@@ -185,6 +185,7 @@ const nextConfig = {
       ? getUniqueValues([
           ...LOOPBACK_WILDCARD_ORIGINS,
           ...getLoopbackOriginVariants(process.env.WEBAPP_URL),
+          ...getLoopbackOriginVariants(process.env.BETTER_AUTH_URL),
           ...getLoopbackOriginVariants(process.env.NEXTAUTH_URL),
           ...getLoopbackOriginVariants(process.env.S3_ENDPOINT_URL),
         ])

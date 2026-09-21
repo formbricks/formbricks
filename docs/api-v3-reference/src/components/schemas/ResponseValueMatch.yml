@@ -1,0 +1,22 @@
+type: string
+enum:
+  - exact
+  - label
+  - other
+  - unmatched
+description: >
+  How a stored raw value was resolved against the current survey definition.
+  Precedence is fixed and applied in this order:
+
+
+  - `exact` — the stored value matched an option **id** in the current definition.
+
+  - `label` — the stored value matched an option's **label text** (ids are stable, labels are
+    editable and language-dependent, so a label match is weaker evidence).
+
+  - `other` — the value arrived through the element's **Other** free-text input. Only reported when
+    the element actually has that input enabled and the value was submitted through it.
+
+  - `unmatched` — no option resolves. The raw value is still returned; it is **not** silently
+    reclassified as `other`, because a *renamed* option is also unmatched text and filing it as a
+    write-in would misattribute the answer.

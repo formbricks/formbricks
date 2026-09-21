@@ -176,7 +176,7 @@ export function FiltersPanel({
           }
           handleUpdateFilter(index, { values });
         }}
-        className={isNumericInput ? "w-[150px] bg-white" : "w-[200px] bg-white"}
+        className="min-w-0 flex-1 basis-36 bg-white"
       />
     );
   };
@@ -210,7 +210,7 @@ export function FiltersPanel({
           const operators = getFilterOperatorsForType(fieldType);
 
           return (
-            <div key={filter.id} className="flex items-center gap-2">
+            <div key={filter.id} className="flex flex-wrap items-center gap-2">
               <FilterFieldCombobox
                 options={fieldOptions}
                 value={filter.field}
@@ -238,7 +238,7 @@ export function FiltersPanel({
                     operator: value,
                   })
                 }>
-                <SelectTrigger className="w-[150px] bg-white">
+                <SelectTrigger className="min-w-0 flex-1 basis-32 bg-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -266,7 +266,7 @@ export function FiltersPanel({
                 variant="ghost"
                 size="icon"
                 onClick={() => handleRemoveFilter(index)}
-                className="size-8">
+                className="size-8 shrink-0">
                 <TrashIcon className="size-4" />
               </Button>
             </div>

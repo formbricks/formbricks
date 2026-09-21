@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
+import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TResponseContact,
@@ -959,7 +960,7 @@ export const getElementSummary = async (
     }
   }
 
-  survey.hiddenFields?.fieldIds?.forEach((hiddenFieldId) => {
+  getIngestedStorageKeys(survey).forEach((hiddenFieldId) => {
     let values: TSurveyElementSummaryHiddenFields["samples"] = [];
     responses.forEach((response) => {
       const answer = response.data[hiddenFieldId];

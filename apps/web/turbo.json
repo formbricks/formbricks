@@ -6,6 +6,7 @@
       "env": [
         "ASSET_PREFIX_URL",
         "BASE_PATH",
+        "BETTER_AUTH_URL",
         "E2E_TESTING",
         "NEXTAUTH_URL",
         "NODE_ENV",
@@ -49,6 +50,8 @@
         "AUDIT_LOG_ENABLED",
         "AUDIT_LOG_GET_USER_IP",
         "AUTH_SKIP_INVITE_FOR_SSO",
+        "AUTH_SSO_DEFAULT_ORGANIZATION_ID",
+        "AUTH_SSO_DEFAULT_ORGANIZATION_ROLE",
         "AUTH_SSO_DEFAULT_TEAM_ID",
         "AUTHZED_CONSISTENCY",
         "AUTHZED_ENABLED",
@@ -60,7 +63,6 @@
         "AZUREAD_CLIENT_SECRET",
         "AZUREAD_TENANT_ID",
         "BETTER_AUTH_SECRET",
-        "BETTER_AUTH_URL",
         "BREVO_API_KEY",
         "BREVO_LIST_ID",
         "BULLMQ_EXTERNAL_WORKER_ENABLED",
@@ -98,6 +100,7 @@
         "IMPRINT_ADDRESS",
         "IMPRINT_URL",
         "INVITE_DISABLED",
+        "INVITE_RATE_LIMIT_PER_24_HOURS",
         "IS_FORMBRICKS_CLOUD",
         "LOG_LEVEL",
         "MAIL_FROM",
@@ -174,7 +177,8 @@
         "TURNSTILE_SITE_KEY",
         "UNSPLASH_ACCESS_KEY",
         "USER_MANAGEMENT_MINIMUM_ROLE",
-        "VERSION"
+        "VERSION",
+        "WEBHOOK_DELIVERY_TIMEOUT_MS"
       ]
     }
   }

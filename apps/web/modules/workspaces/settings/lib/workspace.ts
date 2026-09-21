@@ -17,7 +17,7 @@ import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspac
 import { DEFAULT_LOCALE } from "@/lib/constants";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
-import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
+import { deleteWorkspaceFilesBestEffort } from "@/modules/storage/service";
 
 // Keep v5 defaults aligned with current production camelCase keys.
 // Safe-identifier migration (with backwards compatibility) is intentionally deferred to v5.1.
@@ -123,7 +123,7 @@ export const createWorkspace = async (
     throw new ValidationError("Workspace Name is required");
   }
 
-  const { teamIds, ...data } = workspaceInput;
+  const { teamIds, config: configInput, ...data } = workspaceInput;
   // Captured out here so the guard above still narrows it: inside the transaction callback below,
   // TypeScript widens workspaceInput.name back to `string | undefined`.
   const name = workspaceInput.name;
@@ -164,11 +164,15 @@ export const createWorkspace = async (
 
       const workspace = await tx.workspace.create({
         data: {
-          config: {
-            channel: null,
-            industry: null,
-          },
           ...data,
+          // Built explicitly rather than spread from the caller: the default survey language has to be
+          // one of the workspace's own languages, and a workspace being created has only the seeded
+          // `DEFAULT_WORKSPACE_LANGUAGE`. It is configured afterwards from workspace settings, where
+          // `updateWorkspaceAction` can validate it against the languages that exist (ENG-2816).
+          config: {
+            channel: configInput?.channel ?? null,
+            industry: configInput?.industry ?? null,
+          },
           name,
           organizationId,
           contactAttributeKeys: {
@@ -223,7 +227,9 @@ const deleteWorkspaceRecord = async (db: TWorkspaceDeletionDbClient, workspaceId
     where: {
       id: workspaceId,
     },
-    select: selectWorkspace,
+    // legacyEnvironmentId rides along on the deleted row so storage cleanup has the legacy prefix
+    // after the row is gone. It is not part of selectWorkspace because no other caller needs it.
+    select: { ...selectWorkspace, legacyEnvironmentId: true },
   });
 
   return { feedbackDirectoryAssignments, workspace };
@@ -240,12 +246,7 @@ const completeWorkspaceDeletion = async (
     reconcileFeedbackDirectoryRelationships({ assignments: feedbackDirectoryAssignments })
   );
 
-  const s3Result = await deleteFilesByWorkspaceId(workspaceId, []);
-
-  if (!s3Result.ok && "error" in s3Result) {
-    // fail silently because we don't want to throw an error if the files are not deleted
-    logger.error(s3Result.error, "Error deleting S3 files");
-  }
+  await deleteWorkspaceFilesBestEffort(workspace);
 
   return workspace;
 };

@@ -35,6 +35,8 @@ interface SettingsViewProps {
   locale: TUserLocale;
   appSetupCompleted: boolean;
   enterpriseLicenseRequestFormUrl: string;
+  /** A save or publish was blocked because the survey has no trigger (ENG-2581). */
+  hasTriggerError?: boolean;
 }
 
 export const SettingsView = ({
@@ -56,6 +58,7 @@ export const SettingsView = ({
   locale,
   appSetupCompleted,
   enterpriseLicenseRequestFormUrl,
+  hasTriggerError = false,
 }: Readonly<SettingsViewProps>) => {
   const isAppSurvey = localSurvey.type === "app";
 
@@ -98,6 +101,7 @@ export const SettingsView = ({
         propActionClasses={actionClasses}
         membershipRole={membershipRole}
         workspacePermission={workspacePermission}
+        hasError={hasTriggerError}
       />
       <QuotasCard
         localSurvey={localSurvey}

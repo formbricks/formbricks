@@ -1050,6 +1050,177 @@ describe("recordAudit (audit-sink port)", () => {
   });
 });
 
+describe("recordAnalytics (analytics-sink port)", () => {
+  const copyId = "cm9zr4t2b000208l8h2m1xyz9";
+  const recordAnalytics = vi.fn<NonNullable<WorkflowApiContext["recordAnalytics"]>>();
+  const analyticsCtx = (overrides: Partial<WorkflowApiContext> = {}): WorkflowApiContext =>
+    makeCtx({ recordAnalytics, ...overrides });
+
+  const postRequest = (body?: unknown): Request =>
+    new Request("http://localhost/api/v3/workflows", {
+      method: "POST",
+      ...(body !== undefined
+        ? { body: JSON.stringify(body), headers: { "Content-Type": "application/json" } }
+        : {}),
+    });
+
+  // The shape summary every detail carries for the shared test `definition` (one trigger, one email).
+  const expectedShape = {
+    definition: {
+      triggerType: "response.completed",
+      actionTypes: ["send_email"],
+      actionCount: 1,
+      nodeCount: 2,
+    },
+    options: {
+      endingScope: "all",
+      emailRecipientKind: "literal",
+      attachResponseData: true,
+      includeVariables: false,
+      includeHiddenFields: false,
+    },
+  };
+
+  test("create reports the new workflow with its shape and no previous status", async () => {
+    service.createWorkflow.mockResolvedValue(makeRow({ status: "draft" }));
+
+    await handlers.create({
+      req: postRequest({ workspaceId, name: "Notify team", definition }),
+      ctx: analyticsCtx(),
+    });
+
+    expect(recordAnalytics).toHaveBeenCalledTimes(1);
+    const detail = recordAnalytics.mock.calls[0][0];
+    expect(detail).toEqual(
+      expect.objectContaining({
+        operation: "created",
+        workflowId,
+        workspaceId,
+        status: "draft",
+        ...expectedShape,
+      })
+    );
+    expect(detail.createdAt).toBeInstanceOf(Date);
+    expect(detail.previousStatus).toBeUndefined();
+  });
+
+  test("duplicate reports the copy and names the source", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow());
+    service.duplicateWorkflow.mockResolvedValue(makeRow({ id: copyId, status: "draft" }));
+
+    await handlers.duplicate({
+      req: new Request("http://localhost/api/v3/workflows/x/duplicate", { method: "POST" }),
+      ctx: analyticsCtx(),
+      params: { workflowId },
+    });
+
+    expect(recordAnalytics.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ operation: "duplicated", workflowId: copyId, sourceWorkflowId: workflowId })
+    );
+  });
+
+  test.each([
+    ["enable", "draft", "enabled"],
+    ["disable", "enabled", "disabled"],
+    ["archive", "enabled", "archived"],
+    ["unarchive", "archived", "draft"],
+  ] as const)("%s reports the %s -> %s transition", async (handler, before, after) => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: before }));
+    service.enableWorkflow.mockResolvedValue(makeRow({ status: after }));
+    service.disableWorkflow.mockResolvedValue(makeRow({ status: after }));
+    service.setStatus.mockResolvedValue(makeRow({ status: after }));
+
+    await handlers[handler]({ ctx: analyticsCtx(), params: { workflowId } });
+
+    expect(recordAnalytics).toHaveBeenCalledTimes(1);
+    expect(recordAnalytics.mock.calls[0][0]).toEqual(
+      expect.objectContaining({
+        operation: `${handler}d`,
+        status: after,
+        previousStatus: before,
+        ...expectedShape,
+      })
+    );
+  });
+
+  test("delete reports the removed row's last status", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "archived" }));
+    service.deleteWorkflow.mockResolvedValue(undefined);
+
+    await handlers.delete({ ctx: analyticsCtx(), params: { workflowId } });
+
+    expect(recordAnalytics.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ operation: "deleted", workflowId, status: "archived" })
+    );
+    expect(recordAnalytics.mock.calls[0][0].previousStatus).toBeUndefined();
+  });
+
+  test("test reports whether the dry run passed", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+    verifyTriggerSurvey.mockResolvedValue({ surveyExists: false, missingEndingCardIds: [] });
+
+    await handlers.testWorkflow({ ctx: analyticsCtx(), params: { workflowId } });
+
+    expect(recordAnalytics.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ operation: "tested", workflowId, testOk: false })
+    );
+  });
+
+  test("patch is deliberately not reported (autosave would fire it every few seconds)", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+    service.updateWorkflow.mockResolvedValue(makeRow({ name: "After" }));
+
+    await handlers.patch({
+      req: new Request("http://localhost/api/v3/workflows/x", {
+        method: "PATCH",
+        body: JSON.stringify({ name: "After" }),
+        headers: { "Content-Type": "application/json" },
+      }),
+      ctx: analyticsCtx(),
+      params: { workflowId },
+    });
+
+    expect(recordAnalytics).not.toHaveBeenCalled();
+  });
+
+  test("the detail never carries the definition itself, only its shape", async () => {
+    service.createWorkflow.mockResolvedValue(makeRow());
+
+    await handlers.create({
+      req: postRequest({ workspaceId, name: "Notify team", definition }),
+      ctx: analyticsCtx(),
+    });
+
+    const serialized = JSON.stringify(recordAnalytics.mock.calls[0][0]);
+    expect(serialized).not.toContain("@example.com");
+    expect(serialized).not.toContain("Thanks");
+    expect(serialized).not.toContain("nodes");
+  });
+
+  test("is not called on a failed mutation (denied authorization)", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+    authorizeAllow.mockResolvedValue(deniedResponse());
+
+    await handlers.enable({ ctx: analyticsCtx(), params: { workflowId } });
+
+    expect(recordAnalytics).not.toHaveBeenCalled();
+  });
+
+  test("a throwing sink is swallowed: the already-successful mutation still returns success", async () => {
+    service.createWorkflow.mockResolvedValue(makeRow());
+    const throwingSink = vi.fn().mockRejectedValue(new Error("analytics backend down"));
+
+    const res = await handlers.create({
+      req: postRequest({ workspaceId, name: "Notify team", definition }),
+      ctx: analyticsCtx({ recordAnalytics: throwingSink }),
+    });
+
+    expect(res.status).toBe(201);
+    expect(throwingSink).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalled();
+  });
+});
+
 const runId = "cm9zr4w9d000308l8c5n8xk7e";
 
 const makeRunRow = (overrides: Partial<WorkflowRunRow> = {}): WorkflowRunRow => ({

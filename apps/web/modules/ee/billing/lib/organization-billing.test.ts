@@ -1,12 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
+  DEFAULT_PRO_TRIAL_DAYS,
   addOptimisticBillingFeature,
   applySetupCheckoutUpgrade,
   createPaidPlanCheckoutSession,
+  createProTrialSubscription,
   ensureCloudStripeSetupForOrganization,
   ensureStripeCustomerForOrganization,
   findOrganizationIdByStripeCustomerId,
   getOrganizationBillingWithReadThroughSync,
+  getProTrialDays,
   previewImmediateUpgradeCharge,
   reconcileCloudStripeSubscriptionsForOrganization,
   setOrganizationPaymentAttemptError,
@@ -58,6 +61,8 @@ const mocks = vi.hoisted(() => ({
   loggerInfo: vi.fn(),
   loggerError: vi.fn(),
   capturePostHogEvent: vi.fn(),
+  getPostHogFeatureFlag: vi.fn(),
+  groupIdentifyPostHog: vi.fn(),
 }));
 
 vi.mock("@/lib/constants", async (importOriginal) => {
@@ -116,6 +121,11 @@ vi.mock("@formbricks/logger", () => ({
 
 vi.mock("@/lib/posthog", () => ({
   capturePostHogEvent: mocks.capturePostHogEvent,
+  groupIdentifyPostHog: mocks.groupIdentifyPostHog,
+}));
+
+vi.mock("@/lib/posthog/get-feature-flag", () => ({
+  getPostHogFeatureFlag: mocks.getPostHogFeatureFlag,
 }));
 
 vi.mock("./stripe-plan", async (importOriginal) => {
@@ -2848,6 +2858,28 @@ describe("organization-billing", () => {
       );
     });
 
+    test("refreshes the PostHog organization group's plan facts on every sync", async () => {
+      mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+        stripeCustomerId: "cus_1",
+        limits: { workspaces: 3, monthly: { responses: 1500 } },
+        usageCycleAnchor: new Date(),
+        stripe: { plan: "pro", subscriptionStatus: "active", interval: "monthly", lastSyncedEventId: null },
+      });
+      mocks.subscriptionsList.mockResolvedValue({ data: [buildActiveSubscription("scale", "active")] });
+
+      await syncOrganizationBillingFromStripe("org_1", { id: "evt_1", created: 1739923300 });
+
+      expect(mocks.groupIdentifyPostHog).toHaveBeenCalledTimes(1);
+      // Exact object: every plan fact with its value and nothing else. The merge is additive, so the
+      // signup-time `name` and `email_domain` must never be sent from here.
+      expect(mocks.groupIdentifyPostHog).toHaveBeenCalledWith("organization", "org_1", {
+        plan: "scale",
+        billing_interval: "monthly",
+        subscription_status: "active",
+        has_payment_method: false,
+      });
+    });
+
     test("does not reject the sync when the owner lookup fails after persistence", async () => {
       mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
         stripeCustomerId: "cus_1",
@@ -3239,6 +3271,77 @@ describe("organization-billing", () => {
 
       expect(mocks.prismaOrganizationBillingUpdate).not.toHaveBeenCalled();
       expect(mocks.cacheDel).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getProTrialDays", () => {
+    test("returns the default trial length when the A/B test flag is not the test variant", async () => {
+      mocks.getPostHogFeatureFlag.mockResolvedValue(false);
+
+      const result = await getProTrialDays("org_1");
+
+      expect(mocks.getPostHogFeatureFlag).toHaveBeenCalledWith("org_1", "a-b_billing_shorten-trial-days", {
+        organizationId: "org_1",
+      });
+      expect(result).toBe(14);
+    });
+
+    test("returns the shortened trial length when the A/B test variant is active", async () => {
+      mocks.getPostHogFeatureFlag.mockResolvedValue("test");
+
+      const result = await getProTrialDays("org_1");
+
+      expect(result).toBe(7);
+    });
+  });
+
+  describe("createProTrialSubscription", () => {
+    beforeEach(() => {
+      mocks.customersRetrieve.mockResolvedValue({
+        id: "cus_1",
+        deleted: false,
+        email: "owner@example.com",
+      });
+    });
+
+    // The trial length only reaches Stripe through `trial_period_days`. Assert on the Stripe call
+    // itself: every other test mocks this function away, so a hardcoded value here would be the
+    // A/B test silently running a 14-day trial for both arms while PostHog reports 7.
+    test("sends the resolved trial length to Stripe as trial_period_days", async () => {
+      await createProTrialSubscription("org_1", "cus_1", 7);
+
+      expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customer: "cus_1",
+          trial_period_days: 7,
+          metadata: { organizationId: "org_1" },
+        }),
+        { idempotencyKey: "create-pro-trial-org_1" }
+      );
+    });
+
+    test("defaults to the 14-day trial when no trial length is passed", async () => {
+      await createProTrialSubscription("org_1", "cus_1");
+
+      expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ trial_period_days: DEFAULT_PRO_TRIAL_DAYS }),
+        { idempotencyKey: "create-pro-trial-org_1" }
+      );
+    });
+
+    test("does not create a trial subscription when the email already used a Pro trial", async () => {
+      mocks.customersList.mockResolvedValue({ data: [{ id: "cus_old" }] });
+      mocks.subscriptionsList.mockResolvedValue({
+        data: [
+          {
+            trial_start: 1700000000,
+            items: { data: [{ price: { product: "prod_pro" } }] },
+          },
+        ],
+      });
+
+      await expect(createProTrialSubscription("org_1", "cus_1", 7)).rejects.toThrow("trial_already_used");
+      expect(mocks.subscriptionsCreate).not.toHaveBeenCalled();
     });
   });
 

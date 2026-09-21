@@ -2,7 +2,6 @@ import "server-only";
 import {
   AUDIT_LOG_ENABLED,
   CLOUD_HOBBY_WORKSPACE_LIMIT,
-  COMMUNITY_WORKSPACE_LIMIT,
   IS_FORMBRICKS_CLOUD,
   IS_RECAPTCHA_CONFIGURED,
 } from "@/lib/constants";
@@ -96,7 +95,12 @@ export const getBiggerUploadFileSizePermission = async (organizationId: string):
   const entitlementsContext = await getOrganizationEntitlementsContext(organizationId);
 
   if (!IS_FORMBRICKS_CLOUD) {
-    return entitlementsContext.licenseStatus === "active";
+    // Any active enterprise license grants the bigger upload size — there is no license feature for
+    // it. `licenseActive` rather than the status string for the same reason as the workspace limit
+    // below: in grace the cached license is still active while the status already reads
+    // "unreachable" or "expired", and gating on the status would drop a licensed instance back to
+    // the standard 10 MB cap for the whole window.
+    return entitlementsContext.licenseActive;
   }
 
   const hasPaidCloudCapacity =
@@ -199,11 +203,15 @@ export const getOrganizationWorkspacesLimit = async (organizationId: string): Pr
     return entitlementsContext.limits.workspaces ?? Infinity;
   }
 
-  // `workspaces: null` on an active license means unlimited, mirroring the cloud branch above.
-  if (entitlementsContext.licenseStatus === "active" && entitlementsContext.licenseFeatures) {
-    return entitlementsContext.licenseFeatures.workspaces ?? Infinity;
-  }
-
-  // No active license (no-license / expired / invalid / unreachable) — Community Edition.
-  return COMMUNITY_WORKSPACE_LIMIT;
+  // Self-hosted limits are already resolved by the entitlements provider, which reads the license's
+  // cached `active` flag rather than the narrower live status string. That distinction is the whole
+  // point: `getFallbackLevel` (license.ts) enters the grace period documented in
+  // `docs/self-hosting/advanced/license-activation.mdx` whenever the live check returns anything but
+  // "active" while the cached license is still active and under three days old. So the status can
+  // read "unreachable" (the check never completed) or "expired" (it completed and the key has
+  // lapsed) while the instance is still active on its cached license. Deriving the limit from the
+  // status here would drop that instance to the Community Edition cap for the whole grace window.
+  // `null` means unlimited, and an instance with no usable license is resolved to the community cap
+  // by the provider.
+  return entitlementsContext.limits.workspaces ?? Infinity;
 };

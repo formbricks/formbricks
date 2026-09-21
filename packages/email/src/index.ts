@@ -3,6 +3,7 @@ export { ForgotPasswordEmail } from "../emails/auth/forgot-password-email";
 export { DeleteAccountEmail } from "../emails/auth/delete-account-email";
 export { NewEmailVerification } from "../emails/auth/new-email-verification";
 export { PasswordResetNotifyEmail } from "../emails/auth/password-reset-notify-email";
+export { SsoRecoveryFactorsRemovedEmail } from "../emails/auth/sso-recovery-factors-removed-email";
 export { InviteEmail } from "../emails/invite/invite-email";
 export { InviteAcceptedEmail } from "../emails/invite/invite-accepted-email";
 export { LinkSurveyEmail } from "../emails/survey/link-survey-email";
@@ -22,6 +23,7 @@ export {
   renderAccountDeletionEmail,
   renderNewEmailVerification,
   renderPasswordResetNotifyEmail,
+  renderSsoRecoveryFactorsRemovedEmail,
   renderInviteEmail,
   renderInviteAcceptedEmail,
   renderLinkSurveyEmail,
@@ -30,8 +32,6 @@ export {
   renderEmailCustomizationPreviewEmail,
   renderFollowUpEmail,
 } from "./lib/render";
-
-export { render } from "@react-email/render";
 
 export {
   Body,
@@ -49,6 +49,7 @@ export {
   Section,
   Tailwind,
   Text,
-} from "@react-email/components";
+  render,
+} from "react-email";
 
 export type { ProcessedHiddenField, ProcessedResponseElement, ProcessedVariable } from "./types/follow-up";

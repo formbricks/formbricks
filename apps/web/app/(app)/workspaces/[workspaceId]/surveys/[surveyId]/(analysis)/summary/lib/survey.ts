@@ -6,7 +6,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { convertFloatTo2Decimal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { getSurvey } from "@/lib/survey/service";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
-import { getSurveyFileUploadConfigs } from "@/modules/storage/utils";
+import { collectResponseFileUrls, getSurveyFileUploadElementIds } from "@/modules/storage/utils";
 
 /**
  * Responses are scanned in pages so resetting a survey with a large response count never holds every
@@ -22,9 +22,6 @@ const RESPONSE_FILE_SCAN_PAGE_SIZE = 500;
  * collected.
  */
 const STORAGE_DELETE_CHUNK_SIZE = 100;
-
-/** One response row as the scan below selects it. */
-type ScannedResponseRow = { id: string; createdAt: Date; data: Prisma.JsonValue };
 
 /** Keyset position in the scan: the last row read, ordered by (createdAt, id). */
 type ResponseScanCursor = { createdAt: Date; id: string };
@@ -43,40 +40,15 @@ const afterCursor = (cursor: ResponseScanCursor) => ({
 });
 
 /**
- * Pulls the storage URLs out of one page of scanned responses.
- *
- * Only file-upload answers hold storage URLs, and they are always stored as an array of strings.
- * Anything else under the same key is skipped rather than cast, so malformed data cannot produce a
- * bogus delete target.
- */
-const collectFileUrlsFromPage = (
-  responses: ScannedResponseRow[],
-  fileUploadElementIds: Set<string>
-): string[] => {
-  const fileUrls: string[] = [];
-
-  for (const response of responses) {
-    for (const [elementId, answer] of Object.entries(response.data ?? {})) {
-      if (fileUploadElementIds.has(elementId) && Array.isArray(answer)) {
-        fileUrls.push(...answer.filter((url): url is string => typeof url === "string"));
-      }
-    }
-  }
-
-  return fileUrls;
-};
-
-/**
  * Collects the storage URLs a survey's file-upload answers point at, so they can be deleted once the
  * responses themselves are gone.
  *
  * Must run *before* the responses are deleted: the URLs only exist inside `response.data`, so once the
  * rows are gone there is nothing left to tell storage which objects are now unreferenced.
  *
- * Mirrors the single-response delete path (`findAndDeleteUploadedFilesInResponse` in
- * lib/response/service.ts): the id set comes from the union of `blocks` and `questions` via
- * `getSurveyFileUploadConfigs`, because a survey holds file uploads in either shape and keying off one
- * of them silently skips the other.
+ * The extraction itself is shared with the single-response delete paths
+ * (`getSurveyFileUploadElementIds` + `collectResponseFileUrls` in modules/storage/utils), so all three
+ * read the same id set and skip the same malformed answers.
  */
 const collectSurveyResponseFileUrls = async (
   surveyId: string
@@ -91,11 +63,7 @@ const collectSurveyResponseFileUrls = async (
     return { fileUrls: [], workspaceId: undefined };
   }
 
-  const fileUploadElementIds = new Set(
-    getSurveyFileUploadConfigs({ blocks: survey.blocks, questions: survey.questions }).map(
-      (config) => config.id
-    )
-  );
+  const fileUploadElementIds = getSurveyFileUploadElementIds(survey);
 
   // No file-upload element in the survey's *current* definition, so there is no key this scan would
   // match — skip it. Note this is about today's blocks/questions, not the response history: answers
@@ -122,7 +90,9 @@ const collectSurveyResponseFileUrls = async (
       break;
     }
 
-    fileUrls.push(...collectFileUrlsFromPage(responses, fileUploadElementIds));
+    for (const response of responses) {
+      fileUrls.push(...collectResponseFileUrls(response.data, fileUploadElementIds));
+    }
 
     // A short page means the last one. The `lastRow` check only guards the cursor from going undefined
     // and re-reading the same page forever; a full page always has a last row.

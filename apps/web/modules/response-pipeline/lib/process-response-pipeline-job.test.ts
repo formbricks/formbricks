@@ -1,14 +1,18 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { createHash } from "node:crypto";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TResponsePipelineJobData } from "@formbricks/jobs";
+import { selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { processResponsePipelineJob } from "./process-response-pipeline-job";
 
+// vitestSetup.ts stubs crypto.createHash to a constant for the license checks. The webhook-id derivation
+// is a subject of this suite, so this file uses the real implementation.
+vi.mock("node:crypto", async (importOriginal) => await importOriginal());
+
 const {
-  mockFetch,
   mockCaptureSurveyResponsePostHogEvent,
-  mockCreatePinnedDispatcher,
-  mockDispatcherDestroy,
   mockEnqueueResponseCompletedWorkflowRuns,
+  mockEnqueueWebhookDeliveryJob,
   mockGetIntegrations,
   mockGetFinishedResponseCountBySurveyId,
   mockGetResponseCountBySurveyId,
@@ -25,17 +29,13 @@ const {
   mockSendFollowUpsForResponse,
   mockSendResponseFinishedEmail,
   mockSendTelemetryEvents,
-  mockValidateAndResolveWebhookUrl,
 } = vi.hoisted(() => {
   process.env.HUB_API_URL ??= "https://hub.test";
-  const dispatcherDestroy = vi.fn().mockResolvedValue(undefined);
 
   return {
-    mockFetch: vi.fn(),
     mockCaptureSurveyResponsePostHogEvent: vi.fn(),
-    mockCreatePinnedDispatcher: vi.fn(() => ({ destroy: dispatcherDestroy })),
-    mockDispatcherDestroy: dispatcherDestroy,
     mockEnqueueResponseCompletedWorkflowRuns: vi.fn(),
+    mockEnqueueWebhookDeliveryJob: vi.fn(),
     mockGetIntegrations: vi.fn(),
     mockGetFinishedResponseCountBySurveyId: vi.fn(),
     mockGetResponseCountBySurveyId: vi.fn(),
@@ -52,7 +52,6 @@ const {
     mockSendFollowUpsForResponse: vi.fn(),
     mockSendResponseFinishedEmail: vi.fn(),
     mockSendTelemetryEvents: vi.fn(),
-    mockValidateAndResolveWebhookUrl: vi.fn(),
   };
 });
 
@@ -81,6 +80,7 @@ vi.mock("@formbricks/jobs", () => ({
       this.name = "UnrecoverableError";
     }
   },
+  enqueueWebhookDeliveryJob: mockEnqueueWebhookDeliveryJob,
 }));
 
 vi.mock(import("@/lib/constants"), async (importOriginal) => {
@@ -89,7 +89,6 @@ vi.mock(import("@/lib/constants"), async (importOriginal) => {
   return {
     ...actual,
     POSTHOG_KEY: undefined,
-    DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: false,
   };
 });
 
@@ -115,11 +114,6 @@ vi.mock("@/modules/survey/lib/response", () => ({
 
 vi.mock("./posthog", () => ({
   captureSurveyResponsePostHogEvent: mockCaptureSurveyResponsePostHogEvent,
-}));
-
-vi.mock("@/lib/utils/validate-webhook-url", () => ({
-  validateAndResolveWebhookUrl: mockValidateAndResolveWebhookUrl,
-  createPinnedDispatcher: mockCreatePinnedDispatcher,
 }));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
@@ -217,7 +211,10 @@ const survey = {
   workspaceId: "workspace_123",
 };
 
-const originalFetch = global.fetch;
+const webhookRow = { id: "webhook_123" };
+
+const expectedWebhookMessageId = (jobId: string, webhookId: string, event: string): string =>
+  createHash("sha256").update(`${jobId}:${webhookId}:${event}`).digest("hex");
 
 describe("processResponsePipelineJob", () => {
   beforeEach(() => {
@@ -230,9 +227,7 @@ describe("processResponsePipelineJob", () => {
     mockGetResponseCountBySurveyId.mockResolvedValue(7);
     mockGetFinishedResponseCountBySurveyId.mockResolvedValue(1);
     mockHandleIntegrations.mockResolvedValue(undefined);
-    mockValidateAndResolveWebhookUrl.mockResolvedValue({ ip: "93.184.216.34", family: 4 });
-    mockDispatcherDestroy.mockResolvedValue(undefined);
-    mockCreatePinnedDispatcher.mockImplementation(() => ({ destroy: mockDispatcherDestroy }));
+    mockEnqueueWebhookDeliveryJob.mockResolvedValue({ id: "whd-job_123-webhook_123" });
     mockQueueAuditEventWithoutRequest.mockResolvedValue(undefined);
     mockRecordResponseCreatedMeterEvent.mockResolvedValue(undefined);
     mockSendResponseFinishedEmail.mockResolvedValue(undefined);
@@ -240,16 +235,6 @@ describe("processResponsePipelineJob", () => {
     mockEnqueueResponseCompletedWorkflowRuns.mockResolvedValue(undefined);
     mockSendTelemetryEvents.mockResolvedValue(undefined);
     mockPrismaSurveyUpdate.mockResolvedValue(undefined);
-    mockFetch.mockResolvedValue({
-      ok: true,
-      status: 200,
-    });
-    global.fetch = mockFetch as typeof global.fetch;
-  });
-
-  afterEach(() => {
-    global.fetch = originalFetch;
-    mockFetch.mockReset();
   });
 
   test("invokes the workflow runner on responseFinished", async () => {
@@ -266,6 +251,20 @@ describe("processResponsePipelineJob", () => {
         // thread the resolved organization through.
         organizationId: "org_123",
       })
+    );
+  });
+
+  /**
+   * ENG-1845: the pipeline's readers — the notification email, follow-ups and integrations — resolve
+   * Embedded Data definitions through the joined rows, and `getSurveyEmbeddedFields` fails closed. A
+   * select that loses the join reports every field as unset rather than erroring, so the join belongs
+   * in a test rather than only in a comment.
+   */
+  test("selects the Embedded Data join its readers resolve definitions through", async () => {
+    await processResponsePipelineJob(baseData, baseContext);
+
+    expect(mockPrismaSurveyFindUnique.mock.calls[0][0].select).toEqual(
+      expect.objectContaining({ embeddedDataLinks: selectSurveyEmbeddedDataLinks })
     );
   });
 
@@ -297,37 +296,38 @@ describe("processResponsePipelineJob", () => {
     );
   });
 
-  test("processes responseCreated jobs with webhook, metering, and telemetry side effects", async () => {
-    mockPrismaWebhookFindMany.mockResolvedValue([
-      {
-        id: "webhook_123",
-        secret: "secret",
-        url: "https://example.com/webhook",
-      },
-    ]);
+  test("processes responseCreated jobs with webhook fan-out, metering, and telemetry side effects", async () => {
+    mockPrismaWebhookFindMany.mockResolvedValue([webhookRow]);
 
     await expect(processResponsePipelineJob(baseData, baseContext)).resolves.toBeUndefined();
 
+    // Ids only — the delivery job re-reads url and secret, so neither is loaded here or put in Redis.
     expect(mockPrismaWebhookFindMany).toHaveBeenCalledWith({
       where: {
         OR: [{ surveyIds: { has: "survey_123" } }, { surveyIds: { isEmpty: true } }],
         workspaceId: "workspace_123",
         triggers: { has: "responseCreated" },
       },
+      select: { id: true },
     });
-    expect(mockValidateAndResolveWebhookUrl).toHaveBeenCalledWith("https://example.com/webhook");
-    expect(mockFetch).toHaveBeenCalledWith(
-      "https://example.com/webhook",
-      expect.objectContaining({
-        body: expect.stringContaining('"event":"responseCreated"'),
-        headers: expect.objectContaining({
-          "content-type": "application/json",
-          "webhook-id": expect.any(String),
-          "webhook-signature": expect.any(String),
-          "webhook-timestamp": expect.any(String),
-        }),
-        method: "POST",
-      })
+    expect(mockEnqueueWebhookDeliveryJob).toHaveBeenCalledTimes(1);
+    expect(mockEnqueueWebhookDeliveryJob).toHaveBeenCalledWith(
+      {
+        webhookId: "webhook_123",
+        workspaceId: "workspace_123",
+        surveyId: "survey_123",
+        event: "responseCreated",
+        webhookMessageId: expectedWebhookMessageId("job_123", "webhook_123", "responseCreated"),
+        response: baseData.response,
+        survey: {
+          name: "Test survey",
+          type: "app",
+          status: "inProgress",
+          createdAt: survey.createdAt,
+          updatedAt: survey.updatedAt,
+        },
+      },
+      { jobId: "whd-job_123-webhook_123" }
     );
     expect(mockRecordResponseCreatedMeterEvent).toHaveBeenCalledWith({
       createdAt: baseData.response.createdAt,
@@ -338,22 +338,46 @@ describe("processResponsePipelineJob", () => {
     expect(mockHandleIntegrations).not.toHaveBeenCalled();
   });
 
-  test("uses a stable webhook id for the same BullMQ job across retry attempts", async () => {
-    mockPrismaWebhookFindMany.mockResolvedValue([
-      {
-        id: "webhook_123",
-        secret: null,
-        url: "https://example.com/webhook",
-      },
-    ]);
+  test("derives a stable webhook id from the pipeline job across retry attempts", async () => {
+    mockPrismaWebhookFindMany.mockResolvedValue([webhookRow]);
 
     await expect(processResponsePipelineJob(baseData, baseContext)).resolves.toBeUndefined();
     await expect(processResponsePipelineJob(baseData, finalAttemptContext)).resolves.toBeUndefined();
 
-    const firstHeaders = mockFetch.mock.calls[0]?.[1]?.headers as Record<string, string>;
-    const secondHeaders = mockFetch.mock.calls[1]?.[1]?.headers as Record<string, string>;
+    const messageIds = mockEnqueueWebhookDeliveryJob.mock.calls.map(([payload]) => payload.webhookMessageId);
+    const jobIds = mockEnqueueWebhookDeliveryJob.mock.calls.map(([, options]) => options.jobId);
 
-    expect(firstHeaders["webhook-id"]).toBe(secondHeaders["webhook-id"]);
+    // The exact pre-fan-out derivation, pinned: receivers dedupe on it.
+    expect(messageIds).toEqual([
+      expectedWebhookMessageId("job_123", "webhook_123", "responseCreated"),
+      expectedWebhookMessageId("job_123", "webhook_123", "responseCreated"),
+    ]);
+    // Same deterministic child jobId on the retry, so BullMQ dedupes the re-enqueue.
+    expect(jobIds).toEqual(["whd-job_123-webhook_123", "whd-job_123-webhook_123"]);
+  });
+
+  test("enqueues one delivery job per matching webhook with distinct ids", async () => {
+    mockPrismaWebhookFindMany.mockResolvedValue([
+      { id: "webhook_a" },
+      { id: "webhook_b" },
+      { id: "webhook_c" },
+    ]);
+
+    await expect(processResponsePipelineJob(baseData, baseContext)).resolves.toBeUndefined();
+
+    expect(mockEnqueueWebhookDeliveryJob).toHaveBeenCalledTimes(3);
+    const jobIds = mockEnqueueWebhookDeliveryJob.mock.calls.map(([, options]) => options.jobId);
+    const messageIds = mockEnqueueWebhookDeliveryJob.mock.calls.map(([payload]) => payload.webhookMessageId);
+    expect(jobIds).toEqual(["whd-job_123-webhook_a", "whd-job_123-webhook_b", "whd-job_123-webhook_c"]);
+    expect(new Set(messageIds).size).toBe(3);
+  });
+
+  test("does not enqueue any delivery job when no webhook matches", async () => {
+    mockPrismaWebhookFindMany.mockResolvedValue([]);
+
+    await expect(processResponsePipelineJob(baseData, baseContext)).resolves.toBeUndefined();
+
+    expect(mockEnqueueWebhookDeliveryJob).not.toHaveBeenCalled();
   });
 
   test("processes responseFinished jobs and preserves legacy side effects", async () => {
@@ -363,13 +387,7 @@ describe("processResponsePipelineJob", () => {
       autoComplete: 1,
       followUps: [{ id: "followup_123" }],
     });
-    mockPrismaWebhookFindMany.mockResolvedValue([
-      {
-        id: "webhook_123",
-        secret: null,
-        url: "https://example.com/webhook",
-      },
-    ]);
+    mockPrismaWebhookFindMany.mockResolvedValue([webhookRow]);
     mockPrismaUserFindMany.mockResolvedValue([
       {
         email: "owner@example.com",
@@ -673,8 +691,8 @@ describe("processResponsePipelineJob", () => {
     expect(auditCall).not.toHaveProperty("newObject");
   });
 
-  test("fails the job before the final attempt when webhook delivery fails", async () => {
-    const webhookError = new Error("invalid webhook");
+  test("fails the job before the final attempt when a webhook delivery cannot be enqueued", async () => {
+    const enqueueError = new Error("redis unavailable");
     mockGetIntegrations.mockResolvedValue([{ id: "integration_123", type: "slack" }]);
     mockPrismaSurveyFindUnique.mockResolvedValue({
       ...survey,
@@ -687,14 +705,8 @@ describe("processResponsePipelineJob", () => {
         locale: "en",
       },
     ]);
-    mockPrismaWebhookFindMany.mockResolvedValue([
-      {
-        id: "webhook_123",
-        secret: null,
-        url: "https://example.com/webhook",
-      },
-    ]);
-    mockValidateAndResolveWebhookUrl.mockRejectedValue(webhookError);
+    mockPrismaWebhookFindMany.mockResolvedValue([webhookRow]);
+    mockEnqueueWebhookDeliveryJob.mockRejectedValue(enqueueError);
 
     await expect(
       processResponsePipelineJob(
@@ -704,43 +716,38 @@ describe("processResponsePipelineJob", () => {
         },
         baseContext
       )
-    ).rejects.toThrow("invalid webhook");
+    ).rejects.toThrow("redis unavailable");
 
+    // The retry re-runs the fan-out with the same deterministic child ids, so failing here is safe.
     expect(mockHandleIntegrations).not.toHaveBeenCalled();
     expect(mockSendFollowUpsForResponse).not.toHaveBeenCalled();
     expect(mockSendResponseFinishedEmail).not.toHaveBeenCalled();
     expect(mockPrismaSurveyUpdate).not.toHaveBeenCalled();
     expect(mockLoggerError).toHaveBeenCalledWith(
       expect.objectContaining({
-        err: webhookError,
-        webhookId: "webhook_123",
+        err: enqueueError,
+        jobId: "job_123",
       }),
-      "Response pipeline webhook delivery failed"
+      "Response pipeline job failed"
     );
   });
 
-  test("continues responseFinished side effects on the final webhook attempt", async () => {
-    const webhookError = new Error("invalid webhook");
+  test("continues responseFinished side effects when the fan-out fails on the final attempt", async () => {
+    const enqueueError = new Error("redis unavailable");
     mockGetIntegrations.mockResolvedValue([{ id: "integration_123", type: "slack" }]);
     mockPrismaSurveyFindUnique.mockResolvedValue({
       ...survey,
       autoComplete: 1,
       followUps: [{ id: "followup_123" }],
     });
-    mockPrismaWebhookFindMany.mockResolvedValue([
-      {
-        id: "webhook_123",
-        secret: null,
-        url: "https://example.com/webhook",
-      },
-    ]);
+    mockPrismaWebhookFindMany.mockResolvedValue([webhookRow]);
     mockPrismaUserFindMany.mockResolvedValue([
       {
         email: "owner@example.com",
         locale: "en",
       },
     ]);
-    mockValidateAndResolveWebhookUrl.mockRejectedValue(webhookError);
+    mockEnqueueWebhookDeliveryJob.mockRejectedValue(enqueueError);
 
     await expect(
       processResponsePipelineJob(
@@ -759,10 +766,13 @@ describe("processResponsePipelineJob", () => {
     expect(mockLoggerError).toHaveBeenCalledWith(
       expect.objectContaining({
         attempt: 3,
+        // The final attempt is the one that drops the deliveries, so it must name the cause
+        // itself — no later log carries it.
+        err: enqueueError,
         failedWebhookCount: 1,
         maxAttempts: 3,
       }),
-      "Response pipeline webhook delivery exhausted retries; continuing with remaining side effects"
+      "Response pipeline webhook delivery enqueue exhausted retries; continuing with remaining side effects"
     );
   });
 
@@ -822,13 +832,7 @@ describe("processResponsePipelineJob", () => {
       ...survey,
       autoComplete: 1,
     });
-    mockPrismaWebhookFindMany.mockResolvedValue([
-      {
-        id: "webhook_123",
-        secret: null,
-        url: "https://example.com/webhook",
-      },
-    ]);
+    mockPrismaWebhookFindMany.mockResolvedValue([webhookRow]);
     mockQueueAuditEventWithoutRequest.mockRejectedValue(auditError);
 
     await expect(
@@ -841,7 +845,7 @@ describe("processResponsePipelineJob", () => {
       )
     ).resolves.toBeUndefined();
 
-    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockEnqueueWebhookDeliveryJob).toHaveBeenCalledTimes(1);
     expect(mockLoggerError).toHaveBeenCalledWith(
       expect.objectContaining({
         err: auditError,
@@ -854,13 +858,7 @@ describe("processResponsePipelineJob", () => {
 
   test("logs response count lookup failures without retrying successful webhooks", async () => {
     const responseCountError = new Error("count offline");
-    mockPrismaWebhookFindMany.mockResolvedValue([
-      {
-        id: "webhook_123",
-        secret: null,
-        url: "https://example.com/webhook",
-      },
-    ]);
+    mockPrismaWebhookFindMany.mockResolvedValue([webhookRow]);
     // The total count is only looked up when a notification recipient consumes it.
     mockPrismaUserFindMany.mockResolvedValue([
       {
@@ -880,7 +878,7 @@ describe("processResponsePipelineJob", () => {
       )
     ).resolves.toBeUndefined();
 
-    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockEnqueueWebhookDeliveryJob).toHaveBeenCalledTimes(1);
     expect(mockLoggerError).toHaveBeenCalledWith(
       expect.objectContaining({
         err: responseCountError,
@@ -908,44 +906,9 @@ describe("processResponsePipelineJob", () => {
     );
   });
 
-  test("fails the job when a webhook response is not successful", async () => {
-    mockPrismaWebhookFindMany.mockResolvedValue([
-      {
-        id: "webhook_123",
-        secret: null,
-        url: "https://example.com/webhook",
-      },
-    ]);
-    mockFetch.mockResolvedValue({
-      ok: false,
-      status: 500,
-    });
-
-    await expect(processResponsePipelineJob(baseData, baseContext)).rejects.toThrow(
-      "Webhook delivery failed with status 500"
-    );
-
-    expect(mockLoggerError).toHaveBeenCalledWith(
-      expect.objectContaining({
-        err: expect.any(Error),
-        webhookId: "webhook_123",
-      }),
-      "Response pipeline webhook delivery failed"
-    );
-  });
-
-  test("continues responseCreated side effects on the final webhook attempt", async () => {
-    mockPrismaWebhookFindMany.mockResolvedValue([
-      {
-        id: "webhook_123",
-        secret: null,
-        url: "https://example.com/webhook",
-      },
-    ]);
-    mockFetch.mockResolvedValue({
-      ok: false,
-      status: 500,
-    });
+  test("continues responseCreated side effects when the fan-out fails on the final attempt", async () => {
+    mockPrismaWebhookFindMany.mockResolvedValue([webhookRow]);
+    mockEnqueueWebhookDeliveryJob.mockRejectedValue(new Error("redis unavailable"));
 
     await expect(processResponsePipelineJob(baseData, finalAttemptContext)).resolves.toBeUndefined();
 
@@ -961,7 +924,7 @@ describe("processResponsePipelineJob", () => {
         failedWebhookCount: 1,
         maxAttempts: 3,
       }),
-      "Response pipeline webhook delivery exhausted retries; continuing with remaining side effects"
+      "Response pipeline webhook delivery enqueue exhausted retries; continuing with remaining side effects"
     );
   });
 
@@ -1023,133 +986,6 @@ describe("processResponsePipelineJob", () => {
         surveyId: "survey_123",
       }),
       "Response pipeline job failed"
-    );
-  });
-
-  test("pins fetch to the resolved webhook IP via undici dispatcher", async () => {
-    mockPrismaWebhookFindMany.mockResolvedValue([
-      {
-        id: "webhook_123",
-        secret: null,
-        url: "https://example.com/webhook",
-      },
-    ]);
-    const pinnedDispatcher = { destroy: mockDispatcherDestroy };
-    mockValidateAndResolveWebhookUrl.mockResolvedValue({ ip: "203.0.113.10", family: 4 });
-    mockCreatePinnedDispatcher.mockReturnValue(pinnedDispatcher);
-
-    await expect(processResponsePipelineJob(baseData, baseContext)).resolves.toBeUndefined();
-
-    expect(mockValidateAndResolveWebhookUrl).toHaveBeenCalledWith("https://example.com/webhook");
-    expect(mockCreatePinnedDispatcher).toHaveBeenCalledWith({ ip: "203.0.113.10", family: 4 });
-    expect(mockFetch).toHaveBeenCalledWith(
-      "https://example.com/webhook",
-      expect.objectContaining({
-        dispatcher: pinnedDispatcher,
-        redirect: "manual",
-      })
-    );
-  });
-
-  test("blocks 3xx redirects from webhook endpoints as delivery failures", async () => {
-    mockPrismaWebhookFindMany.mockResolvedValue([
-      {
-        id: "webhook_123",
-        secret: null,
-        url: "https://example.com/webhook",
-      },
-    ]);
-    mockFetch.mockResolvedValue({
-      ok: false,
-      status: 302,
-    });
-
-    await expect(processResponsePipelineJob(baseData, baseContext)).rejects.toThrow(
-      "Webhook delivery blocked: redirect status 302"
-    );
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      "https://example.com/webhook",
-      expect.objectContaining({ redirect: "manual" })
-    );
-    expect(mockLoggerError).toHaveBeenCalledWith(
-      expect.objectContaining({
-        err: expect.any(Error),
-        webhookId: "webhook_123",
-      }),
-      "Response pipeline webhook delivery failed"
-    );
-  });
-
-  test("destroys the pinned dispatcher after a successful webhook delivery", async () => {
-    mockPrismaWebhookFindMany.mockResolvedValue([
-      {
-        id: "webhook_123",
-        secret: null,
-        url: "https://example.com/webhook",
-      },
-    ]);
-
-    await expect(processResponsePipelineJob(baseData, baseContext)).resolves.toBeUndefined();
-
-    expect(mockDispatcherDestroy).toHaveBeenCalledTimes(1);
-  });
-
-  test("logs dispatcher cleanup failures without failing a successful webhook delivery", async () => {
-    const cleanupError = new Error("destroy failed");
-    mockPrismaWebhookFindMany.mockResolvedValue([
-      {
-        id: "webhook_123",
-        secret: null,
-        url: "https://example.com/webhook",
-      },
-    ]);
-    mockDispatcherDestroy.mockRejectedValue(cleanupError);
-
-    await expect(processResponsePipelineJob(baseData, baseContext)).resolves.toBeUndefined();
-
-    expect(mockLoggerWarn).toHaveBeenCalledWith(
-      expect.objectContaining({
-        err: cleanupError,
-        webhookId: "webhook_123",
-        webhookUrl: "https://example.com/webhook",
-      }),
-      "Response pipeline webhook dispatcher cleanup failed"
-    );
-  });
-
-  test("destroys the pinned dispatcher when the webhook fetch throws", async () => {
-    mockPrismaWebhookFindMany.mockResolvedValue([
-      {
-        id: "webhook_123",
-        secret: null,
-        url: "https://example.com/webhook",
-      },
-    ]);
-    mockFetch.mockRejectedValue(new Error("connect refused"));
-
-    await expect(processResponsePipelineJob(baseData, baseContext)).rejects.toThrow("connect refused");
-
-    expect(mockDispatcherDestroy).toHaveBeenCalledTimes(1);
-  });
-
-  test("does not pin a dispatcher when the resolver returns null (internal URL flag)", async () => {
-    mockPrismaWebhookFindMany.mockResolvedValue([
-      {
-        id: "webhook_123",
-        secret: null,
-        url: "http://localhost:3000/webhook",
-      },
-    ]);
-    mockValidateAndResolveWebhookUrl.mockResolvedValue(null);
-
-    await expect(processResponsePipelineJob(baseData, baseContext)).resolves.toBeUndefined();
-
-    expect(mockCreatePinnedDispatcher).not.toHaveBeenCalled();
-    expect(mockDispatcherDestroy).not.toHaveBeenCalled();
-    expect(mockFetch).toHaveBeenCalledWith(
-      "http://localhost:3000/webhook",
-      expect.objectContaining({ dispatcher: undefined })
     );
   });
 

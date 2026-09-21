@@ -93,6 +93,11 @@ export const ZAddWidgetInput = z.object({
   workspaceId: ZId,
   layout: ZWidgetLayout.optional(),
   respectY: z.boolean().optional(),
+  /**
+   * Where the widget goes when `respectY` is not set: "append" (the default) keeps the layout's `x`
+   * and drops the widget below every existing one, "nextOpenSlot" puts it in the first gap it fits.
+   */
+  placement: z.enum(["append", "nextOpenSlot"]).optional(),
 });
 export type TAddWidgetInput = z.infer<typeof ZAddWidgetInput>;
 

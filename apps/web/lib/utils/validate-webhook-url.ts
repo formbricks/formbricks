@@ -106,6 +106,19 @@ const isPrivateIP = (ip: string): boolean => {
 
 const DNS_TIMEOUT_MS = 3000;
 
+/**
+ * The hostname could not be resolved at all (NXDOMAIN, SERVFAIL, resolver timeout) — distinct from a URL
+ * the SSRF policy rejects. It stays an `InvalidInputError` so every create/update/test caller keeps
+ * surfacing it as a 400; the delivery worker checks for this subclass first and retries, because a
+ * resolver hiccup is transient while a policy rejection never becomes deliverable.
+ */
+export class WebhookDnsResolutionError extends InvalidInputError {
+  constructor(message: string) {
+    super(message);
+    this.name = "WebhookDnsResolutionError";
+  }
+}
+
 export type ResolvedAddress = { ip: string; family: 4 | 6 };
 
 const resolveHostnameToAddresses = (hostname: string): Promise<ResolvedAddress[]> => {
@@ -185,7 +198,7 @@ const resolveHostnameOrThrow = async (hostname: string): Promise<ResolvedAddress
     return await resolveHostnameToAddresses(hostname);
   } catch (error) {
     const isTimeout = error instanceof Error && error.message.includes("timed out");
-    throw new InvalidInputError(
+    throw new WebhookDnsResolutionError(
       isTimeout
         ? `DNS resolution timed out for webhook URL hostname: ${hostname}`
         : `Could not resolve webhook URL hostname: ${hostname}`

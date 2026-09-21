@@ -75,7 +75,20 @@ describe("ZNodeRecordsQuery", () => {
     expect(ZNodeRecordsQuery.parse({ workspaceId, directoryId, limit: "25" }).limit).toBe(25);
   });
 
+  /**
+   * Deliberately still 100 while the rest of v3 moved to 250. The literal pins which: 251 is
+   * rejected under either maximum, so only accepting 100 and rejecting 101 tells them apart.
+   */
+  test("accepts the maximum limit, which is still 100 here", () => {
+    const result = ZNodeRecordsQuery.safeParse({ workspaceId, directoryId, limit: 100 });
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.limit).toBe(100);
+    expect(ZNodeRecordsQuery.safeParse({ workspaceId, directoryId, limit: 101 }).success).toBe(false);
+  });
+
   test("rejects an out-of-range limit", () => {
+    expect(ZNodeRecordsQuery.safeParse({ workspaceId, directoryId, limit: 251 }).success).toBe(false);
     expect(ZNodeRecordsQuery.safeParse({ workspaceId, directoryId, limit: 500 }).success).toBe(false);
   });
 });

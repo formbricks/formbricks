@@ -1,5 +1,5 @@
-import { Column, Container, Img, Link, Row, Text } from "@react-email/components";
 import { FileIcon } from "lucide-react";
+import { Column, Container, Img, Link, Row, Text } from "react-email";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TFunction } from "../types/translations";
 
@@ -76,6 +76,10 @@ export const renderEmailResponseValue = (
       );
 
     default:
-      return <Text className="mt-0 text-sm break-words whitespace-pre-wrap">{response as string}</Text>;
+      return (
+        <Text className="mt-0 text-sm break-words whitespace-pre-wrap" dir="auto">
+          {response as string}
+        </Text>
+      );
   }
 };

@@ -6,8 +6,12 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
+import {
+  formatSnakeCaseToTitleCase,
+  isSafeIdentifier,
+  toSafeIdentifier,
+} from "@formbricks/types/safe-identifier";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { formatSnakeCaseToTitleCase, isSafeIdentifier, toSafeIdentifier } from "@/lib/utils/safe-identifier";
 import {
   RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT,
   isReservedFutureDefaultAttributeKey,

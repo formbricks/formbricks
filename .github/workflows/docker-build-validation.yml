@@ -40,16 +40,19 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup Node.js 22.x
+      - name: Setup repository Node.js version
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 22.x
+          node-version-file: .nvmrc
 
       - name: Install pnpm
         uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
+
+      - name: Test maintenance and development preparation
+        run: pnpm exec vitest run docker/__tests__/maintenance-upgrade.test.ts scripts/setup-dev-env.test.ts scripts/dev-authzed-up.test.ts
 
       - name: Build web workspace dependencies
         run: pnpm build --filter=@formbricks/web^...
@@ -204,6 +207,29 @@ jobs:
           test "$status" -eq 1
           test "$output" = '{"status":"disabled"}'
 
+          UNREACHABLE_TOKEN="authzed-cli-validation-secret"
+          set +e
+          unreachable_output="$(timeout 10s docker run --rm \
+            --entrypoint formbricks-authzed \
+            "${AUTHZED_CLI_ENV[@]}" \
+            -e AUTHZED_ENABLED="true" \
+            -e AUTHZED_ENDPOINT="192.0.2.1:50051" \
+            -e AUTHZED_INSECURE="true" \
+            -e AUTHZED_SYSTEM_KEY="formbricks" \
+            -e AUTHZED_TOKEN="$UNREACHABLE_TOKEN" \
+            "$IMAGE" health 2>&1)"
+          unreachable_status=$?
+          set -e
+
+          test "$unreachable_status" -eq 1
+          test "$(printf '%s\n' "$unreachable_output" | wc -l)" -eq 1
+          ! printf '%s' "$unreachable_output" | grep -F "$UNREACHABLE_TOKEN"
+          printf '%s' "$unreachable_output" | jq -e '
+            .status == "unhealthy" and
+            .retryable == true and
+            (.latencyMs | type == "number")
+          ' >/dev/null
+
           set +e
           upgrade_output="$(docker run --rm \
             --entrypoint formbricks-authzed \
@@ -270,6 +296,25 @@ jobs:
             fi
           }
 
+          run_invalid_case "missing AuthZed configuration" "AUTHZED_ENABLED=true" ""
+          run_invalid_case "disabled AuthZed" "AUTHZED_ENABLED=true" "" -e AUTHZED_ENABLED=false
+          run_invalid_case "missing AuthZed token" "AUTHZED_TOKEN" "" \
+            -e AUTHZED_ENABLED=true -e AUTHZED_ENDPOINT=spicedb:50051 -e AUTHZED_SYSTEM_KEY=formbricks
+          run_invalid_case "weak AuthZed consistency" "AUTHZED_CONSISTENCY=fully_consistent" "authzed-secret-sentinel" \
+            -e AUTHZED_ENABLED=true -e AUTHZED_ENDPOINT=spicedb:50051 -e AUTHZED_SYSTEM_KEY=formbricks \
+            -e AUTHZED_TOKEN=authzed-secret-sentinel -e AUTHZED_CONSISTENCY=minimize_latency
+
+          # Valid configuration succeeds even without networking: this is not a readiness RPC.
+          docker run --rm --network none --entrypoint node "${COMMON_ENV[@]}" \
+            -e AUTHZED_ENABLED=true -e AUTHZED_ENDPOINT=spicedb:50051 -e AUTHZED_SYSTEM_KEY=formbricks \
+            -e AUTHZED_TOKEN=authzed-secret-sentinel -e AUTHZED_CONSISTENCY=fully_consistent \
+            "$IMAGE" /home/nextjs/validate-env.mjs --server
+
+          # Migration-only preflight must accept the same base environment without
+          # AuthZed credentials. It must not construct a client or contact a database.
+          docker run --rm --network none --entrypoint node "${COMMON_ENV[@]}" \
+            "$IMAGE" /home/nextjs/validate-env.mjs
+
           run_invalid_case \
             "invalid provider" \
             "AI_PROVIDER" \
@@ -323,7 +368,7 @@ jobs:
           trap 'rm -f docker/.env' EXIT
           printf '%s\n' \
             'WEBAPP_URL=http://localhost:3000' \
-            'NEXTAUTH_URL=http://localhost:3000' \
+            'BETTER_AUTH_URL=http://localhost:3000' \
             'POSTGRES_PASSWORD=compose-postgres-placeholder' \
             "ENCRYPTION_KEY=$DUMMY_ENCRYPTION_KEY" \
             "BETTER_AUTH_SECRET=$DUMMY_ENCRYPTION_KEY" \
@@ -379,6 +424,11 @@ jobs:
             -e CUBEJS_API_URL="http://192.0.2.1:4000" \
             -e CUBEJS_API_SECRET="build-time-placeholder" \
             -e SKIP_STARTUP_MIGRATION="true" \
+            -e AUTHZED_ENABLED=true \
+            -e AUTHZED_ENDPOINT=127.0.0.1:50051 \
+            -e AUTHZED_TOKEN=startup-test-placeholder \
+            -e AUTHZED_SYSTEM_KEY=formbricks \
+            -e AUTHZED_CONSISTENCY=fully_consistent \
             -d "formbricks-test:$GITHUB_SHA"
 
           trap 'docker rm -f formbricks-skip-test >/dev/null 2>&1 || true' EXIT
@@ -483,6 +533,11 @@ jobs:
             -e HUB_API_KEY="build-time-placeholder" \
             -e CUBEJS_API_URL="http://localhost:4000" \
             -e CUBEJS_API_SECRET="build-time-placeholder" \
+            -e AUTHZED_ENABLED=true \
+            -e AUTHZED_ENDPOINT=127.0.0.1:50051 \
+            -e AUTHZED_TOKEN=startup-test-placeholder \
+            -e AUTHZED_SYSTEM_KEY=formbricks \
+            -e AUTHZED_CONSISTENCY=fully_consistent \
             -d "formbricks-test:$GITHUB_SHA"
 
           # Start health check polling immediately (every 5 seconds for up to 5 minutes)

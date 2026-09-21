@@ -69,6 +69,7 @@ export const getSelfHostedOrganizationEntitlementsContext = async (
       // Self-hosted workflows are gated by the boolean license feature, not metered (ENG-1936).
       monthlyWorkflowRuns: null,
     },
+    licenseActive: license.active,
     licenseStatus: license.status,
     licenseFeatures: license.features,
     stripeCustomerId: null,

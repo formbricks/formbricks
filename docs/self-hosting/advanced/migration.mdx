@@ -6,29 +6,66 @@ icon: "arrow-right"
 
 ## v6
 
-Formbricks v6 replaces the legacy authorization evaluator with AuthZed SpiceDB. PostgreSQL remains the source
-of roles and grants, but SpiceDB is the sole decision engine. There is no runtime fallback, so an existing
-installation must migrate through the bridge-compatible v5 release identified in the v6 release notes.
+Formbricks v6 replaces the legacy authorization evaluator with SpiceDB, maintained by AuthZed. PostgreSQL
+remains the source of roles and grants, but SpiceDB is the sole decision engine. There is no runtime fallback,
+so an existing installation must prepare its complete authorization graph before serving v6 traffic.
 
-Before selecting a v6 image:
+Use the supported source/target pair in the release notes and the
+[maintenance upgrade procedure](/self-hosting/advanced/v6-maintenance-upgrade). A self-hosted v5 bridge is not required:
 
-1. Back up the Formbricks and SpiceDB PostgreSQL databases, secrets, deployment configuration, image versions,
-   and canonical schema digest.
+1. Enter maintenance, stop all writers, suspend their controllers, and drain in-flight work. Take recoverable
+   backups of the databases, secrets, configuration, and source image versions.
 2. Merge the release-matched AuthZed deployment services or Helm values without overwriting proxy, storage,
    SMTP, or external-datastore customization.
-3. Run the v6 database migrations while the bridge application remains available.
-4. Run `formbricks-authzed upgrade prepare`, then require `formbricks-authzed upgrade check` to exit `0`.
+3. Run the target-image database migrations while writers remain stopped, never against the still-running v5 app.
+4. Run `formbricks-authzed-prepare --backup-confirmed --writers-stopped`; it runs migrations, reconciliation,
+   one clean full audit, and a second independent `upgrade check` audit.
 5. For one-click or Compose, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true`. For Helm, set
    `authzed.migrationAcknowledged=true` in the v6 upgrade values.
 6. Deploy v6 and verify critical allow, deny, revocation, and cross-tenant cases.
 
-The update scripts and chart fail before replacing the running release when the deployment contract,
-acknowledgement, schema, outbox, or relationship graph is not ready. Do not bypass the acknowledgement to silence
-a failed gate. See [AuthZed Operations](/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6)
-for Docker and Kubernetes commands, guarded schema replacement, backups, repair, and rollback.
+The update script and Helm upgrade hook verify the prepared graph without repairing it. Do not bypass a failed
+gate. Keep maintenance active on failure: after database changes, recovery may require restoring coordinated
+backups rather than running `helm rollback`. Pin explicit releases and digests, not floating tags.
 
-The moving `latest` image tag remains on the bridge-compatible v5 release for at least 30 days after v6 stable
-publication. Existing installations opt into v6 explicitly during that migration window.
+The Helm chart and Formbricks image are versioned independently. A chart-only patch can retain the same
+`appVersion`; review both pins and the rendered image rather than assuming their version numbers match.
+
+### Changes in Environment Variables
+
+<Note>
+  `DEFAULT_ORGANIZATION_ID` and `DEFAULT_ORGANIZATION_ROLE` drive SSO just-in-time provisioning, which is
+  part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license). On a community instance
+  they have no effect, so there is nothing to rename.
+</Note>
+
+- **DEFAULT_ORGANIZATION_ID** has been renamed to **AUTH_SSO_DEFAULT_ORGANIZATION_ID**, matching the
+  `AUTH_SSO_DEFAULT_TEAM_ID` naming pattern. Rename the variable in your configuration; the value is
+  unchanged. Support for this variable was missing between v3.0 and v5.x, so it takes effect again on v6.
+
+- **DEFAULT_ORGANIZATION_ROLE** has been renamed to **AUTH_SSO_DEFAULT_ORGANIZATION_ROLE**.
+
+- **BETTER_AUTH_URL** and **BETTER_AUTH_SECRET** are now the documented names for the auth base URL and
+  the session-signing secret. This is a documentation change, not a rename: `NEXTAUTH_URL` and
+  `NEXTAUTH_SECRET` keep working exactly as before, so **an existing instance needs no action**. New
+  installs configure the `BETTER_AUTH_*` names, which is what the setup guides now show.
+
+  <Warning>
+    If you do choose to move to the new names, **copy the existing value across** rather than generating a
+    new one. `BETTER_AUTH_SECRET` takes precedence, so setting it to a *different* value signs everyone
+    out and invalidates outstanding invite, email-verification and email-change links. Formbricks logs a
+    warning at startup when both are set to different values. The secret is no longer rejected for being
+    shorter than 32 characters, so a shorter legacy value can be renamed as-is — you will see a startup
+    warning recommending a longer one, which you can act on whenever a forced sign-out is acceptable.
+  </Warning>
+
+  Formbricks now refuses to start when neither variable has a value, in every environment. Before this
+  release that refusal applied only when `NODE_ENV=production`; a development or test instance with
+  neither variable set still started, using a fallback value for the signing secret, and only invites
+  and verification links failed. So a production instance is already required
+  to have one of these set and is unaffected. If a non-production instance of yours set neither,
+  generate a secret before upgrading — doing so **signs every current user out**, because their cookies
+  were signed with that fallback value rather than with a secret of yours.
 
 ## v5.4
 
@@ -51,6 +88,44 @@ sessions has to fetch a fresh token — see
 The bundled Valkey image moves from an amd64-only 8.1.1 image to the native amd64/arm64 Valkey 8.1.9 Alpine
 image. Fresh Docker and Helm installations receive it automatically. Existing installations that retain an
 older Compose file or explicitly reuse the previous Helm digest need the one-time update below.
+
+### Envoy Gateway 1.8.4 CRD Upgrade
+
+The updated Helm chart replaces Envoy Gateway 1.7.1 and Gateway API 1.4.1 with Envoy Gateway 1.8.4 and Gateway
+API 1.5.1. Fresh installations receive the new CRDs automatically. Helm does not update CRDs during an ordinary
+upgrade, so existing installations using the bundled controller must apply the matching CRDs before upgrading:
+
+```bash
+crd_dir="$(mktemp -d)"
+helm pull oci://docker.io/envoyproxy/gateway-crds-helm \
+  --version v1.8.4 --untar --untardir "${crd_dir}"
+helm template envoy-gateway-crds "${crd_dir}/gateway-crds-helm" \
+  --set crds.gatewayAPI.enabled=true \
+  --set crds.gatewayAPI.channel=experimental \
+  --set crds.envoyGateway.enabled=true \
+  | kubectl apply --server-side --force-conflicts -f -
+```
+
+`--force-conflicts` transfers the existing CRD fields from Helm's field manager to this explicit CRD upgrade.
+Pulling the OCI chart first keeps Helm 4's pull messages out of the manifest pipe. Remove the temporary directory
+after the apply succeeds.
+
+The chart does not install Envoy Gateway's cluster-wide safe-upgrade admission policy by default. Enabling
+`envoy.crds.gatewayAPI.safeUpgradePolicy.enabled` denies Gateway API CRD versions older than v1.5.0 across the
+whole cluster, including CRDs reconciled by unrelated releases. Enable it only after platform review; a chart
+rollback does not remove that policy automatically.
+
+If the platform already manages compatible Gateway API CRDs, do not install another Gateway API bundle. Install
+only the Envoy Gateway CRDs as described in the [Kubernetes guide](/self-hosting/setup/kubernetes), set
+`envoy.crds.enabled=false`, and configure Flux to skip CRD installation and upgrades. Upgrade the CRDs before the
+controller and never downgrade them during rollback.
+
+The controller scheduling values also move from the ineffective `envoy.deployment.envoyGateway.pod` path to
+`envoy.deployment.pod`. Move any node selectors, tolerations, topology spread constraints, extra volumes, or
+pod annotations that you placed under the old path before upgrading.
+
+The parent chart no longer repeats the bundled controller's default port list. The
+`envoy.deployment.ports` override remains supported, so existing port overrides need no migration.
 
 ### Database migrations
 
@@ -302,10 +377,11 @@ routing. The URLs above are the ones introduced in v5.2 and they are now a stabl
 API — a future authentication-core upgrade will not move them either.
 
 <Note>
-  The table writes `your-domain.com` as your `WEBAPP_URL`, which is correct for a default install. If you
-  set `BETTER_AUTH_URL` or `NEXTAUTH_URL` to a different origin, the callback lives on **that** origin
-  instead — it is derived from the same auth base URL Better Auth itself uses, not from `WEBAPP_URL`.
-  Either way it is unchanged by this upgrade.
+  The table writes `your-domain.com` as your `WEBAPP_URL`, which is correct for a default install. The
+  callback is derived from the same auth base URL Better Auth itself uses, not from `WEBAPP_URL`: that is
+  `BETTER_AUTH_URL`, or `NEXTAUTH_URL` when only the legacy name is set, falling back to `WEBAPP_URL` when
+  neither is. So if either auth URL names a different origin, the callback lives on **that** origin — register
+  that URI at your identity provider. Either way it is unchanged by this upgrade.
 </Note>
 
 <Note>
@@ -475,9 +551,10 @@ with your instance URL:
 Better Auth introduces two optional variables. **Neither is required** for a standard upgrade — both fall
 back to your existing NextAuth configuration:
 
-- `BETTER_AUTH_SECRET` — cookie/session signing secret. Falls back to `NEXTAUTH_SECRET` when unset. If you
-  set it explicitly it must be at least 32 characters. Keeping the `NEXTAUTH_SECRET` fallback is
-  recommended so the value the forward-auth proxy already verifies with stays consistent.
+- `BETTER_AUTH_SECRET` — cookie/session signing secret. Falls back to `NEXTAUTH_SECRET` when unset. On
+  these releases it must be at least 32 characters when set explicitly. Use the value `NEXTAUTH_SECRET`
+  already holds: a *different* one invalidates every session and every outstanding invite and
+  verification link.
 - `BETTER_AUTH_URL` — the auth base URL. Falls back to `NEXTAUTH_URL` (and then `WEBAPP_URL`) when unset.
 
 <Info>
@@ -613,7 +690,7 @@ Formbricks v5 splits rate limiting across two layers:
 - the application server for the remaining session-authenticated routes, server actions, and uncovered APIs
 
 Keep Redis/Valkey enabled for the remaining application-enforced limits. For the covered route groups and exact
-thresholds, use the [rate-limiting guide](/self-hosting/advanced/rate-limiting) as the source of truth.
+thresholds, use the [rate-limiting guide](/self-hosting/configuration/rate-limiting) as the source of truth.
 
 #### AI Features
 

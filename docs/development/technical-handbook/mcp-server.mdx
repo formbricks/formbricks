@@ -67,8 +67,12 @@ issuer under `/api/auth`.
 
 ### OAuth 2.1
 
-OAuth clients use Authorization Code + PKCE with Dynamic Client Registration. The MCP protected
-resource is:
+OAuth clients use Authorization Code + PKCE with Dynamic Client Registration. Registration is open
+(no initial access token — MCP clients self-register), so it accepts only `http` loopback redirect
+URIs: `localhost`, `127.0.0.1` or `[::1]` on any port, which is what every MCP client uses. A
+registration claiming any other redirect URI — including an `https` one — is refused with
+`400 invalid_redirect_uri`, because a remote address is one an attacker could receive an
+authorization code at. The MCP protected resource is:
 
 ```text
 https://app.formbricks.com/api/mcp
@@ -101,6 +105,8 @@ Supported scopes:
 | `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, and the enable/disable/archive/unarchive mutations |
 | `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record` |
+| `responses:read` | `list_responses`, `count_responses`, `get_response` |
+| `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses` |
 | `openid` | OpenID Connect subject interoperability |
 | `profile` | User profile claims |
 | `email` | User email claim |
@@ -114,10 +120,27 @@ without declaring a scope, so a new tool inherits enforcement by construction �
 group legitimately reaches pass `{ anyOf: [...] }` instead of a plain list, which keeps them on the
 same registration path rather than a hand-rolled gate.
 
-The one current exception is the feedback-record tools, which centralise the gate in their own shared
-read/write handler factories and register through `server.registerTool` directly. Every one of their
-handlers is still gated, but the guarantee is by convention there rather than by construction —
-converging them onto `registerScopedTool` is a known follow-up.
+**There are no exceptions, and tests are what keep it that way.** The feedback-record tools were one
+for a while — they gated inside their own handler factories and registered through
+`server.registerTool` directly, which meant every handler was checked but a *new* tool added outside
+those factories would have registered unguarded. ENG-2119 moved all ten onto `registerScopedTool` and
+made `guardMcpScopes` / `guardMcpAnyScope` private again, so the guards are no longer reachable from a
+tool module.
+
+Be precise about what that guarantees. Privacy removes the hand-rolled gate, and the compiler stops you
+forgetting `registerScopedTool`'s scope argument — but it cannot stop a module calling
+`server.registerTool(...)` directly, because `server` is an argument to every tool module. No type
+system reaches that. The checks that do: a test pins `registerScopedTool` as the only export of
+`guard-scopes.ts`, and `feedback-records.test.ts` drives all ten tools with the opposite scope, which
+goes red if a tool is registered unguarded *or* wired to the wrong scope.
+
+**`responses:read` / `responses:write` are grantable but not yet advertised.** They are in
+`MCP_OAUTH_SCOPES` and in the resource's `allowedScopes`, so a client that asks for one is granted it —
+but they are deliberately absent from `MCP_RESOURCE_SCOPES`, which is what the protected-resource
+metadata publishes. Advertising a scope to clients that registered before it existed earns them
+`invalid_scope` on their next consent, so the pair is added to that list only once the integrator
+notice has gone out (ENG-2862). Until then the response tools are registered and gated but reachable
+only by a client that requests the scope explicitly.
 
 **There is no single mandatory baseline scope.** Authentication requires *at least one* resource scope
 (`MCP_RESOURCE_SCOPES`), so a workflows-only or `feedbackRecords:read`-only grant is a legitimate MCP
@@ -172,6 +195,14 @@ API key permissions are enforced through the same workspace access checks as the
 
 | Tool | Minimum Workspace Permission |
 | --- | --- |
+| `list_responses` | `read` |
+| `count_responses` | `read` |
+| `get_response` | `read` |
+| `validate_response` | `write` or `manage` — a dry run, but it resolves the same references the write does |
+| `create_response` | `write` or `manage` |
+| `update_response` | `write` or `manage` |
+| `delete_response` | `manage` |
+| `batch_delete_responses` | `manage` |
 | `list_surveys` | `read` |
 | `get_survey` | `read` |
 | `create_survey` | `write` or `manage` |
@@ -522,6 +553,19 @@ Errors are returned as MCP error tool results with a structured v3 problem paylo
   }
 }
 ```
+
+### Declared result shapes
+
+The response tools advertise an `outputSchema`, which no other tool does yet. A client can read the
+result shape off `tools/list` rather than inferring it from an example, and the SDK checks the
+structured result against the same schema it advertised.
+
+One object root with every branch optional, built by `mcpToolOutput`: a tool answers either the
+success payload or the error one, which reads like a union — but a union converts to a root-level
+`anyOf`, and the SDK then wraps the result for a 2025-era client to keep the wire shape legal. An
+object root is identity on both eras, so the same structured payload reaches every client. The cost is
+that the schema cannot say "exactly one of these", which is why the error branch is described in full:
+a client can still tell the two apart by which key is present.
 
 ## Tool Arguments
 
@@ -934,6 +978,76 @@ each take only a workflow id:
 - `disable_workflow` — stops future runs.
 - `archive_workflow` / `unarchive_workflow` — soft archive and restore (to draft).
 - `delete_workflow` — the v3 delete returns `204 No Content`; the MCP result contains the `requestId`.
+
+### Response tools
+
+Eight tools, one per documented v3 response operation. The set mirrors the API deliberately: what an
+agent can do through MCP is what an API key can do over HTTP, read off one list rather than two.
+
+Every tool description states the boundary against the feedback-record tools, because
+`list_feedback_records(source_id=<surveyId>)` looks like it answers the same question and does not —
+see **Feedback Records And The Hub** below. The full paragraph goes on `list_responses` and
+`count_responses`, where the wrong pick is both likely and quiet; the others carry a one-line form,
+since a description is context every client pays for on every `tools/list`.
+
+#### list_responses / count_responses / get_response
+
+Read-only and idempotent. `workspaceId` is always required; `surveyId` or `contactId` narrows it, and
+the `finished` and `language` filters require one of those two anchors because without one they are
+unbounded scans. `list_responses` caps `limit` at 50 — below the API's 250, because an agent's binding
+constraint is its context window and a response carries every answer.
+
+```json
+{
+  "workspaceId": "clxx1234567890123456789012",
+  "surveyId": "clsv1234567890123456789012",
+  "finished": true,
+  "limit": 20
+}
+```
+
+#### validate_response
+
+A dry run of a create or patch: reports `valid`, `invalid_params`, and — when valid — the `effects` a
+write would have, including the language that would be stamped and the quotas that would count. It
+declares `responses:write` although it writes nothing, because it resolves the same references the
+write resolves; gating it at read would make it a cheaper existence probe than the operation it
+describes.
+
+```json
+{ "operation": "create", "data": { "surveyId": "clsv…", "finished": true, "data": {} } }
+```
+
+#### create_response / update_response
+
+`create_response` records a real submission: webhooks, integrations, follow-ups, quotas and metering
+all run. `update_response` replaces `data` and `tags` wholesale rather than merging, which is why it is
+annotated `destructiveHint: true` — to add one tag, read the response and send every tag it should end
+up with.
+
+Both take the v3 body as an opaque `data` argument and let the operation parse it, so the tool and the
+route answer the same thing to a malformed body.
+
+#### delete_response / batch_delete_responses
+
+Both **ask before they delete**, over the multi-round-trip `input_required` flow: the first call returns
+an `elicitation/create` request and an opaque `requestState`, and the client retries with the answer.
+
+The pending confirmation is HMAC-sealed by `createRequestStateCodec` and bound to the caller, and the
+handler compares the sealed `resourceId` against the arguments on re-entry. Both come back through the
+client, so without that comparison a client could be asked about response A and retry the confirmation
+against response B. The batch tool binds the exact id list, so a confirmation for two ids does not
+carry over to a third.
+
+`confirm: true` skips the prompt. That is not a convenience bolted on afterwards — it is the path a
+2025-era client and a headless caller use, and without it those clients could not delete at all.
+
+```json
+{ "responseId": "clrs1234567890123456789012", "confirm": true }
+```
+
+Both are `idempotentHint: true`: a response that is already gone answers the same `403` as one that was
+never this caller's, so repeating the call converges rather than compounding.
 
 ### list_feedback_datasets
 
@@ -1457,7 +1571,7 @@ query, like `create_feedback_record`.
 - OAuth access tokens must be JWTs audience-bound to `/api/mcp`; opaque MCP access token introspection is not
   accepted by the MCP route.
 - API-key authentication remains supported for compatibility and fallback use.
-- The MCP server exposes only the survey, workflow and feedback-record operations listed on this page.
+- The MCP server exposes only the survey, workflow, response and feedback-record operations listed on this page.
 - Survey and workflow tool coverage depends on the current v3 Surveys and Workflows REST endpoint
   coverage; feedback-record tool coverage depends on the Hub feedback-records API.
 - `enable_workflow` makes a workflow live and can trigger email sending; treat it as a high-impact
@@ -1477,6 +1591,14 @@ query, like `create_feedback_record`.
   a query and a tenant. Those need Hub-side support first.
 - The search tools require an embedding model configured on the Hub API **and** the Hub worker; without
   one they return 503. Embedding is asynchronous and covers only records with text.
+- The response tools are registered but `responses:read` / `responses:write` are not yet advertised in
+  the protected-resource metadata, so a client following the normal consent flow is not offered them.
+  Adding them to `MCP_RESOURCE_SCOPES` is the rollout step that follows the integrator notice.
+- `outputSchema` is declared on the response tools only. The survey, workflow and feedback-record tools
+  still advertise no result shape, so a client has to infer theirs from an example.
+- The response tools cover the v3 operations and nothing more: there is no tool that adds or removes a
+  single tag, because `PATCH` replaces the tag set wholesale and such a tool would be a read-modify-write
+  wrapper with its own race rather than an operation.
 - `create_survey` creates link surveys only. In-app survey creation and distribution settings are not
   part of the current v3 create operation.
 - `patch_survey` follows the v3 PATCH contract: top-level partial document updates only, no JSON Patch,

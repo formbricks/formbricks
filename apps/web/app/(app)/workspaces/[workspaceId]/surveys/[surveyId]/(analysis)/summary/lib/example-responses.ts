@@ -524,13 +524,22 @@ const buildRespondentProfiles = (count: number): TExampleRespondentProfile[] =>
     (_, index) => RESPONDENT_PROFILE_PRESETS[index % RESPONDENT_PROFILE_PRESETS.length]
   );
 
-// Picks an enabled non-default survey language at random ~30% of the time;
-// otherwise leaves it null so the response uses the survey default. Mirrors a
-// real distribution where most respondents use the default language.
+// Picks an enabled non-default survey language ~30% of the time, otherwise the survey's default
+// language code. Mirrors a real distribution where most respondents answer in the default.
+//
+// The default's code rather than null: a real respondent's answer carries it too, because the
+// renderer resolves its "default" sentinel to that code before the response is created. Leaving
+// null here published the feedback record with no language, so generated responses landed in the
+// dashboard's "Not specified" bucket and skewed the Language breakdown (ENG-2838).
+//
+// A survey with no configured languages keeps returning null: it declares no language, so there is
+// no code to assert - the same rule the renderer applies.
 const pickResponseLanguage = (survey: TSurvey): string | null => {
-  const enabledNonDefault = (survey.languages ?? []).filter((l) => l.enabled && !l.default);
-  if (enabledNonDefault.length === 0) return null;
-  if (randomInt(10) >= 3) return null;
+  const languages = survey.languages ?? [];
+  const defaultCode = languages.find((l) => l.default)?.language.code ?? null;
+  const enabledNonDefault = languages.filter((l) => l.enabled && !l.default);
+
+  if (enabledNonDefault.length === 0 || randomInt(10) >= 3) return defaultCode;
   return pickFrom(enabledNonDefault).language.code;
 };
 

@@ -1,4 +1,18 @@
 import { createId } from "@paralleldrive/cuid2";
+import {
+  RESERVED_FIELD_CATALOG,
+  type TEmbeddedFieldsSurvey,
+  type TEmbeddedValueResponse,
+  dropShadowedReservedEntries,
+  findComputedEmbeddedField,
+  getComputedEmbeddedFields,
+  getComputedFieldDataType,
+  getLogicVariableValue,
+  getSurveyEmbeddedFields,
+  listShadowingNames,
+  mergeReservedValues,
+  projectReservedValues,
+} from "@formbricks/types/embedded-data-resolver";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import {
@@ -8,7 +22,8 @@ import {
 } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
-import { TActionCalculate, TSurveyLogicAction, TSurveyVariable } from "@formbricks/types/surveys/types";
+import { evaluateConditionGroup } from "@formbricks/types/surveys/logic-evaluation";
+import { TActionCalculate, TSurveyLogicAction } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
@@ -226,34 +241,76 @@ export const getUpdatedActionBody = (
   }
 };
 
+/** The survey slice {@link buildServerEmbeddedValues} needs to know what the survey declares. */
+export type TServerEmbeddedValuesSurvey = TEmbeddedFieldsSurvey & {
+  blocks: TJsWorkspaceStateSurvey["blocks"];
+};
+
+/**
+ * The reserved-field lookup map for a **persisted** response: every catalog entry the survey does
+ * not declare itself, projected, then shadowed once more by the response's own data.
+ *
+ * Server-side every reserved field is knowable, so this reads `RESERVED_FIELD_CATALOG` whole rather
+ * than the mid-survey subset — the renderer's `projectClientReservedValues` exists precisely because
+ * that is *not* true in the browser.
+ *
+ * **The survey parameter is what makes the grandfather rule work at all (ENG-2538).** This used to
+ * take only a response, so it had nothing to filter by and leaned entirely on `mergeReservedValues`'s
+ * spread — which loses only to a key that *exists*. A survey declaring an optional `url` therefore
+ * resolved the reserved page URL for every response where the respondent left it blank, in quotas,
+ * in server-side logic and (once ENG-2538 wired them up) on every display surface. Passing the survey
+ * lets {@link dropShadowedReservedEntries} apply the same rule the pickers already applied.
+ *
+ * The declared names come from the **stored rows** rather than the legacy columns: every caller here
+ * holds a saved survey, whose rows and declarations agree because every write path reconciles them in
+ * the same transaction. The editor is the one context where they can diverge, and it does not call
+ * this.
+ */
+export const buildServerEmbeddedValues = (
+  response: TEmbeddedValueResponse,
+  survey: TServerEmbeddedValuesSurvey
+): TResponseData =>
+  mergeReservedValues(
+    projectReservedValues(
+      dropShadowedReservedEntries(
+        RESERVED_FIELD_CATALOG,
+        listShadowingNames(
+          getSurveyEmbeddedFields(survey),
+          getElementsFromBlocks(survey.blocks).map((element) => element.id)
+        )
+      ),
+      response
+    ),
+    response.data
+  );
+
+/**
+ * @param embeddedValues Reserved-field values merged UNDER `data` by `mergeReservedValues` — what a
+ *   `reserved` operand reads. Server-side callers holding a real `TResponse` should build this with
+ *   {@link buildServerEmbeddedValues} so the **full** catalog resolves (country, durationSeconds,
+ *   finished, …), not just the mid-survey subset the renderer can see. Defaults to `{}` for callers
+ *   with no response in hand — quota screening evaluates before the row exists — where every
+ *   reserved operand then reads as unset rather than throwing.
+ */
 export const evaluateLogic = (
   localSurvey: TJsWorkspaceStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
   conditions: TConditionGroup,
-  selectedLanguage: string
-): boolean => {
-  const evaluateConditionGroup = (group: TConditionGroup): boolean => {
-    const results = group.conditions.map((condition) => {
-      if (isConditionGroup(condition)) {
-        return evaluateConditionGroup(condition);
-      } else {
-        return evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage);
-      }
-    });
-
-    return group.connector === "or" ? results.some((r) => r) : results.every((r) => r);
-  };
-
-  return evaluateConditionGroup(conditions);
-};
+  selectedLanguage: string,
+  embeddedValues: TResponseData = {}
+): boolean =>
+  evaluateConditionGroup(conditions, (condition) =>
+    evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage, embeddedValues)
+  );
 
 const evaluateSingleCondition = (
   localSurvey: TJsWorkspaceStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
   condition: TSingleCondition,
-  selectedLanguage: string
+  selectedLanguage: string,
+  embeddedValues: TResponseData
 ): boolean => {
   try {
     let leftValue = getLeftOperandValue(
@@ -261,35 +318,35 @@ const evaluateSingleCondition = (
       data,
       variablesData,
       condition.leftOperand,
-      selectedLanguage
+      selectedLanguage,
+      embeddedValues
     );
 
     let rightValue = condition.rightOperand
-      ? getRightOperandValue(localSurvey, data, variablesData, condition.rightOperand)
+      ? getRightOperandValue(localSurvey, data, variablesData, condition.rightOperand, embeddedValues)
       : undefined;
 
     const elements = getElementsFromBlocks(localSurvey.blocks);
 
-    let leftField: TSurveyElement | TSurveyVariable | string;
+    const computedFields = getComputedEmbeddedFields(localSurvey);
+
+    // Only element and hiddenField operands are inspected below; a `variable` operand's declared
+    // type is read through `getComputedFieldDataType` instead, which tolerates a condition naming a
+    // field the survey no longer declares.
+    let leftField: TSurveyElement | string;
 
     if (condition.leftOperand?.type === "element") {
       leftField = elements.find((q) => q.id === condition.leftOperand?.value) ?? "";
-    } else if (condition.leftOperand?.type === "variable") {
-      leftField = localSurvey.variables.find((v) => v.id === condition.leftOperand?.value) as TSurveyVariable;
     } else if (condition.leftOperand?.type === "hiddenField") {
       leftField = condition.leftOperand.value as string;
     } else {
       leftField = "";
     }
 
-    let rightField: TSurveyElement | TSurveyVariable | string;
+    let rightField: TSurveyElement | string;
 
     if (condition.rightOperand?.type === "element") {
       rightField = elements.find((q) => q.id === condition.rightOperand?.value) ?? "";
-    } else if (condition.rightOperand?.type === "variable") {
-      rightField = localSurvey.variables.find(
-        (v) => v.id === condition.rightOperand?.value
-      ) as TSurveyVariable;
     } else if (condition.rightOperand?.type === "hiddenField") {
       rightField = condition.rightOperand.value as string;
     } else {
@@ -298,8 +355,14 @@ const evaluateSingleCondition = (
 
     if (
       condition.leftOperand.type === "variable" &&
-      (leftField as TSurveyVariable).type === "number" &&
-      condition.rightOperand?.type === "hiddenField"
+      getComputedFieldDataType(computedFields, condition.leftOperand.value) === "number" &&
+      // `reserved` alongside `hiddenField` as defence in depth. A *projected* reserved value does not
+      // need it: the catalog read seam runs `coerceToEmbeddedDataType`, so `durationSeconds` and the
+      // other number-typed entries arrive here as JS numbers and `Number()` is a no-op. What this
+      // guards is the one shape the map can still hold as a string — `mergeReservedValues` overlays
+      // `response.data` on the projection unconditionally, so a reserved key that is also a response
+      // key carries that raw string past the seam.
+      (condition.rightOperand?.type === "hiddenField" || condition.rightOperand?.type === "reserved")
     ) {
       rightValue = Number(rightValue as string);
     }
@@ -492,23 +555,13 @@ const evaluateSingleCondition = (
   }
 };
 
-const getVariableValue = (
-  variables: TSurveyVariable[],
-  variableId: string,
-  variablesData: TResponseVariables
-) => {
-  const variable = variables.find((v) => v.id === variableId);
-  if (!variable) return undefined;
-  const variableValue = variablesData[variableId];
-  return variable.type === "number" ? Number(variableValue) || 0 : variableValue || "";
-};
-
 const getLeftOperandValue = (
   localSurvey: TJsWorkspaceStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
   leftOperand: TSingleCondition["leftOperand"],
-  selectedLanguage: string
+  selectedLanguage: string,
+  embeddedValues: TResponseData
 ) => {
   switch (leftOperand.type) {
     case "element":
@@ -591,10 +644,13 @@ const getLeftOperandValue = (
 
       return data[leftOperand.value];
     case "variable":
-      const variables = localSurvey.variables || [];
-      return getVariableValue(variables, leftOperand.value, variablesData);
+      return getLogicVariableValue(getComputedEmbeddedFields(localSurvey), leftOperand.value, variablesData);
     case "hiddenField":
       return data[leftOperand.value];
+    // Server-side the caller projects the FULL catalog, so country/durationSeconds/finished all
+    // resolve here — unlike the renderer, which only ever sees the client-available subset.
+    case "reserved":
+      return embeddedValues[leftOperand.value];
     default:
       return undefined;
   }
@@ -604,7 +660,8 @@ const getRightOperandValue = (
   localSurvey: TJsWorkspaceStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
-  rightOperand: TSingleCondition["rightOperand"]
+  rightOperand: TSingleCondition["rightOperand"],
+  embeddedValues: TResponseData
 ) => {
   if (!rightOperand) return undefined;
 
@@ -612,10 +669,11 @@ const getRightOperandValue = (
     case "element":
       return data[rightOperand.value];
     case "variable":
-      const variables = localSurvey.variables || [];
-      return getVariableValue(variables, rightOperand.value, variablesData);
+      return getLogicVariableValue(getComputedEmbeddedFields(localSurvey), rightOperand.value, variablesData);
     case "hiddenField":
       return data[rightOperand.value];
+    case "reserved":
+      return embeddedValues[rightOperand.value];
     case "static":
       return rightOperand.value;
     default:
@@ -663,14 +721,15 @@ const performCalculation = (
   data: TResponseData,
   calculations: Record<string, number | string>
 ): number | string | undefined => {
-  const variables = survey.variables || [];
-  const variable = variables.find((v) => v.id === action.variableId);
+  const computedField = findComputedEmbeddedField(getComputedEmbeddedFields(survey), action.variableId);
 
-  if (!variable) return undefined;
+  if (!computedField) return undefined;
+
+  const { dataType } = computedField.field;
 
   let currentValue = calculations[action.variableId];
   if (currentValue === undefined) {
-    currentValue = variable.type === "number" ? 0 : "";
+    currentValue = dataType === "number" ? 0 : "";
   }
   let operandValue: string | number | undefined;
 
@@ -685,11 +744,14 @@ const performCalculation = (
         operandValue = value;
       }
       break;
+    // Deliberately no `default` arm: a legacy `"question"` operand (admitted at the type level by
+    // ZDynamicLogicFieldValueDeprecated, normalized away at the API boundary) stays unresolved and
+    // the calculation returns undefined, exactly as before.
     case "element":
     case "hiddenField":
       const val = data[action.value.value];
       if (typeof val === "number" || typeof val === "string") {
-        if (variable.type === "number" && !isNaN(Number(val))) {
+        if (dataType === "number" && !Number.isNaN(Number(val))) {
           operandValue = Number(val);
         } else {
           operandValue = val;

@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
+import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponse, ZResponseInput } from "@formbricks/types/responses";
@@ -21,20 +22,22 @@ import { validateInputs } from "@/lib/utils/validate";
 import { getContact } from "./contact";
 
 export const createResponseWithQuotaEvaluation = async (
-  responseInput: TResponseInputV2
+  responseInput: TResponseInputV2,
+  ingestFlags?: readonly TIngestFlag[]
 ): Promise<TResponseWithQuotaFull> => {
-  return await createClientResponseWithQuotaEvaluation(responseInput, createResponse);
+  return await createClientResponseWithQuotaEvaluation(responseInput, createResponse, ingestFlags);
 };
 
 const buildPrismaResponseData = (
   responseInput: TResponseInputV2,
   contact: { id: string; attributes: TContactAttributes } | null,
-  ttc: Record<string, number>
+  ttc: Record<string, number>,
+  ingestFlags?: readonly TIngestFlag[]
 ): Prisma.ResponseCreateInput => {
   // Reuses the v1 builder but drops caller-supplied timestamps: unlike the v1 management create,
   // the public client create must not let respondents backdate responses
   return {
-    ...buildV1PrismaResponseData(responseInput, contact, ttc),
+    ...buildV1PrismaResponseData(responseInput, contact, ttc, ingestFlags),
     createdAt: undefined,
     updatedAt: undefined,
   };
@@ -42,7 +45,8 @@ const buildPrismaResponseData = (
 
 export const createResponse = async (
   responseInput: TResponseInputV2,
-  tx?: Prisma.TransactionClient
+  tx?: Prisma.TransactionClient,
+  ingestFlags?: readonly TIngestFlag[]
 ): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
 
@@ -73,7 +77,7 @@ export const createResponse = async (
       );
     }
 
-    const prismaData = buildPrismaResponseData(responseInput, contact, ttc);
+    const prismaData = buildPrismaResponseData(responseInput, contact, ttc, ingestFlags);
 
     const prismaClient = tx ?? prisma;
 

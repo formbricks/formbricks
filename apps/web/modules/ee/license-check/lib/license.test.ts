@@ -301,6 +301,49 @@ describe("License Core Logic", () => {
       });
     });
 
+    // The sibling of the test above, and the case every other grace test here misses: the check
+    // does not fail, it succeeds and reports the key as expired. getFallbackLevel treats any
+    // non-active answer as grace, so the instance keeps its cached allowance for the rest of the
+    // window and only the status reflects the lapse. Entitlements that read `active` (the workspace
+    // limit, the bigger upload size) therefore hold; ones reading `status` would not.
+    test("should stay in grace when a completed check reports the license expired", async () => {
+      const { getEnterpriseLicense } = await import("./license");
+      const fetch = global.fetch as Mock;
+
+      const previousTime = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000); // 1 day ago, within grace period
+      const mockPreviousResult = {
+        active: true,
+        features: { removeBranding: true, workspaces: 5 },
+        lastChecked: previousTime,
+        version: 1,
+      };
+
+      mockCache.get.mockImplementation(async (key: string) => {
+        if (key.includes(":previous_result")) {
+          return { ok: true, data: mockPreviousResult };
+        }
+        return { ok: true, data: null };
+      });
+
+      // A healthy 200 from the license server, not a failure — the key itself has lapsed.
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { ...mockFetchedLicenseDetails, status: "expired" } }),
+      });
+
+      const license = await getEnterpriseLicense();
+
+      expect(license).toEqual({
+        active: true,
+        // The cached features, not the ones the expired response carried.
+        features: mockPreviousResult.features,
+        lastChecked: previousTime,
+        isPendingDowngrade: true,
+        fallbackLevel: "grace" as const,
+        status: "expired" as const,
+      });
+    });
+
     test("should return inactive and set new previousResult if fetch fails and previous result is outside grace period", async () => {
       const { getEnterpriseLicense } = await import("./license");
       const fetch = global.fetch as Mock;
@@ -1485,5 +1528,52 @@ describe("License Core Logic", () => {
         })
       );
     });
+  });
+});
+
+describe("getPendingDowngradeSchedule", () => {
+  // The banner used to derive both of these itself, from `Date.now()` during render and from its
+  // own copy of the 3-day constant (ENG-2366). Pinning them here is what keeps the window tied to
+  // GRACE_PERIOD_MS instead of drifting back to a hand-written literal.
+  const lastChecked = new Date("2026-01-10T00:00:00.000Z");
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("schedules the downgrade exactly one grace period after the last successful check", async () => {
+    const { getPendingDowngradeSchedule, GRACE_PERIOD_MS } = await import("./license");
+
+    expect(getPendingDowngradeSchedule(lastChecked).scheduledDowngradeDate.getTime()).toBe(
+      lastChecked.getTime() + GRACE_PERIOD_MS
+    );
+  });
+
+  test("is within the grace period while the window is still open", async () => {
+    const { getPendingDowngradeSchedule, GRACE_PERIOD_MS } = await import("./license");
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(lastChecked.getTime() + GRACE_PERIOD_MS - 1));
+
+    expect(getPendingDowngradeSchedule(lastChecked).isWithinGracePeriod).toBe(true);
+  });
+
+  test("is outside the grace period once the window has elapsed", async () => {
+    const { getPendingDowngradeSchedule, GRACE_PERIOD_MS } = await import("./license");
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(lastChecked.getTime() + GRACE_PERIOD_MS));
+
+    expect(getPendingDowngradeSchedule(lastChecked).isWithinGracePeriod).toBe(false);
+  });
+
+  test("returns the same scheduled date no matter when it is called", async () => {
+    const { getPendingDowngradeSchedule, GRACE_PERIOD_MS } = await import("./license");
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2027-06-01T00:00:00.000Z"));
+
+    // Same input, same output whenever it runs — the property the banner lost by reading the clock
+    // during render, where the server pass and hydration could disagree.
+    expect(getPendingDowngradeSchedule(lastChecked).scheduledDowngradeDate.toISOString()).toBe(
+      new Date(lastChecked.getTime() + GRACE_PERIOD_MS).toISOString()
+    );
   });
 });

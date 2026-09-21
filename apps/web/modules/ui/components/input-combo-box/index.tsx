@@ -34,6 +34,26 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Input } from "@/modules/ui/components/input";
+import { filterComboboxOption } from "./lib/search";
+
+/**
+ * The height `DropdownMenuContent` caps itself at — mirrors the `max-h` on that component, which
+ * is what keeps a long menu inside the viewport.
+ */
+const POPOVER_MAX_HEIGHT = "min(20rem, var(--radix-dropdown-menu-content-available-height, 20rem))";
+/** The popover's own `p-1`, top and bottom. */
+const POPOVER_PADDING = "0.5rem";
+
+/**
+ * Cap the option list at the popover's height minus its chrome, so the list is the only thing that
+ * can scroll. Sized any taller — it used to be a flat `400px` against a 320px popover — the list
+ * scrolls internally *and* overflows the popover, which then scrolls too, and the dropdown renders
+ * two nested scrollbars. The search row is `h-8` plus its 1px bottom border.
+ */
+const getOptionListMaxHeight = (showSearch: boolean): string =>
+  showSearch
+    ? `calc(${POPOVER_MAX_HEIGHT} - ${POPOVER_PADDING} - 2rem - 1px)`
+    : `calc(${POPOVER_MAX_HEIGHT} - ${POPOVER_PADDING})`;
 
 export interface TComboboxOption {
   icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
@@ -80,6 +100,8 @@ function flattenOptions(options?: TComboboxOption[]): TComboboxOption[] {
   return options.flatMap((option) => [option, ...(option.children ? flattenOptions(option.children) : [])]);
 }
 
+// The search terms for an option. `filterComboboxOption` scores these instead of the item's
+// `value`, which is an opaque id the user never sees.
 function getOptionKeywords(option: TComboboxOption): string[] {
   return [option.label];
 }
@@ -243,7 +265,10 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
     onChangeValue(val, undefined, true);
   };
 
-  const getDisplayValue = useMemo(() => {
+  // Renders the selected option(s) inside the trigger. Not memoized: it builds a handful of
+  // elements from an already-narrow option list, and the compiler would not memoize a JSX-returning
+  // value anyway, so the manual memo only made the two disagree (ENG-2366).
+  const renderDisplayValue = () => {
     if (Array.isArray(localValue)) {
       return localValue.map((v, i) => {
         const opt = validOptions?.find((o) => o.value === v);
@@ -290,7 +315,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
         </span>
       </div>
     );
-  }, [localValue, validOptions, iconClassName]);
+  };
 
   const handleClear = () => {
     setInputType(null);
@@ -303,9 +328,12 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
     Array.isArray(localValue) ? localValue.includes(option.value as string) : localValue === option.value;
 
   return (
+    // The height lives on this wrapper rather than on the trigger below: the wrapper clips its children
+    // (overflow-hidden), so a fixed-height trigger inside a shorter wrapper (comboboxClasses="h-9") gets
+    // cropped and its centered content sits low next to same-height controls in a filter row.
     <div
       className={cn(
-        "group/icon flex max-w-[440px] min-w-0 overflow-hidden rounded-md border border-slate-300 hover:border-slate-400",
+        "group/icon flex h-10 max-w-[440px] min-w-0 overflow-hidden rounded-md border border-slate-300 hover:border-slate-400",
         disabled && "cursor-not-allowed border-slate-200 bg-slate-100 opacity-60 hover:border-slate-200",
         comboboxClasses
       )}>
@@ -335,7 +363,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
             aria-expanded={open}
             aria-disabled={disabled || undefined}
             className={cn(
-              "flex h-10 w-full min-w-0 cursor-pointer items-center overflow-hidden bg-white pr-2 text-sm",
+              "flex h-full w-full min-w-0 cursor-pointer items-center overflow-hidden bg-white pr-2 text-sm",
               {
                 "w-10 shrink-0 justify-center pr-0": withInput && inputType !== "dropdown",
                 "pointer-events-none": isClearing || disabled,
@@ -343,7 +371,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
               }
             )}>
             {inputType === "dropdown" ? (
-              <div className="min-w-0 flex-1 truncate px-2 text-sm">{getDisplayValue}</div>
+              <div className="min-w-0 flex-1 truncate px-2 text-sm">{renderDisplayValue()}</div>
             ) : (
               placeholder && (
                 <span className="min-w-0 flex-1 truncate px-2 text-sm text-slate-400">{placeholder}</span>
@@ -378,9 +406,9 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
         <DropdownMenuContent
           side="bottom"
           align="start"
-          className="w-(--radix-dropdown-menu-trigger-width) min-w-52"
+          className="w-(--radix-dropdown-menu-trigger-width) min-w-52 overflow-y-hidden"
           data-testid="dropdown-menu-content">
-          <Command className="flex h-full w-full flex-col overflow-hidden">
+          <Command className="flex h-full w-full flex-col overflow-hidden" filter={filterComboboxOption}>
             {showSearch ? (
               <div className="border-b border-slate-100">
                 <CommandInput
@@ -395,7 +423,10 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
               <button autoFocus className="sr-only" aria-hidden type="button" />
             )}
 
-            <CommandList ref={listRef} className="max-h-[400px] overflow-y-auto border-0 p-1">
+            <CommandList
+              ref={listRef}
+              className="max-h-none overflow-y-auto border-0 p-1"
+              style={{ maxHeight: getOptionListMaxHeight(showSearch) }}>
               <CommandEmpty className="mx-2 my-0 text-xs font-semibold text-slate-500">
                 {emptyDropdownText ?? t("workspace.surveys.edit.no_option_found")}
               </CommandEmpty>

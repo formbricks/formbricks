@@ -19,7 +19,7 @@ export function registerWorkspaceTools(server: McpServer): void {
     {
       title: "List workspaces",
       description:
-        "List the Formbricks workspaces the authenticated user can access. Use this to discover the workspaceId required by the survey, workflow and feedback-record tools.",
+        "List the Formbricks workspaces the authenticated user can access. Use this to discover the workspaceId required by the survey, workflow, feedback-record and response tools.",
       inputSchema: ZMcpListWorkspacesInput,
       annotations: {
         readOnlyHint: true,
@@ -28,7 +28,15 @@ export function registerWorkspaceTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    { anyOf: ["surveys:read", "workflows:read", "feedbackRecords:read"] },
+    // Every tool group needs a workspaceId first, so this has to admit any of them.
+    //
+    // `responses:read` is here for the end state, and is unreachable today: authentication requires at
+    // least one scope from `MCP_RESOURCE_SCOPES`, which deliberately excludes `responses:*` while they
+    // are grantable but unadvertised, so a responses-only token is refused with 403 before it reaches
+    // any tool. It becomes live when the scopes are advertised (ENG-2852). Listed now rather than
+    // later because the omission would then be a silent gap — this list is not what makes the entry
+    // unreachable, so removing it would buy nothing and cost that.
+    { anyOf: ["surveys:read", "workflows:read", "feedbackRecords:read", "responses:read"] },
     async (_input: TMcpListWorkspacesInput, ctx) => {
       const authInfo = getMcpToolAuthInfo(ctx);
       const requestId = getMcpRequestId(authInfo);

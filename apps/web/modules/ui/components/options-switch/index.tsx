@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/cn";
 
 interface TOption {
   value: string;
@@ -25,30 +26,65 @@ export const OptionsSwitch = ({
   handleOptionChange,
   "aria-labelledby": ariaLabelledBy,
 }: Readonly<OptionsSwitchProps>) => {
-  const [highlightStyle, setHighlightStyle] = useState({});
+  /**
+   * Position and animation travel together in one state so they can only ever change in the same
+   * commit: the pill animates when the *selection* changes and is placed outright otherwise. A
+   * re-measure that finds the same geometry writes nothing at all — which matters because
+   * ResizeObserver always delivers one callback the moment it starts observing, and that callback
+   * would otherwise cancel the animation of the change that just set it up.
+   */
+  const [highlight, setHighlight] = useState<{
+    left?: string;
+    width?: string;
+    opacity?: number;
+    animated: boolean;
+  }>({ animated: false });
   const containerRef = useRef<HTMLFieldSetElement>(null);
-  useEffect(() => {
-    const updateHighlight = () => {
-      if (containerRef.current) {
-        const activeElement = containerRef.current.querySelector(`[data-value="${currentOption}"]`);
-        if (activeElement) {
-          const { offsetLeft, offsetWidth } = activeElement as HTMLElement;
-          setHighlightStyle({
-            left: `${offsetLeft}px`,
-            width: `${offsetWidth}px`,
-          });
-        } else {
-          // Hide highlight if no matching element found
-          setHighlightStyle({ opacity: 0 });
-        }
-      }
-    };
-    // Initial call
-    updateHighlight();
+  const hasMeasuredRef = useRef(false);
 
-    // Listen to resize
-    window.addEventListener("resize", updateHighlight);
-    return () => window.removeEventListener("resize", updateHighlight);
+  useEffect(() => {
+    const measure = (animated: boolean) => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const activeElement = container.querySelector<HTMLElement>(`[data-value="${currentOption}"]`);
+      if (!activeElement) {
+        // Hide highlight if no matching element found
+        setHighlight({ opacity: 0, animated: false });
+        return;
+      }
+
+      const left = `${activeElement.offsetLeft}px`;
+      const width = `${activeElement.offsetWidth}px`;
+      setHighlight((previous) =>
+        previous.left === left && previous.width === width ? previous : { left, width, animated }
+      );
+    };
+
+    // The first measurement is the mount: place the pill, never slide it in. Every dialog holding
+    // one of these otherwise plays a slide across the options as it opens.
+    measure(hasMeasuredRef.current);
+    hasMeasuredRef.current = true;
+
+    // The pill is positioned in pixels read from the DOM, so it is only correct until the switch's
+    // own box changes — and `window.resize` misses every way that happens in practice: a dialog
+    // still running its open animation, a sibling appearing beside the switch, a column gaining a
+    // scrollbar, a webfont swapping in. Observing the element itself (and the active option, whose
+    // width can change without the container's) re-measures on the frame it moves.
+    const container = containerRef.current;
+    const remeasure = () => measure(false);
+    const observer = new ResizeObserver(remeasure);
+    if (container) {
+      observer.observe(container);
+      const activeElement = container.querySelector(`[data-value="${currentOption}"]`);
+      if (activeElement) observer.observe(activeElement);
+    }
+
+    window.addEventListener("resize", remeasure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", remeasure);
+    };
   }, [currentOption]);
 
   return (
@@ -61,8 +97,11 @@ export const OptionsSwitch = ({
       aria-labelledby={ariaLabelledBy}
       className="relative flex w-full min-w-0 items-center justify-between rounded-md border bg-white p-1">
       <div
-        className="absolute top-1 bottom-1 rounded-md bg-slate-100 transition-all duration-300 ease-in-out"
-        style={highlightStyle}
+        className={cn(
+          "absolute top-1 bottom-1 rounded-md bg-slate-100",
+          highlight.animated && "transition-all duration-300 ease-in-out"
+        )}
+        style={{ left: highlight.left, width: highlight.width, opacity: highlight.opacity }}
       />
       {elementTypes.map((type) => (
         <button
@@ -76,7 +115,9 @@ export const OptionsSwitch = ({
             e.preventDefault();
             !type.disabled && handleOptionChange(type.value);
           }}
-          className={`relative z-10 grow rounded-md p-2 text-center transition-colors duration-200 ${
+          // nowrap: these labels are short by design, and a two-word option breaking across lines
+          // ("Vertical / bars", "Area / Chart") makes the whole switch grow a second row.
+          className={`relative z-10 grow rounded-md p-2 text-center whitespace-nowrap transition-colors duration-200 ${
             type.disabled
               ? "cursor-not-allowed opacity-50"
               : currentOption === type.value

@@ -34,6 +34,12 @@ yarn-error.log*
 **/.env.development.local
 **/.env.test.local
 **/.env.production.local
+# Any hand-made copy of an env file. `**/.env` alone does not match a suffixed backup, which is how
+# `apps/web/.env.pre-smoke-backup` reached a commit.
+**/.env.*.backup
+**/.env.backup
+**/.env-backup
+**/.env.*backup*
 !packages/database/.env
 !apps/web/.env
 

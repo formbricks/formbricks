@@ -2,7 +2,7 @@ get:
   operationId: getSurveysV3
   summary: List surveys
   description: |
-    Returns surveys for the workspace. Session cookie or x-api-key.
+    Returns surveys for the workspace. Session cookie, `x-api-key`, or a Bearer token.
   tags:
     - V3 Surveys
   parameters:
@@ -19,9 +19,9 @@ get:
       schema:
         type: integer
         minimum: 1
-        maximum: 100
+        maximum: 250
         default: 20
-      description: Page size (max 100)
+      description: Page size (max 250)
     - in: query
       name: cursor
       schema:
@@ -120,39 +120,7 @@ get:
                 items:
                   $ref: ../components/schemas/SurveyListItem.yml
               meta:
-                type: object
-                required:
-                  - limit
-                  - nextCursor
-                  - totalCount
-                  - hasArchived
-                properties:
-                  limit:
-                    type: integer
-                  nextCursor:
-                    type:
-                      - string
-                      - "null"
-                    description: >-
-                      Opaque cursor for the next page. `null` when there are no
-                      more results.
-                  totalCount:
-                    type:
-                      - integer
-                      - "null"
-                    minimum: 0
-                    description: >-
-                      Total number of surveys matching the current filters
-                      across all pages. `null` when `includeTotalCount=false`.
-                  hasArchived:
-                    type:
-                      - boolean
-                      - "null"
-                    description: >-
-                      `true` when the workspace has at least one archived
-                      (soft-deleted) survey. Computed only on the first page
-                      (same gate as `totalCount`); `null` when
-                      `includeTotalCount=false`.
+                $ref: ../components/schemas/SurveyListMeta.yml
     "400":
       $ref: ../components/responses/V3BadRequest.yml
     "401":
@@ -166,6 +134,7 @@ get:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []
 post:
   operationId: createSurveyV3
   summary: Create a survey
@@ -474,3 +443,4 @@ post:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []

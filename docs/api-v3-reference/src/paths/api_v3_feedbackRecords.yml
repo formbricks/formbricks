@@ -1,0 +1,513 @@
+get:
+  operationId: listFeedbackRecordsV3
+  summary: List feedback records
+  description: |
+    Lists the feedback records of one dataset, newest first, with optional filters and keyset
+    pagination. Served by the API gateway, which authorizes the call against `tenant_id` and
+    forwards it to the feedback store — see the introduction for how the two layers answer.
+
+    Requires an API key with **read** permission (or higher) on a workspace the dataset is assigned
+    to. The organization must hold the Unify Feedback entitlement.
+
+    Multi-value filters are OR-ed within a parameter and AND-ed across parameters. Repeat the
+    parameter to pass several values (`?field_type=text&field_type=rating`); comma-separated values
+    are **not** split. Filters on enrichment members (`sentiment`, `emotions`, `sentiment_score_*`)
+    never match records that have not been enriched — use `has_sentiment=false` / `has_emotions=false`
+    to find those.
+  tags:
+    - V3 Feedback Records
+  parameters:
+    - $ref: ../components/parameters/FeedbackRecordsTenantIdQuery.yml
+    - in: query
+      name: submission_id
+      style: form
+      explode: true
+      schema:
+        type: array
+        maxItems: 100
+        items:
+          type: string
+          maxLength: 255
+      description: Records belonging to any of these logical submissions (e.g. response ids).
+    - in: query
+      name: source_type
+      style: form
+      explode: true
+      schema:
+        type: array
+        maxItems: 100
+        items:
+          type: string
+          maxLength: 255
+      description: Records from any of these source types, e.g. `survey`, `review`.
+    - in: query
+      name: source_id
+      style: form
+      explode: true
+      schema:
+        type: array
+        maxItems: 100
+        items:
+          type: string
+          maxLength: 255
+      description: Records from any of these sources (e.g. survey ids).
+    - in: query
+      name: source_name
+      style: form
+      explode: true
+      schema:
+        type: array
+        maxItems: 100
+        items:
+          type: string
+          maxLength: 255
+      description: >-
+        Records whose source display name is any of these. Prefer `source_id` where records carry
+        one: a name can be edited or translated, the id is stable.
+    - in: query
+      name: field_id
+      style: form
+      explode: true
+      schema:
+        type: array
+        maxItems: 100
+        items:
+          type: string
+          maxLength: 255
+      description: Every answer to any of these questions.
+    - in: query
+      name: field_group_id
+      style: form
+      explode: true
+      schema:
+        type: array
+        maxItems: 100
+        items:
+          type: string
+          maxLength: 255
+      description: Records in any of these field groups (ranking / matrix questions).
+    - in: query
+      name: field_type
+      style: form
+      explode: true
+      schema:
+        type: array
+        maxItems: 9
+        items:
+          $ref: ../components/schemas/FeedbackRecordFieldType.yml
+      description: Records of any of these field types. An empty value is ignored, so `?field_type=` equals omitting the filter.
+    - in: query
+      name: value_id
+      style: form
+      explode: true
+      schema:
+        type: array
+        maxItems: 100
+        items:
+          type: string
+          maxLength: 255
+      description: Records whose selected option id is any of these (e.g. every pick of one survey choice).
+    - in: query
+      name: user_id
+      style: form
+      explode: true
+      schema:
+        type: array
+        maxItems: 100
+        items:
+          type: string
+          maxLength: 255
+      description: Everything any of these end users submitted.
+    - in: query
+      name: language
+      style: form
+      explode: true
+      schema:
+        type: array
+        maxItems: 100
+        items:
+          type: string
+          maxLength: 10
+      description: Records given in any of these languages (ISO codes).
+    - in: query
+      name: since
+      schema:
+        type: string
+        format: date-time
+      description: "`collected_at >= since` (ISO 8601, inclusive). Must be between 1970-01-01 and 2080-12-31."
+    - in: query
+      name: until
+      schema:
+        type: string
+        format: date-time
+      description: "`collected_at <= until` (ISO 8601, inclusive)."
+    - in: query
+      name: created_since
+      schema:
+        type: string
+        format: date-time
+      description: >-
+        `created_at >= created_since` (ISO 8601, inclusive). `created_at` is when the record was
+        stored; `collected_at` (see `since`) is when the feedback was given. They diverge on a
+        historical re-import, so this is the filter for "what did this import bring in".
+    - in: query
+      name: created_until
+      schema:
+        type: string
+        format: date-time
+      description: "`created_at <= created_until` (ISO 8601, inclusive)."
+    - in: query
+      name: value_number_min
+      schema:
+        type: number
+        format: double
+      description: >-
+        `value_number >= value_number_min` (inclusive), e.g. NPS promoters with `value_number_min=9`.
+        Records without a numeric answer are excluded. A max below the min answers **400**.
+    - in: query
+      name: value_number_max
+      schema:
+        type: number
+        format: double
+      description: "`value_number <= value_number_max` (inclusive). Paired with the min it selects a band: `9..10` promoters, `0..6` detractors."
+    - in: query
+      name: value_date_min
+      schema:
+        type: string
+        format: date-time
+      description: "`value_date >= value_date_min` (inclusive) — bounds the answer to a date question, not when the feedback was collected."
+    - in: query
+      name: value_date_max
+      schema:
+        type: string
+        format: date-time
+      description: "`value_date <= value_date_max` (inclusive)."
+    - in: query
+      name: sentiment
+      style: form
+      explode: true
+      schema:
+        type: array
+        maxItems: 6
+        items:
+          $ref: ../components/schemas/FeedbackRecordSentiment.yml
+      description: Records carrying any of these sentiment labels. An empty value is ignored.
+    - in: query
+      name: emotions
+      style: form
+      explode: true
+      schema:
+        type: array
+        maxItems: 6
+        items:
+          $ref: ../components/schemas/FeedbackRecordEmotion.yml
+      description: >-
+        Records tagged with **any** of these emotions: a record tagged `{joy}` and one tagged
+        `{joy, anger}` both match `?emotions=joy&emotions=anger`. There is no "all of them" form.
+    - in: query
+      name: sentiment_score_min
+      schema:
+        type: number
+        format: double
+        minimum: -1
+        maximum: 1
+      description: '`sentiment_score >= sentiment_score_min` (inclusive). The score is continuous where the label is bucketed, so this is the filter for "the most negative feedback".'
+    - in: query
+      name: sentiment_score_max
+      schema:
+        type: number
+        format: double
+        minimum: -1
+        maximum: 1
+      description: "`sentiment_score <= sentiment_score_max` (inclusive)."
+    - in: query
+      name: has_sentiment
+      schema:
+        type: boolean
+      description: "`true` selects enriched records (a sentiment label is present), `false` the not-yet-enriched ones. Omit for no constraint."
+    - in: query
+      name: has_emotions
+      schema:
+        type: boolean
+      description: >-
+        `true` selects records carrying emotion labels, `false` those without. Note `false` covers
+        both "not yet classified" and "classified, no emotion detected".
+    - in: query
+      name: has_translation
+      schema:
+        type: boolean
+      description: "`true` selects translated records, `false` untranslated ones. Omit for no constraint."
+    - in: query
+      name: sort
+      schema:
+        type: string
+        enum:
+          - collected_at
+          - created_at
+        default: collected_at
+      description: >-
+        Column to order by. Only columns that are non-null and immutable after insert are offered:
+        a mutable sort key would let a row move across the cursor between pages and be skipped.
+    - in: query
+      name: order
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+        default: desc
+      description: Sort direction. Rows tied on the sort column are ordered by `id` ascending.
+    - in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 100
+      description: >-
+        Page size. Out-of-range and non-numeric values are rejected — `-5` and `1001` answer
+        **400** — with one exception: `limit=0` is indistinguishable from omitting the parameter,
+        so it is accepted and the default of `100` applies. Send no `limit` rather than `0` if you
+        are computing it. The search operations behave differently again: they clamp instead of
+        rejecting.
+    - in: query
+      name: cursor
+      schema:
+        type: string
+      description: >-
+        Opaque keyset cursor returned as `next_cursor` by the previous page. Omit on the first
+        request. A cursor is a position within one specific ordering: presenting it with a different
+        `sort` or `order` answers **400** — restart without a cursor instead.
+  responses:
+    "200":
+      description: Feedback records retrieved successfully
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/FeedbackRecordList.yml
+          examples:
+            basic:
+              summary: One page of two records
+              value:
+                data:
+                  - id: 018e1234-5678-7abc-8ef0-123456789abc
+                    tenant_id: ph7zv3w2u1x5k9d8m4q6c0bn
+                    collected_at: 2026-08-15T10:30:00Z
+                    created_at: 2026-08-15T10:30:02Z
+                    updated_at: 2026-08-15T10:30:02Z
+                    source_type: survey
+                    source_id: cm2k7q9x00003v8h1a2b3c4d5
+                    source_name: Post-match survey
+                    submission_id: cm2k7qa1z0007v8h1e6f7g8h9
+                    field_id: q1
+                    field_label: How satisfied were you with the stadium experience?
+                    field_type: rating
+                    value_number: 4
+                    user_id: fan-8813
+                    language: en
+                  - id: 018e1234-5678-7abc-8ef0-123456789abd
+                    tenant_id: ph7zv3w2u1x5k9d8m4q6c0bn
+                    collected_at: 2026-08-15T10:30:00Z
+                    created_at: 2026-08-15T10:30:02Z
+                    updated_at: 2026-08-15T10:31:40Z
+                    source_type: survey
+                    source_id: cm2k7q9x00003v8h1a2b3c4d5
+                    source_name: Post-match survey
+                    submission_id: cm2k7qa1z0007v8h1e6f7g8h9
+                    field_id: q2
+                    field_label: What could we improve?
+                    field_type: text
+                    value_text: Queues at the north gate were far too long.
+                    user_id: fan-8813
+                    language: en
+                    sentiment: negative
+                    sentiment_score: -0.62
+                    emotions:
+                      - anger
+                limit: 100
+                next_cursor: eyJ0IjoiMjAyNi0wOC0xNVQxMDozMDowMFoiLCJpIjoiMDE4ZTEyMzQtNTY3OC03YWJjLThlZjAtMTIzNDU2Nzg5YWJkIn0=
+    "400":
+      $ref: ../components/responses/FeedbackRecordsBadRequest.yml
+    "401":
+      $ref: ../components/responses/FeedbackRecordsUnauthorized.yml
+    "403":
+      $ref: ../components/responses/FeedbackRecordsForbidden.yml
+    "500":
+      $ref: ../components/responses/FeedbackRecordsInternalServerError.yml
+    "503":
+      $ref: ../components/responses/FeedbackRecordsServiceUnavailable.yml
+  security:
+    - apiKeyAuth: []
+post:
+  operationId: createFeedbackRecordV3
+  summary: Create a feedback record
+  description: |
+    Stores one feedback record in the dataset named by `tenant_id` in the body. The gateway reads
+    `tenant_id` from the JSON body to authorize the call — a body that is not JSON, or has no
+    `tenant_id`, answers **400** before anything is stored.
+
+    Requires an API key with **write** permission (or higher) on a workspace the dataset is
+    assigned to. Creating is allowed on shared datasets (it is ordinary workspace work, like a CSV
+    import); only changing and deleting existing records is restricted to unshared ones.
+
+    Ingestion is idempotent per (`tenant_id`, `submission_id`, `field_id`): a second record with the
+    same triple answers **409** rather than creating a duplicate. Send exactly one `value_*` member,
+    matching `field_type`. A `text` record is enriched asynchronously — `sentiment`, `emotions` and
+    the translation members appear on the record once enrichment completes, and it becomes
+    searchable once embedded.
+  tags:
+    - V3 Feedback Records
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/CreateFeedbackRecordRequest.yml
+        examples:
+          rating:
+            summary: A rating answer
+            value:
+              tenant_id: ph7zv3w2u1x5k9d8m4q6c0bn
+              source_type: survey
+              source_id: cm2k7q9x00003v8h1a2b3c4d5
+              source_name: Post-match survey
+              submission_id: cm2k7qa1z0007v8h1e6f7g8h9
+              field_id: q1
+              field_label: How satisfied were you with the stadium experience?
+              field_type: rating
+              value_number: 4
+              user_id: fan-8813
+              language: en
+          text:
+            summary: A free-text answer (enriched and embedded)
+            value:
+              tenant_id: ph7zv3w2u1x5k9d8m4q6c0bn
+              source_type: call_notes
+              source_id: crm-account-4471
+              source_name: Quarterly review call
+              submission_id: call-2026-08-15-4471
+              field_id: verbatim
+              field_label: Customer verbatim
+              field_type: text
+              value_text: The new reporting module saved us a full day each week.
+              user_id: contact-9a1f
+              language: en
+              metadata:
+                channel: call
+                plan: enterprise
+          categorical:
+            summary: A choice answer with a stable option id
+            value:
+              tenant_id: ph7zv3w2u1x5k9d8m4q6c0bn
+              source_type: survey
+              source_id: cm2k7q9x00003v8h1a2b3c4d5
+              submission_id: cm2k7qa1z0007v8h1e6f7g8h9
+              field_id: q3
+              field_label: Which stand were you in?
+              field_type: categorical
+              value_text: North stand
+              value_id: opt_north
+              user_id: fan-8813
+  responses:
+    "201":
+      description: Feedback record created
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/FeedbackRecord.yml
+          examples:
+            created:
+              summary: The stored record
+              value:
+                id: 018e1234-5678-7abc-8ef0-123456789abc
+                tenant_id: ph7zv3w2u1x5k9d8m4q6c0bn
+                collected_at: 2026-08-15T10:30:00Z
+                created_at: 2026-08-15T10:30:02Z
+                updated_at: 2026-08-15T10:30:02Z
+                source_type: survey
+                source_id: cm2k7q9x00003v8h1a2b3c4d5
+                source_name: Post-match survey
+                submission_id: cm2k7qa1z0007v8h1e6f7g8h9
+                field_id: q1
+                field_label: How satisfied were you with the stadium experience?
+                field_type: rating
+                value_number: 4
+                user_id: fan-8813
+                language: en
+    "400":
+      $ref: ../components/responses/FeedbackRecordsBadRequest.yml
+    "401":
+      $ref: ../components/responses/FeedbackRecordsUnauthorized.yml
+    "403":
+      $ref: ../components/responses/FeedbackRecordsForbidden.yml
+    "409":
+      $ref: ../components/responses/FeedbackRecordsConflict.yml
+    "413":
+      $ref: ../components/responses/FeedbackRecordsPayloadTooLarge.yml
+    "500":
+      $ref: ../components/responses/FeedbackRecordsInternalServerError.yml
+    "503":
+      $ref: ../components/responses/FeedbackRecordsServiceUnavailable.yml
+  security:
+    - apiKeyAuth: []
+delete:
+  operationId: deleteFeedbackRecordsByUserV3
+  summary: Delete a user's feedback records
+  description: |
+    Permanently deletes every record in the dataset whose `user_id` matches — the erasure operation
+    for GDPR Article 17 requests. Derived embeddings are removed with the records. Idempotent:
+    repeating the call answers `deleted_count: 0`.
+
+    `tenant_id` is **required**: the gateway scopes erasure to one dataset. (The underlying store
+    can erase a user across every dataset when `tenant_id` is omitted; that form is not reachable
+    through this API.) Records written without a `user_id` cannot be reached this way — delete them
+    individually.
+
+    Deletion is unrecoverable, so it requires an API key with **manage** permission on a workspace
+    the dataset is assigned to, and the dataset must be assigned to **exactly one** workspace: on a
+    shared dataset no workspace permission can say whose records these are, so API-key mutations
+    are refused with **403**.
+  tags:
+    - V3 Feedback Records
+  parameters:
+    - in: query
+      name: user_id
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 255
+      description: The end-user identifier whose records to delete.
+    - $ref: ../components/parameters/FeedbackRecordsTenantIdQuery.yml
+  responses:
+    "200":
+      description: Records deleted
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/DeleteFeedbackRecordsByUserResult.yml
+          examples:
+            deleted:
+              summary: A user with records
+              value:
+                deleted_count: 42
+                message: Successfully deleted 42 feedback records
+            nothingLeft:
+              summary: Repeated call
+              value:
+                deleted_count: 0
+                message: Successfully deleted 0 feedback records
+    "400":
+      $ref: ../components/responses/FeedbackRecordsBadRequest.yml
+    "401":
+      $ref: ../components/responses/FeedbackRecordsUnauthorized.yml
+    "403":
+      $ref: ../components/responses/FeedbackRecordsForbidden.yml
+    "409":
+      $ref: ../components/responses/FeedbackRecordsWriteConflict.yml
+    "500":
+      $ref: ../components/responses/FeedbackRecordsInternalServerError.yml
+    "503":
+      $ref: ../components/responses/FeedbackRecordsServiceUnavailable.yml
+  security:
+    - apiKeyAuth: []

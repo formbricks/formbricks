@@ -5,11 +5,13 @@ import { useTranslation } from "react-i18next";
 import { Response, Workspace } from "@formbricks/database/prisma-browser";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { validateSurveyPinAction } from "@/modules/survey/link/actions";
 import { SurveyClientWrapper } from "@/modules/survey/link/components/survey-client-wrapper";
+import { useAppLocale } from "@/modules/survey/link/hooks/use-app-locale";
 import { OTPInput } from "@/modules/ui/components/otp-input";
 
 interface PinScreenProps {
@@ -24,6 +26,8 @@ interface PinScreenProps {
   IS_FORMBRICKS_CLOUD: boolean;
   verifiedEmail?: string;
   languageCode: string;
+  /** Locale for the gate's own chrome, resolved server-side from `?lang=` or Accept-Language. */
+  locale: TUserLocale;
   isEmbed: boolean;
   isPreview: boolean;
   contactId?: string;
@@ -34,7 +38,7 @@ interface PinScreenProps {
   styling: TWorkspaceStyling | TSurveyStyling;
 }
 
-export const PinScreen = (props: PinScreenProps) => {
+export const PinScreen = (props: Readonly<PinScreenProps>) => {
   const {
     surveyId,
     workspace,
@@ -47,6 +51,7 @@ export const PinScreen = (props: PinScreenProps) => {
     IS_FORMBRICKS_CLOUD,
     verifiedEmail,
     languageCode,
+    locale,
     isEmbed,
     isPreview,
     contactId,
@@ -60,6 +65,7 @@ export const PinScreen = (props: PinScreenProps) => {
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const { t } = useTranslation();
+  const isLocaleReady = useAppLocale(locale);
   const [error, setError] = useState("");
   const [survey, setSurvey] = useState<TSurvey>();
   const [pinAuthToken, setPinAuthToken] = useState<string | undefined>();
@@ -105,6 +111,10 @@ export const PinScreen = (props: PinScreenProps) => {
   }, [localPinEntry, surveyId]);
 
   if (!survey) {
+    // The gate is nothing but translated chrome, so it waits for its locale instead of asking for the
+    // PIN in the browser's language and switching a frame later.
+    if (!isLocaleReady) return null;
+
     return (
       <div
         className={cn(

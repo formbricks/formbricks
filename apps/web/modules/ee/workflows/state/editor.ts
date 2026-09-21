@@ -28,6 +28,8 @@ export type TWorkflowNodeIssue = {
 export type TWorkflowNodeData = {
   category: TWorkflowNodeCategory;
   icon: TWorkflowNodeIcon;
+  /** Concrete type for analytics (`response.completed`, `send_email`, `if_else`), never shown. */
+  nodeType: string;
   title: string;
   summary: string;
   isLeaf: boolean;

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { DEFAULT_LOCALE, IS_FORMBRICKS_CLOUD, SURVEYS_PER_PAGE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { resolveDefaultSurveyLanguage } from "@/lib/i18n/default-survey-language";
 import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getUserLocale } from "@/lib/user/service";
@@ -59,6 +60,10 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
       surveysPerPage={SURVEYS_PER_PAGE}
       currentWorkspaceChannel={currentWorkspaceChannel}
       locale={locale}
+      defaultSurveyLanguage={resolveDefaultSurveyLanguage({
+        workspaceDefaultLanguage: workspace.config.defaultSurveyLanguage,
+        userLocale: locale,
+      })}
       isAIAvailable={isAIAvailable}
       aiUnavailableReason={aiUnavailableReason}
       showFeaturedTemplates={featuredTemplatesVariant === "test"}

@@ -3,6 +3,7 @@ import { getOnboardingWorkspaceContext } from "@/app/(app)/(onboarding)/lib/onbo
 import { redirectIfOnboardingComplete } from "@/app/(app)/(onboarding)/lib/redirect-if-onboarding-complete";
 import { XMTemplateList } from "@/app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/templates/components/xm-template-list";
 import { DEFAULT_LOCALE } from "@/lib/constants";
+import { resolveDefaultSurveyLanguage } from "@/lib/i18n/default-survey-language";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
@@ -38,7 +39,13 @@ const Page = async (props: TemplatesOnboardingPageProps) => {
     <div className="flex min-h-full min-w-full flex-col items-center justify-center gap-y-12">
       <Header title={t("workspace.xm-templates.headline")} />
       <TemplateCreateQueryClientProvider>
-        <XMTemplateList workspaceId={workspace.id} defaultLanguage={locale} />
+        <XMTemplateList
+          workspaceId={workspace.id}
+          defaultLanguage={resolveDefaultSurveyLanguage({
+            workspaceDefaultLanguage: workspace.config.defaultSurveyLanguage,
+            userLocale: locale,
+          })}
+        />
       </TemplateCreateQueryClientProvider>
     </div>
   );

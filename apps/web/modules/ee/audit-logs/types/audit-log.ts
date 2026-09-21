@@ -67,6 +67,9 @@ export const ZAuditAction = z.enum([
   // in the audit trail.
   "purged",
   "queried",
+  // A bulk export of stored data out of the product (e.g. the response-attachment ZIP). Distinct
+  // from "queried": this leaves the system as files the actor keeps.
+  "exported",
   "sso_recovery_started",
   "sso_recovery_completed",
   "sso_recovery_failed",
