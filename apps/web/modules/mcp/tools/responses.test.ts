@@ -343,7 +343,9 @@ describe("delete confirmation", () => {
   test("the state a first call mints is the state a retry will accept", async () => {
     const result = await call("delete_response", { responseId: RESPONSE_ID });
 
-    await expect(mcpRequestStateCodec.verify(result.requestState as string, callContext())).resolves.toEqual({
+    await expect(
+      mcpRequestStateCodec.verify(result.requestState as string, callContext() as never)
+    ).resolves.toEqual({
       tool: "delete_response",
       resourceId: RESPONSE_ID,
     });
