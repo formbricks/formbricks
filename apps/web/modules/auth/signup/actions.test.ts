@@ -96,8 +96,8 @@ vi.mock("@/lib/constants", () => ({
   // Reached through the ENG-2562 sign-up intent cookie (signup-intent.ts → lib/crypto), which reads
   // both at module load. A 64-char hex key so `symmetricEncrypt` takes its normal path.
   ENCRYPTION_KEY: "0".repeat(64),
-  NEXTAUTH_SECRET: "test-nextauth-secret",
-  BETTER_AUTH_SECRET: undefined,
+  AUTH_SECRET: "test-auth-secret",
+  AUTH_URL: undefined,
   get IS_FORMBRICKS_CLOUD() {
     return constantsOverrides.IS_FORMBRICKS_CLOUD;
   },

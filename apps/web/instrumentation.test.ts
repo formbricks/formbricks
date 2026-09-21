@@ -3,9 +3,13 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 const mockRegisterJobsWorker = vi.fn();
 const mockRegisterRecurringJobs = vi.fn();
 const mockAssertAuthzedRuntimeConfiguration = vi.fn();
+const mockAssertAuthRuntimeConfiguration = vi.fn();
+const mockWarnOnAuthSecretRisks = vi.fn();
 
 vi.mock("@/lib/env", () => ({
   assertAuthzedRuntimeConfiguration: mockAssertAuthzedRuntimeConfiguration,
+  assertAuthRuntimeConfiguration: mockAssertAuthRuntimeConfiguration,
+  warnOnAuthSecretRisks: mockWarnOnAuthSecretRisks,
 }));
 
 vi.mock("@sentry/nextjs", () => ({
@@ -28,6 +32,8 @@ describe("instrumentation register", () => {
     vi.resetModules();
     vi.clearAllMocks();
     mockAssertAuthzedRuntimeConfiguration.mockReset();
+    mockAssertAuthRuntimeConfiguration.mockReset();
+    mockWarnOnAuthSecretRisks.mockReset();
     vi.stubEnv("NEXT_RUNTIME", "nodejs");
     vi.stubEnv("NEXT_PHASE", undefined);
     vi.stubEnv("OTEL_EXPORTER_OTLP_ENDPOINT", undefined);
@@ -86,5 +92,41 @@ describe("instrumentation register", () => {
 
     expect(mockRegisterRecurringJobs).toHaveBeenCalledTimes(1);
     expect(mockRegisterJobsWorker).toHaveBeenCalledTimes(1);
+  });
+
+  test("refuses to start background work without an auth secret", async () => {
+    // Same contract as the AuthZed gate above: a missing auth secret has to stop startup, not surface
+    // later as an invite or verification link that cannot be minted.
+    mockAssertAuthRuntimeConfiguration.mockImplementation(() => {
+      throw new Error("BETTER_AUTH_SECRET is required");
+    });
+
+    const { register } = await import("./instrumentation");
+
+    await expect(register()).rejects.toThrow("BETTER_AUTH_SECRET is required");
+    expect(mockRegisterJobsWorker).not.toHaveBeenCalled();
+    expect(mockRegisterRecurringJobs).not.toHaveBeenCalled();
+  });
+
+  test("warns about risky auth secret configurations at startup", async () => {
+    const { register } = await import("./instrumentation");
+
+    await register();
+
+    expect(mockAssertAuthRuntimeConfiguration).toHaveBeenCalledTimes(1);
+    expect(mockWarnOnAuthSecretRisks).toHaveBeenCalledTimes(1);
+  });
+
+  test("skips the auth checks during a production build", async () => {
+    vi.stubEnv("NEXT_PHASE", "phase-production-build");
+
+    const { register } = await import("./instrumentation");
+
+    await register();
+
+    expect(mockAssertAuthRuntimeConfiguration).not.toHaveBeenCalled();
+    expect(mockWarnOnAuthSecretRisks).not.toHaveBeenCalled();
+    // Same guard, so assert the whole block rather than the two calls this change happened to add.
+    expect(mockAssertAuthzedRuntimeConfiguration).not.toHaveBeenCalled();
   });
 });

@@ -12,6 +12,8 @@ const setTestEnv = (overrides: Record<string, string | undefined> = {}) => {
     HUB_API_KEY: "test-hub-api-key",
     CUBEJS_API_URL: "https://cube.formbricks.local",
     CUBEJS_API_SECRET: "cube-secret",
+    BETTER_AUTH_SECRET: undefined,
+    NEXTAUTH_SECRET: undefined,
     AUTHZED_CONSISTENCY: undefined,
     AUTHZED_ENABLED: undefined,
     AUTHZED_ENDPOINT: undefined,
@@ -657,5 +659,183 @@ describe("env", () => {
     });
 
     await expect(import("./env")).rejects.toThrow("Invalid environment variables");
+  });
+
+  describe("auth secret", () => {
+    const BETTER_AUTH_SECRET = "better-auth-secret-at-least-32-chars!";
+    const NEXTAUTH_SECRET = "nextauth-secret-at-least-32-characters";
+
+    test.each([
+      ["BETTER_AUTH_SECRET only", { BETTER_AUTH_SECRET }],
+      ["NEXTAUTH_SECRET only", { NEXTAUTH_SECRET }],
+      ["both", { BETTER_AUTH_SECRET, NEXTAUTH_SECRET }],
+    ])("starts the server with %s set", async (_label, overrides) => {
+      setTestEnv(overrides);
+      const { assertAuthRuntimeConfiguration } = await import("./env");
+
+      expect(assertAuthRuntimeConfiguration).not.toThrow();
+    });
+
+    test("refuses server startup when neither secret is set", async () => {
+      setTestEnv();
+      const { assertAuthRuntimeConfiguration } = await import("./env");
+      const log = vi.spyOn(console, "error").mockImplementation(() => {});
+      try {
+        expect(assertAuthRuntimeConfiguration).toThrow("BETTER_AUTH_SECRET is required");
+        // Names the legacy alias too: it is undocumented, but an operator hitting this has to know
+        // their existing NEXTAUTH_SECRET would satisfy it.
+        expect(log.mock.calls[0][0]).toContain("NEXTAUTH_SECRET");
+      } finally {
+        log.mockRestore();
+      }
+    });
+
+    test.each(["", "   "])(
+      "treats a blank secret as unset rather than as a secret of length zero (%j)",
+      async (blank) => {
+        // A blank value is falsy, and Better Auth replaces a falsy secret with its own hardcoded
+        // default — so it must normalize to undefined and fall through, not reach `betterAuth()`.
+        setTestEnv({ BETTER_AUTH_SECRET: blank, NEXTAUTH_SECRET });
+        const { env } = await import("./env");
+
+        expect(env.BETTER_AUTH_SECRET).toBeUndefined();
+        expect(env.NEXTAUTH_SECRET).toBe(NEXTAUTH_SECRET);
+      }
+    );
+
+    test("refuses server startup when the only secret set is blank", async () => {
+      setTestEnv({ BETTER_AUTH_SECRET: "" });
+      const { assertAuthRuntimeConfiguration } = await import("./env");
+      const log = vi.spyOn(console, "error").mockImplementation(() => {});
+      try {
+        expect(assertAuthRuntimeConfiguration).toThrow("BETTER_AUTH_SECRET is required");
+      } finally {
+        log.mockRestore();
+      }
+    });
+
+    test.each([
+      ["a trailing newline", "legacy-secret-value\n"],
+      ["a trailing space", "legacy-secret-value "],
+      ["a leading space", " legacy-secret-value"],
+    ])("keeps a secret carrying %s byte-for-byte", async (_label, secret) => {
+      // `.trim()` is a zod TRANSFORM, so trimming here would silently re-key the instance: a value
+      // stored by `kubectl create secret --from-file` carries a trailing newline, the chart round-trips
+      // it through b64dec, and the instance has been signing with it. Rewriting it on upgrade
+      // invalidates every session and every outstanding invite and verification link.
+      setTestEnv({ BETTER_AUTH_SECRET: secret });
+      const { env } = await import("./env");
+
+      expect(env.BETTER_AUTH_SECRET).toBe(secret);
+    });
+
+    test("parses a short secret — the floor is a runtime gate, not a schema rule", async () => {
+      // Kept out of the schema so `next build` and CLI imports still work with no secrets in scope.
+      setTestEnv({ BETTER_AUTH_SECRET: "short-secret" });
+      const { env } = await import("./env");
+
+      expect(env.BETTER_AUTH_SECRET).toBe("short-secret");
+    });
+
+    describe("length floor", () => {
+      const SHORT = "short-secret";
+
+      test("refuses a short secret on a fresh install (BETTER_AUTH_SECRET alone)", async () => {
+        // No migration constraint to protect here, and Better Auth's own sub-32 check is only a warning,
+        // so this is the last hard guard before those characters become the HMAC key for everything.
+        setTestEnv({ BETTER_AUTH_SECRET: SHORT });
+        const { assertAuthRuntimeConfiguration } = await import("./env");
+        const log = vi.spyOn(console, "error").mockImplementation(() => {});
+        try {
+          expect(assertAuthRuntimeConfiguration).toThrow("must be at least 32 characters");
+          // Points at the escape hatch rather than just refusing.
+          expect(log.mock.calls[0][0]).toContain("NEXTAUTH_SECRET");
+        } finally {
+          log.mockRestore();
+        }
+      });
+
+      test("accepts a short secret mid-rename (NEXTAUTH_SECRET also set)", async () => {
+        // The shape this ticket exists to support: the legacy value copied onto the new name. Forcing a
+        // change here would sign everyone out and void outstanding invite and verification links.
+        setTestEnv({ BETTER_AUTH_SECRET: SHORT, NEXTAUTH_SECRET: SHORT });
+        const { assertAuthRuntimeConfiguration } = await import("./env");
+
+        expect(assertAuthRuntimeConfiguration).not.toThrow();
+      });
+
+      test("accepts a short legacy-only secret, which boots today with no floor", async () => {
+        setTestEnv({ NEXTAUTH_SECRET: SHORT });
+        const { assertAuthRuntimeConfiguration } = await import("./env");
+
+        expect(assertAuthRuntimeConfiguration).not.toThrow();
+      });
+
+      test("accepts a 32-character secret on a fresh install", async () => {
+        setTestEnv({ BETTER_AUTH_SECRET: "a".repeat(32) });
+        const { assertAuthRuntimeConfiguration } = await import("./env");
+
+        expect(assertAuthRuntimeConfiguration).not.toThrow();
+      });
+    });
+
+    describe("warnOnAuthSecretRisks", () => {
+      const loadAndWarn = async () => {
+        const { warnOnAuthSecretRisks } = await import("./env");
+        const { logger } = await import("@formbricks/logger");
+        const warn = vi.spyOn(logger, "warn").mockImplementation(() => logger);
+        try {
+          warnOnAuthSecretRisks();
+          return warn.mock.calls.map((call) => String(call[0]));
+        } finally {
+          warn.mockRestore();
+        }
+      };
+
+      test("warns when the two secrets differ only in trailing whitespace", async () => {
+        // They are different secrets, and this is the pair most likely to have been created by accident.
+        setTestEnv({ BETTER_AUTH_SECRET: `${NEXTAUTH_SECRET}\n`, NEXTAUTH_SECRET });
+
+        const warnings = await loadAndWarn();
+
+        expect(warnings).toHaveLength(1);
+        expect(warnings[0]).toContain("both set to different values");
+      });
+
+      test("warns when both secrets are set to different values", async () => {
+        setTestEnv({ BETTER_AUTH_SECRET, NEXTAUTH_SECRET });
+
+        const warnings = await loadAndWarn();
+
+        expect(warnings).toHaveLength(1);
+        expect(warnings[0]).toContain("both set to different values");
+        // Never the values themselves: these go to pino and on to SigNoz.
+        expect(warnings[0]).not.toContain(BETTER_AUTH_SECRET);
+        expect(warnings[0]).not.toContain(NEXTAUTH_SECRET);
+      });
+
+      test("stays silent when both secrets hold the same value", async () => {
+        // The correct way to migrate: copy the value across rather than mint a new one.
+        setTestEnv({ BETTER_AUTH_SECRET: NEXTAUTH_SECRET, NEXTAUTH_SECRET });
+
+        expect(await loadAndWarn()).toStrictEqual([]);
+      });
+
+      test("warns when the resolved secret is shorter than 32 characters", async () => {
+        setTestEnv({ NEXTAUTH_SECRET: "short-secret" });
+
+        const warnings = await loadAndWarn();
+
+        expect(warnings).toHaveLength(1);
+        expect(warnings[0]).toContain("shorter than the recommended 32 characters");
+        expect(warnings[0]).not.toContain("short-secret");
+      });
+
+      test("stays silent on a single secret of adequate length", async () => {
+        setTestEnv({ BETTER_AUTH_SECRET });
+
+        expect(await loadAndWarn()).toStrictEqual([]);
+      });
+    });
   });
 });
