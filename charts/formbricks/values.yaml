@@ -625,7 +625,7 @@ externalSecret:
   files: {}
 
 ##########################################################
-# AuthZed / SpiceDB Authorization Configuration
+# SpiceDB Authorization Configuration
 ##########################################################
 authzed:
   # Formbricks v6 uses SpiceDB as its sole authorization decision engine.
