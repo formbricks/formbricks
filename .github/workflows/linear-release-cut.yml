@@ -32,10 +32,20 @@ name: Linear Release Cut
 #   - If step 2 does not create the release, step 3 fails and this run goes red: create and
 #     start the next train by hand in Linear, then re-run.
 #
-# TRIGGERS ARE DELIBERATELY TRUSTED-ONLY. This job holds a Linear key that can mutate the
-# pipeline. Anyone with push access can create a release/* branch, so the branch name is
-# validated against a strict pattern before it reaches a shell or the action, and the
-# dispatch path refuses every ref but main because a dispatch runs the caller's copy of this file.
+# TRUST MODEL - A RECORDED DECISION, NOT AN OVERSIGHT. This job holds a Linear key that can
+# mutate the pipeline, and a push event runs the pushed ref's copy of this file, so anyone who
+# can create a release/* branch can run their own copy of these steps with the key. That is
+# the exposure PR #9016 removed from the smoke canary. It is accepted here because the cut
+# cannot be observed from a trusted ref, and because it is the trust model the release
+# pipeline already runs on: `release: published` executes the tag's copy of
+# formbricks-release.yml with registry and Helm credentials, and the same people can push
+# tags. Tightening it means a ruleset restricting who may create release/* branches, or an
+# approval-gated environment for the key - repo settings, not this file.
+#
+# What this file does control: the branch name is validated against a strict pattern before
+# it reaches a shell or the action, so a stray release/* branch fails instead of touching the
+# pipeline, and the dispatch path refuses every ref but main because a dispatch runs the
+# caller's copy of this file.
 on:
   push:
     branches:
