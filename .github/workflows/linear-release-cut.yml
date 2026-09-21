@@ -74,6 +74,14 @@ on:
         required: true
         type: string
 
+# Every run mutates the same Linear pipeline, and each sync stores its HEAD as the next scan
+# baseline, so two runs finishing out of order can leave a stale baseline behind. One group
+# serialises them. queue: max rather than the default single-slot queue because a dropped run
+# here is not a lost re-sync but a cut whose freeze, create and start never happened.
+concurrency:
+  group: linear-release-cut
+  queue: max
+
 permissions:
   contents: read
 
@@ -189,13 +197,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Validate the version
+      - name: Validate the inputs
         env:
+          COMMAND: ${{ inputs.command }}
+          STAGE: ${{ inputs.stage }}
           VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
           if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::'$VERSION' is not an exact <major>.<minor>.<patch> version."
+            exit 1
+          fi
+          # The action exits with an error on update without a stage; fail here with a message
+          # that says what to fill in instead.
+          if [[ "$COMMAND" == "update" && -z "$STAGE" ]]; then
+            echo "::error::The update command needs a stage, e.g. 'Code Freeze' or 'In Progress'."
             exit 1
           fi
 

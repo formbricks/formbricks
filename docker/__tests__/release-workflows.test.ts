@@ -64,6 +64,7 @@ type WorkflowJob = {
 };
 
 type Workflow = {
+  concurrency?: { group?: string; queue?: string; "cancel-in-progress"?: boolean };
   jobs?: Record<string, WorkflowJob | undefined>;
   on?: WorkflowTriggers;
   // js-yaml 3 resolved the YAML 1.1 truthy key `on:` to boolean `true`; 4.x keeps it a string.
@@ -221,6 +222,31 @@ describe("release workflows", () => {
     );
   });
 
+  // Every run writes a scan baseline to the same pipeline. The default single-slot queue cancels
+  // an older pending run when a newer one arrives, which for a pending cut means its freeze,
+  // create and start never happen; max keeps every run and serialises them.
+  test("serialises every Linear mutation in one queue that drops nothing", () => {
+    const concurrency = readWorkflow(linearCutWorkflow).concurrency;
+
+    expect(concurrency?.group).toBe("linear-release-cut");
+    expect(concurrency?.queue).toBe("max");
+    expect(concurrency?.["cancel-in-progress"]).toBeUndefined();
+  });
+
+  // The dispatch form cannot express "stage is required only for update"; the action fails on
+  // that combination with a less helpful message, so the job rejects it first.
+  test("rejects a dispatch with a malformed version or an update without a stage", () => {
+    const steps = readWorkflow(linearCutWorkflow).jobs?.["linear-release-dispatch"]?.steps ?? [];
+    const validateIndex = steps.findIndex((step) => step.name === "Validate the inputs");
+    const actionIndex = steps.findIndex((step) => step.uses?.startsWith(`${linearAction}@`));
+
+    expect(steps[validateIndex]?.run).toContain("^[0-9]+\\.[0-9]+\\.[0-9]+$");
+    expect(steps[validateIndex]?.run).toContain('"$COMMAND" == "update" && -z "$STAGE"');
+    // Validation has to precede the credentialed step, not follow it.
+    expect(validateIndex).toBeGreaterThanOrEqual(0);
+    expect(validateIndex).toBeLessThan(actionIndex);
+  });
+
   // release/6.0 ships as 6.0.0, 6.0.1, ...; a release called "6.0" is the minor-only record
   // ENG-2475 had to cancel. The branch name is also untrusted input to a credentialed job.
   test("derives the train from a strictly validated release branch name", () => {
@@ -261,7 +287,13 @@ describe("release workflows", () => {
 
     expect((workflow.on ?? workflow.true)?.push?.paths).toContain(linearCutWorkflow);
     expect(steps.map((step) => step.with?.dry_run)).toEqual(Array(steps.length).fill("true"));
-    expect(steps.map((step) => step.with?.stage)).toContain("Code Freeze");
-    expect(steps.map((step) => step.with?.base_ref)).toContain("${{ github.sha }}");
+    // Bound per step, so `Code Freeze` on a sync or `base_ref` on an update cannot satisfy this.
+    const configs = steps.map((step) => ({
+      command: step.with?.command,
+      stage: step.with?.stage,
+      baseRef: step.with?.base_ref,
+    }));
+    expect(configs).toContainEqual({ command: "update", stage: "Code Freeze", baseRef: undefined });
+    expect(configs).toContainEqual({ command: undefined, stage: undefined, baseRef: "${{ github.sha }}" });
   });
 });
