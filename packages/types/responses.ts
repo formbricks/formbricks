@@ -19,6 +19,8 @@ export const ZResponseFilterCondition = z.enum([
   "lessEqual",
   "greaterThan",
   "greaterEqual",
+  "inRange",
+  "notInRange",
   "includesAll",
   "includesOne",
   "uploaded",
@@ -104,6 +106,33 @@ const ZResponseFilterCriteriaDataGreaterEqual = z.object({
 const ZResponseFilterCriteriaDataGreaterThan = z.object({
   op: z.literal(ZResponseFilterCondition.enum.greaterThan),
   value: z.union([z.number(), z.string()]),
+});
+
+/**
+ * A half-open `[min, max)` window over the stored value — `min` matches, `max` does not.
+ *
+ * It exists because a date-typed field is filtered at a coarser granularity than it is stored: the
+ * response filter's date input emits a day (`2026-09-01`) while the column holds whatever arrived,
+ * which is a day *or* an instant on it (`2026-09-01T10:30:00Z`). "On 2026-09-01" is therefore a
+ * range over the instants of that day rather than an equality, and one condition per key is all the
+ * grammar can carry — so the range is the condition (ENG-3232). `buildDateFieldCondition` is the
+ * only producer; `buildWhereClause` expands it into `gte`/`lt`.
+ *
+ * Both bounds are written in the same ISO spelling as the stored values, which is what lets a single
+ * lexicographic window cover both stored forms: `"2026-09-01" <= "2026-09-01T10:30:00Z" <
+ * "2026-09-02"` holds as text exactly as it does in time.
+ */
+const ZResponseFilterCriteriaDataInRange = z.object({
+  op: z.literal(ZResponseFilterCondition.enum.inRange),
+  min: z.string(),
+  max: z.string(),
+});
+
+/** The complement of {@link ZResponseFilterCriteriaDataInRange}; an absent value matches, as with `notEquals`. */
+const ZResponseFilterCriteriaDataNotInRange = z.object({
+  op: z.literal(ZResponseFilterCondition.enum.notInRange),
+  min: z.string(),
+  max: z.string(),
 });
 
 const ZResponseFilterCriteriaDataIncludesOne = z.object({
@@ -224,7 +253,11 @@ const ZResponseFilterCriteriaIsNotSet = z.object({
  * Condition grammar for the typed Embedded Data + reserved-field filter groups (ENG-1848). One
  * union serves both groups: which subset a field actually offers is decided by its `dataType` at
  * the UI (string → equality + text ops, number → equality + comparisons, date → equality +
- * before/after via lessThan/greaterThan on ISO strings), and `buildWhereClause` only translates.
+ * before/after over ISO strings), and `buildWhereClause` only translates.
+ *
+ * A date-typed field is the exception to "the UI picks the op": its *value* decides too, because a
+ * day-granular value cannot be compared to a stored instant by equality. `buildDateFieldCondition`
+ * rewrites those rows onto the range members below (ENG-3232).
  */
 const ZTypedFieldFilterCondition = z.union([
   ZResponseFilterCriteriaDataEquals,
@@ -239,6 +272,8 @@ const ZTypedFieldFilterCondition = z.union([
   ZResponseFilterCriteriaDataLessEqual,
   ZResponseFilterCriteriaDataGreaterEqual,
   ZResponseFilterCriteriaDataGreaterThan,
+  ZResponseFilterCriteriaDataInRange,
+  ZResponseFilterCriteriaDataNotInRange,
   ZResponseFilterCriteriaIsSet,
   ZResponseFilterCriteriaIsNotSet,
 ]);
@@ -283,6 +318,10 @@ export const ZResponseFilterCriteria = z.object({
         ZResponseFilterCriteriaDataLessEqual,
         ZResponseFilterCriteriaDataGreaterEqual,
         ZResponseFilterCriteriaDataGreaterThan,
+        // An ingested date field filters through `data` under its storage key, so the day window a
+        // date-only filter value means has to be expressible here too (ENG-3232).
+        ZResponseFilterCriteriaDataInRange,
+        ZResponseFilterCriteriaDataNotInRange,
         ZResponseFilterCriteriaDataIncludesOne,
         ZResponseFilterCriteriaDataIncludesAll,
         ZResponseFilterCriteriaDataEquals,

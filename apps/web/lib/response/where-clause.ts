@@ -4,6 +4,7 @@ import { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import {
   RESERVED_FIELD_CATALOG,
   getComputedEmbeddedFields,
+  getIngestedEmbeddedFields,
   getSurveyEmbeddedFields,
   listShadowingNames,
 } from "@formbricks/types/embedded-data-resolver";
@@ -72,6 +73,45 @@ const COMPARISON_OP_TO_PRISMA: Record<string, string> = {
 };
 
 /**
+ * A half-open `[min, max)` window on a JSON path: what a date-only filter value means against a
+ * column that stores days and instants alike (ENG-3232). `notInRange` treats an absent value as a
+ * match, like `notEquals`.
+ *
+ * Date fields only. The bounds are strings — `ZResponseFilterCriteria` types them that way so an
+ * ISO day and an ISO instant compare lexicographically the way they do in time — and only
+ * `buildDateFieldCondition` ever produces this op, from a `date` field. A number stored in JSON
+ * would be compared against those strings across JSON types rather than by value, so a numeric
+ * range would quietly select the wrong rows; numbers filter through `gt`/`gte`/`lt`/`lte` instead,
+ * which `buildTypedFieldCondition` gives them with a real numeric operand. Anything else could only
+ * have been crafted by hand, so it fails closed.
+ */
+const buildJsonPathRangeCondition = (
+  column: "meta" | "variables",
+  path: string[],
+  val: Extract<TTypedFieldFilterCondition, { op: "inRange" | "notInRange" }>,
+  dataType: TEmbeddedDataType
+): Prisma.ResponseWhereInput | null => {
+  if (dataType !== "date") return null;
+
+  if (val.op === "inRange") {
+    return {
+      AND: [
+        mkJsonColumnFilter(column, { path, gte: val.min }),
+        mkJsonColumnFilter(column, { path, lt: val.max }),
+      ],
+    };
+  }
+
+  return {
+    OR: [
+      mkJsonColumnFilter(column, { path, lt: val.min }),
+      mkJsonColumnFilter(column, { path, gte: val.max }),
+      mkJsonColumnFilter(column, { path, equals: Prisma.DbNull }),
+    ],
+  };
+};
+
+/**
  * One typed condition → one Prisma JSON-path filter on `meta` or `variables`. `notEquals` and
  * `isNotSet` treat an absent value as a match (same stance as the `data` branch below). Ops that
  * don't fit the field's dataType — text ops on anything but a string, comparisons on a boolean or
@@ -95,8 +135,14 @@ const buildJsonPathCondition = (
     };
   }
 
+  if (val.op === "inRange" || val.op === "notInRange") {
+    return buildJsonPathRangeCondition(column, path, val, dataType);
+  }
+
+  if (!("value" in val)) return null;
+
   const textOp = TEXT_OP_TO_PRISMA[val.op];
-  if (textOp && "value" in val) {
+  if (textOp) {
     if (dataType !== "string") return null;
     // The dynamic Prisma key needs one cast; the three keys above are all valid string filters.
     const filter = mkJsonColumnFilter(column, {
@@ -107,15 +153,12 @@ const buildJsonPathCondition = (
   }
 
   const comparisonKey = COMPARISON_OP_TO_PRISMA[val.op];
-  if (comparisonKey && "value" in val) {
-    if (dataType !== "number" && dataType !== "date") return null;
-    return mkJsonColumnFilter(column, {
-      path,
-      [comparisonKey]: val.value,
-    } as Prisma.ResponseWhereInput["meta"]);
-  }
-
-  return null;
+  if (!comparisonKey) return null;
+  if (dataType !== "number" && dataType !== "date") return null;
+  return mkJsonColumnFilter(column, {
+    path,
+    [comparisonKey]: val.value,
+  } as Prisma.ResponseWhereInput["meta"]);
 };
 
 /**
@@ -206,6 +249,53 @@ const buildVariableConditions = (
   });
 
   return conditions;
+};
+
+/**
+ * The `data` keys a range may name: ingested **date** fields, for the reason
+ * {@link buildJsonPathRangeCondition} gives — string bounds cannot range a stored number.
+ *
+ * The group is shared. `processIngestedFilters` writes ingested storageKeys into it beside the
+ * element ids that have always lived there, so unlike `variables` it cannot simply drop keys it
+ * does not recognise — an element id is a legitimate key that no embedded field answers for.
+ */
+const rangeableIngestedDataKeys = (survey: TSurvey): ReadonlySet<string> =>
+  new Set(
+    getIngestedEmbeddedFields(survey)
+      .filter(({ field }) => field.dataType === "date")
+      .map(({ link }) => link.storageKey)
+  );
+
+/**
+ * A half-open `[min, max)` window on the `data` column, or nothing at all.
+ *
+ * Same rule as {@link buildJsonPathRangeCondition} on `meta` and `variables`: a range is only
+ * meaningful over an ordered type, and the real producer never asks for another — `inRange` and
+ * `notInRange` reach `data` only through `processIngestedFilters`, which builds them from
+ * `buildTypedFieldCondition`. So this answers crafted criteria, and it answers them by failing
+ * closed rather than by lexicographically ranging a string. `notInRange` lets an absent value
+ * match, like `notEquals` in the same switch.
+ */
+const buildDataRangeConditions = (
+  key: string,
+  val: Extract<NonNullable<TResponseFilterCriteria["data"]>[string], { op: "inRange" | "notInRange" }>,
+  rangeableKeys: ReadonlySet<string>
+): Prisma.ResponseWhereInput[] => {
+  if (!rangeableKeys.has(key)) return [];
+
+  if (val.op === "inRange") {
+    return [{ AND: [{ data: { path: [key], gte: val.min } }, { data: { path: [key], lt: val.max } }] }];
+  }
+
+  return [
+    {
+      OR: [
+        { data: { path: [key], lt: val.min } },
+        { data: { path: [key], gte: val.max } },
+        { data: { path: [key], equals: Prisma.DbNull } },
+      ],
+    },
+  ];
 };
 
 /**
@@ -443,6 +533,7 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
 
   if (filterCriteria?.data) {
     const data: Prisma.ResponseWhereInput[] = [];
+    const rangeableIngestedKeys = rangeableIngestedDataKeys(survey);
 
     Object.entries(filterCriteria.data).forEach(([key, val]) => {
       const elements = getElementsFromBlocks(survey.blocks);
@@ -546,6 +637,10 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
               gte: val.value,
             },
           });
+          break;
+        case "inRange":
+        case "notInRange":
+          data.push(...buildDataRangeConditions(key, val, rangeableIngestedKeys));
           break;
         case "includesAll":
           data.push({
