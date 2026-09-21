@@ -1162,6 +1162,32 @@ describe("surveys", () => {
       }
     });
 
+    test("the picker offers a boolean field exactly the spellings the condition builder accepts", () => {
+      // The other half of the contract above. `buildTypedFieldCondition` takes only these two
+      // literals and drops the row for anything else, so the picker is what guarantees the value
+      // arrives in its stored form. Change this list — to `Yes`/`No`, or back to real booleans —
+      // and every boolean filter row silently stops reaching the query instead of failing loudly.
+      //
+      // Called directly rather than through `genOptions`, whose `asRead` replaces `embeddedFields`
+      // with the legacy-derived rows — and those are all string-typed, so the boolean branch under
+      // test would never run.
+      const { elementFilterOptions } = generateElementAndFilterOptions({
+        survey: typedSurvey as TSurvey,
+        environmentTags: undefined,
+        attributes: {},
+        reservedValues: {},
+        hiddenFields: {},
+        variableValues: {},
+        quotas: [],
+        t,
+      });
+
+      expect(elementFilterOptions.find((option) => option.id === "is_pro")?.filterComboBoxOptions).toEqual([
+        "true",
+        "false",
+      ]);
+    });
+
     test("a date row reaches the data group as the window its value names", () => {
       // The bug this pins (ENG-3232): the row's value is day-granular — the picker is an
       // `<input type="date">` — while the column stores whatever arrived, so `equals` compared a day
