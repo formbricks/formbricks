@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import crypto from "node:crypto";
 import { ScureBase32Plugin, generateURI, verifySync } from "otplib";
 
 /** Bytes of entropy per secret. 20 bytes base32-encode to exactly 32 characters, no padding — the
