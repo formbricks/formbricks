@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
+import {
+  type TLinkedEmbeddedField,
+  deriveLegacyEmbeddedData,
+} from "@formbricks/types/embedded-data-resolver";
 import type { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
@@ -59,6 +62,12 @@ const survey = {
     hiddenFields: { enabled: true, fieldIds: ["utm"] },
   }),
 } as unknown as TSurvey;
+
+/** One stored ingested row whose display name need not match the key its value lives under. */
+const ingestedRow = (name: string, storageKey: string): TLinkedEmbeddedField => ({
+  field: { name, key: null, source: "ingested", dataType: "string", defaultValue: null, locked: false },
+  link: { storageKey },
+});
 
 describe("resolveResponseRecipient", () => {
   test("uses a literal email `to` directly", () => {
@@ -288,7 +297,58 @@ describe("buildSurveyResponseEmailHtml", () => {
     });
     rendered = mockRenderFollowUpEmail.mock.calls[0][0];
     expect(rendered.variables).toEqual([]);
-    expect(rendered.hiddenFields).toEqual([{ id: "utm", value: "newsletter" }]);
+    expect(rendered.hiddenFields).toEqual([{ id: "utm", name: "utm", value: "newsletter" }]);
+  });
+
+  /**
+   * ENG-3233. A shared library field carries a display name the survey does not own, and a renamed
+   * local one diverges the same way; the email block is titled by that name while the value is still
+   * read from the storage key. Red on main, which titled it `utm_campaign`.
+   */
+  test("titles a hidden field by its name and reads its value by storage key", async () => {
+    const renamedSurvey = {
+      ...survey,
+      embeddedFields: [ingestedRow("Campaign", "utm_campaign")],
+    } as unknown as TSurvey;
+    const renamedResponse = {
+      ...response,
+      data: { ...response.data, utm_campaign: "spring_sale" },
+    } as unknown as TResponse;
+
+    await buildSurveyResponseEmailHtml({
+      body: "Body",
+      survey: renamedSurvey,
+      response: renamedResponse,
+      attachResponseData: true,
+      includeHiddenFields: true,
+    });
+
+    expect(mockRenderFollowUpEmail.mock.calls[0][0].hiddenFields).toEqual([
+      { id: "utm_campaign", name: "Campaign", value: "spring_sale" },
+    ]);
+  });
+
+  test("two hidden fields sharing a name stay tellable apart in the email", async () => {
+    const collidingSurvey = {
+      ...survey,
+      embeddedFields: [ingestedRow("Source", "utm_source"), ingestedRow("Source", "referrer")],
+    } as unknown as TSurvey;
+    const collidingResponse = {
+      ...response,
+      data: { utm_source: "newsletter", referrer: "google" },
+    } as unknown as TResponse;
+
+    await buildSurveyResponseEmailHtml({
+      body: "Body",
+      survey: collidingSurvey,
+      response: collidingResponse,
+      attachResponseData: true,
+      includeHiddenFields: true,
+    });
+
+    expect(
+      mockRenderFollowUpEmail.mock.calls[0][0].hiddenFields.map((f: { name: string }) => f.name)
+    ).toEqual(["Source", "Source (referrer)"]);
   });
 
   test("falls back to the default locale when none is provided", async () => {
