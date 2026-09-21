@@ -1,0 +1,1089 @@
+# PROPOSAL — not bundled, not served, not contract-tested. See README.md in this directory.
+#
+# Self-contained OpenAPI document for the survey-visibility additions to the v3 API (ENG-3281). It
+# repeats the security schemes and shared parameters of docs/api-v3-reference/src/openapi.yml so it
+# lints and mocks on its own:
+#
+#   pnpm exec redocly lint docs/api-v3-reference/proposals/survey-visibility/openapi.yml
+#   npx @stoplight/prism-cli mock docs/api-v3-reference/proposals/survey-visibility/openapi.yml
+#
+# When the handlers ship, the pieces move into src/ (README §10) and this file is deleted.
+openapi: 3.1.1
+info:
+  title: Formbricks API v3 — survey visibility (proposal)
+  version: 0.1.0-proposal
+  description: >
+    Additions to the v3 Surveys API for private and workspace-visible surveys (Authorization – Phase 2,
+    Scope 1). Three fields join every survey resource (`visibility`, `owner`, `access`), the survey
+    list gains two filters and one optional count, and one new sub-resource,
+    `/api/v3/surveys/{surveyId}/visibility`, reads and changes visibility. `POST /api/v3/surveys` and
+    `PATCH /api/v3/surveys/{surveyId}` do **not** accept `visibility` and answer **400**
+    `unsupported_field` if it is sent.
+
+
+    Only the changed and added operations are described here. Everything not mentioned keeps the
+    contract in `docs/api-v3-reference/openapi.yml`. The prose rules — permission matrix, gating,
+    response behaviour — are in `README.md` next to this file.
+servers:
+  - url: https://app.formbricks.com
+    description: >-
+      Formbricks Cloud. Paths already include the `/api/v3` prefix; self-hosted instances substitute
+      their own origin.
+tags:
+  - name: V3 Surveys
+    description: Survey management, including visibility.
+
+paths:
+  /api/v3/surveys:
+    get:
+      operationId: getSurveysV3
+      summary: List surveys
+      description: >
+        Returns the surveys in the workspace **that the caller may read**. A private survey is listed
+        only to its owner and to the organisation's owners and managers; to everyone else, API keys
+        included, it does not exist here. `meta.totalCount` and `meta.workspaceSurveyCount` count that
+        same readable set, so neither number can reveal a private survey to someone who cannot see it.
+
+
+        The visibility predicate is applied in the query and the cursor, never after the fact:
+        `limit` keeps its meaning and `meta.nextCursor` being `null` remains the only
+        end-of-collection signal.
+
+
+        Session cookie, `x-api-key`, or a Bearer token, with read access. Parameters not listed here
+        (`filter[name][contains]`, `filter[status][in]`, `filter[type][in]`, `sortBy`) are unchanged.
+      tags:
+        - V3 Surveys
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceIdQuery"
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/CursorQuery"
+        - in: query
+          name: includeTotalCount
+          schema:
+            type: boolean
+            default: true
+          description: >
+            Whether to compute `meta.totalCount`, `meta.workspaceSurveyCount` and
+            `meta.visibilityCounts` for this request. All three are `null` when `false`.
+        - in: query
+          name: filter[visibility][in]
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/SurveyVisibility"
+          style: form
+          explode: true
+          description: >
+            Keep only surveys with one of these visibilities. Repeat the parameter or use
+            comma-separated values, as with `filter[status][in]`. Unknown values → **400**. Filters
+            within the readable set: a workspace member asking for `private` gets their own private
+            surveys, an organisation manager gets everyone's.
+        - in: query
+          name: filter[owner][in]
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - me
+                - others
+          style: form
+          explode: true
+          description: >
+            `me` keeps surveys whose `owner` is the caller; `others` keeps the rest, ownerless surveys
+            included. Relative to the signed-in user, so an API key sending this parameter gets **400**.
+      responses:
+        "200":
+          description: Surveys retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SurveyListItem"
+                  meta:
+                    type: object
+                    required:
+                      - limit
+                      - nextCursor
+                      - totalCount
+                      - workspaceSurveyCount
+                      - visibilityCounts
+                    properties:
+                      limit:
+                        type: integer
+                      nextCursor:
+                        type:
+                          - string
+                          - "null"
+                        description: Opaque cursor for the next page. `null` when there are no more results.
+                      totalCount:
+                        type:
+                          - integer
+                          - "null"
+                        minimum: 0
+                        description: >-
+                          Surveys matching the current filters **and readable by the caller**, across
+                          all pages. `null` when `includeTotalCount=false`.
+                      workspaceSurveyCount:
+                        type:
+                          - integer
+                          - "null"
+                        minimum: 0
+                        description: >-
+                          Surveys in the workspace readable by the caller, archived ones included and
+                          independent of the current filters. Unchanged for every caller until someone
+                          makes a survey private. `null` when `includeTotalCount=false`.
+                      visibilityCounts:
+                        anyOf:
+                          - $ref: "#/components/schemas/SurveyVisibilityCounts"
+                          - type: "null"
+                        description: >-
+                          Facet counts for the Visibility filter, over the readable set, honouring every
+                          filter except `filter[visibility]`. `null` when `includeTotalCount=false`.
+                          Provisional: dropped if the frontend does not need the badges (README §6).
+              examples:
+                managerSeesAColleaguesDraft:
+                  summary: An organisation manager lists a workspace with one private draft
+                  value:
+                    data:
+                      - id: clsv1234567890123456789012
+                        name: Q3 Product Feedback
+                        workspaceId: clws1234567890123456789012
+                        type: link
+                        status: inProgress
+                        publishOn: null
+                        archivedAt: null
+                        createdAt: "2026-08-20T11:02:55.000Z"
+                        updatedAt: "2026-09-18T09:14:03.417Z"
+                        responseCount: 212
+                        completedResponseCount: 198
+                        creator:
+                          name: Alice Example
+                        visibility: workspace
+                        owner:
+                          id: clus1234567890123456789012
+                          name: Alice Example
+                        access:
+                          via: workspace
+                          canChangeVisibility: true
+                      - id: clsv2234567890123456789012
+                        name: Onboarding interview (draft)
+                        workspaceId: clws1234567890123456789012
+                        type: app
+                        status: draft
+                        publishOn: null
+                        archivedAt: null
+                        createdAt: "2026-09-19T08:00:00.000Z"
+                        updatedAt: "2026-09-19T08:30:00.000Z"
+                        responseCount: 0
+                        completedResponseCount: 0
+                        creator:
+                          name: Bob Example
+                        visibility: private
+                        owner:
+                          id: clus2234567890123456789012
+                          name: Bob Example
+                        access:
+                          via: organizationRole
+                          canChangeVisibility: true
+                    meta:
+                      limit: 20
+                      nextCursor: null
+                      totalCount: 2
+                      workspaceSurveyCount: 2
+                      visibilityCounts:
+                        private: 1
+                        workspace: 1
+                apiKeySeesOnlyWorkspaceVisible:
+                  summary: The same workspace read with an API key — the private draft is absent
+                  value:
+                    data:
+                      - id: clsv1234567890123456789012
+                        name: Q3 Product Feedback
+                        workspaceId: clws1234567890123456789012
+                        type: link
+                        status: inProgress
+                        publishOn: null
+                        archivedAt: null
+                        createdAt: "2026-08-20T11:02:55.000Z"
+                        updatedAt: "2026-09-18T09:14:03.417Z"
+                        responseCount: 212
+                        completedResponseCount: 198
+                        creator:
+                          name: Alice Example
+                        visibility: workspace
+                        owner:
+                          id: clus1234567890123456789012
+                          name: Alice Example
+                        access:
+                          via: workspace
+                          canChangeVisibility: false
+                    meta:
+                      limit: 20
+                      nextCursor: null
+                      totalCount: 1
+                      workspaceSurveyCount: 1
+                      visibilityCounts:
+                        private: 0
+                        workspace: 1
+        "400":
+          $ref: "#/components/responses/V3BadRequest"
+        "401":
+          $ref: "#/components/responses/V3Unauthorized"
+        "403":
+          $ref: "#/components/responses/V3Forbidden"
+        "429":
+          $ref: "#/components/responses/V3TooManyRequests"
+        "500":
+          $ref: "#/components/responses/V3InternalServerError"
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+
+  /api/v3/surveys/{surveyId}/visibility:
+    get:
+      operationId: getSurveyVisibilityV3
+      summary: Read a survey's visibility and the impact of changing it
+      description: >
+        Returns the survey's effective visibility, its owner, the caller's access, and what a change
+        would do: `blockers[]` lists the outbound connections that currently make `private` refusable
+        (webhooks, integrations, feedback sources, dashboards, workflows — Decision 13), and `impact`
+        carries the numbers the confirmation dialogues show. Read this before offering "Make private";
+        the `POST` answers **409** while `blockers[]` is non-empty.
+
+
+        Requires `survey.read`. A survey the caller cannot see — unknown id, another workspace, private
+        and the caller is neither owner nor organisation owner/manager, or any private survey for an
+        API key — answers **403** with the same body as every other survey-by-id operation.
+      tags:
+        - V3 Surveys
+      parameters:
+        - $ref: "#/components/parameters/SurveyIdPath"
+      responses:
+        "200":
+          description: Visibility state retrieved
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SurveyVisibilityState"
+              examples:
+                visibleWithBlockers:
+                  summary: Workspace-visible survey that a webhook and a workflow depend on
+                  value:
+                    data:
+                      id: clsv1234567890123456789012
+                      visibility: workspace
+                      owner:
+                        id: clus1234567890123456789012
+                        name: Alice Example
+                      access:
+                        via: workspace
+                        canChangeVisibility: true
+                      blockers:
+                        - type: webhook
+                          id: clwh1234567890123456789012
+                          name: Zapier — new responses
+                        - type: workflow
+                          id: clwf1234567890123456789012
+                          name: Notify #product on completion
+                      impact:
+                        memberCount: 7
+                        responseCount: 212
+                privateDraft:
+                  summary: Private draft seen by its owner
+                  value:
+                    data:
+                      id: clsv2234567890123456789012
+                      visibility: private
+                      owner:
+                        id: clus2234567890123456789012
+                        name: Bob Example
+                      access:
+                        via: owner
+                        canChangeVisibility: true
+                      blockers: []
+                      impact:
+                        memberCount: 7
+                        responseCount: 0
+        "400":
+          $ref: "#/components/responses/V3BadRequest"
+        "401":
+          $ref: "#/components/responses/V3Unauthorized"
+        "403":
+          $ref: "#/components/responses/V3Forbidden"
+        "429":
+          $ref: "#/components/responses/V3TooManyRequests"
+        "500":
+          $ref: "#/components/responses/V3InternalServerError"
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+
+    post:
+      operationId: changeSurveyVisibilityV3
+      summary: Change a survey's visibility
+      description: >
+        Sets the survey to `private` or `workspace`. Answers **200** only once the change is enforced:
+        the flag is stored and the authorization relationship is projected inside the request, so a
+        colleague's next read already reflects it. Sending the value the survey already has is a
+        **200** no-op — nothing is written or audited.
+
+
+        Allowed for the survey's owner (while they still hold read access to the workspace) and for the
+        organisation's owners and managers. **Not** for workspace members with write or team-level
+        manage rights (R-10), and never for API keys (K-4). Every successful change is audit-logged
+        with the actor (Decision 7, 11).
+
+
+        Going `workspace → private` is refused with **409** while any outbound connection depends on
+        the survey; resolve them first (Decision 13). It is refused with **422** when the survey has no
+        owner, because "private" would then mean "administrators only" (Decision log #3) — duplicate
+        the survey for a private copy. Going `private → workspace` has no preconditions.
+
+
+        This is the only way to change visibility: `PATCH /api/v3/surveys/{surveyId}` rejects the field.
+        Publishing does not change visibility; the publish dialogue chains this call before the status
+        change.
+      tags:
+        - V3 Surveys
+      parameters:
+        - $ref: "#/components/parameters/SurveyIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SurveyVisibilityChangeRequest"
+            examples:
+              makeVisible:
+                summary: Share with the workspace
+                value:
+                  visibility: workspace
+              makePrivate:
+                summary: Hide from the workspace
+                value:
+                  visibility: private
+      responses:
+        "200":
+          description: Visibility changed, or already at the requested value
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SurveyVisibilityChangeResult"
+              examples:
+                madeVisibleByOwner:
+                  summary: Owner shares a draft with the workspace before publishing
+                  value:
+                    data:
+                      id: clsv2234567890123456789012
+                      visibility: workspace
+                      owner:
+                        id: clus2234567890123456789012
+                        name: Bob Example
+                      access:
+                        via: workspace
+                        canChangeVisibility: true
+                      changedAt: "2026-09-21T10:15:00.000Z"
+                      changedBy:
+                        type: user
+                        id: clus2234567890123456789012
+                        name: Bob Example
+                madePrivateByManager:
+                  summary: An organisation manager hides a departed colleague's survey
+                  value:
+                    data:
+                      id: clsv1234567890123456789012
+                      visibility: private
+                      owner:
+                        id: clus1234567890123456789012
+                        name: Alice Example
+                      access:
+                        via: organizationRole
+                        canChangeVisibility: true
+                      changedAt: "2026-09-21T10:20:00.000Z"
+                      changedBy:
+                        type: user
+                        id: clus3234567890123456789012
+                        name: Carol Manager
+        "400":
+          $ref: "#/components/responses/V3BadRequest"
+        "401":
+          $ref: "#/components/responses/V3Unauthorized"
+        "403":
+          $ref: "#/components/responses/V3VisibilityForbidden"
+        "409":
+          $ref: "#/components/responses/V3VisibilityBlocked"
+        "422":
+          $ref: "#/components/responses/V3VisibilityNotAllowed"
+        "429":
+          $ref: "#/components/responses/V3TooManyRequests"
+        "500":
+          $ref: "#/components/responses/V3InternalServerError"
+        "503":
+          $ref: "#/components/responses/V3ProjectionPending"
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+      description: Signed-in browser session, as the Formbricks app itself calls these operations.
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Management API key with read, write or manage permission on the workspace.
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: "The same management API key, sent as `Authorization: Bearer <key>`."
+
+  parameters:
+    SurveyIdPath:
+      in: path
+      name: surveyId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Survey identifier.
+    WorkspaceIdQuery:
+      in: query
+      name: workspaceId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Workspace identifier. The canonical container id for v3 collection reads.
+    LimitQuery:
+      in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Page size (max 100).
+    CursorQuery:
+      in: query
+      name: cursor
+      schema:
+        type: string
+      description: Opaque cursor returned as `meta.nextCursor` from the previous page. Omit on the first request.
+
+  schemas:
+    SurveyVisibility:
+      type: string
+      enum:
+        - private
+        - workspace
+      description: >-
+        `private`: readable by the owner and the organisation's owners and managers only.
+        `workspace`: readable by everyone with access to the workspace — today's behaviour.
+
+    SurveyOwner:
+      type: object
+      description: >-
+        The authorization owner — the person whose private surveys these are (Decision 16). Distinct
+        from `creator`, which is attribution only and is never rewritten. Ownership transfer, when it
+        ships, moves this field and leaves `creator` alone.
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: User id.
+        name:
+          type: string
+      additionalProperties: false
+
+    SurveyAccess:
+      type: object
+      description: >-
+        Why **this caller** can see the survey, and whether they may change its visibility. Derived by
+        the server per request; a rendering hint only — every mutation is re-authorised on the server.
+      required:
+        - via
+        - canChangeVisibility
+      properties:
+        via:
+          type: string
+          enum:
+            - workspace
+            - owner
+            - organizationRole
+          description: >-
+            `workspace`: the survey is workspace-visible and the caller has workspace read (always the
+            value for API keys). `owner`: the survey is private and the caller owns it.
+            `organizationRole`: the survey is private and the caller reaches it only as an organisation
+            owner or manager — the case that shows the admin banner.
+        canChangeVisibility:
+          type: boolean
+          description: >-
+            `true` when a `POST …/visibility` by this caller could succeed on permission grounds: the
+            caller is the owner or an organisation owner/manager, the feature is enabled for the
+            organisation and deployment, and the survey has an owner. Preconditions such as blocking
+            connections are not folded in; read `blockers[]` for those.
+      additionalProperties: false
+
+    SurveyVisibilityFields:
+      type: object
+      description: >-
+        The three fields added to `SurveyListItem` and `SurveyResource`. Merged into both via `allOf`
+        when this proposal moves into `src/`. All required, always present.
+      required:
+        - visibility
+        - owner
+        - access
+      properties:
+        visibility:
+          allOf:
+            - $ref: "#/components/schemas/SurveyVisibility"
+          description: >-
+            The **effective** visibility — what the backend enforces on this request. `workspace` for
+            every survey while the deployment's readiness marker is unset, whatever the stored flag,
+            and always `workspace` for API keys (README §5).
+        owner:
+          anyOf:
+            - $ref: "#/components/schemas/SurveyOwner"
+            - type: "null"
+          description: >-
+            `null` when the author's account no longer exists or the survey was created with an API
+            key. A survey with `owner: null` cannot be made private.
+        access:
+          $ref: "#/components/schemas/SurveyAccess"
+
+    SurveyListItem:
+      allOf:
+        - type: object
+          description: >-
+            Shape returned by `GET /api/v3/surveys`, as today (`docs/api-v3-reference/src/components/schemas/SurveyListItem.yml`).
+          required:
+            - id
+            - name
+            - workspaceId
+            - type
+            - status
+            - publishOn
+            - createdAt
+            - updatedAt
+            - archivedAt
+            - responseCount
+            - completedResponseCount
+            - creator
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            workspaceId:
+              type: string
+            type:
+              type: string
+              enum:
+                - link
+                - app
+                - website
+                - web
+            status:
+              type: string
+              enum:
+                - draft
+                - inProgress
+                - paused
+                - completed
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+            archivedAt:
+              type:
+                - string
+                - "null"
+              format: date-time
+            publishOn:
+              type:
+                - string
+                - "null"
+              format: date-time
+            responseCount:
+              type: integer
+            completedResponseCount:
+              type: integer
+            creator:
+              type:
+                - object
+                - "null"
+              description: Attribution only. Unchanged by this proposal; see `owner` for authorization.
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+              additionalProperties: false
+        - $ref: "#/components/schemas/SurveyVisibilityFields"
+
+    SurveyVisibilityCounts:
+      type: object
+      required:
+        - private
+        - workspace
+      properties:
+        private:
+          type: integer
+          minimum: 0
+        workspace:
+          type: integer
+          minimum: 0
+      additionalProperties: false
+
+    SurveyVisibilityBlocker:
+      type: object
+      description: An outbound connection that must be removed before the survey can become private.
+      required:
+        - type
+        - id
+        - name
+      properties:
+        type:
+          type: string
+          enum:
+            - webhook
+            - integration
+            - feedbackSource
+            - dashboard
+            - workflow
+        id:
+          type: string
+        name:
+          type: string
+          description: Display name of the connection, for the UI to list. Never empty; falls back to the type.
+      additionalProperties: false
+
+    SurveyVisibilityImpact:
+      type: object
+      description: The numbers the confirmation dialogues show.
+      required:
+        - memberCount
+        - responseCount
+      properties:
+        memberCount:
+          type: integer
+          minimum: 0
+          description: >-
+            People other than the owner and the organisation's owners/managers who can see the survey
+            now (if workspace-visible) or would gain access (if private).
+        responseCount:
+          type: integer
+          minimum: 0
+          description: Responses on the survey, partial ones included.
+      additionalProperties: false
+
+    SurveyVisibilityState:
+      allOf:
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              description: Survey identifier.
+        - $ref: "#/components/schemas/SurveyVisibilityFields"
+        - type: object
+          required:
+            - blockers
+            - impact
+          properties:
+            blockers:
+              type: array
+              items:
+                $ref: "#/components/schemas/SurveyVisibilityBlocker"
+              description: >-
+                Connections that make `private` refusable right now. Empty when going private is
+                allowed, and always empty for the `workspace` direction.
+            impact:
+              $ref: "#/components/schemas/SurveyVisibilityImpact"
+
+    SurveyVisibilityChangeRequest:
+      type: object
+      required:
+        - visibility
+      properties:
+        visibility:
+          $ref: "#/components/schemas/SurveyVisibility"
+      additionalProperties: false
+
+    SurveyVisibilityActor:
+      type: object
+      description: Who made the change. Always a user in Scope 1, since API keys cannot change visibility.
+      required:
+        - type
+        - id
+        - name
+      properties:
+        type:
+          type: string
+          enum:
+            - user
+        id:
+          type: string
+        name:
+          type: string
+      additionalProperties: false
+
+    SurveyVisibilityChangeResult:
+      allOf:
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              description: Survey identifier.
+        - $ref: "#/components/schemas/SurveyVisibilityFields"
+        - type: object
+          required:
+            - changedAt
+            - changedBy
+          properties:
+            changedAt:
+              type: string
+              format: date-time
+              description: When this visibility took effect. Unchanged on a no-op.
+            changedBy:
+              $ref: "#/components/schemas/SurveyVisibilityActor"
+
+    Problem:
+      type: object
+      description: >-
+        RFC 9457 Problem Details (`application/problem+json`), as in the main spec. Listed here are
+        only the codes this proposal adds; they join the `Problem.yml` enum and `V3_PROBLEM_CODES` in
+        the same commit when the handlers ship. `workspace_survey_limit_reached` is provisional and
+        belongs to the RFC's per-workspace survey cap, which every creation path enforces.
+      required:
+        - title
+        - status
+        - detail
+        - requestId
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          enum:
+            - bad_request
+            - forbidden
+            - internal_server_error
+            - not_authenticated
+            - projection_pending
+            - too_many_requests
+            - visibility_blocked_by_connections
+            - visibility_change_not_allowed
+            - visibility_not_enabled
+            - workspace_survey_limit_reached
+        requestId:
+          type: string
+        details:
+          type: object
+        invalid_params:
+          type: array
+          items:
+            $ref: "#/components/schemas/InvalidParam"
+
+    InvalidParam:
+      type: object
+      required:
+        - name
+        - reason
+      properties:
+        name:
+          type: string
+        reason:
+          type: string
+        code:
+          type: string
+          enum:
+            - unsupported_field
+      additionalProperties: false
+
+  responses:
+    V3BadRequest:
+      description: >-
+        Bad Request — malformed JSON, an unknown `visibility` value, a stray query parameter,
+        `filter[owner][in]` from an API key, or `visibility` sent to `POST /api/v3/surveys` or
+        `PATCH /api/v3/surveys/{surveyId}` (`invalid_params[].code: unsupported_field`).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: Bad Request
+            status: 400
+            detail: Unsupported field 'visibility'. Use POST /api/v3/surveys/{surveyId}/visibility.
+            code: bad_request
+            requestId: req_01j8z1
+            invalid_params:
+              - name: visibility
+                reason: Unsupported field 'visibility'. Use POST /api/v3/surveys/{surveyId}/visibility.
+                code: unsupported_field
+    V3Unauthorized:
+      description: Not authenticated (no valid session or API key).
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+          example: Bearer realm="formbricks"
+        X-Request-Id:
+          schema:
+            type: string
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    V3Forbidden:
+      description: >-
+        Forbidden — the caller cannot see the survey: unknown id, another workspace, no permission on
+        the workspace, or a private survey the caller is not the owner or an organisation owner/manager
+        of. API keys land here for every private survey. One body for all cases, so existence cannot
+        be probed (404 is not used).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: Forbidden
+            status: 403
+            detail: You are not authorized to access this resource
+            code: forbidden
+            requestId: req_01j8z2
+    V3VisibilityForbidden:
+      description: >-
+        Forbidden, one of two codes. `forbidden`: the caller cannot see the survey, **or** sees it but may
+        not change its visibility — workspace members without ownership, team-level managers (R-10), and
+        every API key (K-4) — with the same body as any unreadable survey. `visibility_not_enabled`: the
+        organisation lacks the RBAC / access-control entitlement, or the deployment's readiness marker
+        for survey visibility is not set (README §5); this answer does not depend on the survey.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            notAllowed:
+              summary: Team-level manager, or an API key
+              value:
+                title: Forbidden
+                status: 403
+                detail: You are not authorized to access this resource
+                code: forbidden
+                requestId: req_01j8z3
+            notEnabled:
+              summary: Organisation is not entitled, or the deployment has not enabled visibility
+              value:
+                title: Forbidden
+                status: 403
+                detail: Survey visibility is not enabled for this organization.
+                code: visibility_not_enabled
+                requestId: req_01j8z4
+    V3VisibilityBlocked:
+      description: >-
+        Conflict — `private` was requested while outbound connections depend on the survey. Remove or
+        re-point them, then retry. `details.blockers` matches `blockers[]` from the `GET`.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: Conflict
+            status: 409
+            detail: Make this survey visible to the workspace to keep using it in 2 connections, or remove them before making it private.
+            code: visibility_blocked_by_connections
+            requestId: req_01j8z5
+            details:
+              blockers:
+                - type: webhook
+                  id: clwh1234567890123456789012
+                  name: Zapier — new responses
+                - type: workflow
+                  id: clwf1234567890123456789012
+                  name: Notify #product on completion
+    V3VisibilityNotAllowed:
+      description: >-
+        Unprocessable — `private` was requested on a survey with no owner (`owner: null`). Private
+        means "the owner and the organisation's administrators"; with no owner it would mean
+        administrators only, which is not a state the product offers. Duplicate the survey to get a
+        private copy you own.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: Unprocessable Content
+            status: 422
+            detail: This survey has no owner and cannot be made private. Duplicate it to get a private copy.
+            code: visibility_change_not_allowed
+            requestId: req_01j8z6
+    V3ProjectionPending:
+      description: >-
+        Service Unavailable — the visibility flag was stored, but the authorization relationship could
+        not be projected within the request. The change is queued durably and lands within 60 seconds
+        or the deployment fails closed. Do not retry the `POST`; poll `GET …/visibility` until
+        `visibility` reflects the request.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          example: 5
+        X-Request-Id:
+          schema:
+            type: string
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: Service Unavailable
+            status: 503
+            detail: The visibility change is queued but not yet enforced. Re-read the survey's visibility.
+            code: projection_pending
+            requestId: req_01j8z7
+    V3TooManyRequests:
+      description: >-
+        Rate limit exceeded. `POST …/visibility` has its own per-actor limit, tighter than the general
+        v3 limit, so a loop of visibility changes cannot arm the authorization freshness guard.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+        X-Request-Id:
+          schema:
+            type: string
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    V3InternalServerError:
+      description: Internal Server Error.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
