@@ -1598,7 +1598,6 @@ checksums:
     workspace/actions/your_survey_would_not_be_shown: af44fe160f449ff9557ebe5d3686832d
     workspace/analysis/charts/add_chart_to_dashboard: c2a517ada86cdda60e49bec655ca9a6d
     workspace/analysis/charts/add_chart_to_dashboard_description: 08980a1849757e9aec21fca5881c6be4
-    workspace/analysis/charts/add_filter: ed5d8e9bfcb05cd1e10e4c403befbae6
     workspace/analysis/charts/add_to_dashboard: 9941c3d30895bb8e25ce8d4e03d33a08
     workspace/analysis/charts/advanced_chart_builder_config_prompt: e65524208f5d88030cb920dafab7fca9
     workspace/analysis/charts/ai_chart_generation: add72413077023d31590374e179d8784
@@ -1628,7 +1627,6 @@ checksums:
     workspace/analysis/charts/ai_status_querying: 1c3c61f73ad075cf6515f5575cd7910e
     workspace/analysis/charts/ai_status_reading: 871e53480f4b0e1db78b847885dab553
     workspace/analysis/charts/already_on_dashboard: c2cee946860c71a71cf03392b2d1fc3a
-    workspace/analysis/charts/and_filter_logic: 53e8eb67a396fcb5e419bb4cbf0008df
     workspace/analysis/charts/area_display: eb53ad78765ddc4050d898a70f2fac68
     workspace/analysis/charts/area_display_filled: 8a5591fe0fffc8cce37cb422c0a8cf78
     workspace/analysis/charts/area_display_line: b2083b10c8f7d21284e2892b97a5e8f1
@@ -1769,7 +1767,6 @@ checksums:
     workspace/analysis/charts/field_label_very_negative_count: 21c4fd5049c5cb5da77ee8b70dc98d64
     workspace/analysis/charts/field_label_very_positive_count: a45cb4c83fe2dfc7cd2d0a7285306bb3
     workspace/analysis/charts/filter_data: 05cc68ed2896feef60bbe3829cd9063d
-    workspace/analysis/charts/filters: acf5accc113ff3c1992688058576732c
     workspace/analysis/charts/filters_toggle_description: ea18bdb212a6a85620125cab89a4b1c1
     workspace/analysis/charts/from_scratch: a6e76daa106ee261f4a2884bd4869659
     workspace/analysis/charts/go_to_feedback_directories: 5cc9fd9300fa81c7413035e5adea4094
@@ -1805,7 +1802,6 @@ checksums:
     workspace/analysis/charts/no_data_returned: 73949b8732604b9e2d22d046cc4a6ef9
     workspace/analysis/charts/no_data_returned_for_chart: b9ff6c85697c683f40b3d0c05eeb2046
     workspace/analysis/charts/no_data_source_available: 0b247d065eaf2d0fc1c8ec558eebfba6
-    workspace/analysis/charts/no_fields_found: 084d71950d12a793edad8dbede5328ea
     workspace/analysis/charts/no_grouping: e3a6943e61407600cae057e0833a482d
     workspace/analysis/charts/no_valid_data_to_display: d1ba2b0686520c0a2c62ee73daa1c9c9
     workspace/analysis/charts/no_values_found: c86fa6b3d7f7e255525cd2f9330a9295
@@ -1814,7 +1810,6 @@ checksums:
     workspace/analysis/charts/not_equals: 427715f1ea349965c36f5c628784eb08
     workspace/analysis/charts/open_chart: 729a54bbc4bcb3f431865af5e5a50dd4
     workspace/analysis/charts/open_options: 2c6a35fec9b9d008e41728594bcd07d7
-    workspace/analysis/charts/or_filter_logic: 0208d355f231c386b19390f0bea41b95
     workspace/analysis/charts/pie_display: eb53ad78765ddc4050d898a70f2fac68
     workspace/analysis/charts/pie_display_breakdown: 5a072a1240ff9b5d8246af085ef92192
     workspace/analysis/charts/pie_display_pie: 077915149770d6fb8bc73d743db4e901
@@ -1825,12 +1820,10 @@ checksums:
     workspace/analysis/charts/save_and_add_to_dashboard: a76ed91c62dae10c5f8a9d48cbacd566
     workspace/analysis/charts/save_chart: 5ca3a2c850277cf4bcd24cc986fa0ea4
     workspace/analysis/charts/save_chart_dialog_title: 2e4505f7bf3d1c35b0b37b1e9d3dc566
-    workspace/analysis/charts/search_field: 8585baa2984e1d037e2d83815f0df1b6
     workspace/analysis/charts/search_value: c92a85848cc34ea1717daee8d9a34c86
     workspace/analysis/charts/select_data_source: 983394bc0182b65ec68f713a46b97302
     workspace/analysis/charts/select_data_source_first: 82a02846de9d6351595c97a0929f3b9a
     workspace/analysis/charts/select_dimensions: 6d0d038d027ef9e641bf9b7700edac9f
-    workspace/analysis/charts/select_field: 45665a44f7d5707506364f17f28db3bf
     workspace/analysis/charts/select_measures: c9f101aeb53bf0d4abdd652aaf60a1bf
     workspace/analysis/charts/select_preset: e68bad9a209a6ca35c62184f1f1d829c
     workspace/analysis/charts/select_value: 7fe6a83a7205ac6f1b891c7c3dbf250d

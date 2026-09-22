@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { TConnector } from "@formbricks/types/surveys/logic";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 
@@ -43,4 +44,10 @@ export interface TConditionsEditorConfig<T extends TGenericCondition = TGenericC
   getValueProps: (condition: T) => TConditionValueProps;
   getDefaultOperator: () => string;
   formatLeftOperandValue: (condition: T) => string;
+  /**
+   * Renders the right-operand control for a condition when the default combobox does not fit —
+   * a date picker, or a pick-list fetched per data source. Return `undefined` to fall back to the
+   * combobox described by `getValueProps`, `null` to render nothing (a valueless operator).
+   */
+  renderValueInput?: (condition: T) => ReactNode | undefined;
 }

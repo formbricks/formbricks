@@ -25,9 +25,9 @@ export function FilterDateInput({ value, onChange }: Readonly<FilterDateInputPro
     <DatePicker
       value={selectedDate}
       locale={i18n.resolvedLanguage ?? i18n.language ?? "en-US"}
-      // The wrapper is the flex item in the filter row, so the sizing belongs there; the trigger
-      // only has to stop insisting on its own 280px.
-      className="min-w-0 flex-1 basis-36"
+      // Fills its cell in the conditions editor row; the trigger only has to stop insisting on its
+      // own 280px.
+      className="w-full min-w-0"
       triggerClassName="w-full"
       onChange={(date) => onChange(formatLocalDay(date))}
     />
