@@ -394,20 +394,24 @@ export const SurveyMenuBar = ({
           const savedData = updatedSurveyResponse.data;
 
           // The server deletes a private segment when a survey switches from app to link, so the
-          // working copy has to take that back or it publishes a segment that is gone. The Embedded
-          // Data keys need no such adoption: `hasUnsavedSurveyChanges` normalizes them on both
-          // sides, which settles the dirty check without re-rendering the editor at all.
+          // working copy has to take that back. Skipping it is not a cosmetic loss: the stale id
+          // goes back out on the next save, `assertSurveySegmentBelongsToWorkspace` throws
+          // `ResourceNotFoundError`, and the catch below swallows it — so this block never runs
+          // again and the editor cannot be saved or published until the page is reloaded.
           //
-          // Through the updater rather than against `localSurveyRef` (ENG-3266): the answer
-          // describes the payload from before an edit the author may have made while it was in
-          // flight, and dropping that edit would be worse than a stale segment. The ref cannot
-          // decide it — it is written in a passive effect, so it still names the sent object for as
-          // long as it takes React to flush one, a window the response can land in. `current` is
-          // the state itself, so the identity test is exact.
-          setLocalSurvey((current) => {
-            if (current !== currentSurvey || isDeepEqual(current.segment, savedData.segment)) return current;
-            return { ...current, segment: savedData.segment };
-          });
+          // Through the updater rather than against `localSurveyRef` (ENG-3266), which is written in
+          // a passive effect and so still names the sent object for as long as it takes React to
+          // flush one — a window the response can land in, where the ref would overwrite an edit the
+          // author made mid-flight. `current` is the state itself, so the spread carries that edit
+          // and replaces only the key the server owns.
+          //
+          // The Embedded Data keys need no such adoption: `hasUnsavedSurveyChanges` normalizes them
+          // on both sides, which settles the dirty check without re-rendering the editor at all.
+          setLocalSurvey((current) =>
+            isDeepEqual(current.segment, savedData.segment)
+              ? current
+              : { ...current, segment: savedData.segment }
+          );
 
           // Update surveyRef (not localSurvey state) to prevent re-renders during auto-save.
           // This keeps the UI stable while still tracking that changes have been saved.
