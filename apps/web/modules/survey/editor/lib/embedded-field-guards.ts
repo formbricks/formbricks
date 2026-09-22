@@ -14,6 +14,7 @@ import { type TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { RESERVED_FIELD_NAMES } from "@formbricks/types/reserved-field-names";
 import { isSafeIdentifier } from "@formbricks/types/safe-identifier";
+import { LINK_SURVEY_SYSTEM_PARAM_KEYS } from "@formbricks/types/surveys/validation";
 import { declaredEmbeddedFieldName } from "@/modules/survey/editor/lib/embedded-fields";
 
 /**
@@ -21,13 +22,21 @@ import { declaredEmbeddedFieldName } from "@/modules/survey/editor/lib/embedded-
  *
  * `unsafeAddress` and `reservedAddress` are independent, not a severity ladder: `utm-campaign` is an
  * illegal identifier that is not reserved, `country` is a legal identifier that is, and a row can
- * carry both. `clashingAddress` is the ENG-3121 pair — a computed and an ingested field that resolve
+ * carry both.
+ *
+ * `systemParamAddress` is the *other* reserved set, and it is the one that actually costs the author
+ * something. `validateId`'s strict path refuses both (`validation.ts`), but the two behave nothing
+ * alike on a survey that already holds the name: a `country` field keeps being filled and wins inside
+ * its own survey, while a field declared exactly `lang` is one `getRefusalReason` refuses outright —
+ * "can never fill a hidden field of that name" — so it stays empty for good. Warning about `country`
+ * and not about `lang` would have been exactly backwards. `clashingAddress` is the ENG-3121 pair — a computed and an ingested field that resolve
  * to the same name, which the legacy two-column world allowed because the two had separate
  * namespaces and the merged one no longer does.
  */
 export type TEmbeddedFieldWarning =
   | "unsafeAddress"
   | "reservedAddress"
+  | "systemParamAddress"
   | "clashingAddress"
   | "lockedWithoutDefault";
 
@@ -46,8 +55,10 @@ export const embeddedFieldKey = ({ field, link }: TLinkedEmbeddedField): string 
  * stored out there). `declaredEmbeddedFieldName` is the one that resolves to the string each source
  * is addressed by, and it is what the server's guard compares too.
  *
- * A linked library field is checked all the same, and in practice never warns: `ZEmbeddedData`
- * refuses a reserved or malformed key at creation, so a shared row cannot carry a legacy address.
+ * A linked library field is checked all the same, and usually has nothing to say: `ZEmbeddedData`
+ * refuses a reserved or malformed *key* at creation. It can still warn, though — promote keeps the
+ * survey's existing `storageKey`, and an ingested field is declared by that, so a grandfathered
+ * `utm-campaign` promoted under the key `utm_campaign` stays a shared row with a legacy address.
  */
 export const embeddedFieldWarnings = (
   fields: TLinkedEmbeddedField[]
@@ -64,6 +75,10 @@ export const embeddedFieldWarnings = (
 
     if (!isSafeIdentifier(declaredNames[index])) rowWarnings.push("unsafeAddress");
     if (RESERVED_FIELD_NAMES.has(normalizedName)) rowWarnings.push("reservedAddress");
+    // The RAW name, not the folded one, and deliberately: `getRefusalReason` refuses a fill only
+    // when the *declared* id is in this set exactly, so `Lang` is still filled by `?Lang=` while
+    // `lang` can never be filled at all. Folding here would warn about a field that works.
+    if (LINK_SURVEY_SYSTEM_PARAM_KEYS.has(declaredNames[index])) rowWarnings.push("systemParamAddress");
     if (normalizedNames.some((other, otherIndex) => otherIndex !== index && other === normalizedName)) {
       rowWarnings.push("clashingAddress");
     }

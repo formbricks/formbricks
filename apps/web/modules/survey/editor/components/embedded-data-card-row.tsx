@@ -15,7 +15,7 @@ import { EMBEDDED_FIELD_ICON_BY_DATA_TYPE } from "@/modules/embedded-data/lib/fi
 import { FieldSourceIcon } from "@/modules/embedded-data/settings/components/field-source-icon";
 import { getDataTypeLabel, getSourceLabel } from "@/modules/embedded-data/settings/lib/field-labels";
 import { type TEmbeddedFieldWarning } from "@/modules/survey/editor/lib/embedded-field-guards";
-import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { Alert } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import {
   DropdownMenu,
@@ -79,6 +79,8 @@ export const EmbeddedDataCardRow = ({
         return t("workspace.embedded_data.warning_unsafe_address");
       case "reservedAddress":
         return t("workspace.embedded_data.warning_reserved_address");
+      case "systemParamAddress":
+        return t("workspace.embedded_data.warning_system_param_address");
       case "clashingAddress":
         return t("workspace.embedded_data.warning_clashing_address");
       case "lockedWithoutDefault":
@@ -133,20 +135,23 @@ export const EmbeddedDataCardRow = ({
           <IdBadge id={link.storageKey} showCopyIconOnHover={true} />
         </div>
 
-        {/* Already on screen when the card opens, so `status` rather than the assertive default. */}
+        {/* Already on screen when the card opens, so `status` rather than the assertive default.
+            Rendered as a plain child of `Alert`, not through `AlertDescription`: at `size="small"`
+            that component carries `truncate`, which forces each sentence onto one line and clips it
+            — and these sentences are the whole point of the row. */}
         {warnings.length > 0 && (
           <Alert variant="warning" size="small" role="status" data-testid="embedded-field-warning">
-            <AlertDescription className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-0.5">
               {warnings.map((warning) => (
                 <span key={warning}>{describeWarning(warning)}</span>
               ))}
-            </AlertDescription>
+            </div>
           </Alert>
         )}
       </div>
 
       <DropdownMenu>
-        <DropdownMenuTrigger className="cursor-pointer rounded-lg border border-slate-200 bg-white p-2 hover:bg-slate-50">
+        <DropdownMenuTrigger className="flex size-9 cursor-pointer items-center justify-center rounded-lg bg-white hover:bg-slate-100">
           {/* Names the field, so a screen reader hears which row's menu this opens. */}
           <span className="sr-only">{`${t("workspace.surveys.open_options")} – ${field.name}`}</span>
           <MoreVertical className="size-4" aria-hidden="true" />
