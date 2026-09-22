@@ -57,17 +57,30 @@ export const PreviewSurvey = ({
   isSpamProtectionAllowed,
   publicDomain,
 }: PreviewSurveyProps) => {
-  // ENG-1837: the preview is an authoring surface — the Variables and Hidden Fields cards are the
-  // live source of truth, and the saved EmbeddedData rows only catch up on save. Overriding the
-  // inlined definitions with the card-derived ones is what makes a rename or a new field show up in
-  // the preview's recall and logic on the next render, without a reload.
+  /**
+   * ENG-2628: the editor's working copy is rows-native, so a survey that comes from the editor
+   * already carries the definitions its cards declare and this passes them straight through.
+   *
+   * The derive stays as the fallback for the other caller, the templates gallery, which renders
+   * `getMinimalSurvey()` merged with a preset. That survey exists only in memory and has never been
+   * through a write path, so nothing has ever reconciled rows for it — without this it would preview
+   * with no recall and no logic operands.
+   *
+   * **Nullish, not empty** — deliberately unlike the read seam (`lib/embedded-data/survey-fields.ts`),
+   * which treats zero rows as "not reconciled yet". Here an empty list is an answer: an author who
+   * deletes every field in the editor leaves `embeddedFields: []` beside mount-time legacy columns
+   * that still name them, and falling back on emptiness would preview the fields they just removed.
+   * A survey that has never been written omits the key entirely, which is what selects the derive.
+   */
   const previewSurvey = useMemo(
     () => ({
       ...survey,
-      embeddedFields: getDeclaredEmbeddedFields({
-        variables: survey.variables,
-        hiddenFields: survey.hiddenFields,
-      }),
+      embeddedFields:
+        survey.embeddedFields ??
+        getDeclaredEmbeddedFields({
+          variables: survey.variables,
+          hiddenFields: survey.hiddenFields,
+        }),
     }),
     [survey]
   );

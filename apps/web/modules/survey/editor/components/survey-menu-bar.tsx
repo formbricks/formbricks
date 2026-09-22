@@ -173,6 +173,28 @@ export const SurveyMenuBar = ({
     draftPrimaryLabel = t("workspace.surveys.edit.save_and_close");
   }
 
+  /**
+   * **What every payload below sends for Embedded Data (ENG-2628).**
+   *
+   * `localSurvey.embeddedFields` is the editor's Embedded Data state — the Variables and Hidden
+   * Fields cards write it — and on the wire it is the COMPLETE desired set for both sources. The
+   * server derives `variables` / `hiddenFields` back off it (`toLegacyEmbeddedFields`) and writes
+   * the rows from it, so the two legacy keys travelling in the same payload are ignored: they are
+   * forwarded exactly as they arrived at mount, and nothing here recomputes them. Deriving them
+   * client-side too would give one survey two descriptions that can disagree, which is the failure
+   * this ticket removed.
+   *
+   * There is nothing to spell out at each call site: spreading `localSurvey` carries all three keys.
+   *
+   * The save return does not always replace the working copy, and the dirty check is what closes
+   * that gap. `handleSurveySave` / `handleSurveySaveDraft` both `setLocalSurvey(response)`, so there
+   * the freshly written rows — with their `id`, `key`, `locked` and minted storage keys — land back
+   * in state. The interval auto-save below deliberately does **not**: it updates its refs only, to
+   * avoid re-rendering the editor while the author is typing. So the working copy legitimately keeps
+   * a card-built row with no `id` and the mount-time legacy columns, and `hasUnsavedSurveyChanges`
+   * normalizes all three away before comparing (`editor/lib/unsaved-changes.ts`). Without that
+   * normalization a `isDeepEqual` fails on the key count alone and the auto-save never stops.
+   */
   const getDraftSurveyToPersist = (draftSurvey: TSurvey, segment: TSegment | null): TSurveyDraft => ({
     ...draftSurvey,
     closeOn: draftSurvey.publishOn ? null : draftSurvey.closeOn,

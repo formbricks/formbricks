@@ -1027,13 +1027,11 @@ export const dropShadowedReservedEntries = (
  * {@link listMidSurveyReservedEntries} expect: every name a survey's own definitions already own in
  * the read namespace.
  *
- * Takes resolved fields rather than a survey because the two kinds of caller legitimately read
- * different definitions of "declared", and hiding that choice inside here would make one of them
- * silently wrong: the **editor** must derive from the working copy
- * ({@link getDeclaredEmbeddedFields}), whose rows are stale from the first card edit until the next
- * save, while every **runtime** reader holds a saved survey and must use the rows
- * ({@link getSurveyEmbeddedFields}). Passing the fields in keeps that decision at the call site,
- * where it is visible.
+ * Takes resolved fields rather than a survey so the choice of which read a caller makes stays at the
+ * call site, where it is visible. Every caller now passes {@link getSurveyEmbeddedFields} — the
+ * editor included, since ENG-2628 made its working copy rows-native — and the one remaining reason
+ * to pass anything else is a survey that has never been written and therefore has no rows at all
+ * (see {@link getDeclaredEmbeddedFields}).
  *
  * What is *not* the caller's choice is which kinds count. All three do, and the doc for
  * {@link dropShadowedReservedEntries} says why element ids are the easy one to forget.
@@ -1213,9 +1211,10 @@ export interface TEmbeddedFieldsSurvey extends TLegacyEmbeddedFields {
 }
 
 /**
- * **Where a saved survey's Embedded Data definitions come from.** Every reader outside the editor —
- * recall, logic, export columns, response filters, response tables, emails, integrations — calls
- * this and nothing else. Its counterpart is {@link getDeclaredEmbeddedFields}; between the two, no
+ * **Where a saved survey's Embedded Data definitions come from.** Every reader — recall, logic,
+ * export columns, response filters, response tables, emails, integrations, and since ENG-2628 the
+ * editor's own cards and pickers — calls this and nothing else. Its counterpart is
+ * {@link getDeclaredEmbeddedFields}, which answers for surveys that were never written; between the two, no
  * reader may call {@link deriveLegacyEmbeddedData} directly, which is what keeps "exactly two named
  * decisions, and no third" a property a reviewer can check with grep.
  *
@@ -1256,43 +1255,27 @@ export const getIngestedStorageKeys = (survey: TEmbeddedFieldsSurvey): string[] 
  * {@link deriveLegacyEmbeddedData} directly, so "which of two named decisions does this reader
  * make" stays a property a reviewer can check with grep.
  *
- * Two groups of callers need this rather than the stored rows:
+ * **One caller is left, and it is not the editor** (ENG-2628). The editor's working copy used to be
+ * the legacy columns, so every editor surface derived from them to see a card edit before the next
+ * save; now the cards edit `embeddedFields` itself and every one of those surfaces reads the rows
+ * like everybody else. Recall labelling went with them, for the same reason: the picker that writes
+ * `@label` into the text and the resolver that reads it back share one list again.
  *
- * 1. **The editor.** Its working copy is cloned from the server survey at mount and never
- *    re-fetched, while the rows are only written on save — so an inlined `embeddedFields` is stale
- *    from the first card edit until the next save. Deriving is what makes a rename or a newly added
- *    field show up in the pickers, the logic builder, the calculate widget, the follow-up recipient
- *    list and the preview on the next render. Note this cannot be fixed by reshaping the working
- *    copy instead: it is compared against the server survey with a key-count-sensitive deep equal
- *    to gate the draft auto-save, the discard-changes dialog and the beforeunload prompt, and a
- *    save round-trip puts the server's shape back anyway.
- * 2. **Recall labelling** (`apps/web/lib/utils/recall.ts`). A recall token's label is authoring
- *    syntax: the picker writes `@label` into the text and the label resolver reads it back, so the
- *    two must agree on the same instant's definitions or the round-trip desyncs — a field added
- *    since the last save would render as a raw `#recall:…#` token, and a renamed one would stop
- *    matching. The same functions also label saved surveys for exports and summaries, where this is
- *    a no-op — a saved survey's rows and declarations agree element for element, because every write
- *    path that persists those columns calls `reconcileEmbeddedData` in the same transaction with the
- *    same payload it wrote them from (ENG-2412 moved that call onto the payload; before it, onto the
- *    row just written). There are exactly four: `updateSurveyInternal` and `createSurvey`
- *    (apps/web/lib/survey/service.ts), the copy flow (modules/survey/list/lib/survey.ts) and the v3
- *    patch (app/api/v3/surveys/patch.ts) — a `reconcileEmbeddedData(` grep is the audit, and a fifth
- *    write that skips it reintroduces the divergence. They can also diverge once a shared library definition can be renamed independently
- *    of the survey (ENG-1851), which is when the unified picker (ENG-1853) moves recall and the
- *    pickers onto the tables together.
+ * What remains is the **preview of a survey that has never been written** — the templates gallery
+ * renders a preset merged into `getMinimalSurvey()`, which carries no `embeddedFields` key at all.
+ * Nothing has reconciled rows for it, so `PreviewSurvey` falls back to this to give it recall and
+ * logic operands. (`template-container.tsx` and the editor are the only two `PreviewSurvey` call
+ * sites; the editor's survey comes through `selectSurvey` and takes the rows.) A survey that
+ * HAS been written never needs it: every write path that persists those columns calls
+ * `reconcileEmbeddedData` in the same transaction with the same payload it wrote them from
+ * (ENG-2412 moved that call onto the payload; before it, onto the row just written). There are
+ * exactly four: `updateSurveyInternal` and `createSurvey` (apps/web/lib/survey/service.ts), the copy
+ * flow (modules/survey/list/lib/survey.ts) and the v3 patch (app/api/v3/surveys/patch.ts) — a
+ * `reconcileEmbeddedData(` grep is the audit, and a fifth write that skips it would reintroduce the
+ * divergence.
  */
 // Takes the same survey slice as {@link getSurveyEmbeddedFields}, not the narrower legacy one, so a
 // caller holding a full survey can pass it and the "ignores the stored rows" contract is visible in
 // the signature rather than enforced by which keys happen to be omitted at the call site.
 export const getDeclaredEmbeddedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
   deriveLegacyEmbeddedData(survey);
-
-/** The computed (ex-variable) fields a survey declares right now. */
-export const getDeclaredComputedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
-  getDeclaredEmbeddedFields(survey).filter(({ field }) => field.source === "computed");
-
-/** The storage keys of the ingested (ex-hidden) fields a survey declares right now. */
-export const getDeclaredIngestedStorageKeys = (survey: TEmbeddedFieldsSurvey): string[] =>
-  getDeclaredEmbeddedFields(survey)
-    .filter(({ field }) => field.source === "ingested")
-    .map(({ link }) => link.storageKey);

@@ -6,9 +6,15 @@ import React, { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { getIngestedStorageKeys, getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { validateId } from "@formbricks/types/surveys/validation";
+import {
+  removeEmbeddedField,
+  toCardVariables,
+  upsertCardVariable,
+} from "@/modules/survey/editor/lib/embedded-fields";
 import { findVariableUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
 import { getValidateIdErrorMessage } from "@/modules/survey/editor/lib/validation";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -54,12 +60,15 @@ export const SurveyVariablesCardItem = ({
   const isNameError = !!errors.name?.message;
   const variableType = form.watch("type");
 
+  // ENG-2628: the card edits the survey's Embedded Data rows. `upsertCardVariable` merges into the
+  // existing row rather than replacing it, so a rename or a retype cannot drop the `id`, `key` and
+  // `locked` this form has no word for.
   const editSurveyVariable = useCallback(
     (data: TSurveyVariable) => {
-      setLocalSurvey((prevSurvey) => {
-        const updatedVariables = prevSurvey.variables.map((v) => (v.id === data.id ? data : v));
-        return { ...prevSurvey, variables: updatedVariables };
-      });
+      setLocalSurvey((prevSurvey) => ({
+        ...prevSurvey,
+        embeddedFields: upsertCardVariable(getSurveyEmbeddedFields(prevSurvey), data),
+      }));
     },
     [setLocalSurvey]
   );
@@ -67,7 +76,7 @@ export const SurveyVariablesCardItem = ({
   const createSurveyVariable = (data: TSurveyVariable) => {
     setLocalSurvey({
       ...localSurvey,
-      variables: [...localSurvey.variables, data],
+      embeddedFields: upsertCardVariable(getSurveyEmbeddedFields(localSurvey), data),
     });
     form.reset({
       id: createId(),
@@ -131,10 +140,14 @@ export const SurveyVariablesCardItem = ({
       return;
     }
 
-    setLocalSurvey((prevSurvey) => {
-      const updatedVariables = prevSurvey.variables.filter((v) => v.id !== variableToDelete.id);
-      return { ...prevSurvey, variables: updatedVariables };
-    });
+    setLocalSurvey((prevSurvey) => ({
+      ...prevSurvey,
+      embeddedFields: removeEmbeddedField(
+        getSurveyEmbeddedFields(prevSurvey),
+        "computed",
+        variableToDelete.id
+      ),
+    }));
   };
 
   if (mode === "edit" && !variable) {
@@ -189,15 +202,16 @@ export const SurveyVariablesCardItem = ({
                       return getValidateIdErrorMessage(validateIdError, "variable", t);
                     }
                   }
-                  if (mode === "create" && localSurvey.variables.find((v) => v.name === value)) {
+                  const declaredVariables = toCardVariables(getSurveyEmbeddedFields(localSurvey));
+                  if (mode === "create" && declaredVariables.some((v) => v.name === value)) {
                     return t("workspace.surveys.edit.variable_name_is_already_taken_please_choose_another");
                   }
                   if (mode === "edit" && variable && variable.name !== value) {
-                    if (localSurvey.variables.find((v) => v.name === value)) {
+                    if (declaredVariables.some((v) => v.name === value)) {
                       return t("workspace.surveys.edit.variable_name_is_already_taken_please_choose_another");
                     }
                   }
-                  const hiddenFieldIds = localSurvey.hiddenFields?.fieldIds ?? [];
+                  const hiddenFieldIds = getIngestedStorageKeys(localSurvey);
                   if (hiddenFieldIds.some((id) => id.toLowerCase() === value.toLowerCase())) {
                     return t("workspace.surveys.edit.variable_name_conflicts_with_hidden_field");
                   }

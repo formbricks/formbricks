@@ -14,9 +14,7 @@ import {
   findComputedEmbeddedField,
   getComputedEmbeddedFields,
   getComputedFieldDataType,
-  getDeclaredComputedFields,
   getDeclaredEmbeddedFields,
-  getDeclaredIngestedStorageKeys,
   getIngestedEmbeddedFields,
   getIngestedStorageKeys,
   getLogicVariableValue,
@@ -1596,17 +1594,12 @@ describe("getDeclaredEmbeddedFields", () => {
   ];
 
   test("ignores the stored rows and answers from the declarations", () => {
-    // The editor's working copy carries the rows as of the last save, so a rename or a newly added
-    // field is only visible through this accessor.
+    // What a survey that has never been written holds: a preset merged into `getMinimalSurvey()`
+    // declares its fields in the legacy columns and has no rows for anyone to read.
     expect(getDeclaredEmbeddedFields({ ...legacySurvey, embeddedFields: staleRows })).toStrictEqual(
       deriveLegacyEmbeddedData(legacySurvey)
     );
     expect(getSurveyEmbeddedFields({ ...legacySurvey, embeddedFields: staleRows })).toStrictEqual(staleRows);
-  });
-
-  test("partitions the declarations the same way the stored accessor does", () => {
-    expect(getDeclaredComputedFields(legacySurvey).map(({ field }) => field.name)).toStrictEqual(["score"]);
-    expect(getDeclaredIngestedStorageKeys(legacySurvey)).toStrictEqual(["source_page"]);
   });
 
   test("still answers from the declarations when the rows are a superset", () => {
@@ -1631,7 +1624,11 @@ describe("getDeclaredEmbeddedFields", () => {
       ],
     };
 
-    expect(getDeclaredIngestedStorageKeys(withExtraRow)).toStrictEqual(["source_page"]);
+    const declaredIngested = getDeclaredEmbeddedFields(withExtraRow)
+      .filter(({ field }) => field.source === "ingested")
+      .map(({ link }) => link.storageKey);
+
+    expect(declaredIngested).toStrictEqual(["source_page"]);
     expect(getIngestedStorageKeys(withExtraRow)).toStrictEqual(["source_page", "removed"]);
   });
 });
