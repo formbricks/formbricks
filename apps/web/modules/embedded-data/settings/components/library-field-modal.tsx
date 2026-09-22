@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createId } from "@paralleldrive/cuid2";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -55,6 +55,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
+import { getDataTypeLabel, getSourceLabel } from "../lib/field-labels";
 import {
   formatDefaultValueDraft,
   getAuthorableSources,
@@ -63,7 +64,7 @@ import {
   narrowDataTypeToSource,
   parseDefaultValueDraft,
 } from "../lib/library-field";
-import { getDataTypeLabel, getSourceIcon, getSourceLabel } from "./field-labels";
+import { FieldSourceIcon } from "./field-source-icon";
 
 /**
  * Create and edit in one component, because the two dialogs differ only in what is fixed.
@@ -215,10 +216,36 @@ export const LibraryFieldModal = ({
     }
   };
 
+  /**
+   * Narrowing on a source switch is reversible, unlike the author retyping the field themselves.
+   *
+   * `narrowDataTypeToSource` keeps the current type whenever the new source still allows it, so
+   * only the narrowing case moves anything — and that case is the one the author did not ask for.
+   * Without the snapshot, Passed-in/Date/a default → Calculated → back to Passed-in left a Text
+   * field with no default: the type had been narrowed to `string` on the way out, and coming back
+   * `string` is still allowed, so nothing restored it.
+   */
+  const narrowedAway = useRef<{ dataType: TEmbeddedDataType; defaultValue: string } | null>(null);
+
   const handleSourceChange = (value: string) => {
     const nextSource = ZEmbeddedDataSource.parse(value);
     form.setValue("source", nextSource, { shouldValidate: true, shouldDirty: true });
-    handleDataTypeChange(narrowDataTypeToSource(form.getValues("dataType"), nextSource));
+
+    const current = form.getValues("dataType");
+    const restored = narrowedAway.current;
+    const wanted =
+      restored !== null && getDataTypesForSource(nextSource).includes(restored.dataType)
+        ? restored.dataType
+        : current;
+    const narrowed = narrowDataTypeToSource(wanted, nextSource);
+
+    narrowedAway.current =
+      narrowed === wanted ? null : { dataType: wanted, defaultValue: form.getValues("defaultValue") };
+
+    handleDataTypeChange(narrowed);
+    if (narrowed === restored?.dataType) {
+      form.setValue("defaultValue", restored.defaultValue, { shouldValidate: true, shouldDirty: true });
+    }
     if (!isLockableSource(nextSource)) {
       form.setValue("locked", false, { shouldValidate: true, shouldDirty: true });
     }
@@ -283,6 +310,13 @@ export const LibraryFieldModal = ({
     // read as the old type. Nothing is destroyed by going ahead, so the author is shown what it
     // affects and the same edit is re-sent with the acknowledgement.
     if (result.status === "inUse") {
+      // Only an edit can be retried with the acknowledgement — there is nothing to acknowledge on a
+      // create, and the confirmation below renders only for an existing field. Without this arm a
+      // create that ever returned this status would hide the form and show nothing in its place.
+      if (!isEdit) {
+        toast.error(result.message || t("common.something_went_wrong_please_try_again"));
+        return;
+      }
       setPendingTypeChange({ draft, surveyCount: result.usage.length });
       return;
     }
@@ -436,7 +470,7 @@ export const LibraryFieldModal = ({
                     <div className="flex flex-col gap-2">
                       <Label>{t("workspace.embedded_data.value_source")}</Label>
                       <div className="flex items-center gap-2 text-slate-500">
-                        {getSourceIcon(field.source, "size-4")}
+                        <FieldSourceIcon source={field.source} />
                         <Badge text={getSourceLabel(field.source, t)} type="gray" size="tiny" />
                       </div>
                       <p className="text-xs text-slate-500">
@@ -467,7 +501,7 @@ export const LibraryFieldModal = ({
                                     id={`embedded-data-source-${authorableSource}`}
                                   />
                                   <span className="flex items-center gap-2 text-sm font-medium text-slate-800">
-                                    {getSourceIcon(authorableSource, "size-4")}
+                                    <FieldSourceIcon source={authorableSource} />
                                     {getSourceLabel(authorableSource, t)}
                                   </span>
                                 </label>
@@ -570,9 +604,16 @@ export const LibraryFieldModal = ({
       {pendingTypeChange && field && (
         <ConfirmationModal
           open={true}
+          // Dismissal is refused once the retry is in flight. `submitWrite` resolves regardless of
+          // this dialog, so a Cancel that only cleared `pendingTypeChange` returned the author to
+          // the form while the write went on to succeed, toast and close the dialog under them —
+          // the one outcome they had just declined. Closing the door is the honest fix: the confirm
+          // button already shows its loading state, and the write is short.
           setOpen={(value) => {
-            if (value === false) setPendingTypeChange(null);
+            if (value === false && !isConfirming) setPendingTypeChange(null);
           }}
+          closeOnOutsideClick={!isConfirming}
+          hideCloseButton={isConfirming}
           title={t("workspace.embedded_data.type_change_title", {
             name: field.name,
             from: getDataTypeLabel(field.dataType, t),

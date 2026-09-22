@@ -40,10 +40,16 @@ describe("getReservedFieldLabel", () => {
   });
 
   test("every catalog entry a mid-survey picker can offer has a localized key", () => {
-    // The pickers filter on `availability !== "server"`, so this is exactly the set ENG-1853 renders.
-    // A new client-available entry added without a key here would read in English in every locale —
-    // the `default` arm is a last resort, and this test is what makes shipping one a deliberate act.
-    const offerable = RESERVED_FIELD_CATALOG.filter((entry) => entry.availability !== "server");
+    // A new entry either surface can reach, added without a key here, would read in English in every
+    // locale — the `default` arm is a last resort, and this test is what makes shipping one a
+    // deliberate act.
+    const offerable = RESERVED_FIELD_CATALOG.filter(
+      // Both readers' axes: the mid-survey pickers offer `availability !== "server"`, the
+      // workspace settings page lists `display !== "none"`. Filtering on one left five entries
+      // that are already on screen — country, browser, os, deviceType, ipAddress — outside the
+      // only test that checks a label exists for them.
+      (entry) => entry.availability !== "server" || entry.display !== "none"
+    );
 
     expect(offerable.length).toBeGreaterThan(0);
     for (const entry of offerable) {

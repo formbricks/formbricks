@@ -95,10 +95,12 @@ describe("formatDefaultValueDraft", () => {
 });
 
 describe("getUsageLabel", () => {
-  test("distinguishes unused, one survey and several", () => {
+  test("separates unused from used, and forwards the count for the plural to resolve", () => {
+    // One `used` branch on purpose: the plural category is ICU's to pick per locale, not this
+    // function's. A `single` branch here would have hard-coded English's rule into every language.
     expect(getUsageLabel(0)).toEqual({ kind: "unused" });
-    expect(getUsageLabel(1)).toEqual({ kind: "single" });
-    expect(getUsageLabel(3)).toEqual({ kind: "multiple", count: 3 });
+    expect(getUsageLabel(1)).toEqual({ kind: "used", count: 1 });
+    expect(getUsageLabel(3)).toEqual({ kind: "used", count: 3 });
   });
 
   test("treats a negative count as unused rather than rendering it", () => {

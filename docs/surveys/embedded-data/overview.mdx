@@ -29,7 +29,7 @@ Every Embedded Data field has exactly one source, and the source decides who is 
 
 | Source       | Written by                                   | Called this in the editor | Types today                           |
 | ------------ | -------------------------------------------- | ------------------------- | ------------------------------------- |
-| **Ingested** | the outside world: URL params or the SDK     | Hidden Fields             | `string`                              |
+| **Ingested** | the outside world: URL params or the SDK     | Hidden Fields             | `string`, `number`, `boolean`, `date` |
 | **Computed** | the survey itself, through logic actions      | Variables                 | `string`, `number`                    |
 | **Reserved** | Formbricks, automatically, on every response | not authored at all       | `string`, `number`, `boolean`, `date` |
 
@@ -60,7 +60,12 @@ A field does not care which channel filled it. `plan` is declared the same way, 
 
 ## Declaring a Field
 
-An ingested or computed field has to exist on the survey before anything can fill it. Add it in the survey editor: **Hidden Fields** for ingested, **Variables** for computed. Reserved fields are never declared, they are always available.
+An ingested or computed field has to exist before anything can fill it, and there are two places to declare one:
+
+- **In the survey editor**, for a field only that survey uses: **Hidden Fields** for ingested, **Variables** for computed.
+- **In Settings → Workspace → Embedded Data**, for a field the whole workspace shares. A field declared there can be linked from any survey, and editing it once changes it for every survey using it. The same page lists which surveys use each field, and refuses to delete one that is still in use.
+
+Reserved fields are never declared, they are always available.
 
 A field's **name** is the key you use everywhere: in a URL parameter, in `setEmbeddedData()`, in recall tokens, in logic operands and as the export column header.
 
@@ -68,14 +73,14 @@ Field names follow one rule everywhere, and reserved names are refused for new f
 
 A field also carries a **type** that decides how its value is read back and compared. In this release:
 
-- **Hidden fields** are `string`. Anything you pass is stored as text.
+- **Hidden fields** declared in the survey editor are `string`. A shared field declared in workspace settings can be `string`, `number`, `boolean` or `date`, and incoming values are coerced to it.
 - **Variables** are text or number, and the initial value you set in the editor is the default the field falls back to.
 - **Reserved fields** are typed by Formbricks, and several of them are genuinely numeric: `viewportWidth < 768` is a numeric comparison in logic, not a comparison of digit strings.
 
 <Note>
-  Typing hidden fields (`number`, `boolean`, `date`), giving them a default, and locking a field so nothing
-  outside the survey can write it, are part of the Embedded Data manager and are not authorable yet. The
-  ingest rules below already honour all of them, so nothing changes for you when they arrive.
+  Typing a field, giving it a default, and **locking** it so nothing outside the survey can write it are set
+  on a shared field in Settings → Workspace → Embedded Data. A locked field ignores whatever a URL param or
+  the SDK sends and uses its default instead, which is how you fix a value nobody outside can change.
 </Note>
 
 ## What Happens to an Incoming Value
@@ -99,8 +104,9 @@ The same contract runs in the browser when the survey is displayed, and again on
     response stores, what an export column shows, and what a filter compares against; a `date` field accepts `2026-08-06` and full ISO 8601
     datetimes, stores ISO 8601, and reads a datetime with no zone as UTC rather than as the respondent's
     local time. A value that cannot be coerced is stored verbatim and flagged, so a bad parameter never
-    blocks a response. Today every hidden field is a `string`, and every scalar has a lossless text form, so
-    this step only starts doing visible work once fields can be typed.
+    blocks a response. A field left as `string` — every field declared in the survey editor — passes through
+    this step unchanged, since every scalar has a lossless text form; it does visible work on a shared field
+    that declares a narrower type.
   </Step>
 
   <Step title="Size limit">

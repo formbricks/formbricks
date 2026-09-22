@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { getSurveyStatusLabel } from "./field-labels";
+import { getSurveyStatusLabel } from "../lib/field-labels";
 
 interface DeleteFieldDialogProps {
   field: TSharedEmbeddedData;
