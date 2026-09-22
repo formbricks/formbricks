@@ -85,6 +85,20 @@ const validateSsoInviteToken = async (
 };
 
 /**
+ * ENG-2247: whether the fresh-instance exception — and nothing else — is what admits this sign-up, so
+ * the row it creates carries the single-use bootstrap marker.
+ *
+ * `isFirstUser` alone is not enough. Its caller's branch admits everyone once multi-org is on, where
+ * freshness is incidental rather than the grant, and marking there would make the second SSO account
+ * ever created collide on the unique index.
+ *
+ * A named function rather than an inline expression so `gateSsoProvisioning` stays inside the
+ * cognitive-complexity budget — the same reason `validateSsoInviteToken` sits outside it.
+ */
+const admitsAsBootstrapAdmin = (isFirstUser: boolean, isMultiOrgEnabled: boolean): boolean =>
+  isFirstUser && !isMultiOrgEnabled;
+
+/**
  * Gate for SSO just-in-time user provisioning — the orphan-safe, WRITE-FREE decision logic for the
  * Better Auth SSO sign-up flow (introduced by the NextAuth→Better Auth migration, ENG-1054).
  *
@@ -152,10 +166,7 @@ export const gateSsoProvisioning = async ({
       organizationId: null,
       assignToDefaultTeam: false,
       signupSource,
-      // ENG-2247: mark only when freshness is what admitted this sign-up. `isFirstUser` alone is not
-      // enough — with multi-org on this branch admits everyone, freshness is incidental, and marking
-      // there would make the second SSO account ever created collide on the unique index.
-      isBootstrapAdmin: isFirstUser && !isMultiOrgEnabled,
+      isBootstrapAdmin: admitsAsBootstrapAdmin(isFirstUser, isMultiOrgEnabled),
     };
   }
 
