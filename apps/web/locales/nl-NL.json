@@ -3198,7 +3198,7 @@
         "animated_background_option": "Geanimeerde achtergrond {number}",
         "animation": "Animatie",
         "anonymize_responses": "Antwoorden anonimiseren",
-        "anonymize_responses_description": "Stop met het opslaan van het IP-adres, land en apparaatgegevens van de respondent bij nieuwe antwoorden, en verwijder queryparameters uit vastgelegde pagina-URL's. Reeds verzamelde antwoorden worden niet gewijzigd.",
+        "anonymize_responses_description": "Stop met het opslaan van het IP-adres, land en apparaatgegevens van de respondent bij nieuwe reacties, en verwijder queryparameters uit vastgelegde pagina-URL's.",
         "any_is_true": "een is waar",
         "app_survey_description": "Sluit een enquête in uw web-app of website in om reacties te verzamelen.",
         "assign": "Toewijzen =",

@@ -3198,7 +3198,7 @@
         "animated_background_option": "Fundo animado {number}",
         "animation": "animação",
         "anonymize_responses": "Anonimizar respostas",
-        "anonymize_responses_description": "Parar de armazenar o endereço IP, país e detalhes do dispositivo do respondente em novas respostas, e remover parâmetros de consulta das URLs de página capturadas. As respostas já coletadas não são alteradas.",
+        "anonymize_responses_description": "Pare de armazenar o endereço IP, país e detalhes do dispositivo do respondente em novas respostas e remova parâmetros de consulta das URLs de página capturadas.",
         "any_is_true": "qualquer uma é verdadeira",
         "app_survey_description": "Embuta uma pesquisa no seu app ou site para coletar respostas.",
         "assign": "atribuir =",

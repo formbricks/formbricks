@@ -3198,7 +3198,7 @@
         "animated_background_option": "Animated background {number}",
         "animation": "Animation",
         "anonymize_responses": "Anonymize responses",
-        "anonymize_responses_description": "Stop storing the respondent’s IP address, country and device details on new responses, and remove query parameters from captured page URLs. Responses already collected are not changed.",
+        "anonymize_responses_description": "Stop storing the respondent’s IP address, country and device details on new responses, and remove query parameters from captured page URLs.",
         "any_is_true": "any is true",
         "app_survey_description": "Embed a survey in your web app or website to collect responses.",
         "assign": "Assign =",

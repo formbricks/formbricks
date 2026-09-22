@@ -3198,7 +3198,7 @@
         "animated_background_option": "アニメーション背景{number}",
         "animation": "アニメーション",
         "anonymize_responses": "回答を匿名化",
-        "anonymize_responses_description": "新しい回答から回答者のIPアドレス、国、デバイス情報の保存を停止し、キャプチャされたページURLからクエリパラメータを削除します。既に収集された回答は変更されません。",
+        "anonymize_responses_description": "新しい回答について回答者のIPアドレス、国、デバイス情報の保存を停止し、取得したページURLからクエリパラメータを削除します。",
         "any_is_true": "いずれかが真",
         "app_survey_description": "回答を収集するために、ウェブアプリまたはウェブサイトにアンケートを埋め込みます。",
         "assign": "割り当て =",
