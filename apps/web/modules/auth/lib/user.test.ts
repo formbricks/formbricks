@@ -13,6 +13,7 @@ const mockPrismaUser = {
   twoFactorSecret: "twoFactorSecret",
   backupCodes: "backupCodes",
   groupId: "groupId",
+  isBootstrapAdmin: null,
 };
 
 vi.mock("@formbricks/database", () => ({

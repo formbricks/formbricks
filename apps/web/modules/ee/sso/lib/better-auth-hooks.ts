@@ -288,6 +288,11 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
             // ZUserName — even for degenerate input (emoji-only name + symbol-only email local-part),
             // which would otherwise re-trigger the ENG-1743 error on the user's first profile save.
             name: (user.name && normalizeUserName(user.name)) || deriveNameFromEmail(user.email) || "User",
+            // ENG-2247: the fresh-instance bootstrap marker, when the gate above admitted this sign-up
+            // on that ground alone. `undefined` rather than `false` on every other path — the column
+            // rejects `false`, and transformInput drops an undefined field with no schema default, so
+            // the row is inserted with NULL exactly as it was before.
+            isBootstrapAdmin: decision.isBootstrapAdmin ? true : undefined,
           },
         };
       },

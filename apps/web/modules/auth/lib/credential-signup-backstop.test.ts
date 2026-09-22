@@ -2,12 +2,15 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { SIGNUP_DISABLED_ERROR_CODE } from "@formbricks/types/errors";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
-import { isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
+import { isBootstrapAdminSignup, isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { enforceCredentialSignupBackstop } from "./credential-signup-backstop";
 
 vi.mock("@/modules/auth/lib/signup-email-domain", () => ({ isSignupEmailDomainBlocked: vi.fn() }));
-vi.mock("@/modules/auth/lib/signup-request-context", () => ({ isSignupDomainAllowed: vi.fn() }));
+vi.mock("@/modules/auth/lib/signup-request-context", () => ({
+  isSignupDomainAllowed: vi.fn(),
+  isBootstrapAdminSignup: vi.fn(),
+}));
 vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsMultiOrgEnabled: vi.fn() }));
 
@@ -23,6 +26,7 @@ beforeEach(() => {
   constantsOverrides.SIGNUP_ENABLED = true;
   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
   vi.mocked(getIsFreshInstance).mockResolvedValue(false);
+  vi.mocked(isBootstrapAdminSignup).mockReturnValue(false);
 });
 
 /**
@@ -31,7 +35,12 @@ beforeEach(() => {
  * they describe now lives.
  *
  * The return values are Better Auth's hook contract, so they are asserted literally: `false` blocks the
- * insert silently, a throw blocks it with a surfaced error, `undefined` continues.
+ * insert silently, a throw blocks it with a surfaced error, `{ data }` merges into the inserted row,
+ * and `undefined` continues.
+ *
+ * ENG-2247 rides on that last distinction: `{ data: { isBootstrapAdmin: true } }` is what makes the
+ * fresh-instance exception single-use, so every case below pins whether the marker is stamped — an
+ * over-eager marker is an instance-wide sign-up outage, not a cosmetic difference.
  */
 describe("enforceCredentialSignupBackstop", () => {
   test("blocks a sign-up that bypassed the action (raw /sign-up/email) with a blocked domain", async () => {
@@ -77,13 +86,20 @@ describe("enforceCredentialSignupBackstop", () => {
       });
     });
 
-    test("still allows the first administrator during fresh-instance setup", async () => {
+    // ENG-2247: admitted, and marked — the marker is what stops a second concurrent sign-up from
+    // using the same exception, since only one row can carry it past the unique index.
+    test("still allows the first administrator during fresh-instance setup, and marks the row", async () => {
       vi.mocked(getIsFreshInstance).mockResolvedValue(true);
 
-      expect(await enforceCredentialSignupBackstop("admin@example.com")).toBeUndefined();
+      expect(await enforceCredentialSignupBackstop("admin@example.com")).toEqual({
+        data: { isBootstrapAdmin: true },
+      });
     });
 
-    test("still allows a sign-up when public signup is open", async () => {
+    // ENG-2247: admitted on a DIFFERENT ground, so it must NOT be marked. This is the Cloud case, where
+    // every sign-up takes this branch — marking here would make the second account ever created fail on
+    // the unique index.
+    test("still allows a sign-up when public signup is open, without marking it", async () => {
       constantsOverrides.SIGNUP_ENABLED = true;
       vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
 
@@ -94,6 +110,18 @@ describe("enforceCredentialSignupBackstop", () => {
       vi.mocked(isSignupDomainAllowed).mockReturnValue(true); // action marked the scope
 
       expect(await enforceCredentialSignupBackstop("user@example.com")).toBeUndefined();
+    });
+
+    // ENG-2247: the action decides WHY a sign-up was admitted and records it in the request scope; the
+    // hook is the only place that can reach the insert, so it stamps what the action decided. Without
+    // this the action path — the one the sign-up form uses — would never be marked at all.
+    test("marks an action-routed sign-up the action admitted as the first administrator", async () => {
+      vi.mocked(isSignupDomainAllowed).mockReturnValue(true);
+      vi.mocked(isBootstrapAdminSignup).mockReturnValue(true);
+
+      expect(await enforceCredentialSignupBackstop("admin@example.com")).toEqual({
+        data: { isBootstrapAdmin: true },
+      });
     });
   });
 });

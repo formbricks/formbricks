@@ -41,6 +41,11 @@ export type TSsoProvisioningDecision =
        * every other path, where the org was read here and the role is always `member`.
        */
       useDefaultOrganization?: boolean;
+      /**
+       * ENG-2247: the fresh-instance exception, and nothing else, admitted this sign-up — so the row it
+       * creates carries the single-use bootstrap marker. Absent on every other provision path.
+       */
+      isBootstrapAdmin?: boolean;
     };
 
 /**
@@ -142,7 +147,16 @@ export const gateSsoProvisioning = async ({
   // Fresh instance or multi-org: create the user with no org auto-assignment (handled by onboarding
   // / explicit invites elsewhere).
   if (isFirstUser || isMultiOrgEnabled) {
-    return { action: "provision", organizationId: null, assignToDefaultTeam: false, signupSource };
+    return {
+      action: "provision",
+      organizationId: null,
+      assignToDefaultTeam: false,
+      signupSource,
+      // ENG-2247: mark only when freshness is what admitted this sign-up. `isFirstUser` alone is not
+      // enough — with multi-org on this branch admits everyone, freshness is incidental, and marking
+      // there would make the second SSO account ever created collide on the unique index.
+      isBootstrapAdmin: isFirstUser && !isMultiOrgEnabled,
+    };
   }
 
   // Single-org, non-fresh — refuse to auto-provision into an arbitrary org without a default team.

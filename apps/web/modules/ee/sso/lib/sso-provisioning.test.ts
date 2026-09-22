@@ -97,20 +97,26 @@ beforeEach(() => {
 });
 
 describe("gateSsoProvisioning — bypass branches", () => {
-  test("fresh instance bypasses all gates and assigns no org", async () => {
+  // ENG-2247: fresh AND single-org, so freshness is what admits this sign-up — the row carries the
+  // single-use bootstrap marker, and a second concurrent SSO sign-up loses on the unique index.
+  test("fresh instance bypasses all gates, assigns no org, and marks the bootstrap admin", async () => {
     vi.mocked(getIsFreshInstance).mockResolvedValue(true);
     expect(await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "" })).toEqual({
       action: "provision",
+      isBootstrapAdmin: true,
       organizationId: null,
       assignToDefaultTeam: false,
       signupSource: "direct",
     });
   });
 
-  test("multi-org bypasses all gates and assigns no org", async () => {
+  // ENG-2247: multi-org admits everyone through this branch, so freshness is incidental and the marker
+  // must NOT be stamped — doing so would make the second SSO account ever created fail on the index.
+  test("multi-org bypasses all gates and assigns no org, without marking a bootstrap admin", async () => {
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
     expect(await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "" })).toEqual({
       action: "provision",
+      isBootstrapAdmin: false,
       organizationId: null,
       assignToDefaultTeam: false,
       signupSource: "direct",
@@ -315,6 +321,7 @@ describe("gateSsoProvisioning — personal email domain block (Cloud)", () => {
     vi.mocked(getIsFreshInstance).mockResolvedValue(true);
     expect(await gateSsoProvisioning({ email: blockedEmail, callbackUrl: "" })).toEqual({
       action: "provision",
+      isBootstrapAdmin: true,
       organizationId: null,
       assignToDefaultTeam: false,
       signupSource: "direct",
@@ -326,6 +333,7 @@ describe("gateSsoProvisioning — personal email domain block (Cloud)", () => {
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
     expect(await gateSsoProvisioning({ email: "person@acme-corp.com", callbackUrl: "" })).toEqual({
       action: "provision",
+      isBootstrapAdmin: false,
       organizationId: null,
       assignToDefaultTeam: false,
       signupSource: "direct",
