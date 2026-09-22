@@ -1155,6 +1155,68 @@ describe("listReadableFields", () => {
     ]);
   });
 
+  test("one Embedded Data group carries every source and dataType in the definitions' order", () => {
+    // ENG-1853: the pickers draw one group where they used to draw Variables and Hidden Fields, so
+    // this list is the group. A row's source and type decide its icon and its operators at the call
+    // site, but never which group it lands in, and the order is the definitions' own.
+    const fields = listReadableFields({
+      blocks: [],
+      embeddedData: [
+        { field: makeField({ name: "Plan tier" }), link: { storageKey: "plan" } },
+        {
+          field: makeField({ name: "Seats", source: "computed", dataType: "number", defaultValue: 0 }),
+          link: { storageKey: "seats" },
+        },
+        { field: makeField({ name: "Is trial", dataType: "boolean" }), link: { storageKey: "is_trial" } },
+        { field: makeField({ name: "Signed up", dataType: "date" }), link: { storageKey: "signed_up" } },
+      ],
+      reservedEntries: [],
+      contactAttributeKeys: [],
+    });
+
+    expect(fields.embeddedData).toEqual([
+      { key: "plan", label: "Plan tier" },
+      { key: "seats", label: "Seats" },
+      { key: "is_trial", label: "Is trial" },
+      { key: "signed_up", label: "Signed up" },
+    ]);
+  });
+
+  test("a shared field carries its library key as the secondary label, a survey-owned one does not", () => {
+    // The name is workspace-wide prose and the key is the identifier a URL parameter actually
+    // spells; the two are edited independently, so someone who knows only the key needs the key on
+    // the row to find the field at all. A local field has no library key and shows one string.
+    const fields = listReadableFields({
+      blocks: [],
+      embeddedData: [
+        { field: makeField({ name: "Plan tier", key: "plan_tier" }), link: { storageKey: "plan" } },
+        { field: makeField({ name: "Referrer", key: null }), link: { storageKey: "ref" } },
+      ],
+      reservedEntries: [],
+      contactAttributeKeys: [],
+    });
+
+    expect(fields.embeddedData).toEqual([
+      { key: "plan", label: "Plan tier", secondaryLabel: "plan_tier" },
+      { key: "ref", label: "Referrer" },
+    ]);
+    // Absent rather than null, so a consumer can test it with a plain truthiness check.
+    expect(fields.embeddedData[1].secondaryLabel).toBeUndefined();
+  });
+
+  test("the storage key labels a blank-named field and is never the secondary label", () => {
+    // Repeating the storage key under every local field's name would be noise on the common case,
+    // so the fallback is the label itself — one row, one string.
+    const fields = listReadableFields({
+      blocks: [],
+      embeddedData: [{ field: makeField({ name: "   " }), link: { storageKey: "plan" } }],
+      reservedEntries: [],
+      contactAttributeKeys: [],
+    });
+
+    expect(fields.embeddedData).toEqual([{ key: "plan", label: "plan" }]);
+  });
+
   test("question labels come from headlines: HTML stripped, recall flattened, empty falls back to id", () => {
     const fields = listReadableFields({
       blocks,

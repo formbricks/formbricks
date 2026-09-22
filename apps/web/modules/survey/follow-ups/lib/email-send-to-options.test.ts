@@ -109,6 +109,83 @@ describe("buildEmailSendToOptions", () => {
     ]);
   });
 
+  test("labels an Embedded Data recipient by its name, and a shared one carries its library key", () => {
+    // ENG-1853: the row reads as the field's name, not the storage key it is addressed by. The id is
+    // untouched, so a recipient stored before this still resolves — see `findEmailSendToOption`.
+    const options = buildEmailSendToOptions({
+      survey: makeSurvey({
+        embeddedFields: [
+          {
+            field: {
+              name: "Billing contact",
+              source: "ingested" as const,
+              dataType: "string" as const,
+              defaultValue: null,
+              locked: false,
+              key: "billing_contact",
+            },
+            link: { storageKey: "billing" },
+          },
+          {
+            field: {
+              name: "Referrer email",
+              source: "ingested" as const,
+              dataType: "string" as const,
+              defaultValue: null,
+              locked: false,
+              key: null,
+            },
+            link: { storageKey: "ref" },
+          },
+        ],
+      }),
+      teamMemberDetails: [],
+      userEmail: "me@example.com",
+      selectedLanguageCode: "default",
+      t,
+    });
+
+    expect(options.filter((o) => o.type === "hiddenField")).toEqual([
+      {
+        id: "billing",
+        type: "hiddenField",
+        label: "Billing contact",
+        secondaryLabel: "billing_contact",
+      },
+      { id: "ref", type: "hiddenField", label: "Referrer email", secondaryLabel: undefined },
+    ]);
+  });
+
+  test("a blank name falls back to the storage key rather than drawing an unreadable row", () => {
+    // The same rule as the operand picker's, written out a second time here — so it needs its own
+    // case, or one copy can be deleted with the suite still green.
+    const options = buildEmailSendToOptions({
+      survey: makeSurvey({
+        embeddedFields: [
+          {
+            field: {
+              name: "  ",
+              source: "ingested" as const,
+              dataType: "string" as const,
+              defaultValue: null,
+              locked: false,
+              key: null,
+            },
+            link: { storageKey: "billing" },
+          },
+        ],
+      }),
+      teamMemberDetails: [],
+      userEmail: "me@example.com",
+      selectedLanguageCode: "default",
+      t,
+    });
+
+    expect(options.filter((o) => o.type === "hiddenField")).toEqual([
+      { id: "billing", type: "hiddenField", label: "billing", secondaryLabel: undefined },
+    ]);
+  });
+
   test("adds a verified-email option only when the survey enables it", () => {
     const withVerify = buildEmailSendToOptions({
       survey: makeSurvey({ isVerifyEmailEnabled: true }),

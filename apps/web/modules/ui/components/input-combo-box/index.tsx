@@ -14,6 +14,7 @@ import React, {
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { isExternalImageSrc } from "@/lib/image-hosts";
+import { formatLocalDay, parseStoredDay } from "@/lib/utils/datetime";
 import {
   Command,
   CommandEmpty,
@@ -23,6 +24,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/modules/ui/components/command";
+import { DatePicker } from "@/modules/ui/components/date-picker";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -100,16 +102,31 @@ function flattenOptions(options?: TComboboxOption[]): TComboboxOption[] {
 }
 
 function getOptionKeywords(option: TComboboxOption): string[] {
-  return [option.label];
+  // The library key too, not just the label: a shared Embedded Data field renders its key beside its
+  // name (ENG-1853), and the spelling on screen has to be one the search box matches — the recall
+  // picker already matches on it. cmdk searches `value` (the storage key) and these keywords, and the
+  // library key is neither by default.
+  return option.meta?.hint ? [option.label, option.meta.hint] : [option.label];
 }
 
 function hasOptionDetails(option: TComboboxOption): boolean {
   return Boolean(option.meta?.hint || option.meta?.badge);
 }
 
-function getOptionItemClassName(option: TComboboxOption): string {
-  return cn("px-2", hasOptionDetails(option) ? "py-2" : "truncate");
+function getOptionItemClassName(): string {
+  return "truncate px-2";
 }
+
+/**
+ * A `date` literal is picked from {@link DatePicker}, never typed into an `<input type="date">`.
+ *
+ * The native control renders and parses in the *browser's* locale while the rest of the app formats
+ * in the user's, so the same day read differently in two places on one screen; it also has no
+ * keyboard-free path on the browsers that fall back to a plain text box. The stored value is
+ * unchanged — `yyyy-MM-dd`, which is exactly what the native input emitted — so a condition written
+ * before this still loads, and one written now still compares the way `evaluateLogic` expects.
+ */
+const isDateInput = (inputProps?: React.ComponentProps<typeof Input>): boolean => inputProps?.type === "date";
 
 interface ComboboxOptionLabelProps {
   option: TComboboxOption;
@@ -141,17 +158,24 @@ function ComboboxOptionLabel({
         />
       )}
       {hasOptionDetails(option) ? (
-        <span className="flex min-w-0 flex-col">
-          <span className="flex min-w-0 items-center gap-2">
-            <span className="truncate text-slate-900">{option.label}</span>
-            {option.meta?.badge && (
-              <span className="shrink-0 rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-normal text-slate-500">
-                {option.meta.badge}
-              </span>
-            )}
-          </span>
+        <span className="flex min-w-0 flex-1 items-center gap-2">
+          <span className="truncate text-slate-900">{option.label}</span>
+          {option.meta?.badge && (
+            <span className="shrink-0 rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-normal text-slate-500">
+              {option.meta.badge}
+            </span>
+          )}
+          {/*
+            The hint sits at the end of the row rather than under the label so a column of them lines
+            up and can be scanned on its own. It is what an identifier looks like where it is used —
+            a URL parameter, an integration payload key — so it is set in mono, and `ml-auto` pins it
+            right even when the label is short. `min-w-0` on both halves keeps the truncation on
+            whichever one is actually too long.
+          */}
           {option.meta?.hint && (
-            <span className="mt-0.5 truncate text-xs font-normal text-slate-400">{option.meta.hint}</span>
+            <span className="ml-auto max-w-[45%] truncate font-mono text-xs font-normal text-slate-500">
+              {option.meta.hint}
+            </span>
           )}
         </span>
       ) : (
@@ -182,7 +206,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   "aria-label": ariaLabel,
   "aria-labelledby": ariaLabelledBy,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const resolvedSearchPlaceholder = searchPlaceholder ?? t("common.search");
   const [isClearing, setIsClearing] = useState(false);
   const [open, setOpen] = useState(false);
@@ -334,7 +358,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
         disabled && "cursor-not-allowed border-slate-200 bg-slate-100 opacity-60 hover:border-slate-200",
         comboboxClasses
       )}>
-      {withInput && inputType !== "dropdown" && (
+      {withInput && inputType !== "dropdown" && !isDateInput(inputProps) && (
         <Input
           id={`${id}-input`}
           {...inputProps}
@@ -345,6 +369,41 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
           )}
           value={localValue ?? ""}
           onChange={onInputChange}
+        />
+      )}
+
+      {withInput && inputType !== "dropdown" && isDateInput(inputProps) && (
+        <DatePicker
+          value={parseStoredDay(typeof localValue === "string" ? localValue : null)}
+          locale={i18n.resolvedLanguage ?? i18n.language ?? "en-US"}
+          disabled={disabled || inputProps?.disabled}
+          // `inputProps.placeholder` deliberately NOT forwarded: every caller passes the text
+          // branch's "Select or type value", and typing is the one thing this control removed.
+          // `DatePicker`'s own fallback ("Pick a date") is the copy that matches what it offers.
+          // The trigger insists on 280px of its own; inside this row it is the flex item that has to
+          // give, and the border is the wrapper's so the picker drops its own right edge into it.
+          className="min-w-0 flex-1"
+          // `px-2` rather than the Button default's `px-4`: the logic card gives this column about
+          // 190px, and the icon plus default padding left too little for a formatted day.
+          triggerClassName="h-full w-full rounded-none border-0 border-r border-slate-300 px-2"
+          // The wrapper already draws the hairline — see `triggerClassName` dropping the trigger's.
+          clearButtonClassName="border-0 shadow-none"
+          onChange={(date) => {
+            const day = formatLocalDay(date);
+            setInputType("input");
+            setLocalValue(day);
+            onChangeValue(day, undefined, true);
+          }}
+          // Without this a picked day cannot be taken back: `DatePicker` only ever emits from
+          // `onSelect`, and it renders its own clear button solely when handed an `onClear`. The
+          // wrapper's `XIcon` is no fallback either — it is gated on `inputType === "dropdown"`, and
+          // picking a date sets that to `"input"`. Emptying the stored day is what the text and
+          // number branches already do from `onInputChange` when their box is cleared.
+          onClear={() => {
+            setInputType("input");
+            setLocalValue("");
+            onChangeValue("", undefined, true);
+          }}
         />
       )}
 
@@ -436,7 +495,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                       value={String(opt.value)}
                       keywords={getOptionKeywords(opt)}
                       onSelect={() => handleSelect(opt)}
-                      className={getOptionItemClassName(opt)}>
+                      className={getOptionItemClassName()}>
                       <ComboboxOptionLabel
                         option={opt}
                         iconClassName={iconClassName}
@@ -518,7 +577,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                           value={String(opt.value)}
                           keywords={getOptionKeywords(opt)}
                           onSelect={() => handleSelect(opt)}
-                          className={getOptionItemClassName(opt)}>
+                          className={getOptionItemClassName()}>
                           <ComboboxOptionLabel
                             option={opt}
                             iconClassName={iconClassName}
