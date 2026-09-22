@@ -61,10 +61,18 @@ const sourceDisplayRank = (source: TEmbeddedDataSource): number => {
   return rank === -1 ? SOURCE_DISPLAY_PRIORITY.length : rank;
 };
 
-/** The sources an author may pick in the library form. */
+/**
+ * The sources an author may pick in the library form.
+ *
+ * The probe pins `dataType` explicitly rather than inheriting {@link PROBE_ROW}'s: `acceptsField`
+ * answers `false` for *any* schema issue, so a source constrained away from `string` would drop out
+ * of the radio group entirely instead of appearing unordered. Naming the type here makes the
+ * question "can this source exist at all" rather than "can it exist as a string", and keeps the
+ * promise below — that a source the schema gains still shows up — true.
+ */
 export const getAuthorableSources = (): TEmbeddedDataSource[] =>
   ZEmbeddedDataSource.options
-    .filter((source) => acceptsField({ source }))
+    .filter((source) => getDataTypesForSource(source).length > 0)
     .sort((a, b) => sourceDisplayRank(a) - sourceDisplayRank(b));
 
 /** The data types a source may take. Narrows to text and number for a calculated field. */
@@ -87,7 +95,11 @@ export const narrowDataTypeToSource = (
   source: TEmbeddedDataSource
 ): TEmbeddedDataType => {
   const allowed = getDataTypesForSource(source);
-  return allowed.includes(dataType) ? dataType : allowed[0];
+  if (allowed.includes(dataType)) return dataType;
+  // A source the schema allows no type at all cannot reach the form — `getAuthorableSources` filters
+  // on exactly that — but the signature accepts one, and `allowed[0]` would hand back `undefined`
+  // wearing a `TEmbeddedDataType`. Falling back to `string` keeps the return honest.
+  return allowed[0] ?? "string";
 };
 
 /**
@@ -131,14 +143,16 @@ export const formatDefaultValueDraft = (defaultValue: TEmbeddedDataDefaultValue)
  *
  * A descriptor rather than a translated string: `t()` calls have to be statically resolvable for the
  * key scanner, so the keys stay in the component and only the branch is decided here.
+ *
+ * **One `used` branch, not `single` and `multiple`.** Choosing between a "1 survey" key and an
+ * "{count} surveys" key would put English's plural rule in TypeScript, and most locales do not share
+ * it — Russian needs a third form for 2-4, Romanian a different one from 20 up. The count goes to a
+ * single ICU plural key, which resolves the category per locale.
  */
-export type TUsageLabel = { kind: "unused" } | { kind: "single" } | { kind: "multiple"; count: number };
+export type TUsageLabel = { kind: "unused" } | { kind: "used"; count: number };
 
-export const getUsageLabel = (surveyCount: number): TUsageLabel => {
-  if (surveyCount <= 0) return { kind: "unused" };
-  if (surveyCount === 1) return { kind: "single" };
-  return { kind: "multiple", count: surveyCount };
-};
+export const getUsageLabel = (surveyCount: number): TUsageLabel =>
+  surveyCount <= 0 ? { kind: "unused" } : { kind: "used", count: surveyCount };
 
 /** One of `ZEmbeddedData`'s complaints, addressed to the control that carries the column. */
 export interface TFieldDraftIssue {

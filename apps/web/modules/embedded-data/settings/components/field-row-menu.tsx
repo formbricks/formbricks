@@ -26,7 +26,11 @@ export const FieldRowMenu = ({ fieldName, onEdit, onDelete }: Readonly<FieldRowM
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="cursor-pointer rounded-lg border border-slate-200 bg-white p-2 hover:bg-slate-50">
+      <DropdownMenuTrigger
+        // `hover:bg-slate-100`, not `slate-50`: the row itself hovers to `slate-50`, so matching it
+        // left the trigger with no hover feedback at the moment it is hovered. `size-9` is the
+        // icon-button floor.
+        className="flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-100">
         {/* Names the field, so a screen reader reading the column does not hear the same button twice. */}
         <span className="sr-only">{`${t("workspace.surveys.open_options")} – ${fieldName}`}</span>
         <MoreVertical className="size-4" aria-hidden="true" />

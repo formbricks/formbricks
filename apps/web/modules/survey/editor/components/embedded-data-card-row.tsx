@@ -12,11 +12,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { EMBEDDED_FIELD_ICON_BY_DATA_TYPE } from "@/modules/embedded-data/lib/field-display";
-import {
-  getDataTypeLabel,
-  getSourceIcon,
-  getSourceLabel,
-} from "@/modules/embedded-data/settings/components/field-labels";
+import { FieldSourceIcon } from "@/modules/embedded-data/settings/components/field-source-icon";
+import { getDataTypeLabel, getSourceLabel } from "@/modules/embedded-data/settings/lib/field-labels";
 import { type TEmbeddedFieldWarning } from "@/modules/survey/editor/lib/embedded-field-guards";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
@@ -91,7 +88,9 @@ export const EmbeddedDataCardRow = ({
 
   return (
     <div
-      className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3"
+      // `border-slate-100`: the card around these rows already draws a `slate-200` hairline,
+      // and the row's menu trigger draws a third inside that — one surface, one ring.
+      className="flex items-start justify-between gap-3 rounded-lg border border-slate-100 bg-white p-3"
       data-testid="embedded-field-row"
       data-storage-key={link.storageKey}>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -119,7 +118,7 @@ export const EmbeddedDataCardRow = ({
 
         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
           <span className="flex items-center gap-1.5 whitespace-nowrap">
-            {getSourceIcon(field.source, "size-3.5")}
+            <FieldSourceIcon source={field.source} className="size-3.5" />
             {getSourceLabel(field.source, t)}
           </span>
           <span aria-hidden="true">·</span>

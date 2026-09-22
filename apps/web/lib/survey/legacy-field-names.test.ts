@@ -1,4 +1,7 @@
-import { mockSurvey } from "@/app/api/(internal)/pipeline/lib/__mocks__/survey-follow-up.mock";
+import {
+  mockResponseEmailFollowUp,
+  mockSurvey,
+} from "@/app/api/(internal)/pipeline/lib/__mocks__/survey-follow-up.mock";
 import { describe, expect, test } from "vitest";
 import { ZSurvey } from "@formbricks/types/surveys/types";
 
@@ -114,5 +117,45 @@ describe("derived legacy variables are validated, not just the ones sent", () =>
 
     expect(result.error).toBeUndefined();
     expect(result.success).toBe(true);
+  });
+
+  /**
+   * The case the derivation exists for, and the reason it runs on the way *in* rather than only
+   * guarding the way out. The editor's working copy forwards the legacy columns it was loaded with
+   * at mount, so a field added since then lives only in `embeddedFields` — and the refinement
+   * resolves a follow-up recipient against `hiddenFields.fieldIds`. Without the derive, using a
+   * freshly added field is rejected as "an invalid email field" on publish, in the editor's own
+   * pre-flight and again as the server action's input schema.
+   */
+  test("a recipient declared only in the rows is not reported as an invalid email", () => {
+    const ingested = {
+      field: {
+        name: "plan_tier",
+        key: null,
+        source: "ingested",
+        dataType: "string",
+        defaultValue: null,
+        locked: false,
+      },
+      link: { storageKey: "plan_tier" },
+    };
+
+    const result = ZSurvey.safeParse({
+      ...rowsNativeSurvey([ingested]),
+      followUps: [
+        {
+          ...mockResponseEmailFollowUp,
+          action: {
+            ...mockResponseEmailFollowUp.action,
+            properties: { ...mockResponseEmailFollowUp.action.properties, to: "plan_tier" },
+          },
+        },
+      ],
+    });
+
+    // Asserted on the one issue rather than on `success`: this fixture carries legacy `questions`
+    // with `blocks: []`, so an unrelated follow-up refinement failing would otherwise mask this.
+    const messages = result.error?.issues.map((issue) => issue.message) ?? [];
+    expect(messages).not.toContain("The action in follow up 1 has an invalid email field");
   });
 });

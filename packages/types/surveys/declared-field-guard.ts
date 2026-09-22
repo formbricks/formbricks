@@ -196,7 +196,7 @@ const namesByNamespace = (
  * survey keeps.
  *
  * The error names the side the write introduces (the hidden field, when the variable already
- * existed; the variable otherwise), with the code the editor's hidden-fields card reports for the
+ * existed; the variable otherwise), with the code the editor's Embedded Data card reports for the
  * same clash.
  */
 export const validateNewDeclaredFieldClashes = ({

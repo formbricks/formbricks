@@ -185,10 +185,15 @@ export const SurveyMenuBar = ({
    * this ticket removed.
    *
    * There is nothing to spell out at each call site: spreading `localSurvey` carries all three keys.
-   * What matters is that the save return replaces the working copy — `updateSurveyInternal` re-reads
-   * through `selectSurvey` after the reconcile, so it carries the freshly written rows with their
-   * `id`, `key`, `locked` and minted storage keys. That is what stops the next dirty check seeing a
-   * difference, and with it the auto-save loop.
+   *
+   * The save return does not always replace the working copy, and the dirty check is what closes
+   * that gap. `handleSurveySave` / `handleSurveySaveDraft` both `setLocalSurvey(response)`, so there
+   * the freshly written rows — with their `id`, `key`, `locked` and minted storage keys — land back
+   * in state. The interval auto-save below deliberately does **not**: it updates its refs only, to
+   * avoid re-rendering the editor while the author is typing. So the working copy legitimately keeps
+   * a card-built row with no `id` and the mount-time legacy columns, and `hasUnsavedSurveyChanges`
+   * normalizes all three away before comparing (`editor/lib/unsaved-changes.ts`). Without that
+   * normalization a `isDeepEqual` fails on the key count alone and the auto-save never stops.
    */
   const getDraftSurveyToPersist = (draftSurvey: TSurvey, segment: TSegment | null): TSurveyDraft => ({
     ...draftSurvey,

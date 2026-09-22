@@ -50,7 +50,7 @@ const renderSelectItem = (option: EmailSendToOption, elementIconMap: TElementIco
       {getSelectItemIcon(option.type, elementIconMap)}
       <span className="overflow-hidden text-ellipsis whitespace-nowrap">{option.label}</span>
       {option.secondaryLabel ? (
-        <span className="ml-auto truncate pl-2 font-mono text-xs text-slate-400">
+        <span className="ml-auto truncate pl-2 font-mono text-xs text-slate-500">
           {option.secondaryLabel}
         </span>
       ) : null}

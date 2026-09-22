@@ -119,13 +119,25 @@ export const PromoteEmbeddedFieldDialog = ({
                 autoFocus
                 value={key}
                 isInvalid={keyError !== null}
+                // `isInvalid` only draws a red border. Without these the refusal is visible and
+                // nothing else: focus stays on the button and a screen reader is told nothing.
+                aria-invalid={keyError !== null}
+                aria-describedby={keyError === null ? undefined : "promote-embedded-field-key-error"}
+                onKeyDown={(event) => {
+                  // Every other dialog in this card submits on Enter; this one had no <form>.
+                  if (event.key === "Enter" && !isPromoting) void handlePromote();
+                }}
                 onChange={(event) => {
                   setKey(event.target.value);
                   setKeyError(null);
                 }}
               />
               <p className="text-xs text-slate-500">{t("workspace.embedded_data.key_hint")}</p>
-              {keyError && <p className="text-sm text-red-500">{keyError}</p>}
+              {keyError && (
+                <p id="promote-embedded-field-key-error" className="text-sm text-red-500">
+                  {keyError}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-col gap-2">
