@@ -16,6 +16,19 @@ const baseSurvey = {
 const surveyWith = (overrides: Record<string, unknown>): TSurvey =>
   ({ ...baseSurvey, ...overrides }) as unknown as TSurvey;
 
+/** As the Hidden Fields card builds one: no `id`, because the database assigns that on the write. */
+const ingestedRow = (storageKey: string) => ({
+  field: {
+    name: storageKey,
+    source: "ingested" as const,
+    dataType: "string" as const,
+    defaultValue: null,
+    locked: false,
+    key: null,
+  },
+  link: { storageKey },
+});
+
 describe("hasUnsavedSurveyChanges", () => {
   test("reads clean when the editor matches the survey prop", () => {
     expect(hasUnsavedSurveyChanges(surveyWith({}), [baseSurvey])).toBe(false);
@@ -45,6 +58,38 @@ describe("hasUnsavedSurveyChanges", () => {
     const local = surveyWith({ name: "My survey (edited)" });
 
     expect(hasUnsavedSurveyChanges(local, [baseSurvey, savedResponse])).toBe(true);
+  });
+
+  // ENG-2628. The cards build a row with no `id` — the database assigns it — and they no longer
+  // touch `variables` / `hiddenFields`, which the server derives from the rows. `isDeepEqual` fails
+  // on a differing key count alone, so without normalizing both the draft auto-save would re-save
+  // every tick and the discard dialog would fire on a fully saved survey.
+  test("a field the cards just added reads clean once the save returns it", () => {
+    const local = surveyWith({
+      embeddedFields: [ingestedRow("plan")],
+      variables: [],
+      hiddenFields: { enabled: false, fieldIds: [] },
+    });
+    const savedResponse = surveyWith({
+      embeddedFields: [{ ...ingestedRow("plan"), field: { ...ingestedRow("plan").field, id: "clx_row_1" } }],
+      variables: [],
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+    });
+
+    expect(hasUnsavedSurveyChanges(local, [savedResponse])).toBe(false);
+  });
+
+  test("an edit to the rows themselves still reads dirty", () => {
+    const savedResponse = surveyWith({
+      embeddedFields: [{ ...ingestedRow("plan"), field: { ...ingestedRow("plan").field, id: "clx_row_1" } }],
+    });
+    const renamed = surveyWith({
+      embeddedFields: [
+        { ...ingestedRow("plan"), field: { ...ingestedRow("plan").field, name: "Plan tier" } },
+      ],
+    });
+
+    expect(hasUnsavedSurveyChanges(renamed, [savedResponse])).toBe(true);
   });
 
   test("skips persisted states that are not there yet", () => {

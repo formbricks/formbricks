@@ -24,7 +24,7 @@ interface OptionIdsVariablesProps {
 
 type OptionIdsProps = OptionIdsElementProps | OptionIdsVariablesProps;
 
-export const OptionIds = (props: OptionIdsProps) => {
+export const OptionIds = (props: Readonly<OptionIdsProps>) => {
   const { t } = useTranslation();
   const selectedLanguageCode = "default";
 

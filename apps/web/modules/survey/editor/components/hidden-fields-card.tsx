@@ -202,11 +202,16 @@ export const HiddenFieldsCard = ({
               e.preventDefault();
               const existingElementIds = elements.map((element) => element.id);
               const existingEndingCardIds = localSurvey.endings.map((ending) => ending.id);
-              // Both spellings a computed field answers to, not just its display name: a shared one
-              // is addressed by its library key, so `Plan tier` and `plan_tier` are the same field
-              // and a hidden field taking either would land a second row on one storage key. The
-              // save guard already refuses that; catching it here is where every other collision is
-              // caught, and spares the author a rejected save.
+              // A computed field's display name AND its storage key. The key is the one that would
+              // break the save — a hidden field is addressed by its own name, so taking a variable's
+              // storage key would land a second row on one `(surveyId, storageKey)` — while the name
+              // is what the author actually sees. For a local variable the key is an opaque cuid
+              // nobody would type; it is in the list because it costs nothing and the save guard
+              // refuses it anyway, and catching it here spares the author a rejected save.
+              //
+              // A shared field's *library key* is a third spelling, and it is deliberately not here:
+              // `toCardVariables` speaks `TSurveyVariable`, which has no carrier for it. Nothing can
+              // link a shared field before ENG-1851, and that ticket replaces this card.
               const existingVariableNames = toCardVariables(getSurveyEmbeddedFields(localSurvey)).flatMap(
                 ({ id, name }) => [id, name]
               );

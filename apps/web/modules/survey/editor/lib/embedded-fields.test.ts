@@ -141,6 +141,23 @@ describe("upsertCardVariable", () => {
     expect(result).toHaveLength(2);
     expect(result[0].field.source).toBe("ingested");
   });
+
+  // The form has `text` and `number` only, so `toCardVariable` shows these as text — and the card
+  // submits on blur, so a focus change with no edit would otherwise write that back and retype the
+  // row. The name still moves: the form carries it losslessly whatever the type is.
+  test.each([
+    ["a date row", "date" as const, "2026-08-06"],
+    ["a boolean row", "boolean" as const, false],
+  ])("renames %s without retyping it or dropping its default", (_case, dataType, defaultValue) => {
+    const [edited] = upsertCardVariable([computed("var_id", { dataType, defaultValue })], {
+      id: "var_id",
+      name: "Renamed",
+      type: "text",
+      value: "",
+    });
+
+    expect(edited.field).toMatchObject({ name: "Renamed", dataType, defaultValue });
+  });
 });
 
 describe("appendIngestedField", () => {

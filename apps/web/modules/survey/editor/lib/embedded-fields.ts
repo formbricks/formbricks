@@ -44,6 +44,9 @@ const isFieldAt =
  * Labelled with `field.name`, never `key ?? name` as the derived legacy column is: the card shows a
  * human the field's display name, while the column needs the one spelling that is guaranteed to
  * satisfy `isLegacyVariableName`.
+ *
+ * The form has two types, so a `date` or `boolean` row shows here as text. That is lossy, which is
+ * why it is a one-way trip — see {@link isCardRepresentable}.
  */
 export const toCardVariable = ({ field, link }: TLinkedEmbeddedField): TSurveyVariable =>
   field.dataType === "number"
@@ -65,11 +68,27 @@ export const toCardVariables = (embeddedFields: readonly TLinkedEmbeddedField[])
   embeddedFields.filter(({ field }) => field.source === "computed").map(toCardVariable);
 
 /**
+ * Whether the card's form can describe this row's type and value without losing them.
+ *
+ * It offers `text` and `number`, so a `date` or `boolean` computed field round-trips through
+ * {@link toCardVariable} as text — and writing that back would retype the row to `string` and, for a
+ * boolean, replace its default with `""`. The card submits on blur, so a focus change with no edit
+ * at all is enough to trigger it. Nothing in the editor can create such a row today; the V2 panel
+ * (ENG-1851) is what gives it a control, and until then the safe answer is to leave its type and
+ * value exactly as stored.
+ */
+const isCardRepresentable = ({ dataType }: TLinkedEmbeddedField["field"]): boolean =>
+  dataType === "string" || dataType === "number";
+
+/**
  * The list with one computed field created or updated from the card's form.
  *
  * An existing row is **merged into**, not replaced: `id`, `key` and `locked` have no carrier in the
  * variable form, and dropping them would unlink a shared definition or unlock a locked one on the
  * next save. A new field is local and unlocked, which is the only thing this card can declare.
+ *
+ * A row the form cannot describe keeps its `dataType` and `defaultValue`; only the name, which the
+ * form does carry losslessly for every type, moves.
  */
 export const upsertCardVariable = (
   embeddedFields: readonly TLinkedEmbeddedField[],
@@ -99,7 +118,9 @@ export const upsertCardVariable = (
     index === existingIndex
       ? {
           ...entry,
-          field: { ...entry.field, name: variable.name, dataType, defaultValue: variable.value },
+          field: isCardRepresentable(entry.field)
+            ? { ...entry.field, name: variable.name, dataType, defaultValue: variable.value }
+            : { ...entry.field, name: variable.name },
         }
       : entry
   );

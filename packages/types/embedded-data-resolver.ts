@@ -1211,9 +1211,10 @@ export interface TEmbeddedFieldsSurvey extends TLegacyEmbeddedFields {
 }
 
 /**
- * **Where a saved survey's Embedded Data definitions come from.** Every reader outside the editor —
- * recall, logic, export columns, response filters, response tables, emails, integrations — calls
- * this and nothing else. Its counterpart is {@link getDeclaredEmbeddedFields}; between the two, no
+ * **Where a saved survey's Embedded Data definitions come from.** Every reader — recall, logic,
+ * export columns, response filters, response tables, emails, integrations, and since ENG-2628 the
+ * editor's own cards and pickers — calls this and nothing else. Its counterpart is
+ * {@link getDeclaredEmbeddedFields}, which answers for surveys that were never written; between the two, no
  * reader may call {@link deriveLegacyEmbeddedData} directly, which is what keeps "exactly two named
  * decisions, and no third" a property a reviewer can check with grep.
  *
@@ -1261,9 +1262,10 @@ export const getIngestedStorageKeys = (survey: TEmbeddedFieldsSurvey): string[] 
  * `@label` into the text and the resolver that reads it back share one list again.
  *
  * What remains is the **preview of a survey that has never been written** — the templates gallery
- * renders a preset merged into `getMinimalSurvey()`, and the workspace look settings and the email
- * template preview build their own literals. Nothing has reconciled rows for those, so
- * `PreviewSurvey` falls back to this to give them recall and logic operands at all. A survey that
+ * renders a preset merged into `getMinimalSurvey()`, which carries no `embeddedFields` key at all.
+ * Nothing has reconciled rows for it, so `PreviewSurvey` falls back to this to give it recall and
+ * logic operands. (`template-container.tsx` and the editor are the only two `PreviewSurvey` call
+ * sites; the editor's survey comes through `selectSurvey` and takes the rows.) A survey that
  * HAS been written never needs it: every write path that persists those columns calls
  * `reconcileEmbeddedData` in the same transaction with the same payload it wrote them from
  * (ENG-2412 moved that call onto the payload; before it, onto the row just written). There are
@@ -1277,13 +1279,3 @@ export const getIngestedStorageKeys = (survey: TEmbeddedFieldsSurvey): string[] 
 // the signature rather than enforced by which keys happen to be omitted at the call site.
 export const getDeclaredEmbeddedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
   deriveLegacyEmbeddedData(survey);
-
-/** The computed (ex-variable) fields a survey declares right now. */
-export const getDeclaredComputedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
-  getDeclaredEmbeddedFields(survey).filter(({ field }) => field.source === "computed");
-
-/** The storage keys of the ingested (ex-hidden) fields a survey declares right now. */
-export const getDeclaredIngestedStorageKeys = (survey: TEmbeddedFieldsSurvey): string[] =>
-  getDeclaredEmbeddedFields(survey)
-    .filter(({ field }) => field.source === "ingested")
-    .map(({ link }) => link.storageKey);
