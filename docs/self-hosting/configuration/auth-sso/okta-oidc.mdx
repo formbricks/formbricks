@@ -140,7 +140,7 @@ Integrating Okta with your Formbricks instance lets your users sign in with thei
   To disable email/password login entirely and force all users through Okta, set `EMAIL_AUTH_DISABLED=1`. This hides the email/password form on the login page.
 </Note>
 
-## Automatic User Provisioning
+## Automatic user provisioning
 
 By default, new SSO users must be invited by an organization admin before they can access Formbricks. To let Okta users join automatically and land in a team, add:
 
@@ -158,7 +158,7 @@ AUTH_SSO_DEFAULT_TEAM_ID=your-team-id-here
   With `AUTH_SKIP_INVITE_FOR_SSO=1`, anyone Okta lets through the app integration gets a Formbricks account. Keep the app's **Assignments** scoped to the group that should have access.
 </Warning>
 
-### Finding Your Team ID
+### Finding your team ID
 
 1. Log in to Formbricks as an admin.
 2. Go to **Settings → Organization → Teams**.
@@ -169,7 +169,7 @@ AUTH_SSO_DEFAULT_TEAM_ID=your-team-id-here
   The Teams feature requires the **Role-Based Access Control (RBAC)** add-on on your Enterprise license. If you don't see the Teams section under **Settings → Organization**, contact [Formbricks support](mailto:support@formbricks.com) to enable it.
 </Note>
 
-## Full Configuration Example
+## Full configuration example
 
 ```yml Complete Okta OIDC Configuration
 OIDC_CLIENT_ID=0oa1b2c3d4EXAMPLE5
