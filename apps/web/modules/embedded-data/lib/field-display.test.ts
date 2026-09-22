@@ -1,4 +1,5 @@
 import type { TFunction } from "i18next";
+import { GlobeIcon } from "lucide-react";
 import { describe, expect, test } from "vitest";
 import { ZEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { RESERVED_FIELD_CATALOG } from "@formbricks/types/embedded-data-resolver";
@@ -69,6 +70,16 @@ describe("field icons", () => {
 
   test("an auto-captured field with no icon of its own falls back to the generic one", () => {
     expect(getReservedFieldIcon("utmCampaign")).toBe(RESERVED_FIELD_ICONS.utmCampaign);
-    expect(getReservedFieldIcon("responseId")).toBe(getReservedFieldIcon("surveyId"));
+    // Against the literal, not against another unmapped name: comparing two misses to each other
+    // holds for any fallback value, `undefined` included, so it passed with no fallback at all.
+    expect(getReservedFieldIcon("responseId")).toBe(GlobeIcon);
+  });
+
+  test("every field a picker can offer has an icon of its own, so none takes the fallback", () => {
+    // The fallback is `browser`'s and `url`'s globe, so an entry missing from the map does not render
+    // iconless in a picker — it renders as a different field. `language` was the one that did.
+    const reachable = RESERVED_FIELD_CATALOG.filter((entry) => entry.availability !== "server");
+
+    expect(reachable.filter((entry) => RESERVED_FIELD_ICONS[entry.name] === undefined)).toEqual([]);
   });
 });

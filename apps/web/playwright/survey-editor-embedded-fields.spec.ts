@@ -235,8 +235,11 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     // Baseline: the rows' definitions are offered, and the legacy column's name is nowhere. Before
     // ENG-2628 this pair was the other way round.
     const pickerBeforeEdit = await openRecallPicker(page, "at-key");
-    await expect(recallItem(pickerBeforeEdit, rowEditedName)).toHaveAttribute("title", "variable");
-    await expect(recallItem(pickerBeforeEdit, firstHiddenField)).toHaveAttribute("title", "hiddenField");
+    await expect(recallItem(pickerBeforeEdit, rowEditedName)).toHaveAttribute("data-recall-type", "variable");
+    await expect(recallItem(pickerBeforeEdit, firstHiddenField)).toHaveAttribute(
+      "data-recall-type",
+      "hiddenField"
+    );
     await expect(recallItem(pickerBeforeEdit, variableName)).toHaveCount(0);
     await closeRecallPicker(page);
 
@@ -269,8 +272,14 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
 
     // Recall picker: the new name and the new hidden field, and no trace of the name it replaced.
     const pickerAfterEdit = await openRecallPicker(page, "toolbar");
-    await expect(recallItem(pickerAfterEdit, renamedVariableName)).toHaveAttribute("title", "variable");
-    await expect(recallItem(pickerAfterEdit, secondHiddenField)).toHaveAttribute("title", "hiddenField");
+    await expect(recallItem(pickerAfterEdit, renamedVariableName)).toHaveAttribute(
+      "data-recall-type",
+      "variable"
+    );
+    await expect(recallItem(pickerAfterEdit, secondHiddenField)).toHaveAttribute(
+      "data-recall-type",
+      "hiddenField"
+    );
     await expect(recallItem(pickerAfterEdit, rowEditedName)).toHaveCount(0);
     await closeRecallPicker(page);
 
