@@ -1295,6 +1295,16 @@ const checkElementForRecall = (element: TSurveyElement, recallPattern: string): 
   return false;
 };
 
+/**
+ * Recall anywhere on an ending card, including the two plain-string fields.
+ *
+ * `headline` and `subheader` are `TI18nString`s, so they go through `checkTextForRecallPattern`. The
+ * other two are bare strings and need their own check: an end screen's button link
+ * (`end-screen-form.tsx`) and a redirect ending's URL (`redirect-url-form.tsx`) are both authored
+ * through a `RecallWrapper`, so a token can be sitting in either. Missing them let a field be
+ * removed out from under a redirect, leaving a dangling `#recall:…/fallback:…#` in the URL a
+ * respondent is then sent to.
+ */
 const checkEndingCardsForRecall = (endings: TSurveyEndings | undefined, recallPattern: string): boolean => {
   if (!endings) return false;
 
@@ -1302,10 +1312,11 @@ const checkEndingCardsForRecall = (endings: TSurveyEndings | undefined, recallPa
     if (ending.type === "endScreen") {
       return (
         checkTextForRecallPattern(ending.headline, recallPattern) ||
-        checkTextForRecallPattern(ending.subheader, recallPattern)
+        checkTextForRecallPattern(ending.subheader, recallPattern) ||
+        (ending.buttonLink?.includes(recallPattern) ?? false)
       );
     }
-    return false;
+    return ending.url?.includes(recallPattern) ?? false;
   });
 };
 

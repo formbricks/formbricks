@@ -66,7 +66,9 @@ export const EmbeddedDataCardRow = ({
 
   return (
     <div
-      className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3"
+      // `border-slate-100`: the card around these rows already draws a `slate-200` hairline,
+      // and the row's menu trigger draws a third inside that — one surface, one ring.
+      className="flex items-start justify-between gap-3 rounded-lg border border-slate-100 bg-white p-3"
       data-testid="embedded-field-row"
       data-storage-key={link.storageKey}>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -114,7 +116,7 @@ export const EmbeddedDataCardRow = ({
       </div>
 
       <DropdownMenu>
-        <DropdownMenuTrigger className="cursor-pointer rounded-lg border border-slate-200 bg-white p-2 hover:bg-slate-50">
+        <DropdownMenuTrigger className="flex size-9 cursor-pointer items-center justify-center rounded-lg bg-white hover:bg-slate-100">
           {/* Names the field, so a screen reader hears which row's menu this opens. */}
           <span className="sr-only">{`${t("workspace.surveys.open_options")} – ${field.name}`}</span>
           <MoreVertical className="size-4" aria-hidden="true" />

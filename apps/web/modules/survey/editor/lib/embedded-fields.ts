@@ -271,11 +271,29 @@ export const listLinkableSharedFields = ({
     const candidate = toSharedEntry(row, mintStorageKey(row.source, row.key));
     if (takenStorageKeys.has(candidate.link.storageKey)) return false;
 
+    const candidateName = declaredEmbeddedFieldName(candidate).toLowerCase();
+
+    // A duplicate *within* one namespace, which `validateNewDeclaredFields` cannot see: it compares
+    // the variable namespace against the hidden-field one, and `namesByNamespace` builds each as a
+    // Map, so two computed entries under one name collapse into a single entry and no clash is
+    // reported. A local computed field named `score` beside a library row keyed `score` therefore
+    // passed every check here and died at the save, in `assertDerivedLegacyColumnsAreStorable`, as
+    // "Variable names must be unique" — naming no field, because by then both are just rows.
+    //
+    // Not grandfathered, unlike the cross-namespace rule below: the server's guard runs
+    // `ZStoredSurveyVariables` over the derived array with no baseline, so a survey that already
+    // holds this duplicate cannot save either. Offering the row would only add a second way to fail.
+    const collidesInOwnNamespace = embeddedFields.some(
+      (entry) =>
+        entry.field.source === candidate.field.source &&
+        declaredEmbeddedFieldName(entry).toLowerCase() === candidateName
+    );
+    if (collidesInOwnNamespace) return false;
+
     const errors = validateNewDeclaredFields({
       existing: { embeddedFields: [...persistedFields] },
       incoming: { embeddedFields: [...embeddedFields, candidate] },
     });
-    const candidateName = declaredEmbeddedFieldName(candidate).toLowerCase();
 
     return !errors.some((error) => error.field.toLowerCase() === candidateName);
   });

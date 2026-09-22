@@ -381,9 +381,9 @@ describe("which names a write may newly declare (ENG-1839)", () => {
   test("a survey that already holds the clash cannot be patched at all (pre-existing on main)", async () => {
     // Documents a bug this feature did not introduce, so it is not mistaken for one during release QA.
     //
-    // The editor refuses to CREATE such a survey — both cards check the clash, the variables card
-    // with its own "conflicts with a hidden field" message (which is why it passes empty id lists to
-    // `validateId`: the generic duplicate error would pre-empt the specific one). But surveys holding
+    // The editor refuses to CREATE such a survey — the Embedded Data card checks it through
+    // `validateEmbeddedFieldName`, which passes both namespaces' declared names and so reports the
+    // generic `Duplicate` (ENG-1851; the two legacy cards had a message each). But surveys holding
     // the clash already exist, and v3 then refuses EVERY patch of one, including a patch that resends
     // neither key: the one below only renames the survey and is still rejected, because reference
     // validation runs over the whole merged document.

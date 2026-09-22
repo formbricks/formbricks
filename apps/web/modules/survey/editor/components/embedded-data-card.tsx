@@ -324,6 +324,9 @@ export const EmbeddedDataCard = ({
             if (next === false) setCloning(null);
           }}
           title={t("workspace.embedded_data.edit_a_copy_confirm_title", { name: cloning.field.name })}
+          // Without a description this modal defaults to "This action cannot be undone", which is
+          // the opposite of what the comment below says and of what `buttonVariant` is set for.
+          description={t("workspace.embedded_data.edit_a_copy_confirm_description")}
           body={t("workspace.embedded_data.edit_a_copy_confirm_body")}
           buttonText={t("workspace.embedded_data.edit_a_copy")}
           // Nothing is destroyed — the library field is untouched and this survey keeps the values it
@@ -344,6 +347,7 @@ export const EmbeddedDataCard = ({
               if (next === false) setRemoving(null);
             }}
             title={t("workspace.embedded_data.unlink_field_title", { name: removing.field.name })}
+            description={t("workspace.embedded_data.unlink_field_description")}
             body={t("workspace.embedded_data.unlink_field_body")}
             buttonText={t("common.remove")}
             buttonVariant="default"

@@ -61,6 +61,9 @@ export const EmbeddedDataLibraryDialog = ({
 }: Readonly<EmbeddedDataLibraryDialogProps>) => {
   const { t } = useTranslation();
   const [library, setLibrary] = useState<TSharedEmbeddedDataListItem[] | null>(null);
+  // Distinct from "no rows": a failed load used to set `[]`, and the dialog then told the author
+  // their workspace library was empty — false, and with no way to retry but closing and reopening.
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -72,10 +75,11 @@ export const EmbeddedDataLibraryDialog = ({
 
       if (!response?.data) {
         toast.error(getFormattedErrorMessage(response) || t("common.something_went_wrong_please_try_again"));
-        setLibrary([]);
+        setLoadFailed(true);
         return;
       }
 
+      setLoadFailed(false);
       setLibrary(response.data);
     };
 
@@ -89,6 +93,10 @@ export const EmbeddedDataLibraryDialog = ({
     library === null ? [] : listLinkableSharedFields({ library, embeddedFields, persistedFields });
 
   const renderBody = () => {
+    if (loadFailed) {
+      return <EmptyState variant="simple" text={t("workspace.embedded_data.library_load_failed")} />;
+    }
+
     if (library === null) {
       return (
         <div className="flex justify-center py-8">
