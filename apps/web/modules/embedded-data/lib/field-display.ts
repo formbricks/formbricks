@@ -50,7 +50,7 @@ import { formatFieldNameToTitleCase } from "@formbricks/types/safe-identifier";
  *
  * A table of literal `t("…")` **calls** rather than of key strings: `pnpm i18n` scans for literal
  * `t()` arguments to find unused keys, so a `{ action: "common.action" }` map would make every
- * `workspace.surveys.responses.*` key below read as dead and get deleted from thirty locale files.
+ * `workspace.surveys.responses.*` key below read as dead and get deleted from every other locale.
  * Keeping the call keeps the key alive, and one entry per line reads as the catalog it is — where
  * the `case … return …` pairs this replaced were fifty lines whose shape SonarCloud matched against
  * the equally long translation switch in `modules/ee/contacts/segments/lib/utils.ts`.
@@ -83,7 +83,7 @@ const RESERVED_FIELD_LABELS: Record<string, (t: TFunction) => string> = {
   // The two `display: "none"` entries a picker offers but no column ever shows: `durationSeconds`
   // to the response filter (ENG-1848/ENG-2894), and `language` — the only `availability: "both"`
   // entry — to the mid-survey recall and logic pickers (ENG-1853). Both reuse a key that already
-  // exists rather than adding copy for a word already translated thirty times over.
+  // exists rather than adding copy for a word already translated in every locale.
   durationSeconds: (t) => t("workspace.surveys.responses.duration_seconds"),
   language: (t) => t("common.language"),
 };
@@ -91,9 +91,16 @@ const RESERVED_FIELD_LABELS: Record<string, (t: TFunction) => string> = {
 export const getReservedFieldLabel = (name: string, t: TFunction): string =>
   RESERVED_FIELD_LABELS[name]?.(t) ?? formatFieldNameToTitleCase(name);
 /**
- * Column and row icons, by catalog entry name. Sparse on purpose: an entry with no icon renders
- * without one rather than borrowing a misleading neighbour's, and the UTM family deliberately shares
- * one so a row of five reads as one group.
+ * Column and row icons, by catalog entry name. Deliberately sparse — the UTM family shares one icon
+ * so a row of five reads as one group — and deliberately complete for every entry a surface can
+ * reach: the two readers disagree about a miss, so a gap here is not a neutral choice.
+ *
+ * The response table and the response filter read this map raw and render no icon for a miss
+ * (`responses/lib/utils.ts`, `ElementsComboBox.tsx`), while the pickers go through
+ * {@link getReservedFieldIcon} and take its fallback. So an entry left out does not render "without
+ * one" in the pickers — it borrows the fallback, which is `browser`'s and `url`'s globe. Every
+ * `availability !== "server"` entry therefore has its own icon here, and the fallback exists for the
+ * catalog additions ENG-1858 will bring rather than as the rule.
  */
 export const RESERVED_FIELD_ICONS: Record<string, LucideIcon> = {
   action: MousePointerClickIcon,
@@ -103,6 +110,8 @@ export const RESERVED_FIELD_ICONS: Record<string, LucideIcon> = {
   // Not displayed by the table (display: "none") but offered by the response filter (ENG-1848).
   durationSeconds: TimerIcon,
   ipAddress: ShieldIcon,
+  // The survey language the respondent is answering in, beside `locale`, the device's own setting.
+  language: FlagIcon,
   locale: LanguagesIcon,
   os: AirplayIcon,
   pagePath: FileTextIcon,

@@ -61,11 +61,16 @@ export const PreviewSurvey = ({
    * ENG-2628: the editor's working copy is rows-native, so a survey that comes from the editor
    * already carries the definitions its cards declare and this passes them straight through.
    *
-   * The derive stays as the fallback for the callers that are NOT the editor and have no rows at
-   * all: the templates gallery renders `getMinimalSurvey()` merged with a preset, and the workspace
-   * look settings and the email template preview build their own literals. Those surveys exist only
-   * in memory and have never been through a write path, so nothing has ever reconciled rows for
-   * them — without this they would preview with no recall and no logic operands.
+   * The derive stays as the fallback for the other caller, the templates gallery, which renders
+   * `getMinimalSurvey()` merged with a preset. That survey exists only in memory and has never been
+   * through a write path, so nothing has ever reconciled rows for it — without this it would preview
+   * with no recall and no logic operands.
+   *
+   * **Nullish, not empty** — deliberately unlike the read seam (`lib/embedded-data/survey-fields.ts`),
+   * which treats zero rows as "not reconciled yet". Here an empty list is an answer: an author who
+   * deletes every field in the editor leaves `embeddedFields: []` beside mount-time legacy columns
+   * that still name them, and falling back on emptiness would preview the fields they just removed.
+   * A survey that has never been written omits the key entirely, which is what selects the derive.
    */
   const previewSurvey = useMemo(
     () => ({

@@ -12,11 +12,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { EMBEDDED_FIELD_ICON_BY_DATA_TYPE } from "@/modules/embedded-data/lib/field-display";
-import {
-  getDataTypeLabel,
-  getSourceIcon,
-  getSourceLabel,
-} from "@/modules/embedded-data/settings/components/field-labels";
+import { FieldSourceIcon } from "@/modules/embedded-data/settings/components/field-source-icon";
+import { getDataTypeLabel, getSourceLabel } from "@/modules/embedded-data/settings/lib/field-labels";
 import { Badge } from "@/modules/ui/components/badge";
 import {
   DropdownMenu,
@@ -100,7 +97,7 @@ export const EmbeddedDataCardRow = ({
 
         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
           <span className="flex items-center gap-1.5 whitespace-nowrap">
-            {getSourceIcon(field.source, "size-3.5")}
+            <FieldSourceIcon source={field.source} className="size-3.5" />
             {getSourceLabel(field.source, t)}
           </span>
           <span aria-hidden="true">·</span>

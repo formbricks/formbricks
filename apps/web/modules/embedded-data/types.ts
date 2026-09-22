@@ -40,14 +40,33 @@ export type TEmbeddedDataUsageItem = z.infer<typeof ZEmbeddedDataUsageItem>;
  * `ZEmbeddedData`, which the service runs over the whole prospective row, so this schema and the row
  * schema cannot drift into disagreeing about what a valid field is.
  */
+/**
+ * The create-time length caps `ZEmbeddedDataName` defers to this path.
+ *
+ * `ZEmbeddedData` deliberately leaves `name` uncapped so the backfill can read back a row copied
+ * from a variable name or a hidden field id, neither of which is bounded — and it says the limit
+ * belongs here instead. It matters because `ZLinkedEmbeddedField` carries `name` and `defaultValue`
+ * into public survey payloads, so one oversized library field inflates every linked survey's
+ * payload for every respondent.
+ */
+const NAME_MAX = 255;
+const DESCRIPTION_MAX = 1000;
+const DEFAULT_VALUE_MAX = 1000;
+
+/** A string default, capped; the other branches are scalars and bounded by their own types. */
+const ZCappedDefaultValue = ZEmbeddedDataDefaultValue.refine(
+  (value) => typeof value !== "string" || value.length <= DEFAULT_VALUE_MAX,
+  `A default value may be at most ${String(DEFAULT_VALUE_MAX)} characters`
+);
+
 export const ZCreateSharedEmbeddedDataInput = z
   .object({
     key: z.string(),
-    name: z.string(),
-    description: z.string().nullish(),
+    name: z.string().max(NAME_MAX),
+    description: z.string().max(DESCRIPTION_MAX).nullish(),
     source: ZEmbeddedDataSource,
     dataType: ZEmbeddedDataType.optional(),
-    defaultValue: ZEmbeddedDataDefaultValue.optional(),
+    defaultValue: ZCappedDefaultValue.optional(),
     locked: z.boolean().optional(),
   })
   .strict();
@@ -64,10 +83,10 @@ export type TCreateSharedEmbeddedDataInput = z.infer<typeof ZCreateSharedEmbedde
  */
 export const ZUpdateSharedEmbeddedDataInput = z
   .object({
-    name: z.string().optional(),
-    description: z.string().nullish(),
+    name: z.string().max(NAME_MAX).optional(),
+    description: z.string().max(DESCRIPTION_MAX).nullish(),
     dataType: ZEmbeddedDataType.optional(),
-    defaultValue: ZEmbeddedDataDefaultValue.optional(),
+    defaultValue: ZCappedDefaultValue.optional(),
     locked: z.boolean().optional(),
   })
   .strict();

@@ -10,11 +10,8 @@ import {
 } from "@formbricks/types/embedded-data";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { DefaultValueInput } from "@/modules/embedded-data/components/default-value-input";
-import {
-  getDataTypeLabel,
-  getSourceIcon,
-  getSourceLabel,
-} from "@/modules/embedded-data/settings/components/field-labels";
+import { FieldSourceIcon } from "@/modules/embedded-data/settings/components/field-source-icon";
+import { getDataTypeLabel, getSourceLabel } from "@/modules/embedded-data/settings/lib/field-labels";
 import {
   getAuthorableSources,
   getDataTypesForSource,
@@ -219,7 +216,7 @@ export const EmbeddedFieldModal = ({
                   <div className="flex flex-col gap-2">
                     <Label>{t("workspace.embedded_data.value_source")}</Label>
                     <div className="flex items-center gap-2 text-slate-500">
-                      {getSourceIcon(entry.field.source, "size-4")}
+                      <FieldSourceIcon source={entry.field.source} className="size-4" />
                       <Badge text={getSourceLabel(entry.field.source, t)} type="gray" size="tiny" />
                       <IdBadge id={entry.link.storageKey} showCopyIconOnHover={true} />
                     </div>
@@ -251,7 +248,7 @@ export const EmbeddedFieldModal = ({
                                   id={`embedded-field-source-${authorableSource}`}
                                 />
                                 <span className="flex items-center gap-2 text-sm font-medium text-slate-800">
-                                  {getSourceIcon(authorableSource, "size-4")}
+                                  <FieldSourceIcon source={authorableSource} className="size-4" />
                                   {getSourceLabel(authorableSource, t)}
                                 </span>
                               </label>

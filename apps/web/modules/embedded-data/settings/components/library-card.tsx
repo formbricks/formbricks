@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import type { TSharedEmbeddedDataListItem } from "@/modules/embedded-data/types";
 import { Button } from "@/modules/ui/components/button";
-import { EmptyState } from "@/modules/ui/components/empty-state";
 import { SettingsTable } from "@/modules/ui/components/settings-table";
 import { DeleteFieldDialog } from "./delete-field-dialog";
 import { getLibraryColumns } from "./library-columns";
@@ -50,34 +49,32 @@ export const LibraryCard = ({ workspaceId, fields, isReadOnly, locale }: Readonl
         description={t("workspace.embedded_data.library_description")}
         bodyVariant="flush"
         cta={isReadOnly ? undefined : newFieldButton}>
-        {fields.length === 0 ? (
-          // No action of its own: the card's `cta` already renders the same button in the header,
-          // and repeating it here put two identical "New field" buttons on an empty library.
-          <div className="p-4">
-            <EmptyState text={t("workspace.embedded_data.empty_state")} />
-          </div>
-        ) : (
-          <SettingsTable
-            columns={getLibraryColumns({
-              t,
-              locale,
-              workspaceId,
-              isReadOnly,
-              onEdit: setEditingField,
-              onDelete: setDeletingField,
-            })}
-            rows={fields}
-            getRowId={(field) => field.id}
-            getRowProps={(field) => ({ "data-testid": `embedded-data-row-${field.id}` })}
-            emptyMessage={t("workspace.embedded_data.empty_state")}
-            aria-label={t("workspace.embedded_data.library")}
-            onRowClick={setEditingField}
-            getRowLabel={(field) => field.name}
-            // A read-only member sees every value but cannot open the edit dialog, so the row keeps
-            // its plain text instead of becoming an activator button that leads nowhere.
-            isRowClickable={() => !isReadOnly}
-          />
-        )}
+        {/*
+          Rendered whether or not there are rows: `SettingsTable` draws `emptyMessage` centred across
+          its own columns, so the empty library keeps the table's header and hairline instead of a
+          second card nested inside this one. It also means the header's `cta` is the only "New
+          field" button on the page — an `EmptyState` with its own action put two there.
+        */}
+        <SettingsTable
+          columns={getLibraryColumns({
+            t,
+            locale,
+            workspaceId,
+            isReadOnly,
+            onEdit: setEditingField,
+            onDelete: setDeletingField,
+          })}
+          rows={fields}
+          getRowId={(field) => field.id}
+          getRowProps={(field) => ({ "data-testid": `embedded-data-row-${field.id}` })}
+          emptyMessage={t("workspace.embedded_data.empty_state")}
+          aria-label={t("workspace.embedded_data.library")}
+          onRowClick={setEditingField}
+          getRowLabel={(field) => field.name}
+          // A read-only member sees every value but cannot open the edit dialog, so the row keeps
+          // its plain text instead of becoming an activator button that leads nowhere.
+          isRowClickable={() => !isReadOnly}
+        />
       </SettingsCard>
 
       {isCreateOpen && (

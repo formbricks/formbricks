@@ -1,9 +1,9 @@
 import type { TFunction } from "i18next";
-import { ArrowDownToLineIcon, CalculatorIcon } from "lucide-react";
+import { ArrowDownToLineIcon, CalculatorIcon, type LucideIcon } from "lucide-react";
 import type { TEmbeddedDataSource, TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import type { TReservedFieldPrivacy } from "@formbricks/types/embedded-data-resolver";
 import type { TSurveyStatus } from "@formbricks/types/surveys/types";
-import type { TAutoCapturedAvailability } from "../lib/auto-captured-fields";
+import type { TAutoCapturedAvailability } from "./auto-captured-fields";
 
 /**
  * How a field's enum columns read on screen.
@@ -29,12 +29,19 @@ export const getSourceLabel = (source: TEmbeddedDataSource, t: TFunction): strin
   }
 };
 
-export const getSourceIcon = (source: TEmbeddedDataSource, className: string) =>
-  source === "computed" ? (
-    <CalculatorIcon className={className} aria-hidden="true" />
-  ) : (
-    <ArrowDownToLineIcon className={className} aria-hidden="true" />
-  );
+/**
+ * The icon for each source, as a table of components — the same shape as `RESERVED_FIELD_ICONS`.
+ *
+ * A table rather than a function because the consumer reads it during render: the React Compiler
+ * rule refuses a capitalized local assigned from a *call* there ("Cannot create components during
+ * render"), while an indexed read is what every other icon consumer in the repo does.
+ */
+export const SOURCE_ICONS: Record<TEmbeddedDataSource, LucideIcon> = {
+  computed: CalculatorIcon,
+  // Reserved fields are never rows in this table, but the record has to be total.
+  ingested: ArrowDownToLineIcon,
+  reserved: ArrowDownToLineIcon,
+};
 
 export const getDataTypeLabel = (dataType: TEmbeddedDataType, t: TFunction): string => {
   switch (dataType) {

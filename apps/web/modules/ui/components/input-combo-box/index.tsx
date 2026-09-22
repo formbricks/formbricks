@@ -102,7 +102,11 @@ function flattenOptions(options?: TComboboxOption[]): TComboboxOption[] {
 }
 
 function getOptionKeywords(option: TComboboxOption): string[] {
-  return [option.label];
+  // The library key too, not just the label: a shared Embedded Data field renders its key beside its
+  // name (ENG-1853), and the spelling on screen has to be one the search box matches — the recall
+  // picker already matches on it. cmdk searches `value` (the storage key) and these keywords, and the
+  // library key is neither by default.
+  return option.meta?.hint ? [option.label, option.meta.hint] : [option.label];
 }
 
 function hasOptionDetails(option: TComboboxOption): boolean {
@@ -169,7 +173,7 @@ function ComboboxOptionLabel({
             whichever one is actually too long.
           */}
           {option.meta?.hint && (
-            <span className="ml-auto max-w-[45%] truncate font-mono text-xs font-normal text-slate-400">
+            <span className="ml-auto max-w-[45%] truncate font-mono text-xs font-normal text-slate-500">
               {option.meta.hint}
             </span>
           )}
@@ -373,11 +377,17 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
           value={parseStoredDay(typeof localValue === "string" ? localValue : null)}
           locale={i18n.resolvedLanguage ?? i18n.language ?? "en-US"}
           disabled={disabled || inputProps?.disabled}
-          placeholder={inputProps?.placeholder}
+          // `inputProps.placeholder` deliberately NOT forwarded: every caller passes the text
+          // branch's "Select or type value", and typing is the one thing this control removed.
+          // `DatePicker`'s own fallback ("Pick a date") is the copy that matches what it offers.
           // The trigger insists on 280px of its own; inside this row it is the flex item that has to
           // give, and the border is the wrapper's so the picker drops its own right edge into it.
           className="min-w-0 flex-1"
-          triggerClassName="h-full w-full rounded-none border-0 border-r border-slate-300"
+          // `px-2` rather than the Button default's `px-4`: the logic card gives this column about
+          // 190px, and the icon plus default padding left too little for a formatted day.
+          triggerClassName="h-full w-full rounded-none border-0 border-r border-slate-300 px-2"
+          // The wrapper already draws the hairline — see `triggerClassName` dropping the trigger's.
+          clearButtonClassName="border-0 shadow-none"
           onChange={(date) => {
             const day = formatLocalDay(date);
             setInputType("input");

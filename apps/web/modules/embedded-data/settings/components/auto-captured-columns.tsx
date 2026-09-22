@@ -4,7 +4,7 @@ import type { TFunction } from "i18next";
 import { Badge } from "@/modules/ui/components/badge";
 import type { TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import type { TAutoCapturedField } from "../lib/auto-captured-fields";
-import { getAvailabilityLabel, getDataTypeLabel, getPrivacyLabel } from "./field-labels";
+import { getAvailabilityLabel, getDataTypeLabel, getPrivacyLabel } from "../lib/field-labels";
 
 /**
  * The Auto-captured table's columns.
