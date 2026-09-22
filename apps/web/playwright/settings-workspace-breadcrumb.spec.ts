@@ -7,7 +7,9 @@ import { test } from "./lib/fixtures";
 // workspace-agnostic routes — no workspaceId in the URL — so the top bar must not render the
 // workspace breadcrumb there, only the organization one. The settings sidebar is deliberately
 // untouched and still shows its Workspace section on those routes, so every test below also asserts
-// the sidebar is intact: that is the guard against the breadcrumb change leaking into the sidebar.
+// that section renders, is scoped to this workspace and carries a visible link: that is the guard
+// against the breadcrumb change leaking into the sidebar. Deliberately not an inventory of the
+// pages it lists — see `expectSidebarWorkspaceSection`.
 
 // The settings shell renders exactly one <aside>, either from SettingsNavigation (the
 // workspace-agnostic routes) or from MainNavigation (the in-workspace routes).
@@ -46,7 +48,18 @@ const expectSidebarWorkspaceSection = async (page: Page, workspaceId: string, wo
   // offers is the sidebar's own business and grows on its own schedule; an exact list of its entries
   // is churn rather than coverage, and it fails this spec for reasons that have nothing to do with
   // the breadcrumb it guards.
-  const workspaceLinks = sidebar.locator(`a[href^="/workspaces/${workspaceId}/settings/workspace/"]`);
+  //
+  // But the scoping has to be *asserted*, not just selected. A locator prefixed with this workspace
+  // id only ever selects the links that already match it, so a wrongly-scoped href drops out of the
+  // selection and the assertion below passes anyway. The old cardinality check caught that as a
+  // side effect; this asserts it directly, and still says nothing about which pages exist.
+  const workspaceLinks = sidebar.locator('a[href*="/settings/workspace/"]');
+  const hrefs = await workspaceLinks.evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+
+  expect(hrefs.length).toBeGreaterThan(0);
+  expect(hrefs.every((href) => href?.startsWith(`/workspaces/${workspaceId}/settings/workspace/`))).toBe(
+    true
+  );
   await expect(workspaceLinks.first()).toBeVisible();
 
   await expect(sidebar.getByRole("button", { name: workspaceName })).toBeVisible();

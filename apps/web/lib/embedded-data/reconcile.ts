@@ -227,7 +227,7 @@ const desiredIdentity = (entry: TDesiredEmbeddedField): string =>
  * Pure, so the branching that actually matters — what may be edited, what may be deleted — is
  * testable without a database.
  *
- * Two rules protect the shared library, which the legacy Variables and Hidden Fields cards know
+ * Two rules protect the shared library, which the legacy Variables and Hidden Fields cards knew
  * nothing about. A shared definition is workspace-owned, so removing it from a survey **unlinks**
  * it and leaves the row alone, and a change to its name or type is ignored rather than written back.
  * A shared entry therefore only ever yields a link create, a reorder or an unlink — never a

@@ -12,10 +12,10 @@ import {
 import { useTranslation } from "react-i18next";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { EMBEDDED_FIELD_ICON_BY_DATA_TYPE } from "@/modules/embedded-data/lib/field-display";
-import { getDataTypeLabel } from "@/modules/embedded-data/settings/components/field-labels";
 import { FieldSourceIndicator, StatusIcon } from "@/modules/embedded-data/settings/components/field-status";
+import { getDataTypeLabel } from "@/modules/embedded-data/settings/lib/field-labels";
 import { type TEmbeddedFieldWarning } from "@/modules/survey/editor/lib/embedded-field-guards";
-import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { Alert } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import {
   DropdownMenu,
@@ -79,6 +79,8 @@ export const EmbeddedDataCardRow = ({
         return t("workspace.embedded_data.warning_unsafe_address");
       case "reservedAddress":
         return t("workspace.embedded_data.warning_reserved_address");
+      case "systemParamAddress":
+        return t("workspace.embedded_data.warning_system_param_address");
       case "clashingAddress":
         return t("workspace.embedded_data.warning_clashing_address");
       case "lockedWithoutDefault":
@@ -88,7 +90,9 @@ export const EmbeddedDataCardRow = ({
 
   return (
     <div
-      className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3"
+      // `border-slate-100`: the card around these rows already draws a `slate-200` hairline,
+      // and the row's menu trigger draws a third inside that — one surface, one ring.
+      className="flex items-start justify-between gap-3 rounded-lg border border-slate-100 bg-white p-3"
       data-testid="embedded-field-row"
       data-storage-key={link.storageKey}>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -132,20 +136,23 @@ export const EmbeddedDataCardRow = ({
           <IdBadge id={link.storageKey} />
         </div>
 
-        {/* Already on screen when the card opens, so `status` rather than the assertive default. */}
+        {/* Already on screen when the card opens, so `status` rather than the assertive default.
+            Rendered as a plain child of `Alert`, not through `AlertDescription`: at `size="small"`
+            that component carries `truncate`, which forces each sentence onto one line and clips it
+            — and these sentences are the whole point of the row. */}
         {warnings.length > 0 && (
           <Alert variant="warning" size="small" role="status" data-testid="embedded-field-warning">
-            <AlertDescription className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-0.5">
               {warnings.map((warning) => (
                 <span key={warning}>{describeWarning(warning)}</span>
               ))}
-            </AlertDescription>
+            </div>
           </Alert>
         )}
       </div>
 
       <DropdownMenu>
-        <DropdownMenuTrigger className="cursor-pointer rounded-lg border border-slate-200 bg-white p-2 hover:bg-slate-50">
+        <DropdownMenuTrigger className="flex size-9 cursor-pointer items-center justify-center rounded-lg bg-white hover:bg-slate-100">
           {/* Names the field, so a screen reader hears which row's menu this opens. */}
           <span className="sr-only">{`${t("workspace.surveys.open_options")} – ${field.name}`}</span>
           <MoreVertical className="size-4" aria-hidden="true" />

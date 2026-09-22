@@ -7,8 +7,8 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getEmbeddedDataUsageAction } from "@/modules/embedded-data/actions";
 import type { TEmbeddedDataUsageItem } from "@/modules/embedded-data/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
+import { getSurveyStatusLabel } from "../lib/field-labels";
 import { getUsageLabel } from "../lib/library-field";
-import { getSurveyStatusLabel } from "./field-labels";
 
 interface FieldUsageCellProps {
   fieldId: string;
@@ -21,9 +21,14 @@ interface FieldUsageCellProps {
  *
  * The names are fetched when the popover opens rather than with the list. The list query already
  * counts the links, which is what the cell reads; loading every survey name for every row would pay
- * for a panel most rows never open. Once loaded they are kept — the same row reopened is the common
- * case, and a library field's usage does not change while the page is open unless this user changes
- * it, which reloads the route anyway.
+ * for a panel most rows never open.
+ *
+ * Once loaded they are kept, and the reason is narrower than "a refresh clears them": `router.refresh()`
+ * re-renders the server components but preserves client state, so this cache outlives every write on
+ * this page. It is safe because nothing here changes which surveys link a field — links are edited in
+ * the survey editor, and arriving from there is a navigation, which does remount. The one visible
+ * seam is a link changed in another tab: the cell's count comes from the server and would refresh,
+ * while an already-open popover's names would not.
  *
  * **The whole cell is the control, whichever answer it gives.** The trigger fills its cell rather
  * than hugging its text, so the gap beside "2 surveys" opens the popover like the words do; and an
@@ -42,10 +47,7 @@ export const FieldUsageCell = ({ fieldId, workspaceId, surveyCount }: Readonly<F
     return <span className="block text-slate-500">{t("workspace.embedded_data.not_used")}</span>;
   }
 
-  const text =
-    label.kind === "single"
-      ? t("workspace.embedded_data.used_in_one_survey")
-      : t("workspace.embedded_data.used_in_surveys", { count: label.count });
+  const text = t("workspace.embedded_data.used_in_surveys", { count: label.count });
 
   const loadUsage = async () => {
     setError(null);
@@ -60,6 +62,10 @@ export const FieldUsageCell = ({ fieldId, workspaceId, surveyCount }: Readonly<F
   const renderBody = () => {
     if (error) return <p className="text-sm text-error">{error}</p>;
     if (!usage) return <p className="text-sm text-slate-500">{t("common.loading")}</p>;
+    // A successful empty answer is reachable: `surveyCount` is as old as the page, so the last
+    // linking survey may have been deleted since. Without this the panel renders an empty list.
+    if (usage.length === 0)
+      return <p className="text-sm text-slate-500">{t("workspace.embedded_data.not_used")}</p>;
 
     return (
       <ul className="flex flex-col gap-2">

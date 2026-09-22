@@ -275,16 +275,20 @@ export const RecallItemSelect = ({
           }}
         />
         <div className="max-h-72 overflow-x-hidden overflow-y-auto">
-          {filteredGroups.map((group) => (
-            <div key={group.label}>
-              <p className="px-2 pt-2 pb-1 text-xs font-medium text-slate-500">{group.label}</p>
+          {filteredGroups.map((group, groupIndex) => (
+            <div key={group.label} role="group" aria-labelledby={`recallGroup-${groupIndex}`}>
+              <p
+                id={`recallGroup-${groupIndex}`}
+                className="px-2 pt-2 pb-1 text-xs font-medium text-slate-500">
+                {group.label}
+              </p>
               {group.options.map((recallItem) => {
                 const IconComponent = recallItem.icon;
                 return (
                   <DropdownMenuItem
                     id={"recallItem-" + recallItem.index}
                     key={recallItem.id}
-                    title={recallItem.type}
+                    data-recall-type={recallItem.type}
                     onSelect={() => {
                       addRecallItem({ id: recallItem.id, label: recallItem.label, type: recallItem.type });
                       setShowRecallItemSelect(false);
@@ -300,7 +304,9 @@ export const RecallItemSelect = ({
                         document.getElementById("recallItemSearchInput")?.focus();
                       }
                     }}>
-                    <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
+                    <div className="mr-2 size-4 shrink-0">
+                      {IconComponent && <IconComponent className="size-4" />}
+                    </div>
                     <p className="max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap">
                       {getTextContentWithRecallTruncated(recallItem.label).trim() ||
                         t("common.no_text_found")}
@@ -312,7 +318,7 @@ export const RecallItemSelect = ({
                       field has no library key and renders one string.
                     */}
                     {recallItem.secondaryLabel && (
-                      <span className="ml-auto max-w-[45%] truncate pl-2 font-mono text-xs text-slate-400">
+                      <span className="ml-auto max-w-[45%] truncate pl-2 font-mono text-xs text-slate-500">
                         {recallItem.secondaryLabel}
                       </span>
                     )}

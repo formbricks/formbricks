@@ -3,7 +3,7 @@ import { ArrowDownToLineIcon, CalculatorIcon, type LucideIcon } from "lucide-rea
 import type { TEmbeddedDataSource } from "@formbricks/types/embedded-data";
 import type { TReservedFieldPrivacy } from "@formbricks/types/embedded-data-resolver";
 import type { TSurveyStatus } from "@formbricks/types/surveys/types";
-import type { TAutoCapturedAvailability } from "../lib/auto-captured-fields";
+import type { TAutoCapturedAvailability } from "./auto-captured-fields";
 
 /**
  * How a field's enum columns read on screen.
@@ -30,19 +30,17 @@ export const getSourceLabel = (source: TEmbeddedDataSource, t: TFunction): strin
 };
 
 /**
- * A map rather than a ternary, so a cell can hand the component itself to `StatusIcon` instead of a
- * rendered element. `reserved` has no source cell of its own — the auto-captured table is the
- * answer — but the branch exists because `TEmbeddedDataSource` includes the value.
+ * The icon for each source, as a table of components — the same shape as `RESERVED_FIELD_ICONS`.
+ *
+ * A table rather than a function because the consumer reads it during render: the React Compiler
+ * rule refuses a capitalized local assigned from a *call* there ("Cannot create components during
+ * render"), while an indexed read is what every other icon consumer in the repo does.
  */
 export const SOURCE_ICONS: Record<TEmbeddedDataSource, LucideIcon> = {
-  ingested: ArrowDownToLineIcon,
   computed: CalculatorIcon,
+  // Reserved fields are never rows in this table, but the record has to be total.
+  ingested: ArrowDownToLineIcon,
   reserved: ArrowDownToLineIcon,
-};
-
-export const getSourceIcon = (source: TEmbeddedDataSource, className: string) => {
-  const Icon = SOURCE_ICONS[source];
-  return <Icon className={className} aria-hidden="true" />;
 };
 
 /**

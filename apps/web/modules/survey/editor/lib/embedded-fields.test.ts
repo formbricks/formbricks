@@ -289,6 +289,12 @@ describe("listLinkableSharedFields", () => {
     expect(linkable([computed("var_id", { name: "plan" })])).toEqual(["score"]);
   });
 
+  // The same name inside ONE namespace, which the cross-namespace rule above cannot see: both
+  // derive the legacy variable `score`, and the save dies naming no field at all.
+  test("leaves out a row that would duplicate a name inside its own namespace", () => {
+    expect(linkable([computed("var_id", { name: "score" })])).toEqual(["plan"]);
+  });
+
   // Grandfathering is per-save and reads the stored survey, exactly as the server's guard does: a
   // survey that already holds the clash keeps saving, so the row stays on offer.
   test("still offers a row whose clash the stored survey already holds", () => {

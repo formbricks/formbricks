@@ -1,16 +1,20 @@
 /**
  * The text an analysis surface shows for one stored Embedded Data value (ENG-3266).
  *
- * The value half of {@link getReservedFieldLabel}'s label half, and for the same reason: the response
- * table, the summary and the single-response card each had their own inline expression, all three
- * written as `typeof value === "string"`. That was true while every ingested field was a hidden field
- * and hidden fields were text. Typed fields make it false — a `number` field stores a JSON number, so
- * a value the product accepted, stored and exports rendered as nothing on all three.
+ * The value half of `labelEmbeddedFields`' label half, and for the same reason: every surface that
+ * reads a field's stored value had its own inline expression, all written as
+ * `typeof value === "string"`. That was true while every ingested field was a hidden field and hidden
+ * fields were text. Typed fields make it false — a `number` field stores a JSON number, so a value
+ * the product accepted, stored and exports rendered as nothing.
  *
- * **Deliberately not {@link resolveEmbeddedValue}.** That resolver has coercion and default tiers
- * this does not: it substitutes a locked field's `defaultValue` and re-reads reserved fields, which
- * would change what already-stored responses display. This only widens "what counts as showable" from
- * strings to every JSON scalar, and nothing else.
+ * **Deliberately not `resolveEmbeddedValue`.** That resolver has a default tier this does not: it
+ * substitutes a locked field's `defaultValue`, which would change what already-stored responses
+ * display. This only widens "what counts as showable", and nothing else.
+ *
+ * The `boolean` arm is defensive, not a fix. `ZResponseDataValue` has no boolean member, so a
+ * boolean-typed field is stored as the string `"true"` / `"false"` and already displayed — see the
+ * note on `normalizeBoolean` in `@formbricks/types/embedded-data-ingest`, where widening the read
+ * seam to a fourth value shape was considered and rejected. `number` is the arm that fixes a bug.
  *
  * `null` means there is nothing to show, which is not the same as the empty string: a stored `""` is a
  * present value and stays one, so a caller that skips blanks keeps skipping exactly what it did.

@@ -192,6 +192,42 @@ describe("findEmbeddedFieldRemovalBlocker", () => {
     });
   });
 
+  // The two plain-string fields on an ending card. Both are authored through a `RecallWrapper`, so a
+  // token can sit in either — and a removal that missed them left a dangling token in the URL a
+  // respondent is actually sent to.
+  test("sees recall in a redirect's URL and an end screen's button link", () => {
+    const inRedirect = survey({
+      endings: [{ id: "ending1", type: "redirectToUrl", url: `https://x.test/?p=${recallToken}` }],
+    });
+    const inButtonLink = survey({
+      endings: [
+        {
+          id: "ending1",
+          type: "endScreen",
+          headline: { default: "Thanks" },
+          buttonLink: `https://x.test/?p=${recallToken}`,
+        },
+      ],
+    });
+
+    expect(findEmbeddedFieldRemovalBlocker(inRedirect, [], entry("ingested"))).toEqual({
+      reason: "recallEnding",
+    });
+    expect(findEmbeddedFieldRemovalBlocker(inButtonLink, [], entry("ingested"))).toEqual({
+      reason: "recallEnding",
+    });
+  });
+
+  // The quota arm reads a different operand per source, and only the ingested half was exercised.
+  test("names the quota that counts on a calculated field, not only a passed-in one", () => {
+    const quotas = [quota("Power users", { leftOperand: { type: "variable", value: PLAN } })];
+
+    expect(findEmbeddedFieldRemovalBlocker(survey({}), quotas, entry("computed"))).toEqual({
+      reason: "quota",
+      quotaName: "Power users",
+    });
+  });
+
   test("names the quota that still counts on the field", () => {
     const quotas = [quota("Pro users", { leftOperand: { type: "hiddenField", value: PLAN } })];
 

@@ -156,6 +156,36 @@ describe("buildEmailSendToOptions", () => {
     ]);
   });
 
+  test("a blank name falls back to the storage key rather than drawing an unreadable row", () => {
+    // The same rule as the operand picker's, written out a second time here — so it needs its own
+    // case, or one copy can be deleted with the suite still green.
+    const options = buildEmailSendToOptions({
+      survey: makeSurvey({
+        embeddedFields: [
+          {
+            field: {
+              name: "  ",
+              source: "ingested" as const,
+              dataType: "string" as const,
+              defaultValue: null,
+              locked: false,
+              key: null,
+            },
+            link: { storageKey: "billing" },
+          },
+        ],
+      }),
+      teamMemberDetails: [],
+      userEmail: "me@example.com",
+      selectedLanguageCode: "default",
+      t,
+    });
+
+    expect(options.filter((o) => o.type === "hiddenField")).toEqual([
+      { id: "billing", type: "hiddenField", label: "billing", secondaryLabel: undefined },
+    ]);
+  });
+
   test("adds a verified-email option only when the survey enables it", () => {
     const withVerify = buildEmailSendToOptions({
       survey: makeSurvey({ isVerifyEmailEnabled: true }),

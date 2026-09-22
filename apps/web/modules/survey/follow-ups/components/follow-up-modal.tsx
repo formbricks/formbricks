@@ -359,7 +359,7 @@ export const FollowUpModal = ({
           <span className={textClass}>{option.label}</span>
           {/* A shared Embedded Data field's library key — see `EmailSendToOption.secondaryLabel`. */}
           {option.secondaryLabel ? (
-            <span className="ml-auto truncate pl-2 font-mono text-xs text-slate-400">
+            <span className="ml-auto truncate pl-2 font-mono text-xs text-slate-500">
               {option.secondaryLabel}
             </span>
           ) : null}
@@ -632,6 +632,13 @@ export const FollowUpModal = ({
                                           </div>
                                         ) : null}
 
+                                        {/*
+                                          Ingested fields only, under the whole category's name:
+                                          `buildEmailSendToOptions` lists `getIngestedEmbeddedFields`,
+                                          because an address a recipient is read from arrives with the
+                                          response rather than being computed during it. The heading
+                                          names the category the rows belong to, not everything in it.
+                                        */}
                                         {emailSendToHiddenFieldOptions.length > 0 ? (
                                           <div className="flex flex-col">
                                             <div className="flex gap-x-2 p-2">

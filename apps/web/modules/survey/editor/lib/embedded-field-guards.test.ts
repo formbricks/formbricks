@@ -125,6 +125,20 @@ describe("embeddedFieldWarnings", () => {
     expect(embeddedFieldWarnings([ingested("account_id", { defaultValue: null })]).size).toBe(0);
   });
 
+  /**
+   * The other reserved set, and the one that actually costs the author something. `country` is
+   * refused for a NEW field but keeps being filled on a survey that already declares it; `lang` is a
+   * link-survey system parameter, which `getHiddenFieldsFromSearchParams` drops instead of storing —
+   * so that field is permanently empty. Warning about the first and not the second was backwards.
+   */
+  test("a link-survey system parameter warns, separately from the auto-capture catalog", () => {
+    const systemParam = ingested("lang");
+    const autoCaptured = ingested("country");
+
+    expect(warningsFor([systemParam], systemParam)).toEqual(["systemParamAddress"]);
+    expect(warningsFor([autoCaptured], autoCaptured)).toEqual(["reservedAddress"]);
+  });
+
   test("a row carrying several problems reports all of them", () => {
     const field = ingested("Country", { locked: true, defaultValue: null });
     expect(warningsFor([field], field)).toEqual(["unsafeAddress", "reservedAddress", "lockedWithoutDefault"]);

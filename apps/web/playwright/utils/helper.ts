@@ -998,7 +998,7 @@ export const openCreateEmbeddedFieldTab = async (page: Page): Promise<Locator> =
   const dialog = embeddedFieldDialog(page);
   await expect(dialog).toBeVisible();
   await dialog.getByRole("button", { name: "Create new field", exact: true }).click();
-  await expect(dialog.locator("#embedded-field-name")).toBeVisible();
+  await expect(dialog.getByTestId("embedded-field-name")).toBeVisible();
   return dialog;
 };
 
@@ -1009,17 +1009,17 @@ export const fillEmbeddedFieldDialog = async (
 ): Promise<void> => {
   const dialog = embeddedFieldDialog(page);
 
-  if (field.name !== undefined) await dialog.locator("#embedded-field-name").fill(field.name);
+  if (field.name !== undefined) await dialog.getByTestId("embedded-field-name").fill(field.name);
   // Absent when editing: the source and the address a field is stored under are fixed once set.
   if (field.source !== undefined) {
     await dialog.locator(`#${EMBEDDED_FIELD_SOURCE_IDS[field.source]}`).click();
   }
   if (field.type !== undefined) {
-    await dialog.locator("#embedded-field-type").click();
+    await dialog.getByTestId("embedded-field-type").click();
     await page.getByRole("option", { name: field.type, exact: true }).click();
   }
   if (field.defaultValue !== undefined) {
-    await dialog.locator("#embedded-field-default").fill(field.defaultValue);
+    await dialog.getByTestId("embedded-field-default").fill(field.defaultValue);
   }
 };
 

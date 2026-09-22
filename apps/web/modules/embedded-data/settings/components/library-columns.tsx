@@ -7,8 +7,9 @@ import type { TSharedEmbeddedDataListItem } from "@/modules/embedded-data/types"
 import { DataTypeBadge } from "@/modules/ui/components/data-type-badge";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import type { TSettingsTableColumn } from "@/modules/ui/components/settings-table";
+import { SOURCE_ICONS, getSourceLabel } from "../lib/field-labels";
 import { FieldRowMenu } from "./field-row-menu";
-import { FieldSourceIcon, StatusIcon } from "./field-status";
+import { StatusIcon } from "./field-status";
 import { FieldUsageCell } from "./field-usage-cell";
 
 /**
@@ -67,7 +68,9 @@ export const getLibraryColumns = ({
       skeletonWidth: "w-8",
       // Icon alone, like the auto-captured table's status columns: the heading says what the column
       // answers, and arrow-in against calculator is a difference you read without a word.
-      cell: (field) => <FieldSourceIcon source={field.source} />,
+      cell: (field) => (
+        <StatusIcon icon={SOURCE_ICONS[field.source]} label={getSourceLabel(field.source, t)} />
+      ),
     },
     {
       id: "dataType",
@@ -89,7 +92,17 @@ export const getLibraryColumns = ({
         return (
           <div className="flex items-center gap-2">
             {hasDefault ? (
-              <code className="truncate font-mono text-xs text-slate-800">{String(field.defaultValue)}</code>
+              <code className="truncate font-mono text-xs text-slate-800">
+                {/*
+                  The stored literal, deliberately unformatted — which is why it is in mono while the
+                  Created column beside it goes through `formatDateForDisplay`. A `date` default is
+                  stored and sent as ISO 8601, and it is the exact string a URL parameter carries and
+                  the API returns; localising it here would show the author something they cannot
+                  type back. The edit dialog renders the same value through a date picker, where a
+                  localised reading is the right one because it is being chosen rather than read.
+                */}
+                {String(field.defaultValue)}
+              </code>
             ) : (
               // The dash is what "no default" looks like in a column this narrow — copy all the
               // same, so it comes from the catalog rather than sitting inline, and a locale that
@@ -99,7 +112,10 @@ export const getLibraryColumns = ({
             {field.locked && (
               <StatusIcon
                 icon={LockIcon}
-                iconClassName={cn("size-3.5", !hasDefault && "text-warning")}
+                // `text-warning-muted` clears 3:1 against white where `text-warning` measures ~2.15:1 —
+                // this glyph is the only thing distinguishing "locked" from "locked with nothing to
+                // fall back on".
+                iconClassName={cn("size-4", !hasDefault && "text-warning-muted")}
                 label={
                   hasDefault
                     ? t("workspace.embedded_data.locked_description")

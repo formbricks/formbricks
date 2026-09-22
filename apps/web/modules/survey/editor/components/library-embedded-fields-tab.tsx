@@ -52,6 +52,9 @@ export const LibraryEmbeddedFieldsTab = ({
 }: Readonly<LibraryEmbeddedFieldsTabProps>) => {
   const { t } = useTranslation();
   const [library, setLibrary] = useState<TSharedEmbeddedDataListItem[] | null>(null);
+  // Distinct from "no rows": a failed load used to set `[]`, and the dialog then told the author
+  // their workspace library was empty — false, and with no way to retry but closing and reopening.
+  const [loadFailed, setLoadFailed] = useState(false);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -62,10 +65,11 @@ export const LibraryEmbeddedFieldsTab = ({
 
       if (!response?.data) {
         toast.error(getFormattedErrorMessage(response) || t("common.something_went_wrong_please_try_again"));
-        setLibrary([]);
+        setLoadFailed(true);
         return;
       }
 
+      setLoadFailed(false);
       setLibrary(response.data);
     };
 
@@ -74,6 +78,10 @@ export const LibraryEmbeddedFieldsTab = ({
       isCurrent = false;
     };
   }, [workspaceId, t]);
+
+  if (loadFailed) {
+    return <EmptyState variant="simple" text={t("workspace.embedded_data.library_load_failed")} />;
+  }
 
   if (library === null) {
     return (

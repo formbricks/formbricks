@@ -1,6 +1,6 @@
 import { TFunction } from "i18next";
 import { HTMLInputTypeAttribute, JSX } from "react";
-import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
+import type { TEmbeddedDataSource, TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import {
   RESERVED_FIELD_CATALOG,
   type TLinkedEmbeddedField,
@@ -500,15 +500,31 @@ export const getFormatLeftOperandValue = (condition: TSingleCondition, localSurv
  *
  * The reserved lookup reads the whole catalog rather than {@link getPickerReservedEntries} for that
  * exact reason: the filtered list is what may be *offered*, not what may be *shown*.
+ *
+ * **The row lookup is filtered by the source the operand type names.** A `variable` operand names a
+ * computed row and a `hiddenField` operand an ingested one; storage keys are unique per survey
+ * (`@@unique([surveyId, storageKey])`), so for a well-formed survey the filter changes nothing. It
+ * is there because `getConditionOperatorOptions` resolves a `variable` operand through
+ * `getComputedFieldOptions` — computed rows only — and the two halves of one operand disagreeing
+ * about which row it names is how a row ends up offering text operators beside a `DatePicker`.
  */
+const SOURCE_BY_OPERAND_TYPE: Partial<Record<TSingleCondition["leftOperand"]["type"], TEmbeddedDataSource>> =
+  {
+    variable: "computed",
+    hiddenField: "ingested",
+  };
+
 const getOperandDataType = (condition: TSingleCondition, localSurvey: TSurvey): TEmbeddedDataType => {
   if (condition.leftOperand.type === "reserved") {
     const entry = RESERVED_FIELD_CATALOG.find((candidate) => candidate.name === condition.leftOperand.value);
     return entry?.dataType ?? "string";
   }
 
+  const wantedSource = SOURCE_BY_OPERAND_TYPE[condition.leftOperand.type];
   const field = getSurveyEmbeddedFields(localSurvey).find(
-    ({ link }) => link.storageKey === condition.leftOperand.value
+    ({ field: candidate, link }) =>
+      link.storageKey === condition.leftOperand.value &&
+      (wantedSource === undefined || candidate.source === wantedSource)
   );
   return field?.field.dataType ?? "string";
 };
@@ -554,8 +570,19 @@ export const getConditionOperatorOptions = (
  * that pair on the way in and `projectReservedValues` stringifies a reserved one the same way — so
  * these values compare equal to what the evaluator reads. Typing the word was the only way to write
  * this condition before, and a typo produced a row that read correctly and could never match.
+ *
+ * **The reference groups stay.** Dropping the free-text box is the fix; dropping the other boolean
+ * fields beside it would not be. A condition comparing one boolean field to another is one the old
+ * branch offered, and with `showInput: false` a stored one has nowhere to render: `InputCombobox`
+ * matches the stored value against the options, finds none, and draws an empty trigger — after which
+ * picking `True` silently replaces the reference. Unreachable while `finished` is the catalog's only
+ * boolean and is server-only, and while no UI types an ingested field; ENG-3230 changes both.
  */
-const getBooleanValueProps = (t: TFunction): TConditionValueProps => ({
+const getBooleanValueProps = (
+  t: TFunction,
+  condition: TSingleCondition,
+  localSurvey: TSurvey
+): TConditionValueProps => ({
   show: true,
   showInput: false,
   options: toOperandGroups(t, {
@@ -563,6 +590,21 @@ const getBooleanValueProps = (t: TFunction): TConditionValueProps => ({
       { label: t("common.true"), value: "true", meta: { type: "static" } },
       { label: t("common.false"), value: "false", meta: { type: "static" } },
     ],
+    embeddedData: getEmbeddedFieldOptions(localSurvey, {
+      exclude: condition.leftOperand.value,
+      comparableAs: "boolean",
+    }),
+    // Same rule as the main path below: another auto-captured field of the same dataType, minus the
+    // one on the left, and only opposite an auto-captured operand.
+    autoCaptured:
+      condition.leftOperand.type === "reserved"
+        ? getPickerReservedEntries(localSurvey)
+            .filter(
+              (candidate) =>
+                candidate.name !== condition.leftOperand.value && candidate.dataType === "boolean"
+            )
+            .map((entry) => toReservedOption(entry, t))
+        : [],
   }),
 });
 
@@ -804,7 +846,7 @@ export const getMatchValueProps = (
    */
   const dataType = getOperandDataType(condition, localSurvey);
 
-  if (dataType === "boolean") return getBooleanValueProps(t);
+  if (dataType === "boolean") return getBooleanValueProps(t, condition, localSurvey);
 
   /*
    * Only elements that can actually hold this dataType. Without the filter a numeric condition could
@@ -1253,6 +1295,16 @@ const checkElementForRecall = (element: TSurveyElement, recallPattern: string): 
   return false;
 };
 
+/**
+ * Recall anywhere on an ending card, including the two plain-string fields.
+ *
+ * `headline` and `subheader` are `TI18nString`s, so they go through `checkTextForRecallPattern`. The
+ * other two are bare strings and need their own check: an end screen's button link
+ * (`end-screen-form.tsx`) and a redirect ending's URL (`redirect-url-form.tsx`) are both authored
+ * through a `RecallWrapper`, so a token can be sitting in either. Missing them let a field be
+ * removed out from under a redirect, leaving a dangling `#recall:…/fallback:…#` in the URL a
+ * respondent is then sent to.
+ */
 const checkEndingCardsForRecall = (endings: TSurveyEndings | undefined, recallPattern: string): boolean => {
   if (!endings) return false;
 
@@ -1260,10 +1312,11 @@ const checkEndingCardsForRecall = (endings: TSurveyEndings | undefined, recallPa
     if (ending.type === "endScreen") {
       return (
         checkTextForRecallPattern(ending.headline, recallPattern) ||
-        checkTextForRecallPattern(ending.subheader, recallPattern)
+        checkTextForRecallPattern(ending.subheader, recallPattern) ||
+        (ending.buttonLink?.includes(recallPattern) ?? false)
       );
     }
-    return false;
+    return ending.url?.includes(recallPattern) ?? false;
   });
 };
 

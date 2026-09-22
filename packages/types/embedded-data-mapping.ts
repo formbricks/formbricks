@@ -178,8 +178,8 @@ const toLegacyVariable = (field: TDesiredEmbeddedField): TSurveyVariable =>
  * the flag is a survey-level toggle rather than a property of any field, and the two ingest paths
  * disagree about it (js-core honours it, the link-survey URL path ignores it), so turning it off
  * behind the author's back would silently stop the SDK filling fields they can still see. A survey
- * that gains its first ingested field gets the flag set, which is what the hidden-fields card does
- * today.
+ * that gains its first ingested field gets the flag set — which is what the hidden-fields card did
+ * itself until ENG-2628 moved the legacy columns entirely onto this derivation.
  */
 export const toLegacyEmbeddedFields = (
   desired: readonly TDesiredEmbeddedField[],

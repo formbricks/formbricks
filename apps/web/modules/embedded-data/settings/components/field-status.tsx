@@ -6,7 +6,7 @@ import type { TEmbeddedDataSource } from "@formbricks/types/embedded-data";
 import type { TReservedFieldPrivacy } from "@formbricks/types/embedded-data-resolver";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import type { TAutoCapturedAvailability } from "../lib/auto-captured-fields";
-import { SOURCE_ICONS, getAvailabilityLabel, getPrivacyLabel, getSourceLabel } from "./field-labels";
+import { SOURCE_ICONS, getAvailabilityLabel, getPrivacyLabel, getSourceLabel } from "../lib/field-labels";
 
 /**
  * The Embedded Data tables' status cells: a glyph and a tooltip where a sentence used to sit.
@@ -70,21 +70,10 @@ export const FieldPrivacyIcon = ({ privacy }: Readonly<{ privacy: TReservedField
 };
 
 /**
- * Where a declared field's value comes from, as a glyph alone.
- *
- * For a table, where the "Source" heading already says what the column answers and two values —
- * arrow-in or calculator — are told apart at a glance. Everywhere else, the word comes with it:
- * see {@link FieldSourceIndicator}.
- */
-export const FieldSourceIcon = ({ source }: Readonly<{ source: TEmbeddedDataSource }>) => {
-  const { t } = useTranslation();
-
-  return <StatusIcon icon={SOURCE_ICONS[source]} label={getSourceLabel(source, t)} />;
-};
-
-/**
- * The same answer with its word, for a row that has no column heading to carry it — the editor's
- * field rows, the library picker, and the read-only source block in both edit dialogs.
+ * Where a declared field's value comes from, with its word: for a row that has no column heading to
+ * carry it — the editor's field rows, the library picker, and the read-only source block in both edit
+ * dialogs. A table's Source column draws the glyph alone through {@link StatusIcon}, since its heading
+ * already says what the column answers.
  */
 export const FieldSourceIndicator = ({
   source,

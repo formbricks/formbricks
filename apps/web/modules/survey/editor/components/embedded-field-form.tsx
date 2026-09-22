@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
@@ -12,12 +12,9 @@ import {
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { TValidateIdErrorCode } from "@formbricks/types/surveys/validation";
 import { DefaultValueInput } from "@/modules/embedded-data/components/default-value-input";
-import {
-  getDataTypeLabel,
-  getSourceIcon,
-  getSourceLabel,
-} from "@/modules/embedded-data/settings/components/field-labels";
+import { FieldSourceIcon } from "@/modules/embedded-data/settings/components/field-source-icon";
 import { FieldSourceIndicator } from "@/modules/embedded-data/settings/components/field-status";
+import { getDataTypeLabel, getSourceLabel } from "@/modules/embedded-data/settings/lib/field-labels";
 import {
   getAuthorableSources,
   getDataTypesForSource,
@@ -122,12 +119,37 @@ export const EmbeddedFieldForm = ({
 
   const source = form.watch("source");
   const dataType = form.watch("dataType");
-  const { isSubmitting } = form.formState;
+
+  /**
+   * Narrowing on a source switch is reversible, unlike the author retyping the field themselves.
+   *
+   * `narrowDataTypeToSource` keeps the current type whenever the new source still allows it, so only
+   * the narrowing case moves anything — and that case is the one the author did not ask for. Without
+   * the snapshot, Passed-in/Date/a default -> Calculated -> back to Passed-in left a Text field with
+   * no default: the type was narrowed to `string` on the way out, and coming back `string` is still
+   * allowed, so nothing restored it.
+   */
+  const narrowedAway = useRef<{ dataType: TEmbeddedDataType; defaultValue: string } | null>(null);
 
   const handleSourceChange = (value: string) => {
     const nextSource = ZEmbeddedDataSource.parse(value);
     form.setValue("source", nextSource, { shouldValidate: true, shouldDirty: true });
-    handleDataTypeChange(narrowDataTypeToSource(form.getValues("dataType"), nextSource));
+
+    const current = form.getValues("dataType");
+    const restored = narrowedAway.current;
+    const wanted =
+      restored !== null && getDataTypesForSource(nextSource).includes(restored.dataType)
+        ? restored.dataType
+        : current;
+    const narrowed = narrowDataTypeToSource(wanted, nextSource);
+
+    narrowedAway.current =
+      narrowed === wanted ? null : { dataType: wanted, defaultValue: form.getValues("defaultValue") };
+
+    handleDataTypeChange(narrowed);
+    if (narrowed === restored?.dataType) {
+      form.setValue("defaultValue", restored.defaultValue, { shouldValidate: true, shouldDirty: true });
+    }
     if (!isLockableSource(nextSource)) {
       form.setValue("locked", false, { shouldValidate: true, shouldDirty: true });
     }
@@ -214,7 +236,9 @@ export const EmbeddedFieldForm = ({
                   <FormControl>
                     <Input
                       {...nameField}
-                      id="embedded-field-name"
+                      // `data-testid`, not `id`: an explicit id wins over the one `FormControl`
+                      // supplies, and `FormLabel htmlFor` then points at the description below.
+                      data-testid="embedded-field-name"
                       autoFocus
                       isInvalid={Boolean(form.formState.errors.name)}
                     />
@@ -260,7 +284,7 @@ export const EmbeddedFieldForm = ({
                               id={`embedded-field-source-${authorableSource}`}
                             />
                             <span className="flex items-center gap-2 text-sm font-medium text-slate-800">
-                              {getSourceIcon(authorableSource, "size-4")}
+                              <FieldSourceIcon source={authorableSource} className="size-4" />
                               {getSourceLabel(authorableSource, t)}
                             </span>
                           </label>
@@ -311,7 +335,7 @@ export const EmbeddedFieldForm = ({
                       <Select
                         value={dataTypeField.value}
                         onValueChange={(next) => handleDataTypeChange(ZEmbeddedDataType.parse(next))}>
-                        <SelectTrigger id="embedded-field-type" className="h-10 w-full">
+                        <SelectTrigger data-testid="embedded-field-type" className="h-10 w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -337,7 +361,7 @@ export const EmbeddedFieldForm = ({
                     <FormControl>
                       <DefaultValueInput
                         dataType={dataType}
-                        id="embedded-field-default"
+                        data-testid="embedded-field-default"
                         value={defaultField.value}
                         onChange={defaultField.onChange}
                         locale={locale}
@@ -356,9 +380,10 @@ export const EmbeddedFieldForm = ({
             <Button type="button" variant="secondary" onClick={onCancel}>
               {t("common.cancel")}
             </Button>
-            <Button type="submit" loading={isSubmitting}>
-              {isEdit ? t("common.save") : t("common.add")}
-            </Button>
+            {/* No `loading`: this form writes to `localSurvey` synchronously, so `isSubmitting` is
+                never observable and the prop read as double-submit protection that was not there.
+                The save itself is the menu bar's. */}
+            <Button type="submit">{isEdit ? t("common.save") : t("common.add")}</Button>
           </div>
         </form>
       </FormProvider>

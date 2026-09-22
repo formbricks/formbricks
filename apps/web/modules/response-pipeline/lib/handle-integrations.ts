@@ -393,12 +393,15 @@ const extractResponses = async (
       // Labelled by storage key, while a computed field above is labelled by `field.name`. The
       // asymmetry is deliberate: a computed field's storage key is an opaque cuid, whereas an
       // ingested field's storage key IS its name today (`toDesiredEmbeddedFields` sets both to the
-      // hidden field id), and the Notion mapping modal both keys and labels on the storage key. So
-      // the two are equal today, and switching this side alone would desync the pipeline from that
-      // picker — and silently re-header the spreadsheet/Notion columns of every already-configured
-      // integration, since `elements` IS the column header. When names can diverge from storage keys
-      // (ENG-1851), this and `AddIntegrationModal.tsx` have to move together, with a migration for
-      // existing mappings.
+      // hidden field id), so the two spellings are still identical here. They diverge once the
+      // shared library lands (ENG-1851), and these columns then keep showing the key — relabelling
+      // is its own ticket, because `elements` IS the spreadsheet/Airtable column header and moving
+      // it would silently re-header every already-configured integration, so it needs a migration
+      // for existing mappings.
+      //
+      // The Notion picker moved to the name in ENG-3233 and does not force this side to follow: it
+      // labels by name but still keys its saved mapping on `link.storageKey`, which is the
+      // `element.id` `buildNotionPayloadProperties` reads each value from.
       elements.push(elementId);
       continue;
     }
