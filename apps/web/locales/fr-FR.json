@@ -103,7 +103,7 @@
       "scopes": {
         "email": "View your email address",
         "feedback_records_read": "Read feedback records",
-        "feedback_records_write": "Create feedback records",
+        "feedback_records_write": "Créer, modifier et supprimer des enregistrements de commentaires",
         "offline_access": "Keep access with refresh tokens",
         "openid": "Identify you with OpenID Connect",
         "profile": "View your profile",

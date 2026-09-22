@@ -103,7 +103,7 @@
       "scopes": {
         "email": "メールアドレスの参照",
         "feedback_records_read": "フィードバックレコードの参照",
-        "feedback_records_write": "フィードバックレコードの作成",
+        "feedback_records_write": "フィードバック記録の作成、更新、削除",
         "offline_access": "リフレッシュトークンによるアクセスの維持",
         "openid": "OpenID Connectによる本人確認",
         "profile": "プロフィールの参照",
