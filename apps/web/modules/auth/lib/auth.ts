@@ -250,12 +250,19 @@ export const auth = betterAuth({
     },
   },
 
-  // Existing Prisma columns that Better Auth doesn't know about; declared so the SSO hooks can
-  // write them. `input: false` keeps them server-set only (never settable via the client API).
+  // Existing Prisma columns that Better Auth doesn't know about; declared so the `user.create.before`
+  // hooks can write them. The declaration is not optional paperwork: the adapter's `transformInput`
+  // copies only fields present in the schema, so an undeclared key is dropped from the insert without
+  // a word. `input: false` keeps them server-set only (never settable via the client API).
   user: {
     additionalFields: {
       identityProvider: { type: "string", required: false, input: false },
       identityProviderAccountId: { type: "string", required: false, input: false },
+      // ENG-2247: the fresh-instance bootstrap marker, a one-variant enum column (Better Auth has no
+      // enum field type, and the adapter hands the string straight to Prisma, which validates it).
+      // `returned: false` because it is an internal serialization marker rather than profile data —
+      // nothing outside the sign-up path reads it, so it has no business in a user response body.
+      isBootstrapAdmin: { type: "string", required: false, input: false, returned: false },
     },
     // Account deletion (design doc §14): native Better Auth deleteUser with Formbricks' pre/post
     // cleanup (sole-owner-org guard + org/invite removal, then Brevo + audit). Confirmation friction
