@@ -239,6 +239,7 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
             },
             isAISmartToolsEnabled: true,
             whitelabel: true,
+            displayTimeZone: true,
             memberships: {
               where: { userId },
               select: {
@@ -288,6 +289,7 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
         billing: data.organization.billing,
         isAISmartToolsEnabled: data.organization.isAISmartToolsEnabled,
         whitelabel: data.organization.whitelabel,
+        displayTimeZone: data.organization.displayTimeZone,
       },
       membership: data.organization.memberships[0] || null,
     };

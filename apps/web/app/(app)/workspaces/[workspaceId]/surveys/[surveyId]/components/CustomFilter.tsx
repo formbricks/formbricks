@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { useOrganization } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import {
   DateRange,
   useResponseFilter,
@@ -15,7 +16,11 @@ import { getResponsesDownloadUrlAction } from "@/app/(app)/workspaces/[workspace
 import { downloadResponsesFile } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/utils";
 import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
 import {
+  DATE_RANGE_PRESETS,
   type TDateRangePreset,
+  getCalendarDayInTimeZone,
+  getReportingTimeZone,
+  resolveCalendarDayRangeBounds,
   resolveDateRangeLabelPreset,
   resolveDateRangePresetBounds,
 } from "@/lib/date-ranges";
@@ -27,6 +32,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { PopoverTriggerButton, ResponseFilter } from "./ResponseFilter";
@@ -41,30 +48,32 @@ const getFilterDropDownLabels = (t: TFunction) => ({
   CUSTOM_RANGE: t("workspace.surveys.summary.custom_range"),
 });
 
-// The relative ranges this filter offers, in dropdown order. Picking one tags `dateRange` with its
-// preset, so the trigger label survives a remount without reverse-matching the bounds — several
-// presets span byte-identical days on period-boundary dates (on the 30th of a 30-day month, "last 30
-// days" and "this month" cover the same days) and can't be told apart from `{ from, to }` alone. Order
-// still breaks that tie for a manually picked custom range that happens to match a preset's bounds.
-// What each preset means lives in `@/lib/date-ranges`, shared with the chart time dimension so the
-// Summary tab and a chart over the same field agree.
+// Labels for the relative ranges this filter offers. The list itself, its order and what each preset
+// means live in `@/lib/date-ranges`, shared with the chart time dimension and the dashboard filter so
+// every surface offers the same windows and the Summary tab and a chart over the same field agree.
+// Picking one tags `dateRange` with its preset, so the trigger label survives a remount without
+// reverse-matching the bounds — several presets span byte-identical days on period-boundary dates (on
+// the 30th of a 30-day month, "last 30 days" and "this month" cover the same days) and can't be told
+// apart from `{ from, to }` alone. Order still breaks that tie for a manually picked custom range that
+// happens to match a preset's bounds.
 //
 // Labels are `t()` calls rather than bare key strings on purpose: the translation-key scanner
 // (`packages/i18n-utils`) only counts keys it can see inside a literal `t("…")`, and reports the rest
-// as unused.
-const DATE_RANGE_PRESETS: readonly { preset: TDateRangePreset; getLabel: (t: TFunction) => string }[] = [
-  { preset: "last 7 days", getLabel: (t) => t("workspace.surveys.summary.last_7_days") },
-  { preset: "last 30 days", getLabel: (t) => t("workspace.surveys.summary.last_30_days") },
-  { preset: "this month", getLabel: (t) => t("workspace.surveys.summary.this_month") },
-  { preset: "last month", getLabel: (t) => t("workspace.surveys.summary.last_month") },
-  { preset: "this quarter", getLabel: (t) => t("workspace.surveys.summary.this_quarter") },
-  { preset: "last quarter", getLabel: (t) => t("workspace.surveys.summary.last_quarter") },
-  { preset: "last 6 months", getLabel: (t) => t("workspace.surveys.summary.last_6_months") },
-  { preset: "this year", getLabel: (t) => t("workspace.surveys.summary.this_year") },
-  { preset: "last year", getLabel: (t) => t("workspace.surveys.summary.last_year") },
-];
-
-const DATE_RANGE_PRESET_NAMES = DATE_RANGE_PRESETS.map(({ preset }) => preset);
+// as unused. Keyed by every preset, so a preset added without a label fails to compile.
+const PRESET_LABELS: Record<TDateRangePreset, (t: TFunction) => string> = {
+  today: (t) => t("workspace.surveys.summary.today"),
+  yesterday: (t) => t("workspace.surveys.summary.yesterday"),
+  "last 24 hours": (t) => t("workspace.surveys.summary.last_24_hours"),
+  "last 7 days": (t) => t("workspace.surveys.summary.last_7_days"),
+  "last 30 days": (t) => t("workspace.surveys.summary.last_30_days"),
+  "this month": (t) => t("workspace.surveys.summary.this_month"),
+  "last month": (t) => t("workspace.surveys.summary.last_month"),
+  "this quarter": (t) => t("workspace.surveys.summary.this_quarter"),
+  "last quarter": (t) => t("workspace.surveys.summary.last_quarter"),
+  "last 6 months": (t) => t("workspace.surveys.summary.last_6_months"),
+  "this year": (t) => t("workspace.surveys.summary.this_year"),
+  "last year": (t) => t("workspace.surveys.summary.last_year"),
+};
 
 const DAY_MONTH_OPTIONS: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
 
@@ -72,21 +81,43 @@ interface CustomFilterProps {
   survey: TSurvey;
 }
 
-const getCustomRangeLabel = (dateRange: DateRange, locale: string | undefined, t: TFunction): string => {
+// The days in this filter are calendar days of the organization's reporting zone, so they are shown in
+// that zone too — a viewer west of it would otherwise read "Sep 15" for a range that starts on the 16th.
+const formatDay = (date: Date, locale: string | undefined, timeZone: string): string =>
+  formatDateForDisplay(date, locale, { ...DAY_MONTH_OPTIONS, timeZone });
+
+const getCustomRangeLabel = (
+  dateRange: DateRange,
+  locale: string | undefined,
+  timeZone: string,
+  t: TFunction
+): string => {
   const from = dateRange?.from
-    ? formatDateForDisplay(dateRange.from, locale, DAY_MONTH_OPTIONS)
+    ? formatDay(dateRange.from, locale, timeZone)
     : t("workspace.surveys.summary.select_first_date");
   const to = dateRange?.to
-    ? formatDateForDisplay(dateRange.to, locale, DAY_MONTH_OPTIONS)
+    ? formatDay(dateRange.to, locale, timeZone)
     : t("workspace.surveys.summary.select_last_date");
 
   return `${from} - ${to}`;
 };
 
-const getDateRangeLabel = (dateRange: DateRange, t: TFunction) => {
-  const preset = resolveDateRangeLabelPreset(dateRange, DATE_RANGE_PRESET_NAMES);
-  const matched = DATE_RANGE_PRESETS.find((p) => p.preset === preset);
-  return matched ? matched.getLabel(t) : getFilterDropDownLabels(t).CUSTOM_RANGE;
+// The days a preset resolved to, shown next to its name: the window behind the numbers is then visible
+// instead of implied, and the Summary tab can be compared with a chart at a glance.
+const getResolvedWindowLabel = (
+  dateRange: DateRange,
+  locale: string | undefined,
+  timeZone: string
+): string | null => {
+  if (!dateRange.from || !dateRange.to) return null;
+  const from = formatDay(dateRange.from, locale, timeZone);
+  const to = formatDay(dateRange.to, locale, timeZone);
+  return from === to ? from : `${from} – ${to}`;
+};
+
+const getDateRangeLabel = (dateRange: DateRange, timeZone: string, t: TFunction) => {
+  const preset = resolveDateRangeLabelPreset(dateRange, DATE_RANGE_PRESETS, timeZone);
+  return preset ? PRESET_LABELS[preset](t) : getFilterDropDownLabels(t).CUSTOM_RANGE;
 };
 
 export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
@@ -94,9 +125,15 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
   // `resolvedLanguage` is undefined until i18next finishes initialising, so fall back the way the
   // rest of the app does rather than letting date formatting silently drop to en-US.
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  // Calendar days are cut in the organization's reporting zone, never the browser's, so two colleagues
+  // on different continents see one number and the Summary tab agrees with the charts (ENG-3215).
+  const { organization } = useOrganization();
+  const timeZone = getReportingTimeZone(organization?.displayTimeZone);
   const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState(
-    dateRange.from && dateRange.to ? getDateRangeLabel(dateRange, t) : getFilterDropDownLabels(t).ALL_TIME
+    dateRange.from && dateRange.to
+      ? getDateRangeLabel(dateRange, timeZone, t)
+      : getFilterDropDownLabels(t).ALL_TIME
   );
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
   const [isFilterDropDownOpen, setIsFilterDropDownOpen] = useState<boolean>(false);
@@ -243,6 +280,11 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
   };
 
   useClickOutside(datePickerRef, () => handleDatePickerClose());
+
+  const isCustomRange = filterRange === getFilterDropDownLabels(t).CUSTOM_RANGE;
+  const resolvedWindowLabel =
+    !isCustomRange && dateRange.preset ? getResolvedWindowLabel(dateRange, locale, timeZone) : null;
+
   return (
     <div className="relative flex justify-between">
       <div className="flex justify-stretch gap-x-1.5">
@@ -254,12 +296,15 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
           }}>
           <DropdownMenuTrigger asChild>
             <PopoverTriggerButton isOpen={isFilterDropDownOpen}>
-              {filterRange === getFilterDropDownLabels(t).CUSTOM_RANGE
-                ? getCustomRangeLabel(dateRange, locale, t)
-                : filterRange}
+              {isCustomRange ? getCustomRangeLabel(dateRange, locale, timeZone, t) : filterRange}
+              {resolvedWindowLabel && <span className="ml-1.5 text-slate-500">{resolvedWindowLabel}</span>}
             </PopoverTriggerButton>
           </DropdownMenuTrigger>
-          <DropdownMenuContent>
+          {/* The shared menu caps itself at 20rem, which hid the tail of this list behind a scrollbar; let
+              it take whatever the viewport offers and scroll only when that runs out. */}
+          <DropdownMenuContent
+            align="start"
+            className="max-h-[var(--radix-dropdown-menu-content-available-height)]">
             <DropdownMenuItem
               onClick={() => {
                 setFilterRange(getFilterDropDownLabels(t).ALL_TIME);
@@ -267,14 +312,14 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
               }}>
               <p className="text-slate-700">{getFilterDropDownLabels(t).ALL_TIME}</p>
             </DropdownMenuItem>
-            {DATE_RANGE_PRESETS.map(({ preset, getLabel }) => (
+            {DATE_RANGE_PRESETS.map((preset) => (
               <DropdownMenuItem
                 key={preset}
                 onClick={() => {
-                  setFilterRange(getLabel(t));
-                  setDateRange({ ...resolveDateRangePresetBounds(preset), preset });
+                  setFilterRange(PRESET_LABELS[preset](t));
+                  setDateRange({ ...resolveDateRangePresetBounds(preset, timeZone), preset });
                 }}>
-                <p className="text-slate-700">{getLabel(t)}</p>
+                <p className="text-slate-700">{PRESET_LABELS[preset](t)}</p>
               </DropdownMenuItem>
             ))}
             <DropdownMenuItem
@@ -284,6 +329,10 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
               }}>
               <p className="text-sm text-slate-700 hover:ring-0">{getFilterDropDownLabels(t).CUSTOM_RANGE}</p>
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-xs font-normal text-slate-500">
+              {t("workspace.surveys.summary.date_range_time_zone", { timeZone })}
+            </DropdownMenuLabel>
           </DropdownMenuContent>
         </DropdownMenu>
         <DropdownMenu
@@ -354,10 +403,16 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
       </div>
       {isDatePickerOpen && (
         <div ref={datePickerRef} className="absolute top-full z-50 my-2 rounded-md border bg-white">
+          {/* The calendar speaks calendar days while the filter stores instants, so translate at the
+              boundary in the organization's zone: the highlighted days are then the days being queried,
+              whatever zone the viewer's browser runs in. */}
           <DateRangeCalendar
-            value={dateRange}
+            value={{
+              from: dateRange.from && getCalendarDayInTimeZone(dateRange.from, timeZone),
+              to: dateRange.to && getCalendarDayInTimeZone(dateRange.to, timeZone),
+            }}
             locale={locale}
-            onChange={setDateRange}
+            onChange={(range) => setDateRange(resolveCalendarDayRangeBounds(range, timeZone))}
             onComplete={() => setIsDatePickerOpen(false)}
           />
         </div>

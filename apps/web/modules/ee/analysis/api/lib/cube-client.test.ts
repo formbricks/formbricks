@@ -1,16 +1,25 @@
 import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { getCalendarDayInTimeZone } from "@/lib/date-ranges";
+import { formatLocalDay } from "@/lib/utils/datetime";
 
 vi.mock("server-only", () => ({}));
 
-const { mockLoad, mockLoggerError, mockLoggerWarn, mockQueueAuditEventWithoutRequest, mockTablePivot } =
-  vi.hoisted(() => ({
-    mockLoad: vi.fn(),
-    mockLoggerError: vi.fn(),
-    mockLoggerWarn: vi.fn(),
-    mockQueueAuditEventWithoutRequest: vi.fn(),
-    mockTablePivot: vi.fn(),
-  }));
+const {
+  mockGetOrganization,
+  mockLoad,
+  mockLoggerError,
+  mockLoggerWarn,
+  mockQueueAuditEventWithoutRequest,
+  mockTablePivot,
+} = vi.hoisted(() => ({
+  mockGetOrganization: vi.fn(),
+  mockLoad: vi.fn(),
+  mockLoggerError: vi.fn(),
+  mockLoggerWarn: vi.fn(),
+  mockQueueAuditEventWithoutRequest: vi.fn(),
+  mockTablePivot: vi.fn(),
+}));
 
 vi.mock("@cubejs-client/core", () => ({
   default: vi.fn(() => ({
@@ -27,6 +36,10 @@ vi.mock("@formbricks/logger", () => ({
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   queueAuditEventWithoutRequest: mockQueueAuditEventWithoutRequest,
+}));
+
+vi.mock("@/lib/organization/service", () => ({
+  getOrganization: mockGetOrganization,
 }));
 
 const scopedInput = {
@@ -63,6 +76,7 @@ describe("executeTenantScopedQuery", () => {
     vi.stubEnv("CUBEJS_JWT_AUDIENCE", "formbricks-cube-test");
     vi.stubEnv("CUBEJS_JWT_ISSUER", "formbricks-web-test");
     mockLoad.mockResolvedValue({ tablePivot: mockTablePivot });
+    mockGetOrganization.mockResolvedValue({ displayTimeZone: null });
     mockQueueAuditEventWithoutRequest.mockResolvedValue(undefined);
     mockTablePivot.mockReturnValue([{ id: "1", count: 42 }]);
   });
@@ -75,7 +89,7 @@ describe("executeTenantScopedQuery", () => {
     const { executeTenantScopedQuery } = await import("./cube-client");
     const result = await executeTenantScopedQuery(scopedInput);
 
-    expect(mockLoad).toHaveBeenCalledWith(scopedInput.query);
+    expect(mockLoad).toHaveBeenCalledWith({ ...scopedInput.query, timezone: "UTC" });
     expect(mockTablePivot).toHaveBeenCalled();
     expect(result).toEqual([{ id: "1", count: 42 }]);
 
@@ -99,6 +113,37 @@ describe("executeTenantScopedQuery", () => {
       source: "charts.executeQueryAction",
     });
     expect(typeof payload.jti).toBe("string");
+  });
+
+  test("queries Cube in the organization's display time zone and expands presets in it", async () => {
+    mockGetOrganization.mockResolvedValue({ displayTimeZone: "Europe/Berlin" });
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    await executeTenantScopedQuery({
+      ...scopedInput,
+      query: {
+        measures: ["FeedbackRecords.count"],
+        timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", dateRange: "today" }],
+      },
+    });
+
+    expect(mockGetOrganization).toHaveBeenCalledWith("organization-1");
+    const today = formatLocalDay(getCalendarDayInTimeZone(new Date(), "Europe/Berlin"));
+    expect(mockLoad).toHaveBeenCalledWith({
+      measures: ["FeedbackRecords.count"],
+      timezone: "Europe/Berlin",
+      timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", dateRange: [today, today] }],
+    });
+  });
+
+  test("reports a failed time zone lookup as a failed query instead of querying in the wrong zone", async () => {
+    mockGetOrganization.mockRejectedValue(new Error("db down"));
+    const { executeTenantScopedQuery } = await import("./cube-client");
+
+    await expect(executeTenantScopedQuery(scopedInput)).rejects.toThrow("db down");
+    expect(mockLoad).not.toHaveBeenCalled();
+    expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "failure", targetType: "cubeQuery" })
+    );
   });
 
   test("pivots with a sentinel fill value, because a null fill would still resolve to 0", async () => {

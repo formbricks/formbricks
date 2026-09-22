@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import type { TimeDimensionConfig } from "@/modules/ee/analysis/lib/query-builder";
 import {
-  DATE_PRESETS,
   FEEDBACK_FIELDS,
   TIME_GRANULARITIES,
   getTranslatedDatePresetLabel,
@@ -24,7 +24,7 @@ import {
 
 const TIME_FIELD_OPTIONS = FEEDBACK_FIELDS.dimensions.filter((d) => d.type === "time");
 
-// Sentinel value for the "Custom" entry in the date-range select. Safe against DATE_PRESETS, whose
+// Sentinel value for the "Custom" entry in the date-range select. Safe against DATE_RANGE_PRESETS, whose
 // values are phrases like "last 30 days" — never this token.
 const CUSTOM_RANGE_VALUE = "__custom__";
 
@@ -183,16 +183,16 @@ export function TimeDimensionPanel({
               <SelectTrigger className="w-full bg-white">
                 <SelectValue placeholder={t("workspace.analysis.charts.select_preset")} />
               </SelectTrigger>
-              <SelectContent>
-                {DATE_PRESETS.map((preset) => (
-                  <SelectItem key={preset.value} value={preset.value}>
-                    {getTranslatedDatePresetLabel(preset.value, t)}
+              <SelectContent className="max-h-[var(--radix-select-content-available-height)]">
+                {DATE_RANGE_PRESETS.map((preset) => (
+                  <SelectItem key={preset} value={preset}>
+                    {getTranslatedDatePresetLabel(preset, t)}
                   </SelectItem>
                 ))}
                 {/* preserve a previously-saved preset value we don't recognize */}
                 {dateRangeType === "preset" &&
                   presetValue &&
-                  !DATE_PRESETS.some((p) => p.value === presetValue) && (
+                  !(DATE_RANGE_PRESETS as readonly string[]).includes(presetValue) && (
                     <SelectItem key={presetValue} value={presetValue}>
                       {presetValue}
                     </SelectItem>
