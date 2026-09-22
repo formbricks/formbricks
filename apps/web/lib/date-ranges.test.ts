@@ -35,6 +35,10 @@ describe("getReportingTimeZone", () => {
     expect(getReportingTimeZone(undefined)).toBe("UTC");
     expect(getReportingTimeZone("Europe/Berlin")).toBe("Europe/Berlin");
   });
+
+  test("resolves a zone this runtime does not know to UTC, so Cube is never asked for a name the days were not cut in", () => {
+    expect(getReportingTimeZone("Not/AZone")).toBe("UTC");
+  });
 });
 
 describe("getCalendarDayInTimeZone", () => {
@@ -66,12 +70,52 @@ describe("getStartOfDayInTimeZone / getEndOfDayInTimeZone", () => {
     );
   });
 
-  test("the bounds of a day read back as that day", () => {
-    for (const zone of [UTC, BERLIN, "Pacific/Auckland", "America/Los_Angeles"]) {
-      const picked = day(2026, 9, 27);
+  test("the bounds of a day read back as that day, DST switches included", () => {
+    const cases: [string, Date][] = [
+      [UTC, day(2026, 9, 27)],
+      [BERLIN, day(2026, 3, 29)],
+      ["Pacific/Auckland", day(2026, 9, 27)],
+      ["America/Los_Angeles", day(2026, 11, 1)],
+      ["America/Santiago", day(2026, 9, 6)],
+      ["America/Havana", day(2026, 3, 8)],
+      ["America/Havana", day(2026, 11, 1)],
+      ["Asia/Amman", day(2021, 10, 29)],
+    ];
+    for (const [zone, picked] of cases) {
       expect(getCalendarDayInTimeZone(getStartOfDayInTimeZone(picked, zone), zone)).toEqual(picked);
       expect(getCalendarDayInTimeZone(getEndOfDayInTimeZone(picked, zone), zone)).toEqual(picked);
     }
+  });
+
+  test("a switch at midnight that skips 00:00 starts the day at the switch", () => {
+    // Santiago springs forward at 24:00 on Sep 5, 2026: the clock goes straight from 23:59:59 to 01:00.
+    expect(getStartOfDayInTimeZone(day(2026, 9, 6), "America/Santiago")).toEqual(
+      new Date("2026-09-06T04:00:00.000Z")
+    );
+    expect(getEndOfDayInTimeZone(day(2026, 9, 5), "America/Santiago")).toEqual(
+      new Date("2026-09-06T03:59:59.999Z")
+    );
+    // Havana does the same at 00:00 on Mar 8, 2026.
+    expect(getStartOfDayInTimeZone(day(2026, 3, 8), "America/Havana")).toEqual(
+      new Date("2026-03-08T05:00:00.000Z")
+    );
+  });
+
+  test("a switch at midnight that repeats 00:00 starts the day at the first midnight", () => {
+    // Havana falls back at 01:00 on Nov 1, 2026, so 00:00–00:59 happens twice, and the day is 25 hours.
+    expect(getStartOfDayInTimeZone(day(2026, 11, 1), "America/Havana")).toEqual(
+      new Date("2026-11-01T04:00:00.000Z")
+    );
+    expect(getEndOfDayInTimeZone(day(2026, 11, 1), "America/Havana")).toEqual(
+      new Date("2026-11-02T04:59:59.999Z")
+    );
+    // Amman did the same east of UTC on Oct 29, 2021.
+    expect(getStartOfDayInTimeZone(day(2021, 10, 29), "Asia/Amman")).toEqual(
+      new Date("2021-10-28T21:00:00.000Z")
+    );
+    expect(getEndOfDayInTimeZone(day(2021, 10, 28), "Asia/Amman")).toEqual(
+      new Date("2021-10-28T20:59:59.999Z")
+    );
   });
 
   test("falls back to UTC for a zone name the runtime does not know", () => {

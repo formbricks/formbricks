@@ -20,6 +20,7 @@ import {
   type TDateRangePreset,
   getCalendarDayInTimeZone,
   getReportingTimeZone,
+  isSubDayDateRangePreset,
   resolveCalendarDayRangeBounds,
   resolveDateRangeLabelPreset,
   resolveDateRangePresetBounds,
@@ -59,11 +60,13 @@ const getFilterDropDownLabels = (t: TFunction) => ({
 //
 // Labels are `t()` calls rather than bare key strings on purpose: the translation-key scanner
 // (`packages/i18n-utils`) only counts keys it can see inside a literal `t("…")`, and reports the rest
-// as unused. Keyed by every preset, so a preset added without a label fails to compile.
+// as unused. Keyed by every preset, so a preset added without a label fails to compile. The three presets
+// the Summary gained with the shared list reuse the chart editor's strings: same words, already
+// translated in every locale.
 const PRESET_LABELS: Record<TDateRangePreset, (t: TFunction) => string> = {
-  today: (t) => t("workspace.surveys.summary.today"),
-  yesterday: (t) => t("workspace.surveys.summary.yesterday"),
-  "last 24 hours": (t) => t("workspace.surveys.summary.last_24_hours"),
+  today: (t) => t("workspace.analysis.charts.date_preset_today"),
+  yesterday: (t) => t("workspace.analysis.charts.date_preset_yesterday"),
+  "last 24 hours": (t) => t("workspace.analysis.charts.date_preset_last_24_hours"),
   "last 7 days": (t) => t("workspace.surveys.summary.last_7_days"),
   "last 30 days": (t) => t("workspace.surveys.summary.last_30_days"),
   "this month": (t) => t("workspace.surveys.summary.this_month"),
@@ -282,8 +285,11 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
   useClickOutside(datePickerRef, () => handleDatePickerClose());
 
   const isCustomRange = filterRange === getFilterDropDownLabels(t).CUSTOM_RANGE;
+  // Not for "last 24 hours": two dates would read as a two-day window rather than a rolling one.
   const resolvedWindowLabel =
-    !isCustomRange && dateRange.preset ? getResolvedWindowLabel(dateRange, locale, timeZone) : null;
+    !isCustomRange && dateRange.preset && !isSubDayDateRangePreset(dateRange.preset)
+      ? getResolvedWindowLabel(dateRange, locale, timeZone)
+      : null;
 
   return (
     <div className="relative flex justify-between">
@@ -331,7 +337,7 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuLabel className="text-xs font-normal text-slate-500">
-              {t("workspace.surveys.summary.date_range_time_zone", { timeZone })}
+              {t("workspace.settings.general.display_time_zone")}: {timeZone}
             </DropdownMenuLabel>
           </DropdownMenuContent>
         </DropdownMenu>

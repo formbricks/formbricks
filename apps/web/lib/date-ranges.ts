@@ -2,6 +2,7 @@ import {
   addDays,
   endOfQuarter,
   endOfYear,
+  isSameDay,
   startOfDay,
   startOfMonth,
   startOfQuarter,
@@ -83,10 +84,12 @@ const UTC_TIME_ZONE = "UTC";
 
 /**
  * The IANA zone an organization's calendar days are cut in: its display time zone, UTC when the setting
- * is empty — the same reading the response exports and integrations give it.
+ * is empty — the same reading the response exports and integrations give it. A name this runtime cannot
+ * resolve also reads as UTC, so the value returned here is the zone actually used for every calendar
+ * day: hand it to Cube as-is and the two halves of a query can never disagree.
  */
 export const getReportingTimeZone = (displayTimeZone: string | null | undefined): string =>
-  displayTimeZone ?? UTC_TIME_ZONE;
+  displayTimeZone && isSupportedTimeZone(displayTimeZone) ? displayTimeZone : UTC_TIME_ZONE;
 
 const normalizePreset = (value: string): string => value.toLowerCase().trim();
 
@@ -102,8 +105,9 @@ export const isSubDayDateRangePreset = (preset: string): boolean => {
 };
 
 // Constructing an Intl formatter is the expensive part of reading a wall clock, and the same zone is
-// read many times per render and per chart query, so one formatter per zone is kept for the process.
-const wallClockFormatters = new Map<string, Intl.DateTimeFormat>();
+// read many times per render and per chart query, so one formatter per zone is kept for the process —
+// including the answer "this runtime does not know that zone", so an unknown name is paid for once.
+const wallClockFormatters = new Map<string, Intl.DateTimeFormat | null>();
 
 const createWallClockFormatter = (timeZone: string): Intl.DateTimeFormat =>
   new Intl.DateTimeFormat("en-US", {
@@ -117,22 +121,30 @@ const createWallClockFormatter = (timeZone: string): Intl.DateTimeFormat =>
     second: "numeric",
   });
 
-const getWallClockFormatter = (timeZone: string): Intl.DateTimeFormat => {
+const lookupWallClockFormatter = (timeZone: string): Intl.DateTimeFormat | null => {
   const cached = wallClockFormatters.get(timeZone);
-  if (cached) return cached;
+  if (cached !== undefined) return cached;
 
-  let formatter: Intl.DateTimeFormat;
+  let formatter: Intl.DateTimeFormat | null;
   try {
     formatter = createWallClockFormatter(timeZone);
   } catch {
     // An unknown zone name makes Intl throw a RangeError. The setting is validated against the
-    // runtime's zone list when it is saved, so this only guards a name this runtime does not know —
-    // degrade to UTC rather than failing every date filter for the organization.
-    formatter = createWallClockFormatter(UTC_TIME_ZONE);
+    // runtime's zone list when it is saved, so this only meets a name this runtime does not know.
+    formatter = null;
   }
   wallClockFormatters.set(timeZone, formatter);
   return formatter;
 };
+
+const isSupportedTimeZone = (timeZone: string): boolean => lookupWallClockFormatter(timeZone) !== null;
+
+// Callers are expected to pass a zone `getReportingTimeZone` resolved, so the UTC fallback only guards a
+// direct caller: degrade rather than fail every date filter for the organization.
+const getWallClockFormatter = (timeZone: string): Intl.DateTimeFormat =>
+  lookupWallClockFormatter(timeZone) ??
+  lookupWallClockFormatter(UTC_TIME_ZONE) ??
+  createWallClockFormatter(UTC_TIME_ZONE);
 
 type TWallClock = { year: number; month: number; day: number; hour: number; minute: number; second: number };
 
@@ -172,10 +184,22 @@ const getUtcOffsetMs = (instant: Date, timeZone: string): number => {
 /** The instant at which the calendar day `day` (a date-only value) begins in `timeZone`. */
 export const getStartOfDayInTimeZone = (day: Date, timeZone: string): Date => {
   const wallAsUtc = Date.UTC(day.getFullYear(), day.getMonth(), day.getDate());
+  const isOnDay = (instant: number): boolean =>
+    isSameDay(getCalendarDayInTimeZone(new Date(instant), timeZone), day);
   // The zone's offset at the guess and at the answer differ when a DST switch lies between them, so
-  // resolve twice: the second pass reads the offset that is actually in force at that midnight.
+  // resolve twice; the two guesses then bracket the switch.
   const firstGuess = wallAsUtc - getUtcOffsetMs(new Date(wallAsUtc), timeZone);
-  return new Date(wallAsUtc - getUtcOffsetMs(new Date(firstGuess), timeZone));
+  const secondGuess = wallAsUtc - getUtcOffsetMs(new Date(firstGuess), timeZone);
+  // A switch at midnight itself is the one case a guess can miss the day. Where the clock skips
+  // 00:00–00:59 (Santiago and Havana in spring) one guess still reads 23:xx of the day before, so the day
+  // begins at the switch: the earliest guess whose wall clock is already on it.
+  const guesses = [firstGuess, secondGuess].sort((a, b) => a - b);
+  let start = guesses.find(isOnDay) ?? guesses[0];
+  // Where the clock is set back at midnight instead (Havana and Amman in autumn) midnight happens twice
+  // and a guess can land on the second one, exactly at the switch; the day began at the first.
+  const setBackBy = getUtcOffsetMs(new Date(start - 1), timeZone) - getUtcOffsetMs(new Date(start), timeZone);
+  if (setBackBy > 0 && isOnDay(start - setBackBy)) start -= setBackBy;
+  return new Date(start);
 };
 
 /** The last millisecond of the calendar day `day` (a date-only value) in `timeZone`. */
