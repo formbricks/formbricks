@@ -20,8 +20,9 @@ import {
 } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { isDeepEqual } from "@/lib/utils/object";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
-import { hasUnsavedSurveyChanges, serverOwnedChanges } from "@/modules/survey/editor/lib/unsaved-changes";
+import { hasUnsavedSurveyChanges } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
@@ -392,20 +393,20 @@ export const SurveyMenuBar = ({
         if (updatedSurveyResponse?.data) {
           const savedData = updatedSurveyResponse.data;
 
-          // Adopt the keys the server rewrote (ENG-3266). Without this the working copy can never
-          // match the return, so the dirty check below reports dirty on every tick and the editor
-          // saves every ten seconds with no user edit behind it.
+          // The server deletes a private segment when a survey switches from app to link, so the
+          // working copy has to take that back or it publishes a segment that is gone. The Embedded
+          // Data keys need no such adoption: `hasUnsavedSurveyChanges` normalizes them on both
+          // sides, which settles the dirty check without re-rendering the editor at all.
           //
-          // Through the updater rather than against `localSurveyRef`, because the answer describes
-          // the payload from before an edit the author may have made while it was in flight, and
-          // dropping that edit would be worse than the loop. The ref cannot decide it: it is written
-          // in a passive effect, so it still names the sent object for as long as it takes React to
-          // flush one — a window the response can land in. `current` is the state itself, so the
-          // identity test is exact.
+          // Through the updater rather than against `localSurveyRef` (ENG-3266): the answer
+          // describes the payload from before an edit the author may have made while it was in
+          // flight, and dropping that edit would be worse than a stale segment. The ref cannot
+          // decide it — it is written in a passive effect, so it still names the sent object for as
+          // long as it takes React to flush one, a window the response can land in. `current` is
+          // the state itself, so the identity test is exact.
           setLocalSurvey((current) => {
-            if (current !== currentSurvey) return current;
-            const adopted = serverOwnedChanges(current, savedData);
-            return adopted ? { ...current, ...adopted } : current;
+            if (current !== currentSurvey || isDeepEqual(current.segment, savedData.segment)) return current;
+            return { ...current, segment: savedData.segment };
           });
 
           // Update surveyRef (not localSurvey state) to prevent re-renders during auto-save.
