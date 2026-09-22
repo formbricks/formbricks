@@ -89,14 +89,20 @@ export const FieldUsageCell = ({ fieldId, workspaceId, surveyCount }: Readonly<F
         if (open && !usage) void loadUsage();
       }}>
       <PopoverTrigger
-        // The row behind this one opens the edit dialog. Stopping the click here rather than on the
-        // column keeps that suppression to the trigger, which is the only part of the cell that has
+        // The row behind this one opens the edit dialog. Stopping the click here and on the panel
+        // rather than on the column keeps that suppression to the parts of the cell that have
         // something else to do with it.
         onClick={(event) => event.stopPropagation()}
         className="-m-1 flex w-full cursor-pointer items-center rounded-sm p-1 text-left text-sm text-slate-800 underline underline-offset-2 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-hidden">
         {text}
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-72 shadow-lg">
+      <PopoverContent
+        align="start"
+        className="w-72 shadow-lg"
+        // Radix portals the panel to `body`, but React still bubbles its clicks through the component
+        // tree to the row behind the cell, so a survey link or a status label in here would open the
+        // edit dialog over the popover.
+        onClick={(event) => event.stopPropagation()}>
         {renderBody()}
       </PopoverContent>
     </Popover>

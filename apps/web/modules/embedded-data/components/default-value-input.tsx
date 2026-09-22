@@ -20,6 +20,11 @@ interface DefaultValueInputProps {
   dataType: TEmbeddedDataType;
   /** Stable handle for the control. The date picker is a popover trigger and takes none. */
   id?: string;
+  /**
+   * Test handle, forwarded to the control a test fills or opens: the text and number input and the
+   * boolean select's trigger. The date picker takes none, for the same reason as `id`.
+   */
+  "data-testid"?: string;
   /** The draft value as the DOM holds it: a string, whatever the stored column is. */
   value: string;
   onChange: (value: string) => void;
@@ -45,6 +50,7 @@ interface DefaultValueInputProps {
 export const DefaultValueInput = ({
   dataType,
   id,
+  "data-testid": testId,
   value,
   onChange,
   locale,
@@ -56,7 +62,7 @@ export const DefaultValueInput = ({
       <Select
         value={value === "" ? NO_DEFAULT_VALUE : value}
         onValueChange={(next) => onChange(next === NO_DEFAULT_VALUE ? "" : next)}>
-        <SelectTrigger id={id} className="h-10 w-full">
+        <SelectTrigger id={id} data-testid={testId} className="h-10 w-full">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -83,6 +89,7 @@ export const DefaultValueInput = ({
   return (
     <Input
       id={id}
+      data-testid={testId}
       type={dataType === "number" ? "number" : "text"}
       value={value}
       onChange={(event) => onChange(event.target.value)}

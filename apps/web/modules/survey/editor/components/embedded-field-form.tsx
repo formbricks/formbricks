@@ -187,15 +187,12 @@ export const EmbeddedFieldForm = ({
       // Every other code keeps the shared message, named by source: the two halves of the card still
       // occupy the two namespaces recall and logic address fields through, and an empty or malformed
       // name is refused in terms of the one that refused it.
+      const namespace = draft.source === "computed" ? "variable" : "hiddenField";
       form.setError("name", {
         message:
           nameError.code === TValidateIdErrorCode.Duplicate
             ? t("workspace.embedded_data.survey_field_name_taken")
-            : getValidateIdErrorMessage(
-                nameError,
-                draft.source === "computed" ? "variable" : "hiddenField",
-                t
-              ),
+            : getValidateIdErrorMessage(nameError, namespace, t),
       });
       return;
     }
