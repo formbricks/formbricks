@@ -258,10 +258,11 @@ export const auth = betterAuth({
     additionalFields: {
       identityProvider: { type: "string", required: false, input: false },
       identityProviderAccountId: { type: "string", required: false, input: false },
-      // ENG-2247: the fresh-instance bootstrap marker. `returned: false` because it is an internal
-      // serialization marker rather than profile data — nothing outside the sign-up path reads it, so
-      // it has no business in a session or user response body.
-      isBootstrapAdmin: { type: "boolean", required: false, input: false, returned: false },
+      // ENG-2247: the fresh-instance bootstrap marker, a one-variant enum column (Better Auth has no
+      // enum field type, and the adapter hands the string straight to Prisma, which validates it).
+      // `returned: false` because it is an internal serialization marker rather than profile data —
+      // nothing outside the sign-up path reads it, so it has no business in a user response body.
+      isBootstrapAdmin: { type: "string", required: false, input: false, returned: false },
     },
     // Account deletion (design doc §14): native Better Auth deleteUser with Formbricks' pre/post
     // cleanup (sole-owner-org guard + org/invite removal, then Brevo + audit). Confirmation friction

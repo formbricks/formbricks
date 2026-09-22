@@ -1,4 +1,5 @@
 import "server-only";
+import { BootstrapAdminMarker } from "@formbricks/database/prisma";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
 import { resolveUninvitedSignupAdmission, signupDisabledError } from "@/modules/auth/lib/signup-policy";
 import { isBootstrapAdminSignup, isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
@@ -18,7 +19,7 @@ import { isBootstrapAdminSignup, isSignupDomainAllowed } from "@/modules/auth/li
  */
 export const enforceCredentialSignupBackstop = async (
   email: string
-): Promise<false | { data: { isBootstrapAdmin: true } } | undefined> => {
+): Promise<false | { data: { isBootstrapAdmin: BootstrapAdminMarker } } | undefined> => {
   // createUserAction runs the full personal-email policy (Cloud gate + invite exemption) and marks the
   // request scope before calling signUpEmail. If that mark is absent, this is a direct POST to Better
   // Auth's native /sign-up/email — which bypasses the action — so both re-checks below re-enforce what
@@ -26,7 +27,9 @@ export const enforceCredentialSignupBackstop = async (
   if (isSignupDomainAllowed()) {
     // ENG-2247: the action already decided, and recorded WHY it admitted this sign-up. Stamp the
     // marker here rather than there because this is the only point that can reach the insert.
-    return isBootstrapAdminSignup() ? { data: { isBootstrapAdmin: true } } : undefined;
+    return isBootstrapAdminSignup()
+      ? { data: { isBootstrapAdmin: BootstrapAdminMarker.bootstrapAdmin } }
+      : undefined;
   }
 
   if (await isSignupEmailDomainBlocked(email, async () => false)) {
@@ -51,5 +54,7 @@ export const enforceCredentialSignupBackstop = async (
   // column is what enforces that — two concurrent sign-ups both read `user.count() === 0`, but only
   // one INSERT can carry the marker. "open" must NOT be marked: on Cloud every sign-up takes that
   // branch, and the second one would collide.
-  return admission === "fresh-instance" ? { data: { isBootstrapAdmin: true } } : undefined;
+  return admission === "fresh-instance"
+    ? { data: { isBootstrapAdmin: BootstrapAdminMarker.bootstrapAdmin } }
+    : undefined;
 };

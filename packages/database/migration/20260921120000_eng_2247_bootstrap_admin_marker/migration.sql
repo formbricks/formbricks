@@ -1,43 +1,35 @@
 -- ENG-2247: serialize the fresh-instance sign-up exception.
 --
 -- A closed instance admits exactly one uninvited account — the initial administrator, who has no
--- invite to present. That exception was a plain `SELECT count(*) FROM "User"`, read well before the
--- row it gates ever commits, so two concurrent sign-ups both saw zero and both were admitted.
+-- invite to present. That was gated on `SELECT count(*) FROM "User"`, read well before the row it
+-- gates ever commits, so two concurrent sign-ups both saw zero and both were admitted. The unique
+-- index below decides between them instead: both stamp the marker, only one INSERT can carry it.
+-- NULLs are distinct in Postgres, so every other account is unaffected.
 --
--- There is no transaction to put the check and the insert into: the credential sign-up route is wrapped
--- in `runWithTransaction`, but our Prisma adapter is configured without `transaction: true`, and turning
--- it on would put Argon2 hashing and an awaited verification email inside a Prisma interactive
--- transaction on every sign-up. So the marker rides the INSERT itself — only one row can carry it, and
--- the loser fails on a unique index instead of on a race. That index is built by the migration that
--- follows this one, which needs to run outside a transaction.
---
--- Every statement here is re-runnable, and lands the same way on a database created by `db:push`:
--- that path already has the column (it is in `main.prisma`) but never the CHECK, which Prisma cannot
--- express, so the constraint is dropped and re-added rather than added blind.
+-- The enum has one value on purpose. Over a nullable boolean this index would hold a slot for `true`
+-- AND one for `false`, so the first `false` ever written would take the second slot and break every
+-- later sign-up. There is no `false` to write here.
 
-BEGIN;
--- Bounds the WAIT for the lock, not the work. Both statements below take ACCESS EXCLUSIVE on "User";
--- failing fast beats queueing every sign-in behind us while we wait.
-SET LOCAL lock_timeout = '1s';
+SET lock_timeout = '1s';
+
+-- CreateEnum
+-- Guarded rather than bare: this migration must be idempotent and convergent, including against a
+-- database created with `db:push`, where the type and column already exist.
+DO $$
+BEGIN
+  CREATE TYPE "BootstrapAdminMarker" AS ENUM ('bootstrapAdmin');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AlterTable
--- Nullable with no default, so this is a catalog-only change on PG 11+ — no table rewrite.
-ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "isBootstrapAdmin" BOOLEAN;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "isBootstrapAdmin" "BootstrapAdminMarker";
 
--- AddCheckConstraint
--- "Not the bootstrap admin" is NULL, never `false`. A unique index on a nullable boolean holds one
--- slot for `true` AND one for `false`, so the first `false` ever written takes the second slot and
--- every later sign-up fails on the unique index with an opaque error. This makes `false` unwritable,
--- which turns a silent instance-wide outage into a rejected write at the line that causes it.
---
--- Postgres has no ADD CONSTRAINT IF NOT EXISTS, and a `DO` block would hide the statement from Squawk.
--- Dropping first is idempotent, and the gap is invisible: it closes before this transaction commits.
-ALTER TABLE "User" DROP CONSTRAINT IF EXISTS "User_isBootstrapAdmin_true_or_null";
+-- CreateIndex
+-- Not CONCURRENTLY. "User" is ~55k rows in production, where this build measures ~45ms; an
+-- interrupted concurrent build instead leaves an INVALID index, which enforces nothing while looking
+-- present. For the index that IS this fix, 45ms of write lock is the better failure mode.
+-- squawk-ignore require-concurrent-index-creation
+CREATE UNIQUE INDEX IF NOT EXISTS "User_isBootstrapAdmin_key" ON "User"("isBootstrapAdmin");
 
--- NOT VALID defers the validating scan out of the ACCESS EXCLUSIVE lock, but the column was added by
--- the statement above, so every row is NULL and the scan cannot fail. Deferring would only leave the
--- constraint unvalidated until a follow-up that has no other reason to exist.
--- squawk-ignore constraint-missing-not-valid
-ALTER TABLE "User" ADD CONSTRAINT "User_isBootstrapAdmin_true_or_null" CHECK ("isBootstrapAdmin" IS NULL OR "isBootstrapAdmin");
-
-COMMIT;
+RESET lock_timeout;

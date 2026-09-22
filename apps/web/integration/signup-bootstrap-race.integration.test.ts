@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { BootstrapAdminMarker } from "@formbricks/database/prisma";
 import { SIGNUP_DISABLED_ERROR_CODE } from "@formbricks/types/errors";
 import { resetDb } from "@/integration/reset-db";
 import { SIGNUP_ENABLED } from "@/lib/constants";
@@ -52,7 +53,9 @@ describe("Fresh-instance sign-up exception (real Postgres)", () => {
     const outcomes = await Promise.allSettled([signUp("first@example.com"), signUp("second@example.com")]);
 
     expect(await prisma.user.count()).toBe(1);
-    expect(await prisma.user.count({ where: { isBootstrapAdmin: true } })).toBe(1);
+    expect(
+      await prisma.user.count({ where: { isBootstrapAdmin: BootstrapAdminMarker.bootstrapAdmin } })
+    ).toBe(1);
 
     // One of the two loses, and which one is genuinely undetermined — the assertion is on the count,
     // not on the winner. The loser's error is Better Auth's generic create failure rather than the

@@ -718,6 +718,14 @@ model OrganizationBilling {
   updatedAt        DateTime     @updatedAt @map(name: "updated_at")
 }
 
+/// The bootstrap marker's only value (ENG-2247). A one-variant enum rather than a boolean on
+/// purpose: a unique index over a nullable boolean has a slot for `true` AND one for `false`, so the
+/// first `false` ever written would take the second slot and break every later sign-up. There is no
+/// `false` to write here, which is the same guarantee without a CHECK constraint Prisma cannot model.
+enum BootstrapAdminMarker {
+  bootstrapAdmin
+}
+
 enum OrganizationRole {
   owner
   manager
@@ -1234,11 +1242,7 @@ model User {
   // invite, zero users). The unique index is the serialization: two concurrent uninvited sign-ups
   // both read `user.count() === 0`, but only one INSERT can carry the marker, so the second loses on
   // the constraint instead of the race.
-  //
-  // "Not the bootstrap admin" is NULL, never `false`. A unique index on a nullable boolean holds one
-  // slot for `true` AND one for `false`, so the first `false` ever written takes that slot and every
-  // later sign-up dies on the constraint. A CHECK in the migration makes `false` unwritable.
-  isBootstrapAdmin Boolean? @unique
+  isBootstrapAdmin BootstrapAdminMarker? @unique
 }
 
 /// Defines a segment of contacts based on attributes.

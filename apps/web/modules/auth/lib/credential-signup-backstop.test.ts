@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { BootstrapAdminMarker } from "@formbricks/database/prisma";
 import { SIGNUP_DISABLED_ERROR_CODE } from "@formbricks/types/errors";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
@@ -38,7 +39,7 @@ beforeEach(() => {
  * insert silently, a throw blocks it with a surfaced error, `{ data }` merges into the inserted row,
  * and `undefined` continues.
  *
- * ENG-2247 rides on that last distinction: `{ data: { isBootstrapAdmin: true } }` is what makes the
+ * ENG-2247 rides on that last distinction: stamping `isBootstrapAdmin` is what makes the
  * fresh-instance exception single-use, so every case below pins whether the marker is stamped — an
  * over-eager marker is an instance-wide sign-up outage, not a cosmetic difference.
  */
@@ -92,7 +93,7 @@ describe("enforceCredentialSignupBackstop", () => {
       vi.mocked(getIsFreshInstance).mockResolvedValue(true);
 
       expect(await enforceCredentialSignupBackstop("admin@example.com")).toEqual({
-        data: { isBootstrapAdmin: true },
+        data: { isBootstrapAdmin: BootstrapAdminMarker.bootstrapAdmin },
       });
     });
 
@@ -120,7 +121,7 @@ describe("enforceCredentialSignupBackstop", () => {
       vi.mocked(isBootstrapAdminSignup).mockReturnValue(true);
 
       expect(await enforceCredentialSignupBackstop("admin@example.com")).toEqual({
-        data: { isBootstrapAdmin: true },
+        data: { isBootstrapAdmin: BootstrapAdminMarker.bootstrapAdmin },
       });
     });
   });
