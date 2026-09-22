@@ -2238,7 +2238,7 @@
       "value_true": "Verdadeiro",
       "warning_clashing_address": "Outro campo nesta pesquisa responde por este nome. Recall e lógica resolvem um deles.",
       "warning_reserved_address": "Este nome agora é um campo auto-capturado reservado. Esta pesquisa mantém o próprio, que tem prioridade aqui, então o valor auto-capturado não fica disponível sob este nome.",
-      "warning_system_param_address": "Este nome é um parâmetro de sistema de pesquisa por link, então uma URL nunca pode preenchê-lo. Defina um valor padrão para o campo ou substitua-o por um com nome diferente.",
+      "warning_system_param_address": "Este nome é um parâmetro de URL de pesquisa de link, então uma URL nunca pode preencher este campo.",
       "warning_unsafe_address": "Este nome é anterior à regra de nomenclatura atual. Ele continua funcionando; um novo campo não poderia ser nomeado assim.",
       "when_anonymized": "Quando as respostas forem anonimizadas"
     },

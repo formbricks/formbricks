@@ -2238,7 +2238,7 @@
       "value_true": "Verdadero",
       "warning_clashing_address": "Otro campo en esta encuesta responde a este nombre. La recuperación y la lógica resuelven uno de ellos.",
       "warning_reserved_address": "Este nombre es ahora un campo reservado capturado automáticamente. Esta encuesta conserva el suyo propio, que tiene prioridad aquí, por lo que el valor capturado automáticamente no está disponible bajo este nombre.",
-      "warning_system_param_address": "Este nombre es un parámetro del sistema de encuestas vinculadas, por lo que una URL nunca puede rellenarlo. Asigna un valor predeterminado al campo o reemplázalo por uno con un nombre diferente.",
+      "warning_system_param_address": "Este nombre es un parámetro de URL de encuesta de enlace, por lo que una URL nunca puede rellenar este campo.",
       "warning_unsafe_address": "Este nombre es anterior a la regla de nomenclatura actual. Sigue funcionando; un campo nuevo no podría ser nombrado así.",
       "when_anonymized": "Cuando las respuestas sean anonimizadas"
     },

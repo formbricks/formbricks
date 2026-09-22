@@ -2238,7 +2238,7 @@
       "value_true": "Waar",
       "warning_clashing_address": "Een ander veld in deze enquête reageert op deze naam. Recall en logica lossen er één van op.",
       "warning_reserved_address": "Deze naam is nu een gereserveerd automatisch vastgelegd veld. Deze enquête behoudt zijn eigen veld, dat hier voorrang heeft, dus de automatisch vastgelegde waarde is niet beschikbaar onder deze naam.",
-      "warning_system_param_address": "Deze naam is een link-enquête systeemparameter, dus een URL kan deze nooit vullen. Geef het veld een standaardwaarde of vervang het door een veld met een andere naam.",
+      "warning_system_param_address": "Deze naam is een URL-parameter voor een linkenquête, dus een URL kan dit veld nooit invullen.",
       "warning_unsafe_address": "Deze naam dateert van vóór de huidige naamgevingsregel. Het blijft werken; een nieuw veld kan niet zo worden genoemd.",
       "when_anonymized": "Wanneer antwoorden zijn geanonimiseerd"
     },

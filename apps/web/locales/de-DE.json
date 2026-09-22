@@ -2238,7 +2238,7 @@
       "value_true": "Wahr",
       "warning_clashing_address": "Ein anderes Feld in dieser Umfrage verwendet diesen Namen. Recall und Logik lösen eines der beiden auf.",
       "warning_reserved_address": "Dieser Name ist jetzt ein reserviertes automatisch erfasstes Feld. Diese Umfrage behält ihr eigenes, das hier Vorrang hat, sodass der automatisch erfasste Wert unter diesem Namen nicht verfügbar ist.",
-      "warning_system_param_address": "Dieser Name ist ein Link-Umfrage-Systemparameter, sodass eine URL ihn niemals ausfüllen kann. Gib dem Feld einen Standardwert oder ersetze es durch eines mit einem anderen Namen.",
+      "warning_system_param_address": "Dieser Name ist ein Link-Umfrage-URL-Parameter, daher kann dieses Feld niemals mit einer URL ausgefüllt werden.",
       "warning_unsafe_address": "Dieser Name stammt aus der Zeit vor der aktuellen Namensregel. Er funktioniert weiterhin, aber ein neues Feld könnte nicht so benannt werden.",
       "when_anonymized": "Wenn Antworten anonymisiert werden"
     },

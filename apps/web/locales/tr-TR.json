@@ -2238,7 +2238,7 @@
       "value_true": "Doğru",
       "warning_clashing_address": "Bu anketteki başka bir alan da bu isme yanıt veriyor. Geri çağırma ve mantık bunlardan birini çözümler.",
       "warning_reserved_address": "Bu isim artık ayrılmış bir otomatik yakalanan alandır. Bu anket kendininkini tutar ve burada kazanır, dolayısıyla otomatik yakalanan değer bu isimle kullanılamaz.",
-      "warning_system_param_address": "Bu isim bir bağlantı-anket sistem parametresidir, bu nedenle bir URL asla onu dolduramaz. Alana bir varsayılan değer verin veya farklı adlandırılmış bir alanla değiştirin.",
+      "warning_system_param_address": "Bu isim bir bağlantı-anket URL parametresidir, bu nedenle bu alan asla bir URL ile doldurulamaz.",
       "warning_unsafe_address": "Bu isim mevcut adlandırma kuralından önce vardır. Çalışmaya devam eder; yeni bir alan bu şekilde adlandırılamazdı.",
       "when_anonymized": "Yanıtlar anonimleştirildiğinde"
     },

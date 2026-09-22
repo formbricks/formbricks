@@ -2238,7 +2238,7 @@
       "value_true": "真",
       "warning_clashing_address": "此問卷上的另一個欄位使用相同名稱。在召回和邏輯處理時會解析其中一個。",
       "warning_reserved_address": "此名稱現已成為保留的自動擷取欄位。此問卷保留自己的欄位並優先使用,因此自動擷取的值無法在此名稱下使用。",
-      "warning_system_param_address": "此名稱是連結問卷的系統參數,因此 URL 無法填入。請為此欄位設定預設值,或替換為不同名稱的欄位。",
+      "warning_system_param_address": "此名稱是連結問卷的 URL 參數,因此 URL 永遠無法填入此欄位。",
       "warning_unsafe_address": "此名稱早於目前的命名規則。它仍可正常運作;但新欄位無法使用此名稱。",
       "when_anonymized": "當回應被匿名化時"
     },

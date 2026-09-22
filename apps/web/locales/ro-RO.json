@@ -2238,7 +2238,7 @@
       "value_true": "Adevărat",
       "warning_clashing_address": "Un alt câmp din acest sondaj răspunde la acest nume. Revizuiește și rezolvă conflictul în logică pentru unul dintre ele.",
       "warning_reserved_address": "Acest nume este acum un câmp rezervat preluat automat. Acest sondaj își păstrează propriul câmp, care are prioritate aici, deci valoarea preluată automat nu este disponibilă cu acest nume.",
-      "warning_system_param_address": "Acest nume este un parametru de sistem pentru sondajul-link, deci nu poate fi completat niciodată printr-un URL. Atribuie-i un câmp valoare implicită sau folosește un nume diferit.",
+      "warning_system_param_address": "Acest nume este un parametru URL de tip link-survey, deci un URL nu poate completa niciodată acest câmp.",
       "warning_unsafe_address": "Acest nume este mai vechi decât regula actuală de denumire. Rămâne funcțional; un câmp nou nu ar putea primi acest nume.",
       "when_anonymized": "Când răspunsurile sunt anonimizate"
     },

@@ -2238,7 +2238,7 @@
       "value_true": "Sant",
       "warning_clashing_address": "Ett annat fält i den här undersökningen använder samma namn. Återkallning och logik kommer att välja ett av dem.",
       "warning_reserved_address": "Det här namnet är nu ett reserverat automatiskt infångat fält. Undersökningen behåller sitt eget fält, som har företräde här, så det automatiskt infångade värdet är inte tillgängligt under det här namnet.",
-      "warning_system_param_address": "Det här namnet är en systemparameter för länkade undersökningar, så en URL kan aldrig fylla i det. Ge fältet ett standardvärde eller ersätt det med ett annorlunda namngivet fält.",
+      "warning_system_param_address": "Det här namnet är en URL-parameter för länkenkät, så en URL kan aldrig fylla i det här fältet.",
       "warning_unsafe_address": "Det här namnet är äldre än den nuvarande namnregeln. Det fortsätter att fungera, men ett nytt fält skulle inte kunna namnges så här.",
       "when_anonymized": "När svar anonymiseras"
     },

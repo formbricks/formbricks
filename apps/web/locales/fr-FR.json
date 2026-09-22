@@ -2238,7 +2238,7 @@
       "value_true": "Vrai",
       "warning_clashing_address": "Un autre champ de cette enquête répond à ce nom. Le rappel et la logique en résolvent un des deux.",
       "warning_reserved_address": "Ce nom est maintenant un champ auto-capturé réservé. Cette enquête conserve le sien, qui a la priorité ici, donc la valeur auto-capturée n'est pas disponible sous ce nom.",
-      "warning_system_param_address": "Ce nom est un paramètre système de lien d'enquête, donc une URL ne peut jamais le remplir. Donne au champ une valeur par défaut, ou remplace-le par un champ avec un nom différent.",
+      "warning_system_param_address": "Ce nom est un paramètre d'URL de sondage-lien, donc une URL ne peut jamais remplir ce champ.",
       "warning_unsafe_address": "Ce nom date d'avant la règle de nommage actuelle. Il continue de fonctionner ; un nouveau champ ne pourrait pas être nommé ainsi.",
       "when_anonymized": "Lorsque les réponses sont anonymisées"
     },

@@ -2238,7 +2238,7 @@
       "value_true": "Igaz",
       "warning_clashing_address": "Egy másik mező ezen a felmérésben ugyanerre a névre válaszol. A felidézés és a logika egyiküket oldja fel.",
       "warning_reserved_address": "Ez a név jelenleg egy fenntartott automatikusan rögzített mező. Ez a felmérés megtartja a sajátját, amely itt érvényesül, így az automatikusan rögzített érték nem érhető el ezen a néven.",
-      "warning_system_param_address": "Ez a név egy hivatkozás-felmérés rendszerparaméter, így egy URL soha nem töltheti ki. Adjon az adatmezőnek alapértelmezett értéket, vagy cserélje le egy másik nevűre.",
+      "warning_system_param_address": "Ez a név egy link-felmérés URL-paraméter, így ez a mező soha nem töltődhet ki URL-címmel.",
       "warning_unsafe_address": "Ez a név megelőzi a jelenlegi elnevezési szabályt. Továbbra is működik; egy új mező nem kaphatná meg ezt a nevet.",
       "when_anonymized": "Amikor a válaszok anonimizálva vannak"
     },
