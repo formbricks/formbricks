@@ -103,7 +103,7 @@
       "scopes": {
         "email": "Az e-mail-címe megtekintése",
         "feedback_records_read": "Visszajelzési rekordok olvasása",
-        "feedback_records_write": "Visszajelzési rekordok létrehozása",
+        "feedback_records_write": "Visszajelzési rekordok létrehozása, frissítése és törlése",
         "offline_access": "Hozzáférés megtartása frissítési tokenekkel",
         "openid": "Azonosítsa magát OpenID Connect használatával",
         "profile": "A profilja megtekintése",
