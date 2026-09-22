@@ -3198,7 +3198,7 @@
         "animated_background_option": "{number}. animált háttér",
         "animation": "Animáció",
         "anonymize_responses": "Válaszok anonimizálása",
-        "anonymize_responses_description": "Nem tárolja tovább a válaszadók IP-címét, országát és eszközadatait az új válaszoknál, és eltávolítja a lekérdezési paramétereket a rögzített oldal-URL-ekből. A már összegyűjtött válaszok nem lesznek megváltoztatva.",
+        "anonymize_responses_description": "Kérem, ne tárolja a válaszadó IP-címét, országát és eszközadatait az új válaszoknál, valamint távolítsa el a lekérdezési paramétereket a rögzített oldal URL-ekből.",
         "any_is_true": "bármelyik igaz",
         "app_survey_description": "Egy kérdőív beágyazása a webalkalmazásába vagy webhelyére a válaszok gyűjtéséhez.",
         "assign": "= hozzárendelése",

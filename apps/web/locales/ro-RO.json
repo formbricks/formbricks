@@ -3198,7 +3198,7 @@
         "animated_background_option": "Fundal animat {number}",
         "animation": "Animație",
         "anonymize_responses": "Anonimizează răspunsurile",
-        "anonymize_responses_description": "Oprește stocarea adresei IP a respondentului, a țării și a detaliilor despre dispozitiv pentru răspunsurile noi și elimină parametrii de interogare din adresele URL ale paginilor capturate. Răspunsurile deja colectate nu sunt modificate.",
+        "anonymize_responses_description": "Oprește stocarea adresei IP, țării și detaliilor dispozitivului respondentului pentru răspunsurile noi și elimină parametrii de interogare din URL-urile paginilor capturate.",
         "any_is_true": "oricare este adevărată",
         "app_survey_description": "Incorporați un chestionar în aplicația web sau pe site-ul dvs. pentru a colecta răspunsuri.",
         "assign": "Atribuire =",
