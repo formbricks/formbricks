@@ -1686,6 +1686,22 @@ describe("Response Utils", () => {
         hidden2: [],
       });
     });
+
+    test("a number field offers its stored values to the filter (ENG-3266)", () => {
+      // These are the filter's value options. Under the old `typeof === "string"` gate a `number`
+      // field collected nothing, so it appeared in the filter with an empty dropdown — filterable in
+      // name only. `boolean` never reaches here: `surveys.ts` hardcodes its two options.
+      const responses = [
+        { contactAttributes: {}, data: { hidden1: 42, hidden2: "value2" }, meta: {} },
+        { contactAttributes: {}, data: { hidden1: 0, hidden2: "value4" }, meta: {} },
+      ];
+      const result = getResponseHiddenFields(
+        mockSurvey as TSurvey,
+        responses as unknown as Pick<TResponse, "contactAttributes" | "data" | "meta">[]
+      );
+      expect(result.hidden1).toContain("42");
+      expect(result.hidden1).toContain("0");
+    });
   });
 
   describe("generateAllPermutationsOfSubsets", () => {

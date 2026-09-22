@@ -10,6 +10,7 @@ import {
   ZEmbeddedDataType,
 } from "@formbricks/types/embedded-data";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
+import { TValidateIdErrorCode } from "@formbricks/types/surveys/validation";
 import { DefaultValueInput } from "@/modules/embedded-data/components/default-value-input";
 import { FieldSourceIcon } from "@/modules/embedded-data/settings/components/field-source-icon";
 import { getDataTypeLabel, getSourceLabel } from "@/modules/embedded-data/settings/lib/field-labels";
@@ -180,14 +181,28 @@ export const EmbeddedFieldModal = ({
     });
 
     if (nameError) {
-      // Named by source: the two halves of the merged card still occupy the two namespaces recall and
-      // logic address fields through, and the message says which one refused the name.
+      // A name already spoken for is answered in this card's own words (ENG-3266). The shared
+      // message names the namespaces it searched — "questions, hidden fields, or variables" — which
+      // are the two concepts this card replaced, so the one refusal an author meets routinely was
+      // the one sentence still speaking the vocabulary the merged card removed.
+      //
+      // Its own sentence rather than the address one below: `validateEmbeddedFieldName` refuses a
+      // name that collides with an element or an ending card as well as with another field, and only
+      // the last of those is a field holding the address. Saying so for a question id would send the
+      // author looking for a field that does not exist.
+      //
+      // Every other code keeps the shared message, named by source: the two halves of the card still
+      // occupy the two namespaces recall and logic address fields through, and an empty or malformed
+      // name is refused in terms of the one that refused it.
       form.setError("name", {
-        message: getValidateIdErrorMessage(
-          nameError,
-          draft.source === "computed" ? "variable" : "hiddenField",
-          t
-        ),
+        message:
+          nameError.code === TValidateIdErrorCode.Duplicate
+            ? t("workspace.embedded_data.survey_field_name_taken")
+            : getValidateIdErrorMessage(
+                nameError,
+                draft.source === "computed" ? "variable" : "hiddenField",
+                t
+              ),
       });
       return;
     }

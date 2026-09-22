@@ -21,6 +21,7 @@ import { getElementResponseMapping } from "@/lib/responses";
 import { buildServerEmbeddedValues } from "@/lib/surveyLogic/utils";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { getTranslate } from "@/lingodotdev/server";
+import { displayEmbeddedValue } from "@/modules/embedded-data/lib/value-display";
 import { resolveStorageUrl } from "@/modules/storage/utils";
 
 /**
@@ -134,16 +135,16 @@ const buildHiddenFields = (
 
   // ENG-3233: shown by name, read by storage key. `id` stays the storage key — it is the React key
   // in the template, and only the key is unique per survey.
-  return labelEmbeddedFields(getIngestedEmbeddedFields(survey))
-    .filter(({ link }) => {
-      const hiddenFieldResponse = response.data[link.storageKey];
-      return hiddenFieldResponse && typeof hiddenFieldResponse === "string";
-    })
-    .map(({ link, label }) => ({
-      id: link.storageKey,
-      name: label,
-      value: response.data[link.storageKey] as string,
-    }));
+  //
+  // ENG-3266: the same widening as the analysis surfaces — a `number` field stores a JSON number,
+  // which the old `typeof === "string"` gate dropped, so a follow-up email omitted a row the export
+  // wrote. Read once and flat-map rather than filter-then-map: reading the slot twice is what made
+  // the `as string` cast necessary, and the cast is what let the two reads drift apart.
+  return labelEmbeddedFields(getIngestedEmbeddedFields(survey)).flatMap(({ link, label }) => {
+    const value = displayEmbeddedValue(response.data[link.storageKey]);
+    if (!value) return [];
+    return [{ id: link.storageKey, name: label, value }];
+  });
 };
 
 /**

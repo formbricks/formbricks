@@ -2222,6 +2222,7 @@
       "survey_field_address_fixed": "Källan och adressen kan inte ändras: svar som redan samlats in lagras under dem.",
       "survey_field_address_taken": "Ett annat fält i denna undersökning lagras redan under denna adress. Välj ett annat namn.",
       "survey_field_name_hint": "Hur logik, återkallning och svarstabellen refererar till fältet. Små bokstäver, siffror och understreck.",
+      "survey_field_name_taken": "Den här undersökningen använder redan detta namn för en fråga, ett avslut eller ett annat fält. Välj ett annat.",
       "type_boolean": "Sant/falskt",
       "type_change_body": "Värden som redan samlats in förblir exakt som de är; endast nya svar läses som {to}. Filter och logik som jämför {to}-värden kanske inte matchar de äldre.",
       "type_change_responses_subtitle": "Den här undersökningen har redan {count, plural, one {# svar} other {# svar}}.",

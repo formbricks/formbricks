@@ -2,7 +2,7 @@
 
 import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
@@ -36,7 +36,8 @@ import { AutoSaveIndicator } from "./auto-save-indicator";
 interface SurveyMenuBarProps {
   localSurvey: TSurvey;
   survey: TSurvey;
-  setLocalSurvey: (survey: TSurvey) => void;
+  /** React's own setter: the auto-save adopts through the updater form, so a value alone is not enough. */
+  setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   setInvalidElements: React.Dispatch<React.SetStateAction<string[] | null>>;
@@ -392,12 +393,37 @@ export const SurveyMenuBar = ({
         if (updatedSurveyResponse?.data) {
           const savedData = updatedSurveyResponse.data;
 
-          // If the segment changed on the server (e.g., private segment was deleted when
-          // switching from app to link type), update localSurvey to prevent stale segment
-          // references when publishing
-          if (!isDeepEqual(localSurveyRef.current.segment, savedData.segment)) {
-            setLocalSurvey({ ...localSurveyRef.current, segment: savedData.segment });
-          }
+          // The server deletes a private segment when a survey switches from app to link, so the
+          // working copy has to take that back. Skipping it is not a cosmetic loss: the stale id
+          // goes back out on the next save, `assertSurveySegmentBelongsToWorkspace` throws
+          // `ResourceNotFoundError`, and the catch below swallows it — so this block never runs
+          // again and the editor cannot be saved or published until the page is reloaded.
+          //
+          // Through the updater rather than against `localSurveyRef` (ENG-3266), which is written in
+          // a passive effect and so still names the sent object for as long as it takes React to
+          // flush one — a window the response can land in, where the ref would overwrite whatever
+          // the author changed mid-flight. `current` is the state itself, so the spread carries
+          // those edits and replaces only the key the server owns.
+          //
+          // The one edit the spread could still lose is an edit to `segment` itself: `TargetingCard`
+          // writes it on every change and is mounted for app surveys, so an author refining their
+          // targeting while a tick is in flight would get `savedData.segment` — the segment as it
+          // was when the request went out — written back over the newer one. So the guard is on
+          // `segment` alone, against the value the working copy held when it was sent. Guarding on
+          // the survey's object identity instead settles the same race by abandoning the adoption
+          // after any unrelated keystroke, which is what left the editor unsaveable.
+          //
+          // `currentSurvey.segment` rather than what was serialized: a `temp` segment goes out as
+          // `null`, and comparing against the wire value would read that rewrite as an author edit
+          // and never adopt the real segment the server answers with.
+          //
+          // The Embedded Data keys need no such adoption: `hasUnsavedSurveyChanges` normalizes them
+          // on both sides, which settles the dirty check without re-rendering the editor at all.
+          setLocalSurvey((current) => {
+            if (!isDeepEqual(current.segment, currentSurvey.segment)) return current;
+            if (isDeepEqual(current.segment, savedData.segment)) return current;
+            return { ...current, segment: savedData.segment };
+          });
 
           // Update surveyRef (not localSurvey state) to prevent re-renders during auto-save.
           // This keeps the UI stable while still tracking that changes have been saved.

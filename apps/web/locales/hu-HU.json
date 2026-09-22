@@ -2222,6 +2222,7 @@
       "survey_field_address_fixed": "A forrás és a cím nem módosítható: a már összegyűjtött válaszok azok alatt vannak tárolva.",
       "survey_field_address_taken": "Egy másik mező ebben a felmérésben már ezen a címen van tárolva. Kérem, válasszon egy eltérő nevet.",
       "survey_field_name_hint": "Így hivatkozik a mező a logika, a felidézés és a választábla. Kisbetűk, számok és alulvonások.",
+      "survey_field_name_taken": "Ez a felmérés már használja ezt a nevet egy kérdéshez, egy befejezéshez vagy egy másik mezőhöz. Kérem, válasszon egy másik nevet.",
       "type_boolean": "Igaz/hamis",
       "type_change_body": "A már összegyűjtött értékek pontosan úgy maradnak, ahogy vannak; csak az új válaszok kerülnek beolvasásra {to} típusként. Azok a szűrők és logikák, amelyek {to} értékeket hasonlítanak össze, esetleg nem egyeznek a régebbi értékekkel.",
       "type_change_responses_subtitle": "Ezen felmérésnek már {count, plural, one {# válasza} other {# válasza}} van.",

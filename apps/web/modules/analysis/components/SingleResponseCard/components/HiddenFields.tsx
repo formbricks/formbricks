@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { labelEmbeddedFields } from "@formbricks/types/embedded-data-label";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { TResponseData } from "@formbricks/types/responses";
+import { displayEmbeddedValue } from "@/modules/embedded-data/lib/value-display";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface HiddenFieldsProps {
@@ -24,12 +25,12 @@ export const HiddenFields = ({ hiddenFields, responseData }: Readonly<HiddenFiel
   const hiddenFieldsData: { storageKey: string; label: string; value: string }[] = [];
 
   labelEmbeddedFields(hiddenFields).forEach(({ link, label }) => {
-    const value = responseData[link.storageKey];
+    const value = displayEmbeddedValue(responseData[link.storageKey]);
     if (value) {
       hiddenFieldsData.push({
         storageKey: link.storageKey,
         label,
-        value: typeof value === "string" ? value : "",
+        value,
       });
     }
   });

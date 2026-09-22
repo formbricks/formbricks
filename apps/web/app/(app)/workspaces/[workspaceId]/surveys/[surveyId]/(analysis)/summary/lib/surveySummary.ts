@@ -39,6 +39,7 @@ import { buildWhereClause } from "@/lib/response/where-clause";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
+import { displayEmbeddedValue } from "@/modules/embedded-data/lib/value-display";
 import { convertFloatTo2Decimal } from "./utils";
 
 interface TSurveySummaryResponse {
@@ -966,8 +967,8 @@ export const getElementSummary = async (
   labelEmbeddedFields(getIngestedEmbeddedFields(survey)).forEach(({ link, label }) => {
     let values: TSurveyElementSummaryHiddenFields["samples"] = [];
     responses.forEach((response) => {
-      const answer = response.data[link.storageKey];
-      if (answer && typeof answer === "string") {
+      const answer = displayEmbeddedValue(response.data[link.storageKey]);
+      if (answer) {
         values.push({
           updatedAt: response.updatedAt,
           value: answer,

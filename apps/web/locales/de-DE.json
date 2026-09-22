@@ -2222,6 +2222,7 @@
       "survey_field_address_fixed": "Die Quelle und die Adresse können nicht geändert werden: Bereits erfasste Antworten sind unter ihnen gespeichert.",
       "survey_field_address_taken": "Ein anderes Feld in dieser Umfrage wird bereits unter dieser Adresse gespeichert. Wähle einen anderen Namen.",
       "survey_field_name_hint": "So wird das Feld in Logik, Erinnerungen und der Antworttabelle bezeichnet. Kleinbuchstaben, Zahlen und Unterstriche.",
+      "survey_field_name_taken": "Dieser Name wird in dieser Umfrage bereits für eine Frage, ein Ende oder ein anderes Feld verwendet. Wähle einen anderen Namen.",
       "type_boolean": "Wahr/Falsch",
       "type_change_body": "Bereits erfasste Werte bleiben genau wie sie sind; nur neue Antworten werden als {to} gelesen. Filter und Logik, die {to}-Werte vergleichen, passen möglicherweise nicht zu den älteren Werten.",
       "type_change_responses_subtitle": "Diese Umfrage hat bereits {count, plural, one {# Antwort} other {# Antworten}}.",
