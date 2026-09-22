@@ -298,7 +298,7 @@ describe("validateNewDeclaredFieldClashes", () => {
       ).toEqual(["plan"]);
     });
 
-    test("reports the Duplicate code the editor's hidden-fields card reports for the same clash", () => {
+    test("reports the Duplicate code the editor's Embedded Data card reports for the same clash", () => {
       expect(
         validateNewDeclaredFieldClashes({
           existing: declared({ hiddenFields: ["plan"] }),

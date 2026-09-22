@@ -1,5 +1,7 @@
+import { createId } from "@paralleldrive/cuid2";
 import { describe, expect, test } from "vitest";
 import {
+  describeRowIssues,
   formatDefaultValueDraft,
   getAuthorableSources,
   getDataTypesForSource,
@@ -105,5 +107,49 @@ describe("getUsageLabel", () => {
 
   test("treats a negative count as unused rather than rendering it", () => {
     expect(getUsageLabel(-1)).toEqual({ kind: "unused" });
+  });
+});
+
+describe("describeRowIssues", () => {
+  const draftColumns = new Set(["name", "key", "dataType", "defaultValue", "locked"]);
+  const candidate = (overrides: Record<string, unknown> = {}) => ({
+    id: createId(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    key: "plan_tier",
+    name: "Plan tier",
+    description: null,
+    source: "ingested",
+    dataType: "string",
+    defaultValue: null,
+    locked: false,
+    surveyId: null,
+    workspaceId: createId(),
+    ...overrides,
+  });
+
+  test("says nothing about a row the schema accepts", () => {
+    expect(describeRowIssues(candidate(), draftColumns)).toEqual([]);
+  });
+
+  /**
+   * The point of the indirection: the form asks `ZEmbeddedData` rather than restating it, so the
+   * sentence an author reads inline is the one a refused write would have returned.
+   */
+  test("forwards the schema's own sentence, on the column it complained about", () => {
+    expect(describeRowIssues(candidate({ source: "computed", dataType: "date" }), draftColumns)).toEqual([
+      { message: "Computed fields support only string or number", path: ["dataType"] },
+    ]);
+    expect(describeRowIssues(candidate({ key: "country" }), draftColumns)).toEqual([
+      { message: "Key is reserved", path: ["key"] },
+    ]);
+  });
+
+  // A column the form does not render has nowhere to put its message, and a form that refuses to
+  // submit with nothing on screen is worse than one that says it on the name.
+  test("falls back to the name for a column no control carries", () => {
+    const [issue] = describeRowIssues(candidate({ source: "computed", locked: true }), new Set(["name"]));
+
+    expect(issue).toEqual({ message: "Only ingested fields can be locked", path: ["name"] });
   });
 });

@@ -153,3 +153,42 @@ export type TUsageLabel = { kind: "unused" } | { kind: "used"; count: number };
 
 export const getUsageLabel = (surveyCount: number): TUsageLabel =>
   surveyCount <= 0 ? { kind: "unused" } : { kind: "used", count: surveyCount };
+
+/** One of `ZEmbeddedData`'s complaints, addressed to the control that carries the column. */
+export interface TFieldDraftIssue {
+  message: string;
+  path: [string];
+}
+
+/**
+ * What `ZEmbeddedData` says about a prospective row, as issues a draft form can raise.
+ *
+ * **This is how a form asks the schema instead of restating it.** The same schema `assertValidRow`
+ * runs in the service, over the same prospective row, so the inline message and the one a refused
+ * write would have returned are the same sentence — the key charset, the reserved-name list, a
+ * default that has to agree with `dataType`, locking only an ingested field, and a calculated field
+ * being text or number are each defined exactly once, there.
+ *
+ * Shared by the two forms that author a row — the workspace library dialog and the survey editor's
+ * Embedded Data card — which differ in *which* columns they collect, not in what a valid row is.
+ *
+ * Issue paths are forwarded as they arrive when the draft has a control for that column. The
+ * fallback covers the columns a draft supplies itself, which is unreachable unless its candidate
+ * builder is wrong — and putting the schema's own sentence on the name beats a form that refuses to
+ * submit with nothing on screen.
+ */
+export const describeRowIssues = (
+  candidate: unknown,
+  draftColumns: ReadonlySet<string>
+): TFieldDraftIssue[] => {
+  const parsed = ZEmbeddedData.safeParse(candidate);
+  if (parsed.success) return [];
+
+  return parsed.error.issues.map((issue) => {
+    const [column] = issue.path;
+    return {
+      message: issue.message,
+      path: [typeof column === "string" && draftColumns.has(column) ? column : "name"],
+    };
+  });
+};

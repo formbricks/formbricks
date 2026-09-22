@@ -82,7 +82,7 @@ describe("buildEmailSendToOptions", () => {
 
   test("maps hidden fields to options labelled by id", () => {
     // ENG-2628: the recipient list is enumerated from the survey's Embedded Data rows, which is what
-    // the editor's Hidden Fields card writes — the legacy column no longer decides this.
+    // the editor's Embedded Data card writes — the legacy column no longer decides this.
     const ingested = (storageKey: string) => ({
       field: {
         name: storageKey,

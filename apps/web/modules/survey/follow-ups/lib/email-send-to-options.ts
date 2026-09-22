@@ -55,7 +55,7 @@ export const buildEmailSendToOptions = ({
     return false;
   });
 
-  // ENG-2628: the survey's rows, like every other reader. The editor's Hidden Fields card edits them
+  // ENG-2628: the survey's rows, like every other reader. The editor's Embedded Data cards edit them
   // directly, so this picker — which WRITES a recipient — and `follow-up-item.tsx`, which renders the
   // stored one back, still read the same instant's definitions.
   //

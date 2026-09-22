@@ -62,7 +62,7 @@ A field does not care which channel filled it. `plan` is declared the same way, 
 
 An ingested or computed field has to exist before anything can fill it, and there are two places to declare one:
 
-- **In the survey editor**, for a field only that survey uses: **Hidden Fields** for ingested, **Variables** for computed.
+- **In the survey editor**, for a field only that survey uses: the **Embedded Data** card, where one dialog creates either source.
 - **In Settings → Workspace → Embedded Data**, for a field the whole workspace shares. A field declared there can be linked from any survey, and editing it once changes it for every survey using it. The same page lists which surveys use each field, and refuses to delete one that is still in use.
 
 Reserved fields are never declared, they are always available.

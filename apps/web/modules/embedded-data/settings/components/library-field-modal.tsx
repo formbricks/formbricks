@@ -10,23 +10,21 @@ import { z } from "zod";
 import {
   type TEmbeddedDataSource,
   type TEmbeddedDataType,
-  ZEmbeddedData,
   ZEmbeddedDataSource,
   ZEmbeddedDataType,
 } from "@formbricks/types/embedded-data";
 import { toSafeIdentifier } from "@formbricks/types/safe-identifier";
-import { formatLocalDay, parseStoredDay } from "@/lib/utils/datetime";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   createSharedEmbeddedDataAction,
   updateSharedEmbeddedDataAction,
 } from "@/modules/embedded-data/actions";
+import { DefaultValueInput } from "@/modules/embedded-data/components/default-value-input";
 import type { TSharedEmbeddedData, TSharedEmbeddedDataWriteResult } from "@/modules/embedded-data/types";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
-import { DatePicker } from "@/modules/ui/components/date-picker";
 import {
   Dialog,
   DialogBody,
@@ -57,6 +55,7 @@ import {
 } from "@/modules/ui/components/select";
 import { getDataTypeLabel, getSourceLabel } from "../lib/field-labels";
 import {
+  describeRowIssues,
   formatDefaultValueDraft,
   getAuthorableSources,
   getDataTypesForSource,
@@ -105,18 +104,21 @@ const toCandidateRow = (draft: TLibraryFieldDraft) => ({
   locked: draft.locked,
 });
 
+/** The columns this form renders, and can therefore put a schema issue on. */
+const DRAFT_COLUMNS: ReadonlySet<string> = new Set([
+  "name",
+  "key",
+  "description",
+  "source",
+  "dataType",
+  "defaultValue",
+  "locked",
+]);
+
 /**
- * The draft's shape, with every actual rule delegated to `ZEmbeddedData`.
- *
- * This is the same schema `assertValidRow` runs in the service, over the same prospective row, so
- * the inline message and the one a refused write would have returned are the same sentence — the key
- * charset, the reserved-name list, the default that has to agree with `dataType`, locking only an
- * ingested field, and a calculated field being text or number are all defined exactly once, there.
- *
- * Issue paths are forwarded as they arrive: every column the schema can complain about on this form
- * is a control the form renders. The fallback covers the columns `toCandidateRow` supplies itself,
- * which is unreachable unless that builder is wrong — and putting the schema's own sentence on the
- * first field beats a form that refuses to submit with nothing on screen.
+ * The draft's shape, with every actual rule delegated to `ZEmbeddedData` through
+ * {@link describeRowIssues} — the same delegation the survey editor's Embedded Data card makes, so
+ * the two forms that author a field cannot drift into disagreeing about what a valid one is.
  */
 const ZLibraryFieldDraft = z
   .object({
@@ -129,22 +131,10 @@ const ZLibraryFieldDraft = z
     locked: z.boolean(),
   })
   .superRefine((draft, ctx) => {
-    const parsed = ZEmbeddedData.safeParse(toCandidateRow(draft));
-    if (parsed.success) return;
-
-    const draftKeys = new Set(["name", "key", "description", "source", "dataType", "defaultValue", "locked"]);
-    for (const issue of parsed.error.issues) {
-      const [column] = issue.path;
-      ctx.addIssue({
-        code: "custom",
-        message: issue.message,
-        path: [typeof column === "string" && draftKeys.has(column) ? column : "name"],
-      });
+    for (const issue of describeRowIssues(toCandidateRow(draft), DRAFT_COLUMNS)) {
+      ctx.addIssue({ code: "custom", message: issue.message, path: issue.path });
     }
   });
-
-/** Radix refuses an empty item value, so "no default" travels as a sentinel and is mapped back. */
-const NO_DEFAULT_VALUE = "__no_default__";
 
 const toDraft = (field: TSharedEmbeddedData | null): TLibraryFieldDraft => ({
   name: field?.name ?? "",
@@ -219,11 +209,11 @@ export const LibraryFieldModal = ({
   /**
    * Narrowing on a source switch is reversible, unlike the author retyping the field themselves.
    *
-   * `narrowDataTypeToSource` keeps the current type whenever the new source still allows it, so
-   * only the narrowing case moves anything — and that case is the one the author did not ask for.
-   * Without the snapshot, Passed-in/Date/a default → Calculated → back to Passed-in left a Text
-   * field with no default: the type had been narrowed to `string` on the way out, and coming back
-   * `string` is still allowed, so nothing restored it.
+   * `narrowDataTypeToSource` keeps the current type whenever the new source still allows it, so only
+   * the narrowing case moves anything — and that case is the one the author did not ask for. Without
+   * the snapshot, Passed-in/Date/a default -> Calculated -> back to Passed-in left a Text field with
+   * no default: the type was narrowed to `string` on the way out, and coming back `string` is still
+   * allowed, so nothing restored it.
    */
   const narrowedAway = useRef<{ dataType: TEmbeddedDataType; defaultValue: string } | null>(null);
 
@@ -345,45 +335,6 @@ export const LibraryFieldModal = ({
     } finally {
       setIsConfirming(false);
     }
-  };
-
-  const renderDefaultValueControl = (value: string, onChange: (next: string) => void) => {
-    if (dataType === "boolean") {
-      return (
-        <Select
-          value={value === "" ? NO_DEFAULT_VALUE : value}
-          onValueChange={(next) => onChange(next === NO_DEFAULT_VALUE ? "" : next)}>
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={NO_DEFAULT_VALUE}>{t("workspace.embedded_data.no_default")}</SelectItem>
-            <SelectItem value="true">{t("workspace.embedded_data.value_true")}</SelectItem>
-            <SelectItem value="false">{t("workspace.embedded_data.value_false")}</SelectItem>
-          </SelectContent>
-        </Select>
-      );
-    }
-
-    if (dataType === "date") {
-      return (
-        <DatePicker
-          value={parseStoredDay(value)}
-          locale={locale}
-          triggerClassName="w-full"
-          onChange={(date) => onChange(formatLocalDay(date))}
-          onClear={() => onChange("")}
-        />
-      );
-    }
-
-    return (
-      <Input
-        type={dataType === "number" ? "number" : "text"}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      />
-    );
   };
 
   return (
@@ -549,7 +500,12 @@ export const LibraryFieldModal = ({
                         <FormItem>
                           <FormLabel>{t("workspace.embedded_data.default_value")}</FormLabel>
                           <FormControl>
-                            {renderDefaultValueControl(defaultField.value, defaultField.onChange)}
+                            <DefaultValueInput
+                              dataType={dataType}
+                              value={defaultField.value}
+                              onChange={defaultField.onChange}
+                              locale={locale}
+                            />
                           </FormControl>
                           <FormError />
                         </FormItem>
@@ -605,10 +561,9 @@ export const LibraryFieldModal = ({
         <ConfirmationModal
           open={true}
           // Dismissal is refused once the retry is in flight. `submitWrite` resolves regardless of
-          // this dialog, so a Cancel that only cleared `pendingTypeChange` returned the author to
-          // the form while the write went on to succeed, toast and close the dialog under them —
-          // the one outcome they had just declined. Closing the door is the honest fix: the confirm
-          // button already shows its loading state, and the write is short.
+          // this dialog, so a Cancel that only cleared `pendingTypeChange` returned the author to the
+          // form while the write went on to succeed, toast and close the dialog under them — the one
+          // outcome they had just declined.
           setOpen={(value) => {
             if (value === false && !isConfirming) setPendingTypeChange(null);
           }}
