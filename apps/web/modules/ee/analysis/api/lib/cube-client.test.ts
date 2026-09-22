@@ -1,7 +1,5 @@
 import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { getCalendarDayInTimeZone } from "@/lib/date-ranges";
-import { formatLocalDay } from "@/lib/utils/datetime";
 
 vi.mock("server-only", () => ({}));
 
@@ -116,23 +114,32 @@ describe("executeTenantScopedQuery", () => {
   });
 
   test("queries Cube in the organization's display time zone and expands presets in it", async () => {
-    mockGetOrganization.mockResolvedValue({ displayTimeZone: "Europe/Berlin" });
-    const { executeTenantScopedQuery } = await import("./cube-client");
-    await executeTenantScopedQuery({
-      ...scopedInput,
-      query: {
-        measures: ["FeedbackRecords.count"],
-        timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", dateRange: "today" }],
-      },
-    });
+    // The client reads the clock while expanding the preset, so pin it: 22:30 UTC is still May 21 in UTC
+    // but already May 22 in Berlin, which is exactly the rollover this test is about.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-21T22:30:00Z"));
+    try {
+      mockGetOrganization.mockResolvedValue({ displayTimeZone: "Europe/Berlin" });
+      const { executeTenantScopedQuery } = await import("./cube-client");
+      await executeTenantScopedQuery({
+        ...scopedInput,
+        query: {
+          measures: ["FeedbackRecords.count"],
+          timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", dateRange: "today" }],
+        },
+      });
 
-    expect(mockGetOrganization).toHaveBeenCalledWith("organization-1");
-    const today = formatLocalDay(getCalendarDayInTimeZone(new Date(), "Europe/Berlin"));
-    expect(mockLoad).toHaveBeenCalledWith({
-      measures: ["FeedbackRecords.count"],
-      timezone: "Europe/Berlin",
-      timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", dateRange: [today, today] }],
-    });
+      expect(mockGetOrganization).toHaveBeenCalledWith("organization-1");
+      expect(mockLoad).toHaveBeenCalledWith({
+        measures: ["FeedbackRecords.count"],
+        timezone: "Europe/Berlin",
+        timeDimensions: [
+          { dimension: "FeedbackRecords.collectedAt", dateRange: ["2026-05-22", "2026-05-22"] },
+        ],
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test("reports a failed time zone lookup as a failed query instead of querying in the wrong zone", async () => {

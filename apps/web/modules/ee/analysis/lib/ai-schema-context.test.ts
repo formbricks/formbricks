@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { CHART_TYPE_IDS } from "@/modules/ee/analysis/types/analysis";
 import { generateSchemaContext } from "./ai-schema-context";
 
@@ -44,6 +45,15 @@ describe("AI schema context", () => {
     ["sourceName among the free-text dimensions", "`FeedbackRecords.sourceName`"],
   ])("documents %s", (_description, expectedSnippet) => {
     expect(generateSchemaContext()).toContain(expectedSnippet);
+  });
+
+  // The prompt and the output schema both derive from the shared preset list, so the model can only ask
+  // for windows the summary filter and the dashboards offer too. Hardcode either and this fails.
+  test("offers every shared date preset", () => {
+    const context = generateSchemaContext();
+    for (const preset of DATE_RANGE_PRESETS) {
+      expect(context).toContain(`"${preset}"`);
+    }
   });
 
   test("offers exactly the chart types the output schema accepts", () => {
