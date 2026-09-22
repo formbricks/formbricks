@@ -20,6 +20,11 @@ interface DefaultValueInputProps {
   dataType: TEmbeddedDataType;
   /** Stable handle for the control. The date picker is a popover trigger and takes none. */
   id?: string;
+  /**
+   * Test handle, forwarded to the control a test fills or opens: the text and number input and the
+   * boolean select's trigger. The date picker takes none, for the same reason as `id`.
+   */
+  "data-testid"?: string;
   /** The draft value as the DOM holds it: a string, whatever the stored column is. */
   value: string;
   onChange: (value: string) => void;
@@ -37,10 +42,15 @@ interface DefaultValueInputProps {
  * A blank draft means "no default" — never `""`, which is a value an ingested field would then be
  * filled with. `parseDefaultValueDraft` is the other half of that, and the two are the only places
  * that know it.
+ *
+ * All three controls are forced to `h-10`. Left alone they are three different heights — `Input` is
+ * `h-10`, `SelectTrigger` is `h-9` and the date picker's trigger is a default `Button` at `h-9` — so
+ * the Type/Default pair beside each other stepped by a few pixels depending on the type chosen.
  */
 export const DefaultValueInput = ({
   dataType,
   id,
+  "data-testid": testId,
   value,
   onChange,
   locale,
@@ -52,7 +62,7 @@ export const DefaultValueInput = ({
       <Select
         value={value === "" ? NO_DEFAULT_VALUE : value}
         onValueChange={(next) => onChange(next === NO_DEFAULT_VALUE ? "" : next)}>
-        <SelectTrigger id={id} className="w-full">
+        <SelectTrigger id={id} data-testid={testId} className="h-10 w-full">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -69,7 +79,7 @@ export const DefaultValueInput = ({
       <DatePicker
         value={parseStoredDay(value)}
         locale={locale}
-        triggerClassName="w-full"
+        triggerClassName="h-10 w-full"
         onChange={(date) => onChange(formatLocalDay(date))}
         onClear={() => onChange("")}
       />
@@ -79,6 +89,7 @@ export const DefaultValueInput = ({
   return (
     <Input
       id={id}
+      data-testid={testId}
       type={dataType === "number" ? "number" : "text"}
       value={value}
       onChange={(event) => onChange(event.target.value)}

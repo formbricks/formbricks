@@ -3,15 +3,13 @@
 import type { TFunction } from "i18next";
 import { LockIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { formatDateForDisplay } from "@/lib/utils/datetime";
 import type { TSharedEmbeddedDataListItem } from "@/modules/embedded-data/types";
-import { Badge } from "@/modules/ui/components/badge";
+import { DataTypeBadge } from "@/modules/ui/components/data-type-badge";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import type { TSettingsTableColumn } from "@/modules/ui/components/settings-table";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { getDataTypeLabel, getSourceLabel } from "../lib/field-labels";
+import { SOURCE_ICONS, getSourceLabel } from "../lib/field-labels";
 import { FieldRowMenu } from "./field-row-menu";
-import { FieldSourceIcon } from "./field-source-icon";
+import { StatusIcon } from "./field-status";
 import { FieldUsageCell } from "./field-usage-cell";
 
 /**
@@ -26,14 +24,12 @@ import { FieldUsageCell } from "./field-usage-cell";
  */
 export const getLibraryColumns = ({
   t,
-  locale,
   workspaceId,
   isReadOnly,
   onEdit,
   onDelete,
 }: Readonly<{
   t: TFunction;
-  locale: string;
   workspaceId: string;
   isReadOnly: boolean;
   onEdit: (field: TSharedEmbeddedDataListItem) => void;
@@ -43,7 +39,7 @@ export const getLibraryColumns = ({
     {
       id: "name",
       header: t("common.name"),
-      headerClassName: "w-[22%]",
+      headerClassName: "w-[26%]",
       skeletonWidth: "w-32",
       cell: (field) => (
         <div className="flex flex-col gap-0.5">
@@ -55,39 +51,39 @@ export const getLibraryColumns = ({
     {
       id: "key",
       header: t("common.key"),
-      headerClassName: "w-[16%]",
+      headerClassName: "w-[20%]",
       skeletonWidth: "w-24",
       // The chip copies the key, which is a button inside the row's activator.
       stopRowClick: true,
-      cell: (field) => <IdBadge id={field.key} showCopyIconOnHover={true} />,
+      // The copy affordance is always drawn rather than revealed on hover: a control that appears
+      // under the pointer and takes the chip's width with it makes the column twitch as the cursor
+      // crosses the table.
+      cell: (field) => <IdBadge id={field.key} />,
     },
     {
       id: "source",
       header: t("workspace.embedded_data.value_source_column"),
-      headerClassName: "w-[14%]",
+      headerClassName: "w-[8%]",
       hideBelow: "md",
-      skeletonWidth: "w-20",
+      skeletonWidth: "w-8",
+      // Icon alone, like the auto-captured table's status columns: the heading says what the column
+      // answers, and arrow-in against calculator is a difference you read without a word.
       cell: (field) => (
-        // `whitespace-nowrap`: "Passed in" is two words, and a Badge is a pill — wrapping breaks the
-        // pill across two lines rather than eliding it.
-        <div className="flex items-center gap-2 whitespace-nowrap text-slate-500">
-          <FieldSourceIcon source={field.source} />
-          <Badge text={getSourceLabel(field.source, t)} type="gray" size="tiny" />
-        </div>
+        <StatusIcon icon={SOURCE_ICONS[field.source]} label={getSourceLabel(field.source, t)} />
       ),
     },
     {
       id: "dataType",
       header: t("common.type"),
-      headerClassName: "w-[10%]",
+      headerClassName: "w-[14%]",
       hideBelow: "md",
       skeletonWidth: "w-16",
-      cell: (field) => <Badge text={getDataTypeLabel(field.dataType, t)} type="gray" size="tiny" />,
+      cell: (field) => <DataTypeBadge dataType={field.dataType} />,
     },
     {
       id: "defaultValue",
       header: t("common.default"),
-      headerClassName: "w-[14%]",
+      headerClassName: "w-[16%]",
       hideBelow: "lg",
       skeletonWidth: "w-16",
       cell: (field) => {
@@ -114,24 +110,18 @@ export const getLibraryColumns = ({
               <span className="text-slate-500">{t("workspace.embedded_data.no_default_placeholder")}</span>
             )}
             {field.locked && (
-              <TooltipRenderer
-                tooltipContent={
+              <StatusIcon
+                icon={LockIcon}
+                // `text-warning-muted` clears 3:1 against white where `text-warning` measures ~2.15:1 —
+                // this glyph is the only thing distinguishing "locked" from "locked with nothing to
+                // fall back on".
+                iconClassName={cn("size-4", !hasDefault && "text-warning-muted")}
+                label={
                   hasDefault
                     ? t("workspace.embedded_data.locked_description")
                     : t("workspace.embedded_data.locked_without_default")
-                }>
-                <LockIcon
-                  // `size-4` is the inline icon scale, and `text-warning-muted` clears 3:1 against
-                  // white where `text-warning` measures ~2.15:1 — this glyph is the only thing
-                  // distinguishing "locked" from "locked with nothing to fall back on".
-                  className={cn("size-4 shrink-0", hasDefault ? "text-slate-500" : "text-warning-muted")}
-                  aria-label={
-                    hasDefault
-                      ? t("workspace.embedded_data.locked")
-                      : t("workspace.embedded_data.locked_without_default")
-                  }
-                />
-              </TooltipRenderer>
+                }
+              />
             )}
           </div>
         );
@@ -142,20 +132,13 @@ export const getLibraryColumns = ({
       header: t("workspace.embedded_data.used_in"),
       headerClassName: "w-[12%] whitespace-nowrap",
       skeletonWidth: "w-20",
-      // The cell's trigger opens a popover; a row click behind it would edit the field instead.
-      stopRowClick: true,
+      // Deliberately **not** `stopRowClick`. That stopped every click in the cell, including the ones
+      // on a row with nothing to open, so "Not used" was the one patch of a row that did nothing.
+      // The popover trigger stops its own click instead, which leaves the rest of the cell — and the
+      // whole of an unused one — behaving like the row around it.
       cell: (field) => (
         <FieldUsageCell fieldId={field.id} workspaceId={workspaceId} surveyCount={field.surveyCount} />
       ),
-    },
-    {
-      id: "createdAt",
-      header: t("common.created_at"),
-      headerClassName: "w-[12%] whitespace-nowrap",
-      hideBelow: "lg",
-      cellClassName: "text-slate-500",
-      skeletonWidth: "w-20",
-      cell: (field) => formatDateForDisplay(field.createdAt, locale),
     },
   ];
 

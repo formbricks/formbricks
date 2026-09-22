@@ -14,6 +14,7 @@ import {
   ZEmbeddedDataType,
 } from "@formbricks/types/embedded-data";
 import { toSafeIdentifier } from "@formbricks/types/safe-identifier";
+import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   createSharedEmbeddedDataAction,
@@ -22,7 +23,6 @@ import {
 import { DefaultValueInput } from "@/modules/embedded-data/components/default-value-input";
 import type { TSharedEmbeddedData, TSharedEmbeddedDataWriteResult } from "@/modules/embedded-data/types";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
-import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
@@ -64,6 +64,7 @@ import {
   parseDefaultValueDraft,
 } from "../lib/library-field";
 import { FieldSourceIcon } from "./field-source-icon";
+import { FieldSourceIndicator } from "./field-status";
 
 /**
  * Create and edit in one component, because the two dialogs differ only in what is fixed.
@@ -420,10 +421,7 @@ export const LibraryFieldModal = ({
                   {isEdit ? (
                     <div className="flex flex-col gap-2">
                       <Label>{t("workspace.embedded_data.value_source")}</Label>
-                      <div className="flex items-center gap-2 text-slate-500">
-                        <FieldSourceIcon source={field.source} />
-                        <Badge text={getSourceLabel(field.source, t)} type="gray" size="tiny" />
-                      </div>
+                      <FieldSourceIndicator source={field.source} />
                       <p className="text-xs text-slate-500">
                         {t("workspace.embedded_data.source_cannot_be_changed")}
                       </p>
@@ -465,6 +463,35 @@ export const LibraryFieldModal = ({
                     />
                   )}
 
+                  {/* Why the Type list below is shorter. Which types it holds is `ZEmbeddedData`'s
+                      answer, read through `getDataTypesForSource` — this only names the source the
+                      sentence is about. */}
+                  {source === "computed" && (
+                    <p className="text-xs text-slate-500">
+                      {t("workspace.embedded_data.calculated_type_hint")}
+                    </p>
+                  )}
+
+                  {isLockableSource(source) && (
+                    <FormField
+                      control={form.control}
+                      name="locked"
+                      render={({ field: lockedField }) => (
+                        <FormItem>
+                          <AdvancedOptionToggle
+                            htmlId="embedded-data-locked"
+                            isChecked={lockedField.value}
+                            onToggle={lockedField.onChange}
+                            title={t("workspace.embedded_data.locked")}
+                            description={t("workspace.embedded_data.locked_description")}
+                            customContainerClass="px-0 py-0"
+                          />
+                          <FormError />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -476,7 +503,7 @@ export const LibraryFieldModal = ({
                             <Select
                               value={dataTypeField.value}
                               onValueChange={(next) => handleDataTypeChange(ZEmbeddedDataType.parse(next))}>
-                              <SelectTrigger className="w-full">
+                              <SelectTrigger className="h-10 w-full">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -512,34 +539,12 @@ export const LibraryFieldModal = ({
                       )}
                     />
                   </div>
-
-                  {/* Why the Type list just got shorter. Which types it holds is `ZEmbeddedData`'s
-                      answer, read through `getDataTypesForSource` — this only names the source the
-                      sentence is about. */}
-                  {source === "computed" && (
+                  {/* Moved off the table (ENG-1860): a date every row repeats is worth one line on
+                      the field it belongs to, not a column competing with the values. */}
+                  {isEdit && (
                     <p className="text-xs text-slate-500">
-                      {t("workspace.embedded_data.calculated_type_hint")}
+                      {`${t("common.created_at")}: ${formatDateForDisplay(field.createdAt, locale)}`}
                     </p>
-                  )}
-
-                  {isLockableSource(source) && (
-                    <FormField
-                      control={form.control}
-                      name="locked"
-                      render={({ field: lockedField }) => (
-                        <FormItem>
-                          <AdvancedOptionToggle
-                            htmlId="embedded-data-locked"
-                            isChecked={lockedField.value}
-                            onToggle={lockedField.onChange}
-                            title={t("workspace.embedded_data.locked")}
-                            description={t("workspace.embedded_data.locked_description")}
-                            customContainerClass="px-0 py-0"
-                          />
-                          <FormError />
-                        </FormItem>
-                      )}
-                    />
                   )}
                 </div>
               </DialogBody>

@@ -2,7 +2,7 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { DatabaseIcon, LibraryBigIcon, PlusIcon } from "lucide-react";
+import { DatabaseIcon, PlusIcon } from "lucide-react";
 import { type Dispatch, type SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -11,8 +11,8 @@ import { type TSurveyQuota } from "@formbricks/types/quota";
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import type { TSharedEmbeddedData } from "@/modules/embedded-data/types";
+import { AddEmbeddedFieldModal } from "@/modules/survey/editor/components/add-embedded-field-modal";
 import { EmbeddedDataCardRow } from "@/modules/survey/editor/components/embedded-data-card-row";
-import { EmbeddedDataLibraryDialog } from "@/modules/survey/editor/components/embedded-data-library-dialog";
 import { EmbeddedFieldModal } from "@/modules/survey/editor/components/embedded-field-modal";
 import { PromoteEmbeddedFieldDialog } from "@/modules/survey/editor/components/promote-embedded-field-dialog";
 import { embeddedFieldKey, embeddedFieldWarnings } from "@/modules/survey/editor/lib/embedded-field-guards";
@@ -91,12 +91,11 @@ export const EmbeddedDataCard = ({
   const [parent] = useAutoAnimate();
   const open = activeElementId === EMBEDDED_DATA_CARD_ID;
 
-  // `{ entry }` rather than a bare entry, so "creating a new field" is distinguishable from "closed".
-  const [editing, setEditing] = useState<{ entry: TLinkedEmbeddedField | null } | null>(null);
+  const [editing, setEditing] = useState<TLinkedEmbeddedField | null>(null);
   const [promoting, setPromoting] = useState<TLinkedEmbeddedField | null>(null);
   const [cloning, setCloning] = useState<TLinkedEmbeddedField | null>(null);
   const [removing, setRemoving] = useState<TLinkedEmbeddedField | null>(null);
-  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(false);
 
   const embeddedFields = getSurveyEmbeddedFields(localSurvey);
   const persistedFields = getSurveyEmbeddedFields(persistedSurvey);
@@ -186,7 +185,7 @@ export const EmbeddedDataCard = ({
   const handleLink = (field: TLinkableSharedField) => {
     updateFields((fields) => [...fields, toSharedEntry(field, mintStorageKey(field.source, field.key))]);
     toast.success(t("workspace.embedded_data.field_added", { name: field.name }));
-    setIsLibraryOpen(false);
+    setIsAddOpen(false);
   };
 
   const confirmClone = () => {
@@ -196,14 +195,15 @@ export const EmbeddedDataCard = ({
     setCloning(null);
   };
 
-  const handleSubmitField = (entry: TLinkedEmbeddedField) => {
-    const isNew = editing?.entry === null;
+  const handleCreateField = (entry: TLinkedEmbeddedField) => {
     updateFields((fields) => upsertEmbeddedField(fields, entry));
-    toast.success(
-      isNew
-        ? t("workspace.embedded_data.field_added", { name: entry.field.name })
-        : t("workspace.embedded_data.field_updated", { name: entry.field.name })
-    );
+    toast.success(t("workspace.embedded_data.field_added", { name: entry.field.name }));
+    setIsAddOpen(false);
+  };
+
+  const handleEditField = (entry: TLinkedEmbeddedField) => {
+    updateFields((fields) => upsertEmbeddedField(fields, entry));
+    toast.success(t("workspace.embedded_data.field_updated", { name: entry.field.name }));
     setEditing(null);
   };
 
@@ -220,21 +220,39 @@ export const EmbeddedDataCard = ({
         stored.field.source === entry?.field.source && stored.link.storageKey === entry.link.storageKey
     )?.field.dataType ?? null;
 
+  /**
+   * Every declared name and every occupied address, minus the field being edited.
+   *
+   * The exclusion is what stops an edit reading as a clash with itself, and it is addressed on the
+   * storage key rather than on object identity: a render between opening the dialog and submitting
+   * it rebuilds the list, so comparing references would count the edited field as its own duplicate.
+   */
+  const otherFieldNamesExcept = (entry: TLinkedEmbeddedField | null) =>
+    embeddedFields
+      .filter((field) => field.link.storageKey !== entry?.link.storageKey)
+      .map(declaredEmbeddedFieldName);
+
+  const takenStorageKeysExcept = (entry: TLinkedEmbeddedField | null) =>
+    embeddedFields
+      .filter((field) => field.link.storageKey !== entry?.link.storageKey)
+      .map(({ link }) => link.storageKey);
+
   /** Ids a new name would collide with, beside the survey's other fields. */
   const takenIds = [
     ...getElementsFromBlocks(localSurvey.blocks).map((element) => element.id),
     ...localSurvey.endings.map((ending) => ending.id),
   ];
 
+  /**
+   * One control, secondary, like every other action inside an editor card ("Add logic", "Add
+   * action"). Choosing between a library field and a new one happens in the dialog it opens, which
+   * is where the Actions flow has always made the same choice.
+   */
   const cardActions = (
-    <div className="flex flex-wrap items-center gap-2">
-      <Button size="sm" type="button" onClick={() => setEditing({ entry: null })}>
-        {t("workspace.embedded_data.new_field")}
+    <div>
+      <Button size="sm" type="button" variant="secondary" onClick={() => setIsAddOpen(true)}>
+        {t("workspace.embedded_data.add_field")}
         <PlusIcon />
-      </Button>
-      <Button size="sm" type="button" variant="secondary" onClick={() => setIsLibraryOpen(true)}>
-        {t("workspace.embedded_data.add_from_library")}
-        <LibraryBigIcon />
       </Button>
     </div>
   );
@@ -273,7 +291,7 @@ export const EmbeddedDataCard = ({
                     entry={entry}
                     libraryHref={libraryHref}
                     warnings={warnings.get(embeddedFieldKey(entry)) ?? []}
-                    onEdit={() => setEditing({ entry })}
+                    onEdit={() => setEditing(entry)}
                     onPromote={() => requestPromote(entry)}
                     onCloneToLocal={() => setCloning(entry)}
                     onRemove={() => requestRemove(entry)}
@@ -291,8 +309,8 @@ export const EmbeddedDataCard = ({
       {editing && (
         <EmbeddedFieldModal
           // Keyed by the row, so opening a different field remounts the form with that field's values.
-          key={editing.entry ? embeddedFieldKey(editing.entry) : "new"}
-          entry={editing.entry}
+          key={embeddedFieldKey(editing)}
+          entry={editing}
           open={true}
           setOpen={(next) => {
             if (!next) setEditing(null);
@@ -301,28 +319,31 @@ export const EmbeddedDataCard = ({
           // Matched on the address rather than on object identity: a render between opening the
           // dialog and submitting it rebuilds the list, and comparing references would then count
           // the edited field's own name as a duplicate of itself.
-          otherFieldNames={embeddedFields
-            .filter((entry) => entry.link.storageKey !== editing.entry?.link.storageKey)
-            .map(declaredEmbeddedFieldName)}
+          otherFieldNames={otherFieldNamesExcept(editing)}
           // Same exclusion, same reason: an edit keeps its own address and must not read as taking it.
-          takenStorageKeys={embeddedFields
-            .filter((entry) => entry.link.storageKey !== editing.entry?.link.storageKey)
-            .map(({ link }) => link.storageKey)}
+          takenStorageKeys={takenStorageKeysExcept(editing)}
           locale={locale}
-          storedDataType={storedDataTypeOf(editing.entry)}
+          storedDataType={storedDataTypeOf(editing)}
           responseCount={responseCount}
-          onSubmitField={handleSubmitField}
+          onSubmitField={handleEditField}
         />
       )}
 
-      {isLibraryOpen && (
-        <EmbeddedDataLibraryDialog
-          workspaceId={workspaceId}
+      {isAddOpen && (
+        <AddEmbeddedFieldModal
           open={true}
-          setOpen={setIsLibraryOpen}
+          setOpen={setIsAddOpen}
+          workspaceId={workspaceId}
           embeddedFields={embeddedFields}
           persistedFields={persistedFields}
+          takenIds={takenIds}
+          // Nothing to exclude: a field that does not exist yet cannot clash with itself.
+          otherFieldNames={otherFieldNamesExcept(null)}
+          takenStorageKeys={takenStorageKeysExcept(null)}
+          locale={locale}
+          responseCount={responseCount}
           onLink={handleLink}
+          onCreate={handleCreateField}
         />
       )}
 

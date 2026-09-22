@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next";
 import { ArrowDownToLineIcon, CalculatorIcon, type LucideIcon } from "lucide-react";
-import type { TEmbeddedDataSource, TEmbeddedDataType } from "@formbricks/types/embedded-data";
+import type { TEmbeddedDataSource } from "@formbricks/types/embedded-data";
 import type { TReservedFieldPrivacy } from "@formbricks/types/embedded-data-resolver";
 import type { TSurveyStatus } from "@formbricks/types/surveys/types";
 import type { TAutoCapturedAvailability } from "./auto-captured-fields";
@@ -43,18 +43,11 @@ export const SOURCE_ICONS: Record<TEmbeddedDataSource, LucideIcon> = {
   reserved: ArrowDownToLineIcon,
 };
 
-export const getDataTypeLabel = (dataType: TEmbeddedDataType, t: TFunction): string => {
-  switch (dataType) {
-    case "string":
-      return t("common.text");
-    case "number":
-      return t("common.number");
-    case "boolean":
-      return t("workspace.embedded_data.type_boolean");
-    case "date":
-      return t("common.date");
-  }
-};
+/**
+ * What kind of value a field holds, in the words Attributes already uses for the same four kinds.
+ * Re-exported rather than restated so the two surfaces cannot drift apart again (ENG-1860).
+ */
+export { getDataTypeLabel } from "@/modules/ui/components/data-type-badge/lib/data-types";
 
 /** What the Anonymize responses toggle does to an auto-captured field. */
 export const getPrivacyLabel = (privacy: TReservedFieldPrivacy, t: TFunction): string => {

@@ -323,7 +323,7 @@ export const SurveysList = ({
       <div>
         <div className="flex-col space-y-3" ref={parent}>
           <div
-            className="mt-6 grid w-full grid-cols-8 place-items-center gap-3 px-6 pr-8 text-sm text-slate-800"
+            className="mt-6 grid w-full grid-cols-8 place-items-center gap-3 px-6 pr-14 text-sm text-slate-800"
             data-testid="survey-list-header">
             <div className="col-span-2 place-self-start">{t("common.name")}</div>
             <div className="col-span-1">{t("common.status")}</div>

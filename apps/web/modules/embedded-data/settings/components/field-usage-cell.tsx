@@ -29,6 +29,11 @@ interface FieldUsageCellProps {
  * the survey editor, and arriving from there is a navigation, which does remount. The one visible
  * seam is a link changed in another tab: the cell's count comes from the server and would refresh,
  * while an already-open popover's names would not.
+ *
+ * **The whole cell is the control, whichever answer it gives.** The trigger fills its cell rather
+ * than hugging its text, so the gap beside "2 surveys" opens the popover like the words do; and an
+ * unused row renders no trigger at all and stops nothing, so clicking "Not used" opens the field for
+ * editing exactly as clicking anywhere else on that row does.
  */
 export const FieldUsageCell = ({ fieldId, workspaceId, surveyCount }: Readonly<FieldUsageCellProps>) => {
   const { t } = useTranslation();
@@ -37,7 +42,9 @@ export const FieldUsageCell = ({ fieldId, workspaceId, surveyCount }: Readonly<F
   const label = getUsageLabel(surveyCount);
 
   if (label.kind === "unused") {
-    return <span className="text-slate-500">{t("workspace.embedded_data.not_used")}</span>;
+    // `block`, so the span covers the cell it is given: the row's own click handler is what a click
+    // anywhere in here reaches, and a dead patch in the middle of a clickable row is the bug.
+    return <span className="block text-slate-500">{t("workspace.embedded_data.not_used")}</span>;
   }
 
   const text = t("workspace.embedded_data.used_in_surveys", { count: label.count });
@@ -81,10 +88,21 @@ export const FieldUsageCell = ({ fieldId, workspaceId, surveyCount }: Readonly<F
       onOpenChange={(open) => {
         if (open && !usage) void loadUsage();
       }}>
-      <PopoverTrigger className="rounded-sm text-sm text-slate-800 underline underline-offset-2 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-hidden">
+      <PopoverTrigger
+        // The row behind this one opens the edit dialog. Stopping the click here and on the panel
+        // rather than on the column keeps that suppression to the parts of the cell that have
+        // something else to do with it.
+        onClick={(event) => event.stopPropagation()}
+        className="-m-1 flex w-full cursor-pointer items-center rounded-sm p-1 text-left text-sm text-slate-800 underline underline-offset-2 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-hidden">
         {text}
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-72 shadow-lg">
+      <PopoverContent
+        align="start"
+        className="w-72 shadow-lg"
+        // Radix portals the panel to `body`, but React still bubbles its clicks through the component
+        // tree to the row behind the cell, so a survey link or a status label in here would open the
+        // edit dialog over the popover.
+        onClick={(event) => event.stopPropagation()}>
         {renderBody()}
       </PopoverContent>
     </Popover>
