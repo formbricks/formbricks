@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
@@ -25,11 +25,13 @@ import {
   toEmbeddedFieldDraft,
   toLocalEmbeddedField,
 } from "@/modules/survey/editor/lib/embedded-field-draft";
+import { needsTypeChangeConfirm } from "@/modules/survey/editor/lib/embedded-field-guards";
 import { mintFreeStorageKey, validateEmbeddedFieldName } from "@/modules/survey/editor/lib/embedded-fields";
 import { getValidateIdErrorMessage } from "@/modules/survey/editor/lib/validation";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
   Dialog,
   DialogBody,
@@ -76,6 +78,10 @@ interface EmbeddedFieldModalProps {
   otherFieldNames: string[];
   /** App locale — the date default's picker formats against it. */
   locale: string;
+  /** The type this field has as stored, or null when the survey has never saved it. */
+  storedDataType: TEmbeddedDataType | null;
+  /** How many responses the survey has. Zero means retyping reinterprets nothing. */
+  responseCount: number;
   onSubmitField: (entry: TLinkedEmbeddedField) => void;
 }
 
@@ -102,10 +108,14 @@ export const EmbeddedFieldModal = ({
   takenStorageKeys,
   otherFieldNames,
   locale,
+  storedDataType,
+  responseCount,
   onSubmitField,
 }: Readonly<EmbeddedFieldModalProps>) => {
   const { t } = useTranslation();
   const isEdit = entry !== null;
+  // The edit the author has asked for, held back until they answer the retyping question.
+  const [pendingTypeChange, setPendingTypeChange] = useState<TLinkedEmbeddedField | null>(null);
 
   const form = useForm<TEmbeddedFieldDraft>({
     defaultValues: toEmbeddedFieldDraft(entry),
@@ -192,195 +202,241 @@ export const EmbeddedFieldModal = ({
       return;
     }
 
-    onSubmitField(toLocalEmbeddedField(draft, { storageKey, id: entry?.field.id }));
+    const next = toLocalEmbeddedField(draft, { storageKey, id: entry?.field.id });
+
+    // Retyping a field the survey already has responses for is the one edit that changes how values
+    // already collected are read back, so it is asked about rather than applied.
+    if (needsTypeChangeConfirm({ nextDataType: draft.dataType, storedDataType, responseCount })) {
+      setPendingTypeChange(next);
+      return;
+    }
+
+    applyField(next);
+  };
+
+  const applyField = (next: TLinkedEmbeddedField) => {
+    onSubmitField(next);
     setOpen(false);
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (!next) setOpen(false);
-      }}>
-      <DialogContent width="narrow">
-        <DialogHeader>
-          <DialogTitle>
-            {isEdit ? t("workspace.embedded_data.edit_survey_field") : t("workspace.embedded_data.new_field")}
-          </DialogTitle>
-          <DialogDescription>
-            {isEdit
-              ? t("workspace.embedded_data.edit_survey_field_description")
-              : t("workspace.embedded_data.new_survey_field_description")}
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) setOpen(false);
+        }}>
+        <DialogContent width="narrow">
+          <DialogHeader>
+            <DialogTitle>
+              {isEdit
+                ? t("workspace.embedded_data.edit_survey_field")
+                : t("workspace.embedded_data.new_field")}
+            </DialogTitle>
+            <DialogDescription>
+              {isEdit
+                ? t("workspace.embedded_data.edit_survey_field_description")
+                : t("workspace.embedded_data.new_survey_field_description")}
+            </DialogDescription>
+          </DialogHeader>
 
-        <FormProvider {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <DialogBody>
-              <div className="flex flex-col gap-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field: nameField }) => (
-                    <FormItem>
-                      <FormLabel>{t("common.name")}</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...nameField}
-                          // `data-testid`, not `id`: an explicit id wins over the one `FormControl`
-                          // supplies, and `FormLabel htmlFor` then points at the description below.
-                          data-testid="embedded-field-name"
-                          autoFocus
-                          isInvalid={Boolean(form.formState.errors.name)}
-                        />
-                      </FormControl>
-                      <FormDescription>{t("workspace.embedded_data.survey_field_name_hint")}</FormDescription>
-                      <FormError />
-                    </FormItem>
-                  )}
-                />
-
-                {isEdit ? (
-                  <div className="flex flex-col gap-2">
-                    <Label>{t("workspace.embedded_data.value_source")}</Label>
-                    <div className="flex items-center gap-2 text-slate-500">
-                      <FieldSourceIcon source={entry.field.source} className="size-4" />
-                      <Badge text={getSourceLabel(entry.field.source, t)} type="gray" size="tiny" />
-                      <IdBadge id={entry.link.storageKey} showCopyIconOnHover={true} />
-                    </div>
-                    <p className="text-xs text-slate-500">
-                      {t("workspace.embedded_data.survey_field_address_fixed")}
-                    </p>
-                  </div>
-                ) : (
+          <FormProvider {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <DialogBody>
+                <div className="flex flex-col gap-4">
                   <FormField
                     control={form.control}
-                    name="source"
-                    render={({ field: sourceField }) => (
+                    name="name"
+                    render={({ field: nameField }) => (
                       <FormItem>
-                        <FormLabel>{t("workspace.embedded_data.value_source")}</FormLabel>
+                        <FormLabel>{t("common.name")}</FormLabel>
                         <FormControl>
-                          <RadioGroup
-                            className="grid-cols-2 gap-3"
-                            value={sourceField.value}
-                            onValueChange={handleSourceChange}
-                            aria-label={t("workspace.embedded_data.value_source")}>
-                            {getAuthorableSources().map((authorableSource) => (
-                              <label
-                                key={authorableSource}
-                                htmlFor={`embedded-field-source-${authorableSource}`}
-                                className="flex cursor-pointer items-center gap-3 rounded-md border border-slate-200 p-3">
-                                <RadioGroupItem
-                                  className="shrink-0"
-                                  value={authorableSource}
-                                  id={`embedded-field-source-${authorableSource}`}
-                                />
-                                <span className="flex items-center gap-2 text-sm font-medium text-slate-800">
-                                  <FieldSourceIcon source={authorableSource} className="size-4" />
-                                  {getSourceLabel(authorableSource, t)}
-                                </span>
-                              </label>
-                            ))}
-                          </RadioGroup>
-                        </FormControl>
-                        <FormError />
-                      </FormItem>
-                    )}
-                  />
-                )}
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="dataType"
-                    render={({ field: dataTypeField }) => (
-                      <FormItem>
-                        <FormLabel>{t("common.type")}</FormLabel>
-                        <FormControl>
-                          <Select
-                            value={dataTypeField.value}
-                            onValueChange={(next) => handleDataTypeChange(ZEmbeddedDataType.parse(next))}>
-                            <SelectTrigger data-testid="embedded-field-type" className="w-full">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {getDataTypesForSource(source).map((option) => (
-                                <SelectItem key={option} value={option}>
-                                  {getDataTypeLabel(option, t)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormError />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="defaultValue"
-                    render={({ field: defaultField }) => (
-                      <FormItem>
-                        <FormLabel>{t("workspace.embedded_data.default_value")}</FormLabel>
-                        <FormControl>
-                          <DefaultValueInput
-                            dataType={dataType}
-                            data-testid="embedded-field-default"
-                            value={defaultField.value}
-                            onChange={defaultField.onChange}
-                            locale={locale}
+                          <Input
+                            {...nameField}
+                            // `data-testid`, not `id`: an explicit id wins over the one `FormControl`
+                            // supplies, and `FormLabel htmlFor` then points at the description below.
+                            data-testid="embedded-field-name"
+                            autoFocus
+                            isInvalid={Boolean(form.formState.errors.name)}
                           />
                         </FormControl>
+                        <FormDescription>
+                          {t("workspace.embedded_data.survey_field_name_hint")}
+                        </FormDescription>
                         <FormError />
                       </FormItem>
                     )}
                   />
+
+                  {isEdit ? (
+                    <div className="flex flex-col gap-2">
+                      <Label>{t("workspace.embedded_data.value_source")}</Label>
+                      <div className="flex items-center gap-2 text-slate-500">
+                        <FieldSourceIcon source={entry.field.source} className="size-4" />
+                        <Badge text={getSourceLabel(entry.field.source, t)} type="gray" size="tiny" />
+                        <IdBadge id={entry.link.storageKey} showCopyIconOnHover={true} />
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        {t("workspace.embedded_data.survey_field_address_fixed")}
+                      </p>
+                    </div>
+                  ) : (
+                    <FormField
+                      control={form.control}
+                      name="source"
+                      render={({ field: sourceField }) => (
+                        <FormItem>
+                          <FormLabel>{t("workspace.embedded_data.value_source")}</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              className="grid-cols-2 gap-3"
+                              value={sourceField.value}
+                              onValueChange={handleSourceChange}
+                              aria-label={t("workspace.embedded_data.value_source")}>
+                              {getAuthorableSources().map((authorableSource) => (
+                                <label
+                                  key={authorableSource}
+                                  htmlFor={`embedded-field-source-${authorableSource}`}
+                                  className="flex cursor-pointer items-center gap-3 rounded-md border border-slate-200 p-3">
+                                  <RadioGroupItem
+                                    className="shrink-0"
+                                    value={authorableSource}
+                                    id={`embedded-field-source-${authorableSource}`}
+                                  />
+                                  <span className="flex items-center gap-2 text-sm font-medium text-slate-800">
+                                    <FieldSourceIcon source={authorableSource} className="size-4" />
+                                    {getSourceLabel(authorableSource, t)}
+                                  </span>
+                                </label>
+                              ))}
+                            </RadioGroup>
+                          </FormControl>
+                          <FormError />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="dataType"
+                      render={({ field: dataTypeField }) => (
+                        <FormItem>
+                          <FormLabel>{t("common.type")}</FormLabel>
+                          <FormControl>
+                            <Select
+                              value={dataTypeField.value}
+                              onValueChange={(next) => handleDataTypeChange(ZEmbeddedDataType.parse(next))}>
+                              <SelectTrigger data-testid="embedded-field-type" className="w-full">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {getDataTypesForSource(source).map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {getDataTypeLabel(option, t)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormError />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="defaultValue"
+                      render={({ field: defaultField }) => (
+                        <FormItem>
+                          <FormLabel>{t("workspace.embedded_data.default_value")}</FormLabel>
+                          <FormControl>
+                            <DefaultValueInput
+                              dataType={dataType}
+                              data-testid="embedded-field-default"
+                              value={defaultField.value}
+                              onChange={defaultField.onChange}
+                              locale={locale}
+                            />
+                          </FormControl>
+                          <FormError />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Why the Type list is shorter for a calculated field. Which types it holds is
+                      `ZEmbeddedData`'s answer, read through `getDataTypesForSource` — this only names
+                      the source the sentence is about. */}
+                  {source === "computed" && (
+                    <p className="text-xs text-slate-500">
+                      {t("workspace.embedded_data.calculated_type_hint")}
+                    </p>
+                  )}
+
+                  {isLockableSource(source) && (
+                    <FormField
+                      control={form.control}
+                      name="locked"
+                      render={({ field: lockedField }) => (
+                        <FormItem>
+                          <AdvancedOptionToggle
+                            htmlId="embedded-field-locked"
+                            isChecked={lockedField.value}
+                            onToggle={lockedField.onChange}
+                            title={t("workspace.embedded_data.locked")}
+                            description={t("workspace.embedded_data.locked_description")}
+                            customContainerClass="px-0 py-0"
+                          />
+                          <FormError />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
+              </DialogBody>
 
-                {/* Why the Type list is shorter for a calculated field. Which types it holds is
-                    `ZEmbeddedData`'s answer, read through `getDataTypesForSource` — this only names
-                    the source the sentence is about. */}
-                {source === "computed" && (
-                  <p className="text-xs text-slate-500">
-                    {t("workspace.embedded_data.calculated_type_hint")}
-                  </p>
-                )}
-
-                {isLockableSource(source) && (
-                  <FormField
-                    control={form.control}
-                    name="locked"
-                    render={({ field: lockedField }) => (
-                      <FormItem>
-                        <AdvancedOptionToggle
-                          htmlId="embedded-field-locked"
-                          isChecked={lockedField.value}
-                          onToggle={lockedField.onChange}
-                          title={t("workspace.embedded_data.locked")}
-                          description={t("workspace.embedded_data.locked_description")}
-                          customContainerClass="px-0 py-0"
-                        />
-                        <FormError />
-                      </FormItem>
-                    )}
-                  />
-                )}
-              </div>
-            </DialogBody>
-
-            <DialogFooter className="mt-4">
-              <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
-                {t("common.cancel")}
-              </Button>
-              {/* No `loading`: this form writes to `localSurvey` synchronously, so
-                  `isSubmitting` is never observable and the prop read as double-submit
-                  protection that was not there. The save itself is the menu bar's. */}
-              <Button type="submit">{isEdit ? t("common.save") : t("common.add")}</Button>
-            </DialogFooter>
-          </form>
-        </FormProvider>
-      </DialogContent>
-    </Dialog>
+              <DialogFooter className="mt-4">
+                <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
+                  {t("common.cancel")}
+                </Button>
+                {/* No `loading`: this form writes to `localSurvey` synchronously, so
+                    `isSubmitting` is never observable and the prop read as double-submit
+                    protection that was not there. The save itself is the menu bar's. */}
+                <Button type="submit">{isEdit ? t("common.save") : t("common.add")}</Button>
+              </DialogFooter>
+            </form>
+          </FormProvider>
+        </DialogContent>
+      </Dialog>
+      {/* `storedDataType` is what the collected responses were read as, and the only type the
+        sentence can honestly name — the working copy may already have been retyped once in this
+        session. Non-null whenever this renders, since that is what put the edit here. */}
+      {pendingTypeChange && entry && storedDataType && (
+        <ConfirmationModal
+          open={true}
+          setOpen={(value) => {
+            if (value === false) setPendingTypeChange(null);
+          }}
+          title={t("workspace.embedded_data.type_change_title", {
+            name: entry.field.name,
+            from: getDataTypeLabel(storedDataType, t),
+            to: getDataTypeLabel(pendingTypeChange.field.dataType, t),
+          })}
+          description={t("workspace.embedded_data.type_change_responses_subtitle", {
+            count: responseCount,
+          })}
+          body={t("workspace.embedded_data.type_change_body", {
+            to: getDataTypeLabel(pendingTypeChange.field.dataType, t),
+          })}
+          buttonText={t("workspace.embedded_data.change_type")}
+          // Nothing is destroyed — the collected values stay exactly as they are — so this is the
+          // primary button, not the destructive one this modal defaults to.
+          buttonVariant="default"
+          onConfirm={() => applyField(pendingTypeChange)}
+        />
+      )}
+    </>
   );
 };

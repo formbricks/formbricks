@@ -2224,6 +2224,7 @@
       "survey_field_name_hint": "How logic, recall and the response table refer to the field. Lowercase letters, numbers and underscores.",
       "type_boolean": "True/false",
       "type_change_body": "Values already collected stay exactly as they are; only new responses are read as {to}. Filters and logic that compare {to} values may not match the older ones.",
+      "type_change_responses_subtitle": "This survey already has {count, plural, one {# response} other {# responses}}.",
       "type_change_subtitle": "{count, plural, one {# survey uses this field, and responses have already been collected.} other {# surveys use this field, and responses have already been collected.}}",
       "type_change_title": "Change {name} from {from} to {to}?",
       "unlink_field_body": "The field stays in the workspace library and other surveys keep it. This survey stops collecting it.",
@@ -2235,6 +2236,10 @@
       "value_source": "Where does the value come from?",
       "value_source_column": "Source",
       "value_true": "True",
+      "warning_clashing_address": "Another field on this survey answers to this name. Recall and logic resolve one of them.",
+      "warning_reserved_address": "This name is now a reserved auto-captured field. This survey keeps its own, which wins here, so the auto-captured value is not available under this name.",
+      "warning_system_param_address": "This name is a link-survey URL parameter, so a URL can never fill this field.",
+      "warning_unsafe_address": "This name predates the current naming rule. It keeps working; a new field could not be named this.",
       "when_anonymized": "When responses are anonymized"
     },
     "formbricks_logo": "Formbricks Logo",

@@ -14,6 +14,8 @@ import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resol
 import { EMBEDDED_FIELD_ICON_BY_DATA_TYPE } from "@/modules/embedded-data/lib/field-display";
 import { FieldSourceIcon } from "@/modules/embedded-data/settings/components/field-source-icon";
 import { getDataTypeLabel, getSourceLabel } from "@/modules/embedded-data/settings/lib/field-labels";
+import { type TEmbeddedFieldWarning } from "@/modules/survey/editor/lib/embedded-field-guards";
+import { Alert } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import {
   DropdownMenu,
@@ -29,6 +31,8 @@ interface EmbeddedDataCardRowProps {
   entry: TLinkedEmbeddedField;
   /** Where the workspace library lists this field. Opened in a new tab so the editor is not left. */
   libraryHref: string;
+  /** What is off about this field, from `embeddedFieldWarnings`. Never a reason to refuse a save. */
+  warnings: TEmbeddedFieldWarning[];
   onEdit: () => void;
   onPromote: () => void;
   onCloneToLocal: () => void;
@@ -54,6 +58,7 @@ interface EmbeddedDataCardRowProps {
 export const EmbeddedDataCardRow = ({
   entry,
   libraryHref,
+  warnings,
   onEdit,
   onPromote,
   onCloneToLocal,
@@ -63,6 +68,25 @@ export const EmbeddedDataCardRow = ({
   const { field, link } = entry;
   const isShared = field.key !== null;
   const TypeIcon = EMBEDDED_FIELD_ICON_BY_DATA_TYPE[field.dataType];
+
+  /**
+   * What a warning means, as a sentence. The branch is decided in `.ts`; the copy lives here because
+   * `t()` calls have to be literal for the translation scanner to resolve them.
+   */
+  const describeWarning = (warning: TEmbeddedFieldWarning): string => {
+    switch (warning) {
+      case "unsafeAddress":
+        return t("workspace.embedded_data.warning_unsafe_address");
+      case "reservedAddress":
+        return t("workspace.embedded_data.warning_reserved_address");
+      case "systemParamAddress":
+        return t("workspace.embedded_data.warning_system_param_address");
+      case "clashingAddress":
+        return t("workspace.embedded_data.warning_clashing_address");
+      case "lockedWithoutDefault":
+        return t("workspace.embedded_data.locked_without_default");
+    }
+  };
 
   return (
     <div
@@ -82,13 +106,10 @@ export const EmbeddedDataCardRow = ({
             type={isShared ? "info" : "gray"}
             size="tiny"
           />
+          {/* Only what locking does. That it has no default to fall back on is a warning below,
+              where it is visible without hovering. */}
           {field.locked && (
-            <TooltipRenderer
-              tooltipContent={
-                field.defaultValue === null
-                  ? t("workspace.embedded_data.locked_without_default")
-                  : t("workspace.embedded_data.locked_description")
-              }>
+            <TooltipRenderer tooltipContent={t("workspace.embedded_data.locked_description")}>
               <LockIcon
                 className="size-3.5 shrink-0 text-slate-500"
                 aria-label={t("workspace.embedded_data.locked")}
@@ -113,6 +134,20 @@ export const EmbeddedDataCardRow = ({
           </span>
           <IdBadge id={link.storageKey} showCopyIconOnHover={true} />
         </div>
+
+        {/* Already on screen when the card opens, so `status` rather than the assertive default.
+            Rendered as a plain child of `Alert`, not through `AlertDescription`: at `size="small"`
+            that component carries `truncate`, which forces each sentence onto one line and clips it
+            — and these sentences are the whole point of the row. */}
+        {warnings.length > 0 && (
+          <Alert variant="warning" size="small" role="status" data-testid="embedded-field-warning">
+            <div className="flex flex-col gap-0.5">
+              {warnings.map((warning) => (
+                <span key={warning}>{describeWarning(warning)}</span>
+              ))}
+            </div>
+          </Alert>
+        )}
       </div>
 
       <DropdownMenu>

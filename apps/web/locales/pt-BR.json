@@ -2224,6 +2224,7 @@
       "survey_field_name_hint": "Como lógica, rechamada e a tabela de respostas se referem ao campo. Letras minúsculas, números e underscores.",
       "type_boolean": "Verdadeiro/falso",
       "type_change_body": "Os valores já coletados permanecem exatamente como estão; apenas novas respostas são lidas como {to}. Filtros e lógica que comparam valores {to} podem não corresponder aos mais antigos.",
+      "type_change_responses_subtitle": "Esta pesquisa já tem {count, plural, one {# resposta} other {# respostas}}.",
       "type_change_subtitle": "{count, plural, one {# pesquisa usa este campo e as respostas já foram coletadas.} other {# pesquisas usam este campo e as respostas já foram coletadas.}}",
       "type_change_title": "Mudar {name} de {from} para {to}?",
       "unlink_field_body": "O campo permanece na biblioteca do workspace e outras pesquisas o mantêm. Esta pesquisa para de coletá-lo.",
@@ -2235,6 +2236,10 @@
       "value_source": "De onde vem o valor?",
       "value_source_column": "Origem",
       "value_true": "Verdadeiro",
+      "warning_clashing_address": "Outro campo nesta pesquisa responde por este nome. Recall e lógica resolvem um deles.",
+      "warning_reserved_address": "Este nome agora é um campo auto-capturado reservado. Esta pesquisa mantém o próprio, que tem prioridade aqui, então o valor auto-capturado não fica disponível sob este nome.",
+      "warning_system_param_address": "Este nome é um parâmetro de URL de pesquisa de link, então uma URL nunca pode preencher este campo.",
+      "warning_unsafe_address": "Este nome é anterior à regra de nomenclatura atual. Ele continua funcionando; um novo campo não poderia ser nomeado assim.",
       "when_anonymized": "Quando as respostas forem anonimizadas"
     },
     "formbricks_logo": "Logo da Formbricks",

@@ -962,6 +962,7 @@ export const ElementsView = ({
               activeElementId={activeElementId}
               setActiveElementId={setActiveElementId}
               quotas={quotas}
+              responseCount={responseCount}
               workspaceId={workspace.id}
               locale={locale}
             />

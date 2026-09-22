@@ -2224,6 +2224,7 @@
       "survey_field_name_hint": "Hur logik, återkallning och svarstabellen refererar till fältet. Små bokstäver, siffror och understreck.",
       "type_boolean": "Sant/falskt",
       "type_change_body": "Värden som redan samlats in förblir exakt som de är; endast nya svar läses som {to}. Filter och logik som jämför {to}-värden kanske inte matchar de äldre.",
+      "type_change_responses_subtitle": "Den här undersökningen har redan {count, plural, one {# svar} other {# svar}}.",
       "type_change_subtitle": "{count, plural, one {# enkät använder detta fält och svar har redan samlats in.} other {# enkäter använder detta fält och svar har redan samlats in.}}",
       "type_change_title": "Ändra {name} från {from} till {to}?",
       "unlink_field_body": "Fältet finns kvar i arbetsytans bibliotek och andra enkäter behåller det. Denna enkät slutar samla in det.",
@@ -2235,6 +2236,10 @@
       "value_source": "Varifrån kommer värdet?",
       "value_source_column": "Källa",
       "value_true": "Sant",
+      "warning_clashing_address": "Ett annat fält i den här undersökningen använder samma namn. Återkallning och logik kommer att välja ett av dem.",
+      "warning_reserved_address": "Det här namnet är nu ett reserverat automatiskt infångat fält. Undersökningen behåller sitt eget fält, som har företräde här, så det automatiskt infångade värdet är inte tillgängligt under det här namnet.",
+      "warning_system_param_address": "Det här namnet är en URL-parameter för länkenkät, så en URL kan aldrig fylla i det här fältet.",
+      "warning_unsafe_address": "Det här namnet är äldre än den nuvarande namnregeln. Det fortsätter att fungera, men ett nytt fält skulle inte kunna namnges så här.",
       "when_anonymized": "När svar anonymiseras"
     },
     "formbricks_logo": "Formbricks-logotyp",

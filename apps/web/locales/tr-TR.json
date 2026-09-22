@@ -2224,6 +2224,7 @@
       "survey_field_name_hint": "Mantık, geri çağırma ve yanıt tablosunun alanı nasıl adlandıracağı. Sadece küçük harfler, sayılar ve alt çizgi kullanın.",
       "type_boolean": "Doğru/yanlış",
       "type_change_body": "Daha önce toplanan değerler aynen kalır; sadece yeni yanıtlar {to} olarak okunur. {to} değerlerini karşılaştıran filtreler ve mantık, eskileriyle eşleşmeyebilir.",
+      "type_change_responses_subtitle": "Bu ankette zaten {count, plural, one {# yanıt} other {# yanıt}} var.",
       "type_change_subtitle": "{count, plural, one {# anket bu alanı kullanıyor ve yanıtlar zaten toplandı.} other {# anket bu alanı kullanıyor ve yanıtlar zaten toplandı.}}",
       "type_change_title": "{name} alanını {from} değerinden {to} değerine değiştirilsin mi?",
       "unlink_field_body": "Alan, çalışma alanı kitaplığında kalır ve diğer anketler onu kullanmaya devam eder. Bu anket bunu toplamayı bırakır.",
@@ -2235,6 +2236,10 @@
       "value_source": "Değer nereden geliyor?",
       "value_source_column": "Kaynak",
       "value_true": "Doğru",
+      "warning_clashing_address": "Bu anketteki başka bir alan da bu isme yanıt veriyor. Geri çağırma ve mantık bunlardan birini çözümler.",
+      "warning_reserved_address": "Bu isim artık ayrılmış bir otomatik yakalanan alandır. Bu anket kendininkini tutar ve burada kazanır, dolayısıyla otomatik yakalanan değer bu isimle kullanılamaz.",
+      "warning_system_param_address": "Bu isim bir bağlantı-anket URL parametresidir, bu nedenle bu alan asla bir URL ile doldurulamaz.",
+      "warning_unsafe_address": "Bu isim mevcut adlandırma kuralından önce vardır. Çalışmaya devam eder; yeni bir alan bu şekilde adlandırılamazdı.",
       "when_anonymized": "Yanıtlar anonimleştirildiğinde"
     },
     "formbricks_logo": "Formbricks Logosu",

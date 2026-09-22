@@ -2224,6 +2224,7 @@
       "survey_field_name_hint": "Hoe logica, terugroepen en de antwoordtabel naar het veld verwijzen. Kleine letters, cijfers en underscores.",
       "type_boolean": "Waar/onwaar",
       "type_change_body": "Reeds verzamelde waarden blijven precies zoals ze zijn; alleen nieuwe antwoorden worden gelezen als {to}. Filters en logica die {to}-waarden vergelijken, komen mogelijk niet overeen met de oudere.",
+      "type_change_responses_subtitle": "Deze enquête heeft al {count, plural, one {# respons} other {# responsen}}.",
       "type_change_subtitle": "{count, plural, one {# enquête gebruikt dit veld en er zijn al antwoorden verzameld.} other {# enquêtes gebruiken dit veld en er zijn al antwoorden verzameld.}}",
       "type_change_title": "{name} wijzigen van {from} naar {to}?",
       "unlink_field_body": "Het veld blijft in de werkruimtebibliotheek en andere enquêtes behouden het. Deze enquête stopt met het verzamelen ervan.",
@@ -2235,6 +2236,10 @@
       "value_source": "Waar komt de waarde vandaan?",
       "value_source_column": "Bron",
       "value_true": "Waar",
+      "warning_clashing_address": "Een ander veld in deze enquête reageert op deze naam. Recall en logica lossen er één van op.",
+      "warning_reserved_address": "Deze naam is nu een gereserveerd automatisch vastgelegd veld. Deze enquête behoudt zijn eigen veld, dat hier voorrang heeft, dus de automatisch vastgelegde waarde is niet beschikbaar onder deze naam.",
+      "warning_system_param_address": "Deze naam is een URL-parameter voor een linkenquête, dus een URL kan dit veld nooit invullen.",
+      "warning_unsafe_address": "Deze naam dateert van vóór de huidige naamgevingsregel. Het blijft werken; een nieuw veld kan niet zo worden genoemd.",
       "when_anonymized": "Wanneer antwoorden zijn geanonimiseerd"
     },
     "formbricks_logo": "Formbricks-logo",
