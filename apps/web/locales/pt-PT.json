@@ -3198,7 +3198,7 @@
         "animated_background_option": "Fundo animado {number}",
         "animation": "Animação",
         "anonymize_responses": "Anonimizar respostas",
-        "anonymize_responses_description": "Deixar de armazenar o endereço IP, país e detalhes do dispositivo do inquirido em novas respostas, e remover parâmetros de consulta dos URLs de página capturados. As respostas já recolhidas não são alteradas.",
+        "anonymize_responses_description": "Deixa de armazenar o endereço IP, país e detalhes do dispositivo do inquirido nas novas respostas e remove parâmetros de consulta dos URLs de página capturados.",
         "any_is_true": "qualquer uma é verdadeira",
         "app_survey_description": "Incorpore um inquérito na sua aplicação web ou site para recolher respostas.",
         "assign": "Atribuir =",

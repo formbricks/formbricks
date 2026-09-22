@@ -3198,7 +3198,7 @@
         "animated_background_option": "Arrière-plan animé {number}",
         "animation": "Animation",
         "anonymize_responses": "Anonymiser les réponses",
-        "anonymize_responses_description": "Arrêter de stocker l'adresse IP, le pays et les détails de l'appareil du répondant pour les nouvelles réponses, et supprimer les paramètres de requête des URL de pages capturées. Les réponses déjà collectées ne sont pas modifiées.",
+        "anonymize_responses_description": "Arrête de stocker l'adresse IP, le pays et les détails de l'appareil du répondant sur les nouvelles réponses, et supprime les paramètres de requête des URL de page capturées.",
         "any_is_true": "au moins une est vraie",
         "app_survey_description": "Intégrez une enquête dans votre application web ou votre site web pour collecter des réponses.",
         "assign": "Attribuer =",

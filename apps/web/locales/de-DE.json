@@ -3198,7 +3198,7 @@
         "animated_background_option": "Animierter Hintergrund {number}",
         "animation": "Animation",
         "anonymize_responses": "Antworten anonymisieren",
-        "anonymize_responses_description": "Bei neuen Antworten werden die IP-Adresse, das Land und die Gerätedaten der Teilnehmer nicht mehr gespeichert, und Query-Parameter werden aus den erfassten Seiten-URLs entfernt. Bereits gesammelte Antworten bleiben unverändert.",
+        "anonymize_responses_description": "Speichere bei neuen Antworten nicht mehr die IP-Adresse, das Land und die Gerätedaten der Befragten und entferne Query-Parameter aus erfassten Seiten-URLs.",
         "any_is_true": "mindestens eine ist wahr",
         "app_survey_description": "Binde eine Umfrage in deine Web-App oder Website ein, um Antworten zu sammeln.",
         "assign": "Zuweisen =",

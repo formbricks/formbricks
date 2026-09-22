@@ -3198,7 +3198,7 @@
         "animated_background_option": "动态背景{number}",
         "animation": "动画",
         "anonymize_responses": "匿名化回复",
-        "anonymize_responses_description": "停止在新回复中存储受访者的 IP 地址、国家/地区和设备详情，并从捕获的页面 URL 中移除查询参数。已收集的回复不会更改。",
+        "anonymize_responses_description": "停止在新回复中存储受访者的 IP 地址、国家/地区和设备详情,并从捕获的页面 URL 中删除查询参数。",
         "any_is_true": "任一为真",
         "app_survey_description": "在 你的 网络 应用 或 网站 中 嵌入 问卷 收集 反馈 。",
         "assign": "指派 =",

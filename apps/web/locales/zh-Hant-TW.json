@@ -3198,7 +3198,7 @@
         "animated_background_option": "動態背景{number}",
         "animation": "動畫",
         "anonymize_responses": "匿名化回覆",
-        "anonymize_responses_description": "停止儲存新回覆中受訪者的 IP 位址、國家和裝置詳細資訊,並從擷取的頁面網址中移除查詢參數。已收集的回覆不會變更。",
+        "anonymize_responses_description": "停止儲存新回覆中受訪者的 IP 位址、國家和裝置詳細資訊,並從擷取的頁面網址中移除查詢參數。",
         "any_is_true": "任一為真",
         "app_survey_description": "將問卷嵌入您的 Web 應用程式或網站中以收集回應。",
         "assign": "等於 =",

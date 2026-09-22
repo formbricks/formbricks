@@ -3198,7 +3198,7 @@
         "animated_background_option": "Animerad bakgrund {number}",
         "animation": "Animering",
         "anonymize_responses": "Anonymisera svar",
-        "anonymize_responses_description": "Sluta lagra respondentens IP-adress, land och enhetsuppgifter för nya svar, och ta bort frågeparametrar från sparade sidadresser. Redan insamlade svar ändras inte.",
+        "anonymize_responses_description": "Sluta lagra respondentens IP-adress, land och enhetsuppgifter för nya svar, och ta bort frågeparametrar från registrerade sidadresser.",
         "any_is_true": "någon är sann",
         "app_survey_description": "Bädda in en enkät i din webbapp eller webbplats för att samla in svar.",
         "assign": "Tilldela =",
