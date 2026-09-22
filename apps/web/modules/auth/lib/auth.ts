@@ -81,7 +81,22 @@ export const auth = betterAuth({
   // secret — `assertAuthRuntimeConfiguration` in lib/env.ts is what prevents that, by refusing to boot.
   secret: AUTH_SECRET,
   baseURL: AUTH_URL,
-  disabledPaths: ["/token"],
+  // `/update-user` is served over HTTP for nobody (ENG-3189). Better Auth mounts it beside our own
+  // profile surface, and every field it can reach is one Formbricks does not let a client write there:
+  //
+  //  - `name` is the identity provider's for an SSO user — re-read on every sign-in
+  //    (`overrideUserInfo`) and locked in `updateUserAction` — yet a raw POST landed the write anyway,
+  //    unaudited, until the next sign-in silently reverted it.
+  //  - `image` has no `User` column at all, so the write reached Prisma and threw an unhandled 500 —
+  //    the same hazard `ssoProfileSyncUpdateBefore` and `user.create.before` strip on the SSO paths.
+  //  - `email` the endpoint refuses itself, and our two `additionalFields` are `input: false`.
+  //
+  // So there is nothing left for it to legitimately do, and a 404 at the router is a smaller, more
+  // complete answer than a `hooks.before` gate: profile writes go through `updateUserAction`, which
+  // owns the SSO name lock, the verified email-change flow, rate limiting, and the audit entry. The
+  // path is HTTP-only — `auth.api.updateUser` stays available to server code (`api/index.mjs` applies
+  // `disabledPaths` in the router alone), which is what the SSO hooks and the service layer use.
+  disabledPaths: ["/token", "/update-user"],
   trustedOrigins: AUTH_TRUSTED_ORIGINS,
   telemetry: { enabled: false },
 
