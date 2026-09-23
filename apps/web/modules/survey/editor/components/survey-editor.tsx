@@ -9,6 +9,7 @@ import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/su
 import { TUserLocale } from "@formbricks/types/user";
 import { extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useDocumentVisibility } from "@/lib/useDocumentVisibility";
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
@@ -25,6 +26,10 @@ import { LanguageView } from "@/modules/survey/multi-language-surveys/components
 import { type TSurveySchedulingConfig } from "@/modules/survey/scheduling/lib/config";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { getWorkspaceLanguagesAction, refetchWorkspaceAction } from "../actions";
+
+// How long the preview trails the editor. Every preview render re-mounts the whole survey bundle, so
+// following each keystroke made typing lag on large surveys (ENG-991).
+const PREVIEW_DEBOUNCE_MS = 300;
 
 interface SurveyEditorProps {
   survey: TSurvey;
@@ -103,6 +108,8 @@ export const SurveyEditor = ({
   // strip the inlined `embeddedFields` here — editor surfaces read their definitions through
   // `getDeclaredEmbeddedFields` instead, which ignores the rows and derives from the cards.
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
+  // Only the preview trails; the editor panes keep reading `localSurvey` so input stays immediate.
+  const debouncedPreviewSurvey = useDebouncedValue(localSurvey, PREVIEW_DEBOUNCE_MS);
   const [invalidElements, setInvalidElements] = useState<string[] | null>(null);
   const [hasIncompleteTranslations, setHasIncompleteTranslations] = useState(false);
   // Set when a save or publish is blocked by a missing trigger, so the Survey Trigger card can say
@@ -200,6 +207,7 @@ export const SurveyEditor = ({
 
   // After the null guard, we can safely narrow the setter type for child components
   const setLocalSurveyNonNull = setLocalSurvey as Dispatch<SetStateAction<TSurvey>>;
+  const previewSurvey = debouncedPreviewSurvey ?? localSurvey;
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -323,10 +331,10 @@ export const SurveyEditor = ({
 
         <aside className="group hidden w-1/3 shrink-0 items-center justify-center overflow-hidden border-l border-slate-200 bg-slate-100 shadow-inner md:flex md:flex-col">
           <PreviewSurvey
-            survey={localSurvey}
+            survey={previewSurvey}
             elementId={activeElementId}
             workspace={localWorkspace}
-            previewType={localSurvey.type === "app" ? "modal" : "fullwidth"}
+            previewType={previewSurvey.type === "app" ? "modal" : "fullwidth"}
             languageCode={selectedLanguageCode}
             setLanguageCode={setSelectedLanguageCode}
             locale={locale}

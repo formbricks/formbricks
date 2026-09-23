@@ -2,7 +2,7 @@
 
 import { MotionConfig, motion } from "framer-motion";
 import { ExpandIcon, GlobeIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
@@ -46,7 +46,10 @@ interface PreviewSurveyProps {
 let surveyNameTemp: string;
 let setBlockId = (_: string) => {};
 
-export const PreviewSurvey = ({
+// Memoized because every render re-mounts the survey bundle (`SurveyInline` re-renders on any new
+// props). The editor re-renders on each keystroke; skipping the preview when its inputs are unchanged
+// is what makes debouncing its `survey` prop pay off (ENG-991).
+export const PreviewSurvey = memo(function PreviewSurvey({
   elementId,
   survey,
   previewType,
@@ -56,7 +59,7 @@ export const PreviewSurvey = ({
   locale,
   isSpamProtectionAllowed,
   publicDomain,
-}: PreviewSurveyProps) => {
+}: Readonly<PreviewSurveyProps>) {
   // ENG-1837: the preview is an authoring surface — the Variables and Hidden Fields cards are the
   // live source of truth, and the saved EmbeddedData rows only catch up on save. Overriding the
   // inlined definitions with the card-derived ones is what makes a rename or a new field show up in
@@ -70,6 +73,11 @@ export const PreviewSurvey = ({
       }),
     }),
     [survey]
+  );
+  const jsSurvey = useMemo(() => toJsWorkspaceStateSurvey(previewSurvey), [previewSurvey]);
+  const jsLinkSurvey = useMemo(
+    () => toJsWorkspaceStateSurvey({ ...previewSurvey, type: "link" }),
+    [previewSurvey]
   );
 
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -131,7 +139,7 @@ export const PreviewSurvey = ({
 
   const placement = mirrorPlacementForDir(
     surveyPlacement || workspace.placement,
-    isRTLLanguage(toJsWorkspaceStateSurvey(survey), activeLanguageCode) ? "rtl" : "ltr"
+    isRTLLanguage(jsSurvey, activeLanguageCode) ? "rtl" : "ltr"
   );
   const overlay = surveyOverlay ?? workspace.overlay;
   const clickOutsideClose = surveyClickOutsideClose ?? workspace.clickOutsideClose;
@@ -339,7 +347,7 @@ export const PreviewSurvey = ({
                     <SurveyInline
                       appUrl={publicDomain}
                       isPreviewMode={true}
-                      survey={toJsWorkspaceStateSurvey(previewSurvey)}
+                      survey={jsSurvey}
                       isBrandingEnabled={workspace.inAppSurveyBranding}
                       isRedirectDisabled={true}
                       languageCode={activeLanguageCode}
@@ -388,7 +396,7 @@ export const PreviewSurvey = ({
                           appUrl={publicDomain}
                           isPreviewMode={true}
                           isBrandingEnabled={workspace.linkSurveyBranding}
-                          survey={toJsWorkspaceStateSurvey({ ...previewSurvey, type: "link" })}
+                          survey={jsLinkSurvey}
                           isRedirectDisabled={true}
                           languageCode={languageCode}
                           responseCount={42}
@@ -474,7 +482,7 @@ export const PreviewSurvey = ({
                   <SurveyInline
                     appUrl={publicDomain}
                     isPreviewMode={true}
-                    survey={toJsWorkspaceStateSurvey(previewSurvey)}
+                    survey={jsSurvey}
                     isBrandingEnabled={workspace.inAppSurveyBranding}
                     isRedirectDisabled={true}
                     languageCode={activeLanguageCode}
@@ -530,7 +538,7 @@ export const PreviewSurvey = ({
                         <SurveyInline
                           appUrl={publicDomain}
                           isPreviewMode={true}
-                          survey={toJsWorkspaceStateSurvey({ ...previewSurvey, type: "link" })}
+                          survey={jsLinkSurvey}
                           isBrandingEnabled={workspace.linkSurveyBranding}
                           isRedirectDisabled={true}
                           languageCode={languageCode}
@@ -576,7 +584,7 @@ export const PreviewSurvey = ({
       </div>
     </MotionConfig>
   );
-};
+});
 
 const LanguageSelector = ({
   languages,
