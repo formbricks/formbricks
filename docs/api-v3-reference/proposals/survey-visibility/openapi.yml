@@ -457,10 +457,19 @@ paths:
         Sets the survey to `private` or `workspace`. Answers **200** only once the change is enforced:
         the flag is stored and the authorization relationship is projected inside the request, so a
         colleague's next read already reflects it. Sending the value the survey already **enforces** is
-        a **200** no-op — nothing is written or audited. The check is against the graph, not the stored
-        flag: after a **503**, the stored flag already matches but enforcement does not, so a retry is
-        not a no-op — the server re-attempts the projection and answers **200** or **503** again.
-        Retrying is therefore safe, and never reports success early.
+        a **200** no-op — nothing is written or audited — **provided nothing is pending**. The check is
+        against the graph, not the stored flag: after a **503**, the stored flag already matches but
+        enforcement does not, so a retry is not a no-op — the server re-attempts the projection and
+        answers **200** or **503** again. A request for the *opposite* of a pending change is not a
+        no-op either, even though it matches the enforced value: the server writes the flag back, which
+        supersedes the queued change (the outbox reconciles to the stored flag, it does not replay the
+        old request), and answers **200** with `pending` cleared. Retrying is therefore safe, and no
+        answer can be overtaken by an earlier, still-queued change.
+
+
+        When `private` is refused for two reasons at once — no owner **and** outbound connections —
+        the **422** wins: the missing owner cannot be fixed, so listing connections to remove would send
+        the caller down a dead end.
 
 
         Allowed for the survey's owner (while they still hold read access to the workspace) and for the
@@ -912,8 +921,8 @@ components:
               description: >-
                 A visibility that is stored but not yet enforced: a `POST` answered **503**
                 `projection_pending` and the outbox has not delivered yet. `visibility` keeps reporting
-                the enforced value meanwhile. `null` in the normal case. Clears within 60 seconds or the
-                deployment fails closed.
+                the enforced value meanwhile. `null` in the normal case. Clears within 60 seconds, when
+                a later `POST` supersedes it, or the deployment fails closed.
             allowedTargets:
               type: array
               items:
@@ -1229,7 +1238,8 @@ components:
         or the deployment fails closed. Meanwhile `GET …/visibility` reports the requested value in
         `pending` and the still-enforced one in `visibility`. Retrying the `POST` is safe: it is judged
         against the enforced state, re-attempts the projection, and answers **200** only when that
-        succeeds. Chosen over **202 Accepted** so that the pending state stays an exception, not the
+        succeeds. A `POST` for the opposite value supersedes the queued change rather than being treated
+        as a no-op. Chosen over **202 Accepted** so that the pending state stays an exception, not the
         normal path every client must poll.
       headers:
         Retry-After:

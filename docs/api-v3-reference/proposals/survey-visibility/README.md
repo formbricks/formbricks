@@ -92,10 +92,18 @@ Body `{ "visibility": "private" | "workspace" }`. Answers **200** with the new s
 (Decision log #2). Setting the value the survey already **enforces** is a **200 no-op**: nothing
 written, nothing audited, and `changedAt` / `changedBy` describe the last real change — both `null`
 when there never was one, for example a `workspace` request on an API-key-created survey that is
-still at its creation visibility. The no-op test is against the graph, not the stored flag: a retry
-after a 503 finds the flag already stored but enforcement outstanding, so it is **not** a no-op — the
-server re-attempts the projection and answers 200 or 503 again. A retry can never report success
-before enforcement.
+still at its creation visibility. The no-op test is against the graph, not the stored flag, **and
+only applies when nothing is pending**: a retry after a 503 finds the flag already stored but
+enforcement outstanding, so it is **not** a no-op — the server re-attempts the projection and answers
+200 or 503 again. A request for the opposite of a pending change is not a no-op either, although it
+matches the enforced value: the server writes the flag back, which supersedes the queued change (the
+outbox reconciles to the stored flag rather than replaying the old request), and answers 200 with
+`pending` cleared. No answer can be overtaken by an earlier, still-queued change.
+
+Precedence when `private` is refused for two reasons at once: **422 before 409**. A survey with
+`owner: null` that also has outbound connections answers 422; the missing owner cannot be fixed, so
+listing connections to remove would send the caller down a dead end. `allowedTargets` already omits
+`private` in both cases.
 
 | Result                                  | When                                                                                                                                                                                                                                                                                                                                                                          |
 | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
