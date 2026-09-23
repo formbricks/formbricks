@@ -124,4 +124,14 @@ export const hasLanguageLoaded = (code: string): boolean => {
   return i18n.hasResourceBundle(bundle, "translation");
 };
 
+/**
+ * The tag to hand `i18n.changeLanguage` for a survey language: the bundle `loadLanguage` fetched for it.
+ *
+ * Passing the requested tag lets i18next pick the bundle itself, and it takes the first `supportedLngs`
+ * entry sharing the base language — so every Traditional Chinese tag (`zh-TW`, `zh-Hant-HK`) lands on
+ * `zh-Hans-CN`, a bundle nobody fetched, and renders English. A tag with no bundle is passed through and
+ * falls back to English as before.
+ */
+export const toI18nLanguage = (code: string): string => resolveSurveyRuntimeBundle(code) ?? code;
+
 export default i18n;

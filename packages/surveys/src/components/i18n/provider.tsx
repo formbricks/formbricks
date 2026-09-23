@@ -1,7 +1,7 @@
 import { ComponentChildren } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { I18nextProvider } from "react-i18next";
-import i18n, { hasLanguageLoaded, loadLanguage } from "../../lib/i18n.config";
+import i18n, { hasLanguageLoaded, loadLanguage, toI18nLanguage } from "../../lib/i18n.config";
 
 export const I18nProvider = ({ language, children }: { language: string; children?: ComponentChildren }) => {
   const isFirstRender = useRef(true);
@@ -19,8 +19,8 @@ export const I18nProvider = ({ language, children }: { language: string; childre
   // re-render the switch triggers.
   if (isFirstRender.current) {
     isFirstRender.current = false;
-    if (hasLanguageLoaded(language) && i18n.language !== language) {
-      i18n.changeLanguage(language);
+    if (hasLanguageLoaded(language) && i18n.language !== toI18nLanguage(language)) {
+      i18n.changeLanguage(toI18nLanguage(language));
       appliedLanguage.current = language;
     }
   }
@@ -30,14 +30,13 @@ export const I18nProvider = ({ language, children }: { language: string; childre
   useEffect(() => {
     if (appliedLanguage.current === language) return;
 
-    // Only the first paint is held back; a language the respondent picks is applied by the switch,
-    // which loads the strings before it commits, so the survey never blanks mid-flow.
-    if (!hasLanguageLoaded(language)) setIsReady(false);
-
+    // Only the first paint is held back (`isReady` starts false). A language change after mount keeps the
+    // survey mounted in the current language until the new strings land: dropping to null here would
+    // unmount it, restarting the respondent (or the editor preview) at the welcome card.
     let cancelled = false;
     void loadLanguage(language).then(() => {
       if (cancelled) return;
-      i18n.changeLanguage(language);
+      i18n.changeLanguage(toI18nLanguage(language));
       appliedLanguage.current = language;
       setIsReady(true);
     });

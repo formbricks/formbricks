@@ -9,6 +9,7 @@ import i18n, {
   loadLanguage,
   resolveFallbackBundles,
   setLocaleBaseUrl,
+  toI18nLanguage,
 } from "./i18n.config";
 
 // Locks down the locale-to-bundle fallback contract (ENG-1067). Bundles are keyed by each language's
@@ -190,6 +191,18 @@ describe("loadLanguage", () => {
     expect(english).toBe("Required");
     expect(i18n.getFixedT("pl-PL")("common.required")).toBe(english);
   });
+
+  // i18next resolves a tag against `supportedLngs` by base language and takes the first `zh-*` entry,
+  // which is Simplified — so the tag handed to it has to be the bundle that was actually fetched.
+  test.each(["zh-TW", "zh-HK", "zh-Hant-HK", "zh-Hant-MO", "zh-Hant"])(
+    "%s renders the Traditional bundle it fetched, not English",
+    async (requested) => {
+      fetchMock.mockResolvedValue({ ok: true, json: async () => ({ common: { required: "必填" } }) });
+      await loadLanguage(requested);
+      await i18n.changeLanguage(toI18nLanguage(requested));
+      expect(i18n.t("common.required")).toBe("必填");
+    }
+  );
 
   // The SDK and the link survey pass an absolute appUrl, which is what lets a mobile WebView — whose
   // null base URL cannot resolve a root-relative path — reach the bundles at all.
