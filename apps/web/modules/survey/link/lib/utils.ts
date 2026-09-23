@@ -109,16 +109,22 @@ export const resolveWebAppLocale = (languageCode: string, survey: TSurvey): TUse
     codeToMap = defaultLanguage.language.code;
   }
 
-  const codeToMapLower = codeToMap.toLowerCase();
+  const segments = codeToMap.toLowerCase().split("-");
 
-  // An exact locale first, so a survey language that already names one ("pt-PT") keeps its variant
-  // instead of collapsing into the base language's default ("pt" -> "pt-BR").
-  const exactLocale = ZUserLocale.options.find((locale) => locale.toLowerCase() === codeToMapLower);
-  if (exactLocale) return exactLocale;
+  // The longest prefix first, so a survey language that already names a locale ("pt-PT") keeps its
+  // variant instead of collapsing into the base language's default ("pt" -> "pt-BR"), and a regional
+  // code drops to its script before its base language ("zh-Hant-HK" -> "zh-Hant", not "zh").
+  for (let length = segments.length; length > 0; length--) {
+    const prefix = segments.slice(0, length).join("-");
 
-  return (
-    SURVEY_LANGUAGE_ALIASES[codeToMapLower] ?? SURVEY_LANGUAGE_ALIASES[codeToMapLower.split("-")[0]] ?? null
-  );
+    const exactLocale = ZUserLocale.options.find((locale) => locale.toLowerCase() === prefix);
+    if (exactLocale) return exactLocale;
+
+    const alias = SURVEY_LANGUAGE_ALIASES[prefix];
+    if (alias) return alias;
+  }
+
+  return null;
 };
 
 /**

@@ -41,7 +41,7 @@ describe("scripts/setup-dev-env.sh AuthZed setup", () => {
       templatePath,
       [
         "ENCRYPTION_KEY=",
-        "NEXTAUTH_SECRET=",
+        "BETTER_AUTH_SECRET=",
         "CRON_SECRET=",
         "CUBEJS_API_SECRET=",
         "AUTHZED_TOKEN=",
@@ -111,5 +111,109 @@ describe("scripts/setup-dev-env.sh AuthZed setup", () => {
     expect(values.get("AUTHZED_SYSTEM_KEY")).toBe("custom_key");
     expect(values.get("AUTHZED_INSECURE")).toBe("false");
     expect(output).not.toContain("private-token");
+  });
+
+  test("generates exactly one auth secret on a fresh .env", () => {
+    // Generating both BETTER_AUTH_SECRET and the legacy NEXTAUTH_SECRET would give every clean
+    // checkout two disagreeing secrets, and the app warns about that shape at boot — a warning that
+    // fires on 100% of dev machines is a warning nobody reads.
+    const tempDir = createTempDir();
+    const templatePath = join(tempDir, ".env.example");
+    const envPath = join(tempDir, ".env");
+    writeFileSync(templatePath, ["ENCRYPTION_KEY=", "BETTER_AUTH_SECRET=", ""].join("\n"));
+
+    execFileSync("bash", [setupDevEnvScriptPath], {
+      env: { ...process.env, FORMBRICKS_ENV_PATH: envPath, FORMBRICKS_ENV_TEMPLATE_PATH: templatePath },
+    });
+    const values = parseEnvFile(readFileSync(envPath, "utf8"));
+
+    expect(values.get("BETTER_AUTH_SECRET")).toMatch(/^[a-f0-9]{64}$/);
+    expect(values.has("NEXTAUTH_SECRET")).toBe(false);
+  });
+
+  test("carries an existing NEXTAUTH_SECRET across instead of minting a new one", () => {
+    // An .env from before the rename. BETTER_AUTH_SECRET wins at runtime, so generating a fresh value
+    // here would log the developer out and invalidate their outstanding verification links.
+    const tempDir = createTempDir();
+    const templatePath = join(tempDir, ".env.example");
+    const envPath = join(tempDir, ".env");
+    writeFileSync(templatePath, "");
+    writeFileSync(envPath, "NEXTAUTH_SECRET=legacy-secret-value\nAUTHZED_TOKEN=private-token\n");
+
+    execFileSync("bash", [setupDevEnvScriptPath], {
+      env: { ...process.env, FORMBRICKS_ENV_PATH: envPath, FORMBRICKS_ENV_TEMPLATE_PATH: templatePath },
+    });
+    const values = parseEnvFile(readFileSync(envPath, "utf8"));
+
+    expect(values.get("BETTER_AUTH_SECRET")).toBe("legacy-secret-value");
+    // Left in place: nothing rewrites an existing install's env, and the app still accepts it.
+    expect(values.get("NEXTAUTH_SECRET")).toBe("legacy-secret-value");
+  });
+
+  /**
+   * `export KEY=value` is a form both dotenv and @next/env accept, so a developer whose .env carries
+   * it has a secret the app reads. The matchers used to skip it, which meant the migration saw no
+   * legacy secret and the generation loop minted a fresh BETTER_AUTH_SECRET — logging them out and
+   * voiding their outstanding links, the exact failure this migration exists to prevent.
+   */
+  test("an export-prefixed legacy secret is migrated, not treated as absent", () => {
+    const tempDir = createTempDir();
+    const templatePath = join(tempDir, ".env.example");
+    const envPath = join(tempDir, ".env");
+    writeFileSync(templatePath, "");
+    writeFileSync(envPath, 'export NEXTAUTH_SECRET="exported-secret"\nAUTHZED_TOKEN=private-token\n');
+
+    execFileSync("bash", [setupDevEnvScriptPath], {
+      env: { ...process.env, FORMBRICKS_ENV_PATH: envPath, FORMBRICKS_ENV_TEMPLATE_PATH: templatePath },
+    });
+
+    const contents = readFileSync(envPath, "utf8");
+    // Carried across verbatim, and NOT replaced by a freshly generated 64-char hex secret.
+    expect(contents).toContain('BETTER_AUTH_SECRET="exported-secret"');
+    expect(contents).not.toMatch(/BETTER_AUTH_SECRET=[a-f0-9]{64}/);
+  });
+
+  /**
+   * Rewriting `export KEY=` as a bare `KEY=` would be a silent behaviour change for anyone who
+   * `source`s their .env — the variable would stop reaching child processes.
+   */
+  test("an existing export prefix survives a regenerated value", () => {
+    const tempDir = createTempDir();
+    const templatePath = join(tempDir, ".env.example");
+    const envPath = join(tempDir, ".env");
+    writeFileSync(templatePath, "");
+    // Empty, so the generation loop rewrites this very line.
+    writeFileSync(envPath, "export CRON_SECRET=\nAUTHZED_TOKEN=private-token\n");
+
+    execFileSync("bash", [setupDevEnvScriptPath], {
+      env: { ...process.env, FORMBRICKS_ENV_PATH: envPath, FORMBRICKS_ENV_TEMPLATE_PATH: templatePath },
+    });
+
+    expect(readFileSync(envPath, "utf8")).toMatch(/^export CRON_SECRET=[a-f0-9]{64}$/m);
+  });
+
+  // Both of these assert the assignment is copied byte for byte. Anything that resolves the value and
+  // writes the result back is a re-key: the developer keeps their .env but loses their session, and
+  // the cause is invisible because both keys still "look" like the same secret.
+  test.each([
+    ['" legacy secret "', "quoted value whose whitespace is significant"],
+    ["'  padded  '", "single-quoted value"],
+    ["back\\nslash", "value containing a backslash escape"],
+    ["trailing-hash # not-a-comment", "value dotenv would keep whole"],
+  ])("copies NEXTAUTH_SECRET across verbatim: %s (%s)", (rawValue) => {
+    const tempDir = createTempDir();
+    const templatePath = join(tempDir, ".env.example");
+    const envPath = join(tempDir, ".env");
+    writeFileSync(templatePath, "");
+    writeFileSync(envPath, `NEXTAUTH_SECRET=${rawValue}\nAUTHZED_TOKEN=private-token\n`);
+
+    execFileSync("bash", [setupDevEnvScriptPath], {
+      env: { ...process.env, FORMBRICKS_ENV_PATH: envPath, FORMBRICKS_ENV_TEMPLATE_PATH: templatePath },
+    });
+
+    const contents = readFileSync(envPath, "utf8");
+    expect(contents).toContain(`BETTER_AUTH_SECRET=${rawValue}\n`);
+    // The source assignment is untouched, so the two keys still resolve to one secret.
+    expect(contents).toContain(`NEXTAUTH_SECRET=${rawValue}\n`);
   });
 });

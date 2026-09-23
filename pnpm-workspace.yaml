@@ -189,7 +189,12 @@ overrides:
   # GHSA-55q2-fjhq-7xh7: DOMPurify <=3.4.12 can be bypassed with crafted HTML; patched in 3.4.13.
   # load-bearing: isomorphic-dompurify, posthog-js and redoc resolve vulnerable 3.x versions.
   dompurify: 3.4.13
-  fast-xml-parser: 5.7.0 # load-bearing: @aws-sdk/xml-builder pins 5.4.1 / 5.5.8, both <5.7.0 and vulnerable (GHSA-gh4j-gqv2-49f6 + GHSA-jp2q-39xq-3w4g)
+  # GHSA-gh4j-gqv2-49f6 + GHSA-jp2q-39xq-3w4g are patched in 5.7.0, but 5.7.0 and 5.7.1 reject
+  # entity names starting with "#", and @aws-sdk/xml-builder registers "#xD"/"#10" on its parser —
+  # which threw on every XML-parsed S3 response and silently disabled storage prefix cleanup
+  # (ENG-3263). 5.7.2 is the lowest version that carries both fixes, so the floor is 5.7.2, not 5.7.0.
+  # load-bearing: @aws-sdk/xml-builder pins 5.4.1 / 5.5.8, both <5.7.0 and vulnerable.
+  fast-xml-parser: 5.7.2
   # GHSA-22jq-vg5j-6vgg, GHSA-4xrf-jv44-h6hh and GHSA-mwp4-54f8-5fhr: ip-address parsing
   # vulnerabilities are all patched in 10.3.1.
   # load-bearing: socks and express-rate-limit resolve vulnerable 10.x versions.
@@ -213,7 +218,7 @@ overrides:
   ws@8: 8.21.0
   # Dependabot security batch (transitive-only; direct deps vite/ua-parser-js bumped in package.json).
   "@opentelemetry/core": 2.8.0 # ENG-1355 / GHSA-8988-4f7v-96qf (<2.8.0). load-bearing: the 0.208.0/0.211.0/0.212.0/0.217.0 exporter lines resolve 2.2.0–2.7.1.
-  esbuild: 0.28.1 # ENG-1327 / GHSA-g7r4-m6w7-qqqr (>=0.27.3 <0.28.1). load-bearing: vite@7/tsx/storybook resolve 0.27.7 and react-email pins 0.27.4.
+  esbuild: 0.28.1 # ENG-1327 / GHSA-g7r4-m6w7-qqqr (>=0.27.3 <0.28.1). load-bearing: vite@7/tsx/storybook resolve 0.27.7.
   # ENG-1947 / GHSA-23hp-3jrh-7fpw (CVE-2026-59873): node-tar <=7.5.18 has no hard
   # upper bound on total decompressed bytes / entry count, so a small gzip bomb can
   # exhaust disk and CPU (DoS). Patched in 7.5.19.

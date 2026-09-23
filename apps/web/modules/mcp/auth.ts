@@ -272,7 +272,13 @@ async function isOAuthUserActive(userId: string): Promise<boolean> {
  * `http` is optional because it is absent on non-HTTP transports. Ours is HTTP-only, so in practice it
  * is always there — but the tools already handle a missing token, so nothing needs to assert it.
  */
-export type TMcpToolContext = Pick<ServerContext, "http">;
+/**
+ * `mcpReq` joins `http` here for the multi-round-trip tools: a confirmation arrives as
+ * `mcpReq.inputResponses` and its sealed state as `mcpReq.requestState()`, neither of which is
+ * reachable through `http`. Still a `Pick` rather than the whole `ServerContext`, so a tool cannot
+ * quietly start driving the server from inside a handler.
+ */
+export type TMcpToolContext = Pick<ServerContext, "http" | "mcpReq">;
 
 /**
  * The single place that knows where the SDK puts verified auth on the handler context. Every tool goes

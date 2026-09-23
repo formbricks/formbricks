@@ -87,6 +87,26 @@ vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
   validateV3SurveyFromRawInput: vi.fn(),
 }));
 
+/**
+ * Mocked for the same reason the survey operations above are: this file tests the route, not the
+ * operations behind it. It is also load-bearing — the real module reaches `@/app/lib/pipelines` and
+ * so `@formbricks/jobs`, which does not load under this config, exactly as every other test whose
+ * graph touches the pipeline mocks it out.
+ */
+vi.mock("@/app/api/v3/responses/lib/operations", () => ({
+  batchDeleteV3Responses: vi.fn(),
+  countV3ResponsesOperation: vi.fn(),
+  createV3ResponseFromRawInput: vi.fn(),
+  deleteV3Response: vi.fn(),
+  getV3Response: vi.fn(),
+  listV3Responses: vi.fn(),
+  updateV3ResponseFromRawInput: vi.fn(),
+}));
+
+vi.mock("@/app/api/v3/responses/lib/validate-operations", () => ({
+  validateV3ResponseFromRawInput: vi.fn(),
+}));
+
 vi.mock("@/app/api/v3/lib/audit", () => ({
   buildV3AuditLog: vi.fn(),
   queueV3AuditLog: vi.fn().mockResolvedValue(undefined),
@@ -300,6 +320,14 @@ describe("POST /api/mcp", () => {
       "delete_feedback_record",
       "search_feedback_records",
       "find_similar_feedback_records",
+      "list_responses",
+      "count_responses",
+      "get_response",
+      "validate_response",
+      "create_response",
+      "update_response",
+      "delete_response",
+      "batch_delete_responses",
     ]);
     const tools = new Map(message.result.tools.map((tool: { name: string }) => [tool.name, tool]));
     expect(Object.keys((tools.get("create_survey") as any).inputSchema.properties)).toEqual(

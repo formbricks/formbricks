@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { deleteScopedResponse, deleteScopedResponses, getResponseWorkspaceId } from "./service";
+import {
+  deleteScopedResponse,
+  deleteScopedResponses,
+  getResponseWorkspaceId,
+  getV3ResponseSurveys,
+} from "./service";
 
 vi.mock("server-only", () => ({}));
 
@@ -16,6 +21,7 @@ const {
   mockDeleteDisplay,
   mockReduceQuotas,
   mockDeleteFiles,
+  mockSurveyFindMany,
 } = vi.hoisted(() => ({
   mockTxDelete: vi.fn(),
   mockTxFindMany: vi.fn(),
@@ -28,11 +34,13 @@ const {
   mockDeleteDisplay: vi.fn(),
   mockReduceQuotas: vi.fn(),
   mockDeleteFiles: vi.fn(),
+  mockSurveyFindMany: vi.fn(),
 }));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     response: { findFirst: mockFindFirst },
+    survey: { findMany: mockSurveyFindMany },
     $transaction: mockTransaction,
   },
 }));
@@ -445,5 +453,72 @@ describe("deleteScopedResponses", () => {
     await deleteScopedResponses(BATCH_IDS, SCOPE);
 
     expect(mockReduceQuotas).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * `Survey.blocks` is `Json[] @default([])` and `ZSurvey.blocks` uses `.prefault([])`, so a row with
+ * empty `blocks` and populated `questions` is representable and schema-valid — the blocks migration
+ * having run is not a guarantee one cannot be met. The answer plan is built from `blocks` alone, so
+ * such a survey would report every stored answer as `elementNotInSurvey`: a live survey's answers
+ * returned as orphans.
+ */
+describe("legacy surveys whose blocks were never backfilled", () => {
+  const legacyQuestion = {
+    id: "clq1aaaaaaaaaaaaaaaaaaaa",
+    type: "openText",
+    headline: { default: "How did it go?" },
+    required: false,
+    inputType: "text",
+    charLimit: {},
+  };
+
+  const surveyRow = (over: Record<string, unknown>) => ({
+    id: "clsv1111111111111111111a",
+    name: "Legacy",
+    workspaceId: "ws_1",
+    updatedAt: new Date("2026-09-01T00:00:00.000Z"),
+    blocks: [],
+    questions: [],
+    languages: [],
+    embeddedDataLinks: [],
+    ...over,
+  });
+
+  test("blocks are derived from questions when the column is empty", async () => {
+    mockSurveyFindMany
+      .mockResolvedValueOnce([surveyRow({})])
+      .mockResolvedValueOnce([{ id: "clsv1111111111111111111a", questions: [legacyQuestion] }]);
+
+    const surveys = await getV3ResponseSurveys(["clsv1111111111111111111a"]);
+    const derived = surveys.get("clsv1111111111111111111a");
+
+    expect(derived?.blocks.length).toBeGreaterThan(0);
+    expect(JSON.stringify(derived?.blocks)).toContain(legacyQuestion.id);
+  });
+
+  /** A migrated survey must not be re-derived — the stored blocks are the source of truth. */
+  /**
+   * The rescue costs nothing on the common path: a page whose surveys all have blocks issues no
+   * second query at all.
+   */
+  test("a survey that already has blocks is left alone, and costs no extra query", async () => {
+    const blocks = [{ id: "blk", name: "B", elements: [] }];
+    mockSurveyFindMany.mockResolvedValueOnce([surveyRow({ blocks })]);
+
+    const surveys = await getV3ResponseSurveys(["clsv1111111111111111111a"]);
+
+    expect(surveys.get("clsv1111111111111111111a")?.blocks).toEqual(blocks);
+    expect(mockSurveyFindMany).toHaveBeenCalledTimes(1);
+  });
+
+  test("a survey with neither blocks nor questions stays empty rather than throwing", async () => {
+    mockSurveyFindMany
+      .mockResolvedValueOnce([surveyRow({})])
+      .mockResolvedValueOnce([{ id: "clsv1111111111111111111a", questions: [] }]);
+
+    const surveys = await getV3ResponseSurveys(["clsv1111111111111111111a"]);
+
+    expect(surveys.get("clsv1111111111111111111a")?.blocks).toEqual([]);
   });
 });

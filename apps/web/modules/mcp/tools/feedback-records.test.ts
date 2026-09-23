@@ -887,3 +887,56 @@ describe("update_feedback_record round-trip", () => {
     expect(ZMcpUpdateFeedbackRecordInput.safeParse(mutableEdit).success).toBe(true);
   });
 });
+
+/**
+ * ENG-2119 moved the scope gate out of the two shared handler factories and into `registerScopedTool`,
+ * which turned one gate shared by all ten tools into ten independent per-tool arguments. Nothing pinned
+ * those arguments: reverting a tool to a raw `server.registerTool` left the suite green, and so did
+ * gating a read tool on the write scope. Both are exactly the mistakes the refactor makes easy.
+ *
+ * Driving each tool with the *opposite* feedback scope catches both in one assertion. An unguarded
+ * registration produces no error at all; a tool wired to the wrong scope accepts the scope it should
+ * refuse. Asserting the detail rather than `isError` alone is what stops a handler that fails for some
+ * unrelated reason — a missing operation mock, say — from passing this as a scope denial.
+ */
+describe("every feedback-record tool is gated on its own scope", () => {
+  const TOOL_SCOPES = [
+    ["list_feedback_datasets", "read"],
+    ["list_feedback_records", "read"],
+    ["count_feedback_records", "read"],
+    ["get_feedback_record", "read"],
+    ["search_feedback_records", "read"],
+    ["find_similar_feedback_records", "read"],
+    ["create_feedback_record", "write"],
+    ["create_feedback_records", "write"],
+    ["update_feedback_record", "write"],
+    ["delete_feedback_record", "write"],
+  ] as const;
+
+  /**
+   * The roster has to be exhaustive or the check above is only as good as someone remembering to extend
+   * it: an eleventh tool registered with a raw `server.registerTool` would be both ungated and absent
+   * from `TOOL_SCOPES`, so every case below would still pass. Comparing against what the module actually
+   * registers is what makes "every tool" true rather than "every tool we listed". A removed tool left
+   * behind here fails the same assertion, from the other side.
+   */
+  test("the roster covers exactly the tools the module registers", () => {
+    const { tools } = createToolServer();
+
+    expect([...tools.keys()].sort()).toEqual(TOOL_SCOPES.map(([tool]) => tool).sort());
+  });
+
+  test.each(TOOL_SCOPES)("%s refuses a token holding only the other scope", async (tool, kind) => {
+    const { tools } = createToolServer();
+    const other = kind === "read" ? "feedbackRecords:write" : "feedbackRecords:read";
+
+    const result = await tools
+      .get(tool)!
+      .handler({ workspaceId }, { http: { authInfo: { ...authInfo, scopes: [other] } } });
+
+    expect(result.isError).toBe(true);
+    expect((result.structuredContent as { error: { detail: string } }).error.detail).toBe(
+      `OAuth token does not include the required MCP scope: feedbackRecords:${kind}`
+    );
+  });
+});

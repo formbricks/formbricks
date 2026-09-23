@@ -1,0 +1,32 @@
+allOf:
+  - $ref: ./ResponseDataMap.yml
+  - type: object
+    description: >
+      The same map on the way in, with the cardinality bounds a v3 write enforces.
+
+
+      At most 500 keys, and at most 1000 entries in a multi-select array or matrix object. Both sit
+      far above any real survey — a response holds one entry per element, a multi-select answer one
+      per choice — and exist because every later reader pays per entry: the serializer's per-answer
+      mapping, export columns, and the positional probe the "Other" response filter emits. Exceeding
+      either is a **400** from the request schema, not a 422.
+
+
+      Deliberately separate from `ResponseDataMap`, which the read returns. These bounds are v3-only
+      — the v1 and v2 write paths store the same map without them — so a stored response may exceed
+      them, and the read schema must not claim otherwise.
+    maxProperties: 500
+    # Deliberately says nothing about which value shapes are allowed — `ResponseDataMap` above owns
+    # that, and restating its `oneOf` here would mean the write contract silently narrowed (or stopped
+    # bounding) whenever the read union gained a shape. This branch only bounds the two shapes that
+    # have a cardinality to bound, and is inert for every other one.
+    additionalProperties:
+      if:
+        type: array
+      then:
+        maxItems: 1000
+      else:
+        if:
+          type: object
+        then:
+          maxProperties: 1000

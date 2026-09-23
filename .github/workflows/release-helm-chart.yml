@@ -7,6 +7,20 @@ on:
         description: "The version of the Helm chart to release"
         required: true
         type: string
+      APP_VERSION:
+        description: "The existing Formbricks image tag used by the chart"
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      VERSION:
+        description: "The version of the Helm chart to release"
+        required: true
+        type: string
+      APP_VERSION:
+        description: "The existing Formbricks image tag used by the chart"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -28,21 +42,26 @@ jobs:
 
       - name: Validate input version
         env:
+          INPUT_APP_VERSION: ${{ inputs.APP_VERSION }}
           INPUT_VERSION: ${{ inputs.VERSION }}
         run: |
           set -euo pipefail
-          # Validate input version format (expects clean semver without 'v' prefix)
-          if [[ ! "$INPUT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
-            echo "❌ Error: Invalid version format. Must be clean semver (e.g., 1.2.3, 1.2.3-alpha)"
-            echo "Expected: clean version without 'v' prefix"
-            echo "Provided: $INPUT_VERSION"
-            exit 1
-          fi
+          validate_semver() {
+            local label="$1"
+            local value="$2"
+            if [[ ! "$value" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
+              printf 'Error: %s must be clean semver without a v prefix; provided %s\n' "$label" "$value" >&2
+              exit 1
+            fi
+          }
 
-          # Store validated version in environment variable
-          echo "VERSION<<EOF" >> $GITHUB_ENV
-          echo "$INPUT_VERSION" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          validate_semver "Chart version" "$INPUT_VERSION"
+          validate_semver "Application version" "$INPUT_APP_VERSION"
+
+          {
+            echo "VERSION=$INPUT_VERSION"
+            echo "APP_VERSION=$INPUT_APP_VERSION"
+          } >> "$GITHUB_ENV"
 
       - name: Set up Helm
         uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
@@ -60,19 +79,20 @@ jobs:
 
       - name: Update Chart.yaml with new version
         env:
+          APP_VERSION: ${{ env.APP_VERSION }}
           VERSION: ${{ env.VERSION }}
         run: |
           set -euo pipefail
 
-          echo "Updating Chart.yaml with version: ${VERSION}"
+          echo "Updating Chart.yaml with chart version ${VERSION} and application version ${APP_VERSION}"
           yq -i ".version = \"${VERSION}\"" charts/formbricks/Chart.yaml
-          yq -i ".appVersion = \"${VERSION}\"" charts/formbricks/Chart.yaml
+          yq -i ".appVersion = \"${APP_VERSION}\"" charts/formbricks/Chart.yaml
 
           echo "✅ Successfully updated Chart.yaml"
 
       - name: Validate default Formbricks image tag
         env:
-          VERSION: ${{ env.VERSION }}
+          APP_VERSION: ${{ env.APP_VERSION }}
         run: |
           set -euo pipefail
 
@@ -81,7 +101,7 @@ jobs:
             --show-only templates/deployment.yaml \
             --show-only templates/migration-job.yaml)"
 
-          expected_image="ghcr.io/formbricks/formbricks:${VERSION}"
+          expected_image="ghcr.io/formbricks/formbricks:${APP_VERSION}"
           image_count="$(grep -c "image: ${expected_image}$" <<< "$rendered" || true)"
           if [[ "$image_count" -ne 3 ]]; then
             printf 'Expected %s in web Deployment and both migration containers; found %s matches\n' \

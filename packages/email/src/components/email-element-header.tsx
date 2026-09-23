@@ -1,5 +1,5 @@
-import { Container } from "@react-email/components";
 import type { CSSProperties } from "react";
+import { Container } from "react-email";
 import { cn } from "../../src/lib/cn";
 
 interface ElementHeaderProps {
