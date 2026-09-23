@@ -270,7 +270,9 @@ const nextConfig = {
         ],
       },
       {
-        source: "/js/(.*)",
+        // Everything under /js EXCEPT the survey locale bundles, which are JSON and get their own rule
+        // below. One rule has to win outright: both would otherwise set Content-Type on the same path.
+        source: "/js/((?!locales/).*)",
         headers: [
           {
             key: "Cache-Control",
@@ -280,6 +282,31 @@ const nextConfig = {
           {
             key: "Content-Type",
             value: "application/javascript; charset=UTF-8",
+          },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*",
+          },
+          {
+            key: "Vary",
+            value: "Accept-Encoding",
+          },
+        ],
+      },
+      {
+        // Survey locale bundles, fetched on demand by the survey runtime instead of being compiled into
+        // the widget. Cached as long as the bundle itself: each request carries a `?v=` content hash of
+        // the locale sources, so a translation change lands on a new URL rather than waiting out the CDN.
+        source: "/js/locales/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value:
+              "public, max-age=3600, s-maxage=2592000, stale-while-revalidate=3600, stale-if-error=86400",
+          },
+          {
+            key: "Content-Type",
+            value: "application/json; charset=UTF-8",
           },
           {
             key: "Access-Control-Allow-Origin",
