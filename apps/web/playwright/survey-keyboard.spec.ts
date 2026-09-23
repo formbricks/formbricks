@@ -263,7 +263,7 @@ test.describe("Survey keyboard interaction @slow", () => {
       .poll(async () => page.evaluate(() => document.activeElement?.getAttribute("aria-haspopup")))
       .toBe("menu");
     await page.keyboard.press("Enter");
-    const search = page.getByRole("textbox", { name: "Search..." });
+    const search = page.getByRole("textbox", { name: "Search…" });
     await expect(search).toBeFocused();
 
     // ArrowDown leaves the search and highlights options; Enter selects, the
@@ -277,7 +277,7 @@ test.describe("Survey keyboard interaction @slow", () => {
     // Multi-select dropdown: same path in, Space toggles and keeps the menu open,
     // ArrowUp from the first option returns to the search input.
     await page.keyboard.press("Enter");
-    await expect(page.getByRole("textbox", { name: "Search..." })).toBeFocused();
+    await expect(page.getByRole("textbox", { name: "Search…" })).toBeFocused();
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("Space");
     await expect(page.getByRole("menuitemcheckbox", { name: MULTI_CHOICES[0] })).toHaveAttribute(
@@ -285,7 +285,7 @@ test.describe("Survey keyboard interaction @slow", () => {
       "checked"
     );
     await page.keyboard.press("ArrowUp");
-    await expect(page.getByRole("textbox", { name: "Search..." })).toBeFocused();
+    await expect(page.getByRole("textbox", { name: "Search…" })).toBeFocused();
     await page.keyboard.press("Escape");
 
     await navButton(page, "Next").click();

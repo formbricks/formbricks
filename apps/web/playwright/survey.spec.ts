@@ -204,7 +204,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
         buffer: Buffer.from("this is test"),
       });
 
-      await page.getByText("Uploading...").waitFor({ state: "hidden" });
+      await page.getByText("Uploading…").waitFor({ state: "hidden" });
       await page.locator("#questionCard-8").getByRole("button", { name: "Next" }).click();
 
       // Matrix Question
@@ -904,7 +904,7 @@ test.describe("Testing Survey with advanced logic", async () => {
         mimeType: "application/msword",
         buffer: Buffer.from("this is test"),
       });
-      await page.getByText("Uploading...").waitFor({ state: "hidden" });
+      await page.getByText("Uploading…").waitFor({ state: "hidden" });
       await page.locator("#questionCard-10").getByRole("button", { name: "Next" }).click();
 
       // Date Question
