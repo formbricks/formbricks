@@ -59,6 +59,20 @@ describe("i18n", () => {
   });
 
   describe("getTranslations", () => {
+    // "default" is Formbricks' own marker, not a locale: resolving it would reset the respondent's
+    // chosen language to English (#7515), so it keeps whatever the instance is already on.
+    test('keeps the current language for the internal "default" code', async () => {
+      i18n.addResourceBundle("de-DE", "translation", { common: { required: "Pflichtfeld" } });
+      try {
+        await i18n.changeLanguage("de-DE");
+        expect(getTranslations("default")("common.required")).toBe("Pflichtfeld");
+        expect(i18n.language).toBe("de-DE");
+      } finally {
+        i18n.removeResourceBundle("de-DE", "translation");
+        void i18n.changeLanguage("en-US");
+      }
+    });
+
     // getTranslations also switches the shared instance the survey chrome reads from. Handed the raw
     // tag, i18next resolves Traditional Chinese to the first `zh-*` bundle — Simplified.
     test("switches a Traditional Chinese tag to the Traditional bundle", () => {
