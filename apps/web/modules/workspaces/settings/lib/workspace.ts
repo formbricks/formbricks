@@ -83,6 +83,38 @@ const selectWorkspace = {
   customHeadScripts: true,
 };
 
+// Identifies an object by what it actually resolves to in the bucket, so two URLs that differ only
+// in origin or percent-encoding still compare equal.
+const storageObjectKey = (fileUrl: string): string | null => {
+  const parsed = parseStorageFileUrl(fileUrl);
+  if (!parsed) return null;
+
+  return `${parsed.storageId}/${parsed.accessType}/${decodeURIComponent(parsed.fileName)}`;
+};
+
+/**
+ * Whether the object is one the organization still points at.
+ *
+ * Organization favicons and email logos upload through the same `/api/v1/management/storage` route
+ * as workspace logos, so they land under `{workspaceId}/public/` and clear both guards below.
+ * Changing them takes `organization.manage`; this path takes only `workspace.manage`. Without this
+ * check a workspace manager could point the workspace logo at an organization asset, clear it, and
+ * delete a file they have no permission to touch — while the organization row still references it.
+ */
+const isOrganizationOwnedAsset = async (organizationId: string, objectKey: string): Promise<boolean> => {
+  const organization = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: { whitelabel: true },
+  });
+
+  const whitelabel = organization?.whitelabel;
+  if (!whitelabel) return false;
+
+  return [whitelabel.logoUrl, whitelabel.faviconUrl].some(
+    (url) => url && storageObjectKey(url) === objectKey
+  );
+};
+
 /**
  * Deletes the storage object a removed or replaced workspace logo used to point at.
  *
@@ -96,7 +128,11 @@ const selectWorkspace = {
  * Best-effort: the user asked to change the logo, and the database already says so. A storage
  * failure is logged and never thrown, or a dead bucket would fail an update that did happen.
  */
-const deleteOrphanedWorkspaceLogoFile = async (workspaceId: string, previousUrl: string) => {
+const deleteOrphanedWorkspaceLogoFile = async (
+  workspaceId: string,
+  organizationId: string,
+  previousUrl: string
+) => {
   try {
     const storageFile = parseStorageFileUrl(previousUrl);
     // An external logo URL (a CDN link, which the UI supports) is not ours to delete.
@@ -119,6 +155,15 @@ const deleteOrphanedWorkspaceLogoFile = async (workspaceId: string, previousUrl:
       logger.error(
         { workspaceId, accessType: storageFile.accessType },
         "Refusing to delete a non-public object through workspace logo cleanup"
+      );
+      return;
+    }
+
+    const objectKey = `${storageFile.storageId}/${storageFile.accessType}/${decodeURIComponent(storageFile.fileName)}`;
+    if (await isOrganizationOwnedAsset(organizationId, objectKey)) {
+      logger.error(
+        { workspaceId, organizationId },
+        "Refusing to delete an organization-owned asset through workspace logo cleanup"
       );
       return;
     }
@@ -183,7 +228,7 @@ export const updateWorkspace = async (
   // while the row still points at it. Every upload gets a unique `--fid--{uuid}` key, so the old
   // object has exactly one referrer and losing it orphans the file.
   if (previousLogoUrl && previousLogoUrl !== updatedWorkspace.logo?.url) {
-    await deleteOrphanedWorkspaceLogoFile(workspaceId, previousLogoUrl);
+    await deleteOrphanedWorkspaceLogoFile(workspaceId, updatedWorkspace.organizationId, previousLogoUrl);
   }
 
   return updatedWorkspace as TWorkspace;

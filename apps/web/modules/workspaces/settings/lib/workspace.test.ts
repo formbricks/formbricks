@@ -57,6 +57,9 @@ vi.mock("@formbricks/database", () => ({
     team: {
       findMany: vi.fn(),
     },
+    organization: {
+      findUnique: vi.fn(),
+    },
     feedbackDirectory: {
       upsert: vi.fn(),
       findFirst: vi.fn(),
@@ -141,9 +144,18 @@ describe("workspace lib", () => {
       } as unknown as Awaited<ReturnType<typeof prisma.workspace.update>>);
     };
 
+    // The organization's whitelabel decides whether an object under this workspace's prefix is
+    // actually an organization asset; by default the org claims nothing.
+    const orgClaims = (whitelabel: { logoUrl?: string | null; faviconUrl?: string | null } | null) => {
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue({ whitelabel } as unknown as Awaited<
+        ReturnType<typeof prisma.organization.findUnique>
+      >);
+    };
+
     beforeEach(() => {
       vi.mocked(getWorkspaceLegacyStoragePrefixes).mockResolvedValue(["p1"]);
       vi.mocked(deleteFile).mockResolvedValue({ ok: true, data: undefined });
+      orgClaims(null);
     });
 
     test("deletes the old object when the logo is removed", async () => {
@@ -216,6 +228,35 @@ describe("workspace lib", () => {
 
       expect(deleteFile).not.toHaveBeenCalled();
       expect(logger.error).toHaveBeenCalled();
+    });
+
+    // Organization favicons and email logos upload to the same `{workspaceId}/public/` prefix, but
+    // changing them needs `organization.manage` while this path needs only `workspace.manage`.
+    test.each([
+      ["email logo", "logoUrl"],
+      ["favicon", "faviconUrl"],
+    ])("refuses to delete the organization's %s", async (_label, field) => {
+      const orgAssetUrl = `${LOGO_PREFIX}/org-asset--fid--777.png`;
+      orgClaims({ [field]: orgAssetUrl });
+      withStoredLogo(orgAssetUrl);
+      resolvesTo({ logo: null });
+
+      await updateWorkspace("p1", { logo: { url: undefined } });
+
+      expect(deleteFile).not.toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    // The organization stores an absolute url while the workspace logo holds the relative one; both
+    // resolve to the same object, so a raw string compare would miss it.
+    test("matches an organization asset across url forms", async () => {
+      orgClaims({ logoUrl: "https://app.formbricks.com/storage/p1/public/shared%20asset--fid--888.png" });
+      withStoredLogo(`${LOGO_PREFIX}/shared asset--fid--888.png`);
+      resolvesTo({ logo: null });
+
+      await updateWorkspace("p1", { logo: { url: undefined } });
+
+      expect(deleteFile).not.toHaveBeenCalled();
     });
 
     test("deletes an object under the workspace's legacy environment prefix", async () => {
