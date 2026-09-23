@@ -393,7 +393,7 @@ paths:
                           name: Zapier — new responses
                         - type: workflow
                           id: clwf1234567890123456789012
-                          name: Notify #product on completion
+                          name: "Notify #product on completion"
                       impact:
                         memberCount: 7
                         responseCount: 212
@@ -1197,7 +1197,7 @@ components:
                   name: Zapier — new responses
                 - type: workflow
                   id: clwf1234567890123456789012
-                  name: Notify #product on completion
+                  name: "Notify #product on completion"
     V3VisibilityNotAllowed:
       description: >-
         Unprocessable — `private` was requested on a survey with no owner (`owner: null`). Private
