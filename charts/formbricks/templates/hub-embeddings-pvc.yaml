@@ -1,4 +1,4 @@
-{{- if and .Values.hub.enabled .Values.hub.embeddings.enabled .Values.hub.embeddings.persistence.enabled (not .Values.hub.embeddings.persistence.existingClaim) }}
+{{- if and .Values.hub.enabled .Values.hub.embeddings.enabled .Values.hub.embeddings.deployRuntime .Values.hub.embeddings.persistence.enabled (not .Values.hub.embeddings.persistence.existingClaim) }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
