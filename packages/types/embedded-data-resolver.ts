@@ -956,9 +956,15 @@ export const mergeReservedValues = (
  * The map a recall token or a logic operand is looked up in: what the survey knows about every name
  * it can address, right now.
  *
- * Three layers, lowest precedence first — declared defaults, reserved entries, then the response
- * itself. Defaults sit at the bottom because they are the answer of last resort, and reserved sits
- * under the response for the reason {@link mergeReservedValues} gives.
+ * The response layer goes on first and the defaults last, which reads backwards and is the point:
+ * {@link projectIngestedDefaults} has already decided, per field, whether the response holds
+ * anything usable. It emits a key only when the response does not, so spreading it last overrides
+ * nothing that was supplied — while spreading it first would let the response layer put an
+ * uncoercible value (`?pts=name`) straight back over the default that replaced it.
+ *
+ * Reserved entries sit inside the response layer, under the response itself, for the reason
+ * {@link mergeReservedValues} gives. They cannot collide with a default: a declared field's name is
+ * dropped from the reserved projection by {@link dropShadowedReservedEntries} before it gets here.
  *
  * It exists as a function so the order is pinned by a test rather than by two identical spreads in a
  * component, which is where it lived and where nothing could fail on it. Callers pass the response
@@ -971,8 +977,8 @@ export const buildEmbeddedLookup = (
   reservedValues: Record<string, string | number>,
   responseData: TResponseData
 ): TResponseData => ({
-  ...projectIngestedDefaults(survey, responseData),
   ...mergeReservedValues(reservedValues, responseData),
+  ...projectIngestedDefaults(survey, responseData),
 });
 
 /** One reserved field as a human-facing surface renders it: the entry, plus the value it resolved to. */

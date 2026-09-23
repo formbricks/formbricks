@@ -2166,16 +2166,23 @@ describe("buildEmbeddedLookup", () => {
     });
   });
 
-  test("a reserved entry beats a default of the same name", () => {
-    const clashing = {
-      embeddedFields: [{ field: makeField({ defaultValue: "declared" }), link: { storageKey: "url" } }],
-    };
-
-    expect(buildEmbeddedLookup(clashing, { url: "reserved" }, {})).toStrictEqual({ url: "reserved" });
+  test("a stored value that does not fit the type loses to the default", () => {
+    // What `?pts=name` leaves behind. `projectIngestedDefaults` gets this right on its own, so the
+    // only thing that can break it is the merge: the response layer carries the uncoercible value
+    // too, and spreading it last puts `"name"` back over the 20 the default just supplied.
+    expect(buildEmbeddedLookup(survey, {}, { pts: "name" })).toStrictEqual({ pts: 20 });
   });
 
-  test("a supplied empty string is still an answer", () => {
-    // `""` and `0` are values, so neither layer below may overwrite them.
-    expect(buildEmbeddedLookup(survey, { pts: 7 }, { pts: "" })).toStrictEqual({ pts: "" });
+  test("a supplied value its own type accepts is an answer, falsy ones included", () => {
+    // The falsy cases the last spread must not overwrite — and they are per type, not universal:
+    // `0` is a number, `""` is a string, and each coerces under its own field, so neither emits a
+    // default. An `""` under a *number* field is not this case: it does not coerce, and the resolver
+    // answers with the default for it, which is what the row above pins.
+    const text = {
+      embeddedFields: [{ field: makeField({ defaultValue: "fallback" }), link: { storageKey: "who" } }],
+    };
+
+    expect(buildEmbeddedLookup(survey, { pts: 7 }, { pts: 0 })).toStrictEqual({ pts: 0 });
+    expect(buildEmbeddedLookup(text, {}, { who: "" })).toStrictEqual({ who: "" });
   });
 });
