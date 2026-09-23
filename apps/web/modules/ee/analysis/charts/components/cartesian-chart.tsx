@@ -16,7 +16,13 @@ import {
   getValueLabelPadding,
   truncateLabelToBox,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import {
+  type TTimeAxisTickLayout,
+  getTimeAxisTickLabels,
+  getTimeAxisTickLayout,
+} from "@/modules/ee/analysis/charts/lib/time-axis";
 import { type YAxisScale, computeYAxis } from "@/modules/ee/analysis/charts/lib/y-axis-scale";
+import type { TimeGranularity } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import type { ChartConfig } from "@/modules/ui/components/chart";
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip } from "@/modules/ui/components/chart";
@@ -57,7 +63,14 @@ export interface CartesianChartProps {
    * present (see `getCategoryAxisWidth`), wrapped inside it, and cut from the middle to whatever
    * lines the row density leaves (see `truncateLabelToBox`). */
   horizontal?: boolean;
+  /** Set when the category axis is a time dimension bucketed by this granularity. Its ticks then
+   * thin out to a readable density and use compact, granularity-aware labels (see
+   * `getTimeAxisTickLabels`) instead of labelling every bucket with its full date. */
+  timeAxis?: { granularity: TimeGranularity; locale: string };
 }
+
+/** Resolves, for the axis width Recharts measured, which buckets get a label and what each reads. */
+type TTimeAxisLabels = (axisWidth: number) => { layout: TTimeAxisTickLayout; labels: (string | null)[] };
 
 /** Upper bound (px) on a single x-axis label before wrapping. The per-category band clamp below
  * already stops neighbours colliding, so this is only a ceiling for charts with lots of room (few
@@ -73,6 +86,36 @@ const X_AXIS_TICK_MIN_WIDTH = 32;
 const X_AXIS_RESERVED_HEIGHT = AXIS_LABEL_BOX_HEIGHT + 24;
 /** Vertical offset (px) of the label box below the axis line. */
 const X_AXIS_LABEL_TOP_OFFSET = 4;
+
+/** The wrapping label box one x-axis tick draws, positioned by its caller. */
+function XAxisTickLabel({
+  label,
+  x,
+  y,
+  width,
+  textAlign,
+}: Readonly<{ label: string; x: number; y?: number; width: number; textAlign: string }>) {
+  return (
+    <foreignObject
+      x={x}
+      y={(y ?? 0) + X_AXIS_LABEL_TOP_OFFSET}
+      width={width}
+      height={AXIS_LABEL_BOX_HEIGHT}
+      // Keep the label hit-testable so the `title` full-text tooltip works on hover. The tick sits
+      // in the axis band below the plot, so this doesn't intercept hover over the bars/points.
+      style={{ overflow: "visible" }}>
+      <div
+        title={label}
+        className={`text-muted-foreground line-clamp-3 ${textAlign} text-xs leading-tight`}
+        // Inline, so the clamp tracks the shared line budget the box above is sized from. The class
+        // alone would keep clamping at 3 if AXIS_LABEL_MAX_LINES were raised, leaving a taller box
+        // with the same three lines in it.
+        style={{ textWrap: "pretty", WebkitLineClamp: AXIS_LABEL_MAX_LINES }}>
+        {label}
+      </div>
+    </foreignObject>
+  );
+}
 
 /** Recharts renders default ticks as SVG `<text>`, which cannot wrap. This custom tick uses a
  * `foreignObject` so long labels (e.g. full survey questions) wrap within a max-width, stay under
@@ -94,6 +137,7 @@ function WrappingXAxisTick({
   visibleTicksCount,
   index,
   pointScale = false,
+  timeAxisLabels,
 }: Readonly<{
   x?: number;
   y?: number;
@@ -103,11 +147,37 @@ function WrappingXAxisTick({
   visibleTicksCount?: number;
   index?: number;
   pointScale?: boolean;
+  timeAxisLabels?: TTimeAxisLabels;
 }>) {
-  const label = formatter(payload?.value);
+  const tickX = x ?? 0;
+
+  // A time axis labels one bucket in every `step`, centred with `step` buckets of room, and keeps
+  // its labels clear of the plot edges itself (see `getTimeAxisTickLayout`). Unthinned, its labels
+  // go through the regular edge handling below.
+  let label: string;
+  const timeAxis = timeAxisLabels && width ? timeAxisLabels(width) : undefined;
+  if (timeAxis && index != null) {
+    const timeLabel = timeAxis.labels[index];
+    if (timeLabel == null) return null;
+    if (timeAxis.layout.step > 1) {
+      const slotBoxWidth = Math.min(X_AXIS_TICK_MAX_WIDTH, timeAxis.layout.slotWidth - AXIS_LABEL_GAP);
+      return (
+        <XAxisTickLabel
+          label={timeLabel}
+          x={tickX - slotBoxWidth / 2}
+          y={y}
+          width={slotBoxWidth}
+          textAlign="text-center"
+        />
+      );
+    }
+    label = timeLabel;
+  } else {
+    label = formatter(payload?.value);
+  }
+
   const band = width && visibleTicksCount ? width / visibleTicksCount : X_AXIS_TICK_MAX_WIDTH;
   const tickWidth = Math.min(X_AXIS_TICK_MAX_WIDTH, Math.max(X_AXIS_TICK_MIN_WIDTH, band - AXIS_LABEL_GAP));
-  const tickX = x ?? 0;
 
   const isFirst = pointScale && index === 0;
   const isLast = pointScale && index === (visibleTicksCount ?? 0) - 1;
@@ -133,26 +203,7 @@ function WrappingXAxisTick({
     textAlign = "text-right";
   }
 
-  return (
-    <foreignObject
-      x={boxX}
-      y={(y ?? 0) + X_AXIS_LABEL_TOP_OFFSET}
-      width={boxWidth}
-      height={AXIS_LABEL_BOX_HEIGHT}
-      // Keep the label hit-testable so the `title` full-text tooltip works on hover. The tick sits
-      // in the axis band below the plot, so this doesn't intercept hover over the bars/points.
-      style={{ overflow: "visible" }}>
-      <div
-        title={label}
-        className={`text-muted-foreground line-clamp-3 ${textAlign} text-xs leading-tight`}
-        // Inline, so the clamp tracks the shared line budget the box above is sized from. The class
-        // alone would keep clamping at 3 if AXIS_LABEL_MAX_LINES were raised, leaving a taller box
-        // with the same three lines in it.
-        style={{ textWrap: "pretty", WebkitLineClamp: AXIS_LABEL_MAX_LINES }}>
-        {label}
-      </div>
-    </foreignObject>
-  );
+  return <XAxisTickLabel label={label} x={boxX} y={y} width={boxWidth} textAlign={textAlign} />;
 }
 
 /** Category tick for a flipped (horizontal) chart. Same `foreignObject` wrapping trick as
@@ -237,9 +288,28 @@ export function CartesianChart({
   yAxisScale,
   pointScale = false,
   horizontal = false,
+  timeAxis,
 }: Readonly<CartesianChartProps>) {
   const yScale = yAxisScale ?? computeYAxis(data, dataKeys, zeroBaseline);
   const tickFormatter = xAxisTickFormatter ?? formatXAxisTick;
+
+  // Every tick of one render sees the same axis width, so they share one layout and label list.
+  const timeGranularity = timeAxis?.granularity;
+  const timeLocale = timeAxis?.locale;
+  const timeAxisLabels = useMemo<TTimeAxisLabels | undefined>(() => {
+    if (!timeGranularity || !timeLocale || horizontal || !hasCategoryAxis) return undefined;
+    const values = data.map((row) => row[xAxisKey]);
+    const byWidth = new Map<number, ReturnType<TTimeAxisLabels>>();
+    return (axisWidth) => {
+      let resolved = byWidth.get(axisWidth);
+      if (!resolved) {
+        const layout = getTimeAxisTickLayout(values.length, axisWidth, pointScale);
+        resolved = { layout, labels: getTimeAxisTickLabels(values, timeGranularity, timeLocale, layout) };
+        byWidth.set(axisWidth, resolved);
+      }
+      return resolved;
+    };
+  }, [timeGranularity, timeLocale, horizontal, hasCategoryAxis, data, xAxisKey, pointScale]);
 
   const categoryAxisWidth = useMemo(() => {
     if (!horizontal || !hasCategoryAxis) return 0;
@@ -293,7 +363,11 @@ export function CartesianChart({
               height={hasCategoryAxis ? X_AXIS_RESERVED_HEIGHT : undefined}
               tick={
                 hasCategoryAxis ? (
-                  <WrappingXAxisTick formatter={tickFormatter} pointScale={pointScale} />
+                  <WrappingXAxisTick
+                    formatter={tickFormatter}
+                    pointScale={pointScale}
+                    timeAxisLabels={timeAxisLabels}
+                  />
                 ) : (
                   false
                 )
