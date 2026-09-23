@@ -209,9 +209,14 @@ every survey, so a respondent can navigate between them by heading.
 The survey name sits above them as the survey's single top-level heading, but **only on a link survey**. A
 website or in-app survey is delivered by the JavaScript widget, which loads the survey from an endpoint that
 deliberately withholds survey names, so that a survey's name is not readable by anyone who can reach that
-endpoint. The widget has no name to use, so those surveys carry the second-level card headings with no
-top-level heading above them. A respondent can still move between prompts by heading; what they do not get is
-a heading naming the survey they are answering.
+endpoint. The widget has no name to use:
+
+- **Shown as a pop-up** (the widget's default): the dialog is named with the generic label "Survey Dialog",
+  and there is no top-level heading above the second-level card headings. A respondent can still move between
+  prompts by heading; what they do not get is a heading naming the survey they are answering.
+- **Rendered inline** into a container on the page: the survey now carries "Survey Dialog" as its top-level
+  heading and as the name of its form landmark, so the landmark is always named and the card headings always
+  sit under a top-level heading — **Fixed, not yet released**. It is a generic label, not the survey's name.
 
 **Workaround for released versions, and for website and in-app surveys:** Keeping surveys short and putting one
 question on each screen reduces the amount of navigation a respondent has to do. Repeating the survey's purpose
