@@ -2,12 +2,12 @@ import "server-only";
 import { z } from "zod";
 import { type TChartQuery } from "@formbricks/types/analysis";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
+import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import { formatDataProfile } from "@/modules/ee/analysis/lib/ai-data-profile";
 import { getAIDataProfile } from "@/modules/ee/analysis/lib/ai-data-profile.server";
 import { generateSchemaContext } from "@/modules/ee/analysis/lib/ai-schema-context";
 import {
-  DATE_PRESETS,
   FEEDBACK_DIMENSION_IDS,
   FEEDBACK_MEASURE_IDS,
   FEEDBACK_TIME_DIMENSION_IDS,
@@ -43,7 +43,7 @@ const toEnumTuple = (values: readonly string[]): [string, ...string[]] => {
 const ZMeasureId = z.enum(toEnumTuple(FEEDBACK_MEASURE_IDS));
 const ZDimensionId = z.enum(toEnumTuple(FEEDBACK_DIMENSION_IDS));
 const ZTimeDimensionId = z.enum(toEnumTuple(FEEDBACK_TIME_DIMENSION_IDS));
-const ZDatePreset = z.enum(toEnumTuple(DATE_PRESETS.map((preset) => preset.value)));
+const ZDatePreset = z.enum(toEnumTuple(DATE_RANGE_PRESETS));
 const ZFilterMemberId = z.enum(toEnumTuple([...FEEDBACK_MEASURE_IDS, ...FEEDBACK_DIMENSION_IDS]));
 const ZFilterOperator = z.enum([
   "equals",
