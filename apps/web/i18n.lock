@@ -278,6 +278,7 @@ checksums:
     common/error_rate_limit_description: 37791a33a947204662ee9c6544e90f51
     common/error_rate_limit_title: 23ac9419e267e610e1bfd38e1dc35dc0
     common/expand_rows: b6e06327cb8718dfd6651720843e4dad
+    common/expired: 63b27cccba4ab2143e0f5f3d46e4168a
     common/failed: 99f87615af1fffa2b8802866b096705a
     common/failed_to_copy_to_clipboard: de836a7d628d36c832809252f188f784
     common/failed_to_load_organizations: 512808a2b674c7c28bca73f8f91fd87e
@@ -313,6 +314,7 @@ checksums:
     common/impressions: 7fe38d42d68a64d3fd8436a063751584
     common/imprint: c4e5f2a1994d3cc5896b200709cc499c
     common/in_progress: 3de9afebcb9d4ce8ac42e14995f79ffd
+    common/inactive: 239e3b722db75bbafc6c628a2685eed2
     common/inactive_surveys: 324b8e1844739cdc2a3bc71aef143a76
     common/input: c281c28cbb062bc3538cbd4a42d79cf6
     common/integration: 40d02f65c4356003e0e90ffb944907d2
@@ -2918,6 +2920,7 @@ checksums:
     workspace/settings/teams/all_members_added: 0541be1777b5c838f2e039035488506c
     workspace/settings/teams/all_workspaces_added: 50855f316bd80223b638b3cdc0685822
     workspace/settings/teams/are_you_sure_you_want_to_delete_this_team: 9cf027aeee8059e692948f2da4302163
+    workspace/settings/teams/billing: b01dbdd049ebbd4a349fa64d6ce65a3b
     workspace/settings/teams/billing_role_description: dfcfc3730c3dff59b983c5d9c3d6df12
     workspace/settings/teams/bulk_invite: 9c237edb8782df589c25ae1723942bf7
     workspace/settings/teams/bulk_invite_scale_only_description: a585bbc877bf36694c042d32120b6d8c
@@ -2935,11 +2938,13 @@ checksums:
     workspace/settings/teams/manage: a3d40c0267b81ae53c9598eaeb05087d
     workspace/settings/teams/manage_team: 4c52e636cfd1451a08179fb7a68042ab
     workspace/settings/teams/manage_team_disabled: 2aaa0557b403a5bc657ec9e8b19ac5ac
+    workspace/settings/teams/manager: 8c0b172e24887a9af27134be98ee79b9
     workspace/settings/teams/manager_role_description: 020b8674cc330536239dafe5db087de6
     workspace/settings/teams/member: 1606dc30b369856b9dba1fe9aec425d2
     workspace/settings/teams/member_role_description: 8c2447cb929850b41619988be0b9b1ac
     workspace/settings/teams/member_role_info_message: 511f3b954486f9c8a3b043e498f21c69
     workspace/settings/teams/organization_role: 979b75fcc3696952e5922d659c839c10
+    workspace/settings/teams/owner: 9c0b3aeca046c3ebd3bdc352edc83e88
     workspace/settings/teams/owner_role_description: 8f577e6f9d1368fed4eba5a91ffc8cbf
     workspace/settings/teams/please_fill_all_member_fields: 60e38d9906ec9a02a44d16c736bd9fe9
     workspace/settings/teams/please_fill_all_workspace_fields: 190fc5d3c63cc5ec49d77f587e619ed8
