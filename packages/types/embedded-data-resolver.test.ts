@@ -8,6 +8,7 @@ import {
   type TEmbeddedValueResponse,
   type TLinkedEmbeddedField,
   type TReservedFieldCatalogEntry,
+  buildEmbeddedLookup,
   coerceToEmbeddedDataType,
   deriveLegacyEmbeddedData,
   dropShadowedReservedEntries,
@@ -2124,10 +2125,57 @@ describe("projectIngestedDefaults", () => {
     expect(projectIngestedDefaults(survey, {})).toStrictEqual({ k0: "true" });
   });
 
+  test("a locked field answers with its default even when storage holds a value", () => {
+    // Locking is retroactive: a field locked after its survey collected responses has values that
+    // were legitimate when they arrived, and `resolveEmbeddedValue` answers with the default for
+    // them. Leaving `locked` to `applyIngestContract` alone would disagree on exactly that survey.
+    const survey = surveyWith(makeField({ dataType: "number", defaultValue: 20, locked: true }));
+
+    expect(projectIngestedDefaults(survey, { k0: 99 })).toStrictEqual({ k0: 20 });
+  });
+
   test("computed fields are not this function's business", () => {
     // They are seeded from their own definitions into `variables`, which is a different map.
     const survey = surveyWith(makeField({ source: "computed", dataType: "number", defaultValue: 7 }));
 
     expect(projectIngestedDefaults(survey, {})).toStrictEqual({});
+  });
+});
+
+describe("buildEmbeddedLookup", () => {
+  const survey = {
+    embeddedFields: [
+      { field: makeField({ dataType: "number", defaultValue: 20 }), link: { storageKey: "pts" } },
+    ],
+  };
+
+  test("the response beats the default", () => {
+    expect(buildEmbeddedLookup(survey, {}, { pts: 5 })).toStrictEqual({ pts: 5 });
+  });
+
+  test("the default answers when the response has nothing", () => {
+    expect(buildEmbeddedLookup(survey, {}, {})).toStrictEqual({ pts: 20 });
+  });
+
+  test("the response beats a reserved entry of the same name", () => {
+    // The layer order this function exists to pin: flipping any pair here is a regression that used
+    // to live in two identical spreads inside a component, where nothing could fail on it.
+    expect(buildEmbeddedLookup(survey, { url: "reserved" }, { url: "answered", pts: 5 })).toStrictEqual({
+      url: "answered",
+      pts: 5,
+    });
+  });
+
+  test("a reserved entry beats a default of the same name", () => {
+    const clashing = {
+      embeddedFields: [{ field: makeField({ defaultValue: "declared" }), link: { storageKey: "url" } }],
+    };
+
+    expect(buildEmbeddedLookup(clashing, { url: "reserved" }, {})).toStrictEqual({ url: "reserved" });
+  });
+
+  test("a supplied empty string is still an answer", () => {
+    // `""` and `0` are values, so neither layer below may overwrite them.
+    expect(buildEmbeddedLookup(survey, { pts: 7 }, { pts: "" })).toStrictEqual({ pts: "" });
   });
 });
