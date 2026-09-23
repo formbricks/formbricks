@@ -2,7 +2,7 @@
 
 import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
-import { type Dispatch, type SetStateAction, useState } from "react";
+import { type Dispatch, type SetStateAction, useId, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { type Workspace } from "@formbricks/database/prisma-browser";
@@ -20,6 +20,7 @@ import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -45,6 +46,7 @@ export const AddElementToBlockButton = ({
 }: AddElementToBlockButtonProps) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const menuId = useId();
   const groupedElementTypes = getGroupedElementTypes(t, isCxMode);
 
   const handleAddElement = (elementType: string) => {
@@ -95,9 +97,11 @@ export const AddElementToBlockButton = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         {groupedElementTypes.map((group, index) => (
-          <div key={group.category.id}>
+          <DropdownMenuGroup key={group.category.id} aria-labelledby={`${menuId}-${group.category.id}`}>
             {index > 0 && <DropdownMenuSeparator />}
-            <DropdownMenuLabel className="pt-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+            <DropdownMenuLabel
+              id={`${menuId}-${group.category.id}`}
+              className="pt-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
               {group.category.label}
             </DropdownMenuLabel>
             {group.elements.map((elementType) => (
@@ -109,7 +113,7 @@ export const AddElementToBlockButton = ({
                 <span className="ml-2">{elementType.label}</span>
               </DropdownMenuItem>
             ))}
-          </div>
+          </DropdownMenuGroup>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
