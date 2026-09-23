@@ -57,11 +57,18 @@ export function SsoRecoveryFactorsRemovedEmail({
             {t("emails.sso_recovery_factors_removed_email_api_keys")}
           </Text>
         ) : null}
-        <Text className="text-sm">{t("emails.sso_recovery_factors_removed_email_sign_in_hint")}</Text>
-        <EmailButton
-          href={securitySettingsLink}
-          label={t("emails.sso_recovery_factors_removed_email_review_security")}
-        />
+        {/* The hint and the link both point at the profile page, which hosts the password form and the
+            2FA card and nothing about API keys. A keys-only recovery has nothing to re-enrol there, so
+            sending the reader to it would be a dead end. */}
+        {passwordRemoved || twoFactorRemoved ? (
+          <>
+            <Text className="text-sm">{t("emails.sso_recovery_factors_removed_email_sign_in_hint")}</Text>
+            <EmailButton
+              href={securitySettingsLink}
+              label={t("emails.sso_recovery_factors_removed_email_review_security")}
+            />
+          </>
+        ) : null}
         <Text className="mb-0 text-sm">{t("emails.sso_recovery_factors_removed_email_did_not_expect")}</Text>
         <EmailFooter t={t} />
       </Container>
