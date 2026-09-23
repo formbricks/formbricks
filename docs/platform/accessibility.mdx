@@ -92,27 +92,24 @@ that criterion as supported, and a later review of the code found otherwise.
 
 ### Image Text Alternatives
 
-**Affected criterion:** 1.1.1 — **Not in the 9 August 2026 report.** **Partly fixed, not yet released. Still
-open: there is no field for a creator-written text alternative.**
+**Affected criterion:** 1.1.1 — **Not in the 9 August 2026 report**
 
 Formbricks lets a survey creator add an image to a question or to an ending card, and offers no field for a
 text alternative for it. As assessed, those images were announced only as "Image", with nothing about what they
-show.
+show, and a survey creator had no way to change that.
 
-A question or ending image now takes its text alternative from the uploaded file's name —
-`team-photo-2026.png` is announced as "team photo 2026". Where the file name leaves nothing readable, the image
-is marked decorative and a screen reader skips it rather than announcing a meaningless "Image". The image
-options in a Picture Selection question already worked this way, falling back to a numbered label, and the
-welcome card's logo and video carry a real text alternative.
+Question and ending images are now marked decorative, so a screen reader skips them instead of announcing a
+meaningless "Image" — **Fixed, not yet released**. This does not give them a text alternative: an image that
+carries information still has no way to convey it to a respondent who cannot see it.
 
-What remains is that a file name is a weak text alternative. It can name an image, but it rarely describes what
-an informative image shows, and a survey creator still cannot write one.
+Two places do better. The welcome card's logo and video both carry a real text alternative. And the image
+options in a Picture Selection question derive theirs from the uploaded file's name — `team-photo-2026.png` is
+announced as "team photo 2026" — falling back to a numbered label where the file name leaves nothing readable.
 
-**Workaround:** Name every image file the way you would write its alt text before you upload it. Treat question
-and ending images as illustration all the same: put anything a respondent needs in order to answer into the
-headline or the description, both of which are always read out, and make sure a Picture Selection choice is also
-expressed in text wherever the image carries the meaning. On released versions, question and ending images are
-still announced only as "Image", so the headline and description are the only route there.
+**Workaround:** Treat question and ending images as illustration. Put anything a respondent needs in order to
+answer into the headline or the description, both of which are always read out. For a Picture Selection
+question, name the files the way you would write alt text before you upload them, and make sure the choice is
+also expressed in text wherever the image carries the meaning.
 
 ### Embedded Third-Party Video
 
@@ -317,8 +314,8 @@ not.
 
 **Do not put information only in an image.** Formbricks does not currently offer a field for image alt text, so
 an image cannot carry information on its own. Treat images as illustration and put anything a respondent needs
-in order to answer into the headline or the description. The file name becomes the text alternative for
-question, ending and Picture Selection images, so name the files descriptively before uploading them. See
+in order to answer into the headline or the description. In a Picture Selection question the file name becomes
+the text alternative, so name the files descriptively before uploading them. See
 [Image Text Alternatives](#image-text-alternatives) above.
 
 **Do not convey meaning with colour alone.** If a rating scale, an option, or an instruction depends on a

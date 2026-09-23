@@ -47,8 +47,6 @@ interface RankingProps {
   disabled?: boolean;
   /** Image URL to display above the headline */
   imageUrl?: string;
-  /** Text alternative for the element image; omitted or "" renders it decorative */
-  imageAltText?: string;
   /** Video URL to display above the headline */
   videoUrl?: string;
 }
@@ -167,7 +165,6 @@ function Ranking({
   dir = "auto",
   disabled = false,
   imageUrl,
-  imageAltText,
   videoUrl,
 }: Readonly<RankingProps>): React.JSX.Element {
   const errorAria = getElementErrorAria(inputId, errorMessage);
@@ -227,7 +224,6 @@ function Ranking({
         requiredLabel={requiredLabel}
         htmlFor={inputId}
         imageUrl={imageUrl}
-        imageAltText={imageAltText}
         videoUrl={videoUrl}
       />
 

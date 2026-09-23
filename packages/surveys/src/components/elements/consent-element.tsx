@@ -4,7 +4,6 @@ import { Consent } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyConsentElement } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n";
-import { getMediaAltText } from "@/lib/storage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface ConsentElementProps {
@@ -63,7 +62,6 @@ export function ConsentElement({
         errorMessage={errorMessage}
         dir={dir}
         imageUrl={element.imageUrl}
-        imageAltText={getMediaAltText(element.imageUrl)}
         videoUrl={element.videoUrl}
       />
     </form>

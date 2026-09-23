@@ -4,7 +4,7 @@ import { PictureSelect, type PictureSelectOption } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyPictureSelectionElement } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n";
-import { getImageAltFromUrl, getMediaAltText } from "@/lib/storage";
+import { getImageAltFromUrl } from "@/lib/storage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface PictureSelectionProps {
@@ -88,7 +88,6 @@ export function PictureSelectionElement({
         dir={dir}
         errorMessage={errorMessage}
         imageUrl={element.imageUrl}
-        imageAltText={getMediaAltText(element.imageUrl)}
         videoUrl={element.videoUrl}
       />
     </form>

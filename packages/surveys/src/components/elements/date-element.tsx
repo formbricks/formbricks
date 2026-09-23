@@ -5,7 +5,6 @@ import { type TResponseData, type TResponseTtc } from "@formbricks/types/respons
 import type { TSurveyDateElement } from "@formbricks/types/surveys/elements";
 import { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n";
-import { getMediaAltText } from "@/lib/storage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { getDateBoundsFromRules, toISODateString } from "@/lib/validation/validators/date-utils";
 
@@ -103,7 +102,6 @@ export function DateElement({
         }
         dir={dir}
         imageUrl={element.imageUrl}
-        imageAltText={getMediaAltText(element.imageUrl)}
         videoUrl={element.videoUrl}
       />
     </form>

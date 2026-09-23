@@ -5,7 +5,6 @@ import { type TResponseData, type TResponseTtc } from "@formbricks/types/respons
 import type { TSurveyMultipleChoiceElement } from "@formbricks/types/surveys/elements";
 import { htmlToPlainText } from "@/lib/html-utils";
 import { getLocalizedValue } from "@/lib/i18n";
-import { getMediaAltText } from "@/lib/storage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { getShuffledChoicesIds } from "@/lib/utils";
 
@@ -195,7 +194,6 @@ export function MultipleChoiceSingleElement({
         otherValue={otherValue}
         onOtherValueChange={handleOtherValueChange}
         imageUrl={element.imageUrl}
-        imageAltText={getMediaAltText(element.imageUrl)}
         videoUrl={element.videoUrl}
         searchPlaceholder={t("common.search")}
         searchNoResultsText={t("common.no_results_found")}

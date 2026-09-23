@@ -6,7 +6,6 @@ import { type TResponseData, type TResponseTtc } from "@formbricks/types/respons
 import type { TAllowedFileExtension } from "@formbricks/types/storage";
 import type { TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n";
-import { getMediaAltText } from "@/lib/storage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface FileUploadElementProps {
@@ -364,7 +363,6 @@ export function FileUploadElement({
         errorMessage={errorMessage}
         isUploading={isUploading}
         imageUrl={element.imageUrl}
-        imageAltText={getMediaAltText(element.imageUrl)}
         videoUrl={element.videoUrl}
         placeholderText={t("errors.file_input.placeholder_text")}
         uploadingText={t("errors.file_input.uploading")}

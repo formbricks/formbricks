@@ -4,7 +4,6 @@ import { CTA as Cta, isSafeLinkUrl } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyCTAElement } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n";
-import { getMediaAltText } from "@/lib/storage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface CTAElementProps {
@@ -73,7 +72,6 @@ export function CTAElement({
         required={false}
         buttonVariant="custom"
         imageUrl={element.imageUrl}
-        imageAltText={getMediaAltText(element.imageUrl)}
         videoUrl={element.videoUrl}
       />
     </form>

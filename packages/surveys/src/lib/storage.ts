@@ -18,24 +18,12 @@ export const getImageAltFromUrl = (fileURL: string): string => {
     }
   }
 
-  const alt = name
+  return name
     .replace(/\.[a-z0-9]+$/i, "")
     .replace(/[-_+]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-
-  // Punctuation alone ("!!!.png") names nothing, so it counts as nothing readable.
-  return /[\p{L}\p{N}]/u.test(alt) ? alt : "";
 };
-
-/**
- * Alt text for a question or ending-card image. Surveys have no creator-supplied alt field, so the
- * file name is the only text alternative there is. When it leaves nothing readable — or there is no
- * image — the result is "", which renders `alt=""` and marks the image decorative: a screen reader
- * then skips it instead of announcing a meaningless "Image".
- */
-export const getMediaAltText = (imageUrl: string | undefined): string =>
-  imageUrl ? getImageAltFromUrl(imageUrl) : "";
 
 export const getOriginalFileNameFromUrl = (fileURL: string): string => {
   try {
