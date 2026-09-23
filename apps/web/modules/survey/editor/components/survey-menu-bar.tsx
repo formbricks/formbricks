@@ -23,7 +23,7 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { isDeepEqual } from "@/lib/utils/object";
 import { reportStaleServerActionError } from "@/lib/utils/stale-server-action";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
-import { hasUnsavedSurveyChanges } from "@/modules/survey/editor/lib/unsaved-changes";
+import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
@@ -121,6 +121,25 @@ export const SurveyMenuBar = ({
       isSuccessfullySavedRef.current = false;
     }
   }, [survey]);
+
+  // An autosave sets the flag above without producing the `survey` prop that clears it, so a later
+  // edit would keep the unload warning suppressed and let a reload discard it (ENG-2330).
+  useEffect(() => {
+    // Guarded rather than folded into the condition: this runs on every keystroke, and there is
+    // nothing to retire while the bypass is not set.
+    if (!isSuccessfullySavedRef.current) {
+      return;
+    }
+
+    const isBypassValid = isJustSavedBypassValid(
+      isSuccessfullySavedRef.current,
+      hasUnsavedSurveyChanges(localSurvey, [survey, lastSavedSurveyRef.current])
+    );
+
+    if (!isBypassValid) {
+      isSuccessfullySavedRef.current = false;
+    }
+  }, [localSurvey, survey]);
 
   useEffect(() => {
     const warningText = t("workspace.surveys.edit.unsaved_changes_warning");

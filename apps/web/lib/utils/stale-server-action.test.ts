@@ -8,9 +8,11 @@ vi.mock("next/navigation", () => ({
   unstable_isUnrecognizedActionError: mockIsUnrecognizedActionError,
 }));
 
+/** Both markers Next.js stamps on the rejection, so this matches what a real stale action produces. */
 const staleActionError = () =>
   Object.assign(new Error('Server Action "7f8e93d" was not found on the server.'), {
     name: "UnrecognizedActionError",
+    __NEXT_ERROR_CODE: "E715",
   });
 
 // The module latches once a stale action has been reported, so every test gets its own copy.
@@ -34,10 +36,19 @@ describe("isStaleServerActionError", () => {
     expect(mockIsUnrecognizedActionError).toHaveBeenCalledWith(error);
   });
 
-  test("falls back to the error name when the class identity is lost", async () => {
+  test("falls back to the framework's own markers when the class identity is lost", async () => {
     const { isStaleServerActionError } = await loadModule();
 
     expect(isStaleServerActionError(staleActionError())).toBe(true);
+  });
+
+  test("rejects an application error that only borrows the name", async () => {
+    const { isStaleServerActionError } = await loadModule();
+    const impostor = Object.assign(new Error("boom"), { name: "UnrecognizedActionError" });
+
+    // Accepting this would raise the reload prompt over a working page and drop a real error from
+    // Sentry, so the name on its own is never enough.
+    expect(isStaleServerActionError(impostor)).toBe(false);
   });
 
   test("rejects unrelated rejection reasons", async () => {
@@ -118,6 +129,82 @@ describe("reportStaleServerActionError", () => {
     reportStaleServerActionError(staleActionError());
 
     expect(onStaleAction).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * The path that covers every call site which never delegates. `createOrganizationAction` and
+ * `updateMembershipAction` are two of 72 components that `catch` around an action and show their own
+ * generic message; none of them reach `unhandledrejection`, so the response header is the only signal
+ * left that the prompt can be raised from.
+ */
+describe("the stale action response observer", () => {
+  const addEventListener = vi.fn();
+  const removeEventListener = vi.fn();
+
+  const respondWith = (headers: Record<string, string>) =>
+    vi.fn(() => Promise.resolve({ headers: new Headers(headers) } as Response));
+
+  beforeEach(() => {
+    vi.stubGlobal("window", { addEventListener, removeEventListener, fetch: vi.fn() } as unknown as Window);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  test("prompts for a stale action whose rejection the caller swallows", async () => {
+    const { registerStaleServerActionListener } = await loadModule();
+    window.fetch = respondWith({ "x-nextjs-action-not-found": "1" });
+    const onStaleAction = vi.fn();
+    registerStaleServerActionListener(onStaleAction);
+
+    // The caller shows its own message and never rethrows -- the shape this observer exists for.
+    try {
+      await window.fetch("/create-organization");
+    } catch {
+      /* swallowed, as the call sites do */
+    }
+
+    expect(onStaleAction).toHaveBeenCalledTimes(1);
+  });
+
+  test("leaves an ordinary response alone", async () => {
+    const { registerStaleServerActionListener } = await loadModule();
+    window.fetch = respondWith({ "content-type": "text/x-component" });
+    const onStaleAction = vi.fn();
+    registerStaleServerActionListener(onStaleAction);
+
+    await window.fetch("/some-action");
+
+    expect(onStaleAction).not.toHaveBeenCalled();
+  });
+
+  test("hands the response back untouched", async () => {
+    const { registerStaleServerActionListener } = await loadModule();
+    const response = { headers: new Headers({ "x-nextjs-action-not-found": "1" }) } as Response;
+    window.fetch = vi.fn(() => Promise.resolve(response));
+    registerStaleServerActionListener(vi.fn());
+
+    // Reading headers must not consume the body or swap the response a caller is awaiting.
+    await expect(window.fetch("/create-organization")).resolves.toBe(response);
+  });
+
+  test("restores the original fetch once the last subscriber leaves", async () => {
+    const { registerStaleServerActionListener } = await loadModule();
+    const originalFetch = respondWith({});
+    window.fetch = originalFetch;
+
+    const unsubscribeFirst = registerStaleServerActionListener(vi.fn());
+    const unsubscribeSecond = registerStaleServerActionListener(vi.fn());
+    expect(window.fetch).not.toBe(originalFetch);
+
+    unsubscribeFirst();
+    // Still wrapped: the second subscriber is relying on it.
+    expect(window.fetch).not.toBe(originalFetch);
+
+    unsubscribeSecond();
+    expect(window.fetch).toBe(originalFetch);
   });
 });
 

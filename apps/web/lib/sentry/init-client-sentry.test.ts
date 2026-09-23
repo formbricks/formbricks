@@ -117,9 +117,15 @@ describe("initClientSentryFromRuntimeConfig", () => {
     const event = { message: "boom" };
     const staleAction = Object.assign(new Error('Server Action "7f8e93d" was not found on the server.'), {
       name: "UnrecognizedActionError",
+      __NEXT_ERROR_CODE: "E715",
     });
 
     expect(beforeSend(event, { originalException: staleAction })).toBeNull();
+
+    // An application error that only borrows the name is still reported: dropping it would hide a
+    // real error behind a reload prompt that has no business being up.
+    const impostor = Object.assign(new Error("boom"), { name: "UnrecognizedActionError" });
+    expect(beforeSend(event, { originalException: impostor })).toBe(event);
   });
 
   test("does nothing on the server where there is no window", async () => {
