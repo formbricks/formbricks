@@ -2,7 +2,7 @@
 
 import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
-import { useState } from "react";
+import { type Dispatch, type SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { type Workspace } from "@formbricks/database/prisma-browser";
@@ -29,7 +29,7 @@ import {
 interface AddElementToBlockButtonProps {
   localSurvey: TSurvey;
   block: TSurveyBlock;
-  setLocalSurvey: (survey: TSurvey) => void;
+  setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   setActiveElementId: (elementId: string) => void;
   workspace: Workspace;
   isCxMode: boolean;
@@ -62,6 +62,8 @@ export const AddElementToBlockButton = ({
       languageSymbols
     );
 
+    // Validated against the rendered survey so the toast stays out of the updater; the write itself
+    // re-applies to the latest state, so a snapshot this memoized card skipped can't undo other edits.
     const result = addElementToBlock(localSurvey, block.id, elementWithLabels);
 
     if (!result.ok) {
@@ -70,7 +72,10 @@ export const AddElementToBlockButton = ({
       return;
     }
 
-    setLocalSurvey(result.data);
+    setLocalSurvey((prevSurvey) => {
+      const latest = addElementToBlock(prevSurvey, block.id, elementWithLabels);
+      return latest.ok ? latest.data : prevSurvey;
+    });
     setOpen(false);
     setActiveElementId(elementWithLabels.id);
     scrollElementCardIntoView(elementWithLabels.id);
