@@ -102,14 +102,15 @@ Question and ending images are now marked decorative, so a screen reader skips t
 meaningless "Image" — **Fixed, not yet released**. This does not give them a text alternative: an image that
 carries information still has no way to convey it to a respondent who cannot see it.
 
-Two places do better. The welcome card's logo and video both carry a real text alternative. And the image
-options in a Picture Selection question derive theirs from the uploaded file's name — `team-photo-2026.png` is
-announced as "team photo 2026" — falling back to a numbered label where the file name leaves nothing readable.
+The welcome card's logo and video both carry a real text alternative. The image options in a Picture
+Selection question are named by position — "Option 1", "Option 2" — so a respondent can tell them apart and
+choose one, but the label says nothing about what each image shows. Uploaded file names are never used as text
+alternatives, because a file name can carry personal data.
 
 **Workaround:** Treat question and ending images as illustration. Put anything a respondent needs in order to
 answer into the headline or the description, both of which are always read out. For a Picture Selection
-question, name the files the way you would write alt text before you upload them, and make sure the choice is
-also expressed in text wherever the image carries the meaning.
+question, describe the options in the headline or description as well — for example "Option 1 is the blue
+design, option 2 the green one" — wherever the image carries the meaning.
 
 ### Embedded Third-Party Video
 
@@ -314,8 +315,8 @@ not.
 
 **Do not put information only in an image.** Formbricks does not currently offer a field for image alt text, so
 an image cannot carry information on its own. Treat images as illustration and put anything a respondent needs
-in order to answer into the headline or the description. In a Picture Selection question the file name becomes
-the text alternative, so name the files descriptively before uploading them. See
+in order to answer into the headline or the description. Picture Selection options are announced only by
+position ("Option 1", "Option 2"), so describe the options in text wherever the image carries the meaning. See
 [Image Text Alternatives](#image-text-alternatives) above.
 
 **Do not convey meaning with colour alone.** If a rating scale, an option, or an instruction depends on a
