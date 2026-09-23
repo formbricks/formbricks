@@ -71,6 +71,11 @@ export const PreviewSurvey = ({
     }),
     [survey]
   );
+  const jsSurvey = useMemo(() => toJsWorkspaceStateSurvey(previewSurvey), [previewSurvey]);
+  const jsLinkSurvey = useMemo(
+    () => toJsWorkspaceStateSurvey({ ...previewSurvey, type: "link" }),
+    [previewSurvey]
+  );
 
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
@@ -131,7 +136,7 @@ export const PreviewSurvey = ({
 
   const placement = mirrorPlacementForDir(
     surveyPlacement || workspace.placement,
-    isRTLLanguage(toJsWorkspaceStateSurvey(survey), activeLanguageCode) ? "rtl" : "ltr"
+    isRTLLanguage(jsSurvey, activeLanguageCode) ? "rtl" : "ltr"
   );
   const overlay = surveyOverlay ?? workspace.overlay;
   const clickOutsideClose = surveyClickOutsideClose ?? workspace.clickOutsideClose;
@@ -339,7 +344,7 @@ export const PreviewSurvey = ({
                     <SurveyInline
                       appUrl={publicDomain}
                       isPreviewMode={true}
-                      survey={toJsWorkspaceStateSurvey(previewSurvey)}
+                      survey={jsSurvey}
                       isBrandingEnabled={workspace.inAppSurveyBranding}
                       isRedirectDisabled={true}
                       languageCode={activeLanguageCode}
@@ -388,7 +393,7 @@ export const PreviewSurvey = ({
                           appUrl={publicDomain}
                           isPreviewMode={true}
                           isBrandingEnabled={workspace.linkSurveyBranding}
-                          survey={toJsWorkspaceStateSurvey({ ...previewSurvey, type: "link" })}
+                          survey={jsLinkSurvey}
                           isRedirectDisabled={true}
                           languageCode={languageCode}
                           responseCount={42}
@@ -474,7 +479,7 @@ export const PreviewSurvey = ({
                   <SurveyInline
                     appUrl={publicDomain}
                     isPreviewMode={true}
-                    survey={toJsWorkspaceStateSurvey(previewSurvey)}
+                    survey={jsSurvey}
                     isBrandingEnabled={workspace.inAppSurveyBranding}
                     isRedirectDisabled={true}
                     languageCode={activeLanguageCode}
@@ -530,7 +535,7 @@ export const PreviewSurvey = ({
                         <SurveyInline
                           appUrl={publicDomain}
                           isPreviewMode={true}
-                          survey={toJsWorkspaceStateSurvey({ ...previewSurvey, type: "link" })}
+                          survey={jsLinkSurvey}
                           isBrandingEnabled={workspace.linkSurveyBranding}
                           isRedirectDisabled={true}
                           languageCode={languageCode}
