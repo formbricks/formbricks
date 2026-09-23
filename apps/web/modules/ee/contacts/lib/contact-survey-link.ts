@@ -4,7 +4,10 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { getPublicDomain } from "@/lib/getPublicUrl";
-import { generateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
+import {
+  type TSurveySingleUseLinkParams,
+  generateSurveySingleUseLinkParams,
+} from "@/lib/utils/single-use-surveys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { getSurvey } from "@/modules/survey/lib/survey";
 
@@ -36,7 +39,7 @@ export const getContactSurveyLink = async (
   const encryptedContactId = symmetricEncrypt(contactId, ENCRYPTION_KEY);
   const encryptedSurveyId = symmetricEncrypt(surveyId, ENCRYPTION_KEY);
 
-  let singleUseLinkParams: { suId: string; suToken?: string } | undefined;
+  let singleUseLinkParams: TSurveySingleUseLinkParams | undefined;
 
   if (isSingleUseEnabled) {
     singleUseLinkParams = generateSurveySingleUseLinkParams(surveyId, isSingleUseEncrypted ?? false);

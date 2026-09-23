@@ -67,6 +67,74 @@ The Helm chart and Formbricks image are versioned independently. A chart-only pa
   generate a secret before upgrading — doing so **signs every current user out**, because their cookies
   were signed with that fallback value rather than with a secret of yours.
 
+### Encrypted single-use survey links must be regenerated (action required if you use them)
+
+Encrypted single-use survey links issued before v6 stop working and have to be regenerated.
+
+#### What to do when upgrading
+
+**Regenerate after upgrading, not before.** Links minted by the old version are unsigned whichever
+day you mint them, so regenerating first produces a second batch that the new version rejects exactly
+like the first.
+
+1. Plan a maintenance window covering the deploy and the redistribution. Outstanding links stop
+   working the moment the new version serves traffic, and a respondent who opened one before the
+   deploy and submits after it sees the invitation error and loses their answers.
+2. Deploy v6.
+3. Regenerate the links for any survey with single-use enabled and **URL encryption of single-use
+   ID** on, from the survey's share modal or via
+   `GET /api/v1/management/surveys/{surveyId}/singleUseIds`. The new version signs them.
+4. Re-send. Formbricks never stores generated links, so there is nothing to migrate and nothing to
+   back up — the new links simply replace the old ones.
+
+**Links with URL encryption off are unaffected**, including custom single-use IDs. Those have carried
+a `suToken` signature since 5.0 and validate exactly as before, so integrations that mint their own
+IDs need no changes.
+
+#### What you will see if you skip it
+
+Opening an old encrypted link shows *"This survey can only be taken by invitation"*, and submissions
+against it are rejected. Server logs record one `warn` per rejection carrying the survey id and a
+`reason` of `missing_signature`.
+
+#### Why
+
+An encrypted single-use link carried only an encrypted id and no signature, so nothing tied it to the
+survey it was issued for and any survey on the same deployment accepted it. Both modes now carry the
+same signature, which is what the old links are missing.
+
+#### If you cannot re-issue in time
+
+`SINGLE_USE_LEGACY_UNSIGNED_UNTIL` keeps the old links working for a fixed period, so an in-flight
+campaign does not die on upgrade day. It takes an ISO 8601 date and is unset by default:
+
+```sh
+SINGLE_USE_LEGACY_UNSIGNED_UNTIL=2026-11-15
+```
+
+Unsigned **encrypted** links are accepted until 00:00 UTC on that date, and rejected from then on.
+Nothing else changes: links with URL encryption off are untouched, a `suToken` that is present but
+wrong is still rejected, and the id must still decrypt under your `ENCRYPTION_KEY`.
+
+<Warning>
+  This re-opens the vulnerability the release closed, for as long as it is set. An unsigned encrypted
+  link is bound to no survey, so a link issued for one survey opens **any** survey on the same
+  instance — on a deployment serving more than one organisation, that is across organisations. Set it
+  only on a single-tenant instance, only for as long as re-issuing takes, and only as a deliberate
+  decision. It is not a substitute for step 3 above.
+</Warning>
+
+Each accepted legacy link is logged at `warn` with the survey id and the configured expiry, and
+counted on `formbricks_survey_single_use_link_validations_total` with `reason="legacy_unsigned"`.
+Watch that series fall to zero, then remove the variable — it tells you when the window has stopped
+carrying traffic and re-issuing is complete.
+
+#### Rollback
+
+Downgrading restores the old links, since nothing about them changed on disk — but it also restores
+the behaviour above, so treat it as a stopgap while you regenerate rather than a fix.
+||||||| 1cb21762d6
+
 ## v5.4
 
 v5.4 carries one application-level breaking change, and it is narrow: it affects **API keys** used against
