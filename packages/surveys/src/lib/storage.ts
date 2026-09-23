@@ -18,11 +18,14 @@ export const getImageAltFromUrl = (fileURL: string): string => {
     }
   }
 
-  return name
+  const alt = name
     .replace(/\.[a-z0-9]+$/i, "")
     .replace(/[-_+]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+
+  // Punctuation alone ("!!!.png") names nothing, so it counts as nothing readable.
+  return /[\p{L}\p{N}]/u.test(alt) ? alt : "";
 };
 
 /**

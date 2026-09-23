@@ -20,6 +20,14 @@ describe("getImageAltFromUrl", () => {
   test("returns empty string when nothing readable is left", () => {
     expect(getImageAltFromUrl("https://example.com/files/path/")).toBe("");
   });
+
+  test("returns empty string when only punctuation is left", () => {
+    expect(getImageAltFromUrl("https://example.com/storage/!!!.png")).toBe("");
+  });
+
+  test("keeps non-Latin file names", () => {
+    expect(getImageAltFromUrl("https://example.com/storage/%E5%86%99%E7%9C%9F.png")).toBe("写真");
+  });
 });
 
 describe("getMediaAltText", () => {
