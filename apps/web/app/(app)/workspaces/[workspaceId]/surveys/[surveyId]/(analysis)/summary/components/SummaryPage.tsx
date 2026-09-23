@@ -104,13 +104,14 @@ export const SummaryPage = ({
       setDisplays(data);
       setHasMoreDisplays(data.length === DISPLAYS_PER_PAGE);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : String(error));
+      const errorMessage = error instanceof Error ? error.message : t("common.something_went_wrong");
+      setDisplaysError(errorMessage);
       setDisplays([]);
       setHasMoreDisplays(false);
     } finally {
       setIsDisplaysLoading(false);
     }
-  }, [fetchDisplays]);
+  }, [fetchDisplays, t]);
 
   const handleLoadMoreDisplays = useCallback(async () => {
     try {
