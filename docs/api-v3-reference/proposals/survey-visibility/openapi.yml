@@ -258,6 +258,72 @@ paths:
         - apiKeyAuth: []
         - bearerAuth: []
 
+  /api/v3/surveys/{surveyId}:
+    get:
+      operationId: getSurveyV3
+      summary: Retrieve a survey
+      description: >
+        Unchanged, except that the resource now carries `visibility`, `owner` and `access` (see
+        `SurveyResource`). A private survey the caller may not see answers **403**, identical to an
+        unknown id. `PATCH` on this path is not repeated here: its only change is that `visibility`
+        in the body answers **400** with `invalid_params[].code: unsupported_field`.
+      tags:
+        - V3 Surveys
+      parameters:
+        - $ref: "#/components/parameters/SurveyIdPath"
+      responses:
+        "200":
+          description: Survey retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SurveyResource"
+              examples:
+                privateDraftSeenByOwner:
+                  summary: Only the added fields are shown; the rest of the resource is unchanged
+                  value:
+                    data:
+                      id: clsv2234567890123456789012
+                      workspaceId: clws1234567890123456789012
+                      name: Onboarding interview (draft)
+                      type: app
+                      status: draft
+                      visibility: private
+                      owner:
+                        id: clus2234567890123456789012
+                        name: Bob Example
+                      access:
+                        via: owner
+                        canChangeVisibility: true
+        "400":
+          $ref: "#/components/responses/V3BadRequest"
+        "401":
+          $ref: "#/components/responses/V3Unauthorized"
+        "403":
+          $ref: "#/components/responses/V3Forbidden"
+        "429":
+          $ref: "#/components/responses/V3TooManyRequests"
+        "500":
+          $ref: "#/components/responses/V3InternalServerError"
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+
   /api/v3/surveys/{surveyId}/visibility:
     get:
       operationId: getSurveyVisibilityV3
@@ -513,9 +579,9 @@ components:
       schema:
         type: integer
         minimum: 1
-        maximum: 100
+        maximum: 250
         default: 20
-      description: Page size (max 100).
+      description: Page size (max 250), as on the existing survey list.
     CursorQuery:
       in: query
       name: cursor
@@ -678,6 +744,45 @@ components:
               additionalProperties: false
         - $ref: "#/components/schemas/SurveyVisibilityFields"
 
+    SurveyResource:
+      allOf:
+        - type: object
+          description: >-
+            The full single-survey resource as documented today in
+            `docs/api-v3-reference/src/components/schemas/SurveyResource.yml` (`metadata`, `languages`,
+            `blocks`, `endings`, `hiddenFields`, `variables`, `distribution`, `targeting`, …). Those
+            fields are unchanged and not repeated here; only the identity fields are typed so the
+            example validates. `SurveyVisibilityFields` is merged into the real schema via `allOf` when
+            this proposal moves into `src/`.
+          required:
+            - id
+            - workspaceId
+            - name
+            - type
+            - status
+          properties:
+            id:
+              type: string
+            workspaceId:
+              type: string
+            name:
+              type: string
+            type:
+              type: string
+              enum:
+                - link
+                - app
+                - website
+                - web
+            status:
+              type: string
+              enum:
+                - draft
+                - inProgress
+                - paused
+                - completed
+        - $ref: "#/components/schemas/SurveyVisibilityFields"
+
     SurveyVisibilityCounts:
       type: object
       required:
@@ -802,11 +907,19 @@ components:
             - changedBy
           properties:
             changedAt:
-              type: string
+              type:
+                - string
+                - "null"
               format: date-time
-              description: When this visibility took effect. Unchanged on a no-op.
+              description: >-
+                When the current visibility was last set through this endpoint. `null` when it never
+                was — the survey still has its creation visibility, which is the case for a no-op on a
+                survey nobody has touched. Unchanged by a no-op otherwise.
             changedBy:
-              $ref: "#/components/schemas/SurveyVisibilityActor"
+              anyOf:
+                - $ref: "#/components/schemas/SurveyVisibilityActor"
+                - type: "null"
+              description: Who last set it. `null` exactly when `changedAt` is `null`.
 
     Problem:
       type: object
@@ -853,6 +966,25 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/InvalidParam"
+
+    VisibilityBlockedProblem:
+      allOf:
+        - $ref: "#/components/schemas/Problem"
+        - type: object
+          required:
+            - details
+          properties:
+            details:
+              type: object
+              required:
+                - blockers
+              properties:
+                blockers:
+                  type: array
+                  minItems: 1
+                  items:
+                    $ref: "#/components/schemas/SurveyVisibilityBlocker"
+                  description: The same list `GET …/visibility` returns as `blockers[]`.
 
     InvalidParam:
       type: object
@@ -991,7 +1123,7 @@ components:
       content:
         application/problem+json:
           schema:
-            $ref: "#/components/schemas/Problem"
+            $ref: "#/components/schemas/VisibilityBlockedProblem"
           example:
             title: Conflict
             status: 409

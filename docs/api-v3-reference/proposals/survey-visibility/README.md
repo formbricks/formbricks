@@ -79,7 +79,9 @@ see the survey.
 Body `{ "visibility": "private" | "workspace" }`. Answers **200** with the new state, `changedAt` and
 `changedBy` only after the relationship change has been projected into SpiceDB inside the request
 (Decision log #2). Setting the value the survey already has is a **200 no-op**: nothing written,
-nothing audited.
+nothing audited, and `changedAt` / `changedBy` describe the last real change — both `null` when
+there never was one, for example a `workspace` request on an API-key-created survey that is still at
+its creation visibility.
 
 | Result                                  | When                                                                                                                                                                                                                                                              |
 | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
