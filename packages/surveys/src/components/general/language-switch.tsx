@@ -5,7 +5,7 @@ import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { LanguageIcon } from "@/components/icons/language-icon";
 import { mixColor } from "@/lib/color";
 import { getI18nLanguage } from "@/lib/i18n-utils";
-import i18n from "@/lib/i18n.config";
+import i18n, { loadLanguage, toI18nLanguage } from "@/lib/i18n.config";
 import { getLanguageDisplayName, getShortLanguageDisplayName } from "@/lib/language-display-name";
 import { getVisibleSurveyLanguages, isSameLanguageCode } from "@/lib/language-options";
 import { useClickOutside } from "@/lib/use-click-outside-hook";
@@ -45,6 +45,8 @@ export function LanguageSwitch({
     setShowLanguageDropdown((prev) => !prev);
   };
   const languageDropdownRef = useRef(null);
+  // Sequence number of the most recent language selection — see `handleI18nLanguage`.
+  const latestLanguageRequest = useRef(0);
   const defaultLanguageCode = surveyLanguages.find((surveyLanguage) => {
     return surveyLanguage.default;
   })?.language.code;
@@ -75,9 +77,20 @@ export function LanguageSwitch({
 
   const handleI18nLanguage = (languageCode: string) => {
     const calculatedLanguage = getI18nLanguage(languageCode, surveyLanguages);
-    if (i18n.language !== calculatedLanguage) {
-      i18n.changeLanguage(calculatedLanguage);
-    }
+    // Fetch first, switch second, so the chrome flips straight from one language to the next instead of
+    // blinking through English while the new strings are in flight. Resolves immediately once loaded.
+    //
+    // Only the newest selection may apply. Two languages served by different bundles are two separate
+    // fetches, so picking a second before the first lands would otherwise let the slower request set the
+    // chrome back to a language the respondent has already moved off.
+    const requestId = ++latestLanguageRequest.current;
+    void loadLanguage(calculatedLanguage).then(() => {
+      if (requestId !== latestLanguageRequest.current) return;
+      const i18nLanguage = toI18nLanguage(calculatedLanguage);
+      if (i18n.language !== i18nLanguage) {
+        i18n.changeLanguage(i18nLanguage);
+      }
+    });
   };
 
   const changeLanguage = (languageCode: string) => {
