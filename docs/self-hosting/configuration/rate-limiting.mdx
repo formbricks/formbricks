@@ -91,9 +91,10 @@ These are the limits that still run inside the Formbricks application server:
 | `actions.sendLinkSurveyEmail` | 10 requests  | 60 minutes | IP hash                       | Link survey email send action                                                                                                                             |
 | `actions.licenseRecheck`      | 5 requests   | 1 minute   | User ID                       | Enterprise license recheck action                                                                                                                         |
 
-Invite limits are recipient-counted, so a bulk request for 25 people consumes 25 units. Self-hosters can
-change the limit with `INVITE_RATE_LIMIT_PER_24_HOURS`; Formbricks Cloud organizations with the
-`bulk-invite` entitlement receive a limit of 500 recipients.
+Invite limits count successfully created or refreshed invites. A bulk request for 25 people consumes 25 units
+only when all 25 invites are created; recipients who are already members, already invited, or otherwise fail do
+not consume the daily budget. Self-hosters can change the limit with `INVITE_RATE_LIMIT_PER_24_HOURS`;
+Formbricks Cloud organizations with the `bulk-invite` entitlement receive a limit of 500 recipients.
 
 ## Explicit Envoy Exclusions
 

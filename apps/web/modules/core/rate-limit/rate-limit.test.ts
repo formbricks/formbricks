@@ -1,7 +1,13 @@
 // Import modules after mocking
 import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 // Import after mocking
-import { checkRateLimit, peekRateLimit } from "./rate-limit";
+import {
+  type TRateLimitReservation,
+  checkRateLimit,
+  peekRateLimit,
+  reserveRateLimit,
+  settleRateLimit,
+} from "./rate-limit";
 import { TRateLimitConfig } from "./types/rate-limit";
 
 const { mockEval, mockGet, mockRedisClient, mockCache } = vi.hoisted(() => {
@@ -199,6 +205,92 @@ describe("checkRateLimit", () => {
         arguments: ["5", expect.any(String), "5"],
       })
     );
+  });
+
+  test("should return an exact-window receipt for a weighted reservation", async () => {
+    mockEval.mockResolvedValue([5, 1]);
+
+    const result = await reserveRateLimit(testConfig, "test-user", 5);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data).toEqual({
+      allowed: true,
+      retryAfter: undefined,
+      reservation: {
+        identifier: "test-user",
+        key: expect.stringMatching(/^fb:rate_limit:test:test-user:\d+$/),
+        namespace: "test",
+        requested: 5,
+        settled: false,
+      },
+    });
+  });
+
+  test("should atomically release only unused reserved units", async () => {
+    const reservation: TRateLimitReservation = {
+      identifier: "test-user",
+      key: "fb:rate_limit:test:test-user:123",
+      namespace: "test",
+      requested: 5,
+      settled: false,
+    };
+    mockEval.mockResolvedValue([2, 3]);
+
+    await settleRateLimit(reservation, 2);
+
+    expect(mockEval).toHaveBeenCalledWith(expect.any(String), {
+      keys: [reservation.key],
+      arguments: ["3"],
+    });
+    expect(reservation.settled).toBe(true);
+  });
+
+  test("should settle a receipt only once", async () => {
+    const reservation: TRateLimitReservation = {
+      identifier: "test-user",
+      key: "fb:rate_limit:test:test-user:123",
+      namespace: "test",
+      requested: 5,
+      settled: false,
+    };
+    mockEval.mockResolvedValue([2, 3]);
+
+    await settleRateLimit(reservation, 2);
+    await settleRateLimit(reservation, 2);
+
+    expect(mockEval).toHaveBeenCalledOnce();
+  });
+
+  test("should not touch Redis when all reserved units succeed", async () => {
+    const reservation: TRateLimitReservation = {
+      identifier: "test-user",
+      key: "fb:rate_limit:test:test-user:123",
+      namespace: "test",
+      requested: 5,
+      settled: false,
+    };
+
+    await settleRateLimit(reservation, 5);
+
+    expect(mockEval).not.toHaveBeenCalled();
+    expect(reservation.settled).toBe(true);
+  });
+
+  test.each([-1, 1.5, 6])("should reject invalid successful usage %s", async (successful) => {
+    const reservation: TRateLimitReservation = {
+      identifier: "test-user",
+      key: "fb:rate_limit:test:test-user:123",
+      namespace: "test",
+      requested: 5,
+      settled: false,
+    };
+
+    await expect(settleRateLimit(reservation, successful)).rejects.toThrow(
+      "Successful rate limit usage must be an integer within the reserved amount"
+    );
+    expect(mockEval).not.toHaveBeenCalled();
+    expect(reservation.settled).toBe(false);
   });
 
   test.each([0, -1, 1.5])("should reject invalid usage %s", async (requested) => {

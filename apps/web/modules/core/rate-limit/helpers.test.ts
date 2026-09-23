@@ -10,8 +10,10 @@ import {
   applyRateLimit,
   assertRateLimitAvailable,
   getClientIdentifier,
+  reserveRateLimitUsage,
+  settleRateLimitUsage,
 } from "./helpers";
-import { checkRateLimit, peekRateLimit } from "./rate-limit";
+import { checkRateLimit, peekRateLimit, reserveRateLimit, settleRateLimit } from "./rate-limit";
 import { rateLimitConfigs } from "./rate-limit-configs";
 
 // Mock all dependencies
@@ -26,6 +28,8 @@ vi.mock("@/lib/hash-string", () => ({
 vi.mock("./rate-limit", () => ({
   checkRateLimit: vi.fn(),
   peekRateLimit: vi.fn(),
+  reserveRateLimit: vi.fn(),
+  settleRateLimit: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -186,6 +190,46 @@ describe("helpers", () => {
       await expect(assertRateLimitAvailable(mockConfig, "test-identifier")).rejects.toThrow(
         "Maximum number of requests reached. Please try again later."
       );
+    });
+  });
+
+  describe("rate limit reservations", () => {
+    const mockConfig = {
+      interval: 300,
+      allowedPerInterval: 5,
+      namespace: "test",
+    };
+    const reservation = {
+      identifier: "test-identifier",
+      key: "rate-limit-key",
+      namespace: "test",
+      requested: 5,
+      settled: false,
+    };
+
+    test("returns a receipt for an allowed reservation", async () => {
+      vi.mocked(reserveRateLimit).mockResolvedValue(
+        ok({ allowed: true, retryAfter: undefined, reservation })
+      );
+
+      await expect(reserveRateLimitUsage(mockConfig, "test-identifier", 5)).resolves.toBe(reservation);
+      expect(reserveRateLimit).toHaveBeenCalledWith(mockConfig, "test-identifier", 5);
+    });
+
+    test("rejects a reservation when capacity is exhausted", async () => {
+      vi.mocked(reserveRateLimit).mockResolvedValue(ok({ allowed: false, retryAfter: 60 }));
+
+      await expect(reserveRateLimitUsage(mockConfig, "test-identifier", 5)).rejects.toThrow(
+        "Maximum number of requests reached. Please try again later."
+      );
+    });
+
+    test("settles an existing receipt and ignores a fail-open reservation", async () => {
+      await settleRateLimitUsage(reservation, 2);
+      await settleRateLimitUsage(undefined, 0);
+
+      expect(settleRateLimit).toHaveBeenCalledOnce();
+      expect(settleRateLimit).toHaveBeenCalledWith(reservation, 2);
     });
   });
 
