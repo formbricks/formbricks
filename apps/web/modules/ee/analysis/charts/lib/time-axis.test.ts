@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import {
   formatTimeBucket,
   getTimeAxisTickLabels,
@@ -33,6 +33,18 @@ describe("formatTimeBucket", () => {
     expect(plain(formatTimeBucket("2026-09-14T23:00:00.000", "hour", "en-US"))).toBe(
       "Sep 14, 2026, 11:00 PM"
     );
+  });
+
+  test("keeps an hour that falls in the viewer's daylight-saving gap", () => {
+    // 2:00 AM does not exist in New York on Mar 8, 2026; local parsing would print 3:00 AM.
+    vi.stubEnv("TZ", "America/New_York");
+    try {
+      expect(plain(formatTimeBucket("2026-03-08T02:00:00.000", "hour", "en-US"))).toBe(
+        "Mar 8, 2026, 2:00 AM"
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   test("formats coarser buckets without a time", () => {
@@ -74,6 +86,11 @@ describe("getTimeAxisTickLayout", () => {
       expect((count - 1 - layout.last) * bucket + inset).toBeGreaterThanOrEqual(layout.slotWidth / 2);
       expect((layout.last - layout.first) % layout.step).toBe(0);
     }
+  });
+
+  test("keeps the only label inside the plot when no bucket has a full slot", () => {
+    // Two band buckets across 100px: each is 50px, too narrow for either to hold a 72px slot.
+    expect(getTimeAxisTickLayout(2, 100, false)).toEqual({ step: 2, first: 0, last: 0, slotWidth: 50 });
   });
 
   test("labels every bucket when there is at most one or no width to measure", () => {

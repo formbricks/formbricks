@@ -160,7 +160,10 @@ function WrappingXAxisTick({
     const timeLabel = timeAxis.labels[index];
     if (timeLabel == null) return null;
     if (timeAxis.layout.step > 1) {
-      const slotBoxWidth = Math.min(X_AXIS_TICK_MAX_WIDTH, timeAxis.layout.slotWidth - AXIS_LABEL_GAP);
+      const slotBoxWidth = Math.max(
+        1,
+        Math.min(X_AXIS_TICK_MAX_WIDTH, timeAxis.layout.slotWidth - AXIS_LABEL_GAP)
+      );
       return (
         <XAxisTickLabel
           label={timeLabel}

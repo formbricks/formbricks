@@ -1,4 +1,3 @@
-import { isValid, parseISO } from "date-fns";
 import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { TIME_GRANULARITIES, type TimeGranularity } from "@/modules/ee/analysis/lib/schema-definition";
 
@@ -7,15 +6,26 @@ import { TIME_GRANULARITIES, type TimeGranularity } from "@/modules/ee/analysis/
 export const TIME_AXIS_MIN_TICK_WIDTH = 72;
 
 // Cube returns time buckets as wall-clock strings in the reporting time zone, without an offset
-// ("2026-09-14T13:00:00.000"). Parsing them as local time and formatting them without a `timeZone`
-// keeps that wall clock as-is; converting would shift the bucket to the viewer's zone.
-const ISO_DATE_PREFIX = /^\d{4}-\d{2}-\d{2}/;
+// ("2026-09-14T13:00:00.000"). The fields are read into a UTC date and every format and comparison
+// runs in UTC, so the wall clock comes out exactly as Cube sent it. Local time would shift it to the
+// viewer's zone, or skip an hour that falls in the viewer's daylight-saving gap.
+const TIME_BUCKET = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/;
+const BUCKET_TIME_ZONE = "UTC";
 
 const parseTimeBucket = (value: unknown): Date | null => {
-  if (typeof value !== "string" || !ISO_DATE_PREFIX.test(value)) return null;
-  const date = parseISO(value);
-  return isValid(date) ? date : null;
+  if (typeof value !== "string") return null;
+  const match = TIME_BUCKET.exec(value);
+  if (!match) return null;
+  const [year, month, day, hour, minute] = match.slice(1).map((part) => Number(part ?? 0));
+  const date = new Date(Date.UTC(year, month - 1, day, hour, minute));
+  // Date.UTC rolls an out-of-range field over ("2026-02-30" → Mar 2); treat that as not a bucket.
+  return date.getUTCMonth() === month - 1 && date.getUTCDate() === day ? date : null;
 };
+
+const inBucketZone = (options: Intl.DateTimeFormatOptions): Intl.DateTimeFormatOptions => ({
+  ...options,
+  timeZone: BUCKET_TIME_ZONE,
+});
 
 /** The granularity a Cube time column is bucketed by (`FeedbackRecords.collectedAt.hour` → "hour"). */
 export const getTimeGranularityFromKey = (key: string): TimeGranularity | undefined =>
@@ -36,8 +46,8 @@ export const formatTimeBucket = (value: unknown, granularity: TimeGranularity, l
   const date = parseTimeBucket(value);
   if (!date) return typeof value === "string" || typeof value === "number" ? String(value) : "";
   return granularity === "hour"
-    ? formatDateTimeForDisplay(date, locale, FULL_LABEL_OPTIONS.hour)
-    : formatDateForDisplay(date, locale, FULL_LABEL_OPTIONS[granularity]);
+    ? formatDateTimeForDisplay(date, locale, inBucketZone(FULL_LABEL_OPTIONS.hour))
+    : formatDateForDisplay(date, locale, inBucketZone(FULL_LABEL_OPTIONS[granularity]));
 };
 
 export interface TTimeAxisTickLayout {
@@ -77,9 +87,16 @@ export const getTimeAxisTickLayout = (
   const edgeInset = pointScale ? 0 : bucketWidth / 2;
   // Buckets to skip at each edge before a centred label's half-slot fits inside the plot.
   const edgeBuckets = Math.ceil(Math.max(0, slotWidth / 2 - edgeInset) / bucketWidth);
-  const first = Math.min(edgeBuckets, tickCount - 1);
+  const first = edgeBuckets;
   const lastAllowed = tickCount - 1 - edgeBuckets;
-  const last = lastAllowed < first ? first : first + Math.floor((lastAllowed - first) / step) * step;
+  if (lastAllowed < first) {
+    // Too narrow for any bucket to hold a full slot clear of both edges: label only the middle
+    // bucket, with a slot shrunk to the room it has to the nearer edge.
+    const middle = Math.floor((tickCount - 1) / 2);
+    const room = Math.min(middle, tickCount - 1 - middle) * bucketWidth + edgeInset;
+    return { step, first: middle, last: middle, slotWidth: 2 * room };
+  }
+  const last = first + Math.floor((lastAllowed - first) / step) * step;
   return { step, first, last, slotWidth };
 };
 
@@ -87,7 +104,9 @@ const isLabelled = (index: number, { step, first, last }: TTimeAxisTickLayout) =
   index >= first && index <= last && (index - first) % step === 0;
 
 const isSameDay = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  a.getUTCFullYear() === b.getUTCFullYear() &&
+  a.getUTCMonth() === b.getUTCMonth() &&
+  a.getUTCDate() === b.getUTCDate();
 
 /**
  * Compact labels for the buckets `layout` labels; the others are `null`.
@@ -118,16 +137,16 @@ export const getTimeAxisTickLabels = (
       case "hour": {
         const time: Intl.DateTimeFormatOptions = { hour: "numeric", minute: "2-digit" };
         return prior && isSameDay(prior, date)
-          ? formatDateTimeForDisplay(date, locale, time)
-          : formatDateTimeForDisplay(date, locale, { month: "short", day: "numeric", ...time });
+          ? formatDateTimeForDisplay(date, locale, inBucketZone(time))
+          : formatDateTimeForDisplay(date, locale, inBucketZone({ month: "short", day: "numeric", ...time }));
       }
       case "day":
       case "week":
-        return prior && prior.getFullYear() === date.getFullYear()
-          ? formatDateForDisplay(date, locale, { month: "short", day: "numeric" })
-          : formatDateForDisplay(date, locale, FULL_LABEL_OPTIONS.day);
+        return prior && prior.getUTCFullYear() === date.getUTCFullYear()
+          ? formatDateForDisplay(date, locale, inBucketZone({ month: "short", day: "numeric" }))
+          : formatDateForDisplay(date, locale, inBucketZone(FULL_LABEL_OPTIONS.day));
       default:
-        return formatDateForDisplay(date, locale, FULL_LABEL_OPTIONS[granularity]);
+        return formatDateForDisplay(date, locale, inBucketZone(FULL_LABEL_OPTIONS[granularity]));
     }
   });
 };
