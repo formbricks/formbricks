@@ -10,6 +10,7 @@ interface TopControlBarProps {
   organizationWorkspacesLimit: number;
   isFormbricksCloud: boolean;
   isLicenseActive: boolean;
+  isNoLicense: boolean;
   isOwnerOrManager: boolean;
   isAccessControlAllowed: boolean;
   membershipRole?: TOrganizationRole;
@@ -23,6 +24,7 @@ export const TopControlBar = ({
   organizationWorkspacesLimit,
   isFormbricksCloud,
   isLicenseActive,
+  isNoLicense,
   isOwnerOrManager,
   isAccessControlAllowed,
   membershipRole,
@@ -42,6 +44,7 @@ export const TopControlBar = ({
         organizationWorkspacesLimit={organizationWorkspacesLimit}
         isFormbricksCloud={isFormbricksCloud}
         isLicenseActive={isLicenseActive}
+        isNoLicense={isNoLicense}
         isOwnerOrManager={isOwnerOrManager}
         isMembershipPending={isMembershipPending}
         isAccessControlAllowed={isAccessControlAllowed}

@@ -1,12 +1,13 @@
 ---
-title: "AuthZed Operations"
+title: "SpiceDB Authorization Operations"
 description: "Configure, monitor, back up, and repair the SpiceDB authorization dependency used by Formbricks."
 icon: "shield-halved"
 ---
 
-Formbricks uses [AuthZed SpiceDB](https://authzed.com/docs/spicedb) to store a relationship graph for
-authorization. PostgreSQL remains the source of truth. Formbricks projects membership, team, workspace, and
-API-key changes into SpiceDB after their PostgreSQL transaction commits.
+Formbricks uses [SpiceDB](https://authzed.com/docs/spicedb), maintained by AuthZed, to store a relationship
+graph for authorization. PostgreSQL remains the source of truth. Formbricks projects membership, team,
+workspace, and API-key changes into SpiceDB after their PostgreSQL transaction commits. Existing environment
+variables and operator commands keep the `AUTHZED_` prefix for compatibility.
 
 <Note>
   Formbricks v6 makes SpiceDB the sole authorization decision engine and has no runtime legacy fallback.
@@ -28,7 +29,7 @@ API-key changes into SpiceDB after their PostgreSQL transaction commits.
 | SpiceDB PostgreSQL datastore | Persistent SpiceDB schema, relationships, and revisions                         |
 | SpiceDB                      | Evaluates the relationship graph                                                |
 | Formbricks projection layer  | Copies committed PostgreSQL authorization changes into SpiceDB                  |
-| AuthZed operator commands    | Check health and schema state, then audit or repair relationship drift          |
+| Formbricks operator commands | Check health and schema state, then audit or repair relationship drift          |
 
 Formbricks writes projection intent in the same PostgreSQL transaction as the source mutation. BullMQ wakes the
 delivery worker, but PostgreSQL is the durable queue. A failed delivery is retried idempotently and a stale or
@@ -42,7 +43,7 @@ also means `/health` alone cannot prove that authorization data is healthy.
 
 There is no browser health or administration page. Use the release-matched operator commands below.
 
-## Configure AuthZed
+## Configure SpiceDB
 
 | Variable                    | Purpose                                                             | Default                                             |
 | --------------------------- | ------------------------------------------------------------------- | --------------------------------------------------- |
@@ -378,10 +379,10 @@ procedure.
 
 ## Inspect and drain durable delivery
 
-The v6 bridge writes projection intent in the same PostgreSQL transaction as an authorization source change.
-BullMQ wakes the delivery worker, but PostgreSQL remains the durable queue. Deletes, and updates that are not
-provably grants, are treated as revocations; direct authority fails closed when a revocation remains unresolved
-for 60 seconds or enters dead letter.
+The v6 projection layer writes projection intent in the same PostgreSQL transaction as an authorization source
+change. BullMQ wakes the delivery worker, but PostgreSQL remains the durable queue. Deletes, and updates that are
+not provably grants, are treated as revocations; direct authority fails closed when a revocation remains
+unresolved for 60 seconds or enters dead letter.
 
 ```bash
 formbricks-authzed outbox status

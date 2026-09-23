@@ -194,32 +194,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/SurveyListItem'
                   meta:
-                    type: object
-                    required:
-                      - limit
-                      - nextCursor
-                      - totalCount
-                      - workspaceSurveyCount
-                    properties:
-                      limit:
-                        type: integer
-                      nextCursor:
-                        type:
-                          - string
-                          - 'null'
-                        description: Opaque cursor for the next page. `null` when there are no more results.
-                      totalCount:
-                        type:
-                          - integer
-                          - 'null'
-                        minimum: 0
-                        description: Total number of surveys matching the current filters across all pages. `null` when `includeTotalCount=false`.
-                      workspaceSurveyCount:
-                        type:
-                          - integer
-                          - 'null'
-                        minimum: 0
-                        description: Total number of surveys in the workspace, archived (soft-deleted) ones included and independent of the current filters. `null` when `includeTotalCount=false` (the same gate as `totalCount`). Replaces the boolean `hasArchived` field of earlier releases.
+                    $ref: '#/components/schemas/SurveyListMeta'
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -1440,42 +1415,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/ResponseListItem'
                   meta:
-                    type: object
-                    required:
-                      - limit
-                      - nextCursor
-                      - totalCount
-                      - totalCountRelation
-                    properties:
-                      limit:
-                        type: integer
-                        minimum: 1
-                        description: The page size actually applied. Carries no `maximum` — it echoes what the server used rather than bounding what may be asked for.
-                      nextCursor:
-                        type:
-                          - string
-                          - 'null'
-                        description: 'Opaque cursor for the next page. `null` when there are no more results — the only reliable end-of-collection signal. Pass it back verbatim: the encoding is deliberately unspecified and may change without notice, so a client that decodes or constructs one is relying on something this contract does not promise.'
-                      totalCount:
-                        type:
-                          - integer
-                          - 'null'
-                        minimum: 0
-                        description: |
-                          Responses matching the current scope and filters across all pages, **counted only up to 10 000**. Exact below that; at the cap the value is exactly `10000` and means "at least 10 000", which `totalCountRelation` states explicitly. `null` unless `includeTotalCount=true`.
-
-                          The cap is not timidity — an exact count over this table grows superlinearly with the data while a capped one stays flat, so an uncapped total is the one part of a page whose cost is unbounded. Read `totalCountRelation` rather than testing for the magic number.
-                      totalCountRelation:
-                        type:
-                          - string
-                          - 'null'
-                        enum:
-                          - eq
-                          - gte
-                          - null
-                        description: |
-                          How to read `totalCount`: `eq` when it is exact, `gte` when the 10 000 cap was reached and it is a lower bound, `null` when `includeTotalCount=false`. This is the same eq/gte convention Elasticsearch uses for `hits.total.relation`, so a consumer can render "10,000+" honestly instead of claiming a precise figure it does not have.
-                    additionalProperties: false
+                    $ref: '#/components/schemas/ResponseListMeta'
               examples:
                 page:
                   summary: One page of responses, exercising several answer types
@@ -3221,18 +3161,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/ActionClassResource'
                   meta:
-                    type: object
-                    required:
-                      - limit
-                      - nextCursor
-                    properties:
-                      limit:
-                        type: integer
-                      nextCursor:
-                        type:
-                          - string
-                          - 'null'
-                        description: Opaque cursor for the next page. `null` when there are no more results.
+                    $ref: '#/components/schemas/CursorPaginationMeta'
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -3306,18 +3235,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/ContactAttributeKeyResource'
                   meta:
-                    type: object
-                    required:
-                      - limit
-                      - nextCursor
-                    properties:
-                      limit:
-                        type: integer
-                      nextCursor:
-                        type:
-                          - string
-                          - 'null'
-                        description: Opaque cursor for the next page. `null` when there are no more results.
+                    $ref: '#/components/schemas/CursorPaginationMeta'
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -4442,6 +4360,49 @@ components:
             name:
               type: string
           additionalProperties: false
+    ListPaginationMeta:
+      type: object
+      description: |-
+        The pagination half of a v3 list's `meta`, shared by every paginated collection.
+
+        Deliberately open, and never an endpoint's `meta` by itself: an endpoint composes it with `allOf` and closes the result with `unevaluatedProperties: false`. A base that closed itself could not be extended — inside an `allOf`, `additionalProperties: false` sees a sibling branch's properties as additional and rejects them. An endpoint that adds nothing still wraps it, so no `meta` anywhere is open.
+
+        Every field here is `required`. A shared envelope that makes its fields optional is how v3's predecessor stopped honouring its own pagination contract without the schema gate noticing (ENG-2622): `meta: {}` — or no `meta` at all — validated cleanly while the endpoint returned nothing.
+      required:
+        - limit
+        - nextCursor
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          description: 'The page size actually applied. Carries no `maximum`: it echoes what the server used, it does not bound what may be asked for. The request-side bound is the `limit` query parameter on the operation itself and differs per collection — read it there. A shared description cannot state it without being wrong for some of the operations that compose this base.'
+        nextCursor:
+          type:
+            - string
+            - 'null'
+          description: 'Opaque cursor for the next page. `null` when there are no more results — the only reliable end-of-collection signal, since the server may return fewer items than `limit` without the collection being exhausted. Pass it back verbatim: the encoding is deliberately unspecified and may change without notice, so a client that decodes or constructs one is relying on something this contract does not promise.'
+    SurveyListMeta:
+      allOf:
+        - $ref: '#/components/schemas/ListPaginationMeta'
+        - type: object
+          required:
+            - totalCount
+            - workspaceSurveyCount
+          properties:
+            totalCount:
+              type:
+                - integer
+                - 'null'
+              minimum: 0
+              description: Total number of surveys matching the current filters across all pages. `null` when `includeTotalCount=false`.
+            workspaceSurveyCount:
+              type:
+                - integer
+                - 'null'
+              minimum: 0
+              description: Total number of surveys in the workspace, archived (soft-deleted) ones included and independent of the current filters. `null` when `includeTotalCount=false` (the same gate as `totalCount`). Replaces the boolean `hasArchived` field of earlier releases.
+      unevaluatedProperties: false
+      description: The list `meta` for surveys — pagination, the filtered total, and the workspace total. Both counting fields are `required` but nullable, gated on `includeTotalCount`.
     InvalidParam:
       type: object
       description: |
@@ -7286,6 +7247,35 @@ components:
         A survey response as returned by the list endpoint. Self-describing: `answers[]` carries each element's id, label, type and value, so a consumer can read a response without also fetching the survey.
 
         `answers[]` and `embeddedData[]` ship on the list view as well as the detailed view — they are the point of the resource, and withholding them from the list would force consumers into an N+1 of item reads. The list view omits only the identity and provenance fields: `contact`, `displayId` and `singleUseId`. See `ResponseResource` for those.
+    ResponseListMeta:
+      allOf:
+        - $ref: '#/components/schemas/ListPaginationMeta'
+        - type: object
+          required:
+            - totalCount
+            - totalCountRelation
+          properties:
+            totalCount:
+              type:
+                - integer
+                - 'null'
+              minimum: 0
+              description: |
+                Responses matching the current scope and filters across all pages, **counted only up to 10 000**. Exact below that; at the cap the value is exactly `10000` and means "at least 10 000", which `totalCountRelation` states explicitly. `null` unless `includeTotalCount=true`.
+
+                The cap is not timidity — an exact count over this table grows superlinearly with the data while a capped one stays flat, so an uncapped total is the one part of a page whose cost is unbounded. Read `totalCountRelation` rather than testing for the magic number.
+            totalCountRelation:
+              type:
+                - string
+                - 'null'
+              enum:
+                - eq
+                - gte
+                - null
+              description: |
+                How to read `totalCount`: `eq` when it is exact, `gte` when the 10 000 cap was reached and it is a lower bound, `null` when `includeTotalCount=false`. This is the same eq/gte convention Elasticsearch uses for `hits.total.relation`, so a consumer can render "10,000+" honestly instead of claiming a precise figure it does not have.
+      unevaluatedProperties: false
+      description: The list `meta` for responses — pagination plus a bounded, opt-in total. Both counting fields are `required` but nullable, so `includeTotalCount=false` answers `null` rather than omitting them.
     ResponseDataMap:
       type: object
       description: |
@@ -7930,21 +7920,13 @@ components:
           minimum: 0
           description: Total number of runs (dry runs included) for this workflow.
     CursorPaginationMeta:
-      type: object
-      required:
-        - limit
-        - nextCursor
-      properties:
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-        nextCursor:
-          type:
-            - string
-            - 'null'
-          description: Opaque cursor for the next page. `null` when there are no more results.
-      additionalProperties: false
+      allOf:
+        - $ref: '#/components/schemas/ListPaginationMeta'
+      unevaluatedProperties: false
+      description: |-
+        A list `meta` carrying pagination and nothing else — the shape for collections that do not report a total and have no domain context to echo.
+
+        Adds nothing to `ListPaginationMeta`; the `allOf` wrapper is what closes it. Each composing operation bounds its own requests through its `limit` query parameter, which is why this shape states no cap of its own.
     WorkflowNodeUi:
       type: object
       description: Builder-only UI metadata that does not affect workflow execution. Additional keys are preserved.
