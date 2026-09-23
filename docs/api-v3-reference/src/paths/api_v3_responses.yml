@@ -156,60 +156,7 @@ get:
                 items:
                   $ref: ../components/schemas/ResponseListItem.yml
               meta:
-                type: object
-                required:
-                  - limit
-                  - nextCursor
-                  - totalCount
-                  - totalCountRelation
-                properties:
-                  limit:
-                    type: integer
-                    minimum: 1
-                    description: >-
-                      The page size actually applied. Carries no `maximum` — it echoes what the
-                      server used rather than bounding what may be asked for.
-                  nextCursor:
-                    type:
-                      - string
-                      - "null"
-                    description: >-
-                      Opaque cursor for the next page. `null` when there are no more results — the
-                      only reliable end-of-collection signal. Pass it back verbatim: the encoding is
-                      deliberately unspecified and may change without notice, so a client that
-                      decodes or constructs one is relying on something this contract does not
-                      promise.
-                  totalCount:
-                    type:
-                      - integer
-                      - "null"
-                    minimum: 0
-                    description: >
-                      Responses matching the current scope and filters across all pages, **counted
-                      only up to 10 000**. Exact below that; at the cap the value is exactly `10000`
-                      and means "at least 10 000", which `totalCountRelation` states explicitly.
-                      `null` unless `includeTotalCount=true`.
-
-
-                      The cap is not timidity — an exact count over this table grows superlinearly
-                      with the data while a capped one stays flat, so an uncapped total is the one
-                      part of a page whose cost is unbounded. Read `totalCountRelation` rather than
-                      testing for the magic number.
-                  totalCountRelation:
-                    type:
-                      - string
-                      - "null"
-                    enum:
-                      - eq
-                      - gte
-                      - null
-                    description: >
-                      How to read `totalCount`: `eq` when it is exact, `gte` when the 10 000 cap was
-                      reached and it is a lower bound, `null` when `includeTotalCount=false`. This is
-                      the same eq/gte convention Elasticsearch uses for `hits.total.relation`, so a
-                      consumer can render "10,000+" honestly instead of claiming a precise figure it
-                      does not have.
-                additionalProperties: false
+                $ref: ../components/schemas/ResponseListMeta.yml
           examples:
             page:
               summary: One page of responses, exercising several answer types
@@ -318,6 +265,12 @@ get:
       $ref: ../components/responses/V3Unauthorized.yml
     "403":
       $ref: ../components/responses/V3Forbidden.yml
+    "413":
+      description: Payload Too Large — the request body exceeds the 2 MB limit.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
     "429":
       $ref: ../components/responses/V3TooManyRequests.yml
     "500":
@@ -454,11 +407,29 @@ post:
       $ref: ../components/responses/V3Forbidden.yml
     "422":
       description: >
-        Unprocessable Content — the body is well-formed but conflicts with stored state: `surveyId`
-        does not resolve, `endingId` is not an ending of that survey, `language` is not enabled on
-        it, `contactId` is not a contact in the same workspace, `displayId` already backs another
-        response, `singleUseId` is already used for this survey, or an answer violates the survey's
-        own validation rules. Each is itemized in `invalid_params`.
+        Unprocessable Content — the body is well-formed but conflicts with stored state: `endingId`
+        is not an ending of that survey, `language` is not enabled on it, `contactId` is not a
+        contact in the same workspace, `displayId` does not exist for that survey or already backs
+        another response, `singleUseId` is already used for this survey, a tag id does not resolve in
+        the same workspace, an `embeddedData` name is not declared on the survey, is ambiguous, or is
+        addressed twice by one payload, a file-upload answer references a file outside this survey's
+        upload element, or an answer violates the survey's own validation rules. Each is itemized in
+        `invalid_params`.
+
+
+        **`surveyId` is not in that list, and answers 403 instead** — whether it names no survey at
+        all or one in another workspace. Every other id here is checked *after* authorization,
+        inside a workspace the caller already holds, so a distinct answer for each discloses
+        nothing. `surveyId` is the scope anchor and is necessarily checked *before* authorization,
+        so a separate "no such survey" would let any valid API key probe the id space of every other
+        tenant. The two cases are therefore byte-identical, as they are on `GET`, `PATCH` and
+        `DELETE` of a response id.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "413":
+      description: Payload Too Large — the request body exceeds the 2 MB limit.
       content:
         application/problem+json:
           schema:

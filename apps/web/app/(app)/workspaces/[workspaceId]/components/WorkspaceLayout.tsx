@@ -157,6 +157,7 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
           publicDomain={publicDomain}
           organizationWorkspacesLimit={organizationWorkspacesLimit}
           isLicenseActive={active}
+          isNoLicense={status === "no-license"}
           isAccessControlAllowed={isAccessControlAllowed}
           responseCount={responseCount}
           newTrialBannerVariant={newTrialBannerVariant}
@@ -170,6 +171,7 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
             organizationWorkspacesLimit={organizationWorkspacesLimit}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
             isLicenseActive={active}
+            isNoLicense={status === "no-license"}
             isOwnerOrManager={isOwnerOrManager}
             isAccessControlAllowed={isAccessControlAllowed}
             membershipRole={membership.role}

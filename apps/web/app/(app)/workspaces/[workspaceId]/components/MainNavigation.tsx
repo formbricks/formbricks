@@ -56,6 +56,7 @@ interface NavigationProps {
   publicDomain: string;
   organizationWorkspacesLimit: number;
   isLicenseActive: boolean;
+  isNoLicense: boolean;
   isAccessControlAllowed: boolean;
   responseCount: number;
   newTrialBannerVariant: string | boolean;
@@ -134,6 +135,7 @@ export const MainNavigation = ({
   publicDomain,
   organizationWorkspacesLimit,
   isLicenseActive,
+  isNoLicense,
   isAccessControlAllowed,
   responseCount,
   newTrialBannerVariant,
@@ -604,6 +606,7 @@ export const MainNavigation = ({
           setOpen={setOpenWorkspaceLimitModal}
           buttons={workspaceLimitModalButtons()}
           workspaceLimit={organizationWorkspacesLimit}
+          showLiteLicenseTip={!isFormbricksCloud && isNoLicense}
         />
       )}
       {openCreateWorkspaceModal && (

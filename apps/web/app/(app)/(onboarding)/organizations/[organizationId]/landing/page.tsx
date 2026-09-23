@@ -53,6 +53,7 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
               organizationWorkspacesLimit={0}
               isFormbricksCloud={IS_FORMBRICKS_CLOUD}
               isLicenseActive={false}
+              isNoLicense={false}
               isOwnerOrManager={false}
               isAccessControlAllowed={false}
               isMembershipPending={isMembershipPending}

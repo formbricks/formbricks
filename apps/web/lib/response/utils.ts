@@ -301,6 +301,25 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
   return { metaDataFields, elements, hiddenFields, variables, userAttributes };
 };
 
+/**
+ * One export row, keyed by column label.
+ *
+ * Null-prototype on purpose. Most keys written into a row below are user-supplied text — a question
+ * headline, an embedded field's display name, a contact attribute — and on an ordinary object the
+ * key `__proto__` does not create an own property: the assignment runs `Object.prototype`'s
+ * inherited setter and the value is discarded. The column then renders as `{}` in CSV and as no cell
+ * at all in XLSX. Storage keys are safe identifiers and were never affected, so this only reaches a
+ * surface where a *display name* becomes a key.
+ *
+ * Fixed here rather than by sanitizing each label: the label is legitimate data and should survive
+ * into the file under the name its author gave it.
+ *
+ * Both writers stay happy — `convertToCsv` and `convertToXlsxBuffer` read cells as `row[header]`
+ * against the header list, and neither iterates the row nor calls `hasOwnProperty` on it.
+ */
+const newExportRow = (fixedColumns: Record<string, string | number>): Record<string, string | number> =>
+  Object.assign(Object.create(null) as Record<string, string | number>, fixedColumns);
+
 export const getResponsesJson = (
   survey: TSurvey,
   responses: TResponseWithQuotas[],
@@ -315,16 +334,18 @@ export const getResponsesJson = (
 
   responses.forEach((response, idx) => {
     // basic response details
-    jsonData.push({
-      "No.": idx + 1,
-      "Response ID": response.id,
-      Timestamp: getFormattedDateTimeString(response.createdAt, timeZone),
-      Finished: response.finished ? "Yes" : "No",
-      "Survey ID": response.surveyId,
-      "Formbricks ID (internal)": response.contact?.id || "",
-      "User ID": response.contact?.userId || "",
-      Tags: response.tags.map((tag) => tag.name).join(", "),
-    });
+    jsonData.push(
+      newExportRow({
+        "No.": idx + 1,
+        "Response ID": response.id,
+        Timestamp: getFormattedDateTimeString(response.createdAt, timeZone),
+        Finished: response.finished ? "Yes" : "No",
+        "Survey ID": response.surveyId,
+        "Formbricks ID (internal)": response.contact?.id || "",
+        "User ID": response.contact?.userId || "",
+        Tags: response.tags.map((tag) => tag.name).join(", "),
+      })
+    );
 
     if (isQuotasAllowed) {
       jsonData[idx]["Quotas"] = response.quotas?.map((quota) => quota.name).join(", ") || "";

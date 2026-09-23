@@ -9,7 +9,7 @@ readonly ENV_PATH="${FORMBRICKS_ENV_PATH:-${REPO_ROOT}/.env}"
 source "${SCRIPT_DIR}/dev-env.sh"
 readonly REQUIRED_GENERATED_KEYS=(
   "ENCRYPTION_KEY"
-  "NEXTAUTH_SECRET"
+  "BETTER_AUTH_SECRET"
   "CRON_SECRET"
   "CUBEJS_API_SECRET"
   "AUTHZED_TOKEN"
@@ -88,13 +88,22 @@ upsert_env_value() {
 
   TEMP_FILE="$(mktemp "${ENV_PATH}.tmp.XXXXXX")"
 
-  awk -v key="${key}" -v value="${value}" '
+  # The value travels through the environment, not `awk -v`, for two reasons. An -v assignment expands
+  # backslash escapes, so `-v value='a\nb'` writes a real newline and silently corrupts any secret
+  # containing a backslash; ENVIRON is passed through verbatim. It also keeps every secret this script
+  # writes — the migrated one and the generated ones — out of awk's argv, which `ps` shows to other
+  # users on this machine. The key stays on -v: it is one of this script's own literals, and it is
+  # interpolated into the match regex rather than printed.
+  FORMBRICKS_UPSERT_VALUE="${value}" awk -v key="${key}" '
     BEGIN {
       replaced = 0
+      value = ENVIRON["FORMBRICKS_UPSERT_VALUE"]
     }
 
-    $0 ~ "^[[:space:]]*" key "[[:space:]]*=" {
-      print key "=" value
+    $0 ~ "^[[:space:]]*(export[[:space:]]+)?" key "[[:space:]]*=" {
+      # Keep an `export` prefix the line already had. Dropping it would be a silent behaviour change
+      # for anyone who `source`s their .env: without it the variable stops reaching child processes.
+      print ($0 ~ "^[[:space:]]*export[[:space:]]+" ? "export " : "") key "=" value
       replaced = 1
       next
     }
@@ -120,6 +129,8 @@ main() {
   local key=""
   local current_value=""
   local spicedb_port=""
+  local better_auth_secret=""
+  local legacy_auth_secret=""
   local bundled_endpoint=""
 
   ensure_prerequisites
@@ -163,6 +174,27 @@ main() {
   fi
   if [[ "$(read_env_value AUTHZED_ENDPOINT)" != "${bundled_endpoint}" && -z "$(read_env_value AUTHZED_TOKEN)" ]]; then
     fail "Custom AUTHZED_ENDPOINT requires its existing AUTHZED_TOKEN; no replacement token was generated."
+  fi
+
+  # An .env that predates the BETTER_AUTH_* rename carries the secret under NEXTAUTH_SECRET. Copy that
+  # value across rather than letting the loop below mint a new one: BETTER_AUTH_SECRET wins at runtime,
+  # so generating a fresh one would log the developer out and invalidate their outstanding links, and
+  # leave the two keys disagreeing — which the app warns about at boot, on every machine.
+  better_auth_secret="$(read_env_value BETTER_AUTH_SECRET)"
+  legacy_auth_secret="$(read_env_value NEXTAUTH_SECRET)"
+  if [[ -z "${better_auth_secret}" && -n "${legacy_auth_secret}" ]]; then
+    # Copy the assignment verbatim, not the resolved value: `NEXTAUTH_SECRET=" s "` resolves to ` s `,
+    # and writing that back unquoted would resolve to `s` — a different secret, so every session and
+    # outstanding link dies. The comparison below still uses the resolved values, which is what
+    # "do these two keys hold the same secret" means.
+    upsert_env_value "BETTER_AUTH_SECRET" "$(read_env_raw_value NEXTAUTH_SECRET)"
+    updated_keys+=("BETTER_AUTH_SECRET (from NEXTAUTH_SECRET)")
+  elif [[ -n "${better_auth_secret}" && -n "${legacy_auth_secret}" \
+    && "${better_auth_secret}" != "${legacy_auth_secret}" ]]; then
+    # Never rewrite a secret the developer chose — just stop the boot warning being a mystery.
+    log "Note: BETTER_AUTH_SECRET and NEXTAUTH_SECRET hold different values in ${ENV_PATH}."
+    log "      BETTER_AUTH_SECRET wins; the app warns about this at startup. Remove NEXTAUTH_SECRET, or"
+    log "      set both to the same value, to silence it."
   fi
 
   for key in "${REQUIRED_GENERATED_KEYS[@]}"; do

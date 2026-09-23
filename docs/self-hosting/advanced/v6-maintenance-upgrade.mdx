@@ -8,6 +8,12 @@ Formbricks v6 uses SpiceDB for authorization. Self-hosted installations can upgr
 supported v5 version during a maintenance window; a bridge release is not required for this path.
 PostgreSQL remains the source of roles and grants. SpiceDB stores the derived authorization graph.
 
+<Info>
+  **Self-hosted upgrades do not use the Formbricks Cloud bridge.** Stop all writers, run the
+  release-matched preparation once, verify the result, and start v6. The bridge is a temporary Cloud
+  rollout artifact, not a product dependency or a step hidden inside the Helm chart.
+</Info>
+
 <Warning>
   Use only an upgrade pair listed as tested in the target release notes. The
   `formbricks-authzed-prepare` executable is available only in images containing this change, not in
@@ -35,9 +41,11 @@ The command reuses the image's existing migration runner and `formbricks-authzed
 - Pin the target Formbricks image by digest and the matching chart/Compose files. Preserve the current
   images, chart, values, secrets, and volume names. Do not combine this change with a PostgreSQL major
   upgrade, a storage migration, or unrelated Hub/Cube changes.
+- Treat the Helm chart version and application image version as separate pins. A chart-only patch can
+  keep the same Formbricks `appVersion`; verify both values and the rendered image before upgrading.
 - Prepare private SpiceDB connectivity, dedicated datastore credentials, its reviewed version, and
   completed datastore migrations. Retain existing operator ownership; never install a second operator
-  over an existing cluster-wide operator. See [SpiceDB operations](/self-hosting/advanced/authzed-operations).
+  over an existing cluster-wide operator. See [SpiceDB operations](/self-hosting/configuration/authzed-operations).
 
 Identify **all writers**, including Formbricks replicas, Hub/Hub workers, workflow workers, scheduled
 jobs, import jobs, integrations, and administrative scripts. Include workloads outside the application
@@ -51,10 +59,11 @@ configuration into shared CI logs. Prepare and render the exact target manifests
 
 <Steps>
   <Step title="Enter and verify maintenance">
-    Serve maintenance at the ingress/reverse proxy and stop accepting new work. Suspend the identified
-    controllers and schedules, stop all writers, and wait for in-flight work and database transactions
-    to finish. Suspending a CronJob does not stop an already-running Job. Scaling a Deployment to zero
-    is insufficient if an autoscaler or GitOps controller can restore it.
+    Serve a human-readable maintenance page at the ingress/reverse proxy and stop accepting new work.
+    Do not use an application API's JSON maintenance response as the public landing page. Suspend the
+    identified controllers and schedules, stop all writers, and wait for in-flight work and database
+    transactions to finish. Suspending a CronJob does not stop an already-running Job. Scaling a
+    Deployment to zero is insufficient if an autoscaler or GitOps controller can restore it.
 
     Verify there are no remaining writer pods, containers, Jobs, external scripts, or active writer
     transactions. Keep only required infrastructure and the dedicated preparation process running.
@@ -72,7 +81,9 @@ configuration into shared CI logs. Prepare and render the exact target manifests
     Run the command below using the exact target image and the same application database and AuthZed
     configuration that v6 will use. It first validates configuration and authenticated SpiceDB health,
     then runs application migrations, schema preparation, outbox drain, relationship repair, and a
-    separate full verification. `AUTHZED_CONSISTENCY` must be `fully_consistent`.
+    separate full verification. Preparation reconciles the graph and requires a clean full dry-run
+    audit; the wrapper then performs a second independent full dry-run audit through `upgrade check`.
+    `AUTHZED_CONSISTENCY` must be `fully_consistent`.
 
     ```bash
     formbricks-authzed-prepare --backup-confirmed --writers-stopped
@@ -90,8 +101,9 @@ configuration into shared CI logs. Prepare and render the exact target manifests
 
     Verify the actual pod/container image IDs. Through restricted access, test an allowed user, a
     denied user, a scoped API key, organization/workspace lists, and a grant revocation. Verify outbox
-    delivery, rerun `formbricks-authzed upgrade check`, and check operational-error metrics. `/health`
-    alone does not establish authorization readiness.
+    delivery, rerun `formbricks-authzed upgrade check`, and check operational-error metrics. Test a new
+    browser session, then hard-refresh an old tab: cached v5 assets or Server Action references are not
+    a valid v6 readiness signal. `/health` alone does not establish authorization readiness.
   </Step>
   <Step title="Resume service">
     Restore controller and worker settings only after their desired manifests point to the tested v6
@@ -167,12 +179,26 @@ image-pull credentials, network policy, and environment bindings for your instal
 Secret must contain the required runtime/migration environment; the chart's application Secret does
 not necessarily contain `DATABASE_URL` or AuthZed values that it normally injects separately. Prefer
 explicit `valueFrom.secretKeyRef` bindings to existing Secrets when possible. Never put secrets on a
-command line or commit their values.
+command line or commit their values. If migrations use a different database credential, bind
+`MIGRATE_DATABASE_URL` as well as `DATABASE_URL`; the target image's migration runner uses it when set.
 
 Wait for Job completion and inspect its sanitized result before running `helm upgrade` or resuming an
 Argo CD/Flux reconciliation. Preparation is not a Helm migration hook or a permanent chart component.
 Delete the Job and any temporary environment Secret after acceptance; retain only sanitized evidence.
 There is no activation table to clean up.
+
+## Exit checklist
+
+Keep maintenance active until all of these are true:
+
+- `formbricks-authzed-prepare` exited `0`, including its two clean full audits, and the v6 migration
+  acknowledgement is set only for this prepared upgrade.
+- The running image ID, chart values, schema, outbox, and a fresh `formbricks-authzed upgrade check` match
+  the reviewed target.
+- Allowed and denied users, a scoped API key, organization/workspace lists, and a grant revocation work
+  from a fresh browser session; an old tab recovers after a hard refresh.
+
+Only then resume controllers and writers and remove the ingress maintenance page.
 
 ## Results and recovery
 
@@ -231,11 +257,3 @@ explicit maintenance preparation has completed with that target image and a revi
 Use the procedure above again; the persistent acknowledgement is not permission to skip preparation.
 An online, backward-compatible schema rollout would need its own reviewed and tested release procedure;
 neither the Helm hook nor the one-click updater infers that a schema change is safe while writers run.
-
-## Cloud is a separate rollout path
-
-Formbricks Cloud can use a temporary, immutable bridge artifact to project relationships while legacy
-authorization still serves requests, followed by a brief controlled authorization-write pause. That
-artifact is not a self-hosting prerequisite and does not restore a legacy evaluator to the normal v6
-application. Continued read/respondent traffic is a rehearsal requirement, not an unconditional promise
-of zero downtime.

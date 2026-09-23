@@ -60,9 +60,10 @@ or provide equivalent edge rate limiting for the documented route coverage. The 
 least two for availability during voluntary disruptions, or change/disable the PDB for an intentional
 single-replica deployment.
 
-## AuthZed / SpiceDB
+## SpiceDB authorization
 
-Formbricks v6 enables AuthZed, `fully_consistent` authorization, and the bundled SpiceDB operator by default.
+Formbricks v6 uses SpiceDB, maintained by AuthZed, with `fully_consistent` authorization. The bundled SpiceDB
+operator is enabled by default.
 
 ### Breaking changes from v5
 
@@ -240,7 +241,7 @@ from the target image, then prepared with `--expected-current-digest sha256:<dig
 relationships before replacement; see the repository `authzed/README.md` for exit codes and rollback rules.
 Later v6 releases with an unchanged canonical schema retain the read-only gate. A schema-changing release needs
 explicit preparation during maintenance; see [later v6 upgrades](../../docs/self-hosting/advanced/v6-maintenance-upgrade.mdx#later-v6-upgrades).
-The public [AuthZed operations guide](../../docs/self-hosting/advanced/authzed-operations.mdx) covers backups,
+The public [SpiceDB operations guide](../../docs/self-hosting/configuration/authzed-operations.mdx) covers backups,
 restoration, schema lifecycle, relationship repair, and monitoring.
 
 Cloud operators that run the same guarded schema, outbox drain, reconciliation, and audit sequence outside Helm

@@ -1,4 +1,4 @@
-import { authenticator } from "otplib";
+import { generateSync } from "otplib";
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
@@ -17,10 +17,8 @@ const allCookies = (res: Response): string =>
 
 const secretFromUri = (uri: string): string => /[?&]secret=([^&]+)/.exec(uri)?.[1] ?? "";
 
-const totp = (secret: string): string => {
-  authenticator.options = { digits: 6, step: 30 }; // matches auth.ts totpOptions
-  return authenticator.generate(secret);
-};
+// digits 6 / period 30 are otplib's defaults and match auth.ts totpOptions.
+const totp = (secret: string): string => generateSync({ secret });
 
 const createVerifiedUser = async (email: string, password: string): Promise<string> => {
   await auth.api.signUpEmail({ body: { email, password, name: "Tfa" }, asResponse: true });

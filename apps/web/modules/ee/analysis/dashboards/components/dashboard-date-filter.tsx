@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { formatLocalDay, parseLocalDay } from "@/lib/utils/datetime";
-import { DASHBOARD_DATE_PRESETS } from "@/modules/ee/analysis/lib/date-presets";
 import { getTranslatedDatePresetLabel } from "@/modules/ee/analysis/lib/schema-definition";
 import { DateRangePicker } from "@/modules/ui/components/date-picker";
 import {
@@ -90,14 +90,14 @@ export const DashboardDateFilter = ({ value, onChange }: Readonly<DashboardDateF
         <SelectTrigger className="w-48 bg-white">
           <SelectValue placeholder={t("workspace.analysis.dashboards.date_filter_placeholder")} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="max-h-[var(--radix-select-content-available-height)]">
           <SelectItem value={DEFAULT_VALUE}>
             {t("workspace.analysis.dashboards.date_filter_default")}
           </SelectItem>
           <SelectItem value={ALL_TIME_VALUE}>
             {t("workspace.analysis.dashboards.date_filter_all_time")}
           </SelectItem>
-          {DASHBOARD_DATE_PRESETS.map((preset) => (
+          {DATE_RANGE_PRESETS.map((preset) => (
             <SelectItem key={preset} value={preset}>
               {getTranslatedDatePresetLabel(preset, t)}
             </SelectItem>

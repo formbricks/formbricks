@@ -24,12 +24,10 @@
   },
   "dependencies": {
     "@formbricks/types": "workspace:*",
-    "@react-email/components": "1.0.12",
-    "@react-email/render": "2.0.6",
     "clsx": "catalog:",
     "lucide-react": "catalog:",
     "react": "catalog:",
-    "react-email": "5.2.11",
+    "react-email": "6.9.5",
     "tailwind-merge": "catalog:"
   },
   "devDependencies": {

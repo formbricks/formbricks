@@ -15,7 +15,7 @@ Everything below exists to make that visible and recoverable.
 
 See also: [direct AuthZed cutover and rollback contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-rollback-contract-b4c352aecdad) for the approved release and rollback contract,
 [README](./README.md) for the projection development contract, and
-[AuthZed Operations](../docs/self-hosting/advanced/authzed-operations.mdx) for the public self-hosted operator
+[AuthZed Operations](../docs/self-hosting/configuration/authzed-operations.mdx) for the public self-hosted operator
 contract.
 
 ## 1. Symptoms

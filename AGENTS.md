@@ -19,10 +19,14 @@ Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surf
 Turbo runs a task only in packages that define the matching script and **silently skips** the rest.
 Every `packages/*` workspace therefore exposes the standard `lint` / `typecheck` / `test` /
 `test:coverage` scripts (plus `build` where there is a compile step). Deliberate exceptions:
-`config-*` packages hold only config files (no scripts beyond `clean`); `types` has no runtime logic
-to test; `email`, `types`, and `vite-plugins` are consumed from source, so they have no `build`;
-`apps/storybook` has no unit tests by policy (its components are exercised by the feature journeys in
-`apps/web/playwright`). Keep new packages on this matrix or document the exception here.
+`config-*` packages hold only config files (no scripts beyond `clean`); `email`, `types`, and
+`vite-plugins` are consumed from source, so they have no `build`; `apps/storybook` has no unit tests
+by policy (its components are exercised by the feature journeys in `apps/web/playwright`). Keep new
+packages on this matrix or document the exception here.
+
+`types` is mostly declarations, but `validation.ts` is runtime logic and is tested like any other
+package — it is in Sonar's scope (ENG-2432), so treat it as covered code, not as a types-only
+workspace.
 
 Consuming one of those source-only packages from another package's build config
 (`../vite-plugins/node-next-dts`, `.../postcss-scope-fbjs.cjs`, `.../copy-compiled-assets`) takes two
@@ -130,8 +134,8 @@ ship their own CSS rather than relying on the app to scan them:
 
 - `@formbricks/surveys` — prebuilt bundle served from `apps/web/public/js/` (see the section above).
 - `@formbricks/survey-ui` — exports `./styles` (`dist/survey-ui.css`), scoped to `#fbjs`.
-- `@formbricks/email` — ships no stylesheet at all; `@react-email/tailwind` compiles and inlines the
-  classes into the email HTML at render time.
+- `@formbricks/email` — ships no stylesheet at all; `react-email`'s `Tailwind` component compiles and
+  inlines the classes into the email HTML at render time.
 
 If you ever consume a workspace package as raw source **for its styling**, the app has to be told
 about that package's files explicitly — detection stops at the app's own root, so nothing else will

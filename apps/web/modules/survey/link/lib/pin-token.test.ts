@@ -9,9 +9,10 @@ vi.mock("@formbricks/logger", () => ({
 
 const TEST_SECRET = "test-secret-at-least-32-chars-long!!";
 
+// `AUTH_SECRET` is the already-resolved BETTER_AUTH_SECRET/NEXTAUTH_SECRET value; which of the two
+// wins is constants.ts's business and is covered by lib/constants.test.ts.
 vi.mock("@/lib/constants", () => ({
-  BETTER_AUTH_SECRET: undefined,
-  NEXTAUTH_SECRET: TEST_SECRET,
+  AUTH_SECRET: TEST_SECRET,
 }));
 
 // Import after mocks are set up
@@ -71,32 +72,27 @@ describe("verifyLinkSurveyPinToken", () => {
 });
 
 describe("secret resolution", () => {
-  test("prefers BETTER_AUTH_SECRET over NEXTAUTH_SECRET", async () => {
+  test("signs with the resolved auth secret", async () => {
     vi.resetModules();
-    const betterAuthSecret = "better-auth-secret-at-least-32-chars!!";
-    vi.doMock("@/lib/constants", () => ({
-      BETTER_AUTH_SECRET: betterAuthSecret,
-      NEXTAUTH_SECRET: TEST_SECRET,
-    }));
+    const otherSecret = "some-other-secret-at-least-32-chars!!";
+    vi.doMock("@/lib/constants", () => ({ AUTH_SECRET: otherSecret }));
     const mod = await import("./pin-token");
 
     const token = mod.createLinkSurveyPinToken(SURVEY_ID);
-    // Verifies against BETTER_AUTH_SECRET, not the NextAuth fallback.
-    expect(() => jwt.verify(token, betterAuthSecret)).not.toThrow();
+    expect(() => jwt.verify(token, otherSecret)).not.toThrow();
+    // A token signed with anything else must not verify — this is what keeps PIN enforcement tied to
+    // the same secret auth.ts uses rather than drifting to a stale one.
     expect(() => jwt.verify(token, TEST_SECRET)).toThrow();
     expect(mod.verifyLinkSurveyPinToken(token, SURVEY_ID)).toBe(true);
   });
 
-  test("falls back to NEXTAUTH_SECRET when BETTER_AUTH_SECRET is unset", async () => {
+  test("throws when no auth secret is set", async () => {
     vi.resetModules();
-    vi.doMock("@/lib/constants", () => ({
-      BETTER_AUTH_SECRET: undefined,
-      NEXTAUTH_SECRET: TEST_SECRET,
-    }));
+    vi.doMock("@/lib/constants", () => ({ AUTH_SECRET: undefined }));
     const mod = await import("./pin-token");
 
-    const token = mod.createLinkSurveyPinToken(SURVEY_ID);
-    expect(() => jwt.verify(token, TEST_SECRET)).not.toThrow();
-    expect(mod.verifyLinkSurveyPinToken(token, SURVEY_ID)).toBe(true);
+    expect(() => mod.createLinkSurveyPinToken(SURVEY_ID)).toThrow(
+      "No auth secret set (BETTER_AUTH_SECRET or NEXTAUTH_SECRET)"
+    );
   });
 });

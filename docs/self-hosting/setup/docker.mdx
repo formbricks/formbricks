@@ -80,10 +80,10 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    POSTGRES_PASSWORD=$(openssl rand -hex 32)
    cat <<EOF > .env
    WEBAPP_URL=http://localhost:3000
-   NEXTAUTH_URL=http://localhost:3000
+   BETTER_AUTH_URL=http://localhost:3000
    POSTGRES_PASSWORD=$POSTGRES_PASSWORD
    POSTGRES_PASSWORD_URL_ENCODED=$POSTGRES_PASSWORD
-   NEXTAUTH_SECRET=$(openssl rand -hex 32)
+   BETTER_AUTH_SECRET=$(openssl rand -hex 32)
    ENCRYPTION_KEY=$(openssl rand -hex 32)
    CRON_SECRET=$(openssl rand -hex 32)
    HUB_API_KEY=$(openssl rand -hex 32)
@@ -172,7 +172,7 @@ docker compose --profile authzed-ops run --rm authzed-ops backfill
 docker compose --profile authzed-ops run --rm authzed-ops upgrade check
 ```
 
-See [AuthZed Operations](/self-hosting/advanced/authzed-operations) before applying a schema, repairing
+See [AuthZed Operations](/self-hosting/configuration/authzed-operations) before applying a schema, repairing
 relationships, upgrading SpiceDB, or restoring a backup.
 
 The bundled PostgreSQL service leaves `track_commit_timestamp` at its default `off` value, so SpiceDB reports
@@ -379,7 +379,7 @@ first release that requires the AuthZed runtime:
    ```
 
    A non-empty mismatched schema requires the reviewed `remoteDigest` as described in
-   [AuthZed Operations](/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6).
+   [AuthZed Operations](/self-hosting/configuration/authzed-operations#upgrade-an-existing-installation-to-v6).
 7. Only after preparation and verification exit `0`, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env` and
    run `docker compose up -d`. The one-click updater only checks the already-prepared graph; it does not perform
    online preparation. Keep maintenance active until authorization checks pass.
@@ -391,7 +391,7 @@ first release that requires the AuthZed runtime:
 
 After database changes, restoring the old image alone may not be safe. Remain in maintenance and either fix
 forward or restore coordinated backups with the matching v5 configuration. Never delete volumes. See the
-rollback procedure in [AuthZed Operations](/self-hosting/advanced/authzed-operations#roll-back-a-v6-upgrade).
+rollback procedure in [AuthZed Operations](/self-hosting/configuration/authzed-operations#roll-back-a-v6-upgrade).
 
 <Info>
   For a major migration such as Formbricks 4.x to 5.0, update your compose structure and configuration first.
@@ -706,7 +706,7 @@ docker compose logs --tail=200 postgres redis
 
 Common checks:
 
-- **Missing or empty secrets**: Confirm `.env` contains `NEXTAUTH_SECRET`, `ENCRYPTION_KEY`, `CRON_SECRET`,
+- **Missing or empty secrets**: Confirm `.env` contains `BETTER_AUTH_SECRET`, `ENCRYPTION_KEY`, `CRON_SECRET`,
   `HUB_API_KEY`, and `CUBEJS_API_SECRET`.
 - **Migration failures**: Check `formbricks-migrate`, `hub-migrate`, and `postgres` logs. Do not remove Docker
   volumes on an existing install unless you intend to delete its data.
@@ -738,16 +738,19 @@ Common checks:
   **If the port was reachable from an untrusted network, also invalidate existing sessions.** Valkey persists
   to its `redis` volume, so removing the port does not clear session or token state an attacker may already
   have written — a forged session can remain valid afterward. After closing the port, set a new
-  `NEXTAUTH_SECRET` in your `.env`, then recreate the app container so it picks up the change:
+  `BETTER_AUTH_SECRET` in your `.env`, then recreate the app container so it picks up the change:
   ```bash
   docker compose up -d --force-recreate formbricks
   ```
   A plain `docker compose restart` keeps the container's original environment, so the rotated secret would not
   take effect. Recreating invalidates every session cookie, so all users must sign in again, while stored
-  data, the job queue, and the cache stay intact. (If you added `BETTER_AUTH_SECRET` to the `formbricks`
-  service environment yourself, rotate that instead — Better Auth prefers it over `NEXTAUTH_SECRET`; the
-  bundled compose ships only `NEXTAUTH_SECRET`.) Leave `ENCRYPTION_KEY` unchanged, and do **not** run a blanket
-  `FLUSHDB` — the same Valkey also holds BullMQ job queues and the application cache.
+  data, the job queue, and the cache stay intact. (On an instance installed before this variable was
+  renamed, the secret may live in your `.env` under the older name, `NEXTAUTH_SECRET`. Replace the value
+  of whichever name your `.env` actually defines. Adding the *other* name alongside it does not reliably
+  rotate anything: `BETTER_AUTH_SECRET` wins whenever both are set, so a new `NEXTAUTH_SECRET` next to an
+  existing `BETTER_AUTH_SECRET` changes nothing and leaves the forged session valid.) Leave
+  `ENCRYPTION_KEY` unchanged, and do **not** run a blanket `FLUSHDB` — the same Valkey also holds BullMQ
+  job queues and the application cache.
 </Warning>
 
 <Note>

@@ -2,9 +2,9 @@
  * Generates a system prompt for the AI chart query LLM.
  * Derived from FEEDBACK_FIELDS to keep schema and prompt in sync.
  */
+import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { CHART_TYPE_IDS } from "@/modules/ee/analysis/types/analysis";
 import {
-  DATE_PRESETS,
   FEEDBACK_FIELDS,
   FILTER_OPERATORS,
   type FieldDefinition,
@@ -41,7 +41,7 @@ function formatOperators(): string {
 export function generateSchemaContext(): string {
   const measuresText = FEEDBACK_FIELDS.measures.map(formatMeasure).join("\n");
   const dimensionsText = FEEDBACK_FIELDS.dimensions.map(formatDimension).join("\n");
-  const datePresetsText = DATE_PRESETS.map((p) => `"${p.value}"`).join(", ");
+  const datePresetsText = DATE_RANGE_PRESETS.map((preset) => `"${preset}"`).join(", ");
   const operatorsText = formatOperators();
   const chartTypesText = formatChartTypes();
 

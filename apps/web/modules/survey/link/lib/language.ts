@@ -1,5 +1,6 @@
 import "server-only";
 import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
+import { resolveSurveyLanguageDefaultTag } from "@formbricks/i18n-utils/survey-runtime-languages";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 /**
@@ -34,10 +35,36 @@ export function resolveSurveyLanguageCode(langParam: string | undefined, survey:
       ? survey.languages.find(
           (surveyLanguage) => normalizeLanguageCode(surveyLanguage.language.code) === langParamCanonical
         )
-      : undefined);
+      : undefined) ??
+    findSiblingVariant(langParam, survey);
 
   if (!selectedLanguage || selectedLanguage?.default || !selectedLanguage?.enabled) {
     return "default";
   }
   return selectedLanguage.language.code;
+}
+
+/**
+ * The enabled survey language that writes the same language the respondent asked for, when the survey
+ * has no row for the requested variant itself: `?lang=zh-Hant-HK` on a survey offering Traditional
+ * (`zh-Hant-TW`) and Simplified (`zh-Hans-CN`) serves the Traditional one. A reader of Hong Kong
+ * Chinese can read Taiwanese Chinese; the survey's default language — often another language
+ * altogether — is the worse answer.
+ *
+ * Sibling means sharing a language *default tag*, which keeps the script: `zh-Hant-HK` and `zh-Hant-TW`
+ * both resolve to `zh-Hant-TW`, so Traditional never borrows Simplified and `pt-PT` can still fall to
+ * `pt-BR`. Disabled rows are skipped, and ties are broken on the stored code so the pick does not
+ * depend on the order the languages happen to sit in.
+ */
+function findSiblingVariant(langParam: string, survey: TSurvey) {
+  const requestedDefaultTag = resolveSurveyLanguageDefaultTag(langParam);
+  if (!requestedDefaultTag) return undefined;
+
+  return survey.languages
+    .filter(
+      (surveyLanguage) =>
+        surveyLanguage.enabled &&
+        resolveSurveyLanguageDefaultTag(surveyLanguage.language.code) === requestedDefaultTag
+    )
+    .sort((a, b) => a.language.code.localeCompare(b.language.code))[0];
 }
