@@ -676,6 +676,7 @@
     "response_finished_email_subject": "Uma resposta para {surveyName} foi concluída ✅",
     "schedule_your_meeting": "Agende a sua reunião",
     "select_a_date": "Selecionar uma data",
+    "sso_recovery_factors_removed_email_api_keys": "As chaves de API que criaste foram eliminadas. Podes criar novas nas definições da tua organização.",
     "sso_recovery_factors_removed_email_did_not_expect": "Se não acabaste de iniciar sessão com single sign-on, contacta o teu administrador imediatamente.",
     "sso_recovery_factors_removed_email_heading": "Fatores de início de sessão removidos da tua conta",
     "sso_recovery_factors_removed_email_password": "A tua palavra-passe foi removida.",

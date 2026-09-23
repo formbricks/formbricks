@@ -676,6 +676,7 @@
     "response_finished_email_subject": "{surveyName} の回答が完了しました ✅",
     "schedule_your_meeting": "ミーティングを予約",
     "select_a_date": "日付を選択",
+    "sso_recovery_factors_removed_email_api_keys": "作成していたAPIキーが削除されました。組織設定で新しいキーを作成できます。",
     "sso_recovery_factors_removed_email_did_not_expect": "シングルサインオンでサインインした覚えがない場合は、すぐに管理者に連絡してください。",
     "sso_recovery_factors_removed_email_heading": "アカウントからサインイン要素が削除されました",
     "sso_recovery_factors_removed_email_password": "パスワードが削除されました。",

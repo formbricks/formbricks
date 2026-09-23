@@ -12,6 +12,8 @@ interface SsoRecoveryFactorsRemovedEmailProps extends TEmailTemplateLegalProps {
   readonly passwordRemoved: boolean;
   /** Whether an enrolled second factor was removed. */
   readonly twoFactorRemoved: boolean;
+  /** Whether API keys the account had created were deleted (ENG-2634). */
+  readonly apiKeysRemoved: boolean;
   /** Where to re-enrol: the account security settings. */
   readonly securitySettingsLink: string;
   readonly t?: TFunction;
@@ -30,6 +32,7 @@ interface SsoRecoveryFactorsRemovedEmailProps extends TEmailTemplateLegalProps {
 export function SsoRecoveryFactorsRemovedEmail({
   passwordRemoved,
   twoFactorRemoved,
+  apiKeysRemoved,
   securitySettingsLink,
   t = mockT,
   ...legalProps
@@ -47,6 +50,11 @@ export function SsoRecoveryFactorsRemovedEmail({
         {twoFactorRemoved ? (
           <Text className="mb-0 text-sm font-bold">
             {t("emails.sso_recovery_factors_removed_email_two_factor")}
+          </Text>
+        ) : null}
+        {apiKeysRemoved ? (
+          <Text className="mb-0 text-sm font-bold">
+            {t("emails.sso_recovery_factors_removed_email_api_keys")}
           </Text>
         ) : null}
         <Text className="text-sm">{t("emails.sso_recovery_factors_removed_email_sign_in_hint")}</Text>

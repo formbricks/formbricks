@@ -676,6 +676,7 @@
     "response_finished_email_subject": "对 {surveyName} 的回答已完成 ✅",
     "schedule_your_meeting": "安排你的会议",
     "select_a_date": "选择 日期",
+    "sso_recovery_factors_removed_email_api_keys": "你创建的 API 密钥已被删除。你可以在组织设置中创建新的密钥。",
     "sso_recovery_factors_removed_email_did_not_expect": "如果你刚才没有使用单点登录进行登录，请立即联系你的管理员。",
     "sso_recovery_factors_removed_email_heading": "你的账户登录方式已被移除",
     "sso_recovery_factors_removed_email_password": "你的密码已被移除。",

@@ -676,6 +676,7 @@
     "response_finished_email_subject": "A(z) {surveyName} kérdőívre adott válasz befejeződött ✅",
     "schedule_your_meeting": "Megbeszélés ütemezése",
     "select_a_date": "Dátum kiválasztása",
+    "sso_recovery_factors_removed_email_api_keys": "Az Ön által létrehozott API kulcsok törlésre kerültek. Újakat hozhat létre a szervezeti beállításokban.",
     "sso_recovery_factors_removed_email_did_not_expect": "Ha nem épp most jelentkezett be egyszeri bejelentkezéssel, akkor azonnal vegye fel a kapcsolatot az adminisztrátorral.",
     "sso_recovery_factors_removed_email_heading": "Bejelentkezési faktorok eltávolítva a fiókjából",
     "sso_recovery_factors_removed_email_password": "A jelszava el lett távolítva.",

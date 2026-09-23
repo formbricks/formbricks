@@ -60,6 +60,8 @@ const translations: Record<TranslationKey, TranslationValue> = {
   "emails.reject": "Reject",
   "emails.render_email_response_value_file_upload_response_link_not_included":
     "Link to uploaded file is not included for data privacy reasons",
+  "emails.sso_recovery_factors_removed_email_api_keys":
+    "API keys you had created were deleted. You can create new ones in your organization settings.",
   "emails.sso_recovery_factors_removed_email_did_not_expect":
     "If you did not just sign in with single sign-on, contact your administrator immediately.",
   "emails.sso_recovery_factors_removed_email_heading": "Sign-in factors removed from your account",
