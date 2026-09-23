@@ -5,7 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
-import { type KeyboardEvent, useRef, useState } from "react";
+import { type KeyboardEvent, memo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { TI18nString } from "@formbricks/types/i18n";
@@ -38,6 +38,7 @@ import { OpenElementForm } from "@/modules/survey/editor/components/open-element
 import { PictureSelectionForm } from "@/modules/survey/editor/components/picture-selection-form";
 import { RankingElementForm } from "@/modules/survey/editor/components/ranking-element-form";
 import { RatingElementForm } from "@/modules/survey/editor/components/rating-element-form";
+import { areBlockCardPropsEqual } from "@/modules/survey/editor/lib/block-card-memo";
 import { BLOCK_NAME_MAX_LENGTH } from "@/modules/survey/editor/lib/blocks";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { getElementIconMap, getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
@@ -81,9 +82,13 @@ interface BlockCardProps {
   addElementToBlock: (element: TSurveyElement, blockId: string, afterElementIdx: number) => void;
   moveElementToBlock?: (elementId: string, targetBlockId: string) => void;
   totalBlocks: number;
+  // The last block the user pointed at or focused. It re-renders on every survey change, like the
+  // active block, so menus and handlers inside it never act on a snapshot the memo skipped.
+  isLastInteracted: boolean;
+  onInteract: (blockId: string) => void;
 }
 
-export const BlockCard = ({
+const BlockCardComponent = ({
   localSurvey,
   workspace,
   block,
@@ -116,6 +121,7 @@ export const BlockCard = ({
   addElementToBlock,
   moveElementToBlock,
   totalBlocks,
+  onInteract,
 }: Readonly<BlockCardProps>) => {
   const selectedLanguageCode = "default";
 
@@ -271,7 +277,10 @@ export const BlockCard = ({
       )}
       ref={setNodeRef}
       style={style}
-      id={block.id}>
+      id={block.id}
+      // Capture phase, so it also fires for menus portaled out of the card and before they read props.
+      onPointerDownCapture={() => onInteract(block.id)}
+      onFocusCapture={() => onInteract(block.id)}>
       <div
         {...listeners}
         {...attributes}
@@ -547,3 +556,6 @@ export const BlockCard = ({
     </div>
   );
 };
+
+// Skips re-rendering blocks the current edit cannot affect; see block-card-memo.ts for the rules.
+export const BlockCard = memo(BlockCardComponent, areBlockCardPropsEqual);
