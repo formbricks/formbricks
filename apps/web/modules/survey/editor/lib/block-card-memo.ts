@@ -47,7 +47,7 @@ const addStrings = (value: unknown, out: Set<string>): void => {
 };
 
 /** Every string value anywhere inside `value`. Survey objects are immutable, so this is cached. */
-export const getNestedStrings = (value: object): ReadonlySet<string> => {
+const getNestedStrings = (value: object): ReadonlySet<string> => {
   const cached = stringsCache.get(value);
   if (cached) return cached;
   const strings = new Set<string>();
@@ -77,23 +77,44 @@ const getBlocksIndex = (survey: TSurvey) => {
   return index;
 };
 
+const candidateIdsCache = new WeakMap<object, readonly string[]>();
+
+// Strings inside `value` that may name an element: every plain string (logic operands and targets
+// hold bare ids) plus the ids inside recall tokens. Filtered against the real element ids later.
+const getCandidateIds = (value: object): readonly string[] => {
+  const cached = candidateIdsCache.get(value);
+  if (cached) return cached;
+  const ids = [...getNestedStrings(value)].flatMap((text) =>
+    text.includes("#recall:") ? extractIds(text) : [text]
+  );
+  candidateIdsCache.set(value, ids);
+  return ids;
+};
+
+// Ending cards can recall elements, and logic targets display ending headlines, so every block
+// depends on what the endings reference. Keyed on the `endings` array, shared by all cards.
+const endingCandidateIdsCache = new WeakMap<TSurvey["endings"], readonly string[]>();
+
+const getEndingCandidateIds = (endings: TSurvey["endings"]): readonly string[] => {
+  const cached = endingCandidateIdsCache.get(endings);
+  if (cached) return cached;
+  const ids = endings.flatMap((ending) => getCandidateIds(ending));
+  endingCandidateIdsCache.set(endings, ids);
+  return ids;
+};
+
 /** Ids of the elements that `block` (and the ending cards) display data from, followed transitively. */
 export const getReferencedElementIds = (survey: TSurvey, block: TSurveyBlock): string[] => {
   const { elementsById } = getBlocksIndex(survey);
   const referenced = new Set<string>();
-  const queue: object[] = [block, ...survey.endings];
+  const queue: string[] = [...getCandidateIds(block), ...getEndingCandidateIds(survey.endings)];
 
   while (queue.length > 0) {
-    const current = queue.pop() as object;
-    for (const text of getNestedStrings(current)) {
-      const candidateIds = text.includes("#recall:") ? extractIds(text) : [text];
-      for (const id of candidateIds) {
-        const element = elementsById.get(id);
-        if (element && !referenced.has(id)) {
-          referenced.add(id);
-          queue.push(element);
-        }
-      }
+    const id = queue.pop() as string;
+    const element = elementsById.get(id);
+    if (element && !referenced.has(id)) {
+      referenced.add(id);
+      queue.push(...getCandidateIds(element));
     }
   }
 
@@ -107,7 +128,7 @@ const haveSameNonBlockFields = (prev: TSurvey, next: TSurvey): boolean => {
 };
 
 /** True when nothing `block`'s card displays differs between the two survey snapshots. */
-export const isSurveyEquivalentForBlock = (prev: TSurvey, next: TSurvey, block: TSurveyBlock): boolean => {
+const isSurveyEquivalentForBlock = (prev: TSurvey, next: TSurvey, block: TSurveyBlock): boolean => {
   if (prev === next) return true;
   if (!haveSameNonBlockFields(prev, next)) return false;
   const prevIndex = getBlocksIndex(prev);
@@ -119,13 +140,11 @@ export const isSurveyEquivalentForBlock = (prev: TSurvey, next: TSurvey, block: 
   );
 };
 
-export const getActiveElementIdInBlock = (
-  block: TSurveyBlock,
-  activeElementId: string | null
-): string | null => block.elements.find((element) => element.id === activeElementId)?.id ?? null;
+const getActiveElementIdInBlock = (block: TSurveyBlock, activeElementId: string | null): string | null =>
+  block.elements.find((element) => element.id === activeElementId)?.id ?? null;
 
 /** The invalid ids that belong to the block: its own id, its elements, logic rules, or anything nested. */
-export const getBlockInvalidIds = (block: TSurveyBlock, invalidElements?: string[]): string[] => {
+const getBlockInvalidIds = (block: TSurveyBlock, invalidElements?: string[]): string[] => {
   if (!invalidElements?.length) return [];
   const blockStrings = getNestedStrings(block);
   return invalidElements.filter((id) => blockStrings.has(id));

@@ -63,6 +63,10 @@ import {
   validateElement,
 } from "../lib/validation";
 
+// Module-level so the sensor descriptor keeps its identity: a fresh options object per render gives
+// DndContext new activators, which re-renders every useSortable consumer (each BlockCard) on every edit.
+const POINTER_SENSOR_OPTIONS = { activationConstraint: { distance: 5 } };
+
 interface ElementsViewProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<SetStateAction<TSurvey>>;
@@ -824,13 +828,7 @@ export const ElementsView = ({
     }
   }, [activeElementId, setActiveElementId, localSurvey, selectedLanguageCode, t]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    })
-  );
+  const sensors = useSensors(useSensor(PointerSensor, POINTER_SENSOR_OPTIONS));
 
   const onBlockCardDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;

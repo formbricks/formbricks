@@ -5,7 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
-import { type KeyboardEvent, memo, useRef, useState } from "react";
+import { type Dispatch, type KeyboardEvent, type SetStateAction, memo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { TI18nString } from "@formbricks/types/i18n";
@@ -75,15 +75,14 @@ interface BlockCardProps {
   onAlertTrigger: () => void;
   isStorageConfigured: boolean;
   isExternalUrlsAllowed: boolean;
-  setLocalSurvey: (survey: TSurvey) => void;
+  setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   duplicateBlock: (blockId: string) => void;
   deleteBlock: (blockId: string) => void;
   moveBlock: (blockId: string, direction: "up" | "down") => void;
   addElementToBlock: (element: TSurveyElement, blockId: string, afterElementIdx: number) => void;
   moveElementToBlock?: (elementId: string, targetBlockId: string) => void;
   totalBlocks: number;
-  // The last block the user pointed at or focused. It re-renders on every survey change, like the
-  // active block, so menus and handlers inside it never act on a snapshot the memo skipped.
+  // Read only by the memo comparator: the last-pressed/focused card re-renders on every survey change.
   isLastInteracted: boolean;
   onInteract: (blockId: string) => void;
 }
@@ -278,7 +277,9 @@ const BlockCardComponent = ({
       ref={setNodeRef}
       style={style}
       id={block.id}
-      // Capture phase, so it also fires for menus portaled out of the card and before they read props.
+      // Capture phase, so presses inside menus portaled out of the card count too. The re-render this
+      // triggers is flushed before the click that follows (and together with a menu opened by this
+      // press), so those see fresh props; a handler running in this same pointerdown does not.
       onPointerDownCapture={() => onInteract(block.id)}
       onFocusCapture={() => onInteract(block.id)}>
       <div
@@ -548,6 +549,7 @@ const BlockCardComponent = ({
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 isLastBlock={blockIdx === totalBlocks - 1}
+                setLocalSurvey={setLocalSurvey}
               />
             </div>
           </Collapsible.CollapsibleContent>
