@@ -240,9 +240,17 @@ describe("survey block discoverability (ENG-2180)", () => {
   });
 
   /**
-   * The rating values are read off `ZSurveyRatingElement` through a cast, so a change in Zod's internals
-   * would not throw — it would yield an empty list and quietly ship `scale ()` to every agent. Pinning
-   * the real values here means the description degrades loudly instead.
+   * The rating values are read off `ZSurveyRatingElement` through a cast, so the compiler cannot see a
+   * change in Zod's internals. The two ways that can go wrong fail very differently, and only one of
+   * them needs a test.
+   *
+   * If `.options` stops existing, `schemas.ts` throws `TypeError` while it is still evaluating its
+   * module body — every suite that imports the tool surface goes red at once, so nothing here is
+   * needed to notice it.
+   *
+   * If `.options` survives but answers different values, nothing throws and the advertised scale or
+   * range silently stops matching the accepted one — which is the drift this whole description exists
+   * to prevent. Pinning the real values is what catches that.
    */
   test("the description carries the rating values the schema actually accepts", async () => {
     const { ZMcpCreateSurveyInput } = surveyAndFeedbackSchemas;
