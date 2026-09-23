@@ -128,14 +128,12 @@ describe("workspace lib", () => {
     const oldUrl = `${LOGO_PREFIX}/old--fid--111.png`;
     const newUrl = `${LOGO_PREFIX}/new--fid--222.png`;
 
-    // updateWorkspace reads the stored logo with `select: { logo: true }`, so the fixture models that
-    // projection rather than a whole row — same reasoning as mockOrgTeams above.
-    const withStoredLogo = (url: string | null) => {
-      vi.mocked(prisma.workspace.findUnique).mockResolvedValueOnce(
-        (url ? { logo: { url } } : { logo: null }) as unknown as Awaited<
-          ReturnType<typeof prisma.workspace.findUnique>
-        >
-      );
+    const loadedAt = new Date("2026-09-23T10:00:00.000Z");
+
+    // updateWorkspace reads the stored logo through a locked `SELECT … FOR UPDATE`, so the fixture
+    // models that row rather than a whole workspace — same reasoning as mockOrgTeams above.
+    const withStoredLogo = (url: string | null, updatedAt: Date = loadedAt) => {
+      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([{ logo: url ? { url } : null, updatedAt }]);
     };
     const resolvesTo = (workspace: Partial<TWorkspace> & { logo?: { url: string } | null }) => {
       vi.mocked(prisma.workspace.update).mockResolvedValueOnce({
@@ -191,7 +189,7 @@ describe("workspace lib", () => {
 
       await updateWorkspace("p1", { name: "renamed" });
 
-      expect(prisma.workspace.findUnique).not.toHaveBeenCalled();
+      expect(prisma.$queryRaw).not.toHaveBeenCalled();
       expect(deleteFile).not.toHaveBeenCalled();
     });
 
@@ -257,6 +255,68 @@ describe("workspace lib", () => {
       await updateWorkspace("p1", { logo: { url: undefined } });
 
       expect(deleteFile).not.toHaveBeenCalled();
+    });
+
+    // Two saves that both loaded logo A: the replace writes C and deletes A, then the stale save
+    // restores A. Without a baseline the row ends up pointing at an object that no longer exists.
+    describe("stale-save guard", () => {
+      const changedAt = new Date("2026-09-23T10:05:00.000Z");
+
+      test("rejects a save whose baseline is older than the stored row", async () => {
+        withStoredLogo(newUrl, changedAt);
+
+        await expect(
+          updateWorkspace("p1", { logo: { url: oldUrl }, expectedUpdatedAt: loadedAt })
+        ).rejects.toThrow(OperationNotAllowedError);
+
+        expect(prisma.workspace.update).not.toHaveBeenCalled();
+        expect(deleteFile).not.toHaveBeenCalled();
+      });
+
+      test("accepts a save whose baseline matches", async () => {
+        withStoredLogo(oldUrl);
+        resolvesTo({ logo: { url: newUrl } });
+
+        await updateWorkspace("p1", { logo: { url: newUrl }, expectedUpdatedAt: loadedAt });
+
+        expect(deleteFile).toHaveBeenCalledWith("p1", "public", "old--fid--111.png");
+      });
+
+      test("still updates when no baseline is supplied", async () => {
+        withStoredLogo(oldUrl, changedAt);
+        resolvesTo({ logo: null });
+
+        await updateWorkspace("p1", { logo: { url: undefined } });
+
+        expect(prisma.workspace.update).toHaveBeenCalled();
+      });
+
+      // createWorkspace shares the same input schema and spreads it into prisma.create, so the
+      // baseline has to be stripped there too or it reaches Prisma as an unknown column.
+      test("is stripped by createWorkspace too", async () => {
+        vi.mocked(prisma.workspace.create).mockResolvedValueOnce(baseWorkspace);
+
+        await createWorkspace("org1", { name: "New", expectedUpdatedAt: loadedAt });
+
+        expect(prisma.workspace.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.not.objectContaining({ expectedUpdatedAt: expect.anything() }),
+          })
+        );
+      });
+
+      test("never writes the baseline as a column", async () => {
+        withStoredLogo(oldUrl);
+        resolvesTo({ logo: null });
+
+        await updateWorkspace("p1", { logo: { url: undefined }, expectedUpdatedAt: loadedAt });
+
+        expect(prisma.workspace.update).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.not.objectContaining({ expectedUpdatedAt: expect.anything() }),
+          })
+        );
+      });
     });
 
     test("deletes an object under the workspace's legacy environment prefix", async () => {

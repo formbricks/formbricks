@@ -74,6 +74,9 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
     try {
       const updatedWorkspace = {
         logo: { url: logoUrl, bgColor: isBgColorEnabled ? logoBgColor : undefined },
+        // The server rejects the write if the workspace changed since this page loaded, so a stale
+        // tab cannot restore a logo url whose object another save has already deleted.
+        expectedUpdatedAt: workspace.updatedAt,
       };
       const updateWorkspaceResponse = await updateWorkspaceAction({
         workspaceId: workspace.id,
@@ -85,6 +88,8 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
       } else {
         const errorMessage = getFormattedErrorMessage(updateWorkspaceResponse);
         toast.error(errorMessage);
+        // Pull the current logo back down so a rejected stale save leaves the page usable.
+        router.refresh();
       }
     } catch (error) {
       toast.error(t("workspace.look.failed_to_update_logo"));
@@ -105,6 +110,7 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
     try {
       const updatedWorkspace = {
         logo: { url: undefined, bgColor: undefined },
+        expectedUpdatedAt: workspace.updatedAt,
       };
       const updateWorkspaceResponse = await updateWorkspaceAction({
         workspaceId: workspace.id,
@@ -116,6 +122,7 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
       } else {
         const errorMessage = getFormattedErrorMessage(updateWorkspaceResponse);
         toast.error(errorMessage);
+        router.refresh();
       }
     } catch (error) {
       toast.error(t("workspace.look.failed_to_remove_logo"));

@@ -10,7 +10,7 @@ import {
   ResourceNotFoundError,
   ValidationError,
 } from "@formbricks/types/errors";
-import { TWorkspace, TWorkspaceUpdateInput, ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
+import { TLogo, TWorkspace, TWorkspaceUpdateInput, ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
 import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
@@ -192,26 +192,53 @@ export const updateWorkspace = async (
   // ENG-1919: organizationId is the workspace's tenant anchor, set at creation and immutable on
   // update. Persisting a caller-supplied organizationId here would let an authorized workspace
   // owner move their workspace (and all its data) into another organization, so it is stripped.
-  const { organizationId: _organizationId, ...data } = inputWorkspace;
+  // expectedUpdatedAt is a concurrency baseline, not a column — writing it would be nonsense and
+  // would also fight Prisma's own @updatedAt.
+  const { organizationId: _organizationId, expectedUpdatedAt, ...data } = inputWorkspace;
   let updatedWorkspace;
   let previousLogoUrl: string | undefined;
   try {
     // Only an update carrying a logo can orphan one, so a rename or a styling change costs no read.
     if ("logo" in inputWorkspace) {
-      const current = await prisma.workspace.findUnique({
-        where: { id: workspaceId },
-        select: { logo: true },
-      });
-      previousLogoUrl = current?.logo?.url;
-    }
+      // Read, version check and write are one transaction over a locked row. Without it, two saves
+      // that both loaded logo A interleave: the replace writes C and deletes A, then the stale save
+      // restores A, leaving the row pointing at an object that no longer exists.
+      ({ updatedWorkspace, previousLogoUrl } = await prisma.$transaction(async (tx) => {
+        const [current] = await tx.$queryRaw<{ logo: TLogo | null; updatedAt: Date }[]>`
+          SELECT "logo", "updated_at" AS "updatedAt"
+          FROM "Workspace"
+          WHERE "id" = ${workspaceId}
+          FOR UPDATE
+        `;
 
-    updatedWorkspace = await prisma.workspace.update({
-      where: {
-        id: workspaceId,
-      },
-      data,
-      select: selectWorkspace,
-    });
+        if (!current) {
+          throw new ResourceNotFoundError("workspace", workspaceId);
+        }
+
+        if (expectedUpdatedAt && current.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
+          throw new OperationNotAllowedError(
+            "This workspace was changed somewhere else. Reload the page and try again."
+          );
+        }
+
+        return {
+          updatedWorkspace: await tx.workspace.update({
+            where: { id: workspaceId },
+            data,
+            select: selectWorkspace,
+          }),
+          previousLogoUrl: current.logo?.url,
+        };
+      }));
+    } else {
+      updatedWorkspace = await prisma.workspace.update({
+        where: {
+          id: workspaceId,
+        },
+        data,
+        select: selectWorkspace,
+      });
+    }
   } catch (error) {
     if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
@@ -244,7 +271,9 @@ export const createWorkspace = async (
     throw new ValidationError("Workspace Name is required");
   }
 
-  const { teamIds, config: configInput, ...data } = workspaceInput;
+  // expectedUpdatedAt shares ZWorkspaceUpdateInput with the update path but is a concurrency
+  // baseline, not a column; leaving it in would hand Prisma an unknown field on create.
+  const { teamIds, config: configInput, expectedUpdatedAt: _expectedUpdatedAt, ...data } = workspaceInput;
   // Captured out here so the guard above still narrows it: inside the transaction callback below,
   // TypeScript widens workspaceInput.name back to `string | undefined`.
   const name = workspaceInput.name;
