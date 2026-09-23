@@ -160,7 +160,7 @@ describe("workspace lib", () => {
       withStoredLogo(oldUrl);
       resolvesTo({ logo: null });
 
-      await updateWorkspace("p1", { logo: { url: undefined } });
+      await updateWorkspace("p1", { logo: { url: undefined }, expectedUpdatedAt: loadedAt });
 
       expect(deleteFile).toHaveBeenCalledWith("p1", "public", "old--fid--111.png");
     });
@@ -169,7 +169,7 @@ describe("workspace lib", () => {
       withStoredLogo(oldUrl);
       resolvesTo({ logo: { url: newUrl } });
 
-      await updateWorkspace("p1", { logo: { url: newUrl } });
+      await updateWorkspace("p1", { logo: { url: newUrl }, expectedUpdatedAt: loadedAt });
 
       expect(deleteFile).toHaveBeenCalledTimes(1);
       expect(deleteFile).toHaveBeenCalledWith("p1", "public", "old--fid--111.png");
@@ -179,7 +179,22 @@ describe("workspace lib", () => {
       withStoredLogo(oldUrl);
       resolvesTo({ logo: { url: oldUrl } });
 
-      await updateWorkspace("p1", { logo: { url: oldUrl, bgColor: "#fff" } });
+      await updateWorkspace("p1", { logo: { url: oldUrl, bgColor: "#fff" }, expectedUpdatedAt: loadedAt });
+
+      expect(deleteFile).not.toHaveBeenCalled();
+    });
+
+    // The same object can be named by an absolute and a relative url, and with the file name
+    // percent-encoded or not. A raw string compare reads that as a change and deletes the object
+    // the row still points at.
+    test("deletes nothing when the url is re-spelled but resolves to the same object", async () => {
+      withStoredLogo(`${LOGO_PREFIX}/my%20logo--fid--1.png`);
+      resolvesTo({ logo: { url: "https://app.formbricks.com/storage/p1/public/my logo--fid--1.png" } });
+
+      await updateWorkspace("p1", {
+        logo: { url: "https://app.formbricks.com/storage/p1/public/my logo--fid--1.png" },
+        expectedUpdatedAt: loadedAt,
+      });
 
       expect(deleteFile).not.toHaveBeenCalled();
     });
@@ -199,7 +214,7 @@ describe("workspace lib", () => {
       withStoredLogo(oldUrl);
       resolvesTo({ logo: { url: oldUrl } });
 
-      await updateWorkspace("p1", { logo: undefined });
+      await updateWorkspace("p1", { logo: undefined, expectedUpdatedAt: loadedAt });
 
       expect(deleteFile).not.toHaveBeenCalled();
     });
@@ -210,7 +225,7 @@ describe("workspace lib", () => {
       withStoredLogo("/storage/other-workspace/public/victim--fid--999.png");
       resolvesTo({ logo: null });
 
-      await updateWorkspace("p1", { logo: { url: undefined } });
+      await updateWorkspace("p1", { logo: { url: undefined }, expectedUpdatedAt: loadedAt });
 
       expect(deleteFile).not.toHaveBeenCalled();
       expect(logger.error).toHaveBeenCalled();
@@ -222,7 +237,7 @@ describe("workspace lib", () => {
       withStoredLogo("/storage/p1/private/response-attachment--fid--888.pdf");
       resolvesTo({ logo: null });
 
-      await updateWorkspace("p1", { logo: { url: undefined } });
+      await updateWorkspace("p1", { logo: { url: undefined }, expectedUpdatedAt: loadedAt });
 
       expect(deleteFile).not.toHaveBeenCalled();
       expect(logger.error).toHaveBeenCalled();
@@ -239,7 +254,7 @@ describe("workspace lib", () => {
       withStoredLogo(orgAssetUrl);
       resolvesTo({ logo: null });
 
-      await updateWorkspace("p1", { logo: { url: undefined } });
+      await updateWorkspace("p1", { logo: { url: undefined }, expectedUpdatedAt: loadedAt });
 
       expect(deleteFile).not.toHaveBeenCalled();
       expect(logger.error).toHaveBeenCalled();
@@ -252,7 +267,7 @@ describe("workspace lib", () => {
       withStoredLogo(`${LOGO_PREFIX}/shared asset--fid--888.png`);
       resolvesTo({ logo: null });
 
-      await updateWorkspace("p1", { logo: { url: undefined } });
+      await updateWorkspace("p1", { logo: { url: undefined }, expectedUpdatedAt: loadedAt });
 
       expect(deleteFile).not.toHaveBeenCalled();
     });
@@ -282,13 +297,19 @@ describe("workspace lib", () => {
         expect(deleteFile).toHaveBeenCalledWith("p1", "public", "old--fid--111.png");
       });
 
-      test("still updates when no baseline is supplied", async () => {
-        withStoredLogo(oldUrl, changedAt);
-        resolvesTo({ logo: null });
+      // An opt-in guard protects nobody who forgets it, so a logo-bearing update without a baseline
+      // is refused outright rather than silently skipping the version check.
+      test("refuses a logo update that carries no baseline", async () => {
+        await expect(updateWorkspace("p1", { logo: { url: undefined } })).rejects.toThrow(ValidationError);
 
-        await updateWorkspace("p1", { logo: { url: undefined } });
+        expect(prisma.workspace.update).not.toHaveBeenCalled();
+        expect(deleteFile).not.toHaveBeenCalled();
+      });
 
-        expect(prisma.workspace.update).toHaveBeenCalled();
+      test("leaves updates without a logo free of the baseline requirement", async () => {
+        resolvesTo({ name: "renamed" });
+
+        await expect(updateWorkspace("p1", { name: "renamed" })).resolves.toBeDefined();
       });
 
       // createWorkspace shares the same input schema and spreads it into prisma.create, so the
@@ -324,7 +345,7 @@ describe("workspace lib", () => {
       withStoredLogo("/storage/env-legacy/public/legacy--fid--333.png");
       resolvesTo({ logo: null });
 
-      await updateWorkspace("p1", { logo: { url: undefined } });
+      await updateWorkspace("p1", { logo: { url: undefined }, expectedUpdatedAt: loadedAt });
 
       expect(deleteFile).toHaveBeenCalledWith("env-legacy", "public", "legacy--fid--333.png");
     });
@@ -333,7 +354,7 @@ describe("workspace lib", () => {
       withStoredLogo("https://cdn.example.com/logo.png");
       resolvesTo({ logo: null });
 
-      await updateWorkspace("p1", { logo: { url: undefined } });
+      await updateWorkspace("p1", { logo: { url: undefined }, expectedUpdatedAt: loadedAt });
 
       expect(deleteFile).not.toHaveBeenCalled();
     });
@@ -343,7 +364,7 @@ describe("workspace lib", () => {
       withStoredLogo(`${LOGO_PREFIX}/my%20logo--fid--444.png`);
       resolvesTo({ logo: null });
 
-      await updateWorkspace("p1", { logo: { url: undefined } });
+      await updateWorkspace("p1", { logo: { url: undefined }, expectedUpdatedAt: loadedAt });
 
       expect(deleteFile).toHaveBeenCalledWith("p1", "public", "my logo--fid--444.png");
     });
@@ -360,7 +381,9 @@ describe("workspace lib", () => {
       withStoredLogo(oldUrl);
       resolvesTo({ logo: null });
 
-      await expect(updateWorkspace("p1", { logo: { url: undefined } })).resolves.toBeDefined();
+      await expect(
+        updateWorkspace("p1", { logo: { url: undefined }, expectedUpdatedAt: loadedAt })
+      ).resolves.toBeDefined();
       expect(logger.error).toHaveBeenCalled();
     });
   });

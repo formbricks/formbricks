@@ -86,10 +86,13 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
         toast.success(t("workspace.look.logo_updated_successfully"));
         router.refresh();
       } else {
+        // Deliberately no refresh here. The draft below lives in useState and is seeded once, so
+        // refreshing would hand this page a current `updatedAt` while it still holds the old logo
+        // url — the next save would then pass the version check and restore a deleted object.
+        // Leaving the stale baseline in place keeps every retry rejected until the user reloads,
+        // which is what the message asks for.
         const errorMessage = getFormattedErrorMessage(updateWorkspaceResponse);
         toast.error(errorMessage);
-        // Pull the current logo back down so a rejected stale save leaves the page usable.
-        router.refresh();
       }
     } catch (error) {
       toast.error(t("workspace.look.failed_to_update_logo"));
@@ -120,9 +123,9 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
         toast.success(t("workspace.look.logo_removed_successfully"));
         router.refresh();
       } else {
+        // Same as saveChanges: no refresh, so a rejected stale save cannot pick up a fresh baseline.
         const errorMessage = getFormattedErrorMessage(updateWorkspaceResponse);
         toast.error(errorMessage);
-        router.refresh();
       }
     } catch (error) {
       toast.error(t("workspace.look.failed_to_remove_logo"));

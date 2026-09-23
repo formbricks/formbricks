@@ -200,6 +200,12 @@ export const updateWorkspace = async (
   try {
     // Only an update carrying a logo can orphan one, so a rename or a styling change costs no read.
     if ("logo" in inputWorkspace) {
+      // Required rather than optional: an opt-in guard protects nobody who forgets it, and a save
+      // with no baseline is exactly the stale write that restores a url whose object is gone.
+      if (!expectedUpdatedAt) {
+        throw new ValidationError("expectedUpdatedAt is required when the update carries a logo");
+      }
+
       // Read, version check and write are one transaction over a locked row. Without it, two saves
       // that both loaded logo A interleave: the replace writes C and deletes A, then the stale save
       // restores A, leaving the row pointing at an object that no longer exists.
@@ -215,7 +221,7 @@ export const updateWorkspace = async (
           throw new ResourceNotFoundError("workspace", workspaceId);
         }
 
-        if (expectedUpdatedAt && current.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
+        if (current.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
           throw new OperationNotAllowedError(
             "This workspace was changed somewhere else. Reload the page and try again."
           );
@@ -254,7 +260,14 @@ export const updateWorkspace = async (
   // `logo: undefined` as "leave this field alone", so trusting the input would delete the object
   // while the row still points at it. Every upload gets a unique `--fid--{uuid}` key, so the old
   // object has exactly one referrer and losing it orphans the file.
-  if (previousLogoUrl && previousLogoUrl !== updatedWorkspace.logo?.url) {
+  //
+  // Compared on the resolved object key, not the raw url: one object can be named by an absolute
+  // and a relative url, and with the file name percent-encoded or not, so a string compare would
+  // read a re-spelled url as a change and delete the object the row still points at.
+  const previousObjectKey = previousLogoUrl ? storageObjectKey(previousLogoUrl) : null;
+  const persistedObjectKey = updatedWorkspace.logo?.url ? storageObjectKey(updatedWorkspace.logo.url) : null;
+
+  if (previousLogoUrl && previousObjectKey !== persistedObjectKey) {
     await deleteOrphanedWorkspaceLogoFile(workspaceId, updatedWorkspace.organizationId, previousLogoUrl);
   }
 
