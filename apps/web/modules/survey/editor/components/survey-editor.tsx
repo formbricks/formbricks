@@ -1,6 +1,6 @@
 "use client";
 
-import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, memo, useCallback, useEffect, useRef, useState } from "react";
 import { ActionClass, Language, OrganizationRole, Workspace } from "@formbricks/database/prisma-browser";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
@@ -30,6 +30,9 @@ import { getWorkspaceLanguagesAction, refetchWorkspaceAction } from "../actions"
 // How long the preview trails the editor. Every preview render re-mounts the whole survey bundle, so
 // following each keystroke made typing lag on large surveys (ENG-991).
 const PREVIEW_DEBOUNCE_MS = 300;
+// Memoized so the editor's per-keystroke re-renders skip the preview while its debounced inputs are
+// unchanged; without it the preview would still re-render (and re-mount the survey) every time.
+const MemoizedPreviewSurvey = memo(PreviewSurvey);
 
 interface SurveyEditorProps {
   survey: TSurvey;
@@ -330,7 +333,7 @@ export const SurveyEditor = ({
         </main>
 
         <aside className="group hidden w-1/3 shrink-0 items-center justify-center overflow-hidden border-l border-slate-200 bg-slate-100 shadow-inner md:flex md:flex-col">
-          <PreviewSurvey
+          <MemoizedPreviewSurvey
             survey={previewSurvey}
             elementId={activeElementId}
             workspace={localWorkspace}

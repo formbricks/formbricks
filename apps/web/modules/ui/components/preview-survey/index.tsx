@@ -2,7 +2,7 @@
 
 import { MotionConfig, motion } from "framer-motion";
 import { ExpandIcon, GlobeIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
@@ -46,10 +46,7 @@ interface PreviewSurveyProps {
 let surveyNameTemp: string;
 let setBlockId = (_: string) => {};
 
-// Memoized because every render re-mounts the survey bundle (`SurveyInline` re-renders on any new
-// props). The editor re-renders on each keystroke; skipping the preview when its inputs are unchanged
-// is what makes debouncing its `survey` prop pay off (ENG-991).
-export const PreviewSurvey = memo(function PreviewSurvey({
+export const PreviewSurvey = ({
   elementId,
   survey,
   previewType,
@@ -59,7 +56,7 @@ export const PreviewSurvey = memo(function PreviewSurvey({
   locale,
   isSpamProtectionAllowed,
   publicDomain,
-}: Readonly<PreviewSurveyProps>) {
+}: PreviewSurveyProps) => {
   // ENG-1837: the preview is an authoring surface — the Variables and Hidden Fields cards are the
   // live source of truth, and the saved EmbeddedData rows only catch up on save. Overriding the
   // inlined definitions with the card-derived ones is what makes a rename or a new field show up in
@@ -584,7 +581,7 @@ export const PreviewSurvey = memo(function PreviewSurvey({
       </div>
     </MotionConfig>
   );
-});
+};
 
 const LanguageSelector = ({
   languages,
