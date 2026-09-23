@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { logger } from "@formbricks/logger";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt } from "@/lib/crypto";
+import { env } from "@/lib/env";
 import {
   type TSurveySingleUseLinkValidation,
   validateSurveySingleUseLinkParams,
@@ -126,6 +127,23 @@ export const resolveSingleUseIdForSurvey = ({
     return null;
   }
 
-  recordSingleUseLinkValidation({ mode, outcome: "accepted", reason: "none", surface });
+  if (result.legacyUnsigned) {
+    // warn, not info: the deployment has just accepted a credential bound to no survey, because
+    // SINGLE_USE_LEGACY_UNSIGNED_UNTIL is set. Unlike the rejection warns above, this one is bounded
+    // by how many pre-release links are still circulating rather than by anonymous traffic, so it is
+    // not a flooding lever — and it is the only record that the window is doing anything. Carries
+    // the expiry so the line answers "how long does this keep happening" on its own.
+    logger.warn(
+      { surveyId, surface, legacyUnsignedUntil: env.SINGLE_USE_LEGACY_UNSIGNED_UNTIL },
+      "Accepted an unsigned legacy single-use link under SINGLE_USE_LEGACY_UNSIGNED_UNTIL"
+    );
+  }
+
+  recordSingleUseLinkValidation({
+    mode,
+    outcome: "accepted",
+    reason: result.legacyUnsigned ? "legacy_unsigned" : "none",
+    surface,
+  });
   return result.singleUseId;
 };

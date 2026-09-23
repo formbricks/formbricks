@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricEncrypt } from "@/lib/crypto";
@@ -34,7 +34,7 @@ vi.mock(
  * key, for which Buffer.from(key, "hex") is not 32 bytes. Every encrypt would throw, the resolver
  * would return null, and every "rejected" assertion below would pass while proving nothing.
  */
-vi.mock("@/lib/env", () => ({ env: { ENCRYPTION_KEY: KEY } }));
+vi.mock("@/lib/env", () => ({ env: { ENCRYPTION_KEY: KEY, SINGLE_USE_LEGACY_UNSIGNED_UNTIL: undefined } }));
 vi.mock("@/lib/constants", async (importOriginal: () => Promise<typeof import("@/lib/constants")>) => ({
   ...(await importOriginal()),
   ENCRYPTION_KEY: KEY,
@@ -215,6 +215,53 @@ describe("resolveSingleUseIdForSurvey (ENG-2758)", () => {
       openOn(SURVEY_B, minted.suId);
       expect(vi.mocked(logger.warn).mock.calls[0][0]).toMatchObject({ reason: "missing_signature" });
       expect(vi.mocked(logger.warn).mock.calls[0][0]).not.toHaveProperty("suTokenFingerprint");
+    });
+  });
+
+  describe("SINGLE_USE_LEGACY_UNSIGNED_UNTIL", () => {
+    // A pre-ENG-2758 link: a real ciphertext under this deployment's key, and no token at all.
+    const legacySuId = () => symmetricEncrypt(createId(), ENCRYPTION_KEY);
+
+    afterEach(() => {
+      vi.mocked(env).SINGLE_USE_LEGACY_UNSIGNED_UNTIL = undefined;
+    });
+
+    test("an unsigned legacy link is refused while unset", () => {
+      expect(openOn(SURVEY_A, legacySuId())).toBeNull();
+    });
+
+    test("it opens while the window is set, and the accept is warned and counted apart", () => {
+      vi.mocked(env).SINGLE_USE_LEGACY_UNSIGNED_UNTIL = "2099-01-01";
+
+      expect(openOn(SURVEY_A, legacySuId())).toMatch(/^[a-z0-9]{24}$/);
+
+      // Visible while it happens. An operator cannot otherwise tell the window is load-bearing.
+      expect(vi.mocked(logger.warn).mock.calls.at(-1)?.[0]).toMatchObject({
+        surveyId: SURVEY_A,
+        surface: "link_page",
+        legacyUnsignedUntil: "2099-01-01",
+      });
+      expect(recordSingleUseLinkValidation).toHaveBeenCalledWith(
+        expect.objectContaining({ outcome: "accepted", reason: "legacy_unsigned" })
+      );
+      expect(logger.error).not.toHaveBeenCalled();
+    });
+
+    test("the window does not let survey A's unsigned link open survey B either", () => {
+      // The point worth being explicit about: this is not a narrower hole than the pre-fix one, it
+      // is the same one, reopened on purpose and on a timer. The ciphertext is bound to nothing, so
+      // any survey on the deployment takes it.
+      vi.mocked(env).SINGLE_USE_LEGACY_UNSIGNED_UNTIL = "2099-01-01";
+      const suId = legacySuId();
+
+      expect(openOn(SURVEY_A, suId)).not.toBeNull();
+      expect(openOn(SURVEY_B, suId)).not.toBeNull();
+    });
+
+    test("it is shut again once the date has passed", () => {
+      vi.mocked(env).SINGLE_USE_LEGACY_UNSIGNED_UNTIL = "2000-01-01";
+
+      expect(openOn(SURVEY_A, legacySuId())).toBeNull();
     });
   });
 });

@@ -18,7 +18,12 @@ export type TSingleUseLinkSurface =
 
 export type TSingleUseLinkValidationMetric = Readonly<{
   outcome: "accepted" | "rejected";
-  reason: TSurveySingleUseLinkRejectionReason | "none" | "internal_error";
+  /**
+   * "none" on an ordinary accept, "legacy_unsigned" when the accept came from the
+   * SINGLE_USE_LEGACY_UNSIGNED_UNTIL window instead of a signature — the series an operator watches
+   * to know whether the window is still carrying traffic and can be closed.
+   */
+  reason: TSurveySingleUseLinkRejectionReason | "none" | "internal_error" | "legacy_unsigned";
   mode: "encrypted" | "plaintext";
   surface: TSingleUseLinkSurface;
 }>;

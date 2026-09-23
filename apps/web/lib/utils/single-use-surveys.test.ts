@@ -1,5 +1,5 @@
 import * as cuid2 from "@paralleldrive/cuid2";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as crypto from "@/lib/crypto";
 import { env } from "@/lib/env";
 import {
@@ -382,6 +382,115 @@ describe("Single Use Surveys", () => {
         reason: "signature_mismatch",
       });
       expect(decrypt).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("SINGLE_USE_LEGACY_UNSIGNED_UNTIL grace window", () => {
+    const SURVEY_A = "cm0aaaaaaaaaaaaaaaaaaaaa1";
+    const SURVEY_B = "cm0bbbbbbbbbbbbbbbbbbbbb2";
+    const PLAIN_CUID = "cm8f4x9mm0001gx9h5b7d7h3q";
+
+    const fakeEncrypt = (plaintext: string) => `iv:enc(${plaintext}):tag`;
+    const fakeDecrypt = (ciphertext: string) => {
+      const match = /^iv:enc\((.*)\):tag$/.exec(ciphertext);
+      if (!match) throw new Error("Invalid encrypted payload");
+      return match[1];
+    };
+
+    // Far enough either side of today that these never go stale, so no clock faking is needed.
+    const OPEN = "2099-01-01";
+    const CLOSED = "2000-01-01";
+
+    beforeEach(() => {
+      vi.mocked(env).ENCRYPTION_KEY = "test-encryption-key";
+      vi.mocked(env).SINGLE_USE_LEGACY_UNSIGNED_UNTIL = undefined;
+      vi.mocked(cuid2.createId).mockReturnValue(PLAIN_CUID);
+      vi.mocked(cuid2.isCuid).mockImplementation((value: string) => value === PLAIN_CUID);
+      vi.mocked(crypto.symmetricEncrypt).mockImplementation(fakeEncrypt);
+    });
+
+    afterEach(() => {
+      vi.mocked(env).SINGLE_USE_LEGACY_UNSIGNED_UNTIL = undefined;
+    });
+
+    // A pre-ENG-2758 link: an encrypted suId and nothing else. Minting one is the only thing this
+    // codebase can no longer do, so it is built from the ciphertext directly.
+    const legacyLink = () => ({ suId: fakeEncrypt(PLAIN_CUID) });
+
+    const present = (
+      surveyId: string,
+      params: { suId: string; suToken?: string },
+      isEncrypted = true,
+      decrypt: (value: string) => string = fakeDecrypt
+    ) => validateSurveySingleUseLinkParams({ surveyId, ...params, isEncrypted, decrypt });
+
+    test("rejects an unsigned legacy link when unset, which is the default", () => {
+      expect(present(SURVEY_A, legacyLink())).toEqual({ ok: false, reason: "missing_signature" });
+    });
+
+    test("admits one while the window is open, and says so on the result", () => {
+      vi.mocked(env).SINGLE_USE_LEGACY_UNSIGNED_UNTIL = OPEN;
+
+      expect(present(SURVEY_A, legacyLink())).toEqual({
+        ok: true,
+        singleUseId: PLAIN_CUID,
+        legacyUnsigned: true,
+      });
+    });
+
+    test("rejects it again once the date has passed", () => {
+      vi.mocked(env).SINGLE_USE_LEGACY_UNSIGNED_UNTIL = CLOSED;
+
+      expect(present(SURVEY_A, legacyLink())).toEqual({ ok: false, reason: "missing_signature" });
+    });
+
+    test("does not mark an ordinary signed link, even with the window open", () => {
+      vi.mocked(env).SINGLE_USE_LEGACY_UNSIGNED_UNTIL = OPEN;
+      const minted = generateSurveySingleUseLinkParams(SURVEY_A, true);
+
+      // No `legacyUnsigned`, so the metric and the log stay quiet for traffic that never needed the
+      // window — otherwise its usage could never be read as "safe to close".
+      expect(present(SURVEY_A, minted)).toEqual({ ok: true, singleUseId: PLAIN_CUID });
+    });
+
+    describe("stays narrow on each of its three axes", () => {
+      test("plaintext mode is never graced — it has required a token since 5.0", () => {
+        vi.mocked(env).SINGLE_USE_LEGACY_UNSIGNED_UNTIL = OPEN;
+
+        expect(present(SURVEY_A, { suId: PLAIN_CUID }, false)).toEqual({
+          ok: false,
+          reason: "missing_signature",
+        });
+      });
+
+      test("a token that is present and wrong is never graced", () => {
+        vi.mocked(env).SINGLE_USE_LEGACY_UNSIGNED_UNTIL = OPEN;
+        const minted = generateSurveySingleUseLinkParams(SURVEY_B, true);
+
+        // Survey B's token replayed onto survey A. Only an *absent* token has the shape of a legacy
+        // link; a wrong one is a forgery or a rotated key, and the window must not launder it.
+        expect(present(SURVEY_A, { suId: minted.suId, suToken: minted.suToken })).toEqual({
+          ok: false,
+          reason: "signature_mismatch",
+        });
+      });
+
+      test("the suId must still decrypt to a cuid under this deployment's key", () => {
+        vi.mocked(env).SINGLE_USE_LEGACY_UNSIGNED_UNTIL = OPEN;
+
+        // The window drops the signature requirement, not the cipher. An arbitrary string is still
+        // refused, so the residual exposure is bounded to ciphertexts this key actually produced.
+        // Decrypts cleanly but is not a single-use id.
+        expect(present(SURVEY_A, { suId: fakeEncrypt("not-a-cuid") })).toEqual({
+          ok: false,
+          reason: "not_a_cuid",
+        });
+        // Not something this key ever produced.
+        expect(present(SURVEY_A, { suId: "iv:not-ours:tag" })).toEqual({
+          ok: false,
+          reason: "decryption_failed",
+        });
+      });
     });
   });
 });

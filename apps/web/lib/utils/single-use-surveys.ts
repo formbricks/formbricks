@@ -45,7 +45,17 @@ export type TSurveySingleUseLinkRejectionReason =
  * fingerprint says somebody mailed links minted before this release.
  */
 export type TSurveySingleUseLinkValidation =
-  | { ok: true; singleUseId: string }
+  | {
+      ok: true;
+      singleUseId: string;
+      /**
+       * Set only when the link was admitted by the `SINGLE_USE_LEGACY_UNSIGNED_UNTIL` grace window
+       * rather than by its signature. Callers surface it — this is the deployment knowingly
+       * accepting an unbound credential, so it must be visible while it happens, not inferred later
+       * from the absence of a rejection.
+       */
+      legacyUnsigned?: true;
+    }
   | { ok: false; reason: TSurveySingleUseLinkRejectionReason };
 
 const getSingleUseSigningKey = (): string => {
@@ -61,6 +71,27 @@ const getSingleUseSigningKey = (): string => {
  * ENG-2758 was. Everything outside this file goes through `generateSurveySingleUseLinkParams`,
  * which always signs. Do not export it again.
  */
+/**
+ * Whether the deployment is still inside its `SINGLE_USE_LEGACY_UNSIGNED_UNTIL` window.
+ *
+ * Read on every call rather than memoized at module load: the window has to actually close on a
+ * long-running pod, and a value frozen at boot would keep it open until the next deploy.
+ *
+ * `z.iso.date()` in `lib/env.ts` already guarantees a parseable date, so the NaN guard is only for
+ * callers that bypass env validation — it fails closed, which is the right direction for a switch
+ * whose "on" position is a known hole.
+ */
+const isLegacyUnsignedGraceActive = (now: number = Date.now()): boolean => {
+  const until = env.SINGLE_USE_LEGACY_UNSIGNED_UNTIL;
+  if (!until) {
+    return false;
+  }
+
+  const expiresAt = Date.parse(until);
+
+  return !Number.isNaN(expiresAt) && now < expiresAt;
+};
+
 const generateSurveySingleUseId = (isEncrypted: boolean): string => {
   const cuid = createId();
   if (!isEncrypted) {
@@ -190,7 +221,25 @@ export const validateSurveySingleUseLinkParams = ({
   //     to be a cuid2 — including the `contactId` that getContactSurveyLink encrypts into the
   //     base64url (readable) payload of a /c/{jwt} personalized link. Only the MAC distinguishes
   //     "a single-use id minted for THIS survey" from "a cuid this deployment once encrypted".
-  if (!validateSurveySingleUseSignature(surveyId, trimmedSuId, suToken)) {
+  //
+  // The one exception is the `SINGLE_USE_LEGACY_UNSIGNED_UNTIL` window below, and it is deliberately
+  // narrow on all three axes: encrypted mode only, an *absent* token only, and only until the
+  // configured date.
+  //
+  //  - Plaintext is excluded because it has required a `suToken` since 5.0. Unsigned plaintext links
+  //    were already rejected before this fix, so gracing them would open a hole this change never
+  //    made rather than soften one it did.
+  //  - `signature_mismatch` is excluded because a token that is present and wrong is a forgery or a
+  //    rotated key, never a link minted before the signature existed. Only the absence of a token
+  //    has the shape of a legacy link.
+  //
+  // What remains admitted is still an unbound credential: any ciphertext this deployment's key
+  // produced whose plaintext is a cuid2, which the decrypt below is all that stands behind. That is
+  // the hole, stated plainly, and it is why the default is off.
+  const graced =
+    isEncrypted && !suToken && isLegacyUnsignedGraceActive() ? ({ legacyUnsigned: true } as const) : null;
+
+  if (!graced && !validateSurveySingleUseSignature(surveyId, trimmedSuId, suToken)) {
     return { ok: false, reason: suToken ? "signature_mismatch" : "missing_signature" };
   }
 
@@ -222,5 +271,5 @@ export const validateSurveySingleUseLinkParams = ({
     return { ok: false, reason: "not_a_cuid" };
   }
 
-  return { ok: true, singleUseId: decryptedSingleUseId };
+  return { ok: true, singleUseId: decryptedSingleUseId, ...graced };
 };
