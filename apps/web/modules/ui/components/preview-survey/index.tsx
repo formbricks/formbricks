@@ -312,7 +312,7 @@ export const PreviewSurvey = ({
           )}>
           {previewMode === "mobile" && (
             <>
-              <p className="absolute top-0 left-0 m-2 rounded-sm bg-slate-100 px-2 py-1 text-xs text-slate-400">
+              <p className="absolute top-0 left-0 m-2 rounded-sm bg-slate-100 px-2 py-1 text-xs text-slate-600">
                 {t("common.preview")}
               </p>
               <div className="absolute top-0 right-0 m-2 flex items-center gap-1">
@@ -434,7 +434,7 @@ export const PreviewSurvey = ({
                     }></button>
                 </div>
                 <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-                  <p>
+                  <p className="text-slate-600">
                     {previewType === "modal" ? t("workspace.surveys.edit.your_web_app") : t("common.preview")}
                   </p>
 
@@ -570,11 +570,13 @@ export const PreviewSurvey = ({
           <TabOption
             active={previewMode === "mobile"}
             icon={<SmartphoneIcon className="mx-4 my-2 size-4 text-slate-700" />}
+            label={t("workspace.surveys.edit.mobile_preview")}
             onClick={() => handlePreviewModeChange("mobile")}
           />
           <TabOption
             active={previewMode === "desktop"}
             icon={<MonitorIcon className="mx-4 my-2 size-4 text-slate-700" />}
+            label={t("workspace.surveys.edit.desktop_preview")}
             onClick={() => handlePreviewModeChange("desktop")}
           />
         </div>
