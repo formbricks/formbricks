@@ -190,7 +190,7 @@
     "add_new_workspace": "Add new workspace",
     "add_to_team": "Add to team",
     "add_workspace": "Add workspace",
-    "add_workspace_lite_license_description": "You've reached the workspace limit of the Community Edition. We'll send you a complimentary Lite Enterprise License that adds one more workspace. No strings attached. Free forever.",
+    "add_workspace_lite_license_description": "You have reached the workspace limit of the Community Edition. We will send you a complimentary Lite Enterprise License that adds one more workspace. No strings attached. Free forever.",
     "add_workspace_lite_license_title": "Add another workspace for free",
     "ai_unavailable": {
       "enable_in_settings": "Enable in settings",
@@ -374,7 +374,7 @@
     "link": "Link",
     "link_survey": "Link Survey",
     "link_surveys": "Link Surveys",
-    "lite_license_tip_description": "We'll send you a complimentary Lite Enterprise License. No strings attached. Free forever.",
+    "lite_license_tip_description": "We will send you a complimentary Lite Enterprise License. No strings attached. Free forever.",
     "load_more": "Load more",
     "loading": "Loading",
     "logo": "Logo",
@@ -2593,7 +2593,7 @@
         "add_api_key": "Add API key",
         "add_permission": "Add permission",
         "api_keys_description": "Manage API keys to access Formbricks management APIs",
-        "connect_app_banner_description": "Setting up Formbricks on your web or mobile app doesn't need an API key.",
+        "connect_app_banner_description": "Setting up Formbricks on your web or mobile app does not need an API key.",
         "connect_app_banner_link": "Go to Web & Mobile SDK",
         "connect_app_banner_title": "Setting up a Website & App survey?"
       },

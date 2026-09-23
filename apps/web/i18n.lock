@@ -159,7 +159,7 @@ checksums:
     common/add_new_workspace: 6571cc8952d3c9a017c51cb842965d57
     common/add_to_team: 81ea05d21e72679f58a5bc77f6077ba1
     common/add_workspace: 17b0856283b433b848ce9bf4c03c6ae5
-    common/add_workspace_lite_license_description: 4ad72ecdbed03453a47660e34c3eded9
+    common/add_workspace_lite_license_description: 390d22493fef8d4144b799b6f0494fb7
     common/add_workspace_lite_license_title: 29ed7cc4e13dc1962668e8e4ffd878b5
     common/ai_unavailable/enable_in_settings: f994107b44e64d8202446acb723740ac
     common/ai_unavailable/instance_not_configured: 6deeb8aeaff3982d07e1d5a045e06d2d
@@ -341,7 +341,7 @@ checksums:
     common/link: 60f0aa33e70ca6df3b6659802b16f433
     common/link_survey: f860f30b034d29c3aaac984f34f46c1d
     common/link_surveys: e4b98a8523d6aba56b75263006a9e812
-    common/lite_license_tip_description: 8dacc5a3319efba01c7ae0ee70f94b38
+    common/lite_license_tip_description: c1f0a6b217e3a91e69b6f9d1ab1720c8
     common/load_more: 365c2d8dfc53ac7e9188acd5274e2837
     common/loading: c6bc8c380e83336c81a92594d3f23000
     common/logo: 47fa6b3978c1c06acc29b6cae393b0c9
@@ -2492,7 +2492,7 @@ checksums:
     workspace/settings/api_keys/add_api_key: 1c11117b1d4665ccdeb68530381c6a9d
     workspace/settings/api_keys/add_permission: 4f0481d26a32aef6137ee6f18aaf8e89
     workspace/settings/api_keys/api_keys_description: 42c2d587834d54f124b9541b32ff7133
-    workspace/settings/api_keys/connect_app_banner_description: 7e10fc5e1900d0e40f279ed19a4965b6
+    workspace/settings/api_keys/connect_app_banner_description: 76e44d7824850bd9f1713a6101f87714
     workspace/settings/api_keys/connect_app_banner_link: 1b4522cd48be097df8948fdc201c4580
     workspace/settings/api_keys/connect_app_banner_title: 658234361bace033a510d8acdbefce01
     workspace/settings/billing/billing_interval_toggle: 62c76eb73507108fc6aefdf1ab86cc38
