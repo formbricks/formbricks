@@ -952,6 +952,35 @@ export const mergeReservedValues = (
   responseData: TResponseData
 ): TResponseData => ({ ...reservedValues, ...responseData });
 
+/**
+ * The map a recall token or a logic operand is looked up in: what the survey knows about every name
+ * it can address, right now.
+ *
+ * The response layer goes on first and the defaults last, which reads backwards and is the point:
+ * {@link projectIngestedDefaults} has already decided, per field, whether the response holds
+ * anything usable. It emits a key only when the response does not, so spreading it last overrides
+ * nothing that was supplied — while spreading it first would let the response layer put an
+ * uncoercible value (`?pts=name`) straight back over the default that replaced it.
+ *
+ * Reserved entries sit inside the response layer, under the response itself, for the reason
+ * {@link mergeReservedValues} gives. They cannot collide with a default: a declared field's name is
+ * dropped from the reserved projection by {@link dropShadowedReservedEntries} before it gets here.
+ *
+ * It exists as a function so the order is pinned by a test rather than by two identical spreads in a
+ * component, which is where it lived and where nothing could fail on it. Callers pass the response
+ * data they want read — mid-block logic passes the in-flight answers, recall passes the committed
+ * ones — and this never writes anything back: the record the response queue submits is built
+ * elsewhere and must not carry defaults (see {@link projectIngestedDefaults}).
+ */
+export const buildEmbeddedLookup = (
+  survey: TEmbeddedFieldsSurvey,
+  reservedValues: Record<string, string | number>,
+  responseData: TResponseData
+): TResponseData => ({
+  ...mergeReservedValues(reservedValues, responseData),
+  ...projectIngestedDefaults(survey, responseData),
+});
+
 /** One reserved field as a human-facing surface renders it: the entry, plus the value it resolved to. */
 export interface TDisplayableReservedField {
   entry: TReservedFieldCatalogEntry;
@@ -1269,6 +1298,50 @@ export const getIngestedEmbeddedFields = (survey: TEmbeddedFieldsSurvey): TLinke
 /** The storage keys of a survey's ingested fields — what `response.data` addresses them by. */
 export const getIngestedStorageKeys = (survey: TEmbeddedFieldsSurvey): string[] =>
   getIngestedEmbeddedFields(survey).map(({ link }) => link.storageKey);
+
+/**
+ * What an ingested field answers with when nothing usable was supplied for it — its `defaultValue`,
+ * keyed by storage key, for the caller to merge **under** `response.data`.
+ *
+ * The default only ever exists at read time. `applyIngestContract` deliberately never writes it
+ * (rule 8: two writers would let a later change to a default apply on one path and not the other),
+ * so a field nothing arrived for keeps its key omitted from storage — and without a read that
+ * applies the default, the declared fallback reaches nothing at all. A recall token then renders its
+ * own `fallback:` text, and a logic condition reads the field as unset.
+ *
+ * The two tiers match {@link resolveEmbeddedValue}'s field arm rather than restating it: a stored
+ * value that does not fit the field's `dataType` reads as unset and resolves to the default. That is
+ * the same answer, and the right one — ingest keeps an uncoercible value verbatim and flags it
+ * `coercion_failed`, and what a survey shows should be the field's declared fallback, not the text
+ * that failed to be a number.
+ *
+ * `locked` is read before the stored value, not instead of it. `applyIngestContract` already drops
+ * an incoming value for a locked field, so on the ingest path the key is absent anyway — but a field
+ * locked *after* its survey collected responses has values in storage that were legitimate when they
+ * arrived, and for those the resolver answers with the default. Leaving `locked` to the contract
+ * alone would make this projection disagree with the seam it mirrors on exactly that survey.
+ *
+ * Booleans are stringified the way {@link projectReservedValues} stringifies them — `TResponseData`
+ * has no boolean member, and `"true"` / `"false"` is the spelling ingest stores.
+ */
+export const projectIngestedDefaults = (
+  survey: TEmbeddedFieldsSurvey,
+  data: TResponseData
+): Record<string, string | number> => {
+  const defaults: Record<string, string | number> = {};
+
+  for (const { field, link } of getIngestedEmbeddedFields(survey)) {
+    const stored = field.locked ? undefined : data[link.storageKey];
+    if (coerceToEmbeddedDataType(stored, field.dataType) !== undefined) continue;
+
+    const fallback = coerceToEmbeddedDataType(field.defaultValue, field.dataType);
+    if (fallback === undefined) continue;
+
+    defaults[link.storageKey] = typeof fallback === "boolean" ? String(fallback) : fallback;
+  }
+
+  return defaults;
+};
 
 /**
  * **What a survey declares right now, ignoring what is stored.** The counterpart to

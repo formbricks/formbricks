@@ -8,6 +8,7 @@ import {
   type TEmbeddedValueResponse,
   type TLinkedEmbeddedField,
   type TReservedFieldCatalogEntry,
+  buildEmbeddedLookup,
   coerceToEmbeddedDataType,
   deriveLegacyEmbeddedData,
   dropShadowedReservedEntries,
@@ -25,6 +26,7 @@ import {
   listShadowingNames,
   mergeReservedValues,
   projectClientReservedValues,
+  projectIngestedDefaults,
   projectReservedValues,
   redactUrlQuery,
   resolveEmbeddedValue,
@@ -2075,5 +2077,112 @@ describe("listMidSurveyReservedEntries", () => {
 
     expect(entry?.dataType).toBe("string");
     expect(entry?.availability).not.toBe("server");
+  });
+});
+
+describe("projectIngestedDefaults", () => {
+  const surveyWith = (...fields: TLinkedEmbeddedField["field"][]) => ({
+    embeddedFields: fields.map((field, index) => ({ field, link: { storageKey: `k${index}` } })),
+  });
+
+  test("a field nothing arrived for answers with its default", () => {
+    // The regression (ENG-3266 follow-up): ingest never writes `defaultValue`, and nothing read it
+    // back, so a recall token rendered its own `fallback:` text and a logic condition read unset.
+    const survey = surveyWith(makeField({ dataType: "number", defaultValue: 20 }));
+
+    expect(projectIngestedDefaults(survey, {})).toStrictEqual({ k0: 20 });
+  });
+
+  test("a supplied value wins, including the ones that look empty", () => {
+    const survey = surveyWith(
+      makeField({ dataType: "number", defaultValue: 20 }),
+      makeField({ dataType: "string", defaultValue: "fallback" })
+    );
+
+    // `0` and `""` are values the respondent supplied; only the caller's merge order can protect
+    // them, and it only can if this function leaves their keys out.
+    expect(projectIngestedDefaults(survey, { k0: 0, k1: "" })).toStrictEqual({});
+  });
+
+  test("a stored value that does not fit the type resolves to the default", () => {
+    // What `?pts=name` leaves behind: ingest keeps it verbatim and flags `coercion_failed`, and the
+    // survey should show the declared fallback rather than the text that failed to be a number.
+    const survey = surveyWith(makeField({ dataType: "number", defaultValue: 20 }));
+
+    expect(projectIngestedDefaults(survey, { k0: "name" })).toStrictEqual({ k0: 20 });
+  });
+
+  test("a field with no default contributes no key", () => {
+    const survey = surveyWith(makeField({ dataType: "number" }));
+
+    expect(projectIngestedDefaults(survey, {})).toStrictEqual({});
+  });
+
+  test("a boolean default is stringified the way ingest stores one", () => {
+    // `TResponseData` has no boolean member, and the read seams downstream compare on `"true"`.
+    const survey = surveyWith(makeField({ dataType: "boolean", defaultValue: true }));
+
+    expect(projectIngestedDefaults(survey, {})).toStrictEqual({ k0: "true" });
+  });
+
+  test("a locked field answers with its default even when storage holds a value", () => {
+    // Locking is retroactive: a field locked after its survey collected responses has values that
+    // were legitimate when they arrived, and `resolveEmbeddedValue` answers with the default for
+    // them. Leaving `locked` to `applyIngestContract` alone would disagree on exactly that survey.
+    const survey = surveyWith(makeField({ dataType: "number", defaultValue: 20, locked: true }));
+
+    expect(projectIngestedDefaults(survey, { k0: 99 })).toStrictEqual({ k0: 20 });
+  });
+
+  test("computed fields are not this function's business", () => {
+    // They are seeded from their own definitions into `variables`, which is a different map.
+    const survey = surveyWith(makeField({ source: "computed", dataType: "number", defaultValue: 7 }));
+
+    expect(projectIngestedDefaults(survey, {})).toStrictEqual({});
+  });
+});
+
+describe("buildEmbeddedLookup", () => {
+  const survey = {
+    embeddedFields: [
+      { field: makeField({ dataType: "number", defaultValue: 20 }), link: { storageKey: "pts" } },
+    ],
+  };
+
+  test("the response beats the default", () => {
+    expect(buildEmbeddedLookup(survey, {}, { pts: 5 })).toStrictEqual({ pts: 5 });
+  });
+
+  test("the default answers when the response has nothing", () => {
+    expect(buildEmbeddedLookup(survey, {}, {})).toStrictEqual({ pts: 20 });
+  });
+
+  test("the response beats a reserved entry of the same name", () => {
+    // The layer order this function exists to pin: flipping any pair here is a regression that used
+    // to live in two identical spreads inside a component, where nothing could fail on it.
+    expect(buildEmbeddedLookup(survey, { url: "reserved" }, { url: "answered", pts: 5 })).toStrictEqual({
+      url: "answered",
+      pts: 5,
+    });
+  });
+
+  test("a stored value that does not fit the type loses to the default", () => {
+    // What `?pts=name` leaves behind. `projectIngestedDefaults` gets this right on its own, so the
+    // only thing that can break it is the merge: the response layer carries the uncoercible value
+    // too, and spreading it last puts `"name"` back over the 20 the default just supplied.
+    expect(buildEmbeddedLookup(survey, {}, { pts: "name" })).toStrictEqual({ pts: 20 });
+  });
+
+  test("a supplied value its own type accepts is an answer, falsy ones included", () => {
+    // The falsy cases the last spread must not overwrite — and they are per type, not universal:
+    // `0` is a number, `""` is a string, and each coerces under its own field, so neither emits a
+    // default. An `""` under a *number* field is not this case: it does not coerce, and the resolver
+    // answers with the default for it, which is what the row above pins.
+    const text = {
+      embeddedFields: [{ field: makeField({ defaultValue: "fallback" }), link: { storageKey: "who" } }],
+    };
+
+    expect(buildEmbeddedLookup(survey, { pts: 7 }, { pts: 0 })).toStrictEqual({ pts: 0 });
+    expect(buildEmbeddedLookup(text, {}, { who: "" })).toStrictEqual({ who: "" });
   });
 });
