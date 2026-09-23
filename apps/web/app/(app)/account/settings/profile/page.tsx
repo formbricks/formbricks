@@ -14,6 +14,8 @@ import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { requiresPasswordConfirmationForAccountDeletion } from "@/modules/account/lib/account-deletion-auth";
 import { getSession } from "@/modules/auth/lib/session";
+import { LiteLicenseTip } from "@/modules/ee/license-check/components/lite-license-tip";
+import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getIsMultiOrgEnabled, getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getSettingsLayoutData } from "@/modules/settings/lib/navigation-data";
 import { getOrganizationBillingPath } from "@/modules/settings/lib/routes";
@@ -43,6 +45,44 @@ const Page = async () => {
     ? getOrganizationBillingPath(layoutData.organization.id, IS_FORMBRICKS_CLOUD)
     : "/";
 
+  const canUseTwoFactorAuth = isTwoFactorAuthEnabled || user.twoFactorEnabled;
+  // Self-hosted without any license key: 2FA is part of the free Lite license, so offer that instead
+  // of the paid upgrade.
+  const showTwoFactorLiteLicenseTip =
+    !canUseTwoFactorAuth && !IS_FORMBRICKS_CLOUD && (await getEnterpriseLicense()).status === "no-license";
+
+  let securityContent: React.ReactNode;
+  if (canUseTwoFactorAuth) {
+    securityContent = <AccountSecurity user={user} />;
+  } else if (showTwoFactorLiteLicenseTip) {
+    securityContent = (
+      <LiteLicenseTip
+        feature="two_factor_auth"
+        title={t("workspace.settings.profile.two_factor_authentication_lite_license_title")}
+        description={t("common.lite_license_tip_description")}
+      />
+    );
+  } else {
+    securityContent = (
+      <UpgradePrompt
+        title={t("workspace.settings.profile.unlock_two_factor_authentication")}
+        description={t("workspace.settings.profile.two_factor_authentication_description")}
+        buttons={[
+          {
+            text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
+            href: IS_FORMBRICKS_CLOUD ? billingUpgradeHref : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
+          },
+          {
+            text: t("common.learn_more"),
+            href: IS_FORMBRICKS_CLOUD
+              ? billingUpgradeHref
+              : "https://formbricks.com/learn-more-self-hosting-license?utm_source=formbricks-app&utm_medium=webapp&utm_campaign=ee_lock_two_factor",
+          },
+        ]}
+      />
+    );
+  }
+
   const isPasswordResetEnabled = !PASSWORD_RESET_DISABLED && user.identityProvider === "email";
   const requiresPasswordConfirmation = requiresPasswordConfirmationForAccountDeletion(user);
 
@@ -62,27 +102,9 @@ const Page = async () => {
         {user.identityProvider === "email" && (
           <SettingsCard
             title={t("common.security")}
-            description={t("workspace.settings.profile.security_description")}>
-            {!isTwoFactorAuthEnabled && !user.twoFactorEnabled ? (
-              <UpgradePrompt
-                title={t("workspace.settings.profile.unlock_two_factor_authentication")}
-                description={t("workspace.settings.profile.two_factor_authentication_description")}
-                buttons={[
-                  {
-                    text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
-                    href: IS_FORMBRICKS_CLOUD ? billingUpgradeHref : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
-                  },
-                  {
-                    text: t("common.learn_more"),
-                    href: IS_FORMBRICKS_CLOUD
-                      ? billingUpgradeHref
-                      : "https://formbricks.com/learn-more-self-hosting-license?utm_source=formbricks-app&utm_medium=webapp&utm_campaign=ee_lock_two_factor",
-                  },
-                ]}
-              />
-            ) : (
-              <AccountSecurity user={user} />
-            )}
+            description={t("workspace.settings.profile.security_description")}
+            bodyVariant={showTwoFactorLiteLicenseTip ? "bleed" : "padded"}>
+            {securityContent}
           </SettingsCard>
         )}
 

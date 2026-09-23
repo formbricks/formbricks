@@ -3,6 +3,7 @@ import type { BetterAuthOptions } from "better-auth";
 import { APIError, createAuthMiddleware, getOAuthState } from "better-auth/api";
 import { cookies } from "next/headers";
 import { prisma } from "@formbricks/database";
+import { BootstrapAdminMarker } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { normalizeUserName } from "@formbricks/types/user";
@@ -288,6 +289,10 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
             // ZUserName — even for degenerate input (emoji-only name + symbol-only email local-part),
             // which would otherwise re-trigger the ENG-1743 error on the user's first profile save.
             name: (user.name && normalizeUserName(user.name)) || deriveNameFromEmail(user.email) || "User",
+            // ENG-2247: the fresh-instance bootstrap marker, when the gate above admitted this sign-up
+            // on that ground alone. `undefined` on every other path — transformInput drops an undefined
+            // field with no schema default, so the row is inserted with NULL exactly as it was before.
+            isBootstrapAdmin: decision.isBootstrapAdmin ? BootstrapAdminMarker.bootstrapAdmin : undefined,
           },
         };
       },

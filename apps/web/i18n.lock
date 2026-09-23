@@ -1,6 +1,8 @@
 version: 1
 checksums:
   55dc377b5e931bfc64e4add83e35d9ea:
+    auth/account_deleted/description: b4c8e487e2878695280861bccf9c880e
+    auth/account_deleted/heading: 804400728b6c442c746b32ee02d1795a
     auth/continue_with_azure: cbe83e6a317329bc7df5cf461ce63e47
     auth/continue_with_email: ffa84b192fae5cd6611815ba61582f24
     auth/continue_with_github: 38afe2cfdd9c3d85474eb9a4319313f5
@@ -88,7 +90,7 @@ checksums:
     auth/oauth/revoke_confirmation: 9f2ef40fac22fe48e39d81de2b677345
     auth/oauth/scopes/email: c28cf6b6c6221b0045539a5f7712230f
     auth/oauth/scopes/feedback_records_read: 720898c950af227bb3be529a64e3bc38
-    auth/oauth/scopes/feedback_records_write: 2c620b5bfeaef1580d27e30a971a93a8
+    auth/oauth/scopes/feedback_records_write: a929a6212367549f904d78362e56006c
     auth/oauth/scopes/offline_access: 5086c8bd3685a21f691d81d50dc0a4e0
     auth/oauth/scopes/openid: 557e91a8b41497cf95b1434aefcb72ea
     auth/oauth/scopes/profile: ea073dc28851ee1a00365047be103d50
@@ -157,6 +159,8 @@ checksums:
     common/add_new_workspace: 6571cc8952d3c9a017c51cb842965d57
     common/add_to_team: 81ea05d21e72679f58a5bc77f6077ba1
     common/add_workspace: 17b0856283b433b848ce9bf4c03c6ae5
+    common/add_workspace_lite_license_description: 4ad72ecdbed03453a47660e34c3eded9
+    common/add_workspace_lite_license_title: 29ed7cc4e13dc1962668e8e4ffd878b5
     common/ai_unavailable/enable_in_settings: f994107b44e64d8202446acb723740ac
     common/ai_unavailable/instance_not_configured: 6deeb8aeaff3982d07e1d5a045e06d2d
     common/ai_unavailable/not_enabled: 13df84ae47d35dfa6e86ffa62f29c75d
@@ -276,6 +280,7 @@ checksums:
     common/error_rate_limit_description: 37791a33a947204662ee9c6544e90f51
     common/error_rate_limit_title: 23ac9419e267e610e1bfd38e1dc35dc0
     common/expand_rows: b6e06327cb8718dfd6651720843e4dad
+    common/expired: 63b27cccba4ab2143e0f5f3d46e4168a
     common/failed: 99f87615af1fffa2b8802866b096705a
     common/failed_to_copy_to_clipboard: de836a7d628d36c832809252f188f784
     common/failed_to_load_organizations: 512808a2b674c7c28bca73f8f91fd87e
@@ -311,6 +316,7 @@ checksums:
     common/impressions: 7fe38d42d68a64d3fd8436a063751584
     common/imprint: c4e5f2a1994d3cc5896b200709cc499c
     common/in_progress: 3de9afebcb9d4ce8ac42e14995f79ffd
+    common/inactive: 239e3b722db75bbafc6c628a2685eed2
     common/inactive_surveys: 324b8e1844739cdc2a3bc71aef143a76
     common/input: c281c28cbb062bc3538cbd4a42d79cf6
     common/integration: 40d02f65c4356003e0e90ffb944907d2
@@ -333,6 +339,7 @@ checksums:
     common/link: 60f0aa33e70ca6df3b6659802b16f433
     common/link_survey: f860f30b034d29c3aaac984f34f46c1d
     common/link_surveys: e4b98a8523d6aba56b75263006a9e812
+    common/lite_license_tip_description: 8dacc5a3319efba01c7ae0ee70f94b38
     common/load_more: 365c2d8dfc53ac7e9188acd5274e2837
     common/loading: c6bc8c380e83336c81a92594d3f23000
     common/logo: 47fa6b3978c1c06acc29b6cae393b0c9
@@ -432,6 +439,7 @@ checksums:
     common/reorder_and_hide_columns: a5e3d7c0c7ef879211d05a37be1c5069
     common/replace: 98b2268975b1a737b2e4ad837df96703
     common/report_survey: 147dd05db52e35f5d1f837460fb720f5
+    common/request_lite_license: 5bf4ddd64c056c5cf00ecd254f3e1390
     common/request_trial_license: 560df1240ef621f7c60d3f7d65422ccd
     common/required: 04d7fb6f37ffe0a6ca97d49e2a8b6eb5
     common/reset_to_default: 68ee98b46677392f44b505b268053b26
@@ -2353,13 +2361,11 @@ checksums:
     workspace/look/generate_theme_btn: 0345bf322c191e70d01fd6607ec5c2f8
     workspace/look/generate_theme_confirmation: f119dbb85fb2bda1c0bcdc581724ef3b
     workspace/look/generate_theme_header: 4df5f30a20cf78e248465915f222fd1b
-    workspace/look/lite_license_description: c14c608da28f5b99b9024da463135117
     workspace/look/logo_removed_successfully: f3a7f9d226affa91121e90ff360553aa
     workspace/look/logo_settings_description: da155953f55cb44d0e563d9e740241aa
     workspace/look/logo_updated_successfully: 170250f18062b79be6ac0481ec9d4368
     workspace/look/logo_upload_failed: 342624c84a04b891846a5d37e00d2c9f
     workspace/look/placement_updated_successfully: 65bdf0cfbf4f7e2430b4e7f5d4d377b5
-    workspace/look/remove_branding_license_request_cta: 5bf4ddd64c056c5cf00ecd254f3e1390
     workspace/look/remove_branding_with_a_higher_plan: ee049340ea6fdc454edfdb0c29eb554b
     workspace/look/remove_logo: 7f0eb5e99706a338f3040cae5d724346
     workspace/look/remove_logo_confirmation: 386603e03a70672ae515fa6c9b8d6ab4
@@ -2373,7 +2379,6 @@ checksums:
     workspace/look/suggested_colors_applied_please_save: a440b8e29a327822a94d9bbf8c52e2ed
     workspace/look/theme: 21fe00b7a518089576fb83c08631107a
     workspace/look/theme_settings_description: 9fc45322818c3774ab4a44ea14d7836e
-    workspace/look/unlock_remove_branding_with_lite_license: 4ad1f6e457297dec10705ce7760580b2
     workspace/segments/add_filter_below: be9b9c51d4d61903e782fb37931d8905
     workspace/segments/add_your_first_filter_to_get_started: 365f9fc1600e2e44e2502e9ad9fde46a
     workspace/segments/any_survey: 7d0016d308c65b27dcabcaf725bb20a5
@@ -2709,7 +2714,7 @@ checksums:
     workspace/settings/enterprise/license_status_invalid: a4bfd3787fc0bf0a38db61745bd25cec
     workspace/settings/enterprise/license_status_unreachable: 202b110dab099f1167b13c326349e570
     workspace/settings/enterprise/license_unreachable_grace_period: c0587c9d79ac55ff2035fb8b8eec4433
-    workspace/settings/enterprise/lite_license_description: ebaf319f802e9f1f91e52bfcb4953528
+    workspace/settings/enterprise/lite_license_description: cdf82a31abef06037118cd56bc3a883f
     workspace/settings/enterprise/lite_license_title: b45a0bcf9a111356125b4a6d68866361
     workspace/settings/enterprise/oidc_sso: 6a620d31e752f52de5aa1aba28934c80
     workspace/settings/enterprise/questions_please_reach_out_to_email: 62d2e5f69a9bad47c0b975c702603caa
@@ -2905,6 +2910,7 @@ checksums:
     workspace/settings/profile/two_factor_authentication: 97a428a54e41d68810a12dbae075f371
     workspace/settings/profile/two_factor_authentication_description: 1429e4eeaea193f15fb508875d4fb601
     workspace/settings/profile/two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app: 308ba145b3dc485ff4f17387e977b1f9
+    workspace/settings/profile/two_factor_authentication_lite_license_title: 94bb00111796adc70ffc06dc4aca360f
     workspace/settings/profile/two_factor_code: c8597a6518a04027bad18c0f232f3fc4
     workspace/settings/profile/unlock_two_factor_authentication: 4c4beb47bb61faf30e1934e17a395fe4
     workspace/settings/profile/update_personal_info: 5806f9bae0248a604cf85a2d8790a606
@@ -2916,6 +2922,7 @@ checksums:
     workspace/settings/teams/all_members_added: 0541be1777b5c838f2e039035488506c
     workspace/settings/teams/all_workspaces_added: 50855f316bd80223b638b3cdc0685822
     workspace/settings/teams/are_you_sure_you_want_to_delete_this_team: 9cf027aeee8059e692948f2da4302163
+    workspace/settings/teams/billing: b01dbdd049ebbd4a349fa64d6ce65a3b
     workspace/settings/teams/billing_role_description: dfcfc3730c3dff59b983c5d9c3d6df12
     workspace/settings/teams/bulk_invite: 9c237edb8782df589c25ae1723942bf7
     workspace/settings/teams/bulk_invite_scale_only_description: a585bbc877bf36694c042d32120b6d8c
@@ -2933,11 +2940,13 @@ checksums:
     workspace/settings/teams/manage: a3d40c0267b81ae53c9598eaeb05087d
     workspace/settings/teams/manage_team: 4c52e636cfd1451a08179fb7a68042ab
     workspace/settings/teams/manage_team_disabled: 2aaa0557b403a5bc657ec9e8b19ac5ac
+    workspace/settings/teams/manager: 8c0b172e24887a9af27134be98ee79b9
     workspace/settings/teams/manager_role_description: 020b8674cc330536239dafe5db087de6
     workspace/settings/teams/member: 1606dc30b369856b9dba1fe9aec425d2
     workspace/settings/teams/member_role_description: 8c2447cb929850b41619988be0b9b1ac
     workspace/settings/teams/member_role_info_message: 511f3b954486f9c8a3b043e498f21c69
     workspace/settings/teams/organization_role: 979b75fcc3696952e5922d659c839c10
+    workspace/settings/teams/owner: 9c0b3aeca046c3ebd3bdc352edc83e88
     workspace/settings/teams/owner_role_description: 8f577e6f9d1368fed4eba5a91ffc8cbf
     workspace/settings/teams/please_fill_all_member_fields: 60e38d9906ec9a02a44d16c736bd9fe9
     workspace/settings/teams/please_fill_all_workspace_fields: 190fc5d3c63cc5ec49d77f587e619ed8
@@ -4030,7 +4039,7 @@ checksums:
     workspace/unify/default_source_name_formbricks: 9088b01e1085b1cf42412597ebeea051
     workspace/unify/delete_feedback_record: 86d7262c000cfb1f91ea373036cd3616
     workspace/unify/delete_feedback_record_confirmation: 389f5a27a76d825d8751cc8fa20589ea
-    workspace/unify/delete_feedback_records_confirmation: 9867caf985bfd77e4df9be2164298dd5
+    workspace/unify/delete_feedback_records_confirmation: 9fad14c0047470bd5db8bc7717c54aa6
     workspace/unify/delete_source_confirmation: 43b048de6338be1757ade6bf5029b010
     workspace/unify/dismiss: c2f298165cbfc17041b795065bfeb57c
     workspace/unify/download_sample_csv: 76975598e61d4eaeb04fc14da8b0a837
@@ -4060,7 +4069,8 @@ checksums:
     workspace/unify/feedback_record_details_description: 0b6f908154161241ce6bdeb4a2acaecd
     workspace/unify/feedback_record_mcp: 8d9aeea97bbb0ad4c4adbf508057f284
     workspace/unify/feedback_records: e24cf48bb6985910f4ffe5e00512d388
-    workspace/unify/feedback_records_deleted_successfully: 176c27a362d593a62355904c50bb0e9e
+    workspace/unify/feedback_records_count_selected: cfa91b58600f61b7fa822aa526dbf91d
+    workspace/unify/feedback_records_deleted_successfully: ee4adb6e4f6239fe3358ee917ed08898
     workspace/unify/feedback_records_partially_deleted: dff8cd8482e8053ce4186e6b42d0aee8
     workspace/unify/feedback_records_refreshed: 4b27a8e2a8dbe8afa945d9f874aa7ef1
     workspace/unify/feedback_sources: e58ec9be19db8789e7096a756d24f2b2
@@ -4136,7 +4146,7 @@ checksums:
     workspace/unify/sentiment: 9ba5719c80c0136c2d0644217619aff6
     workspace/unify/set_value: b8a86f8da957ebd599ece4b1b1936a78
     workspace/unify/setup_connection: 2b15b163e60a2112904d8fa505206a22
-    workspace/unify/showing_count_loaded: f443aae08223b65fbd5521d6e69534a4
+    workspace/unify/showing_count_loaded: efb18bdf77b3fbfa824c734dfcbd8695
     workspace/unify/showing_rows: e851514ed6c4d2e453d0098af2d773bd
     workspace/unify/source: 45309626f464f4bda161ee783a4c8c80
     workspace/unify/source_connect_csv_description: 8db7e23acbfa89920694d61ac9585b44

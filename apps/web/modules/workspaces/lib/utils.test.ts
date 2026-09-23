@@ -207,6 +207,7 @@ describe("layout navigation gates (ENG-1737)", () => {
     billing: { stripeCustomerId: null, limits: {}, usageCycleAnchor: null, stripe: null },
     isAISmartToolsEnabled: false,
     whitelabel: null,
+    displayTimeZone: "Europe/Berlin",
   };
 
   beforeEach(() => {
@@ -277,6 +278,14 @@ describe("layout navigation gates (ENG-1737)", () => {
         id: layoutWorkspaceId,
         organizationId: layoutOrganizationId,
       });
+    });
+
+    // The organization is rebuilt field by field, and `displayTimeZone` is optional on its type, so dropping
+    // it compiles cleanly — which is how every date filter silently fell back to UTC once (ENG-3215).
+    test("carries the organization's display time zone to the layout, where the date filters read it", async () => {
+      const data = await getWorkspaceLayoutData(layoutWorkspaceId, layoutUserId);
+
+      expect(data.organization.displayTimeZone).toBe("Europe/Berlin");
     });
 
     test("throws AuthorizationError when the user may not navigate there", async () => {
