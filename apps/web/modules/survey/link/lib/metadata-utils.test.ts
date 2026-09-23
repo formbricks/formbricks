@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
@@ -88,6 +88,7 @@ describe("Metadata Utils", () => {
       expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
       expect(result).toEqual({
         title: "Survey",
+        ogTitle: "Survey",
         description: "Please complete this survey.",
         survey: null,
         ogImage: undefined,
@@ -121,6 +122,7 @@ describe("Metadata Utils", () => {
       expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
       expect(result).toEqual({
         title: "Welcome Headline",
+        ogTitle: "Welcome Headline",
         description: "Please complete this survey.",
         survey: mockSurvey,
         ogImage: undefined,
@@ -144,44 +146,66 @@ describe("Metadata Utils", () => {
 
       expect(result).toEqual({
         title: "Test Survey",
+        ogTitle: "Test Survey",
         description: "Please complete this survey.",
         survey: mockSurvey,
         ogImage: undefined,
       });
     });
 
-    test("adds Formbricks to title when IS_FORMBRICKS_CLOUD is true", async () => {
-      // Temporarily modify the mocked module
-      vi.doMock("@/lib/constants", () => ({
-        IS_FORMBRICKS_CLOUD: true,
-        WEBAPP_URL: "https://test.formbricks.com",
-      }));
+    describe("on Formbricks Cloud", () => {
+      // The root layout's `title.template` ("%s | Formbricks") is what brands `<title>`, so `title`
+      // must come back bare or the tab reads "… | Formbricks | Formbricks". Social previews are not
+      // templated, so `ogTitle` carries the suffix itself.
+      const loadWithCloud = async () => {
+        vi.resetModules();
+        vi.doMock("@/lib/constants", () => ({
+          IS_FORMBRICKS_CLOUD: true,
+          WEBAPP_URL: "https://test.formbricks.com",
+        }));
+        const { getSurvey: getSurveyMock } = await import("@/modules/survey/lib/survey");
+        const { getBasicSurveyMetadata: getBasicSurveyMetadataOnCloud } = await import("./metadata-utils");
+        return { getSurveyMock, getBasicSurveyMetadataOnCloud };
+      };
 
-      // Re-import the function to use the updated mock
-      const { getBasicSurveyMetadata: getBasicSurveyMetadataWithCloudMock } =
-        await import("./metadata-utils");
+      afterEach(() => {
+        vi.doUnmock("@/lib/constants");
+        vi.resetModules();
+      });
 
-      const mockSurvey = {
-        id: mockSurveyId,
-        workspaceId: mockWorkspaceId,
-        name: "Test Survey",
-        metadata: {},
-        welcomeCard: {
-          enabled: false,
-        } as TSurveyWelcomeCard,
-      } as unknown as TSurvey;
+      test("leaves the brand suffix off the page title and puts it on the social title", async () => {
+        const { getSurveyMock, getBasicSurveyMetadataOnCloud } = await loadWithCloud();
+        vi.mocked(getSurveyMock).mockResolvedValue({
+          id: mockSurveyId,
+          workspaceId: mockWorkspaceId,
+          name: "Test Survey",
+          metadata: {},
+          languages: [],
+          welcomeCard: { enabled: false } as TSurveyWelcomeCard,
+        } as unknown as TSurvey);
 
-      vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
+        const result = await getBasicSurveyMetadataOnCloud(mockSurveyId);
 
-      const result = await getBasicSurveyMetadataWithCloudMock(mockSurveyId);
+        expect(result.title).toBe("Test Survey");
+        expect(result.ogTitle).toBe("Test Survey | Formbricks");
+      });
 
-      expect(result.title).toBe("Test Survey | Formbricks");
+      test("keeps a custom link-metadata title unbranded in social previews", async () => {
+        const { getSurveyMock, getBasicSurveyMetadataOnCloud } = await loadWithCloud();
+        vi.mocked(getSurveyMock).mockResolvedValue({
+          id: mockSurveyId,
+          workspaceId: mockWorkspaceId,
+          name: "Test Survey",
+          metadata: { title: { default: "Custom Title" } },
+          languages: [],
+          welcomeCard: { enabled: false } as TSurveyWelcomeCard,
+        } as unknown as TSurvey);
 
-      // Reset the mock
-      vi.doMock("@/lib/constants", () => ({
-        IS_FORMBRICKS_CLOUD: false,
-        WEBAPP_URL: "https://test.formbricks.com",
-      }));
+        const result = await getBasicSurveyMetadataOnCloud(mockSurveyId);
+
+        expect(result.title).toBe("Custom Title");
+        expect(result.ogTitle).toBe("Custom Title");
+      });
     });
 
     test("handles welcome card headline with HTML content", async () => {
