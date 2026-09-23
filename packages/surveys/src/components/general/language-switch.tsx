@@ -1,4 +1,4 @@
-import { useRef, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
@@ -6,6 +6,7 @@ import { LanguageIcon } from "@/components/icons/language-icon";
 import { mixColor } from "@/lib/color";
 import { getI18nLanguage } from "@/lib/i18n-utils";
 import i18n, { loadLanguage, toI18nLanguage } from "@/lib/i18n.config";
+import { isPlainEscape } from "@/lib/keyboard";
 import { getLanguageDisplayName, getShortLanguageDisplayName } from "@/lib/language-display-name";
 import { getVisibleSurveyLanguages, isSameLanguageCode } from "@/lib/language-options";
 import { useClickOutside } from "@/lib/use-click-outside-hook";
@@ -45,6 +46,8 @@ export function LanguageSwitch({
     setShowLanguageDropdown((prev) => !prev);
   };
   const languageDropdownRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   // Sequence number of the most recent language selection — see `handleI18nLanguage`.
   const latestLanguageRequest = useRef(0);
   const defaultLanguageCode = surveyLanguages.find((surveyLanguage) => {
@@ -108,16 +111,66 @@ export function LanguageSwitch({
       //for lexical editor
       setFirstRender(true);
     }
-    setShowLanguageDropdown(false);
+    closeDropdownAndRefocus();
   };
+
+  // The popup unmounts on close, so whichever option held focus disappears with it and focus would
+  // fall back to <body>. Handing it back to the trigger keeps a keyboard user where they started.
+  const closeDropdownAndRefocus = () => {
+    setShowLanguageDropdown(false);
+    triggerRef.current?.focus();
+  };
+
+  // Escape closes the popup (WCAG 2.1.1). The listener sits on the switcher's own wrapper, so it
+  // only fires while focus is on the trigger or an option, and stops propagation so the same key
+  // does not also reach the survey container's Escape handling and close the whole modal survey.
+  // Imperative for the same reason as useNoOverlayModal: a keydown JSX prop on a plain div fails
+  // a11y linting.
+  //
+  // Tabbing past the last option moves focus out of the wrapper with the popup still open, and an
+  // Escape from there would reach the survey's handler and close the whole survey instead. So the
+  // popup also closes once focus lands outside the switcher — without refocusing the trigger, which
+  // would undo the Tab. A null relatedTarget (focus going to <body>, or Safari not focusing a
+  // clicked button) is left to useClickOutside, or a pointer tap on an option would close the
+  // popup before its click registers.
+  useEffect(() => {
+    if (!showLanguageDropdown) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isPlainEscape(event)) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      setShowLanguageDropdown(false);
+      triggerRef.current?.focus();
+    };
+
+    const handleFocusOut = (event: FocusEvent) => {
+      const nextFocused = event.relatedTarget;
+      if (nextFocused instanceof Node && !container.contains(nextFocused)) {
+        setShowLanguageDropdown(false);
+      }
+    };
+
+    container.addEventListener("keydown", handleKeyDown);
+    container.addEventListener("focusout", handleFocusOut);
+    return () => {
+      container.removeEventListener("keydown", handleKeyDown);
+      container.removeEventListener("focusout", handleFocusOut);
+    };
+  }, [showLanguageDropdown]);
 
   useClickOutside(languageDropdownRef, () => {
     setShowLanguageDropdown(false);
   });
 
   return (
-    <div className="z-1001 flex w-fit items-center">
+    <div ref={containerRef} className="z-1001 flex w-fit items-center">
       <button
+        ref={triggerRef}
         // The language NAME, not the full label: aria-label already supplies the accessible name, and
         // an identical title becomes the accessible description — screen readers then read the same
         // sentence twice on every focus. The tooltip's only remaining job is showing the untruncated
@@ -134,7 +187,8 @@ export function LanguageSwitch({
           borderRadius: typeof borderRadius === "number" ? `${borderRadius}px` : borderRadius,
         }}
         onClick={toggleDropdown}
-        aria-haspopup="true"
+        // No aria-haspopup: the popup is a plain group of buttons, not a menu with arrow-key
+        // navigation, and announcing a menu it does not implement is worse than announcing nothing.
         aria-expanded={showLanguageDropdown}
         aria-label={triggerLabel}
         onMouseEnter={() => setIsHovered(true)}
