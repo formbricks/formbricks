@@ -285,6 +285,21 @@ describe("User Management", () => {
       expect(result).toEqual(mockUser);
     });
 
+    // ENG-3257. Cheap guard in the fast suite for what the integration test proves for real: the query
+    // is keyed on the canonical address, so a caller passing the form input through untouched still
+    // matches the stored row. Postgres compares `text` case-sensitively and Better Auth looks up
+    // `email.toLowerCase()`, so an un-normalized key here means the password-reset lookup and the
+    // framework it feeds disagree, and the user is silently mailed nothing.
+    test("queries by the lowercased address when the caller passes mixed case", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce(null);
+
+      await getUserByEmail("Test@Example.COM");
+
+      expect(prisma.user.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { email: mockEmail } })
+      );
+    });
+
     test("throws DatabaseError on prisma error", async () => {
       vi.mocked(prisma.user.findFirst).mockRejectedValueOnce(new Error("Database error"));
 
