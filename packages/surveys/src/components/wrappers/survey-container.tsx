@@ -2,6 +2,7 @@ import { type ComponentChildren } from "preact";
 import { type MutableRef, useEffect } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TOverlay, type TPlacement } from "@formbricks/types/common";
+import { isPlainEscape } from "@/lib/keyboard";
 import { ensureLiveRegion } from "@/lib/live-region";
 import { SURVEY_INSTRUCTIONS_ID } from "@/lib/survey-page";
 import { useFocusTrap } from "@/lib/use-focus-trap";
@@ -42,7 +43,9 @@ type UseNoOverlayModalOptions = {
  * this component's modal semantics, so it is not shared code; and its whole behaviour is DOM
  * listeners and a timer, which per AGENTS.md is covered by Playwright rather than unit tests. As a
  * lib/*.ts module it would have added 22 lines the repo does not unit-test on principle, failing the
- * new-code coverage gate for a refactor that changes no behaviour.
+ * new-code coverage gate for a refactor that changes no behaviour. The one piece that IS shared —
+ * which Escape presses count as "close", modifier guard included — lives in lib/keyboard.ts as
+ * `isPlainEscape`, alongside useFocusTrap and the language switcher that also use it.
  */
 const useNoOverlayModal = ({
   enabled,
@@ -57,7 +60,7 @@ const useNoOverlayModal = ({
     if (!container) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (!isPlainEscape(event)) return;
 
       event.preventDefault();
       onClose?.();
