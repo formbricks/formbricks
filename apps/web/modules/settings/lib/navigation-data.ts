@@ -6,7 +6,6 @@ import type { TWorkspace } from "@formbricks/types/workspace";
 import { getOrganizationsByUserId } from "@/app/(app)/workspaces/[workspaceId]/lib/organization";
 import { getWorkspacesByUserId } from "@/app/(app)/workspaces/[workspaceId]/lib/workspace";
 import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { getPublicDomain } from "@/lib/getPublicUrl";
 import { FORMBRICKS_WORKSPACE_ID_COOKIE } from "@/lib/localStorage";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getMonthlyOrganizationResponseCount, getOrganization } from "@/lib/organization/service";
@@ -36,7 +35,6 @@ export interface TSettingsLayoutData {
   responseCount: number;
   isFormbricksCloud: boolean;
   isDevelopment: boolean;
-  publicDomain: string;
   // The "current" workspace used to render the sidebar's Workspace section, back link, and the
   // WorkspaceContext that reused settings components depend on. Null when the user has no workspace
   // (the org/account settings still render — Phase 2 handles that empty state).
@@ -136,7 +134,6 @@ export const getSettingsLayoutData = async (
     responseCount,
     isFormbricksCloud: IS_FORMBRICKS_CLOUD,
     isDevelopment: IS_DEVELOPMENT,
-    publicDomain: getPublicDomain(),
     currentWorkspace,
     backUrl: currentWorkspace ? `/workspaces/${currentWorkspace.id}/surveys` : "/",
   };

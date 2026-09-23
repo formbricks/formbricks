@@ -53,7 +53,6 @@ interface NavigationProps {
   isFormbricksCloud: boolean;
   isDevelopment: boolean;
   membershipRole?: TOrganizationRole;
-  publicDomain: string;
   organizationWorkspacesLimit: number;
   isLicenseActive: boolean;
   isNoLicense: boolean;
@@ -132,7 +131,6 @@ export const MainNavigation = ({
   membershipRole,
   isFormbricksCloud,
   isDevelopment,
-  publicDomain,
   organizationWorkspacesLimit,
   isLicenseActive,
   isNoLicense,
@@ -590,7 +588,6 @@ export const MainNavigation = ({
               <UserDropdown
                 user={user}
                 organizationId={organization.id}
-                publicDomain={publicDomain}
                 isCollapsed={isCollapsed}
                 isTextVisible={isTextVisible}
                 className="rounded-br-xl"
