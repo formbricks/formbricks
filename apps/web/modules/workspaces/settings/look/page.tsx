@@ -19,7 +19,9 @@ export const WorkspaceLookSettingsPage = async (props: { params: Promise<{ works
   const params = await props.params;
   const t = await getTranslate();
 
-  const { isReadOnly, organization } = await getWorkspaceAuth(params.workspaceId);
+  const { canManage, organization } = await getWorkspaceAuth(params.workspaceId);
+  // Every card on this page saves through an action that asserts `workspace.manage`.
+  const isReadOnly = !canManage;
 
   const workspace = await getWorkspace(params.workspaceId);
 
