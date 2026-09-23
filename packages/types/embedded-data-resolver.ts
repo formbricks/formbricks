@@ -1271,6 +1271,46 @@ export const getIngestedStorageKeys = (survey: TEmbeddedFieldsSurvey): string[] 
   getIngestedEmbeddedFields(survey).map(({ link }) => link.storageKey);
 
 /**
+ * What an ingested field answers with when nothing usable was supplied for it — its `defaultValue`,
+ * keyed by storage key, for the caller to merge **under** `response.data`.
+ *
+ * The default only ever exists at read time. `applyIngestContract` deliberately never writes it
+ * (rule 8: two writers would let a later change to a default apply on one path and not the other),
+ * so a field nothing arrived for keeps its key omitted from storage — and without a read that
+ * applies the default, the declared fallback reaches nothing at all. A recall token then renders its
+ * own `fallback:` text, and a logic condition reads the field as unset.
+ *
+ * The two tiers match {@link resolveEmbeddedValue}'s field arm rather than restating it: a stored
+ * value that does not fit the field's `dataType` reads as unset and resolves to the default. That is
+ * the same answer, and the right one — ingest keeps an uncoercible value verbatim and flags it
+ * `coercion_failed`, and what a survey shows should be the field's declared fallback, not the text
+ * that failed to be a number.
+ *
+ * `locked` needs no case of its own: `applyIngestContract` drops an incoming value for a locked
+ * field, so its key is absent from `data` and the default is all there is.
+ *
+ * Booleans are stringified the way {@link projectReservedValues} stringifies them — `TResponseData`
+ * has no boolean member, and `"true"` / `"false"` is the spelling ingest stores.
+ */
+export const projectIngestedDefaults = (
+  survey: TEmbeddedFieldsSurvey,
+  data: TResponseData
+): Record<string, string | number> => {
+  const defaults: Record<string, string | number> = {};
+
+  for (const { field, link } of getIngestedEmbeddedFields(survey)) {
+    if (coerceToEmbeddedDataType(data[link.storageKey], field.dataType) !== undefined) continue;
+
+    const fallback = coerceToEmbeddedDataType(field.defaultValue, field.dataType);
+    if (fallback === undefined) continue;
+
+    defaults[link.storageKey] = typeof fallback === "boolean" ? String(fallback) : fallback;
+  }
+
+  return defaults;
+};
+
+/**
  * **What a survey declares right now, ignoring what is stored.** The counterpart to
  * {@link getSurveyEmbeddedFields}; between the two, no caller needs
  * {@link deriveLegacyEmbeddedData} directly, so "which of two named decisions does this reader

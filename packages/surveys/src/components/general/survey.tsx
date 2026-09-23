@@ -12,6 +12,7 @@ import {
   listShadowingNames,
   mergeReservedValues,
   projectClientReservedValues,
+  projectIngestedDefaults,
 } from "@formbricks/types/embedded-data-resolver";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { TJsFileUploadParams, type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
@@ -904,8 +905,12 @@ export function Survey({
         logic.conditions,
         selectedLanguage,
         // Merged against the in-flight response data (answers from this block included), so a
-        // declared field shadows a same-named reserved entry here exactly as it does in recall.
-        mergeReservedValues(reservedFieldValues, localResponseData)
+        // declared field shadows a same-named reserved entry here exactly as it does in recall —
+        // ingested defaults underneath both, for the same reason and in the same order.
+        {
+          ...projectIngestedDefaults(localSurvey, localResponseData),
+          ...mergeReservedValues(reservedFieldValues, localResponseData),
+        }
       );
 
       if (!isLogicMet) {
@@ -1137,10 +1142,18 @@ export function Survey({
   /**
    * Recall's lookup map. The reserved side is already shadow-filtered, so a declared field owns its
    * name whether or not it has a value; the merge order is what still protects a stored `""` or `0`.
+   *
+   * Ingested defaults go underneath both, because they are the answer of last resort: a field the
+   * respondent supplied nothing usable for falls back to what the survey declared. They are kept out
+   * of `responseData` on purpose — that record is what the queue submits, and ingest does not write
+   * defaults (see `projectIngestedDefaults`).
    */
   const recallValues = useMemo(
-    () => mergeReservedValues(reservedValues, responseData),
-    [reservedValues, responseData]
+    () => ({
+      ...projectIngestedDefaults(localSurvey, responseData),
+      ...mergeReservedValues(reservedValues, responseData),
+    }),
+    [localSurvey, reservedValues, responseData]
   );
 
   useEffect(() => {
