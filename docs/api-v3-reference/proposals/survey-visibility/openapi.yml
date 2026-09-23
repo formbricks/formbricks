@@ -21,9 +21,12 @@ info:
     `unsupported_field` if it is sent.
 
 
-    Only the changed and added operations are described here. Everything not mentioned keeps the
-    contract in `docs/api-v3-reference/openapi.yml`. The prose rules — permission matrix, gating,
-    response behaviour — are in `README.md` next to this file.
+    Only the changed and added operations are described here, so this file alone is a **delta**, not
+    the whole API. `node build-mock.mjs` in this directory overlays it onto the committed bundle
+    `docs/api-v3-reference/openapi.yml` and writes `.generated/openapi.mock.yml`: the complete
+    contract with every existing parameter and schema, which is what Prism mocks and clients generate
+    from. The prose rules — permission matrix, gating, response behaviour — are in `README.md` next
+    to this file.
 servers:
   - url: https://app.formbricks.com
     description: >-
@@ -336,9 +339,16 @@ paths:
         the `POST` answers **409** while `blockers[]` is non-empty.
 
 
-        Requires `survey.read`. A survey the caller cannot see — unknown id, another workspace, private
-        and the caller is neither owner nor organisation owner/manager, or any private survey for an
-        API key — answers **403** with the same body as every other survey-by-id operation.
+        Requires `survey.change_visibility`, the same permission as the `POST`: the survey's owner or an
+        organisation owner/manager, with the feature enabled. Everyone else — read or write members,
+        team-level managers, every API key, and anyone who cannot see the survey at all — answers **403**
+        with the same body as an unknown id. Connection names and ids are configuration, not survey
+        content, and only the people who may act on them get to read them.
+
+
+        `pending` reports a change that is stored but not yet enforced (see the `POST`'s 503), and
+        `allowedTargets` lists the values a `POST` would accept right now, so the UI shows only
+        transitions that can succeed.
       tags:
         - V3 Surveys
       parameters:
@@ -387,6 +397,8 @@ paths:
                       impact:
                         memberCount: 7
                         responseCount: 212
+                      pending: null
+                      allowedTargets: []
                 privateDraft:
                   summary: Private draft seen by its owner
                   value:
@@ -403,12 +415,32 @@ paths:
                       impact:
                         memberCount: 7
                         responseCount: 0
+                      pending: null
+                      allowedTargets:
+                        - workspace
+                ownerlessPrivateSeenByManager:
+                  summary: Departed author's private survey, read by an organisation manager
+                  value:
+                    data:
+                      id: clsv3234567890123456789012
+                      visibility: private
+                      owner: null
+                      access:
+                        via: organizationRole
+                        canChangeVisibility: true
+                      blockers: []
+                      impact:
+                        memberCount: 7
+                        responseCount: 41
+                      pending: null
+                      allowedTargets:
+                        - workspace
         "400":
           $ref: "#/components/responses/V3BadRequest"
         "401":
           $ref: "#/components/responses/V3Unauthorized"
         "403":
-          $ref: "#/components/responses/V3Forbidden"
+          $ref: "#/components/responses/V3VisibilityForbidden"
         "429":
           $ref: "#/components/responses/V3TooManyRequests"
         "500":
@@ -424,8 +456,11 @@ paths:
       description: >
         Sets the survey to `private` or `workspace`. Answers **200** only once the change is enforced:
         the flag is stored and the authorization relationship is projected inside the request, so a
-        colleague's next read already reflects it. Sending the value the survey already has is a
-        **200** no-op — nothing is written or audited.
+        colleague's next read already reflects it. Sending the value the survey already **enforces** is
+        a **200** no-op — nothing is written or audited. The check is against the graph, not the stored
+        flag: after a **503**, the stored flag already matches but enforcement does not, so a retry is
+        not a no-op — the server re-attempts the projection and answers **200** or **503** again.
+        Retrying is therefore safe, and never reports success early.
 
 
         Allowed for the survey's owner (while they still hold read access to the workspace) and for the
@@ -639,10 +674,12 @@ components:
         canChangeVisibility:
           type: boolean
           description: >-
-            `true` when a `POST …/visibility` by this caller could succeed on permission grounds: the
-            caller is the owner or an organisation owner/manager, the feature is enabled for the
-            organisation and deployment, and the survey has an owner. Preconditions such as blocking
-            connections are not folded in; read `blockers[]` for those.
+            Permission only: `true` when this caller is the owner or an organisation owner/manager and
+            the feature is enabled for the organisation and deployment. It says nothing about which
+            target values would be accepted — a survey with `owner: null` still gets `true` for an
+            organisation manager, who must be able to make it workspace-visible again (Decision 12).
+            Target-specific rules (blocking connections, the no-owner refusal) live in
+            `allowedTargets` and `blockers[]` on `GET …/visibility`.
       additionalProperties: false
 
     SurveyVisibilityFields:
@@ -863,6 +900,29 @@ components:
                 allowed, and always empty for the `workspace` direction.
             impact:
               $ref: "#/components/schemas/SurveyVisibilityImpact"
+        - type: object
+          required:
+            - pending
+            - allowedTargets
+          properties:
+            pending:
+              anyOf:
+                - $ref: "#/components/schemas/SurveyVisibility"
+                - type: "null"
+              description: >-
+                A visibility that is stored but not yet enforced: a `POST` answered **503**
+                `projection_pending` and the outbox has not delivered yet. `visibility` keeps reporting
+                the enforced value meanwhile. `null` in the normal case. Clears within 60 seconds or the
+                deployment fails closed.
+            allowedTargets:
+              type: array
+              items:
+                $ref: "#/components/schemas/SurveyVisibility"
+              uniqueItems: true
+              description: >-
+                Values a `POST …/visibility` by this caller would accept right now: never the current
+                value, never `private` while `blockers[]` is non-empty or `owner` is `null`. Empty
+                when no transition is possible. Drives the row menu and the editor control.
 
     SurveyVisibilityChangeRequest:
       type: object
@@ -1166,8 +1226,11 @@ components:
       description: >-
         Service Unavailable — the visibility flag was stored, but the authorization relationship could
         not be projected within the request. The change is queued durably and lands within 60 seconds
-        or the deployment fails closed. Do not retry the `POST`; poll `GET …/visibility` until
-        `visibility` reflects the request.
+        or the deployment fails closed. Meanwhile `GET …/visibility` reports the requested value in
+        `pending` and the still-enforced one in `visibility`. Retrying the `POST` is safe: it is judged
+        against the enforced state, re-attempts the projection, and answers **200** only when that
+        succeeds. Chosen over **202 Accepted** so that the pending state stays an exception, not the
+        normal path every client must poll.
       headers:
         Retry-After:
           schema:

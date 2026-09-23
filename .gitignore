@@ -100,3 +100,6 @@ authzed/*.perf.jsonl
 docs/api-v3-reference/contract-tests/fixtures.json
 .schemathesis/
 __pycache__/
+
+# Survey-visibility contract proposal: the merged mock contract is rebuilt from the bundle plus the delta.
+docs/api-v3-reference/proposals/**/.generated/
