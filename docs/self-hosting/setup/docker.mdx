@@ -117,7 +117,7 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
 1. **Start the Docker Setup**
 
    Now, you're ready to run Formbricks with Docker. Use the command below to start Formbricks together with
-   PostgreSQL, Redis, Formbricks Hub, Cube, and SpiceDB.
+   PostgreSQL, Redis, the Formbricks Hub API and worker, Cube, and SpiceDB.
 
    ```bash
    docker compose up -d
@@ -133,11 +133,12 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    docker compose ps -a
    curl -fsS http://localhost:3000/health
    docker compose logs --tail=100 formbricks-migrate hub-migrate authzed-db-bootstrap spicedb-migrate
-   docker compose logs --tail=100 formbricks hub cube spicedb
+   docker compose logs --tail=100 formbricks hub hub-worker cube spicedb
    ```
 
    `formbricks-migrate`, `hub-migrate`, `authzed-db-bootstrap`, and `spicedb-migrate` should complete
-   successfully. `postgres`, `redis`, `cube`, `hub`, `spicedb`, and `formbricks` should be running or healthy.
+   successfully. `postgres`, `redis`, `cube`, `hub`, `hub-worker`, `spicedb`, and `formbricks` should be running
+   or healthy. The worker has no HTTP health endpoint, so verify that it stays `Up` without repeated restarts.
 
 1. **Open Formbricks in Your Browser**
 
@@ -700,7 +701,7 @@ docker compose ps -a
 Then inspect the services that commonly explain startup issues:
 
 ```bash
-docker compose logs --tail=200 formbricks-migrate hub-migrate formbricks hub cube
+docker compose logs --tail=200 formbricks-migrate hub-migrate formbricks hub hub-worker cube
 docker compose logs --tail=200 postgres redis
 ```
 
@@ -714,6 +715,10 @@ Common checks:
   exist, then inspect `docker compose logs cube`.
 - **Hub auth errors**: Confirm the same `HUB_API_KEY` from `.env` is used by Formbricks Web and the Hub
   service.
+- **Hub jobs remain queued**: Confirm `docker compose ps hub-worker` reports `Up`, then inspect
+  `docker compose logs --tail=200 hub-worker`. The worker has no HTTP health endpoint; a stable process and a
+  shrinking River backlog are its readiness signals. If it restarts, confirm each configured enrichment
+  provider/model has the required credentials and that the worker can reach PostgreSQL.
 - **Port conflicts**: Confirm port `3000` and any optional service ports you enabled are not already in use on
   the host. The current template does not publish the bundled Valkey (`redis` service) to the host — it is
   reachable only on the internal compose network — so a fresh install does not need port `6379` free on the
