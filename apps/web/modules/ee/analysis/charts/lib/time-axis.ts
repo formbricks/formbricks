@@ -142,7 +142,7 @@ export const getTimeAxisTickLabels = (
       }
       case "day":
       case "week":
-        return prior && prior.getUTCFullYear() === date.getUTCFullYear()
+        return prior?.getUTCFullYear() === date.getUTCFullYear()
           ? formatDateForDisplay(date, locale, inBucketZone({ month: "short", day: "numeric" }))
           : formatDateForDisplay(date, locale, inBucketZone(FULL_LABEL_OPTIONS.day));
       default:

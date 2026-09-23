@@ -139,7 +139,7 @@ const PieCenterLabel = ({
   );
 };
 
-interface BarChartViewProps {
+interface BarChartViewProps extends Pick<CartesianChartProps, "timeAxis"> {
   sortedData: TChartDataRow[];
   dataKeys: string[];
   isMultiMeasure: boolean;
@@ -148,7 +148,6 @@ interface BarChartViewProps {
   chartConfig: ChartConfig;
   formatDimensionValue: (value: unknown) => string;
   isHorizontal?: boolean;
-  timeAxis?: CartesianChartProps["timeAxis"];
 }
 
 const BarChartView = ({

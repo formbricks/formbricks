@@ -117,17 +117,61 @@ function XAxisTickLabel({
   );
 }
 
-/** Recharts renders default ticks as SVG `<text>`, which cannot wrap. This custom tick uses a
- * `foreignObject` so long labels (e.g. full survey questions) wrap within a max-width, stay under
- * their data point, and clamp to 3 lines with the full text on hover. The width is derived from the
- * per-category band (`width / visibleTicksCount`, both injected by Recharts' CartesianAxis) so
- * labels shrink to fit as categories are added instead of overlapping each other.
+/** Where one category label's box sits on the x-axis.
  *
  * `pointScale` charts (line/area) place the first and last categories *on* the plot boundary, so a
  * centred label there would spill half its width past the SVG edge and get clipped. For those edge
  * ticks we anchor the box inward (left-align the first, right-align the last) instead of centring,
  * which keeps the full label inside the plot. Band-scale charts (bars) inset their edge categories
  * by half a band, so their centred labels always fit and are left centred. */
+function getCategoryTickBox({
+  tickX,
+  width,
+  visibleTicksCount,
+  index,
+  pointScale,
+}: {
+  tickX: number;
+  width?: number;
+  visibleTicksCount?: number;
+  index?: number;
+  pointScale: boolean;
+}): { boxX: number; boxWidth: number; textAlign: string } {
+  const band = width && visibleTicksCount ? width / visibleTicksCount : X_AXIS_TICK_MAX_WIDTH;
+  const tickWidth = Math.min(X_AXIS_TICK_MAX_WIDTH, Math.max(X_AXIS_TICK_MIN_WIDTH, band - AXIS_LABEL_GAP));
+
+  const isFirst = pointScale && index === 0;
+  const isLast = pointScale && index === (visibleTicksCount ?? 0) - 1;
+
+  // An edge label is anchored on the plot boundary while its neighbour stays centred one `spacing`
+  // away, so a full-width edge box overruns that neighbour from ~5 point-scale categories up. Cap the
+  // edge box at the room up to the neighbour's near edge (`spacing - tickWidth / 2`); centred ticks
+  // are already spaced a full band apart and keep `tickWidth`.
+  const spacing =
+    width && visibleTicksCount && visibleTicksCount > 1 ? width / (visibleTicksCount - 1) : Infinity;
+  const edgeWidth = Math.max(X_AXIS_TICK_MIN_WIDTH, Math.min(tickWidth, spacing - tickWidth / 2));
+
+  if (isFirst) {
+    // Left edge at the point; the label extends inward (right).
+    return { boxX: tickX, boxWidth: edgeWidth, textAlign: "text-left" };
+  }
+  if (isLast) {
+    // Right edge at the point; the label extends inward (left).
+    return { boxX: tickX - edgeWidth, boxWidth: edgeWidth, textAlign: "text-right" };
+  }
+  return { boxX: tickX - tickWidth / 2, boxWidth: tickWidth, textAlign: "text-center" };
+}
+
+/** Recharts renders default ticks as SVG `<text>`, which cannot wrap. This custom tick uses a
+ * `foreignObject` so long labels (e.g. full survey questions) wrap within a max-width, stay under
+ * their data point, and clamp to 3 lines with the full text on hover. The width is derived from the
+ * per-category band (`width / visibleTicksCount`, both injected by Recharts' CartesianAxis) so
+ * labels shrink to fit as categories are added instead of overlapping each other; edge ticks are
+ * placed by `getCategoryTickBox`.
+ *
+ * A time axis labels one bucket in every `step`, centred with `step` buckets of room, and keeps its
+ * labels clear of the plot edges itself (see `getTimeAxisTickLayout`). Unthinned, its labels are
+ * placed like any other category. */
 function WrappingXAxisTick({
   x,
   y,
@@ -150,62 +194,33 @@ function WrappingXAxisTick({
   timeAxisLabels?: TTimeAxisLabels;
 }>) {
   const tickX = x ?? 0;
+  const timeAxis = timeAxisLabels && width && index != null ? timeAxisLabels(width) : undefined;
+  const label = timeAxis && index != null ? timeAxis.labels[index] : formatter(payload?.value);
+  if (label == null) return null;
 
-  // A time axis labels one bucket in every `step`, centred with `step` buckets of room, and keeps
-  // its labels clear of the plot edges itself (see `getTimeAxisTickLayout`). Unthinned, its labels
-  // go through the regular edge handling below.
-  let label: string;
-  const timeAxis = timeAxisLabels && width ? timeAxisLabels(width) : undefined;
-  if (timeAxis && index != null) {
-    const timeLabel = timeAxis.labels[index];
-    if (timeLabel == null) return null;
-    if (timeAxis.layout.step > 1) {
-      const slotBoxWidth = Math.max(
-        1,
-        Math.min(X_AXIS_TICK_MAX_WIDTH, timeAxis.layout.slotWidth - AXIS_LABEL_GAP)
-      );
-      return (
-        <XAxisTickLabel
-          label={timeLabel}
-          x={tickX - slotBoxWidth / 2}
-          y={y}
-          width={slotBoxWidth}
-          textAlign="text-center"
-        />
-      );
-    }
-    label = timeLabel;
-  } else {
-    label = formatter(payload?.value);
+  if (timeAxis && timeAxis.layout.step > 1) {
+    const slotBoxWidth = Math.max(
+      1,
+      Math.min(X_AXIS_TICK_MAX_WIDTH, timeAxis.layout.slotWidth - AXIS_LABEL_GAP)
+    );
+    return (
+      <XAxisTickLabel
+        label={label}
+        x={tickX - slotBoxWidth / 2}
+        y={y}
+        width={slotBoxWidth}
+        textAlign="text-center"
+      />
+    );
   }
 
-  const band = width && visibleTicksCount ? width / visibleTicksCount : X_AXIS_TICK_MAX_WIDTH;
-  const tickWidth = Math.min(X_AXIS_TICK_MAX_WIDTH, Math.max(X_AXIS_TICK_MIN_WIDTH, band - AXIS_LABEL_GAP));
-
-  const isFirst = pointScale && index === 0;
-  const isLast = pointScale && index === (visibleTicksCount ?? 0) - 1;
-
-  // An edge label is anchored on the plot boundary while its neighbour stays centred one `spacing`
-  // away, so a full-width edge box overruns that neighbour from ~5 point-scale categories up. Cap the
-  // edge box at the room up to the neighbour's near edge (`spacing - tickWidth / 2`); centred ticks
-  // are already spaced a full band apart and keep `tickWidth`.
-  const spacing =
-    width && visibleTicksCount && visibleTicksCount > 1 ? width / (visibleTicksCount - 1) : Infinity;
-  const edgeWidth = Math.max(X_AXIS_TICK_MIN_WIDTH, Math.min(tickWidth, spacing - tickWidth / 2));
-
-  let boxX = tickX - tickWidth / 2;
-  let boxWidth = tickWidth;
-  let textAlign = "text-center";
-  if (isFirst) {
-    boxX = tickX; // left edge at the point; label extends inward (right)
-    boxWidth = edgeWidth;
-    textAlign = "text-left";
-  } else if (isLast) {
-    boxX = tickX - edgeWidth; // right edge at the point; label extends inward (left)
-    boxWidth = edgeWidth;
-    textAlign = "text-right";
-  }
-
+  const { boxX, boxWidth, textAlign } = getCategoryTickBox({
+    tickX,
+    width,
+    visibleTicksCount,
+    index,
+    pointScale,
+  });
   return <XAxisTickLabel label={label} x={boxX} y={y} width={boxWidth} textAlign={textAlign} />;
 }
 
