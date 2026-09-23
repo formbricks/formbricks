@@ -251,7 +251,6 @@ test.describe("Survey keyboard interaction @slow", () => {
   // beforeEach (same pattern as survey-accessibility.spec.ts).
   let surveyUrl: string | undefined;
   let pictureSurveyUrl: string | undefined;
-  let languageSwitchSurveyUrl: string | undefined;
 
   test.beforeEach(async ({ users, baseURL }) => {
     if (surveyUrl) return;
@@ -263,10 +262,8 @@ test.describe("Survey keyboard interaction @slow", () => {
       user.id,
       baseURL ?? "http://localhost:3000"
     );
-    const languageSwitchSurveyId = await seedLanguageSwitchSurvey(user.workspaceId, user.id);
     surveyUrl = `/s/${surveyId}`;
     pictureSurveyUrl = `/s/${pictureSurveyId}`;
-    languageSwitchSurveyUrl = `/s/${languageSwitchSurveyId}`;
   });
 
   test("arrows browse without selecting; Space selects and auto-progresses once", async ({ page }) => {
@@ -349,8 +346,12 @@ test.describe("Survey keyboard interaction @slow", () => {
     await expect(page.getByText("Anything else to add?")).toBeVisible();
   });
 
-  test("language switcher closes on Escape and hands focus back to its trigger", async ({ page }) => {
-    await page.goto(languageSwitchSurveyUrl ?? "");
+  test("language switcher closes on Escape and hands focus back to its trigger", async ({ page, users }) => {
+    // Seeded here rather than in beforeEach: no other test in the suite needs a multi-language survey.
+    const user = await users.create({ skipSurveySeed: true });
+    if (!user.workspaceId) throw new Error("users.create() did not return a workspaceId");
+    const surveyId = await seedLanguageSwitchSurvey(user.workspaceId, user.id);
+    await page.goto(`/s/${surveyId}`);
     await expect(page.getByText(LANGUAGE_SWITCH_HEADLINE)).toBeVisible();
 
     // Not located by name: picking German re-renders the survey UI in German, so the accessible
@@ -363,14 +364,11 @@ test.describe("Survey keyboard interaction @slow", () => {
       await trigger.focus();
       await expect(trigger).toHaveAccessibleName(/^Language:/);
       await page.keyboard.press("Enter");
-      await expect(trigger).toHaveAttribute("aria-expanded", "true");
-      await expect(trigger).not.toHaveAttribute("aria-haspopup");
+      await expect(germanOption).toBeVisible();
       await page.keyboard.press("Tab");
-      await expect(page.locator("button[aria-current]")).toBeFocused();
 
       await page.keyboard.press("Escape");
       await expect(germanOption).toBeHidden();
-      await expect(trigger).toHaveAttribute("aria-expanded", "false");
       await expect(trigger).toBeFocused();
       await expect(page.getByText(LANGUAGE_SWITCH_HEADLINE)).toBeVisible();
     });

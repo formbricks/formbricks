@@ -113,6 +113,13 @@ export function LanguageSwitch({
   // does not also reach the survey container's Escape handling and close the whole modal survey.
   // Imperative for the same reason as useNoOverlayModal: a keydown JSX prop on a plain div fails
   // a11y linting.
+  //
+  // Tabbing past the last option moves focus out of the wrapper with the popup still open, and an
+  // Escape from there would reach the survey's handler and close the whole survey instead. So the
+  // popup also closes once focus lands outside the switcher — without refocusing the trigger, which
+  // would undo the Tab. A null relatedTarget (focus going to <body>, or Safari not focusing a
+  // clicked button) is left to useClickOutside, or a pointer tap on an option would close the
+  // popup before its click registers.
   useEffect(() => {
     if (!showLanguageDropdown) return;
 
@@ -128,9 +135,18 @@ export function LanguageSwitch({
       triggerRef.current?.focus();
     };
 
+    const handleFocusOut = (event: FocusEvent) => {
+      const nextFocused = event.relatedTarget;
+      if (nextFocused instanceof Node && !container.contains(nextFocused)) {
+        setShowLanguageDropdown(false);
+      }
+    };
+
     container.addEventListener("keydown", handleKeyDown);
+    container.addEventListener("focusout", handleFocusOut);
     return () => {
       container.removeEventListener("keydown", handleKeyDown);
+      container.removeEventListener("focusout", handleFocusOut);
     };
   }, [showLanguageDropdown]);
 
