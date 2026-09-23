@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { TI18nString } from "@formbricks/types/i18n";
-import { getLocalizedValue } from "./i18n";
+import { getLocalizedValue, getTranslations } from "./i18n";
+import i18n from "./i18n.config";
 
 describe("i18n", () => {
   describe("getLocalizedValue", () => {
@@ -54,6 +55,24 @@ describe("i18n", () => {
         "en-GB": "British text",
       };
       expect(getLocalizedValue(i18nString, "en-GB")).toBe("British text");
+    });
+  });
+
+  describe("getTranslations", () => {
+    // getTranslations also switches the shared instance the survey chrome reads from. Handed the raw
+    // tag, i18next resolves Traditional Chinese to the first `zh-*` bundle — Simplified.
+    test("switches a Traditional Chinese tag to the Traditional bundle", () => {
+      i18n.addResourceBundle("zh-Hant-TW", "translation", { common: { required: "必填" } });
+      i18n.addResourceBundle("zh-Hans-CN", "translation", { common: { required: "必填项" } });
+      try {
+        expect(getTranslations("zh-HK")("common.required")).toBe("必填");
+        expect(i18n.language).toBe("zh-Hant-TW");
+        expect(i18n.t("common.required")).toBe("必填");
+      } finally {
+        void i18n.changeLanguage("en-US");
+        i18n.removeResourceBundle("zh-Hant-TW", "translation");
+        i18n.removeResourceBundle("zh-Hans-CN", "translation");
+      }
     });
   });
 });
