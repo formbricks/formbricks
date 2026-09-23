@@ -697,13 +697,24 @@ true
 {{- end -}}
 {{- end }}
 
-{{- define "formbricks.nextAuthSecret" -}}
+{{/*
+Resolve the auth secret, preferring the documented BETTER_AUTH_SECRET and accepting the legacy
+NEXTAUTH_SECRET an existing release already stores. Reading the legacy key is what keeps `helm upgrade`
+from minting a fresh secret on an instance installed before the rename — which would log every user out
+and invalidate outstanding invite and verification links.
+
+Include this ONCE per render and reuse the value: the final branch is `randAlphaNum`, so a second
+`include` on a fresh install returns a different secret.
+*/}}
+{{- define "formbricks.authSecret" -}}
 {{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
 {{- $secretData := dig "data" dict $secret }}
-{{- if index $secretData "NEXTAUTH_SECRET" }}
+{{- if index $secretData "BETTER_AUTH_SECRET" }}
+    {{- index $secretData "BETTER_AUTH_SECRET" | b64dec -}}
+{{- else if index $secretData "NEXTAUTH_SECRET" }}
     {{- index $secretData "NEXTAUTH_SECRET" | b64dec -}}
 {{- else if and $secret (hasKey $secret "data") }}
-    {{- fail (printf "Secret %q exists in namespace %q but is missing NEXTAUTH_SECRET" (include "formbricks.appSecretName" .) .Release.Namespace) -}}
+    {{- fail (printf "Secret %q exists in namespace %q but is missing BETTER_AUTH_SECRET (the legacy NEXTAUTH_SECRET is also accepted)" (include "formbricks.appSecretName" .) .Release.Namespace) -}}
 {{- else }}
     {{- randAlphaNum 32 -}}
 {{- end -}}

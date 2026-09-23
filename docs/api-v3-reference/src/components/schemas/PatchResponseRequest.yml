@@ -9,11 +9,14 @@ description: >
   payload omits keeps its value rather than being cleared.
 
 
-  **Note for the implementation, because the obvious shortcut is wrong.** The one shipped update
-  service merges `data` (`apps/web/lib/response/service.ts`, `// merge data object`), and merges
-  `ttc` with it. Reusing it would ship merge semantics under a replace contract, silently — an
-  unimplemented route has no test to catch the difference. v3 replaces on purpose: a merge makes it
-  impossible to delete an answer, which a correction flow needs. A patch that sets `finished` to `true` fires the finish side of the response pipeline.
+  v3 replaces on purpose, where v1 and v2 merge: a merge makes it impossible to delete an answer,
+  which a correction flow needs.
+
+
+  **Every patch runs the response pipeline**, emitting `responseUpdated` — so webhooks, integrations
+  and follow-ups fire for a correction as much as for a substantive edit. A patch that *transitions*
+  the response to finished additionally emits `responseFinished`; one that patches an
+  already-finished response does not re-emit it.
 
 
   Not patchable, and rejected if sent: `createdAt`, `updatedAt`, `surveyId`, `contactId`,
@@ -34,13 +37,15 @@ properties:
       - string
       - "null"
   data:
-    $ref: ./ResponseDataMap.yml
+    $ref: ./ResponseDataMapInput.yml
   embeddedData:
     $ref: ./ResponseEmbeddedDataInput.yml
   tags:
     type: array
+    maxItems: 100
     description: >-
-      Complete set of tag ids for this response, replacing whatever is currently applied. Tags must
+      Complete set of tag ids for this response, replacing whatever is currently applied. Repeats are
+      allowed and collapse, because the set is applied as a set. Tags must
       already exist in the same workspace — create them via `POST /api/v3/tags`.
     items:
       type: string

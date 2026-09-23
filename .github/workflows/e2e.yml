@@ -9,7 +9,8 @@ on:
         required: false
       ENTERPRISE_LICENSE_KEY:
         required: true
-      # Add other secrets if necessary
+      # A secret added here must also be named in pr.yml's e2e-test job: the caller does not
+      # `inherit`, so an unnamed optional secret arrives empty and a required one fails the call.
   workflow_dispatch:
     inputs:
       force_mode:

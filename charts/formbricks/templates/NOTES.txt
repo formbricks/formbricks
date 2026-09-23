@@ -86,11 +86,11 @@ Environment Variables:
 The following environment variables have been configured:
 
 - `WEBAPP_URL`: {{ .Values.formbricks.webappUrl }}
-- `NEXTAUTH_URL`: {{ .Values.formbricks.webappUrl }}
+- `BETTER_AUTH_URL`: {{ .Values.formbricks.webappUrl }}
 {{- if .Values.formbricks.publicUrl }}
 - `PUBLIC_URL`: {{ .Values.formbricks.publicUrl }}
 {{- end }}
-- `NEXTAUTH_SECRET`: A random 32-character string (auto-generated)
+- `BETTER_AUTH_SECRET`: A random 32-character string (auto-generated)
 - `ENCRYPTION_KEY`: A random 32-character string (auto-generated)
 - `CRON_SECRET`: A random 32-character string (auto-generated)
 - `EMAIL_VERIFICATION_DISABLED`: 1 # By Default email verification is disabled, configure SMTP settings to enable(https://formbricks.com/docs/self-hosting/configuration/smtp)
@@ -98,7 +98,7 @@ The following environment variables have been configured:
 
 Retrieve them using:
 ```sh
-kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.name" . }}-app-secrets -o jsonpath="{.data.NEXTAUTH_SECRET}" | base64 --decode
+kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.name" . }}-app-secrets -o jsonpath="{.data.BETTER_AUTH_SECRET}" | base64 --decode
 kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.name" . }}-app-secrets -o jsonpath="{.data.ENCRYPTION_KEY}" | base64 --decode
 kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.name" . }}-app-secrets -o jsonpath="{.data.CRON_SECRET}" | base64 --decode	
 ```
@@ -172,7 +172,7 @@ External Secrets:
 ---
 
 {{- if .Values.authzed.enabled }}
-AuthZed / SpiceDB Operations:
+SpiceDB Authorization Operations:
 
    SpiceDB is configured in `{{ .Values.authzed.mode }}` mode. It is not part of the Formbricks
    readiness probe, and its gRPC endpoint should remain private.

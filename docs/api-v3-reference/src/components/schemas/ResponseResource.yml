@@ -71,8 +71,12 @@ description: >
 
   Values themselves round-trip: within those two kinds every value the read emits is accepted
   verbatim on a write, and a `date` reads and writes as the same ISO-8601 string. So a
-  read-edit-write cycle loses nothing except on the finite set of legacy surveys carrying one name
-  as both a variable and a hidden field, where the write refuses the name outright.
+  read-edit-write cycle loses nothing except in two cases, both confined to rows v1 or v2 wrote.
+  The first is the finite set of legacy surveys carrying one name as both a variable and a hidden
+  field, where the write refuses the name outright. The second is a `data` map holding more keys
+  than `ResponseDataMapInput` accepts: the stored map is unbounded and the write bound is not, so
+  such a response cannot be patched here — and trimming it to fit is not a workaround, since `data`
+  is replaced wholesale and an omitted key is a deletion.
 
 
   Note which fields carry `readOnly` here and which do not, because it is the opposite of what an

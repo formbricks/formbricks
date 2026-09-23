@@ -260,7 +260,10 @@ export const SurveysList = ({
   if (showInitialLoading) {
     return (
       <PageContentWrapper>
-        <PageHeader pageTitle={t("common.surveys")} />
+        {/* The CTA depends on nothing the query fetches, so it stays live while the list loads —
+            someone who came to create a survey should not wait for a list they did not ask for
+            (ENG-2579). Same expression as the loaded state below, so the header does not shift. */}
+        <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : createSurveyButton} />
         <div className="flex items-center justify-between">
           <div className="flex h-9 animate-pulse gap-2">
             <div className="w-48 rounded-md bg-slate-300"></div>

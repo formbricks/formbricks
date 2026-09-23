@@ -107,11 +107,12 @@ If your cluster already uses an external secret manager, enable `externalSecret`
 SecretStore. Ensure the resulting app secret exposes the values your deployment needs, including `DATABASE_URL`,
 `REDIS_URL`, and `HUB_API_KEY`.
 
-### AuthZed / SpiceDB
+### SpiceDB authorization
 
-Formbricks v6 uses AuthZed as its authorization engine. Fresh chart installations enable a private,
-two-replica SpiceDB cluster and `fully_consistent` decisions by default. If the cluster already has a compatible
-SpiceDB operator, keep the authorization runtime enabled but disable this release's operator installation:
+Formbricks v6 uses SpiceDB, maintained by AuthZed, as its authorization engine. Fresh chart installations
+enable a private, two-replica SpiceDB cluster and `fully_consistent` decisions by default. If the cluster already
+has a compatible SpiceDB operator, keep the authorization runtime enabled but disable this release's operator
+installation:
 
 ```yaml
 authzed:

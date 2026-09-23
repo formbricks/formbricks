@@ -13,7 +13,7 @@ import { TWorkspace } from "@formbricks/types/workspace";
 import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
-import { deleteFile, deleteFilesByWorkspaceId } from "@/modules/storage/service";
+import { deleteFile, deleteWorkspaceFilesBestEffort } from "@/modules/storage/service";
 import { createWorkspace, deleteWorkspace, deleteWorkspaceIfNotLast, updateWorkspace } from "./workspace";
 
 vi.mock("server-only", () => ({}));
@@ -101,7 +101,7 @@ vi.mock("@/lib/utils/validate", () => ({
 }));
 
 vi.mock("@/modules/storage/service", () => ({
-  deleteFilesByWorkspaceId: vi.fn(),
+  deleteWorkspaceFilesBestEffort: vi.fn(),
   deleteFile: vi.fn(),
 }));
 
@@ -125,18 +125,25 @@ describe("workspace lib", () => {
     const oldUrl = `${LOGO_PREFIX}/old--fid--111.png`;
     const newUrl = `${LOGO_PREFIX}/new--fid--222.png`;
 
+    // updateWorkspace reads the stored logo with `select: { logo: true }`, so the fixture models that
+    // projection rather than a whole row — same reasoning as mockOrgTeams above.
     const withStoredLogo = (url: string | null) => {
       vi.mocked(prisma.workspace.findUnique).mockResolvedValueOnce(
-        (url ? { logo: { url } } : { logo: null }) as any
+        (url ? { logo: { url } } : { logo: null }) as unknown as Awaited<
+          ReturnType<typeof prisma.workspace.findUnique>
+        >
       );
     };
     const resolvesTo = (workspace: Partial<TWorkspace> & { logo?: { url: string } | null }) => {
-      vi.mocked(prisma.workspace.update).mockResolvedValueOnce({ ...baseWorkspace, ...workspace } as any);
+      vi.mocked(prisma.workspace.update).mockResolvedValueOnce({
+        ...baseWorkspace,
+        ...workspace,
+      } as unknown as Awaited<ReturnType<typeof prisma.workspace.update>>);
     };
 
     beforeEach(() => {
       vi.mocked(getWorkspaceLegacyStoragePrefixes).mockResolvedValue(["p1"]);
-      vi.mocked(deleteFile).mockResolvedValue({ ok: true, data: undefined } as any);
+      vi.mocked(deleteFile).mockResolvedValue({ ok: true, data: undefined });
     });
 
     test("deletes the old object when the logo is removed", async () => {
@@ -241,7 +248,11 @@ describe("workspace lib", () => {
     });
 
     test.each([
-      ["returns an error", () => vi.mocked(deleteFile).mockResolvedValue({ ok: false, error: {} } as any)],
+      [
+        "returns an error",
+        () =>
+          vi.mocked(deleteFile).mockResolvedValue({ ok: false, error: { code: StorageErrorCode.Unknown } }),
+      ],
       ["rejects", () => vi.mocked(deleteFile).mockRejectedValue(new Error("bucket down"))],
     ])("still resolves the update when deleteFile %s", async (_label, arrange) => {
       arrange();
@@ -480,25 +491,36 @@ describe("workspace lib", () => {
       ] as any);
       vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace as any);
 
-      vi.mocked(deleteFilesByWorkspaceId).mockResolvedValue({ ok: true, data: undefined });
       const result = await deleteWorkspace("p1");
       expect(result).toEqual(baseWorkspace);
       expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({ workspaceIds: ["p1"] });
       expect(reconcileFeedbackDirectoryRelationships).toHaveBeenCalledWith({
         assignments: [feedbackDirectoryAssignment],
       });
-      expect(deleteFilesByWorkspaceId).toHaveBeenCalledWith("p1", []);
+      expect(deleteWorkspaceFilesBestEffort).toHaveBeenCalledWith(baseWorkspace);
     });
 
-    test("logs error if file deletion fails", async () => {
-      vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace as any);
-      vi.mocked(deleteFilesByWorkspaceId).mockResolvedValue({
-        ok: false,
-        error: { code: StorageErrorCode.Unknown },
-      } as any);
-      vi.mocked(logger.error).mockImplementation(() => {});
+    // ENG-3197: this used to pass a hardcoded [] for the legacy prefixes, so files uploaded before
+    // the workspace was migrated off its environment id survived the delete.
+    test("passes the workspace's legacy environment prefix to storage cleanup", async () => {
+      const migratedWorkspace = { ...baseWorkspace, legacyEnvironmentId: "env-1" };
+      vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(migratedWorkspace as any);
+
       await deleteWorkspace("p1");
-      expect(logger.error).toHaveBeenCalled();
+
+      expect(deleteWorkspaceFilesBestEffort).toHaveBeenCalledWith(migratedWorkspace);
+    });
+
+    test("selects legacyEnvironmentId off the deleted row", async () => {
+      vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace as any);
+
+      await deleteWorkspace("p1");
+
+      expect(prisma.workspace.delete).toHaveBeenCalledWith(
+        expect.objectContaining({
+          select: expect.objectContaining({ legacyEnvironmentId: true }),
+        })
+      );
     });
 
     test("throws DatabaseError on Prisma error", async () => {
@@ -518,7 +540,6 @@ describe("workspace lib", () => {
     test("deletes a workspace while another workspace remains", async () => {
       vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([{ id: "p1" }, { id: "p2" }]);
       vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace as any);
-      vi.mocked(deleteFilesByWorkspaceId).mockResolvedValue({ ok: true, data: undefined });
 
       await expect(deleteWorkspaceIfNotLast("p1", "org1")).resolves.toEqual(baseWorkspace);
     });
