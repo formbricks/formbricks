@@ -1,5 +1,9 @@
 {
   "auth": {
+    "account_deleted": {
+      "description": "あなたのアカウントとすべてのデータは完全に削除されました。次の画面に移動します。",
+      "heading": "アカウントが削除されました"
+    },
     "continue_with_azure": "Microsoftで続行",
     "continue_with_email": "メールアドレスで続行",
     "continue_with_github": "GitHubで続行",

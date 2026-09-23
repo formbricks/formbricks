@@ -1,5 +1,9 @@
 {
   "auth": {
+    "account_deleted": {
+      "description": "你的帳號及其所有資料已永久移除。現在將帶你繼續前往。",
+      "heading": "你的帳號已刪除"
+    },
     "continue_with_azure": "繼續使用 Microsoft",
     "continue_with_email": "使用電子郵件繼續",
     "continue_with_github": "使用 GitHub 繼續",
