@@ -5,6 +5,7 @@ import { type TResponseData, type TResponseTtc } from "@formbricks/types/respons
 import type { TSurveyMatrixElement } from "@formbricks/types/surveys/elements";
 import { htmlToPlainText } from "@/lib/html-utils";
 import { getLocalizedValue } from "@/lib/i18n";
+import { getMediaAltText } from "@/lib/storage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { getShuffledRowIndices } from "@/lib/utils";
 
@@ -150,6 +151,7 @@ export function MatrixElement({
         requiredLabel={t("common.required")}
         errorMessage={errorMessage}
         imageUrl={element.imageUrl}
+        imageAltText={getMediaAltText(element.imageUrl)}
         videoUrl={element.videoUrl}
       />
     </form>

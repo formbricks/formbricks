@@ -73,6 +73,8 @@ interface SingleSelectProps {
   onOtherValueChange?: (value: string) => void;
   /** Image URL to display above the headline */
   imageUrl?: string;
+  /** Text alternative for the element image; omitted or "" renders it decorative */
+  imageAltText?: string;
   /** Video URL to display above the headline */
   videoUrl?: string;
   /** Placeholder text for the search input in dropdown mode */
@@ -663,6 +665,7 @@ function SingleSelect({
   otherValue = "",
   onOtherValueChange,
   imageUrl,
+  imageAltText,
   videoUrl,
   searchPlaceholder = "Search...",
   searchNoResultsText = "No results found",
@@ -750,6 +753,7 @@ function SingleSelect({
             required={required}
             requiredLabel={requiredLabel}
             imageUrl={imageUrl}
+            imageAltText={imageAltText}
             videoUrl={videoUrl}
           />
           <SingleSelectListVariant
@@ -783,6 +787,7 @@ function SingleSelect({
             required={required}
             requiredLabel={requiredLabel}
             imageUrl={imageUrl}
+            imageAltText={imageAltText}
             videoUrl={videoUrl}
           />
           <div data-element-input>

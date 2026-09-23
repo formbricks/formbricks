@@ -8,6 +8,7 @@ import type {
   TSurveyRatingElement,
 } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n";
+import { getMediaAltText } from "@/lib/storage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface RatingElementProps {
@@ -70,6 +71,7 @@ export function RatingElement({
         requiredLabel={t("common.required")}
         dir={dir}
         imageUrl={element.imageUrl}
+        imageAltText={getMediaAltText(element.imageUrl)}
         videoUrl={element.videoUrl}
         errorMessage={errorMessage}
       />

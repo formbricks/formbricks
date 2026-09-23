@@ -6,6 +6,7 @@ import { ElementMedia } from "@/components/general/element-media";
 import { Headline } from "@/components/general/headline";
 import { Subheader } from "@/components/general/subheader";
 import { getLocalizedValue } from "@/lib/i18n";
+import { getMediaAltText } from "@/lib/storage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface CalElementProps {
@@ -52,7 +53,13 @@ export function CalElement({
       }}
       className="w-full">
       <div>
-        {isMediaAvailable ? <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} /> : null}
+        {isMediaAvailable ? (
+          <ElementMedia
+            imgUrl={element.imageUrl}
+            videoUrl={element.videoUrl}
+            altText={getMediaAltText(element.imageUrl)}
+          />
+        ) : null}
         <Headline headline={getLocalizedValue(element.headline, languageCode)} required={element.required} />
         <Subheader subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""} />
         <CalEmbed key={element.id} element={element} onSuccessfulBooking={onSuccessfulBooking} />

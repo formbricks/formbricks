@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { getImageAltFromUrl, getOriginalFileNameFromUrl } from "./storage";
+import { getImageAltFromUrl, getMediaAltText, getOriginalFileNameFromUrl } from "./storage";
 
 describe("getImageAltFromUrl", () => {
   test("decodes URL-encoded file names and strips the extension", () => {
@@ -19,6 +19,23 @@ describe("getImageAltFromUrl", () => {
 
   test("returns empty string when nothing readable is left", () => {
     expect(getImageAltFromUrl("https://example.com/files/path/")).toBe("");
+  });
+});
+
+describe("getMediaAltText", () => {
+  test("derives a readable name from the image's file name", () => {
+    expect(getMediaAltText("https://example.com/storage/team-photo-2026--fid--abc123.png")).toBe(
+      "team photo 2026"
+    );
+  });
+
+  test("returns empty string (decorative) when the file name leaves nothing readable", () => {
+    expect(getMediaAltText("https://example.com/storage/___.png")).toBe("");
+  });
+
+  test("returns empty string when there is no image URL", () => {
+    expect(getMediaAltText(undefined)).toBe("");
+    expect(getMediaAltText("")).toBe("");
   });
 });
 

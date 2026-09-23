@@ -4,6 +4,7 @@ import { FormField, type FormFieldConfig } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyAddressElement } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n";
+import { getMediaAltText } from "@/lib/storage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface AddressElementProps {
@@ -126,6 +127,7 @@ export function AddressElement({
         requiredLabel={t("common.required")}
         dir={dir}
         imageUrl={element.imageUrl}
+        imageAltText={getMediaAltText(element.imageUrl)}
         videoUrl={element.videoUrl}
         errorMessage={errorMessage}
       />

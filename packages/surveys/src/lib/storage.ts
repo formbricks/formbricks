@@ -25,6 +25,15 @@ export const getImageAltFromUrl = (fileURL: string): string => {
     .trim();
 };
 
+/**
+ * Alt text for a question or ending-card image. Surveys have no creator-supplied alt field, so the
+ * file name is the only text alternative there is. When it leaves nothing readable — or there is no
+ * image — the result is "", which renders `alt=""` and marks the image decorative: a screen reader
+ * then skips it instead of announcing a meaningless "Image".
+ */
+export const getMediaAltText = (imageUrl: string | undefined): string =>
+  imageUrl ? getImageAltFromUrl(imageUrl) : "";
+
 export const getOriginalFileNameFromUrl = (fileURL: string): string => {
   try {
     const fileNameFromURL = fileURL.startsWith("/storage/")

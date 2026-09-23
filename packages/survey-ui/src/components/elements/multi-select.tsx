@@ -75,6 +75,8 @@ interface MultiSelectProps {
   exclusiveOptionIds?: string[];
   /** Image URL to display above the headline */
   imageUrl?: string;
+  /** Text alternative for the element image; omitted or "" renders it decorative */
+  imageAltText?: string;
   /** Video URL to display above the headline */
   videoUrl?: string;
   /** Placeholder text for the search input in dropdown mode */
@@ -523,6 +525,7 @@ function MultiSelect({
   onOtherValueChange,
   exclusiveOptionIds = [],
   imageUrl,
+  imageAltText,
   videoUrl,
   searchPlaceholder = "Search...",
   searchNoResultsText = "No results found",
@@ -605,6 +608,7 @@ function MultiSelect({
             required={required}
             requiredLabel={requiredLabel}
             imageUrl={imageUrl}
+            imageAltText={imageAltText}
             videoUrl={videoUrl}
           />
           <div className="relative" data-element-input>
@@ -641,6 +645,7 @@ function MultiSelect({
             required={required}
             requiredLabel={requiredLabel}
             imageUrl={imageUrl}
+            imageAltText={imageAltText}
             videoUrl={videoUrl}
           />
           <div className="relative" data-element-input>

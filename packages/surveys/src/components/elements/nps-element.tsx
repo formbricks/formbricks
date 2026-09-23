@@ -5,6 +5,7 @@ import { type TResponseData, type TResponseTtc } from "@formbricks/types/respons
 import type { TSurveyNPSElement } from "@formbricks/types/surveys/elements";
 // Import as Nps to fix sonar issue - "Imported JSX component NPS must be in PascalCase"
 import { getLocalizedValue } from "@/lib/i18n";
+import { getMediaAltText } from "@/lib/storage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface NPSElementProps {
@@ -67,6 +68,7 @@ export function NPSElement({
         errorMessage={errorMessage}
         dir={dir}
         imageUrl={element.imageUrl}
+        imageAltText={getMediaAltText(element.imageUrl)}
         videoUrl={element.videoUrl}
       />
     </form>

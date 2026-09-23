@@ -12,6 +12,7 @@ import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { replaceRecallInfo } from "@/lib/recall";
+import { getMediaAltText } from "@/lib/storage";
 
 interface EndingCardProps {
   survey: TJsWorkspaceStateSurvey;
@@ -67,7 +68,11 @@ export function EndingCard({
   }, [isCurrent, autoFocusEnabled, isResponseSendingFinished, hasButton]);
   const media =
     endingCard.type === "endScreen" && (endingCard.imageUrl ?? endingCard.videoUrl) ? (
-      <ElementMedia imgUrl={endingCard.imageUrl} videoUrl={endingCard.videoUrl} />
+      <ElementMedia
+        imgUrl={endingCard.imageUrl}
+        videoUrl={endingCard.videoUrl}
+        altText={getMediaAltText(endingCard.imageUrl)}
+      />
     ) : null;
 
   const checkmark = (

@@ -34,6 +34,8 @@ export interface ConsentProps {
   disabled?: boolean;
   /** Image URL to display above the headline */
   imageUrl?: string;
+  /** Text alternative for the element image; omitted or "" renders it decorative */
+  imageAltText?: string;
   /** Video URL to display above the headline */
   videoUrl?: string;
 }
@@ -52,6 +54,7 @@ function Consent({
   dir = "auto",
   disabled = false,
   imageUrl,
+  imageAltText,
   videoUrl,
 }: Readonly<ConsentProps>): React.JSX.Element {
   const handleCheckboxChange = (checked: boolean): void => {
@@ -71,6 +74,7 @@ function Consent({
         requiredLabel={requiredLabel}
         htmlFor={inputId}
         imageUrl={imageUrl}
+        imageAltText={imageAltText}
         videoUrl={videoUrl}
       />
 

@@ -26,6 +26,8 @@ interface OpenTextProps {
   rows?: number;
   disabled?: boolean;
   imageUrl?: string;
+  /** Text alternative for the element image; omitted or "" renders it decorative */
+  imageAltText?: string;
   videoUrl?: string;
 }
 
@@ -47,6 +49,7 @@ function OpenText({
   rows = 3,
   disabled = false,
   imageUrl,
+  imageAltText,
   videoUrl,
 }: Readonly<OpenTextProps>): React.JSX.Element {
   const [currentLength, setCurrentLength] = useState(value.length);
@@ -82,6 +85,7 @@ function OpenText({
         requiredLabel={requiredLabel}
         htmlFor={inputId}
         imageUrl={imageUrl}
+        imageAltText={imageAltText}
         videoUrl={videoUrl}
       />
       <div className="relative" data-element-input>

@@ -32,11 +32,12 @@ const asSafeMediaUrl = (url: string | undefined): string | undefined =>
 interface ElementMediaProps {
   imgUrl?: string;
   videoUrl?: string;
-  altText?: string;
+  /** Text alternative for the image. "" marks it decorative; there is deliberately no default. */
+  altText: string;
   className?: string;
 }
 
-export function ElementMedia({ imgUrl, videoUrl, altText = "Image", className }: ElementMediaProps) {
+export function ElementMedia({ imgUrl, videoUrl, altText, className }: Readonly<ElementMediaProps>) {
   const { t } = useTranslation();
   // Every sink is validated, not just the href. `ZStorageUrl` now rejects unsafe schemes on write, but
   // this component renders survey JSON straight from the API, and rows written before that validation

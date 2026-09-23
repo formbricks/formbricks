@@ -35,6 +35,8 @@ interface DateElementProps {
   locale?: string;
   /** Image URL to display above the headline */
   imageUrl?: string;
+  /** Text alternative for the element image; omitted or "" renders it decorative */
+  imageAltText?: string;
   /** Video URL to display above the headline */
   videoUrl?: string;
 }
@@ -55,6 +57,7 @@ function DateElement({
   locale = "en-US",
   errorMessage,
   imageUrl,
+  imageAltText,
   videoUrl,
 }: Readonly<DateElementProps>): React.JSX.Element {
   const errorAria = getElementErrorAria(inputId, errorMessage);
@@ -161,6 +164,7 @@ function DateElement({
         requiredLabel={requiredLabel}
         htmlFor={inputId}
         imageUrl={imageUrl}
+        imageAltText={imageAltText}
         videoUrl={videoUrl}
       />
 
