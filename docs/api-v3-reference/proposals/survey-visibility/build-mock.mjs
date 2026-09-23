@@ -94,8 +94,8 @@ const withVisibilityFields = (survey) =>
     : {
         ...survey,
         visibility: "workspace",
-        owner: survey.creator?.name ? { id: "clus0000000000000000000000", name: survey.creator.name } : null,
-        access: { via: "workspace", canChangeVisibility: false },
+        owner: survey.creator?.name ? { name: survey.creator.name } : null,
+        access: { via: "workspace", canManageVisibility: false },
       };
 for (const [path, item] of Object.entries(out.paths)) {
   if (!path.startsWith("/api/v3/surveys") || path.endsWith("/visibility")) continue;

@@ -181,11 +181,10 @@ paths:
                           name: Alice Example
                         visibility: workspace
                         owner:
-                          id: clus1234567890123456789012
                           name: Alice Example
                         access:
                           via: workspace
-                          canChangeVisibility: true
+                          canManageVisibility: true
                       - id: clsv2234567890123456789012
                         name: Onboarding interview (draft)
                         workspaceId: clws1234567890123456789012
@@ -201,11 +200,10 @@ paths:
                           name: Bob Example
                         visibility: private
                         owner:
-                          id: clus2234567890123456789012
                           name: Bob Example
                         access:
                           via: organizationRole
-                          canChangeVisibility: true
+                          canManageVisibility: true
                     meta:
                       limit: 20
                       nextCursor: null
@@ -233,11 +231,10 @@ paths:
                           name: Alice Example
                         visibility: workspace
                         owner:
-                          id: clus1234567890123456789012
                           name: Alice Example
                         access:
                           via: workspace
-                          canChangeVisibility: false
+                          canManageVisibility: false
                     meta:
                       limit: 20
                       nextCursor: null
@@ -307,11 +304,10 @@ paths:
                       status: draft
                       visibility: private
                       owner:
-                        id: clus2234567890123456789012
                         name: Bob Example
                       access:
                         via: owner
-                        canChangeVisibility: true
+                        canManageVisibility: true
         "400":
           $ref: "#/components/responses/V3BadRequest"
         "401":
@@ -332,11 +328,12 @@ paths:
       operationId: getSurveyVisibilityV3
       summary: Read a survey's visibility and the impact of changing it
       description: >
-        Returns the survey's effective visibility, its owner, the caller's access, and what a change
+        Returns the survey's enforced visibility, its owner, the caller's access, and what a change
         would do: `blockers[]` lists the outbound connections that currently make `private` refusable
-        (webhooks, integrations, feedback sources, dashboards, workflows — Decision 13), and `impact`
-        carries the numbers the confirmation dialogues show. Read this before offering "Make private";
-        the `POST` answers **409** while `blockers[]` is non-empty.
+        (webhooks, integrations, feedback sources, dashboards, workflows — Decision 13), `impact`
+        carries the numbers the confirmation dialogues show, `allowedTargets[]` the values a `POST`
+        would act on right now, and `pending` / `version` describe a change still in flight. Read this
+        before offering "Make private"; the `POST` answers **409** while `blockers[]` is non-empty.
 
 
         Requires `survey.change_visibility`, the same permission as the `POST`: the survey's owner or an
@@ -346,9 +343,10 @@ paths:
         content, and only the people who may act on them get to read them.
 
 
-        `pending` reports a change that is stored but not yet enforced (see the `POST`'s 503), and
-        `allowedTargets` lists the values a `POST` would accept right now, so the UI shows only
-        transitions that can succeed.
+        While `pending` is non-null the survey is private for everyone but its owner and the
+        organisation's owners and managers, whichever direction is queued — the application fails
+        closed until the graph acknowledges the change — so `visibility` reads `private` in that state
+        and `allowedTargets` includes the value that cancels the pending change.
       tags:
         - V3 Surveys
       parameters:
@@ -382,11 +380,10 @@ paths:
                       id: clsv1234567890123456789012
                       visibility: workspace
                       owner:
-                        id: clus1234567890123456789012
                         name: Alice Example
                       access:
                         via: workspace
-                        canChangeVisibility: true
+                        canManageVisibility: true
                       blockers:
                         - type: webhook
                           id: clwh1234567890123456789012
@@ -398,6 +395,7 @@ paths:
                         memberCount: 7
                         responseCount: 212
                       pending: null
+                      version: 2
                       allowedTargets: []
                 privateDraft:
                   summary: Private draft seen by its owner
@@ -406,18 +404,38 @@ paths:
                       id: clsv2234567890123456789012
                       visibility: private
                       owner:
-                        id: clus2234567890123456789012
                         name: Bob Example
                       access:
                         via: owner
-                        canChangeVisibility: true
+                        canManageVisibility: true
                       blockers: []
                       impact:
                         memberCount: 7
                         responseCount: 0
                       pending: null
+                      version: 2
                       allowedTargets:
                         - workspace
+                pendingGrant:
+                  summary: Owner asked for workspace; the in-request projection failed, the outbox will finish it
+                  value:
+                    data:
+                      id: clsv2234567890123456789012
+                      visibility: private
+                      owner:
+                        name: Bob Example
+                      access:
+                        via: owner
+                        canManageVisibility: true
+                      blockers: []
+                      impact:
+                        memberCount: 7
+                        responseCount: 0
+                      pending: workspace
+                      version: 3
+                      allowedTargets:
+                        - workspace
+                        - private
                 ownerlessPrivateSeenByManager:
                   summary: Departed author's private survey, read by an organisation manager
                   value:
@@ -427,12 +445,13 @@ paths:
                       owner: null
                       access:
                         via: organizationRole
-                        canChangeVisibility: true
+                        canManageVisibility: true
                       blockers: []
                       impact:
                         memberCount: 7
                         responseCount: 41
                       pending: null
+                      version: 2
                       allowedTargets:
                         - workspace
         "400":
@@ -454,17 +473,35 @@ paths:
       operationId: changeSurveyVisibilityV3
       summary: Change a survey's visibility
       description: >
-        Sets the survey to `private` or `workspace`. Answers **200** only once the change is enforced:
-        the flag is stored and the authorization relationship is projected inside the request, so a
-        colleague's next read already reflects it. Sending the value the survey already **enforces** is
-        a **200** no-op — nothing is written or audited — **provided nothing is pending**. The check is
-        against the graph, not the stored flag: after a **503**, the stored flag already matches but
-        enforcement does not, so a retry is not a no-op — the server re-attempts the projection and
-        answers **200** or **503** again. A request for the *opposite* of a pending change is not a
-        no-op either, even though it matches the enforced value: the server writes the flag back, which
-        supersedes the queued change (the outbox reconciles to the stored flag, it does not replay the
-        old request), and answers **200** with `pending` cleared. Retrying is therefore safe, and no
-        answer can be overtaken by an earlier, still-queued change.
+        Sets the survey to `private` or `workspace`.
+
+
+        **Restrictions take effect at once.** A `workspace → private` request stores the flag, a new
+        `version` and a pending marker in one transaction. From that instant the survey is private on
+        every path — single reads, lists and counts, responses, exports — for everyone but the owner and
+        the organisation's owners and managers, whether or not the graph has caught up (ENG-3204: fail
+        closed). The relationships are then projected; the answer is **200** either way, with
+        `pending: null` when the graph acknowledged this `version` inside the request and
+        `pending: "private"` when the outbox will finish it.
+
+
+        **Grants take effect when enforced.** A `private → workspace` request answers **200** only once
+        the graph has acknowledged this exact `version`; until then the survey stays private. If the
+        in-request projection fails, the answer is **503** `projection_pending`: the change is stored
+        and queued, `GET …/visibility` shows `pending: "workspace"`, and retrying is safe.
+
+
+        **Fencing.** Every accepted change increments the survey's `version`. Projection work carries
+        the version it was issued for, and a projector holding an older version never writes, so a
+        worker leased before a newer change cannot overtake it — including one that crashed before its
+        verification pass. A **200** for a grant means the graph holds this exact version.
+
+
+        **No-ops and cancellation.** Requesting the value the survey already enforces, with nothing
+        pending, is a **200** no-op: nothing is written or audited and `changedAt` / `changedBy` are
+        unchanged. Requesting the enforced value while the *opposite* is pending **cancels** the pending
+        change: a new version is stored, the queued work is superseded, and the answer is **200** with
+        `pending: null`. Requesting the pending value again re-attempts the projection (200 or 503).
 
 
         When `private` is refused for two reasons at once — no owner **and** outbound connections —
@@ -481,7 +518,10 @@ paths:
         Going `workspace → private` is refused with **409** while any outbound connection depends on
         the survey; resolve them first (Decision 13). It is refused with **422** when the survey has no
         owner, because "private" would then mean "administrators only" (Decision log #3) — duplicate
-        the survey for a private copy. Going `private → workspace` has no preconditions.
+        the survey for a private copy. Going `private → workspace` has no preconditions. The rule also
+        holds in the other direction: while a survey is private or has a change pending, no webhook,
+        integration, feedback source, dashboard or workflow can be attached to it (README §3,
+        `survey_not_workspace_visible`).
 
 
         This is the only way to change visibility: `PATCH /api/v3/surveys/{surveyId}` rejects the field.
@@ -535,12 +575,13 @@ paths:
                       id: clsv2234567890123456789012
                       visibility: workspace
                       owner:
-                        id: clus2234567890123456789012
                         name: Bob Example
                       access:
                         via: workspace
-                        canChangeVisibility: true
-                      changedAt: "2026-09-21T10:15:00.000Z"
+                        canManageVisibility: true
+                      version: 3
+                      pending: null
+                      changedAt: \"2026-09-21T10:15:00.000Z"
                       changedBy:
                         type: user
                         id: clus2234567890123456789012
@@ -552,12 +593,13 @@ paths:
                       id: clsv1234567890123456789012
                       visibility: private
                       owner:
-                        id: clus1234567890123456789012
                         name: Alice Example
                       access:
                         via: organizationRole
-                        canChangeVisibility: true
-                      changedAt: "2026-09-21T10:20:00.000Z"
+                        canManageVisibility: true
+                      version: 3
+                      pending: null
+                      changedAt: \"2026-09-21T10:20:00.000Z"
                       changedBy:
                         type: user
                         id: clus3234567890123456789012
@@ -647,15 +689,14 @@ components:
       type: object
       description: >-
         The authorization owner — the person whose private surveys these are (Decision 16). Distinct
-        from `creator`, which is attribution only and is never rewritten. Ownership transfer, when it
-        ships, moves this field and leaves `creator` alone.
+        from `creator`, which is attribution only and is never rewritten. Display only, like `creator`:
+        no user id is exposed, because `access.via === "owner"` already answers "is this mine" and
+        `filter[owner][in]=me` filters server-side. Ownership transfer can add an identifier later,
+        additively. Durable source: `Survey.ownerId` in PostgreSQL, projected to `survey#owner@user`;
+        the graph never holds ownership alone, so a rebuild from an empty graph restores it.
       required:
-        - id
         - name
       properties:
-        id:
-          type: string
-          description: User id.
         name:
           type: string
       additionalProperties: false
@@ -667,28 +708,31 @@ components:
         the server per request; a rendering hint only — every mutation is re-authorised on the server.
       required:
         - via
-        - canChangeVisibility
+        - canManageVisibility
       properties:
         via:
           type: string
-          enum:
+          description: >-
+            Why this caller can see the survey. Known values today: `workspace` (the survey is
+            workspace-visible and the caller has workspace read — always the value for API keys),
+            `owner` (private, the caller owns it), `organizationRole` (private, the caller reaches it
+            only as an organisation owner or manager — the case that shows the admin banner).
+            **Open set, deliberately not an enum**: named person and team sharing will add values, so
+            clients treat an unknown string as "some other access path" and never branch exhaustively.
+            Explanatory metadata, not authorization truth — the server re-authorises every call.
+          examples:
             - workspace
             - owner
             - organizationRole
-          description: >-
-            `workspace`: the survey is workspace-visible and the caller has workspace read (always the
-            value for API keys). `owner`: the survey is private and the caller owns it.
-            `organizationRole`: the survey is private and the caller reaches it only as an organisation
-            owner or manager — the case that shows the admin banner.
-        canChangeVisibility:
+        canManageVisibility:
           type: boolean
           description: >-
-            Permission only: `true` when this caller is the owner or an organisation owner/manager and
-            the feature is enabled for the organisation and deployment. It says nothing about which
-            target values would be accepted — a survey with `owner: null` still gets `true` for an
-            organisation manager, who must be able to make it workspace-visible again (Decision 12).
-            Target-specific rules (blocking connections, the no-owner refusal) live in
-            `allowedTargets` and `blockers[]` on `GET …/visibility`.
+            Permission only: `true` when this caller holds `survey.change_visibility` — owner or
+            organisation owner/manager, feature enabled for the organisation and deployment. It can be
+            `true` while `allowedTargets` is empty (blockers, or no owner): it answers "may this person
+            manage visibility at all", which is what shows or hides the controls; `allowedTargets` on
+            `GET …/visibility` answers which transitions would succeed now. Stays `true` for an
+            organisation manager on an ownerless private survey (Decision 12).
       additionalProperties: false
 
     SurveyVisibilityFields:
@@ -705,16 +749,18 @@ components:
           allOf:
             - $ref: "#/components/schemas/SurveyVisibility"
           description: >-
-            The **effective** visibility — what the backend enforces on this request. `workspace` for
-            every survey while the deployment's readiness marker is unset, whatever the stored flag,
-            and always `workspace` for API keys (README §5).
+            The **enforced** visibility on this request. `private` whenever a change is pending, in
+            either direction (fail closed). `workspace` for every survey while the deployment's
+            readiness marker is unset, whatever the stored flag, and always `workspace` for API keys
+            (README §5).
         owner:
           anyOf:
             - $ref: "#/components/schemas/SurveyOwner"
             - type: "null"
           description: >-
-            `null` when the author's account no longer exists or the survey was created with an API
-            key. A survey with `owner: null` cannot be made private.
+            `null` when the author's account no longer exists (`Survey.ownerId` is set null on user
+            deletion) or the survey was created with an API key. A survey with `owner: null` cannot be
+            made private; an organisation owner/manager can still make it workspace-visible.
         access:
           $ref: "#/components/schemas/SurveyAccess"
 
@@ -912,6 +958,7 @@ components:
         - type: object
           required:
             - pending
+            - version
             - allowedTargets
           properties:
             pending:
@@ -919,19 +966,31 @@ components:
                 - $ref: "#/components/schemas/SurveyVisibility"
                 - type: "null"
               description: >-
-                A visibility that is stored but not yet enforced: a `POST` answered **503**
-                `projection_pending` and the outbox has not delivered yet. `visibility` keeps reporting
-                the enforced value meanwhile. `null` in the normal case. Clears within 60 seconds, when
-                a later `POST` supersedes it, or the deployment fails closed.
+                The value a `POST` stored that the graph has not yet acknowledged. While non-null the
+                survey is private for everyone but the owner and the organisation's owners and managers,
+                whichever value is pending — `visibility` reads `private`. `"private"` means the
+                restriction is already enforced and only the graph is catching up; `"workspace"` means
+                the grant is not yet in effect. `null` normally. Clears when the outbox delivers
+                (within 60 seconds, or the deployment fails closed), or when a later `POST` cancels or
+                supersedes it.
+            version:
+              type: integer
+              minimum: 0
+              description: >-
+                Monotonic per survey; incremented by every accepted `POST`, including cancellations.
+                Projection work is fenced on it: a projector holding an older version never writes. `0`
+                for a survey whose visibility was never changed through this endpoint.
             allowedTargets:
               type: array
               items:
                 $ref: "#/components/schemas/SurveyVisibility"
               uniqueItems: true
               description: >-
-                Values a `POST …/visibility` by this caller would accept right now: never the current
-                value, never `private` while `blockers[]` is non-empty or `owner` is `null`. Empty
-                when no transition is possible. Drives the row menu and the editor control.
+                Values a `POST …/visibility` by this caller would act on right now. Never the enforced
+                value — **except** when a different value is pending, in which case the enforced value
+                is listed because requesting it cancels the pending change. Never `private` while
+                `blockers[]` is non-empty or `owner` is `null`. Empty when nothing would happen. Drives
+                the row menu and the editor control.
 
     SurveyVisibilityChangeRequest:
       type: object
@@ -972,9 +1031,22 @@ components:
         - $ref: "#/components/schemas/SurveyVisibilityFields"
         - type: object
           required:
+            - version
+            - pending
             - changedAt
             - changedBy
           properties:
+            version:
+              type: integer
+              minimum: 0
+              description: The survey's visibility version after this call. Unchanged by a no-op.
+            pending:
+              anyOf:
+                - $ref: "#/components/schemas/SurveyVisibility"
+                - type: "null"
+              description: >-
+                `"private"` when the restriction is enforced but the graph is still catching up (the
+                outbox will finish it); `null` otherwise. A grant never returns 200 with a pending value.
             changedAt:
               type:
                 - string
@@ -995,8 +1067,11 @@ components:
       description: >-
         RFC 9457 Problem Details (`application/problem+json`), as in the main spec. Listed here are
         only the codes this proposal adds; they join the `Problem.yml` enum and `V3_PROBLEM_CODES` in
-        the same commit when the handlers ship. `workspace_survey_limit_reached` is provisional and
-        belongs to the RFC's per-workspace survey cap, which every creation path enforces.
+        the same commit when the handlers ship. `survey_not_workspace_visible` is emitted by every
+        operation that attaches a survey to outbound plumbing (README §3) — `POST`/`PATCH
+        /api/v3/workflows` first, since that is the v3 surface that exists. `workspace_survey_limit_reached`
+        is provisional and belongs to the RFC's per-workspace survey cap, which every creation path
+        enforces.
       required:
         - title
         - status
@@ -1022,6 +1097,7 @@ components:
             - internal_server_error
             - not_authenticated
             - projection_pending
+            - survey_not_workspace_visible
             - too_many_requests
             - visibility_blocked_by_connections
             - visibility_change_not_allowed
@@ -1233,14 +1309,14 @@ components:
             requestId: req_01j8z6
     V3ProjectionPending:
       description: >-
-        Service Unavailable — the visibility flag was stored, but the authorization relationship could
-        not be projected within the request. The change is queued durably and lands within 60 seconds
-        or the deployment fails closed. Meanwhile `GET …/visibility` reports the requested value in
-        `pending` and the still-enforced one in `visibility`. Retrying the `POST` is safe: it is judged
-        against the enforced state, re-attempts the projection, and answers **200** only when that
-        succeeds. A `POST` for the opposite value supersedes the queued change rather than being treated
-        as a no-op. Chosen over **202 Accepted** so that the pending state stays an exception, not the
-        normal path every client must poll.
+        Service Unavailable — only for a **grant** (`private → workspace`): the flag and a new
+        `version` were stored, but the graph did not acknowledge the projection within the request. The
+        survey stays private meanwhile (fail closed); the change is queued durably and lands within 60
+        seconds or the deployment fails closed. `GET …/visibility` shows `pending: "workspace"`.
+        Retrying the `POST` is safe: it re-attempts the projection and answers **200** only when the
+        graph holds this exact version. A `POST` for `private` cancels the pending grant. A restriction
+        never answers 503 — it is enforced the moment it is stored. Chosen over **202 Accepted** so the
+        pending state stays an exception, not the normal path every client must poll.
       headers:
         Retry-After:
           schema:

@@ -34,18 +34,20 @@ A private survey is readable only by its **owner** (the author, projected as `su
 the organisation's owners and managers; nobody else can see that it exists, API keys included. New
 surveys created by a signed-in person start private; surveys created with an API key start
 workspace-visible. Visibility is changed through one dedicated endpoint, never through `PATCH`.
-Responses follow their survey. Nothing about respondents or public collection changes.
+Responses follow their survey. While a change is in flight the survey is private to everyone but its
+owner and the organisation's owners and managers, whichever direction is queued. Nothing about
+respondents or public collection changes.
 
 ## 2. Resource changes
 
 Three fields are added to `SurveyListItem` and `SurveyResource`. All three are **required and always
 present**, so clients never branch on absence.
 
-| Field        | Type                           | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| ------------ | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `visibility` | `"private" \| "workspace"`     | The **effective** visibility: what the backend enforces on this request. See §5 for when it differs from the stored flag.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `owner`      | `{ id, name } \| null`         | The authorization owner (Decision 16). `null` when the author's account is gone or the survey was created with an API key. Distinct from `creator`, which stays pure attribution and is never rewritten; in Scope 1 the two coincide whenever both are non-null. `owner` is the field that ownership transfer will move later.                                                                                                                                                                                                                                                                                                                                           |
-| `access`     | `{ via, canChangeVisibility }` | Server-derived, per caller. `via` says why this caller can see the survey: `"workspace"` (workspace-visible and the caller has workspace read), `"owner"` (private, caller is the owner), `"organizationRole"` (private, caller reaches it only as organisation owner/manager). `canChangeVisibility` is permission only — owner or organisation owner/manager, feature on — and stays `true` for an ownerless private survey so an administrator can still release it (Decision 12). Which target values would be accepted is answered by `allowedTargets` on the visibility sub-resource. The backend re-checks on every mutation; the hint never authorises anything. |
+| Field        | Type                           | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------ | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `visibility` | `"private" \| "workspace"`     | The **effective** visibility: what the backend enforces on this request. See §5 for when it differs from the stored flag.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `owner`      | `{ name } \| null`             | The authorization owner (Decision 16). Display only, like `creator`: no user id — `access.via === "owner"` answers "is it mine" and `filter[owner][in]=me` filters server-side; an identifier can be added later, additively. `null` when the author's account is gone or the survey was created with an API key. Distinct from `creator`, which stays pure attribution and is never rewritten; in Scope 1 the two coincide whenever both are non-null. **Durable source is `Survey.ownerId` in PostgreSQL**, set null on user deletion and projected to `survey#owner@user`; the graph never holds ownership alone, so a rebuild from an empty graph restores it (ENG-3203, ENG-3204).          |
+| `access`     | `{ via, canManageVisibility }` | Server-derived, per caller. `via` says why this caller can see the survey: `"workspace"` (workspace-visible and the caller has workspace read), `"owner"` (private, caller is the owner), `"organizationRole"` (private, caller reaches it only as organisation owner/manager). **Open string, not a closed enum**: named sharing will add values, so clients treat unknown strings as "another access path" and never branch exhaustively. Explanatory metadata, never authorization truth. `canManageVisibility` is permission only — `survey.change_visibility` — and shows or hides the controls; it can be `true` while `allowedTargets` is empty. The backend re-checks on every mutation. |
 
 `via` is chosen lowest-privilege-first: an organisation manager who is also a member of the workspace
 sees `"workspace"` on a workspace-visible survey and `"organizationRole"` on a colleague's private one.
@@ -53,7 +55,7 @@ The admin banner ("This survey is private to {Name}. You can see it because you'
 owner or manager") renders exactly when `visibility === "private" && access.via === "organizationRole"`.
 
 API keys always receive `visibility: "workspace"`, `access.via: "workspace"`,
-`access.canChangeVisibility: false` (K-4).
+`access.canManageVisibility: false` (K-4).
 
 `visibility` is **not** accepted on `POST /api/v3/surveys` or `PATCH /api/v3/surveys/{surveyId}`. Both
 answer **400** with `invalid_params[].code: unsupported_field`, the same way `createdBy` and `type`
@@ -76,10 +78,14 @@ the current state plus what a change would do:
   can see the survey today (workspace-visible) or would gain access (private). `responseCount`: the
   survey's responses. Feeds "Hide this from your team? {N} people lose access to this survey and its
   {M} responses."
-- `allowedTargets[]` — the values a `POST` by this caller would accept right now. Never the current
-  value; never `private` while `blockers[]` is non-empty or `owner` is `null`. The row menu and the
-  editor control render from this, so a user is never offered a transition that answers 409 or 422.
-- `pending` — a value stored but not yet enforced after a 503 (below); `null` normally.
+- `allowedTargets[]` — the values a `POST` by this caller would act on right now. Never the enforced
+  value, **except** when a different value is pending: then the enforced value is listed because
+  requesting it cancels the pending change. Never `private` while `blockers[]` is non-empty or `owner`
+  is `null`. The row menu and the editor control render from this, so a user is never offered a
+  transition that answers 409 or 422, and always sees the cancel action while something is pending.
+- `pending` — the value a `POST` stored that the graph has not yet acknowledged; `null` normally.
+  While non-null the survey is private to everyone but owner and admins, whichever value is pending.
+- `version` — monotonic per survey, incremented by every accepted `POST`. Fences projection work.
 
 Authorization: `survey.change_visibility`, the same permission as the `POST`. Read and write members,
 team-level managers and every API key answer 403 with the same body as an unknown id (Decision log
@@ -87,35 +93,47 @@ team-level managers and every API key answer 403 with the same body as an unknow
 
 ### `POST /api/v3/surveys/{surveyId}/visibility`
 
-Body `{ "visibility": "private" | "workspace" }`. Answers **200** with the new state, `changedAt` and
-`changedBy` only after the relationship change has been projected into SpiceDB inside the request
-(Decision log #2). Setting the value the survey already **enforces** is a **200 no-op**: nothing
-written, nothing audited, and `changedAt` / `changedBy` describe the last real change — both `null`
-when there never was one, for example a `workspace` request on an API-key-created survey that is
-still at its creation visibility. The no-op test is against the graph, not the stored flag, **and
-only applies when nothing is pending**: a retry after a 503 finds the flag already stored but
-enforcement outstanding, so it is **not** a no-op — the server re-attempts the projection and answers
-200 or 503 again. A request for the opposite of a pending change is not a no-op either, although it
-matches the enforced value: the server writes the flag back, which supersedes the queued change (the
-outbox reconciles to the stored flag rather than replaying the old request), and answers 200 with
-`pending` cleared. No answer can be overtaken by an earlier, still-queued change.
+Body `{ "visibility": "private" | "workspace" }`. Two directions, two guarantees (Decision log #10):
+
+- **Restrictions take effect at once.** `workspace → private` stores the flag, a new `version` and a
+  pending marker in one transaction. From that instant the survey is private on every path — single
+  reads, lists and counts, responses, exports — for everyone but the owner and the organisation's
+  owners and managers, whether or not the graph has caught up. This is the durable pending marker
+  ENG-3204 asked for: it denies immediately, without waiting for the deployment-wide 60-second guard.
+  The relationships are then projected; the answer is **200** either way, `pending: null` if the graph
+  acknowledged this version in-request, `pending: "private"` if the outbox will finish it.
+- **Grants take effect when enforced.** `private → workspace` answers **200** only once the graph has
+  acknowledged this exact `version`; until then the survey stays private. If the in-request projection
+  fails, **503** `projection_pending`: stored, queued, `GET` shows `pending: "workspace"`, retry is safe.
+
+**Fencing** (Decision log #11). Every accepted `POST` increments `version`. Projection work carries the
+version it was issued for; a projector holding an older version never writes, so a worker leased
+before a newer change — or one that crashed before its verification pass — cannot overtake it. A 200
+for a grant means the graph holds this exact version, not merely that a re-read of the flag agreed.
+
+**No-ops and cancellation.** Requesting the value the survey already enforces, with nothing pending, is
+a **200 no-op**: nothing written, nothing audited, `changedAt` / `changedBy` describe the last real
+change — both `null` when there never was one. Requesting the enforced value while the _opposite_ is
+pending **cancels** the pending change: new version, queued work superseded, 200 with `pending: null`.
+Requesting the pending value again re-attempts the projection (200 or 503). No answer can be
+overtaken by earlier work.
 
 Precedence when `private` is refused for two reasons at once: **422 before 409**. A survey with
 `owner: null` that also has outbound connections answers 422; the missing owner cannot be fixed, so
 listing connections to remove would send the caller down a dead end. `allowedTargets` already omits
 `private` in both cases.
 
-| Result                                  | When                                                                                                                                                                                                                                                                                                                                                                          |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 200                                     | Changed, or already at the requested value.                                                                                                                                                                                                                                                                                                                                   |
-| 400 `bad_request`                       | Malformed body, unknown value, stray query parameter.                                                                                                                                                                                                                                                                                                                         |
-| 401 `not_authenticated`                 | No credentials.                                                                                                                                                                                                                                                                                                                                                               |
-| 403 `forbidden`                         | Caller cannot see the survey (unknown id, other workspace, private and not owner/admin), **or** caller is an API key (K-4), **or** caller sees it but may not change it (workspace member, team-level manager — R-10). One body for all, so nothing is probeable.                                                                                                             |
-| 403 `visibility_not_enabled`            | The RBAC entitlement is missing on the organisation, or the deployment's readiness marker is not set (§5). Independent of the survey, so not an existence leak.                                                                                                                                                                                                               |
-| 409 `visibility_blocked_by_connections` | Requested `private` while `blockers[]` is non-empty. `details.blockers` repeats the list so the UI can name them without a second call.                                                                                                                                                                                                                                       |
-| 422 `visibility_change_not_allowed`     | Requested `private` on a survey with `owner: null` (Decision log #3). `detail` says to duplicate the survey for a private copy.                                                                                                                                                                                                                                               |
-| 429 `too_many_requests`                 | Per-actor limit on visibility changes (RFC §2b: a loop of `workspace → private` must not be able to arm the freshness guard). Value set by backend; `Retry-After` present.                                                                                                                                                                                                    |
-| 503 `projection_pending`                | The survey flag was written but the SpiceDB projection did not complete in-request. The change **is** queued (outbox) and lands within 60 s or fails closed. `GET …/visibility` shows it under `pending` meanwhile. Retrying the POST is safe and re-attempts the projection. Chosen over 202 so pending stays an exception, not a path every client polls (Decision log #8). |
+| Result                                  | When                                                                                                                                                                                                                                                                                                                                                                         |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 200                                     | Changed and enforced; or a restriction stored and enforced with the graph still catching up (`pending: "private"`); or a no-op; or a cancellation.                                                                                                                                                                                                                           |
+| 400 `bad_request`                       | Malformed body, unknown value, stray query parameter.                                                                                                                                                                                                                                                                                                                        |
+| 401 `not_authenticated`                 | No credentials.                                                                                                                                                                                                                                                                                                                                                              |
+| 403 `forbidden`                         | Caller cannot see the survey (unknown id, other workspace, private and not owner/admin), **or** caller is an API key (K-4), **or** caller sees it but may not change it (workspace member, team-level manager — R-10). One body for all, so nothing is probeable.                                                                                                            |
+| 403 `visibility_not_enabled`            | The RBAC entitlement is missing on the organisation, or the deployment's readiness marker is not set (§5). Independent of the survey, so not an existence leak.                                                                                                                                                                                                              |
+| 409 `visibility_blocked_by_connections` | Requested `private` while `blockers[]` is non-empty. `details.blockers` repeats the list so the UI can name them without a second call.                                                                                                                                                                                                                                      |
+| 422 `visibility_change_not_allowed`     | Requested `private` on a survey with `owner: null` (Decision log #3). `detail` says to duplicate the survey for a private copy.                                                                                                                                                                                                                                              |
+| 429 `too_many_requests`                 | Per-actor limit on visibility changes (RFC §2b: a loop of `workspace → private` must not be able to arm the freshness guard). Value set by backend; `Retry-After` present.                                                                                                                                                                                                   |
+| 503 `projection_pending`                | **Grants only.** The flag and version were stored but the graph did not acknowledge in-request. The survey stays private meanwhile; the change lands within 60 s or fails closed. `GET …/visibility` shows `pending: "workspace"`. Retrying is safe; `POST private` cancels. Chosen over 202 so pending stays an exception, not a path every client polls (Decision log #8). |
 
 Authorization: a new action `survey.change_visibility` = owner (who still holds workspace read) **or**
 organisation owner/manager. Not workspace write, not team-level manage. In the RFC's schema this is
@@ -123,6 +141,27 @@ organisation owner/manager. Not workspace write, not team-level manage. In the R
 
 Audit: every successful change is recorded with actor, survey, old and new value (Decision 7, 11).
 Proposed action name `visibilityChanged` on target `survey`.
+
+### Outbound plumbing, both directions (Decision 13, R-6)
+
+The invariant is "a private survey never feeds outbound plumbing", and it has to hold whatever the
+order of operations. Three enforcement points, all required:
+
+1. **Flip time** — `workspace → private` answers 409 while a webhook, integration, feedback source,
+   dashboard/chart or workflow references the survey (`blockers[]`, above).
+2. **Attach time** — every surface that attaches a survey to outbound plumbing refuses a survey that is
+   private **or has a change pending**, with **422** `survey_not_workspace_visible` and an
+   `invalid_params` entry naming the field. In v3 today that is `POST` and `PATCH /api/v3/workflows`
+   (`definition.trigger.config.surveyId`); the same code applies to the v1/v2 webhook endpoints
+   (`surveyIds[]`), and to the in-app integration, feedback-source and dashboard flows. Survey pickers
+   in those flows omit private surveys altogether, with the outbound-block copy where the picker is.
+3. **Dispatch time** — the pipeline skips a private survey even when a connection somehow references
+   it: wildcard webhooks (`surveyIds: []` means every survey in the workspace) cannot be blocked at
+   attach time, and a race between a flip and an attach can slip through both checks. Skipped
+   deliveries are logged with the survey and connection ids (ENG-3202 decision 1).
+
+Feedback records already copied into a dataset stay where they are; the flip is blocked by the
+connection (point 1), which is the project's answer for webhooks and integrations too.
 
 ### Publishing and scheduling (V-3)
 
@@ -148,7 +187,7 @@ original owner.
 Two switches gate the feature (Decision 6; RFC §2b "readiness marker"). The contract makes their
 combination observable without a separate capability endpoint:
 
-| RBAC entitlement | Readiness marker | `visibility` reports           | Enforcement                                                             | `access.canChangeVisibility` | `POST …/visibility`          | Session create default |
+| RBAC entitlement | Readiness marker | `visibility` reports           | Enforcement                                                             | `access.canManageVisibility` | `POST …/visibility`          | Session create default |
 | ---------------- | ---------------- | ------------------------------ | ----------------------------------------------------------------------- | ---------------------------- | ---------------------------- | ---------------------- |
 | on               | on               | stored flag                    | private surveys hidden                                                  | per §3 rules                 | enabled                      | `private`              |
 | off              | on               | stored flag                    | private surveys **stay hidden** (Decision 6: "nothing is released")     | `false` for everyone         | 403 `visibility_not_enabled` | `workspace`            |
@@ -183,7 +222,8 @@ enforcing.
 
 No schema change on `/api/v3/responses/**`; behaviour only. Every response operation resolves the
 response to its survey and authorises against `survey.response_read` / `survey.write` /
-`survey.manage` instead of the bare workspace ladder:
+`survey.manage` instead of the bare workspace ladder. A survey with a pending visibility change counts
+as private here too (fail closed):
 
 | Operation                                                      | Private survey, caller cannot see it                                                                                                        |
 | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -213,6 +253,7 @@ Survey **S** in workspace **W**. "ladder" = the caller's existing workspace perm
 | Anyone, S has `owner: null`, requesting `private`                   | —                               | —                                                              | 422                      |
 | Organisation owner / manager, S private with `owner: null`          | —                               | full, `via: organizationRole`, `allowedTargets: ["workspace"]` | allowed (to `workspace`) |
 | Read/write member, team-level manager, API key — `GET S/visibility` | 403                             | 403                                                            | —                        |
+| Anyone, S has a change pending in either direction                  | treated as `private` everywhere | treated as `private` everywhere                                | per rows above           |
 
 Lifecycle: archive and restore keep the flag (Decision 14); delete follows `survey.delete` as today;
 duplicate and copy produce a private survey owned by the actor (R-11); `createdBy` is never rewritten.
@@ -222,8 +263,8 @@ duplicate and copy produce a private survey owned by the actor (R-11); `createdB
 1. **403 everywhere, unchanged.** Decision 10 / K-1 say 404; v3 answers 403 for unknown, foreign and
    forbidden ids alike, and 404 only for private surveys would make the two distinguishable. Product
    text to be amended to name no code. _Owner: Johannes._
-2. **Synchronous change.** 200 only after in-request projection; 503 `projection_pending` otherwise.
-   Follows the RFC over ENG-3204's pending-marker proposal. _Owner: Bhagya to confirm._
+2. **Synchronous change** — superseded by #10 and #11: restrictions enforce at once through a durable
+   pending marker, grants answer 200 only on an acknowledged version, 503 is for grants only.
 3. **Two rules not yet on the Key Decisions page.** Author who leaves the workspace loses private
    drafts there; `owner: null` surveys cannot be made private. _Owner: Johannes to record._
 4. **Workflows are outbound.** Blocked like webhooks.
@@ -231,11 +272,22 @@ duplicate and copy produce a private survey owned by the actor (R-11); `createdB
 6. **Dedicated endpoint, not PATCH.**
 7. **`GET …/visibility` requires `survey.change_visibility`** (Bhagya, PR review 23 Sep). Blocker ids
    and names are configuration; readers and API keys have no use for them.
-8. **503 + `pending`, not 202** (Bhagya, PR review 23 Sep). The no-op check runs against the enforced
-   graph state, so a retry after 503 re-attempts projection instead of reporting success. `GET`
-   exposes `pending` so the UI can show the in-between state honestly.
-9. **`canChangeVisibility` is permission-only; `allowedTargets` is target-specific** (Bhagya, PR review
+8. **503 + `pending`, not 202** (Bhagya, PR review 23 Sep). `GET` exposes `pending` so the UI can show
+   the in-between state honestly; 503 stays the exception rather than a path every client polls.
+9. **`canManageVisibility` is permission-only; `allowedTargets` is target-specific** (Bhagya, PR review
    23 Sep). Keeps the administrator's recovery action on ownerless private surveys visible.
+10. **Fail closed while pending** (Bhagya, second review 23 Sep; ENG-3204). A stored restriction denies
+    immediately on every path; a stored grant is not in effect until acknowledged. While anything is
+    pending the survey is private to all but owner and admins.
+11. **Version fencing** (Bhagya, second review 23 Sep; ENG-3204). Monotonic `version` per survey;
+    projectors never write an older version; a grant's 200 acknowledges the exact version.
+12. **Outbound rule in both directions** (Bhagya, second review 23 Sep). Attach-time refusal with
+    `survey_not_workspace_visible`, pickers omit private surveys, dispatch-time skip as the last line.
+13. **Cancellation is representable** (Bhagya, second review 23 Sep). `allowedTargets` lists the
+    enforced value while the opposite is pending; requesting it cancels.
+14. **Contract hardening** (Bhagya, PR comment 23 Sep). `canChangeVisibility` renamed
+    `canManageVisibility`; `access.via` is an open string; `owner` exposes no user id; `Survey.ownerId`
+    is the durable ownership source projected into the graph.
 
 Not yet decided, needed before backend freeze: the per-actor rate limit value; the per-workspace survey
 cap default and its error (`workspace_survey_limit_reached`, RFC §2b — adjacent to this contract, listed
@@ -243,7 +295,10 @@ in `openapi.yml` as provisional); whether `meta.visibilityCounts` ships.
 
 ## 10. How this lands
 
-1. Backend PR (ENG-3282) implements handlers against this file and moves the YAML into `src/`:
+1. Backend PR (ENG-3282) implements handlers against this file and moves the YAML into `src/`. Schema
+   work it carries: `Survey.visibility`, `Survey.ownerId` (nullable, set null on user deletion),
+   `Survey.visibilityVersion` and the pending marker, all in PostgreSQL and projected from there.
+   Spec work:
    `SurveyVisibilityFields` merged into `SurveyListItem.yml` / `SurveyResource.yml` via `allOf`, the
    two path files added, new codes appended to `Problem.yml` **and** `V3_PROBLEM_CODES` in the same
    commit, list parameters added to `api_v3_surveys.yml`, the responses path descriptions gain one
