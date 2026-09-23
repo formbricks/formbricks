@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { applyIngestContract } from "@formbricks/types/embedded-data-ingest";
 import {
   RESERVED_FIELD_CATALOG,
+  buildEmbeddedLookup,
   coerceToEmbeddedDataType,
   dropShadowedReservedEntries,
   getComputedEmbeddedFields,
@@ -12,7 +13,6 @@ import {
   listShadowingNames,
   mergeReservedValues,
   projectClientReservedValues,
-  projectIngestedDefaults,
 } from "@formbricks/types/embedded-data-resolver";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { TJsFileUploadParams, type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
@@ -904,13 +904,9 @@ export function Survey({
         calculationResults,
         logic.conditions,
         selectedLanguage,
-        // Merged against the in-flight response data (answers from this block included), so a
-        // declared field shadows a same-named reserved entry here exactly as it does in recall —
-        // ingested defaults underneath both, for the same reason and in the same order.
-        {
-          ...projectIngestedDefaults(localSurvey, localResponseData),
-          ...mergeReservedValues(reservedFieldValues, localResponseData),
-        }
+        // Built against the in-flight response data (answers from this block included), so a
+        // declared field shadows a same-named reserved entry here exactly as it does in recall.
+        buildEmbeddedLookup(localSurvey, reservedFieldValues, localResponseData)
       );
 
       if (!isLogicMet) {
@@ -1149,10 +1145,7 @@ export function Survey({
    * defaults (see `projectIngestedDefaults`).
    */
   const recallValues = useMemo(
-    () => ({
-      ...projectIngestedDefaults(localSurvey, responseData),
-      ...mergeReservedValues(reservedValues, responseData),
-    }),
+    () => buildEmbeddedLookup(localSurvey, reservedValues, responseData),
     [localSurvey, reservedValues, responseData]
   );
 
