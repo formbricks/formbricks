@@ -732,4 +732,40 @@ describe("ordering rules (ENG-3069)", () => {
       getV3SurveyIntroducedPrecedenceInvalidParams(refInput(twoBlockSurvey()), refInput(newlyBroken))
     ).toEqual([expect.objectContaining({ code: "misordered_reference", identifier: "second_q" })]);
   });
+
+  test("survives an insert before the recalling block, which shifts the source index too", () => {
+    // The test above moves only the target. A key that still carried the *source* path would pass it and
+    // yet report this survey — a stored forward recall whose block just moved down one — as newly broken,
+    // bricking exactly the survey the delta exists to keep editable.
+    const baseline = withHeadline(0, "Hi #recall:second_q/fallback:x#");
+    const shifted = twoBlockSurvey({
+      blocks: [
+        {
+          id: "clbk0000000000000000000000",
+          name: "Inserted",
+          elements: [{ id: "new_q", type: "openText", headline: { "en-US": "New" }, required: false }],
+        },
+        {
+          id: "clbk1111111111111111111111",
+          name: "First",
+          elements: [
+            {
+              id: "first_q",
+              type: "openText",
+              headline: { "en-US": "Hi #recall:second_q/fallback:x#" },
+              required: false,
+            },
+          ],
+        },
+        {
+          id: "clbk2222222222222222222222",
+          name: "Second",
+          elements: [{ id: "second_q", type: "openText", headline: { "en-US": "Two" }, required: false }],
+        },
+      ],
+    });
+
+    expect(getV3SurveyPrecedenceInvalidParams(refInput(shifted))).toHaveLength(1);
+    expect(getV3SurveyIntroducedPrecedenceInvalidParams(refInput(baseline), refInput(shifted))).toEqual([]);
+  });
 });

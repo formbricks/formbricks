@@ -41,6 +41,7 @@ import {
 import { parseV3SurveysListQuery } from "../parse-v3-surveys-list-query";
 import {
   type TV3SurveyWritePrecondition,
+  V3SurveyArchivedError,
   V3SurveyStaleError,
   V3SurveyStoredDocumentError,
   assertV3SurveyPrecondition,
@@ -57,8 +58,11 @@ import {
   type TV3SurveyBlockOp,
   type TV3SurveyDocument,
   type TV3SurveyValidationRequestBody,
+  V3_SURVEY_BLOCK_OPS_MAX,
+  V3_SURVEY_BLOCK_ORDER_MAX,
   ZV3CreateSurveyBody,
   ZV3EditSurveyBlocksBody,
+  ZV3ExpectedUpdatedAt,
   ZV3SetSurveyBlockOrderBody,
   ZV3SurveyValidationRequestBody,
   formatV3ZodInvalidParams,
@@ -551,6 +555,19 @@ export async function restoreV3Survey(params: TV3SurveyMutationParams): Promise<
   return runV3SurveyLifecycleMutation(params, { operation: "restore", mutate: restoreSurvey });
 }
 
+/** The 422 for an archived survey, shared by the pre-write guard and the write's own `archivedAt` check. */
+function problemSurveyArchived(requestId: string, instance: string): Response {
+  return problemUnprocessableContent(requestId, "Survey is archived", {
+    instance,
+    invalid_params: [
+      {
+        name: "archivedAt",
+        reason: "This survey is archived. Restore it before editing.",
+      },
+    ],
+  });
+}
+
 /**
  * Map an error thrown during survey patch to its problem+json Response. Extracted from
  * patchV3SurveyResponse to keep that handler's cognitive complexity within bounds.
@@ -601,13 +618,18 @@ function mapV3SurveyPatchError(
     );
     return problemUnprocessableContent(
       requestId,
-      "The stored survey does not satisfy the v3 survey document contract, so this request was not evaluated. The reported paths are into the stored survey, not your request; repair them in the editor.",
+      "The stored survey does not satisfy the v3 survey document contract. The reported paths are into the stored survey, not your request; a patch that includes corrected values for those fields is accepted, or repair them in the editor.",
       {
         code: "stored_survey_invalid",
         invalid_params: err.invalidParams,
         instance,
       }
     );
+  }
+
+  if (err instanceof V3SurveyArchivedError) {
+    log.warn({ statusCode: 422, workspaceId }, "Survey was archived while the request was in flight");
+    return problemSurveyArchived(requestId, instance);
   }
 
   if (err instanceof V3SurveyStaleError) {
@@ -748,15 +770,7 @@ async function runV3SurveyDocumentMutation({
     // it from the same fetch the auth check used avoids a restore-between-reads TOCTOU.
     if (survey.archivedAt) {
       log.warn({ statusCode: 422, workspaceId }, "Attempted to patch an archived survey");
-      return problemUnprocessableContent(requestId, "Survey is archived", {
-        instance,
-        invalid_params: [
-          {
-            name: "archivedAt",
-            reason: "This survey is archived. Restore it before editing.",
-          },
-        ],
-      });
+      return problemSurveyArchived(requestId, instance);
     }
 
     // Legacy question-based surveys have no v3 block list. Without this the block endpoints would
@@ -789,13 +803,22 @@ async function runV3SurveyDocumentMutation({
       return cachedResource;
     };
 
+    // The block endpoints write a whole `blocks` array built from *this* read. Without a precondition a
+    // concurrent write — another agent's insert, the editor's autosave — is silently overwritten and
+    // both callers see 200: the exact block loss these endpoints exist to prevent. So a caller that
+    // sends none still gets one, the survey as this request read it, and a race answers 409 instead of
+    // dropping a block. PATCH keeps its documented last-write-wins when the body carries no
+    // `updatedAt`: a whole-array PATCH caller knows it is replacing everything.
+    const effectivePrecondition =
+      precondition ?? (operation === "patch" ? undefined : { expectedUpdatedAt: survey.updatedAt });
+
     // RFC 9110 evaluates a precondition *before* the method, so it goes ahead of `buildInput` and not
     // only on the paths that reach the write. Block ops resolve against live server state, which
     // means the commonest reason one fails to apply is exactly that the survey moved on — and the one
     // caller who supplied `expectedUpdatedAt` would otherwise get a 422 blaming its request when the
-    // honest answer is 409, re-read and retry. `patchV3Survey` re-checks the same value for the
-    // body-derived precondition the PATCH route carries; the explicit one is settled here.
-    assertV3SurveyPrecondition(survey, precondition);
+    // honest answer is 409, re-read and retry. `patchV3Survey` re-checks the same value as a cheap
+    // pre-flight; the compare-and-set in its UPDATE remains the guarantee.
+    assertV3SurveyPrecondition(survey, effectivePrecondition);
 
     const built = buildInput({ survey, getResource });
 
@@ -832,7 +855,7 @@ async function runV3SurveyDocumentMutation({
       built.input,
       requestId,
       authResult.organizationId,
-      precondition
+      effectivePrecondition
     );
     const resource = serializeV3SurveyResource(updatedSurvey);
 
@@ -848,7 +871,9 @@ async function runV3SurveyDocumentMutation({
         statusCode: 200,
         workspaceId,
         wrote: true,
-        precondition: precondition ? "matched" : "none",
+        // "matched": the caller supplied one and it held. "implicit": the block endpoints' own
+        // read-time token. "none": a PATCH with no `updatedAt`, i.e. last-write-wins.
+        precondition: precondition ? "matched" : effectivePrecondition ? "implicit" : "none",
         ...built.logFields,
       },
       "Survey document updated"
@@ -859,11 +884,19 @@ async function runV3SurveyDocumentMutation({
       cache: "private, no-store",
     });
   } catch (error) {
-    // A block op produced this document, so `blocks.<i>` paths name an array the caller never sent.
-    // Rewrite the ones that belong to an op before the error leaves the building.
+    // A block op or reorder produced this document, so every `blocks.<i>` path is indexed against an
+    // array the caller never sent. Rewrite them into the caller's coordinates — the op that produced
+    // the block, or its stored index — before the error leaves the building. Both attributions carry
+    // such paths: a stored-survey problem sits in a block whose index the ops may have shifted.
     if (remapInvalidParam && error instanceof V3SurveyReferenceValidationError) {
       return mapV3SurveyPatchError(
         new V3SurveyReferenceValidationError(error.invalidParams.map(remapInvalidParam)),
+        { log, requestId, instance, workspaceId }
+      );
+    }
+    if (remapInvalidParam && error instanceof V3SurveyStoredDocumentError) {
+      return mapV3SurveyPatchError(
+        new V3SurveyStoredDocumentError(error.invalidParams.map(remapInvalidParam)),
         { log, requestId, instance, workspaceId }
       );
     }
@@ -871,11 +904,26 @@ async function runV3SurveyDocumentMutation({
   }
 }
 
+/**
+ * A round-tripped `updatedAt` is the PATCH caller's precondition. Read here as well as in prepare so
+ * the pipeline evaluates it *before* the body is validated: a stale echo whose blocks no longer fit the
+ * survey — a language was added since the read — must answer 409, not a 422 blaming the request.
+ * A malformed value is left for prepare to report as `read_only_field`.
+ */
+function readBodyPrecondition(body: unknown): TV3SurveyWritePrecondition | undefined {
+  if (!isPlainObjectBody(body)) {
+    return undefined;
+  }
+  const parsed = ZV3ExpectedUpdatedAt.safeParse(body.updatedAt);
+  return parsed.success ? { expectedUpdatedAt: new Date(parsed.data) } : undefined;
+}
+
 export async function patchV3SurveyResponse({ body, ...params }: TPatchV3SurveyParams): Promise<Response> {
   return runV3SurveyDocumentMutation({
     ...params,
     body,
     operation: "patch",
+    precondition: readBodyPrecondition(body),
     buildInput: () => ({
       ok: true,
       input: body,
@@ -888,6 +936,24 @@ export async function patchV3SurveyResponse({ body, ...params }: TPatchV3SurveyP
 
 function isPlainObjectBody(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Zod parses every element before an array `.max()` fires, so a 2 MB body of junk entries would come
+ * back as one `invalid_params` entry per element — measured at ~500 MB of heap for a 200k-entry `order`
+ * — and before the survey authorization has run. Refuse on length first, with the one issue the schema
+ * would have raised. The schema itself keeps `.max()` as the contract the MCP tools advertise; the MCP
+ * SDK validates tool input through a JSON-schema validator that stops at the first failing keyword, so
+ * that surface is bounded already.
+ */
+function findOversizedArray(body: unknown, key: string, max: number): InvalidParam | null {
+  if (!isPlainObjectBody(body)) {
+    return null;
+  }
+  const value = body[key];
+  return Array.isArray(value) && value.length > max
+    ? { name: key, reason: `Too big: expected array to have <=${max} items` }
+    : null;
 }
 
 /**
@@ -974,6 +1040,14 @@ export async function editV3SurveyBlocksResponse({
   body,
   ...params
 }: TPatchV3SurveyParams): Promise<Response> {
+  const oversized = findOversizedArray(body, "ops", V3_SURVEY_BLOCK_OPS_MAX);
+  if (oversized) {
+    return problemBadRequest(params.requestId, "Invalid request body", {
+      instance: params.instance,
+      invalid_params: [oversized],
+    });
+  }
+
   const parsed = ZV3EditSurveyBlocksBody.safeParse(body);
   if (!parsed.success) {
     return problemBadRequest(params.requestId, "Invalid request body", {
@@ -1009,7 +1083,7 @@ export async function editV3SurveyBlocksResponse({
         ok: true,
         input: { blocks: result.blocks },
         logFields: { ...result.summary, blockCount: result.blocks.length },
-        remapInvalidParam: (param) => remapBlockInvalidParamPath(param, result.originOpIndexByBlockIndex),
+        remapInvalidParam: (param) => remapBlockInvalidParamPath(param, result.blockPathByIndex),
       };
     },
   });
@@ -1019,6 +1093,14 @@ export async function setV3SurveyBlockOrderResponse({
   body,
   ...params
 }: TPatchV3SurveyParams): Promise<Response> {
+  const oversized = findOversizedArray(body, "order", V3_SURVEY_BLOCK_ORDER_MAX);
+  if (oversized) {
+    return problemBadRequest(params.requestId, "Invalid request body", {
+      instance: params.instance,
+      invalid_params: [oversized],
+    });
+  }
+
   const parsed = ZV3SetSurveyBlockOrderBody.safeParse(body);
   if (!parsed.success) {
     return problemBadRequest(params.requestId, "Invalid request body", {
@@ -1058,6 +1140,9 @@ export async function setV3SurveyBlockOrderResponse({
         ok: true,
         input: { blocks: result.blocks },
         logFields: { blockCount: result.blocks.length },
+        // Validation sees the *reordered* array, so a `blocks.<i>` it reports names the block's new slot;
+        // the caller knows blocks by the index GET showed them at.
+        remapInvalidParam: (param) => remapBlockInvalidParamPath(param, result.blockPathByIndex),
       };
     },
   });

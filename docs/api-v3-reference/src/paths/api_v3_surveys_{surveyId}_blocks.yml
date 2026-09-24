@@ -120,9 +120,11 @@ patch:
       description: >
         The request is well-formed but could not be applied. `invalid_params[].name` points at the
         operation that failed — `ops.<i>.…` — including for problems found while validating the
-        resulting document. The one exception is a block the request did not touch: those keep their
-        `blocks.<i>` path, because the problem is in the stored survey rather than in any operation.
-        A `stored_survey_invalid` response reports stored-survey paths throughout for the same reason.
+        resulting document. The one exception is a block the request did not touch: those are
+        reported at `blocks.<i>`, where `<i>` is the block's index in the stored survey — the same
+        index `GET` returns, even when an earlier operation inserted or removed blocks before it —
+        because the problem is in the stored survey rather than in any operation. A
+        `stored_survey_invalid` response uses stored-survey paths throughout for the same reason.
 
 
         Common codes: `dangling_reference` (an id that is not on the survey),
@@ -156,9 +158,9 @@ patch:
                 title: Unprocessable Content
                 status: 422
                 detail: >-
-                  The stored survey does not satisfy the v3 survey document contract, so this
-                  request was not evaluated. The reported paths are into the stored survey, not your
-                  request; repair them in the editor.
+                  The stored survey does not satisfy the v3 survey document contract. The reported
+                  paths are into the stored survey, not your request; a patch that includes corrected
+                  values for those fields is accepted, or repair them in the editor.
                 code: stored_survey_invalid
                 requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
                 invalid_params:
@@ -172,3 +174,4 @@ patch:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []

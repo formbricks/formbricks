@@ -24,18 +24,25 @@ export type TV3BlockOpsSummary = {
   removeCount: number;
 };
 
+/**
+ * Final block index → where the caller can find that block, as a path prefix: `ops.<n>.block` for a
+ * block an op produced, `blocks.<j>` with the *stored* index for one the request did not touch. The
+ * document that gets validated is the post-op array, so every `blocks.<i>` a downstream check reports
+ * is in coordinates the caller never saw; this map translates them back.
+ */
+export type TV3BlockPathByIndex = ReadonlyMap<number, string>;
+
 export type TV3BlockOpsResult =
   | {
       ok: true;
       blocks: TV3PublicBlock[];
-      /** Final block index → the op that produced it, for remapping downstream `blocks.<i>` paths. */
-      originOpIndexByBlockIndex: ReadonlyMap<number, number>;
+      blockPathByIndex: TV3BlockPathByIndex;
       summary: TV3BlockOpsSummary;
     }
   | { ok: false; invalidParams: InvalidParam[]; failedOpIndex: number; summary: TV3BlockOpsSummary };
 
 export type TV3BlockReorderResult =
-  | { ok: true; unchanged: boolean; blocks: TV3PublicBlock[] }
+  | { ok: true; unchanged: boolean; blocks: TV3PublicBlock[]; blockPathByIndex: TV3BlockPathByIndex }
   | { ok: false; invalidParams: InvalidParam[] };
 
 function isPublicBlock(value: unknown): value is TV3PublicBlock {
@@ -146,15 +153,26 @@ type TV3BlockUpdateOp = Extract<TV3SurveyBlockOp, { op: "update" }>;
 type TV3BlockInsertOp = Extract<TV3SurveyBlockOp, { op: "insert" }>;
 type TV3BlockRemoveOp = Extract<TV3SurveyBlockOp, { op: "remove" }>;
 
+/** Where an entry of the working list came from: an op in this request, or a position in the stored survey. */
+type TBlockOrigin = { op: number } | { stored: number };
+
 /**
- * The block list being built, and in parallel which op produced each entry.
- * `origins[i] === null` means block `i` is untouched by this request, so a downstream issue keeps its
- * `blocks.<i>` path instead of being remapped onto an op the caller never sent.
+ * The block list being built, and in parallel where each entry came from. An untouched block keeps its
+ * *stored* index here even after earlier entries are inserted or removed, so a downstream issue in it
+ * is reported at the path the caller can see in GET rather than at its post-op position.
  */
 type TWorkingBlocks = {
   blocks: TV3PublicBlock[];
-  origins: (number | null)[];
+  origins: TBlockOrigin[];
 };
+
+function originPath(origin: TBlockOrigin): string {
+  return "op" in origin ? `ops.${origin.op}.block` : `blocks.${origin.stored}`;
+}
+
+function toBlockPathByIndex(origins: readonly TBlockOrigin[]): TV3BlockPathByIndex {
+  return new Map(origins.map((origin, index) => [index, originPath(origin)]));
+}
 
 /** `null` = the op applied; otherwise the issues that stopped it. */
 type TOpOutcome = InvalidParam[] | null;
@@ -190,7 +208,7 @@ function applyUpdateOp(state: TWorkingBlocks, opIndex: number, op: TV3BlockUpdat
   }
 
   state.blocks[targetIndex] = { ...op.block, id: op.id };
-  state.origins[targetIndex] = opIndex;
+  state.origins[targetIndex] = { op: opIndex };
   return null;
 }
 
@@ -230,10 +248,9 @@ function applyInsertOp(state: TWorkingBlocks, opIndex: number, op: TV3BlockInser
 
   const existingIndex = state.blocks.findIndex((block) => block.id === newId);
   if (existingIndex !== -1) {
-    // The other copy is either a stored block (keep the `blocks.<i>` path — that is where it is) or
-    // one an earlier op in this request inserted, in which case `blocks.<i>` names an array the
-    // caller never sent and the actionable path is that op's payload.
-    const existingOrigin = state.origins[existingIndex];
+    // The other copy is either a stored block (name it by its stored index — that is where GET shows
+    // it) or one an earlier op in this request inserted, in which case the actionable path is that
+    // op's payload.
     return [
       {
         name: `ops.${opIndex}.block.id`,
@@ -241,8 +258,7 @@ function applyInsertOp(state: TWorkingBlocks, opIndex: number, op: TV3BlockInser
         code: "duplicate_identifier",
         identifier: newId,
         referenceType: "block",
-        firstUsedAt:
-          existingOrigin === null ? `blocks.${existingIndex}.id` : `ops.${existingOrigin}.block.id`,
+        firstUsedAt: `${originPath(state.origins[existingIndex])}.id`,
       },
     ];
   }
@@ -253,7 +269,7 @@ function applyInsertOp(state: TWorkingBlocks, opIndex: number, op: TV3BlockInser
   }
 
   state.blocks.splice(position.index, 0, { ...op.block, id: newId });
-  state.origins.splice(position.index, 0, opIndex);
+  state.origins.splice(position.index, 0, { op: opIndex });
   return null;
 }
 
@@ -292,7 +308,7 @@ export function applySurveyBlockOperations(
   const summary = summarize(ops);
   const state: TWorkingBlocks = {
     blocks: [...currentBlocks],
-    origins: currentBlocks.map(() => null),
+    origins: currentBlocks.map((_block, index) => ({ stored: index })),
   };
 
   for (const [opIndex, op] of ops.entries()) {
@@ -318,14 +334,7 @@ export function applySurveyBlockOperations(
     };
   }
 
-  const originOpIndexByBlockIndex = new Map<number, number>();
-  state.origins.forEach((opIndex, blockIndex) => {
-    if (opIndex !== null) {
-      originOpIndexByBlockIndex.set(blockIndex, opIndex);
-    }
-  });
-
-  return { ok: true, blocks: state.blocks, originOpIndexByBlockIndex, summary };
+  return { ok: true, blocks: state.blocks, blockPathByIndex: toBlockPathByIndex(state.origins), summary };
 }
 
 /**
@@ -340,7 +349,7 @@ export function reorderSurveyBlocks(
   currentBlocks: readonly TV3PublicBlock[],
   order: readonly string[]
 ): TV3BlockReorderResult {
-  const byId = new Map(currentBlocks.map((block) => [block.id, block]));
+  const stored = new Map(currentBlocks.map((block, index) => [block.id, { block, index }]));
   const diagnostics = new OrderDiagnostics();
   const seenAt = new Map<string, number>();
 
@@ -359,7 +368,7 @@ export function reorderSurveyBlocks(
     }
     seenAt.set(id, index);
 
-    if (!byId.has(id)) {
+    if (!stored.has(id)) {
       diagnostics.push(() => ({
         name: `order.${index}`,
         reason: `Block '${id}' does not exist on this survey`,
@@ -389,33 +398,40 @@ export function reorderSurveyBlocks(
   }
 
   const unchanged = currentBlocks.every((block, index) => block.id === order[index]);
+  // Safe: no diagnostics means every id in `order` resolved.
+  const reordered = order.map((id) => stored.get(id) as { block: TV3PublicBlock; index: number });
 
   return {
     ok: true,
     unchanged,
-    blocks: order.map((id) => byId.get(id) as TV3PublicBlock),
+    blocks: reordered.map(({ block }) => block),
+    blockPathByIndex: new Map(
+      reordered.map(({ index: storedIndex }, index) => [index, `blocks.${storedIndex}`])
+    ),
   };
 }
 
 /**
- * Rewrite a downstream `blocks.<i>.…` path to `ops.<n>.block.…` when block `<i>` came from an op.
+ * Rewrite a downstream `blocks.<i>.…` path — indexed against the post-op array — to where the caller
+ * can find it: `ops.<n>.block.…` when block `<i>` came from an op, `blocks.<j>.…` with the stored index
+ * when it did not.
  *
  * Without this, "blocks.7.elements.0.headline" after five inserts is unactionable — the caller never
- * sent a `blocks` array. Blocks the request did not touch keep their `blocks.<i>` path on purpose:
- * a dangling jump target in an untouched block really is a problem with the stored document, not
- * with any op.
+ * sent a `blocks` array — and "blocks.1.logic.0" after one remove names a different block than the
+ * caller's GET does. An untouched block's problem really is a problem with the stored document, so it
+ * is reported at the stored coordinates, not at whatever slot it occupies after the ops.
  */
 export function remapBlockInvalidParamPath(
   param: InvalidParam,
-  originOpIndexByBlockIndex: ReadonlyMap<number, number>
+  blockPathByIndex: TV3BlockPathByIndex
 ): InvalidParam {
   const remap = (path: string): string => {
     const match = /^blocks\.(\d+)(?<rest>\..*)?$/.exec(path);
     if (!match) {
       return path;
     }
-    const opIndex = originOpIndexByBlockIndex.get(Number(match[1]));
-    return opIndex === undefined ? path : `ops.${opIndex}.block${match.groups?.rest ?? ""}`;
+    const prefix = blockPathByIndex.get(Number(match[1]));
+    return prefix === undefined ? path : `${prefix}${match.groups?.rest ?? ""}`;
   };
 
   /**
@@ -425,13 +441,13 @@ export function remapBlockInvalidParamPath(
    * "conflicts with … at …", the recall reasons naming the element they point at. Remapping only the
    * structured fields leaves those sentences in `blocks.<i>` coordinates beside a `name` that now
    * reads `ops.<n>.block`, so one param contradicts itself and half of it names an array the caller
-   * never sent. Unanchored on purpose — the path sits mid-sentence — and still keyed by the same map,
-   * so a quoted path into a block the request did not touch is left exactly as it is.
+   * never sent. Unanchored on purpose — the path sits mid-sentence — and keyed by the same map, so a
+   * quoted path is translated exactly as a structured one is.
    */
   const remapWithin = (text: string): string =>
     text.replace(/blocks\.(\d+)((?:\.[A-Za-z0-9_-]+)*)/g, (whole, index: string, rest: string) => {
-      const opIndex = originOpIndexByBlockIndex.get(Number(index));
-      return opIndex === undefined ? whole : `ops.${opIndex}.block${rest}`;
+      const prefix = blockPathByIndex.get(Number(index));
+      return prefix === undefined ? whole : `${prefix}${rest}`;
     });
 
   // `firstUsedAt` and `conflictsWith` are paths too — a duplicate-id report names both copies. Leaving

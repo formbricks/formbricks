@@ -389,8 +389,8 @@ describe("which names a write may newly declare (ENG-1839)", () => {
     // What ENG-3070 changed is the attribution, not the refusal. This used to come back as
     // `duplicate_identifier` in `invalid_params`, which reads as "your request is malformed" and sent
     // integrators looking for a payload bug that was not there. It is now a `stored_survey_invalid`
-    // 422 whose paths point into the stored survey, with a detail telling the caller to repair it in
-    // the editor. Still 422, still unpatchable through the API — but now honestly attributed.
+    // 422 whose paths point into the stored survey, with a detail saying a patch that supplies the fix
+    // is accepted. Still 422 for this `{ name }` patch — but now honestly attributed.
     const survey = await seedSurvey({
       variables: [{ id: VARIABLE_ID, name: "plan", type: "text", value: "free" }],
       hiddenFields: { enabled: true, fieldIds: ["plan"] },

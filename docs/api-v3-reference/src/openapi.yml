@@ -8,7 +8,8 @@ info:
   description: >
     **Surveys**: **GET /api/v3/surveys**, **POST /api/v3/surveys**, **POST
     /api/v3/surveys/generate**, **POST /api/v3/surveys/validate**, **GET
-    /api/v3/surveys/{surveyId}**, **PATCH /api/v3/surveys/{surveyId}**, and
+    /api/v3/surveys/{surveyId}**, **PATCH /api/v3/surveys/{surveyId}**, **PATCH
+    /api/v3/surveys/{surveyId}/blocks**, **PUT /api/v3/surveys/{surveyId}/blocks/order**, and
     **DELETE /api/v3/surveys/{surveyId}**.
 
 
@@ -263,8 +264,8 @@ info:
 
     **Next steps (out of scope for this spec)**
 
-    Additional v3 survey update endpoints, optional ETag/304, field selection,
-    translation-specific writes, and survey version history.
+    Optional ETag/304, field selection, translation-specific writes, and survey
+    version history.
   version: 0.1.0
   x-implementation-notes:
     route: apps/web/app/api/v3/surveys/route.ts

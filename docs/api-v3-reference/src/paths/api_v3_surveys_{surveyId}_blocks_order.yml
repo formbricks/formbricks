@@ -131,3 +131,4 @@ put:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []

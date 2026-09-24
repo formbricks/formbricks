@@ -162,18 +162,16 @@ export function getV3SurveyMediaInvalidParams(blocks: TV3SurveyDocument["blocks"
 /**
  * How strictly to apply the ordering rules (ENG-3069).
  *
- * `enforce` on create, where there is no prior state to preserve. `introduced` on the patch family,
- * which reports only what the change adds — enforcing the full set would make a survey that already
- * contains a forward recall unpatchable, including by a patch that never touches it.
+ * `introduced` on the patch family (PATCH, block edit, reorder): only what the change adds is reported —
+ * enforcing the full set would make a survey that already contains a forward recall unpatchable,
+ * including by a request that never touches it. `skip` on create, which accepted these documents before
+ * the rule existed (see `prepareV3SurveyCreate` for why that stays). `enforce` is kept for the rollout
+ * that tightens create and is reached by no production caller today. The parameter is required rather
+ * than defaulted so a new caller has to choose.
  */
 export type TV3SurveyPrecedencePolicy =
-  // Not reached in production today: enforcing the full set anywhere would reject input that is
-  // currently valid. Kept for the rollout that tightens create behind a version bump.
   | { mode: "enforce" }
   | { mode: "introduced"; baseline: TV3SurveyDocument }
-  // Building the *stored* document: never judge its ordering. We did not author it, and failing here
-  // would make an existing survey with a forward recall unpatchable — precisely the ENG-3070 bug this
-  // rule is supposed to avoid causing.
   | { mode: "skip" };
 
 function toReferenceInput(document: TV3SurveyDocument) {
@@ -187,12 +185,9 @@ function toReferenceInput(document: TV3SurveyDocument) {
   };
 }
 
-/** Hoisted so the default is one shared frozen policy rather than a fresh literal per call. */
-const ENFORCE_PRECEDENCE: TV3SurveyPrecedencePolicy = { mode: "enforce" };
-
 export function validateV3SurveyDocument(
   document: TV3SurveyDocument,
-  precedence: TV3SurveyPrecedencePolicy = ENFORCE_PRECEDENCE
+  precedence: TV3SurveyPrecedencePolicy
 ): TV3SurveyDocumentValidationResult {
   const languageInvalidParams = getV3SurveyLanguageInvalidParams(document);
   const mediaInvalidParams = getV3SurveyMediaInvalidParams(document.blocks);

@@ -349,7 +349,7 @@ patch:
               currentUpdatedAt: 2026-04-21T11:30:00.000Z
     "422":
       description: >-
-        Unprocessable Content — the request cannot be processed against stored state. Two cases:
+        Unprocessable Content — the request cannot be processed against stored state. Four cases:
 
         1. The target survey is archived (soft-deleted) and therefore read-only; restore it before
         editing. The `invalid_params` entry reports `name: archivedAt` with the reason
@@ -364,6 +364,10 @@ patch:
         entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an
         unsupported person identifier, or an unknown device value. The `invalid_params`
         array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).
+        A patch that newly *introduces* a forward reference — a recall of an answer not yet given, a
+        logic condition reading a later block, or a `requireAnswer` target that is not in a later block
+        — is refused with `code: misordered_reference`; a survey that already contains one stays
+        patchable, only newly created violations are rejected.
 
 
         3. A server-owned field was echoed back with a different value — `code: read_only_field`,

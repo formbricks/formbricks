@@ -690,7 +690,7 @@ function getV3SurveyPrecedenceViolations(input: TReferenceValidationInput): TPre
   return [...violations.values()];
 }
 
-/** Every ordering violation in the document. Used on create, where there is no baseline to spare. */
+/** Every ordering violation in the document — the `enforce` policy, kept for the create rollout. */
 export function getV3SurveyPrecedenceInvalidParams(input: TReferenceValidationInput): InvalidParam[] {
   return getV3SurveyPrecedenceViolations(input).map((violation) => violation.issue);
 }

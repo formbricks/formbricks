@@ -53,6 +53,15 @@ const CONTRACT_IDS = {
 } as const;
 
 /**
+ * Pinned `updatedAt` for every seeded survey, so the block operations' `expectedUpdatedAt` override can
+ * name it. Their documented request examples carry a fixed timestamp, and the hook only rewrites keys the
+ * overrides name — left alone, every example call answers 409 and neither operation's 200 is ever
+ * schema-checked. Once a run's first edit lands the row moves on and later cases answer 409, which is
+ * documented too.
+ */
+const CONTRACT_FIXTURE_UPDATED_AT = new Date("2026-04-21T10:00:00.000Z");
+
+/**
  * Where the id map goes. Defaults to the contract-tests directory that reads it, resolved from this
  * file rather than the working directory — `pnpm --filter` runs scripts from the package root, so a
  * caller-supplied relative path would mean something different from what the caller typed.
@@ -169,6 +178,7 @@ async function seedSurvey(
     type: "link" as const,
     blocks,
     archivedAt: archived ? new Date() : null,
+    updatedAt: CONTRACT_FIXTURE_UPDATED_AT,
   };
 
   await prisma.survey.upsert({ where: { id }, update: fields, create: { id, ...fields } });
@@ -307,14 +317,17 @@ async function main(): Promise<void> {
         body: {
           blockId: `${CONTRACT_IDS.SURVEY_BLOCKS_EDIT}block`,
           id: `${CONTRACT_IDS.SURVEY_BLOCKS_EDIT}block`,
+          expectedUpdatedAt: CONTRACT_FIXTURE_UPDATED_AT.toISOString(),
         },
       },
       // The order must be a permutation of the seeded survey's own block ids, so it cannot be
-      // generated — without this the operation only ever exercises its documented 422.
+      // generated — without this the operation only ever exercises its documented 422. And without the
+      // pinned `expectedUpdatedAt`, the example's fixed timestamp makes every call a 409.
       setSurveyBlockOrderV3: {
         path: { surveyId: CONTRACT_IDS.SURVEY_BLOCKS_ORDER },
         body: {
           order: [`${CONTRACT_IDS.SURVEY_BLOCKS_ORDER}block`, `${CONTRACT_IDS.SURVEY_BLOCKS_ORDER}block2`],
+          expectedUpdatedAt: CONTRACT_FIXTURE_UPDATED_AT.toISOString(),
         },
       },
       restoreSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_RESTORE } },

@@ -5,7 +5,7 @@ openapi: 3.1.1
 info:
   title: Formbricks API v3
   description: |
-    **Surveys**: **GET /api/v3/surveys**, **POST /api/v3/surveys**, **POST /api/v3/surveys/generate**, **POST /api/v3/surveys/validate**, **GET /api/v3/surveys/{surveyId}**, **PATCH /api/v3/surveys/{surveyId}**, and **DELETE /api/v3/surveys/{surveyId}**.
+    **Surveys**: **GET /api/v3/surveys**, **POST /api/v3/surveys**, **POST /api/v3/surveys/generate**, **POST /api/v3/surveys/validate**, **GET /api/v3/surveys/{surveyId}**, **PATCH /api/v3/surveys/{surveyId}**, **PATCH /api/v3/surveys/{surveyId}/blocks**, **PUT /api/v3/surveys/{surveyId}/blocks/order**, and **DELETE /api/v3/surveys/{surveyId}**.
 
     **Responses**: **GET /api/v3/responses**, **GET /api/v3/responses/count**, **POST /api/v3/responses/validate**, **POST /api/v3/responses/batch-delete**, **GET /api/v3/responses/{responseId}**, **POST /api/v3/responses**, **PATCH /api/v3/responses/{responseId}**, and **DELETE /api/v3/responses/{responseId}**.
 
@@ -61,7 +61,7 @@ info:
     The v3-backed survey overview page intentionally removes actions that are not yet exposed by this contract: `Created by` filtering, `Duplicate`, `Copy...`, `Preview`, and `Copy link`.
 
     **Next steps (out of scope for this spec)**
-    Additional v3 survey update endpoints, optional ETag/304, field selection, translation-specific writes, and survey version history.
+    Optional ETag/304, field selection, translation-specific writes, and survey version history.
   version: 0.1.0
   x-implementation-notes:
     route: apps/web/app/api/v3/surveys/route.ts
@@ -1098,9 +1098,9 @@ paths:
                   currentUpdatedAt: '2026-04-21T11:30:00.000Z'
         '422':
           description: |-
-            Unprocessable Content — the request cannot be processed against stored state. Two cases:
+            Unprocessable Content — the request cannot be processed against stored state. Four cases:
             1. The target survey is archived (soft-deleted) and therefore read-only; restore it before editing. The `invalid_params` entry reports `name: archivedAt` with the reason `This survey is archived. Restore it before editing.`
-            2. The patched document passed schema validation but failed a cross-reference check that requires stored state to detect: an undeclared locale key used in content, a duplicate stable id, an immutable element-id change on a published survey, a dangling logic/jump reference, an invalid media URL, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).
+            2. The patched document passed schema validation but failed a cross-reference check that requires stored state to detect: an undeclared locale key used in content, a duplicate stable id, an immutable element-id change on a published survey, a dangling logic/jump reference, an invalid media URL, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`). A patch that newly *introduces* a forward reference — a recall of an answer not yet given, a logic condition reading a later block, or a `requireAnswer` target that is not in a later block — is refused with `code: misordered_reference`; a survey that already contains one stays patchable, only newly created violations are rejected.
 
             3. A server-owned field was echoed back with a different value — `code: read_only_field`, with the submitted value in `identifier`. Sending the value `GET` returned is always a no-op.
 
@@ -1293,7 +1293,7 @@ paths:
                   currentUpdatedAt: '2026-04-21T11:30:00.000Z'
         '422':
           description: |
-            The request is well-formed but could not be applied. `invalid_params[].name` points at the operation that failed — `ops.<i>.…` — including for problems found while validating the resulting document. The one exception is a block the request did not touch: those keep their `blocks.<i>` path, because the problem is in the stored survey rather than in any operation. A `stored_survey_invalid` response reports stored-survey paths throughout for the same reason.
+            The request is well-formed but could not be applied. `invalid_params[].name` points at the operation that failed — `ops.<i>.…` — including for problems found while validating the resulting document. The one exception is a block the request did not touch: those are reported at `blocks.<i>`, where `<i>` is the block's index in the stored survey — the same index `GET` returns, even when an earlier operation inserted or removed blocks before it — because the problem is in the stored survey rather than in any operation. A `stored_survey_invalid` response uses stored-survey paths throughout for the same reason.
 
             Common codes: `dangling_reference` (an id that is not on the survey), `duplicate_identifier` (inserting an id that already exists), `missing_required_field` (an inserted block whose `id` is present but empty — omitting `id` entirely is fine, the server generates one), `immutable_identifier` (`block.id` contradicting the op's `id`), and `stored_survey_invalid` when the stored survey itself fails the document contract.
           content:
@@ -1321,7 +1321,7 @@ paths:
                   value:
                     title: Unprocessable Content
                     status: 422
-                    detail: The stored survey does not satisfy the v3 survey document contract, so this request was not evaluated. The reported paths are into the stored survey, not your request; repair them in the editor.
+                    detail: The stored survey does not satisfy the v3 survey document contract. The reported paths are into the stored survey, not your request; a patch that includes corrected values for those fields is accepted, or repair them in the editor.
                     code: stored_survey_invalid
                     requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
                     invalid_params:
@@ -1335,6 +1335,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/surveys/{surveyId}/blocks/order:
     put:
       operationId: setSurveyBlockOrderV3
@@ -1446,6 +1447,7 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/surveys/{surveyId}/archive:
     post:
       operationId: archiveSurveyV3
@@ -7061,12 +7063,13 @@ components:
         order:
           type: array
           minItems: 1
+          maxItems: 1000
           items:
             type: string
             maxLength: 128
             minLength: 1
           description: |
-            Every current block id, exactly once, in the desired order. Ids are trimmed before use, so an id that is empty or whitespace-only is a **400**. A missing, unknown or repeated id is a **422** — repeats are reported as `duplicate_identifier` rather than rejected by the schema, so the response names the offending entry. A missing or unknown id is likewise a **422** — which is what makes this safer than resending the blocks, since a dropped block cannot pass unnoticed.
+            Every current block id, exactly once, in the desired order. Ids are trimmed before use, so an id that is empty or whitespace-only is a **400**, as is a list of more than 1000 ids. A missing, unknown or repeated id is a **422** — repeats are reported as `duplicate_identifier` rather than rejected by the schema, so the response names the offending entry, and a dropped block cannot pass unnoticed, which is what makes this safer than resending the blocks.
         expectedUpdatedAt:
           type: string
           format: date-time

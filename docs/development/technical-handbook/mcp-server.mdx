@@ -100,7 +100,7 @@ Supported scopes:
 | Scope | Use |
 | --- | --- |
 | `surveys:read` | `list_surveys`, `get_survey`, `validate_survey` |
-| `surveys:write` | `create_survey`, `patch_survey`, `delete_survey` |
+| `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey` |
 | `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow` |
 | `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, and the enable/disable/archive/unarchive mutations |
 | `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
@@ -181,6 +181,8 @@ API key permissions are enforced through the same workspace access checks as the
 | `create_survey` | `write` or `manage` |
 | `validate_survey` | `read` — a dry run; it validates a create or patch payload without writing |
 | `patch_survey` | `write` or `manage` |
+| `edit_survey_blocks` | `write` or `manage` |
+| `set_survey_block_order` | `write` or `manage` |
 | `delete_survey` | `write` or `manage` |
 | `list_workflows` | `read` |
 | `get_workflow` | `read` |
@@ -1590,8 +1592,9 @@ query, like `create_feedback_record`.
   ENG-3070 failure. `create_survey` is deliberately not covered: tightening it would reject payloads
   that are valid today, which needs its own versioned rollout.
 - `stored_survey_invalid` (422) means the *stored* survey no longer satisfies the v3 document
-  contract, so the request was never evaluated; the reported paths are into the survey, not the
-  request. Repair it in the editor.
+  contract; the reported paths are into the survey, not the request. A patch that includes corrected
+  values for those fields is accepted — or repair it in the editor. Only a survey the API cannot read
+  at all (legacy questions, no v3 block list) is refused before the request is evaluated.
 - `patch_survey` follows the v3 PATCH contract: top-level partial document updates only, no JSON Patch,
   and no nested deep merge. Provided top-level objects and arrays replace their whole subtree and can
   remove omitted nested entries.

@@ -359,9 +359,10 @@ describe("v3 survey preparation", () => {
     }
   });
 
-  test("rejects a changed id, type, createdAt or archivedAt", () => {
+  test("rejects a changed id, workspaceId, type, createdAt or archivedAt", () => {
     const cases: [string, Record<string, unknown>][] = [
       ["id", { id: "clsvzzzzzzzzzzzzzzzzzzzzzz" }],
+      ["workspaceId", { workspaceId: "clwszzzzzzzzzzzzzzzzzzzzzz" }],
       ["type", { type: "app" }],
       ["createdAt", { createdAt: "2020-01-01T00:00:00.000Z" }],
       ["archivedAt", { archivedAt: "2020-01-01T00:00:00.000Z" }],
@@ -572,6 +573,37 @@ describe("v3 survey preparation", () => {
     }
   });
 
+  test("round-trips a workspace language alias, and rejects a changed one as read-only", () => {
+    // GET emits `languages[].alias` only when the workspace language has one; the default fixture has
+    // none, so without this the strip-and-compare in prepare never runs.
+    const withAlias = {
+      ...survey,
+      languages: survey.languages.map((entry) =>
+        entry.language.code === "de-DE"
+          ? { ...entry, language: { ...entry.language, alias: "German" } }
+          : entry
+      ),
+    } as TSurvey;
+    const resource = JSON.parse(JSON.stringify(serializeV3SurveyResource(withAlias)));
+
+    expect(prepareV3SurveyPatchInput(withAlias, resource).ok).toBe(true);
+
+    const german = resource.languages.findIndex((language: { code: string }) => language.code === "de-DE");
+    resource.languages[german].alias = "Deutsch";
+    const changed = prepareV3SurveyPatchInput(withAlias, resource);
+
+    expect(changed.ok).toBe(false);
+    if (!changed.ok) {
+      expect(changed.validation.invalidParams).toEqual([
+        expect.objectContaining({
+          name: `languages.${german}.alias`,
+          code: "read_only_field",
+          identifier: "Deutsch",
+        }),
+      ]);
+    }
+  });
+
   test("surfaces a round-tripped updatedAt as the write precondition, without comparing it", () => {
     const stale = "2020-01-01T00:00:00.000Z";
 
@@ -637,38 +669,40 @@ describe("v3 survey preparation", () => {
     }
   });
 
+  const forwardRecallPatch = {
+    blocks: [
+      {
+        id: "clbk1234567890123456789012",
+        name: "Main Block",
+        elements: [
+          {
+            id: "satisfaction",
+            type: "openText",
+            headline: {
+              "en-US": "Hi #recall:later_q/fallback:x#",
+              "de-DE": "Hallo #recall:later_q/fallback:x#",
+            },
+            required: true,
+          },
+        ],
+      },
+      {
+        id: "clbk9999999999999999999999",
+        name: "Later Block",
+        elements: [
+          {
+            id: "later_q",
+            type: "openText",
+            headline: { "en-US": "Later", "de-DE": "Spaeter" },
+            required: false,
+          },
+        ],
+      },
+    ],
+  };
+
   test("but a patch that introduces a new forward recall is rejected", () => {
-    const preparation = prepareV3SurveyPatchInput(survey, {
-      blocks: [
-        {
-          id: "clbk1234567890123456789012",
-          name: "Main Block",
-          elements: [
-            {
-              id: "satisfaction",
-              type: "openText",
-              headline: {
-                "en-US": "Hi #recall:later_q/fallback:x#",
-                "de-DE": "Hallo #recall:later_q/fallback:x#",
-              },
-              required: true,
-            },
-          ],
-        },
-        {
-          id: "clbk9999999999999999999999",
-          name: "Later Block",
-          elements: [
-            {
-              id: "later_q",
-              type: "openText",
-              headline: { "en-US": "Later", "de-DE": "Spaeter" },
-              required: false,
-            },
-          ],
-        },
-      ],
-    });
+    const preparation = prepareV3SurveyPatchInput(survey, forwardRecallPatch);
 
     expect(preparation.ok).toBe(false);
     if (!preparation.ok) {
@@ -740,6 +774,24 @@ describe("prepareV3SurveyPatchInput with a semantically invalid stored survey", 
     // Without this the caller is told its `{ name }` patch is malformed, and the reported path is
     // `blocks.0.…` — an array it never sent.
     expect(result.origin).toBe("storedSurvey");
+  });
+
+  test("blames the request when it adds a new problem beside a pre-existing one", () => {
+    // The rule is "one new issue makes the whole response the caller's". Every other request-blamed case
+    // starts from a stored survey that validates clean and never reaches that comparison.
+    const result = prepareV3SurveyPatchInput(storedInvalidSurvey, {
+      endings: [{ id: "clend12345678901234567890", type: "endScreen", headline: { "en-US": "Bye" } }],
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.origin).toBe("request");
+    expect(result.validation.invalidParams).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "blocks.0.elements.0.headline" }),
+        expect.objectContaining({ name: "endings.0.headline" }),
+      ])
+    );
   });
 
   test("accepts a patch that repairs the offending field", () => {

@@ -113,6 +113,12 @@ vi.mock("../patch", () => {
         this.name = "V3SurveyStoredDocumentError";
       }
     },
+    V3SurveyArchivedError: class V3SurveyArchivedError extends Error {
+      constructor() {
+        super("Survey is archived");
+        this.name = "V3SurveyArchivedError";
+      }
+    },
     V3SurveyStaleError,
     // Real behaviour, not a stub: the no-write path depends on this to reject a stale caller, so a
     // no-op mock here would let that regression back in without failing a test.
@@ -761,7 +767,7 @@ describe("patchV3SurveyResponse", () => {
     expect(response.status).toBe(422);
     const body = await response.json();
     expect(body.code).toBe("stored_survey_invalid");
-    expect(body.detail).toMatch(/not evaluated/);
+    expect(body.detail).toMatch(/into the stored survey/);
     expect(body.invalid_params).toEqual([expect.objectContaining({ name: "blocks.0.elements.0.headline" })]);
   });
 
@@ -786,6 +792,7 @@ describe("patchV3SurveyResponse", () => {
       requestId,
       instance,
     });
+    // No `updatedAt` in the body → no precondition, last-write-wins as documented.
     expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(survey, patchBody, requestId, "org_1", undefined);
     expect(auditLog).toMatchObject({
       organizationId: "org_1",
@@ -813,6 +820,31 @@ describe("patchV3SurveyResponse", () => {
 
     expect(response.status).toBe(403);
     expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
+  });
+
+  test("evaluates a round-tripped updatedAt before the body is validated", async () => {
+    // A stale echo must answer 409 re-read-and-retry, not a 422 blaming the request for blocks that no
+    // longer fit a survey that moved on. So the pipeline reads it off the body itself, ahead of prepare.
+    const response = await patchV3SurveyResponse({
+      surveyId: "survey_1",
+      body: { name: "Stale", updatedAt: "2020-01-01T00:00:00.000Z" },
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(409);
+    expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
+  });
+
+  test("forwards a matching round-tripped updatedAt as the write precondition", async () => {
+    const body = { name: "Fresh", updatedAt: "2026-01-01T00:00:00.000Z" };
+
+    await patchV3SurveyResponse({ surveyId: "survey_1", body, authentication, requestId, instance });
+
+    expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(survey, body, requestId, "org_1", {
+      expectedUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
+    });
   });
 
   test("rejects patches to an archived survey with 422 and does not patch", async () => {
@@ -1174,12 +1206,14 @@ describe("editV3SurveyBlocksResponse", () => {
     const response = await call({ ops: [{ op: "update", id: "blk_a", block: replacement }] }, auditLog);
 
     expect(response.status).toBe(200);
+    // No caller precondition, so the pipeline supplies its own — the survey as this request read it. A
+    // concurrent writer then costs a 409 instead of a silently dropped block.
     expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(
       survey,
       { blocks: [replacement, blockB] },
       requestId,
       "org_1",
-      undefined
+      { expectedUpdatedAt: survey.updatedAt }
     );
     expect(auditLog).toMatchObject({
       organizationId: "org_1",
@@ -1228,6 +1262,30 @@ describe("editV3SurveyBlocksResponse", () => {
     expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(survey, { blocks: [blockA] }, requestId, "org_1", {
       expectedUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
     });
+  });
+
+  test("refuses an oversized ops array with one issue, before touching the survey", async () => {
+    // Zod would report one issue per element; a 2 MB body of junk must not come back as a 2 MB 400.
+    const response = await call({ ops: Array.from({ length: 5000 }, () => 0) });
+
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.invalid_params).toEqual([expect.objectContaining({ name: "ops" })]);
+    expect(vi.mocked(getAuthorizedV3Survey)).not.toHaveBeenCalled();
+  });
+
+  test("remaps a stored-survey problem onto the block's stored index after a remove", async () => {
+    // Removing blk_a leaves blk_b at post-op index 0; the caller's GET shows it at blocks.1.
+    vi.mocked(patchV3Survey).mockRejectedValue(
+      new V3SurveyStoredDocumentError([{ name: "blocks.0.elements.0.headline", reason: "bad" }])
+    );
+
+    const response = await call({ ops: [{ op: "remove", id: "blk_a" }] });
+
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.code).toBe("stored_survey_invalid");
+    expect(body.invalid_params).toEqual([expect.objectContaining({ name: "blocks.1.elements.0.headline" })]);
   });
 
   test("returns 400 for a malformed envelope without touching the survey", async () => {
@@ -1411,8 +1469,30 @@ describe("setV3SurveyBlockOrderResponse", () => {
       { blocks: [blockB, blockA] },
       requestId,
       "org_1",
-      undefined
+      { expectedUpdatedAt: survey.updatedAt }
     );
+  });
+
+  test("remaps a downstream blocks.<i> path onto the block's stored index", async () => {
+    // Validation ran on the reordered array, where blk_a sits at index 1; GET shows it at blocks.0.
+    vi.mocked(patchV3Survey).mockRejectedValue(
+      new V3SurveyReferenceValidationError([{ name: "blocks.1.logic.0", reason: "bad" }])
+    );
+
+    const response = await call({ order: ["blk_b", "blk_a"] });
+
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.invalid_params).toEqual([expect.objectContaining({ name: "blocks.0.logic.0" })]);
+  });
+
+  test("refuses an oversized order with one issue, before touching the survey", async () => {
+    const response = await call({ order: Array.from({ length: 5000 }, () => 0) });
+
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.invalid_params).toEqual([expect.objectContaining({ name: "order" })]);
+    expect(vi.mocked(getAuthorizedV3Survey)).not.toHaveBeenCalled();
   });
 
   test("skips the write when the order already matches, so updatedAt does not move", async () => {

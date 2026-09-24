@@ -205,6 +205,14 @@ export class V3SurveyStaleError extends Error {
   }
 }
 
+/** The survey was archived between the authorized read and the write. Same 422 as the pre-write guard. */
+export class V3SurveyArchivedError extends Error {
+  constructor() {
+    super("Survey is archived");
+    this.name = "V3SurveyArchivedError";
+  }
+}
+
 /**
  * Throw when the caller's precondition no longer matches the stored survey.
  *
@@ -223,25 +231,33 @@ export function assertV3SurveyPrecondition(
 }
 
 /**
- * A P2025 under a precondition is ambiguous: either the row moved on, or the survey is gone. One
- * cheap re-read separates the 409 from the existing not-found path. Scoped by workspace even though
- * the caller is already authorized for this id — an unscoped findUnique-by-id is the shape that gets
- * copy-pasted somewhere it is not safe.
+ * A P2025 from the survey UPDATE means the row no longer matched its `where`: the survey is gone, it was
+ * archived under us, or — under a precondition — it moved on. One cheap re-read tells the three apart.
+ * Scoped by workspace even though the caller is already authorized for this id — an unscoped
+ * findUnique-by-id is the shape that gets copy-pasted somewhere it is not safe.
  */
-async function resolveStaleOrMissing(
+async function resolveUpdateMiss(
   currentSurvey: TSurvey,
-  precondition: TV3SurveyWritePrecondition
+  precondition: TV3SurveyWritePrecondition | undefined,
+  cause: Error
 ): Promise<Error> {
   const row = await prisma.survey.findFirst({
     where: { id: currentSurvey.id, workspaceId: currentSurvey.workspaceId },
-    select: { updatedAt: true },
+    select: { updatedAt: true, archivedAt: true },
   });
 
   if (!row) {
     return new ResourceNotFoundError("Survey", currentSurvey.id);
   }
+  if (row.archivedAt) {
+    return new V3SurveyArchivedError();
+  }
+  if (precondition) {
+    return new V3SurveyStaleError(precondition.expectedUpdatedAt, row.updatedAt, "write");
+  }
 
-  return new V3SurveyStaleError(precondition.expectedUpdatedAt, row.updatedAt, "write");
+  // Live, unarchived, unconditional — and the UPDATE still missed it. Not a state this code can explain.
+  return new DatabaseError(cause.message);
 }
 
 export async function executeV3SurveyPatch(params: {
@@ -321,8 +337,13 @@ export async function executeV3SurveyPatch(params: {
       // Survey's @updatedAt bumps on every writer — so the row matches only if nobody has written
       // since the caller's read. Two agents editing different blocks can no longer silently
       // overwrite each other's whole `blocks` array.
+      //
+      // `archivedAt: null` makes the pipeline's archived guard hold for the whole request: that guard
+      // reads the survey once, up front, and this UPDATE carries `status` from the same read — so an
+      // archive landing in between would otherwise be written straight back to `inProgress`.
       where: {
         id: currentSurvey.id,
+        archivedAt: null,
         ...(precondition ? { updatedAt: precondition.expectedUpdatedAt } : {}),
       },
       data,
@@ -393,9 +414,10 @@ export async function executeV3SurveyPatch(params: {
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      // Only meaningful under a precondition: without one, P2025 keeps its existing 500 semantics.
-      if (error.code === "P2025" && precondition) {
-        throw await resolveStaleOrMissing(currentSurvey, precondition);
+      // Only the survey UPDATE can raise a P2025 here: the segment write wraps its own, and the
+      // reconcile and trigger writes are `*Many`/`create`.
+      if (error.code === "P2025") {
+        throw await resolveUpdateMiss(currentSurvey, precondition, error);
       }
       throw new DatabaseError(error.message);
     }

@@ -56,8 +56,8 @@ describe("applySurveyBlockOperations — update", () => {
 
     expect(ids(result.blocks)).toEqual(["blk_a", "blk_b", "blk_c"]);
     expect(result.blocks[1]).toEqual(replacement);
-    expect(result.originOpIndexByBlockIndex.get(1)).toBe(0);
-    expect(result.originOpIndexByBlockIndex.has(0)).toBe(false);
+    expect(result.blockPathByIndex.get(1)).toBe("ops.0.block");
+    expect(result.blockPathByIndex.get(0)).toBe("blocks.0");
   });
 
   test("fills in an omitted block.id from the op id", () => {
@@ -112,8 +112,10 @@ describe("applySurveyBlockOperations — insert", () => {
       ])
     );
     expect(ids(result.blocks)).toEqual(["blk_x", "blk_y", "blk_a", "blk_b", "blk_c"]);
-    expect(result.originOpIndexByBlockIndex.get(0)).toBe(0);
-    expect(result.originOpIndexByBlockIndex.get(1)).toBe(1);
+    expect(result.blockPathByIndex.get(0)).toBe("ops.0.block");
+    expect(result.blockPathByIndex.get(1)).toBe("ops.1.block");
+    // The stored blocks moved right by two, but the map still names them where GET shows them.
+    expect(result.blockPathByIndex.get(2)).toBe("blocks.0");
   });
 
   test("requires an id on the inserted block", () => {
@@ -279,8 +281,38 @@ describe("reorderSurveyBlocks", () => {
   });
 });
 
+describe("applySurveyBlockOperations — path map for untouched blocks", () => {
+  test("an untouched block keeps its stored index after an earlier remove", () => {
+    // Validation runs on the post-op array, where C now sits at index 1. The caller's GET shows it at
+    // blocks.2, and that is the coordinate any problem in it has to be reported at.
+    const result = expectOk(applySurveyBlockOperations(current, [{ op: "remove", id: "blk_a" }]));
+
+    expect(ids(result.blocks)).toEqual(["blk_b", "blk_c"]);
+    expect(result.blockPathByIndex.get(0)).toBe("blocks.1");
+    expect(result.blockPathByIndex.get(1)).toBe("blocks.2");
+  });
+});
+
+describe("reorderSurveyBlocks — path map", () => {
+  test("maps every new slot back to the block's stored index", () => {
+    const result = expectOk(reorderSurveyBlocks(current, ["blk_c", "blk_a", "blk_b"]));
+
+    expect([...result.blockPathByIndex.entries()]).toEqual([
+      [0, "blocks.2"],
+      [1, "blocks.0"],
+      [2, "blocks.1"],
+    ]);
+  });
+});
+
 describe("remapBlockInvalidParamPath", () => {
-  const origins = new Map([[1, 3]]);
+  // Post-op index → caller-visible prefix: block 1 came from op 3, block 0 is stored block 0, and block 2
+  // is stored block 3 (an earlier entry was removed).
+  const origins = new Map([
+    [0, "blocks.0"],
+    [1, "ops.3.block"],
+    [2, "blocks.3"],
+  ]);
 
   test("rewrites a path into a block the request touched", () => {
     expect(
@@ -300,6 +332,12 @@ describe("remapBlockInvalidParamPath", () => {
     );
     expect(remapBlockInvalidParamPath({ name: "endings.0.headline", reason: "r" }, origins).name).toBe(
       "endings.0.headline"
+    );
+  });
+
+  test("reports an untouched block at its stored index, not its post-op slot", () => {
+    expect(remapBlockInvalidParamPath({ name: "blocks.2.logic.0", reason: "r" }, origins).name).toBe(
+      "blocks.3.logic.0"
     );
   });
 
@@ -422,14 +460,16 @@ describe("insert collisions name the other copy where the caller can find it", (
     });
   });
 
-  test("a collision with a stored block keeps the stored path", () => {
+  test("a collision with a stored block names the stored path, even after an earlier op shifted it", () => {
     const result = applySurveyBlockOperations([block("blk_a"), block("blk_b")], [
+      { op: "remove", id: "blk_a" },
       { op: "insert", block: { id: "blk_b", name: "dup" }, position: { type: "start" } },
     ] as TV3SurveyBlockOp[]);
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.invalidParams[0]).toMatchObject({ firstUsedAt: "blocks.1.id" });
+    // blk_b sits at index 0 of the working list by now; GET shows it at blocks.1.
+    expect(result.invalidParams[0]).toMatchObject({ name: "ops.1.block.id", firstUsedAt: "blocks.1.id" });
   });
 });
 
@@ -467,7 +507,7 @@ describe("findDuplicateBlockId", () => {
  * naming `blocks.<i>`, an array the caller never sent.
  */
 describe("remapBlockInvalidParamPath rewrites paths quoted inside the reason", () => {
-  const origins = new Map([[3, 0]]);
+  const origins = new Map([[3, "ops.0.block"]]);
 
   test("translates a quoted path into a block the request touched", () => {
     const param = {

@@ -9,6 +9,7 @@ import {
   type TV3PatchSurveyBody,
   type TV3SurveyDocument,
   ZV3CreateSurveyBody,
+  ZV3ExpectedUpdatedAt,
   createZV3PatchSurveyBodySchema,
   createZV3SurveyDocumentBaseSchema,
   formatV3ZodInvalidParams,
@@ -61,7 +62,7 @@ function invalidPreparation(
 
 function validPreparation<TDocument extends TV3SurveyDocument>(
   document: TDocument,
-  precedence?: TV3SurveyPrecedencePolicy
+  precedence: TV3SurveyPrecedencePolicy
 ): TV3SurveyPrepareResult<TDocument> {
   const validation = validateV3SurveyDocument(document, precedence);
 
@@ -193,8 +194,8 @@ function deriveFailureOrigin(
   // The stored document is validated under the *same* policy shape the caller judges the patched one
   // with, and that matters. `introduced` filters precedence violations on `violation.key`, which is
   // `recall|<scopeKey>|<recallId>` — a scope, not a path — while `invalidParamSignature` is
-  // `<path>\0<code>\0<recallId>`. Two different lenses. Under the default `enforce` here, `preExisting`
-  // would carry the stored survey's own precedence violations keyed by path, and a violation the
+  // `<path>\0<code>\0<recallId>`. Two different lenses. Under `enforce` here, `preExisting` would
+  // carry the stored survey's own precedence violations keyed by path, and a violation the
   // request genuinely introduced could match one of them: move a different element into the index the
   // old one occupied, recalling the same target, and the new violation's (path, code, recallId) is
   // identical to the old one's while its scope is not. It survives the `introduced` filter, then gets
@@ -385,13 +386,14 @@ const READ_ONLY_FIELD_CHECKS: Record<Exclude<TReadOnlyPatchKey, "updatedAt">, TR
         },
 };
 
-/** The precondition, or `null` when the value is not a usable ISO 8601 instant. */
+/**
+ * The precondition, or `null` when the value is not the ISO 8601 date-time GET returns. The same shape
+ * the block endpoints require, so both surfaces reject the same input — `new Date()` would read `"1"` as
+ * the year 2001 and an offset-less string in the server's own time zone.
+ */
 function parseExpectedUpdatedAt(submitted: unknown): { expectedUpdatedAt: Date } | null {
-  if (typeof submitted !== "string") {
-    return null;
-  }
-  const parsed = new Date(submitted);
-  return Number.isNaN(parsed.getTime()) ? null : { expectedUpdatedAt: parsed };
+  const parsed = ZV3ExpectedUpdatedAt.safeParse(submitted);
+  return parsed.success ? { expectedUpdatedAt: new Date(parsed.data) } : null;
 }
 
 function splitReadOnlyPatchFields(
@@ -545,6 +547,10 @@ export function prepareV3SurveyPatchInput(
 
   // `introduced`: only ordering violations this request newly creates are rejected. Enforcing the
   // whole rule here would brick every survey that already contains one — the ENG-3070 failure again.
+  // This is the whole patch family, plain PATCH included: a whole-array PATCH that newly adds a forward
+  // recall is refused exactly as a reorder is, and the PATCH 422 contract lists `misordered_reference`.
+  // (v3 is not publicly released, so this tightening ships without a version bump; create stays on
+  // `skip` as `prepareV3SurveyCreate` explains.)
   const validation = validateV3SurveyDocument(patchedDocument, {
     mode: "introduced",
     baseline: currentDocument.document,

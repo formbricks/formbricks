@@ -12,7 +12,7 @@ import {
   normalizeSurveyScheduling,
   reconcileDueSurveySchedules,
 } from "@/modules/survey/scheduling/lib/survey-scheduling";
-import { V3SurveyStaleError, executeV3SurveyPatch, patchV3Survey } from "./patch";
+import { V3SurveyArchivedError, V3SurveyStaleError, executeV3SurveyPatch, patchV3Survey } from "./patch";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import { ZV3CreateSurveyBody } from "./schemas";
 import {
@@ -299,7 +299,7 @@ describe("patchV3Survey", () => {
 
     expect(prisma.survey.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: currentSurvey.id },
+        where: { id: currentSurvey.id, archivedAt: null },
         data: expect.objectContaining({
           name: "Start from scratch (MCP QA test renamed)",
           metadata: currentSurvey.metadata,
@@ -478,7 +478,7 @@ describe("patchV3Survey", () => {
     );
     expect(prisma.survey.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: currentSurvey.id },
+        where: { id: currentSurvey.id, archivedAt: null },
         data: expect.objectContaining({
           name: "Updated Feedback",
           metadata: {
@@ -761,9 +761,10 @@ describe("patchV3Survey", () => {
   });
 
   test("maps Prisma persistence errors to database errors", async () => {
+    // Any code but P2025, which the compare-and-set now resolves by re-reading the row.
     vi.mocked(prisma.survey.update).mockRejectedValueOnce(
       new Prisma.PrismaClientKnownRequestError("Survey update failed", {
-        code: "P2025",
+        code: "P2002",
         clientVersion: "test",
       })
     );
@@ -1105,7 +1106,9 @@ describe("patchV3Survey", () => {
       await patchV3Survey(currentSurvey, { name: "CAS" }, "req_cas_1", "org_1", { expectedUpdatedAt });
 
       expect(prisma.survey.update).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: currentSurvey.id, updatedAt: expectedUpdatedAt } })
+        expect.objectContaining({
+          where: { id: currentSurvey.id, archivedAt: null, updatedAt: expectedUpdatedAt },
+        })
       );
     });
 
@@ -1113,7 +1116,7 @@ describe("patchV3Survey", () => {
       await patchV3Survey(currentSurvey, { name: "no CAS" }, "req_cas_2", "org_1");
 
       expect(prisma.survey.update).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: currentSurvey.id } })
+        expect.objectContaining({ where: { id: currentSurvey.id, archivedAt: null } })
       );
     });
 
@@ -1145,7 +1148,9 @@ describe("patchV3Survey", () => {
       );
 
       expect(prisma.survey.update).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: currentSurvey.id, updatedAt: expectedUpdatedAt } })
+        expect.objectContaining({
+          where: { id: currentSurvey.id, archivedAt: null, updatedAt: expectedUpdatedAt },
+        })
       );
     });
 
@@ -1214,13 +1219,30 @@ describe("patchV3Survey", () => {
       ).rejects.toBeInstanceOf(ResourceNotFoundError);
     });
 
-    test("leaves P2025 as a database error when there is no precondition", async () => {
+    test("turns a P2025 on a survey archived mid-request into the archived error, precondition or not", async () => {
+      // The UPDATE's `where` carries `archivedAt: null`, so an archive that lands after the authorized
+      // read misses the row instead of being written straight back to inProgress.
       rejectWithP2025();
+      vi.mocked(prisma.survey.findFirst).mockResolvedValue({
+        updatedAt: currentSurvey.updatedAt,
+        archivedAt: new Date("2026-04-21T10:30:00.000Z"),
+      } as never);
 
       await expect(patchV3Survey(currentSurvey, { name: "x" }, "req_cas_6", "org_1")).rejects.toBeInstanceOf(
+        V3SurveyArchivedError
+      );
+    });
+
+    test("keeps a P2025 on a live, unarchived, unconditional row a database error", async () => {
+      rejectWithP2025();
+      vi.mocked(prisma.survey.findFirst).mockResolvedValue({
+        updatedAt: currentSurvey.updatedAt,
+        archivedAt: null,
+      } as never);
+
+      await expect(patchV3Survey(currentSurvey, { name: "x" }, "req_cas_7", "org_1")).rejects.toBeInstanceOf(
         DatabaseError
       );
-      expect(prisma.survey.findFirst).not.toHaveBeenCalled();
     });
 
     test("V3SurveyStaleError carries both timestamps for the 409 body", () => {
