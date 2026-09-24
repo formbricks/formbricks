@@ -11,6 +11,14 @@ import type { TUsageRangeBounds } from "./range";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+const SURVEY_COUNT_KEYS = ["draft", "scheduled", "inProgress", "paused", "completed", "archived"] as const;
+const MEMBER_COUNT_KEYS = ["total", "active", "dormant", "deactivated"] as const;
+
+// Postgres returns COUNT as bigint; an aggregate without GROUP BY always yields one row, but read it
+// defensively so a driver change cannot turn into NaN on the page.
+const toCounts = <K extends string>(row: Partial<Record<K, bigint>> | undefined, keys: readonly K[]) =>
+  Object.fromEntries(keys.map((key) => [key, Number(row?.[key] ?? 0)])) as Record<K, number>;
+
 const createdAtFragment = (column: Prisma.Sql, { from, to }: TUsageRangeBounds): Prisma.Sql =>
   Prisma.sql`${from ? Prisma.sql`AND ${column} >= ${from}` : Prisma.empty} ${
     to ? Prisma.sql`AND ${column} <= ${to}` : Prisma.empty
@@ -61,14 +69,7 @@ const getSurveyCounts = async (organizationId: string): Promise<TOrganizationUsa
     JOIN "Workspace" w ON w."id" = s."workspaceId"
     WHERE w."organizationId" = ${organizationId}`;
 
-  return {
-    draft: Number(row?.draft ?? 0),
-    scheduled: Number(row?.scheduled ?? 0),
-    inProgress: Number(row?.inProgress ?? 0),
-    paused: Number(row?.paused ?? 0),
-    completed: Number(row?.completed ?? 0),
-    archived: Number(row?.archived ?? 0),
-  };
+  return toCounts(row, SURVEY_COUNT_KEYS);
 };
 
 // Every membership row, like the Members list and the owner count — `accepted` gates nothing, so it is not
@@ -88,12 +89,7 @@ const getMemberCounts = async (organizationId: string, now: Date): Promise<TOrga
     JOIN "User" u ON u."id" = m."userId"
     WHERE m."organizationId" = ${organizationId}`;
 
-  return {
-    total: Number(row?.total ?? 0),
-    active: Number(row?.active ?? 0),
-    dormant: Number(row?.dormant ?? 0),
-    deactivated: Number(row?.deactivated ?? 0),
-  };
+  return toCounts(row, MEMBER_COUNT_KEYS);
 };
 
 export const getOrganizationUsage = async ({

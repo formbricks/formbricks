@@ -71,6 +71,28 @@ describe("getOrganizationUsage", () => {
     expect(usage.timeZone).toBe("UTC");
   });
 
+  test("reads a missing aggregate row as zeros rather than NaN", async () => {
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([] as never);
+
+    const usage = await getOrganizationUsage({
+      organizationId: ORG_ID,
+      range: {},
+      timeZone: "UTC",
+      now: NOW,
+    });
+
+    expect(usage.surveys).toEqual({
+      draft: 0,
+      scheduled: 0,
+      inProgress: 0,
+      paused: 0,
+      completed: 0,
+      archived: 0,
+    });
+    expect(usage.members).toEqual({ total: 0, active: 0, dormant: 0, deactivated: 0 });
+    expect(usage.totals.responseCount).toBe(0);
+  });
+
   test("scopes every raw query to the organization", async () => {
     await getOrganizationUsage({ organizationId: ORG_ID, range: {}, timeZone: "UTC", now: NOW });
 
