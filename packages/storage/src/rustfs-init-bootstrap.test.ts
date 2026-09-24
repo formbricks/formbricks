@@ -6,6 +6,7 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -128,6 +129,27 @@ describe("docker/formbricks.sh RustFS bootstrap", () => {
     writeRustfsInitScript(generatedScriptPath, standaloneFormbricksScriptPath);
 
     expect(readFileSync(generatedScriptPath, "utf8")).toBe(readFileSync(rustfsInitTemplatePath, "utf8"));
+  });
+
+  test("generated init script remains readable with a restrictive installer umask", () => {
+    const tempDir = createTempDir();
+    const standaloneFormbricksScriptPath = join(tempDir, "formbricks.sh");
+    const generatedScriptPath = join(tempDir, "rustfs-init.sh");
+
+    copyFileSync(formbricksScriptPath, standaloneFormbricksScriptPath);
+    execFileSync(
+      "bash",
+      [
+        "-lc",
+        'umask 077; source "$1"; write_rustfs_init_script "$2"',
+        "bash",
+        standaloneFormbricksScriptPath,
+        generatedScriptPath,
+      ],
+      { encoding: "utf8" }
+    );
+
+    expect(statSync(generatedScriptPath).mode & 0o777).toBe(0o755);
   });
 
   test("generated init script provisions a bucket-scoped policy for the service user", () => {

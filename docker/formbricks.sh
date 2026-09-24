@@ -15,7 +15,7 @@ write_rustfs_init_script() {
 
   if [ -f "$template_path" ]; then
     cp "$template_path" "$target_path"
-    chmod +x "$target_path"
+    chmod 755 "$target_path"
     return
   fi
 
@@ -125,7 +125,7 @@ rc admin policy attach rustfs "$RUSTFS_POLICY_NAME" --user "$RUSTFS_SERVICE_USER
 echo '✅ RustFS setup complete!'
 RUSTFS_SCRIPT_EOF
 
-  chmod +x "$target_path"
+  chmod 755 "$target_path"
 }
 
 upsert_dotenv_var() {
