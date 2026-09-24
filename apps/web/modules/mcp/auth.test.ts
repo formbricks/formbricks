@@ -1,6 +1,8 @@
-import { SignJWT, generateKeyPair, jwtVerify } from "jose";
+import { SignJWT, exportJWK, generateKeyPair, jwtVerify } from "jose";
 import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { type Server, createServer } from "node:http";
+import type { AddressInfo } from "node:net";
+import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { authenticateApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
@@ -12,10 +14,16 @@ import {
   handleAuthenticatedMcpRequest,
 } from "./auth";
 
-const { verifyBearerTokenMock, userFindUniqueMock, warnMock } = vi.hoisted(() => ({
+const { getJwksMock, verifyBearerTokenMock, userFindUniqueMock, warnMock } = vi.hoisted(() => ({
+  getJwksMock: vi.fn(),
   verifyBearerTokenMock: vi.fn(),
   userFindUniqueMock: vi.fn(),
   warnMock: vi.fn(),
+}));
+
+vi.mock("better-auth/oauth2", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("better-auth/oauth2")>()),
+  getJwks: getJwksMock,
 }));
 
 vi.mock("@better-auth/oauth-provider/resource-client", () => ({
@@ -86,7 +94,7 @@ vi.mock("@formbricks/logger", () => ({
 
 // Imported dynamically so it resolves against the partially-mocked module above rather than being
 // hoisted past it.
-const { MCP_CHALLENGE_SCOPE } = await import("@/modules/auth/lib/oauth-urls");
+const { MCP_CHALLENGE_SCOPE, getMcpOAuthJwksUrl } = await import("@/modules/auth/lib/oauth-urls");
 
 // Two comma-separated quoted auth-params, per the `#auth-param` list grammar in RFC 9110 §11.6.1 (#8718).
 // Cases that care about the challenge's *shape* assert this rather than the whole string, so they do not
@@ -595,35 +603,6 @@ describe("authenticateMcpRequest", () => {
     );
   });
 
-  test("distinguishes an unavailable JWKS endpoint without logging the raw error", async () => {
-    verifyBearerTokenMock.mockRejectedValue(
-      new TypeError("fetch failed", {
-        cause: Object.assign(new Error("connection refused"), { code: "ECONNREFUSED" }),
-      })
-    );
-
-    const result = await authenticateMcpRequest(
-      createRequest("http://localhost/api/mcp", {
-        authorization: "Bearer oauth_access_token",
-      })
-    );
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.response.status).toBe(401);
-    }
-    expect(warnMock).toHaveBeenCalledWith(
-      {
-        errorCode: "ECONNREFUSED",
-        errorName: "TypeError",
-        failureSource: "jwks_fetch",
-        statusCode: 401,
-      },
-      "MCP OAuth authentication failed"
-    );
-    expect(JSON.stringify(warnMock.mock.calls)).not.toContain("connection refused");
-  });
-
   test("returns 429 when OAuth requests are rate limited", async () => {
     verifyBearerTokenMock.mockResolvedValue({
       aud: MCP_AUDIENCE,
@@ -698,6 +677,8 @@ describe("MCP OAuth access token audience binding", () => {
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
 
     keyPair = await generateKeyPair("ES256");
+    // A served key set: these cases are about the token, not about loading the keys.
+    getJwksMock.mockResolvedValue({ keys: [] });
     verifyBearerTokenMock.mockImplementation(
       async (token: string, opts: { verifyOptions: { audience: string; issuer: string } }) =>
         (await jwtVerify(token, keyPair.publicKey, opts.verifyOptions)).payload
@@ -793,5 +774,127 @@ describe("MCP OAuth access token audience binding", () => {
     if (!result.ok) {
       expect(result.response.status).toBe(401);
     }
+  });
+});
+
+// Better Auth reshapes a failed JWKS load inside `verifyBearerToken` — a 403 becomes a bare
+// `Error("Jwks failed: Forbidden")`, an unreachable endpoint's `TypeError` is swallowed into a
+// `no token payload` 401 — so a hand-built rejection cannot show what production logs. Here the real
+// `getJwks` and `verifyBearerToken` run against a live local endpoint.
+describe("MCP OAuth JWKS loading against the real Better Auth verifier", () => {
+  const ISSUER = "https://app.example.com/api/auth";
+  const KID = "key_1";
+  let server: Server;
+  let origin: string;
+  let unreachableUrl: string;
+  let jwksRequests: number;
+  let token: string;
+  let realOAuth2: typeof import("better-auth/oauth2");
+
+  beforeAll(async () => {
+    realOAuth2 = await vi.importActual<typeof import("better-auth/oauth2")>("better-auth/oauth2");
+
+    const keyPair = await generateKeyPair("ES256");
+    const publicJwk = { ...(await exportJWK(keyPair.publicKey)), kid: KID, alg: "ES256", use: "sig" };
+    token = await new SignJWT({ scope: "surveys:read", azp: "client_1" })
+      .setProtectedHeader({ alg: "ES256", typ: "at+jwt", kid: KID })
+      .setIssuer(ISSUER)
+      .setAudience(MCP_AUDIENCE)
+      .setSubject("user_1")
+      .setIssuedAt()
+      .setExpirationTime("15m")
+      .sign(keyPair.privateKey);
+
+    server = createServer((request, response) => {
+      if (request.url === "/jwks") {
+        jwksRequests++;
+        response.setHeader("content-type", "application/json");
+        response.end(JSON.stringify({ keys: [publicJwk] }));
+      } else if (request.url === "/login-page") {
+        // A proxy that answers 200 with its own sign-in page instead of the key set.
+        response.setHeader("content-type", "text/html");
+        response.end("<html>Sign in</html>");
+      } else {
+        // A reverse proxy's IP allowlist refusing this server.
+        response.statusCode = 403;
+        response.end();
+      }
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+
+    const closed = createServer();
+    await new Promise<void>((resolve) => closed.listen(0, "127.0.0.1", resolve));
+    unreachableUrl = `http://127.0.0.1:${(closed.address() as AddressInfo).port}/jwks`;
+    await new Promise<void>((resolve) => closed.close(() => resolve()));
+  });
+
+  afterAll(async () => {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  });
+
+  beforeEach(() => {
+    jwksRequests = 0;
+    // Set per test: the global setup resets every mock before each one.
+    getJwksMock.mockImplementation(realOAuth2.getJwks);
+    verifyBearerTokenMock.mockImplementation(realOAuth2.verifyBearerToken);
+    userFindUniqueMock.mockResolvedValue({ isActive: true });
+    vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
+    vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
+  });
+
+  async function authenticateAgainst(jwksUrl: string, bearerToken = token) {
+    vi.mocked(getMcpOAuthJwksUrl).mockReturnValue(jwksUrl);
+    return authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", { authorization: `Bearer ${bearerToken}` })
+    );
+  }
+
+  test("accepts a valid token and fetches the key set once", async () => {
+    const result = await authenticateAgainst(`${origin}/jwks`);
+
+    expect(result.ok).toBe(true);
+    // verifyBearerToken read the set the pre-load cached instead of fetching it a second time.
+    expect(jwksRequests).toBe(1);
+  });
+
+  test.each([
+    { failure: "a 403 from the JWKS endpoint", path: "/forbidden", errorName: "Error", errorCode: undefined },
+    {
+      failure: "an unreachable JWKS endpoint",
+      path: null,
+      errorName: "TypeError",
+      errorCode: "ECONNREFUSED",
+    },
+    {
+      failure: "a 200 that is not a key set",
+      path: "/login-page",
+      errorName: "JWKSInvalid",
+      errorCode: "ERR_JWKS_INVALID",
+    },
+  ])("logs $failure as a JWKS failure", async ({ path, errorName, errorCode }) => {
+    const result = await authenticateAgainst(path === null ? unreachableUrl : `${origin}${path}`);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(401);
+    }
+    // Exactly this context and nothing else: the raw error, whose message can name internal hosts,
+    // never reaches the log.
+    expect(warnMock).toHaveBeenCalledTimes(1);
+    expect(warnMock).toHaveBeenCalledWith(
+      { errorCode, errorName, failureSource: "jwks_fetch", statusCode: 401 },
+      "MCP OAuth authentication failed"
+    );
+  });
+
+  test("still logs a token that is not a JWS as a token failure while the JWKS is unreachable", async () => {
+    const result = await authenticateAgainst(unreachableUrl, "opaque_access_token");
+
+    expect(result.ok).toBe(false);
+    expect(warnMock).toHaveBeenCalledWith(
+      { errorCode: undefined, errorName: "APIError", failureSource: "token_verification", statusCode: 401 },
+      "MCP OAuth authentication failed"
+    );
   });
 });
