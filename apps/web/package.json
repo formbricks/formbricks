@@ -193,6 +193,7 @@
     "cross-env": "catalog:",
     "dotenv": "catalog:",
     "dotenv-cli": "catalog:",
+    "intl-messageformat": "10.7.18",
     "playwright": "1.58.2",
     "jsdom": "catalog:",
     "postcss": "catalog:",
