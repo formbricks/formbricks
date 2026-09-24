@@ -2238,6 +2238,7 @@
         "reconnect_button_description": "A Google Táblázatok kapcsolata lejárt. Kapcsolódjon újra a válaszok szinkronizálásának folytatásához. A meglévő táblázatok hivatkozásai és adatai megmaradnak.",
         "reconnect_button_tooltip": "Csatlakoztassa újra az integrációt a hozzáférés frissítéséhez. A meglévő táblázatok hivatkozásai és adatai megmaradnak.",
         "spreadsheet_permission_error": "Nincs jogosultsága hozzáférni ehhez a táblázathoz. Győződjön meg arról, hogy a táblázat meg van-e osztva a Google-fiókjával, és rendelkezik-e írási hozzáféréssel a táblázathoz.",
+        "spreadsheet_scope_error": "A Formbricks nem rendelkezik engedéllyel az Ön Google Táblázataihoz való hozzáféréshez. Kérjük, csatlakoztassa újra az integrációt, és engedélyezze a Google Táblázatokhoz való hozzáférést, amikor a Google ezt kéri.",
         "spreadsheet_url": "Táblázat URL-e",
         "token_expired_error": "A Google Táblázatok frissítési tokenje lejárt vagy visszavonásra került. Csatlakoztassa újra az integrációt."
       },

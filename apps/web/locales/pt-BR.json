@@ -2238,6 +2238,7 @@
         "reconnect_button_description": "Sua conexão com o Google Sheets expirou. Reconecte para continuar sincronizando respostas. Seus links de planilhas e dados existentes serão preservados.",
         "reconnect_button_tooltip": "Reconecte a integração para atualizar seu acesso. Seus links de planilhas e dados existentes serão preservados.",
         "spreadsheet_permission_error": "Você não tem permissão para acessar esta planilha. Certifique-se de que a planilha está compartilhada com sua conta do Google e que você tem acesso de gravação à planilha.",
+        "spreadsheet_scope_error": "O Formbricks não tem permissão para acessar suas Planilhas Google. Por favor, reconecte a integração e permita o acesso às Planilhas Google quando o Google solicitar.",
         "spreadsheet_url": "URL da planilha",
         "token_expired_error": "O token de atualização do Google Sheets expirou ou foi revogado. Reconecte a integração."
       },

@@ -2238,6 +2238,7 @@
         "reconnect_button_description": "Je Google Sheets-verbinding is verlopen. Maak opnieuw verbinding om door te gaan met het synchroniseren van antwoorden. Je bestaande spreadsheetlinks en gegevens blijven behouden.",
         "reconnect_button_tooltip": "Maak opnieuw verbinding met de integratie om je toegang te vernieuwen. Je bestaande spreadsheetlinks en gegevens blijven behouden.",
         "spreadsheet_permission_error": "Je hebt geen toegang tot dit spreadsheet. Zorg ervoor dat het spreadsheet is gedeeld met je Google-account en dat je schrijftoegang hebt tot het spreadsheet.",
+        "spreadsheet_scope_error": "Formbricks heeft geen toestemming om toegang te krijgen tot je Google Sheets. Maak opnieuw verbinding met de integratie en sta toegang tot Google Sheets toe wanneer Google daarom vraagt.",
         "spreadsheet_url": "Spreadsheet-URL",
         "token_expired_error": "Het vernieuwingstoken van Google Sheets is verlopen of ingetrokken. Maak opnieuw verbinding met de integratie."
       },
