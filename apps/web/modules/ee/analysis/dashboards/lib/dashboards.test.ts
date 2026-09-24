@@ -736,7 +736,9 @@ describe("Dashboard Service", () => {
       });
     });
 
-    test("nextOpenSlot places the widget in the first gap it fits", async () => {
+    // ENG-3209: a chart added from the chart builder or "add existing charts" was appended below every
+    // widget, leaving a visible gap beside a narrower one. Every add now fills the first open slot.
+    test("places a new widget in the first gap it fits", async () => {
       mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
       mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
       mockTxWidget.aggregate.mockResolvedValue({ _max: { order: 1 } });
@@ -752,7 +754,6 @@ describe("Dashboard Service", () => {
         chartId: mockChartId,
         workspaceId: mockWorkspaceId,
         layout: mockLayout,
-        placement: "nextOpenSlot",
       });
 
       expect(mockTxWidget.create).toHaveBeenCalledWith({
@@ -760,7 +761,7 @@ describe("Dashboard Service", () => {
       });
     });
 
-    test("nextOpenSlot drops the widget below a full row", async () => {
+    test("drops a new widget below a full row", async () => {
       mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
       mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
       mockTxWidget.aggregate.mockResolvedValue({ _max: { order: 0 } });
@@ -773,7 +774,6 @@ describe("Dashboard Service", () => {
         chartId: mockChartId,
         workspaceId: mockWorkspaceId,
         layout: mockLayout,
-        placement: "nextOpenSlot",
       });
 
       expect(mockTxWidget.create).toHaveBeenCalledWith({
@@ -781,7 +781,7 @@ describe("Dashboard Service", () => {
       });
     });
 
-    test("nextOpenSlot appends instead of filling a gap when a stored layout is unreadable", async () => {
+    test("appends instead of filling a gap when a stored layout is unreadable", async () => {
       mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
       mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
       mockTxWidget.aggregate.mockResolvedValue({ _max: { order: 1 } });
@@ -798,7 +798,6 @@ describe("Dashboard Service", () => {
         chartId: mockChartId,
         workspaceId: mockWorkspaceId,
         layout: mockLayout,
-        placement: "nextOpenSlot",
       });
 
       expect(mockTxWidget.create).toHaveBeenCalledWith({
