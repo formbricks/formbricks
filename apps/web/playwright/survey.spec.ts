@@ -14,10 +14,9 @@ test.beforeEach(async ({ page }) => {
   await helper.mockStorageUploads(page);
 });
 
-// The rendered alt is the human-readable form of the file name (decoded, no
-// extension or separator noise) — see getImageAltFromUrl in @formbricks/surveys.
-const firstPictureChoiceAlt = "logo transparent";
-const secondPictureChoiceAlt = "android chrome 192x192";
+// Picture choices are named by position, never by file name (a file name can carry personal data).
+const firstPictureChoiceAlt = "Option 1";
+const secondPictureChoiceAlt = "Option 2";
 
 const selectPictureChoice = async (pictureSelectQuestion: Locator, choiceAlt: string) => {
   const choiceImage = pictureSelectQuestion.getByRole("img", { name: choiceAlt });
