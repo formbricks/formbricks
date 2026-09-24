@@ -21,10 +21,15 @@
  * being text or number) live on `ZEmbeddedData`, which the card's form parses against.
  */
 import { createId } from "@paralleldrive/cuid2";
+import type { TFunction } from "i18next";
 import { type TEmbeddedData, type TEmbeddedDataSource } from "@formbricks/types/embedded-data";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { validateNewDeclaredFields } from "@formbricks/types/surveys/declared-field-guard";
-import { type TValidateIdError, validateId } from "@formbricks/types/surveys/validation";
+import {
+  type TValidateIdError,
+  TValidateIdErrorCode,
+  validateId,
+} from "@formbricks/types/surveys/validation";
 
 /**
  * Addresses one field the way the reconcile does, on `(source, storageKey)`.
@@ -49,28 +54,6 @@ const isFieldAt =
  */
 export const mintStorageKey = (source: TEmbeddedDataSource, name: string): string =>
   source === "computed" ? createId() : name;
-
-/**
- * The same address, or null when the survey already has a field at it.
- *
- * An ingested field's address is its name, so a new one can land on an address another field holds —
- * including a computed field's cuid, which the card displays and offers to copy. Nothing upstream
- * refuses it: `validateNewDeclaredFields` compares *declared names*, and a computed field declares
- * its display name, not its cuid. `upsertEmbeddedField` then keeps both rows, because it matches on
- * source **and** address and these differ in source.
- *
- * The survey only fails at the save, on `@@unique([surveyId, storageKey])`, as a Prisma constraint
- * violation with no field to point at. Refusing it at the modal is what turns that into a message.
- * The caller passes the addresses minus the one being edited, so an edit keeping its own is free.
- */
-export const mintFreeStorageKey = (
-  source: TEmbeddedDataSource,
-  name: string,
-  takenStorageKeys: readonly string[]
-): string | null => {
-  const storageKey = mintStorageKey(source, name);
-  return takenStorageKeys.includes(storageKey) ? null : storageKey;
-};
 
 /**
  * The library row slice the editor needs in order to link one.
@@ -206,7 +189,62 @@ export const declaredEmbeddedFieldName = ({ field, link }: TLinkedEmbeddedField)
   field.source === "computed" ? (field.key ?? field.name) : link.storageKey;
 
 /**
- * Why a name the author typed cannot be used, or null when it can.
+ * A refusal in the words of the control the author is looking at.
+ *
+ * `getValidateIdErrorMessage` phrases the same codes as "{Variable,Hidden field} ID …", which is the
+ * vocabulary this card replaced — and which is what told an author naming a passed-in field that
+ * their *ID* could not contain spaces, about an input labelled Name. The code is the same; only the
+ * sentence around it belongs to whichever control holds the declared name.
+ *
+ * `label` is already translated, because it is the control's own label: a passed-in field declares
+ * its address, a calculated one its name.
+ */
+export const getEmbeddedFieldErrorMessage = (
+  error: TValidateIdError,
+  label: string,
+  t: TFunction
+): string => {
+  // A switch of literal keys rather than a lookup table: `scan-translations` reads `t("…")` calls
+  // statically, and a key built by interpolation reads to it as six unused strings.
+  switch (error.code) {
+    case TValidateIdErrorCode.Empty:
+      return t("workspace.embedded_data.field_error_empty", { label });
+    case TValidateIdErrorCode.Duplicate:
+      return t("workspace.embedded_data.survey_field_address_taken");
+    case TValidateIdErrorCode.Reserved:
+      return t("workspace.embedded_data.field_error_reserved", { label, field: error.field });
+    case TValidateIdErrorCode.HasSpaces:
+      return t("workspace.embedded_data.field_error_no_spaces", { label });
+    case TValidateIdErrorCode.InvalidChars:
+      return t("workspace.embedded_data.field_error_invalid_chars", { label });
+    case TValidateIdErrorCode.NotSafeIdentifier:
+      return t("workspace.embedded_data.field_error_not_safe_identifier", { label });
+  }
+};
+
+/**
+ * Whether another field on this survey already answers to the name the author typed.
+ *
+ * The one rule left on the display name now that the address carries the identifier ones. It stays
+ * because the pickers label a field by its name and disambiguate only a *shared* one, by its library
+ * key — so two local fields called `Plan tier` are two identical rows in recall and logic with
+ * nothing to tell them apart. Case-insensitive, because telling them apart by capitalisation is no
+ * better.
+ *
+ * Elements and ending cards are deliberately not checked: they collide in the address namespace, not
+ * this one, and a field may perfectly well be named after the question it describes.
+ */
+export const isEmbeddedFieldNameTaken = ({
+  name,
+  otherFieldNames,
+}: {
+  name: string;
+  /** Every field's display name except the one being edited. */
+  otherFieldNames: string[];
+}): boolean => otherFieldNames.some((other) => other.trim().toLowerCase() === name.trim().toLowerCase());
+
+/**
+ * Why the declared name the author typed cannot be used, or null when it can.
  *
  * Entirely delegated to `validateId` in its strict mode — the same call the server's
  * `validateNewDeclaredFieldNames` makes, so the inline error and a refused save agree about what a
@@ -214,27 +252,37 @@ export const declaredEmbeddedFieldName = ({ field, link }: TLinkedEmbeddedField)
  * card ids and every other field's declared name, because recall and logic address all four through
  * one namespace.
  *
- * **An unchanged name is left alone**, which is the editor's half of the server's grandfather rule:
- * a survey that already declares `country` must stay editable, or its author could no longer change
- * its type or its default.
+ * **Which control holds the declared name depends on the source**, which is why the caller resolves
+ * it through {@link declaredEmbeddedFieldName} rather than this function taking a field. A passed-in
+ * field is declared by its address, so the identifier rules belong to the ID input and its display
+ * name is free text; a calculated field is declared by its display name, so they belong there and
+ * its address is a minted cuid nobody types. Putting the refusal on the wrong control is the bug
+ * this split exists to fix — an author naming a passed-in field was told their *ID* could not
+ * contain spaces, about an input labelled Name.
+ *
+ * **An unchanged declared name is left alone**, which is the editor's half of the server's
+ * grandfather rule: a survey that already declares `country` must stay editable, or its author could
+ * no longer change its type or its default.
  */
-export const validateEmbeddedFieldName = ({
-  name,
+export const validateEmbeddedFieldDeclaredName = ({
+  declaredName,
   takenIds,
-  otherFieldNames,
-  previousName,
+  otherDeclaredNames,
+  previousDeclaredName,
 }: {
-  name: string;
+  declaredName: string;
   /** Ids already spoken for in the namespace: the survey's elements and ending cards. */
   takenIds: string[];
   /** Every field's declared name except the one being edited. */
-  otherFieldNames: string[];
-  /** The name the edited field already had, or null when the field is new. */
-  previousName: string | null;
+  otherDeclaredNames: string[];
+  /** The declared name the edited field already had, or null when the field is new. */
+  previousDeclaredName: string | null;
 }): TValidateIdError | null => {
-  if (previousName !== null && previousName.toLowerCase() === name.toLowerCase()) return null;
+  if (previousDeclaredName !== null && previousDeclaredName.toLowerCase() === declaredName.toLowerCase()) {
+    return null;
+  }
 
-  return validateId(name, takenIds, [], otherFieldNames, [], { requireSafeIdentifier: true });
+  return validateId(declaredName, takenIds, [], otherDeclaredNames, [], { requireSafeIdentifier: true });
 };
 
 /**

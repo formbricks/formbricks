@@ -227,10 +227,19 @@ export const EmbeddedDataCard = ({
    * storage key rather than on object identity: a render between opening the dialog and submitting
    * it rebuilds the list, so comparing references would count the edited field as its own duplicate.
    */
-  const otherFieldNamesExcept = (entry: TLinkedEmbeddedField | null) =>
+  const otherDeclaredNamesExcept = (entry: TLinkedEmbeddedField | null) =>
     embeddedFields
       .filter((field) => field.link.storageKey !== entry?.link.storageKey)
       .map(declaredEmbeddedFieldName);
+
+  /**
+   * Display names, which are not declared names: a passed-in field is declared by its address, so
+   * its label is free text that only has to be unique among labels. Same exclusion, same reason.
+   */
+  const otherDisplayNamesExcept = (entry: TLinkedEmbeddedField | null) =>
+    embeddedFields
+      .filter((field) => field.link.storageKey !== entry?.link.storageKey)
+      .map(({ field }) => field.name);
 
   const takenStorageKeysExcept = (entry: TLinkedEmbeddedField | null) =>
     embeddedFields
@@ -319,7 +328,8 @@ export const EmbeddedDataCard = ({
           // Matched on the address rather than on object identity: a render between opening the
           // dialog and submitting it rebuilds the list, and comparing references would then count
           // the edited field's own name as a duplicate of itself.
-          otherFieldNames={otherFieldNamesExcept(editing)}
+          otherDeclaredNames={otherDeclaredNamesExcept(editing)}
+          otherDisplayNames={otherDisplayNamesExcept(editing)}
           // Same exclusion, same reason: an edit keeps its own address and must not read as taking it.
           takenStorageKeys={takenStorageKeysExcept(editing)}
           locale={locale}
@@ -338,7 +348,8 @@ export const EmbeddedDataCard = ({
           persistedFields={persistedFields}
           takenIds={takenIds}
           // Nothing to exclude: a field that does not exist yet cannot clash with itself.
-          otherFieldNames={otherFieldNamesExcept(null)}
+          otherDeclaredNames={otherDeclaredNamesExcept(null)}
+          otherDisplayNames={otherDisplayNamesExcept(null)}
           takenStorageKeys={takenStorageKeysExcept(null)}
           locale={locale}
           responseCount={responseCount}

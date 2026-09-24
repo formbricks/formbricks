@@ -9,6 +9,7 @@ import {
 
 const draft = (overrides: Partial<TEmbeddedFieldDraft> = {}): TEmbeddedFieldDraft => ({
   name: "plan",
+  storageKey: "plan",
   source: "ingested",
   dataType: "string",
   defaultValue: "",
@@ -62,6 +63,9 @@ describe("toEmbeddedFieldDraft", () => {
   test("opens a new field as an unlocked passed-in text field", () => {
     expect(toEmbeddedFieldDraft(null)).toEqual({
       name: "",
+      // Empty, not minted: the address follows what the author types into Name, and a field they
+      // have not named yet has no address to show them.
+      storageKey: "",
       source: "ingested",
       dataType: "string",
       defaultValue: "",
@@ -85,6 +89,9 @@ describe("toEmbeddedFieldDraft", () => {
 
     expect(toEmbeddedFieldDraft(entry)).toEqual({
       name: "Plan",
+      // The address it is stored under, which the edit form shows read-only — and which a field
+      // migrated from a hidden field shares with its name, because the two were one string then.
+      storageKey: "plan",
       source: "ingested",
       dataType: "number",
       defaultValue: "7",

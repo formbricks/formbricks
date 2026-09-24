@@ -23,7 +23,8 @@ interface EmbeddedFieldModalProps {
   /** The addresses this survey's other fields occupy. */
   takenStorageKeys: string[];
   /** Every other field's declared name — what makes a repeat a duplicate. */
-  otherFieldNames: string[];
+  otherDeclaredNames: string[];
+  otherDisplayNames: string[];
   /** App locale — the date default's picker formats against it. */
   locale: string;
   /** The type this field has as stored, or null when the survey has never saved it. */
@@ -47,7 +48,8 @@ export const EmbeddedFieldModal = ({
   setOpen,
   takenIds,
   takenStorageKeys,
-  otherFieldNames,
+  otherDeclaredNames,
+  otherDisplayNames,
   locale,
   storedDataType,
   responseCount,
@@ -72,7 +74,8 @@ export const EmbeddedFieldModal = ({
             entry={entry}
             takenIds={takenIds}
             takenStorageKeys={takenStorageKeys}
-            otherFieldNames={otherFieldNames}
+            otherDeclaredNames={otherDeclaredNames}
+            otherDisplayNames={otherDisplayNames}
             locale={locale}
             storedDataType={storedDataType}
             responseCount={responseCount}

@@ -50,7 +50,7 @@ export const UpdateElementId = ({
 
     if (validateIdError) {
       setIsInputInvalid(true);
-      toast.error(getValidateIdErrorMessage(validateIdError, "question", t));
+      toast.error(getValidateIdErrorMessage(validateIdError, t));
       setCurrentValue(prevValue);
       return;
     }

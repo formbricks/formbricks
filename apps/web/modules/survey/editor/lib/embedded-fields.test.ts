@@ -1,23 +1,34 @@
-import { describe, expect, test } from "vitest";
+import type { TFunction } from "i18next";
+import { describe, expect, test, vi } from "vitest";
 import {
   linkedToDesiredEmbeddedFields,
   toLegacyEmbeddedFields,
 } from "@formbricks/types/embedded-data-mapping";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
+import { ZSurveyVariable } from "@formbricks/types/surveys/types";
 import { TValidateIdErrorCode } from "@formbricks/types/surveys/validation";
 import {
   type TLinkableSharedField,
   cloneSharedFieldToLocal,
   declaredEmbeddedFieldName,
+  getEmbeddedFieldErrorMessage,
+  isEmbeddedFieldNameTaken,
   isPromotableEmbeddedField,
   listLinkableSharedFields,
-  mintFreeStorageKey,
   mintStorageKey,
   removeEmbeddedField,
   toSharedEntry,
   upsertEmbeddedField,
-  validateEmbeddedFieldName,
+  validateEmbeddedFieldDeclaredName,
 } from "./embedded-fields";
+
+/** The legacy entry a computed field is dual-written as — the shape `ZSurveyVariable` judges. */
+const toLegacyVariable = (storageKey: string) => ({
+  id: storageKey,
+  name: "plan_tier",
+  type: "text" as const,
+  value: "",
+});
 
 const computed = (
   storageKey: string,
@@ -79,28 +90,17 @@ describe("mintStorageKey", () => {
     expect(first).not.toBe("score");
     expect(mintStorageKey("computed", "score")).not.toBe(first);
   });
-});
 
-describe("mintFreeStorageKey", () => {
-  test("refuses an address another field already holds", () => {
-    // The reachable case: a computed field's address is a cuid, which the card displays and offers to
-    // copy, and a cuid is a legal ingested field name. Nothing upstream catches it — the two declare
-    // different names, and `upsertEmbeddedField` keeps both because their sources differ — so without
-    // this the survey only fails at the save, on `@@unique([surveyId, storageKey])`.
-    expect(mintFreeStorageKey("ingested", "cm4abc123", ["cm4abc123"])).toBeNull();
-    expect(mintFreeStorageKey("ingested", "utm_source", ["utm_source"])).toBeNull();
-  });
-
-  test("mints when the address is free", () => {
-    expect(mintFreeStorageKey("ingested", "plan", ["utm_source"])).toBe("plan");
-    expect(mintFreeStorageKey("ingested", "plan", [])).toBe("plan");
-  });
-
-  test("a computed field's fresh id is free by construction", () => {
-    const key = mintFreeStorageKey("computed", "score", ["score"]);
-
-    expect(key).not.toBeNull();
-    expect(key).not.toBe("score");
+  test("a computed field's id is a cuid2, which the legacy variables column requires", () => {
+    // Not cosmetic, and the reason the create form offers an ID input for a passed-in field only:
+    // the rows are dual-written to `survey.variables` until ENG-2404 retires that column, and
+    // `ZSurveyVariable` pins each entry's `id` to `z.cuid2()`. An author-written address would be
+    // refused on save with "Invalid cuid2", pointing at no control.
+    expect(() =>
+      ZSurveyVariable.parse(toLegacyVariable(mintStorageKey("computed", "Plan tier")))
+    ).not.toThrow();
+    // The mutation this guards: hand the same column an author-written address and it is refused.
+    expect(() => ZSurveyVariable.parse(toLegacyVariable("plan_tier"))).toThrow();
   });
 });
 
@@ -167,11 +167,11 @@ describe("cloneSharedFieldToLocal", () => {
     const declaredName = declaredEmbeddedFieldName(cloned);
 
     expect(
-      validateEmbeddedFieldName({
-        name: declaredName,
+      validateEmbeddedFieldDeclaredName({
+        declaredName,
         takenIds: [],
-        otherFieldNames: [],
-        previousName: null,
+        otherDeclaredNames: [],
+        previousDeclaredName: null,
       })
     ).toBeNull();
     expect(declaredName).toBe("plan_tier");
@@ -228,37 +228,52 @@ describe("declaredEmbeddedFieldName", () => {
   });
 });
 
-describe("validateEmbeddedFieldName", () => {
-  const check = (name: string, overrides: Partial<Parameters<typeof validateEmbeddedFieldName>[0]> = {}) =>
-    validateEmbeddedFieldName({ name, takenIds: [], otherFieldNames: [], previousName: null, ...overrides });
+describe("validateEmbeddedFieldDeclaredName", () => {
+  const check = (
+    declaredName: string,
+    overrides: Partial<Parameters<typeof validateEmbeddedFieldDeclaredName>[0]> = {}
+  ) =>
+    validateEmbeddedFieldDeclaredName({
+      declaredName,
+      takenIds: [],
+      otherDeclaredNames: [],
+      previousDeclaredName: null,
+      ...overrides,
+    });
 
   test("accepts a safe identifier nothing else has taken", () => {
     expect(check("plan_tier")).toBeNull();
   });
 
+  // The rules moved off the display name and onto the address, which is what actually has to be an
+  // identifier: a URL parameter spells it, and so does a recall token.
+  test("judges the address, leaving the display name free", () => {
+    expect(check("plan_tier", { otherDeclaredNames: ["Plan Tier"] })).toBeNull();
+  });
+
   // The whole point of delegating to `validateId`'s strict branch: `country` is lowercase with no
   // separators, so only the reserved list refuses it — and the server refuses it for the same reason.
-  test("refuses an auto-captured field's name, in any casing", () => {
+  test("refuses an auto-captured field's address, in any casing", () => {
     expect(check("country")).toEqual({ code: TValidateIdErrorCode.Reserved, field: "country" });
     expect(check("Country")).toEqual({ code: TValidateIdErrorCode.Reserved, field: "Country" });
   });
 
-  test("refuses a name that is not a safe identifier", () => {
+  test("refuses an address that is not a safe identifier", () => {
     expect(check("Plan Tier")?.code).toBe(TValidateIdErrorCode.HasSpaces);
     expect(check("PlanTier")?.code).toBe(TValidateIdErrorCode.NotSafeIdentifier);
     expect(check("")?.code).toBe(TValidateIdErrorCode.Empty);
   });
 
-  test("refuses a name another field or an element already answers to", () => {
-    expect(check("score", { otherFieldNames: ["score"] })?.code).toBe(TValidateIdErrorCode.Duplicate);
+  test("refuses an address another field or an element already answers to", () => {
+    expect(check("score", { otherDeclaredNames: ["score"] })?.code).toBe(TValidateIdErrorCode.Duplicate);
     expect(check("q1", { takenIds: ["q1"] })?.code).toBe(TValidateIdErrorCode.Duplicate);
   });
 
   // The editor's half of the server's grandfather rule: a survey that already declares `country` has
   // to stay editable, or its author could never change the field's type or default.
-  test("leaves an unchanged name alone, whatever it is", () => {
-    expect(check("country", { previousName: "country" })).toBeNull();
-    expect(check("Country", { previousName: "country" })).toBeNull();
+  test("leaves an unchanged address alone, whatever it is", () => {
+    expect(check("country", { previousDeclaredName: "country" })).toBeNull();
+    expect(check("Country", { previousDeclaredName: "country" })).toBeNull();
   });
 });
 
@@ -367,5 +382,75 @@ describe("the columns the server derives back from a card-built list", () => {
     expect(
       toLegacyEmbeddedFields(linkedToDesiredEmbeddedFields(fields), { enabled: true, fieldIds: [] })
     ).toEqual({ variables: [], hiddenFields: { enabled: true, fieldIds: [] } });
+  });
+});
+
+describe("isEmbeddedFieldNameTaken", () => {
+  const taken = (name: string, otherFieldNames: string[]) =>
+    isEmbeddedFieldNameTaken({ name, otherFieldNames });
+
+  test("catches a repeat whatever its casing or padding", () => {
+    // The pickers label a local field by its name and have nothing else to show beside it, so two
+    // fields called `Plan tier` are two identical rows in recall and logic.
+    expect(taken("Plan tier", ["plan TIER"])).toBe(true);
+    expect(taken("  Plan tier  ", ["Plan tier"])).toBe(true);
+  });
+
+  test("leaves a name no other field holds alone", () => {
+    expect(taken("Plan tier", ["Region", "Score"])).toBe(false);
+  });
+
+  test("says nothing about elements, which collide in the other namespace", () => {
+    // A field may perfectly well be named after the question it describes; what it may not do is
+    // take that question's id as its address, which `validateEmbeddedFieldDeclaredName` is for.
+    expect(taken("What is your plan?", [])).toBe(false);
+  });
+});
+
+describe("getEmbeddedFieldErrorMessage", () => {
+  /** Returns the key and whatever was interpolated, so a test can assert both. */
+  const spyT = () =>
+    vi.fn((key: string, params?: Record<string, string>) =>
+      JSON.stringify({ key, ...params })
+    ) as unknown as TFunction;
+
+  const message = (code: TValidateIdErrorCode, label: string, field = "") => {
+    const t = spyT();
+    return JSON.parse(getEmbeddedFieldErrorMessage({ code, field }, label, t));
+  };
+
+  test("names the control the author is looking at, not the entity", () => {
+    // The whole point: the shared `getValidateIdErrorMessage` phrases these as "{Variable,Hidden
+    // field} ID …", which is what told an author naming a passed-in field that their ID could not
+    // contain spaces. Same code, two controls, two sentences.
+    expect(message(TValidateIdErrorCode.HasSpaces, "Key").label).toBe("Key");
+    expect(message(TValidateIdErrorCode.HasSpaces, "Name").label).toBe("Name");
+  });
+
+  test("every code has a sentence of this card's own", () => {
+    // A code falling through would render the key itself at the author, so pin all six.
+    const keys = [
+      TValidateIdErrorCode.Empty,
+      TValidateIdErrorCode.Duplicate,
+      TValidateIdErrorCode.Reserved,
+      TValidateIdErrorCode.HasSpaces,
+      TValidateIdErrorCode.InvalidChars,
+      TValidateIdErrorCode.NotSafeIdentifier,
+    ].map((code) => message(code, "Key").key);
+
+    expect(new Set(keys).size).toBe(keys.length);
+    for (const key of keys) expect(key).toMatch(/^workspace\.embedded_data\./);
+  });
+
+  test("carries the refused spelling for a reserved name", () => {
+    expect(message(TValidateIdErrorCode.Reserved, "Key", "country").field).toBe("country");
+  });
+
+  test("a taken address is answered without naming a control", () => {
+    // It is the one refusal that is about the survey rather than about what was typed, so it reads
+    // the same whichever control holds the declared name.
+    expect(message(TValidateIdErrorCode.Duplicate, "Key")).toStrictEqual({
+      key: "workspace.embedded_data.survey_field_address_taken",
+    });
   });
 });

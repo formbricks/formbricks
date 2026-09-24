@@ -28,7 +28,8 @@ interface AddEmbeddedFieldModalProps {
   /** The addresses this survey's fields occupy. */
   takenStorageKeys: string[];
   /** Every declared name — what makes a repeat a duplicate. */
-  otherFieldNames: string[];
+  otherDeclaredNames: string[];
+  otherDisplayNames: string[];
   locale: string;
   responseCount: number;
   onLink: (field: TLinkableSharedField) => void;
@@ -56,7 +57,8 @@ export const AddEmbeddedFieldModal = ({
   persistedFields,
   takenIds,
   takenStorageKeys,
-  otherFieldNames,
+  otherDeclaredNames,
+  otherDisplayNames,
   locale,
   responseCount,
   onLink,
@@ -84,7 +86,8 @@ export const AddEmbeddedFieldModal = ({
           entry={null}
           takenIds={takenIds}
           takenStorageKeys={takenStorageKeys}
-          otherFieldNames={otherFieldNames}
+          otherDeclaredNames={otherDeclaredNames}
+          otherDisplayNames={otherDisplayNames}
           locale={locale}
           // A field that does not exist yet has no stored type and nothing to reinterpret, so the
           // retyping question this pair drives can never be asked from here.

@@ -25,6 +25,12 @@ import {
  */
 export interface TEmbeddedFieldDraft {
   name: string;
+  /**
+   * The address the field's value lives under, which the author now writes rather than the form
+   * deriving it from the name. Empty on a field that has never been saved and whose name the author
+   * has not typed yet; read-only once the field exists, like the library's `key`.
+   */
+  storageKey: string;
   source: TEmbeddedDataSource;
   dataType: TEmbeddedDataType;
   /** Every control's value as the DOM holds it — a string, even where the stored column is not one. */
@@ -72,6 +78,7 @@ export const toCandidateRow = (draft: TEmbeddedFieldDraft): TEmbeddedData => ({
 export const ZEmbeddedFieldDraft = z
   .object({
     name: z.string(),
+    storageKey: z.string(),
     source: ZEmbeddedDataSource,
     dataType: ZEmbeddedDataType,
     defaultValue: z.string(),
@@ -92,6 +99,10 @@ export const ZEmbeddedFieldDraft = z
  */
 export const toEmbeddedFieldDraft = (entry: TLinkedEmbeddedField | null): TEmbeddedFieldDraft => ({
   name: entry?.field.name ?? "",
+  // A field the survey already has is shown at the address it is stored under. For one migrated from
+  // a hidden field that is also its name, because the two were one string before this form separated
+  // them — which is why the create form derives the address from the name rather than minting a cuid.
+  storageKey: entry?.link.storageKey ?? "",
   source: entry?.field.source ?? "ingested",
   dataType: entry?.field.dataType ?? "string",
   defaultValue: formatDefaultValueDraft(entry?.field.defaultValue ?? null),
