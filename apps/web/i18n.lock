@@ -174,6 +174,7 @@ checksums:
     common/allow_users_to_exit_by_clicking_outside_the_survey: 1c09db6e85214f1b1c3d4774c4c5cd56
     common/an_unknown_error_occurred_while_deleting_table_items: 06be3fd128aeb51eed4fba9a079ecee2
     common/analysis: 409bac6215382c47e59f5039cc4cdcdd
+    common/analyze: af1ac2f4d577f39533d24a24a0d08d37
     common/and: dc75b95c804b16dc617a5f16f7393bca
     common/anonymous: 77b5222e710cc1dae073dae32309f8ed
     common/api_keys: f961b547cd312cc8b9b79f0c9e0b2cc3
@@ -186,6 +187,7 @@ checksums:
     common/archive: fa813ab3074103e5daad07462af25789
     common/archived: cf5127ecfd7e43a35466a1ba5fe16450
     common/are_you_sure: 6d5cd13628a7887711fd0c29f1123652
+    common/ask: 24150ae04c60dcd8688d93a8a3a2d238
     common/attempt: fbe2d20432424e164245e13ff9195310
     common/attributes: 86d0ae6fea0fbb119722ed3841f8385a
     common/authorized_apps: 62c2c8e6703c9e5224e98294a53e1884

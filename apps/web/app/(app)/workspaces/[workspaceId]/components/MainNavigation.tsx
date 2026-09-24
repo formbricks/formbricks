@@ -179,8 +179,7 @@ export const MainNavigation = ({
     () => [
       {
         id: "ask",
-        // Product section (IA) label — intentionally not localized (kept in English across all locales)
-        name: "Ask",
+        name: t("common.ask"),
         items: [
           {
             name: t("common.surveys"),
@@ -204,9 +203,8 @@ export const MainNavigation = ({
       },
       {
         id: "unify-feedback",
-        // Same policy as "Ask" above: product section labels stay English in every locale.
         // Was "Unify" until ENG-2742 settled on Ask / Analyze / Act as the three pillars.
-        name: sectionLabelWithBeta("Analyze"),
+        name: sectionLabelWithBeta(t("common.analyze")),
         items: [
           {
             name: t("workspace.unify.feedback_data"),
@@ -228,10 +226,6 @@ export const MainNavigation = ({
       },
       {
         id: "act",
-        // Kept translated, unlike "Ask" and "Analyze" above. Those two are deliberately English in
-        // every locale; this one has been going through t() since it was added. Making the three
-        // consistent means dropping a string 15 locales already translate, which is a naming
-        // decision rather than a side effect of adding a badge — see ENG-2742.
         name: sectionLabelWithBeta(t("common.act")),
         items: [
           {
