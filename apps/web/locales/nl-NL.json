@@ -3205,6 +3205,7 @@
         "ai_translation_all_fields_populated": "Alle velden zijn al vertaald",
         "ai_translation_complete": "AI-vertaling voltooid",
         "ai_translation_failed": "Vertaling mislukt",
+        "ai_translation_output_too_long": "Deze enquête bevat te veel tekst om in één keer te vertalen. Vertaal enkele velden handmatig en probeer het opnieuw.",
         "ai_translation_quota_exceeded": "Vertaling is tijdelijk niet beschikbaar vanwege grote vraag. Probeer het over een moment opnieuw.",
         "all_are_true": "alle zijn waar",
         "all_other_answers_will_continue_to_fallback": "Alle andere antwoorden blijven <fallbackSelect />",
