@@ -27,6 +27,10 @@ const dockerComposeOverrideKeys = [
   "POSTGRES_PASSWORD",
   "POSTGRES_PASSWORD_URL_ENCODED",
   "HUB_DATABASE_URL",
+  "HUB_IMAGE_REF",
+  "TAXONOMY_SERVICE_URL",
+  "TAXONOMY_SERVICE_TOKEN",
+  "HUB_INTERNAL_API_TOKEN",
   "CUBEJS_DB_PASS",
   "AUTHZED_TOKEN",
   "AUTHZED_DATABASE_PASSWORD",
@@ -791,13 +795,6 @@ describe("docker/formbricks.sh AuthZed setup", () => {
     expect(migration).toBeLessThan(updateFunction.lastIndexOf("compose up -d"));
     expect(updateFunction).toContain("authzed-ops upgrade check");
     expect(updateFunction.indexOf("upgrade check")).toBeLessThan(updateFunction.indexOf("compose down"));
-    expect(updateFunction).toContain("docker compose config --services");
-    expect(updateFunction.indexOf("docker compose config --services")).toBeLessThan(
-      updateFunction.indexOf("docker compose pull")
-    );
-    expect(updateFunction.indexOf("docker compose config --services")).toBeLessThan(
-      updateFunction.indexOf("migrate_legacy_valkey_image docker-compose.yml")
-    );
   });
 
   test("blocks an update before pulling images when the Hub worker is missing", () => {

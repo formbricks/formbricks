@@ -143,11 +143,11 @@ installation keeps its local `docker-compose.yml` during `formbricks.sh update`,
 updating; the updater now exits before pulling images, running migrations, or stopping services when the
 resolved Compose project does not contain `hub-worker`.
 
-1. Back up the customized Compose file, then download the file from the release you are upgrading to. Use that
+1. Start in the directory containing your customized `docker-compose.yml`, then back it up and download the file
+   from the release you are upgrading to. For a one-click installation, run `cd formbricks` first. Use that
    release's tag instead of `stable` when your deployment is pinned.
 
    ```bash
-   cd formbricks
    cp -p docker-compose.yml docker-compose.yml.before-hub-worker
    curl -fsSL -o docker-compose.release.yml \
      https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
@@ -184,10 +184,17 @@ The worker has no HTTP health endpoint. A stable process and decreasing queue ar
 restarts, verify PostgreSQL connectivity and every configured enrichment provider credential. Jobs already in
 River remain stored in PostgreSQL and begin draining when the worker starts; no repair or re-enqueue is required.
 
-To roll back only this change, stop the worker and restore the backed-up Compose file. Completed jobs remain
-committed and pending jobs remain queued, but all Hub asynchronous processing pauses again. A fully custom
-deployment that runs Hub workers outside this Compose project must use its own manual upgrade workflow rather
-than the one-click updater.
+To roll back only this change, remove the worker container before restoring the backed-up Compose file so its
+`restart: always` policy cannot start it again:
+
+```bash
+docker compose rm -fs hub-worker
+cp -p docker-compose.yml.before-hub-worker docker-compose.yml
+```
+
+Completed jobs remain committed and pending jobs remain queued, but all Hub asynchronous processing pauses
+again. A fully custom deployment that runs Hub workers outside this Compose project must use its own manual
+upgrade workflow rather than the one-click updater.
 
 ## v5.4
 
