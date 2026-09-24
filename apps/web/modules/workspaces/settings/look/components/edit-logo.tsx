@@ -74,6 +74,9 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
     try {
       const updatedWorkspace = {
         logo: { url: logoUrl, bgColor: isBgColorEnabled ? logoBgColor : undefined },
+        // The server rejects the write if the workspace changed since this page loaded, so a stale
+        // tab cannot restore a logo url whose object another save has already deleted.
+        expectedUpdatedAt: workspace.updatedAt,
       };
       const updateWorkspaceResponse = await updateWorkspaceAction({
         workspaceId: workspace.id,
@@ -83,6 +86,11 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
         toast.success(t("workspace.look.logo_updated_successfully"));
         router.refresh();
       } else {
+        // Deliberately no refresh here. The draft below lives in useState and is seeded once, so
+        // refreshing would hand this page a current `updatedAt` while it still holds the old logo
+        // url — the next save would then pass the version check and restore a deleted object.
+        // Leaving the stale baseline in place keeps every retry rejected until the user reloads,
+        // which is what the message asks for.
         const errorMessage = getFormattedErrorMessage(updateWorkspaceResponse);
         toast.error(errorMessage);
       }
@@ -105,6 +113,7 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
     try {
       const updatedWorkspace = {
         logo: { url: undefined, bgColor: undefined },
+        expectedUpdatedAt: workspace.updatedAt,
       };
       const updateWorkspaceResponse = await updateWorkspaceAction({
         workspaceId: workspace.id,
@@ -114,6 +123,7 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
         toast.success(t("workspace.look.logo_removed_successfully"));
         router.refresh();
       } else {
+        // Same as saveChanges: no refresh, so a rejected stale save cannot pick up a fresh baseline.
         const errorMessage = getFormattedErrorMessage(updateWorkspaceResponse);
         toast.error(errorMessage);
       }
