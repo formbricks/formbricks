@@ -1,6 +1,12 @@
 x-formbricks-database: &formbricks-database
   DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD_URL_ENCODED:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}@postgres:5432/formbricks?schema=public"
 
+x-hub-runtime-environment: &hub-runtime-environment
+  DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD_URL_ENCODED:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}@postgres:5432/formbricks?sslmode=disable}
+  TAXONOMY_SERVICE_URL: ${TAXONOMY_SERVICE_URL:-}
+  TAXONOMY_SERVICE_TOKEN: ${TAXONOMY_SERVICE_TOKEN:-}
+  HUB_INTERNAL_API_TOKEN: ${HUB_INTERNAL_API_TOKEN:-}
+
 x-environment: &environment
   environment: &app-environment
     ######################################################## REQUIRED ########################################################
@@ -445,7 +451,7 @@ services:
   # Run Hub DB migrations (goose + river) before the API starts. Uses same image; migrations are idempotent.
   # Default tracks :latest so self-host updates (compose pull) advance Hub alongside the app image.
   # Operators who want an immutable pin can set HUB_IMAGE_REF in docker/.env to either ":<tag>"
-  # (e.g. ":0.3.0") or "@sha256:<digest>". hub and hub-migrate share the same value — no drift.
+  # (e.g. ":0.3.0") or "@sha256:<digest>". hub, hub-worker, and hub-migrate share the same value — no drift.
   hub-migrate:
     image: ghcr.io/formbricks/hub${HUB_IMAGE_REF:-:latest}
     restart: "no"
@@ -470,11 +476,22 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      <<: *hub-runtime-environment
       API_KEY: ${HUB_API_KEY:-}
-      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD_URL_ENCODED:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}@postgres:5432/formbricks?sslmode=disable}
-      TAXONOMY_SERVICE_URL: ${TAXONOMY_SERVICE_URL:-}
-      TAXONOMY_SERVICE_TOKEN: ${TAXONOMY_SERVICE_TOKEN:-}
-      HUB_INTERNAL_API_TOKEN: ${HUB_INTERNAL_API_TOKEN:-}
+
+  # Hub worker processes every asynchronous Hub job, including webhooks and configured enrichments.
+  hub-worker:
+    restart: always
+    image: ghcr.io/formbricks/hub${HUB_IMAGE_REF:-:latest}
+    depends_on:
+      hub-migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    entrypoint: ["/app/hub-worker"]
+    healthcheck:
+      disable: true
+    environment: *hub-runtime-environment
 
   # Optional AI taxonomy beta service. Enable with COMPOSE_PROFILES=taxonomy.
   taxonomy:

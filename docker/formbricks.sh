@@ -1308,6 +1308,20 @@ update_formbricks() {
   echo "🔄 Updating Formbricks..."
   cd formbricks
 
+  local compose_services
+  if ! compose_services=$(sudo docker compose config --services); then
+    echo "❌ Could not render docker-compose.yml. No images were pulled and no services were stopped." >&2
+    echo "Fix the Compose error, run 'docker compose config', and retry the update." >&2
+    exit 1
+  fi
+
+  if ! printf '%s\n' "$compose_services" | grep -Fxq "hub-worker"; then
+    echo "❌ This installation does not contain the required Hub worker service." >&2
+    echo "Your customized Compose file was not changed. Merge the release-matched hub-worker service, validate it with 'docker compose config', and retry." >&2
+    echo "https://formbricks.com/docs/self-hosting/advanced/migration#hub-worker-required-for-docker" >&2
+    exit 1
+  fi
+
   migrate_legacy_valkey_image docker-compose.yml
 
   if ! grep -Eq '^  authzed-ops:$' docker-compose.yml || ! grep -Eq '^  spicedb:$' docker-compose.yml; then
