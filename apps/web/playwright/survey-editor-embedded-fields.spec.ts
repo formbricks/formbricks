@@ -335,7 +335,7 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
 
     // The error names the field, and the field is NOT added to the card.
     await expect(
-      page.getByText('Hidden field ID "country" is not allowed. It is a reserved keyword.', {
+      page.getByText("Hidden field ID “country” is not allowed. It is a reserved keyword.", {
         exact: true,
       })
     ).toBeVisible();
@@ -349,7 +349,7 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     await input.fill("Country");
     await addButton.click();
     await expect(
-      page.getByText('Hidden field ID "Country" is not allowed. It is a reserved keyword.', {
+      page.getByText("Hidden field ID “Country” is not allowed. It is a reserved keyword.", {
         exact: true,
       })
     ).toBeVisible();
@@ -392,7 +392,7 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
 
     // Inline under the field rather than a toast — that is how this card reports name errors.
     await expect(
-      createForm.getByText('Variable ID "country" is not allowed. It is a reserved keyword.', {
+      createForm.getByText("Variable ID “country” is not allowed. It is a reserved keyword.", {
         exact: true,
       })
     ).toBeVisible();
@@ -401,7 +401,7 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     await nameInput.fill("Country");
     await createForm.getByRole("button", { name: "Add variable", exact: true }).click();
     await expect(
-      createForm.getByText('Variable ID "Country" is not allowed. It is a reserved keyword.', {
+      createForm.getByText("Variable ID “Country” is not allowed. It is a reserved keyword.", {
         exact: true,
       })
     ).toBeVisible();

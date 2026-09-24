@@ -6,6 +6,7 @@ import { DEFAULT_LOCALE, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
+import { canGrantOrganizationWriteAccess } from "@/modules/organization/settings/api-keys/lib/organization-access";
 import { getWorkspacesByOrganizationId } from "@/modules/organization/settings/api-keys/lib/workspaces";
 import { redirectBillingRoleFromRestrictedOrgSettings } from "@/modules/settings/lib/redirect-billing-role";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -40,9 +41,14 @@ export const APIKeysPage = async (props: Readonly<{ params: Promise<{ organizati
     })
   );
 
-  const [workspaces, locale] = await Promise.all([
+  // ENG-3075: the organization-access *write* toggle mints a key that can manage the organization's
+  // users, teams and workspace-team grants, so it is offered only to someone who clears
+  // USER_MANAGEMENT_MINIMUM_ROLE. `createApiKeyAction` asks the same question — this only keeps the UI
+  // from offering what the mutation would refuse.
+  const [workspaces, locale, canGrantWriteAccess] = await Promise.all([
     getWorkspacesByOrganizationId(organization.id),
     getUserLocale(session.user.id),
+    canGrantOrganizationWriteAccess(session.user.id, organization.id),
   ]);
 
   return (
@@ -70,6 +76,7 @@ export const APIKeysPage = async (props: Readonly<{ params: Promise<{ organizati
           locale={locale ?? DEFAULT_LOCALE}
           workspaces={workspaces}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+          canGrantOrganizationWriteAccess={canGrantWriteAccess}
         />
       </SettingsCard>
     </PageContentWrapper>

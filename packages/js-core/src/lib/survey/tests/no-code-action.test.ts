@@ -179,7 +179,7 @@ describe("no-code-event-listeners file", () => {
     getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
 
     const mockTimeoutStack = {
-      getTimeouts: vi.fn().mockReturnValue([{ event: "pageViewAction", timeoutId: 123 }]),
+      getTimeouts: vi.fn().mockReturnValue([{ event: "pageViewAction", timeoutId: 123, fired: false }]),
       remove: vi.fn(),
       add: vi.fn(),
     };
@@ -191,6 +191,47 @@ describe("no-code-event-listeners file", () => {
     expect(trackNoCodeAction).not.toHaveBeenCalled();
     expect(mockTimeoutStack.remove).toHaveBeenCalledWith(123);
     expect(setIsSurveyRunning).toHaveBeenCalledWith(false);
+  });
+
+  test("checkPageUrl drops a fired timeout on an invalid url but leaves isSurveyRunning alone", async () => {
+    // The entry's survey is already on screen. Releasing the guard here is what let a second survey
+    // render on top of the first (ENG-2849).
+    (handleUrlFilters as Mock).mockReturnValue(false);
+
+    const mockConfigValue = {
+      get: vi.fn().mockReturnValue({
+        workspace: {
+          data: {
+            actionClasses: [
+              {
+                name: "pageViewAction",
+                type: "noCode",
+                noCodeConfig: {
+                  type: "pageView",
+                  urlFilters: [{ value: "/fail", rule: "contains" }],
+                },
+              },
+            ],
+          },
+        },
+      }),
+    };
+
+    getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
+
+    const mockTimeoutStack = {
+      getTimeouts: vi.fn().mockReturnValue([{ event: "pageViewAction", timeoutId: 123, fired: true }]),
+      remove: vi.fn(),
+      add: vi.fn(),
+    };
+
+    getInstanceTimeoutStackMock.mockReturnValue(mockTimeoutStack as unknown as TimeoutStack);
+
+    await checkPageUrl();
+
+    // Still pruned — a spent entry is garbage either way — but the guard stays held.
+    expect(mockTimeoutStack.remove).toHaveBeenCalledWith(123);
+    expect(setIsSurveyRunning).not.toHaveBeenCalled();
   });
 
   test("addPageUrlEventListeners adds event listeners to window, patches history if not patched", () => {
@@ -945,7 +986,7 @@ describe("time on page action handling", () => {
     getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
 
     const mockTimeoutStack = {
-      getTimeouts: vi.fn().mockReturnValue([{ event: "dwellAction", timeoutId: 999 }]),
+      getTimeouts: vi.fn().mockReturnValue([{ event: "dwellAction", timeoutId: 999, fired: false }]),
       remove: vi.fn(),
       add: vi.fn(),
     };
@@ -963,5 +1004,34 @@ describe("time on page action handling", () => {
 
     expect(mockTimeoutStack.remove).toHaveBeenCalledWith(999);
     expect(setIsSurveyRunning).toHaveBeenCalledWith(false);
+  });
+
+  test("leaves isSurveyRunning alone when a time on page action's survey has already rendered", async () => {
+    // Same release-the-guard bug as the page-view path, reached through checkTimeOnPage instead.
+    (handleUrlFilters as Mock).mockReturnValue(true);
+    (trackNoCodeAction as Mock).mockResolvedValue({ ok: true });
+
+    const mockConfig = createConfigWithTimeOnPageAction("dwellAction", 5);
+    getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+
+    const mockTimeoutStack = {
+      getTimeouts: vi.fn().mockReturnValue([{ event: "dwellAction", timeoutId: 999, fired: true }]),
+      remove: vi.fn(),
+      add: vi.fn(),
+    };
+    getInstanceTimeoutStackMock.mockReturnValue(mockTimeoutStack as unknown as TimeoutStack);
+
+    vi.stubGlobal("window", {
+      location: { href: "https://example.com/dashboard" },
+      setTimeout: globalThis.setTimeout,
+    });
+
+    await checkPageUrl();
+
+    (handleUrlFilters as Mock).mockReturnValue(false);
+    await checkPageUrl();
+
+    expect(mockTimeoutStack.remove).toHaveBeenCalledWith(999);
+    expect(setIsSurveyRunning).not.toHaveBeenCalled();
   });
 });

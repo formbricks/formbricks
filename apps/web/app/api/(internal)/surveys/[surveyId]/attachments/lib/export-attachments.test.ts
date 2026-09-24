@@ -82,7 +82,7 @@ describe("streamAttachmentsAsZip", () => {
     vi.clearAllMocks();
   });
 
-  test("sets the streaming download headers", () => {
+  test("sets the streaming download headers", async () => {
     mockedGetFileStream.mockResolvedValue(streamOf("x") as never);
 
     const response = streamAttachmentsAsZip({ entries: [okEntry()], survey, now: NOW });
@@ -93,6 +93,13 @@ describe("streamAttachmentsAsZip", () => {
       'attachment; filename="survey-1-attachments-2026-09-01.zip"'
     );
     expect(response.headers.get("Cache-Control")).toBe("no-store");
+
+    // Drained even though this test asserts nothing about the bytes. `streamAttachmentsAsZip` starts
+    // its pipeline when it is called, not when the body is read, so an unconsumed response keeps
+    // running into the next test and appends a second `buildAttachmentManifestCsv` call there — which
+    // reads `.at(-1)`, and so sees whichever call happened to land last. This is the only call site in
+    // the file that does not already go through `readArchive`.
+    await readArchive(response);
   });
 
   test("writes each attachment at its zip path and appends a manifest", async () => {

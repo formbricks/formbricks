@@ -19,10 +19,25 @@ Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surf
 Turbo runs a task only in packages that define the matching script and **silently skips** the rest.
 Every `packages/*` workspace therefore exposes the standard `lint` / `typecheck` / `test` /
 `test:coverage` scripts (plus `build` where there is a compile step). Deliberate exceptions:
-`config-*` packages hold only config files (no scripts beyond `clean`); `types` has no runtime logic
-to test; `email`, `types`, and `vite-plugins` are consumed from source, so they have no `build`;
-`apps/storybook` has no unit tests by policy (its components are exercised by the feature journeys in
-`apps/web/playwright`). Keep new packages on this matrix or document the exception here.
+`config-*` packages hold only config files (no scripts beyond `clean`); `email`, `types`, and
+`vite-plugins` are consumed from source, so they have no `build`; `apps/storybook` has no unit tests
+by policy (its components are exercised by the feature journeys in `apps/web/playwright`). Keep new
+packages on this matrix or document the exception here.
+
+`types` is mostly declarations, but `validation.ts` is runtime logic and is tested like any other
+package — it is in Sonar's scope (ENG-2432), so treat it as covered code, not as a types-only
+workspace.
+
+Consuming one of those source-only packages from another package's build config
+(`../vite-plugins/node-next-dts`, `.../postcss-scope-fbjs.cjs`, `.../copy-compiled-assets`) takes two
+things: declare it in `devDependencies`, and give every build task that reads it a `^build` /
+`^build:dev` edge. The declaration alone invalidates nothing — a task's hash folds in the tasks named
+in `dependsOn`, so the `^` edge is what carries the helper's contents. A root `pkg#task` block
+overwrites the shared task config outright — nothing is inherited — so the `^` entry has to be
+repeated in every block that declares the task, or a helper edit silently replays an older build
+(ENG-1681, ENG-2925). A package's own `turbo.json` behaves differently: it inherits the shared config
+per field, so it only needs `dependsOn` when it is changing it. Guarded by
+`apps/web/lib/turbo-vite-plugins-edge.test.ts`.
 
 ### Shared dependency versions (pnpm catalog)
 
@@ -50,9 +65,13 @@ workspace globs from `pnpm-workspace.yaml` itself.
 The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the built bundle is copied to `apps/web/public/js/`. The Next.js app imports from `dist/`, **not** the source files. This means:
 
 - After any change to `packages/surveys` or its dependencies (`packages/survey-ui`, `packages/types`, etc.), you **must rebuild** for changes to take effect in the running app.
-- Turborepo caches build outputs aggressively. Always use `--force` to bypass the cache when iterating on survey packages:
+- Turborepo caches build outputs aggressively. The copied bundles are declared outputs of the two
+  packages' `build` tasks (`$TURBO_ROOT$/apps/web/public/js/…`), so a `pnpm build` cache hit restores
+  them together with `dist/**` instead of leaving the app without `/js/formbricks.umd.cjs`
+  (ENG-2924). Only `build` declares them: `build:dev` copies through the same plugin, and a second task
+  declaring the same paths makes each cache entry capture whatever the other left on disk. If a build
+  still looks stale, bypass the cache explicitly:
   ```
-  rm -rf packages/surveys/dist apps/web/public/js/surveys.* node_modules/.cache/turbo
   pnpm build --filter=@formbricks/surveys... --force
   ```
 - The browser also caches the UMD bundle (`surveys.umd.cjs`) served from `public/js/`. After rebuilding, do a **hard refresh** (Cmd+Shift+R / Ctrl+Shift+R) or disable the browser cache via DevTools to pick up the new bundle.
@@ -115,8 +134,8 @@ ship their own CSS rather than relying on the app to scan them:
 
 - `@formbricks/surveys` — prebuilt bundle served from `apps/web/public/js/` (see the section above).
 - `@formbricks/survey-ui` — exports `./styles` (`dist/survey-ui.css`), scoped to `#fbjs`.
-- `@formbricks/email` — ships no stylesheet at all; `@react-email/tailwind` compiles and inlines the
-  classes into the email HTML at render time.
+- `@formbricks/email` — ships no stylesheet at all; `react-email`'s `Tailwind` component compiles and
+  inlines the classes into the email HTML at render time.
 
 If you ever consume a workspace package as raw source **for its styling**, the app has to be told
 about that package's files explicitly — detection stops at the app's own root, so nothing else will

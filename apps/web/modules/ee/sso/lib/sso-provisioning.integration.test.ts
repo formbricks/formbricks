@@ -40,6 +40,9 @@ describe("SSO provisioning (real Postgres)", () => {
     const decision = await gateSsoProvisioning({ email: "first@example.com", callbackUrl: "" });
     expect(decision).toEqual({
       action: "provision",
+      // ENG-2247: freshness is read from the real empty database here, not a mock, so this also pins
+      // that the single-use bootstrap marker is what the SSO gate hands to the insert.
+      isBootstrapAdmin: true,
       organizationId: null,
       assignToDefaultTeam: false,
       signupSource: "direct",

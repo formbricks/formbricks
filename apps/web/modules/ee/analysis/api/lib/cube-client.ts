@@ -3,6 +3,8 @@ import cubejs, { type Query } from "@cubejs-client/core";
 import { randomUUID } from "node:crypto";
 import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
+import { getReportingTimeZone } from "@/lib/date-ranges";
+import { getOrganization } from "@/lib/organization/service";
 import { expandPresetDateRanges } from "@/modules/ee/analysis/lib/date-presets";
 import { isRatioMeasure } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
@@ -139,9 +141,21 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
     throw error;
   }
 
+  // Calendar days in the query are cut in the organization's reporting zone (see `@/lib/date-ranges`),
+  // the same zone the survey summary filter uses, so a chart and the Summary tab agree on a window.
+  let timeZone: string;
+  try {
+    const organization = await getOrganization(input.organizationId);
+    timeZone = getReportingTimeZone(organization?.displayTimeZone);
+  } catch (error) {
+    queueCubeQueryAuditEvent({ error, input, requestId, status: "failure" });
+    logger.error(error, "Cube query time zone lookup failed");
+    throw error;
+  }
+
   try {
     const client = cubejs(token, { apiUrl });
-    const resultSet = await client.load(expandPresetDateRanges(input.query) as Query);
+    const resultSet = await client.load(expandPresetDateRanges(input.query, timeZone) as Query);
     const measures = input.query.measures ?? [];
     const granular = (input.query.timeDimensions ?? []).filter((td) => Boolean(td.granularity));
     const filled = resultSet.tablePivot({ fillWithValue: NULL_FILL_SENTINEL });

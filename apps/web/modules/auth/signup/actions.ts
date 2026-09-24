@@ -35,8 +35,9 @@ import {
   SIGNUP_INTENT_COOKIE_OPTIONS,
   createSignupIntentToken,
 } from "@/modules/auth/lib/signup-intent";
-import { isUninvitedSignupAllowed } from "@/modules/auth/lib/signup-policy";
+import { resolveUninvitedSignupAdmission } from "@/modules/auth/lib/signup-policy";
 import {
+  markBootstrapAdminSignup,
   markSignupDomainAllowed,
   runWithSignupRequestContext,
 } from "@/modules/auth/lib/signup-request-context";
@@ -347,11 +348,15 @@ async function handlePostUserCreation(
  * The two sign-up gates that used to live only in `signup/page.tsx`, enforced here so a direct POST to
  * this action cannot walk around them. Extracted from `createUserAction` to keep that function within
  * the cognitive-complexity budget.
+ *
+ * Returns WHICH grant admitted the sign-up, because the two are not interchangeable downstream: only
+ * the fresh-instance exception is single-use, and `user.create.before` needs to know that to stamp the
+ * bootstrap marker (ENG-2247).
  */
 async function assertSignupPolicyAllows(
   inviteToken: string | undefined,
   inviteMatch: InviteMatch
-): Promise<void> {
+): Promise<{ isBootstrapAdmin: boolean }> {
   // A supplied-but-unusable invite is rejected before the user row is created, so a bad token can't
   // leave an orphaned account behind (handleInviteAcceptance would otherwise throw after signup).
   if (inviteToken && inviteMatch !== "valid") {
@@ -360,17 +365,22 @@ async function assertSignupPolicyAllows(
   }
 
   // A valid invite is an independent grant — it admits the holder whatever the instance policy says.
+  // Never the bootstrap administrator, even on an empty instance: the grant is the invite, not the
+  // exception, and spending the single-use marker here would lock out the operator it is reserved for.
   if (inviteMatch === "valid") {
-    return;
+    return { isBootstrapAdmin: false };
   }
 
   // No invite, so it comes down to instance policy: public sign-up genuinely open, or the initial
   // administrator during fresh-instance setup, who has no invite to present. That predicate is shared
   // with the Better Auth hooks (signup-policy.ts) — writing it out twice is what left Better Auth's
   // native /sign-up/email open after this action was fixed (ENG-2073 → ENG-2293).
-  if (!(await isUninvitedSignupAllowed())) {
+  const admission = await resolveUninvitedSignupAdmission();
+  if (admission === "denied") {
     throw new InvalidInputError(SIGNUP_DISABLED_ERROR_CODE);
   }
+
+  return { isBootstrapAdmin: admission === "fresh-instance" };
 }
 
 export const createUserAction = actionClient.inputSchema(ZCreateUserAction).action(
@@ -385,7 +395,7 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     const inviteToken = parsedInput.inviteToken?.trim() || undefined;
     const inviteMatch = await resolveInviteMatch(inviteToken, parsedInput.email);
 
-    await assertSignupPolicyAllows(inviteToken, inviteMatch);
+    const { isBootstrapAdmin } = await assertSignupPolicyAllows(inviteToken, inviteMatch);
 
     // Formbricks Cloud only: reject personal/free/disposable email domains before any user is created.
     // Invited users are exempt unless SIGNUP_DOMAIN_CHECK_ON_INVITES is enabled.
@@ -398,6 +408,9 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     // /sign-up/email endpoint (which bypasses the action and is re-checked in the hook).
     const outcome = await runWithSignupRequestContext(() => {
       markSignupDomainAllowed();
+      // ENG-2247: carried into user.create.before, which stamps the marker on the row it inserts. The
+      // unique index on that column is what makes two concurrent fresh-instance sign-ups resolve to one.
+      if (isBootstrapAdmin) markBootstrapAdminSignup();
       return signUpUserSafely(
         parsedInput.email,
         parsedInput.name,

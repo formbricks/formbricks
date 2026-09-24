@@ -10,7 +10,7 @@ import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-cli
 import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { dropEmptyMeasureRows } from "@/modules/ee/analysis/charts/lib/empty-measure-rows";
-import { resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
+import { pruneOptionLabels, resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
 import { checkFeedbackDirectoryAccess } from "@/modules/ee/analysis/lib/access";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
@@ -67,12 +67,15 @@ async function executeWidgetQuery(
       source: "dashboards.widget",
     });
 
+    // Mirror the chart builder again: groups that no selected measure can answer for are dropped
+    // rather than rendered as blank bars and empty Chart Data rows (ENG-3150).
+    const rows = dropEmptyMeasureRows(Array.isArray(data) ? data : [], rewrittenQuery);
+    const usedLabels = pruneOptionLabels(rewrittenQuery, rows, optionLabels);
+
     return {
-      // Mirror the chart builder again: groups that no selected measure can answer for are dropped
-      // rather than rendered as blank bars and empty Chart Data rows (ENG-3150).
-      data: dropEmptyMeasureRows(Array.isArray(data) ? data : [], rewrittenQuery),
+      data: rows,
       query: rewrittenQuery,
-      ...(optionLabels ? { optionLabels } : {}),
+      ...(usedLabels ? { optionLabels: usedLabels } : {}),
     };
   } catch (error) {
     logger.error(error, "Failed to load dashboard widget data");

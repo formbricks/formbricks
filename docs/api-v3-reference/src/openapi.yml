@@ -50,8 +50,9 @@ info:
     body**, not as a query parameter. Single-resource endpoints
     (`GET`/`PATCH`/`DELETE /api/v3/surveys/{surveyId}`) locate the resource by
     its globally-unique id and resolve the workspace from it, so they do **not**
-    accept a `workspaceId` query parameter — sending one returns **400**
-    (`Unrecognized key: "workspaceId"`).
+    accept a `workspaceId` query parameter — sending one returns **400** with an
+    `invalid_params` entry naming the key itself (`name: "workspaceId"`,
+    `reason: "Unsupported field 'workspaceId'"`), rather than one naming the body.
 
 
     **Auth**
@@ -131,6 +132,15 @@ info:
     that costing round-trippability, the **detailed read returns `data` unchanged** — so a
     single-response read can be edited and sent back as `PATCH { "data": … }`, and the typed
     `answers[]` array is an addition rather than a replacement.
+
+
+    One case where that round trip does not close: a write bound applies to `data` on the way in
+    (`ResponseDataMapInput`) and none applies to the stored map, because v1 and v2 wrote it without
+    one. A response carrying more answer keys than the write accepts therefore cannot be corrected
+    through `PATCH` at all — the whole map is rejected, and sending a smaller one is not a
+    workaround, because `data` is replaced wholesale and every key left out is deleted. Correct
+    those through the v1/v2 management API or the dashboard. This is reachable only on surveys with
+    more elements than the bound allows.
 
     Embedded Data is the exception, and it is symmetric rather than round-tripped: hidden fields and
     variables are read and written through `embeddedData`, addressed by **name** in both directions.
@@ -368,3 +378,15 @@ components:
       description: >
         Management API key; must include **workspaceId** as an allowed workspace
         with read, write, or manage permission.
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: >
+        The same management API key, presented as `Authorization: Bearer <key>`
+        instead of `x-api-key`. Equivalent in every way — same key, same
+        workspace permissions — and offered because it is what most HTTP clients
+        and SDK generators reach for by default.
+
+        A **401** from any operation that accepts it carries
+        `WWW-Authenticate: Bearer realm="formbricks"`. Session-only operations
+        accept neither this nor `x-api-key`.

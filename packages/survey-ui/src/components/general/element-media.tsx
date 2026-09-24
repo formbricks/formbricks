@@ -38,7 +38,7 @@ interface ElementMediaProps {
   altText?: string;
 }
 
-function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: Readonly<ElementMediaProps>): React.ReactNode {
+function ElementMedia({ imgUrl, videoUrl, altText }: Readonly<ElementMediaProps>): React.ReactNode {
   // Every sink is validated, not just the href. `ZStorageUrl` now rejects unsafe schemes on write, but
   // this component renders survey JSON straight from the API, and rows written before that validation
   // can still carry a `javascript:`/`data:` URL. An unsafe value in `<iframe src>` executes; in
@@ -61,7 +61,8 @@ function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: Readonly<ElementM
         <img
           key={safeImgUrl}
           src={safeImgUrl}
-          alt={altText}
+          // No text alternative given means decorative (`alt=""`), never a hardcoded "Image".
+          alt={altText ?? ""}
           className={cn("mx-auto max-h-[40dvh] rounded-md object-contain", isLoading ? "opacity-0" : "")}
           onLoad={() => {
             setIsLoading(false);

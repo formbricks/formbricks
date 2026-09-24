@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { TFunction } from "i18next";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -526,4 +527,26 @@ export const moveElementInBlock = (
     ...survey,
     blocks,
   });
+};
+
+/**
+ * Copies `labelValue` into every block (except `skipBlockIndex`) whose `labelKey` is missing or blank
+ * in `languageCode`. Returns the same survey when no block needs it.
+ */
+export const fillEmptyBlockButtonLabels = (
+  survey: TSurvey,
+  labelKey: "buttonLabel" | "backButtonLabel",
+  labelValue: TI18nString,
+  skipBlockIndex: number,
+  languageCode: string
+): TSurvey => {
+  let changed = false;
+  const blocks = survey.blocks.map((block, index) => {
+    if (index === skipBlockIndex) return block;
+    const currentLabel = block[labelKey];
+    if (currentLabel && currentLabel[languageCode]?.trim() !== "") return block;
+    changed = true;
+    return { ...block, [labelKey]: labelValue };
+  });
+  return changed ? { ...survey, blocks } : survey;
 };
