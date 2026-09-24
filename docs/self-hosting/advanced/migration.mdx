@@ -31,6 +31,12 @@ backups rather than running `helm rollback`. Pin explicit releases and digests, 
 The Helm chart and Formbricks image are versioned independently. A chart-only patch can retain the same
 `appVersion`; review both pins and the rendered image rather than assuming their version numbers match.
 
+### Bundled TEI log level
+
+The Helm chart now defaults `hub.embeddings.env.RUST_LOG` to `warn` because TEI 1.9 includes its API key in
+INFO-level startup arguments. If you need a different log level, set `hub.embeddings.env.RUST_LOG` explicitly
+and use it only with a runtime that redacts credentials from its logs.
+
 ### Changes in Environment Variables
 
 <Note>

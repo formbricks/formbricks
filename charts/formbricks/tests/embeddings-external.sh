@@ -16,7 +16,7 @@ helm template bundled-embeddings "${CHART_DIR}" \
   >"${render_dir}/bundled.yaml"
 
 test "$(grep -c 'name: RUST_LOG' "${render_dir}/bundled.yaml")" -eq 2
-test "$(grep -A1 'name: RUST_LOG' "${render_dir}/bundled.yaml" | grep -Ec 'value: "?warn"?')" -eq 2
+test "$(grep -A1 'name: RUST_LOG' "${render_dir}/bundled.yaml" | grep -Ec 'value: "?warn"?$')" -eq 2
 
 helm template bundled-embeddings-debug "${CHART_DIR}" \
   --set formbricks.webappUrl=https://qa.example.com \
@@ -24,7 +24,7 @@ helm template bundled-embeddings-debug "${CHART_DIR}" \
   --set-string hub.embeddings.env.RUST_LOG=debug \
   >"${render_dir}/bundled-debug.yaml"
 
-grep -A1 'name: RUST_LOG' "${render_dir}/bundled-debug.yaml" | grep -Eq 'value: "?debug"?'
+grep -A1 'name: RUST_LOG' "${render_dir}/bundled-debug.yaml" | grep -Eq 'value: "?debug"?$'
 
 helm template external-embeddings "${CHART_DIR}" \
   --set formbricks.webappUrl=https://qa.example.com \
