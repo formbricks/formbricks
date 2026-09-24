@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TMember, TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
+import { getReportingTimeZone } from "@/lib/date-ranges";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { formatDateForDisplay, formatDateWithOrdinal } from "@/lib/utils/datetime";
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
@@ -86,12 +87,16 @@ const showDeleteButton = (
   return true;
 };
 
-const getLastSignInLabel = (member: TMemberRow, t: TFunction, locale: string) => {
+// The calendar day is read in the organization's reporting zone, so a sign-in near midnight lands on the
+// same day here as on the Usage page, whatever the viewer's browser zone.
+const LAST_SIGN_IN_OPTIONS: Intl.DateTimeFormatOptions = { year: "numeric", month: "short", day: "numeric" };
+
+const getLastSignInLabel = (member: TMemberRow, t: TFunction, locale: string, timeZone: string) => {
   if (isInvitee(member)) return null;
   if (!member.lastLoginAt) {
     return <span className="text-slate-500">{t("common.no_sign_in_recorded")}</span>;
   }
-  return formatDateForDisplay(new Date(member.lastLoginAt), locale);
+  return formatDateForDisplay(new Date(member.lastLoginAt), locale, { ...LAST_SIGN_IN_OPTIONS, timeZone });
 };
 
 const LastSignInHeader = ({
@@ -197,8 +202,11 @@ const getMemberColumns = ({
       id: "last-sign-in",
       header: <LastSignInHeader t={t} sort={lastSignInSort} onToggle={onToggleLastSignInSort} />,
       headerClassName: "w-[13%]",
+      // `ph-no-capture` is PostHog redaction, like the name and email cells.
+      cellClassName: "ph-no-capture",
       hideBelow: "md",
-      cell: (member) => getLastSignInLabel(member, t, locale),
+      cell: (member) =>
+        getLastSignInLabel(member, t, locale, getReportingTimeZone(organization.displayTimeZone)),
     });
   }
 
