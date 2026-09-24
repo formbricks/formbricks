@@ -69,8 +69,17 @@ interface EmbeddedFieldFormProps {
    * save, on `@@unique([surveyId, storageKey])`, as a Prisma violation with no field to point at.
    */
   takenStorageKeys: string[];
-  /** Every other field's declared name — what makes a repeat a duplicate. */
-  otherFieldNames: string[];
+  /**
+   * Every other field's **declared** name — its address for a passed-in field, its name for a
+   * calculated one. This is the namespace recall and logic address, so it is what makes a repeat a
+   * duplicate.
+   */
+  otherDeclaredNames: string[];
+  /**
+   * Every other field's **display** name, which is a different set: a passed-in field's label is
+   * free text and never enters the namespace above.
+   */
+  otherDisplayNames: string[];
   /** App locale — the date default's picker formats against it. */
   locale: string;
   /** The type this field has as stored, or null when the survey has never saved it. */
@@ -104,7 +113,8 @@ export const EmbeddedFieldForm = ({
   entry,
   takenIds,
   takenStorageKeys,
-  otherFieldNames,
+  otherDeclaredNames,
+  otherDisplayNames,
   locale,
   storedDataType,
   responseCount,
@@ -145,10 +155,18 @@ export const EmbeddedFieldForm = ({
    * that is what tells an untouched auto-generated value apart from one the author typed, so their
    * own ID survives a later edit to the name. Create only — an existing field's address is read-only.
    */
-  const handleNameChange = (value: string) => {
-    const previousAutoKey = toSafeIdentifier(form.getValues("name"));
+  /**
+   * Whether the Key is still the one this form derived, rather than one the author typed over it.
+   * Compared against what the *current* name would produce, which is what tells an untouched
+   * auto-generated value apart from a deliberate one.
+   */
+  const keyStillFollowsName = (): boolean => {
     const currentKey = form.getValues("storageKey");
-    const shouldFollow = currentKey === "" || currentKey === previousAutoKey;
+    return currentKey === "" || currentKey === toSafeIdentifier(form.getValues("name"));
+  };
+
+  const handleNameChange = (value: string) => {
+    const shouldFollow = keyStillFollowsName();
 
     form.setValue("name", value, { shouldValidate: true, shouldDirty: true });
     // Only a passed-in field has an address the author writes. A calculated one mints a cuid at
@@ -180,10 +198,14 @@ export const EmbeddedFieldForm = ({
     if (!isLockableSource(nextSource)) {
       form.setValue("locked", false, { shouldValidate: true, shouldDirty: true });
     }
-    // The ID input is only rendered for a passed-in field, so coming back to one has to re-derive
+    // The Key input is only rendered for a passed-in field, so coming back to one has to re-derive
     // what it would have held — otherwise the address stays at whatever the name was when the author
     // last switched away, or empty if they never typed one.
-    if (nextSource === "ingested" && !isEdit) {
+    //
+    // Guarded by the same rule the Name change uses: a key the author wrote themselves survives the
+    // round trip, because it cannot be changed once the field exists and silently reverting it would
+    // cost them the one thing this form fixes forever.
+    if (nextSource === "ingested" && !isEdit && keyStillFollowsName()) {
       form.setValue("storageKey", toSafeIdentifier(form.getValues("name")), {
         shouldValidate: true,
         shouldDirty: true,
@@ -223,7 +245,10 @@ export const EmbeddedFieldForm = ({
 
     // Only a passed-in field has a display name free enough to repeat one. A calculated field's name
     // is its declared name, so a repeat is already a duplicate below.
-    if (declaresByAddress && isEmbeddedFieldNameTaken({ name: draft.name, otherFieldNames })) {
+    if (
+      declaresByAddress &&
+      isEmbeddedFieldNameTaken({ name: draft.name, otherFieldNames: otherDisplayNames })
+    ) {
       form.setError("name", { message: t("workspace.embedded_data.survey_field_display_name_taken") });
       return;
     }
@@ -231,7 +256,13 @@ export const EmbeddedFieldForm = ({
     const addressError = validateEmbeddedFieldDeclaredName({
       declaredName,
       takenIds,
-      otherDeclaredNames: declaresByAddress ? takenStorageKeys : otherFieldNames,
+      // Both sources judge against the same namespace. A passed-in field's key must dodge the
+      // storage keys too: a calculated field's address is a cuid the card displays and offers to
+      // copy, so an author can paste one in, and `@@unique([surveyId, storageKey])` would only
+      // catch it at the save with no field to point at.
+      otherDeclaredNames: declaresByAddress
+        ? [...otherDeclaredNames, ...takenStorageKeys]
+        : otherDeclaredNames,
       previousDeclaredName: entry === null ? null : declaredEmbeddedFieldName(entry),
     });
 

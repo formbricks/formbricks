@@ -1,4 +1,5 @@
-import { describe, expect, test } from "vitest";
+import type { TFunction } from "i18next";
+import { describe, expect, test, vi } from "vitest";
 import {
   linkedToDesiredEmbeddedFields,
   toLegacyEmbeddedFields,
@@ -10,6 +11,7 @@ import {
   type TLinkableSharedField,
   cloneSharedFieldToLocal,
   declaredEmbeddedFieldName,
+  getEmbeddedFieldErrorMessage,
   isEmbeddedFieldNameTaken,
   isPromotableEmbeddedField,
   listLinkableSharedFields,
@@ -402,5 +404,53 @@ describe("isEmbeddedFieldNameTaken", () => {
     // A field may perfectly well be named after the question it describes; what it may not do is
     // take that question's id as its address, which `validateEmbeddedFieldDeclaredName` is for.
     expect(taken("What is your plan?", [])).toBe(false);
+  });
+});
+
+describe("getEmbeddedFieldErrorMessage", () => {
+  /** Returns the key and whatever was interpolated, so a test can assert both. */
+  const spyT = () =>
+    vi.fn((key: string, params?: Record<string, string>) =>
+      JSON.stringify({ key, ...params })
+    ) as unknown as TFunction;
+
+  const message = (code: TValidateIdErrorCode, label: string, field = "") => {
+    const t = spyT();
+    return JSON.parse(getEmbeddedFieldErrorMessage({ code, field }, label, t));
+  };
+
+  test("names the control the author is looking at, not the entity", () => {
+    // The whole point: the shared `getValidateIdErrorMessage` phrases these as "{Variable,Hidden
+    // field} ID …", which is what told an author naming a passed-in field that their ID could not
+    // contain spaces. Same code, two controls, two sentences.
+    expect(message(TValidateIdErrorCode.HasSpaces, "Key").label).toBe("Key");
+    expect(message(TValidateIdErrorCode.HasSpaces, "Name").label).toBe("Name");
+  });
+
+  test("every code has a sentence of this card's own", () => {
+    // A code falling through would render the key itself at the author, so pin all six.
+    const keys = [
+      TValidateIdErrorCode.Empty,
+      TValidateIdErrorCode.Duplicate,
+      TValidateIdErrorCode.Reserved,
+      TValidateIdErrorCode.HasSpaces,
+      TValidateIdErrorCode.InvalidChars,
+      TValidateIdErrorCode.NotSafeIdentifier,
+    ].map((code) => message(code, "Key").key);
+
+    expect(new Set(keys).size).toBe(keys.length);
+    for (const key of keys) expect(key).toMatch(/^workspace\.embedded_data\./);
+  });
+
+  test("carries the refused spelling for a reserved name", () => {
+    expect(message(TValidateIdErrorCode.Reserved, "Key", "country").field).toBe("country");
+  });
+
+  test("a taken address is answered without naming a control", () => {
+    // It is the one refusal that is about the survey rather than about what was typed, so it reads
+    // the same whichever control holds the declared name.
+    expect(message(TValidateIdErrorCode.Duplicate, "Key")).toStrictEqual({
+      key: "workspace.embedded_data.survey_field_address_taken",
+    });
   });
 });

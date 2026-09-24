@@ -329,31 +329,28 @@ export const isSurveyValid = (
   return true;
 };
 
-export const getValidateIdErrorMessage = (
-  error: TValidateIdError,
-  type: "hiddenField" | "question" | "variable",
-  t: TFunction
-): string => {
-  const localizedType = {
-    hiddenField: () => t("common.hidden_field"),
-    question: () => t("workspace.surveys.edit.question"),
-    variable: () => t("common.variable"),
-  }[type]();
-
+/**
+ * Why an element id the author typed cannot be used.
+ *
+ * Question ids are the only thing left that reaches these strings. They used to be shared with the
+ * hidden-fields and variables cards through a `{type}` placeholder, which is why every sentence read
+ * "{Hidden field,Variable} ID …" — vocabulary the merged Embedded Data card removed. That card
+ * phrases its own refusals now (`getEmbeddedFieldErrorMessage`), naming whichever of Name or Key the
+ * author is looking at, so the placeholder had one value left and the sentences say it outright.
+ */
+export const getValidateIdErrorMessage = (error: TValidateIdError, t: TFunction): string => {
   switch (error.code) {
     case TValidateIdErrorCode.Empty:
-      return t("workspace.surveys.edit.validate_id_empty", { type: localizedType });
+      return t("workspace.surveys.edit.validate_id_empty");
     case TValidateIdErrorCode.Duplicate:
-      return t("workspace.surveys.edit.validate_id_duplicate", { type: localizedType });
+      return t("workspace.surveys.edit.validate_id_duplicate");
     case TValidateIdErrorCode.Reserved:
-      return t("workspace.surveys.edit.validate_id_reserved", { type: localizedType, field: error.field });
+      return t("workspace.surveys.edit.validate_id_reserved", { field: error.field });
     case TValidateIdErrorCode.HasSpaces:
-      return t("workspace.surveys.edit.validate_id_no_spaces", { type: localizedType });
+      return t("workspace.surveys.edit.validate_id_no_spaces");
     case TValidateIdErrorCode.InvalidChars:
-      return t("workspace.surveys.edit.validate_id_invalid_chars", { type: localizedType });
+      return t("workspace.surveys.edit.validate_id_invalid_chars");
     case TValidateIdErrorCode.NotSafeIdentifier:
-      return t("workspace.surveys.edit.validate_id_not_safe_identifier", { type: localizedType });
-    default:
-      return t("workspace.surveys.edit.validate_id_invalid_chars", { type: localizedType });
+      return t("workspace.surveys.edit.validate_id_not_safe_identifier");
   }
 };

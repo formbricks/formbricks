@@ -1305,9 +1305,6 @@ describe("validation.isSurveyValid", () => {
 
 describe("validation.getValidateIdErrorMessage", () => {
   const mockT: TFunction = ((key: string, params?: Record<string, string>) => {
-    // Simulate localized entity labels
-    if (key === "common.hidden_field") return "Hidden field";
-    if (key === "workspace.surveys.edit.question") return "Question";
     if (!params) return key;
     return Object.entries(params).reduce((str, [k, v]) => str.replace(`{${k}}`, v), key);
   }) as TFunction;
@@ -1315,7 +1312,6 @@ describe("validation.getValidateIdErrorMessage", () => {
   test("returns translated message for Empty error code", () => {
     const result = validation.getValidateIdErrorMessage(
       { code: TValidateIdErrorCode.Empty, field: "" },
-      "hiddenField",
       mockT
     );
     expect(result).toContain("validate_id_empty");
@@ -1324,7 +1320,6 @@ describe("validation.getValidateIdErrorMessage", () => {
   test("returns translated message for Duplicate error code", () => {
     const result = validation.getValidateIdErrorMessage(
       { code: TValidateIdErrorCode.Duplicate, field: "test" },
-      "question",
       mockT
     );
     expect(result).toContain("validate_id_duplicate");
@@ -1333,7 +1328,6 @@ describe("validation.getValidateIdErrorMessage", () => {
   test("returns translated message for Reserved error code with field name", () => {
     const result = validation.getValidateIdErrorMessage(
       { code: TValidateIdErrorCode.Reserved, field: "userId" },
-      "hiddenField",
       mockT
     );
     expect(result).toContain("validate_id_reserved");
@@ -1342,7 +1336,6 @@ describe("validation.getValidateIdErrorMessage", () => {
   test("returns translated message for HasSpaces error code", () => {
     const result = validation.getValidateIdErrorMessage(
       { code: TValidateIdErrorCode.HasSpaces, field: "my field" },
-      "hiddenField",
       mockT
     );
     expect(result).toContain("validate_id_no_spaces");
@@ -1351,7 +1344,6 @@ describe("validation.getValidateIdErrorMessage", () => {
   test("returns translated message for InvalidChars error code", () => {
     const result = validation.getValidateIdErrorMessage(
       { code: TValidateIdErrorCode.InvalidChars, field: "field!" },
-      "question",
       mockT
     );
     expect(result).toContain("validate_id_invalid_chars");
@@ -1360,43 +1352,37 @@ describe("validation.getValidateIdErrorMessage", () => {
   test("returns a distinct message for NotSafeIdentifier error code", () => {
     const result = validation.getValidateIdErrorMessage(
       { code: TValidateIdErrorCode.NotSafeIdentifier, field: "Legacy-Field" },
-      "hiddenField",
       mockT
     );
     expect(result).toContain("validate_id_not_safe_identifier");
     expect(result).not.toContain("validate_id_invalid_chars");
   });
 
-  test("localizes type before passing to translation function", () => {
-    const spyT = vi.fn().mockImplementation((key: string) => {
-      if (key === "common.hidden_field") return "Hidden field";
-      return "translated";
-    });
+  test("asks for the sentence alone, with no entity to interpolate", () => {
+    // The `{type}` placeholder is gone with the cards that shared these strings, so a second lookup
+    // for "Hidden field" or "Variable" is the regression to catch: it would mean the sentences had
+    // drifted back to naming an entity this function no longer knows about.
+    const spyT = vi.fn().mockReturnValue("translated");
     const result = validation.getValidateIdErrorMessage(
       { code: TValidateIdErrorCode.Empty, field: "" },
-      "hiddenField",
       spyT as unknown as TFunction
     );
-    expect(spyT).toHaveBeenCalledWith("common.hidden_field");
-    expect(spyT).toHaveBeenCalledWith("workspace.surveys.edit.validate_id_empty", {
-      type: "Hidden field",
-    });
+
+    expect(spyT).toHaveBeenCalledTimes(1);
+    expect(spyT).toHaveBeenCalledWith("workspace.surveys.edit.validate_id_empty");
     expect(result).toBe("translated");
   });
 
-  test("localizes question type and passes field for Reserved error code", () => {
-    const spyT = vi.fn().mockImplementation((key: string) => {
-      if (key === "workspace.surveys.edit.question") return "Question";
-      return "translated";
-    });
+  test("passes the refused field for Reserved, and nothing else", () => {
+    const spyT = vi.fn().mockReturnValue("translated");
+
     validation.getValidateIdErrorMessage(
       { code: TValidateIdErrorCode.Reserved, field: "userId" },
-      "question",
       spyT as unknown as TFunction
     );
-    expect(spyT).toHaveBeenCalledWith("workspace.surveys.edit.question");
+
+    expect(spyT).toHaveBeenCalledTimes(1);
     expect(spyT).toHaveBeenCalledWith("workspace.surveys.edit.validate_id_reserved", {
-      type: "Question",
       field: "userId",
     });
   });
