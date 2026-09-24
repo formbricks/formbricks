@@ -1,13 +1,19 @@
 "use client";
 
 import type { TFunction } from "i18next";
+import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TMember, TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { formatDateWithOrdinal } from "@/lib/utils/datetime";
+import { formatDateForDisplay, formatDateWithOrdinal } from "@/lib/utils/datetime";
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
 import { MemberActions } from "@/modules/organization/settings/teams/components/edit-memberships/member-actions";
+import {
+  type TLastSignInSort,
+  sortMembersByLastSignIn,
+} from "@/modules/organization/settings/teams/lib/sort-members";
 import { hasMoreThanOneActiveOwner, isInviteExpired } from "@/modules/organization/settings/teams/lib/utils";
 import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 import { Badge } from "@/modules/ui/components/badge";
@@ -80,6 +86,32 @@ const showDeleteButton = (
   return true;
 };
 
+const getLastSignInLabel = (member: TMemberRow, t: TFunction, locale: string) => {
+  if (isInvitee(member)) return null;
+  if (!member.lastLoginAt) {
+    return <span className="text-slate-500">{t("common.no_sign_in_recorded")}</span>;
+  }
+  return formatDateForDisplay(new Date(member.lastLoginAt), locale);
+};
+
+const LastSignInHeader = ({
+  t,
+  sort,
+  onToggle,
+}: Readonly<{ t: TFunction; sort: TLastSignInSort | null; onToggle: () => void }>) => {
+  const Icon = { desc: ArrowDownIcon, asc: ArrowUpIcon, none: ArrowUpDownIcon }[sort ?? "none"];
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="inline-flex items-center gap-1 whitespace-nowrap hover:text-slate-900"
+      data-testid="last-sign-in-sort">
+      {t("common.last_sign_in")}
+      <Icon className="size-3.5" aria-hidden="true" />
+    </button>
+  );
+};
+
 /**
  * Defined at module level rather than inside the component: an inline `cell` that returns JSX reads as a
  * nested component definition to Sonar (typescript:S6478), and re-declaring the array per render buys
@@ -101,6 +133,8 @@ const getMemberColumns = ({
   isOwnerOrManager,
   isManager,
   doesOrgHaveMoreThanOneOwner,
+  lastSignInSort,
+  onToggleLastSignInSort,
 }: Readonly<{
   t: TFunction;
   locale: string;
@@ -113,6 +147,8 @@ const getMemberColumns = ({
   isOwnerOrManager: boolean;
   isManager: boolean;
   doesOrgHaveMoreThanOneOwner: boolean;
+  lastSignInSort: TLastSignInSort | null;
+  onToggleLastSignInSort: () => void;
 }>): TSettingsTableColumn<TMemberRow>[] => {
   // `ph-no-capture` on the name, email and role cells is PostHog redaction, not styling.
   const columns: TSettingsTableColumn<TMemberRow>[] = [
@@ -152,6 +188,18 @@ const getMemberColumns = ({
           isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
         />
       ),
+    });
+  }
+
+  // Owners and Managers only (ENG-3317); the server does not even send the value to anyone else.
+  if (isOwnerOrManager) {
+    columns.push({
+      id: "last-sign-in",
+      header: <LastSignInHeader t={t} sort={lastSignInSort} onToggle={onToggleLastSignInSort} />,
+      headerClassName: "w-[15%]",
+      cellClassName: "whitespace-nowrap",
+      hideBelow: "md",
+      cell: (member) => getLastSignInLabel(member, t, locale),
     });
   }
 
@@ -218,7 +266,12 @@ export const MembersInfo = ({
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
 
-  const allMembers = [...members, ...invites];
+  // Unsorted until the header is clicked, then newest first, then oldest first. Invites have no sign-in
+  // and always follow the members.
+  const [lastSignInSort, setLastSignInSort] = useState<TLastSignInSort | null>(null);
+  const toggleLastSignInSort = () => setLastSignInSort((current) => (current === "desc" ? "asc" : "desc"));
+  const sortedMembers = lastSignInSort ? sortMembersByLastSignIn(members, lastSignInSort) : members;
+  const allMembers = [...sortedMembers, ...invites];
 
   const { isOwner, isManager } = getAccessFlags(currentUserRole);
   const isOwnerOrManager = isOwner || isManager;
@@ -239,6 +292,8 @@ export const MembersInfo = ({
         isOwnerOrManager,
         isManager,
         doesOrgHaveMoreThanOneOwner,
+        lastSignInSort,
+        onToggleLastSignInSort: toggleLastSignInSort,
       })}
       rows={allMembers}
       getRowId={(member) => member.email}

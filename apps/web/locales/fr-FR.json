@@ -367,6 +367,7 @@
     "label": "Étiquette",
     "language": "Langue",
     "last_name": "Nom de famille",
+    "last_sign_in": "Dernière connexion",
     "learn_more": "En savoir plus",
     "license_expired": "License Expired",
     "light_overlay": "Claire",
@@ -407,6 +408,7 @@
     "no_quotas_found": "Aucun quota trouvé",
     "no_result_found": "Aucun résultat trouvé",
     "no_results": "Aucun résultat",
+    "no_sign_in_recorded": "Aucune connexion enregistrée",
     "no_surveys_found": "Aucun sondage trouvé.",
     "no_text_found": "Aucun texte trouvé",
     "none_of_the_above": "Aucun des éléments ci-dessus",
@@ -3089,6 +3091,22 @@
         "unlock_teams_title": "Débloquez Teams avec un forfait supérieur.",
         "upgrade_plan_notice_message": "Débloquez les rôles d'organisation avec un plan supérieur.",
         "you_are_a_member": "Vous êtes un membre"
+      },
+      "usage": {
+        "load_error": "Impossible de charger les données d'utilisation. Recharge la page pour réessayer.",
+        "members_active": "Connectés dans les 30 derniers jours",
+        "members_deactivated": "Désactivés",
+        "members_description": "Activité de connexion des membres de l'organisation. Non affectée par la plage de dates.",
+        "members_dormant": "Aucune connexion depuis 90+ jours",
+        "members_total": "Membres",
+        "nav_label": "Utilisation",
+        "no_workspaces": "Cette organisation n'a pas encore d'espaces de travail.",
+        "range_label": "Plage de dates",
+        "responses_description": "Toutes les réponses enregistrées dans la plage sélectionnée, réponses partielles incluses.",
+        "responses_title": "Réponses par espace de travail",
+        "surveys_description": "Enquêtes par statut actuel. Non affecté par la plage de dates.",
+        "time_zone_note": "Les jours sont comptés en {timeZone}.",
+        "total": "Total"
       }
     },
     "surveys": {

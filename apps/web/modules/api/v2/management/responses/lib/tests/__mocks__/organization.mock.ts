@@ -11,17 +11,3 @@ export const organizationBilling: TOrganizationBilling = {
   },
   usageCycleAnchor: new Date(),
 };
-
-export const organizationWorkspaces = {
-  workspaces: [
-    { id: "w6pljnz4l9ljgmyl51xv8ah8" },
-    { id: "v5sfypq4ib6vjelccho23lmn" },
-    { id: "ffbv7bmhs52yd8beebu6be2l" },
-  ],
-};
-
-export const workspaceIds = [
-  "w6pljnz4l9ljgmyl51xv8ah8",
-  "v5sfypq4ib6vjelccho23lmn",
-  "ffbv7bmhs52yd8beebu6be2l",
-];

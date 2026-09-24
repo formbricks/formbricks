@@ -367,6 +367,7 @@
     "label": "Címke",
     "language": "Nyelv",
     "last_name": "Vezetéknév",
+    "last_sign_in": "Utolsó bejelentkezés",
     "learn_more": "Tudjon meg többet",
     "license_expired": "A licenc lejárt",
     "light_overlay": "Világos rávetítés",
@@ -407,6 +408,7 @@
     "no_quotas_found": "Nem találhatók kvóták",
     "no_result_found": "Nem található eredmény",
     "no_results": "Nincs találat",
+    "no_sign_in_recorded": "Nincs rögzített bejelentkezés",
     "no_surveys_found": "Nem találhatók kérdőívek.",
     "no_text_found": "Nem található szöveg",
     "none_of_the_above": "A fentiek közül egyik sem",
@@ -3089,6 +3091,22 @@
         "unlock_teams_title": "Csapatok feloldása egy magasabb csomaggal.",
         "upgrade_plan_notice_message": "Szervezeti szerepek feloldása egy magasabb csomaggal.",
         "you_are_a_member": "Ön tag"
+      },
+      "usage": {
+        "load_error": "Nem sikerült betölteni a használati adatokat. Kérjük, töltse be újra az oldalt, és próbálja meg ismét.",
+        "members_active": "30 napon belül bejelentkezett",
+        "members_deactivated": "Deaktiválva",
+        "members_description": "A szervezeti tagok bejelentkezési aktivitása. Nem függ a dátumtartománytól.",
+        "members_dormant": "90+ napja nem jelentkezett be",
+        "members_total": "Tagok",
+        "nav_label": "Használat",
+        "no_workspaces": "Ennek a szervezetnek még nincsenek munkaterületei.",
+        "range_label": "Dátumtartomány",
+        "responses_description": "Minden tárolt válasz a kiválasztott tartományban, a részleges válaszokat is beleértve.",
+        "responses_title": "Válaszok munkaterületenként",
+        "surveys_description": "Felmérések jelenlegi állapot szerint. Nem befolyásolja a dátumtartomány.",
+        "time_zone_note": "A napok {timeZone} időzónában kerülnek számításra.",
+        "total": "Összesen"
       }
     },
     "surveys": {
