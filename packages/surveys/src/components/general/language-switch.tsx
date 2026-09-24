@@ -178,7 +178,7 @@ export function LanguageSwitch({
         title={activeLanguage ? getLanguageDisplayName(activeLanguage.language.code) : triggerLabel}
         type="button"
         className={cn(
-          "text-heading relative flex h-8 items-center justify-center gap-1.5 rounded-md focus:ring-2 focus:ring-offset-2 focus:outline-hidden",
+          "text-heading relative flex h-8 items-center justify-center gap-1.5 rounded-md",
           activeDisplayName ? "w-auto px-2" : "w-8"
         )}
         style={{
