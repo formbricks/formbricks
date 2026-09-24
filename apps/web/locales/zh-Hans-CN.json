@@ -3203,6 +3203,7 @@
         "ai_translation_all_fields_populated": "所有字段均已翻译",
         "ai_translation_complete": "AI 翻译完成",
         "ai_translation_failed": "翻译失败",
+        "ai_translation_output_too_long": "此调查的文本内容过多，无法一次性翻译。请先手动翻译部分字段，然后再试。",
         "ai_translation_quota_exceeded": "由于需求量大，翻译暂时不可用。请稍后重试。",
         "all_are_true": "全部为真",
         "all_other_answers_will_continue_to_fallback": "所有其他回答将继续<fallbackSelect />",

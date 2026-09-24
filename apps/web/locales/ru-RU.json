@@ -3203,6 +3203,7 @@
         "ai_translation_all_fields_populated": "Все поля уже переведены",
         "ai_translation_complete": "Перевод с помощью ИИ завершён",
         "ai_translation_failed": "Перевод не удался",
+        "ai_translation_output_too_long": "В этом опросе слишком много текста для перевода за один раз. Переведите некоторые поля вручную, а затем попробуйте снова.",
         "ai_translation_quota_exceeded": "Перевод временно недоступен из-за высокого спроса. Попробуйте снова через некоторое время.",
         "all_are_true": "все условия выполняются",
         "all_other_answers_will_continue_to_fallback": "Все остальные ответы продолжат <fallbackSelect />",

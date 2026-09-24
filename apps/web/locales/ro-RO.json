@@ -3203,6 +3203,7 @@
         "ai_translation_all_fields_populated": "Toate câmpurile sunt deja traduse",
         "ai_translation_complete": "Traducerea AI finalizată",
         "ai_translation_failed": "Traducerea a eșuat",
+        "ai_translation_output_too_long": "Acest sondaj conține prea mult text pentru a fi tradus dintr-o dată. Tradu manual câteva câmpuri, apoi încearcă din nou.",
         "ai_translation_quota_exceeded": "Traducerea este temporar indisponibilă din cauza cererii mari. Te rugăm să încerci din nou în scurt timp.",
         "all_are_true": "toate sunt adevărate",
         "all_other_answers_will_continue_to_fallback": "Toate celelalte răspunsuri vor continua să <fallbackSelect />",

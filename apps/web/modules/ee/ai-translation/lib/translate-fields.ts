@@ -1,6 +1,8 @@
 import "server-only";
 import { z } from "zod";
+import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { logger } from "@formbricks/logger";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 
@@ -16,6 +18,8 @@ const AI_TRANSLATION_TIMEOUT_MS = 45_000;
 const AI_TRANSLATION_MIN_OUTPUT_TOKENS = 1024;
 const AI_TRANSLATION_MAX_OUTPUT_TOKENS = 8192;
 const AI_TRANSLATION_OUTPUT_TOKENS_PER_FIELD = 160;
+
+export const AI_TRANSLATION_OUTPUT_TOO_LONG = "ai_output_too_long";
 
 interface TranslateFieldsInput {
   organizationId: string;
@@ -77,6 +81,14 @@ Rules:
 
   const userPayload = JSON.stringify(items.map(({ id, text, richText }) => ({ id, text, richText })));
 
+  const maxOutputTokens = Math.min(
+    AI_TRANSLATION_MAX_OUTPUT_TOKENS,
+    Math.max(
+      AI_TRANSLATION_MIN_OUTPUT_TOKENS,
+      translatableFields.length * AI_TRANSLATION_OUTPUT_TOKENS_PER_FIELD
+    )
+  );
+
   const result = await generateOrganizationAIObject({
     organizationId,
     aiTracing: { distinctId: userId, feature: AI_TRACING_FEATURE.Translation, workspaceId },
@@ -84,14 +96,20 @@ Rules:
     system: systemPrompt,
     prompt: userPayload,
     temperature: 0,
-    maxOutputTokens: Math.min(
-      AI_TRANSLATION_MAX_OUTPUT_TOKENS,
-      Math.max(
-        AI_TRANSLATION_MIN_OUTPUT_TOKENS,
-        translatableFields.length * AI_TRANSLATION_OUTPUT_TOKENS_PER_FIELD
-      )
-    ),
+    maxOutputTokens,
     timeout: AI_TRANSLATION_TIMEOUT_MS,
+  }).catch((error: unknown) => {
+    // Retrying is futile (temperature 0, same budget), so tell the user the batch is too large instead
+    // of a generic failure. The token counts decide whether field count or reasoning tokens ate the
+    // budget, so keep them in our logs — the client only gets the code.
+    if (error instanceof AIOutputTokenLimitError) {
+      logger.warn(
+        { organizationId, requestedCount: translatableFields.length, ...error.details },
+        "AI translation exceeded the output token limit"
+      );
+      throw new InvalidInputError(AI_TRANSLATION_OUTPUT_TOO_LONG);
+    }
+    throw error;
   });
 
   const translatedById = result.object;

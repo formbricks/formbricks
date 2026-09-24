@@ -3203,6 +3203,7 @@
         "ai_translation_all_fields_populated": "Az összes mező le van már fordítva",
         "ai_translation_complete": "Az MI-fordítás befejeződött",
         "ai_translation_failed": "A fordítás nem sikerült",
+        "ai_translation_output_too_long": "Ez a felmérés túl sok szöveget tartalmaz ahhoz, hogy egyszerre lefordítsuk. Kérem, fordítson le néhány mezőt manuálisan, majd próbálja újra.",
         "ai_translation_quota_exceeded": "A fordítás átmenetileg nem érhető el nagy igénybevétel miatt. Próbálja meg később újra.",
         "all_are_true": "az összes igaz",
         "all_other_answers_will_continue_to_fallback": "Az összes többi válasz továbbra is <fallbackSelect />",

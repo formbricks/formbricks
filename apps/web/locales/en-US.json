@@ -3203,6 +3203,7 @@
         "ai_translation_all_fields_populated": "All fields are already translated",
         "ai_translation_complete": "AI translation complete",
         "ai_translation_failed": "Translation failed",
+        "ai_translation_output_too_long": "This survey has too much text to translate at once. Translate some fields manually, then try again.",
         "ai_translation_quota_exceeded": "Translation is temporarily unavailable due to high demand. Please try again shortly.",
         "all_are_true": "all are true",
         "all_other_answers_will_continue_to_fallback": "All other answers will continue to <fallbackSelect />",
