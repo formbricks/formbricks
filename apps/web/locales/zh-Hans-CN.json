@@ -2239,6 +2239,7 @@
         "reconnect_button_description": "你的 Google Sheets 连接已过期。请重新连接以继续同步回复。你现有的表格链接和数据会被保留。",
         "reconnect_button_tooltip": "重新连接集成以刷新你的访问权限。你现有的表格链接和数据会被保留。",
         "spreadsheet_permission_error": "您没有权限访问该表格。请确保该表格已与您的Google账号共享，并且您拥有写入权限。",
+        "spreadsheet_scope_error": "Formbricks 无权访问你的 Google Sheets。请重新连接集成，并在 Google 提示时允许访问 Google Sheets。",
         "spreadsheet_url": "电子表格 URL",
         "token_expired_error": "Google Sheets 的刷新令牌已过期或被撤销。请重新连接集成。"
       },

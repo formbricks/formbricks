@@ -2239,6 +2239,7 @@
         "reconnect_button_description": "Deine Google Sheets-Verbindung ist abgelaufen. Bitte verbinde dich erneut, um weiterhin Antworten zu synchronisieren. Deine bestehenden Tabellenverknüpfungen und Daten bleiben erhalten.",
         "reconnect_button_tooltip": "Verbinde die Integration erneut, um deinen Zugriff zu aktualisieren. Deine vorhandenen Tabellen-Links und Daten bleiben erhalten.",
         "spreadsheet_permission_error": "Du hast keine Berechtigung, auf diese Tabelle zuzugreifen. Bitte stelle sicher, dass die Tabelle mit deinem Google-Konto geteilt ist und du Schreibzugriff auf die Tabelle hast.",
+        "spreadsheet_scope_error": "Formbricks darf nicht auf deine Google Sheets zugreifen. Bitte verbinde die Integration erneut und erlaube den Zugriff auf Google Sheets, wenn Google danach fragt.",
         "spreadsheet_url": "Tabellen-URL",
         "token_expired_error": "Das Google Sheets Refresh-Token ist abgelaufen oder wurde widerrufen. Bitte verbinde die Integration erneut."
       },

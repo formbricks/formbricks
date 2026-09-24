@@ -2239,6 +2239,7 @@
         "reconnect_button_description": "Din Google Sheets-anslutning har gått ut. Återanslut för att fortsätta synkronisera svar. Dina befintliga kalkylarkslänkar och data kommer att sparas.",
         "reconnect_button_tooltip": "Återanslut integrationen för att uppdatera din åtkomst. Dina befintliga kalkylarkslänkar och data kommer att sparas.",
         "spreadsheet_permission_error": "Du har inte behörighet att komma åt detta kalkylblad. Kontrollera att kalkylbladet är delat med ditt Google-konto och att du har skrivrättigheter.",
+        "spreadsheet_scope_error": "Formbricks har inte tillgång till dina Google Sheets. Anslut integrationen igen och tillåt åtkomst till Google Sheets när Google frågar.",
         "spreadsheet_url": "Kalkylblads-URL",
         "token_expired_error": "Google Sheets refresh token har gått ut eller återkallats. Återanslut integrationen."
       },

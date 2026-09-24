@@ -2239,6 +2239,7 @@
         "reconnect_button_description": "你的 Google Sheets 連線已過期。請重新連線以繼續同步回應。你現有的試算表連結和資料都會被保留。",
         "reconnect_button_tooltip": "重新連線整合以刷新存取權限。你現有的試算表連結和資料都會被保留。",
         "spreadsheet_permission_error": "您沒有權限存取此試算表。請確認該試算表已與您的 Google 帳戶分享，且您擁有寫入權限。",
+        "spreadsheet_scope_error": "Formbricks 無權存取你的 Google 試算表。請重新連接整合，並在 Google 詢問時允許存取 Google 試算表。",
         "spreadsheet_url": "試算表網址",
         "token_expired_error": "Google Sheets 的刷新權杖已過期或被撤銷。請重新連線整合。"
       },

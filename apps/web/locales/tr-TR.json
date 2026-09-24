@@ -2239,6 +2239,7 @@
         "reconnect_button_description": "Google Sheets bağlantın süresi doldu. Yanıtları senkronize etmeye devam etmek için lütfen yeniden bağlan. Mevcut elektronik tablo bağlantıların ve verilerin korunacak.",
         "reconnect_button_tooltip": "Erişimini yenilemek için entegrasyonu yeniden bağla. Mevcut elektronik tablo bağlantıların ve verilerin korunacak.",
         "spreadsheet_permission_error": "Bu elektronik tabloya erişim izniniz yok. Lütfen elektronik tablonun Google hesabınla paylaşıldığından ve elektronik tabloda yazma erişimine sahip olduğundan emin ol.",
+        "spreadsheet_scope_error": "Formbricks'in Google E-Tablolarına erişim izni yok. Lütfen entegrasyonu yeniden bağlayın ve Google sorduğunda Google E-Tablolarına erişime izin verin.",
         "spreadsheet_url": "Elektronik Tablo URL'si",
         "token_expired_error": "Google Sheets yenileme belirtecinin süresi doldu veya iptal edildi. Lütfen entegrasyonu yeniden bağla."
       },

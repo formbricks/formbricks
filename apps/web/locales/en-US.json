@@ -2239,6 +2239,7 @@
         "reconnect_button_description": "Your Google Sheets connection has expired. Please reconnect to continue syncing responses. Your existing spreadsheet links and data will be preserved.",
         "reconnect_button_tooltip": "Reconnect the integration to refresh your access. Your existing spreadsheet links and data will be preserved.",
         "spreadsheet_permission_error": "You do not have permission to access this spreadsheet. Please ensure the spreadsheet is shared with your Google account and you have write access to the spreadsheet.",
+        "spreadsheet_scope_error": "Formbricks is not allowed to access your Google Sheets. Please reconnect the integration and allow access to Google Sheets when Google asks.",
         "spreadsheet_url": "Spreadsheet URL",
         "token_expired_error": "Google Sheets refresh token has expired or been revoked. Please reconnect the integration."
       },

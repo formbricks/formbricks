@@ -2239,6 +2239,7 @@
         "reconnect_button_description": "Conexiunea ta cu Google Sheets a expirat. Te rugăm să te reconectezi pentru a continua sincronizarea răspunsurilor. Linkurile și datele existente din foile de calcul vor fi păstrate.",
         "reconnect_button_tooltip": "Reconectează integrarea pentru a-ți reîmprospăta accesul. Linkurile și datele existente din foile de calcul vor fi păstrate.",
         "spreadsheet_permission_error": "Nu aveți permisiunea de a accesa această foaie de calcul. Asigurați-vă că foaia de calcul este partajată cu contul dvs. Google și că aveți acces de scriere la aceasta.",
+        "spreadsheet_scope_error": "Formbricks nu are permisiunea de a accesa Google Sheets. Te rugăm să reconectezi integrarea și să permiți accesul la Google Sheets când Google îți solicită.",
         "spreadsheet_url": "URL foaie de calcul",
         "token_expired_error": "Tokenul de reîmprospătare Google Sheets a expirat sau a fost revocat. Te rugăm să reconectezi integrarea."
       },
