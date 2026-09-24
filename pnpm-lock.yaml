@@ -848,6 +848,9 @@ importers:
       dotenv-cli:
         specifier: 'catalog:'
         version: 11.0.0
+      intl-messageformat:
+        specifier: 10.7.18
+        version: 10.7.18
       jsdom:
         specifier: 'catalog:'
         version: 29.1.1(@noble/hashes@2.0.1)

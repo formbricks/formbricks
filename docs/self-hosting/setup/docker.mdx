@@ -117,7 +117,7 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
 1. **Start the Docker Setup**
 
    Now, you're ready to run Formbricks with Docker. Use the command below to start Formbricks together with
-   PostgreSQL, Redis, Formbricks Hub, Cube, and SpiceDB.
+   PostgreSQL, Redis, the Formbricks Hub API and worker, Cube, and SpiceDB.
 
    ```bash
    docker compose up -d
@@ -133,11 +133,12 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    docker compose ps -a
    curl -fsS http://localhost:3000/health
    docker compose logs --tail=100 formbricks-migrate hub-migrate authzed-db-bootstrap spicedb-migrate
-   docker compose logs --tail=100 formbricks hub cube spicedb
+   docker compose logs --tail=100 formbricks hub hub-worker cube spicedb
    ```
 
    `formbricks-migrate`, `hub-migrate`, `authzed-db-bootstrap`, and `spicedb-migrate` should complete
-   successfully. `postgres`, `redis`, `cube`, `hub`, `spicedb`, and `formbricks` should be running or healthy.
+   successfully. `postgres`, `redis`, `cube`, `hub`, `hub-worker`, `spicedb`, and `formbricks` should be running
+   or healthy. The worker has no HTTP health endpoint, so verify that it stays `Up` without repeated restarts.
 
 1. **Open Formbricks in Your Browser**
 
@@ -552,7 +553,7 @@ services:
       - rustfs-data:/data
 
   rustfs-init:
-    image: quay.io/minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868
+    image: rustfs/rc:v0.1.36@sha256:ab024bfebee49a750ce886b4c70963ccd9ddaa03f491704a90710641d7a26699
     depends_on:
       - rustfs
     environment:
@@ -567,11 +568,11 @@ services:
       - -c
       - |
         set -e
-        until mc alias set rustfs http://rustfs:9000 "$RUSTFS_ADMIN_USER" "$RUSTFS_ADMIN_PASSWORD" >/dev/null 2>&1 \
-          && mc ls rustfs >/dev/null 2>&1; do
+        until rc alias set rustfs http://rustfs:9000 "$RUSTFS_ADMIN_USER" "$RUSTFS_ADMIN_PASSWORD" >/dev/null 2>&1 \
+          && rc bucket list rustfs >/dev/null 2>&1; do
           sleep 2
         done
-        mc mb rustfs/"$RUSTFS_BUCKET_NAME" --ignore-existing
+        rc bucket create rustfs/"$RUSTFS_BUCKET_NAME" --ignore-existing
         cat > /tmp/formbricks-policy.json << EOF
         {
           "Version": "2012-10-17",
@@ -589,14 +590,13 @@ services:
           ]
         }
         EOF
-        if ! mc admin policy info rustfs "$RUSTFS_POLICY_NAME" >/dev/null 2>&1; then
-          mc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json || \
-            mc admin policy add rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json
+        if ! rc admin policy info rustfs "$RUSTFS_POLICY_NAME" >/dev/null 2>&1; then
+          rc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json
         fi
-        if ! mc admin user info rustfs "$RUSTFS_SERVICE_USER" >/dev/null 2>&1; then
-          mc admin user add rustfs "$RUSTFS_SERVICE_USER" "$RUSTFS_SERVICE_PASSWORD"
+        if ! rc admin user info rustfs "$RUSTFS_SERVICE_USER" >/dev/null 2>&1; then
+          rc admin user add rustfs "$RUSTFS_SERVICE_USER" "$RUSTFS_SERVICE_PASSWORD"
         fi
-        mc admin policy attach rustfs "$RUSTFS_POLICY_NAME" --user "$RUSTFS_SERVICE_USER"
+        rc admin policy attach rustfs "$RUSTFS_POLICY_NAME" --user "$RUSTFS_SERVICE_USER"
 ```
 
 Declare the corresponding volume:
@@ -655,7 +655,7 @@ RustFS console step is required.
 - **Connection refused**: Ensure the `rustfs` container is running and port `9000` is reachable from the
   Formbricks container.
 - **Bucket not found**: Confirm that `rustfs-init` completed successfully or create the bucket manually with
-  `mc`.
+  `rc`.
 - **Auth failed**: Confirm that `S3_ACCESS_KEY` and `S3_SECRET_KEY` match the RustFS credentials configured on
   the server.
 - **Backups**: Back up the `rustfs-data` volume regularly, especially for single-server deployments.
@@ -700,7 +700,7 @@ docker compose ps -a
 Then inspect the services that commonly explain startup issues:
 
 ```bash
-docker compose logs --tail=200 formbricks-migrate hub-migrate formbricks hub cube
+docker compose logs --tail=200 formbricks-migrate hub-migrate formbricks hub hub-worker cube
 docker compose logs --tail=200 postgres redis
 ```
 
@@ -714,6 +714,10 @@ Common checks:
   exist, then inspect `docker compose logs cube`.
 - **Hub auth errors**: Confirm the same `HUB_API_KEY` from `.env` is used by Formbricks Web and the Hub
   service.
+- **Hub jobs remain queued**: Confirm `docker compose ps hub-worker` reports `Up`, then inspect
+  `docker compose logs --tail=200 hub-worker`. The worker has no HTTP health endpoint; a stable process and a
+  shrinking River backlog are its readiness signals. If it restarts, confirm each configured enrichment
+  provider/model has the required credentials and that the worker can reach PostgreSQL.
 - **Port conflicts**: Confirm port `3000` and any optional service ports you enabled are not already in use on
   the host. The current template does not publish the bundled Valkey (`redis` service) to the host — it is
   reachable only on the internal compose network — so a fresh install does not need port `6379` free on the

@@ -53,9 +53,9 @@ interface NavigationProps {
   isFormbricksCloud: boolean;
   isDevelopment: boolean;
   membershipRole?: TOrganizationRole;
-  publicDomain: string;
   organizationWorkspacesLimit: number;
   isLicenseActive: boolean;
+  isNoLicense: boolean;
   isAccessControlAllowed: boolean;
   responseCount: number;
   newTrialBannerVariant: string | boolean;
@@ -131,9 +131,9 @@ export const MainNavigation = ({
   membershipRole,
   isFormbricksCloud,
   isDevelopment,
-  publicDomain,
   organizationWorkspacesLimit,
   isLicenseActive,
+  isNoLicense,
   isAccessControlAllowed,
   responseCount,
   newTrialBannerVariant,
@@ -588,7 +588,6 @@ export const MainNavigation = ({
               <UserDropdown
                 user={user}
                 organizationId={organization.id}
-                publicDomain={publicDomain}
                 isCollapsed={isCollapsed}
                 isTextVisible={isTextVisible}
                 className="rounded-br-xl"
@@ -604,6 +603,7 @@ export const MainNavigation = ({
           setOpen={setOpenWorkspaceLimitModal}
           buttons={workspaceLimitModalButtons()}
           workspaceLimit={organizationWorkspacesLimit}
+          showLiteLicenseTip={!isFormbricksCloud && isNoLicense}
         />
       )}
       {openCreateWorkspaceModal && (

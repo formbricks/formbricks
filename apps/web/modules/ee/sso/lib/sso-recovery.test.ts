@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
 import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
@@ -41,6 +42,12 @@ vi.mock("@/lib/constants", async (importOriginal) => {
 
 vi.mock("@/lib/jwt", () => ({
   createEmailToken: mocks.createEmailToken,
+}));
+
+// The SpiceDB side of the API key sweep. `runPostCommitProjection` itself is left real: it is the
+// boundary that swallows a projection failure, and a test that mocked it would prove nothing about it.
+vi.mock("@/lib/authzed/api-key", () => ({
+  reconcileApiKeyRelationships: vi.fn(),
 }));
 
 vi.mock("./recovery-intent", () => ({
@@ -112,6 +119,8 @@ describe("sso-recovery", () => {
   const txOauthAccessUpdateMany = vi.fn();
   const txOauthRefreshUpdateMany = vi.fn();
   const txOauthConsentDeleteMany = vi.fn();
+  const txApiKeyFindMany = vi.fn();
+  const txApiKeyDeleteMany = vi.fn();
   // Both new stores belong in the stub: post-ENG-1054 the password lives on `Account` and the 2FA secret
   // in `TwoFactor`, so a strip that only touched `user` is exactly the bug ENG-2557 fixed.
   const tx = {
@@ -134,6 +143,16 @@ describe("sso-recovery", () => {
     oauthConsent: {
       deleteMany: txOauthConsentDeleteMany,
     },
+    apiKey: {
+      findMany: txApiKeyFindMany,
+      deleteMany: txApiKeyDeleteMany,
+    },
+  };
+
+  /** The squatter minted keys: the ENG-2634 starting state, opted into per test. */
+  const withApiKeys = (ids: string[]) => {
+    txApiKeyFindMany.mockResolvedValue(ids.map((id) => ({ id })));
+    txApiKeyDeleteMany.mockResolvedValue({ count: ids.length });
   };
 
   beforeEach(() => {
@@ -148,6 +167,7 @@ describe("sso-recovery", () => {
     txOauthAccessUpdateMany.mockResolvedValue({ count: 1 });
     txOauthRefreshUpdateMany.mockResolvedValue({ count: 2 });
     txOauthConsentDeleteMany.mockResolvedValue({ count: 1 });
+    withApiKeys([]); // the common case: no keys, so nothing to reconcile or to mail about
     vi.mocked(revokeUserSessionsExcept).mockResolvedValue(2);
     // The mock carries a commit step. Without one, `consumeSsoRecoveryIntent` moved INSIDE the
     // transaction was indistinguishable from after it — and inside is wrong, because Redis is not part
@@ -265,6 +285,15 @@ describe("sso-recovery", () => {
       identityProvider: "email",
       identityProviderAccountId: null,
     } as any);
+    withApiKeys(["apikey_1", "apikey_2"]);
+    // Same commit-step trick as `consumeSsoRecoveryIntent`: SpiceDB is not part of the transaction, so a
+    // reconciliation issued inside it would survive a rollback and delete relationships for keys that
+    // still exist.
+    let reconciledAfterCommit: boolean | null = null;
+    vi.mocked(reconcileApiKeyRelationships).mockImplementation(async () => {
+      reconciledAfterCommit = transactionCommitted;
+      return { status: "projected" } as never;
+    });
 
     const callbackUrl = await completeSsoRecovery({
       stateId: "test-state",
@@ -326,6 +355,11 @@ describe("sso-recovery", () => {
     // Consent too: `/authorize` skips the consent screen when a row exists, so leaving it would let a
     // still-cookie-cached session mint a replacement refresh token and undo the revocation above.
     expect(txOauthConsentDeleteMany).toHaveBeenCalledWith({ where: { userId: "user_1" } });
+    // The keys THIS user minted (ENG-2634): scoped by creator, not by organization, so a colleague's key
+    // on an organization the squatter reached is left alone.
+    expect(txApiKeyDeleteMany).toHaveBeenCalledWith({ where: { createdBy: "user_1" } });
+    expect(reconcileApiKeyRelationships).toHaveBeenCalledWith({ apiKeyIds: ["apikey_1", "apikey_2"] });
+    expect(reconciledAfterCommit).toBe(true);
     expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "sso_recovery_completed",
@@ -339,6 +373,7 @@ describe("sso-recovery", () => {
           oauthAccessTokensRevoked: 1,
           oauthRefreshTokensRevoked: 2,
           oauthConsentsRevoked: 1,
+          apiKeysRevoked: 2,
           sessionsRevoked: 2,
         }),
       })
@@ -396,7 +431,26 @@ describe("sso-recovery", () => {
         locale: "de-DE",
         passwordRemoved: true,
         twoFactorRemoved: true,
+        apiKeysRemoved: false,
       });
+    });
+
+    /**
+     * ENG-2634. An account with neither sign-in factor set can still have minted API keys, and for a
+     * legitimate owner those are the removal with a blast radius — integrations stop working — so the
+     * keys alone have to be enough to send the mail.
+     */
+    test("reports deleted API keys on their own, when neither sign-in factor was set", async () => {
+      asUnverifiedUser();
+      txTwoFactorDeleteMany.mockResolvedValue({ count: 0 });
+      txAccountUpdateMany.mockResolvedValue({ count: 0 });
+      withApiKeys(["apikey_1"]);
+
+      await completeRecovery();
+
+      expect(sendSsoRecoveryFactorsRemovedEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ passwordRemoved: false, twoFactorRemoved: false, apiKeysRemoved: true })
+      );
     });
 
     // Each flag reports what this account actually had, so the mail never claims to have removed a
@@ -661,6 +715,8 @@ describe("sso-recovery", () => {
     expect(txOauthAccessUpdateMany).not.toHaveBeenCalled();
     expect(txOauthRefreshUpdateMany).not.toHaveBeenCalled();
     expect(txOauthConsentDeleteMany).not.toHaveBeenCalled();
+    expect(txApiKeyDeleteMany).not.toHaveBeenCalled();
+    expect(reconcileApiKeyRelationships).not.toHaveBeenCalled();
     // A proven account is a legitimate one: linking another provider to it must not sign its other
     // sessions out, and must not report a strip that did not happen.
     expect(revokeUserSessionsExcept).not.toHaveBeenCalled();

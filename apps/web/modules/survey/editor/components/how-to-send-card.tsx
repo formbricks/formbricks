@@ -96,7 +96,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, appSetupCompleted }
         asChild
         className="h-full w-full cursor-pointer"
         id="howToSendCardTrigger">
-        <div className="inline-flex px-4 py-4">
+        <button type="button" className="inline-flex px-4 py-4 text-left">
           <div className="flex items-center pr-5 pl-2">
             <CheckIcon
               strokeWidth={3}
@@ -109,7 +109,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, appSetupCompleted }
               {t("workspace.surveys.edit.choose_where_to_run_the_survey")}
             </p>
           </div>
-        </div>
+        </button>
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent className="flex flex-col overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
         <hr className="py-1 text-slate-600" />
