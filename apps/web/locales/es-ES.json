@@ -3205,6 +3205,7 @@
         "ai_translation_all_fields_populated": "Todos los campos ya están traducidos",
         "ai_translation_complete": "Traducción con IA completada",
         "ai_translation_failed": "La traducción ha fallado",
+        "ai_translation_output_too_long": "Esta encuesta tiene demasiado texto para traducir de una vez. Traduce algunos campos manualmente y vuelve a intentarlo.",
         "ai_translation_quota_exceeded": "La traducción no está disponible temporalmente debido a la alta demanda. Por favor, inténtalo de nuevo en breve.",
         "all_are_true": "todas son verdaderas",
         "all_other_answers_will_continue_to_fallback": "Todas las demás respuestas continuarán <fallbackSelect />",
