@@ -10,7 +10,7 @@ import {
   ZEmbeddedDataType,
 } from "@formbricks/types/embedded-data";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
-import { TValidateIdErrorCode } from "@formbricks/types/surveys/validation";
+import { toSafeIdentifier } from "@formbricks/types/safe-identifier";
 import { DefaultValueInput } from "@/modules/embedded-data/components/default-value-input";
 import { FieldSourceIcon } from "@/modules/embedded-data/settings/components/field-source-icon";
 import { FieldSourceIndicator } from "@/modules/embedded-data/settings/components/field-status";
@@ -28,8 +28,13 @@ import {
   toLocalEmbeddedField,
 } from "@/modules/survey/editor/lib/embedded-field-draft";
 import { needsTypeChangeConfirm } from "@/modules/survey/editor/lib/embedded-field-guards";
-import { mintFreeStorageKey, validateEmbeddedFieldName } from "@/modules/survey/editor/lib/embedded-fields";
-import { getValidateIdErrorMessage } from "@/modules/survey/editor/lib/validation";
+import {
+  declaredEmbeddedFieldName,
+  getEmbeddedFieldErrorMessage,
+  isEmbeddedFieldNameTaken,
+  mintStorageKey,
+  validateEmbeddedFieldDeclaredName,
+} from "@/modules/survey/editor/lib/embedded-fields";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -60,8 +65,8 @@ interface EmbeddedFieldFormProps {
   /** Ids already spoken for in the survey's namespace: its elements and ending cards. */
   takenIds: string[];
   /**
-   * The addresses this survey's other fields occupy. A passed-in field is addressed by its name, so
-   * a new one can be given an address another field already holds; see `mintFreeStorageKey`.
+   * The addresses this survey's other fields occupy. The survey would otherwise only fail at the
+   * save, on `@@unique([surveyId, storageKey])`, as a Prisma violation with no field to point at.
    */
   takenStorageKeys: string[];
   /** Every other field's declared name — what makes a repeat a duplicate. */
@@ -131,6 +136,28 @@ export const EmbeddedFieldForm = ({
    */
   const narrowedAway = useRef<{ dataType: TEmbeddedDataType; defaultValue: string } | null>(null);
 
+  /**
+   * The ID follows the name while the author has not taken it over, the same way the library form's
+   * key does — so the common case is one input, and the address is still something they can see and
+   * correct before it is fixed forever.
+   *
+   * `shouldFollow` compares against what the *previous* name would have produced, not against empty:
+   * that is what tells an untouched auto-generated value apart from one the author typed, so their
+   * own ID survives a later edit to the name. Create only — an existing field's address is read-only.
+   */
+  const handleNameChange = (value: string) => {
+    const previousAutoKey = toSafeIdentifier(form.getValues("name"));
+    const currentKey = form.getValues("storageKey");
+    const shouldFollow = currentKey === "" || currentKey === previousAutoKey;
+
+    form.setValue("name", value, { shouldValidate: true, shouldDirty: true });
+    // Only a passed-in field has an address the author writes. A calculated one mints a cuid at
+    // submit, so there is no ID input for this to fill.
+    if (!isEdit && shouldFollow && form.getValues("source") === "ingested") {
+      form.setValue("storageKey", toSafeIdentifier(value), { shouldValidate: true, shouldDirty: true });
+    }
+  };
+
   const handleSourceChange = (value: string) => {
     const nextSource = ZEmbeddedDataSource.parse(value);
     form.setValue("source", nextSource, { shouldValidate: true, shouldDirty: true });
@@ -153,6 +180,15 @@ export const EmbeddedFieldForm = ({
     if (!isLockableSource(nextSource)) {
       form.setValue("locked", false, { shouldValidate: true, shouldDirty: true });
     }
+    // The ID input is only rendered for a passed-in field, so coming back to one has to re-derive
+    // what it would have held — otherwise the address stays at whatever the name was when the author
+    // last switched away, or empty if they never typed one.
+    if (nextSource === "ingested" && !isEdit) {
+      form.setValue("storageKey", toSafeIdentifier(form.getValues("name")), {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
   };
 
   /**
@@ -166,44 +202,47 @@ export const EmbeddedFieldForm = ({
   };
 
   const onSubmit: SubmitHandler<TEmbeddedFieldDraft> = (draft) => {
-    const nameError = validateEmbeddedFieldName({
-      name: draft.name,
-      takenIds,
-      otherFieldNames,
-      previousName: entry?.field.name ?? null,
-    });
+    // Which control holds the declared name follows the source, so the refusal lands on the input the
+    // author would have to change — resolved the same way the server's guard resolves it, which is
+    // what keeps an inline error and a refused save agreeing.
+    //
+    // A passed-in field declares its address, so the ID input carries the identifier rules and its
+    // Name is free text. A calculated field declares its *name*, so that one control is the ID and is
+    // labelled as such; its address is a minted cuid, because the legacy `variables` column it is
+    // dual-written to pins `id` to `z.cuid2()`. Giving a calculated field a free display name as well
+    // needs `declaredEntryName` to move off the name on both of its payload shapes — see ENG-3383.
+    const declaresByAddress = draft.source === "ingested";
+    const declaredControl = declaresByAddress ? "storageKey" : "name";
+    const declaredName = declaresByAddress ? draft.storageKey : draft.name;
 
-    if (nameError) {
-      // A name already spoken for is answered in this card's own words (ENG-3266). The shared
-      // message names the namespaces it searched — "questions, hidden fields, or variables" — which
-      // are the two concepts this card replaced, so the one refusal an author meets routinely was
-      // the one sentence still speaking the vocabulary the merged card removed.
-      //
-      // Its own sentence rather than the address one below: `validateEmbeddedFieldName` refuses a
-      // name that collides with an element or an ending card as well as with another field, and only
-      // the last of those is a field holding the address. Saying so for a question id would send the
-      // author looking for a field that does not exist.
-      //
-      // Every other code keeps the shared message, named by source: the two halves of the card still
-      // occupy the two namespaces recall and logic address fields through, and an empty or malformed
-      // name is refused in terms of the one that refused it.
-      const namespace = draft.source === "computed" ? "variable" : "hiddenField";
-      form.setError("name", {
-        message:
-          nameError.code === TValidateIdErrorCode.Duplicate
-            ? t("workspace.embedded_data.survey_field_name_taken")
-            : getValidateIdErrorMessage(nameError, namespace, t),
-      });
+    // An edit keeps the address its responses are already stored under — read-only for the same
+    // reason the library's key is, and rendered as a badge rather than an input.
+    const storageKey =
+      entry?.link.storageKey ??
+      (declaresByAddress ? draft.storageKey : mintStorageKey(draft.source, draft.name));
+
+    // Only a passed-in field has a display name free enough to repeat one. A calculated field's name
+    // is its declared name, so a repeat is already a duplicate below.
+    if (declaresByAddress && isEmbeddedFieldNameTaken({ name: draft.name, otherFieldNames })) {
+      form.setError("name", { message: t("workspace.embedded_data.survey_field_display_name_taken") });
       return;
     }
 
-    // An edit keeps the address its responses are already stored under — it is read-only for the
-    // same reason the library's key is. Only a new field mints one, and only a new one can collide.
-    const storageKey =
-      entry?.link.storageKey ?? mintFreeStorageKey(draft.source, draft.name, takenStorageKeys);
+    const addressError = validateEmbeddedFieldDeclaredName({
+      declaredName,
+      takenIds,
+      otherDeclaredNames: declaresByAddress ? takenStorageKeys : otherFieldNames,
+      previousDeclaredName: entry === null ? null : declaredEmbeddedFieldName(entry),
+    });
 
-    if (storageKey === null) {
-      form.setError("name", { message: t("workspace.embedded_data.survey_field_address_taken") });
+    if (addressError) {
+      form.setError(declaredControl, {
+        message: getEmbeddedFieldErrorMessage(
+          addressError,
+          declaresByAddress ? t("common.key") : t("common.name"),
+          t
+        ),
+      });
       return;
     }
 
@@ -237,14 +276,43 @@ export const EmbeddedFieldForm = ({
                       // supplies, and `FormLabel htmlFor` then points at the description below.
                       data-testid="embedded-field-name"
                       autoFocus
+                      onChange={(event) => handleNameChange(event.currentTarget.value)}
                       isInvalid={Boolean(form.formState.errors.name)}
                     />
                   </FormControl>
-                  <FormDescription>{t("workspace.embedded_data.survey_field_name_hint")}</FormDescription>
+                  <FormDescription>
+                    {source === "computed"
+                      ? t("workspace.embedded_data.survey_field_computed_name_hint")
+                      : t("workspace.embedded_data.survey_field_name_hint")}
+                  </FormDescription>
                   <FormError />
                 </FormItem>
               )}
             />
+
+            {/* Create only, and only for a passed-in field: that is the one whose address the author
+              spells, in the URL or the SDK call. A calculated field is addressed by the recall id its
+              tokens already carry, which is minted rather than typed. */}
+            {!isEdit && source === "ingested" && (
+              <FormField
+                control={form.control}
+                name="storageKey"
+                render={({ field: keyField }) => (
+                  <FormItem>
+                    <FormLabel>{t("common.key")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...keyField}
+                        data-testid="embedded-field-key"
+                        isInvalid={Boolean(form.formState.errors.storageKey)}
+                      />
+                    </FormControl>
+                    <FormDescription>{t("workspace.embedded_data.survey_field_key_hint")}</FormDescription>
+                    <FormError />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {isEdit ? (
               <div className="flex flex-col gap-2">

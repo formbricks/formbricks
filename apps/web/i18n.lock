@@ -2104,6 +2104,11 @@ checksums:
     workspace/embedded_data/field_added: 9ac1f4d41279342b06d631234a378290
     workspace/embedded_data/field_created: f3a560c0513872373997e6cce7db5c16
     workspace/embedded_data/field_deleted: 01f670d4f537c8b23c7120754461ceac
+    workspace/embedded_data/field_error_empty: 3a24738e6b7e947a81b6bc7a0a64df7c
+    workspace/embedded_data/field_error_invalid_chars: dbb9a2c6e6f1638661bc3dc8e702f809
+    workspace/embedded_data/field_error_no_spaces: 47d06907026c167ae284ddb016b45efe
+    workspace/embedded_data/field_error_not_safe_identifier: 9c5f49e4d8d854ae676660ed48302f4f
+    workspace/embedded_data/field_error_reserved: 0f956632814258da835c38fb0142bfa1
     workspace/embedded_data/field_in_library: 0f7bfa913a7a8df2620b59cd839aeeee
     workspace/embedded_data/field_removed: 44714dc9ca82c633a4474ae69d51cb59
     workspace/embedded_data/field_updated: 1636b2ceba3666bcb15d5c0462cceb34
@@ -2143,9 +2148,11 @@ checksums:
     workspace/embedded_data/still_used_description: 080d1377b235df9b11b8c52ade4d10d3
     workspace/embedded_data/still_used_title: ed1cac1cb6bb3e0e651305ea109a9b25
     workspace/embedded_data/survey_field_address_fixed: 717b7c84a057227d3e1a6434a55e606b
-    workspace/embedded_data/survey_field_address_taken: ccea2d3cc325a89d33b6ce451e27d516
-    workspace/embedded_data/survey_field_name_hint: 46ebfb90081a61cfed7b1f6d07bd029e
-    workspace/embedded_data/survey_field_name_taken: 1afaf989ef175695ae1483e133c8a499
+    workspace/embedded_data/survey_field_address_taken: 2e88dd2b8f0506c064f44818d64a3577
+    workspace/embedded_data/survey_field_computed_name_hint: 25a5e6e9682ee0959af4b5933ca1fbf4
+    workspace/embedded_data/survey_field_display_name_taken: 583e3e40b18e741d5f4d8a44b1ea1e77
+    workspace/embedded_data/survey_field_key_hint: 8cd131bc26e688650aa269c12a6def27
+    workspace/embedded_data/survey_field_name_hint: fdd235f505a90641ac4e9fa1ca830a06
     workspace/embedded_data/type_boolean: cd6b8f6ab199da93ec0401c546e491a9
     workspace/embedded_data/type_change_body: 579b7314e7067303db705f75cb9cf385
     workspace/embedded_data/type_change_responses_subtitle: 5f07cb595a8cb6f42471d573ae64f579
