@@ -69,7 +69,7 @@ export const getPreviousBlockId = (
   blockId: string,
   history: readonly string[]
 ): string | undefined => {
-  if (history.length > 0) return history[history.length - 1];
+  if (history.length > 0) return history.at(-1);
 
   const currentBlockIndex = survey.blocks.findIndex((block) => block.id === blockId);
   if (currentBlockIndex <= 0) return undefined;
