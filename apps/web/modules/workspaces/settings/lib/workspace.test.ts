@@ -199,6 +199,19 @@ describe("workspace lib", () => {
       expect(deleteFile).not.toHaveBeenCalled();
     });
 
+    // The comparison runs after the write has committed, so a url whose percent escapes cannot be
+    // decoded must not throw — that would report a save that actually succeeded as failed.
+    test("resolves the update when the stored url has a malformed percent escape", async () => {
+      withStoredLogo(`${LOGO_PREFIX}/bad%zz.png`);
+      resolvesTo({ logo: null });
+
+      await expect(
+        updateWorkspace("p1", { logo: { url: undefined }, expectedUpdatedAt: loadedAt })
+      ).resolves.toBeDefined();
+
+      expect(deleteFile).not.toHaveBeenCalled();
+    });
+
     test("does not read or delete anything when the update carries no logo", async () => {
       resolvesTo({ name: "renamed" });
 

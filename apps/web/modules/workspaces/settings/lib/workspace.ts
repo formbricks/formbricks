@@ -89,7 +89,15 @@ const storageObjectKey = (fileUrl: string): string | null => {
   const parsed = parseStorageFileUrl(fileUrl);
   if (!parsed) return null;
 
-  return `${parsed.storageId}/${parsed.accessType}/${decodeURIComponent(parsed.fileName)}`;
+  try {
+    return `${parsed.storageId}/${parsed.accessType}/${decodeURIComponent(parsed.fileName)}`;
+  } catch {
+    // `logo.url` is caller-supplied and nothing upstream validates percent escapes, so a name like
+    // `bad%zz.png` reaches this far and makes decodeURIComponent throw. The caller is compared and
+    // cleaned up *after* the workspace write has committed, so throwing here would report a save
+    // that actually succeeded as failed. An unresolvable name is simply not a key we can match.
+    return null;
+  }
 };
 
 /**
