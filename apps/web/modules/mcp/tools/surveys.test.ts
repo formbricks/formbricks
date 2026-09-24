@@ -527,22 +527,27 @@ describe("registerSurveyTools", () => {
 
   test("write tools return MCP errors for read-only OAuth scopes", async () => {
     const { tools } = createToolServer();
+    const surveyId = "clxx1234567890123456789012";
+    // Every write tool, so a new one registered under `surveys:read` by mistake fails here. For an
+    // OAuth user who holds the write role, this scope is the only barrier.
+    const cases: [string, Record<string, unknown>, unknown][] = [
+      ["delete_survey", { surveyId }, deleteV3Survey],
+      ["edit_survey_blocks", { surveyId, ops: [{ op: "remove", id: "blk_a" }] }, editV3SurveyBlocksResponse],
+      ["set_survey_block_order", { surveyId, order: ["blk_a"] }, setV3SurveyBlockOrderResponse],
+    ];
 
-    const result = await tools.get("delete_survey")!.handler(
-      {
-        surveyId: "clxx1234567890123456789012",
-      },
-      { http: { authInfo: readOnlyOAuthAuthInfo } }
-    );
+    for (const [name, input, operation] of cases) {
+      const result = await tools.get(name)!.handler(input, { http: { authInfo: readOnlyOAuthAuthInfo } });
 
-    expect(deleteV3Survey).not.toHaveBeenCalled();
-    expect(result.isError).toBe(true);
-    expect(result.structuredContent.error).toMatchObject({
-      status: 403,
-      code: "forbidden",
-      detail: "OAuth token does not include the required MCP scope: surveys:write",
-      requestId: "req_tool",
-    });
+      expect(operation, name).not.toHaveBeenCalled();
+      expect(result.isError, name).toBe(true);
+      expect(result.structuredContent.error, name).toMatchObject({
+        status: 403,
+        code: "forbidden",
+        detail: "OAuth token does not include the required MCP scope: surveys:write",
+        requestId: "req_tool",
+      });
+    }
   });
 
   // Covers the MCP scope gate only — validateV3SurveyFromRawInput is mocked here, so this passed

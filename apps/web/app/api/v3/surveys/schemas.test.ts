@@ -1016,4 +1016,48 @@ describe("block operation bodies are bounded (ENG-1652)", () => {
       false
     );
   });
+
+  test("an oversized array costs one issue, not one per element — on REST and through the MCP SDK's validate", async () => {
+    // Zod parses every element before `.max()` fires: 200k junk entries measured at ~500 MB of heap and
+    // a multi-megabyte error body. `lengthBoundedArray` checks the length first. `~standard.validate`
+    // is the entry point @modelcontextprotocol/server uses for tool arguments, ahead of the scope gate,
+    // so it has to be bounded by the schema itself rather than by a check in the REST operation.
+    const junk = Array.from({ length: 5000 }, () => 0);
+
+    const order = ZV3SetSurveyBlockOrderBody.safeParse({ order: junk });
+    expect(order.success).toBe(false);
+    if (!order.success) {
+      expect(order.error.issues).toHaveLength(1);
+      expect(formatV3ZodInvalidParams(order.error, "body")).toEqual([
+        expect.objectContaining({
+          name: "order",
+          reason: `Too big: expected array to have <=${V3_SURVEY_BLOCK_ORDER_MAX} items`,
+        }),
+      ]);
+    }
+
+    const ops = ZV3EditSurveyBlocksBody.safeParse({ ops: junk });
+    expect(ops.success).toBe(false);
+    if (!ops.success) {
+      expect(ops.error.issues).toHaveLength(1);
+    }
+
+    const viaStandard = await ZV3SetSurveyBlockOrderBody["~standard"].validate({ order: junk });
+    expect(viaStandard.issues).toHaveLength(1);
+  });
+
+  test("still advertises the item shape and both bounds in the JSON schema the MCP tools publish", () => {
+    // A `.pipe()` around the field would turn the advertised `items` into `{}` under `io: "input"`; the
+    // field-level preprocess must not.
+    const json = z.toJSONSchema(ZV3EditSurveyBlocksBody, { io: "input", unrepresentable: "any" }) as {
+      properties: Record<string, Record<string, unknown>>;
+    };
+
+    expect(json.properties.ops).toMatchObject({
+      type: "array",
+      minItems: 1,
+      maxItems: V3_SURVEY_BLOCK_OPS_MAX,
+    });
+    expect(JSON.stringify(json.properties.ops.items)).toContain('"remove"');
+  });
 });

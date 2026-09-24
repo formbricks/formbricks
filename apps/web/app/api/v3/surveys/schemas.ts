@@ -1351,12 +1351,44 @@ export const ZV3ExpectedUpdatedAt = z.iso
     "Optimistic-concurrency precondition: the survey's `updatedAt` from your last read. The write is rejected with 409 if the survey changed since."
   );
 
+/**
+ * `z.array(item).max(n)` parses every element before the `.max()` check runs, so a 2 MB body of junk
+ * entries comes back as one issue per element — measured at ~500 MB of transient heap for a 200k-entry
+ * `order` — on both surfaces that share these bodies: the REST route, and the MCP tool, whose SDK
+ * validates arguments through Zod's `~standard.validate` and collects every issue before the scope
+ * gate runs. Checking the length *before* the value reaches the inner schema makes an oversized array
+ * cost exactly one issue. A field-level `preprocess` keeps the advertised JSON schema intact (`items`,
+ * `minItems` and `maxItems` all survive `z.toJSONSchema`), which a `.pipe()` around the field does not.
+ */
+function lengthBoundedArray<TItem extends z.ZodType>(
+  item: TItem,
+  min: number,
+  max: number,
+  description: string
+) {
+  return z.preprocess((value, ctx) => {
+    if (Array.isArray(value) && value.length > max) {
+      ctx.addIssue({
+        code: "too_big",
+        origin: "array",
+        maximum: max,
+        inclusive: true,
+        input: value,
+        message: `Too big: expected array to have <=${max} items`,
+      });
+      return z.NEVER;
+    }
+    return value;
+  }, z.array(item).min(min).max(max).describe(description));
+}
+
 export const ZV3EditSurveyBlocksBody = z.strictObject({
-  ops: z
-    .array(ZV3SurveyBlockOp)
-    .min(1)
-    .max(V3_SURVEY_BLOCK_OPS_MAX)
-    .describe("Operations applied in order, atomically — all of them or none."),
+  ops: lengthBoundedArray(
+    ZV3SurveyBlockOp,
+    1,
+    V3_SURVEY_BLOCK_OPS_MAX,
+    "Operations applied in order, atomically — all of them or none."
+  ),
   expectedUpdatedAt: ZV3ExpectedUpdatedAt.optional(),
 });
 
@@ -1371,11 +1403,12 @@ export const ZV3EditSurveyBlocksBody = z.strictObject({
 export const V3_SURVEY_BLOCK_ORDER_MAX = 1000;
 
 export const ZV3SetSurveyBlockOrderBody = z.strictObject({
-  order: z
-    .array(ZV3BlockRef)
-    .min(1)
-    .max(V3_SURVEY_BLOCK_ORDER_MAX)
-    .describe("Every current block id, exactly once, in the desired order."),
+  order: lengthBoundedArray(
+    ZV3BlockRef,
+    1,
+    V3_SURVEY_BLOCK_ORDER_MAX,
+    "Every current block id, exactly once, in the desired order."
+  ),
   expectedUpdatedAt: ZV3ExpectedUpdatedAt.optional(),
 });
 

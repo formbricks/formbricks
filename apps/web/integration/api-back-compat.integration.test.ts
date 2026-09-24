@@ -3,7 +3,11 @@ import { prisma } from "@formbricks/database";
 import { toDesiredEmbeddedFields } from "@formbricks/types/embedded-data-mapping";
 import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
 import { type TSurvey } from "@formbricks/types/surveys/types";
-import { V3SurveyStoredDocumentError, patchV3Survey } from "@/app/api/v3/surveys/patch";
+import {
+  V3SurveyArchivedError,
+  V3SurveyStoredDocumentError,
+  patchV3Survey,
+} from "@/app/api/v3/surveys/patch";
 import { V3SurveyReferenceValidationError } from "@/app/api/v3/surveys/reference-validation";
 import { resetDb } from "@/integration/reset-db";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
@@ -549,5 +553,42 @@ describe("grandfathering at the v1 / v2 write boundary (updateSurvey)", () => {
         ],
       })
     ).toEqual({ refused: "InvalidInputError" });
+  });
+});
+
+describe("the compare-and-set holds against real Postgres (ENG-3069)", () => {
+  // The mocked tests pin the UPDATE's `where`; only a real row shows that a mismatch is a P2025 the
+  // re-read then resolves — and that nothing landed. `expectedUpdatedAt` here is the survey as the
+  // caller read it, so the pre-flight passes and the UPDATE itself is what refuses.
+  test("a write on a survey that moved on since the read is refused as stale, at the write", async () => {
+    const stale = await seedSurvey();
+    await prisma.survey.update({
+      where: { id: stale.id },
+      data: { name: "Moved on", updatedAt: new Date(stale.updatedAt.getTime() + 1000) },
+    });
+
+    await expect(
+      patchV3Survey(stale, { name: "Late" }, "req_cas_stale", undefined, {
+        expectedUpdatedAt: stale.updatedAt,
+      })
+    ).rejects.toMatchObject({ name: "V3SurveyStaleError", detectedAt: "write" });
+
+    const row = await prisma.survey.findUniqueOrThrow({ where: { id: stale.id }, select: { name: true } });
+    expect(row.name).toBe("Moved on");
+  });
+
+  test("a survey archived between the authorized read and the write is refused as archived", async () => {
+    const stale = await seedSurvey();
+    await prisma.survey.update({ where: { id: stale.id }, data: { archivedAt: new Date() } });
+
+    await expect(patchV3Survey(stale, { name: "Late" }, "req_cas_archived")).rejects.toBeInstanceOf(
+      V3SurveyArchivedError
+    );
+
+    const row = await prisma.survey.findUniqueOrThrow({
+      where: { id: stale.id },
+      select: { name: true, status: true },
+    });
+    expect(row).toEqual({ name: "Back-compat Survey", status: "draft" });
   });
 });

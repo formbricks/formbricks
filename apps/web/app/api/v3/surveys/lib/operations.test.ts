@@ -1199,6 +1199,16 @@ describe("editV3SurveyBlocksResponse", () => {
       auditLog,
     });
 
+  test("authorizes the survey at readWrite before any op is applied", async () => {
+    // The level is set once in the shared pipeline; this pins it from the block endpoint's side so a
+    // per-operation refactor that lowered it to `read` would fail here, not only on the PATCH test.
+    await call({ ops: [{ op: "remove", id: "blk_b" }] });
+
+    expect(vi.mocked(getAuthorizedV3Survey)).toHaveBeenCalledWith(
+      expect.objectContaining({ surveyId: "survey_1", access: "readWrite" })
+    );
+  });
+
   test("splices the ops into the stored blocks and writes the whole array once", async () => {
     const auditLog = {} as any;
     const replacement = { id: "blk_a", name: "A renamed", elements: [] };
@@ -1459,6 +1469,14 @@ describe("setV3SurveyBlockOrderResponse", () => {
       instance,
       auditLog,
     });
+
+  test("authorizes the survey at readWrite before the order is applied", async () => {
+    await call({ order: ["blk_b", "blk_a"] });
+
+    expect(vi.mocked(getAuthorizedV3Survey)).toHaveBeenCalledWith(
+      expect.objectContaining({ surveyId: "survey_1", access: "readWrite" })
+    );
+  });
 
   test("applies a permutation", async () => {
     const response = await call({ order: ["blk_b", "blk_a"] });

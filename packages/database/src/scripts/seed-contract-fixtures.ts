@@ -150,20 +150,35 @@ async function seedResponse(id: string, surveyId: string): Promise<void> {
   });
 }
 
+/**
+ * Block and element ids the block-edit fixture is seeded with: the ones the documented request examples
+ * of `PATCH /api/v3/surveys/{surveyId}/blocks` name. The alternative — a generic `id` override in the
+ * hook — rewrites every `id` key in the example recursively, so the update's *element* id becomes the
+ * block id (a cross-namespace `duplicate_identifier` 422) and the insert's new block id becomes an
+ * existing one (another 422). Seeding the example's ids instead lets the update example answer 200
+ * against a non-draft survey, whose element ids are immutable and therefore have to match too.
+ */
+const BLOCK_EDIT_EXAMPLE_BLOCKS = [
+  { id: "k1p9wq2m4x7c3v8b5n6t0j2r", elementId: "satisfaction" },
+  { id: "n7m4q8w2e6r0t3y5u1i9o2p4", elementId: "followup_seed" },
+] as const;
+
 async function seedSurvey(
   id: string,
   name: string,
   archived: boolean,
   // The block operations need at least two blocks: one to address and one left over, since removing
   // the last block is (correctly) rejected.
-  blockCount = 1
+  blockCount = 1,
+  blockIds?: readonly { id: string; elementId: string }[]
 ): Promise<void> {
   const blocks = Array.from({ length: blockCount }, (_unused, index) => ({
-    id: index === 0 ? `${id}block` : `${id}block${String(index + 1)}`,
+    id: blockIds?.[index]?.id ?? (index === 0 ? `${id}block` : `${id}block${String(index + 1)}`),
     name: `Main Block ${String(index + 1)}`,
     elements: [
       {
-        id: index === 0 ? `${id}element` : `${id}element${String(index + 1)}`,
+        id:
+          blockIds?.[index]?.elementId ?? (index === 0 ? `${id}element` : `${id}element${String(index + 1)}`),
         type: "openText",
         headline: { default: "Contract fixture question" },
         required: false,
@@ -253,7 +268,13 @@ async function main(): Promise<void> {
   await seedSurvey(CONTRACT_IDS.SURVEY_PATCH, "Contract fixture — patch", false);
   await seedSurvey(CONTRACT_IDS.SURVEY_DELETE, "Contract fixture — delete", false);
   await seedSurvey(CONTRACT_IDS.SURVEY_ARCHIVE, "Contract fixture — archive", false);
-  await seedSurvey(CONTRACT_IDS.SURVEY_BLOCKS_EDIT, "Contract fixture — block edit", false, 2);
+  await seedSurvey(
+    CONTRACT_IDS.SURVEY_BLOCKS_EDIT,
+    "Contract fixture — block edit",
+    false,
+    BLOCK_EDIT_EXAMPLE_BLOCKS.length,
+    BLOCK_EDIT_EXAMPLE_BLOCKS
+  );
   await seedSurvey(CONTRACT_IDS.SURVEY_BLOCKS_ORDER, "Contract fixture — block order", false, 2);
   // Restore only has something to do on an already-archived survey.
   await seedSurvey(CONTRACT_IDS.SURVEY_RESTORE, "Contract fixture — restore", true);
@@ -312,11 +333,12 @@ async function main(): Promise<void> {
       patchSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_PATCH } },
       deleteSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_DELETE } },
       archiveSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_ARCHIVE } },
+      // No `id`/`blockId` override on purpose — the survey is seeded with the example's own ids (see
+      // BLOCK_EDIT_EXAMPLE_BLOCKS), because the hook rewrites `id` at every depth and would turn the
+      // example's element id into the block id.
       editSurveyBlocksV3: {
         path: { surveyId: CONTRACT_IDS.SURVEY_BLOCKS_EDIT },
         body: {
-          blockId: `${CONTRACT_IDS.SURVEY_BLOCKS_EDIT}block`,
-          id: `${CONTRACT_IDS.SURVEY_BLOCKS_EDIT}block`,
           expectedUpdatedAt: CONTRACT_FIXTURE_UPDATED_AT.toISOString(),
         },
       },

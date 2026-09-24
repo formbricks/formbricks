@@ -58,8 +58,6 @@ import {
   type TV3SurveyBlockOp,
   type TV3SurveyDocument,
   type TV3SurveyValidationRequestBody,
-  V3_SURVEY_BLOCK_OPS_MAX,
-  V3_SURVEY_BLOCK_ORDER_MAX,
   ZV3CreateSurveyBody,
   ZV3EditSurveyBlocksBody,
   ZV3ExpectedUpdatedAt,
@@ -939,24 +937,6 @@ function isPlainObjectBody(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * Zod parses every element before an array `.max()` fires, so a 2 MB body of junk entries would come
- * back as one `invalid_params` entry per element — measured at ~500 MB of heap for a 200k-entry `order`
- * — and before the survey authorization has run. Refuse on length first, with the one issue the schema
- * would have raised. The schema itself keeps `.max()` as the contract the MCP tools advertise; the MCP
- * SDK validates tool input through a JSON-schema validator that stops at the first failing keyword, so
- * that surface is bounded already.
- */
-function findOversizedArray(body: unknown, key: string, max: number): InvalidParam | null {
-  if (!isPlainObjectBody(body)) {
-    return null;
-  }
-  const value = body[key];
-  return Array.isArray(value) && value.length > max
-    ? { name: key, reason: `Too big: expected array to have <=${max} items` }
-    : null;
-}
-
-/**
  * Mint ids for inserted blocks that omit one, matching `create_survey`, which generates block ids via
  * `addGeneratedCreateIds`. Without this the two surfaces disagree — create invents ids for you, insert
  * 422s — and since every block id a caller has seen is server-generated, omitting it is the natural
@@ -1040,14 +1020,8 @@ export async function editV3SurveyBlocksResponse({
   body,
   ...params
 }: TPatchV3SurveyParams): Promise<Response> {
-  const oversized = findOversizedArray(body, "ops", V3_SURVEY_BLOCK_OPS_MAX);
-  if (oversized) {
-    return problemBadRequest(params.requestId, "Invalid request body", {
-      instance: params.instance,
-      invalid_params: [oversized],
-    });
-  }
-
+  // The body schema bounds `ops` on length before parsing elements (see `lengthBoundedArray`), so an
+  // oversized array is one issue here and one issue on the MCP tool that shares the schema.
   const parsed = ZV3EditSurveyBlocksBody.safeParse(body);
   if (!parsed.success) {
     return problemBadRequest(params.requestId, "Invalid request body", {
@@ -1093,14 +1067,6 @@ export async function setV3SurveyBlockOrderResponse({
   body,
   ...params
 }: TPatchV3SurveyParams): Promise<Response> {
-  const oversized = findOversizedArray(body, "order", V3_SURVEY_BLOCK_ORDER_MAX);
-  if (oversized) {
-    return problemBadRequest(params.requestId, "Invalid request body", {
-      instance: params.instance,
-      invalid_params: [oversized],
-    });
-  }
-
   const parsed = ZV3SetSurveyBlockOrderBody.safeParse(body);
   if (!parsed.success) {
     return problemBadRequest(params.requestId, "Invalid request body", {
