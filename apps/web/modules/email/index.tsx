@@ -289,16 +289,20 @@ export const sendSsoRecoveryFactorsRemovedEmail = async ({
   locale,
   passwordRemoved,
   twoFactorRemoved,
+  apiKeysRemoved,
 }: {
   email: string;
   locale: TUserLocale;
   passwordRemoved: boolean;
   twoFactorRemoved: boolean;
+  /** Keys the account had created were deleted with the strip (ENG-2634). */
+  apiKeysRemoved: boolean;
 }): Promise<boolean> => {
   const t = await getTranslate(locale);
   const html = await renderSsoRecoveryFactorsRemovedEmail({
     passwordRemoved,
     twoFactorRemoved,
+    apiKeysRemoved,
     // The account profile page is where both factors this mail can name are re-enrolled — the password
     // form and the 2FA card both live there. There is no separate /settings/security route.
     securitySettingsLink: `${WEBAPP_URL}/account/settings/profile`,

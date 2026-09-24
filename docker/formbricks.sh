@@ -793,10 +793,27 @@ EOT
 
   echo "🚙 Updating docker-compose.yml with your custom inputs..."
   sed -i "/WEBAPP_URL:/s|WEBAPP_URL:.*|WEBAPP_URL: \"https://$domain_name\"|" docker-compose.yml
+  sed -i "/BETTER_AUTH_URL:/s|BETTER_AUTH_URL:.*|BETTER_AUTH_URL: \"https://$domain_name\"|" docker-compose.yml
   sed -i "/NEXTAUTH_URL:/s|NEXTAUTH_URL:.*|NEXTAUTH_URL: \"https://$domain_name\"|" docker-compose.yml
 
-  nextauth_secret=$(openssl rand -hex 32) && sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $nextauth_secret/" docker-compose.yml
-  echo "🚗 NEXTAUTH_SECRET updated successfully!"
+  # One generated value written under both keys. Two `openssl` calls would hand a fresh install the
+  # two-secrets-disagreeing configuration on day one. The legacy key is still written because this
+  # script seds a docker-compose.yml freshly downloaded from `stable`, so script and compose file are
+  # version-skewed by design: an older compose file has only the legacy key to match.
+  auth_secret=$(openssl rand -hex 32)
+  sed -i "/BETTER_AUTH_SECRET:$/s/BETTER_AUTH_SECRET:.*/BETTER_AUTH_SECRET: $auth_secret/" docker-compose.yml
+  sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $auth_secret/" docker-compose.yml
+  # Report what actually landed. This script patches a docker-compose.yml downloaded from `stable`, so an
+  # older one carries only the legacy key and the first sed matches nothing — claiming success either way
+  # would hide an install left with an empty secret.
+  if grep -q "BETTER_AUTH_SECRET: $auth_secret" docker-compose.yml; then
+    echo "🚗 BETTER_AUTH_SECRET updated successfully!"
+  elif grep -q "NEXTAUTH_SECRET: $auth_secret" docker-compose.yml; then
+    echo "🚗 NEXTAUTH_SECRET updated successfully!"
+  else
+    echo "❌ Could not set an auth secret in docker-compose.yml - no BETTER_AUTH_SECRET or NEXTAUTH_SECRET line to update."
+    exit 1
+  fi
 
   encryption_key=$(openssl rand -hex 32) && sed -i "/ENCRYPTION_KEY:$/s/ENCRYPTION_KEY:.*/ENCRYPTION_KEY: $encryption_key/" docker-compose.yml
   echo "🚗 ENCRYPTION_KEY updated successfully!"
@@ -1290,6 +1307,20 @@ migrate_legacy_valkey_image() {
 update_formbricks() {
   echo "🔄 Updating Formbricks..."
   cd formbricks
+
+  local compose_services
+  if ! compose_services=$(sudo docker compose config --services); then
+    echo "❌ Could not render docker-compose.yml. No images were pulled and no services were stopped." >&2
+    echo "Fix the Compose error, run 'docker compose config', and retry the update." >&2
+    exit 1
+  fi
+
+  if ! printf '%s\n' "$compose_services" | grep -Fxq "hub-worker"; then
+    echo "❌ This installation does not contain the required Hub worker service." >&2
+    echo "Your customized Compose file was not changed. Merge the release-matched hub-worker service, validate it with 'docker compose config', and retry." >&2
+    echo "https://formbricks.com/docs/self-hosting/advanced/migration#hub-worker-required-for-docker" >&2
+    exit 1
+  fi
 
   migrate_legacy_valkey_image docker-compose.yml
 

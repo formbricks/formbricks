@@ -16,7 +16,7 @@ info:
     **Spec location:** source of truth is the multi-file tree at `docs/api-v3-reference/src/` (root `openapi.yml` plus one file per path and component); `docs/api-v3-reference/openapi.yml` is the generated single-file bundle (alongside v2 at `docs/api-v2-reference/openapi.yml`).
 
     **workspaceId**
-    `workspaceId` is the canonical container identifier for this API. It is a **required query parameter on collection read endpoints** (`GET /api/v3/surveys`, `GET /api/v3/action-classes`, `GET /api/v3/contact-attribute-keys`) because those operate within a workspace. **`POST /api/v3/surveys` instead requires `workspaceId` in the request body**, not as a query parameter. Single-resource endpoints (`GET`/`PATCH`/`DELETE /api/v3/surveys/{surveyId}`) locate the resource by its globally-unique id and resolve the workspace from it, so they do **not** accept a `workspaceId` query parameter — sending one returns **400** (`Unrecognized key: "workspaceId"`).
+    `workspaceId` is the canonical container identifier for this API. It is a **required query parameter on collection read endpoints** (`GET /api/v3/surveys`, `GET /api/v3/action-classes`, `GET /api/v3/contact-attribute-keys`) because those operate within a workspace. **`POST /api/v3/surveys` instead requires `workspaceId` in the request body**, not as a query parameter. Single-resource endpoints (`GET`/`PATCH`/`DELETE /api/v3/surveys/{surveyId}`) locate the resource by its globally-unique id and resolve the workspace from it, so they do **not** accept a `workspaceId` query parameter — sending one returns **400** with an `invalid_params` entry naming the key itself (`name: "workspaceId"`, `reason: "Unsupported field 'workspaceId'"`), rather than one naming the body.
 
     **Auth**
     Authenticate with either a session cookie or **`x-api-key`**. In dual-auth mode, V3 checks the API key first when the header is present, otherwise it uses the session path. Unauthenticated callers get **401** before query validation.
@@ -35,6 +35,8 @@ info:
     **Responses**
     The response resource is **self-describing**. Answers come back as a typed `answers[]` array in which each entry carries the element's id, label, type and value, rather than as a map keyed by element id — so a consumer holding only a response can read it without fetching the survey and joining. Hidden fields, survey variables and auto-captured context are one `embeddedData[]` collection rather than three parallel concepts, each entry declaring a `kind` and a `type`. Data whose element has since been deleted is reported in `unresolved[]` instead of being dropped silently. Labels are resolved at read time against the current survey definition, and the `resolution` object discloses that policy along with the survey's `updatedAt` so a consumer can detect wording drift.
     Writes take answers in the **stored map form** (`data`) while reads return the typed array. Resolving ids into labelled answers is unambiguous; the reverse would mean matching caller-supplied labels back onto option ids, so the write side keeps the stored shape. To stop that costing round-trippability, the **detailed read returns `data` unchanged** — so a single-response read can be edited and sent back as `PATCH { "data": … }`, and the typed `answers[]` array is an addition rather than a replacement.
+
+    One case where that round trip does not close: a write bound applies to `data` on the way in (`ResponseDataMapInput`) and none applies to the stored map, because v1 and v2 wrote it without one. A response carrying more answer keys than the write accepts therefore cannot be corrected through `PATCH` at all — the whole map is rejected, and sending a smaller one is not a workaround, because `data` is replaced wholesale and every key left out is deleted. Correct those through the v1/v2 management API or the dashboard. This is reachable only on surveys with more elements than the bound allows.
     Embedded Data is the exception, and it is symmetric rather than round-tripped: hidden fields and variables are read and written through `embeddedData`, addressed by **name** in both directions. No raw map of them is echoed, because a name is already what a write accepts — publishing the storage keys underneath (a variable's is its cuid) would expose a layout the caller has no use for. `data` therefore carries element answers only.
     Of those two, only `data` carries no `readOnly`, because it is the same map on the way in and on the way out. Embedded Data is writable through the **request's own** `embeddedData` map, not through the response field of that name — so `embeddedData[]`, like every other derived view on the resource, is marked `readOnly`, per its meaning of server-managed. `ResponseResource` lists them all. The list view omits `data`, since a bulk reader is not editing. `POST /api/v3/responses/validate` exists so a caller can see what a map would produce, and what a write would do, before committing to it.
     `createdAt` and `updatedAt` are **server-owned** on this resource: they cannot be supplied on create or changed by a patch. Response metering counts rows by `(surveyId, createdAt)`, and a client-chosen `createdAt` also lets rows be inserted into the middle of another consumer's already-paginated stream. Backdating stays available on v2 until a dedicated import path exists. The respondent's IP address and the `contactAttributes` snapshot that v1/v2 expose are not part of this resource in any view; that snapshot is copied from the contact at submission time and never refreshed, so it is stale PII by construction.
@@ -192,32 +194,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/SurveyListItem'
                   meta:
-                    type: object
-                    required:
-                      - limit
-                      - nextCursor
-                      - totalCount
-                      - workspaceSurveyCount
-                    properties:
-                      limit:
-                        type: integer
-                      nextCursor:
-                        type:
-                          - string
-                          - 'null'
-                        description: Opaque cursor for the next page. `null` when there are no more results.
-                      totalCount:
-                        type:
-                          - integer
-                          - 'null'
-                        minimum: 0
-                        description: Total number of surveys matching the current filters across all pages. `null` when `includeTotalCount=false`.
-                      workspaceSurveyCount:
-                        type:
-                          - integer
-                          - 'null'
-                        minimum: 0
-                        description: Total number of surveys in the workspace, archived (soft-deleted) ones included and independent of the current filters. `null` when `includeTotalCount=false` (the same gate as `totalCount`). Replaces the boolean `hasArchived` field of earlier releases.
+                    $ref: '#/components/schemas/SurveyListMeta'
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -1722,42 +1699,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/ResponseListItem'
                   meta:
-                    type: object
-                    required:
-                      - limit
-                      - nextCursor
-                      - totalCount
-                      - totalCountRelation
-                    properties:
-                      limit:
-                        type: integer
-                        minimum: 1
-                        description: The page size actually applied. Carries no `maximum` — it echoes what the server used rather than bounding what may be asked for.
-                      nextCursor:
-                        type:
-                          - string
-                          - 'null'
-                        description: 'Opaque cursor for the next page. `null` when there are no more results — the only reliable end-of-collection signal. Pass it back verbatim: the encoding is deliberately unspecified and may change without notice, so a client that decodes or constructs one is relying on something this contract does not promise.'
-                      totalCount:
-                        type:
-                          - integer
-                          - 'null'
-                        minimum: 0
-                        description: |
-                          Responses matching the current scope and filters across all pages, **counted only up to 10 000**. Exact below that; at the cap the value is exactly `10000` and means "at least 10 000", which `totalCountRelation` states explicitly. `null` unless `includeTotalCount=true`.
-
-                          The cap is not timidity — an exact count over this table grows superlinearly with the data while a capped one stays flat, so an uncapped total is the one part of a page whose cost is unbounded. Read `totalCountRelation` rather than testing for the magic number.
-                      totalCountRelation:
-                        type:
-                          - string
-                          - 'null'
-                        enum:
-                          - eq
-                          - gte
-                          - null
-                        description: |
-                          How to read `totalCount`: `eq` when it is exact, `gte` when the 10 000 cap was reached and it is a lower bound, `null` when `includeTotalCount=false`. This is the same eq/gte convention Elasticsearch uses for `hits.total.relation`, so a consumer can render "10,000+" honestly instead of claiming a precise figure it does not have.
-                    additionalProperties: false
+                    $ref: '#/components/schemas/ResponseListMeta'
               examples:
                 page:
                   summary: One page of responses, exercising several answer types
@@ -1859,6 +1801,12 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
+        '413':
+          description: Payload Too Large — the request body exceeds the 2 MB limit.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -1973,9 +1921,17 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
+        '413':
+          description: Payload Too Large — the request body exceeds the 2 MB limit.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: |
-            Unprocessable Content — the body is well-formed but conflicts with stored state: `surveyId` does not resolve, `endingId` is not an ending of that survey, `language` is not enabled on it, `contactId` is not a contact in the same workspace, `displayId` already backs another response, `singleUseId` is already used for this survey, or an answer violates the survey's own validation rules. Each is itemized in `invalid_params`.
+            Unprocessable Content — the body is well-formed but conflicts with stored state: `endingId` is not an ending of that survey, `language` is not enabled on it, `contactId` is not a contact in the same workspace, `displayId` does not exist for that survey or already backs another response, `singleUseId` is already used for this survey, a tag id does not resolve in the same workspace, an `embeddedData` name is not declared on the survey, is ambiguous, or is addressed twice by one payload, a file-upload answer references a file outside this survey's upload element, or an answer violates the survey's own validation rules. Each is itemized in `invalid_params`.
+
+            **`surveyId` is not in that list, and answers 403 instead** — whether it names no survey at all or one in another workspace. Every other id here is checked *after* authorization, inside a workspace the caller already holds, so a distinct answer for each discloses nothing. `surveyId` is the scope anchor and is necessarily checked *before* authorization, so a separate "no such survey" would let any valid API key probe the id space of every other tenant. The two cases are therefore byte-identical, as they are on `GET`, `PATCH` and `DELETE` of a response id.
           content:
             application/problem+json:
               schema:
@@ -2529,7 +2485,7 @@ paths:
 
         `PATCH` is the only update verb — there is no `PUT`. Within it, `data` is replaced wholesale rather than deep-merged, so send the complete answer map; `embeddedData` merges by field name. Unknown top-level keys are rejected with **400** rather than ignored.
 
-        Setting `finished` to `true` fires the finish side of the response pipeline, including Hub ingestion. Updates otherwise emit `responseUpdated`.
+        Every patch emits `responseUpdated` and runs the response pipeline, including Hub ingestion. Transitioning `finished` to `true` additionally emits `responseFinished`; patching a response that is already finished does not re-emit it.
       tags:
         - V3 Responses
       parameters:
@@ -2591,8 +2547,14 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
+        '413':
+          description: Payload Too Large — the request body exceeds the 2 MB limit.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
-          description: 'Unprocessable Content — the body is well-formed but conflicts with stored state: `endingId` is not an ending of the response''s survey, `language` is not enabled on it, a tag id does not resolve in the same workspace, or an answer violates the survey''s validation rules.'
+          description: 'Unprocessable Content — the body is well-formed but conflicts with stored state: `endingId` is not an ending of the response''s survey, `language` is not enabled on it, a tag id does not resolve in the same workspace, an `embeddedData` name is not declared on the survey, is ambiguous, or is addressed twice by one payload, a file-upload answer references a file outside this survey''s upload element, or an answer violates the survey''s validation rules.'
           content:
             application/problem+json:
               schema:
@@ -3483,18 +3445,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/ActionClassResource'
                   meta:
-                    type: object
-                    required:
-                      - limit
-                      - nextCursor
-                    properties:
-                      limit:
-                        type: integer
-                      nextCursor:
-                        type:
-                          - string
-                          - 'null'
-                        description: Opaque cursor for the next page. `null` when there are no more results.
+                    $ref: '#/components/schemas/CursorPaginationMeta'
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -3568,18 +3519,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/ContactAttributeKeyResource'
                   meta:
-                    type: object
-                    required:
-                      - limit
-                      - nextCursor
-                    properties:
-                      limit:
-                        type: integer
-                      nextCursor:
-                        type:
-                          - string
-                          - 'null'
-                        description: Opaque cursor for the next page. `null` when there are no more results.
+                    $ref: '#/components/schemas/CursorPaginationMeta'
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -4704,6 +4644,49 @@ components:
             name:
               type: string
           additionalProperties: false
+    ListPaginationMeta:
+      type: object
+      description: |-
+        The pagination half of a v3 list's `meta`, shared by every paginated collection.
+
+        Deliberately open, and never an endpoint's `meta` by itself: an endpoint composes it with `allOf` and closes the result with `unevaluatedProperties: false`. A base that closed itself could not be extended — inside an `allOf`, `additionalProperties: false` sees a sibling branch's properties as additional and rejects them. An endpoint that adds nothing still wraps it, so no `meta` anywhere is open.
+
+        Every field here is `required`. A shared envelope that makes its fields optional is how v3's predecessor stopped honouring its own pagination contract without the schema gate noticing (ENG-2622): `meta: {}` — or no `meta` at all — validated cleanly while the endpoint returned nothing.
+      required:
+        - limit
+        - nextCursor
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          description: 'The page size actually applied. Carries no `maximum`: it echoes what the server used, it does not bound what may be asked for. The request-side bound is the `limit` query parameter on the operation itself and differs per collection — read it there. A shared description cannot state it without being wrong for some of the operations that compose this base.'
+        nextCursor:
+          type:
+            - string
+            - 'null'
+          description: 'Opaque cursor for the next page. `null` when there are no more results — the only reliable end-of-collection signal, since the server may return fewer items than `limit` without the collection being exhausted. Pass it back verbatim: the encoding is deliberately unspecified and may change without notice, so a client that decodes or constructs one is relying on something this contract does not promise.'
+    SurveyListMeta:
+      allOf:
+        - $ref: '#/components/schemas/ListPaginationMeta'
+        - type: object
+          required:
+            - totalCount
+            - workspaceSurveyCount
+          properties:
+            totalCount:
+              type:
+                - integer
+                - 'null'
+              minimum: 0
+              description: Total number of surveys matching the current filters across all pages. `null` when `includeTotalCount=false`.
+            workspaceSurveyCount:
+              type:
+                - integer
+                - 'null'
+              minimum: 0
+              description: Total number of surveys in the workspace, archived (soft-deleted) ones included and independent of the current filters. `null` when `includeTotalCount=false` (the same gate as `totalCount`). Replaces the boolean `hasArchived` field of earlier releases.
+      unevaluatedProperties: false
+      description: The list `meta` for surveys — pagination, the filtered total, and the workspace total. Both counting fields are `required` but nullable, gated on `includeTotalCount`.
     InvalidParam:
       type: object
       description: |
@@ -7753,6 +7736,35 @@ components:
         A survey response as returned by the list endpoint. Self-describing: `answers[]` carries each element's id, label, type and value, so a consumer can read a response without also fetching the survey.
 
         `answers[]` and `embeddedData[]` ship on the list view as well as the detailed view — they are the point of the resource, and withholding them from the list would force consumers into an N+1 of item reads. The list view omits only the identity and provenance fields: `contact`, `displayId` and `singleUseId`. See `ResponseResource` for those.
+    ResponseListMeta:
+      allOf:
+        - $ref: '#/components/schemas/ListPaginationMeta'
+        - type: object
+          required:
+            - totalCount
+            - totalCountRelation
+          properties:
+            totalCount:
+              type:
+                - integer
+                - 'null'
+              minimum: 0
+              description: |
+                Responses matching the current scope and filters across all pages, **counted only up to 10 000**. Exact below that; at the cap the value is exactly `10000` and means "at least 10 000", which `totalCountRelation` states explicitly. `null` unless `includeTotalCount=true`.
+
+                The cap is not timidity — an exact count over this table grows superlinearly with the data while a capped one stays flat, so an uncapped total is the one part of a page whose cost is unbounded. Read `totalCountRelation` rather than testing for the magic number.
+            totalCountRelation:
+              type:
+                - string
+                - 'null'
+              enum:
+                - eq
+                - gte
+                - null
+              description: |
+                How to read `totalCount`: `eq` when it is exact, `gte` when the 10 000 cap was reached and it is a lower bound, `null` when `includeTotalCount=false`. This is the same eq/gte convention Elasticsearch uses for `hits.total.relation`, so a consumer can render "10,000+" honestly instead of claiming a precise figure it does not have.
+      unevaluatedProperties: false
+      description: The list `meta` for responses — pagination plus a bounded, opt-in total. Both counting fields are `required` but nullable, so `includeTotalCount=false` answers `null` rather than omitting them.
     ResponseDataMap:
       type: object
       description: |
@@ -7769,6 +7781,8 @@ components:
         Keeping the two apart is what lets the storage layout change underneath — the legacy columns go away eventually — without this contract either following it or breaking a round-trip it promised.
 
         The value shapes are the stored ones, and they differ by element type. `ResponseAnswer` documents each; `answers[]` on the read is the resolved view of this same map.
+
+        **Bounds are a write-side concern and live on `ResponseDataMapInput`, not here.** This schema is the stored shape, and a read must describe what the API can actually return: the v1 and v2 write paths store this same map with no cardinality limit, so a response written through them can carry more keys — or a longer multi-select — than a v3 write would accept. Declaring the write bounds on this schema would make `GET /api/v3/responses/{responseId}` promise something it cannot keep for those rows.
       additionalProperties:
         oneOf:
           - type: string
@@ -7779,6 +7793,27 @@ components:
           - type: object
             additionalProperties:
               type: string
+    ResponseDataMapInput:
+      allOf:
+        - $ref: '#/components/schemas/ResponseDataMap'
+        - type: object
+          description: |
+            The same map on the way in, with the cardinality bounds a v3 write enforces.
+
+            At most 500 keys, and at most 1000 entries in a multi-select array or matrix object. Both sit far above any real survey — a response holds one entry per element, a multi-select answer one per choice — and exist because every later reader pays per entry: the serializer's per-answer mapping, export columns, and the positional probe the "Other" response filter emits. Exceeding either is a **400** from the request schema, not a 422.
+
+            Deliberately separate from `ResponseDataMap`, which the read returns. These bounds are v3-only — the v1 and v2 write paths store the same map without them — so a stored response may exceed them, and the read schema must not claim otherwise.
+          maxProperties: 500
+          additionalProperties:
+            if:
+              type: array
+            then:
+              maxItems: 1000
+            else:
+              if:
+                type: object
+              then:
+                maxProperties: 1000
     ResponseEmbeddedDataInput:
       type: object
       description: |
@@ -7791,7 +7826,8 @@ components:
         - `ingested` (hidden fields) — accepted, through the same ingest contract the SDK uses: the name
           must be declared on the survey, the value is coerced to the field's declared `type`, a `locked`
           field ignores the write, and the whole payload is bounded. A name the survey does not declare is
-          a 400 rather than a silent drop.
+          a **422** rather than a silent drop — knowing whether a name is declared means loading the
+          survey, and these operations route every failure that needs stored state to 422.
 
         - `computed` (variables) — accepted, because a management caller correcting a response needs to,
           and v1 and v2 both allow it today.
@@ -7805,9 +7841,12 @@ components:
 
         `null` **clears** a field. Omission and `null` therefore mean different things — leave it alone versus remove its value — which is the only reading that makes a merge-shaped map able to express deletion at all. A cleared field is then absent from `embeddedData[]` on the next read, exactly as one that was never written, and a field whose definition carries a `defaultValue` falls back to that default rather than disappearing.
 
-        **An ambiguous name is refused.** The read says `key` is unique per `kind` rather than across the collection, because a survey predating the reserved-name guard can hold a variable and a hidden field under one name. This map has no `kind`, so on such a survey a name cannot say which field it means — and guessing would write the caller's value into the wrong one. A name that matches more than one declared field is a 400 naming it; rename one side on the survey to clear it. The set is finite, frozen and tracked, and nothing new can enter it.
+        **An ambiguous name is refused.** The read says `key` is unique per `kind` rather than across the collection, because a survey predating the reserved-name guard can hold a variable and a hidden field under one name. This map has no `kind`, so on such a survey a name cannot say which field it means — and guessing would write the caller's value into the wrong one. A name that matches more than one declared field is a **422** naming it, for the same reason as an undeclared one; rename one side on the survey to clear it. The set is finite, frozen and tracked, and nothing new can enter it.
 
         Reserved names collide differently and are not ambiguous: `reserved` is not writable at all, so a name that matches both a declared field and a catalog entry resolves to the declared one.
+
+        **At most 500 names.** Every name that matches no declared field becomes its own `invalid_params` entry naming it, so without a cap a large body answers with a 422 several times its own size. Far above any real survey; a v3-only bound, as on `data`.
+      maxProperties: 500
       additionalProperties:
         oneOf:
           - type: string
@@ -7819,9 +7858,14 @@ components:
       description: |
         Per-element time-to-complete, keyed by element id, in **milliseconds**. Accepted on create so that a caller replaying a real submission can carry its timing; reads report the same information as `durationSeconds` in seconds, on each answer and summed at the top level.
 
-        This is client-reported telemetry, not a measurement the server can vouch for, so each value is clamped into `[0, 86400000]` (24 hours per element) rather than rejected — a noisy timing value should never cost you the response. Any finite number is therefore accepted, which is why no bounds are declared here.
+        This is client-reported telemetry, not a measurement the server can vouch for, so each value is clamped into `[0, 86400000]` (24 hours per element) rather than rejected — a noisy timing value should never cost you the response. Any finite *value* is therefore accepted, and none is declared out of range.
 
-        **Do not send a `_total` key.** The server writes that bucket itself when the response is finished, by summing every value in this map — including a `_total` you supplied, which is then counted twice and permanently skews the stored total. `durationSeconds` on the read is computed from the real element entries and ignores the bucket entirely, so there is nothing to gain by sending one.
+        The number of **entries** is capped at 500, matching `data`: a response holds one timing per element, so anything beyond that is not telemetry the server can use. A map with more entries is **rejected** — `maxProperties` below is enforced during request validation, so the whole write fails rather than the excess being trimmed or stored.
+
+        **Do not send a `_total` key.** The server owns that bucket: it drops any `_total` you supply and writes its own when the response is finished, by summing the element entries. Sending one therefore changes nothing rather than skewing the stored total, and `durationSeconds` on the read is computed from the element entries regardless.
+
+        **An omitted map is not the same as an empty one.** Omitting `ttc` stores no timings at all and the response reports no `durationSeconds`; sending `{}` on a finished response stores a `_total` of zero, which reads as "completed instantly".
+      maxProperties: 500
       additionalProperties:
         type: number
     ResponseMetaInput:
@@ -7883,7 +7927,7 @@ components:
           type: boolean
           description: 'Whether this response is complete. Creating with `finished: true` fires the finish side of the pipeline immediately, including Hub ingestion.'
         data:
-          $ref: '#/components/schemas/ResponseDataMap'
+          $ref: '#/components/schemas/ResponseDataMapInput'
         embeddedData:
           $ref: '#/components/schemas/ResponseEmbeddedDataInput'
         ttc:
@@ -7893,6 +7937,7 @@ components:
         tags:
           type: array
           uniqueItems: true
+          maxItems: 100
           description: Tag ids to apply, so a tagged response can be created in one call rather than a create followed by a patch. Tags must already exist in the same workspace — create them via `POST /api/v3/tags`. Applied in the same transaction as the response.
           items:
             type: string
@@ -7916,7 +7961,9 @@ components:
           description: Display (survey impression) this response answers. Create-only. Each display can back at most one response.
         singleUseId:
           type: string
-          description: Single-use link id, for surveys configured with single-use links. Create-only, and unique per survey.
+          minLength: 1
+          maxLength: 255
+          description: 'Single-use link id, for surveys configured with single-use links. Create-only, and unique per survey. Bounded because the value is indexed with `surveyId`: an empty string would slip past the uniqueness pre-check and still be stored, and an oversize one overflows the index entry.'
       additionalProperties: false
     ResponseContact:
       type: object
@@ -7977,7 +8024,7 @@ components:
 
         They are not the *same* view, and the differences are deliberate. A write accepts `ingested` and `computed` fields only: a `reserved` entry describes the submission environment, and being able to read one back is not a licence to author it. An unset field is **omitted** from the read while `null` on a write **clears** one, because a merge-shaped map has no other way to spell deletion. And a name the read returns twice under different `kind`s cannot be written at all — see `ResponseEmbeddedDataInput`, which refuses an ambiguous name rather than guessing.
 
-        Values themselves round-trip: within those two kinds every value the read emits is accepted verbatim on a write, and a `date` reads and writes as the same ISO-8601 string. So a read-edit-write cycle loses nothing except on the finite set of legacy surveys carrying one name as both a variable and a hidden field, where the write refuses the name outright.
+        Values themselves round-trip: within those two kinds every value the read emits is accepted verbatim on a write, and a `date` reads and writes as the same ISO-8601 string. So a read-edit-write cycle loses nothing except in two cases, both confined to rows v1 or v2 wrote. The first is the finite set of legacy surveys carrying one name as both a variable and a hidden field, where the write refuses the name outright. The second is a `data` map holding more keys than `ResponseDataMapInput` accepts: the stored map is unbounded and the write bound is not, so such a response cannot be patched here — and trimming it to fit is not a workaround, since `data` is replaced wholesale and an omitted key is a deletion.
 
         Note which fields carry `readOnly` here and which do not, because it is the opposite of what an "echo" framing would suggest. `readOnly` means a value is managed exclusively by the server, so it marks the **derived** views — `answers[]`, `embeddedData[]`, `unresolved[]`, `resolution`, the denormalized `surveyName` and `workspaceId`, the timestamps, `durationSeconds` and `id`. `data` is *not* read-only: it is exactly what the write endpoints accept, and leaving it unmarked is what makes this representation round-trippable rather than merely informative.
 
@@ -8008,7 +8055,9 @@ components:
 
         `data` is **replaced wholesale**, not deep-merged — send the complete answer map you want stored. `embeddedData` is the exception and merges by name: it addresses individual fields, so a field the payload omits keeps its value rather than being cleared.
 
-        **Note for the implementation, because the obvious shortcut is wrong.** The one shipped update service merges `data` (`apps/web/lib/response/service.ts`, `// merge data object`), and merges `ttc` with it. Reusing it would ship merge semantics under a replace contract, silently — an unimplemented route has no test to catch the difference. v3 replaces on purpose: a merge makes it impossible to delete an answer, which a correction flow needs. A patch that sets `finished` to `true` fires the finish side of the response pipeline.
+        v3 replaces on purpose, where v1 and v2 merge: a merge makes it impossible to delete an answer, which a correction flow needs.
+
+        **Every patch runs the response pipeline**, emitting `responseUpdated` — so webhooks, integrations and follow-ups fire for a correction as much as for a substantive edit. A patch that *transitions* the response to finished additionally emits `responseFinished`; one that patches an already-finished response does not re-emit it.
 
         Not patchable, and rejected if sent: `createdAt`, `updatedAt`, `surveyId`, `contactId`, `displayId`, `singleUseId`, `contactAttributes`, and the create-only `ttc` and `meta` — timing and submission context describe the original submission event, so they are set once and not revised. `contactId` is create-only deliberately — re-attributing an existing response to a different person is a capability only v2 offers, and it is not carried forward.
       minProperties: 1
@@ -8024,12 +8073,13 @@ components:
             - string
             - 'null'
         data:
-          $ref: '#/components/schemas/ResponseDataMap'
+          $ref: '#/components/schemas/ResponseDataMapInput'
         embeddedData:
           $ref: '#/components/schemas/ResponseEmbeddedDataInput'
         tags:
           type: array
-          description: Complete set of tag ids for this response, replacing whatever is currently applied. Tags must already exist in the same workspace — create them via `POST /api/v3/tags`.
+          maxItems: 100
+          description: Complete set of tag ids for this response, replacing whatever is currently applied. Repeats are allowed and collapse, because the set is applied as a set. Tags must already exist in the same workspace — create them via `POST /api/v3/tags`.
           items:
             type: string
             format: cuid2
@@ -8092,7 +8142,7 @@ components:
           description: The display that would be linked, or `null` if none.
         firesPipeline:
           type: boolean
-          description: Whether a real write would run the response pipeline — webhooks, integrations, follow-ups, and Hub ingestion. True for a create, and for a patch that transitions the response to finished.
+          description: 'Whether a real write would run the response pipeline — webhooks, integrations, follow-ups, and Hub ingestion. Always `true`: a create emits `responseCreated` and every patch emits `responseUpdated`, so a write is never side-effect free. A patch that transitions the response to finished additionally emits `responseFinished`; the transition decides which events go out, not whether any do.'
         countsTowardMeteredResponses:
           type: boolean
           description: Whether a real write would consume one metered monthly response.
@@ -8359,21 +8409,13 @@ components:
           minimum: 0
           description: Total number of runs (dry runs included) for this workflow.
     CursorPaginationMeta:
-      type: object
-      required:
-        - limit
-        - nextCursor
-      properties:
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-        nextCursor:
-          type:
-            - string
-            - 'null'
-          description: Opaque cursor for the next page. `null` when there are no more results.
-      additionalProperties: false
+      allOf:
+        - $ref: '#/components/schemas/ListPaginationMeta'
+      unevaluatedProperties: false
+      description: |-
+        A list `meta` carrying pagination and nothing else — the shape for collections that do not report a total and have no domain context to echo.
+
+        Adds nothing to `ListPaginationMeta`; the `allOf` wrapper is what closes it. Each composing operation bounds its own requests through its `limit` query parameter, which is why this shape states no cap of its own.
     WorkflowNodeUi:
       type: object
       description: Builder-only UI metadata that does not affect workflow execution. Additional keys are preserved.

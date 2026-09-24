@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { mcpRequestStateCodec } from "./request-state";
 import { MCP_HANDLER_OPTIONS, identifyMcpUser } from "./server";
 
 vi.mock("server-only", () => ({}));
@@ -12,6 +13,7 @@ vi.mock("@/lib/posthog/mcp-tracing", () => ({
 }));
 
 vi.mock("./tools/feedback-records", () => ({ registerFeedbackRecordTools: vi.fn() }));
+vi.mock("./tools/responses", () => ({ registerResponseTools: vi.fn() }));
 vi.mock("./tools/surveys", () => ({ registerSurveyTools: vi.fn() }));
 vi.mock("./tools/workflows", () => ({ registerWorkflowTools: vi.fn() }));
 vi.mock("./tools/workspaces", () => ({ registerWorkspaceTools: vi.fn() }));
@@ -41,6 +43,19 @@ describe("mcpHandler options", () => {
    */
   test("declares subscription streams as refused", () => {
     expect(MCP_HANDLER_OPTIONS.maxSubscriptions).toBe(0);
+  });
+
+  /**
+   * The option is the whole of the "a forged `requestState` never reaches a handler" guarantee: the
+   * SDK verifies nothing by default, so leaving it unset hands every handler whatever string the
+   * client echoed. Nothing else asserted it — removing the line left all of `modules/mcp` green.
+   *
+   * Pinned by identity rather than by shape. A verifier that is merely *a function* is the failure
+   * this cannot be allowed to pass: the point is that it is the codec's own, so a hand-rolled or
+   * permissive stand-in fails here.
+   */
+  test("declares the request-state verifier, and it is the codec's own", () => {
+    expect(MCP_HANDLER_OPTIONS.requestState.verify).toBe(mcpRequestStateCodec.verify);
   });
 });
 

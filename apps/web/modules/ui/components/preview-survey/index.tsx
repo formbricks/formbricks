@@ -71,6 +71,11 @@ export const PreviewSurvey = ({
     }),
     [survey]
   );
+  const jsSurvey = useMemo(() => toJsWorkspaceStateSurvey(previewSurvey), [previewSurvey]);
+  const jsLinkSurvey = useMemo(
+    () => toJsWorkspaceStateSurvey({ ...previewSurvey, type: "link" }),
+    [previewSurvey]
+  );
 
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
@@ -131,7 +136,7 @@ export const PreviewSurvey = ({
 
   const placement = mirrorPlacementForDir(
     surveyPlacement || workspace.placement,
-    isRTLLanguage(toJsWorkspaceStateSurvey(survey), activeLanguageCode) ? "rtl" : "ltr"
+    isRTLLanguage(jsSurvey, activeLanguageCode) ? "rtl" : "ltr"
   );
   const overlay = surveyOverlay ?? workspace.overlay;
   const clickOutsideClose = surveyClickOutsideClose ?? workspace.clickOutsideClose;
@@ -307,7 +312,7 @@ export const PreviewSurvey = ({
           )}>
           {previewMode === "mobile" && (
             <>
-              <p className="absolute top-0 left-0 m-2 rounded-sm bg-slate-100 px-2 py-1 text-xs text-slate-400">
+              <p className="absolute top-0 left-0 m-2 rounded-sm bg-slate-100 px-2 py-1 text-xs text-slate-600">
                 {t("common.preview")}
               </p>
               <div className="absolute top-0 right-0 m-2 flex items-center gap-1">
@@ -339,7 +344,7 @@ export const PreviewSurvey = ({
                     <SurveyInline
                       appUrl={publicDomain}
                       isPreviewMode={true}
-                      survey={toJsWorkspaceStateSurvey(previewSurvey)}
+                      survey={jsSurvey}
                       isBrandingEnabled={workspace.inAppSurveyBranding}
                       isRedirectDisabled={true}
                       languageCode={activeLanguageCode}
@@ -388,7 +393,7 @@ export const PreviewSurvey = ({
                           appUrl={publicDomain}
                           isPreviewMode={true}
                           isBrandingEnabled={workspace.linkSurveyBranding}
-                          survey={toJsWorkspaceStateSurvey({ ...previewSurvey, type: "link" })}
+                          survey={jsLinkSurvey}
                           isRedirectDisabled={true}
                           languageCode={languageCode}
                           responseCount={42}
@@ -429,7 +434,7 @@ export const PreviewSurvey = ({
                     }></button>
                 </div>
                 <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-                  <p>
+                  <p className="text-slate-600">
                     {previewType === "modal" ? t("workspace.surveys.edit.your_web_app") : t("common.preview")}
                   </p>
 
@@ -474,7 +479,7 @@ export const PreviewSurvey = ({
                   <SurveyInline
                     appUrl={publicDomain}
                     isPreviewMode={true}
-                    survey={toJsWorkspaceStateSurvey(previewSurvey)}
+                    survey={jsSurvey}
                     isBrandingEnabled={workspace.inAppSurveyBranding}
                     isRedirectDisabled={true}
                     languageCode={activeLanguageCode}
@@ -530,7 +535,7 @@ export const PreviewSurvey = ({
                         <SurveyInline
                           appUrl={publicDomain}
                           isPreviewMode={true}
-                          survey={toJsWorkspaceStateSurvey({ ...previewSurvey, type: "link" })}
+                          survey={jsLinkSurvey}
                           isBrandingEnabled={workspace.linkSurveyBranding}
                           isRedirectDisabled={true}
                           languageCode={languageCode}
@@ -565,11 +570,13 @@ export const PreviewSurvey = ({
           <TabOption
             active={previewMode === "mobile"}
             icon={<SmartphoneIcon className="mx-4 my-2 size-4 text-slate-700" />}
+            label={t("workspace.surveys.edit.mobile_preview")}
             onClick={() => handlePreviewModeChange("mobile")}
           />
           <TabOption
             active={previewMode === "desktop"}
             icon={<MonitorIcon className="mx-4 my-2 size-4 text-slate-700" />}
+            label={t("workspace.surveys.edit.desktop_preview")}
             onClick={() => handlePreviewModeChange("desktop")}
           />
         </div>

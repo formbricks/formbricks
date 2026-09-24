@@ -1,7 +1,13 @@
-import { describe, expect, test } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import * as surveyAndFeedbackSchemas from "./schemas";
 import * as workflowSchemas from "./workflow-schemas";
+
+vi.mock("server-only", () => ({}));
 
 /**
  * Guards the ENG-2256 policy at every depth, against the JSON Schema we actually advertise rather than
@@ -104,9 +110,24 @@ function classifyObjectNodes(name: string, schema: z.ZodType): Walked {
   return walked;
 }
 
-const allSchemas = Object.entries({ ...surveyAndFeedbackSchemas, ...workflowSchemas }).filter(
-  (entry) => entry[1] instanceof z.ZodType
-);
+/**
+ * Every schema either module exports, as `[name, schema]`.
+ *
+ * Both imports are namespace imports, so a module is free to export something that is not a schema —
+ * `SURVEY_BLOCK_EXAMPLE` is the first to do so. The `instanceof` filter has always removed those at
+ * runtime; the predicate is what tells the compiler so. Without it the element type stays a union of
+ * every export's concrete type, and Zod 4's `ZodType` is invariant enough that such a union will not
+ * assign to the `z.ZodType` parameter below.
+ *
+ * Deliberately a predicate rather than a cast: a cast would also silence the day a genuine schema
+ * stops being a `ZodType`, which is exactly what this suite exists to notice.
+ */
+const allExports: [string, unknown][] = Object.entries({
+  ...surveyAndFeedbackSchemas,
+  ...workflowSchemas,
+});
+
+const allSchemas = allExports.filter((entry): entry is [string, z.ZodType] => entry[1] instanceof z.ZodType);
 
 /**
  * The two tools whose input embeds the shared workflow `definition`, which is still open at every level
@@ -205,5 +226,79 @@ describe("MCP tool input schemas reject undeclared arguments (ENG-2256)", () => 
     const advertised = z.toJSONSchema(surveyAndFeedbackSchemas.ZMcpListSurveysInput, { io: "input" });
 
     expect(advertised).toMatchObject({ additionalProperties: false });
+  });
+});
+
+describe("survey block discoverability (ENG-2180)", () => {
+  // The whole defect was that the tool surface described `blocks` as a "v3 survey document contract"
+  // it never defined, leaving the element vocabulary discoverable only by probing the live validator.
+  // These two guard the cure rather than the symptom: the advertised vocabulary has to stay identical
+  // to the accepted one, and the worked example has to keep working.
+  test("advertises exactly the element types the schema accepts", () => {
+    const advertised = surveyAndFeedbackSchemas.ZMcpCreateSurveyInput.shape.blocks.description ?? "";
+
+    for (const type of Object.values(TSurveyElementTypeEnum)) {
+      expect(advertised).toContain(type);
+    }
+    // ...and nothing invented. An element type that is advertised but not accepted is the worse half.
+    const listed = /one of: ([^.]+)\./.exec(advertised)?.[1].split(", ") ?? [];
+    expect(listed.toSorted()).toEqual(Object.values(TSurveyElementTypeEnum).toSorted());
+  });
+
+  /**
+   * The rating values are read off `ZSurveyRatingElement` through a cast, so the compiler cannot see a
+   * change in Zod's internals. The two ways that can go wrong fail very differently, and only one of
+   * them needs a test.
+   *
+   * If `.options` stops existing, `schemas.ts` throws `TypeError` while it is still evaluating its
+   * module body — every suite that imports the tool surface goes red at once, so nothing here is
+   * needed to notice it.
+   *
+   * If `.options` survives but answers different values, nothing throws and the advertised scale or
+   * range silently stops matching the accepted one — which is the drift this whole description exists
+   * to prevent. Pinning the real values is what catches that.
+   */
+  test("the description carries the rating values the schema actually accepts", async () => {
+    const { ZMcpCreateSurveyInput } = surveyAndFeedbackSchemas;
+    const description = ZMcpCreateSurveyInput.shape.blocks.description ?? "";
+
+    expect(description).toContain("`scale` (number|smiley|star)");
+    expect(description).toContain("`range` (5|3|4|6|7|10)");
+  });
+
+  /**
+   * The handbook restates the element list in prose, and says of it that the two "cannot drift". That is
+   * only true of the tool description, which is generated; the `.mdx` copy is hand-written and would go
+   * stale the day an element type is added. This makes the claim true rather than softening it.
+   */
+  test("the handbook's element list matches the enum", () => {
+    const handbook = path.resolve(
+      path.dirname(fileURLToPath(import.meta.url)),
+      "../../../../../docs/development/technical-handbook/mcp-server.mdx"
+    );
+    const prose = fs.readFileSync(handbook, "utf-8").replace(/\n/g, " ");
+    const listed = /The element\s+`type` is one of ([^.]+)\./.exec(prose)?.[1] ?? "";
+
+    expect(
+      listed
+        .split(",")
+        .map((entry) => entry.trim().replaceAll("`", ""))
+        .toSorted()
+    ).toEqual(Object.values(TSurveyElementTypeEnum).toSorted());
+  });
+
+  test("the example block in the description is accepted by the create schema", async () => {
+    const { ZV3CreateSurveyBody } = await import("@/app/api/v3/surveys/schemas");
+
+    const parsed = ZV3CreateSurveyBody.safeParse({
+      workspaceId: "clxx1234567890123456789012",
+      name: "Example",
+      blocks: [surveyAndFeedbackSchemas.SURVEY_BLOCK_EXAMPLE],
+    });
+
+    // A worked example that has silently stopped validating is worse than no example at all: it is a
+    // confident wrong answer, which is exactly what probing already gives an agent.
+    expect(parsed.error?.issues ?? []).toEqual([]);
+    expect(parsed.success).toBe(true);
   });
 });

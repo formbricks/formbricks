@@ -6,6 +6,7 @@
       "env": [
         "ASSET_PREFIX_URL",
         "BASE_PATH",
+        "BETTER_AUTH_URL",
         "E2E_TESTING",
         "NEXTAUTH_URL",
         "NODE_ENV",
@@ -62,7 +63,6 @@
         "AZUREAD_CLIENT_SECRET",
         "AZUREAD_TENANT_ID",
         "BETTER_AUTH_SECRET",
-        "BETTER_AUTH_URL",
         "BREVO_API_KEY",
         "BREVO_LIST_ID",
         "BULLMQ_EXTERNAL_WORKER_ENABLED",
@@ -152,6 +152,7 @@
         "SENTRY_ENVIRONMENT",
         "SESSION_MAX_AGE",
         "SIGNUP_DOMAIN_CHECK_ON_INVITES",
+        "SINGLE_USE_LEGACY_UNSIGNED_UNTIL",
         "SLACK_CLIENT_ID",
         "SLACK_CLIENT_SECRET",
         "SMTP_AUTHENTICATED",

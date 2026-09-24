@@ -723,6 +723,46 @@ describe("validateElementResponse", () => {
       );
       expect(result.valid).toBe(false);
     });
+
+    describe("field label prefix", () => {
+      const buildElement = (firstNamePlaceholder: string): TSurveyElement =>
+        ({
+          id: "contact1",
+          type: TSurveyElementTypeEnum.ContactInfo,
+          headline: { default: "Contact Info" },
+          firstName: { show: true, required: false, placeholder: { default: firstNamePlaceholder } },
+          lastName: { show: true, required: false, placeholder: { default: "Last Name" } },
+          email: { show: false, required: false, placeholder: { default: "Email" } },
+          phone: { show: false, required: false, placeholder: { default: "Phone" } },
+          company: { show: false, required: false, placeholder: { default: "Company" } },
+          required: false,
+          validation: {
+            rules: [{ id: "rule1", type: "minLength", field: "firstName", params: { min: 3 } }],
+          },
+        }) as unknown as TSurveyContactInfoElement;
+
+      const firstMessage = (firstNamePlaceholder: string): string | undefined => {
+        const result = validateElementResponse(buildElement(firstNamePlaceholder), ["Jo", "Doe"], "en");
+        expect(result.valid).toBe(false);
+        return result.errors[0].message;
+      };
+
+      test("should not double the colon when the label already ends with one", () => {
+        expect(firstMessage("Nombre:")).toBe("Nombre: errors.min_length");
+      });
+
+      test("should strip a trailing full-width colon", () => {
+        expect(firstMessage("名前：")).toBe("名前: errors.min_length");
+      });
+
+      test("should keep a single colon for a label without one", () => {
+        expect(firstMessage("First Name")).toBe("First Name: errors.min_length");
+      });
+
+      test("should omit the prefix when the label is only punctuation", () => {
+        expect(firstMessage(":")).toBe("errors.min_length");
+      });
+    });
   });
 
   describe("matrix element validation rules", () => {

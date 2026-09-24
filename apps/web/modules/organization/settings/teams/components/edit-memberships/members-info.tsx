@@ -22,29 +22,25 @@ const isInvitee = (member: TMemberRow): member is TInvite => {
   return (member as TInvite).expiresAt !== undefined;
 };
 
-/**
- * The four badge texts are English literals, as they were before this conversion. Fixing that needs new
- * i18n keys and is a behaviour change rather than a restyle, so it stays a follow-up.
- */
 const getMembershipBadge = (member: TMemberRow, t: TFunction, locale: string) => {
   if (isInvitee(member)) {
     return isInviteExpired(member) ? (
-      <Badge type="gray" text="Expired" size="tiny" data-testid="expired-badge" />
+      <Badge type="gray" text={t("common.expired")} size="tiny" data-testid="expired-badge" />
     ) : (
       <TooltipRenderer
         tooltipContent={`${t("workspace.settings.general.invite_expires_on", {
           date: formatDateWithOrdinal(member.expiresAt, locale),
         })}`}>
-        <Badge type="warning" text="Pending" size="tiny" />
+        <Badge type="warning" text={t("common.pending")} size="tiny" />
       </TooltipRenderer>
     );
   }
 
   if (!member.isActive) {
-    return <Badge type="gray" text="Inactive" size="tiny" />;
+    return <Badge type="gray" text={t("common.inactive")} size="tiny" />;
   }
 
-  return <Badge type="success" text="Active" size="tiny" />;
+  return <Badge type="success" text={t("common.active")} size="tiny" />;
 };
 
 const showDeleteButton = (

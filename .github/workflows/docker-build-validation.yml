@@ -368,7 +368,7 @@ jobs:
           trap 'rm -f docker/.env' EXIT
           printf '%s\n' \
             'WEBAPP_URL=http://localhost:3000' \
-            'NEXTAUTH_URL=http://localhost:3000' \
+            'BETTER_AUTH_URL=http://localhost:3000' \
             'POSTGRES_PASSWORD=compose-postgres-placeholder' \
             "ENCRYPTION_KEY=$DUMMY_ENCRYPTION_KEY" \
             "BETTER_AUTH_SECRET=$DUMMY_ENCRYPTION_KEY" \

@@ -529,6 +529,18 @@ Secret used by the embeddings runtime for Hugging Face access.
 {{- end -}}
 {{- end }}
 
+{{/* Require explicit endpoints when the chart does not deploy the bundled TEI runtime. */}}
+{{- define "formbricks.validateHubEmbeddingsRuntime" -}}
+{{- if and .Values.hub.embeddings.enabled (not .Values.hub.embeddings.deployRuntime) -}}
+  {{- if not .Values.hub.embeddings.baseUrl -}}
+    {{- fail "hub.embeddings.baseUrl is required when hub.embeddings.enabled=true and hub.embeddings.deployRuntime=false" -}}
+  {{- end -}}
+  {{- if and .Values.hub.embeddings.background.enabled (not .Values.hub.embeddings.background.baseUrl) -}}
+    {{- fail "hub.embeddings.background.baseUrl is required when background embeddings are enabled without the bundled runtime" -}}
+  {{- end -}}
+{{- end -}}
+{{- end }}
+
 {{/*
 Model name Hub sends to the OpenAI-compatible embeddings endpoint.
 */}}
@@ -697,13 +709,24 @@ true
 {{- end -}}
 {{- end }}
 
-{{- define "formbricks.nextAuthSecret" -}}
+{{/*
+Resolve the auth secret, preferring the documented BETTER_AUTH_SECRET and accepting the legacy
+NEXTAUTH_SECRET an existing release already stores. Reading the legacy key is what keeps `helm upgrade`
+from minting a fresh secret on an instance installed before the rename — which would log every user out
+and invalidate outstanding invite and verification links.
+
+Include this ONCE per render and reuse the value: the final branch is `randAlphaNum`, so a second
+`include` on a fresh install returns a different secret.
+*/}}
+{{- define "formbricks.authSecret" -}}
 {{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
 {{- $secretData := dig "data" dict $secret }}
-{{- if index $secretData "NEXTAUTH_SECRET" }}
+{{- if index $secretData "BETTER_AUTH_SECRET" }}
+    {{- index $secretData "BETTER_AUTH_SECRET" | b64dec -}}
+{{- else if index $secretData "NEXTAUTH_SECRET" }}
     {{- index $secretData "NEXTAUTH_SECRET" | b64dec -}}
 {{- else if and $secret (hasKey $secret "data") }}
-    {{- fail (printf "Secret %q exists in namespace %q but is missing NEXTAUTH_SECRET" (include "formbricks.appSecretName" .) .Release.Namespace) -}}
+    {{- fail (printf "Secret %q exists in namespace %q but is missing BETTER_AUTH_SECRET (the legacy NEXTAUTH_SECRET is also accepted)" (include "formbricks.appSecretName" .) .Release.Namespace) -}}
 {{- else }}
     {{- randAlphaNum 32 -}}
 {{- end -}}

@@ -172,8 +172,9 @@ periodically for safety.
     [environment variables](/self-hosting/configuration/environment-variables) reference.
 
     If the Formbricks container or pod cannot resolve that public origin when it verifies a token, set
-    `MCP_OAUTH_JWKS_URL` to the internal `/api/auth/jwks` endpoint. Keep `WEBAPP_URL`, `NEXTAUTH_URL`, and
-    `BETTER_AUTH_URL` public: the internal override is only used for the server-side signing-key fetch.
+    `MCP_OAUTH_JWKS_URL` to the internal `/api/auth/jwks` endpoint. Keep `WEBAPP_URL` and your auth base
+    URL public: the internal override is only used for the server-side signing-key fetch. On an instance
+    that still configures the auth URL under its older name, that is the one that has to stay public.
     `/api/auth/jwks` is correct only when no custom application subpath is configured. If Formbricks is
     mounted at `/formbricks`, use the complete internal URL, such as
     `http://formbricks:3000/formbricks/api/auth/jwks`.

@@ -15,7 +15,7 @@ partOfOverride: ""
 ##########################################################
 formbricks:
   # REQUIRED: Base URL of the site (e.g., https://formbricks.example.com)
-  # This is used for WEBAPP_URL and NEXTAUTH_URL
+  # This is used for WEBAPP_URL and BETTER_AUTH_URL
   webappUrl: ""
 
   # Optional: Public URL for surveys (defaults to webappUrl if not set)
@@ -625,7 +625,7 @@ externalSecret:
   files: {}
 
 ##########################################################
-# AuthZed / SpiceDB Authorization Configuration
+# SpiceDB Authorization Configuration
 ##########################################################
 authzed:
   # Formbricks v6 uses SpiceDB as its sole authorization decision engine.
@@ -1278,8 +1278,11 @@ hub:
     topologySpreadConstraints: []
 
   embeddings:
-    # Optional self-hosted OpenAI-compatible embeddings runtime for Hub.
+    # Optional OpenAI-compatible embeddings integration for Hub.
     enabled: false
+    # Deploy the bundled TEI workloads. Set false when baseUrl points to an
+    # externally managed runtime. Embedding env wiring remains enabled.
+    deployRuntime: true
     runtime: tei
     model: Alibaba-NLP/gte-multilingual-base
     revision: ""

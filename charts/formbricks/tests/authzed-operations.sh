@@ -39,7 +39,7 @@ render_notes() {
 }
 
 authzed_operations_notes() {
-  sed -n '/AuthZed \/ SpiceDB Operations:/,/^---$/p' <<<"$1"
+  sed -n '/SpiceDB Authorization Operations:/,/^---$/p' <<<"$1"
 }
 
 assert_safe_authzed_notes() {
@@ -47,14 +47,14 @@ assert_safe_authzed_notes() {
   local notes="$2"
 
   if grep --extended-regexp --ignore-case 'preshared|datastore_uri|token|ingress' <<<"${notes}" >/dev/null; then
-    printf '%s\n' "AuthZed operations notes for ${release_name} must not expose secrets or suggest an Ingress." >&2
+    printf '%s\n' "SpiceDB operations notes for ${release_name} must not expose secrets or suggest an Ingress." >&2
     exit 1
   fi
 }
 
 disabled_notes="$(render_notes authzed-disabled --set authzed.enabled=false)"
-if grep --fixed-strings "AuthZed / SpiceDB Operations:" <<<"${disabled_notes}" >/dev/null; then
-  printf '%s\n' "AuthZed operations notes must be hidden when AuthZed is disabled." >&2
+if grep --fixed-strings "SpiceDB Authorization Operations:" <<<"${disabled_notes}" >/dev/null; then
+  printf '%s\n' "SpiceDB operations notes must be hidden when AuthZed is disabled." >&2
   exit 1
 fi
 

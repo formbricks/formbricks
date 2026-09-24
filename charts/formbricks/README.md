@@ -1,6 +1,6 @@
 # formbricks
 
-![Version: 5.3.4](https://img.shields.io/badge/Version-5.3.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 5.3.4](https://img.shields.io/badge/AppVersion-5.3.4-informational?style=flat-square)
+![Version: 6.0.0](https://img.shields.io/badge/Version-6.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 6.0.0](https://img.shields.io/badge/AppVersion-6.0.0-informational?style=flat-square)
 
 A Helm chart for Formbricks with PostgreSQL, Valkey
 
@@ -60,9 +60,10 @@ or provide equivalent edge rate limiting for the documented route coverage. The 
 least two for availability during voluntary disruptions, or change/disable the PDB for an intentional
 single-replica deployment.
 
-## AuthZed / SpiceDB
+## SpiceDB authorization
 
-Formbricks v6 enables AuthZed, `fully_consistent` authorization, and the bundled SpiceDB operator by default.
+Formbricks v6 uses SpiceDB, maintained by AuthZed, with `fully_consistent` authorization. The bundled SpiceDB
+operator is enabled by default.
 
 ### Breaking changes from v5
 
@@ -240,7 +241,7 @@ from the target image, then prepared with `--expected-current-digest sha256:<dig
 relationships before replacement; see the repository `authzed/README.md` for exit codes and rollback rules.
 Later v6 releases with an unchanged canonical schema retain the read-only gate. A schema-changing release needs
 explicit preparation during maintenance; see [later v6 upgrades](../../docs/self-hosting/advanced/v6-maintenance-upgrade.mdx#later-v6-upgrades).
-The public [AuthZed operations guide](../../docs/self-hosting/configuration/authzed-operations.mdx) covers backups,
+The public [SpiceDB operations guide](../../docs/self-hosting/configuration/authzed-operations.mdx) covers backups,
 restoration, schema lifecycle, relationship repair, and monitoring.
 
 Cloud operators that run the same guarded schema, outbox drain, reconciliation, and audit sequence outside Helm
@@ -286,7 +287,9 @@ Before migrations start, the migration Job waits for the effective PostgreSQL en
 
 When deployed with Argo CD, chart-managed Secrets, ExternalSecrets, and bundled PostgreSQL render in sync wave `-2`, and the Formbricks and Hub migration hooks run in sync wave `-1`. This lets app and Hub secrets exist and PostgreSQL become healthy before migration jobs start.
 
-Self-hosted embeddings are disabled by default. Set `hub.embeddings.enabled=true` to deploy an internal Hugging Face Text Embeddings Inference (TEI) service and wire Hub API plus Hub worker to it through the OpenAI-compatible endpoint added in Hub:
+Embeddings are disabled by default. Set `hub.embeddings.enabled=true` to configure Hub API and Hub
+worker for an OpenAI-compatible endpoint. The chart deploys an internal Hugging Face Text Embeddings
+Inference (TEI) service by default:
 
 ```yaml
 hub:
@@ -305,6 +308,27 @@ The generated Hub embedding configuration is:
 - `EMBEDDING_MODEL=<hub.embeddings.servedModelName or hub.embeddings.model>`
 - `EMBEDDING_BASE_URL=http://<release>-hub-embeddings:8080/v1`
 - `EMBEDDING_PROVIDER_API_KEY` from a dedicated embeddings Secret
+
+To use an externally managed runtime without deploying the bundled TEI workloads, set
+`deployRuntime=false`, provide the external URLs, and reference a Secret containing the matching API
+key:
+
+```yaml
+hub:
+  embeddings:
+    enabled: true
+    deployRuntime: false
+    baseUrl: https://embeddings.example.com/v1
+    auth:
+      existingSecret: formbricks-embeddings
+    background:
+      enabled: true
+      baseUrl: https://embeddings-worker.example.com/v1
+```
+
+When the background pool is disabled, Hub worker reuses the foreground `baseUrl`. When it is enabled
+with `deployRuntime=false`, `background.baseUrl` is required. The chart continues wiring Hub and the
+worker but omits the bundled TEI Deployments, StatefulSet, Services, PVC, HPAs, and PDB.
 
 For sustained background throughput, enable the worker-only TEI pool. Hub API and semantic-search
 queries continue to use the foreground service; only `hub-worker` receives the background URL and
@@ -784,6 +808,7 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | hub.embeddings.autoscaling.maxReplicas                             | int    | `2`                                                                         |                                                           |
 | hub.embeddings.autoscaling.minReplicas                             | int    | `1`                                                                         |                                                           |
 | hub.embeddings.baseUrl                                             | string | `""`                                                                        | Defaults to the internal TEI service URL ending in `/v1`. |
+| hub.embeddings.deployRuntime                                       | bool   | `true`                                                                      | Deploy the bundled TEI workloads.                        |
 | hub.embeddings.enabled                                             | bool   | `false`                                                                     |                                                           |
 | hub.embeddings.extraArgs                                           | list   | `["--dtype","float16"]`                                                     | Additional args appended to the generated TEI args.       |
 | hub.embeddings.huggingFace.existingSecret                          | string | `""`                                                                        |                                                           |
