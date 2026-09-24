@@ -156,22 +156,22 @@ export const EmbeddedFieldForm = ({
    * own ID survives a later edit to the name. Create only — an existing field's address is read-only.
    */
   /**
-   * Whether the Key is still the one this form derived, rather than one the author typed over it.
-   * Compared against what the *current* name would produce, which is what tells an untouched
-   * auto-generated value apart from a deliberate one.
+   * Whether the author has written the Key themselves, which stops it following the Name.
+   *
+   * A ref rather than a comparison against what the Name would derive, because taking the Key over
+   * is an *event*: the Key input is hidden while the source is Calculated, so a Name edited there
+   * leaves a derived key looking author-written the moment the two stop matching, and it would then
+   * be frozen at a spelling nobody chose. Clearing the Key hands it back — an empty one has nothing
+   * to protect.
    */
-  const keyStillFollowsName = (): boolean => {
-    const currentKey = form.getValues("storageKey");
-    return currentKey === "" || currentKey === toSafeIdentifier(form.getValues("name"));
-  };
+  const keyEditedByAuthor = useRef(false);
 
   const handleNameChange = (value: string) => {
-    const shouldFollow = keyStillFollowsName();
-
     form.setValue("name", value, { shouldValidate: true, shouldDirty: true });
-    // Only a passed-in field has an address the author writes. A calculated one mints a cuid at
-    // submit, so there is no ID input for this to fill.
-    if (!isEdit && shouldFollow && form.getValues("source") === "ingested") {
+
+    // Derived under either source, not just Passed in: a calculated field ignores the key, but the
+    // author can switch back, and what they see then has to describe the name they actually have.
+    if (!isEdit && !keyEditedByAuthor.current) {
       form.setValue("storageKey", toSafeIdentifier(value), { shouldValidate: true, shouldDirty: true });
     }
   };
@@ -197,19 +197,6 @@ export const EmbeddedFieldForm = ({
     }
     if (!isLockableSource(nextSource)) {
       form.setValue("locked", false, { shouldValidate: true, shouldDirty: true });
-    }
-    // The Key input is only rendered for a passed-in field, so coming back to one has to re-derive
-    // what it would have held — otherwise the address stays at whatever the name was when the author
-    // last switched away, or empty if they never typed one.
-    //
-    // Guarded by the same rule the Name change uses: a key the author wrote themselves survives the
-    // round trip, because it cannot be changed once the field exists and silently reverting it would
-    // cost them the one thing this form fixes forever.
-    if (nextSource === "ingested" && !isEdit && keyStillFollowsName()) {
-      form.setValue("storageKey", toSafeIdentifier(form.getValues("name")), {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
     }
   };
 
@@ -335,6 +322,11 @@ export const EmbeddedFieldForm = ({
                       <Input
                         {...keyField}
                         data-testid="embedded-field-key"
+                        onChange={(event) => {
+                          // Emptying it is a handback, not a takeover.
+                          keyEditedByAuthor.current = event.currentTarget.value !== "";
+                          keyField.onChange(event);
+                        }}
                         isInvalid={Boolean(form.formState.errors.storageKey)}
                       />
                     </FormControl>
