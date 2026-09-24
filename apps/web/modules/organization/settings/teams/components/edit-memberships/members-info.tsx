@@ -155,14 +155,14 @@ const getMemberColumns = ({
     {
       id: "name",
       header: t("common.full_name"),
-      headerClassName: "w-[17%]",
+      headerClassName: "w-[15%]",
       cellClassName: "ph-no-capture",
       cell: (member) => member.name,
     },
     {
       id: "email",
       header: t("common.email"),
-      headerClassName: "w-[25%]",
+      headerClassName: "w-[22%]",
       cellClassName: "ph-no-capture",
       cell: (member) => member.email,
     },
@@ -172,7 +172,7 @@ const getMemberColumns = ({
     columns.push({
       id: "role",
       header: t("common.role"),
-      headerClassName: "w-[17%]",
+      headerClassName: "w-[15%]",
       cellClassName: "ph-no-capture",
       cell: (member) => (
         <EditMembershipRole
@@ -196,8 +196,7 @@ const getMemberColumns = ({
     columns.push({
       id: "last-sign-in",
       header: <LastSignInHeader t={t} sort={lastSignInSort} onToggle={onToggleLastSignInSort} />,
-      headerClassName: "w-[15%]",
-      cellClassName: "whitespace-nowrap",
+      headerClassName: "w-[13%]",
       hideBelow: "md",
       cell: (member) => getLastSignInLabel(member, t, locale),
     });
@@ -206,7 +205,7 @@ const getMemberColumns = ({
   columns.push({
     id: "status",
     header: t("common.status"),
-    headerClassName: "w-[17%]",
+    headerClassName: "w-[13%]",
     cell: (member) => getMembershipBadge(member, t, locale),
   });
 
@@ -214,7 +213,7 @@ const getMemberColumns = ({
     columns.push({
       id: "actions",
       header: t("common.actions"),
-      headerClassName: "w-[24%]",
+      headerClassName: "w-[22%]",
       // `align` is doing real work here, unlike the other actions columns in this series: this header has
       // visible text, and `text-align` is the only thing that moves it. Right rather than the centre the
       // old header used, so the label sits over the controls it names.
