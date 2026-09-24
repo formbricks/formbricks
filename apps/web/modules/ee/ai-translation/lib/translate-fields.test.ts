@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
-import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import {
   AI_TRANSLATION_OUTPUT_TOO_LONG,
@@ -146,17 +145,14 @@ describe("translateFields", () => {
 
   // ENG-2831: the token-limit error was neither an expected error nor a mapped code, so the modal fell
   // back to a generic "Translation failed" and every occurrence landed in Sentry. It has to reach the
-  // client as a code it can explain, with the token counts kept in our own logs.
-  test("maps an output token limit overflow to the ai_output_too_long code and logs the token counts", async () => {
-    const details = { maxOutputTokens: 8192, outputTokens: 8192, reasoningTokens: 0 };
-    mockGenerateOrganizationAIObject.mockRejectedValue(new AIOutputTokenLimitError(details));
+  // client as a code it can explain.
+  test("maps an output token limit overflow to the ai_output_too_long code", async () => {
+    mockGenerateOrganizationAIObject.mockRejectedValue(
+      new AIOutputTokenLimitError({ maxOutputTokens: 8192, outputTokens: 8192, reasoningTokens: 0 })
+    );
 
     await expect(translateFields({ ...baseInput, fields })).rejects.toThrow(
       new InvalidInputError(AI_TRANSLATION_OUTPUT_TOO_LONG)
-    );
-    expect(logger.warn).toHaveBeenCalledWith(
-      expect.objectContaining({ requestedCount: fields.length, ...details }),
-      expect.any(String)
     );
   });
 

@@ -100,13 +100,8 @@ Rules:
     timeout: AI_TRANSLATION_TIMEOUT_MS,
   }).catch((error: unknown) => {
     // Retrying is futile (temperature 0, same budget), so tell the user the batch is too large instead
-    // of a generic failure. The token counts decide whether field count or reasoning tokens ate the
-    // budget, so keep them in our logs — the client only gets the code.
+    // of a generic failure. The shared AI service has already logged the token counts.
     if (error instanceof AIOutputTokenLimitError) {
-      logger.warn(
-        { organizationId, requestedCount: translatableFields.length, ...error.details },
-        "AI translation exceeded the output token limit"
-      );
       throw new InvalidInputError(AI_TRANSLATION_OUTPUT_TOO_LONG);
     }
     throw error;
