@@ -1,5 +1,13 @@
 import { execFileSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  copyFileSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,59 +24,57 @@ const createTempDir = (): string => {
   return tempDir;
 };
 
-const writeMockMc = (tempDir: string): void => {
+const writeMockRc = (tempDir: string): void => {
   const binDir = join(tempDir, "bin");
   mkdirSync(binDir, { recursive: true });
 
-  const mockMcPath = join(binDir, "mc");
+  const mockRcPath = join(binDir, "rc");
   writeFileSync(
-    mockMcPath,
+    mockRcPath,
     `#!/bin/sh
 set -eu
 
-log_file="\${MC_LOG_FILE:?}"
-capture_dir="\${MC_CAPTURE_DIR:?}"
+log_file="\${RC_LOG_FILE:?}"
+capture_dir="\${RC_CAPTURE_DIR:?}"
 
 printf '%s\\n' "$*" >> "$log_file"
 
 if [ "$1" = "alias" ] && [ "$2" = "set" ] && [ "$3" = "rustfs" ]; then
-  if [ "\${MC_ALIAS_SET_ALWAYS_FAIL:-0}" = "1" ]; then
+  if [ "\${RC_ALIAS_SET_ALWAYS_FAIL:-0}" = "1" ]; then
     exit 1
   fi
   exit 0
 fi
 
-if [ "$1" = "ls" ] && [ "$2" = "rustfs" ]; then
+if [ "$1" = "bucket" ] && [ "$2" = "list" ] && [ "$3" = "rustfs" ]; then
   exit 0
 fi
 
-if [ "$1" = "mb" ] && [ "$2" = "rustfs/formbricks" ] && [ "$3" = "--ignore-existing" ]; then
+if [ "$1" = "bucket" ] && [ "$2" = "create" ] && [ "$3" = "rustfs/formbricks" ] && [ "$4" = "--ignore-existing" ]; then
   exit 0
 fi
 
-if [ "$1" = "cors" ] && [ "$2" = "set" ] && [ "$3" = "rustfs/formbricks" ]; then
-  cp "$4" "$capture_dir/cors.xml"
+if [ "$1" = "bucket" ] && [ "$2" = "cors" ] && [ "$3" = "set" ] && [ "$4" = "rustfs/formbricks" ]; then
+  cp "$5" "$capture_dir/cors.xml"
   exit 0
 fi
 
 if [ "$1" = "admin" ] && [ "$2" = "policy" ] && [ "$3" = "info" ]; then
+  if [ "\${RC_POLICY_EXISTS:-0}" = "1" ]; then
+    exit 0
+  fi
   exit 1
 fi
 
 if [ "$1" = "admin" ] && [ "$2" = "policy" ] && [ "$3" = "create" ]; then
-  if [ "\${MC_POLICY_CREATE_FAIL:-0}" = "1" ]; then
-    exit 1
-  fi
-  cp "$6" "$capture_dir/policy.json"
-  exit 0
-fi
-
-if [ "$1" = "admin" ] && [ "$2" = "policy" ] && [ "$3" = "add" ]; then
   cp "$6" "$capture_dir/policy.json"
   exit 0
 fi
 
 if [ "$1" = "admin" ] && [ "$2" = "user" ] && [ "$3" = "info" ]; then
+  if [ "\${RC_USER_EXISTS:-0}" = "1" ]; then
+    exit 0
+  fi
   exit 1
 fi
 
@@ -80,11 +86,11 @@ if [ "$1" = "admin" ] && [ "$2" = "policy" ] && [ "$3" = "attach" ]; then
   exit 0
 fi
 
-printf 'unexpected mc invocation: %s\\n' "$*" >&2
+printf 'unexpected rc invocation: %s\\n' "$*" >&2
 exit 1
 `
   );
-  chmodSync(mockMcPath, 0o755);
+  chmodSync(mockRcPath, 0o755);
 
   const mockSleepPath = join(binDir, "sleep");
   writeFileSync(
@@ -96,10 +102,10 @@ exit 0
   chmodSync(mockSleepPath, 0o755);
 };
 
-const writeRustfsInitScript = (targetPath: string): void => {
+const writeRustfsInitScript = (targetPath: string, sourceScriptPath = formbricksScriptPath): void => {
   execFileSync(
     "bash",
-    ["-lc", 'source "$1"; write_rustfs_init_script "$2"', "bash", formbricksScriptPath, targetPath],
+    ["-lc", 'source "$1"; write_rustfs_init_script "$2"', "bash", sourceScriptPath, targetPath],
     { encoding: "utf8" }
   );
 };
@@ -113,11 +119,13 @@ afterEach(() => {
 });
 
 describe("docker/formbricks.sh RustFS bootstrap", () => {
-  test("generated init script stays in sync with the checked-in dev bootstrap script", () => {
+  test("embedded init script stays in sync with the checked-in dev bootstrap script", () => {
     const tempDir = createTempDir();
+    const standaloneFormbricksScriptPath = join(tempDir, "formbricks.sh");
     const generatedScriptPath = join(tempDir, "rustfs-init.sh");
 
-    writeRustfsInitScript(generatedScriptPath);
+    copyFileSync(formbricksScriptPath, standaloneFormbricksScriptPath);
+    writeRustfsInitScript(generatedScriptPath, standaloneFormbricksScriptPath);
 
     expect(readFileSync(generatedScriptPath, "utf8")).toBe(readFileSync(rustfsInitTemplatePath, "utf8"));
   });
@@ -125,11 +133,11 @@ describe("docker/formbricks.sh RustFS bootstrap", () => {
   test("generated init script provisions a bucket-scoped policy for the service user", () => {
     const tempDir = createTempDir();
     const generatedScriptPath = join(tempDir, "rustfs-init.sh");
-    const logFile = join(tempDir, "mc.log");
+    const logFile = join(tempDir, "rc.log");
     const captureDir = join(tempDir, "capture");
 
     mkdirSync(captureDir, { recursive: true });
-    writeMockMc(tempDir);
+    writeMockRc(tempDir);
     writeRustfsInitScript(generatedScriptPath);
 
     execFileSync(generatedScriptPath, {
@@ -138,8 +146,8 @@ describe("docker/formbricks.sh RustFS bootstrap", () => {
       env: {
         ...process.env,
         PATH: `${join(tempDir, "bin")}:${process.env.PATH ?? ""}`,
-        MC_LOG_FILE: logFile,
-        MC_CAPTURE_DIR: captureDir,
+        RC_LOG_FILE: logFile,
+        RC_CAPTURE_DIR: captureDir,
         RUSTFS_ADMIN_USER: "admin-user",
         RUSTFS_ADMIN_PASSWORD: "admin-password",
         RUSTFS_SERVICE_USER: "service-user",
@@ -150,13 +158,13 @@ describe("docker/formbricks.sh RustFS bootstrap", () => {
       },
     });
 
-    const mcCalls = readFileSync(logFile, "utf8").trim().split("\n");
+    const rcCalls = readFileSync(logFile, "utf8").trim().split("\n");
 
-    expect(mcCalls).toEqual([
+    expect(rcCalls).toEqual([
       "alias set rustfs http://rustfs:9000 admin-user admin-password",
-      "ls rustfs",
-      "mb rustfs/formbricks --ignore-existing",
-      "cors set rustfs/formbricks /tmp/formbricks-cors.xml",
+      "bucket list rustfs",
+      "bucket create rustfs/formbricks --ignore-existing",
+      "bucket cors set rustfs/formbricks /tmp/formbricks-cors.xml",
       "admin policy info rustfs formbricks-app-policy",
       "admin policy create rustfs formbricks-app-policy /tmp/formbricks-policy.json",
       "admin user info rustfs service-user",
@@ -202,14 +210,14 @@ describe("docker/formbricks.sh RustFS bootstrap", () => {
 `);
   });
 
-  test("generated init script falls back to policy add when policy create is unavailable", () => {
+  test("generated init script reuses an existing policy and service user", () => {
     const tempDir = createTempDir();
     const generatedScriptPath = join(tempDir, "rustfs-init.sh");
-    const logFile = join(tempDir, "mc.log");
+    const logFile = join(tempDir, "rc.log");
     const captureDir = join(tempDir, "capture");
 
     mkdirSync(captureDir, { recursive: true });
-    writeMockMc(tempDir);
+    writeMockRc(tempDir);
     writeRustfsInitScript(generatedScriptPath);
 
     execFileSync(generatedScriptPath, {
@@ -218,9 +226,10 @@ describe("docker/formbricks.sh RustFS bootstrap", () => {
       env: {
         ...process.env,
         PATH: `${join(tempDir, "bin")}:${process.env.PATH ?? ""}`,
-        MC_LOG_FILE: logFile,
-        MC_CAPTURE_DIR: captureDir,
-        MC_POLICY_CREATE_FAIL: "1",
+        RC_LOG_FILE: logFile,
+        RC_CAPTURE_DIR: captureDir,
+        RC_POLICY_EXISTS: "1",
+        RC_USER_EXISTS: "1",
         RUSTFS_ADMIN_USER: "admin-user",
         RUSTFS_ADMIN_PASSWORD: "admin-password",
         RUSTFS_SERVICE_USER: "service-user",
@@ -230,20 +239,26 @@ describe("docker/formbricks.sh RustFS bootstrap", () => {
       },
     });
 
-    const mcCalls = readFileSync(logFile, "utf8").trim().split("\n");
+    const rcCalls = readFileSync(logFile, "utf8").trim().split("\n");
 
-    expect(mcCalls).toContain("admin policy create rustfs formbricks-app-policy /tmp/formbricks-policy.json");
-    expect(mcCalls).toContain("admin policy add rustfs formbricks-app-policy /tmp/formbricks-policy.json");
+    expect(rcCalls).toEqual([
+      "alias set rustfs http://rustfs:9000 admin-user admin-password",
+      "bucket list rustfs",
+      "bucket create rustfs/formbricks --ignore-existing",
+      "admin policy info rustfs formbricks-app-policy",
+      "admin user info rustfs service-user",
+      "admin policy attach rustfs formbricks-app-policy --user service-user",
+    ]);
   });
 
   test("generated init script exits non-zero when RustFS never becomes ready", () => {
     const tempDir = createTempDir();
     const generatedScriptPath = join(tempDir, "rustfs-init.sh");
-    const logFile = join(tempDir, "mc.log");
+    const logFile = join(tempDir, "rc.log");
     const captureDir = join(tempDir, "capture");
 
     mkdirSync(captureDir, { recursive: true });
-    writeMockMc(tempDir);
+    writeMockRc(tempDir);
     writeRustfsInitScript(generatedScriptPath);
 
     expect(() =>
@@ -253,9 +268,9 @@ describe("docker/formbricks.sh RustFS bootstrap", () => {
         env: {
           ...process.env,
           PATH: `${join(tempDir, "bin")}:${process.env.PATH ?? ""}`,
-          MC_LOG_FILE: logFile,
-          MC_CAPTURE_DIR: captureDir,
-          MC_ALIAS_SET_ALWAYS_FAIL: "1",
+          RC_LOG_FILE: logFile,
+          RC_CAPTURE_DIR: captureDir,
+          RC_ALIAS_SET_ALWAYS_FAIL: "1",
           RUSTFS_ADMIN_USER: "admin-user",
           RUSTFS_ADMIN_PASSWORD: "admin-password",
           RUSTFS_SERVICE_USER: "service-user",
