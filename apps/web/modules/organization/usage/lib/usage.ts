@@ -19,10 +19,12 @@ const MEMBER_COUNT_KEYS = ["total", "active", "dormant", "deactivated"] as const
 const toCounts = <K extends string>(row: Partial<Record<K, bigint>> | undefined, keys: readonly K[]) =>
   Object.fromEntries(keys.map((key) => [key, Number(row?.[key] ?? 0)])) as Record<K, number>;
 
-const createdAtFragment = (column: Prisma.Sql, { from, to }: TUsageRangeBounds): Prisma.Sql =>
-  Prisma.sql`${from ? Prisma.sql`AND ${column} >= ${from}` : Prisma.empty} ${
-    to ? Prisma.sql`AND ${column} <= ${to}` : Prisma.empty
-  }`;
+// The optional `AND column >= from AND column <= to` join condition; empty for an all-time range.
+const createdAtFragment = (column: Prisma.Sql, { from, to }: TUsageRangeBounds): Prisma.Sql => {
+  const lowerBound = from ? Prisma.sql`AND ${column} >= ${from}` : Prisma.empty;
+  const upperBound = to ? Prisma.sql`AND ${column} <= ${to}` : Prisma.empty;
+  return Prisma.join([lowerBound, upperBound], " ");
+};
 
 // One grouped pass per workspace (ENG-3326). The LEFT JOINs keep workspaces with no responses as a 0 row,
 // and the join walks the `[surveyId, created_at, id]` index, so cost follows the responses in the range.
