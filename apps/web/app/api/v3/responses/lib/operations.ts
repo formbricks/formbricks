@@ -72,7 +72,9 @@ type TDeleteParams = {
 
 /** The keys of a stored JSON map, or none when the column holds something else. */
 const fieldNamesOf = (value: unknown): string[] =>
-  typeof value === "object" && value !== null && !Array.isArray(value) ? Object.keys(value).sort() : [];
+  typeof value === "object" && value !== null && !Array.isArray(value)
+    ? Object.keys(value).sort((a, b) => a.localeCompare(b))
+    : [];
 
 /**
  * The deleted row as the audit trail keeps it: which response, whose, and how much it held — never what

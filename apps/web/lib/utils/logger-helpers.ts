@@ -1,6 +1,6 @@
 import { isStringUrl } from "@/lib/utils/url";
 
-const SENSITIVE_KEYS = [
+const SENSITIVE_KEYS = new Set([
   "email",
   "name",
   "password",
@@ -42,7 +42,7 @@ const SENSITIVE_KEYS = [
   "useragent",
   "value_text",
   "translated_text",
-];
+]);
 
 /**
  * Keys whose value is respondent content rather than a field: a response's `data` and `variables`, a
@@ -52,7 +52,7 @@ const SENSITIVE_KEYS = [
  * of these keys is therefore reduced to its field names and a count (ENG-2873). Arrays and scalars fall
  * through to the normal walk: a survey's `variables` are definitions, not content, and arrive as an array.
  */
-const CONTENT_CONTAINERS = ["data", "variables", "contactattributes", "embeddeddata", "metadata"];
+const CONTENT_CONTAINERS = new Set(["data", "variables", "contactattributes", "embeddeddata", "metadata"]);
 
 const URL_SENSITIVE_KEYS = ["token", "code", "state"];
 
@@ -61,7 +61,7 @@ const isPlainObject = (value: unknown): value is Record<string, unknown> =>
 
 /** What a content container leaves behind in an audit event: the shape, not the values. */
 const projectContent = (value: Record<string, unknown>) => {
-  const fieldNames = Object.keys(value).sort();
+  const fieldNames = Object.keys(value).sort((a, b) => a.localeCompare(b));
   return { redactedContent: true, fieldNames, fieldCount: fieldNames.length };
 };
 
@@ -90,10 +90,10 @@ export const redactPII = (obj: any, seen: WeakSet<any> = new WeakSet()): any => 
     return Object.fromEntries(
       Object.entries(obj).map(([key, value]) => {
         const lowerKey = key.toLowerCase();
-        if (SENSITIVE_KEYS.includes(lowerKey)) {
+        if (SENSITIVE_KEYS.has(lowerKey)) {
           return [key, "********"];
         }
-        if (CONTENT_CONTAINERS.includes(lowerKey) && isPlainObject(value)) {
+        if (CONTENT_CONTAINERS.has(lowerKey) && isPlainObject(value)) {
           return [key, projectContent(value)];
         }
         return [key, redactPII(value, seen)];
