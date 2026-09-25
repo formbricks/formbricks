@@ -108,7 +108,7 @@ const isValidHostname = (hostname: string): boolean => {
 
   const labels = hostname.split(".");
   if (labels.length < 2) return false;
-  const topLevelDomain = labels[labels.length - 1];
+  const topLevelDomain = hostname.slice(hostname.lastIndexOf(".") + 1);
   return labels.every((label) => DOMAIN_LABEL.test(label)) && TOP_LEVEL_DOMAIN.test(topLevelDomain);
 };
 
