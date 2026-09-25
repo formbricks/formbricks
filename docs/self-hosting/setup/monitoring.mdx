@@ -169,6 +169,12 @@ The metrics exported by the Prometheus integration include:
   - Event loop lag
   - Heap statistics (size, used, available)
 
+- **v3 Responses API Metrics** (`formbricks.api.v3.responses.*`, exported with dots replaced by underscores):
+  - `reads` — one count per list, count or get, with `operation`, `via` (`ui`, `api`, `mcp`), `status_class`, and `filters` (the sorted filter keys the caller used, never their values)
+  - `read.duration` — wall-clock milliseconds per read, by `operation` and `status_class`
+  - `page.surveys` — how many distinct surveys one list page spans, i.e. the size of its single survey query
+  - `unresolved.responses` and `unresolved.entries` — responses served with a non-empty `unresolved[]`, and its entries by `reason`; a rising count means surveys are being edited in ways that orphan stored answers
+
 ### Collecting Metrics
 
 You can scrape metrics from your Prometheus server by adding the following to your Prometheus configuration:

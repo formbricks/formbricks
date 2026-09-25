@@ -70,6 +70,25 @@ vi.mock("@formbricks/logger", () => ({
   logger: { withContext: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn() }) },
 }));
 
+/**
+ * The read timer is replaced by a recorder: what each operation *observes* about itself is asserted
+ * here, and what the instruments do with it is `metrics.test.ts`'s subject.
+ */
+const { mockStartRead, mockReadDone, observations } = vi.hoisted(() => {
+  const observations: Record<string, unknown>[] = [];
+  const mockReadDone = vi.fn((response: Response) => response);
+  return {
+    observations,
+    mockReadDone,
+    mockStartRead: vi.fn((params: { operation: string }) => {
+      const observation: Record<string, unknown> = { operation: params.operation };
+      observations.push(observation);
+      return { observation, done: mockReadDone };
+    }),
+  };
+});
+vi.mock("./metrics", () => ({ startV3ResponsesRead: mockStartRead }));
+
 const params = {
   responseId: "clrsaaaaaaaaaaaaaaaaaaaa",
   authentication: { apiKeyId: "key_1", workspacePermissions: [] } as never,
@@ -579,5 +598,81 @@ describe("countV3ResponsesOperation", () => {
 
     expect(res.status).toBe(400);
     expect(mockCount).not.toHaveBeenCalled();
+  });
+});
+
+describe("the reads are observed for ENG-2898", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    observations.length = 0;
+    mockRequireAccess.mockResolvedValue({ workspaceId: WORKSPACE, organizationId: "org_1" });
+    mockGetSurveys.mockResolvedValue(new Map([[SURVEY.id, SURVEY]]));
+    mockKeysetPage.mockResolvedValue([{ id: ROW.id, createdAt: ROW.createdAt, surveyId: ROW.surveyId }]);
+    mockHydrate.mockResolvedValue([ROW]);
+    mockCount.mockResolvedValue({ count: 1, relation: "eq" });
+    mockGetWorkspaceId.mockResolvedValue(WORKSPACE);
+    mockGetScoped.mockResolvedValue(ROW);
+  });
+
+  test("a list observes its filter, paging flags, survey spread and serialized items", async () => {
+    const res = await listV3Responses({
+      ...read,
+      searchParams: query(`workspaceId=${WORKSPACE}&surveyId=${SURVEY.id}&includeTotalCount=true`),
+    });
+
+    expect(mockStartRead).toHaveBeenCalledWith({
+      operation: "list",
+      authentication: read.authentication,
+      instance: read.instance,
+    });
+    expect(mockReadDone).toHaveBeenCalledTimes(1);
+    expect(mockReadDone).toHaveBeenCalledWith(res);
+    expect(observations[0]).toMatchObject({
+      filter: { workspaceId: WORKSPACE, surveyId: SURVEY.id },
+      cursorUsed: false,
+      includeTotalCount: true,
+      pageSurveyCount: 1,
+    });
+    expect((observations[0].items as { unresolved: unknown[] }[]).map((item) => item.unresolved)).toEqual([
+      [],
+    ]);
+  });
+
+  test("a rejected list query is still handed to the timer, with nothing observed", async () => {
+    const res = await listV3Responses({ ...read, searchParams: query(`workspaceId=${WORKSPACE}&limit=x`) });
+
+    expect(res.status).toBe(400);
+    expect(mockReadDone).toHaveBeenCalledWith(res);
+    expect(observations[0]).toEqual({ operation: "list" });
+  });
+
+  test("a count observes its filter and precision", async () => {
+    const res = await countV3ResponsesOperation({
+      ...read,
+      searchParams: query(`workspaceId=${WORKSPACE}&surveyId=${SURVEY.id}&precision=exact`),
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockReadDone).toHaveBeenCalledWith(res);
+    expect(observations[0]).toEqual({
+      operation: "count",
+      filter: expect.objectContaining({ surveyId: SURVEY.id }),
+      precision: "exact",
+    });
+  });
+
+  test("a get observes the one resource it served, and a 403 exit still reaches the timer", async () => {
+    const ok = await getV3Response({ ...read, responseId: ROW.id });
+    expect(ok.status).toBe(200);
+    expect(mockReadDone).toHaveBeenCalledWith(ok);
+    expect(observations[0]).toMatchObject({
+      operation: "get",
+      items: [expect.objectContaining({ id: ROW.id })],
+    });
+
+    mockGetWorkspaceId.mockResolvedValue(null);
+    const denied = await getV3Response({ ...read, responseId: ROW.id });
+    expect(denied.status).toBe(403);
+    expect(mockReadDone).toHaveBeenLastCalledWith(denied);
   });
 });
