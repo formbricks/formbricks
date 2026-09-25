@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { type TChartQuery } from "@formbricks/types/analysis";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
@@ -14,6 +15,7 @@ import {
 } from "@/modules/ee/analysis/lib/schema-definition";
 import { type TChartType, ZChartType } from "@/modules/ee/analysis/types/analysis";
 import { resolveAIDateRange } from "./ai-chart-date-range";
+import { AI_CHART_PROMPT_ERROR_CODE } from "./ai-chart-errors";
 import { getAIChartPromptError } from "./ai-chart-errors.server";
 import { prepareQueryForChartType } from "./big-number";
 
@@ -88,6 +90,14 @@ const ZFilter = z
   });
 
 export const ZAIQueryResponse = z.object({
+  // First on purpose: the model writes fields in schema order, so it commits to "can this be charted
+  // at all" before it has filled in a query, rather than justifying one it already wrote. Without it
+  // gibberish came back as the default count measure — a real-looking chart for a request nobody made.
+  answerable: z
+    .boolean()
+    .describe(
+      "False only when the request is gibberish or asks for something the feedback data cannot answer (weather, jokes, general knowledge). Vague but on-topic requests are answerable. When false, the other fields are ignored."
+    ),
   name: z
     .string()
     .nullable()
@@ -150,8 +160,8 @@ type GenerateAIChartQueryInput = {
 /**
  * Translate a natural-language prompt into a normalized Cube.js chart query.
  * Throws an InvalidInputError carrying a stable AI chart error code when
- * structured output cannot be generated; provider/config/network failures
- * stay on the existing error path.
+ * structured output cannot be generated or the model flags the prompt as
+ * unanswerable; provider/config/network failures stay on the existing error path.
  */
 export const generateAIChartQuery = async ({
   organizationId,
@@ -195,6 +205,10 @@ export const generateAIChartQuery = async ({
     }
 
     throw error;
+  }
+
+  if (!output.answerable) {
+    throw new InvalidInputError(AI_CHART_PROMPT_ERROR_CODE);
   }
 
   return normalizeChartQuery(output);
