@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   getOrganization: vi.fn(),
   getIsAISmartToolsEnabled: vi.fn(),
   loggerError: vi.fn(),
+  loggerWarn: vi.fn(),
   wrapAiModelWithTracing: vi.fn(),
 }));
 
@@ -33,6 +34,15 @@ vi.mock("@formbricks/ai", () => ({
       this.code = code;
     }
   },
+  AIOutputTokenLimitError: class AIOutputTokenLimitError extends Error {
+    details: Record<string, number>;
+
+    constructor(details: Record<string, number> = {}) {
+      super("AI generation stopped because the output token limit was reached");
+      this.name = "AIOutputTokenLimitError";
+      this.details = details;
+    }
+  },
   generateObject: mocks.generateObject,
   streamObject: mocks.streamObject,
   generateText: mocks.generateText,
@@ -43,6 +53,7 @@ vi.mock("@formbricks/ai", () => ({
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: mocks.loggerError,
+    warn: mocks.loggerWarn,
   },
 }));
 
@@ -269,6 +280,28 @@ describe("AI organization service", () => {
         err: modelError,
       },
       "Failed to generate organization AI object"
+    );
+  });
+
+  // ENG-2831: every caller maps a token-limit overflow to a user-facing message, so it must not log at
+  // error level — but the token counts still have to reach the logs.
+  test("warns with the token counts instead of logging an error when the output token limit is hit", async () => {
+    const { AIOutputTokenLimitError } = await import("@formbricks/ai");
+    const details = { maxOutputTokens: 8192, outputTokens: 8192, reasoningTokens: 512 };
+    const tokenLimitError = new AIOutputTokenLimitError(details);
+    mocks.generateObject.mockRejectedValueOnce(tokenLimitError);
+
+    await expect(
+      generateOrganizationAIObject({
+        organizationId: "org_1",
+        schema: { type: "object" },
+        prompt: "Translate this survey",
+      } as any)
+    ).rejects.toBe(tokenLimitError);
+    expect(mocks.loggerError).not.toHaveBeenCalled();
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      { organizationId: "org_1", ...details },
+      "Failed to generate organization AI object: output token limit reached"
     );
   });
 

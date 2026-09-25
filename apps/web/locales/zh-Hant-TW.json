@@ -3205,6 +3205,7 @@
         "ai_translation_all_fields_populated": "所有欄位都已翻譯",
         "ai_translation_complete": "AI 翻譯完成",
         "ai_translation_failed": "翻譯失敗",
+        "ai_translation_output_too_long": "這份問卷的文字內容過多，無法一次翻譯完成。請先手動翻譯部分欄位，然後再試一次。",
         "ai_translation_quota_exceeded": "由於需求量大，翻譯功能暫時無法使用。請稍後再試。",
         "all_are_true": "全部為真",
         "all_other_answers_will_continue_to_fallback": "所有其他答案將繼續<fallbackSelect />",

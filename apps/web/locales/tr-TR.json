@@ -3205,6 +3205,7 @@
         "ai_translation_all_fields_populated": "Tüm alanlar zaten çevrilmiş",
         "ai_translation_complete": "Yapay Zeka çevirisi tamamlandı",
         "ai_translation_failed": "Çeviri başarısız oldu",
+        "ai_translation_output_too_long": "Bu anketin bir seferde çevrilemeyecek kadar çok metni var. Bazı alanları manuel olarak çevir, sonra tekrar dene.",
         "ai_translation_quota_exceeded": "Yoğun talep nedeniyle çeviri geçici olarak kullanılamıyor. Lütfen kısa bir süre sonra tekrar deneyin.",
         "all_are_true": "tümü doğru",
         "all_other_answers_will_continue_to_fallback": "Diğer tüm yanıtlar <fallbackSelect /> olmaya devam edecek",

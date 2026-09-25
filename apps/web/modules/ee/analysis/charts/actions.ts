@@ -341,6 +341,8 @@ export const generateAIChartAction = authenticatedActionClient
         source: "charts.generateAIChartAction",
       });
 
+      await applyRateLimit(rateLimitConfigs.actions.aiChartGeneration, ctx.user.id);
+
       const { chartType, query, name } = await generateAIChartQuery({
         organizationId,
         workspaceId,

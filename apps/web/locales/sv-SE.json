@@ -3205,6 +3205,7 @@
         "ai_translation_all_fields_populated": "Alla fält är redan översatta",
         "ai_translation_complete": "AI-översättning klar",
         "ai_translation_failed": "Översättningen misslyckades",
+        "ai_translation_output_too_long": "Den här undersökningen har för mycket text för att översättas på en gång. Översätt några fält manuellt och försök sedan igen.",
         "ai_translation_quota_exceeded": "Översättning är tillfälligt otillgänglig på grund av hög efterfrågan. Försök igen om en liten stund.",
         "all_are_true": "alla är sanna",
         "all_other_answers_will_continue_to_fallback": "Alla andra svar kommer fortsätta att <fallbackSelect />",
