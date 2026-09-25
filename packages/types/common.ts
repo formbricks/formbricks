@@ -83,20 +83,68 @@ export const getZSafeUrl = z.string().superRefine((url, ctx) => {
   safeUrlRefinement(url, ctx);
 });
 
-// Simple URL validation for ending cards - only checks if URL starts with http:// or https://
-// This allows dynamic URLs via hidden fields/recall values
+// URL validation for ending cards (button link, redirect URL). Stricter than a protocol check so a
+// typo like "http://google" is caught, but a host that is a recall value (a hidden field holding the
+// whole URL) is left alone: it can only be known once the survey runs.
 export const ZEndingCardUrl = z.string().superRefine((url, ctx) => {
   endingCardUrlRefinement(url, ctx);
 });
 
+const DOMAIN_LABEL = /^(?!-)[a-z0-9-]{1,63}(?<!-)$/;
+const TOP_LEVEL_DOMAIN = /^(?:[a-z]{2,63}|xn--[a-z0-9-]{1,59})$/;
+
+const isIPv4 = (hostname: string): boolean => {
+  const parts = hostname.split(".");
+  return (
+    parts.length === 4 &&
+    parts.every((part) => /^\d{1,3}$/.test(part) && Number(part) <= 255 && part === String(Number(part)))
+  );
+};
+
+// `hostname` as `new URL` normalises it: lower-cased, unicode already punycoded, IPv6 in brackets.
+const isValidHostname = (hostname: string): boolean => {
+  if (hostname === "localhost" || isIPv4(hostname)) return true;
+  if (hostname.startsWith("[") && hostname.endsWith("]")) return true;
+
+  const labels = hostname.split(".");
+  if (labels.length < 2) return false;
+  const topLevelDomain = labels[labels.length - 1];
+  return labels.every((label) => DOMAIN_LABEL.test(label)) && TOP_LEVEL_DOMAIN.test(topLevelDomain);
+};
+
+// The host ends at the first "/", "?" or "#". A recall token starts with "#", so one right there means
+// the host (or its tail) is dynamic.
+const hasDynamicHost = (urlAfterProtocol: string): boolean => {
+  const hostEnd = urlAfterProtocol.search(/[/?#]/);
+  return hostEnd !== -1 && urlAfterProtocol.startsWith("#recall:", hostEnd);
+};
+
 export const endingCardUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
   // Trim the URL to handle trailing/leading spaces
   const trimmedUrl = url.trim();
+  const protocol = ["https://", "http://"].find((prefix) => trimmedUrl.startsWith(prefix));
 
-  if (!trimmedUrl.startsWith("http://") && !trimmedUrl.startsWith("https://")) {
+  if (!protocol) {
     ctx.addIssue({
       code: "custom",
       message: "URL must start with http:// or https://",
+    });
+    return;
+  }
+
+  if (hasDynamicHost(trimmedUrl.slice(protocol.length))) return;
+
+  let hostname: string;
+  try {
+    hostname = new URL(trimmedUrl).hostname;
+  } catch {
+    hostname = "";
+  }
+
+  if (!isValidHostname(hostname)) {
+    ctx.addIssue({
+      code: "custom",
+      message: "URL must be a valid web address, like https://example.com",
     });
   }
 };
