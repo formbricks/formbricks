@@ -1,7 +1,7 @@
 "use client";
 
 import { CircleAlert } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { truncate } from "@/lib/utils/strings";
@@ -54,8 +54,15 @@ export const PurgeFeedbackDirectoryData = ({
     }
   };
 
+  // Held Enter repeats every ~30ms, which is faster than React can flip `isPending` and unmount the
+  // dialog, so a state-based guard lets several purges through — four went out and three more came
+  // back rate-limited while testing ENG-2604. A ref is written synchronously, so the repeats after
+  // the first one see it set.
+  const isPurgingRef = useRef(false);
+
   const handlePurge = async () => {
-    if (!hasValidConfirmation) return;
+    if (!hasValidConfirmation || isPurgingRef.current) return;
+    isPurgingRef.current = true;
 
     try {
       await purgeDataset({ datasetId: directoryId });
@@ -90,6 +97,8 @@ export const PurgeFeedbackDirectoryData = ({
       }
 
       toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+    } finally {
+      isPurgingRef.current = false;
     }
   };
 
@@ -135,9 +144,8 @@ export const PurgeFeedbackDirectoryData = ({
               // without stopPropagation, Enter here also reaches the outer form and saves the dataset
               // (toast "updated successfully", both dialogs close), regardless of what was typed.
               e.stopPropagation();
-              // Enter bypasses the footer button, which is the only thing carrying `isDeleting`, so
-              // without this a held Enter fires a second purge while the first is still in flight.
-              if (isPending) return;
+              // Enter bypasses the footer button, which is the only thing carrying `isDeleting`;
+              // handlePurge's own ref guard is what keeps a held Enter to a single purge.
               await handlePurge();
             }}>
             <label htmlFor="purgeDatasetConfirmation">

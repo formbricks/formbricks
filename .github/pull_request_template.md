@@ -11,7 +11,9 @@ archaeology (which commit introduced it, who touched what); a defence of a choic
 or of what you deliberately did not do; commentary on how strong your own tests are; a restatement
 of the ticket, or of what CI reports (lint, typecheck, tests, build, Sonar); a path the `Rerun:`
 line already carries; bold on more than a phrase or two per section. No promotional footers and no
-advertising of yourself or any tool — the agent note at the bottom is the one exception. -->
+advertising of yourself or any tool — the agent note at the bottom is the one exception. Never an
+agent session or conversation link (`claude.ai/code/session_…`, Codex, Cursor, ChatGPT share links):
+transcripts can hold private data, so drop one even when your tool appends it by default. -->
 
 <!-- Complete the line below: `Fixes ENG-<id>`, or `Ref ENG-<id>` if this PR only partly addresses
 the ticket, so merging doesn't close it. The magic word comes first; a bare URL links nothing.

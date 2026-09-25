@@ -22,16 +22,16 @@
     "question_video": "Fragevideo",
     "required": "Erforderlich",
     "respondents_will_not_see_this_card": "Befragte werden diese Karte nicht sehen",
-    "response_saved_offline": "Deine Antwort wurde noch nicht gesendet. Sie wird automatisch übermittelt, sobald du wieder online bist.",
+    "response_saved_offline": "Ihre Antwort wurde noch nicht gesendet. Sie wird automatisch übermittelt, sobald Sie wieder online sind.",
     "retry": "Wiederholen",
     "retrying": "Erneuter Versuch...",
     "scheduling_calendar": "Terminkalender",
     "scroll_to_bottom": "Nach unten scrollen",
     "search": "Suchen...",
-    "select_option": "Wähle eine Option",
-    "select_options": "Wähle Optionen",
+    "select_option": "Wählen Sie eine Option",
+    "select_options": "Wählen Sie Optionen",
     "sending_responses": "Antworten werden gesendet...",
-    "survey_closes_automatically_in_x_seconds": "{count, plural, one {Diese Umfrage schließt sich automatisch in {count} Sekunde, wenn du nicht antwortest} other {Diese Umfrage schließt sich automatisch in {count} Sekunden, wenn du nicht antwortest}}",
+    "survey_closes_automatically_in_x_seconds": "{count, plural, one {Diese Umfrage schließt sich automatisch in {count} Sekunde, wenn Sie nicht antworten} other {Diese Umfrage schließt sich automatisch in {count} Sekunden, wenn Sie nicht antworten}}",
     "survey_dialog": "Umfragedialog",
     "survey_opened_announcement": "Am Ende der Seite wurde eine Umfrage geöffnet.",
     "survey_progress": "Umfragefortschritt",
@@ -54,12 +54,12 @@
       "duplicate_files": "Die folgenden Dateien sind bereits hochgeladen: {duplicateNames}. Doppelte Dateien sind nicht erlaubt.",
       "file_size_exceeded": "Die folgenden Dateien überschreiten die maximale Größe von {maxSizeInMB} MB und wurden entfernt: {fileNames}",
       "file_size_exceeded_alert": "Die Datei sollte kleiner als {maxSizeInMB} MB sein",
-      "invalid_file_name": "Der Dateiname enthält ungültige Zeichen. Bitte benenne die Datei um und versuche es erneut.",
+      "invalid_file_name": "Der Dateiname enthält ungültige Zeichen. Bitte benennen Sie die Datei um und versuchen Sie es erneut.",
       "no_valid_file_types_selected": "Keine gültigen Dateitypen ausgewählt. Bitte wählen Sie einen gültigen Dateityp.",
       "only_one_file_can_be_uploaded_at_a_time": "Es kann nur eine Datei gleichzeitig hochgeladen werden.",
-      "placeholder_text": "Klicke oder ziehe Dateien hierher zum Hochladen",
+      "placeholder_text": "Zum Hochladen klicken oder Dateien hierher ziehen",
       "upload_failed": "Upload fehlgeschlagen! Bitte versuchen Sie es erneut.",
-      "upload_service_unavailable": "Der Datei-Upload-Dienst ist nicht verfügbar. Bitte versuche es später erneut oder kontaktiere den Umfragebesitzer.",
+      "upload_service_unavailable": "Der Datei-Upload-Dienst ist nicht verfügbar. Bitte versuchen Sie es später erneut oder kontaktieren Sie den Umfrageersteller.",
       "uploading": "Wird hochgeladen...",
       "you_can_only_upload_a_maximum_of_files": "Sie können maximal {FILE_LIMIT} Dateien hochladen."
     },
@@ -88,15 +88,15 @@
     "please_fill_out_this_field": "Bitte füllen Sie dieses Feld aus",
     "recaptcha_error": {
       "message": "Ihre Antwort konnte nicht übermittelt werden, da sie als automatisierte Aktivität eingestuft wurde. Wenn Sie atmen, versuchen Sie es bitte erneut.",
-      "title": "Wir konnten nicht verifizieren, dass du ein Mensch bist."
+      "title": "Wir konnten nicht verifizieren, dass Sie ein Mensch sind."
     },
     "response_already_completed": {
-      "message": "Diese Antwort wurde bereits abgeschlossen und kann nicht mehr geändert werden. Du kannst dieses Fenster jetzt schließen.",
+      "message": "Diese Antwort wurde bereits abgeschlossen und kann nicht mehr geändert werden. Sie können dieses Fenster jetzt schließen.",
       "title": "Diese Antwort wurde bereits abgeschlossen."
     },
     "response_sending_error_permanent": {
-      "message": "Deine Antwort konnte nicht übermittelt werden und kann nicht erneut versucht werden. Bitte kontaktiere den Umfrage-Ersteller, falls das weiterhin passiert.",
-      "title": "Deine Antwort konnte nicht übermittelt werden."
+      "message": "Ihre Antwort konnte nicht übermittelt werden und kann nicht erneut versucht werden. Bitte kontaktieren Sie den Umfrageersteller, falls das weiterhin passiert.",
+      "title": "Ihre Antwort konnte nicht übermittelt werden."
     },
     "value_must_contain": "Wert muss {value} enthalten",
     "value_must_equal": "Wert muss {value} entsprechen",

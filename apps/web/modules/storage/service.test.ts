@@ -5,6 +5,7 @@ import { TAccessType } from "@formbricks/types/storage";
 import {
   deleteFile,
   deleteFilesByWorkspaceId,
+  deleteWorkspaceFilesBestEffort,
   getFileStreamForDownload,
   getSignedUrlForUpload,
 } from "./service";
@@ -468,6 +469,58 @@ describe("storage service", () => {
       const result = await deleteFilesByWorkspaceId("ws-456", ["env-123"]);
 
       expect(result!.ok).toBe(false);
+    });
+  });
+
+  // ENG-3197: this is the guarantee both deletion paths lean on. It runs after the database cascade
+  // has committed, so it must never throw, and it must never drop the legacy prefix.
+  describe("deleteWorkspaceFilesBestEffort", () => {
+    const mockSuccessResult = { ok: true, data: undefined } as MockedDeleteFilesByPrefixReturn;
+
+    test("should delete both the workspace prefix and the legacy environment prefix", async () => {
+      vi.mocked(deleteFilesByPrefix).mockResolvedValue(mockSuccessResult);
+
+      await deleteWorkspaceFilesBestEffort({ id: "ws-456", legacyEnvironmentId: "env-123" });
+
+      expect(deleteFilesByPrefix).toHaveBeenCalledTimes(2);
+      expect(deleteFilesByPrefix).toHaveBeenCalledWith("ws-456");
+      expect(deleteFilesByPrefix).toHaveBeenCalledWith("env-123");
+      expect(logger.error).not.toHaveBeenCalled();
+    });
+
+    test.each([
+      ["null", null],
+      ["undefined", undefined],
+    ])("should not pass a %s legacyEnvironmentId through as a prefix", async (_label, legacyId) => {
+      vi.mocked(deleteFilesByPrefix).mockResolvedValue(mockSuccessResult);
+
+      await deleteWorkspaceFilesBestEffort({ id: "ws-456", legacyEnvironmentId: legacyId });
+
+      expect(deleteFilesByPrefix).toHaveBeenCalledTimes(1);
+      expect(deleteFilesByPrefix).toHaveBeenCalledWith("ws-456");
+    });
+
+    test("should log and resolve when the storage call returns an error", async () => {
+      vi.mocked(deleteFilesByPrefix).mockResolvedValue({
+        ok: false,
+        error: { code: StorageErrorCode.S3CredentialsError },
+      } as MockedDeleteFilesByPrefixReturn);
+
+      await expect(
+        deleteWorkspaceFilesBestEffort({ id: "ws-456", legacyEnvironmentId: null })
+      ).resolves.toBeUndefined();
+
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    test("should log and resolve when the storage call rejects", async () => {
+      vi.mocked(deleteFilesByPrefix).mockRejectedValue(new Error("bucket unreachable"));
+
+      await expect(
+        deleteWorkspaceFilesBestEffort({ id: "ws-456", legacyEnvironmentId: "env-123" })
+      ).resolves.toBeUndefined();
+
+      expect(logger.error).toHaveBeenCalled();
     });
   });
 

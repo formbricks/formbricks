@@ -9,7 +9,8 @@ on:
         required: false
       ENTERPRISE_LICENSE_KEY:
         required: true
-      # Add other secrets if necessary
+      # A secret added here must also be named in pr.yml's e2e-test job: the caller does not
+      # `inherit`, so an unnamed optional secret arrives empty and a required one fails the call.
   workflow_dispatch:
     inputs:
       force_mode:
@@ -63,6 +64,8 @@ jobs:
         uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
         with:
           egress-policy: audit
+          # This is a literal block, so every line below is an endpoint — no comments inside it.
+          # Docker Hub serves every container image used by this workflow.
           allowed-endpoints: |
             ee.formbricks.com:443
             registry-1.docker.io:443
@@ -182,7 +185,7 @@ jobs:
             -e RUSTFS_POLICY_NAME=formbricks-e2e-policy \
             -e RUSTFS_CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000 \
             -v "$PWD/docker/rustfs-init.sh:/tmp/rustfs-init.sh:ro" \
-            minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 \
+            rustfs/rc:v0.1.36@sha256:ab024bfebee49a750ce886b4c70963ccd9ddaa03f491704a90710641d7a26699 \
             /tmp/rustfs-init.sh
 
       # NOTE: no build cache here. We measured caching Next's .next/cache

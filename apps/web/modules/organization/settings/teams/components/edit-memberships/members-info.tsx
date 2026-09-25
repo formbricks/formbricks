@@ -8,7 +8,7 @@ import { getAccessFlags } from "@/lib/membership/utils";
 import { formatDateWithOrdinal } from "@/lib/utils/datetime";
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
 import { MemberActions } from "@/modules/organization/settings/teams/components/edit-memberships/member-actions";
-import { isInviteExpired } from "@/modules/organization/settings/teams/lib/utils";
+import { hasMoreThanOneActiveOwner, isInviteExpired } from "@/modules/organization/settings/teams/lib/utils";
 import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 import { Badge } from "@/modules/ui/components/badge";
 import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
@@ -22,29 +22,25 @@ const isInvitee = (member: TMemberRow): member is TInvite => {
   return (member as TInvite).expiresAt !== undefined;
 };
 
-/**
- * The four badge texts are English literals, as they were before this conversion. Fixing that needs new
- * i18n keys and is a behaviour change rather than a restyle, so it stays a follow-up.
- */
 const getMembershipBadge = (member: TMemberRow, t: TFunction, locale: string) => {
   if (isInvitee(member)) {
     return isInviteExpired(member) ? (
-      <Badge type="gray" text="Expired" size="tiny" data-testid="expired-badge" />
+      <Badge type="gray" text={t("common.expired")} size="tiny" data-testid="expired-badge" />
     ) : (
       <TooltipRenderer
         tooltipContent={`${t("workspace.settings.general.invite_expires_on", {
           date: formatDateWithOrdinal(member.expiresAt, locale),
         })}`}>
-        <Badge type="warning" text="Pending" size="tiny" />
+        <Badge type="warning" text={t("common.pending")} size="tiny" />
       </TooltipRenderer>
     );
   }
 
   if (!member.isActive) {
-    return <Badge type="gray" text="Inactive" size="tiny" />;
+    return <Badge type="gray" text={t("common.inactive")} size="tiny" />;
   }
 
-  return <Badge type="success" text="Active" size="tiny" />;
+  return <Badge type="success" text={t("common.active")} size="tiny" />;
 };
 
 const showDeleteButton = (
@@ -227,7 +223,7 @@ export const MembersInfo = ({
   const { isOwner, isManager } = getAccessFlags(currentUserRole);
   const isOwnerOrManager = isOwner || isManager;
 
-  const doesOrgHaveMoreThanOneOwner = allMembers.filter((member) => member.role === "owner").length > 1;
+  const doesOrgHaveMoreThanOneOwner = hasMoreThanOneActiveOwner(members);
 
   return (
     <SettingsTable

@@ -4,3 +4,4 @@
  */
 export const GOOGLE_SHEET_INTEGRATION_INVALID_GRANT = "invalid_grant";
 export const GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION = "insufficient_permission";
+export const GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_SCOPES = "insufficient_scopes";

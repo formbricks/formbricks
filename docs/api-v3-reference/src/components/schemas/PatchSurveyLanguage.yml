@@ -1,0 +1,32 @@
+type: object
+description: >-
+  Language entry accepted by `PATCH /api/v3/surveys/{surveyId}`. Identical to the create shape plus
+  `alias`, which `GET` returns so a round-tripped body carries it. `alias` belongs to the workspace
+  language rather than the survey, so it is verified rather than applied: echoing the value `GET`
+  returned is a no-op, and a different one is rejected with `read_only_field`.
+required:
+  - code
+properties:
+  code:
+    type: string
+    description: >-
+      Server-emitted survey language code/tag, echoed from `GET`. Deliberately not `LocaleCode`:
+      existing surveys carry language-only and script-only codes (`vi`, `gu`), and a read-only echo
+      has to accept whatever the read returned. New languages are still created through the strict
+      shape.
+    example: en-US
+  default:
+    type: boolean
+    description: >-
+      Optional marker for readability; only the `defaultLanguage` entry may set
+      this to true.
+  enabled:
+    type: boolean
+    default: true
+    description: Whether this language is enabled for respondent-facing delivery.
+  alias:
+    type:
+      - string
+      - "null"
+    description: Workspace-level alias for the language. Read-only; echo the value `GET` returned.
+additionalProperties: false

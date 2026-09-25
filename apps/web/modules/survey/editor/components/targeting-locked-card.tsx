@@ -30,7 +30,7 @@ export const TargetingLockedCard = ({
       <Collapsible.CollapsibleTrigger
         asChild
         className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
-        <div className="inline-flex px-4 py-4">
+        <button type="button" className="inline-flex px-4 py-4 text-left">
           <div className="flex items-center pr-5 pl-2">
             <div className="rounded-full border border-slate-300 bg-slate-100 p-1">
               <LockIcon className="size-4 text-slate-500" strokeWidth={3} />
@@ -40,7 +40,7 @@ export const TargetingLockedCard = ({
             <p className="font-semibold text-slate-800">{t("workspace.segments.target_audience")}</p>
             <p className="mt-1 text-sm text-slate-500">{t("workspace.segments.pre_segment_users")}</p>
           </div>
-        </div>
+        </button>
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent className="min-w-full overflow-auto">
         <hr className="text-slate-600" />

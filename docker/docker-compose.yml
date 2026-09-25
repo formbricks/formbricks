@@ -1,6 +1,12 @@
 x-formbricks-database: &formbricks-database
   DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD_URL_ENCODED:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}@postgres:5432/formbricks?schema=public"
 
+x-hub-runtime-environment: &hub-runtime-environment
+  DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD_URL_ENCODED:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}@postgres:5432/formbricks?sslmode=disable}
+  TAXONOMY_SERVICE_URL: ${TAXONOMY_SERVICE_URL:-}
+  TAXONOMY_SERVICE_TOKEN: ${TAXONOMY_SERVICE_TOKEN:-}
+  HUB_INTERNAL_API_TOKEN: ${HUB_INTERNAL_API_TOKEN:-}
+
 x-environment: &environment
   environment: &app-environment
     ######################################################## REQUIRED ########################################################
@@ -9,15 +15,22 @@ x-environment: &environment
     # Set this to your public-facing URL, e.g., example http://localhost:3000 or https://example.com
     WEBAPP_URL:
 
-    # Required for next-auth. Should be the same as WEBAPP_URL
+    # The auth base URL. Should be the same as WEBAPP_URL.
+    BETTER_AUTH_URL:
+
+    # Legacy alias for BETTER_AUTH_URL, kept so an instance installed before the rename keeps working.
+    # Set BETTER_AUTH_URL on a new install; this one needs no value.
     NEXTAUTH_URL:
 
     # PostgreSQL DB for Formbricks to connect to
     <<: *formbricks-database
 
-    # NextJS Auth
-    # @see: https://next-auth.js.org/configuration/options#nextauth_secret
+    # Signs session cookies and every invite, verification and email-change token.
     # You can use: `openssl rand -hex 32` to generate one
+    BETTER_AUTH_SECRET:
+
+    # Legacy alias for BETTER_AUTH_SECRET. An instance installed before the rename keeps its value here
+    # and nothing rewrites it, so this key stays supported indefinitely.
     NEXTAUTH_SECRET:
 
     # Encryption Key is used for 2FA & Single use URLs for Link Surveys
@@ -438,7 +451,7 @@ services:
   # Run Hub DB migrations (goose + river) before the API starts. Uses same image; migrations are idempotent.
   # Default tracks :latest so self-host updates (compose pull) advance Hub alongside the app image.
   # Operators who want an immutable pin can set HUB_IMAGE_REF in docker/.env to either ":<tag>"
-  # (e.g. ":0.3.0") or "@sha256:<digest>". hub and hub-migrate share the same value — no drift.
+  # (e.g. ":0.3.0") or "@sha256:<digest>". hub, hub-worker, and hub-migrate share the same value — no drift.
   hub-migrate:
     image: ghcr.io/formbricks/hub${HUB_IMAGE_REF:-:latest}
     restart: "no"
@@ -463,11 +476,22 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      <<: *hub-runtime-environment
       API_KEY: ${HUB_API_KEY:-}
-      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD_URL_ENCODED:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}@postgres:5432/formbricks?sslmode=disable}
-      TAXONOMY_SERVICE_URL: ${TAXONOMY_SERVICE_URL:-}
-      TAXONOMY_SERVICE_TOKEN: ${TAXONOMY_SERVICE_TOKEN:-}
-      HUB_INTERNAL_API_TOKEN: ${HUB_INTERNAL_API_TOKEN:-}
+
+  # Hub worker processes every asynchronous Hub job, including webhooks and configured enrichments.
+  hub-worker:
+    restart: always
+    image: ghcr.io/formbricks/hub${HUB_IMAGE_REF:-:latest}
+    depends_on:
+      hub-migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    entrypoint: ["/app/hub-worker"]
+    healthcheck:
+      disable: true
+    environment: *hub-runtime-environment
 
   # Optional AI taxonomy beta service. Enable with COMPOSE_PROFILES=taxonomy.
   taxonomy:

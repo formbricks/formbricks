@@ -1,15 +1,11 @@
-type: object
-required:
-  - limit
-  - nextCursor
-properties:
-  limit:
-    type: integer
-    minimum: 1
-    maximum: 100
-  nextCursor:
-    type:
-      - string
-      - "null"
-    description: Opaque cursor for the next page. `null` when there are no more results.
-additionalProperties: false
+allOf:
+  - $ref: ./ListPaginationMeta.yml
+unevaluatedProperties: false
+description: >-
+  A list `meta` carrying pagination and nothing else — the shape for collections that do not report a
+  total and have no domain context to echo.
+
+
+  Adds nothing to `ListPaginationMeta`; the `allOf` wrapper is what closes it. Each composing
+  operation bounds its own requests through its `limit` query parameter, which is why this shape
+  states no cap of its own.

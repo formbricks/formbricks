@@ -3,6 +3,7 @@
  * Used by the advanced chart builder to provide field metadata and operators.
  */
 import type { TFunction } from "i18next";
+import { type TDateRangePreset } from "@/lib/date-ranges";
 
 export interface FieldDefinition {
   id: string;
@@ -343,7 +344,7 @@ export const FEEDBACK_FIELDS = {
       label: "NPS: Score",
       type: "number",
       group: "score",
-      description: "Net Promoter Score: ((Promoters - Detractors) / Total NPS responses) * 100",
+      description: "Net Promoter Score: ((Promoters - Detractors) / Answered NPS responses) * 100",
     },
     {
       id: "FeedbackRecords.npsAverage",
@@ -358,28 +359,28 @@ export const FEEDBACK_FIELDS = {
       label: "NPS: Promoters",
       type: "count",
       group: "count",
-      description: "Number of NPS promoters (score 9-10)",
+      description: "Number of NPS promoters (score >= 9; NPS scale is 0-10)",
     },
     {
       id: "FeedbackRecords.passiveCount",
       label: "NPS: Passives",
       type: "count",
       group: "count",
-      description: "Number of NPS passives (score 7-8)",
+      description: "Number of NPS passives (score >= 7 and < 9; NPS scale is 0-10)",
     },
     {
       id: "FeedbackRecords.detractorCount",
       label: "NPS: Detractors",
       type: "count",
       group: "count",
-      description: "Number of NPS detractors (score 0-6)",
+      description: "Number of NPS detractors (score < 7; NPS scale is 0-10)",
     },
     {
       id: "FeedbackRecords.csatScore",
       label: "CSAT: Score",
       type: "number",
       group: "score",
-      description: "CSAT Score: % of CSAT responses rated 4 or 5 (top-2-box on the 1-5 scale)",
+      description: "CSAT Score: % of answered CSAT responses scoring >= 4 (CSAT scale is 1-5)",
     },
     {
       id: "FeedbackRecords.csatAverage",
@@ -394,21 +395,21 @@ export const FEEDBACK_FIELDS = {
       label: "CSAT: Satisfied",
       type: "count",
       group: "count",
-      description: "Number of satisfied CSAT responses (top-2-box on the 1-5 scale)",
+      description: "Number of satisfied CSAT responses (score >= 4; CSAT scale is 1-5)",
     },
     {
       id: "FeedbackRecords.csatDissatisfiedCount",
       label: "CSAT: Dissatisfied",
       type: "count",
       group: "count",
-      description: "Number of dissatisfied CSAT responses (bottom-2-box on the 1-5 scale)",
+      description: "Number of dissatisfied CSAT responses (score < 3; CSAT scale is 1-5)",
     },
     {
       id: "FeedbackRecords.csatNeutralCount",
       label: "CSAT: Neutral",
       type: "count",
       group: "count",
-      description: "Number of neutral CSAT responses (middle box on the 1-5 scale)",
+      description: "Number of neutral CSAT responses (score >= 3 and < 4; CSAT scale is 1-5)",
     },
     {
       id: "FeedbackRecords.csatCount",
@@ -715,17 +716,6 @@ export const GRANULARITY_LABELS: Record<string, string> = {
   year: "Year",
 };
 
-export const DATE_PRESETS = [
-  { label: "Today", value: "today" },
-  { label: "Yesterday", value: "yesterday" },
-  { label: "Last 7 days", value: "last 7 days" },
-  { label: "Last 30 days", value: "last 30 days" },
-  { label: "This month", value: "this month" },
-  { label: "Last month", value: "last month" },
-  { label: "This quarter", value: "this quarter" },
-  { label: "This year", value: "this year" },
-] as const;
-
 /**
  * Get filter operators for a given field type.
  */
@@ -871,7 +861,7 @@ export function getTranslatedGranularityLabel(granularity: string, t: TFunction)
  * Translate a date preset value.
  */
 export function getTranslatedDatePresetLabel(value: string, t: TFunction): string {
-  const labels: Record<string, string> = {
+  const labels: Record<TDateRangePreset, string> = {
     today: t("workspace.analysis.charts.date_preset_today"),
     yesterday: t("workspace.analysis.charts.date_preset_yesterday"),
     "last 24 hours": t("workspace.analysis.charts.date_preset_last_24_hours"),
@@ -885,7 +875,7 @@ export function getTranslatedDatePresetLabel(value: string, t: TFunction): strin
     "this year": t("workspace.analysis.charts.date_preset_this_year"),
     "last year": t("workspace.analysis.charts.date_preset_last_year"),
   };
-  return labels[value] ?? value;
+  return (labels as Record<string, string>)[value] ?? value;
 }
 
 /**

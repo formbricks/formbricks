@@ -33,7 +33,10 @@ properties:
     type: boolean
     description: >-
       Whether a real write would run the response pipeline — webhooks, integrations, follow-ups, and
-      Hub ingestion. True for a create, and for a patch that transitions the response to finished.
+      Hub ingestion. Always `true`: a create emits `responseCreated` and every patch emits
+      `responseUpdated`, so a write is never side-effect free. A patch that transitions the response to
+      finished additionally emits `responseFinished`; the transition decides which events go out, not
+      whether any do.
   countsTowardMeteredResponses:
     type: boolean
     description: Whether a real write would consume one metered monthly response.

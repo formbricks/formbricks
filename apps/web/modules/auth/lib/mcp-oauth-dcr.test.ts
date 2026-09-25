@@ -5,7 +5,7 @@ import { jwt } from "better-auth/plugins";
 import { NextRequest } from "next/server";
 import { describe, expect, test, vi } from "vitest";
 import { GET as getProtectedResourceMetadata } from "@/app/.well-known/oauth-protected-resource/[[...resource]]/route";
-import { withInferredApplicationType } from "./mcp-dcr-application-type";
+import { prepareDcrRequest, withInferredApplicationType } from "./mcp-dcr-application-type";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { getAuthIssuerUrl, getMcpResourceUrl, getOAuthUserInfoUrl } from "./oauth-urls";
 
@@ -22,6 +22,20 @@ vi.mock("@/lib/env", () => ({
 
 const BASE_URL = "http://localhost:3000";
 const REDIRECT_URI = "http://127.0.0.1:33418/callback";
+
+/**
+ * A registration exactly as an MCP client sends it: a loopback callback and no `application_type`.
+ * Shared by the two suites below, which read it from opposite ends — one asks what upstream does with
+ * it, the other that our own gate lets it through untouched.
+ */
+const LOOPBACK_REGISTRATION = JSON.stringify({
+  client_name: "MCP DCR client that omits application_type",
+  redirect_uris: [REDIRECT_URI],
+  grant_types: ["authorization_code", "refresh_token"],
+  response_types: ["code"],
+  token_endpoint_auth_method: "none",
+  scope: "surveys:read",
+});
 
 /**
  * Regression suite for the MCP OAuth handshake as REAL clients drive it (Claude Code, MCP
@@ -162,15 +176,6 @@ describe("MCP OAuth Dynamic Client Registration → authorize (real-client shape
    * the second proves the normalizer actually resolves it against that same real validator. Note the
    * body is IDENTICAL in both — only `withInferredApplicationType` is applied.
    */
-  const LOOPBACK_REGISTRATION = JSON.stringify({
-    client_name: "MCP DCR client that omits application_type",
-    redirect_uris: [REDIRECT_URI],
-    grant_types: ["authorization_code", "refresh_token"],
-    response_types: ["code"],
-    token_endpoint_auth_method: "none",
-    scope: "surveys:read",
-  });
-
   const register = (auth: ReturnType<typeof createAuthInstance>, body: string) =>
     auth.handler(
       new Request(`${BASE_URL}/api/auth/oauth2/register`, {
@@ -341,5 +346,124 @@ describe("MCP OAuth Dynamic Client Registration → authorize (real-client shape
     ]);
 
     expect(authorize.location).toContain("error=invalid_scope");
+  });
+});
+
+/**
+ * The DCR redirect-URI allowlist (ENG-3086) against the REAL plugin, which is the only place its two
+ * load-bearing assumptions can be checked. The allowlist is a pre-handler gate keyed on the request
+ * path, so it is only complete while upstream agrees with it about (a) which paths reach
+ * `/oauth2/register` and (b) which bodies that endpoint will parse. Either could change under a
+ * version bump, and either changing silently reopens the hole — a path upstream routes but the gate
+ * does not match is a bypass, not a 404. So both are asserted here rather than reasoned about, the
+ * same discipline as the `application_type` pair above.
+ */
+describe("DCR redirect-URI allowlist vs. the real plugin (ENG-3086)", () => {
+  const REGISTER_PATH = "/api/auth/oauth2/register";
+
+  /** The pentest report's payload, byte for byte (ENG-3086). */
+  const REPORTED_REGISTRATION = JSON.stringify({
+    client_name: "SecurityResearchVerify1",
+    redirect_uris: ["https://attacker-controlled-test.example.org/cb"],
+    grant_types: ["authorization_code"],
+    response_types: ["code"],
+    token_endpoint_auth_method: "none",
+  });
+
+  const registrationRequest = (path: string, body: string, contentType = "application/json") =>
+    new Request(`${BASE_URL}${path}`, {
+      method: "POST",
+      headers: { "content-type": contentType },
+      body,
+    });
+
+  /** The route's real pipeline: the gate first, then Better Auth for whatever it lets through. */
+  const throughRoute = async (auth: ReturnType<typeof createAuthInstance>, request: Request) => {
+    const prepared = await prepareDcrRequest(request);
+    return prepared instanceof Response ? prepared : auth.handler(prepared);
+  };
+
+  test("upstream alone registers the reported attacker client", async () => {
+    const response = await createAuthInstance().handler(
+      registrationRequest(REGISTER_PATH, REPORTED_REGISTRATION)
+    );
+    const body = (await response.json()) as { client_id?: string };
+
+    // The vulnerability itself: an anonymous caller, an attacker-controlled https redirect, a
+    // client_id back. This is what the gate below has to be measured against.
+    expect(response.status).toBe(201);
+    expect(body.client_id).toBeTruthy();
+  });
+
+  test("the gate rejects that same registration before upstream sees it", async () => {
+    const response = await throughRoute(
+      createAuthInstance(),
+      registrationRequest(REGISTER_PATH, REPORTED_REGISTRATION)
+    );
+    const body = (await response.json()) as { error?: string };
+
+    expect(response.status).toBe(400);
+    expect(body.error).toBe("invalid_redirect_uri");
+  });
+
+  test("a loopback MCP registration still reaches upstream and registers", async () => {
+    const response = await throughRoute(
+      createAuthInstance(),
+      registrationRequest(REGISTER_PATH, LOOPBACK_REGISTRATION)
+    );
+    const body = (await response.json()) as { client_id?: string };
+
+    // Through the gate AND through the application_type inference — the shape a real MCP client sends.
+    expect(response.status).toBe(201);
+    expect(body.client_id).toBeTruthy();
+  });
+
+  // Paths the gate matches. `..` and a query string are the two that would slip past a naive
+  // pathname comparison, so they are pinned as matched rather than left to the router.
+  test.each([REGISTER_PATH, `${REGISTER_PATH}?x=1`, "/api/auth/x/../oauth2/register"])(
+    "the gate matches %s",
+    async (path) => {
+      const response = await throughRoute(
+        createAuthInstance(),
+        registrationRequest(path, REPORTED_REGISTRATION)
+      );
+
+      expect(response.status).toBe(400);
+    }
+  );
+
+  // …and the mirror image: every near-miss spelling the gate does NOT match must be a path upstream
+  // does not route either. A 201 here would mean the allowlist can be walked around by rewriting the
+  // URL, which is the failure mode a pre-handler gate has and a plugin-level hook would not.
+  test.each([
+    `${REGISTER_PATH}/`,
+    "/api/auth/oauth2/REGISTER",
+    "/api/auth/oauth2/regis%74er",
+    "/api/auth//oauth2/register",
+    `${REGISTER_PATH}.`,
+    `${REGISTER_PATH};x`,
+    `${REGISTER_PATH}%20`,
+  ])("upstream does not route %s, which the gate deliberately ignores", async (path) => {
+    // Returned as the very same object: the gate does not read this request at all, let alone judge it.
+    const probe = registrationRequest(path, REPORTED_REGISTRATION);
+    expect(await prepareDcrRequest(probe)).toBe(probe);
+
+    const response = await createAuthInstance().handler(registrationRequest(path, REPORTED_REGISTRATION));
+
+    expect(response.status).toBe(404);
+  });
+
+  // The other half of the same question: the gate reads the body as JSON, so a content type upstream
+  // would parse some other way would be a bypass. Upstream accepts application/json only.
+  test("upstream refuses a form-encoded registration outright", async () => {
+    const response = await createAuthInstance().handler(
+      registrationRequest(
+        REGISTER_PATH,
+        `redirect_uris[]=${encodeURIComponent("https://attacker-controlled-test.example.org/cb")}`,
+        "application/x-www-form-urlencoded"
+      )
+    );
+
+    expect(response.status).toBe(415);
   });
 });

@@ -2,7 +2,7 @@ get:
   operationId: getSurveysV3
   summary: List surveys
   description: |
-    Returns surveys for the workspace. Session cookie or x-api-key.
+    Returns surveys for the workspace. Session cookie, `x-api-key`, or a Bearer token.
   tags:
     - V3 Surveys
   parameters:
@@ -120,41 +120,7 @@ get:
                 items:
                   $ref: ../components/schemas/SurveyListItem.yml
               meta:
-                type: object
-                required:
-                  - limit
-                  - nextCursor
-                  - totalCount
-                  - workspaceSurveyCount
-                properties:
-                  limit:
-                    type: integer
-                  nextCursor:
-                    type:
-                      - string
-                      - "null"
-                    description: >-
-                      Opaque cursor for the next page. `null` when there are no
-                      more results.
-                  totalCount:
-                    type:
-                      - integer
-                      - "null"
-                    minimum: 0
-                    description: >-
-                      Total number of surveys matching the current filters
-                      across all pages. `null` when `includeTotalCount=false`.
-                  workspaceSurveyCount:
-                    type:
-                      - integer
-                      - "null"
-                    minimum: 0
-                    description: >-
-                      Total number of surveys in the workspace, archived
-                      (soft-deleted) ones included and independent of the
-                      current filters. `null` when `includeTotalCount=false`
-                      (the same gate as `totalCount`). Replaces the boolean
-                      `hasArchived` field of earlier releases.
+                $ref: ../components/schemas/SurveyListMeta.yml
     "400":
       $ref: ../components/responses/V3BadRequest.yml
     "401":
@@ -168,6 +134,7 @@ get:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []
 post:
   operationId: createSurveyV3
   summary: Create a survey
@@ -476,3 +443,4 @@ post:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []

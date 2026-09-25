@@ -6,8 +6,9 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
-import { getAccessFlags } from "@/lib/membership/utils";
+import { getAccessFlags, getOrganizationRoleLabels } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { isRoleEditDisabled } from "@/modules/ee/role-management/lib/role-edit-rules";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -48,14 +49,19 @@ export function EditMembershipRole({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
+  const roleLabels = getOrganizationRoleLabels(t);
   const { isOwner, isManager } = getAccessFlags(currentUserRole);
   const isOwnerOrManager = isOwner || isManager;
 
-  const disableRole =
-    isUserManagementDisabledFromUi ||
-    memberId === userId ||
-    (memberRole === "owner" && !doesOrgHaveMoreThanOneOwner) ||
-    (currentUserRole === "manager" && memberRole === "owner");
+  const disableRole = isRoleEditDisabled({
+    isUserManagementDisabledFromUi,
+    currentUserRole,
+    memberRole,
+    memberId,
+    userId,
+    memberAccepted,
+    doesOrgHaveMoreThanOneOwner,
+  });
 
   const handleMemberRoleUpdate = async (role: TOrganizationRole) => {
     setLoading(true);
@@ -91,7 +97,7 @@ export function EditMembershipRole({
   };
 
   const getMembershipRoles = () => {
-    let roles: string[] = ["member"];
+    const roles: TOrganizationRole[] = ["member"];
 
     if (isOwner) {
       roles.push("manager", "owner");
@@ -113,7 +119,7 @@ export function EditMembershipRole({
             loading={loading}
             size="sm"
             variant="secondary">
-            <span className="ml-1 capitalize">{memberRole}</span>
+            <span className="ml-1">{roleLabels[memberRole]}</span>
             <ChevronDownIcon className="size-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -126,8 +132,8 @@ export function EditMembershipRole({
               value={memberRole}
               className="flex flex-col-reverse">
               {getMembershipRoles().map((role) => (
-                <DropdownMenuRadioItem className="capitalize" key={role} value={role}>
-                  {role.toLowerCase()}
+                <DropdownMenuRadioItem key={role} value={role}>
+                  {roleLabels[role]}
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
@@ -137,5 +143,5 @@ export function EditMembershipRole({
     );
   }
 
-  return <Badge size="tiny" type="gray" text={memberRole} className="capitalize" />;
+  return <Badge size="tiny" type="gray" text={roleLabels[memberRole]} />;
 }

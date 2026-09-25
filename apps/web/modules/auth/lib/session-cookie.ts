@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
+import { AUTH_SECRET } from "@/lib/constants";
 import { constantTimeEqual } from "@/lib/crypto";
-import { env } from "@/lib/env";
 
 /**
  * Better Auth session cookie names — `cookiePrefix: "formbricks"` + `useSecureCookies: true`
@@ -35,10 +35,10 @@ const decode = (value: string): string | null => {
  * Fails closed: a missing secret or an invalid signature returns `null`.
  */
 const verifyAndExtractSessionToken = (signedValue: string | null): string | null => {
-  // Must match auth.ts's secret resolution (BETTER_AUTH_SECRET, else NEXTAUTH_SECRET) so this verifies
-  // the cookies Better Auth actually signs — a mismatch rejects every session and loops the user
-  // between / and /auth/login. Fails closed when neither secret is set.
-  const secret = env.BETTER_AUTH_SECRET ?? env.NEXTAUTH_SECRET;
+  // The same resolved secret auth.ts hands Better Auth, so this verifies the cookies BA actually
+  // signs — a mismatch rejects every session and loops the user between / and /auth/login. Fails
+  // closed when no secret is set.
+  const secret = AUTH_SECRET;
   if (!signedValue || !secret) {
     return null;
   }
