@@ -345,6 +345,17 @@ describe("withV3ResponsesReadMetrics", () => {
     expect(recordsTo(V3_RESPONSES_PAGE_SURVEYS)).toEqual([[1, { via: "ui" }]]);
   });
 
+  test("a route that throws is recorded as a 5xx and the error still propagates", async () => {
+    const route = withV3ResponsesReadMetrics("get", async () => {
+      throw new Error("escaped");
+    });
+
+    await expect(route(request(), undefined)).rejects.toThrow("escaped");
+    expect(addsTo(V3_RESPONSES_READS_TOTAL)).toEqual([
+      [1, { operation: "get", via: "ui", status_class: "5xx", filters: "none" }],
+    ]);
+  });
+
   test("outside a boundary the operation records itself, so the MCP path is still covered", () => {
     const read = startV3ResponsesRead({
       operation: "get",

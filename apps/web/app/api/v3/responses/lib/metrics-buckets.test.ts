@@ -84,6 +84,17 @@ describe("v3 responses read metrics, as exported", () => {
     expect(Math.max(...(value?.buckets.boundaries ?? []))).toBeLessThanOrEqual(10);
   });
 
+  test("with no meter provider registered, recording is a no-op rather than a throw", async () => {
+    // What a deployment without OTLP or Prometheus enabled looks like: `instrumentation-node.ts` never
+    // registers a provider, so the API hands out its no-op meter.
+    vi.resetModules();
+    const { recordV3ResponsesRead } = await import("./metrics");
+
+    expect(() =>
+      recordV3ResponsesRead({ operation: "list", via: "api", status: 200, durationMs: 1, pageSurveyCount: 2 })
+    ).not.toThrow();
+  });
+
   test("the counter is exported under its Prometheus name, byte for byte", async () => {
     const { provider, byName } = await exportOnce([
       { operation: "count", via: "mcp", status: 200, durationMs: 1 },

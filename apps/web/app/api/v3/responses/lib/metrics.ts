@@ -293,7 +293,7 @@ export const startV3ResponsesRead = (params: {
   const via = resolveV3RequestVia(params.authentication, params.instance ?? "");
   const outer = readContext.getStore();
 
-  if (outer && outer.operation === params.operation) {
+  if (outer?.operation === params.operation) {
     outer.via = via;
     return { observation: outer.observation, done: (response) => response };
   }
