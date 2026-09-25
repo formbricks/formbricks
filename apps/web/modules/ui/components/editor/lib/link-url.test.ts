@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { isValidEditorLinkUrl } from "./link-url";
+import { isMailtoUrl, isValidEditorLinkUrl } from "./link-url";
 
 describe("isValidEditorLinkUrl", () => {
   test("accepts http(s) links with a real host", () => {
@@ -27,6 +27,8 @@ describe("isValidEditorLinkUrl", () => {
     expect(isValidEditorLinkUrl("mailto:hello@")).toBe(false);
     expect(isValidEditorLinkUrl("mailto:a%20b@example.com")).toBe(false);
     expect(isValidEditorLinkUrl("mailto:%E0@example.com")).toBe(false);
+    expect(isValidEditorLinkUrl("mailto:hello@example.com%0D%0ABcc:other@example.com")).toBe(false);
+    expect(isValidEditorLinkUrl("mailto:hello@example.com%7F")).toBe(false);
   });
 
   test("rejects script-capable and other schemes", () => {
@@ -34,5 +36,11 @@ describe("isValidEditorLinkUrl", () => {
     expect(isValidEditorLinkUrl("data:text/html,<script>alert(1)</script>")).toBe(false);
     expect(isValidEditorLinkUrl("ftp://example.com")).toBe(false);
     expect(isValidEditorLinkUrl("not a url")).toBe(false);
+  });
+
+  test("isMailtoUrl tells mailto: links apart from web links", () => {
+    expect(isMailtoUrl("mailto:hello@example.com")).toBe(true);
+    expect(isMailtoUrl(" MAILTO:hello@example.com")).toBe(true);
+    expect(isMailtoUrl("https://example.com/mailto:x")).toBe(false);
   });
 });

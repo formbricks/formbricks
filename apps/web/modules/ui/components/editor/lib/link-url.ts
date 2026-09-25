@@ -1,15 +1,23 @@
 import { isStringUrl } from "@/lib/utils/url";
 
+const hasControlCharacter = (value: string): boolean =>
+  Array.from(value).some((char) => {
+    const code = char.codePointAt(0) ?? 0;
+    return code < 0x20 || code === 0x7f;
+  });
+
 // A mailto: target needs at least one recipient address — `mailto:` alone, or `mailto:?subject=…`,
 // would hand the respondent an empty mail draft rather than the contact the author meant.
 const isValidMailtoUrl = (urlObj: URL): boolean => {
   const recipients = decodeURIComponent(urlObj.pathname);
-  if (!recipients || recipients.includes(" ")) return false;
+  if (!recipients || recipients.includes(" ") || hasControlCharacter(recipients)) return false;
   return recipients.split(",").every((recipient) => {
     const atIndex = recipient.indexOf("@");
     return atIndex > 0 && atIndex < recipient.length - 1;
   });
 };
+
+export const isMailtoUrl = (url: string): boolean => url.trim().toLowerCase().startsWith("mailto:");
 
 /**
  * Whether a URL typed into the rich-text link editor is an acceptable link target.

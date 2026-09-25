@@ -122,7 +122,8 @@ export const endingCardButtonLinkRefinement = (url: string, ctx: z.RefinementCtx
     return;
   }
 
-  if (trimmedUrl.length === "mailto:".length) {
+  const recipient = trimmedUrl.slice("mailto:".length).split("?")[0];
+  if (recipient.length === 0) {
     ctx.addIssue({
       code: "custom",
       message: "mailto: link must include an email address",

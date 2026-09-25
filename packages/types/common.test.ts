@@ -13,10 +13,12 @@ describe("ZEndingCardButtonLink", () => {
     expect(ZEndingCardButtonLink.safeParse(" mailto:hello@felofish.com?subject=Hi ").success).toBe(true);
   });
 
-  test("rejects a mailto: link with no address", () => {
-    const result = ZEndingCardButtonLink.safeParse("mailto:");
-    expect(result.success).toBe(false);
-    expect(result.error?.issues[0].message).toBe("mailto: link must include an email address");
+  test("rejects a mailto: link with no recipient before the query", () => {
+    for (const url of ["mailto:", "mailto:?subject=Hello"]) {
+      const result = ZEndingCardButtonLink.safeParse(url);
+      expect(result.success).toBe(false);
+      expect(result.error?.issues[0].message).toBe("mailto: link must include an email address");
+    }
   });
 
   test("rejects other schemes", () => {

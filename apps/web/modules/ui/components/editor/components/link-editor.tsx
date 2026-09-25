@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
-import { isValidEditorLinkUrl } from "../lib/link-url";
+import { isMailtoUrl, isValidEditorLinkUrl } from "../lib/link-url";
 
 const getSelectedNode = (selection: RangeSelection) => {
   const anchor = selection.anchor;
@@ -58,17 +58,15 @@ const LinkEditorContent = ({ editor, open, setOpen }: LinkEditorProps) => {
     }
   }, [open, editor]);
 
-  const linkAttributes = {
-    target: "_blank",
-    rel: "noopener noreferrer",
-  };
-
   const handleSubmit = () => {
     if (!isValidEditorLinkUrl(linkUrl)) {
       setError(t("workspace.surveys.edit.please_enter_a_valid_url"));
       return;
     }
     if (linkUrl) {
+      // mailto: links keep the current tab, like auto-linked emails: handing off to the mail client
+      // does not navigate the respondent away from their response.
+      const linkAttributes = isMailtoUrl(linkUrl) ? {} : { target: "_blank", rel: "noopener noreferrer" };
       editor.dispatchCommand(TOGGLE_LINK_COMMAND, {
         url: linkUrl,
         ...linkAttributes,
