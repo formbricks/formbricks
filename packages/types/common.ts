@@ -133,8 +133,17 @@ export const endingCardButtonLinkRefinement = (url: string, ctx: z.RefinementCtx
 
 // A recipient filled in from a recall value (`#recall:id/fallback:…#`) is only known at response time,
 // so it is accepted as is; the renderer re-checks the final URL before opening it.
+const RECALL_PREFIX = "#recall:";
+
+const isRecallToken = (recipient: string): boolean => {
+  if (!recipient.startsWith(RECALL_PREFIX) || !recipient.endsWith("#")) return false;
+  const body = recipient.slice(RECALL_PREFIX.length, -1);
+  const id = body.split("/")[0];
+  return id.length > 0 && !body.includes("#");
+};
+
 const isMailtoRecipientValid = (recipient: string): boolean => {
-  if (recipient.includes("#recall:")) return true;
+  if (isRecallToken(recipient)) return true;
   const atIndex = recipient.indexOf("@");
   if (atIndex <= 0 || recipient.includes(" ")) return false;
   const domain = recipient.slice(atIndex + 1);
