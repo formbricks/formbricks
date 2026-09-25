@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { type Control, Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
-import { getAccessFlags } from "@/lib/membership/utils";
+import { getAccessFlags, getOrganizationRoleLabels } from "@/lib/membership/utils";
 import { Label } from "@/modules/ui/components/label";
 import {
   Select,
@@ -33,8 +33,10 @@ export function AddMemberRole({
 
   const { t } = useTranslation();
 
+  const roleLabels = getOrganizationRoleLabels(t);
+
   const roles = useMemo(() => {
-    let rolesArray = ["member"];
+    const rolesArray: TOrganizationRole[] = ["member"];
 
     if (isOwner) {
       rolesArray.push("manager", "owner");
@@ -68,16 +70,16 @@ export function AddMemberRole({
               onChange(v as TOrganizationRole);
             }}
             value={value}>
-            <SelectTrigger className="capitalize">
+            <SelectTrigger>
               <SelectValue>
-                <P>{value}</P>
+                <P>{roleLabels[value]}</P>
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectGroup className="flex flex-col-reverse">
                 {roles.map((role) => (
                   <SelectItem key={role} value={role}>
-                    <P className="capitalize">{role}</P>
+                    <P>{roleLabels[role]}</P>
                     <Muted className="text-slate-500">
                       {(rolesDescription as Record<string, string>)[role]}
                     </Muted>

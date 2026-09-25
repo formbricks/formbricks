@@ -142,6 +142,13 @@ describe("resolveWebAppLocale", () => {
     expect(resolveWebAppLocale("zh", createMockSurvey())).toBe("zh-Hans-CN");
   });
 
+  test("falls back to the script before the base language for a regional code", () => {
+    // "zh-Hant-HK" names no locale and no alias, but Hong Kong writes Traditional Chinese — dropping
+    // straight to "zh" would hand a Traditional survey Simplified chrome.
+    expect(resolveWebAppLocale("zh-Hant-HK", createMockSurvey())).toBe("zh-Hant-TW");
+    expect(resolveWebAppLocale("zh-CN", createMockSurvey())).toBe("zh-Hans-CN");
+  });
+
   test("matches survey language codes regardless of case", () => {
     expect(resolveWebAppLocale("DE-de", createMockSurvey())).toBe("de-DE");
     expect(resolveWebAppLocale("zh-hant-tw", createMockSurvey())).toBe("zh-Hant-TW");

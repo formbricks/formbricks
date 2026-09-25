@@ -37,6 +37,8 @@ const CONTRACT_IDS = {
   SURVEY_PATCH: "clctsurveypatch000000001",
   SURVEY_DELETE: "clctsurveydelete00000001",
   SURVEY_ARCHIVE: "clctsurveyarchive0000001",
+  SURVEY_BLOCKS_EDIT: "clctsurveyblocksedit0001",
+  SURVEY_BLOCKS_ORDER: "clctsurveyblocksorder001",
   SURVEY_RESTORE: "clctsurveyrestore0000001",
   WORKFLOW_PATCH: "clctworkflowpatch0000001",
   WORKFLOW_DELETE: "clctworkflowdelete000001",
@@ -47,7 +49,17 @@ const CONTRACT_IDS = {
   WORKFLOW_UNARCHIVE: "clctworkflowunarchive001",
   WORKFLOW_TEST: "clctworkflowtest00000001",
   ACTION_CLASS_READ: "clctactionclassread00001",
+  RESPONSE_READ: "clctresponseread00000001",
 } as const;
+
+/**
+ * Pinned `updatedAt` for every seeded survey, so the block operations' `expectedUpdatedAt` override can
+ * name it. Their documented request examples carry a fixed timestamp, and the hook only rewrites keys the
+ * overrides name — left alone, every example call answers 409 and neither operation's 200 is ever
+ * schema-checked. Once a run's first edit lands the row moves on and later cases answer 409, which is
+ * documented too.
+ */
+const CONTRACT_FIXTURE_UPDATED_AT = new Date("2026-04-21T10:00:00.000Z");
 
 /**
  * Where the id map goes. Defaults to the contract-tests directory that reads it, resolved from this
@@ -98,21 +110,81 @@ async function seedSurveyLanguages(surveyId: string, codes: readonly string[]): 
   }
 }
 
-async function seedSurvey(id: string, name: string, archived: boolean): Promise<void> {
-  const blocks = [
-    {
-      id: `${id}block`,
-      name: "Main Block",
-      elements: [
-        {
-          id: `${id}element`,
-          type: "openText",
-          headline: { default: "Contract fixture question" },
-          required: false,
-        },
-      ],
-    },
-  ] as unknown as TSurveyBlocks;
+/**
+ * One response on the read survey, so the three response reads have something to return.
+ *
+ * Without it `GET /api/v3/responses` and `/count` answer a valid but empty page, and
+ * `GET /{responseId}` has no id to fetch — all schema-conformant, and none of it exercising the
+ * payload the contract actually describes. The answer is keyed by the read survey's own element id
+ * so it resolves into `answers[]` rather than landing in `unresolved[]`, which is the difference
+ * between checking the envelope and checking the response body.
+ *
+ * `ttc` is present because `durationSeconds` is the one optional member of the payload, and absent
+ * timing is the case that omits it — seeding timing exercises the other branch.
+ *
+ * The destructive response operations are not seeded here: their gates open on their own tickets,
+ * and each will want its own victim for the reason this file's header gives.
+ */
+async function seedResponse(id: string, surveyId: string): Promise<void> {
+  const elementId = `${surveyId}element`;
+  const fields = {
+    surveyId,
+    finished: true,
+    // The survey's own default code, not `"default"`. `"default"` is a legitimate stored value — the
+    // contract says so (`ResponseBase.yml`) and three app surfaces guard on it — but it is the wrong
+    // fixture here: it matches none of the survey's declared languages, so `resolveV3LabelContext`
+    // took the unrecognised-language fallback and the one row the contract suite validates exercised
+    // the fallback branch in every body. `z.string().nullable()` accepts that, so nothing failed — the
+    // fixture was schema-valid and had quietly stopped describing the ordinary payload.
+    language: READ_SURVEY_LANGUAGES[0],
+    data: { [elementId]: "Contract fixture answer" },
+    ttc: { [elementId]: 1500, _total: 1500 },
+    meta: { source: "link" },
+    variables: {},
+  };
+
+  await prisma.response.upsert({
+    where: { id },
+    update: fields,
+    create: { id, ...fields },
+  });
+}
+
+/**
+ * Block and element ids the block-edit fixture is seeded with: the ones the documented request examples
+ * of `PATCH /api/v3/surveys/{surveyId}/blocks` name. The alternative — a generic `id` override in the
+ * hook — rewrites every `id` key in the example recursively, so the update's *element* id becomes the
+ * block id (a cross-namespace `duplicate_identifier` 422) and the insert's new block id becomes an
+ * existing one (another 422). Seeding the example's ids instead lets the update example answer 200
+ * against a non-draft survey, whose element ids are immutable and therefore have to match too.
+ */
+const BLOCK_EDIT_EXAMPLE_BLOCKS = [
+  { id: "k1p9wq2m4x7c3v8b5n6t0j2r", elementId: "satisfaction" },
+  { id: "n7m4q8w2e6r0t3y5u1i9o2p4", elementId: "followup_seed" },
+] as const;
+
+async function seedSurvey(
+  id: string,
+  name: string,
+  archived: boolean,
+  // The block operations need at least two blocks: one to address and one left over, since removing
+  // the last block is (correctly) rejected.
+  blockCount = 1,
+  blockIds?: readonly { id: string; elementId: string }[]
+): Promise<void> {
+  const blocks = Array.from({ length: blockCount }, (_unused, index) => ({
+    id: blockIds?.[index]?.id ?? (index === 0 ? `${id}block` : `${id}block${String(index + 1)}`),
+    name: `Main Block ${String(index + 1)}`,
+    elements: [
+      {
+        id:
+          blockIds?.[index]?.elementId ?? (index === 0 ? `${id}element` : `${id}element${String(index + 1)}`),
+        type: "openText",
+        headline: { default: "Contract fixture question" },
+        required: false,
+      },
+    ],
+  })) as unknown as TSurveyBlocks;
 
   const fields = {
     name,
@@ -121,6 +193,7 @@ async function seedSurvey(id: string, name: string, archived: boolean): Promise<
     type: "link" as const,
     blocks,
     archivedAt: archived ? new Date() : null,
+    updatedAt: CONTRACT_FIXTURE_UPDATED_AT,
   };
 
   await prisma.survey.upsert({ where: { id }, update: fields, create: { id, ...fields } });
@@ -191,9 +264,18 @@ async function main(): Promise<void> {
 
   await seedSurvey(CONTRACT_IDS.SURVEY_READ, "Contract fixture — read", false);
   await seedSurveyLanguages(CONTRACT_IDS.SURVEY_READ, READ_SURVEY_LANGUAGES);
+  await seedResponse(CONTRACT_IDS.RESPONSE_READ, CONTRACT_IDS.SURVEY_READ);
   await seedSurvey(CONTRACT_IDS.SURVEY_PATCH, "Contract fixture — patch", false);
   await seedSurvey(CONTRACT_IDS.SURVEY_DELETE, "Contract fixture — delete", false);
   await seedSurvey(CONTRACT_IDS.SURVEY_ARCHIVE, "Contract fixture — archive", false);
+  await seedSurvey(
+    CONTRACT_IDS.SURVEY_BLOCKS_EDIT,
+    "Contract fixture — block edit",
+    false,
+    BLOCK_EDIT_EXAMPLE_BLOCKS.length,
+    BLOCK_EDIT_EXAMPLE_BLOCKS
+  );
+  await seedSurvey(CONTRACT_IDS.SURVEY_BLOCKS_ORDER, "Contract fixture — block order", false, 2);
   // Restore only has something to do on an already-archived survey.
   await seedSurvey(CONTRACT_IDS.SURVEY_RESTORE, "Contract fixture — restore", true);
 
@@ -247,9 +329,29 @@ async function main(): Promise<void> {
       ...(workflowRun ? { runId: workflowRun.id } : {}),
     },
     operations: {
+      getResponseV3: { path: { responseId: CONTRACT_IDS.RESPONSE_READ } },
       patchSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_PATCH } },
       deleteSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_DELETE } },
       archiveSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_ARCHIVE } },
+      // No `id`/`blockId` override on purpose — the survey is seeded with the example's own ids (see
+      // BLOCK_EDIT_EXAMPLE_BLOCKS), because the hook rewrites `id` at every depth and would turn the
+      // example's element id into the block id.
+      editSurveyBlocksV3: {
+        path: { surveyId: CONTRACT_IDS.SURVEY_BLOCKS_EDIT },
+        body: {
+          expectedUpdatedAt: CONTRACT_FIXTURE_UPDATED_AT.toISOString(),
+        },
+      },
+      // The order must be a permutation of the seeded survey's own block ids, so it cannot be
+      // generated — without this the operation only ever exercises its documented 422. And without the
+      // pinned `expectedUpdatedAt`, the example's fixed timestamp makes every call a 409.
+      setSurveyBlockOrderV3: {
+        path: { surveyId: CONTRACT_IDS.SURVEY_BLOCKS_ORDER },
+        body: {
+          order: [`${CONTRACT_IDS.SURVEY_BLOCKS_ORDER}block`, `${CONTRACT_IDS.SURVEY_BLOCKS_ORDER}block2`],
+          expectedUpdatedAt: CONTRACT_FIXTURE_UPDATED_AT.toISOString(),
+        },
+      },
       restoreSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_RESTORE } },
       patchWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_PATCH } },
       deleteWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_DELETE } },

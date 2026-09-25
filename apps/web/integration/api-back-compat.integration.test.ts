@@ -3,7 +3,11 @@ import { prisma } from "@formbricks/database";
 import { toDesiredEmbeddedFields } from "@formbricks/types/embedded-data-mapping";
 import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
 import { type TSurvey } from "@formbricks/types/surveys/types";
-import { patchV3Survey } from "@/app/api/v3/surveys/patch";
+import {
+  V3SurveyArchivedError,
+  V3SurveyStoredDocumentError,
+  patchV3Survey,
+} from "@/app/api/v3/surveys/patch";
 import { V3SurveyReferenceValidationError } from "@/app/api/v3/surveys/reference-validation";
 import { resetDb } from "@/integration/reset-db";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
@@ -131,16 +135,26 @@ const expectNoDrift = async (surveyId: string) => {
   expect(await readRows(surveyId)).toEqual(fromColumns);
 };
 
-/** Runs a patch and reports whether the naming guard refused it, so the table reads as a table. */
+/**
+ * Runs a patch and reports whether the naming guard refused it, so the table reads as a table.
+ *
+ * The two refusals are reported separately because they are not the same answer: `refused` means the
+ * request was evaluated and rejected, `storedSurveyRefused` (ENG-3070) means it never was, because
+ * the survey already on disk does not satisfy the contract. Both are 422s; only the first is the
+ * caller's to fix.
+ */
 const patchOutcome = async (
   survey: TSurvey,
   document: Parameters<typeof patchV3Survey>[1],
   requestId: string
-): Promise<"accepted" | { refused: string[] }> => {
+): Promise<"accepted" | { refused: string[] } | { storedSurveyRefused: string[] }> => {
   try {
     await patchV3Survey(survey, document, requestId);
     return "accepted";
   } catch (error) {
+    if (error instanceof V3SurveyStoredDocumentError) {
+      return { storedSurveyRefused: error.invalidParams.map((param) => param.code) };
+    }
     if (error instanceof V3SurveyReferenceValidationError) {
       return { refused: error.invalidParams.map((param) => param.code) };
     }
@@ -378,27 +392,33 @@ describe("which names a write may newly declare (ENG-1839)", () => {
     ).toEqual({ refused: ["duplicate_identifier"] });
   });
 
-  test("a survey that already holds the clash cannot be patched at all (pre-existing on main)", async () => {
-    // Documents a bug this feature did not introduce, so it is not mistaken for one during release QA.
+  test("a survey that already holds the clash is refused against the stored survey, not the request", async () => {
+    // The counterpart to the row above: there, the patch *introduces* the clash and is the caller's
+    // fault; here the survey already holds one — a variable and a hidden field both named `plan` —
+    // and v3 refuses EVERY patch of it, including the one below, which only renames the survey and
+    // resends neither key. Reference validation runs over the whole merged document, so there is no
+    // patch small enough to slip past it.
     //
     // The editor refuses to CREATE such a survey — the Embedded Data card checks it through
     // `validateEmbeddedFieldName`, which passes both namespaces' declared names and so reports the
     // generic `Duplicate` (ENG-1851; the two legacy cards had a message each). But surveys holding
-    // the clash already exist, and v3 then refuses EVERY patch of one, including a patch that resends
-    // neither key: the one below only renames the survey and is still rejected, because reference
-    // validation runs over the whole merged document.
+    // the clash already exist — as of the September 2026 production copy, 46 of them, 28 `inProgress`,
+    // with names like `first_name`, `brand`, `score` — and v3 then refuses EVERY patch of one,
+    // including a patch that resends neither key: the one below only renames the survey and is still
+    // rejected, because reference validation runs over the whole merged document.
     //
-    // Pre-existing, not an Embedded Data regression: the editor check and the reference validation
-    // are both on `main`, and the epic's only change to `reference-validation.ts` is a comment. As of
-    // the September 2026 production copy this affects 46 surveys, 28 of them `inProgress` — names
-    // like `first_name`, `brand`, `score`. Its own ticket, not V1 release scope.
+    // What ENG-3070 changed is the attribution, not the refusal. This used to come back as
+    // `duplicate_identifier` in `invalid_params`, which reads as "your request is malformed" and sent
+    // integrators looking for a payload bug that was not there. It is now a `stored_survey_invalid`
+    // 422 whose paths point into the stored survey, with a detail saying a patch that supplies the fix
+    // is accepted. Still 422 for this `{ name }` patch — but now honestly attributed.
     const survey = await seedSurvey({
       variables: [{ id: VARIABLE_ID, name: "plan", type: "text", value: "free" }],
       hiddenFields: { enabled: true, fieldIds: ["plan"] },
     });
 
     expect(await patchOutcome(survey, { name: "Renamed" }, "req_backcompat_clash_untouched")).toEqual({
-      refused: ["duplicate_identifier"],
+      storedSurveyRefused: ["duplicate_identifier"],
     });
   });
 });
@@ -606,5 +626,42 @@ describe("no embeddedFields, no change — one row per legacy write route", () =
 
     expect(await readAsLegacyApi(survey.id)).toMatchObject(LEGACY_PAYLOAD);
     await expectNoDrift(survey.id);
+  });
+});
+
+describe("the compare-and-set holds against real Postgres (ENG-3069)", () => {
+  // The mocked tests pin the UPDATE's `where`; only a real row shows that a mismatch is a P2025 the
+  // re-read then resolves — and that nothing landed. `expectedUpdatedAt` here is the survey as the
+  // caller read it, so the pre-flight passes and the UPDATE itself is what refuses.
+  test("a write on a survey that moved on since the read is refused as stale, at the write", async () => {
+    const stale = await seedSurvey();
+    await prisma.survey.update({
+      where: { id: stale.id },
+      data: { name: "Moved on", updatedAt: new Date(stale.updatedAt.getTime() + 1000) },
+    });
+
+    await expect(
+      patchV3Survey(stale, { name: "Late" }, "req_cas_stale", undefined, {
+        expectedUpdatedAt: stale.updatedAt,
+      })
+    ).rejects.toMatchObject({ name: "V3SurveyStaleError", detectedAt: "write" });
+
+    const row = await prisma.survey.findUniqueOrThrow({ where: { id: stale.id }, select: { name: true } });
+    expect(row.name).toBe("Moved on");
+  });
+
+  test("a survey archived between the authorized read and the write is refused as archived", async () => {
+    const stale = await seedSurvey();
+    await prisma.survey.update({ where: { id: stale.id }, data: { archivedAt: new Date() } });
+
+    await expect(patchV3Survey(stale, { name: "Late" }, "req_cas_archived")).rejects.toBeInstanceOf(
+      V3SurveyArchivedError
+    );
+
+    const row = await prisma.survey.findUniqueOrThrow({
+      where: { id: stale.id },
+      select: { name: true, status: true },
+    });
+    expect(row).toEqual({ name: "Back-compat Survey", status: "draft" });
   });
 });

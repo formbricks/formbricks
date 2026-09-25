@@ -1,12 +1,12 @@
 name: PR Update
 
-# Update permissions to include all necessary ones
+# No `id-token: write` here: nothing in this gate uses OIDC (the Azure login that needed it left
+# e2e.yml in #6949), and a workflow-level grant reaches every job, most of which run PR-head code.
 permissions:
   contents: read
   pull-requests: read
   actions: read
   checks: write
-  id-token: write
 
 on:
   pull_request:
@@ -18,15 +18,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # No `secrets:` on test and lint: neither workflow declares one, and both run PR-head code — see
+  # the note on api-v3-contract-tests below for why `inherit` is out.
   test:
     name: Run Unit Tests
     uses: ./.github/workflows/test.yml
-    secrets: inherit
 
   lint:
     name: Run Linters
     uses: ./.github/workflows/lint.yml
-    secrets: inherit
 
   typecheck:
     name: Run Typecheck
@@ -51,7 +51,11 @@ jobs:
   e2e-test:
     name: Run E2E Tests
     uses: ./.github/workflows/e2e.yml
-    secrets: inherit
+    # The three e2e.yml declares, named rather than inherited — see api-v3-contract-tests below.
+    secrets:
+      PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
+      PLAYWRIGHT_SERVICE_ACCESS_TOKEN: ${{ secrets.PLAYWRIGHT_SERVICE_ACCESS_TOKEN }}
+      ENTERPRISE_LICENSE_KEY: ${{ secrets.ENTERPRISE_LICENSE_KEY }}
 
   validate-authzed-schema:
     name: Validate AuthZed Schema

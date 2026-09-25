@@ -260,8 +260,18 @@ export const ToolbarPlugin = (
         }
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally reloads editor content only when updateTemplate/firstRender toggle; depending on editor/props would re-run on every unrelated prop change
-  }, [props.updateTemplate, props.firstRender]);
+    // `props.firstRender` is deliberately NOT a dependency (ENG-3277). The effect below flips it from
+    // true to false during mount, which used to re-run this one the moment its guard started passing —
+    // so every mount seeded the editor twice, and the second seed's `root.clear()` discarded anything
+    // typed in between. The re-seed reads `props.getText()`, and the survey-state write-back is
+    // debounced by 100ms (element-form-input), so the value it restores is the pre-edit one.
+    //
+    // Nothing else needs the dependency: the only true-to-false transition in the codebase is that
+    // mount-time flip. The two callers that force a re-seed (rich-text-translation-input, follow-up
+    // modal) set `firstRender` back to *true* and remount the editor via its `key`, which re-runs the
+    // mount effect rather than this one.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally reloads editor content only when updateTemplate toggles; depending on editor/props would re-run on every unrelated prop change
+  }, [props.updateTemplate]);
 
   useEffect(() => {
     if (props.setFirstRender && props.firstRender) {

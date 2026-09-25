@@ -1,7 +1,11 @@
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { isInternalI18nString, isPlainObject } from "./guards";
-import { validateV3SurveyReferences } from "./reference-validation";
+import {
+  getV3SurveyIntroducedPrecedenceInvalidParams,
+  getV3SurveyPrecedenceInvalidParams,
+  validateV3SurveyReferences,
+} from "./reference-validation";
 import type { TV3SurveyDocument } from "./schemas";
 import { V3_SURVEY_TRANSLATABLE_METADATA_KEYS } from "./translation-fields";
 
@@ -155,22 +159,53 @@ export function getV3SurveyMediaInvalidParams(blocks: TV3SurveyDocument["blocks"
   ];
 }
 
-export function validateV3SurveyDocument(document: TV3SurveyDocument): TV3SurveyDocumentValidationResult {
-  const languageInvalidParams = getV3SurveyLanguageInvalidParams(document);
-  const mediaInvalidParams = getV3SurveyMediaInvalidParams(document.blocks);
-  const invalidParams = [...languageInvalidParams, ...mediaInvalidParams];
+/**
+ * How strictly to apply the ordering rules (ENG-3069).
+ *
+ * `introduced` on the patch family (PATCH, block edit, reorder): only what the change adds is reported —
+ * enforcing the full set would make a survey that already contains a forward recall unpatchable,
+ * including by a request that never touches it. `skip` on create, which accepted these documents before
+ * the rule existed (see `prepareV3SurveyCreate` for why that stays). `enforce` is kept for the rollout
+ * that tightens create and is reached by no production caller today. The parameter is required rather
+ * than defaulted so a new caller has to choose.
+ */
+export type TV3SurveyPrecedencePolicy =
+  | { mode: "enforce" }
+  | { mode: "introduced"; baseline: TV3SurveyDocument }
+  | { mode: "skip" };
 
-  const referenceValidation = validateV3SurveyReferences({
+function toReferenceInput(document: TV3SurveyDocument) {
+  return {
     blocks: document.blocks,
     endings: document.endings,
     hiddenFields: document.hiddenFields,
     metadata: document.metadata,
     variables: document.variables,
     welcomeCard: document.welcomeCard,
-  });
+  };
+}
+
+export function validateV3SurveyDocument(
+  document: TV3SurveyDocument,
+  precedence: TV3SurveyPrecedencePolicy
+): TV3SurveyDocumentValidationResult {
+  const languageInvalidParams = getV3SurveyLanguageInvalidParams(document);
+  const mediaInvalidParams = getV3SurveyMediaInvalidParams(document.blocks);
+  const invalidParams = [...languageInvalidParams, ...mediaInvalidParams];
+
+  const referenceInput = toReferenceInput(document);
+  const referenceValidation = validateV3SurveyReferences(referenceInput);
 
   if (!referenceValidation.ok) {
     invalidParams.push(...referenceValidation.invalidParams);
+  }
+
+  if (precedence.mode === "enforce") {
+    invalidParams.push(...getV3SurveyPrecedenceInvalidParams(referenceInput));
+  } else if (precedence.mode === "introduced") {
+    invalidParams.push(
+      ...getV3SurveyIntroducedPrecedenceInvalidParams(toReferenceInput(precedence.baseline), referenceInput)
+    );
   }
 
   if (invalidParams.length > 0) {

@@ -1,5 +1,6 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
+import { logger } from "@formbricks/logger";
 import { AI_PROVIDERS } from "@formbricks/types/ai";
 import { isValidIanaTimeZone } from "@formbricks/types/common";
 import { throwEnvValidationError } from "./env-validation-error";
@@ -58,7 +59,10 @@ type TAIConfigurationEnv = z.infer<typeof ZAIConfigurationEnv>;
 const isJsonObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-type TEnvironmentIssuePath = keyof TAIConfigurationEnv | keyof TAuthzedConfigurationEnv;
+type TEnvironmentIssuePath =
+  | keyof TAIConfigurationEnv
+  | keyof TAuthzedConfigurationEnv
+  | keyof TAuthConfigurationEnv;
 
 const addEnvIssue = (ctx: z.RefinementCtx, path: TEnvironmentIssuePath, message: string): void => {
   ctx.addIssue({
@@ -207,6 +211,14 @@ const ZSurveySchedulingLocalMinute = z.coerce.number().int().min(0).max(59);
 const emptyStringToUndefined = (value: unknown) =>
   typeof value === "string" && value.trim() === "" ? undefined : value;
 const ZOptionalNonEmptyString = z.preprocess(emptyStringToUndefined, z.string().trim().min(1).optional());
+/**
+ * Blank normalizes to unset, but a non-blank value is kept VERBATIM — no `.trim()`, which in zod is a
+ * transform and would rewrite the parsed value. For a secret that is fatal: an instance whose value
+ * carries a trailing newline (what `kubectl create secret --from-file` stores, and what the chart
+ * faithfully round-trips through `b64dec`) has been signing with the untrimmed string, so trimming it
+ * here would invalidate every session and every outstanding invite and verification link.
+ */
+const ZOptionalVerbatimSecret = z.preprocess(emptyStringToUndefined, z.string().min(1).optional());
 const ZAuthzedBoolean = z.enum(["true", "false", "1", "0"]);
 const ZAuthzedConsistency = z.enum(["minimize_latency", "fully_consistent"]).optional();
 const ZAuthzedToken = z
@@ -293,6 +305,68 @@ const validateAuthzedConfiguration = (values: TAuthzedConfigurationEnv, ctx: z.R
   }
 };
 
+/**
+ * The auth secret pair, validated at server start rather than at import.
+ *
+ * Kept out of the module-eval `superRefine` chain on purpose, for the same reason
+ * `assertAuthzedRuntimeConfiguration` is: `next build`, the AuthZed CLI and the typegen script all
+ * import this module with no secrets in scope, and a hard requirement there would fail the build
+ * rather than the misconfigured boot.
+ */
+const ZAuthConfigurationEnv = z.object({
+  BETTER_AUTH_SECRET: z.string().optional(),
+  NEXTAUTH_SECRET: z.string().optional(),
+});
+
+type TAuthConfigurationEnv = z.infer<typeof ZAuthConfigurationEnv>;
+
+/** Truthiness, not `!== undefined`: a blank secret must count as missing here too. */
+const hasValue = (value: string | undefined): value is string => Boolean(value?.trim());
+
+/** The floor Better Auth itself only warns about, and the one this file used to enforce via `.min(32)`. */
+const MIN_AUTH_SECRET_LENGTH = 32;
+
+const validateAuthConfiguration = (values: TAuthConfigurationEnv, ctx: z.RefinementCtx): void => {
+  const betterAuthSecret = values.BETTER_AUTH_SECRET;
+  const legacySecret = values.NEXTAUTH_SECRET;
+
+  if (!hasValue(betterAuthSecret) && !hasValue(legacySecret)) {
+    addEnvIssue(
+      ctx,
+      "BETTER_AUTH_SECRET",
+      "BETTER_AUTH_SECRET is required. Generate one with `openssl rand -hex 32`. " +
+        "(An instance that predates the rename may set NEXTAUTH_SECRET instead; either is accepted. " +
+        "AUTH_SECRET is not: Better Auth reads it, but Formbricks signs its own tokens and does not.)"
+    );
+    return;
+  }
+
+  // The length floor, kept where it still buys something and dropped only where it would trap someone.
+  //
+  // It applies when BETTER_AUTH_SECRET is the ONLY secret set — a fresh install, which has no migration
+  // constraint and would otherwise lose a guard it used to have: Better Auth's own sub-32 check is a
+  // `logger.warn` that scrolls past, and those characters become the HMAC key for session cookies and
+  // for every invite, verification, email-change and survey-PIN token.
+  //
+  // It does NOT apply when NEXTAUTH_SECRET is also set. That is the rename-in-progress shape this
+  // ticket exists to support: an operator copying a shorter legacy secret onto the new name must not be
+  // forced to change its value, because changing it signs everyone out and voids outstanding links.
+  // A legacy-only instance is likewise left alone — it boots today with no floor at all.
+  if (
+    hasValue(betterAuthSecret) &&
+    !hasValue(legacySecret) &&
+    betterAuthSecret.length < MIN_AUTH_SECRET_LENGTH
+  ) {
+    addEnvIssue(
+      ctx,
+      "BETTER_AUTH_SECRET",
+      `BETTER_AUTH_SECRET must be at least ${MIN_AUTH_SECRET_LENGTH} characters. ` +
+        "Generate one with `openssl rand -hex 32`. (Renaming a shorter secret from an older instance? " +
+        "Keep NEXTAUTH_SECRET set alongside it and the existing value is accepted as-is.)"
+    );
+  }
+};
+
 const parsedEnv = createEnv({
   onValidationError: throwEnvValidationError,
   /*
@@ -311,6 +385,8 @@ const parsedEnv = createEnv({
     BREVO_LIST_ID: z.string().optional(),
     DATABASE_URL: z.url(),
     DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: z.enum(["1", "0"]).optional(),
+    // Bounded so a misconfiguration cannot pin a background-worker slot for minutes.
+    WEBHOOK_DELIVERY_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(30_000).optional(),
     DEBUG_SHOW_RESET_LINK: z.enum(["1", "0"]).optional(),
     // DEBUG is a common ambient env var in CI/tooling, so we accept arbitrary strings here
     // and only treat "1" as enabling Formbricks-specific debug behavior downstream.
@@ -331,6 +407,18 @@ const parsedEnv = createEnv({
     // Cloud-only: when "1", the personal-email sign-up block also applies to invited users.
     // Default (unset/"0") exempts invites — see isSignupEmailDomainBlocked.
     SIGNUP_DOMAIN_CHECK_ON_INVITES: z.enum(["1", "0"]).optional(),
+    /**
+     * Grace window for single-use links minted before the ENG-2758 fix, which carry no `suToken`.
+     *
+     * An ISO 8601 date (`YYYY-MM-DD`); unsigned **encrypted** links are accepted until 00:00 UTC on
+     * it, and rejected from then on. Unset means no grace at all, which is the secure default.
+     *
+     * While it is set the deployment accepts a single-use credential that is bound to no survey, so
+     * a link issued for one survey opens any other on the same instance. On a multi-tenant
+     * deployment that is cross-organisation. Set it only on a single-tenant instance, only long
+     * enough to re-issue the outstanding links, and never without an explicit security decision.
+     */
+    SINGLE_USE_LEGACY_UNSIGNED_UNTIL: z.iso.date().optional(),
     BULLMQ_WORKER_CONCURRENCY: z.coerce.number().int().min(1).optional(),
     BULLMQ_WORKER_COUNT: z.coerce.number().int().min(1).optional(),
     BULLMQ_EXTERNAL_WORKER_ENABLED: z.enum(["1", "0"]).optional(),
@@ -393,12 +481,21 @@ const parsedEnv = createEnv({
     POSTHOG_KEY: z.string().optional(),
     LOG_LEVEL: z.enum(["debug", "info", "warn", "error", "fatal"]).optional(),
     MAIL_FROM: z.email().optional(),
+    // `NEXTAUTH_*` are the undocumented backward-compatible alias for `BETTER_AUTH_*` (ENG-2599);
+    // lib/constants.ts resolves the pair and explains why the alias is permanent.
+    //
+    // `ZOptionalNonEmptyString`, not `z.string().optional()`: a blank value has to normalize to
+    // *unset* so it falls through to the other variable. `.env.example` ships these keys empty, and an
+    // empty secret is not "no secret" — it is a falsy one, which Better Auth silently replaces with
+    // its own hardcoded default. `assertAuthRuntimeConfiguration` then refuses to start if neither is
+    // actually set, so blank fails loudly at boot instead of quietly at the first invite.
     NEXTAUTH_URL: z.url().optional(),
-    NEXTAUTH_SECRET: z.string().optional(),
-    // Better Auth (ENG-1054). Optional during the additive migration; BA requires a strong
-    // (>=32 char) secret in production and throws if unset there. Enforce the floor when set so a
-    // weak secret can't silently ship (it stays optional for the pre-cutover rollout).
-    BETTER_AUTH_SECRET: z.string().min(32).optional(),
+    NEXTAUTH_SECRET: ZOptionalVerbatimSecret,
+    // No length floor: Better Auth itself only warns below 32 characters, and a hard failure here
+    // would trap an operator renaming a shorter legacy secret — the one fix available to them would be
+    // changing its value, which invalidates every session and outstanding token. Warned about at boot
+    // instead (`warnOnAuthSecretRisks`).
+    BETTER_AUTH_SECRET: ZOptionalVerbatimSecret,
     BETTER_AUTH_URL: z.url().optional(),
     MCP_OAUTH_JWKS_URL: ZMcpOauthJwksUrl.optional(),
     MAIL_FROM_NAME: z.string().optional(),
@@ -519,6 +616,7 @@ const parsedEnv = createEnv({
     CRON_SECRET: process.env.CRON_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: process.env.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS,
+    WEBHOOK_DELIVERY_TIMEOUT_MS: process.env.WEBHOOK_DELIVERY_TIMEOUT_MS,
     DEBUG: process.env.DEBUG,
     DEBUG_SHOW_RESET_LINK: process.env.DEBUG_SHOW_RESET_LINK,
     AUTH_DEFAULT_ORGANIZATION_ID: process.env.AUTH_SSO_DEFAULT_ORGANIZATION_ID,
@@ -532,6 +630,7 @@ const parsedEnv = createEnv({
     AUTHZED_SYSTEM_KEY: process.env.AUTHZED_SYSTEM_KEY,
     AUTHZED_TOKEN: process.env.AUTHZED_TOKEN,
     SIGNUP_DOMAIN_CHECK_ON_INVITES: process.env.SIGNUP_DOMAIN_CHECK_ON_INVITES,
+    SINGLE_USE_LEGACY_UNSIGNED_UNTIL: process.env.SINGLE_USE_LEGACY_UNSIGNED_UNTIL,
     BULLMQ_EXTERNAL_WORKER_ENABLED: process.env.BULLMQ_EXTERNAL_WORKER_ENABLED,
     BULLMQ_WORKER_CONCURRENCY: process.env.BULLMQ_WORKER_CONCURRENCY,
     BULLMQ_WORKER_COUNT: process.env.BULLMQ_WORKER_COUNT,
@@ -659,3 +758,80 @@ if (!postParseResult.success) {
 }
 
 export const env = parsedEnv;
+
+/**
+ * v6 has no legacy authorization fallback. Validate configuration before serving
+ * requests, not during builds or diagnostic CLI imports. This never contacts SpiceDB.
+ */
+export const assertAuthzedRuntimeConfiguration = (): void => {
+  const result = ZAuthzedConfigurationEnv.superRefine((values, ctx) => {
+    if (values.AUTHZED_ENABLED !== "true" && values.AUTHZED_ENABLED !== "1") {
+      addEnvIssue(
+        ctx,
+        "AUTHZED_ENABLED",
+        "Formbricks v6 requires AUTHZED_ENABLED=true; configure SpiceDB before starting the server. See https://formbricks.com/docs/self-hosting/configuration/authzed-operations"
+      );
+    }
+    // Report missing credentials even when enablement was omitted.
+    validateAuthzedConfiguration({ ...values, AUTHZED_ENABLED: "true" }, ctx);
+    if (values.AUTHZED_CONSISTENCY !== "fully_consistent") {
+      addEnvIssue(ctx, "AUTHZED_CONSISTENCY", "Formbricks v6 requires AUTHZED_CONSISTENCY=fully_consistent");
+    }
+  }).safeParse(env);
+
+  if (!result.success) {
+    throwEnvValidationError(result.error.issues);
+  }
+};
+
+/**
+ * Refuse to start without an auth secret.
+ *
+ * Deliberately a runtime assertion rather than a module-eval refinement — see
+ * `ZAuthConfigurationEnv`. Called from `instrumentation.ts` (behind the build-phase guard) and from
+ * `scripts/docker/validate-env.ts --server`, which the container entrypoint runs before migrations.
+ * Without it, a fresh install that set neither variable signs in and only then discovers that invites
+ * and verification links cannot be minted.
+ */
+export const assertAuthRuntimeConfiguration = (): void => {
+  const result = ZAuthConfigurationEnv.superRefine(validateAuthConfiguration).safeParse(env);
+
+  if (!result.success) {
+    throwEnvValidationError(result.error.issues);
+  }
+};
+
+/**
+ * Warn about the two auth-secret configurations that work but will bite.
+ *
+ * Never logs the secrets, their lengths, or any prefix of them: this goes to pino and on to SigNoz,
+ * and the precedent for anything secret-adjacent is `auth.ts`'s `sendVerificationEmail`, which logs
+ * the domain and never the address, the token, or the URL.
+ */
+export const warnOnAuthSecretRisks = (): void => {
+  // Compared verbatim: two secrets differing only in trailing whitespace ARE different secrets, and
+  // that is exactly the pair an operator most needs told about.
+  const betterAuthSecret = env.BETTER_AUTH_SECRET;
+  const nextAuthSecret = env.NEXTAUTH_SECRET;
+
+  // The add-instead-of-rename footgun: BETTER_AUTH_SECRET wins, so adding it with a NEW value rather
+  // than moving the existing one across silently invalidates every session and every outstanding
+  // invite, verification and email-change link.
+  if (betterAuthSecret && nextAuthSecret && betterAuthSecret !== nextAuthSecret) {
+    logger.warn(
+      "BETTER_AUTH_SECRET and NEXTAUTH_SECRET are both set to different values. BETTER_AUTH_SECRET wins, " +
+        "so sessions and outstanding invite, verification and email-change links signed with the other one " +
+        "are no longer valid. To keep them, set BETTER_AUTH_SECRET to the value NEXTAUTH_SECRET already had."
+    );
+  }
+
+  // Better Auth warns below 32 too; ours is the actionable version, since we accept the shorter value.
+  const resolvedSecret = betterAuthSecret ?? nextAuthSecret;
+  if (resolvedSecret && resolvedSecret.length < 32) {
+    logger.warn(
+      "The configured auth secret is shorter than the recommended 32 characters. It signs session " +
+        "cookies and every invite, verification and email-change token, so a short one is worth rotating " +
+        "— generate a replacement with `openssl rand -hex 32`. Rotating invalidates existing sessions and links."
+    );
+  }
+};

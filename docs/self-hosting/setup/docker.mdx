@@ -80,10 +80,10 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    POSTGRES_PASSWORD=$(openssl rand -hex 32)
    cat <<EOF > .env
    WEBAPP_URL=http://localhost:3000
-   NEXTAUTH_URL=http://localhost:3000
+   BETTER_AUTH_URL=http://localhost:3000
    POSTGRES_PASSWORD=$POSTGRES_PASSWORD
    POSTGRES_PASSWORD_URL_ENCODED=$POSTGRES_PASSWORD
-   NEXTAUTH_SECRET=$(openssl rand -hex 32)
+   BETTER_AUTH_SECRET=$(openssl rand -hex 32)
    ENCRYPTION_KEY=$(openssl rand -hex 32)
    CRON_SECRET=$(openssl rand -hex 32)
    HUB_API_KEY=$(openssl rand -hex 32)
@@ -117,7 +117,7 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
 1. **Start the Docker Setup**
 
    Now, you're ready to run Formbricks with Docker. Use the command below to start Formbricks together with
-   PostgreSQL, Redis, Formbricks Hub, Cube, and SpiceDB.
+   PostgreSQL, Redis, the Formbricks Hub API and worker, Cube, and SpiceDB.
 
    ```bash
    docker compose up -d
@@ -133,11 +133,12 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    docker compose ps -a
    curl -fsS http://localhost:3000/health
    docker compose logs --tail=100 formbricks-migrate hub-migrate authzed-db-bootstrap spicedb-migrate
-   docker compose logs --tail=100 formbricks hub cube spicedb
+   docker compose logs --tail=100 formbricks hub hub-worker cube spicedb
    ```
 
    `formbricks-migrate`, `hub-migrate`, `authzed-db-bootstrap`, and `spicedb-migrate` should complete
-   successfully. `postgres`, `redis`, `cube`, `hub`, `spicedb`, and `formbricks` should be running or healthy.
+   successfully. `postgres`, `redis`, `cube`, `hub`, `hub-worker`, `spicedb`, and `formbricks` should be running
+   or healthy. The worker has no HTTP health endpoint, so verify that it stays `Up` without repeated restarts.
 
 1. **Open Formbricks in Your Browser**
 
@@ -172,7 +173,7 @@ docker compose --profile authzed-ops run --rm authzed-ops backfill
 docker compose --profile authzed-ops run --rm authzed-ops upgrade check
 ```
 
-See [AuthZed Operations](/self-hosting/advanced/authzed-operations) before applying a schema, repairing
+See [AuthZed Operations](/self-hosting/configuration/authzed-operations) before applying a schema, repairing
 relationships, upgrading SpiceDB, or restoring a backup.
 
 The bundled PostgreSQL service leaves `track_commit_timestamp` at its default `off` value, so SpiceDB reports
@@ -360,35 +361,38 @@ See our [migration guide](/self-hosting/advanced/migration) for version-specific
 The normal image update commands do not add new services to an existing customized Compose file. Before the
 first release that requires the AuthZed runtime:
 
-1. Back up `.env`, `docker-compose.yml`, and the PostgreSQL volume.
+1. Follow the [maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade): stop all writers and
+   controllers, drain in-flight work, then back up configuration, secrets, and databases.
 2. Download `authzed-postgres-bootstrap.sh` from the same Formbricks release as the Compose file.
 3. Generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` with `openssl rand -hex 32` and add them to `.env`.
 4. Merge `authzed-db-bootstrap`, `spicedb-migrate`, `spicedb`, `authzed-initialize`, and the profiled
    `authzed-ops` service, plus the six `AUTHZED_*` Formbricks variables, from the released Compose file into your
    customized file. Use `AUTHZED_CONSISTENCY=fully_consistent`. Preserve proxy, storage, and SMTP settings.
-5. Run `docker compose config` and `docker compose pull`. Apply the release's Formbricks database migrations
-   while the old application remains available: `docker compose run --rm formbricks-migrate`.
-6. Start PostgreSQL and SpiceDB, then run the guarded preparation and read-only gate:
+5. Validate the reviewed Compose configuration privately and pull the pinned images. Keep writers stopped.
+6. Wait for PostgreSQL and SpiceDB, then run the target image's maintenance command. It runs application
+   migrations before graph preparation and verification:
 
    ```bash
-   docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb
-   docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
-   docker compose --profile authzed-ops run --rm authzed-ops upgrade check
+   docker compose up -d --wait postgres spicedb
+   docker compose --profile authzed-ops run --rm --no-deps \
+     --entrypoint formbricks-authzed-prepare authzed-ops \
+     --backup-confirmed --writers-stopped
    ```
 
    A non-empty mismatched schema requires the reviewed `remoteDigest` as described in
-   [AuthZed Operations](/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6).
-7. Only after `upgrade check` exits `0`, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env` and
-   run `docker compose up -d`. The one-click updater performs the same preparation before it stops the old app.
+   [AuthZed Operations](/self-hosting/configuration/authzed-operations#upgrade-an-existing-installation-to-v6).
+7. Only after preparation and verification exit `0`, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env` and
+   run `docker compose up -d`. The one-click updater only checks the already-prepared graph; it does not perform
+   online preparation. Keep maintenance active until authorization checks pass.
 8. Confirm `authzed-db-bootstrap`, `spicedb-migrate`, and `authzed-initialize` completed and `spicedb` is healthy
    with `docker compose ps -a`.
 9. Back up the new authorization database with
    `docker compose exec -T postgres pg_dump -U postgres -d spicedb > spicedb-backup.sql` after validation and
    include it in future database backup procedures.
 
-To roll back v6, restore the exact bridge-compatible v5 image and configuration kept for the migration. Keep
-outbox delivery enabled, require a clean audit, and do not delete or replace either PostgreSQL database. See the
-rollback procedure in [AuthZed Operations](/self-hosting/advanced/authzed-operations#roll-back-a-v6-upgrade).
+After database changes, restoring the old image alone may not be safe. Remain in maintenance and either fix
+forward or restore coordinated backups with the matching v5 configuration. Never delete volumes. See the
+rollback procedure in [AuthZed Operations](/self-hosting/configuration/authzed-operations#roll-back-a-v6-upgrade).
 
 <Info>
   For a major migration such as Formbricks 4.x to 5.0, update your compose structure and configuration first.
@@ -402,21 +406,31 @@ rollback procedure in [AuthZed Operations](/self-hosting/advanced/authzed-operat
    docker compose pull
    ```
 
+1. Check the target release's already-prepared authorization graph. If blocked, follow the maintenance
+   preparation guide above before proceeding.
+
+   ```bash
+   docker compose --profile authzed-ops run --rm --no-deps authzed-ops upgrade check
+   ```
+
 1. Stop the Formbricks stack
 
    ```bash
    docker compose down
    ```
 
-1. Re-start the Formbricks stack with the updated image
+1. Wait for PostgreSQL and complete application migrations before restarting the updated stack. Stop if a
+   command fails; do not restart against a partially migrated database.
 
    ```bash
+   docker compose up -d --wait postgres &&
+   docker compose run --rm --no-deps formbricks-migrate &&
    docker compose up -d
    ```
 
 <Warning>
   **Security (existing installs):** these steps — and the [one-click setup script](/self-hosting/setup/one-click)
-  updater, which runs the same `pull` / `down` / `up -d` — do **not** rewrite your existing
+  updater — do **not** rewrite your existing
   `docker-compose.yml`. If your bundled `redis` (Valkey) service still publishes `ports: - "6379:6379"`, it
   stays exposed to the host after updating. See [Debug](#debug) for how to remove the mapping and, if the port
   was reachable from an untrusted network, invalidate existing sessions.
@@ -539,7 +553,7 @@ services:
       - rustfs-data:/data
 
   rustfs-init:
-    image: quay.io/minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868
+    image: rustfs/rc:v0.1.36@sha256:ab024bfebee49a750ce886b4c70963ccd9ddaa03f491704a90710641d7a26699
     depends_on:
       - rustfs
     environment:
@@ -554,11 +568,11 @@ services:
       - -c
       - |
         set -e
-        until mc alias set rustfs http://rustfs:9000 "$RUSTFS_ADMIN_USER" "$RUSTFS_ADMIN_PASSWORD" >/dev/null 2>&1 \
-          && mc ls rustfs >/dev/null 2>&1; do
+        until rc alias set rustfs http://rustfs:9000 "$RUSTFS_ADMIN_USER" "$RUSTFS_ADMIN_PASSWORD" >/dev/null 2>&1 \
+          && rc bucket list rustfs >/dev/null 2>&1; do
           sleep 2
         done
-        mc mb rustfs/"$RUSTFS_BUCKET_NAME" --ignore-existing
+        rc bucket create rustfs/"$RUSTFS_BUCKET_NAME" --ignore-existing
         cat > /tmp/formbricks-policy.json << EOF
         {
           "Version": "2012-10-17",
@@ -576,14 +590,13 @@ services:
           ]
         }
         EOF
-        if ! mc admin policy info rustfs "$RUSTFS_POLICY_NAME" >/dev/null 2>&1; then
-          mc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json || \
-            mc admin policy add rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json
+        if ! rc admin policy info rustfs "$RUSTFS_POLICY_NAME" >/dev/null 2>&1; then
+          rc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json
         fi
-        if ! mc admin user info rustfs "$RUSTFS_SERVICE_USER" >/dev/null 2>&1; then
-          mc admin user add rustfs "$RUSTFS_SERVICE_USER" "$RUSTFS_SERVICE_PASSWORD"
+        if ! rc admin user info rustfs "$RUSTFS_SERVICE_USER" >/dev/null 2>&1; then
+          rc admin user add rustfs "$RUSTFS_SERVICE_USER" "$RUSTFS_SERVICE_PASSWORD"
         fi
-        mc admin policy attach rustfs "$RUSTFS_POLICY_NAME" --user "$RUSTFS_SERVICE_USER"
+        rc admin policy attach rustfs "$RUSTFS_POLICY_NAME" --user "$RUSTFS_SERVICE_USER"
 ```
 
 Declare the corresponding volume:
@@ -642,7 +655,7 @@ RustFS console step is required.
 - **Connection refused**: Ensure the `rustfs` container is running and port `9000` is reachable from the
   Formbricks container.
 - **Bucket not found**: Confirm that `rustfs-init` completed successfully or create the bucket manually with
-  `mc`.
+  `rc`.
 - **Auth failed**: Confirm that `S3_ACCESS_KEY` and `S3_SECRET_KEY` match the RustFS credentials configured on
   the server.
 - **Backups**: Back up the `rustfs-data` volume regularly, especially for single-server deployments.
@@ -687,13 +700,13 @@ docker compose ps -a
 Then inspect the services that commonly explain startup issues:
 
 ```bash
-docker compose logs --tail=200 formbricks-migrate hub-migrate formbricks hub cube
+docker compose logs --tail=200 formbricks-migrate hub-migrate formbricks hub hub-worker cube
 docker compose logs --tail=200 postgres redis
 ```
 
 Common checks:
 
-- **Missing or empty secrets**: Confirm `.env` contains `NEXTAUTH_SECRET`, `ENCRYPTION_KEY`, `CRON_SECRET`,
+- **Missing or empty secrets**: Confirm `.env` contains `BETTER_AUTH_SECRET`, `ENCRYPTION_KEY`, `CRON_SECRET`,
   `HUB_API_KEY`, and `CUBEJS_API_SECRET`.
 - **Migration failures**: Check `formbricks-migrate`, `hub-migrate`, and `postgres` logs. Do not remove Docker
   volumes on an existing install unless you intend to delete its data.
@@ -701,6 +714,10 @@ Common checks:
   exist, then inspect `docker compose logs cube`.
 - **Hub auth errors**: Confirm the same `HUB_API_KEY` from `.env` is used by Formbricks Web and the Hub
   service.
+- **Hub jobs remain queued**: Confirm `docker compose ps hub-worker` reports `Up`, then inspect
+  `docker compose logs --tail=200 hub-worker`. The worker has no HTTP health endpoint; a stable process and a
+  shrinking River backlog are its readiness signals. If it restarts, confirm each configured enrichment
+  provider/model has the required credentials and that the worker can reach PostgreSQL.
 - **Port conflicts**: Confirm port `3000` and any optional service ports you enabled are not already in use on
   the host. The current template does not publish the bundled Valkey (`redis` service) to the host — it is
   reachable only on the internal compose network — so a fresh install does not need port `6379` free on the
@@ -725,16 +742,19 @@ Common checks:
   **If the port was reachable from an untrusted network, also invalidate existing sessions.** Valkey persists
   to its `redis` volume, so removing the port does not clear session or token state an attacker may already
   have written — a forged session can remain valid afterward. After closing the port, set a new
-  `NEXTAUTH_SECRET` in your `.env`, then recreate the app container so it picks up the change:
+  `BETTER_AUTH_SECRET` in your `.env`, then recreate the app container so it picks up the change:
   ```bash
   docker compose up -d --force-recreate formbricks
   ```
   A plain `docker compose restart` keeps the container's original environment, so the rotated secret would not
   take effect. Recreating invalidates every session cookie, so all users must sign in again, while stored
-  data, the job queue, and the cache stay intact. (If you added `BETTER_AUTH_SECRET` to the `formbricks`
-  service environment yourself, rotate that instead — Better Auth prefers it over `NEXTAUTH_SECRET`; the
-  bundled compose ships only `NEXTAUTH_SECRET`.) Leave `ENCRYPTION_KEY` unchanged, and do **not** run a blanket
-  `FLUSHDB` — the same Valkey also holds BullMQ job queues and the application cache.
+  data, the job queue, and the cache stay intact. (On an instance installed before this variable was
+  renamed, the secret may live in your `.env` under the older name, `NEXTAUTH_SECRET`. Replace the value
+  of whichever name your `.env` actually defines. Adding the *other* name alongside it does not reliably
+  rotate anything: `BETTER_AUTH_SECRET` wins whenever both are set, so a new `NEXTAUTH_SECRET` next to an
+  existing `BETTER_AUTH_SECRET` changes nothing and leaves the forged session valid.) Leave
+  `ENCRYPTION_KEY` unchanged, and do **not** run a blanket `FLUSHDB` — the same Valkey also holds BullMQ
+  job queues and the application cache.
 </Warning>
 
 <Note>

@@ -9,12 +9,12 @@ import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getExistingContactResponse, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
-import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";
 import {
   getBasicSurveyMetadata,
   getMetadataBrandColor,
   getSurveyOpenGraphMetadata,
 } from "@/modules/survey/link/lib/metadata-utils";
+import { resolveSingleUseIdForSurvey } from "@/modules/survey/link/lib/single-use-link";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getWorkspaceById } from "@/modules/survey/link/lib/workspace";
@@ -38,7 +38,7 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
       };
     }
     const { surveyId } = result.data;
-    const { title, description, survey, ogImage } = await getBasicSurveyMetadata(surveyId);
+    const { title, ogTitle, description, survey, ogImage } = await getBasicSurveyMetadata(surveyId);
 
     if (!survey) {
       return { title, description };
@@ -49,7 +49,7 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
     const customFaviconUrl = workspaceContext.organizationWhitelabel?.faviconUrl;
 
     const brandColor = getMetadataBrandColor(workspaceContext.workspace.styling, survey.styling);
-    const baseMetadata = getSurveyOpenGraphMetadata(survey.id, title, brandColor);
+    const baseMetadata = getSurveyOpenGraphMetadata(survey.id, ogTitle, brandColor);
 
     // Override with the custom image URL
     if (baseMetadata.openGraph) {
@@ -142,12 +142,13 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   let singleUseId: string | undefined = undefined;
 
   if (isSingleUseSurvey) {
-    const validatedSingleUseId = checkAndValidateSingleUseId(
+    const validatedSingleUseId = resolveSingleUseIdForSurvey({
+      surveyId: survey.id,
+      isEncrypted: Boolean(isSingleUseSurveyEncrypted),
       suId,
-      isSingleUseSurveyEncrypted,
-      survey.id,
-      suToken
-    );
+      suToken,
+      surface: "contact_link_page",
+    });
     if (!validatedSingleUseId) {
       const workspaceContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
       return <SurveyInactive status="link invalid" workspace={workspaceContext.workspace} />;

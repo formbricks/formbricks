@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   createChartAction,
@@ -17,6 +18,15 @@ const executeQueryAction = executeQueryActionExport as unknown as (args: {
   optionLabels?: Record<string, string>;
   effectiveQuery: unknown;
 }>;
+
+const generateAIChartActionHandler = generateAIChartAction as unknown as (args: {
+  ctx: unknown;
+  parsedInput: {
+    workspaceId: string;
+    prompt: string;
+    feedbackDirectoryId: string;
+  };
+}) => Promise<unknown>;
 
 const mocks = vi.hoisted(() => {
   const actionClientAction = vi.fn((fn) => fn);
@@ -212,14 +222,14 @@ describe("chart Cube actions", () => {
       name: "Responses by Source Type",
     });
 
-    const result = await generateAIChartAction({
+    const result = await generateAIChartActionHandler({
       ctx,
       parsedInput: {
         workspaceId: "workspace-1",
         prompt: "responses by sentiment",
         feedbackDirectoryId: "frd-1",
       },
-    } as any);
+    });
 
     expect(mocks.generateAIChartQuery).toHaveBeenCalledWith({
       organizationId: "organization-1",
@@ -230,6 +240,10 @@ describe("chart Cube actions", () => {
       userId: "user-1",
       prompt: "responses by sentiment",
     });
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.actions.aiChartGeneration, "user-1");
+    expect(mocks.applyRateLimit.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.generateAIChartQuery.mock.invocationCallOrder[0]
+    );
     expect(result).toMatchObject({
       chartType: "bar",
       query: {
@@ -256,16 +270,37 @@ describe("chart Cube actions", () => {
     mocks.checkFeedbackDirectoryAccess.mockRejectedValueOnce(new Error("no access"));
 
     await expect(
-      generateAIChartAction({
+      generateAIChartActionHandler({
         ctx,
         parsedInput: {
           workspaceId: "workspace-1",
           prompt: "responses by sentiment",
           feedbackDirectoryId: "frd-1",
         },
-      } as any)
+      })
     ).rejects.toThrow("no access");
 
+    expect(mocks.generateAIChartQuery).not.toHaveBeenCalled();
+    expect(mocks.executeTenantScopedQuery).not.toHaveBeenCalled();
+  });
+
+  test("generateAIChartAction does not call the AI lib when the rate limit is exceeded", async () => {
+    mocks.applyRateLimit.mockRejectedValueOnce(
+      new TooManyRequestsError("Maximum number of requests reached. Please try again later.")
+    );
+
+    await expect(
+      generateAIChartActionHandler({
+        ctx,
+        parsedInput: {
+          workspaceId: "workspace-1",
+          prompt: "responses by sentiment",
+          feedbackDirectoryId: "frd-1",
+        },
+      })
+    ).rejects.toThrow(TooManyRequestsError);
+
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.actions.aiChartGeneration, "user-1");
     expect(mocks.generateAIChartQuery).not.toHaveBeenCalled();
     expect(mocks.executeTenantScopedQuery).not.toHaveBeenCalled();
   });
@@ -274,14 +309,14 @@ describe("chart Cube actions", () => {
     mocks.generateAIChartQuery.mockRejectedValueOnce(new Error("AI failed"));
 
     await expect(
-      generateAIChartAction({
+      generateAIChartActionHandler({
         ctx,
         parsedInput: {
           workspaceId: "workspace-1",
           prompt: "responses by sentiment",
           feedbackDirectoryId: "frd-1",
         },
-      } as any)
+      })
     ).rejects.toThrow("AI failed");
 
     expect(mocks.executeTenantScopedQuery).not.toHaveBeenCalled();

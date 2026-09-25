@@ -10,6 +10,16 @@ interface SignupRequestStore {
    * there so it can't be used to skip the gate.
    */
   domainAllowed?: boolean;
+  /**
+   * Set by `createUserAction` when the instance policy admitted this sign-up *because the instance was
+   * empty* — the initial administrator, who has no invite to present (ENG-2247). `user.create.before`
+   * reads it to stamp the bootstrap marker on the row it is about to insert.
+   *
+   * Carried rather than re-derived, because the hook cannot re-derive it correctly: the action admits
+   * an invited sign-up without consulting instance policy at all, so a hook that re-ran the check
+   * would read "instance is empty" and mark an invite holder as the bootstrap administrator.
+   */
+  bootstrapAdmin?: boolean;
 }
 
 const signupRequestContext = new AsyncLocalStorage<SignupRequestStore>();
@@ -25,3 +35,12 @@ export const markSignupDomainAllowed = (): void => {
 
 /** True only when the current user creation runs inside an action scope that already enforced the policy. */
 export const isSignupDomainAllowed = (): boolean => signupRequestContext.getStore()?.domainAllowed === true;
+
+/** Mark, within the current signup scope, that the fresh-instance exception is what admitted this sign-up. */
+export const markBootstrapAdminSignup = (): void => {
+  const store = signupRequestContext.getStore();
+  if (store) store.bootstrapAdmin = true;
+};
+
+/** True only when the action admitted the current user creation via the fresh-instance exception. */
+export const isBootstrapAdminSignup = (): boolean => signupRequestContext.getStore()?.bootstrapAdmin === true;

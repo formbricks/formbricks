@@ -36,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Input } from "@/modules/ui/components/input";
+import { filterComboboxOption } from "./lib/search";
 
 /**
  * The height `DropdownMenuContent` caps itself at — mirrors the `max-h` on that component, which
@@ -101,6 +102,8 @@ function flattenOptions(options?: TComboboxOption[]): TComboboxOption[] {
   return options.flatMap((option) => [option, ...(option.children ? flattenOptions(option.children) : [])]);
 }
 
+// The search terms for an option. `filterComboboxOption` scores these instead of the item's
+// `value`, which is an opaque id the user never sees.
 function getOptionKeywords(option: TComboboxOption): string[] {
   // The library key too, not just the label: a shared Embedded Data field renders its key beside its
   // name (ENG-1853), and the spelling on screen has to be one the search box matches — the recall
@@ -464,7 +467,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
           align="start"
           className="w-(--radix-dropdown-menu-trigger-width) min-w-52 overflow-y-hidden"
           data-testid="dropdown-menu-content">
-          <Command className="flex h-full w-full flex-col overflow-hidden">
+          <Command className="flex h-full w-full flex-col overflow-hidden" filter={filterComboboxOption}>
             {showSearch ? (
               <div className="border-b border-slate-100">
                 <CommandInput

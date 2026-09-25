@@ -14,6 +14,7 @@ import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
+import type { TSsoProvisioningRejectReason } from "@/modules/auth/lib/sso-provisioning-reject-reasons";
 import { updateUser } from "@/modules/auth/lib/user";
 import { resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
 import { getAccessControlPermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -25,7 +26,9 @@ import { getFirstOrganization } from "@/modules/ee/sso/lib/organization";
 import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
 
 export type TSsoProvisioningDecision =
-  | { action: "reject"; reason: string }
+  // The reason is a closed set, not a free string: it leaves the server as the `?error=` code the
+  // login form and the callback-outcome log both key on (ENG-2882).
+  | { action: "reject"; reason: TSsoProvisioningRejectReason }
   | {
       action: "provision";
       /** Org to auto-assign the new member to; null = fresh instance / multi-org (no auto-assignment). */
@@ -38,6 +41,11 @@ export type TSsoProvisioningDecision =
        * every other path, where the org was read here and the role is always `member`.
        */
       useDefaultOrganization?: boolean;
+      /**
+       * ENG-2247: the fresh-instance exception, and nothing else, admitted this sign-up — so the row it
+       * creates carries the single-use bootstrap marker. Absent on every other provision path.
+       */
+      isBootstrapAdmin?: boolean;
     };
 
 /**
@@ -46,7 +54,10 @@ export type TSsoProvisioningDecision =
  * gateSsoProvisioning so that gate stays under the cognitive-complexity budget — its behavior is
  * covered by sso-provisioning.test.ts.
  */
-const validateSsoInviteToken = async (email: string, callbackUrl: string): Promise<string | null> => {
+const validateSsoInviteToken = async (
+  email: string,
+  callbackUrl: string
+): Promise<TSsoProvisioningRejectReason | null> => {
   if (!callbackUrl) return "missing_callback_url";
   let inviteToken = "";
   try {
@@ -72,6 +83,20 @@ const validateSsoInviteToken = async (email: string, callbackUrl: string): Promi
       return "invite_token_validation_error"; // "missing" | "verification_error"
   }
 };
+
+/**
+ * ENG-2247: whether the fresh-instance exception — and nothing else — is what admits this sign-up, so
+ * the row it creates carries the single-use bootstrap marker.
+ *
+ * `isFirstUser` alone is not enough. Its caller's branch admits everyone once multi-org is on, where
+ * freshness is incidental rather than the grant, and marking there would make the second SSO account
+ * ever created collide on the unique index.
+ *
+ * A named function rather than an inline expression so `gateSsoProvisioning` stays inside the
+ * cognitive-complexity budget — the same reason `validateSsoInviteToken` sits outside it.
+ */
+const admitsAsBootstrapAdmin = (isFirstUser: boolean, isMultiOrgEnabled: boolean): boolean =>
+  isFirstUser && !isMultiOrgEnabled;
 
 /**
  * Gate for SSO just-in-time user provisioning — the orphan-safe, WRITE-FREE decision logic for the
@@ -136,7 +161,13 @@ export const gateSsoProvisioning = async ({
   // Fresh instance or multi-org: create the user with no org auto-assignment (handled by onboarding
   // / explicit invites elsewhere).
   if (isFirstUser || isMultiOrgEnabled) {
-    return { action: "provision", organizationId: null, assignToDefaultTeam: false, signupSource };
+    return {
+      action: "provision",
+      organizationId: null,
+      assignToDefaultTeam: false,
+      signupSource,
+      isBootstrapAdmin: admitsAsBootstrapAdmin(isFirstUser, isMultiOrgEnabled),
+    };
   }
 
   // Single-org, non-fresh — refuse to auto-provision into an arbitrary org without a default team.

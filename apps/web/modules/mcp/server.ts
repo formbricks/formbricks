@@ -6,7 +6,9 @@ import { logger } from "@formbricks/logger";
 import { instrumentMcpServerWithTracing } from "@/lib/posthog/mcp-tracing";
 import { getMcpAuthentication } from "./auth";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./constants";
+import { mcpRequestStateCodec } from "./request-state";
 import { registerFeedbackRecordTools } from "./tools/feedback-records";
+import { registerResponseTools } from "./tools/responses";
 import { registerSurveyTools } from "./tools/surveys";
 import { registerWorkflowTools } from "./tools/workflows";
 import { registerWorkspaceTools } from "./tools/workspaces";
@@ -96,6 +98,18 @@ export const MCP_HANDLER_OPTIONS = {
   // Revisit when we actually have something to notify about (resources, or tools that change at
   // runtime); `mcp-handler` 2.1.1 is the version that forwards this option.
   maxSubscriptions: 0,
+  /**
+   * Integrity for the multi-round-trip `requestState` the delete tools mint.
+   *
+   * `requestState` round-trips through the client and comes back as attacker-controlled input, and
+   * the SDK verifies nothing by default — leaving this unset would hand a handler whatever string
+   * the client chose to echo. The hook runs before the handler on every round that carries state, so
+   * a forged or expired one is refused at the seam and never reaches a tool.
+   *
+   * Server-level rather than per-tool because that is where the SDK puts it: one verifier covers
+   * every tool that ever mints state, which is also what stops a future tool from forgetting.
+   */
+  requestState: { verify: mcpRequestStateCodec.verify },
 } as const;
 
 export const mcpHandler = createMcpHandler((server) => {
@@ -103,5 +117,6 @@ export const mcpHandler = createMcpHandler((server) => {
   registerWorkflowTools(server);
   registerWorkspaceTools(server);
   registerFeedbackRecordTools(server);
+  registerResponseTools(server);
   instrumentMcpServerWithTracing(server, identifyMcpUser);
 }, MCP_HANDLER_OPTIONS);

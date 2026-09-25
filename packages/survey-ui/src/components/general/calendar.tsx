@@ -179,8 +179,13 @@ function Calendar({
           "border-2 border-brand rounded-md data-[selected=true]:rounded-none",
           defaultClassNames.today
         ),
+        // Outside days keep the full input colour, so their text contrast matches the in-month days for
+        // any palette (opacity scaled it down and failed AA on lighter themed input colours). They are
+        // set apart by italic instead: the browser renders it for every font, whereas a lighter weight
+        // silently does nothing when the survey's font ships no light face. It targets the day button
+        // itself because a button does not inherit font-style from its cell.
         outside: cn(
-          "text-[var(--fb-input-color)] opacity-70 aria-selected:text-[var(--fb-input-color)] opacity-70",
+          "text-[var(--fb-input-color)] aria-selected:text-[var(--fb-input-color)] [&>button]:italic",
           defaultClassNames.outside
         ),
         disabled: cn("text-muted-foreground opacity-50", defaultClassNames.disabled),

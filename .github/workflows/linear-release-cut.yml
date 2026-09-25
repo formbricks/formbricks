@@ -1,0 +1,224 @@
+name: Linear Release Cut
+
+# Tells Linear about the release-branch cut, which linear-release.yml (main) and
+# formbricks-release.yml (published tag) cannot see.
+#
+# WHY. The Formbricks pipeline is scheduled: main collects into the started release, a
+# release/x.y branch is cut to stabilise, and the published tag completes the exact version.
+# Nothing used to mark the cut, so main kept syncing into the release being stabilised - the
+# 5.4.0 release in Linear carries a note saying exactly that. Linear's fix for this is a frozen
+# started stage: an unversioned sync skips a frozen release and lands on the next started one,
+# while a sync with an explicit version still reaches it.
+#
+# WHAT RUNS WHEN.
+#   release/x.y created  -> 1. update x.y.0 to "Code Freeze"
+#                           2. sync x.(y+1).0 with base_ref=HEAD, so the next train is created
+#                              without taking the commits that belong to the frozen one
+#                           3. update x.(y+1).0 to "In Progress", so main has an unfrozen target
+#   release/x.y pushed   -> sync x.y.0 while no stable x.y.N tag is reachable from HEAD. RC
+#                           tags do not count. Once x.y.0 has shipped, patch commits are left to
+#                           the tag-time sync in formbricks-release.yml, which targets the exact
+#                           x.y.N - guessing the patch number here would create planned releases
+#                           that may never ship, the drift ENG-2475 cleaned up.
+#   workflow_dispatch    -> the given command against the given version, from main only.
+#
+# RUNBOOK.
+#   - The "Code Freeze" stage must exist on the pipeline with lifecycle type "started" AND the
+#     freeze toggle on. Linear offers the freeze toggle only on started stages, so the type is
+#     what makes freezing possible at all; the toggle is what makes the unversioned main sync
+#     skip the release. Neither can be set from CI.
+#
+#     Both matter because a cut leaves two started releases - x.y.0 in Code Freeze and
+#     x.(y+1).0 in Progress. The toggle is the only thing that tells an unversioned sync which
+#     of the two to land on.
+#   - Major bump: the next train is derived as x.(y+1).0, so cutting release/5.5 before 6.0
+#     creates 5.6.0. Edit that release's version to 6.0.0 in Linear, or dispatch `sync` then
+#     `update --stage "In Progress"` with the right version and cancel the derived one.
+#   - If step 2 does not create the release, step 3 fails and this run goes red: create and
+#     start the next train by hand in Linear, then re-run.
+#
+# TRUST MODEL - A RECORDED DECISION, NOT AN OVERSIGHT. This job holds a Linear key that can
+# mutate the pipeline, and a push event runs the pushed ref's copy of this file, so anyone who
+# can create a release/* branch can run their own copy of these steps with the key. That is
+# the exposure PR #9016 removed from the smoke canary. It is accepted here because the cut
+# cannot be observed from a trusted ref, and because it is the trust model the release
+# pipeline already runs on: `release: published` executes the tag's copy of
+# formbricks-release.yml with registry and Helm credentials, and the same people can push
+# tags. Tightening it means a ruleset restricting who may create release/* branches, or an
+# approval-gated environment for the key - repo settings, not this file.
+#
+# What this file does control: the branch name is validated against a strict pattern before
+# it reaches a shell or the action, so a stray release/* branch fails instead of touching the
+# pipeline, and the dispatch path refuses every ref but main because a dispatch runs the
+# caller's copy of this file.
+on:
+  push:
+    branches:
+      - "release/**"
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "Release command"
+        required: true
+        type: choice
+        options:
+          - sync
+          - update
+          - complete
+      stage:
+        description: "Stage name for update (e.g. Code Freeze, In Progress)"
+        required: false
+        type: string
+      version:
+        description: "Exact release version, e.g. 6.2.0"
+        required: true
+        type: string
+
+# Every run mutates the same Linear pipeline, and each sync stores its HEAD as the next scan
+# baseline, so two runs finishing out of order can leave a stale baseline behind. One group
+# serialises them. queue: max rather than the default single-slot queue because a dropped run
+# here is not a lost re-sync but a cut whose freeze, create and start never happened.
+concurrency:
+  group: linear-release-cut
+  queue: max
+
+permissions:
+  contents: read
+
+jobs:
+  linear-release-cut:
+    name: Sync the release branch to Linear
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name == 'push'
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      # Versions come from the train, never from the branch name alone: release/6.0 ships as
+      # 6.0.0, 6.0.1, ... and a Linear release literally called "6.0" is the stale minor-only
+      # record ENG-2475 had to cancel.
+      - name: Derive the release train
+        id: train
+        env:
+          BRANCH: ${{ github.ref_name }}
+          CREATED: ${{ github.event.created }}
+        run: |
+          set -euo pipefail
+
+          TRAIN="${BRANCH#release/}"
+          if [[ ! "$TRAIN" =~ ^[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Branch '$BRANCH' is not release/<major>.<minor>; refusing to touch the Linear pipeline."
+            exit 1
+          fi
+
+          MAJOR="${TRAIN%.*}"
+          MINOR="${TRAIN#*.}"
+          CURRENT="${TRAIN}.0"
+          NEXT="${MAJOR}.$((MINOR + 1)).0"
+
+          # Stable tags only: 6.1.0-rc.1 is not 6.1.0 shipping.
+          if git tag --merged HEAD | grep -Eq "^v?${MAJOR}\.${MINOR}\.[0-9]+$"; then
+            SHIPPED=true
+          else
+            SHIPPED=false
+          fi
+
+          {
+            echo "current=$CURRENT"
+            echo "next=$NEXT"
+            echo "shipped=$SHIPPED"
+          } >> "$GITHUB_OUTPUT"
+          echo "train=$TRAIN current=$CURRENT next=$NEXT shipped=$SHIPPED created=$CREATED"
+
+      # --- branch creation: freeze the outgoing train, then create and start the next one ---
+
+      - name: Freeze the train being cut
+        if: github.event.created
+        uses: linear/linear-release-action@17b8c24f8ceb2b98cabaf1965ff83c55dd596fac # v0.15.1
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
+          command: update
+          stage: Code Freeze
+          version: ${{ steps.train.outputs.current }}
+
+      # base_ref is an exclusive lower bound, so <HEAD>..HEAD is empty: the release is created
+      # and its scan baseline set to this commit, without attaching anything that belongs to the
+      # frozen train. The next main merge then scans from here.
+      - name: Create the next train
+        if: github.event.created
+        uses: linear/linear-release-action@17b8c24f8ceb2b98cabaf1965ff83c55dd596fac # v0.15.1
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
+          version: ${{ steps.train.outputs.next }}
+          base_ref: ${{ github.sha }}
+
+      - name: Start the next train
+        if: github.event.created
+        uses: linear/linear-release-action@17b8c24f8ceb2b98cabaf1965ff83c55dd596fac # v0.15.1
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
+          command: update
+          stage: In Progress
+          version: ${{ steps.train.outputs.next }}
+
+      # --- later pushes: stabilisation and RC fixes land on the frozen train by explicit version ---
+
+      - name: Sync stabilisation commits to the train
+        if: ${{ !github.event.created && steps.train.outputs.shipped == 'false' }}
+        uses: linear/linear-release-action@17b8c24f8ceb2b98cabaf1965ff83c55dd596fac # v0.15.1
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
+          version: ${{ steps.train.outputs.current }}
+
+  linear-release-dispatch:
+    name: Run a release command by hand
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # A dispatch runs the file as it exists on the caller's chosen ref, so the key must not be
+    # handed to a branch's copy of these steps.
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Validate the inputs
+        env:
+          COMMAND: ${{ inputs.command }}
+          STAGE: ${{ inputs.stage }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::'$VERSION' is not an exact <major>.<minor>.<patch> version."
+            exit 1
+          fi
+          # The action exits with an error on update without a stage; fail here with a message
+          # that says what to fill in instead.
+          if [[ "$COMMAND" == "update" && -z "$STAGE" ]]; then
+            echo "::error::The update command needs a stage, e.g. 'Code Freeze' or 'In Progress'."
+            exit 1
+          fi
+
+      - name: Run the release command
+        uses: linear/linear-release-action@17b8c24f8ceb2b98cabaf1965ff83c55dd596fac # v0.15.1
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
+          command: ${{ inputs.command }}
+          stage: ${{ inputs.stage }}
+          version: ${{ inputs.version }}

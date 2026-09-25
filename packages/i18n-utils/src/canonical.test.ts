@@ -83,3 +83,21 @@ describe("LANGUAGE_CANONICAL_MAP / CANONICAL_LANGUAGE_CODES", () => {
     expect(CANONICAL_LANGUAGE_CODES.length).toBe(new Set(CANONICAL_LANGUAGE_CODES).size);
   });
 });
+
+describe("regional variants for multi-market European rollouts (ENG-3221)", () => {
+  // A customer running one survey across every European market needs the region-tagged variants their
+  // markets actually use, not just the base languages. These four had no canonical tag, so the picker
+  // never offered them and `createLanguage` rejected them as uncurated CLDR fallbacks.
+  const addedVariants = ["de-LU", "fr-LU", "it-CH", "nl-BE"];
+
+  test.each(addedVariants)("%s is a canonical tag that normalizes to itself", (code) => {
+    expect(normalizeLanguageCode(code)).toBe(code);
+    expect(CANONICAL_LANGUAGE_CODES).toContain(code);
+  });
+
+  test("Luxembourg is two locales, not one", () => {
+    // The source list filed "Luxembourg" under both German and French markets. Both are real BCP-47
+    // locales and both are offered, so the ambiguity resolves either way.
+    expect(normalizeLanguageCode("de-LU")).not.toBe(normalizeLanguageCode("fr-LU"));
+  });
+});

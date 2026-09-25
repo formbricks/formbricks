@@ -50,6 +50,9 @@ describe("OAuth protected resource metadata", () => {
         "workflows:write",
         "feedbackRecords:read",
         "feedbackRecords:write",
+        // `responses:*` are grantable but deliberately NOT advertised until the response tools ship
+        // (ENG-2852). Advertising a scope is what makes clients ask for it, and asking is what earns
+        // `invalid_scope` from a client that registered before it existed.
         "offline_access",
       ],
       bearer_methods_supported: ["header"],

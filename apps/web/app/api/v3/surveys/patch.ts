@@ -8,6 +8,7 @@ import {
   validateNewDeclaredFieldNames,
 } from "@formbricks/types/surveys/declared-field-guard";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
 import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
@@ -174,13 +175,99 @@ async function buildV3AppSurveyPatchWrites(params: {
   return { segmentId, filters: nextFilters };
 }
 
+/**
+ * Optimistic-concurrency precondition (ENG-3069): the `updatedAt` the caller last read.
+ * Enforced as a compare-and-set in the UPDATE's own `where`, so there is no read-then-write window.
+ */
+export type TV3SurveyWritePrecondition = { expectedUpdatedAt: Date };
+
+/**
+ * ENG-3070: the *stored* survey does not satisfy the v3 document contract, so the request was never
+ * evaluated. Distinct from a reference-validation failure because the fix is to repair the survey,
+ * not the payload — and because reporting it as `invalid_params` on request paths misattributes it.
+ */
+export class V3SurveyStoredDocumentError extends Error {
+  constructor(readonly invalidParams: InvalidParam[]) {
+    super("Stored survey does not satisfy the v3 survey document contract");
+    this.name = "V3SurveyStoredDocumentError";
+  }
+}
+
+export class V3SurveyStaleError extends Error {
+  constructor(
+    readonly expectedUpdatedAt: Date,
+    readonly currentUpdatedAt: Date,
+    /** Whether the early read caught it, or the compare-and-set did. Useful for judging real races. */
+    readonly detectedAt: "read" | "write"
+  ) {
+    super("Survey was modified since it was last read");
+    this.name = "V3SurveyStaleError";
+  }
+}
+
+/** The survey was archived between the authorized read and the write. Same 422 as the pre-write guard. */
+export class V3SurveyArchivedError extends Error {
+  constructor() {
+    super("Survey is archived");
+    this.name = "V3SurveyArchivedError";
+  }
+}
+
+/**
+ * Throw when the caller's precondition no longer matches the stored survey.
+ *
+ * Exported because the no-write paths need it too. RFC 9110 evaluates a precondition *before* the
+ * method, so an outcome that happens to be a no-op does not excuse a stale caller: reordering blocks
+ * into the order they already hold must still fail, or a caller whose view of the survey is out of
+ * date gets a 200 that reads as confirmation.
+ */
+export function assertV3SurveyPrecondition(
+  currentSurvey: { updatedAt: Date },
+  precondition: TV3SurveyWritePrecondition | undefined
+): void {
+  if (precondition && currentSurvey.updatedAt.getTime() !== precondition.expectedUpdatedAt.getTime()) {
+    throw new V3SurveyStaleError(precondition.expectedUpdatedAt, currentSurvey.updatedAt, "read");
+  }
+}
+
+/**
+ * A P2025 from the survey UPDATE means the row no longer matched its `where`: the survey is gone, it was
+ * archived under us, or — under a precondition — it moved on. One cheap re-read tells the three apart.
+ * Scoped by workspace even though the caller is already authorized for this id — an unscoped
+ * findUnique-by-id is the shape that gets copy-pasted somewhere it is not safe.
+ */
+async function resolveUpdateMiss(
+  currentSurvey: TSurvey,
+  precondition: TV3SurveyWritePrecondition | undefined,
+  cause: Error
+): Promise<Error> {
+  const row = await prisma.survey.findFirst({
+    where: { id: currentSurvey.id, workspaceId: currentSurvey.workspaceId },
+    select: { updatedAt: true, archivedAt: true },
+  });
+
+  if (!row) {
+    return new ResourceNotFoundError("Survey", currentSurvey.id);
+  }
+  if (row.archivedAt) {
+    return new V3SurveyArchivedError();
+  }
+  if (precondition) {
+    return new V3SurveyStaleError(precondition.expectedUpdatedAt, row.updatedAt, "write");
+  }
+
+  // Live, unarchived, unconditional — and the UPDATE still missed it. Not a state this code can explain.
+  return new DatabaseError(cause.message);
+}
+
 export async function executeV3SurveyPatch(params: {
   currentSurvey: TSurvey;
   document: TV3SurveyDocument;
   languageRequests: TV3SurveyLanguageRequest[];
   requestId?: string;
+  precondition?: TV3SurveyWritePrecondition;
 }): Promise<TSurvey> {
-  const { currentSurvey, document, languageRequests, requestId } = params;
+  const { currentSurvey, document, languageRequests, requestId, precondition } = params;
   const mediaInvalidParams = getV3SurveyMediaInvalidParams(document.blocks);
   if (mediaInvalidParams.length > 0) {
     throw new V3SurveyReferenceValidationError(mediaInvalidParams);
@@ -245,7 +332,23 @@ export async function executeV3SurveyPatch(params: {
       : null;
 
   const runSurveyUpdate = (client: Prisma.TransactionClient) =>
-    client.survey.update({ where: { id: currentSurvey.id }, data, select: selectSurvey });
+    client.survey.update({
+      // ENG-3069: compare-and-set. `updatedAt` is legal in a unique where (extendedWhereUnique), and
+      // Survey's @updatedAt bumps on every writer — so the row matches only if nobody has written
+      // since the caller's read. Two agents editing different blocks can no longer silently
+      // overwrite each other's whole `blocks` array.
+      //
+      // `archivedAt: null` makes the pipeline's archived guard hold for the whole request: that guard
+      // reads the survey once, up front, and this UPDATE carries `status` from the same read — so an
+      // archive landing in between would otherwise be written straight back to `inProgress`.
+      where: {
+        id: currentSurvey.id,
+        archivedAt: null,
+        ...(precondition ? { updatedAt: precondition.expectedUpdatedAt } : {}),
+      },
+      data,
+      select: selectSurvey,
+    });
 
   try {
     // One transaction, always. Two writes have to land with the survey or not at all:
@@ -311,6 +414,11 @@ export async function executeV3SurveyPatch(params: {
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // Only the survey UPDATE can raise a P2025 here: the segment write wraps its own, and the
+      // reconcile and trigger writes are `*Many`/`create`.
+      if (error.code === "P2025") {
+        throw await resolveUpdateMiss(currentSurvey, precondition, error);
+      }
       throw new DatabaseError(error.message);
     }
 
@@ -322,12 +430,23 @@ export async function patchV3Survey(
   currentSurvey: TSurvey,
   input: unknown,
   requestId?: string,
-  organizationId?: string
+  organizationId?: string,
+  precondition?: TV3SurveyWritePrecondition
 ): Promise<TSurvey> {
   const preparation = prepareV3SurveyPatchInput(currentSurvey, input);
   if (!preparation.ok) {
-    throw new V3SurveyReferenceValidationError(preparation.validation.invalidParams);
+    throw preparation.origin === "storedSurvey"
+      ? new V3SurveyStoredDocumentError(preparation.validation.invalidParams)
+      : new V3SurveyReferenceValidationError(preparation.validation.invalidParams);
   }
+
+  // Two ways in: the block endpoints pass `expectedUpdatedAt` explicitly, while a PATCH caller
+  // round-tripping GET output gets it from the body's `updatedAt` via prepare. An explicit one wins.
+  const effectivePrecondition = precondition ?? preparation.precondition;
+
+  // Cheap pre-flight so a stale caller gets an accurate 409 without a write attempt. The
+  // compare-and-set below remains the actual guarantee — this only improves the error.
+  assertV3SurveyPrecondition(currentSurvey, effectivePrecondition);
 
   await assertV3SurveyWritePermissions(
     {
@@ -349,5 +468,6 @@ export async function patchV3Survey(
     document: preparation.document,
     languageRequests: preparation.languageRequests,
     requestId,
+    precondition: effectivePrecondition,
   });
 }

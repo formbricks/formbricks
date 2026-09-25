@@ -84,8 +84,12 @@ export function CardlessSurveyLayout({
     };
   }, [checkScroll]);
 
-  // Re-check the scroll position whenever the visible card changes, since the content height changes.
+  // A new card opens at its top. In cardless mode this area is what scrolls, so the reset Survey
+  // applies to its own content box never reaches it. Then re-check, since the content height changed.
   useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
     checkScroll();
   }, [blockId, checkScroll]);
 

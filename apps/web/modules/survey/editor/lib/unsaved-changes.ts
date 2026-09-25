@@ -59,3 +59,18 @@ export const hasUnsavedSurveyChanges = (
     (persisted) => persisted && isDeepEqual(local, ignoringServerOwned(persisted))
   );
 };
+
+/**
+ * Whether the editor's "just saved" bypass of the unload warning still holds.
+ *
+ * A successful save sets that bypass so the navigation the user is already making is not interrupted
+ * by a warning about the work that save just persisted. Only a new `survey` prop clears it again, and
+ * an autosave does not produce one -- it writes its result into refs to avoid re-rendering the
+ * editor. So after an autosave the bypass stays set indefinitely, and the next edit leaves the editor
+ * dirty with its unload warning disabled: a reload discards that edit silently, including the one
+ * offered by the stale-deployment prompt (ENG-2330).
+ *
+ * Unsaved changes are what the bypass exists to skip over, so their reappearance is what retires it.
+ */
+export const isJustSavedBypassValid = (hasJustSaved: boolean, hasUnsavedChanges: boolean): boolean =>
+  hasJustSaved && !hasUnsavedChanges;

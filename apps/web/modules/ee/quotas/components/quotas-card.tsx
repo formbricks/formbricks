@@ -149,7 +149,7 @@ export const QuotasCard = ({
           asChild
           className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50"
           id="quotasCardTrigger">
-          <div className="inline-flex px-4 py-4">
+          <button type="button" className="inline-flex px-4 py-4 text-left">
             <div className="flex items-center pr-5 pl-2">
               <CheckIcon
                 strokeWidth={3}
@@ -161,7 +161,7 @@ export const QuotasCard = ({
               <p className="font-semibold text-slate-800">{t("common.quotas")}</p>
               <p className="mt-1 text-sm text-slate-500">{t("common.quotas_description")}</p>
             </div>
-          </div>
+          </button>
         </Collapsible.Trigger>
 
         <Collapsible.Content className="flex flex-col overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">

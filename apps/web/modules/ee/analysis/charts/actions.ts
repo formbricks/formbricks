@@ -20,7 +20,7 @@ import {
   updateChart,
 } from "@/modules/ee/analysis/charts/lib/charts";
 import { dropEmptyMeasureRows } from "@/modules/ee/analysis/charts/lib/empty-measure-rows";
-import { resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
+import { pruneOptionLabels, resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
 import {
   type TDimensionValue,
@@ -303,8 +303,9 @@ export const executeQueryAction = authenticatedActionClient
       // Cube emits a row per group present in the source, including groups no selected measure can
       // answer for — they render as blank bars and empty Chart Data rows (ENG-3150).
       const rows = dropEmptyMeasureRows(Array.isArray(rawRows) ? rawRows : [], rewrittenQuery);
+      const usedLabels = pruneOptionLabels(rewrittenQuery, rows, optionLabels);
 
-      return { rows, ...(optionLabels ? { optionLabels } : {}), effectiveQuery: rewrittenQuery };
+      return { rows, ...(usedLabels ? { optionLabels: usedLabels } : {}), effectiveQuery: rewrittenQuery };
     }
   );
 
@@ -339,6 +340,8 @@ export const generateAIChartAction = authenticatedActionClient
         minPermission: "read",
         source: "charts.generateAIChartAction",
       });
+
+      await applyRateLimit(rateLimitConfigs.actions.aiChartGeneration, ctx.user.id);
 
       const { chartType, query, name } = await generateAIChartQuery({
         organizationId,

@@ -180,9 +180,12 @@ export const TopicsSubtopicsContainer = ({
               ? t("workspace.unify.taxonomy_run_in_progress")
               : t("workspace.unify.taxonomy_run_started")
           ),
-        // A trigger failure comes back as a raw upstream detail (502 / bad_gateway with the Hub's JSON
-        // blob), so show a clean localized message instead of dumping it. The specific failed-run alert
-        // (with the exact reason) still renders once /state refetches; raw detail stays in server logs.
+        // No longer a raw upstream blob: the server now answers a bounded, relayed 400 whose `detail`
+        // and `invalid_params` carry the actionable reason ("at least 20 embedded text feedback records
+        // are required; found 3"), rather than the 502 with the Hub's JSON that this used to discard.
+        // Still shows the localized string, so that reason reaches nobody — surfacing it is a UX call
+        // this error-mapping change deliberately does not make. The specific failed-run alert still
+        // renders once /state refetches.
         onError: () => toast.error(t("workspace.unify.taxonomy_start_failed")),
       }
     );

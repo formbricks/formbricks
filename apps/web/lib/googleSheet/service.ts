@@ -21,6 +21,7 @@ import {
 } from "@/lib/constants";
 import {
   GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION,
+  GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_SCOPES,
   GOOGLE_SHEET_INTEGRATION_INVALID_GRANT,
 } from "@/lib/googleSheet/constants";
 import { createOrUpdateIntegration } from "@/lib/integration/service";
@@ -133,12 +134,18 @@ export const getSpreadsheetNameById = async (
         ) => {
           if (err) {
             const msg = err.message?.toLowerCase() ?? "";
+            // The stored grant lacks the Sheets scope (e.g. the box was unticked on Google's consent
+            // screen). Google phrases this without the word "permission", and the way out is to
+            // reconnect, not to share the spreadsheet, so it gets its own code.
+            const isScopeError = msg.includes("insufficient authentication scopes");
             const isPermissionError =
               msg.includes("permission") ||
               msg.includes("caller does not have") ||
               msg.includes("insufficient permission") ||
               msg.includes("access denied");
-            if (isPermissionError) {
+            if (isScopeError) {
+              reject(new OperationNotAllowedError(GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_SCOPES));
+            } else if (isPermissionError) {
               reject(new OperationNotAllowedError(GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION));
             } else {
               reject(new UnknownError(`Error while fetching spreadsheet data: ${err.message}`));
