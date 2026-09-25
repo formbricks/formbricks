@@ -96,7 +96,7 @@ export const ZAIQueryResponse = z.object({
   answerable: z
     .boolean()
     .describe(
-      "False only when the request is gibberish or asks for something the feedback data cannot answer (weather, jokes, general knowledge). Vague but on-topic requests are answerable. When false, the other fields are ignored."
+      "False only when the request is gibberish or asks for something the feedback data cannot answer (weather, jokes, general knowledge). Vague but on-topic requests are answerable. When false, still fill every other field with placeholders (null, an empty measures array, any chartType); they are ignored."
     ),
   name: z
     .string()
