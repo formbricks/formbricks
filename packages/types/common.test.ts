@@ -34,6 +34,8 @@ describe("ZEndingCardButtonLink", () => {
       "mailto:not-an-email#recall:",
       "mailto:#recall:#",
       "mailto:#recall:/fallback:x#",
+      "mailto:#recall:email#",
+      "mailto:#recall:em ail/fallback:x#",
     ]) {
       const result = ZEndingCardButtonLink.safeParse(url);
       expect(result.success).toBe(false);

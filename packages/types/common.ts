@@ -135,11 +135,18 @@ export const endingCardButtonLinkRefinement = (url: string, ctx: z.RefinementCtx
 // so it is accepted as is; the renderer re-checks the final URL before opening it.
 const RECALL_PREFIX = "#recall:";
 
+const RECALL_FALLBACK_MARKER = "/fallback:";
+const RECALL_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
+
+// Same grammar the survey renderer resolves: `#recall:<id>/fallback:<text>#`.
 const isRecallToken = (recipient: string): boolean => {
   if (!recipient.startsWith(RECALL_PREFIX) || !recipient.endsWith("#")) return false;
   const body = recipient.slice(RECALL_PREFIX.length, -1);
-  const id = body.split("/")[0];
-  return id.length > 0 && !body.includes("#");
+  const markerIndex = body.indexOf(RECALL_FALLBACK_MARKER);
+  if (markerIndex < 0) return false;
+  const id = body.slice(0, markerIndex);
+  const fallback = body.slice(markerIndex + RECALL_FALLBACK_MARKER.length);
+  return RECALL_ID_PATTERN.test(id) && !fallback.includes("#");
 };
 
 const isMailtoRecipientValid = (recipient: string): boolean => {
