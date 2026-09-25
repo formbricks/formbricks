@@ -101,6 +101,35 @@ export const endingCardUrlRefinement = (url: string, ctx: z.RefinementCtx): void
   }
 };
 
+// Ending card button links may also open the respondent's mail client. Redirect-to-URL endings keep
+// using `ZEndingCardUrl`: a redirect replaces the survey page, which only makes sense for a web page.
+export const ZEndingCardButtonLink = z.string().superRefine((url, ctx) => {
+  endingCardButtonLinkRefinement(url, ctx);
+});
+
+export const endingCardButtonLinkRefinement = (url: string, ctx: z.RefinementCtx): void => {
+  const trimmedUrl = url.trim();
+
+  if (trimmedUrl.startsWith("http://") || trimmedUrl.startsWith("https://")) {
+    return;
+  }
+
+  if (!trimmedUrl.startsWith("mailto:")) {
+    ctx.addIssue({
+      code: "custom",
+      message: "URL must start with http://, https:// or mailto:",
+    });
+    return;
+  }
+
+  if (trimmedUrl.length === "mailto:".length) {
+    ctx.addIssue({
+      code: "custom",
+      message: "mailto: link must include an email address",
+    });
+  }
+};
+
 export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
   if (url.includes(" ") || url.endsWith(" ") || url.startsWith(" ")) {
     ctx.addIssue({
