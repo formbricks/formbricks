@@ -133,7 +133,10 @@ describe("registerScopedTool", () => {
  * refused mutation is written down as a failure attributed to the caller, and that nothing else is.
  */
 describe("registerScopedTool — auditing refused mutations", () => {
-  const AUDITED = { ...CONFIG, audit: { action: "deleted", targetType: "response" } } as const;
+  const AUDITED = {
+    ...CONFIG,
+    audit: { action: "deleted", targetType: "response", targetIdArg: "responseId" },
+  } as const;
 
   test("audits a refused mutation as a failed attempt by the actor, against the id it named", async () => {
     const { server, tools } = createToolServer();
@@ -159,6 +162,23 @@ describe("registerScopedTool — auditing refused mutations", () => {
       eventId: "req_probe",
       targetId: "clres00000000000000000001",
     });
+  });
+
+  test("records no target for a refused creation, even when the input names an existing id", async () => {
+    const { server, tools } = createToolServer();
+    const created = { ...CONFIG, audit: { action: "created", targetType: "workflow" } } as const;
+    registerScopedTool(server as any, "duplicate_workflow", created, ["workflows:write"], vi.fn() as any);
+
+    await tools
+      .get("duplicate_workflow")!
+      .handler(
+        { workflowId: "clwf000000000000000000001" },
+        { http: { authInfo: authInfoWithScopes(["workflows:read"], "req_dup", API_KEY_AUTH) } }
+      );
+
+    expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
+    // The id in the input is the source being copied, not something that was created.
+    expect(vi.mocked(queueV3AuditLog).mock.calls[0][0]).not.toHaveProperty("targetId");
   });
 
   test("audits nothing when the refused tool declares no audit — reads are not attempts", async () => {

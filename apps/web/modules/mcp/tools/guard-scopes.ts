@@ -76,11 +76,14 @@ async function guardMcpAnyScope(
   );
 }
 
-/** What a refused call would have done — enough to write it down as a failed attempt. */
-type TMcpToolAudit = { action: TAuditAction; targetType: TAuditTarget };
-
-/** Argument names a tool's input may carry for the resource it targets, most specific first. */
-const TARGET_ID_ARGS = ["responseId", "surveyId", "workflowId", "feedbackRecordId", "recordId"] as const;
+/**
+ * What a refused call would have done — enough to write it down as a failed attempt. `targetIdArg` names
+ * the input argument that carries the id of the resource the tool would have changed; a tool that would
+ * have *created* something declares none, because the ids in its input name other things — the workspace
+ * a survey would go into, the workflow `duplicate_workflow` would copy — and recording one of those as the
+ * target of a failed creation would be a false record.
+ */
+type TMcpToolAudit = { action: TAuditAction; targetType: TAuditTarget; targetIdArg?: string };
 
 /**
  * Record a scope refusal on a mutating tool as a failed audit event (ENG-2872).
@@ -109,10 +112,11 @@ async function auditRefusedMutation(
 
   // `buildAuditLogBaseObject` starts every event as a failure; only a completed mutation flips it.
   auditLog.eventId = requestId;
-  const args = input && typeof input === "object" ? (input as Record<string, unknown>) : {};
-  const targetId = TARGET_ID_ARGS.map((key) => args[key]).find((value) => typeof value === "string");
-  if (typeof targetId === "string") {
-    auditLog.targetId = targetId;
+  if (audit.targetIdArg && input && typeof input === "object") {
+    const targetId = (input as Record<string, unknown>)[audit.targetIdArg];
+    if (typeof targetId === "string") {
+      auditLog.targetId = targetId;
+    }
   }
 
   await queueV3AuditLog(auditLog, requestId, logger.withContext({ requestId, tool: toolName }));

@@ -305,7 +305,7 @@ export function registerWorkflowTools(server: McpServer): void {
         "Provided top-level fields replace that whole subtree; definition edits are only accepted while draft or disabled.",
       ].join(" "),
       inputSchema: ZMcpPatchWorkflowInput,
-      audit: { action: "updated", targetType: "workflow" },
+      audit: { action: "updated", targetType: "workflow", targetIdArg: "workflowId" },
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -358,7 +358,7 @@ export function registerWorkflowTools(server: McpServer): void {
       title: "Delete workflow",
       description: "Delete a Formbricks workflow using the v3 Workflows API contract.",
       inputSchema: ZMcpWorkflowIdInput,
-      audit: { action: "deleted", targetType: "workflow" },
+      audit: { action: "deleted", targetType: "workflow", targetIdArg: "workflowId" },
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -384,7 +384,7 @@ export function registerWorkflowTools(server: McpServer): void {
         "Once live it runs on matching survey responses and can send emails.",
       ].join(" "),
       inputSchema: ZMcpWorkflowIdInput,
-      audit: { action: "updated", targetType: "workflow" },
+      audit: { action: "updated", targetType: "workflow", targetIdArg: "workflowId" },
       annotations: {
         readOnlyHint: false,
         // Enabling activates a live, email-sending workflow — high impact.
@@ -408,7 +408,7 @@ export function registerWorkflowTools(server: McpServer): void {
       description:
         "Disable a live Formbricks workflow (stops future runs) using the v3 Workflows API contract.",
       inputSchema: ZMcpWorkflowIdInput,
-      audit: { action: "updated", targetType: "workflow" },
+      audit: { action: "updated", targetType: "workflow", targetIdArg: "workflowId" },
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -430,7 +430,7 @@ export function registerWorkflowTools(server: McpServer): void {
       title: "Archive workflow",
       description: "Archive a Formbricks workflow using the v3 Workflows API contract.",
       inputSchema: ZMcpWorkflowIdInput,
-      audit: { action: "updated", targetType: "workflow" },
+      audit: { action: "updated", targetType: "workflow", targetIdArg: "workflowId" },
       annotations: {
         readOnlyHint: false,
         // Archiving soft-deletes and excludes the workflow from default reads.
@@ -453,7 +453,7 @@ export function registerWorkflowTools(server: McpServer): void {
       title: "Unarchive workflow",
       description: "Unarchive a Formbricks workflow (back to draft) using the v3 Workflows API contract.",
       inputSchema: ZMcpWorkflowIdInput,
-      audit: { action: "updated", targetType: "workflow" },
+      audit: { action: "updated", targetType: "workflow", targetIdArg: "workflowId" },
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,

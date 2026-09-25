@@ -236,7 +236,7 @@ export function registerSurveyTools(server: McpServer): void {
         "The full get_survey output can be sent back unchanged; `updatedAt` is then an optimistic-concurrency precondition and a mismatch returns 409.",
       ].join(" "),
       inputSchema: ZMcpPatchSurveyInput,
-      audit: { action: "updated", targetType: "survey" },
+      audit: { action: "updated", targetType: "survey", targetIdArg: "surveyId" },
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -276,7 +276,7 @@ export function registerSurveyTools(server: McpServer): void {
         "Removing a block orphans any answers already collected for it, and the API cannot undo that — on a survey that is not a draft, confirm with the user before removing.",
       ].join(" "),
       inputSchema: ZMcpEditSurveyBlocksInput,
-      audit: { action: "updated", targetType: "survey" },
+      audit: { action: "updated", targetType: "survey", targetIdArg: "surveyId" },
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -327,7 +327,7 @@ export function registerSurveyTools(server: McpServer): void {
         "To repeat a call safely, refresh `expectedUpdatedAt` from the previous response or omit it — reusing the old value is a stale precondition and returns 409, which is the precondition working, not the reorder failing.",
       ].join(" "),
       inputSchema: ZMcpSetSurveyBlockOrderInput,
-      audit: { action: "updated", targetType: "survey" },
+      audit: { action: "updated", targetType: "survey", targetIdArg: "surveyId" },
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -367,7 +367,7 @@ export function registerSurveyTools(server: McpServer): void {
       title: "Delete survey",
       description: "Delete a Formbricks survey using the v3 Surveys API contract.",
       inputSchema: ZMcpDeleteSurveyInput,
-      audit: { action: "deleted", targetType: "survey" },
+      audit: { action: "deleted", targetType: "survey", targetIdArg: "surveyId" },
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
