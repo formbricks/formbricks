@@ -24,7 +24,6 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@formbricks/database": "workspace:*",
     "@formbricks/logger": "workspace:*",
     "@formbricks/types": "workspace:*",
     "bullmq": "5.61.0",
