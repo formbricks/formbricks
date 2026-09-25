@@ -66,8 +66,9 @@ vi.mock("./write-service", () => ({
   dispatchV3ResponsePipeline: vi.fn(),
   normalizeV3Ttc: vi.fn(() => ({})),
 }));
+const { mockLogInfo } = vi.hoisted(() => ({ mockLogInfo: vi.fn() }));
 vi.mock("@formbricks/logger", () => ({
-  logger: { withContext: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn() }) },
+  logger: { withContext: () => ({ warn: vi.fn(), error: vi.fn(), info: mockLogInfo }) },
 }));
 
 /**
@@ -636,6 +637,28 @@ describe("the reads are observed for ENG-2898", () => {
     expect((observations[0].items as { unresolved: unknown[] }[]).map((item) => item.unresolved)).toEqual([
       [],
     ]);
+  });
+
+  /**
+   * The names are caller-controlled, so the line carries only key-shaped ones, capped, plus the
+   * total — and never a value. `filter[tags]` is the evidence ENG-2897 needs; the rest is noise.
+   */
+  test("a rejected query logs key-shaped parameter names only, capped, with the total", async () => {
+    const unsafe = encodeURIComponent("email=someone@example.com; drop");
+    const flood = Array.from({ length: 12 }, (_, i) => `filter[x${i}]=1`).join("&");
+    const res = await listV3Responses({
+      ...read,
+      searchParams: query(`workspaceId=${WORKSPACE}&filter[tags][in]=tag_secret&${unsafe}=1&${flood}`),
+    });
+
+    expect(res.status).toBe(400);
+    expect(mockLogInfo).toHaveBeenCalledTimes(1);
+    const [payload] = mockLogInfo.mock.calls[0] as [{ rejectedParamCount: number; rejectedParams: string[] }];
+    expect(payload.rejectedParamCount).toBe(14);
+    expect(payload.rejectedParams).toHaveLength(10);
+    expect(payload.rejectedParams[0]).toBe("filter[tags][in]");
+    expect(JSON.stringify(payload)).not.toContain("tag_secret");
+    expect(JSON.stringify(payload)).not.toContain("someone@example.com");
   });
 
   test("a rejected list query is still handed to the timer, with nothing observed", async () => {

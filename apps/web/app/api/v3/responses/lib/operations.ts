@@ -199,6 +199,15 @@ type TReadParams = {
   instance?: string;
 };
 
+/** How many rejected parameter names one log line will carry; the rest are counted, not named. */
+const MAX_LOGGED_REJECTED_PARAMS = 10;
+
+/**
+ * A rejected name is only logged when it looks like a query key — the bracket-and-dot vocabulary the
+ * contract uses, bounded in length. Anything else is caller-supplied text and is counted instead.
+ */
+const LOGGABLE_PARAM_NAME = /^[\w[\].-]{1,64}$/;
+
 /**
  * Turn a parse failure into the 400 the contract promises.
  *
@@ -207,8 +216,9 @@ type TReadParams = {
  *
  * The rejected parameter *names* are logged, because they are the other half of ENG-2898 §1: a
  * caller sending `filter[tags]` is refused, and the refusal is the only evidence that anyone wants
- * tag filtering (ENG-2897). Names only — a caller-controlled value has no place in a log line, and
- * a name is unbounded, which is why this is a log and not a metric attribute.
+ * tag filtering (ENG-2897). Names only, never values — and the names are caller-controlled, so the
+ * line is bounded twice over: only key-shaped names of bounded length, and at most a handful of
+ * them, with the total alongside so a flood is still visible as a number.
  */
 const badQuery = (
   invalidParams: TV3InvalidParam[],
@@ -216,7 +226,16 @@ const badQuery = (
   instance: string | undefined,
   log: ReturnType<typeof logger.withContext>
 ): Response => {
-  log.info({ rejectedParams: invalidParams.map((param) => param.name) }, "v3 responses query rejected");
+  log.info(
+    {
+      rejectedParamCount: invalidParams.length,
+      rejectedParams: invalidParams
+        .map((param) => param.name)
+        .filter((name) => LOGGABLE_PARAM_NAME.test(name))
+        .slice(0, MAX_LOGGED_REJECTED_PARAMS),
+    },
+    "v3 responses query rejected"
+  );
 
   return problemBadRequest(requestId, "The query parameters are invalid.", {
     invalid_params: invalidParams,
