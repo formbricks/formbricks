@@ -180,7 +180,7 @@ reviews:
         - Caching uses `cache.withCache()` with a key from `createCacheKey.*`. Next.js
           `unstable_cache()` is banned, and cache keys are never built by string concatenation.
 
-    - path: "{apps/web,packages}/**/*.ts"
+    - path: "{apps/web,packages}/**/*.{ts,tsx}"
       instructions: |
         Performance is an explicit review dimension in this repo (AGENTS.md "Performance in Review"):
         the patterns below reach `main` when nobody looks for them. Raise one where the diff
@@ -194,9 +194,16 @@ reviews:
         - Expensive calls repeated per request or per row — embeddings, AI calls, cross-service
           fetches — that are not behind `cache.withCache()`, batched, or moved into a job.
         - Independent queries awaited sequentially instead of `Promise.all`.
+        - Client-side waterfalls: duplicate fetches of the same data, requests chained that do not
+          depend on each other, or many calls fired from a loop where one batch request would do.
+        - Render amplification: one state change or parent update re-rendering a large subtree that
+          does not depend on it (a context value rebuilt every render, unstable props into a big list).
+          Name the measured cost, not a missing `useMemo`; AGENTS.md rules out memoization for its
+          own sake.
+        - Large lists rendered in full with no pagination or virtualization.
         Quantify the cost against the data ("one query per response, ~5k on a 5k-response survey").
         If you cannot, ask the author for numbers instead of speculating. Do not raise these on
-        `*.test.ts`, `__mocks__`, or seed scripts, where looping over fixtures is expected.
+        `*.test.ts`, `*.test.tsx`, `__mocks__`, or seed scripts, where looping over fixtures is expected.
 
     - path: "packages/database/schema/*.prisma"
       instructions: |

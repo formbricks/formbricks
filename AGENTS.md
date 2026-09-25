@@ -202,6 +202,14 @@ What to look for:
 - **Uncached expensive calls** — embeddings, AI calls, and cross-service fetches repeated per request or per
   row belong behind `cache.withCache()` (see "Caching"), batched, or moved into a job.
 - **Sequential awaits** — independent queries awaited one after another instead of `Promise.all`.
+- **Client-side waterfalls** — the same data fetched twice, requests chained that do not depend on each
+  other, or hundreds of calls fired from a loop where one batch request would do.
+- **Render amplification** — one state change, interaction or parent update re-rendering a large subtree that
+  does not depend on it: a context value rebuilt on every render, unstable props fed into a big list, state
+  lifted higher than its readers. Point at the measured cost ("every keystroke re-renders all 500 rows"), not at
+  a missing `useMemo` — the Quality Checklist still rules out memoization for its own sake.
+- **Large-list rendering** — hundreds or thousands of rows rendered at once with no pagination or
+  virtualization.
 
 State the cost in terms of the data: "one query per response, so ~5k queries on a 5k-response survey" is
 reviewable, "this might be slow" is not. Where the answer is genuinely unclear, ask the author for numbers
