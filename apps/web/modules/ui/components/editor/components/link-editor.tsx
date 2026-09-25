@@ -65,8 +65,11 @@ const LinkEditorContent = ({ editor, open, setOpen }: LinkEditorProps) => {
     }
     if (linkUrl) {
       // mailto: links keep the current tab, like auto-linked emails: handing off to the mail client
-      // does not navigate the respondent away from their response.
-      const linkAttributes = isMailtoUrl(linkUrl) ? {} : { target: "_blank", rel: "noopener noreferrer" };
+      // does not navigate the respondent away from their response. `null` clears the attributes when an
+      // existing web link is edited into a mailto: link.
+      const linkAttributes = isMailtoUrl(linkUrl)
+        ? { target: null, rel: null }
+        : { target: "_blank", rel: "noopener noreferrer" };
       editor.dispatchCommand(TOGGLE_LINK_COMMAND, {
         url: linkUrl,
         ...linkAttributes,

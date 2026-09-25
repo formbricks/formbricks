@@ -122,13 +122,35 @@ export const endingCardButtonLinkRefinement = (url: string, ctx: z.RefinementCtx
     return;
   }
 
-  const recipient = trimmedUrl.slice("mailto:".length).split("?")[0];
-  if (recipient.length === 0) {
+  const recipients = trimmedUrl.slice("mailto:".length).split("?")[0];
+  if (!areMailtoRecipientsValid(recipients)) {
     ctx.addIssue({
       code: "custom",
-      message: "mailto: link must include an email address",
+      message: "mailto: link must include a valid email address",
     });
   }
+};
+
+// A recipient filled in from a recall value (`#recall:id/fallback:…#`) is only known at response time,
+// so it is accepted as is; the renderer re-checks the final URL before opening it.
+const isMailtoRecipientValid = (recipient: string): boolean => {
+  if (recipient.includes("#recall:")) return true;
+  const atIndex = recipient.indexOf("@");
+  if (atIndex <= 0 || recipient.includes(" ")) return false;
+  const domain = recipient.slice(atIndex + 1);
+  const dotIndex = domain.lastIndexOf(".");
+  return dotIndex > 0 && dotIndex < domain.length - 1 && !domain.includes("@");
+};
+
+const areMailtoRecipientsValid = (recipients: string): boolean => {
+  if (recipients.length === 0) return false;
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(recipients);
+  } catch {
+    return false;
+  }
+  return decoded.split(",").every(isMailtoRecipientValid);
 };
 
 export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
