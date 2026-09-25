@@ -1,5 +1,7 @@
 import "server-only";
 import { type Attributes, type Counter, type Histogram, metrics } from "@opentelemetry/api";
+import type { NextRequest } from "next/server";
+import { AsyncLocalStorage } from "node:async_hooks";
 import { type TV3RequestVia, resolveV3RequestVia } from "@/app/api/v3/lib/request-via";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import type { TV3ResponsesFilter } from "./parse-v3-responses-list-query";
@@ -18,6 +20,22 @@ import type { TV3ResponseUnresolvedEntry } from "./resources";
  * value, or a contact field. The filter attribute is the set of filter *keys* a caller used; the
  * unresolved attribute is the contract's `reason` enum, never the orphaned key itself, which would be
  * both unbounded and, for a hidden field, caller-named.
+ *
+ * ## Two entry points, one record per read
+ *
+ * A read reaches the operation two ways. Over HTTP it passes through `withV3ApiWrapper`, which can
+ * answer 401, 429 or 400 before the operation ever runs; the MCP tools call the operation directly
+ * with no wrapper at all. So the timer has to live at *both* boundaries without counting a request
+ * twice: `withV3ResponsesReadMetrics` opens a request-scoped context around the route, the operation's
+ * `startV3ResponsesRead` joins that context when one exists and fills in what it learned, and only
+ * the outer boundary records. With no context — the MCP path — the operation records itself.
+ *
+ * ## Names
+ *
+ * Spelled out Prometheus-style (`_total`, `_seconds`) rather than dotted, following the AuthZed
+ * metrics: the direct Prometheus exporter and an OTLP-to-Prometheus translation each rewrite a dotted
+ * name differently, so a dotted instrument is two series names across the two supported readers. The
+ * names below are the exported names, byte for byte, and the monitoring guide lists them.
  *
  * `metrics.getMeter()` hands back a proxy that binds to the SDK's provider once
  * `instrumentation-node.ts` has registered it and stays a no-op otherwise, so recording is safe with
@@ -51,6 +69,13 @@ export interface TV3ResponsesReadSample extends TV3ResponsesReadObservation {
 
 const METER_NAME = "formbricks.api.v3.responses";
 
+export const V3_RESPONSES_READS_TOTAL = "formbricks_api_v3_responses_reads_total";
+export const V3_RESPONSES_READ_DURATION_SECONDS = "formbricks_api_v3_responses_read_duration_seconds";
+export const V3_RESPONSES_PAGE_SURVEYS = "formbricks_api_v3_responses_page_surveys";
+export const V3_RESPONSES_UNRESOLVED_ENTRIES_TOTAL = "formbricks_api_v3_responses_unresolved_entries_total";
+export const V3_RESPONSES_UNRESOLVED_RESPONSES_TOTAL =
+  "formbricks_api_v3_responses_unresolved_responses_total";
+
 interface TInstruments {
   reads: Counter;
   duration: Histogram;
@@ -65,24 +90,30 @@ const getInstruments = (): TInstruments => {
   if (!instruments) {
     const meter = metrics.getMeter(METER_NAME);
     instruments = {
-      reads: meter.createCounter("formbricks.api.v3.responses.reads", {
+      reads: meter.createCounter(V3_RESPONSES_READS_TOTAL, {
         description: "v3 response reads by operation, surface, status class and the filter keys used",
         unit: "{request}",
       }),
-      duration: meter.createHistogram("formbricks.api.v3.responses.read.duration", {
-        description: "Wall-clock duration of one v3 response read, parse to response",
-        unit: "ms",
+      duration: meter.createHistogram(V3_RESPONSES_READ_DURATION_SECONDS, {
+        advice: {
+          explicitBucketBoundaries: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
+        },
+        description: "Wall-clock duration of one v3 response read, request boundary to response",
+        unit: "s",
       }),
-      pageSurveys: meter.createHistogram("formbricks.api.v3.responses.page.surveys", {
-        advice: { explicitBucketBoundaries: [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 250] },
+      pageSurveys: meter.createHistogram(V3_RESPONSES_PAGE_SURVEYS, {
+        // 0.5 first, not 1: OpenTelemetry buckets are upper-inclusive, so boundaries starting at 1 put
+        // an empty page (0) and the common one-survey page (1) in the same `le="1"` bucket. The same
+        // integer-count pattern as the authorization checks-per-request histogram.
+        advice: { explicitBucketBoundaries: [0.5, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 250] },
         description: "Distinct surveys one v3 list page spans — the size of its single survey query",
         unit: "{survey}",
       }),
-      unresolvedEntries: meter.createCounter("formbricks.api.v3.responses.unresolved.entries", {
+      unresolvedEntries: meter.createCounter(V3_RESPONSES_UNRESOLVED_ENTRIES_TOTAL, {
         description: "unresolved[] entries served by v3 response reads, by reason",
         unit: "{entry}",
       }),
-      unresolvedResponses: meter.createCounter("formbricks.api.v3.responses.unresolved.responses", {
+      unresolvedResponses: meter.createCounter(V3_RESPONSES_UNRESOLVED_RESPONSES_TOTAL, {
         description: "Responses served by v3 reads with at least one unresolved[] entry",
         unit: "{response}",
       }),
@@ -151,7 +182,7 @@ export const recordV3ResponsesRead = (sample: TV3ResponsesReadSample): void => {
     if (sample.precision !== undefined) readAttributes.precision = sample.precision;
 
     reads.add(1, readAttributes);
-    duration.record(Math.max(0, sample.durationMs), base);
+    duration.record(Math.max(0, sample.durationMs) / 1_000, base);
 
     if (sample.pageSurveyCount !== undefined) {
       pageSurveys.record(sample.pageSurveyCount, { via: sample.via });
@@ -172,6 +203,72 @@ export const recordV3ResponsesRead = (sample: TV3ResponsesReadSample): void => {
   }
 };
 
+/** One read in flight, from whichever boundary opened it. */
+interface TV3ResponsesReadContext {
+  operation: TV3ResponsesReadOperation;
+  via: TV3RequestVia;
+  startedAt: number;
+  observation: TV3ResponsesReadObservation;
+}
+
+const readContext = new AsyncLocalStorage<TV3ResponsesReadContext>();
+
+const finish = (context: TV3ResponsesReadContext, status: number): void => {
+  recordV3ResponsesRead({
+    ...context.observation,
+    operation: context.operation,
+    via: context.via,
+    status,
+    durationMs: performance.now() - context.startedAt,
+  });
+};
+
+/**
+ * The surface a request *presents* as, before anything has authenticated it: the same test the
+ * wrapper uses to choose the API-key path. Provisional — the operation replaces it with the
+ * authenticated answer once it runs — but it is what a 401 or 429 gets attributed to.
+ */
+const presentedVia = (headers: Headers): TV3RequestVia => {
+  if (headers.get("x-api-key")?.trim()) return "api";
+  return headers.get("authorization")?.trim().toLowerCase().startsWith("bearer ") ? "api" : "ui";
+};
+
+/**
+ * Wrap a response-route handler so *every* exit is recorded, including the ones `withV3ApiWrapper`
+ * takes before the operation runs: an unauthenticated 401, a rate-limited 429, a 400 from the route's
+ * own schemas. Without this the `status_class` breakdown undercounts 4xx and the counter measures the
+ * operation rather than the endpoint.
+ *
+ * The operation still fills in the filter keys, page spread and items through the shared context —
+ * this records once, at the end, with everything both layers learned.
+ */
+export const withV3ResponsesReadMetrics =
+  <TProps>(
+    operation: TV3ResponsesReadOperation,
+    route: (req: NextRequest, props: TProps) => Promise<Response>
+  ): ((req: NextRequest, props: TProps) => Promise<Response>) =>
+  async (req, props) => {
+    const context: TV3ResponsesReadContext = {
+      operation,
+      via: presentedVia(req.headers),
+      startedAt: performance.now(),
+      observation: {},
+    };
+
+    return readContext.run(context, async () => {
+      try {
+        const response = await route(req, props);
+        finish(context, response.status);
+        return response;
+      } catch (error) {
+        // The wrapper maps every throw to a problem response, so this is unreachable in practice —
+        // but a read that did escape is still a read, and a 5xx is the only honest class for it.
+        finish(context, 500);
+        throw error;
+      }
+    });
+  };
+
 export interface TV3ResponsesReadTimer {
   /** Mutable, filled in by the operation as it learns what the read was. */
   observation: TV3ResponsesReadObservation;
@@ -180,28 +277,38 @@ export interface TV3ResponsesReadTimer {
 }
 
 /**
- * Start timing one read. Every exit of the operation returns through `done`, so a 400, a 403 and a
- * 200 all land in the same counter with their own status class.
+ * Start timing one read from inside the operation. Every exit of the operation returns through
+ * `done`, so a 400, a 403 and a 200 all land in the same counter with their own status class.
+ *
+ * Inside a `withV3ResponsesReadMetrics` boundary this joins the request's context instead of opening
+ * one: the observation is shared, the authenticated `via` replaces the presented one, and `done` is a
+ * pass-through, so the read is recorded exactly once, by the boundary. Outside one — the MCP tools
+ * call the operations directly — it records itself.
  */
 export const startV3ResponsesRead = (params: {
   operation: TV3ResponsesReadOperation;
   authentication: TV3Authentication;
   instance?: string;
 }): TV3ResponsesReadTimer => {
-  const startedAt = performance.now();
   const via = resolveV3RequestVia(params.authentication, params.instance ?? "");
-  const observation: TV3ResponsesReadObservation = {};
+  const outer = readContext.getStore();
+
+  if (outer && outer.operation === params.operation) {
+    outer.via = via;
+    return { observation: outer.observation, done: (response) => response };
+  }
+
+  const context: TV3ResponsesReadContext = {
+    operation: params.operation,
+    via,
+    startedAt: performance.now(),
+    observation: {},
+  };
 
   return {
-    observation,
+    observation: context.observation,
     done: (response) => {
-      recordV3ResponsesRead({
-        ...observation,
-        operation: params.operation,
-        via,
-        status: response.status,
-        durationMs: performance.now() - startedAt,
-      });
+      finish(context, response.status);
       return response;
     },
   };

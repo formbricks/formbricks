@@ -10,19 +10,23 @@
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { ZV3EmptyQuery } from "@/app/api/v3/lib/schemas";
+import { withV3ResponsesReadMetrics } from "./lib/metrics";
 import { createV3Response, listV3Responses } from "./lib/operations";
 import { ZV3CreateResponseBody } from "./lib/schemas";
 
-export const GET = withV3ApiWrapper({
-  auth: "both",
-  handler: async ({ req, authentication, requestId, instance }) =>
-    listV3Responses({
-      searchParams: new URL(req.url).searchParams,
-      authentication,
-      requestId,
-      instance,
-    }),
-});
+export const GET = withV3ResponsesReadMetrics(
+  "list",
+  withV3ApiWrapper({
+    auth: "both",
+    handler: async ({ req, authentication, requestId, instance }) =>
+      listV3Responses({
+        searchParams: new URL(req.url).searchParams,
+        authentication,
+        requestId,
+        instance,
+      }),
+  })
+);
 
 /**
  * POST /api/v3/responses — record a real submission.

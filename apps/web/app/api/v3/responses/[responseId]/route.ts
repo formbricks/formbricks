@@ -10,22 +10,26 @@
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { ZV3EmptyQuery } from "@/app/api/v3/lib/schemas";
+import { withV3ResponsesReadMetrics } from "../lib/metrics";
 import { deleteV3Response, getV3Response, updateV3Response } from "../lib/operations";
 import { ZV3PatchResponseBody, ZV3ResponseIdParams } from "../lib/schemas";
 
-export const GET = withV3ApiWrapper({
-  auth: "both",
-  // An empty strict query, so any query parameter at all is a 400 naming the key. The endpoint takes
-  // none by design: the workspace comes from the response, never from the caller.
-  schemas: { params: ZV3ResponseIdParams, query: ZV3EmptyQuery },
-  handler: async ({ authentication, parsedInput, requestId, instance }) =>
-    getV3Response({
-      authentication,
-      responseId: parsedInput.params.responseId,
-      requestId,
-      instance,
-    }),
-});
+export const GET = withV3ResponsesReadMetrics(
+  "get",
+  withV3ApiWrapper({
+    auth: "both",
+    // An empty strict query, so any query parameter at all is a 400 naming the key. The endpoint takes
+    // none by design: the workspace comes from the response, never from the caller.
+    schemas: { params: ZV3ResponseIdParams, query: ZV3EmptyQuery },
+    handler: async ({ authentication, parsedInput, requestId, instance }) =>
+      getV3Response({
+        authentication,
+        responseId: parsedInput.params.responseId,
+        requestId,
+        instance,
+      }),
+  })
+);
 
 export const DELETE = withV3ApiWrapper({
   auth: "both",

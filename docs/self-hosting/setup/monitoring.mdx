@@ -169,11 +169,11 @@ The metrics exported by the Prometheus integration include:
   - Event loop lag
   - Heap statistics (size, used, available)
 
-- **v3 Responses API Metrics** (`formbricks.api.v3.responses.*`, exported with dots replaced by underscores):
-  - `reads` — one count per list, count or get, with `operation`, `via` (`ui`, `api`, `mcp`), `status_class`, and `filters` (the sorted filter keys the caller used, never their values)
-  - `read.duration` — wall-clock milliseconds per read, by `operation` and `status_class`
-  - `page.surveys` — how many distinct surveys one list page spans, i.e. the size of its single survey query
-  - `unresolved.responses` and `unresolved.entries` — responses served with a non-empty `unresolved[]`, and its entries by `reason`; a rising count means surveys are being edited in ways that orphan stored answers
+- **v3 Responses API Metrics** — the names below are the exported series names through both the Prometheus exporter and an OTLP collector:
+  - `formbricks_api_v3_responses_reads_total` — one count per list, count or get, at the route boundary, so a 401, 429 or 400 counts too. Attributes: `operation`, `via` (`ui`, `api`, `mcp`), `status_class`, and `filters` (the sorted filter keys the caller used, never their values).
+  - `formbricks_api_v3_responses_read_duration_seconds` — wall-clock seconds per read, by `operation`, `via` and `status_class`
+  - `formbricks_api_v3_responses_page_surveys` — how many distinct surveys one list page spans, i.e. the size of its single survey query; the first bucket boundary is `0.5`, so an empty page is distinguishable from a one-survey page
+  - `formbricks_api_v3_responses_unresolved_responses_total` and `formbricks_api_v3_responses_unresolved_entries_total` — responses served with a non-empty `unresolved[]`, and its entries by `reason`. These count every *read*, so a client polling one unchanged response raises them without any survey edit, and `valueShapeMismatch` can be legacy malformed data rather than a definition change. Read them as a ratio of `unresolved_responses_total` to `reads_total` (`operation` = `list` or `get`), grouped by `reason`, rather than as a raw count.
 
 ### Collecting Metrics
 
