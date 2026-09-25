@@ -1,7 +1,12 @@
 import { describe, expect, test } from "vitest";
 import type { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
-import { getSurveyDisplayName, getSurveyPagePosition, hasSurveyInstructions } from "./survey-page";
+import {
+  getSurveyDisplayName,
+  getSurveyHeadingName,
+  getSurveyPagePosition,
+  hasSurveyInstructions,
+} from "./survey-page";
 
 const block = (id: string) => ({ id, name: id, elements: [] });
 
@@ -149,5 +154,21 @@ describe("getSurveyDisplayName", () => {
     expect(getSurveyDisplayName(`Re: ${PUBLIC_API_SURVEY_NAME_PLACEHOLDER}`)).toBe(
       `Re: ${PUBLIC_API_SURVEY_NAME_PLACEHOLDER}`
     );
+  });
+});
+
+describe("getSurveyHeadingName", () => {
+  test("uses the survey name on either surface", () => {
+    expect(getSurveyHeadingName("Product feedback", "inline", "Survey Dialog")).toBe("Product feedback");
+    expect(getSurveyHeadingName("Product feedback", "modal", "Survey Dialog")).toBe("Product feedback");
+  });
+
+  test("falls back to the generic label for an unnamed inline survey", () => {
+    // An app survey rendered inline has its name withheld; its form landmark and h1 still need one.
+    expect(getSurveyHeadingName(undefined, "inline", "Survey Dialog")).toBe("Survey Dialog");
+  });
+
+  test("renders no heading for an unnamed modal survey", () => {
+    expect(getSurveyHeadingName(undefined, "modal", "Survey Dialog")).toBeUndefined();
   });
 });

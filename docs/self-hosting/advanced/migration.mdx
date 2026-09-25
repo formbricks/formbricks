@@ -31,6 +31,12 @@ backups rather than running `helm rollback`. Pin explicit releases and digests, 
 The Helm chart and Formbricks image are versioned independently. A chart-only patch can retain the same
 `appVersion`; review both pins and the rendered image rather than assuming their version numbers match.
 
+### Bundled TEI log level
+
+The Helm chart now defaults `hub.embeddings.env.RUST_LOG` to `warn` because TEI 1.9 includes its API key in
+INFO-level startup arguments. If you need a different log level, set `hub.embeddings.env.RUST_LOG` explicitly
+and use it only with a runtime that redacts credentials from its logs.
+
 ### Changes in Environment Variables
 
 <Note>
@@ -134,6 +140,67 @@ carrying traffic and re-issuing is complete.
 Downgrading restores the old links, since nothing about them changed on disk — but it also restores
 the behaviour above, so treat it as a stopgap while you regenerate rather than a fix.
 ||||||| 1cb21762d6
+
+### Hub worker required for Docker
+
+Fresh Docker and one-click installations start `hub-worker` with the Hub API. The worker consumes every
+PostgreSQL-backed asynchronous Hub job, including webhook deliveries and any configured enrichment. An existing
+installation keeps its local `docker-compose.yml` during `formbricks.sh update`, so merge the worker before
+updating; the updater now exits before pulling images, running migrations, or stopping services when the
+resolved Compose project does not contain `hub-worker`.
+
+1. Start in the directory containing your customized `docker-compose.yml`, then back it up and download the file
+   from the release you are upgrading to. For a one-click installation, run `cd formbricks` first. Use that
+   release's tag instead of `stable` when your deployment is pinned.
+
+   ```bash
+   cp -p docker-compose.yml docker-compose.yml.before-hub-worker
+   curl -fsSL -o docker-compose.release.yml \
+     https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
+   ```
+
+2. Compare the two files. Merge `x-hub-runtime-environment` and the release's `hub` and `hub-worker` sections as
+   one unit so the API and worker retain the same database and taxonomy configuration. Preserve local proxy,
+   storage, database, and image-pin customizations. `hub`, `hub-worker`, and `hub-migrate` must resolve to the
+   same Hub image reference.
+3. Validate the result before changing the running stack:
+
+   ```bash
+   docker compose config >/dev/null
+   docker compose config --services | grep -Fx hub-worker
+   ```
+
+4. For a one-click installation, rerun `./formbricks.sh update`. For a manually managed Compose installation,
+   apply Hub migrations before starting the API and worker from the new image:
+
+   ```bash
+   docker compose pull hub hub-migrate hub-worker
+   docker compose up --force-recreate hub-migrate
+   docker compose up -d hub hub-worker
+   ```
+
+5. Verify that the worker stays running and that the existing River backlog decreases:
+
+   ```bash
+   docker compose ps hub-worker
+   docker compose logs --tail=200 hub-worker
+   ```
+
+The worker has no HTTP health endpoint. A stable process and decreasing queue are the readiness signals. If it
+restarts, verify PostgreSQL connectivity and every configured enrichment provider credential. Jobs already in
+River remain stored in PostgreSQL and begin draining when the worker starts; no repair or re-enqueue is required.
+
+To roll back only this change, remove the worker container before restoring the backed-up Compose file so its
+`restart: always` policy cannot start it again:
+
+```bash
+docker compose rm -fs hub-worker
+cp -p docker-compose.yml.before-hub-worker docker-compose.yml
+```
+
+Completed jobs remain committed and pending jobs remain queued, but all Hub asynchronous processing pauses
+again. A fully custom deployment that runs Hub workers outside this Compose project must use its own manual
+upgrade workflow rather than the one-click updater.
 
 ## v5.4
 
@@ -849,7 +916,7 @@ Cube is part of the baseline Formbricks v5 stack.
       `POSTGRES_PASSWORD_URL_ENCODED` to its percent-encoded form
     - add a non-empty `HUB_API_KEY` and reuse the same value wherever your deployment resolves Hub auth
     - keep `HUB_API_URL` at `http://hub:8080` unless Hub runs elsewhere
-    - include the bundled `formbricks-migrate`, `hub-migrate`, and `hub` services
+    - include the bundled `formbricks-migrate`, `hub-migrate`, `hub`, and `hub-worker` services
     - sync `formbricks/cube/cube.js` and `formbricks/cube/schema/FeedbackRecords.js` from the current
       release and ensure `formbricks/.env` contains `CUBEJS_API_SECRET` (Cube is part of the baseline stack
       in v5)
@@ -881,7 +948,7 @@ Cube is part of the baseline Formbricks v5 stack.
       `POSTGRES_PASSWORD_URL_ENCODED` to its percent-encoded form
     - `HUB_API_KEY` is configured and the same value is available wherever your deployment resolves Hub auth
     - `HUB_API_URL` points to the Hub service the app can reach
-    - the compose stack includes `formbricks-migrate`, `hub-migrate`, and `hub`
+    - the compose stack includes `formbricks-migrate`, `hub-migrate`, `hub`, and `hub-worker`
     - the v5 stack also includes `cube`, `cube/cube.js`, and `cube/schema/FeedbackRecords.js`, with
       `CUBEJS_API_SECRET` available through your `.env` or shell environment
     - if your legacy Compose file still includes bundled MinIO for uploads, treat that as a separate storage

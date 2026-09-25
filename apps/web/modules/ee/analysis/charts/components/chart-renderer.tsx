@@ -6,7 +6,10 @@ import { Area, AreaChart, Bar, BarChart, Cell, Label, LabelList, Legend, Pie, Pi
 import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
 import { cn } from "@/lib/cn";
 import { BreakdownBars } from "@/modules/ee/analysis/charts/components/breakdown-bars";
-import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
+import {
+  CartesianChart,
+  type CartesianChartProps,
+} from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/polished-tooltip";
 import { computeBigNumberValue } from "@/modules/ee/analysis/charts/lib/big-number";
 import { resolveChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
@@ -26,6 +29,7 @@ import {
   prepareMeasureSliceData,
   preparePieData,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import { formatTimeBucket, getTimeGranularityFromKey } from "@/modules/ee/analysis/charts/lib/time-axis";
 import { computeYAxis } from "@/modules/ee/analysis/charts/lib/y-axis-scale";
 import {
   FEEDBACK_MEASURE_IDS,
@@ -135,7 +139,7 @@ const PieCenterLabel = ({
   );
 };
 
-interface BarChartViewProps {
+interface BarChartViewProps extends Pick<CartesianChartProps, "timeAxis"> {
   sortedData: TChartDataRow[];
   dataKeys: string[];
   isMultiMeasure: boolean;
@@ -155,6 +159,7 @@ const BarChartView = ({
   chartConfig,
   formatDimensionValue,
   isHorizontal = false,
+  timeAxis,
 }: Readonly<BarChartViewProps>) => {
   const { t } = useTranslation();
   // Value labels sit past the end of the bar, which is the top of a vertical bar and the
@@ -234,6 +239,7 @@ const BarChartView = ({
       hasCategoryAxis={hasCategoryAxis}
       horizontal={isHorizontal}
       xAxisTickFormatter={formatDimensionValue}
+      timeAxis={timeAxis}
       chartProps={isMultiMeasure ? { barCategoryGap: "20%" } : {}}>
       {dataKeys.map((key) => (
         <Bar key={key} dataKey={key} fill={chartConfig[key]?.color} radius={4}>
@@ -364,7 +370,7 @@ export function ChartRenderer({
   optionLabels,
   config,
 }: Readonly<ChartRendererProps>) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { barOrientation, pieDisplay, areaDisplay } = resolveChartDisplay(config);
   // Unique across charts on the same page so SVG <defs> ids don't collide.
   const gradientIdPrefix = useId();
@@ -392,11 +398,17 @@ export function ChartRenderer({
   // Enum dimensions (e.g. sentiment) sort ordinally instead of alphabetically and
   // render translated labels instead of their raw machine tokens.
   const sortedData = sortRowsByEnumDimension(data, xAxisKey);
+  // A time-bucketed x-axis formats by its granularity: the tooltip header keeps an hourly bucket's
+  // time, and the axis thins its ticks to a readable density (ENG-3211).
+  const timeGranularity = xAxisKey === timeDimKey ? getTimeGranularityFromKey(xAxisKey) : undefined;
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  const timeAxis = timeGranularity ? { granularity: timeGranularity, locale } : undefined;
   const formatDimensionValue = (value: unknown): string => {
     // If the x-axis is a valueId dimension, resolve via the option-label map first.
     if (xAxisKey === "FeedbackRecords.valueId" && optionLabels && typeof value === "string") {
       return optionLabels[value] ?? value;
     }
+    if (timeGranularity) return formatTimeBucket(value, timeGranularity, locale);
     return getTranslatedDimensionValueLabel(xAxisKey, value, t) ?? formatXAxisTick(value);
   };
 
@@ -445,6 +457,7 @@ export function ChartRenderer({
           chartConfig={chartConfig}
           formatDimensionValue={formatDimensionValue}
           isHorizontal={barOrientation === "horizontal"}
+          timeAxis={timeAxis}
         />
       );
     // Line is a display style of this type, not a type of its own: both render the same Recharts
@@ -461,6 +474,7 @@ export function ChartRenderer({
           showLegend
           hasCategoryAxis={hasCategoryAxis}
           xAxisTickFormatter={formatDimensionValue}
+          timeAxis={timeAxis}
           pointScale>
           {isLine ? (
             <defs>

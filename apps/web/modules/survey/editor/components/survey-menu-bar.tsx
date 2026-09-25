@@ -699,6 +699,7 @@ export const SurveyMenuBar = ({
             setLocalSurvey(updatedSurvey);
           }}
           className="h-8 w-72 border-white py-0 hover:border-slate-200"
+          aria-label={t("workspace.surveys.rename_survey_placeholder")}
         />
       </div>
 

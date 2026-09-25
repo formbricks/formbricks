@@ -59,10 +59,9 @@ export const duplicateChartAndAddWidget = async ({
     dashboardId,
     chartId: chart.id,
     workspaceId,
+    // Placed in the first open slot, chosen inside the insert transaction off the layouts read there,
+    // so two concurrent duplicates cannot settle on the same spot.
     layout,
-    // The slot is chosen inside the insert transaction, off the layouts read there, so two
-    // concurrent duplicates cannot settle on the same spot.
-    placement: "nextOpenSlot",
   });
 
   return { chart, widget };

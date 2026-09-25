@@ -37,7 +37,7 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
       };
     }
     const { surveyId } = result.data;
-    const { title, description, survey, ogImage } = await getBasicSurveyMetadata(surveyId);
+    const { title, ogTitle, description, survey, ogImage } = await getBasicSurveyMetadata(surveyId);
 
     if (!survey) {
       return { title, description };
@@ -48,7 +48,7 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
     const customFaviconUrl = workspaceContext.organizationWhitelabel?.faviconUrl;
 
     const brandColor = getMetadataBrandColor(workspaceContext.workspace.styling, survey.styling);
-    const baseMetadata = getSurveyOpenGraphMetadata(survey.id, title, brandColor);
+    const baseMetadata = getSurveyOpenGraphMetadata(survey.id, ogTitle, brandColor);
 
     // Override with the custom image URL
     if (baseMetadata.openGraph) {

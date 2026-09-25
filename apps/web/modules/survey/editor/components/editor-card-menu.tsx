@@ -2,7 +2,7 @@
 
 import { createId } from "@paralleldrive/cuid2";
 import { ArrowDownIcon, ArrowRightIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { TI18nString } from "@formbricks/types/i18n";
@@ -17,6 +17,7 @@ import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -72,6 +73,7 @@ export const EditorCardMenu = ({
 }: EditorCardMenuProps) => {
   const { t } = useTranslation();
   const [logicWarningModal, setLogicWarningModal] = useState(false);
+  const menuId = useId();
   const [changeToType, setChangeToType] = useState(() => {
     if (card.type !== "endScreen" && card.type !== "redirectToUrl") {
       return card.type;
@@ -241,9 +243,13 @@ export const EditorCardMenu = ({
                     }))
                     .filter((group) => group.elements.length > 0)
                     .map((group, index) => (
-                      <div key={group.category.id}>
+                      <DropdownMenuGroup
+                        key={group.category.id}
+                        aria-labelledby={`${menuId}-change-${group.category.id}`}>
                         {index > 0 && <DropdownMenuSeparator />}
-                        <DropdownMenuLabel className="pt-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                        <DropdownMenuLabel
+                          id={`${menuId}-change-${group.category.id}`}
+                          className="pt-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
                           {group.category.label}
                         </DropdownMenuLabel>
                         {group.elements.map((elementType) => (
@@ -262,7 +268,7 @@ export const EditorCardMenu = ({
                             <span className="ml-2">{elementType.label}</span>
                           </DropdownMenuItem>
                         ))}
-                      </div>
+                      </DropdownMenuGroup>
                     ))}
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
@@ -286,9 +292,13 @@ export const EditorCardMenu = ({
 
                 <DropdownMenuSubContent className="ml-2">
                   {groupedElementTypes.map((group, index) => (
-                    <div key={group.category.id}>
+                    <DropdownMenuGroup
+                      key={group.category.id}
+                      aria-labelledby={`${menuId}-add-${group.category.id}`}>
                       {index > 0 && <DropdownMenuSeparator />}
-                      <DropdownMenuLabel className="pt-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                      <DropdownMenuLabel
+                        id={`${menuId}-add-${group.category.id}`}
+                        className="pt-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
                         {group.category.label}
                       </DropdownMenuLabel>
                       {group.elements.map((elementType) => (
@@ -305,7 +315,7 @@ export const EditorCardMenu = ({
                           <span className="ml-2">{elementType.label}</span>
                         </DropdownMenuItem>
                       ))}
-                    </div>
+                    </DropdownMenuGroup>
                   ))}
                 </DropdownMenuSubContent>
               </DropdownMenuSub>

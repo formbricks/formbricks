@@ -65,13 +65,11 @@ jobs:
         with:
           egress-policy: audit
           # This is a literal block, so every line below is an endpoint — no comments inside it.
-          # quay.io carries the MinIO images and serves their blobs directly, with no separate
-          # CDN host to allow; Docker Hub stays for every other image.
+          # Docker Hub serves every container image used by this workflow.
           allowed-endpoints: |
             ee.formbricks.com:443
             registry-1.docker.io:443
             docker.io:443
-            quay.io:443
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: ./.github/actions/dangerous-git-checkout
@@ -187,7 +185,7 @@ jobs:
             -e RUSTFS_POLICY_NAME=formbricks-e2e-policy \
             -e RUSTFS_CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000 \
             -v "$PWD/docker/rustfs-init.sh:/tmp/rustfs-init.sh:ro" \
-            quay.io/minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 \
+            rustfs/rc:v0.1.36@sha256:ab024bfebee49a750ce886b4c70963ccd9ddaa03f491704a90710641d7a26699 \
             /tmp/rustfs-init.sh
 
       # NOTE: no build cache here. We measured caching Next's .next/cache

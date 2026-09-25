@@ -55,13 +55,13 @@ curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker
 ```
 
 <Info>
-  The v6 one-click stack is based on the production Docker Compose file and includes Formbricks Hub
-  and Cube as part of the baseline (Cube configuration lives under `formbricks/cube/`). Ensure your generated
-  `formbricks/docker-compose.yml` contains a non-empty `HUB_API_KEY` and that `formbricks/.env` contains
-  `CUBEJS_API_SECRET`, `AUTHZED_TOKEN`, and `AUTHZED_DATABASE_PASSWORD` before treating the stack as ready.
-  The installer generates these values without printing them and restricts `.env` to `0600`. `HUB_API_URL`
-  should normally stay at `http://hub:8080`. Bundled SpiceDB is installed for every new setup and does not
-  require an Enterprise license check.
+  The v6 one-click stack is based on the production Docker Compose file and includes the Formbricks Hub API,
+  `hub-worker`, and Cube as part of the baseline (Cube configuration lives under `formbricks/cube/`). Ensure your
+  generated `formbricks/docker-compose.yml` contains the worker service and a non-empty `HUB_API_KEY`, and that
+  `formbricks/.env` contains `CUBEJS_API_SECRET`, `AUTHZED_TOKEN`, and `AUTHZED_DATABASE_PASSWORD` before
+  treating the stack as ready. The installer generates these values without printing them and restricts `.env`
+  to `0600`. `HUB_API_URL` should normally stay at `http://hub:8080`. Bundled SpiceDB is installed for every new
+  setup and does not require an Enterprise license check.
 </Info>
 
 <Info>
@@ -334,10 +334,11 @@ chmod +x formbricks.sh
 ./formbricks.sh update
 ```
 
-The script pulls images and runs the read-only AuthZed upgrade check. A failed check leaves the existing
-application running. Otherwise it stops the stack, waits for PostgreSQL, completes application migrations,
-and only then starts the new stack. A failed migration leaves the stack stopped for recovery; preparation
-is never run against a live installation by the updater.
+The script first validates the resolved Compose project and requires the baseline `hub-worker`, then pulls
+images and runs the read-only AuthZed upgrade check. A failed preflight leaves the existing application running.
+Otherwise it stops the stack, waits for PostgreSQL, completes application migrations, and only then starts the
+new stack. A failed migration leaves the stack stopped for recovery; preparation is never run against a live
+installation by the updater.
 
 Starting with v5.4, the updater also recognizes the old amd64-only bundled Valkey digest. It backs up your
 Compose file, replaces only that exact image reference with the native amd64/arm64 digest, and validates the
@@ -354,8 +355,10 @@ The update command does not regenerate or rotate them.
   your existing deployment, confirm `HUB_API_KEY` is set, and only then run the update command. If your older
   one-click install also uses bundled MinIO for file uploads, review that storage path separately before the
   first v5 restart; newer self-hosting updates move the bundled object-storage path to RustFS, while external
-  S3-compatible storage keeps the same `S3_*` app contract. The v6 updater also refuses to continue until the
-  Compose file contains the release-matched AuthZed services and `.env` contains
+  S3-compatible storage keeps the same `S3_*` app contract. The updater refuses to continue until the Compose
+  project includes the release-matched `hub-worker`; follow the
+  [Hub worker migration](/self-hosting/advanced/migration#hub-worker-required-for-docker) if that preflight
+  fails. The v6 updater also requires the release-matched AuthZed services and requires `.env` to contain
   `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` after a clean preparation.
 
   The same applies to pinned third-party images. Because the update command only re-pulls what your Compose

@@ -287,7 +287,9 @@ Before migrations start, the migration Job waits for the effective PostgreSQL en
 
 When deployed with Argo CD, chart-managed Secrets, ExternalSecrets, and bundled PostgreSQL render in sync wave `-2`, and the Formbricks and Hub migration hooks run in sync wave `-1`. This lets app and Hub secrets exist and PostgreSQL become healthy before migration jobs start.
 
-Self-hosted embeddings are disabled by default. Set `hub.embeddings.enabled=true` to deploy an internal Hugging Face Text Embeddings Inference (TEI) service and wire Hub API plus Hub worker to it through the OpenAI-compatible endpoint added in Hub:
+Embeddings are disabled by default. Set `hub.embeddings.enabled=true` to configure Hub API and Hub
+worker for an OpenAI-compatible endpoint. The chart deploys an internal Hugging Face Text Embeddings
+Inference (TEI) service by default:
 
 ```yaml
 hub:
@@ -306,6 +308,27 @@ The generated Hub embedding configuration is:
 - `EMBEDDING_MODEL=<hub.embeddings.servedModelName or hub.embeddings.model>`
 - `EMBEDDING_BASE_URL=http://<release>-hub-embeddings:8080/v1`
 - `EMBEDDING_PROVIDER_API_KEY` from a dedicated embeddings Secret
+
+To use an externally managed runtime without deploying the bundled TEI workloads, set
+`deployRuntime=false`, provide the external URLs, and reference a Secret containing the matching API
+key:
+
+```yaml
+hub:
+  embeddings:
+    enabled: true
+    deployRuntime: false
+    baseUrl: https://embeddings.example.com/v1
+    auth:
+      existingSecret: formbricks-embeddings
+    background:
+      enabled: true
+      baseUrl: https://embeddings-worker.example.com/v1
+```
+
+When the background pool is disabled, Hub worker reuses the foreground `baseUrl`. When it is enabled
+with `deployRuntime=false`, `background.baseUrl` is required. The chart continues wiring Hub and the
+worker but omits the bundled TEI Deployments, StatefulSet, Services, PVC, HPAs, and PDB.
 
 For sustained background throughput, enable the worker-only TEI pool. Hub API and semantic-search
 queries continue to use the foreground service; only `hub-worker` receives the background URL and
@@ -785,6 +808,7 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | hub.embeddings.autoscaling.maxReplicas                             | int    | `2`                                                                         |                                                           |
 | hub.embeddings.autoscaling.minReplicas                             | int    | `1`                                                                         |                                                           |
 | hub.embeddings.baseUrl                                             | string | `""`                                                                        | Defaults to the internal TEI service URL ending in `/v1`. |
+| hub.embeddings.deployRuntime                                       | bool   | `true`                                                                      | Deploy the bundled TEI workloads.                        |
 | hub.embeddings.enabled                                             | bool   | `false`                                                                     |                                                           |
 | hub.embeddings.extraArgs                                           | list   | `["--dtype","float16"]`                                                     | Additional args appended to the generated TEI args.       |
 | hub.embeddings.huggingFace.existingSecret                          | string | `""`                                                                        |                                                           |
