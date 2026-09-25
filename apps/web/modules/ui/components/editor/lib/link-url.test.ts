@@ -29,6 +29,8 @@ describe("isValidEditorLinkUrl", () => {
     expect(isValidEditorLinkUrl("mailto:%E0@example.com")).toBe(false);
     expect(isValidEditorLinkUrl("mailto:hello@example.com%0D%0ABcc:other@example.com")).toBe(false);
     expect(isValidEditorLinkUrl("mailto:hello@example.com%7F")).toBe(false);
+    expect(isValidEditorLinkUrl("mailto:a@b@example.com")).toBe(false);
+    expect(isValidEditorLinkUrl("mailto:hello@example")).toBe(false);
   });
 
   test("rejects script-capable and other schemes", () => {

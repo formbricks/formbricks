@@ -1,3 +1,4 @@
+import { isEmailAddressShape } from "@formbricks/types/common";
 import { isStringUrl } from "@/lib/utils/url";
 
 const hasControlCharacter = (value: string): boolean =>
@@ -11,10 +12,7 @@ const hasControlCharacter = (value: string): boolean =>
 const isValidMailtoUrl = (urlObj: URL): boolean => {
   const recipients = decodeURIComponent(urlObj.pathname);
   if (!recipients || recipients.includes(" ") || hasControlCharacter(recipients)) return false;
-  return recipients.split(",").every((recipient) => {
-    const atIndex = recipient.indexOf("@");
-    return atIndex > 0 && atIndex < recipient.length - 1;
-  });
+  return recipients.split(",").every(isEmailAddressShape);
 };
 
 export const isMailtoUrl = (url: string): boolean => url.trim().toLowerCase().startsWith("mailto:");

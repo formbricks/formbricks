@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { ZEndingCardButtonLink, ZEndingCardUrl } from "./common";
+import { ZEndingCardButtonLink, ZEndingCardUrl, isEmailAddressShape } from "./common";
 
 describe("ZEndingCardButtonLink", () => {
   test("accepts http(s) links, including recall placeholders", () => {
@@ -36,6 +36,9 @@ describe("ZEndingCardButtonLink", () => {
       "mailto:#recall:/fallback:x#",
       "mailto:#recall:email#",
       "mailto:#recall:em ail/fallback:x#",
+      "mailto:#recall:email/fallback:not-an-email#",
+      "mailto:#recall:email/fallback:#",
+      "mailto:a@b@example.com",
     ]) {
       const result = ZEndingCardButtonLink.safeParse(url);
       expect(result.success).toBe(false);
@@ -53,5 +56,26 @@ describe("ZEndingCardButtonLink", () => {
 
   test("leaves redirect URLs http(s)-only", () => {
     expect(ZEndingCardUrl.safeParse("mailto:hello@felofish.com").success).toBe(false);
+  });
+});
+
+describe("isEmailAddressShape", () => {
+  test("accepts a single address with a dotted domain", () => {
+    expect(isEmailAddressShape("hello@example.com")).toBe(true);
+    expect(isEmailAddressShape("first.last+tag@sub.example.org")).toBe(true);
+  });
+
+  test("rejects anything else", () => {
+    for (const value of [
+      "",
+      "hello",
+      "@example.com",
+      "a@b@example.com",
+      "a@example",
+      "a@example.c",
+      "a b@example.com",
+    ]) {
+      expect(isEmailAddressShape(value)).toBe(false);
+    }
   });
 });

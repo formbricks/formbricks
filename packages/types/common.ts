@@ -131,33 +131,37 @@ export const endingCardButtonLinkRefinement = (url: string, ctx: z.RefinementCtx
   }
 };
 
-// A recipient filled in from a recall value (`#recall:id/fallback:…#`) is only known at response time,
-// so it is accepted as is; the renderer re-checks the final URL before opening it.
-const RECALL_PREFIX = "#recall:";
+/**
+ * Whether `address` has the shape the survey email validator accepts: one `@` with a non-empty local
+ * part, and a dotted domain whose top-level domain has 2+ characters. No whitespace.
+ */
+export const isEmailAddressShape = (address: string): boolean => {
+  const atIndex = address.indexOf("@");
+  if (atIndex <= 0 || address.lastIndexOf("@") !== atIndex || /\s/.test(address)) return false;
+  const domain = address.slice(atIndex + 1);
+  const dotIndex = domain.lastIndexOf(".");
+  return dotIndex > 0 && dotIndex < domain.length - 2;
+};
 
+const RECALL_PREFIX = "#recall:";
 const RECALL_FALLBACK_MARKER = "/fallback:";
 const RECALL_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
 
-// Same grammar the survey renderer resolves: `#recall:<id>/fallback:<text>#`.
-const isRecallToken = (recipient: string): boolean => {
+// A recipient filled in from a recall value is only known at response time. It must use the grammar the
+// survey renderer resolves (`#recall:<id>/fallback:<text>#`), and its fallback, which is what the link
+// uses when there is no answer, must itself be a valid address.
+const isRecallRecipient = (recipient: string): boolean => {
   if (!recipient.startsWith(RECALL_PREFIX) || !recipient.endsWith("#")) return false;
   const body = recipient.slice(RECALL_PREFIX.length, -1);
   const markerIndex = body.indexOf(RECALL_FALLBACK_MARKER);
   if (markerIndex < 0) return false;
   const id = body.slice(0, markerIndex);
   const fallback = body.slice(markerIndex + RECALL_FALLBACK_MARKER.length);
-  return RECALL_ID_PATTERN.test(id) && !fallback.includes("#");
+  return RECALL_ID_PATTERN.test(id) && !fallback.includes("#") && isEmailAddressShape(fallback);
 };
 
-const isMailtoRecipientValid = (recipient: string): boolean => {
-  if (isRecallToken(recipient)) return true;
-  const atIndex = recipient.indexOf("@");
-  if (atIndex <= 0 || recipient.includes(" ")) return false;
-  const domain = recipient.slice(atIndex + 1);
-  const dotIndex = domain.lastIndexOf(".");
-  // Same shape as the survey email validator: a dotted domain with a top-level domain of 2+ characters.
-  return dotIndex > 0 && dotIndex < domain.length - 2 && !domain.includes("@");
-};
+const isMailtoRecipientValid = (recipient: string): boolean =>
+  isRecallRecipient(recipient) || isEmailAddressShape(recipient);
 
 const areMailtoRecipientsValid = (recipients: string): boolean => {
   if (recipients.length === 0) return false;
