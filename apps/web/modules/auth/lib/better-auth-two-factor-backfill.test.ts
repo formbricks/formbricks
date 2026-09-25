@@ -60,7 +60,7 @@ describe("twoFactorBackfillAfterHandler", () => {
     );
     expect(prisma.twoFactor.upsert).toHaveBeenCalledWith({
       where: { userId: "user123" },
-      update: { secret: "ba-secret", backupCodes: "ba-codes", verified: true },
+      update: {},
       create: { userId: "user123", secret: "ba-secret", backupCodes: "ba-codes", verified: true },
     });
   });

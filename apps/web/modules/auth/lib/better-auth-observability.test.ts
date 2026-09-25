@@ -9,6 +9,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import { sampleAuthFailure } from "./auth-failure-sampling";
 import {
   auditFailedAuthAfter,
   auditPasswordReset,
@@ -23,7 +24,7 @@ import {
 import { runWithBetterAuthRequestContext } from "./better-auth-request-context";
 import { finalizeSuccessfulSignIn } from "./sign-in-tracking";
 import { SSO_PROVISIONING_REJECT_REASONS } from "./sso-provisioning-reject-reasons";
-import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
+import { logAuthAttempt } from "./utils";
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   queueAuditEventBackground: vi.fn(),
@@ -44,8 +45,8 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 // betterAuthLogger only captures to Sentry when SENTRY_DSN && IS_PRODUCTION; force both on for the file.
-vi.mock("@/lib/constants", async (importActual) => ({
-  ...(await importActual<typeof import("@/lib/constants")>()),
+vi.mock("@/lib/constants", () => ({
+  AUDIT_LOG_ENABLED: true,
   IS_PRODUCTION: true,
   SENTRY_DSN: "https://examplePublicKey@o0.ingest.sentry.io/0",
 }));
@@ -54,9 +55,9 @@ vi.mock("./sign-in-tracking", () => ({
   finalizeSuccessfulSignIn: vi.fn(),
 }));
 
+vi.mock("./auth-failure-sampling", () => ({ sampleAuthFailure: vi.fn() }));
 vi.mock("./utils", () => ({
   logAuthAttempt: vi.fn(),
-  shouldLogAuthFailure: vi.fn(),
 }));
 
 describe("redactEmailsInLogMessage (ENG-2091)", () => {
@@ -138,7 +139,13 @@ const unauthorized = (): APIError =>
 describe("auditFailedAuthAfter (failed-login audit)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(shouldLogAuthFailure).mockResolvedValue(true);
+    vi.mocked(sampleAuthFailure).mockResolvedValue({
+      emit: true,
+      attemptCount: 1,
+      suppressedCount: 0,
+      windowStart: 0,
+      samplingUnavailable: false,
+    });
   });
 
   test("audits a rejected /sign-in/email via the hashed-identifier helper", async () => {
@@ -146,14 +153,15 @@ describe("auditFailedAuthAfter (failed-login audit)", () => {
       makeCtx({ path: "/sign-in/email", body: { email: "ada@example.com" }, returned: unauthorized() })
     );
 
-    expect(shouldLogAuthFailure).toHaveBeenCalledWith("ada@example.com");
+    expect(sampleAuthFailure).toHaveBeenCalledWith("ada@example.com");
     // Reason derived from the returned APIError's code; never the raw email (logAuthAttempt hashes it).
     expect(logAuthAttempt).toHaveBeenCalledWith(
       "invalid_email_or_password",
       "credentials",
       "password",
       UNKNOWN_DATA,
-      "ada@example.com"
+      "ada@example.com",
+      expect.objectContaining({ attemptCount: 1, suppressedCount: 0 })
     );
   });
 
@@ -162,7 +170,7 @@ describe("auditFailedAuthAfter (failed-login audit)", () => {
       makeCtx({ path: "/sign-up/email", body: { email: "ada@example.com" }, returned: unauthorized() })
     );
 
-    expect(shouldLogAuthFailure).not.toHaveBeenCalled();
+    expect(sampleAuthFailure).not.toHaveBeenCalled();
     expect(logAuthAttempt).not.toHaveBeenCalled();
   });
 
@@ -178,8 +186,14 @@ describe("auditFailedAuthAfter (failed-login audit)", () => {
     expect(logAuthAttempt).not.toHaveBeenCalled();
   });
 
-  test("respects the rate-limit gate (fail-closed when Redis is unavailable)", async () => {
-    vi.mocked(shouldLogAuthFailure).mockResolvedValue(false);
+  test("respects a distributed sampling suppression", async () => {
+    vi.mocked(sampleAuthFailure).mockResolvedValue({
+      emit: false,
+      attemptCount: 4,
+      suppressedCount: 1,
+      windowStart: 0,
+      samplingUnavailable: false,
+    });
 
     await auditFailedAuthAfter(
       makeCtx({ path: "/sign-in/email", body: { email: "ada@example.com" }, returned: unauthorized() })
@@ -191,7 +205,7 @@ describe("auditFailedAuthAfter (failed-login audit)", () => {
   test("skips when the request body carries no email", async () => {
     await auditFailedAuthAfter(makeCtx({ path: "/sign-in/email", body: {}, returned: unauthorized() }));
 
-    expect(shouldLogAuthFailure).not.toHaveBeenCalled();
+    expect(sampleAuthFailure).not.toHaveBeenCalled();
     expect(logAuthAttempt).not.toHaveBeenCalled();
   });
 
@@ -213,7 +227,8 @@ describe("auditFailedAuthAfter (failed-login audit)", () => {
       "credentials",
       "password",
       UNKNOWN_DATA,
-      "ada@example.com"
+      "ada@example.com",
+      expect.objectContaining({ attemptCount: 1, suppressedCount: 0 })
     );
   });
 });
