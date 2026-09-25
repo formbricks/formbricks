@@ -21,9 +21,13 @@ There are two types of variables you can add to your survey:
 ## How to Add Variables
 
 1. Open the survey in the editor, stay on the **Questions** tab and scroll to the bottom. You will find the **Embedded Data** card.
-2. Choose **New field**, set the source to **Calculated**, give it a name, choose its type — text or number — and set a default value. Add as many as you need.
+2. Choose **Add field**, then **Create new field**. Set the source to **Calculated**, give it a name, choose its type — text or number — and set a default value. Add as many as you need.
 
-Each calculated field is addressed by an ID rather than by its name, shown on its row in the card, and that ID is what recall and logic use.
+A calculated field has one name, and it is both what recall and logic refer to it by and what the response table shows — so it has to read like a key: lowercase letters, numbers and underscores. Its storage address is generated for you and never typed.
+
+![The Embedded Data card, with the calculated field score beside two passed-in fields](/images/surveys/embedded-data/editor-card.webp)
+
+The `score` row above is a calculated field: **Calculated** as its source, `0` as the value it starts at, and a generated address you never type.
 
 ## Use cases
 
@@ -35,11 +39,11 @@ Each calculated field is addressed by an ID rather than by its name, shown on it
 
 Variables are different from hidden fields in the following ways:
 
-1. **Setting**: Hidden fields can be set through query parameters or `formbricks.setup`, but variables can only be set either during creation or dynamically by using logic actions.
+1. **Setting**: a passed-in field is filled from a URL parameter or the SDK; a calculated field can only be set at creation or updated by logic actions as the survey runs.
 
 2. **Updating**: Hidden fields cannot be set again, but the value of variables can be updated while the user fills the survey.
 
-3. **Type**: Hidden fields can only store text data, but variables can store both text and number data.
+3. **Type**: a passed-in field can be text, number, true/false or a date; a calculated field is text or number, the types survey logic can produce.
 
 ## How to use Variables
 

@@ -40,6 +40,27 @@ The distinction the two names were always making is the one the new vocabulary m
   survey that is otherwise capturing everything.
 </Note>
 
+## What Changed in the Editor
+
+The Hidden Fields and Variables cards are gone. One **Embedded Data** card replaces both, and a field's old card is now its **source**: **Passed in** for what used to be a hidden field, **Calculated** for what used to be a variable.
+
+Nothing about your data moved. Existing fields appear in the new card at the addresses they already had, with the values they already collected.
+
+| Before                                   | Now                                                          |
+| ---------------------------------------- | ------------------------------------------------------------ |
+| Two cards, one per kind                  | One **Embedded Data** card, source picked per field           |
+| A hidden field was a bare name           | A **Name** you can rename, and a **Key** that is the address  |
+| Text only, no default, no lock           | A type, a default and a lock on any passed-in field           |
+| A field belonged to one survey           | Or to the workspace — see [Field library](/surveys/embedded-data/library) |
+
+<Note>
+  **Nothing changed for URL parameters, `setEmbeddedData()` or the API.** `?plan=gold` fills the same field
+  it always did, the SDK call is unchanged, and `hiddenFields` and `variables` on the survey resource look
+  exactly as they did. This release changes where you author a field, not how anything reads or writes one.
+</Note>
+
+A survey carried over from before this release can hold a field today's rules would refuse — a mixed-case name, a name the platform has since reserved, two fields answering to one name. Those keep working and are never renamed; the card marks the row and says why, because the address a value is stored under cannot change. The list is on the [Field library](/surveys/embedded-data/library#what-the-warnings-on-a-row-mean) page.
+
 ## Naming Rules for New Fields
 
 New hidden field and variable names must start with a lowercase letter and then contain only lowercase letters, numbers and underscores, and cannot be one of the reserved names in any casing. Names your surveys already use are grandfathered: they load, collect values and re-save unchanged.
