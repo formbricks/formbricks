@@ -444,3 +444,7 @@ patchedDependencies:
   # ENG-2559: a failed secondary-storage session read bypasses Better Auth's configured database
   # fallback. Remove this version-pinned patch once upstream handles Redis read failures here.
   "better-auth@1.7.0": patches/better-auth@1.7.0.patch
+  # ENG-2780 / node-postgres#3543: pg-pool can retain a connection that finishes establishing after
+  # connectionTimeoutMillis, leaking capacity and poisoning the pool. Remove this version-pinned patch
+  # once node-postgres#3711 is released in pg-pool and the dependency is upgraded to that version.
+  "pg-pool@3.13.0": patches/pg-pool@3.13.0.patch
