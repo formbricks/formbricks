@@ -435,9 +435,9 @@ export const updateSurveyInternal = async (
         : [];
       const updatedLanguageIds =
         languages.length > 0 ? updatedSurvey.languages.map((l) => l.language.id) : [];
-      const enabledLanguageIds = languages.map((language) => {
-        if (language.enabled) return language.language.id;
-      });
+      const enabledLanguageIds = languages
+        .filter((language) => language.enabled)
+        .map((language) => language.language.id);
 
       // Determine languages to add and remove
       const languagesToAdd = updatedLanguageIds.filter((id) => !currentLanguageIds.includes(id));
@@ -468,10 +468,7 @@ export const updateSurveyInternal = async (
 
       // Remove languages no longer associated with the survey
       if (languagesToRemove.length > 0) {
-        data.languages.deleteMany = languagesToRemove.map((languageId) => ({
-          languageId: languageId,
-          enabled: enabledLanguageIds.includes(languageId),
-        }));
+        data.languages.deleteMany = languagesToRemove.map((languageId) => ({ languageId }));
       }
     }
 

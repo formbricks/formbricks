@@ -33,6 +33,7 @@ import {
   mockActionClass,
   mockId,
   mockOrganizationOutput,
+  mockSurveyLanguages,
   mockSurveyOutput,
   mockSurveyWithLogic,
   mockTransformedSurveyOutput,
@@ -370,6 +371,28 @@ describe("Tests for updateSurvey", () => {
       expect(updateArg?.data).not.toHaveProperty("workspaceId");
       expect(updateArg?.data).not.toHaveProperty("id");
       expect(updateArg?.where).toEqual({ id: updateSurveyInput.id });
+    });
+
+    test("deletes a removed language even when it was enabled", async () => {
+      // The current survey carries en (default) and de, both enabled; the update keeps only en.
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.language.findMany.mockResolvedValueOnce([mockSurveyLanguages[0].language]);
+      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+      await updateSurvey({ ...updateSurveyInput, languages: [mockSurveyLanguages[0]] });
+
+      const updateArg = vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0];
+      expect(updateArg?.data.languages).toEqual(
+        expect.objectContaining({
+          deleteMany: [{ languageId: mockSurveyLanguages[1].language.id }],
+          updateMany: expect.arrayContaining([
+            {
+              where: { languageId: mockSurveyLanguages[0].language.id },
+              data: { default: true, enabled: true },
+            },
+          ]),
+        })
+      );
     });
 
     // Note: Language handling tests (for languages.length > 0 fix) are covered in

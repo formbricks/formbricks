@@ -883,6 +883,34 @@ describe("Survey Logic", () => {
       ).toBe(true);
     });
 
+    test("evaluates doesNotIncludeAllOf as the inverse of includesAllOf", () => {
+      const condition = (
+        operator: "includesAllOf" | "doesNotIncludeAllOf" | "doesNotIncludeOneOf",
+        right: string[]
+      ): TConditionGroup => ({
+        id: "group1",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            operator,
+            leftOperand: { type: "element", value: "q4" },
+            rightOperand: { type: "static", value: right },
+          },
+        ],
+      });
+      const evaluate = (group: TConditionGroup) =>
+        evaluateLogic(mockSurvey, mockData, mockVariablesData, group, "default");
+
+      // q4 holds Option 1 and Option 2: opt3 is missing, so not all of them are included — but one is.
+      expect(evaluate(condition("includesAllOf", ["opt1", "opt3"]))).toBe(false);
+      expect(evaluate(condition("doesNotIncludeAllOf", ["opt1", "opt3"]))).toBe(true);
+      expect(evaluate(condition("doesNotIncludeOneOf", ["opt1", "opt3"]))).toBe(false);
+      // Every selected option is present.
+      expect(evaluate(condition("includesAllOf", ["opt1", "opt2"]))).toBe(true);
+      expect(evaluate(condition("doesNotIncludeAllOf", ["opt1", "opt2"]))).toBe(false);
+    });
+
     test("evaluates special state operators", () => {
       // Tests for isSubmitted, isSkipped, etc.
       const isSubmittedCondition: TConditionGroup = {
