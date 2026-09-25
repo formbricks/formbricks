@@ -148,7 +148,8 @@ const isMailtoRecipientValid = (recipient: string): boolean => {
   if (atIndex <= 0 || recipient.includes(" ")) return false;
   const domain = recipient.slice(atIndex + 1);
   const dotIndex = domain.lastIndexOf(".");
-  return dotIndex > 0 && dotIndex < domain.length - 1 && !domain.includes("@");
+  // Same shape as the survey email validator: a dotted domain with a top-level domain of 2+ characters.
+  return dotIndex > 0 && dotIndex < domain.length - 2 && !domain.includes("@");
 };
 
 const areMailtoRecipientsValid = (recipients: string): boolean => {
