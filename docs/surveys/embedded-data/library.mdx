@@ -35,6 +35,10 @@ In the survey editor, on the **Questions** tab, scroll to the **Embedded Data** 
   </Step>
 </Steps>
 
+![The Embedded Data card, with a linked library field above two the survey owns](/images/surveys/embedded-data/editor-card.webp)
+
+A row's badge says which kind it is: **Library** for a linked field, **This survey** for one declared here.
+
 ## Name and Key
 
 A **passed-in** field has two things a person types, and they are not the same:
@@ -54,7 +58,16 @@ A library field's key is workspace-unique, so two library fields can share a dis
 
 ## The Library Page
 
-**Settings → Workspace → Embedded Data** lists every shared field with its source, type, and how many surveys use it. From a row's menu you can edit it, or delete it.
+**Settings → Workspace → Embedded Data** is where the library lives. The **Library** card lists every shared
+field with its key, source, type, default and how many surveys use it; the **Used in** cell names them.
+
+![The workspace Embedded Data page: the Library card above the auto-captured fields](/images/surveys/embedded-data/library-page.webp)
+
+**New field** declares one straight from this page, without opening a survey — the same dialog the survey
+editor's **Create new field** tab uses, so a field can start life either way. Clicking a row opens it for
+editing, and the row's menu offers the same Edit plus Delete.
+
+![The New library field dialog: name, key, source, lock, type and default](/images/surveys/embedded-data/new-library-field.webp)
 
 - **Editing a field applies to every survey using it.** The dialog says so before you save.
 - **Deleting is blocked while a field is in use.** Formbricks names the surveys still holding it and asks you to remove it from those first.
@@ -64,6 +77,9 @@ A library field's key is workspace-unique, so two library fields can share a dis
   - A value that does not fit falls back to the field's default, or reads as unset when it has none. `"gold"` under a field retyped to number is still stored, and still exported, but no longer resolves.
 
   Where you see this depends on the reader. The [v3 responses API](/api-v3-reference/introduction) resolves through the declared type, so its output changes. Exports and the response table show the stored value as text, so they do not.
+
+A member without permission to change workspace settings still sees every field and its values, but gets no
+**New field** button and no row menu.
 
 The same page lists the **auto-captured fields** — the ones every survey records on every response without declaring anything. Those are covered in [Reserved fields](/surveys/embedded-data/reserved-fields).
 
