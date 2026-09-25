@@ -58,7 +58,12 @@ A library field's key is workspace-unique, so two library fields can share a dis
 
 - **Editing a field applies to every survey using it.** The dialog says so before you save.
 - **Deleting is blocked while a field is in use.** Formbricks names the surveys still holding it and asks you to remove it from those first.
-- **Changing a field's type is asked about, not applied silently**, once responses exist. Values already collected stay exactly as they are; only new responses are read as the new type, so filters and logic comparing the new type may not match the older values.
+- **Changing a field's type is asked about, not applied silently**, once responses exist. No stored value is rewritten — but reading one goes through the field's *current* type, so responses you already collected can come back differently:
+
+  - A value that fits the new type is read as it: `"42"` under a field retyped to number comes back as `42`.
+  - A value that does not fit falls back to the field's default, or reads as unset when it has none. `"gold"` under a field retyped to number is still stored, and still exported, but no longer resolves.
+
+  Where you see this depends on the reader. The [v3 responses API](/api-v3-reference/introduction) resolves through the declared type, so its output changes. Exports and the response table show the stored value as text, so they do not.
 
 The same page lists the **auto-captured fields** — the ones every survey records on every response without declaring anything. Those are covered in [Reserved fields](/surveys/embedded-data/reserved-fields).
 
