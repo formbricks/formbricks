@@ -51,7 +51,11 @@ import {
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { TElementResponseMappingSurvey, getElementResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
-import { TVerificationRequestPurpose, buildVerificationLinks } from "@/modules/auth/lib/verification-links";
+import {
+  TVerificationRequestPurpose,
+  VERIFICATION_LINK_TTL_SECONDS,
+  buildVerificationLinks,
+} from "@/modules/auth/lib/verification-links";
 import { buildVerifiedLinkSurveyUrl } from "@/modules/email/lib/verified-link-survey-url";
 import { resolveStorageUrl } from "@/modules/storage/utils";
 
@@ -151,17 +155,23 @@ export const sendVerificationEmail = async ({
   locale,
   callbackUrl,
   purpose = "email_verification",
+  linkTtlSeconds = VERIFICATION_LINK_TTL_SECONDS,
 }: {
   id: string;
   email: TUserEmail;
   locale: TUserLocale;
   callbackUrl?: string;
   purpose?: TVerificationRequestPurpose;
+  /**
+   * Overridden only by an SSO-recovery resend, which has to mint a link no longer-lived than the intent
+   * it points at — see `getSsoRecoveryPairedTtlSeconds`. Everything else gets the full window.
+   */
+  linkTtlSeconds?: number;
 }): Promise<boolean> => {
   try {
     const t = await getTranslate(locale);
     const token = createToken(id, {
-      expiresIn: "1d",
+      expiresIn: linkTtlSeconds,
       purpose,
     });
     const { verifyLink, verificationRequestLink } = buildVerificationLinks({
@@ -279,16 +289,20 @@ export const sendSsoRecoveryFactorsRemovedEmail = async ({
   locale,
   passwordRemoved,
   twoFactorRemoved,
+  apiKeysRemoved,
 }: {
   email: string;
   locale: TUserLocale;
   passwordRemoved: boolean;
   twoFactorRemoved: boolean;
+  /** Keys the account had created were deleted with the strip (ENG-2634). */
+  apiKeysRemoved: boolean;
 }): Promise<boolean> => {
   const t = await getTranslate(locale);
   const html = await renderSsoRecoveryFactorsRemovedEmail({
     passwordRemoved,
     twoFactorRemoved,
+    apiKeysRemoved,
     // The account profile page is where both factors this mail can name are re-enrolled — the password
     // form and the 2FA card both live there. There is no separate /settings/security route.
     securitySettingsLink: `${WEBAPP_URL}/account/settings/profile`,

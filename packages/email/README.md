@@ -42,17 +42,16 @@ Visit `localhost:3456` to preview all email templates with mock data.
 
 ### Styling
 
-Templates are styled with Tailwind utility classes on the `<Tailwind>` component from
-`@react-email/components`. There is no Tailwind build step, no PostCSS pipeline and no Tailwind config
-in this package, and none is needed: `@react-email/tailwind` compiles the classes at render time and
-inlines them into the email HTML.
+Templates are styled with Tailwind utility classes on the `<Tailwind>` component from `react-email`.
+There is no Tailwind build step, no PostCSS pipeline and no Tailwind config in this package, and none
+is needed: `<Tailwind>` compiles the classes at render time and inlines them into the email HTML.
 
-The engine it compiles with is **Tailwind v4** (`@react-email/components` → `@react-email/tailwind`,
-which depends on `tailwindcss@^4`), and `<Tailwind>` is used without a `config` prop, so the available
-utilities are exactly the **default v4 theme**. Write v4: `bg-linear-to-r`, `shadow-xs`,
-`inset-shadow-sm` and `text-shadow-lg` all render. The v3 spellings mostly still resolve as deprecated
-aliases, but v4 re-scaled some of them — `shadow-sm` now emits what v3's plain `shadow` emitted — so
-carrying v3 habits over changes the result silently.
+The engine it compiles with is **Tailwind v4** (`react-email` depends on `tailwindcss@^4`), and
+`<Tailwind>` is used without a `config` prop, so the available utilities are exactly the **default v4
+theme**. Write v4: `bg-linear-to-r`, `shadow-xs`, `inset-shadow-sm` and `text-shadow-lg` all render.
+The v3 spellings mostly still resolve as deprecated aliases, but v4 re-scaled some of them —
+`shadow-sm` now emits what v3's plain `shadow` emitted — so carrying v3 habits over changes the
+result silently.
 
 Nothing here should pin a Tailwind version of its own. Class sorting comes from the repo-root Prettier
 config, whose `prettier-plugin-tailwindcss` defaults to the same v4 theme. A package-local
@@ -109,6 +108,6 @@ const html = await renderResponseFinishedEmail({
 
 - **Preview Mode**: Templates use mock `t()` function and example data for visual QA
 - **Production Mode**: Web app passes real `t()` function and pre-processed data
-- **Render Functions**: Typed helper functions abstract `@react-email/render` from web app
+- **Render Functions**: Typed helper functions abstract `react-email`'s `render` from web app
 - **No Business Logic**: SMTP, i18n, JWT, database queries, and data processing stay in web app
 - **Clean Separation**: Web app processes data → Email package renders HTML

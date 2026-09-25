@@ -27,6 +27,10 @@ const dockerComposeOverrideKeys = [
   "POSTGRES_PASSWORD",
   "POSTGRES_PASSWORD_URL_ENCODED",
   "HUB_DATABASE_URL",
+  "HUB_IMAGE_REF",
+  "TAXONOMY_SERVICE_URL",
+  "TAXONOMY_SERVICE_TOKEN",
+  "HUB_INTERNAL_API_TOKEN",
   "CUBEJS_DB_PASS",
   "AUTHZED_TOKEN",
   "AUTHZED_DATABASE_PASSWORD",
@@ -39,7 +43,18 @@ const dockerComposeTest = (name: string, testFunction: () => void): void => {
 };
 
 type RenderedDockerComposeConfig = {
-  services: Record<string, { environment?: Record<string, string> }>;
+  services: Record<
+    string,
+    {
+      depends_on?: Record<string, { condition?: string }>;
+      entrypoint?: string[];
+      environment?: Record<string, string>;
+      healthcheck?: { disable?: boolean };
+      image?: string;
+      ports?: unknown[];
+      restart?: string;
+    }
+  >;
 };
 
 const createTempDir = (): string => {
@@ -305,6 +320,56 @@ describe("docker/docker-compose.yml Cube configuration", () => {
   });
 });
 
+describe("docker/docker-compose.yml Hub worker configuration", () => {
+  dockerComposeTest("runs the worker with the same image, database, and migration gate as Hub", () => {
+    const config = renderDockerCompose("POSTGRES_PASSWORD=test-password\n");
+    const hub = config.services.hub;
+    const hubMigrate = config.services["hub-migrate"];
+    const hubWorker = config.services["hub-worker"];
+
+    expect(hubWorker, "the hub-worker service is missing from docker-compose.yml").toBeTypeOf("object");
+    expect(hubWorker.image).toBe(hub.image);
+    expect(hubWorker.image).toBe(hubMigrate.image);
+    expect(hubWorker.entrypoint).toEqual(["/app/hub-worker"]);
+    expect(hubWorker.restart).toBe("always");
+    expect(hubWorker.ports ?? []).toEqual([]);
+    expect(hubWorker.healthcheck).toEqual({ disable: true });
+    expect(hubWorker.depends_on).toMatchObject({
+      "hub-migrate": { condition: "service_completed_successfully" },
+      postgres: { condition: "service_healthy" },
+    });
+    expect(hubWorker.depends_on).not.toHaveProperty("hub");
+    expect(getRenderedServiceEnvironment(config, "hub-worker").DATABASE_URL).toBe(
+      getRenderedServiceEnvironment(config, "hub").DATABASE_URL
+    );
+    expect(getRenderedServiceEnvironment(config, "hub-worker")).not.toHaveProperty("API_KEY");
+  });
+
+  dockerComposeTest("applies Hub image and database overrides to the API, migration, and worker", () => {
+    const hubDatabaseUrl = "postgresql://hub:secret@database.example.com:5432/hub?sslmode=require";
+    const config = renderDockerCompose(
+      `POSTGRES_PASSWORD=test-password
+HUB_DATABASE_URL=${hubDatabaseUrl}
+HUB_IMAGE_REF=:0.8.5
+TAXONOMY_SERVICE_URL=http://taxonomy:8000
+TAXONOMY_SERVICE_TOKEN=test-taxonomy-token
+HUB_INTERNAL_API_TOKEN=test-hub-internal-token
+`
+    );
+
+    for (const serviceName of ["hub", "hub-migrate", "hub-worker"]) {
+      expect(config.services[serviceName].image).toBe("ghcr.io/formbricks/hub:0.8.5");
+      expect(getRenderedServiceEnvironment(config, serviceName).DATABASE_URL).toBe(hubDatabaseUrl);
+    }
+
+    const hubEnvironment = getRenderedServiceEnvironment(config, "hub");
+    const workerEnvironment = getRenderedServiceEnvironment(config, "hub-worker");
+    for (const variableName of ["TAXONOMY_SERVICE_URL", "TAXONOMY_SERVICE_TOKEN", "HUB_INTERNAL_API_TOKEN"]) {
+      expect(workerEnvironment[variableName]).toBe(hubEnvironment[variableName]);
+    }
+  });
+});
+
 describe("Docker self-hosting credentials", () => {
   dockerComposeTest("rejects a missing PostgreSQL password", () => {
     expect(() => renderDockerCompose("")).toThrow(/POSTGRES_PASSWORD.*missing a value/);
@@ -331,6 +396,7 @@ describe("Docker self-hosting credentials", () => {
     );
     expect(getRenderedServiceEnvironment(config, "hub-migrate").DATABASE_URL).toBe(hubDatabaseUrl);
     expect(getRenderedServiceEnvironment(config, "hub").DATABASE_URL).toBe(hubDatabaseUrl);
+    expect(getRenderedServiceEnvironment(config, "hub-worker").DATABASE_URL).toBe(hubDatabaseUrl);
     expect(getRenderedServiceEnvironment(config, "cube").CUBEJS_DB_PASS).toBe(password);
   });
 
@@ -358,6 +424,7 @@ describe("Docker self-hosting credentials", () => {
     );
     expect(getRenderedServiceEnvironment(config, "hub-migrate").DATABASE_URL).toBe(hubDatabaseUrl);
     expect(getRenderedServiceEnvironment(config, "hub").DATABASE_URL).toBe(hubDatabaseUrl);
+    expect(getRenderedServiceEnvironment(config, "hub-worker").DATABASE_URL).toBe(hubDatabaseUrl);
     expect(getRenderedServiceEnvironment(config, "cube").CUBEJS_DB_PASS).toBe(rawPassword);
   });
 
@@ -722,41 +789,143 @@ describe("docker/formbricks.sh AuthZed setup", () => {
       "This installation does not yet contain the AuthZed v6 Compose services"
     );
     expect(updateFunction).toContain("FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true");
-    expect(updateFunction).toContain("authzed-ops upgrade prepare");
+    expect(updateFunction).not.toContain("authzed-ops upgrade prepare");
+    const migration = updateFunction.indexOf("run --rm --no-deps formbricks-migrate");
+    expect(migration).toBeGreaterThan(updateFunction.indexOf("compose down"));
+    expect(migration).toBeLessThan(updateFunction.lastIndexOf("compose up -d"));
     expect(updateFunction).toContain("authzed-ops upgrade check");
     expect(updateFunction.indexOf("upgrade check")).toBeLessThan(updateFunction.indexOf("compose down"));
   });
 
-  test("runs the upgrade gates before stopping an existing installation", () => {
+  test("blocks an update before pulling images when the Hub worker is missing", () => {
+    const tempDir = createTempDir();
+    const installationDir = join(tempDir, "formbricks");
+    const binDir = join(tempDir, "bin");
+    const commandLog = join(tempDir, "commands.log");
+    const composePath = join(installationDir, "docker-compose.yml");
+    const composeContents = `services:
+  authzed-ops:
+  redis:
+    image: ${legacyValkeyImage}
+  spicedb:
+`;
+    mkdirSync(installationDir, { recursive: true });
+    mkdirSync(binDir, { recursive: true });
+    writeFileSync(composePath, composeContents);
+    writeFileSync(join(installationDir, ".env"), "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n");
+    writeFileSync(
+      join(binDir, "sudo"),
+      '#!/bin/sh\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\ncase "$*" in *"config --services") printf "authzed-ops\\nspicedb\\n" ;; esac\n',
+      { mode: 0o700 }
+    );
+
+    const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
+      cwd: tempDir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        COMMAND_LOG: commandLog,
+        PATH: `${binDir}:${process.env.PATH ?? ""}`,
+      },
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("does not contain the required Hub worker service");
+    expect(result.stderr).toContain("/self-hosting/advanced/migration#hub-worker-required-for-docker");
+    expect(readFileSync(commandLog, "utf8")).toBe("docker compose config --services\n");
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(existsSync(`${composePath}.before-valkey-8.1.9`)).toBe(false);
+  });
+
+  test("blocks an update before pulling images when Compose cannot be rendered", () => {
     const tempDir = createTempDir();
     const installationDir = join(tempDir, "formbricks");
     const binDir = join(tempDir, "bin");
     const commandLog = join(tempDir, "commands.log");
     mkdirSync(installationDir, { recursive: true });
     mkdirSync(binDir, { recursive: true });
-    writeFileSync(join(installationDir, "docker-compose.yml"), "services:\n  authzed-ops:\n  spicedb:\n");
+    writeFileSync(join(installationDir, "docker-compose.yml"), "services:\n  hub-worker:\n");
     writeFileSync(join(installationDir, ".env"), "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n");
-    writeFileSync(join(binDir, "sudo"), '#!/bin/sh\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\n', {
-      mode: 0o700,
-    });
+    writeFileSync(
+      join(binDir, "sudo"),
+      '#!/bin/sh\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\ncase "$*" in *"config --services") exit 2 ;; esac\n',
+      { mode: 0o700 }
+    );
 
     const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
       cwd: tempDir,
       encoding: "utf8",
-      env: { ...process.env, COMMAND_LOG: commandLog, PATH: `${binDir}:${process.env.PATH ?? ""}` },
+      env: {
+        ...process.env,
+        COMMAND_LOG: commandLog,
+        PATH: `${binDir}:${process.env.PATH ?? ""}`,
+      },
     });
 
-    expect(result.status).toBe(0);
-    const commands = readFileSync(commandLog, "utf8").trim().split("\n");
-    expect(commands).toEqual([
-      "docker compose pull",
-      "docker compose run --rm formbricks-migrate",
-      "docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare",
-      "docker compose --profile authzed-ops run --rm authzed-ops upgrade check",
-      "docker compose down",
-      "docker compose up -d",
-    ]);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Could not render docker-compose.yml");
+    expect(readFileSync(commandLog, "utf8")).toBe("docker compose config --services\n");
   });
+
+  test.each([
+    { checkExitCode: 0, migrationExitCode: 0 },
+    { checkExitCode: 2, migrationExitCode: 0 },
+    { checkExitCode: 0, migrationExitCode: 1 },
+  ])(
+    "checks before stopping, migrates before starting, and stops on failure: %j",
+    ({ checkExitCode, migrationExitCode }) => {
+      const tempDir = createTempDir();
+      const installationDir = join(tempDir, "formbricks");
+      const binDir = join(tempDir, "bin");
+      const commandLog = join(tempDir, "commands.log");
+      mkdirSync(installationDir, { recursive: true });
+      mkdirSync(binDir, { recursive: true });
+      writeFileSync(
+        join(installationDir, "docker-compose.yml"),
+        "services:\n  authzed-ops:\n  hub-worker:\n  spicedb:\n"
+      );
+      writeFileSync(join(installationDir, ".env"), "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n");
+      writeFileSync(
+        join(binDir, "sudo"),
+        '#!/bin/sh\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\ncase "$*" in *"config --services") printf "authzed-ops\\nhub-worker\\nspicedb\\n" ;; *"upgrade check") exit "$CHECK_EXIT_CODE" ;; *"run --rm --no-deps formbricks-migrate") exit "$MIGRATION_EXIT_CODE" ;; esac\n',
+        {
+          mode: 0o700,
+        }
+      );
+
+      const result = spawnSync(
+        "bash",
+        ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath],
+        {
+          cwd: tempDir,
+          encoding: "utf8",
+          env: {
+            ...process.env,
+            CHECK_EXIT_CODE: String(checkExitCode),
+            MIGRATION_EXIT_CODE: String(migrationExitCode),
+            COMMAND_LOG: commandLog,
+            PATH: `${binDir}:${process.env.PATH ?? ""}`,
+          },
+        }
+      );
+
+      expect(result.status).toBe(checkExitCode || migrationExitCode);
+      const commands = readFileSync(commandLog, "utf8").trim().split("\n");
+      expect(commands).toEqual([
+        "docker compose config --services",
+        "docker compose pull",
+        "docker compose --profile authzed-ops run --rm --no-deps authzed-ops upgrade check",
+        ...(checkExitCode === 0
+          ? [
+              "docker compose down",
+              "docker compose up -d --wait postgres",
+              "docker compose run --rm --no-deps formbricks-migrate",
+              ...(migrationExitCode === 0 ? ["docker compose up -d"] : []),
+            ]
+          : []),
+      ]);
+    }
+  );
 
   test("waits for the source migration before preparing a fresh AuthZed graph", () => {
     const script = readFileSync(formbricksScriptPath, "utf8");

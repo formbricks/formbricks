@@ -1,9 +1,10 @@
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
-import { TooManyRequestsError } from "@formbricks/types/errors";
+import { ResourceNotFoundError, TooManyRequestsError } from "@formbricks/types/errors";
+import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
-import { withV3ApiWrapper } from "./api-wrapper";
+import { formatZodIssues, withV3ApiWrapper } from "./api-wrapper";
 
 const { mockAuthenticateRequest, mockGetSession } = vi.hoisted(() => ({
   mockAuthenticateRequest: vi.fn(),
@@ -51,6 +52,7 @@ vi.mock("@/app/lib/api/with-api-logging", () => ({
   buildAuditLogBaseObject: mockBuildAuditLogBaseObject,
 }));
 
+vi.mock("@/app/lib/api/api-error-reporter", () => ({ reportApiError: vi.fn() }));
 vi.mock("@formbricks/logger", () => ({
   logger: {
     withContext: vi.fn(() => ({
@@ -302,6 +304,37 @@ describe("withV3ApiWrapper", () => {
       }),
       "V3 API authentication failed"
     );
+  });
+
+  /**
+   * RFC 9110 §15.5.2 asks a 401 for a challenge "applicable to the target resource". Bearer is applicable
+   * where this API accepts `Authorization: Bearer <fbk_…>` — the `apiKey` and `both` modes — and is a
+   * false statement on a session-cookie route, which consults no HTTP authentication scheme at all.
+   * Pinned per mode, because the difference is the whole point and a single default cannot express it.
+   */
+  test("a 401 on a bearer-accepting route carries the challenge", async () => {
+    const wrapped = withV3ApiWrapper({
+      auth: "both",
+      handler: vi.fn(async () => Response.json({ ok: true })),
+    });
+
+    const response = await wrapped(new NextRequest("http://localhost/api/v3/surveys"), {} as never);
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get("WWW-Authenticate")).toBe('Bearer realm="formbricks"');
+  });
+
+  test("a 401 on a session-only route carries no challenge", async () => {
+    mockGetSession.mockResolvedValue(null);
+    const wrapped = withV3ApiWrapper({
+      auth: "session",
+      handler: vi.fn(async () => Response.json({ ok: true })),
+    });
+
+    const response = await wrapped(new NextRequest("http://localhost/api/v3/tags"), {} as never);
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get("WWW-Authenticate")).toBeNull();
   });
 
   test("returns 400 problem response for invalid query input", async () => {
@@ -629,5 +662,230 @@ describe("withV3ApiWrapper", () => {
     const body = await response.json();
     expect(body.code).toBe("internal_server_error");
     expect(body.requestId).toBe("req-boom");
+  });
+
+  /**
+   * The wrapper's catch is a backstop, not a flattener: operations map their own throws (they must — the
+   * MCP tools call them without this wrapper), so anything arriving here escaped that and gets the same
+   * treatment rather than a blanket 500. A missing resource is the case that matters, because 403-not-404
+   * is the disclosure rule the whole surface relies on.
+   */
+  test("maps a thrown ResourceNotFoundError to 403, not a blanket 500", async () => {
+    mockGetSession.mockResolvedValue({ user: { id: "user_1" }, expires: "2026-01-01" });
+
+    const wrapped = withV3ApiWrapper({
+      auth: "both",
+      handler: async () => {
+        throw new ResourceNotFoundError("Survey", "survey_secret");
+      },
+    });
+
+    const response = await wrapped(
+      new NextRequest("http://localhost/api/v3/surveys", {
+        headers: { "x-request-id": "req-missing" },
+      }),
+      {} as never
+    );
+
+    expect(response.status).toBe(403);
+    const body = await response.json();
+    expect(body.code).toBe("forbidden");
+    expect(body.requestId).toBe("req-missing");
+    expect(JSON.stringify(body)).not.toContain("survey_secret");
+  });
+
+  // The catch queues the audit event before mapping, so a throw stays attributable.
+  test("queues a failure audit log when the handler throws", async () => {
+    mockGetSession.mockResolvedValue({ user: { id: "user_1" }, expires: "2026-01-01" });
+
+    const wrapped = withV3ApiWrapper({
+      auth: "both",
+      action: "created",
+      targetType: "survey",
+      handler: async () => {
+        throw new Error("boom");
+      },
+    });
+
+    await wrapped(
+      new NextRequest("http://localhost/api/v3/surveys", {
+        method: "POST",
+        headers: { "x-request-id": "req-audit" },
+      }),
+      {} as never
+    );
+
+    expect(mockQueueAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "failure", eventId: "req-audit" })
+    );
+  });
+});
+
+/**
+ * There was no error reporting under `app/api/v3` before this. The tests matter more than usual
+ * because the reporting is invisible in every response: nothing about a 500's body tells you whether
+ * it reached Sentry, so a regression here is silent by construction.
+ */
+describe("5xx reporting", () => {
+  const reported = () => vi.mocked(reportApiError).mock.calls.map(([c]) => c);
+
+  beforeEach(() => {
+    vi.mocked(reportApiError).mockClear();
+    mockGetSession.mockResolvedValue({ user: { id: "user_1" }, expires: "2026-01-01" });
+  });
+
+  /**
+   * The path that would otherwise be missed. A v3 operation returns its problem response rather than
+   * throwing — it must, because the MCP server calls it directly with no wrapper — so a `catch`-only
+   * hook would see almost no real failure.
+   */
+  test("reports a 500 the handler returned rather than threw", async () => {
+    const route = withV3ApiWrapper({
+      auth: "session",
+      handler: async () => Response.json({ title: "Internal Server Error" }, { status: 500 }),
+    });
+
+    const response = await route(new NextRequest("http://localhost/api/v3/things"), {} as never);
+
+    expect(reported()).toHaveLength(1);
+    expect(reported()[0]).toMatchObject({ status: 500, apiVersion: "v3" });
+    // Reporting must be a pure observation: the caller's body reaches them untouched. Without this
+    // the test passes even if the reporter consumed or replaced the response.
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({ title: "Internal Server Error" });
+  });
+
+  /** The thrown path carries the original error, which is what gives Sentry a stack. */
+  test("reports a thrown error, passing the error itself", async () => {
+    const boom = new Error("kaboom");
+    const route = withV3ApiWrapper({
+      auth: "session",
+      handler: async () => {
+        throw boom;
+      },
+    });
+
+    const response = await route(new NextRequest("http://localhost/api/v3/things"), {} as never);
+
+    expect(response.status).toBe(500);
+    expect(reported()).toHaveLength(1);
+    expect(reported()[0]).toMatchObject({ status: 500, apiVersion: "v3", error: boom });
+  });
+
+  /**
+   * 503 sits in this list rather than with the 5xx above because in v3 it is not a fault: it means the
+   * capability is not enabled on this deployment, and a transient outage is a 502. Without this row a
+   * self-hoster running without Hub or AI configured raises a Sentry error on every such request.
+   */
+  test.each([
+    ["a success", 200],
+    ["a client error", 400],
+    ["a forbidden", 403],
+    ["a not-configured 503", 503],
+  ])("stays silent on %s — Sentry is for 5xx only", async (_label, status) => {
+    const route = withV3ApiWrapper({
+      auth: "session",
+      handler: async () => new Response(null, { status }),
+    });
+
+    await route(new NextRequest("http://localhost/api/v3/things"), {} as never);
+
+    expect(reported()).toHaveLength(0);
+  });
+
+  /**
+   * The other half of skipping 503: a transient upstream failure is a 502 in v3, and that still has to
+   * reach Sentry. Without this the 503 exclusion could quietly widen to every dependency problem.
+   */
+  test("still reports a 502 — an outage is a fault, unlike a 503", async () => {
+    const route = withV3ApiWrapper({
+      auth: "session",
+      handler: async () => Response.json({ title: "Bad Gateway" }, { status: 502 }),
+    });
+
+    await route(new NextRequest("http://localhost/api/v3/things"), {} as never);
+
+    expect(reported()).toHaveLength(1);
+    expect(reported()[0]).toMatchObject({ status: 502, apiVersion: "v3" });
+  });
+
+  /** Observability must never change what the caller gets back. */
+  test("a reporter failure does not affect the response", async () => {
+    vi.mocked(reportApiError).mockImplementationOnce(() => {
+      throw new Error("sentry is down");
+    });
+    const route = withV3ApiWrapper({
+      auth: "session",
+      // Deliberately 502, not 503: a 503 never reaches the reporter now, so this would assert nothing.
+      handler: async () => Response.json({ x: 1 }, { status: 502 }),
+    });
+
+    const response = await route(new NextRequest("http://localhost/api/v3/things"), {} as never);
+
+    expect(response.status).toBe(502);
+    await expect(response.json()).resolves.toEqual({ x: 1 });
+  });
+});
+
+/**
+ * `formatZodIssues` changed every v3 400 — an unsupported key is now named instead of the body — and
+ * nothing exercised it. The one "Unsupported field" case in this file builds a `custom` issue through
+ * `superRefine`, which never reaches the expansion, so reverting the function to Zod's base `map`
+ * kept the suite green.
+ *
+ * Driven through a real `.strict()` parse rather than a hand-built issue: the expansion reads
+ * `issue.keys`, which Zod populates and a fixture would only assert the shape of.
+ */
+describe("formatZodIssues — the unknown-key expansion", () => {
+  const strictBody = z.object({ kept: z.string() }).strict();
+
+  const issuesFor = (value: Record<string, unknown>) => {
+    const parsed = strictBody.safeParse(value);
+    if (parsed.success) throw new Error("expected the strict parse to reject");
+    return formatZodIssues(parsed.error, "body");
+  };
+
+  test("names each unknown key instead of the body", () => {
+    const params = issuesFor({ kept: "x", extra: 1, alsoExtra: 2 });
+
+    expect(params).toEqual([
+      { name: "extra", reason: "Unsupported field 'extra'", code: "unsupported_field" },
+      { name: "alsoExtra", reason: "Unsupported field 'alsoExtra'", code: "unsupported_field" },
+    ]);
+  });
+
+  test("stops at 20 keys and says how many it did not list", () => {
+    const value: Record<string, unknown> = { kept: "x" };
+    for (let i = 0; i < 25; i += 1) value[`extra${i}`] = i;
+
+    const params = issuesFor(value);
+
+    // 20 named, plus one summary — the list is caller-controlled and reaches both the body and the log.
+    expect(params).toHaveLength(21);
+    expect(params.at(-1)).toEqual({
+      name: "body",
+      reason: "5 further unsupported fields were not listed",
+      code: "unsupported_field",
+    });
+  });
+
+  test("a nested object's keys are reported under their path", () => {
+    const nested = z.object({ meta: z.object({ kept: z.string() }).strict() }).strict();
+    const parsed = nested.safeParse({ meta: { kept: "x", extra: 1 } });
+    if (parsed.success) throw new Error("expected the strict parse to reject");
+
+    expect(formatZodIssues(parsed.error, "body")).toEqual([
+      { name: "meta.extra", reason: "Unsupported field 'extra'", code: "unsupported_field" },
+    ]);
+  });
+
+  test("an issue carrying no key list still produces a param", () => {
+    // The fallback exists so an empty list cannot leave a 400 with no `invalid_params` at all.
+    const params = formatZodIssues(
+      { issues: [{ code: "unrecognized_keys", path: [], message: "Unrecognized key" }] } as never,
+      "body"
+    );
+
+    expect(params).toEqual([{ name: "body", reason: "Unrecognized key", code: "unsupported_field" }]);
   });
 });

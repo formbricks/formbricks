@@ -232,6 +232,7 @@ get:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []
 patch:
   operationId: updateResponseV3
   summary: Update a response
@@ -245,8 +246,9 @@ patch:
     rejected with **400** rather than ignored.
 
 
-    Setting `finished` to `true` fires the finish side of the response pipeline, including Hub
-    ingestion. Updates otherwise emit `responseUpdated`.
+    Every patch emits `responseUpdated` and runs the response pipeline, including Hub ingestion.
+    Transitioning `finished` to `true` additionally emits `responseFinished`; patching a response that
+    is already finished does not re-emit it.
   tags:
     - V3 Responses
   parameters:
@@ -315,7 +317,15 @@ patch:
       description: >-
         Unprocessable Content — the body is well-formed but conflicts with stored state: `endingId` is
         not an ending of the response's survey, `language` is not enabled on it, a tag id does not
-        resolve in the same workspace, or an answer violates the survey's validation rules.
+        resolve in the same workspace, an `embeddedData` name is not declared on the survey, is
+        ambiguous, or is addressed twice by one payload, a file-upload answer references a file
+        outside this survey's upload element, or an answer violates the survey's validation rules.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "413":
+      description: Payload Too Large — the request body exceeds the 2 MB limit.
       content:
         application/problem+json:
           schema:
@@ -327,6 +337,7 @@ patch:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []
 delete:
   operationId: deleteResponseV3
   summary: Delete a response
@@ -372,3 +383,4 @@ delete:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []

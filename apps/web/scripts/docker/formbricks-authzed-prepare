@@ -1,0 +1,78 @@
+#!/bin/sh
+
+# Explicit maintenance-only entry point; never invoked by normal container startup.
+set +x
+set -eu
+
+result() {
+  if [ "$1" = prepared ]; then
+    printf '{"status":"prepared","code":"%s","restartRequired":true}\n' "$2"
+  else
+    printf '{"status":"blocked","code":"%s"}\n' "$2"
+  fi
+}
+
+backup=false
+writers=false
+digest=""
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --backup-confirmed) backup=true; shift ;;
+    --writers-stopped) writers=true; shift ;;
+    --expected-current-digest)
+      if [ "$#" -lt 2 ] || [ -z "$2" ]; then result blocked upgrade_invalid_arguments; exit 2; fi
+      digest="$2"
+      shift 2
+      ;;
+    *) result blocked upgrade_invalid_arguments; exit 2 ;;
+  esac
+done
+
+if [ "$backup" != true ] || [ "$writers" != true ]; then
+  result blocked upgrade_maintenance_required
+  exit 2
+fi
+if [ -n "$digest" ] && ! printf '%s\n' "$digest" | grep -Eq '^sha256:[a-f0-9]{64}$'; then
+  result blocked upgrade_invalid_arguments
+  exit 2
+fi
+if ! command -v timeout >/dev/null 2>&1; then
+  result blocked upgrade_timeout_unavailable
+  exit 2
+fi
+
+export LOG_LEVEL=fatal
+export NODE_ENV=production
+case "${AUTHZED_ENABLED:-}" in
+  true | 1) ;;
+  *) result blocked upgrade_configuration_invalid; exit 2 ;;
+esac
+if [ "${AUTHZED_CONSISTENCY:-}" != fully_consistent ]; then
+  result blocked upgrade_configuration_invalid
+  exit 2
+fi
+
+# Do not copy raw migration/SDK output into automation logs. Operators can run
+# individual commands in a restricted session to diagnose a stable step failure.
+run_step() {
+  code="$1"
+  shift
+  if ! timeout 1800 "$@" >/dev/null 2>&1; then
+    result blocked "$code"
+    exit 2
+  fi
+}
+
+run_step upgrade_configuration_invalid node /home/nextjs/validate-env.mjs
+run_step upgrade_spicedb_unhealthy formbricks-authzed health
+run_step upgrade_database_migration_failed node /home/nextjs/packages/database/dist/scripts/apply-migrations.js
+if [ -n "$digest" ]; then
+  run_step upgrade_graph_not_ready formbricks-authzed upgrade prepare --expected-current-digest "$digest"
+else
+  run_step upgrade_graph_not_ready formbricks-authzed upgrade prepare
+fi
+run_step upgrade_verification_failed formbricks-authzed upgrade check
+
+# Workload lifecycle is owned by the caller. Never restart v5, v6, or controllers,
+# including on failure or interruption; database changes may require restoration.
+result prepared upgrade_prepared

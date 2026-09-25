@@ -10,6 +10,9 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import type { TUserLocale } from "@formbricks/types/user";
 import {
+  AUTH_SECRET,
+  AUTH_TRUSTED_ORIGINS,
+  AUTH_URL,
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
   PASSWORD_RESET_DISABLED,
@@ -18,7 +21,6 @@ import {
   SESSION_MAX_AGE,
 } from "@/lib/constants";
 import { hashSecret, verifySecret } from "@/lib/crypto";
-import { env } from "@/lib/env";
 import { BETTER_AUTH_IP_ADDRESS_CONFIG } from "@/lib/utils/client-ip";
 import {
   accountDeletionConfig,
@@ -34,6 +36,7 @@ import { runAfterEmailVerificationHooks } from "./better-auth-email-verification
 import { hibpBreachCheckBeforeHandler } from "./better-auth-hibp";
 import { auditPasswordReset, betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
+import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";
@@ -72,15 +75,30 @@ export const getUserLocale = async (userId: string): Promise<TUserLocale> => {
  */
 export const auth = betterAuth({
   appName: "Formbricks",
-  // ENG-1054: fall back to NEXTAUTH_SECRET (which already signed NextAuth's session cookies) when
-  // BETTER_AUTH_SECRET is unset. This keeps existing envs working AND guarantees BA's cookie signing
-  // uses the same secret the forward-auth proxy verifies with (session-cookie.ts) — a mismatch makes
-  // the proxy reject every session and bounce users between / and /auth/login. NEXTAUTH_SECRET also
-  // still signs app JWTs (lib/jwt.ts).
-  secret: env.BETTER_AUTH_SECRET ?? env.NEXTAUTH_SECRET,
-  baseURL: env.BETTER_AUTH_URL ?? env.NEXTAUTH_URL,
-  disabledPaths: ["/token"],
-  trustedOrigins: [env.BETTER_AUTH_URL, env.NEXTAUTH_URL].filter((url): url is string => Boolean(url)),
+  // Resolved in lib/constants.ts, which documents the BETTER_AUTH_* / NEXTAUTH_* alias. Passing it
+  // explicitly is what keeps BA's cookie signing on the same secret the forward-auth proxy verifies with
+  // (session-cookie.ts) and lib/jwt.ts signs app JWTs with; a divergence between any two of them is an
+  // outage. Note a falsy value here does NOT stop BA falling through to its own hardcoded default
+  // secret — `assertAuthRuntimeConfiguration` in lib/env.ts is what prevents that, by refusing to boot.
+  secret: AUTH_SECRET,
+  baseURL: AUTH_URL,
+  // `/update-user` is served over HTTP for nobody (ENG-3189). Better Auth mounts it beside our own
+  // profile surface, and every field it can reach is one Formbricks does not let a client write there:
+  //
+  //  - `name` is the identity provider's for an SSO user — re-read on every sign-in
+  //    (`overrideUserInfo`) and locked in `updateUserAction` — yet a raw POST landed the write anyway,
+  //    unaudited, until the next sign-in silently reverted it.
+  //  - `image` has no `User` column at all, so the write reached Prisma and threw an unhandled 500 —
+  //    the same hazard `ssoProfileSyncUpdateBefore` and `user.create.before` strip on the SSO paths.
+  //  - `email` the endpoint refuses itself, and our two `additionalFields` are `input: false`.
+  //
+  // So there is nothing left for it to legitimately do, and a 404 at the router is a smaller, more
+  // complete answer than a `hooks.before` gate: profile writes go through `updateUserAction`, which
+  // owns the SSO name lock, the verified email-change flow, rate limiting, and the audit entry. The
+  // path is HTTP-only — `auth.api.updateUser` stays available to server code (`api/index.mjs` applies
+  // `disabledPaths` in the router alone), which is what the SSO hooks and the service layer use.
+  disabledPaths: ["/token", "/update-user"],
+  trustedOrigins: AUTH_TRUSTED_ORIGINS,
   telemetry: { enabled: false },
 
   database: prismaAdapter(prisma, { provider: "postgresql" }),
@@ -248,12 +266,19 @@ export const auth = betterAuth({
     },
   },
 
-  // Existing Prisma columns that Better Auth doesn't know about; declared so the SSO hooks can
-  // write them. `input: false` keeps them server-set only (never settable via the client API).
+  // Existing Prisma columns that Better Auth doesn't know about; declared so the `user.create.before`
+  // hooks can write them. The declaration is not optional paperwork: the adapter's `transformInput`
+  // copies only fields present in the schema, so an undeclared key is dropped from the insert without
+  // a word. `input: false` keeps them server-set only (never settable via the client API).
   user: {
     additionalFields: {
       identityProvider: { type: "string", required: false, input: false },
       identityProviderAccountId: { type: "string", required: false, input: false },
+      // ENG-2247: the fresh-instance bootstrap marker, a one-variant enum column (Better Auth has no
+      // enum field type, and the adapter hands the string straight to Prisma, which validates it).
+      // `returned: false` because it is an internal serialization marker rather than profile data —
+      // nothing outside the sign-up path reads it, so it has no business in a user response body.
+      isBootstrapAdmin: { type: "string", required: false, input: false, returned: false },
     },
     // Account deletion (design doc §14): native Better Auth deleteUser with Formbricks' pre/post
     // cleanup (sole-owner-org guard + org/invite removal, then Brevo + audit). Confirmation friction
@@ -303,6 +328,9 @@ export const auth = betterAuth({
       // the reset token isn't consumed on a rejection. Fails open when api.pwnedpasswords.com is
       // unreachable and honors PASSWORD_HIBP_CHECK_DISABLED. See better-auth-hibp.ts.
       await hibpBreachCheckBeforeHandler(ctx);
+      // ENG-3258: repair a NULL-issuer credential row before sign-in / reset-request looks it up. Last,
+      // so only a request every gate above let through can write. See credential-issuer-heal.ts.
+      await healCredentialAccountIssuerBeforeHandler(ctx);
     }),
     after: createAuthMiddleware(runAfterAuthHooks),
   },

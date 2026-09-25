@@ -2,6 +2,18 @@ import { z } from "zod";
 
 export const INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE = "ERR_INVALID_PASSWORD_RESET_TOKEN";
 
+/**
+ * Stable, locale-independent marker used when an SSO-recovery resend is asked for after the stored
+ * intent is gone — expired, or already consumed.
+ *
+ * It exists because the server cannot tell those apart from a state id someone made up: all three are
+ * "recovery-shaped callback URL, nothing in the store". Reporting success for that case told a user
+ * whose link had aged out that a mail was on its way when none was sent, and left restarting SSO
+ * sign-in — the only way out — undiscoverable. A made-up state getting the same message costs nothing,
+ * since whoever supplied it already knows what they sent.
+ */
+export const SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE = "ERR_SSO_RECOVERY_LINK_EXPIRED";
+
 class ResourceNotFoundError extends Error {
   statusCode = 404;
   resourceId: string | null;

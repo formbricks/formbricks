@@ -58,10 +58,16 @@ const trimTrailingSlash = (value: string): string => value.replace(/\/+$/, "");
  * `apps/web/modules/auth/lib/oauth-urls.ts`, for the same reason `resolveMcpResourceIdentifier` below is
  * one: `packages/database` cannot import from `apps/web`.
  *
- * A copy is only safe if something fails when the two diverge, so
- * `apps/web/modules/auth/lib/mcp-oauth-resource-seed.test.ts` asserts this list equals `MCP_OAUTH_SCOPES`
- * exactly. Divergence is not cosmetic: a scope the app advertises but this row omits is intersected away
- * at `/authorize`, so a client requesting it fails `invalid_scope`.
+ * **This list is history: what the backfill seeded when it ran. Do not widen it.** It once had to equal
+ * `MCP_OAUTH_SCOPES` exactly, and `mcp-oauth-resource-seed.test.ts` asserted that — which meant every
+ * new scope was appended here, to a migration that had already run everywhere. That repairs nothing on
+ * an upgraded instance and leaves the migration claiming something it never did.
+ *
+ * The test now freezes this literal and checks the covering invariant across migrations instead: what
+ * the backfill seeded, plus what each later repair migration grants, must include everything the app
+ * can grant. A new scope therefore needs a **new data migration**, not an edit here. Divergence is not
+ * cosmetic: a scope the app advertises but this row omits is intersected away at `/authorize`, so a
+ * client requesting it fails `invalid_scope` with nothing logged.
  */
 export const MCP_RESOURCE_ALLOWED_SCOPES = [
   "openid",

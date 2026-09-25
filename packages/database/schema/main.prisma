@@ -192,9 +192,20 @@ model Response {
   workflowRuns      WorkflowRun[]
 
   @@unique([surveyId, singleUseId])
-  @@index([createdAt])
-  @@index([surveyId, createdAt]) // to determine monthly response count
-  @@index([contactId, createdAt]) // to determine monthly identified users (persons)
+  // `id` is the keyset tie-breaker for `GET /api/v3/responses`. It has to be in the index for the
+  // row-constructor page predicate `(created_at, id) < ($1, $2)` to land in the Index Cond; without it
+  // the planner filters and rescans the range on every page.
+  //
+  // The three narrow indexes below each remain alongside their wider replacement, deliberately and
+  // temporarily. Measured: the planner picks the wide one when both are present, so keeping them costs
+  // write amplification rather than a slow plan. ENG-3120 drops them once production confirms that
+  // choice — a drop is the half that cannot be undone by reverting a migration.
+  @@index([createdAt]) // superseded by ([createdAt, id]); pending removal
+  @@index([createdAt, id])
+  @@index([surveyId, createdAt]) // superseded; also the monthly response count
+  @@index([surveyId, createdAt, id])
+  @@index([contactId, createdAt]) // superseded; also the monthly identified users (persons)
+  @@index([contactId, createdAt, id])
   @@index([surveyId, finished]) // survey list's (surveyId, finished) count aggregation — keeps it an index-only scan
 }
 
@@ -668,7 +679,7 @@ model Workspace {
 /// @property billing - JSON field containing billing information
 /// @property whitelabel - Whitelabel configuration for the organization
 /// @property isAISmartToolsEnabled - Controls access to AI smart tools (e.g. translations) that never touch collected data
-/// @property displayTimeZone - Optional IANA time zone used for human-facing response timestamps (exports, integrations); null means UTC
+/// @property displayTimeZone - Optional IANA time zone used for human-facing response timestamps (exports, integrations) and for the calendar days behind the analytics date filters (survey summary, charts, dashboards); null means UTC
 model Organization {
   id                    String               @id @default(cuid())
   createdAt             DateTime             @default(now()) @map(name: "created_at")
@@ -705,6 +716,14 @@ model OrganizationBilling {
   stripe           Json?
   createdAt        DateTime     @default(now()) @map(name: "created_at")
   updatedAt        DateTime     @updatedAt @map(name: "updated_at")
+}
+
+/// The bootstrap marker's only value (ENG-2247). A one-variant enum rather than a boolean on
+/// purpose: a unique index over a nullable boolean has a slot for `true` AND one for `false`, so the
+/// first `false` ever written would take the second slot and break every later sign-up. There is no
+/// `false` to write here, which is the same guarantee without a CHECK constraint Prisma cannot model.
+enum BootstrapAdminMarker {
+  bootstrapAdmin
 }
 
 enum OrganizationRole {
@@ -1218,6 +1237,12 @@ model User {
   workflowVersionsPublished WorkflowVersion[]   @relation("workflowVersionPublishedBy")
   lastLoginAt               DateTime?
   isActive                  Boolean             @default(true)
+
+  // ENG-2247: marks the ONE account admitted by the fresh-instance exception (closed instance, no
+  // invite, zero users). The unique index is the serialization: two concurrent uninvited sign-ups
+  // both read `user.count() === 0`, but only one INSERT can carry the marker, so the second loses on
+  // the constraint instead of the race.
+  isBootstrapAdmin BootstrapAdminMarker? @unique
 }
 
 /// Defines a segment of contacts based on attributes.
