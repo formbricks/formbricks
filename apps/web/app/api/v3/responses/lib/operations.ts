@@ -35,6 +35,7 @@ import {
 } from "./schemas";
 import { createV3ResponseSerializer } from "./serializers";
 import {
+  type TDeletedResponse,
   countV3Responses,
   deleteScopedResponse,
   deleteScopedResponses,
@@ -67,6 +68,38 @@ type TDeleteParams = {
   requestId: string;
   instance?: string;
   auditLog?: TV3AuditLog;
+};
+
+/** The keys of a stored JSON map, or none when the column holds something else. */
+const fieldNamesOf = (value: unknown): string[] =>
+  typeof value === "object" && value !== null && !Array.isArray(value) ? Object.keys(value).sort() : [];
+
+/**
+ * The deleted row as the audit trail keeps it: which response, whose, and how much it held — never what
+ * it held. `redactPII` reduces content containers the same way at the sink, but the operation states
+ * the shape itself so the RFC's "field names, not values" rule for response mutations does not rest on
+ * a list of key names in another module. `singleUseId` and `ttc` are left out: one is a spent token, the
+ * other timing telemetry, and neither helps a reviewer.
+ */
+const toDeletedResponseAuditRecord = (row: TDeletedResponse) => {
+  const answerFieldNames = fieldNamesOf(row.data);
+  const variableFieldNames = fieldNamesOf(row.variables);
+
+  return {
+    id: row.id,
+    surveyId: row.surveyId,
+    contactId: row.contactId,
+    displayId: row.displayId,
+    endingId: row.endingId,
+    language: row.language,
+    finished: row.finished,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    answerFieldNames,
+    answerCount: answerFieldNames.length,
+    variableFieldNames,
+    variableCount: variableFieldNames.length,
+  };
 };
 
 /**
@@ -110,10 +143,12 @@ export async function deleteV3Response({
     if (auditLog) {
       auditLog.targetId = responseId;
       auditLog.organizationId = access.organizationId;
-      // The deleted content, kept only in the audit trail — the response itself is gone. v1, v2 and
-      // `deleteV3FeedbackRecord` all record it; a delete that does not say *what* it destroyed is not
-      // reviewable. `redactPII` runs over this before it is persisted.
-      auditLog.oldObject = deleted;
+      // What was destroyed, as identity and shape — never the answers. The row is gone, so this is the
+      // only record left, and a delete that says nothing about *what* it destroyed is not reviewable.
+      // But the audit store has its own retention, access model and export path, and respondent free
+      // text does not belong in it (ENG-2873): field names and counts answer the reviewer's question —
+      // which response, whose, how much — without carrying a single value.
+      auditLog.oldObject = toDeletedResponseAuditRecord(deleted);
     }
 
     return noContentResponse({ requestId });

@@ -276,6 +276,7 @@ export function registerResponseTools(server: McpServer): void {
       ].join(" "),
       inputSchema: ZMcpCreateResponseInput,
       outputSchema: ZMcpResponseOutput,
+      audit: { action: "created", targetType: "response" },
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -312,6 +313,7 @@ export function registerResponseTools(server: McpServer): void {
       ].join(" "),
       inputSchema: ZMcpUpdateResponseInput,
       outputSchema: ZMcpResponseOutput,
+      audit: { action: "updated", targetType: "response" },
       annotations: {
         readOnlyHint: false,
         // A wholesale replace removes the answers and tags it omits, and the previous value is not
@@ -476,6 +478,7 @@ function registerDeleteTools(server: McpServer): void {
       ].join(" "),
       inputSchema: ZMcpDeleteResponseInput,
       outputSchema: ZMcpResponseDeleteOutput,
+      audit: { action: "deleted", targetType: "response" },
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -529,6 +532,7 @@ function registerDeleteTools(server: McpServer): void {
       ].join(" "),
       inputSchema: ZMcpBatchDeleteResponsesInput,
       outputSchema: ZMcpResponseBatchDeleteOutput,
+      audit: { action: "deleted", targetType: "response" },
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,

@@ -181,17 +181,30 @@ describe("deleteV3Response", () => {
   });
 
   /**
-   * The row is gone after this, so the audit event is the only remaining record of what was destroyed.
-   * v1, v2 and `deleteV3FeedbackRecord` all record `oldObject`; a delete that omits it leaves an entry
-   * saying something was deleted and nothing about what.
+   * The row is gone after this, so the audit event is the only remaining record of what was destroyed —
+   * and the audit store is not where respondent answers belong (ENG-2873). So `oldObject` says which
+   * response, whose, and how much it held, never what it held: the field names of `data` are recorded,
+   * the values are not.
    */
-  test("records the deleted response as the audit event's oldObject", async () => {
+  test("records the deleted response's identity and shape as oldObject, never its answers", async () => {
     mockGetWorkspaceId.mockResolvedValue("ws_1");
-    const auditLog = {} as never;
+    const auditLog = {} as { oldObject?: Record<string, unknown> };
 
-    await deleteV3Response({ ...params, auditLog });
+    await deleteV3Response({ ...params, auditLog: auditLog as never });
 
-    expect(auditLog).toHaveProperty("oldObject", DELETED_ROW);
+    expect(auditLog.oldObject).toMatchObject({
+      id: "clrsaaaaaaaaaaaaaaaaaaaa",
+      surveyId: "svy_1",
+      finished: true,
+      answerFieldNames: ["q1"],
+      answerCount: 1,
+      variableFieldNames: [],
+      variableCount: 0,
+    });
+    expect(auditLog.oldObject).not.toHaveProperty("data");
+    // The fixture's one answer is the string "answer"; the key names carry the same word, so match the
+    // quoted value rather than the bare word.
+    expect(JSON.stringify(auditLog.oldObject)).not.toContain('"answer"');
   });
 
   test("records no oldObject when the delete never happened", async () => {
