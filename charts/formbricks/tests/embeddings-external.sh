@@ -8,6 +8,24 @@ readonly CHART_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 render_dir="$(mktemp -d)"
 trap 'rm -rf "${render_dir}"' EXIT
 
+helm template bundled-embeddings "${CHART_DIR}" \
+  --set formbricks.webappUrl=https://qa.example.com \
+  --set hub.embeddings.enabled=true \
+  --set hub.embeddings.auth.existingSecret=formbricks-embeddings \
+  --set hub.embeddings.background.enabled=true \
+  >"${render_dir}/bundled.yaml"
+
+test "$(grep -c 'name: RUST_LOG' "${render_dir}/bundled.yaml")" -eq 2
+test "$(grep -A1 'name: RUST_LOG' "${render_dir}/bundled.yaml" | grep -Ec 'value: "?warn"?$')" -eq 2
+
+helm template bundled-embeddings-debug "${CHART_DIR}" \
+  --set formbricks.webappUrl=https://qa.example.com \
+  --set hub.embeddings.enabled=true \
+  --set-string hub.embeddings.env.RUST_LOG=debug \
+  >"${render_dir}/bundled-debug.yaml"
+
+grep -A1 'name: RUST_LOG' "${render_dir}/bundled-debug.yaml" | grep -Eq 'value: "?debug"?$'
+
 helm template external-embeddings "${CHART_DIR}" \
   --set formbricks.webappUrl=https://qa.example.com \
   --set hub.worker.enabled=true \

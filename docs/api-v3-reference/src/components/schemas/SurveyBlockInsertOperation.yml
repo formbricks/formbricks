@@ -1,0 +1,21 @@
+type: object
+additionalProperties: false
+description: Add a new block at an anchored position.
+required:
+  - op
+  - block
+  - position
+properties:
+  op:
+    type: string
+    enum:
+      - insert
+  block:
+    allOf:
+      - $ref: CreateSurveyBlock.yml
+    description: >
+      New block. `id` is optional and generated when omitted, matching survey creation. Supply
+      one only when a later operation in the same request anchors after it; if supplied it must
+      not already exist on the survey.
+  position:
+    $ref: SurveyBlockInsertPosition.yml
