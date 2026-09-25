@@ -1,11 +1,11 @@
 {
   "configurations": [
     {
-      "name": "Launch localhost:3002",
+      "name": "Launch localhost:3000",
       "reAttach": true,
       "request": "launch",
       "type": "firefox",
-      "url": "http://localhost:3002/",
+      "url": "http://localhost:3000/",
       "webRoot": "${workspaceFolder}"
     },
     {

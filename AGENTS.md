@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surface, with feature modules under `app/` and `modules/`, assets in `public/` and `images/`, and Playwright specs in `apps/web/playwright/`. `apps/storybook` renders reusable UI pieces for review. Shared logic lives in `packages/*`: `database` (Prisma schemas/migrations), `surveys`, `js-core`, `types`, plus linting and TypeScript presets (`config-*`). Deployment collateral is kept in `docs/`, `docker/`, and `helm-chart/`. Unit tests sit next to their source as `*.test.ts` or inside `__tests__`.
+Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surface, with feature modules under `app/` and `modules/`, assets in `public/` and `images/`, and Playwright specs in `apps/web/playwright/`. `apps/storybook` renders reusable UI pieces for review. Shared logic lives in `packages/*`: `database` (Prisma schemas/migrations), `surveys`, `js-core`, `types`, plus linting and TypeScript presets (`config-*`). Deployment collateral is kept in `docs/`, `docker/`, and `charts/`. Unit tests sit next to their source as `*.test.ts` or inside `__tests__`.
 
 ## Build, Test & Development Commands
 
@@ -292,7 +292,7 @@ Do not:
   dependencies. `@slow` is triage metadata only: nothing in `playwright.config.ts` or CI reads it, so
   tagging a spec does not make its cost go away.
 
-## Documentation (apps/docs)
+## Documentation (root docs/)
 
 - Add frontmatter with `title`, `description`, and `icon` at the top of the MDX file.
 - Do not start with an H1; use Camel Case headings (only capitalize the feature name).
