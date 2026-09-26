@@ -1,7 +1,7 @@
 // extend this object in order to add more validation rules
 import { TFunction } from "i18next";
 import { toast } from "react-hot-toast";
-import { ZEndingCardUrl } from "@formbricks/types/common";
+import { ZEndingCardButtonLink, ZEndingCardUrl } from "@formbricks/types/common";
 import { TI18nString } from "@formbricks/types/i18n";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurveyBlockLogic, ZSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
@@ -235,7 +235,7 @@ export const isEndingCardValid = (
       if (!card.buttonLink) {
         return false;
       }
-      const parseResult = ZEndingCardUrl.safeParse(card.buttonLink.trim());
+      const parseResult = ZEndingCardButtonLink.safeParse(card.buttonLink.trim());
       if (!parseResult.success) {
         return false;
       }

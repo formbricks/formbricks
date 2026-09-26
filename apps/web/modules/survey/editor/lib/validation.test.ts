@@ -458,6 +458,29 @@ describe("validation.isEndingCardValid", () => {
     expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
   });
 
+  test("should return true for endScreen card with a mailto: button link", () => {
+    const card: TSurveyEndScreenCard = {
+      ...baseEndScreenCard,
+      buttonLabel: { default: "Go", en: "Go", de: "Los" },
+      buttonLink: "mailto:hello@example.com",
+    };
+    expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
+  });
+
+  test("should return false for endScreen card with a javascript: button link", () => {
+    const card: TSurveyEndScreenCard = {
+      ...baseEndScreenCard,
+      buttonLabel: { default: "Go", en: "Go", de: "Los" },
+      buttonLink: "javascript:alert(1)",
+    };
+    expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(false);
+  });
+
+  test("should return false for a redirectToUrl card with a mailto: url", () => {
+    const card: TSurveyRedirectUrlCard = { ...baseRedirectUrlCard, url: "mailto:hello@example.com" };
+    expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(false);
+  });
+
   test("should return true for endScreen card with dynamic URL containing recall", () => {
     const card: TSurveyEndScreenCard = {
       ...baseEndScreenCard,

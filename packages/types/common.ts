@@ -101,6 +101,79 @@ export const endingCardUrlRefinement = (url: string, ctx: z.RefinementCtx): void
   }
 };
 
+// Ending card button links may also open the respondent's mail client. Redirect-to-URL endings keep
+// using `ZEndingCardUrl`: a redirect replaces the survey page, which only makes sense for a web page.
+export const ZEndingCardButtonLink = z.string().superRefine((url, ctx) => {
+  endingCardButtonLinkRefinement(url, ctx);
+});
+
+export const endingCardButtonLinkRefinement = (url: string, ctx: z.RefinementCtx): void => {
+  const trimmedUrl = url.trim();
+
+  if (trimmedUrl.startsWith("http://") || trimmedUrl.startsWith("https://")) {
+    return;
+  }
+
+  if (!trimmedUrl.startsWith("mailto:")) {
+    ctx.addIssue({
+      code: "custom",
+      message: "URL must start with http://, https:// or mailto:",
+    });
+    return;
+  }
+
+  const recipients = trimmedUrl.slice("mailto:".length).split("?")[0];
+  if (!areMailtoRecipientsValid(recipients)) {
+    ctx.addIssue({
+      code: "custom",
+      message: "mailto: link must include a valid email address",
+    });
+  }
+};
+
+/**
+ * Whether `address` has the shape the survey email validator accepts: one `@` with a non-empty local
+ * part, and a dotted domain whose top-level domain has 2+ characters. No whitespace.
+ */
+export const isEmailAddressShape = (address: string): boolean => {
+  const atIndex = address.indexOf("@");
+  if (atIndex <= 0 || address.lastIndexOf("@") !== atIndex || /\s/.test(address)) return false;
+  const domain = address.slice(atIndex + 1);
+  const dotIndex = domain.lastIndexOf(".");
+  return dotIndex > 0 && dotIndex < domain.length - 2;
+};
+
+const RECALL_PREFIX = "#recall:";
+const RECALL_FALLBACK_MARKER = "/fallback:";
+const RECALL_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
+
+// A recipient filled in from a recall value is only known at response time. It must use the grammar the
+// survey renderer resolves (`#recall:<id>/fallback:<text>#`), and its fallback, which is what the link
+// uses when there is no answer, must itself be a valid address.
+const isRecallRecipient = (recipient: string): boolean => {
+  if (!recipient.startsWith(RECALL_PREFIX) || !recipient.endsWith("#")) return false;
+  const body = recipient.slice(RECALL_PREFIX.length, -1);
+  const markerIndex = body.indexOf(RECALL_FALLBACK_MARKER);
+  if (markerIndex < 0) return false;
+  const id = body.slice(0, markerIndex);
+  const fallback = body.slice(markerIndex + RECALL_FALLBACK_MARKER.length);
+  return RECALL_ID_PATTERN.test(id) && !fallback.includes("#") && isEmailAddressShape(fallback);
+};
+
+const isMailtoRecipientValid = (recipient: string): boolean =>
+  isRecallRecipient(recipient) || isEmailAddressShape(recipient);
+
+const areMailtoRecipientsValid = (recipients: string): boolean => {
+  if (recipients.length === 0) return false;
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(recipients);
+  } catch {
+    return false;
+  }
+  return decoded.split(",").every(isMailtoRecipientValid);
+};
+
 export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
   if (url.includes(" ") || url.endsWith(" ") || url.startsWith(" ")) {
     ctx.addIssue({
