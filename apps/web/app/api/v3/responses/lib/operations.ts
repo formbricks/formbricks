@@ -21,6 +21,7 @@ import { validateResponseData } from "@/modules/api/lib/validation";
 import { validateClientFileUploads } from "@/modules/storage/utils";
 import { buildAnswerPlan } from "./answers";
 import { resolveV3LabelContext } from "./label-resolution";
+import { startV3ResponsesRead } from "./metrics";
 import {
   RESPONSES_CURSOR_KIND,
   type TV3InvalidParam,
@@ -235,17 +236,49 @@ type TReadParams = {
   instance?: string;
 };
 
+/** How many rejected parameter names one log line will carry; the rest are counted, not named. */
+const MAX_LOGGED_REJECTED_PARAMS = 10;
+
+/**
+ * A rejected name is only logged when it looks like a query key — the bracket-and-dot vocabulary the
+ * contract uses, bounded in length. Anything else is caller-supplied text and is counted instead.
+ */
+const LOGGABLE_PARAM_NAME = /^[\w[\].-]{1,64}$/;
+
 /**
  * Turn a parse failure into the 400 the contract promises.
  *
  * The parser reports every offending key at once, so a caller fixing a query sees all of it rather
  * than one problem per round trip.
+ *
+ * The rejected parameter *names* are logged, because they are the other half of ENG-2898 §1: a
+ * caller sending `filter[tags]` is refused, and the refusal is the only evidence that anyone wants
+ * tag filtering (ENG-2897). Names only, never values — and the names are caller-controlled, so the
+ * line is bounded twice over: only key-shaped names of bounded length, and at most a handful of
+ * them, with the total alongside so a flood is still visible as a number.
  */
-const badQuery = (invalidParams: TV3InvalidParam[], requestId: string, instance?: string): Response =>
-  problemBadRequest(requestId, "The query parameters are invalid.", {
+const badQuery = (
+  invalidParams: TV3InvalidParam[],
+  requestId: string,
+  instance: string | undefined,
+  log: ReturnType<typeof logger.withContext>
+): Response => {
+  log.info(
+    {
+      rejectedParamCount: invalidParams.length,
+      rejectedParams: invalidParams
+        .map((param) => param.name)
+        .filter((name) => LOGGABLE_PARAM_NAME.test(name))
+        .slice(0, MAX_LOGGED_REJECTED_PARAMS),
+    },
+    "v3 responses query rejected"
+  );
+
+  return problemBadRequest(requestId, "The query parameters are invalid.", {
     invalid_params: invalidParams,
     instance,
   });
+};
 
 /**
  * `GET /api/v3/responses` → 200 `{ data, meta }`.
@@ -265,12 +298,17 @@ export async function listV3Responses({
   instance,
 }: TReadParams & { searchParams: URLSearchParams }): Promise<Response> {
   const log = logger.withContext({ requestId });
+  const read = startV3ResponsesRead({ operation: "list", authentication, instance });
 
   try {
     const parsed = parseV3ResponsesListQuery(searchParams);
     if (!parsed.ok) {
-      return badQuery(parsed.invalid_params, requestId, instance);
+      return read.done(badQuery(parsed.invalid_params, requestId, instance, log));
     }
+
+    read.observation.filter = parsed.filter;
+    read.observation.cursorUsed = parsed.cursor !== null;
+    read.observation.includeTotalCount = parsed.includeTotalCount;
 
     const access = await requireV3WorkspaceAccess(
       authentication,
@@ -281,7 +319,7 @@ export async function listV3Responses({
     );
 
     if (access instanceof Response) {
-      return access;
+      return read.done(access);
     }
 
     const keysetRows = await listV3ResponseKeysetPage({
@@ -304,9 +342,12 @@ export async function listV3Responses({
     // to, and the total when it was asked for. The surveys are keyed off the keyset page rather
     // than the hydrated rows — phase one already carries `surveyId`, so waiting for the hydration
     // to learn which surveys to load would serialize two queries that need nothing from each other.
+    const pageSurveyIds = page.map((row) => row.surveyId);
+    read.observation.pageSurveyCount = new Set(pageSurveyIds).size;
+
     const [rows, surveys, total] = await Promise.all([
       hydrateV3Responses(page.map((row) => row.id)),
-      getV3ResponseSurveys(page.map((row) => row.surveyId)),
+      getV3ResponseSurveys(pageSurveyIds),
       parsed.includeTotalCount
         ? countV3Responses({ filter: parsed.filter, precision: "capped" })
         : Promise.resolve(null),
@@ -327,23 +368,29 @@ export async function listV3Responses({
       return [serializer.toListItem(row, survey)];
     });
 
-    return successListResponse(
-      data,
-      {
-        limit: parsed.limit,
-        nextCursor,
-        totalCount: total?.count ?? null,
-        totalCountRelation: total?.relation ?? null,
-      },
-      { requestId, cache: "private, no-store" }
+    read.observation.items = data;
+
+    return read.done(
+      successListResponse(
+        data,
+        {
+          limit: parsed.limit,
+          nextCursor,
+          totalCount: total?.count ?? null,
+          totalCountRelation: total?.relation ?? null,
+        },
+        { requestId, cache: "private, no-store" }
+      )
     );
   } catch (error) {
-    return mapV3ThrownError(error, {
-      log,
-      requestId,
-      instance: instance ?? "",
-      operation: "responses.list",
-    });
+    return read.done(
+      mapV3ThrownError(error, {
+        log,
+        requestId,
+        instance: instance ?? "",
+        operation: "responses.list",
+      })
+    );
   }
 }
 
@@ -360,12 +407,16 @@ export async function countV3ResponsesOperation({
   instance,
 }: TReadParams & { searchParams: URLSearchParams }): Promise<Response> {
   const log = logger.withContext({ requestId });
+  const read = startV3ResponsesRead({ operation: "count", authentication, instance });
 
   try {
     const parsed = parseV3ResponsesCountQuery(searchParams);
     if (!parsed.ok) {
-      return badQuery(parsed.invalid_params, requestId, instance);
+      return read.done(badQuery(parsed.invalid_params, requestId, instance, log));
     }
+
+    read.observation.filter = parsed.filter;
+    read.observation.precision = parsed.precision;
 
     const access = await requireV3WorkspaceAccess(
       authentication,
@@ -376,7 +427,7 @@ export async function countV3ResponsesOperation({
     );
 
     if (access instanceof Response) {
-      return access;
+      return read.done(access);
     }
 
     const { count, relation } = await countV3Responses({
@@ -384,14 +435,16 @@ export async function countV3ResponsesOperation({
       precision: parsed.precision,
     });
 
-    return successResponse({ count, relation }, { requestId, cache: "private, no-store" });
+    return read.done(successResponse({ count, relation }, { requestId, cache: "private, no-store" }));
   } catch (error) {
-    return mapV3ThrownError(error, {
-      log,
-      requestId,
-      instance: instance ?? "",
-      operation: "responses.count",
-    });
+    return read.done(
+      mapV3ThrownError(error, {
+        log,
+        requestId,
+        instance: instance ?? "",
+        operation: "responses.count",
+      })
+    );
   }
 }
 
@@ -410,18 +463,19 @@ export async function getV3Response({
   instance,
 }: TReadParams & { responseId: string }): Promise<Response> {
   const log = logger.withContext({ requestId, responseId });
+  const read = startV3ResponsesRead({ operation: "get", authentication, instance });
 
   try {
     const workspaceId = await getResponseWorkspaceId(responseId);
 
     if (!workspaceId) {
-      return problemForbidden(requestId, undefined, instance);
+      return read.done(problemForbidden(requestId, undefined, instance));
     }
 
     const access = await requireV3WorkspaceAccess(authentication, workspaceId, "read", requestId, instance);
 
     if (access instanceof Response) {
-      return access;
+      return read.done(access);
     }
 
     const row = await getScopedV3Response(responseId, { workspaceId });
@@ -429,26 +483,29 @@ export async function getV3Response({
     // Deleted between the scope lookup and the read. The same 403 as above, so the race is
     // indistinguishable from a response that was never the caller's.
     if (!row) {
-      return problemForbidden(requestId, undefined, instance);
+      return read.done(problemForbidden(requestId, undefined, instance));
     }
 
     const surveys = await getV3ResponseSurveys([row.surveyId]);
     const survey = surveys.get(row.surveyId);
 
     if (!survey) {
-      return problemForbidden(requestId, undefined, instance);
+      return read.done(problemForbidden(requestId, undefined, instance));
     }
 
     const resource = createV3ResponseSerializer().toResource(row, survey);
+    read.observation.items = [resource];
 
-    return successResponse(resource, { requestId, cache: "private, no-store" });
+    return read.done(successResponse(resource, { requestId, cache: "private, no-store" }));
   } catch (error) {
-    return mapV3ThrownError(error, {
-      log,
-      requestId,
-      instance: instance ?? "",
-      operation: "responses.get",
-    });
+    return read.done(
+      mapV3ThrownError(error, {
+        log,
+        requestId,
+        instance: instance ?? "",
+        operation: "responses.get",
+      })
+    );
   }
 }
 

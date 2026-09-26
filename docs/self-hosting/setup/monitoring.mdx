@@ -169,6 +169,12 @@ The metrics exported by the Prometheus integration include:
   - Event loop lag
   - Heap statistics (size, used, available)
 
+- **v3 Responses API Metrics** — the two counters and the two `unresolved` counters below are exported under exactly these series names through both the Prometheus exporter and an OTLP collector. The two histograms are metric *families*: querying the family name returns nothing, and their queryable series are the `_bucket`, `_sum` and `_count` suffixes.
+  - `formbricks_api_v3_responses_reads_total` — one count per list, count or get, at the route boundary, so a 401, 429 or 400 counts too. Attributes: `operation`, `via` (`ui`, `api`, `mcp`), `status_class`, and `filters` (the sorted filter keys the caller used, never their values).
+  - `formbricks_api_v3_responses_read_duration_seconds` (histogram family) — wall-clock seconds per read, by `operation`, `via` and `status_class`. Series: `formbricks_api_v3_responses_read_duration_seconds_bucket`, `..._sum`, `..._count`. For example, the p95 per operation: `histogram_quantile(0.95, sum by (le, operation) (rate(formbricks_api_v3_responses_read_duration_seconds_bucket[5m])))`.
+  - `formbricks_api_v3_responses_page_surveys` (histogram family) — how many distinct surveys one list page spans, i.e. the size of its single survey query. Series: `formbricks_api_v3_responses_page_surveys_bucket`, `..._sum`, `..._count`. The first bucket boundary is `0.5`, so `formbricks_api_v3_responses_page_surveys_bucket{le="0.5"}` counts empty pages and is distinguishable from one-survey pages.
+  - `formbricks_api_v3_responses_unresolved_responses_total` and `formbricks_api_v3_responses_unresolved_entries_total` — responses served with a non-empty `unresolved[]`, and its entries by `reason`. These count every *read*, so a client polling one unchanged response raises them without any survey edit, and `valueShapeMismatch` can be legacy malformed data rather than a definition change. Read `unresolved_responses_total` over `reads_total` by `operation` as unresolved responses served per read (a list page can carry several, so for `list` this can exceed 1; for `get` it is the share of affected reads), and use `unresolved_entries_total` grouped by `reason` for the breakdown, rather than a rising raw count.
+
 ### Collecting Metrics
 
 You can scrape metrics from your Prometheus server by adding the following to your Prometheus configuration:
