@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { cache } from "@/lib/cache";
 import { applyRateLimit } from "./helpers";
-import { checkRateLimit } from "./rate-limit";
+import { checkRateLimit, reserveRateLimit, settleRateLimit } from "./rate-limit";
 import { TRateLimitConfig } from "./types/rate-limit";
 
 // Check if Redis is available (basic requirements)
@@ -215,6 +215,73 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
       expect(rejectedResult.data.retryAfter).toBeGreaterThan(0);
     }
     expect(await redis.get(key)).toBe("5");
+  });
+
+  test("Reservations release failed units without extending the fixed window", async () => {
+    if (!isRedisAvailable) {
+      console.log("Skipping test: Redis not available");
+      return;
+    }
+
+    const config: TRateLimitConfig = {
+      interval: 3600,
+      allowedPerInterval: 5,
+      namespace: "test:reservation",
+    };
+    const identifier = `reservation-test-${Date.now()}`;
+    const redis = await cache.getRedisClient();
+
+    expect(redis).not.toBeNull();
+    if (!redis) return;
+
+    const result = await reserveRateLimit(config, identifier, 5);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !result.data.reservation) {
+      throw new Error("Expected a rate-limit reservation");
+    }
+
+    const initialTtl = await redis.ttl(result.data.reservation.key);
+    await settleRateLimit(result.data.reservation, 2);
+
+    expect(await redis.get(result.data.reservation.key)).toBe("2");
+    expect(await redis.ttl(result.data.reservation.key)).toBeLessThanOrEqual(initialTtl);
+  });
+
+  test("Settlement cannot decrement a newer fixed window", async () => {
+    if (!isRedisAvailable) {
+      console.log("Skipping test: Redis not available");
+      return;
+    }
+
+    const config: TRateLimitConfig = {
+      interval: 1,
+      allowedPerInterval: 5,
+      namespace: "test:reservation-window",
+    };
+    const identifier = `reservation-window-test-${Date.now()}`;
+    const redis = await cache.getRedisClient();
+
+    expect(redis).not.toBeNull();
+    if (!redis) return;
+
+    const firstResult = await reserveRateLimit(config, identifier, 2);
+    expect(firstResult.ok).toBe(true);
+    if (!firstResult.ok || !firstResult.data.reservation) {
+      throw new Error("Expected the first rate-limit reservation");
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+
+    const secondResult = await reserveRateLimit(config, identifier, 1);
+    expect(secondResult.ok).toBe(true);
+    if (!secondResult.ok || !secondResult.data.reservation) {
+      throw new Error("Expected the second rate-limit reservation");
+    }
+    expect(secondResult.data.reservation.key).not.toBe(firstResult.data.reservation.key);
+
+    await settleRateLimit(firstResult.data.reservation, 0);
+
+    expect(await redis.get(secondResult.data.reservation.key)).toBe("1");
   });
 
   test("Race condition test: concurrent requests to same identifier", async () => {

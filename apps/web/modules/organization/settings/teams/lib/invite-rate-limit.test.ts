@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { reserveRateLimitUsage, settleRateLimitUsage } from "@/modules/core/rate-limit/helpers";
+import type { TRateLimitReservation } from "@/modules/core/rate-limit/rate-limit";
 import { getBulkInvitePermission } from "@/modules/ee/license-check/lib/utils";
-import { applyInviteRateLimit, getInviteRateLimitConfig } from "./invite-rate-limit";
+import { getInviteRateLimitConfig, reserveInviteRateLimit, settleInviteRateLimit } from "./invite-rate-limit";
 
 const constants = vi.hoisted(() => ({
   isFormbricksCloud: false,
@@ -19,7 +20,8 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
 }));
 
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
-  applyRateLimit: vi.fn(),
+  reserveRateLimitUsage: vi.fn(),
+  settleRateLimitUsage: vi.fn(),
 }));
 
 describe("getInviteRateLimitConfig", () => {
@@ -59,11 +61,11 @@ describe("getInviteRateLimitConfig", () => {
   });
 
   test("applies the recipient count to the organization budget", async () => {
-    vi.mocked(applyRateLimit).mockResolvedValueOnce({ allowed: true });
+    vi.mocked(reserveRateLimitUsage).mockResolvedValueOnce(undefined);
 
-    await applyInviteRateLimit("org_1", 25);
+    await reserveInviteRateLimit("org_1", 25);
 
-    expect(applyRateLimit).toHaveBeenCalledWith(
+    expect(reserveRateLimitUsage).toHaveBeenCalledWith(
       {
         interval: 3600 * 24,
         allowedPerInterval: 75,
@@ -72,5 +74,19 @@ describe("getInviteRateLimitConfig", () => {
       "org_1",
       25
     );
+  });
+
+  test("settles the reservation to the successful recipient count", async () => {
+    const reservation: TRateLimitReservation = {
+      identifier: "org_1",
+      key: "rate-limit-key",
+      namespace: "action:invite-member",
+      requested: 25,
+      settled: false,
+    };
+
+    await settleInviteRateLimit(reservation, 10);
+
+    expect(settleRateLimitUsage).toHaveBeenCalledWith(reservation, 10);
   });
 });

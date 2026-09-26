@@ -30,7 +30,7 @@ import {
 import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
 import { deleteInvite, getInvite, inviteUser, refreshInviteExpiration, resendInvite } from "./lib/invite";
 import { type TBulkInviteResult, getInviteFailureReason } from "./lib/invite-failure";
-import { applyInviteRateLimit } from "./lib/invite-rate-limit";
+import { reserveInviteRateLimit, settleInviteRateLimit } from "./lib/invite-rate-limit";
 
 // Hard cap on a single bulk import to bound payload size and email fan-out.
 const BULK_INVITE_MAX_INVITEES = 500;
@@ -177,14 +177,22 @@ export const resendInviteAction = authenticatedActionClient.inputSchema(ZResendI
       id: parsedInput.organizationId,
     });
     await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
-    await applyInviteRateLimit(parsedInput.organizationId);
+    const rateLimitReservation = await reserveInviteRateLimit(parsedInput.organizationId);
 
-    const invite = await getInvite(parsedInput.inviteId);
+    let invite: Awaited<ReturnType<typeof getInvite>>;
+    let updatedInvite: Awaited<ReturnType<typeof resendInvite>>;
+    try {
+      invite = await getInvite(parsedInput.inviteId);
+      updatedInvite = await resendInvite(parsedInput.inviteId);
+    } catch (error) {
+      await settleInviteRateLimit(rateLimitReservation, 0);
+      throw error;
+    }
+    await settleInviteRateLimit(rateLimitReservation, 1);
 
     ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
     ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
     ctx.auditLoggingCtx.oldObject = { ...invite };
-    const updatedInvite = await resendInvite(parsedInput.inviteId);
     ctx.auditLoggingCtx.newObject = updatedInvite;
     await sendInviteMemberEmail(
       parsedInput.inviteId,
@@ -339,18 +347,25 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
       await checkRoleManagementPermission(parsedInput.organizationId);
     }
 
-    await applyInviteRateLimit(parsedInput.organizationId);
+    const rateLimitReservation = await reserveInviteRateLimit(parsedInput.organizationId);
 
-    const inviteId = await inviteUser({
-      organizationId: parsedInput.organizationId,
-      invitee: {
-        email: parsedInput.email,
-        name: parsedInput.name,
-        role: parsedInput.role,
-        teamIds: parsedInput.teamIds,
-      },
-      currentUserId: ctx.user.id,
-    });
+    let inviteId: Awaited<ReturnType<typeof inviteUser>>;
+    try {
+      inviteId = await inviteUser({
+        organizationId: parsedInput.organizationId,
+        invitee: {
+          email: parsedInput.email,
+          name: parsedInput.name,
+          role: parsedInput.role,
+          teamIds: parsedInput.teamIds,
+        },
+        currentUserId: ctx.user.id,
+      });
+    } catch (error) {
+      await settleInviteRateLimit(rateLimitReservation, 0);
+      throw error;
+    }
+    await settleInviteRateLimit(rateLimitReservation, inviteId ? 1 : 0);
 
     ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
     ctx.auditLoggingCtx.inviteId = inviteId;
@@ -439,36 +454,40 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
       await checkRoleManagementPermission(organizationId);
     }
 
-    await applyInviteRateLimit(organizationId, invitees.length);
+    const rateLimitReservation = await reserveInviteRateLimit(organizationId, invitees.length);
 
     const results: TBulkInviteResult[] = [];
     const invitedEmails: string[] = [];
 
-    for (const invitee of invitees) {
-      const email = invitee.email.toLowerCase();
-      try {
-        const inviteId = await inviteUser({
-          organizationId,
-          invitee: { ...invitee, email },
-          currentUserId: ctx.user.id,
-        });
+    try {
+      for (const invitee of invitees) {
+        const email = invitee.email.toLowerCase();
+        try {
+          const inviteId = await inviteUser({
+            organizationId,
+            invitee: { ...invitee, email },
+            currentUserId: ctx.user.id,
+          });
 
-        if (inviteId) {
-          // Best-effort email (see inviteUserAction): a failed send must not flip a created invite
-          // to "failed" — the invitee exists and can be reached via the invite link.
-          try {
-            await sendInviteMemberEmail(inviteId, email, ctx.user.name ?? "", invitee.name ?? "");
-          } catch (error) {
-            logger.error(error, "Failed to send bulk invite email");
+          if (inviteId) {
+            // Best-effort email (see inviteUserAction): a failed send must not flip a created invite
+            // to "failed" — the invitee exists and can be reached via the invite link.
+            try {
+              await sendInviteMemberEmail(inviteId, email, ctx.user.name ?? "", invitee.name ?? "");
+            } catch (error) {
+              logger.error(error, "Failed to send bulk invite email");
+            }
+            invitedEmails.push(email);
+            results.push({ email, success: true });
+          } else {
+            results.push({ email, success: false, failureReason: "unknown" });
           }
-          invitedEmails.push(email);
-          results.push({ email, success: true });
-        } else {
-          results.push({ email, success: false, failureReason: "unknown" });
+        } catch (error) {
+          results.push({ email, success: false, failureReason: getInviteFailureReason(error) });
         }
-      } catch (error) {
-        results.push({ email, success: false, failureReason: getInviteFailureReason(error) });
       }
+    } finally {
+      await settleInviteRateLimit(rateLimitReservation, invitedEmails.length);
     }
 
     ctx.auditLoggingCtx.organizationId = organizationId;
