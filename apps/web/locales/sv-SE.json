@@ -367,6 +367,7 @@
     "label": "Etikett",
     "language": "Språk",
     "last_name": "Efternamn",
+    "last_sign_in": "Senaste inloggning",
     "learn_more": "Läs mer",
     "license_expired": "License Expired",
     "light_overlay": "Ljust överlägg",
@@ -407,6 +408,7 @@
     "no_quotas_found": "Inga kvoter hittades",
     "no_result_found": "Inget resultat hittades",
     "no_results": "Inga resultat",
+    "no_sign_in_recorded": "Ingen inloggning registrerad",
     "no_surveys_found": "Inga enkäter hittades.",
     "no_text_found": "Ingen text hittades",
     "none_of_the_above": "Inget av ovanstående",
@@ -3089,6 +3091,22 @@
         "unlock_teams_title": "Lås upp team med en högre plan.",
         "upgrade_plan_notice_message": "Lås upp organisationsroller med en högre plan.",
         "you_are_a_member": "Du är medlem"
+      },
+      "usage": {
+        "load_error": "Kunde inte läsa in användning. Ladda om sidan för att försöka igen.",
+        "members_active": "Inloggade inom 30 dagar",
+        "members_deactivated": "Inaktiverade",
+        "members_description": "Inloggningsaktivitet för organisationens medlemmar. Påverkas inte av datumintervallet.",
+        "members_dormant": "Ingen inloggning på 90+ dagar",
+        "members_total": "Medlemmar",
+        "nav_label": "Användning",
+        "no_workspaces": "Den här organisationen har inga arbetsytor än.",
+        "range_label": "Datumintervall",
+        "responses_description": "Alla lagrade svar i det valda intervallet, inklusive partiella svar.",
+        "responses_title": "Svar per arbetsyta",
+        "surveys_description": "Enkäter efter nuvarande status. Påverkas inte av datumintervallet.",
+        "time_zone_note": "Dagar räknas i {timeZone}.",
+        "total": "Totalt"
       }
     },
     "surveys": {

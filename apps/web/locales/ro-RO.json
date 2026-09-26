@@ -367,6 +367,7 @@
     "label": "Etichetă",
     "language": "Limba",
     "last_name": "Nume de familie",
+    "last_sign_in": "Ultima autentificare",
     "learn_more": "Află mai multe",
     "license_expired": "License Expired",
     "light_overlay": "Suprapunere ușoară",
@@ -407,6 +408,7 @@
     "no_quotas_found": "Nicio cotă găsită",
     "no_result_found": "Niciun rezultat găsit",
     "no_results": "Nicio rezultat",
+    "no_sign_in_recorded": "Nicio autentificare înregistrată",
     "no_surveys_found": "Nu au fost găsite sondaje.",
     "no_text_found": "Niciun text găsit",
     "none_of_the_above": "Niciuna dintre cele de mai sus",
@@ -3089,6 +3091,22 @@
         "unlock_teams_title": "Deblocați echipele cu un plan superior.",
         "upgrade_plan_notice_message": "Deblocați rolurile organizației cu un plan superior.",
         "you_are_a_member": "Ești membru"
+      },
+      "usage": {
+        "load_error": "Nu s-a putut încărca utilizarea. Reîncarcă pagina pentru a încerca din nou.",
+        "members_active": "Autentificați în ultimele 30 de zile",
+        "members_deactivated": "Dezactivați",
+        "members_description": "Activitatea de autentificare a membrilor organizației. Nu este afectată de intervalul de date.",
+        "members_dormant": "Nicio autentificare timp de 90+ zile",
+        "members_total": "Membri",
+        "nav_label": "Utilizare",
+        "no_workspaces": "Această organizație nu are încă spații de lucru.",
+        "range_label": "Interval de date",
+        "responses_description": "Fiecare răspuns stocat în intervalul selectat, răspunsurile parțiale incluse.",
+        "responses_title": "Răspunsuri per spațiu de lucru",
+        "surveys_description": "Sondaje după statusul curent. Nu este afectat de intervalul de date.",
+        "time_zone_note": "Zilele sunt calculate în {timeZone}.",
+        "total": "Total"
       }
     },
     "surveys": {

@@ -367,6 +367,7 @@
     "label": "Bezeichnung",
     "language": "Sprache",
     "last_name": "Nachname",
+    "last_sign_in": "Letzte Anmeldung",
     "learn_more": "Mehr erfahren",
     "license_expired": "Lizenz abgelaufen",
     "light_overlay": "Helles Overlay",
@@ -407,6 +408,7 @@
     "no_quotas_found": "Keine Kontingente gefunden",
     "no_result_found": "Kein Ergebnis gefunden",
     "no_results": "Keine Ergebnisse",
+    "no_sign_in_recorded": "Keine Anmeldung erfasst",
     "no_surveys_found": "Keine Umfragen gefunden.",
     "no_text_found": "Kein Text gefunden",
     "none_of_the_above": "Keine der oben genannten Optionen",
@@ -3089,6 +3091,22 @@
         "unlock_teams_title": "Schalte Teams mit einem höheren Tarif frei.",
         "upgrade_plan_notice_message": "Schalte Organisationsrollen mit einem höheren Tarif frei.",
         "you_are_a_member": "Du bist Mitglied"
+      },
+      "usage": {
+        "load_error": "Nutzungsdaten konnten nicht geladen werden. Lade die Seite neu, um es erneut zu versuchen.",
+        "members_active": "Innerhalb von 30 Tagen angemeldet",
+        "members_deactivated": "Deaktiviert",
+        "members_description": "Anmeldeaktivität der Organisationsmitglieder. Wird nicht vom Datumsbereich beeinflusst.",
+        "members_dormant": "Keine Anmeldung seit 90+ Tagen",
+        "members_total": "Mitglieder",
+        "nav_label": "Nutzung",
+        "no_workspaces": "Diese Organisation hat noch keine Workspaces.",
+        "range_label": "Datumsbereich",
+        "responses_description": "Jede gespeicherte Antwort im ausgewählten Zeitraum, einschließlich unvollständiger Antworten.",
+        "responses_title": "Antworten pro Workspace",
+        "surveys_description": "Umfragen nach aktuellem Status. Wird nicht vom Datumsbereich beeinflusst.",
+        "time_zone_note": "Tage werden in {timeZone} gezählt.",
+        "total": "Gesamt"
       }
     },
     "surveys": {

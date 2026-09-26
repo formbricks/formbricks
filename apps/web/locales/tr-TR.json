@@ -367,6 +367,7 @@
     "label": "Etiket",
     "language": "Dil",
     "last_name": "Soyad",
+    "last_sign_in": "Son oturum açma",
     "learn_more": "Daha fazla bilgi",
     "license_expired": "Lisans Süresi Doldu",
     "light_overlay": "Açık kaplama",
@@ -407,6 +408,7 @@
     "no_quotas_found": "Kota bulunamadı",
     "no_result_found": "Sonuç bulunamadı",
     "no_results": "Sonuç yok",
+    "no_sign_in_recorded": "Oturum açma kaydı yok",
     "no_surveys_found": "Survey bulunamadı.",
     "no_text_found": "Metin bulunamadı",
     "none_of_the_above": "Yukarıdakilerin hiçbiri",
@@ -3089,6 +3091,22 @@
         "unlock_teams_title": "Daha yüksek bir planla Takımları etkinleştir.",
         "upgrade_plan_notice_message": "Daha yüksek bir planla Organizasyon Rollerini etkinleştir.",
         "you_are_a_member": "Sen bir üyesin"
+      },
+      "usage": {
+        "load_error": "Kullanım verileri yüklenemedi. Tekrar denemek için sayfayı yenile.",
+        "members_active": "Son 30 gün içinde oturum açtı",
+        "members_deactivated": "Devre dışı bırakıldı",
+        "members_description": "Organizasyon üyelerinin oturum açma etkinliği. Tarih aralığından etkilenmez.",
+        "members_dormant": "90+ gün boyunca oturum açma yok",
+        "members_total": "Üyeler",
+        "nav_label": "Kullanım",
+        "no_workspaces": "Bu organizasyonun henüz çalışma alanı yok.",
+        "range_label": "Tarih aralığı",
+        "responses_description": "Seçilen aralıktaki her kaydedilmiş yanıt, kısmi yanıtlar dahil.",
+        "responses_title": "Çalışma alanı başına yanıtlar",
+        "surveys_description": "Anketlerin mevcut durumlarına göre dağılımı. Tarih aralığından etkilenmez.",
+        "time_zone_note": "Günler {timeZone} saat dilimine göre sayılır.",
+        "total": "Toplam"
       }
     },
     "surveys": {

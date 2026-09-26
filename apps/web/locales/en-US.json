@@ -367,6 +367,7 @@
     "label": "Label",
     "language": "Language",
     "last_name": "Last Name",
+    "last_sign_in": "Last sign-in",
     "learn_more": "Learn more",
     "license_expired": "License Expired",
     "light_overlay": "Light overlay",
@@ -407,6 +408,7 @@
     "no_quotas_found": "No quotas found",
     "no_result_found": "No result found",
     "no_results": "No results",
+    "no_sign_in_recorded": "No sign-in recorded",
     "no_surveys_found": "No surveys found.",
     "no_text_found": "No text found",
     "none_of_the_above": "None of the above",
@@ -3089,6 +3091,22 @@
         "unlock_teams_title": "Unlock Teams with a higher plan.",
         "upgrade_plan_notice_message": "Unlock Organization Roles with a higher plan.",
         "you_are_a_member": "You are a member"
+      },
+      "usage": {
+        "load_error": "Could not load usage. Reload the page to try again.",
+        "members_active": "Signed in within 30 days",
+        "members_deactivated": "Deactivated",
+        "members_description": "Sign-in activity of organization members. Not affected by the date range.",
+        "members_dormant": "No sign-in for 90+ days",
+        "members_total": "Members",
+        "nav_label": "Usage",
+        "no_workspaces": "This organization has no workspaces yet.",
+        "range_label": "Date range",
+        "responses_description": "Every stored response in the selected range, partial responses included.",
+        "responses_title": "Responses per workspace",
+        "surveys_description": "Surveys by current status. Not affected by the date range.",
+        "time_zone_note": "Days are counted in {timeZone}.",
+        "total": "Total"
       }
     },
     "surveys": {

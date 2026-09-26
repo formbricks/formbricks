@@ -367,6 +367,7 @@
     "label": "Etiqueta",
     "language": "Língua",
     "last_name": "Sobrenome",
+    "last_sign_in": "Último login",
     "learn_more": "Saiba mais",
     "license_expired": "License Expired",
     "light_overlay": "sobreposição leve",
@@ -407,6 +408,7 @@
     "no_quotas_found": "Nenhuma cota encontrada",
     "no_result_found": "Nenhum resultado encontrado",
     "no_results": "Nenhum resultado",
+    "no_sign_in_recorded": "Nenhum login registrado",
     "no_surveys_found": "Não foram encontradas pesquisas.",
     "no_text_found": "Nenhum texto encontrado",
     "none_of_the_above": "Nenhuma das opções acima",
@@ -3089,6 +3091,22 @@
         "unlock_teams_title": "Desbloqueie equipes com um plano superior.",
         "upgrade_plan_notice_message": "Desbloqueie Funções de Organização com um plano superior.",
         "you_are_a_member": "Você é um membro"
+      },
+      "usage": {
+        "load_error": "Não foi possível carregar o uso. Recarregue a página para tentar novamente.",
+        "members_active": "Logaram nos últimos 30 dias",
+        "members_deactivated": "Desativados",
+        "members_description": "Atividade de login dos membros da organização. Não é afetada pelo intervalo de datas.",
+        "members_dormant": "Sem login há mais de 90 dias",
+        "members_total": "Membros",
+        "nav_label": "Uso",
+        "no_workspaces": "Esta organização ainda não tem workspaces.",
+        "range_label": "Intervalo de datas",
+        "responses_description": "Todas as respostas armazenadas no intervalo selecionado, incluindo respostas parciais.",
+        "responses_title": "Respostas por workspace",
+        "surveys_description": "Pesquisas por status atual. Não é afetado pelo intervalo de datas.",
+        "time_zone_note": "Os dias são contados em {timeZone}.",
+        "total": "Total"
       }
     },
     "surveys": {
