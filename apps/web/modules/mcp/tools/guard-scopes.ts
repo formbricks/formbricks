@@ -6,9 +6,14 @@ import type {
   ToolAnnotations,
   ToolCallback,
 } from "@modelcontextprotocol/server";
+import { logger } from "@formbricks/logger";
+import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
+import { getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
+import type { TAuditAction, TAuditTarget } from "@/modules/ee/audit-logs/types/audit-log";
 import {
   type TMcpToolContext,
   createMcpInsufficientScopeResponse,
+  getMcpAuthentication,
   getMcpRequestId,
   getMcpToolAuthInfo,
   hasAnyMcpScope,
@@ -71,6 +76,52 @@ async function guardMcpAnyScope(
   );
 }
 
+/**
+ * What a refused call would have done — enough to write it down as a failed attempt. `targetIdArg` names
+ * the input argument that carries the id of the resource the tool would have changed; a tool that would
+ * have *created* something declares none, because the ids in its input name other things — the workspace
+ * a survey would go into, the workflow `duplicate_workflow` would copy — and recording one of those as the
+ * target of a failed creation would be a false record.
+ */
+type TMcpToolAudit = { action: TAuditAction; targetType: TAuditTarget; targetIdArg?: string };
+
+/**
+ * Record a scope refusal on a mutating tool as a failed audit event (ENG-2872).
+ *
+ * The gate runs before `runMcpMutation`, so without this a caller reaching for `delete_response` with a
+ * read-only credential left no trace at all — the one attempt an audit trail exists to show. The actor is
+ * known here (the request authenticated; it merely lacks the scope), which is what makes the event
+ * attributable; a 401 has no actor and is deliberately not audited anywhere on this surface.
+ */
+async function auditRefusedMutation(
+  toolName: string,
+  audit: TMcpToolAudit,
+  input: unknown,
+  authInfo: AuthInfo | undefined,
+  requestId: string
+): Promise<void> {
+  const auditLog = buildV3AuditLog(
+    getMcpAuthentication(authInfo),
+    audit.action,
+    audit.targetType,
+    getMcpResourceUrl()
+  );
+  if (!auditLog) {
+    return;
+  }
+
+  // `buildAuditLogBaseObject` starts every event as a failure; only a completed mutation flips it.
+  auditLog.eventId = requestId;
+  if (audit.targetIdArg && input && typeof input === "object") {
+    const targetId = (input as Record<string, unknown>)[audit.targetIdArg];
+    if (typeof targetId === "string") {
+      auditLog.targetId = targetId;
+    }
+  }
+
+  await queueV3AuditLog(auditLog, requestId, logger.withContext({ requestId, tool: toolName }));
+}
+
 type ScopedToolConfig<
   InputSchema extends StandardSchemaWithJSON,
   OutputSchema extends StandardSchemaWithJSON,
@@ -88,6 +139,12 @@ type ScopedToolConfig<
    */
   outputSchema?: OutputSchema;
   annotations?: ToolAnnotations;
+  /**
+   * Set on every mutating tool and on nothing else (ENG-2872). A refused *read* discloses nothing and
+   * would only add noise; a refused mutation is exactly what an audit reviewer wants to see, and it is
+   * the guard's to record because the tool's own runner never runs.
+   */
+  audit?: TMcpToolAudit;
 };
 
 /**
@@ -104,6 +161,9 @@ type ScopedToolConfig<
  * Pass `{ anyOf: [...] }` instead of a plain tuple for the rare tool that more than one scope group
  * legitimately reaches (workspace discovery). That keeps such tools on this registration path rather
  * than dropping them to a raw `server.registerTool` with a hand-rolled gate.
+ *
+ * A mutating tool also declares `audit`, and a refusal on it is written to the audit log as a failed
+ * attempt before the 403 goes back (ENG-2872).
  */
 export function registerScopedTool<
   InputSchema extends StandardSchemaWithJSON,
@@ -116,6 +176,10 @@ export function registerScopedTool<
   requiredScopes: [string, ...string[]] | { anyOf: [string, ...string[]] },
   handler: ToolCallback<InputSchema>
 ): void {
+  // `audit` is the guard's, not the SDK's. Stripped only when present, so a plain config still reaches
+  // `registerTool` as the very object the caller built.
+  const { audit, ...toolConfig } = config;
+
   const guardedHandler = (async (input: unknown, ctx: TMcpToolContext) => {
     const authInfo = getMcpToolAuthInfo(ctx);
     const requestId = getMcpRequestId(authInfo);
@@ -124,6 +188,9 @@ export function registerScopedTool<
         ? await guardMcpAnyScope(authInfo, requiredScopes.anyOf, requestId)
         : await guardMcpScopes(authInfo, requiredScopes, requestId);
     if (scopeError) {
+      if (audit) {
+        await auditRefusedMutation(name, audit, input, authInfo, requestId);
+      }
       return scopeError;
     }
     // Cast needed only because ToolCallback<InputSchema> is a conditional signature that TS can't call
@@ -134,5 +201,5 @@ export function registerScopedTool<
     return (handler as (input: unknown, ctx: unknown) => Promise<CallToolResult>)(input, ctx);
   }) as ToolCallback<InputSchema>;
 
-  server.registerTool(name, config, guardedHandler);
+  server.registerTool(name, audit ? toolConfig : config, guardedHandler);
 }

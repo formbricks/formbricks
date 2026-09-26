@@ -203,6 +203,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
       description:
         "Create a feedback record in a workspace's feedback dataset. The dataset is resolved from workspaceId, or from datasetId when the workspace has more than one; it can never be set through the record body.",
       inputSchema: ZMcpCreateFeedbackRecordInput,
+      audit: { action: "created", targetType: "feedbackRecord" },
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -232,6 +233,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
       description:
         "Create several feedback records in one call — use this instead of calling create_feedback_record repeatedly when importing a batch. Every record is validated before any is written, so an invalid record fails the whole call rather than storing part of the batch. If the feedback service rejects some records (a duplicate submission, say), the created ones are returned and meta.failures lists the rest by index, so only those need retrying; check meta.failed. Records in one call are NOT automatically treated as one submission: each record without a submission_id gets its own generated one, so to record several answers given together (a survey response, a call with a rating and a comment) set the same submission_id on all of them.",
       inputSchema: ZMcpCreateFeedbackRecordsInput,
+      audit: { action: "created", targetType: "feedbackRecord" },
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -306,6 +308,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
       description:
         "Correct the value of an existing feedback record — the text, number, boolean, date or chosen option, plus user_id, language and metadata. Send ONLY those fields: this tool rejects any other key rather than ignoring it, so do not echo a record back from get_feedback_record unchanged — strip its provenance fields (source_*, field_*, submission_id, collected_at) and its derived sentiment/emotions/translation first. If a call is rejected the error names every key to remove. Only the fields you send are changed, with one exception: metadata is REPLACED wholesale, so to add a key you must send the existing keys too (fetch the record first with get_feedback_record). Send the value field that matches the record's field_type — value_text for text, value_number for nps/csat/ces/rating/number, value_boolean for boolean, value_date for date, value_text and/or value_id for categorical; sending any other one is rejected, because field_type itself cannot be changed. A record's provenance cannot be changed either (which source, question, submission or when it was collected); correcting those means deleting the record and creating it again. Editing the text clears the derived sentiment, emotions and translation and regenerates them in the background, so the response comes back without them — that means 'being recomputed', not 'none'. Semantic search catches up with an edit a moment later, and clearing a record's text makes it unsearchable.",
       inputSchema: ZMcpUpdateFeedbackRecordInput,
+      audit: { action: "updated", targetType: "feedbackRecord", targetIdArg: "feedbackRecordId" },
       annotations: {
         readOnlyHint: false,
         // Overwrites a stored value irreversibly (the previous value survives only in the audit log), so
@@ -338,6 +341,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
       description:
         "Permanently delete one feedback record from a workspace's feedback dataset. This cannot be undone: the record and its search embedding are removed, and no copy is kept. Deletes a single record only — there is no bulk delete. Returns no content on success.",
       inputSchema: ZMcpDeleteFeedbackRecordInput,
+      audit: { action: "deleted", targetType: "feedbackRecord", targetIdArg: "feedbackRecordId" },
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
