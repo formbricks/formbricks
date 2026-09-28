@@ -32,13 +32,14 @@ describe("ZEndingCardUrl", () => {
     ["https://example.123", "numeric top-level domain"],
     ["ftp://example.com", "wrong protocol"],
     ["example.com", "no protocol"],
+    ["https://google#recall:", "incomplete recall token after an invalid host"],
+    ["https://#recall:test123/fallback:example.com", "recall token without its closing #"],
   ])("rejects %s (%s)", (url) => {
     expect(isValid(url)).toBe(false);
   });
 
   test.each([
     "https://#recall:url123/fallback:example.com#",
-    "https://#recall:test123/fallback:example.com",
     "https://example.com/?user=#recall:uid/fallback:anonymous#",
     "https://example.com/#recall:path/fallback:#",
   ])("accepts a hidden-field URL: %s", (url) => {

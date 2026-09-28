@@ -112,11 +112,14 @@ const isValidHostname = (hostname: string): boolean => {
   return labels.every((label) => DOMAIN_LABEL.test(label)) && TOP_LEVEL_DOMAIN.test(topLevelDomain);
 };
 
-// The host ends at the first "/", "?" or "#". A recall token starts with "#", so one right there means
-// the host (or its tail) is dynamic.
+// Same shape the survey resolves at runtime; a token missing its closing "#" is never replaced.
+const RECALL_TOKEN = /^#recall:[A-Za-z0-9_-]+\/fallback:[^#]*#/;
+
+// The host ends at the first "/", "?" or "#". A complete recall token right there means the host (or
+// its tail) is dynamic.
 const hasDynamicHost = (urlAfterProtocol: string): boolean => {
   const hostEnd = urlAfterProtocol.search(/[/?#]/);
-  return hostEnd !== -1 && urlAfterProtocol.startsWith("#recall:", hostEnd);
+  return hostEnd !== -1 && RECALL_TOKEN.test(urlAfterProtocol.slice(hostEnd));
 };
 
 export const endingCardUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
