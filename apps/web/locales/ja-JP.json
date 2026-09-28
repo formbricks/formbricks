@@ -367,6 +367,7 @@
     "label": "ラベル",
     "language": "言語",
     "last_name": "姓",
+    "last_sign_in": "最終サインイン",
     "learn_more": "詳細を見る",
     "license_expired": "ライセンスの有効期限切れ",
     "light_overlay": "明るいオーバーレイ",
@@ -407,6 +408,7 @@
     "no_quotas_found": "クォータが見つかりません",
     "no_result_found": "結果が見つかりません",
     "no_results": "結果なし",
+    "no_sign_in_recorded": "サインイン記録なし",
     "no_surveys_found": "アンケートが見つかりません。",
     "no_text_found": "テキストが見つかりません",
     "none_of_the_above": "いずれも該当しません",
@@ -3089,6 +3091,22 @@
         "unlock_teams_title": "上位プランでチームをアンロック。",
         "upgrade_plan_notice_message": "上位プランで組織ロールをアンロック。",
         "you_are_a_member": "あなたはメンバーです"
+      },
+      "usage": {
+        "load_error": "使用状況を読み込めませんでした。ページを再読み込みして、もう一度お試しください。",
+        "members_active": "30日以内にサインイン",
+        "members_deactivated": "無効化済み",
+        "members_description": "組織メンバーのサインイン活動。日付範囲の影響を受けません。",
+        "members_dormant": "90日以上サインインなし",
+        "members_total": "メンバー",
+        "nav_label": "使用状況",
+        "no_workspaces": "この組織にはまだワークスペースがありません。",
+        "range_label": "日付範囲",
+        "responses_description": "選択した範囲内に保存されたすべての回答です。部分的な回答も含まれます。",
+        "responses_title": "ワークスペースごとの回答数",
+        "surveys_description": "現在のステータス別のアンケートです。日付範囲の影響を受けません。",
+        "time_zone_note": "日数は{timeZone}でカウントされます。",
+        "total": "合計"
       }
     },
     "surveys": {

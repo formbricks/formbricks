@@ -367,6 +367,7 @@
     "label": "標籤",
     "language": "語言",
     "last_name": "姓氏",
+    "last_sign_in": "上次登入",
     "learn_more": "瞭解更多",
     "license_expired": "授權已過期",
     "light_overlay": "淺色覆蓋",
@@ -407,6 +408,7 @@
     "no_quotas_found": "找不到配額",
     "no_result_found": "找不到結果",
     "no_results": "沒有結果",
+    "no_sign_in_recorded": "無登入記錄",
     "no_surveys_found": "找不到問卷。",
     "no_text_found": "找不到文字",
     "none_of_the_above": "以上皆非",
@@ -3089,6 +3091,22 @@
         "unlock_teams_title": "使用更高等級的方案解鎖團隊。",
         "upgrade_plan_notice_message": "使用更高等級的方案解鎖組織角色。",
         "you_are_a_member": "您是成員"
+      },
+      "usage": {
+        "load_error": "無法載入使用情況。請重新載入頁面後再試一次。",
+        "members_active": "30 天內曾登入",
+        "members_deactivated": "已停用",
+        "members_description": "組織成員的登入活動。不受日期範圍影響。",
+        "members_dormant": "90 天以上未登入",
+        "members_total": "成員",
+        "nav_label": "使用情況",
+        "no_workspaces": "此組織尚未建立任何工作區。",
+        "range_label": "日期範圍",
+        "responses_description": "所選範圍內儲存的所有回覆，包含部分回覆。",
+        "responses_title": "各工作區的回覆數",
+        "surveys_description": "依目前狀態顯示的問卷調查。不受日期範圍影響。",
+        "time_zone_note": "天數以 {timeZone} 計算。",
+        "total": "總計"
       }
     },
     "surveys": {

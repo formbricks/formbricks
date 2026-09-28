@@ -334,6 +334,7 @@ checksums:
     common/label: a5c71bf158481233f8215dbd38cc196b
     common/language: 277fd1a41cc237a437cd1d5e4a80463b
     common/last_name: 2c9a7de7738ca007ba9023c385149c26
+    common/last_sign_in: 762202e68dd04f4002ebb2a2bfa0bdf5
     common/learn_more: e598091d132f890c37a6d4ed94f6d794
     common/license_expired: 7af13535e320e4197989472c01387d2c
     common/light_overlay: 0499907ea7b8405f4267b117998b5a78
@@ -374,6 +375,7 @@ checksums:
     common/no_quotas_found: 19dea6bcc39b579351073b3974990cb6
     common/no_result_found: fedddbc0149972ea072a9e063198a16d
     common/no_results: 0e9b73265c6542240f5a3bf6b43e9280
+    common/no_sign_in_recorded: 4c8ca261bc58fdd1a4d05f8b6750f110
     common/no_surveys_found: 7b74706fe4f4aacd7d858e19e444fe85
     common/no_text_found: 27350f35bdd57b3701c7ec578a1a0e11
     common/none_of_the_above: e007f0b1e046d5ddbbcfbd87940456ee
@@ -2972,6 +2974,20 @@ checksums:
     workspace/settings/teams/unlock_teams_title: 45b2a27d29d706418fd62540d34a19f3
     workspace/settings/teams/upgrade_plan_notice_message: 305d6f94381482a8df6e72b74b097e99
     workspace/settings/teams/you_are_a_member: cf5af638d5371c8fbc337e92519e5150
+    workspace/settings/usage/load_error: 4d0b1d1f301e9e7673735cb3afc07003
+    workspace/settings/usage/members_active: 8cef33d13a9ef4e9ce44728d432d5e74
+    workspace/settings/usage/members_deactivated: 14ddb2ee5b4a55fd67e952878b7373a6
+    workspace/settings/usage/members_description: a505200c4938fae02d617f14950f43a4
+    workspace/settings/usage/members_dormant: d0d908b218713c2db0a514ee7975a2f6
+    workspace/settings/usage/members_total: 0932e80cba1e3e0a7f52bb67ff31da32
+    workspace/settings/usage/nav_label: 9ee126f9eeb9a2ecc83946e21c61eedb
+    workspace/settings/usage/no_workspaces: 04d0c371fb8ff8e25b04a5d86dc4d92d
+    workspace/settings/usage/range_label: be548c93a997ed6c2e9ac5c943faac10
+    workspace/settings/usage/responses_description: 77986225730eba31535e59d492e21162
+    workspace/settings/usage/responses_title: acdd68a4fd79e6cded7d3b628f5405e9
+    workspace/settings/usage/surveys_description: 1e2f21a08b7a81a5fa80aaab995d0b48
+    workspace/settings/usage/time_zone_note: c61dcae60bc43f4162c90aed072a7979
+    workspace/settings/usage/total: f60dc0a14e9b1bace656c644de25de5b
     workspace/surveys/ai_create/ai_output_too_long: 3be34ddb7af610421d806827ae04f3d7
     workspace/surveys/ai_create/ai_rate_limited: fb5875814003cb27c15bbc30a20b9ec2
     workspace/surveys/ai_create/ai_survey_creation: fadcad47da7eb78c63641c11964e314b
