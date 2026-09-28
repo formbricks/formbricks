@@ -77,5 +77,14 @@ describe("parseNumber", () => {
 
   test("rejects non-finite numbers", () => {
     expect(parseNumber("1e400")).toBeNull();
+    expect(parseNumber("-1e400")).toBeNull();
+  });
+
+  test("still parses decimals and negatives as numbers", () => {
+    expect(parseNumber("5.5")).toBe(5.5);
+    expect(parseNumber("-5")).toBe(-5);
+    expect(parseNumber("-5.5")).toBe(-5.5);
+    expect(parseNumber("-0")).toBe(-0);
+    expect(parseNumber("1e2")).toBe(100);
   });
 });
