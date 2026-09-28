@@ -69,6 +69,22 @@ export const GET = withV1ApiWrapper({
   },
 });
 
+/** The request body, or the 413/400 to answer with when it is too large or not JSON. */
+const parseSurveyBody = async (
+  req: Parameters<typeof parseJsonBodyWithLimit>[0]
+): Promise<{ body: Record<string, unknown> } | { response: Response }> => {
+  try {
+    return { body: await parseJsonBodyWithLimit<Record<string, unknown>>(req) };
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return { response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }) };
+    }
+
+    logger.error({ error, url: req.url }, "Error parsing JSON");
+    return { response: responses.badRequestResponse("Malformed JSON input, please check your request body") };
+  }
+};
+
 export const POST = withV1ApiWrapper({
   handler: async ({ req, auditLog, authentication }) => {
     if (!authentication || !("apiKeyId" in authentication)) {
@@ -76,21 +92,9 @@ export const POST = withV1ApiWrapper({
     }
 
     try {
-      let surveyInput;
-      try {
-        surveyInput = await parseJsonBodyWithLimit<Record<string, unknown>>(req);
-      } catch (error) {
-        if (error instanceof RequestBodyTooLargeError) {
-          return {
-            response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }),
-          };
-        }
-
-        logger.error({ error, url: req.url }, "Error parsing JSON");
-        return {
-          response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
-        };
-      }
+      const parsedBody = await parseSurveyBody(req);
+      if ("response" in parsedBody) return { response: parsedBody.response };
+      let surveyInput = parsedBody.body;
 
       // Backwards compat: accept projectOverwrites as alias for workspaceOverwrites
       surveyInput = normaliseProjectOverwritesToWorkspace(surveyInput);

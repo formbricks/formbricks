@@ -582,6 +582,67 @@ const handleSurveyAutoCompleteSafely = async ({
   }
 };
 
+/**
+ * The responseFinished work that sends the response out of the app: integrations, the feedback-source
+ * pipeline and follow-ups. ENG-3283: none of it runs for a survey that is not workspace-visible.
+ */
+const runOutboundResponseFinishedEffects = async ({
+  data,
+  displayTimeZone,
+  integrations,
+  logContext,
+  outboundAllowed,
+  survey,
+  workspaceId,
+}: {
+  data: TResponsePipelineJobData;
+  displayTimeZone: string | null;
+  integrations: Awaited<ReturnType<typeof loadIntegrationsSafely>>;
+  logContext: ReturnType<typeof getPipelineLogContext>;
+  outboundAllowed: boolean;
+  survey: TPipelineSurvey;
+  workspaceId: string;
+}): Promise<void> => {
+  if (!outboundAllowed) {
+    recordSurveyOutboundSkipped("integration");
+    recordSurveyOutboundSkipped("feedback_source");
+    if (survey.followUps?.length) recordSurveyOutboundSkipped("follow_up", survey.followUps.length);
+    return;
+  }
+
+  if (integrations.length > 0) {
+    try {
+      await handleIntegrations(integrations, data, survey, displayTimeZone ?? "UTC");
+    } catch (error) {
+      logger.error(
+        {
+          ...logContext,
+          err: error,
+        },
+        "Response pipeline integration handling failed"
+      );
+    }
+  }
+
+  try {
+    await handleFeedbackSourcePipeline(data.response, survey, workspaceId);
+  } catch (error) {
+    logger.error(
+      {
+        ...logContext,
+        err: error,
+      },
+      "Response pipeline feedbackSource handling failed"
+    );
+  }
+
+  await handleFollowUpsSafely({
+    data,
+    logContext,
+    survey,
+  });
+};
+
 const runResponseFinishedSideEffects = async ({
   data,
   displayTimeZone,
@@ -635,43 +696,15 @@ const runResponseFinishedSideEffects = async ({
         })
       : Promise.resolve(null);
 
-  if (integrations.length > 0) {
-    try {
-      await handleIntegrations(integrations, data, survey, displayTimeZone ?? "UTC");
-    } catch (error) {
-      logger.error(
-        {
-          ...logContext,
-          err: error,
-        },
-        "Response pipeline integration handling failed"
-      );
-    }
-  }
-
-  if (outboundAllowed) {
-    try {
-      await handleFeedbackSourcePipeline(data.response, survey, workspaceId);
-    } catch (error) {
-      logger.error(
-        {
-          ...logContext,
-          err: error,
-        },
-        "Response pipeline feedbackSource handling failed"
-      );
-    }
-
-    await handleFollowUpsSafely({
-      data,
-      logContext,
-      survey,
-    });
-  } else {
-    recordSurveyOutboundSkipped("integration");
-    recordSurveyOutboundSkipped("feedback_source");
-    if (survey.followUps?.length) recordSurveyOutboundSkipped("follow_up", survey.followUps.length);
-  }
+  await runOutboundResponseFinishedEffects({
+    data,
+    displayTimeZone,
+    integrations,
+    logContext,
+    outboundAllowed,
+    survey,
+    workspaceId,
+  });
 
   await sendNotificationEmailsSafely({
     data,

@@ -81,6 +81,21 @@ const toSurveyResourceScope = (row: TSurveyAuthorizationScopeRow | null): TResou
   return { organizationId: row.organizationId, permissionResource: { type: "survey", id: row.id } };
 };
 
+/** Readiness marker off: exactly the pre-ENG-3282 behaviour, workspace permissions throughout. */
+const resolveSurveyScope = async (surveyId: string): Promise<TResourceScope | null> =>
+  (await isSurveyVisibilityReady())
+    ? toSurveyResourceScope(await getSurveyAuthorizationScopeRow(surveyId))
+    : toWorkspaceResourceScope(await getSurveyAuthorizationWorkspaceScope(surveyId));
+
+/** Responses follow their survey (contract §7). */
+const resolveResponseScope = async (responseId: string): Promise<TResourceScope | null> => {
+  if (!(await isSurveyVisibilityReady())) {
+    return toWorkspaceResourceScope(await getResponseAuthorizationWorkspaceScope(responseId));
+  }
+  const surveyId = await getResponseSurveyId(responseId);
+  return surveyId ? toSurveyResourceScope(await getSurveyAuthorizationScopeRow(surveyId)) : null;
+};
+
 const resolveResourceScope = async (resource: TAuthorizationResource): Promise<TResourceScope | null> => {
   switch (resource.type) {
     case "organization": {
@@ -103,24 +118,13 @@ const resolveResourceScope = async (resource: TAuthorizationResource): Promise<T
         ? { organizationId, permissionResource: { type: resource.type, id: resource.id } }
         : null;
     }
-    case "survey": {
-      // Readiness marker off: exactly the pre-ENG-3282 behaviour, workspace permissions throughout.
-      if (!(await isSurveyVisibilityReady())) {
-        return toWorkspaceResourceScope(await getSurveyAuthorizationWorkspaceScope(resource.id));
-      }
-      return toSurveyResourceScope(await getSurveyAuthorizationScopeRow(resource.id));
-    }
+    case "survey":
+      return resolveSurveyScope(resource.id);
     case "dashboard": {
       return toWorkspaceResourceScope(await getDashboardAuthorizationWorkspaceScope(resource.id));
     }
-    case "response": {
-      // Responses follow their survey (contract §7).
-      if (!(await isSurveyVisibilityReady())) {
-        return toWorkspaceResourceScope(await getResponseAuthorizationWorkspaceScope(resource.id));
-      }
-      const surveyId = await getResponseSurveyId(resource.id);
-      return surveyId ? toSurveyResourceScope(await getSurveyAuthorizationScopeRow(surveyId)) : null;
-    }
+    case "response":
+      return resolveResponseScope(resource.id);
     case "feedbackDirectory": {
       const scope = await getFeedbackDirectoryAuthorizationScope(resource.id);
       // Archive state is an authoritative PostgreSQL policy input, not a projected relationship.
