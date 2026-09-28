@@ -128,7 +128,7 @@ const resolveRecallFallbacks = (url: string): string => {
       const fallbackStart = RECALL_TOKEN_START.lastIndex;
       const fallbackEnd = url.indexOf("#", fallbackStart);
       if (fallbackEnd === -1) break;
-      const fallback = url.slice(fallbackStart, fallbackEnd).split("nbsp").join(" ").trim();
+      const fallback = url.slice(fallbackStart, fallbackEnd).replaceAll("nbsp", " ").trim();
       resolved += url.slice(copiedUpTo, tokenStart) + fallback;
       copiedUpTo = fallbackEnd + 1;
     }
