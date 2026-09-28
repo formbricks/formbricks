@@ -1,5 +1,5 @@
 diff --git a/index.js b/index.js
-index 2fbdb78d5ef9aaf09c01cacae651a5d96cbcfed7..aac5cecfd32fe1ce80d3b0ac210bdf07884efabd 100644
+index 2fbdb78d5ef9aaf09c01cacae651a5d96cbcfed7..b07f3b4fa5899200fea7cd8c4577df4fda85e07d 100644
 --- a/index.js
 +++ b/index.js
 @@ -102,6 +102,7 @@ class Pool extends EventEmitter {
@@ -10,6 +10,11 @@ index 2fbdb78d5ef9aaf09c01cacae651a5d96cbcfed7..aac5cecfd32fe1ce80d3b0ac210bdf07
      this._pendingQueue = []
      this._endCallback = undefined
      this.ending = false
+@@ -119,3 +120,3 @@ class Pool extends EventEmitter {
+   _isFull() {
+-    return this._clients.length >= this.options.max
++    return this._clients.length + this._endingClients.size >= this.options.max
+   }
 @@ -137,7 +138,7 @@ class Pool extends EventEmitter {
            this._remove(item.client)
          })
@@ -19,7 +24,7 @@ index 2fbdb78d5ef9aaf09c01cacae651a5d96cbcfed7..aac5cecfd32fe1ce80d3b0ac210bdf07
          this.ended = true
          this._endCallback()
        }
-@@ -249,15 +250,31 @@ class Pool extends EventEmitter {
+@@ -249,15 +250,51 @@ class Pool extends EventEmitter {
      let timeoutHit = false
      if (this.options.connectionTimeoutMillis) {
        tid = setTimeout(() => {
@@ -39,7 +44,16 @@ index 2fbdb78d5ef9aaf09c01cacae651a5d96cbcfed7..aac5cecfd32fe1ce80d3b0ac210bdf07
 +        this._pulseQueue()
 +        client.removeAllListeners('error')
 +        client.on('error', () => {})
++        let forceEndTimer
++        let endHandled = false
 +        const handleEnd = () => {
++          if (endHandled) {
++            return
++          }
++          endHandled = true
++          if (forceEndTimer) {
++            clearTimeout(forceEndTimer)
++          }
 +          this._endingClients.delete(client)
 +          this._pulseQueue()
 +        }
@@ -52,14 +66,25 @@ index 2fbdb78d5ef9aaf09c01cacae651a5d96cbcfed7..aac5cecfd32fe1ce80d3b0ac210bdf07
 -          timeoutHit = true
 -          // force kill the node driver, and let libpq do its teardown
 -          client.end()
++          const connection = client.connection
 +          client.once('end', handleEnd)
-+          client.connection.end()
++          forceEndTimer = setTimeout(() => {
++            try {
++              connection.stream.destroy()
++            } finally {
++              handleEnd()
++            }
++          }, this.options.connectionTimeoutMillis)
++          if (forceEndTimer.unref) {
++            forceEndTimer.unref()
++          }
++          connection.end()
 +        } else {
 +          client.end(handleEnd)
          }
        }, this.options.connectionTimeoutMillis)
      }
-@@ -282,5 +299,9 @@ class Pool extends EventEmitter {
+@@ -282,5 +316,9 @@ class Pool extends EventEmitter {
          if (!pendingItem.timedOut) {
            pendingItem.callback(err, undefined, NOOP)
          }

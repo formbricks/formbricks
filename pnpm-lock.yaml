@@ -242,7 +242,7 @@ overrides:
 patchedDependencies:
   '@better-auth/oauth-provider@1.7.0': c902485a86bcc6e01946ff9b5339866f3dcd2bbf84369e1c10cc4608e8e2ebd4
   better-auth@1.7.0: 1e1eb950e3163ebedbeeb9823f5951a9b9b12cf542ec6b15784bd06ddfb1582e
-  pg-pool@3.13.0: 9d1e9cfacc70c94942e31bc03da8cba883e41a85b5026041e2749b13e768ac3d
+  pg-pool@3.13.0: aa3bce1e442ad52e5542d7ec054505652dbf3dd6d3e6eaf4abc526c0d8633581
 
 importers:
 
@@ -21859,7 +21859,7 @@ snapshots:
 
   pg-int8@1.0.1: {}
 
-  pg-pool@3.13.0(patch_hash=9d1e9cfacc70c94942e31bc03da8cba883e41a85b5026041e2749b13e768ac3d)(pg@8.20.0):
+  pg-pool@3.13.0(patch_hash=aa3bce1e442ad52e5542d7ec054505652dbf3dd6d3e6eaf4abc526c0d8633581)(pg@8.20.0):
     dependencies:
       pg: 8.20.0
 
@@ -21876,7 +21876,7 @@ snapshots:
   pg@8.20.0:
     dependencies:
       pg-connection-string: 2.12.0
-      pg-pool: 3.13.0(patch_hash=9d1e9cfacc70c94942e31bc03da8cba883e41a85b5026041e2749b13e768ac3d)(pg@8.20.0)
+      pg-pool: 3.13.0(patch_hash=aa3bce1e442ad52e5542d7ec054505652dbf3dd6d3e6eaf4abc526c0d8633581)(pg@8.20.0)
       pg-protocol: 1.13.0
       pg-types: 2.2.0
       pgpass: 1.0.5
