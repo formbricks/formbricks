@@ -2,15 +2,17 @@
 -- from.
 --
 -- Every column is additive and defaults to today's behaviour: `visibility = 'workspace'`, no owner,
--- versions equal. Nothing here writes a row; `ownerId` is backfilled from `createdBy` by the data
+-- versions equal. Nothing here writes a row of a migrated database; `ownerId` is backfilled from `createdBy` by the data
 -- migration that follows, BEFORE the projection trigger exists (the migration after that), so the
 -- backfill enqueues no outbox events.
 --
--- `visibilityPending` is a STORED generated column so the visibility predicate stays expressible in
--- Prisma (`where` cannot compare two columns). Adding a stored generated column rewrites the table
--- under an ACCESS EXCLUSIVE lock. "Survey" is small (thousands to low hundreds of thousands of rows),
--- so the rewrite is accepted; `lock_timeout` keeps it from queueing behind a long transaction — if it
--- fires, rerun the migration. Prisma declares it `@default(dbgenerated(...))`, so it never writes it.
+-- `visibilityPending` ("visibilityVersion" <> "visibilityProjectedVersion") is stored so the visibility
+-- predicate stays expressible in Prisma, whose `where` cannot compare two columns. It is an ordinary
+-- column kept by a BEFORE trigger rather than a GENERATED one: Prisma cannot declare a generated
+-- column, and `db:push` fails on the cross-column default it would need to stay drift-free. A
+-- constant `DEFAULT false` also adds the column without rewriting the table. Every existing row has
+-- equal versions, so `false` is already correct for it; the recompute below only matters for a
+-- database created with `db:push`, which has the column but not the trigger.
 --
 -- The partial pending index exists only here: Prisma cannot express a partial index and does not drop
 -- indexes it does not know, so the schema file declares none and no drift results.
@@ -33,23 +35,28 @@ ALTER TABLE "Survey" ADD COLUMN IF NOT EXISTS "visibilityVersion" INTEGER NOT NU
 ALTER TABLE "Survey" ADD COLUMN IF NOT EXISTS "visibilityProjectedVersion" INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE "Survey" ADD COLUMN IF NOT EXISTS "visibilityChangedAt" TIMESTAMP(3);
 ALTER TABLE "Survey" ADD COLUMN IF NOT EXISTS "visibilityChangedById" TEXT;
--- `db:push` cannot create a generated column: it leaves an ordinary one, which `IF NOT EXISTS` below
--- would then keep, NULL and never pending. Replace it (and the index over it) so the result converges.
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = current_schema() AND table_name = 'Survey'
-      AND column_name = 'visibilityPending' AND is_generated = 'NEVER'
-  ) THEN
-    DROP INDEX IF EXISTS "Survey_visibility_pending_idx";
-    ALTER TABLE "Survey" DROP COLUMN "visibilityPending";
-  END IF;
-END $$;
+ALTER TABLE "Survey" ADD COLUMN IF NOT EXISTS "visibilityPending" BOOLEAN NOT NULL DEFAULT false;
 
--- The table rewrite is accepted; see the header.
--- squawk-ignore adding-field-with-default
-ALTER TABLE "Survey" ADD COLUMN IF NOT EXISTS "visibilityPending" BOOLEAN GENERATED ALWAYS AS ("visibilityVersion" <> "visibilityProjectedVersion") STORED;
+-- Derived, never written by the application: recomputed on every insert and on any update that
+-- touches either version (or the column itself, so a stray write cannot stick).
+CREATE OR REPLACE FUNCTION survey_visibility_pending() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  NEW."visibilityPending" := NEW."visibilityVersion" <> NEW."visibilityProjectedVersion";
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS survey_visibility_pending ON "Survey";
+CREATE TRIGGER survey_visibility_pending
+  BEFORE INSERT OR UPDATE OF "visibilityVersion", "visibilityProjectedVersion", "visibilityPending"
+  ON "Survey"
+  FOR EACH ROW EXECUTE FUNCTION survey_visibility_pending();
+
+-- Converges a `db:push` database. Touches no row on a migrated one, where every row already agrees.
+UPDATE "Survey"
+SET "visibilityPending" = ("visibilityVersion" <> "visibilityProjectedVersion")
+WHERE "visibilityPending" <> ("visibilityVersion" <> "visibilityProjectedVersion");
 
 -- AddForeignKey
 -- NOT VALID then VALIDATE: the column was added above with no values, so validation scans nothing
@@ -65,9 +72,9 @@ END $$;
 ALTER TABLE "Survey" VALIDATE CONSTRAINT "Survey_ownerId_fkey";
 
 -- CreateIndex
--- Not CONCURRENTLY. The table was just rewritten under an exclusive lock for the generated column, so
--- a concurrent build buys nothing here, and an interrupted concurrent build would leave an INVALID
--- index that `IF NOT EXISTS` then skips on retry.
+-- Not CONCURRENTLY: an interrupted concurrent build leaves an INVALID index that `IF NOT EXISTS` then
+-- skips on retry. "Survey" is small (thousands to low hundreds of thousands of rows), so a plain build
+-- is brief.
 -- squawk-ignore require-concurrent-index-creation
 CREATE INDEX IF NOT EXISTS "Survey_workspaceId_ownerId_idx" ON "Survey"("workspaceId", "ownerId");
 

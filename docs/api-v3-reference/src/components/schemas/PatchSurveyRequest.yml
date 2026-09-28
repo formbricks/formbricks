@@ -9,9 +9,10 @@ description: >
 
   The server-owned fields `GET` returns — `id`, `workspaceId`, `type`, `createdAt`, `updatedAt`,
   `archivedAt`, `defaultLanguage` and `languages[].alias` — are accepted and verified, so a survey
-  fetched with `GET` can be sent straight back. So are `visibility`, `owner` and `access`, which only
-  accept the unchanged value (**422** `unsupported_field` otherwise). Echoing the value you were given is a no-op; changing
-  one is a **422** `read_only_field`. A round-tripped `updatedAt` additionally acts as an
+  fetched with `GET` can be sent straight back. Echoing the value you were given is a no-op; changing
+  one is a **422** `read_only_field`. `visibility`, `owner` and `access` are accepted the same way,
+  but a changed value is a **422** `unsupported_field`: visibility changes go through
+  `POST /api/v3/surveys/{surveyId}/visibility`. A round-tripped `updatedAt` additionally acts as an
   optimistic-concurrency precondition, and a stale one is rejected with **409**. `questions`,
   analytics, styling and scripts remain rejected outright. App surveys (stored `type: app`) additionally accept `distribution` and
   `targeting`; both are rejected for link surveys, and changing `targeting` filters requires the

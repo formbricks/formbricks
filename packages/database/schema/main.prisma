@@ -390,10 +390,10 @@ model Survey {
   visibilityVersion          Int              @default(0)
   /// The `visibilityVersion` SpiceDB last acknowledged.
   visibilityProjectedVersion Int              @default(0)
-  /// Generated in SQL: "visibilityVersion" <> "visibilityProjectedVersion", so never NULL in practice.
-  /// Read-only: never put it in create/update data. `dbgenerated` (not a static default, which Prisma
-  /// inlines into every INSERT and PostgreSQL rejects) keeps it out of INSERTs and matches the migration.
-  visibilityPending          Boolean?         @default(dbgenerated("(\"visibilityVersion\" <> \"visibilityProjectedVersion\")"))
+  /// "visibilityVersion" <> "visibilityProjectedVersion", kept by the `survey_visibility_pending`
+  /// trigger (a BEFORE trigger overrides whatever an INSERT or UPDATE supplies). Read-only: never put it
+  /// in create/update data.
+  visibilityPending          Boolean          @default(false)
   visibilityChangedAt        DateTime?
   visibilityChangedById      String?
 

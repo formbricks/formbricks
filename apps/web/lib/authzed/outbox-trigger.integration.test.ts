@@ -267,7 +267,7 @@ describe("AuthZed projection outbox triggers: survey (ENG-3282)", () => {
     });
     await clearOutbox();
 
-    // INSERT → grant. Also proves Prisma never writes the generated `visibilityPending` column.
+    // INSERT → grant. Also proves the `visibilityPending` trigger, not Prisma, decides the column.
     const survey = await prisma.survey.create({
       data: { name: "Transitions", workspaceId: workspace.id, ownerId: owner.id, createdBy: owner.id },
     });

@@ -18,7 +18,7 @@ import { getEffectiveVisibility } from "./policy";
 export const SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE =
   "Outbound connections can only use surveys that are visible to the whole workspace";
 
-/** The rows an outbound check needs: `visibilityPending` is the generated column (version mismatch). */
+/** The rows an outbound check needs: `visibilityPending` is the trigger-kept version mismatch. */
 const notWorkspaceVisibleWhere: Prisma.SurveyWhereInput = {
   OR: [{ visibility: "private" }, { visibilityPending: true }],
 };
