@@ -10,6 +10,7 @@ import {
   CartesianChart,
   type CartesianChartProps,
 } from "@/modules/ee/analysis/charts/components/cartesian-chart";
+import { MatrixChart } from "@/modules/ee/analysis/charts/components/matrix-chart";
 import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/polished-tooltip";
 import { computeBigNumberValue } from "@/modules/ee/analysis/charts/lib/big-number";
 import { resolveChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
@@ -358,6 +359,8 @@ interface ChartRendererProps {
   query: TChartQuery;
   /** value_id → default-language label map, present when the query groups by valueId. */
   optionLabels?: Record<string, string>;
+  /** Matrix row field_id → statement map, present when the query groups by fieldId. */
+  fieldLabels?: Record<string, string>;
   /** Saved display settings. Charts saved before these existed have an empty config and keep
    * the previous behavior (vertical bars). */
   config?: TChartConfig;
@@ -368,6 +371,7 @@ export function ChartRenderer({
   data,
   query,
   optionLabels,
+  fieldLabels,
   config,
 }: Readonly<ChartRendererProps>) {
   const { t, i18n } = useTranslation();
@@ -380,6 +384,20 @@ export function ChartRenderer({
       <div className="text-muted-foreground flex h-full min-h-64 items-center justify-center">
         {t("workspace.analysis.charts.no_data_available")}
       </div>
+    );
+  }
+
+  // A matrix lays out two groupings on its own two axes, so none of the single-axis setup below
+  // applies to it.
+  if (chartType === "matrix") {
+    return (
+      <MatrixChart
+        data={data}
+        query={query}
+        config={config}
+        optionLabels={optionLabels}
+        fieldLabels={fieldLabels}
+      />
     );
   }
 

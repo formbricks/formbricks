@@ -5,8 +5,11 @@ import {
   ChartBarIcon,
   ChartColumnIcon,
   ChartPieIcon,
+  HashIcon,
   LineChartIcon,
+  PercentIcon,
   RectangleHorizontalIcon,
+  SigmaIcon,
 } from "lucide-react";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
@@ -18,16 +21,98 @@ import {
   resolveChartDisplay,
   supportsAreaDisplay,
   supportsBarOrientation,
+  supportsMatrixDisplay,
   supportsPieDisplay,
 } from "@/modules/ee/analysis/charts/lib/chart-display";
+import { type TMatrixCellValue, resolveMatrixDisplay } from "@/modules/ee/analysis/charts/lib/matrix-pivot";
 import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 import { Label } from "@/modules/ui/components/label";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
+import { Switch } from "@/modules/ui/components/switch";
 
 interface ChartDisplaySettingsProps {
   chartType: TChartType | undefined;
   config: TChartConfig;
   onChange: (config: TChartConfig) => void;
+}
+
+interface MatrixToggleProps {
+  label: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}
+
+function MatrixToggle({ label, checked, onCheckedChange }: Readonly<MatrixToggleProps>) {
+  const id = useId();
+  return (
+    <div className="flex items-center gap-2">
+      <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} />
+      <Label htmlFor={id} className="cursor-pointer text-xs text-slate-600">
+        {label}
+      </Label>
+    </div>
+  );
+}
+
+/** How a matrix reads: what a cell prints, whether it is tinted, totals, and which way round. */
+function MatrixDisplaySettings({
+  config,
+  onChange,
+}: Readonly<{ config: TChartConfig; onChange: (config: TChartConfig) => void }>) {
+  const { t } = useTranslation();
+  const { cellValue, colorScale, showTotals, transpose } = resolveMatrixDisplay(config);
+  const cellValueLabelId = useId();
+
+  return (
+    <>
+      <div className="flex min-w-0 items-center gap-3">
+        <Label id={cellValueLabelId} className="shrink-0 text-xs text-slate-500">
+          {t("workspace.analysis.charts.matrix_cell_value")}
+        </Label>
+        <div className="min-w-0">
+          <OptionsSwitch
+            aria-labelledby={cellValueLabelId}
+            options={[
+              {
+                value: "percent",
+                label: t("workspace.analysis.charts.matrix_cell_value_percent"),
+                icon: <PercentIcon className="size-4" />,
+              },
+              {
+                value: "count",
+                label: t("workspace.analysis.charts.matrix_cell_value_count"),
+                icon: <HashIcon className="size-4" />,
+              },
+              {
+                value: "both",
+                label: t("workspace.analysis.charts.matrix_cell_value_both"),
+                icon: <SigmaIcon className="size-4" />,
+              },
+            ]}
+            currentOption={cellValue}
+            handleOptionChange={(value) =>
+              onChange({ ...config, matrixCellValue: value as TMatrixCellValue })
+            }
+          />
+        </div>
+      </div>
+      <MatrixToggle
+        label={t("workspace.analysis.charts.matrix_color_scale")}
+        checked={colorScale}
+        onCheckedChange={(checked) => onChange({ ...config, matrixColorScale: checked })}
+      />
+      <MatrixToggle
+        label={t("workspace.analysis.charts.matrix_show_totals")}
+        checked={showTotals}
+        onCheckedChange={(checked) => onChange({ ...config, matrixShowTotals: checked })}
+      />
+      <MatrixToggle
+        label={t("workspace.analysis.charts.matrix_transpose")}
+        checked={transpose}
+        onCheckedChange={(checked) => onChange({ ...config, matrixTranspose: checked })}
+      />
+    </>
+  );
 }
 
 /**
@@ -45,16 +130,18 @@ export function ChartDisplaySettings({ chartType, config, onChange }: Readonly<C
   const showBarOrientation = supportsBarOrientation(chartType);
   const showPieDisplay = supportsPieDisplay(chartType);
   const showAreaDisplay = supportsAreaDisplay(chartType);
+  const showMatrixDisplay = supportsMatrixDisplay(chartType);
   // Generated rather than hardcoded: two of these panels on one page would otherwise share ids.
   const barOrientationLabelId = useId();
   const pieDisplayLabelId = useId();
   const areaDisplayLabelId = useId();
 
   // For a chart type with no applicable setting the strip would be an empty band.
-  if (!showBarOrientation && !showPieDisplay && !showAreaDisplay) return null;
+  if (!showBarOrientation && !showPieDisplay && !showAreaDisplay && !showMatrixDisplay) return null;
 
   return (
     <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+      {showMatrixDisplay && <MatrixDisplaySettings config={config} onChange={onChange} />}
       {showAreaDisplay && (
         <div className="flex min-w-0 items-center gap-3">
           <Label id={areaDisplayLabelId} className="shrink-0 text-xs text-slate-500">

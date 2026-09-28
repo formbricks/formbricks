@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TWidgetLayout, ZChartConfig, ZChartQuery, ZWidgetLayout } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 
-export const CHART_TYPE_IDS = ["area", "bar", "pie", "big_number"] as const;
+export const CHART_TYPE_IDS = ["area", "bar", "pie", "big_number", "matrix"] as const;
 export const ZChartType = z.enum(CHART_TYPE_IDS);
 export type TChartType = z.infer<typeof ZChartType>;
 
@@ -115,16 +115,27 @@ export type TDashboardDetail = TDashboard & {
 /** Row from Cube.js tablePivot - keys are measure/dimension names, values are primitives */
 export type TChartDataRow = Record<string, string | number | null | boolean | undefined>;
 
-export interface AnalyticsResponse {
+/** Label maps the server attaches so a renderer can show survey text instead of stored ids. */
+export interface TChartLabelMaps {
+  /**
+   * Mapping from value_id (choice UUID) to the choice's default-language label. Present when the
+   * query groups by `FeedbackRecords.valueId` (i.e., the server rewrote a valueText grouping for a
+   * single-select question). Renderers use this to display human-readable labels instead of raw ids.
+   * Keys are in survey order, which the matrix chart uses as its column order.
+   */
+  optionLabels?: Record<string, string>;
+  /**
+   * Mapping from a matrix row's field_id (`<elementId>__<rowId>`) to its default-language statement,
+   * in survey order. Present when the query groups by `FeedbackRecords.fieldId` and matrix questions
+   * are behind the rows; the matrix chart uses it for row labels and row order.
+   */
+  fieldLabels?: Record<string, string>;
+}
+
+export interface AnalyticsResponse extends TChartLabelMaps {
   query: z.infer<typeof ZChartQuery>;
   chartType: TChartType;
   data?: TChartDataRow[];
   error?: string;
   suggestedName?: string;
-  /**
-   * Mapping from value_id (choice UUID) to the choice's default-language label. Present when the
-   * query groups by `FeedbackRecords.valueId` (i.e., the server rewrote a valueText grouping for a
-   * single-select question). Renderers use this to display human-readable labels instead of raw ids.
-   */
-  optionLabels?: Record<string, string>;
 }

@@ -95,6 +95,7 @@ export function ChartPreview({
               data={data}
               query={chartData.query}
               optionLabels={chartData.optionLabels}
+              fieldLabels={chartData.fieldLabels}
               config={config}
             />
           </ChartErrorBoundary>

@@ -16,18 +16,23 @@ export const DEFAULT_AREA_DISPLAY: TAreaDisplay = "filled";
 export const supportsBarOrientation = (chartType: TChartType | undefined): boolean => chartType === "bar";
 export const supportsPieDisplay = (chartType: TChartType | undefined): boolean => chartType === "pie";
 export const supportsAreaDisplay = (chartType: TChartType | undefined): boolean => chartType === "area";
+export const supportsMatrixDisplay = (chartType: TChartType | undefined): boolean => chartType === "matrix";
 
 /**
  * Whether a chart type has any display setting at all. The settings strip under the preview is only
  * rendered when it would hold something, so it never appears as an empty band.
  */
 export const hasChartDisplaySettings = (chartType: TChartType | undefined): boolean =>
-  supportsBarOrientation(chartType) || supportsPieDisplay(chartType) || supportsAreaDisplay(chartType);
+  supportsBarOrientation(chartType) ||
+  supportsPieDisplay(chartType) ||
+  supportsAreaDisplay(chartType) ||
+  supportsMatrixDisplay(chartType);
 
 /**
  * Big Number shows a single snapshot value and Pie shows composition at a point in time — bucketing
  * either into time series by granularity produces a chart that no longer answers the question its
- * type implies, which is what ENG-2541 flagged as confusing. Bar and Line/Area keep it: a trend over
+ * type implies, which is what ENG-2541 flagged as confusing. A matrix already spends both of its
+ * axes on groupings, so a time bucket would be a third axis it has nowhere to draw. Bar and Line/Area keep it: a trend over
  * time is exactly what those types are for.
  *
  * Only gates *grouping* (the granularity control). A time dimension with no granularity is a
@@ -36,7 +41,7 @@ export const hasChartDisplaySettings = (chartType: TChartType | undefined): bool
  * (the filters panel only supports absolute dates).
  */
 export const supportsTimeGrouping = (chartType: TChartType | undefined): boolean =>
-  chartType !== "big_number" && chartType !== "pie";
+  chartType !== "big_number" && chartType !== "pie" && chartType !== "matrix";
 
 /**
  * Resolves the display settings a chart renders with. Charts saved before these settings
@@ -59,12 +64,26 @@ export const sanitizeChartDisplay = (
   config: TChartConfig | null | undefined,
   chartType: TChartType | undefined
 ): TChartConfig => {
-  const { barOrientation, pieDisplay, areaDisplay, ...rest } = config ?? {};
+  const {
+    barOrientation,
+    pieDisplay,
+    areaDisplay,
+    matrixCellValue,
+    matrixColorScale,
+    matrixShowTotals,
+    matrixTranspose,
+    ...rest
+  } = config ?? {};
+  const isMatrix = supportsMatrixDisplay(chartType);
 
   return {
     ...rest,
     ...(supportsBarOrientation(chartType) && barOrientation ? { barOrientation } : {}),
     ...(supportsPieDisplay(chartType) && pieDisplay ? { pieDisplay } : {}),
     ...(supportsAreaDisplay(chartType) && areaDisplay ? { areaDisplay } : {}),
+    ...(isMatrix && matrixCellValue ? { matrixCellValue } : {}),
+    ...(isMatrix && matrixColorScale !== undefined ? { matrixColorScale } : {}),
+    ...(isMatrix && matrixShowTotals !== undefined ? { matrixShowTotals } : {}),
+    ...(isMatrix && matrixTranspose !== undefined ? { matrixTranspose } : {}),
   };
 };

@@ -27,12 +27,33 @@ Charts live under **Analyze → Analysis**. Each chart is a query plus a visuali
 | **Line Chart** | Trend over time without area fill (CSAT week-over-week, response rate). |
 | **Pie Chart** | Share-of-total across a small set of categories (channel mix, sentiment split). |
 | **Big Number** | Headline KPI for a dashboard (total responses, avg NPS, % positive). |
+| **Matrix** | A grid of two groupings × one measure. Built for matrix (Likert) questions: statements as rows, scale points as columns, each cell the share of that statement's answers. Works for any two groupings too (country × source). |
 
 You can build a chart in two ways:
 
 ### Manual builder
 
 Pick a Feedback Dataset, choose dimensions and measures (count of records, average NPS, ...), apply filters, and select a chart type. Live preview updates as you tweak.
+
+### Matrix chart
+
+To chart a matrix question:
+
+<Steps>
+  <Step title="Pick the Matrix type">
+    In the chart builder, select **Matrix** in the chart type switch above the preview.
+  </Step>
+  <Step title="Pick your matrix question">
+    Choose the question under **Matrix question** at the top of the left panel. Formbricks fills in the rows (the statements), the columns (the scale points) and the measure (**Count**) for you, in the order they appear in your survey.
+  </Step>
+  <Step title="Adjust how it reads">
+    Under the preview, choose what each cell shows (**Percent**, **Count** or **Both**), and turn the **Color scale**, **Totals** and **Swap rows and columns** on or off.
+  </Step>
+</Steps>
+
+Percentages are always taken per statement, so each statement adds up to 100%. Hover a cell to see its count and the number of answers behind it.
+
+To build any other matrix, turn on **Group data** and pick two fields — the first becomes the rows, the second the columns — plus exactly one measure. A matrix shows up to 30 rows and 15 columns; add a filter to narrow a larger one down.
 
 ### AI builder
 
