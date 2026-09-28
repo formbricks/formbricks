@@ -1900,8 +1900,6 @@
         "matrix_setup_step_todo": "待完成：",
         "matrix_setup_title": "就快完成了",
         "matrix_setup_two_groupings": "按恰好两个字段分组：先行后列",
-        "matrix_share_hint_columns": "每列总和为 100%。",
-        "matrix_share_hint_rows": "每行总和为 100%。",
         "matrix_show_totals": "总计",
         "matrix_statement": "陈述",
         "matrix_too_large": "此网格有 {rows} 行和 {columns} 列,超过了矩阵可以显示的 {maxRows} × {maxColumns}。请添加筛选条件以缩小范围。",

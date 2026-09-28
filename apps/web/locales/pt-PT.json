@@ -1900,8 +1900,6 @@
         "matrix_setup_step_todo": "Por fazer:",
         "matrix_setup_title": "Quase lá",
         "matrix_setup_two_groupings": "Agrupa por exatamente dois campos: linhas primeiro, depois colunas",
-        "matrix_share_hint_columns": "Cada coluna soma 100%.",
-        "matrix_share_hint_rows": "Cada linha soma 100%.",
         "matrix_show_totals": "Totais",
         "matrix_statement": "Afirmação",
         "matrix_too_large": "Esta grelha tem {rows} linhas e {columns} colunas, mais do que as {maxRows} × {maxColumns} que uma matriz pode mostrar. Adiciona um filtro para restringir os dados.",

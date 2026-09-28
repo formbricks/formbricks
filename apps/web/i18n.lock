@@ -1831,8 +1831,6 @@ checksums:
     workspace/analysis/charts/matrix_setup_step_todo: 9c724da4e939a33332bb05be29255384
     workspace/analysis/charts/matrix_setup_title: 151957d98ce9d4a1bb0158d6a83007ac
     workspace/analysis/charts/matrix_setup_two_groupings: 0d44b0711cda709c44c91a172de9b2ee
-    workspace/analysis/charts/matrix_share_hint_columns: 703429b91532bee4ad7ec0dee7d98e5c
-    workspace/analysis/charts/matrix_share_hint_rows: 917dfe0c5c08d1b6a07e65e4d75d0556
     workspace/analysis/charts/matrix_show_totals: a70bac80ad45b13e42ba64c66ab7744d
     workspace/analysis/charts/matrix_statement: 2465759e8d243eedd93dd1a7bc7c7e8e
     workspace/analysis/charts/matrix_too_large: 0b5555a13fbf0e908f4e53e59c594cb5

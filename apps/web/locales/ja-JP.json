@@ -1900,8 +1900,6 @@
         "matrix_setup_step_todo": "必要な設定:",
         "matrix_setup_title": "もう少しです",
         "matrix_setup_two_groupings": "2つのフィールドでグループ化:最初に行、次に列",
-        "matrix_share_hint_columns": "各列の合計は100%になります。",
-        "matrix_share_hint_rows": "各行の合計は100%になります。",
         "matrix_show_totals": "合計",
         "matrix_statement": "質問項目",
         "matrix_too_large": "このグリッドには{rows}行と{columns}列がありますが、マトリックスで表示可能な{maxRows} × {maxColumns}を超えています。フィルターを追加して絞り込んでください。",

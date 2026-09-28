@@ -1900,8 +1900,6 @@
         "matrix_setup_step_todo": "À faire :",
         "matrix_setup_title": "On y est presque",
         "matrix_setup_two_groupings": "Regroupe par exactement deux champs : d'abord les lignes, puis les colonnes",
-        "matrix_share_hint_columns": "Chaque colonne totalise 100 %.",
-        "matrix_share_hint_rows": "Chaque ligne totalise 100 %.",
         "matrix_show_totals": "Totaux",
         "matrix_statement": "Énoncé",
         "matrix_too_large": "Cette grille contient {rows} lignes et {columns} colonnes, soit plus que les {maxRows} × {maxColumns} qu'une matrice peut afficher. Ajoute un filtre pour affiner les résultats.",

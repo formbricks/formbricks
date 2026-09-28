@@ -1900,8 +1900,6 @@
         "matrix_setup_step_todo": "Tennivaló:",
         "matrix_setup_title": "Már majdnem kész",
         "matrix_setup_two_groupings": "Csoportosítson pontosan két mező szerint: először sorok, majd oszlopok",
-        "matrix_share_hint_columns": "Minden oszlop összege 100%.",
-        "matrix_share_hint_rows": "Minden sor összege 100%.",
         "matrix_show_totals": "Összesítések",
         "matrix_statement": "Kijelentés",
         "matrix_too_large": "Ez a rács {rows} sorból és {columns} oszlopból áll, ami meghaladja a mátrix által megjeleníthető {maxRows} × {maxColumns} méretet. Kérem, alkalmazzon szűrőt a szűkítéshez.",

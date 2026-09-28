@@ -1900,8 +1900,6 @@
         "matrix_setup_step_todo": "Yapılacak:",
         "matrix_setup_title": "Neredeyse hazır",
         "matrix_setup_two_groupings": "Tam olarak iki alana göre grupla: önce satırlar, sonra sütunlar",
-        "matrix_share_hint_columns": "Her sütun %100'e kadar çıkar.",
-        "matrix_share_hint_rows": "Her satır %100'e kadar çıkar.",
         "matrix_show_totals": "Toplamlar",
         "matrix_statement": "İfade",
         "matrix_too_large": "Bu tablo {rows} satır ve {columns} sütuna sahip, bu da bir matrisin gösterebileceği {maxRows} × {maxColumns} limitini aşıyor. Daraltmak için bir filtre ekle.",

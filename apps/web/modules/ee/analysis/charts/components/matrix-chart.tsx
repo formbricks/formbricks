@@ -162,7 +162,6 @@ export function MatrixChart({ data, query, config, optionLabels, fieldLabels }: 
   const formatValue = (value: number) => value.toLocaleString(locale, { maximumFractionDigits: 2 });
   const formatShare = (share: number) =>
     new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 }).format(share);
-  const showsShares = pivot.isAdditive && display.cellValue !== "count";
 
   const cellTitle = (cell: TMatrixGridCell): string => {
     const base = `${cell.rowLabel} · ${cell.columnLabel}`;
@@ -189,13 +188,6 @@ export function MatrixChart({ data, query, config, optionLabels, fieldLabels }: 
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-2">
-      {showsShares && (
-        <p className="shrink-0 text-xs text-slate-500">
-          {display.transpose
-            ? t("workspace.analysis.charts.matrix_share_hint_columns")
-            : t("workspace.analysis.charts.matrix_share_hint_rows")}
-        </p>
-      )}
       <div className="min-h-0 flex-1 overflow-auto rounded-md border border-slate-200">
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">

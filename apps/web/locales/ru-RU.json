@@ -1900,8 +1900,6 @@
         "matrix_setup_step_todo": "Осталось:",
         "matrix_setup_title": "Почти готово",
         "matrix_setup_two_groupings": "Группируй ровно по двум полям: сначала строки, затем столбцы",
-        "matrix_share_hint_columns": "Каждый столбец в сумме составляет 100%.",
-        "matrix_share_hint_rows": "Каждая строка в сумме составляет 100%.",
         "matrix_show_totals": "Итоги",
         "matrix_statement": "Утверждение",
         "matrix_too_large": "Эта таблица содержит {rows} строк и {columns} столбцов, что превышает лимит {maxRows} × {maxColumns} для матрицы. Добавь фильтр, чтобы сузить выборку.",
