@@ -6,6 +6,8 @@ import {
   CATEGORY_AXIS_LABEL_LINES,
   CATEGORY_AXIS_MAX_WIDTH,
   CATEGORY_AXIS_MIN_WIDTH,
+  CATEGORY_AXIS_WIDTH_RATIO,
+  CATEGORY_AXIS_WIDTH_STEP,
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
   CHART_NOT_ENRICHED_COLOR,
@@ -420,6 +422,9 @@ describe("chart-utils", () => {
 });
 
 describe("flipped bar axis sizing", () => {
+  /** A real KAS question, long enough to be cut by the flat ceiling at every chart width. */
+  const LONG_QUESTION = "How satisfied are you with the checkout experience overall?";
+
   test("sizes the category gutter to the labels present", () => {
     // Three numeric categories used to leave ~150px of empty gutter before the bars started.
     expect(getCategoryAxisWidth(["3", "10", "25"])).toBeLessThan(CATEGORY_AXIS_MAX_WIDTH / 2);
@@ -436,6 +441,47 @@ describe("flipped bar axis sizing", () => {
   test("takes the longest label, not the first or last", () => {
     const width = getCategoryAxisWidth(["ok", "a considerably longer label", "no"]);
     expect(width).toBe(getCategoryAxisWidth(["a considerably longer label"]));
+  });
+
+  // ENG-3223: the gutter used to cap at a flat 160px, so the chart editor cut its labels at exactly
+  // the point the dashboard widget did, with ~300px of the extra width going to bars nobody needed
+  // longer.
+  test("grows the gutter with the chart, so a wider chart shows more label", () => {
+    const labels = [LONG_QUESTION];
+    const widget = getCategoryAxisWidth(labels, 502);
+    const editor = getCategoryAxisWidth(labels, 924);
+
+    expect(editor).toBeGreaterThan(widget);
+    expect(editor).toBeGreaterThan(CATEGORY_AXIS_MAX_WIDTH);
+  });
+
+  test("falls back to the flat ceiling before the chart has been measured", () => {
+    // The first render has no measurement, and must not guess one: a gutter too wide for the chart
+    // it lands in is what puts the labels under the bars.
+    expect(getCategoryAxisWidth([LONG_QUESTION])).toBe(CATEGORY_AXIS_MAX_WIDTH);
+    expect(getCategoryAxisWidth([LONG_QUESTION], 0)).toBe(CATEGORY_AXIS_MAX_WIDTH);
+    expect(getCategoryAxisWidth([LONG_QUESTION], -50)).toBe(CATEGORY_AXIS_MAX_WIDTH);
+  });
+
+  test("never grows past what the longest label needs", () => {
+    // A short label on a huge chart keeps the gutter it earns — the ratio is a ceiling, not a size.
+    expect(getCategoryAxisWidth(["Gender"], 4000)).toBe(getCategoryAxisWidth(["Gender"]));
+    expect(getCategoryAxisWidth([], 4000)).toBe(CATEGORY_AXIS_MIN_WIDTH);
+  });
+
+  test("leaves the plot the clear majority of the chart at every width", () => {
+    for (const chartWidth of [600, 924, 1400, 2400]) {
+      const gutter = getCategoryAxisWidth([LONG_QUESTION.repeat(4)], chartWidth);
+      expect(gutter).toBeLessThanOrEqual(chartWidth * CATEGORY_AXIS_WIDTH_RATIO);
+    }
+  });
+
+  test("snaps the grown ceiling to a step, so a drag-resize does not re-key every frame", () => {
+    const labels = [LONG_QUESTION.repeat(4)];
+    const base = getCategoryAxisWidth(labels, 1200);
+
+    expect(base % CATEGORY_AXIS_WIDTH_STEP).toBe(0);
+    expect(getCategoryAxisWidth(labels, 1203)).toBe(base);
   });
 
   test("reserves room for the widest value label so the longest bar keeps its number", () => {

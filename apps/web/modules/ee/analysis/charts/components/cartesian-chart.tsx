@@ -1,6 +1,6 @@
 "use client";
 
-import { type ElementType, type ReactNode, useMemo } from "react";
+import { type ElementType, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   AXIS_LABEL_BOX_HEIGHT,
@@ -60,8 +60,8 @@ export interface CartesianChartProps {
   pointScale?: boolean;
   /** Flips the chart onto its side: categories run down the y-axis and values across the x-axis.
    * Bar charts only — the category labels move into a gutter on the left, sized to the labels
-   * present (see `getCategoryAxisWidth`), wrapped inside it, and cut from the middle to whatever
-   * lines the row density leaves (see `truncateLabelToBox`). */
+   * present and to the chart's own width (see `getCategoryAxisWidth`), wrapped inside it, and cut
+   * from the middle to whatever lines the row density leaves (see `truncateLabelToBox`). */
   horizontal?: boolean;
   /** Set when the category axis is a time dimension bucketed by this granularity. Its ticks then
    * thin out to a readable density and use compact, granularity-aware labels (see
@@ -289,6 +289,29 @@ function WrappingYAxisTick({
   );
 }
 
+/** Content-box width (px) of the observed element, 0 until the first observation lands.
+ *
+ * Only a flipped chart needs this, so it is opt-in: passing `enabled: false` never attaches an
+ * observer and leaves the width at 0, which `getCategoryAxisWidth` reads as "not measured". */
+function useMeasuredWidth(enabled: boolean) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!enabled || !element) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries.at(-1);
+      if (entry) setWidth(entry.contentRect.width);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [enabled]);
+
+  return [ref, width] as const;
+}
+
 export function CartesianChart({
   data,
   xAxisKey,
@@ -329,10 +352,21 @@ export function CartesianChart({
     };
   }, [timeGranularity, timeLocale, horizontal, hasCategoryAxis, data, xAxisKey, pointScale]);
 
+  // The gutter grows with the chart, so it needs the chart's width — and recharts derives its plot
+  // offset from `<YAxis width>` when it lays the chart out, so a width that arrives later leaves the
+  // labels and the plot disagreeing about where the gutter ends (ENG-3223). Measuring the wrapper
+  // rather than reading it back off the chart, and re-keying the chart below on the result, keeps
+  // the offset and the tick boxes derived from the same number.
+  const hasCategoryGutter = horizontal && hasCategoryAxis;
+  const [wrapperRef, wrapperWidth] = useMeasuredWidth(hasCategoryGutter);
+
   const categoryAxisWidth = useMemo(() => {
-    if (!horizontal || !hasCategoryAxis) return 0;
-    return getCategoryAxisWidth(data.map((row) => tickFormatter(row[xAxisKey])));
-  }, [horizontal, hasCategoryAxis, data, xAxisKey, tickFormatter]);
+    if (!hasCategoryGutter) return 0;
+    return getCategoryAxisWidth(
+      data.map((row) => tickFormatter(row[xAxisKey])),
+      wrapperWidth
+    );
+  }, [hasCategoryGutter, data, xAxisKey, tickFormatter, wrapperWidth]);
 
   // Flipped, a bar's value label sits past its end with nothing reserving room for it, so the
   // longest bar loses its label whenever the data max lands on the axis bound. The vertical axis
@@ -348,9 +382,17 @@ export function CartesianChart({
     // to the band that leaves (see `WrappingYAxisTick`). Reserving height per row instead would put
     // a scroll region inside a dashboard widget, hiding rows behind an interaction to show label
     // text that a middle-truncated label already distinguishes.
-    <div className="h-full min-h-64 w-full">
+    <div ref={wrapperRef} className="h-full min-h-64 w-full">
       <ChartContainer config={chartConfig} className="h-full w-full">
-        <Chart data={data} {...(horizontal ? { layout: "vertical" as const } : {})} {...chartProps}>
+        {/* Remount when the gutter changes so recharts recomputes its plot offset from the width the
+            ticks are about to be given; updating `<YAxis width>` in place leaves the offset behind
+            and paints the labels under the bars. The key is constant for every other chart, and
+            `CATEGORY_AXIS_WIDTH_STEP` keeps a drag-resize to one remount per notch. */}
+        <Chart
+          key={hasCategoryGutter ? categoryAxisWidth : undefined}
+          data={data}
+          {...(horizontal ? { layout: "vertical" as const } : {})}
+          {...chartProps}>
           {/* syncWithTicks: draw a gridline only at each tick. Without it Recharts adds
               extra lines at the plot-area top/bottom edges (revealed by the YAxis padding),
               which showed up as unlabelled boundary lines above 80 and below 0. The gridlines

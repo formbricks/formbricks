@@ -327,22 +327,49 @@ const AXIS_CHAR_WIDTH_WIDE = 7;
  * which measures the space between two neighbouring labels. */
 export const AXIS_TICK_GAP = 8;
 
-/** Ceiling (px) for the category gutter: wide enough for a short question label, capped so the bars
- * keep most of the plot. Longer labels are cut inside it (see `truncateLabelToBox`).
+/** Base ceiling (px) for the category gutter: wide enough for a short question label on a chart
+ * whose width is not known yet. Longer labels are cut inside it (see `truncateLabelToBox`).
  *
- * Flat, not a share of the chart's width: a gutter that grows after recharts has computed its plot
- * offset leaves the label box and the plot disagreeing about where the gutter ends, and the labels
- * paint under the bars. Scaling it with the chart is worth doing (ENG-3223) but needs the axis
- * width settled before recharts lays the chart out, not after. */
+ * A wide chart raises this ceiling proportionally — see {@link CATEGORY_AXIS_WIDTH_RATIO} — but
+ * never lowers it, so a dashboard widget keeps exactly the gutter it has today. */
 export const CATEGORY_AXIS_MAX_WIDTH = 160;
 /** Floor (px), so a one-character label still has a readable gutter. */
 export const CATEGORY_AXIS_MIN_WIDTH = 28;
 
-/** Width (px) for the left-hand category gutter of a flipped bar chart, from the labels present. */
-export const getCategoryAxisWidth = (labels: string[]): number => {
+/** Share of a flipped chart's width the gutter may grow to once the chart has been measured. A
+ * third leaves the bars two thirds of the plot at every width, so widening a chart from a dashboard
+ * widget to the full-screen editor spends the new pixels on the half that needs them (ENG-3223).
+ *
+ * Callers must have the measured width in hand *before* recharts lays the chart out. A width that
+ * arrives afterwards changes `<YAxis width>` without moving the plot offset recharts already
+ * computed, and the label box and the plot then disagree about where the gutter ends — which paints
+ * the labels under the bars. `CartesianChart` settles this by re-keying the chart on the resolved
+ * gutter, so the offset is derived from the same number the ticks are given. */
+export const CATEGORY_AXIS_WIDTH_RATIO = 1 / 3;
+
+/** Quantum (px) the measured ceiling snaps down to. The gutter is what re-keys (and so remounts) a
+ * flipped chart, and an exact third would re-key it on every three pixels of a drag-resize; a step
+ * this size is finer than a character of label and costs at most one remount per notch. */
+export const CATEGORY_AXIS_WIDTH_STEP = 32;
+
+/**
+ * Width (px) for the left-hand category gutter of a flipped bar chart, from the labels present and
+ * — once known — the width of the chart they sit in.
+ *
+ * `chartWidth` is 0 on the render before the chart has been measured, which falls back to the flat
+ * {@link CATEGORY_AXIS_MAX_WIDTH} ceiling: the first paint is the one today's charts already show,
+ * never a gutter too wide for the chart it lands in.
+ */
+export const getCategoryAxisWidth = (labels: string[], chartWidth = 0): number => {
   const longest = labels.reduce((max, label) => Math.max(max, label.length), 0);
   const needed = Math.ceil(longest * AXIS_CHAR_WIDTH) + AXIS_TICK_GAP * 2;
-  return Math.min(CATEGORY_AXIS_MAX_WIDTH, Math.max(CATEGORY_AXIS_MIN_WIDTH, needed));
+  const grown =
+    Math.floor((Math.max(0, chartWidth) * CATEGORY_AXIS_WIDTH_RATIO) / CATEGORY_AXIS_WIDTH_STEP) *
+    CATEGORY_AXIS_WIDTH_STEP;
+  // Never below the flat ceiling: the ratio is there to grow a wide chart's gutter, not to shrink a
+  // narrow one's below what it renders today.
+  const ceiling = Math.max(CATEGORY_AXIS_MAX_WIDTH, grown);
+  return Math.min(ceiling, Math.max(CATEGORY_AXIS_MIN_WIDTH, needed));
 };
 
 // ── Wrapped axis label sizing ─────────────────────────────────────────────────
