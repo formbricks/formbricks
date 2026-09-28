@@ -661,11 +661,16 @@ Output:
   "meta": {
     "limit": 20,
     "nextCursor": null,
-    "totalCount": 1
+    "totalCount": 1,
+    "workspaceSurveyCount": 3
   },
   "requestId": "req_..."
 }
 ```
+
+`totalCount` is the number of surveys matching the filters; `workspaceSurveyCount` is every survey in the
+workspace, archived ones included and independent of the filters, so it can be larger. Both are `null`
+when `includeTotalCount` is `false`.
 
 ### get_survey
 
