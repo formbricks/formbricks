@@ -16,18 +16,19 @@ import { drainAuthzedOutbox } from "@/lib/authzed/outbox-processor";
  */
 export const synchronizeAuthzedIntegrationFixture = async (): Promise<void> => {
   const client = getAuthzedClient();
-  const request = {
-    maxPrune: AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN,
-    prune: true,
-    scope: { kind: "all" },
-  } as const;
+  // Surveys are their own scope (ENG-3282), outside the full-deployment one, so both are converged.
+  const scopes = [{ kind: "all" }, { kind: "survey" }] as const;
+  const requestFor = (scope: (typeof scopes)[number]) =>
+    ({ maxPrune: AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN, prune: true, scope }) as const;
 
-  const applied = await runAuthzedBackfill(
-    { ...request, mode: "apply" },
-    { apply: createAuthzedBackfillApply(), client }
-  );
-  if (applied.counters.failed > 0) {
-    throw new Error("AuthZed integration fixture reconciliation failed");
+  for (const scope of scopes) {
+    const applied = await runAuthzedBackfill(
+      { ...requestFor(scope), mode: "apply" },
+      { apply: createAuthzedBackfillApply(), client }
+    );
+    if (applied.counters.failed > 0) {
+      throw new Error("AuthZed integration fixture reconciliation failed");
+    }
   }
 
   const drained = await drainAuthzedOutbox();
@@ -35,11 +36,13 @@ export const synchronizeAuthzedIntegrationFixture = async (): Promise<void> => {
     throw new Error("AuthZed integration fixture outbox did not drain");
   }
 
-  const verified = await runAuthzedBackfill(
-    { ...request, mode: "dry_run" },
-    { apply: createAuthzedBackfillNoopApply(), client }
-  );
-  if (verified.status !== "reconciled") {
-    throw new Error("AuthZed integration fixture did not converge");
+  for (const scope of scopes) {
+    const verified = await runAuthzedBackfill(
+      { ...requestFor(scope), mode: "dry_run" },
+      { apply: createAuthzedBackfillNoopApply(), client }
+    );
+    if (verified.status !== "reconciled") {
+      throw new Error("AuthZed integration fixture did not converge");
+    }
   }
 };

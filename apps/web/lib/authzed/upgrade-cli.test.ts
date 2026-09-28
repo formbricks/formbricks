@@ -39,6 +39,7 @@ const audit = (status: TAuthzedBackfillResult["status"] = "reconciled"): TAuthze
   counters,
   failures: [],
   lastOrganizationId: "tenant_identifier_must_not_escape",
+  lastSurveyId: "survey_identifier_must_not_escape",
   mismatchedParents: [],
   mismatchedPermissions: [],
   mode: "dry_run",
@@ -73,6 +74,7 @@ const dependencies = (overrides: Record<string, unknown> = {}) => {
       }),
       isEnabled: vi.fn().mockReturnValue(true),
       outboxStatus: vi.fn().mockResolvedValue(outbox),
+      readScopes: vi.fn().mockResolvedValue({ survey: "not-ready" }),
       writeOutput: (output: string) => outputs.push(output),
       ...overrides,
     },
@@ -92,9 +94,11 @@ describe("runAuthzedUpgradeCli", () => {
       health,
       outbox,
       schema,
+      scopes: { survey: "not-ready" },
       status: "ready",
     });
     expect(deps.outputs.join("")).not.toContain("tenant_identifier_must_not_escape");
+    expect(deps.outputs.join("")).not.toContain("survey_identifier_must_not_escape");
     expect(deps.values.configureBulkClient).toHaveBeenCalledBefore(deps.values.checkHealth);
     expect(deps.values.closeClient).toHaveBeenCalledOnce();
   });

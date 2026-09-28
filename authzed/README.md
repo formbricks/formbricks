@@ -382,10 +382,49 @@ Authenticated feedback-gateway requests carry the bounded `feedback_gateway` tel
 unauthenticated gateway traffic is never authorized as an authenticated actor. The surface only attributes
 authoritative metrics; it does not select an evaluator.
 
+## Survey projection
+
+ENG-3282 projects survey ownership and visibility. PostgreSQL is the durable source — `Survey.workspaceId`,
+`Survey.ownerId` and `Survey.visibility` — and `apps/web/lib/authzed/survey.ts` writes exactly the edges a
+row implies:
+
+| Fact                                 | Edge                                  |
+| ------------------------------------ | ------------------------------------- |
+| always                               | `survey#workspace@workspace:W`        |
+| an owner is set                      | `survey#owner@user:O`                 |
+| `visibility = workspace`             | `survey#shared_workspace@workspace:W` |
+| `visibility = private` with an owner | `survey#private_owner@user:O`         |
+
+A workspace-visible survey therefore resolves exactly as it did before the projection existed; a private one
+is reachable only by its owner along their own workspace ladder, and by organization owners and managers
+through `workspace#administer`. `shared_workspace` is only ever derived from `Survey.workspaceId`: an edge to
+another tenant's workspace would grant that tenant's members read, and the survey audit reports one as a
+mismatched parent.
+
+- **Fast path and outbox.** The `authzed_projection_survey` trigger enqueues an event on insert, delete, and
+  any write to `visibility`, `ownerId` or `workspaceId`. `private → workspace` on the same owner and
+  workspace, and a write that leaves all three unchanged, are grants; every other move is a revocation.
+  The visibility endpoint also projects in-request.
+- **Fencing.** Each survey is reconciled inside a transaction holding
+  `pg_advisory_xact_lock(hashtext('survey-visibility:' || id))`, the same lock the visibility endpoint
+  takes to store a change. The projector acknowledges the exact `visibilityVersion` it wrote into
+  `visibilityProjectedVersion`; while the two differ (`visibilityPending`), PostgreSQL treats the survey as
+  private on every path.
+- **DELETE is not a revocation.** Every survey decision resolves the row first and denies once it is gone,
+  so deleting a workspace with many surveys cannot arm the freshness guard. Leftover edges are hygiene.
+- **Repair scope.** Surveys are their own backfill scope, `--scope=survey`, outside `--scope=all`: the
+  six-hourly audit stays proportional to the number of grants. A daily job audits the survey scope as a dry
+  run and reports drift through metrics only.
+- **Readiness marker.** `AuthzedProjectionScopeState` row `survey`. Until it is set, survey and response
+  decisions collapse to workspace permissions exactly as before, so a fresh deploy changes nothing. It is
+  set only by `pnpm authzed:backfill --scope=survey --apply --mark-ready`, which marks only after two
+  further dry runs come back clean, and cleared with `--scope=survey --clear-ready`.
+  `SURVEY_VISIBILITY_FORCE_DISABLED=1` is the emergency override that ignores the row.
+
 ## Resource parent resolution during the current-model migration
 
 The initial migration deliberately does not project one relationship for every
-survey, dashboard, and response. ENG-1738's private evaluator uses
+dashboard and response (surveys are projected — see above). ENG-1738's private evaluator uses
 the existing server-only PostgreSQL resolvers to map:
 
 - a survey or dashboard to its workspace;
@@ -397,7 +436,7 @@ the current authorization boundary and avoids adding a high-cardinality
 Resolver database failures remain operational errors and missing resources
 remain denials, preserving the current authorization contract.
 
-The `survey#workspace`, `dashboard#workspace`, and `response#survey` relations
+The `dashboard#workspace` and `response#survey` relations
 remain in the schema for later resource-level sharing. They must not be queried
 directly until a future projector and matching backfill scope cover those edges;
 the backfill classifies them as ignored today and never prunes them.
@@ -515,6 +554,13 @@ pnpm authzed:backfill --apply --prune --confirm-prune --scope=all \
 
 # Resume an interrupted run from the lastOrganizationId it reported.
 pnpm authzed:backfill --apply --after-organization-id=<cuid>
+
+# Surveys are their own scope (ENG-3282). Converge every survey, then mark the scope ready.
+pnpm authzed:backfill --scope=survey --apply --mark-ready
+# Resume an interrupted survey walk from the lastSurveyId it reported.
+pnpm authzed:backfill --scope=survey --apply --after-survey-id=<cuid>
+# Roll enforcement back to workspace permissions.
+pnpm authzed:backfill --scope=survey --clear-ready
 ```
 
 Exit codes match `authzed:schema`: `0` reconciled, `2` drift remains, `1` failed

@@ -168,6 +168,14 @@ upgrade gate before enabling the v6 application image.
 | AUTHZED_INSECURE    | Allows plaintext gRPC for an in-cluster service. Keep disabled for endpoints outside the trusted cluster network. | optional              | `true` in Helm and bundled Docker/dev |
 | AUTHZED_CONSISTENCY | Must be `fully_consistent` for v6 authorization.                                                               | required              | `fully_consistent` in released Docker and Helm |
 
+Two variables govern survey visibility, which is enforced only once the survey projection is marked ready
+(see [AuthZed operations](/self-hosting/configuration/authzed-operations)):
+
+| Variable                         | Description                                                                                                                                             | Required | Default  |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------- |
+| SURVEY_VISIBILITY_FORCE_DISABLED | Emergency switch. `1` ignores the survey readiness marker, so every survey is workspace-visible again. Takes effect on restart; the stored flags are kept. | optional | unset    |
+| SURVEY_WORKSPACE_LIMIT           | Most surveys one workspace may hold, archived surveys included. Creating one past it answers `422 workspace_survey_limit_reached`.                        | optional | `10000`  |
+
 Docker Compose additionally requires `AUTHZED_DATABASE_PASSWORD` for its dedicated `spicedb` PostgreSQL
 login. Generate both it and `AUTHZED_TOKEN` with `openssl rand -hex 32`. `SPICEDB_IMAGE_REF` can override the
 bundled `authzed/spicedb:v1.52.0` image for an explicitly reviewed upgrade; the migration and server services

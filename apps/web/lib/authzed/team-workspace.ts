@@ -16,6 +16,7 @@ import {
 } from "./projection";
 import { deleteRelationshipsInBoundedBatches, packRelationshipUpdateGroups } from "./relationship-batches";
 import { TEAM_RELATIONS, WORKSPACE_TEAM_RELATIONS } from "./relationship-map";
+import { surveyRelationshipsOnWorkspaceFilter } from "./survey";
 
 const TEAM_RELATION_NAMES = Object.values(TEAM_RELATIONS);
 const WORKSPACE_TEAM_RELATION_NAMES = Object.values(WORKSPACE_TEAM_RELATIONS);
@@ -235,6 +236,10 @@ const writeSnapshot = async (
   for (const workspaceId of targets.workspaceIds) {
     if (!workspacesById.has(workspaceId)) {
       deletionFilters.push({ resourceId: workspaceId, resourceType: "workspace" });
+      // ENG-3282: the workspace's surveys point at it too. Their own DELETE events remove them one by
+      // one; this clears them in a single subject-wide delete as well, so a replayed workspace event
+      // cannot leave them behind.
+      deletionFilters.push(surveyRelationshipsOnWorkspaceFilter(workspaceId));
     }
   }
   await deleteRelationshipsInBoundedBatches(client, deletionFilters);

@@ -190,6 +190,32 @@ is deleted for it, and the run finishes `drifted`. That cleanup belongs to `--or
 `--scope=all`, where the wider deletion is the intended unit of work. If a workspace run keeps reporting
 orphans it will not prune, this is why — widen the scope.
 
+**Surveys (ENG-3282).** Surveys are their own scope and never part of `--scope=all`:
+
+```bash
+# Report survey drift. Writes nothing.
+pnpm authzed:backfill --scope=survey
+
+# Converge every survey from PostgreSQL. Add --mark-ready to set the readiness marker once two further
+# dry runs come back clean; the output then carries `readiness: "ready" | "not-ready"`.
+pnpm authzed:backfill --scope=survey --apply --mark-ready
+
+# Remove relationships of surveys whose row is gone (the same prune safeguards as any other scope).
+pnpm authzed:backfill --scope=survey --apply --prune --confirm-prune --expected-endpoint=<host:port>
+
+# Resume an interrupted walk from the lastSurveyId it reported.
+pnpm authzed:backfill --scope=survey --apply --after-survey-id=<cuid>
+
+# Roll enforcement back: survey decisions collapse to workspace permissions within five seconds.
+pnpm authzed:backfill --scope=survey --clear-ready
+```
+
+`--clear-ready` touches only PostgreSQL and works while SpiceDB is unreachable. If PostgreSQL is what is
+broken, set `SURVEY_VISIBILITY_FORCE_DISABLED=1` and restart instead. A survey audit that reports
+`mismatchedParents` naming `shared_workspace` means some survey is shared with a workspace it does not
+belong to — another tenant's members can read it. Treat it as an incident: remove that edge with
+`zed relationship delete`, then rerun the survey scope with `--apply`.
+
 **Resuming.** A run reports `lastOrganizationId`. Feed it back:
 
 ```bash

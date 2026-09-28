@@ -6,6 +6,7 @@ import {
   reconcileFeedbackDirectoryRelationships,
 } from "./feedback-directory";
 import { reconcileOrganizationMemberships } from "./organization-membership";
+import { reconcileSurveyRelationships } from "./survey";
 import { reconcileTeamWorkspaceRelationships } from "./team-workspace";
 
 const INERT_RESULT = { passes: 0, status: "projected" } as const;
@@ -16,6 +17,7 @@ export const createAuthzedBackfillNoopApply = (): TAuthzedBackfillApply => ({
   reconcileApiKeys: async () => INERT_RESULT,
   reconcileFeedbackDirectories: async () => INERT_RESULT,
   reconcileMemberships: async () => INERT_RESULT,
+  reconcileSurveys: async () => INERT_RESULT,
   reconcileTeamWorkspace: async () => INERT_RESULT,
 });
 
@@ -25,5 +27,6 @@ export const createAuthzedBackfillApply = (): TAuthzedBackfillApply => ({
   reconcileApiKeys: reconcileApiKeyRelationships,
   reconcileFeedbackDirectories: reconcileFeedbackDirectoryRelationships,
   reconcileMemberships: reconcileOrganizationMemberships,
+  reconcileSurveys: reconcileSurveyRelationships,
   reconcileTeamWorkspace: reconcileTeamWorkspaceRelationships,
 });

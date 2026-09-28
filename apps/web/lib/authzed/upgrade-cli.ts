@@ -15,6 +15,7 @@ import {
   applyCanonicalAuthzedSchema,
   checkCanonicalAuthzedSchema,
 } from "./schema";
+import { type TAuthzedProjectionScope, readProjectionScopeReadiness } from "./scope-readiness";
 import type { TAuthzedUpgradeCliCommand } from "./upgrade-cli-command";
 
 type TAuthzedUpgradeAudit = Readonly<{
@@ -32,6 +33,11 @@ type TAuthzedUpgradeResult = Readonly<{
   outbox?: TAuthzedOutboxStatus | TAuthzedOutboxDrainResult;
   retryable?: boolean;
   schema?: TAuthzedSchemaApplyResult | TAuthzedSchemaCheckResult;
+  /**
+   * Per-scope readiness markers (ENG-3282). Informational: a scope that is not ready is enforced by
+   * the workspace ladder, which is the safe state, so it never blocks an upgrade.
+   */
+  scopes?: Readonly<Record<TAuthzedProjectionScope, "not-ready" | "ready">>;
   status: "blocked" | "failed" | "prepared" | "ready";
 }>;
 
@@ -46,6 +52,7 @@ type TAuthzedUpgradeCliDependencies = Readonly<{
   drainOutbox: () => Promise<TAuthzedOutboxDrainResult>;
   isEnabled: () => boolean;
   outboxStatus: () => Promise<TAuthzedOutboxStatus>;
+  readScopes: () => Promise<Readonly<Record<TAuthzedProjectionScope, "not-ready" | "ready">>>;
   writeOutput: (output: string) => void;
 }>;
 
@@ -71,6 +78,7 @@ const defaultDependencies: TAuthzedUpgradeCliDependencies = {
   drainOutbox: drainAuthzedOutbox,
   isEnabled: () => env.AUTHZED_ENABLED === "true" || env.AUTHZED_ENABLED === "1",
   outboxStatus: getAuthzedOutboxStatus,
+  readScopes: readProjectionScopeReadiness,
   writeOutput: (output) => process.stdout.write(output),
 };
 
@@ -137,6 +145,7 @@ const runCheck = async (dependencies: TAuthzedUpgradeCliDependencies): Promise<T
     health,
     outbox,
     schema,
+    scopes: await dependencies.readScopes(),
     status: audit.status === "reconciled" ? "ready" : audit.status === "failed" ? "failed" : "blocked",
   };
 };

@@ -525,6 +525,34 @@ The default destructive cap is 500 orphaned resources. `--max-prune=<number>` ma
 the run observes more than the cap, it deletes nothing. Investigate a wrong endpoint, wrong database, partial
 restore, or shared SpiceDB before proceeding.
 
+### Audit and repair surveys
+
+Surveys are audited and repaired as their own scope, never as part of `--scope=all`, so the six-hourly audit
+stays proportional to your number of grants rather than your number of surveys. A daily job audits them as a
+dry run and reports drift through metrics.
+
+```bash
+formbricks-authzed backfill --scope=survey
+formbricks-authzed backfill --scope=survey --apply
+formbricks-authzed backfill --scope=survey --apply --after-survey-id=<last-survey-id>
+```
+
+Survey visibility is enforced only once the survey scope is marked ready. Marking it runs the repair, then
+two further dry runs, and sets the marker only if both come back clean:
+
+```bash
+formbricks-authzed backfill --scope=survey --apply --mark-ready
+```
+
+To roll enforcement back to workspace permissions, clear the marker. This touches only PostgreSQL:
+
+```bash
+formbricks-authzed backfill --scope=survey --clear-ready
+```
+
+`formbricks-authzed upgrade check` reports the marker as `scopes.survey`. If PostgreSQL itself is unavailable,
+set `SURVEY_VISIBILITY_FORCE_DISABLED=1` and restart to ignore the marker.
+
 ### Interpret drift categories
 
 | Category            | Meaning and response                                                                                                                        |

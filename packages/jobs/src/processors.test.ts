@@ -343,6 +343,7 @@ describe("@formbricks/jobs processor registry", () => {
   test.each([
     [JOB_NAMES.authzedProjectionDelivery, "AuthZed projection delivery"],
     [JOB_NAMES.authzedReconciliationAudit, "AuthZed reconciliation audit"],
+    [JOB_NAMES.authzedSurveyAudit, "AuthZed survey audit"],
     [JOB_NAMES.surveyArchivePurge, "survey archive purge"],
     [JOB_NAMES.surveyScheduling, "survey scheduling"],
     [JOB_NAMES.workflowRunReconcile, "workflow run reconcile"],

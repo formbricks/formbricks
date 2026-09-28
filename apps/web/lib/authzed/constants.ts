@@ -59,6 +59,12 @@ export const AUTHZED_MAX_OBSERVED_RELATIONSHIPS_PER_UNIT = 20_000;
 export const AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE = 100;
 
 /**
+ * Surveys per page of the `survey` backfill scope (ENG-3282). Each survey is observed and reconciled on
+ * its own, so this bounds the ids held in memory and the resume granularity, not a single query.
+ */
+export const AUTHZED_BACKFILL_SURVEY_PAGE_SIZE = 5_000;
+
+/**
  * Projection targets handed to a reconciler in one call.
  *
  * Reconcilers read their source snapshot with `where: { OR: targets.map(...) }`, which is unbounded
