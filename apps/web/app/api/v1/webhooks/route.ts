@@ -12,6 +12,10 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
+import {
+  SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE,
+  findNotWorkspaceVisibleSurveyIds,
+} from "@/lib/survey/visibility/outbound";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ authentication }: THandlerParams) => {
@@ -83,6 +87,16 @@ export const POST = withV1ApiWrapper({
     ) {
       return {
         response: responses.unauthorizedResponse(),
+      };
+    }
+
+    // ENG-3283: a webhook would forward a private survey's responses past its access list.
+    const blockedSurveyIds = await findNotWorkspaceVisibleSurveyIds(inputValidation.data.surveyIds ?? []);
+    if (blockedSurveyIds.length > 0) {
+      return {
+        response: responses.badRequestResponse(SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE, {
+          surveyIds: blockedSurveyIds.join(","),
+        }),
       };
     }
 

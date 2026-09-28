@@ -144,7 +144,7 @@ describe("marker on: private surveys leave every read path of those who may not 
     const v2 = await getV2Responses([ids.workspace], { limit: 50, skip: 0 } as never, where);
     if (!v2.ok) throw new Error("v2 responses read failed");
     expect(surveyIdsOf(v2.data.data)).toEqual([ids.visibleSurvey]);
-    expect(v2.data.meta.total).toBe(1);
+    expect(v2.data.meta?.total).toBe(1);
 
     await expect(
       canApiKeyReachSurveyResource(ids.apiKey, "survey.read", { id: ids.visibleSurvey, type: "survey" })

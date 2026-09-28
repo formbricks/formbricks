@@ -17,6 +17,8 @@ vi.mock("@formbricks/logger", () => ({
 }));
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: vi.fn() }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
+const visibility = vi.hoisted(() => ({ ready: false }));
+vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: async () => visibility.ready }));
 vi.mock("@/lib/utils/helper", () => ({ getOrganizationIdFromWorkspaceId: vi.fn() }));
 vi.mock("@/lib/workspace/service", () => ({ getWorkspaceMemberEmails: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsWorkflowsEnabled: vi.fn() }));
@@ -176,7 +178,7 @@ describe("verifyTriggerSurvey (validates a workflow trigger's referenced survey)
     expect(result).toEqual({ surveyExists: false, missingEndingCardIds: [] });
     expect(surveyFindUnique).toHaveBeenCalledWith({
       where: { id_workspaceId: { id: "s_1", workspaceId: "ws_1" } },
-      select: { endings: true },
+      select: { endings: true, visibility: true, visibilityProjectedVersion: true, visibilityVersion: true },
     });
   });
 
@@ -189,7 +191,11 @@ describe("verifyTriggerSurvey (validates a workflow trigger's referenced survey)
       endingCardIds: [endingId1, "ending_missing"],
     });
 
-    expect(result).toEqual({ surveyExists: true, missingEndingCardIds: ["ending_missing"] });
+    expect(result).toEqual({
+      surveyExists: true,
+      missingEndingCardIds: ["ending_missing"],
+      surveyNotWorkspaceVisible: false,
+    });
   });
 
   test("accepts a workflow trigger whose survey and ending cards all exist", async () => {
@@ -197,7 +203,26 @@ describe("verifyTriggerSurvey (validates a workflow trigger's referenced survey)
 
     const result = await verify({ workspaceId: "ws_1", surveyId: "s_1", endingCardIds: [endingId1] });
 
-    expect(result).toEqual({ surveyExists: true, missingEndingCardIds: [] });
+    expect(result).toEqual({
+      surveyExists: true,
+      missingEndingCardIds: [],
+      surveyNotWorkspaceVisible: false,
+    });
+  });
+
+  test("flags a private trigger survey once survey visibility is enforced (ENG-3283)", async () => {
+    visibility.ready = true;
+    surveyFindUnique.mockResolvedValue({
+      endings: [endScreen(endingId1)],
+      visibility: "private",
+      visibilityProjectedVersion: 1,
+      visibilityVersion: 1,
+    });
+
+    const result = await verify({ workspaceId: "ws_1", surveyId: "s_1", endingCardIds: [endingId1] });
+    visibility.ready = false;
+
+    expect(result).toEqual({ surveyExists: true, missingEndingCardIds: [], surveyNotWorkspaceVisible: true });
   });
 });
 

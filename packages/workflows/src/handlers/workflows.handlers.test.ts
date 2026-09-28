@@ -525,6 +525,23 @@ describe("enable", () => {
     expect(service.enableWorkflow).not.toHaveBeenCalled();
   });
 
+  test("rejects a trigger survey that is not workspace-visible with 422 workflow_not_executable", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+    verifyTriggerSurvey.mockResolvedValue({
+      surveyExists: true,
+      missingEndingCardIds: [],
+      surveyNotWorkspaceVisible: true,
+    });
+
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(422);
+    const body = await readJson<{ code: string; invalid_params: { name: string }[] }>(res);
+    expect(body.code).toBe("workflow_not_executable");
+    expect(body.invalid_params.map((p) => p.name)).toContain("definition.trigger.config.surveyId");
+    expect(service.enableWorkflow).not.toHaveBeenCalled();
+  });
+
   test("rejects a missing ending card with 422 workflow_not_executable", async () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
     verifyTriggerSurvey.mockResolvedValue({ surveyExists: true, missingEndingCardIds: ["ec_missing"] });
@@ -720,6 +737,22 @@ describe("testWorkflow", () => {
     const body = await readJson<TestResultBody>(res);
     expect(body.data.ok).toBe(false);
     expect(body.data.problems.map((p) => p.code)).toContain("definition_not_executable");
+  });
+
+  test("reports a trigger survey that is not workspace-visible", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+    verifyTriggerSurvey.mockResolvedValue({
+      surveyExists: true,
+      missingEndingCardIds: [],
+      surveyNotWorkspaceVisible: true,
+    });
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+    const body = await readJson<TestResultBody>(res);
+    expect(body.data.ok).toBe(false);
+    expect(body.data.problems.map((p) => p.code)).toContain("survey_not_workspace_visible");
   });
 
   test("skips the survey check when the definition is not executable", async () => {

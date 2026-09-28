@@ -388,6 +388,28 @@ describe("processResponsePipelineJob", () => {
     expect(mockEnqueueWebhookDeliveryJob).not.toHaveBeenCalled();
   });
 
+  test("sends nothing out of the app for a private survey, even to a wildcard webhook", async () => {
+    mockIsSurveyVisibilityReady.mockResolvedValue(true);
+    mockPrismaSurveyFindUnique.mockResolvedValue({
+      ...survey,
+      followUps: [{ id: "followup_123" }],
+      visibility: "private",
+      visibilityProjectedVersion: 2,
+      visibilityVersion: 2,
+    });
+    // An all-surveys webhook matches every survey in the workspace, the private one included.
+    mockPrismaWebhookFindMany.mockResolvedValue([webhookRow]);
+    mockGetIntegrations.mockResolvedValue([{ id: "integration_123", type: "slack" }]);
+
+    await processResponsePipelineJob({ ...baseData, event: "responseFinished" }, baseContext);
+
+    expect(mockEnqueueWebhookDeliveryJob).not.toHaveBeenCalled();
+    expect(mockGetIntegrations).not.toHaveBeenCalled();
+    expect(mockHandleIntegrations).not.toHaveBeenCalled();
+    expect(mockSendFollowUpsForResponse).not.toHaveBeenCalled();
+    expect(mockEnqueueResponseCompletedWorkflowRuns).not.toHaveBeenCalled();
+  });
+
   test("alerts only subscribers who may read the survey's responses once visibility is enforced", async () => {
     mockIsSurveyVisibilityReady.mockResolvedValue(true);
     mockPrismaUserFindMany.mockResolvedValue([

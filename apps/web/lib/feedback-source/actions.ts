@@ -228,7 +228,11 @@ export const updateFeedbackSourceWithMappingsAction = authenticatedActionClient
       // fails here rather than as a Prisma error from the update.
       const feedbackSource = await prisma.feedbackSource.findUnique({
         where: { id: parsedInput.feedbackSourceId, workspaceId: parsedInput.workspaceId },
-        select: { feedbackDirectoryId: true, type: true },
+        select: {
+          feedbackDirectoryId: true,
+          formbricksMappings: { select: { surveyId: true } },
+          type: true,
+        },
       });
       if (!feedbackSource) {
         throw new ResourceNotFoundError("FeedbackSource", parsedInput.feedbackSourceId);
@@ -245,7 +249,8 @@ export const updateFeedbackSourceWithMappingsAction = authenticatedActionClient
       if (parsedInput.formbricksMappings?.length) {
         mappingsInput = await resolveFormbricksMappingsInput(
           parsedInput.formbricksMappings,
-          parsedInput.workspaceId
+          parsedInput.workspaceId,
+          feedbackSource.formbricksMappings.map(({ surveyId }) => surveyId)
         );
       } else if (parsedInput.fieldMappings && parsedInput.fieldMappings.length > 0) {
         mappingsInput = {

@@ -199,12 +199,21 @@ const buildDisallowedRecipientParams = (disallowedEmails: string[]): WorkflowInv
   }));
 
 /** Map a failed trigger-survey check to field-level `invalid_params` on the definition's trigger config. */
+const SURVEY_NOT_WORKSPACE_VISIBLE_REASON =
+  "The referenced survey is not visible to the whole workspace, so workflows cannot use it.";
+
 const buildSurveyInvalidParams = (check: TriggerSurveyCheck): WorkflowInvalidParam[] => {
   const invalidParams: WorkflowInvalidParam[] = [];
   if (!check.surveyExists) {
     invalidParams.push({
       name: "definition.trigger.config.surveyId",
       reason: "The referenced survey does not exist in this workspace.",
+    });
+  }
+  if (check.surveyNotWorkspaceVisible) {
+    invalidParams.push({
+      name: "definition.trigger.config.surveyId",
+      reason: SURVEY_NOT_WORKSPACE_VISIBLE_REASON,
     });
   }
   for (const endingCardId of check.missingEndingCardIds) {
@@ -480,7 +489,11 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         surveyId,
         endingCardIds,
       });
-      if (!surveyCheck.surveyExists || surveyCheck.missingEndingCardIds.length > 0) {
+      if (
+        !surveyCheck.surveyExists ||
+        surveyCheck.surveyNotWorkspaceVisible ||
+        surveyCheck.missingEndingCardIds.length > 0
+      ) {
         throw new WorkflowNotExecutableError(buildSurveyInvalidParams(surveyCheck));
       }
 
@@ -611,6 +624,13 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
             code: "survey_not_found",
             field: "definition.trigger.config.surveyId",
             message: "The referenced survey does not exist in this workspace.",
+          });
+        }
+        if (surveyCheck.surveyNotWorkspaceVisible) {
+          problems.push({
+            code: "survey_not_workspace_visible",
+            field: "definition.trigger.config.surveyId",
+            message: SURVEY_NOT_WORKSPACE_VISIBLE_REASON,
           });
         }
         for (const endingCardId of surveyCheck.missingEndingCardIds) {

@@ -19,6 +19,7 @@ import { handleFeedbackSourcePipeline } from "@/lib/feedback-source/pipeline-han
 import { getIntegrations } from "@/lib/integration/service";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
+import { isSurveyOutboundAllowed, surveyOutboundVisibilitySelect } from "@/lib/survey/visibility/outbound";
 import { sendTelemetryEvents } from "@/lib/telemetry/usage-update";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { type TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
@@ -31,6 +32,7 @@ import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { getFinishedResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { handleIntegrations } from "./handle-integrations";
+import { recordSurveyOutboundSkipped } from "./outbound-visibility-metrics";
 
 const DEFAULT_NOTIFICATION_LOCALE: TUserLocale = "en-US";
 
@@ -46,6 +48,7 @@ const pipelineOrganizationSelect = {
 
 const pipelineSurveySelect = {
   id: true,
+  ...surveyOutboundVisibilitySelect,
   workspaceId: true,
   name: true,
   type: true,
@@ -586,6 +589,7 @@ const runResponseFinishedSideEffects = async ({
   organizationId,
   stripeCustomerId,
   survey,
+  outboundAllowed,
   workspaceId,
 }: {
   data: TResponsePipelineJobData;
@@ -594,13 +598,12 @@ const runResponseFinishedSideEffects = async ({
   organizationId: string;
   stripeCustomerId: string | null | undefined;
   survey: TPipelineSurvey;
+  /** ENG-3283: false for a survey that is not workspace-visible — nothing leaves the app for it. */
+  outboundAllowed: boolean;
   workspaceId: string;
 }) => {
   const [integrations, usersWithNotifications] = await Promise.all([
-    loadIntegrationsSafely({
-      logContext,
-      workspaceId,
-    }),
+    outboundAllowed ? loadIntegrationsSafely({ logContext, workspaceId }) : Promise.resolve([]),
     getUsersWithNotifications({
       data,
       logContext,
@@ -646,23 +649,29 @@ const runResponseFinishedSideEffects = async ({
     }
   }
 
-  try {
-    await handleFeedbackSourcePipeline(data.response, survey, workspaceId);
-  } catch (error) {
-    logger.error(
-      {
-        ...logContext,
-        err: error,
-      },
-      "Response pipeline feedbackSource handling failed"
-    );
-  }
+  if (outboundAllowed) {
+    try {
+      await handleFeedbackSourcePipeline(data.response, survey, workspaceId);
+    } catch (error) {
+      logger.error(
+        {
+          ...logContext,
+          err: error,
+        },
+        "Response pipeline feedbackSource handling failed"
+      );
+    }
 
-  await handleFollowUpsSafely({
-    data,
-    logContext,
-    survey,
-  });
+    await handleFollowUpsSafely({
+      data,
+      logContext,
+      survey,
+    });
+  } else {
+    recordSurveyOutboundSkipped("integration");
+    recordSurveyOutboundSkipped("feedback_source");
+    if (survey.followUps?.length) recordSurveyOutboundSkipped("follow_up", survey.followUps.length);
+  }
 
   await sendNotificationEmailsSafely({
     data,
@@ -679,6 +688,11 @@ const runResponseFinishedSideEffects = async ({
     organizationId,
     survey,
   });
+
+  if (!outboundAllowed) {
+    recordSurveyOutboundSkipped("workflow");
+    return;
+  }
 
   // Workflow runner (producer): enqueue runs for matching enabled workflows. Isolated so a runner
   // failure never breaks the response pipeline job, its retries, or the other side-effects above.
@@ -789,12 +803,24 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
       );
     }
 
-    await enqueueWebhookDeliveryJobs({
-      data,
-      logContext,
-      survey,
-      webhooks,
-    });
+    // ENG-3283: a private survey's responses never leave the app — no webhook, integration, feedback
+    // source, follow-up or workflow. Metering, telemetry, auto-complete and the (already filtered)
+    // alert emails are internal and still run.
+    const outboundAllowed = isSurveyOutboundAllowed(survey, await isSurveyVisibilityReady());
+    if (outboundAllowed) {
+      await enqueueWebhookDeliveryJobs({
+        data,
+        logContext,
+        survey,
+        webhooks,
+      });
+    } else {
+      logger.info(
+        { ...logContext, reason: "survey_not_workspace_visible" },
+        "Response pipeline skipped outbound delivery for a survey that is not workspace-visible"
+      );
+      recordSurveyOutboundSkipped("webhook", webhooks.length);
+    }
 
     if (data.event === "responseFinished") {
       await runResponseFinishedSideEffects({
@@ -802,6 +828,7 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
         displayTimeZone: organization.displayTimeZone,
         logContext,
         organizationId: organization.id,
+        outboundAllowed,
         stripeCustomerId: organization.billing?.stripeCustomerId,
         survey,
         workspaceId: data.workspaceId,

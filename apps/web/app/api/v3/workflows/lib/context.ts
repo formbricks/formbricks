@@ -10,7 +10,9 @@ import {
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { ENCRYPTION_KEY } from "@/lib/constants";
+import { isSurveyOutboundAllowed, surveyOutboundVisibilitySelect } from "@/lib/survey/visibility/outbound";
 import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
@@ -45,7 +47,7 @@ const verifyTriggerSurvey: WorkflowApiContext["verifyTriggerSurvey"] = async ({
 }) => {
   const survey = await prisma.survey.findUnique({
     where: { id_workspaceId: { id: surveyId, workspaceId } },
-    select: { endings: true },
+    select: { endings: true, ...surveyOutboundVisibilitySelect },
   });
 
   if (!survey) {
@@ -55,6 +57,8 @@ const verifyTriggerSurvey: WorkflowApiContext["verifyTriggerSurvey"] = async ({
   const endingIds = new Set(ZSurveyEndings.parse(survey.endings).map((ending) => ending.id));
   return {
     surveyExists: true,
+    // ENG-3283: a workflow forwards the survey's responses, so its survey must be workspace-visible.
+    surveyNotWorkspaceVisible: !isSurveyOutboundAllowed(survey, await isSurveyVisibilityReady()),
     missingEndingCardIds: endingCardIds.filter((endingCardId) => !endingIds.has(endingCardId)),
   };
 };
