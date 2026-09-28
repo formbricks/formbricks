@@ -367,6 +367,7 @@
     "label": "Etiqueta",
     "language": "Idioma",
     "last_name": "Apelido",
+    "last_sign_in": "Último início de sessão",
     "learn_more": "Saiba mais",
     "license_expired": "License Expired",
     "light_overlay": "Sobreposição leve",
@@ -407,6 +408,7 @@
     "no_quotas_found": "Nenhum quota encontrado",
     "no_result_found": "Nenhum resultado encontrado",
     "no_results": "Nenhum resultado",
+    "no_sign_in_recorded": "Nenhum início de sessão registado",
     "no_surveys_found": "Nenhum inquérito encontrado.",
     "no_text_found": "Nenhum texto encontrado",
     "none_of_the_above": "Nenhuma das opções acima",
@@ -3089,6 +3091,22 @@
         "unlock_teams_title": "Desbloqueie as Equipas com um plano superior",
         "upgrade_plan_notice_message": "Desbloqueie as Funções da Organização com um plano superior",
         "you_are_a_member": "És um membro"
+      },
+      "usage": {
+        "load_error": "Não foi possível carregar a utilização. Recarrega a página para tentar novamente.",
+        "members_active": "Iniciaram sessão nos últimos 30 dias",
+        "members_deactivated": "Desativados",
+        "members_description": "Atividade de início de sessão dos membros da organização. Não é afetada pelo intervalo de datas.",
+        "members_dormant": "Sem início de sessão há mais de 90 dias",
+        "members_total": "Membros",
+        "nav_label": "Utilização",
+        "no_workspaces": "Esta organização ainda não tem espaços de trabalho.",
+        "range_label": "Intervalo de datas",
+        "responses_description": "Todas as respostas guardadas no intervalo selecionado, incluindo respostas parciais.",
+        "responses_title": "Respostas por espaço de trabalho",
+        "surveys_description": "Inquéritos por estado atual. Não é afetado pelo intervalo de datas.",
+        "time_zone_note": "Os dias são contados em {timeZone}.",
+        "total": "Total"
       }
     },
     "surveys": {

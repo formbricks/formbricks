@@ -42,7 +42,7 @@ const organizationId = "org-1";
 const userId = "user-1";
 const teamId = "team-1";
 const mockMember = {
-  user: { name: "Test", email: "test@example.com", isActive: true },
+  user: { name: "Test", email: "test@example.com", isActive: true, lastLoginAt: new Date("2026-09-01") },
   userId,
   organizationId,
   accepted: true,
@@ -68,6 +68,7 @@ describe("getMembershipByOrganizationId", () => {
     expect(result[0].name).toBe("Test");
     expect(result[0].email).toBe("test@example.com");
     expect(result[0].isActive).toBe(true);
+    expect(result[0].lastLoginAt).toEqual(new Date("2026-09-01"));
   });
   test("throws DatabaseError on prisma error", async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("db", {

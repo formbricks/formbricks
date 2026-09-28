@@ -55,6 +55,7 @@ export const getMembershipByOrganizationId = reactCache(
               name: true,
               email: true,
               isActive: true,
+              lastLoginAt: true,
             },
           },
           userId: true,
@@ -73,6 +74,7 @@ export const getMembershipByOrganizationId = reactCache(
           accepted: member.accepted,
           role: member.role,
           isActive: member.user?.isActive || false,
+          lastLoginAt: member.user?.lastLoginAt ?? null,
         };
       });
 
