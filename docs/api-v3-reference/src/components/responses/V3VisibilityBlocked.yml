@@ -1,0 +1,30 @@
+description: Conflict — `private` was requested while outbound connections depend on the survey. Remove or
+  re-point them, then retry. `details.blockers` matches `blockers[]` from the `GET`.
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+  Cache-Control:
+    schema:
+      type: string
+    example: private, no-store
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/VisibilityBlockedProblem.yml
+    example:
+      title: Conflict
+      status: 409
+      detail:
+        Make this survey visible to the workspace to keep using it in 2 connections, or remove them before
+        making it private.
+      code: visibility_blocked_by_connections
+      requestId: req_01j8z5
+      details:
+        blockers:
+          - type: webhook
+            id: clwh1234567890123456789012
+            name: Zapier — new responses
+          - type: workflow
+            id: clwf1234567890123456789012
+            name: "Notify #product on completion"

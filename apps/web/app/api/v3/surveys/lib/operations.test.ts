@@ -1,7 +1,9 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
+import { recordSurveyListPredicateMismatch } from "@/lib/authorization/metrics";
+import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/lib/survey";
@@ -46,8 +48,14 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 vi.mock("@/app/api/v3/lib/auth", () => ({
+  // Plain, like the visibility context below: survives the suites' `vi.resetAllMocks()`.
+  getV3AuthorizationActor: (authentication: { apiKeyId?: string; user?: { id: string } } | null) =>
+    authentication?.user ? { type: "user", id: authentication.user.id } : { type: "apiKey", id: "api_key_1" },
   requireV3WorkspaceAccess: vi.fn(),
 }));
+
+vi.mock("@/lib/authorization/resource-list", () => ({ filterReadableSurveyIds: vi.fn() }));
+vi.mock("@/lib/authorization/metrics", () => ({ recordSurveyListPredicateMismatch: vi.fn() }));
 
 vi.mock("@/lib/posthog", () => ({
   capturePostHogEvent: vi.fn(),
@@ -138,6 +146,26 @@ vi.mock("../prepare", () => ({
   prepareV3SurveyPatchInput: vi.fn(),
 }));
 
+// ENG-3282: what the visibility context resolves to in these tests (marker off, an API key). Plain
+// functions rather than `vi.fn()`s, so the suites' `vi.resetAllMocks()` cannot clear them.
+const { RESOURCE_VISIBILITY, VISIBILITY_CONTEXT, visibilityOverride } = vi.hoisted(() => {
+  const context = {
+    actorContext: { enforced: false, kind: "apiKey" },
+    gates: { entitled: false, ready: false },
+  } as const;
+  return {
+    RESOURCE_VISIBILITY: { ...context, ownerName: null } as const,
+    VISIBILITY_CONTEXT: context,
+    // A test that needs enforcement on sets this and clears it again.
+    visibilityOverride: { context: null as unknown },
+  };
+});
+
+vi.mock("../visibility-context", () => ({
+  resolveV3SurveyResourceVisibility: async () => RESOURCE_VISIBILITY,
+  resolveV3SurveyVisibilityContext: async () => visibilityOverride.context ?? VISIBILITY_CONTEXT,
+}));
+
 vi.mock("../serializers", async () => {
   const actual = await vi.importActual<typeof import("../serializers")>("../serializers");
   return {
@@ -210,6 +238,7 @@ function mockListQuery(overrides: Record<string, unknown> = {}) {
     cursor: null,
     sortBy: undefined,
     filterCriteria: {},
+    visibilityFilter: {},
     includeTotalCount: true,
     ...overrides,
   } as any);
@@ -251,6 +280,8 @@ describe("listV3Surveys", () => {
       cursor: null,
       sortBy: undefined,
       filterCriteria: {},
+      actorContext: VISIBILITY_CONTEXT.actorContext,
+      visibilityFilter: {},
     });
     expect(await readJson(response)).toEqual({
       data: [serializedSurvey],
@@ -577,7 +608,12 @@ describe("createV3SurveyResponse", () => {
 describe("getV3Survey", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({ survey, authResult, response: null } as any);
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+      survey,
+      authResult,
+      response: null,
+      visibility: RESOURCE_VISIBILITY,
+    } as any);
     vi.mocked(serializeV3SurveyResource).mockReturnValue(serializedSurvey as any);
   });
 
@@ -598,7 +634,9 @@ describe("getV3Survey", () => {
       requestId,
       instance,
     });
-    expect(vi.mocked(serializeV3SurveyResource)).toHaveBeenCalledWith(survey, { lang: ["en-US"] });
+    expect(vi.mocked(serializeV3SurveyResource)).toHaveBeenCalledWith(survey, RESOURCE_VISIBILITY, {
+      lang: ["en-US"],
+    });
     expect(await readJson(response)).toEqual({ data: serializedSurvey });
   });
 
@@ -665,7 +703,12 @@ describe("getV3Survey", () => {
 describe("deleteV3Survey", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({ survey, authResult, response: null } as any);
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+      survey,
+      authResult,
+      response: null,
+      visibility: RESOURCE_VISIBILITY,
+    } as any);
     vi.mocked(deleteSurvey).mockResolvedValue(survey as any);
   });
 
@@ -738,7 +781,12 @@ describe("patchV3SurveyResponse", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     // Not archived by default (survey fixture has no archivedAt) so the read-only guard lets patches through.
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({ survey, authResult, response: null } as any);
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+      survey,
+      authResult,
+      response: null,
+      visibility: RESOURCE_VISIBILITY,
+    } as any);
     vi.mocked(patchV3Survey).mockResolvedValue(updatedSurvey as any);
     vi.mocked(serializeV3SurveyResource).mockImplementation((input) => {
       return (input as any).name === "Updated Survey"
@@ -793,7 +841,14 @@ describe("patchV3SurveyResponse", () => {
       instance,
     });
     // No `updatedAt` in the body → no precondition, last-write-wins as documented.
-    expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(survey, patchBody, requestId, "org_1", undefined);
+    expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(
+      survey,
+      patchBody,
+      requestId,
+      "org_1",
+      undefined,
+      serializedSurvey
+    );
     expect(auditLog).toMatchObject({
       organizationId: "org_1",
       targetId: "survey_1",
@@ -842,9 +897,14 @@ describe("patchV3SurveyResponse", () => {
 
     await patchV3SurveyResponse({ surveyId: "survey_1", body, authentication, requestId, instance });
 
-    expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(survey, body, requestId, "org_1", {
-      expectedUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
-    });
+    expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(
+      survey,
+      body,
+      requestId,
+      "org_1",
+      { expectedUpdatedAt: new Date("2026-01-01T00:00:00.000Z") },
+      expect.anything()
+    );
   });
 
   test("rejects patches to an archived survey with 422 and does not patch", async () => {
@@ -940,7 +1000,12 @@ describe("patchV3SurveyResponse", () => {
 describe("archiveV3Survey", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({ survey, authResult, response: null } as any);
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+      survey,
+      authResult,
+      response: null,
+      visibility: RESOURCE_VISIBILITY,
+    } as any);
     vi.mocked(archiveSurvey).mockResolvedValue({
       id: "survey_1",
       status: "paused",
@@ -1000,7 +1065,12 @@ describe("archiveV3Survey", () => {
 describe("restoreV3Survey", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({ survey, authResult, response: null } as any);
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+      survey,
+      authResult,
+      response: null,
+      visibility: RESOURCE_VISIBILITY,
+    } as any);
     vi.mocked(restoreSurvey).mockResolvedValue({
       id: "survey_1",
       status: "paused",
@@ -1041,7 +1111,12 @@ describe("validateV3Survey", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(authResult);
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({ survey, authResult, response: null } as any);
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+      survey,
+      authResult,
+      response: null,
+      visibility: RESOURCE_VISIBILITY,
+    } as any);
     vi.mocked(prepareV3SurveyCreateInput).mockReturnValue({
       ok: true,
       languageRequests: [{ code: "en-US", default: true, enabled: true }],
@@ -1111,7 +1186,13 @@ describe("validateV3Survey", () => {
       requestId,
       instance,
     });
-    expect(vi.mocked(prepareV3SurveyPatchInput)).toHaveBeenCalledWith(survey, { name: "" });
+    expect(vi.mocked(prepareV3SurveyPatchInput)).toHaveBeenCalledWith(
+      survey,
+      { name: "" },
+      {
+        reportedVisibility: expect.objectContaining({ visibility: "workspace" }),
+      }
+    );
     expect(await readJson(response)).toEqual({
       data: {
         valid: false,
@@ -1180,7 +1261,12 @@ describe("editV3SurveyBlocksResponse", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({ survey, authResult, response: null } as any);
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+      survey,
+      authResult,
+      response: null,
+      visibility: RESOURCE_VISIBILITY,
+    } as any);
     vi.mocked(patchV3Survey).mockResolvedValue(updatedSurvey as any);
     vi.mocked(serializeV3SurveyResource).mockImplementation((input) =>
       (input as any).name === "Updated Survey"
@@ -1223,7 +1309,8 @@ describe("editV3SurveyBlocksResponse", () => {
       { blocks: [replacement, blockB] },
       requestId,
       "org_1",
-      { expectedUpdatedAt: survey.updatedAt }
+      { expectedUpdatedAt: survey.updatedAt },
+      expect.anything()
     );
     expect(auditLog).toMatchObject({
       organizationId: "org_1",
@@ -1269,9 +1356,14 @@ describe("editV3SurveyBlocksResponse", () => {
       expectedUpdatedAt: "2026-01-01T00:00:00.000Z",
     });
 
-    expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(survey, { blocks: [blockA] }, requestId, "org_1", {
-      expectedUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
-    });
+    expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(
+      survey,
+      { blocks: [blockA] },
+      requestId,
+      "org_1",
+      { expectedUpdatedAt: new Date("2026-01-01T00:00:00.000Z") },
+      expect.anything()
+    );
   });
 
   test("refuses an oversized ops array with one issue, before touching the survey", async () => {
@@ -1451,7 +1543,12 @@ describe("setV3SurveyBlockOrderResponse", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({ survey, authResult, response: null } as any);
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+      survey,
+      authResult,
+      response: null,
+      visibility: RESOURCE_VISIBILITY,
+    } as any);
     vi.mocked(patchV3Survey).mockResolvedValue(updatedSurvey as any);
     vi.mocked(serializeV3SurveyResource).mockImplementation((input) =>
       (input as any).name === "Updated Survey"
@@ -1487,7 +1584,8 @@ describe("setV3SurveyBlockOrderResponse", () => {
       { blocks: [blockB, blockA] },
       requestId,
       "org_1",
-      { expectedUpdatedAt: survey.updatedAt }
+      { expectedUpdatedAt: survey.updatedAt },
+      expect.anything()
     );
   });
 
@@ -1572,5 +1670,107 @@ describe("setV3SurveyBlockOrderResponse", () => {
 
     expect(response.status).toBe(400);
     expect(vi.mocked(getAuthorizedV3Survey)).not.toHaveBeenCalled();
+  });
+});
+
+describe("listV3Surveys visibility (ENG-3282)", () => {
+  const enforcedMember = {
+    actorContext: { enforced: true, isOrganizationAdmin: false, kind: "user", userId: "user_1" },
+    gates: { entitled: true, ready: true },
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockListQuery();
+    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(authResult);
+    vi.mocked(getSurveyCount).mockResolvedValue(2);
+    vi.mocked(getWorkspaceSurveyCount).mockResolvedValue(2);
+    vi.mocked(serializeV3SurveyListItem).mockImplementation((row) => ({ id: row.id }) as any);
+  });
+
+  afterEach(() => {
+    visibilityOverride.context = null;
+  });
+
+  test("scopes the page and both counts with the caller's context", async () => {
+    visibilityOverride.context = enforcedMember;
+    mockListQuery({ visibilityFilter: { visibility: ["private"] } });
+    vi.mocked(getSurveyListPage).mockResolvedValue({ surveys: [], nextCursor: null } as any);
+    vi.mocked(filterReadableSurveyIds).mockResolvedValue(new Set());
+
+    await listV3Surveys({
+      searchParams: new URLSearchParams({ workspaceId }),
+      authentication: sessionAuthentication,
+      requestId,
+      instance,
+    });
+
+    expect(getSurveyListPage).toHaveBeenCalledWith(
+      workspaceId,
+      expect.objectContaining({
+        actorContext: enforcedMember.actorContext,
+        visibilityFilter: { visibility: ["private"] },
+      })
+    );
+    expect(getSurveyCount).toHaveBeenCalledWith(workspaceId, {}, enforcedMember.actorContext, {
+      visibility: ["private"],
+    });
+    expect(getWorkspaceSurveyCount).toHaveBeenCalledWith(workspaceId, enforcedMember.actorContext);
+  });
+
+  test("drops and counts a row the graph denies even though the SQL predicate admitted it", async () => {
+    visibilityOverride.context = enforcedMember;
+    vi.mocked(getSurveyListPage).mockResolvedValue({
+      surveys: [{ id: "survey_ok" }, { id: "survey_leak" }],
+      nextCursor: null,
+    } as any);
+    vi.mocked(filterReadableSurveyIds).mockResolvedValue(new Set(["survey_ok"]));
+
+    const response = await listV3Surveys({
+      searchParams: new URLSearchParams({ workspaceId }),
+      authentication: sessionAuthentication,
+      requestId,
+      instance,
+    });
+
+    expect(filterReadableSurveyIds).toHaveBeenCalledWith({ type: "user", id: "user_1" }, [
+      "survey_ok",
+      "survey_leak",
+    ]);
+    expect(recordSurveyListPredicateMismatch).toHaveBeenCalledWith(1);
+    expect((await readJson(response)).data).toEqual([{ id: "survey_ok" }]);
+  });
+
+  test("skips the bulk check entirely while visibility is not enforced", async () => {
+    vi.mocked(getSurveyListPage).mockResolvedValue({
+      surveys: [{ id: "survey_ok" }],
+      nextCursor: null,
+    } as any);
+
+    await listV3Surveys({
+      searchParams: new URLSearchParams({ workspaceId }),
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(filterReadableSurveyIds).not.toHaveBeenCalled();
+  });
+
+  test("refuses the owner filter for an API key with 400", async () => {
+    mockListQuery({ visibilityFilter: { owner: ["me"] } });
+
+    const response = await listV3Surveys({
+      searchParams: new URLSearchParams({ workspaceId }),
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(400);
+    expect((await readJson(response)).invalid_params).toEqual([
+      expect.objectContaining({ name: "filter[owner][in]" }),
+    ]);
+    expect(getSurveyListPage).not.toHaveBeenCalled();
   });
 });

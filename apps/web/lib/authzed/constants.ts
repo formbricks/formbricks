@@ -36,6 +36,9 @@ export const AUTHZED_MAX_RELATIONSHIP_READS = 250;
  */
 export const AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE = 250;
 
+/** Most items one `CheckBulkPermissions` call may carry — the v3 list's page ceiling (ENG-3282). */
+export const AUTHZED_MAX_BULK_CHECK_ITEMS = 250;
+
 /**
  * Resource IDs accumulated by one complete permission lookup.
  *

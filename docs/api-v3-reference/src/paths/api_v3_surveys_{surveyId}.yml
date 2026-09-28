@@ -94,6 +94,12 @@ get:
                   createdAt: "2026-05-18T09:24:54.014Z"
                   updatedAt: "2026-05-18T09:24:54.014Z"
                   archivedAt: null
+                  visibility: workspace
+                  owner:
+                    name: Alice Example
+                  access:
+                    via: workspace
+                    canManageVisibility: false
                   name: CSAT Survey
                   type: link
                   status: inProgress
@@ -134,6 +140,12 @@ get:
                   createdAt: "2026-05-18T09:24:54.014Z"
                   updatedAt: "2026-05-18T09:24:54.014Z"
                   archivedAt: null
+                  visibility: workspace
+                  owner:
+                    name: Alice Example
+                  access:
+                    via: workspace
+                    canManageVisibility: false
                   name: CSAT Survey
                   type: link
                   status: inProgress

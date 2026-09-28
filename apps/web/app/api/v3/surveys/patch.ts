@@ -27,7 +27,7 @@ import {
 } from "@/modules/survey/scheduling/lib/survey-scheduling";
 import { v3DistributionToScalars } from "./distribution";
 import { type TV3SurveyLanguageRequest, ensureV3WorkspaceLanguages } from "./languages";
-import { prepareV3SurveyPatchInput } from "./prepare";
+import { type TV3SurveyReportedVisibility, prepareV3SurveyPatchInput } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3SurveyDocument } from "./schemas";
 import {
@@ -431,9 +431,10 @@ export async function patchV3Survey(
   input: unknown,
   requestId?: string,
   organizationId?: string,
-  precondition?: TV3SurveyWritePrecondition
+  precondition?: TV3SurveyWritePrecondition,
+  reportedVisibility?: TV3SurveyReportedVisibility
 ): Promise<TSurvey> {
-  const preparation = prepareV3SurveyPatchInput(currentSurvey, input);
+  const preparation = prepareV3SurveyPatchInput(currentSurvey, input, { reportedVisibility });
   if (!preparation.ok) {
     throw preparation.origin === "storedSurvey"
       ? new V3SurveyStoredDocumentError(preparation.validation.invalidParams)

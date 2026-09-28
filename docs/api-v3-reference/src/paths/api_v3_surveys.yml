@@ -2,7 +2,14 @@ get:
   operationId: getSurveysV3
   summary: List surveys
   description: |
-    Returns surveys for the workspace. Session cookie, `x-api-key`, or a Bearer token.
+    Returns the surveys in the workspace **that the caller may read**. A private survey is listed only
+    to its owner and to the organisation's owners and managers; to everyone else, API keys included, it
+    does not exist here. `meta.totalCount` and `meta.workspaceSurveyCount` count that same readable set,
+    so neither number reveals a private survey to someone who cannot see it. The visibility predicate
+    is applied in the query and the cursor, never after the fact: `limit` keeps its meaning and
+    `meta.nextCursor` being `null` remains the only end-of-collection signal.
+
+    Session cookie, `x-api-key`, or a Bearer token.
   tags:
     - V3 Surveys
   parameters:
@@ -83,6 +90,33 @@ get:
       description: >-
         Survey type filter (`link` / `app`). Same repeat-or-comma rules as
         `filter[status][in]`.
+    - in: query
+      name: filter[visibility][in]
+      schema:
+        type: array
+        items:
+          $ref: ../components/schemas/SurveyVisibility.yml
+      style: form
+      explode: true
+      description: >-
+        Keep only surveys with one of these visibilities, as each item reports it (a survey with a
+        change in flight counts as `private`). Same repeat-or-comma rules as `filter[status][in]`;
+        unknown values → **400**. Filters within the readable set: a workspace member asking for
+        `private` gets their own private surveys, an organisation manager gets everyone's.
+    - in: query
+      name: filter[owner][in]
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - me
+            - others
+      style: form
+      explode: true
+      description: >-
+        `me` keeps surveys whose `owner` is the caller; `others` keeps the rest, ownerless surveys
+        included. Relative to the signed-in user, so an API key sending this parameter gets **400**.
     - in: query
       name: sortBy
       schema:

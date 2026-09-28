@@ -4,7 +4,7 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
-import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { getV3AuthorizationActor, requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
   type InvalidParam,
@@ -20,6 +20,8 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
+import { recordSurveyListPredicateMismatch } from "@/lib/authorization/metrics";
+import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { WorkspaceSurveyLimitError } from "@/lib/survey/visibility/limit";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
@@ -72,7 +74,9 @@ import {
   V3SurveyUnsupportedShapeError,
   serializeV3SurveyListItem,
   serializeV3SurveyResource,
+  serializeV3SurveyVisibilityFields,
 } from "../serializers";
+import { resolveV3SurveyResourceVisibility, resolveV3SurveyVisibilityContext } from "../visibility-context";
 import { V3SurveyWritePermissionError } from "../write-permissions";
 
 type TListV3SurveysParams = {
@@ -201,19 +205,42 @@ export async function listV3Surveys({
 
     const { workspaceId } = authResult;
 
+    // ENG-3282: resolved once and shared by the page, both counts and every item's `access`.
+    const visibilityContext = await resolveV3SurveyVisibilityContext(
+      authentication,
+      authResult.organizationId
+    );
+    const { actorContext } = visibilityContext;
+    if (actorContext.kind === "apiKey" && parsed.visibilityFilter.owner?.length) {
+      const invalidParams = [
+        {
+          name: "filter[owner][in]",
+          reason: "Filtering by owner needs a signed-in user; API keys own no surveys.",
+        },
+      ];
+      log.warn({ statusCode: 400, invalidParams }, "Validation failed");
+      return problemBadRequest(requestId, "Invalid query parameters", {
+        invalid_params: invalidParams,
+        instance,
+      });
+    }
+
     const surveyPagePromise = getSurveyListPage(workspaceId, {
       limit: parsed.limit,
       cursor: parsed.cursor,
       sortBy: parsed.sortBy,
       filterCriteria: parsed.filterCriteria,
+      actorContext,
+      visibilityFilter: parsed.visibilityFilter,
     });
     // Both counts are gated on includeTotalCount alone. The list client sends it only on the first
     // page and reads them from pages[0].meta, but any caller can ask for them on a cursor request.
+    // Both count only what this caller can read (contract §6).
     const totalCountPromise = parsed.includeTotalCount
-      ? getSurveyCount(workspaceId, parsed.filterCriteria)
+      ? getSurveyCount(workspaceId, parsed.filterCriteria, actorContext, parsed.visibilityFilter)
       : Promise.resolve(null);
     const workspaceSurveyCountPromise = parsed.includeTotalCount
-      ? getWorkspaceSurveyCount(workspaceId)
+      ? getWorkspaceSurveyCount(workspaceId, actorContext)
       : Promise.resolve(null);
     const [surveyPage, totalCount, workspaceSurveyCount] = await Promise.all([
       surveyPagePromise,
@@ -221,8 +248,29 @@ export async function listV3Surveys({
       workspaceSurveyCountPromise,
     ]);
 
+    // ENG-3282, defence in depth: the SQL predicate already scoped the page; the graph confirms it in
+    // one bulk check. A row it denies is dropped and counted — a disagreement between PostgreSQL and
+    // SpiceDB is a projection bug to alert on, and failing closed on it is the safe direction.
+    let surveys = surveyPage.surveys;
+    const actor = getV3AuthorizationActor(authentication);
+    if (actorContext.enforced && actor) {
+      const readable = await filterReadableSurveyIds(
+        actor,
+        surveys.map(({ id }) => id)
+      );
+      const deniedIds = surveys.filter(({ id }) => !readable.has(id)).map(({ id }) => id);
+      if (deniedIds.length > 0) {
+        recordSurveyListPredicateMismatch(deniedIds.length);
+        log.warn(
+          { deniedSurveyIds: deniedIds, workspaceId },
+          "Survey list predicate admitted rows the graph denies"
+        );
+        surveys = surveys.filter(({ id }) => readable.has(id));
+      }
+    }
+
     return successListResponse(
-      surveyPage.surveys.map(serializeV3SurveyListItem),
+      surveys.map((survey) => serializeV3SurveyListItem(survey, visibilityContext)),
       {
         limit: parsed.limit,
         nextCursor: surveyPage.nextCursor,
@@ -335,7 +383,10 @@ export async function createV3SurveyResponse({
       authResult.organizationId,
       createOptions
     );
-    const resource = serializeV3SurveyResource(survey);
+    const resource = serializeV3SurveyResource(
+      survey,
+      await resolveV3SurveyResourceVisibility(survey, authentication, authResult.organizationId)
+    );
 
     if (auditLog) {
       auditLog.organizationId = authResult.organizationId;
@@ -407,7 +458,7 @@ export async function getV3Survey({
   const log = logger.withContext({ requestId, surveyId });
 
   try {
-    const { survey, response } = await getAuthorizedV3Survey({
+    const { survey, response, visibility } = await getAuthorizedV3Survey({
       surveyId,
       authentication,
       access: "read",
@@ -421,7 +472,7 @@ export async function getV3Survey({
     }
 
     try {
-      return successResponse(serializeV3SurveyResource(survey, { lang }), {
+      return successResponse(serializeV3SurveyResource(survey, visibility, { lang }), {
         requestId,
         cache: "private, no-store",
       });
@@ -753,7 +804,7 @@ async function runV3SurveyDocumentMutation({
   let remapInvalidParam: ((param: InvalidParam) => InvalidParam) | undefined;
 
   try {
-    const { survey, authResult, response } = await getAuthorizedV3Survey({
+    const { survey, authResult, response, visibility } = await getAuthorizedV3Survey({
       surveyId,
       authentication,
       access: "readWrite",
@@ -803,7 +854,7 @@ async function runV3SurveyDocumentMutation({
     // out of the serializer as a 400 here instead of the 422 the prepare step already gives it.
     let cachedResource: ReturnType<typeof serializeV3SurveyResource> | undefined;
     const getResource = (): ReturnType<typeof serializeV3SurveyResource> => {
-      cachedResource ??= serializeV3SurveyResource(survey);
+      cachedResource ??= serializeV3SurveyResource(survey, visibility);
       return cachedResource;
     };
 
@@ -859,9 +910,12 @@ async function runV3SurveyDocumentMutation({
       built.input,
       requestId,
       authResult.organizationId,
-      effectivePrecondition
+      effectivePrecondition,
+      oldResource
     );
-    const resource = serializeV3SurveyResource(updatedSurvey);
+    // Visibility is unchanged by a document write (it is never writable through one), so the
+    // request's context still describes the updated survey.
+    const resource = serializeV3SurveyResource(updatedSurvey, visibility);
 
     if (auditLog) {
       auditLog.targetId = updatedSurvey.id;
@@ -1169,7 +1223,7 @@ export async function validateV3Survey({
       );
     }
 
-    const { survey, response } = await getAuthorizedV3Survey({
+    const { survey, response, visibility } = await getAuthorizedV3Survey({
       surveyId: validationBody.surveyId,
       authentication,
       access: "read",
@@ -1192,7 +1246,12 @@ export async function validateV3Survey({
     });
 
     return successResponse(
-      serializeValidationResult("patch", prepareV3SurveyPatchInput(survey, validationBody.data)),
+      serializeValidationResult(
+        "patch",
+        prepareV3SurveyPatchInput(survey, validationBody.data, {
+          reportedVisibility: serializeV3SurveyVisibilityFields(survey, visibility.ownerName, visibility),
+        })
+      ),
       {
         requestId,
         cache: "private, no-store",

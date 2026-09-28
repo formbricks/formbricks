@@ -1,0 +1,307 @@
+get:
+  operationId: getSurveyVisibilityV3
+  summary: Read a survey's visibility and the impact of changing it
+  description: >
+    Returns the survey's enforced visibility, its owner, the caller's access, and what a change would do:
+    `blockers[]` lists the outbound connections that currently make `private` refusable (webhooks,
+    integrations, active feedback sources, and draft or enabled workflows), `impact` carries the numbers the
+    confirmation dialogues show, `allowedTargets[]` the values a `POST` would act on right now, and `pending`
+    / `version` describe a change still in flight. Read this before offering "Make private"; the `POST`
+    answers **409** while `blockers[]` is non-empty.
+
+
+    Requires `survey.change_visibility`, the same permission as the `POST`: the survey's owner or an
+    organisation owner/manager, with the feature enabled. Everyone else — read or write members, team-level
+    managers, every API key, and anyone who cannot see the survey at all — answers **403** with the same body
+    as an unknown id. Connection names and ids are configuration, not survey content, and only the people who
+    may act on them get to read them.
+
+
+    While `pending` is non-null the survey is private for everyone but its owner and the organisation's owners
+    and managers, whichever direction is queued — the application fails closed until the graph acknowledges
+    the change — so `visibility` reads `private` in that state and `allowedTargets` includes the value that
+    cancels the pending change.
+  tags:
+    - V3 Surveys
+  parameters:
+    - in: path
+      name: surveyId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Survey identifier.
+  responses:
+    "200":
+      description: Visibility state retrieved
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/SurveyVisibilityState.yml
+          examples:
+            visibleWithBlockers:
+              summary: Workspace-visible survey that a webhook and a workflow depend on
+              value:
+                data:
+                  id: clsv1234567890123456789012
+                  visibility: workspace
+                  owner:
+                    name: Alice Example
+                  access:
+                    via: workspace
+                    canManageVisibility: true
+                  blockers:
+                    - type: webhook
+                      id: clwh1234567890123456789012
+                      name: Zapier — new responses
+                    - type: workflow
+                      id: clwf1234567890123456789012
+                      name: "Notify #product on completion"
+                  impact:
+                    memberCount: 7
+                    responseCount: 212
+                  pending: null
+                  version: 2
+                  allowedTargets: []
+            privateDraft:
+              summary: Private draft seen by its owner
+              value:
+                data:
+                  id: clsv2234567890123456789012
+                  visibility: private
+                  owner:
+                    name: Bob Example
+                  access:
+                    via: owner
+                    canManageVisibility: true
+                  blockers: []
+                  impact:
+                    memberCount: 7
+                    responseCount: 0
+                  pending: null
+                  version: 2
+                  allowedTargets:
+                    - workspace
+            pendingGrant:
+              summary: Owner asked for workspace; the in-request projection failed, the outbox will finish it
+              value:
+                data:
+                  id: clsv2234567890123456789012
+                  visibility: private
+                  owner:
+                    name: Bob Example
+                  access:
+                    via: owner
+                    canManageVisibility: true
+                  blockers: []
+                  impact:
+                    memberCount: 7
+                    responseCount: 0
+                  pending: workspace
+                  version: 3
+                  allowedTargets:
+                    - workspace
+                    - private
+            ownerlessPrivateSeenByManager:
+              summary: Departed author's private survey, read by an organisation manager
+              value:
+                data:
+                  id: clsv3234567890123456789012
+                  visibility: private
+                  owner: null
+                  access:
+                    via: organizationRole
+                    canManageVisibility: true
+                  blockers: []
+                  impact:
+                    memberCount: 7
+                    responseCount: 41
+                  pending: null
+                  version: 2
+                  allowedTargets:
+                    - workspace
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3VisibilityForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+post:
+  operationId: changeSurveyVisibilityV3
+  summary: Change a survey's visibility
+  description: >
+    Sets the survey to `private` or `workspace`.
+
+
+    **Restrictions take effect at once.** A `workspace → private` request stores the flag, a new `version` and
+    a pending marker in one transaction. From that instant the survey is private on every path — single reads,
+    lists and counts, responses, exports — for everyone but the owner and the organisation's owners and
+    managers, whether or not the graph has caught up (fail closed). The relationships are then
+    projected; the answer is **200** either way, with `pending: null` when the graph acknowledged this
+    `version` inside the request and `pending: "private"` when the outbox will finish it.
+
+
+    **Grants take effect when enforced.** A `private → workspace` request answers **200** only once the graph
+    has acknowledged this exact `version`; until then the survey stays private. If the in-request projection
+    fails, the answer is **503** `projection_pending`: the change is stored and queued, `GET …/visibility`
+    shows `pending: "workspace"`, and retrying is safe.
+
+
+    **Fencing.** Every accepted change increments the survey's `version`. Projection work carries the version
+    it was issued for, and a projector holding an older version never writes, so a worker leased before a
+    newer change cannot overtake it — including one that crashed before its verification pass. A **200** for a
+    grant means the graph holds this exact version.
+
+
+    **No-ops and cancellation.** Requesting the value the survey already enforces, with nothing pending, is a
+    **200** no-op: nothing is written or audited and `changedAt` / `changedBy` are unchanged. Requesting the
+    enforced value while the *opposite* is pending **cancels** the pending change: a new version is stored,
+    the queued work is superseded, and the answer is **200** with `pending: null`. Requesting the pending
+    value again re-attempts the projection (200 or 503).
+
+
+    When `private` is refused for two reasons at once — no owner **and** outbound connections — the **422**
+    wins: the missing owner cannot be fixed, so listing connections to remove would send the caller down a
+    dead end.
+
+
+    Allowed for the survey's owner (while they still hold read access to the workspace) and for the
+    organisation's owners and managers. **Not** for workspace members with write or team-level manage rights,
+    and never for API keys. Every successful change is audit-logged with the actor.
+
+
+    Going `workspace → private` is refused with **409** while any outbound connection depends on the survey;
+    resolve them first. It is refused with **422** when the survey has no owner, because
+    "private" would then mean "administrators only" — duplicate the survey for a private
+    copy. Going `private → workspace` has no preconditions.
+
+
+    This is the only way to change visibility: `PATCH /api/v3/surveys/{surveyId}` accepts `visibility`,
+    `owner` and `access` only as the exact values `GET` returned (so a fetched survey round-trips), and
+    rejects any other value as an unsupported field.
+    Publishing does not change visibility; the publish dialogue chains this call before the status change.
+  tags:
+    - V3 Surveys
+  parameters:
+    - in: path
+      name: surveyId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Survey identifier.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/SurveyVisibilityChangeRequest.yml
+        examples:
+          makeVisible:
+            summary: Share with the workspace
+            value:
+              visibility: workspace
+          makePrivate:
+            summary: Hide from the workspace
+            value:
+              visibility: private
+  responses:
+    "200":
+      description: Visibility changed, or already at the requested value
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/SurveyVisibilityChangeResult.yml
+          examples:
+            madeVisibleByOwner:
+              summary: Owner shares a draft with the workspace before publishing
+              value:
+                data:
+                  id: clsv2234567890123456789012
+                  visibility: workspace
+                  owner:
+                    name: Bob Example
+                  access:
+                    via: workspace
+                    canManageVisibility: true
+                  version: 3
+                  pending: null
+                  changedAt: "2026-09-21T10:15:00.000Z"
+                  changedBy:
+                    type: user
+                    id: clus2234567890123456789012
+                    name: Bob Example
+            madePrivateByManager:
+              summary: An organisation manager hides a departed colleague's survey
+              value:
+                data:
+                  id: clsv1234567890123456789012
+                  visibility: private
+                  owner:
+                    name: Alice Example
+                  access:
+                    via: organizationRole
+                    canManageVisibility: true
+                  version: 3
+                  pending: null
+                  changedAt: "2026-09-21T10:20:00.000Z"
+                  changedBy:
+                    type: user
+                    id: clus3234567890123456789012
+                    name: Carol Manager
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3VisibilityForbidden.yml
+    "409":
+      $ref: ../components/responses/V3VisibilityBlocked.yml
+    "422":
+      $ref: ../components/responses/V3VisibilityNotAllowed.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "503":
+      $ref: ../components/responses/V3ProjectionPending.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

@@ -14,6 +14,7 @@ import {
   UNSPLASH_ALLOWED_DOMAINS,
 } from "@/lib/constants";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import {
   getOrganizationIdFromSurveyId,
@@ -313,10 +314,14 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
     // isn't enabled, mirroring the POSTHOG_KEY gate above.
     let isSecondPublish = false;
     if (isPublish && IS_FORMBRICKS_SURVEYS_CONFIGURED) {
-      const publishedCount = await getSurveyCount(result.workspaceId, {
-        status: ["inProgress", "paused", "completed"],
-        createdBy: { userId: ctx.user.id, value: ["you"] },
-      });
+      const publishedCount = await getSurveyCount(
+        result.workspaceId,
+        {
+          status: ["inProgress", "paused", "completed"],
+          createdBy: { userId: ctx.user.id, value: ["you"] },
+        },
+        await resolveSurveyActorContext({ type: "user", id: ctx.user.id }, organizationId)
+      );
       isSecondPublish = publishedCount === 2;
     }
 

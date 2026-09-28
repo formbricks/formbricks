@@ -48,10 +48,15 @@ properties:
       - not_authenticated
       - not_found
       - payload_too_large
+      - projection_pending
       - service_unavailable
       - stored_survey_invalid
+      - survey_not_workspace_visible
       - too_many_requests
       - unprocessable_content
+      - visibility_blocked_by_connections
+      - visibility_change_not_allowed
+      - visibility_not_enabled
       - workflow_not_executable
       - workspace_survey_limit_reached
   requestId:

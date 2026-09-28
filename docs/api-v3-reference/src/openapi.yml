@@ -316,6 +316,8 @@ paths:
     $ref: paths/api_v3_surveys_{surveyId}_archive.yml
   /api/v3/surveys/{surveyId}/restore:
     $ref: paths/api_v3_surveys_{surveyId}_restore.yml
+  /api/v3/surveys/{surveyId}/visibility:
+    $ref: paths/api_v3_surveys_{surveyId}_visibility.yml
   /api/v3/responses:
     $ref: paths/api_v3_responses.yml
   /api/v3/responses/count:

@@ -16,8 +16,10 @@ import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
+import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { WorkspaceSurveyLimitError, assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
+import { type TSurveyVisibilityFilter, buildSurveyAccessWhere } from "@/lib/survey/visibility/predicate";
 import { validateInputs } from "@/lib/utils/validate";
 import { getTranslate } from "@/lingodotdev/server";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -444,13 +446,23 @@ export const copySurveyToOtherWorkspace = async (
 
 /** Count surveys in a workspace, optionally with the same filter as getSurveys (so total matches list). */
 export const getSurveyCount = reactCache(
-  async (workspaceId: string, filterCriteria?: TSurveyFilterCriteria): Promise<number> => {
+  async (
+    workspaceId: string,
+    filterCriteria: TSurveyFilterCriteria | undefined,
+    actorContext: TSurveyActorContext,
+    visibilityFilter?: TSurveyVisibilityFilter
+  ): Promise<number> => {
     validateInputs([workspaceId, z.cuid2()]);
     try {
+      const { AND: filterClauses } = buildWhereClause(filterCriteria);
       const surveyCount = await prisma.survey.count({
         where: {
           workspaceId,
-          ...buildWhereClause(filterCriteria),
+          // ENG-3282: the same visibility clauses as the list, so the total counts exactly the set it pages.
+          AND: [
+            ...(Array.isArray(filterClauses) ? filterClauses : []),
+            ...buildSurveyAccessWhere(actorContext, visibilityFilter),
+          ],
         },
       });
 
@@ -471,16 +483,22 @@ export const getSurveyCount = reactCache(
  * empty workspace (onboarding) from a filter that matched nothing — and a count rather than a flag so
  * an optimistic delete can decrement it before the server answers.
  */
-export const getWorkspaceSurveyCount = reactCache(async (workspaceId: string): Promise<number> => {
-  validateInputs([workspaceId, z.cuid2()]);
-  try {
-    return await prisma.survey.count({ where: { workspaceId } });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error counting the workspace's surveys");
-      throw new DatabaseError(error.message);
-    }
+export const getWorkspaceSurveyCount = reactCache(
+  async (workspaceId: string, actorContext: TSurveyActorContext): Promise<number> => {
+    validateInputs([workspaceId, z.cuid2()]);
+    try {
+      // ENG-3282: surveys this caller can read, so a private survey is not countable by someone who
+      // cannot see it (an existence oracle otherwise).
+      return await prisma.survey.count({
+        where: { workspaceId, AND: buildSurveyAccessWhere(actorContext) },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        logger.error(error, "Error counting the workspace's surveys");
+        throw new DatabaseError(error.message);
+      }
 
-    throw error;
+      throw error;
+    }
   }
-});
+);

@@ -69,6 +69,12 @@ Three things to know before reading the result:
   the live smoke recorded in ENG-1259. The bundle therefore documents 36 operations and this job
   exercises 28 — the four `/tags` operations carry `x-excluded` (no docs page, ENG-2533) but are
   still tested.
+- **The two survey visibility operations answer 403 to every API key** (ENG-3282, K-4), and this
+  harness authenticates with one, so `GET`/`POST /api/v3/surveys/{surveyId}/visibility` are checked
+  against their documented 403 on a real, readable fixture survey. Their 200/409/422/503 shapes are
+  covered by the unit and integration suites. The job marks the survey projection ready
+  (`authzed:backfill --scope=survey --apply --mark-ready`) so every other operation runs with
+  visibility enforced.
 - **Rate limiting.** Set `RATE_LIMITING_DISABLED=1`, otherwise a burst of cases can turn into
   documented-but-uninteresting 429s.
 

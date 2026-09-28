@@ -21,6 +21,11 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "api:v3:surveys:generate",
     }, // 10 per minute (AI survey generation)
+    v3SurveyVisibility: {
+      interval: 60,
+      allowedPerInterval: 10,
+      namespace: "api:v3:surveys:visibility",
+    }, // 10 per minute per actor — a loop of workspace → private must not be able to arm the freshness guard (ENG-3282)
     internalDatasetPurge: {
       interval: 3600,
       allowedPerInterval: 5,

@@ -40,6 +40,8 @@ const CONTRACT_IDS = {
   SURVEY_BLOCKS_EDIT: "clctsurveyblocksedit0001",
   SURVEY_BLOCKS_ORDER: "clctsurveyblocksorder001",
   SURVEY_RESTORE: "clctsurveyrestore0000001",
+  SURVEY_VISIBILITY: "clctsurveyvisibility0001",
+  SURVEY_VISIBILITY_PRIVATE: "clctsurveyvisibilityp001",
   WORKFLOW_PATCH: "clctworkflowpatch0000001",
   WORKFLOW_DELETE: "clctworkflowdelete000001",
   WORKFLOW_DUPLICATE: "clctworkflowduplicate001",
@@ -278,6 +280,19 @@ async function main(): Promise<void> {
   await seedSurvey(CONTRACT_IDS.SURVEY_BLOCKS_ORDER, "Contract fixture — block order", false, 2);
   // Restore only has something to do on an already-archived survey.
   await seedSurvey(CONTRACT_IDS.SURVEY_RESTORE, "Contract fixture — restore", true);
+  // ENG-3282: one workspace-visible and one private survey, both owned by the seed admin, so the
+  // visibility operations and the list's visibility fields have real rows in both states.
+  await seedSurvey(CONTRACT_IDS.SURVEY_VISIBILITY, "Contract fixture — visibility", false);
+  await seedSurvey(CONTRACT_IDS.SURVEY_VISIBILITY_PRIVATE, "Contract fixture — private", false);
+  for (const [id, visibility] of [
+    [CONTRACT_IDS.SURVEY_VISIBILITY, "workspace"],
+    [CONTRACT_IDS.SURVEY_VISIBILITY_PRIVATE, "private"],
+  ] as const) {
+    await prisma.survey.update({
+      where: { id },
+      data: { ownerId: SEED_IDS.USER_ADMIN, visibility, updatedAt: CONTRACT_FIXTURE_UPDATED_AT },
+    });
+  }
 
   await seedWorkflow(CONTRACT_IDS.WORKFLOW_PATCH, "Contract fixture — patch", "draft");
   await seedWorkflow(CONTRACT_IDS.WORKFLOW_DELETE, "Contract fixture — delete", "draft");
@@ -353,6 +368,11 @@ async function main(): Promise<void> {
         },
       },
       restoreSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_RESTORE } },
+      // API keys never manage visibility (K-4), and this harness authenticates with one, so both
+      // operations are checked against their documented 403 — on a real, readable survey, not an
+      // unknown id, which is the same body by design.
+      getSurveyVisibilityV3: { path: { surveyId: CONTRACT_IDS.SURVEY_VISIBILITY } },
+      changeSurveyVisibilityV3: { path: { surveyId: CONTRACT_IDS.SURVEY_VISIBILITY } },
       patchWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_PATCH } },
       deleteWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_DELETE } },
       duplicateWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_DUPLICATE } },

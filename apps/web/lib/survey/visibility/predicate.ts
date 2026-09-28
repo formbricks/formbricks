@@ -1,4 +1,5 @@
 import { Prisma } from "@formbricks/database/prisma";
+import type { TSurveyVisibility } from "@formbricks/types/surveys/types";
 import type { TSurveyActorContext } from "./actor-context";
 
 /**
@@ -41,4 +42,54 @@ export const visibleSurveySqlPredicate = (ctx: TSurveyActorContext, alias: strin
   if (ctx.kind === "apiKey") return sharedAndSettled;
 
   return Prisma.sql`(${sharedAndSettled} OR ${table}."ownerId" = ${ctx.userId})`;
+};
+
+/** The list's own `filter[visibility][in]` / `filter[owner][in]` (contract §6). */
+export type TSurveyVisibilityFilter = Readonly<{
+  owner?: ReadonlyArray<"me" | "others">;
+  visibility?: ReadonlyArray<TSurveyVisibility>;
+}>;
+
+/**
+ * Matches on the *reported* visibility, the one a caller sees on each item: pending counts as private,
+ * and with enforcement off every survey is workspace-visible.
+ */
+const effectiveVisibilityWhere = (
+  visibility: TSurveyVisibility,
+  enforced: boolean
+): Prisma.SurveyWhereInput => {
+  if (!enforced) return visibility === "workspace" ? {} : { id: { in: [] } };
+  return visibility === "workspace"
+    ? { visibility: "workspace", visibilityPending: false }
+    : { OR: [{ visibility: "private" }, { visibilityPending: true }] };
+};
+
+/**
+ * Every clause a survey list or count query must AND together: the visibility predicate, then the
+ * caller's own visibility and owner filters. A filter naming both values of a two-valued set is no
+ * filter. `owner` is only meaningful for a user; callers refuse it for API keys (400) before this.
+ */
+export const buildSurveyAccessWhere = (
+  ctx: TSurveyActorContext,
+  filter: TSurveyVisibilityFilter = {}
+): Prisma.SurveyWhereInput[] => {
+  const clauses: Prisma.SurveyWhereInput[] = [];
+
+  const visible = buildVisibleSurveyWhere(ctx);
+  if (Object.keys(visible).length > 0) clauses.push(visible);
+
+  if (filter.visibility?.length === 1) {
+    const clause = effectiveVisibilityWhere(filter.visibility[0], ctx.enforced);
+    if (Object.keys(clause).length > 0) clauses.push(clause);
+  }
+
+  if (filter.owner?.length === 1 && ctx.kind === "user") {
+    clauses.push(
+      filter.owner[0] === "me"
+        ? { ownerId: ctx.userId }
+        : { OR: [{ ownerId: { not: ctx.userId } }, { ownerId: null }] }
+    );
+  }
+
+  return clauses;
 };

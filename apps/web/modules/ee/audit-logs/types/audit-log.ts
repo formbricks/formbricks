@@ -73,6 +73,8 @@ export const ZAuditAction = z.enum([
   "sso_recovery_started",
   "sso_recovery_completed",
   "sso_recovery_failed",
+  // ENG-3282: a survey's visibility changed through `POST /api/v3/surveys/{id}/visibility`.
+  "visibilityChanged",
 ]);
 export const ZActor = z.enum(["user", "api", "system"]);
 export const ZAuditStatus = z.enum(["success", "failure"]);

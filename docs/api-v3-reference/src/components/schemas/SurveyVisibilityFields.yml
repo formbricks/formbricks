@@ -1,0 +1,24 @@
+type: object
+description: The three fields every `SurveyListItem` and `SurveyResource` carries, merged into both
+  via `allOf`. All required, always present.
+required:
+  - visibility
+  - owner
+  - access
+properties:
+  visibility:
+    allOf:
+      - $ref: ./SurveyVisibility.yml
+    description:
+      The **enforced** visibility on this request. `private` whenever a change is pending, in either
+      direction (fail closed). `workspace` for every survey while the deployment's readiness marker is unset,
+      whatever the stored flag, and always `workspace` for API keys.
+  owner:
+    anyOf:
+      - $ref: ./SurveyOwner.yml
+      - type: "null"
+    description: "`null` when the author's account no longer exists (`Survey.ownerId` is set null on user
+      deletion) or the survey was created with an API key. A survey with `owner: null` cannot be made private;
+      an organisation owner/manager can still make it workspace-visible."
+  access:
+    $ref: ./SurveyAccess.yml

@@ -1,0 +1,21 @@
+description: 'Unprocessable — `private` was requested on a survey with no owner (`owner: null`). Private means
+  "the owner and the organisation''s administrators"; with no owner it would mean administrators only, which
+  is not a state the product offers. Duplicate the survey to get a private copy you own.'
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+  Cache-Control:
+    schema:
+      type: string
+    example: private, no-store
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/Problem.yml
+    example:
+      title: Unprocessable Content
+      status: 422
+      detail: This survey has no owner and cannot be made private. Duplicate it to get a private copy.
+      code: visibility_change_not_allowed
+      requestId: req_01j8z6

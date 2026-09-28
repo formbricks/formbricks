@@ -1,0 +1,41 @@
+allOf:
+  - type: object
+    required:
+      - id
+    properties:
+      id:
+        type: string
+        description: Survey identifier.
+  - $ref: ./SurveyVisibilityFields.yml
+  - type: object
+    required:
+      - version
+      - pending
+      - changedAt
+      - changedBy
+    properties:
+      version:
+        type: integer
+        minimum: 0
+        description: The survey's visibility version after this call. Unchanged by a no-op.
+      pending:
+        anyOf:
+          - $ref: ./SurveyVisibility.yml
+          - type: "null"
+        description:
+          '`"private"` when the restriction is enforced but the graph is still catching up (the outbox will
+          finish it); `null` otherwise. A grant never returns 200 with a pending value.'
+      changedAt:
+        type:
+          - string
+          - "null"
+        format: date-time
+        description:
+          When the current visibility was last set through this endpoint. `null` when it never was — the
+          survey still has its creation visibility, which is the case for a no-op on a survey nobody has
+          touched. Unchanged by a no-op otherwise.
+      changedBy:
+        anyOf:
+          - $ref: ./SurveyVisibilityActor.yml
+          - type: "null"
+        description: Who last set it. `null` exactly when `changedAt` is `null`.

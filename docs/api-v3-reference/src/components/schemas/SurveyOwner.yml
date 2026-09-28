@@ -1,0 +1,13 @@
+type: object
+description: 'The authorization owner — the person whose private surveys these are. Distinct
+  from `creator`, which is attribution only and is never rewritten. Display only, like `creator`: no user id
+  is exposed, because `access.via === "owner"` already answers "is this mine" and `filter[owner][in]=me`
+  filters server-side. Ownership transfer can add an identifier later, additively. Durable source:
+  `Survey.ownerId` in PostgreSQL, projected to `survey#owner@user`; the graph never holds ownership alone, so
+  a rebuild from an empty graph restores it.'
+required:
+  - name
+properties:
+  name:
+    type: string
+additionalProperties: false
