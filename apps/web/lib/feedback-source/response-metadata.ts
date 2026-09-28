@@ -325,13 +325,17 @@ export const buildEmbeddedDataMetadata = (
     return {};
   }
 
-  // A Map, read back through Object.fromEntries: `name` is any non-blank string, and assigning a
-  // field called `__proto__` onto an object literal reaches the prototype setter instead of
-  // becoming an own key.
+  // A Map, read back through Object.fromEntries, so no field name can reach an object literal's
+  // prototype setter while the object is built.
   const values = new Map<string, string | number | boolean>();
+  // Names are claimed before their value is read. Checking `values` instead would make a clash "the
+  // first field with a value wins": an empty ingested field would hand its name to a computed one,
+  // and one Hub dimension would mix both sources depending on the response.
+  const claimed = new Set<string>();
   let usedBytes = 2; // The enclosing "{}".
   let overBudget = 0;
   let unreadable = 0;
+  let unpublishable = 0;
   let firstError: unknown;
 
   for (const entry of fields) {
@@ -348,11 +352,18 @@ export const buildEmbeddedDataMetadata = (
       // value: the jsonb insert reaches Postgres and fails as a 500 rather than a rejected field.
       // Trimmed like the values are, so `" brand "` and `"brand"` cannot become two Hub dimensions.
       const key = field.name.replaceAll("\u0000", "").trim();
+      // Blank, or `__proto__`. Hub stores that one fine, but React drops an own `__proto__` key when it
+      // serializes props, as does any reader that spreads the object or parses it into a plain one, so
+      // the record drawer would show one field fewer than the record holds.
+      if (!key || key === "__proto__") {
+        unpublishable += 1;
+        continue;
+      }
       // On a name collision the first field to reach here wins. The list is every ingested field
-      // followed by every computed one, so in practice: ingested beats computed, and within one
-      // source the earlier declaration beats the later. The point is that it is fixed rather than
-      // dependent on the response.
-      if (!key || values.has(key)) continue;
+      // followed by every computed one, so ingested beats computed, and within one source the earlier
+      // declaration beats the later — whether or not the winner has a value on this response.
+      if (claimed.has(key)) continue;
+      claimed.add(key);
 
       const value = sanitizeValue(resolveEmbeddedValue({ field, link }, response), MAX_METADATA_TEXT_LENGTH);
       if (value === undefined) continue;
@@ -391,6 +402,12 @@ export const buildEmbeddedDataMetadata = (
     logger.warn(
       { err: firstError, ...logContext, unreadable, published: values.size },
       "Embedded Data fields dropped from FeedbackRecord metadata: field could not be read"
+    );
+  }
+  if (unpublishable > 0) {
+    logger.warn(
+      { ...logContext, unpublishable, published: values.size },
+      "Embedded Data fields dropped from FeedbackRecord metadata: name cannot be published"
     );
   }
 

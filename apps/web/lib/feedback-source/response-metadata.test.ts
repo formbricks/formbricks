@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import type { TEmbeddedValueResponse, TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
@@ -353,7 +354,7 @@ describe("projectMetadataFields", () => {
 });
 
 /**
- * The three hazards below all come from `field.name` being any non-blank string (`ZEmbeddedDataName`
+ * The hazards below all come from `field.name` being any non-blank string (`ZEmbeddedDataName`
  * refines nothing else), so they are proven here against the builder directly rather than through a
  * survey response: each one is invisible in an end-to-end assertion, and each removes itself
  * silently if the guard goes.
@@ -418,14 +419,31 @@ describe("buildEmbeddedDataMetadata", () => {
     );
   });
 
-  test("publishes a field named __proto__ as an own key, not as the object's prototype", () => {
-    const survey = { embeddedFields: [ingested("__proto__", "key-proto")] };
+  test("gives the name to the ingested field even when it has no value, so the computed one cannot stand in", () => {
+    // Claiming the name only once a value resolved let an empty ingested field hand it over, and
+    // one Hub dimension then held values from both sources depending on the response.
+    const survey = {
+      embeddedFields: [ingested("channel", "channel_param"), field("channel", "computed", "var-channel")],
+    };
 
-    const result = buildEmbeddedDataMetadata(responseWithData({ "key-proto": "AEG" }), survey);
+    expect(
+      buildEmbeddedDataMetadata(responseWithData({}, { "var-channel": "computed-loses" }), survey)
+    ).toEqual({});
+  });
 
-    // Assigning this name onto an object literal reaches the prototype setter, so the field would
-    // vanish from the published object while every other assertion still passed.
-    expect(Object.hasOwn(result, "__proto__")).toBe(true);
+  test("skips a field named __proto__ and says so, since readers of the record would drop it", () => {
+    const survey = { embeddedFields: [ingested("__proto__", "key-proto"), ingested("brand")] };
+
+    const result = buildEmbeddedDataMetadata(responseWithData({ "key-proto": "AEG", brand: "AEG" }), survey);
+
+    // Hub keeps an own `__proto__` key, but React drops it when it serializes props, so the record
+    // drawer would show one field fewer than the record holds.
+    expect(result).toEqual({ brand: "AEG" });
+    expect(Object.hasOwn(result, "__proto__")).toBe(false);
     expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ unpublishable: 1, published: 1 }),
+      expect.any(String)
+    );
   });
 });
