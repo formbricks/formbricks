@@ -162,8 +162,8 @@ const reconcileSurveyChunk = ({
 export const reconcileSurveyRelationships = async (
   surveyIds: ReadonlyArray<string>
 ): Promise<TAuthzedProjectionResult> => {
-  // Code-unit order, the same for every caller, so concurrent reconciles take the locks in one order.
-  const unique = [...new Set(surveyIds)].sort();
+  // One fixed order for every caller, so concurrent reconciles take the per-survey locks in one order.
+  const unique = [...new Set(surveyIds)].sort((left, right) => left.localeCompare(right));
   return (
     (await runChunked(reconcileSurveyChunk, { surveyIds: unique })) ?? { passes: 0, status: "projected" }
   );
