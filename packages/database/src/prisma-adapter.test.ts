@@ -1,13 +1,7 @@
+import { EventEmitter } from "node:events";
 import { Pool, type PoolClient } from "pg";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { createPrismaPgAdapter } from "./prisma-adapter";
-
-type TPrismaPgOptions = {
-  disposeExternalPool?: boolean;
-  onConnectionError?: (error: Error) => void;
-  onPoolError?: (error: Error) => void;
-  schema?: string;
-};
 
 type TPoolConnectCallback = (
   error: Error | undefined,
@@ -15,14 +9,9 @@ type TPoolConnectCallback = (
   done: (release?: unknown) => void
 ) => void;
 
-const { loggerErrorMock, loggerWarnMock, prismaPgMock } = vi.hoisted(() => ({
+const { loggerErrorMock, loggerWarnMock } = vi.hoisted(() => ({
   loggerErrorMock: vi.fn<(context: Record<string, unknown>, message: string) => void>(),
   loggerWarnMock: vi.fn<(context: Record<string, unknown>, message: string) => void>(),
-  prismaPgMock: vi.fn<(pool: Pool, options: TPrismaPgOptions) => void>(),
-}));
-
-vi.mock("@prisma/adapter-pg", () => ({
-  PrismaPg: prismaPgMock,
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -34,29 +23,27 @@ vi.mock("@formbricks/logger", () => ({
 
 const pools: Pool[] = [];
 
-const getCreatedPool = (): Pool => {
-  const pool = prismaPgMock.mock.calls[prismaPgMock.mock.calls.length - 1]?.[0];
-  if (!(pool instanceof Pool)) throw new Error("Expected PrismaPg to receive a Pool instance");
+const connectAdapter = async (databaseUrl: string) => {
+  const result = createPrismaPgAdapter(databaseUrl);
+  const adapter = await result.adapter.connect();
+  const pool = adapter.underlyingDriver();
   pools.push(pool);
-  return pool;
+  return { adapter, pool, result };
 };
 
 afterEach(async () => {
   vi.restoreAllMocks();
   loggerErrorMock.mockReset();
   loggerWarnMock.mockReset();
-  prismaPgMock.mockClear();
-  await Promise.all(pools.splice(0).map((pool) => pool.end()));
+  await Promise.all(pools.splice(0).map((pool) => (pool.ending ? Promise.resolve() : pool.end())));
 });
 
 describe("createPrismaPgAdapter", () => {
-  test("creates an externally owned pool with the translated Prisma URL settings", () => {
+  test("creates an externally owned pool with the translated Prisma URL settings", async () => {
     const databaseUrl =
       "postgresql://app:secret@database:5432/formbricks?connection_limit=10&connect_timeout=15&schema=customer&sslaccept=strict";
 
-    const result = createPrismaPgAdapter(databaseUrl);
-    const pool = getCreatedPool();
-    const options = prismaPgMock.mock.calls[prismaPgMock.mock.calls.length - 1]?.[1];
+    const { adapter, pool, result } = await connectAdapter(databaseUrl);
 
     expect(result.connectionString).toBe("postgresql://app:secret@database:5432/formbricks");
     expect(pool.options).toMatchObject({
@@ -65,10 +52,7 @@ describe("createPrismaPgAdapter", () => {
       max: 10,
       ssl: { rejectUnauthorized: true },
     });
-    expect(options.disposeExternalPool).toBe(true);
-    expect(options.schema).toBe("customer");
-    expect(typeof options.onConnectionError).toBe("function");
-    expect(typeof options.onPoolError).toBe("function");
+    expect(adapter.getConnectionInfo()).toEqual({ schemaName: "customer", supportsRelationJoins: true });
   });
 
   test("logs a safe structured event when establishing a pooled connection fails", async () => {
@@ -77,8 +61,9 @@ describe("createPrismaPgAdapter", () => {
     });
     vi.spyOn(Pool.prototype, "connect").mockRejectedValueOnce(sensitiveError);
 
-    createPrismaPgAdapter("postgresql://app:secret@database:5432/formbricks?connect_timeout=15");
-    const pool = getCreatedPool();
+    const { pool } = await connectAdapter(
+      "postgresql://app:secret@database:5432/formbricks?connect_timeout=15"
+    );
 
     await expect(pool.connect()).rejects.toBe(sensitiveError);
     expect(loggerErrorMock).toHaveBeenCalledWith(
@@ -98,15 +83,16 @@ describe("createPrismaPgAdapter", () => {
     expect(JSON.stringify(loggerErrorMock.mock.calls)).not.toContain("super-secret");
   });
 
-  test("logs and forwards callback-style connection failures", () => {
+  test("logs and forwards callback-style connection failures", async () => {
     const sensitiveError = Object.assign(new Error("password=super-secret"), { code: "ECONNREFUSED" });
     const done = vi.fn();
     vi.spyOn(Pool.prototype, "connect").mockImplementationOnce((callback) => {
       callback(sensitiveError, undefined, done);
     });
 
-    createPrismaPgAdapter("postgresql://app:secret@database:5432/formbricks?connect_timeout=15");
-    const pool = getCreatedPool();
+    const { pool } = await connectAdapter(
+      "postgresql://app:secret@database:5432/formbricks?connect_timeout=15"
+    );
     const callback = vi.fn<TPoolConnectCallback>();
 
     pool.connect(callback);
@@ -123,15 +109,14 @@ describe("createPrismaPgAdapter", () => {
     expect(JSON.stringify(loggerErrorMock.mock.calls)).not.toContain("super-secret");
   });
 
-  test("forwards successful callback-style connections without logging", () => {
+  test("forwards successful callback-style connections without logging", async () => {
     const client = {} as PoolClient;
     const done = vi.fn();
     vi.spyOn(Pool.prototype, "connect").mockImplementationOnce((callback) => {
       callback(undefined, client, done);
     });
 
-    createPrismaPgAdapter("postgresql://app:secret@database:5432/formbricks");
-    const pool = getCreatedPool();
+    const { pool } = await connectAdapter("postgresql://app:secret@database:5432/formbricks");
     const callback = vi.fn<TPoolConnectCallback>();
 
     pool.connect(callback);
@@ -179,13 +164,10 @@ describe("createPrismaPgAdapter", () => {
       undefined,
     ],
     ["non-object error", "invalid error", "database_connection_error", undefined],
-    ["null error", null, "database_connection_error", undefined],
-  ])("classifies %s safely", (_case, error, classification, errorCode) => {
-    createPrismaPgAdapter("postgresql://app:secret@database:5432/formbricks");
-    getCreatedPool();
-    const options = prismaPgMock.mock.calls[prismaPgMock.mock.calls.length - 1]?.[1];
+  ])("classifies %s safely", async (_case, error, classification, errorCode) => {
+    const { pool } = await connectAdapter("postgresql://app:secret@database:5432/formbricks");
 
-    options.onConnectionError?.(error as Error);
+    pool.emit("error", error);
 
     expect(loggerErrorMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -201,24 +183,32 @@ describe("createPrismaPgAdapter", () => {
     }
   });
 
-  test.each([
-    ["onPoolError", "idle_connection"],
-    ["onConnectionError", "acquired_connection"],
-  ])("logs %s without serializing the raw error", (callbackName, phase) => {
-    createPrismaPgAdapter("postgresql://app:secret@database:5432/formbricks");
-    getCreatedPool();
-    const options = prismaPgMock.mock.calls[prismaPgMock.mock.calls.length - 1]?.[1] as Record<
-      string,
-      (error: Error) => void
-    >;
-    const sensitiveError = Object.assign(new Error("password=super-secret"), { code: "ETIMEDOUT" });
+  test("classifies null connection rejections safely", async () => {
+    vi.spyOn(Pool.prototype, "connect").mockRejectedValueOnce(null);
+    const { pool } = await connectAdapter("postgresql://app:secret@database:5432/formbricks");
 
-    options[callbackName](sensitiveError);
+    await expect(pool.connect()).rejects.toBeNull();
+
+    expect(loggerErrorMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        classification: "database_connection_error",
+      }),
+      "PostgreSQL pool connection failed"
+    );
+    expect(loggerErrorMock.mock.calls[0]?.[0]).not.toHaveProperty("error_code");
+  });
+
+  test("registers pool error listeners and disposes the external pool", async () => {
+    const sensitiveError = Object.assign(new Error("password=super-secret"), { code: "ETIMEDOUT" });
+    const { adapter, pool } = await connectAdapter("postgresql://app:secret@database:5432/formbricks");
+    const endSpy = vi.spyOn(pool, "end");
+
+    pool.emit("error", sensitiveError);
 
     expect(loggerErrorMock).toHaveBeenCalledWith(
       expect.objectContaining({
         event: "postgres_pool_connection_failed",
-        phase,
+        phase: "idle_connection",
         classification: "connection_timeout",
         error_code: "ETIMEDOUT",
         connection_timeout_ms: 5_000,
@@ -226,5 +216,40 @@ describe("createPrismaPgAdapter", () => {
       "PostgreSQL pool connection failed"
     );
     expect(JSON.stringify(loggerErrorMock.mock.calls)).not.toContain("super-secret");
+
+    await adapter.dispose();
+
+    expect(endSpy).toHaveBeenCalledOnce();
+  });
+
+  test("logs acquired connection errors without serializing the raw error", async () => {
+    const sensitiveError = Object.assign(new Error("password=super-secret"), { code: "ETIMEDOUT" });
+    const client = Object.assign(new EventEmitter(), {
+      query: vi.fn().mockResolvedValue({ rowCount: 0 }),
+      release: vi.fn(),
+    }) as unknown as PoolClient;
+    (
+      vi.spyOn(Pool.prototype, "connect") as unknown as {
+        mockResolvedValueOnce: (value: PoolClient) => void;
+      }
+    ).mockResolvedValueOnce(client);
+    const { adapter } = await connectAdapter("postgresql://app:secret@database:5432/formbricks");
+    const transaction = await adapter.startTransaction();
+
+    client.emit("error", sensitiveError);
+
+    expect(loggerErrorMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "postgres_pool_connection_failed",
+        phase: "acquired_connection",
+        classification: "connection_timeout",
+        error_code: "ETIMEDOUT",
+        connection_timeout_ms: 5_000,
+      }),
+      "PostgreSQL pool connection failed"
+    );
+    expect(JSON.stringify(loggerErrorMock.mock.calls)).not.toContain("super-secret");
+
+    await transaction.rollback();
   });
 });

@@ -1,8 +1,25 @@
 diff --git a/index.js b/index.js
-index 92451629c026a7561a2e556f3e8c6f73341c7c52..b915117d6fe640b1798fe44c6af2946ee15f9c39 100644
+index 2fbdb78d5ef9aaf09c01cacae651a5d96cbcfed7..aac5cecfd32fe1ce80d3b0ac210bdf07884efabd 100644
 --- a/index.js
 +++ b/index.js
-@@ -249,14 +249,24 @@ class Pool extends EventEmitter {
+@@ -102,6 +102,7 @@ class Pool extends EventEmitter {
+     this._clients = []
+     this._idle = []
+     this._expired = new WeakSet()
++    this._endingClients = new Set()
+     this._pendingQueue = []
+     this._endCallback = undefined
+     this.ending = false
+@@ -137,7 +138,7 @@ class Pool extends EventEmitter {
+           this._remove(item.client)
+         })
+       }
+-      if (!this._clients.length) {
++      if (!this._clients.length && !this._endingClients.size) {
+         this.ended = true
+         this._endCallback()
+       }
+@@ -249,15 +250,31 @@ class Pool extends EventEmitter {
      let timeoutHit = false
      if (this.options.connectionTimeoutMillis) {
        tid = setTimeout(() => {
@@ -13,6 +30,7 @@ index 92451629c026a7561a2e556f3e8c6f73341c7c52..b915117d6fe640b1798fe44c6af2946e
 +
 +        this.log('ending client due to timeout')
 +        timeoutHit = true
++        this._endingClients.add(client)
 +        this._clients = this._clients.filter((c) => c !== client)
 +        if (!pendingItem.timedOut) {
 +          pendingItem.timedOut = true
@@ -21,6 +39,10 @@ index 92451629c026a7561a2e556f3e8c6f73341c7c52..b915117d6fe640b1798fe44c6af2946e
 +        this._pulseQueue()
 +        client.removeAllListeners('error')
 +        client.on('error', () => {})
++        const handleEnd = () => {
++          this._endingClients.delete(client)
++          this._pulseQueue()
++        }
          if (client.connection) {
 -          this.log('ending client due to timeout')
 -          timeoutHit = true
@@ -29,12 +51,15 @@ index 92451629c026a7561a2e556f3e8c6f73341c7c52..b915117d6fe640b1798fe44c6af2946e
 -          this.log('ending client due to timeout')
 -          timeoutHit = true
 -          // force kill the node driver, and let libpq do its teardown
+-          client.end()
++          client.once('end', handleEnd)
 +          client.connection.end()
 +        } else {
-           client.end()
++          client.end(handleEnd)
          }
        }, this.options.connectionTimeoutMillis)
-@@ -282,5 +292,10 @@ class Pool extends EventEmitter {
+     }
+@@ -282,5 +299,9 @@ class Pool extends EventEmitter {
          if (!pendingItem.timedOut) {
            pendingItem.callback(err, undefined, NOOP)
          }
@@ -42,6 +67,5 @@ index 92451629c026a7561a2e556f3e8c6f73341c7c52..b915117d6fe640b1798fe44c6af2946e
 +        this.log('client connected after timeout, discarding')
 +        client.removeAllListeners('error')
 +        client.on('error', () => {})
-+        client.end()
        } else {
          this.log('new client connected')

@@ -7,6 +7,7 @@ class DelayedClient extends EventEmitter {
 
   connection = undefined;
   ended = false;
+  endCalls = 0;
 
   constructor() {
     super();
@@ -19,7 +20,8 @@ class DelayedClient extends EventEmitter {
 
   end(callback?: () => void): void {
     this.ended = true;
-    callback?.();
+    this.endCalls += 1;
+    setTimeout(() => callback?.(), 50);
   }
 
   isConnected(): boolean {
@@ -54,6 +56,48 @@ describe("pg-pool connection timeout patch", () => {
 
     expect(DelayedClient.instances).toHaveLength(1);
     expect(DelayedClient.instances[0].ended).toBe(true);
+    expect(DelayedClient.instances[0].endCalls).toBe(1);
     await pool.end();
+  });
+
+  test("waits for a timed-out connection to close when shutdown starts in the checkout callback", async () => {
+    vi.useFakeTimers();
+    const pool = new Pool({
+      Client: DelayedClient as unknown as NonNullable<PoolConfig["Client"]>,
+      connectionTimeoutMillis: 100,
+      max: 1,
+    });
+    let shutdownComplete = false;
+
+    const shutdown = new Promise<void>((resolve, reject) => {
+      pool.connect((error, client) => {
+        try {
+          expect(error).toMatchObject({ message: "Connection terminated due to connection timeout" });
+          expect(client).toBeUndefined();
+          void pool.end(() => {
+            shutdownComplete = true;
+            resolve();
+          });
+        } catch (error) {
+          reject(error instanceof Error ? error : new Error("Checkout callback assertion failed"));
+        }
+      });
+    });
+
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(pool.totalCount).toBe(0);
+    expect(DelayedClient.instances[0].endCalls).toBe(1);
+    expect(shutdownComplete).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(49);
+    expect(shutdownComplete).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(1);
+    await shutdown;
+
+    await vi.advanceTimersByTimeAsync(50);
+    expect(shutdownComplete).toBe(true);
+    expect(DelayedClient.instances[0].endCalls).toBe(1);
   });
 });
