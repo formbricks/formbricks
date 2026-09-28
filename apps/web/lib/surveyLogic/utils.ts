@@ -261,10 +261,9 @@ export type TServerEmbeddedValuesSurvey = TEmbeddedFieldsSurvey & {
  * in server-side logic and (once ENG-2538 wired them up) on every display surface. Passing the survey
  * lets {@link dropShadowedReservedEntries} apply the same rule the pickers already applied.
  *
- * The declared names come from the **stored rows** rather than the legacy columns: every caller here
- * holds a saved survey, whose rows and declarations agree because every write path reconciles them in
- * the same transaction. The editor is the one context where they can diverge, and it does not call
- * this.
+ * The declared names come from the **stored rows**, the only place a saved survey's fields live
+ * (ENG-2404) — every caller here holds a saved survey. The editor, whose working copy can run ahead
+ * of what is stored, does not call this.
  */
 export const buildServerEmbeddedValues = (
   response: TEmbeddedValueResponse,
