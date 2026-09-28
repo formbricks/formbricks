@@ -18,15 +18,17 @@ import { seedAppSurvey } from "./utils/app-survey";
 
 declare global {
   interface Window {
-    formbricks: {
-      setup: (config: { workspaceId: string; appUrl: string }) => Promise<void>;
-      track: (name: string) => Promise<void>;
-    };
     __workspaceId: string;
     __hostEscapeDefaultPrevented: boolean | null;
     __hostChordDefaultPrevented: boolean | null;
   }
 }
+
+// `window.formbricks` is typed by @formbricks/js as optional; the spec has already waited for it.
+const trackAction = (key: string) => {
+  if (!window.formbricks) throw new Error("Formbricks SDK is not loaded");
+  return window.formbricks.track(key);
+};
 
 // Prose long enough that a drag across it selects an unmistakable number of characters.
 const HOST_PROSE =
@@ -130,7 +132,7 @@ test.describe("App survey widget does not block the host page", () => {
     // firing mid-form must not pull the user out of what they are typing.
     await page.locator("#host-input").fill("BEFORE");
 
-    await page.evaluate((key) => window.formbricks.track(key), seeded.actionKey);
+    await page.evaluate(trackAction, seeded.actionKey);
 
     const dialog = page.locator("#fbjs [role='dialog']");
     await expect(dialog).toBeVisible({ timeout: 120000 });
@@ -224,7 +226,7 @@ test.describe("App survey widget does not block the host page", () => {
     await page.waitForFunction(() => Boolean(window.formbricks), null, { timeout: 120000 });
 
     await page.locator("#host-input").fill("BEFORE");
-    await page.evaluate((key) => window.formbricks.track(key), seeded.actionKey);
+    await page.evaluate(trackAction, seeded.actionKey);
 
     const dialog = page.locator("#fbjs [role='dialog']");
     await expect(dialog).toBeVisible({ timeout: 120000 });
