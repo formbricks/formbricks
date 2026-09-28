@@ -71,6 +71,7 @@ const deps = (overrides = {}) => ({
   clearSurveyReadiness: vi.fn().mockResolvedValue(undefined),
   markSurveyReady: vi.fn().mockResolvedValue(undefined),
   closeClient: vi.fn(),
+  configureClient: vi.fn(),
   isEnabled: vi.fn().mockReturnValue(true),
   resolveEndpoint: vi.fn().mockReturnValue(ENDPOINT),
   run: vi.fn().mockResolvedValue(result()),
@@ -425,6 +426,8 @@ describe("survey scope and readiness (ENG-3282)", () => {
     ).resolves.toBe(0);
 
     expect(dependencies.run).toHaveBeenCalledTimes(3);
+    // The real client refuses a second configure once built, so the three runs must share one.
+    expect(dependencies.configureClient).toHaveBeenCalledTimes(1);
     expect(dependencies.run.mock.calls.slice(1).map(([request]) => request.mode)).toEqual([
       "dry_run",
       "dry_run",

@@ -37,6 +37,8 @@ type TAuthzedReadinessOutcome = Readonly<{ readiness: "not-ready" | "ready"; rea
 type TAuthzedBackfillCliDependencies = Readonly<{
   clearSurveyReadiness: () => Promise<void>;
   closeClient: () => void;
+  /** Widens the channel deadline for bulk work. Once per process, before the first client exists. */
+  configureClient: () => void;
   isEnabled: () => boolean;
   markSurveyReady: () => Promise<void>;
   resolveEndpoint: () => string | undefined;
@@ -53,17 +55,14 @@ type TAuthzedBackfillCliDependencies = Readonly<{
 const defaultDependencies: TAuthzedBackfillCliDependencies = {
   clearSurveyReadiness: () => clearProjectionScopeReady("survey"),
   closeClient: closeAuthzedClient,
+  configureClient: configureAuthzedClientForBulkWork,
   isEnabled: isAuthzedEnabled,
   markSurveyReady: () => setProjectionScopeReady("survey", "authzed:backfill --mark-ready"),
   resolveEndpoint: () => env.AUTHZED_ENDPOINT,
-  // Widened before the first client is built, so the reconcilers this hands to the orchestrator — which
-  // reach the channel through `getAuthzedClient()` themselves — write under the same bulk deadline the
-  // sweep reads under.
-  run: (request, apply) => {
-    configureAuthzedClientForBulkWork();
-
-    return runAuthzedBackfill(request, { apply, client: getAuthzedClient() });
-  },
+  // The channel was widened by `configureClient` before this first builds it, so the reconcilers the
+  // orchestrator is handed — which reach the channel through `getAuthzedClient()` themselves — write
+  // under the same bulk deadline the sweep reads under. Called up to three times under `--mark-ready`.
+  run: (request, apply) => runAuthzedBackfill(request, { apply, client: getAuthzedClient() }),
   writeOutput: (output) => process.stdout.write(output),
 };
 
@@ -187,6 +186,9 @@ export const runAuthzedBackfillCli = async (
         prune: command.prune,
         scope: resolveScope(command),
       };
+      // Once, here: `--mark-ready` runs the backfill three times, and the client refuses to be
+      // reconfigured once built.
+      dependencies.configureClient();
       const runResult = await dependencies.run(
         request,
         command.mode === "apply" ? createAuthzedBackfillApply() : createAuthzedBackfillNoopApply()
