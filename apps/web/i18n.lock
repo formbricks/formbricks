@@ -4136,7 +4136,7 @@ checksums:
     workspace/unify/manage_directories: 0ad23f38f8185bb987a2caf5f09334dc
     workspace/unify/manage_feedback_sources: 6aa6a82334ab680b5aa187b7245e8ec8
     workspace/unify/metadata: 695d4f7da261ba76e3be4de495491028
-    workspace/unify/metadata_read_only_entries: 1934fee46c0a117f4926b61cc3d2d602
+    workspace/unify/metadata_read_only_entries: 960e18fc184ebb08e55c70492c137fb8
     workspace/unify/missing_feedback_source_title: 9ab1b8d54b4da72dd00ce03fe3b698b5
     workspace/unify/no_feedback_directory_available: 3b8def4bb369948f17da401bd64e942b
     workspace/unify/no_feedback_directory_linked_admin_description: 0a7db006ea1a8e3e667da0e9c4483bb2

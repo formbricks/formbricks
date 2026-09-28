@@ -4304,7 +4304,7 @@
       "manage_directories": "管理数据集",
       "manage_feedback_sources": "管理反馈来源",
       "metadata": "元数据",
-      "metadata_read_only_entries": "只读元数据值（非字符串）",
+      "metadata_read_only_entries": "只读元数据值",
       "missing_feedback_source_title": "Missing feedback source?",
       "no_feedback_directory_available": "此工作区未分配反馈数据集。请先创建或分配一个。",
       "no_feedback_directory_linked_admin_description": "反馈数据集将来自多个工作区的反馈数据汇集在一起。将数据集连接到此工作区即可开始使用。",

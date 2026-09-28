@@ -74,13 +74,6 @@ export const toISOOrUndefined = (dateTimeValue: string | undefined): string | un
 };
 
 export const mapRecordToValues = (record: FeedbackRecordData): TFeedbackRecordFormValues => {
-  const metadataEntries = Object.entries(record.metadata ?? {})
-    .filter(([, value]) => typeof value === "string")
-    .map(([key, value]) => ({
-      key,
-      value: value as string,
-    }));
-
   return {
     id: record.id,
     tenant_id: record.tenant_id,
@@ -102,17 +95,18 @@ export const mapRecordToValues = (record: FeedbackRecordData): TFeedbackRecordFo
     value_date: record.value_date ? toLocalDateTimeInput(record.value_date) : "",
     language: record.language ?? "",
     user_id: record.user_id ?? "",
-    metadataEntries,
   };
 };
 
+/**
+ * Every metadata entry, for the drawer's read-only list. Strings are shown as-is; anything else is
+ * JSON, so a boolean or an object still reads unambiguously.
+ */
 export const getReadOnlyMetadataEntries = (record: FeedbackRecordData): { key: string; value: string }[] => {
-  return Object.entries(record.metadata ?? {})
-    .filter(([, value]) => typeof value !== "string")
-    .map(([key, value]) => ({
-      key,
-      value: JSON.stringify(value),
-    }));
+  return Object.entries(record.metadata ?? {}).map(([key, value]) => ({
+    key,
+    value: typeof value === "string" ? value : JSON.stringify(value),
+  }));
 };
 
 export const parseNumberValue = (value: string): number | null => {

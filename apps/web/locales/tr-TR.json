@@ -4304,7 +4304,7 @@
       "manage_directories": "Veri kümelerini yönet",
       "manage_feedback_sources": "Geri bildirim kaynaklarını yönetin",
       "metadata": "Meta veriler",
-      "metadata_read_only_entries": "Salt okunur meta veri değerleri (dize dışı)",
+      "metadata_read_only_entries": "Salt okunur metadata değerleri",
       "missing_feedback_source_title": "Missing feedback source?",
       "no_feedback_directory_available": "Bu çalışma alanına atanmış geri bildirim veri kümesi yok. Önce bir tane oluştur veya ata.",
       "no_feedback_directory_linked_admin_description": "Geri bildirim veri kümeleri, birden fazla çalışma alanından gelen geri bildirim verilerini bir araya getirir. Başlamak için bu çalışma alanına bir veri kümesi bağla.",

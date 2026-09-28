@@ -4304,7 +4304,7 @@
       "manage_directories": "データセットを管理",
       "manage_feedback_sources": "フィードバックソースを管理する",
       "metadata": "メタデータ",
-      "metadata_read_only_entries": "読み取り専用メタデータ値 (非文字列)",
+      "metadata_read_only_entries": "読み取り専用のメタデータ値",
       "missing_feedback_source_title": "フィードバックソースが見つかりませんか?",
       "no_feedback_directory_available": "このワークスペースにフィードバックデータセットが割り当てられていません。まず作成または割り当ててください。",
       "no_feedback_directory_linked_admin_description": "フィードバックデータセットは、複数のワークスペースからのフィードバックデータをまとめます。開始するには、このワークスペースにデータセットを接続してください。",

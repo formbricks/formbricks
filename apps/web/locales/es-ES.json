@@ -4304,7 +4304,7 @@
       "manage_directories": "Gestionar conjuntos de datos",
       "manage_feedback_sources": "Administrar fuentes de comentarios",
       "metadata": "Metadatos",
-      "metadata_read_only_entries": "Valores de metadatos de solo lectura (no cadenas)",
+      "metadata_read_only_entries": "Valores de metadatos de solo lectura",
       "missing_feedback_source_title": "¿Falta alguna fuente de feedback?",
       "no_feedback_directory_available": "No hay ningún conjunto de datos de feedback asignado a este espacio de trabajo. Crea o asigna uno primero.",
       "no_feedback_directory_linked_admin_description": "Los conjuntos de datos de comentarios reúnen datos de comentarios de múltiples espacios de trabajo. Conecta un conjunto de datos a este espacio de trabajo para comenzar.",

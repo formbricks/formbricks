@@ -4304,7 +4304,7 @@
       "manage_directories": "Gestionează seturile de date",
       "manage_feedback_sources": "Gestionați sursele de feedback",
       "metadata": "Metadate",
-      "metadata_read_only_entries": "Valori de metadate numai pentru citire (fără șir)",
+      "metadata_read_only_entries": "Valori de metadate doar în citire",
       "missing_feedback_source_title": "Lipsește o sursă de feedback?",
       "no_feedback_directory_available": "Niciun set de date de feedback atribuit acestui workspace. Creează sau atribuie unul mai întâi.",
       "no_feedback_directory_linked_admin_description": "Seturile de date cu feedback reunesc datele de feedback din mai multe spații de lucru. Conectează un set de date la acest spațiu de lucru pentru a începe.",
