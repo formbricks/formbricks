@@ -276,6 +276,24 @@ export const pruneFieldLabels = (
 };
 
 /**
+ * The mappings the query's filters pin it to: a `fieldId equals` filter first, else a `fieldLabel`
+ * or `fieldGroupLabel equals` filter. Empty when the filters name no question.
+ */
+const resolvePinnedMappings = async (
+  filters: TCubeFilter[],
+  workspaceMappings: TMappingRef[],
+  loadSurvey: TSurveyLoader
+): Promise<TMappingRef[]> => {
+  const fieldId = extractMemberEqualsValue(filters, "FeedbackRecords.fieldId");
+  if (fieldId) return resolveMappingsByFieldId(fieldId, workspaceMappings);
+
+  const labelFilter =
+    extractMemberEqualsValue(filters, "FeedbackRecords.fieldLabel") ??
+    extractMemberEqualsValue(filters, "FeedbackRecords.fieldGroupLabel");
+  return labelFilter ? resolveMappingsByFieldLabel(labelFilter, workspaceMappings, loadSurvey) : [];
+};
+
+/**
  * Both label maps of a resolved grouping, pruned to what the rows need (see `pruneOptionLabels`).
  * Spread into a query response; absent maps are left out rather than sent as undefined.
  */
@@ -329,22 +347,10 @@ export async function resolveOptionGrouping(
     return { rewrittenQuery: query };
   }
 
-  const filters = query.filters ?? [];
-  const fieldId = extractMemberEqualsValue(filters, "FeedbackRecords.fieldId");
-  const labelFilter = fieldId
-    ? undefined
-    : (extractMemberEqualsValue(filters, "FeedbackRecords.fieldLabel") ??
-      extractMemberEqualsValue(filters, "FeedbackRecords.fieldGroupLabel"));
-
   const workspaceMappings = await getWorkspaceMappings(workspaceId);
   const loadSurvey = createSurveyLoader();
 
-  let mappings: TMappingRef[] = [];
-  if (fieldId) {
-    mappings = resolveMappingsByFieldId(fieldId, workspaceMappings);
-  } else if (labelFilter) {
-    mappings = await resolveMappingsByFieldLabel(labelFilter, workspaceMappings, loadSurvey);
-  }
+  let mappings = await resolvePinnedMappings(query.filters ?? [], workspaceMappings, loadSurvey);
 
   // Nothing pinned down, but the chart is grouping by a raw id: label from the whole workspace
   // rather than leaving the ids bare. The map is then not attributable to one question, which

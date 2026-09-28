@@ -366,14 +366,14 @@ interface ChartRendererProps {
   config?: TChartConfig;
 }
 
-export function ChartRenderer({
+/** Every chart type drawn along a single category or time axis: area, bar, pie and big number. */
+function SeriesChartRenderer({
   chartType,
   data,
   query,
   optionLabels,
-  fieldLabels,
   config,
-}: Readonly<ChartRendererProps>) {
+}: Readonly<Omit<ChartRendererProps, "fieldLabels">>) {
   const { t, i18n } = useTranslation();
   const { barOrientation, pieDisplay, areaDisplay } = resolveChartDisplay(config);
   // Unique across charts on the same page so SVG <defs> ids don't collide.
@@ -384,20 +384,6 @@ export function ChartRenderer({
       <div className="text-muted-foreground flex h-full min-h-64 items-center justify-center">
         {t("workspace.analysis.charts.no_data_available")}
       </div>
-    );
-  }
-
-  // A matrix lays out two groupings on its own two axes, so none of the single-axis setup below
-  // applies to it.
-  if (chartType === "matrix") {
-    return (
-      <MatrixChart
-        data={data}
-        query={query}
-        config={config}
-        optionLabels={optionLabels}
-        fieldLabels={fieldLabels}
-      />
     );
   }
 
@@ -596,4 +582,20 @@ export function ChartRenderer({
         </div>
       );
   }
+}
+
+export function ChartRenderer({ fieldLabels, ...props }: Readonly<ChartRendererProps>) {
+  // A matrix lays out two groupings on its own two axes, so none of the single-axis setup applies.
+  if (props.chartType === "matrix" && props.data.length > 0) {
+    return (
+      <MatrixChart
+        data={props.data}
+        query={props.query}
+        config={props.config}
+        optionLabels={props.optionLabels}
+        fieldLabels={fieldLabels}
+      />
+    );
+  }
+  return <SeriesChartRenderer {...props} />;
 }

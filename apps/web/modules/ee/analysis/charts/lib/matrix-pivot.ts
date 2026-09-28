@@ -151,9 +151,11 @@ export interface TBuildMatrixPivotInput {
   formatColumnLabel: (value: string) => string;
 }
 
+/** A grouping value as a grid key. Cube returns dimension members as primitives; anything else is skipped. */
 const toKey = (value: unknown): string | null => {
-  if (value === null || value === undefined || value === "") return null;
-  return String(value);
+  if (typeof value === "string") return value === "" ? null : value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return null;
 };
 
 const toNumber = (value: unknown): number => {
