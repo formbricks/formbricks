@@ -524,6 +524,19 @@ describe("matrix label maps (ENG-3312)", () => {
     expect(Object.keys(result.optionLabels ?? {})).toEqual(["c-no", "c-mid", "c-yes"]);
   });
 
+  test("a filter on one statement's field id keeps only that statement", async () => {
+    const result = await resolveOptionGrouping(
+      matrixQuery([
+        { member: "FeedbackRecords.fieldId", operator: "equals", values: ["el-matrix__r-fast"] },
+      ]) as never,
+      "workspace-1",
+      "dir-1"
+    );
+
+    expect(result.fieldLabels).toEqual({ "el-matrix__r-fast": "It was fast" });
+    expect(Object.keys(result.optionLabels ?? {})).toEqual(["c-no", "c-mid", "c-yes"]);
+  });
+
   test("grouping by fieldId alone resolves row labels without an option map", async () => {
     const result = await resolveOptionGrouping(
       { measures: ["FeedbackRecords.count"], dimensions: ["FeedbackRecords.fieldId"], filters: [] } as never,

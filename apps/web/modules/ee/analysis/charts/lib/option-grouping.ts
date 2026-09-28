@@ -305,6 +305,20 @@ const resolvePinnedMappings = async (
 };
 
 /**
+ * A `fieldId equals <elementId>__<rowId>` filter pins the whole matrix question (see
+ * `resolveMappingsByFieldId`), but only that one statement can come back. Pinned maps ship whole, so
+ * keep just the filtered row — otherwise the matrix chart draws every other statement as empty.
+ */
+const narrowToFilteredRow = (
+  fieldLabels: Record<string, string>,
+  filters: TCubeFilter[]
+): Record<string, string> => {
+  const fieldId = extractMemberEqualsValue(filters, "FeedbackRecords.fieldId");
+  if (!fieldId || fieldLabels[fieldId] === undefined) return fieldLabels;
+  return { [fieldId]: fieldLabels[fieldId] };
+};
+
+/**
  * Both label maps of a resolved grouping, pruned to what the rows need (see `pruneOptionLabels`).
  * Spread into a query response; absent maps are left out rather than sent as undefined.
  */
@@ -379,7 +393,8 @@ export async function resolveOptionGrouping(
   const maps = await buildLabelMaps(mappings, loadSurvey, attributable);
   const optionLabels =
     (hasValueId || hasValueText) && Object.keys(maps.optionLabels).length > 0 ? maps.optionLabels : undefined;
-  const fieldLabels = hasFieldId && Object.keys(maps.fieldLabels).length > 0 ? maps.fieldLabels : undefined;
+  const rowLabels = narrowToFilteredRow(maps.fieldLabels, query.filters ?? []);
+  const fieldLabels = hasFieldId && Object.keys(rowLabels).length > 0 ? rowLabels : undefined;
   if (!optionLabels && !fieldLabels) {
     return { rewrittenQuery: query };
   }
