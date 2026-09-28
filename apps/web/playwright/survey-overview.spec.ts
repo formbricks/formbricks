@@ -335,7 +335,7 @@ test.describe("Survey overview", () => {
     await expect(page.getByText("Survey deleted successfully", { exact: true })).toBeVisible();
   });
 
-  test("a duplicate keeps the original's behaviour and security settings", async ({ page, users }) => {
+  test("duplicating a survey from the list keeps its PIN", async ({ page, users }) => {
     const timestamp = Date.now();
     const email = `overview-duplicate-${timestamp}@example.com`;
     const name = `overview-duplicate-${timestamp}`;
@@ -352,37 +352,16 @@ test.describe("Survey overview", () => {
         throw new Error("Unable to determine workspace id from surveys URL");
       })();
 
-    // What a user configures under the survey's Settings before duplicating. The copy used to lose
-    // every one of these, the PIN most consequentially: you could publish an unprotected duplicate
-    // believing it was still protected (ENG-2144).
-    const configuredSettings = {
-      pin: "1234",
-      autoComplete: 50,
-      autoClose: 30,
-      delay: 5,
-      redirectUrl: "https://example.com/thanks",
-      isVerifyEmailEnabled: true,
-      isAnonymizeResponsesEnabled: true,
-      isBackButtonHidden: true,
-      recaptcha: { enabled: true, threshold: 0.5 },
-    };
-
+    // The field-by-field copy policy is unit-tested. This proves the list's Duplicate action reaches
+    // the database with a setting intact — the PIN, whose loss mattered most (ENG-2144).
     await prisma.survey.create({
-      data: {
-        workspaceId,
-        createdBy: userId,
-        name: surveyName,
-        status: "draft",
-        type: "link",
-        ...configuredSettings,
-      },
+      data: { workspaceId, createdBy: userId, name: surveyName, status: "draft", type: "link", pin: "1234" },
     });
 
     await page.reload();
     await expect(page.getByText(surveyName, { exact: true })).toBeVisible({ timeout: 10000 });
 
-    // Scoped to this survey's own actions menu — the workspace is seeded with another survey, so
-    // the bare trigger matches more than one row.
+    // Scoped to this survey's own actions menu — the workspace is seeded with another survey.
     const surveyActions = page.locator(`#${surveyName.toLowerCase().split(" ").join("-")}-survey-actions`);
     await surveyActions.getByTestId("survey-dropdown-trigger").click();
     await page.getByTestId("duplicate-survey").click();
@@ -391,17 +370,11 @@ test.describe("Survey overview", () => {
     });
     await expect(page.getByText(`${surveyName} (copy)`, { exact: true })).toBeVisible();
 
-    // Asserted on the stored row rather than the editor: the bug was the copy never reading these
-    // columns, so the row is where it is visible without clicking through every settings card.
     const copy = await prisma.survey.findFirst({
       where: { workspaceId, name: `${surveyName} (copy)` },
+      select: { pin: true },
     });
-
-    expect(copy).toMatchObject(configuredSettings);
-    // The fields that must still differ on a copy.
-    expect(copy?.status).toBe("draft");
-    expect(copy?.publishOn).toBeNull();
-    expect(copy?.closeOn).toBeNull();
+    expect(copy?.pin).toBe("1234");
   });
 
   test("restores the survey when delete fails", async ({ page, users }) => {

@@ -305,6 +305,10 @@ export const copySurveyToOtherWorkspace = async (
         ? structuredClone(existingSurvey.workspaceOverwrites)
         : Prisma.JsonNull,
       styling: existingSurvey.styling ? structuredClone(existingSurvey.styling) : Prisma.JsonNull,
+      // "replace" means "run only this survey's scripts, not the workspace's". In another workspace
+      // that would silently switch off the target's own head scripts (analytics, consent), so the
+      // copy keeps its scripts but adds them to the target's instead.
+      customHeadScriptsMode: isSameWorkspace ? existingSurvey.customHeadScriptsMode : "add",
       segment: undefined,
       followUps: {
         createMany: {

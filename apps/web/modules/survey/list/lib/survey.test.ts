@@ -346,6 +346,16 @@ describe("copySurveyToOtherWorkspace", () => {
     expect(checkForInvalidMediaInBlocks).toHaveBeenCalledWith(mockExistingSurveyDetails.blocks);
   });
 
+  // Resolve only what the query selects, the way Prisma does. Returning the whole survey regardless
+  // of the `select` would let these tests pass even when a column is never read — which is the bug.
+  const mockSourceSurvey = (columns: Record<string, unknown>) => {
+    const sourceSurvey: Record<string, unknown> = { ...mockExistingSurveyDetails, ...columns };
+    vi.mocked(prisma.survey.findUnique).mockImplementation((({ select }: { select: object }) =>
+      Promise.resolve(
+        Object.fromEntries(Object.keys(select).map((column) => [column, sourceSurvey[column]]))
+      )) as never);
+  };
+
   test("carries the source survey's behaviour and security settings onto the copy", async () => {
     const configuredSettings = {
       pin: "1234",
@@ -366,17 +376,7 @@ describe("copySurveyToOtherWorkspace", () => {
       customHeadScriptsMode: "replace",
       inlineTriggers: { codeConfig: { identifier: "inline" } },
     };
-    // Return only what the query asks for, the way Prisma does. Resolving the whole survey
-    // regardless of the `select` would make this test pass even when the settings are not read,
-    // which is precisely the bug.
-    const sourceSurvey: Record<string, unknown> = {
-      ...mockExistingSurveyDetails,
-      ...configuredSettings,
-    };
-    vi.mocked(prisma.survey.findUnique).mockImplementation((({ select }: { select: object }) =>
-      Promise.resolve(
-        Object.fromEntries(Object.keys(select).map((column) => [column, sourceSurvey[column]]))
-      )) as never);
+    mockSourceSurvey(configuredSettings);
 
     await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, sourceWorkspaceId, userId);
 
@@ -385,15 +385,33 @@ describe("copySurveyToOtherWorkspace", () => {
     );
   });
 
-  test("does not read the scheduling dates, so the copy cannot inherit them", async () => {
-    // The scheduler closes an `inProgress` survey whose `closeOn` has passed. A copy that inherited
-    // a date already in the past would complete itself on the first tick after the user publishes
-    // it. Not selecting the dates is what keeps them off the copy, so that is what is asserted.
+  test("does not carry the scheduling dates onto the copy", async () => {
+    // The scheduler closes an `inProgress` survey whose `closeOn` has passed, so a copy that
+    // inherited a past date would complete itself on the first tick after the user publishes it.
+    mockSourceSurvey({ publishOn: new Date("2020-01-01"), closeOn: new Date("2020-02-01") });
+
     await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, sourceWorkspaceId, userId);
 
-    const { select } = vi.mocked(prisma.survey.findUnique).mock.calls[0][0];
-    expect(select).not.toHaveProperty("publishOn");
-    expect(select).not.toHaveProperty("closeOn");
+    const { data } = vi.mocked(prisma.survey.create).mock.calls[0][0];
+    expect(data).not.toHaveProperty("publishOn");
+    expect(data).not.toHaveProperty("closeOn");
+  });
+
+  test("keeps head scripts on a copy to another workspace, but adds them to the target's own", async () => {
+    // "replace" would switch off the target workspace's head scripts on the copy. A same-workspace
+    // duplicate keeps "replace"; the settings test above covers that.
+    mockSourceSurvey({ customHeadScripts: "<script>analytics()</script>", customHeadScriptsMode: "replace" });
+
+    await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId);
+
+    expect(prisma.survey.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          customHeadScripts: "<script>analytics()</script>",
+          customHeadScriptsMode: "add",
+        }),
+      })
+    );
   });
 
   test("accounts for every Survey column, so a new one cannot be dropped silently", async () => {
@@ -408,6 +426,7 @@ describe("copySurveyToOtherWorkspace", () => {
       "updatedAt",
       "workspaceId",
       "createdBy",
+      // Not reset: the copy reconnects or recreates the segment through the `segment` relation.
       "segmentId",
       // Lifecycle: every copy starts as an unpublished, unarchived draft with its own link.
       "status",
