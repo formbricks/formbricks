@@ -78,10 +78,10 @@ A field also carries a **type** that decides how its value is read back and comp
 - **Reserved fields** are typed by Formbricks, and several of them are genuinely numeric: `viewportWidth < 768` is a numeric comparison in logic, not a comparison of digit strings.
 
 <Note>
-  A field's type, its default, and the **lock** that stops anything outside the survey writing it are all set
-  in the field's own dialog, on a survey field and a [library field](/surveys/embedded-data/library) alike.
-  A locked field ignores whatever a URL param or the SDK sends and uses its default instead, which is how
-  you fix a value nobody outside can change.
+  A field's type and default are set in its own dialog, on a survey field and a
+  [library field](/surveys/embedded-data/library) alike. A **passed-in** field also has a **lock** there: a
+  locked field ignores whatever a URL param or the SDK sends and uses its default instead, which is how you
+  fix a value nobody outside can change. A calculated field has no lock: only the survey's own logic writes it.
 </Note>
 
 ## What Happens to an Incoming Value
