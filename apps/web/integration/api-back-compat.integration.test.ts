@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
-import { toDesiredEmbeddedFields } from "@formbricks/types/embedded-data-mapping";
-import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
+import {
+  embeddedFieldsFromLegacyInput,
+  toDesiredEmbeddedFields,
+} from "@formbricks/types/embedded-data-mapping";
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import {
   V3SurveyArchivedError,
@@ -19,13 +21,11 @@ import { transformPrismaSurvey } from "@/lib/survey/utils";
  *
  * Two things only a real database can show, and neither is covered anywhere else:
  *
- * 1. **What v1 and v2 keep serving.** `transformPrismaSurvey` swaps the row relation for
- *    `embeddedFields` and deliberately does NOT touch `hiddenFields` / `variables`, so both legacy
- *    APIs hand back the legacy JSON columns verbatim. Their *shape* therefore cannot regress — what
- *    can is the columns and the rows drifting apart, at which point v1 and v2 describe a survey the
- *    app itself no longer agrees with. Every write path is supposed to move both together in one
- *    transaction; these tests are what makes that a checked property rather than a convention. It is
- *    also the exact guarantee ENG-2404 needs before it can drop the columns.
+ * 1. **What v1 and v2 keep serving.** ENG-2404 dropped the `hiddenFields` / `variables` columns, so
+ *    `transformPrismaSurvey` derives both from the rows it inlines as `embeddedFields`. What can
+ *    regress is the *shape* of that projection and whether it still describes the stored rows — at
+ *    which point v1 and v2 would describe a survey the app itself no longer agrees with. These tests
+ *    are what makes that a checked property rather than a convention.
  *
  * 2. **Which names a write may newly declare (ENG-1839).** The guard is grandfathered, so its
  *    behaviour depends on what the survey already holds — which means a fixture with real stored rows
@@ -68,15 +68,17 @@ const seedSurvey = async (legacy?: {
       status: "draft",
       workspaceId: workspace.id,
       blocks: BLOCKS,
-      variables: (legacy?.variables ?? []) as never,
-      hiddenFields: (legacy?.hiddenFields ?? { enabled: false }) as never,
     },
-    select: selectSurvey,
+    select: { id: true },
   });
 
-  // Mirror the state every stored survey is in: rows reconciled from the columns it was saved with.
+  // The survey's fields exist only as rows (ENG-2404): write them the way a legacy save would.
   await prisma.$transaction((tx) =>
-    reconcileEmbeddedData(tx, { surveyId: survey.id, workspaceId: workspace.id, patch: survey })
+    reconcileEmbeddedData(tx, {
+      surveyId: survey.id,
+      workspaceId: workspace.id,
+      patch: { variables: legacy?.variables as never, hiddenFields: legacy?.hiddenFields },
+    })
   );
 
   // Read back AFTER the reconcile, because `survey` above predates the rows. Both write boundaries
@@ -87,10 +89,9 @@ const seedSurvey = async (legacy?: {
 };
 
 /**
- * The survey as `GET /api/v1/management/surveys/{id}` and the v2 equivalent serve it. Both select
- * `hiddenFields` and `variables` (service.ts `selectSurvey`; v2's own
- * `modules/api/v2/management/surveys/types/surveys.ts`) and both hand the survey through
- * `transformPrismaSurvey`, so this is the payload an integration written before V1 parses.
+ * The survey as `GET /api/v1/management/surveys/{id}` and the v2 equivalent serve it. Both read
+ * through `selectSurvey`, whose Embedded Data join `transformPrismaSurvey` derives `hiddenFields` and
+ * `variables` from, so this is the payload an integration written before V1 parses.
  */
 const readAsLegacyApi = async (surveyId: string): Promise<TSurvey> =>
   prisma.survey
@@ -122,8 +123,8 @@ const readRows = async (surveyId: string) =>
     .then((links) => links.map(({ storageKey, embeddedData }) => ({ storageKey, ...embeddedData })));
 
 /**
- * The assertion that catches drift: what the legacy columns say, turned into rows, must equal the
- * rows actually stored. A write that moved one without the other fails here.
+ * The assertion that catches drift: what the served legacy keys say, turned into rows, must equal the
+ * rows actually stored. A projection that stopped describing the rows fails here.
  */
 const expectNoDrift = async (surveyId: string) => {
   const served = await readAsLegacyApi(surveyId);
@@ -205,7 +206,7 @@ describe("what v1 and v2 keep serving for a survey with Embedded Data", () => {
     expect(served).not.toHaveProperty("embeddedDataLinks");
   });
 
-  test("what the columns say and what the rows hold agree after a seed", async () => {
+  test("what v1 serves and what the rows hold agree after a seed", async () => {
     const survey = await seedSurvey({
       variables: [{ id: VARIABLE_ID, name: "score", type: "number", value: 7 }],
       hiddenFields: { enabled: true, fieldIds: ["plan"] },
@@ -214,7 +215,7 @@ describe("what v1 and v2 keep serving for a survey with Embedded Data", () => {
     await expectNoDrift(survey.id);
   });
 
-  test("a v3 patch moves the columns and the rows together, so v1 never goes stale", async () => {
+  test("a v3 patch moves the rows, and v1 serves what it moved", async () => {
     const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["plan"] } });
 
     await patchV3Survey(
@@ -243,15 +244,15 @@ describe("what v1 and v2 keep serving for a survey with Embedded Data", () => {
   });
 
   test("deriving the legacy shape back off the rows reproduces what v1 serves", async () => {
-    // The round trip ENG-2404 depends on: once the columns are gone, this derivation is what has to
-    // stand in for them, so it must already agree with them today.
+    // The round trip ENG-2404 depends on: the columns are gone, so the served legacy shape and the
+    // input adapter have to describe the same fields at the same addresses.
     const survey = await seedSurvey({
       variables: [{ id: VARIABLE_ID, name: "score", type: "number", value: 7 }],
       hiddenFields: { enabled: true, fieldIds: ["plan"] },
     });
 
     const served = await readAsLegacyApi(survey.id);
-    const derived = deriveLegacyEmbeddedData({
+    const derived = embeddedFieldsFromLegacyInput({
       variables: served.variables,
       hiddenFields: served.hiddenFields,
     });
@@ -580,7 +581,7 @@ describe("grandfathering at the v1 / v2 write boundary (updateSurvey)", () => {
 /**
  * ENG-3228 made `embeddedFields` accepted input on the survey write path. One row per legacy write
  * route, proving that a payload which does not carry it writes exactly what it always wrote — the
- * columns decide, and the rows follow them.
+ * legacy keys decide the rows, and v1 serves them back in the same shape.
  *
  * The fourth route, the duplicate, needs two workspaces and two libraries to say anything
  * interesting, so its rows live in embedded-data-reconcile.integration.test.ts beside the shared-link

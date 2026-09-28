@@ -22,7 +22,7 @@ import {
   validateEmbeddedFieldDeclaredName,
 } from "./embedded-fields";
 
-/** The legacy entry a computed field is dual-written as — the shape `ZSurveyVariable` judges. */
+/** The legacy entry a computed field is derived into — the shape `ZSurveyVariable` judges. */
 const toLegacyVariable = (storageKey: string) => ({
   id: storageKey,
   name: "plan_tier",
@@ -91,11 +91,11 @@ describe("mintStorageKey", () => {
     expect(mintStorageKey("computed", "score")).not.toBe(first);
   });
 
-  test("a computed field's id is a cuid2, which the legacy variables column requires", () => {
+  test("a computed field's id is a cuid2, which the legacy variables projection requires", () => {
     // Not cosmetic, and the reason the create form offers an ID input for a passed-in field only:
-    // the rows are dual-written to `survey.variables` until ENG-2404 retires that column, and
-    // `ZSurveyVariable` pins each entry's `id` to `z.cuid2()`. An author-written address would be
-    // refused on save with "Invalid cuid2", pointing at no control.
+    // every read derives the rows into `survey.variables` (ENG-2404), and `ZSurveyVariable` pins each
+    // entry's `id` to `z.cuid2()`. An author-written address would be refused on save with "Invalid
+    // cuid2", pointing at no control.
     expect(() =>
       ZSurveyVariable.parse(toLegacyVariable(mintStorageKey("computed", "Plan tier")))
     ).not.toThrow();
@@ -348,18 +348,19 @@ describe("isPromotableEmbeddedField", () => {
 });
 
 /**
- * The property the whole refactor rests on: what the card builds derives back into the legacy columns
- * the editor used to write by hand. `enabled` is the server's, taken from the stored survey and only
- * ever turned on, so it is passed in here the way `updateSurveyInternal` passes it.
+ * The property the whole refactor rests on: what the card builds derives back into the legacy shape
+ * the editor used to write by hand — the projection the read seam hands SDK bundles and API
+ * consumers (ENG-2404). `enabled` has no storage of its own: it is on exactly when there is an
+ * ingested field.
  */
-describe("the columns the server derives back from a card-built list", () => {
+describe("the legacy shape the server derives back from a card-built list", () => {
   test("round-trips a calculated and a passed-in field", () => {
     const fields = upsertEmbeddedField(
       [computed("cuid_var", { name: "score", dataType: "number", defaultValue: 5 })],
       ingested("source_page")
     );
 
-    expect(toLegacyEmbeddedFields(linkedToDesiredEmbeddedFields(fields), { enabled: false })).toEqual({
+    expect(toLegacyEmbeddedFields(linkedToDesiredEmbeddedFields(fields))).toEqual({
       variables: [{ id: "cuid_var", name: "score", type: "number", value: 5 }],
       hiddenFields: { enabled: true, fieldIds: ["source_page"] },
     });
@@ -370,18 +371,19 @@ describe("the columns the server derives back from a card-built list", () => {
   test("derives a linked library field under its key", () => {
     const fields = [toSharedEntry(sharedRow({ source: "computed" }), "cuid_var")];
 
-    expect(toLegacyEmbeddedFields(linkedToDesiredEmbeddedFields(fields), { enabled: false })).toEqual({
+    expect(toLegacyEmbeddedFields(linkedToDesiredEmbeddedFields(fields))).toEqual({
       variables: [{ id: "cuid_var", name: "plan_tier", type: "text", value: "" }],
       hiddenFields: { enabled: false, fieldIds: [] },
     });
   });
 
-  test("leaves `enabled` on when the last ingested field is removed", () => {
+  test("turns `enabled` off when the last ingested field is removed", () => {
     const fields = removeEmbeddedField([ingested("source_page")], "ingested", "source_page");
 
-    expect(
-      toLegacyEmbeddedFields(linkedToDesiredEmbeddedFields(fields), { enabled: true, fieldIds: [] })
-    ).toEqual({ variables: [], hiddenFields: { enabled: true, fieldIds: [] } });
+    expect(toLegacyEmbeddedFields(linkedToDesiredEmbeddedFields(fields))).toEqual({
+      variables: [],
+      hiddenFields: { enabled: false, fieldIds: [] },
+    });
   });
 });
 

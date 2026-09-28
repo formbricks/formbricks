@@ -247,8 +247,8 @@ export type TSurveyEmbeddedData = z.infer<typeof ZSurveyEmbeddedData>;
  * what marks it shared in the first place. Both are the same exposure class as the survey and
  * segment ids that already ship in these payloads.
  *
- * `id` is optional because the pairs {@link deriveLegacyEmbeddedData} synthesizes from a survey's
- * legacy columns describe no stored row and have no id to give. `key` is not: a row always knows
+ * `id` is optional because the pairs `embeddedFieldsFromLegacyInput` builds from legacy input
+ * describe no stored row and have no id to give. `key` is not: a row always knows
  * whether it is in the library, and a local one is `null`.
  *
  * Deliberately a plain string rather than {@link ZEmbeddedData}'s `key`, which refuses reserved and

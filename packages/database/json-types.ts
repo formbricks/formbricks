@@ -25,14 +25,12 @@ import type { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/
 import {
   type TSurveyClosedMessage,
   type TSurveyEnding,
-  type TSurveyHiddenFields,
   type TSurveyInlineTriggers,
   type TSurveyMetadata,
   type TSurveyQuestions,
   type TSurveyRecaptcha,
   type TSurveySingleUse,
   type TSurveyStyling,
-  type TSurveyVariables,
   type TSurveyWelcomeCard,
   type TSurveyWorkspaceOverwrites,
 } from "@formbricks/types/surveys/types";
@@ -63,8 +61,6 @@ declare global {
     export type SurveyQuestions = TSurveyQuestions;
     export type SurveyBlocks = TSurveyBlock;
     export type SurveyEnding = TSurveyEnding;
-    export type SurveyHiddenFields = TSurveyHiddenFields;
-    export type SurveyVariables = TSurveyVariables;
     export type SurveyInlineTriggers = TSurveyInlineTriggers;
     export type SurveyWorkspaceOverwrites = TSurveyWorkspaceOverwrites;
     export type SurveyStyling = TSurveyStyling;

@@ -216,10 +216,8 @@ const mockExistingSurveyDetails = {
   ],
   questions: [],
   endings: [{ type: "default", headline: { default: "Thanks!" } }],
-  variables: [{ id: "var1", name: "Var One" }],
-  hiddenFields: { enabled: true, fieldIds: ["hf1"] },
-  // ENG-3228: the copy plans its Embedded Data off the source's ROWS, so this relation — not the two
-  // columns above — is what decides which fields the duplicate gets and who owns each one.
+  // ENG-3228: the copy plans its Embedded Data off the source's ROWS, so this relation is what
+  // decides which fields the duplicate gets and who owns each one — since ENG-2404 it is all there is.
   embeddedDataLinks: [
     {
       storageKey: "var_cuid",
@@ -297,10 +295,6 @@ describe("copySurveyToOtherWorkspace", () => {
   const mockNewSurveyResult = {
     id: "new_cuid2_id",
     workspaceId: targetWorkspaceId,
-    // The copy carries the source survey's Embedded Data, which the reconcile re-creates for the new
-    // survey (ENG-1978).
-    variables: [{ id: "var_cuid", name: "score", type: "number", value: 0 }],
-    hiddenFields: { enabled: true, fieldIds: ["plan"] },
     segment: null,
     triggers: [
       { actionClass: { id: "new_ac1", name: "Code Action", workspaceId: targetWorkspaceId } },
@@ -409,24 +403,36 @@ describe("copySurveyToOtherWorkspace", () => {
     ]);
   });
 
-  test("copies a backfill-skipped survey's fields from its legacy columns", async () => {
-    // The backfill skips a survey whose legacy columns it cannot map, and that survey keeps
-    // resolving from them until its next save. Planning the copy off its empty relation would give
-    // the duplicate no fields at all — the columns answer for it instead.
+  test("never writes the dropped legacy columns, and returns the legacy keys derived from the plan", async () => {
+    // ENG-2404: `Survey` has no `variables` / `hiddenFields` column. The result still carries both
+    // (it is the audit log's `newObject`), derived from the plan the rows were written from.
+    const newSurvey = await copySurveyToOtherWorkspace(
+      sourceWorkspaceId,
+      surveyId,
+      targetWorkspaceId,
+      userId
+    );
+
+    const [[createArgs]] = vi.mocked(prisma.survey.create).mock.calls;
+    expect(createArgs.data).not.toHaveProperty("variables");
+    expect(createArgs.data).not.toHaveProperty("hiddenFields");
+    expect(createArgs.select).not.toHaveProperty("variables");
+    expect(newSurvey.variables).toEqual([{ id: "var_cuid", name: "score", type: "number", value: 0 }]);
+    expect(newSurvey.hiddenFields).toEqual({ enabled: true, fieldIds: ["plan"] });
+  });
+
+  test("a source with no rows copies no fields — zero rows is zero fields", async () => {
+    // The zero-row fallback to the legacy columns went with the columns (ENG-2404): the migration
+    // that dropped them gave every survey still without links its rows first.
     vi.mocked(prisma.survey.findUnique).mockResolvedValue({
       ...mockExistingSurveyDetails,
-      variables: [{ id: "var1", name: "Var One", type: "text", value: "" }],
-      hiddenFields: { enabled: true, fieldIds: ["hf1"] },
       embeddedDataLinks: [],
     } as any);
 
     await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId);
 
-    const links = vi
-      .mocked(prisma.surveyEmbeddedData.create)
-      .mock.calls.map(([args]) => (args as { data: { storageKey: string } }).data.storageKey);
-
-    expect(links).toEqual(["var1", "hf1"]);
+    expect(prisma.surveyEmbeddedData.create).not.toHaveBeenCalled();
+    expect(prisma.embeddedData.create).not.toHaveBeenCalled();
   });
 
   describe("a shared field, on copy (ENG-3228)", () => {

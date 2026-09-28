@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
+import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
@@ -132,7 +132,7 @@ describe("Survey Logic", () => {
     // ENG-2412: the rows are the only thing the resolver reads now, and a survey reaching the
     // renderer always carries them inlined from the payload. A fixture with the legacy columns
     // alone describes a survey nothing would resolve fields for.
-    embeddedFields: deriveLegacyEmbeddedData({
+    embeddedFields: embeddedFieldsFromLegacyInput({
       variables: mockVariables,
       hiddenFields: { enabled: true, fieldIds: ["fieldId1"] },
     }),

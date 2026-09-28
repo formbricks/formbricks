@@ -33,8 +33,6 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
         questions: true,
         blocks: true,
         endings: true,
-        hiddenFields: true,
-        variables: true,
         displayOption: true,
         recontactDays: true,
         displayLimit: true,
@@ -120,7 +118,8 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
         },
         followUps: true,
 
-        // ENG-1837: the definitions the renderer's recall and logic engines resolve through.
+        // ENG-1837: the definitions the renderer's recall and logic engines resolve through, and
+        // (ENG-2404) what the legacy `variables` / `hiddenFields` keys are derived from.
         embeddedDataLinks: selectPublicSurveyEmbeddedDataLinks,
       },
     });

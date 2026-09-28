@@ -1,6 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
-import { type TDesiredEmbeddedField } from "@formbricks/types/embedded-data-mapping";
-import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
+import {
+  type TDesiredEmbeddedField,
+  embeddedFieldsFromLegacyInput,
+} from "@formbricks/types/embedded-data-mapping";
 import {
   type TCurrentEmbeddedField,
   assertLinkableEmbeddedFields,
@@ -168,9 +170,9 @@ describe("resolveDesiredEmbeddedFields", () => {
         hiddenFields: { enabled: true, fieldIds: ["plan", "Brand-Name"] },
       };
 
-      expect(resolveDesiredEmbeddedFields([], { embeddedFields: deriveLegacyEmbeddedData(legacy) })).toEqual(
-        resolveDesiredEmbeddedFields([], legacy)
-      );
+      expect(
+        resolveDesiredEmbeddedFields([], { embeddedFields: embeddedFieldsFromLegacyInput(legacy) })
+      ).toEqual(resolveDesiredEmbeddedFields([], legacy));
     });
   });
 

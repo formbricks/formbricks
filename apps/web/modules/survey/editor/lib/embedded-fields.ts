@@ -2,10 +2,10 @@
  * The editor's Embedded Data state, as rows (ENG-2628, ENG-1851).
  *
  * `localSurvey.embeddedFields` is what the Embedded Data card edits, and what every editor reader
- * resolves through — the legacy `variables` / `hiddenFields` columns are forwarded untouched from
- * mount state at the save boundary and re-derived server-side from these rows
- * (`toLegacyEmbeddedFields`). That is what removes the stale-projection problem the editor had while
- * the Variables and Hidden Fields cards owned the columns: there is one description of a survey's
+ * resolves through — the legacy `variables` / `hiddenFields` keys are forwarded untouched from
+ * mount state at the save boundary, ignored by the write, and re-derived from the stored rows on the
+ * next read (`toLegacyEmbeddedFields`). That is what removes the stale-projection problem the editor
+ * had while the Variables and Hidden Fields cards owned them: there is one description of a survey's
  * fields in the working copy, so a reader can no longer disagree with the card that just changed it.
  *
  * Every function here is a pure list transform. The card holds the list on `localSurvey` and hands
@@ -13,7 +13,7 @@
  *
  * **Position is the order the author sees and the order that is stored.** A new field is appended,
  * an edited one keeps its place, and the reconcile writes `order` from this array's index — so the
- * card, the derived legacy columns and the stored rows all agree without anyone sorting anything.
+ * card, the derived legacy projection and the stored rows all agree without anyone sorting anything.
  *
  * **Nothing here restates a validation rule.** Names go through `validateId`, cross-namespace
  * clashes through `validateNewDeclaredFields` — the same functions the server runs — and the row
@@ -70,7 +70,7 @@ export type TLinkableSharedField = Pick<
  * One library row as the entry a survey links it with.
  *
  * The definition columns are copied rather than referenced: they are what the card renders and what
- * the legacy columns are derived from, and the reconcile ignores every one of them for a shared
+ * the legacy keys are derived from, and the reconcile ignores every one of them for a shared
  * entry — a shared definition is workspace-owned, so a survey can link it, reorder it and unlink it
  * but never write to it. `key` is what says the entry is shared, and `id` names the row.
  *
@@ -182,7 +182,7 @@ export const removeEmbeddedField = (
  * The name one entry occupies in the survey's recall and logic namespace.
  *
  * Mirrors `declaredEntryName` in the server's guard, and for the same reason: a computed field is
- * addressed by its name (a shared one by its library key, the spelling the derived legacy column
+ * addressed by its name (a shared one by its library key, the spelling the derived legacy variable
  * carries), an ingested field by the storage key its value arrives under.
  */
 export const declaredEmbeddedFieldName = ({ field, link }: TLinkedEmbeddedField): string =>

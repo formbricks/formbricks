@@ -1,7 +1,6 @@
 import { z } from "zod";
 import type { TContactAttributeKey } from "./contact-attribute-key";
 import type { TEmbeddedData, TEmbeddedDataType, TSurveyEmbeddedData } from "./embedded-data";
-import { type TLegacyEmbeddedFields, toDesiredEmbeddedFields } from "./embedded-data-mapping";
 import type { TI18nString } from "./i18n";
 import type { TResponse, TResponseData, TResponseVariables } from "./responses";
 import { formatFieldNameToTitleCase } from "./safe-identifier";
@@ -567,14 +566,14 @@ export type TEmbeddedValueRef =
 
 /**
  * A stored field definition paired with the survey link that addresses it — the unit
- * {@link listReadableFields} enumerates and {@link deriveLegacyEmbeddedData} synthesizes. The pair
+ * {@link listReadableFields} enumerates and `embeddedFieldsFromLegacyInput` synthesizes. The pair
  * is assignable to {@link TEmbeddedValueRef}, so whatever a caller lists it can also resolve,
  * without repackaging.
  *
  * `key` and `id` are what make the pair writable as well as readable (ENG-3228): the survey write
  * path takes these same pairs back, and `key !== null` is how an entry says it links a shared
- * library row rather than one the survey owns. `id` is optional because a pair derived from the
- * legacy columns describes no stored row. Mirrored by `ZLinkedEmbeddedField` (embedded-data.ts),
+ * library row rather than one the survey owns. `id` is optional because a pair built from legacy
+ * input describes no stored row. Mirrored by `ZLinkedEmbeddedField` (embedded-data.ts),
  * which carries the reasoning for what is and is not in this shape.
  */
 export interface TLinkedEmbeddedField {
@@ -1060,7 +1059,7 @@ export const dropShadowedReservedEntries = (
  * call site, where it is visible. Every caller now passes {@link getSurveyEmbeddedFields} — the
  * editor included, since ENG-2628 made its working copy rows-native — and the one remaining reason
  * to pass anything else is a survey that has never been written and therefore has no rows at all
- * (see {@link getDeclaredEmbeddedFields}).
+ * (see `embeddedFieldsFromLegacyInput`).
  *
  * What is *not* the caller's choice is which kinds count. All three do, and the doc for
  * {@link dropShadowedReservedEntries} says why element ids are the easy one to forget.
@@ -1137,7 +1136,7 @@ export interface TReadableFields {
  * Inputs are explicit: the field/link pairs don't live on `TSurvey` until ENG-1837 inlines them,
  * contact attribute keys are workspace-level, the reserved catalog is code — and `blocks`, which
  * does live on `TSurvey`, is taken alone so the function needs no survey object. Passing them in
- * keeps this pure and lets legacy surveys participate via {@link deriveLegacyEmbeddedData}.
+ * keeps this pure and lets a never-written survey participate via `embeddedFieldsFromLegacyInput`.
  */
 export interface TListReadableFieldsInput {
   /** The survey's blocks — elements live here (the legacy `questions` model is not enumerated). */
@@ -1228,56 +1227,29 @@ export const listReadableFields = (input: TListReadableFieldsInput): TReadableFi
 };
 
 /**
- * Maps a survey's legacy declarations (`variables`, `hiddenFields.fieldIds`) into the same
- * field/link pairs the resolver and enumerator consume — the pure-function fallback that lets
- * ENG-1837 serve surveys whose rows haven't been backfilled (migration spec §8), with no fetch
- * logic here.
- *
- * The §8 rules live in `toDesiredEmbeddedFields`, shared with ENG-1978's write bridge and ENG-1835's
- * backfill; this only reshapes them into `{field, link}` pairs. `locked: false` and `key: null` come
- * from that mapping — neither has a legacy equivalent, and a column-derived field is local and
- * unlocked by construction.
- *
- * `hiddenFields.enabled` is deliberately ignored: recall and logic consult `fieldIds` alone today,
- * and ingestion is split on the flag — the js-core SDK drops hidden fields when disabled, while the
- * link-survey URL path fills them regardless (`getHiddenFieldsFromSearchParams` receives only
- * `fieldIds`). Deriving from `fieldIds` alone therefore preserves today's read behavior exactly:
- * whatever either path stored still resolves, and what nothing stored reports as unset.
- */
-export const deriveLegacyEmbeddedData = (survey: TLegacyEmbeddedFields): TLinkedEmbeddedField[] =>
-  toDesiredEmbeddedFields(survey).map(({ storageKey, embeddedDataId: _embeddedDataId, ...field }) => ({
-    field,
-    link: { storageKey },
-  }));
-
-/**
  * The survey slice {@link getSurveyEmbeddedFields} needs. Deliberately looser than `TSurvey`: the
  * readers this serves hold everything from a full survey to a four-key `Pick`, and every one of them
  * must be able to call the accessor without widening its own select.
  */
-export interface TEmbeddedFieldsSurvey extends TLegacyEmbeddedFields {
+export interface TEmbeddedFieldsSurvey {
   /** The rows, joined and inlined at load. Absent when the select omitted the join. */
   embeddedFields?: TLinkedEmbeddedField[] | null;
 }
 
 /**
- * **Where a saved survey's Embedded Data definitions come from.** Every reader — recall, logic,
- * export columns, response filters, response tables, emails, integrations, and since ENG-2628 the
- * editor's own cards and pickers — calls this and nothing else. Its counterpart is
- * {@link getDeclaredEmbeddedFields}, which answers for surveys that were never written; between the two, no
- * reader may call {@link deriveLegacyEmbeddedData} directly, which is what keeps "exactly two named
- * decisions, and no third" a property a reviewer can check with grep.
+ * **Where a survey's Embedded Data definitions come from.** Every reader — recall, logic, export
+ * columns, response filters, response tables, emails, integrations, the editor's own cards and
+ * pickers, and the preview — calls this and nothing else.
  *
- * **The rows are the whole answer** (ENG-2412). This used to fall back to the legacy columns for a
- * survey with no rows, which is why deleting a survey's rows made its fields reappear rather than
- * disappear. The write path now writes the rows from the payload, so a survey with no rows is a
- * survey with no fields, and that is what this reports.
+ * **The rows are the whole answer** (ENG-2412, ENG-2404). A survey with no rows is a survey with no
+ * fields. The legacy `variables` / `hiddenFields` a survey still carries are derived *from* these
+ * rows at the read seam, so there is nothing else to consult; a survey that has never been written
+ * (a template in the gallery) is given `embeddedFields` where it is built, by
+ * `embeddedFieldsFromLegacyInput`.
  *
  * **Every survey select that reaches a reader must therefore carry the join** —
  * `selectSurveyEmbeddedDataLinks`, inlined by `transformPrismaSurvey`. A select that omits it yields
- * `undefined` here and the survey reads as having no fields at all. Audited when the fallback was
- * removed: every reader gets its survey through `selectSurvey` or a select that embeds the same
- * constant.
+ * `undefined` here and the survey reads as having no fields at all.
  *
  * This is a *definition* lookup only. ENG-1837 repoints where a field's name, source and dataType
  * come from; it deliberately does not repoint value arithmetic onto {@link resolveEmbeddedValue},
@@ -1342,34 +1314,3 @@ export const projectIngestedDefaults = (
 
   return defaults;
 };
-
-/**
- * **What a survey declares right now, ignoring what is stored.** The counterpart to
- * {@link getSurveyEmbeddedFields}; between the two, no caller needs
- * {@link deriveLegacyEmbeddedData} directly, so "which of two named decisions does this reader
- * make" stays a property a reviewer can check with grep.
- *
- * **One caller is left, and it is not the editor** (ENG-2628). The editor's working copy used to be
- * the legacy columns, so every editor surface derived from them to see a card edit before the next
- * save; now the cards edit `embeddedFields` itself and every one of those surfaces reads the rows
- * like everybody else. Recall labelling went with them, for the same reason: the picker that writes
- * `@label` into the text and the resolver that reads it back share one list again.
- *
- * What remains is the **preview of a survey that has never been written** — the templates gallery
- * renders a preset merged into `getMinimalSurvey()`, which carries no `embeddedFields` key at all.
- * Nothing has reconciled rows for it, so `PreviewSurvey` falls back to this to give it recall and
- * logic operands. (`template-container.tsx` and the editor are the only two `PreviewSurvey` call
- * sites; the editor's survey comes through `selectSurvey` and takes the rows.) A survey that
- * HAS been written never needs it: every write path that persists those columns calls
- * `reconcileEmbeddedData` in the same transaction with the same payload it wrote them from
- * (ENG-2412 moved that call onto the payload; before it, onto the row just written). There are
- * exactly four: `updateSurveyInternal` and `createSurvey` (apps/web/lib/survey/service.ts), the copy
- * flow (modules/survey/list/lib/survey.ts) and the v3 patch (app/api/v3/surveys/patch.ts) — a
- * `reconcileEmbeddedData(` grep is the audit, and a fifth write that skips it would reintroduce the
- * divergence.
- */
-// Takes the same survey slice as {@link getSurveyEmbeddedFields}, not the narrower legacy one, so a
-// caller holding a full survey can pass it and the "ignores the stored rows" contract is visible in
-// the signature rather than enforced by which keys happen to be omitted at the call site.
-export const getDeclaredEmbeddedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
-  deriveLegacyEmbeddedData(survey);

@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest";
 import * as xlsx from "xlsx";
 import { Prisma } from "@formbricks/database/prisma";
+import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
 import {
   type TEmbeddedValueResponse,
   type TLinkedEmbeddedField,
-  deriveLegacyEmbeddedData,
 } from "@formbricks/types/embedded-data-resolver";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseFilterCriteria, ZResponseFilterCriteria } from "@formbricks/types/responses";
@@ -35,7 +35,7 @@ import { RESERVED_FILTER_LOCATORS, buildWhereClause } from "./where-clause";
 // generic: inferring the type parameter from those uses made TypeScript demand the whole survey
 // shape from fixtures that are partial on purpose.
 const asRead = (survey: Partial<TSurvey>): TSurvey =>
-  ({ ...survey, embeddedFields: deriveLegacyEmbeddedData(survey) }) as unknown as TSurvey;
+  ({ ...survey, embeddedFields: embeddedFieldsFromLegacyInput(survey) }) as unknown as TSurvey;
 
 /** One stored ingested row whose display name need not match the key its value lives under. */
 const ingestedRow = (name: string, storageKey: string): TLinkedEmbeddedField => ({

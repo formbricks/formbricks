@@ -1,8 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
-import {
-  type TEmbeddedValueResponse,
-  deriveLegacyEmbeddedData,
-} from "@formbricks/types/embedded-data-resolver";
+import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
+import { type TEmbeddedValueResponse } from "@formbricks/types/embedded-data-resolver";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
@@ -100,7 +98,7 @@ describe("surveyLogic", () => {
     ],
     // The rows are the only thing `getSurveyEmbeddedFields` reads since ENG-2412, so a fixture that
     // declares a variable has to carry the matching row — that is what a real survey read returns.
-    embeddedFields: deriveLegacyEmbeddedData({
+    embeddedFields: embeddedFieldsFromLegacyInput({
       variables: [{ id: "v", name: "num", type: "number", value: 0 }],
     }),
     displayOption: "displayOnce",
@@ -895,7 +893,7 @@ describe("surveyLogic", () => {
       ],
       questions: [],
       variables: TWO_VARIABLES,
-      embeddedFields: deriveLegacyEmbeddedData({ variables: TWO_VARIABLES }),
+      embeddedFields: embeddedFieldsFromLegacyInput({ variables: TWO_VARIABLES }),
     };
 
     const data: TResponseData = {
@@ -1091,7 +1089,7 @@ describe("surveyLogic", () => {
       ],
       questions: [],
       variables: TWO_VARIABLES,
-      embeddedFields: deriveLegacyEmbeddedData({ variables: TWO_VARIABLES }),
+      embeddedFields: embeddedFieldsFromLegacyInput({ variables: TWO_VARIABLES }),
     };
 
     const vars: TResponseVariables = {
@@ -1186,7 +1184,7 @@ describe("surveyLogic", () => {
     const surveyWithVars: TJsWorkspaceStateSurvey = {
       ...mockSurvey,
       variables: TWO_VARIABLES,
-      embeddedFields: deriveLegacyEmbeddedData({ variables: TWO_VARIABLES }),
+      embeddedFields: embeddedFieldsFromLegacyInput({ variables: TWO_VARIABLES }),
     };
 
     const data: TResponseData = {

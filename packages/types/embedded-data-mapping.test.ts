@@ -326,36 +326,27 @@ describe("toLegacyEmbeddedFields", () => {
   });
 
   describe("hiddenFields.enabled", () => {
+    // ENG-2404: the flag has no storage any more, so it is derived — on exactly when the survey has
+    // an ingested field, which is what the stored flag said for every survey the product wrote.
     const plan = computed({ source: "ingested", storageKey: "plan", name: "plan", dataType: "string" });
 
-    test("turns on when the survey has its first ingested field", () => {
-      expect(toLegacyEmbeddedFields([plan], { enabled: false, fieldIds: [] }).hiddenFields.enabled).toBe(
-        true
-      );
+    test("is on when the survey has an ingested field", () => {
+      expect(toLegacyEmbeddedFields([plan]).hiddenFields).toEqual({ enabled: true, fieldIds: ["plan"] });
     });
 
-    test("stays on when every ingested field is removed", () => {
-      // It is a survey-level toggle rather than a property of any field, and the two ingest paths
-      // disagree about it — turning it off behind the author's back is not this function's call.
-      expect(toLegacyEmbeddedFields([], { enabled: true, fieldIds: ["plan"] }).hiddenFields).toEqual({
-        enabled: true,
-        fieldIds: [],
-      });
-    });
-
-    test("stays off for a survey with only computed fields and no previous value", () => {
+    test("is off for a survey with only computed fields", () => {
       expect(toLegacyEmbeddedFields([computed()]).hiddenFields).toEqual({ enabled: false, fieldIds: [] });
     });
   });
 
   test("round-trips toDesiredEmbeddedFields for local fields", () => {
-    // The property ENG-3228 rests on: a V2 payload that describes exactly what the columns describe
-    // has to derive back to those columns, or every save through the new carrier would rewrite them.
+    // What the read seam rests on (ENG-2404): a survey the backfill moved from legacy input into rows
+    // has to derive back to exactly that input, or its outbound payloads would change shape.
     const legacy = {
       variables: [numberVariable, textVariable],
       hiddenFields: { enabled: true, fieldIds: ["plan", "Brand-Name"] },
     };
 
-    expect(toLegacyEmbeddedFields(toDesiredEmbeddedFields(legacy), legacy.hiddenFields)).toEqual(legacy);
+    expect(toLegacyEmbeddedFields(toDesiredEmbeddedFields(legacy))).toEqual(legacy);
   });
 });

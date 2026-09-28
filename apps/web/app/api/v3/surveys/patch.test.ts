@@ -33,6 +33,7 @@ vi.mock("@formbricks/database", () => {
       findUnique: vi.fn(),
       findFirst: vi.fn(),
       update: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
     },
     segment: {
       update: vi.fn(),
@@ -207,6 +208,22 @@ type TLanguageUpsertReturn = ReturnType<typeof prisma.language.upsert>;
 type TSurveyUpdateArgs = Parameters<typeof prisma.survey.update>[0];
 type TSurveyUpdateReturn = ReturnType<typeof prisma.survey.update>;
 
+/**
+ * What the post-reconcile re-read returns: the stored survey with the last update's data applied. The
+ * update itself selects only the id — the re-read is what the route serializes.
+ */
+const readBackUpdatedSurvey = (data: TSurveyUpdateArgs["data"] | undefined) => ({
+  ...currentSurvey,
+  name: data?.name ?? currentSurvey.name,
+  status: data?.status ?? currentSurvey.status,
+  metadata: data?.metadata ?? currentSurvey.metadata,
+  welcomeCard: data?.welcomeCard ?? currentSurvey.welcomeCard,
+  blocks: data?.blocks ?? currentSurvey.blocks,
+  endings: data?.endings ?? currentSurvey.endings,
+  closeOn: data?.closeOn ?? currentSurvey.closeOn,
+  publishOn: data?.publishOn ?? currentSurvey.publishOn,
+});
+
 describe("patchV3Survey", () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -230,23 +247,13 @@ describe("patchV3Survey", () => {
         }) as TLanguageUpsertReturn;
       }
     );
-    vi.mocked(prisma.survey.update).mockImplementation((args: TSurveyUpdateArgs): TSurveyUpdateReturn => {
-      const data = args.data;
-
-      return Promise.resolve({
-        ...currentSurvey,
-        name: data.name ?? currentSurvey.name,
-        status: data.status ?? currentSurvey.status,
-        metadata: data.metadata ?? currentSurvey.metadata,
-        welcomeCard: data.welcomeCard ?? currentSurvey.welcomeCard,
-        blocks: data.blocks ?? currentSurvey.blocks,
-        endings: data.endings ?? currentSurvey.endings,
-        hiddenFields: data.hiddenFields ?? currentSurvey.hiddenFields,
-        variables: data.variables ?? currentSurvey.variables,
-        closeOn: data.closeOn ?? currentSurvey.closeOn,
-        publishOn: data.publishOn ?? currentSurvey.publishOn,
-      }) as unknown as TSurveyUpdateReturn;
-    });
+    vi.mocked(prisma.survey.update).mockImplementation(
+      (): TSurveyUpdateReturn => Promise.resolve({ id: currentSurvey.id }) as unknown as TSurveyUpdateReturn
+    );
+    vi.mocked(prisma.survey.findUniqueOrThrow).mockImplementation((() =>
+      Promise.resolve(
+        readBackUpdatedSurvey(vi.mocked(prisma.survey.update).mock.lastCall?.[0].data)
+      )) as unknown as typeof prisma.survey.findUniqueOrThrow);
     vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
     // ENG-1837: the patch reconciles the EmbeddedData rows in the same transaction as the survey
     // write, so the models that reconcile touches have to answer. Left as the real reconcile rather
@@ -303,9 +310,27 @@ describe("patchV3Survey", () => {
         data: expect.objectContaining({
           name: "Start from scratch (MCP QA test renamed)",
           metadata: currentSurvey.metadata,
-          hiddenFields: currentSurvey.hiddenFields,
         }),
       })
+    );
+  });
+
+  test("never writes the dropped legacy columns, and returns the survey read back after the reconcile", async () => {
+    // ENG-2404: `Survey` has no `variables` / `hiddenFields` column, so Prisma would refuse either
+    // key. They reach the database as rows, and the response is re-read after the reconcile so the
+    // projection derived from those rows describes the patched survey rather than the stored one.
+    await patchV3Survey(
+      currentSurvey,
+      { hiddenFields: { enabled: true, fieldIds: ["utm_source"] } },
+      "req_qa",
+      "org_1"
+    );
+
+    const [[updateArgs]] = vi.mocked(prisma.survey.update).mock.calls;
+    expect(updateArgs.data).not.toHaveProperty("variables");
+    expect(updateArgs.data).not.toHaveProperty("hiddenFields");
+    expect(vi.mocked(prisma.survey.findUniqueOrThrow).mock.invocationCallOrder[0]).toBeGreaterThan(
+      vi.mocked(prisma.surveyEmbeddedData.create).mock.invocationCallOrder[0]
     );
   });
 
@@ -439,9 +464,12 @@ describe("patchV3Survey", () => {
           metadata: {
             title: { default: "MCP QA title" },
           },
-          hiddenFields: { enabled: true, fieldIds: ["utm_source"] },
         }),
       })
+    );
+    // The hidden field has no column any more; it lands as a row.
+    expect(prisma.surveyEmbeddedData.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ storageKey: "utm_source" }) })
     );
   });
 
@@ -666,13 +694,9 @@ describe("patchV3Survey", () => {
         requestId: "req_1",
       });
 
-      // Nothing is renamed or dropped: the field is written back exactly as it was.
-      expect(prisma.survey.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            hiddenFields: { enabled: true, fieldIds: ["country"] },
-          }),
-        })
+      // Nothing is renamed or dropped: the field is written back exactly as it was, as a row.
+      expect(prisma.surveyEmbeddedData.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ storageKey: "country" }) })
       );
     });
 
@@ -999,7 +1023,10 @@ describe("patchV3Survey", () => {
       // Run the interactive transaction with a DISTINCT tx client so the assertions prove both writes
       // go through it (not the global prisma) — i.e. that the update really is transactional.
       const tx = {
-        survey: { update: vi.fn(vi.mocked(prisma.survey.update).getMockImplementation()) },
+        survey: {
+          update: vi.fn(vi.mocked(prisma.survey.update).getMockImplementation()),
+          findUniqueOrThrow: vi.fn(vi.mocked(prisma.survey.findUniqueOrThrow).getMockImplementation()),
+        },
         segment: { update: vi.fn() },
         // ENG-1837: the EmbeddedData reconcile is part of the same transaction, so it has to be
         // reachable on the tx client — and the assertions below prove it used that client.

@@ -852,7 +852,7 @@ describe("Tests for updateSurvey", () => {
     const updateWith = (embeddedFields: unknown[]) =>
       updateSurvey({ ...updateSurveyInput, embeddedFields } as never);
 
-    test("derives both legacy columns from the payload, ignoring the ones sent beside it", async () => {
+    test("writes the payload's fields as rows and never the dropped legacy columns", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
       prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
 
@@ -871,16 +871,19 @@ describe("Tests for updateSurvey", () => {
         },
       ]);
 
-      // The dual write continues, but the rows are what it is derived from: deployed SDK bundles
-      // still read these columns off the workspace-state payload.
-      const data = vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0].data as {
-        variables: unknown;
-        hiddenFields: unknown;
-      };
-      expect(data.variables).toEqual([
-        { id: "varscore0000000000000001", name: "score", type: "number", value: 3 },
-      ]);
-      expect(data.hiddenFields).toEqual({ enabled: true, fieldIds: ["plan"] });
+      // ENG-2404: `Survey` has no column for either key, so Prisma would refuse both. The rows are
+      // the only place the fields land — with everything the legacy shape could not carry.
+      const data = vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0].data;
+      expect(data).not.toHaveProperty("variables");
+      expect(data).not.toHaveProperty("hiddenFields");
+      expect(prisma.embeddedData.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ name: "plan", dataType: "number", defaultValue: 7, locked: true }),
+        })
+      );
+      expect(prisma.surveyEmbeddedData.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ storageKey: "varscore0000000000000001" }) })
+      );
     });
 
     test("refuses a payload whose derived columns would not load again", async () => {
@@ -975,18 +978,23 @@ describe("Tests for updateSurvey", () => {
       expect(prisma.segment.update).not.toHaveBeenCalled();
     });
 
-    test("leaves the legacy path alone when the payload does not carry the key", async () => {
+    test("a legacy payload without the key reaches the rows through the reconcile, not a column", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
       prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
 
-      await updateSurvey(updateSurveyInput);
+      await updateSurvey({
+        ...updateSurveyInput,
+        variables: [{ id: "clx000000000000000000001", name: "score", type: "number", value: 3 }],
+      });
 
-      const data = vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0].data as {
-        variables: unknown;
-        hiddenFields: unknown;
-      };
-      expect(data.variables).toEqual(updateSurveyInput.variables);
-      expect(data.hiddenFields).toEqual(updateSurveyInput.hiddenFields);
+      const data = vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0].data;
+      expect(data).not.toHaveProperty("variables");
+      expect(data).not.toHaveProperty("hiddenFields");
+      expect(prisma.embeddedData.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ name: "score", source: "computed", defaultValue: 3 }),
+        })
+      );
     });
   });
 
@@ -1039,9 +1047,10 @@ describe("Tests for updateSurvey", () => {
         )
       ).resolves.toBeDefined();
 
-      const updateArg = vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0];
-      // Nothing is renamed or dropped: the field is written back exactly as it was.
-      expect(updateArg?.data).toMatchObject({ hiddenFields: { enabled: true, fieldIds: ["country"] } });
+      // Nothing is renamed or dropped: the field is written back exactly as it was, as a row.
+      expect(prisma.surveyEmbeddedData.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ storageKey: "country" }) })
+      );
     });
 
     test("GRANDFATHER: a grandfathered survey may still not ADD a second reserved name", async () => {
@@ -1450,7 +1459,7 @@ describe("Tests for createSurvey", () => {
       ]);
     });
 
-    test("derives the legacy columns from an embeddedFields create payload", async () => {
+    test("writes an embeddedFields create payload as rows, never as columns or a nested write", async () => {
       // Both create schemas dropped their `embeddedFields` omission, so `POST /api/v1/management/surveys`
       // reaches this branch. Nothing else passed `embeddedFields` to `createSurvey`, so deleting the
       // derive — or reverting the parsed body to the unvalidated one — used to keep the suite green.
@@ -1491,19 +1500,22 @@ describe("Tests for createSurvey", () => {
 
       const createArg = prisma.survey.create.mock.calls[0][0] as { data: Record<string, unknown> };
 
-      // The rows are the whole answer; the columns are derived back off them (the dual write).
-      expect(createArg.data.hiddenFields).toMatchObject({ fieldIds: ["plan"] });
-      expect(createArg.data.variables).toEqual([
-        { id: "clx000000000000000000001", name: "score", type: "number", value: 0 },
-      ]);
+      // ENG-2404: the rows are the only place the fields land — `Survey` has no column for either
+      // legacy key, so Prisma would refuse both.
+      expect(createArg.data).not.toHaveProperty("hiddenFields");
+      expect(createArg.data).not.toHaveProperty("variables");
+      expect(
+        vi.mocked(prisma.surveyEmbeddedData.create).mock.calls.map(([args]) => args.data.storageKey)
+      ).toEqual(["plan", "clx000000000000000000001"]);
       // And never as a nested relation write: `Survey` owns `embeddedDataLinks`, so leaving the key
       // on the payload would turn it into one.
       expect(createArg.data).not.toHaveProperty("embeddedFields");
     });
 
-    test("a shared field's columns come from the library row on create, not from the payload", async () => {
-      // The create path derives the legacy columns before the transaction, so it has to resolve the
-      // link itself — `reconcileEmbeddedData` re-checks it inside, but the columns are built by then.
+    test("a shared field is checked against the library row on create, not the payload", async () => {
+      // The create path refuses an unstorable legacy projection before the transaction, so it has to
+      // resolve the link itself — `reconcileEmbeddedData` re-checks it inside, but by then a refusal
+      // would be a rolled-back create rather than a 400.
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       // Answers both calls: this path resolves the link before the transaction, and `reconcileEmbeddedData`
       // re-checks it inside.
@@ -1544,11 +1556,20 @@ describe("Tests for createSurvey", () => {
       } as never);
 
       const createArg = prisma.survey.create.mock.calls[0][0] as { data: Record<string, unknown> };
+      expect(createArg.data).not.toHaveProperty("variables");
 
-      // `legacyComputedName` takes the library key, `toLegacyVariable` the library type and default.
-      expect(createArg.data.variables).toEqual([
-        { id: "clx000000000000000000001", name: "plan_tier", type: "number", value: 7 },
-      ]);
+      // The link goes to the library row the payload named, and nothing about its definition is
+      // written back from the payload's made-up claims about it.
+      expect(prisma.surveyEmbeddedData.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            embeddedDataId: "clx000000000000000000009",
+            storageKey: "clx000000000000000000001",
+          }),
+        })
+      );
+      expect(prisma.embeddedData.create).not.toHaveBeenCalled();
+      expect(prisma.embeddedData.updateMany).not.toHaveBeenCalled();
     });
 
     test("strips archivedAt from a create payload so a caller can't create a pre-archived survey", async () => {

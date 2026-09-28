@@ -35,7 +35,10 @@ export interface TDesiredEmbeddedField {
   embeddedDataId?: string;
 }
 
-/** A survey's legacy Embedded Data, the only two places it lives before the tables exist. */
+/**
+ * A survey's Embedded Data in the legacy shape, as a write payload may still carry it (v1, v3, MCP,
+ * templates). Input only since ENG-2404 dropped the columns it was once stored in.
+ */
 export interface TLegacyEmbeddedFields {
   variables?: TSurveyVariable[] | null;
   hiddenFields?: TSurveyHiddenFields | null;
@@ -44,9 +47,11 @@ export interface TLegacyEmbeddedFields {
 /**
  * Translates a survey's legacy `variables` + `hiddenFields` into the fields it should have as rows.
  *
- * Shared by the two things that write those rows: the editor write bridge (ENG-1978) and the
- * one-time backfill (ENG-1835). Keeping it in `@formbricks/types` is what lets both reach it — a
- * data migration in `packages/database` cannot import from `apps/web`.
+ * Shared by the things that write those rows from the legacy shape: the reconcile's legacy-input
+ * branch, for a payload that still sends `variables` / `hiddenFields`, and the two backfills
+ * (ENG-1835, and ENG-2404's before the columns were dropped). Keeping it in `@formbricks/types` is
+ * what lets all of them reach it — a data migration in `packages/database` cannot import from
+ * `apps/web`.
  *
  * **The rule that makes the migration safe:** `storageKey` is the field's *existing* address — a
  * variable's cuid, a hidden field's name — never a new or normalised one. Those are the keys recall
@@ -54,8 +59,8 @@ export interface TLegacyEmbeddedFields {
  * survey keep resolving untouched. Legacy names with uppercase letters or hyphens pass through
  * exactly as stored.
  *
- * Every field it produces is **local** (`key: null`) and unlocked: the legacy columns have no
- * carrier for a library link or a lock, so neither can arrive this way. What they also cannot carry
+ * Every field it produces is **local** (`key: null`) and unlocked: the legacy shape has no
+ * carrier for a library link or a lock, so neither can arrive this way. What it also cannot carry
  * is preserved rather than reset — see `resolveDesiredEmbeddedFields` in
  * apps/web/lib/embedded-data/reconcile.ts, which merges this output over the survey's current rows.
  *
@@ -94,10 +99,27 @@ export const toDesiredEmbeddedFields = ({
 };
 
 /**
+ * **The input adapter** from the legacy shape to the `{ field, link }` pairs `embeddedFields`
+ * carries — for a survey that has never been written and so has no rows to read.
+ *
+ * Not a read fallback: since ENG-2404 a stored survey has no legacy columns to fall back to, and
+ * `getSurveyEmbeddedFields` reads its rows and nothing else. What still arrives in the legacy shape
+ * is input — today the template presets, which the gallery previews before anything has reconciled
+ * rows for them (`getTemplatePreviewSurvey`). The fields come out exactly as a write of the same
+ * input would store them: the rules are {@link toDesiredEmbeddedFields}', local and unlocked, with
+ * no row id because no row exists.
+ */
+export const embeddedFieldsFromLegacyInput = (legacy: TLegacyEmbeddedFields): TLinkedEmbeddedField[] =>
+  toDesiredEmbeddedFields(legacy).map(({ storageKey, embeddedDataId: _embeddedDataId, ...field }) => ({
+    field,
+    link: { storageKey },
+  }));
+
+/**
  * Translates the `embeddedFields` a write payload carries into the fields the survey should have.
  *
  * The V2 authoring path's counterpart to {@link toDesiredEmbeddedFields} (ENG-3228). Where the
- * legacy columns can only say "a variable named x" or "a hidden field named y", this carries
+ * legacy shape can only say "a variable named x" or "a hidden field named y", this carries
  * everything a row holds — `dataType`, `defaultValue`, `locked` — plus the library link, so the
  * panel can type a field, give it a default, lock it, or point it at the workspace library.
  *
@@ -123,7 +145,10 @@ export const linkedToDesiredEmbeddedFields = (
     ...(field.key !== null && field.id !== undefined ? { embeddedDataId: field.id } : {}),
   }));
 
-/** The legacy columns a survey's fields derive back into — both written on every save. */
+/**
+ * The legacy `variables` / `hiddenFields` shape a survey's fields derive back into. No longer stored
+ * (ENG-2404): the read seam derives it from the rows for the payloads that still carry it.
+ */
 export interface TLegacyEmbeddedColumns {
   variables: TSurveyVariable[];
   hiddenFields: TSurveyHiddenFields;
@@ -134,7 +159,7 @@ export interface TLegacyEmbeddedColumns {
  *
  * A **shared** computed field uses its library key rather than its display name, because
  * `ZSurveyVariable` runs every name through `isLegacyVariableName` — a library field labelled
- * `Plan tier` would fail the schema the derived column is validated by on every save and read. The
+ * `Plan tier` would fail the schema the derived projection is validated by on every save. The
  * key is the one spelling of a shared field that is guaranteed to be an identifier, and it is also
  * the name the library itself addresses the field by.
  */
@@ -147,7 +172,7 @@ const legacyComputedName = (field: TDesiredEmbeddedField): string => field.key ?
  * arm demands a number and whose `text` arm demands a string, while `defaultValue` is a `string |
  * number | boolean | null` that a `boolean` or `date` field could legitimately hold. Anything that
  * cannot be the variable's declared type falls back to the same value the schema's `prefault` would
- * have supplied, so the derived column always parses.
+ * have supplied, so the derived projection always parses.
  */
 const toLegacyVariable = (field: TDesiredEmbeddedField): TSurveyVariable =>
   field.dataType === "number"
@@ -165,34 +190,21 @@ const toLegacyVariable = (field: TDesiredEmbeddedField): TSurveyVariable =>
       };
 
 /**
- * Derives the legacy `variables` / `hiddenFields` columns back out of a survey's fields — the
- * inverse of {@link toDesiredEmbeddedFields}, and what keeps the dual write honest once a payload
- * declares its fields as rows instead of columns (ENG-3228).
+ * Derives the legacy `variables` / `hiddenFields` shape out of a survey's fields — the inverse of
+ * {@link toDesiredEmbeddedFields}.
  *
- * The columns are no longer an input on that path, but they are still written: they are the rollback
- * net until ENG-2404 drops them, and deployed SDK bundles read them off the workspace-state payload.
- * Deriving them rather than trusting whatever `variables` the same payload happened to carry is what
- * stops the two descriptions of one survey drifting apart.
+ * Nothing stores the result any more (ENG-2404). It is the read-only projection deployed SDK bundles
+ * and v1 / v3 API consumers still receive (ENG-1838), derived from the rows at every read, and what
+ * the `ZSurvey` refinement resolves logic operands against for a payload that declares its fields as
+ * `embeddedFields`. Both sides deriving it with this one function is what keeps them agreeing.
  *
- * `hiddenFields.enabled` is carried over from the survey's current value and only ever turned **on**:
- * the flag is a survey-level toggle rather than a property of any field, and the two ingest paths
- * disagree about it (js-core honours it, the link-survey URL path ignores it), so turning it off
- * behind the author's back would silently stop the SDK filling fields they can still see. A survey
- * that gains its first ingested field gets the flag set — which is what the hidden-fields card did
- * itself until ENG-2628 moved the legacy columns entirely onto this derivation.
+ * `hiddenFields.enabled` has no storage of its own either, so it is derived too: on exactly when the
+ * survey has an ingested field. That is what the stored flag always said in practice — it started
+ * off, the first hidden field turned it on, and nothing in the product ever turned it off again.
  */
-export const toLegacyEmbeddedFields = (
-  desired: readonly TDesiredEmbeddedField[],
-  previousHiddenFields?: TSurveyHiddenFields | null
-): TLegacyEmbeddedColumns => {
+export const toLegacyEmbeddedFields = (desired: readonly TDesiredEmbeddedField[]): TLegacyEmbeddedColumns => {
   const variables = desired.filter((field) => field.source === "computed").map(toLegacyVariable);
   const fieldIds = desired.filter((field) => field.source === "ingested").map((field) => field.storageKey);
 
-  return {
-    variables,
-    hiddenFields: {
-      enabled: (previousHiddenFields?.enabled ?? false) || fieldIds.length > 0,
-      fieldIds,
-    },
-  };
+  return { variables, hiddenFields: { enabled: fieldIds.length > 0, fieldIds } };
 };

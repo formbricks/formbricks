@@ -5,6 +5,7 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
 import { selectPublicSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
+import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import { getWorkspaceStateData } from "./data";
 
 vi.mock("server-only", () => ({}));
@@ -68,7 +69,6 @@ const mockWorkspaceData = {
       welcomeCard: { enabled: false },
       questions: [],
       blocks: null,
-      variables: [],
       showLanguageSwitch: false,
       languages: [],
       endings: [],
@@ -79,7 +79,7 @@ const mockWorkspaceData = {
       recontactDays: null,
       displayLimit: null,
       displayOption: "displayOnce",
-      hiddenFields: { enabled: false },
+      embeddedDataLinks: [],
       isBackButtonHidden: false,
       triggers: [],
       displayPercentage: null,
@@ -505,42 +505,75 @@ describe("getWorkspaceStateData", () => {
 /**
  * ENG-1838. Already-deployed SDK bundles on customer sites read `survey.variables` and
  * `survey.hiddenFields.fieldIds` straight off this payload, and we do not control when a customer
- * upgrades their embed. The Embedded Data work added `embeddedDataLinks` *alongside* those keys
- * rather than replacing them, and ENG-2404 will eventually drop the columns they come from.
+ * upgrades their embed. ENG-2404 dropped the columns those keys came from, so they are now derived
+ * from the EmbeddedData rows by `transformPrismaSurvey` — which is why these cases run the real
+ * transform rather than the identity mock the rest of this file uses.
  *
- * When that happens this test fails, and whoever drops the columns has to derive the two keys from
- * the EmbeddedData rows instead. That failure is the whole point of the test — without it the
- * payload would quietly stop carrying them and every old bundle in the wild would break silently.
+ * If the derivation ever stops, this fails: without it the payload would quietly stop carrying the
+ * two keys and every old bundle in the wild would break silently.
  */
 describe("legacy Embedded Data shape on the wire (ENG-1838)", () => {
-  const surveyWithFields = {
+  const ingested = (storageKey: string) => ({
+    storageKey,
+    embeddedData: {
+      key: null,
+      name: storageKey,
+      source: "ingested",
+      dataType: "string",
+      defaultValue: null,
+      locked: false,
+    },
+  });
+
+  const surveyWithRows = {
     ...mockWorkspaceData.surveys[0],
-    variables: [{ id: "clx000000000000000000001", name: "score", type: "number", value: 7 }],
-    hiddenFields: { enabled: true, fieldIds: ["utm_source", "plan"] },
+    embeddedDataLinks: [
+      {
+        storageKey: "clx000000000000000000001",
+        embeddedData: {
+          key: null,
+          name: "score",
+          source: "computed",
+          dataType: "number",
+          defaultValue: 7,
+          locked: false,
+        },
+      },
+      ingested("utm_source"),
+      ingested("plan"),
+    ],
   };
 
-  test("the workspace-state payload still carries variables and hiddenFields", async () => {
+  beforeEach(async () => {
+    const actual = await vi.importActual<typeof import("@/modules/survey/lib/utils")>(
+      "@/modules/survey/lib/utils"
+    );
+    vi.mocked(transformPrismaSurvey).mockImplementation(actual.transformPrismaSurvey);
+  });
+
+  test("the workspace-state payload still carries variables and hiddenFields, derived from the rows", async () => {
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
       ...mockWorkspaceData,
-      surveys: [surveyWithFields],
+      surveys: [surveyWithRows],
     } as never);
 
     const [survey] = (await getWorkspaceStateData(workspaceId)).surveys;
 
-    expect(survey.variables).toEqual(surveyWithFields.variables);
-    expect(survey.hiddenFields).toEqual(surveyWithFields.hiddenFields);
+    expect(survey.variables).toEqual([
+      { id: "clx000000000000000000001", name: "score", type: "number", value: 7 },
+    ]);
+    // In row order, which is the order the old bundle iterates `fieldIds` in.
+    expect(survey.hiddenFields).toEqual({ enabled: true, fieldIds: ["utm_source", "plan"] });
   });
 
-  test("the query asks for both columns, so removing them from the select fails here", async () => {
+  test("a survey with no rows still carries both keys, empty", async () => {
+    // An old bundle reads `hiddenFields.fieldIds` without a guard, so an absent key is a crash, not
+    // "no hidden fields".
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockWorkspaceData as never);
 
-    await getWorkspaceStateData(workspaceId);
+    const [survey] = (await getWorkspaceStateData(workspaceId)).surveys;
 
-    const [call] = vi.mocked(prisma.workspace.findUnique).mock.calls;
-    const surveySelect = (call[0] as { select: { surveys: { select: Record<string, unknown> } } }).select
-      .surveys.select;
-
-    expect(surveySelect.variables).toBe(true);
-    expect(surveySelect.hiddenFields).toBe(true);
+    expect(survey.variables).toEqual([]);
+    expect(survey.hiddenFields).toEqual({ enabled: false, fieldIds: [] });
   });
 });

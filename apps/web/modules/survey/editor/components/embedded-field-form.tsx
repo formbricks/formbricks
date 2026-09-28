@@ -217,8 +217,8 @@ export const EmbeddedFieldForm = ({
     //
     // A passed-in field declares its address, so the ID input carries the identifier rules and its
     // Name is free text. A calculated field declares its *name*, so that one control is the ID and is
-    // labelled as such; its address is a minted cuid, because the legacy `variables` column it is
-    // dual-written to pins `id` to `z.cuid2()`. Giving a calculated field a free display name as well
+    // labelled as such; its address is a minted cuid, because the legacy `variables` projection it is
+    // derived into pins `id` to `z.cuid2()`. Giving a calculated field a free display name as well
     // needs `declaredEntryName` to move off the name on both of its payload shapes — see ENG-3383.
     const declaresByAddress = draft.source === "ingested";
     const declaredControl = declaresByAddress ? "storageKey" : "name";
