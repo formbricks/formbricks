@@ -66,9 +66,20 @@ const createSurveyLoader = (): TSurveyLoader => {
 };
 
 /** Every mapping in the workspace, flattened across feedback sources. */
-const getWorkspaceMappings = async (workspaceId: string): Promise<TMappingRef[]> => {
+/**
+ * Every mapping of the workspace's feedback sources that feed `feedbackDirectoryId` — the directory
+ * the chart reads. A source feeding another directory never contributes rows to this chart, so its
+ * labels must not either: pinned maps ship whole, and the matrix chart draws every statement and
+ * scale point in them.
+ */
+const getDirectoryMappings = async (
+  workspaceId: string,
+  feedbackDirectoryId: string
+): Promise<TMappingRef[]> => {
   const feedbackSources = await getFeedbackSourcesWithMappings(workspaceId);
-  return feedbackSources.flatMap((source) => source.formbricksMappings);
+  return feedbackSources
+    .filter((source) => source.feedbackDirectoryId === feedbackDirectoryId)
+    .flatMap((source) => source.formbricksMappings);
 };
 
 /**
@@ -337,7 +348,8 @@ export const pruneChartLabels = (
  */
 export async function resolveOptionGrouping(
   query: TChartQuery,
-  workspaceId: string
+  workspaceId: string,
+  feedbackDirectoryId: string
 ): Promise<TOptionGroupingResult> {
   const dimensions = query.dimensions ?? [];
   const hasValueText = dimensions.includes(VALUE_TEXT_DIMENSION);
@@ -347,13 +359,13 @@ export async function resolveOptionGrouping(
     return { rewrittenQuery: query };
   }
 
-  const workspaceMappings = await getWorkspaceMappings(workspaceId);
+  const workspaceMappings = await getDirectoryMappings(workspaceId, feedbackDirectoryId);
   const loadSurvey = createSurveyLoader();
 
   let mappings = await resolvePinnedMappings(query.filters ?? [], workspaceMappings, loadSurvey);
 
-  // Nothing pinned down, but the chart is grouping by a raw id: label from the whole workspace
-  // rather than leaving the ids bare. The map is then not attributable to one question, which
+  // Nothing pinned down, but the chart is grouping by a raw id: label from every question in the
+  // chart's directory rather than leaving the ids bare. The map is then not attributable to one question, which
   // decides how the shared "other" bucket is labelled (see `collectOptionLabels`).
   let attributable = true;
   if (mappings.length === 0 && (hasValueId || hasFieldId)) {

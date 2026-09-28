@@ -55,7 +55,7 @@ async function executeWidgetQuery(
 
     // Mirror the chart builder (executeQueryAction): resolve option labels so value_id slices
     // display human-readable option names. Without this the dashboard renders raw value_ids.
-    const grouping = await resolveOptionGrouping(query, workspaceId);
+    const grouping = await resolveOptionGrouping(query, workspaceId, tenant.feedbackDirectoryId);
     const { rewrittenQuery } = grouping;
 
     const data = await executeTenantScopedQuery({

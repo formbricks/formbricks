@@ -289,7 +289,7 @@ export const executeQueryAction = authenticatedActionClient
         source: "charts.executeQueryAction",
       });
 
-      const grouping = await resolveOptionGrouping(parsedInput.query, workspaceId);
+      const grouping = await resolveOptionGrouping(parsedInput.query, workspaceId, feedbackDirectoryId);
       const { rewrittenQuery } = grouping;
 
       const rawRows = await executeTenantScopedQuery({
@@ -354,7 +354,7 @@ export const generateAIChartAction = authenticatedActionClient
       // Resolved like a builder query, so an AI chart grouped by option or matrix-row ids renders
       // survey labels (and a matrix its survey order) from the first paint, not bare ids.
       const [grouping, data] = await Promise.all([
-        resolveOptionGrouping(validatedQuery, workspaceId),
+        resolveOptionGrouping(validatedQuery, workspaceId, feedbackDirectoryId),
         executeTenantScopedQuery({
           query: validatedQuery,
           feedbackDirectoryId,
