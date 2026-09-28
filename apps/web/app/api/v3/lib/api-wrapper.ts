@@ -12,8 +12,10 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { TAuditAction, TAuditTarget } from "@/modules/ee/audit-logs/types/audit-log";
+import { arrayBudgetInvalidParam, findArrayBudgetViolation } from "./array-budget";
 import { buildV3AuditLog, queueV3AuditLog } from "./audit";
 import { mapV3ThrownError } from "./errors";
+import { BoundedInvalidParams } from "./invalid-params";
 import {
   type InvalidParam,
   isInvalidParamCode,
@@ -125,24 +127,35 @@ function expandUnrecognizedKeys(issue: z.core.$ZodIssue, fallbackName: string): 
  * Exported because `POST /api/v3/responses/validate` reports problems *inside* its payload as a 200
  * body rather than a 400, and those params have to be the ones the real write would have produced —
  * a second formatter would let the dry run describe the same rejection differently.
+ *
+ * Bounded to `V3_INVALID_PARAMS_MAX` entries plus a summary: the issue list is caller-shaped (one per
+ * offending array element, one per unknown key), so an unbounded list is a response amplifier.
  */
 export function formatZodIssues(error: z.ZodError, fallbackName: string): InvalidParam[] {
-  return error.issues.flatMap((issue) => {
+  const invalidParams = new BoundedInvalidParams();
+
+  for (const issue of error.issues) {
     if (issue.code === "unrecognized_keys") {
-      return expandUnrecognizedKeys(issue, fallbackName);
+      // Pushed one by one so the cap counts keys, not issues; the expansion is itself bounded.
+      for (const param of expandUnrecognizedKeys(issue, fallbackName)) {
+        invalidParams.push(() => param);
+      }
+      continue;
     }
 
-    const params = "params" in issue && isPlainObject(issue.params) ? issue.params : {};
-    const code = isInvalidParamCode(params.code) ? params.code : undefined;
+    invalidParams.push(() => {
+      const params = "params" in issue && isPlainObject(issue.params) ? issue.params : {};
+      const code = isInvalidParamCode(params.code) ? params.code : undefined;
 
-    return [
-      {
+      return {
         name: issue.path.length > 0 ? issue.path.join(".") : fallbackName,
         reason: issue.message,
         ...(code ? { code } : {}),
-      },
-    ];
-  });
+      };
+    });
+  }
+
+  return invalidParams.report(fallbackName, "request");
 }
 
 type TV3InputParseFailure = {
@@ -253,6 +266,22 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
       const invalidParams = [
         { name: "body", reason: "Malformed JSON input, please check your request body" },
       ];
+      return {
+        ok: false,
+        detail: "Invalid request body",
+        invalidParams,
+        response: problemBadRequest(requestId, "Invalid request body", {
+          instance,
+          invalid_params: invalidParams,
+        }),
+      };
+    }
+
+    // Before the schema sees the body: an oversized array would otherwise cost one Zod issue per
+    // element (ENG-3384), and this covers arrays the schema types as `unknown` or `z.record` too.
+    const budgetViolation = findArrayBudgetViolation(bodyData);
+    if (budgetViolation) {
+      const invalidParams = [arrayBudgetInvalidParam(budgetViolation, "body")];
       return {
         ok: false,
         detail: "Invalid request body",
@@ -481,11 +510,14 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
 
       const parsedInputResult = await parseV3Input(req, props, schemas, requestId, instance);
       if (!parsedInputResult.ok) {
+        // The count and the first few names, never the array: it is as long as the caller made it,
+        // and a `reason` can echo caller input (ENG-3384).
         log.warn(
           {
             statusCode: parsedInputResult.response.status,
             detail: parsedInputResult.detail,
-            invalidParams: parsedInputResult.invalidParams,
+            invalidParamCount: parsedInputResult.invalidParams.length,
+            invalidParamNames: parsedInputResult.invalidParams.slice(0, 5).map((param) => param.name),
           },
           "V3 API request validation failed"
         );

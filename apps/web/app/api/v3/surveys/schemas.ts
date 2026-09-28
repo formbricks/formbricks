@@ -13,6 +13,8 @@ import {
   ZSurveyVariables,
   ZSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
+import { lengthBoundedArray } from "@/app/api/v3/lib/bounded-array";
+import { BoundedInvalidParams } from "@/app/api/v3/lib/invalid-params";
 import { type InvalidParam, isInvalidParamCode } from "@/app/api/v3/lib/response";
 import { normalizeV3SurveyWriteLanguageCode } from "./language";
 import { V3_SURVEY_TRANSLATABLE_METADATA_KEYS } from "./translation-fields";
@@ -1091,7 +1093,33 @@ function addLanguageIssues(
 }
 
 const ZV3SurveyName = z.string().trim().min(1, "Survey name is required");
-const ZV3SurveyBlocks = ZSurveyBlocks.min(1, "At least one block is required");
+
+/**
+ * Ceilings on the top-level arrays of a survey document (ENG-1652, ENG-3384). Each sits far above any
+ * survey seen in production (the largest has 31 blocks) and is advertised as `maxItems` in the OpenAPI
+ * reference and in the MCP tool schemas. The arrays nested inside blocks — elements, choices, rows,
+ * logic — belong to the shared `@formbricks/types` schemas and are bounded by the route-level array
+ * budget (`@/app/api/v3/lib/array-budget`) rather than field by field.
+ */
+export const V3_SURVEY_MAX_BLOCKS = 1000;
+export const V3_SURVEY_MAX_ENDINGS = 100;
+export const V3_SURVEY_MAX_VARIABLES = 100;
+export const V3_SURVEY_MAX_LANGUAGES = 50;
+export const V3_SURVEY_MAX_HIDDEN_FIELDS = 200;
+export const V3_SURVEY_MAX_TRIGGERS = 50;
+
+const ZV3SurveyBlocks = lengthBoundedArray(ZSurveyBlocks.element, {
+  min: 1,
+  max: V3_SURVEY_MAX_BLOCKS,
+  minMessage: "At least one block is required",
+});
+const ZV3SurveyEndings = lengthBoundedArray(ZSurveyEndings.element, { max: V3_SURVEY_MAX_ENDINGS });
+const ZV3SurveyVariables = lengthBoundedArray(ZSurveyVariables.element, { max: V3_SURVEY_MAX_VARIABLES });
+const ZV3SurveyHiddenFields = ZSurveyHiddenFields.extend({
+  fieldIds: lengthBoundedArray(ZSurveyHiddenFields.shape.fieldIds.unwrap().element, {
+    max: V3_SURVEY_MAX_HIDDEN_FIELDS,
+  }).optional(),
+});
 
 // App-survey trigger references an existing workspace action class by id.
 // Existence/uniqueness is validated against workspace action classes at write time.
@@ -1111,7 +1139,7 @@ const ZV3SurveyDistribution = z
     autoClose: z.number().int().nonnegative().nullable().prefault(null),
     autoComplete: z.number().int().min(1, "Response limit must be greater than 0").nullable().prefault(null),
     delay: z.number().int().nonnegative().prefault(0),
-    triggers: z.array(ZV3SurveyTrigger).prefault([]),
+    triggers: lengthBoundedArray(ZV3SurveyTrigger, { max: V3_SURVEY_MAX_TRIGGERS }).prefault([]),
   })
   .strict();
 
@@ -1177,12 +1205,14 @@ function createV3SurveyDocumentShape(options?: TV3LanguageCompatibilityOptions) 
     status: ZSurveyStatus.prefault("draft"),
     metadata: ZSurveyMetadata.prefault({}),
     defaultLanguage: createZV3SurveyLanguageTag(options).prefault(DEFAULT_V3_SURVEY_LANGUAGE),
-    languages: z.array(createZV3SurveyLanguageInput(options)).prefault([]),
+    languages: lengthBoundedArray(createZV3SurveyLanguageInput(options), {
+      max: V3_SURVEY_MAX_LANGUAGES,
+    }).prefault([]),
     welcomeCard: ZSurveyWelcomeCard.prefault({ enabled: false }),
     blocks: ZV3SurveyBlocks,
-    endings: ZSurveyEndings.prefault([]),
-    hiddenFields: ZSurveyHiddenFields.prefault({ enabled: false }),
-    variables: ZSurveyVariables.prefault([]),
+    endings: ZV3SurveyEndings.prefault([]),
+    hiddenFields: ZV3SurveyHiddenFields.prefault({ enabled: false }),
+    variables: ZV3SurveyVariables.prefault([]),
     distribution: ZV3SurveyDistribution.optional(),
     targeting: ZV3SurveyTargeting.optional(),
   };
@@ -1193,12 +1223,14 @@ function createV3SurveyPatchShape(options?: TV3LanguageCompatibilityOptions) {
     name: ZV3SurveyName.optional(),
     status: ZSurveyStatus.optional(),
     metadata: ZSurveyMetadata.optional(),
-    languages: z.array(createZV3SurveyLanguageInput(options)).optional(),
+    languages: lengthBoundedArray(createZV3SurveyLanguageInput(options), {
+      max: V3_SURVEY_MAX_LANGUAGES,
+    }).optional(),
     welcomeCard: ZSurveyWelcomeCard.optional(),
     blocks: ZV3SurveyBlocks.optional(),
-    endings: ZSurveyEndings.optional(),
-    hiddenFields: ZSurveyHiddenFields.optional(),
-    variables: ZSurveyVariables.optional(),
+    endings: ZV3SurveyEndings.optional(),
+    hiddenFields: ZV3SurveyHiddenFields.optional(),
+    variables: ZV3SurveyVariables.optional(),
     distribution: ZV3SurveyDistribution.optional(),
     targeting: ZV3SurveyTargeting.optional(),
   };
@@ -1351,44 +1383,12 @@ export const ZV3ExpectedUpdatedAt = z.iso
     "Optimistic-concurrency precondition: the survey's `updatedAt` from your last read. The write is rejected with 409 if the survey changed since."
   );
 
-/**
- * `z.array(item).max(n)` parses every element before the `.max()` check runs, so a 2 MB body of junk
- * entries comes back as one issue per element — measured at ~500 MB of transient heap for a 200k-entry
- * `order` — on both surfaces that share these bodies: the REST route, and the MCP tool, whose SDK
- * validates arguments through Zod's `~standard.validate` and collects every issue before the scope
- * gate runs. Checking the length *before* the value reaches the inner schema makes an oversized array
- * cost exactly one issue. A field-level `preprocess` keeps the advertised JSON schema intact (`items`,
- * `minItems` and `maxItems` all survive `z.toJSONSchema`), which a `.pipe()` around the field does not.
- */
-function lengthBoundedArray<TItem extends z.ZodType>(
-  item: TItem,
-  min: number,
-  max: number,
-  description: string
-) {
-  return z.preprocess((value, ctx) => {
-    if (Array.isArray(value) && value.length > max) {
-      ctx.addIssue({
-        code: "too_big",
-        origin: "array",
-        maximum: max,
-        inclusive: true,
-        input: value,
-        message: `Too big: expected array to have <=${max} items`,
-      });
-      return z.NEVER;
-    }
-    return value;
-  }, z.array(item).min(min).max(max).describe(description));
-}
-
 export const ZV3EditSurveyBlocksBody = z.strictObject({
-  ops: lengthBoundedArray(
-    ZV3SurveyBlockOp,
-    1,
-    V3_SURVEY_BLOCK_OPS_MAX,
-    "Operations applied in order, atomically — all of them or none."
-  ),
+  ops: lengthBoundedArray(ZV3SurveyBlockOp, {
+    min: 1,
+    max: V3_SURVEY_BLOCK_OPS_MAX,
+    description: "Operations applied in order, atomically — all of them or none.",
+  }),
   expectedUpdatedAt: ZV3ExpectedUpdatedAt.optional(),
 });
 
@@ -1396,19 +1396,18 @@ export const ZV3EditSurveyBlocksBody = z.strictObject({
  * Ceiling on a block order, defence in depth behind `reorderSurveyBlocks`'s bounded diagnostics.
  *
  * Not a batch size like `V3_SURVEY_BLOCK_OPS_MAX` — a valid order lists every block exactly once, so
- * the real bound is blocks-per-survey, which nothing caps today. Set generously (the largest survey
- * seen is 31 blocks) so no legitimate reorder is refused, while still keeping a 2 MB body from
+ * the real bound is blocks-per-survey, which is `V3_SURVEY_MAX_BLOCKS`. Set generously (the largest
+ * survey seen is 31 blocks) so no legitimate reorder is refused, while still keeping a 2 MB body from
  * turning into ~419k entries. ENG-1652's policy applied to the input, as `ops` already does.
  */
-export const V3_SURVEY_BLOCK_ORDER_MAX = 1000;
+export const V3_SURVEY_BLOCK_ORDER_MAX = V3_SURVEY_MAX_BLOCKS;
 
 export const ZV3SetSurveyBlockOrderBody = z.strictObject({
-  order: lengthBoundedArray(
-    ZV3BlockRef,
-    1,
-    V3_SURVEY_BLOCK_ORDER_MAX,
-    "Every current block id, exactly once, in the desired order."
-  ),
+  order: lengthBoundedArray(ZV3BlockRef, {
+    min: 1,
+    max: V3_SURVEY_BLOCK_ORDER_MAX,
+    description: "Every current block id, exactly once, in the desired order.",
+  }),
   expectedUpdatedAt: ZV3ExpectedUpdatedAt.optional(),
 });
 
@@ -1455,17 +1454,24 @@ function toV3InvalidParamReason(message: string): string {
     .join(" ");
 }
 
+/** Bounded like `formatZodIssues` in the wrapper: the issue list is as long as the caller made it. */
 export function formatV3ZodInvalidParams(error: z.ZodError, fallbackName: string): InvalidParam[] {
-  return error.issues.map((issue) => {
-    const params = "params" in issue && isPlainObject(issue.params) ? issue.params : {};
-    const code = isInvalidParamCode(params.code) ? params.code : undefined;
+  const invalidParams = new BoundedInvalidParams();
 
-    return {
-      name: issue.path.length > 0 ? issue.path.join(".") : fallbackName,
-      reason: toV3InvalidParamReason(issue.message),
-      ...(code ? { code } : {}),
-    };
-  });
+  for (const issue of error.issues) {
+    invalidParams.push(() => {
+      const params = "params" in issue && isPlainObject(issue.params) ? issue.params : {};
+      const code = isInvalidParamCode(params.code) ? params.code : undefined;
+
+      return {
+        name: issue.path.length > 0 ? issue.path.join(".") : fallbackName,
+        reason: toV3InvalidParamReason(issue.message),
+        ...(code ? { code } : {}),
+      };
+    });
+  }
+
+  return invalidParams.report(fallbackName, "request");
 }
 
 export type TV3SurveyBlockOp = z.infer<typeof ZV3SurveyBlockOp>;
