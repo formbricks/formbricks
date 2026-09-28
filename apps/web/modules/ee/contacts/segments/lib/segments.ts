@@ -34,6 +34,7 @@ import {
   ZSegmentUpdateInput,
 } from "@formbricks/types/segment";
 import { getSurvey } from "@/lib/survey/service";
+import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
@@ -178,7 +179,7 @@ export const getSurveyRefsForWorkspace = reactCache(
     validateInputs([workspaceId, ZId]);
     try {
       return await prisma.survey.findMany({
-        where: { workspaceId, ...visibleSurveyWhere },
+        where: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) },
         select: { id: true, name: true, status: true },
         orderBy: { updatedAt: "desc" },
         take: SURVEY_FILTER_REF_LIMIT,

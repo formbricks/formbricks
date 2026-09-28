@@ -10,7 +10,7 @@
 -- Prisma (`where` cannot compare two columns). Adding a stored generated column rewrites the table
 -- under an ACCESS EXCLUSIVE lock. "Survey" is small (thousands to low hundreds of thousands of rows),
 -- so the rewrite is accepted; `lock_timeout` keeps it from queueing behind a long transaction — if it
--- fires, rerun the migration. Prisma declares it optional and default-less, so it never writes it.
+-- fires, rerun the migration. Prisma declares it `@default(dbgenerated(...))`, so it never writes it.
 --
 -- The partial pending index exists only here: Prisma cannot express a partial index and does not drop
 -- indexes it does not know, so the schema file declares none and no drift results.
@@ -33,6 +33,20 @@ ALTER TABLE "Survey" ADD COLUMN IF NOT EXISTS "visibilityVersion" INTEGER NOT NU
 ALTER TABLE "Survey" ADD COLUMN IF NOT EXISTS "visibilityProjectedVersion" INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE "Survey" ADD COLUMN IF NOT EXISTS "visibilityChangedAt" TIMESTAMP(3);
 ALTER TABLE "Survey" ADD COLUMN IF NOT EXISTS "visibilityChangedById" TEXT;
+-- `db:push` cannot create a generated column: it leaves an ordinary one, which `IF NOT EXISTS` below
+-- would then keep, NULL and never pending. Replace it (and the index over it) so the result converges.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = current_schema() AND table_name = 'Survey'
+      AND column_name = 'visibilityPending' AND is_generated = 'NEVER'
+  ) THEN
+    DROP INDEX IF EXISTS "Survey_visibility_pending_idx";
+    ALTER TABLE "Survey" DROP COLUMN "visibilityPending";
+  END IF;
+END $$;
+
 -- The table rewrite is accepted; see the header.
 -- squawk-ignore adding-field-with-default
 ALTER TABLE "Survey" ADD COLUMN IF NOT EXISTS "visibilityPending" BOOLEAN GENERATED ALWAYS AS ("visibilityVersion" <> "visibilityProjectedVersion") STORED;

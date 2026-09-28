@@ -537,6 +537,12 @@ formbricks-authzed backfill --scope=survey --apply
 formbricks-authzed backfill --scope=survey --apply --after-survey-id=<last-survey-id>
 ```
 
+<Warning>
+  Do not mark the survey scope ready in production yet. This release has no screen for sharing a
+  survey: once the marker is set, every survey a person creates is private to them, and teammates have
+  no way to get access. Enable it once the Formbricks release that adds survey sharing is installed.
+</Warning>
+
 Survey visibility is enforced only once the survey scope is marked ready. Marking it runs the repair, then
 two further dry runs, and sets the marker only if both come back clean:
 

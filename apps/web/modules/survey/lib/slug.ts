@@ -5,6 +5,7 @@ import type { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyStatus } from "@formbricks/types/surveys/types";
+import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 
 export interface TSurveyBySlug {
@@ -83,7 +84,7 @@ export const getSurveysWithSlugsByOrganizationId = reactCache(
         where: {
           slug: { not: null },
           workspace: { organizationId },
-          ...visibleSurveyWhere,
+          ...andVisibleSurveys(visibleSurveyWhere),
         },
         select: {
           id: true,

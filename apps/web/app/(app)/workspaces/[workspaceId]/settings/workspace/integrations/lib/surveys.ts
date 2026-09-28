@@ -8,6 +8,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { selectSurvey } from "@/lib/survey/service";
 import { transformPrismaSurvey } from "@/lib/survey/utils";
+import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { validateInputs } from "@/lib/utils/validate";
 
 export const getSurveys = reactCache(
@@ -27,7 +28,7 @@ export const getSurveys = reactCache(
           },
           // Archived surveys must not be selectable as integration targets.
           archivedAt: null,
-          ...visibleSurveyWhere,
+          ...andVisibleSurveys(visibleSurveyWhere),
         },
         select: selectSurvey,
         orderBy: {

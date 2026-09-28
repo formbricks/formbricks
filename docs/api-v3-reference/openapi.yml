@@ -7104,7 +7104,7 @@ components:
         Patch payload shape. Top-level fields are partial; any provided nested object or array
         fully replaces that subtree. Omitted top-level fields are preserved.
 
-        The server-owned fields `GET` returns — `id`, `workspaceId`, `type`, `createdAt`, `updatedAt`, `archivedAt`, `defaultLanguage` and `languages[].alias` — are accepted and verified, so a survey fetched with `GET` can be sent straight back. Echoing the value you were given is a no-op; changing one is a **422** `read_only_field`. A round-tripped `updatedAt` additionally acts as an optimistic-concurrency precondition, and a stale one is rejected with **409**. `questions`, analytics, styling and scripts remain rejected outright. App surveys (stored `type: app`) additionally accept `distribution` and `targeting`; both are rejected for link surveys, and changing `targeting` filters requires the Contacts entitlement.
+        The server-owned fields `GET` returns — `id`, `workspaceId`, `type`, `createdAt`, `updatedAt`, `archivedAt`, `defaultLanguage` and `languages[].alias` — are accepted and verified, so a survey fetched with `GET` can be sent straight back. So are `visibility`, `owner` and `access`, which only accept the unchanged value (**422** `unsupported_field` otherwise). Echoing the value you were given is a no-op; changing one is a **422** `read_only_field`. A round-tripped `updatedAt` additionally acts as an optimistic-concurrency precondition, and a stale one is rejected with **409**. `questions`, analytics, styling and scripts remain rejected outright. App surveys (stored `type: app`) additionally accept `distribution` and `targeting`; both are rejected for link surveys, and changing `targeting` filters requires the Contacts entitlement.
 
         `metadata`, `languages`, `welcomeCard`, `blocks`, `endings`, `hiddenFields`, and `variables`
         replace their full top-level value when provided. Missing ids in replaced arrays are deletions.
@@ -7140,6 +7140,19 @@ components:
             - 'null'
           format: date-time
           description: Read-only echo. Use `/archive` and `/restore` to change it.
+        visibility:
+          allOf:
+            - $ref: '#/components/schemas/SurveyVisibility'
+          description: Read-only echo. Accepted only unchanged, so a survey fetched with `GET` can be sent back; any other value is a **422** `unsupported_field`. Change it with `POST /api/v3/surveys/{surveyId}/visibility`.
+        owner:
+          anyOf:
+            - $ref: '#/components/schemas/SurveyOwner'
+            - type: 'null'
+          description: Read-only echo, accepted only unchanged (otherwise **422** `unsupported_field`).
+        access:
+          allOf:
+            - $ref: '#/components/schemas/SurveyAccess'
+          description: Read-only echo, accepted only unchanged (otherwise **422** `unsupported_field`).
         defaultLanguage:
           type: string
           description: Read-only echo of the survey default language, in whatever shape `GET` returned — legacy surveys carry language-only codes, so this is not constrained to `LocaleCode`.

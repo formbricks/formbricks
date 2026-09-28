@@ -32,6 +32,7 @@ import {
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
 import type { TSurveyCreationFacts } from "@/lib/survey/visibility/creation";
+import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { getSurveyWorkspaceIdMap } from "@/modules/ee/contacts/segments/lib/segments";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
@@ -251,7 +252,7 @@ export const getSurveysByActionClassId = reactCache(
         where: {
           // An action class belongs to one workspace; scope to it rather than trusting the join alone.
           workspaceId,
-          ...visibleSurveyWhere,
+          ...andVisibleSurveys(visibleSurveyWhere),
           triggers: {
             some: {
               actionClass: {
@@ -300,7 +301,7 @@ export const getSurveys = reactCache(
           workspaceId,
           // Archived surveys are hidden by default across the app.
           archivedAt: null,
-          ...visibleSurveyWhere,
+          ...andVisibleSurveys(visibleSurveyWhere),
         },
         select: selectSurvey,
         orderBy: {

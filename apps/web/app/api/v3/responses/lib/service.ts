@@ -9,7 +9,7 @@ import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation"
 import { deleteDisplay } from "@/lib/display/service";
 import { inlineSurveyEmbeddedFields, selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
-import { visibleSurveySqlPredicate } from "@/lib/survey/visibility/predicate";
+import { andVisibleSurveys, visibleSurveySqlPredicate } from "@/lib/survey/visibility/predicate";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
 import { collectResponseFileUrls, getSurveyFileUploadElementIds } from "@/modules/storage/utils";
 import type { TV3ResponsesFilter } from "./parse-v3-responses-list-query";
@@ -253,7 +253,7 @@ export type TBatchDeleteResult = {
  */
 export async function deleteScopedResponses(
   responseIds: string[],
-  { visibleSurveyWhere, workspaceId }: TWorkspaceScope
+  { visibleSurveyWhere = {}, workspaceId }: TWorkspaceScope
 ): Promise<TBatchDeleteResult> {
   let outcome: TBatchDeleteResult & { fileUrls: string[] };
 
@@ -262,7 +262,7 @@ export async function deleteScopedResponses(
       // Scoped read first: the file URLs live inside `response.data` and the display ids on the rows,
       // and both are gone once the rows are.
       const rows = await tx.response.findMany({
-        where: { id: { in: responseIds }, survey: { workspaceId, ...visibleSurveyWhere } },
+        where: { id: { in: responseIds }, survey: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) } },
         select: { id: true, displayId: true, data: true, surveyId: true },
       });
 
@@ -290,7 +290,7 @@ export async function deleteScopedResponses(
       // Responses before displays — see the note above. Not a correctness constraint: the FK is
       // SET NULL, so the reverse order also works, it just updates rows on their way out.
       const { count } = await tx.response.deleteMany({
-        where: { id: { in: responseIds }, survey: { workspaceId, ...visibleSurveyWhere } },
+        where: { id: { in: responseIds }, survey: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) } },
       });
 
       const displayIds = rows

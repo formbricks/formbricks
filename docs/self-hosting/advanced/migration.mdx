@@ -37,6 +37,12 @@ Surveys can now be private to their owner and the organization's owners and mana
 `Survey` table record each survey's owner and visibility. The migrations set every existing survey to
 workspace-visible and make its creator the owner, so **access is unchanged after the upgrade**.
 
+<Warning>
+  Do not mark the survey scope ready in production yet. This release has no screen for sharing a
+  survey: once the marker is set, every survey a person creates is private to them, and teammates have
+  no way to get access. Enable it once the Formbricks release that adds survey sharing is installed.
+</Warning>
+
 Enforcement stays off until an operator marks the survey scope ready:
 
 ```bash

@@ -136,7 +136,7 @@ describe("Slug Library Tests", () => {
           where: {
             slug: { not: null },
             workspace: { organizationId: "org_123" },
-            OR: [{ visibility: "workspace", visibilityPending: false }, { ownerId: "user_1" }],
+            AND: [{ OR: [{ visibility: "workspace", visibilityPending: false }, { ownerId: "user_1" }] }],
           },
         })
       );

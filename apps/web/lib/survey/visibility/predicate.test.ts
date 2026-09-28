@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { TSurveyActorContext } from "./actor-context";
 import {
+  andVisibleSurveys,
   buildVisibleResponseWhere,
   buildVisibleSurveyWhere,
   buildVisibleSurveyWhereAcrossOrganizations,
@@ -74,6 +75,20 @@ describe("buildVisibleSurveyWhereAcrossOrganizations", () => {
           },
         },
       ],
+    });
+  });
+});
+
+describe("andVisibleSurveys", () => {
+  test("is empty while nothing is restricted, so unenforced queries are unchanged", () => {
+    expect(andVisibleSurveys({})).toEqual({});
+  });
+
+  test("nests the clause under AND, so it cannot replace the caller's tenant scope", () => {
+    const clause = { workspaceId: "other", visibility: "workspace" as const };
+    expect({ workspaceId: "mine", ...andVisibleSurveys(clause) }).toEqual({
+      workspaceId: "mine",
+      AND: [clause],
     });
   });
 });

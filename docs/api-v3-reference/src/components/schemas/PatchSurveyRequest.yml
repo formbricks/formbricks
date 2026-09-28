@@ -9,7 +9,8 @@ description: >
 
   The server-owned fields `GET` returns — `id`, `workspaceId`, `type`, `createdAt`, `updatedAt`,
   `archivedAt`, `defaultLanguage` and `languages[].alias` — are accepted and verified, so a survey
-  fetched with `GET` can be sent straight back. Echoing the value you were given is a no-op; changing
+  fetched with `GET` can be sent straight back. So are `visibility`, `owner` and `access`, which only
+  accept the unchanged value (**422** `unsupported_field` otherwise). Echoing the value you were given is a no-op; changing
   one is a **422** `read_only_field`. A round-tripped `updatedAt` additionally acts as an
   optimistic-concurrency precondition, and a stale one is rejected with **409**. `questions`,
   analytics, styling and scripts remain rejected outright. App surveys (stored `type: app`) additionally accept `distribution` and
@@ -66,6 +67,21 @@ properties:
       - "null"
     format: date-time
     description: Read-only echo. Use `/archive` and `/restore` to change it.
+  visibility:
+    allOf:
+      - $ref: ./SurveyVisibility.yml
+    description: >-
+      Read-only echo. Accepted only unchanged, so a survey fetched with `GET` can be sent back; any
+      other value is a **422** `unsupported_field`. Change it with `POST /api/v3/surveys/{surveyId}/visibility`.
+  owner:
+    anyOf:
+      - $ref: ./SurveyOwner.yml
+      - type: "null"
+    description: Read-only echo, accepted only unchanged (otherwise **422** `unsupported_field`).
+  access:
+    allOf:
+      - $ref: ./SurveyAccess.yml
+    description: Read-only echo, accepted only unchanged (otherwise **422** `unsupported_field`).
   defaultLanguage:
     type: string
     description: >-

@@ -47,6 +47,14 @@ export const buildVisibleSurveyWhereAcrossOrganizations = (
   };
 };
 
+/**
+ * Merge a visibility clause into a `Survey` where next to the caller's tenant scope. Nested under `AND`
+ * so it can never replace a key of that scope (`workspaceId`, say), and omitted when empty so a query
+ * with enforcement off is exactly the one it was before ENG-3282.
+ */
+export const andVisibleSurveys = (visibleSurveyWhere: Prisma.SurveyWhereInput): Prisma.SurveyWhereInput =>
+  Object.keys(visibleSurveyWhere).length === 0 ? {} : { AND: [visibleSurveyWhere] };
+
 export const buildVisibleResponseWhere = (ctx: TSurveyActorContext): Prisma.ResponseWhereInput => {
   const survey = buildVisibleSurveyWhere(ctx);
   return Object.keys(survey).length === 0 ? {} : { survey };

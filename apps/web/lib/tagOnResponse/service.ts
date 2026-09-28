@@ -5,6 +5,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TTagsCount, TTagsOnResponses } from "@formbricks/types/tags";
+import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { getUniqueConstraintFields, isUniqueConstraintError } from "../utils/prisma-constraint";
 import { validateInputs } from "../utils/validate";
 
@@ -88,7 +89,7 @@ export const getTagsOnResponsesCount = reactCache(
           response: {
             survey: {
               workspaceId,
-              ...visibleSurveyWhere,
+              ...andVisibleSurveys(visibleSurveyWhere),
             },
           },
         },

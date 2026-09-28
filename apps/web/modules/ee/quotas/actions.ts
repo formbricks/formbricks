@@ -112,7 +112,8 @@ export const getQuotaResponseCountAction = authenticatedActionClient
     }) => {
       const organizationId = await getOrganizationIdFromQuotaId(parsedInput.quotaId);
       await checkQuotasEnabled(organizationId);
-      await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
+      // A count of screened-in responses: reading it needs the survey's responses, not write access.
+      await assertCan({ type: "user", id: ctx.user.id }, "survey.response_read", {
         type: "survey",
         id: await getSurveyIdFromQuotaId(parsedInput.quotaId),
       });

@@ -1,4 +1,5 @@
 import { Prisma } from "@formbricks/database/prisma";
+import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 import { TGetResponsesFilter } from "@/modules/api/v2/management/responses/types/responses";
 
@@ -11,7 +12,7 @@ export const getResponsesQuery = (
     where: {
       survey: {
         workspaceId: { in: workspaceIds },
-        ...visibleSurveyWhere,
+        ...andVisibleSurveys(visibleSurveyWhere),
       },
     },
   };
