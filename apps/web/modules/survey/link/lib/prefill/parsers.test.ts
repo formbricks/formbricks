@@ -67,4 +67,15 @@ describe("parseNumber", () => {
     expect(parseNumber("false")).toBeNull();
     expect(parseNumber("null")).toBeNull();
   });
+
+  test("rejects non-number JSON that Number() would coerce", () => {
+    expect(parseNumber("[]")).toBeNull();
+    expect(parseNumber("[5]")).toBeNull();
+    expect(parseNumber('"5"')).toBeNull();
+    expect(parseNumber('""')).toBeNull();
+  });
+
+  test("rejects non-finite numbers", () => {
+    expect(parseNumber("1e400")).toBeNull();
+  });
 });
