@@ -112,14 +112,30 @@ const isValidHostname = (hostname: string): boolean => {
   return labels.every((label) => DOMAIN_LABEL.test(label)) && TOP_LEVEL_DOMAIN.test(topLevelDomain);
 };
 
-// Same shape the survey resolves at runtime; a token missing its closing "#" is never replaced.
-const RECALL_TOKEN = /^#recall:[A-Za-z0-9_-]+\/fallback:[^#]*#/;
+const RECALL_TOKEN_START = /#recall:[A-Za-z0-9_-]+\/fallback:/y;
 
-// The host ends at the first "/", "?" or "#". A complete recall token right there means the host (or
-// its tail) is dynamic.
-const hasDynamicHost = (urlAfterProtocol: string): boolean => {
-  const hostEnd = urlAfterProtocol.search(/[/?#]/);
-  return hostEnd !== -1 && RECALL_TOKEN.test(urlAfterProtocol.slice(hostEnd));
+// Replaces each complete `#recall:<id>/fallback:<value>#` token with its fallback, the way the survey
+// does at runtime when the value is missing. A token without its closing "#" is left as it is, as the
+// survey leaves it. An index scan rather than a global regex, which is O(N^2) on a run of open tokens.
+const resolveRecallFallbacks = (url: string): string => {
+  let resolved = "";
+  let copiedUpTo = 0;
+  let tokenStart = url.indexOf("#recall:");
+
+  while (tokenStart !== -1) {
+    RECALL_TOKEN_START.lastIndex = tokenStart;
+    if (RECALL_TOKEN_START.test(url)) {
+      const fallbackStart = RECALL_TOKEN_START.lastIndex;
+      const fallbackEnd = url.indexOf("#", fallbackStart);
+      if (fallbackEnd === -1) break;
+      const fallback = url.slice(fallbackStart, fallbackEnd).replace(/nbsp/g, " ").trim();
+      resolved += url.slice(copiedUpTo, tokenStart) + fallback;
+      copiedUpTo = fallbackEnd + 1;
+    }
+    tokenStart = url.indexOf("#recall:", Math.max(copiedUpTo, tokenStart + 1));
+  }
+
+  return resolved + url.slice(copiedUpTo);
 };
 
 export const endingCardUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
@@ -135,11 +151,16 @@ export const endingCardUrlRefinement = (url: string, ctx: z.RefinementCtx): void
     return;
   }
 
-  if (hasDynamicHost(trimmedUrl.slice(protocol.length))) return;
+  // The fallback is where a respondent without the value lands, so that is the host to check. Only a
+  // host made entirely of recall values with no fallback is unknown until the survey runs.
+  const resolvedUrl = resolveRecallFallbacks(trimmedUrl);
+  const hostIsFullyDynamic =
+    trimmedUrl.startsWith(`${protocol}#recall:`) && /^(?:[/?#]|$)/.test(resolvedUrl.slice(protocol.length));
+  if (resolvedUrl !== trimmedUrl && hostIsFullyDynamic) return;
 
   let hostname: string;
   try {
-    hostname = new URL(trimmedUrl).hostname;
+    hostname = new URL(resolvedUrl).hostname;
   } catch {
     hostname = "";
   }

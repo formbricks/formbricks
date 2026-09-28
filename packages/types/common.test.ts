@@ -34,6 +34,8 @@ describe("ZEndingCardUrl", () => {
     ["example.com", "no protocol"],
     ["https://google#recall:", "incomplete recall token after an invalid host"],
     ["https://#recall:test123/fallback:example.com", "recall token without its closing #"],
+    ["https://google#recall:id/fallback:#", "host completed by an empty fallback"],
+    ["https://#recall:id/fallback:google#", "fallback that is not a web address"],
   ])("rejects %s (%s)", (url) => {
     expect(isValid(url)).toBe(false);
   });
@@ -42,6 +44,8 @@ describe("ZEndingCardUrl", () => {
     "https://#recall:url123/fallback:example.com#",
     "https://example.com/?user=#recall:uid/fallback:anonymous#",
     "https://example.com/#recall:path/fallback:#",
+    "https://foo#recall:id/fallback:.example.com#",
+    "https://#recall:url123/fallback:#",
   ])("accepts a hidden-field URL: %s", (url) => {
     expect(isValid(url)).toBe(true);
   });
