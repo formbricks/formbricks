@@ -67,7 +67,7 @@ An ingested or computed field has to exist before anything can fill it, and ther
 
 Reserved fields are never declared, they are always available.
 
-A passed-in field carries two things you type, and they do different jobs. Its **name** is what you call it — what the response table, the summary and your exports show, renameable at any time. Its **key** is the address the value lives under: the URL parameter, the SDK key, and what recall and logic resolve. The key fills itself in from the name, and cannot change once the field exists, because responses are already stored under it. A calculated field has a name only; its address is generated.
+A passed-in field carries two things you type, and they do different jobs. Its **name** is what you call it — what the response table, the summary and your exports show, renameable at any time. Its **key** is the address the value lives under: the URL parameter, the SDK key, and what recall and logic resolve. The key fills itself in from the name, and cannot change once the field exists, because responses are already stored under it. A calculated field added on a survey has a name only; one in the [library](/surveys/embedded-data/library) also takes a key, because that is how other surveys find it. Either way its storage address is generated.
 
 Keys follow one rule everywhere, and reserved names are refused for new fields in any casing. The full rule and the refused list live on the [Hidden Fields](/surveys/general-features/hidden-fields#naming) page.
 
@@ -78,10 +78,10 @@ A field also carries a **type** that decides how its value is read back and comp
 - **Reserved fields** are typed by Formbricks, and several of them are genuinely numeric: `viewportWidth < 768` is a numeric comparison in logic, not a comparison of digit strings.
 
 <Note>
-  A field's type, its default, and the **lock** that stops anything outside the survey writing it are set in
-  the same dialog, on a survey field and a [library field](/surveys/embedded-data/library) alike. A locked
-  field ignores whatever a URL param or the SDK sends and uses its default instead, which is how you fix a
-  value nobody outside can change.
+  A field's type, its default, and the **lock** that stops anything outside the survey writing it are all set
+  in the field's own dialog, on a survey field and a [library field](/surveys/embedded-data/library) alike.
+  A locked field ignores whatever a URL param or the SDK sends and uses its default instead, which is how
+  you fix a value nobody outside can change.
 </Note>
 
 ## What Happens to an Incoming Value

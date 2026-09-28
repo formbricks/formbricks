@@ -49,12 +49,15 @@ A **passed-in** field has two things a person types, and they are not the same:
 The Key fills itself in from the Name as you type, so you usually only write one of them. Type your own Key and it stops following.
 
 <Note>
-  A **calculated** field has one control, and its name still has to read like a key — lowercase letters,
-  numbers and underscores. That name is both what surveys refer to it by and what the response table shows.
-  Its storage address is generated for you and never typed.
+  A **calculated survey field** has one control, and its name still has to read like a key — lowercase
+  letters, numbers and underscores. That name is both what the survey refers to it by and what the response
+  table shows. Its storage address is generated for you and never typed.
+
+  A **calculated library field** asks for both, like a passed-in one: the Name is what the response table
+  shows, and the Key is how surveys refer to it in recall and logic. Its storage address is still generated.
 </Note>
 
-A library field's key is workspace-unique, so two library fields can share a display name but never a key. A survey field has no library key; its address is the Key you gave it on that survey.
+A library field's key is workspace-unique, so two library fields can share a display name but never a key. A survey field has no library key: a passed-in one lives under the Key you gave it on that survey, a calculated one under its generated address.
 
 ## The Library Page
 
@@ -63,9 +66,9 @@ field with its key, source, type, default and how many surveys use it; the **Use
 
 ![The workspace Embedded Data page: the Library card above the auto-captured fields](/images/surveys/embedded-data/library-page.webp)
 
-**New field** declares one straight from this page, without opening a survey — the same dialog the survey
-editor's **Create new field** tab uses, so a field can start life either way. Clicking a row opens it for
-editing, and the row's menu offers the same Edit plus Delete.
+**New field** declares one straight from this page, without opening a survey, so a field can start life
+here or on a survey. It always asks for a Key, calculated fields included, because the Key is how other
+surveys find it. Clicking a row opens it for editing, and the row's menu offers the same Edit plus Delete.
 
 ![The New library field dialog: name, key, source, lock, type and default](/images/surveys/embedded-data/new-library-field.webp)
 
