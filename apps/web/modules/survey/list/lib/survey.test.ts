@@ -346,6 +346,87 @@ describe("copySurveyToOtherWorkspace", () => {
     expect(checkForInvalidMediaInBlocks).toHaveBeenCalledWith(mockExistingSurveyDetails.blocks);
   });
 
+  test("carries the source survey's behaviour and security settings onto the copy", async () => {
+    const configuredSettings = {
+      pin: "1234",
+      autoComplete: 50,
+      autoClose: 30,
+      delay: 5,
+      redirectUrl: "https://example.com/thanks",
+      displayPercentage: 25,
+      showLanguageSwitch: true,
+      recaptcha: { enabled: true, threshold: 0.5 },
+      isVerifyEmailEnabled: true,
+      isAnonymizeResponsesEnabled: true,
+      isCaptureIpEnabled: true,
+      isBackButtonHidden: true,
+      isAutoProgressingEnabled: true,
+      metadata: { title: { default: "Shared title" } },
+      customHeadScripts: "<script>analytics()</script>",
+      customHeadScriptsMode: "replace",
+      inlineTriggers: { codeConfig: { identifier: "inline" } },
+    };
+    // Return only what the query asks for, the way Prisma does. Resolving the whole survey
+    // regardless of the `select` would make this test pass even when the settings are not read,
+    // which is precisely the bug.
+    const sourceSurvey: Record<string, unknown> = {
+      ...mockExistingSurveyDetails,
+      ...configuredSettings,
+    };
+    vi.mocked(prisma.survey.findUnique).mockImplementation((({ select }: { select: object }) =>
+      Promise.resolve(
+        Object.fromEntries(Object.keys(select).map((column) => [column, sourceSurvey[column]]))
+      )) as never);
+
+    await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, sourceWorkspaceId, userId);
+
+    expect(prisma.survey.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining(configuredSettings) })
+    );
+  });
+
+  test("does not read the scheduling dates, so the copy cannot inherit them", async () => {
+    // The scheduler closes an `inProgress` survey whose `closeOn` has passed. A copy that inherited
+    // a date already in the past would complete itself on the first tick after the user publishes
+    // it. Not selecting the dates is what keeps them off the copy, so that is what is asserted.
+    await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, sourceWorkspaceId, userId);
+
+    const { select } = vi.mocked(prisma.survey.findUnique).mock.calls[0][0];
+    expect(select).not.toHaveProperty("publishOn");
+    expect(select).not.toHaveProperty("closeOn");
+  });
+
+  test("accounts for every Survey column, so a new one cannot be dropped silently", async () => {
+    // The copy is built by spreading whatever `getExistingSurvey` selects, so a column that is
+    // neither selected nor listed below is reset to its database default without anyone noticing.
+    // That is the ENG-2144 bug, and #6802 before it. Adding a Survey column fails this test until
+    // you decide which side it belongs on.
+    const RESET_ON_COPY = new Set([
+      // Identity and ownership: the copy is a new row in a workspace the caller chose.
+      "id",
+      "createdAt",
+      "updatedAt",
+      "workspaceId",
+      "createdBy",
+      "segmentId",
+      // Lifecycle: every copy starts as an unpublished, unarchived draft with its own link.
+      "status",
+      "archivedAt",
+      "slug",
+      "publishOn",
+      "closeOn",
+    ]);
+
+    await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, sourceWorkspaceId, userId);
+
+    const { select } = vi.mocked(prisma.survey.findUnique).mock.calls[0][0];
+    const unaccounted = Object.keys(Prisma.SurveyScalarFieldEnum).filter(
+      (column) => !(column in (select ?? {})) && !RESET_ON_COPY.has(column)
+    );
+
+    expect(unaccounted).toEqual([]);
+  });
+
   test("defines the copied survey's embedded data in the TARGET workspace, not the source", async () => {
     // The function's `workspaceId` argument is the source. Reading it instead of the created
     // survey's own workspace would define the fields in the wrong tenant — which the composite
