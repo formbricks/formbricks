@@ -254,12 +254,12 @@ describe("processWebhookDeliveryJob", () => {
 
   test("an SSRF policy rejection is permanent", async () => {
     mockSend.mockRejectedValue(
-      new InvalidInputError("Webhook URL must not point to restricted or internal IP addresses")
+      new InvalidInputError("Webhook URL must not point to private or internal IP addresses")
     );
 
     await expect(processWebhookDeliveryJob(data, createContext())).rejects.toMatchObject({
       name: "UnrecoverableError",
-      message: expect.stringContaining("restricted or internal IP addresses"),
+      message: expect.stringContaining("private or internal IP addresses"),
     });
     expect(mockRecordOutcome).toHaveBeenCalledWith(
       expect.objectContaining({ outcome: "permanent_failure", statusCode: undefined })
@@ -332,6 +332,20 @@ describe("processWebhookDeliveryJob", () => {
       visibilityProjectedVersion: 1,
       visibilityVersion: 1,
     });
+
+    await expect(processWebhookDeliveryJob(data, createContext())).resolves.toBeUndefined();
+
+    expect(mockSend).not.toHaveBeenCalled();
+    expect(mockRecordOutcome).toHaveBeenCalledWith({
+      outcome: "skipped_not_visible",
+      event: "responseFinished",
+    });
+  });
+
+  test("completes without a request when the survey was deleted while the delivery was queued", async () => {
+    mockFindFirst.mockResolvedValue(target);
+    mockVisibilityReady.mockResolvedValueOnce(true);
+    mockSurveyFindUnique.mockResolvedValue(null);
 
     await expect(processWebhookDeliveryJob(data, createContext())).resolves.toBeUndefined();
 

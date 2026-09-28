@@ -445,7 +445,7 @@ enforcement.
 
 ## Authorization evaluation and direct cutover
 
-The restricted SpiceDB evaluator sits behind the existing server-only `can()` and
+The private SpiceDB evaluator sits behind the existing server-only `can()` and
 `assertCan()` contract. The direct-authority image makes SpiceDB the sole evaluator
 with no runtime legacy fallback or cohort selector. The separately pinned bridge
 image remains the deployment rollback artifact while the durable outbox keeps its

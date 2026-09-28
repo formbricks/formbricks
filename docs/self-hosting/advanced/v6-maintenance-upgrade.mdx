@@ -43,7 +43,7 @@ The command reuses the image's existing migration runner and `formbricks-authzed
   upgrade, a storage migration, or unrelated Hub/Cube changes.
 - Treat the Helm chart version and application image version as separate pins. A chart-only patch can
   keep the same Formbricks `appVersion`; verify both values and the rendered image before upgrading.
-- Prepare restricted SpiceDB connectivity, dedicated datastore credentials, its reviewed version, and
+- Prepare private SpiceDB connectivity, dedicated datastore credentials, its reviewed version, and
   completed datastore migrations. Retain existing operator ownership; never install a second operator
   over an existing cluster-wide operator. See [SpiceDB operations](/self-hosting/configuration/authzed-operations).
 

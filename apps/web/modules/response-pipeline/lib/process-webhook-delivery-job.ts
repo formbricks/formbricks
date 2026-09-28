@@ -131,8 +131,9 @@ const isSurveyStillOutboundVisible = async (surveyId: string): Promise<boolean> 
     where: { id: surveyId },
     select: surveyOutboundVisibilitySelect,
   });
-  // A deleted survey has nothing left to protect; the webhook's own checks decide that case.
-  return survey === null || isSurveyOutboundAllowed(survey, true);
+  // Fail closed on a deleted survey: its queued payload may belong to one restricted before deletion,
+  // and `Webhook.surveyIds` is not a foreign key, so the webhook still looks subscribed.
+  return survey !== null && isSurveyOutboundAllowed(survey, true);
 };
 
 type TDeliveryAttempt = { kind: "completed"; statusCode: number } | { kind: "threw"; error: unknown };

@@ -54,7 +54,7 @@ vi.mock("@/modules/storage/utils", () => ({
     Object.fromEntries(
       Object.entries(data).map(([key, value]) => [
         key,
-        value === "storage://restricted/file.png" ? "https://cdn.example.com/file.png" : value,
+        value === "storage://private/file.png" ? "https://cdn.example.com/file.png" : value,
       ])
     ),
   validateClientFileUploads: vi.fn(),
@@ -94,7 +94,7 @@ describe("GET /management/responses", () => {
     mockGetResponses.mockResolvedValue({
       ok: true,
       data: {
-        data: [{ id: "res1", data: { q1: "a", upload: "storage://restricted/file.png" } }],
+        data: [{ id: "res1", data: { q1: "a", upload: "storage://private/file.png" } }],
         meta: { total: 137, limit: 2, offset: 10 },
       },
     });
