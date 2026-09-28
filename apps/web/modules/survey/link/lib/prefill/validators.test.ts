@@ -2,14 +2,15 @@ import { describe, expect, test } from "vitest";
 import { TSurveyElementTypeEnum, TSurveyRatingElement } from "@formbricks/types/surveys/elements";
 import { validateNPS, validateRating } from "./validators";
 
-const ratingElement = {
+const ratingElement: TSurveyRatingElement = {
   id: "rating",
   type: TSurveyElementTypeEnum.Rating,
   headline: { default: "Rate" },
   required: false,
   scale: "number",
   range: 5,
-} as TSurveyRatingElement;
+  isColorCodingEnabled: false,
+};
 
 describe("prefill validators", () => {
   test("rejects JSON literals for NPS values", () => {
