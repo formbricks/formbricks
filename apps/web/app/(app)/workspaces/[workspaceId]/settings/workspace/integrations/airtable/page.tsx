@@ -8,6 +8,7 @@ import { getAirtableTables } from "@/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, DEFAULT_LOCALE, WEBAPP_URL } from "@/lib/constants";
 import { redactIntegrationCredentials } from "@/lib/integration/redact-credentials";
 import { getIntegrations } from "@/lib/integration/service";
+import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSettingsPageMetadata } from "@/modules/settings/lib/metadata";
@@ -24,10 +25,12 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const t = await getTranslate();
   const isEnabled = !!AIRTABLE_CLIENT_ID;
 
-  const { isReadOnly, session, workspace } = await getWorkspaceAuth(params.workspaceId);
+  const { isReadOnly, organization, session, workspace } = await getWorkspaceAuth(params.workspaceId);
 
   const [surveys, integrations, locale] = await Promise.all([
-    getSurveys(workspace.id),
+    getUserVisibleSurveyWhere(session.user.id, organization.id).then((where) =>
+      getSurveys(workspace.id, where)
+    ),
     getIntegrations(workspace.id),
     getUserLocale(session.user.id),
   ]);

@@ -11,6 +11,7 @@ import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
 import { getSurvey } from "@/lib/survey/service";
+import { canApiKeyReachSurveyResource, getApiKeyVisibleSurveyWhere } from "@/lib/survey/visibility/api-key";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { resolveStorageUrlsInObject, validateClientFileUploads } from "@/modules/storage/utils";
@@ -42,7 +43,11 @@ export const GET = withV1ApiWrapper({
             { type: "apiKey", id: authentication.apiKeyId },
             getWorkspaceAuthorizationActionForMethod("GET"),
             { type: "workspace", id: survey.workspaceId }
-          ))
+          )) ||
+          !(await canApiKeyReachSurveyResource(authentication.apiKeyId, "survey.response_read", {
+            type: "survey",
+            id: survey.id,
+          }))
         ) {
           return {
             response: responses.unauthorizedResponse(),
@@ -54,7 +59,12 @@ export const GET = withV1ApiWrapper({
         const workspaceIds = [
           ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
         ];
-        const workspaceResponses = await getResponsesByWorkspaceIds(workspaceIds, limit, offset);
+        const workspaceResponses = await getResponsesByWorkspaceIds(
+          workspaceIds,
+          limit,
+          offset,
+          await getApiKeyVisibleSurveyWhere()
+        );
         allResponses.push(...workspaceResponses);
       }
       return {

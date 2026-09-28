@@ -27,9 +27,9 @@ export const getResponsesDownloadUrlAction = authenticatedActionClient
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
     const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
 
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
-      type: "workspace",
-      id: workspaceId,
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.response_export", {
+      type: "survey",
+      id: parsedInput.surveyId,
     });
 
     const result = await getResponseDownloadFile(
@@ -69,9 +69,9 @@ export const getSurveyFilterDataAction = authenticatedActionClient
 
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
 
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
-      type: "workspace",
-      id: survey.workspaceId,
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.response_read", {
+      type: "survey",
+      id: parsedInput.surveyId,
     });
 
     const organizationBilling = await getOrganizationBilling(organizationId);

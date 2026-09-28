@@ -10,31 +10,38 @@ import { selectSurvey } from "@/lib/survey/service";
 import { transformPrismaSurvey } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
 
-export const getSurveys = reactCache(async (workspaceId: string): Promise<TSurvey[]> => {
-  validateInputs([workspaceId, ZId]);
+export const getSurveys = reactCache(
+  async (
+    workspaceId: string,
+    /** ENG-3282: the viewer's survey-visibility clause. */
+    visibleSurveyWhere: Prisma.SurveyWhereInput
+  ): Promise<TSurvey[]> => {
+    validateInputs([workspaceId, ZId]);
 
-  try {
-    const surveysPrisma = await prisma.survey.findMany({
-      where: {
-        workspaceId,
-        status: {
-          not: "completed",
+    try {
+      const surveysPrisma = await prisma.survey.findMany({
+        where: {
+          workspaceId,
+          status: {
+            not: "completed",
+          },
+          // Archived surveys must not be selectable as integration targets.
+          archivedAt: null,
+          ...visibleSurveyWhere,
         },
-        // Archived surveys must not be selectable as integration targets.
-        archivedAt: null,
-      },
-      select: selectSurvey,
-      orderBy: {
-        updatedAt: "desc",
-      },
-    });
+        select: selectSurvey,
+        orderBy: {
+          updatedAt: "desc",
+        },
+      });
 
-    return surveysPrisma.map((surveyPrisma) => transformPrismaSurvey<TSurvey>(surveyPrisma));
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error({ error }, "getSurveys: Could not fetch surveys");
-      throw new DatabaseError(error.message);
+      return surveysPrisma.map((surveyPrisma) => transformPrismaSurvey<TSurvey>(surveyPrisma));
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        logger.error({ error }, "getSurveys: Could not fetch surveys");
+        throw new DatabaseError(error.message);
+      }
+      throw error;
     }
-    throw error;
   }
-});
+);

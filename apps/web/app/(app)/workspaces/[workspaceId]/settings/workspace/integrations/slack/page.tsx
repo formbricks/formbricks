@@ -5,6 +5,7 @@ import { SlackWrapper } from "@/app/(app)/workspaces/[workspaceId]/settings/work
 import { DEFAULT_LOCALE, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@/lib/constants";
 import { redactIntegrationCredentials } from "@/lib/integration/redact-credentials";
 import { getIntegrationByType } from "@/lib/integration/service";
+import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSettingsPageMetadata } from "@/modules/settings/lib/metadata";
@@ -22,10 +23,12 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
 
   const t = await getTranslate();
 
-  const { isReadOnly, session, workspace } = await getWorkspaceAuth(params.workspaceId);
+  const { isReadOnly, organization, session, workspace } = await getWorkspaceAuth(params.workspaceId);
 
   const [surveys, slackIntegration, locale] = await Promise.all([
-    getSurveys(workspace.id),
+    getUserVisibleSurveyWhere(session.user.id, organization.id).then((where) =>
+      getSurveys(workspace.id, where)
+    ),
     getIntegrationByType(workspace.id, "slack"),
     getUserLocale(session.user.id),
   ]);

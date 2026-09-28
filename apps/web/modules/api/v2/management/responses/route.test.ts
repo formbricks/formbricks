@@ -105,7 +105,7 @@ describe("GET /management/responses", () => {
     expect(mockGetAuthorizedApiKeyWorkspaceIds).toHaveBeenCalledWith(
       expect.objectContaining({ apiKeyId: "apiKey123" })
     );
-    expect(mockGetResponses).toHaveBeenCalledWith(["ws123"], query);
+    expect(mockGetResponses).toHaveBeenCalledWith(["ws123"], query, {});
     expect(response.status).toBe(200);
     expect(body).toEqual({
       data: [{ id: "res1", data: { q1: "a", upload: "https://cdn.example.com/file.png" } }],

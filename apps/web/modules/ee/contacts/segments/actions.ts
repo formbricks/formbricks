@@ -8,6 +8,7 @@ import { assertCan } from "@/lib/authorization";
 import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { loadNewSegmentInSurvey } from "@/lib/survey/service";
+import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import {
   getOrganizationIdFromSegmentId,
@@ -320,5 +321,8 @@ export const getSurveysForSegmentFilterAction = authenticatedActionClient
 
     await checkAdvancedTargetingPermission(organizationId);
 
-    return await getSurveyRefsForWorkspace(parsedInput.workspaceId);
+    return await getSurveyRefsForWorkspace(
+      parsedInput.workspaceId,
+      await getUserVisibleSurveyWhere(ctx.user.id, organizationId)
+    );
   });

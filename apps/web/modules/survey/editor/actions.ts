@@ -197,9 +197,9 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
 
     const organizationId = await getOrganizationIdFromSurveyId(survey.id);
     const workspaceId = await getWorkspaceIdFromSurveyId(survey.id);
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-      type: "workspace",
-      id: workspaceId,
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
+      type: "survey",
+      id: survey.id,
     });
     await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
@@ -245,9 +245,9 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
   withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.id);
     const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.id);
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-      type: "workspace",
-      id: workspaceId,
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
+      type: "survey",
+      id: parsedInput.id,
     });
     await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 

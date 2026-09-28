@@ -73,29 +73,36 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
   }
 };
 
-export const getTagsOnResponsesCount = reactCache(async (workspaceId: string): Promise<TTagsCount> => {
-  validateInputs([workspaceId, ZId]);
+export const getTagsOnResponsesCount = reactCache(
+  async (
+    workspaceId: string,
+    /** ENG-3282: the caller's survey-visibility clause, so a private survey's responses are not counted. */
+    visibleSurveyWhere: Prisma.SurveyWhereInput
+  ): Promise<TTagsCount> => {
+    validateInputs([workspaceId, ZId]);
 
-  try {
-    const tagsCount = await prisma.tagsOnResponses.groupBy({
-      by: ["tagId"],
-      where: {
-        response: {
-          survey: {
-            workspaceId,
+    try {
+      const tagsCount = await prisma.tagsOnResponses.groupBy({
+        by: ["tagId"],
+        where: {
+          response: {
+            survey: {
+              workspaceId,
+              ...visibleSurveyWhere,
+            },
           },
         },
-      },
-      _count: {
-        _all: true,
-      },
-    });
+        _count: {
+          _all: true,
+        },
+      });
 
-    return tagsCount.map((tagCount) => ({ tagId: tagCount.tagId, count: tagCount._count._all }));
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
+      return tagsCount.map((tagCount) => ({ tagId: tagCount.tagId, count: tagCount._count._all }));
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
     }
-    throw error;
   }
-});
+);

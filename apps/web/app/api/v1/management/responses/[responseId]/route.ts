@@ -10,6 +10,7 @@ import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { deleteResponse, getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
+import { RESPONSE_ACTION_FOR_METHOD, canApiKeyReachSurveyResource } from "@/lib/survey/visibility/api-key";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { resolveStorageUrlsInObject, validateClientFileUploads } from "@/modules/storage/utils";
@@ -45,6 +46,12 @@ async function fetchAndAuthorizeResponse(
       { type: "apiKey", id: authentication.apiKeyId },
       getWorkspaceAuthorizationActionForMethod(requiredPermission),
       { type: "workspace", id: survey.workspaceId }
+    )) ||
+    // ENG-3282: responses follow their survey; a private survey's are out of an API key's reach.
+    !(await canApiKeyReachSurveyResource(
+      authentication.apiKeyId,
+      RESPONSE_ACTION_FOR_METHOD[requiredPermission],
+      { type: "response", id: responseId }
     ))
   ) {
     return { error: responses.unauthorizedResponse() };

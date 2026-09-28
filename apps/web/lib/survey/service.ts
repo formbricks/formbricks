@@ -236,13 +236,22 @@ export const getSurvey = reactCache(async (surveyId: string): Promise<TSurvey | 
 });
 
 export const getSurveysByActionClassId = reactCache(
-  async (actionClassId: string, page?: number): Promise<TSurvey[]> => {
-    validateInputs([actionClassId, ZId], [page, ZOptionalNumber]);
+  async (
+    actionClassId: string,
+    workspaceId: string,
+    /** ENG-3282: the caller's survey-visibility clause. */
+    visibleSurveyWhere: Prisma.SurveyWhereInput,
+    page?: number
+  ): Promise<TSurvey[]> => {
+    validateInputs([actionClassId, ZId], [workspaceId, ZId], [page, ZOptionalNumber]);
 
     let surveysPrisma;
     try {
       surveysPrisma = await prisma.survey.findMany({
         where: {
+          // An action class belongs to one workspace; scope to it rather than trusting the join alone.
+          workspaceId,
+          ...visibleSurveyWhere,
           triggers: {
             some: {
               actionClass: {
@@ -276,7 +285,13 @@ export const getSurveysByActionClassId = reactCache(
 );
 
 export const getSurveys = reactCache(
-  async (workspaceId: string, limit?: number, offset?: number): Promise<TSurvey[]> => {
+  async (
+    workspaceId: string,
+    /** ENG-3282: the caller's survey-visibility clause; see `lib/survey/visibility/predicate.ts`. */
+    visibleSurveyWhere: Prisma.SurveyWhereInput,
+    limit?: number,
+    offset?: number
+  ): Promise<TSurvey[]> => {
     validateInputs([workspaceId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
 
     try {
@@ -285,6 +300,7 @@ export const getSurveys = reactCache(
           workspaceId,
           // Archived surveys are hidden by default across the app.
           archivedAt: null,
+          ...visibleSurveyWhere,
         },
         select: selectSurvey,
         orderBy: {

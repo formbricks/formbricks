@@ -26,6 +26,7 @@ import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
+import { getApiKeyVisibleSurveyWhere } from "@/lib/survey/visibility/api-key";
 import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { WorkspaceSurveyLimitError, assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
@@ -47,7 +48,7 @@ export const GET = withV1ApiWrapper({
         ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
       ];
 
-      const surveys = await getSurveys(workspaceIds, limit, offset);
+      const surveys = await getSurveys(workspaceIds, limit, offset, await getApiKeyVisibleSurveyWhere());
 
       // Always expose `questions` (derived from blocks) alongside `blocks` so API v1
       // consumers get a consistent shape regardless of how the survey was built.

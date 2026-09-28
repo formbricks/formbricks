@@ -1,14 +1,33 @@
 import { NextRequest } from "next/server";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { authenticateRequest } from "@/app/api/v1/auth";
-import { can } from "@/lib/authorization";
+import { type TAuthorizationActor, can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
+import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
+import { SURVEY_ACTION_FOR_METHOD } from "@/lib/survey/visibility/api-key";
 import { getSession } from "@/modules/auth/lib/session";
+
+/**
+ * ENG-3282: a file under `surveys/{surveyId}/…` belongs to that survey, so once visibility is enforced
+ * the survey has to be reachable too — a private survey's uploads are its owner's and the organization
+ * administrators'. Legacy paths name no survey and keep the workspace check alone.
+ */
+const canReachSurveyFile = async (
+  actor: TAuthorizationActor,
+  filePath: ReadonlyArray<string>,
+  action: "GET" | "DELETE"
+): Promise<boolean> => {
+  const [segment, surveyId] = filePath;
+  if (segment !== "surveys" || !surveyId) return true;
+  if (!(await isSurveyVisibilityReady())) return true;
+  return can(actor, SURVEY_ACTION_FOR_METHOD[action], { type: "survey", id: surveyId });
+};
 
 export const authorizePrivateDownload = async (
   request: NextRequest,
   workspaceId: string,
-  action: "GET" | "DELETE"
+  action: "GET" | "DELETE",
+  filePath: ReadonlyArray<string>
 ): Promise<
   Result<
     { authType: "session"; userId: string } | { authType: "apiKey"; apiKeyId: string },
@@ -25,7 +44,10 @@ export const authorizePrivateDownload = async (
       getWorkspaceAuthorizationActionForMethod(action),
       { type: "workspace", id: workspaceId }
     );
-    if (!isUserAuthorized) {
+    if (
+      !isUserAuthorized ||
+      !(await canReachSurveyFile({ type: "user", id: session.user.id }, filePath, action))
+    ) {
       return err({
         unauthorized: true,
       });
@@ -48,7 +70,8 @@ export const authorizePrivateDownload = async (
     !(await can({ type: "apiKey", id: auth.apiKeyId }, getWorkspaceAuthorizationActionForMethod(action), {
       type: "workspace",
       id: workspaceId,
-    }))
+    })) ||
+    !(await canReachSurveyFile({ type: "apiKey", id: auth.apiKeyId }, filePath, action))
   ) {
     return err({
       unauthorized: true,

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getFeedbackSourcesWithMappings } from "@/lib/feedback-source/service";
 import { getSurveys } from "@/lib/survey/service";
+import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getTranslate } from "@/lingodotdev/server";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import { FeedbackDataEmptyState } from "@/modules/ee/unify-feedback/components/feedback-data-empty-state";
@@ -73,7 +74,9 @@ export const UnifyFeedbackSourcesPage = async (
 
   const [feedbackSources, surveys, directories] = await Promise.all([
     getFeedbackSourcesWithMappings(workspaceId),
-    getSurveys(workspaceId),
+    getUserVisibleSurveyWhere(session.user.id, organization.id).then((where) =>
+      getSurveys(workspaceId, where)
+    ),
     getAuthorizedWorkspaceFeedbackDirectories(session.user.id, workspaceId),
   ]);
 

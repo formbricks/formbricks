@@ -24,6 +24,29 @@ export const buildVisibleSurveyWhere = (ctx: TSurveyActorContext): Prisma.Survey
   return { OR: [sharedAndSettled, { ownerId: ctx.userId }] };
 };
 
+/**
+ * The same rule for a query spanning several organizations (the account-level notification settings),
+ * where "organization administrator" differs per row: an owner or manager membership in the survey's
+ * organization is the same test `organization.manage` makes.
+ */
+export const buildVisibleSurveyWhereAcrossOrganizations = (
+  enforced: boolean,
+  userId: string
+): Prisma.SurveyWhereInput => {
+  if (!enforced) return {};
+  return {
+    OR: [
+      { visibility: "workspace", visibilityPending: false },
+      { ownerId: userId },
+      {
+        workspace: {
+          organization: { memberships: { some: { userId, role: { in: ["owner", "manager"] } } } },
+        },
+      },
+    ],
+  };
+};
+
 export const buildVisibleResponseWhere = (ctx: TSurveyActorContext): Prisma.ResponseWhereInput => {
   const survey = buildVisibleSurveyWhere(ctx);
   return Object.keys(survey).length === 0 ? {} : { survey };

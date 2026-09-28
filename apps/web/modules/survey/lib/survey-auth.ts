@@ -6,6 +6,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { can } from "@/lib/authorization";
+import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { getSession } from "@/modules/auth/lib/session";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { TWorkspaceAuth } from "@/modules/workspaces/types/workspace-auth";
@@ -60,10 +61,13 @@ export const canReadSurveyInWorkspace = async (workspaceId: string, surveyId: st
     return false;
   }
 
-  return can({ type: "user", id: session.user.id }, "workspace.read", {
-    type: "workspace",
-    id: workspaceId,
-  });
+  const actor = { type: "user", id: session.user.id } as const;
+  // ENG-3282: once survey visibility is enforced the survey itself decides — a private survey is its
+  // owner's and the organization administrators', whoever else can read the workspace.
+  if (await isSurveyVisibilityReady()) {
+    return can(actor, "survey.read", { type: "survey", id: surveyId });
+  }
+  return can(actor, "workspace.read", { type: "workspace", id: workspaceId });
 };
 
 /**
@@ -87,6 +91,18 @@ export const getSurveyAuth = reactCache(
     ]);
 
     if (surveyWorkspaceId !== workspaceAuth.workspace.id) {
+      notFound();
+    }
+
+    // ENG-3282: workspace access is necessary but no longer sufficient once visibility is enforced.
+    // The same 404 as a foreign id, so a private survey's existence is not revealed.
+    if (
+      (await isSurveyVisibilityReady()) &&
+      !(await can({ type: "user", id: workspaceAuth.session.user.id }, "survey.read", {
+        type: "survey",
+        id: surveyId,
+      }))
+    ) {
       notFound();
     }
 

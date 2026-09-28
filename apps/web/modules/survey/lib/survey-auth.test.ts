@@ -5,6 +5,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import type { Session } from "@formbricks/types/auth";
 import { DatabaseError } from "@formbricks/types/errors";
 import { can } from "@/lib/authorization";
+import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { getSession } from "@/modules/auth/lib/session";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { TWorkspaceAuth } from "@/modules/workspaces/types/workspace-auth";
@@ -39,6 +40,8 @@ vi.mock("next/navigation", () => ({
     throw new Error("NEXT_NOT_FOUND");
   }),
 }));
+
+vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
 
 vi.mock("@/modules/workspaces/lib/utils", () => ({
   getWorkspaceAuth: vi.fn(),
@@ -187,5 +190,48 @@ describe("getSurveyAuth", () => {
     mockPrismaSurvey.findUnique.mockRejectedValueOnce(error);
 
     await expect(getSurveyAuth(VICTIM_WORKSPACE_ID, SURVEY_ID)).rejects.toThrow(error);
+  });
+});
+
+describe("survey visibility enforced (ENG-3282)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(isSurveyVisibilityReady).mockResolvedValue(true);
+    mockGetSession.mockResolvedValue(buildSession(ATTACKER_USER_ID));
+  });
+
+  test("canReadSurveyInWorkspace asks about the survey itself, not the workspace", async () => {
+    mockSurveyLookup({ workspaceId: VICTIM_WORKSPACE_ID });
+    mockCan.mockResolvedValue(false);
+
+    await expect(canReadSurveyInWorkspace(VICTIM_WORKSPACE_ID, SURVEY_ID)).resolves.toBe(false);
+    expect(mockCan).toHaveBeenCalledWith({ type: "user", id: ATTACKER_USER_ID }, "survey.read", {
+      type: "survey",
+      id: SURVEY_ID,
+    });
+  });
+
+  test("getSurveyAuth answers 404 for a private survey the caller may not read", async () => {
+    mockGetWorkspaceAuth.mockResolvedValue({
+      ...buildWorkspaceAuth(VICTIM_WORKSPACE_ID),
+      session: buildSession(ATTACKER_USER_ID),
+    } as TWorkspaceAuth);
+    mockSurveyLookup({ workspaceId: VICTIM_WORKSPACE_ID });
+    mockCan.mockResolvedValue(false);
+
+    await expect(getSurveyAuth(VICTIM_WORKSPACE_ID, SURVEY_ID)).rejects.toThrow("NEXT_NOT_FOUND");
+    expect(mockCan).toHaveBeenCalledWith({ type: "user", id: ATTACKER_USER_ID }, "survey.read", {
+      type: "survey",
+      id: SURVEY_ID,
+    });
+  });
+
+  test("getSurveyAuth returns the workspace auth when the survey is readable", async () => {
+    const auth = { ...buildWorkspaceAuth(VICTIM_WORKSPACE_ID), session: buildSession(ATTACKER_USER_ID) };
+    mockGetWorkspaceAuth.mockResolvedValue(auth as TWorkspaceAuth);
+    mockSurveyLookup({ workspaceId: VICTIM_WORKSPACE_ID });
+    mockCan.mockResolvedValue(true);
+
+    await expect(getSurveyAuth(VICTIM_WORKSPACE_ID, SURVEY_ID)).resolves.toBe(auth);
   });
 });

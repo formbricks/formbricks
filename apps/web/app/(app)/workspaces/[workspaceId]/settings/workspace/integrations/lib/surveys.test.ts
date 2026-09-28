@@ -98,7 +98,7 @@ describe("getSurveys", () => {
       return { ...found } as TSurvey;
     });
 
-    const surveys = await getSurveys(workspaceId);
+    const surveys = await getSurveys(workspaceId, {});
 
     expect(surveys).toEqual(mockTransformedSurveys);
     // Use expect.any(ZId) for the Zod schema validation check
@@ -130,7 +130,7 @@ describe("getSurveys", () => {
 
     vi.mocked(prisma.survey.findMany).mockRejectedValueOnce(prismaError);
 
-    await expect(getSurveys(workspaceId)).rejects.toThrow(DatabaseError);
+    await expect(getSurveys(workspaceId, {})).rejects.toThrow(DatabaseError);
     expect(logger.error).toHaveBeenCalledWith({ error: prismaError }, "getSurveys: Could not fetch surveys");
     // React cache is already mocked globally - no need to check it here
   });
@@ -140,7 +140,7 @@ describe("getSurveys", () => {
 
     vi.mocked(prisma.survey.findMany).mockRejectedValueOnce(genericError);
 
-    await expect(getSurveys(workspaceId)).rejects.toThrow(genericError);
+    await expect(getSurveys(workspaceId, {})).rejects.toThrow(genericError);
     expect(logger.error).not.toHaveBeenCalled();
     // React cache is already mocked globally - no need to check it here
   });

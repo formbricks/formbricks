@@ -114,29 +114,41 @@ export const getSegment = reactCache(async (segmentId: string): Promise<TSegment
   }
 });
 
-export const getSegments = reactCache(async (workspaceId: string): Promise<TSegmentWithSurveyRefs[]> => {
-  validateInputs([workspaceId, ZId]);
-  try {
-    const segments = await prisma.segment.findMany({
-      where: {
-        workspaceId,
-      },
-      select: selectSegment,
-    });
+/**
+ * @param visibleSurveyWhere ENG-3282: when given, each segment's survey references only name surveys
+ *   the viewer may see — for the segments page. Targeting and delete guards omit it: they need every
+ *   survey a segment is attached to, visible to this viewer or not.
+ */
+export const getSegments = reactCache(
+  async (
+    workspaceId: string,
+    visibleSurveyWhere?: Prisma.SurveyWhereInput
+  ): Promise<TSegmentWithSurveyRefs[]> => {
+    validateInputs([workspaceId, ZId]);
+    try {
+      const segments = await prisma.segment.findMany({
+        where: {
+          workspaceId,
+        },
+        select: visibleSurveyWhere
+          ? { ...selectSegment, surveys: { ...selectSegment.surveys, where: visibleSurveyWhere } }
+          : selectSegment,
+      });
 
-    if (!segments) {
-      return [];
+      if (!segments) {
+        return [];
+      }
+
+      return segments.map((segment) => transformPrismaSegment(segment));
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
     }
-
-    return segments.map((segment) => transformPrismaSegment(segment));
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
   }
-});
+);
 
 export interface TSurveyFilterRef {
   id: string;
@@ -158,11 +170,15 @@ export const SURVEY_FILTER_REF_LIMIT = 1000;
  * is needed. Bounded by {@link SURVEY_FILTER_REF_LIMIT}, most-recently-updated first.
  */
 export const getSurveyRefsForWorkspace = reactCache(
-  async (workspaceId: string): Promise<TSurveyFilterRef[]> => {
+  async (
+    workspaceId: string,
+    /** ENG-3282: the viewer's survey-visibility clause. */
+    visibleSurveyWhere: Prisma.SurveyWhereInput
+  ): Promise<TSurveyFilterRef[]> => {
     validateInputs([workspaceId, ZId]);
     try {
       return await prisma.survey.findMany({
-        where: { workspaceId },
+        where: { workspaceId, ...visibleSurveyWhere },
         select: { id: true, name: true, status: true },
         orderBy: { updatedAt: "desc" },
         take: SURVEY_FILTER_REF_LIMIT,

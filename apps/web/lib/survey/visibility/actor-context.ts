@@ -1,8 +1,10 @@
 import "server-only";
 import { cache as reactCache } from "react";
+import type { Prisma } from "@formbricks/database/prisma";
 import { can } from "@/lib/authorization";
 import type { TAuthorizationActor } from "@/lib/authorization";
 import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
+import { buildVisibleSurveyWhere } from "./predicate";
 
 /**
  * Who is asking, in the terms the visibility predicate needs (ENG-3282). Resolved once per request and
@@ -35,3 +37,10 @@ export const resolveSurveyActorContext = (
   actor: TAuthorizationActor,
   organizationId: string
 ): Promise<TSurveyActorContext> => resolveSurveyActorContextCached(actor.type, actor.id, organizationId);
+
+/** The `Survey` clause for a signed-in user's pickers and lists in one organization. */
+export const getUserVisibleSurveyWhere = async (
+  userId: string,
+  organizationId: string
+): Promise<Prisma.SurveyWhereInput> =>
+  buildVisibleSurveyWhere(await resolveSurveyActorContext({ id: userId, type: "user" }, organizationId));

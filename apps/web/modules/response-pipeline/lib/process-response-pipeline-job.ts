@@ -11,6 +11,8 @@ import {
 import { logger } from "@formbricks/logger";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
+import { can } from "@/lib/authorization";
+import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { POSTHOG_KEY } from "@/lib/constants";
 import { selectSurveyEmbeddedDataLinks, withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { handleFeedbackSourcePipeline } from "@/lib/feedback-source/pipeline-handler";
@@ -303,6 +305,25 @@ const loadResponseCountSafely = async ({
   }
 };
 
+/**
+ * ENG-3282: an alert carries the response, so it only goes to someone who may read it — for a private
+ * survey, its owner and the organization administrators. A subscription made while the survey was
+ * workspace-visible does not survive a restriction. Bounded by the subscriber count; a no-op while
+ * survey visibility is not enforced.
+ */
+const keepRecipientsWhoMayReadResponses = async <TUser extends { id: string }>(
+  users: TUser[],
+  surveyId: string
+): Promise<TUser[]> => {
+  if (users.length === 0 || !(await isSurveyVisibilityReady())) return users;
+  const allowed = await Promise.all(
+    users.map((user) =>
+      can({ id: user.id, type: "user" }, "survey.response_read", { id: surveyId, type: "survey" })
+    )
+  );
+  return users.filter((_, index) => allowed[index]);
+};
+
 const getUsersWithNotifications = async ({
   data,
   logContext,
@@ -364,10 +385,10 @@ const getUsersWithNotifications = async ({
           equals: true,
         },
       },
-      select: { email: true, locale: true },
+      select: { email: true, id: true, locale: true },
     });
 
-    return users.map((user) => ({
+    return (await keepRecipientsWhoMayReadResponses(users, data.surveyId)).map((user) => ({
       email: user.email,
       locale: toUserLocale(user.locale),
     }));

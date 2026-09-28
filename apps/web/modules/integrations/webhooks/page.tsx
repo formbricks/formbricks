@@ -1,5 +1,6 @@
 import { DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS } from "@/lib/constants";
 import { getSurveys } from "@/lib/survey/service";
+import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getTranslate } from "@/lingodotdev/server";
 import { AddWebhookButton } from "@/modules/integrations/webhooks/components/add-webhook-button";
 import { WebhookRowData } from "@/modules/integrations/webhooks/components/webhook-row-data";
@@ -15,11 +16,13 @@ export const WebhooksPage = async (props: { params: Promise<{ workspaceId: strin
   const params = await props.params;
   const t = await getTranslate();
 
-  const { isReadOnly, workspace } = await getWorkspaceAuth(params.workspaceId);
+  const { isReadOnly, organization, session, workspace } = await getWorkspaceAuth(params.workspaceId);
 
   const [webhooks, surveys] = await Promise.all([
     getWebhooks(workspace.id),
-    getSurveys(workspace.id, 200), // HOTFIX: not getting all surveys for now since it's maxing out the prisma accelerate limit
+    getUserVisibleSurveyWhere(session.user.id, organization.id).then((where) =>
+      getSurveys(workspace.id, where, 200)
+    ), // HOTFIX: not getting all surveys for now since it's maxing out the prisma accelerate limit
   ]);
 
   const renderAddWebhookButton = () => (

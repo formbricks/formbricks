@@ -1,6 +1,7 @@
 import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import type { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyStatus } from "@formbricks/types/surveys/types";
@@ -72,12 +73,17 @@ export const updateSurveySlug = async (
 
 // Get all surveys with slugs for an organization (for Domain settings page)
 export const getSurveysWithSlugsByOrganizationId = reactCache(
-  async (organizationId: string): Promise<TSurveyWithSlug[]> => {
+  async (
+    organizationId: string,
+    /** ENG-3282: the viewer's survey-visibility clause, so a private survey's slug is not listed. */
+    visibleSurveyWhere: Prisma.SurveyWhereInput
+  ): Promise<TSurveyWithSlug[]> => {
     try {
       const surveys = await prisma.survey.findMany({
         where: {
           slug: { not: null },
           workspace: { organizationId },
+          ...visibleSurveyWhere,
         },
         select: {
           id: true,

@@ -1,6 +1,11 @@
 import { describe, expect, test } from "vitest";
 import type { TSurveyActorContext } from "./actor-context";
-import { buildVisibleResponseWhere, buildVisibleSurveyWhere, visibleSurveySqlPredicate } from "./predicate";
+import {
+  buildVisibleResponseWhere,
+  buildVisibleSurveyWhere,
+  buildVisibleSurveyWhereAcrossOrganizations,
+  visibleSurveySqlPredicate,
+} from "./predicate";
 
 const member: TSurveyActorContext = {
   enforced: true,
@@ -50,5 +55,25 @@ describe("buildVisibleSurveyWhere", () => {
 
   test("refuses an alias that is not a bare identifier", () => {
     expect(() => visibleSurveySqlPredicate(member, 's"; DROP TABLE "Survey')).toThrow("Invalid SQL alias");
+  });
+});
+
+describe("buildVisibleSurveyWhereAcrossOrganizations", () => {
+  test("restricts nothing while enforcement is off", () => {
+    expect(buildVisibleSurveyWhereAcrossOrganizations(false, "u1")).toEqual({});
+  });
+
+  test("admits shared surveys, owned ones, and every survey of an organization the user administers", () => {
+    expect(buildVisibleSurveyWhereAcrossOrganizations(true, "u1")).toEqual({
+      OR: [
+        { visibility: "workspace", visibilityPending: false },
+        { ownerId: "u1" },
+        {
+          workspace: {
+            organization: { memberships: { some: { userId: "u1", role: { in: ["owner", "manager"] } } } },
+          },
+        },
+      ],
+    });
   });
 });

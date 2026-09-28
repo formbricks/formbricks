@@ -147,13 +147,20 @@ export const createResponse = async (
 };
 
 export const getResponsesByWorkspaceIds = reactCache(
-  async (workspaceIds: string[], limit?: number, offset?: number): Promise<TResponse[]> => {
+  async (
+    workspaceIds: string[],
+    limit?: number,
+    offset?: number,
+    /** ENG-3282: the API key's visibility clause on the response's survey. */
+    visibleSurveyWhere: Prisma.SurveyWhereInput = {}
+  ): Promise<TResponse[]> => {
     validateInputs([workspaceIds, ZId.array()], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
     try {
       const responses = await prisma.response.findMany({
         where: {
           survey: {
             workspaceId: { in: workspaceIds },
+            ...visibleSurveyWhere,
           },
         },
         select: responseSelection,

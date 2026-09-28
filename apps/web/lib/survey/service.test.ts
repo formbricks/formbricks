@@ -286,13 +286,13 @@ describe("Tests for getSurveysByActionClassId", () => {
   describe("Happy Path", () => {
     test("Returns an array of surveys for a given actionClassId", async () => {
       prisma.survey.findMany.mockResolvedValueOnce([mockSurveyOutput]);
-      const surveys = await getSurveysByActionClassId(mockId);
+      const surveys = await getSurveysByActionClassId(mockId, mockId, {});
       expect(surveys).toEqual([mockTransformedSurveyOutput]);
     });
 
     test("Returns an empty array if no surveys are found", async () => {
       prisma.survey.findMany.mockResolvedValueOnce([]);
-      const surveys = await getSurveysByActionClassId(mockId);
+      const surveys = await getSurveysByActionClassId(mockId, mockId, {});
       expect(surveys).toEqual([]);
     });
   });
@@ -303,7 +303,7 @@ describe("Tests for getSurveysByActionClassId", () => {
     test("should throw an error if there is an unknown error", async () => {
       const mockErrorMessage = "Unknown error occurred";
       prisma.survey.findMany.mockRejectedValue(new Error(mockErrorMessage));
-      await expect(getSurveysByActionClassId(mockId)).rejects.toThrow(Error);
+      await expect(getSurveysByActionClassId(mockId, mockId, {})).rejects.toThrow(Error);
     });
   });
 });
@@ -312,14 +312,14 @@ describe("Tests for getSurveys", () => {
   describe("Happy Path", () => {
     test("Returns an array of surveys for a given workspaceId, limit(optional) and offset(optional)", async () => {
       prisma.survey.findMany.mockResolvedValueOnce([mockSurveyOutput]);
-      const surveys = await getSurveys(mockId);
+      const surveys = await getSurveys(mockId, {});
       expect(surveys).toEqual([mockTransformedSurveyOutput]);
     });
 
     test("Returns an empty array if no surveys are found", async () => {
       prisma.survey.findMany.mockResolvedValueOnce([]);
 
-      const surveys = await getSurveys(mockId);
+      const surveys = await getSurveys(mockId, {});
       expect(surveys).toEqual([]);
     });
   });
@@ -335,13 +335,13 @@ describe("Tests for getSurveys", () => {
       });
 
       prisma.survey.findMany.mockRejectedValue(errToThrow);
-      await expect(getSurveys(mockId)).rejects.toThrow(DatabaseError);
+      await expect(getSurveys(mockId, {})).rejects.toThrow(DatabaseError);
     });
 
     test("should throw an error if there is an unknown error", async () => {
       const mockErrorMessage = "Unknown error occurred";
       prisma.survey.findMany.mockRejectedValue(new Error(mockErrorMessage));
-      await expect(getSurveys(mockId)).rejects.toThrow(Error);
+      await expect(getSurveys(mockId, {})).rejects.toThrow(Error);
     });
   });
 });

@@ -127,13 +127,16 @@ describe("Slug Library Tests", () => {
       ];
       vi.mocked(prisma.survey.findMany).mockResolvedValueOnce(mockSurveys as never);
 
-      const result = await getSurveysWithSlugsByOrganizationId("org_123");
+      const result = await getSurveysWithSlugsByOrganizationId("org_123", {
+        OR: [{ visibility: "workspace", visibilityPending: false }, { ownerId: "user_1" }],
+      });
       expect(result).toEqual(mockSurveys);
       expect(prisma.survey.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
             slug: { not: null },
             workspace: { organizationId: "org_123" },
+            OR: [{ visibility: "workspace", visibilityPending: false }, { ownerId: "user_1" }],
           },
         })
       );
@@ -146,13 +149,13 @@ describe("Slug Library Tests", () => {
       });
       vi.mocked(prisma.survey.findMany).mockRejectedValueOnce(prismaError);
 
-      await expect(getSurveysWithSlugsByOrganizationId("org_123")).rejects.toThrow(DatabaseError);
+      await expect(getSurveysWithSlugsByOrganizationId("org_123", {})).rejects.toThrow(DatabaseError);
     });
 
     test("should rethrow non-prisma errors", async () => {
       vi.mocked(prisma.survey.findMany).mockRejectedValueOnce(new Error("boom"));
 
-      await expect(getSurveysWithSlugsByOrganizationId("org_123")).rejects.toThrow("boom");
+      await expect(getSurveysWithSlugsByOrganizationId("org_123", {})).rejects.toThrow("boom");
     });
   });
 });
