@@ -1,12 +1,17 @@
 import "server-only";
+import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
+import { isPending } from "@/lib/survey/visibility/policy";
 import type { TAuthorizationActor, TAuthorizationResource, TAuthorizationResourceType } from "./contract";
 import {
+  type TSurveyAuthorizationScopeRow,
   getApiKeyOrganizationId,
   getAuthorizationOrganizationId,
   getDashboardAuthorizationWorkspaceScope,
   getFeedbackDirectoryAssignmentAuthorizationScope,
   getFeedbackDirectoryAuthorizationScope,
   getResponseAuthorizationWorkspaceScope,
+  getResponseSurveyId,
+  getSurveyAuthorizationScopeRow,
   getSurveyAuthorizationWorkspaceScope,
   getTeamOrganizationId,
   getWorkspaceOrganizationId,
@@ -18,15 +23,29 @@ type TResolvedPermissionResource = Readonly<{
   id: string;
 }>;
 
+/**
+ * A survey whose visibility change the graph has not acknowledged yet (ENG-3282). The graph still
+ * holds the previous version, so the decision is made from PostgreSQL facts instead: private to its
+ * owner (along their workspace ladder) and the organization's administrators, whichever way the
+ * change points.
+ */
+export type TPendingPrivateSurveyPolicy = Readonly<{
+  kind: "pendingPrivate";
+  ownerId: string | null;
+  surveyId: string;
+}>;
+
 export type TResolvedAuthorizationScope = Readonly<{
   actorValid: boolean;
   organizationId: string;
   permissionResource: TResolvedPermissionResource;
+  policy?: TPendingPrivateSurveyPolicy;
 }>;
 
 type TResourceScope = Readonly<{
   organizationId: string;
   permissionResource: TResolvedPermissionResource;
+  policy?: TPendingPrivateSurveyPolicy;
 }>;
 
 const resolveWorkspaceScope = async (workspaceId: string): Promise<TResourceScope | null> => {
@@ -45,6 +64,22 @@ const toWorkspaceResourceScope = (
         permissionResource: { type: "workspace", id: scope.workspaceId },
       }
     : null;
+
+/**
+ * A survey decided on the survey's own graph node once visibility is enforced. A pending change falls
+ * back to the workspace node plus a policy the evaluator applies from PostgreSQL facts.
+ */
+const toSurveyResourceScope = (row: TSurveyAuthorizationScopeRow | null): TResourceScope | null => {
+  if (!row) return null;
+  if (isPending(row)) {
+    return {
+      organizationId: row.organizationId,
+      permissionResource: { type: "workspace", id: row.workspaceId },
+      policy: { kind: "pendingPrivate", ownerId: row.ownerId, surveyId: row.id },
+    };
+  }
+  return { organizationId: row.organizationId, permissionResource: { type: "survey", id: row.id } };
+};
 
 const resolveResourceScope = async (resource: TAuthorizationResource): Promise<TResourceScope | null> => {
   switch (resource.type) {
@@ -69,13 +104,22 @@ const resolveResourceScope = async (resource: TAuthorizationResource): Promise<T
         : null;
     }
     case "survey": {
-      return toWorkspaceResourceScope(await getSurveyAuthorizationWorkspaceScope(resource.id));
+      // Readiness marker off: exactly the pre-ENG-3282 behaviour, workspace permissions throughout.
+      if (!(await isSurveyVisibilityReady())) {
+        return toWorkspaceResourceScope(await getSurveyAuthorizationWorkspaceScope(resource.id));
+      }
+      return toSurveyResourceScope(await getSurveyAuthorizationScopeRow(resource.id));
     }
     case "dashboard": {
       return toWorkspaceResourceScope(await getDashboardAuthorizationWorkspaceScope(resource.id));
     }
     case "response": {
-      return toWorkspaceResourceScope(await getResponseAuthorizationWorkspaceScope(resource.id));
+      // Responses follow their survey (contract §7).
+      if (!(await isSurveyVisibilityReady())) {
+        return toWorkspaceResourceScope(await getResponseAuthorizationWorkspaceScope(resource.id));
+      }
+      const surveyId = await getResponseSurveyId(resource.id);
+      return surveyId ? toSurveyResourceScope(await getSurveyAuthorizationScopeRow(surveyId)) : null;
     }
     case "feedbackDirectory": {
       const scope = await getFeedbackDirectoryAuthorizationScope(resource.id);

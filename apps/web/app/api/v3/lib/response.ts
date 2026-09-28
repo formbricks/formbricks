@@ -74,6 +74,7 @@ export const V3_PROBLEM_CODES = [
   "too_many_requests",
   "unprocessable_content",
   "workflow_not_executable",
+  "workspace_survey_limit_reached",
 ] as const;
 
 export type V3ProblemCode = (typeof V3_PROBLEM_CODES)[number];
@@ -279,6 +280,29 @@ export function problemUnprocessableContent(
     instance: options?.instance,
     invalid_params: options?.invalid_params,
   });
+}
+
+/**
+ * ENG-3282: the workspace already holds `SURVEY_WORKSPACE_LIMIT` surveys. `details` carries the limit
+ * and the current count so a client can say how many to archive or delete without a second call.
+ */
+export function problemWorkspaceSurveyLimit(
+  requestId: string,
+  limit: number,
+  count: number,
+  instance?: string
+): Response {
+  return problemResponse(
+    422,
+    "Unprocessable Content",
+    "This workspace has reached its survey limit",
+    requestId,
+    {
+      code: "workspace_survey_limit_reached",
+      details: { count, limit },
+      instance,
+    }
+  );
 }
 
 export function problemConflict(

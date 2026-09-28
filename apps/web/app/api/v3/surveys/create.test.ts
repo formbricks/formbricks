@@ -4,6 +4,8 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurvey, getSurvey } from "@/lib/survey/service";
+import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
+import { assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { V3SurveyCreatePermissionError, V3SurveyInputValidationError, createV3Survey } from "./create";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
@@ -23,6 +25,15 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@/lib/survey/service", () => ({
   createSurvey: vi.fn(),
   getSurvey: vi.fn(),
+}));
+
+vi.mock("@/lib/survey/visibility/limit", () => ({
+  WorkspaceSurveyLimitError: class extends Error {},
+  assertWorkspaceSurveyLimit: vi.fn(),
+}));
+
+vi.mock("@/lib/survey/visibility/creation", () => ({
+  resolveSurveyCreationFacts: vi.fn(),
 }));
 
 vi.mock("@/lib/actionClass/service", () => ({
@@ -105,6 +116,8 @@ const createdSurvey = {
 type TLanguageUpsertArgs = Parameters<typeof prisma.language.upsert>[0];
 type TLanguageUpsertReturn = ReturnType<typeof prisma.language.upsert>;
 
+const WORKSPACE_FACTS = { ownerId: null, visibility: "workspace" } as const;
+
 describe("createV3Survey", () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -146,6 +159,7 @@ describe("createV3Survey", () => {
       isContactsEnabled: true,
     });
     vi.mocked(getSurvey).mockResolvedValue(createdSurvey);
+    vi.mocked(resolveSurveyCreationFacts).mockResolvedValue(WORKSPACE_FACTS);
   });
 
   test("maps the public v3 body to the internal create payload", async () => {
@@ -155,7 +169,8 @@ describe("createV3Survey", () => {
         user: { id: "user_1", email: "user@example.com", name: "User" },
         expires: "2026-05-01",
       },
-      "req_1"
+      "req_1",
+      "org_1"
     );
 
     expect(prisma.language.upsert).toHaveBeenCalledWith(
@@ -199,7 +214,7 @@ describe("createV3Survey", () => {
           expect.objectContaining({ default: false, enabled: true }),
         ],
       }),
-      []
+      { creationFacts: WORKSPACE_FACTS, privateSegmentFilters: [] }
     );
     expect(getOrganizationByWorkspaceId).not.toHaveBeenCalled();
     expect(getExternalUrlsPermission).not.toHaveBeenCalled();
@@ -255,7 +270,7 @@ describe("createV3Survey", () => {
           expect.objectContaining({ language: expect.objectContaining({ code: "fr-FR" }), enabled: false }),
         ]),
       }),
-      []
+      { creationFacts: WORKSPACE_FACTS, privateSegmentFilters: [] }
     );
   });
 
@@ -684,7 +699,7 @@ describe("createV3Survey", () => {
           delay: 5,
           triggers: [{ actionClass }],
         }),
-        []
+        { creationFacts: WORKSPACE_FACTS, privateSegmentFilters: [] }
       );
       // No targeting filters → empty private segment, no entitlement check.
       expect(resolveV3ContactsEntitlement).not.toHaveBeenCalled();
@@ -702,11 +717,10 @@ describe("createV3Survey", () => {
       const result = await createV3Survey(body, null, "req_app_2", "org_1");
 
       expect(resolveV3ContactsEntitlement).toHaveBeenCalledWith(workspaceId, "org_1");
-      expect(createSurvey).toHaveBeenCalledWith(
-        workspaceId,
-        expect.objectContaining({ type: "app" }),
-        attributeFilters
-      );
+      expect(createSurvey).toHaveBeenCalledWith(workspaceId, expect.objectContaining({ type: "app" }), {
+        creationFacts: WORKSPACE_FACTS,
+        privateSegmentFilters: attributeFilters,
+      });
       expect(getSurvey).toHaveBeenCalledWith(appSurveyId);
       expect(result.segment?.filters).toEqual(attributeFilters);
     });
@@ -749,6 +763,40 @@ describe("createV3Survey", () => {
       });
 
       await expect(createV3Survey(body, null, "req_app_5")).rejects.toThrow(V3SurveyReferenceValidationError);
+      expect(createSurvey).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("ownership and visibility (ENG-3282)", () => {
+    test("resolves the creation facts from the principal and hands them to the service", async () => {
+      vi.mocked(resolveSurveyCreationFacts).mockResolvedValueOnce({
+        ownerId: "user_1",
+        visibility: "private",
+      });
+
+      await createV3Survey(
+        createBody,
+        { user: { id: "user_1", email: "user@example.com", name: "User" }, expires: "2026-05-01" },
+        "req_facts",
+        "org_1"
+      );
+
+      expect(resolveSurveyCreationFacts).toHaveBeenCalledWith({
+        actor: { type: "user", id: "user_1" },
+        organizationId: "org_1",
+      });
+      expect(createSurvey).toHaveBeenCalledWith(workspaceId, expect.anything(), {
+        creationFacts: { ownerId: "user_1", visibility: "private" },
+        privateSegmentFilters: [],
+      });
+    });
+
+    test("checks the workspace cap before writing anything", async () => {
+      vi.mocked(assertWorkspaceSurveyLimit).mockRejectedValueOnce(new Error("limit"));
+
+      await expect(createV3Survey(createBody, null, "req_cap", "org_1")).rejects.toThrow("limit");
+      expect(assertWorkspaceSurveyLimit).toHaveBeenCalledWith(workspaceId);
+      expect(prisma.language.upsert).not.toHaveBeenCalled();
       expect(createSurvey).not.toHaveBeenCalled();
     });
   });

@@ -532,19 +532,35 @@ export const withDerivedQuestions = <
   };
 };
 
+const INTERNAL_SURVEY_PROJECTION_KEYS = [
+  "embeddedFields",
+  "ownerId",
+  "visibility",
+  "visibilityChangedAt",
+  "visibilityChangedById",
+  "visibilityPending",
+  "visibilityProjectedVersion",
+  "visibilityVersion",
+] as const;
+
+type TInternalSurveyProjectionKey = (typeof INTERNAL_SURVEY_PROJECTION_KEYS)[number];
+
 /**
  * Drops read-only projections the v1 survey contract does not describe.
  *
  * `embeddedFields` (ENG-1837) is joined onto every survey the management endpoints read, but v1 is a
  * versioned public contract and how Embedded Data is serialised is ENG-1838's call — so it does not
- * leak out ahead of that decision. Write paths are unaffected: the key is omitted from both create
- * schemas and stripped again in `updateSurveyInternal`.
+ * leak out ahead of that decision. The ENG-3282 authorization facts (visibility, owner, versions) are
+ * v3's to describe, and `ownerId` is an identifier v3 deliberately never exposes. Write paths are
+ * unaffected: every one of these is omitted from both create schemas and stripped again in
+ * `updateSurveyInternal`.
  */
-export const withoutInternalSurveyProjections = <T extends { embeddedFields?: unknown }>(
+export const withoutInternalSurveyProjections = <T extends object>(
   survey: T
-): Omit<T, "embeddedFields"> => {
-  const { embeddedFields: _embeddedFields, ...rest } = survey;
-  return rest;
+): Omit<T, TInternalSurveyProjectionKey> => {
+  const rest = { ...survey } as Record<string, unknown>;
+  for (const key of INTERNAL_SURVEY_PROJECTION_KEYS) delete rest[key];
+  return rest as Omit<T, TInternalSurveyProjectionKey>;
 };
 
 export const validateSurveyInput = (input: {

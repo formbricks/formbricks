@@ -25,6 +25,7 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   ApiKey: "relationship_or_grant_source",
   ApiKeyWorkspace: "relationship_or_grant_source",
   AuthzedProjectionOutbox: "authentication_or_application",
+  AuthzedProjectionScopeState: "authentication_or_application",
   Chart: "workspace_inherited_resource",
   Contact: "workspace_inherited_resource",
   ContactAttribute: "parent_derived_or_data_integrity",

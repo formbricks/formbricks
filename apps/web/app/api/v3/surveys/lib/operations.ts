@@ -14,12 +14,14 @@ import {
   problemConflict,
   problemForbidden,
   problemUnprocessableContent,
+  problemWorkspaceSurveyLimit,
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { WorkspaceSurveyLimitError } from "@/lib/survey/visibility/limit";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
@@ -246,6 +248,10 @@ function mapV3SurveyCreateError(
     instance,
   }: { log: ReturnType<typeof logger.withContext>; requestId: string; instance: string }
 ): Response {
+  if (err instanceof WorkspaceSurveyLimitError) {
+    log.warn({ statusCode: 422, limit: err.limit }, "Workspace survey limit reached");
+    return problemWorkspaceSurveyLimit(requestId, err.limit, err.count, instance);
+  }
   if (err instanceof V3SurveyReferenceValidationError) {
     // Well-formed JSON that fails semantic/reference validation (dangling refs, duplicate ids,
     // undeclared locales, invalid media, unknown action-class ids) → 422, not 400 (which is reserved

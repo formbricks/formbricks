@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import {
   getApiKeyOrganizationId,
   getAuthorizationOrganizationId,
@@ -6,6 +7,8 @@ import {
   getFeedbackDirectoryAssignmentAuthorizationScope,
   getFeedbackDirectoryAuthorizationScope,
   getResponseAuthorizationWorkspaceScope,
+  getResponseSurveyId,
+  getSurveyAuthorizationScopeRow,
   getSurveyAuthorizationWorkspaceScope,
   getTeamOrganizationId,
   getWorkspaceOrganizationId,
@@ -20,15 +23,19 @@ vi.mock("./resolvers", () => ({
   getFeedbackDirectoryAssignmentAuthorizationScope: vi.fn(),
   getFeedbackDirectoryAuthorizationScope: vi.fn(),
   getResponseAuthorizationWorkspaceScope: vi.fn(),
+  getResponseSurveyId: vi.fn(),
+  getSurveyAuthorizationScopeRow: vi.fn(),
   getSurveyAuthorizationWorkspaceScope: vi.fn(),
   getTeamOrganizationId: vi.fn(),
   getWorkspaceOrganizationId: vi.fn(),
   isAuthorizationUserActive: vi.fn(),
 }));
+vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn() }));
 
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(isAuthorizationUserActive).mockResolvedValue(true);
+  vi.mocked(isSurveyVisibilityReady).mockResolvedValue(false);
 });
 
 describe("resolveAuthorizationScope", () => {
@@ -224,5 +231,72 @@ describe("resolveAuthorizationScope", () => {
     await expect(
       resolveAuthorizationScope({ type: "user", id: "user-1" }, { type: "team", id: "team-1" })
     ).rejects.toBe(failure);
+  });
+});
+
+describe("survey and response scopes once survey visibility is enforced (ENG-3282)", () => {
+  const row = (overrides: Partial<Awaited<ReturnType<typeof getSurveyAuthorizationScopeRow>>> = {}) => ({
+    id: "survey-1",
+    organizationId: "org-1",
+    ownerId: "owner-1",
+    visibility: "private" as const,
+    visibilityProjectedVersion: 2,
+    visibilityVersion: 2,
+    workspaceId: "workspace-1",
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    vi.mocked(isSurveyVisibilityReady).mockResolvedValue(true);
+  });
+
+  test("decides a settled survey on its own node", async () => {
+    vi.mocked(getSurveyAuthorizationScopeRow).mockResolvedValue(row());
+
+    await expect(
+      resolveAuthorizationScope({ type: "user", id: "user-1" }, { type: "survey", id: "survey-1" })
+    ).resolves.toEqual({
+      actorValid: true,
+      organizationId: "org-1",
+      permissionResource: { type: "survey", id: "survey-1" },
+    });
+    expect(getSurveyAuthorizationWorkspaceScope).not.toHaveBeenCalled();
+  });
+
+  test("falls back to the workspace node with a pending-private policy while a change is in flight", async () => {
+    vi.mocked(getSurveyAuthorizationScopeRow).mockResolvedValue(
+      row({ visibility: "workspace", visibilityVersion: 3 })
+    );
+
+    await expect(
+      resolveAuthorizationScope({ type: "user", id: "user-1" }, { type: "survey", id: "survey-1" })
+    ).resolves.toEqual({
+      actorValid: true,
+      organizationId: "org-1",
+      permissionResource: { type: "workspace", id: "workspace-1" },
+      policy: { kind: "pendingPrivate", ownerId: "owner-1", surveyId: "survey-1" },
+    });
+  });
+
+  test("resolves a response through its survey", async () => {
+    vi.mocked(getResponseSurveyId).mockResolvedValue("survey-1");
+    vi.mocked(getSurveyAuthorizationScopeRow).mockResolvedValue(row());
+
+    await expect(
+      resolveAuthorizationScope({ type: "apiKey", id: "key-1" }, { type: "response", id: "response-1" })
+    ).resolves.toMatchObject({ permissionResource: { type: "survey", id: "survey-1" } });
+    expect(getResponseAuthorizationWorkspaceScope).not.toHaveBeenCalled();
+  });
+
+  test("denies an unknown survey or response", async () => {
+    vi.mocked(getSurveyAuthorizationScopeRow).mockResolvedValue(null);
+    vi.mocked(getResponseSurveyId).mockResolvedValue(null);
+
+    await expect(
+      resolveAuthorizationScope({ type: "user", id: "user-1" }, { type: "survey", id: "gone" })
+    ).resolves.toBeNull();
+    await expect(
+      resolveAuthorizationScope({ type: "user", id: "user-1" }, { type: "response", id: "gone" })
+    ).resolves.toBeNull();
   });
 });

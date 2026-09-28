@@ -11,7 +11,11 @@ import {
 } from "./contract";
 import type { AuthorizationEvaluator } from "./evaluator";
 import { getSpicedbObjectType } from "./object-type";
-import { type TResolvedAuthorizationScope, resolveAuthorizationScope } from "./source-scope";
+import {
+  type TPendingPrivateSurveyPolicy,
+  type TResolvedAuthorizationScope,
+  resolveAuthorizationScope,
+} from "./source-scope";
 
 const parseAction = (
   action: TAuthorizationAction
@@ -23,6 +27,12 @@ const parseAction = (
   };
 };
 
+/**
+ * The workspace permission a survey, response or dashboard action is decided by whenever the decision is
+ * made on the workspace node: always for dashboards, and for surveys and responses while survey
+ * visibility is not enforced (readiness marker off) or a change is pending. `survey.change_visibility`
+ * is deliberately absent — it has no workspace equivalent.
+ */
 const WORKSPACE_PERMISSION_FOR_DERIVED_ACTION = {
   "dashboard.read": "read",
   "dashboard.write": "write",
@@ -39,11 +49,18 @@ const WORKSPACE_PERMISSION_FOR_DERIVED_ACTION = {
   "survey.write": "write",
 } as const satisfies Partial<Record<TAuthorizationAction, "manage" | "read" | "write">>;
 
-const getPermission = (
-  actor: TAuthorizationActor,
+/** A response action decided on its survey's node (ENG-3282): the survey permission it inherits. */
+const SURVEY_PERMISSION_FOR_RESPONSE_ACTION = {
+  "response.export": "response_export",
+  "response.manage": "manage",
+  "response.read": "response_read",
+  "response.write": "write",
+} as const satisfies Partial<Record<TAuthorizationAction, string>>;
+
+const assertActionMatchesResource = (
   action: TAuthorizationAction,
   resourceType: TAuthorizationResourceType
-): string | null => {
+): void => {
   const parsed = parseAction(action);
   if (
     parsed.resourceType !== resourceType ||
@@ -51,7 +68,14 @@ const getPermission = (
   ) {
     throw new Error(`Invalid authorization action/resource combination`);
   }
+};
 
+const getPermission = (
+  actor: TAuthorizationActor,
+  action: TAuthorizationAction,
+  resourceType: TAuthorizationResourceType,
+  permissionResourceType: TAuthorizationResourceType
+): string | null => {
   if (actor.type === "user" && action === "organization.manage_access") {
     switch (USER_MANAGEMENT_MINIMUM_ROLE) {
       case "disabled":
@@ -63,13 +87,70 @@ const getPermission = (
     }
   }
 
-  if (action in WORKSPACE_PERMISSION_FOR_DERIVED_ACTION) {
-    return WORKSPACE_PERMISSION_FOR_DERIVED_ACTION[
-      action as keyof typeof WORKSPACE_PERMISSION_FOR_DERIVED_ACTION
+  if (permissionResourceType === "workspace" && resourceType !== "workspace") {
+    // No workspace permission stands in for `survey.change_visibility`, so it is denied here; the
+    // visibility endpoint refuses it earlier with `visibility_not_enabled` while the marker is off.
+    return action in WORKSPACE_PERMISSION_FOR_DERIVED_ACTION
+      ? WORKSPACE_PERMISSION_FOR_DERIVED_ACTION[
+          action as keyof typeof WORKSPACE_PERMISSION_FOR_DERIVED_ACTION
+        ]
+      : null;
+  }
+
+  if (permissionResourceType === "survey" && resourceType === "response") {
+    return SURVEY_PERMISSION_FOR_RESPONSE_ACTION[
+      action as keyof typeof SURVEY_PERMISSION_FOR_RESPONSE_ACTION
     ];
   }
 
-  return parsed.permission;
+  return parseAction(action).permission;
+};
+
+type TSpicedbCheck = Readonly<{
+  permission: string;
+  resource: Readonly<{ id: string; type: TAuthorizationResourceType }>;
+}>;
+
+/**
+ * The single check a pending survey is decided by (ENG-3282, contract §5 "fail closed while pending").
+ *
+ * - `survey.change_visibility` stays on the survey's own node: who may change visibility does not
+ *   depend on which value is in flight, and the owner/administrator edges are unaffected by it.
+ * - API keys: never, whichever way the change points (K-1).
+ * - the owner: their workspace ladder for the action, which includes the administrators' arm;
+ * - anyone else: organization owners and managers only (`workspace#administer`).
+ */
+const getPendingPrivateCheck = (
+  actor: TAuthorizationActor,
+  action: TAuthorizationAction,
+  workspaceId: string,
+  policy: TPendingPrivateSurveyPolicy
+): TSpicedbCheck | null => {
+  if (action === "survey.change_visibility") {
+    return { permission: "change_visibility", resource: { id: policy.surveyId, type: "survey" } };
+  }
+  if (actor.type === "apiKey") return null;
+
+  const ladder =
+    WORKSPACE_PERMISSION_FOR_DERIVED_ACTION[action as keyof typeof WORKSPACE_PERMISSION_FOR_DERIVED_ACTION];
+  if (!ladder) return null;
+
+  return {
+    permission: policy.ownerId !== null && policy.ownerId === actor.id ? ladder : "administer",
+    resource: { id: workspaceId, type: "workspace" },
+  };
+};
+
+const getCheck = (
+  actor: TAuthorizationActor,
+  action: TAuthorizationAction,
+  resourceType: TAuthorizationResourceType,
+  scope: TResolvedAuthorizationScope
+): TSpicedbCheck | null => {
+  if (scope.policy) return getPendingPrivateCheck(actor, action, scope.permissionResource.id, scope.policy);
+
+  const permission = getPermission(actor, action, resourceType, scope.permissionResource.type);
+  return permission ? { permission, resource: scope.permissionResource } : null;
 };
 
 export const checkSpicedbPermissionAtScope = async <TAction extends TAuthorizationAction>(
@@ -80,16 +161,17 @@ export const checkSpicedbPermissionAtScope = async <TAction extends TAuthorizati
 ): Promise<boolean> => {
   if (!scope.actorValid) return false;
 
+  assertActionMatchesResource(action, resource.type);
   await assertAuthzedProjectionFreshness();
 
-  const permission = getPermission(actor, action, resource.type);
-  if (!permission) return false;
+  const check = getCheck(actor, action, resource.type, scope);
+  if (!check) return false;
 
   const decision = await getAuthzedClient().checkPermission({
-    permission,
+    permission: check.permission,
     resource: {
-      objectId: scope.permissionResource.id,
-      objectType: getSpicedbObjectType(scope.permissionResource.type),
+      objectId: check.resource.id,
+      objectType: getSpicedbObjectType(check.resource.type),
     },
     subject: {
       objectId: actor.id,

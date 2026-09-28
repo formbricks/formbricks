@@ -26,6 +26,8 @@ import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
+import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
+import { WorkspaceSurveyLimitError, assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getSurveys } from "./lib/surveys";
 
@@ -153,7 +155,14 @@ export const POST = withV1ApiWrapper({
       }
 
       const { workspaceId: __, ...surveyCreateInput } = surveyData;
-      const survey = await createSurvey(workspaceId, surveyCreateInput);
+      await assertWorkspaceSurveyLimit(workspaceId);
+      // ENG-3282: an API key always creates a workspace-visible, ownerless survey. A `createdBy` in the
+      // body stays attribution only; it never makes that user the owner.
+      const creationFacts = await resolveSurveyCreationFacts({
+        actor: { type: "apiKey", id: authentication.apiKeyId },
+        organizationId: organization.id,
+      });
+      const survey = await createSurvey(workspaceId, surveyCreateInput, { creationFacts });
       if (auditLog) {
         auditLog.targetId = survey.id;
         auditLog.newObject = survey;
@@ -172,6 +181,9 @@ export const POST = withV1ApiWrapper({
         ),
       };
     } catch (error) {
+      if (error instanceof WorkspaceSurveyLimitError) {
+        return { response: responses.workspaceSurveyLimitResponse(error.limit, error.count) };
+      }
       // Invalid survey media (e.g. an unsupported/unparseable choice imageUrl) surfaces as an
       // InvalidInputError, which handleApiError returns as a 400 with its message instead of a 500
       // that would page Sentry. DatabaseError and unexpected errors become a generic, reported 500.

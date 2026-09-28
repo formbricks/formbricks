@@ -31,6 +31,7 @@ import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
+import type { TSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { getSurveyWorkspaceIdMap } from "@/modules/ee/contacts/segments/lib/segments";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
@@ -796,6 +797,15 @@ const attachSurveyCreatorToCreateData = (
   };
 };
 
+const attachSurveyCreationFactsToCreateData = (
+  data: Omit<Prisma.SurveyCreateInput, "workspace">,
+  { ownerId, visibility }: TSurveyCreationFacts
+): Omit<Prisma.SurveyCreateInput, "workspace"> => ({
+  ...data,
+  visibility,
+  ...(ownerId ? { owner: { connect: { id: ownerId } } } : {}),
+});
+
 const attachSurveyFollowUpsToCreateData = (
   data: Omit<Prisma.SurveyCreateInput, "workspace">,
   followUps?: TSurveyCreateInput["followUps"]
@@ -879,10 +889,19 @@ const assertSurveySegmentBelongsToWorkspace = async (
   }
 };
 
+export type TCreateSurveyOptions = Readonly<{
+  /**
+   * ENG-3282: visibility and owner, from `resolveSurveyCreationFacts` — never from the request body,
+   * whose schema does not carry them. Required so no creation path can forget it.
+   */
+  creationFacts: TSurveyCreationFacts;
+  privateSegmentFilters?: TBaseFilters;
+}>;
+
 export const createSurvey = async (
   workspaceId: string,
   surveyBody: TSurveyCreateInput,
-  privateSegmentFilters: TBaseFilters = []
+  { creationFacts, privateSegmentFilters = [] }: TCreateSurveyOptions
 ): Promise<TSurvey> => {
   const [parsedWorkspaceId, parsedSurveyBody] = validateInputs(
     [workspaceId, ZId],
@@ -946,7 +965,13 @@ export const createSurvey = async (
       attributeFilters: undefined,
     } as Omit<Prisma.SurveyCreateInput, "workspace">;
     const data = validateSurveyCreateDataMedia(
-      attachSurveyFollowUpsToCreateData(attachSurveyCreatorToCreateData(baseData, createdBy), followUps)
+      attachSurveyFollowUpsToCreateData(
+        attachSurveyCreationFactsToCreateData(
+          attachSurveyCreatorToCreateData(baseData, createdBy),
+          creationFacts
+        ),
+        followUps
+      )
     );
 
     const organization = await getOrganizationByWorkspaceId(parsedWorkspaceId);

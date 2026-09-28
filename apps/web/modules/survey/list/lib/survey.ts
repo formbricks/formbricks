@@ -5,12 +5,19 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+} from "@formbricks/types/errors";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
+import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
+import { WorkspaceSurveyLimitError, assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
 import { validateInputs } from "@/lib/utils/validate";
 import { getTranslate } from "@/lingodotdev/server";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -118,6 +125,19 @@ export const copySurveyToOtherWorkspace = async (
           select: { name: true, type: true, key: true, noCodeConfig: true, id: true },
         })
       : [];
+
+    // ENG-3282: a copy is a new survey on every count — the target workspace's cap applies, and it is
+    // owned by the person copying it, with the visibility a fresh creation in the target organization
+    // would get. Neither is read from the source: `getExistingSurvey` selects no visibility column.
+    await assertWorkspaceSurveyLimit(targetWorkspace.id);
+    const targetOrganizationId = isSameWorkspace
+      ? organization.id
+      : ((await getOrganizationByWorkspaceId(targetWorkspace.id))?.id ?? null);
+    if (!targetOrganizationId) throw new ResourceNotFoundError("Organization", targetWorkspace.id);
+    const creationFacts = await resolveSurveyCreationFacts({
+      actor: { type: "user", id: userId },
+      organizationId: targetOrganizationId,
+    });
 
     const { ...restExistingSurvey } = existingSurvey;
     const hasLanguages = existingSurvey.languages && existingSurvey.languages.length > 0;
@@ -271,6 +291,8 @@ export const copySurveyToOtherWorkspace = async (
           id: userId,
         },
       },
+      owner: { connect: { id: userId } },
+      visibility: creationFacts.visibility,
       surveyClosedMessage: existingSurvey.surveyClosedMessage
         ? structuredClone(existingSurvey.surveyClosedMessage)
         : Prisma.JsonNull,
@@ -412,6 +434,9 @@ export const copySurveyToOtherWorkspace = async (
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       logger.error(error, "Error copying survey to other workspace");
       throw new DatabaseError(error.message);
+    }
+    if (error instanceof WorkspaceSurveyLimitError) {
+      throw new OperationNotAllowedError("The target workspace has reached its survey limit");
     }
     throw error;
   }

@@ -11,6 +11,8 @@ import {
 } from "./__mock__/survey.mock";
 import { createSurvey, updateSurveyInternal } from "./service";
 
+const WORKSPACE_CREATION_FACTS = { ownerId: null, visibility: "workspace" } as const;
+
 const { mockQueueAuditEventWithoutRequest } = vi.hoisted(() => ({
   mockQueueAuditEventWithoutRequest: vi.fn(),
 }));
@@ -333,13 +335,17 @@ describe("survey service scheduling", () => {
       type: "link",
     } as never);
 
-    const createdSurvey = await createSurvey(updateSurveyInput.workspaceId, {
-      ...createSurveyInput,
-      name: "Scheduled survey",
-      publishOn: dueSelection,
-      status: "paused",
-      type: "link",
-    });
+    const createdSurvey = await createSurvey(
+      updateSurveyInput.workspaceId,
+      {
+        ...createSurveyInput,
+        name: "Scheduled survey",
+        publishOn: dueSelection,
+        status: "paused",
+        type: "link",
+      },
+      { creationFacts: WORKSPACE_CREATION_FACTS }
+    );
 
     expect(createdSurvey.status).toBe("inProgress");
     expect(prisma.survey.create).toHaveBeenCalledWith(
@@ -382,14 +388,18 @@ describe("survey service scheduling", () => {
     const sameDaySelection = new Date(Date.UTC(2026, 3, 17, 12, 0, 0));
 
     await expect(
-      createSurvey(updateSurveyInput.workspaceId, {
-        ...createSurveyInput,
-        closeOn: sameDaySelection,
-        name: "Scheduled survey",
-        publishOn: sameDaySelection,
-        status: "paused",
-        type: "link",
-      })
+      createSurvey(
+        updateSurveyInput.workspaceId,
+        {
+          ...createSurveyInput,
+          closeOn: sameDaySelection,
+          name: "Scheduled survey",
+          publishOn: sameDaySelection,
+          status: "paused",
+          type: "link",
+        },
+        { creationFacts: WORKSPACE_CREATION_FACTS }
+      )
     ).rejects.toThrow(ValidationError);
 
     expect(prisma.survey.create).not.toHaveBeenCalled();
