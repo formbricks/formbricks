@@ -4370,7 +4370,7 @@
       "manage_directories": "Adathalmazok kezelése",
       "manage_feedback_sources": "Visszajelzési források kezelése",
       "metadata": "Metaadatok",
-      "metadata_read_only_entries": "Csak olvasható metaadatértékek (nem karakterlánc)",
+      "metadata_read_only_entries": "Csak olvasható metaadat-értékek",
       "missing_feedback_source_title": "Hiányzik a visszajelzési forrás?",
       "no_feedback_directory_available": "Nincs visszajelzési adathalmaz hozzárendelve ehhez a munkaterülethez. Először hozzon létre vagy rendeljen hozzá egyet.",
       "no_feedback_directory_linked_admin_description": "A visszajelzési adathalmazok több munkaterület visszajelzési adatait egyesítik. Csatlakoztasson egy adathalmazt ehhez a munkaterülethez a kezdeti lépésekhez.",

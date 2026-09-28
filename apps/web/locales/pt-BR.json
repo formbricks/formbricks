@@ -4370,7 +4370,7 @@
       "manage_directories": "Gerenciar conjuntos de dados",
       "manage_feedback_sources": "Gerenciar fontes de feedback",
       "metadata": "Metadados",
-      "metadata_read_only_entries": "Valores de metadados somente leitura (sem string)",
+      "metadata_read_only_entries": "Valores de metadados somente leitura",
       "missing_feedback_source_title": "Faltando alguma fonte de feedback?",
       "no_feedback_directory_available": "Nenhum conjunto de dados de feedback atribuído a este workspace. Crie ou atribua um primeiro.",
       "no_feedback_directory_linked_admin_description": "Conjuntos de dados de feedback reúnem dados de feedback de vários workspaces. Conecte um conjunto de dados a este workspace para começar.",

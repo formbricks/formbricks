@@ -92,7 +92,6 @@ describe("mapRecordToValues", () => {
     expect(result.value_text).toBe("hello");
     expect(result.value_number).toBe("42");
     expect(result.source_id).toBe("s1");
-    expect(result.metadataEntries).toEqual([{ key: "tag", value: "vip" }]);
   });
 
   test("handles nullish optional fields", () => {
@@ -104,11 +103,15 @@ describe("mapRecordToValues", () => {
 });
 
 describe("getReadOnlyMetadataEntries", () => {
-  test("returns only non-string metadata values", () => {
-    const record = makeRecord({ metadata: { tag: "vip", count: 5, nested: { a: 1 } } });
+  test("returns every metadata value, strings as-is and the rest as JSON", () => {
+    const record = makeRecord({
+      metadata: { device: "desktop", count: 5, finished: true, nested: { a: 1 } },
+    });
     const result = getReadOnlyMetadataEntries(record);
     expect(result).toEqual([
+      { key: "device", value: "desktop" },
       { key: "count", value: "5" },
+      { key: "finished", value: "true" },
       { key: "nested", value: '{"a":1}' },
     ]);
   });
@@ -124,15 +127,10 @@ describe("getReadOnlyMetadataEntries", () => {
 
   test.each([
     ["an array", ["AEG"], '["AEG"]'],
-    ["a string", "AEG", '"AEG"'],
+    ["a string", "AEG", "AEG"],
   ])("keeps an embedded_data value that is %s, so nothing is hidden", (_label, value, shown) => {
     const record = makeRecord({ metadata: { embedded_data: value } });
     expect(getReadOnlyMetadataEntries(record)).toEqual([{ key: "embedded_data", value: shown }]);
-  });
-
-  test("still leaves out every other string value", () => {
-    const record = makeRecord({ metadata: { url: "https://example.com", finished: true } });
-    expect(getReadOnlyMetadataEntries(record)).toEqual([{ key: "finished", value: "true" }]);
   });
 });
 
