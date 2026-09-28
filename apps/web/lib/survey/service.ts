@@ -79,6 +79,12 @@ export const selectSurvey = {
   type: true,
   workspaceId: true,
   createdBy: true,
+  visibility: true,
+  ownerId: true,
+  visibilityVersion: true,
+  visibilityProjectedVersion: true,
+  visibilityChangedAt: true,
+  visibilityChangedById: true,
   status: true,
   welcomeCard: true,
   questions: true,
@@ -370,6 +376,14 @@ export const updateSurveyInternal = async (
       // turn a read projection into a nested relation write. The rows are written by
       // `reconcileEmbeddedData` from `updatedSurvey`'s legacy keys instead (ENG-2412).
       embeddedFields: _embeddedFields,
+      // ENG-3282: authorization facts are server-owned. Visibility changes go through the dedicated
+      // endpoint under the per-survey lock; a survey save must never write them, or it would race it.
+      visibility: _visibility,
+      ownerId: _ownerId,
+      visibilityVersion: _visibilityVersion,
+      visibilityProjectedVersion: _visibilityProjectedVersion,
+      visibilityChangedAt: _visibilityChangedAt,
+      visibilityChangedById: _visibilityChangedById,
       ...surveyData
     } = updatedSurvey;
 

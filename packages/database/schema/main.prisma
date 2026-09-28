@@ -343,6 +343,13 @@ enum displayOptions {
   respondMultiple
 }
 
+/// Who may read a survey. `workspace` is everyone with workspace access (the behaviour before ENG-3282);
+/// `private` is the owner and the organization's owners and managers only.
+enum SurveyVisibility {
+  private
+  workspace
+}
+
 enum SurveyScriptMode {
   add
   replace
@@ -363,16 +370,33 @@ enum SurveyScriptMode {
 /// @property customHeadScripts - Survey-specific custom HTML scripts (self-hosted only)
 /// @property customHeadScriptsMode - "add" (merge with workspace) or "replace" (override workspace)
 model Survey {
-  id                  String                  @id @default(cuid())
-  createdAt           DateTime                @default(now()) @map(name: "created_at")
-  updatedAt           DateTime                @updatedAt @map(name: "updated_at")
-  name                String
-  redirectUrl         String?
-  type                SurveyType              @default(app)
-  workspace           Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId         String
-  creator             User?                   @relation(fields: [createdBy], references: [id])
-  createdBy           String?
+  id          String     @id @default(cuid())
+  createdAt   DateTime   @default(now()) @map(name: "created_at")
+  updatedAt   DateTime   @updatedAt @map(name: "updated_at")
+  name        String
+  redirectUrl String?
+  type        SurveyType @default(app)
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+  creator     User?      @relation("SurveyCreator", fields: [createdBy], references: [id])
+  createdBy   String?
+
+  /// ENG-3282: authorization facts, projected into SpiceDB by the survey outbox trigger. `ownerId` is
+  /// the durable ownership source; `createdBy` stays pure attribution and is never rewritten.
+  visibility                 SurveyVisibility @default(workspace)
+  owner                      User?            @relation("SurveyOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  ownerId                    String?
+  /// Incremented by every accepted visibility change; fences projection work.
+  visibilityVersion          Int              @default(0)
+  /// The `visibilityVersion` SpiceDB last acknowledged.
+  visibilityProjectedVersion Int              @default(0)
+  /// Generated in SQL: "visibilityVersion" <> "visibilityProjectedVersion", so never NULL in practice.
+  /// Read-only: never put it in create/update data. Optional and default-less on purpose — Prisma
+  /// inlines a static `@default` into every INSERT, which PostgreSQL rejects for a generated column.
+  visibilityPending          Boolean?
+  visibilityChangedAt        DateTime?
+  visibilityChangedById      String?
+
   status              SurveyStatus            @default(draft)
   /// [SurveyWelcomeCard]
   welcomeCard         Json                    @default("{\"enabled\": false}")
@@ -445,6 +469,7 @@ model Survey {
 
   @@unique([id, workspaceId])
   @@index([workspaceId, updatedAt])
+  @@index([workspaceId, ownerId])
   @@index([segmentId])
   @@index([status, publishOn])
   @@index([status, closeOn])
@@ -1228,7 +1253,8 @@ model User {
   notificationSettings      Json                @default("{}")
   /// [Locale]
   locale                    String              @default("en-US")
-  surveys                   Survey[]
+  surveys                   Survey[]            @relation("SurveyCreator")
+  ownedSurveys              Survey[]            @relation("SurveyOwner")
   charts                    Chart[]             @relation("chartCreatedBy")
   dashboards                Dashboard[]         @relation("dashboardCreatedBy")
   feedbackSources           FeedbackSource[]
@@ -1751,6 +1777,15 @@ model FeedbackDirectoryWorkspace {
 
   @@id([feedbackDirectoryId, workspaceId])
   @@index([workspaceId])
+}
+
+/// ENG-3282: per-scope readiness of a SpiceDB projection. A row with `readyAt` set means the scope was
+/// backfilled and audited clean, so the evaluator may enforce it. Written only by the backfill CLI.
+model AuthzedProjectionScopeState {
+  scope     String    @id
+  readyAt   DateTime?
+  readyBy   String?
+  updatedAt DateTime  @updatedAt
 }
 
 /// Durable PostgreSQL queue for rebuilding SpiceDB relationships after an authorization source changes.
