@@ -39,11 +39,14 @@ import { deleteFeedbackRecordAction, retrieveFeedbackRecordAction } from "../act
 import { FIELD_TYPE_OPTIONS, type TFeedbackRecordFormValues } from "../lib/types";
 import {
   formatSourceType,
+  getEmbeddedDataEntries,
   getReadOnlyMetadataEntries,
   getValueFieldByType,
   mapRecordToValues,
   resolveFeedbackDisplayText,
 } from "../lib/utils";
+import { EmbeddedDataEntries } from "./embedded-data-entries";
+import { MetadataEntryRow } from "./metadata-entry-row";
 
 interface FeedbackRecordFormDrawerProps {
   open: boolean;
@@ -78,6 +81,7 @@ export const FeedbackRecordFormDrawer = ({
   const selectedValueField = getValueFieldByType(fieldType);
 
   const readOnlyMetadataEntries = useMemo(() => (record ? getReadOnlyMetadataEntries(record) : []), [record]);
+  const embeddedDataEntries = useMemo(() => (record ? getEmbeddedDataEntries(record) : []), [record]);
 
   // ENG-1253: show the Hub translation read-only beside the original. Shared resolver keeps the
   // empty/identical guards consistent with the other surfaces.
@@ -535,23 +539,21 @@ export const FeedbackRecordFormDrawer = ({
                   />
                 </div>
 
-                {readOnlyMetadataEntries.length > 0 && (
+                {(readOnlyMetadataEntries.length > 0 || embeddedDataEntries.length > 0) && (
                   <div className="space-y-2">
                     <FormLabel>{t("workspace.unify.metadata")}</FormLabel>
                     <div className="space-y-2">
-                      <p className="text-xs text-slate-500">
-                        {t("workspace.unify.metadata_read_only_entries")}
-                      </p>
+                      {readOnlyMetadataEntries.length > 0 && (
+                        <p className="text-xs text-slate-500">
+                          {t("workspace.unify.metadata_read_only_entries")}
+                        </p>
+                      )}
                       {readOnlyMetadataEntries.map((entry) => (
-                        <div
-                          key={entry.key}
-                          className="grid grid-cols-2 gap-2 rounded-md bg-slate-50 p-2 text-xs">
-                          <span className="font-medium text-slate-700">{entry.key}</span>
-                          <span className="truncate text-slate-600" title={entry.value}>
-                            {entry.value}
-                          </span>
-                        </div>
+                        <MetadataEntryRow key={entry.key} label={entry.key} value={entry.value} />
                       ))}
+                      {embeddedDataEntries.length > 0 && (
+                        <EmbeddedDataEntries entries={embeddedDataEntries} />
+                      )}
                     </div>
                   </div>
                 )}

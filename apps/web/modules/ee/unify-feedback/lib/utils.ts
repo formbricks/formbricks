@@ -106,13 +106,38 @@ export const mapRecordToValues = (record: FeedbackRecordData): TFeedbackRecordFo
   };
 };
 
+/** Where the survey pipeline publishes a response's Embedded Data on each record (ENG-3290). */
+const EMBEDDED_DATA_METADATA_KEY = "embedded_data";
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+/** Non-string metadata, minus an Embedded Data object: `getEmbeddedDataEntries` shows that one. */
 export const getReadOnlyMetadataEntries = (record: FeedbackRecordData): { key: string; value: string }[] => {
   return Object.entries(record.metadata ?? {})
     .filter(([, value]) => typeof value !== "string")
+    .filter(([key, value]) => !(key === EMBEDDED_DATA_METADATA_KEY && isPlainObject(value)))
     .map(([key, value]) => ({
       key,
       value: JSON.stringify(value),
     }));
+};
+
+/**
+ * The record's Embedded Data as one row per field, sorted by name.
+ *
+ * Only a real object counts: `metadata` is free-form, and the public API, CSV import and MCP can put
+ * anything under this key. Anything else stays in the generic metadata list, so it is never hidden.
+ * Sorted because Hub stores `metadata` as jsonb, which reorders keys by length rather than keeping
+ * the order the survey declared them in.
+ */
+export const getEmbeddedDataEntries = (record: FeedbackRecordData): { key: string; value: string }[] => {
+  const embeddedData = record.metadata?.[EMBEDDED_DATA_METADATA_KEY];
+  if (!isPlainObject(embeddedData)) return [];
+
+  return Object.entries(embeddedData)
+    .map(([key, value]) => ({ key, value: typeof value === "string" ? value : JSON.stringify(value) }))
+    .sort((a, b) => a.key.localeCompare(b.key));
 };
 
 export const parseNumberValue = (value: string): number | null => {

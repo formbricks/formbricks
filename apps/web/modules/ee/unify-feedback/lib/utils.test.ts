@@ -6,6 +6,7 @@ import {
   formatFieldType,
   formatFieldTypeLabel,
   formatSourceType,
+  getEmbeddedDataEntries,
   getReadOnlyMetadataEntries,
   getValueFieldByType,
   isPresetSourceType,
@@ -114,6 +115,43 @@ describe("getReadOnlyMetadataEntries", () => {
 
   test("returns empty array when no metadata", () => {
     expect(getReadOnlyMetadataEntries(makeRecord())).toEqual([]);
+  });
+
+  test("leaves out an embedded_data object, which has its own rows", () => {
+    const record = makeRecord({ metadata: { finished: true, embedded_data: { brand: "AEG" } } });
+    expect(getReadOnlyMetadataEntries(record)).toEqual([{ key: "finished", value: "true" }]);
+  });
+
+  test("keeps an embedded_data value that is not an object, so nothing is hidden", () => {
+    const record = makeRecord({ metadata: { embedded_data: ["AEG"] } });
+    expect(getReadOnlyMetadataEntries(record)).toEqual([{ key: "embedded_data", value: '["AEG"]' }]);
+  });
+});
+
+describe("getEmbeddedDataEntries", () => {
+  test("returns one row per field, sorted by name, with scalars as text", () => {
+    const record = makeRecord({
+      metadata: { finished: true, embedded_data: { plan: "pro", score: 0, brand: "AEG", trial: false } },
+    });
+    expect(getEmbeddedDataEntries(record)).toEqual([
+      { key: "brand", value: "AEG" },
+      { key: "plan", value: "pro" },
+      { key: "score", value: "0" },
+      { key: "trial", value: "false" },
+    ]);
+  });
+
+  test("returns empty array when the record has no embedded data", () => {
+    expect(getEmbeddedDataEntries(makeRecord())).toEqual([]);
+    expect(getEmbeddedDataEntries(makeRecord({ metadata: { finished: true } }))).toEqual([]);
+  });
+
+  test.each([
+    ["a string", "AEG"],
+    ["an array", ["AEG"]],
+    ["null", null],
+  ])("ignores embedded_data that is %s rather than an object", (_label, value) => {
+    expect(getEmbeddedDataEntries(makeRecord({ metadata: { embedded_data: value } }))).toEqual([]);
   });
 });
 
