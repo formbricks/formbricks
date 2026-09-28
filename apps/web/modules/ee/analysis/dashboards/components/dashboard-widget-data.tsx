@@ -40,7 +40,14 @@ export function DashboardWidgetData({
   // way in both places — bare, because the widget's own title bar and body already provide the
   // heading and the scroll container.
   if (view === "data") {
-    return <DataViewer data={result.data} optionLabels={result.optionLabels} bare />;
+    return (
+      <DataViewer
+        data={result.data}
+        optionLabels={result.optionLabels}
+        fieldLabels={result.fieldLabels}
+        bare
+      />
+    );
   }
 
   // Use the resolved query + option labels from the promise (not the raw saved query): the label
