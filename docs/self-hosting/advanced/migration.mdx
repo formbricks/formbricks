@@ -31,6 +31,39 @@ backups rather than running `helm rollback`. Pin explicit releases and digests, 
 The Helm chart and Formbricks image are versioned independently. A chart-only patch can retain the same
 `appVersion`; review both pins and the rendered image rather than assuming their version numbers match.
 
+### Survey visibility (opt-in)
+
+Surveys can now be private to their owner and the organization's owners and managers. New columns on the
+`Survey` table record each survey's owner and visibility. The migrations set every existing survey to
+workspace-visible and make its creator the owner, so **access is unchanged after the upgrade**.
+
+Enforcement stays off until an operator marks the survey scope ready:
+
+```bash
+formbricks-authzed backfill --scope=survey --apply --mark-ready
+```
+
+While the marker is set:
+
+- a survey a person creates is private to them until they share it with the workspace;
+- API keys never see private surveys or their responses;
+- webhooks, integrations, feedback sources, follow-ups and workflows never receive a private survey's
+  responses, and cannot be attached to one.
+
+Two new environment variables:
+
+- **SURVEY_VISIBILITY_FORCE_DISABLED**: emergency switch. `1` ignores the marker, so every survey is
+  workspace-visible again. Takes effect on restart.
+- **SURVEY_WORKSPACE_LIMIT**: most surveys one workspace may hold, archived ones included (default `10000`).
+  This applies whether or not visibility is enforced: creating a survey past it answers
+  `422 workspace_survey_limit_reached`. Raise it before upgrading if a workspace is near the default.
+
+To roll back, clear the marker. This touches only PostgreSQL and keeps each survey's stored visibility:
+
+```bash
+formbricks-authzed backfill --scope=survey --clear-ready
+```
+
 ### Bundled TEI log level
 
 The Helm chart now defaults `hub.embeddings.env.RUST_LOG` to `warn` because TEI 1.9 includes its API key in
