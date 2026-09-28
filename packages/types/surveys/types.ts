@@ -866,9 +866,9 @@ export const ZSurveyStatus = z.enum(["draft", "inProgress", "paused", "completed
 
 export type TSurveyStatus = z.infer<typeof ZSurveyStatus>;
 
-// ENG-3282: who may read a survey. `workspace` is everyone with workspace access; `private` is the
+// ENG-3282: who may read a survey. `workspace` is everyone with workspace access; `restricted` is the
 // owner and the organization's owners and managers only.
-export const ZSurveyVisibility = z.enum(["private", "workspace"]);
+export const ZSurveyVisibility = z.enum(["restricted", "workspace"]);
 
 export type TSurveyVisibility = z.infer<typeof ZSurveyVisibility>;
 

@@ -10,7 +10,7 @@ properties:
     allOf:
       - $ref: ./SurveyVisibility.yml
     description:
-      The **enforced** visibility on this request. `private` whenever a change is pending, in either
+      The **enforced** visibility on this request. `restricted` whenever a change is pending, in either
       direction (fail closed). `workspace` for every survey while the deployment's readiness marker is unset,
       whatever the stored flag, and always `workspace` for API keys.
   owner:
@@ -18,7 +18,7 @@ properties:
       - $ref: ./SurveyOwner.yml
       - type: "null"
     description: "`null` when the author's account no longer exists (`Survey.ownerId` is set null on user
-      deletion) or the survey was created with an API key. A survey with `owner: null` cannot be made private;
+      deletion) or the survey was created with an API key. A survey with `owner: null` cannot be restricted;
       an organisation owner/manager can still make it workspace-visible."
   access:
     $ref: ./SurveyAccess.yml

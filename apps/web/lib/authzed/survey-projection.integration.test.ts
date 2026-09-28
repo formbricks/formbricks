@@ -81,7 +81,7 @@ describe("survey projection through the outbox", () => {
     // What the visibility endpoint writes: the flag and a new version, together.
     await prisma.survey.update({
       where: { id: survey.id },
-      data: { visibility: "private", visibilityVersion: { increment: 1 } },
+      data: { visibility: "restricted", visibilityVersion: { increment: 1 } },
     });
     await drain();
 
@@ -158,7 +158,7 @@ describe("survey backfill scope and readiness marker", () => {
     const [visible, hidden] = await Promise.all([
       prisma.survey.create({ data: { name: "Visible", ownerId: owner.id, workspaceId: workspace.id } }),
       prisma.survey.create({
-        data: { name: "Hidden", ownerId: owner.id, visibility: "private", workspaceId: workspace.id },
+        data: { name: "Hidden", ownerId: owner.id, visibility: "restricted", workspaceId: workspace.id },
       }),
     ]);
     // Discard what the trigger enqueued, and the edges: the state right after an upgrade.

@@ -210,11 +210,11 @@ describe("verifyTriggerSurvey (validates a workflow trigger's referenced survey)
     });
   });
 
-  test("flags a private trigger survey once survey visibility is enforced (ENG-3283)", async () => {
+  test("flags a restricted trigger survey once survey visibility is enforced (ENG-3283)", async () => {
     visibility.ready = true;
     surveyFindUnique.mockResolvedValue({
       endings: [endScreen(endingId1)],
-      visibility: "private",
+      visibility: "restricted",
       visibilityProjectedVersion: 1,
       visibilityVersion: 1,
     });

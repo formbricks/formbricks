@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 
-/** An outbound connection that makes `private` refusable (contract §3, Decision 13). */
+/** An outbound connection that makes `restricted` refusable (contract §3, Decision 13). */
 export type TSurveyVisibilityBlocker = Readonly<{
   id: string;
   name: string;

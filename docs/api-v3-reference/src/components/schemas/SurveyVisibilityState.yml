@@ -17,7 +17,7 @@ allOf:
         items:
           $ref: ./SurveyVisibilityBlocker.yml
         description:
-          Connections that make `private` refusable right now. Empty when going private is allowed, and
+          Connections that make `restricted` refusable right now. Empty when being restricted is allowed, and
           always empty for the `workspace` direction.
       impact:
         $ref: ./SurveyVisibilityImpact.yml
@@ -33,8 +33,8 @@ allOf:
           - type: "null"
         description:
           The value a `POST` stored that the graph has not yet acknowledged. While non-null the survey is
-          private for everyone but the owner and the organisation's owners and managers, whichever value is
-          pending — `visibility` reads `private`. `"private"` means the restriction is already enforced and
+          restricted for everyone but the owner and the organisation's owners and managers, whichever value is
+          pending — `visibility` reads `restricted`. `"restricted"` means the restriction is already enforced and
           only the graph is catching up; `"workspace"` means the grant is not yet in effect. `null` normally.
           Clears when the outbox delivers (within 60 seconds, or the deployment fails closed), or when a later
           `POST` cancels or supersedes it.
@@ -53,5 +53,5 @@ allOf:
         description:
           Values a `POST …/visibility` by this caller would act on right now. Never the enforced value —
           **except** when a different value is pending, in which case the enforced value is listed because
-          requesting it cancels the pending change. Never `private` while `blockers[]` is non-empty or `owner`
+          requesting it cancels the pending change. Never `restricted` while `blockers[]` is non-empty or `owner`
           is `null`. Empty when nothing would happen. Drives the row menu and the editor control.

@@ -1,5 +1,5 @@
 type: object
-description: An outbound connection that must be removed before the survey can become private.
+description: An outbound connection that must be removed before the survey can become restricted.
 required:
   - type
   - id

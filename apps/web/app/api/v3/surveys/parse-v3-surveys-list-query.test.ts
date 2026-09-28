@@ -170,13 +170,13 @@ describe("visibility and owner filters (ENG-3282)", () => {
   test("parses repeated and comma-separated values into the visibility filter", () => {
     const result = parseV3SurveysListQuery(
       new URLSearchParams(
-        `workspaceId=${workspaceId}&filter[visibility][in]=private&filter[owner][in]=me,others`
+        `workspaceId=${workspaceId}&filter[visibility][in]=restricted&filter[owner][in]=me,others`
       )
     );
 
     expect(result).toMatchObject({
       ok: true,
-      visibilityFilter: { owner: ["me", "others"], visibility: ["private"] },
+      visibilityFilter: { owner: ["me", "others"], visibility: ["restricted"] },
     });
   });
 

@@ -176,7 +176,7 @@ jobs:
           # contract is exercised with survey visibility enforced — the state production runs in.
           pnpm authzed:backfill --scope=survey --apply --mark-ready > /tmp/authzed-survey-backfill.json
           survey_backfill_exit=$?
-          # The fixtures make surveys private, which the outbox records as revocations. The backfill
+          # The fixtures make surveys restricted, which the outbox records as revocations. The backfill
           # converges the graph but leaves those events queued, and no worker runs in this job; left
           # there, the freshness guard fails every authorization check closed after 60 seconds.
           pnpm authzed:outbox drain > /tmp/authzed-outbox-drain.json

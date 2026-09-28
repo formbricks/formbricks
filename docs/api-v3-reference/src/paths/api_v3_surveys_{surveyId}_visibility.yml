@@ -3,10 +3,10 @@ get:
   summary: Read a survey's visibility and the impact of changing it
   description: >
     Returns the survey's enforced visibility, its owner, the caller's access, and what a change would do:
-    `blockers[]` lists the outbound connections that currently make `private` refusable (webhooks,
+    `blockers[]` lists the outbound connections that currently make `restricted` refusable (webhooks,
     integrations, active feedback sources, and draft or enabled workflows), `impact` carries the numbers the
     confirmation dialogues show, `allowedTargets[]` the values a `POST` would act on right now, and `pending`
-    / `version` describe a change still in flight. Read this before offering "Make private"; the `POST`
+    / `version` describe a change still in flight. Read this before offering "Make restricted"; the `POST`
     answers **409** while `blockers[]` is non-empty.
 
 
@@ -17,9 +17,9 @@ get:
     may act on them get to read them.
 
 
-    While `pending` is non-null the survey is private for everyone but its owner and the organisation's owners
+    While `pending` is non-null the survey is restricted for everyone but its owner and the organisation's owners
     and managers, whichever direction is queued — the application fails closed until the graph acknowledges
-    the change — so `visibility` reads `private` in that state and `allowedTargets` includes the value that
+    the change — so `visibility` reads `restricted` in that state and `allowedTargets` includes the value that
     cancels the pending change.
   tags:
     - V3 Surveys
@@ -78,11 +78,11 @@ get:
                   version: 2
                   allowedTargets: []
             privateDraft:
-              summary: Private draft seen by its owner
+              summary: Restricted draft seen by its owner
               value:
                 data:
                   id: clsv2234567890123456789012
-                  visibility: private
+                  visibility: restricted
                   owner:
                     name: Bob Example
                   access:
@@ -101,7 +101,7 @@ get:
               value:
                 data:
                   id: clsv2234567890123456789012
-                  visibility: private
+                  visibility: restricted
                   owner:
                     name: Bob Example
                   access:
@@ -115,13 +115,13 @@ get:
                   version: 3
                   allowedTargets:
                     - workspace
-                    - private
+                    - restricted
             ownerlessPrivateSeenByManager:
-              summary: Departed author's private survey, read by an organisation manager
+              summary: Departed author's restricted survey, read by an organisation manager
               value:
                 data:
                   id: clsv3234567890123456789012
-                  visibility: private
+                  visibility: restricted
                   owner: null
                   access:
                     via: organizationRole
@@ -152,19 +152,19 @@ post:
   operationId: changeSurveyVisibilityV3
   summary: Change a survey's visibility
   description: >
-    Sets the survey to `private` or `workspace`.
+    Sets the survey to `restricted` or `workspace`.
 
 
-    **Restrictions take effect at once.** A `workspace → private` request stores the flag, a new `version` and
-    a pending marker in one transaction. From that instant the survey is private on every path — single reads,
+    **Restrictions take effect at once.** A `workspace → restricted` request stores the flag, a new `version` and
+    a pending marker in one transaction. From that instant the survey is restricted on every path — single reads,
     lists and counts, responses, exports — for everyone but the owner and the organisation's owners and
     managers, whether or not the graph has caught up (fail closed). The relationships are then
     projected; the answer is **200** either way, with `pending: null` when the graph acknowledged this
-    `version` inside the request and `pending: "private"` when the outbox will finish it.
+    `version` inside the request and `pending: "restricted"` when the outbox will finish it.
 
 
-    **Grants take effect when enforced.** A `private → workspace` request answers **200** only once the graph
-    has acknowledged this exact `version`; until then the survey stays private. If the in-request projection
+    **Grants take effect when enforced.** A `restricted → workspace` request answers **200** only once the graph
+    has acknowledged this exact `version`; until then the survey stays restricted. If the in-request projection
     fails, the answer is **503** `projection_pending`: the change is stored and queued, `GET …/visibility`
     shows `pending: "workspace"`, and retrying is safe.
 
@@ -182,7 +182,7 @@ post:
     value again re-attempts the projection (200 or 503).
 
 
-    When `private` is refused for two reasons at once — no owner **and** outbound connections — the **422**
+    When `restricted` is refused for two reasons at once — no owner **and** outbound connections — the **422**
     wins: the missing owner cannot be fixed, so listing connections to remove would send the caller down a
     dead end.
 
@@ -192,10 +192,10 @@ post:
     and never for API keys. Every successful change is audit-logged with the actor.
 
 
-    Going `workspace → private` is refused with **409** while any outbound connection depends on the survey;
+    Going `workspace → restricted` is refused with **409** while any outbound connection depends on the survey;
     resolve them first. It is refused with **422** when the survey has no owner, because
-    "private" would then mean "administrators only" — duplicate the survey for a private
-    copy. Going `private → workspace` has no preconditions.
+    "restricted" would then mean "administrators only" — duplicate the survey for a restricted
+    copy. Going `restricted → workspace` has no preconditions.
 
 
     This is the only way to change visibility: `PATCH /api/v3/surveys/{surveyId}` accepts `visibility`,
@@ -226,7 +226,7 @@ post:
           makePrivate:
             summary: Hide from the workspace
             value:
-              visibility: private
+              visibility: restricted
   responses:
     "200":
       description: Visibility changed, or already at the requested value
@@ -272,7 +272,7 @@ post:
               value:
                 data:
                   id: clsv1234567890123456789012
-                  visibility: private
+                  visibility: restricted
                   owner:
                     name: Alice Example
                   access:

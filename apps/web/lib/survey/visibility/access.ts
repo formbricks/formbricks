@@ -25,7 +25,7 @@ export const getReportedVisibility = (
 ): TSurveyVisibility => (gates.ready ? getEffectiveVisibility(row) : "workspace");
 
 /**
- * `via` is chosen lowest-privilege first: an organization manager who owns a private survey sees
+ * `via` is chosen lowest-privilege first: an organization manager who owns a restricted survey sees
  * `"owner"`, and on a workspace-visible survey everyone who can see it sees `"workspace"`.
  *
  * `canManageVisibility` mirrors `survey.change_visibility` — the owner or an organization admin — and is

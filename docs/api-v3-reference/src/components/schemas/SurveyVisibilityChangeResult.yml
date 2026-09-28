@@ -23,7 +23,7 @@ allOf:
           - $ref: ./SurveyVisibility.yml
           - type: "null"
         description:
-          '`"private"` when the restriction is enforced but the graph is still catching up (the outbox will
+          '`"restricted"` when the restriction is enforced but the graph is still catching up (the outbox will
           finish it); `null` otherwise. A grant never returns 200 with a pending value.'
       changedAt:
         type:

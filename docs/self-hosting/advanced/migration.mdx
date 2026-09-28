@@ -33,13 +33,13 @@ The Helm chart and Formbricks image are versioned independently. A chart-only pa
 
 ### Survey visibility (opt-in)
 
-Surveys can now be private to their owner and the organization's owners and managers. New columns on the
+Surveys can now be restricted to their owner and the organization's owners and managers. New columns on the
 `Survey` table record each survey's owner and visibility. The migrations set every existing survey to
 workspace-visible and make its creator the owner, so **access is unchanged after the upgrade**.
 
 <Warning>
   Do not mark the survey scope ready in production yet. This release has no screen for sharing a
-  survey: once the marker is set, every survey a person creates is private to them, and teammates have
+  survey: once the marker is set, every survey a person creates is restricted to them, and teammates have
   no way to get access. Enable it once the Formbricks release that adds survey sharing is installed.
 </Warning>
 
@@ -51,9 +51,9 @@ formbricks-authzed backfill --scope=survey --apply --mark-ready
 
 While the marker is set:
 
-- a survey a person creates is private to them until they share it with the workspace;
-- API keys never see private surveys or their responses;
-- webhooks, integrations, feedback sources, follow-ups and workflows never receive a private survey's
+- a survey a person creates is restricted to them until they share it with the workspace;
+- API keys never see restricted surveys or their responses;
+- webhooks, integrations, feedback sources, follow-ups and workflows never receive a restricted survey's
   responses, and cannot be attached to one.
 
 Two new environment variables:
@@ -1638,7 +1638,7 @@ That’s it! Once the containers are up and running, simply navigate to the same
 ## v2.7
 
 <Info>
-  AI Features & Database Update: This release lays the groundwork for upcoming AI features, now in private beta. Formbricks requires the `pgvector` extension in PostgreSQL.
+  AI Features & Database Update: This release lays the groundwork for upcoming AI features, now in restricted beta. Formbricks requires the `pgvector` extension in PostgreSQL.
 
 One-Click Setup Users: Use the `pgvector/pgvector:pg15` image instead of `postgres:15-alpine` to ensure compatibility.
 

@@ -15,7 +15,7 @@ describe("resolveSurveyCreationFacts", () => {
   test.each([
     [
       { entitled: true, ready: true },
-      { ownerId: "user-1", visibility: "private" },
+      { ownerId: "user-1", visibility: "restricted" },
     ],
     [
       { entitled: false, ready: true },

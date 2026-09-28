@@ -51,7 +51,7 @@ export const GET = async (request: Request, props: { params: Promise<TContactLin
           getWorkspaceAuthorizationActionForMethod("GET"),
           { type: "workspace", id: workspaceId }
         )) ||
-        // ENG-3282: a personal link to a private survey is out of an API key's reach.
+        // ENG-3282: a personal link to a restricted survey is out of an API key's reach.
         !(await canApiKeyReachSurveyResource(authentication.apiKeyId, "survey.read", {
           type: "survey",
           id: params.surveyId,

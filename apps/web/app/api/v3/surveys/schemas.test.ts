@@ -1066,7 +1066,7 @@ describe("block operation bodies are bounded (ENG-1652)", () => {
 // `POST …/visibility`, so both write bodies refuse it — and the owner — as an unsupported field.
 describe("survey visibility is not writable through the survey document", () => {
   test.each(["visibility", "ownerId", "owner"])("create refuses `%s` with unsupported_field", (field) => {
-    const result = ZV3CreateSurveyBody.safeParse({ ...validCreateBody, [field]: "private" });
+    const result = ZV3CreateSurveyBody.safeParse({ ...validCreateBody, [field]: "restricted" });
 
     expect(result.success).toBe(false);
     if (result.success) return;
@@ -1076,7 +1076,7 @@ describe("survey visibility is not writable through the survey document", () => 
   });
 
   test.each(["visibility", "ownerId", "owner"])("PATCH refuses `%s` with unsupported_field", (field) => {
-    const result = ZV3PatchSurveyBody.safeParse({ name: "Renamed", [field]: "private" });
+    const result = ZV3PatchSurveyBody.safeParse({ name: "Renamed", [field]: "restricted" });
 
     expect(result.success).toBe(false);
     if (result.success) return;

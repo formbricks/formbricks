@@ -4,9 +4,9 @@ import { getEffectiveVisibility, getPendingVisibility, isPending } from "./polic
 describe("visibility policy", () => {
   test.each([
     ["settled workspace", "workspace", 1, 1, false, "workspace", null],
-    ["settled private", "private", 1, 1, false, "private", null],
-    ["pending restriction", "private", 2, 1, true, "private", "private"],
-    ["pending grant", "workspace", 2, 1, true, "private", "workspace"],
+    ["settled restricted", "restricted", 1, 1, false, "restricted", null],
+    ["pending restriction", "restricted", 2, 1, true, "restricted", "restricted"],
+    ["pending grant", "workspace", 2, 1, true, "restricted", "workspace"],
   ] as const)(
     "%s",
     (_label, visibility, visibilityVersion, visibilityProjectedVersion, pending, effective, queued) => {

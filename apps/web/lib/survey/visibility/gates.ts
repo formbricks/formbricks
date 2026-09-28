@@ -8,8 +8,8 @@ import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils
  * - `ready`: the deployment's readiness marker. Decides *enforcement* — while it is off every survey is
  *   workspace-visible on every path, exactly as before ENG-3282.
  * - `entitled`: the organization's RBAC entitlement, meaningful only while `ready`. Decides whether
- *   anyone may *change* visibility and whether signed-in creation defaults to private. Losing it never
- *   releases a private survey (Decision 6).
+ *   anyone may *change* visibility and whether signed-in creation defaults to restricted. Losing it never
+ *   releases a restricted survey (Decision 6).
  */
 export type TSurveyVisibilityGates = Readonly<{ entitled: boolean; ready: boolean }>;
 

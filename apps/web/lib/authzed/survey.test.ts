@@ -84,16 +84,16 @@ describe("expectedSurveyRelationships", () => {
     ]);
   });
 
-  test("a private survey replaces the shared edge with the private owner", () => {
-    expect(expectedSurveyRelationships(row({ visibility: "private" }))).toEqual([
+  test("a restricted survey replaces the shared edge with the restricted owner", () => {
+    expect(expectedSurveyRelationships(row({ visibility: "restricted" }))).toEqual([
       edge("workspace", "workspace", WORKSPACE_ID),
       edge("owner", "user", "owner-id"),
       edge("private_owner", "user", "owner-id"),
     ]);
   });
 
-  test("an ownerless private survey is reachable only through the workspace administrators", () => {
-    expect(expectedSurveyRelationships(row({ ownerId: null, visibility: "private" }))).toEqual([
+  test("an ownerless restricted survey is reachable only through the workspace administrators", () => {
+    expect(expectedSurveyRelationships(row({ ownerId: null, visibility: "restricted" }))).toEqual([
       edge("workspace", "workspace", WORKSPACE_ID),
     ]);
   });
@@ -101,7 +101,7 @@ describe("expectedSurveyRelationships", () => {
 
 describe("diffSurveyRelationships", () => {
   test("touches every expected edge and deletes every other observed one", () => {
-    const expected = expectedSurveyRelationships(row({ visibility: "private" }));
+    const expected = expectedSurveyRelationships(row({ visibility: "restricted" }));
     const current = [edge("shared_workspace", "workspace", WORKSPACE_ID), edge("owner", "user", "owner-id")];
 
     expect(diffSurveyRelationships(current, expected)).toEqual([
@@ -146,7 +146,7 @@ describe("reconcileSurveyRelationships", () => {
   });
 
   test("replaces a previous owner's edges with the current owner's", async () => {
-    tx.survey.findUnique.mockResolvedValue(row({ ownerId: "new-owner", visibility: "private" }));
+    tx.survey.findUnique.mockResolvedValue(row({ ownerId: "new-owner", visibility: "restricted" }));
     observe([
       edge("workspace", "workspace", WORKSPACE_ID),
       edge("owner", "user", "old-owner"),

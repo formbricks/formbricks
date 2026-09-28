@@ -1254,11 +1254,11 @@ describe("Tests for createSurvey", () => {
       await createSurvey(
         mockWorkspaceId,
         { ...mockCreateSurveyInput, visibility: "workspace", ownerId: "body-owner" } as never,
-        { creationFacts: { ownerId: "user-1", visibility: "private" } }
+        { creationFacts: { ownerId: "user-1", visibility: "restricted" } }
       );
 
       const { data } = prisma.survey.create.mock.calls[0][0] as { data: Record<string, unknown> };
-      expect(data).toMatchObject({ owner: { connect: { id: "user-1" } }, visibility: "private" });
+      expect(data).toMatchObject({ owner: { connect: { id: "user-1" } }, visibility: "restricted" });
       expect(data).not.toHaveProperty("ownerId");
 
       prisma.survey.create.mockClear();

@@ -76,7 +76,7 @@ export const updateSurveySlug = async (
 export const getSurveysWithSlugsByOrganizationId = reactCache(
   async (
     organizationId: string,
-    /** ENG-3282: the viewer's survey-visibility clause, so a private survey's slug is not listed. */
+    /** ENG-3282: the viewer's survey-visibility clause, so a restricted survey's slug is not listed. */
     visibleSurveyWhere: Prisma.SurveyWhereInput
   ): Promise<TSurveyWithSlug[]> => {
     try {

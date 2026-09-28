@@ -99,7 +99,7 @@ beforeEach(() => {
 
 describe("POST …/visibility", () => {
   test("400 for a body with an unknown key, marked unsupported_field", async () => {
-    const response = await post({ visibility: "private", owner: "someone" });
+    const response = await post({ visibility: "restricted", owner: "someone" });
 
     expect(response.status).toBe(400);
     expect((await json(response)).invalid_params).toEqual([
@@ -112,7 +112,7 @@ describe("POST …/visibility", () => {
   });
 
   test("403 forbidden for an API key, before the survey is even looked up (K-4)", async () => {
-    const response = await post({ visibility: "private" }, apiKey);
+    const response = await post({ visibility: "restricted" }, apiKey);
 
     expect(response.status).toBe(403);
     expect((await json(response)).code).toBe("forbidden");
@@ -124,7 +124,7 @@ describe("POST …/visibility", () => {
       response: new Response(null, { status: 403 }),
     } as never);
 
-    expect((await post({ visibility: "private" })).status).toBe(403);
+    expect((await post({ visibility: "restricted" })).status).toBe(403);
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
@@ -134,7 +134,7 @@ describe("POST …/visibility", () => {
   ])("403 visibility_not_enabled when %s", async (_label, visibility) => {
     authorize(row(), visibility);
 
-    const response = await post({ visibility: "private" });
+    const response = await post({ visibility: "restricted" });
 
     expect(response.status).toBe(403);
     expect((await json(response)).code).toBe("visibility_not_enabled");
@@ -143,7 +143,7 @@ describe("POST …/visibility", () => {
   test("403 forbidden for someone who sees the survey but may not change it (R-10)", async () => {
     vi.mocked(can).mockResolvedValue(false);
 
-    const response = await post({ visibility: "private" });
+    const response = await post({ visibility: "restricted" });
 
     expect(can).toHaveBeenCalledWith({ id: "user_1", type: "user" }, "survey.change_visibility", {
       id: SURVEY_ID,
@@ -157,7 +157,7 @@ describe("POST …/visibility", () => {
     vi.mocked(findSurveyOutboundBlockers).mockResolvedValue(blockers as never);
     const tx = store(row());
 
-    const response = await post({ visibility: "private" });
+    const response = await post({ visibility: "restricted" });
 
     expect(response.status).toBe(409);
     expect(await json(response)).toMatchObject({
@@ -171,7 +171,7 @@ describe("POST …/visibility", () => {
     vi.mocked(findSurveyOutboundBlockers).mockResolvedValue([{ id: "wh_1", name: "x", type: "webhook" }]);
     store(row({ ownerId: null }));
 
-    const response = await post({ visibility: "private" });
+    const response = await post({ visibility: "restricted" });
 
     expect(response.status).toBe(422);
     expect((await json(response)).code).toBe("visibility_change_not_allowed");
@@ -193,8 +193,8 @@ describe("POST …/visibility", () => {
     expect(skipV3AuditLog).toHaveBeenCalledWith(auditLog);
   });
 
-  test("a restriction answers 200 even when the graph has not caught up, with pending private", async () => {
-    const after = row({ visibility: "private", visibilityChangedById: "user_1", visibilityVersion: 3 });
+  test("a restriction answers 200 even when the graph has not caught up, with pending restricted", async () => {
+    const after = row({ visibility: "restricted", visibilityChangedById: "user_1", visibilityVersion: 3 });
     const tx = store(row(), after);
     vi.mocked(reconcileSurveyRelationships).mockResolvedValue({
       attempts: 3,
@@ -205,15 +205,15 @@ describe("POST …/visibility", () => {
     vi.mocked(prisma.survey.findUniqueOrThrow).mockResolvedValue(after as never);
     const auditLog: Record<string, unknown> = {};
 
-    const response = await post({ visibility: "private" }, session, auditLog);
+    const response = await post({ visibility: "restricted" }, session, auditLog);
 
     expect(response.status).toBe(200);
     expect(await json(response)).toMatchObject({
       data: {
         changedBy: { id: "user_1", name: "Ada", type: "user" },
-        pending: "private",
+        pending: "restricted",
         version: 3,
-        visibility: "private",
+        visibility: "restricted",
       },
     });
     // Stored without touching `updatedAt`, and fenced by the per-survey lock taken first.
@@ -221,7 +221,7 @@ describe("POST …/visibility", () => {
     expect(strings.join("?")).toContain('"visibilityVersion" = "visibilityVersion" + 1');
     expect(strings.join("?")).not.toContain("updated_at");
     expect(auditLog).toMatchObject({
-      newObject: { version: 3, visibility: "private" },
+      newObject: { version: 3, visibility: "restricted" },
       oldObject: { version: 2, visibility: "workspace" },
       status: "success",
     });
@@ -229,7 +229,7 @@ describe("POST …/visibility", () => {
 
   test("a grant answers 200 only once the graph acknowledged this exact version", async () => {
     const stored = row({ visibility: "workspace", visibilityVersion: 4, visibilityProjectedVersion: 3 });
-    store(row({ visibility: "private", visibilityProjectedVersion: 3, visibilityVersion: 3 }), stored);
+    store(row({ visibility: "restricted", visibilityProjectedVersion: 3, visibilityVersion: 3 }), stored);
     vi.mocked(prisma.survey.findUniqueOrThrow).mockResolvedValue({
       ...stored,
       visibilityProjectedVersion: 4,
@@ -243,7 +243,7 @@ describe("POST …/visibility", () => {
 
   test("503 projection_pending for a grant the graph did not acknowledge in-request; retry is safe", async () => {
     const stored = row({ visibility: "workspace", visibilityVersion: 4, visibilityProjectedVersion: 3 });
-    store(row({ visibility: "private", visibilityProjectedVersion: 3, visibilityVersion: 3 }), stored);
+    store(row({ visibility: "restricted", visibilityProjectedVersion: 3, visibilityVersion: 3 }), stored);
     vi.mocked(reconcileSurveyRelationships).mockResolvedValue({
       attempts: 3,
       code: "authzed_unavailable",
@@ -309,8 +309,8 @@ describe("GET …/visibility", () => {
     });
   });
 
-  test("reports no blockers for a settled private survey, whose only target is workspace", async () => {
-    authorize(row({ visibility: "private" }));
+  test("reports no blockers for a settled restricted survey, whose only target is workspace", async () => {
+    authorize(row({ visibility: "restricted" }));
 
     const response = await getV3SurveyVisibility({
       authentication: session,

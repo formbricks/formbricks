@@ -16,7 +16,7 @@ export interface TriggerSurveyCheck {
   surveyExists: boolean;
   missingEndingCardIds: string[];
   /**
-   * The survey exists but is private (or has a visibility change pending), so a workflow may not send
+   * The survey exists but is restricted (or has a visibility change pending), so a workflow may not send
    * its responses anywhere (ENG-3283). Absent means visible, for adapters that have no such concept.
    */
   surveyNotWorkspaceVisible?: boolean;

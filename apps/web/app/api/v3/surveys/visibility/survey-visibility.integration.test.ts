@@ -61,7 +61,7 @@ const apiKeyAuthentication = () =>
 
 const instance = "/api/v3/surveys";
 
-const post = (surveyId: string, visibility: "private" | "workspace", userId = ids.owner) =>
+const post = (surveyId: string, visibility: "restricted" | "workspace", userId = ids.owner) =>
   changeV3SurveyVisibility({
     authentication: session(userId),
     body: { visibility },
@@ -148,7 +148,7 @@ afterAll(async () => {
   resetSurveyVisibilityReadinessMemo();
 });
 
-const createSurvey = async (name: string, visibility: "private" | "workspace" = "workspace") => {
+const createSurvey = async (name: string, visibility: "restricted" | "workspace" = "workspace") => {
   const survey = await prisma.survey.create({
     data: { name, ownerId: ids.owner, visibility, workspaceId: ids.workspace },
   });
@@ -179,7 +179,7 @@ describe("POST …/visibility against the real stack", () => {
     await taken;
 
     let settled = false;
-    const request = post(surveyId, "private").then((response) => {
+    const request = post(surveyId, "restricted").then((response) => {
       settled = true;
       return response;
     });
@@ -191,12 +191,12 @@ describe("POST …/visibility against the real stack", () => {
     const response = await request;
 
     expect(response.status).toBe(200);
-    expect((await response.json()).data).toMatchObject({ pending: null, visibility: "private" });
+    expect((await response.json()).data).toMatchObject({ pending: null, visibility: "restricted" });
     expect(await graphEdges(surveyId)).toEqual(await expectedEdges(surveyId));
   });
 
   test("a grant the graph did not take in-request answers 503, and the outbox finishes it", async () => {
-    const surveyId = await createSurvey("Grant", "private");
+    const surveyId = await createSurvey("Grant", "restricted");
     projection.failNext = true;
 
     const response = await post(surveyId, "workspace");
@@ -208,7 +208,7 @@ describe("POST …/visibility against the real stack", () => {
       requestId: "req",
       surveyId,
     });
-    expect((await pending.json()).data).toMatchObject({ pending: "workspace", visibility: "private" });
+    expect((await pending.json()).data).toMatchObject({ pending: "workspace", visibility: "restricted" });
 
     await drainAuthzedOutbox();
 
@@ -225,20 +225,20 @@ describe("POST …/visibility against the real stack", () => {
     const surveyId = await createSurvey("Restriction");
     projection.failNext = true;
 
-    const response = await post(surveyId, "private");
+    const response = await post(surveyId, "restricted");
 
     expect(response.status).toBe(200);
-    expect((await response.json()).data).toMatchObject({ pending: "private", visibility: "private" });
+    expect((await response.json()).data).toMatchObject({ pending: "restricted", visibility: "restricted" });
     expect((await listedIds(session(ids.member))).ids).not.toContain(surveyId);
   });
 
   test("refuses the same change from a read member, and from an API key", async () => {
     const surveyId = await createSurvey("Refused");
 
-    expect((await post(surveyId, "private", ids.member)).status).toBe(403);
+    expect((await post(surveyId, "restricted", ids.member)).status).toBe(403);
     const byKey = await changeV3SurveyVisibility({
       authentication: apiKeyAuthentication(),
-      body: { visibility: "private" },
+      body: { visibility: "restricted" },
       instance,
       requestId: "req",
       surveyId,
@@ -250,8 +250,8 @@ describe("POST …/visibility against the real stack", () => {
 describe("GET /api/v3/surveys scoping", () => {
   test("each principal sees exactly what it may read, and counts exactly that", async () => {
     const visible = await createSurvey("Visible");
-    const hidden = await createSurvey("Hidden", "private");
-    const pendingGrant = await createSurvey("Pending grant", "private");
+    const hidden = await createSurvey("Hidden", "restricted");
+    const pendingGrant = await createSurvey("Pending grant", "restricted");
     await prisma.survey.update({
       where: { id: pendingGrant },
       data: { visibility: "workspace", visibilityVersion: { increment: 1 } },
@@ -266,7 +266,7 @@ describe("GET /api/v3/surveys scoping", () => {
       ids: [visible, hidden, pendingGrant].sort(),
       totalCount: 3,
     });
-    // A pending grant is still private to everyone but its owner and the administrators.
+    // A pending grant is still restricted to everyone but its owner and the administrators.
     expect(await listedIds(session(ids.member))).toEqual({ ids: [visible], totalCount: 1 });
     expect(await listedIds(apiKeyAuthentication())).toEqual({ ids: [visible], totalCount: 1 });
   });

@@ -254,12 +254,12 @@ describe("processWebhookDeliveryJob", () => {
 
   test("an SSRF policy rejection is permanent", async () => {
     mockSend.mockRejectedValue(
-      new InvalidInputError("Webhook URL must not point to private or internal IP addresses")
+      new InvalidInputError("Webhook URL must not point to restricted or internal IP addresses")
     );
 
     await expect(processWebhookDeliveryJob(data, createContext())).rejects.toMatchObject({
       name: "UnrecoverableError",
-      message: expect.stringContaining("private or internal IP addresses"),
+      message: expect.stringContaining("restricted or internal IP addresses"),
     });
     expect(mockRecordOutcome).toHaveBeenCalledWith(
       expect.objectContaining({ outcome: "permanent_failure", statusCode: undefined })
@@ -324,11 +324,11 @@ describe("processWebhookDeliveryJob", () => {
     );
   });
 
-  test("completes without a request when the survey was made private after fan-out", async () => {
+  test("completes without a request when the survey was restricted after fan-out", async () => {
     mockFindFirst.mockResolvedValue(target);
     mockVisibilityReady.mockResolvedValueOnce(true);
     mockSurveyFindUnique.mockResolvedValue({
-      visibility: "private",
+      visibility: "restricted",
       visibilityProjectedVersion: 1,
       visibilityVersion: 1,
     });

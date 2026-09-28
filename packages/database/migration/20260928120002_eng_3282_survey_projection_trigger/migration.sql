@@ -39,18 +39,18 @@ CREATE OR REPLACE FUNCTION authzed_projection_is_grant(
     WHEN 'membership' THEN
       previous_source ->> 'role' IS NOT DISTINCT FROM source ->> 'role'
 
-    -- survey.ts reconciles the survey's edges to exactly what its row implies. Only private -> workspace
+    -- survey.ts reconciles the survey's edges to exactly what its row implies. Only restricted -> workspace
     -- on the same owner and workspace provably adds edges without removing any; a write that leaves all
     -- three facts as they were projects byte-identical relationships. Every other move takes access
     -- away from someone: an owner change drops the old owner, a workspace move drops the old workspace,
-    -- and workspace -> private drops the shared edge.
+    -- and workspace -> restricted drops the shared edge.
     WHEN 'survey' THEN
       (previous_source ->> 'workspaceId') IS NOT DISTINCT FROM (source ->> 'workspaceId')
       AND (previous_source ->> 'ownerId') IS NOT DISTINCT FROM (source ->> 'ownerId')
       AND (
         (previous_source ->> 'visibility') IS NOT DISTINCT FROM (source ->> 'visibility')
         OR (
-          (previous_source ->> 'visibility') = 'private'
+          (previous_source ->> 'visibility') = 'restricted'
           AND (source ->> 'visibility') = 'workspace'
         )
       )

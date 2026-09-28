@@ -16,11 +16,11 @@ export const isPending = (row: Omit<TVersionedVisibility, "visibility">): boolea
   row.visibilityVersion !== row.visibilityProjectedVersion;
 
 /**
- * What is enforced right now. Pending counts as private whichever way it points: a restriction takes
+ * What is enforced right now. Pending counts as restricted whichever way it points: a restriction takes
  * effect at once, and a grant only once the graph holds it (fail closed).
  */
 export const getEffectiveVisibility = (row: TVersionedVisibility): TSurveyVisibility =>
-  isPending(row) ? "private" : row.visibility;
+  isPending(row) ? "restricted" : row.visibility;
 
 /** The value a stored change is still waiting on, or `null` when nothing is in flight. */
 export const getPendingVisibility = (row: TVersionedVisibility): TSurveyVisibility | null =>

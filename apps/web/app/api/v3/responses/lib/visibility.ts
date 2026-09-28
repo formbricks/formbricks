@@ -8,9 +8,9 @@ import { type TSurveyActorContext, resolveSurveyActorContext } from "@/lib/surve
 
 /**
  * Responses follow their survey (ENG-3282, contract §7). Once survey visibility is enforced, workspace
- * access is necessary but not sufficient: a response of a private survey is its owner's and the
+ * access is necessary but not sufficient: a response of a restricted survey is its owner's and the
  * organization administrators'. Checked after the workspace gate, with the same 403 body as an unknown
- * id, so a private survey's responses are not probeable. A no-op while the marker is off, so a
+ * id, so a restricted survey's responses are not probeable. A no-op while the marker is off, so a
  * deployment that has not opted in pays no second check.
  */
 export async function refuseUnlessV3SurveyVisible<TAction extends TAuthorizationAction>(

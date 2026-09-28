@@ -17,7 +17,7 @@ variables and operator commands keep the `AUTHZED_` prefix for compatibility.
 </Note>
 
 <Warning>
-  Treat SpiceDB as a private infrastructure dependency. Do not publish its gRPC port through an Ingress,
+  Treat SpiceDB as a restricted infrastructure dependency. Do not publish its gRPC port through an Ingress,
   reverse proxy, load balancer, or public Docker port.
 </Warning>
 
@@ -60,7 +60,7 @@ There is no browser health or administration page. Use the release-matched opera
 explicit port and no scheme, path, query, credentials, or whitespace. Examples include `spicedb:50051`,
 `grpc.authzed.com:443`, and `[::1]:50051`.
 
-Use `AUTHZED_INSECURE=false` for AuthZed Cloud or any endpoint outside a trusted private network. Plaintext
+Use `AUTHZED_INSECURE=false` for AuthZed Cloud or any endpoint outside a trusted restricted network. Plaintext
 gRPC transmits the preshared token without TLS protection. Changing AuthZed configuration requires restarting
 the Formbricks process.
 
@@ -122,7 +122,7 @@ does not affect schema operations, relationship projection, permission checks, o
 
 The Formbricks chart supports two modes:
 
-- `authzed.mode=selfHosted` creates a `SpiceDBCluster` and points Formbricks at its private Kubernetes Service.
+- `authzed.mode=selfHosted` creates a `SpiceDBCluster` and points Formbricks at its restricted Kubernetes Service.
 - `authzed.mode=external` configures the Formbricks client for AuthZed Cloud or another external SpiceDB.
 
 For a chart-managed cluster:
@@ -539,7 +539,7 @@ formbricks-authzed backfill --scope=survey --apply --after-survey-id=<last-surve
 
 <Warning>
   Do not mark the survey scope ready in production yet. This release has no screen for sharing a
-  survey: once the marker is set, every survey a person creates is private to them, and teammates have
+  survey: once the marker is set, every survey a person creates is restricted to them, and teammates have
   no way to get access. Enable it once the Formbricks release that adds survey sharing is installed.
 </Warning>
 

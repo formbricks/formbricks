@@ -75,7 +75,7 @@ Three things to know before reading the result:
   covered by the unit and integration suites. The job marks the survey projection ready
   (`authzed:backfill --scope=survey --apply --mark-ready`) so every other operation runs with
   visibility enforced, then drains the outbox (`authzed:outbox drain`). The fixtures make surveys
-  private, which queues revocations; with no worker to deliver them, the freshness guard would fail
+  restricted, which queues revocations; with no worker to deliver them, the freshness guard would fail
   every authorization check closed after 60 seconds. Locally, a running dev worker does this for you.
 - **Rate limiting.** Set `RATE_LIMITING_DISABLED=1`, otherwise a burst of cases can turn into
   documented-but-uninteresting 429s.

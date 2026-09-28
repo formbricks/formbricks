@@ -6,7 +6,7 @@ export type TSurveyVisibilityImpact = Readonly<{ memberCount: number; responseCo
 /**
  * The numbers the confirmation dialogues show (contract §3): the people other than the owner and the
  * organization's owners and managers who can see the survey through the workspace — who would lose
- * access by making it private, or gain it by sharing it — and the survey's responses.
+ * access by restricting it, or gain it by sharing it — and the survey's responses.
  *
  * Membership through a team only counts for a non-billing member of the organization, mirroring the
  * graph's `team#member` intersection with `organization#product_member`.

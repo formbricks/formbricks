@@ -1694,7 +1694,7 @@ describe("listV3Surveys visibility (ENG-3282)", () => {
 
   test("scopes the page and both counts with the caller's context", async () => {
     visibilityOverride.context = enforcedMember;
-    mockListQuery({ visibilityFilter: { visibility: ["private"] } });
+    mockListQuery({ visibilityFilter: { visibility: ["restricted"] } });
     vi.mocked(getSurveyListPage).mockResolvedValue({ surveys: [], nextCursor: null } as any);
     vi.mocked(filterReadableSurveyIds).mockResolvedValue(new Set());
 
@@ -1709,11 +1709,11 @@ describe("listV3Surveys visibility (ENG-3282)", () => {
       workspaceId,
       expect.objectContaining({
         actorContext: enforcedMember.actorContext,
-        visibilityFilter: { visibility: ["private"] },
+        visibilityFilter: { visibility: ["restricted"] },
       })
     );
     expect(getSurveyCount).toHaveBeenCalledWith(workspaceId, {}, enforcedMember.actorContext, {
-      visibility: ["private"],
+      visibility: ["restricted"],
     });
     expect(getWorkspaceSurveyCount).toHaveBeenCalledWith(workspaceId, enforcedMember.actorContext);
   });

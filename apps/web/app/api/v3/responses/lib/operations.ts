@@ -635,7 +635,7 @@ function composeV3ResponseWrite({
  * Every v1 and v2 write path runs this, and omitting it is not a cosmetic gap: a stored answer is a
  * storage path that later gets resolved into a signed URL by the dashboard, the export and the read
  * endpoints. A caller with write access to workspace A could otherwise store
- * `/storage/{workspaceB}/private/surveys/…` under a file-upload element and have it resolved on
+ * `/storage/{workspaceB}/restricted/surveys/…` under a file-upload element and have it resolved on
  * their own response — the cross-tenant storage reference ENG-1981 closed on the management routes.
  *
  * `legacyOwnedStoragePrefixes` is passed for the same reason the management routes pass it: this is a

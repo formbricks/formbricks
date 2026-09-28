@@ -91,10 +91,10 @@ paths:
       operationId: getSurveysV3
       summary: List surveys
       description: |
-        Returns the surveys in the workspace **that the caller may read**. A private survey is listed only
+        Returns the surveys in the workspace **that the caller may read**. A restricted survey is listed only
         to its owner and to the organisation's owners and managers; to everyone else, API keys included, it
         does not exist here. `meta.totalCount` and `meta.workspaceSurveyCount` count that same readable set,
-        so neither number reveals a private survey to someone who cannot see it. The visibility predicate
+        so neither number reveals a restricted survey to someone who cannot see it. The visibility predicate
         is applied in the query and the cursor, never after the fact: `limit` keeps its meaning and
         `meta.nextCursor` being `null` remains the only end-of-collection signal.
 
@@ -174,7 +174,7 @@ paths:
               $ref: '#/components/schemas/SurveyVisibility'
           style: form
           explode: true
-          description: 'Keep only surveys with one of these visibilities, as each item reports it (a survey with a change in flight counts as `private`). Same repeat-or-comma rules as `filter[status][in]`; unknown values → **400**. Filters within the readable set: a workspace member asking for `private` gets their own private surveys, an organisation manager gets everyone''s.'
+          description: 'Keep only surveys with one of these visibilities, as each item reports it (a survey with a change in flight counts as `restricted`). Same repeat-or-comma rules as `filter[status][in]`; unknown values → **400**. Filters within the readable set: a workspace member asking for `restricted` gets their own restricted surveys, an organisation manager gets everyone''s.'
         - in: query
           name: filter[owner][in]
           schema:
@@ -1632,11 +1632,11 @@ paths:
       operationId: getSurveyVisibilityV3
       summary: Read a survey's visibility and the impact of changing it
       description: |
-        Returns the survey's enforced visibility, its owner, the caller's access, and what a change would do: `blockers[]` lists the outbound connections that currently make `private` refusable (webhooks, integrations, active feedback sources, and draft or enabled workflows), `impact` carries the numbers the confirmation dialogues show, `allowedTargets[]` the values a `POST` would act on right now, and `pending` / `version` describe a change still in flight. Read this before offering "Make private"; the `POST` answers **409** while `blockers[]` is non-empty.
+        Returns the survey's enforced visibility, its owner, the caller's access, and what a change would do: `blockers[]` lists the outbound connections that currently make `restricted` refusable (webhooks, integrations, active feedback sources, and draft or enabled workflows), `impact` carries the numbers the confirmation dialogues show, `allowedTargets[]` the values a `POST` would act on right now, and `pending` / `version` describe a change still in flight. Read this before offering "Make restricted"; the `POST` answers **409** while `blockers[]` is non-empty.
 
         Requires `survey.change_visibility`, the same permission as the `POST`: the survey's owner or an organisation owner/manager, with the feature enabled. Everyone else — read or write members, team-level managers, every API key, and anyone who cannot see the survey at all — answers **403** with the same body as an unknown id. Connection names and ids are configuration, not survey content, and only the people who may act on them get to read them.
 
-        While `pending` is non-null the survey is private for everyone but its owner and the organisation's owners and managers, whichever direction is queued — the application fails closed until the graph acknowledges the change — so `visibility` reads `private` in that state and `allowedTargets` includes the value that cancels the pending change.
+        While `pending` is non-null the survey is restricted for everyone but its owner and the organisation's owners and managers, whichever direction is queued — the application fails closed until the graph acknowledges the change — so `visibility` reads `restricted` in that state and `allowedTargets` includes the value that cancels the pending change.
       tags:
         - V3 Surveys
       parameters:
@@ -1694,11 +1694,11 @@ paths:
                       version: 2
                       allowedTargets: []
                 privateDraft:
-                  summary: Private draft seen by its owner
+                  summary: Restricted draft seen by its owner
                   value:
                     data:
                       id: clsv2234567890123456789012
-                      visibility: private
+                      visibility: restricted
                       owner:
                         name: Bob Example
                       access:
@@ -1717,7 +1717,7 @@ paths:
                   value:
                     data:
                       id: clsv2234567890123456789012
-                      visibility: private
+                      visibility: restricted
                       owner:
                         name: Bob Example
                       access:
@@ -1731,13 +1731,13 @@ paths:
                       version: 3
                       allowedTargets:
                         - workspace
-                        - private
+                        - restricted
                 ownerlessPrivateSeenByManager:
-                  summary: Departed author's private survey, read by an organisation manager
+                  summary: Departed author's restricted survey, read by an organisation manager
                   value:
                     data:
                       id: clsv3234567890123456789012
-                      visibility: private
+                      visibility: restricted
                       owner: null
                       access:
                         via: organizationRole
@@ -1768,21 +1768,21 @@ paths:
       operationId: changeSurveyVisibilityV3
       summary: Change a survey's visibility
       description: |
-        Sets the survey to `private` or `workspace`.
+        Sets the survey to `restricted` or `workspace`.
 
-        **Restrictions take effect at once.** A `workspace → private` request stores the flag, a new `version` and a pending marker in one transaction. From that instant the survey is private on every path — single reads, lists and counts, responses, exports — for everyone but the owner and the organisation's owners and managers, whether or not the graph has caught up (fail closed). The relationships are then projected; the answer is **200** either way, with `pending: null` when the graph acknowledged this `version` inside the request and `pending: "private"` when the outbox will finish it.
+        **Restrictions take effect at once.** A `workspace → restricted` request stores the flag, a new `version` and a pending marker in one transaction. From that instant the survey is restricted on every path — single reads, lists and counts, responses, exports — for everyone but the owner and the organisation's owners and managers, whether or not the graph has caught up (fail closed). The relationships are then projected; the answer is **200** either way, with `pending: null` when the graph acknowledged this `version` inside the request and `pending: "restricted"` when the outbox will finish it.
 
-        **Grants take effect when enforced.** A `private → workspace` request answers **200** only once the graph has acknowledged this exact `version`; until then the survey stays private. If the in-request projection fails, the answer is **503** `projection_pending`: the change is stored and queued, `GET …/visibility` shows `pending: "workspace"`, and retrying is safe.
+        **Grants take effect when enforced.** A `restricted → workspace` request answers **200** only once the graph has acknowledged this exact `version`; until then the survey stays restricted. If the in-request projection fails, the answer is **503** `projection_pending`: the change is stored and queued, `GET …/visibility` shows `pending: "workspace"`, and retrying is safe.
 
         **Fencing.** Every accepted change increments the survey's `version`. Projection work carries the version it was issued for, and a projector holding an older version never writes, so a worker leased before a newer change cannot overtake it — including one that crashed before its verification pass. A **200** for a grant means the graph holds this exact version.
 
         **No-ops and cancellation.** Requesting the value the survey already enforces, with nothing pending, is a **200** no-op: nothing is written or audited and `changedAt` / `changedBy` are unchanged. Requesting the enforced value while the *opposite* is pending **cancels** the pending change: a new version is stored, the queued work is superseded, and the answer is **200** with `pending: null`. Requesting the pending value again re-attempts the projection (200 or 503).
 
-        When `private` is refused for two reasons at once — no owner **and** outbound connections — the **422** wins: the missing owner cannot be fixed, so listing connections to remove would send the caller down a dead end.
+        When `restricted` is refused for two reasons at once — no owner **and** outbound connections — the **422** wins: the missing owner cannot be fixed, so listing connections to remove would send the caller down a dead end.
 
         Allowed for the survey's owner (while they still hold read access to the workspace) and for the organisation's owners and managers. **Not** for workspace members with write or team-level manage rights, and never for API keys. Every successful change is audit-logged with the actor.
 
-        Going `workspace → private` is refused with **409** while any outbound connection depends on the survey; resolve them first. It is refused with **422** when the survey has no owner, because "private" would then mean "administrators only" — duplicate the survey for a private copy. Going `private → workspace` has no preconditions.
+        Going `workspace → restricted` is refused with **409** while any outbound connection depends on the survey; resolve them first. It is refused with **422** when the survey has no owner, because "restricted" would then mean "administrators only" — duplicate the survey for a restricted copy. Going `restricted → workspace` has no preconditions.
 
         This is the only way to change visibility: `PATCH /api/v3/surveys/{surveyId}` accepts `visibility`, `owner` and `access` only as the exact values `GET` returned (so a fetched survey round-trips), and rejects any other value as an unsupported field. Publishing does not change visibility; the publish dialogue chains this call before the status change.
       tags:
@@ -1809,7 +1809,7 @@ paths:
               makePrivate:
                 summary: Hide from the workspace
                 value:
-                  visibility: private
+                  visibility: restricted
       responses:
         '200':
           description: Visibility changed, or already at the requested value
@@ -1855,7 +1855,7 @@ paths:
                   value:
                     data:
                       id: clsv1234567890123456789012
-                      visibility: private
+                      visibility: restricted
                       owner:
                         name: Alice Example
                       access:
@@ -4873,12 +4873,12 @@ components:
     SurveyVisibility:
       type: string
       enum:
-        - private
+        - restricted
         - workspace
-      description: '`private`: readable by the owner and the organisation''s owners and managers only. `workspace`: readable by everyone with access to the workspace — today''s behaviour.'
+      description: '`restricted`: readable by the owner and the organisation''s owners and managers only. `workspace`: readable by everyone with access to the workspace — today''s behaviour.'
     SurveyOwner:
       type: object
-      description: 'The authorization owner — the person whose private surveys these are. Distinct from `creator`, which is attribution only and is never rewritten. Display only, like `creator`: no user id is exposed, because `access.via === "owner"` already answers "is this mine" and `filter[owner][in]=me` filters server-side. Ownership transfer can add an identifier later, additively. Durable source: `Survey.ownerId` in PostgreSQL, projected to `survey#owner@user`; the graph never holds ownership alone, so a rebuild from an empty graph restores it.'
+      description: 'The authorization owner — the person whose restricted surveys these are. Distinct from `creator`, which is attribution only and is never rewritten. Display only, like `creator`: no user id is exposed, because `access.via === "owner"` already answers "is this mine" and `filter[owner][in]=me` filters server-side. Ownership transfer can add an identifier later, additively. Durable source: `Survey.ownerId` in PostgreSQL, projected to `survey#owner@user`; the graph never holds ownership alone, so a rebuild from an empty graph restores it.'
       required:
         - name
       properties:
@@ -4894,14 +4894,14 @@ components:
       properties:
         via:
           type: string
-          description: 'Why this caller can see the survey. Known values today: `workspace` (the survey is workspace-visible and the caller has workspace read — always the value for API keys), `owner` (private, the caller owns it), `organizationRole` (private, the caller reaches it only as an organisation owner or manager — the case that shows the admin banner). **Open set, deliberately not an enum**: named person and team sharing will add values, so clients treat an unknown string as "some other access path" and never branch exhaustively. Explanatory metadata, not authorization truth — the server re-authorises every call.'
+          description: 'Why this caller can see the survey. Known values today: `workspace` (the survey is workspace-visible and the caller has workspace read — always the value for API keys), `owner` (restricted, the caller owns it), `organizationRole` (restricted, the caller reaches it only as an organisation owner or manager — the case that shows the admin banner). **Open set, deliberately not an enum**: named person and team sharing will add values, so clients treat an unknown string as "some other access path" and never branch exhaustively. Explanatory metadata, not authorization truth — the server re-authorises every call.'
           examples:
             - workspace
             - owner
             - organizationRole
         canManageVisibility:
           type: boolean
-          description: 'Permission only: `true` when this caller holds `survey.change_visibility` — owner or organisation owner/manager, feature enabled for the organisation and deployment. It can be `true` while `allowedTargets` is empty (blockers, or no owner): it answers "may this person manage visibility at all", which is what shows or hides the controls; `allowedTargets` on `GET …/visibility` answers which transitions would succeed now. Stays `true` for an organisation manager on an ownerless private survey.'
+          description: 'Permission only: `true` when this caller holds `survey.change_visibility` — owner or organisation owner/manager, feature enabled for the organisation and deployment. It can be `true` while `allowedTargets` is empty (blockers, or no owner): it answers "may this person manage visibility at all", which is what shows or hides the controls; `allowedTargets` on `GET …/visibility` answers which transitions would succeed now. Stays `true` for an organisation manager on an ownerless restricted survey.'
       additionalProperties: false
     SurveyVisibilityFields:
       type: object
@@ -4914,12 +4914,12 @@ components:
         visibility:
           allOf:
             - $ref: '#/components/schemas/SurveyVisibility'
-          description: The **enforced** visibility on this request. `private` whenever a change is pending, in either direction (fail closed). `workspace` for every survey while the deployment's readiness marker is unset, whatever the stored flag, and always `workspace` for API keys.
+          description: The **enforced** visibility on this request. `restricted` whenever a change is pending, in either direction (fail closed). `workspace` for every survey while the deployment's readiness marker is unset, whatever the stored flag, and always `workspace` for API keys.
         owner:
           anyOf:
             - $ref: '#/components/schemas/SurveyOwner'
             - type: 'null'
-          description: '`null` when the author''s account no longer exists (`Survey.ownerId` is set null on user deletion) or the survey was created with an API key. A survey with `owner: null` cannot be made private; an organisation owner/manager can still make it workspace-visible.'
+          description: '`null` when the author''s account no longer exists (`Survey.ownerId` is set null on user deletion) or the survey was created with an API key. A survey with `owner: null` cannot be restricted; an organisation owner/manager can still make it workspace-visible.'
         access:
           $ref: '#/components/schemas/SurveyAccess'
     SurveyListItem:
@@ -7436,7 +7436,7 @@ components:
             Optimistic-concurrency precondition: the survey's `updatedAt` from your last read. If the survey changed since, the write is rejected with **409**.
     SurveyVisibilityBlocker:
       type: object
-      description: An outbound connection that must be removed before the survey can become private.
+      description: An outbound connection that must be removed before the survey can become restricted.
       required:
         - type
         - id
@@ -7466,7 +7466,7 @@ components:
         memberCount:
           type: integer
           minimum: 0
-          description: People other than the owner and the organisation's owners/managers who can see the survey now (if workspace-visible) or would gain access (if private).
+          description: People other than the owner and the organisation's owners/managers who can see the survey now (if workspace-visible) or would gain access (if restricted).
         responseCount:
           type: integer
           minimum: 0
@@ -7491,7 +7491,7 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/SurveyVisibilityBlocker'
-              description: Connections that make `private` refusable right now. Empty when going private is allowed, and always empty for the `workspace` direction.
+              description: Connections that make `restricted` refusable right now. Empty when being restricted is allowed, and always empty for the `workspace` direction.
             impact:
               $ref: '#/components/schemas/SurveyVisibilityImpact'
         - type: object
@@ -7504,7 +7504,7 @@ components:
               anyOf:
                 - $ref: '#/components/schemas/SurveyVisibility'
                 - type: 'null'
-              description: The value a `POST` stored that the graph has not yet acknowledged. While non-null the survey is private for everyone but the owner and the organisation's owners and managers, whichever value is pending — `visibility` reads `private`. `"private"` means the restriction is already enforced and only the graph is catching up; `"workspace"` means the grant is not yet in effect. `null` normally. Clears when the outbox delivers (within 60 seconds, or the deployment fails closed), or when a later `POST` cancels or supersedes it.
+              description: The value a `POST` stored that the graph has not yet acknowledged. While non-null the survey is restricted for everyone but the owner and the organisation's owners and managers, whichever value is pending — `visibility` reads `restricted`. `"restricted"` means the restriction is already enforced and only the graph is catching up; `"workspace"` means the grant is not yet in effect. `null` normally. Clears when the outbox delivers (within 60 seconds, or the deployment fails closed), or when a later `POST` cancels or supersedes it.
             version:
               type: integer
               minimum: 0
@@ -7514,7 +7514,7 @@ components:
               items:
                 $ref: '#/components/schemas/SurveyVisibility'
               uniqueItems: true
-              description: Values a `POST …/visibility` by this caller would act on right now. Never the enforced value — **except** when a different value is pending, in which case the enforced value is listed because requesting it cancels the pending change. Never `private` while `blockers[]` is non-empty or `owner` is `null`. Empty when nothing would happen. Drives the row menu and the editor control.
+              description: Values a `POST …/visibility` by this caller would act on right now. Never the enforced value — **except** when a different value is pending, in which case the enforced value is listed because requesting it cancels the pending change. Never `restricted` while `blockers[]` is non-empty or `owner` is `null`. Empty when nothing would happen. Drives the row menu and the editor control.
     SurveyVisibilityChangeRequest:
       type: object
       required:
@@ -7565,7 +7565,7 @@ components:
               anyOf:
                 - $ref: '#/components/schemas/SurveyVisibility'
                 - type: 'null'
-              description: '`"private"` when the restriction is enforced but the graph is still catching up (the outbox will finish it); `null` otherwise. A grant never returns 200 with a pending value.'
+              description: '`"restricted"` when the restriction is enforced but the graph is still catching up (the outbox will finish it); `null` otherwise. A grant never returns 200 with a pending value.'
             changedAt:
               type:
                 - string
@@ -10154,7 +10154,7 @@ components:
                 code: visibility_not_enabled
                 requestId: req_01j8z4
     V3VisibilityBlocked:
-      description: Conflict — `private` was requested while outbound connections depend on the survey. Remove or re-point them, then retry. `details.blockers` matches `blockers[]` from the `GET`.
+      description: Conflict — `restricted` was requested while outbound connections depend on the survey. Remove or re-point them, then retry. `details.blockers` matches `blockers[]` from the `GET`.
       headers:
         X-Request-Id:
           schema:
@@ -10170,7 +10170,7 @@ components:
           example:
             title: Conflict
             status: 409
-            detail: Make this survey visible to the workspace to keep using it in 2 connections, or remove them before making it private.
+            detail: Make this survey visible to the workspace to keep using it in 2 connections, or remove them before restricting it.
             code: visibility_blocked_by_connections
             requestId: req_01j8z5
             details:
@@ -10182,7 +10182,7 @@ components:
                   id: clwf1234567890123456789012
                   name: 'Notify #product on completion'
     V3VisibilityNotAllowed:
-      description: 'Unprocessable — `private` was requested on a survey with no owner (`owner: null`). Private means "the owner and the organisation''s administrators"; with no owner it would mean administrators only, which is not a state the product offers. Duplicate the survey to get a private copy you own.'
+      description: 'Unprocessable — `restricted` was requested on a survey with no owner (`owner: null`). Restricted means "the owner and the organisation''s administrators"; with no owner it would mean administrators only, which is not a state the product offers. Duplicate the survey to get a restricted copy you own.'
       headers:
         X-Request-Id:
           schema:
@@ -10198,11 +10198,11 @@ components:
           example:
             title: Unprocessable Content
             status: 422
-            detail: This survey has no owner and cannot be made private. Duplicate it to get a private copy.
+            detail: This survey has no author and can't be restricted. Duplicate it to get a restricted copy you own.
             code: visibility_change_not_allowed
             requestId: req_01j8z6
     V3ProjectionPending:
-      description: 'Service Unavailable — only for a **grant** (`private → workspace`): the flag and a new `version` were stored, but the graph did not acknowledge the projection within the request. The survey stays private meanwhile (fail closed); the change is queued durably and lands within 60 seconds or the deployment fails closed. `GET …/visibility` shows `pending: "workspace"`. Retrying the `POST` is safe: it re-attempts the projection and answers **200** only when the graph holds this exact version. A `POST` for `private` cancels the pending grant. A restriction never answers 503 — it is enforced the moment it is stored. Chosen over **202 Accepted** so the pending state stays an exception, not the normal path every client must poll.'
+      description: 'Service Unavailable — only for a **grant** (`restricted → workspace`): the flag and a new `version` were stored, but the graph did not acknowledge the projection within the request. The survey stays restricted meanwhile (fail closed); the change is queued durably and lands within 60 seconds or the deployment fails closed. `GET …/visibility` shows `pending: "workspace"`. Retrying the `POST` is safe: it re-attempts the projection and answers **200** only when the graph holds this exact version. A `POST` for `restricted` cancels the pending grant. A restriction never answers 503 — it is enforced the moment it is stored. Chosen over **202 Accepted** so the pending state stays an exception, not the normal path every client must poll.'
       headers:
         Retry-After:
           schema:

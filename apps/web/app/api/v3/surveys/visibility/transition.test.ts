@@ -6,7 +6,7 @@ import {
 } from "./transition";
 
 const settled = (
-  visibility: "private" | "workspace",
+  visibility: "restricted" | "workspace",
   ownerId: string | null = "owner"
 ): TVisibilityTransitionRow => ({
   ownerId,
@@ -17,7 +17,7 @@ const settled = (
 
 /** A stored value the graph has not acknowledged yet. */
 const pending = (
-  visibility: "private" | "workspace",
+  visibility: "restricted" | "workspace",
   ownerId: string | null = "owner"
 ): TVisibilityTransitionRow => ({
   ownerId,
@@ -35,17 +35,17 @@ describe("planVisibilityTransition (contract §3)", () => {
       0,
       { kind: "noop" },
     ],
-    ["private → private is a no-op too", settled("private"), "private", 0, { kind: "noop" }],
+    ["restricted → restricted is a no-op too", settled("restricted"), "restricted", 0, { kind: "noop" }],
     [
-      "workspace → private is a change",
+      "workspace → restricted is a change",
       settled("workspace"),
-      "private",
+      "restricted",
       0,
-      { kind: "change", to: "private" },
+      { kind: "change", to: "restricted" },
     ],
     [
-      "private → workspace is a change with no precondition",
-      settled("private", null),
+      "restricted → workspace is a change with no precondition",
+      settled("restricted", null),
       "workspace",
       3,
       { kind: "change", to: "workspace" },
@@ -59,21 +59,21 @@ describe("planVisibilityTransition (contract §3)", () => {
     ],
     [
       "requesting the pending restriction again retries it",
-      pending("private"),
-      "private",
+      pending("restricted"),
+      "restricted",
       0,
-      { kind: "retry", to: "private" },
+      { kind: "retry", to: "restricted" },
     ],
     [
       "the enforced value while a grant is pending cancels it",
       pending("workspace"),
-      "private",
+      "restricted",
       0,
-      { kind: "cancel", to: "private" },
+      { kind: "cancel", to: "restricted" },
     ],
     [
       "workspace while a restriction is pending cancels it",
-      pending("private"),
+      pending("restricted"),
       "workspace",
       0,
       { kind: "cancel", to: "workspace" },
@@ -82,9 +82,9 @@ describe("planVisibilityTransition (contract §3)", () => {
     expect(planVisibilityTransition({ blockerCount, requested, row })).toEqual(expected);
   });
 
-  test("refuses private while outbound connections depend on the survey (409)", () => {
+  test("refuses restricted while outbound connections depend on the survey (409)", () => {
     expect(
-      planVisibilityTransition({ blockerCount: 2, requested: "private", row: settled("workspace") })
+      planVisibilityTransition({ blockerCount: 2, requested: "restricted", row: settled("workspace") })
     ).toEqual({
       code: "visibility_blocked_by_connections",
       kind: "reject",
@@ -92,48 +92,48 @@ describe("planVisibilityTransition (contract §3)", () => {
     });
   });
 
-  test("refuses private for an ownerless survey (422)", () => {
+  test("refuses restricted for an ownerless survey (422)", () => {
     expect(
-      planVisibilityTransition({ blockerCount: 0, requested: "private", row: settled("workspace", null) })
+      planVisibilityTransition({ blockerCount: 0, requested: "restricted", row: settled("workspace", null) })
     ).toEqual({ code: "visibility_change_not_allowed", kind: "reject", status: 422 });
   });
 
   test("422 wins over 409: the missing owner cannot be fixed, so listing connections is a dead end", () => {
     expect(
-      planVisibilityTransition({ blockerCount: 5, requested: "private", row: settled("workspace", null) })
+      planVisibilityTransition({ blockerCount: 5, requested: "restricted", row: settled("workspace", null) })
     ).toMatchObject({ status: 422 });
   });
 
-  test("cancelling a pending grant back to private is refused on the same grounds", () => {
+  test("cancelling a pending grant back to restricted is refused on the same grounds", () => {
     expect(
-      planVisibilityTransition({ blockerCount: 1, requested: "private", row: pending("workspace") })
+      planVisibilityTransition({ blockerCount: 1, requested: "restricted", row: pending("workspace") })
     ).toMatchObject({
       status: 409,
     });
     expect(
-      planVisibilityTransition({ blockerCount: 0, requested: "private", row: pending("workspace", null) })
+      planVisibilityTransition({ blockerCount: 0, requested: "restricted", row: pending("workspace", null) })
     ).toMatchObject({ status: 422 });
   });
 });
 
 describe("getAllowedVisibilityTargets", () => {
   test.each([
-    ["a settled workspace-visible survey offers private", settled("workspace"), 0, ["private"]],
-    ["blockers take private off the list", settled("workspace"), 1, []],
-    ["an ownerless survey never offers private", settled("workspace", null), 0, []],
-    ["a settled private survey offers workspace", settled("private"), 0, ["workspace"]],
+    ["a settled workspace-visible survey offers restricted", settled("workspace"), 0, ["restricted"]],
+    ["blockers take restricted off the list", settled("workspace"), 1, []],
+    ["an ownerless survey never offers restricted", settled("workspace", null), 0, []],
+    ["a settled restricted survey offers workspace", settled("restricted"), 0, ["workspace"]],
     [
-      "an ownerless private survey still offers workspace (the administrator's recovery)",
-      settled("private", null),
+      "an ownerless restricted survey still offers workspace (the administrator's recovery)",
+      settled("restricted", null),
       0,
       ["workspace"],
     ],
-    ["a pending grant offers the retry and the cancel", pending("workspace"), 0, ["workspace", "private"]],
+    ["a pending grant offers the retry and the cancel", pending("workspace"), 0, ["workspace", "restricted"]],
     [
       "a pending restriction offers the cancel and the retry",
-      pending("private"),
+      pending("restricted"),
       0,
-      ["workspace", "private"],
+      ["workspace", "restricted"],
     ],
   ] as const)("%s", (_label, row, blockerCount, expected) => {
     expect(getAllowedVisibilityTargets(row, blockerCount)).toEqual(expected);

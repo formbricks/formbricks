@@ -10,7 +10,7 @@ import { SURVEY_RELATIONS } from "./relationship-map";
 export type TSurveyProjectionRow = Readonly<{
   id: string;
   ownerId: string | null;
-  visibility: "private" | "workspace";
+  visibility: "restricted" | "workspace";
   visibilityVersion: number;
   workspaceId: string;
 }>;

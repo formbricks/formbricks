@@ -97,7 +97,7 @@ describe("getSurveyListPage", () => {
 
     await getSurveyListPage(workspaceId, {
       actorContext: { enforced: true, isOrganizationAdmin: false, kind: "user", userId: "user_1" },
-      visibilityFilter: { visibility: ["private"] },
+      visibilityFilter: { visibility: ["restricted"] },
       limit: 5,
       cursor: null,
       sortBy: "updatedAt",
@@ -111,7 +111,7 @@ describe("getSurveyListPage", () => {
           AND: [
             { name: { contains: "nps" } },
             { OR: [{ visibility: "workspace", visibilityPending: false }, { ownerId: "user_1" }] },
-            { OR: [{ visibility: "private" }, { visibilityPending: true }] },
+            { OR: [{ visibility: "restricted" }, { visibilityPending: true }] },
           ],
         },
       })

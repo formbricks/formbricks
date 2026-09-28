@@ -239,7 +239,7 @@ describe("survey and response scopes once survey visibility is enforced (ENG-328
     id: "survey-1",
     organizationId: "org-1",
     ownerId: "owner-1",
-    visibility: "private" as const,
+    visibility: "restricted" as const,
     visibilityProjectedVersion: 2,
     visibilityVersion: 2,
     workspaceId: "workspace-1",
@@ -263,7 +263,7 @@ describe("survey and response scopes once survey visibility is enforced (ENG-328
     expect(getSurveyAuthorizationWorkspaceScope).not.toHaveBeenCalled();
   });
 
-  test("falls back to the workspace node with a pending-private policy while a change is in flight", async () => {
+  test("falls back to the workspace node with a pending-restricted policy while a change is in flight", async () => {
     vi.mocked(getSurveyAuthorizationScopeRow).mockResolvedValue(
       row({ visibility: "workspace", visibilityVersion: 3 })
     );

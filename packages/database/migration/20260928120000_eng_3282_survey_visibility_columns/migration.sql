@@ -23,7 +23,7 @@ SET lock_timeout = '1s';
 -- Guarded rather than bare: idempotent and convergent, including against a `db:push` database.
 DO $$
 BEGIN
-  CREATE TYPE "SurveyVisibility" AS ENUM ('private', 'workspace');
+  CREATE TYPE "SurveyVisibility" AS ENUM ('restricted', 'workspace');
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;

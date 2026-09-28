@@ -46,7 +46,7 @@ describe("buildVisibleSurveyWhere", () => {
     });
   });
 
-  test("an API key sees settled workspace-visible surveys only — never a private or pending one", () => {
+  test("an API key sees settled workspace-visible surveys only — never a restricted or pending one", () => {
     expect(buildVisibleSurveyWhere(apiKey)).toEqual({ visibility: "workspace", visibilityPending: false });
     expect(sqlOf(apiKey)).toEqual({
       text: '("s"."visibility" = \'workspace\' AND "s"."visibilityPending" = false)',

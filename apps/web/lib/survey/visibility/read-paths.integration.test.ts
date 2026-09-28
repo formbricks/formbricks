@@ -20,7 +20,7 @@ import { canApiKeyReachSurveyResource, getApiKeyVisibleSurveyWhere } from "./api
 /**
  * ENG-3282, Gate E: the read paths outside `/api/v3/surveys` against a real PostgreSQL and SpiceDB.
  * Four principals — the survey's owner, an organization manager, a plain read member and a manage-level
- * API key — over one workspace-visible and one private survey, each with a tagged response from the
+ * API key — over one workspace-visible and one restricted survey, each with a tagged response from the
  * same contact. With the marker off every path returns exactly what it returned before.
  */
 const ids = {
@@ -85,7 +85,7 @@ beforeAll(async () => {
   ids.contact = contact.id;
   ids.tag = tag.id;
 
-  const survey = async (name: string, visibility: "private" | "workspace") => {
+  const survey = async (name: string, visibility: "restricted" | "workspace") => {
     const created = await prisma.survey.create({
       data: { name, ownerId: ids.owner, slug: `${visibility}-slug`, visibility, workspaceId: workspace.id },
     });
@@ -101,7 +101,7 @@ beforeAll(async () => {
     return created.id;
   };
   ids.visibleSurvey = await survey("Visible", "workspace");
-  ids.privateSurvey = await survey("Private", "private");
+  ids.privateSurvey = await survey("Restricted", "restricted");
 
   await synchronizeAuthzedIntegrationFixture();
 }, 120_000);
@@ -128,7 +128,7 @@ describe("marker off: every read path is unchanged", () => {
   });
 });
 
-describe("marker on: private surveys leave every read path of those who may not see them", () => {
+describe("marker on: restricted surveys leave every read path of those who may not see them", () => {
   beforeAll(() => setMarker(true));
 
   test("v1 and v2 management: an API key lists, counts and reaches workspace-visible surveys only", async () => {

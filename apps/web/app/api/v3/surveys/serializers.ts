@@ -44,7 +44,7 @@ type TV3SurveyListItemBase = Pick<
 export type TV3SurveyVisibilityFields = {
   access: TSurveyAccess;
   owner: { name: string } | null;
-  visibility: "private" | "workspace";
+  visibility: "restricted" | "workspace";
 };
 
 /** Who is asking and which switches are on — resolved once per request, shared by every item. */
@@ -55,7 +55,7 @@ export type TV3SurveyVisibilityContext = Readonly<{
 
 type TV3SurveyVisibilityRow = Readonly<{
   ownerId: string | null;
-  visibility: "private" | "workspace";
+  visibility: "restricted" | "workspace";
   visibilityProjectedVersion: number;
   visibilityVersion: number;
 }>;

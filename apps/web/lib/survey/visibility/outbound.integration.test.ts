@@ -11,7 +11,7 @@ import { processResponsePipelineJob } from "@/modules/response-pipeline/lib/proc
 import { findNotWorkspaceVisibleSurveyIds } from "./outbound";
 
 /**
- * ENG-3283, Gate F: against a real PostgreSQL, a response to a private survey enqueues no webhook
+ * ENG-3283, Gate F: against a real PostgreSQL, a response to a restricted survey enqueues no webhook
  * delivery — not even for a webhook subscribed to every survey in the workspace, which is the case the
  * attach-time guard cannot catch. Only the queue boundary is replaced, so the test observes enqueues.
  */
@@ -77,7 +77,7 @@ beforeAll(async () => {
   ).id;
   ids.privateSurvey = (
     await prisma.survey.create({
-      data: { name: "Private", visibility: "private", workspaceId: workspace.id },
+      data: { name: "Restricted", visibility: "restricted", workspaceId: workspace.id },
     })
   ).id;
 
@@ -111,12 +111,12 @@ describe("outbound plumbing with survey visibility enforced", () => {
     expect(enqueued.jobs).toHaveLength(1);
   });
 
-  test("a private survey's response enqueues no delivery, even for a wildcard webhook", async () => {
+  test("a restricted survey's response enqueues no delivery, even for a wildcard webhook", async () => {
     await processResponsePipelineJob(await pipelineData(ids.privateSurvey), context);
     expect(enqueued.jobs).toHaveLength(0);
   });
 
-  test("the attach-time lookup names exactly the private survey", async () => {
+  test("the attach-time lookup names exactly the restricted survey", async () => {
     await expect(findNotWorkspaceVisibleSurveyIds([ids.visibleSurvey, ids.privateSurvey])).resolves.toEqual([
       ids.privateSurvey,
     ]);

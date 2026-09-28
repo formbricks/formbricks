@@ -113,7 +113,7 @@ describe("getAuthorizedV3Survey", () => {
         type: "survey",
         id: survey.id,
       });
-      // The same body as an unknown id: a private survey's existence is not probeable.
+      // The same body as an unknown id: a restricted survey's existence is not probeable.
       expect(denied.response?.status).toBe(403);
       expect(denied.survey).toBeNull();
 

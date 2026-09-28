@@ -287,8 +287,8 @@ describe("AuthZed projection outbox triggers: survey (ENG-3282)", () => {
       ]);
     };
 
-    await expectNext({ visibility: "private" }, true); // workspace → private drops the shared edge
-    await expectNext({ visibility: "workspace" }, false); // private → workspace only adds
+    await expectNext({ visibility: "restricted" }, true); // workspace → restricted drops the shared edge
+    await expectNext({ visibility: "workspace" }, false); // restricted → workspace only adds
     await expectNext({ visibility: "workspace" }, false); // unchanged facts project identical edges
     await expectNext({ ownerId: other.id }, true); // the previous owner loses change_visibility
     await expectNext({ workspaceId: otherWorkspace.id }, true); // the previous workspace loses read

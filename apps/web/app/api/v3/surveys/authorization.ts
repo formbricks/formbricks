@@ -37,8 +37,8 @@ export async function getAuthorizedV3Survey(params: {
   }
 
   // ENG-3282: once survey visibility is enforced, workspace access is necessary but not sufficient —
-  // a private survey is its owner's and the administrators'. Same 403 body as an unknown id, so a
-  // private survey's existence is not probeable. Skipped entirely while the marker is off, so a
+  // a restricted survey is its owner's and the administrators'. Same 403 body as an unknown id, so a
+  // restricted survey's existence is not probeable. Skipped entirely while the marker is off, so a
   // deployment that has not opted in pays no second check.
   if (await isSurveyVisibilityReady()) {
     const actor = getV3AuthorizationActor(authentication);

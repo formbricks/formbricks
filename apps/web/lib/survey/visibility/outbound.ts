@@ -8,10 +8,10 @@ import { getEffectiveVisibility } from "./policy";
 /**
  * Outbound plumbing (ENG-3283): webhooks, integrations, feedback sources, follow-ups and workflows
  * send a survey's responses to someone outside its access list, so they only ever serve a survey that
- * is workspace-visible *now*. A pending change counts as private either way (fail closed).
+ * is workspace-visible *now*. A pending change counts as restricted either way (fail closed).
  *
  * Enforced twice: when a connection is attached (a clear error for the caller) and when a response is
- * dispatched (the attach check cannot see a survey made private later). Both are no-ops while survey
+ * dispatched (the attach check cannot see a survey restricted later). Both are no-ops while survey
  * visibility is not enforced, so a deployment that has not opted in behaves exactly as before.
  */
 
@@ -20,7 +20,7 @@ export const SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE =
 
 /** The rows an outbound check needs: `visibilityPending` is the trigger-kept version mismatch. */
 const notWorkspaceVisibleWhere: Prisma.SurveyWhereInput = {
-  OR: [{ visibility: "private" }, { visibilityPending: true }],
+  OR: [{ visibility: "restricted" }, { visibilityPending: true }],
 };
 
 /** Of `surveyIds`, the ones outbound plumbing must not serve. `[]` while enforcement is off. */
@@ -39,7 +39,7 @@ export const findNotWorkspaceVisibleSurveyIds = async (
 
 /**
  * Of `next`, the surveys newly attached and not workspace-visible. Only additions are refused: a survey
- * made private after it was attached stays on the connection (dispatch skips it), so saving an
+ * restricted after it was attached stays on the connection (dispatch skips it), so saving an
  * unrelated edit to that connection must not fail.
  */
 export const findNewlyAttachedNotWorkspaceVisibleSurveyIds = (

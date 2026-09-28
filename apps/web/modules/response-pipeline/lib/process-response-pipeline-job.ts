@@ -309,7 +309,7 @@ const loadResponseCountSafely = async ({
 };
 
 /**
- * ENG-3282: an alert carries the response, so it only goes to someone who may read it — for a private
+ * ENG-3282: an alert carries the response, so it only goes to someone who may read it — for a restricted
  * survey, its owner and the organization administrators. A subscription made while the survey was
  * workspace-visible does not survive a restriction. Bounded by the subscriber count; a no-op while
  * survey visibility is not enforced.
@@ -836,7 +836,7 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
       );
     }
 
-    // ENG-3283: a private survey's responses never leave the app — no webhook, integration, feedback
+    // ENG-3283: a restricted survey's responses never leave the app — no webhook, integration, feedback
     // source, follow-up or workflow. Metering, telemetry, auto-complete and the (already filtered)
     // alert emails are internal and still run.
     const outboundAllowed = isSurveyOutboundAllowed(survey, await isSurveyVisibilityReady());

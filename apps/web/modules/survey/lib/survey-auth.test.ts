@@ -211,7 +211,7 @@ describe("survey visibility enforced (ENG-3282)", () => {
     });
   });
 
-  test("getSurveyAuth answers 404 for a private survey the caller may not read", async () => {
+  test("getSurveyAuth answers 404 for a restricted survey the caller may not read", async () => {
     mockGetWorkspaceAuth.mockResolvedValue({
       ...buildWorkspaceAuth(VICTIM_WORKSPACE_ID),
       session: buildSession(ATTACKER_USER_ID),

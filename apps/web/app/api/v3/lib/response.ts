@@ -305,7 +305,7 @@ export function problemVisibilityNotEnabled(requestId: string, instance?: string
   );
 }
 
-/** ENG-3282: `private` refused while outbound connections depend on the survey; lists them. */
+/** ENG-3282: `restricted` refused while outbound connections depend on the survey; lists them. */
 export function problemVisibilityBlocked(
   requestId: string,
   blockers: ReadonlyArray<Readonly<{ id: string; name: string; type: string }>>,
@@ -314,18 +314,18 @@ export function problemVisibilityBlocked(
   return problemResponse(
     409,
     "Conflict",
-    "Remove the connections that use this survey before making it private",
+    "Remove the connections that use this survey before restricting it",
     requestId,
     { code: "visibility_blocked_by_connections", details: { blockers }, instance }
   );
 }
 
-/** ENG-3282: `private` refused because the survey has no owner (Decision log #3). */
+/** ENG-3282: `restricted` refused because the survey has no owner (Decision log #3). */
 export function problemVisibilityChangeNotAllowed(requestId: string, instance?: string): Response {
   return problemResponse(
     422,
     "Unprocessable Content",
-    "A survey without an owner cannot be made private. Duplicate it to get a private copy you own.",
+    "A survey without an author can't be restricted. Duplicate it to get a restricted copy you own.",
     requestId,
     { code: "visibility_change_not_allowed", instance }
   );
@@ -333,13 +333,13 @@ export function problemVisibilityChangeNotAllowed(requestId: string, instance?: 
 
 /**
  * ENG-3282: a grant was stored but the graph did not acknowledge it in-request. The survey stays
- * private until the outbox delivers it; retrying is safe.
+ * restricted until the outbox delivers it; retrying is safe.
  */
 export function problemProjectionPending(requestId: string, instance?: string): Response {
   return problemResponse(
     503,
     "Service Unavailable",
-    "The change is stored and will take effect shortly; the survey stays private until it does",
+    "The change is stored and will take effect shortly; the survey stays restricted until it does",
     requestId,
     { code: "projection_pending", headers: { "Retry-After": "5" }, instance }
   );

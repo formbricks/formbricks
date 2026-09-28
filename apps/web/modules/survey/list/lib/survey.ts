@@ -517,7 +517,7 @@ export const getWorkspaceSurveyCount = reactCache(
   async (workspaceId: string, actorContext: TSurveyActorContext): Promise<number> => {
     validateInputs([workspaceId, z.cuid2()]);
     try {
-      // ENG-3282: surveys this caller can read, so a private survey is not countable by someone who
+      // ENG-3282: surveys this caller can read, so a restricted survey is not countable by someone who
       // cannot see it (an existence oracle otherwise).
       return await prisma.survey.count({
         where: { workspaceId, AND: buildSurveyAccessWhere(actorContext) },

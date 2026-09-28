@@ -25,7 +25,7 @@ type TResolvedPermissionResource = Readonly<{
 
 /**
  * A survey whose visibility change the graph has not acknowledged yet (ENG-3282). The graph still
- * holds the previous version, so the decision is made from PostgreSQL facts instead: private to its
+ * holds the previous version, so the decision is made from PostgreSQL facts instead: restricted to its
  * owner (along their workspace ladder) and the organization's administrators, whichever way the
  * change points.
  */

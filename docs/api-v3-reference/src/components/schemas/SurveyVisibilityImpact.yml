@@ -9,7 +9,7 @@ properties:
     minimum: 0
     description:
       People other than the owner and the organisation's owners/managers who can see the survey now (if
-      workspace-visible) or would gain access (if private).
+      workspace-visible) or would gain access (if restricted).
   responseCount:
     type: integer
     minimum: 0

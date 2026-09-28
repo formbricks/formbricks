@@ -280,13 +280,13 @@ async function main(): Promise<void> {
   await seedSurvey(CONTRACT_IDS.SURVEY_BLOCKS_ORDER, "Contract fixture — block order", false, 2);
   // Restore only has something to do on an already-archived survey.
   await seedSurvey(CONTRACT_IDS.SURVEY_RESTORE, "Contract fixture — restore", true);
-  // ENG-3282: one workspace-visible and one private survey, both owned by the seed admin, so the
+  // ENG-3282: one workspace-visible and one restricted survey, both owned by the seed admin, so the
   // visibility operations and the list's visibility fields have real rows in both states.
   await seedSurvey(CONTRACT_IDS.SURVEY_VISIBILITY, "Contract fixture — visibility", false);
-  await seedSurvey(CONTRACT_IDS.SURVEY_VISIBILITY_PRIVATE, "Contract fixture — private", false);
+  await seedSurvey(CONTRACT_IDS.SURVEY_VISIBILITY_PRIVATE, "Contract fixture — restricted", false);
   for (const [id, visibility] of [
     [CONTRACT_IDS.SURVEY_VISIBILITY, "workspace"],
-    [CONTRACT_IDS.SURVEY_VISIBILITY_PRIVATE, "private"],
+    [CONTRACT_IDS.SURVEY_VISIBILITY_PRIVATE, "restricted"],
   ] as const) {
     await prisma.survey.update({
       where: { id },

@@ -973,7 +973,7 @@ describe("visibility fields on PATCH (ENG-3282)", () => {
   test("refuses a changed visibility as an unsupported field — it changes only through POST …/visibility", () => {
     const preparation = prepareV3SurveyPatchInput(
       survey,
-      { name: "Renamed", visibility: "private" },
+      { name: "Renamed", visibility: "restricted" },
       { reportedVisibility: reported }
     );
 

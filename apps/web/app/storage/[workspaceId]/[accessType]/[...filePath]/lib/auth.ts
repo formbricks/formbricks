@@ -9,7 +9,7 @@ import { getSession } from "@/modules/auth/lib/session";
 
 /**
  * ENG-3282: a file under `surveys/{surveyId}/…` belongs to that survey, so once visibility is enforced
- * the survey has to be reachable too — a private survey's uploads are its owner's and the organization
+ * the survey has to be reachable too — a restricted survey's uploads are its owner's and the organization
  * administrators'. Legacy paths name no survey and keep the workspace check alone.
  */
 const canReachSurveyFile = async (

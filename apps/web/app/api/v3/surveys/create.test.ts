@@ -771,7 +771,7 @@ describe("createV3Survey", () => {
     test("resolves the creation facts from the principal and hands them to the service", async () => {
       vi.mocked(resolveSurveyCreationFacts).mockResolvedValueOnce({
         ownerId: "user_1",
-        visibility: "private",
+        visibility: "restricted",
       });
 
       await createV3Survey(
@@ -786,7 +786,7 @@ describe("createV3Survey", () => {
         organizationId: "org_1",
       });
       expect(createSurvey).toHaveBeenCalledWith(workspaceId, expect.anything(), {
-        creationFacts: { ownerId: "user_1", visibility: "private" },
+        creationFacts: { ownerId: "user_1", visibility: "restricted" },
         privateSegmentFilters: [],
       });
     });

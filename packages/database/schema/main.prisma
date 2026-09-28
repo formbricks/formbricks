@@ -344,9 +344,9 @@ enum displayOptions {
 }
 
 /// Who may read a survey. `workspace` is everyone with workspace access (the behaviour before ENG-3282);
-/// `private` is the owner and the organization's owners and managers only.
+/// `restricted` is the owner and the organization's owners and managers only.
 enum SurveyVisibility {
-  private
+  restricted
   workspace
 }
 

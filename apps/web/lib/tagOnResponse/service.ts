@@ -77,7 +77,7 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
 export const getTagsOnResponsesCount = reactCache(
   async (
     workspaceId: string,
-    /** ENG-3282: the caller's survey-visibility clause, so a private survey's responses are not counted. */
+    /** ENG-3282: the caller's survey-visibility clause, so a restricted survey's responses are not counted. */
     visibleSurveyWhere: Prisma.SurveyWhereInput
   ): Promise<TTagsCount> => {
     validateInputs([workspaceId, ZId]);

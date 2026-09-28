@@ -1,6 +1,7 @@
 type: string
 enum:
-  - private
+  - restricted
   - workspace
-description: "`private`: readable by the owner and the organisation's owners and managers only. `workspace`:
+description:
+  "`restricted`: readable by the owner and the organisation's owners and managers only. `workspace`:
   readable by everyone with access to the workspace — today's behaviour."

@@ -1,8 +1,9 @@
-description: 'Service Unavailable — only for a **grant** (`private → workspace`): the flag and a new `version`
-  were stored, but the graph did not acknowledge the projection within the request. The survey stays private
+description:
+  'Service Unavailable — only for a **grant** (`restricted → workspace`): the flag and a new `version`
+  were stored, but the graph did not acknowledge the projection within the request. The survey stays restricted
   meanwhile (fail closed); the change is queued durably and lands within 60 seconds or the deployment fails
   closed. `GET …/visibility` shows `pending: "workspace"`. Retrying the `POST` is safe: it re-attempts the
-  projection and answers **200** only when the graph holds this exact version. A `POST` for `private` cancels
+  projection and answers **200** only when the graph holds this exact version. A `POST` for `restricted` cancels
   the pending grant. A restriction never answers 503 — it is enforced the moment it is stored. Chosen over
   **202 Accepted** so the pending state stays an exception, not the normal path every client must poll.'
 headers:

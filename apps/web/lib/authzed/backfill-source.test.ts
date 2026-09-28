@@ -616,7 +616,7 @@ describe("survey sources (ENG-3282)", () => {
   const surveyRow = (id: string, overrides: Record<string, unknown> = {}) => ({
     id,
     ownerId: "user-1",
-    visibility: "private",
+    visibility: "restricted",
     visibilityVersion: 0,
     workspaceId: "ws-1",
     ...overrides,

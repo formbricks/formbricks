@@ -34,7 +34,7 @@ import {
  * `GET` / `POST /api/v3/surveys/{surveyId}/visibility` (ENG-3282, contract §3).
  *
  * Both answer every caller who may not change the survey's visibility — unknown and foreign ids,
- * private surveys they cannot see, API keys, workspace members, team-level managers — with the one
+ * restricted surveys they cannot see, API keys, workspace members, team-level managers — with the one
  * shared 403 body, so nothing about the survey is probeable. `visibility_not_enabled` is a separate 403
  * because it depends only on the organization and the deployment, never on the survey.
  */
@@ -127,9 +127,9 @@ async function authorizeVisibilityCaller({
   };
 }
 
-/** Connections only matter while `private` is a possible target: not for a settled private survey. */
+/** Connections only matter while `restricted` is a possible target: not for a settled restricted survey. */
 const findRelevantBlockers = (row: TVisibilityRow): Promise<TSurveyVisibilityBlocker[]> =>
-  row.visibility === "private" && getPendingVisibility(row) === null
+  row.visibility === "restricted" && getPendingVisibility(row) === null
     ? Promise.resolve([])
     : findSurveyOutboundBlockers(row.id, row.workspaceId);
 
@@ -252,8 +252,8 @@ export async function changeV3SurveyVisibility(
     const requested = parsed.data.visibility;
 
     // Read outside the lock: attaching a connection does not take it. A race between a flip and an
-    // attach is closed at dispatch instead, which skips a private survey whatever references it.
-    const blockers = requested === "private" ? await findRelevantBlockers(caller.row) : [];
+    // attach is closed at dispatch instead, which skips a restricted survey whatever references it.
+    const blockers = requested === "restricted" ? await findRelevantBlockers(caller.row) : [];
     const { plan, row: stored } = await storeVisibilityChange(surveyId, requested, blockers.length, userId);
 
     if (plan.kind === "reject") {
@@ -293,7 +293,7 @@ export async function changeV3SurveyVisibility(
     }
 
     // A grant is only in effect once the graph holds this exact version; until then the survey stays
-    // private and the caller is told so. A restriction is enforced the moment it is stored.
+    // restricted and the caller is told so. A restriction is enforced the moment it is stored.
     if (plan.to === "workspace" && pending !== null) {
       log.warn(
         { projection: projection.status, version: stored.visibilityVersion },

@@ -90,7 +90,7 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    // ENG-3283: a webhook would forward a private survey's responses past its access list.
+    // ENG-3283: a webhook would forward a restricted survey's responses past its access list.
     const blockedSurveyIds = await findNotWorkspaceVisibleSurveyIds(inputValidation.data.surveyIds ?? []);
     if (blockedSurveyIds.length > 0) {
       return {

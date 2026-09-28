@@ -157,7 +157,7 @@ export type TSurveyAuthorizationScopeRow = Readonly<{
   id: string;
   organizationId: string;
   ownerId: string | null;
-  visibility: "private" | "workspace";
+  visibility: "restricted" | "workspace";
   visibilityProjectedVersion: number;
   visibilityVersion: number;
   workspaceId: string;

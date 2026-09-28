@@ -6,7 +6,7 @@ import { buildVisibleSurveyWhere } from "./predicate";
 
 /**
  * The visibility rules for the API-key-only management APIs (v1, v2), ENG-3282. An API key never sees
- * a private survey or one with a change pending (K-1), so its predicate needs no per-caller check.
+ * a restricted survey or one with a change pending (K-1), so its predicate needs no per-caller check.
  */
 
 /** The `Survey` clause every list an API key reads must carry. `{}` while the marker is off. */

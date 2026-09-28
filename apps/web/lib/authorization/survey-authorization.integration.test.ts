@@ -77,18 +77,18 @@ beforeAll(async () => {
   ids.apiKey = apiKey.id;
   ids.workspace = workspace.id;
 
-  const survey = (name: string, visibility: "private" | "workspace") =>
+  const survey = (name: string, visibility: "restricted" | "workspace") =>
     prisma.survey.create({ data: { name, ownerId: ids.owner, visibility, workspaceId: workspace.id } });
   ids.visibleSurvey = (await survey("Visible", "workspace")).id;
-  ids.privateSurvey = (await survey("Private", "private")).id;
-  ids.pendingSurvey = (await survey("Pending grant", "private")).id;
+  ids.privateSurvey = (await survey("Restricted", "restricted")).id;
+  ids.pendingSurvey = (await survey("Pending grant", "restricted")).id;
   ids.privateResponse = (
     await prisma.response.create({ data: { data: {}, finished: true, surveyId: ids.privateSurvey } })
   ).id;
 
   await synchronizeAuthzedIntegrationFixture();
 
-  // A grant stored but not yet acknowledged: the graph still says private, PostgreSQL says workspace.
+  // A grant stored but not yet acknowledged: the graph still says restricted, PostgreSQL says workspace.
   await prisma.survey.update({
     where: { id: ids.pendingSurvey },
     data: { visibility: "workspace", visibilityVersion: { increment: 1 } },
@@ -103,7 +103,7 @@ afterAll(async () => {
 describe("marker off: exactly the workspace ladder, as before ENG-3282", () => {
   beforeAll(() => setMarker(false));
 
-  test("every workspace reader reads every survey, private or not", async () => {
+  test("every workspace reader reads every survey, restricted or not", async () => {
     for (const surveyId of [ids.visibleSurvey, ids.privateSurvey, ids.pendingSurvey]) {
       await expect(readSurvey(user(ids.member), surveyId)).resolves.toBe(true);
       await expect(readSurvey({ id: ids.apiKey, type: "apiKey" }, surveyId)).resolves.toBe(true);
@@ -135,7 +135,7 @@ describe("marker on: the contract's permission matrix", () => {
     await expect(can(actor(), "response.read", { id: ids.privateResponse, type: "response" })).resolves.toBe(
       readsPrivate
     );
-    // A pending grant is still private to everyone but owner and administrators.
+    // A pending grant is still restricted to everyone but owner and administrators.
     await expect(readSurvey(actor(), ids.pendingSurvey)).resolves.toBe(readsPrivate);
   });
 
@@ -172,7 +172,7 @@ describe("marker on: the contract's permission matrix", () => {
     }
   });
 
-  test("an owner who loses workspace access loses their private survey", async () => {
+  test("an owner who loses workspace access loses their restricted survey", async () => {
     await prisma.teamUser.deleteMany({ where: { userId: ids.owner } });
     await synchronizeAuthzedIntegrationFixture();
     await expect(readSurvey(user(ids.owner), ids.privateSurvey)).resolves.toBe(false);

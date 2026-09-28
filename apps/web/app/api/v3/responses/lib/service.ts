@@ -506,7 +506,7 @@ const idColumn = (): Prisma.Sql => Prisma.raw('r."id"');
  * that would confirm the survey exists.
  */
 const scopeAndFilters = (filter: TV3ResponsesFilter, access: TSurveyActorContext): Prisma.Sql[] => {
-  // ENG-3282: the survey visibility predicate rides inside the scope clause, so a private survey's
+  // ENG-3282: the survey visibility predicate rides inside the scope clause, so a restricted survey's
   // responses are absent from the page and from the count alike (contract §7) — never post-filtered.
   const clauses: Prisma.Sql[] = [
     Prisma.sql`EXISTS (SELECT 1 FROM "Survey" s WHERE s."id" = r."surveyId" AND s."workspaceId" = ${filter.workspaceId} AND ${visibleSurveySqlPredicate(access, "s")})`,

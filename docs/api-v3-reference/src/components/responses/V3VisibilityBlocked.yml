@@ -1,4 +1,4 @@
-description: Conflict — `private` was requested while outbound connections depend on the survey. Remove or
+description: Conflict — `restricted` was requested while outbound connections depend on the survey. Remove or
   re-point them, then retry. `details.blockers` matches `blockers[]` from the `GET`.
 headers:
   X-Request-Id:
@@ -17,7 +17,7 @@ content:
       status: 409
       detail:
         Make this survey visible to the workspace to keep using it in 2 connections, or remove them before
-        making it private.
+        restricting it.
       code: visibility_blocked_by_connections
       requestId: req_01j8z5
       details:

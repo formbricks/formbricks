@@ -195,7 +195,7 @@ export async function executeV3SurveyCreate(params: {
     await assertV3SurveyTargetingFilterReferences(input.workspaceId, input.targeting?.filters ?? []);
   }
 
-  // ENG-3282: who owns the survey and whether it starts private, decided by the principal — never by
+  // ENG-3282: who owns the survey and whether it starts restricted, decided by the principal — never by
   // the body, whose schema has no such fields. Both reads happen before any write, as does the cap.
   const actor = getV3AuthorizationActor(authentication);
   const organizationId =

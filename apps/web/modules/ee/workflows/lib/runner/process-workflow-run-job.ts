@@ -486,8 +486,8 @@ const loadRunEmailContext = async (
     );
   }
 
-  // ENG-3283: the survey may have been made private after this run was enqueued. A run forwards the
-  // response out of the app, so it stops here rather than sending a private survey's data.
+  // ENG-3283: the survey may have been restricted after this run was enqueued. A run forwards the
+  // response out of the app, so it stops here rather than sending a restricted survey's data.
   if (!isSurveyOutboundAllowed(survey, await isSurveyVisibilityReady())) {
     recordSurveyOutboundSkipped("workflow");
     throw new WorkflowRunNotExecutableError(

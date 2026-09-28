@@ -47,7 +47,7 @@ async function fetchAndAuthorizeResponse(
       getWorkspaceAuthorizationActionForMethod(requiredPermission),
       { type: "workspace", id: survey.workspaceId }
     )) ||
-    // ENG-3282: responses follow their survey; a private survey's are out of an API key's reach.
+    // ENG-3282: responses follow their survey; a restricted survey's are out of an API key's reach.
     !(await canApiKeyReachSurveyResource(
       authentication.apiKeyId,
       RESPONSE_ACTION_FOR_METHOD[requiredPermission],

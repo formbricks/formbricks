@@ -51,7 +51,7 @@ const fetchAndAuthorizeSurvey = async (
       getWorkspaceAuthorizationActionForMethod(requiredPermission),
       { type: "workspace", id: survey.workspaceId }
     )) ||
-    // ENG-3282: an API key never reaches a private survey — the same answer as a foreign one.
+    // ENG-3282: an API key never reaches a restricted survey — the same answer as a foreign one.
     !(await canApiKeyReachSurveyResource(
       authentication.apiKeyId,
       SURVEY_ACTION_FOR_METHOD[requiredPermission],

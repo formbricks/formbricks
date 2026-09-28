@@ -45,7 +45,7 @@ export const createOrUpdateIntegration = async (
   validateInputs([workspaceId, ZId]);
 
   // ENG-3283: an integration row forwards its surveys' responses to a third party, so a newly mapped
-  // survey must be workspace-visible. Surveys already mapped are left alone (dispatch skips a private
+  // survey must be workspace-visible. Surveys already mapped are left alone (dispatch skips a restricted
   // one), so token refreshes and unrelated edits keep saving.
   const existing = await prisma.integration.findUnique({
     where: { type_workspaceId: { workspaceId, type: integrationData.type } },

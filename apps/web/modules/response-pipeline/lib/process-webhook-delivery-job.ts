@@ -226,7 +226,7 @@ export const processWebhookDeliveryJob: JobHandler<TWebhookDeliveryJobData> = as
     return;
   }
 
-  // ENG-3283: the survey may have been made private after this delivery was enqueued (or while it
+  // ENG-3283: the survey may have been restricted after this delivery was enqueued (or while it
   // was retrying). The pipeline checked at fan-out; this closes the window up to the request itself.
   if (!(await isSurveyStillOutboundVisible(data.surveyId))) {
     logger.info(

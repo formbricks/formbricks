@@ -2,10 +2,10 @@ get:
   operationId: getSurveysV3
   summary: List surveys
   description: |
-    Returns the surveys in the workspace **that the caller may read**. A private survey is listed only
+    Returns the surveys in the workspace **that the caller may read**. A restricted survey is listed only
     to its owner and to the organisation's owners and managers; to everyone else, API keys included, it
     does not exist here. `meta.totalCount` and `meta.workspaceSurveyCount` count that same readable set,
-    so neither number reveals a private survey to someone who cannot see it. The visibility predicate
+    so neither number reveals a restricted survey to someone who cannot see it. The visibility predicate
     is applied in the query and the cursor, never after the fact: `limit` keeps its meaning and
     `meta.nextCursor` being `null` remains the only end-of-collection signal.
 
@@ -100,9 +100,9 @@ get:
       explode: true
       description: >-
         Keep only surveys with one of these visibilities, as each item reports it (a survey with a
-        change in flight counts as `private`). Same repeat-or-comma rules as `filter[status][in]`;
+        change in flight counts as `restricted`). Same repeat-or-comma rules as `filter[status][in]`;
         unknown values → **400**. Filters within the readable set: a workspace member asking for
-        `private` gets their own private surveys, an organisation manager gets everyone's.
+        `restricted` gets their own restricted surveys, an organisation manager gets everyone's.
     - in: query
       name: filter[owner][in]
       schema:

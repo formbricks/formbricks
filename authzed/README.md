@@ -395,21 +395,21 @@ row implies:
 | `visibility = workspace`             | `survey#shared_workspace@workspace:W` |
 | `visibility = private` with an owner | `survey#private_owner@user:O`         |
 
-A workspace-visible survey therefore resolves exactly as it did before the projection existed; a private one
+A workspace-visible survey therefore resolves exactly as it did before the projection existed; a restricted one
 is reachable only by its owner along their own workspace ladder, and by organization owners and managers
 through `workspace#administer`. `shared_workspace` is only ever derived from `Survey.workspaceId`: an edge to
 another tenant's workspace would grant that tenant's members read, and the survey audit reports one as a
 mismatched parent.
 
 - **Fast path and outbox.** The `authzed_projection_survey` trigger enqueues an event on insert, delete, and
-  any write to `visibility`, `ownerId` or `workspaceId`. `private → workspace` on the same owner and
+  any write to `visibility`, `ownerId` or `workspaceId`. `restricted → workspace` on the same owner and
   workspace, and a write that leaves all three unchanged, are grants; every other move is a revocation.
   The visibility endpoint also projects in-request.
 - **Fencing.** Each survey is reconciled inside a transaction holding
   `pg_advisory_xact_lock(hashtext('survey-visibility:' || id))`, the same lock the visibility endpoint
   takes to store a change. The projector acknowledges the exact `visibilityVersion` it wrote into
   `visibilityProjectedVersion`; while the two differ (`visibilityPending`), PostgreSQL treats the survey as
-  private on every path.
+  restricted on every path.
 - **DELETE is not a revocation.** Every survey decision resolves the row first and denies once it is gone,
   so deleting a workspace with many surveys cannot arm the freshness guard. Leftover edges are hygiene.
 - **Repair scope.** Surveys are their own backfill scope, `--scope=survey`, outside `--scope=all`: the
@@ -424,7 +424,7 @@ mismatched parent.
 ## Resource parent resolution during the current-model migration
 
 The initial migration deliberately does not project one relationship for every
-dashboard and response (surveys are projected — see above). ENG-1738's private evaluator uses
+dashboard and response (surveys are projected — see above). ENG-1738's restricted evaluator uses
 the existing server-only PostgreSQL resolvers to map:
 
 - a survey or dashboard to its workspace;
@@ -445,7 +445,7 @@ enforcement.
 
 ## Authorization evaluation and direct cutover
 
-The private SpiceDB evaluator sits behind the existing server-only `can()` and
+The restricted SpiceDB evaluator sits behind the existing server-only `can()` and
 `assertCan()` contract. The direct-authority image makes SpiceDB the sole evaluator
 with no runtime legacy fallback or cohort selector. The separately pinned bridge
 image remains the deployment rollback artifact while the durable outbox keeps its

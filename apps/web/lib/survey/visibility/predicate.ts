@@ -5,12 +5,12 @@ import type { TSurveyActorContext } from "./actor-context";
 /**
  * The one visibility predicate (ENG-3282, contract §6). Every list, count, export and response read
  * that can return a survey or its responses applies it in SQL — never as a post-filter, so `limit`,
- * cursors and counts stay exact and a private survey is not countable by someone who cannot see it.
+ * cursors and counts stay exact and a restricted survey is not countable by someone who cannot see it.
  *
  * - enforcement off (readiness marker unset): no restriction, as before ENG-3282;
  * - organization owner/manager: no restriction;
  * - other user: workspace-visible surveys with nothing pending, plus the ones they own;
- * - API key: workspace-visible surveys with nothing pending. Never a private one.
+ * - API key: workspace-visible surveys with nothing pending. Never a restricted one.
  *
  * Workspace membership is NOT part of this: callers already scope to a workspace the actor may read.
  */
@@ -82,7 +82,7 @@ export type TSurveyVisibilityFilter = Readonly<{
 }>;
 
 /**
- * Matches on the *reported* visibility, the one a caller sees on each item: pending counts as private,
+ * Matches on the *reported* visibility, the one a caller sees on each item: pending counts as restricted,
  * and with enforcement off every survey is workspace-visible.
  */
 const effectiveVisibilityWhere = (
@@ -92,7 +92,7 @@ const effectiveVisibilityWhere = (
   if (!enforced) return visibility === "workspace" ? {} : { id: { in: [] } };
   return visibility === "workspace"
     ? { visibility: "workspace", visibilityPending: false }
-    : { OR: [{ visibility: "private" }, { visibilityPending: true }] };
+    : { OR: [{ visibility: "restricted" }, { visibilityPending: true }] };
 };
 
 /**

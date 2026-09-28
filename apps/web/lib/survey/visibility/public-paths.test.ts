@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 
 // ENG-3282, contract §7: survey visibility is about who *manages and reads* a survey inside the app. It
-// never changes whether respondents can take one — a private survey keeps collecting responses through
+// never changes whether respondents can take one — a restricted survey keeps collecting responses through
 // its link, the SDK and the client API, and its OG image still renders. These surfaces must therefore
 // not consult the visibility layer at all. A direct import is the tell that one started to.
 
