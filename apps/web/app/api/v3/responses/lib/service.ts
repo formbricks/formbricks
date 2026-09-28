@@ -83,7 +83,9 @@ export async function getResponseWorkspaceId(responseId: string): Promise<string
 }
 
 /**
- * The deleted row as recorded in the audit trail: the response's own scalars, no relations. Mirrors v1's
+ * The deleted row as the delete reads it back: the response's own scalars, no relations. `data` feeds the
+ * file-URL cleanup below and, with `variables`, the *shape* of the audit record — the operation reduces
+ * both to field names before anything reaches the audit trail (ENG-2873). Mirrors v1's
  * `responseSelection` minus its `contact`/`tags` joins, which are not worth adding to a delete.
  */
 const deletedResponseSelect = {
@@ -98,11 +100,12 @@ const deletedResponseSelect = {
   variables: true,
   ttc: true,
   // Deliberately absent: `meta` and `contactAttributes`. Nothing reads either — they would reach only
-  // the audit log's `oldObject`, and `redactPII` (`lib/utils/logger-helpers.ts`) matches exact key
-  // names, so `meta.ipAddress` lands there in plaintext. Those two are precisely what this resource's
-  // contract names as never exposed in any view, and writing them to a store with its own retention,
-  // access model and export path is exposing them. `contactId` and `surveyId` keep the record
-  // reviewable without either. ENG-2873 covers the general shape of this problem.
+  // the audit log's `oldObject`, and both are precisely what this resource's contract names as never
+  // exposed in any view; writing them to a store with its own retention, access model and export path
+  // is exposing them. `redactPII` (`lib/utils/logger-helpers.ts`) now redacts `ipAddress` and reduces
+  // attribute snapshots to field names (ENG-2873), so a producer that does forward them is caught at
+  // the sink — but not reading them at all is still the cleaner guarantee. `contactId` and `surveyId`
+  // keep the record reviewable without either.
   singleUseId: true,
   language: true,
   displayId: true,

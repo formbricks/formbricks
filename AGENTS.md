@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surface, with feature modules under `app/` and `modules/`, assets in `public/` and `images/`, and Playwright specs in `apps/web/playwright/`. `apps/storybook` renders reusable UI pieces for review. Shared logic lives in `packages/*`: `database` (Prisma schemas/migrations), `surveys`, `js-core`, `types`, plus linting and TypeScript presets (`config-*`). Deployment collateral is kept in `docs/`, `docker/`, and `helm-chart/`. Unit tests sit next to their source as `*.test.ts` or inside `__tests__`.
+Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surface, with feature modules under `app/` and `modules/`, assets in `public/` and `images/`, and Playwright specs in `apps/web/playwright/`. `apps/storybook` renders reusable UI pieces for review. Shared logic lives in `packages/*`: `database` (Prisma schemas/migrations), `surveys`, `js-core`, `types`, plus linting and TypeScript presets (`config-*`). Deployment collateral is kept in `docs/`, `docker/`, and `charts/`. Unit tests sit next to their source as `*.test.ts` or inside `__tests__`.
 
 ## Build, Test & Development Commands
 
@@ -203,6 +203,38 @@ Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonl
 - Prefer cursor pagination for large datasets.
 - When filtering by `createdAt`, include indexed fields (e.g., `surveyId` + `createdAt`).
 
+## Performance in Review
+
+Performance is an explicit review dimension, not something to discover in production. The bottlenecks that
+have reached `main` — N+1 queries, embedding work that never finishes — were all visible in the diff that
+introduced them, so every review of data access, of a loop over tenant data, or of an AI/embedding path looks
+for them deliberately.
+
+What to look for:
+
+- **N+1 queries** — a query, AI call, or cross-service fetch issued inside a `for`/`map`/`Promise.all` over
+  rows. One `findMany` with an `in` filter, an `include`, or a single grouped query replaces it.
+- **Unbounded work** — a `findMany` with no `take`, a pagination or retry loop with no ceiling, or a whole
+  table pulled into memory and filtered in JS. Bound it and push the filter into the query.
+- **Missing indexes** — a new `where`/`orderBy` combination needs an index that serves it; see "Database &
+  Prisma Performance" for the `createdAt` rule.
+- **Uncached expensive calls** — embeddings, AI calls, and cross-service fetches repeated per request or per
+  row belong behind `cache.withCache()` (see "Caching"), batched, or moved into a job.
+- **Sequential awaits** — independent queries awaited one after another instead of `Promise.all`.
+- **Client-side waterfalls** — the same data fetched twice, requests chained that do not depend on each
+  other, or hundreds of calls fired from a loop where one batch request would do.
+- **Render amplification** — one state change, interaction or parent update re-rendering a large subtree that
+  does not depend on it: a context value rebuilt on every render, unstable props fed into a big list, state
+  lifted higher than its readers. Point at the measured cost ("every keystroke re-renders all 500 rows"), not at
+  a missing `useMemo` — the Quality Checklist still rules out memoization for its own sake.
+- **Large-list rendering** — hundreds or thousands of rows rendered at once with no pagination or
+  virtualization.
+
+State the cost in terms of the data: "one query per response, so ~5k queries on a 5k-response survey" is
+reviewable, "this might be slow" is not. Where the answer is genuinely unclear, ask the author for numbers
+rather than guessing. `.coderabbit.yaml` carries the same checks as path instructions, so the automated review
+raises them too — but that is a second pair of eyes, and its silence is not a pass.
+
 ## Testing Guidelines
 
 Principles:
@@ -292,7 +324,7 @@ Do not:
   dependencies. `@slow` is triage metadata only: nothing in `playwright.config.ts` or CI reads it, so
   tagging a spec does not make its cost go away.
 
-## Documentation (apps/docs)
+## Documentation (root docs/)
 
 - Add frontmatter with `title`, `description`, and `icon` at the top of the MDX file.
 - Do not start with an H1; use Camel Case headings (only capitalize the feature name).

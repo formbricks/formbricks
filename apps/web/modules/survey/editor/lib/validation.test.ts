@@ -485,7 +485,7 @@ describe("validation.isEndingCardValid", () => {
     const card: TSurveyEndScreenCard = {
       ...baseEndScreenCard,
       buttonLabel: { default: "Go", en: "Go", de: "Los" },
-      buttonLink: "https://#recall:test123/fallback:example.com",
+      buttonLink: "https://#recall:test123/fallback:example.com#",
     };
     expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
   });
@@ -506,7 +506,7 @@ describe("validation.isEndingCardValid", () => {
   });
 
   test("should return true for redirectUrl card with dynamic URL containing recall", () => {
-    const card = { ...baseRedirectUrlCard, url: "https://#recall:test123/fallback:example.com" };
+    const card = { ...baseRedirectUrlCard, url: "https://#recall:test123/fallback:example.com#" };
     expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
   });
 

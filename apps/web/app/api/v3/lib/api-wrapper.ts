@@ -492,6 +492,12 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         return parsedInputResult.response;
       }
 
+      // Built after authentication, rate limiting and parsing on purpose (ENG-2872). A 401 has no actor
+      // to attribute — and an unauthenticated caller could fill the audit store one row per bad key; a
+      // 429 is already logged by the limiter; a 400 is a malformed request, not an authorization event.
+      // The rejection a reviewer wants — the 403 an authenticated caller gets for someone else's
+      // resource — is raised by the operation below and is audited as a failure. MCP's scope gate
+      // audits its own refusals in `registerScopedTool`.
       auditLog = buildV3AuditLog(authResult.authentication, action, targetType, req.url);
 
       const execute = () =>

@@ -367,6 +367,7 @@
     "label": "标签",
     "language": "语言",
     "last_name": "姓",
+    "last_sign_in": "上次登录",
     "learn_more": "了解 更多",
     "license_expired": "License Expired",
     "light_overlay": "浅色遮罩层",
@@ -407,6 +408,7 @@
     "no_quotas_found": "未找到配额",
     "no_result_found": "没有 结果",
     "no_results": "没有 结果",
+    "no_sign_in_recorded": "无登录记录",
     "no_surveys_found": "未找到 调查",
     "no_text_found": "未找到文本",
     "none_of_the_above": "以上 都 不 是",
@@ -3089,6 +3091,22 @@
         "unlock_teams_title": "通过 更 高级 划解锁 团队",
         "upgrade_plan_notice_message": "解锁更多组织角色功能 通过升级计划。",
         "you_are_a_member": "你是 会员"
+      },
+      "usage": {
+        "load_error": "无法加载使用情况。请重新加载页面重试。",
+        "members_active": "30 天内登录过",
+        "members_deactivated": "已停用",
+        "members_description": "组织成员的登录活动。不受日期范围影响。",
+        "members_dormant": "90 天以上未登录",
+        "members_total": "成员",
+        "nav_label": "使用情况",
+        "no_workspaces": "此组织尚无工作空间。",
+        "range_label": "日期范围",
+        "responses_description": "所选范围内的所有已存储回复,包括部分回复。",
+        "responses_title": "每个工作空间的回复数",
+        "surveys_description": "按当前状态显示的调查。不受日期范围影响。",
+        "time_zone_note": "天数以 {timeZone} 计算。",
+        "total": "总计"
       }
     },
     "surveys": {

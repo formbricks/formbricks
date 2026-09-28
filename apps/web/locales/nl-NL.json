@@ -367,6 +367,7 @@
     "label": "Label",
     "language": "Taal",
     "last_name": "Achternaam",
+    "last_sign_in": "Laatste aanmelding",
     "learn_more": "Meer informatie",
     "license_expired": "License Expired",
     "light_overlay": "Lichte overlay",
@@ -407,6 +408,7 @@
     "no_quotas_found": "Geen quota gevonden",
     "no_result_found": "Geen resultaat gevonden",
     "no_results": "Geen resultaten",
+    "no_sign_in_recorded": "Geen aanmelding geregistreerd",
     "no_surveys_found": "Geen enquêtes gevonden.",
     "no_text_found": "Geen tekst gevonden",
     "none_of_the_above": "Geen van bovenstaande",
@@ -3089,6 +3091,22 @@
         "unlock_teams_title": "Ontgrendel teams met een hoger plan.",
         "upgrade_plan_notice_message": "Ontgrendel organisatierollen met een hoger plan.",
         "you_are_a_member": "Je bent lid"
+      },
+      "usage": {
+        "load_error": "Kan gebruiksgegevens niet laden. Ververs de pagina om het opnieuw te proberen.",
+        "members_active": "Aangemeld binnen 30 dagen",
+        "members_deactivated": "Gedeactiveerd",
+        "members_description": "Aanmeldactiviteit van organisatieleden. Niet beïnvloed door de datumbereik.",
+        "members_dormant": "Geen aanmelding gedurende 90+ dagen",
+        "members_total": "Leden",
+        "nav_label": "Gebruik",
+        "no_workspaces": "Deze organisatie heeft nog geen workspaces.",
+        "range_label": "Datumreeks",
+        "responses_description": "Elke opgeslagen reactie in de geselecteerde periode, inclusief gedeeltelijke reacties.",
+        "responses_title": "Reacties per workspace",
+        "surveys_description": "Enquêtes op huidige status. Wordt niet beïnvloed door de datumreeks.",
+        "time_zone_note": "Dagen worden geteld in {timeZone}.",
+        "total": "Totaal"
       }
     },
     "surveys": {
