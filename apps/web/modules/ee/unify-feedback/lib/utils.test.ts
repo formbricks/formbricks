@@ -122,9 +122,17 @@ describe("getReadOnlyMetadataEntries", () => {
     expect(getReadOnlyMetadataEntries(record)).toEqual([{ key: "finished", value: "true" }]);
   });
 
-  test("keeps an embedded_data value that is not an object, so nothing is hidden", () => {
-    const record = makeRecord({ metadata: { embedded_data: ["AEG"] } });
-    expect(getReadOnlyMetadataEntries(record)).toEqual([{ key: "embedded_data", value: '["AEG"]' }]);
+  test.each([
+    ["an array", ["AEG"], '["AEG"]'],
+    ["a string", "AEG", '"AEG"'],
+  ])("keeps an embedded_data value that is %s, so nothing is hidden", (_label, value, shown) => {
+    const record = makeRecord({ metadata: { embedded_data: value } });
+    expect(getReadOnlyMetadataEntries(record)).toEqual([{ key: "embedded_data", value: shown }]);
+  });
+
+  test("still leaves out every other string value", () => {
+    const record = makeRecord({ metadata: { url: "https://example.com", finished: true } });
+    expect(getReadOnlyMetadataEntries(record)).toEqual([{ key: "finished", value: "true" }]);
   });
 });
 

@@ -112,11 +112,16 @@ const EMBEDDED_DATA_METADATA_KEY = "embedded_data";
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-/** Non-string metadata, minus an Embedded Data object: `getEmbeddedDataEntries` shows that one. */
+/**
+ * Non-string metadata, with `embedded_data` as the one exception either way. An object there gets its
+ * own rows from `getEmbeddedDataEntries`, so it is left out. Any other value, strings included, is kept:
+ * string metadata is rendered nowhere else, so dropping it here would hide it entirely.
+ */
 export const getReadOnlyMetadataEntries = (record: FeedbackRecordData): { key: string; value: string }[] => {
   return Object.entries(record.metadata ?? {})
-    .filter(([, value]) => typeof value !== "string")
-    .filter(([key, value]) => !(key === EMBEDDED_DATA_METADATA_KEY && isPlainObject(value)))
+    .filter(([key, value]) =>
+      key === EMBEDDED_DATA_METADATA_KEY ? !isPlainObject(value) : typeof value !== "string"
+    )
     .map(([key, value]) => ({
       key,
       value: JSON.stringify(value),
