@@ -24,7 +24,7 @@ index 2fbdb78d5ef9aaf09c01cacae651a5d96cbcfed7..b07f3b4fa5899200fea7cd8c4577df4f
          this.ended = true
          this._endCallback()
        }
-@@ -249,15 +250,51 @@ class Pool extends EventEmitter {
+@@ -249,15 +250,47 @@ class Pool extends EventEmitter {
      let timeoutHit = false
      if (this.options.connectionTimeoutMillis) {
        tid = setTimeout(() => {
@@ -69,11 +69,7 @@ index 2fbdb78d5ef9aaf09c01cacae651a5d96cbcfed7..b07f3b4fa5899200fea7cd8c4577df4f
 +          const connection = client.connection
 +          client.once('end', handleEnd)
 +          forceEndTimer = setTimeout(() => {
-+            try {
-+              connection.stream.destroy()
-+            } finally {
-+              handleEnd()
-+            }
++            connection.stream.destroy()
 +          }, this.options.connectionTimeoutMillis)
 +          if (forceEndTimer.unref) {
 +            forceEndTimer.unref()

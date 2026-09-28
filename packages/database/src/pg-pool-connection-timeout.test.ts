@@ -34,7 +34,7 @@ class StuckConnectionClient extends EventEmitter {
 
   connection = {
     end: vi.fn(),
-    stream: { destroy: vi.fn() },
+    stream: { destroy: vi.fn(() => this.emit("end")) },
   };
 
   constructor() {
