@@ -176,13 +176,20 @@ jobs:
           # contract is exercised with survey visibility enforced — the state production runs in.
           pnpm authzed:backfill --scope=survey --apply --mark-ready > /tmp/authzed-survey-backfill.json
           survey_backfill_exit=$?
+          # The fixtures make surveys private, which the outbox records as revocations. The backfill
+          # converges the graph but leaves those events queued, and no worker runs in this job; left
+          # there, the freshness guard fails every authorization check closed after 60 seconds.
+          pnpm authzed:outbox drain > /tmp/authzed-outbox-drain.json
+          drain_exit=$?
           set -e
 
           # Aggregate evidence only: the detailed report contains disposable fixture identifiers.
           jq -c '{status, code, counters, truncated}' /tmp/authzed-backfill.json || true
           jq -c '{status, code, counters, truncated, readiness}' /tmp/authzed-survey-backfill.json || true
+          jq -c '{status, delivered, remaining, deadLettered}' /tmp/authzed-outbox-drain.json || true
           if [ "${backfill_exit}" -ne 0 ]; then exit "${backfill_exit}"; fi
-          exit "${survey_backfill_exit}"
+          if [ "${survey_backfill_exit}" -ne 0 ]; then exit "${survey_backfill_exit}"; fi
+          exit "${drain_exit}"
 
       - name: Run App
         if: steps.harness.outputs.present == 'true'
