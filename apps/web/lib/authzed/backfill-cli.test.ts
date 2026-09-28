@@ -7,7 +7,11 @@ import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 // Neutralize the real default dependencies at import time; behaviour comes from per-test overrides.
 vi.mock("./api-key", () => ({ reconcileApiKeyRelationships: vi.fn() }));
 vi.mock("./backfill", () => ({ runAuthzedBackfill: vi.fn() }));
-vi.mock("./client", () => ({ closeAuthzedClient: vi.fn(), getAuthzedClient: vi.fn() }));
+vi.mock("./client", () => ({
+  closeAuthzedClient: vi.fn(),
+  configureAuthzedClientForBulkWork: vi.fn(),
+  getAuthzedClient: vi.fn(),
+}));
 vi.mock("./config", () => ({ isAuthzedEnabled: vi.fn() }));
 vi.mock("./feedback-directory", () => ({
   deleteFeedbackDirectoryAssignmentRelationships: vi.fn(),
