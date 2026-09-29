@@ -31,7 +31,7 @@ interface CustomHtmlFormData {
   customHeadScriptsMode: TSurvey["customHeadScriptsMode"];
 }
 
-export const CustomHtmlTab = ({ workspaceCustomScripts, isReadOnly }: CustomHtmlTabProps) => {
+export const CustomHtmlTab = ({ workspaceCustomScripts, isReadOnly }: Readonly<CustomHtmlTabProps>) => {
   const { t } = useTranslation();
   const { survey } = useSurvey();
   const [isSaving, setIsSaving] = useState(false);

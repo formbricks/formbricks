@@ -57,7 +57,7 @@ export const SurveyAnalysisCTA = ({
   isStorageConfigured,
   enterpriseLicenseRequestFormUrl,
   aiUnavailableReason,
-}: SurveyAnalysisCTAProps) => {
+}: Readonly<SurveyAnalysisCTAProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();

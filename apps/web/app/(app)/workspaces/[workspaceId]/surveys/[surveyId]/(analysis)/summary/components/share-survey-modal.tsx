@@ -73,7 +73,7 @@ export const ShareSurveyModal = ({
   isStorageConfigured,
   workspaceCustomScripts,
   enterpriseLicenseRequestFormUrl,
-}: ShareSurveyModalProps) => {
+}: Readonly<ShareSurveyModalProps>) => {
   const [surveyUrl, setSurveyUrl] = useState<string>(getSurveyUrl(survey, publicDomain, "default"));
   const [showView, setShowView] = useState<ModalView>(modalView);
   const { email } = user;
