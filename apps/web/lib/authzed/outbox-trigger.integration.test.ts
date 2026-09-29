@@ -23,7 +23,7 @@ const readMigration = (name: string): string =>
 const migration = readMigration("20260818120000_add_authzed_projection_outbox");
 // Re-declares both trigger functions with the survey case (ENG-3282). Replaying the outbox migration
 // alone would roll them back to the pre-survey classifier, so the convergence test replays both.
-const surveyMigration = readMigration("20260928120002_eng_3282_survey_projection_trigger");
+const surveyMigration = readMigration("20260928120002_add_survey_projection_trigger");
 
 /**
  * The durable outbox against a real PostgreSQL (ENG-2408).

@@ -15,7 +15,7 @@ const BATCH_SIZE = 5000;
 export const backfillSurveyOwner: MigrationScript = {
   type: "data",
   id: "pqgmcbm8az1vb2c3zz5ojrmp",
-  name: "20260928120001_eng_3282_backfill_survey_owner",
+  name: "20260928120001_backfill_survey_owner",
   run: async ({ prisma }) => {
     const { rows } = await runUntilExhausted(
       () =>

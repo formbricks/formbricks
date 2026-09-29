@@ -7,7 +7,7 @@ const readMigration = (name: string): string =>
   readFileSync(new URL(`${name}/migration.sql`, MIGRATIONS_DIR), "utf8");
 
 const outboxMigration = readMigration("20260818120000_add_authzed_projection_outbox");
-const surveyMigration = readMigration("20260928120002_eng_3282_survey_projection_trigger");
+const surveyMigration = readMigration("20260928120002_add_survey_projection_trigger");
 
 /** The body of one `CREATE OR REPLACE FUNCTION` statement, up to its `LANGUAGE` clause. */
 const functionBody = (sql: string, name: string): string => {
@@ -48,13 +48,14 @@ describe("survey projection trigger migration (ENG-3282)", () => {
   // The trigger fires on every `ownerId` write. If it existed before the backfill ran, an upgrade
   // would enqueue one revocation per existing survey and arm the freshness guard deployment-wide.
   test("sorts after the owner backfill it must not observe", () => {
+    const ours = [
+      "20260928120000_add_survey_visibility_columns",
+      "20260928120001_backfill_survey_owner",
+      "20260928120002_add_survey_projection_trigger",
+    ];
     const names = readdirSync(MIGRATIONS_DIR)
-      .filter((name) => name.includes("eng_3282"))
+      .filter((name) => ours.includes(name))
       .sort();
-    expect(names).toEqual([
-      "20260928120000_eng_3282_survey_visibility_columns",
-      "20260928120001_eng_3282_backfill_survey_owner",
-      "20260928120002_eng_3282_survey_projection_trigger",
-    ]);
+    expect(names).toEqual(ours);
   });
 });
