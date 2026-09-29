@@ -4,7 +4,7 @@ import {
   SURVEY_SCHEDULING_TIME_ZONE_LABEL,
 } from "@/modules/survey/scheduling/lib/constants";
 import { test } from "./lib/fixtures";
-import { createSurveyFromScratch } from "./utils/helper";
+import { activateSurvey, createSurveyFromScratch } from "./utils/helper";
 
 const formatSelectedDate = (date: Date): string =>
   new Intl.DateTimeFormat("en-US", {
@@ -169,7 +169,7 @@ test.describe("Survey scheduling settings", () => {
     await pickDateForToggle(page, "Activate survey on date", 2);
     await pickDateForToggle(page, "Close survey on date", 3);
 
-    await page.getByRole("button", { name: "Schedule survey", exact: true }).click({ noWaitAfter: true });
+    await activateSurvey(page, { via: "schedule" });
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary/);
 
     await expect(page.getByText("Survey scheduled successfully")).toBeVisible();

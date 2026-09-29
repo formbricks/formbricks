@@ -1,7 +1,7 @@
 import { type Locator, type Page, expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
-import { createSurveyFromScratch, fillRichTextEditor } from "./utils/helper";
+import { activateSurvey, createSurveyFromScratch, fillRichTextEditor } from "./utils/helper";
 
 /**
  * Reserved fields in recall and logic (ENG-1840).
@@ -103,7 +103,7 @@ const publishAsLinkSurvey = async (page: Page): Promise<string> => {
 
   await Promise.all([
     page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/, { timeout: 120000 }),
-    page.getByRole("button", { name: "Activate", exact: true }).click(),
+    activateSurvey(page),
   ]);
 
   await page.getByLabel("Copy survey link to clipboard").click();

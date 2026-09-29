@@ -3,11 +3,10 @@ import { prisma } from "@formbricks/database";
 import { type UsersFixture, login } from "./fixtures/users";
 import { test } from "./lib/fixtures";
 
-// ENG-3395: restricted surveys, end to end. This spec needs the survey readiness marker, which is one
-// global row: set in the shared job it would make every survey restricted and open the Activate
-// dialog in every other spec. So it runs only in its own CI job (`e2e.yml`, `survey-visibility`),
-// against a database where `authzed:backfill --scope=survey --mark-ready` has run, and the main
-// Playwright project ignores it (`playwright.config.ts`).
+// ENG-3395: restricted surveys, end to end. Relies on the survey readiness marker, which the E2E job
+// sets before the suite runs (`e2e.yml`, `authzed:backfill --scope=survey --apply --mark-ready`) — the
+// state production runs in. Every other spec activates through `activateSurvey`, which answers the
+// same "Who can view this survey?" dialog with "Visible to {workspace}"; this one keeps it restricted.
 
 const WORKSPACE_NAME = "Visibility Journey";
 const VISIBLE_TO_WORKSPACE = `Visible to ${WORKSPACE_NAME}`;
