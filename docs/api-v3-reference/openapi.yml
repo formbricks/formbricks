@@ -29,6 +29,8 @@ info:
     A query parameter that an operation does not declare returns **400**, with the offending key reported in `invalid_params[].name` — including on operations that declare no query parameters at all. Unknown parameters are rejected rather than ignored on purpose: a silently-dropped filter returns *more* data than the caller believes they asked for, and a typo in a filter name is indistinguishable from no filter at all. The same applies to request bodies, where unsupported fields are rejected instead of stripped.
     Unrecognized **headers** are tolerated, as gateways and proxies legitimately add them; strictness is about parameters and body fields, not transport metadata.
     This is the rule for the surveys, responses, tags and workspace reference-list operations. The workflows family does not enforce it today, so treat parameter strictness there as unspecified rather than guaranteed.
+    **Request limits**
+    A request body may be at most **2 MB**; a larger one is refused with **413** before it is read. Inside a body, **no array may hold more than 1 000 items, and all arrays together may hold at most 50 000 elements**, at any depth — a body that exceeds either bound is refused with **400** and a single `invalid_params` entry naming the offending array, before any field is validated. Fields with a tighter bound document it as `maxItems` on the field (a survey's `blocks`, `endings`, `variables`, `languages`, `hiddenFields.fieldIds` and `distribution.triggers` since 0.2.0). A 400 or 422 lists at most **50** `invalid_params` entries; when there are more, the last entry says how many were left out. Since 0.2.0.
     **Filtering**
     Filters use explicit operator-style query parameters under the **`filter[...]` family**. The survey list supports `filter[name][contains]`, `filter[status][in]`, and `filter[type][in]`. The workflow list supports `filter[name][contains]` and `filter[status][in]`; the workflow run list supports `filter[status][in]` and `filter[isDryRun][eq]`. Resource-scoping identifiers (`workspaceId`, `workflowId`, `responseId`) stay plain query parameters. Multi-value filters use repeated keys or comma-separated values (e.g. `filter[status][in]=draft&filter[status][in]=inProgress` or `filter[status][in]=draft,inProgress`). Sorting remains a flat `sortBy` query parameter.
 
@@ -64,7 +66,7 @@ info:
 
     **Next steps (out of scope for this spec)**
     Optional ETag/304, field selection, translation-specific writes, and survey version history.
-  version: 0.1.0
+  version: 0.2.0
   x-implementation-notes:
     route: apps/web/app/api/v3/surveys/route.ts
     generate-route: apps/web/app/api/v3/surveys/generate/route.ts
@@ -5866,6 +5868,7 @@ components:
           type: boolean
         fieldIds:
           type: array
+          maxItems: 200
           items:
             type: string
             pattern: ^[a-zA-Z0-9_-]+$
@@ -6001,6 +6004,7 @@ components:
         triggers:
           type: array
           default: []
+          maxItems: 50
           items:
             $ref: '#/components/schemas/SurveyTrigger'
           description: |
@@ -6327,6 +6331,7 @@ components:
         languages:
           type: array
           default: []
+          maxItems: 50
           items:
             $ref: '#/components/schemas/CreateSurveyLanguage'
           description: |
@@ -6340,11 +6345,13 @@ components:
         blocks:
           type: array
           minItems: 1
+          maxItems: 1000
           items:
             $ref: '#/components/schemas/CreateSurveyBlock'
         endings:
           type: array
           default: []
+          maxItems: 100
           items:
             $ref: '#/components/schemas/SurveyEnding'
         hiddenFields:
@@ -6355,6 +6362,7 @@ components:
         variables:
           type: array
           default: []
+          maxItems: 100
           items:
             $ref: '#/components/schemas/CreateSurveyVariable'
         distribution:
@@ -6795,6 +6803,7 @@ components:
             - $ref: '#/components/schemas/SurveyMetadata'
         languages:
           type: array
+          maxItems: 50
           items:
             $ref: '#/components/schemas/PatchSurveyLanguage'
           description: |
@@ -6808,16 +6817,19 @@ components:
         blocks:
           type: array
           minItems: 1
+          maxItems: 1000
           items:
             $ref: '#/components/schemas/SurveyBlock'
         endings:
           type: array
+          maxItems: 100
           items:
             $ref: '#/components/schemas/SurveyEnding'
         hiddenFields:
           $ref: '#/components/schemas/SurveyHiddenFields'
         variables:
           type: array
+          maxItems: 100
           items:
             $ref: '#/components/schemas/SurveyVariable'
         distribution:
