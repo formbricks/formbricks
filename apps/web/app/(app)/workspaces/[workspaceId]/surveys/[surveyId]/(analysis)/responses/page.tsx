@@ -27,10 +27,10 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string; sur
   const params = await props.params;
   const t = await getTranslate();
 
-  const { session, organization, isReadOnly, workspace } = await getSurveyAuth(
-    params.workspaceId,
-    params.surveyId
-  );
+  const { session, organization, isReadOnly, isOwner, isManager, hasManageAccess, workspace } =
+    await getSurveyAuth(params.workspaceId, params.surveyId);
+  // The UI counterpart of `workspace.manage`, which survey head scripts require.
+  const canManage = isOwner || isManager || hasManageAccess;
 
   const [survey, user, tags, isContactsEnabled, responseCount] = await Promise.all([
     getSurvey(params.surveyId),
@@ -77,6 +77,7 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string; sur
         cta={
           <SurveyAnalysisCTA
             isReadOnly={isReadOnly}
+            canManage={canManage}
             user={user}
             publicDomain={publicDomain}
             responseCount={responseCount}
