@@ -289,11 +289,10 @@ export const AddChannelMappingModal = ({
                     selectedItem={selectedSurvey}
                     setSelectedItem={setSelectedSurvey}
                     disabled={surveys.length === 0}
-                    getItemDisabledHint={(survey: TSurvey) =>
-                      isRestrictedSurveyPick(surveyVisibilityEnabled, survey, attachedSurveyIds) ? (
-                        <RestrictedSurveyHint kind="restricted" />
-                      ) : null
+                    isItemDisabled={(survey: TSurvey) =>
+                      isRestrictedSurveyPick(surveyVisibilityEnabled, survey, attachedSurveyIds)
                     }
+                    disabledItemHint={<RestrictedSurveyHint kind="restricted" />}
                   />
                   <RestrictedSurveysNote
                     surveyVisibilityEnabled={surveyVisibilityEnabled}

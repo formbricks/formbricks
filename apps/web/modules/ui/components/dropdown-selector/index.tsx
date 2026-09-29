@@ -17,8 +17,9 @@ interface DropdownSelectorProps {
   disabled: boolean;
   placeholder?: string;
   refetch?: () => void;
-  /** A reason an item cannot be picked, shown beside it; the item is disabled whenever this returns one. */
-  getItemDisabledHint?: (item: any) => ReactNode;
+  /** Items this returns true for are shown disabled, with `disabledItemHint` beside them. */
+  isItemDisabled?: (item: any) => boolean;
+  disabledItemHint?: ReactNode;
 }
 
 export const DropdownSelector = ({
@@ -28,7 +29,8 @@ export const DropdownSelector = ({
   setSelectedItem,
   disabled,
   placeholder,
-  getItemDisabledHint,
+  isItemDisabled,
+  disabledItemHint,
 }: Readonly<DropdownSelectorProps>) => {
   return (
     <div className="col-span-1">
@@ -59,15 +61,15 @@ export const DropdownSelector = ({
                 {items
                   .sort((a, b) => a.name?.localeCompare(b.name))
                   .map((item) => {
-                    const disabledHint = getItemDisabledHint?.(item);
+                    const isDisabled = isItemDisabled?.(item) ?? false;
                     return (
                       <DropdownMenuItem
                         key={item.id}
-                        disabled={!!disabledHint}
+                        disabled={isDisabled}
                         className="flex cursor-pointer items-center p-3 hover:bg-slate-100 hover:outline-hidden data-disabled:cursor-default data-disabled:opacity-50"
                         onSelect={() => setSelectedItem(item)}>
                         {item.name}
-                        {disabledHint}
+                        {isDisabled && disabledItemHint}
                       </DropdownMenuItem>
                     );
                   })}
