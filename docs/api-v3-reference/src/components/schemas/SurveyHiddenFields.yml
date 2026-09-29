@@ -30,6 +30,7 @@ properties:
     type: boolean
   fieldIds:
     type: array
+    maxItems: 200
     items:
       type: string
       pattern: ^[a-zA-Z0-9_-]+$

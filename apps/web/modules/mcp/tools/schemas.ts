@@ -13,7 +13,25 @@ import {
   ZV3FeedbackRecordSimilarityFilters,
   ZV3FeedbackRecordUpdateBodyFields,
 } from "@/app/api/v3/feedbackRecords/lib/schemas";
-import { ZV3EditSurveyBlocksBody, ZV3SetSurveyBlockOrderBody } from "@/app/api/v3/surveys/schemas";
+import { lengthBoundedArray } from "@/app/api/v3/lib/bounded-array";
+import {
+  V3_SURVEY_MAX_BLOCKS,
+  V3_SURVEY_MAX_ENDINGS,
+  V3_SURVEY_MAX_LANGUAGES,
+  V3_SURVEY_MAX_VARIABLES,
+  ZV3EditSurveyBlocksBody,
+  ZV3SetSurveyBlockOrderBody,
+} from "@/app/api/v3/surveys/schemas";
+
+/**
+ * Every array argument is declared through `lengthBoundedArray`, never a bare `z.array().max()`: the
+ * SDK validates arguments with Zod's `~standard.validate`, which parses every element before an
+ * array-level `.max()` runs and collects one issue per element — ahead of the scope gate, so a
+ * read-only token can trigger it (ENG-3384). The route-level array budget in `app/api/mcp/route.ts` is
+ * the backstop; these bounds are the ones the tool schemas advertise to the model as `maxItems`.
+ */
+const MCP_MAX_FILTER_VALUES = 10;
+const MCP_MAX_LANGUAGE_CODES = 20;
 
 /**
  * Every schema here is `.strict()`, so an argument a tool does not declare is a loud error instead of a
@@ -90,16 +108,19 @@ export const ZMcpListSurveysInput = z
           .optional(),
         status: z
           .strictObject({
-            in: z
-              .array(ZSurveyStatus)
-              .optional()
-              .describe("Survey statuses to include, for example draft or inProgress."),
+            in: lengthBoundedArray(ZSurveyStatus, {
+              max: MCP_MAX_FILTER_VALUES,
+              description: "Survey statuses to include, for example draft or inProgress.",
+            }).optional(),
           })
           .describe("Filter by survey status.")
           .optional(),
         type: z
           .strictObject({
-            in: z.array(ZSurveyType).optional().describe("Survey types to include, for example link."),
+            in: lengthBoundedArray(ZSurveyType, {
+              max: MCP_MAX_FILTER_VALUES,
+              description: "Survey types to include, for example link.",
+            }).optional(),
           })
           .describe("Filter by survey type.")
           .optional(),
@@ -116,10 +137,10 @@ export const ZMcpListSurveysInput = z
 export const ZMcpGetSurveyInput = z
   .object({
     surveyId: z.cuid2().describe("Survey ID to fetch."),
-    lang: z
-      .array(z.string().trim().min(1))
-      .optional()
-      .describe("Optional language codes or configured aliases used to filter translatable survey fields."),
+    lang: lengthBoundedArray(z.string().trim().min(1), {
+      max: MCP_MAX_LANGUAGE_CODES,
+      description: "Optional language codes or configured aliases used to filter translatable survey fields.",
+    }).optional(),
   })
   .strict();
 
@@ -197,21 +218,25 @@ export const ZMcpCreateSurveyInput = z
       .optional()
       .describe("Default language code or configured language alias. Defaults to en-US."),
     metadata: ZMcpObjectInput.optional().describe("Survey metadata using the v3 survey document contract."),
-    languages: z
-      .array(ZMcpSurveyLanguageInput)
-      .optional()
-      .describe("Configured survey languages using the v3 survey document contract."),
+    languages: lengthBoundedArray(ZMcpSurveyLanguageInput, {
+      max: V3_SURVEY_MAX_LANGUAGES,
+      description: "Configured survey languages using the v3 survey document contract.",
+    }).optional(),
     welcomeCard: ZMcpObjectInput.optional().describe("Welcome card using the v3 survey document contract."),
-    blocks: z.array(ZMcpObjectInput).min(1).describe(SURVEY_BLOCKS_DESCRIPTION),
-    endings: z
-      .array(ZMcpObjectInput)
-      .optional()
-      .describe("Survey endings using the v3 survey document contract."),
+    blocks: lengthBoundedArray(ZMcpObjectInput, {
+      min: 1,
+      max: V3_SURVEY_MAX_BLOCKS,
+      description: SURVEY_BLOCKS_DESCRIPTION,
+    }),
+    endings: lengthBoundedArray(ZMcpObjectInput, {
+      max: V3_SURVEY_MAX_ENDINGS,
+      description: "Survey endings using the v3 survey document contract.",
+    }).optional(),
     hiddenFields: ZMcpObjectInput.optional().describe("Hidden fields using the v3 survey document contract."),
-    variables: z
-      .array(ZMcpObjectInput)
-      .optional()
-      .describe("Survey variables using the v3 survey document contract."),
+    variables: lengthBoundedArray(ZMcpObjectInput, {
+      max: V3_SURVEY_MAX_VARIABLES,
+      description: "Survey variables using the v3 survey document contract.",
+    }).optional(),
   })
   .strict();
 
@@ -327,16 +352,14 @@ export const ZMcpCreateFeedbackRecordsInput = z
   .object({
     workspaceId: ZId.describe("Workspace ID to create the feedback records in."),
     datasetId: datasetIdField,
-    records: z
-      // The strict variant: an unknown key *inside a record* must be rejected, not dropped. Without it
-      // the outer `.strict()` below covers only the top level, so a misspelled `user_id` in a batch
-      // import vanished silently — ENG-2256 in the one place it does the most damage.
-      .array(ZV3FeedbackRecordCreateBodyStrict)
-      .min(1)
-      .max(MAX_FEEDBACK_RECORDS_PER_BATCH)
-      .describe(
-        `Feedback records to create, 1–${MAX_FEEDBACK_RECORDS_PER_BATCH} per call. Every record is validated before any is written, so an invalid record fails the whole call rather than storing part of the batch.`
-      ),
+    // The strict variant: an unknown key *inside a record* must be rejected, not dropped. Without it
+    // the outer `.strict()` below covers only the top level, so a misspelled `user_id` in a batch
+    // import vanished silently — ENG-2256 in the one place it does the most damage.
+    records: lengthBoundedArray(ZV3FeedbackRecordCreateBodyStrict, {
+      min: 1,
+      max: MAX_FEEDBACK_RECORDS_PER_BATCH,
+      description: `Feedback records to create, 1–${MAX_FEEDBACK_RECORDS_PER_BATCH} per call. Every record is validated before any is written, so an invalid record fails the whole call rather than storing part of the batch.`,
+    }),
   })
   .strict();
 

@@ -40,7 +40,12 @@ import {
   readStoredWidgetView,
   writeStoredWidgetView,
 } from "@/modules/ee/analysis/dashboards/lib/widget-view";
-import type { TChartDataRow, TDashboardDetail, TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
+import type {
+  TChartDataRow,
+  TChartLabelMaps,
+  TDashboardDetail,
+  TDashboardWidget,
+} from "@/modules/ee/analysis/types/analysis";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -61,8 +66,7 @@ interface DashboardDetailClientProps {
   widgetDataPromises: Map<
     string,
     Promise<
-      | { data: TChartDataRow[]; query: TChartQuery; optionLabels?: Record<string, string> }
-      | { error: TDashboardWidgetError }
+      ({ data: TChartDataRow[]; query: TChartQuery } & TChartLabelMaps) | { error: TDashboardWidgetError }
     >
   >;
   dateFilter: TDashboardDateFilter | null;
@@ -138,8 +142,7 @@ const MemoizedWidgetContent = memo(function WidgetContent({
 }: Readonly<{
   widget: TDashboardWidget;
   dataPromise?: Promise<
-    | { data: TChartDataRow[]; query: TChartQuery; optionLabels?: Record<string, string> }
-    | { error: TDashboardWidgetError }
+    ({ data: TChartDataRow[]; query: TChartQuery } & TChartLabelMaps) | { error: TDashboardWidgetError }
   >;
   view: TWidgetView;
 }>) {
@@ -172,8 +175,7 @@ const MemoizedWidgetItem = memo(function WidgetItem({
   widget: TDashboardWidget;
   isEditing: boolean;
   dataPromise?: Promise<
-    | { data: TChartDataRow[]; query: TChartQuery; optionLabels?: Record<string, string> }
-    | { error: TDashboardWidgetError }
+    ({ data: TChartDataRow[]; query: TChartQuery } & TChartLabelMaps) | { error: TDashboardWidgetError }
   >;
   onEdit?: () => void;
   onDuplicate?: () => void;

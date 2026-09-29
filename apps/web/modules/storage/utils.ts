@@ -293,6 +293,32 @@ export const parseStorageFileUrl = (fileUrl: string): TParsedStorageFileUrl | nu
   return { storageId, accessType, fileName };
 };
 
+/**
+ * The survey a storage URL's object key is filed under: the `{surveyId}` of a current upload
+ * (`{id}/private/surveys/{surveyId}/…`), or `null` for a key that names no survey — the flat
+ * pre-#8044 keys, and anything that does not parse.
+ *
+ * Reads the key the way the delete path builds it. `deleteResponseFileUrls` decodes the file name
+ * before deleting, so the check decodes too: on the raw URL, `%73urveys/{other}/…` or
+ * `surveys%2F{other}%2F…` would read as a flat key and still delete `surveys/{other}/…`. A name that
+ * does not decode returns `null`, because the delete path fails on it the same way and deletes
+ * nothing.
+ */
+export const getStorageUrlSurveyId = (fileUrl: string): string | null => {
+  const parsed = parseStorageFileUrl(fileUrl);
+  if (!parsed) return null;
+
+  let fileName: string;
+  try {
+    fileName = decodeURIComponent(parsed.fileName);
+  } catch {
+    return null;
+  }
+
+  const [scope, surveyId] = fileName.split("/");
+  return scope === "surveys" && surveyId ? surveyId : null;
+};
+
 const isScopedPrivateUploadUrl = ({
   fileUrl,
   workspaceId,

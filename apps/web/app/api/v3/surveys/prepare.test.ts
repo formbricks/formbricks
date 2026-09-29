@@ -326,6 +326,31 @@ describe("v3 survey preparation", () => {
     }
   });
 
+  test("parses a stored survey above a request array cap, and still refuses the cap on the request (ENG-3384)", () => {
+    // The caps bound request input. A survey the editor built with more items than a cap has to stay
+    // editable through v3 and MCP: on the first cut of the fix, a name-only patch of a 101-variable
+    // survey returned 422 `stored_survey_invalid` (review on #9423).
+    const variables = Array.from({ length: 101 }, (_unused, index) => ({
+      id: `clvar${String(index).padStart(21, "0")}`,
+      name: `score_${index}`,
+      type: "number",
+      value: 0,
+    }));
+    const oversizedStoredSurvey = { ...survey, variables } as unknown as TSurvey;
+
+    const renamed = prepareV3SurveyPatchInput(oversizedStoredSurvey, { name: "Renamed" });
+    expect(renamed.ok).toBe(true);
+
+    const resent = prepareV3SurveyPatchInput(oversizedStoredSurvey, { variables });
+    expect(resent.ok).toBe(false);
+    if (!resent.ok) {
+      expect(resent.origin).toBe("request");
+      expect(resent.validation.invalidParams).toEqual([
+        expect.objectContaining({ name: "variables", reason: "Too big: expected array to have <=100 items" }),
+      ]);
+    }
+  });
+
   test("applies a patch over the current document before validating references", () => {
     const preparation = prepareV3SurveyPatchInput(survey, {
       blocks: [

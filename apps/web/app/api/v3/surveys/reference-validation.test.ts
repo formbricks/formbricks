@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  V3SurveyReferenceValidationError,
   getV3SurveyIntroducedPrecedenceInvalidParams,
   getV3SurveyPrecedenceInvalidParams,
   validateV3SurveyReferences,
@@ -374,6 +375,78 @@ describe("validateV3SurveyReferences", () => {
           }),
         ])
       );
+    }
+  });
+
+  test("reports a repeated dangling recall once per field, however often the token repeats (ENG-3384)", () => {
+    // A single label can repeat a `#recall:` token as often as the 2 MB body allows; each repeat was its
+    // own entry, so one field could fill the whole response.
+    const survey = {
+      ...validSurvey,
+      blocks: [
+        {
+          ...validSurvey.blocks[0],
+          elements: [
+            {
+              ...validSurvey.blocks[0].elements[0],
+              headline: { default: "#recall:missing_id/fallback:x# ".repeat(10_000) },
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = validateV3SurveyReferences({
+      blocks: survey.blocks,
+      endings: survey.endings,
+      hiddenFields: survey.hiddenFields,
+      variables: survey.variables,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.invalidParams).toEqual([
+        expect.objectContaining({
+          name: "blocks.0.elements.0.headline.default",
+          missingId: "missing_id",
+          referenceType: "recall",
+        }),
+      ]);
+    }
+  });
+
+  test("returns every reference problem; the response-boundary error caps them at 50 (ENG-3384)", () => {
+    const elements = Array.from({ length: 60 }, (_unused, index) => ({
+      ...validSurvey.blocks[0].elements[0],
+      id: `question_${index}`,
+      headline: { default: `#recall:missing_${index}/fallback:x#` },
+    }));
+    // The fixture block's logic points at the element replaced here, so it goes too: the sixty recalls
+    // have to be the only problems for the counts below to mean anything.
+    const survey = {
+      ...validSurvey,
+      blocks: [{ ...validSurvey.blocks[0], elements, logic: undefined, logicFallback: undefined }],
+    };
+
+    const result = validateV3SurveyReferences({
+      blocks: survey.blocks,
+      endings: survey.endings,
+      hiddenFields: survey.hiddenFields,
+      variables: survey.variables,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      // Uncapped here on purpose: `deriveFailureOrigin` diffs this list against the stored survey's, and
+      // a capped pair would blame the stored survey for a new problem past the cap.
+      expect(result.invalidParams).toHaveLength(60);
+
+      const thrown = new V3SurveyReferenceValidationError(result.invalidParams);
+      expect(thrown.invalidParams).toHaveLength(50);
+      expect(thrown.invalidParams.at(-1)).toEqual({
+        name: "survey",
+        reason: "11 further problems with this survey were not reported; fix the ones above and retry",
+      });
     }
   });
 

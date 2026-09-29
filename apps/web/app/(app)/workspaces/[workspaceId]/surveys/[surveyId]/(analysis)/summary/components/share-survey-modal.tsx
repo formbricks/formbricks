@@ -52,6 +52,7 @@ interface ShareSurveyModalProps {
   isContactsEnabled: boolean;
   isFormbricksCloud: boolean;
   isReadOnly: boolean;
+  canManage: boolean;
   isStorageConfigured: boolean;
   workspaceCustomScripts?: string | null;
   enterpriseLicenseRequestFormUrl: string;
@@ -68,10 +69,11 @@ export const ShareSurveyModal = ({
   isContactsEnabled,
   isFormbricksCloud,
   isReadOnly,
+  canManage,
   isStorageConfigured,
   workspaceCustomScripts,
   enterpriseLicenseRequestFormUrl,
-}: ShareSurveyModalProps) => {
+}: Readonly<ShareSurveyModalProps>) => {
   const [surveyUrl, setSurveyUrl] = useState<string>(getSurveyUrl(survey, publicDomain, "default"));
   const [showView, setShowView] = useState<ModalView>(modalView);
   const { email } = user;
@@ -194,7 +196,8 @@ export const ShareSurveyModal = ({
         title: t("workspace.surveys.share.custom_html.nav_title"),
         description: t("workspace.surveys.share.custom_html.description"),
         componentType: CustomHtmlTab,
-        componentProps: { workspaceCustomScripts, isReadOnly },
+        // Survey head scripts take Manage access, not the Read & write that `isReadOnly` reflects.
+        componentProps: { workspaceCustomScripts, isReadOnly: !canManage },
       },
     ];
 
@@ -211,6 +214,7 @@ export const ShareSurveyModal = ({
     user.locale,
     surveyUrl,
     isReadOnly,
+    canManage,
     segments,
     isContactsEnabled,
     isFormbricksCloud,

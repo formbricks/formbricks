@@ -24,6 +24,7 @@ import { validateInputs } from "@/lib/utils/validate";
 import { getTranslate } from "@/lingodotdev/server";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
+import { assertCanWriteCustomHeadScripts } from "@/modules/survey/lib/custom-head-scripts-permission";
 import { buildWhereClause } from "@/modules/survey/lib/utils";
 import { doesWorkspaceExist, getWorkspaceWithLanguages } from "@/modules/survey/list/lib/workspace";
 import type { TWorkspaceWithLanguages } from "@/modules/survey/list/types/surveys";
@@ -144,6 +145,15 @@ export const copySurveyToOtherWorkspace = async (
       ]);
 
       if (!targetWorkspace) throw new ResourceNotFoundError("Workspace", targetWorkspaceId);
+
+      // The copy runs these scripts on the target workspace's link surveys, where no one with Manage
+      // access has approved them, so carrying them over takes Manage there — as writing them would.
+      await assertCanWriteCustomHeadScripts(
+        { type: "user", id: userId },
+        targetWorkspace.id,
+        { customHeadScripts: existingSurvey.customHeadScripts },
+        null
+      );
     }
 
     // Fetch existing action classes in target workspace for name conflict checks

@@ -135,6 +135,9 @@ function parseStoredV3SurveyDocument(
     allowInternalDefaultTranslationKey: true,
     allowedLanguageCodes,
     fallbackDefaultLanguage: defaultLanguage,
+    // The array caps are request bounds. A survey the editor built above one must stay editable
+    // through v3 and MCP, so the stored document is parsed without them.
+    boundArrays: false,
   }).safeParse({
     name: survey.name,
     status: survey.status,

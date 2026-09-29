@@ -1,6 +1,7 @@
 import type { TSurveyBlocks } from "@formbricks/types/surveys/blocks";
 import type { TConditionGroup, TDynamicLogicFieldValue } from "@formbricks/types/surveys/logic";
 import type { TSurveyEndings, TSurveyHiddenFields, TSurveyVariables } from "@formbricks/types/surveys/types";
+import { capInvalidParams } from "@/app/api/v3/lib/invalid-params";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 
 type TReferenceValidationInput = {
@@ -25,13 +26,19 @@ type TReferenceLookup = {
 };
 type TInvalidParamReferenceType = Exclude<InvalidParam["referenceType"], undefined>;
 
+/**
+ * The response boundary for survey validation problems: every 422 the surveys API sends is built from
+ * an instance of this, so the `invalid_params` cap lives here (ENG-3384). The validators themselves
+ * return full lists — `deriveFailureOrigin` diffs the merged document's against the stored survey's,
+ * and capping before that comparison would blame the stored survey for a new problem past the cap.
+ */
 export class V3SurveyReferenceValidationError extends Error {
   invalidParams: InvalidParam[];
 
   constructor(invalidParams: InvalidParam[]) {
     super("Survey contains invalid references");
     this.name = "V3SurveyReferenceValidationError";
-    this.invalidParams = invalidParams;
+    this.invalidParams = capInvalidParams(invalidParams, "survey", "survey");
   }
 }
 
@@ -130,10 +137,18 @@ function addRecallReferenceIssues(
   issues: InvalidParam[]
 ): void {
   if (typeof value === "string") {
-    const recallPattern = /#recall:([A-Za-z0-9_-]+)/g;
+    // One report per distinct id per field: a single label can repeat a `#recall:` token as often as
+    // the 2 MB body allows, and every repeat was its own entry (ENG-3384). The list is returned in
+    // full — `deriveFailureOrigin` compares it with the stored survey's — and capped at the response.
+    const seen = new Set<string>();
 
-    for (const match of value.matchAll(recallPattern)) {
+    for (const match of value.matchAll(/#recall:([A-Za-z0-9_-]+)/g)) {
       const recallId = match[1];
+      if (seen.has(recallId)) {
+        continue;
+      }
+      seen.add(recallId);
+
       const isKnownReference =
         references.elementIds.has(recallId) ||
         references.variableIds.has(recallId) ||
@@ -327,35 +342,38 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
   );
 
   input.blocks.forEach((block, blockIndex) => {
-    if (block.logicFallback && !block.logic?.length) {
+    // A local so the narrowing survives into the deferred builders below.
+    const logicFallback = block.logicFallback;
+
+    if (logicFallback && !block.logic?.length) {
       issues.push({
         name: `blocks.${blockIndex}.logicFallback`,
         reason:
           "logicFallback requires at least one logic rule on the same block; omit logicFallback for normal sequential flow or add blocks[].logic",
         code: "invalid_reference",
-        identifier: block.logicFallback,
-        referenceType: navigationTargetReferenceTypes.get(block.logicFallback) ?? "block",
+        identifier: logicFallback,
+        referenceType: navigationTargetReferenceTypes.get(logicFallback) ?? "block",
       });
     }
 
-    if (block.logicFallback && block.logicFallback === block.id) {
+    if (logicFallback && logicFallback === block.id) {
       issues.push({
         name: `blocks.${blockIndex}.logicFallback`,
         reason: "logicFallback cannot target the same block",
         code: "invalid_reference",
-        identifier: block.logicFallback,
+        identifier: logicFallback,
         referenceType: "block",
       });
     }
 
-    if (block.logicFallback && !navigationTargetIds.has(block.logicFallback)) {
+    if (logicFallback && !navigationTargetIds.has(logicFallback)) {
       issues.push({
         name: `blocks.${blockIndex}.logicFallback`,
-        reason: `Logic fallback target '${block.logicFallback}' is not defined in blocks or endings`,
+        reason: `Logic fallback target '${logicFallback}' is not defined in blocks or endings`,
         code: "dangling_reference",
-        identifier: block.logicFallback,
+        identifier: logicFallback,
         referenceType: "block",
-        missingId: block.logicFallback,
+        missingId: logicFallback,
       });
     }
 

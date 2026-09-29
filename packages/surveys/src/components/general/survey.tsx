@@ -34,7 +34,10 @@ import { ProgressBar } from "@/components/general/progress-bar";
 import { RecaptchaBranding } from "@/components/general/recaptcha-branding";
 import { ResponseErrorComponent } from "@/components/general/response-error-component";
 import { Subheader } from "@/components/general/subheader";
-import { SurveyCloseButton } from "@/components/general/survey-close-button";
+import {
+  SURVEY_CLOSE_BUTTON_ROW_CLASS_NAME,
+  SurveyCloseButton,
+} from "@/components/general/survey-close-button";
 import { WelcomeCard } from "@/components/general/welcome-card";
 import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
 import { CardlessSurveyLayout } from "@/components/wrappers/cardless-survey-layout";
@@ -1333,8 +1336,12 @@ export function Survey({
           return (
             <>
               {localSurvey.type !== "link" ? (
-                <div className="bg-survey-bg relative h-8 w-full">
-                  <div className="flex w-full items-center justify-end">
+                <div className="bg-survey-bg relative w-full">
+                  <div
+                    className={cn(
+                      "flex w-full items-center justify-end",
+                      SURVEY_CLOSE_BUTTON_ROW_CLASS_NAME
+                    )}>
                     <SurveyCloseButton
                       onClose={onClose}
                       hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
@@ -1358,8 +1365,12 @@ export function Survey({
           return (
             <>
               {localSurvey.type !== "link" ? (
-                <div className="bg-survey-bg relative h-8 w-full">
-                  <div className="flex w-full items-center justify-end">
+                <div className="bg-survey-bg relative w-full">
+                  <div
+                    className={cn(
+                      "flex w-full items-center justify-end",
+                      SURVEY_CLOSE_BUTTON_ROW_CLASS_NAME
+                    )}>
                     <SurveyCloseButton
                       onClose={onClose}
                       hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
@@ -1485,12 +1496,12 @@ export function Survey({
                 ) : null}
 
                 {isCloseButtonVisible || isLanguageSwitchVisible ? (
-                  <div
-                    className={cn(
-                      "relative w-full",
-                      isCloseButtonVisible || isLanguageSwitchVisible ? "h-8" : "h-5"
-                    )}>
-                    <div className={cn("flex w-full items-center justify-end")}>
+                  <div className="relative w-full">
+                    <div
+                      className={cn(
+                        "flex w-full items-center justify-end",
+                        isCloseButtonVisible ? SURVEY_CLOSE_BUTTON_ROW_CLASS_NAME : "h-8"
+                      )}>
                       {isLanguageSwitchVisible && (
                         <LanguageSwitch
                           survey={localSurvey}
