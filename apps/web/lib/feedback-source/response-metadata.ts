@@ -339,12 +339,10 @@ export const buildEmbeddedDataMetadata = (
   let firstError: unknown;
 
   for (const entry of fields) {
-    // The whole body, not just the read: `name` is `String NOT NULL` in the table, but a survey on
-    // the legacy columns has its pairs synthesized by `deriveLegacyEmbeddedData` from
-    // `hiddenFields.fieldIds` and `variables[].name` — `Json` columns the pipeline's select reads
-    // without a Zod parse. A stored `fieldIds: [42]` makes `.replaceAll` throw, and outside a guard
-    // that throw leaves this function, `buildBaseFields` and the transform, so the response
-    // publishes no records to any feedback source at all.
+    // The whole body, not just the read: the pipeline's select reads the rows without a Zod parse,
+    // so a `name` that is not a string makes `.replaceAll` throw, and outside a guard that throw
+    // leaves this function, `buildBaseFields` and the transform, so the response publishes no
+    // records to any feedback source at all.
     try {
       const { field, link } = entry;
 

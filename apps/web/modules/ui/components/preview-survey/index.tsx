@@ -6,7 +6,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
-import { getDeclaredEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurvey, TSurveyLanguage, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -57,38 +56,11 @@ export const PreviewSurvey = ({
   isSpamProtectionAllowed,
   publicDomain,
 }: PreviewSurveyProps) => {
-  /**
-   * ENG-2628: the editor's working copy is rows-native, so a survey that comes from the editor
-   * already carries the definitions its cards declare and this passes them straight through.
-   *
-   * The derive stays as the fallback for the other caller, the templates gallery, which renders
-   * `getMinimalSurvey()` merged with a preset. That survey exists only in memory and has never been
-   * through a write path, so nothing has ever reconciled rows for it — without this it would preview
-   * with no recall and no logic operands.
-   *
-   * **Nullish, not empty** — deliberately unlike the read seam (`lib/embedded-data/survey-fields.ts`),
-   * which treats zero rows as "not reconciled yet". Here an empty list is an answer: an author who
-   * deletes every field in the editor leaves `embeddedFields: []` beside mount-time legacy columns
-   * that still name them, and falling back on emptiness would preview the fields they just removed.
-   * A survey that has never been written omits the key entirely, which is what selects the derive.
-   */
-  const previewSurvey = useMemo(
-    () => ({
-      ...survey,
-      embeddedFields:
-        survey.embeddedFields ??
-        getDeclaredEmbeddedFields({
-          variables: survey.variables,
-          hiddenFields: survey.hiddenFields,
-        }),
-    }),
-    [survey]
-  );
-  const jsSurvey = useMemo(() => toJsWorkspaceStateSurvey(previewSurvey), [previewSurvey]);
-  const jsLinkSurvey = useMemo(
-    () => toJsWorkspaceStateSurvey({ ...previewSurvey, type: "link" }),
-    [previewSurvey]
-  );
+  // Both callers hand over a survey that already carries its `embeddedFields`: the editor's working
+  // copy is rows-native (ENG-2628), and the templates gallery builds its never-written survey through
+  // `getTemplatePreviewSurvey`, which adapts the preset's legacy keys at that boundary (ENG-2404).
+  const jsSurvey = useMemo(() => toJsWorkspaceStateSurvey(survey), [survey]);
+  const jsLinkSurvey = useMemo(() => toJsWorkspaceStateSurvey({ ...survey, type: "link" }), [survey]);
 
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);

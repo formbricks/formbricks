@@ -949,14 +949,15 @@ export const ZSurveyBase = z.object({
   /**
    * The survey's Embedded Data definitions, joined from `EmbeddedData` / `SurveyEmbeddedData` and
    * inlined when the survey is loaded (ENG-1837). This is the **read** source of truth for every
-   * reader — reach it through `getSurveyEmbeddedFields`, never directly, so surveys read through a
-   * select that omits the join still fall back to the legacy columns below.
+   * reader — reach it through `getSurveyEmbeddedFields`, never directly. `variables` / `hiddenFields`
+   * above and below are a read-only projection derived from it at load (ENG-2404), kept for the
+   * payloads deployed SDK bundles and API consumers still read.
    *
    * Since ENG-3228 it is also **accepted input** on `updateSurvey` and `createSurvey`: one shape for
    * read and write, so the editor sends back the pairs it was loaded with, carrying the `dataType`,
-   * `defaultValue`, `locked` and shared-library link the legacy columns have no word for. Present in
+   * `defaultValue`, `locked` and shared-library link the legacy shape has no word for. Present in
    * a payload, it is the complete desired set for both sources and `variables` / `hiddenFields` are
-   * re-derived from it server-side; absent, the legacy columns run the write exactly as before.
+   * ignored; absent, those two legacy keys run the write exactly as before.
    *
    * Still optional — every survey literal, fixture and create payload in the codebase predates it —
    * and still never spread into Prisma: `Survey` owns relations named `embeddedData` /
@@ -1026,9 +1027,9 @@ export const ZSurveyBase = z.object({
  * The survey this refinement resolves logic operands and follow-up recipients against.
  *
  * Identical to the input except for `variables` / `hiddenFields`, which are re-derived when the
- * payload declares its Embedded Data as rows — the same derivation `updateSurveyInternal` runs
- * before it writes (`toLegacyEmbeddedFields`), so what this validates against is what the survey
- * will hold once the write lands rather than what the columns happen to say on the way in.
+ * payload declares its Embedded Data as rows — the same derivation the read seam runs over the
+ * stored rows (`toLegacyEmbeddedFields`), so what this validates against is what the survey will
+ * read back as once the write lands rather than what the legacy keys happen to say on the way in.
  *
  * That distinction only exists because of the editor (ENG-2628): its working copy is rows-native,
  * so the two legacy keys it forwards are whatever it was loaded with at mount, and a variable or
@@ -1042,10 +1043,7 @@ export const ZSurveyBase = z.object({
 const withDerivedLegacyColumns = <T extends z.infer<typeof ZSurveyBase>>(survey: T): T => {
   if (survey.embeddedFields === undefined) return survey;
 
-  const derived = toLegacyEmbeddedFields(
-    linkedToDesiredEmbeddedFields(survey.embeddedFields),
-    survey.hiddenFields
-  );
+  const derived = toLegacyEmbeddedFields(linkedToDesiredEmbeddedFields(survey.embeddedFields));
   return { ...survey, variables: derived.variables, hiddenFields: derived.hiddenFields };
 };
 
@@ -1055,8 +1053,8 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
 
   // `ZSurveyBase` already ran this over the *incoming* `variables`, which the derivation above has
   // just replaced — so on a rows-native payload nothing has checked what the survey will actually
-  // hold. Two computed fields can derive one legacy name (a local `score` alongside a library field
-  // keyed `score`), and that survey would parse here and then fail to load again. `updateSurvey`
+  // read back as. Two computed fields can derive one legacy name (a local `score` alongside a library
+  // field keyed `score`), and that survey would parse here and then fail its next save. `updateSurvey`
   // refuses it before it writes; running the same schema here is what stops the editor's pre-flight
   // and the server action's input schema disagreeing with the write path about the same payload.
   if (survey.embeddedFields !== undefined) {

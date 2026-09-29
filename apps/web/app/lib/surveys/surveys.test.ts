@@ -3,7 +3,8 @@ import { cleanup } from "@testing-library/react";
 import { TFunction } from "i18next";
 import { afterEach, describe, expect, test } from "vitest";
 import { normalizeIngestedValue } from "@formbricks/types/embedded-data-ingest";
-import { coerceToEmbeddedDataType, deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
+import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
+import { coerceToEmbeddedDataType } from "@formbricks/types/embedded-data-resolver";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -24,7 +25,7 @@ const t = ((key: string) => key) as TFunction;
 
 /** A survey as readers receive it: EmbeddedData rows inlined from the legacy columns (ENG-2412). */
 const asRead = (survey: TSurvey): TSurvey =>
-  ({ ...survey, embeddedFields: deriveLegacyEmbeddedData(survey) }) as TSurvey;
+  ({ ...survey, embeddedFields: embeddedFieldsFromLegacyInput(survey) }) as TSurvey;
 
 const genOptions = (
   survey: TSurvey,

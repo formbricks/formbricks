@@ -48,8 +48,8 @@ const BLOCKS = [
 
 const STORAGE_KEY = "flag";
 
-/** A survey declaring one ingested field of `dataType`. Rows written directly: the legacy columns
- * the reconcile derives from carry no dataType, so a typed field has no other way in. */
+/** A survey declaring one ingested field of `dataType`. Rows written directly: the legacy shape
+ * carries no dataType, so a typed field has no way in through a legacy write. */
 const seedSurvey = async (dataType: "boolean" | "date"): Promise<TSurvey> => {
   const organization = await prisma.organization.create({ data: { name: "Filter Org" } });
   const workspace = await prisma.workspace.create({
@@ -62,7 +62,6 @@ const seedSurvey = async (dataType: "boolean" | "date"): Promise<TSurvey> => {
       status: "inProgress",
       workspaceId: workspace.id,
       blocks: BLOCKS,
-      hiddenFields: { enabled: true, fieldIds: [STORAGE_KEY] },
     },
     select: { id: true },
   });

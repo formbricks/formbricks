@@ -19,7 +19,7 @@ export interface TDeclaredFieldSource {
    * them, both sources, so this takes precedence over the two legacy keys below and they are not
    * read at all — the same precedence `resolveDesiredEmbeddedFields` applies in the reconcile. A
    * survey loaded through a select that carries the join always has it, which is what makes the
-   * grandfathering set the rows rather than the columns.
+   * grandfathering set the rows rather than the legacy keys.
    */
   embeddedFields?: TLinkedEmbeddedField[] | null;
   hiddenFields?: Pick<TSurveyHiddenFields, "fieldIds"> | null;
@@ -40,10 +40,10 @@ const isDeclared = <T>(carrier: T | null | undefined): carrier is T =>
 /**
  * The name one Embedded Data entry occupies in the survey's recall and logic namespace.
  *
- * Not the same column for both sources, because the legacy columns are not: a computed field is
+ * Not the same attribute for both sources, because the legacy shape is not: a computed field is
  * addressed by its variable *name*, an ingested one by the *storage key* its value arrives under.
  * A shared computed field answers to its library key rather than its display label, for the reason
- * `toLegacyEmbeddedFields` (embedded-data-mapping.ts) writes the key into the derived column — a
+ * `toLegacyEmbeddedFields` (embedded-data-mapping.ts) puts the key into the derived projection — a
  * label like `Plan tier` is not a legal variable name, and checking it here would refuse every
  * link to a library field that has one.
  */

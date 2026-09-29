@@ -1,16 +1,17 @@
 import "server-only";
 import { Prisma } from "@formbricks/database/prisma";
-import { type TLegacyEmbeddedFields } from "@formbricks/types/embedded-data-mapping";
 import {
-  type TLinkedEmbeddedField,
-  deriveLegacyEmbeddedData,
-} from "@formbricks/types/embedded-data-resolver";
+  type TLegacyEmbeddedColumns,
+  linkedToDesiredEmbeddedFields,
+  toLegacyEmbeddedFields,
+} from "@formbricks/types/embedded-data-mapping";
+import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 
 /**
  * The join that makes the `EmbeddedData` / `SurveyEmbeddedData` tables the read source of truth
- * (ENG-1837). Add it to a survey select and pass the row through {@link inlineSurveyEmbeddedFields};
- * every reader then resolves definitions through `getSurveyEmbeddedFields` instead of reading
- * `survey.variables` / `survey.hiddenFields`.
+ * (ENG-1837). Add it to a survey select and pass the row through {@link withInlinedEmbeddedFields};
+ * every reader then resolves definitions through `getSurveyEmbeddedFields`, and the legacy
+ * `variables` / `hiddenFields` keys outbound payloads still carry are derived from the same rows.
  *
  * Only the columns a reader or the editor's write-back needs are selected — the row's owning
  * survey, workspace and timestamps stay server-side. It mirrors `SELECT_CURRENT_FIELDS` in
@@ -77,13 +78,8 @@ export const selectPublicSurveyEmbeddedDataLinks = {
   },
 } as const satisfies Prisma.SurveySelect["embeddedDataLinks"];
 
-/**
- * The shape {@link selectSurveyEmbeddedDataLinks} produces, as much of it as the mapping needs.
- *
- * The legacy columns ride along because the mapping falls back to them for a row-less survey; both
- * members are optional, so a select that omits them is unaffected.
- */
-interface TSurveyWithEmbeddedDataLinks extends TLegacyEmbeddedFields {
+/** The shape {@link selectSurveyEmbeddedDataLinks} produces, as much of it as the mapping needs. */
+interface TSurveyWithEmbeddedDataLinks {
   embeddedDataLinks?: {
     storageKey: string;
     embeddedData: TLinkedEmbeddedField["field"];
@@ -92,46 +88,54 @@ interface TSurveyWithEmbeddedDataLinks extends TLegacyEmbeddedFields {
 
 /**
  * Reshapes the joined rows into the `{ field, link }` pairs the read seam consumes, or `undefined`
- * when the select omitted the join — which is exactly the input `getSurveyEmbeddedFields`' fallback
- * expects, so a survey read through a narrower select keeps resolving off its legacy columns.
+ * when the select omitted the join.
+ *
+ * Zero rows is zero fields (ENG-2404). The legacy columns this used to fall back to for a survey the
+ * ENG-1835 backfill skipped are gone; the migration that dropped them gave every such survey its
+ * rows first.
  *
  * Ordering is not this function's job (ENG-2401): the rows carry an `order` column and arrive sorted
- * by it. Before that column existed this ranked them against the legacy JSON, which needed guards
- * here so that one malformed column could not take down an entire survey read.
+ * by it.
  */
 export const inlineSurveyEmbeddedFields = (
   surveyPrisma: TSurveyWithEmbeddedDataLinks
-): TLinkedEmbeddedField[] | undefined => {
-  const links = surveyPrisma.embeddedDataLinks;
-  if (!links) return undefined;
+): TLinkedEmbeddedField[] | undefined =>
+  surveyPrisma.embeddedDataLinks?.map((link) => ({
+    field: link.embeddedData,
+    link: { storageKey: link.storageKey },
+  }));
 
-  // **A survey the backfill skipped has its declarations only in the legacy columns.** The migration
-  // skips a survey whose `variables` or `hiddenFields` it cannot map — a malformed or duplicated
-  // declaration — and records that such a survey "is not stranded ... it migrates itself the next
-  // time someone saves it".
-  //
-  // An empty relation is truthy, so without this it inlined as `embeddedFields: []`, and every write
-  // branch tests `!== undefined`. Any caller that loads a survey and hands it straight back to
-  // `updateSurvey` — `updateSingleUseLinksAction` spreads one — then derives empty legacy columns
-  // over the only copy of that survey's fields. Toggling single-use links would wipe them.
-  //
-  // So zero rows is not "no fields", it is "not reconciled yet", and the columns answer for it. One
-  // row makes the rows authoritative again, and the first save through this path writes rows, so the
-  // fallback heals itself and is never consulted twice for the same survey.
-  if (links.length === 0) return deriveLegacyEmbeddedData(surveyPrisma);
-
-  return links.map((link) => ({ field: link.embeddedData, link: { storageKey: link.storageKey } }));
-};
+/**
+ * What {@link withInlinedEmbeddedFields} returns: a select that carried the join always yields the
+ * inlined pairs and the two derived legacy keys; one that may not have, may not.
+ */
+type TInlinedSurvey<T extends TSurveyWithEmbeddedDataLinks> = Omit<T, "embeddedDataLinks"> &
+  (T extends { embeddedDataLinks: unknown[] }
+    ? { embeddedFields: TLinkedEmbeddedField[] } & TLegacyEmbeddedColumns
+    : { embeddedFields?: TLinkedEmbeddedField[] } & Partial<TLegacyEmbeddedColumns>);
 
 /**
  * Replaces the raw `embeddedDataLinks` relation on a Prisma survey row with the inlined
- * `embeddedFields` the read seam consumes, so the relation shape never leaks onto `TSurvey`.
- * A no-op for rows read through a select without the join.
+ * `embeddedFields` the read seam consumes, so the relation shape never leaks onto `TSurvey` — and
+ * derives the legacy `variables` / `hiddenFields` from the same rows.
+ *
+ * The two legacy keys are a **read-only projection** now (ENG-2404): `Survey` has no column for
+ * either, but deployed SDK bundles and v1 / v3 API consumers still read them (ENG-1838), and the
+ * `ZSurvey` logic refinement resolves operands against them. Deriving them here, from the rows and
+ * in row order, is what keeps every one of those payloads saying exactly what the rows say.
+ *
+ * A no-op for rows read through a select without the join: such a survey carries neither
+ * `embeddedFields` nor the two legacy keys.
  */
 export const withInlinedEmbeddedFields = <T extends TSurveyWithEmbeddedDataLinks>(
   surveyPrisma: T
-): Omit<T, "embeddedDataLinks"> & { embeddedFields?: TLinkedEmbeddedField[] } => {
+): TInlinedSurvey<T> => {
   const { embeddedDataLinks: _links, ...rest } = surveyPrisma;
   const embeddedFields = inlineSurveyEmbeddedFields(surveyPrisma);
-  return embeddedFields ? { ...rest, embeddedFields } : rest;
+  if (!embeddedFields) return rest as TInlinedSurvey<T>;
+  return {
+    ...rest,
+    embeddedFields,
+    ...toLegacyEmbeddedFields(linkedToDesiredEmbeddedFields(embeddedFields)),
+  } as TInlinedSurvey<T>;
 };

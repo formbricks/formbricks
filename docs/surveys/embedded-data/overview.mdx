@@ -17,9 +17,10 @@ That makes it the counterpart to **contact attributes**, which are **data about 
 | Lives past the survey | no                                           | yes                                                  |
 
 <Note>
-  **The API payloads are unchanged** and no survey needs editing. What did change is the editor: the Hidden
-  Fields and Variables cards are now one **Embedded Data** card, where a field's source is **Passed in** or
-  **Calculated**. See [Hidden Fields and Variables](/surveys/embedded-data/migration) if you already use
+  **The API payloads keep their shape** and no survey needs editing; only `hiddenFields.enabled` is now
+  derived (`true` whenever a passed-in field exists) and ignored on write. What did change is the editor: the
+  Hidden Fields and Variables cards are now one **Embedded Data** card, where a field's source is **Passed in**
+  or **Calculated**. See [Hidden Fields and Variables](/surveys/embedded-data/migration) if you already use
   them.
 </Note>
 

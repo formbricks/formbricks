@@ -97,10 +97,10 @@ const isSharedDesiredField = (entry: TDesiredEmbeddedField): entry is TSharedDes
  * Works out what a survey should have after a save: the fields the payload declared, plus — for a
  * legacy payload — the current rows of whichever group it did not carry.
  *
- * This is what makes the rows the write source of truth rather than a copy of the columns. It has to
- * be a merge rather than a straight read of the payload, because `updateSurveyInternal` and the v3
- * patch both accept partial updates: a call carrying only `{ name }` would otherwise resolve to an
- * empty set and delete every field the survey has. Renaming a survey would wipe its Embedded Data.
+ * It has to be a merge rather than a straight read of the payload, because `updateSurveyInternal`
+ * and the v3 patch both accept partial updates: a call carrying only `{ name }` would otherwise
+ * resolve to an empty set and delete every field the survey has. Renaming a survey would wipe its
+ * Embedded Data.
  *
  * **Presence is `!== undefined`, not the `in` operator.** Every write seam builds one object literal
  * with all three keys spelled out and lets Prisma ignore the undefined ones, so `"variables" in patch`
@@ -113,11 +113,11 @@ const isSharedDesiredField = (entry: TDesiredEmbeddedField): entry is TSharedDes
  * (`toLegacyEmbeddedFields`). There is no merge to do: nothing a survey holds is unrepresentable in
  * this carrier.
  *
- * ## The legacy branch may only say what the columns can carry
+ * ## The legacy branch may only say what the legacy shape can carry
  *
  * The two groups are merged independently because they arrive independently: a payload carrying
  * `variables` alone must leave the ingested rows exactly where they are. Within a group, an entry
- * that already exists at the same `(storageKey, source)` keeps everything the legacy columns have no
+ * that already exists at the same `(storageKey, source)` keeps everything the legacy shape has no
  * word for — its ownership, its `locked`, and for an ingested field its `dataType` and
  * `defaultValue`. So a v1 PUT can add, remove, and rename or retype the variables it owns, and can
  * *not* unlink a shared field, unlock a locked one, or untype a typed one. Without this a
@@ -147,7 +147,7 @@ export const resolveDesiredEmbeddedFields = (
     entries.map((entry) => {
       const existing = currentByAddress.get(`${entry.source}:${entry.storageKey}`);
       if (existing === undefined) return entry;
-      // A shared definition is workspace-owned and the columns cannot describe it at all, so a
+      // A shared definition is workspace-owned and the legacy shape cannot describe it at all, so a
       // legacy write's only options are to keep the link or drop it.
       if (existing.key !== null) return existing;
       // A hidden field id is a name and nothing else; a variable additionally carries its type and
@@ -302,11 +302,9 @@ export const planEmbeddedDataReconcile = (
 /**
  * Brings a survey's `EmbeddedData` rows and links in step with the payload it was just saved with.
  *
- * **The payload, not the persisted survey** (ENG-2412). The rows are the write source of truth now;
- * `survey.variables` / `survey.hiddenFields` are written from the same payload in the same
- * transaction and kept only as a rollback path until they are dropped. Reading the persisted survey
- * here instead would put the columns back in charge, and reading the rows would be circular — the
- * target would always equal the current state and no edit would ever persist.
+ * **The payload, not the persisted survey** (ENG-2412). The rows are the only place Embedded Data is
+ * stored (ENG-2404 dropped `Survey.variables` / `Survey.hiddenFields`), so reading them here would be
+ * circular — the target would always equal the current state and no edit would ever persist.
  *
  * Runs inside the caller's transaction so a survey never commits without its fields, and takes
  * `workspaceId` explicitly because the copy flow writes into a *different* workspace than the one it
@@ -349,8 +347,8 @@ export const reconcileEmbeddedData = async (
   );
   assertNoDuplicateStorageKeys(desired);
 
-  // Only for the V2 carrier. The legacy branch above returns entries built either from the columns —
-  // whose own schemas already gate them — or from rows this survey already holds, and re-checking
+  // Only for the V2 carrier. The legacy branch above returns entries built either from the legacy
+  // input — whose own schemas already gate it — or from rows this survey already holds, and re-checking
   // those would refuse a survey stored before a rule existed. Both run before the first write, so a
   // refusal rolls the caller's transaction back with nothing persisted.
   if (patch.embeddedFields !== undefined) {
@@ -472,8 +470,8 @@ const assertNoDuplicateStorageKeys = (desired: TDesiredEmbeddedField[]): void =>
  * after it gains a different library key, and the survey copy feeds this the storage keys of rows
  * that already exist — including ones the ENG-1835 backfill moved across from columns no schema
  * ever vetted. A charset or cuid rule here would therefore refuse to duplicate a survey that works.
- * Whether the keys a *client* sent can be written back as legacy columns is checked where those
- * columns are derived, against the schemas that will have to parse them (`lib/survey/service.ts`).
+ * Whether the keys a *client* sent can be derived into the legacy shape is checked at the client
+ * boundary, against the schemas that will have to parse it (`lib/survey/service.ts`).
  *
  * What is left are the two the data model cannot represent at all:
  *
@@ -520,13 +518,12 @@ export const assertWritableEmbeddedFields = (desired: TDesiredEmbeddedField[]): 
  *
  * A shared entry's `key`, `name`, `dataType`, `defaultValue` and `locked` arrive from the client and
  * are never written back: {@link buildReconcilePlan} skips a row this survey does not own, so the
- * library row keeps whatever it already said. But `toLegacyEmbeddedFields` derives `variables` and
- * `hiddenFields` from these same entries, and those columns *are* written — so a payload naming a
- * real library row with a made-up `dataType` or `key` would store legacy columns describing the
- * field differently from the row they were derived beside. Deriving them exists precisely to stop
- * the two descriptions of one survey drifting apart, so for a shared entry the derivation has to
- * read the library, not the payload. The rows are loaded here anyway; taking their columns costs
- * one wider select.
+ * library row keeps whatever it already said. But the write path checks the legacy `variables` /
+ * `hiddenFields` these entries will derive into (`assertDerivedLegacyColumnsAreStorable`), and every
+ * later read derives them from the library row — so a payload naming a real library row with a
+ * made-up `dataType` or `key` would be judged on a projection no read will ever produce. For a
+ * shared entry the check therefore has to read the library, not the payload. The rows are loaded
+ * here anyway; taking their columns costs one wider select.
  */
 export const assertLinkableEmbeddedFields = async (
   tx: Prisma.TransactionClient,

@@ -289,26 +289,24 @@ export function Survey({
     setlocalSurvey(survey);
   }, [survey]);
 
-  // ENG-1837: computed fields are seeded from their definitions in the EmbeddedData tables, falling
-  // back to the legacy `variables` column for surveys whose rows are not joined in. Only `variables`
-  // and `embeddedFields` are passed (and depended on): a computed field can never be derived from
-  // `hiddenFields`, so nothing else can change this map.
+  // ENG-1837: computed fields are seeded from their definitions in the EmbeddedData tables. Only
+  // `embeddedFields` is passed (and depended on), since nothing else can change this map.
   useEffect(() => {
     setCurrentVariables(
-      getComputedEmbeddedFields({
-        variables: survey.variables,
-        embeddedFields: survey.embeddedFields,
-      }).reduce<TResponseVariables>((acc, { field, link }) => {
-        // Provably the variable's declared value for every field derived from the legacy shape:
-        // ZSurveyVariable pins a number variable to a number and a text one to a string, and both
-        // are pass-throughs here (see the seeding test in embedded-data-mapping.test.ts). Booleans
-        // and dates have no slot in TResponseVariables and no computed field can carry one.
-        const seed = coerceToEmbeddedDataType(field.defaultValue, field.dataType);
-        if (typeof seed === "string" || typeof seed === "number") acc[link.storageKey] = seed;
-        return acc;
-      }, {})
+      getComputedEmbeddedFields({ embeddedFields: survey.embeddedFields }).reduce<TResponseVariables>(
+        (acc, { field, link }) => {
+          // Provably the variable's declared value for every field derived from the legacy shape:
+          // ZSurveyVariable pins a number variable to a number and a text one to a string, and both
+          // are pass-throughs here (see the seeding test in embedded-data-mapping.test.ts). Booleans
+          // and dates have no slot in TResponseVariables and no computed field can carry one.
+          const seed = coerceToEmbeddedDataType(field.defaultValue, field.dataType);
+          if (typeof seed === "string" || typeof seed === "number") acc[link.storageKey] = seed;
+          return acc;
+        },
+        {}
+      )
     );
-  }, [survey.variables, survey.embeddedFields]);
+  }, [survey.embeddedFields]);
 
   const autoFocusEnabled = autoFocus ?? window.self === window.top;
 

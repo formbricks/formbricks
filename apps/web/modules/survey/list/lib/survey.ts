@@ -9,10 +9,7 @@ import {
   linkedToDesiredEmbeddedFields,
   toLegacyEmbeddedFields,
 } from "@formbricks/types/embedded-data-mapping";
-import {
-  type TLinkedEmbeddedField,
-  deriveLegacyEmbeddedData,
-} from "@formbricks/types/embedded-data-resolver";
+import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
@@ -51,12 +48,10 @@ const getExistingSurvey = async (surveyId: string) => {
       questions: true,
       blocks: true,
       endings: true,
-      variables: true,
-      hiddenFields: true,
-      // ENG-3228: the copy follows the source's ROWS, not its legacy columns — the columns cannot
-      // say that a field is a link to the workspace library, so reading them localized every shared
-      // field a survey had. Selected with the row's ownership (`key`) and id so
-      // `planCopiedEmbeddedFields` can decide per field whether to re-link it or clone it.
+      // ENG-3228: the copy follows the source's ROWS — the legacy shape cannot say that a field is a
+      // link to the workspace library, so copying it localized every shared field a survey had.
+      // Since ENG-2404 the rows are all there is. Selected with the row's ownership (`key`) and id
+      // so `planCopiedEmbeddedFields` can decide per field whether to re-link it or clone it.
       embeddedDataLinks: {
         select: {
           storageKey: true,
@@ -121,9 +116,10 @@ type TSourceEmbeddedLinks = NonNullable<Awaited<ReturnType<typeof getExistingSur
  *
  * When there is no match the field is **localized**: the copy gets a private definition rather than
  * losing the field. It takes the library `key` as its name, not the display label, because a local
- * field's name is the legacy variable name or hidden field id the copy's columns will carry, and a
- * label like `Plan tier` is not a legal one. The storage key is preserved either way — it is the
- * address recall tokens and logic operands inside the copied blocks already point at.
+ * field's name is the legacy variable name or hidden field id the copy's derived `variables` /
+ * `hiddenFields` will carry, and a label like `Plan tier` is not a legal one. The storage key is
+ * preserved either way — it is the address recall tokens and logic operands inside the copied blocks
+ * already point at.
  */
 const planCopiedEmbeddedFields = async (
   links: TSourceEmbeddedLinks,
@@ -241,28 +237,12 @@ export const copySurveyToOtherWorkspace = async (
     const hasLanguages = existingSurvey.languages && existingSurvey.languages.length > 0;
     const t = await getTranslate();
 
-    // **Zero rows is "not reconciled yet", not "no fields."** The backfill skips a survey whose
-    // legacy columns it cannot map, and such a survey keeps resolving from them until its next save.
-    // Planning from its empty relation would hand the copy an empty plan, and the derived columns
-    // below would then write `variables: []` / `fieldIds: []` — copying the survey by dropping every
-    // field it declares. The columns answer for it instead, exactly as every reader still does.
-    //
-    // No library lookup is skipped by taking this branch: a survey the backfill skipped has no links
-    // to begin with, so `deriveLegacyEmbeddedData` producing only local fields (`key: null`) is what
-    // the planner would have concluded for each of them anyway.
-    const copiedEmbeddedFields =
-      embeddedDataLinks.length > 0
-        ? await planCopiedEmbeddedFields(embeddedDataLinks, {
-            isSameWorkspace,
-            targetWorkspaceId: targetWorkspace.id,
-          })
-        : deriveLegacyEmbeddedData(existingSurvey);
-    // Derived from the plan rather than cloned from the source, so a localized shared field lands in
-    // the columns under the same name the copy's row holds.
-    const copiedLegacyColumns = toLegacyEmbeddedFields(
-      linkedToDesiredEmbeddedFields(copiedEmbeddedFields),
-      existingSurvey.hiddenFields
-    );
+    // Zero rows is zero fields (ENG-2404): the migration that dropped the legacy columns gave every
+    // survey still without links the rows its columns described, so there is nothing else to read.
+    const copiedEmbeddedFields = await planCopiedEmbeddedFields(embeddedDataLinks, {
+      isSameWorkspace,
+      targetWorkspaceId: targetWorkspace.id,
+    });
 
     // Prepare survey data
     const surveyData: Prisma.SurveyCreateInput = {
@@ -274,8 +254,6 @@ export const copySurveyToOtherWorkspace = async (
       welcomeCard: structuredClone(existingSurvey.welcomeCard),
       blocks: structuredClone(existingSurvey.blocks),
       endings: structuredClone(existingSurvey.endings),
-      variables: copiedLegacyColumns.variables,
-      hiddenFields: copiedLegacyColumns.hiddenFields,
       languages: hasLanguages
         ? {
             create: existingSurvey.languages.map((surveyLanguage) => ({
@@ -496,8 +474,6 @@ export const copySurveyToOtherWorkspace = async (
           select: {
             id: true,
             workspaceId: true,
-            variables: true,
-            hiddenFields: true,
             segment: {
               select: {
                 id: true,
@@ -538,12 +514,17 @@ export const copySurveyToOtherWorkspace = async (
           patch: { embeddedFields: copiedEmbeddedFields },
         });
 
-        return createdSurvey;
+        // The legacy keys this result has always carried (it is the audit log's `newObject`), derived
+        // from the plan the rows were just written from, as every other read derives them.
+        return {
+          ...createdSurvey,
+          ...toLegacyEmbeddedFields(linkedToDesiredEmbeddedFields(copiedEmbeddedFields)),
+        };
       },
       // This create was untransacted before ENG-1978, so wrapping it introduced Prisma's 5s
       // interactive-transaction ceiling where there had been none. It is the deepest of the
-      // reconcile call sites (enumerated on `getDeclaredEmbeddedFields`) — it clones blocks, endings,
-      // the welcome card, variables, hidden fields, follow-ups and quotas, and resolves an action
+      // reconcile call sites (a `reconcileEmbeddedData(` grep enumerates them) — it clones blocks,
+      // endings, the welcome card, Embedded Data, follow-ups and quotas, and resolves an action
       // class per trigger through `connectOrCreate` — so a large survey could plausibly reach it and
       // fail a copy that used to succeed. Matches the ceiling on `updateSurveyInternal` for the same
       // reason.

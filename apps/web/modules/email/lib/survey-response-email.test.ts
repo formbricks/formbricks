@@ -1,8 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import {
-  type TLinkedEmbeddedField,
-  deriveLegacyEmbeddedData,
-} from "@formbricks/types/embedded-data-resolver";
+import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
+import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import type { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
@@ -57,7 +55,7 @@ const survey = {
   variables: [{ id: "var1", name: "plan", type: "text" }],
   hiddenFields: { enabled: true, fieldIds: ["utm"] },
   // The rows are what the accessors read since ENG-2412; a real survey read carries both.
-  embeddedFields: deriveLegacyEmbeddedData({
+  embeddedFields: embeddedFieldsFromLegacyInput({
     variables: [{ id: "var1", name: "plan", type: "text", value: "" }],
     hiddenFields: { enabled: true, fieldIds: ["utm"] },
   }),

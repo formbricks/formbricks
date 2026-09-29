@@ -30,6 +30,7 @@ import {
 import {
   TSurvey,
   TSurveyCreateInput,
+  TSurveyVariables,
   ZStoredSurveyVariables,
   ZSurvey,
   ZSurveyCreateInput,
@@ -87,16 +88,16 @@ const assertValidNewDeclaredFields = (params: {
 };
 
 /**
- * ENG-3228: the legacy columns a payload's `embeddedFields` derive into, refused as a 400 if they
- * could not be read back.
+ * ENG-3228: the legacy `variables` / `hiddenFields` a payload's `embeddedFields` derive into, refused
+ * as a 400 if they could not be read back.
  *
- * The rows are the write source of truth, but the columns are still written beside them and still
- * parsed by `ZSurvey` on every load — so a storage key the client minted badly (a computed field
- * whose key is not a cuid, an ingested one carrying a space) would persist a survey that then fails
- * to load. Checked here rather than in the reconcile because this is the *client* boundary: the
- * survey copy feeds the reconcile storage keys of rows that already exist, including ones the
- * ENG-1835 backfill moved across from columns no schema ever vetted, and re-judging those would
- * refuse to duplicate a survey that works today.
+ * Nothing stores them since ENG-2404, but the read seam derives them from the rows on every load and
+ * `ZSurvey` parses what it derived on every save — the editor sends the survey straight back — so a
+ * storage key the client minted badly (a computed field whose key is not a cuid, an ingested one
+ * carrying a space) would persist a survey whose next save fails. Checked here rather than in the
+ * reconcile because this is the *client* boundary: the survey copy feeds the reconcile storage keys
+ * of rows that already exist, including ones the ENG-1835 backfill moved across from columns no
+ * schema ever vetted, and re-judging those would refuse to duplicate a survey that works today.
  */
 const assertDerivedLegacyColumnsAreStorable = (columns: {
   variables: unknown;
@@ -130,8 +131,6 @@ export const selectSurvey = {
   questions: true,
   blocks: true,
   endings: true,
-  hiddenFields: true,
-  variables: true,
   displayOption: true,
   recontactDays: true,
   displayLimit: true,
@@ -414,8 +413,11 @@ export const updateSurveyInternal = async (
       // still never spread into Prisma — `surveyData` goes straight into `tx.survey.update`'s
       // `data`, and `Survey` owns relations named `embeddedData` / `embeddedDataLinks`, so leaving
       // it in would turn the payload into a nested relation write. It reaches the database through
-      // `reconcileEmbeddedData` and, as the derived legacy columns, through the block below.
+      // `reconcileEmbeddedData` alone. ENG-2404: so do the two legacy keys, which have no column any
+      // more — Prisma would refuse them as unknown arguments.
       embeddedFields,
+      variables,
+      hiddenFields,
       ...surveyData
     } = updatedSurvey;
 
@@ -425,29 +427,19 @@ export const updateSurveyInternal = async (
     // segment edit beside an unstorable field would half-apply.
     //
     // All four refusals are therefore spent here: the two pure ones, the workspace lookup behind the
-    // shared links, and the derived columns. The reconcile re-runs the first two inside the
+    // shared links, and the derived legacy projection. The reconcile re-runs the first two inside the
     // transaction, which is what protects its other callers; re-running them is cheap and keeps that
     // function safe on its own.
-    let derivedLegacyColumns: ReturnType<typeof toLegacyEmbeddedFields> | undefined;
     if (embeddedFields !== undefined) {
       const declared = linkedToDesiredEmbeddedFields(embeddedFields);
       assertWritableEmbeddedFields(declared);
       // Shared entries come back carrying the library's own definition rather than the payload's
-      // claim about it, so the columns derived below describe the same field the rows do.
+      // claim about it, so the projection checked below is the one the read seam will derive.
       const desired = await assertLinkableEmbeddedFields(prisma, {
         workspaceId: currentSurvey.workspaceId,
         desired: declared,
       });
-
-      // ENG-3228: when the payload declares its Embedded Data as rows, those rows are the whole
-      // answer and the legacy columns are derived back off them rather than taken from whatever
-      // `variables` / `hiddenFields` came along in the same request. The dual write continues — the
-      // columns are the rollback net until ENG-2404, and deployed SDK bundles read them off the
-      // workspace-state payload — so deriving is what keeps the two descriptions of one survey from
-      // drifting apart. `enabled` comes from the stored survey because it is a survey-level toggle
-      // with no per-field carrier. Applied to `surveyData` further down, where the write is assembled.
-      derivedLegacyColumns = toLegacyEmbeddedFields(desired, currentSurvey.hiddenFields);
-      assertDerivedLegacyColumnsAreStorable(derivedLegacyColumns);
+      assertDerivedLegacyColumnsAreStorable(toLegacyEmbeddedFields(desired));
     }
 
     // ENG-1749 sibling: the segment block below updates/deletes by segment.id directly. Ensure the
@@ -760,12 +752,6 @@ export const updateSurveyInternal = async (
     surveyData.publishOn = normalizedScheduling.publishOn;
     surveyData.closeOn = normalizedScheduling.closeOn;
 
-    // Derived and refused above, before the segment writes; only applied here.
-    if (derivedLegacyColumns !== undefined) {
-      surveyData.variables = derivedLegacyColumns.variables;
-      surveyData.hiddenFields = derivedLegacyColumns.hiddenFields;
-    }
-
     data = {
       ...surveyData,
       ...data,
@@ -788,20 +774,16 @@ export const updateSurveyInternal = async (
         });
 
         // ENG-1978: write the saved fields into the EmbeddedData tables in the same transaction, so a
-        // survey never commits without them. ENG-2412: from the PAYLOAD, which is what makes the rows
-        // the write source of truth rather than a copy of the columns `data` just wrote. A caller that
-        // omits every key is not saying "delete these" — `reconcileEmbeddedData` carries the current
-        // rows over untouched. ENG-3228: `embeddedFields`, when the payload carries it, is the
-        // complete set for both sources and the two legacy keys beside it are ignored. workspaceId
-        // comes from the stored survey for the ENG-1749 reason above — never from the client.
+        // survey never commits without them. ENG-2412: from the PAYLOAD — the rows are the only place
+        // Embedded Data is stored (ENG-2404). A caller that omits every key is not saying "delete
+        // these" — `reconcileEmbeddedData` carries the current rows over untouched. ENG-3228:
+        // `embeddedFields`, when the payload carries it, is the complete set for both sources and the
+        // two legacy keys beside it are ignored. workspaceId comes from the stored survey for the
+        // ENG-1749 reason above — never from the client.
         await reconcileEmbeddedData(tx, {
           surveyId,
           workspaceId: currentSurvey.workspaceId,
-          patch: {
-            variables: updatedSurvey.variables,
-            hiddenFields: updatedSurvey.hiddenFields,
-            embeddedFields,
-          },
+          patch: { variables, hiddenFields, embeddedFields },
         });
 
         // Re-read AFTER the reconcile (ENG-3228). `survey` above was selected before the rows moved,
@@ -980,8 +962,11 @@ export const createSurvey = async (
       styling,
       // ENG-3228: accepted input, but never spread into Prisma — `Survey` owns relations named
       // `embeddedData` / `embeddedDataLinks`, so it would become a nested relation write. It reaches
-      // the database as the rows `reconcileEmbeddedData` writes plus the columns derived below.
+      // the database as the rows `reconcileEmbeddedData` writes. ENG-2404: so do the two legacy
+      // keys, which have no column to spread into any more.
       embeddedFields,
+      variables,
+      hiddenFields,
       ...restSurveyBody
     } = parsedSurveyBody;
     await assertSurveyLanguagesBelongToWorkspace(parsedWorkspaceId, languages);
@@ -993,23 +978,17 @@ export const createSurvey = async (
     // keeps duplicating a survey that already declares `country` working.
     assertValidNewDeclaredFields({ existing: {}, incoming: parsedSurveyBody });
 
-    // ENG-3228: same derivation as the update path — a payload that declares its fields as rows owns
-    // both columns, which are written from the rows rather than from whatever arrived beside them,
-    // and a shared entry is canonicalized from its library row first so the columns cannot describe
-    // it differently from the row they are derived beside. Nothing to carry `enabled` over from on a
-    // create, so it turns on exactly when the survey has an ingested field.
-    //
-    // `reconcileEmbeddedData` re-runs the link refusals inside the transaction below, but by then
-    // these columns are already built, so the resolve has to happen out here too — and doing it
-    // before the transaction turns a bad link into a 400 rather than a rolled-back create.
-    let derivedColumns: ReturnType<typeof toLegacyEmbeddedFields> | undefined;
+    // ENG-3228: same refusal as the update path — the legacy projection the read seam will derive
+    // from these rows has to be one `ZSurvey` can parse, and a shared entry is canonicalized from its
+    // library row first so the projection checked is the one that will actually be derived.
+    // `reconcileEmbeddedData` re-runs the link refusals inside the transaction below; doing it out
+    // here too turns a bad link into a 400 rather than a rolled-back create.
     if (embeddedFields !== undefined) {
       const desired = await assertLinkableEmbeddedFields(prisma, {
         workspaceId: parsedWorkspaceId,
         desired: linkedToDesiredEmbeddedFields(embeddedFields),
       });
-      derivedColumns = toLegacyEmbeddedFields(desired);
-      assertDerivedLegacyColumnsAreStorable(derivedColumns);
+      assertDerivedLegacyColumnsAreStorable(toLegacyEmbeddedFields(desired));
     }
 
     // An app survey can never be shown without a trigger, so block creating one directly in a
@@ -1044,7 +1023,6 @@ export const createSurvey = async (
 
     const baseData = {
       ...restSurveyBody,
-      ...derivedColumns,
       styling: styling === null ? Prisma.JsonNull : styling,
       ...normalizeSurveyScheduling({
         closeOn: normalizedCloseOn,
@@ -1114,17 +1092,14 @@ export const createSurvey = async (
 
         // ENG-1978: a survey created from a template, the API or a duplicate can already carry
         // variables and hidden fields, so the tables have to be populated at creation, not just on the
-        // next save. ENG-3228: a payload that declared its fields as rows takes that branch instead —
-        // the columns on `createdSurvey` were derived from those same rows, so either way the two
-        // descriptions agree.
+        // next save. From the payload (ENG-2404): the rows are the only thing this create stores
+        // them in. ENG-3228: a payload that declared its fields as rows takes that branch instead.
         await reconcileEmbeddedData(tx, {
           surveyId: createdSurvey.id,
           workspaceId: parsedWorkspaceId,
-          patch: {
-            variables: createdSurvey.variables,
-            hiddenFields: createdSurvey.hiddenFields,
-            embeddedFields,
-          },
+          // `validateInputs` types its result as the schema's input, where a variable's `value` is
+          // optional; `ZSurveyCreateInput` has already applied its prefault, so every one is set.
+          patch: { variables: variables as TSurveyVariables | undefined, hiddenFields, embeddedFields },
         });
 
         // Re-read after the reconcile, not before it. `createdSurvey` was selected before the links
@@ -1138,8 +1113,8 @@ export const createSurvey = async (
       // This transaction predates ENG-1978, but the reconcile above adds a read plus two writes per
       // field inside it, and neither `variables` nor `hiddenFields` is bounded — so a large template or
       // API create could now reach Prisma's 5s default where it used to fit. Matched to the other
-      // reconcile call sites (enumerated on `getDeclaredEmbeddedFields`) rather than left to inherit
-      // a ceiling this work made easier to hit.
+      // reconcile call sites (a `reconcileEmbeddedData(` grep enumerates them) rather than left to
+      // inherit a ceiling this work made easier to hit.
       { timeout: 20_000, maxWait: 10_000 }
     );
 

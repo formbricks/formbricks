@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
-import {
-  type TLinkedEmbeddedField,
-  deriveLegacyEmbeddedData,
-} from "@formbricks/types/embedded-data-resolver";
+import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { TFeedbackSourceFormbricksMapping } from "@formbricks/types/feedback-source";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -1393,22 +1390,6 @@ describe("transformResponseToFeedbackRecords", () => {
       expect(embeddedDataOf(result[0])).toEqual({ brand: "AEG" });
     });
 
-    test("publishes the same way for a survey still on legacy hiddenFields and variables", () => {
-      // An un-migrated survey reaches every reader through the same inlined pairs, so there is no
-      // second code path here to keep in step.
-      const survey = surveyWith(
-        deriveLegacyEmbeddedData({
-          hiddenFields: { enabled: true, fieldIds: ["brand"] },
-          variables: [{ id: "var-score", name: "score", type: "number", value: 0 }],
-        })
-      );
-      const response = responseWith({ brand: "AEG" }, { "var-score": 42 });
-
-      const result = transformResponseToFeedbackRecords(response, survey, textMapping, mockTenantId);
-
-      expect(embeddedDataOf(result[0])).toEqual({ brand: "AEG", score: 42 });
-    });
-
     test("truncates an oversized string value", () => {
       const survey = surveyWith([linkedField("notes", "ingested")]);
       const response = responseWith({ notes: "x".repeat(300) });
@@ -1452,16 +1433,14 @@ describe("transformResponseToFeedbackRecords", () => {
       );
     });
 
-    test("survives a malformed legacy field name, keeping the records and the other fields", () => {
-      // `hiddenFields` is a Json column that the pipeline's survey select reads without a Zod parse,
-      // and `deriveLegacyEmbeddedData` takes each field's name straight out of `fieldIds` — so a
-      // stored number reaches `.replaceAll` and throws. Outside a guard that throw leaves the
-      // transform entirely, and the response publishes no records to any feedback source.
-      const survey = surveyWith(
-        deriveLegacyEmbeddedData({
-          hiddenFields: { enabled: true, fieldIds: [42 as unknown as string, "brand"] },
-        })
-      );
+    test("survives a malformed field name, keeping the records and the other fields", () => {
+      // The pipeline's survey select reads the rows without a Zod parse, so a name that is not a
+      // string reaches `.replaceAll` and throws. Outside a guard that throw leaves the transform
+      // entirely, and the response publishes no records to any feedback source.
+      const survey = surveyWith([
+        linkedField(42 as unknown as string, "ingested", {}, "legacy_42"),
+        linkedField("brand", "ingested"),
+      ]);
       const response = responseWith({ brand: "AEG" });
 
       const result = transformResponseToFeedbackRecords(response, survey, textMapping, mockTenantId);

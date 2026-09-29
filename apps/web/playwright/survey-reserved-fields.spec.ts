@@ -251,12 +251,6 @@ test.describe("Reserved fields in recall and logic", () => {
           embeddedDataId: field.id,
         },
       });
-      // The legacy column too, so the survey is in the state a real grandfathered survey is in and
-      // nothing downstream can read it as undeclared.
-      await prisma.survey.update({
-        where: { id },
-        data: { hiddenFields: { enabled: true, fieldIds: ["url"] } },
-      });
 
       return id!;
     });

@@ -4,7 +4,7 @@ import { isDeepEqual } from "@/lib/utils/object";
 /** Stands in for `updatedAt` on both sides of a comparison, so its real value never decides one. */
 const IGNORED_UPDATED_AT = new Date(0);
 
-/** Stands in for the legacy columns, which the server derives rather than the author editing them. */
+/** Stands in for the legacy keys, which the server derives rather than the author editing them. */
 const IGNORED_LEGACY_COLUMNS = {
   variables: [],
   hiddenFields: { enabled: false, fieldIds: [] },

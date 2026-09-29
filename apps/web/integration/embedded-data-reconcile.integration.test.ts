@@ -6,7 +6,7 @@ import { InvalidInputError } from "@formbricks/types/errors";
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import { resetDb } from "@/integration/reset-db";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
-import { selectSurvey, updateSurvey } from "@/lib/survey/service";
+import { selectSurvey, updateSurvey, updateSurveyInternal } from "@/lib/survey/service";
 import { transformPrismaSurvey } from "@/lib/survey/utils";
 import { copySurveyToOtherWorkspace } from "@/modules/survey/list/lib/survey";
 
@@ -343,9 +343,7 @@ describe("reconcileEmbeddedData (real Postgres)", () => {
       const declared = { enabled: true, fieldIds: ["country", "team_size"] };
       await reconcile(surveyId, workspaceId, { hiddenFields: declared });
 
-      const copy = await prisma.survey.create({
-        data: { name: "Survey (copy)", workspaceId, hiddenFields: declared },
-      });
+      const copy = await prisma.survey.create({ data: { name: "Survey (copy)", workspaceId } });
 
       await expect(reconcile(copy.id, workspaceId, { hiddenFields: declared })).resolves.not.toThrow();
 
@@ -364,7 +362,7 @@ describe("reconcileEmbeddedData (real Postgres)", () => {
 
       const { workspaceId: otherWorkspaceId } = await seedSurvey();
       const copy = await prisma.survey.create({
-        data: { name: "Survey (copy)", workspaceId: otherWorkspaceId, hiddenFields: declared },
+        data: { name: "Survey (copy)", workspaceId: otherWorkspaceId },
       });
 
       await reconcile(copy.id, otherWorkspaceId, { hiddenFields: declared });
@@ -593,9 +591,9 @@ const BLOCKS = [
 /**
  * ENG-3228: the survey write path, end to end.
  *
- * `updateSurvey` is where the two descriptions of a survey are written together, and the rule this
- * covers is the one a unit test cannot: a payload that declares its fields as rows owns BOTH the rows
- * and the legacy columns, and a payload that does not is left exactly as it was.
+ * The rule this covers is the one a unit test cannot: a payload that declares its fields as rows owns
+ * the rows outright — and with them the legacy `variables` / `hiddenFields` every read derives from
+ * those rows (ENG-2404) — while a payload that does not is merged exactly as it always was.
  */
 describe("updateSurvey accepts embeddedFields (real Postgres)", () => {
   const VARIABLE_ID = "clvar123456789012345678902";
@@ -615,13 +613,15 @@ describe("updateSurvey accepts embeddedFields (real Postgres)", () => {
         status: "draft",
         workspaceId: workspace.id,
         blocks: BLOCKS as never,
-        variables: (legacy?.variables ?? []) as never,
-        hiddenFields: (legacy?.hiddenFields ?? { enabled: false }) as never,
       },
-      select: selectSurvey,
+      select: { id: true },
     });
     await prisma.$transaction((tx) =>
-      reconcileEmbeddedData(tx, { surveyId: created.id, workspaceId: workspace.id, patch: created })
+      reconcileEmbeddedData(tx, {
+        surveyId: created.id,
+        workspaceId: workspace.id,
+        patch: { variables: legacy?.variables as never, hiddenFields: legacy?.hiddenFields },
+      })
     );
 
     return { workspaceId: workspace.id, survey: await loadSurvey(created.id) };
@@ -632,13 +632,11 @@ describe("updateSurvey accepts embeddedFields (real Postgres)", () => {
       .findUniqueOrThrow({ where: { id: surveyId }, select: selectSurvey })
       .then((survey) => transformPrismaSurvey<TSurvey>(survey));
 
-  const readColumns = async (surveyId: string) =>
-    prisma.survey.findUniqueOrThrow({
-      where: { id: surveyId },
-      select: { variables: true, hiddenFields: true },
-    });
+  /** The legacy shape every read serves, derived from the rows since ENG-2404 dropped its columns. */
+  const readLegacyShape = async (surveyId: string) =>
+    loadSurvey(surveyId).then(({ variables, hiddenFields }) => ({ variables, hiddenFields }));
 
-  test("writes the rows and derives both legacy columns from them", async () => {
+  test("writes the rows, and the legacy shape read back is derived from them", async () => {
     const { survey } = await seedEditableSurvey();
 
     const saved = await updateSurvey({
@@ -667,8 +665,8 @@ describe("updateSurvey accepts embeddedFields (real Postgres)", () => {
           link: { storageKey: "seats" },
         },
       ],
-      // Deliberately contradicting the rows: the reconcile ignores them and the columns are derived,
-      // so nothing a V2 payload happens to carry here can reach the database.
+      // Deliberately contradicting the rows: the reconcile ignores them and the legacy shape is
+      // derived from the rows, so nothing a V2 payload happens to carry here can reach the database.
       variables: [{ id: "clvar123456789012345678909", name: "stale", type: "text", value: "" }],
       hiddenFields: { enabled: false, fieldIds: ["stale_hidden_field"] },
     });
@@ -681,7 +679,7 @@ describe("updateSurvey accepts embeddedFields (real Postgres)", () => {
       locked: true,
       defaultValue: 2,
     });
-    expect(await readColumns(survey.id)).toEqual({
+    expect(await readLegacyShape(survey.id)).toEqual({
       variables: [{ id: VARIABLE_ID, name: "score", type: "number", value: 7 }],
       // `enabled` turns on because the survey now has an ingested field.
       hiddenFields: { enabled: true, fieldIds: ["seats"] },
@@ -699,15 +697,54 @@ describe("updateSurvey accepts embeddedFields (real Postgres)", () => {
     const { embeddedFields: _embeddedFields, ...legacyPut } = survey;
     await updateSurvey({ ...legacyPut, hiddenFields: { enabled: true, fieldIds: ["plan", "tier"] } });
 
-    expect(await readColumns(survey.id)).toEqual({
+    expect(await readLegacyShape(survey.id)).toEqual({
       variables: [],
       hiddenFields: { enabled: true, fieldIds: ["plan", "tier"] },
     });
     expect((await readFields(survey.id)).map((field) => field.storageKey)).toEqual(["plan", "tier"]);
   });
 
+  test("an update carrying neither legacy key nor embeddedFields leaves the rows untouched", async () => {
+    // ENG-2412, pinned end to end now that the rows are the only copy (ENG-2404): an absent key is an
+    // omission, never "delete these". `updateSurveyInternal` is the entry point that can carry such a
+    // payload — `ZSurvey` makes `updateSurvey`'s callers send both keys.
+    const { survey } = await seedEditableSurvey({
+      variables: [{ id: VARIABLE_ID, name: "score", type: "number", value: 7 }],
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+    });
+    const before = await readFields(survey.id);
+
+    const {
+      embeddedFields: _embeddedFields,
+      variables: _variables,
+      hiddenFields: _hiddenFields,
+      ...nameOnly
+    } = survey;
+    await updateSurveyInternal({ ...nameOnly, name: "Renamed" } as TSurvey, true);
+
+    expect(await readFields(survey.id)).toEqual(before);
+  });
+
+  test("an update carrying `variables: []` clears the computed rows and keeps the ingested ones", async () => {
+    const { survey } = await seedEditableSurvey({
+      variables: [{ id: VARIABLE_ID, name: "score", type: "number", value: 7 }],
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+    });
+
+    const { embeddedFields: _embeddedFields, ...legacyPut } = survey;
+    await updateSurvey({ ...legacyPut, variables: [] });
+
+    expect(await readFields(survey.id)).toEqual([
+      expect.objectContaining({ storageKey: "plan", source: "ingested" }),
+    ]);
+    expect(await readLegacyShape(survey.id)).toEqual({
+      variables: [],
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+    });
+  });
+
   test("a variables-only PUT keeps a shared computed link the editor made", async () => {
-    // The read-modify-write an integration does: it resends the derived column and knows nothing
+    // The read-modify-write an integration does: it resends the derived variables and knows nothing
     // about the library. Localizing the field here would fork a private copy of a shared definition.
     const { workspaceId, survey } = await seedEditableSurvey();
     const shared = await prisma.embeddedData.create({
@@ -739,20 +776,20 @@ describe("updateSurvey accepts embeddedFields (real Postgres)", () => {
       await prisma.surveyEmbeddedData.findFirstOrThrow({ where: { surveyId: survey.id } })
     ).toMatchObject({ embeddedDataId: shared.id, storageKey: VARIABLE_ID });
     expect(await prisma.embeddedData.count({ where: { surveyId: survey.id } })).toBe(0);
-    // The derived column names the field by its library key, which is the only spelling of a shared
-    // field that `ZSurveyVariable` accepts.
-    expect((await readColumns(survey.id)).variables).toEqual([
+    // The derived legacy shape names the field by its library key, which is the only spelling of a
+    // shared field that `ZSurveyVariable` accepts.
+    expect((await readLegacyShape(survey.id)).variables).toEqual([
       { id: VARIABLE_ID, name: "score", type: "number", value: 0 },
     ]);
   });
 
-  test("a computed storage key the variables column could not hold is a 400", async () => {
-    // The columns are still written and still parsed by `ZSurvey` on every load, so a storage key
-    // the client minted badly would persist a survey that then fails to load. Refused where the
-    // columns are derived, not in the reconcile — the survey copy legitimately feeds that storage
-    // keys the backfill moved across from columns no schema ever vetted.
+  test("a computed storage key the derived variables could not hold is a 400", async () => {
+    // The legacy shape is derived from the rows on every read and parsed by `ZSurvey` on every save,
+    // so a storage key the client minted badly would persist a survey whose next save fails.
+    // Refused at the client boundary, not in the reconcile — the survey copy legitimately feeds that
+    // storage keys the backfill moved across from columns no schema ever vetted.
     //
-    // Two guards now derive those columns and refuse them: `surveyRefinement` (ENG-2628) reaches
+    // Two guards derive that shape and refuse it: `surveyRefinement` (ENG-2628) reaches
     // this payload first through `validateInputs([updatedSurvey, ZSurvey])`, and
     // `assertDerivedLegacyColumnsAreStorable` still covers the internal callers that skip it. Both
     // answer 400, which is what this test is named for, so it asserts the status and the absent
@@ -773,7 +810,7 @@ describe("updateSurvey accepts embeddedFields (real Postgres)", () => {
               locked: false,
             },
             // Charset-legal, so `ZSurvey` lets it through; not a cuid, so `ZSurveyVariable.id` would
-            // refuse the column derived from it.
+            // refuse the variable derived from it.
             link: { storageKey: "Not_A_Cuid" },
           },
         ],
@@ -956,7 +993,7 @@ describe("copySurveyToOtherWorkspace carries Embedded Data ownership (real Postg
         fieldId: targetMatch.id,
       },
       // No `cohort` in the target library, so the copy keeps the field as its own rather than losing
-      // it — named by the library key, which is what the derived columns and recall address it by.
+      // it — named by the library key, which is what the derived legacy shape and recall address it by.
       {
         storageKey: "cohort",
         key: null,
@@ -982,12 +1019,10 @@ describe("copySurveyToOtherWorkspace carries Embedded Data ownership (real Postg
       expect.objectContaining({ storageKey: "clx000000000000000000001", key: null, isLocalToTheCopy: true }),
       expect.objectContaining({ storageKey: "plan", key: null, isLocalToTheCopy: true }),
     ]);
-    expect(
-      await prisma.survey.findUniqueOrThrow({
-        where: { id: copy.id },
-        select: { variables: true, hiddenFields: true },
-      })
-    ).toEqual({
+    const readBack = transformPrismaSurvey<TSurvey>(
+      await prisma.survey.findUniqueOrThrow({ where: { id: copy.id }, select: selectSurvey })
+    );
+    expect({ variables: readBack.variables, hiddenFields: readBack.hiddenFields }).toEqual({
       variables: [{ id: "clx000000000000000000001", name: "score", type: "number", value: 7 }],
       hiddenFields: { enabled: true, fieldIds: ["plan"] },
     });

@@ -126,7 +126,6 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
             // decoded `Survey.name` as a required field keep working.
             questions: true,
             blocks: true,
-            variables: true,
             type: true,
             showLanguageSwitch: true,
             languages: {
@@ -162,9 +161,9 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
             recontactDays: true,
             displayLimit: true,
             displayOption: true,
-            hiddenFields: true,
             // ENG-1837: the definitions the SDK-rendered survey's recall and logic engines resolve
-            // through. Rides in the same 60s-cached workspace-state payload as the columns above.
+            // through. ENG-2404: also what `transformPrismaSurvey` derives the legacy `variables` /
+            // `hiddenFields` from, which deployed SDK bundles still read (ENG-1838).
             embeddedDataLinks: selectPublicSurveyEmbeddedDataLinks,
             isBackButtonHidden: true,
             isAutoProgressingEnabled: true,

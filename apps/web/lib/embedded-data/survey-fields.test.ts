@@ -72,7 +72,7 @@ interface TTestSurvey {
 }
 
 describe("inlineSurveyEmbeddedFields", () => {
-  test("returns undefined when the select omitted the join, so the accessor can fall back", () => {
+  test("returns undefined when the select omitted the join", () => {
     expect(inlineSurveyEmbeddedFields({})).toBeUndefined();
   });
 
@@ -114,41 +114,10 @@ describe("inlineSurveyEmbeddedFields", () => {
     });
   });
 
-  test("a survey with no rows and no legacy columns inlines an empty list", () => {
+  test("a survey with no rows inlines an empty list", () => {
+    // ENG-2404: zero rows is zero fields. The legacy columns this used to fall back to are gone, and
+    // the migration that dropped them gave every survey still without links its rows first.
     expect(inlineSurveyEmbeddedFields({ embeddedDataLinks: [] })).toStrictEqual([]);
-  });
-
-  /**
-   * The backfill skips a survey whose legacy columns it cannot map and records that it "migrates
-   * itself the next time someone saves it". Zero rows therefore means "not reconciled yet", not
-   * "no fields".
-   *
-   * Reporting `[]` here is what let any caller that loads a survey and hands it straight back to
-   * `updateSurvey` — `updateSingleUseLinksAction` spreads one — derive empty legacy columns over the
-   * only copy of that survey's declarations.
-   */
-  test("a survey the backfill skipped is read from its legacy columns, not as empty", () => {
-    const fields = inlineSurveyEmbeddedFields({
-      embeddedDataLinks: [],
-      variables: [{ id: "v1", name: "score", type: "number", value: 0 }],
-      hiddenFields: { enabled: true, fieldIds: ["utm_source"] },
-    });
-
-    expect(fields?.map(({ field, link }) => [field.source, field.name, link.storageKey])).toStrictEqual([
-      ["computed", "score", "v1"],
-      ["ingested", "utm_source", "utm_source"],
-    ]);
-  });
-
-  test("one row is enough to make the rows authoritative again", () => {
-    // The self-heal's other half: the first save through the fallback writes rows, and from then on
-    // the columns are derived output rather than input. A survey mid-migration must not read as both.
-    const fields = inlineSurveyEmbeddedFields({
-      embeddedDataLinks: JOINED_LINKS,
-      hiddenFields: { enabled: true, fieldIds: ["never_read"] },
-    });
-
-    expect(fields?.map(({ link }) => link.storageKey)).not.toContain("never_read");
   });
 });
 
@@ -161,11 +130,32 @@ describe("withInlinedEmbeddedFields", () => {
     expect(transformed).toHaveProperty("embeddedFields");
   });
 
+  test("derives the legacy variables and hiddenFields from the rows, in row order", () => {
+    // ENG-2404: no column holds them any more, and deployed SDK bundles and v1/v3 consumers still
+    // read both (ENG-1838). Row order is what the export, the pickers and the old bundles all see.
+    const transformed = withInlinedEmbeddedFields({ id: "s1", embeddedDataLinks: JOINED_LINKS });
+
+    expect(transformed.variables).toStrictEqual([
+      { id: "clx000000000000000000002", name: "tier", type: "text", value: "" },
+      { id: "clx000000000000000000001", name: "score", type: "text", value: "" },
+    ]);
+    expect(transformed.hiddenFields).toStrictEqual({ enabled: true, fieldIds: ["utm_source", "plan"] });
+  });
+
+  test("a survey with no fields still carries both legacy keys, empty", () => {
+    // An old SDK bundle reads `hiddenFields.fieldIds` without a guard.
+    const transformed = withInlinedEmbeddedFields({ id: "s1", embeddedDataLinks: [] });
+
+    expect(transformed.variables).toStrictEqual([]);
+    expect(transformed.hiddenFields).toStrictEqual({ enabled: false, fieldIds: [] });
+  });
+
   test("leaves a survey read without the join untouched, adding no key", () => {
     const survey: TTestSurvey = { id: "s1" };
 
     expect(withInlinedEmbeddedFields(survey)).toStrictEqual(survey);
     expect(withInlinedEmbeddedFields(survey)).not.toHaveProperty("embeddedFields");
+    expect(withInlinedEmbeddedFields(survey)).not.toHaveProperty("variables");
   });
 
   test("adds the key even when the survey has no fields at all", () => {

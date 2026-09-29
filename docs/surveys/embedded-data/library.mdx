@@ -131,6 +131,6 @@ None of these blocks a save. They are there because the addresses values are alr
 
 ## What the API Sees
 
-Nothing about the library changes the shape of the survey resource. `hiddenFields` and `variables` are still written and read exactly as before, whether a field was declared on the survey or linked from the library, so integrations built against the management API keep working untouched.
+Nothing about the library changes the shape of the survey resource. `hiddenFields` and `variables` keep the same keys (only `hiddenFields.enabled` is derived), whether a field was declared on the survey or linked from the library, so integrations built against the management API keep working untouched.
 
 The library itself is not exposed on the public API in this release, and neither `GET /api/v3/surveys/{id}` nor the MCP `get_survey` tool returns the field definitions behind those two keys.

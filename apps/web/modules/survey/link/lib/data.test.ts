@@ -439,13 +439,12 @@ describe("data", () => {
 /**
  * ENG-1838. The link-survey page renders through a bundled `packages/surveys`, so this payload is
  * never version-skewed the way an embedded SDK bundle is — but the shape is still a contract the
- * renderer's recall and logic engines read, and it is the same two columns ENG-2404 will drop.
- *
- * This fails the moment `variables` / `hiddenFields` leave the select, which is exactly when someone
- * has to replace them with a projection derived from the EmbeddedData rows.
+ * renderer's recall and logic engines read. ENG-2404 dropped the two columns it came from, so
+ * `variables` / `hiddenFields` are now derived from the Embedded Data rows by `transformPrismaSurvey`
+ * (mocked in this file) — which makes the rows in the select the whole contract.
  */
 describe("legacy Embedded Data shape on the wire (ENG-1838)", () => {
-  test("the link-survey query asks for both legacy columns", async () => {
+  test("the link-survey query asks for the rows the legacy keys are derived from", async () => {
     vi.mocked(prisma.survey.findUnique).mockResolvedValue({ id: "survey-1" } as never);
     vi.mocked(transformPrismaSurvey).mockReturnValue({ id: "survey-1" } as never);
 
@@ -454,7 +453,31 @@ describe("legacy Embedded Data shape on the wire (ENG-1838)", () => {
     const [call] = vi.mocked(prisma.survey.findUnique).mock.calls;
     const select = (call[0] as { select: Record<string, unknown> }).select;
 
-    expect(select.variables).toBe(true);
-    expect(select.hiddenFields).toBe(true);
+    expect(select.embeddedDataLinks).toEqual(selectPublicSurveyEmbeddedDataLinks);
+  });
+
+  test("transformPrismaSurvey derives both legacy keys from those rows", async () => {
+    const actual = await vi.importActual<typeof import("@/modules/survey/lib/utils")>(
+      "@/modules/survey/lib/utils"
+    );
+    const survey = actual.transformPrismaSurvey<TSurvey>({
+      id: "survey-1",
+      embeddedDataLinks: [
+        {
+          storageKey: "plan",
+          embeddedData: {
+            key: null,
+            name: "plan",
+            source: "ingested",
+            dataType: "string",
+            defaultValue: null,
+            locked: false,
+          },
+        },
+      ],
+    });
+
+    expect(survey.variables).toEqual([]);
+    expect(survey.hiddenFields).toEqual({ enabled: true, fieldIds: ["plan"] });
   });
 });

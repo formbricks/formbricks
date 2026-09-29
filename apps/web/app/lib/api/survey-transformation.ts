@@ -539,7 +539,8 @@ export const withDerivedQuestions = <
  * versioned public contract and how Embedded Data is serialised is ENG-1838's call — so it does not
  * leak out ahead of that decision. The v1 write path is unaffected for the same reason from the
  * other side: `ZSurveyUpdateInput` omits the key, so a v1 PUT reaches `updateSurvey` carrying only
- * the legacy columns even though ENG-3228 made the key accepted input elsewhere.
+ * the legacy `variables` / `hiddenFields` even though ENG-3228 made the key accepted input
+ * elsewhere. Those two stay on the response: since ENG-2404 they are derived from the same rows.
  */
 export const withoutInternalSurveyProjections = <T extends { embeddedFields?: unknown }>(
   survey: T
