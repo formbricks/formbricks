@@ -49,10 +49,10 @@ jobs:
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Tailscale
-        uses: tailscale/github-action@84a3f23bb4d843bcf4da6cf824ec1be473daf4de # v3.2.3
+        uses: tailscale/github-action@d1b6cd204f8dceda5b3eaad7f1f767be390056cd # v4.2.0
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
@@ -60,7 +60,7 @@ jobs:
           args: --accept-routes
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@f24d7193d98baebaeacc7e2227925dd47cc267f5 # v4.2.0
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           role-to-assume: ${{ secrets.AWS_ASSUME_ROLE_ARN }}
           aws-region: "eu-central-1"
@@ -71,7 +71,7 @@ jobs:
         env:
           AWS_REGION: eu-central-1
 
-      - uses: helmfile/helmfile-action@712000e3d4e28c72778ecc53857746082f555ef3 # v2.0.4
+      - uses: helmfile/helmfile-action@614b4cd063ada10b87f668f6ffd35485bce0cac5 # v2.4.8
         name: Deploy Formbricks Cloud Production
         if: inputs.ENVIRONMENT == 'production'
         env:
@@ -89,7 +89,7 @@ jobs:
           helmfile-auto-init: "false"
           helmfile-workdirectory: infra/formbricks-cloud-helm
 
-      - uses: helmfile/helmfile-action@712000e3d4e28c72778ecc53857746082f555ef3 # v2.0.4
+      - uses: helmfile/helmfile-action@614b4cd063ada10b87f668f6ffd35485bce0cac5 # v2.4.8
         name: Deploy Formbricks Cloud Staging
         if: inputs.ENVIRONMENT == 'staging'
         env:

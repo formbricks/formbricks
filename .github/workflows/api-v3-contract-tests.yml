@@ -58,7 +58,7 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false # no later step needs git auth (dangerous-git-checkout re-auths)
       - uses: ./.github/actions/dangerous-git-checkout
@@ -79,11 +79,11 @@ jobs:
 
       - name: Install pnpm
         if: steps.harness.outputs.present == 'true'
-        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js (version from .nvmrc)
         if: steps.harness.outputs.present == 'true'
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: ".nvmrc"
           cache: pnpm
@@ -282,7 +282,7 @@ jobs:
 
       - name: Upload contract test report
         if: always() && steps.harness.outputs.present == 'true'
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: api-v3-contract-report
           if-no-files-found: ignore
@@ -292,7 +292,7 @@ jobs:
       # and an application log is the wrong thing to ship as an artifact on every green PR.
       - name: Upload app logs
         if: failure() && steps.harness.outputs.present == 'true'
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: api-v3-contract-app-logs
           if-no-files-found: ignore
