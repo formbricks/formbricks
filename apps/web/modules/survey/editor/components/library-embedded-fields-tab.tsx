@@ -25,6 +25,8 @@ interface LibraryEmbeddedFieldsTabProps {
   embeddedFields: readonly TLinkedEmbeddedField[];
   /** The survey's fields as stored — the baseline the clash guard grandfathers names against. */
   persistedFields: readonly TLinkedEmbeddedField[];
+  /** Ids already spoken for in the survey's namespace: its elements and ending cards. */
+  takenIds: readonly string[];
   onLink: (field: TLinkableSharedField) => void;
 }
 
@@ -37,9 +39,10 @@ interface LibraryEmbeddedFieldsTabProps {
  * is current rather than whatever it was when the editor loaded.
  *
  * **Which rows are offered is `listLinkableSharedFields`' answer, not this component's.** A row is
- * left out when the survey already links it, when its address is taken, or when adding it would put
- * one name in both the calculated and passed-in namespaces — the last of those decided by the same
- * guard, with the same grandfathering, that the save would apply.
+ * left out when the survey already links it, when its address is taken, when its name is an element
+ * or ending id, or when adding it would put one name in both the calculated and passed-in namespaces
+ * — the last of those decided by the same guard, with the same grandfathering, that the save would
+ * apply.
  *
  * Laid out like `SavedActionsTab`: a search box over a scrolling list of pickable rows, because it
  * is the same choice — take one that already exists, or switch to the tab that makes a new one.
@@ -48,6 +51,7 @@ export const LibraryEmbeddedFieldsTab = ({
   workspaceId,
   embeddedFields,
   persistedFields,
+  takenIds,
   onLink,
 }: Readonly<LibraryEmbeddedFieldsTabProps>) => {
   const { t } = useTranslation();
@@ -91,7 +95,7 @@ export const LibraryEmbeddedFieldsTab = ({
     );
   }
 
-  const linkable = listLinkableSharedFields({ library, embeddedFields, persistedFields });
+  const linkable = listLinkableSharedFields({ library, embeddedFields, persistedFields, takenIds });
   const term = search.trim().toLowerCase();
   const matches = term
     ? linkable.filter(

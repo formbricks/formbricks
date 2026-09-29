@@ -288,13 +288,16 @@ export const validateEmbeddedFieldDeclaredName = ({
 /**
  * The library rows this survey can still add, in library order.
  *
- * Three reasons one is not offered, and none of them is restated here:
+ * Four reasons one is not offered, and none of them is restated here:
  *
  * - it is **already linked** — matched on the row's id rather than its key, so a row renamed in the
  *   library still reads as the one the survey holds;
  * - its **address is taken** — `@@unique([surveyId, storageKey])` would refuse the link, and an
  *   ingested field's address is its library key, so a survey with a local `plan` cannot also link
  *   the library's `plan`;
+ * - its **name is an element or ending id** — the same `takenIds` a new local field is refused
+ *   against. For an ingested row the save would refuse it too (ENG-3142): the answer owns that
+ *   `response.data` key, so the field could never hold a value;
  * - it would **clash across the namespaces** — `validateNewDeclaredFields` against the survey as
  *   stored, which is the same call, with the same grandfathering, the save itself would make.
  */
@@ -302,16 +305,20 @@ export const listLinkableSharedFields = ({
   library,
   embeddedFields,
   persistedFields,
+  takenIds,
 }: {
   library: readonly TLinkableSharedField[];
   embeddedFields: readonly TLinkedEmbeddedField[];
   /** The survey's fields as stored — the baseline the server grandfathers names against. */
   persistedFields: readonly TLinkedEmbeddedField[];
+  /** Ids already spoken for in the survey's namespace: its elements and ending cards. */
+  takenIds: readonly string[];
 }): TLinkableSharedField[] => {
   const linkedRowIds = new Set(
     embeddedFields.filter(({ field }) => field.key !== null).map(({ field }) => field.id)
   );
   const takenStorageKeys = new Set(embeddedFields.map(({ link }) => link.storageKey));
+  const takenNames = new Set(takenIds.map((id) => id.toLowerCase()));
 
   return library.filter((row) => {
     if (linkedRowIds.has(row.id)) return false;
@@ -320,6 +327,7 @@ export const listLinkableSharedFields = ({
     if (takenStorageKeys.has(candidate.link.storageKey)) return false;
 
     const candidateName = declaredEmbeddedFieldName(candidate).toLowerCase();
+    if (takenNames.has(candidateName)) return false;
 
     // A duplicate *within* one namespace, which `validateNewDeclaredFields` cannot see: it compares
     // the variable namespace against the hidden-field one, and `namesByNamespace` builds each as a
