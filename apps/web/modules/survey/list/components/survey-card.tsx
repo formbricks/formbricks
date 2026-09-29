@@ -105,6 +105,73 @@ const MakeVisibleStrip = ({
   );
 };
 
+const SurveyNameCell = ({
+  name,
+  hasWorkspaceMarker,
+  workspaceName,
+}: Readonly<{ name: string; hasWorkspaceMarker: boolean; workspaceName: string }>) => {
+  const nameNode = <div className="w-full truncate">{name}</div>;
+  if (!hasWorkspaceMarker) return nameNode;
+  return <WorkspaceVisibilityMarker workspaceName={workspaceName}>{nameNode}</WorkspaceVisibilityMarker>;
+};
+
+const SurveyStatusPill = ({
+  status,
+  isArchived,
+  isScheduled,
+}: Readonly<{ status: TSurveyStatus; isArchived: boolean; isScheduled: boolean }>) => {
+  const { t } = useTranslation();
+  return (
+    <div
+      className={cn(
+        "col-span-1 flex w-fit items-center gap-2 rounded-full py-1 pr-2 pl-1 text-sm whitespace-nowrap text-slate-800",
+        isArchived && "bg-slate-100",
+        !isArchived && status === "inProgress" && "bg-emerald-50",
+        !isArchived && status === "completed" && "bg-slate-200",
+        !isArchived && status === "draft" && "bg-slate-100",
+        !isArchived && status === "paused" && "bg-slate-100"
+      )}>
+      {isArchived ? (
+        <>
+          <div className="rounded-full bg-slate-300 p-1">
+            <ArchiveIcon className="size-3 text-slate-600" />
+          </div>{" "}
+          {t("common.archived")}
+        </>
+      ) : (
+        <>
+          <SurveyStatusIndicator status={status} isScheduled={isScheduled} />{" "}
+          {getSurveyStatusLabel(status, isScheduled, t)}{" "}
+        </>
+      )}
+    </div>
+  );
+};
+
+const SurveyCreatorCell = ({
+  creatorName,
+  restrictedMarker,
+  workspaceName,
+}: Readonly<{
+  creatorName: string | null;
+  restrictedMarker: ReturnType<typeof getRestrictedRowMarker>;
+  workspaceName: string;
+}>) => {
+  if (!restrictedMarker) {
+    return (
+      <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
+        {creatorName ?? "-"}
+      </div>
+    );
+  }
+  return (
+    <div className="col-span-1 flex max-w-full items-center overflow-hidden text-sm whitespace-nowrap text-slate-600">
+      <span className="truncate">{creatorName ?? "-"}</span>
+      <RoleAccessMarker kind={restrictedMarker} workspaceName={workspaceName} />
+    </div>
+  );
+};
+
 export const SurveyCard = ({
   survey,
   publicDomain,
@@ -121,12 +188,10 @@ export const SurveyCard = ({
   updateSurveyVisibility,
   onVisibilityNotEnabled,
 }: Readonly<SurveyCardProps>) => {
-  const { t } = useTranslation();
   const { workspace } = useWorkspace();
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const isArchived = survey.archivedAt !== null;
   const isScheduled = !isArchived && survey.status === "paused" && survey.publishOn !== null;
-  const surveyStatusLabel = getSurveyStatusLabel(survey.status, isScheduled, t);
 
   const isSurveyCreationDeletionDisabled = isReadOnly;
 
@@ -168,37 +233,13 @@ export const SurveyCard = ({
         canMakeVisible && "rounded-b-none border-b-0"
       )}>
       <div className="col-span-2 flex max-w-full items-center justify-self-start text-sm font-medium text-slate-900">
-        {hasWorkspaceMarker ? (
-          <WorkspaceVisibilityMarker workspaceName={workspaceName}>
-            <div className="w-full truncate">{survey.name}</div>
-          </WorkspaceVisibilityMarker>
-        ) : (
-          <div className="w-full truncate">{survey.name}</div>
-        )}
+        <SurveyNameCell
+          name={survey.name}
+          hasWorkspaceMarker={hasWorkspaceMarker}
+          workspaceName={workspaceName}
+        />
       </div>
-      <div
-        className={cn(
-          "col-span-1 flex w-fit items-center gap-2 rounded-full py-1 pr-2 pl-1 text-sm whitespace-nowrap text-slate-800",
-          isArchived && "bg-slate-100",
-          !isArchived && survey.status === "inProgress" && "bg-emerald-50",
-          !isArchived && survey.status === "completed" && "bg-slate-200",
-          !isArchived && survey.status === "draft" && "bg-slate-100",
-          !isArchived && survey.status === "paused" && "bg-slate-100"
-        )}>
-        {isArchived ? (
-          <>
-            <div className="rounded-full bg-slate-300 p-1">
-              <ArchiveIcon className="size-3 text-slate-600" />
-            </div>{" "}
-            {t("common.archived")}
-          </>
-        ) : (
-          <>
-            <SurveyStatusIndicator status={survey.status} isScheduled={isScheduled} />{" "}
-            {surveyStatusLabel}{" "}
-          </>
-        )}
-      </div>
+      <SurveyStatusPill status={survey.status} isArchived={isArchived} isScheduled={isScheduled} />
       <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
         {survey.completedResponseCount}
       </div>
@@ -211,16 +252,11 @@ export const SurveyCard = ({
       <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
         {timeSince(survey.updatedAt.toString(), locale)}
       </div>
-      {restrictedMarker ? (
-        <div className="col-span-1 flex max-w-full items-center overflow-hidden text-sm whitespace-nowrap text-slate-600">
-          <span className="truncate">{survey.creator ? survey.creator.name : "-"}</span>
-          <RoleAccessMarker kind={restrictedMarker} workspaceName={workspaceName} />
-        </div>
-      ) : (
-        <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
-          {survey.creator ? survey.creator.name : "-"}
-        </div>
-      )}
+      <SurveyCreatorCell
+        creatorName={survey.creator?.name ?? null}
+        restrictedMarker={restrictedMarker}
+        workspaceName={workspaceName}
+      />
     </div>
   );
 
