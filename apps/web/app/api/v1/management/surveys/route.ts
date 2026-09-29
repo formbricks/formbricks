@@ -1,7 +1,7 @@
 import { logger } from "@formbricks/logger";
 import { ZSurveyCreateInputWithWorkspaceId } from "@formbricks/types/surveys/types";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
-import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
+import { checkSurveyWritePermissions } from "@/app/api/v1/management/surveys/lib/utils";
 import {
   addLegacyProjectOverwrites,
   addLegacyProjectOverwritesToList,
@@ -137,7 +137,10 @@ export const POST = withV1ApiWrapper({
         surveyData.questions = [];
       }
 
-      const featureCheckResult = await checkFeaturePermissions(surveyData, organization);
+      const featureCheckResult = await checkSurveyWritePermissions(surveyData, organization, {
+        workspacePermissions: authentication.workspacePermissions,
+        workspaceId,
+      });
       if (featureCheckResult) {
         return {
           response: featureCheckResult,

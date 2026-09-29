@@ -1,9 +1,14 @@
+import { TAPIKeyWorkspacePermission } from "@formbricks/types/auth";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TSurvey, TSurveyCreateInputWithWorkspaceId } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
+import {
+  CUSTOM_HEAD_SCRIPTS_PERMISSION_MESSAGE,
+  canApiKeyWriteCustomHeadScripts,
+} from "@/modules/survey/lib/custom-head-scripts-permission";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 
 export const checkFeaturePermissions = async (
@@ -67,4 +72,29 @@ export const checkFeaturePermissions = async (
   }
 
   return null;
+};
+
+/**
+ * Every permission a v1 survey write needs beyond the route's `workspace.write` check: the
+ * organization's feature entitlements, then `workspace.manage` for the API key when the write changes
+ * the survey's custom head scripts.
+ */
+export const checkSurveyWritePermissions = async (
+  surveyData: TSurveyCreateInputWithWorkspaceId,
+  organization: TOrganization,
+  apiKey: { workspacePermissions: TAPIKeyWorkspacePermission[]; workspaceId: string },
+  oldSurvey?: TSurvey
+): Promise<Response | null> => {
+  const featureCheckResult = await checkFeaturePermissions(surveyData, organization, oldSurvey);
+  if (featureCheckResult) {
+    return featureCheckResult;
+  }
+
+  const canWriteScripts = canApiKeyWriteCustomHeadScripts(
+    apiKey.workspacePermissions,
+    apiKey.workspaceId,
+    surveyData,
+    oldSurvey ?? null
+  );
+  return canWriteScripts ? null : responses.forbiddenResponse(CUSTOM_HEAD_SCRIPTS_PERMISSION_MESSAGE);
 };

@@ -35,7 +35,10 @@ const SurveyPage = async (
     return notFound();
   }
 
-  const { session, isReadOnly, workspace, organization } = await getSurveyAuth(params.workspaceId, surveyId);
+  const { session, isReadOnly, isOwner, isManager, hasManageAccess, workspace, organization } =
+    await getSurveyAuth(params.workspaceId, surveyId);
+  // The UI counterpart of `workspace.manage`, which survey head scripts require.
+  const canManage = isOwner || isManager || hasManageAccess;
 
   const survey = await getSurvey(params.surveyId);
 
@@ -76,6 +79,7 @@ const SurveyPage = async (
         cta={
           <SurveyAnalysisCTA
             isReadOnly={isReadOnly}
+            canManage={canManage}
             user={user}
             publicDomain={publicDomain}
             responseCount={initialSurveySummary?.meta.totalResponses ?? 0}
