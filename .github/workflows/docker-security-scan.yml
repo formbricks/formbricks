@@ -4,9 +4,15 @@ on:
   schedule:
     - cron: "0 2 * * *" # Daily at 2 AM UTC
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Docker Release to Github"]
-    types: [completed]
+  # Called by formbricks-release.yml once the community image is published, so a release is
+  # scanned by the digest it actually pushed rather than whatever `:latest` points at. Called
+  # workflows see the caller's github context, so github.ref/github.sha are the release tag.
+  workflow_call:
+    inputs:
+      image_ref:
+        description: "Image to scan, pinned by digest (e.g. ghcr.io/formbricks/formbricks@sha256:...)"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -29,22 +35,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Determine ref and commit for upload
-        id: gitref
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
-          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-        run: |
-          set -euo pipefail
-          if [[ "${EVENT_NAME}" == "workflow_run" ]]; then
-            echo "ref=refs/heads/${HEAD_BRANCH}" >> "$GITHUB_OUTPUT"
-            echo "sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
-          else
-            echo "ref=${GITHUB_REF}" >> "$GITHUB_OUTPUT"
-            echo "sha=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
-          fi
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
         with:
@@ -55,7 +45,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
-          image-ref: "ghcr.io/${{ github.repository }}:latest"
+          image-ref: ${{ inputs.image_ref || format('ghcr.io/{0}:latest', github.repository) }}
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH,MEDIUM,LOW"
@@ -66,6 +56,6 @@ jobs:
         if: ${{ always() && hashFiles('trivy-results.sarif') != '' }}
         with:
           sarif_file: "trivy-results.sarif"
-          ref: ${{ steps.gitref.outputs.ref }}
-          sha: ${{ steps.gitref.outputs.sha }}
+          ref: ${{ github.ref }}
+          sha: ${{ github.sha }}
           category: "trivy-container-scan"
