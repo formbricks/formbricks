@@ -4,10 +4,11 @@ import { CloseIcon } from "@/components/icons/close-icon";
 import { mixColor } from "@/lib/color";
 
 // Insets the close button's row from the card's rounded corner: a square inset by 0.3 × radius stays
-// inside the arc (the exact bound is 1 - 1/√2 ≈ 0.293). Capped at 24px so very large radii do not push the
-// header down indefinitely. Written out literally so Tailwind can detect it.
+// inside the arc (the exact bound is 1 - 1/√2 ≈ 0.293). A card never renders a radius above half its width,
+// so the inset is capped at 15% of the row width (0.3 × 50%) rather than growing with any configured value.
+// Written out literally so Tailwind can detect it.
 export const SURVEY_CLOSE_BUTTON_ROW_CLASS_NAME =
-  "pt-[clamp(4px,calc(var(--fb-border-radius)*0.3),24px)] pe-[clamp(4px,calc(var(--fb-border-radius)*0.3),24px)]";
+  "pt-[clamp(4px,calc(var(--fb-border-radius)*0.3),15%)] pe-[clamp(4px,calc(var(--fb-border-radius)*0.3),15%)]";
 
 interface SurveyCloseButtonProps {
   onClose?: () => void;
