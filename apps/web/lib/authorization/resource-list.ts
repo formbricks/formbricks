@@ -1,6 +1,7 @@
 import "server-only";
 import { performance } from "node:perf_hooks";
 import { cache as reactCache } from "react";
+import { prisma } from "@formbricks/database";
 import { getAuthzedClient } from "@/lib/authzed/client";
 import { assertAuthzedProjectionFreshness } from "@/lib/authzed/outbox-freshness";
 import { getAuthorizationSurface, recordAuthorizationCheckIssued } from "./context";
@@ -114,4 +115,27 @@ export const filterReadableSurveyIds = async (
     });
     throw normalized;
   }
+};
+
+/**
+ * Of `surveyIds`, the ones whose projection SpiceDB has not received yet: an undelivered outbox event
+ * still targets them. A survey created or copied a moment ago is readable to its owner in PostgreSQL
+ * but not yet in the graph, so a graph denial for one of these is lag, not a mismatch.
+ */
+export const findSurveyIdsAwaitingProjection = async (
+  surveyIds: ReadonlyArray<string>
+): Promise<ReadonlySet<string>> => {
+  if (surveyIds.length === 0) return new Set();
+
+  const rows = await prisma.authzedProjectionOutbox.findMany({
+    where: {
+      targetType: "survey",
+      primaryId: { in: [...surveyIds] },
+      processedAt: null,
+      deadLetteredAt: null,
+    },
+    select: { primaryId: true },
+    distinct: ["primaryId"],
+  });
+  return new Set(rows.map(({ primaryId }) => primaryId));
 };
