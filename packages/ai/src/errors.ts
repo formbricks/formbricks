@@ -45,7 +45,48 @@ export class AIOutputTokenLimitError extends Error {
   }
 }
 
+export type AIOAuthTokenErrorCode =
+  | "token_request_failed"
+  | "token_response_invalid"
+  | "token_endpoint_timeout"
+  | "token_endpoint_unreachable";
+
+const OAUTH_TOKEN_ERROR_MESSAGES: Record<AIOAuthTokenErrorCode, string> = {
+  token_request_failed: "OAuth2 token endpoint rejected the client credentials request",
+  token_response_invalid: "OAuth2 token endpoint returned a response without a usable bearer token",
+  token_endpoint_timeout: "OAuth2 token endpoint did not respond in time",
+  token_endpoint_unreachable: "OAuth2 token endpoint could not be reached",
+};
+
+/**
+ * Thrown when the OAuth2 client-credentials token for the AI provider cannot be obtained.
+ *
+ * This error is a secret-hygiene boundary: error reporters (PostHog's `serializeError` among them)
+ * walk every own key and follow `cause`, redacting nothing. So it carries only enumerated,
+ * non-secret scalars — a fixed message, a code, the HTTP status and the token endpoint's host —
+ * and deliberately never sets `cause` or holds the response body, client id, secret or token.
+ */
+export class AIOAuthTokenError extends Error {
+  readonly code: AIOAuthTokenErrorCode;
+  readonly statusCode?: number;
+  /** Host of the token endpoint only — no path or query, which some gateways use for tenant ids. */
+  readonly tokenUrlHost: string;
+
+  constructor(
+    code: AIOAuthTokenErrorCode,
+    { statusCode, tokenUrlHost }: { statusCode?: number; tokenUrlHost: string }
+  ) {
+    super(OAUTH_TOKEN_ERROR_MESSAGES[code]);
+    this.name = "AIOAuthTokenError";
+    this.code = code;
+    this.statusCode = statusCode;
+    this.tokenUrlHost = tokenUrlHost;
+  }
+}
+
 export interface AIProviderErrorInfo {
+  /** The provider (or its OAuth2 token endpoint) rejected this instance's credentials. */
+  isAuthFailure: boolean;
   /** Provider returned HTTP 429 — quota / rate limit exhausted. */
   isQuotaExhausted: boolean;
   /** Whether the underlying call is worth retrying later. */
@@ -71,6 +112,7 @@ const parseRetryAfterSeconds = (headers?: Record<string, string>): number | unde
 const buildInfo = (error: APICallError): AIProviderErrorInfo => {
   const isQuotaExhausted = error.statusCode === 429;
   return {
+    isAuthFailure: error.statusCode === 401 || error.statusCode === 403,
     isQuotaExhausted,
     // A 429 is always worth retrying later, even if the SDK didn't flag the call retryable.
     isRetryable: isQuotaExhausted || error.isRetryable,
@@ -88,6 +130,15 @@ const buildInfo = (error: APICallError): AIProviderErrorInfo => {
  * `AIProviderErrorInfo` shape without importing the SDK directly.
  */
 export const classifyAIProviderError = (error: unknown): AIProviderErrorInfo | undefined => {
+  if (error instanceof AIOAuthTokenError) {
+    return {
+      isAuthFailure: true,
+      isQuotaExhausted: false,
+      isRetryable: false,
+      ...(error.statusCode === undefined ? {} : { statusCode: error.statusCode }),
+    };
+  }
+
   if (APICallError.isInstance(error)) {
     return buildInfo(error);
   }
@@ -101,7 +152,11 @@ export const classifyAIProviderError = (error: unknown): AIProviderErrorInfo | u
     if (apiError) {
       return buildInfo(apiError);
     }
-    return { isQuotaExhausted: false, isRetryable: error.reason === "maxRetriesExceeded" };
+    return {
+      isAuthFailure: false,
+      isQuotaExhausted: false,
+      isRetryable: error.reason === "maxRetriesExceeded",
+    };
   }
 
   return undefined;
