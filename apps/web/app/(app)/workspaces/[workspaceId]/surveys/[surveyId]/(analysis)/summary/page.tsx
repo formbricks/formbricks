@@ -38,7 +38,10 @@ const SurveyPage = async (
     return notFound();
   }
 
-  const { session, isReadOnly, workspace, organization } = await getSurveyAuth(params.workspaceId, surveyId);
+  const { session, isReadOnly, canManage, workspace, organization } = await getSurveyAuth(
+    params.workspaceId,
+    surveyId
+  );
 
   const survey = await getSurvey(params.surveyId);
 
@@ -82,6 +85,7 @@ const SurveyPage = async (
         cta={
           <SurveyAnalysisCTA
             isReadOnly={isReadOnly}
+            canManage={canManage}
             user={user}
             publicDomain={publicDomain}
             responseCount={initialSurveySummary?.meta.totalResponses ?? 0}

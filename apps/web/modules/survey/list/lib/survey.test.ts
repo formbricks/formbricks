@@ -5,7 +5,8 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { TActionClassType } from "@formbricks/types/action-classes";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { can } from "@/lib/authorization";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
@@ -40,6 +41,10 @@ vi.mock("@/lib/survey/utils", () => ({
 
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
+}));
+
+vi.mock("@/lib/authorization", () => ({
+  can: vi.fn(),
 }));
 
 vi.mock("@/lib/organization/service", () => ({
@@ -146,6 +151,8 @@ const resetMocks = () => {
   vi.mocked(prisma.actionClass.findMany).mockReset();
   vi.mocked(getQuotas).mockReset();
   vi.mocked(logger.error).mockClear();
+  vi.mocked(can).mockReset();
+  vi.mocked(can).mockResolvedValue(true);
 
   // copySurveyToOtherWorkspace wraps its writes in a transaction (ENG-1978) so the survey and its
   // Embedded Data rows land together. Reset first like every mock above — otherwise the call history
@@ -419,6 +426,34 @@ describe("copySurveyToOtherWorkspace", () => {
         }),
       })
     );
+  });
+
+  test("refuses to carry head scripts into a workspace the user cannot manage", async () => {
+    mockSourceSurvey({ customHeadScripts: "<script>analytics()</script>", customHeadScriptsMode: "add" });
+    vi.mocked(can).mockResolvedValue(false);
+
+    await expect(
+      copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId)
+    ).rejects.toThrow(OperationNotAllowedError);
+
+    expect(can).toHaveBeenCalledWith({ type: "user", id: userId }, "workspace.manage", {
+      type: "workspace",
+      id: targetWorkspaceId,
+    });
+    expect(prisma.survey.create).not.toHaveBeenCalled();
+  });
+
+  test("duplicates a survey with head scripts in its own workspace without Manage access", async () => {
+    // The scripts were already approved for this workspace, so a Read & write member can duplicate.
+    vi.mocked(getWorkspaceWithLanguages).mockReset();
+    vi.mocked(getWorkspaceWithLanguages).mockResolvedValue(mockSourceWorkspace);
+    mockSourceSurvey({ customHeadScripts: "<script>analytics()</script>", customHeadScriptsMode: "add" });
+    vi.mocked(can).mockResolvedValue(false);
+
+    await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, sourceWorkspaceId, userId);
+
+    expect(can).not.toHaveBeenCalled();
+    expect(prisma.survey.create).toHaveBeenCalled();
   });
 
   test("accounts for every Survey column, so a new one cannot be dropped silently", async () => {

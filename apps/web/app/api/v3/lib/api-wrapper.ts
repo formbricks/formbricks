@@ -12,8 +12,10 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { TAuditAction, TAuditTarget } from "@/modules/ee/audit-logs/types/audit-log";
+import { arrayBudgetInvalidParam, findArrayBudgetViolation } from "./array-budget";
 import { buildV3AuditLog, queueV3AuditLog } from "./audit";
 import { mapV3ThrownError } from "./errors";
+import { BoundedInvalidParams } from "./invalid-params";
 import {
   type InvalidParam,
   isInvalidParamCode,
@@ -125,24 +127,35 @@ function expandUnrecognizedKeys(issue: z.core.$ZodIssue, fallbackName: string): 
  * Exported because `POST /api/v3/responses/validate` reports problems *inside* its payload as a 200
  * body rather than a 400, and those params have to be the ones the real write would have produced —
  * a second formatter would let the dry run describe the same rejection differently.
+ *
+ * Bounded to `V3_INVALID_PARAMS_MAX` entries plus a summary: the issue list is caller-shaped (one per
+ * offending array element, one per unknown key), so an unbounded list is a response amplifier.
  */
 export function formatZodIssues(error: z.ZodError, fallbackName: string): InvalidParam[] {
-  return error.issues.flatMap((issue) => {
+  const invalidParams = new BoundedInvalidParams();
+
+  for (const issue of error.issues) {
     if (issue.code === "unrecognized_keys") {
-      return expandUnrecognizedKeys(issue, fallbackName);
+      // Pushed one by one so the cap counts keys, not issues; the expansion is itself bounded.
+      for (const param of expandUnrecognizedKeys(issue, fallbackName)) {
+        invalidParams.push(() => param);
+      }
+      continue;
     }
 
-    const params = "params" in issue && isPlainObject(issue.params) ? issue.params : {};
-    const code = isInvalidParamCode(params.code) ? params.code : undefined;
+    invalidParams.push(() => {
+      const params = "params" in issue && isPlainObject(issue.params) ? issue.params : {};
+      const code = isInvalidParamCode(params.code) ? params.code : undefined;
 
-    return [
-      {
+      return {
         name: issue.path.length > 0 ? issue.path.join(".") : fallbackName,
         reason: issue.message,
         ...(code ? { code } : {}),
-      },
-    ];
-  });
+      };
+    });
+  }
+
+  return invalidParams.report(fallbackName, "request");
 }
 
 type TV3InputParseFailure = {
@@ -226,6 +239,112 @@ async function authenticateV3Request(req: NextRequest, authMode: TV3AuthMode): P
   return null;
 }
 
+function invalidBodyFailure(
+  invalidParams: InvalidParam[],
+  requestId: string,
+  instance: string
+): TV3InputParseFailure {
+  return {
+    ok: false,
+    detail: "Invalid request body",
+    invalidParams,
+    response: problemBadRequest(requestId, "Invalid request body", {
+      instance,
+      invalid_params: invalidParams,
+    }),
+  };
+}
+
+function bodyTooLargeFailure(
+  error: RequestBodyTooLargeError,
+  requestId: string,
+  instance: string
+): TV3InputParseFailure {
+  return {
+    ok: false,
+    detail: error.message,
+    invalidParams: [],
+    response: problemPayloadTooLarge(requestId, error.message, instance),
+  };
+}
+
+/**
+ * The array budget, checked before any schema sees the body: an oversized array would otherwise cost
+ * one Zod issue per element (ENG-3384), and this covers arrays a schema types as `unknown` or
+ * `z.record` too.
+ */
+function arrayBudgetFailure(
+  bodyData: unknown,
+  requestId: string,
+  instance: string
+): TV3InputParseFailure | null {
+  const violation = findArrayBudgetViolation(bodyData);
+  return violation
+    ? invalidBodyFailure([arrayBudgetInvalidParam(violation, "body")], requestId, instance)
+    : null;
+}
+
+/** The body step of `parseV3Input`: read within the byte limit, check the array budget, then parse. */
+async function parseV3Body(
+  req: NextRequest,
+  schema: TV3Schema,
+  requestId: string,
+  instance: string
+): Promise<{ ok: true; body: unknown } | TV3InputParseFailure> {
+  let bodyData: unknown;
+  try {
+    bodyData = await parseJsonBodyWithLimit(req);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return bodyTooLargeFailure(error, requestId, instance);
+    }
+
+    return invalidBodyFailure(
+      [{ name: "body", reason: "Malformed JSON input, please check your request body" }],
+      requestId,
+      instance
+    );
+  }
+
+  const budgetFailure = arrayBudgetFailure(bodyData, requestId, instance);
+  if (budgetFailure) {
+    return budgetFailure;
+  }
+
+  const bodyResult = schema.safeParse(bodyData);
+  if (!bodyResult.success) {
+    return invalidBodyFailure(formatZodIssues(bodyResult.error, "body"), requestId, instance);
+  }
+
+  return { ok: true, body: bodyResult.data };
+}
+
+/**
+ * The same byte limit and array budget for a route that declares no body schema but hands `req` to a
+ * handler that reads it — the workflows family delegates its bodies to `packages/workflows`, whose
+ * reader buffers the whole body before it measures it and answers 400 rather than 413. The checks run
+ * on a clone so the handler's own stream stays intact; a body that is not JSON is left to the handler,
+ * which owns that error.
+ */
+async function preflightUndeclaredBody(
+  req: NextRequest,
+  requestId: string,
+  instance: string
+): Promise<TV3InputParseFailure | null> {
+  if (req.method === "GET" || req.method === "HEAD" || req.body === null) {
+    return null;
+  }
+
+  let bodyData: unknown;
+  try {
+    bodyData = await parseJsonBodyWithLimit(req.clone());
+  } catch (error) {
+    return error instanceof RequestBodyTooLargeError ? bodyTooLargeFailure(error, requestId, instance) : null;
+  }
+
+  return arrayBudgetFailure(bodyData, requestId, instance);
+}
+
 async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
   req: NextRequest,
   props: TProps,
@@ -236,49 +355,17 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
   const parsedInput = {} as TV3ParsedInput<S>;
 
   if (schemas?.body) {
-    let bodyData: unknown;
-
-    try {
-      bodyData = await parseJsonBodyWithLimit(req);
-    } catch (error) {
-      if (error instanceof RequestBodyTooLargeError) {
-        return {
-          ok: false,
-          detail: error.message,
-          invalidParams: [],
-          response: problemPayloadTooLarge(requestId, error.message, instance),
-        };
-      }
-
-      const invalidParams = [
-        { name: "body", reason: "Malformed JSON input, please check your request body" },
-      ];
-      return {
-        ok: false,
-        detail: "Invalid request body",
-        invalidParams,
-        response: problemBadRequest(requestId, "Invalid request body", {
-          instance,
-          invalid_params: invalidParams,
-        }),
-      };
+    const bodyResult = await parseV3Body(req, schemas.body, requestId, instance);
+    if (!bodyResult.ok) {
+      return bodyResult;
     }
 
-    const bodyResult = schemas.body.safeParse(bodyData);
-    if (!bodyResult.success) {
-      const invalidParams = formatZodIssues(bodyResult.error, "body");
-      return {
-        ok: false,
-        detail: "Invalid request body",
-        invalidParams,
-        response: problemBadRequest(requestId, "Invalid request body", {
-          instance,
-          invalid_params: invalidParams,
-        }),
-      };
+    parsedInput.body = bodyResult.body as TV3ParsedInput<S>["body"];
+  } else {
+    const preflightFailure = await preflightUndeclaredBody(req, requestId, instance);
+    if (preflightFailure) {
+      return preflightFailure;
     }
-
-    parsedInput.body = bodyResult.data as TV3ParsedInput<S>["body"];
   }
 
   if (schemas?.query) {
@@ -481,11 +568,14 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
 
       const parsedInputResult = await parseV3Input(req, props, schemas, requestId, instance);
       if (!parsedInputResult.ok) {
+        // The count and the first few names, never the array: it is as long as the caller made it,
+        // and a `reason` can echo caller input (ENG-3384).
         log.warn(
           {
             statusCode: parsedInputResult.response.status,
             detail: parsedInputResult.detail,
-            invalidParams: parsedInputResult.invalidParams,
+            invalidParamCount: parsedInputResult.invalidParams.length,
+            invalidParamNames: parsedInputResult.invalidParams.slice(0, 5).map((param) => param.name),
           },
           "V3 API request validation failed"
         );

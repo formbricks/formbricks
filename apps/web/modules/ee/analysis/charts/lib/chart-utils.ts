@@ -327,22 +327,41 @@ const AXIS_CHAR_WIDTH_WIDE = 7;
  * which measures the space between two neighbouring labels. */
 export const AXIS_TICK_GAP = 8;
 
-/** Ceiling (px) for the category gutter: wide enough for a short question label, capped so the bars
- * keep most of the plot. Longer labels are cut inside it (see `truncateLabelToBox`).
- *
- * Flat, not a share of the chart's width: a gutter that grows after recharts has computed its plot
- * offset leaves the label box and the plot disagreeing about where the gutter ends, and the labels
- * paint under the bars. Scaling it with the chart is worth doing (ENG-3223) but needs the axis
- * width settled before recharts lays the chart out, not after. */
-export const CATEGORY_AXIS_MAX_WIDTH = 160;
+/** Share of the chart's width the category gutter may claim at most, so the bars keep the clear
+ * majority of the plot however long the labels run. Labels longer than that share are cut inside
+ * the gutter (see `truncateLabelToBox`). */
+export const CATEGORY_AXIS_MAX_SHARE = 1 / 3;
+/** Least ceiling (px) for the category gutter: what the share above may never cut below, so a
+ * narrow dashboard widget keeps the gutter it always had, and what the gutter caps at while the
+ * chart's width is not known yet (the server render and the responsive container's first pass).
+ * Wide enough for a short question label; longer labels are cut inside it. */
+export const CATEGORY_AXIS_MIN_CEILING = 160;
 /** Floor (px), so a one-character label still has a readable gutter. */
 export const CATEGORY_AXIS_MIN_WIDTH = 28;
 
-/** Width (px) for the left-hand category gutter of a flipped bar chart, from the labels present. */
-export const getCategoryAxisWidth = (labels: string[]): number => {
+/**
+ * Width (px) for the left-hand category gutter of a flipped bar chart: what the longest label
+ * needs, capped at `CATEGORY_AXIS_MAX_SHARE` of the chart's width or `CATEGORY_AXIS_MIN_CEILING`,
+ * whichever is more.
+ *
+ * The cap scales with the chart because the gutter is the half that needs the room: widening a chart
+ * from a dashboard widget to the full-screen editor used to hand every new pixel to bars that were
+ * already legible while the labels stayed cut at the same point (ENG-3223). It never claims more
+ * than the longest label needs, so short labels keep a narrow gutter on any chart, and it never
+ * drops below the flat ceiling it used to have, so narrow widgets read exactly as before.
+ *
+ * `chartWidth` has to be the width recharts is about to lay the chart out with — the tick boxes and
+ * the plot offset are both derived from this number in the same render, so a width that arrives
+ * later leaves the two disagreeing about where the gutter ends and the labels paint under the bars.
+ * Unknown (`undefined`, non-finite or non-positive) means the flat ceiling alone.
+ */
+export const getCategoryAxisWidth = (labels: string[], chartWidth?: number): number => {
   const longest = labels.reduce((max, label) => Math.max(max, label.length), 0);
   const needed = Math.ceil(longest * AXIS_CHAR_WIDTH) + AXIS_TICK_GAP * 2;
-  return Math.min(CATEGORY_AXIS_MAX_WIDTH, Math.max(CATEGORY_AXIS_MIN_WIDTH, needed));
+  const measured = chartWidth !== undefined && Number.isFinite(chartWidth) && chartWidth > 0;
+  const share = measured ? Math.floor(chartWidth * CATEGORY_AXIS_MAX_SHARE) : 0;
+  const ceiling = Math.max(CATEGORY_AXIS_MIN_CEILING, share);
+  return Math.min(ceiling, Math.max(CATEGORY_AXIS_MIN_WIDTH, needed));
 };
 
 // ── Wrapped axis label sizing ─────────────────────────────────────────────────

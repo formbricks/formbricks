@@ -9,6 +9,8 @@ import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 
 const VALUE_ID_DIMENSION = "FeedbackRecords.valueId";
+const VALUE_TEXT_DIMENSION = "FeedbackRecords.valueText";
+const FIELD_ID_DIMENSION = "FeedbackRecords.fieldId";
 
 // ── Option-id resolution helpers ──────────────────────────────────────────────
 
@@ -41,6 +43,15 @@ type TSurveyLoader = (surveyId: string) => Promise<Awaited<ReturnType<typeof get
 export interface TOptionGroupingResult {
   rewrittenQuery: TChartQuery;
   optionLabels?: Record<string, string>;
+  /** Matrix row field_id → statement, in survey order. See `collectMatrixRowLabels`. */
+  fieldLabels?: Record<string, string>;
+  /**
+   * Whether the filters pinned the maps to particular questions. A pinned map describes exactly
+   * the question(s) the chart is about, so it is shipped whole — which is what lets a matrix show a
+   * scale point nobody picked as 0% instead of dropping the column. An unpinned map was built from
+   * the whole workspace and is pruned to the rows returned (see `pruneOptionLabels`).
+   */
+  pinned?: boolean;
 }
 
 /** Dedupe survey loads so we only call getSurvey once per distinct surveyId within one resolve. */
@@ -55,9 +66,20 @@ const createSurveyLoader = (): TSurveyLoader => {
 };
 
 /** Every mapping in the workspace, flattened across feedback sources. */
-const getWorkspaceMappings = async (workspaceId: string): Promise<TMappingRef[]> => {
+/**
+ * Every mapping of the workspace's feedback sources that feed `feedbackDirectoryId` — the directory
+ * the chart reads. A source feeding another directory never contributes rows to this chart, so its
+ * labels must not either: pinned maps ship whole, and the matrix chart draws every statement and
+ * scale point in them.
+ */
+const getDirectoryMappings = async (
+  workspaceId: string,
+  feedbackDirectoryId: string
+): Promise<TMappingRef[]> => {
   const feedbackSources = await getFeedbackSourcesWithMappings(workspaceId);
-  return feedbackSources.flatMap((source) => source.formbricksMappings);
+  return feedbackSources
+    .filter((source) => source.feedbackDirectoryId === feedbackDirectoryId)
+    .flatMap((source) => source.formbricksMappings);
 };
 
 /**
@@ -177,103 +199,190 @@ const collectOptionLabels = (
   }
 };
 
-/** Resolve each mapping to its element and merge every option label it can produce. */
-const buildOptionLabels = async (
+/**
+ * Add a matrix element's row field_ids → default-language statement to `into`, in survey order.
+ *
+ * A matrix answer is stored as one record per row with `field_id = ${elementId}__${rowId}` and the
+ * statement as `field_label` (see transform.ts). Grouping by the stable field_id keeps one row per
+ * statement across languages; this map gives those ids back their text and their survey order.
+ */
+const collectMatrixRowLabels = (
+  element: { id: string; type: string; rows?: unknown },
+  into: Record<string, string>
+): void => {
+  if (element.type !== TSurveyElementTypeEnum.Matrix || !Array.isArray(element.rows)) return;
+  for (const row of element.rows as { id: string; label: TSurveyElementChoice["label"] }[]) {
+    into[`${element.id}__${row.id}`] ??= getChoiceLabelDefault(row);
+  }
+};
+
+/** Resolve each mapping to its element and merge every option (and matrix row) label it can produce. */
+const buildLabelMaps = async (
   mappings: TMappingRef[],
   loadSurvey: TSurveyLoader,
   attributable: boolean
-): Promise<Record<string, string>> => {
+): Promise<{ optionLabels: Record<string, string>; fieldLabels: Record<string, string> }> => {
   const optionLabels: Record<string, string> = {};
+  const fieldLabels: Record<string, string> = {};
   for (const mapping of mappings) {
     const survey = await loadSurvey(mapping.surveyId);
     if (!survey) continue;
     const element = getElementsFromBlocks(survey.blocks).find((el) => el.id === mapping.elementId);
     if (!element) continue;
     collectOptionLabels(element, optionLabels, attributable);
+    collectMatrixRowLabels(element, fieldLabels);
   }
-  return optionLabels;
+  return { optionLabels, fieldLabels };
 };
 
 /**
- * Ship only the labels a `Value (Option)` grouping actually renders. The map behind it can be
- * built from every mapping in the workspace (see below), and the caller has already narrowed the
- * rows to the feedback directory the viewer may read — so pruning against those rows keeps
- * unrelated surveys' option labels out of the response and off the wire. Groupings that do not
- * carry a value_id pass through untouched; the renderer never consults the map for them.
+ * Keep the entries of `labels` whose key appears under `dimension` in `rows`, in the map's own
+ * order — the map is built in survey order (scale points left to right, statements top to bottom),
+ * and that order is what the matrix chart lays its grid out by.
  */
-export const pruneOptionLabels = (
-  query: TChartQuery,
+const pruneLabelMap = (
+  labels: Record<string, string>,
   rows: Record<string, unknown>[],
-  optionLabels: Record<string, string> | undefined
+  dimension: string
 ): Record<string, string> | undefined => {
-  if (!optionLabels || !(query.dimensions ?? []).includes(VALUE_ID_DIMENSION)) {
-    return optionLabels;
-  }
-
-  const used: Record<string, string> = {};
-  for (const row of rows) {
-    const valueId = row[VALUE_ID_DIMENSION];
-    if (typeof valueId === "string" && optionLabels[valueId] !== undefined) {
-      used[valueId] = optionLabels[valueId];
-    }
-  }
+  const present = new Set(rows.map((row) => row[dimension]).filter((v) => typeof v === "string"));
+  const used = Object.fromEntries(Object.entries(labels).filter(([key]) => present.has(key)));
   return Object.keys(used).length > 0 ? used : undefined;
 };
 
 /**
- * When a query groups by either `FeedbackRecords.valueText` or `FeedbackRecords.valueId`, attach a
- * `{ [value_id]: defaultLabel }` map so the renderer can show human-readable option labels instead
- * of the raw choice ids stored in `value_id`. The dimension the user picked is never rewritten:
- * choice records store one row per option with its own value_id (see transform.ts), so valueText
- * and valueId both group correctly on their own.
+ * Ship only the labels a grouping actually renders. The map behind it can be built from every
+ * mapping in the workspace (see below), and the caller has already narrowed the rows to the feedback
+ * directory the viewer may read — so pruning against those rows keeps unrelated surveys' labels out
+ * of the response and off the wire. Groupings that do not carry the map's key pass through
+ * untouched; the renderer never consults the map for them.
+ *
+ * A `pinned` map is shipped whole: it only describes the question(s) the filters named, and the
+ * matrix chart needs its unanswered scale points and statements to draw them as 0% rather than
+ * leave them out. The map's order is kept either way.
+ */
+export const pruneOptionLabels = (
+  query: TChartQuery,
+  rows: Record<string, unknown>[],
+  optionLabels: Record<string, string> | undefined,
+  pinned = false
+): Record<string, string> | undefined => {
+  if (!optionLabels || pinned || !(query.dimensions ?? []).includes(VALUE_ID_DIMENSION)) {
+    return optionLabels;
+  }
+  return pruneLabelMap(optionLabels, rows, VALUE_ID_DIMENSION);
+};
+
+/** The `fieldLabels` counterpart of {@link pruneOptionLabels}, keyed by `FeedbackRecords.fieldId`. */
+export const pruneFieldLabels = (
+  query: TChartQuery,
+  rows: Record<string, unknown>[],
+  fieldLabels: Record<string, string> | undefined,
+  pinned = false
+): Record<string, string> | undefined => {
+  if (!fieldLabels || pinned || !(query.dimensions ?? []).includes(FIELD_ID_DIMENSION)) {
+    return fieldLabels;
+  }
+  return pruneLabelMap(fieldLabels, rows, FIELD_ID_DIMENSION);
+};
+
+/**
+ * The mappings the query's filters pin it to: a `fieldId equals` filter first, else a `fieldLabel`
+ * or `fieldGroupLabel equals` filter. Empty when the filters name no question.
+ */
+const resolvePinnedMappings = async (
+  filters: TCubeFilter[],
+  workspaceMappings: TMappingRef[],
+  loadSurvey: TSurveyLoader
+): Promise<TMappingRef[]> => {
+  const fieldId = extractMemberEqualsValue(filters, "FeedbackRecords.fieldId");
+  if (fieldId) return resolveMappingsByFieldId(fieldId, workspaceMappings);
+
+  const labelFilter =
+    extractMemberEqualsValue(filters, "FeedbackRecords.fieldLabel") ??
+    extractMemberEqualsValue(filters, "FeedbackRecords.fieldGroupLabel");
+  return labelFilter ? resolveMappingsByFieldLabel(labelFilter, workspaceMappings, loadSurvey) : [];
+};
+
+/**
+ * A `fieldId equals <elementId>__<rowId>` filter pins the whole matrix question (see
+ * `resolveMappingsByFieldId`), but only that one statement can come back. Pinned maps ship whole, so
+ * keep just the filtered row — otherwise the matrix chart draws every other statement as empty.
+ */
+const narrowToFilteredRow = (
+  fieldLabels: Record<string, string>,
+  filters: TCubeFilter[]
+): Record<string, string> => {
+  const fieldId = extractMemberEqualsValue(filters, "FeedbackRecords.fieldId");
+  if (!fieldId || fieldLabels[fieldId] === undefined) return fieldLabels;
+  return { [fieldId]: fieldLabels[fieldId] };
+};
+
+/**
+ * Both label maps of a resolved grouping, pruned to what the rows need (see `pruneOptionLabels`).
+ * Spread into a query response; absent maps are left out rather than sent as undefined.
+ */
+export const pruneChartLabels = (
+  grouping: TOptionGroupingResult,
+  rows: Record<string, unknown>[]
+): { optionLabels?: Record<string, string>; fieldLabels?: Record<string, string> } => {
+  const { rewrittenQuery, pinned } = grouping;
+  const optionLabels = pruneOptionLabels(rewrittenQuery, rows, grouping.optionLabels, pinned);
+  const fieldLabels = pruneFieldLabels(rewrittenQuery, rows, grouping.fieldLabels, pinned);
+  return { ...(optionLabels ? { optionLabels } : {}), ...(fieldLabels ? { fieldLabels } : {}) };
+};
+
+/**
+ * When a query groups by `FeedbackRecords.valueText`, `FeedbackRecords.valueId` or
+ * `FeedbackRecords.fieldId`, attach label maps so the renderer can show human-readable text instead
+ * of the raw ids stored in the record:
+ * - `optionLabels`: `{ [value_id]: defaultLabel }` for choice and matrix-column ids;
+ * - `fieldLabels`: `{ [field_id]: statement }` for matrix rows (`${elementId}__${rowId}`).
+ *
+ * The dimension the user picked is never rewritten: choice records store one row per option with
+ * its own value_id (see transform.ts), so valueText and valueId both group correctly on their own.
  *
  * Which mappings contribute labels:
  * - a `FeedbackRecords.fieldId equals <id>` filter pins the mapping directly (matching the
  *   `${elementId}__${optionId}` form multi-select and matrix records use as well);
- * - otherwise a `FeedbackRecords.fieldLabel equals <label>` filter matches every mapping whose
- *   effective label is that string — several surveys may ask the same question, and all of them
- *   contribute;
- * - when the filters pin nothing and the chart groups by valueId, every mapping in the workspace
- *   contributes. Grouping by valueId with no resolvable label map is exactly the case that renders
- *   bare cuids (ENG-3140), and option ids are cuids, so a wider map cannot mislabel a bucket — with
- *   the one exception of the shared `"other"` id, which falls back to a generic label there rather
- *   than borrowing whichever survey was read first.
+ * - otherwise a `FeedbackRecords.fieldLabel equals <label>` or `FeedbackRecords.fieldGroupLabel
+ *   equals <label>` filter matches every mapping whose effective label is that string — several
+ *   surveys may ask the same question, and all of them contribute. A matrix's group label is its
+ *   headline (or custom label), which is exactly the effective label, so the matrix chart's recipe
+ *   pins its question this way;
+ * - when the filters pin nothing and the chart groups by valueId or fieldId, every mapping in the
+ *   workspace contributes. Grouping by valueId with no resolvable label map is exactly the case that
+ *   renders bare cuids (ENG-3140), and option and element ids are cuids, so a wider map cannot
+ *   mislabel a bucket — with the one exception of the shared `"other"` id, which falls back to a
+ *   generic label there rather than borrowing whichever survey was read first.
  *   A valueText grouping is readable on its own and does not pay for that widening.
  *
- * Returns `{ rewrittenQuery, optionLabels }`. `rewrittenQuery` is always the original query
- * (kept for caller symmetry); `optionLabels` is omitted when no mapped element carries option ids.
+ * `rewrittenQuery` is always the original query (kept for caller symmetry); each map is omitted
+ * when no mapped element produces an entry for it.
  */
 export async function resolveOptionGrouping(
   query: TChartQuery,
-  workspaceId: string
+  workspaceId: string,
+  feedbackDirectoryId: string
 ): Promise<TOptionGroupingResult> {
   const dimensions = query.dimensions ?? [];
-  const hasValueText = dimensions.includes("FeedbackRecords.valueText");
+  const hasValueText = dimensions.includes(VALUE_TEXT_DIMENSION);
   const hasValueId = dimensions.includes(VALUE_ID_DIMENSION);
-  if (!hasValueText && !hasValueId) {
+  const hasFieldId = dimensions.includes(FIELD_ID_DIMENSION);
+  if (!hasValueText && !hasValueId && !hasFieldId) {
     return { rewrittenQuery: query };
   }
 
-  const fieldId = extractMemberEqualsValue(query.filters ?? [], "FeedbackRecords.fieldId");
-  const fieldLabelFilter = fieldId
-    ? undefined
-    : extractMemberEqualsValue(query.filters ?? [], "FeedbackRecords.fieldLabel");
-
-  const workspaceMappings = await getWorkspaceMappings(workspaceId);
+  const workspaceMappings = await getDirectoryMappings(workspaceId, feedbackDirectoryId);
   const loadSurvey = createSurveyLoader();
 
-  let mappings: TMappingRef[] = [];
-  if (fieldId) {
-    mappings = resolveMappingsByFieldId(fieldId, workspaceMappings);
-  } else if (fieldLabelFilter) {
-    mappings = await resolveMappingsByFieldLabel(fieldLabelFilter, workspaceMappings, loadSurvey);
-  }
+  let mappings = await resolvePinnedMappings(query.filters ?? [], workspaceMappings, loadSurvey);
 
-  // Nothing pinned down, but the chart is grouping by the raw option id: label from the whole
-  // workspace rather than leaving the ids bare. The map is then not attributable to one question,
-  // which decides how the shared "other" bucket is labelled (see `collectOptionLabels`).
+  // Nothing pinned down, but the chart is grouping by a raw id: label from every question in the
+  // chart's directory rather than leaving the ids bare. The map is then not attributable to one question, which
+  // decides how the shared "other" bucket is labelled (see `collectOptionLabels`).
   let attributable = true;
-  if (mappings.length === 0 && hasValueId) {
+  if (mappings.length === 0 && (hasValueId || hasFieldId)) {
     mappings = workspaceMappings;
     attributable = false;
   }
@@ -281,10 +390,19 @@ export async function resolveOptionGrouping(
     return { rewrittenQuery: query };
   }
 
-  const optionLabels = await buildOptionLabels(mappings, loadSurvey, attributable);
-  if (Object.keys(optionLabels).length === 0) {
+  const maps = await buildLabelMaps(mappings, loadSurvey, attributable);
+  const optionLabels =
+    (hasValueId || hasValueText) && Object.keys(maps.optionLabels).length > 0 ? maps.optionLabels : undefined;
+  const rowLabels = narrowToFilteredRow(maps.fieldLabels, query.filters ?? []);
+  const fieldLabels = hasFieldId && Object.keys(rowLabels).length > 0 ? rowLabels : undefined;
+  if (!optionLabels && !fieldLabels) {
     return { rewrittenQuery: query };
   }
 
-  return { rewrittenQuery: query, optionLabels };
+  return {
+    rewrittenQuery: query,
+    ...(optionLabels ? { optionLabels } : {}),
+    ...(fieldLabels ? { fieldLabels } : {}),
+    pinned: attributable,
+  };
 }

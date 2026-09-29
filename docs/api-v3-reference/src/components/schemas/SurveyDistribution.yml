@@ -67,6 +67,7 @@ properties:
   triggers:
     type: array
     default: []
+    maxItems: 50
     items:
       $ref: ./SurveyTrigger.yml
     description: >

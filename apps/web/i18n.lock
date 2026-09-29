@@ -1665,6 +1665,7 @@ checksums:
     workspace/analysis/charts/chart_type_area: 2c121342478819dcb4328319bba5cbc7
     workspace/analysis/charts/chart_type_bar: 06c6871083f76c237d5881f91789885b
     workspace/analysis/charts/chart_type_big_number: c4cfaeb80bce1d845f93449d8d981af4
+    workspace/analysis/charts/chart_type_matrix: ff18f26a7020ec89bef25eee6aa800f8
     workspace/analysis/charts/chart_type_not_supported: 0f1c7c7a3feabe6aa7ecd18bdd9b8277
     workspace/analysis/charts/chart_type_pie: f76d0aa04be86a2bc36e87908c503316
     workspace/analysis/charts/chart_updated_successfully: a2c210523902c726aa1328bbeda0b357
@@ -1808,6 +1809,36 @@ checksums:
     workspace/analysis/charts/language_value_unspecified: 85dba018c7aea3e0590a113361f419c5
     workspace/analysis/charts/less_than: fb41255dd44bb6de78617b078610c91b
     workspace/analysis/charts/less_than_or_equal: da4a2816aadf788d33efcdcc3c61802e
+    workspace/analysis/charts/matrix_answer: 143faa6db8f8ed1249bc98aaed23641b
+    workspace/analysis/charts/matrix_caption: a391419f6e8b6e342ee0c1482d8f16ca
+    workspace/analysis/charts/matrix_cell_tooltip: 73695839b75535b8bd4da6100bdfe2f8
+    workspace/analysis/charts/matrix_cell_value: 16dfe5dc481240cd2819a6394f90df92
+    workspace/analysis/charts/matrix_cell_value_both: a428a7a748bdf6aca1d98915884e9f9a
+    workspace/analysis/charts/matrix_cell_value_count: 9c5848662eb8024ddf360f7e4001a968
+    workspace/analysis/charts/matrix_cell_value_percent: 43ea775b4353046dd57717794dadaed4
+    workspace/analysis/charts/matrix_color_scale: 60d8f2237bcd2c845e9b72ff89269ce7
+    workspace/analysis/charts/matrix_columns: 14896556dc1535d70198854757f704ec
+    workspace/analysis/charts/matrix_empty_prompt: 170853ad43dab75ed5b55d6fade2e6cd
+    workspace/analysis/charts/matrix_group_by_description: c2399a48b15054d33dc2fab18b1eed11
+    workspace/analysis/charts/matrix_question_description: 175486e1f29d165364c54429d11d70d2
+    workspace/analysis/charts/matrix_question_label: 7855c2141f5ec372f971b79e49c53e9b
+    workspace/analysis/charts/matrix_question_meta: cdaf2a3cbbab393c5edd014c951240a8
+    workspace/analysis/charts/matrix_question_placeholder: a86d14b5d8e94144d8fd7ae0b513cc43
+    workspace/analysis/charts/matrix_questions_empty: 3fc07b34f87793ae2e947ca49b0c481d
+    workspace/analysis/charts/matrix_questions_error: 3ebb645588c4a481d164a8a427ae76de
+    workspace/analysis/charts/matrix_rows: 8f41f34e6ca28221cf1ebd948af4c151
+    workspace/analysis/charts/matrix_setup_description: e92f28c30ba2b0a95e93abd94580b82e
+    workspace/analysis/charts/matrix_setup_no_time_grouping: 7b40ab40ff78b27535eb45f93ae535e1
+    workspace/analysis/charts/matrix_setup_one_measure: fe6c1b0c890c43f09de8f8164c87e994
+    workspace/analysis/charts/matrix_setup_step_done: bd4853c26822595190b03bb4afeaee3e
+    workspace/analysis/charts/matrix_setup_step_todo: 9c724da4e939a33332bb05be29255384
+    workspace/analysis/charts/matrix_setup_title: 151957d98ce9d4a1bb0158d6a83007ac
+    workspace/analysis/charts/matrix_setup_two_groupings: 0d44b0711cda709c44c91a172de9b2ee
+    workspace/analysis/charts/matrix_show_totals: a70bac80ad45b13e42ba64c66ab7744d
+    workspace/analysis/charts/matrix_statement: 2465759e8d243eedd93dd1a7bc7c7e8e
+    workspace/analysis/charts/matrix_too_large: 0b5555a13fbf0e908f4e53e59c594cb5
+    workspace/analysis/charts/matrix_total: f60dc0a14e9b1bace656c644de25de5b
+    workspace/analysis/charts/matrix_transpose: 22dc7b475662a5ebd38de0bb64211eda
     workspace/analysis/charts/measure_group_average: 8ebb872222898ed8785e5a9d77c5a2c3
     workspace/analysis/charts/measure_group_count: 9c5848662eb8024ddf360f7e4001a968
     workspace/analysis/charts/measure_group_other: 79acaa6cd481262bea4e743a422529d2

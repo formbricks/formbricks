@@ -4,6 +4,12 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
+import {
+  V3_SURVEY_MAX_BLOCKS,
+  V3_SURVEY_MAX_ENDINGS,
+  V3_SURVEY_MAX_LANGUAGES,
+  V3_SURVEY_MAX_VARIABLES,
+} from "@/app/api/v3/surveys/schemas";
 import * as surveyAndFeedbackSchemas from "./schemas";
 import * as workflowSchemas from "./workflow-schemas";
 
@@ -300,5 +306,97 @@ describe("survey block discoverability (ENG-2180)", () => {
     // confident wrong answer, which is exactly what probing already gives an agent.
     expect(parsed.error?.issues ?? []).toEqual([]);
     expect(parsed.success).toBe(true);
+  });
+});
+
+/**
+ * The SDK validates tool arguments through `~standard.validate` ahead of the scope gate, and Zod parses
+ * every array element before an array-level `.max()` runs — so an unbounded array argument cost one issue
+ * per element, reachable with a read-only token (ENG-3384). Each declared array has to refuse an oversized
+ * value with exactly one issue, and still advertise its bound as `maxItems` to the model.
+ */
+describe("array arguments are length-bounded (ENG-3384)", () => {
+  const junkObjects = (count: number) => Array.from({ length: count }, () => ({}));
+  const workspaceId = "clxx1234567890123456789012";
+
+  const cases: [string, z.ZodType, Record<string, unknown>, string[]][] = [
+    [
+      "create_survey blocks",
+      surveyAndFeedbackSchemas.ZMcpCreateSurveyInput,
+      { workspaceId, name: "Junk", blocks: junkObjects(V3_SURVEY_MAX_BLOCKS + 1) },
+      ["blocks"],
+    ],
+    [
+      "create_survey endings",
+      surveyAndFeedbackSchemas.ZMcpCreateSurveyInput,
+      { workspaceId, name: "Junk", blocks: [{}], endings: junkObjects(V3_SURVEY_MAX_ENDINGS + 1) },
+      ["endings"],
+    ],
+    [
+      "create_survey variables",
+      surveyAndFeedbackSchemas.ZMcpCreateSurveyInput,
+      { workspaceId, name: "Junk", blocks: [{}], variables: junkObjects(V3_SURVEY_MAX_VARIABLES + 1) },
+      ["variables"],
+    ],
+    [
+      "create_survey languages",
+      surveyAndFeedbackSchemas.ZMcpCreateSurveyInput,
+      { workspaceId, name: "Junk", blocks: [{}], languages: junkObjects(V3_SURVEY_MAX_LANGUAGES + 1) },
+      ["languages"],
+    ],
+    [
+      "get_survey lang",
+      surveyAndFeedbackSchemas.ZMcpGetSurveyInput,
+      { surveyId: "clsv1234567890123456789012", lang: Array.from({ length: 21 }, () => "en-US") },
+      ["lang"],
+    ],
+    [
+      "list_surveys filter.status.in",
+      surveyAndFeedbackSchemas.ZMcpListSurveysInput,
+      { workspaceId, filter: { status: { in: Array.from({ length: 11 }, () => "draft") } } },
+      ["filter", "status", "in"],
+    ],
+    [
+      "create_feedback_records records",
+      surveyAndFeedbackSchemas.ZMcpCreateFeedbackRecordsInput,
+      { workspaceId, datasetId: "clds1234567890123456789012", records: junkObjects(101) },
+      ["records"],
+    ],
+    [
+      "list_workflows filter.status.in",
+      workflowSchemas.ZMcpListWorkflowsInput,
+      { workspaceId, filter: { status: { in: Array.from({ length: 11 }, () => "draft") } } },
+      ["filter", "status", "in"],
+    ],
+  ];
+
+  test.each(cases)(
+    "%s over its cap costs one issue through the SDK's validate",
+    async (_name, schema, input, path) => {
+      const result = await schema["~standard"].validate(input);
+
+      expect(result.issues).toHaveLength(1);
+      expect(result.issues?.[0]).toMatchObject({
+        path,
+        message: expect.stringMatching(/^Too big: expected array to have <=\d+ items$/),
+      });
+    }
+  );
+
+  test("advertises the bound as maxItems, with the item shape intact", () => {
+    const json = z.toJSONSchema(surveyAndFeedbackSchemas.ZMcpCreateSurveyInput, {
+      io: "input",
+      unrepresentable: "any",
+    }) as { properties: Record<string, Record<string, unknown>> };
+
+    expect(json.properties.blocks).toMatchObject({
+      type: "array",
+      minItems: 1,
+      maxItems: V3_SURVEY_MAX_BLOCKS,
+    });
+    expect(json.properties.endings).toMatchObject({ type: "array", maxItems: V3_SURVEY_MAX_ENDINGS });
+    expect(json.properties.variables).toMatchObject({ type: "array", maxItems: V3_SURVEY_MAX_VARIABLES });
+    expect(json.properties.languages).toMatchObject({ type: "array", maxItems: V3_SURVEY_MAX_LANGUAGES });
+    expect(json.properties.languages.items).toMatchObject({ type: "object" });
   });
 });
