@@ -48,33 +48,39 @@ const salvageVariables = (value: unknown, lost: string[]): TSurveyVariables => {
 
   const variables: TSurveyVariables = [];
   for (const [index, entry] of value.entries()) {
-    if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
-      lost.push(`variables[${index.toString()}] is ${describeShape(entry)}, not an object`);
-      continue;
-    }
-    const { id, name, type, value: defaultValue } = entry as Record<string, unknown>;
-    if (typeof id !== "string" || id === "") {
-      lost.push(`variables[${index.toString()}] has no string id`);
-      continue;
-    }
-    if (typeof name !== "string") {
-      lost.push(`variable ${id} has no string name`);
-      continue;
-    }
-    if (defaultValue !== undefined && !isScalarDefault(defaultValue)) {
-      lost.push(`variable ${id} value is ${describeShape(defaultValue)}; stored without a default`);
-    }
-    // A claim about raw JSON rather than a parsed variable: `value` may not match `type` here, and
-    // `toDesiredEmbeddedFields` copies it across as the default without looking.
-    const variable = {
-      id,
-      name,
-      type: type === "number" ? "number" : "text",
-      value: isScalarDefault(defaultValue) ? defaultValue : null,
-    };
-    variables.push(variable as TSurveyVariables[number]);
+    const variable = salvageVariable(entry, index, lost);
+    if (variable) variables.push(variable);
   }
   return variables;
+};
+
+/** One element of `variables`, or `null` when it cannot become a row (the reason goes to `lost`). */
+const salvageVariable = (entry: unknown, index: number, lost: string[]): TSurveyVariables[number] | null => {
+  if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
+    lost.push(`variables[${index.toString()}] is ${describeShape(entry)}, not an object`);
+    return null;
+  }
+  const { id, name, type, value: defaultValue } = entry as Record<string, unknown>;
+  if (typeof id !== "string" || id === "") {
+    lost.push(`variables[${index.toString()}] has no string id`);
+    return null;
+  }
+  if (typeof name !== "string") {
+    lost.push(`variable ${id} has no string name`);
+    return null;
+  }
+  if (defaultValue !== undefined && !isScalarDefault(defaultValue)) {
+    lost.push(`variable ${id} value is ${describeShape(defaultValue)}; stored without a default`);
+  }
+  // A claim about raw JSON rather than a parsed variable: `value` may not match `type` here, and
+  // `toDesiredEmbeddedFields` copies it across as the default without looking.
+  const variable = {
+    id,
+    name,
+    type: type === "number" ? "number" : "text",
+    value: isScalarDefault(defaultValue) ? defaultValue : null,
+  };
+  return variable as TSurveyVariables[number];
 };
 
 /** Keeps every hidden field id that is a non-empty string. */
