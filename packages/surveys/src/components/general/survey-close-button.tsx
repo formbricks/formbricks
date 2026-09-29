@@ -3,6 +3,12 @@ import { useTranslation } from "react-i18next";
 import { CloseIcon } from "@/components/icons/close-icon";
 import { mixColor } from "@/lib/color";
 
+// Insets the close button's row from the card's rounded corner: a square inset by 0.3 × radius stays
+// inside the arc (the exact bound is 1 - 1/√2 ≈ 0.293). Capped at 24px so very large radii do not push the
+// header down indefinitely. Written out literally so Tailwind can detect it.
+export const SURVEY_CLOSE_BUTTON_ROW_CLASS_NAME =
+  "pt-[clamp(4px,calc(var(--fb-border-radius)*0.3),24px)] pe-[clamp(4px,calc(var(--fb-border-radius)*0.3),24px)]";
+
 interface SurveyCloseButtonProps {
   onClose?: () => void;
   hoverColor?: string;
@@ -26,7 +32,7 @@ export function SurveyCloseButton({ onClose, hoverColor, borderRadius }: Readonl
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className="text-heading relative flex h-8 w-8 items-center justify-center p-2"
+        className="text-heading relative flex h-11 w-11 items-center justify-center"
         aria-label={t("common.close_survey")}>
         <CloseIcon />
       </button>
