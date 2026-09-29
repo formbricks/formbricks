@@ -21,7 +21,7 @@ const subscribeToNothing = () => () => undefined;
 
 const getSessionStorage = (): Storage | undefined => {
   try {
-    return typeof globalThis.window === "undefined" ? undefined : globalThis.window.sessionStorage;
+    return globalThis.window === undefined ? undefined : globalThis.window.sessionStorage;
   } catch {
     return undefined;
   }

@@ -42,6 +42,69 @@ interface SurveyCardProps {
   updateSurveyVisibility: (surveyId: string, visibility: TSurveyVisibility) => Promise<void>;
   onVisibilityNotEnabled: () => void;
 }
+const getSurveyStatusLabel = (
+  status: TSurveyStatus,
+  isScheduled: boolean,
+  t: ReturnType<typeof useTranslation>["t"]
+): string | undefined => {
+  switch (status) {
+    case "inProgress":
+      return t("common.in_progress");
+    case "completed":
+      return t("common.closed");
+    case "draft":
+      return t("common.draft");
+    case "paused":
+      return isScheduled ? t("common.scheduled") : t("common.paused");
+    default:
+      return undefined;
+  }
+};
+
+type MakeVisibleStripProps = Pick<
+  SurveyCardProps,
+  "workspaceName" | "updateSurveyVisibility" | "onVisibilityNotEnabled"
+> & { surveyId: string };
+
+/** The author-gone row's one-click way out, in a strip under the row so its columns stay aligned. */
+const MakeVisibleStrip = ({
+  surveyId,
+  workspaceName,
+  updateSurveyVisibility,
+  onVisibilityNotEnabled,
+}: Readonly<MakeVisibleStripProps>) => {
+  const { t } = useTranslation();
+  const [isMakingVisible, setIsMakingVisible] = useState(false);
+
+  const handleMakeVisible = async () => {
+    setIsMakingVisible(true);
+    try {
+      await updateSurveyVisibility(surveyId, "workspace");
+      toast.success(t("workspace.surveys.visibility.visibility_updated"));
+    } catch (error) {
+      const reaction = getVisibilityErrorReaction(error);
+      if (reaction === "pending") {
+        toast.success(t("workspace.surveys.visibility.visibility_update_pending"));
+      } else {
+        toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+        if (reaction === "hide_controls") onVisibilityNotEnabled();
+      }
+    } finally {
+      setIsMakingVisible(false);
+    }
+  };
+
+  return (
+    <div className="flex justify-end rounded-b-xl border border-t-0 border-slate-200 bg-amber-50 px-4 pb-3">
+      <MakeVisibleToWorkspaceButton
+        workspaceName={workspaceName}
+        loading={isMakingVisible}
+        onClick={() => void handleMakeVisible()}
+      />
+    </div>
+  );
+};
+
 export const SurveyCard = ({
   survey,
   publicDomain,
@@ -63,24 +126,10 @@ export const SurveyCard = ({
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const isArchived = survey.archivedAt !== null;
   const isScheduled = !isArchived && survey.status === "paused" && survey.publishOn !== null;
-  const surveyStatusLabel = (() => {
-    switch (survey.status) {
-      case "inProgress":
-        return t("common.in_progress");
-      case "completed":
-        return t("common.closed");
-      case "draft":
-        return t("common.draft");
-      case "paused":
-        return isScheduled ? t("common.scheduled") : t("common.paused");
-      default:
-        return undefined;
-    }
-  })();
+  const surveyStatusLabel = getSurveyStatusLabel(survey.status, isScheduled, t);
 
   const isSurveyCreationDeletionDisabled = isReadOnly;
 
-  const [isMakingVisible, setIsMakingVisible] = useState(false);
   const hasWorkspaceMarker = showWorkspaceMarker({
     gate: surveyVisibilityEnabled,
     visibility: survey.visibility,
@@ -92,24 +141,6 @@ export const SurveyCard = ({
     owner: survey.owner,
   });
   const canMakeVisible = restrictedMarker === "author_gone" && survey.access.canManageVisibility;
-
-  const handleMakeVisible = async () => {
-    setIsMakingVisible(true);
-    try {
-      await updateSurveyVisibility(survey.id, "workspace");
-      toast.success(t("workspace.surveys.visibility.visibility_updated"));
-    } catch (error) {
-      const reaction = getVisibilityErrorReaction(error);
-      if (reaction === "pending") {
-        toast.success(t("workspace.surveys.visibility.visibility_update_pending"));
-      } else {
-        toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
-        if (reaction === "hide_controls") onVisibilityNotEnabled();
-      }
-    } finally {
-      setIsMakingVisible(false);
-    }
-  };
 
   const linkHref = useMemo(() => {
     // Archived surveys are read-only; always send to summary (never the editor).
@@ -205,13 +236,12 @@ export const SurveyCard = ({
       {/* Below the row and outside its link: a button inside a link is neither valid markup nor
           reachable, and a strip keeps the row's columns aligned with every other row. */}
       {canMakeVisible && (
-        <div className="flex justify-end rounded-b-xl border border-t-0 border-slate-200 bg-amber-50 px-4 pb-3">
-          <MakeVisibleToWorkspaceButton
-            workspaceName={workspaceName}
-            loading={isMakingVisible}
-            onClick={() => void handleMakeVisible()}
-          />
-        </div>
+        <MakeVisibleStrip
+          surveyId={survey.id}
+          workspaceName={workspaceName}
+          updateSurveyVisibility={updateSurveyVisibility}
+          onVisibilityNotEnabled={onVisibilityNotEnabled}
+        />
       )}
       <div className="absolute top-3.5 right-3">
         <SurveyDropDownMenu
