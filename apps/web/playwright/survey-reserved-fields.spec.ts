@@ -103,7 +103,7 @@ const publishAsLinkSurvey = async (page: Page): Promise<string> => {
 
   await Promise.all([
     page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/, { timeout: 120000 }),
-    page.getByRole("button", { name: "Publish", exact: true }).click(),
+    page.getByRole("button", { name: "Activate", exact: true }).click(),
   ]);
 
   await page.getByLabel("Copy survey link to clipboard").click();

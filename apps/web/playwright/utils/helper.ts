@@ -678,7 +678,7 @@ export const fillChoiceOptions = async (page: Page, values: string[]) => {
   await fillLabelsUntilCommitted(page, values, (index) => page.getByPlaceholder(`Option ${index + 1}`));
 };
 
-const publishButtonOf = (page: Page): Locator => page.getByRole("button", { name: "Publish", exact: true });
+const publishButtonOf = (page: Page): Locator => page.getByRole("button", { name: "Activate", exact: true });
 
 /**
  * Publish the survey being edited and wait for the summary page.

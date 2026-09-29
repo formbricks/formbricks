@@ -43,7 +43,7 @@ const ensureDateToggleEnabled = async (page: Page, toggleTitle: string) => {
 };
 
 const openResponseOptions = async (page: Page) => {
-  const publishOnDateLabel = page.getByText("Publish survey on date", { exact: true });
+  const publishOnDateLabel = page.getByText("Activate survey on date", { exact: true });
 
   if (await publishOnDateLabel.isVisible().catch(() => false)) {
     return;
@@ -57,7 +57,7 @@ const createMinimalSurvey = async (page: Page) => {
   await createSurveyFromScratch(page);
 };
 
-const publishScheduleSummary = `Survey will be published at ${SURVEY_SCHEDULING_TIME_LABEL} in the ${SURVEY_SCHEDULING_TIME_ZONE_LABEL} timezone on the selected date`;
+const publishScheduleSummary = `Survey will be activated at ${SURVEY_SCHEDULING_TIME_LABEL} in the ${SURVEY_SCHEDULING_TIME_ZONE_LABEL} timezone on the selected date`;
 const closeScheduleSummary = `Survey will be closed at ${SURVEY_SCHEDULING_TIME_LABEL} in the ${SURVEY_SCHEDULING_TIME_ZONE_LABEL} timezone on the selected date`;
 
 const pickDateForToggle = async (page: Page, toggleTitle: string, dayOffset: number) => {
@@ -108,22 +108,22 @@ test.describe("Survey scheduling settings", () => {
       .click();
 
     await openResponseOptions(page);
-    await expect(page.getByText("Publish survey on date")).toBeVisible();
+    await expect(page.getByText("Activate survey on date")).toBeVisible();
     await expect(page.getByText("Close survey on date")).toBeVisible();
     await expect(page.getByText(publishScheduleSummary)).toBeVisible();
     await expect(page.getByText(closeScheduleSummary)).toBeVisible();
 
-    await ensureDateToggleEnabled(page, "Publish survey on date");
+    await ensureDateToggleEnabled(page, "Activate survey on date");
     await ensureDateToggleEnabled(page, "Close survey on date");
     await expect(page.getByRole("button", { name: "Schedule survey", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Save without scheduling", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Save as draft", exact: true })).not.toBeVisible();
-    await expect(page.getByRole("button", { name: "Publish", exact: true })).not.toBeVisible();
+    await expect(page.getByRole("button", { name: "Activate", exact: true })).not.toBeVisible();
 
-    const publishDate = await pickDateForToggle(page, "Publish survey on date", 2);
+    const publishDate = await pickDateForToggle(page, "Activate survey on date", 2);
     const closeDate = await pickDateForToggle(page, "Close survey on date", 3);
 
-    const publishDateToggle = getDateToggleContainer(page, "Publish survey on date");
+    const publishDateToggle = getDateToggleContainer(page, "Activate survey on date");
     const closeDateToggle = getDateToggleContainer(page, "Close survey on date");
     await expect(
       publishDateToggle.getByRole("button", { name: formatSelectedDate(publishDate), exact: true })
@@ -166,7 +166,7 @@ test.describe("Survey scheduling settings", () => {
       .click();
 
     await openResponseOptions(page);
-    await pickDateForToggle(page, "Publish survey on date", 2);
+    await pickDateForToggle(page, "Activate survey on date", 2);
     await pickDateForToggle(page, "Close survey on date", 3);
 
     await page.getByRole("button", { name: "Schedule survey", exact: true }).click({ noWaitAfter: true });

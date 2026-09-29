@@ -111,7 +111,7 @@ export const SurveyDropDownMenu = ({
       case "paused":
         return t("common.paused");
       case "completed":
-        return t("common.completed");
+        return t("common.closed");
       case "draft":
         return t("common.draft");
       default:

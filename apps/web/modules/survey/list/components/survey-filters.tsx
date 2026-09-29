@@ -33,7 +33,7 @@ const getStatusOptions = (t: TFunction): TFilterOption<TSurveyStatusFilter>[] =>
   { label: t("common.draft"), value: "draft" },
   { label: t("common.in_progress"), value: "inProgress" },
   { label: t("common.paused"), value: "paused" },
-  { label: t("common.completed"), value: "completed" },
+  { label: t("common.closed"), value: "completed" },
   { label: t("common.archived"), value: "archived", separatorBefore: true },
 ];
 

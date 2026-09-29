@@ -47,7 +47,7 @@ export const SurveyCard = ({
       case "inProgress":
         return t("common.in_progress");
       case "completed":
-        return t("common.completed");
+        return t("common.closed");
       case "draft":
         return t("common.draft");
       case "paused":

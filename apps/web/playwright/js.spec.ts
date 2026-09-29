@@ -109,7 +109,7 @@ test.describe("JS Package Test", async () => {
 
     await Promise.all([
       page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary/, { timeout: 120000 }),
-      page.getByRole("button", { name: "Publish", exact: true }).click(),
+      page.getByRole("button", { name: "Activate", exact: true }).click(),
     ]);
 
     const surveyId = /\/surveys\/([^/]+)\/summary/.exec(page.url())?.[1];
