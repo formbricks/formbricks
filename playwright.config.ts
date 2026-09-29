@@ -7,6 +7,15 @@ import { defineConfig, devices } from "@playwright/test";
 require("dotenv").config({ path: ".env" });
 
 /**
+ * The restricted-surveys journey needs the survey readiness marker, one global row that changes how
+ * every other spec behaves (new surveys start restricted, Activate asks who can view). It therefore runs
+ * alone, in its own CI job against its own marked database (`e2e.yml`, "Run E2E Tests (restricted
+ * surveys)"), selected by this variable; every other run ignores it.
+ */
+const SURVEY_VISIBILITY_SPEC = "**/survey-visibility.spec.ts";
+const isSurveyVisibilityRun = process.env.E2E_SURVEY_VISIBILITY_READY === "1";
+
+/**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
@@ -40,11 +49,18 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
-    {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
-      testMatch: "**/*.spec.ts",
-    },
+    isSurveyVisibilityRun
+      ? {
+          name: "survey-visibility",
+          use: { ...devices["Desktop Chrome"] },
+          testMatch: SURVEY_VISIBILITY_SPEC,
+        }
+      : {
+          name: "chromium",
+          use: { ...devices["Desktop Chrome"] },
+          testMatch: "**/*.spec.ts",
+          testIgnore: SURVEY_VISIBILITY_SPEC,
+        },
 
     // {
     //   name: "firefox",
