@@ -74,6 +74,10 @@ describe("selectionToRankingValue", () => {
     expect(selectionToRankingValue(["other"], options, "other", "")).toEqual([""]);
   });
 
+  test("drops ids that match no option", () => {
+    expect(selectionToRankingValue(["gone", "a"], options, "other", "")).toEqual(["Price"]);
+  });
+
   test("round-trips through rankingValueToSelection", () => {
     const value = ["Integrations", "Speed"];
     const { selectedIds, otherValue } = rankingValueToSelection(value, options, "other");

@@ -140,6 +140,21 @@ describe("validateOtherOptionLengthForMultipleChoice", () => {
     expect(result).toBeUndefined();
   });
 
+  test("skips a ranking question stored without choices", () => {
+    const result = validateOtherOptionLengthForMultipleChoice({
+      responseData: { rank: ["Z".repeat(MAX_OTHER_OPTION_LENGTH + 1)] },
+      surveyQuestions: [{ id: "rank", type: "ranking" }],
+    });
+
+    expect(result).toBeUndefined();
+  });
+
+  test("treats malformed choices without a label object as non-matching", () => {
+    const result = validateOtherOptionLength("Z".repeat(MAX_OTHER_OPTION_LENGTH + 1), [null, "x"], "q1");
+
+    expect(result).toBe("q1");
+  });
+
   test("accepts a ranking whose Other text is within the limit", () => {
     const result = validateOtherOptionLengthForMultipleChoice({
       responseData: { rank: ["Integrations", "Option 2"] },

@@ -790,6 +790,66 @@ describe("getQuestionSummary", () => {
       expect(choices[0]).toMatchObject({ value: "Item 1", count: 3 });
     });
 
+    test.each([
+      {
+        name: "counts an Other ranked with no text but lists no value, falling back to the Other label",
+        otherLabel: "",
+        answer: ["", "Item 1"],
+        expected: { value: "Other", count: 1, avgRanking: 1, others: [] },
+      },
+      {
+        name: "reports an unranked Other with a zero count and average",
+        otherLabel: "Something else",
+        answer: ["Item 1"],
+        expected: { value: "Something else", count: 0, avgRanking: 0, others: [] },
+      },
+    ])("getQuestionSummary $name", async ({ otherLabel, answer, expected }) => {
+      const survey = {
+        id: "survey-1",
+        blocks: [
+          {
+            id: "block1",
+            name: "Block 1",
+            elements: [
+              {
+                id: "ranking-q1",
+                type: TSurveyElementTypeEnum.Ranking,
+                headline: { default: "Rank these items" },
+                required: true,
+                choices: [
+                  { id: "item1", label: { default: "Item 1" } },
+                  { id: "other", label: { default: otherLabel } },
+                ],
+              },
+            ],
+          },
+        ],
+        questions: [],
+        languages: [],
+        welcomeCard: { enabled: false },
+      } as unknown as TSurvey;
+
+      const responses = [
+        {
+          id: "response-1",
+          data: { "ranking-q1": answer },
+          updatedAt: new Date(),
+          contact: null,
+          contactAttributes: {},
+          language: null,
+          ttc: {},
+          finished: true,
+        },
+      ];
+
+      const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, [
+        { elementId: "ranking-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
+      ] as unknown as TSurveySummary["dropOff"]);
+
+      const other = (summary[0] as TSurveyElementSummaryRanking).choices.at(-1);
+      expect(other).toEqual(expected);
+    });
+
     test("getQuestionSummary ignores unmatched ranking entries when there is no Other option", async () => {
       const question = {
         id: "ranking-q1",
