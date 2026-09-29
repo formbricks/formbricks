@@ -92,6 +92,56 @@ to this provider that you must set, and it has to be a valid HTTP(S) URL.
   `http://vllm:8000/v1` on the internal Compose network.
 </Warning>
 
+### Behind an OAuth2 gateway
+
+Some gateways in front of a model do not accept a static API key. They issue short-lived access tokens through the
+OAuth2 client-credentials flow instead: Formbricks exchanges a client ID and secret for a token at the gateway's
+token endpoint, and sends that token with every model request. Set `AI_OPENAI_COMPATIBLE_AUTH_MODE` and Formbricks
+fetches the token for you, refreshes it shortly before it expires, and requests a new one if the gateway rejects
+it — you never paste a token.
+
+```bash
+AI_PROVIDER=openai-compatible
+AI_MODEL=your-model
+AI_OPENAI_COMPATIBLE_BASE_URL=https://gateway.example.internal/v1
+AI_OPENAI_COMPATIBLE_AUTH_MODE=oauth2-client-credentials
+AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL=https://gateway.example.internal/oauth/token
+AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_ID=formbricks
+AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET=your-client-secret
+# Optional
+AI_OPENAI_COMPATIBLE_OAUTH_SCOPE="llm.invoke"
+AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE=basic
+AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON={"audience":"https://gateway.example.internal"}
+```
+
+- `AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE` decides where the client credentials go. `basic`, the default and the
+  OAuth2 standard, sends them in the `Authorization` header of the token request. `post` sends them in the form
+  body instead, which some gateways require.
+- `AI_OPENAI_COMPATIBLE_OAUTH_SCOPE` is a space-separated list of scopes, if your gateway asks for any.
+- `AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON` adds string parameters to the token request, such as the
+  `audience` or `resource` some identity providers expect.
+- Leave `AI_OPENAI_COMPATIBLE_API_KEY` unset. Formbricks refuses to start when both are configured, so there is
+  only ever one source of credentials.
+
+If the gateway rejects the credentials, survey generation tells the user to ask an administrator to check the AI
+provider configuration, and the server log records the failure without the secret or the token.
+
+<Note>
+  If the token endpoint or the gateway uses a certificate from a private CA, set
+  `NODE_EXTRA_CA_CERTS=/path/to/ca.pem` on the Formbricks container. No Formbricks setting is needed. Mutual TLS
+  (client certificates) is not supported.
+</Note>
+
+<Note>
+  Structured outputs are a separate capability from authentication. Check that your gateway supports them before
+  setting `AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS=1`.
+</Note>
+
+<Warning>
+  The `https://` advice above applies to the token endpoint too: the client secret is sent to
+  `AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL` on every token request.
+</Warning>
+
 ## Google Cloud
 
 ```bash
