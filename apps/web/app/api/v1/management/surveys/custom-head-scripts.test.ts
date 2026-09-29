@@ -5,6 +5,7 @@ import { can } from "@/lib/authorization";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurveyInput, updateSurveyInput } from "@/lib/survey/__mock__/survey.mock";
 import { createSurvey, getSurvey, updateSurvey } from "@/lib/survey/service";
+import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { PUT } from "./[surveyId]/route";
 import { POST } from "./route";
 
@@ -24,9 +25,10 @@ vi.mock("@/lib/survey/service", () => ({
   updateSurvey: vi.fn(),
 }));
 vi.mock("@/app/api/v1/management/lib/workspace-resolver", () => ({ resolveBodyIds: vi.fn() }));
-vi.mock("@/app/api/v1/management/surveys/lib/utils", () => ({
-  checkFeaturePermissions: vi.fn().mockResolvedValue(null),
-}));
+// The real `checkSurveyWritePermissions` runs; only the organization's entitlement lookups are stubbed.
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsSpamProtectionEnabled: vi.fn() }));
+vi.mock("@/modules/survey/follow-ups/lib/utils", () => ({ getSurveyFollowUpsPermission: vi.fn() }));
+vi.mock("@/modules/survey/lib/permission", () => ({ getExternalUrlsPermission: vi.fn() }));
 vi.mock("@/app/api/v1/management/surveys/lib/surveys", () => ({ getSurveys: vi.fn() }));
 vi.mock("@/app/api/v1/management/surveys/[surveyId]/lib/surveys", () => ({ deleteSurvey: vi.fn() }));
 vi.mock("@/app/lib/api/legacy-environment-id", () => ({
@@ -67,6 +69,7 @@ const post = (body: Record<string, unknown>) =>
 
 beforeEach(() => {
   vi.mocked(can).mockReset();
+  vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);
   vi.mocked(getSurvey).mockResolvedValue(storedSurvey);
   vi.mocked(updateSurvey).mockReset();
   vi.mocked(updateSurvey).mockImplementation(async (survey) => survey);

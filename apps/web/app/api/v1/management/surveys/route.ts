@@ -1,7 +1,7 @@
 import { logger } from "@formbricks/logger";
 import { ZSurveyCreateInputWithWorkspaceId } from "@formbricks/types/surveys/types";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
-import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
+import { checkSurveyWritePermissions } from "@/app/api/v1/management/surveys/lib/utils";
 import {
   addLegacyProjectOverwrites,
   addLegacyProjectOverwritesToList,
@@ -27,10 +27,6 @@ import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/pe
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
-import {
-  CUSTOM_HEAD_SCRIPTS_PERMISSION_MESSAGE,
-  canWriteCustomHeadScripts,
-} from "@/modules/survey/lib/custom-head-scripts-permission";
 import { getSurveys } from "./lib/surveys";
 
 export const GET = withV1ApiWrapper({
@@ -149,22 +145,14 @@ export const POST = withV1ApiWrapper({
         surveyData.questions = [];
       }
 
-      const featureCheckResult = await checkFeaturePermissions(surveyData, organization);
+      const featureCheckResult = await checkSurveyWritePermissions(surveyData, organization, {
+        apiKeyId: authentication.apiKeyId,
+        workspaceId,
+      });
       if (featureCheckResult) {
         return {
           response: featureCheckResult,
         };
-      }
-
-      if (
-        !(await canWriteCustomHeadScripts(
-          { type: "apiKey", id: authentication.apiKeyId },
-          workspaceId,
-          surveyData,
-          null
-        ))
-      ) {
-        return { response: responses.forbiddenResponse(CUSTOM_HEAD_SCRIPTS_PERMISSION_MESSAGE) };
       }
 
       const { workspaceId: __, ...surveyCreateInput } = surveyData;

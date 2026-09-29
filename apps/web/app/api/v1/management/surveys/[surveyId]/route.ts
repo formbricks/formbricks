@@ -4,7 +4,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSurveyUpdateInput } from "@formbricks/types/surveys/types";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { deleteSurvey } from "@/app/api/v1/management/surveys/[surveyId]/lib/surveys";
-import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
+import { checkSurveyWritePermissions } from "@/app/api/v1/management/surveys/lib/utils";
 import {
   addLegacyProjectOverwrites,
   normaliseProjectOverwritesToWorkspace,
@@ -28,10 +28,6 @@ import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/pe
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
-import {
-  CUSTOM_HEAD_SCRIPTS_PERMISSION_MESSAGE,
-  canWriteCustomHeadScripts,
-} from "@/modules/survey/lib/custom-head-scripts-permission";
 
 type TSurveyUpdateBody = Record<string, unknown> & {
   blocks?: Parameters<typeof validateSurveyInput>[0]["blocks"];
@@ -227,26 +223,16 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
-      const featureCheckResult = await checkFeaturePermissions(
-        surveyUpdate as Parameters<typeof checkFeaturePermissions>[0],
+      const featureCheckResult = await checkSurveyWritePermissions(
+        surveyUpdate as Parameters<typeof checkSurveyWritePermissions>[0],
         organization,
+        { apiKeyId: authentication.apiKeyId, workspaceId: result.survey.workspaceId },
         result.survey
       );
       if (featureCheckResult) {
         return {
           response: featureCheckResult,
         };
-      }
-
-      if (
-        !(await canWriteCustomHeadScripts(
-          { type: "apiKey", id: authentication.apiKeyId },
-          result.survey.workspaceId,
-          inputValidation.data,
-          result.survey
-        ))
-      ) {
-        return { response: responses.forbiddenResponse(CUSTOM_HEAD_SCRIPTS_PERMISSION_MESSAGE) };
       }
 
       try {
