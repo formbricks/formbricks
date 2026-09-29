@@ -31,8 +31,7 @@ export const WorkspaceVisibilityMarker = ({
         tooltipContent={
           <div className="space-y-1">
             <p className="font-medium text-slate-800">{label}</p>
-            {/* The description arrives a beat later, so a passing hover only shows the short line. */}
-            <p className="text-slate-500 delay-1000 duration-300 animate-in fade-in fill-mode-both">
+            <p className="text-slate-500">
               {t("workspace.surveys.visibility.visible_to_workspace_description", {
                 workspace: workspaceName,
               })}
