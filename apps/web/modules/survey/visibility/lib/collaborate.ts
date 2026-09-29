@@ -86,16 +86,49 @@ export const groupBlockersByType = (blockers: readonly TSurveyVisibilityBlocker[
       .sort((left, right) => left.localeCompare(right)),
   })).filter((group) => group.names.length > 0);
 
+type TCollaborateOptionsState = Readonly<{
+  blockers: readonly TSurveyVisibilityBlocker[];
+  allowedTargets: readonly TSurveyVisibility[];
+}>;
+
 /**
- * Whether the Collaborate modal explains why Restricted is unavailable: the survey is visible to the
- * workspace now, connections depend on it, and so the server does not offer Restricted. "Unavailable"
- * for any other reason (no owner, say) keeps its plain badge.
+ * Restricted is refused only because outbound connections depend on this workspace-visible survey.
+ * The option then stays pickable so picking it can say which connections to remove first.
  */
-export const showBlockersInCollaborate = (
+const isRestrictedBlockedByConnections = (
   current: TSurveyVisibility | null,
-  state: Readonly<{
-    blockers: readonly TSurveyVisibilityBlocker[];
-    allowedTargets: readonly TSurveyVisibility[];
-  }>
+  state: TCollaborateOptionsState
 ): boolean =>
   current === "workspace" && state.blockers.length > 0 && !state.allowedTargets.includes("restricted");
+
+/**
+ * Whether a Collaborate option is greyed out with "Unavailable": the server does not offer it and no
+ * blocker explains why (no owner, say). The current value and a blocked Restricted stay selectable.
+ */
+export const isVisibilityOptionDisabled = ({
+  value,
+  current,
+  state,
+}: Readonly<{
+  value: TSurveyVisibility;
+  current: TSurveyVisibility | null;
+  state: TCollaborateOptionsState;
+}>): boolean => {
+  if (value === current || state.allowedTargets.includes(value)) return false;
+  return !(value === "restricted" && isRestrictedBlockedByConnections(current, state));
+};
+
+/**
+ * Whether the Collaborate modal lists the blocking connections: only once the user has picked a
+ * Restricted that connections hold back. Save stays off meanwhile (`canSaveVisibility`), and picking
+ * Visible again hides the list.
+ */
+export const showBlockersInCollaborate = ({
+  selected,
+  current,
+  state,
+}: Readonly<{
+  selected: TSurveyVisibility | null;
+  current: TSurveyVisibility | null;
+  state: TCollaborateOptionsState;
+}>): boolean => selected === "restricted" && isRestrictedBlockedByConnections(current, state);

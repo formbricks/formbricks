@@ -17,6 +17,7 @@ import {
   getDisplayedVisibility,
   getRestrictedAuthor,
   getVisibilityErrorReaction,
+  isVisibilityOptionDisabled,
   needsRestrictConfirmation,
   showBlockersInCollaborate,
 } from "@/modules/survey/visibility/lib/collaborate";
@@ -175,13 +176,13 @@ export const CollaborateModal = ({
               </SelectTrigger>
               <SelectContent>
                 {VISIBILITY_OPTIONS.map((value) => {
-                  const isAvailable = value === current || allowedTargets.includes(value);
+                  const isDisabled = state ? isVisibilityOptionDisabled({ value, current, state }) : true;
                   return (
-                    <SelectItem key={value} value={value} disabled={!isAvailable} className="py-2">
+                    <SelectItem key={value} value={value} disabled={isDisabled} className="py-2">
                       <span className="flex max-w-sm flex-col gap-0.5 whitespace-normal">
                         <span className="flex items-center gap-2 text-slate-800">
                           {optionLabel(value)}
-                          {!isAvailable && (
+                          {isDisabled && (
                             <Badge
                               text={t("workspace.surveys.visibility.unavailable")}
                               type="gray"
@@ -196,7 +197,7 @@ export const CollaborateModal = ({
                 })}
               </SelectContent>
             </Select>
-            {state && showBlockersInCollaborate(current, state) && (
+            {state && showBlockersInCollaborate({ selected, current, state }) && (
               <div className="px-1">
                 <VisibilityBlockersAlert blockers={state.blockers} />
               </div>

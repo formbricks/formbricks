@@ -116,6 +116,34 @@ export const AuthorGoneCannotRestrict: Story = {
   ],
 };
 
+/**
+ * Connections hold the survey visible. Restricted stays selectable; picking it lists the blocking
+ * connections under the select and keeps Save disabled, and picking Visible again hides the list.
+ */
+export const BlockedByConnections: Story = {
+  args: baseArgs,
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Open the select and pick Restricted: the blocking connections appear below it and Save stays disabled.",
+      },
+    },
+  },
+  decorators: [
+    withVisibilityState({
+      ...baseState,
+      visibility: "workspace",
+      access: { via: "workspace", canManageVisibility: true },
+      allowedTargets: ["workspace"],
+      blockers: [
+        { id: "i1", name: "Google Sheets", type: "integration" },
+        { id: "w1", name: "CRM sync", type: "webhook" },
+      ],
+    }),
+  ],
+};
+
 export const PendingGrant: Story = {
   args: baseArgs,
   decorators: [withVisibilityState({ ...baseState, pending: "workspace", version: 2 })],

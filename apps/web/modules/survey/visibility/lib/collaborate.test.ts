@@ -6,6 +6,7 @@ import {
   getRestrictedAuthor,
   getVisibilityErrorReaction,
   groupBlockersByType,
+  isVisibilityOptionDisabled,
   needsRestrictConfirmation,
   showBlockersInCollaborate,
 } from "./collaborate";
@@ -105,20 +106,86 @@ describe("groupBlockersByType", () => {
   });
 });
 
-describe("showBlockersInCollaborate", () => {
+describe("isVisibilityOptionDisabled", () => {
   const blockers = [{ id: "i1", name: "Slack", type: "integration" as const }];
 
-  test("explains a Restricted option held back by connections on a workspace-visible survey", () => {
-    expect(showBlockersInCollaborate("workspace", { blockers, allowedTargets: [] })).toBe(true);
+  test("a Restricted held back by connections stays selectable", () => {
+    expect(
+      isVisibilityOptionDisabled({
+        value: "restricted",
+        current: "workspace",
+        state: { blockers, allowedTargets: ["workspace"] },
+      })
+    ).toBe(false);
   });
 
-  test("stays quiet without blockers, e.g. Unavailable because the survey has no owner", () => {
-    expect(showBlockersInCollaborate("workspace", { blockers: [], allowedTargets: [] })).toBe(false);
+  test("a Restricted unavailable for another reason, e.g. no owner, is disabled", () => {
+    expect(
+      isVisibilityOptionDisabled({
+        value: "restricted",
+        current: "workspace",
+        state: { blockers: [], allowedTargets: ["workspace"] },
+      })
+    ).toBe(true);
   });
 
-  test("stays quiet when Restricted is offered anyway, or the survey is already restricted", () => {
-    expect(showBlockersInCollaborate("workspace", { blockers, allowedTargets: ["restricted"] })).toBe(false);
-    expect(showBlockersInCollaborate("restricted", { blockers, allowedTargets: [] })).toBe(false);
-    expect(showBlockersInCollaborate(null, { blockers, allowedTargets: [] })).toBe(false);
+  test("the current value and any allowed target are never disabled", () => {
+    const state = { blockers: [], allowedTargets: ["restricted" as const] };
+    expect(isVisibilityOptionDisabled({ value: "workspace", current: "workspace", state })).toBe(false);
+    expect(isVisibilityOptionDisabled({ value: "restricted", current: "workspace", state })).toBe(false);
+  });
+
+  test("an unoffered Visible stays disabled even with blockers", () => {
+    expect(
+      isVisibilityOptionDisabled({
+        value: "workspace",
+        current: "restricted",
+        state: { blockers, allowedTargets: [] },
+      })
+    ).toBe(true);
+  });
+});
+
+describe("showBlockersInCollaborate", () => {
+  const blockers = [{ id: "i1", name: "Slack", type: "integration" as const }];
+  const blocked = { blockers, allowedTargets: ["workspace" as const] };
+
+  test("shows the blockers once Restricted is picked on a survey connections hold visible", () => {
+    expect(showBlockersInCollaborate({ selected: "restricted", current: "workspace", state: blocked })).toBe(
+      true
+    );
+  });
+
+  test("hides them while Visible is selected, the default", () => {
+    expect(showBlockersInCollaborate({ selected: "workspace", current: "workspace", state: blocked })).toBe(
+      false
+    );
+    expect(showBlockersInCollaborate({ selected: null, current: "workspace", state: blocked })).toBe(false);
+  });
+
+  test("never for Restricted unavailable without blockers, offered anyway, or already current", () => {
+    expect(
+      showBlockersInCollaborate({
+        selected: "restricted",
+        current: "workspace",
+        state: { blockers: [], allowedTargets: ["workspace"] },
+      })
+    ).toBe(false);
+    expect(
+      showBlockersInCollaborate({
+        selected: "restricted",
+        current: "workspace",
+        state: { blockers, allowedTargets: ["restricted", "workspace"] },
+      })
+    ).toBe(false);
+    expect(showBlockersInCollaborate({ selected: "restricted", current: "restricted", state: blocked })).toBe(
+      false
+    );
+  });
+
+  test("Save stays off while the blocked Restricted is picked", () => {
+    expect(
+      canSaveVisibility({ current: "workspace", selected: "restricted", allowedTargets: ["workspace"] })
+    ).toBe(false);
   });
 });
