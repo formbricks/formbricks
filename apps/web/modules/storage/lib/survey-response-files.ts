@@ -3,7 +3,11 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { getSurvey } from "@/lib/survey/service";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
-import { collectResponseFileUrls, getSurveyFileUploadElementIds } from "@/modules/storage/utils";
+import {
+  collectResponseFileUrls,
+  getStorageUrlSurveyId,
+  getSurveyFileUploadElementIds,
+} from "@/modules/storage/utils";
 
 /**
  * Responses are scanned in pages so a survey with a large response count never holds every
@@ -107,6 +111,10 @@ export const collectSurveyResponseFileUrls = async (
 /**
  * Deletes the files `collectSurveyResponseFileUrls` found, in chunks of STORAGE_DELETE_CHUNK_SIZE.
  *
+ * A URL whose key is filed under a different survey is dropped first. `deleteResponseFileUrls` only
+ * checks the workspace, and an answer can hold another survey's URL: one written under a key that
+ * only later became a file-upload element is never checked against its survey.
+ *
  * Callers run this after the responses are committed as deleted, so it never throws: turning a
  * completed delete into a failed one would only make the caller retry against rows that are gone.
  * `deleteResponseFileUrls` already logs and swallows per-file errors, and the guard here covers an
@@ -117,8 +125,20 @@ export const deleteSurveyResponseFiles = async (
   workspaceId: string | undefined,
   surveyId: string
 ): Promise<void> => {
-  for (let i = 0; i < fileUrls.length; i += STORAGE_DELETE_CHUNK_SIZE) {
-    const chunk = fileUrls.slice(i, i + STORAGE_DELETE_CHUNK_SIZE);
+  const ownFileUrls = fileUrls.filter((fileUrl) => {
+    const keySurveyId = getStorageUrlSurveyId(fileUrl);
+    return keySurveyId === null || keySurveyId === surveyId;
+  });
+
+  if (ownFileUrls.length < fileUrls.length) {
+    logger.error(
+      { surveyId, workspaceId, fileCount: fileUrls.length - ownFileUrls.length },
+      "Refusing to delete response files stored under another survey"
+    );
+  }
+
+  for (let i = 0; i < ownFileUrls.length; i += STORAGE_DELETE_CHUNK_SIZE) {
+    const chunk = ownFileUrls.slice(i, i + STORAGE_DELETE_CHUNK_SIZE);
     try {
       await deleteResponseFileUrls(chunk, workspaceId);
     } catch (error) {

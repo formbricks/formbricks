@@ -214,6 +214,36 @@ describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
 
       expect(deleteResponseFileUrls).not.toHaveBeenCalled();
     });
+
+    test("Never deletes a file stored under another survey's folder", async () => {
+      const otherSurveyId = "clq5n7p1q0000m7z0h5p6g3r9";
+      const ownFile = storageUrl(`surveys/${surveyId}/elements/${fileUploadElement.id}/own.png`);
+      const flatFile = storageUrl("flat.png");
+
+      mockSurvey(surveyWithFileUpload);
+      mockResponsePages([
+        {
+          id: "response-1",
+          createdAt: scanTimestamp(0),
+          data: {
+            [fileUploadElement.id]: [
+              ownFile,
+              flatFile,
+              storageUrl(`surveys/${otherSurveyId}/elements/${fileUploadElement.id}/other.png`),
+              // Both decode to `surveys/{otherSurveyId}/…`, which is the key the delete path builds.
+              storageUrl(`%73urveys/${otherSurveyId}/elements/${fileUploadElement.id}/encoded.png`),
+              storageUrl(`surveys%2F${otherSurveyId}%2Felements%2F${fileUploadElement.id}%2Fslash.png`),
+            ],
+          },
+        },
+      ]);
+      vi.mocked(prisma.$transaction).mockResolvedValue([{ count: 1 }, { count: 0 }]);
+
+      await deleteResponsesAndDisplaysForSurvey(surveyId);
+
+      expect(deleteResponseFileUrls).toHaveBeenCalledTimes(1);
+      expect(deleteResponseFileUrls).toHaveBeenCalledWith([ownFile, flatFile], workspaceId);
+    });
   });
 
   describe("Sad Path", () => {

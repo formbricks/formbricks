@@ -11,6 +11,7 @@ import {
   deleteSurveyResponseFiles,
 } from "@/modules/storage/lib/survey-response-files";
 import { deleteSurveyUploadFilesBestEffort } from "@/modules/storage/service";
+import { getStorageUrlSurveyId } from "@/modules/storage/utils";
 
 /**
  * Permanently deletes a survey, cascades private-segment cleanup, and removes its respondents' uploads
@@ -73,11 +74,15 @@ export const deleteSurvey = async (surveyId: string, options?: { requireArchived
 
     // Only reached once the delete has committed, so no file goes while its survey survives. Both calls
     // log and swallow storage errors: the survey is already gone, and reporting a failure would only
-    // make the caller retry a delete that happened. They overlap on current uploads, which is harmless
-    // (S3 treats deleting a missing key as success): the scan is the only way to reach pre-#8044 files,
-    // and the sweep catches what the scan cannot, including a response that landed after it ran.
-    await deleteSurveyResponseFiles(fileUrls, deletedSurvey.workspaceId, surveyId);
+    // make the caller retry a delete that happened.
+    //
+    // The sweep deletes the survey's upload folder in batches, including files the scan cannot see
+    // (removed upload elements, uploads never submitted, a response that landed after the scan). So the
+    // per-file delete only gets the flat pre-#8044 keys the folder does not hold; a key filed under a
+    // survey is either this survey's (swept) or another survey's (never ours to delete).
     await deleteSurveyUploadFilesBestEffort({ workspaceId: deletedSurvey.workspaceId, surveyId });
+    const flatKeyFileUrls = fileUrls.filter((fileUrl) => getStorageUrlSurveyId(fileUrl) === null);
+    await deleteSurveyResponseFiles(flatKeyFileUrls, deletedSurvey.workspaceId, surveyId);
 
     return deletedSurvey;
   } catch (error) {

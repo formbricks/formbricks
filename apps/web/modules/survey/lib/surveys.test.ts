@@ -230,8 +230,12 @@ describe("deleteSurvey", () => {
     } as unknown as TSurvey;
     const surveyWithoutFileUpload = { workspaceId, questions: [], blocks: [] } as unknown as TSurvey;
 
+    // A current upload, keyed under this survey's folder, and a pre-#8044 upload with a flat key.
     const fileUrl = (name: string) =>
       `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${fileUploadElementId}/${name}`;
+    const flatFileUrl = (name: string) => `/storage/${workspaceId}/private/${name}`;
+    const otherSurveyFileUrl = (name: string) =>
+      `/storage/${workspaceId}/private/surveys/clq5n7p1q0000m7z0h5p6g3r9/elements/${fileUploadElementId}/${name}`;
 
     const mockTransaction = (tx: Record<string, unknown>) =>
       vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(tx as never));
@@ -249,7 +253,7 @@ describe("deleteSurvey", () => {
         {
           id: "response-1",
           createdAt: new Date("2026-06-01T00:00:00.000Z"),
-          data: { [fileUploadElementId]: [fileUrl("a.png"), fileUrl("b.pdf")], other: "not a file" },
+          data: { [fileUploadElementId]: [fileUrl("a.png"), flatFileUrl("b.pdf")], other: "not a file" },
         },
       ] as never);
       vi.mocked(deleteResponseFileUrls).mockResolvedValue(undefined);
@@ -261,7 +265,11 @@ describe("deleteSurvey", () => {
       vi.mocked(prisma.response.findMany).mockImplementation((async () => {
         callOrder.push("scan");
         return [
-          { id: "response-1", createdAt: new Date(), data: { [fileUploadElementId]: [fileUrl("a.png")] } },
+          {
+            id: "response-1",
+            createdAt: new Date(),
+            data: { [fileUploadElementId]: [flatFileUrl("a.png")] },
+          },
         ];
       }) as never);
       vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
@@ -290,7 +298,31 @@ describe("deleteSurvey", () => {
       // no file is removed while its survey could still survive.
       expect(callOrder.slice(0, 3)).toEqual(["scan", "transaction", "delete"]);
       expect(new Set(callOrder.slice(3))).toEqual(new Set(["files", "folder"]));
-      expect(deleteResponseFileUrls).toHaveBeenCalledWith([fileUrl("a.png")], workspaceId);
+      expect(deleteResponseFileUrls).toHaveBeenCalledWith([flatFileUrl("a.png")], workspaceId);
+      expect(deleteSurveyUploadFilesBestEffort).toHaveBeenCalledWith({ workspaceId, surveyId });
+    });
+
+    test("deletes only flat keys one by one, leaving survey-filed keys to the folder sweep", async () => {
+      vi.mocked(prisma.response.findMany).mockResolvedValue([
+        {
+          id: "response-1",
+          createdAt: new Date("2026-06-01T00:00:00.000Z"),
+          data: {
+            [fileUploadElementId]: [fileUrl("a.png"), flatFileUrl("b.pdf"), otherSurveyFileUrl("c.png")],
+          },
+        },
+      ] as never);
+      mockTransaction({
+        survey: { delete: vi.fn().mockResolvedValue(mockDeletedSurveyLink) },
+        segment: { delete: vi.fn() },
+      });
+
+      await deleteSurvey(surveyId);
+
+      // This survey's own upload is swept with its folder, so deleting it one by one as well would
+      // double the storage calls; the other survey's upload is not this survey's to delete at all.
+      expect(deleteResponseFileUrls).toHaveBeenCalledTimes(1);
+      expect(deleteResponseFileUrls).toHaveBeenCalledWith([flatFileUrl("b.pdf")], workspaceId);
       expect(deleteSurveyUploadFilesBestEffort).toHaveBeenCalledWith({ workspaceId, surveyId });
     });
 
@@ -344,7 +376,7 @@ describe("deleteSurvey", () => {
 
       await deleteSurvey(surveyId, { requireArchivedBefore: cutoff });
 
-      expect(deleteResponseFileUrls).toHaveBeenCalledWith([fileUrl("a.png"), fileUrl("b.pdf")], workspaceId);
+      expect(deleteResponseFileUrls).toHaveBeenCalledWith([flatFileUrl("b.pdf")], workspaceId);
       expect(deleteSurveyUploadFilesBestEffort).toHaveBeenCalledWith({ workspaceId, surveyId });
     });
 
