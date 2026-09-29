@@ -59,6 +59,7 @@ export const V3_PROBLEM_CODES = [
   "ai_generated_payload_invalid",
   "ai_instance_not_configured",
   "ai_output_too_long",
+  "ai_provider_auth_failed",
   "ai_smart_tools_disabled",
   "bad_gateway",
   "bad_request",
@@ -297,9 +298,14 @@ export function problemConflict(
   });
 }
 
-export function problemBadGateway(requestId: string, detail: string, instance?: string): Response {
+export function problemBadGateway(
+  requestId: string,
+  detail: string,
+  instance?: string,
+  code: V3ProblemCode = "bad_gateway"
+): Response {
   return problemResponse(502, "Bad Gateway", detail, requestId, {
-    code: "bad_gateway",
+    code,
     instance,
   });
 }

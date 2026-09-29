@@ -3178,6 +3178,7 @@
         "prompt_helper_website_label": "Website-Feedback",
         "prompt_label": "Beschreibe die Umfrage, die du brauchst",
         "prompt_placeholder": "Beschreibe die Umfrage, die du benötigst, z. B. Verstehen, warum neue Nutzer während des Onboardings abbrechen und was ihnen helfen würde, die Einrichtung abzuschließen",
+        "provider_auth_failed": "Der KI-Anbieter hat die Zugangsdaten dieser Instanz abgelehnt. Bitte deinen Administrator, die KI-Konfiguration zu überprüfen.",
         "regenerate": "Neu generieren",
         "request_rejected": "Diese Eingabe konnte nicht verwendet werden. Versuche, sie anders zu formulieren.",
         "shortcut_hint": "⌘/Strg + Eingabetaste zum Generieren",

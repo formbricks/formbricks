@@ -3178,6 +3178,7 @@
         "prompt_helper_website_label": "Retours sur le site web",
         "prompt_label": "Décris le questionnaire dont tu as besoin",
         "prompt_placeholder": "Décris l'enquête dont tu as besoin, par exemple : Comprendre pourquoi les nouveaux utilisateurs abandonnent pendant l'onboarding et ce qui les aiderait à terminer la configuration",
+        "provider_auth_failed": "Le fournisseur d'IA a rejeté les identifiants de cette instance. Demande à ton administrateur de vérifier la configuration IA.",
         "regenerate": "Régénérer",
         "request_rejected": "Cette demande n'a pas pu être utilisée. Essaie de la reformuler.",
         "shortcut_hint": "⌘/Ctrl + Entrée pour générer",

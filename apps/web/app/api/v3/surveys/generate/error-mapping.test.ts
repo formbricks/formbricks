@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { AIOutputTokenLimitError } from "@formbricks/ai";
+import { AIOAuthTokenError, AIOutputTokenLimitError } from "@formbricks/ai";
 import { logger } from "@formbricks/logger";
 import {
   OperationNotAllowedError,
@@ -127,5 +127,17 @@ describe("mapV3SurveyGenerateError", () => {
       expect.objectContaining({ err: error, requestId: context.requestId }),
       "Failed to generate v3 survey create payload"
     );
+  });
+
+  test("maps an OAuth2 token failure to 502 ai_provider_auth_failed instead of prompt advice", async () => {
+    const response = mapV3SurveyGenerateError(
+      new AIOAuthTokenError("token_request_failed", { statusCode: 401, tokenUrlHost: "idp.example" }),
+      context
+    );
+
+    expect(response.status).toBe(502);
+    const problem = (await response.json()) as { code?: string; detail?: string };
+    expect(problem.code).toBe("ai_provider_auth_failed");
+    expect(problem.detail).not.toContain("add more detail");
   });
 });

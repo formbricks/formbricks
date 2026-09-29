@@ -3178,6 +3178,7 @@
         "prompt_helper_website_label": "Website feedback",
         "prompt_label": "Describe the survey you need",
         "prompt_placeholder": "Describe the survey you need, e.g. Understand why new users stop during onboarding and what would help them finish setup",
+        "provider_auth_failed": "The AI provider rejected this instance's credentials. Ask your administrator to check the AI configuration.",
         "regenerate": "Regenerate",
         "request_rejected": "That prompt could not be used. Try rephrasing it.",
         "shortcut_hint": "⌘/Ctrl + Enter to generate",

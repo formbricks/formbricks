@@ -3178,6 +3178,7 @@
         "prompt_helper_website_label": "Webhelyvisszajelzés",
         "prompt_label": "Írja le, hogy milyen kérdőívre van szüksége",
         "prompt_placeholder": "Írja le, hogy milyen kérdőívre van szüksége, például „Annak megértése, hogy az új felhasználók miért szakítják meg a beléptetést, és mi segítene nekik a beállítás befejezésében”",
+        "provider_auth_failed": "Az AI szolgáltató elutasította ezen példány hitelesítő adatait. Kérje meg a rendszergazdát, hogy ellenőrizze az AI konfigurációt.",
         "regenerate": "Újraelőállítás",
         "request_rejected": "Ezt az utasítást nem sikerült használni. Próbálja meg átfogalmazni.",
         "shortcut_hint": "⌘/Ctrl + Enter az előállításhoz",

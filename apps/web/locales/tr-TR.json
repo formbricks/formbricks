@@ -3178,6 +3178,7 @@
         "prompt_helper_website_label": "Web sitesi geri bildirimi",
         "prompt_label": "İhtiyacın olan anketi açıkla",
         "prompt_placeholder": "İhtiyacın olan anketi tanımla, örneğin: Yeni kullanıcıların neden onboarding sırasında durduğunu ve kurulumu tamamlamalarına neyin yardımcı olacağını anla",
+        "provider_auth_failed": "Yapay zeka sağlayıcısı bu örneğin kimlik bilgilerini reddetti. Yöneticinizden yapay zeka yapılandırmasını kontrol etmesini isteyin.",
         "regenerate": "Yeniden oluştur",
         "request_rejected": "Bu komut kullanılamadı. Yeniden ifade etmeyi dene.",
         "shortcut_hint": "Oluşturmak için ⌘/Ctrl + Enter",

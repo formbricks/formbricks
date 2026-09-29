@@ -28,6 +28,8 @@ export function getAiErrorMessage(code: string | undefined, t: TranslateFn): str
       return t("workspace.surveys.ai_create.ai_output_too_long");
     case "ai_quota_exceeded":
       return t("workspace.surveys.ai_create.ai_rate_limited");
+    case "ai_provider_auth_failed":
+      return t("workspace.surveys.ai_create.provider_auth_failed");
     case "ai_generation_failed":
       return t("workspace.surveys.ai_create.generation_failed");
     case "ai_nothing_generated":

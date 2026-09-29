@@ -3178,6 +3178,7 @@
         "prompt_helper_website_label": "Feedback do site",
         "prompt_label": "Descreva a pesquisa que você precisa",
         "prompt_placeholder": "Descreva a pesquisa que você precisa, por exemplo: Entender por que novos usuários abandonam durante a integração e o que os ajudaria a concluir a configuração",
+        "provider_auth_failed": "O provedor de IA rejeitou as credenciais desta instância. Peça ao seu administrador para verificar a configuração de IA.",
         "regenerate": "Gerar novamente",
         "request_rejected": "Esse prompt não pôde ser usado. Tente reformulá-lo.",
         "shortcut_hint": "⌘/Ctrl + Enter para gerar",
