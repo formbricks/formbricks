@@ -162,6 +162,7 @@ export function useChartDialog({
           chartType: resolveChartType(chart.type),
           data: queryRows.rows,
           ...(queryRows.optionLabels ? { optionLabels: queryRows.optionLabels } : {}),
+          ...(queryRows.fieldLabels ? { fieldLabels: queryRows.fieldLabels } : {}),
         });
       } catch (error: unknown) {
         if (cancelled) return;

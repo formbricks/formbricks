@@ -25,8 +25,12 @@ import { findNextOpenSlot, parseWidgetLayouts } from "./widget-placement";
 
 const MAX_NAME_ATTEMPTS = 5;
 
-const getDefaultWidgetLayout = (chartType: TChartType): TWidgetLayout =>
-  chartType === "big_number" ? { x: 0, y: 0, w: 3, h: 2 } : { x: 0, y: 0, w: 4, h: 4 };
+const getDefaultWidgetLayout = (chartType: TChartType): TWidgetLayout => {
+  if (chartType === "big_number") return { x: 0, y: 0, w: 3, h: 2 };
+  // A grid of statements needs the width for its labels and the height for its rows.
+  if (chartType === "matrix") return { x: 0, y: 0, w: 6, h: 5 };
+  return { x: 0, y: 0, w: 4, h: 4 };
+};
 
 /**
  * The `x`/`y` a new widget takes on a dashboard that already holds `existingWidgets`: the first gap

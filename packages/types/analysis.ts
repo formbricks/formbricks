@@ -60,6 +60,14 @@ export const ZChartConfig = z.object({
   pieDisplay: z.enum(["pie", "breakdown"]).optional(),
   /** Area charts only: a solid band under the stroke ("filled", default) or a line with a soft fade ("line"). */
   areaDisplay: z.enum(["filled", "line"]).optional(),
+  /** Matrix charts only: what each cell prints — share of its row ("percent", default), the raw "count", or "both". */
+  matrixCellValue: z.enum(["percent", "count", "both"]).optional(),
+  /** Matrix charts only: tint cells by value (default true). */
+  matrixColorScale: z.boolean().optional(),
+  /** Matrix charts only: add a total column and a total row (default false). */
+  matrixShowTotals: z.boolean().optional(),
+  /** Matrix charts only: swap rows and columns on screen. The query is unchanged (default false). */
+  matrixTranspose: z.boolean().optional(),
   colors: z.array(z.string()).optional(),
   xAxisLabel: z.string().optional(),
   yAxisLabel: z.string().optional(),
