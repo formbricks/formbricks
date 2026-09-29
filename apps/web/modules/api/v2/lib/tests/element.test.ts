@@ -4,12 +4,6 @@ import { TSurveyQuestionChoice, TSurveyQuestionTypeEnum } from "@formbricks/type
 import { MAX_OTHER_OPTION_LENGTH } from "@/lib/constants";
 import { validateOtherOptionLength, validateOtherOptionLengthForMultipleChoice } from "../element";
 
-vi.mock("@/lib/i18n/utils", () => ({
-  getLocalizedValue: vi.fn().mockImplementation((value, language) => {
-    return typeof value === "string" ? value : value[language] || value["default"] || "";
-  }),
-}));
-
 vi.mock("@/app/api/v2/client/[workspaceId]/responses/lib/recaptcha", () => ({
   verifyRecaptchaToken: vi.fn(),
 }));
@@ -131,6 +125,19 @@ describe("validateOtherOptionLengthForMultipleChoice", () => {
     });
 
     expect(result).toBe("rank");
+  });
+
+  test("matches the default label when the response language has a blank translation", () => {
+    const longLabel = "L".repeat(MAX_OTHER_OPTION_LENGTH + 1);
+    const result = validateOtherOptionLengthForMultipleChoice({
+      responseData: { rank: [longLabel] },
+      surveyQuestions: [
+        { id: "rank", type: "ranking", choices: [{ id: "1", label: { default: longLabel, fr: " " } }] },
+      ],
+      responseLanguage: "fr",
+    });
+
+    expect(result).toBeUndefined();
   });
 
   test("accepts a ranking whose Other text is within the limit", () => {
