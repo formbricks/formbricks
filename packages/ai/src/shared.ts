@@ -70,3 +70,31 @@ export const resolveActiveAIProvider = (value?: string | null): ActiveAIProvider
 
   return normalizedValue;
 };
+
+export const OPENAI_COMPATIBLE_AUTH_MODES = ["api-key", "oauth2-client-credentials"] as const;
+export type OpenAICompatibleAuthMode = (typeof OPENAI_COMPATIBLE_AUTH_MODES)[number];
+
+export const OPENAI_COMPATIBLE_OAUTH_AUTH_STYLES = ["basic", "post"] as const;
+export type OpenAICompatibleOAuthAuthStyle = (typeof OPENAI_COMPATIBLE_OAUTH_AUTH_STYLES)[number];
+
+const parseEnumValue = <T extends string>(
+  allowed: readonly T[],
+  fallback: T,
+  value?: string | null
+): T | undefined => {
+  const normalizedValue = normalizeValue(value);
+
+  if (!normalizedValue) {
+    return fallback;
+  }
+
+  return allowed.includes(normalizedValue as T) ? (normalizedValue as T) : undefined;
+};
+
+/** `api-key` when unset; `undefined` for an unrecognised value, so callers fail closed. */
+export const parseAuthMode = (value?: string | null): OpenAICompatibleAuthMode | undefined =>
+  parseEnumValue(OPENAI_COMPATIBLE_AUTH_MODES, "api-key", value);
+
+/** `basic` when unset; `undefined` for an unrecognised value. */
+export const parseAuthStyle = (value?: string | null): OpenAICompatibleOAuthAuthStyle | undefined =>
+  parseEnumValue(OPENAI_COMPATIBLE_OAUTH_AUTH_STYLES, "basic", value);
