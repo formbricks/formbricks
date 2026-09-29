@@ -47,5 +47,6 @@ export const transformToUnifySurvey = (survey: TSurvey): TUnifySurvey => {
     status: mapSurveyStatus(survey.status),
     elements: unifySurveyElements,
     createdAt: survey.createdAt,
+    visibility: survey.visibility,
   };
 };

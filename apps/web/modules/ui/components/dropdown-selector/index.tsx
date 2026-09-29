@@ -1,4 +1,5 @@
 import { ChevronDownIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +17,8 @@ interface DropdownSelectorProps {
   disabled: boolean;
   placeholder?: string;
   refetch?: () => void;
+  /** A reason an item cannot be picked, shown beside it; the item is disabled whenever this returns one. */
+  getItemDisabledHint?: (item: any) => ReactNode;
 }
 
 export const DropdownSelector = ({
@@ -25,7 +28,8 @@ export const DropdownSelector = ({
   setSelectedItem,
   disabled,
   placeholder,
-}: DropdownSelectorProps) => {
+  getItemDisabledHint,
+}: Readonly<DropdownSelectorProps>) => {
   return (
     <div className="col-span-1">
       {label && <Label htmlFor={label}>{label}</Label>}
@@ -54,14 +58,19 @@ export const DropdownSelector = ({
                 align="start">
                 {items
                   .sort((a, b) => a.name?.localeCompare(b.name))
-                  .map((item) => (
-                    <DropdownMenuItem
-                      key={item.id}
-                      className="flex cursor-pointer items-center p-3 hover:bg-slate-100 hover:outline-hidden data-disabled:cursor-default data-disabled:opacity-50"
-                      onSelect={() => setSelectedItem(item)}>
-                      {item.name}
-                    </DropdownMenuItem>
-                  ))}
+                  .map((item) => {
+                    const disabledHint = getItemDisabledHint?.(item);
+                    return (
+                      <DropdownMenuItem
+                        key={item.id}
+                        disabled={!!disabledHint}
+                        className="flex cursor-pointer items-center p-3 hover:bg-slate-100 hover:outline-hidden data-disabled:cursor-default data-disabled:opacity-50"
+                        onSelect={() => setSelectedItem(item)}>
+                        {item.name}
+                        {disabledHint}
+                      </DropdownMenuItem>
+                    );
+                  })}
               </DropdownMenuContent>
             </DropdownMenuPortal>
           )}

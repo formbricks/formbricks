@@ -14,6 +14,7 @@ interface WebhookTableProps {
   children: [JSX.Element, JSX.Element[]];
   isReadOnly: boolean;
   allowInternalUrls: boolean;
+  surveyVisibilityEnabled: boolean;
 }
 
 export const WebhookTable = ({
@@ -23,7 +24,8 @@ export const WebhookTable = ({
   children: [TableHeading, webhookRows],
   isReadOnly,
   allowInternalUrls,
-}: WebhookTableProps) => {
+  surveyVisibilityEnabled,
+}: Readonly<WebhookTableProps>) => {
   const [isWebhookDetailModalOpen, setWebhookDetailModalOpen] = useState(false);
   const { t } = useTranslation();
   const [activeWebhook, setActiveWebhook] = useState<Webhook>({
@@ -74,6 +76,7 @@ export const WebhookTable = ({
         surveys={surveys}
         isReadOnly={isReadOnly}
         allowInternalUrls={allowInternalUrls}
+        surveyVisibilityEnabled={surveyVisibilityEnabled}
       />
     </>
   );

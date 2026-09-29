@@ -5,7 +5,12 @@ import { ActionClass, Language, OrganizationRole, Workspace } from "@formbricks/
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyEditorTabs,
+  TSurveyStyling,
+  TSurveyVisibility,
+} from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
@@ -27,6 +32,7 @@ import { LanguageView } from "@/modules/survey/multi-language-surveys/components
 import { type TSurveySchedulingConfig } from "@/modules/survey/scheduling/lib/config";
 import { RestrictedSurveyBanner } from "@/modules/survey/visibility/components/restricted-survey-banner";
 import { showRestrictedBanner } from "@/modules/survey/visibility/lib/markers";
+import { isOutboundBlocked } from "@/modules/survey/visibility/lib/state";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { getWorkspaceLanguagesAction, refetchWorkspaceAction } from "../actions";
 
@@ -129,6 +135,16 @@ export const SurveyEditor = ({
   const [hasTriggerError, setHasTriggerError] = useState(false);
 
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
+
+  // ENG-3395. The stored visibility is kept apart from `localSurvey`: it is changed through its own
+  // endpoint, never by a survey save, so it must not make the editor look dirty. It lives here rather
+  // than in the menu bar because the Follow-ups tab reads it too.
+  const [changedVisibility, setChangedVisibility] = useState<TSurveyVisibility | null>(null);
+  const storedVisibility = changedVisibility ?? survey.visibility;
+  const [isVisibilityTurnedOff, setIsVisibilityTurnedOff] = useState(false);
+  const visibilityGate = surveyVisibilityEnabled && !isVisibilityTurnedOff;
+  // Stable: the Collaborate modal runs it from an effect.
+  const handleVisibilityNotEnabled = useCallback(() => setIsVisibilityTurnedOff(true), []);
 
   // `isFollowUpsTabVisible` tracks the server `survey` prop, which a save refreshes
   // (`survey-menu-bar` calls `router.refresh()`). Deleting the last follow-up therefore hides the
@@ -239,7 +255,10 @@ export const SurveyEditor = ({
         locale={locale}
         setIsCautionDialogOpen={setIsCautionDialogOpen}
         isStorageConfigured={isStorageConfigured}
-        surveyVisibilityEnabled={surveyVisibilityEnabled}
+        visibilityGate={visibilityGate}
+        storedVisibility={storedVisibility}
+        onVisibilityChanged={setChangedVisibility}
+        onVisibilityNotEnabled={handleVisibilityNotEnabled}
         surveyAccess={surveyAccess}
         ownerName={ownerName}
       />
@@ -349,6 +368,8 @@ export const SurveyEditor = ({
               userEmail={userEmail}
               teamMemberDetails={teamMemberDetails}
               locale={locale}
+              isRestricted={isOutboundBlocked(visibilityGate, { visibility: storedVisibility })}
+              workspaceName={localWorkspace.name}
             />
           )}
         </main>

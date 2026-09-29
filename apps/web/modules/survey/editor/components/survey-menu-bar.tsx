@@ -63,8 +63,16 @@ interface SurveyMenuBarProps {
   locale: string;
   setIsCautionDialogOpen: (open: boolean) => void;
   isStorageConfigured: boolean;
-  /** ENG-3395: the server-side restricted-surveys gate (readiness marker and entitlement). */
-  surveyVisibilityEnabled: boolean;
+  /**
+   * ENG-3395: the restricted-surveys gate — the server-side flag, turned off for the rest of the
+   * session when the server reports visibility as not enabled. Owned by the editor, which the
+   * Follow-ups tab reads as well.
+   */
+  visibilityGate: boolean;
+  /** The stored visibility, including a change made from this editor. */
+  storedVisibility: TSurveyVisibility;
+  onVisibilityChanged: (visibility: TSurveyVisibility) => void;
+  onVisibilityNotEnabled: () => void;
   /** Why this user can see the survey; `null` while the gate is off. */
   surveyAccess: TSurveyAccess | null;
   /** The author's display name; `null` when the survey has no owner or the gate is off. */
@@ -87,7 +95,10 @@ export const SurveyMenuBar = ({
   locale,
   setIsCautionDialogOpen,
   isStorageConfigured = true,
-  surveyVisibilityEnabled,
+  visibilityGate,
+  storedVisibility,
+  onVisibilityChanged,
+  onVisibilityNotEnabled,
   surveyAccess,
   ownerName,
 }: Readonly<SurveyMenuBarProps>) => {
@@ -114,24 +125,18 @@ export const SurveyMenuBar = ({
   // snapshot along with it and hide the change.
   const lastSavedSurveyRef = useRef<TSurvey | null>(null);
 
-  // ENG-3395. The stored visibility is kept apart from `localSurvey`: it is changed through its own
-  // endpoint, never by a survey save, so it must not make the editor look dirty.
-  const [changedVisibility, setChangedVisibility] = useState<TSurveyVisibility | null>(null);
-  const storedVisibility = changedVisibility ?? survey.visibility;
-  const [isVisibilityTurnedOff, setIsVisibilityTurnedOff] = useState(false);
   const [isActivateDialogOpen, setIsActivateDialogOpen] = useState(false);
   const [isCollaborateModalOpen, setIsCollaborateModalOpen] = useState(false);
   const [isChangingVisibility, setIsChangingVisibility] = useState(false);
   const updateSurveyVisibility = useUpdateSurveyVisibility();
-  const visibilityGate = surveyVisibilityEnabled && !isVisibilityTurnedOff;
   const canManageVisibility = showVisibilityControls(visibilityGate, surveyAccess);
   const restrictedAuthor = getRestrictedAuthor(surveyAccess, ownerName);
 
   // Stable: the Collaborate modal runs it from an effect.
   const handleVisibilityNotEnabled = useCallback(() => {
-    setIsVisibilityTurnedOff(true);
+    onVisibilityNotEnabled();
     setIsActivateDialogOpen(false);
-  }, []);
+  }, [onVisibilityNotEnabled]);
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -742,12 +747,12 @@ export const SurveyMenuBar = ({
         surveyId: localSurvey.id,
         visibility: "workspace",
       });
-      setChangedVisibility(result.pending ?? result.visibility);
+      onVisibilityChanged(result.pending ?? result.visibility);
       return planActivation(choice, { ok: true });
     } catch (error) {
       const step = planActivation(choice, { ok: false, error });
       if (step.kind === "activate") {
-        setChangedVisibility("workspace");
+        onVisibilityChanged("workspace");
       } else {
         toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
       }
@@ -897,7 +902,7 @@ export const SurveyMenuBar = ({
             surveyId={localSurvey.id}
             surveyName={localSurvey.name}
             workspaceName={workspace.name}
-            onVisibilityChanged={setChangedVisibility}
+            onVisibilityChanged={onVisibilityChanged}
             onVisibilityNotEnabled={handleVisibilityNotEnabled}
           />
           <ActivateDialog

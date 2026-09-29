@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { isEffectivelyRestricted, isRoleOnlyAccess, showVisibilityControls } from "./state";
+import {
+  isEffectivelyRestricted,
+  isOutboundBlocked,
+  isRoleOnlyAccess,
+  showVisibilityControls,
+} from "./state";
 
 describe("isEffectivelyRestricted", () => {
   test.each([
@@ -11,6 +16,19 @@ describe("isEffectivelyRestricted", () => {
     [{ visibility: "restricted" as const, pending: "workspace" as const }, true],
   ])("%o → %s", (state, expected) => {
     expect(isEffectivelyRestricted(state)).toBe(expected);
+  });
+});
+
+describe("isOutboundBlocked", () => {
+  test("blocks a restricted survey, or one with a change in flight, while the gate is on", () => {
+    expect(isOutboundBlocked(true, { visibility: "restricted" })).toBe(true);
+    expect(isOutboundBlocked(true, { visibility: "workspace", pending: "restricted" })).toBe(true);
+    expect(isOutboundBlocked(true, { visibility: "workspace" })).toBe(false);
+  });
+
+  test("never blocks with the gate off, so the product looks as it did before", () => {
+    expect(isOutboundBlocked(false, { visibility: "restricted" })).toBe(false);
+    expect(isOutboundBlocked(false, { visibility: "workspace", pending: "restricted" })).toBe(false);
   });
 });
 

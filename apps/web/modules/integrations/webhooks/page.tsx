@@ -7,6 +7,7 @@ import { WebhookRowData } from "@/modules/integrations/webhooks/components/webho
 import { WebhookTable } from "@/modules/integrations/webhooks/components/webhook-table";
 import { WebhookTableHeading } from "@/modules/integrations/webhooks/components/webhook-table-heading";
 import { getWebhooks } from "@/modules/integrations/webhooks/lib/webhook";
+import { getSurveyVisibilityUiGate } from "@/modules/survey/visibility/lib/gate";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -18,11 +19,12 @@ export const WebhooksPage = async (props: { params: Promise<{ workspaceId: strin
 
   const { isReadOnly, organization, session, workspace } = await getWorkspaceAuth(params.workspaceId);
 
-  const [webhooks, surveys] = await Promise.all([
+  const [webhooks, surveys, surveyVisibilityEnabled] = await Promise.all([
     getWebhooks(workspace.id),
     getUserVisibleSurveyWhere(session.user.id, organization.id).then((where) =>
       getSurveys(workspace.id, where, 200)
     ), // HOTFIX: not getting all surveys for now since it's maxing out the prisma accelerate limit
+    getSurveyVisibilityUiGate(organization.id),
   ]);
 
   const renderAddWebhookButton = () => (
@@ -30,6 +32,7 @@ export const WebhooksPage = async (props: { params: Promise<{ workspaceId: strin
       workspaceId={workspace.id}
       surveys={surveys}
       allowInternalUrls={DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS}
+      surveyVisibilityEnabled={surveyVisibilityEnabled}
     />
   );
 
@@ -42,10 +45,16 @@ export const WebhooksPage = async (props: { params: Promise<{ workspaceId: strin
         webhooks={webhooks}
         surveys={surveys}
         isReadOnly={isReadOnly}
-        allowInternalUrls={DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS}>
+        allowInternalUrls={DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS}
+        surveyVisibilityEnabled={surveyVisibilityEnabled}>
         <WebhookTableHeading />
         {webhooks.map((webhook) => (
-          <WebhookRowData key={webhook.id} webhook={webhook} surveys={surveys} />
+          <WebhookRowData
+            key={webhook.id}
+            webhook={webhook}
+            surveys={surveys}
+            surveyVisibilityEnabled={surveyVisibilityEnabled}
+          />
         ))}
       </WebhookTable>
     </PageContentWrapper>

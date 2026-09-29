@@ -27,6 +27,7 @@ const createMockSurvey = (overrides: Partial<TSurvey> = {}): TSurvey =>
     id: "survey-1",
     name: "Test Survey",
     status: "inProgress",
+    visibility: "workspace",
     createdAt: NOW,
     blocks: [
       {
@@ -50,6 +51,12 @@ const createMockSurvey = (overrides: Partial<TSurvey> = {}): TSurvey =>
   }) as unknown as TSurvey;
 
 describe("transformToUnifySurvey", () => {
+  test("carries the survey's visibility, so pickers can refuse a restricted survey", () => {
+    expect(transformToUnifySurvey(createMockSurvey({ visibility: "restricted" })).visibility).toBe(
+      "restricted"
+    );
+  });
+
   test("transforms a survey with basic elements", () => {
     const result = transformToUnifySurvey(createMockSurvey());
 
@@ -58,6 +65,7 @@ describe("transformToUnifySurvey", () => {
       name: "Test Survey",
       status: "active",
       createdAt: NOW,
+      visibility: "workspace",
       elements: [
         {
           id: "el-text",
