@@ -21,7 +21,7 @@ import {
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { recordSurveyListPredicateMismatch } from "@/lib/authorization/metrics";
-import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
+import { filterReadableSurveyIds, findSurveyIdsAwaitingProjection } from "@/lib/authorization/resource-list";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { WorkspaceSurveyLimitError } from "@/lib/survey/visibility/limit";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
@@ -258,14 +258,19 @@ export async function listV3Surveys({
         actor,
         surveys.map(({ id }) => id)
       );
-      const deniedIds = surveys.filter(({ id }) => !readable.has(id)).map(({ id }) => id);
+      const graphDeniedIds = surveys.filter(({ id }) => !readable.has(id)).map(({ id }) => id);
+      // A survey whose projection is still in the outbox (just created or copied) is admitted by the
+      // SQL predicate alone, as every non-list read already is; only a settled disagreement is a bug.
+      const awaitingProjection = await findSurveyIdsAwaitingProjection(graphDeniedIds);
+      const deniedIds = graphDeniedIds.filter((id) => !awaitingProjection.has(id));
       if (deniedIds.length > 0) {
         recordSurveyListPredicateMismatch(deniedIds.length);
         log.warn(
           { deniedSurveyIds: deniedIds, workspaceId },
           "Survey list predicate admitted rows the graph denies"
         );
-        surveys = surveys.filter(({ id }) => readable.has(id));
+        const denied = new Set(deniedIds);
+        surveys = surveys.filter(({ id }) => !denied.has(id));
       }
     }
 

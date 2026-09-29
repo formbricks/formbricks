@@ -3,7 +3,7 @@ import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbric
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import { recordSurveyListPredicateMismatch } from "@/lib/authorization/metrics";
-import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
+import { filterReadableSurveyIds, findSurveyIdsAwaitingProjection } from "@/lib/authorization/resource-list";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/lib/survey";
@@ -54,7 +54,10 @@ vi.mock("@/app/api/v3/lib/auth", () => ({
   requireV3WorkspaceAccess: vi.fn(),
 }));
 
-vi.mock("@/lib/authorization/resource-list", () => ({ filterReadableSurveyIds: vi.fn() }));
+vi.mock("@/lib/authorization/resource-list", () => ({
+  filterReadableSurveyIds: vi.fn(),
+  findSurveyIdsAwaitingProjection: vi.fn(async () => new Set()),
+}));
 vi.mock("@/lib/authorization/metrics", () => ({ recordSurveyListPredicateMismatch: vi.fn() }));
 
 vi.mock("@/lib/posthog", () => ({
@@ -1739,6 +1742,27 @@ describe("listV3Surveys visibility (ENG-3282)", () => {
     ]);
     expect(recordSurveyListPredicateMismatch).toHaveBeenCalledWith(1);
     expect((await readJson(response)).data).toEqual([{ id: "survey_ok" }]);
+  });
+
+  test("keeps a denied row whose projection is still in the outbox, without counting a mismatch", async () => {
+    visibilityOverride.context = enforcedMember;
+    vi.mocked(getSurveyListPage).mockResolvedValue({
+      surveys: [{ id: "survey_ok" }, { id: "survey_fresh" }, { id: "survey_leak" }],
+      nextCursor: null,
+    } as any);
+    vi.mocked(filterReadableSurveyIds).mockResolvedValue(new Set(["survey_ok"]));
+    vi.mocked(findSurveyIdsAwaitingProjection).mockResolvedValueOnce(new Set(["survey_fresh"]));
+
+    const response = await listV3Surveys({
+      searchParams: new URLSearchParams({ workspaceId }),
+      authentication: sessionAuthentication,
+      requestId,
+      instance,
+    });
+
+    expect(findSurveyIdsAwaitingProjection).toHaveBeenCalledWith(["survey_fresh", "survey_leak"]);
+    expect(recordSurveyListPredicateMismatch).toHaveBeenCalledWith(1);
+    expect((await readJson(response)).data).toEqual([{ id: "survey_ok" }, { id: "survey_fresh" }]);
   });
 
   test("skips the bulk check entirely while visibility is not enforced", async () => {

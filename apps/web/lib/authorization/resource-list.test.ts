@@ -1,12 +1,18 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { prisma } from "@formbricks/database";
 import { getAuthzedClient } from "@/lib/authzed/client";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "@/lib/authzed/errors";
 import { assertAuthzedProjectionFreshness } from "@/lib/authzed/outbox-freshness";
 import { getAuthorizationSurface, recordAuthorizationCheckIssued } from "./context";
 import { recordAuthorizationDecision } from "./metrics";
-import { lookupAuthorizedOrganizationIds, lookupAuthorizedWorkspaceIds } from "./resource-list";
+import {
+  findSurveyIdsAwaitingProjection,
+  lookupAuthorizedOrganizationIds,
+  lookupAuthorizedWorkspaceIds,
+} from "./resource-list";
 
 vi.mock("@/lib/authzed/client", () => ({ getAuthzedClient: vi.fn() }));
+vi.mock("@formbricks/database", () => ({ prisma: { authzedProjectionOutbox: { findMany: vi.fn() } } }));
 vi.mock("@/lib/authzed/outbox-freshness", () => ({ assertAuthzedProjectionFreshness: vi.fn() }));
 vi.mock("./context", () => ({
   getAuthorizationSurface: vi.fn(() => "unscoped"),
@@ -108,5 +114,29 @@ describe("authoritative resource lists", () => {
     expect(recordAuthorizationDecision).toHaveBeenCalledWith(
       expect.objectContaining({ outcome: "deny", surface: "mcp" })
     );
+  });
+});
+
+describe("findSurveyIdsAwaitingProjection", () => {
+  test("returns the surveys with an undelivered outbox event, in one query", async () => {
+    vi.mocked(prisma.authzedProjectionOutbox.findMany).mockResolvedValue([{ primaryId: "s2" }] as never);
+
+    await expect(findSurveyIdsAwaitingProjection(["s1", "s2"])).resolves.toEqual(new Set(["s2"]));
+    expect(prisma.authzedProjectionOutbox.findMany).toHaveBeenCalledWith({
+      where: {
+        targetType: "survey",
+        primaryId: { in: ["s1", "s2"] },
+        processedAt: null,
+        deadLetteredAt: null,
+      },
+      select: { primaryId: true },
+      distinct: ["primaryId"],
+    });
+  });
+
+  test("makes no query for no ids", async () => {
+    vi.mocked(prisma.authzedProjectionOutbox.findMany).mockClear();
+    await expect(findSurveyIdsAwaitingProjection([])).resolves.toEqual(new Set());
+    expect(prisma.authzedProjectionOutbox.findMany).not.toHaveBeenCalled();
   });
 });
