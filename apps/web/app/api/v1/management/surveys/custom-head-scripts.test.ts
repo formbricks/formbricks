@@ -37,6 +37,14 @@ vi.mock("@/app/lib/api/legacy-environment-id", () => ({
   addLegacyEnvironmentIdToList: vi.fn(async (value) => value),
 }));
 vi.mock("@/modules/storage/utils", () => ({ resolveStorageUrlsInObject: vi.fn((value) => value) }));
+// Survey visibility (ENG-3282) is orthogonal here: an API key creates a workspace-visible, ownerless survey.
+vi.mock("@/lib/survey/visibility/limit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/survey/visibility/limit")>()),
+  assertWorkspaceSurveyLimit: vi.fn(),
+}));
+vi.mock("@/lib/survey/visibility/creation", () => ({
+  resolveSurveyCreationFacts: vi.fn(async () => ({ ownerId: null, visibility: "workspace" })),
+}));
 
 const workspaceId = "clxworkspace00000000000001";
 const apiKey = { apiKeyId: "key_1", workspacePermissions: [], organizationId: "org_1" };
