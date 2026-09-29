@@ -15,12 +15,6 @@ const meta: Meta<typeof VisibilityBlockersAlert> = {
     },
   },
   argTypes: {
-    size: {
-      control: "select",
-      options: ["default", "small"],
-      description: "Alert size",
-      table: { category: "Appearance", type: { summary: '"default" | "small"' } },
-    },
     blockers: {
       control: "object",
       description: "The connections that depend on the survey",
@@ -44,7 +38,5 @@ const blockers = [
 ];
 
 export const Default: Story = { args: { blockers } };
-
-export const Small: Story = { args: { blockers, size: "small" } };
 
 export const NoBlockers: Story = { args: { blockers: [] } };

@@ -198,7 +198,7 @@ export const CollaborateModal = ({
             </Select>
             {state && showBlockersInCollaborate(current, state) && (
               <div className="px-1">
-                <VisibilityBlockersAlert blockers={state.blockers} size="small" />
+                <VisibilityBlockersAlert blockers={state.blockers} />
               </div>
             )}
             {state?.pending && (
