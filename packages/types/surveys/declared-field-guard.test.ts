@@ -540,6 +540,15 @@ describe("validateNewElementIdClashes", () => {
       ).toEqual(["plan"]);
     });
 
+    test("empty blocks are the survey's current ones too, because the update keeps them", () => {
+      expect(
+        elementClashes({
+          existing: { blocks: blocks("plan") },
+          incoming: { ...declared({ hiddenFields: ["plan"] }), blocks: [] },
+        })
+      ).toEqual(["plan"]);
+    });
+
     test("a variable under an element's id is out of scope here", () => {
       // A variable is stored under its cuid, not its name, so it never loses its value to an answer.
       expect(

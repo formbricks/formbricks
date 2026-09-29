@@ -11,7 +11,7 @@ import {
 import { V3SurveyReferenceValidationError } from "@/app/api/v3/surveys/reference-validation";
 import { resetDb } from "@/integration/reset-db";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
-import { createSurvey, selectSurvey, updateSurvey } from "@/lib/survey/service";
+import { createSurvey, selectSurvey, updateSurvey, updateSurveyDraft } from "@/lib/survey/service";
 import { transformPrismaSurvey } from "@/lib/survey/utils";
 
 /**
@@ -600,6 +600,21 @@ describe("a hidden field under an element's id, at the v1 / v2 write boundary", 
 
     expect(await putOutcome(survey, { blocks: renamed as never })).toEqual({ refused: "InvalidInputError" });
     expect((await readAsLegacyApi(survey.id)).blocks[0].elements[0].id).toBe(ELEMENT_ID);
+  });
+
+  test("a draft save that sends empty blocks is still checked against the stored ones", async () => {
+    // `updateSurveyInternal` writes `blocks` only when the list is non-empty, so `blocks: []` keeps
+    // the stored elements. A PUT cannot send it (`ZSurvey` refuses a survey with no elements), but
+    // the draft save skips `ZSurvey` and runs the same guard.
+    const survey = await seedSurvey();
+    const { embeddedFields: _embeddedFields, ...draft } = {
+      ...survey,
+      blocks: [],
+      hiddenFields: { enabled: true, fieldIds: [ELEMENT_ID] },
+    };
+
+    await expect(updateSurveyDraft(draft)).rejects.toMatchObject({ name: "InvalidInputError" });
+    expect((await readAsLegacyApi(survey.id)).hiddenFields.fieldIds ?? []).toEqual([]);
   });
 
   test("a full PUT that resends a clash the survey already holds is accepted", async () => {

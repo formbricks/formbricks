@@ -290,9 +290,12 @@ export const validateNewElementIdClashes = ({
   const current = namesByNamespace(existing);
   const currentElementIds = toNamespace(elementIdsOf(existing.blocks ?? []));
   const nextHiddenFields = namesAfterWrite(current, incoming).hiddenFields;
-  const nextElementIds = isDeclared(incoming.blocks)
-    ? toNamespace(elementIdsOf(incoming.blocks))
-    : currentElementIds;
+  // An empty list counts as not carried: `updateSurveyInternal` writes `blocks` only when the list is
+  // non-empty, so `blocks: []` leaves the stored elements in place.
+  const nextElementIds =
+    isDeclared(incoming.blocks) && incoming.blocks.length > 0
+      ? toNamespace(elementIdsOf(incoming.blocks))
+      : currentElementIds;
 
   const errors: TValidateIdError[] = [];
   for (const [lowered, hiddenFieldId] of nextHiddenFields) {
