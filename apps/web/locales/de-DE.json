@@ -4370,7 +4370,7 @@
       "manage_directories": "Datensätze verwalten",
       "manage_feedback_sources": "Feedbackquellen verwalten",
       "metadata": "Metadaten",
-      "metadata_read_only_entries": "Schreibgeschützte Metadatenwerte (keine Zeichenfolge)",
+      "metadata_read_only_entries": "Schreibgeschützte Metadatenwerte",
       "missing_feedback_source_title": "Feedback-Quelle fehlt?",
       "no_feedback_directory_available": "Diesem Workspace ist kein Feedback-Datensatz zugeordnet. Erstelle oder weise zuerst einen zu.",
       "no_feedback_directory_linked_admin_description": "Feedback-Datensätze bringen Feedback-Daten aus mehreren Workspaces zusammen. Verbinde einen Datensatz mit diesem Workspace, um loszulegen.",

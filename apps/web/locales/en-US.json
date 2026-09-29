@@ -4370,7 +4370,7 @@
       "manage_directories": "Manage datasets",
       "manage_feedback_sources": "Manage feedback sources",
       "metadata": "Metadata",
-      "metadata_read_only_entries": "Read-only metadata values (non-string)",
+      "metadata_read_only_entries": "Read-only metadata values",
       "missing_feedback_source_title": "Missing feedback source?",
       "no_feedback_directory_available": "No feedback dataset assigned to this workspace. Create or assign one first.",
       "no_feedback_directory_linked_admin_description": "Feedback datasets bring feedback data from multiple workspaces together. Connect a dataset to this workspace to get started.",

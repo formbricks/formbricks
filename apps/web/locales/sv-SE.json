@@ -4370,7 +4370,7 @@
       "manage_directories": "Hantera dataset",
       "manage_feedback_sources": "Hantera feedbackkällor",
       "metadata": "Metadata",
-      "metadata_read_only_entries": "Skrivskyddade metadatavärden (icke-sträng)",
+      "metadata_read_only_entries": "Skrivskyddade metadatavärden",
       "missing_feedback_source_title": "Missing feedback source?",
       "no_feedback_directory_available": "Inget feedbackdataset är tilldelat denna arbetsyta. Skapa eller tilldela ett först.",
       "no_feedback_directory_linked_admin_description": "Feedbackdataset samlar feedbackdata från flera arbetsytor. Anslut ett dataset till den här arbetsytan för att komma igång.",
