@@ -3531,6 +3531,8 @@
         "load_segment": "載入區隔",
         "logic_error_warning": "變更將導致邏輯錯誤",
         "logic_error_warning_text": "變更問題類型將會從此問題中移除邏輯條件",
+        "logic_fallback_destination_missing": "「{blockName}」的備用目的地已不存在。請選擇有效的目的地。",
+        "logic_jump_destination_missing": "「{blockName}」規則 {ruleNumber} 中的跳轉目的地已不存在。請選擇有效的目的地。",
         "logo_settings": "標誌設定",
         "long_answer": "長回答",
         "long_answer_toggle_description": "允許受訪者撰寫較長的多行回答。",

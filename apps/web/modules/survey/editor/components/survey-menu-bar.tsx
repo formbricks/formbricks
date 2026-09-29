@@ -23,6 +23,7 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { isDeepEqual } from "@/lib/utils/object";
 import { reportStaleServerActionError } from "@/lib/utils/stale-server-action";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { getLogicDestinationErrorMessage } from "@/modules/survey/editor/lib/logic-destination-error";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
@@ -331,6 +332,12 @@ export const SurveyMenuBar = ({
             blockNumber: (firstError.path[1] as number) + 1,
           })
         );
+        return false;
+      }
+
+      const logicDestinationMessage = getLogicDestinationErrorMessage(firstError, localSurvey.blocks, t);
+      if (logicDestinationMessage) {
+        toast.error(logicDestinationMessage, { className: "w-fit max-w-md!" });
         return false;
       }
 

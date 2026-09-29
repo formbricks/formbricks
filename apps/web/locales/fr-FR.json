@@ -3531,6 +3531,8 @@
         "load_segment": "Segment de chargement",
         "logic_error_warning": "Changer causera des erreurs logiques",
         "logic_error_warning_text": "Changer le type de question supprimera les conditions logiques de cette question.",
+        "logic_fallback_destination_missing": "La destination de secours de « {blockName} » n'existe plus. Choisis une destination valide.",
+        "logic_jump_destination_missing": "La destination du saut dans la règle {ruleNumber} de « {blockName} » n'existe plus. Choisis une destination valide.",
         "logo_settings": "Paramètres du logo",
         "long_answer": "Longue réponse",
         "long_answer_toggle_description": "Permettre aux répondants d'écrire des réponses plus longues et sur plusieurs lignes.",

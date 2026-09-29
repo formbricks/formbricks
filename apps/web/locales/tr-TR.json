@@ -3531,6 +3531,8 @@
         "load_segment": "Segmenti yükle",
         "logic_error_warning": "Değişiklik mantık hatalarına neden olacak",
         "logic_error_warning_text": "Soru tipinin değiştirilmesi, bu sorudaki mantık koşullarını kaldıracaktır",
+        "logic_fallback_destination_missing": "\"{blockName}\" bloğunun yedek hedefi artık mevcut değil. Geçerli bir hedef seçin.",
+        "logic_jump_destination_missing": "\"{blockName}\" bloğunun {ruleNumber} numaralı kuralındaki atlama hedefi artık mevcut değil. Geçerli bir hedef seçin.",
         "logo_settings": "Logo ayarları",
         "long_answer": "Uzun yanıt",
         "long_answer_toggle_description": "Yanıtlayanların daha uzun, çok satırlı cevaplar yazmasına izin ver.",

@@ -3531,6 +3531,8 @@
         "load_segment": "Laadsegment",
         "logic_error_warning": "Wijzigen zal logische fouten veroorzaken",
         "logic_error_warning_text": "Als u het vraagtype wijzigt, worden de logische voorwaarden van deze vraag verwijderd",
+        "logic_fallback_destination_missing": "Fallback-bestemming van \"{blockName}\" bestaat niet meer. Kies een geldige bestemming.",
+        "logic_jump_destination_missing": "Sprong-bestemming in regel {ruleNumber} van \"{blockName}\" bestaat niet meer. Kies een geldige bestemming.",
         "logo_settings": "Logo-instellingen",
         "long_answer": "Lang antwoord",
         "long_answer_toggle_description": "Sta respondenten toe om langere antwoorden met meerdere regels te schrijven.",

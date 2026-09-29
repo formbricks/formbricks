@@ -3531,6 +3531,8 @@
         "load_segment": "Segment laden",
         "logic_error_warning": "Änderung führt zu Logikfehlern",
         "logic_error_warning_text": "Wenn Du den Fragetyp änderst, werden die Logikbedingungen aus dieser Frage entfernt",
+        "logic_fallback_destination_missing": "Das Ausweichziel von „{blockName}“ existiert nicht mehr. Wähle ein gültiges Ziel aus.",
+        "logic_jump_destination_missing": "Das Sprungziel in Regel {ruleNumber} von „{blockName}“ existiert nicht mehr. Wähle ein gültiges Ziel aus.",
         "logo_settings": "Logo-Einstellungen",
         "long_answer": "Lange Antwort",
         "long_answer_toggle_description": "Erlaube Befragten, längere, mehrzeilige Antworten zu schreiben.",

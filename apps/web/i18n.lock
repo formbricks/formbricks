@@ -3406,6 +3406,8 @@ checksums:
     workspace/surveys/edit/load_segment: 5341d3de37ff10f7526152e38e25e3c5
     workspace/surveys/edit/logic_error_warning: 542fbb918ffdb29e6f9a4a6196ffb558
     workspace/surveys/edit/logic_error_warning_text: f2afad8852a95ed169a39959efbf592c
+    workspace/surveys/edit/logic_fallback_destination_missing: 93c798da330d37866f75b49ac5ca72e3
+    workspace/surveys/edit/logic_jump_destination_missing: b21842473f9dbb8b0d8a19c0413ef6ad
     workspace/surveys/edit/logo_settings: 9f54ca6684e989cc38bf177425b6d366
     workspace/surveys/edit/long_answer: 3a97f8d2e90aba6e679917a0c5670c53
     workspace/surveys/edit/long_answer_toggle_description: 86bcdfeb74d9825c2f2d5a215e92d111

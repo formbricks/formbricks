@@ -3531,6 +3531,8 @@
         "load_segment": "Ladda segment",
         "logic_error_warning": "Ändring kommer att orsaka logikfel",
         "logic_error_warning_text": "Att ändra frågetypen kommer att ta bort logikvillkoren från denna fråga",
+        "logic_fallback_destination_missing": "Reservmålet för \"{blockName}\" finns inte längre. Välj ett giltigt mål.",
+        "logic_jump_destination_missing": "Hoppmålet i regel {ruleNumber} för \"{blockName}\" finns inte längre. Välj ett giltigt mål.",
         "logo_settings": "Inställningar för logotyp",
         "long_answer": "Långt svar",
         "long_answer_toggle_description": "Tillåt respondenter att skriva längre svar på flera rader.",

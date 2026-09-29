@@ -3531,6 +3531,8 @@
         "load_segment": "Cargar segmento",
         "logic_error_warning": "El cambio causará errores lógicos",
         "logic_error_warning_text": "Cambiar el tipo de pregunta eliminará las condiciones lógicas de esta pregunta",
+        "logic_fallback_destination_missing": "El destino alternativo de \"{blockName}\" ya no existe. Elige un destino válido.",
+        "logic_jump_destination_missing": "El destino del salto en la regla {ruleNumber} de \"{blockName}\" ya no existe. Elige un destino válido.",
         "logo_settings": "Ajustes del logotipo",
         "long_answer": "Respuesta larga",
         "long_answer_toggle_description": "Permitir a los encuestados escribir respuestas más largas y de varias líneas.",

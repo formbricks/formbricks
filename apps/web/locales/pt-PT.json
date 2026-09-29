@@ -3531,6 +3531,8 @@
         "load_segment": "Carregar segmento",
         "logic_error_warning": "A alteração causará erros de lógica",
         "logic_error_warning_text": "Alterar o tipo de pergunta irá remover as condições lógicas desta pergunta",
+        "logic_fallback_destination_missing": "O destino de recurso de \"{blockName}\" já não existe. Escolhe um destino válido.",
+        "logic_jump_destination_missing": "O destino do salto na regra {ruleNumber} de \"{blockName}\" já não existe. Escolhe um destino válido.",
         "logo_settings": "Definições do logótipo",
         "long_answer": "Resposta longa",
         "long_answer_toggle_description": "Permitir que os inquiridos escrevam respostas mais longas e com várias linhas.",

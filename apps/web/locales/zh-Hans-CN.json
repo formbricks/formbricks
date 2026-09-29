@@ -3531,6 +3531,8 @@
         "load_segment": "载入 段落",
         "logic_error_warning": "更改 将 导致 逻辑 错误",
         "logic_error_warning_text": "更改问题类型 会 移除 此问题 的 逻辑条件",
+        "logic_fallback_destination_missing": "\"{blockName}\"的备用目标已不存在。请选择一个有效的目标。",
+        "logic_jump_destination_missing": "\"{blockName}\"的规则 {ruleNumber} 中的跳转目标已不存在。请选择一个有效的目标。",
         "logo_settings": "Logo 设置",
         "long_answer": "长答案",
         "long_answer_toggle_description": "允许受访者填写较长的多行答案。",
