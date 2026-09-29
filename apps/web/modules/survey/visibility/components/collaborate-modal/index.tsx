@@ -157,7 +157,9 @@ export const CollaborateModal = ({
           </DialogHeader>
 
           <DialogBody className="space-y-2">
-            <Label htmlFor={`survey-visibility-${surveyId}`}>{t("common.visibility")}</Label>
+            <Label htmlFor={`survey-visibility-${surveyId}`} className="ml-1">
+              {t("common.visibility")}
+            </Label>
             <Select
               value={selected ?? undefined}
               disabled={!state}
@@ -165,7 +167,8 @@ export const CollaborateModal = ({
                 const option = VISIBILITY_OPTIONS.find((candidate) => candidate === value);
                 if (option) setPicked(option);
               }}>
-              <SelectTrigger id={`survey-visibility-${surveyId}`}>
+              {/* A little room so the dialog body's overflow doesn't clip the border and focus ring. */}
+              <SelectTrigger id={`survey-visibility-${surveyId}`} className="m-1 w-[calc(100%-0.5rem)]">
                 <SelectValue>{selected ? optionLabel(selected) : null}</SelectValue>
               </SelectTrigger>
               <SelectContent>
