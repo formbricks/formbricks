@@ -334,29 +334,40 @@ describe("promoteEmbeddedDataToShared", () => {
     expect(prisma.embeddedData.update).not.toHaveBeenCalled();
   });
 
-  test("refuses a computed field's key that another variable in its survey is named", async () => {
-    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue({
-      ...localRow,
-      source: "computed",
-      dataType: "number",
-    } as never);
-    vi.mocked(prisma.surveyEmbeddedData.findFirst).mockResolvedValue({
-      id: "cllk1234567890123456789012",
-    } as never);
-
-    await expect(promoteEmbeddedDataToShared(fieldId, workspaceId, { key: "score" })).rejects.toThrow(
-      InvalidInputError
-    );
-    expect(prisma.surveyEmbeddedData.findFirst).toHaveBeenCalledWith({
-      where: {
-        workspaceId,
-        surveyId,
-        embeddedDataId: { not: fieldId },
-        embeddedData: { source: "computed", OR: [{ key: "score" }, { key: null, name: "score" }] },
-      },
-      select: { id: true },
+  describe("a computed field whose survey has another variable named `score`", () => {
+    beforeEach(() => {
+      vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue({
+        ...localRow,
+        source: "computed",
+        dataType: "number",
+      } as never);
+      // Answers a clash only for a query that looks for `score` by key or by legacy name.
+      vi.mocked(prisma.surveyEmbeddedData.findFirst).mockImplementation(((query: {
+        where?: { embeddedData?: { OR?: Array<{ key?: string | null; name?: string }> } };
+      }) => {
+        const conditions = query.where?.embeddedData?.OR ?? [];
+        const matches = conditions.some(
+          (condition) => condition.key === "score" || (condition.key === null && condition.name === "score")
+        );
+        return Promise.resolve(matches ? { id: "cllk1234567890123456789012" } : null);
+      }) as never);
     });
-    expect(prisma.embeddedData.update).not.toHaveBeenCalled();
+
+    test("refuses promoting it under that name", async () => {
+      await expect(promoteEmbeddedDataToShared(fieldId, workspaceId, { key: "score" })).rejects.toThrow(
+        InvalidInputError
+      );
+      expect(prisma.embeddedData.update).not.toHaveBeenCalled();
+    });
+
+    test("promotes it under any other name", async () => {
+      vi.mocked(prisma.embeddedData.update).mockResolvedValue(sharedRow as never);
+
+      await expect(promoteEmbeddedDataToShared(fieldId, workspaceId, { key: "plan_tier" })).resolves.toEqual(
+        sharedRow
+      );
+      expect(prisma.embeddedData.update).toHaveBeenCalled();
+    });
   });
 
   test("answers a taken key with the id of the row already holding it", async () => {
