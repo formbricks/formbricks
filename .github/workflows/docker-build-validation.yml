@@ -348,6 +348,17 @@ jobs:
             -e AI_OPENAI_COMPATIBLE_BASE_URL="base-url-secret-sentinel"
 
           run_invalid_case \
+            "oauth mode missing token URL" \
+            "AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL" \
+            "oauth-client-secret-sentinel" \
+            -e AI_PROVIDER="openai-compatible" \
+            -e AI_MODEL="test-model" \
+            -e AI_OPENAI_COMPATIBLE_BASE_URL="https://gateway.example/v1" \
+            -e AI_OPENAI_COMPATIBLE_AUTH_MODE="oauth2-client-credentials" \
+            -e AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_ID="test-client" \
+            -e AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET="oauth-client-secret-sentinel"
+
+          run_invalid_case \
             "invalid Azure base URL" \
             "AI_AZURE_BASE_URL" \
             "azure-base-url-secret-sentinel" \
