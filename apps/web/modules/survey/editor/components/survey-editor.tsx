@@ -9,6 +9,7 @@ import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/su
 import { TUserLocale } from "@formbricks/types/user";
 import { extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
+import type { TSurveyAccess } from "@/lib/survey/visibility/access";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useDocumentVisibility } from "@/lib/useDocumentVisibility";
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
@@ -64,6 +65,9 @@ interface SurveyEditorProps {
   isExternalUrlsAllowed: boolean;
   publicDomain: string;
   enterpriseLicenseRequestFormUrl: string;
+  surveyVisibilityEnabled: boolean;
+  surveyAccess: TSurveyAccess | null;
+  ownerName: string | null;
 }
 
 export const SurveyEditor = ({
@@ -96,6 +100,9 @@ export const SurveyEditor = ({
   isExternalUrlsAllowed,
   publicDomain,
   enterpriseLicenseRequestFormUrl,
+  surveyVisibilityEnabled,
+  surveyAccess,
+  ownerName,
 }: Readonly<SurveyEditorProps>) => {
   const isFollowUpsTabVisible = shouldShowFollowUpsTab({
     followUpCount: survey.followUps.length,
@@ -230,6 +237,9 @@ export const SurveyEditor = ({
         locale={locale}
         setIsCautionDialogOpen={setIsCautionDialogOpen}
         isStorageConfigured={isStorageConfigured}
+        surveyVisibilityEnabled={surveyVisibilityEnabled}
+        surveyAccess={surveyAccess}
+        ownerName={ownerName}
       />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main

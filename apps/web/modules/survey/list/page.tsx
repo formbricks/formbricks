@@ -11,6 +11,7 @@ import { getTranslate } from "@/lingodotdev/server";
 import { getSurveyAIAvailability } from "@/modules/survey/lib/get-survey-ai-availability";
 import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
 import { SurveysList } from "@/modules/survey/list/components/survey-list";
+import { getSurveyVisibilityUiGate } from "@/modules/survey/visibility/lib/gate";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 export const metadata: Metadata = {
@@ -41,11 +42,13 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
   }
 
   const currentWorkspaceChannel = workspace.config.channel ?? null;
-  const [locale, featuredTemplatesVariant, { isAIAvailable, aiUnavailableReason }] = await Promise.all([
-    getUserLocale(session.user.id).then((l) => l ?? DEFAULT_LOCALE),
-    getPostHogFeatureFlag(session.user.id, "a-b_surveys_featured-templates-create-with-ai"),
-    getSurveyAIAvailability(workspace.organizationId, { isReadOnly }),
-  ]);
+  const [locale, featuredTemplatesVariant, { isAIAvailable, aiUnavailableReason }, surveyVisibilityEnabled] =
+    await Promise.all([
+      getUserLocale(session.user.id).then((l) => l ?? DEFAULT_LOCALE),
+      getPostHogFeatureFlag(session.user.id, "a-b_surveys_featured-templates-create-with-ai"),
+      getSurveyAIAvailability(workspace.organizationId, { isReadOnly }),
+      getSurveyVisibilityUiGate(workspace.organizationId),
+    ]);
   const workspaceWithRequiredProps = {
     ...workspace,
     brandColor: workspace.styling?.brandColor?.light ?? null,
@@ -67,6 +70,8 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
       isAIAvailable={isAIAvailable}
       aiUnavailableReason={aiUnavailableReason}
       showFeaturedTemplates={featuredTemplatesVariant === "test"}
+      surveyVisibilityEnabled={surveyVisibilityEnabled}
+      currentUserId={session.user.id}
     />
   );
 };

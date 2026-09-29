@@ -53,6 +53,9 @@ interface SurveysListProps {
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
   showFeaturedTemplates?: boolean;
+  /** ENG-3395: the server-side restricted-surveys gate (readiness marker and entitlement). */
+  surveyVisibilityEnabled: boolean;
+  currentUserId: string;
 }
 
 type NewSurveyMenuProps = {

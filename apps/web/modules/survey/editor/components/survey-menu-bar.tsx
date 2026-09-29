@@ -19,6 +19,7 @@ import {
   ZSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
+import type { TSurveyAccess } from "@/lib/survey/visibility/access";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { isDeepEqual } from "@/lib/utils/object";
 import { reportStaleServerActionError } from "@/lib/utils/stale-server-action";
@@ -50,6 +51,12 @@ interface SurveyMenuBarProps {
   locale: string;
   setIsCautionDialogOpen: (open: boolean) => void;
   isStorageConfigured: boolean;
+  /** ENG-3395: the server-side restricted-surveys gate (readiness marker and entitlement). */
+  surveyVisibilityEnabled: boolean;
+  /** Why this user can see the survey; `null` while the gate is off. */
+  surveyAccess: TSurveyAccess | null;
+  /** The author's display name; `null` when the survey has no owner or the gate is off. */
+  ownerName: string | null;
 }
 
 export const SurveyMenuBar = ({
