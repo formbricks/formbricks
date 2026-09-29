@@ -204,66 +204,29 @@ test.describe("Auto-captured browser context on responses @slow", () => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto(`/s/${ownSurveyId}?${UTM_QUERY}`);
     await submitAnswer(page, "Seen in the product");
-    // Kept, not discarded: the disclosure assertions below compare against what was actually stored,
-    // so a wrong value projection cannot pass on the strength of the labels alone.
+    // Kept, not discarded: the popover assertions below compare against what was actually stored.
     const storedMeta = await readStoredMeta(ownSurveyId);
 
     await owner.login();
     await page.goto(`/workspaces/${owner.workspaceId}/surveys/${ownSurveyId}/responses`);
-
-    await test.step("the new reserved columns are registered, but off by default", async () => {
-      // The half that used to be impossible: the settings modal iterates the PERSISTED column order,
-      // so before `reconcileColumnOrder` a newly added column id had no toggle and no drag handle.
-      await page.getByRole("button", { name: "Table settings" }).click();
-
-      const modal = page.getByRole("dialog");
-      await expect(modal).toBeVisible();
-      await expect(modal.getByText("Page Path", { exact: true })).toBeVisible();
-      await expect(modal.getByText("UTM Source", { exact: true })).toBeVisible();
-
-      // `DataTableSettingsModalItem` puts the column id on its Switch, so this is the column's own
-      // toggle rather than a positional guess. Unchecked = the table did not silently grow thirteen
-      // columns.
-      await expect(modal.locator('[role="switch"]#METADATA_pagePath')).toHaveAttribute(
-        "data-state",
-        "unchecked"
-      );
-      // A field the table has always shown stays on.
-      await expect(modal.locator('[role="switch"]#METADATA_url')).toHaveAttribute("data-state", "checked");
-
-      await page.keyboard.press("Escape");
-      await expect(modal).toBeHidden();
-    });
 
     // The response card lives in the response modal, and the table is the default view. Clicking any
     // cell but `select` opens it (`ResponseTableCell.handleCellClick`); the dedicated "Expand
     // response" button is `group-hover:flex`, so it needs a hover dance this does not.
     await page.getByRole("cell", { name: "Anonymous" }).click();
 
-    await test.step("every auto-captured field sits in the Metadata popover", async () => {
-      // One click-to-open popover (a dialog, not a hover tooltip) carries both the seven classic
-      // fields and the ENG-1841 ones — there is no longer a "More context" fold in the card body.
-      // Asserted on the definition list rather than per row: each row is a `<dt>`/`<dd>` pair.
+    await test.step("the stored values show in the Metadata popover", async () => {
+      // Only the values are asserted here. The labels and the column toggles are logic, unit-tested
+      // in `field-display.test.ts` (`getReservedFieldLabel`) and `column-state.test.ts`
+      // (`reconcileColumnOrder`, `seedReservedColumnVisibility`).
       const metadata = page.getByRole("button", { name: "Metadata" }).first();
       await expect(metadata).toBeVisible({ timeout: 60000 });
       await metadata.click();
 
       const popover = page.getByRole("dialog", { name: "Metadata" });
       await expect(popover).toBeVisible();
-      await expect(popover.getByRole("term").filter({ hasText: /^Browser$/ })).toBeVisible();
-      await expect(popover.getByRole("term").filter({ hasText: /^OS$/ })).toBeVisible();
-      await expect(popover.getByRole("term").filter({ hasText: /^Device$/ })).toBeVisible();
-      // `URL` proves the gating fix: the whole block used to be behind `hasUserAgent`, so with
-      // "Anonymize responses" on — which drops `meta.userAgent` — url, action and source vanished too.
-      await expect(popover.getByRole("term").filter({ hasText: /^URL$/ })).toBeVisible();
-
-      // Labels derived by `getReservedFieldLabel`, so a catalog addition needs no new key.
-      await expect(popover.getByText("Page Path", { exact: true })).toBeVisible();
-      await expect(popover.getByText("UTM Source", { exact: true })).toBeVisible();
-      await expect(popover.getByText("Timezone", { exact: true })).toBeVisible();
-      await expect(popover.getByText("Viewport Width", { exact: true })).toBeVisible();
-      // The values, not just the labels — and read back off the stored response rather than
-      // hard-coded, so the display is checked against what capture actually wrote.
+      // Read back off the stored response rather than hard-coded, so the display is checked against
+      // what capture actually wrote.
       await expect(popover.getByText("newsletter", { exact: true })).toBeVisible();
       await expect(popover.getByText(`/s/${ownSurveyId}`, { exact: true })).toBeVisible();
       expect(storedMeta.pagePath).toBe(`/s/${ownSurveyId}`);

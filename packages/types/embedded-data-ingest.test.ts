@@ -518,19 +518,20 @@ describe("applyIngestContract", () => {
     });
 
     test("measures UTF-8 bytes, not code units, and cuts on a code-point boundary", () => {
-      // "😀" is 4 UTF-8 bytes and 2 UTF-16 units, so a byte budget of 4n+2 has to stop short of one.
-      const emoji = "😀".repeat(MAX_INGESTED_VALUE_BYTES); // 4× the budget in bytes
+      // "😀" is 4 UTF-8 bytes and 2 UTF-16 units. The one-byte prefix leaves a budget that is not a
+      // multiple of 4, so the cut lands inside an emoji and has to stop short of it.
+      const value = `a${"😀".repeat(MAX_INGESTED_VALUE_BYTES)}`; // ~4× the budget in bytes
       const result = applyIngestContract({
-        incoming: { note: emoji },
+        incoming: { note: value },
         ingestedFields: [ingestedField({ storageKey: "note" })],
         elementIds: [],
       });
 
       const stored = result.data.note as string;
       expect(new TextEncoder().encode(stored).length).toBeLessThanOrEqual(MAX_INGESTED_VALUE_BYTES);
-      expect(stored).toBe("😀".repeat(MAX_INGESTED_VALUE_BYTES / 4));
+      expect(stored).toBe(`a${"😀".repeat(Math.floor((MAX_INGESTED_VALUE_BYTES - 1) / 4))}`);
       // No lone surrogate survived the cut.
-      expect(stored).toEqual([...stored].join(""));
+      expect(stored).not.toMatch(/\p{Surrogate}/u);
       expect(result.flags).toEqual([{ key: "note", reason: "truncated" }]);
     });
 

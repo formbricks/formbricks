@@ -1562,7 +1562,9 @@ export function Survey({
       <Subheader
         subheader={replaceRecallInfo(
           getLocalizedValue(localSurvey.welcomeCard.subheader, selectedLanguage),
-          responseData,
+          // The same lookup the visible welcome card recalls from, so a reserved token like
+          // `#recall:url#` resolves here too instead of staying literal.
+          recallValues,
           currentVariables,
           selectedLanguage
         )}
