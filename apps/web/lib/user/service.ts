@@ -12,6 +12,7 @@ import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { deleteUserTeamRelationships } from "@/lib/authzed/team-workspace";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
+import { normalizeEmailForComparison } from "../utils/email";
 import { validateInputs } from "../utils/validate";
 import { publicUserSelect } from "./public-user";
 
@@ -40,13 +41,22 @@ export const getUser = reactCache(async (id: string): Promise<TUser | null> => {
   }
 });
 
+/**
+ * Look a user up by email address.
+ *
+ * Canonicalized before the query, for the reason spelled out on `normalizeEmailForComparison` and on
+ * the sibling lookup in `modules/auth/lib/user.ts`: Postgres compares `text` case-sensitively while
+ * Better Auth stores and looks up `email.toLowerCase()`, and a lookup that can disagree with Better
+ * Auth is the ENG-3257 defect. Today's callers here already lowercase before calling; normalizing in
+ * the query is what stops the next one from having to know that.
+ */
 export const getUserByEmail = reactCache(async (email: string): Promise<TUser | null> => {
   validateInputs([email, z.email()]);
 
   try {
     const user = await prisma.user.findFirst({
       where: {
-        email,
+        email: normalizeEmailForComparison(email),
       },
       select: publicUserSelect,
     });

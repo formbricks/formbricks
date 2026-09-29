@@ -71,7 +71,3 @@ export function parseStoredSurveyFilters(
     return null;
   }
 }
-
-export function hasActiveSurveyFilters(filters: TSurveyOverviewFilters): boolean {
-  return Boolean(filters.name) || filters.status.length > 0 || filters.type.length > 0;
-}

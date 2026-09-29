@@ -10,6 +10,7 @@ import {
   EyeIcon,
   LinkIcon,
   MoreVertical,
+  PencilIcon,
   SquarePenIcon,
   TrashIcon,
 } from "lucide-react";
@@ -25,9 +26,9 @@ import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
-import { copySurveyLink } from "@/modules/survey/lib/client-utils";
 import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
 import { CopySurveyModal } from "@/modules/survey/list/components/copy-survey-modal";
+import { RenameSurveyModal } from "@/modules/survey/list/components/rename-survey-modal";
 import { surveyKeys } from "@/modules/survey/list/lib/query";
 import { TSurveyListItem } from "@/modules/survey/list/types/survey-overview";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -56,6 +57,7 @@ interface SurveyDropDownMenuProps {
   updateSurveyStatus: (surveyId: string, status: TSurveyStatus) => Promise<void>;
   archiveSurvey: (surveyId: string) => Promise<void>;
   restoreSurvey: (surveyId: string) => Promise<void>;
+  renameSurvey: (surveyId: string, name: string) => Promise<void>;
 }
 
 // Non-draft statuses that can be targeted by a status change from the list.
@@ -71,6 +73,7 @@ export const SurveyDropDownMenu = ({
   updateSurveyStatus,
   archiveSurvey,
   restoreSurvey,
+  renameSurvey,
 }: Readonly<SurveyDropDownMenuProps>) => {
   const { workspace } = useWorkspace();
 
@@ -83,6 +86,7 @@ export const SurveyDropDownMenu = ({
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -174,7 +178,7 @@ export const SurveyDropDownMenu = ({
     try {
       e.preventDefault();
       setIsDropDownOpen(false);
-      await navigator.clipboard.writeText(copySurveyLink(surveyLink));
+      await navigator.clipboard.writeText(surveyLink);
       toast.success(t("common.copied_to_clipboard"));
     } catch (error) {
       logger.error(error);
@@ -268,6 +272,18 @@ export const SurveyDropDownMenu = ({
                   <SquarePenIcon className="mr-2 size-4" />
                   {t("common.edit")}
                 </Link>
+              </DropdownMenuItem>
+            )}
+            {!isArchived && canManageSurvey && (
+              <DropdownMenuItem
+                data-testid="rename-survey"
+                icon={<PencilIcon className="size-4" />}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setIsDropDownOpen(false);
+                  setIsRenameModalOpen(true);
+                }}>
+                {t("common.rename")}
               </DropdownMenuItem>
             )}
             {!isArchived && canManageSurvey && (
@@ -426,6 +442,16 @@ export const SurveyDropDownMenu = ({
           onConfirm={handleArchiveSurvey}
           hideCloseButton={isInProgress}
           closeOnOutsideClick={!isInProgress}
+        />
+      )}
+
+      {!isArchived && canManageSurvey && (
+        <RenameSurveyModal
+          open={isRenameModalOpen}
+          setOpen={setIsRenameModalOpen}
+          surveyId={survey.id}
+          surveyName={survey.name}
+          renameSurvey={renameSurvey}
         />
       )}
 

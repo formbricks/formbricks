@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  hasChartDisplaySettings,
   resolveChartDisplay,
   sanitizeChartDisplay,
   supportsAreaDisplay,
@@ -153,5 +154,35 @@ describe("supportsTimeGrouping", () => {
 
   test("defaults to supported when the chart type is unknown", () => {
     expect(supportsTimeGrouping(undefined)).toBe(true);
+  });
+});
+
+describe("hasChartDisplaySettings", () => {
+  test("is true only for the types that own a setting", () => {
+    expect(hasChartDisplaySettings("bar")).toBe(true);
+    expect(hasChartDisplaySettings("pie")).toBe(true);
+    // No "line" case: main folded line into area, toggled through areaDisplay.
+    expect(hasChartDisplaySettings("area")).toBe(true);
+    expect(hasChartDisplaySettings("big_number")).toBe(false);
+    expect(hasChartDisplaySettings(undefined)).toBe(false);
+  });
+});
+
+describe("matrix display", () => {
+  const matrixConfig = {
+    matrixCellValue: "both" as const,
+    matrixColorScale: false,
+    matrixShowTotals: true,
+    matrixTranspose: true,
+  };
+
+  test("a matrix has settings but no time grouping", () => {
+    expect(hasChartDisplaySettings("matrix")).toBe(true);
+    expect(supportsTimeGrouping("matrix")).toBe(false);
+  });
+
+  test("keeps its settings, including an explicit false, and drops them for any other type", () => {
+    expect(sanitizeChartDisplay(matrixConfig, "matrix")).toEqual(matrixConfig);
+    expect(sanitizeChartDisplay({ ...matrixConfig, showGrid: true }, "bar")).toEqual({ showGrid: true });
   });
 });

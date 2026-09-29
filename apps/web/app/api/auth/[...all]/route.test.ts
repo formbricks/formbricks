@@ -192,3 +192,45 @@ describe("[...all] Better Auth route — pinned SSO callback (ENG-2343)", () => 
     expect(handlerMock.mock.calls[0][0]).toBe(request);
   });
 });
+
+/**
+ * The DCR redirect-URI allowlist (ENG-3086). `prepareDcrRequest` is the real implementation here, so
+ * these prove the route wires it: a non-loopback registration is rejected before `auth.handler` runs,
+ * and a loopback one is still delegated (with the application_type inference applied to its body).
+ */
+describe("[...all] Better Auth route — DCR redirect-URI allowlist (ENG-3086)", () => {
+  beforeEach(() => {
+    handlerMock.mockClear();
+    runWithCtxMock.mockClear();
+  });
+
+  test("rejects a non-loopback registration without delegating to auth.handler", async () => {
+    const response = await POST(
+      new Request("http://localhost/api/auth/oauth2/register", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ redirect_uris: ["https://attacker-controlled-test.example.org/cb"] }),
+      })
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({ error: "invalid_redirect_uri" });
+    expect(handlerMock).not.toHaveBeenCalled();
+    expect(runWithCtxMock).not.toHaveBeenCalled();
+  });
+
+  test("delegates a loopback registration to auth.handler with the inferred type", async () => {
+    await POST(
+      new Request("http://localhost/api/auth/oauth2/register", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ redirect_uris: ["http://127.0.0.1:33418/callback"] }),
+      })
+    );
+
+    expect(handlerMock).toHaveBeenCalledTimes(1);
+    const handled = handlerMock.mock.calls[0][0];
+    expect(handled.url).toBe("http://localhost/api/auth/oauth2/register");
+    await expect(handled.json()).resolves.toMatchObject({ application_type: "native" });
+  });
+});

@@ -6,6 +6,7 @@ import { ZAIQueryResponse, generateAIChartQuery } from "./ai-chart-query.server"
 
 const mocks = vi.hoisted(() => ({
   generateOrganizationAIObject: vi.fn(),
+  getAIDataProfile: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
@@ -18,9 +19,14 @@ vi.mock("@/modules/ee/analysis/lib/ai-schema-context", () => ({
   generateSchemaContext: vi.fn(() => "schema context"),
 }));
 
+vi.mock("@/modules/ee/analysis/lib/ai-data-profile.server", () => ({
+  getAIDataProfile: mocks.getAIDataProfile,
+}));
+
 describe("generateAIChartQuery", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.getAIDataProfile.mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -30,6 +36,7 @@ describe("generateAIChartQuery", () => {
   test("returns the AI-generated chart type and normalized query for a clean response", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        answerable: true,
         name: "Responses by Source Type",
         measures: ["FeedbackRecords.count"],
         dimensions: ["FeedbackRecords.sourceType"],
@@ -42,6 +49,7 @@ describe("generateAIChartQuery", () => {
     const result = await generateAIChartQuery({
       organizationId: "organization-1",
       workspaceId: "workspace-1",
+      feedbackDirectoryId: "directory-1",
       userId: "user-1",
       prompt: "responses by sentiment",
     });
@@ -60,7 +68,9 @@ describe("generateAIChartQuery", () => {
         system: "schema context",
         prompt: 'User request: "responses by sentiment"',
         temperature: 0,
-        maxOutputTokens: 1024,
+        // Counts reasoning tokens too: at 1024 a thinking model spent the whole budget before
+        // writing a field. Dropping this back below a few thousand reintroduces that failure.
+        maxOutputTokens: 8192,
         timeout: 30000,
       })
     );
@@ -69,6 +79,7 @@ describe("generateAIChartQuery", () => {
   test("maps NPS score prompts to the NPS score measure", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        answerable: true,
         name: null,
         measures: ["FeedbackRecords.npsScore"],
         dimensions: null,
@@ -81,6 +92,7 @@ describe("generateAIChartQuery", () => {
     const result = await generateAIChartQuery({
       organizationId: "organization-1",
       workspaceId: "workspace-1",
+      feedbackDirectoryId: "directory-1",
       userId: "user-1",
       prompt: "create a big number chart with the NPS score",
     });
@@ -94,6 +106,7 @@ describe("generateAIChartQuery", () => {
   test("strips a grouping the model put on a big number, which has no axis for it", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        answerable: true,
         name: null,
         measures: ["FeedbackRecords.npsScore"],
         dimensions: ["FeedbackRecords.sourceName"],
@@ -101,7 +114,9 @@ describe("generateAIChartQuery", () => {
           {
             dimension: "FeedbackRecords.collectedAt",
             granularity: "day",
-            dateRange: "last 30 days",
+            dateRangePreset: "last 30 days",
+            dateRangeStart: null,
+            dateRangeEnd: null,
           },
         ],
         chartType: "big_number",
@@ -112,6 +127,7 @@ describe("generateAIChartQuery", () => {
     const result = await generateAIChartQuery({
       organizationId: "organization-1",
       workspaceId: "workspace-1",
+      feedbackDirectoryId: "directory-1",
       userId: "user-1",
       prompt: "NPS score for the last 30 days as a big number",
     });
@@ -130,6 +146,7 @@ describe("generateAIChartQuery", () => {
   test("falls back to the total count measure when the AI returns no measures", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        answerable: true,
         name: null,
         measures: [],
         dimensions: null,
@@ -142,6 +159,7 @@ describe("generateAIChartQuery", () => {
     const result = await generateAIChartQuery({
       organizationId: "organization-1",
       workspaceId: "workspace-1",
+      feedbackDirectoryId: "directory-1",
       userId: "user-1",
       prompt: "show a big number",
     });
@@ -152,12 +170,25 @@ describe("generateAIChartQuery", () => {
   test("normalizes filters and time dimensions, dropping null-only optional fields", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        answerable: true,
         name: null,
         measures: ["FeedbackRecords.count"],
         dimensions: null,
         timeDimensions: [
-          { dimension: "FeedbackRecords.collectedAt", granularity: "day", dateRange: "last 30 days" },
-          { dimension: "FeedbackRecords.collectedAt", granularity: null, dateRange: null },
+          {
+            dimension: "FeedbackRecords.collectedAt",
+            granularity: "day",
+            dateRangePreset: "last 30 days",
+            dateRangeStart: null,
+            dateRangeEnd: null,
+          },
+          {
+            dimension: "FeedbackRecords.collectedAt",
+            granularity: null,
+            dateRangePreset: null,
+            dateRangeStart: null,
+            dateRangeEnd: null,
+          },
         ],
         chartType: "area",
         filters: [
@@ -170,6 +201,7 @@ describe("generateAIChartQuery", () => {
     const result = await generateAIChartQuery({
       organizationId: "organization-1",
       workspaceId: "workspace-1",
+      feedbackDirectoryId: "directory-1",
       userId: "user-1",
       prompt: "trend over time",
     });
@@ -186,6 +218,7 @@ describe("generateAIChartQuery", () => {
 
   test("rejects value-based filters without a non-empty values array", () => {
     const result = ZAIQueryResponse.safeParse({
+      answerable: true,
       name: null,
       measures: ["FeedbackRecords.count"],
       dimensions: null,
@@ -203,6 +236,7 @@ describe("generateAIChartQuery", () => {
 
   test("rejects valueless filters that include values", () => {
     const result = ZAIQueryResponse.safeParse({
+      answerable: true,
       name: null,
       measures: ["FeedbackRecords.count"],
       dimensions: null,
@@ -218,6 +252,7 @@ describe("generateAIChartQuery", () => {
 
   test("allows valueless filters with omitted values", () => {
     const result = ZAIQueryResponse.safeParse({
+      answerable: true,
       name: null,
       measures: ["FeedbackRecords.count"],
       dimensions: null,
@@ -232,6 +267,7 @@ describe("generateAIChartQuery", () => {
   test("trims the AI-suggested name and caps it at 255 characters", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        answerable: true,
         name: `  ${"a".repeat(300)}  `,
         measures: ["FeedbackRecords.count"],
         dimensions: null,
@@ -244,6 +280,7 @@ describe("generateAIChartQuery", () => {
     const result = await generateAIChartQuery({
       organizationId: "organization-1",
       workspaceId: "workspace-1",
+      feedbackDirectoryId: "directory-1",
       userId: "user-1",
       prompt: "responses",
     });
@@ -254,6 +291,7 @@ describe("generateAIChartQuery", () => {
   test("omits the name when the AI returns a blank name", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        answerable: true,
         name: "   ",
         measures: ["FeedbackRecords.count"],
         dimensions: null,
@@ -266,6 +304,7 @@ describe("generateAIChartQuery", () => {
     const result = await generateAIChartQuery({
       organizationId: "organization-1",
       workspaceId: "workspace-1",
+      feedbackDirectoryId: "directory-1",
       userId: "user-1",
       prompt: "responses",
     });
@@ -297,6 +336,7 @@ describe("generateAIChartQuery", () => {
       generateAIChartQuery({
         organizationId: "organization-1",
         workspaceId: "workspace-1",
+        feedbackDirectoryId: "directory-1",
         userId: "user-1",
         prompt: "anything",
       })
@@ -304,6 +344,49 @@ describe("generateAIChartQuery", () => {
       name: InvalidInputError.name,
       message: AI_CHART_PROMPT_ERROR_CODE,
     });
+  });
+
+  test("rejects a prompt the model flags as unanswerable instead of charting the default measure", async () => {
+    // What a model answers for "ASDASDSADASSADASD": a query shape filled in with the defaults,
+    // which used to render as a real-looking count chart.
+    mocks.generateOrganizationAIObject.mockResolvedValueOnce({
+      object: {
+        answerable: false,
+        name: "Total Feedback Records",
+        measures: ["FeedbackRecords.count"],
+        dimensions: null,
+        timeDimensions: null,
+        chartType: "big_number",
+        filters: null,
+      },
+    });
+
+    await expect(
+      generateAIChartQuery({
+        organizationId: "organization-1",
+        workspaceId: "workspace-1",
+        feedbackDirectoryId: "directory-1",
+        userId: "user-1",
+        prompt: "ASDASDSADASSADASD",
+      })
+    ).rejects.toMatchObject({
+      name: InvalidInputError.name,
+      message: AI_CHART_PROMPT_ERROR_CODE,
+    });
+  });
+
+  test("requires the model to state whether the prompt is answerable", () => {
+    const result = ZAIQueryResponse.safeParse({
+      name: null,
+      measures: ["FeedbackRecords.count"],
+      dimensions: null,
+      timeDimensions: null,
+      chartType: "bar",
+      filters: null,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["answerable"]);
   });
 
   test("does not convert provider failures", async () => {
@@ -314,6 +397,7 @@ describe("generateAIChartQuery", () => {
       generateAIChartQuery({
         organizationId: "organization-1",
         workspaceId: "workspace-1",
+        feedbackDirectoryId: "directory-1",
         userId: "user-1",
         prompt: "anything",
       })
@@ -327,9 +411,144 @@ describe("generateAIChartQuery", () => {
       generateAIChartQuery({
         organizationId: "organization-1",
         workspaceId: "workspace-1",
+        feedbackDirectoryId: "directory-1",
         userId: "user-1",
         prompt: "anything",
       })
     ).rejects.toBe("string failure");
+  });
+
+  test("puts the directory's real sources and questions in the system prompt", async () => {
+    mocks.getAIDataProfile.mockResolvedValue({
+      totalRecords: 42,
+      sources: [{ name: "Web widget prod", type: "link" }],
+      questions: [{ label: "How happy are you?", fieldType: "rating" }],
+      languages: ["en"],
+      fieldTypes: ["rating"],
+      earliestMonth: "2026-01",
+      latestMonth: "2026-09",
+      truncated: { sources: false, questions: false, languages: false },
+    });
+    mocks.generateOrganizationAIObject.mockResolvedValueOnce({
+      object: {
+        answerable: true,
+        name: null,
+        measures: ["FeedbackRecords.count"],
+        dimensions: null,
+        timeDimensions: null,
+        chartType: "bar",
+        filters: null,
+      },
+    });
+
+    await generateAIChartQuery({
+      organizationId: "organization-1",
+      workspaceId: "workspace-1",
+      feedbackDirectoryId: "directory-1",
+      userId: "user-1",
+      prompt: "responses by source",
+    });
+
+    const { system } = mocks.generateOrganizationAIObject.mock.calls[0][0];
+    expect(system).toContain("schema context");
+    expect(system).toContain("Web widget prod");
+    expect(system).toContain("How happy are you?");
+  });
+
+  test("turns an explicit window into the tuple the builder reads as a custom range", async () => {
+    mocks.generateOrganizationAIObject.mockResolvedValueOnce({
+      object: {
+        answerable: true,
+        name: null,
+        measures: ["FeedbackRecords.count"],
+        dimensions: null,
+        timeDimensions: [
+          {
+            dimension: "FeedbackRecords.collectedAt",
+            granularity: "month",
+            dateRangePreset: null,
+            dateRangeStart: "2026-08-01",
+            dateRangeEnd: "2026-09-30",
+          },
+        ],
+        chartType: "area",
+        filters: null,
+      },
+    });
+
+    const result = await generateAIChartQuery({
+      organizationId: "organization-1",
+      workspaceId: "workspace-1",
+      feedbackDirectoryId: "directory-1",
+      userId: "user-1",
+      prompt: "responses in August and September",
+    });
+
+    // A tuple, never a string: parseQueryToState lifts this into two Dates and the date-range
+    // select shows Custom Range, instead of rendering the raw value as its own dropdown entry.
+    expect(result.query.timeDimensions).toEqual([
+      {
+        dimension: "FeedbackRecords.collectedAt",
+        granularity: "month",
+        dateRange: ["2026-08-01", "2026-09-30"],
+      },
+    ]);
+  });
+
+  test("drops a date range the model could not express in the fields it was given", async () => {
+    mocks.generateOrganizationAIObject.mockResolvedValueOnce({
+      object: {
+        answerable: true,
+        name: null,
+        measures: ["FeedbackRecords.count"],
+        dimensions: null,
+        timeDimensions: [
+          {
+            dimension: "FeedbackRecords.collectedAt",
+            granularity: null,
+            dateRangePreset: null,
+            dateRangeStart: "2026-08-01T00:00:00.000Z/2026-09-30T23:59:59.999Z",
+            dateRangeEnd: null,
+          },
+        ],
+        chartType: "bar",
+        filters: null,
+      },
+    });
+
+    const result = await generateAIChartQuery({
+      organizationId: "organization-1",
+      workspaceId: "workspace-1",
+      feedbackDirectoryId: "directory-1",
+      userId: "user-1",
+      prompt: "responses in August and September",
+    });
+
+    expect(result.query.timeDimensions).toEqual([{ dimension: "FeedbackRecords.collectedAt" }]);
+  });
+
+  test("falls back to the schema-only prompt when the directory cannot be profiled", async () => {
+    mocks.getAIDataProfile.mockResolvedValue(null);
+    mocks.generateOrganizationAIObject.mockResolvedValueOnce({
+      object: {
+        answerable: true,
+        name: null,
+        measures: ["FeedbackRecords.count"],
+        dimensions: null,
+        timeDimensions: null,
+        chartType: "bar",
+        filters: null,
+      },
+    });
+
+    await generateAIChartQuery({
+      organizationId: "organization-1",
+      workspaceId: "workspace-1",
+      feedbackDirectoryId: "directory-1",
+      userId: "user-1",
+      prompt: "responses by source",
+    });
+
+    expect(mocks.generateOrganizationAIObject.mock.calls[0][0].system).toBe("schema context");
   });
 });

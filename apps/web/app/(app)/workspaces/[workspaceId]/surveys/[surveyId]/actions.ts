@@ -81,11 +81,15 @@ export const getSurveyFilterDataAction = authenticatedActionClient
 
     const isQuotasAllowed = await getIsQuotasEnabled(organizationId);
 
-    const [tags, { contactAttributes: attributes, meta, hiddenFields }, quotas = []] = await Promise.all([
+    const [
+      tags,
+      { contactAttributes: attributes, meta, hiddenFields, reservedValues, variableValues },
+      quotas = [],
+    ] = await Promise.all([
       getTagsByWorkspaceId(survey.workspaceId),
       getResponseFilteringValues(parsedInput.surveyId),
       isQuotasAllowed ? getQuotas(parsedInput.surveyId) : [],
     ]);
 
-    return { environmentTags: tags, attributes, meta, hiddenFields, quotas };
+    return { environmentTags: tags, attributes, meta, hiddenFields, reservedValues, variableValues, quotas };
   });

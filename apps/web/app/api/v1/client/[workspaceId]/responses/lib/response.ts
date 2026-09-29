@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
+import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
@@ -58,15 +59,17 @@ export const responseSelection = {
 
 export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInput,
+  ingestFlags?: readonly TIngestFlag[],
   // Optional caller-owned transaction — see the comment on the client helper this delegates to.
   tx?: Prisma.TransactionClient
 ): Promise<TResponseWithQuotaFull> => {
-  return await createClientResponseWithQuotaEvaluation(responseInput, createResponse, tx);
+  return await createClientResponseWithQuotaEvaluation(responseInput, createResponse, ingestFlags, tx);
 };
 
 export const createResponse = async (
   responseInput: TResponseInput,
-  tx: Prisma.TransactionClient
+  tx: Prisma.TransactionClient,
+  ingestFlags?: readonly TIngestFlag[]
 ): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
 
@@ -100,7 +103,8 @@ export const createResponse = async (
     const prismaData = buildPrismaResponseData(
       { ...responseInput, createdAt: undefined, updatedAt: undefined },
       contact,
-      ttc
+      ttc,
+      ingestFlags
     );
 
     const prismaClient = tx ?? prisma;

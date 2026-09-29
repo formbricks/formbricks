@@ -22,7 +22,7 @@ describe("SSO recovery sign-in (real Postgres)", () => {
       data: { email: "recover@example.com", name: "Recover", emailVerified: true },
     });
     const token = createToken(user.id, { purpose: "sso_recovery" });
-    const callbackUrl = `${WEBAPP_URL}/api/auth/sso/recovery/complete?intent=test-intent`;
+    const callbackUrl = `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=test-state`;
 
     const res = await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl }, asResponse: true });
 

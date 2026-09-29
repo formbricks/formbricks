@@ -7,12 +7,12 @@ dependencies:
   version: 16.4.16
 - name: gateway-helm
   repository: oci://docker.io/envoyproxy
-  version: v1.7.1
+  version: v1.8.4
 - name: redis
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 20.11.2
 - name: vllm-stack
   repository: https://vllm-project.github.io/production-stack
   version: 0.1.11
-digest: sha256:773f39357be58c0ed738ac9b42d95267ec9aeb6b12b2ac59667619005616eb7d
-generated: "2026-07-13T12:42:44.617964+05:30"
+digest: sha256:2a3f9fbdc5f5972314eca75f52d1938386d0c89da178dafe49343b0d7f096306
+generated: "2026-09-16T16:11:35.286223+05:30"

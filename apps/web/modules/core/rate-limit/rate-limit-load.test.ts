@@ -174,6 +174,49 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
     }
   });
 
+  test("Weighted requests preserve the first-write TTL and reject without consuming quota", async () => {
+    if (!isRedisAvailable) {
+      console.log("Skipping test: Redis not available");
+      return;
+    }
+
+    const config: TRateLimitConfig = {
+      interval: 3600,
+      allowedPerInterval: 5,
+      namespace: "test:weighted",
+    };
+    const identifier = `weighted-test-${Date.now()}`;
+    const redis = await cache.getRedisClient();
+
+    expect(redis).not.toBeNull();
+    if (!redis) return;
+
+    const firstResult = await checkRateLimit(config, identifier, 3);
+    expect(firstResult).toEqual({ ok: true, data: { allowed: true, retryAfter: undefined } });
+
+    const [key] = await redis.keys(`fb:rate_limit:${config.namespace}:${identifier}:*`);
+    expect(key).toBeDefined();
+    if (!key) throw new Error("Expected the weighted rate-limit key to exist");
+    expect(await redis.get(key)).toBe("3");
+
+    const firstWriteTtl = await redis.ttl(key);
+    expect(firstWriteTtl).toBeGreaterThan(0);
+    expect(firstWriteTtl).toBeLessThanOrEqual(config.interval);
+
+    const secondResult = await checkRateLimit(config, identifier, 2);
+    expect(secondResult).toEqual({ ok: true, data: { allowed: true, retryAfter: undefined } });
+    expect(await redis.get(key)).toBe("5");
+    expect(await redis.ttl(key)).toBeLessThanOrEqual(firstWriteTtl);
+
+    const rejectedResult = await checkRateLimit(config, identifier, 1);
+    expect(rejectedResult.ok).toBe(true);
+    if (rejectedResult.ok) {
+      expect(rejectedResult.data.allowed).toBe(false);
+      expect(rejectedResult.data.retryAfter).toBeGreaterThan(0);
+    }
+    expect(await redis.get(key)).toBe("5");
+  });
+
   test("Race condition test: concurrent requests to same identifier", async () => {
     if (!isRedisAvailable) {
       console.log("Skipping test: Redis not available");

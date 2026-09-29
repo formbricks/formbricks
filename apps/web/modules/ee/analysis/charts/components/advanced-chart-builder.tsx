@@ -5,11 +5,16 @@ import { useTranslation } from "react-i18next";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { DimensionsPanel } from "@/modules/ee/analysis/charts/components/dimensions-panel";
 import { FiltersPanel } from "@/modules/ee/analysis/charts/components/filters-panel";
+import { MatrixQuestionPicker } from "@/modules/ee/analysis/charts/components/matrix-question-picker";
 import { MeasuresPanel } from "@/modules/ee/analysis/charts/components/measures-panel";
 import { TimeDimensionPanel } from "@/modules/ee/analysis/charts/components/time-dimension-panel";
 import { useChartQuery } from "@/modules/ee/analysis/charts/hooks/use-chart-query";
 import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
 import { supportsTimeGrouping } from "@/modules/ee/analysis/charts/lib/chart-display";
+import {
+  buildMatrixQuestionQuery,
+  getMatrixQuestionLabel,
+} from "@/modules/ee/analysis/charts/lib/matrix-pivot";
 import {
   type ChartBuilderState,
   type FilterRow,
@@ -201,14 +206,31 @@ export function AdvancedChartBuilder({
     return () => clearTimeout(timeout);
   }, [currentQueryJson, isConfigComplete, feedbackDirectoryId]);
 
+  const isMatrix = chartType === "matrix";
+  // Picking a matrix question replaces the form with the matrix recipe — rows, columns, measure and
+  // the question filter — and keeps the date range. The auto-run below then draws it.
+  const applyMatrixQuestion = (label: string) => {
+    const parsed = parseQueryToState(buildMatrixQuestionQuery(label, currentQuery.timeDimensions));
+    dispatch({ type: ACTION.INIT_FROM_QUERY, payload: { ...initialState, ...parsed } });
+    setDimensionsOpen(true);
+  };
+
   return (
-    <div className="mx-1 space-y-2">
-      <div className="mt-4 flex w-full flex-col gap-3 overflow-hidden rounded-lg border bg-slate-50 p-4">
-        <MeasuresPanel
-          selectedMeasures={state.selectedMeasures}
-          onMeasuresChange={(measures) => dispatch({ type: ACTION.SET_MEASURES, payload: measures })}
+    <div className="space-y-2">
+      {isMatrix && feedbackDirectoryId && (
+        <MatrixQuestionPicker
+          workspaceId={workspaceId}
+          feedbackDirectoryId={feedbackDirectoryId}
+          selectedLabel={getMatrixQuestionLabel(currentQuery)}
+          onSelect={applyMatrixQuestion}
         />
-      </div>
+      )}
+      {/* Flat, like every other control in the rail: a filled box here read as a card inside a card. */}
+      <MeasuresPanel
+        hideTitle
+        selectedMeasures={state.selectedMeasures}
+        onMeasuresChange={(measures) => dispatch({ type: ACTION.SET_MEASURES, payload: measures })}
+      />
 
       <AdvancedOptionToggle
         isChecked={filtersOpen}
@@ -261,6 +283,7 @@ export function AdvancedChartBuilder({
         childBorder>
         <DimensionsPanel
           hideTitle
+          isMatrix={isMatrix}
           selectedDimensions={state.selectedDimensions}
           onDimensionsChange={(dimensions) => dispatch({ type: ACTION.SET_DIMENSIONS, payload: dimensions })}
         />

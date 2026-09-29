@@ -59,6 +59,20 @@ const handleDomainAwareRouting = (request: NextRequest): NextResponse | null => 
   }
 };
 
+/**
+ * Request headers Next.js sets only on prefetches (`next/dist/client/components/app-router-headers`).
+ * A prefetch is speculative — the router issues one for every link it has rendered, whether or not
+ * the user ever opens it — so it must never be read as "the user is here now".
+ */
+const NEXT_PREFETCH_HEADERS = [
+  "next-router-prefetch",
+  "next-router-segment-prefetch",
+  "next-instant-navigation-testing-prefetch",
+] as const;
+
+const isPrefetchRequest = (request: NextRequest): boolean =>
+  NEXT_PREFETCH_HEADERS.some((header) => request.headers.has(header));
+
 export const proxy = async (originalRequest: NextRequest) => {
   // Handle domain-aware routing first
   const domainResponse = handleDomainAwareRouting(originalRequest);
@@ -97,9 +111,17 @@ export const proxy = async (originalRequest: NextRequest) => {
   // Only set the cookie when the value actually changes: a Set-Cookie on a server-action POST makes
   // Next.js treat the action as revalidated, forcing a router refresh after every action — on pages
   // that call an action on mount this becomes an infinite POST/refresh loop.
+  //
+  // Prefetches are excluded because they are not visits. The router re-prefetches the links of a
+  // tree it rendered earlier, so after deleting a workspace it still prefetches that workspace's
+  // now-stale links — and letting one write this cookie overwrote the surviving workspace the
+  // delete action had just stored, pointing it at a workspace that no longer exists. The
+  // org-settings shell then cannot trust the cookie and falls back to `organizations[0]`, dropping
+  // a member of several organizations into an unrelated one.
   const workspaceMatch = /^\/workspaces\/([^/]+)/.exec(request.nextUrl.pathname);
   if (
     workspaceMatch?.[1] &&
+    !isPrefetchRequest(request) &&
     request.cookies.get(FORMBRICKS_WORKSPACE_ID_COOKIE)?.value !== workspaceMatch[1]
   ) {
     nextResponseWithCustomHeader.cookies.set(FORMBRICKS_WORKSPACE_ID_COOKIE, workspaceMatch[1], {

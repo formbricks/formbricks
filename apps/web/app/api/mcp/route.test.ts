@@ -87,6 +87,26 @@ vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
   validateV3SurveyFromRawInput: vi.fn(),
 }));
 
+/**
+ * Mocked for the same reason the survey operations above are: this file tests the route, not the
+ * operations behind it. It is also load-bearing — the real module reaches `@/app/lib/pipelines` and
+ * so `@formbricks/jobs`, which does not load under this config, exactly as every other test whose
+ * graph touches the pipeline mocks it out.
+ */
+vi.mock("@/app/api/v3/responses/lib/operations", () => ({
+  batchDeleteV3Responses: vi.fn(),
+  countV3ResponsesOperation: vi.fn(),
+  createV3ResponseFromRawInput: vi.fn(),
+  deleteV3Response: vi.fn(),
+  getV3Response: vi.fn(),
+  listV3Responses: vi.fn(),
+  updateV3ResponseFromRawInput: vi.fn(),
+}));
+
+vi.mock("@/app/api/v3/responses/lib/validate-operations", () => ({
+  validateV3ResponseFromRawInput: vi.fn(),
+}));
+
 vi.mock("@/app/api/v3/lib/audit", () => ({
   buildV3AuditLog: vi.fn(),
   queueV3AuditLog: vi.fn().mockResolvedValue(undefined),
@@ -275,6 +295,8 @@ describe("POST /api/mcp", () => {
       "create_survey",
       "validate_survey",
       "patch_survey",
+      "edit_survey_blocks",
+      "set_survey_block_order",
       "delete_survey",
       "list_workflows",
       "get_workflow",
@@ -300,6 +322,14 @@ describe("POST /api/mcp", () => {
       "delete_feedback_record",
       "search_feedback_records",
       "find_similar_feedback_records",
+      "list_responses",
+      "count_responses",
+      "get_response",
+      "validate_response",
+      "create_response",
+      "update_response",
+      "delete_response",
+      "batch_delete_responses",
     ]);
     const tools = new Map(message.result.tools.map((tool: { name: string }) => [tool.name, tool]));
     expect(Object.keys((tools.get("create_survey") as any).inputSchema.properties)).toEqual(
@@ -559,6 +589,8 @@ describe("POST /api/mcp", () => {
       exp: Math.floor(Date.now() / 1000) + 900,
       azp: "client_wf_read_only",
     });
+    // The module mock returns nothing by default; the guard only queues what the builder hands back.
+    vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as never);
 
     const response = await POST(
       createMcpRequest(
@@ -592,10 +624,22 @@ describe("POST /api/mcp", () => {
       detail: "OAuth token does not include the required MCP scope: workflows:write",
       requestId: "req_wf_read_only",
     });
-    // The scope gate must fire BEFORE any mutation side effect: no audit log is built or queued for a
-    // request that never reaches the workflow handler.
-    expect(buildV3AuditLog).not.toHaveBeenCalled();
-    expect(queueV3AuditLog).not.toHaveBeenCalled();
+    // The scope gate fires BEFORE any mutation side effect — the workflow handler never runs — but the
+    // refusal itself is written down as a failed attempt by the caller (ENG-2872): a read-only token
+    // reaching for `delete_workflow` is exactly the event an audit reviewer wants to see.
+    expect(buildV3AuditLog).toHaveBeenCalledTimes(1);
+    expect(buildV3AuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ user: expect.objectContaining({ id: "user_1" }) }),
+      "deleted",
+      "workflow",
+      expect.any(String)
+    );
+    expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(queueV3AuditLog).mock.calls[0][0]).toMatchObject({
+      status: "failure",
+      eventId: "req_wf_read_only",
+      targetId: "wf1234567890123456789012ab",
+    });
   });
 
   test("calls create_survey through the MCP route", async () => {

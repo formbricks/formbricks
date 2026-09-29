@@ -115,6 +115,9 @@ RUN chown -R nextjs:nextjs ./authzed-cli \
 COPY --from=installer /app/apps/web/scripts/docker/formbricks-authzed /usr/local/bin/formbricks-authzed
 RUN chown root:root /usr/local/bin/formbricks-authzed && chmod 555 /usr/local/bin/formbricks-authzed
 
+COPY --from=installer /app/apps/web/scripts/docker/formbricks-authzed-prepare /usr/local/bin/formbricks-authzed-prepare
+RUN chown root:root /usr/local/bin/formbricks-authzed-prepare && chmod 555 /usr/local/bin/formbricks-authzed-prepare
+
 COPY --from=installer /app/prisma.config.mjs ./prisma.config.mjs
 RUN chmod 644 ./prisma.config.mjs
 

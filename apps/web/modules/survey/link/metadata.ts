@@ -18,7 +18,11 @@ export const getMetadataForLinkSurvey = async (
     notFound();
   }
 
-  const { title, description, ogImage } = await getBasicSurveyMetadata(surveyId, languageCode, survey);
+  const { title, ogTitle, description, ogImage } = await getBasicSurveyMetadata(
+    surveyId,
+    languageCode,
+    survey
+  );
 
   // Fetch organization whitelabel data for custom favicon
   const workspaceContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
@@ -26,7 +30,7 @@ export const getMetadataForLinkSurvey = async (
 
   // Use the shared function for creating the base metadata but override with custom data
   const brandColor = getMetadataBrandColor(workspaceContext.workspace.styling, survey.styling);
-  const baseMetadata = getSurveyOpenGraphMetadata(survey.id, title, brandColor);
+  const baseMetadata = getSurveyOpenGraphMetadata(survey.id, ogTitle, brandColor);
 
   // Override with the custom image URL
   if (baseMetadata.openGraph) {

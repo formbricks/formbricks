@@ -1,9 +1,12 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
+import { normalizeHex } from "@/lib/utils/colors";
 
 export const GET = async (req: NextRequest) => {
-  let name = req.nextUrl.searchParams.get("name");
-  let brandColor = req.nextUrl.searchParams.get("brandColor");
+  const name = req.nextUrl.searchParams.get("name");
+  // The value lands unescaped in SVG attributes, so only a canonical #rrggbb may pass; anything else
+  // (e.g. a query string mangled by a link-preview fetcher) falls back to the defaults.
+  const brandColor = normalizeHex(req.nextUrl.searchParams.get("brandColor") ?? "");
 
   return new ImageResponse(
     <div

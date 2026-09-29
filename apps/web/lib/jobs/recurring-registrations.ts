@@ -7,6 +7,7 @@ import {
   type TRecurringBackgroundJobSchedule,
   type TRecurringJobKey,
   type TResponsePipelineJobData,
+  type TWebhookDeliveryJobData,
   type TWorkflowRunJobData,
   recurringJobs,
 } from "@formbricks/jobs";
@@ -14,10 +15,16 @@ import { processAuthzedProjectionDeliveryJob } from "@/lib/authzed/outbox-proces
 import { processAuthzedScheduledReconciliationJob } from "@/lib/authzed/scheduled-reconciliation";
 import { USAGE_TELEMETRY_DAILY_CRON_PATTERN, USAGE_TELEMETRY_TIME_ZONE } from "@/lib/telemetry/constants";
 import { processUsageTelemetryJob } from "@/lib/telemetry/process-usage-telemetry-job";
+import {
+  WORKFLOWS_USAGE_SNAPSHOT_DAILY_CRON_PATTERN,
+  WORKFLOWS_USAGE_SNAPSHOT_TIME_ZONE,
+} from "@/modules/ee/workflows/lib/analytics/constants";
+import { processWorkflowsUsageSnapshotJob } from "@/modules/ee/workflows/lib/analytics/process-workflows-usage-snapshot-job";
 import { processWorkflowRunJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-job";
 import { processWorkflowRunReconcileJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-reconcile-job";
 import { WORKFLOW_RUN_RECONCILE_INTERVAL_MS } from "@/modules/ee/workflows/lib/runner/reconcile-constants";
 import { processResponsePipelineJob } from "@/modules/response-pipeline/lib/process-response-pipeline-job";
+import { processWebhookDeliveryJob } from "@/modules/response-pipeline/lib/process-webhook-delivery-job";
 import {
   SURVEY_ARCHIVE_PURGE_DAILY_CRON_PATTERN,
   SURVEY_ARCHIVE_PURGE_TIME_ZONE,
@@ -126,6 +133,15 @@ export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, Recurr
       kind: "every",
     },
   },
+  workflowsUsageSnapshot: {
+    handler: processWorkflowsUsageSnapshotJob,
+    job: recurringJobs.workflowsUsageSnapshot,
+    schedule: {
+      cronPattern: WORKFLOWS_USAGE_SNAPSHOT_DAILY_CRON_PATTERN,
+      kind: "cron",
+      timeZone: WORKFLOWS_USAGE_SNAPSHOT_TIME_ZONE,
+    },
+  },
 };
 
 export const RECURRING_JOB_REGISTRATIONS: readonly RecurringJobRegistration[] = Object.values(
@@ -136,6 +152,8 @@ export const RECURRING_JOB_REGISTRATIONS: readonly RecurringJobRegistration[] = 
 export const getJobHandlerOverrides = (): JobHandlerOverrides => ({
   [ONE_SHOT_JOB_NAMES.responsePipeline]:
     toJobHandlerOverride<TResponsePipelineJobData>(processResponsePipelineJob),
+  [ONE_SHOT_JOB_NAMES.webhookDelivery]:
+    toJobHandlerOverride<TWebhookDeliveryJobData>(processWebhookDeliveryJob),
   [ONE_SHOT_JOB_NAMES.workflowRun]: toJobHandlerOverride<TWorkflowRunJobData>(processWorkflowRunJob),
   ...Object.fromEntries(
     RECURRING_JOB_REGISTRATIONS.map((registration) => [

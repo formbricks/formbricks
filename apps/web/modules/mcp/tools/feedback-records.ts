@@ -19,7 +19,7 @@ import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { type TMcpToolContext, getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
-import { guardMcpScopes } from "./guard-scopes";
+import { registerScopedTool } from "./guard-scopes";
 import { runMcpMutation } from "./run-mcp-mutation";
 import {
   type TMcpCountFeedbackRecordsInput,
@@ -44,12 +44,16 @@ import {
   ZMcpUpdateFeedbackRecordInput,
 } from "./schemas";
 
-const FEEDBACK_RECORDS_READ_SCOPE = ["feedbackRecords:read"];
-const FEEDBACK_RECORDS_WRITE_SCOPE = ["feedbackRecords:write"];
+// Typed as a non-empty tuple so `registerScopedTool` accepts them: its signature refuses `[]`, which
+// would gate on nothing.
+const FEEDBACK_RECORDS_READ_SCOPE: [string, ...string[]] = ["feedbackRecords:read"];
+const FEEDBACK_RECORDS_WRITE_SCOPE: [string, ...string[]] = ["feedbackRecords:write"];
 
 /**
- * Shared handler body for the read-only tools: resolve the request id, gate on the read scope, run the
- * v3 operation, map its Response to a tool result. Only `run` differs between them.
+ * Shared handler body for the read-only tools: resolve the request id, run the v3 operation, map its
+ * Response to a tool result. Only `run` differs between them.
+ *
+ * No scope gate here any more — `registerScopedTool` applies it before this body runs (ENG-2119).
  */
 function readOnlyHandler<TInput>(
   run: (input: TInput, authentication: TV3Authentication, requestId: string) => Promise<Response>
@@ -57,10 +61,6 @@ function readOnlyHandler<TInput>(
   return async (input: TInput, ctx: TMcpToolContext): Promise<CallToolResult> => {
     const authInfo = getMcpToolAuthInfo(ctx);
     const requestId = getMcpRequestId(authInfo);
-    const scopeError = await guardMcpScopes(authInfo, FEEDBACK_RECORDS_READ_SCOPE, requestId);
-    if (scopeError) {
-      return scopeError;
-    }
 
     const response = await run(input, getMcpAuthentication(authInfo), requestId);
     return await responseToMcpToolResult(response, requestId);
@@ -68,9 +68,11 @@ function readOnlyHandler<TInput>(
 }
 
 /**
- * Shared handler body for the mutating tools: write scope, plus the audit-log lifecycle — the record is
- * stamped by the operation, and the outcome (`success`, or an `eventId` on failure) by this wrapper. A
- * throw still queues the log, so a failed mutation is never silently unaudited.
+ * Shared handler body for the mutating tools: the audit-log lifecycle — the record is stamped by the
+ * operation, and the outcome (`success`, or an `eventId` on failure) by this wrapper. A throw still
+ * queues the log, so a failed mutation is never silently unaudited.
+ *
+ * The write scope is no longer checked here; `registerScopedTool` gates it before this runs (ENG-2119).
  */
 function writeHandler<TInput extends { workspaceId: string }>(
   action: "created" | "updated" | "deleted",
@@ -82,15 +84,8 @@ function writeHandler<TInput extends { workspaceId: string }>(
   ) => Promise<Response>
 ) {
   return async (input: TInput, ctx: TMcpToolContext): Promise<CallToolResult> => {
-    const authInfo = getMcpToolAuthInfo(ctx);
-    const requestId = getMcpRequestId(authInfo);
-    const scopeError = await guardMcpScopes(authInfo, FEEDBACK_RECORDS_WRITE_SCOPE, requestId);
-    if (scopeError) {
-      return scopeError;
-    }
-
-    // The scope gate above is the only part that differs from the survey/workflow tools, which get
-    // theirs from registerScopedTool; the audit lifecycle itself is shared.
+    // Scope is gated at registration now, like every other tool family; this wrapper is purely the
+    // audit lifecycle.
     return await runMcpMutation(
       ctx,
       { action, resource: "feedbackRecord", logContext: { workspaceId: input.workspaceId } },
@@ -101,7 +96,8 @@ function writeHandler<TInput extends { workspaceId: string }>(
 }
 
 export function registerFeedbackRecordTools(server: McpServer): void {
-  server.registerTool(
+  registerScopedTool(
+    server,
     "list_feedback_datasets",
     {
       title: "List feedback datasets",
@@ -115,6 +111,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
+    FEEDBACK_RECORDS_READ_SCOPE,
     readOnlyHandler<TMcpListFeedbackDatasetsInput>((input, authentication, requestId) =>
       listV3FeedbackDatasets({
         workspaceId: input.workspaceId,
@@ -125,7 +122,8 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     )
   );
 
-  server.registerTool(
+  registerScopedTool(
+    server,
     "list_feedback_records",
     {
       title: "List feedback records",
@@ -143,12 +141,14 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     // field by field: adding a filter to the schema can't silently fail to reach the operation. Safe
     // because the schema is `.strict()` (ENG-2256), so an undeclared key is rejected before this handler
     // runs rather than spread onward, and the operation allowlists what reaches the Hub regardless.
+    FEEDBACK_RECORDS_READ_SCOPE,
     readOnlyHandler<TMcpListFeedbackRecordsInput>((input, authentication, requestId) =>
       listV3FeedbackRecords({ ...input, authentication, requestId, instance: MCP_API_ROUTE })
     )
   );
 
-  server.registerTool(
+  registerScopedTool(
+    server,
     "count_feedback_records",
     {
       title: "Count feedback records",
@@ -162,12 +162,14 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
+    FEEDBACK_RECORDS_READ_SCOPE,
     readOnlyHandler<TMcpCountFeedbackRecordsInput>((input, authentication, requestId) =>
       countV3FeedbackRecords({ ...input, authentication, requestId, instance: MCP_API_ROUTE })
     )
   );
 
-  server.registerTool(
+  registerScopedTool(
+    server,
     "get_feedback_record",
     {
       title: "Get feedback record",
@@ -180,6 +182,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
+    FEEDBACK_RECORDS_READ_SCOPE,
     readOnlyHandler<TMcpGetFeedbackRecordInput>((input, authentication, requestId) =>
       getV3FeedbackRecord({
         workspaceId: input.workspaceId,
@@ -192,13 +195,15 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     )
   );
 
-  server.registerTool(
+  registerScopedTool(
+    server,
     "create_feedback_record",
     {
       title: "Create feedback record",
       description:
         "Create a feedback record in a workspace's feedback dataset. The dataset is resolved from workspaceId, or from datasetId when the workspace has more than one; it can never be set through the record body.",
       inputSchema: ZMcpCreateFeedbackRecordInput,
+      audit: { action: "created", targetType: "feedbackRecord" },
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -206,6 +211,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
+    FEEDBACK_RECORDS_WRITE_SCOPE,
     writeHandler<TMcpCreateFeedbackRecordInput>("created", (input, authentication, requestId, auditLog) =>
       createV3FeedbackRecord({
         workspaceId: input.workspaceId,
@@ -219,13 +225,15 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     )
   );
 
-  server.registerTool(
+  registerScopedTool(
+    server,
     "create_feedback_records",
     {
       title: "Create feedback records",
       description:
         "Create several feedback records in one call — use this instead of calling create_feedback_record repeatedly when importing a batch. Every record is validated before any is written, so an invalid record fails the whole call rather than storing part of the batch. If the feedback service rejects some records (a duplicate submission, say), the created ones are returned and meta.failures lists the rest by index, so only those need retrying; check meta.failed. Records in one call are NOT automatically treated as one submission: each record without a submission_id gets its own generated one, so to record several answers given together (a survey response, a call with a rating and a comment) set the same submission_id on all of them.",
       inputSchema: ZMcpCreateFeedbackRecordsInput,
+      audit: { action: "created", targetType: "feedbackRecord" },
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -233,14 +241,10 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
+    FEEDBACK_RECORDS_WRITE_SCOPE,
     async (input: TMcpCreateFeedbackRecordsInput, ctx) => {
       const authInfo = getMcpToolAuthInfo(ctx);
       const requestId = getMcpRequestId(authInfo);
-      const scopeError = await guardMcpScopes(authInfo, FEEDBACK_RECORDS_WRITE_SCOPE, requestId);
-      if (scopeError) {
-        return scopeError;
-      }
-
       const authentication = getMcpAuthentication(authInfo);
       const log = logger.withContext({ requestId, workspaceId: input.workspaceId });
       // One audit event per record, not per call: N records created is N creations to an auditor. The
@@ -296,13 +300,15 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     }
   );
 
-  server.registerTool(
+  registerScopedTool(
+    server,
     "update_feedback_record",
     {
       title: "Update feedback record",
       description:
         "Correct the value of an existing feedback record — the text, number, boolean, date or chosen option, plus user_id, language and metadata. Send ONLY those fields: this tool rejects any other key rather than ignoring it, so do not echo a record back from get_feedback_record unchanged — strip its provenance fields (source_*, field_*, submission_id, collected_at) and its derived sentiment/emotions/translation first. If a call is rejected the error names every key to remove. Only the fields you send are changed, with one exception: metadata is REPLACED wholesale, so to add a key you must send the existing keys too (fetch the record first with get_feedback_record). Send the value field that matches the record's field_type — value_text for text, value_number for nps/csat/ces/rating/number, value_boolean for boolean, value_date for date, value_text and/or value_id for categorical; sending any other one is rejected, because field_type itself cannot be changed. A record's provenance cannot be changed either (which source, question, submission or when it was collected); correcting those means deleting the record and creating it again. Editing the text clears the derived sentiment, emotions and translation and regenerates them in the background, so the response comes back without them — that means 'being recomputed', not 'none'. Semantic search catches up with an edit a moment later, and clearing a record's text makes it unsearchable.",
       inputSchema: ZMcpUpdateFeedbackRecordInput,
+      audit: { action: "updated", targetType: "feedbackRecord", targetIdArg: "feedbackRecordId" },
       annotations: {
         readOnlyHint: false,
         // Overwrites a stored value irreversibly (the previous value survives only in the audit log), so
@@ -312,6 +318,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
+    FEEDBACK_RECORDS_WRITE_SCOPE,
     writeHandler<TMcpUpdateFeedbackRecordInput>("updated", (input, authentication, requestId, auditLog) =>
       updateV3FeedbackRecord({
         workspaceId: input.workspaceId,
@@ -326,13 +333,15 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     )
   );
 
-  server.registerTool(
+  registerScopedTool(
+    server,
     "delete_feedback_record",
     {
       title: "Delete feedback record",
       description:
         "Permanently delete one feedback record from a workspace's feedback dataset. This cannot be undone: the record and its search embedding are removed, and no copy is kept. Deletes a single record only — there is no bulk delete. Returns no content on success.",
       inputSchema: ZMcpDeleteFeedbackRecordInput,
+      audit: { action: "deleted", targetType: "feedbackRecord", targetIdArg: "feedbackRecordId" },
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -340,6 +349,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
+    FEEDBACK_RECORDS_WRITE_SCOPE,
     writeHandler<TMcpDeleteFeedbackRecordInput>("deleted", (input, authentication, requestId, auditLog) =>
       deleteV3FeedbackRecord({
         workspaceId: input.workspaceId,
@@ -353,7 +363,8 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     )
   );
 
-  server.registerTool(
+  registerScopedTool(
+    server,
     "search_feedback_records",
     {
       title: "Search feedback records",
@@ -367,6 +378,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
+    FEEDBACK_RECORDS_READ_SCOPE,
     readOnlyHandler<TMcpSearchFeedbackRecordsInput>((input, authentication, requestId) =>
       searchV3FeedbackRecords({
         workspaceId: input.workspaceId,
@@ -382,7 +394,8 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     )
   );
 
-  server.registerTool(
+  registerScopedTool(
+    server,
     "find_similar_feedback_records",
     {
       title: "Find similar feedback records",
@@ -396,6 +409,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
+    FEEDBACK_RECORDS_READ_SCOPE,
     readOnlyHandler<TMcpFindSimilarFeedbackRecordsInput>((input, authentication, requestId) =>
       findSimilarV3FeedbackRecords({
         workspaceId: input.workspaceId,

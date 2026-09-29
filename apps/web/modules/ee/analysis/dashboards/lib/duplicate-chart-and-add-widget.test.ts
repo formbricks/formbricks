@@ -74,10 +74,9 @@ describe("duplicateChartAndAddWidget", () => {
     });
 
     expect(result).toEqual({ chart: mockDuplicatedChart, widget: mockWidget });
-    expect(prisma.dashboard.findFirst).toHaveBeenCalledWith({
-      where: { id: mockDashboardId, workspaceId: mockWorkspaceId },
-      select: { id: true },
-    });
+    expect(prisma.dashboard.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: mockDashboardId, workspaceId: mockWorkspaceId } })
+    );
     expect(duplicateChart).toHaveBeenCalledWith(mockChartId, mockWorkspaceId, mockUserId);
     expect(addChartToDashboard).toHaveBeenCalledWith({
       dashboardId: mockDashboardId,

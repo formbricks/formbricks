@@ -4,7 +4,7 @@ import { TFunction } from "i18next";
 import { ChevronDownIcon, X } from "lucide-react";
 import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { TFilterOption, TSortOption } from "@formbricks/types/surveys/types";
+import type { TSortOption } from "@formbricks/types/surveys/types";
 import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { SortOption } from "@/modules/survey/list/components/sort-option";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
@@ -15,26 +15,26 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { FilterDropdown, type TFilterOption } from "@/modules/ui/components/filter-dropdown";
 import { SearchBar } from "@/modules/ui/components/search-bar";
-import { SurveyFilterDropdown } from "./survey-filter-dropdown";
 
 interface SurveyFilterProps {
   surveyFilters: TSurveyOverviewFilters;
   setSurveyFilters: Dispatch<SetStateAction<TSurveyOverviewFilters>>;
   currentWorkspaceChannel: TWorkspaceConfigChannel;
-  // Whether the workspace has any archived surveys; the "Archived" option is hidden when false.
-  hasArchived?: boolean;
 }
 
-// Real statuses users can filter on, plus the "archived" pseudo-status.
-const SELECTABLE_STATUS_VALUES = new Set(["draft", "inProgress", "paused", "completed", "archived"]);
+type TSurveyStatusFilter = TSurveyOverviewFilters["status"][number];
+type TSurveyTypeFilter = TSurveyOverviewFilters["type"][number];
 
-const getStatusOptions = (t: TFunction, hasArchived: boolean): TFilterOption[] => [
+// Archived is one more status, set apart by a divider because it is the only one excluded from the
+// default list. Same shape as the workflows status filter.
+const getStatusOptions = (t: TFunction): TFilterOption<TSurveyStatusFilter>[] => [
   { label: t("common.draft"), value: "draft" },
   { label: t("common.in_progress"), value: "inProgress" },
   { label: t("common.paused"), value: "paused" },
   { label: t("common.completed"), value: "completed" },
-  ...(hasArchived ? [{ label: t("common.archived"), value: "archived" }] : []),
+  { label: t("common.archived"), value: "archived", separatorBefore: true },
 ];
 
 const getSortOptions = (t: TFunction): TSortOption[] => [
@@ -60,7 +60,6 @@ export const SurveyFilters = ({
   surveyFilters,
   setSurveyFilters,
   currentWorkspaceChannel,
-  hasArchived = false,
 }: Readonly<SurveyFilterProps>) => {
   const { sortBy, status, type } = surveyFilters;
   const [name, setName] = useState(surveyFilters.name);
@@ -74,7 +73,7 @@ export const SurveyFilters = ({
 
   const [dropdownOpenStates, setDropdownOpenStates] = useState(new Map());
 
-  const typeOptions: TFilterOption[] = [
+  const typeOptions: TFilterOption<TSurveyTypeFilter>[] = [
     { label: t("common.link"), value: "link" },
     { label: t("common.app"), value: "app" },
   ];
@@ -87,25 +86,18 @@ export const SurveyFilters = ({
     setDropdownOpenStates(new Map(dropdownOpenStates).set(id, !dropdownOpenStates.get(id)));
   };
 
-  const handleStatusChange = (value: string) => {
-    if (SELECTABLE_STATUS_VALUES.has(value)) {
-      const statusValue = value as TSurveyOverviewFilters["status"][number];
-      if (status.includes(statusValue)) {
-        setSurveyFilters((prev) => ({ ...prev, status: prev.status.filter((v) => v !== statusValue) }));
-      } else {
-        setSurveyFilters((prev) => ({ ...prev, status: [...prev.status, statusValue] }));
-      }
-    }
+  const handleStatusChange = (value: TSurveyStatusFilter) => {
+    setSurveyFilters((prev) => ({
+      ...prev,
+      status: prev.status.includes(value) ? prev.status.filter((v) => v !== value) : [...prev.status, value],
+    }));
   };
 
-  const handleTypeChange = (value: string) => {
-    if (value === "link" || value === "app") {
-      if (type.includes(value)) {
-        setSurveyFilters((prev) => ({ ...prev, type: prev.type.filter((v) => v !== value) }));
-      } else {
-        setSurveyFilters((prev) => ({ ...prev, type: [...prev.type, value] }));
-      }
-    }
+  const handleTypeChange = (value: TSurveyTypeFilter) => {
+    setSurveyFilters((prev) => ({
+      ...prev,
+      type: prev.type.includes(value) ? prev.type.filter((v) => v !== value) : [...prev.type, value],
+    }));
   };
 
   const handleSortChange = (option: TSortOption) => {
@@ -122,26 +114,26 @@ export const SurveyFilters = ({
           className="border-slate-700"
         />
         <div>
-          <SurveyFilterDropdown
+          <FilterDropdown
             title={t("common.status")}
-            id="status"
-            options={getStatusOptions(t, hasArchived)}
+            className="surveyFilterDropdown"
+            options={getStatusOptions(t)}
             selectedOptions={status}
-            setSelectedOptions={handleStatusChange}
-            isOpen={dropdownOpenStates.get("status")}
-            toggleDropdown={toggleDropdown}
+            onToggleOption={handleStatusChange}
+            isOpen={Boolean(dropdownOpenStates.get("status"))}
+            onOpenChange={() => toggleDropdown("status")}
           />
         </div>
         {currentWorkspaceChannel !== "link" && (
           <div>
-            <SurveyFilterDropdown
+            <FilterDropdown
               title={t("common.type")}
-              id="type"
+              className="surveyFilterDropdown"
               options={typeOptions}
               selectedOptions={type}
-              setSelectedOptions={handleTypeChange}
-              isOpen={dropdownOpenStates.get("type")}
-              toggleDropdown={toggleDropdown}
+              onToggleOption={handleTypeChange}
+              isOpen={Boolean(dropdownOpenStates.get("type"))}
+              onOpenChange={() => toggleDropdown("type")}
             />
           </div>
         )}

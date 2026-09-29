@@ -2,34 +2,35 @@
 
 import { FileDigitIcon, FileType2Icon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { TResponseVariables } from "@formbricks/types/responses";
-import { TSurveyVariables } from "@formbricks/types/surveys/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
-interface HiddenFieldsProps {
-  variables: TSurveyVariables;
+interface ResponseVariablesProps {
+  /** The survey's computed Embedded Data fields, resolved through `getSurveyEmbeddedFields`. */
+  variables: TLinkedEmbeddedField[];
   variablesData: TResponseVariables;
 }
 
-export const ResponseVariables = ({ variables, variablesData }: HiddenFieldsProps) => {
+export const ResponseVariables = ({ variables, variablesData }: Readonly<ResponseVariablesProps>) => {
   const { t } = useTranslation();
   return (
     <div className="mt-6 flex flex-col gap-6">
-      {variables.map((variable) => {
+      {variables.map(({ field, link }) => {
         if (
-          variablesData[variable.id] === undefined ||
-          !["string", "number"].includes(typeof variablesData[variable.id])
+          variablesData[link.storageKey] === undefined ||
+          !["string", "number"].includes(typeof variablesData[link.storageKey])
         )
           return null;
         return (
-          <div key={variable.id}>
+          <div key={link.storageKey}>
             <div className="flex gap-x-2 text-sm text-slate-500">
-              <p>{variable.name}</p>
+              <p>{field.name}</p>
               <div className="flex items-center gap-x-2 rounded-full bg-slate-100 px-2">
                 <TooltipProvider delayDuration={50}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      {variable.type === "number" ? (
+                      {field.dataType === "number" ? (
                         <FileDigitIcon className="size-4" />
                       ) : (
                         <FileType2Icon className="size-4" />
@@ -42,7 +43,9 @@ export const ResponseVariables = ({ variables, variablesData }: HiddenFieldsProp
                 </TooltipProvider>
               </div>
             </div>
-            <p className="ph-no-capture mt-2 font-semibold text-slate-700">{variablesData[variable.id]}</p>
+            <p className="ph-no-capture mt-2 font-semibold text-slate-700">
+              {variablesData[link.storageKey]}
+            </p>
           </div>
         );
       })}

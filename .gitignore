@@ -34,7 +34,12 @@ yarn-error.log*
 **/.env.development.local
 **/.env.test.local
 **/.env.production.local
-!packages/database/.env
+# Any hand-made copy of an env file. `**/.env` alone does not match a suffixed backup, which is how
+# `apps/web/.env.pre-smoke-backup` reached a commit.
+**/.env.*.backup
+**/.env.backup
+**/.env-backup
+**/.env.*backup*
 !apps/web/.env
 
 # local cloud credentials — the Hub's google-gemini (Vertex) enrichment providers need a GCP

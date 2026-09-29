@@ -28,6 +28,7 @@ import {
   Rows3Icon,
   SmartphoneIcon,
   SmilePlusIcon,
+  SquareFunctionIcon,
   StarIcon,
   User,
 } from "lucide-react";
@@ -36,6 +37,7 @@ import { useTranslation } from "react-i18next";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
+import { RESERVED_FIELD_ICONS } from "@/modules/analysis/lib/reserved-field-display";
 import { Button } from "@/modules/ui/components/button";
 import {
   Command,
@@ -54,6 +56,7 @@ export enum OptionsType {
   OTHERS = "Other Filters",
   META = "Meta",
   HIDDEN_FIELDS = "Hidden Fields",
+  VARIABLES = "Variables",
   QUOTAS = "Quotas",
 }
 
@@ -71,6 +74,8 @@ const getOptionsTypeTranslationKey = (type: OptionsType, t: TFunction): string =
       return t("common.meta");
     case OptionsType.HIDDEN_FIELDS:
       return t("common.hidden_fields");
+    case OptionsType.VARIABLES:
+      return t("common.variables");
     case OptionsType.QUOTAS:
       return t("common.quotas");
   }
@@ -116,7 +121,11 @@ const elementIcons = {
   // hidden fields
   [OptionsType.HIDDEN_FIELDS]: EyeOff,
 
-  // meta
+  // variables (computed embedded fields)
+  [OptionsType.VARIABLES]: SquareFunctionIcon,
+
+  // meta — reserved fields resolve through RESERVED_FIELD_ICONS by catalog name (see getDisplayIcon);
+  // these stay as fallbacks for ids the shared map has no icon for.
   device: SmartphoneIcon,
   os: AirplayIcon,
   browser: GlobeIcon,
@@ -158,12 +167,19 @@ const getLabelClassName = (type: OptionsType | string, label?: string): string =
   return label === "os" || label === "url" ? "uppercase" : "capitalize";
 };
 
-export const SelectedCommandItem = ({ label, elementType, type }: Partial<ElementOption>) => {
+export const SelectedCommandItem = ({ label, elementType, type, id }: Partial<ElementOption>) => {
   const getDisplayIcon = () => {
     if (!type) return null;
     if (type === OptionsType.ELEMENTS && elementType) return getIcon(elementType);
     if (type === OptionsType.ATTRIBUTES) return getIcon(OptionsType.ATTRIBUTES);
     if (type === OptionsType.HIDDEN_FIELDS) return getIcon(OptionsType.HIDDEN_FIELDS);
+    if (type === OptionsType.VARIABLES) return getIcon(OptionsType.VARIABLES);
+    if (type === OptionsType.META && id) {
+      // Reserved fields share the response table's icon map, keyed by catalog name.
+      const ReservedIcon = RESERVED_FIELD_ICONS[id];
+      if (ReservedIcon) return <ReservedIcon className="size-5" strokeWidth={1.5} />;
+      return getIcon(id);
+    }
     if ([OptionsType.META, OptionsType.OTHERS].includes(type) && label) return getIcon(label);
     if (type === OptionsType.TAGS) return getIcon(OptionsType.TAGS);
     if (type === OptionsType.QUOTAS) return getIcon(OptionsType.QUOTAS);

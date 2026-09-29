@@ -8,6 +8,7 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
+import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
@@ -53,6 +54,32 @@ const getExistingSurvey = async (surveyId: string) => {
       displayOption: true,
       recontactDays: true,
       displayLimit: true,
+      // Behaviour, presentation and security settings. The copy is built by spreading whatever this
+      // select returns, so a settings column missing here is not reset on purpose — it is never read,
+      // and the new row silently falls back to its database default. That is how duplicates lost PIN
+      // protection, response limits and redirect URLs (ENG-2144), and the recontact fields before
+      // that (#6802). Add new Survey settings columns here; `survey.test.ts` fails if you forget.
+      redirectUrl: true,
+      autoComplete: true,
+      autoClose: true,
+      delay: true,
+      displayPercentage: true,
+      showLanguageSwitch: true,
+      pin: true,
+      recaptcha: true,
+      isVerifyEmailEnabled: true,
+      isAnonymizeResponsesEnabled: true,
+      isCaptureIpEnabled: true,
+      isBackButtonHidden: true,
+      isAutoProgressingEnabled: true,
+      metadata: true,
+      customHeadScripts: true,
+      customHeadScriptsMode: true,
+      inlineTriggers: true,
+      // `publishOn` and `closeOn` are the deliberate exceptions. The scheduler promotes a survey on
+      // `paused` + publishOn <= now and closes it on `inProgress` + closeOn <= now, so a copy that
+      // inherited a date already in the past would complete itself on the first tick after the user
+      // publishes it. They are also normalised against each other on save, which this path bypasses.
       triggers: {
         select: {
           actionClass: {
@@ -278,6 +305,10 @@ export const copySurveyToOtherWorkspace = async (
         ? structuredClone(existingSurvey.workspaceOverwrites)
         : Prisma.JsonNull,
       styling: existingSurvey.styling ? structuredClone(existingSurvey.styling) : Prisma.JsonNull,
+      // "replace" means "run only this survey's scripts, not the workspace's". In another workspace
+      // that would silently switch off the target's own head scripts (analytics, consent), so the
+      // copy keeps its scripts but adds them to the target's instead.
+      customHeadScriptsMode: isSameWorkspace ? existingSurvey.customHeadScriptsMode : "add",
       segment: undefined,
       followUps: {
         createMany: {
@@ -347,38 +378,64 @@ export const copySurveyToOtherWorkspace = async (
       }
     }
 
-    const newSurvey = await prisma.survey.create({
-      data: surveyData,
-      select: {
-        id: true,
-        workspaceId: true,
-        segment: {
+    const newSurvey = await prisma.$transaction(
+      async (tx) => {
+        const createdSurvey = await tx.survey.create({
+          data: surveyData,
           select: {
             id: true,
-          },
-        },
-        triggers: {
-          select: {
-            actionClass: {
+            workspaceId: true,
+            variables: true,
+            hiddenFields: true,
+            segment: {
               select: {
                 id: true,
-                name: true,
-                workspaceId: true,
               },
             },
-          },
-        },
-        languages: {
-          select: {
-            language: {
+            triggers: {
               select: {
-                code: true,
+                actionClass: {
+                  select: {
+                    id: true,
+                    name: true,
+                    workspaceId: true,
+                  },
+                },
+              },
+            },
+            languages: {
+              select: {
+                language: {
+                  select: {
+                    code: true,
+                  },
+                },
               },
             },
           },
-        },
+        });
+
+        // ENG-1978: the copy carries the source survey's variables and hidden fields, so the new
+        // survey needs its own rows. `workspaceId` is read off the created row rather than the
+        // function's `workspaceId` argument, which is the SOURCE workspace — a copy into a different
+        // workspace must define its fields there.
+        await reconcileEmbeddedData(tx, {
+          surveyId: createdSurvey.id,
+          workspaceId: createdSurvey.workspaceId,
+          patch: { variables: createdSurvey.variables, hiddenFields: createdSurvey.hiddenFields },
+        });
+
+        return createdSurvey;
       },
-    });
+      // This create was untransacted before ENG-1978, so wrapping it introduced Prisma's 5s
+      // interactive-transaction ceiling where there had been none. It is the deepest of the
+      // reconcile call sites (enumerated on `getDeclaredEmbeddedFields`) — it clones blocks, endings,
+      // the welcome card, variables, hidden fields, follow-ups and quotas, and resolves an action
+      // class per trigger through `connectOrCreate` — so a large survey could plausibly reach it and
+      // fail a copy that used to succeed. Matches the ceiling on `updateSurveyInternal` for the same
+      // reason.
+      { timeout: 20_000, maxWait: 10_000 }
+    );
 
     return newSurvey;
   } catch (error) {
@@ -414,19 +471,18 @@ export const getSurveyCount = reactCache(
   }
 );
 
-/** Whether the workspace has any archived (soft-deleted) surveys. Drives the "Archived" filter option. */
-export const hasArchivedSurveys = reactCache(async (workspaceId: string): Promise<boolean> => {
+/**
+ * Every survey in the workspace, archived ones included. Filter-independent, so the list can tell an
+ * empty workspace (onboarding) from a filter that matched nothing — and a count rather than a flag so
+ * an optimistic delete can decrement it before the server answers.
+ */
+export const getWorkspaceSurveyCount = reactCache(async (workspaceId: string): Promise<number> => {
   validateInputs([workspaceId, z.cuid2()]);
   try {
-    const archivedSurvey = await prisma.survey.findFirst({
-      where: { workspaceId, archivedAt: { not: null } },
-      select: { id: true },
-    });
-
-    return archivedSurvey !== null;
+    return await prisma.survey.count({ where: { workspaceId } });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error checking for archived surveys");
+      logger.error(error, "Error counting the workspace's surveys");
       throw new DatabaseError(error.message);
     }
 

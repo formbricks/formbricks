@@ -10,6 +10,8 @@ import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createCustomerPortalSession } from "@/modules/ee/billing/api/lib/create-customer-portal-session";
 import { createSetupCheckoutSession } from "@/modules/ee/billing/api/lib/create-setup-checkout-session";
@@ -20,6 +22,7 @@ import {
   createProTrialSubscription,
   ensureCloudStripeSetupForOrganization,
   ensureStripeCustomerForOrganization,
+  getProTrialDays,
   previewImmediateUpgradeCharge,
   reconcileCloudStripeSubscriptionsForOrganization,
   setOrganizationPaymentAttemptError,
@@ -256,13 +259,13 @@ export const startHobbyAction = authenticatedActionClient
     return { success: true };
   });
 
-export const startProTrialAction = authenticatedActionClient
-  .inputSchema(ZStartScaleTrialAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const startProTrialAction = authenticatedActionClient.inputSchema(ZStartScaleTrialAction).action(
+  withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
     await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
       type: "organization",
       id: parsedInput.organizationId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
 
     const organization = await getOrganization(parsedInput.organizationId);
     if (!organization) {
@@ -276,7 +279,11 @@ export const startProTrialAction = authenticatedActionClient
       throw new ResourceNotFoundError("OrganizationBilling", parsedInput.organizationId);
     }
 
-    await createProTrialSubscription(parsedInput.organizationId, customerId);
+    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+
+    const trialDays = await getProTrialDays(parsedInput.organizationId);
+
+    await createProTrialSubscription(parsedInput.organizationId, customerId, trialDays);
     await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId);
     await syncOrganizationBillingFromStripe(parsedInput.organizationId);
     // Optimistically grant ai-smart-tools so the onboarding survey page sees it
@@ -293,7 +300,7 @@ export const startProTrialAction = authenticatedActionClient
       {
         plan: "pro",
         organization_id: parsedInput.organizationId,
-        trial_duration_days: 14,
+        trial_duration_days: trialDays,
       },
       { organizationId: parsedInput.organizationId }
     );
@@ -307,8 +314,11 @@ export const startProTrialAction = authenticatedActionClient
       { organizationId: parsedInput.organizationId }
     );
 
+    ctx.auditLoggingCtx.newObject = { plan: "pro", trialDurationDays: trialDays };
+
     return { success: true };
-  });
+  })
+);
 
 const ZChangeBillingPlanAction = z.discriminatedUnion("targetPlan", [
   z.object({

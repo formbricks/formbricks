@@ -8,15 +8,15 @@ import {
   ZAllowedFileExtension,
 } from "@formbricks/types/storage";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import { TSurveyElementTypeEnum, TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
-import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { type TFileUploadCandidate, getSurveyFileUploadConfigs } from "./survey-file-upload-elements";
 import { getOriginalFileNameFromUrl } from "./url-helpers";
 
-// Re-export for backward compatibility with server-side code
+// Re-exports for backward compatibility with server-side code
 export { getOriginalFileNameFromUrl } from "./url-helpers";
+export { getSurveyFileUploadConfigs } from "./survey-file-upload-elements";
 
 /**
  * Sanitize a provided file name to a safe subset.
@@ -119,21 +119,6 @@ const getAllowedFileExtensionFromFileName = (fileName: string): TAllowedFileExte
   return extensionValidation.success ? extensionValidation.data : null;
 };
 
-export const getSurveyFileUploadConfigs = ({
-  blocks,
-  questions,
-}: {
-  blocks?: TSurveyBlock[] | null;
-  questions?: TSurveyQuestion[] | null;
-}): TSurveyFileUploadElement[] => {
-  return [
-    ...(blocks ?? [])
-      .flatMap((block) => block.elements)
-      .filter((element) => element.type === TSurveyElementTypeEnum.FileUpload),
-    ...(questions ?? []).filter((question) => question.type === TSurveyQuestionTypeEnum.FileUpload),
-  ] as TSurveyFileUploadElement[];
-};
-
 /**
  * The ids of the elements whose answers hold storage URLs.
  *
@@ -146,7 +131,7 @@ export const getSurveyFileUploadConfigs = ({
  */
 export const getSurveyFileUploadElementIds = (survey: {
   blocks?: TSurveyBlock[] | null;
-  questions?: TSurveyQuestion[] | null;
+  questions?: readonly TFileUploadCandidate[] | null;
 }): Set<string> =>
   new Set(
     getSurveyFileUploadConfigs({ blocks: survey.blocks, questions: survey.questions }).map(
@@ -192,7 +177,7 @@ export const validateSurveyAllowsFileUpload = ({
   fileName: string;
   elementId: string;
   blocks?: TSurveyBlock[] | null;
-  questions?: TSurveyQuestion[] | null;
+  questions?: readonly TFileUploadCandidate[] | null;
 }): TSurveyFileUploadPermissionResult => {
   const fileUploadConfigs = getSurveyFileUploadConfigs({ blocks, questions });
 
@@ -308,6 +293,32 @@ export const parseStorageFileUrl = (fileUrl: string): TParsedStorageFileUrl | nu
   return { storageId, accessType, fileName };
 };
 
+/**
+ * The survey a storage URL's object key is filed under: the `{surveyId}` of a current upload
+ * (`{id}/private/surveys/{surveyId}/…`), or `null` for a key that names no survey — the flat
+ * pre-#8044 keys, and anything that does not parse.
+ *
+ * Reads the key the way the delete path builds it. `deleteResponseFileUrls` decodes the file name
+ * before deleting, so the check decodes too: on the raw URL, `%73urveys/{other}/…` or
+ * `surveys%2F{other}%2F…` would read as a flat key and still delete `surveys/{other}/…`. A name that
+ * does not decode returns `null`, because the delete path fails on it the same way and deletes
+ * nothing.
+ */
+export const getStorageUrlSurveyId = (fileUrl: string): string | null => {
+  const parsed = parseStorageFileUrl(fileUrl);
+  if (!parsed) return null;
+
+  let fileName: string;
+  try {
+    fileName = decodeURIComponent(parsed.fileName);
+  } catch {
+    return null;
+  }
+
+  const [scope, surveyId] = fileName.split("/");
+  return scope === "surveys" && surveyId ? surveyId : null;
+};
+
 const isScopedPrivateUploadUrl = ({
   fileUrl,
   workspaceId,
@@ -387,7 +398,7 @@ export const validateClientFileUploads = ({
   workspaceId: string;
   surveyId: string;
   blocks?: TSurveyBlock[] | null;
-  questions?: TSurveyQuestion[] | null;
+  questions?: readonly TFileUploadCandidate[] | null;
   // Passed by the management routes (see getWorkspaceLegacyEnvironmentId) so a replayed old response
   // whose file URL predates the scoped shape still validates against a prefix the workspace owns.
   // Omitted by the client widget path, which stays strict on the scoped shape.

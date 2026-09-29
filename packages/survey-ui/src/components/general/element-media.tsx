@@ -38,7 +38,7 @@ interface ElementMediaProps {
   altText?: string;
 }
 
-function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: Readonly<ElementMediaProps>): React.ReactNode {
+function ElementMedia({ imgUrl, videoUrl, altText }: Readonly<ElementMediaProps>): React.ReactNode {
   // Every sink is validated, not just the href. `ZStorageUrl` now rejects unsafe schemes on write, but
   // this component renders survey JSON straight from the API, and rows written before that validation
   // can still carry a `javascript:`/`data:` URL. An unsafe value in `<iframe src>` executes; in
@@ -53,7 +53,10 @@ function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: Readonly<ElementM
   }
 
   return (
-    <div className="group/image relative mb-6 block min-h-40 rounded-md">
+    // The minimum height only reserves room for the loading skeleton: an unloaded <img> has no size, so the
+    // absolutely positioned placeholder would collapse to nothing. Once loaded, the media sets the height —
+    // keeping the floor left empty space under any image shorter than 160px (a wide banner, a logo).
+    <div className={cn("group/image relative mb-6 block rounded-md", isLoading && "min-h-40")}>
       {isLoading ? (
         <div className="absolute inset-auto flex h-full w-full animate-pulse items-center justify-center rounded-md bg-slate-200" />
       ) : null}
@@ -61,7 +64,8 @@ function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: Readonly<ElementM
         <img
           key={safeImgUrl}
           src={safeImgUrl}
-          alt={altText}
+          // No text alternative given means decorative (`alt=""`), never a hardcoded "Image".
+          alt={altText ?? ""}
           className={cn("mx-auto max-h-[40dvh] rounded-md object-contain", isLoading ? "opacity-0" : "")}
           onLoad={() => {
             setIsLoading(false);

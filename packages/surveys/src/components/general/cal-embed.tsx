@@ -42,8 +42,13 @@ export function CalEmbed({ element, onSuccessfulBooking }: Readonly<CalEmbedProp
   // Keep the latest booking callback in a ref so the Cal listener registered in
   // the effect below stays stable and doesn't churn (register/unregister) every
   // time `onSuccessfulBooking` changes identity.
+  // Written in an effect rather than during render: a ref written while rendering is mutation of
+  // state the renderer may retry or discard (ENG-2366). The only reader is the Cal
+  // bookingSuccessful listener below, which fires long after this has committed.
   const onSuccessfulBookingRef = useRef(onSuccessfulBooking);
-  onSuccessfulBookingRef.current = onSuccessfulBooking;
+  useEffect(() => {
+    onSuccessfulBookingRef.current = onSuccessfulBooking;
+  }, [onSuccessfulBooking]);
 
   const cal = useMemo(() => snippet("https://cal.com/embed.js"), []);
 

@@ -57,7 +57,8 @@ export const ClientLogo = ({
         <Link
           href={lookSettingsHref}
           className="group/link absolute h-full w-full hover:cursor-pointer"
-          target="_blank">
+          target="_blank"
+          aria-label={t("workspace.surveys.edit.logo_settings")}>
           <ArrowUpRight
             size={24}
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform rounded-md bg-white/80 p-0.5 text-slate-700 opacity-0 transition-all duration-200 ease-in-out group-hover/link:opacity-100"

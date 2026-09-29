@@ -1,0 +1,11 @@
+type: string
+description: >-
+  Sentiment polarity label inferred from `value_text` by the sentiment enrichment: five ordinal
+  levels plus a distinct `mixed`. Server-generated and read-only.
+enum:
+  - very_negative
+  - negative
+  - neutral
+  - positive
+  - very_positive
+  - mixed

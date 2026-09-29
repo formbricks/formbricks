@@ -4,14 +4,16 @@
 one idea each; the Coverage table is ≤6 rows. Short sentences, plain words, present tense, written
 for a colleague who has not read the ticket: user-visible effect first, mechanism second. Overflow
 folds rather than being dropped. Coverage, Open gaps and Breaking changes stay visible; only long
-media, command logs and Coverage rows past the sixth fold. -->
+command logs and Coverage rows past the sixth fold. -->
 
 <!-- NEVER WRITE — each of these reads as diligence and costs the reviewer a paragraph: blame
 archaeology (which commit introduced it, who touched what); a defence of a choice nobody questioned,
 or of what you deliberately did not do; commentary on how strong your own tests are; a restatement
 of the ticket, or of what CI reports (lint, typecheck, tests, build, Sonar); a path the `Rerun:`
 line already carries; bold on more than a phrase or two per section. No promotional footers and no
-advertising of yourself or any tool — the agent note at the bottom is the one exception. -->
+advertising of yourself or any tool — the agent note at the bottom is the one exception. Never an
+agent session or conversation link (`claude.ai/code/session_…`, Codex, Cursor, ChatGPT share links):
+transcripts can hold private data, so drop one even when your tool appends it by default. -->
 
 <!-- Complete the line below: `Fixes ENG-<id>`, or `Ref ENG-<id>` if this PR only partly addresses
 the ticket, so merging doesn't close it. The magic word comes first; a bare URL links nothing.
@@ -103,7 +105,7 @@ account, plan or flag state where it matters. `How` is one of `unit (red on main
 cheapest level that can fail. Every `unit` and `e2e` row names the test or spec it rests on, in the
 row or in a `Rerun:` line that names it. A `red on main` row names its own command where that
 differs from `Rerun:`; a `mutation` row names the mutated `file:line`. The table stays visible —
-fold long media and command logs, and rows past the sixth. -->
+fold long command logs, and rows past the sixth. -->
 
 | Behaviour | How | Outcome |
 | --- | --- | --- |

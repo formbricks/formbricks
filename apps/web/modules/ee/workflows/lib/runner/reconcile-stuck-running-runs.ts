@@ -1,5 +1,6 @@
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { captureWorkflowRunFailed } from "@/modules/ee/workflows/lib/analytics/run-failure";
 import {
   WORKFLOW_RUN_RECONCILE_BATCH_SIZE,
   WORKFLOW_RUN_STUCK_RUNNING_MAX_AGE_MS,
@@ -69,7 +70,16 @@ export const reconcileStuckRunningWorkflowRuns = async ({
     },
     orderBy: { updatedAt: "asc" },
     take: WORKFLOW_RUN_RECONCILE_BATCH_SIZE,
-    select: { id: true, workflowId: true, workspaceId: true, startedAt: true, updatedAt: true },
+    select: {
+      id: true,
+      workflowId: true,
+      workspaceId: true,
+      startedAt: true,
+      updatedAt: true,
+      // Only for the failure analytics below; the recovery itself needs neither.
+      triggerType: true,
+      attempt: true,
+    },
   });
 
   let recovered = 0;
@@ -101,6 +111,18 @@ export const reconcileStuckRunningWorkflowRuns = async ({
       }
 
       recovered += 1;
+
+      // This reconciler is one of the three writers of a terminal `failed`, so it reports the
+      // failure like the runner does (ENG-2851) — otherwise a pod that died mid-step would show up
+      // in the snapshot's `runs_24h_failed` and in no `workflow_run_failed` event.
+      await captureWorkflowRunFailed({
+        runId: run.id,
+        workflowId: run.workflowId,
+        workspaceId: run.workspaceId,
+        triggerType: run.triggerType,
+        errorKind: "abandoned_mid_execution",
+        attempt: run.attempt,
+      });
 
       // Only after we own the failure: flip the orphaned in-flight steps to `skipped` (never `failed`,
       // which the executor would re-claim and re-send). 0 is legitimate — a crash before the first

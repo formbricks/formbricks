@@ -2,7 +2,7 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
-import { useState } from "react";
+import { type Dispatch, type SetStateAction, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
@@ -10,6 +10,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
+import { fillEmptyBlockButtonLabels } from "@/modules/survey/editor/lib/blocks";
 
 interface BlockSettingsProps {
   localSurvey: TSurvey;
@@ -24,6 +25,7 @@ interface BlockSettingsProps {
   locale: TUserLocale;
   isStorageConfigured: boolean;
   isLastBlock: boolean;
+  setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
 }
 
 export const BlockSettings = ({
@@ -35,6 +37,7 @@ export const BlockSettings = ({
   locale,
   isStorageConfigured,
   isLastBlock,
+  setLocalSurvey,
 }: Readonly<BlockSettingsProps>) => {
   const { t } = useTranslation();
 
@@ -45,14 +48,11 @@ export const BlockSettings = ({
     labelValue: TI18nString,
     skipBlockIndex: number
   ) => {
-    // Update button labels for all blocks except the one at skipBlockIndex
-    localSurvey.blocks.forEach((block, index) => {
-      if (index === skipBlockIndex) return;
-      const currentLabel = block[labelKey];
-      if (!currentLabel || currentLabel[selectedLanguageCode]?.trim() === "") {
-        updateBlockButtonLabel(index, labelKey, labelValue);
-      }
-    });
+    // Update button labels for all blocks except the one at skipBlockIndex. Reads the latest state, not
+    // the rendered snapshot, which a memoized block card may hold from before other blocks' edits.
+    setLocalSurvey((prevSurvey) =>
+      fillEmptyBlockButtonLabels(prevSurvey, labelKey, labelValue, skipBlockIndex, selectedLanguageCode)
+    );
   };
 
   return (

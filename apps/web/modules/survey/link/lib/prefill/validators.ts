@@ -123,7 +123,7 @@ export const validateMultipleChoiceMulti = (
 
 export const validateNPS = (answer: string): TValidationResult => {
   const answerNumber = parseNumber(answer);
-  if (answerNumber === null || answerNumber < 0 || answerNumber > 10) {
+  if (answerNumber === null || !Number.isInteger(answerNumber) || answerNumber < 0 || answerNumber > 10) {
     return invalid(TSurveyElementTypeEnum.NPS);
   }
   return { isValid: true, type: TSurveyElementTypeEnum.NPS };
@@ -147,7 +147,12 @@ export const validateRating = (
   answer: string
 ): TValidationResult => {
   const answerNumber = parseNumber(answer);
-  if (answerNumber === null || answerNumber < 1 || answerNumber > (element.range ?? 5)) {
+  if (
+    answerNumber === null ||
+    !Number.isInteger(answerNumber) ||
+    answerNumber < 1 ||
+    answerNumber > (element.range ?? 5)
+  ) {
     return invalid(element.type);
   }
   return { isValid: true, type: element.type };

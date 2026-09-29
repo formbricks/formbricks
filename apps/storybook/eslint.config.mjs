@@ -1,25 +1,22 @@
-import js from "@eslint/js";
-import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import storybook from "eslint-plugin-storybook";
-import globals from "globals";
-import tseslint from "typescript-eslint";
+import react from "@formbricks/config-eslint/react";
 
+/*
+ * Storybook consumes the shared `react` tier like every other React workspace (ENG-2366). It used
+ * to carry a self-contained flat config because it needed eslint-plugin-react-hooks v7 while the
+ * tiers were pinned to v5; ENG-1689 moved the plugin into the pnpm catalog, so that reason is gone
+ * and keeping a second config here only meant storybook silently missing rule changes made
+ * everywhere else.
+ *
+ * Only what is genuinely storybook-specific stays local: the storybook plugin's own rules and the
+ * Vite react-refresh check.
+ */
 export default [
-  { ignores: ["dist/**", "node_modules/**", "storybook-static/**"] },
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
-  // eslint-plugin-react-hooks v7 exposes flat configs under `configs.flat.*`;
-  // the top-level `recommended-latest` is the legacy (eslintrc) format and crashes ESLint 9.
-  reactHooks.configs.flat.recommended,
+  { ignores: ["storybook-static/**"] },
+  ...react({ tsconfigRootDir: import.meta.dirname }),
   ...storybook.configs["flat/recommended"],
   {
-    languageOptions: {
-      globals: {
-        ...globals.browser,
-        ...globals.es2020,
-      },
-    },
     plugins: {
       "react-refresh": reactRefresh,
     },

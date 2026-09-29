@@ -82,13 +82,18 @@ Phone input automatically validates phone number format. Additional rules availa
 
 | Rule | Description | Example |
 |------|-------------|---------|
-| Is later than | Date must be after specified date | Must be after today |
-| Is earlier than | Date must be before specified date | Must be before Dec 31, 2025 |
-| Is between | Date must be within range | Between Jan 1 and Dec 31 |
-| Is not between | Date must be outside range | Cannot be during holidays |
+| Is later than | Date must be after a lower bound | No earlier than 3 working days ago |
+| Is earlier than | Date must be before an upper bound | Must be before Dec 31, 2025 |
+| Is between | Date must be within a range | From today to 4 working days from now |
+| Is not between | Date must be outside a range | Cannot be during holidays |
+
+Each date rule has a **Date mode** that decides how its bounds are set:
+
+- **Specific date**: a fixed calendar date in YYYY-MM-DD format (e.g., 2025-01-15). The bound itself is not accepted, so "Is later than 2025-01-15" first accepts 2025-01-16.
+- **Relative to submission**: a number of days before or after the day the response is submitted, counted in **calendar days** or **working days** (Monday to Friday). The bound day itself is accepted, so "3 working days before submission" on a Tuesday accepts the previous Thursday. Rolling windows such as "no earlier than 3 days ago" stay correct without anyone editing the survey.
 
 <Note>
-  Date values should be specified in YYYY-MM-DD format (e.g., 2025-01-15).
+  For **Is later than**, **Is earlier than** and **Is between** rules combined with **All are true**, the date picker only offers the dates the rules allow. Working days change how the offset is counted, not which days can be picked: a weekend inside the window stays selectable.
 </Note>
 
 ### Matrix Questions

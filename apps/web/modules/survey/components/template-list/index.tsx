@@ -10,9 +10,9 @@ import { type TTemplate, type TTemplateFilter, ZTemplateRole } from "@formbricks
 import type { TUserLocale } from "@formbricks/types/user";
 import { ZWorkspaceConfigChannel, ZWorkspaceConfigIndustry } from "@formbricks/types/workspace";
 import { CUSTOM_SURVEY_TEMPLATE_ID, templates } from "@/app/lib/templates";
+import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { IS_DEVELOPMENT_BUILD } from "@/lib/env-client";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
-import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { CreateWithAITemplate } from "./components/create-with-ai-template";
 import { StartFromScratchTemplate } from "./components/start-from-scratch-template";
 import { Template } from "./components/template";
@@ -22,13 +22,15 @@ import { useCreateSurveyFromTemplate } from "./hooks/use-create-survey-from-temp
 interface TemplateListProps {
   workspaceId: string;
   workspace: Workspace;
-  defaultLanguage: TUserLocale;
+  /** The language the created survey is authored in — see `resolveDefaultSurveyLanguage`. */
+  defaultLanguage: string;
   templateSearch?: string;
   showFilters?: boolean;
   onTemplateClick?: (template: TTemplate) => void;
   noPreview?: boolean; // single click to create survey
   showAICreateCard?: boolean;
-  language?: TUserLocale;
+  /** The creator's dashboard locale. AI generation is capped to the languages the dashboard has. */
+  language: TUserLocale;
   isAIAvailable?: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
 }
@@ -42,7 +44,7 @@ export const TemplateList = ({
   onTemplateClick = () => {},
   noPreview,
   showAICreateCard = false,
-  language = defaultLanguage,
+  language,
   isAIAvailable = false,
   aiUnavailableReason,
 }: Readonly<TemplateListProps>) => {

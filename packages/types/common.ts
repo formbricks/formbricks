@@ -83,22 +83,168 @@ export const getZSafeUrl = z.string().superRefine((url, ctx) => {
   safeUrlRefinement(url, ctx);
 });
 
-// Simple URL validation for ending cards - only checks if URL starts with http:// or https://
-// This allows dynamic URLs via hidden fields/recall values
+// URL validation for ending cards (button link, redirect URL). Stricter than a protocol check so a
+// typo like "http://google" is caught, but a host that is a recall value (a hidden field holding the
+// whole URL) is left alone: it can only be known once the survey runs.
 export const ZEndingCardUrl = z.string().superRefine((url, ctx) => {
   endingCardUrlRefinement(url, ctx);
 });
 
+const DOMAIN_LABEL = /^(?!-)[a-z0-9-]{1,63}(?<!-)$/;
+const TOP_LEVEL_DOMAIN = /^(?:[a-z]{2,63}|xn--[a-z0-9-]{1,59})$/;
+
+const isIPv4 = (hostname: string): boolean => {
+  const parts = hostname.split(".");
+  return (
+    parts.length === 4 &&
+    parts.every((part) => /^\d{1,3}$/.test(part) && Number(part) <= 255 && part === String(Number(part)))
+  );
+};
+
+// `hostname` as `new URL` normalises it: lower-cased, unicode already punycoded, IPv6 in brackets.
+const isValidHostname = (hostname: string): boolean => {
+  if (hostname === "localhost" || isIPv4(hostname)) return true;
+  if (hostname.startsWith("[") && hostname.endsWith("]")) return true;
+
+  const labels = hostname.split(".");
+  if (labels.length < 2) return false;
+  const topLevelDomain = hostname.slice(hostname.lastIndexOf(".") + 1);
+  return labels.every((label) => DOMAIN_LABEL.test(label)) && TOP_LEVEL_DOMAIN.test(topLevelDomain);
+};
+
+const RECALL_TOKEN_START = /#recall:[A-Za-z0-9_-]+\/fallback:/y;
+
+// Replaces each complete `#recall:<id>/fallback:<value>#` token with its fallback, the way the survey
+// does at runtime when the value is missing. A token without its closing "#" is left as it is, as the
+// survey leaves it. An index scan rather than a global regex, which is O(N^2) on a run of open tokens.
+const resolveRecallFallbacks = (url: string): string => {
+  let resolved = "";
+  let copiedUpTo = 0;
+  let tokenStart = url.indexOf("#recall:");
+
+  while (tokenStart !== -1) {
+    RECALL_TOKEN_START.lastIndex = tokenStart;
+    if (RECALL_TOKEN_START.test(url)) {
+      const fallbackStart = RECALL_TOKEN_START.lastIndex;
+      const fallbackEnd = url.indexOf("#", fallbackStart);
+      if (fallbackEnd === -1) break;
+      const fallback = url.slice(fallbackStart, fallbackEnd).replaceAll("nbsp", " ").trim();
+      resolved += url.slice(copiedUpTo, tokenStart) + fallback;
+      copiedUpTo = fallbackEnd + 1;
+    }
+    tokenStart = url.indexOf("#recall:", Math.max(copiedUpTo, tokenStart + 1));
+  }
+
+  return resolved + url.slice(copiedUpTo);
+};
+
 export const endingCardUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
   // Trim the URL to handle trailing/leading spaces
   const trimmedUrl = url.trim();
+  const protocol = ["https://", "http://"].find((prefix) => trimmedUrl.startsWith(prefix));
 
-  if (!trimmedUrl.startsWith("http://") && !trimmedUrl.startsWith("https://")) {
+  if (!protocol) {
     ctx.addIssue({
       code: "custom",
       message: "URL must start with http:// or https://",
     });
+    return;
   }
+
+  // The fallback is where a respondent without the value lands, so that is the host to check. Only a
+  // host made entirely of recall values with no fallback is unknown until the survey runs.
+  const resolvedUrl = resolveRecallFallbacks(trimmedUrl);
+  const hostIsFullyDynamic =
+    trimmedUrl.startsWith(`${protocol}#recall:`) && /^(?:[/?#]|$)/.test(resolvedUrl.slice(protocol.length));
+  if (resolvedUrl !== trimmedUrl && hostIsFullyDynamic) return;
+
+  let hostname: string;
+  try {
+    hostname = new URL(resolvedUrl).hostname;
+  } catch {
+    hostname = "";
+  }
+
+  if (!isValidHostname(hostname)) {
+    ctx.addIssue({
+      code: "custom",
+      message: "URL must be a valid web address, like https://example.com",
+    });
+  }
+};
+
+// Ending card button links may also open the respondent's mail client. Redirect-to-URL endings keep
+// using `ZEndingCardUrl`: a redirect replaces the survey page, which only makes sense for a web page.
+export const ZEndingCardButtonLink = z.string().superRefine((url, ctx) => {
+  endingCardButtonLinkRefinement(url, ctx);
+});
+
+export const endingCardButtonLinkRefinement = (url: string, ctx: z.RefinementCtx): void => {
+  const trimmedUrl = url.trim();
+
+  if (trimmedUrl.startsWith("http://") || trimmedUrl.startsWith("https://")) {
+    endingCardUrlRefinement(url, ctx);
+    return;
+  }
+
+  if (!trimmedUrl.startsWith("mailto:")) {
+    ctx.addIssue({
+      code: "custom",
+      message: "URL must start with http://, https:// or mailto:",
+    });
+    return;
+  }
+
+  const recipients = trimmedUrl.slice("mailto:".length).split("?")[0];
+  if (!areMailtoRecipientsValid(recipients)) {
+    ctx.addIssue({
+      code: "custom",
+      message: "mailto: link must include a valid email address",
+    });
+  }
+};
+
+/**
+ * Whether `address` has the shape the survey email validator accepts: one `@` with a non-empty local
+ * part, and a dotted domain whose top-level domain has 2+ characters. No whitespace.
+ */
+export const isEmailAddressShape = (address: string): boolean => {
+  const atIndex = address.indexOf("@");
+  if (atIndex <= 0 || address.lastIndexOf("@") !== atIndex || /\s/.test(address)) return false;
+  const domain = address.slice(atIndex + 1);
+  const dotIndex = domain.lastIndexOf(".");
+  return dotIndex > 0 && dotIndex < domain.length - 2;
+};
+
+const RECALL_PREFIX = "#recall:";
+const RECALL_FALLBACK_MARKER = "/fallback:";
+const RECALL_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
+
+// A recipient filled in from a recall value is only known at response time. It must use the grammar the
+// survey renderer resolves (`#recall:<id>/fallback:<text>#`), and its fallback, which is what the link
+// uses when there is no answer, must itself be a valid address.
+const isRecallRecipient = (recipient: string): boolean => {
+  if (!recipient.startsWith(RECALL_PREFIX) || !recipient.endsWith("#")) return false;
+  const body = recipient.slice(RECALL_PREFIX.length, -1);
+  const markerIndex = body.indexOf(RECALL_FALLBACK_MARKER);
+  if (markerIndex < 0) return false;
+  const id = body.slice(0, markerIndex);
+  const fallback = body.slice(markerIndex + RECALL_FALLBACK_MARKER.length);
+  return RECALL_ID_PATTERN.test(id) && !fallback.includes("#") && isEmailAddressShape(fallback);
+};
+
+const isMailtoRecipientValid = (recipient: string): boolean =>
+  isRecallRecipient(recipient) || isEmailAddressShape(recipient);
+
+const areMailtoRecipientsValid = (recipients: string): boolean => {
+  if (recipients.length === 0) return false;
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(recipients);
+  } catch {
+    return false;
+  }
+  return decoded.split(",").every(isMailtoRecipientValid);
 };
 
 export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {

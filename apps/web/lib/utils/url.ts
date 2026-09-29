@@ -34,6 +34,22 @@ export const testURLmatch = (
   }
 };
 
+/**
+ * Upper bound on a callback URL, in characters (ENG-2783).
+ *
+ * A callback rides in a request line, and nginx's `large_client_header_buffers` defaults to `4 8k` with
+ * the rule that a request line must fit inside ONE buffer — so an over-long callback comes back as a
+ * bare `414 Request-URI Too Large`, a blank page with nothing to act on. Rejecting it here turns that
+ * into something diagnosable instead: `proxy.ts` answers `400 {"error":"Invalid callback URL"}`, and
+ * the auth flows fall back to `WEBAPP_URL` the same way they do for any other invalid callback.
+ *
+ * 2048 is the conventional safe maximum, and it is not a new constraint on this codebase:
+ * `resendVerificationEmailAction` has capped its callback at 2000 since it was written. The widest
+ * legitimate callback in the app is an invite link, `/invite?token=<jwt>`, which measures ~640
+ * characters with a long address — so this leaves roughly threefold headroom.
+ */
+export const MAX_CALLBACK_URL_LENGTH = 2048;
+
 // Helper function to validate callback URLs
 export const getValidatedCallbackUrl = (
   url: string | null | undefined,
@@ -77,7 +93,14 @@ export const getValidatedCallbackUrl = (
       return null;
     }
 
-    return parsedUrl.toString();
+    const validatedCallbackUrl = parsedUrl.toString();
+
+    // Measured on what we RETURN, not on what came in. `toString()` percent-encodes, up to ninefold
+    // for a 3-byte character, so an input under the cap can leave it: 258 characters ending in 227 CJK
+    // characters comes back as 2074. Checking the input instead made the function reject its own
+    // output, so a callback accepted here failed the re-validation in `completeSsoRecovery` and the
+    // user landed on the app root rather than where they were going.
+    return validatedCallbackUrl.length > MAX_CALLBACK_URL_LENGTH ? null : validatedCallbackUrl;
   } catch {
     return null;
   }

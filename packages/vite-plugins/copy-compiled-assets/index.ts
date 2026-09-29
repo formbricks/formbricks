@@ -1,4 +1,4 @@
-import { access, copyFile, mkdir, readdir, stat } from "node:fs/promises";
+import { access, copyFile, mkdir, readdir, rm, stat } from "node:fs/promises";
 import path from "node:path";
 import { type Plugin, type ResolvedConfig } from "vite";
 
@@ -6,6 +6,7 @@ interface CopyCompiledAssetsPluginOptions {
   filename: string;
   distDir: string;
   skipDirectoryCheck?: boolean; // New option to skip checking non-existent directories
+  localesDir?: string; // Locale JSON to publish beside the bundle for on-demand loading
 }
 
 const ensureDirectoryExists = async (dirPath: string): Promise<void> => {
@@ -84,6 +85,28 @@ export function copyCompiledAssetsPlugin(options: CopyCompiledAssetsPluginOption
         }
 
         console.log(`Copied ${String(copiedFiles)} files to ${outputDir} (${options.filename})`);
+
+        // The survey runtime fetches these at display time instead of carrying all of them in the
+        // bundle, so they are a build output like the bundle itself — see `loadLanguage`. Declared in
+        // turbo.json alongside it, or a cached build would restore the bundle without them and every
+        // non-English survey would quietly render English.
+        if (options.localesDir) {
+          const localesOutputDir = path.resolve(outputDir, "locales");
+
+          // Replace the directory rather than copy over it. Turbo captures every file this glob matches
+          // after the task runs, whoever wrote it, so a locale left behind by an older build (a renamed
+          // tag, a dropped language) would be captured into the cache entry and restored on every hit —
+          // outliving its source, and making the same cache key hold different bytes run to run.
+          await rm(localesOutputDir, { recursive: true, force: true });
+          await ensureDirectoryExists(localesOutputDir);
+
+          const localeFiles = (await readdir(options.localesDir)).filter((file) => file.endsWith(".json"));
+          for (const file of localeFiles) {
+            await copyFile(path.resolve(options.localesDir, file), path.resolve(localesOutputDir, file));
+          }
+
+          console.log(`Copied ${String(localeFiles.length)} locale files to ${localesOutputDir}`);
+        }
       } catch (error) {
         if (options.skipDirectoryCheck) {
           console.error(

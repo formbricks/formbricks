@@ -1,0 +1,14 @@
+oneOf:
+  - $ref: SurveyBlockUpdateOperation.yml
+  - $ref: SurveyBlockInsertOperation.yml
+  - $ref: SurveyBlockRemoveOperation.yml
+# Named branches with an explicit mapping: OpenAPI 3.1 does not resolve a discriminator against
+# inline schemas, so with anonymous `oneOf` members the discriminator is inert and a generated
+# client cannot tell the variants apart.
+discriminator:
+  propertyName: op
+  mapping:
+    update: ./SurveyBlockUpdateOperation.yml
+    insert: ./SurveyBlockInsertOperation.yml
+    remove: ./SurveyBlockRemoveOperation.yml
+description: A single block operation.

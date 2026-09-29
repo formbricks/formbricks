@@ -20,8 +20,13 @@ import { prisma } from "@formbricks/database";
  * the durable projection queue records identifiers by value so a row survives the deletion it
  * describes — so nothing above cascades to it, and database triggers write to it on every mutation
  * the three roots cascade through.
+ *
+ * `oauthResource` is the second: the OAuth resource registry is instance-level rather than tenant-level,
+ * so it hangs off none of the three roots. Its CASCADE also clears `oauthClientResource`, whose
+ * `resourceId` references it. Without this, a second test seeding the same resource identifier fails the
+ * unique constraint rather than starting clean (ENG-2862).
  */
 export const resetDb = (): Promise<unknown> =>
   prisma.$executeRawUnsafe(
-    'TRUNCATE "User", "Organization", "Team", "AuthzedProjectionOutbox" RESTART IDENTITY CASCADE;'
+    'TRUNCATE "User", "Organization", "Team", "AuthzedProjectionOutbox", "oauthResource" RESTART IDENTITY CASCADE;'
   );

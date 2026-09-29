@@ -5,12 +5,14 @@ description: >
   or array
 
   fully replaces that subtree. Omitted top-level fields are preserved.
-  Immutable/system fields
 
-  such as `id`, `workspaceId`, `type`, `defaultLanguage`, timestamps,
-  `questions`, analytics, styling,
 
-  and scripts are rejected. App surveys (stored `type: app`) additionally accept `distribution` and
+  The server-owned fields `GET` returns — `id`, `workspaceId`, `type`, `createdAt`, `updatedAt`,
+  `archivedAt`, `defaultLanguage` and `languages[].alias` — are accepted and verified, so a survey
+  fetched with `GET` can be sent straight back. Echoing the value you were given is a no-op; changing
+  one is a **422** `read_only_field`. A round-tripped `updatedAt` additionally acts as an
+  optimistic-concurrency precondition, and a stale one is rejected with **409**. `questions`,
+  analytics, styling and scripts remain rejected outright. App surveys (stored `type: app`) additionally accept `distribution` and
   `targeting`; both are rejected for link surveys, and changing `targeting` filters requires the
   Contacts entitlement.
 
@@ -34,6 +36,41 @@ description: >
 
   changes.
 properties:
+  id:
+    type: string
+    description: Read-only echo. Must match the survey being patched.
+  workspaceId:
+    type: string
+    description: Read-only echo. A survey cannot be moved between workspaces.
+  type:
+    type: string
+    # link | app only — matches ZSurveyType. SurveyResource still lists `website`, which the runtime
+    # does not accept; not copied here.
+    enum:
+      - link
+      - app
+    description: Read-only echo. Immutable after creation.
+  createdAt:
+    type: string
+    format: date-time
+    description: Read-only echo of the creation timestamp.
+  updatedAt:
+    type: string
+    format: date-time
+    description: >-
+      Read-only echo, and an optimistic-concurrency precondition: the write is applied only if the
+      survey has not changed since the read this value came from, and is otherwise a **409**.
+  archivedAt:
+    type:
+      - string
+      - "null"
+    format: date-time
+    description: Read-only echo. Use `/archive` and `/restore` to change it.
+  defaultLanguage:
+    type: string
+    description: >-
+      Read-only echo of the survey default language, in whatever shape `GET` returned — legacy
+      surveys carry language-only codes, so this is not constrained to `LocaleCode`.
   name:
     type: string
     minLength: 1
@@ -50,7 +87,7 @@ properties:
   languages:
     type: array
     items:
-      $ref: ./CreateSurveyLanguage.yml
+      $ref: ./PatchSurveyLanguage.yml
     description: >
       Replaces the survey language configuration. The default language cannot be
       changed through

@@ -57,6 +57,7 @@ spec:
           command: ["sh", "-ec"]
           args:
             - |
+              {{- if .Release.IsInstall }}
               attempts=0
               until formbricks-authzed upgrade prepare; do
                 attempts=$((attempts + 1))
@@ -66,6 +67,8 @@ spec:
                 fi
                 sleep 5
               done
+              {{- end }}
+              # Upgrades are read-only: preparation is an explicit maintenance operation.
               formbricks-authzed upgrade check
           {{- if or .Values.deployment.envFrom (or (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) .Values.secret.enabled) }}
           envFrom:

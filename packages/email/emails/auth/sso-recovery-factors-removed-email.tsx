@@ -1,4 +1,4 @@
-import { Container, Heading, Text } from "@react-email/components";
+import { Container, Heading, Text } from "react-email";
 import { EmailButton } from "../../src/components/email-button";
 import { EmailFooter } from "../../src/components/email-footer";
 import { EmailTemplate } from "../../src/components/email-template";
@@ -12,6 +12,8 @@ interface SsoRecoveryFactorsRemovedEmailProps extends TEmailTemplateLegalProps {
   readonly passwordRemoved: boolean;
   /** Whether an enrolled second factor was removed. */
   readonly twoFactorRemoved: boolean;
+  /** Whether API keys the account had created were deleted (ENG-2634). */
+  readonly apiKeysRemoved: boolean;
   /** Where to re-enrol: the account security settings. */
   readonly securitySettingsLink: string;
   readonly t?: TFunction;
@@ -30,6 +32,7 @@ interface SsoRecoveryFactorsRemovedEmailProps extends TEmailTemplateLegalProps {
 export function SsoRecoveryFactorsRemovedEmail({
   passwordRemoved,
   twoFactorRemoved,
+  apiKeysRemoved,
   securitySettingsLink,
   t = mockT,
   ...legalProps
@@ -49,11 +52,23 @@ export function SsoRecoveryFactorsRemovedEmail({
             {t("emails.sso_recovery_factors_removed_email_two_factor")}
           </Text>
         ) : null}
-        <Text className="text-sm">{t("emails.sso_recovery_factors_removed_email_sign_in_hint")}</Text>
-        <EmailButton
-          href={securitySettingsLink}
-          label={t("emails.sso_recovery_factors_removed_email_review_security")}
-        />
+        {apiKeysRemoved ? (
+          <Text className="mb-0 text-sm font-bold">
+            {t("emails.sso_recovery_factors_removed_email_api_keys")}
+          </Text>
+        ) : null}
+        {/* The hint and the link both point at the profile page, which hosts the password form and the
+            2FA card and nothing about API keys. A keys-only recovery has nothing to re-enrol there, so
+            sending the reader to it would be a dead end. */}
+        {passwordRemoved || twoFactorRemoved ? (
+          <>
+            <Text className="text-sm">{t("emails.sso_recovery_factors_removed_email_sign_in_hint")}</Text>
+            <EmailButton
+              href={securitySettingsLink}
+              label={t("emails.sso_recovery_factors_removed_email_review_security")}
+            />
+          </>
+        ) : null}
         <Text className="mb-0 text-sm">{t("emails.sso_recovery_factors_removed_email_did_not_expect")}</Text>
         <EmailFooter t={t} />
       </Container>

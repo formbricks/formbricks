@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { hasUnsavedSurveyChanges } from "./unsaved-changes";
+import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "./unsaved-changes";
 
 const baseSurvey = {
   id: "survey_1",
@@ -50,5 +50,31 @@ describe("hasUnsavedSurveyChanges", () => {
   test("skips persisted states that are not there yet", () => {
     expect(hasUnsavedSurveyChanges(baseSurvey, [null, undefined, baseSurvey])).toBe(false);
     expect(hasUnsavedSurveyChanges(baseSurvey, [null, undefined])).toBe(true);
+  });
+});
+
+describe("isJustSavedBypassValid", () => {
+  test("holds while the save it was set by is still what the editor holds", () => {
+    expect(isJustSavedBypassValid(true, false)).toBe(true);
+  });
+
+  test("is not set at all before a save", () => {
+    expect(isJustSavedBypassValid(false, false)).toBe(false);
+    expect(isJustSavedBypassValid(false, true)).toBe(false);
+  });
+
+  /**
+   * The reported sequence: an autosave succeeds and sets the bypass, the user types again, the tab
+   * hits a stale action and they click Reload. Without this the bypass is still set, the unload guard
+   * returns early, and the edit made after the autosave is discarded with no warning (ENG-2330).
+   */
+  test("retires once the editor is dirty again after the save", () => {
+    const savedByAutosave = surveyWith({ name: "My survey" });
+    const editedAfterwards = surveyWith({ name: "My survey (edited)" });
+
+    const isDirtyAgain = hasUnsavedSurveyChanges(editedAfterwards, [baseSurvey, savedByAutosave]);
+
+    expect(isDirtyAgain).toBe(true);
+    expect(isJustSavedBypassValid(true, isDirtyAgain)).toBe(false);
   });
 });

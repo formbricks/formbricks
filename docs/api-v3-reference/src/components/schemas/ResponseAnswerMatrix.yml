@@ -1,0 +1,66 @@
+allOf:
+  - $ref: ./ResponseAnswerBase.yml
+  - type: object
+    required:
+      - rows
+    properties:
+      elementType:
+        type: string
+        enum:
+          - matrix
+      rows:
+        type: array
+        description: >-
+          One entry per row the respondent answered. Rows left blank are omitted rather than returned
+          with a null column. Both sides of a matrix cell need resolving against the current
+          definition, so each entry reports its own `match` — see `ResponseValueMatch`.
+        items:
+          type: object
+          required:
+            - rawKey
+            - rowLabel
+            - rawValue
+            - columnLabel
+            - match
+          properties:
+            rawKey:
+              type: string
+              description: >-
+                The stored map key for this row, verbatim. Matrix answers are stored keyed by the
+                **localized row label** in the respondent's language, not by row id — so this is the
+                string to use when rebuilding the stored object, and it is not necessarily equal to
+                `rowLabel`, which is resolved in the *current* definition's language.
+            rowId:
+              type:
+                - string
+                - "null"
+              description: >-
+                Row id resolved from the current definition, or `null` when the stored key matches no
+                current row. Derived, never stored.
+            rowLabel:
+              type: string
+              description: >-
+                Row label in the resolved language. Falls back to `rawKey` when the row no longer
+                resolves.
+            columnId:
+              type:
+                - string
+                - "null"
+              description: >-
+                Column id resolved from the current definition, or `null` when it no longer resolves.
+                Derived, never stored.
+            columnLabel:
+              type:
+                - string
+                - "null"
+              description: Column label in the resolved language. `null` when `match` is `unmatched`.
+            rawValue:
+              type: string
+              description: >-
+                The selected column as stored, verbatim — the localized column label, not a column
+                id. This is the value to use when rebuilding the stored object.
+            match:
+              $ref: ./ResponseValueMatch.yml
+          additionalProperties: false
+unevaluatedProperties: false
+description: Matrix answer — one selected column per answered row.

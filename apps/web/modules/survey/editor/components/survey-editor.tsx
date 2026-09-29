@@ -1,6 +1,6 @@
 "use client";
 
-import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, memo, useCallback, useEffect, useRef, useState } from "react";
 import { ActionClass, Language, OrganizationRole, Workspace } from "@formbricks/database/prisma-browser";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
@@ -9,6 +9,7 @@ import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/su
 import { TUserLocale } from "@formbricks/types/user";
 import { extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useDocumentVisibility } from "@/lib/useDocumentVisibility";
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
@@ -20,10 +21,18 @@ import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-edit
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
+import { shouldShowFollowUpsTab } from "@/modules/survey/follow-ups/lib/deprecation";
 import { LanguageView } from "@/modules/survey/multi-language-surveys/components/language-view";
 import { type TSurveySchedulingConfig } from "@/modules/survey/scheduling/lib/config";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { getWorkspaceLanguagesAction, refetchWorkspaceAction } from "../actions";
+
+// How long the preview trails the editor. Every preview render re-mounts the whole survey bundle, so
+// following each keystroke made typing lag on large surveys (ENG-991).
+const PREVIEW_DEBOUNCE_MS = 300;
+// Memoized so the editor's per-keystroke re-renders skip the preview while its debounced inputs are
+// unchanged; without it the preview would still re-render (and re-mount the survey) every time.
+const MemoizedPreviewSurvey = memo(PreviewSurvey);
 
 interface SurveyEditorProps {
   survey: TSurvey;
@@ -47,6 +56,7 @@ interface SurveyEditorProps {
   mailFrom: string;
   workspaceLanguages: Language[];
   isSurveyFollowUpsAllowed: boolean;
+  isWorkflowsAllowed: boolean;
   userEmail: string;
   teamMemberDetails: TFollowUpEmailToUser[];
   isStorageConfigured: boolean;
@@ -78,6 +88,7 @@ export const SurveyEditor = ({
   workspacePermission,
   mailFrom,
   isSurveyFollowUpsAllowed = false,
+  isWorkflowsAllowed = false,
   userEmail,
   teamMemberDetails,
   isStorageConfigured,
@@ -85,14 +96,40 @@ export const SurveyEditor = ({
   isExternalUrlsAllowed,
   publicDomain,
   enterpriseLicenseRequestFormUrl,
-}: SurveyEditorProps) => {
+}: Readonly<SurveyEditorProps>) => {
+  const isFollowUpsTabVisible = shouldShowFollowUpsTab({
+    followUpCount: survey.followUps.length,
+    isSurveyFollowUpsAllowed,
+    isWorkflowsAllowed,
+  });
+
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("elements");
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
+  // `localSurvey` must stay a structural clone of `survey`: the menu bar compares the two with
+  // `isDeepEqual` to gate the draft auto-save, the back-navigation dialog and the beforeunload
+  // prompt, and that comparison short-circuits on differing key counts. ENG-1837 therefore does NOT
+  // strip the inlined `embeddedFields` here — editor surfaces read their definitions through
+  // `getDeclaredEmbeddedFields` instead, which ignores the rows and derives from the cards.
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
+  // Only the preview trails; the editor panes keep reading `localSurvey` so input stays immediate.
+  const debouncedPreviewSurvey = useDebouncedValue(localSurvey, PREVIEW_DEBOUNCE_MS);
   const [invalidElements, setInvalidElements] = useState<string[] | null>(null);
   const [hasIncompleteTranslations, setHasIncompleteTranslations] = useState(false);
+  // Set when a save or publish is blocked by a missing trigger, so the Survey Trigger card can say
+  // so (ENG-2581). The card itself stops showing the error once the survey has a trigger.
+  const [hasTriggerError, setHasTriggerError] = useState(false);
 
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
+
+  // `isFollowUpsTabVisible` tracks the server `survey` prop, which a save refreshes
+  // (`survey-menu-bar` calls `router.refresh()`). Deleting the last follow-up therefore hides the
+  // tab while `activeView` — client state — still points at it, leaving an empty main pane with no
+  // tab selected. Fall back to the elements view so the deletion flow cannot dead-end.
+  useEffect(() => {
+    if (!isFollowUpsTabVisible && activeView === "followUps") {
+      setActiveView("elements");
+    }
+  }, [isFollowUpsTabVisible, activeView]);
   const surveyEditorRef = useRef(null);
   const [localWorkspace, setLocalWorkspace] = useState<Workspace>(workspace);
   const [localWorkspaceLanguages, setLocalWorkspaceLanguages] = useState<Language[]>(workspaceLanguages);
@@ -127,6 +164,8 @@ export const SurveyEditor = ({
   // `[localSurvey?.type]` effect below already picks the first element whenever `localSurvey`
   // appears.
   useEffect(() => {
+    // Must stay identical to the `useState` initializer above: the working copy is compared
+    // against `survey` key-for-key by the menu bar, so any reshaping has to apply to both or neither.
     setLocalSurvey((current) => current ?? structuredClone(survey));
   }, [survey]);
 
@@ -171,6 +210,7 @@ export const SurveyEditor = ({
 
   // After the null guard, we can safely narrow the setter type for child components
   const setLocalSurveyNonNull = setLocalSurvey as Dispatch<SetStateAction<TSurvey>>;
+  const previewSurvey = debouncedPreviewSurvey ?? localSurvey;
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -181,6 +221,7 @@ export const SurveyEditor = ({
         activeId={activeView}
         setActiveId={setActiveView}
         setInvalidElements={setInvalidElements}
+        setHasTriggerError={setHasTriggerError}
         workspace={localWorkspace}
         responseCount={responseCount}
         finishedResponseCount={finishedResponseCount}
@@ -199,6 +240,7 @@ export const SurveyEditor = ({
             setActiveId={setActiveView}
             isCxMode={isCxMode}
             isStylingTabVisible={!!workspace.styling.allowStyleOverwrite}
+            isFollowUpsTabVisible={isFollowUpsTabVisible}
             hasLanguageErrors={hasIncompleteTranslations}
           />
 
@@ -270,31 +312,32 @@ export const SurveyEditor = ({
               locale={locale}
               appSetupCompleted={localWorkspace.appSetupCompleted}
               enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
+              hasTriggerError={hasTriggerError}
             />
           )}
 
-          {activeView === "followUps" && (
+          {activeView === "followUps" && isFollowUpsTabVisible && (
             <FollowUpsView
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurveyNonNull}
               selectedLanguageCode={selectedLanguageCode}
               mailFrom={mailFrom}
               isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
-              isFormbricksCloud={isFormbricksCloud}
+              isWorkflowsAllowed={isWorkflowsAllowed}
+              workspaceId={workspace.id}
               userEmail={userEmail}
               teamMemberDetails={teamMemberDetails}
               locale={locale}
-              enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
             />
           )}
         </main>
 
         <aside className="group hidden w-1/3 shrink-0 items-center justify-center overflow-hidden border-l border-slate-200 bg-slate-100 shadow-inner md:flex md:flex-col">
-          <PreviewSurvey
-            survey={localSurvey}
+          <MemoizedPreviewSurvey
+            survey={previewSurvey}
             elementId={activeElementId}
             workspace={localWorkspace}
-            previewType={localSurvey.type === "app" ? "modal" : "fullwidth"}
+            previewType={previewSurvey.type === "app" ? "modal" : "fullwidth"}
             languageCode={selectedLanguageCode}
             setLanguageCode={setSelectedLanguageCode}
             locale={locale}

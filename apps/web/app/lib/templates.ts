@@ -5005,6 +5005,7 @@ export const previewSurvey = (workspaceName: string, t: TFunction): TSurvey => {
     isBackButtonHidden: false,
     isAutoProgressingEnabled: true,
     isCaptureIpEnabled: false,
+    isAnonymizeResponsesEnabled: false,
     metadata: {},
     questions: [], // Required for build-time type checking (Zod defaults to [] at runtime)
     slug: null,

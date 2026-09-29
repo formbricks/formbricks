@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
 import type { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
@@ -52,6 +53,11 @@ const survey = {
   languages: [],
   variables: [{ id: "var1", name: "plan", type: "text" }],
   hiddenFields: { enabled: true, fieldIds: ["utm"] },
+  // The rows are what the accessors read since ENG-2412; a real survey read carries both.
+  embeddedFields: deriveLegacyEmbeddedData({
+    variables: [{ id: "var1", name: "plan", type: "text", value: "" }],
+    hiddenFields: { enabled: true, fieldIds: ["utm"] },
+  }),
 } as unknown as TSurvey;
 
 describe("resolveResponseRecipient", () => {
@@ -129,15 +135,24 @@ describe("buildSurveyResponseEmailHtml", () => {
     // allowlist below permits `<a href>` for author-written body HTML, so without escaping a
     // respondent could smuggle a clickable link through an open-text answer into an owner-facing
     // email. The locale is passed explicitly so recalled date answers aren't formatted as en-US.
+    //
+    // The lookup map is `buildServerEmbeddedValues(response, survey)`, not `response.data`
+    // (ENG-2538): a reserved token in a notification body used to render its fallback here while
+    // resolving correctly in the live survey. Asserted as a superset — every answer still reachable,
+    // plus the reserved values — rather than a literal object, so a catalog addition (ENG-1858) does
+    // not fail this test for saying nothing about sanitization.
     expect(mockParseRecallInfo).toHaveBeenCalledWith(
       "#recall:name/fallback:there#",
-      response.data,
+      expect.objectContaining({ ...response.data, responseId: response.id, surveyId: response.surveyId }),
       response.variables,
       false,
       "en-US",
       undefined,
       true
     );
+    // The declared answers are not merely present, they still WIN: `name` is the respondent's, and
+    // nothing reserved may overwrite it.
+    expect(mockParseRecallInfo.mock.calls[0][1]).toMatchObject(response.data);
     const rendered = mockRenderFollowUpEmail.mock.calls[0][0];
     expect(rendered.body).toBe("<p>Hi Jane</p>");
     expect(rendered.body).not.toContain("<script>");

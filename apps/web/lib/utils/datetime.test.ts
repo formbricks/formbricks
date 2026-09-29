@@ -9,6 +9,7 @@ import {
   getFormattedDateTimeString,
   isValidDateString,
   parseLocalDay,
+  parseStoredDay,
 } from "./datetime";
 
 describe("datetime utils", () => {
@@ -119,6 +120,49 @@ describe("formatLocalDay / parseLocalDay", () => {
       expect(formatLocalDay(parseLocalDay(day))).toBe(day);
     }
   );
+});
+
+describe("parseStoredDay", () => {
+  test("reads the calendar day out of a stored ISO timestamp without shifting it", () => {
+    // Segment and contact-attribute values are stored at midnight UTC. Parsing the whole string as an
+    // instant would land on the 4th for viewers west of UTC; the day named in the string must win.
+    const parsed = parseStoredDay("2026-08-05T00:00:00.000Z");
+
+    expect(parsed && formatLocalDay(parsed)).toBe("2026-08-05");
+    expect(parsed && [parsed.getHours(), parsed.getMinutes()]).toEqual([0, 0]);
+  });
+
+  test("parses a bare yyyy-MM-dd day, as validation rules store it", () => {
+    const parsed = parseStoredDay("2026-01-31");
+
+    expect(parsed && [parsed.getFullYear(), parsed.getMonth(), parsed.getDate()]).toEqual([2026, 0, 31]);
+  });
+
+  test.each(["2026-08-05T25:99:99Z", "2026-08-05Tnot-a-time", "2026-08-05T"])(
+    "keeps the day when only the time part is malformed: %s",
+    (value) => {
+      // Deliberate: the day is what the picker shows, and the `<input type="date">` this replaced
+      // split on "T" the same way. Blanking a readable day over a broken suffix would lose data.
+      const parsed = parseStoredDay(value);
+
+      expect(parsed && formatLocalDay(parsed)).toBe("2026-08-05");
+    }
+  );
+
+  test("returns null when there is no stored value", () => {
+    expect(parseStoredDay("")).toBeNull();
+    expect(parseStoredDay(null)).toBeNull();
+    expect(parseStoredDay(undefined)).toBeNull();
+  });
+
+  test.each([
+    ["not-a-date", "unparseable text"],
+    ["2026-13-45", "an out-of-range day that Date would roll over to 2027-02-14"],
+    ["05/08/2026", "a non-ISO order"],
+    ["2026-9-7", 'an unpadded day, which an <input type="date"> also rejected'],
+  ])("returns null for %s (%s)", (value) => {
+    expect(parseStoredDay(value)).toBeNull();
+  });
 });
 
 describe("getDateFnsLocale", () => {

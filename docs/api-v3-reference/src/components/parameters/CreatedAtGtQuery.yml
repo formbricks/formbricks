@@ -1,0 +1,11 @@
+in: query
+name: filter[createdAt][gt]
+schema:
+  type: string
+  format: date-time
+description: >-
+  Only records created strictly after this instant (**exclusive**). Paired with
+  `filter[createdAt][lt]` this is a fully open `(start, end)` window. For a half-open
+  `[start, end)` window — the one whose consecutive pages tile without dropping a record that
+  sits exactly on a boundary instant — use `filter[createdAt][gte]` with `filter[createdAt][lt]`.
+  Mutually exclusive with `filter[createdAt][gte]` — sending both is a **400**.

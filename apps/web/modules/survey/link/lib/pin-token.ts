@@ -1,21 +1,18 @@
 import "server-only";
 import jwt from "jsonwebtoken";
 import { logger } from "@formbricks/logger";
-import { BETTER_AUTH_SECRET, NEXTAUTH_SECRET } from "@/lib/constants";
+import { AUTH_SECRET } from "@/lib/constants";
 
 const PIN_TOKEN_PURPOSE = "link_survey_pin";
 const PIN_TOKEN_TTL_SECONDS = 60 * 60; // 1 hour
 
-// Mirror the auth session secret resolution (auth.ts / session-cookie.ts): prefer
-// BETTER_AUTH_SECRET, fall back to NEXTAUTH_SECRET. A better-auth-only deployment sets only
-// BETTER_AUTH_SECRET, so keying PIN tokens off NEXTAUTH_SECRET alone would throw and break PIN
-// enforcement even though auth itself works.
+// The same resolved secret auth.ts hands Better Auth (see lib/constants.ts), so a better-auth-only
+// deployment enforces PINs just like a legacy one.
 //
-// Resolved lazily inside the functions rather than at module scope: reading the constants at
-// import time makes every unrelated test that mocks "@/lib/constants" (and transitively imports
-// this module) fail Vitest's strict missing-export check. Deferring the access keeps import
-// side-effect-free, matching the pre-existing pattern.
-const resolvePinTokenSecret = (): string | undefined => BETTER_AUTH_SECRET ?? NEXTAUTH_SECRET;
+// Resolved lazily inside the functions rather than at module scope: reading the constant at import
+// time makes every unrelated test that mocks "@/lib/constants" (and transitively imports this module)
+// fail Vitest's strict missing-export check. Deferring the access keeps import side-effect-free.
+const resolvePinTokenSecret = (): string | undefined => AUTH_SECRET;
 
 export const createLinkSurveyPinToken = (surveyId: string): string => {
   const secret = resolvePinTokenSecret();

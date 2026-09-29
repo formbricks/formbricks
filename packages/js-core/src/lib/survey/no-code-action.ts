@@ -48,6 +48,25 @@ const timeOnPageTimers = new Map<string, TimeOnPageState>();
 // Event types for various listeners
 const events = ["hashchange", "popstate", "pushstate", "replacestate", "load"];
 
+/**
+ * Drops an action's scheduled survey and reports whether there was really one to cancel.
+ *
+ * Navigating away from an action's URL should call off a survey that is still waiting out its
+ * `delay`, and release the `isSurveyRunning` guard so a later legitimate trigger can still show
+ * something. A survey that already rendered is the opposite case: it is on screen, and releasing the
+ * guard for it lets the next trigger stack a second survey on top of the first (ENG-2849). Its entry
+ * is still dropped — it is spent either way — but `false` keeps the guard held.
+ */
+const cancelScheduledSurvey = (actionName: string): boolean => {
+  const timeoutStack = TimeoutStack.getInstance();
+
+  const scheduled = timeoutStack.getTimeouts().find((timeout) => timeout.event === actionName);
+  if (!scheduled) return false;
+
+  timeoutStack.remove(scheduled.timeoutId);
+  return !scheduled.fired;
+};
+
 // Page URL Event Handlers
 let arePageUrlEventListenersAdded = false;
 let isHistoryPatched = false;
@@ -58,7 +77,6 @@ export const setIsHistoryPatched = (value: boolean): void => {
 const checkTimeOnPage = (actionClasses: TWorkspaceStateActionClass[]): void => {
   const queue = CommandQueue.getInstance();
   const logger = Logger.getInstance();
-  const timeoutStack = TimeoutStack.getInstance();
 
   const noCodeTimeOnPageActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "pageDwell"
@@ -110,11 +128,9 @@ const checkTimeOnPage = (actionClasses: TWorkspaceStateActionClass[]): void => {
     }
     timeOnPageTimers.delete(actionName);
 
-    const scheduledTimeout = timeoutStack.getTimeouts().find((t) => t.event === actionName);
-    if (!scheduledTimeout) continue;
-
-    timeoutStack.remove(scheduledTimeout.timeoutId);
-    setIsSurveyRunning(false);
+    if (cancelScheduledSurvey(actionName)) {
+      setIsSurveyRunning(false);
+    }
   }
 };
 
@@ -122,7 +138,6 @@ export const checkPageUrl = async (): Promise<Result<void, unknown>> => {
   const queue = CommandQueue.getInstance();
   const appConfig = Config.getInstance();
   const logger = Logger.getInstance();
-  const timeoutStack = TimeoutStack.getInstance();
 
   logger.debug(`Checking page url: ${window.location.href}`);
   const actionClasses = appConfig.get().workspace.data.actionClasses;
@@ -138,15 +153,9 @@ export const checkPageUrl = async (): Promise<Result<void, unknown>> => {
 
     if (isValidUrl) {
       await queue.add(trackNoCodePageViewActionHandler, CommandType.GeneralAction, true, event.name);
-    } else {
-      const scheduledTimeouts = timeoutStack.getTimeouts();
-
-      const scheduledTimeout = scheduledTimeouts.find((timeout) => timeout.event === event.name);
-      // If invalid, clear if it's scheduled
-      if (scheduledTimeout) {
-        timeoutStack.remove(scheduledTimeout.timeoutId);
-        setIsSurveyRunning(false);
-      }
+    } else if (cancelScheduledSurvey(event.name)) {
+      // If invalid, call off a survey that has not rendered yet
+      setIsSurveyRunning(false);
     }
   }
 

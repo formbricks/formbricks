@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { deleteDashboardAction } from "@/modules/ee/analysis/dashboards/actions";
 import { AddExistingChartsDialog } from "@/modules/ee/analysis/dashboards/components/add-existing-charts-dialog";
 import { Button } from "@/modules/ui/components/button";
@@ -25,6 +25,11 @@ interface DashboardControlBarProps {
   isAIAvailable?: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
   onRefresh: () => void;
+  /**
+   * Single-key shortcut that toggles edit mode. Its key cap sits on whichever button it currently
+   * triggers: the pencil in view mode, save while there are changes, cancel while there are none.
+   */
+  editHotkey?: string;
   onEditToggle: () => void;
   onSave: () => void;
   onCancel: () => void;
@@ -42,6 +47,7 @@ export const DashboardControlBar = ({
   isAIAvailable,
   aiUnavailableReason,
   onRefresh,
+  editHotkey,
   onEditToggle,
   onSave,
   onCancel,
@@ -76,6 +82,7 @@ export const DashboardControlBar = ({
     {
       icon: isSaving ? null : CheckIcon,
       tooltip: hasChanges ? t("common.save") : t("common.no_changes"),
+      shortcut: hasChanges && !isSaving ? editHotkey : undefined,
       onClick: onSave,
       isVisible: true,
       isLoading: isSaving,
@@ -84,6 +91,7 @@ export const DashboardControlBar = ({
     {
       icon: XIcon,
       tooltip: t("common.cancel"),
+      shortcut: !hasChanges && !isSaving ? editHotkey : undefined,
       onClick: onCancel,
       isVisible: true,
       disabled: isSaving,
@@ -100,6 +108,7 @@ export const DashboardControlBar = ({
     {
       icon: PencilIcon,
       tooltip: t("common.edit"),
+      shortcut: editHotkey,
       onClick: onEditToggle,
       isVisible: !isReadOnly,
     },

@@ -1,4 +1,4 @@
-import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
 import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
 
 /**

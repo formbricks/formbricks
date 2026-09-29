@@ -12,6 +12,7 @@ import {
   getSsoProviderFromContext,
   ssoDatabaseHooks,
   ssoLicenseGateBefore,
+  ssoProfileSyncUpdateBefore,
   ssoRecoveryAfter,
 } from "./better-auth-hooks";
 import { gateSsoProvisioning, provisionSsoUserMemberships } from "./sso-provisioning";
@@ -344,6 +345,20 @@ describe("ssoDatabaseHooks.user.create.after", () => {
     expect(identifyPostHogPerson).toHaveBeenCalledWith("u1", { email: "a@b.com", name: undefined });
   });
 
+  test("forwards useDefaultOrganization so the write phase find-or-creates the org (ENG-2089)", async () => {
+    await runWithSsoRequestContext(async () => {
+      setSsoProvisioningDecision({
+        ...provisionDecision,
+        organizationId: "default-org",
+        useDefaultOrganization: true,
+      });
+      await after({ id: "u1", email: "a@b.com" } as never, callbackCtx as never);
+    });
+    expect(provisionSsoUserMemberships).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationId: "default-org", useDefaultOrganization: true })
+    );
+  });
+
   test("does nothing when no decision is stashed (e.g. non-SSO sign-up)", async () => {
     await runWithSsoRequestContext(() =>
       after({ id: "u1", email: "a@b.com" } as never, callbackCtx as never)
@@ -497,6 +512,41 @@ describe("ssoLicenseGateBefore", () => {
   test("allows a SAML callback when both SSO and SAML are licensed", async () => {
     await expect(ssoLicenseGateBefore(samlCtx as never)).resolves.toBeUndefined();
   });
+
+  /**
+   * Why SSO recovery needs no entitlement check of its own.
+   *
+   * Neither `resendVerificationEmailAction` nor `completeSsoRecovery` calls `getIsSsoEnabled`, which
+   * reads like the "EE feature reachable without an entitlement check" that `.coderabbit.yaml` asks
+   * reviewers to flag. What makes it safe is upstream: recovery has exactly one producer
+   * (`startSsoRecovery`, called only from `ssoRecoveryAfterHandler`), that producer runs in
+   * `hooks.after`, and this gate runs first in `hooks.before` selecting requests by the same
+   * `resolveSsoIdentityProvider` predicate. On an unlicensed instance the callback is rejected before
+   * the endpoint runs, so no intent is ever minted and there is nothing downstream to reach.
+   *
+   * Pinned per provider because that shared predicate IS the argument: narrow one side's selection and
+   * the gate silently stops covering the other.
+   */
+  test.each(["google", "github", "azuread", "azure-ad", "openid", "saml"])(
+    "rejects a %s callback when SSO is unlicensed, so no recovery intent can be minted",
+    async (providerId) => {
+      vi.mocked(getIsSsoEnabled).mockResolvedValue(false);
+
+      await expect(
+        ssoLicenseGateBefore({ path: "/callback/:providerId", params: { providerId } } as never)
+      ).rejects.toThrow("SSO is not enabled");
+    }
+  );
+
+  test("a request this gate ignores is one recovery ignores too", async () => {
+    const nonCallback = { path: "/sign-up/email" } as never;
+
+    await ssoLicenseGateBefore(nonCallback);
+
+    expect(getIsSsoEnabled).not.toHaveBeenCalled();
+    // The other half of the shared predicate: no provider resolved, so recovery declines to act.
+    expect(getSsoProviderFromContext(nonCallback)).toBeNull();
+  });
 });
 
 describe("ssoRecoveryAfter", () => {
@@ -626,6 +676,71 @@ describe("blockedSignupDomainRedirectAfter", () => {
       await blockedSignupDomainRedirectAfter(ctx as never);
     });
     expect(redirect).not.toHaveBeenCalled();
+  });
+});
+
+describe("ssoProfileSyncUpdateBefore", () => {
+  // The shape Better Auth writes under `overrideUserInfo`: handleOAuthUserInfo destructures the
+  // resolved userInfo, so name/image/email/emailVerified are all present on this one update.
+  const overrideWrite = {
+    name: "Jane Doe-Smith",
+    image: "https://graph.microsoft.com/v1.0/me/photo/$value",
+    email: "jane@corp.test",
+    emailVerified: true,
+  };
+
+  test("drops `image`, which has no column on User and would fail the update", async () => {
+    const result = await ssoProfileSyncUpdateBefore(overrideWrite, callbackCtx);
+    // `undefined` is how a field is removed: on an update the adapter skips every undefined field
+    // that has no `onUpdate`. Asserting the key is present and undefined, not merely absent, because
+    // the hook's return is shallow-MERGED over the original data — a missing key would keep the URL.
+    expect(result?.data).toHaveProperty("image", undefined);
+  });
+
+  test("keeps the stored email and its verified flag out of the sync", async () => {
+    const result = await ssoProfileSyncUpdateBefore(overrideWrite, callbackCtx);
+    expect(result?.data).toHaveProperty("email", undefined);
+    expect(result?.data).toHaveProperty("emailVerified", undefined);
+  });
+
+  test("syncs the renamed display name", async () => {
+    const result = await ssoProfileSyncUpdateBefore(overrideWrite, callbackCtx);
+    expect(result?.data.name).toBe("Jane Doe-Smith");
+  });
+
+  test("normalizes an IdP name the same way sign-up does (ENG-1743)", async () => {
+    const result = await ssoProfileSyncUpdateBefore(
+      { ...overrideWrite, name: "Jane  Doe-Smith \u2028<script>" },
+      callbackCtx
+    );
+    expect(result?.data.name).toBe("Jane Doe-Smith script");
+  });
+
+  test("leaves the stored name alone when the IdP name normalizes away", async () => {
+    const result = await ssoProfileSyncUpdateBefore({ ...overrideWrite, name: "🎉🎉" }, callbackCtx);
+    // Unlike sign-up there is already a good name in the row, so no email-local-part fallback.
+    expect(result?.data).toHaveProperty("name", undefined);
+  });
+
+  test("ignores updates made outside an SSO callback", async () => {
+    // e.g. POST /change-email — clamping here would silently break it.
+    await expect(
+      ssoProfileSyncUpdateBefore(overrideWrite, { path: "/change-email" })
+    ).resolves.toBeUndefined();
+  });
+
+  test("ignores a same-request update that carries no profile fields", async () => {
+    // account.create.after denormalizes identityProvider via updateUser on this very callback.
+    await expect(
+      ssoProfileSyncUpdateBefore(
+        { identityProvider: "azuread", identityProviderAccountId: "sub-1" },
+        callbackCtx
+      )
+    ).resolves.toBeUndefined();
+  });
+
+  test("ignores the bare emailVerified flip on the link path", async () => {
+    await expect(ssoProfileSyncUpdateBefore({ emailVerified: true }, callbackCtx)).resolves.toBeUndefined();
   });
 });
 

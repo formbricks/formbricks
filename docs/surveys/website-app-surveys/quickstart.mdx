@@ -1,62 +1,72 @@
 ---
-title: "Quickstart - Web & App Surveys"
+title: "Setup Web & Mobile SDK connection"
 description: "App surveys deliver 6–10x higher conversion rates compared to email surveys. If you are new to Formbricks, follow the steps in this guide to launch a survey in your web or mobile app (React Native) within 10–15 minutes."
 icon: "rocket"
-sidebarTitle: "Quickstart"
+sidebarTitle: "SDK Setup"
 ---
 
 <Steps>
-  <Step title="Create a Formbricks cloud account">
-    While you can [self-host](/self-hosting/overview) Formbricks, the fastest and easiest way to get started is with the free Cloud plan. Simply [sign up](https://app.formbricks.com/auth/signup) here, follow the onboarding steps, and choose the "Formbricks Surveys" option.
-    
-    ![what are you here for](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738113228/image_d11uiy.png)
+  <Step title="Create a free Formbricks Cloud account">
+    While you can [self-host](/self-hosting/overview) Formbricks, the quickest and easiest way to get started is with the free Cloud plan. Just [sign up here](https://app.formbricks.com/auth/signup) and click through the onboarding.
   </Step>
 
-  <Step title="Choose 'In-product surveys'">
-    You can create In-product and Link Surveys with both options, but the onboarding will prompt you to connect your app/website to Formbricks.
+  <Step title="Open Web & Mobile SDK">
+    In your workspace, go to **Settings** and open **Web & Mobile SDK** under **Workspace**. **Workspace details** holds the two values the SDK needs — your **Workspace ID** and your **SDK Connection URL** — and the **Connection status** card tells you whether Formbricks has heard from your app yet.
 
-    ![three options](/images/surveys/website-app-surveys/quickstart/survey-type.webp)
+    ![The Web & Mobile SDK settings page with a grey Connection status card reading "Formbricks SDK is not yet connected", the Workspace details card and the How to install card](/images/surveys/website-app-surveys/quickstart/web-and-mobile-sdk.webp)
 
+    <Note>
+      Not the person who will add the SDK? The banner at the top of the page invites a technical team member into the organization so they can do this step for you.
+    </Note>
   </Step>
 
-<Step title="Connect your App/Website">
-  Follow the instructions to connect your app or website: ![connect product to
-  formbricks](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738114328/image_tv0jmj.png)
-</Step>
+  <Step title="Add the Formbricks SDK to your app">
+    Under **How to install**, expand the method that matches your stack:
 
-  <Step title="Confirm setup">
-    As soon as Formbricks receives the first data point, you will see a message in the onboarding:
+    | Method | Covers |
+    | :--- | :--- |
+    | **Website** | HTML, React.js, Next.js, Vue.js |
+    | **Mobile** | React Native, Swift, Android, Flutter |
+    | **Google Tag Manager** | Any website, without touching its code |
+    | **WordPress** | WordPress sites, via the official plugin |
 
-    ![congrats](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738114793/image_lij7kw.png)
+    Each method gives you a handful of numbered steps and a snippet that already carries your Workspace ID and SDK Connection URL, so there is nothing left to fill in. For plain HTML, paste the snippet into the `<head>` of every page of your website.
 
-    Onboarding is complete! Now let's create our first survey as you should see templates to choose from after clicking on **Next**:
+    ![The How to install card with the Website method expanded, showing the HTML, React.js, Next.js and Vue.js tabs and the pre-filled HTML snippet](/images/surveys/website-app-surveys/quickstart/how-to-install.webp)
 
-    ![first survey](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738115025/image_yyuuzn.jpg)
+    Each method also links out to its full guide: the [framework guides](/surveys/website-app-surveys/framework-guides) for code, [Google Tag Manager](/surveys/website-app-surveys/google-tag-manager) and [WordPress](/platform/features/integrations/wordpress) for the no-code routes.
+  </Step>
 
+  <Step title="Confirm the connection">
+    Open the website or launch the app you added the SDK to, then come back to **Web & Mobile SDK** and hit **Re-check**. Once Formbricks has the first data point, the **Connection status** card turns green:
+
+    ![The Connection status card, green, reading "Receiving data" and "Formbricks SDK is connected"](/images/surveys/website-app-surveys/quickstart/connection-status.webp)
+
+    <Note>
+      Still grey? The card only re-reads the status on **Re-check** or a page reload, so give the SDK a moment and check again. If it stays grey on the web, turn on [Debug Mode](/surveys/website-app-surveys/framework-guides#activate-debug-mode) and read your browser console. On mobile, check your platform's log output instead — the Xcode console, Logcat, or your Metro or Flutter console.
+    </Note>
   </Step>
 
   <Step title="Create your first survey">
-    To be able to see a survey in your app, you need to create one. We'll choose one of the templates and head over to the survey settings:
+    Head back to **Surveys**, click **New Survey** and pick a template. Then open the **Settings** tab of the editor and set **Survey Type** to **Website & App Survey** — that is what makes the survey run inside your app instead of on a shareable link.
 
-    Pick the Survey Type as **Website & App Survey**.
-
+    ![The Survey Type section of the survey settings, with Website & App Survey selected](/images/surveys/website-app-surveys/quickstart/survey-type.webp)
   </Step>
 
   <Step title="Create trigger to show survey">
-    Scroll to **Survey Trigger**, click **+ Add Action**, and select **Page View**. This ensures the survey appears when the Formbricks Widget detects any page load.
+    Still in the **Settings** tab, scroll to **Survey Trigger** and click **Add action**. On the **Capture new action** tab, name the action, choose **Page View** and click **Create action**. The survey now appears whenever the Formbricks widget detects a page load.
 
-    ![page view action](/images/surveys/website-app-surveys/quickstart/page-view-action.webp)
-
+    ![The Add action dialog on the Capture new action tab, with the No code action type and Page View selected](/images/surveys/website-app-surveys/quickstart/page-view-action.webp)
   </Step>
 
   <Step title="Set Recontact Options right">
-  A common hiccup is users seeing one survey but it doesn't appear again. This is due to the default settings we chose to avoid survey fatigue. While setting up, we recommend the following Recontact Options:
-  ![recontact options](/images/surveys/website-app-surveys/quickstart/recontact-options.webp)
+    A common hiccup is users seeing one survey but it doesn't appear again. This is due to the default settings we chose to avoid survey fatigue. While setting up, open **Visibility & Recontact** and choose **Ignore Cooldown Period** and **Keep showing while conditions match**:
+
+    ![The Visibility & Recontact section with Ignore Cooldown Period and Keep showing while conditions match selected](/images/surveys/website-app-surveys/quickstart/recontact-options.webp)
 
     <Note>
       Please change this setting after testing your survey to avoid user fatigue.
     </Note>
-
   </Step>
 
 <Step title="Publish the survey">
