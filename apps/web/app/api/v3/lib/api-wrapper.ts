@@ -239,14 +239,12 @@ async function authenticateV3Request(req: NextRequest, authMode: TV3AuthMode): P
   return null;
 }
 
-/** The body step of `parseV3Input`: read within the byte limit, check the array budget, then parse. */
-async function parseV3Body(
-  req: NextRequest,
-  schema: TV3Schema,
+function invalidBodyFailure(
+  invalidParams: InvalidParam[],
   requestId: string,
   instance: string
-): Promise<{ ok: true; body: unknown } | TV3InputParseFailure> {
-  const invalidBody = (invalidParams: InvalidParam[]): TV3InputParseFailure => ({
+): TV3InputParseFailure {
+  return {
     ok: false,
     detail: "Invalid request body",
     invalidParams,
@@ -254,37 +252,97 @@ async function parseV3Body(
       instance,
       invalid_params: invalidParams,
     }),
-  });
+  };
+}
 
+function bodyTooLargeFailure(
+  error: RequestBodyTooLargeError,
+  requestId: string,
+  instance: string
+): TV3InputParseFailure {
+  return {
+    ok: false,
+    detail: error.message,
+    invalidParams: [],
+    response: problemPayloadTooLarge(requestId, error.message, instance),
+  };
+}
+
+/**
+ * The array budget, checked before any schema sees the body: an oversized array would otherwise cost
+ * one Zod issue per element (ENG-3384), and this covers arrays a schema types as `unknown` or
+ * `z.record` too.
+ */
+function arrayBudgetFailure(
+  bodyData: unknown,
+  requestId: string,
+  instance: string
+): TV3InputParseFailure | null {
+  const violation = findArrayBudgetViolation(bodyData);
+  return violation
+    ? invalidBodyFailure([arrayBudgetInvalidParam(violation, "body")], requestId, instance)
+    : null;
+}
+
+/** The body step of `parseV3Input`: read within the byte limit, check the array budget, then parse. */
+async function parseV3Body(
+  req: NextRequest,
+  schema: TV3Schema,
+  requestId: string,
+  instance: string
+): Promise<{ ok: true; body: unknown } | TV3InputParseFailure> {
   let bodyData: unknown;
   try {
     bodyData = await parseJsonBodyWithLimit(req);
   } catch (error) {
     if (error instanceof RequestBodyTooLargeError) {
-      return {
-        ok: false,
-        detail: error.message,
-        invalidParams: [],
-        response: problemPayloadTooLarge(requestId, error.message, instance),
-      };
+      return bodyTooLargeFailure(error, requestId, instance);
     }
 
-    return invalidBody([{ name: "body", reason: "Malformed JSON input, please check your request body" }]);
+    return invalidBodyFailure(
+      [{ name: "body", reason: "Malformed JSON input, please check your request body" }],
+      requestId,
+      instance
+    );
   }
 
-  // Before the schema sees the body: an oversized array would otherwise cost one Zod issue per
-  // element (ENG-3384), and this covers arrays the schema types as `unknown` or `z.record` too.
-  const budgetViolation = findArrayBudgetViolation(bodyData);
-  if (budgetViolation) {
-    return invalidBody([arrayBudgetInvalidParam(budgetViolation, "body")]);
+  const budgetFailure = arrayBudgetFailure(bodyData, requestId, instance);
+  if (budgetFailure) {
+    return budgetFailure;
   }
 
   const bodyResult = schema.safeParse(bodyData);
   if (!bodyResult.success) {
-    return invalidBody(formatZodIssues(bodyResult.error, "body"));
+    return invalidBodyFailure(formatZodIssues(bodyResult.error, "body"), requestId, instance);
   }
 
   return { ok: true, body: bodyResult.data };
+}
+
+/**
+ * The same byte limit and array budget for a route that declares no body schema but hands `req` to a
+ * handler that reads it — the workflows family delegates its bodies to `packages/workflows`, whose
+ * reader buffers the whole body before it measures it and answers 400 rather than 413. The checks run
+ * on a clone so the handler's own stream stays intact; a body that is not JSON is left to the handler,
+ * which owns that error.
+ */
+async function preflightUndeclaredBody(
+  req: NextRequest,
+  requestId: string,
+  instance: string
+): Promise<TV3InputParseFailure | null> {
+  if (req.method === "GET" || req.method === "HEAD" || req.body === null) {
+    return null;
+  }
+
+  let bodyData: unknown;
+  try {
+    bodyData = await parseJsonBodyWithLimit(req.clone());
+  } catch (error) {
+    return error instanceof RequestBodyTooLargeError ? bodyTooLargeFailure(error, requestId, instance) : null;
+  }
+
+  return arrayBudgetFailure(bodyData, requestId, instance);
 }
 
 async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
@@ -303,6 +361,11 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
     }
 
     parsedInput.body = bodyResult.body as TV3ParsedInput<S>["body"];
+  } else {
+    const preflightFailure = await preflightUndeclaredBody(req, requestId, instance);
+    if (preflightFailure) {
+      return preflightFailure;
+    }
   }
 
   if (schemas?.query) {

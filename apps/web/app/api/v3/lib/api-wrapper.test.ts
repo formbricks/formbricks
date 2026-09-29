@@ -955,4 +955,83 @@ describe("request array budget (ENG-3384)", () => {
       "V3 API request validation failed"
     );
   });
+
+  // The workflows routes declare no body schema and hand `req` to a handler that reads it itself, so
+  // the wrapper checks a clone and leaves the handler's stream intact.
+  describe("a route without a body schema", () => {
+    test("still refuses an oversized array before the handler reads the body", async () => {
+      const handler = vi.fn(async () => Response.json({ ok: true }));
+
+      const response = await withV3ApiWrapper({ auth: "none", handler })(
+        new NextRequest("http://localhost/api/v3/workflows", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            definition: { nodes: Array.from({ length: V3_REQUEST_ARRAY_MAX_ITEMS + 1 }, () => 0) },
+          }),
+        }),
+        {} as never
+      );
+
+      expect(response.status).toBe(400);
+      expect(handler).not.toHaveBeenCalled();
+      await expect(response.json()).resolves.toMatchObject({
+        invalid_params: [expect.objectContaining({ name: "definition.nodes" })],
+      });
+    });
+
+    test("answers 413 to a body without content-length that exceeds the limit", async () => {
+      const handler = vi.fn(async () => Response.json({ ok: true }));
+      const oversized = new TextEncoder().encode(`{"a":"${"x".repeat(DEFAULT_REQUEST_BODY_LIMIT_BYTES)}"}`);
+
+      const response = await withV3ApiWrapper({ auth: "none", handler })(
+        new NextRequest("http://localhost/api/v3/workflows", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: new ReadableStream<Uint8Array>({
+            start(controller) {
+              controller.enqueue(oversized);
+              controller.close();
+            },
+          }),
+          duplex: "half",
+        } as ConstructorParameters<typeof NextRequest>[1]),
+        {} as never
+      );
+
+      expect(response.status).toBe(413);
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    test("hands an acceptable body to the handler unread", async () => {
+      const handler = vi.fn(async ({ req }: { req: NextRequest }) => Response.json(await req.json()));
+
+      const response = await withV3ApiWrapper({ auth: "none", handler })(
+        new NextRequest("http://localhost/api/v3/workflows", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: "Nudge", definition: { nodes: [{ id: "n1" }] } }),
+        }),
+        {} as never
+      );
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual({
+        name: "Nudge",
+        definition: { nodes: [{ id: "n1" }] },
+      });
+    });
+
+    test("leaves a body that is not JSON to the handler", async () => {
+      const handler = vi.fn(async ({ req }: { req: NextRequest }) => new Response(await req.text()));
+
+      const response = await withV3ApiWrapper({ auth: "none", handler })(
+        new NextRequest("http://localhost/api/v3/workflows", { method: "POST", body: "not json" }),
+        {} as never
+      );
+
+      expect(handler).toHaveBeenCalledTimes(1);
+      await expect(response.text()).resolves.toBe("not json");
+    });
+  });
 });
