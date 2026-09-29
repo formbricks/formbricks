@@ -76,3 +76,14 @@ export const getPreviousBlockId = (
 
   return survey.blocks[currentBlockIndex - 1].id;
 };
+
+/**
+ * The saved `history` to restore with offline progress, keeping only entries Back can land on: a
+ * block that still exists, or the `"start"` sentinel.
+ *
+ * `history` is persisted as-is, so a creator deleting a block after progress was saved leaves its
+ * id behind. Back would return that id, which renders no card and no controls — a blank survey.
+ * Dropping it lets Back skip to the entry before it, or fall back to array order once none remain.
+ */
+export const getRestorableHistory = (survey: TNavigableSurvey, history: readonly string[]): string[] =>
+  history.filter((entry) => entry === START_BLOCK_ID || survey.blocks.some((block) => block.id === entry));

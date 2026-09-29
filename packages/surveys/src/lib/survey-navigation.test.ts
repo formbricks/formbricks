@@ -4,11 +4,12 @@ import {
   START_BLOCK_ID,
   getForwardTargetFromOffBlockId,
   getPreviousBlockId,
+  getRestorableHistory,
   isFinishedBlockId,
 } from "./survey-navigation";
 
 const survey = {
-  blocks: [{ id: "block-1" }, { id: "block-2" }],
+  blocks: [{ id: "block-1" }, { id: "block-2" }, { id: "block-3" }],
   endings: [{ id: "ending-1" }, { id: "ending-2" }],
 };
 
@@ -47,8 +48,8 @@ describe("getForwardTargetFromOffBlockId", () => {
 
 describe("getPreviousBlockId", () => {
   test("returns the last visited card, which branching logic makes authoritative over array order", () => {
-    // From block-2 the array order would say block-1; history says the respondent jumped in.
-    expect(getPreviousBlockId(survey, "block-2", ["block-1", "block-2"])).toBe("block-2");
+    // From block-3 the array order would say block-2; history says the respondent jumped from block-1.
+    expect(getPreviousBlockId(survey, "block-3", ["block-1"])).toBe("block-1");
   });
 
   test("returns the welcome card when that is what the respondent came from", () => {
@@ -70,5 +71,18 @@ describe("getPreviousBlockId", () => {
     ["a block deleted since progress was saved", "deleted-block"],
   ])("returns nothing from %s with no history, rather than reading blocks[-2]", (_label, blockId) => {
     expect(getPreviousBlockId(survey, blockId, [])).toBeUndefined();
+  });
+});
+
+describe("getRestorableHistory", () => {
+  test("drops a block deleted since progress was saved, so Back cannot land on a blank card", () => {
+    expect(getRestorableHistory(survey, [START_BLOCK_ID, "deleted-block", "block-1"])).toEqual([
+      START_BLOCK_ID,
+      "block-1",
+    ]);
+  });
+
+  test("drops ending ids and the 'end' sentinel, which are not places to go back to", () => {
+    expect(getRestorableHistory(survey, ["block-1", "ending-1", END_BLOCK_ID])).toEqual(["block-1"]);
   });
 });

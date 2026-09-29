@@ -75,9 +75,10 @@ vi.mock("@/components/general/block-conditional", () => ({
 vi.mock("@/components/wrappers/stacked-cards-container", () => {
   // Mirrors the real container's index math: a `currentBlockId` that is not a block — an ending id,
   // the "end" sentinel, or a block deleted since progress was saved — maps past the end of the
-  // array, and the card the respondent came from stays mounted behind the current one. That
-  // peeking card keeps its submit and back controls live, which is how a navigation is reachable
-  // from a position that no longer resolves to a block.
+  // array. The card before the current one is also rendered with live controls. The real container
+  // makes that card inert (`pointerEvents: "none"`) and simple layouts do not mount it, so clicking
+  // it here is a synthetic way to call the handlers from an off-block position, not a respondent
+  // interaction.
   const resolveBlockIndex = (survey: any, currentBlockId: string): number => {
     if (currentBlockId === "start") return -1;
     const blockIndex = survey.blocks.findIndex((block: any) => block.id === currentBlockId);
@@ -391,13 +392,12 @@ describe("Survey offline restore", () => {
     expect(apiClientMocks.getResponseIdByDisplayId).not.toHaveBeenCalled();
   });
 
-  test("queues the answer instead of throwing when submitted from the ending card", async () => {
+  test("a submit reaching the handler from the ending card is a no-op instead of throwing", async () => {
     offlineStorageMocks.getSurveyProgress.mockResolvedValue(makeProgress());
 
     renderSurvey();
 
-    // Finish the survey, which moves the pointer onto the ending card while the last block's card
-    // stays mounted behind it.
+    // Finish the survey, which moves the pointer onto the ending card.
     fireEvent.click(await screen.findByTestId("submit-block-2"));
 
     await waitFor(() => {
@@ -406,21 +406,16 @@ describe("Survey offline restore", () => {
 
     expect(await screen.findByTestId("ending-card")).toBeTruthy();
 
-    // Submitting again from that still-live card used to throw "Block not found" as an unhandled
-    // rejection, dropping the answer entirely (ENG-2818).
+    // Synthetic: the mock keeps the previous card clickable, so this calls `onSubmit` with the
+    // pointer on the ending. It used to throw "Block not found" (ENG-2818); re-sending instead
+    // would repeat `finished: true`, which the server rejects and which swaps the ending for the
+    // error card. The response is already finished, so nothing is sent.
     fireEvent.click(await screen.findByTestId("submit-block-2"));
 
     await waitFor(() => {
-      expect(apiClientMocks.updateResponse).toHaveBeenCalledWith(
-        expect.objectContaining({
-          responseId: "response-created",
-          finished: true,
-          endingId: "ending-1",
-        })
-      );
+      expect(screen.queryByTestId("ending-card")).toBeTruthy();
     });
-
-    expect(screen.queryByTestId("ending-card")).toBeTruthy();
+    expect(apiClientMocks.updateResponse).not.toHaveBeenCalled();
   });
 
   test("back from the first block with no history is a no-op instead of throwing", async () => {

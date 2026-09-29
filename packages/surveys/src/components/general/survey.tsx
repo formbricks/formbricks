@@ -43,6 +43,7 @@ import {
   END_BLOCK_ID,
   getForwardTargetFromOffBlockId,
   getPreviousBlockId,
+  getRestorableHistory,
   isFinishedBlockId,
 } from "@/lib/survey-navigation";
 import { SURVEY_INSTRUCTIONS_ID, getSurveyPagePosition, hasSurveyInstructions } from "@/lib/survey-page";
@@ -550,7 +551,7 @@ export function Survey({
         setResponseData(progress.responseData);
         setTtc(progress.ttc);
         setCurrentVariables(progress.currentVariables);
-        setHistory(progress.history);
+        setHistory(getRestorableHistory(localSurvey, progress.history));
         setSelectedLanguage(progress.selectedLanguage);
 
         // Restore survey state from snapshot
@@ -773,11 +774,11 @@ export function Survey({
       };
 
     if (!currentBlock) {
-      // `blockId` is not a block: an ending id (the survey already finished), the "end" sentinel,
-      // or a block that no longer exists because the survey was edited after progress was saved.
-      // None of those leaves anything to advance through, so finish rather than throw — throwing
-      // escaped as an unhandled rejection, which dropped the answer in hand and left the Next
-      // button spinning (ENG-2818).
+      // `blockId` is not a block. `onSubmit` returns before reaching here for an ending id or the
+      // "end" sentinel, so in practice this is a block that no longer exists because the survey was
+      // edited after progress was saved. Nothing is left to advance through, so finish rather than
+      // throw — throwing escaped as an unhandled rejection, which dropped the answer in hand and left
+      // the Next button spinning (ENG-2818).
       const offBlockTarget = getForwardTargetFromOffBlockId(localSurvey, blockId);
 
       // An ending or the sentinel is an expected position to submit from. A `blockId` that matches
@@ -1015,6 +1016,12 @@ export function Survey({
   };
 
   const onSubmit = async (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
+    // The survey is already over — an ending card or the "end" sentinel is showing. Re-sending the
+    // response would repeat `finished: true`, which the server rejects with a 400, and the error card
+    // would then replace the ending. Nothing is left to record, so the submit is a no-op; returning
+    // here also keeps the ending id out of `history`.
+    if (isFinishedBlockId(localSurvey, blockId)) return;
+
     isNavigatingBackRef.current = false;
     hasUserNavigatedRef.current = true;
     blurOutgoingCard();
