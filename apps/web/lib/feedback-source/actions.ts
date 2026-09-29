@@ -12,6 +12,7 @@ import {
 import { assertCan } from "@/lib/authorization";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
+import { assertNewlyAttachedSurveysWorkspaceVisible } from "@/lib/survey/visibility/outbound";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import {
@@ -352,6 +353,9 @@ export const importHistoricalResponsesAction = authenticatedActionClient
       if (survey.workspaceId !== parsedInput.workspaceId) {
         throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
       }
+      // Copying responses into a feedback directory is outbound (ENG-3283): a restricted survey's
+      // responses must not leave its access list this way either.
+      await assertNewlyAttachedSurveysWorkspaceVisible([survey.id]);
 
       const importResult = await importHistoricalResponses(feedbackSource, survey);
       ctx.auditLoggingCtx.newObject = importResult;

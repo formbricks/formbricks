@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => {
     deleteFeedbackSource: vi.fn(),
     importHistoricalResponses: vi.fn(),
     getSurvey: vi.fn(),
+    assertNewlyAttachedSurveysWorkspaceVisible: vi.fn(),
     feedbackDirectoryFindUnique: vi.fn(),
     feedbackSourceFindUnique: vi.fn(),
   };
@@ -48,6 +49,9 @@ vi.mock("@/lib/utils/helper", () => ({
   getWorkspaceIdFromSurveyId: vi.fn(),
 }));
 vi.mock("@/lib/survey/service", () => ({ getSurvey: mocks.getSurvey }));
+vi.mock("@/lib/survey/visibility/outbound", () => ({
+  assertNewlyAttachedSurveysWorkspaceVisible: mocks.assertNewlyAttachedSurveysWorkspaceVisible,
+}));
 vi.mock("@/lib/response/service", () => ({ getResponseCountBySurveyId: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: mocks.applyRateLimit }));
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
@@ -154,5 +158,18 @@ describe("feedback source mutation safeguards", () => {
       feedbackSourceId,
       newObject: { successes: 1, failures: 0, skipped: 0 },
     });
+  });
+
+  test("refuses to import a restricted survey's responses", async () => {
+    mocks.assertNewlyAttachedSurveysWorkspaceVisible.mockRejectedValue(new Error("not workspace-visible"));
+
+    await expect(
+      (importHistoricalResponsesAction as any)({
+        ctx,
+        parsedInput: { feedbackSourceId, workspaceId, surveyId: "survey-1" },
+      })
+    ).rejects.toThrow("not workspace-visible");
+    expect(mocks.assertNewlyAttachedSurveysWorkspaceVisible).toHaveBeenCalledWith(["survey-1"]);
+    expect(mocks.importHistoricalResponses).not.toHaveBeenCalled();
   });
 });
