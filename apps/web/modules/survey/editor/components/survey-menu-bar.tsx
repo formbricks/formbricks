@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
+import { ArrowLeftIcon, SettingsIcon, UsersIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
@@ -14,6 +14,7 @@ import {
   TSurvey,
   TSurveyEditorTabs,
   TSurveyStatus,
+  TSurveyVisibility,
   ZSurvey,
   ZSurveyEndScreenCard,
   ZSurveyRedirectUrlCard,
@@ -23,10 +24,21 @@ import type { TSurveyAccess } from "@/lib/survey/visibility/access";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { isDeepEqual } from "@/lib/utils/object";
 import { reportStaleServerActionError } from "@/lib/utils/stale-server-action";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
+import { ActivateDialog } from "@/modules/survey/visibility/components/activate-dialog";
+import { CollaborateModal } from "@/modules/survey/visibility/components/collaborate-modal";
+import { useUpdateSurveyVisibility } from "@/modules/survey/visibility/hooks/use-update-survey-visibility";
+import {
+  type TActivationStep,
+  planActivation,
+  shouldAskWhoCanView,
+} from "@/modules/survey/visibility/lib/activate-flow";
+import { getRestrictedAuthor } from "@/modules/survey/visibility/lib/collaborate";
+import { showVisibilityControls } from "@/modules/survey/visibility/lib/state";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
@@ -75,6 +87,9 @@ export const SurveyMenuBar = ({
   locale,
   setIsCautionDialogOpen,
   isStorageConfigured = true,
+  surveyVisibilityEnabled,
+  surveyAccess,
+  ownerName,
 }: Readonly<SurveyMenuBarProps>) => {
   const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
@@ -98,6 +113,25 @@ export const SurveyMenuBar = ({
   // rather than aliased, so a later in-place edit of the editor's own survey cannot drag the
   // snapshot along with it and hide the change.
   const lastSavedSurveyRef = useRef<TSurvey | null>(null);
+
+  // ENG-3395. The stored visibility is kept apart from `localSurvey`: it is changed through its own
+  // endpoint, never by a survey save, so it must not make the editor look dirty.
+  const [changedVisibility, setChangedVisibility] = useState<TSurveyVisibility | null>(null);
+  const storedVisibility = changedVisibility ?? survey.visibility;
+  const [isVisibilityTurnedOff, setIsVisibilityTurnedOff] = useState(false);
+  const [isActivateDialogOpen, setIsActivateDialogOpen] = useState(false);
+  const [isCollaborateModalOpen, setIsCollaborateModalOpen] = useState(false);
+  const [isChangingVisibility, setIsChangingVisibility] = useState(false);
+  const updateSurveyVisibility = useUpdateSurveyVisibility();
+  const visibilityGate = surveyVisibilityEnabled && !isVisibilityTurnedOff;
+  const canManageVisibility = showVisibilityControls(visibilityGate, surveyAccess);
+  const restrictedAuthor = getRestrictedAuthor(surveyAccess, ownerName);
+
+  // Stable: the Collaborate modal runs it from an effect.
+  const handleVisibilityNotEnabled = useCallback(() => {
+    setIsVisibilityTurnedOff(true);
+    setIsActivateDialogOpen(false);
+  }, []);
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -683,6 +717,61 @@ export const SurveyMenuBar = ({
     }
   };
 
+  const runActivation = () => (isPublishScheduled ? handleSurveySchedule() : handleSurveyPublish());
+
+  // The same checks the activate path runs, done up front so the dialog never opens for a survey
+  // that could not be activated anyway.
+  const isReadyToActivate = (): boolean => {
+    if (blockOnMissingTrigger(isPublishScheduled ? "paused" : "inProgress")) return false;
+    if (!validateSurveyWithZod()) return false;
+    return isSurveyValid(localSurvey, selectedLanguageCode, t, finishedResponseCount);
+  };
+
+  const handleActivateClick = () => {
+    if (!shouldAskWhoCanView({ gate: visibilityGate, access: surveyAccess, visibility: storedVisibility })) {
+      void runActivation();
+      return;
+    }
+    if (isReadyToActivate()) setIsActivateDialogOpen(true);
+  };
+
+  const makeVisibleForActivation = async (choice: TSurveyVisibility): Promise<TActivationStep> => {
+    setIsChangingVisibility(true);
+    try {
+      const result = await updateSurveyVisibility.mutateAsync({
+        surveyId: localSurvey.id,
+        visibility: "workspace",
+      });
+      setChangedVisibility(result.pending ?? result.visibility);
+      return planActivation(choice, { ok: true });
+    } catch (error) {
+      const step = planActivation(choice, { ok: false, error });
+      if (step.kind === "activate") {
+        setChangedVisibility("workspace");
+      } else {
+        toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+      }
+      return step;
+    } finally {
+      setIsChangingVisibility(false);
+    }
+  };
+
+  const handleActivateConfirm = async (choice: TSurveyVisibility) => {
+    let step = planActivation(choice);
+    if (step.kind === "change_visibility") step = await makeVisibleForActivation(choice);
+
+    if (step.kind === "abort") {
+      if (step.hideControls) handleVisibilityNotEnabled();
+      return;
+    }
+    if (step.kind === "activate" && step.pending) {
+      toast.success(t("workspace.surveys.visibility.visibility_update_pending"));
+    }
+    setIsActivateDialogOpen(false);
+    await runActivation();
+  };
+
   return (
     <div className="border-b border-slate-200 bg-white px-5 py-2.5 sm:flex sm:items-center sm:justify-between">
       <div className="flex h-full items-center gap-x-2 whitespace-nowrap">
@@ -708,6 +797,12 @@ export const SurveyMenuBar = ({
           className="h-8 w-72 border-white py-0 hover:border-slate-200"
           aria-label={t("workspace.surveys.rename_survey_placeholder")}
         />
+        {canManageVisibility && (
+          <Button size="sm" variant="secondary" onClick={() => setIsCollaborateModalOpen(true)}>
+            <UsersIcon />
+            {t("common.collaborate")}
+          </Button>
+        )}
       </div>
 
       <div className="mt-3 flex items-center gap-2 sm:mt-0 sm:ml-4">
@@ -775,7 +870,7 @@ export const SurveyMenuBar = ({
             size="sm"
             disabled={isSurveySaving}
             loading={isSurveyPublishing}
-            onClick={isPublishScheduled ? handleSurveySchedule : handleSurveyPublish}>
+            onClick={handleActivateClick}>
             {draftPrimaryLabel}
           </Button>
         )}
@@ -794,6 +889,28 @@ export const SurveyMenuBar = ({
         }}
         onConfirm={handleSaveAndGoBack}
       />
+      {canManageVisibility && (
+        <>
+          <CollaborateModal
+            open={isCollaborateModalOpen}
+            setOpen={setIsCollaborateModalOpen}
+            surveyId={localSurvey.id}
+            surveyName={localSurvey.name}
+            workspaceName={workspace.name}
+            onVisibilityChanged={setChangedVisibility}
+            onVisibilityNotEnabled={handleVisibilityNotEnabled}
+          />
+          <ActivateDialog
+            open={isActivateDialogOpen}
+            setOpen={setIsActivateDialogOpen}
+            workspaceName={workspace.name}
+            author={restrictedAuthor}
+            isScheduling={isPublishScheduled}
+            isSubmitting={isChangingVisibility || isSurveyPublishing}
+            onConfirm={(choice) => void handleActivateConfirm(choice)}
+          />
+        </>
+      )}
     </div>
   );
 };

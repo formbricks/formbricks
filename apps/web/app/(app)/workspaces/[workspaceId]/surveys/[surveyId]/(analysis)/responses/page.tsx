@@ -20,6 +20,9 @@ import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-c
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { getSurveyAuth } from "@/modules/survey/lib/survey-auth";
+import { RestrictedSurveyBanner } from "@/modules/survey/visibility/components/restricted-survey-banner";
+import { getSurveyVisibilityViewer } from "@/modules/survey/visibility/lib/gate";
+import { showRestrictedBanner } from "@/modules/survey/visibility/lib/markers";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
@@ -68,7 +71,10 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string; sur
   const aiUnavailableReason = getAISmartToolsUnavailableReason(aiConfig) ?? null;
 
   // Fetch initial responses on the server to prevent duplicate client-side fetch
-  const initialResponses = await getResponses(params.surveyId, RESPONSES_PER_PAGE, 0);
+  const [initialResponses, { surveyVisibilityEnabled, surveyAccess, ownerName }] = await Promise.all([
+    getResponses(params.surveyId, RESPONSES_PER_PAGE, 0),
+    getSurveyVisibilityViewer(survey, session.user.id, organization.id),
+  ]);
 
   return (
     <PageContentWrapper>
@@ -90,6 +96,11 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string; sur
         }>
         <SurveyAnalysisNavigation survey={survey} activeId="responses" />
       </PageHeader>
+      {showRestrictedBanner({
+        gate: surveyVisibilityEnabled,
+        visibility: survey.visibility,
+        access: surveyAccess,
+      }) && <RestrictedSurveyBanner surveyId={survey.id} ownerName={ownerName} />}
       <ResponsePage
         survey={survey}
         surveyId={params.surveyId}

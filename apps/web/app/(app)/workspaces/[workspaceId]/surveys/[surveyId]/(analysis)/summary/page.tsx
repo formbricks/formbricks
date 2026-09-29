@@ -19,6 +19,9 @@ import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { getSurveyAuth } from "@/modules/survey/lib/survey-auth";
+import { RestrictedSurveyBanner } from "@/modules/survey/visibility/components/restricted-survey-banner";
+import { getSurveyVisibilityViewer } from "@/modules/survey/visibility/lib/gate";
+import { showRestrictedBanner } from "@/modules/survey/visibility/lib/markers";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -65,7 +68,10 @@ const SurveyPage = async (
   const aiUnavailableReason = getAISmartToolsUnavailableReason(aiConfig) ?? null;
 
   // Fetch initial survey summary data on the server to prevent duplicate API calls during hydration
-  const initialSurveySummary = await getSurveySummary(surveyId);
+  const [initialSurveySummary, { surveyVisibilityEnabled, surveyAccess, ownerName }] = await Promise.all([
+    getSurveySummary(surveyId),
+    getSurveyVisibilityViewer(survey, session.user.id, organization.id),
+  ]);
 
   const publicDomain = getPublicDomain();
 
@@ -89,6 +95,11 @@ const SurveyPage = async (
         }>
         <SurveyAnalysisNavigation survey={survey} activeId="summary" />
       </PageHeader>
+      {showRestrictedBanner({
+        gate: surveyVisibilityEnabled,
+        visibility: survey.visibility,
+        access: surveyAccess,
+      }) && <RestrictedSurveyBanner surveyId={survey.id} ownerName={ownerName} />}
       <SummaryPage
         survey={survey}
         surveyId={params.surveyId}

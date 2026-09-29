@@ -25,6 +25,8 @@ import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups
 import { shouldShowFollowUpsTab } from "@/modules/survey/follow-ups/lib/deprecation";
 import { LanguageView } from "@/modules/survey/multi-language-surveys/components/language-view";
 import { type TSurveySchedulingConfig } from "@/modules/survey/scheduling/lib/config";
+import { RestrictedSurveyBanner } from "@/modules/survey/visibility/components/restricted-survey-banner";
+import { showRestrictedBanner } from "@/modules/survey/visibility/lib/markers";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { getWorkspaceLanguagesAction, refetchWorkspaceAction } from "../actions";
 
@@ -241,6 +243,15 @@ export const SurveyEditor = ({
         surveyAccess={surveyAccess}
         ownerName={ownerName}
       />
+      {showRestrictedBanner({
+        gate: surveyVisibilityEnabled,
+        visibility: survey.visibility,
+        access: surveyAccess,
+      }) && (
+        <div className="bg-slate-50 px-5 pt-3">
+          <RestrictedSurveyBanner surveyId={survey.id} ownerName={ownerName} />
+        </div>
+      )}
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main
           className="relative z-0 w-full overflow-y-auto bg-slate-50 focus:outline-hidden md:w-2/3"

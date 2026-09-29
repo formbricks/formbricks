@@ -3,10 +3,10 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { ChevronDownIcon, LayoutTemplateIcon, PlusCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type ComponentProps, useEffect, useMemo, useState } from "react";
+import { type ComponentProps, useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { TSurveyStatus, TSurveyType } from "@formbricks/types/surveys/types";
+import type { TSurveyStatus, TSurveyType, TSurveyVisibility } from "@formbricks/types/surveys/types";
 import type { TUserLocale } from "@formbricks/types/user";
 import type { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { CUSTOM_SURVEY_TEMPLATE_ID } from "@/app/lib/templates";
@@ -29,6 +29,7 @@ import {
 } from "@/modules/survey/list/lib/utils";
 import { TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
 import { TemplateContainerWithPreview } from "@/modules/survey/templates/components/template-container";
+import { useUpdateSurveyVisibility } from "@/modules/survey/visibility/hooks/use-update-survey-visibility";
 import { AiIcon } from "@/modules/ui/components/ai";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -163,9 +164,14 @@ export const SurveysList = ({
   isAIAvailable,
   aiUnavailableReason,
   showFeaturedTemplates = false,
+  surveyVisibilityEnabled,
 }: Readonly<SurveysListProps>) => {
   const { t } = useTranslation();
   const [surveyFilters, setSurveyFilters] = useState<TSurveyOverviewFilters>(initialFilters);
+  // Set when a visibility request answers `visibility_not_enabled`: the feature was switched off after
+  // this page rendered, so every visibility control goes away until the next load.
+  const [isVisibilityTurnedOff, setIsVisibilityTurnedOff] = useState(false);
+  const visibilityGate = surveyVisibilityEnabled && !isVisibilityTurnedOff;
   const [isFilterInitialized, setIsFilterInitialized] = useState(false);
   const [parent] = useAutoAnimate();
 
@@ -226,6 +232,13 @@ export const SurveysList = ({
   const archiveSurveyMutation = useArchiveSurvey({ queryKey });
   const restoreSurveyMutation = useRestoreSurvey({ queryKey });
   const renameSurveyMutation = useRenameSurvey({ queryKey });
+  const updateSurveyVisibilityMutation = useUpdateSurveyVisibility({ listQueryKey: queryKey });
+
+  // Stable: the Collaborate modal runs it from an effect.
+  const handleVisibilityNotEnabled = useCallback(() => {
+    setIsVisibilityTurnedOff(true);
+    setSurveyFilters((prev) => (prev.visibility.length > 0 ? { ...prev, visibility: [] } : prev));
+  }, []);
 
   const showInitialLoading = !isFilterInitialized || (isLoading && surveys.length === 0);
   // Only a workspace without a single survey gets the onboarding empty states. Every other empty
@@ -252,6 +265,10 @@ export const SurveysList = ({
 
   const handleRenameSurvey = async (surveyId: string, name: string) => {
     await renameSurveyMutation.mutateAsync({ surveyId, name });
+  };
+
+  const handleUpdateSurveyVisibility = async (surveyId: string, visibility: TSurveyVisibility) => {
+    await updateSurveyVisibilityMutation.mutateAsync({ surveyId, visibility });
   };
 
   const createSurveyButton = (
@@ -355,6 +372,11 @@ export const SurveysList = ({
               renameSurvey={handleRenameSurvey}
               publicDomain={publicDomain}
               locale={locale}
+              surveyVisibilityEnabled={visibilityGate}
+              workspaceName={workspace.name}
+              listQueryKey={queryKey}
+              updateSurveyVisibility={handleUpdateSurveyVisibility}
+              onVisibilityNotEnabled={handleVisibilityNotEnabled}
             />
           ))}
         </div>
@@ -390,6 +412,7 @@ export const SurveysList = ({
           surveyFilters={normalizedFilters}
           setSurveyFilters={setSurveyFilters}
           currentWorkspaceChannel={currentWorkspaceChannel}
+          surveyVisibilityEnabled={visibilityGate}
         />
         {surveyContent}
       </div>

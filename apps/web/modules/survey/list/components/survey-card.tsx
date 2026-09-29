@@ -2,16 +2,26 @@
 
 import { ArchiveIcon } from "lucide-react";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { TSurveyStatus } from "@formbricks/types/surveys/types";
+import type { TSurveyStatus, TSurveyVisibility } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
 import { timeSince } from "@/lib/time";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { SurveyTypeIndicator } from "@/modules/survey/list/components/survey-type-indicator";
+import type { surveyKeys } from "@/modules/survey/list/lib/query";
 import { TSurveyListItem } from "@/modules/survey/list/types/survey-overview";
+import {
+  MakeVisibleToWorkspaceButton,
+  RoleAccessMarker,
+} from "@/modules/survey/visibility/components/role-access-marker";
+import { WorkspaceVisibilityMarker } from "@/modules/survey/visibility/components/workspace-visibility-marker";
+import { getVisibilityErrorReaction } from "@/modules/survey/visibility/lib/collaborate";
+import { getRestrictedRowMarker, showWorkspaceMarker } from "@/modules/survey/visibility/lib/markers";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
 import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 
@@ -25,6 +35,12 @@ interface SurveyCardProps {
   restoreSurvey: (surveyId: string) => Promise<void>;
   renameSurvey: (surveyId: string, name: string) => Promise<void>;
   locale: TUserLocale;
+  /** ENG-3395: the restricted-surveys gate. While it is off the row renders exactly as before. */
+  surveyVisibilityEnabled: boolean;
+  workspaceName: string;
+  listQueryKey: ReturnType<typeof surveyKeys.list>;
+  updateSurveyVisibility: (surveyId: string, visibility: TSurveyVisibility) => Promise<void>;
+  onVisibilityNotEnabled: () => void;
 }
 export const SurveyCard = ({
   survey,
@@ -36,6 +52,11 @@ export const SurveyCard = ({
   restoreSurvey,
   renameSurvey,
   locale,
+  surveyVisibilityEnabled,
+  workspaceName,
+  listQueryKey,
+  updateSurveyVisibility,
+  onVisibilityNotEnabled,
 }: Readonly<SurveyCardProps>) => {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
@@ -59,6 +80,37 @@ export const SurveyCard = ({
 
   const isSurveyCreationDeletionDisabled = isReadOnly;
 
+  const [isMakingVisible, setIsMakingVisible] = useState(false);
+  const hasWorkspaceMarker = showWorkspaceMarker({
+    gate: surveyVisibilityEnabled,
+    visibility: survey.visibility,
+  });
+  const restrictedMarker = getRestrictedRowMarker({
+    gate: surveyVisibilityEnabled,
+    visibility: survey.visibility,
+    access: survey.access,
+    owner: survey.owner,
+  });
+  const canMakeVisible = restrictedMarker === "author_gone" && survey.access.canManageVisibility;
+
+  const handleMakeVisible = async () => {
+    setIsMakingVisible(true);
+    try {
+      await updateSurveyVisibility(survey.id, "workspace");
+      toast.success(t("workspace.surveys.visibility.visibility_updated"));
+    } catch (error) {
+      const reaction = getVisibilityErrorReaction(error);
+      if (reaction === "pending") {
+        toast.success(t("workspace.surveys.visibility.visibility_update_pending"));
+      } else {
+        toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+        if (reaction === "hide_controls") onVisibilityNotEnabled();
+      }
+    } finally {
+      setIsMakingVisible(false);
+    }
+  };
+
   const linkHref = useMemo(() => {
     // Archived surveys are read-only; always send to summary (never the editor).
     if (isArchived) {
@@ -80,10 +132,18 @@ export const SurveyCard = ({
     <div
       className={cn(
         "grid w-full grid-cols-8 place-items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 pr-8 shadow-xs transition-colors ease-in-out",
-        !isCardNotClickable && "hover:border-slate-400"
+        !isCardNotClickable && "hover:border-slate-400",
+        restrictedMarker === "author_gone" && "bg-amber-50",
+        canMakeVisible && "pr-56"
       )}>
       <div className="col-span-2 flex max-w-full items-center justify-self-start text-sm font-medium text-slate-900">
-        <div className="w-full truncate">{survey.name}</div>
+        {hasWorkspaceMarker ? (
+          <WorkspaceVisibilityMarker workspaceName={workspaceName}>
+            <div className="w-full truncate">{survey.name}</div>
+          </WorkspaceVisibilityMarker>
+        ) : (
+          <div className="w-full truncate">{survey.name}</div>
+        )}
       </div>
       <div
         className={cn(
@@ -120,9 +180,16 @@ export const SurveyCard = ({
       <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
         {timeSince(survey.updatedAt.toString(), locale)}
       </div>
-      <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
-        {survey.creator ? survey.creator.name : "-"}
-      </div>
+      {restrictedMarker ? (
+        <div className="col-span-1 flex max-w-full items-center overflow-hidden text-sm whitespace-nowrap text-slate-600">
+          <span className="truncate">{survey.creator ? survey.creator.name : "-"}</span>
+          <RoleAccessMarker kind={restrictedMarker} workspaceName={workspaceName} />
+        </div>
+      ) : (
+        <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
+          {survey.creator ? survey.creator.name : "-"}
+        </div>
+      )}
     </div>
   );
 
@@ -135,7 +202,15 @@ export const SurveyCard = ({
           {CardBody}
         </Link>
       )}
-      <div className="absolute top-3.5 right-3">
+      <div className="absolute top-3.5 right-3 flex items-center gap-2">
+        {/* Outside the row's link: a button inside a link is neither valid markup nor reachable. */}
+        {canMakeVisible && (
+          <MakeVisibleToWorkspaceButton
+            workspaceName={workspaceName}
+            loading={isMakingVisible}
+            onClick={() => void handleMakeVisible()}
+          />
+        )}
         <SurveyDropDownMenu
           survey={survey}
           key={`surveys-${survey.id}`}
@@ -148,6 +223,10 @@ export const SurveyCard = ({
           archiveSurvey={archiveSurvey}
           restoreSurvey={restoreSurvey}
           renameSurvey={renameSurvey}
+          surveyVisibilityEnabled={surveyVisibilityEnabled}
+          workspaceName={workspaceName}
+          listQueryKey={listQueryKey}
+          onVisibilityNotEnabled={onVisibilityNotEnabled}
         />
       </div>
     </div>
