@@ -150,17 +150,23 @@ describe("AIOAuthTokenError", () => {
     expect(Object.keys(tokenError).sort()).toEqual(["code", "name", "statusCode", "tokenUrlHost"]);
   });
 
-  test("is classified as a non-retryable auth failure", () => {
+  test.each([
+    ["a rejected token request", "token_request_failed", 401],
+    ["an unusable token response", "token_response_invalid", undefined],
+  ] as const)("classifies %s as a non-retryable auth failure", (_label, code, statusCode) => {
     expect(
-      classifyAIProviderError(
-        new AIOAuthTokenError("token_request_failed", { statusCode: 401, tokenUrlHost: "idp.example" })
-      )
-    ).toEqual({ isAuthFailure: true, isQuotaExhausted: false, isRetryable: false, statusCode: 401 });
+      classifyAIProviderError(new AIOAuthTokenError(code, { statusCode, tokenUrlHost: "idp.example" }))
+    ).toMatchObject({ isAuthFailure: true, isQuotaExhausted: false, isRetryable: false });
+  });
+
+  test.each([
+    ["a timeout", "token_endpoint_timeout", undefined],
+    ["an unreachable endpoint", "token_endpoint_unreachable", undefined],
+    ["a 5xx", "token_request_failed", 503],
+  ] as const)("classifies %s as a retryable outage, not an auth failure", (_label, code, statusCode) => {
     expect(
-      classifyAIProviderError(
-        new AIOAuthTokenError("token_endpoint_timeout", { tokenUrlHost: "idp.example" })
-      )
-    ).toEqual({ isAuthFailure: true, isQuotaExhausted: false, isRetryable: false });
+      classifyAIProviderError(new AIOAuthTokenError(code, { statusCode, tokenUrlHost: "idp.example" }))
+    ).toMatchObject({ isAuthFailure: false, isQuotaExhausted: false, isRetryable: true });
   });
 });
 

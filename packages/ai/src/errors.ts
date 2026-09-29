@@ -131,10 +131,17 @@ const buildInfo = (error: APICallError): AIProviderErrorInfo => {
  */
 export const classifyAIProviderError = (error: unknown): AIProviderErrorInfo | undefined => {
   if (error instanceof AIOAuthTokenError) {
+    // Only a definitive answer from the token endpoint is a credentials problem. A timeout, a network
+    // failure or a 5xx is the identity provider being down: reporting that as "credentials rejected"
+    // would send an administrator to rotate a secret that is fine.
+    const isTransient =
+      error.code === "token_endpoint_timeout" ||
+      error.code === "token_endpoint_unreachable" ||
+      (error.statusCode !== undefined && error.statusCode >= 500);
     return {
-      isAuthFailure: true,
+      isAuthFailure: !isTransient,
       isQuotaExhausted: false,
-      isRetryable: false,
+      isRetryable: isTransient,
       ...(error.statusCode === undefined ? {} : { statusCode: error.statusCode }),
     };
   }
