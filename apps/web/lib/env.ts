@@ -52,6 +52,13 @@ const ZAIConfigurationEnv = z.object({
   AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS: z.string().optional(),
   AI_OPENAI_COMPATIBLE_HEADERS_JSON: z.string().optional(),
   AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_AUTH_MODE: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_ID: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_OAUTH_SCOPE: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON: z.string().optional(),
 });
 
 type TAIConfigurationEnv = z.infer<typeof ZAIConfigurationEnv>;
@@ -165,6 +172,83 @@ const validateStringRecordEnv = (
   }
 };
 
+const OPENAI_COMPATIBLE_AUTH_MODES = ["api-key", "oauth2-client-credentials"] as const;
+const OPENAI_COMPATIBLE_OAUTH_AUTH_STYLES = ["basic", "post"] as const;
+const OAUTH_MODE_REQUIREMENT = "when AI_OPENAI_COMPATIBLE_AUTH_MODE=oauth2-client-credentials";
+
+const isOneOf = (allowed: readonly string[], value: string | undefined): boolean =>
+  !value?.trim() || allowed.includes(value.trim());
+
+// Mirrors the openai-compatible adapter's validate in packages/ai. Messages name the variable and
+// never echo its value: the client secret sits next to these in the same environment.
+const validateOpenAICompatibleAuthConfiguration = (
+  values: TAIConfigurationEnv,
+  ctx: z.RefinementCtx
+): void => {
+  const authMode = values.AI_OPENAI_COMPATIBLE_AUTH_MODE?.trim();
+
+  if (!isOneOf(OPENAI_COMPATIBLE_AUTH_MODES, authMode)) {
+    addEnvIssue(
+      ctx,
+      "AI_OPENAI_COMPATIBLE_AUTH_MODE",
+      `AI_OPENAI_COMPATIBLE_AUTH_MODE must be one of: ${OPENAI_COMPATIBLE_AUTH_MODES.join(", ")}`
+    );
+    return;
+  }
+
+  // Stray OAUTH_* variables in api-key mode are ignored, exactly as the adapter ignores them.
+  if (authMode !== "oauth2-client-credentials") {
+    return;
+  }
+
+  const tokenUrl = values.AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL?.trim();
+
+  if (!tokenUrl) {
+    addEnvIssue(
+      ctx,
+      "AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL",
+      `AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL is required ${OAUTH_MODE_REQUIREMENT}`
+    );
+  } else if (!isHttpUrl(tokenUrl)) {
+    addEnvIssue(
+      ctx,
+      "AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL",
+      "AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL must be a valid http(s) URL"
+    );
+  }
+
+  for (const path of [
+    "AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_ID",
+    "AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET",
+  ] as const) {
+    if (!values[path]?.trim()) {
+      addEnvIssue(ctx, path, `${path} is required ${OAUTH_MODE_REQUIREMENT}`);
+    }
+  }
+
+  if (!isOneOf(OPENAI_COMPATIBLE_OAUTH_AUTH_STYLES, values.AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE)) {
+    addEnvIssue(
+      ctx,
+      "AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE",
+      `AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE must be one of: ${OPENAI_COMPATIBLE_OAUTH_AUTH_STYLES.join(", ")}`
+    );
+  }
+
+  validateStringRecordEnv(
+    ctx,
+    "AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON",
+    values.AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON
+  );
+
+  if (values.AI_OPENAI_COMPATIBLE_API_KEY?.trim()) {
+    addEnvIssue(
+      ctx,
+      "AI_OPENAI_COMPATIBLE_API_KEY",
+      "AI_OPENAI_COMPATIBLE_API_KEY must not be set when AI_OPENAI_COMPATIBLE_AUTH_MODE=oauth2-client-credentials"
+    );
+  }
+};
+
 const validateOpenAICompatibleAIConfiguration = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
   if (!values.AI_OPENAI_COMPATIBLE_BASE_URL) {
     addEnvIssue(
@@ -180,6 +264,7 @@ const validateOpenAICompatibleAIConfiguration = (values: TAIConfigurationEnv, ct
     "AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON",
     values.AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON
   );
+  validateOpenAICompatibleAuthConfiguration(values, ctx);
 };
 
 const validateActiveAIProviderConfiguration = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
@@ -454,6 +539,13 @@ const parsedEnv = createEnv({
     AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS: z.string().optional(),
     AI_OPENAI_COMPATIBLE_HEADERS_JSON: z.string().optional(),
     AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON: z.string().optional(),
+    AI_OPENAI_COMPATIBLE_AUTH_MODE: z.string().optional(),
+    AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: z.string().optional(),
+    AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_ID: z.string().optional(),
+    AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET: z.string().optional(),
+    AI_OPENAI_COMPATIBLE_OAUTH_SCOPE: z.string().optional(),
+    AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE: z.string().optional(),
+    AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON: z.string().optional(),
     CUBEJS_API_SECRET: z.string().trim().min(1),
     CUBEJS_API_URL: z.url(),
     CUBEJS_JWT_AUDIENCE: ZOptionalNonEmptyString,
@@ -667,6 +759,13 @@ const parsedEnv = createEnv({
       process.env.AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS,
     AI_OPENAI_COMPATIBLE_HEADERS_JSON: process.env.AI_OPENAI_COMPATIBLE_HEADERS_JSON,
     AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON: process.env.AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON,
+    AI_OPENAI_COMPATIBLE_AUTH_MODE: process.env.AI_OPENAI_COMPATIBLE_AUTH_MODE,
+    AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: process.env.AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL,
+    AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_ID: process.env.AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_ID,
+    AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET: process.env.AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET,
+    AI_OPENAI_COMPATIBLE_OAUTH_SCOPE: process.env.AI_OPENAI_COMPATIBLE_OAUTH_SCOPE,
+    AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE: process.env.AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE,
+    AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON: process.env.AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON,
     CUBEJS_API_SECRET: process.env.CUBEJS_API_SECRET,
     CUBEJS_API_URL: process.env.CUBEJS_API_URL,
     CUBEJS_JWT_AUDIENCE: process.env.CUBEJS_JWT_AUDIENCE,
