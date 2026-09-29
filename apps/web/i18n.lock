@@ -4001,6 +4001,7 @@ checksums:
     workspace/surveys/visibility/change_to_restricted: 8b5edf5aa98849ef56dcf01d81204d99
     workspace/surveys/visibility/dashboards: 4bc47e48559a6b688684dcb7ac4babc9
     workspace/surveys/visibility/everyone_in_workspace_and_owners_managers: 73ed5ad63b322efe358122bb8273dacc
+    workspace/surveys/visibility/feedback_sources: ee5fd409e10c96357b36d5b6535b60c7
     workspace/surveys/visibility/keep_visible_to_workspace: e14bd2814180db267021ce60b3400c19
     workspace/surveys/visibility/make_visible_to_workspace: eb1c19f33fa1a1a80ec71c75fb3a555b
     workspace/surveys/visibility/restrict_dialog_impact: 51c5428d4d6005fd16bb2d05eb2a10f5

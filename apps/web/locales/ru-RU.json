@@ -4164,6 +4164,7 @@
         "change_to_restricted": "Изменить на Ограниченный",
         "dashboards": "Дашборды",
         "everyone_in_workspace_and_owners_managers": "Все в {workspace}, владельцы и менеджеры вашей организации",
+        "feedback_sources": "Источники обратной связи",
         "keep_visible_to_workspace": "Оставить видимым для {workspace}",
         "make_visible_to_workspace": "Сделать видимым для {workspace}",
         "restrict_dialog_impact": "{memberCount, plural, one {{memberCount} коллега} few {{memberCount} коллеги} many {{memberCount} коллег} other {{memberCount} коллег}} в {workspace} потеряют доступ к этому опросу и его {responseCount, plural, one {{responseCount} ответу} few {{responseCount} ответам} many {{responseCount} ответам} other {{responseCount} ответам}}.",

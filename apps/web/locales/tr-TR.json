@@ -4164,6 +4164,7 @@
         "change_to_restricted": "Kısıtlı Olarak Değiştir",
         "dashboards": "Panolar",
         "everyone_in_workspace_and_owners_managers": "{workspace} içindeki herkes, kuruluşunuzun sahipleri ve yöneticileri",
+        "feedback_sources": "Geri bildirim kaynakları",
         "keep_visible_to_workspace": "{workspace} için görünür tut",
         "make_visible_to_workspace": "{workspace} için görünür yap",
         "restrict_dialog_impact": "{workspace} içindeki {memberCount, plural, one {{memberCount} meslektaşın} other {{memberCount} meslektaşın}} bu ankete ve {responseCount, plural, one {{responseCount} yanıtına} other {{responseCount} yanıtına}} erişimini kaybedecek.",

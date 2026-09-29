@@ -4164,6 +4164,7 @@
         "change_to_restricted": "Alterar para Restrita",
         "dashboards": "Painéis",
         "everyone_in_workspace_and_owners_managers": "Todos em {workspace}, os proprietários e gerentes da sua organização",
+        "feedback_sources": "Fontes de feedback",
         "keep_visible_to_workspace": "Manter visível para {workspace}",
         "make_visible_to_workspace": "Tornar visível para {workspace}",
         "restrict_dialog_impact": "{memberCount, plural, one {{memberCount} colega} other {{memberCount} colegas}} em {workspace} perderá acesso a esta pesquisa e suas {responseCount, plural, one {{responseCount} resposta} other {{responseCount} respostas}}.",

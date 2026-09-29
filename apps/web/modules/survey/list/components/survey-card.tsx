@@ -134,7 +134,7 @@ export const SurveyCard = ({
         "grid w-full grid-cols-8 place-items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 pr-8 shadow-xs transition-colors ease-in-out",
         !isCardNotClickable && "hover:border-slate-400",
         restrictedMarker === "author_gone" && "bg-amber-50",
-        canMakeVisible && "pr-56"
+        canMakeVisible && "rounded-b-none border-b-0"
       )}>
       <div className="col-span-2 flex max-w-full items-center justify-self-start text-sm font-medium text-slate-900">
         {hasWorkspaceMarker ? (
@@ -202,15 +202,18 @@ export const SurveyCard = ({
           {CardBody}
         </Link>
       )}
-      <div className="absolute top-3.5 right-3 flex items-center gap-2">
-        {/* Outside the row's link: a button inside a link is neither valid markup nor reachable. */}
-        {canMakeVisible && (
+      {/* Below the row and outside its link: a button inside a link is neither valid markup nor
+          reachable, and a strip keeps the row's columns aligned with every other row. */}
+      {canMakeVisible && (
+        <div className="flex justify-end rounded-b-xl border border-t-0 border-slate-200 bg-amber-50 px-4 pb-3">
           <MakeVisibleToWorkspaceButton
             workspaceName={workspaceName}
             loading={isMakingVisible}
             onClick={() => void handleMakeVisible()}
           />
-        )}
+        </div>
+      )}
+      <div className="absolute top-3.5 right-3">
         <SurveyDropDownMenu
           survey={survey}
           key={`surveys-${survey.id}`}

@@ -4164,6 +4164,7 @@
         "change_to_restricted": "Change to Restricted",
         "dashboards": "Dashboards",
         "everyone_in_workspace_and_owners_managers": "Everyone in {workspace}, your organization's owners and managers",
+        "feedback_sources": "Feedback sources",
         "keep_visible_to_workspace": "Keep visible to {workspace}",
         "make_visible_to_workspace": "Make visible to {workspace}",
         "restrict_dialog_impact": "{memberCount, plural, one {{memberCount} colleague} other {{memberCount} colleagues}} in {workspace} will lose access to this survey and its {responseCount, plural, one {{responseCount} response} other {{responseCount} responses}}.",

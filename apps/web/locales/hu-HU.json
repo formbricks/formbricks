@@ -4164,6 +4164,7 @@
         "change_to_restricted": "Váltás Korlátozott állapotra",
         "dashboards": "Irányítópultok",
         "everyone_in_workspace_and_owners_managers": "Mindenki a(z) {workspace} munkaterületen, valamint az Ön szervezetének tulajdonosai és vezetői",
+        "feedback_sources": "Visszajelzési források",
         "keep_visible_to_workspace": "Maradjon látható a következő számára: {workspace}",
         "make_visible_to_workspace": "Legyen látható a következő számára: {workspace}",
         "restrict_dialog_impact": "{memberCount, plural, one {{memberCount} munkatárs} other {{memberCount} munkatárs}} a(z) {workspace} munkaterületen elveszíti a hozzáférést ehhez a felméréshez és annak {responseCount, plural, one {{responseCount} válaszához} other {{responseCount} válaszához}}.",

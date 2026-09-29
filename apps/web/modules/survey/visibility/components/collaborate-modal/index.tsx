@@ -234,7 +234,11 @@ export const CollaborateModal = ({
 
       <RestrictConfirmationDialog
         open={open && isRestrictDialogOpen}
-        setOpen={setIsRestrictDialogOpen}
+        setOpen={(next) => {
+          // "Keep visible" is a decision, not a dismissal: drop the pending Restricted choice too.
+          if (!next) setPicked(null);
+          setIsRestrictDialogOpen(next);
+        }}
         workspaceName={workspaceName}
         author={author}
         impact={state?.impact ?? null}

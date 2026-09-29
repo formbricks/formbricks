@@ -4164,6 +4164,7 @@
         "change_to_restricted": "Ändra till begränsad",
         "dashboards": "Instrumentpaneler",
         "everyone_in_workspace_and_owners_managers": "Alla i {workspace}, din organisations ägare och chefer",
+        "feedback_sources": "Feedbackkällor",
         "keep_visible_to_workspace": "Behåll synlig för {workspace}",
         "make_visible_to_workspace": "Gör synlig för {workspace}",
         "restrict_dialog_impact": "{memberCount, plural, one {{memberCount} kollega} other {{memberCount} kollegor}} i {workspace} kommer att förlora åtkomst till den här undersökningen och dess {responseCount, plural, one {{responseCount} svar} other {{responseCount} svar}}.",

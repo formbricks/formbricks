@@ -26,7 +26,7 @@ const BlockerTypeLabel = ({ type }: Readonly<{ type: TSurveyVisibilityBlocker["t
   const { t } = useTranslation();
   switch (type) {
     case "feedbackSource":
-      return <>{t("workspace.unify.feedback_sources")}</>;
+      return <>{t("workspace.surveys.visibility.feedback_sources")}</>;
     case "integration":
       return <>{t("common.integrations")}</>;
     case "webhook":
@@ -65,7 +65,7 @@ export const RestrictConfirmationDialog = ({
       after: copy.restrictedAccess,
     },
     { label: t("workspace.surveys.visibility.can_collect_responses"), before: yes, after: yes },
-    { label: t("workspace.unify.feedback_sources"), before: yes, after: no },
+    { label: t("workspace.surveys.visibility.feedback_sources"), before: yes, after: no },
     { label: t("common.integrations"), before: yes, after: no },
     { label: t("common.webhooks"), before: yes, after: no },
     { label: t("common.workflows"), before: yes, after: no },

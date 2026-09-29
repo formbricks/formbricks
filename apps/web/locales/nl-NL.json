@@ -4164,6 +4164,7 @@
         "change_to_restricted": "Wijzigen naar Beperkt",
         "dashboards": "Dashboards",
         "everyone_in_workspace_and_owners_managers": "Iedereen in {workspace}, de eigenaren en managers van je organisatie",
+        "feedback_sources": "Feedbackbronnen",
         "keep_visible_to_workspace": "Zichtbaar houden voor {workspace}",
         "make_visible_to_workspace": "Zichtbaar maken voor {workspace}",
         "restrict_dialog_impact": "{memberCount, plural, one {{memberCount} collega} other {{memberCount} collega's}} in {workspace} zullen toegang verliezen tot deze enquête en de {responseCount, plural, one {{responseCount} reactie} other {{responseCount} reacties}}.",

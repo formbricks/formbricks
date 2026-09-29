@@ -4164,6 +4164,7 @@
         "change_to_restricted": "Schimbă în Restricționat",
         "dashboards": "Tablouri de bord",
         "everyone_in_workspace_and_owners_managers": "Toată lumea din {workspace}, proprietarii și managerii organizației tale",
+        "feedback_sources": "Surse de feedback",
         "keep_visible_to_workspace": "Păstrează vizibil pentru {workspace}",
         "make_visible_to_workspace": "Fă vizibil pentru {workspace}",
         "restrict_dialog_impact": "{memberCount, plural, one {{memberCount} coleg} few {{memberCount} colegi} other {{memberCount} de colegi}} din {workspace} vor pierde accesul la acest sondaj și la {responseCount, plural, one {{responseCount} răspuns} few {{responseCount} răspunsuri} other {{responseCount} de răspunsuri}} ale acestuia.",

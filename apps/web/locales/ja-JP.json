@@ -4164,6 +4164,7 @@
         "change_to_restricted": "制限付きに変更",
         "dashboards": "ダッシュボード",
         "everyone_in_workspace_and_owners_managers": "{workspace}の全員、組織のオーナーとマネージャー",
+        "feedback_sources": "フィードバックソース",
         "keep_visible_to_workspace": "{workspace}に公開したままにする",
         "make_visible_to_workspace": "{workspace}に公開する",
         "restrict_dialog_impact": "{workspace}の{memberCount, plural, other {{memberCount}人の同僚}}がこのアンケートと{responseCount, plural, other {{responseCount}件の回答}}にアクセスできなくなります。",

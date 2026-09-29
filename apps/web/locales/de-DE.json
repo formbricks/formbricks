@@ -4164,6 +4164,7 @@
         "change_to_restricted": "Auf Eingeschränkt ändern",
         "dashboards": "Dashboards",
         "everyone_in_workspace_and_owners_managers": "Alle in {workspace}, die Inhaber und Manager deiner Organisation",
+        "feedback_sources": "Feedback-Quellen",
         "keep_visible_to_workspace": "Für {workspace} sichtbar lassen",
         "make_visible_to_workspace": "Für {workspace} sichtbar machen",
         "restrict_dialog_impact": "{memberCount, plural, one {{memberCount} Kollege} other {{memberCount} Kollegen}} in {workspace} verlieren den Zugriff auf diese Umfrage und ihre {responseCount, plural, one {{responseCount} Antwort} other {{responseCount} Antworten}}.",

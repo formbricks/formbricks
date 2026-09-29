@@ -4164,6 +4164,7 @@
         "change_to_restricted": "Cambiar a Restringida",
         "dashboards": "Paneles",
         "everyone_in_workspace_and_owners_managers": "Todos en {workspace}, los propietarios y administradores de tu organización",
+        "feedback_sources": "Fuentes de comentarios",
         "keep_visible_to_workspace": "Mantener visible para {workspace}",
         "make_visible_to_workspace": "Hacer visible para {workspace}",
         "restrict_dialog_impact": "{memberCount, plural, one {{memberCount} compañero} other {{memberCount} compañeros}} en {workspace} perderán el acceso a esta encuesta y a {responseCount, plural, one {su {responseCount} respuesta} other {sus {responseCount} respuestas}}.",
