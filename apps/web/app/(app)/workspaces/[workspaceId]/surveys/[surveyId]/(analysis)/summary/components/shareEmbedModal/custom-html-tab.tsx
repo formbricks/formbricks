@@ -149,6 +149,13 @@ export const CustomHtmlTab = ({ workspaceCustomScripts, isReadOnly }: CustomHtml
           <Button type="submit" disabled={isSaving || isReadOnly || !isDirty}>
             {isSaving ? t("common.saving") : t("common.save")}
           </Button>
+          {isReadOnly && (
+            <Alert variant="warning" role="status">
+              <AlertDescription>
+                {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
+              </AlertDescription>
+            </Alert>
+          )}
           {/* Security Warning */}
           <Alert variant="warning" className="flex items-start gap-2" role="status">
             <AlertTriangleIcon className="mt-0.5 size-4 shrink-0" />

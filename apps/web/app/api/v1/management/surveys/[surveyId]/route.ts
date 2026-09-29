@@ -28,6 +28,10 @@ import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/pe
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
+import {
+  CUSTOM_HEAD_SCRIPTS_PERMISSION_MESSAGE,
+  canWriteCustomHeadScripts,
+} from "@/modules/survey/lib/custom-head-scripts-permission";
 
 type TSurveyUpdateBody = Record<string, unknown> & {
   blocks?: Parameters<typeof validateSurveyInput>[0]["blocks"];
@@ -232,6 +236,17 @@ export const PUT = withV1ApiWrapper({
         return {
           response: featureCheckResult,
         };
+      }
+
+      if (
+        !(await canWriteCustomHeadScripts(
+          { type: "apiKey", id: authentication.apiKeyId },
+          result.survey.workspaceId,
+          inputValidation.data,
+          result.survey
+        ))
+      ) {
+        return { response: responses.forbiddenResponse(CUSTOM_HEAD_SCRIPTS_PERMISSION_MESSAGE) };
       }
 
       try {

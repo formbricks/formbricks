@@ -29,6 +29,7 @@ import { updateSurvey, updateSurveyDraft } from "@/modules/survey/editor/lib/sur
 import { ZSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { assertCanWriteCustomHeadScripts } from "@/modules/survey/lib/custom-head-scripts-permission";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
 import { getSurveyCount } from "@/modules/survey/list/lib/survey";
@@ -220,6 +221,7 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
     }
 
     await checkExternalUrlsPermission(organizationId, survey, oldObject);
+    await assertCanWriteCustomHeadScripts({ type: "user", id: ctx.user.id }, workspaceId, survey, oldObject);
 
     // Use the draft version that skips validation
     const result = await updateSurveyDraft(survey);
@@ -269,6 +271,12 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
 
     // Check external URLs permission (with grandfathering)
     await checkExternalUrlsPermission(organizationId, parsedInput, oldObject);
+    await assertCanWriteCustomHeadScripts(
+      { type: "user", id: ctx.user.id },
+      workspaceId,
+      parsedInput,
+      oldObject
+    );
     const result = await updateSurvey(parsedInput);
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
