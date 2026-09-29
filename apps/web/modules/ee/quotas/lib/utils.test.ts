@@ -228,7 +228,26 @@ describe("Quota Utils", () => {
           id: mockQuota.id,
           ...mockQuota.logic,
         },
-        "default"
+        "default",
+        {}
+      );
+    });
+
+    test("forwards reserved-field values so a quota condition on them can resolve", () => {
+      // Without this argument a `reserved` operand in a quota reads as unset and the quota silently
+      // never matches — the gap that left `buildServerEmbeddedValues` with no production caller.
+      vi.mocked(evaluateLogic).mockReturnValue(true);
+      const embeddedValues = { country: "DE", finished: "true" };
+
+      evaluateQuotas(mockSurvey, mockResponseData, mockVariablesData, [mockQuota], "default", embeddedValues);
+
+      expect(evaluateLogic).toHaveBeenCalledWith(
+        mockSurvey,
+        mockResponseData,
+        mockVariablesData,
+        { id: mockQuota.id, ...mockQuota.logic },
+        "default",
+        embeddedValues
       );
     });
 
@@ -271,7 +290,8 @@ describe("Quota Utils", () => {
           id: mockQuota.id,
           ...mockQuota.logic,
         },
-        "default"
+        "default",
+        {}
       );
     });
   });

@@ -15,7 +15,7 @@ partOfOverride: ""
 ##########################################################
 formbricks:
   # REQUIRED: Base URL of the site (e.g., https://formbricks.example.com)
-  # This is used for WEBAPP_URL and NEXTAUTH_URL
+  # This is used for WEBAPP_URL and BETTER_AUTH_URL
   webappUrl: ""
 
   # Optional: Public URL for surveys (defaults to webappUrl if not set)
@@ -625,7 +625,7 @@ externalSecret:
   files: {}
 
 ##########################################################
-# AuthZed / SpiceDB Authorization Configuration
+# SpiceDB Authorization Configuration
 ##########################################################
 authzed:
   # Formbricks v6 uses SpiceDB as its sole authorization decision engine.
@@ -743,6 +743,8 @@ authzed:
 # Values passed to the bundled spicedb-operator dependency when
 # authzed.operator.install=true.
 spicedbOperator:
+  # The camelCase dependency alias is a values key, not a valid Kubernetes name.
+  nameOverride: spicedb-operator
   watchNamespaces: []
   serviceMonitor:
     enabled: false
@@ -773,6 +775,16 @@ envoy:
   controller:
     enabled: false
 
+  # Install the Gateway API and Envoy Gateway CRDs bundled with the controller.
+  # Set this to false when the platform manages both CRD sets separately.
+  crds:
+    enabled: true
+    gatewayAPI:
+      # Cluster-wide policy that denies Gateway API CRD versions older than v1.5.0.
+      # Enable only after confirming that no other release reconciles an older bundle.
+      safeUpgradePolicy:
+        enabled: false
+
   createNamespace: false
 
   deployment:
@@ -784,23 +796,10 @@ envoy:
         requests:
           cpu: 100m
           memory: 256Mi
-      pod:
-        topologySpreadConstraints: []
-        tolerations: []
-        nodeSelector: {}
-    ports:
-      - name: grpc
-        port: 18000
-        targetPort: 18000
-      - name: ratelimit
-        port: 18001
-        targetPort: 18001
-      - name: wasm
-        port: 18002
-        targetPort: 18002
-      - name: metrics
-        port: 19001
-        targetPort: 19001
+    pod:
+      topologySpreadConstraints: []
+      tolerations: []
+      nodeSelector: {}
 
   service:
     type: ClusterIP
@@ -1279,8 +1278,11 @@ hub:
     topologySpreadConstraints: []
 
   embeddings:
-    # Optional self-hosted OpenAI-compatible embeddings runtime for Hub.
+    # Optional OpenAI-compatible embeddings integration for Hub.
     enabled: false
+    # Deploy the bundled TEI workloads. Set false when baseUrl points to an
+    # externally managed runtime. Embedding env wiring remains enabled.
+    deployRuntime: true
     runtime: tei
     model: Alibaba-NLP/gte-multilingual-base
     revision: ""
@@ -1365,7 +1367,11 @@ hub:
     extraArgs:
       - --dtype
       - float16
-    env: {}
+    # TEI 1.9 includes parsed arguments in INFO startup logs. Keep the secure
+    # default below so API_KEY is not copied into container logs. Override only
+    # when the selected runtime is known to redact credentials.
+    env:
+      RUST_LOG: warn
 
     port: 8080
     prometheusPort: 9000

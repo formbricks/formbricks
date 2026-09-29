@@ -4,6 +4,7 @@ import {
   type TWorkflowDefinition,
   type TWorkflowNode,
   getBlankSendEmailContentFields,
+  getWorkflowNodeConcreteType,
 } from "@formbricks/workflows";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
 import type { TWorkflowNodeData, TWorkflowNodeIssue } from "@/modules/ee/workflows/state/editor";
@@ -74,6 +75,7 @@ export const workflowDefinitionToFlowNodes = (
       data: {
         category: registryEntry.category,
         icon: registryEntry.icon,
+        nodeType: getWorkflowNodeConcreteType(node) ?? node.type,
         title: registryEntry.title(node, t),
         summary: registryEntry.summary(node, t),
         isLeaf: !sourcesWithEdges.has(node.id),

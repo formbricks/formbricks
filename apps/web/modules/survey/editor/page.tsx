@@ -16,6 +16,7 @@ import {
   getIsContactsEnabled,
   getIsQuotasEnabled,
   getIsSpamProtectionEnabled,
+  getIsWorkflowsEnabled,
 } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getTeamMemberDetails } from "@/modules/survey/editor/lib/team";
@@ -97,12 +98,15 @@ export const SurveyEditorPage = async (props: {
     isQuotasAllowed,
     isExternalUrlsAllowed,
     isUserTargetingAllowed,
+    isWorkflowsAllowed,
   ] = await Promise.all([
     getSurveyFollowUpsPermission(workspaceWithTeamIds.organizationId),
     getIsSpamProtectionEnabled(workspaceWithTeamIds.organizationId),
     getIsQuotasEnabled(workspaceWithTeamIds.organizationId),
     getExternalUrlsPermission(workspaceWithTeamIds.organizationId),
     getIsContactsEnabled(workspaceWithTeamIds.organizationId),
+    // Drives the Follow-ups deprecation: the tab only survives where Workflows cannot replace it.
+    getIsWorkflowsEnabled(workspaceWithTeamIds.organizationId),
   ]);
 
   const quotas = isQuotasAllowed && survey ? await getQuotas(survey.id) : [];
@@ -147,6 +151,7 @@ export const SurveyEditorPage = async (props: {
       locale={locale ?? DEFAULT_LOCALE}
       mailFrom={MAIL_FROM ?? "hola@formbricks.com"}
       isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
+      isWorkflowsAllowed={isWorkflowsAllowed}
       userEmail={userEmail}
       teamMemberDetails={teamMemberDetails}
       isStorageConfigured={IS_STORAGE_CONFIGURED}

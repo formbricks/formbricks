@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   createChartAction,
@@ -17,6 +18,15 @@ const executeQueryAction = executeQueryActionExport as unknown as (args: {
   optionLabels?: Record<string, string>;
   effectiveQuery: unknown;
 }>;
+
+const generateAIChartActionHandler = generateAIChartAction as unknown as (args: {
+  ctx: unknown;
+  parsedInput: {
+    workspaceId: string;
+    prompt: string;
+    feedbackDirectoryId: string;
+  };
+}) => Promise<unknown>;
 
 const mocks = vi.hoisted(() => {
   const actionClientAction = vi.fn((fn) => fn);
@@ -212,21 +222,28 @@ describe("chart Cube actions", () => {
       name: "Responses by Source Type",
     });
 
-    const result = await generateAIChartAction({
+    const result = await generateAIChartActionHandler({
       ctx,
       parsedInput: {
         workspaceId: "workspace-1",
         prompt: "responses by sentiment",
         feedbackDirectoryId: "frd-1",
       },
-    } as any);
+    });
 
     expect(mocks.generateAIChartQuery).toHaveBeenCalledWith({
       organizationId: "organization-1",
       workspaceId: "workspace-1",
+      // The generator profiles this directory for the system prompt, so it has to arrive here —
+      // without it the model is back to guessing filter values off the schema alone.
+      feedbackDirectoryId: "frd-1",
       userId: "user-1",
       prompt: "responses by sentiment",
     });
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.actions.aiChartGeneration, "user-1");
+    expect(mocks.applyRateLimit.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.generateAIChartQuery.mock.invocationCallOrder[0]
+    );
     expect(result).toMatchObject({
       chartType: "bar",
       query: {
@@ -253,16 +270,37 @@ describe("chart Cube actions", () => {
     mocks.checkFeedbackDirectoryAccess.mockRejectedValueOnce(new Error("no access"));
 
     await expect(
-      generateAIChartAction({
+      generateAIChartActionHandler({
         ctx,
         parsedInput: {
           workspaceId: "workspace-1",
           prompt: "responses by sentiment",
           feedbackDirectoryId: "frd-1",
         },
-      } as any)
+      })
     ).rejects.toThrow("no access");
 
+    expect(mocks.generateAIChartQuery).not.toHaveBeenCalled();
+    expect(mocks.executeTenantScopedQuery).not.toHaveBeenCalled();
+  });
+
+  test("generateAIChartAction does not call the AI lib when the rate limit is exceeded", async () => {
+    mocks.applyRateLimit.mockRejectedValueOnce(
+      new TooManyRequestsError("Maximum number of requests reached. Please try again later.")
+    );
+
+    await expect(
+      generateAIChartActionHandler({
+        ctx,
+        parsedInput: {
+          workspaceId: "workspace-1",
+          prompt: "responses by sentiment",
+          feedbackDirectoryId: "frd-1",
+        },
+      })
+    ).rejects.toThrow(TooManyRequestsError);
+
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.actions.aiChartGeneration, "user-1");
     expect(mocks.generateAIChartQuery).not.toHaveBeenCalled();
     expect(mocks.executeTenantScopedQuery).not.toHaveBeenCalled();
   });
@@ -271,14 +309,14 @@ describe("chart Cube actions", () => {
     mocks.generateAIChartQuery.mockRejectedValueOnce(new Error("AI failed"));
 
     await expect(
-      generateAIChartAction({
+      generateAIChartActionHandler({
         ctx,
         parsedInput: {
           workspaceId: "workspace-1",
           prompt: "responses by sentiment",
           feedbackDirectoryId: "frd-1",
         },
-      } as any)
+      })
     ).rejects.toThrow("AI failed");
 
     expect(mocks.executeTenantScopedQuery).not.toHaveBeenCalled();
@@ -290,6 +328,7 @@ describe("chart Cube actions", () => {
     // Wire up feedbackSources -> survey -> MultipleChoiceMulti element.
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
+        feedbackDirectoryId: "frd-1",
         formbricksMappings: [{ elementId: "field-multi", surveyId: "survey-multi" }],
       },
     ]);
@@ -340,6 +379,7 @@ describe("chart Cube actions", () => {
     // A non-choice element type — OpenText — must not be touched.
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
+        feedbackDirectoryId: "frd-1",
         formbricksMappings: [{ elementId: "field-open", surveyId: "survey-open" }],
       },
     ]);
@@ -373,6 +413,7 @@ describe("chart Cube actions", () => {
     // The mapping has no customFieldLabel, so the effective label comes from the element headline.
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
+        feedbackDirectoryId: "frd-1",
         formbricksMappings: [{ elementId: "field-sc", surveyId: "survey-sc", customFieldLabel: null }],
       },
     ]);
@@ -401,7 +442,7 @@ describe("chart Cube actions", () => {
         query: {
           measures: ["FeedbackRecords.count"],
           dimensions: ["FeedbackRecords.valueText"],
-          // User filtered by "Question" (fieldLabel), not by fieldId.
+          // User filtered by "Field Label" (fieldLabel), not by fieldId.
           filters: [
             { member: "FeedbackRecords.fieldLabel", operator: "equals", values: ["Favourite colour?"] },
           ],
@@ -424,6 +465,7 @@ describe("chart Cube actions", () => {
   test("executeQueryAction returns optionLabels for a multi-select element matched by fieldLabel (no rewrite/split)", async () => {
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
+        feedbackDirectoryId: "frd-1",
         formbricksMappings: [{ elementId: "field-mc", surveyId: "survey-mc", customFieldLabel: null }],
       },
     ]);
@@ -474,6 +516,7 @@ describe("chart Cube actions", () => {
     // Two different mappings share the same effective label — must not guess.
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
+        feedbackDirectoryId: "frd-1",
         formbricksMappings: [
           { elementId: "field-a", surveyId: "survey-a", customFieldLabel: null },
           { elementId: "field-b", surveyId: "survey-b", customFieldLabel: null },
@@ -550,6 +593,7 @@ describe("chart Cube actions", () => {
     // User selected "Value (Option)" directly from the picker — dimension is already valueId.
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
+        feedbackDirectoryId: "frd-1",
         formbricksMappings: [{ elementId: "field-sc3", surveyId: "survey-sc3" }],
       },
     ]);
@@ -601,6 +645,7 @@ describe("chart Cube actions", () => {
     // to Value (Text). Multi-select stores one record per option with its own value_id now.
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
+        feedbackDirectoryId: "frd-1",
         formbricksMappings: [{ elementId: "field-mc2", surveyId: "survey-mc2" }],
       },
     ]);
@@ -651,6 +696,7 @@ describe("chart Cube actions", () => {
     // fieldId should take precedence; fieldLabel is ignored.
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
+        feedbackDirectoryId: "frd-1",
         formbricksMappings: [{ elementId: "field-sc2", surveyId: "survey-sc2", customFieldLabel: null }],
       },
     ]);

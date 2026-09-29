@@ -1,9 +1,233 @@
 import "server-only";
 import { Prisma } from "@formbricks/database/prisma";
+import { TEmbeddedDataType } from "@formbricks/types/embedded-data";
+import {
+  RESERVED_FIELD_CATALOG,
+  getComputedEmbeddedFields,
+  getSurveyEmbeddedFields,
+  listShadowingNames,
+} from "@formbricks/types/embedded-data-resolver";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { generateAllPermutationsOfSubsets } from "./utils";
+
+type TTypedFieldFilterCondition = NonNullable<TResponseFilterCriteria["reserved"]>[string];
+
+type TReservedFilterLocator = { kind: "meta"; path: string[] } | { kind: "ttcTotalMs" };
+
+/**
+ * Where each filterable reserved field physically lives on the Response row. The catalog carries
+ * typed `read` accessors instead of path strings on purpose (see the rationale in
+ * embedded-data-resolver.ts), so the DB layer owns this map; the anti-drift test in utils.test.ts
+ * pins that every entry `getReservedFilterEntries` can offer has a locator. `durationSeconds` is
+ * the one computed entry — it filters the stored `ttc._total` milliseconds through windows that
+ * reproduce the read seam's `Math.round(ms / 1000)` projection exactly.
+ */
+export const RESERVED_FILTER_LOCATORS: Record<string, TReservedFilterLocator> = {
+  source: { kind: "meta", path: ["source"] },
+  url: { kind: "meta", path: ["url"] },
+  country: { kind: "meta", path: ["country"] },
+  action: { kind: "meta", path: ["action"] },
+  browser: { kind: "meta", path: ["userAgent", "browser"] },
+  os: { kind: "meta", path: ["userAgent", "os"] },
+  deviceType: { kind: "meta", path: ["userAgent", "device"] },
+  ipAddress: { kind: "meta", path: ["ipAddress"] },
+  pagePath: { kind: "meta", path: ["pagePath"] },
+  pageReferrer: { kind: "meta", path: ["pageReferrer"] },
+  utmSource: { kind: "meta", path: ["utmSource"] },
+  utmMedium: { kind: "meta", path: ["utmMedium"] },
+  utmCampaign: { kind: "meta", path: ["utmCampaign"] },
+  utmTerm: { kind: "meta", path: ["utmTerm"] },
+  utmContent: { kind: "meta", path: ["utmContent"] },
+  screenWidth: { kind: "meta", path: ["screenWidth"] },
+  screenHeight: { kind: "meta", path: ["screenHeight"] },
+  viewportWidth: { kind: "meta", path: ["viewportWidth"] },
+  viewportHeight: { kind: "meta", path: ["viewportHeight"] },
+  timezone: { kind: "meta", path: ["timezone"] },
+  locale: { kind: "meta", path: ["locale"] },
+  durationSeconds: { kind: "ttcTotalMs" },
+};
+
+const mkJsonColumnFilter = (
+  column: "meta" | "variables",
+  filter: Prisma.ResponseWhereInput["meta"]
+): Prisma.ResponseWhereInput => (column === "meta" ? { meta: filter } : { variables: filter });
+
+// Negated text ops share their Prisma key with the positive op and wrap in NOT.
+const TEXT_OP_TO_PRISMA: Record<string, { key: string; negated: boolean }> = {
+  contains: { key: "string_contains", negated: false },
+  doesNotContain: { key: "string_contains", negated: true },
+  startsWith: { key: "string_starts_with", negated: false },
+  doesNotStartWith: { key: "string_starts_with", negated: true },
+  endsWith: { key: "string_ends_with", negated: false },
+  doesNotEndWith: { key: "string_ends_with", negated: true },
+};
+
+const COMPARISON_OP_TO_PRISMA: Record<string, string> = {
+  lessThan: "lt",
+  lessEqual: "lte",
+  greaterThan: "gt",
+  greaterEqual: "gte",
+};
+
+/**
+ * One typed condition → one Prisma JSON-path filter on `meta` or `variables`. `notEquals` and
+ * `isNotSet` treat an absent value as a match (same stance as the `data` branch below). Ops that
+ * don't fit the field's dataType — text ops on anything but a string, comparisons on a boolean or
+ * string — emit nothing: fail closed rather than querying a shape the value can never have.
+ */
+const buildJsonPathCondition = (
+  column: "meta" | "variables",
+  path: string[],
+  val: TTypedFieldFilterCondition,
+  dataType: TEmbeddedDataType
+): Prisma.ResponseWhereInput | null => {
+  if (val.op === "isSet") return mkJsonColumnFilter(column, { path, not: Prisma.DbNull });
+  if (val.op === "isNotSet") return mkJsonColumnFilter(column, { path, equals: Prisma.DbNull });
+  if (val.op === "equals") return mkJsonColumnFilter(column, { path, equals: val.value });
+  if (val.op === "notEquals") {
+    return {
+      OR: [
+        mkJsonColumnFilter(column, { path, not: val.value }),
+        mkJsonColumnFilter(column, { path, equals: Prisma.DbNull }),
+      ],
+    };
+  }
+
+  const textOp = TEXT_OP_TO_PRISMA[val.op];
+  if (textOp && "value" in val) {
+    if (dataType !== "string") return null;
+    // The dynamic Prisma key needs one cast; the three keys above are all valid string filters.
+    const filter = mkJsonColumnFilter(column, {
+      path,
+      [textOp.key]: val.value,
+    } as Prisma.ResponseWhereInput["meta"]);
+    return textOp.negated ? { NOT: filter } : filter;
+  }
+
+  const comparisonKey = COMPARISON_OP_TO_PRISMA[val.op];
+  if (comparisonKey && "value" in val) {
+    if (dataType !== "number" && dataType !== "date") return null;
+    return mkJsonColumnFilter(column, {
+      path,
+      [comparisonKey]: val.value,
+    } as Prisma.ResponseWhereInput["meta"]);
+  }
+
+  return null;
+};
+
+/**
+ * `durationSeconds` filters in seconds against `ttc._total`, which stores milliseconds. The read
+ * seam projects `Math.round(ms / 1000)`, so second `s` covers ms in [s*1000-500, s*1000+500) — the
+ * windows below make DB filtering agree with the projected value at every boundary. `ttc._total`
+ * only exists on finished responses, so partials never match (except via `isNotSet`).
+ */
+const buildDurationSecondsCondition = (val: TTypedFieldFilterCondition): Prisma.ResponseWhereInput | null => {
+  const path = ["_total"];
+  if (val.op === "isSet") return { ttc: { path, not: Prisma.DbNull } };
+  if (val.op === "isNotSet") return { ttc: { path, equals: Prisma.DbNull } };
+  if (!("value" in val)) return null;
+  const seconds = Number(val.value);
+  if (!Number.isFinite(seconds)) return null;
+  const lower = seconds * 1000 - 500;
+  const upper = seconds * 1000 + 500;
+  switch (val.op) {
+    case "equals":
+      return { AND: [{ ttc: { path, gte: lower } }, { ttc: { path, lt: upper } }] };
+    case "notEquals":
+      return {
+        OR: [
+          { ttc: { path, lt: lower } },
+          { ttc: { path, gte: upper } },
+          { ttc: { path, equals: Prisma.DbNull } },
+        ],
+      };
+    case "greaterThan":
+      return { ttc: { path, gte: upper } };
+    case "greaterEqual":
+      return { ttc: { path, gte: lower } };
+    case "lessThan":
+      return { ttc: { path, lt: lower } };
+    case "lessEqual":
+      return { ttc: { path, lt: upper } };
+    default:
+      return null;
+  }
+};
+
+/**
+ * The `reserved` criteria group → conditions. Fails closed (ENG-1848): a name the survey's declared
+ * fields or element ids shadow filters the declared value elsewhere, never the reserved read — and
+ * an unknown name emits nothing. `Object.hasOwn` because the keys come from a z.record: a crafted
+ * `__proto__`/`constructor` key must not resolve a locator through the prototype chain.
+ */
+const buildReservedConditions = (
+  survey: TSurvey,
+  reserved: NonNullable<TResponseFilterCriteria["reserved"]>
+): Prisma.ResponseWhereInput[] => {
+  const elementIds = getElementsFromBlocks(survey.blocks).map((element) => element.id);
+  const shadowed = new Set(listShadowingNames(getSurveyEmbeddedFields(survey), elementIds));
+  const catalogEntriesByName = new Map(RESERVED_FIELD_CATALOG.map((entry) => [entry.name, entry]));
+  const conditions: Prisma.ResponseWhereInput[] = [];
+
+  Object.entries(reserved).forEach(([name, val]) => {
+    if (shadowed.has(name)) return;
+    if (!Object.hasOwn(RESERVED_FILTER_LOCATORS, name)) return;
+    const entry = catalogEntriesByName.get(name);
+    if (!entry) return;
+    const locator = RESERVED_FILTER_LOCATORS[name];
+    const condition =
+      locator.kind === "ttcTotalMs"
+        ? buildDurationSecondsCondition(val)
+        : buildJsonPathCondition("meta", locator.path, val, entry.dataType);
+    if (condition) conditions.push(condition);
+  });
+
+  return conditions;
+};
+
+/** The `variables` group → conditions. Keys are computed-field storageKeys; anything else emits nothing. */
+const buildVariableConditions = (
+  survey: TSurvey,
+  variables: NonNullable<TResponseFilterCriteria["variables"]>
+): Prisma.ResponseWhereInput[] => {
+  const computedFieldsByKey = new Map(
+    getComputedEmbeddedFields(survey).map((field) => [field.link.storageKey, field])
+  );
+  const conditions: Prisma.ResponseWhereInput[] = [];
+
+  Object.entries(variables).forEach(([storageKey, val]) => {
+    const field = computedFieldsByKey.get(storageKey);
+    if (!field) return;
+    const condition = buildJsonPathCondition("variables", [storageKey], val, field.field.dataType);
+    if (condition) conditions.push(condition);
+  });
+
+  return conditions;
+};
+
+/**
+ * The ENG-1848 criteria groups as ready-to-push clauses. Both branches live here rather than in
+ * `buildWhereClause`, which sat exactly at the cognitive-complexity limit before this feature —
+ * even two plain `if`s there tip it over.
+ */
+const buildEmbeddedDataFilterClauses = (
+  survey: TSurvey,
+  filterCriteria?: TResponseFilterCriteria
+): Prisma.ResponseWhereInput[] => {
+  const clauses: Prisma.ResponseWhereInput[] = [];
+
+  if (filterCriteria?.reserved) {
+    clauses.push({ AND: buildReservedConditions(survey, filterCriteria.reserved) });
+  }
+  if (filterCriteria?.variables) {
+    clauses.push({ AND: buildVariableConditions(survey, filterCriteria.variables) });
+  }
+
+  return clauses;
+};
 
 const createFilterTags = (tags: TResponseFilterCriteria["tags"]) => {
   if (!tags) return [];
@@ -42,8 +266,61 @@ const createFilterTags = (tags: TResponseFilterCriteria["tags"]) => {
   return filterTags.flat();
 };
 
+/**
+ * Upper bound on the filter clauses a single buildWhereClause call may emit.
+ *
+ * The "Other" branches below scale with the element's choice count, which has no maximum
+ * (ZSurveyElementChoice is `.min(2)` only), so an unbounded predicate is a denial-of-service
+ * vector — a low-privilege request could allocate until the process died (ENG-3161).
+ *
+ * The budget is per CALL, not per branch: `filterCriteria.data` is a record whose keys are each
+ * iterated below, so a per-branch cap would simply be multiplied by the key count.
+ *
+ * 10k clauses is ~30k bind parameters (each probe binds key + index + label), comfortably under
+ * PostgreSQL's 65535 ceiling.
+ *
+ * What that buys is not one number. The multi branch charges `positions x (distinct labels + 1)`, and
+ * a label exists per language, so the reachable choice count falls roughly as `10000 / (L x c)`: ~99
+ * choices monolingual, but only ~40 trilingual, and a 45-option country list in five languages does
+ * not fit. Deduplicating labels below recovers the common case where a choice is left untranslated
+ * and the same text repeats across languages, but not one that is genuinely translated five ways.
+ * Sharing the budget across keys means `tags` or a second `data` key takes from the same allowance.
+ *
+ * A filter past the budget throws, which the analysis actions surface as a hard error. That is the
+ * deliberate trade against ENG-3161's unbounded predicate, but it is reachable by a legitimate survey
+ * rather than only by an abusive one — see the PR's open gaps.
+ */
+const MAX_FILTER_CLAUSES = 10_000;
+
+/**
+ * Extra array positions probed beyond the element's choice count when testing for an "Other" write-in.
+ *
+ * Sized for the two ways a stored answer outgrows `choices.length` in practice — a handful of repeated
+ * entries, or a few choices deleted from a running survey after the answer was collected. It is a
+ * mitigation, not a proof: see the probe itself for what remains uncovered.
+ */
+const OTHER_WRITE_IN_PROBE_SLACK = 8;
+
+/**
+ * One call's clause allowance. The returned `spend` charges against it and refuses the filter once
+ * it is exhausted. Kept out of buildWhereClause so the budget is a self-contained concern rather
+ * than more branching inside an already-large builder.
+ */
+const createClauseBudget = (): ((count: number) => void) => {
+  let remaining = MAX_FILTER_CLAUSES;
+
+  return (count: number): void => {
+    remaining -= count;
+    if (remaining < 0) {
+      throw new InvalidInputError("This response filter is too large to evaluate");
+    }
+  };
+};
+
 export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilterCriteria) => {
   const whereClause: Prisma.ResponseWhereInput["AND"] = [];
+
+  const spend = createClauseBudget();
 
   if (filterCriteria?.finished !== undefined) {
     whereClause.push({
@@ -66,7 +343,10 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
   }
 
   if (filterCriteria?.tags) {
+    // `applied` expands to one relation subquery per tag, so charge what was actually emitted.
     const tagFilters = createFilterTags(filterCriteria.tags);
+    spend(tagFilters.length);
+
     whereClause.push({
       AND: tagFilters,
     });
@@ -215,6 +495,8 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
     });
   }
 
+  whereClause.push(...buildEmbeddedDataFilterClauses(survey, filterCriteria));
+
   if (filterCriteria?.data) {
     const data: Prisma.ResponseWhereInput[] = [];
 
@@ -343,27 +625,59 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
             otherChoice &&
             values.has(otherChoice.label.default)
           ) {
-            const predefinedLabels: string[] = [];
+            // Deduplicated: a choice left untranslated carries the same text under every language
+            // key, and `{ not: label }` twice is the same clause twice. Charging it once per language
+            // spent the budget on nothing (ENG-3161 review).
+            const predefinedLabelSet = new Set<string>();
 
             element.choices.forEach((choice) => {
               Object.values(choice.label).forEach((label) => {
                 if (!values.has(label)) {
-                  predefinedLabels.push(label);
+                  predefinedLabelSet.add(label);
                 }
               });
             });
 
-            const subsets = generateAllPermutationsOfSubsets(predefinedLabels);
+            const predefinedLabels = [...predefinedLabelSet];
+
             if (element.type === "multipleChoiceMulti") {
-              const subsetConditions = subsets.map((subset) => ({
-                data: { path: [key], equals: subset },
-              }));
+              // A multi answer is a string[] of the chosen labels, with the "Other" write-in stored
+              // as the raw typed text. "Other was chosen" therefore means: at least one entry is
+              // not a predefined label. Prisma's JSON filters have no subset operator, so each
+              // array position is probed by numeric path segment; positions past the end extract to
+              // SQL NULL, so unanswered and empty ([]) responses correctly do not match.
+              //
+              // A well-formed answer holds at most one entry per choice, so `choices.length` would
+              // cover it. Stored answers are not guaranteed well-formed, and both ways past that end
+              // with the write-in at an unprobed index — silently narrowing what the pre-ENG-3161
+              // predicate matched:
+              //
+              //   - nothing enforces uniqueness (`ZResponseDataValue` is `z.array(z.string())` with
+              //     no cap), so `["A0","A0","A0","A0","write-in"]` is accepted on a 3-choice element;
+              //   - deleting choices from a running survey shrinks `choices.length` while the already
+              //     collected answers keep their original length.
+              //
+              // The slack covers both at realistic sizes. It cannot close the class — an array with
+              // more than SLACK duplicates still escapes — because a positional probe cannot bound an
+              // unbounded array. Bounding the stored array on write is the real fix and its own ticket.
+              const positions = element.choices.length + OTHER_WRITE_IN_PROBE_SLACK;
+              spend(positions * (predefinedLabels.length + 1));
+
               data.push({
-                NOT: {
-                  OR: subsetConditions,
-                },
+                OR: Array.from({ length: positions }, (_unused, index) => ({
+                  AND: [
+                    { data: { path: [key, String(index)], not: Prisma.DbNull } },
+                    ...predefinedLabels.map((label) => ({
+                      data: { path: [key, String(index)], not: label },
+                    })),
+                  ],
+                })),
               });
             } else {
+              // A single answer is a scalar string, so "not any predefined label" is directly
+              // expressible and stays linear in the label count.
+              spend(predefinedLabels.length);
+
               data.push({
                 AND: predefinedLabels.map((label) => ({
                   NOT: {
@@ -376,6 +690,9 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
               });
             }
           } else {
+            // Two clauses per selected value: the array shape and the scalar shape.
+            spend(val.value.length * 2);
+
             data.push({
               OR: val.value.map((value: string | number) => ({
                 OR: [
@@ -458,6 +775,61 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
           });
           break;
         }
+        // Text ops for string-typed ingested Embedded Data fields (ENG-1848).
+        case "contains":
+          data.push({
+            data: {
+              path: [key],
+              string_contains: val.value,
+            },
+          });
+          break;
+        case "doesNotContain":
+          data.push({
+            NOT: {
+              data: {
+                path: [key],
+                string_contains: val.value,
+              },
+            },
+          });
+          break;
+        case "startsWith":
+          data.push({
+            data: {
+              path: [key],
+              string_starts_with: val.value,
+            },
+          });
+          break;
+        case "doesNotStartWith":
+          data.push({
+            NOT: {
+              data: {
+                path: [key],
+                string_starts_with: val.value,
+              },
+            },
+          });
+          break;
+        case "endsWith":
+          data.push({
+            data: {
+              path: [key],
+              string_ends_with: val.value,
+            },
+          });
+          break;
+        case "doesNotEndWith":
+          data.push({
+            NOT: {
+              data: {
+                path: [key],
+                string_ends_with: val.value,
+              },
+            },
+          });
+          break;
       }
     });
 

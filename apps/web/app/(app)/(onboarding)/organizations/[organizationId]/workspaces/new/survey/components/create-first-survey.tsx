@@ -5,13 +5,12 @@ import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { TUserLocale } from "@formbricks/types/user";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
 import { CUSTOM_SURVEY_TEMPLATE_ID } from "@/app/lib/templates";
+import { getAIUnavailableMessage } from "@/lib/ai/availability";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { useCreateSurveyFromTemplate } from "@/modules/survey/components/template-list/hooks/use-create-survey-from-template";
-import { getUnavailableMessageKey } from "@/modules/survey/components/template-list/lib/ai-create-utils";
 import { AiGlyph } from "@/modules/ui/components/ai";
 
 type TOnboardingSurveyPath = "scratch" | "template" | "ai";
@@ -19,7 +18,8 @@ type TOnboardingSurveyPath = "scratch" | "template" | "ai";
 interface CreateFirstSurveyProps {
   organizationId: string;
   workspaceId: string;
-  defaultLanguage: TUserLocale;
+  /** The language the created survey is authored in — see `resolveDefaultSurveyLanguage`. */
+  defaultLanguage: string;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
 }
@@ -61,7 +61,7 @@ export const CreateFirstSurvey = ({
     }
   };
 
-  const aiDisabledDescription = isAIAvailable ? undefined : t(getUnavailableMessageKey(aiUnavailableReason));
+  const aiDisabledDescription = isAIAvailable ? undefined : getAIUnavailableMessage(aiUnavailableReason, t);
 
   const options = [
     {

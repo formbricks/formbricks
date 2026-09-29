@@ -7,7 +7,7 @@ import { createAuthPathLabeller } from "@/modules/auth/lib/better-auth-path-labe
 import { runWithBetterAuthRequestContext } from "@/modules/auth/lib/better-auth-request-context";
 import { runWithEmailVerificationRequestContext } from "@/modules/auth/lib/email-verification-request-context";
 import { mapLegacySsoCallbackRequest } from "@/modules/auth/lib/legacy-sso-callback";
-import { normalizeDcrRequest } from "@/modules/auth/lib/mcp-dcr-application-type";
+import { prepareDcrRequest } from "@/modules/auth/lib/mcp-dcr-application-type";
 import { runWithSsoRequestContext } from "@/modules/ee/sso/lib/sso-request-context";
 
 // Force-no-store so Better Auth's outbound SSO fetches (token exchange, userinfo, JWKS) are never
@@ -64,8 +64,21 @@ const handler = async (request: Request): Promise<Response> => {
   // hooks, the audits — reads the MAPPED request, so each sees the endpoint that actually ran.
   // Two normalisations, both because 1.7 changed a contract that clients and IdPs already depend on and
   // neither is ours to change: the pinned SSO callback path, and `application_type` on dynamic client
-  // registration (see each module). Both no-op for every other request.
-  const mappedRequest = await normalizeDcrRequest(mapLegacySsoCallbackRequest(request));
+  // registration (see each module). The DCR redirect-URI allowlist (ENG-3086) rides the same body read
+  // and rejects non-loopback registrations before Better Auth sees them. All three no-op otherwise.
+  const preparedRequest = await prepareDcrRequest(mapLegacySsoCallbackRequest(request));
+  // A rejected DCR registration is the one early return here. It runs before auth.handler, so it skips
+  // Better Auth's `/oauth2/register` rate limit (5/min) and the SSO-callback observability below — both
+  // acceptable: a rejected registration writes no client row (the limit exists to cap client creation,
+  // and this check actually strengthens that cap) and is not a callback. Re-limiting here would cost a
+  // Redis round-trip to save one JSON parse, which is the wrong trade.
+  //
+  // That parse is of a body bounded only by `proxyClientMaxBodySize` (16mb, next.config.mjs) — but so
+  // was the read this replaced, and so is Better Auth's own, which also runs after the body is
+  // buffered. Bounding it belongs to the whole `/api/auth/*` surface rather than this one branch:
+  // ENG-3248.
+  if (preparedRequest instanceof Response) return preparedRequest;
+  const mappedRequest = preparedRequest;
   try {
     const response = await runWithBetterAuthRequestContext(
       { path: labelAuthPath(mappedRequest.url), method: mappedRequest.method },

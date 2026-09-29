@@ -43,6 +43,8 @@ export function LogicEditorConditions({
       blockIdx,
       getDefaultOperator: () => (firstElement ? getDefaultOperatorForElement(firstElement, t) : "equals"),
       includeCreateGroup: true,
+      // Block logic runs in the renderer, which projects the client-available reserved values.
+      includeReservedFields: true,
     },
     {
       onConditionsChange: (updater) => {

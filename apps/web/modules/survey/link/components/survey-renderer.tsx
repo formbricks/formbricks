@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { type Response } from "@formbricks/database/prisma-browser";
-import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
@@ -20,8 +19,10 @@ import { SurveyCompletedMessage } from "@/modules/survey/link/components/survey-
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
+import { resolveSurveyLanguageCode } from "@/modules/survey/link/lib/language";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { hasUserIdSearchParam } from "@/modules/survey/link/lib/user-id";
+import { getGateLocale } from "@/modules/survey/link/lib/utils";
 import { TWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 
 interface SurveyRendererProps {
@@ -63,6 +64,11 @@ export const renderSurvey = async ({
 }: SurveyRendererProps) => {
   const langParam = searchParams.lang;
   const isEmbed = searchParams.embed === "true";
+
+  // The survey's content language, and the locale everything around that content is translated in.
+  // Both are resolved once, here, so a gate screen can never disagree with the survey behind it.
+  const languageCode = resolveSurveyLanguageCode(langParam, survey);
+  const gateLocale = getGateLocale({ langParam, languageCode, survey, fallbackLocale: locale });
 
   // Archived surveys are absent from the workspace for respondents — treat the public link as a
   // missing survey (same as a draft or non-link survey) rather than showing an inactive/scheduled state.
@@ -117,9 +123,9 @@ export const renderSurvey = async ({
         <VerifyEmail
           survey={publicSurvey}
           isErrorComponent={true}
-          languageCode={getLanguageCode(langParam, survey)}
+          languageCode={languageCode}
           styling={workspace.styling}
-          locale={locale}
+          locale={gateLocale}
         />
       );
     }
@@ -128,16 +134,15 @@ export const renderSurvey = async ({
         singleUseId={searchParams.suId ?? ""}
         singleUseToken={searchParams.suToken}
         survey={publicSurvey}
-        languageCode={getLanguageCode(langParam, survey)}
+        languageCode={languageCode}
         styling={workspace.styling}
-        locale={locale}
+        locale={gateLocale}
       />
     );
   }
 
   // Compute final styling based on workspace and survey settings
   const styling = computeStyling(workspace.styling, survey.styling);
-  const languageCode = getLanguageCode(langParam, survey);
   const publicDomain = getPublicDomain();
   const canReadUserIdFromUrl =
     allowUrlUserIdLookup && !contactId && hasUserIdSearchParam(searchParams)
@@ -160,6 +165,7 @@ export const renderSurvey = async ({
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
         verifiedEmail={verifiedEmail}
         languageCode={languageCode}
+        locale={gateLocale}
         isEmbed={isEmbed}
         isPreview={isPreview}
         contactId={contactId}
@@ -209,39 +215,4 @@ function computeStyling(
     return workspaceStyling;
   }
   return surveyStyling?.overwriteThemeStyling ? surveyStyling : workspaceStyling;
-}
-
-/**
- * Determines the language code to use for the survey.
- * Checks URL parameter against available survey languages and returns
- * "default" if language is not found or disabled.
- */
-function getLanguageCode(langParam: string | undefined, survey: TSurvey): string {
-  if (!langParam) return "default";
-
-  // Match the URL `?lang=` value against the survey's languages in strict precedence so selection is
-  // deterministic regardless of array order: (1) an exact stored `code`, then (2) a custom `alias`, then
-  // (3) canonical equivalence. Code beats alias because an exact code always lines up with the survey's
-  // i18n content keys — without this, one row's alias could shadow another row's exact code. The canonical
-  // pass lets a shared link with a legacy code (`?lang=pt`) still resolve to a migrated language (`pt-BR`).
-  // Returns the survey's stored code so it lines up with its content keys.
-  const langParamLower = langParam.toLowerCase();
-  const langParamCanonical = normalizeLanguageCode(langParam);
-  const selectedLanguage =
-    survey.languages.find(
-      (surveyLanguage) => surveyLanguage.language.code.toLowerCase() === langParamLower
-    ) ??
-    survey.languages.find(
-      (surveyLanguage) => surveyLanguage.language.alias?.toLowerCase() === langParamLower
-    ) ??
-    (langParamCanonical
-      ? survey.languages.find(
-          (surveyLanguage) => normalizeLanguageCode(surveyLanguage.language.code) === langParamCanonical
-        )
-      : undefined);
-
-  if (!selectedLanguage || selectedLanguage?.default || !selectedLanguage?.enabled) {
-    return "default";
-  }
-  return selectedLanguage.language.code;
 }

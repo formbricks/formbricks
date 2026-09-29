@@ -83,7 +83,7 @@ export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlace
       <Collapsible.CollapsibleTrigger
         asChild
         className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
-        <div className="inline-flex px-4 py-4">
+        <button type="button" className="inline-flex px-4 py-4 text-left">
           <div className="flex items-center pr-5 pl-2">
             <CheckIcon
               strokeWidth={3}
@@ -96,7 +96,7 @@ export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlace
               {t("workspace.surveys.edit.overwrite_the_global_placement_of_the_survey")}
             </p>
           </div>
-        </div>
+        </button>
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent
         className={`flex ${open && "pb-3"} overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down`}>

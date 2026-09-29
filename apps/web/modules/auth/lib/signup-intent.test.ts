@@ -1,11 +1,12 @@
 import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-const NEXTAUTH_SECRET = "test-nextauth-secret";
+const AUTH_SECRET = "test-auth-secret";
 // 32 bytes hex — symmetricEncrypt/symmetricDecrypt expect a 64-char key.
 const ENCRYPTION_KEY = "0".repeat(64);
 
-vi.mock("@/lib/constants", () => ({ NEXTAUTH_SECRET, ENCRYPTION_KEY, BETTER_AUTH_SECRET: undefined }));
+// AUTH_URL is reached transitively through auth-cookies.ts (USE_SECURE_COOKIES).
+vi.mock("@/lib/constants", () => ({ AUTH_SECRET, ENCRYPTION_KEY, AUTH_URL: undefined }));
 vi.mock("@/lib/env", () => ({ env: { WEBAPP_URL: "http://localhost:3000" } }));
 // Imported only so the boundary test below can call the REAL `verifyToken`; its gateway-auth import
 // chain is irrelevant to that call and pulls in server env, so stub it.
@@ -82,7 +83,7 @@ describe("signup intent token", () => {
     (purpose) => {
       const otherFlowToken = jwt.sign(
         { id: symmetricEncrypt("user_1", ENCRYPTION_KEY), purpose },
-        NEXTAUTH_SECRET,
+        AUTH_SECRET,
         { algorithm: "HS256" }
       );
 
@@ -95,7 +96,7 @@ describe("signup intent token", () => {
   // mutation). Nothing mints a `uid`-carrying token today, which is exactly why this row exists — the
   // check is what keeps that true if something ever does.
   test.each([["other_kind"], [undefined], [""]])("refuses a uid-carrying token whose kind is %s", (kind) => {
-    const wrongKind = jwt.sign({ uid: symmetricEncrypt("user_1", ENCRYPTION_KEY), kind }, NEXTAUTH_SECRET, {
+    const wrongKind = jwt.sign({ uid: symmetricEncrypt("user_1", ENCRYPTION_KEY), kind }, AUTH_SECRET, {
       algorithm: "HS256",
     });
 
@@ -116,7 +117,7 @@ describe("signup intent token", () => {
     expect(decoded.kind).toBe("signup_intent");
 
     // And the boundary itself: the REAL verifier refuses the token. The signature is genuinely valid
-    // to it (same secret on a NEXTAUTH_SECRET-only deployment), so what this binds is the
+    // to it (same secret on a AUTH_SECRET-only deployment), so what this binds is the
     // `if (!payload?.id)` bail-out — the layout assertions above would keep passing if `verifyToken`
     // ever started accepting `uid`/`kind`; this call would not.
     const { verifyToken } = await import("@/lib/jwt");

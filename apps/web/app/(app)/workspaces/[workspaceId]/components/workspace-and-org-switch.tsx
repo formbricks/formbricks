@@ -13,6 +13,7 @@ interface WorkspaceAndOrgSwitchProps {
   organizationWorkspacesLimit: number;
   isFormbricksCloud: boolean;
   isLicenseActive: boolean;
+  isNoLicense: boolean;
   isOwnerOrManager: boolean;
   isAccessControlAllowed: boolean;
   isMembershipPending: boolean;
@@ -31,6 +32,7 @@ export const WorkspaceAndOrgSwitch = ({
   organizationWorkspacesLimit,
   isFormbricksCloud,
   isLicenseActive,
+  isNoLicense,
   isOwnerOrManager,
   isAccessControlAllowed,
   isMembershipPending,
@@ -59,6 +61,7 @@ export const WorkspaceAndOrgSwitch = ({
             organizationWorkspacesLimit={organizationWorkspacesLimit}
             isFormbricksCloud={isFormbricksCloud}
             isLicenseActive={isLicenseActive}
+            isNoLicense={isNoLicense}
             isAccessControlAllowed={isAccessControlAllowed}
             isEnvironmentBreadcrumbVisible={false}
             isMembershipPending={isMembershipPending}

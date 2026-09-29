@@ -1,4 +1,5 @@
 import { type MutableRef, useEffect, useRef } from "preact/hooks";
+import { isPlainEscape } from "@/lib/keyboard";
 
 type FocusScope = { paused: boolean; pause: () => void; resume: () => void };
 type FocusableTarget = HTMLElement | { focus: (options?: FocusOptions) => void };
@@ -270,8 +271,7 @@ export const useFocusTrap = <TElement extends HTMLElement>({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (focusScope.paused) return;
 
-      const hasModifierKey = event.altKey || event.ctrlKey || event.metaKey;
-      if (event.key === "Escape" && !hasModifierKey && onEscapeKeyDownRef.current) {
+      if (isPlainEscape(event) && onEscapeKeyDownRef.current) {
         event.preventDefault();
         onEscapeKeyDownRef.current();
         return;

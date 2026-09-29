@@ -1,0 +1,41 @@
+allOf:
+  - $ref: ./ListPaginationMeta.yml
+  - type: object
+    required:
+      - totalCount
+      - totalCountRelation
+    properties:
+      totalCount:
+        type:
+          - integer
+          - "null"
+        minimum: 0
+        description: >
+          Responses matching the current scope and filters across all pages, **counted
+          only up to 10 000**. Exact below that; at the cap the value is exactly `10000`
+          and means "at least 10 000", which `totalCountRelation` states explicitly.
+          `null` unless `includeTotalCount=true`.
+
+
+          The cap is not timidity — an exact count over this table grows superlinearly
+          with the data while a capped one stays flat, so an uncapped total is the one
+          part of a page whose cost is unbounded. Read `totalCountRelation` rather than
+          testing for the magic number.
+      totalCountRelation:
+        type:
+          - string
+          - "null"
+        enum:
+          - eq
+          - gte
+          - null
+        description: >
+          How to read `totalCount`: `eq` when it is exact, `gte` when the 10 000 cap was
+          reached and it is a lower bound, `null` when `includeTotalCount=false`. This is
+          the same eq/gte convention Elasticsearch uses for `hits.total.relation`, so a
+          consumer can render "10,000+" honestly instead of claiming a precise figure it
+          does not have.
+unevaluatedProperties: false
+description: >-
+  The list `meta` for responses — pagination plus a bounded, opt-in total. Both counting fields are
+  `required` but nullable, so `includeTotalCount=false` answers `null` rather than omitting them.

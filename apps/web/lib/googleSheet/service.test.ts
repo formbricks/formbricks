@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { AuthenticationError, UnknownError } from "@formbricks/types/errors";
+import { AuthenticationError, OperationNotAllowedError, UnknownError } from "@formbricks/types/errors";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
-import { GOOGLE_SHEET_INTEGRATION_INVALID_GRANT } from "@/lib/googleSheet/constants";
+import {
+  GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION,
+  GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_SCOPES,
+  GOOGLE_SHEET_INTEGRATION_INVALID_GRANT,
+} from "@/lib/googleSheet/constants";
 
 vi.mock("@/lib/integration/service", () => ({ createOrUpdateIntegration: vi.fn() }));
 
@@ -17,6 +21,8 @@ const sheetsMock = vi.hoisted(() => ({
   append: vi.fn(),
 }));
 
+const spreadsheetsGetMock = vi.hoisted(() => vi.fn());
+
 vi.mock("googleapis", () => ({
   google: {
     auth: {
@@ -24,7 +30,7 @@ vi.mock("googleapis", () => ({
         setCredentials() {}
       },
     },
-    sheets: () => ({ spreadsheets: { values: sheetsMock } }),
+    sheets: () => ({ spreadsheets: { values: sheetsMock, get: spreadsheetsGetMock } }),
   },
 }));
 
@@ -51,18 +57,6 @@ const redactedIntegration = {
   },
 } as TIntegrationGoogleSheets;
 
-// ENG-2303: a blank refresh token reached googleapis, which surfaced it as a bare "No refresh token is
-// set." straight into a user-facing toast. It has to fail as the reconnect case instead, which the modal
-// maps to a real message. Nothing here touches the network: the guard short-circuits before any Google
-// call, which is also what keeps this test hermetic.
-describe("getSpreadsheetNameById", () => {
-  test("throws an invalid_grant AuthenticationError when the stored refresh token is blank", async () => {
-    await expect(getSpreadsheetNameById(redactedIntegration, "sheet1")).rejects.toThrow(
-      new AuthenticationError(GOOGLE_SHEET_INTEGRATION_INVALID_GRANT)
-    );
-  });
-});
-
 /** An integration whose stored access token is still valid, so `authorize` never has to refresh. */
 const authorizedIntegration = {
   id: "integration1",
@@ -80,6 +74,60 @@ const authorizedIntegration = {
     },
   },
 } as TIntegrationGoogleSheets;
+
+// ENG-2303: a blank refresh token reached googleapis, which surfaced it as a bare "No refresh token is
+// set." straight into a user-facing toast. It has to fail as the reconnect case instead, which the modal
+// maps to a real message. Nothing here touches the network: the guard short-circuits before any Google
+// call, which is also what keeps this test hermetic.
+describe("getSpreadsheetNameById", () => {
+  test("throws an invalid_grant AuthenticationError when the stored refresh token is blank", async () => {
+    await expect(getSpreadsheetNameById(redactedIntegration, "sheet1")).rejects.toThrow(
+      new AuthenticationError(GOOGLE_SHEET_INTEGRATION_INVALID_GRANT)
+    );
+  });
+
+  // ENG-2807: Google's scope rejection never says "permission", so it slipped past the permission guard
+  // and reached the user as a raw English Google string. It needs its own code, because the fix is to
+  // reconnect and grant the Sheets scope, not to share the spreadsheet.
+  describe("when Google rejects the spreadsheet fetch", () => {
+    const rejectWith = (message: string) => {
+      spreadsheetsGetMock.mockImplementation((_params, callback: (err: Error | null) => void) => {
+        setTimeout(() => callback(new Error(message)), 0);
+      });
+    };
+
+    beforeEach(() => {
+      spreadsheetsGetMock.mockReset();
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    test("maps a missing OAuth scope to the insufficient_scopes code", async () => {
+      rejectWith("Request had insufficient authentication scopes.");
+
+      await expect(getSpreadsheetNameById(authorizedIntegration, "sheet1")).rejects.toThrow(
+        new OperationNotAllowedError(GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_SCOPES)
+      );
+    });
+
+    test("keeps mapping a sharing problem to the insufficient_permission code", async () => {
+      rejectWith("The caller does not have permission");
+
+      await expect(getSpreadsheetNameById(authorizedIntegration, "sheet1")).rejects.toThrow(
+        new OperationNotAllowedError(GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION)
+      );
+    });
+
+    test("wraps any other Google error in an UnknownError", async () => {
+      rejectWith("Requested entity was not found.");
+
+      await expect(getSpreadsheetNameById(authorizedIntegration, "sheet1")).rejects.toThrow(UnknownError);
+    });
+  });
+});
 
 // ENG-2250: both writes used to `throw` from inside the node-style googleapis callback, so the error
 // escaped `writeData`'s own `try/catch` and surfaced as an unhandled rejection while `writeData` itself

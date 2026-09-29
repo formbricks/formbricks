@@ -88,6 +88,11 @@ export const recurringJobDescriptors = {
     name: JOB_NAMES.workflowRunReconcile,
     scheduleId: "workflow-run-reconcile",
   }),
+  workflowsUsageSnapshot: defineRecurringJob({
+    label: "workflows usage snapshot",
+    name: JOB_NAMES.workflowsUsageSnapshot,
+    scheduleId: "daily-workflows-usage-snapshot",
+  }),
 } as const satisfies Record<string, RecurringJobDescriptor>;
 
 export type TRecurringJobKey = keyof typeof recurringJobDescriptors;

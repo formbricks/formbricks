@@ -31,6 +31,7 @@ import {
   validateCardFieldsForAllLanguages,
   validateQuestionLabels,
 } from "@formbricks/types/surveys/validation";
+import { isAppSurveyMissingTriggersToPublish } from "@/lib/survey/utils";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 import * as validation from "./validation";
 
@@ -458,11 +459,34 @@ describe("validation.isEndingCardValid", () => {
     expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
   });
 
+  test("should return true for endScreen card with a mailto: button link", () => {
+    const card: TSurveyEndScreenCard = {
+      ...baseEndScreenCard,
+      buttonLabel: { default: "Go", en: "Go", de: "Los" },
+      buttonLink: "mailto:hello@example.com",
+    };
+    expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
+  });
+
+  test("should return false for endScreen card with a javascript: button link", () => {
+    const card: TSurveyEndScreenCard = {
+      ...baseEndScreenCard,
+      buttonLabel: { default: "Go", en: "Go", de: "Los" },
+      buttonLink: "javascript:alert(1)",
+    };
+    expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(false);
+  });
+
+  test("should return false for a redirectToUrl card with a mailto: url", () => {
+    const card: TSurveyRedirectUrlCard = { ...baseRedirectUrlCard, url: "mailto:hello@example.com" };
+    expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(false);
+  });
+
   test("should return true for endScreen card with dynamic URL containing recall", () => {
     const card: TSurveyEndScreenCard = {
       ...baseEndScreenCard,
       buttonLabel: { default: "Go", en: "Go", de: "Los" },
-      buttonLink: "https://#recall:test123/fallback:example.com",
+      buttonLink: "https://#recall:test123/fallback:example.com#",
     };
     expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
   });
@@ -483,7 +507,7 @@ describe("validation.isEndingCardValid", () => {
   });
 
   test("should return true for redirectUrl card with dynamic URL containing recall", () => {
-    const card = { ...baseRedirectUrlCard, url: "https://#recall:test123/fallback:example.com" };
+    const card = { ...baseRedirectUrlCard, url: "https://#recall:test123/fallback:example.com#" };
     expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
   });
 
@@ -1357,6 +1381,16 @@ describe("validation.getValidateIdErrorMessage", () => {
     expect(result).toContain("validate_id_invalid_chars");
   });
 
+  test("returns a distinct message for NotSafeIdentifier error code", () => {
+    const result = validation.getValidateIdErrorMessage(
+      { code: TValidateIdErrorCode.NotSafeIdentifier, field: "Legacy-Field" },
+      "hiddenField",
+      mockT
+    );
+    expect(result).toContain("validate_id_not_safe_identifier");
+    expect(result).not.toContain("validate_id_invalid_chars");
+  });
+
   test("localizes type before passing to translation function", () => {
     const spyT = vi.fn().mockImplementation((key: string) => {
       if (key === "common.hidden_field") return "Hidden field";
@@ -1739,5 +1773,64 @@ describe("ZSurvey element issues reach the editor with a usable path", () => {
 
     expect(result.success).toBe(true);
     expect(result.data?.blocks[0].elements[0]).toMatchObject({ shuffleOption: "none" });
+  });
+});
+
+// ENG-2581: the editor stopped disabling Save / Save & Close / Publish for a missing trigger and
+// now blocks the click instead, so this predicate is what decides whether the click is refused.
+describe("validation.isMissingRequiredTrigger", () => {
+  const appSurveyWithoutTriggers = { type: "app", triggers: [] } as unknown as TSurvey;
+
+  test.each(["inProgress", "paused", "completed"] as const)(
+    "refuses an app survey with no trigger heading for %s",
+    (targetStatus) => {
+      expect(validation.isMissingRequiredTrigger(appSurveyWithoutTriggers, targetStatus)).toBe(true);
+    }
+  );
+
+  test("lets an app survey with no trigger be saved as a draft", () => {
+    expect(validation.isMissingRequiredTrigger(appSurveyWithoutTriggers, "draft")).toBe(false);
+  });
+
+  test("lets a link survey publish with no trigger", () => {
+    expect(
+      validation.isMissingRequiredTrigger({ type: "link", triggers: [] } as unknown as TSurvey, "inProgress")
+    ).toBe(false);
+  });
+
+  test("lets an app survey with a trigger publish", () => {
+    const withTrigger = {
+      type: "app",
+      triggers: [{ actionClass: { id: "action1", name: "Click" } }],
+    } as unknown as TSurvey;
+
+    expect(validation.isMissingRequiredTrigger(withTrigger, "inProgress")).toBe(false);
+  });
+
+  test.each([
+    ["a null triggers array", null],
+    ["an undefined triggers array", undefined],
+    ["a hole left by a removed trigger", [undefined]],
+  ])("treats %s as no trigger", (_case, triggers) => {
+    expect(
+      validation.isMissingRequiredTrigger({ type: "app", triggers } as unknown as TSurvey, "inProgress")
+    ).toBe(true);
+  });
+
+  // The client cannot import the server-only module that owns the same rule, so the two are separate
+  // code. This is what keeps them from drifting: the client must refuse exactly what the server
+  // rejects, or the editor promises a save the API then fails.
+  test("agrees with the server-side rule on every type/status/trigger combination", () => {
+    for (const type of ["app", "link"] as const) {
+      for (const status of ["draft", "inProgress", "paused", "completed"] as const) {
+        for (const triggers of [[], [{ actionClass: { id: "action1" } }]]) {
+          const survey = { type, triggers } as unknown as TSurvey;
+
+          expect(validation.isMissingRequiredTrigger(survey, status)).toBe(
+            isAppSurveyMissingTriggersToPublish(type, status, triggers)
+          );
+        }
+      }
+    }
   });
 });

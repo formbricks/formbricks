@@ -25,6 +25,8 @@ interface SurveyEditorTabsProps {
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   isStylingTabVisible?: boolean;
+  /** Follow-ups are deprecated — see `shouldShowFollowUpsTab` for who still gets the tab. */
+  isFollowUpsTabVisible?: boolean;
   isCxMode: boolean;
   hasLanguageErrors?: boolean;
 }
@@ -33,9 +35,10 @@ export const SurveyEditorTabs = ({
   activeId,
   setActiveId,
   isStylingTabVisible,
+  isFollowUpsTabVisible,
   isCxMode,
   hasLanguageErrors,
-}: SurveyEditorTabsProps) => {
+}: Readonly<SurveyEditorTabsProps>) => {
   const { t } = useTranslation();
   const tabsComputed = useMemo(() => {
     const tabs: Tab[] = [
@@ -67,11 +70,12 @@ export const SurveyEditorTabs = ({
       },
     ];
 
-    if (isStylingTabVisible) {
-      return tabs;
-    }
-    return tabs.filter((tab) => tab.id !== "styling");
-  }, [isStylingTabVisible, t, hasLanguageErrors]);
+    return tabs.filter((tab) => {
+      if (tab.id === "styling") return !!isStylingTabVisible;
+      if (tab.id === "followUps") return !!isFollowUpsTabVisible;
+      return true;
+    });
+  }, [isStylingTabVisible, isFollowUpsTabVisible, t, hasLanguageErrors]);
 
   const cxModeHiddenTabIds = new Set<TSurveyEditorTabs>(["settings", "language", "followUps"]);
   const tabsToDisplay = isCxMode

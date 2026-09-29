@@ -40,7 +40,10 @@ vi.mock("@/modules/auth/lib/cutover/reencode-two-factor", () => ({
   buildReencodedTwoFactorData: vi.fn(),
 }));
 
-vi.mock("@/modules/auth/lib/totp", () => ({
+// Only the verifier is mocked: these tests drive code paths by forcing a token valid/invalid. The
+// secret generator and key-URI builder stay real, so the setup test still exercises them.
+vi.mock("@/modules/auth/lib/totp", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/auth/lib/totp")>()),
   totpAuthenticatorCheck: vi.fn(),
 }));
 

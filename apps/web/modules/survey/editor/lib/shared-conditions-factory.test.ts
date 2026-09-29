@@ -248,7 +248,9 @@ describe("shared-conditions-factory", () => {
       result.config.getLeftOperandOptions();
 
       const { getConditionValueOptions } = await import("@/modules/survey/editor/lib/utils");
-      expect(getConditionValueOptions).toHaveBeenCalledWith(mockSurvey, mockT, undefined);
+      // Reserved fields default to OFF: this factory also drives the quota condition builder, whose
+      // evaluator projects no reserved values (ENG-1840).
+      expect(getConditionValueOptions).toHaveBeenCalledWith(mockSurvey, mockT, undefined, false);
     });
 
     test("should call getConditionValueOptions with questionIdx", async () => {
@@ -261,7 +263,19 @@ describe("shared-conditions-factory", () => {
       result.config.getLeftOperandOptions();
 
       const { getConditionValueOptions } = await import("@/modules/survey/editor/lib/utils");
-      expect(getConditionValueOptions).toHaveBeenCalledWith(mockSurvey, mockT, 0);
+      expect(getConditionValueOptions).toHaveBeenCalledWith(mockSurvey, mockT, 0, false);
+    });
+
+    test("should forward includeReservedFields when the caller opts in", async () => {
+      const result = createSharedConditionsFactory(
+        { ...defaultParams, includeReservedFields: true },
+        defaultCallbacks
+      );
+
+      result.config.getLeftOperandOptions();
+
+      const { getConditionValueOptions } = await import("@/modules/survey/editor/lib/utils");
+      expect(getConditionValueOptions).toHaveBeenCalledWith(mockSurvey, mockT, undefined, true);
     });
 
     test("should call getMatchValueProps without questionIdx", async () => {

@@ -14,6 +14,7 @@ import {
   getSurveyLanguageTag,
   isRTL,
   isRTLLanguage,
+  mirrorPlacementForDir,
   resolveSelectedLanguageCode,
 } from "./utils";
 
@@ -668,5 +669,31 @@ describe("cn", () => {
 
   test("handles nulls, booleans and undefined values", () => {
     expect(cn(null, true, false, undefined, [null, true, false, undefined])).toBe("");
+  });
+});
+
+describe("mirrorPlacementForDir", () => {
+  test("mirrors the horizontal side of every corner placement in RTL", () => {
+    expect(mirrorPlacementForDir("bottomRight", "rtl")).toBe("bottomLeft");
+    expect(mirrorPlacementForDir("bottomLeft", "rtl")).toBe("bottomRight");
+    expect(mirrorPlacementForDir("topRight", "rtl")).toBe("topLeft");
+    expect(mirrorPlacementForDir("topLeft", "rtl")).toBe("topRight");
+  });
+
+  test("leaves center untouched in RTL — it has no side to flip", () => {
+    expect(mirrorPlacementForDir("center", "rtl")).toBe("center");
+  });
+
+  test("returns the authored placement unchanged for ltr and auto", () => {
+    expect(mirrorPlacementForDir("bottomRight", "ltr")).toBe("bottomRight");
+    expect(mirrorPlacementForDir("topLeft", "ltr")).toBe("topLeft");
+    expect(mirrorPlacementForDir("bottomRight", "auto")).toBe("bottomRight");
+  });
+
+  test("is its own inverse, so a survey switched back to an LTR language returns to its corner", () => {
+    const placements = ["bottomRight", "bottomLeft", "topRight", "topLeft", "center"] as const;
+    for (const placement of placements) {
+      expect(mirrorPlacementForDir(mirrorPlacementForDir(placement, "rtl"), "rtl")).toBe(placement);
+    }
   });
 });

@@ -11,6 +11,10 @@ export const LINKED_SSO_LOOKUP_SELECT = {
   isActive: true,
   identityProvider: true,
   identityProviderAccountId: true,
+  // Read before the recovery strip nulls it: 2FA lives in two stores, and a user who enrolled before
+  // the backfill shim landed has this legacy column set with no `TwoFactor` row to count. Without it,
+  // both the audit record and the notification mail would report that nothing was taken from them.
+  twoFactorEnabled: true,
 } as const;
 
 export type TSsoLookupUser = Prisma.UserGetPayload<{

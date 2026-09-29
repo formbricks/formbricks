@@ -56,6 +56,7 @@ describe("Survey Editor Library Tests", () => {
     recaptcha: null,
     isBackButtonHidden: false,
     isCaptureIpEnabled: false,
+    isAnonymizeResponsesEnabled: false,
     pin: null,
     displayPercentage: null,
     languages: [],

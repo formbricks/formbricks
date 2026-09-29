@@ -3,7 +3,10 @@ import { TCloudBillingPlan } from "@formbricks/types/organizations";
 import { getOnboardingWorkspace } from "@/app/(app)/(onboarding)/lib/onboarding-workspace";
 import { redirectIfOnboardingComplete } from "@/app/(app)/(onboarding)/lib/redirect-if-onboarding-complete";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
+import {
+  getOrganizationBillingWithReadThroughSync,
+  getProTrialDays,
+} from "@/modules/ee/billing/lib/organization-billing";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { SelectPlanOnboarding } from "./components/select-plan-onboarding";
 
@@ -43,7 +46,9 @@ const Page = async (props: PlanPageProps) => {
     return redirect(`/organizations/${params.organizationId}/workspaces/new/survey`);
   }
 
-  return <SelectPlanOnboarding organizationId={params.organizationId} />;
+  const trialDays = await getProTrialDays(params.organizationId);
+
+  return <SelectPlanOnboarding organizationId={params.organizationId} trialDays={trialDays} />;
 };
 
 export default Page;

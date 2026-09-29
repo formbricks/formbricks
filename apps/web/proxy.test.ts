@@ -152,6 +152,41 @@ describe("proxy", () => {
     expect(response.cookies.get("formbricks-workspace-id")?.value).toBe("ws-456");
   });
 
+  test.each([
+    ["next-router-prefetch"],
+    ["next-router-segment-prefetch"],
+    ["next-instant-navigation-testing-prefetch"],
+  ])("leaves the active-workspace cookie alone on a %s request", async (prefetchHeader) => {
+    mockGetProxySession.mockResolvedValue(null);
+
+    // The router keeps prefetching the links of a tree it rendered earlier, so after a workspace is
+    // deleted it still prefetches that workspace's links. Honouring one would overwrite the
+    // surviving workspace the delete action stored with a workspace that no longer exists.
+    const request = new NextRequest("http://localhost:3000/workspaces/ws-deleted/settings/workspace/tags", {
+      headers: { [prefetchHeader]: "1" },
+    });
+    request.cookies.set("formbricks-workspace-id", "ws-surviving");
+
+    const response = await proxy(request);
+
+    expect(response.cookies.get("formbricks-workspace-id")).toBeUndefined();
+  });
+
+  test("still sets the active-workspace cookie on a client-side navigation to a workspace", async () => {
+    mockGetProxySession.mockResolvedValue(null);
+
+    // A soft navigation is an RSC request too; only the prefetch headers separate it from a
+    // prefetch, so excluding prefetches must not stop the cookie from following a real route change.
+    const request = new NextRequest("http://localhost:3000/workspaces/ws-456/surveys", {
+      headers: { rsc: "1", "next-router-state-tree": "%5B%22%22%5D" },
+    });
+    request.cookies.set("formbricks-workspace-id", "ws-123");
+
+    const response = await proxy(request);
+
+    expect(response.cookies.get("formbricks-workspace-id")?.value).toBe("ws-456");
+  });
+
   test("overwrites a caller-supplied private IP header with the canonical trusted hop", async () => {
     mockGetProxySession.mockResolvedValue(null);
     const request = new NextRequest("http://localhost:3000/api/auth/sign-in/email", {

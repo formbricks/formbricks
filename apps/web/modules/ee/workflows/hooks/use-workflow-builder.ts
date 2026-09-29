@@ -12,6 +12,8 @@ import {
   ZWorkflowDefinition,
 } from "@formbricks/workflows";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
+import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
+import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
 import {
   MUTATION_TIMEOUT_MS,
   archiveWorkflow,
@@ -280,11 +282,13 @@ export const useWorkflowBuilder = ({
         // effect then re-runs seeing both, with no reliance on microtask-vs-render ordering.
         // Doubles as the effect's no-retry guard, keeping a broken draft from looping one PATCH per
         // debounce window.
+        const errorKind = classifyWorkflowSaveError(error);
         setSaveError({
           draftSignature: attemptedSignature,
-          kind: classifyWorkflowSaveError(error),
+          kind: errorKind,
           detail: describeSaveErrorDetail(error, t),
         });
+        trackWorkflowEvent(WORKFLOW_CLIENT_EVENTS.autosaveFailed, { error_kind: errorKind, silent });
         if (!silent) toast.error(getWorkflowApiErrorMessage(error, t("workspace.workflows.save_failed")));
         return false;
       } finally {

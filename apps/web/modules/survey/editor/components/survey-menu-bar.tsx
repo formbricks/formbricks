@@ -2,24 +2,28 @@
 
 import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
-import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
+import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import formbricks from "@formbricks/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
   TSurvey,
   TSurveyEditorTabs,
+  TSurveyStatus,
   ZSurvey,
   ZSurveyEndScreenCard,
   ZSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { isDeepEqual } from "@/lib/utils/object";
+import { reportStaleServerActionError } from "@/lib/utils/stale-server-action";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
@@ -27,7 +31,7 @@ import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { updateSurveyAction, updateSurveyDraftAction } from "../actions";
-import { describeElementIssue, isSurveyValid } from "../lib/validation";
+import { describeElementIssue, isMissingRequiredTrigger, isSurveyValid } from "../lib/validation";
 import { AutoSaveIndicator } from "./auto-save-indicator";
 
 interface SurveyMenuBarProps {
@@ -37,11 +41,11 @@ interface SurveyMenuBarProps {
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   setInvalidElements: React.Dispatch<React.SetStateAction<string[] | null>>;
+  setHasTriggerError: React.Dispatch<React.SetStateAction<boolean>>;
   workspace: Workspace;
   responseCount: number;
   finishedResponseCount: number;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (selectedLanguage: string) => void;
   isCxMode: boolean;
   locale: string;
   setIsCautionDialogOpen: (open: boolean) => void;
@@ -55,6 +59,7 @@ export const SurveyMenuBar = ({
   activeId,
   setActiveId,
   setInvalidElements,
+  setHasTriggerError,
   workspace,
   responseCount,
   finishedResponseCount,
@@ -63,7 +68,7 @@ export const SurveyMenuBar = ({
   locale,
   setIsCautionDialogOpen,
   isStorageConfigured = true,
-}: SurveyMenuBarProps) => {
+}: Readonly<SurveyMenuBarProps>) => {
   const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
   const router = useRouter();
@@ -81,6 +86,11 @@ export const SurveyMenuBar = ({
   const localSurveyRef = useRef(localSurvey);
   const surveyRef = useRef(survey);
   const isSurveySavingRef = useRef(isSurveySaving);
+  // A snapshot of what the last successful save returned. The `survey` prop is the other persisted
+  // state; the two are not interchangeable, so the dirty checks below compare against both. Cloned
+  // rather than aliased, so a later in-place edit of the editor's own survey cannot drag the
+  // snapshot along with it and hide the change.
+  const lastSavedSurveyRef = useRef<TSurvey | null>(null);
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -112,6 +122,25 @@ export const SurveyMenuBar = ({
     }
   }, [survey]);
 
+  // An autosave sets the flag above without producing the `survey` prop that clears it, so a later
+  // edit would keep the unload warning suppressed and let a reload discard it (ENG-2330).
+  useEffect(() => {
+    // Guarded rather than folded into the condition: this runs on every keystroke, and there is
+    // nothing to retire while the bypass is not set.
+    if (!isSuccessfullySavedRef.current) {
+      return;
+    }
+
+    const isBypassValid = isJustSavedBypassValid(
+      isSuccessfullySavedRef.current,
+      hasUnsavedSurveyChanges(localSurvey, [survey, lastSavedSurveyRef.current])
+    );
+
+    if (!isBypassValid) {
+      isSuccessfullySavedRef.current = false;
+    }
+  }, [localSurvey, survey]);
+
   useEffect(() => {
     const warningText = t("workspace.surveys.edit.unsaved_changes_warning");
     const handleWindowClose = (e: BeforeUnloadEvent) => {
@@ -120,7 +149,7 @@ export const SurveyMenuBar = ({
         return;
       }
 
-      if (!isDeepEqual(localSurvey, survey)) {
+      if (hasUnsavedSurveyChanges(localSurvey, [survey, lastSavedSurveyRef.current])) {
         e.preventDefault();
         return (e.returnValue = warningText);
       }
@@ -139,21 +168,22 @@ export const SurveyMenuBar = ({
     }
   };
 
-  const containsEmptyTriggers = useMemo(() => {
-    if (localSurvey.type === "link") return false;
+  /**
+   * A missing trigger used to disable Save / Save & Close / Publish outright, which left the user
+   * with a greyed-out button and no reason for it (ENG-2581). The buttons now stay clickable and the
+   * click reports the problem: the trigger-required toast, plus the Survey Trigger card marked
+   * invalid on the Settings tab, where it can be fixed. The rule itself is unchanged and still
+   * enforced server-side.
+   */
+  const blockOnMissingTrigger = (targetStatus: TSurveyStatus): boolean => {
+    if (!isMissingRequiredTrigger(localSurvey, targetStatus)) return false;
 
-    const noTriggers = !localSurvey.triggers || localSurvey.triggers.length === 0 || !localSurvey.triggers[0];
+    toast.error(t("workspace.surveys.edit.please_set_a_survey_trigger"));
+    setHasTriggerError(true);
+    setActiveId("settings");
+    return true;
+  };
 
-    if (noTriggers) return true;
-
-    return false;
-  }, [localSurvey]);
-
-  const disableSave = useMemo(() => {
-    if (isSurveySaving) return true;
-
-    if (localSurvey.status !== "draft" && containsEmptyTriggers) return true;
-  }, [containsEmptyTriggers, isSurveySaving, localSurvey.status]);
   const isPublishScheduled = localSurvey.status === "draft" && localSurvey.publishOn !== null;
   const draftSaveLabel = isPublishScheduled ? t("common.save_without_scheduling") : t("common.save_as_draft");
   let draftPrimaryLabel = t("workspace.surveys.edit.publish");
@@ -172,10 +202,7 @@ export const SurveyMenuBar = ({
   });
 
   const handleBack = () => {
-    const { updatedAt, ...localSurveyRest } = localSurvey;
-    const { updatedAt: _, ...surveyRest } = survey;
-
-    if (!isDeepEqual(localSurveyRest, surveyRest)) {
+    if (hasUnsavedSurveyChanges(localSurvey, [survey, lastSavedSurveyRef.current])) {
       setConfirmDialogOpen(true);
     } else {
       router.back();
@@ -358,12 +385,10 @@ export const SurveyMenuBar = ({
       // Skip if already saving, publishing, or auto-saving
       if (isAutoSavingRef.current || isSurveySavingRef.current || isSurveyPublishingRef.current) return;
 
-      // Check for changes using refs (avoids re-creating interval on every change)
-      const { updatedAt: localUpdatedAt, ...localSurveyRest } = localSurveyRef.current;
-      const { updatedAt: surveyUpdatedAt, ...surveyRest } = surveyRef.current;
-
-      // Skip if no changes
-      if (isDeepEqual(localSurveyRest, surveyRest)) return;
+      // Check for changes using refs (avoids re-creating interval on every change), and skip if
+      // there are none
+      if (!hasUnsavedSurveyChanges(localSurveyRef.current, [surveyRef.current, lastSavedSurveyRef.current]))
+        return;
 
       isAutoSavingRef.current = true;
 
@@ -388,10 +413,19 @@ export const SurveyMenuBar = ({
           // This keeps the UI stable while still tracking that changes have been saved.
           // The comparison uses refs, so this prevents unnecessary re-saves.
           surveyRef.current = { ...savedData };
+          lastSavedSurveyRef.current = structuredClone(savedData);
           isSuccessfullySavedRef.current = true;
           setLastAutoSaved(new Date());
         }
       } catch (e) {
+        // A stale bundle's action id is rejected by the new deployment: hand it to the reload
+        // prompt rather than failing this tick silently, and stop the interval -- nothing this
+        // bundle sends is accepted until the tab reloads, so retrying every 10s only burns
+        // requests behind a prompt that is already up.
+        if (reportStaleServerActionError(e)) {
+          clearInterval(intervalId);
+          return;
+        }
         console.error(e);
       } finally {
         isAutoSavingRef.current = false;
@@ -415,6 +449,7 @@ export const SurveyMenuBar = ({
       setIsSurveySaving(false);
       if (updatedSurveyResponse?.data) {
         setLocalSurvey(updatedSurveyResponse.data);
+        lastSavedSurveyRef.current = structuredClone(updatedSurveyResponse.data);
         toast.success(t("workspace.surveys.edit.changes_saved"));
         isSuccessfullySavedRef.current = true;
         router.refresh();
@@ -425,14 +460,22 @@ export const SurveyMenuBar = ({
       }
       return true;
     } catch (e) {
-      console.error(e);
       setIsSurveySaving(false);
+      // The reload prompt already explains a stale-deployment failure, so don't also claim the
+      // save itself went wrong.
+      if (reportStaleServerActionError(e)) {
+        return false;
+      }
+      console.error(e);
       toast.error(t("workspace.surveys.edit.error_saving_changes"));
       return false;
     }
   };
 
   const handleSurveySave = async (): Promise<boolean> => {
+    // Ahead of the spinner: a click that cannot go through should report why, not appear to work.
+    if (blockOnMissingTrigger(localSurvey.status)) return false;
+
     setIsSurveySaving(true);
 
     const isSurveyValidatedWithZod = validateSurveyWithZod();
@@ -471,12 +514,6 @@ export const SurveyMenuBar = ({
         }
       });
 
-      if (localSurvey.type !== "link" && !localSurvey.triggers?.length) {
-        toast.error(t("workspace.surveys.edit.please_set_a_survey_trigger"));
-        setIsSurveySaving(false);
-        return false;
-      }
-
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
       const updatedSurveyResponse = await updateSurveyAction({ ...localSurvey, segment });
@@ -487,6 +524,7 @@ export const SurveyMenuBar = ({
         // doesn't linger in editor state and get echoed back on the next update.
         const { isSecondPublish: _isSecondPublish, ...updatedSurvey } = updatedSurveyResponse.data;
         setLocalSurvey(updatedSurvey);
+        lastSavedSurveyRef.current = structuredClone(updatedSurvey);
         toast.success(t("workspace.surveys.edit.changes_saved"));
         // Set flag to prevent beforeunload warning during router.refresh()
         isSuccessfullySavedRef.current = true;
@@ -499,8 +537,11 @@ export const SurveyMenuBar = ({
 
       return true;
     } catch (e) {
-      console.error(e);
       setIsSurveySaving(false);
+      if (reportStaleServerActionError(e)) {
+        return false;
+      }
+      console.error(e);
       toast.error(t("workspace.surveys.edit.error_saving_changes"));
       return false;
     }
@@ -530,6 +571,8 @@ export const SurveyMenuBar = ({
   };
 
   const handleSurveyPublish = async () => {
+    if (blockOnMissingTrigger("inProgress")) return;
+
     isSurveyPublishingRef.current = true;
     setIsSurveyPublishing(true);
 
@@ -580,14 +623,20 @@ export const SurveyMenuBar = ({
       isSuccessfullySavedRef.current = true;
       router.push(`${workspaceBasePath}/surveys/${localSurvey.id}/summary?success=true`);
     } catch (error) {
-      console.error(error);
-      toast.error(t("workspace.surveys.edit.error_publishing_survey"));
       isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
+      if (reportStaleServerActionError(error)) {
+        return;
+      }
+      console.error(error);
+      toast.error(t("workspace.surveys.edit.error_publishing_survey"));
     }
   };
 
   const handleSurveySchedule = async () => {
+    // Scheduling lands on "paused", which is live enough to need a trigger.
+    if (blockOnMissingTrigger("paused")) return;
+
     isSurveyPublishingRef.current = true;
     setIsSurveyPublishing(true);
 
@@ -629,10 +678,13 @@ export const SurveyMenuBar = ({
       isSuccessfullySavedRef.current = true;
       router.push(`${workspaceBasePath}/surveys/${localSurvey.id}/summary?scheduled=true`);
     } catch (error) {
-      console.error(error);
-      toast.error(t("workspace.surveys.edit.error_publishing_survey"));
       isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
+      if (reportStaleServerActionError(error)) {
+        return;
+      }
+      console.error(error);
+      toast.error(t("workspace.surveys.edit.error_publishing_survey"));
     }
   };
 
@@ -659,6 +711,7 @@ export const SurveyMenuBar = ({
             setLocalSurvey(updatedSurvey);
           }}
           className="h-8 w-72 border-white py-0 hover:border-slate-200"
+          aria-label={t("workspace.surveys.rename_survey_placeholder")}
         />
       </div>
 
@@ -691,7 +744,7 @@ export const SurveyMenuBar = ({
         {!isCxMode && (
           <Button
             data-save-button
-            disabled={disableSave}
+            disabled={isSurveySaving}
             variant="secondary"
             size="sm"
             loading={isSurveySaving}
@@ -702,7 +755,7 @@ export const SurveyMenuBar = ({
         )}
         {localSurvey.status !== "draft" && (
           <Button
-            disabled={disableSave}
+            disabled={isSurveySaving}
             className="mr-3"
             size="sm"
             loading={isSurveySaving}
@@ -725,7 +778,7 @@ export const SurveyMenuBar = ({
         {localSurvey.status === "draft" && (!audiencePrompt || isLinkSurvey) && (
           <Button
             size="sm"
-            disabled={isSurveySaving || containsEmptyTriggers}
+            disabled={isSurveySaving}
             loading={isSurveyPublishing}
             onClick={isPublishScheduled ? handleSurveySchedule : handleSurveyPublish}>
             {draftPrimaryLabel}

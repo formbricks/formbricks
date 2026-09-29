@@ -1,7 +1,7 @@
 import { logger } from "@formbricks/logger";
 import { ZSurveyCreateInputWithWorkspaceId } from "@formbricks/types/surveys/types";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
-import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
+import { checkSurveyWritePermissions } from "@/app/api/v1/management/surveys/lib/utils";
 import {
   addLegacyProjectOverwrites,
   addLegacyProjectOverwritesToList,
@@ -18,6 +18,7 @@ import {
   transformQuestionsToBlocks,
   validateSurveyInput,
   withDerivedQuestions,
+  withoutInternalSurveyProjections,
 } from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -48,7 +49,9 @@ export const GET = withV1ApiWrapper({
 
       // Always expose `questions` (derived from blocks) alongside `blocks` so API v1
       // consumers get a consistent shape regardless of how the survey was built.
-      const surveysWithQuestions = surveys.map((survey) => withDerivedQuestions(survey));
+      const surveysWithQuestions = surveys.map((survey) =>
+        withoutInternalSurveyProjections(withDerivedQuestions(survey))
+      );
 
       return {
         response: responses.successResponse(
@@ -142,7 +145,10 @@ export const POST = withV1ApiWrapper({
         surveyData.questions = [];
       }
 
-      const featureCheckResult = await checkFeaturePermissions(surveyData, organization);
+      const featureCheckResult = await checkSurveyWritePermissions(surveyData, organization, {
+        apiKeyId: authentication.apiKeyId,
+        workspaceId,
+      });
       if (featureCheckResult) {
         return {
           response: featureCheckResult,
@@ -162,7 +168,9 @@ export const POST = withV1ApiWrapper({
         // on, so a client retrying that false error creates a second survey.
         response: responses.successResponse(
           await addLegacyEnvironmentIdBestEffort(
-            addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(survey)))
+            addLegacyProjectOverwrites(
+              resolveStorageUrlsInObject(withoutInternalSurveyProjections(withDerivedQuestions(survey)))
+            )
           )
         ),
       };

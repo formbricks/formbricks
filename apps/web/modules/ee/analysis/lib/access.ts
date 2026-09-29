@@ -29,6 +29,7 @@ type TFeedbackDirectoryAccessSource =
   | "charts.executeQueryAction"
   | "charts.generateAIChartAction"
   | "charts.getDimensionValuesAction"
+  | "charts.matrixQuestions"
   | "dashboards.widget";
 
 type TCheckFeedbackDirectoryAccessInput = {

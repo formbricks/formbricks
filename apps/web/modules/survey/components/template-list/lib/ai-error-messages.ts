@@ -1,3 +1,4 @@
+import { getAIUnavailableMessageForErrorCode } from "@/lib/ai/availability";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 
 type TranslateFn = (key: string) => string;
@@ -13,13 +14,14 @@ type TranslateFn = (key: string) => string;
  * scanner — and it is still testable by passing an identity function.
  */
 export function getAiErrorMessage(code: string | undefined, t: TranslateFn): string {
+  // The codes that mean "AI is unavailable" read the same sentence every other AI gate shows, so
+  // the entitlement, organization-toggle and instance-config wording lives in one place.
+  const aiUnavailableMessage = getAIUnavailableMessageForErrorCode(code, t);
+  if (aiUnavailableMessage) {
+    return aiUnavailableMessage;
+  }
+
   switch (code) {
-    case "ai_features_not_enabled":
-      return t("workspace.surveys.ai_create.ai_not_in_plan");
-    case "ai_smart_tools_disabled":
-      return t("workspace.surveys.ai_create.ai_not_enabled");
-    case "ai_instance_not_configured":
-      return t("workspace.surveys.ai_create.ai_instance_not_configured");
     case "ai_generated_payload_invalid":
       return t("workspace.surveys.ai_create.generated_payload_invalid");
     case "ai_output_too_long":

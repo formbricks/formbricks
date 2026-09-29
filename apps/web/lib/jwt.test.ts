@@ -8,7 +8,6 @@ import {
   createFeedbackRecordsGatewayToken,
   createGatewayServiceToken,
   createInviteToken,
-  createSsoRelinkIntent,
   createToken,
   createTokenForLinkSurvey,
   getEmailFromEmailToken,
@@ -16,17 +15,16 @@ import {
   verifyFeedbackRecordsGatewayToken,
   verifyGatewayServiceToken,
   verifyInviteToken,
-  verifySsoRelinkIntent,
   verifyToken,
   verifyTokenForLinkSurvey,
 } from "./jwt";
 
 const TEST_ENCRYPTION_KEY = "0".repeat(32); // 32-byte key for AES-256-GCM
-const TEST_NEXTAUTH_SECRET = "test-nextauth-secret";
+const TEST_AUTH_SECRET = "test-auth-secret";
 const DIFFERENT_SECRET = "different-secret";
 
 // Error message constants
-const NEXTAUTH_SECRET_ERROR = "NEXTAUTH_SECRET is not set";
+const AUTH_SECRET_ERROR = "No auth secret set (BETTER_AUTH_SECRET or NEXTAUTH_SECRET)";
 const ENCRYPTION_KEY_ERROR = "ENCRYPTION_KEY is not set";
 
 // Helper function to test error cases for missing secrets/keys
@@ -34,26 +32,26 @@ const testMissingSecretsError = async (
   testFn: (...args: any[]) => any,
   args: any[],
   options: {
-    testNextAuthSecret?: boolean;
+    testAuthSecret?: boolean;
     testEncryptionKey?: boolean;
     isAsync?: boolean;
   } = {}
 ) => {
-  const { testNextAuthSecret = true, testEncryptionKey = true, isAsync = false } = options;
+  const { testAuthSecret = true, testEncryptionKey = true, isAsync = false } = options;
 
-  if (testNextAuthSecret) {
+  if (testAuthSecret) {
     const constants = await import("@/lib/constants");
-    const originalSecret = (constants as any).NEXTAUTH_SECRET;
-    (constants as any).NEXTAUTH_SECRET = undefined;
+    const originalSecret = (constants as any).AUTH_SECRET;
+    (constants as any).AUTH_SECRET = undefined;
 
     if (isAsync) {
-      await expect(testFn(...args)).rejects.toThrow(NEXTAUTH_SECRET_ERROR);
+      await expect(testFn(...args)).rejects.toThrow(AUTH_SECRET_ERROR);
     } else {
-      expect(() => testFn(...args)).toThrow(NEXTAUTH_SECRET_ERROR);
+      expect(() => testFn(...args)).toThrow(AUTH_SECRET_ERROR);
     }
 
     // Restore
-    (constants as any).NEXTAUTH_SECRET = originalSecret;
+    (constants as any).AUTH_SECRET = originalSecret;
   }
 
   if (testEncryptionKey) {
@@ -72,17 +70,10 @@ const testMissingSecretsError = async (
   }
 };
 
-// Mock environment variables
-vi.mock("@/lib/env", () => ({
-  env: {
-    ENCRYPTION_KEY: "0".repeat(32),
-    NEXTAUTH_SECRET: "test-nextauth-secret",
-  },
-}));
-
-// Mock constants
+// Mock constants. `AUTH_SECRET` is the resolved BETTER_AUTH_SECRET/NEXTAUTH_SECRET value
+// (lib/constants.ts) — jwt.ts reads it at call time, which is what lets the helper below drop it.
 vi.mock("@/lib/constants", () => ({
-  NEXTAUTH_SECRET: "test-nextauth-secret",
+  AUTH_SECRET: "test-auth-secret",
   ENCRYPTION_KEY: "0".repeat(32),
 }));
 
@@ -156,9 +147,9 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(decoded.exp - decoded.iat).toBe(3600);
     });
 
-    test("should throw error if NEXTAUTH_SECRET is not set", async () => {
+    test("should throw error if no auth secret is set", async () => {
       await testMissingSecretsError(createToken, [mockUser.id], {
-        testNextAuthSecret: true,
+        testAuthSecret: true,
         testEncryptionKey: false,
       });
     });
@@ -182,7 +173,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     });
 
     test("rejects feedback records gateway tokens with the wrong purpose", () => {
-      const token = jwt.sign({ purpose: "wrong_purpose" }, TEST_NEXTAUTH_SECRET, {
+      const token = jwt.sign({ purpose: "wrong_purpose" }, TEST_AUTH_SECRET, {
         subject: mockUser.id,
       });
 
@@ -192,7 +183,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     });
 
     test("rejects expired feedback records gateway tokens", () => {
-      const expiredToken = jwt.sign({ purpose: "feedback_records_gateway" }, TEST_NEXTAUTH_SECRET, {
+      const expiredToken = jwt.sign({ purpose: "feedback_records_gateway" }, TEST_AUTH_SECRET, {
         subject: mockUser.id,
         expiresIn: -1,
       });
@@ -217,7 +208,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(decoded.surveyId).toBe(surveyId);
     });
 
-    test("should throw error if NEXTAUTH_SECRET or ENCRYPTION_KEY is not set", async () => {
+    test("should throw error if no auth secret or ENCRYPTION_KEY is set", async () => {
       await testMissingSecretsError(createTokenForLinkSurvey, ["survey-id", mockUser.email]);
     });
   });
@@ -230,7 +221,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(mockSymmetricEncrypt).toHaveBeenCalledWith(mockUser.email, TEST_ENCRYPTION_KEY);
     });
 
-    test("should throw error if NEXTAUTH_SECRET or ENCRYPTION_KEY is not set", async () => {
+    test("should throw error if no auth secret or ENCRYPTION_KEY is set", async () => {
       await testMissingSecretsError(createEmailToken, [mockUser.email]);
     });
   });
@@ -249,7 +240,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(decoded.exp - decoded.iat).toBe(86400);
     });
 
-    test("should throw error if NEXTAUTH_SECRET or ENCRYPTION_KEY is not set", async () => {
+    test("should throw error if no auth secret or ENCRYPTION_KEY is set", async () => {
       await testMissingSecretsError(createEmailChangeToken, [mockUser.id, mockUser.email], {
         isAsync: true,
       });
@@ -287,7 +278,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(decoded.exp - decoded.iat).toBe(86400);
     });
 
-    test("should throw error if NEXTAUTH_SECRET or ENCRYPTION_KEY is not set", async () => {
+    test("should throw error if no auth secret or ENCRYPTION_KEY is set", async () => {
       await testMissingSecretsError(createInviteToken, ["invite-id", mockUser.email]);
     });
   });
@@ -306,13 +297,13 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       });
 
       // Create token manually with unencrypted email for legacy compatibility
-      const legacyToken = jwt.sign({ email: mockUser.email }, TEST_NEXTAUTH_SECRET);
+      const legacyToken = jwt.sign({ email: mockUser.email }, TEST_AUTH_SECRET);
       const extractedEmail = getEmailFromEmailToken(legacyToken);
       expect(extractedEmail).toBe(mockUser.email);
     });
 
-    test("should throw error if NEXTAUTH_SECRET or ENCRYPTION_KEY is not set", async () => {
-      const token = jwt.sign({ email: "test@example.com" }, TEST_NEXTAUTH_SECRET);
+    test("should throw error if no auth secret or ENCRYPTION_KEY is set", async () => {
+      const token = jwt.sign({ email: "test@example.com" }, TEST_AUTH_SECRET);
       await testMissingSecretsError(getEmailFromEmailToken, [token]);
     });
 
@@ -324,7 +315,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     test("should reject an expired email-display token", () => {
       const token = jwt.sign(
         { email: `encrypted_${mockUser.email}`, purpose: "email_display" },
-        TEST_NEXTAUTH_SECRET,
+        TEST_AUTH_SECRET,
         { expiresIn: "-1s" }
       );
       expect(() => getEmailFromEmailToken(token)).toThrow();
@@ -339,7 +330,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(verifiedEmail).toBe(mockUser.email);
     });
 
-    // Regression: every token in this module is signed with NEXTAUTH_SECRET, so a token minted for a
+    // Regression: every token in this module is signed with the same auth secret, so a token minted for a
     // different flow must not pass as a verified email. `createEmailToken` is reachable through an
     // unauthenticated server action for any registered address, so accepting it here bypassed the
     // link-survey email gate for arbitrary people.
@@ -354,14 +345,14 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     });
 
     test("should reject a token with no surveyId claim signed with the plain secret", () => {
-      const token = jwt.sign({ email: `encrypted_${mockUser.email}` }, TEST_NEXTAUTH_SECRET);
+      const token = jwt.sign({ email: `encrypted_${mockUser.email}` }, TEST_AUTH_SECRET);
       expect(verifyTokenForLinkSurvey(token, "test-survey-id")).toBeNull();
     });
 
     test("should reject a link survey token whose purpose is for another flow", () => {
       const token = jwt.sign(
         { email: `encrypted_${mockUser.email}`, surveyId: "test-survey-id", purpose: "email_display" },
-        TEST_NEXTAUTH_SECRET
+        TEST_AUTH_SECRET
       );
       expect(verifyTokenForLinkSurvey(token, "test-survey-id")).toBeNull();
     });
@@ -370,7 +361,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       const surveyId = "test-survey-id";
       const token = jwt.sign(
         { email: `encrypted_${mockUser.email}`, surveyId, purpose: "link_survey_email_verification" },
-        TEST_NEXTAUTH_SECRET,
+        TEST_AUTH_SECRET,
         { expiresIn: "-1s" }
       );
       expect(verifyTokenForLinkSurvey(token, surveyId)).toBeNull();
@@ -381,16 +372,16 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(result).toBeNull();
     });
 
-    test("should return null if NEXTAUTH_SECRET is not set", async () => {
+    test("should return null if no auth secret is set", async () => {
       const constants = await import("@/lib/constants");
-      const originalSecret = (constants as any).NEXTAUTH_SECRET;
-      (constants as any).NEXTAUTH_SECRET = undefined;
+      const originalSecret = (constants as any).AUTH_SECRET;
+      (constants as any).AUTH_SECRET = undefined;
 
       const result = verifyTokenForLinkSurvey("any-token", "test-survey-id");
       expect(result).toBeNull();
 
       // Restore
-      (constants as any).NEXTAUTH_SECRET = originalSecret;
+      (constants as any).AUTH_SECRET = originalSecret;
     });
 
     test("should return null if surveyId doesn't match", () => {
@@ -402,7 +393,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     });
 
     test("should return null if email is missing from payload", () => {
-      const tokenWithoutEmail = jwt.sign({ surveyId: "test-survey-id" }, TEST_NEXTAUTH_SECRET);
+      const tokenWithoutEmail = jwt.sign({ surveyId: "test-survey-id" }, TEST_AUTH_SECRET);
       const result = verifyTokenForLinkSurvey(tokenWithoutEmail, "test-survey-id");
       expect(result).toBeNull();
     });
@@ -418,7 +409,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
           email: mockUser.email,
           surveyId: "test-survey-id",
         },
-        TEST_NEXTAUTH_SECRET
+        TEST_AUTH_SECRET
       );
 
       const result = verifyTokenForLinkSurvey(legacyToken, "test-survey-id");
@@ -436,7 +427,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
           email: mockUser.email,
           surveyId: "survey-id",
         },
-        TEST_NEXTAUTH_SECRET
+        TEST_AUTH_SECRET
       );
 
       const result = verifyTokenForLinkSurvey(token, "survey-id");
@@ -449,8 +440,8 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     test("should verify legacy survey tokens with surveyId-based secret", async () => {
       const surveyId = "test-survey-id";
 
-      // Create legacy token with old format (NEXTAUTH_SECRET + surveyId)
-      const legacyToken = jwt.sign({ email: `encrypted_${mockUser.email}` }, TEST_NEXTAUTH_SECRET + surveyId);
+      // Create legacy token with old format (auth secret + surveyId)
+      const legacyToken = jwt.sign({ email: `encrypted_${mockUser.email}` }, TEST_AUTH_SECRET + surveyId);
 
       const result = verifyTokenForLinkSurvey(legacyToken, surveyId);
       expect(result).toBe(mockUser.email);
@@ -475,7 +466,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       // Create legacy token for one survey
       const legacyToken = jwt.sign(
         { email: `encrypted_${mockUser.email}` },
-        TEST_NEXTAUTH_SECRET + correctSurveyId
+        TEST_AUTH_SECRET + correctSurveyId
       );
 
       // Try to verify with different survey ID
@@ -501,9 +492,9 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       await expect(verifyToken(token)).rejects.toThrow("User not found");
     });
 
-    test("should throw error if NEXTAUTH_SECRET is not set", async () => {
+    test("should throw error if no auth secret is set", async () => {
       await testMissingSecretsError(verifyToken, ["any-token"], {
-        testNextAuthSecret: true,
+        testAuthSecret: true,
         testEncryptionKey: false,
         isAsync: true,
       });
@@ -515,13 +506,13 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     });
 
     test("should throw error if token payload is missing id", async () => {
-      const tokenWithoutId = jwt.sign({ email: mockUser.email }, TEST_NEXTAUTH_SECRET);
+      const tokenWithoutId = jwt.sign({ email: mockUser.email }, TEST_AUTH_SECRET);
       await expect(verifyToken(tokenWithoutId)).rejects.toThrow("Invalid token");
     });
 
     test("should return raw id from payload", async () => {
       // Create token with unencrypted id
-      const token = jwt.sign({ id: mockUser.id }, TEST_NEXTAUTH_SECRET);
+      const token = jwt.sign({ id: mockUser.id }, TEST_AUTH_SECRET);
       const verified = await verifyToken(token);
       expect(verified).toEqual({
         id: mockUser.id, // Returns the raw ID from payload
@@ -531,8 +522,8 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     });
 
     test("should verify legacy tokens with email-based secret", async () => {
-      // Create legacy token with old format (NEXTAUTH_SECRET + userEmail)
-      const legacyToken = jwt.sign({ id: `encrypted_${mockUser.id}` }, TEST_NEXTAUTH_SECRET + mockUser.email);
+      // Create legacy token with old format (auth secret + userEmail)
+      const legacyToken = jwt.sign({ id: `encrypted_${mockUser.id}` }, TEST_AUTH_SECRET + mockUser.email);
 
       const verified = await verifyToken(legacyToken);
       expect(verified).toEqual({
@@ -545,7 +536,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     test("should prioritize new tokens over legacy tokens", async () => {
       // Create both new and legacy tokens for the same user
       const newToken = createToken(mockUser.id);
-      const legacyToken = jwt.sign({ id: `encrypted_${mockUser.id}` }, TEST_NEXTAUTH_SECRET + mockUser.email);
+      const legacyToken = jwt.sign({ id: `encrypted_${mockUser.id}` }, TEST_AUTH_SECRET + mockUser.email);
 
       // New token should verify without triggering legacy path
       const verifiedNew = await verifyToken(newToken);
@@ -588,17 +579,17 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(() => verifyInviteToken("invalid-token")).toThrow("Invalid or expired invite token");
     });
 
-    test("should throw error if NEXTAUTH_SECRET or ENCRYPTION_KEY is not set", async () => {
+    test("should throw error if no auth secret or ENCRYPTION_KEY is set", async () => {
       await testMissingSecretsError(verifyInviteToken, ["any-token"]);
     });
 
     test("should throw error if inviteId is missing", () => {
-      const tokenWithoutInviteId = jwt.sign({ email: mockUser.email }, TEST_NEXTAUTH_SECRET);
+      const tokenWithoutInviteId = jwt.sign({ email: mockUser.email }, TEST_AUTH_SECRET);
       expect(() => verifyInviteToken(tokenWithoutInviteId)).toThrow("Invalid or expired invite token");
     });
 
     test("should throw error if email is missing", () => {
-      const tokenWithoutEmail = jwt.sign({ inviteId: "test-invite-id" }, TEST_NEXTAUTH_SECRET);
+      const tokenWithoutEmail = jwt.sign({ inviteId: "test-invite-id" }, TEST_AUTH_SECRET);
       expect(() => verifyInviteToken(tokenWithoutEmail)).toThrow("Invalid or expired invite token");
     });
 
@@ -613,7 +604,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
           inviteId,
           email: mockUser.email,
         },
-        TEST_NEXTAUTH_SECRET
+        TEST_AUTH_SECRET
       );
 
       const verified = verifyInviteToken(legacyToken);
@@ -645,26 +636,26 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(result).toEqual({ id: userId, email });
     });
 
-    test("should throw error if NEXTAUTH_SECRET or ENCRYPTION_KEY is not set", async () => {
+    test("should throw error if no auth secret or ENCRYPTION_KEY is set", async () => {
       await testMissingSecretsError(verifyEmailChangeToken, ["any-token"], { isAsync: true });
     });
 
     test("should throw error if token is invalid or missing fields", async () => {
-      const token = jwt.sign({ foo: "bar" }, TEST_NEXTAUTH_SECRET);
+      const token = jwt.sign({ foo: "bar" }, TEST_AUTH_SECRET);
       await expect(verifyEmailChangeToken(token)).rejects.toThrow(
         "Token is invalid or missing required fields"
       );
     });
 
     test("should throw error if id is missing", async () => {
-      const token = jwt.sign({ email: "test@example.com" }, TEST_NEXTAUTH_SECRET);
+      const token = jwt.sign({ email: "test@example.com" }, TEST_AUTH_SECRET);
       await expect(verifyEmailChangeToken(token)).rejects.toThrow(
         "Token is invalid or missing required fields"
       );
     });
 
     test("should throw error if email is missing", async () => {
-      const token = jwt.sign({ id: "test-id" }, TEST_NEXTAUTH_SECRET);
+      const token = jwt.sign({ id: "test-id" }, TEST_AUTH_SECRET);
       await expect(verifyEmailChangeToken(token)).rejects.toThrow(
         "Token is invalid or missing required fields"
       );
@@ -742,7 +733,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       test("should reject an unbound token in the pre-fix shape", async () => {
         const unboundToken = jwt.sign(
           { id: `encrypted_${mockUser.id}`, email: "encrypted_attacker@evil.com" },
-          TEST_NEXTAUTH_SECRET,
+          TEST_AUTH_SECRET,
           { expiresIn: "1d" }
         );
 
@@ -759,7 +750,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
             purpose: "email_change",
             fingerprint: "ab".repeat(32),
           },
-          TEST_NEXTAUTH_SECRET,
+          TEST_AUTH_SECRET,
           { expiresIn: "1d" }
         );
 
@@ -776,7 +767,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
             purpose: "email_verification",
             fingerprint: "ab".repeat(32),
           },
-          TEST_NEXTAUTH_SECRET,
+          TEST_AUTH_SECRET,
           { expiresIn: "1d" }
         );
 
@@ -889,7 +880,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         // Create signature using HMAC (as if it were HS256)
         const crypto = require("crypto");
         const signature = crypto
-          .createHmac("sha256", TEST_NEXTAUTH_SECRET)
+          .createHmac("sha256", TEST_AUTH_SECRET)
           .update(`${maliciousHeader}.${maliciousPayload}`)
           .digest("base64url");
 
@@ -979,7 +970,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
             id: "encrypted_test-id",
             exp: Math.floor(Date.now() / 1000) - 3600, // Expired 1 hour ago
           },
-          TEST_NEXTAUTH_SECRET
+          TEST_AUTH_SECRET
         );
 
         await expect(verifyToken(expiredToken)).rejects.toThrow("Invalid token");
@@ -992,7 +983,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
             email: "encrypted_test@example.com",
             exp: Math.floor(Date.now() / 1000) - 3600, // Expired 1 hour ago
           },
-          TEST_NEXTAUTH_SECRET
+          TEST_AUTH_SECRET
         );
 
         await expect(verifyEmailChangeToken(expiredToken)).rejects.toThrow();
@@ -1028,7 +1019,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
             email: "test@example.com",
             surveyId: "test-survey-id",
           },
-          TEST_NEXTAUTH_SECRET
+          TEST_AUTH_SECRET
         );
 
         const result = verifyTokenForLinkSurvey(token, "test-survey-id");
@@ -1052,7 +1043,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         for (const maliciousId of maliciousIds) {
           mockSymmetricDecrypt.mockReturnValueOnce(maliciousId);
 
-          const token = jwt.sign({ id: "encrypted_malicious" }, TEST_NEXTAUTH_SECRET);
+          const token = jwt.sign({ id: "encrypted_malicious" }, TEST_AUTH_SECRET);
 
           // The function should look up the user safely
           await verifyToken(token);
@@ -1080,7 +1071,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     describe("Legacy Token Compatibility", () => {
       test("should handle legacy unencrypted tokens gracefully", async () => {
         // Legacy token with plain text data
-        const legacyToken = jwt.sign({ id: mockUser.id }, TEST_NEXTAUTH_SECRET);
+        const legacyToken = jwt.sign({ id: mockUser.id }, TEST_AUTH_SECRET);
         const result = await verifyToken(legacyToken);
 
         expect(result.id).toBe(mockUser.id); // Returns raw ID from payload
@@ -1102,7 +1093,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
             inviteId: "encrypted_test-invite-id",
             email: "plain-email@example.com",
           },
-          TEST_NEXTAUTH_SECRET
+          TEST_AUTH_SECRET
         );
 
         const result = verifyInviteToken(token);
@@ -1114,7 +1105,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         // Simulate old token format with per-user secret
         const oldFormatToken = jwt.sign(
           { id: `encrypted_${mockUser.id}` },
-          TEST_NEXTAUTH_SECRET + mockUser.email
+          TEST_AUTH_SECRET + mockUser.email
         );
 
         const result = await verifyToken(oldFormatToken);
@@ -1128,7 +1119,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         // Simulate old survey token format
         const oldFormatSurveyToken = jwt.sign(
           { email: `encrypted_${mockUser.email}` },
-          TEST_NEXTAUTH_SECRET + surveyId
+          TEST_AUTH_SECRET + surveyId
         );
 
         const result = verifyTokenForLinkSurvey(oldFormatSurveyToken, surveyId);
@@ -1137,10 +1128,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
 
       test("should gracefully handle database errors during legacy verification", async () => {
         // Create token that will fail new method
-        const legacyToken = jwt.sign(
-          { id: `encrypted_${mockUser.id}` },
-          TEST_NEXTAUTH_SECRET + mockUser.email
-        );
+        const legacyToken = jwt.sign({ id: `encrypted_${mockUser.id}` }, TEST_AUTH_SECRET + mockUser.email);
 
         // Make database lookup fail
         (prisma.user.findUnique as any).mockRejectedValueOnce(new Error("DB connection lost"));
@@ -1229,7 +1217,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       });
 
       test("defaults legacy verification tokens to email_verification when purpose is missing", async () => {
-        const legacyToken = jwt.sign({ id: `encrypted_${mockUser.id}` }, TEST_NEXTAUTH_SECRET);
+        const legacyToken = jwt.sign({ id: `encrypted_${mockUser.id}` }, TEST_AUTH_SECRET);
 
         await expect(verifyToken(legacyToken)).resolves.toEqual(
           expect.objectContaining({
@@ -1238,53 +1226,6 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
             purpose: "email_verification",
           })
         );
-      });
-
-      test("round-trips SSO relink intents without losing callback state", () => {
-        const intent = createSsoRelinkIntent({
-          userId: mockUser.id,
-          email: mockUser.email,
-          provider: "google",
-          providerAccountId: "provider-123",
-          callbackUrl: "http://localhost:3000/invite?token=invite-token",
-        });
-
-        expect(verifySsoRelinkIntent(intent)).toEqual({
-          userId: mockUser.id,
-          email: mockUser.email,
-          provider: "google",
-          providerAccountId: "provider-123",
-          callbackUrl: "http://localhost:3000/invite?token=invite-token",
-        });
-      });
-
-      test("rejects expired SSO relink intents", () => {
-        const expiredIntent = jwt.sign(
-          {
-            userId: crypto.symmetricEncrypt(mockUser.id, TEST_ENCRYPTION_KEY),
-            email: crypto.symmetricEncrypt(mockUser.email, TEST_ENCRYPTION_KEY),
-            provider: "google",
-            providerAccountId: crypto.symmetricEncrypt("provider-123", TEST_ENCRYPTION_KEY),
-            callbackUrl: crypto.symmetricEncrypt("http://localhost:3000", TEST_ENCRYPTION_KEY),
-            exp: Math.floor(Date.now() / 1000) - 3600,
-          },
-          TEST_NEXTAUTH_SECRET
-        );
-
-        expect(() => verifySsoRelinkIntent(expiredIntent)).toThrow();
-      });
-
-      test("rejects tampered SSO relink intents", () => {
-        const intent = createSsoRelinkIntent({
-          userId: mockUser.id,
-          email: mockUser.email,
-          provider: "google",
-          providerAccountId: "provider-123",
-          callbackUrl: "http://localhost:3000",
-        });
-
-        const tamperedIntent = `${intent.slice(0, -1)}x`;
-        expect(() => verifySsoRelinkIntent(tamperedIntent)).toThrow();
       });
     });
   });

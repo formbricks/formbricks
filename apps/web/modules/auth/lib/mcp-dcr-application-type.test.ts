@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   isDcrRegistration,
-  normalizeDcrRequest,
+  prepareDcrRequest,
   withInferredApplicationType,
 } from "./mcp-dcr-application-type";
 
@@ -112,7 +112,7 @@ describe("isDcrRegistration", () => {
   });
 });
 
-describe("normalizeDcrRequest", () => {
+describe("prepareDcrRequest", () => {
   test("rebuilds the registration with the inferred type and keeps the headers", async () => {
     const request = new Request(REGISTER, {
       method: "POST",
@@ -120,24 +120,53 @@ describe("normalizeDcrRequest", () => {
       body: JSON.stringify({ redirect_uris: ["http://127.0.0.1:33418/callback"] }),
     });
 
-    const normalized = await normalizeDcrRequest(request);
+    const prepared = await prepareDcrRequest(request);
 
+    expect(prepared).toBeInstanceOf(Request);
+    const normalized = prepared as Request;
     expect(normalized.headers.get("authorization")).toBe("Bearer t");
     await expect(normalized.json()).resolves.toMatchObject({ application_type: "native" });
+  });
+
+  // ENG-3086: the reported repro — an anonymous registration claiming an attacker-controlled https
+  // redirect URI — is rejected before it reaches Better Auth.
+  test("rejects a registration with a non-loopback redirect URI", async () => {
+    const prepared = await prepareDcrRequest(
+      new Request(REGISTER, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          client_name: "SecurityResearchVerify1",
+          redirect_uris: ["https://attacker-controlled-test.example.org/cb"],
+          grant_types: ["authorization_code"],
+          response_types: ["code"],
+          token_endpoint_auth_method: "none",
+        }),
+      })
+    );
+
+    expect(prepared).toBeInstanceOf(Response);
+    const response = prepared as Response;
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({ error: "invalid_redirect_uri" });
   });
 
   // A Request body is single-use, so the normalizer has to reconstruct even when it changes nothing —
   // otherwise the body it consumed would be gone by the time Better Auth reads it.
   test("still yields a readable body when nothing is inferred", async () => {
-    const body = JSON.stringify({ redirect_uris: ["https://app.example.com/cb"] });
-    const normalized = await normalizeDcrRequest(new Request(REGISTER, { method: "POST", body }));
+    const body = JSON.stringify({
+      redirect_uris: ["http://127.0.0.1:1/cb"],
+      application_type: "native",
+    });
+    const prepared = await prepareDcrRequest(new Request(REGISTER, { method: "POST", body }));
 
-    await expect(normalized.text()).resolves.toBe(body);
+    expect(prepared).toBeInstanceOf(Request);
+    await expect((prepared as Request).text()).resolves.toBe(body);
   });
 
   test("returns the original object for a request it does not handle", async () => {
     const request = new Request(`${BASE}/api/auth/sign-in/email`, { method: "POST", body: "{}" });
 
-    expect(await normalizeDcrRequest(request)).toBe(request);
+    expect(await prepareDcrRequest(request)).toBe(request);
   });
 });

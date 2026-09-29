@@ -490,6 +490,57 @@ describe("updateAttributes", () => {
     // Both name (coerced from boolean) and email should be upserted
     expect(transactionCall).toHaveLength(2);
   });
+
+  describe("concurrent-identify deadlock protection (ENG-2252)", () => {
+    test("upserts existing attributes in attributeKeyId order regardless of payload key order", async () => {
+      vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+      vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "jane@example.com" });
+      vi.mocked(hasEmailAttribute).mockResolvedValue(false);
+
+      // Payload in the exact reverse of attributeKeyId order — the ordering that deadlocks against a
+      // concurrent ascending payload when upserts lock rows in caller order.
+      const attributes = { customAttr: "c", email: "john@example.com", name: "John" };
+      const result = await updateAttributes(contactId, userId, workspaceId, attributes);
+
+      expect(result.success).toBe(true);
+      const upsertedKeyIds = vi
+        .mocked(prisma.contactAttribute.upsert)
+        .mock.calls.map(([args]) => args.where.contactId_attributeKeyId?.attributeKeyId);
+      expect(upsertedKeyIds).toEqual(["key-1", "key-2", "key-3"]);
+    });
+
+    test("retries the upsert transaction once when it deadlocks, and succeeds", async () => {
+      vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+      vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "jane@example.com" });
+      vi.mocked(hasEmailAttribute).mockResolvedValue(false);
+      // The driver-adapter deadlock shape seen in Sentry (FORMBRICKS-19P).
+      vi.mocked(prisma.$transaction)
+        .mockRejectedValueOnce(new Error("deadlock detected"))
+        .mockResolvedValueOnce(undefined);
+
+      const result = await updateAttributes(contactId, userId, workspaceId, {
+        name: "John",
+        email: "john@example.com",
+      });
+
+      expect(result.success).toBe(true);
+      expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+    });
+
+    test("creates new attribute keys in key order regardless of payload key order", async () => {
+      vi.mocked(getContactAttributeKeys).mockResolvedValue([]);
+      vi.mocked(getContactAttributes).mockResolvedValue({});
+      vi.mocked(prisma.contactAttributeKey.create).mockResolvedValue(undefined as never);
+
+      const result = await updateAttributes(contactId, userId, workspaceId, { zeta: "1", alpha: "2" });
+
+      expect(result.success).toBe(true);
+      const createdKeys = vi
+        .mocked(prisma.contactAttributeKey.create)
+        .mock.calls.map(([args]) => args.data.key);
+      expect(createdKeys).toEqual(["alpha", "zeta"]);
+    });
+  });
 });
 
 describe("formatAttributeMessage", () => {

@@ -65,6 +65,89 @@ describe("redactPII", () => {
   });
 });
 
+/**
+ * ENG-2873. Exact-key redaction cannot protect the inside of a response's `data`: its keys are the
+ * customer's own element ids, so no list of names reaches the answers. These pin the deny-by-default
+ * projection that replaces such containers with their shape.
+ */
+describe("redactPII — content containers", () => {
+  test("reduces a response's data, variables and embedded data to field names and a count", () => {
+    const input = {
+      id: "r1",
+      data: { q1: "my landlord is Jane Doe", q2: 4 },
+      variables: { score: 8 },
+      embeddedData: { plan: "pro" },
+    };
+
+    const redacted = redactPII(input);
+
+    expect(redacted).toEqual({
+      id: "r1",
+      data: { redactedContent: true, fieldNames: ["q1", "q2"], fieldCount: 2 },
+      variables: { redactedContent: true, fieldNames: ["score"], fieldCount: 1 },
+      embeddedData: { redactedContent: true, fieldNames: ["plan"], fieldCount: 1 },
+    });
+    expect(JSON.stringify(redacted)).not.toContain("Jane Doe");
+  });
+
+  test("reduces a contact attribute snapshot and a metadata blob the same way", () => {
+    const redacted = redactPII({
+      contactAttributes: { company: "Acme", plan: "team" },
+      metadata: { source: "app-store", rating: 1 },
+    });
+
+    expect(redacted.contactAttributes).toEqual({
+      redactedContent: true,
+      fieldNames: ["company", "plan"],
+      fieldCount: 2,
+    });
+    expect(redacted.metadata).toEqual({
+      redactedContent: true,
+      fieldNames: ["rating", "source"],
+      fieldCount: 2,
+    });
+  });
+
+  test("leaves an array under a container name to the normal walk — survey variables are definitions", () => {
+    const redacted = redactPII({ variables: [{ id: "v1", type: "number", value: 0 }] });
+
+    expect(redacted.variables).toEqual([{ id: "v1", type: "number", value: 0 }]);
+  });
+
+  test("reports which fields a patch changed, not what they became", () => {
+    const before = { finished: false, data: { q1: "old", q2: "same" } };
+    const after = { finished: true, data: { q1: "new", q2: "same" } };
+
+    expect(redactPII(deepDiff(before, after))).toEqual({
+      finished: true,
+      data: { redactedContent: true, fieldNames: ["q1"], fieldCount: 1 },
+    });
+  });
+
+  test("redacts the respondent identifiers and free-text leaves regardless of casing", () => {
+    const redacted = redactPII({
+      meta: { ipAddress: "203.0.113.9", userAgent: { browser: "Firefox" }, url: "https://example.com/s" },
+      value_text: "the checkout page keeps failing",
+      translated_text: "die Kasse schlägt fehl",
+    });
+
+    expect(redacted.meta).toEqual({
+      ipAddress: "********",
+      userAgent: "********",
+      url: "https://example.com/s",
+    });
+    expect(redacted.value_text).toBe("********");
+    expect(redacted.translated_text).toBe("********");
+  });
+
+  test("matches the two camelCase entries that were listed in the wrong case", () => {
+    expect(redactPII({ stripeCustomerId: "cus_123", fileName: "passport.pdf" })).toEqual({
+      stripeCustomerId: "********",
+      fileName: "********",
+    });
+  });
+});
+
 describe("deepDiff", () => {
   test("returns undefined for equal primitives", () => {
     expect(deepDiff(1, 1)).toBeUndefined();

@@ -9,6 +9,7 @@ import posthog from "posthog-js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
+import formbricks from "@formbricks/js";
 import {
   type TCloudBillingInterval,
   type TOrganization,
@@ -16,6 +17,7 @@ import {
   type TOrganizationStripeSubscriptionStatus,
 } from "@formbricks/types/organizations";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
+import { CHURN_SURVEY_PENDING_KEY } from "@/app/formbricks/components/formbricks-provider";
 import { cn } from "@/lib/cn";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -67,6 +69,7 @@ type TDisplayPlan = "hobby" | "pro" | "scale" | "custom" | "unknown";
 type TStandardPlan = "hobby" | "pro" | "scale";
 
 interface PricingTableProps {
+  userId: string;
   organization: TOrganization;
   responseCount: number;
   workspaceCount: number;
@@ -296,6 +299,7 @@ const PlanFeatureContent = ({
 };
 
 export const PricingTable = ({
+  userId,
   organization,
   responseCount,
   workspaceCount,
@@ -865,6 +869,7 @@ export const PricingTable = ({
           toast.error(getActionErrorMessage(response.serverError, t));
           return;
         }
+        formbricks.track("subscription_cancelled").catch(() => undefined);
         toast.success(getPlanChangeSuccessMessage(response?.data?.mode, t));
         router.refresh();
         return;
@@ -885,6 +890,14 @@ export const PricingTable = ({
           router.refresh();
           return;
         }
+
+        if (plan === "hobby" && response.data.mode !== "immediate") {
+          // Fire an in-app code action so a churn survey can be triggered from the dashboard
+          // right after the org drops to the free plan. No reload follows this path, so the SDK
+          // has time to deliver it.
+          formbricks.track("subscription_cancelled").catch(() => undefined);
+        }
+
         if (response.data.mode === "immediate") {
           // Force-sync until the converted plan lands, then hand the success toast across a full
           // reload — router.refresh() alone doesn't reliably refetch the billing snapshot, so "current
@@ -892,6 +905,14 @@ export const PricingTable = ({
           await waitForBillingPlanAction({ organizationId, targetPlan: plan });
           if (globalThis.window !== undefined) {
             globalThis.window.sessionStorage.setItem(BILLING_UPGRADE_RESULT_KEY, JSON.stringify({ plan }));
+            if (plan === "hobby") {
+              // formbricks.track() only queues the action; a call here would be lost or interrupted
+              // by the reload below. Persist a one-shot marker instead and let FormbricksProvider
+              // fire the code action once the SDK is set up again after reload. Scoped to the
+              // originating user so a logout/login in the same tab before it's consumed can't
+              // attribute the cancellation to whoever is signed in when it fires.
+              globalThis.window.sessionStorage.setItem(CHURN_SURVEY_PENDING_KEY, userId);
+            }
             globalThis.window.location.reload();
             return;
           }

@@ -38,11 +38,11 @@ properties:
     type: string
   type:
     type: string
+    # link | app only — the Prisma `SurveyType` enum and `ZSurveyType` have exactly those two values.
+    # `website` and `web` were both documented here; neither can appear in a response.
     enum:
       - link
       - app
-      - website
-      - web
   status:
     type: string
     enum:

@@ -125,8 +125,18 @@ function isOriginAllowed(request: NextRequest): boolean {
   }
 }
 
+/**
+ * Scopes for the API-key path, derived from the key's workspace permissions.
+ *
+ * `responses:*` is granted here alongside the others (ENG-2862) because it widens nothing: an API key
+ * with `read` on a workspace can already read that workspace's responses through v1/v2 management, so
+ * withholding the scope would only make the MCP surface narrower than the REST surface the same
+ * credential already has. The PII argument that gives responses their own scope is about the **OAuth**
+ * path, where a user grants scopes at consent and a token minted for surveys must not silently carry
+ * respondent answers — that is handled by the scope being separately grantable, not by omitting it here.
+ */
 function getMcpScopes(authentication: TAuthenticationApiKey): string[] {
-  const scopes = new Set(["surveys:read", "workflows:read", "feedbackRecords:read"]);
+  const scopes = new Set(["surveys:read", "workflows:read", "feedbackRecords:read", "responses:read"]);
   if (
     authentication.workspacePermissions.some(
       (permission) => permission.permission === "write" || permission.permission === "manage"
@@ -135,6 +145,7 @@ function getMcpScopes(authentication: TAuthenticationApiKey): string[] {
     scopes.add("surveys:write");
     scopes.add("workflows:write");
     scopes.add("feedbackRecords:write");
+    scopes.add("responses:write");
   }
 
   return Array.from(scopes);
@@ -261,7 +272,13 @@ async function isOAuthUserActive(userId: string): Promise<boolean> {
  * `http` is optional because it is absent on non-HTTP transports. Ours is HTTP-only, so in practice it
  * is always there — but the tools already handle a missing token, so nothing needs to assert it.
  */
-export type TMcpToolContext = Pick<ServerContext, "http">;
+/**
+ * `mcpReq` joins `http` here for the multi-round-trip tools: a confirmation arrives as
+ * `mcpReq.inputResponses` and its sealed state as `mcpReq.requestState()`, neither of which is
+ * reachable through `http`. Still a `Pick` rather than the whole `ServerContext`, so a tool cannot
+ * quietly start driving the server from inside a handler.
+ */
+export type TMcpToolContext = Pick<ServerContext, "http" | "mcpReq">;
 
 /**
  * The single place that knows where the SDK puts verified auth on the handler context. Every tool goes

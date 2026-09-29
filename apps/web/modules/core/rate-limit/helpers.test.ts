@@ -152,6 +152,14 @@ describe("helpers", () => {
 
       expect(checkRateLimit).toHaveBeenCalledTimes(identifiers.length);
     });
+
+    test("should pass weighted usage to the rate limiter", async () => {
+      (checkRateLimit as any).mockResolvedValue(ok({ allowed: true }));
+
+      await expect(applyRateLimit(mockConfig, mockIdentifier, 25)).resolves.toEqual({ allowed: true });
+
+      expect(checkRateLimit).toHaveBeenCalledWith(mockConfig, mockIdentifier, 25);
+    });
   });
 
   describe("assertRateLimitAvailable", () => {

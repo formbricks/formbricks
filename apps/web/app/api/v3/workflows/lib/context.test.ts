@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
 import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -15,6 +16,7 @@ vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ warn: vi.fn(), error: vi.fn() })) },
 }));
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: vi.fn() }));
+vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 vi.mock("@/lib/utils/helper", () => ({ getOrganizationIdFromWorkspaceId: vi.fn() }));
 vi.mock("@/lib/workspace/service", () => ({ getWorkspaceMemberEmails: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsWorkflowsEnabled: vi.fn() }));
@@ -109,6 +111,50 @@ describe("buildWorkflowApiContext", () => {
 
     expect(result).toBe(denied);
     expect(getIsWorkflowsEnabled).not.toHaveBeenCalled();
+  });
+});
+
+describe("recordAnalytics (product-analytics sink, ENG-2851)", () => {
+  const detail = {
+    operation: "created" as const,
+    workflowId: "wf_1",
+    workspaceId: "ws_1",
+    status: "draft" as const,
+    createdAt: new Date("2026-09-01T10:00:00.000Z"),
+    definition: { triggerType: null, actionTypes: [], actionCount: 0, nodeCount: 0 },
+    options: {
+      endingScope: null,
+      emailRecipientKind: null,
+      attachResponseData: null,
+      includeVariables: null,
+      includeHiddenFields: null,
+    },
+  };
+
+  test("is always bound, even without an audit log, and captures under the acting user", async () => {
+    vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue("org_1");
+    const ctx = buildWorkflowApiContext(sessionAuth, "req_1", "https://app.formbricks.com/api/v3/workflows");
+
+    expect(ctx.recordAudit).toBeUndefined();
+    await ctx.recordAnalytics?.(detail);
+
+    expect(capturePostHogEvent).toHaveBeenCalledWith(
+      "cm9zr52kh000508l8e3q7bw9j",
+      "workflow_created",
+      expect.objectContaining({ via: "ui", workflow_id: "wf_1", organization_id: "org_1" }),
+      { organizationId: "org_1", workspaceId: "ws_1" }
+    );
+  });
+
+  test("tells the MCP surface apart from a plain API call made with the same key", async () => {
+    await buildWorkflowApiContext(apiKeyAuth, "req_1", "/api/mcp").recordAnalytics?.(detail);
+
+    expect(capturePostHogEvent).toHaveBeenCalledWith(
+      "org_1",
+      "workflow_created",
+      expect.objectContaining({ via: "mcp" }),
+      expect.anything()
+    );
   });
 });
 

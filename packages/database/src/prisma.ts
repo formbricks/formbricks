@@ -72,6 +72,12 @@ export { PrismaClientKnownRequestError } from "../generated/prisma/internal/pris
 export const Prisma = GeneratedPrisma;
 
 export namespace Prisma {
+  /**
+   * The tagged-template SQL fragment `Prisma.sql` returns. Derived from the runtime class rather than
+   * re-exported, because Prisma 7 declares it in `@prisma/client-runtime-utils` and the generated client
+   * does not surface the type — so a caller composing `$queryRaw` fragments has nothing to annotate with.
+   */
+  export type Sql = InstanceType<typeof GeneratedPrisma.Sql>;
   export type InputJsonValue = PrismaNamespaceTypes.InputJsonValue;
   export type JsonObject = PrismaNamespaceTypes.JsonObject;
   export type JsonValue = PrismaNamespaceTypes.JsonValue;
@@ -136,6 +142,7 @@ export namespace Prisma {
   export type SegmentUpdateInput = PrismaModelTypes.SegmentUpdateInput;
   export type StringFilter = PrismaModelTypes.StringFilter;
   export type SurveyCreateInput = PrismaModelTypes.SurveyCreateInput;
+  export type SurveyEmbeddedDataSelect = PrismaModelTypes.SurveyEmbeddedDataSelect;
   export type SurveyGetPayload<S extends boolean | null | undefined | PrismaModelTypes.SurveyDefaultArgs> =
     PrismaModelTypes.SurveyGetPayload<S>;
   export type SurveyLanguageCreateNestedManyWithoutSurveyInput =

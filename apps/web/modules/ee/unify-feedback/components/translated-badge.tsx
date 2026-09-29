@@ -2,7 +2,7 @@
 
 import { LanguagesIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
+import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import { cn } from "@/lib/cn";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 

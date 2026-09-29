@@ -1,5 +1,6 @@
 import { NoObjectGeneratedError } from "ai";
 import { describe, expect, test, vi } from "vitest";
+import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { AI_CHART_PROMPT_ERROR_CODE } from "./ai-chart-errors";
 import { getAIChartPromptError } from "./ai-chart-errors.server";
@@ -25,6 +26,15 @@ describe("getAIChartPromptError", () => {
         },
         finishReason: "stop",
       })
+    );
+
+    expect(result).toBeInstanceOf(InvalidInputError);
+    expect(result?.message).toBe(AI_CHART_PROMPT_ERROR_CODE);
+  });
+
+  test("maps an exhausted output budget to the prompt error code rather than a 500", () => {
+    const result = getAIChartPromptError(
+      new AIOutputTokenLimitError({ maxOutputTokens: 8192, outputTokens: 8192, reasoningTokens: 8100 })
     );
 
     expect(result).toBeInstanceOf(InvalidInputError);

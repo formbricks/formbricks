@@ -2,11 +2,14 @@ import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
 import { createHmac } from "node:crypto";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { ENCRYPTION_KEY, NEXTAUTH_SECRET } from "@/lib/constants";
+import { AUTH_SECRET, ENCRYPTION_KEY } from "@/lib/constants";
 import { constantTimeEqual, symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { TGatewayAuthService, getGatewayAuthServiceTokenPurpose } from "@/modules/gateway-auth/lib/service";
 
 const FEEDBACK_RECORDS_GATEWAY_TOKEN_TTL_SECONDS = 60 * 10;
+
+/** Names both accepted variables: the alias is undocumented, but an operator hitting this needs it. */
+const NO_AUTH_SECRET_ERROR = "No auth secret set (BETTER_AUTH_SECRET or NEXTAUTH_SECRET)";
 
 // Helper function to decrypt with fallback to plain text
 const decryptWithFallback = (encryptedText: string, key: string): string => {
@@ -18,7 +21,23 @@ const decryptWithFallback = (encryptedText: string, key: string): string => {
 };
 
 /**
- * Every token minted here is signed with the same `NEXTAUTH_SECRET`, so the signature alone proves
+ * Resolve the signing secret, or refuse to mint/verify.
+ *
+ * Resolved per call rather than captured at module scope, for the reason `pin-token.ts` spells out:
+ * reading `@/lib/constants` at import time makes every unrelated test that mocks it — and transitively
+ * imports this module — fail Vitest's missing-export check. It also keeps the guard observable to
+ * `jwt.test.ts`, which drives it by swapping the constant.
+ */
+const requireAuthSecret = (): string => {
+  if (!AUTH_SECRET) {
+    throw new Error(NO_AUTH_SECRET_ERROR);
+  }
+
+  return AUTH_SECRET;
+};
+
+/**
+ * Every token minted here is signed with the same auth secret, so the signature alone proves
  * nothing about *which* flow a token was issued for. Tokens that grant something must therefore carry
  * an explicit `purpose` claim and the verifier must require it, otherwise a token handed out by one
  * flow is replayable against another (e.g. an email- or invite-token accepted as proof of email
@@ -46,14 +65,6 @@ type TVerificationTokenOptions = SignOptions & {
   purpose?: TVerificationTokenPurpose;
 };
 
-type TSsoRelinkIntentPayload = {
-  callbackUrl: string;
-  email: string;
-  provider: string;
-  providerAccountId: string;
-  userId: string;
-};
-
 const DEFAULT_VERIFICATION_TOKEN_PURPOSE: TVerificationTokenPurpose = "email_verification";
 
 const getVerificationTokenPurpose = (purpose: unknown): TVerificationTokenPurpose => {
@@ -65,9 +76,7 @@ const getVerificationTokenPurpose = (purpose: unknown): TVerificationTokenPurpos
 };
 
 export const createToken = (userId: string, options: TVerificationTokenOptions = {}): string => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
+  const authSecret = requireAuthSecret();
 
   if (!ENCRYPTION_KEY) {
     throw new Error("ENCRYPTION_KEY is not set");
@@ -76,7 +85,7 @@ export const createToken = (userId: string, options: TVerificationTokenOptions =
   const encryptedUserId = symmetricEncrypt(userId, ENCRYPTION_KEY);
   const { purpose = DEFAULT_VERIFICATION_TOKEN_PURPOSE, ...jwtOptions } = options;
 
-  return jwt.sign({ id: encryptedUserId, purpose }, NEXTAUTH_SECRET, jwtOptions);
+  return jwt.sign({ id: encryptedUserId, purpose }, authSecret, jwtOptions);
 };
 
 export const createGatewayServiceToken = (
@@ -86,11 +95,9 @@ export const createGatewayServiceToken = (
   token: string;
   expiresAt: string;
 } => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
+  const authSecret = requireAuthSecret();
 
-  const token = jwt.sign({ purpose: getGatewayAuthServiceTokenPurpose(service) }, NEXTAUTH_SECRET, {
+  const token = jwt.sign({ purpose: getGatewayAuthServiceTokenPurpose(service) }, authSecret, {
     algorithm: "HS256",
     expiresIn: FEEDBACK_RECORDS_GATEWAY_TOKEN_TTL_SECONDS,
     subject: userId,
@@ -117,9 +124,7 @@ export const createFeedbackRecordsGatewayToken = (
 };
 
 export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): string => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
+  const authSecret = requireAuthSecret();
 
   if (!ENCRYPTION_KEY) {
     throw new Error("ENCRYPTION_KEY is not set");
@@ -128,7 +133,7 @@ export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): s
   const encryptedEmail = symmetricEncrypt(userEmail, ENCRYPTION_KEY);
   return jwt.sign(
     { email: encryptedEmail, surveyId, purpose: LINK_SURVEY_EMAIL_VERIFICATION_PURPOSE },
-    NEXTAUTH_SECRET,
+    authSecret,
     { expiresIn: LINK_SURVEY_TOKEN_TTL }
   );
 };
@@ -158,9 +163,7 @@ export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): s
  * recomputed or probed by whoever holds the token.
  */
 const getEmailChangeCredentialFingerprint = async (userId: string): Promise<string> => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
+  const authSecret = requireAuthSecret();
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -186,21 +189,19 @@ const getEmailChangeCredentialFingerprint = async (userId: string): Promise<stri
     throw new Error("Email change token cannot be bound: user has no credential account");
   }
 
-  return createHmac("sha256", NEXTAUTH_SECRET)
+  return createHmac("sha256", authSecret)
     .update(`${userId}:${user.email}:${credentialUpdatedAt.toISOString()}`)
     .digest("hex");
 };
 
 export const verifyEmailChangeToken = async (token: string): Promise<{ id: string; email: string }> => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
+  const authSecret = requireAuthSecret();
 
   if (!ENCRYPTION_KEY) {
     throw new Error("ENCRYPTION_KEY is not set");
   }
 
-  const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as {
+  const payload = jwt.verify(token, authSecret, { algorithms: ["HS256"] }) as {
     id: string;
     email: string;
     purpose?: string;
@@ -211,7 +212,7 @@ export const verifyEmailChangeToken = async (token: string): Promise<{ id: strin
     throw new Error("Token is invalid or missing required fields");
   }
 
-  // Every token in this file is signed with the same NEXTAUTH_SECRET, so require the claims that say
+  // Every token in this file is signed with the same auth secret, so require the claims that say
   // this one was minted for an email change and against which credential state. Both are mandatory —
   // treating a missing claim as legacy-and-therefore-acceptable would leave exactly the unbound token
   // this check exists to reject. Links already in flight when this shipped stop working; re-requesting
@@ -242,11 +243,9 @@ export const verifyGatewayServiceToken = (
 ): {
   userId: string;
 } => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
+  const authSecret = requireAuthSecret();
 
-  const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
+  const payload = jwt.verify(token, authSecret, { algorithms: ["HS256"] }) as JwtPayload & {
     purpose?: string;
     sub?: string;
   };
@@ -269,9 +268,7 @@ export const verifyFeedbackRecordsGatewayToken = (
 };
 
 export const createEmailChangeToken = async (userId: string, email: string): Promise<string> => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
+  const authSecret = requireAuthSecret();
 
   if (!ENCRYPTION_KEY) {
     throw new Error("ENCRYPTION_KEY is not set");
@@ -289,15 +286,13 @@ export const createEmailChangeToken = async (userId: string, email: string): Pro
     fingerprint: await getEmailChangeCredentialFingerprint(userId),
   };
 
-  return jwt.sign(payload, NEXTAUTH_SECRET, {
+  return jwt.sign(payload, authSecret, {
     expiresIn: EMAIL_CHANGE_TOKEN_TTL,
   });
 };
 
 export const createEmailToken = (email: string): string => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
+  const authSecret = requireAuthSecret();
 
   if (!ENCRYPTION_KEY) {
     throw new Error("ENCRYPTION_KEY is not set");
@@ -306,21 +301,19 @@ export const createEmailToken = (email: string): string => {
   const encryptedEmail = symmetricEncrypt(email, ENCRYPTION_KEY);
   // Handed out by an unauthenticated action purely so the "check your inbox" screen can echo the
   // address back. It must therefore be inert everywhere else: scope it with a purpose and a TTL.
-  return jwt.sign({ email: encryptedEmail, purpose: EMAIL_DISPLAY_TOKEN_PURPOSE }, NEXTAUTH_SECRET, {
+  return jwt.sign({ email: encryptedEmail, purpose: EMAIL_DISPLAY_TOKEN_PURPOSE }, authSecret, {
     expiresIn: EMAIL_DISPLAY_TOKEN_TTL,
   });
 };
 
 export const getEmailFromEmailToken = (token: string): string => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
+  const authSecret = requireAuthSecret();
 
   if (!ENCRYPTION_KEY) {
     throw new Error("ENCRYPTION_KEY is not set");
   }
 
-  const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
+  const payload = jwt.verify(token, authSecret, { algorithms: ["HS256"] }) as JwtPayload & {
     email: string;
     purpose?: string;
   };
@@ -335,9 +328,7 @@ export const getEmailFromEmailToken = (token: string): string => {
 };
 
 export const createInviteToken = (inviteId: string, email: string, options = {}): string => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
+  const authSecret = requireAuthSecret();
 
   if (!ENCRYPTION_KEY) {
     throw new Error("ENCRYPTION_KEY is not set");
@@ -345,23 +336,24 @@ export const createInviteToken = (inviteId: string, email: string, options = {})
 
   const encryptedInviteId = symmetricEncrypt(inviteId, ENCRYPTION_KEY);
   const encryptedEmail = symmetricEncrypt(email, ENCRYPTION_KEY);
-  return jwt.sign({ inviteId: encryptedInviteId, email: encryptedEmail }, NEXTAUTH_SECRET, options);
+  return jwt.sign({ inviteId: encryptedInviteId, email: encryptedEmail }, authSecret, options);
 };
 
 export const verifyTokenForLinkSurvey = (token: string, surveyId: string): string | null => {
-  if (!NEXTAUTH_SECRET) {
+  const authSecret = AUTH_SECRET;
+  if (!authSecret) {
     return null;
   }
 
   try {
     let payload: JwtPayload & { email: string; surveyId?: string; purpose?: string };
     // Legacy tokens carry no `surveyId` claim; they are bound to one survey by their signing key
-    // (`NEXTAUTH_SECRET + surveyId`) instead, so that path needs no claim check.
+    // (auth secret + `surveyId`) instead, so that path needs no claim check.
     let isBoundBySigningKey = false;
 
     // Try primary method first (consistent secret)
     try {
-      payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
+      payload = jwt.verify(token, authSecret, { algorithms: ["HS256"] }) as JwtPayload & {
         email: string;
         surveyId: string;
       };
@@ -370,7 +362,7 @@ export const verifyTokenForLinkSurvey = (token: string, surveyId: string): strin
 
       // Fallback to legacy method (surveyId-based secret)
       try {
-        payload = jwt.verify(token, NEXTAUTH_SECRET + surveyId, { algorithms: ["HS256"] }) as JwtPayload & {
+        payload = jwt.verify(token, authSecret + surveyId, { algorithms: ["HS256"] }) as JwtPayload & {
           email: string;
         };
         isBoundBySigningKey = true;
@@ -381,7 +373,7 @@ export const verifyTokenForLinkSurvey = (token: string, surveyId: string): strin
     }
 
     // A token verified with the plain secret MUST name this survey. Accepting a missing `surveyId`
-    // here let any NEXTAUTH_SECRET-signed token that happens to carry an `email` claim — e.g. the one
+    // here let any auth-secret-signed token that happens to carry an `email` claim — e.g. the one
     // `createEmailToken` hands out for an arbitrary address — pass as a verified email for any survey.
     if (!isBoundBySigningKey && payload.surveyId !== surveyId) {
       return null;
@@ -454,82 +446,15 @@ const getUserEmailForLegacyVerification = async (
   return { userId: decryptedId, userEmail: foundUser.email };
 };
 
-const DEFAULT_SSO_RELINK_INTENT_OPTIONS: SignOptions = {
-  expiresIn: "15m",
-};
-
-export const createSsoRelinkIntent = (
-  payload: TSsoRelinkIntentPayload,
-  options: SignOptions = DEFAULT_SSO_RELINK_INTENT_OPTIONS
-): string => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
-
-  if (!ENCRYPTION_KEY) {
-    throw new Error("ENCRYPTION_KEY is not set");
-  }
-
-  return jwt.sign(
-    {
-      userId: symmetricEncrypt(payload.userId, ENCRYPTION_KEY),
-      email: symmetricEncrypt(payload.email, ENCRYPTION_KEY),
-      provider: payload.provider,
-      providerAccountId: symmetricEncrypt(payload.providerAccountId, ENCRYPTION_KEY),
-      callbackUrl: symmetricEncrypt(payload.callbackUrl, ENCRYPTION_KEY),
-    },
-    NEXTAUTH_SECRET,
-    options
-  );
-};
-
-export const verifySsoRelinkIntent = (token: string): TSsoRelinkIntentPayload => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
-
-  if (!ENCRYPTION_KEY) {
-    throw new Error("ENCRYPTION_KEY is not set");
-  }
-
-  const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
-    userId: string;
-    email: string;
-    provider: string;
-    providerAccountId: string;
-    callbackUrl: string;
-  };
-
-  if (
-    !payload?.userId ||
-    !payload?.email ||
-    !payload?.provider ||
-    !payload?.providerAccountId ||
-    !payload?.callbackUrl
-  ) {
-    throw new Error("Token is invalid or missing required fields");
-  }
-
-  return {
-    userId: decryptWithFallback(payload.userId, ENCRYPTION_KEY),
-    email: decryptWithFallback(payload.email, ENCRYPTION_KEY),
-    provider: payload.provider,
-    providerAccountId: decryptWithFallback(payload.providerAccountId, ENCRYPTION_KEY),
-    callbackUrl: decryptWithFallback(payload.callbackUrl, ENCRYPTION_KEY),
-  };
-};
-
 export const verifyToken = async (token: string): Promise<TVerifyTokenPayload> => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
+  const authSecret = requireAuthSecret();
 
   let payload: JwtPayload & { id: string };
   let userData: { userId: string; userEmail: string } | null = null;
 
   // Try new method first, with smart fallback to legacy
   try {
-    payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
+    payload = jwt.verify(token, authSecret, { algorithms: ["HS256"] }) as JwtPayload & {
       id: string;
     };
   } catch (newMethodError) {
@@ -540,7 +465,7 @@ export const verifyToken = async (token: string): Promise<TVerifyTokenPayload> =
 
     // Try legacy verification with email-based secret
     try {
-      payload = jwt.verify(token, NEXTAUTH_SECRET + userData.userEmail, {
+      payload = jwt.verify(token, authSecret + userData.userEmail, {
         algorithms: ["HS256"],
       }) as JwtPayload & {
         id: string;
@@ -566,16 +491,14 @@ export const verifyToken = async (token: string): Promise<TVerifyTokenPayload> =
 };
 
 export const verifyInviteToken = (token: string): { inviteId: string; email: string } => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
+  const authSecret = requireAuthSecret();
 
   if (!ENCRYPTION_KEY) {
     throw new Error("ENCRYPTION_KEY is not set");
   }
 
   try {
-    const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
+    const payload = jwt.verify(token, authSecret, { algorithms: ["HS256"] }) as JwtPayload & {
       inviteId: string;
       email: string;
     };

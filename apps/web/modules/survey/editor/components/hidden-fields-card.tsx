@@ -205,7 +205,10 @@ export const HiddenFieldsCard = ({
                 existingElementIds,
                 existingEndingCardIds,
                 existingHiddenFieldIds,
-                existingVariableNames
+                existingVariableNames,
+                // New hidden fields follow the shared naming rule; already stored names are
+                // untouched and keep loading through the lenient survey schema.
+                { requireSafeIdentifier: true }
               );
 
               if (validateIdError) {

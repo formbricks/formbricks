@@ -1,0 +1,6 @@
+# Files GitHub should treat as generated: collapsed by default in pull-request diffs and left out of
+# the repository's language statistics. Only build outputs that are committed on purpose belong here.
+
+# Single-file OpenAPI bundle Mintlify and the Schemathesis contract tests read. Redocly regenerates it
+# from docs/api-v3-reference/src/ via `pnpm api:v3:bundle`; the source tree carries the reviewable diff.
+docs/api-v3-reference/openapi.yml linguist-generated=true

@@ -108,11 +108,13 @@ export const ThemeStylingPreviewSurvey = ({
   const clickOutsideClose = surveyClickOutsideClose ?? workspace.clickOutsideClose;
 
   const highlightBorderColor = workspace.styling.highlightBorderColor?.light;
-  // eslint-disable-next-line react-hooks/purity -- migration ENG-2366
-  const [surveyFormKey, setSurveyFormKey] = useState<number>(Date.now());
+  // Bumped to force the preview to remount and start over. A counter rather than `Date.now()`: the
+  // key only has to differ from the previous one, and reading the clock during render is impure —
+  // it would also make the rendered key differ between the server pass and hydration (ENG-2366).
+  const [surveyFormKey, setSurveyFormKey] = useState(0);
 
   const resetQuestionProgress = () => {
-    setSurveyFormKey(Date.now());
+    setSurveyFormKey((previousKey) => previousKey + 1);
   };
 
   const styling = useMemo(() => {

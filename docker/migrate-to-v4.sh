@@ -562,7 +562,7 @@ add_minio_service() {
     minio_service_config="
   minio:
     restart: always
-    image: minio/minio@sha256:13582eff79c6605a2d315bdd0e70164142ea7e98fc8411e9e10d089502a6d883
+    image: quay.io/minio/minio@sha256:13582eff79c6605a2d315bdd0e70164142ea7e98fc8411e9e10d089502a6d883
     command: server /data
     environment:
       MINIO_ROOT_USER: \"$minio_root_user\"
@@ -586,7 +586,7 @@ ${tls_block}
       - \"traefik.http.middlewares.minio-ratelimit.ratelimit.burst=200\"
 
   minio-init:
-    image: minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868
+    image: quay.io/minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868
     depends_on:
       - minio
     environment:
@@ -919,7 +919,7 @@ wait_for_minio_ready() {
     while [[ $attempt -le $max_attempts ]]; do
         # Probe using mc from a one-off mc container to avoid relying on service state
         if docker run --rm $(compose_network_flag) --entrypoint /bin/sh \
-          minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc \
+          quay.io/minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc \
           "mc alias set minio http://minio:9000 '$minio_root_user' '$minio_root_password' >/dev/null 2>&1 && mc admin info minio >/dev/null 2>&1"; then
           print_status "MinIO is ready!"
           return 0
@@ -942,7 +942,7 @@ ensure_bucket_exists() {
         -e MINIO_ROOT_PASSWORD="$minio_root_password" \
         -e MINIO_BUCKET_NAME="$minio_bucket_name" \
         --entrypoint /bin/sh \
-        minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc '
+        quay.io/minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc '
             mc alias set minio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null 2>&1;
             mc mb minio/"$MINIO_BUCKET_NAME" --ignore-existing
         '
@@ -957,7 +957,7 @@ ensure_service_user_and_policy() {
         -e MINIO_SERVICE_USER="$minio_service_user" \
         -e MINIO_SERVICE_PASSWORD="$minio_service_password" \
         -e MINIO_BUCKET_NAME="$minio_bucket_name" \
-        --entrypoint /bin/sh minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc '
+        --entrypoint /bin/sh quay.io/minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc '
             mc alias set minio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null 2>&1;
             # Create shared policy if missing
             if ! mc admin policy info minio formbricks-policy >/dev/null 2>&1; then
@@ -1010,7 +1010,7 @@ migrate_container_files_to_minio() {
         -e MINIO_ROOT_USER="$minio_root_user" \
         -e MINIO_ROOT_PASSWORD="$minio_root_password" \
         -e MINIO_BUCKET_NAME="$minio_bucket_name" \
-        --entrypoint /bin/sh minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc '
+        --entrypoint /bin/sh quay.io/minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc '
             echo "📁 Starting file migration from container to MinIO...";
             mc alias set minio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD";
             mc mirror --overwrite --preserve '"$container_path"' "minio/$MINIO_BUCKET_NAME"
@@ -1077,7 +1077,7 @@ migrate_files_to_minio() {
         -e MINIO_ROOT_PASSWORD="$minio_root_password" \
         -e MINIO_BUCKET_NAME="$minio_bucket_name" \
         --entrypoint /bin/sh \
-        minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc '
+        quay.io/minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc '
             echo "🔗 Setting up MinIO alias for migration...";
             mc alias set minio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD";
             

@@ -9,6 +9,7 @@ export const DEFAULT_CUBE_JWT_AUDIENCE = "formbricks-cube";
 export const DEFAULT_CUBE_JWT_ISSUER = "formbricks-web";
 
 export type TCubeQuerySource =
+  | "charts.aiDataProfile"
   | "charts.executeQueryAction"
   | "charts.generateAIChartAction"
   | "charts.getDimensionValuesAction"

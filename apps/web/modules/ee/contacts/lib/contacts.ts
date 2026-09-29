@@ -6,9 +6,9 @@ import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber, ZOptionalString } from "@formbricks/types/common";
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@formbricks/types/safe-identifier";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { getSurvey } from "@/lib/survey/service";
-import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   getReservedFutureDefaultAttributeKeyIssue,

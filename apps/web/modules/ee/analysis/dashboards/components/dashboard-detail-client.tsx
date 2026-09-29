@@ -9,9 +9,9 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import "react-resizable/css/styles.css";
 import type { TChartQuery } from "@formbricks/types/analysis";
+import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
-import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { DashboardControlBar } from "@/modules/ee/analysis/dashboards/components/dashboard-control-bar";
 import { DashboardDateFilter } from "@/modules/ee/analysis/dashboards/components/dashboard-date-filter";
@@ -29,12 +29,23 @@ import {
   writeStoredDateFilter,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
 import {
+  EDIT_HOTKEY,
+  hasOpenOverlay,
+  isEditHotkey,
+  resolveEditHotkeyAction,
+} from "@/modules/ee/analysis/dashboards/lib/edit-hotkey";
+import {
   DEFAULT_WIDGET_VIEW,
   type TWidgetView,
   readStoredWidgetView,
   writeStoredWidgetView,
 } from "@/modules/ee/analysis/dashboards/lib/widget-view";
-import type { TChartDataRow, TDashboardDetail, TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
+import type {
+  TChartDataRow,
+  TChartLabelMaps,
+  TDashboardDetail,
+  TDashboardWidget,
+} from "@/modules/ee/analysis/types/analysis";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -55,8 +66,7 @@ interface DashboardDetailClientProps {
   widgetDataPromises: Map<
     string,
     Promise<
-      | { data: TChartDataRow[]; query: TChartQuery; optionLabels?: Record<string, string> }
-      | { error: TDashboardWidgetError }
+      ({ data: TChartDataRow[]; query: TChartQuery } & TChartLabelMaps) | { error: TDashboardWidgetError }
     >
   >;
   dateFilter: TDashboardDateFilter | null;
@@ -132,8 +142,7 @@ const MemoizedWidgetContent = memo(function WidgetContent({
 }: Readonly<{
   widget: TDashboardWidget;
   dataPromise?: Promise<
-    | { data: TChartDataRow[]; query: TChartQuery; optionLabels?: Record<string, string> }
-    | { error: TDashboardWidgetError }
+    ({ data: TChartDataRow[]; query: TChartQuery } & TChartLabelMaps) | { error: TDashboardWidgetError }
   >;
   view: TWidgetView;
 }>) {
@@ -166,8 +175,7 @@ const MemoizedWidgetItem = memo(function WidgetItem({
   widget: TDashboardWidget;
   isEditing: boolean;
   dataPromise?: Promise<
-    | { data: TChartDataRow[]; query: TChartQuery; optionLabels?: Record<string, string> }
-    | { error: TDashboardWidgetError }
+    ({ data: TChartDataRow[]; query: TChartQuery } & TChartLabelMaps) | { error: TDashboardWidgetError }
   >;
   onEdit?: () => void;
   onDuplicate?: () => void;
@@ -436,6 +444,29 @@ export function DashboardDetailClient({
     }
   }, [name, widgets, dashboard, workspaceId, router, t, startTransition]);
 
+  // `E` toggles edit mode: it enters from view mode, and inside edit mode it saves when there is
+  // something to save and cancels otherwise - the same button the key cap sits on in the control bar.
+  useEffect(() => {
+    const action = resolveEditHotkeyAction({ isReadOnly, isEditing, hasChanges, isSaving });
+    if (!action) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isEditHotkey(event) || hasOpenOverlay()) {
+        return;
+      }
+
+      event.preventDefault();
+      if (action === "enter") handleEnterEditMode();
+      else if (action === "save") void handleSave();
+      else handleCancel();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleCancel, handleEnterEditMode, handleSave, hasChanges, isEditing, isReadOnly, isSaving]);
+
   const applyDateFilterToUrl = useCallback(
     (filter: TDashboardDateFilter | null) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -498,6 +529,7 @@ export function DashboardDetailClient({
             isAIAvailable={isAIAvailable}
             aiUnavailableReason={aiUnavailableReason}
             onRefresh={() => router.refresh()}
+            editHotkey={EDIT_HOTKEY}
             onEditToggle={handleEnterEditMode}
             onSave={handleSave}
             onCancel={handleCancel}
@@ -580,8 +612,6 @@ export function DashboardDetailClient({
             });
           }}
           directories={directories}
-          isAIAvailable={isAIAvailable}
-          aiUnavailableReason={aiUnavailableReason}
         />
       )}
     </PageContentWrapper>

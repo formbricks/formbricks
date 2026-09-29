@@ -6,10 +6,10 @@ import type { LexicalEditor, RangeSelection } from "lexical";
 import { $getSelection, $isRangeSelection } from "lexical";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { isStringUrl } from "@/lib/utils/url";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
+import { isMailtoUrl, isValidEditorLinkUrl } from "../lib/link-url";
 
 const getSelectedNode = (selection: RangeSelection) => {
   const anchor = selection.anchor;
@@ -24,29 +24,6 @@ const getSelectedNode = (selection: RangeSelection) => {
     return focus.offset === focusNode.getTextContentSize() ? anchorNode : focusNode;
   } else {
     return anchor.offset === anchorNode.getTextContentSize() ? focusNode : anchorNode;
-  }
-};
-
-const validateUrl = (url: string): boolean => {
-  // Use existing helper for basic URL validation
-  if (!isStringUrl(url)) {
-    return false;
-  }
-
-  try {
-    const urlObj = new URL(url);
-    // Ensure valid protocol (http or https)
-    if (urlObj.protocol !== "http:" && urlObj.protocol !== "https:") {
-      return false;
-    }
-    // Check for IPv6 address
-    const isIPv6 = urlObj.hostname.startsWith("[") && urlObj.hostname.endsWith("]");
-    // Check for IPv4 address
-    const isIPv4 = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(urlObj.hostname);
-    // Ensure proper domain structure (has a dot), is localhost, or is an IP address
-    return urlObj.hostname.includes(".") || urlObj.hostname === "localhost" || isIPv6 || isIPv4;
-  } catch {
-    return false;
   }
 };
 
@@ -81,17 +58,18 @@ const LinkEditorContent = ({ editor, open, setOpen }: LinkEditorProps) => {
     }
   }, [open, editor]);
 
-  const linkAttributes = {
-    target: "_blank",
-    rel: "noopener noreferrer",
-  };
-
   const handleSubmit = () => {
-    if (!validateUrl(linkUrl)) {
+    if (!isValidEditorLinkUrl(linkUrl)) {
       setError(t("workspace.surveys.edit.please_enter_a_valid_url"));
       return;
     }
     if (linkUrl) {
+      // mailto: links keep the current tab, like auto-linked emails: handing off to the mail client
+      // does not navigate the respondent away from their response. `null` clears the attributes when an
+      // existing web link is edited into a mailto: link.
+      const linkAttributes = isMailtoUrl(linkUrl)
+        ? { target: null, rel: null }
+        : { target: "_blank", rel: "noopener noreferrer" };
       editor.dispatchCommand(TOGGLE_LINK_COMMAND, {
         url: linkUrl,
         ...linkAttributes,
@@ -131,7 +109,7 @@ const LinkEditorContent = ({ editor, open, setOpen }: LinkEditorProps) => {
             onInput={(event) => {
               const value = event.currentTarget.value;
               setLinkUrl(value);
-              if (error && validateUrl(value)) {
+              if (error && isValidEditorLinkUrl(value)) {
                 setError("");
               }
             }}

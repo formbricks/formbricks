@@ -4,7 +4,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSurveyUpdateInput } from "@formbricks/types/surveys/types";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { deleteSurvey } from "@/app/api/v1/management/surveys/[surveyId]/lib/surveys";
-import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
+import { checkSurveyWritePermissions } from "@/app/api/v1/management/surveys/lib/utils";
 import {
   addLegacyProjectOverwrites,
   normaliseProjectOverwritesToWorkspace,
@@ -19,6 +19,7 @@ import {
   transformQuestionsToBlocks,
   validateSurveyInput,
   withDerivedQuestions,
+  withoutInternalSurveyProjections,
 } from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -77,7 +78,11 @@ export const GET = withV1ApiWrapper({
       return {
         response: responses.successResponse(
           await addLegacyEnvironmentId(
-            addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(result.survey)))
+            addLegacyProjectOverwrites(
+              resolveStorageUrlsInObject(
+                withoutInternalSurveyProjections(withDerivedQuestions(result.survey))
+              )
+            )
           )
         ),
       };
@@ -218,9 +223,10 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
-      const featureCheckResult = await checkFeaturePermissions(
-        surveyUpdate as Parameters<typeof checkFeaturePermissions>[0],
+      const featureCheckResult = await checkSurveyWritePermissions(
+        surveyUpdate as Parameters<typeof checkSurveyWritePermissions>[0],
         organization,
+        { apiKeyId: authentication.apiKeyId, workspaceId: result.survey.workspaceId },
         result.survey
       );
       if (featureCheckResult) {
@@ -241,7 +247,11 @@ export const PUT = withV1ApiWrapper({
           // with it.
           response: responses.successResponse(
             await addLegacyEnvironmentIdBestEffort(
-              addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(updatedSurvey)))
+              addLegacyProjectOverwrites(
+                resolveStorageUrlsInObject(
+                  withoutInternalSurveyProjections(withDerivedQuestions(updatedSurvey))
+                )
+              )
             )
           ),
         };

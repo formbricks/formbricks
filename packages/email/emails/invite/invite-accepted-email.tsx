@@ -1,4 +1,4 @@
-import { Container, Heading, Text } from "@react-email/components";
+import { Container, Heading, Text } from "react-email";
 import { EmailFooter } from "../../src/components/email-footer";
 import { EmailTemplate } from "../../src/components/email-template";
 import { exampleData } from "../../src/lib/example-data";

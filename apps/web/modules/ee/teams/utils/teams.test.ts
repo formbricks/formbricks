@@ -1,13 +1,31 @@
 import { describe, expect, test } from "vitest";
+import enUS from "@/locales/en-US.json";
 import { ZTeamRole } from "@/modules/ee/teams/team-list/types/team";
 import { ZTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
-import { TeamPermissionMapping, TeamRoleMapping, getTeamAccessFlags, getTeamPermissionFlags } from "./teams";
+import {
+  TeamPermissionTranslationKeys,
+  TeamRoleMapping,
+  getTeamAccessFlags,
+  getTeamPermissionFlags,
+} from "./teams";
 
-describe("TeamPermissionMapping", () => {
-  test("maps WorkspaceTeamPermission to correct labels", () => {
-    expect(TeamPermissionMapping[ZTeamPermission.enum.read]).toBe("Read");
-    expect(TeamPermissionMapping[ZTeamPermission.enum.readWrite]).toBe("Read & write");
-    expect(TeamPermissionMapping[ZTeamPermission.enum.manage]).toBe("Manage");
+describe("TeamPermissionTranslationKeys", () => {
+  test("maps WorkspaceTeamPermission to translation keys", () => {
+    expect(TeamPermissionTranslationKeys[ZTeamPermission.enum.read]).toBe("workspace.settings.teams.read");
+    expect(TeamPermissionTranslationKeys[ZTeamPermission.enum.readWrite]).toBe(
+      "workspace.settings.teams.read_write"
+    );
+    expect(TeamPermissionTranslationKeys[ZTeamPermission.enum.manage]).toBe(
+      "workspace.settings.teams.manage"
+    );
+  });
+
+  test("every key it maps to exists in en-US", () => {
+    for (const key of Object.values(TeamPermissionTranslationKeys)) {
+      expect(
+        key.split(".").reduce<unknown>((node, part) => (node as Record<string, unknown>)?.[part], enUS)
+      ).toBeTypeOf("string");
+    }
   });
 });
 

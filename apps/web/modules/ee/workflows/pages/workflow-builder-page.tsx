@@ -7,6 +7,7 @@ import { WorkflowCanvas } from "@/modules/ee/workflows/components/canvas/workflo
 import { WorkflowInspectorPanel } from "@/modules/ee/workflows/components/inspector/workflow-inspector-panel";
 import { WorkflowEmailAuthoringProvider } from "@/modules/ee/workflows/components/workflow-email-authoring-context";
 import { useReconcileTriggerEndingCards } from "@/modules/ee/workflows/hooks/use-reconcile-trigger-ending-cards";
+import { useTrackWorkflowSurface } from "@/modules/ee/workflows/hooks/use-track-workflow-surface";
 import { useWorkflowSurveyOptions } from "@/modules/ee/workflows/hooks/use-trigger-survey-picker";
 import { useWorkflowBuilder } from "@/modules/ee/workflows/hooks/use-workflow-builder";
 import { useWorkflowNodeUrlSync } from "@/modules/ee/workflows/hooks/use-workflow-node-url-sync";
@@ -57,6 +58,13 @@ export const WorkflowBuilderPage = ({
 
   // Deep-link the inspected node (?node=…) once the editor is hydrated.
   useWorkflowNodeUrlSync({ isEnabled: Boolean(builder.workflow) });
+
+  // Analytics: the builder counts as visited once the workflow is loaded, not while the skeleton shows.
+  useTrackWorkflowSurface(builder.workflow ? "builder" : null, {
+    workflowId,
+    workflowStatus: builder.workflow?.status,
+    isReadOnly,
+  });
 
   if (builder.isLoading) {
     return <WorkflowBuilderBodyLoading />;

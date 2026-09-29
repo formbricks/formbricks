@@ -67,6 +67,21 @@ export const getSurveyDisplayName = (name: string | undefined): string | undefin
 };
 
 /**
+ * The name the survey's top-level heading carries, or `undefined` when it renders none.
+ *
+ * An inline survey always gets one: its container is the form landmark that names the survey
+ * (WCAG 2.4.2) and holds the h1 above the h2 card headings (WCAG 2.4.6). An app survey rendered
+ * inline has no name of its own (see getSurveyDisplayName), so it takes the generic label rather than
+ * leaving the form unnamed and the card headings orphaned. A modal survey renders the h1 only for a
+ * real name; its dialog already carries the generic label as its accessible name.
+ */
+export const getSurveyHeadingName = (
+  surveyName: string | undefined,
+  mode: "modal" | "inline",
+  fallbackName: string
+): string | undefined => surveyName ?? (mode === "inline" ? fallbackName : undefined);
+
+/**
  * Whether the survey has instructions worth exposing on every page.
  *
  * The welcome card's subheader is the only instructions text a survey has — there is no

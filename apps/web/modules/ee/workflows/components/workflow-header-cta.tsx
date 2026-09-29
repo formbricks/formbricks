@@ -16,11 +16,14 @@ import { useTranslation } from "react-i18next";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { WorkflowAutoSaveIndicator } from "@/modules/ee/workflows/components/workflow-auto-save-indicator";
 import { useWorkflowBuilder } from "@/modules/ee/workflows/hooks/use-workflow-builder";
+import { summarizeValidationProblems, trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
+import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
 import { deleteWorkflow } from "@/modules/ee/workflows/lib/api-client";
 import { getWorkflowStatusBadge } from "@/modules/ee/workflows/lib/display";
 import {
   hasWorkflowSaveFailedAtom,
   workflowAtom,
+  workflowValidationProblemsAtom,
   workflowValidityAtom,
 } from "@/modules/ee/workflows/state/editor";
 import { Button } from "@/modules/ui/components/button";
@@ -44,6 +47,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
   const segment = useSelectedLayoutSegment();
   const workflow = useAtomValue(workflowAtom);
   const validity = useAtomValue(workflowValidityAtom);
+  const validationProblems = useAtomValue(workflowValidationProblemsAtom);
   const hasSaveFailed = useAtomValue(hasWorkflowSaveFailedAtom);
   const builder = useWorkflowBuilder({ workflowId, isReadOnly, loadOnMount: false });
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
@@ -68,6 +72,17 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
   const handleArchiveConfirm = async () => {
     await builder.archive();
     setIsArchiveModalOpen(false);
+  };
+
+  // Analytics: a user opening the status menu of a draft whose Enable is greyed out is the closest
+  // thing to "tried to enable and could not", and the problem codes say what stopped them.
+  const handleStatusMenuOpenChange = (open: boolean) => {
+    if (open && !isArchived && !isActive && !validity.isReady) {
+      trackWorkflowEvent(
+        WORKFLOW_CLIENT_EVENTS.enableBlocked,
+        summarizeValidationProblems(validationProblems)
+      );
+    }
   };
 
   const handleDelete = async () => {
@@ -102,7 +117,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
           only — on the runs tab the pill above is carrying a save failure and nothing else. */}
       {isEditTab && (
         <>
-          <DropdownMenu>
+          <DropdownMenu onOpenChange={handleStatusMenuOpenChange}>
             {/* `disabled` must sit on the trigger, not only the child Button: Radix's open guard
                 reads the trigger's own prop, so a value passed solely to the Button leaves the menu
                 openable (the DOM attribute and the JS guard disagree). Belt-and-suspenders, the
