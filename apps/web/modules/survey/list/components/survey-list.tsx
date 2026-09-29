@@ -22,7 +22,11 @@ import { useRestoreSurvey } from "@/modules/survey/list/hooks/use-restore-survey
 import { useSurveys } from "@/modules/survey/list/hooks/use-surveys";
 import { useUpdateSurveyStatus } from "@/modules/survey/list/hooks/use-update-survey-status";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
-import { normalizeSurveyFilters, parseStoredSurveyFilters } from "@/modules/survey/list/lib/utils";
+import {
+  normalizeSurveyFilters,
+  parseStoredSurveyFilters,
+  serializeStoredSurveyFilters,
+} from "@/modules/survey/list/lib/utils";
 import { TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
 import { TemplateContainerWithPreview } from "@/modules/survey/templates/components/template-container";
 import { AiIcon } from "@/modules/ui/components/ai";
@@ -195,7 +199,7 @@ export const SurveysList = ({
 
     globalThis.window.localStorage.setItem(
       FORMBRICKS_SURVEYS_FILTERS_KEY_LS,
-      JSON.stringify(normalizedFilters)
+      serializeStoredSurveyFilters(normalizedFilters)
     );
   }, [normalizedFilters, isFilterInitialized]);
 
