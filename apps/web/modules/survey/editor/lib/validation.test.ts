@@ -1666,6 +1666,7 @@ describe("ZSurvey element issues reach the editor with a usable path", () => {
     metadata: {},
     slug: null,
     isCaptureIpEnabled: false,
+    isAnonymizeResponsesEnabled: false,
   });
 
   // A matrix element whose second row label has no value for the enabled `de` language. This is the

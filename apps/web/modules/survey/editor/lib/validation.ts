@@ -2,7 +2,7 @@
 import { TFunction } from "i18next";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
-import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
+import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import { ZEndingCardButtonLink, ZEndingCardUrl } from "@formbricks/types/common";
 import { TI18nString } from "@formbricks/types/i18n";
 import { ZSegmentFilters } from "@formbricks/types/segment";
@@ -353,9 +353,11 @@ const NUMBERED_COLLECTION_LABEL_KEYS: Record<string, string> = {
   choices: "common.choice_n",
 };
 
-// Element fields whose schema name is not what the author sees in the editor.
-const ELEMENT_FIELD_LABEL_KEYS: Record<string, string> = {
-  shuffleOption: "workspace.surveys.edit.field_label_shuffle_option",
+// Element fields whose schema name is not what the author sees in the editor. A function with literal
+// t() calls rather than a key table, because the translation scanner only sees literal keys.
+const getElementFieldLabel = (field: string, t: TFunction): string | undefined => {
+  if (field === "shuffleOption") return t("workspace.surveys.edit.field_label_shuffle_option");
+  return undefined;
 };
 
 /**
@@ -488,9 +490,7 @@ export const describeElementIssue = (
         languageCode = segment;
         return;
       }
-      fieldParts.push(
-        ELEMENT_FIELD_LABEL_KEYS[segment] ? t(ELEMENT_FIELD_LABEL_KEYS[segment]) : humanizeFieldName(segment)
-      );
+      fieldParts.push(getElementFieldLabel(segment, t) ?? humanizeFieldName(segment));
     }
   });
 
