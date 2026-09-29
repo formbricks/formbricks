@@ -27,7 +27,7 @@ vi.mock("@formbricks/database", () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
-    surveyEmbeddedData: { findMany: vi.fn() },
+    surveyEmbeddedData: { findMany: vi.fn(), findFirst: vi.fn() },
     response: { findFirst: vi.fn() },
   },
 }));
@@ -331,6 +331,31 @@ describe("promoteEmbeddedDataToShared", () => {
     await expect(promoteEmbeddedDataToShared(fieldId, workspaceId, { key: "lang" })).rejects.toThrow(
       "Key is reserved"
     );
+    expect(prisma.embeddedData.update).not.toHaveBeenCalled();
+  });
+
+  test("refuses a computed field's key that another variable in its survey is named", async () => {
+    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue({
+      ...localRow,
+      source: "computed",
+      dataType: "number",
+    } as never);
+    vi.mocked(prisma.surveyEmbeddedData.findFirst).mockResolvedValue({
+      id: "cllk1234567890123456789012",
+    } as never);
+
+    await expect(promoteEmbeddedDataToShared(fieldId, workspaceId, { key: "score" })).rejects.toThrow(
+      InvalidInputError
+    );
+    expect(prisma.surveyEmbeddedData.findFirst).toHaveBeenCalledWith({
+      where: {
+        workspaceId,
+        surveyId,
+        embeddedDataId: { not: fieldId },
+        embeddedData: { source: "computed", OR: [{ key: "score" }, { key: null, name: "score" }] },
+      },
+      select: { id: true },
+    });
     expect(prisma.embeddedData.update).not.toHaveBeenCalled();
   });
 

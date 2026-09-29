@@ -1572,6 +1572,55 @@ describe("Tests for createSurvey", () => {
       expect(prisma.embeddedData.updateMany).not.toHaveBeenCalled();
     });
 
+    test("a shared field's name clash is caught through its library key, not the payload's", async () => {
+      // The payload's key disagrees with the row's, so only a check that reads the library row sees
+      // the shared field answer to `plan_tier` — the name the local variable already has.
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      vi.mocked(prisma.embeddedData.findMany).mockResolvedValue([
+        {
+          id: "clx000000000000000000009",
+          key: "plan_tier",
+          source: "computed",
+          name: "Plan tier",
+          dataType: "number",
+          defaultValue: 7,
+          locked: false,
+        },
+      ] as never);
+
+      await expect(
+        createSurvey(mockWorkspaceId, {
+          ...mockCreateSurveyInput,
+          embeddedFields: [
+            {
+              field: {
+                key: null,
+                name: "plan_tier",
+                source: "computed",
+                dataType: "number",
+                defaultValue: 0,
+                locked: false,
+              },
+              link: { storageKey: "clx000000000000000000002" },
+            },
+            {
+              field: {
+                id: "clx000000000000000000009",
+                key: "other_key",
+                name: "Plan tier",
+                source: "computed",
+                dataType: "number",
+                defaultValue: 7,
+                locked: false,
+              },
+              link: { storageKey: "clx000000000000000000001" },
+            },
+          ],
+        } as never)
+      ).rejects.toThrow(/unique/);
+      expect(prisma.survey.create).not.toHaveBeenCalled();
+    });
+
     test("strips archivedAt from a create payload so a caller can't create a pre-archived survey", async () => {
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       prisma.survey.create.mockResolvedValueOnce({

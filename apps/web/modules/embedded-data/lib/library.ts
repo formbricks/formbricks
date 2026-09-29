@@ -392,6 +392,27 @@ export const promoteEmbeddedDataToShared = async (
   });
   assertValidRow(promoted);
 
+  // A shared computed field answers to its key in the derived legacy `variables`, where names must be
+  // unique. A key equal to another computed field's name in the same survey would make every later v1
+  // or v3 write of that survey fail validation, so it is refused here instead.
+  if (existing.source === "computed" && existing.surveyId) {
+    const clash = await prisma.surveyEmbeddedData.findFirst({
+      where: {
+        workspaceId,
+        surveyId: existing.surveyId,
+        embeddedDataId: { not: id },
+        embeddedData: {
+          source: "computed",
+          OR: [{ key: input.key }, { key: null, name: input.key }],
+        },
+      },
+      select: { id: true },
+    });
+    if (clash) {
+      throw new InvalidInputError("Key matches the name of another variable in this survey");
+    }
+  }
+
   try {
     const updated = await prisma.embeddedData.update({
       // `surveyId: { not: null }` a second time, so the write enforces what the read above checked
