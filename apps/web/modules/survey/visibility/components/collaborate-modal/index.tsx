@@ -8,6 +8,7 @@ import type { TSurveyVisibility } from "@formbricks/types/surveys/types";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import type { surveyKeys } from "@/modules/survey/list/lib/query";
 import { RestrictConfirmationDialog } from "@/modules/survey/visibility/components/restrict-confirmation-dialog";
+import { VisibilityBlockersAlert } from "@/modules/survey/visibility/components/visibility-blockers-alert";
 import { useSurveyVisibility } from "@/modules/survey/visibility/hooks/use-survey-visibility";
 import { useUpdateSurveyVisibility } from "@/modules/survey/visibility/hooks/use-update-survey-visibility";
 import { useVisibilityCopy } from "@/modules/survey/visibility/hooks/use-visibility-copy";
@@ -17,6 +18,7 @@ import {
   getRestrictedAuthor,
   getVisibilityErrorReaction,
   needsRestrictConfirmation,
+  showBlockersInCollaborate,
 } from "@/modules/survey/visibility/lib/collaborate";
 import { SURVEY_VISIBILITY_DOCS_URL } from "@/modules/survey/visibility/lib/constants";
 import { Badge } from "@/modules/ui/components/badge";
@@ -194,6 +196,11 @@ export const CollaborateModal = ({
                 })}
               </SelectContent>
             </Select>
+            {state && showBlockersInCollaborate(current, state) && (
+              <div className="px-1">
+                <VisibilityBlockersAlert blockers={state.blockers} size="small" />
+              </div>
+            )}
             {state?.pending && (
               <p className="text-xs text-slate-500">
                 {t("workspace.surveys.visibility.visibility_update_pending")}

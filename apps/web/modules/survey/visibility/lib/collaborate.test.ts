@@ -7,6 +7,7 @@ import {
   getVisibilityErrorReaction,
   groupBlockersByType,
   needsRestrictConfirmation,
+  showBlockersInCollaborate,
 } from "./collaborate";
 
 const apiError = (status: number, code?: string) => new V3ApiError({ status, detail: "Nope", code });
@@ -101,5 +102,23 @@ describe("groupBlockersByType", () => {
 
   test("no blockers, no groups", () => {
     expect(groupBlockersByType([])).toEqual([]);
+  });
+});
+
+describe("showBlockersInCollaborate", () => {
+  const blockers = [{ id: "i1", name: "Slack", type: "integration" as const }];
+
+  test("explains a Restricted option held back by connections on a workspace-visible survey", () => {
+    expect(showBlockersInCollaborate("workspace", { blockers, allowedTargets: [] })).toBe(true);
+  });
+
+  test("stays quiet without blockers, e.g. Unavailable because the survey has no owner", () => {
+    expect(showBlockersInCollaborate("workspace", { blockers: [], allowedTargets: [] })).toBe(false);
+  });
+
+  test("stays quiet when Restricted is offered anyway, or the survey is already restricted", () => {
+    expect(showBlockersInCollaborate("workspace", { blockers, allowedTargets: ["restricted"] })).toBe(false);
+    expect(showBlockersInCollaborate("restricted", { blockers, allowedTargets: [] })).toBe(false);
+    expect(showBlockersInCollaborate(null, { blockers, allowedTargets: [] })).toBe(false);
   });
 });

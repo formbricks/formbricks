@@ -85,3 +85,17 @@ export const groupBlockersByType = (blockers: readonly TSurveyVisibilityBlocker[
       .map((blocker) => blocker.name)
       .sort((left, right) => left.localeCompare(right)),
   })).filter((group) => group.names.length > 0);
+
+/**
+ * Whether the Collaborate modal explains why Restricted is unavailable: the survey is visible to the
+ * workspace now, connections depend on it, and so the server does not offer Restricted. "Unavailable"
+ * for any other reason (no owner, say) keeps its plain badge.
+ */
+export const showBlockersInCollaborate = (
+  current: TSurveyVisibility | null,
+  state: Readonly<{
+    blockers: readonly TSurveyVisibilityBlocker[];
+    allowedTargets: readonly TSurveyVisibility[];
+  }>
+): boolean =>
+  current === "workspace" && state.blockers.length > 0 && !state.allowedTargets.includes("restricted");

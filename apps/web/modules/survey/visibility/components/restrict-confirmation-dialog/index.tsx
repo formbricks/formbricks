@@ -3,11 +3,11 @@
 import { ArrowUpRightIcon, ShieldIcon } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 import { useTranslation } from "react-i18next";
+import { VisibilityBlockersAlert } from "@/modules/survey/visibility/components/visibility-blockers-alert";
 import { useVisibilityCopy } from "@/modules/survey/visibility/hooks/use-visibility-copy";
 import { type TRestrictedAuthor, groupBlockersByType } from "@/modules/survey/visibility/lib/collaborate";
 import { SURVEY_VISIBILITY_DOCS_URL } from "@/modules/survey/visibility/lib/constants";
 import type { TSurveyVisibilityBlocker } from "@/modules/survey/visibility/types";
-import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 
 interface RestrictConfirmationDialogProps {
@@ -21,22 +21,6 @@ interface RestrictConfirmationDialogProps {
   onConfirm: () => void;
   isSubmitting?: boolean;
 }
-
-const BlockerTypeLabel = ({ type }: Readonly<{ type: TSurveyVisibilityBlocker["type"] }>) => {
-  const { t } = useTranslation();
-  switch (type) {
-    case "feedbackSource":
-      return <>{t("workspace.surveys.visibility.feedback_sources")}</>;
-    case "integration":
-      return <>{t("common.integrations")}</>;
-    case "webhook":
-      return <>{t("common.webhooks")}</>;
-    case "workflow":
-      return <>{t("common.workflows")}</>;
-    case "dashboard":
-      return <>{t("workspace.surveys.visibility.dashboards")}</>;
-  }
-};
 
 /**
  * Visible → Restricted always passes through here. It spells out who loses access, compares what the
@@ -115,20 +99,7 @@ export const RestrictConfirmationDialog = ({
             </tbody>
           </table>
 
-          {blockerGroups.length > 0 && (
-            <Alert variant="warning" size="default" role="status">
-              <AlertTitle>{t("workspace.surveys.visibility.blocked_by_connections")}</AlertTitle>
-              <AlertDescription>
-                <ul className="list-disc space-y-0.5 pl-4">
-                  {blockerGroups.map((group) => (
-                    <li key={group.type}>
-                      <BlockerTypeLabel type={group.type} />: {group.names.join(", ")}
-                    </li>
-                  ))}
-                </ul>
-              </AlertDescription>
-            </Alert>
-          )}
+          <VisibilityBlockersAlert blockers={blockers} />
 
           <a
             href={SURVEY_VISIBILITY_DOCS_URL}
