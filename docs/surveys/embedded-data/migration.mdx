@@ -23,7 +23,7 @@ The distinction the two names were always making is the one the new vocabulary m
 - **Logic conditions keep matching.** Hidden field and variable operands are unchanged.
 - **`?field=value` in a survey link keeps filling hidden fields**, including the case-insensitive matching that was already there.
 - **`formbricks.track("action", { hiddenFields: { … } })` keeps working**, and an explicit value there still beats an ambient one.
-- **API payloads are unchanged.** `hiddenFields` and `variables` on the survey resource look exactly as they did.
+- **API payloads keep their shape.** `hiddenFields` and `variables` on the survey resource carry the same keys as before. The one difference: `hiddenFields.enabled` is now derived, `true` whenever the survey has a hidden field, and a value sent on write is ignored. To turn hidden fields off, remove them.
 - **Exports keep their hidden field and variable columns.**
 
 ## What Is New

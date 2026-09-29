@@ -18,7 +18,8 @@ That makes it the counterpart to **contact attributes**, which are **data about 
 
 <Note>
   Nothing renames. In the survey editor these are still the **Hidden Fields** and **Variables** cards, and the
-  API payloads are unchanged. Embedded Data is the name for those two plus the auto-captured fields, now that
+  API payloads keep their shape (only `hiddenFields.enabled` is now derived: `true` whenever a hidden field
+  exists). Embedded Data is the name for those two plus the auto-captured fields, now that
   they share one type system and one read path. See [Hidden Fields and
   Variables](/surveys/embedded-data/migration) if you already use them.
 </Note>

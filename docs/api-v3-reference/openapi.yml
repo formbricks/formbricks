@@ -5864,6 +5864,8 @@ components:
       properties:
         enabled:
           type: boolean
+          description: |
+            Derived, not stored: `true` whenever the survey declares at least one hidden field. A value sent on create or update is ignored; to turn hidden fields off, remove them from `fieldIds`.
         fieldIds:
           type: array
           items:

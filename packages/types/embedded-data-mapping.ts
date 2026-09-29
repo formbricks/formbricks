@@ -199,8 +199,9 @@ const toLegacyVariable = (field: TDesiredEmbeddedField): TSurveyVariable =>
  * `embeddedFields`. Both sides deriving it with this one function is what keeps them agreeing.
  *
  * `hiddenFields.enabled` has no storage of its own either, so it is derived too: on exactly when the
- * survey has an ingested field. That is what the stored flag always said in practice — it started
- * off, the first hidden field turned it on, and nothing in the product ever turned it off again.
+ * survey has an ingested field. The editor once had a toggle that switched it off (removed in #6649);
+ * a value sent on write is ignored now, so a caller that relied on `enabled: false` removes the fields
+ * instead.
  */
 export const toLegacyEmbeddedFields = (desired: readonly TDesiredEmbeddedField[]): TLegacyEmbeddedColumns => {
   const variables = desired.filter((field) => field.source === "computed").map(toLegacyVariable);
