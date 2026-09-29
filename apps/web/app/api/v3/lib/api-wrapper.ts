@@ -239,6 +239,54 @@ async function authenticateV3Request(req: NextRequest, authMode: TV3AuthMode): P
   return null;
 }
 
+/** The body step of `parseV3Input`: read within the byte limit, check the array budget, then parse. */
+async function parseV3Body(
+  req: NextRequest,
+  schema: TV3Schema,
+  requestId: string,
+  instance: string
+): Promise<{ ok: true; body: unknown } | TV3InputParseFailure> {
+  const invalidBody = (invalidParams: InvalidParam[]): TV3InputParseFailure => ({
+    ok: false,
+    detail: "Invalid request body",
+    invalidParams,
+    response: problemBadRequest(requestId, "Invalid request body", {
+      instance,
+      invalid_params: invalidParams,
+    }),
+  });
+
+  let bodyData: unknown;
+  try {
+    bodyData = await parseJsonBodyWithLimit(req);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return {
+        ok: false,
+        detail: error.message,
+        invalidParams: [],
+        response: problemPayloadTooLarge(requestId, error.message, instance),
+      };
+    }
+
+    return invalidBody([{ name: "body", reason: "Malformed JSON input, please check your request body" }]);
+  }
+
+  // Before the schema sees the body: an oversized array would otherwise cost one Zod issue per
+  // element (ENG-3384), and this covers arrays the schema types as `unknown` or `z.record` too.
+  const budgetViolation = findArrayBudgetViolation(bodyData);
+  if (budgetViolation) {
+    return invalidBody([arrayBudgetInvalidParam(budgetViolation, "body")]);
+  }
+
+  const bodyResult = schema.safeParse(bodyData);
+  if (!bodyResult.success) {
+    return invalidBody(formatZodIssues(bodyResult.error, "body"));
+  }
+
+  return { ok: true, body: bodyResult.data };
+}
+
 async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
   req: NextRequest,
   props: TProps,
@@ -249,65 +297,12 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
   const parsedInput = {} as TV3ParsedInput<S>;
 
   if (schemas?.body) {
-    let bodyData: unknown;
-
-    try {
-      bodyData = await parseJsonBodyWithLimit(req);
-    } catch (error) {
-      if (error instanceof RequestBodyTooLargeError) {
-        return {
-          ok: false,
-          detail: error.message,
-          invalidParams: [],
-          response: problemPayloadTooLarge(requestId, error.message, instance),
-        };
-      }
-
-      const invalidParams = [
-        { name: "body", reason: "Malformed JSON input, please check your request body" },
-      ];
-      return {
-        ok: false,
-        detail: "Invalid request body",
-        invalidParams,
-        response: problemBadRequest(requestId, "Invalid request body", {
-          instance,
-          invalid_params: invalidParams,
-        }),
-      };
+    const bodyResult = await parseV3Body(req, schemas.body, requestId, instance);
+    if (!bodyResult.ok) {
+      return bodyResult;
     }
 
-    // Before the schema sees the body: an oversized array would otherwise cost one Zod issue per
-    // element (ENG-3384), and this covers arrays the schema types as `unknown` or `z.record` too.
-    const budgetViolation = findArrayBudgetViolation(bodyData);
-    if (budgetViolation) {
-      const invalidParams = [arrayBudgetInvalidParam(budgetViolation, "body")];
-      return {
-        ok: false,
-        detail: "Invalid request body",
-        invalidParams,
-        response: problemBadRequest(requestId, "Invalid request body", {
-          instance,
-          invalid_params: invalidParams,
-        }),
-      };
-    }
-
-    const bodyResult = schemas.body.safeParse(bodyData);
-    if (!bodyResult.success) {
-      const invalidParams = formatZodIssues(bodyResult.error, "body");
-      return {
-        ok: false,
-        detail: "Invalid request body",
-        invalidParams,
-        response: problemBadRequest(requestId, "Invalid request body", {
-          instance,
-          invalid_params: invalidParams,
-        }),
-      };
-    }
-
-    parsedInput.body = bodyResult.data as TV3ParsedInput<S>["body"];
+    parsedInput.body = bodyResult.body as TV3ParsedInput<S>["body"];
   }
 
   if (schemas?.query) {

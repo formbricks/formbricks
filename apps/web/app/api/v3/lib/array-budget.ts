@@ -28,6 +28,30 @@ export type TArrayBudgetViolation =
 /** One step of the walk's path, shared by reference so a deep body costs one node per level. */
 type TPathNode = { segment: string; parent: TPathNode | null };
 
+type TWalkFrame = { value: unknown; path: TPathNode | null };
+
+function checkArray(array: unknown[], path: TPathNode | null, total: number): TArrayBudgetViolation | null {
+  if (array.length > V3_REQUEST_ARRAY_MAX_ITEMS) {
+    return { kind: "array_too_long", path: renderPath(path), length: array.length };
+  }
+  if (total > V3_REQUEST_ARRAY_MAX_TOTAL_ELEMENTS) {
+    return { kind: "too_many_elements", path: renderPath(path), total };
+  }
+  return null;
+}
+
+/** Pushed in reverse so the walk visits children in document order. */
+function pushChildren(
+  stack: TWalkFrame[],
+  children: readonly (readonly [string, unknown])[],
+  parent: TPathNode | null
+): void {
+  for (let index = children.length - 1; index >= 0; index -= 1) {
+    const [segment, value] = children[index];
+    stack.push({ value, path: { segment, parent } });
+  }
+}
+
 /**
  * Checks every array in a parsed JSON value against the two budgets above, before any schema sees it.
  *
@@ -43,36 +67,23 @@ type TPathNode = { segment: string; parent: TPathNode | null };
  * the root value itself.
  */
 export function findArrayBudgetViolation(value: unknown): TArrayBudgetViolation | null {
-  const stack: { value: unknown; path: TPathNode | null }[] = [{ value, path: null }];
+  const stack: TWalkFrame[] = [{ value, path: null }];
   let total = 0;
 
-  while (stack.length > 0) {
-    const current = stack.pop();
-    if (current === undefined) break;
-
+  for (let current = stack.pop(); current !== undefined; current = stack.pop()) {
     if (Array.isArray(current.value)) {
-      if (current.value.length > V3_REQUEST_ARRAY_MAX_ITEMS) {
-        return { kind: "array_too_long", path: renderPath(current.path), length: current.value.length };
-      }
-
       total += current.value.length;
-      if (total > V3_REQUEST_ARRAY_MAX_TOTAL_ELEMENTS) {
-        return { kind: "too_many_elements", path: renderPath(current.path), total };
+      const violation = checkArray(current.value, current.path, total);
+      if (violation) {
+        return violation;
       }
-
-      // Pushed in reverse so the walk visits elements in document order.
-      for (let index = current.value.length - 1; index >= 0; index -= 1) {
-        stack.push({ value: current.value[index], path: { segment: String(index), parent: current.path } });
-      }
-      continue;
-    }
-
-    if (typeof current.value === "object" && current.value !== null) {
-      const entries = Object.entries(current.value);
-      for (let index = entries.length - 1; index >= 0; index -= 1) {
-        const [key, entry] = entries[index];
-        stack.push({ value: entry, path: { segment: key, parent: current.path } });
-      }
+      pushChildren(
+        stack,
+        current.value.map((entry, index) => [String(index), entry] as const),
+        current.path
+      );
+    } else if (typeof current.value === "object" && current.value !== null) {
+      pushChildren(stack, Object.entries(current.value), current.path);
     }
   }
 
