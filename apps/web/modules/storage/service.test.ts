@@ -5,6 +5,7 @@ import { TAccessType } from "@formbricks/types/storage";
 import {
   deleteFile,
   deleteFilesByWorkspaceId,
+  deleteSurveyUploadFilesBestEffort,
   deleteWorkspaceFilesBestEffort,
   getFileStreamForDownload,
   getSignedUrlForUpload,
@@ -518,6 +519,47 @@ describe("storage service", () => {
 
       await expect(
         deleteWorkspaceFilesBestEffort({ id: "ws-456", legacyEnvironmentId: "env-123" })
+      ).resolves.toBeUndefined();
+
+      expect(logger.error).toHaveBeenCalled();
+    });
+  });
+
+  // ENG-3373: runs after a survey delete has committed, so it must never throw.
+  describe("deleteSurveyUploadFilesBestEffort", () => {
+    test("should delete only the survey's own upload folder", async () => {
+      vi.mocked(deleteFilesByPrefix).mockResolvedValue({
+        ok: true,
+        data: undefined,
+      } as MockedDeleteFilesByPrefixReturn);
+
+      await deleteSurveyUploadFilesBestEffort({ workspaceId: "ws-456", surveyId: "survey-1" });
+
+      // Must match the key the client upload route writes, and end in "/" so survey-1 cannot also
+      // match survey-10.
+      expect(deleteFilesByPrefix).toHaveBeenCalledTimes(1);
+      expect(deleteFilesByPrefix).toHaveBeenCalledWith("ws-456/private/surveys/survey-1/");
+      expect(logger.error).not.toHaveBeenCalled();
+    });
+
+    test("should log and resolve when the storage call returns an error", async () => {
+      vi.mocked(deleteFilesByPrefix).mockResolvedValue({
+        ok: false,
+        error: { code: StorageErrorCode.S3CredentialsError },
+      } as MockedDeleteFilesByPrefixReturn);
+
+      await expect(
+        deleteSurveyUploadFilesBestEffort({ workspaceId: "ws-456", surveyId: "survey-1" })
+      ).resolves.toBeUndefined();
+
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    test("should log and resolve when the storage call rejects", async () => {
+      vi.mocked(deleteFilesByPrefix).mockRejectedValue(new Error("bucket unreachable"));
+
+      await expect(
+        deleteSurveyUploadFilesBestEffort({ workspaceId: "ws-456", surveyId: "survey-1" })
       ).resolves.toBeUndefined();
 
       expect(logger.error).toHaveBeenCalled();
