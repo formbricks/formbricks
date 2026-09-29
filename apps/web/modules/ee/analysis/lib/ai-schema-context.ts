@@ -80,7 +80,8 @@ like \`start/end\` in any of these fields.
 ${operatorsText}
 
 ## Guidelines
-- Always include at least one measure. If unspecified, default to \`${CUBE_NAME}.count\`.
+- First decide whether the request can be answered from this feedback data at all. Set \`answerable\` to false when it is gibberish (random characters, keyboard mashing) or asks about something the data does not hold (the weather, a joke, general knowledge, writing code). A vague request that is still about the feedback ("show me something useful", "how are we doing") is answerable. When \`answerable\` is false, the rest of the query is ignored: still return every field, as placeholders (null, an empty \`measures\` array, any chart type), rather than inventing a query.
+- Always include at least one measure. If an answerable request names none, default to \`${CUBE_NAME}.count\`.
 - Use dimension IDs exactly as shown (e.g. \`FeedbackRecords.sourceType\`, \`FeedbackRecords.collectedAt\`).
 - Only add a timeDimension when the request actually concerns time: it names a period ("last quarter", "since June"), or it asks for a trend ("over time", "by week"). A request that does neither — "responses by source", "average rating per question" — must omit timeDimensions entirely, so the chart covers all the data. Do not add a default window: a chart is saved and reopened, and a range nobody asked for becomes a silent filter on every later viewing.
 - For time-based filtering (date range only, no time grouping): add a timeDimension with dimension \`${CUBE_NAME}.collectedAt\` and a date range in the form described above. Do NOT include granularity (default is None / filter only).
