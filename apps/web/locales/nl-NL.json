@@ -4370,7 +4370,7 @@
       "manage_directories": "Datasets beheren",
       "manage_feedback_sources": "Beheer feedbackbronnen",
       "metadata": "Metagegevens",
-      "metadata_read_only_entries": "Alleen-lezen metadatawaarden (niet-tekenreeks)",
+      "metadata_read_only_entries": "Alleen-lezen metadatawaarden",
       "missing_feedback_source_title": "Mis je een feedbackbron?",
       "no_feedback_directory_available": "Geen feedback-dataset toegewezen aan deze workspace. Maak of wijs er eerst een toe.",
       "no_feedback_directory_linked_admin_description": "Feedback-datasets brengen feedbackgegevens uit meerdere workspaces samen. Koppel een dataset aan deze workspace om aan de slag te gaan.",

@@ -2,10 +2,9 @@ import "server-only";
 import { logger } from "@formbricks/logger";
 import { TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
 import { TResponse } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import { type TReconcileFailure, reconcileFeedbackRecords } from "./reconcile";
 import { getFeedbackSourcesBySurveyId, updateFeedbackSource } from "./service";
-import { transformResponseToFeedbackRecords } from "./transform";
+import { type TFeedbackRecordSurvey, transformResponseToFeedbackRecords } from "./transform";
 import { getErrorMessage } from "./utils";
 
 /**
@@ -34,7 +33,7 @@ const logFailedRecords = (feedbackSourceId: string, failures: TReconcileFailure[
 const processFeedbackSource = async (
   feedbackSource: TFeedbackSourceWithMappings,
   response: TResponse,
-  survey: Pick<TSurvey, "id" | "name" | "type" | "blocks" | "languages">,
+  survey: TFeedbackRecordSurvey,
   workspaceId: string
 ): Promise<void> => {
   const feedbackRecords = transformResponseToFeedbackRecords(
@@ -106,7 +105,7 @@ const processFeedbackSource = async (
  */
 export const handleFeedbackSourcePipeline = async (
   response: TResponse,
-  survey: Pick<TSurvey, "id" | "name" | "type" | "blocks" | "languages">,
+  survey: TFeedbackRecordSurvey,
   workspaceId: string
 ): Promise<void> => {
   try {

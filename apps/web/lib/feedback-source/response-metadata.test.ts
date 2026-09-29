@@ -1,12 +1,19 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
+import type { TEmbeddedValueResponse, TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
   HUB_METADATA_FIELDS,
   type TMetadataContext,
+  buildEmbeddedDataMetadata,
   buildResponseMetadata,
   projectMetadataFields,
   stripUrlQuery,
 } from "./response-metadata";
+
+vi.mock("@formbricks/logger", () => ({
+  logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}));
 
 type TMetadataResponse = TMetadataContext["response"];
 
@@ -343,5 +350,100 @@ describe("projectMetadataFields", () => {
     );
 
     expect(result.roomy).toHaveLength(400);
+  });
+});
+
+/**
+ * The hazards below all come from `field.name` being any non-blank string (`ZEmbeddedDataName`
+ * refines nothing else), so they are proven here against the builder directly rather than through a
+ * survey response: each one is invisible in an end-to-end assertion, and each removes itself
+ * silently if the guard goes.
+ */
+describe("buildEmbeddedDataMetadata", () => {
+  const field = (name: string, source: "ingested" | "computed", storageKey = name): TLinkedEmbeddedField => ({
+    field: { key: null, name, source, dataType: "string", defaultValue: null, locked: false },
+    link: { storageKey },
+  });
+
+  const ingested = (name: string, storageKey = name) => field(name, "ingested", storageKey);
+
+  const responseWithData = (
+    data: Record<string, string>,
+    variables: Record<string, string> = {}
+  ): TEmbeddedValueResponse =>
+    ({
+      id: "response-1",
+      surveyId: "survey-1",
+      createdAt: new Date("2026-02-24T10:00:00.000Z"),
+      updatedAt: new Date("2026-02-24T10:00:00.000Z"),
+      finished: true,
+      language: "default",
+      data,
+      variables,
+      ttc: {},
+      meta: {},
+    }) as unknown as TEmbeddedValueResponse;
+
+  test("keeps the first of two fields of the same source sharing a name", () => {
+    // Nothing stops a survey declaring the same name twice, and letting the later one win would
+    // make the published value depend on the response rather than on the survey.
+    const survey = {
+      embeddedFields: [ingested("brand", "brand_a"), ingested("brand", "brand_b")],
+    };
+
+    expect(
+      buildEmbeddedDataMetadata(responseWithData({ brand_a: "AEG", brand_b: "Electrolux" }), survey)
+    ).toEqual({ brand: "AEG" });
+  });
+
+  test("lets an ingested field win a name it shares with a computed one, whichever is declared first", () => {
+    // The field list is every ingested field followed by every computed one, so source decides
+    // before declaration order does — and a survey that lists the computed one first does not
+    // change that. Documented as the rule because it is what the concatenation guarantees.
+    const survey = {
+      embeddedFields: [field("plan", "computed", "var-plan"), ingested("plan", "plan_param")],
+    };
+
+    expect(
+      buildEmbeddedDataMetadata(responseWithData({ plan_param: "pro" }, { "var-plan": "calculated" }), survey)
+    ).toEqual({ plan: "pro" });
+  });
+
+  test("strips NUL bytes and surrounding space from the published key", () => {
+    // A NUL reaching the jsonb insert fails as a 500 rather than a rejected field, which costs the
+    // response every one of its records; an untrimmed name would be a second Hub dimension.
+    const survey = { embeddedFields: [ingested("a\u0000b", "key-nul"), ingested("  plan  ", "key-pad")] };
+
+    expect(buildEmbeddedDataMetadata(responseWithData({ "key-nul": "x", "key-pad": "pro" }), survey)).toEqual(
+      { ab: "x", plan: "pro" }
+    );
+  });
+
+  test("gives the name to the ingested field even when it has no value, so the computed one cannot stand in", () => {
+    // Claiming the name only once a value resolved let an empty ingested field hand it over, and
+    // one Hub dimension then held values from both sources depending on the response.
+    const survey = {
+      embeddedFields: [ingested("channel", "channel_param"), field("channel", "computed", "var-channel")],
+    };
+
+    expect(
+      buildEmbeddedDataMetadata(responseWithData({}, { "var-channel": "computed-loses" }), survey)
+    ).toEqual({});
+  });
+
+  test("skips a field named __proto__ and says so, since readers of the record would drop it", () => {
+    const survey = { embeddedFields: [ingested("__proto__", "key-proto"), ingested("brand")] };
+
+    const result = buildEmbeddedDataMetadata(responseWithData({ "key-proto": "AEG", brand: "AEG" }), survey);
+
+    // Hub keeps an own `__proto__` key, but React drops it when it serializes props, so the record
+    // drawer would show one field fewer than the record holds.
+    expect(result).toEqual({ brand: "AEG" });
+    expect(Object.hasOwn(result, "__proto__")).toBe(false);
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ unpublishable: 1, published: 1 }),
+      expect.any(String)
+    );
   });
 });

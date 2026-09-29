@@ -1,4 +1,5 @@
 import "server-only";
+import type { TEmbeddedFieldsSurvey } from "@formbricks/types/embedded-data-resolver";
 import { TFeedbackSourceFormbricksMapping, THubFieldType } from "@formbricks/types/feedback-source";
 import { TResponse, TResponseData, TResponseDataValue } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
@@ -15,7 +16,19 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLanguageCode, getLocalizedValue } from "@/lib/i18n/utils";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import type { FeedbackRecordCreateParams } from "@/modules/hub";
-import { type TResponseMetadata, buildResponseMetadata } from "./response-metadata";
+import { type TRecordMetadata, buildEmbeddedDataMetadata, buildResponseMetadata } from "./response-metadata";
+
+/**
+ * The survey slice this module reads. `embeddedFields` is inlined by `withInlinedEmbeddedFields`
+ * and rides along on the object every caller already loads.
+ *
+ * Naming it here documents the expectation; it does not enforce it. The property is optional —
+ * `TEmbeddedFieldsSurvey` has to be, because the same shape serves surveys loaded through narrower
+ * selects — so a caller whose select drops the join still type-checks and simply publishes no
+ * Embedded Data. All three call sites carry it today.
+ */
+export type TFeedbackRecordSurvey = Pick<TSurvey, "id" | "name" | "type" | "blocks" | "languages"> &
+  TEmbeddedFieldsSurvey;
 
 const getHeadlineFromElement = (element?: TSurveyElement): string => {
   if (!element?.headline) return "Untitled";
@@ -159,16 +172,21 @@ type BaseRecordFields = Pick<
 > & {
   language?: string;
   user_id?: string;
-  metadata?: TResponseMetadata;
+  metadata?: TRecordMetadata;
 };
 
 const buildBaseFields = (
   response: TResponse,
-  survey: Pick<TSurvey, "id" | "name" | "type">,
+  survey: Pick<TSurvey, "id" | "name" | "type"> & TEmbeddedFieldsSurvey,
   tenantId: string
 ): BaseRecordFields => {
-  // Built once per response and shared by every record of the submission (ENG-1554).
-  const metadata = buildResponseMetadata(response, survey);
+  // Both built once per response and shared by every record of the submission (ENG-1554, ENG-3290).
+  const embeddedData = buildEmbeddedDataMetadata(response, survey);
+  const metadata: TRecordMetadata = {
+    ...buildResponseMetadata(response, survey),
+    // Omitted rather than sent as {} for the same reason the whole object is, below.
+    ...(Object.keys(embeddedData).length > 0 ? { embedded_data: embeddedData } : {}),
+  };
 
   return {
     collected_at: getCollectedAt(response),
@@ -370,7 +388,7 @@ const normalizeElementValue = (
  */
 export function transformResponseToFeedbackRecords(
   response: TResponse,
-  survey: Pick<TSurvey, "id" | "name" | "type" | "blocks" | "languages">,
+  survey: TFeedbackRecordSurvey,
   mappings: TFeedbackSourceFormbricksMapping[],
   tenantId: string
 ): FeedbackRecordCreateParams[] {

@@ -4370,7 +4370,7 @@
       "manage_directories": "管理資料集",
       "manage_feedback_sources": "管理回饋來源",
       "metadata": "中繼資料",
-      "metadata_read_only_entries": "唯讀元資料值（非字串）",
+      "metadata_read_only_entries": "唯讀中繼資料值",
       "missing_feedback_source_title": "缺少意見回饋來源？",
       "no_feedback_directory_available": "此工作區尚未指派意見回饋資料集。請先建立或指派一個。",
       "no_feedback_directory_linked_admin_description": "意見回饋資料集將來自多個工作區的意見回饋資料整合在一起。將資料集連結到此工作區即可開始使用。",
