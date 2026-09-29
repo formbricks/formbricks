@@ -45,9 +45,9 @@ describe("getShuffleOptionAfterRemovingSpecialChoice", () => {
   });
 
   test("keeps the mode while another special choice remains", () => {
-    expect(getShuffleOptionAfterRemovingSpecialChoice("exceptLast", [choice("a"), choice("none")])).toBe(
-      undefined
-    );
+    expect(
+      getShuffleOptionAfterRemovingSpecialChoice("exceptLast", [choice("a"), choice("none")])
+    ).toBeUndefined();
   });
 
   test("keeps modes that never depended on a special choice", () => {

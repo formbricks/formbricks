@@ -38,7 +38,7 @@ export const OtherValuesList = ({ others, surveyType }: Readonly<OtherValuesList
         .filter((otherValue) => otherValue.value !== "")
         .slice(0, visibleOtherResponses)
         .map((otherValue, idx) => (
-          <div key={`${idx}-${otherValue}`} dir="auto">
+          <div key={`${idx}-${otherValue.value}`} dir="auto">
             {surveyType === "link" && (
               <div className="ph-no-capture col-span-1 m-2 flex h-10 items-center rounded-lg pl-4 text-sm font-medium text-slate-900">
                 <span>{otherValue.value}</span>
