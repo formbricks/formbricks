@@ -3680,7 +3680,7 @@ const validateBlockConditions = (
 
 /** How a logic error names a block: its editable title, or its position when the title is blank. */
 const getBlockLabel = (block: TSurveyBlock, blockIndex: number): string =>
-  block.name.trim() ? block.name : `Block ${String(blockIndex + 1)}`;
+  block.name.trim() || `Block ${String(blockIndex + 1)}`;
 
 const validateBlockActions = (
   survey: TSurvey,

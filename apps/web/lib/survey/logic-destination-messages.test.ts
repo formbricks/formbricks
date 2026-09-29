@@ -75,6 +75,12 @@ describe("a logic rule whose destination block no longer exists", () => {
     expect((issues[0] as { params?: unknown }).params).toEqual({ missingLogicDestination: "jump" });
   });
 
+  test("trims the title, so the schema and the editor toast name the block the same way", () => {
+    const issues = issuesOf(surveyWith({ name: "  Intro questions  ", logic: [jumpRule(deletedBlockId)] }));
+
+    expect(issues[0].message).toContain('of "Intro questions" no longer exists');
+  });
+
   test("a fallback names the owning block's title, not the missing id", () => {
     const issues = issuesOf(
       surveyWith({ name: "Intro questions", logic: [jumpRule("block2")], logicFallback: deletedBlockId })
