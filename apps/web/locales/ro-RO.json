@@ -3245,7 +3245,7 @@
         "auto_progress_rating_and_nps": "Avansare automată pentru întrebări de rating și NPS",
         "auto_progress_rating_and_nps_description": "Avansare automată în blocurile cu o singură întrebare. Întrebările obligatorii ascund butonul Următorul, cu excepția situației în care este selectată opțiunea „Altele“.",
         "auto_save_disabled": "Salvare automată dezactivată",
-        "auto_save_disabled_tooltip": "Sondajul tău este salvat automat doar când este în ciornă. Acest lucru asigură că sondajele active nu sunt actualizate din greșeală.",
+        "auto_save_disabled_tooltip": "Chestionarul tău este salvat automat doar când este în stadiul de ciornă. Astfel ne asigurăm că chestionarele care nu mai sunt ciorne nu sunt modificate din greșeală.",
         "auto_save_on": "Salvare automată activată",
         "automatically_close_survey_after_n_seconds_if_no_response": "Închide automat chestionarul după <autoCloseInput /> secunde de la declanșare dacă nu există răspuns.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Închideți automat sondajul după un număr anumit de răspunsuri.",

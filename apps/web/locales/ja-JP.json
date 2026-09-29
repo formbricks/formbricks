@@ -3245,7 +3245,7 @@
         "auto_progress_rating_and_nps": "評価とNPSの質問を自動進行",
         "auto_progress_rating_and_nps_description": "単一質問ブロックでは自動的に次へ進みます。必須質問では「次へ」ボタンが非表示になりますが、「その他」が選択された場合は表示されます。",
         "auto_save_disabled": "自動保存が無効",
-        "auto_save_disabled_tooltip": "アンケートは下書き状態のときのみ自動保存されます。これにより、実施中のアンケートが意図せず更新されることを防ぎます。",
+        "auto_save_disabled_tooltip": "アンケートは下書き状態の時のみ自動保存されます。これにより、下書きでなくなったアンケートが誤って変更されることを防ぎます。",
         "auto_save_on": "自動保存オン",
         "automatically_close_survey_after_n_seconds_if_no_response": "トリガー後、応答がない場合は<autoCloseInput />秒後に自動的にアンケートを閉じます。",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "一定の回答数に達した後にアンケートを自動的に閉じます。",

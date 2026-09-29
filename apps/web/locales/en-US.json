@@ -3245,7 +3245,7 @@
         "auto_progress_rating_and_nps": "Auto-progress rating and NPS questions",
         "auto_progress_rating_and_nps_description": "Auto-advance in single-question blocks. Required questions hide Next, except when “Other” is selected.",
         "auto_save_disabled": "Auto-save disabled",
-        "auto_save_disabled_tooltip": "Your survey is only auto-saved when in draft. This assures active surveys are not unintentionally updated.",
+        "auto_save_disabled_tooltip": "Your survey is only auto-saved when in draft. This makes sure surveys that are no longer drafts aren't changed by accident.",
         "auto_save_on": "Auto-save on",
         "automatically_close_survey_after_n_seconds_if_no_response": "Automatically close survey after <autoCloseInput /> seconds after trigger if no response.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Automatically close the survey after a certain number of responses.",

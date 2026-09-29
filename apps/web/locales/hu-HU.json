@@ -3245,7 +3245,7 @@
         "auto_progress_rating_and_nps": "Értékelés és valós ügyfél-támogatottsági érték kérdések automatikus feldolgozása",
         "auto_progress_rating_and_nps_description": "Automatikus továbblépés az egykérdéses blokkokban. A kötelező kérdések elrejtik a „Tovább” gombot, kivéve ha az „Egyéb” van kiválasztva.",
         "auto_save_disabled": "Az automatikus mentés letiltva",
-        "auto_save_disabled_tooltip": "A felmérése csak akkor kerül automatikusan mentésre, amikor piszkozat állapotban van. Ez biztosítja, hogy az aktív felmérések ne frissüljenek véletlenül.",
+        "auto_save_disabled_tooltip": "Az Ön felmérése kizárólag vázlat állapotban kerül automatikusan mentésre. Ez biztosítja, hogy a már nem vázlat állapotú felmérések ne módosuljanak véletlenül.",
         "auto_save_on": "Automatikus mentés bekapcsolva",
         "automatically_close_survey_after_n_seconds_if_no_response": "Kérdőív automatikus lezárása az aktiváló utáni <autoCloseInput /> másodperc után, ha nincs válasz.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "A kérdőív automatikus lezárása egy bizonyos számú válasz után.",

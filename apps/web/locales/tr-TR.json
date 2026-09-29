@@ -3245,7 +3245,7 @@
         "auto_progress_rating_and_nps": "Derecelendirme ve NPS sorularını otomatik ilerlet",
         "auto_progress_rating_and_nps_description": "Tek soruluk bloklarda otomatik ilerle. Zorunlu sorular İleri düğmesini gizler, \"Diğer\" seçildiğinde hariç.",
         "auto_save_disabled": "Otomatik kaydetme devre dışı",
-        "auto_save_disabled_tooltip": "Anketin yalnızca taslak halindeyken otomatik kaydedilir. Bu, aktif anketlerin istemeden güncellenmemesini sağlar.",
+        "auto_save_disabled_tooltip": "Anketin otomatik kaydetme özelliği sadece taslak durumundayken çalışır. Bu, artık taslak olmayan anketlerin yanlışlıkla değiştirilmemesini sağlar.",
         "auto_save_on": "Otomatik kaydetme açık",
         "automatically_close_survey_after_n_seconds_if_no_response": "Yanıt alınmazsa, tetiklendikten <autoCloseInput /> saniye sonra anketi otomatik olarak kapat.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Belirli sayıda yanıt alındıktan sonra anketi otomatik olarak kapat.",

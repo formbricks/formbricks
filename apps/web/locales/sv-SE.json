@@ -3245,7 +3245,7 @@
         "auto_progress_rating_and_nps": "Gå vidare automatiskt vid betygs- och NPS-frågor",
         "auto_progress_rating_and_nps_description": "Gå automatiskt vidare i frågeblock med en enda fråga. Obligatoriska frågor döljer Nästa-knappen, förutom när \"Annat\" är valt.",
         "auto_save_disabled": "Automatisk sparning inaktiverad",
-        "auto_save_disabled_tooltip": "Din undersökning sparas endast automatiskt när den är i utkastläge. Detta säkerställer att aktiva undersökningar inte uppdateras oavsiktligt.",
+        "auto_save_disabled_tooltip": "Din enkät sparas bara automatiskt när den är ett utkast. Detta säkerställer att enkäter som inte längre är utkast inte ändras av misstag.",
         "auto_save_on": "Automatisk sparning på",
         "automatically_close_survey_after_n_seconds_if_no_response": "Stäng enkäten automatiskt efter <autoCloseInput /> sekunder om inget svar ges.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Stäng enkäten automatiskt efter ett visst antal svar.",

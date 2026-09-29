@@ -3245,7 +3245,7 @@
         "auto_progress_rating_and_nps": "Avançar automaticamente em perguntas de classificação e NPS",
         "auto_progress_rating_and_nps_description": "Avançar automaticamente em blocos de pergunta única. Perguntas obrigatórias ocultam o botão Seguinte, exceto quando \"Outro\" está selecionado.",
         "auto_save_disabled": "Guardar automático desativado",
-        "auto_save_disabled_tooltip": "O teu inquérito só é guardado automaticamente quando está em rascunho. Isto garante que inquéritos ativos não sejam atualizados sem intenção.",
+        "auto_save_disabled_tooltip": "O teu inquérito só é guardado automaticamente quando está em rascunho. Isto garante que inquéritos que já não são rascunhos não são alterados acidentalmente.",
         "auto_save_on": "Guardar automático ativado",
         "automatically_close_survey_after_n_seconds_if_no_response": "Fechar automaticamente o inquérito após <autoCloseInput /> segundos após o acionamento se não houver resposta.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Fechar automaticamente o inquérito após um certo número de respostas",

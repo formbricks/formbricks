@@ -3245,7 +3245,7 @@
         "auto_progress_rating_and_nps": "Progression automatique pour les questions d'évaluation et NPS",
         "auto_progress_rating_and_nps_description": "Passage automatique pour les blocs à question unique. Les questions obligatoires masquent le bouton Suivant, sauf lorsque « Autre » est sélectionné.",
         "auto_save_disabled": "Sauvegarde automatique désactivée",
-        "auto_save_disabled_tooltip": "Ton questionnaire est uniquement sauvegardé automatiquement lorsqu'il est en brouillon. Cela garantit que les questionnaires actifs ne sont pas modifiés involontairement.",
+        "auto_save_disabled_tooltip": "Ton sondage n'est enregistré automatiquement que lorsqu'il est en brouillon. Cela garantit que les sondages qui ne sont plus des brouillons ne sont pas modifiés par accident.",
         "auto_save_on": "Sauvegarde automatique activée",
         "automatically_close_survey_after_n_seconds_if_no_response": "Fermer automatiquement le sondage après <autoCloseInput /> secondes suivant le déclenchement si aucune réponse.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Fermer automatiquement l'enquête après un certain nombre de réponses.",
