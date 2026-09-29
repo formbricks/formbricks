@@ -399,6 +399,43 @@ describe("validateElementResponse", () => {
     });
   });
 
+  describe("ranking element with an Other option", () => {
+    const buildRanking = (withOther: boolean, required = false): TSurveyElement =>
+      ({
+        id: "rank1",
+        type: TSurveyElementTypeEnum.Ranking,
+        headline: { default: "Rank these" },
+        required,
+        choices: [
+          { id: "opt1", label: { default: "Price" } },
+          { id: "opt2", label: { default: "Speed" } },
+          ...(withOther ? [{ id: "other", label: { default: "Other" } }] : []),
+        ],
+      }) as unknown as TSurveyRankingElement;
+
+    test("rejects a ranked Other whose text is empty", () => {
+      const result = validateElementResponse(buildRanking(true), ["Price", ""], "en");
+      expect(result.valid).toBe(false);
+      expect(result.errors).toHaveLength(1);
+    });
+
+    test("rejects a ranked Other whose text is whitespace only", () => {
+      expect(validateElementResponse(buildRanking(true, true), ["  ", "Speed"], "en").valid).toBe(false);
+    });
+
+    test("accepts a ranked Other with text", () => {
+      expect(validateElementResponse(buildRanking(true), ["Price", "Integrations"], "en").valid).toBe(true);
+    });
+
+    test("accepts a ranking that leaves Other unranked", () => {
+      expect(validateElementResponse(buildRanking(true), ["Speed", "Price"], "en").valid).toBe(true);
+    });
+
+    test("ignores empty entries when the element has no Other option", () => {
+      expect(validateElementResponse(buildRanking(false), ["Price", ""], "en").valid).toBe(true);
+    });
+  });
+
   describe("validation rules - AND logic", () => {
     test("should return valid when all rules pass", () => {
       const element: TSurveyElement = {

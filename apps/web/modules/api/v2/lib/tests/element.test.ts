@@ -123,6 +123,25 @@ describe("validateOtherOptionLengthForMultipleChoice", () => {
     expect(result).toBe("q2");
   });
 
+  test("returns questionId for a ranking whose Other slot holds over-long text", () => {
+    const longText = "Z".repeat(MAX_OTHER_OPTION_LENGTH + 1);
+    const result = validateOtherOptionLengthForMultipleChoice({
+      responseData: { rank: ["Option 1", longText] },
+      surveyQuestions: [{ id: "rank", type: "ranking", choices: mockChoices }],
+    });
+
+    expect(result).toBe("rank");
+  });
+
+  test("accepts a ranking whose Other text is within the limit", () => {
+    const result = validateOtherOptionLengthForMultipleChoice({
+      responseData: { rank: ["Integrations", "Option 2"] },
+      surveyQuestions: [{ id: "rank", type: "ranking", choices: mockChoices }],
+    });
+
+    expect(result).toBeUndefined();
+  });
+
   test("ignores non-matching or unrelated question IDs", () => {
     const result = validateOtherOptionLengthForMultipleChoice({
       responseData: { unrelated: "Other: something" },

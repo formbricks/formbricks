@@ -49,9 +49,13 @@ export const validateOtherOptionLengthForMultipleChoice = ({
     const question = surveyQuestions.find((q) => q.id === questionId);
     if (!question) continue;
 
-    const isMultiChoice = question.type === "multipleChoiceMulti" || question.type === "multipleChoiceSingle";
+    // Ranking stores a ranked "Other" as free text in place of a label, like multiple choice.
+    const hasOtherText =
+      question.type === "multipleChoiceMulti" ||
+      question.type === "multipleChoiceSingle" ||
+      question.type === "ranking";
 
-    if (!isMultiChoice || !question.choices) continue;
+    if (!hasOtherText || !question.choices) continue;
 
     const error = validateAnswer(answer, question.choices, questionId, responseLanguage);
     if (error) return error;
