@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  V3SurveyReferenceValidationError,
   getV3SurveyIntroducedPrecedenceInvalidParams,
   getV3SurveyPrecedenceInvalidParams,
   validateV3SurveyReferences,
@@ -414,14 +415,14 @@ describe("validateV3SurveyReferences", () => {
     }
   });
 
-  test("lists at most 50 reference problems and counts the rest (ENG-3384)", () => {
+  test("returns every reference problem; the response-boundary error caps them at 50 (ENG-3384)", () => {
     const elements = Array.from({ length: 60 }, (_unused, index) => ({
       ...validSurvey.blocks[0].elements[0],
       id: `question_${index}`,
       headline: { default: `#recall:missing_${index}/fallback:x#` },
     }));
     // The fixture block's logic points at the element replaced here, so it goes too: the sixty recalls
-    // have to be the only problems for the count below to mean anything.
+    // have to be the only problems for the counts below to mean anything.
     const survey = {
       ...validSurvey,
       blocks: [{ ...validSurvey.blocks[0], elements, logic: undefined, logicFallback: undefined }],
@@ -436,10 +437,15 @@ describe("validateV3SurveyReferences", () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.invalidParams).toHaveLength(51);
-      expect(result.invalidParams.at(-1)).toEqual({
+      // Uncapped here on purpose: `deriveFailureOrigin` diffs this list against the stored survey's, and
+      // a capped pair would blame the stored survey for a new problem past the cap.
+      expect(result.invalidParams).toHaveLength(60);
+
+      const thrown = new V3SurveyReferenceValidationError(result.invalidParams);
+      expect(thrown.invalidParams).toHaveLength(50);
+      expect(thrown.invalidParams.at(-1)).toEqual({
         name: "survey",
-        reason: "10 further problems with this survey were not reported; fix the ones above and retry",
+        reason: "11 further problems with this survey were not reported; fix the ones above and retry",
       });
     }
   });

@@ -46,6 +46,22 @@ describe("findArrayBudgetViolation", () => {
     expect(findArrayBudgetViolation(value)).toBeNull();
   });
 
+  test("clips the reported path to ten segments and 64 characters per key", () => {
+    // The path is caller-shaped too: 60k nested arrays put a 100 KB `name` into the 400 before this.
+    let value: unknown = junk(V3_REQUEST_ARRAY_MAX_ITEMS + 1);
+    for (let depth = 0; depth < 30; depth += 1) {
+      value = [value];
+    }
+    const longKey = "k".repeat(100);
+
+    const violation = findArrayBudgetViolation({ [longKey]: value });
+
+    expect(violation?.kind).toBe("array_too_long");
+    expect(violation?.path).toBe(
+      [`${"k".repeat(64)}…`, ...Array.from({ length: 9 }, () => "0"), "…"].join(".")
+    );
+  });
+
   test("ignores scalars and objects without arrays", () => {
     expect(findArrayBudgetViolation({ name: "x", nested: { flag: true, none: null } })).toBeNull();
     expect(findArrayBudgetViolation("string")).toBeNull();

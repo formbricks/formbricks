@@ -899,11 +899,12 @@ describe("formatZodIssues — the unknown-key expansion", () => {
 
     const params = formatZodIssues(parsed.error, "body");
 
-    expect(params).toHaveLength(V3_INVALID_PARAMS_MAX + 1);
+    // The limit counts the summary: 49 problems listed, the 50th entry counts the other eleven.
+    expect(params).toHaveLength(V3_INVALID_PARAMS_MAX);
     expect(params[0]).toMatchObject({ name: "0" });
     expect(params.at(-1)).toEqual({
       name: "body",
-      reason: "10 further problems with this request were not reported; fix the ones above and retry",
+      reason: "11 further problems with this request were not reported; fix the ones above and retry",
     });
   });
 });

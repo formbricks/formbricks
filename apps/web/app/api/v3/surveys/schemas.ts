@@ -31,6 +31,12 @@ type TV3LanguageNormalizationOptions = TV3LanguageCompatibilityOptions & {
 
 type TV3SurveyDocumentSchemaOptions = TV3LanguageNormalizationOptions & {
   fallbackDefaultLanguage?: string;
+  /**
+   * `false` parses a document without the `V3_SURVEY_MAX_*` array caps. Those are bounds on request
+   * input; the stored survey is parsed with the same schema, and a survey the editor built above a cap
+   * has to stay editable through v3 and MCP (review on #9423).
+   */
+  boundArrays?: boolean;
 };
 
 const createZV3SurveyLanguageTag = (options?: TV3LanguageCompatibilityOptions) =>
@@ -1108,18 +1114,40 @@ export const V3_SURVEY_MAX_LANGUAGES = 50;
 export const V3_SURVEY_MAX_HIDDEN_FIELDS = 200;
 export const V3_SURVEY_MAX_TRIGGERS = 50;
 
-const ZV3SurveyBlocks = lengthBoundedArray(ZSurveyBlocks.element, {
-  min: 1,
-  max: V3_SURVEY_MAX_BLOCKS,
-  minMessage: "At least one block is required",
-});
-const ZV3SurveyEndings = lengthBoundedArray(ZSurveyEndings.element, { max: V3_SURVEY_MAX_ENDINGS });
-const ZV3SurveyVariables = lengthBoundedArray(ZSurveyVariables.element, { max: V3_SURVEY_MAX_VARIABLES });
-const ZV3SurveyHiddenFields = ZSurveyHiddenFields.extend({
-  fieldIds: lengthBoundedArray(ZSurveyHiddenFields.shape.fieldIds.unwrap().element, {
-    max: V3_SURVEY_MAX_HIDDEN_FIELDS,
-  }).optional(),
-});
+/**
+ * A document array, capped for request input or plain for the stored document. Typed on the output
+ * alone so both variants slot into the same shape; the input side is `unknown` either way once the
+ * preprocess wraps it.
+ */
+function documentArray<TItem extends z.ZodType>(
+  item: TItem,
+  bounds: { min?: number; max: number; minMessage?: string },
+  bound: boolean
+): z.ZodType<z.output<TItem>[]> {
+  if (bound) {
+    return lengthBoundedArray(item, bounds);
+  }
+  return z.array(item).min(bounds.min ?? 0, bounds.minMessage ? { message: bounds.minMessage } : undefined);
+}
+
+const createZV3SurveyBlocks = (bound: boolean) =>
+  documentArray(
+    ZSurveyBlocks.element,
+    { min: 1, max: V3_SURVEY_MAX_BLOCKS, minMessage: "At least one block is required" },
+    bound
+  );
+const createZV3SurveyEndings = (bound: boolean) =>
+  documentArray(ZSurveyEndings.element, { max: V3_SURVEY_MAX_ENDINGS }, bound);
+const createZV3SurveyVariables = (bound: boolean) =>
+  documentArray(ZSurveyVariables.element, { max: V3_SURVEY_MAX_VARIABLES }, bound);
+const createZV3SurveyHiddenFields = (bound: boolean): z.ZodType<z.output<typeof ZSurveyHiddenFields>> =>
+  bound
+    ? ZSurveyHiddenFields.extend({
+        fieldIds: lengthBoundedArray(ZSurveyHiddenFields.shape.fieldIds.unwrap().element, {
+          max: V3_SURVEY_MAX_HIDDEN_FIELDS,
+        }).optional(),
+      })
+    : ZSurveyHiddenFields;
 
 // App-survey trigger references an existing workspace action class by id.
 // Existence/uniqueness is validated against workspace action classes at write time.
@@ -1130,18 +1158,26 @@ const ZV3SurveyTrigger = z.object({ actionClassId: z.cuid2() }).strict();
  * provided `distribution` object fully determines the runtime config (top-level replacement semantics).
  * Only honored when `type === "app"`; rejected for link surveys (see addAppDistributionIssues).
  */
-const ZV3SurveyDistribution = z
-  .object({
-    displayOption: ZSurveyDisplayOption.prefault("displayOnce"),
-    displayPercentage: z.number().min(0.01).max(100).nullable().prefault(null),
-    displayLimit: z.number().int().nonnegative().nullable().prefault(null),
-    recontactDays: z.number().int().nonnegative().nullable().prefault(null),
-    autoClose: z.number().int().nonnegative().nullable().prefault(null),
-    autoComplete: z.number().int().min(1, "Response limit must be greater than 0").nullable().prefault(null),
-    delay: z.number().int().nonnegative().prefault(0),
-    triggers: lengthBoundedArray(ZV3SurveyTrigger, { max: V3_SURVEY_MAX_TRIGGERS }).prefault([]),
-  })
-  .strict();
+const createZV3SurveyDistribution = (bound: boolean) =>
+  z
+    .object({
+      displayOption: ZSurveyDisplayOption.prefault("displayOnce"),
+      displayPercentage: z.number().min(0.01).max(100).nullable().prefault(null),
+      displayLimit: z.number().int().nonnegative().nullable().prefault(null),
+      recontactDays: z.number().int().nonnegative().nullable().prefault(null),
+      autoClose: z.number().int().nonnegative().nullable().prefault(null),
+      autoComplete: z
+        .number()
+        .int()
+        .min(1, "Response limit must be greater than 0")
+        .nullable()
+        .prefault(null),
+      delay: z.number().int().nonnegative().prefault(0),
+      triggers: documentArray(ZV3SurveyTrigger, { max: V3_SURVEY_MAX_TRIGGERS }, bound).prefault([]),
+    })
+    .strict();
+
+const ZV3SurveyDistribution = createZV3SurveyDistribution(true);
 
 // App-survey contact targeting. `filters: []` means "show to everyone".
 const ZV3SurveyTargeting = z.object({ filters: ZSegmentFilters }).strict();
@@ -1199,21 +1235,24 @@ function addAppDistributionIssues(
   }
 }
 
-function createV3SurveyDocumentShape(options?: TV3LanguageCompatibilityOptions) {
+/** `bound: false` is for the stored document only — see `TV3SurveyDocumentSchemaOptions.boundArrays`. */
+function createV3SurveyDocumentShape(options?: TV3LanguageCompatibilityOptions, bound = true) {
   return {
     name: ZV3SurveyName,
     status: ZSurveyStatus.prefault("draft"),
     metadata: ZSurveyMetadata.prefault({}),
     defaultLanguage: createZV3SurveyLanguageTag(options).prefault(DEFAULT_V3_SURVEY_LANGUAGE),
-    languages: lengthBoundedArray(createZV3SurveyLanguageInput(options), {
-      max: V3_SURVEY_MAX_LANGUAGES,
-    }).prefault([]),
+    languages: documentArray(
+      createZV3SurveyLanguageInput(options),
+      { max: V3_SURVEY_MAX_LANGUAGES },
+      bound
+    ).prefault([]),
     welcomeCard: ZSurveyWelcomeCard.prefault({ enabled: false }),
-    blocks: ZV3SurveyBlocks,
-    endings: ZV3SurveyEndings.prefault([]),
-    hiddenFields: ZV3SurveyHiddenFields.prefault({ enabled: false }),
-    variables: ZV3SurveyVariables.prefault([]),
-    distribution: ZV3SurveyDistribution.optional(),
+    blocks: createZV3SurveyBlocks(bound),
+    endings: createZV3SurveyEndings(bound).prefault([]),
+    hiddenFields: createZV3SurveyHiddenFields(bound).prefault({ enabled: false }),
+    variables: createZV3SurveyVariables(bound).prefault([]),
+    distribution: createZV3SurveyDistribution(bound).optional(),
     targeting: ZV3SurveyTargeting.optional(),
   };
 }
@@ -1227,10 +1266,10 @@ function createV3SurveyPatchShape(options?: TV3LanguageCompatibilityOptions) {
       max: V3_SURVEY_MAX_LANGUAGES,
     }).optional(),
     welcomeCard: ZSurveyWelcomeCard.optional(),
-    blocks: ZV3SurveyBlocks.optional(),
-    endings: ZV3SurveyEndings.optional(),
-    hiddenFields: ZV3SurveyHiddenFields.optional(),
-    variables: ZV3SurveyVariables.optional(),
+    blocks: createZV3SurveyBlocks(true).optional(),
+    endings: createZV3SurveyEndings(true).optional(),
+    hiddenFields: createZV3SurveyHiddenFields(true).optional(),
+    variables: createZV3SurveyVariables(true).optional(),
     distribution: ZV3SurveyDistribution.optional(),
     targeting: ZV3SurveyTargeting.optional(),
   };
@@ -1246,7 +1285,10 @@ export function createZV3SurveyDocumentBaseSchema(options?: TV3SurveyDocumentSch
       applyDefaultLanguage: true,
       allowedLanguageCodes: options?.allowedLanguageCodes,
     }),
-    z.object(createV3SurveyDocumentShape(options)).strict().superRefine(addLanguageIssues)
+    z
+      .object(createV3SurveyDocumentShape(options, options?.boundArrays ?? true))
+      .strict()
+      .superRefine(addLanguageIssues)
   );
 }
 

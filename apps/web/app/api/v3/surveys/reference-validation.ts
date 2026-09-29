@@ -1,7 +1,7 @@
 import type { TSurveyBlocks } from "@formbricks/types/surveys/blocks";
 import type { TConditionGroup, TDynamicLogicFieldValue } from "@formbricks/types/surveys/logic";
 import type { TSurveyEndings, TSurveyHiddenFields, TSurveyVariables } from "@formbricks/types/surveys/types";
-import { BoundedInvalidParams } from "@/app/api/v3/lib/invalid-params";
+import { capInvalidParams } from "@/app/api/v3/lib/invalid-params";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 
 type TReferenceValidationInput = {
@@ -26,13 +26,19 @@ type TReferenceLookup = {
 };
 type TInvalidParamReferenceType = Exclude<InvalidParam["referenceType"], undefined>;
 
+/**
+ * The response boundary for survey validation problems: every 422 the surveys API sends is built from
+ * an instance of this, so the `invalid_params` cap lives here (ENG-3384). The validators themselves
+ * return full lists — `deriveFailureOrigin` diffs the merged document's against the stored survey's,
+ * and capping before that comparison would blame the stored survey for a new problem past the cap.
+ */
 export class V3SurveyReferenceValidationError extends Error {
   invalidParams: InvalidParam[];
 
   constructor(invalidParams: InvalidParam[]) {
     super("Survey contains invalid references");
     this.name = "V3SurveyReferenceValidationError";
-    this.invalidParams = invalidParams;
+    this.invalidParams = capInvalidParams(invalidParams, "survey", "survey");
   }
 }
 
@@ -44,21 +50,21 @@ function addDuplicateIdIssues(
   entries: { id: string; path: string }[],
   label: string,
   referenceType: TInvalidParamReferenceType,
-  issues: BoundedInvalidParams
+  issues: InvalidParam[]
 ): void {
   const firstPathById = new Map<string, string>();
 
   entries.forEach(({ id, path }) => {
     const firstPath = firstPathById.get(id);
     if (firstPath !== undefined) {
-      issues.push(() => ({
+      issues.push({
         name: path,
         reason: `${label} id '${id}' is duplicated; first used at ${firstPath}`,
         code: "duplicate_identifier",
         identifier: id,
         referenceType,
         firstUsedAt: firstPath,
-      }));
+      });
       return;
     }
 
@@ -71,21 +77,21 @@ function addDuplicateValueIssues(
   pathForIndex: (index: number) => string,
   label: string,
   referenceType: TInvalidParamReferenceType,
-  issues: BoundedInvalidParams
+  issues: InvalidParam[]
 ): void {
   const firstIndexByValue = new Map<string, number>();
 
   values.forEach((value, index) => {
     const firstIndex = firstIndexByValue.get(value);
     if (firstIndex !== undefined) {
-      issues.push(() => ({
+      issues.push({
         name: pathForIndex(index),
         reason: `${label} '${value}' is duplicated; first used at ${pathForIndex(firstIndex)}`,
         code: "duplicate_identifier",
         identifier: value,
         referenceType,
         firstUsedAt: pathForIndex(firstIndex),
-      }));
+      });
       return;
     }
 
@@ -93,7 +99,7 @@ function addDuplicateValueIssues(
   });
 }
 
-function addCrossNamespaceCollisionIssues(entries: TNamedReference[], issues: BoundedInvalidParams): void {
+function addCrossNamespaceCollisionIssues(entries: TNamedReference[], issues: InvalidParam[]): void {
   const firstEntryById = new Map<string, TNamedReference>();
 
   entries.forEach((entry) => {
@@ -109,14 +115,14 @@ function addCrossNamespaceCollisionIssues(entries: TNamedReference[], issues: Bo
       return;
     }
 
-    issues.push(() => ({
+    issues.push({
       name: entry.path,
       reason: `${entry.namespace} identifier '${entry.id}' conflicts with ${firstEntry.namespace} identifier at ${firstEntry.path}`,
       code: "duplicate_identifier",
       identifier: entry.id,
       referenceType: entry.namespace,
       conflictsWith: firstEntry.path,
-    }));
+    });
   });
 }
 
@@ -128,12 +134,12 @@ function addRecallReferenceIssues(
   value: unknown,
   path: string,
   references: TReferenceLookup,
-  issues: BoundedInvalidParams
+  issues: InvalidParam[]
 ): void {
   if (typeof value === "string") {
     // One report per distinct id per field: a single label can repeat a `#recall:` token as often as
-    // the 2 MB body allows, and every repeat was its own entry (ENG-3384). The collector bounds the
-    // total across fields.
+    // the 2 MB body allows, and every repeat was its own entry (ENG-3384). The list is returned in
+    // full — `deriveFailureOrigin` compares it with the stored survey's — and capped at the response.
     const seen = new Set<string>();
 
     for (const match of value.matchAll(/#recall:([A-Za-z0-9_-]+)/g)) {
@@ -149,14 +155,14 @@ function addRecallReferenceIssues(
         references.hiddenFieldIds.has(recallId);
 
       if (!isKnownReference) {
-        issues.push(() => ({
+        issues.push({
           name: path,
           reason: `Recall reference '${recallId}' is not defined in blocks, variables, or hiddenFields.fieldIds`,
           code: "dangling_reference",
           identifier: recallId,
           referenceType: "recall",
           missingId: recallId,
-        }));
+        });
       }
     }
 
@@ -180,7 +186,7 @@ function addRecallReferenceIssues(
 function addMetadataRecallReferenceIssues(
   metadata: unknown,
   references: TReferenceLookup,
-  issues: BoundedInvalidParams
+  issues: InvalidParam[]
 ): void {
   if (!isPlainObject(metadata)) {
     return;
@@ -194,39 +200,39 @@ function validateDynamicOperand(
   operand: TDynamicLogicFieldValue,
   path: string,
   references: TReferenceLookup,
-  issues: BoundedInvalidParams
+  issues: InvalidParam[]
 ): void {
   if (operand.type === "element" && !references.elementIds.has(operand.value)) {
-    issues.push(() => ({
+    issues.push({
       name: `${path}.value`,
       reason: `Element id '${operand.value}' is not defined in blocks`,
       code: "dangling_reference",
       identifier: operand.value,
       referenceType: "element",
       missingId: operand.value,
-    }));
+    });
   }
 
   if (operand.type === "variable" && !references.variableIds.has(operand.value)) {
-    issues.push(() => ({
+    issues.push({
       name: `${path}.value`,
       reason: `Variable id '${operand.value}' is not defined in variables`,
       code: "dangling_reference",
       identifier: operand.value,
       referenceType: "variable",
       missingId: operand.value,
-    }));
+    });
   }
 
   if (operand.type === "hiddenField" && !references.hiddenFieldIds.has(operand.value)) {
-    issues.push(() => ({
+    issues.push({
       name: `${path}.value`,
       reason: `Hidden field id '${operand.value}' is not defined in hiddenFields.fieldIds`,
       code: "dangling_reference",
       identifier: operand.value,
       referenceType: "hiddenField",
       missingId: operand.value,
-    }));
+    });
   }
 
   // `reserved` has no arm on purpose, and it is checked by a test rather than left to be inferred
@@ -242,7 +248,7 @@ function validateConditionGroup(
   conditionGroup: TConditionGroup,
   path: string,
   references: TReferenceLookup,
-  issues: BoundedInvalidParams
+  issues: InvalidParam[]
 ): void {
   conditionGroup.conditions.forEach((condition, index) => {
     const conditionPath = `${path}.conditions.${index}`;
@@ -261,7 +267,7 @@ function validateConditionGroup(
 }
 
 export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInput): InvalidParam[] {
-  const issues = new BoundedInvalidParams();
+  const issues: InvalidParam[] = [];
   const blockIds = input.blocks.map((block) => block.id);
   const blockEntries = input.blocks.map((block, index) => ({
     id: block.id,
@@ -340,35 +346,35 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
     const logicFallback = block.logicFallback;
 
     if (logicFallback && !block.logic?.length) {
-      issues.push(() => ({
+      issues.push({
         name: `blocks.${blockIndex}.logicFallback`,
         reason:
           "logicFallback requires at least one logic rule on the same block; omit logicFallback for normal sequential flow or add blocks[].logic",
         code: "invalid_reference",
         identifier: logicFallback,
         referenceType: navigationTargetReferenceTypes.get(logicFallback) ?? "block",
-      }));
+      });
     }
 
     if (logicFallback && logicFallback === block.id) {
-      issues.push(() => ({
+      issues.push({
         name: `blocks.${blockIndex}.logicFallback`,
         reason: "logicFallback cannot target the same block",
         code: "invalid_reference",
         identifier: logicFallback,
         referenceType: "block",
-      }));
+      });
     }
 
     if (logicFallback && !navigationTargetIds.has(logicFallback)) {
-      issues.push(() => ({
+      issues.push({
         name: `blocks.${blockIndex}.logicFallback`,
         reason: `Logic fallback target '${logicFallback}' is not defined in blocks or endings`,
         code: "dangling_reference",
         identifier: logicFallback,
         referenceType: "block",
         missingId: logicFallback,
-      }));
+      });
     }
 
     block.logic?.forEach((logic, logicIndex) => {
@@ -380,14 +386,14 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
 
         if (action.objective === "calculate") {
           if (!references.variableIds.has(action.variableId)) {
-            issues.push(() => ({
+            issues.push({
               name: `${actionPath}.variableId`,
               reason: `Variable id '${action.variableId}' is not defined in variables`,
               code: "dangling_reference",
               identifier: action.variableId,
               referenceType: "variable",
               missingId: action.variableId,
-            }));
+            });
           }
 
           if (action.value.type !== "static") {
@@ -396,25 +402,25 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
         }
 
         if (action.objective === "requireAnswer" && !references.elementIds.has(action.target)) {
-          issues.push(() => ({
+          issues.push({
             name: `${actionPath}.target`,
             reason: `Element id '${action.target}' is not defined in blocks`,
             code: "dangling_reference",
             identifier: action.target,
             referenceType: "element",
             missingId: action.target,
-          }));
+          });
         }
 
         if (action.objective === "jumpToBlock" && !navigationTargetIds.has(action.target)) {
-          issues.push(() => ({
+          issues.push({
             name: `${actionPath}.target`,
             reason: `Jump target '${action.target}' is not defined in blocks or endings`,
             code: "dangling_reference",
             identifier: action.target,
             referenceType: "block",
             missingId: action.target,
-          }));
+          });
         }
       });
     });
@@ -425,7 +431,7 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
   addRecallReferenceIssues(input.welcomeCard, "welcomeCard", references, issues);
   addMetadataRecallReferenceIssues(input.metadata, references, issues);
 
-  return issues.report("survey", "survey");
+  return issues;
 }
 
 export function validateV3SurveyReferences(
