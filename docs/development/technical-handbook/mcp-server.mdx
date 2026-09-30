@@ -610,6 +610,13 @@ Two kinds of exception:
   on the one tool every other workspace-scoped tool depends on for its `workspaceId`.
 </Note>
 
+Array arguments are bounded. No array in a tool call may hold more than 1 000 items, and all the arrays
+in one call together at most 50 000 elements, at any depth; a call over either bound is refused with a
+JSON-RPC `-32602` error before its arguments are parsed. Fields with a tighter bound advertise it as
+`maxItems` in the tool's input schema — `create_survey`'s `blocks`, `endings`, `variables` and
+`languages`, `get_survey`'s `lang`, the list filters' `in` arrays, and `create_feedback_records`'
+`records`. A request body may be at most 2 MB, whether or not it declares a `Content-Length`.
+
 ## Available Tools
 
 ### list_surveys
@@ -661,11 +668,16 @@ Output:
   "meta": {
     "limit": 20,
     "nextCursor": null,
-    "totalCount": 1
+    "totalCount": 1,
+    "workspaceSurveyCount": 3
   },
   "requestId": "req_..."
 }
 ```
+
+`totalCount` is the number of surveys matching the filters; `workspaceSurveyCount` is every survey in the
+workspace, archived ones included and independent of the filters, so it can be larger. Both are `null`
+when `includeTotalCount` is `false`.
 
 ### get_survey
 

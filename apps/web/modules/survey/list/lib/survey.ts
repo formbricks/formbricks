@@ -20,6 +20,7 @@ import { validateInputs } from "@/lib/utils/validate";
 import { getTranslate } from "@/lingodotdev/server";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
+import { assertCanWriteCustomHeadScripts } from "@/modules/survey/lib/custom-head-scripts-permission";
 import { buildWhereClause } from "@/modules/survey/lib/utils";
 import { doesWorkspaceExist, getWorkspaceWithLanguages } from "@/modules/survey/list/lib/workspace";
 import type { TWorkspaceWithLanguages } from "@/modules/survey/list/types/surveys";
@@ -78,6 +79,32 @@ const getExistingSurvey = async (surveyId: string) => {
       displayOption: true,
       recontactDays: true,
       displayLimit: true,
+      // Behaviour, presentation and security settings. The copy is built by spreading whatever this
+      // select returns, so a settings column missing here is not reset on purpose — it is never read,
+      // and the new row silently falls back to its database default. That is how duplicates lost PIN
+      // protection, response limits and redirect URLs (ENG-2144), and the recontact fields before
+      // that (#6802). Add new Survey settings columns here; `survey.test.ts` fails if you forget.
+      redirectUrl: true,
+      autoComplete: true,
+      autoClose: true,
+      delay: true,
+      displayPercentage: true,
+      showLanguageSwitch: true,
+      pin: true,
+      recaptcha: true,
+      isVerifyEmailEnabled: true,
+      isAnonymizeResponsesEnabled: true,
+      isCaptureIpEnabled: true,
+      isBackButtonHidden: true,
+      isAutoProgressingEnabled: true,
+      metadata: true,
+      customHeadScripts: true,
+      customHeadScriptsMode: true,
+      inlineTriggers: true,
+      // `publishOn` and `closeOn` are the deliberate exceptions. The scheduler promotes a survey on
+      // `paused` + publishOn <= now and closes it on `inProgress` + closeOn <= now, so a copy that
+      // inherited a date already in the past would complete itself on the first tick after the user
+      // publishes it. They are also normalised against each other on save, which this path bypasses.
       triggers: {
         select: {
           actionClass: {
@@ -221,6 +248,15 @@ export const copySurveyToOtherWorkspace = async (
       ]);
 
       if (!targetWorkspace) throw new ResourceNotFoundError("Workspace", targetWorkspaceId);
+
+      // The copy runs these scripts on the target workspace's link surveys, where no one with Manage
+      // access has approved them, so carrying them over takes Manage there — as writing them would.
+      await assertCanWriteCustomHeadScripts(
+        { type: "user", id: userId },
+        targetWorkspace.id,
+        { customHeadScripts: existingSurvey.customHeadScripts },
+        null
+      );
     }
 
     // Fetch existing action classes in target workspace for name conflict checks
@@ -398,6 +434,10 @@ export const copySurveyToOtherWorkspace = async (
         ? structuredClone(existingSurvey.workspaceOverwrites)
         : Prisma.JsonNull,
       styling: existingSurvey.styling ? structuredClone(existingSurvey.styling) : Prisma.JsonNull,
+      // "replace" means "run only this survey's scripts, not the workspace's". In another workspace
+      // that would silently switch off the target's own head scripts (analytics, consent), so the
+      // copy keeps its scripts but adds them to the target's instead.
+      customHeadScriptsMode: isSameWorkspace ? existingSurvey.customHeadScriptsMode : "add",
       segment: undefined,
       followUps: {
         createMany: {

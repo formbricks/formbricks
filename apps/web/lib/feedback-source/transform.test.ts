@@ -704,6 +704,58 @@ describe("transformResponseToFeedbackRecords", () => {
       });
     });
 
+    test("ranks free text under the Other option when the element offers one", () => {
+      const surveyWithOther = {
+        ...rankingSurvey,
+        blocks: [
+          {
+            elements: [
+              {
+                ...rankingSurvey.blocks[0].elements[0],
+                choices: [
+                  { id: "ch-1", label: { default: "Reports" } },
+                  { id: "other", label: { default: "Other" } },
+                ],
+              },
+            ],
+          },
+        ],
+      } as unknown as TSurvey;
+      const response = {
+        id: "resp-other",
+        createdAt: NOW,
+        data: { "el-ranking": ["Integrations", "Reports"] },
+        language: "default",
+      } as unknown as TResponse;
+      const mappings = [createMapping({ elementId: "el-ranking", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, surveyWithOther, mappings, mockTenantId);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toMatchObject({
+        field_id: "el-ranking__other",
+        field_label: "Other",
+        value_number: 1,
+        metadata: expect.objectContaining({ other_text: "Integrations" }),
+      });
+      expect(result[1]).toMatchObject({ field_id: "el-ranking__ch-1", value_number: 2 });
+      expect(result[1].metadata).not.toHaveProperty("other_text");
+    });
+
+    test("drops unmatched ranking entries when the element has no Other option", () => {
+      const response = {
+        id: "resp-unmatched",
+        createdAt: NOW,
+        data: { "el-ranking": ["Integrations", "Reports"] },
+        language: "default",
+      } as unknown as TResponse;
+      const mappings = [createMapping({ elementId: "el-ranking", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, rankingSurvey, mappings, mockTenantId);
+
+      expect(result.map((r) => r.field_id)).toEqual(["el-ranking__ch-1"]);
+    });
+
     test("emits no records for empty ranking response", () => {
       const response = {
         id: "resp-empty",

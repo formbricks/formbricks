@@ -841,10 +841,11 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.getByRole("row", { name: "Phone" }).getByRole("switch").nth(1).click();
   await page.getByRole("row", { name: "Company" }).getByRole("switch").nth(1).click();
 
-  // Fill Ranking question
+  // Fill Ranking question, with an "Other" option respondents can rank and describe
   await addElement(page, "Ranking");
   await fillRichTextEditor(page, "Question*", params.ranking.question);
   await fillChoiceOptions(page, params.ranking.choices);
+  await page.getByRole("button", { name: "Add “Other”" }).click();
 };
 
 /**

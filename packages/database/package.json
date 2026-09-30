@@ -1,6 +1,5 @@
 {
   "name": "@formbricks/database",
-  "packageManager": "pnpm@11.7.0",
   "private": true,
   "version": "0.1.0",
   "main": "./dist/index.cjs",
@@ -79,7 +78,7 @@
     "@prisma/adapter-pg": "7.8.0",
     "@prisma/client": "catalog:",
     "bcryptjs": "catalog:",
-    "pg": "8.16.3",
+    "pg": "8.20.0",
     "pino": "catalog:",
     "uuid": "catalog:",
     "zod": "catalog:",

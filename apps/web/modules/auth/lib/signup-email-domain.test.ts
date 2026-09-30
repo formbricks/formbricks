@@ -63,6 +63,16 @@ describe("isBlockedEmailDomain", () => {
       "test@earthlink.net",
       "test@roadrunner.com",
       "test@gmail.cz",
+      "test@sina.com",
+      "test@sohu.com",
+      "test@aliyun.com",
+      "test@mail.ru",
+      "test@web.de",
+      "test@t-online.de",
+      "test@naver.com",
+      "test@daum.net",
+      "test@tutanota.com",
+      "test@hushmail.com",
     ]) {
       expect(isBlockedEmailDomain(email)).toBe(true);
     }

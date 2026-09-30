@@ -6,15 +6,19 @@
  * at all. The default stops counting at the cap and says so through `relation`.
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
+import { withV3ResponsesReadMetrics } from "../lib/metrics";
 import { countV3ResponsesOperation } from "../lib/operations";
 
-export const GET = withV3ApiWrapper({
-  auth: "both",
-  handler: async ({ req, authentication, requestId, instance }) =>
-    countV3ResponsesOperation({
-      searchParams: new URL(req.url).searchParams,
-      authentication,
-      requestId,
-      instance,
-    }),
-});
+export const GET = withV3ResponsesReadMetrics(
+  "count",
+  withV3ApiWrapper({
+    auth: "both",
+    handler: async ({ req, authentication, requestId, instance }) =>
+      countV3ResponsesOperation({
+        searchParams: new URL(req.url).searchParams,
+        authentication,
+        requestId,
+        instance,
+      }),
+  })
+);

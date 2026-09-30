@@ -23,8 +23,8 @@ export const parseNumber = (value: string): number | null => {
   try {
     // Handle `&` being used instead of `;` in some cases
     const cleanedValue = value.replaceAll("&", ";");
-    const num = Number(JSON.parse(cleanedValue));
-    return Number.isNaN(num) ? null : num;
+    const parsedValue = JSON.parse(cleanedValue);
+    return typeof parsedValue === "number" && Number.isFinite(parsedValue) ? parsedValue : null;
   } catch {
     return null;
   }

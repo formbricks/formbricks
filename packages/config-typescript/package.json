@@ -4,7 +4,7 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
-    "clean": "rimraf node_modules dist turbo"
+    "clean": "rimraf node_modules dist .turbo"
   },
   "devDependencies": {
     "@types/node": "catalog:",

@@ -6,13 +6,12 @@ import { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
 import { ChartRenderer } from "@/modules/ee/analysis/charts/components/chart-renderer";
 import { DataViewer } from "@/modules/ee/analysis/charts/components/data-viewer";
 import { DEFAULT_WIDGET_VIEW, type TWidgetView } from "@/modules/ee/analysis/dashboards/lib/widget-view";
-import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
+import type { TChartDataRow, TChartLabelMaps, TChartType } from "@/modules/ee/analysis/types/analysis";
 import type { TDashboardWidgetError } from "../lib/widget-errors";
 
 interface DashboardWidgetDataProps {
   dataPromise: Promise<
-    | { data: TChartDataRow[]; query: TChartQuery; optionLabels?: Record<string, string> }
-    | { error: TDashboardWidgetError }
+    ({ data: TChartDataRow[]; query: TChartQuery } & TChartLabelMaps) | { error: TDashboardWidgetError }
   >;
   chartType: TChartType;
   /** Saved display settings of the chart behind this widget. */
@@ -41,7 +40,14 @@ export function DashboardWidgetData({
   // way in both places — bare, because the widget's own title bar and body already provide the
   // heading and the scroll container.
   if (view === "data") {
-    return <DataViewer data={result.data} optionLabels={result.optionLabels} bare />;
+    return (
+      <DataViewer
+        data={result.data}
+        optionLabels={result.optionLabels}
+        fieldLabels={result.fieldLabels}
+        bare
+      />
+    );
   }
 
   // Use the resolved query + option labels from the promise (not the raw saved query): the label
@@ -52,6 +58,7 @@ export function DashboardWidgetData({
       data={result.data}
       query={result.query}
       optionLabels={result.optionLabels}
+      fieldLabels={result.fieldLabels}
       config={config}
     />
   );

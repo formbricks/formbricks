@@ -1,6 +1,15 @@
 import { z } from "zod";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
-import { ZColor, ZEndingCardUrl, ZId, ZOverlay, ZPlacement, ZStorageUrl, getZSafeUrl } from "../common";
+import {
+  ZColor,
+  ZEndingCardButtonLink,
+  ZEndingCardUrl,
+  ZId,
+  ZOverlay,
+  ZPlacement,
+  ZStorageUrl,
+  getZSafeUrl,
+} from "../common";
 import { ZContactAttributes } from "../contact-attribute";
 import { ZLinkedEmbeddedField } from "../embedded-data";
 import { linkedToDesiredEmbeddedFields, toLegacyEmbeddedFields } from "../embedded-data-mapping";
@@ -64,7 +73,7 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: ZEndingCardUrl.optional(),
+  buttonLink: ZEndingCardButtonLink.optional(),
   imageUrl: ZStorageUrl.optional(),
   videoUrl: ZStorageUrl.optional(),
   // Absent means "show it": the checkmark predates this field, so every survey written before it has to
@@ -1911,7 +1920,7 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
             path: ["endings", index, "buttonLink"],
           });
         } else {
-          const parsedButtonLink = ZEndingCardUrl.safeParse(ending.buttonLink);
+          const parsedButtonLink = ZEndingCardButtonLink.safeParse(ending.buttonLink);
           if (!parsedButtonLink.success) {
             const errorMessage = parsedButtonLink.error.issues[0].message;
             ctx.addIssue({

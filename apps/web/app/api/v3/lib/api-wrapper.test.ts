@@ -5,6 +5,8 @@ import { ResourceNotFoundError, TooManyRequestsError } from "@formbricks/types/e
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { formatZodIssues, withV3ApiWrapper } from "./api-wrapper";
+import { V3_REQUEST_ARRAY_MAX_ITEMS } from "./array-budget";
+import { V3_INVALID_PARAMS_MAX } from "./invalid-params";
 
 const { mockAuthenticateRequest, mockGetSession } = vi.hoisted(() => ({
   mockAuthenticateRequest: vi.fn(),
@@ -370,7 +372,8 @@ describe("withV3ApiWrapper", () => {
       expect.objectContaining({
         statusCode: 400,
         detail: "Invalid query parameters",
-        invalidParams: expect.arrayContaining([expect.objectContaining({ name: "limit" })]),
+        invalidParamCount: 1,
+        invalidParamNames: ["limit"],
       }),
       "V3 API request validation failed"
     );
@@ -462,19 +465,17 @@ describe("withV3ApiWrapper", () => {
         reason: "Malformed JSON input, please check your request body",
       },
     ]);
+    // The count and names, never the entries: the array is as long as the caller made it (ENG-3384).
     expect(mockLoggerWarn).toHaveBeenCalledWith(
       expect.objectContaining({
         statusCode: 400,
         detail: "Invalid request body",
-        invalidParams: [
-          {
-            name: "body",
-            reason: "Malformed JSON input, please check your request body",
-          },
-        ],
+        invalidParamCount: 1,
+        invalidParamNames: ["body"],
       }),
       "V3 API request validation failed"
     );
+    expect(mockLoggerWarn.mock.calls.at(-1)?.[0]).not.toHaveProperty("invalidParams");
   });
 
   test("returns 413 problem response for oversized JSON input", async () => {
@@ -887,5 +888,150 @@ describe("formatZodIssues — the unknown-key expansion", () => {
     );
 
     expect(params).toEqual([{ name: "body", reason: "Unrecognized key", code: "unsupported_field" }]);
+  });
+
+  test("lists at most 50 problems and counts the rest (ENG-3384)", () => {
+    // One Zod issue per bad element: the shape a junk array produces once it is under the array cap.
+    const parsed = z
+      .array(z.number())
+      .safeParse(Array.from({ length: V3_INVALID_PARAMS_MAX + 10 }, () => "x"));
+    if (parsed.success) throw new Error("expected the parse to reject");
+
+    const params = formatZodIssues(parsed.error, "body");
+
+    // The limit counts the summary: 49 problems listed, the 50th entry counts the other eleven.
+    expect(params).toHaveLength(V3_INVALID_PARAMS_MAX);
+    expect(params[0]).toMatchObject({ name: "0" });
+    expect(params.at(-1)).toEqual({
+      name: "body",
+      reason: "11 further problems with this request were not reported; fix the ones above and retry",
+    });
+  });
+});
+
+describe("request array budget (ENG-3384)", () => {
+  test("refuses an oversized array with one invalid_param before the body schema runs", async () => {
+    let schemaRan = false;
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const wrapped = withV3ApiWrapper({
+      auth: "none",
+      schemas: {
+        body: z.unknown().superRefine(() => {
+          schemaRan = true;
+        }),
+      },
+      handler,
+    });
+
+    const response = await wrapped(
+      new NextRequest("http://localhost/api/v3/surveys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-request-id": "req-budget" },
+        body: JSON.stringify({
+          blocks: [{ elements: Array.from({ length: V3_REQUEST_ARRAY_MAX_ITEMS + 1 }, () => 0) }],
+        }),
+      }),
+      {} as never
+    );
+
+    expect(response.status).toBe(400);
+    expect(handler).not.toHaveBeenCalled();
+    expect(schemaRan).toBe(false);
+    await expect(response.json()).resolves.toMatchObject({
+      requestId: "req-budget",
+      invalid_params: [
+        {
+          name: "blocks.0.elements",
+          reason: `Too big: expected array to have <=${V3_REQUEST_ARRAY_MAX_ITEMS} items`,
+        },
+      ],
+    });
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statusCode: 400,
+        invalidParamCount: 1,
+        invalidParamNames: ["blocks.0.elements"],
+      }),
+      "V3 API request validation failed"
+    );
+  });
+
+  // The workflows routes declare no body schema and hand `req` to a handler that reads it itself, so
+  // the wrapper checks a clone and leaves the handler's stream intact.
+  describe("a route without a body schema", () => {
+    test("still refuses an oversized array before the handler reads the body", async () => {
+      const handler = vi.fn(async () => Response.json({ ok: true }));
+
+      const response = await withV3ApiWrapper({ auth: "none", handler })(
+        new NextRequest("http://localhost/api/v3/workflows", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            definition: { nodes: Array.from({ length: V3_REQUEST_ARRAY_MAX_ITEMS + 1 }, () => 0) },
+          }),
+        }),
+        {} as never
+      );
+
+      expect(response.status).toBe(400);
+      expect(handler).not.toHaveBeenCalled();
+      await expect(response.json()).resolves.toMatchObject({
+        invalid_params: [expect.objectContaining({ name: "definition.nodes" })],
+      });
+    });
+
+    test("answers 413 to a body without content-length that exceeds the limit", async () => {
+      const handler = vi.fn(async () => Response.json({ ok: true }));
+      const oversized = new TextEncoder().encode(`{"a":"${"x".repeat(DEFAULT_REQUEST_BODY_LIMIT_BYTES)}"}`);
+
+      const response = await withV3ApiWrapper({ auth: "none", handler })(
+        new NextRequest("http://localhost/api/v3/workflows", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: new ReadableStream<Uint8Array>({
+            start(controller) {
+              controller.enqueue(oversized);
+              controller.close();
+            },
+          }),
+          duplex: "half",
+        } as ConstructorParameters<typeof NextRequest>[1]),
+        {} as never
+      );
+
+      expect(response.status).toBe(413);
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    test("hands an acceptable body to the handler unread", async () => {
+      const handler = vi.fn(async ({ req }: { req: NextRequest }) => Response.json(await req.json()));
+
+      const response = await withV3ApiWrapper({ auth: "none", handler })(
+        new NextRequest("http://localhost/api/v3/workflows", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: "Nudge", definition: { nodes: [{ id: "n1" }] } }),
+        }),
+        {} as never
+      );
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual({
+        name: "Nudge",
+        definition: { nodes: [{ id: "n1" }] },
+      });
+    });
+
+    test("leaves a body that is not JSON to the handler", async () => {
+      const handler = vi.fn(async ({ req }: { req: NextRequest }) => new Response(await req.text()));
+
+      const response = await withV3ApiWrapper({ auth: "none", handler })(
+        new NextRequest("http://localhost/api/v3/workflows", { method: "POST", body: "not json" }),
+        {} as never
+      );
+
+      expect(handler).toHaveBeenCalledTimes(1);
+      await expect(response.text()).resolves.toBe("not json");
+    });
   });
 });

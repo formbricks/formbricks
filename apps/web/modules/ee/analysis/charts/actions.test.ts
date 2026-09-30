@@ -328,6 +328,7 @@ describe("chart Cube actions", () => {
     // Wire up feedbackSources -> survey -> MultipleChoiceMulti element.
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
+        feedbackDirectoryId: "frd-1",
         formbricksMappings: [{ elementId: "field-multi", surveyId: "survey-multi" }],
       },
     ]);
@@ -378,6 +379,7 @@ describe("chart Cube actions", () => {
     // A non-choice element type — OpenText — must not be touched.
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
+        feedbackDirectoryId: "frd-1",
         formbricksMappings: [{ elementId: "field-open", surveyId: "survey-open" }],
       },
     ]);
@@ -411,6 +413,7 @@ describe("chart Cube actions", () => {
     // The mapping has no customFieldLabel, so the effective label comes from the element headline.
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
+        feedbackDirectoryId: "frd-1",
         formbricksMappings: [{ elementId: "field-sc", surveyId: "survey-sc", customFieldLabel: null }],
       },
     ]);
@@ -462,6 +465,7 @@ describe("chart Cube actions", () => {
   test("executeQueryAction returns optionLabels for a multi-select element matched by fieldLabel (no rewrite/split)", async () => {
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
+        feedbackDirectoryId: "frd-1",
         formbricksMappings: [{ elementId: "field-mc", surveyId: "survey-mc", customFieldLabel: null }],
       },
     ]);
@@ -512,6 +516,7 @@ describe("chart Cube actions", () => {
     // Two different mappings share the same effective label — must not guess.
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
+        feedbackDirectoryId: "frd-1",
         formbricksMappings: [
           { elementId: "field-a", surveyId: "survey-a", customFieldLabel: null },
           { elementId: "field-b", surveyId: "survey-b", customFieldLabel: null },
@@ -588,6 +593,7 @@ describe("chart Cube actions", () => {
     // User selected "Value (Option)" directly from the picker — dimension is already valueId.
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
+        feedbackDirectoryId: "frd-1",
         formbricksMappings: [{ elementId: "field-sc3", surveyId: "survey-sc3" }],
       },
     ]);
@@ -639,6 +645,7 @@ describe("chart Cube actions", () => {
     // to Value (Text). Multi-select stores one record per option with its own value_id now.
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
+        feedbackDirectoryId: "frd-1",
         formbricksMappings: [{ elementId: "field-mc2", surveyId: "survey-mc2" }],
       },
     ]);
@@ -689,6 +696,7 @@ describe("chart Cube actions", () => {
     // fieldId should take precedence; fieldLabel is ignored.
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
+        feedbackDirectoryId: "frd-1",
         formbricksMappings: [{ elementId: "field-sc2", surveyId: "survey-sc2", customFieldLabel: null }],
       },
     ]);

@@ -1,6 +1,6 @@
 "use client";
 
-import { type ElementType, type ReactNode, useMemo } from "react";
+import { type ElementType, type ReactElement, type ReactNode, useMemo } from "react";
 import { CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   AXIS_LABEL_BOX_HEIGHT,
@@ -60,8 +60,8 @@ export interface CartesianChartProps {
   pointScale?: boolean;
   /** Flips the chart onto its side: categories run down the y-axis and values across the x-axis.
    * Bar charts only — the category labels move into a gutter on the left, sized to the labels
-   * present (see `getCategoryAxisWidth`), wrapped inside it, and cut from the middle to whatever
-   * lines the row density leaves (see `truncateLabelToBox`). */
+   * present and the chart's width (see `getCategoryAxisWidth`), wrapped inside it, and cut from the
+   * middle to whatever lines the row density leaves (see `truncateLabelToBox`). */
   horizontal?: boolean;
   /** Set when the category axis is a time dimension bucketed by this granularity. Its ticks then
    * thin out to a readable density and use compact, granularity-aware labels (see
@@ -289,6 +289,39 @@ function WrappingYAxisTick({
   );
 }
 
+/** What a chart's layout needs from the measured container: the size recharts is about to draw at
+ * and the category gutter derived from it. */
+type TMeasuredLayout = { width?: number; height?: number; categoryAxisWidth: number };
+
+/**
+ * Sizes the flipped category gutter from the width the chart is laid out with, in the same render.
+ *
+ * Rendered as the `ResponsiveContainer`'s child, so recharts hands it the container's measured
+ * `width`/`height` (it clones its child with them) *before* the chart element exists. That is what
+ * lets the gutter scale with the chart (ENG-3223): a width observed from outside arrived after
+ * recharts had computed its plot offset, so `<YAxis width>` changed but the offset did not, and the
+ * labels painted under the bars. Here the tick boxes, the axis width and the offset all come from
+ * one `width` — on the first render and on every resize, which recharts treats as a fresh layout.
+ *
+ * Before the container has measured (server render, first client pass) `width` is unset and the
+ * gutter falls back to its flat ceiling; the container renders nothing until it has a size anyway.
+ */
+function MeasuredChart({
+  width,
+  height,
+  categoryLabels,
+  children,
+}: Readonly<{
+  width?: number;
+  height?: number;
+  /** Formatted category labels of a flipped chart; empty when there is no category gutter. */
+  categoryLabels: string[];
+  children: (layout: TMeasuredLayout) => ReactElement;
+}>) {
+  const categoryAxisWidth = categoryLabels.length > 0 ? getCategoryAxisWidth(categoryLabels, width) : 0;
+  return children({ width, height, categoryAxisWidth });
+}
+
 export function CartesianChart({
   data,
   xAxisKey,
@@ -329,9 +362,10 @@ export function CartesianChart({
     };
   }, [timeGranularity, timeLocale, horizontal, hasCategoryAxis, data, xAxisKey, pointScale]);
 
-  const categoryAxisWidth = useMemo(() => {
-    if (!horizontal || !hasCategoryAxis) return 0;
-    return getCategoryAxisWidth(data.map((row) => tickFormatter(row[xAxisKey])));
+  // The gutter itself is sized inside `MeasuredChart`, where the chart's width is known.
+  const categoryLabels = useMemo(() => {
+    if (!horizontal || !hasCategoryAxis) return [];
+    return data.map((row) => tickFormatter(row[xAxisKey]));
   }, [horizontal, hasCategoryAxis, data, xAxisKey, tickFormatter]);
 
   // Flipped, a bar's value label sits past its end with nothing reserving room for it, so the
@@ -350,96 +384,110 @@ export function CartesianChart({
     // text that a middle-truncated label already distinguishes.
     <div className="h-full min-h-64 w-full">
       <ChartContainer config={chartConfig} className="h-full w-full">
-        <Chart data={data} {...(horizontal ? { layout: "vertical" as const } : {})} {...chartProps}>
-          {/* syncWithTicks: draw a gridline only at each tick. Without it Recharts adds
+        <MeasuredChart categoryLabels={categoryLabels}>
+          {({ width, height, categoryAxisWidth }) => (
+            <Chart
+              data={data}
+              width={width}
+              height={height}
+              {...(horizontal ? { layout: "vertical" as const } : {})}
+              {...chartProps}>
+              {/* syncWithTicks: draw a gridline only at each tick. Without it Recharts adds
               extra lines at the plot-area top/bottom edges (revealed by the YAxis padding),
               which showed up as unlabelled boundary lines above 80 and below 0. The gridlines
               always run across the value axis, which flips with the layout. */}
-          <CartesianGrid strokeDasharray="2 4" vertical={horizontal} horizontal={!horizontal} syncWithTicks />
-          {/* Flipped charts swap the axis roles: values run along the x-axis and the categories
-              stack down the y-axis. */}
-          {horizontal ? (
-            <XAxis
-              type="number"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-              padding={{ left: 4, right: valueLabelPadding }}
-              domain={yScale?.domain}
-              ticks={yScale?.ticks}
-              interval={0}
-            />
-          ) : (
-            <XAxis
-              dataKey={xAxisKey}
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-              // Label every data point (default recharts hides overlapping ticks, which dropped
-              // long question labels on area/line charts) and wrap each label within a max-width.
-              interval={hasCategoryAxis ? 0 : undefined}
-              height={hasCategoryAxis ? X_AXIS_RESERVED_HEIGHT : undefined}
-              tick={
-                hasCategoryAxis ? (
-                  <WrappingXAxisTick
-                    formatter={tickFormatter}
-                    pointScale={pointScale}
-                    timeAxisLabels={timeAxisLabels}
-                  />
-                ) : (
-                  false
-                )
-              }
-            />
-          )}
-          {horizontal ? (
-            <YAxis
-              type="category"
-              dataKey={xAxisKey}
-              tickLine={false}
-              axisLine={false}
-              width={categoryAxisWidth}
-              interval={0}
-              tick={
-                hasCategoryAxis ? (
-                  <WrappingYAxisTick formatter={tickFormatter} axisWidth={categoryAxisWidth} />
-                ) : (
-                  false
-                )
-              }
-            />
-          ) : (
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              padding={{ top: 16, bottom: 4 }}
-              domain={yScale?.domain}
-              ticks={yScale?.ticks}
-              interval={0}
-            />
-          )}
-          <ChartTooltip
-            content={
-              <PolishedChartTooltip
-                labelFormatter={xAxisTickFormatter}
-                hideLabel={tooltipHideLabel ?? !hasCategoryAxis}
+              <CartesianGrid
+                strokeDasharray="2 4"
+                vertical={horizontal}
+                horizontal={!horizontal}
+                syncWithTicks
               />
-            }
-            cursor={tooltipCursor}
-            // Measure-only charts (no category) have one bar per measure, so a shared tooltip would
-            // dump every measure at once with no way to tell which bar is which. Scope it to the
-            // hovered bar instead. Category charts keep the shared tooltip to compare within a group.
-            shared={hasCategoryAxis}
-          />
-          {showLegend && (
-            <ChartLegend
-              content={<ChartLegendContent />}
-              verticalAlign="bottom"
-              height={CHART_LEGEND_HEIGHT}
-            />
+              {/* Flipped charts swap the axis roles: values run along the x-axis and the categories
+              stack down the y-axis. */}
+              {horizontal ? (
+                <XAxis
+                  type="number"
+                  tickLine={false}
+                  tickMargin={10}
+                  axisLine={false}
+                  padding={{ left: 4, right: valueLabelPadding }}
+                  domain={yScale?.domain}
+                  ticks={yScale?.ticks}
+                  interval={0}
+                />
+              ) : (
+                <XAxis
+                  dataKey={xAxisKey}
+                  tickLine={false}
+                  tickMargin={10}
+                  axisLine={false}
+                  // Label every data point (default recharts hides overlapping ticks, which dropped
+                  // long question labels on area/line charts) and wrap each label within a max-width.
+                  interval={hasCategoryAxis ? 0 : undefined}
+                  height={hasCategoryAxis ? X_AXIS_RESERVED_HEIGHT : undefined}
+                  tick={
+                    hasCategoryAxis ? (
+                      <WrappingXAxisTick
+                        formatter={tickFormatter}
+                        pointScale={pointScale}
+                        timeAxisLabels={timeAxisLabels}
+                      />
+                    ) : (
+                      false
+                    )
+                  }
+                />
+              )}
+              {horizontal ? (
+                <YAxis
+                  type="category"
+                  dataKey={xAxisKey}
+                  tickLine={false}
+                  axisLine={false}
+                  width={categoryAxisWidth}
+                  interval={0}
+                  tick={
+                    hasCategoryAxis ? (
+                      <WrappingYAxisTick formatter={tickFormatter} axisWidth={categoryAxisWidth} />
+                    ) : (
+                      false
+                    )
+                  }
+                />
+              ) : (
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  padding={{ top: 16, bottom: 4 }}
+                  domain={yScale?.domain}
+                  ticks={yScale?.ticks}
+                  interval={0}
+                />
+              )}
+              <ChartTooltip
+                content={
+                  <PolishedChartTooltip
+                    labelFormatter={xAxisTickFormatter}
+                    hideLabel={tooltipHideLabel ?? !hasCategoryAxis}
+                  />
+                }
+                cursor={tooltipCursor}
+                // Measure-only charts (no category) have one bar per measure, so a shared tooltip would
+                // dump every measure at once with no way to tell which bar is which. Scope it to the
+                // hovered bar instead. Category charts keep the shared tooltip to compare within a group.
+                shared={hasCategoryAxis}
+              />
+              {showLegend && (
+                <ChartLegend
+                  content={<ChartLegendContent />}
+                  verticalAlign="bottom"
+                  height={CHART_LEGEND_HEIGHT}
+                />
+              )}
+              {children}
+            </Chart>
           )}
-          {children}
-        </Chart>
+        </MeasuredChart>
       </ChartContainer>
     </div>
   );
