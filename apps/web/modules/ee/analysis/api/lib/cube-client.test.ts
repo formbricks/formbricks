@@ -343,6 +343,35 @@ describe("executeTenantScopedQuery", () => {
     );
   });
 
+  test("still renders the chart when Cube does not know the response base measure", async () => {
+    // A self-hosted Cube running an older schema has no npsCount.
+    mockLoad
+      .mockRejectedValueOnce(new Error("Error: 'npsCount' not found for path 'FeedbackRecords.npsCount'"))
+      .mockResolvedValueOnce({ tablePivot: mockTablePivot });
+    mockTablePivot.mockReturnValue([{ "FeedbackRecords.npsScore": "40" }]);
+
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const query = { measures: ["FeedbackRecords.npsScore"] };
+    const result = await executeTenantScopedQuery({ ...scopedInput, query });
+
+    expect(mockLoad).toHaveBeenNthCalledWith(1, {
+      measures: ["FeedbackRecords.npsScore", "FeedbackRecords.npsCount"],
+      timezone: "UTC",
+    });
+    expect(mockLoad).toHaveBeenNthCalledWith(2, { ...query, timezone: "UTC" });
+    expect(result).toEqual([{ "FeedbackRecords.npsScore": "40" }]);
+    expect(mockLoggerWarn).toHaveBeenCalledWith(expect.any(Error), expect.stringContaining("response base"));
+  });
+
+  test("does not retry a failed query that carried no response base", async () => {
+    mockLoad.mockRejectedValue(new Error("boom"));
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    await expect(
+      executeTenantScopedQuery({ ...scopedInput, query: { measures: ["FeedbackRecords.count"] } })
+    ).rejects.toThrow(/Cube query failed/);
+    expect(mockLoad).toHaveBeenCalledTimes(1);
+  });
+
   test("leaves a query with no single response base untouched", async () => {
     const { executeTenantScopedQuery } = await import("./cube-client");
     const query = { measures: ["FeedbackRecords.npsScore", "FeedbackRecords.count"] };

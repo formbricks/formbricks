@@ -1,5 +1,5 @@
 import "server-only";
-import cubejs, { type Query } from "@cubejs-client/core";
+import cubejs, { type Query, type ResultSet } from "@cubejs-client/core";
 import { randomUUID } from "node:crypto";
 import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
@@ -160,8 +160,20 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
     // (charts show "Based on N answers" without a second round trip) and the NULL value band is
     // dropped. The audit event and the granular time dimension still come from `input.query`,
     // which is the chart as saved.
-    const executedQuery = applyValueBandNullGuard(withResponseBaseMeasure(input.query));
-    const resultSet = await client.load(expandPresetDateRanges(executedQuery, timeZone) as Query);
+    const plainQuery = applyValueBandNullGuard(input.query);
+    let executedQuery = applyValueBandNullGuard(withResponseBaseMeasure(input.query));
+    let resultSet: ResultSet;
+    try {
+      resultSet = await client.load(expandPresetDateRanges(executedQuery, timeZone) as Query);
+    } catch (error) {
+      // The base is a courtesy, never a reason for the chart itself to fail. A self-hosted Cube whose
+      // schema predates the count (the Docker install keeps the schema on the host and upgrades do not
+      // refresh it) rejects the injected member, so run the chart as saved instead.
+      if ((executedQuery.measures?.length ?? 0) === (plainQuery.measures?.length ?? 0)) throw error;
+      logger.warn(error, "Cube rejected the response base measure; retrying without it");
+      executedQuery = plainQuery;
+      resultSet = await client.load(expandPresetDateRanges(executedQuery, timeZone) as Query);
+    }
     // The injected count is a measure too: an invented date bucket must read 0 answers, not NULL.
     const measures = executedQuery.measures ?? [];
     const granular = (input.query.timeDimensions ?? []).filter((td) => Boolean(td.granularity));
