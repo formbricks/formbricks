@@ -1,5 +1,5 @@
+import { createCubeTransport } from "./__mocks__/cube-transport.mock";
 import type * as CubeClient from "@cubejs-client/core";
-import type { ITransport } from "@cubejs-client/core";
 import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -259,19 +259,7 @@ describe("executeTenantScopedQuery", () => {
         },
       ],
     };
-    const transport: ITransport<Response> = {
-      authorization: undefined,
-      request: () => ({
-        subscribe: <T>(callback: (result: Response, resubscribe: () => Promise<T>) => T) =>
-          new Promise<T>((resolve) => {
-            resolve(
-              callback(new Response(JSON.stringify(loadResponse)), () =>
-                Promise.reject(new Error("unexpected resubscribe"))
-              )
-            );
-          }),
-      }),
-    };
+    const transport = createCubeTransport(loadResponse);
     const { CubeApi } = await vi.importActual<typeof CubeClient>("@cubejs-client/core");
     mockLoad.mockImplementationOnce((query: CubeClient.Query, options?: CubeClient.LoadMethodOptions) =>
       new CubeApi("token", { apiUrl: "https://cube.example.com/cubejs-api/v1", transport }).load(
