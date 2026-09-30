@@ -12,6 +12,7 @@ import {
   updateLanguage,
 } from "@/lib/language/service";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromLanguageId } from "@/lib/utils/helper";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -89,12 +90,18 @@ const ZGetSurveysUsingGivenLanguageAction = z.object({
 export const getSurveysUsingGivenLanguageAction = authenticatedActionClient
   .inputSchema(ZGetSurveysUsingGivenLanguageAction)
   .action(async ({ ctx, parsedInput }) => {
+    const workspaceId = await getWorkspaceIdFromLanguageId(parsedInput.languageId);
     await assertCan({ type: "user", id: ctx.user.id }, "workspace.manage", {
       type: "workspace",
-      id: await getWorkspaceIdFromLanguageId(parsedInput.languageId),
+      id: workspaceId,
     });
 
-    return await getSurveysUsingGivenLanguage(parsedInput.languageId);
+    // ENG-3282: workspace manage is not survey access — only the surveys this caller may see are named.
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+    return await getSurveysUsingGivenLanguage(
+      parsedInput.languageId,
+      await getUserVisibleSurveyWhere(ctx.user.id, organizationId)
+    );
   });
 
 const ZUpdateLanguageAction = z.object({

@@ -17,7 +17,7 @@ import {
 } from "@formbricks/types/errors";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { getWorkspace } from "@/lib/workspace/service";
-import { createLanguage, deleteLanguage, updateLanguage } from "../service";
+import { createLanguage, deleteLanguage, getSurveysUsingGivenLanguage, updateLanguage } from "../service";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -26,6 +26,7 @@ vi.mock("@formbricks/database", () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
+    surveyLanguage: { findMany: vi.fn() },
   },
 }));
 
@@ -220,5 +221,32 @@ describe("deleteLanguage", () => {
 
       await expect(deleteLanguage(mockLanguageId, mockWorkspaceId)).resolves.toEqual(mockLanguage);
     });
+  });
+});
+
+describe("getSurveysUsingGivenLanguage (ENG-3282)", () => {
+  beforeEach(() => {
+    vi.mocked(prisma.surveyLanguage.findMany).mockReset();
+    vi.mocked(prisma.surveyLanguage.findMany).mockResolvedValue([{ survey: { name: "Visible" } }] as never);
+  });
+
+  test("names only the surveys the caller's visibility predicate admits", async () => {
+    const visibleSurveyWhere = { OR: [{ visibility: "workspace" as const }, { ownerId: "user-1" }] };
+
+    await expect(getSurveysUsingGivenLanguage(mockLanguageId, visibleSurveyWhere)).resolves.toEqual([
+      "Visible",
+    ]);
+    expect(prisma.surveyLanguage.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { languageId: mockLanguageId, survey: { AND: [visibleSurveyWhere] } },
+      })
+    );
+  });
+
+  test("adds no survey clause while visibility is not enforced", async () => {
+    await getSurveysUsingGivenLanguage(`${mockLanguageId}-off`, {});
+    expect(prisma.surveyLanguage.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { languageId: `${mockLanguageId}-off` } })
+    );
   });
 });
