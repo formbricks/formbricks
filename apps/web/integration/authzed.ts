@@ -21,11 +21,15 @@ export const synchronizeAuthzedIntegrationFixture = async (): Promise<void> => {
   const requestFor = (scope: (typeof scopes)[number]) =>
     ({ maxPrune: AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN, prune: true, scope }) as const;
 
-  for (const scope of scopes) {
-    const applied = await runAuthzedBackfill(
+  const applyScope = (scope: (typeof scopes)[number]) =>
+    runAuthzedBackfill(
       { ...requestFor(scope), mode: "apply" },
       { apply: createAuthzedBackfillApply(), client }
     );
+
+  for (const scope of scopes) {
+    // One apply at a time, in the order the operator CLI runs them: both write the same graph.
+    const applied = await applyScope(scope); // NOSONAR
     if (applied.counters.failed > 0) {
       throw new Error("AuthZed integration fixture reconciliation failed");
     }
@@ -36,13 +40,16 @@ export const synchronizeAuthzedIntegrationFixture = async (): Promise<void> => {
     throw new Error("AuthZed integration fixture outbox did not drain");
   }
 
-  for (const scope of scopes) {
-    const verified = await runAuthzedBackfill(
-      { ...requestFor(scope), mode: "dry_run" },
-      { apply: createAuthzedBackfillNoopApply(), client }
-    );
-    if (verified.status !== "reconciled") {
-      throw new Error("AuthZed integration fixture did not converge");
-    }
+  // Read-only audits of disjoint scopes, so they can run together.
+  const verified = await Promise.all(
+    scopes.map((scope) =>
+      runAuthzedBackfill(
+        { ...requestFor(scope), mode: "dry_run" },
+        { apply: createAuthzedBackfillNoopApply(), client }
+      )
+    )
+  );
+  if (verified.some(({ status }) => status !== "reconciled")) {
+    throw new Error("AuthZed integration fixture did not converge");
   }
 };

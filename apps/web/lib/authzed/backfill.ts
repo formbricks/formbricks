@@ -1283,7 +1283,8 @@ const runSurveyScope = async (ctx: TRunContext, afterSurveyId?: string): Promise
 
     if (surveyIds.length === 0) break;
 
-    await processSurveyPage(ctx, surveyIds);
+    // Keyset pagination: the next page starts after this one, and pages are bounded on purpose.
+    await processSurveyPage(ctx, surveyIds); // NOSONAR
     cursor = surveyIds.at(-1);
     ctx.state.lastSurveyId = cursor ?? ctx.state.lastSurveyId;
   }

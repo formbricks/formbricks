@@ -126,7 +126,8 @@ const reconcileSurvey = async (client: TAuthzedClient, surveyId: string): Promis
         });
         const updates = diffSurveyRelationships(current, expectedSurveyRelationships(row));
         for (const batch of packRelationshipUpdateGroups(updates.map((update) => [update]))) {
-          await client.writeRelationships(batch);
+          // One write in flight per survey, inside its advisory lock, like the other projectors.
+          await client.writeRelationships(batch); // NOSONAR
         }
 
         // The lock fences visibility changes, but not every fact: deleting the owner's account sets
@@ -150,7 +151,7 @@ const reconcileSurveyChunk = ({
     let passes = 0;
     // Sequential: each survey holds a pooled connection for the length of its SpiceDB round trips.
     for (const surveyId of surveyIds) {
-      passes = Math.max(passes, await reconcileSurvey(client, surveyId));
+      passes = Math.max(passes, await reconcileSurvey(client, surveyId)); // NOSONAR
     }
     return passes;
   });
