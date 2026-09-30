@@ -210,8 +210,17 @@ pnpm authzed:backfill --scope=survey --apply --after-survey-id=<cuid>
 pnpm authzed:backfill --scope=survey --clear-ready
 ```
 
-`--clear-ready` touches only PostgreSQL and works while SpiceDB is unreachable. If PostgreSQL is what is
-broken, set `SURVEY_VISIBILITY_FORCE_DISABLED=1` and restart instead. A survey audit that reports
+`--clear-ready` touches only PostgreSQL and works while SpiceDB is unreachable. It is a deliberate
+rollback: every restricted survey becomes workspace-visible again until the marker is set.
+
+> **Warning:** do not reach for `SURVEY_VISIBILITY_FORCE_DISABLED=1` when PostgreSQL or SpiceDB is
+> failing. The flag exposes every restricted survey — and its responses — to the whole workspace, and
+> it is never an operational fallback (ENG-3282 §6): an outage must fail closed, not fall back to
+> workspace-wide access. It does not even help — with PostgreSQL down every decision fails anyway, and
+> the exposure begins the moment it recovers with the flag still set. Fix the dependency instead; the
+> flag is only for an intentional, owner-approved decision to switch survey visibility off.
+
+A survey audit that reports
 `mismatchedParents` naming `shared_workspace` means some survey is shared with a workspace it does not
 belong to — another tenant's members can read it. Treat it as an incident: remove that edge with
 `zed relationship delete`, then rerun the survey scope with `--apply`.
