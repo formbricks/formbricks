@@ -3,7 +3,7 @@ import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbric
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import { recordSurveyListPredicateMismatch } from "@/lib/authorization/metrics";
-import { filterReadableSurveyIds, findSurveyIdsAwaitingProjection } from "@/lib/authorization/resource-list";
+import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/lib/survey";
@@ -54,10 +54,7 @@ vi.mock("@/app/api/v3/lib/auth", () => ({
   requireV3WorkspaceAccess: vi.fn(),
 }));
 
-vi.mock("@/lib/authorization/resource-list", () => ({
-  filterReadableSurveyIds: vi.fn(),
-  findSurveyIdsAwaitingProjection: vi.fn(async () => new Set()),
-}));
+vi.mock("@/lib/authorization/resource-list", () => ({ filterReadableSurveyIds: vi.fn() }));
 vi.mock("@/lib/authorization/metrics", () => ({ recordSurveyListPredicateMismatch: vi.fn() }));
 
 vi.mock("@/lib/posthog", () => ({
@@ -1744,14 +1741,19 @@ describe("listV3Surveys visibility (ENG-3282)", () => {
     expect((await readJson(response)).data).toEqual([{ id: "survey_ok" }]);
   });
 
-  test("keeps a denied row whose projection is still in the outbox, without counting a mismatch", async () => {
+  test("confirms only settled rows against the graph: a pending one is decided from PostgreSQL", async () => {
     visibilityOverride.context = enforcedMember;
+    const settled = { visibilityProjectedVersion: 1, visibilityVersion: 1 };
     vi.mocked(getSurveyListPage).mockResolvedValue({
-      surveys: [{ id: "survey_ok" }, { id: "survey_fresh" }, { id: "survey_leak" }],
+      surveys: [
+        { id: "survey_ok", ...settled },
+        // Just created: one version ahead of its acknowledgement, so the graph holds nothing for it yet.
+        { id: "survey_fresh", visibilityProjectedVersion: 0, visibilityVersion: 1 },
+        { id: "survey_leak", ...settled },
+      ],
       nextCursor: null,
-    } as any);
+    } as never);
     vi.mocked(filterReadableSurveyIds).mockResolvedValue(new Set(["survey_ok"]));
-    vi.mocked(findSurveyIdsAwaitingProjection).mockResolvedValueOnce(new Set(["survey_fresh"]));
 
     const response = await listV3Surveys({
       searchParams: new URLSearchParams({ workspaceId }),
@@ -1760,7 +1762,10 @@ describe("listV3Surveys visibility (ENG-3282)", () => {
       instance,
     });
 
-    expect(findSurveyIdsAwaitingProjection).toHaveBeenCalledWith(["survey_fresh", "survey_leak"]);
+    expect(filterReadableSurveyIds).toHaveBeenCalledWith({ type: "user", id: "user_1" }, [
+      "survey_ok",
+      "survey_leak",
+    ]);
     expect(recordSurveyListPredicateMismatch).toHaveBeenCalledWith(1);
     expect((await readJson(response)).data).toEqual([{ id: "survey_ok" }, { id: "survey_fresh" }]);
   });

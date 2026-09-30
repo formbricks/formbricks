@@ -414,7 +414,10 @@ mismatched parent.
   `pg_advisory_xact_lock(hashtext('survey-visibility:' || id))`, the same lock the visibility endpoint
   takes to store a change. The projector acknowledges the exact `visibilityVersion` it wrote into
   `visibilityProjectedVersion`; while the two differ (`visibilityPending`), PostgreSQL treats the survey as
-  restricted on every path.
+  restricted on every path, and direct checks decide it from PostgreSQL facts (its owner along their
+  workspace ladder, else administrators) rather than from the graph. An insert starts one version ahead
+  of its acknowledgement, so a survey that was just created or copied is pending, not an empty graph node,
+  until its first projection lands.
 - **DELETE is not a revocation.** Every survey decision resolves the row first and denies once it is gone,
   so deleting a workspace with many surveys cannot arm the freshness guard. Leftover edges are hygiene.
 - **Repair scope.** Surveys are their own backfill scope, `--scope=survey`, outside `--scope=all`: the

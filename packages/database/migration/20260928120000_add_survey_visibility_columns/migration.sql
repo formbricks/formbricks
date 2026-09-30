@@ -2,7 +2,8 @@
 -- from.
 --
 -- Every column is additive and defaults to today's behaviour: `visibility = 'workspace'`, no owner,
--- versions equal. Nothing here writes a row of a migrated database; `ownerId` is backfilled from `createdBy` by the data
+-- versions equal. A row inserted from here on starts one version ahead of its acknowledgement instead
+-- (see the trigger below). Nothing here writes a row of a migrated database; `ownerId` is backfilled from `createdBy` by the data
 -- migration that follows, BEFORE the projection trigger exists (the migration after that), so the
 -- backfill enqueues no outbox events.
 --
@@ -39,9 +40,18 @@ ALTER TABLE "Survey" ADD COLUMN IF NOT EXISTS "visibilityPending" BOOLEAN NOT NU
 
 -- Derived, never written by the application: recomputed on every insert and on any update that
 -- touches either version (or the column itself, so a stray write cannot stick).
+--
+-- A new row (a create or a copy) has no graph edges until the projector has run, so it must not look
+-- settled: authorization would consult an empty survey node and deny even its owner. An insert that
+-- arrives with equal versions is therefore moved one version ahead of its acknowledgement, and stays
+-- pending — decided from these PostgreSQL facts, fail closed — until the projector acknowledges exactly
+-- that version. An insert already carrying a pending pair keeps it.
 CREATE OR REPLACE FUNCTION survey_visibility_pending() RETURNS trigger
 LANGUAGE plpgsql AS $$
 BEGIN
+  IF TG_OP = 'INSERT' AND NEW."visibilityVersion" = NEW."visibilityProjectedVersion" THEN
+    NEW."visibilityVersion" := NEW."visibilityProjectedVersion" + 1;
+  END IF;
   NEW."visibilityPending" := NEW."visibilityVersion" <> NEW."visibilityProjectedVersion";
   RETURN NEW;
 END;

@@ -70,6 +70,8 @@ describe("survey projection through the outbox", () => {
     const survey = await prisma.survey.create({
       data: { name: "Lifecycle", ownerId: owner.id, workspaceId: workspace.id },
     });
+    // Pending from the insert until the projector acknowledges exactly the version it projected.
+    expect(survey).toMatchObject({ visibilityPending: true, visibilityVersion: 1 });
     await drain();
 
     expect(await surveyEdges(survey.id)).toEqual([
@@ -77,6 +79,12 @@ describe("survey projection through the outbox", () => {
       `shared_workspace@workspace:${workspace.id}`,
       `workspace@workspace:${workspace.id}`,
     ]);
+    await expect(
+      prisma.survey.findUniqueOrThrow({
+        where: { id: survey.id },
+        select: { visibilityPending: true, visibilityProjectedVersion: true },
+      })
+    ).resolves.toEqual({ visibilityPending: false, visibilityProjectedVersion: 1 });
 
     // What the visibility endpoint writes: the flag and a new version, together.
     await prisma.survey.update({
@@ -95,7 +103,7 @@ describe("survey projection through the outbox", () => {
         where: { id: survey.id },
         select: { visibilityPending: true, visibilityProjectedVersion: true },
       })
-    ).resolves.toEqual({ visibilityPending: false, visibilityProjectedVersion: 1 });
+    ).resolves.toEqual({ visibilityPending: false, visibilityProjectedVersion: 2 });
 
     await prisma.survey.delete({ where: { id: survey.id } });
     await drain();

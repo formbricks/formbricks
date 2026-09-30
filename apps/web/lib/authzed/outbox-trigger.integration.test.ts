@@ -267,11 +267,16 @@ describe("AuthZed projection outbox triggers: survey (ENG-3282)", () => {
     });
     await clearOutbox();
 
-    // INSERT → grant. Also proves the `visibilityPending` trigger, not Prisma, decides the column.
+    // INSERT → grant. Also proves the `visibilityPending` trigger, not Prisma, decides the column: the
+    // row starts one version ahead of its acknowledgement, pending until the projector has run.
     const survey = await prisma.survey.create({
       data: { name: "Transitions", workspaceId: workspace.id, ownerId: owner.id, createdBy: owner.id },
     });
-    expect(survey.visibilityPending).toBe(false);
+    expect(survey).toMatchObject({
+      visibilityPending: true,
+      visibilityProjectedVersion: 0,
+      visibilityVersion: 1,
+    });
     expect(await surveyEvents()).toEqual([
       { isRevocation: false, primaryId: survey.id, secondaryId: null, targetType: "survey" },
     ]);
@@ -310,19 +315,39 @@ describe("AuthZed projection outbox triggers: survey (ENG-3282)", () => {
 
   test("keeps visibilityPending in step with the two versions", async () => {
     const { workspace } = await seedSurvey("survey-pending");
-    const survey = await prisma.survey.create({ data: { name: "Pending", workspaceId: workspace.id } });
+    // Whatever pair the insert supplies, equal versions never survive it: a new row is pending.
+    const survey = await prisma.survey.create({
+      data: {
+        name: "Pending",
+        visibilityProjectedVersion: 3,
+        visibilityVersion: 3,
+        workspaceId: workspace.id,
+      },
+    });
+    expect(survey).toMatchObject({
+      visibilityPending: true,
+      visibilityProjectedVersion: 3,
+      visibilityVersion: 4,
+    });
+
+    const acked = await prisma.survey.update({
+      where: { id: survey.id },
+      data: { visibilityProjectedVersion: survey.visibilityVersion },
+    });
+    expect(acked.visibilityPending).toBe(false);
+
+    // Only an insert is moved ahead: an update that leaves the versions equal stays settled.
+    const touched = await prisma.survey.update({
+      where: { id: survey.id },
+      data: { visibilityPending: true },
+    });
+    expect(touched).toMatchObject({ visibilityPending: false, visibilityVersion: 4 });
 
     const bumped = await prisma.survey.update({
       where: { id: survey.id },
       data: { visibilityVersion: { increment: 1 } },
     });
     expect(bumped.visibilityPending).toBe(true);
-
-    const acked = await prisma.survey.update({
-      where: { id: survey.id },
-      data: { visibilityProjectedVersion: bumped.visibilityVersion },
-    });
-    expect(acked.visibilityPending).toBe(false);
   });
 
   test("sets the owner to null when the owning user is deleted", async () => {
