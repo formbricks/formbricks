@@ -358,6 +358,11 @@ export const importHistoricalResponsesAction = authenticatedActionClient
       if (survey.workspaceId !== parsedInput.workspaceId) {
         throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
       }
+      // ENG-3282: the import copies this survey's responses, so the caller must be able to read them.
+      await assertCan({ type: "user", id: ctx.user.id }, "survey.response_read", {
+        type: "survey",
+        id: survey.id,
+      });
       // Copying responses into a feedback directory is outbound (ENG-3283): a restricted survey's
       // responses must not leave its access list this way either.
       await assertNewlyAttachedSurveysWorkspaceVisible([survey.id]);

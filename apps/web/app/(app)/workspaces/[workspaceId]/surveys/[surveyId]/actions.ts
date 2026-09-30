@@ -61,6 +61,13 @@ const ZGetSurveyFilterDataAction = z.object({
 export const getSurveyFilterDataAction = authenticatedActionClient
   .inputSchema(ZGetSurveyFilterDataAction)
   .action(async ({ ctx, parsedInput }) => {
+    // Authorized first: the resolver denies an unknown id too, so a forbidden survey and a missing one
+    // answer alike (ENG-3282) instead of "not found" confirming which ids exist.
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.response_read", {
+      type: "survey",
+      id: parsedInput.surveyId,
+    });
+
     const survey = await getSurvey(parsedInput.surveyId);
 
     if (!survey) {
@@ -68,11 +75,6 @@ export const getSurveyFilterDataAction = authenticatedActionClient
     }
 
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-
-    await assertCan({ type: "user", id: ctx.user.id }, "survey.response_read", {
-      type: "survey",
-      id: parsedInput.surveyId,
-    });
 
     const organizationBilling = await getOrganizationBilling(organizationId);
     if (!organizationBilling) {

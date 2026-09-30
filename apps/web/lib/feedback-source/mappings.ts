@@ -74,13 +74,14 @@ export const resolveFormbricksMappingsInput = async (
   /** Surveys the source already maps; only newly mapped ones must be workspace-visible (ENG-3283). */
   previousSurveyIds: ReadonlyArray<string> = []
 ): Promise<TMappingsInput> => {
+  const resolved = await Promise.all(
+    entries.map(({ surveyId, elementIds }) => resolveSurveyMappings(surveyId, elementIds, workspaceId))
+  );
+  // Only after every survey is pinned to this workspace: checked first, a foreign restricted survey
+  // would answer "not workspace-visible" instead of not-found, confirming that it exists.
   await assertNewlyAttachedSurveysWorkspaceVisible(
     entries.map(({ surveyId }) => surveyId),
     previousSurveyIds
-  );
-
-  const resolved = await Promise.all(
-    entries.map(({ surveyId, elementIds }) => resolveSurveyMappings(surveyId, elementIds, workspaceId))
   );
   const flattenedMappings = resolved.flatMap(({ mappings }) => mappings);
   if (flattenedMappings.length === 0) {
