@@ -51,8 +51,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
 
-      - name: Test maintenance and development preparation
-        run: pnpm exec vitest run docker/__tests__/maintenance-upgrade.test.ts scripts/setup-dev-env.test.ts scripts/dev-authzed-up.test.ts
+      - name: Test maintenance, development preparation and release tagging
+        run: pnpm exec vitest run docker/__tests__/maintenance-upgrade.test.ts scripts/setup-dev-env.test.ts scripts/dev-authzed-up.test.ts .github/actions/build-and-push-docker/ghcr-tags.test.ts
 
       - name: Build web workspace dependencies
         run: pnpm build --filter=@formbricks/web^...
