@@ -133,7 +133,7 @@ export function toFilterRowUpdates(updates: Partial<TGenericCondition>): Partial
     const value = updates.rightOperand?.value;
     if (value === undefined || value === "") return { values: null };
     if (Array.isArray(value)) return { values: value.length > 0 ? value : null };
-    return typeof value === "number" ? { values: [value] } : { values: [value] };
+    return { values: [value] };
   }
 
   return {};
