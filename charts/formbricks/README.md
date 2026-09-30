@@ -596,6 +596,10 @@ taxonomy:
       region: us-east-1
 ```
 
+Bedrock needs a taxonomy image of version 0.1.6 or later; earlier images, including the chart's default `v0.1.0`,
+ship without the AWS SDK and fail on the first Bedrock request whichever way credentials are supplied. Set
+`taxonomy.image.tag` (or `taxonomy.image.digest`) accordingly.
+
 Prefer an IAM role delivered to the pod through EKS Pod Identity or IRSA. Give Taxonomy its own ServiceAccount
 so the role reaches only this pod, not the web app or migration job that share `rbac.serviceAccount`:
 
