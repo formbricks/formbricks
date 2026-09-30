@@ -7,7 +7,7 @@ import {
   formatCellValue,
   formatPercentShare,
   getSemanticDimensionColor,
-  getSentimentMeasureColor,
+  getSemanticMeasureColor,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import {
   getMeasureAxisLabel,
@@ -64,7 +64,7 @@ export function BreakdownBars({
       key,
       label: getMeasureAxisLabel(key, t),
       value: sortedData.reduce((sum, row) => sum + (Number(row[key]) || 0), 0),
-      color: getSentimentMeasureColor(key),
+      color: getSemanticMeasureColor(key),
     }));
   }
 

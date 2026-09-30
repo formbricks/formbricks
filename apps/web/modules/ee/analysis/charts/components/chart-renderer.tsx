@@ -25,7 +25,7 @@ import {
   formatPercentShare,
   formatXAxisTick,
   getSemanticDimensionColor,
-  getSentimentMeasureColor,
+  getSemanticMeasureColor,
   pivotMeasuresToCategories,
   prepareMeasureSliceData,
   preparePieData,
@@ -442,7 +442,7 @@ function SeriesChartRenderer({
       key,
       {
         label: formatCubeColumnHeader(key, t),
-        color: getSentimentMeasureColor(key) ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length],
+        color: getSemanticMeasureColor(key) ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length],
       },
     ])
   );

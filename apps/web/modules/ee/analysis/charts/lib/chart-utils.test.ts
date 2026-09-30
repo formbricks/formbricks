@@ -11,6 +11,8 @@ import {
   CHART_MEASURE_COLORS,
   CHART_NOT_ENRICHED_COLOR,
   CHART_SENTIMENT_COLORS,
+  CHART_VALUE_BAND_COLORS,
+  PIE_MEASURE_ID_KEY,
   PIE_MEASURE_NAME_KEY,
   PIE_MEASURE_VALUE_KEY,
   PIVOTED_MEASURE_KEY,
@@ -21,10 +23,12 @@ import {
   formatCellValue,
   formatPercentShare,
   formatXAxisTick,
+  getBandMeasureColor,
   getCategoryAxisWidth,
   getCategoryLabelBoxHeight,
   getCategoryLabelLineClamp,
   getSemanticDimensionColor,
+  getSemanticMeasureColor,
   getSentimentMeasureColor,
   getValueLabelPadding,
   pivotMeasuresToCategories,
@@ -42,9 +46,24 @@ describe("chart-utils", () => {
       const rows = [{ "m.joy": 1163, "m.anger": 1050, "m.fear": 3 }];
       const result = prepareMeasureSliceData(rows, ["m.joy", "m.anger", "m.fear"], label);
       expect(result).toEqual([
-        { [PIE_MEASURE_NAME_KEY]: "L:m.joy", [PIE_MEASURE_VALUE_KEY]: 1163, tooltipLabel: "L:m.joy" },
-        { [PIE_MEASURE_NAME_KEY]: "L:m.anger", [PIE_MEASURE_VALUE_KEY]: 1050, tooltipLabel: "L:m.anger" },
-        { [PIE_MEASURE_NAME_KEY]: "L:m.fear", [PIE_MEASURE_VALUE_KEY]: 3, tooltipLabel: "L:m.fear" },
+        {
+          [PIE_MEASURE_NAME_KEY]: "L:m.joy",
+          [PIE_MEASURE_ID_KEY]: "m.joy",
+          [PIE_MEASURE_VALUE_KEY]: 1163,
+          tooltipLabel: "L:m.joy",
+        },
+        {
+          [PIE_MEASURE_NAME_KEY]: "L:m.anger",
+          [PIE_MEASURE_ID_KEY]: "m.anger",
+          [PIE_MEASURE_VALUE_KEY]: 1050,
+          tooltipLabel: "L:m.anger",
+        },
+        {
+          [PIE_MEASURE_NAME_KEY]: "L:m.fear",
+          [PIE_MEASURE_ID_KEY]: "m.fear",
+          [PIE_MEASURE_VALUE_KEY]: 3,
+          tooltipLabel: "L:m.fear",
+        },
       ]);
     });
 
@@ -64,8 +83,18 @@ describe("chart-utils", () => {
       ];
       const result = prepareMeasureSliceData(rows, ["m.joy", "m.anger"], label);
       expect(result).toEqual([
-        { [PIE_MEASURE_NAME_KEY]: "L:m.joy", [PIE_MEASURE_VALUE_KEY]: 15, tooltipLabel: "L:m.joy" },
-        { [PIE_MEASURE_NAME_KEY]: "L:m.anger", [PIE_MEASURE_VALUE_KEY]: 2, tooltipLabel: "L:m.anger" },
+        {
+          [PIE_MEASURE_NAME_KEY]: "L:m.joy",
+          [PIE_MEASURE_ID_KEY]: "m.joy",
+          [PIE_MEASURE_VALUE_KEY]: 15,
+          tooltipLabel: "L:m.joy",
+        },
+        {
+          [PIE_MEASURE_NAME_KEY]: "L:m.anger",
+          [PIE_MEASURE_ID_KEY]: "m.anger",
+          [PIE_MEASURE_VALUE_KEY]: 2,
+          tooltipLabel: "L:m.anger",
+        },
       ]);
     });
 
@@ -309,6 +338,85 @@ describe("chart-utils", () => {
       // emotions keep the generic palette (only their empty bucket is semantic)
       expect(getSemanticDimensionColor("FeedbackRecords.emotions", "joy")).toBeUndefined();
       expect(getSemanticDimensionColor("FeedbackRecords.language", "positive")).toBeUndefined();
+    });
+  });
+
+  describe("value band colors (ENG-3331)", () => {
+    const bandDim = "FeedbackRecords.valueBand";
+
+    test("colors each band by polarity, NPS and CSAT alike", () => {
+      expect(getSemanticDimensionColor(bandDim, "promoter")).toBe(CHART_VALUE_BAND_COLORS.positive);
+      expect(getSemanticDimensionColor(bandDim, "satisfied")).toBe(CHART_VALUE_BAND_COLORS.positive);
+      expect(getSemanticDimensionColor(bandDim, "passive")).toBe(CHART_VALUE_BAND_COLORS.neutral);
+      expect(getSemanticDimensionColor(bandDim, "neutral")).toBe(CHART_VALUE_BAND_COLORS.neutral);
+      expect(getSemanticDimensionColor(bandDim, "detractor")).toBe(CHART_VALUE_BAND_COLORS.negative);
+      expect(getSemanticDimensionColor(bandDim, "dissatisfied")).toBe(CHART_VALUE_BAND_COLORS.negative);
+      expect(getSemanticDimensionColor(bandDim, "very_positive")).toBeUndefined();
+      expect(getSemanticDimensionColor(bandDim, null)).toBeUndefined();
+    });
+
+    test("gives the bucket count measures the color of their band", () => {
+      expect(getBandMeasureColor("FeedbackRecords.promoterCount")).toBe(CHART_VALUE_BAND_COLORS.positive);
+      expect(getBandMeasureColor("FeedbackRecords.passiveCount")).toBe(CHART_VALUE_BAND_COLORS.neutral);
+      expect(getBandMeasureColor("FeedbackRecords.csatDissatisfiedCount")).toBe(
+        CHART_VALUE_BAND_COLORS.negative
+      );
+      expect(getBandMeasureColor("FeedbackRecords.npsCount")).toBeUndefined();
+      expect(getSemanticMeasureColor("FeedbackRecords.positiveCount")).toBe(CHART_SENTIMENT_COLORS.positive);
+      expect(getSemanticMeasureColor("FeedbackRecords.detractorCount")).toBe(
+        CHART_VALUE_BAND_COLORS.negative
+      );
+    });
+
+    test("band slices keep their colors and leave the palette to the other slices", () => {
+      const rows = [
+        { [bandDim]: "promoter", count: 50 },
+        { [bandDim]: "mystery", count: 40 },
+        { [bandDim]: "detractor", count: 30 },
+      ];
+      expect(preparePieData(rows, "count", bandDim)?.colors).toEqual([
+        CHART_VALUE_BAND_COLORS.positive,
+        CHART_MEASURE_COLORS[0],
+        CHART_VALUE_BAND_COLORS.negative,
+      ]);
+    });
+
+    test("a pie of the three NPS bucket measures colors each slice by its band", () => {
+      const slices = prepareMeasureSliceData(
+        [
+          {
+            "FeedbackRecords.promoterCount": 184,
+            "FeedbackRecords.passiveCount": 98,
+            "FeedbackRecords.detractorCount": 64,
+            "FeedbackRecords.count": 10,
+          },
+        ],
+        [
+          "FeedbackRecords.promoterCount",
+          "FeedbackRecords.passiveCount",
+          "FeedbackRecords.detractorCount",
+          "FeedbackRecords.count",
+        ],
+        (key) => key
+      );
+      expect(preparePieData(slices, PIE_MEASURE_VALUE_KEY, PIE_MEASURE_NAME_KEY)?.colors).toEqual([
+        CHART_VALUE_BAND_COLORS.positive,
+        CHART_VALUE_BAND_COLORS.neutral,
+        CHART_VALUE_BAND_COLORS.negative,
+        CHART_MEASURE_COLORS[0],
+      ]);
+    });
+
+    test("band count measures do not consume a palette slot when pivoted to categories", () => {
+      const rows = pivotMeasuresToCategories(
+        [{ "FeedbackRecords.promoterCount": 3, "FeedbackRecords.count": 9 }],
+        ["FeedbackRecords.promoterCount", "FeedbackRecords.count"],
+        (key) => key
+      );
+      expect(rows.map((row) => row.fill)).toEqual([
+        CHART_VALUE_BAND_COLORS.positive,
+        CHART_MEASURE_COLORS[0],
+      ]);
     });
   });
 
