@@ -5,6 +5,7 @@ import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { getReportingTimeZone } from "@/lib/date-ranges";
 import { getOrganization } from "@/lib/organization/service";
+import { withResponseBaseMeasure } from "@/modules/ee/analysis/charts/lib/response-base";
 import { expandPresetDateRanges } from "@/modules/ee/analysis/lib/date-presets";
 import { isRatioMeasure } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
@@ -155,11 +156,14 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
 
   try {
     const client = cubejs(token, { apiUrl });
-    // What Cube runs can differ from what the caller asked for; the audit event and the granular
-    // time dimension still come from `input.query`, which is the chart as saved.
-    const executedQuery = applyValueBandNullGuard(input.query);
+    // What Cube runs can differ from what the caller asked for: the response base count rides along
+    // (charts show "Based on N answers" without a second round trip) and the NULL value band is
+    // dropped. The audit event and the granular time dimension still come from `input.query`,
+    // which is the chart as saved.
+    const executedQuery = applyValueBandNullGuard(withResponseBaseMeasure(input.query));
     const resultSet = await client.load(expandPresetDateRanges(executedQuery, timeZone) as Query);
-    const measures = input.query.measures ?? [];
+    // The injected count is a measure too: an invented date bucket must read 0 answers, not NULL.
+    const measures = executedQuery.measures ?? [];
     const granular = (input.query.timeDimensions ?? []).filter((td) => Boolean(td.granularity));
     const filled = resultSet.tablePivot({ fillWithValue: NULL_FILL_SENTINEL });
 

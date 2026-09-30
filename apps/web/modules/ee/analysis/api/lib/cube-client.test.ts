@@ -298,6 +298,58 @@ describe("executeTenantScopedQuery", () => {
     ]);
   });
 
+  test("fetches the response base alongside a score and counts 0 answers in an invented bucket", async () => {
+    const WEEK = "FeedbackRecords.collectedAt.week";
+    mockTablePivot.mockImplementation((pivotConfig?: { fillMissingDates?: boolean }) => {
+      const real = [
+        { [WEEK]: "2026-01-05", "FeedbackRecords.npsScore": "40", "FeedbackRecords.npsCount": 25 },
+      ];
+      if (pivotConfig?.fillMissingDates === false) return real;
+      return [
+        ...real,
+        {
+          [WEEK]: "2026-01-12",
+          "FeedbackRecords.npsScore": "__formbricks_null__",
+          "FeedbackRecords.npsCount": "__formbricks_null__",
+        },
+      ];
+    });
+
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const query = {
+      measures: ["FeedbackRecords.npsScore"],
+      timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", granularity: "week" as const }],
+    };
+    const result = await executeTenantScopedQuery({ ...scopedInput, query });
+
+    expect(mockLoad).toHaveBeenCalledWith({
+      ...query,
+      measures: ["FeedbackRecords.npsScore", "FeedbackRecords.npsCount"],
+      timezone: "UTC",
+    });
+    // A week nobody answered has no score, but it genuinely had zero answers.
+    expect(result).toEqual([
+      { [WEEK]: "2026-01-05", "FeedbackRecords.npsScore": "40", "FeedbackRecords.npsCount": 25 },
+      { [WEEK]: "2026-01-12", "FeedbackRecords.npsScore": null, "FeedbackRecords.npsCount": 0 },
+    ]);
+    expect(query.measures).toEqual(["FeedbackRecords.npsScore"]);
+    // The audit trail records the chart as the user built it, not the injected member.
+    expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        newObject: expect.objectContaining({
+          query: expect.objectContaining({ measures: ["FeedbackRecords.npsScore"] }),
+        }),
+      })
+    );
+  });
+
+  test("leaves a query with no single response base untouched", async () => {
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const query = { measures: ["FeedbackRecords.npsScore", "FeedbackRecords.count"] };
+    await executeTenantScopedQuery({ ...scopedInput, query });
+    expect(mockLoad).toHaveBeenCalledWith({ ...query, timezone: "UTC" });
+  });
+
   test("keeps a zero-activity day as 0 when every empty bucket was synthesized", async () => {
     const DAY = "FeedbackRecords.collectedAt.day";
     mockTablePivot.mockImplementation((pivotConfig?: { fillMissingDates?: boolean }) => {

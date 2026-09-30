@@ -57,6 +57,8 @@ export interface CartesianChartProps {
    * charts render values under a synthetic key (PIVOTED_VALUE_KEY) that carries no measure id, so
    * they resolve the fixed-scale axis from the original measure columns and pass it here (ENG-2226). */
   yAxisScale?: YAxisScale;
+  /** Response base column on each row; the tooltip prints it as "n = …" for the hovered point. */
+  responseBaseKey?: string;
   /** True for point-scale charts (line/area) where the first/last categories sit on the plot
    * boundary. Anchors the edge x-axis labels inward so they aren't clipped by the plot edge.
    * Leave false for band-scale charts (bars), whose edge categories are already inset. */
@@ -340,6 +342,7 @@ export function CartesianChart({
   hasCategoryAxis = true,
   tooltipHideLabel,
   yAxisScale,
+  responseBaseKey,
   pointScale = false,
   horizontal = false,
   timeAxis,
@@ -480,6 +483,7 @@ export function CartesianChart({
                   <PolishedChartTooltip
                     labelFormatter={xAxisTickFormatter}
                     hideLabel={tooltipHideLabel ?? !hasCategoryAxis}
+                    responseBaseKey={responseBaseKey}
                   />
                 }
                 cursor={tooltipCursor}
