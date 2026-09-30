@@ -53,7 +53,10 @@ function ElementMedia({ imgUrl, videoUrl, altText }: Readonly<ElementMediaProps>
   }
 
   return (
-    <div className="group/image relative mb-6 block min-h-40 rounded-md">
+    // The minimum height only reserves room for the loading skeleton: an unloaded <img> has no size, so the
+    // absolutely positioned placeholder would collapse to nothing. Once loaded, the media sets the height —
+    // keeping the floor left empty space under any image shorter than 160px (a wide banner, a logo).
+    <div className={cn("group/image relative mb-6 block rounded-md", isLoading && "min-h-40")}>
       {isLoading ? (
         <div className="absolute inset-auto flex h-full w-full animate-pulse items-center justify-center rounded-md bg-slate-200" />
       ) : null}

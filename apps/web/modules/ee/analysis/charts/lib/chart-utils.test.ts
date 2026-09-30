@@ -4,7 +4,8 @@ import {
   AXIS_LABEL_GAP,
   AXIS_LABEL_LINE_HEIGHT,
   CATEGORY_AXIS_LABEL_LINES,
-  CATEGORY_AXIS_MAX_WIDTH,
+  CATEGORY_AXIS_MAX_SHARE,
+  CATEGORY_AXIS_MIN_CEILING,
   CATEGORY_AXIS_MIN_WIDTH,
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
@@ -422,20 +423,75 @@ describe("chart-utils", () => {
 describe("flipped bar axis sizing", () => {
   test("sizes the category gutter to the labels present", () => {
     // Three numeric categories used to leave ~150px of empty gutter before the bars started.
-    expect(getCategoryAxisWidth(["3", "10", "25"])).toBeLessThan(CATEGORY_AXIS_MAX_WIDTH / 2);
+    expect(getCategoryAxisWidth(["3", "10", "25"])).toBeLessThan(CATEGORY_AXIS_MIN_CEILING / 2);
   });
 
   test("never drops below the floor or above the ceiling", () => {
     expect(getCategoryAxisWidth(["1"])).toBe(CATEGORY_AXIS_MIN_WIDTH);
     expect(getCategoryAxisWidth([])).toBe(CATEGORY_AXIS_MIN_WIDTH);
     expect(getCategoryAxisWidth(["How satisfied are you with the checkout experience overall?"])).toBe(
-      CATEGORY_AXIS_MAX_WIDTH
+      CATEGORY_AXIS_MIN_CEILING
     );
   });
 
   test("takes the longest label, not the first or last", () => {
     const width = getCategoryAxisWidth(["ok", "a considerably longer label", "no"]);
     expect(width).toBe(getCategoryAxisWidth(["a considerably longer label"]));
+  });
+
+  // ENG-3223: the flat 160px cap meant widening a chart from a dashboard widget to the editor gave
+  // every new pixel to the bars while the labels stayed cut at the same point.
+  describe("gutter scales with the chart", () => {
+    // Two real questions from the KAS pre-match survey; the longest is 45 characters.
+    const LONG_LABELS = [
+      "CSAT With clarity of screening procedures",
+      "CSAT with AHLAN pre-match accommodation",
+    ];
+    const WIDGET_WIDTH = 502;
+    const EDITOR_WIDTH = 924;
+
+    test("a wider chart gets a wider gutter, up to what the longest label needs", () => {
+      const needed = getCategoryAxisWidth(LONG_LABELS, 100_000);
+      const inWidget = getCategoryAxisWidth(LONG_LABELS, WIDGET_WIDTH);
+      const inEditor = getCategoryAxisWidth(LONG_LABELS, EDITOR_WIDTH);
+
+      // The widget cannot fit the label, so the gutter takes its full share of the width.
+      expect(inWidget).toBe(Math.floor(WIDGET_WIDTH * CATEGORY_AXIS_MAX_SHARE));
+      expect(inWidget).toBeLessThan(needed);
+      // The editor can, so the gutter stops at the label rather than at the share.
+      expect(inEditor).toBe(needed);
+      expect(inEditor).toBeLessThan(Math.floor(EDITOR_WIDTH * CATEGORY_AXIS_MAX_SHARE));
+      expect(inEditor).toBeGreaterThan(inWidget);
+    });
+
+    test("leaves the plot the clear majority of the chart at any width from a widget up", () => {
+      for (const chartWidth of [480, WIDGET_WIDTH, EDITOR_WIDTH, 1600]) {
+        const gutter = getCategoryAxisWidth(LONG_LABELS, chartWidth);
+        expect(chartWidth - gutter).toBeGreaterThanOrEqual(gutter * 2);
+      }
+    });
+
+    test("a widget too narrow for a third to be worth anything keeps the gutter it had", () => {
+      // A quarter-width dashboard widget; a third of it is under the flat ceiling.
+      expect(getCategoryAxisWidth(LONG_LABELS, 377)).toBe(CATEGORY_AXIS_MIN_CEILING);
+    });
+
+    test("never claims more than the longest label needs, however wide the chart", () => {
+      const unbounded = getCategoryAxisWidth(["Gender", "Nationality"]);
+      expect(getCategoryAxisWidth(["Gender", "Nationality"], 4000)).toBe(unbounded);
+      expect(unbounded).toBeLessThan(CATEGORY_AXIS_MIN_CEILING);
+    });
+
+    test("keeps the flat ceiling until the chart has been measured", () => {
+      for (const unmeasured of [undefined, 0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+        expect(getCategoryAxisWidth(LONG_LABELS, unmeasured)).toBe(CATEGORY_AXIS_MIN_CEILING);
+      }
+    });
+
+    test("short labels keep the floor on any chart", () => {
+      expect(getCategoryAxisWidth(["1"], 60)).toBe(CATEGORY_AXIS_MIN_WIDTH);
+      expect(getCategoryAxisWidth(["1"], 4000)).toBe(CATEGORY_AXIS_MIN_WIDTH);
+    });
   });
 
   test("reserves room for the widest value label so the longest bar keeps its number", () => {
@@ -451,7 +507,7 @@ describe("flipped bar axis sizing", () => {
 });
 
 describe("category label truncation", () => {
-  // The gutter caps at CATEGORY_AXIS_MAX_WIDTH and the tick hands the helper `axisWidth - gap`.
+  // The gutter caps at CATEGORY_AXIS_MIN_CEILING and the tick hands the helper `axisWidth - gap`.
   const BOX_WIDTH = 152;
   // Two real questions from the KAS pre-match survey, which share nineteen leading characters.
   const CLARITY_SCREENING = "CSAT With clarity of screening procedures";

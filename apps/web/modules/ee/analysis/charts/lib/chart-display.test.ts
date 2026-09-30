@@ -167,3 +167,22 @@ describe("hasChartDisplaySettings", () => {
     expect(hasChartDisplaySettings(undefined)).toBe(false);
   });
 });
+
+describe("matrix display", () => {
+  const matrixConfig = {
+    matrixCellValue: "both" as const,
+    matrixColorScale: false,
+    matrixShowTotals: true,
+    matrixTranspose: true,
+  };
+
+  test("a matrix has settings but no time grouping", () => {
+    expect(hasChartDisplaySettings("matrix")).toBe(true);
+    expect(supportsTimeGrouping("matrix")).toBe(false);
+  });
+
+  test("keeps its settings, including an explicit false, and drops them for any other type", () => {
+    expect(sanitizeChartDisplay(matrixConfig, "matrix")).toEqual(matrixConfig);
+    expect(sanitizeChartDisplay({ ...matrixConfig, showGrid: true }, "bar")).toEqual({ showGrid: true });
+  });
+});

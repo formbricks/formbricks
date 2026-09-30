@@ -17,12 +17,15 @@ interface DimensionsPanelProps {
   selectedDimensions: string[];
   onDimensionsChange: (dimensions: string[]) => void;
   hideTitle?: boolean;
+  /** A matrix reads its groupings positionally — the first is the rows, the second the columns. */
+  isMatrix?: boolean;
 }
 
 export function DimensionsPanel({
   selectedDimensions,
   onDimensionsChange,
   hideTitle = false,
+  isMatrix = false,
 }: Readonly<DimensionsPanelProps>) {
   const { t } = useTranslation();
 
@@ -58,7 +61,23 @@ export function DimensionsPanel({
           Helper text, not an alert: it explains the field rather than warning about it, and a
           small Alert truncates to one line — which in a narrow column loses the half that matters.
         */}
-        <p className="text-xs text-slate-500">{t("workspace.analysis.charts.group_by_description")}</p>
+        <p className="text-xs text-slate-500">
+          {isMatrix
+            ? t("workspace.analysis.charts.matrix_group_by_description")
+            : t("workspace.analysis.charts.group_by_description")}
+        </p>
+        {isMatrix && selectedDimensions.length > 0 && (
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-md bg-slate-50 px-3 py-2 text-xs">
+            <dt className="text-slate-500">{t("workspace.analysis.charts.matrix_rows")}</dt>
+            <dd className="truncate text-slate-900">
+              {selectedDimensions[0] ? getTranslatedFieldLabel(selectedDimensions[0], t) : "\u2013"}
+            </dd>
+            <dt className="text-slate-500">{t("workspace.analysis.charts.matrix_columns")}</dt>
+            <dd className="truncate text-slate-900">
+              {selectedDimensions[1] ? getTranslatedFieldLabel(selectedDimensions[1], t) : "\u2013"}
+            </dd>
+          </dl>
+        )}
         {suggestsOptionGrouping && (
           // Full size so it wraps: this one is several sentences, and truncated it says nothing.
           <Alert variant="warning" role="status">

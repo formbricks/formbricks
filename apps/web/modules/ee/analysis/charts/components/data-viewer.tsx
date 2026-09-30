@@ -14,6 +14,8 @@ interface DataViewerProps {
   data: TChartDataRow[];
   /** value_id → default-language label map, present when the query groups by valueId. */
   optionLabels?: Record<string, string>;
+  /** Matrix row field_id → statement map, present when the query groups by fieldId. */
+  fieldLabels?: Record<string, string>;
   /**
    * Drop the card, the heading and the fixed scroll height, and fill the parent instead. For a
    * dashboard widget, whose title bar already names the chart and whose body already scrolls —
@@ -22,7 +24,7 @@ interface DataViewerProps {
   bare?: boolean;
 }
 
-export function DataViewer({ data, optionLabels, bare = false }: Readonly<DataViewerProps>) {
+export function DataViewer({ data, optionLabels, fieldLabels, bare = false }: Readonly<DataViewerProps>) {
   const { t } = useTranslation();
   if (!data || data.length === 0 || Object.keys(data[0]).length === 0) {
     return (
@@ -38,6 +40,10 @@ export function DataViewer({ data, optionLabels, bare = false }: Readonly<DataVi
   const renderCellValue = (key: string, value: unknown): string => {
     if (key === "FeedbackRecords.valueId" && optionLabels && typeof value === "string") {
       return optionLabels[value] ?? value;
+    }
+    // A matrix row's field_id (`<elementId>__<rowId>`) reads as its statement, like the grid does.
+    if (key === "FeedbackRecords.fieldId" && fieldLabels && typeof value === "string") {
+      return fieldLabels[value] ?? value;
     }
     return (getTranslatedDimensionValueLabel(key, value, t) ?? formatCellValue(value)) as string;
   };

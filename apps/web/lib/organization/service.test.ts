@@ -18,6 +18,7 @@ import { deleteWorkspaceFilesBestEffort } from "@/modules/storage/service";
 import {
   createOrganization,
   deleteOrganization,
+  getMonthlyOrganizationResponseCount,
   getMonthlyOrganizationWorkflowRunCount,
   getOrganization,
   getOrganizationsByUserId,
@@ -44,6 +45,9 @@ vi.mock("@formbricks/database", () => ({
     },
     workflowRun: {
       aggregate: vi.fn(),
+    },
+    response: {
+      count: vi.fn(),
     },
   },
 }));
@@ -591,6 +595,36 @@ describe("Organization Service", () => {
       await expect(getMonthlyOrganizationWorkflowRunCount("cms634kob000001uzrelh0qeb")).rejects.toThrow(
         DatabaseError
       );
+    });
+  });
+
+  describe("getMonthlyOrganizationResponseCount", () => {
+    test("counts the organization's responses in the billing cycle, scoped through its workspaces", async () => {
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue({
+        id: "org_1",
+        name: "Test Org",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        billing: {
+          stripeCustomerId: null,
+          limits: { workspaces: 5, monthly: { responses: 5000 } },
+          usageCycleAnchor: null,
+          stripe: null,
+        },
+        isAISmartToolsEnabled: false,
+        whitelabel: null,
+      } as never);
+      vi.mocked(prisma.response.count).mockResolvedValue(17);
+
+      const result = await getMonthlyOrganizationResponseCount("cms634kob000001uzrelh0qeb");
+
+      expect(result).toBe(17);
+      expect(prisma.response.count).toHaveBeenCalledWith({
+        where: {
+          survey: { workspace: { organizationId: "cms634kob000001uzrelh0qeb" } },
+          createdAt: { gte: expect.any(Date), lt: expect.any(Date) },
+        },
+      });
     });
   });
 });

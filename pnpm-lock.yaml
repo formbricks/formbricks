@@ -210,7 +210,7 @@ overrides:
   postcss: 8.5.23
   dompurify: 3.4.13
   fast-xml-parser: 5.7.2
-  ip-address@10: 10.3.1
+  ip-address@10: 10.7.1
   nanoid@3: 3.3.18
   typeorm: 0.3.31
   uuid@8: 11.1.1
@@ -220,13 +220,13 @@ overrides:
   esbuild: 0.28.1
   tar: 7.5.21
   js-yaml@4: 4.3.2
-  undici@6: 6.28.0
-  undici@7: 7.29.0
+  undici@6: 6.28.1
+  undici@7: 7.29.1
   sharp: 0.35.4
   '@opentelemetry/propagator-jaeger': 2.9.0
   valibot: 1.4.2
   socket.io-parser@4: 4.2.7
-  fast-uri@3: 3.1.6
+  fast-uri@3: 3.1.8
   deepmerge-ts@7: 8.0.1
   mysql2: 3.23.1
   browserslist: 4.28.7
@@ -242,6 +242,7 @@ overrides:
 patchedDependencies:
   '@better-auth/oauth-provider@1.7.0': c902485a86bcc6e01946ff9b5339866f3dcd2bbf84369e1c10cc4608e8e2ebd4
   better-auth@1.7.0: 1e1eb950e3163ebedbeeb9823f5951a9b9b12cf542ec6b15784bd06ddfb1582e
+  pg-pool@3.13.0: d923cc722d868672d07c34b01ac29017b42f3e77f4f52a9e6a2a1e225e7690c7
 
 importers:
 
@@ -677,8 +678,8 @@ importers:
         specifier: 8.1.10
         version: 8.1.10(next@16.3.3(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       nodemailer:
-        specifier: 9.1.1
-        version: 9.1.1
+        specifier: 10.0.9
+        version: 10.0.9
       otplib:
         specifier: 13.5.0
         version: 13.5.0
@@ -761,8 +762,8 @@ importers:
         specifier: 2.0.10
         version: 2.0.10
       undici:
-        specifier: 7.29.0
-        version: 7.29.0
+        specifier: 7.29.1
+        version: 7.29.1
       uuid:
         specifier: 'catalog:'
         version: 14.0.0
@@ -1079,8 +1080,8 @@ importers:
         specifier: 'catalog:'
         version: 3.0.3
       pg:
-        specifier: 8.16.3
-        version: 8.16.3
+        specifier: 8.20.0
+        version: 8.20.0
       pino:
         specifier: 'catalog:'
         version: 10.3.1
@@ -8045,8 +8046,8 @@ packages:
   fast-shallow-equal@1.0.0:
     resolution: {integrity: sha512-HPtaa38cPgWvaCFmRNhlc6NG7pv6NUHqjPgVAkWGoB9mQMwYB27/K0CvOM5Czy+qpT3e8XJ6Q4aPAnzpNpzNaw==}
 
-  fast-uri@3.1.6:
-    resolution: {integrity: sha512-7Ical1vFEMr0onbVzEDIreM22I4khW+fzyQPwvAFWBp1iwdshSZRsL4jjRvPG9JP1uiqMHRto+YU6R2/CzDz5Q==}
+  fast-uri@3.1.8:
+    resolution: {integrity: sha512-GZMtZUTNRpOVIECoXwLNZS5xUGE+mVNbTB8h/7Rwh2TFWcBQiPzTgyZi05BF9UMZKkLJv8XBRJTlU7zg8+ZfMg==}
 
   fast-xml-builder@1.2.0:
     resolution: {integrity: sha512-00aAWieqff+ZJhsXA4g1g7M8k+7AYoMUUHF+/zFb5U6Uv/P0Vl4QZo84/IcufzYalLuEj9928bXN9PbbFzMF0Q==}
@@ -8580,8 +8581,8 @@ packages:
     resolution: {integrity: sha512-Qho8TgIamqEPdgiMadJwzRMW3TudIg6vpg4YONokGDudy4eqRIJtDbVX72pfLBcWxvbn3qm/40TyGUObdW4tLQ==}
     engines: {node: '>=12.22.0'}
 
-  ip-address@10.3.1:
-    resolution: {integrity: sha512-1e9d3kb97NHJTIJDZW9rKqW2h6+dFa50Dy0fpPSMQp2ADje5gvKsXmdiK6dwY5t76TaTt5+P5N1Y/LoToIxP6g==}
+  ip-address@10.7.1:
+    resolution: {integrity: sha512-4OUAqU9Z1i3vCnS05hzGiFnEMDpQ+62pAD/MVQOp83fYyNC8GleCqaS0QikQBmcWCrKFiUs/B8ztRRiYOAXuCA==}
     engines: {node: '>= 12'}
 
   ipaddr.js@1.9.1:
@@ -9619,9 +9620,9 @@ packages:
     resolution: {integrity: sha512-YHs7BmmcsdAI5Ozuf8JZo6PT0mv2GIWC9vMfvUC3dp65M8hn7Ux8CPL+2oBI7juNuj9d0ndhTcznq2ODBps9cQ==}
     engines: {node: '>=18'}
 
-  nodemailer@9.1.1:
-    resolution: {integrity: sha512-izw9mVKFix6YSnC9eLgV6g1opl9DUlRio9ZNcq+Wu9Ujn2UwF+8Nl0B8nz22kEC+CTZCvinkxwJ0DeFbb6NwcQ==}
-    engines: {node: '>=6.0.0'}
+  nodemailer@10.0.9:
+    resolution: {integrity: sha512-BF0qcyplCwp+jMk6HCjFykBz/YhhZSsxrARhOldLwFWH+8kGjQsd2WIMIZhqEuyXRoGFi0ONbDeWDMDoL8MhLw==}
+    engines: {node: '>=20.0.0'}
 
   nopt@5.0.0:
     resolution: {integrity: sha512-Tbj67rffqceeLpcRXrT7vKAN8CwfPeIBgM7E6iBkmKLV7bEMwpGgYLGv0jACUsECaa/vuxP0IjEont6umdMgtQ==}
@@ -9892,15 +9893,6 @@ packages:
   pg-types@2.2.0:
     resolution: {integrity: sha512-qTAAlrEsl8s4OiEQY69wDvcMIdQN6wdz5ojQiOy6YRMuynxenON0O5oCpJI6lshc6scgAY8qvJ2On/p+CXY0GA==}
     engines: {node: '>=4'}
-
-  pg@8.16.3:
-    resolution: {integrity: sha512-enxc1h0jA/aq5oSDMvqyW3q89ra6XIIDZgCX9vkMrnz5DFTw/Ny3Li2lFQ+pt3L6MCgm/5o2o8HW9hiJji+xvw==}
-    engines: {node: '>= 16.0.0'}
-    peerDependencies:
-      pg-native: '>=3.0.1'
-    peerDependenciesMeta:
-      pg-native:
-        optional: true
 
   pg@8.20.0:
     resolution: {integrity: sha512-ldhMxz2r8fl/6QkXnBD3CR9/xg694oT6DZQ2s6c/RI28OjtSOpxnPrUCGOBJ46RCUxcWdx3p6kw/xnDHjKvaRA==}
@@ -11534,12 +11526,12 @@ packages:
   undici-types@7.18.2:
     resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
 
-  undici@6.28.0:
-    resolution: {integrity: sha512-LIY910g9TI13YS95lrMFrs8Rm/u/irgHeTWoKCoteeJ04CUJ92eEfj0rVn+7VKMPBpUPiUoBKfhNyLI23EE/KA==}
+  undici@6.28.1:
+    resolution: {integrity: sha512-zWpdTVD54H48CIybL0rWQ3ukpb9d23wM7eH5RtfdmeP70cWHNjtfo7P4vZX+5CoDcO53J4Pu5uXp7lNfjc6DRA==}
     engines: {node: '>=18.17'}
 
-  undici@7.29.0:
-    resolution: {integrity: sha512-IDxfleLmmbSskfWSUATiN1nfn2rDuvnMOqb5CWR92iIfojA0Ud+ulOAAEQ57LPr9rWmsreUyf5lwyao+7GNNVw==}
+  undici@7.29.1:
+    resolution: {integrity: sha512-RYONW2MeafgYlkVOKYKkA/Ag7BmXqgIWCa8t1m0JcxrQg9pI9lEqRhAOruOBCbAohOa/gkCF+iPi9hrgvTzu6Q==}
     engines: {node: '>=20.18.1'}
 
   unique-filename@1.1.1:
@@ -15608,7 +15600,7 @@ snapshots:
     dependencies:
       '@prisma/driver-adapter-utils': 7.8.0
       '@types/pg': 8.16.0
-      pg: 8.16.3
+      pg: 8.20.0
       postgres-array: 3.0.4
     transitivePeerDependencies:
       - pg-native
@@ -16405,7 +16397,7 @@ snapshots:
       openapi-sampler: 1.7.0
       outdent: 0.8.0
       set-cookie-parser: 2.7.1
-      undici: 6.28.0
+      undici: 6.28.1
     transitivePeerDependencies:
       - ajv
       - supports-color
@@ -18286,14 +18278,14 @@ snapshots:
   ajv@8.18.0:
     dependencies:
       fast-deep-equal: 3.1.3
-      fast-uri: 3.1.6
+      fast-uri: 3.1.8
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
   ajv@8.20.0:
     dependencies:
       fast-deep-equal: 3.1.3
-      fast-uri: 3.1.6
+      fast-uri: 3.1.8
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
@@ -19892,7 +19884,7 @@ snapshots:
   express-rate-limit@8.5.2(express@5.2.1):
     dependencies:
       express: 5.2.1
-      ip-address: 10.3.1
+      ip-address: 10.7.1
     optional: true
 
   express@5.2.1:
@@ -19965,7 +19957,7 @@ snapshots:
 
   fast-shallow-equal@1.0.0: {}
 
-  fast-uri@3.1.6: {}
+  fast-uri@3.1.8: {}
 
   fast-xml-builder@1.2.0:
     dependencies:
@@ -20569,7 +20561,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  ip-address@10.3.1:
+  ip-address@10.7.1:
     optional: true
 
   ipaddr.js@1.9.1:
@@ -20858,7 +20850,7 @@ snapshots:
       saxes: 6.0.0
       symbol-tree: 3.2.4
       tough-cookie: 6.0.1
-      undici: 7.29.0
+      undici: 7.29.1
       w3c-xmlserializer: 5.0.0
       webidl-conversions: 8.0.1
       whatwg-mimetype: 5.0.0
@@ -21565,7 +21557,7 @@ snapshots:
 
   node-releases@2.0.54: {}
 
-  nodemailer@9.1.1: {}
+  nodemailer@10.0.9: {}
 
   nopt@5.0.0:
     dependencies:
@@ -21867,11 +21859,7 @@ snapshots:
 
   pg-int8@1.0.1: {}
 
-  pg-pool@3.13.0(pg@8.16.3):
-    dependencies:
-      pg: 8.16.3
-
-  pg-pool@3.13.0(pg@8.20.0):
+  pg-pool@3.13.0(patch_hash=d923cc722d868672d07c34b01ac29017b42f3e77f4f52a9e6a2a1e225e7690c7)(pg@8.20.0):
     dependencies:
       pg: 8.20.0
 
@@ -21885,20 +21873,10 @@ snapshots:
       postgres-date: 1.0.7
       postgres-interval: 1.2.0
 
-  pg@8.16.3:
-    dependencies:
-      pg-connection-string: 2.12.0
-      pg-pool: 3.13.0(pg@8.16.3)
-      pg-protocol: 1.13.0
-      pg-types: 2.2.0
-      pgpass: 1.0.5
-    optionalDependencies:
-      pg-cloudflare: 1.3.0
-
   pg@8.20.0:
     dependencies:
       pg-connection-string: 2.12.0
-      pg-pool: 3.13.0(pg@8.20.0)
+      pg-pool: 3.13.0(patch_hash=d923cc722d868672d07c34b01ac29017b42f3e77f4f52a9e6a2a1e225e7690c7)(pg@8.20.0)
       pg-protocol: 1.13.0
       pg-types: 2.2.0
       pgpass: 1.0.5
@@ -23096,7 +23074,7 @@ snapshots:
 
   socks@2.8.7:
     dependencies:
-      ip-address: 10.3.1
+      ip-address: 10.7.1
       smart-buffer: 4.2.0
     optional: true
 
@@ -23764,9 +23742,9 @@ snapshots:
 
   undici-types@7.18.2: {}
 
-  undici@6.28.0: {}
+  undici@6.28.1: {}
 
-  undici@7.29.0: {}
+  undici@7.29.1: {}
 
   unique-filename@1.1.1:
     dependencies:

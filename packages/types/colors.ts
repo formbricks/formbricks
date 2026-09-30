@@ -10,7 +10,7 @@
 // Normalizes every hex form `ZColor` accepts (#RGB, #RGBA, #RRGGBB, #RRGGBBAA, with or without
 // the leading "#") to lowercase #rrggbb, dropping any alpha channel. Returns undefined for
 // anything else. Centralized so the parsers below never throw on persisted styling values.
-const normalizeHex = (color: string): string | undefined => {
+export const normalizeHex = (color: string): string | undefined => {
   const hex = color.startsWith("#") ? color.slice(1) : color;
   if (!/^[a-f\d]+$/i.test(hex)) return undefined;
 

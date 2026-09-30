@@ -81,7 +81,11 @@ export function ChartBuilderBody({
         config={chartConfig}
         isLoading={isLoadingChart || queryState.isLoading}
         error={chartLoadError ?? queryState.error}
-        emptyMessage={t("workspace.analysis.charts.advanced_chart_builder_config_prompt")}
+        emptyMessage={
+          chartType === "matrix"
+            ? t("workspace.analysis.charts.matrix_empty_prompt")
+            : t("workspace.analysis.charts.advanced_chart_builder_config_prompt")
+        }
         typeControl={<ChartTypeSwitch selectedChartType={chartType} onChartTypeSelect={onChartTypeSelect} />}
         displaySettings={
           showsDisplaySettings ? (

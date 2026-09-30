@@ -386,7 +386,8 @@ describe("reorderSurveyBlocks diagnostics bound", () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.invalidParams).toHaveLength(51);
+    // 50 entries in total, the summary included (ENG-3384's documented `invalid_params` limit).
+    expect(result.invalidParams).toHaveLength(50);
     expect(result.invalidParams.at(-1)).toEqual({
       name: "order",
       reason: expect.stringContaining("further problems with this order were not reported"),
@@ -414,8 +415,8 @@ describe("reorderSurveyBlocks diagnostics bound", () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.invalidParams).toHaveLength(51);
-    // The cap is 50; the other tests in this describe pin it via the 51-entry reply.
+    expect(result.invalidParams).toHaveLength(50);
+    // The collector builds at most 50 before it only counts; the reply then keeps 49 plus the summary.
     expect(stringified).toBeLessThanOrEqual(50);
   });
 
@@ -427,8 +428,8 @@ describe("reorderSurveyBlocks diagnostics bound", () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    // 500 unknown ids + blk_a missing = 501 problems; 50 reported, 451 counted.
-    expect(result.invalidParams.at(-1)?.reason).toContain("451 further problems");
+    // 500 unknown ids + blk_a missing = 501 problems; 49 reported, 452 counted.
+    expect(result.invalidParams.at(-1)?.reason).toContain("452 further problems");
   });
 
   test("reports every problem when they fit under the cap", () => {

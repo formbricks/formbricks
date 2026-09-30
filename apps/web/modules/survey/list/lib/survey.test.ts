@@ -5,7 +5,8 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { TActionClassType } from "@formbricks/types/action-classes";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { can } from "@/lib/authorization";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
@@ -33,6 +34,10 @@ vi.mock("@/lib/survey/utils", () => ({
 
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
+}));
+
+vi.mock("@/lib/authorization", () => ({
+  can: vi.fn(),
 }));
 
 vi.mock("@/lib/organization/service", () => ({
@@ -139,6 +144,8 @@ const resetMocks = () => {
   vi.mocked(prisma.actionClass.findMany).mockReset();
   vi.mocked(getQuotas).mockReset();
   vi.mocked(logger.error).mockClear();
+  vi.mocked(can).mockReset();
+  vi.mocked(can).mockResolvedValue(true);
 
   // copySurveyToOtherWorkspace wraps its writes in a transaction (ENG-1978) so the survey and its
   // Embedded Data rows land together. Reset first like every mock above — otherwise the call history
@@ -344,6 +351,134 @@ describe("copySurveyToOtherWorkspace", () => {
       })
     );
     expect(checkForInvalidMediaInBlocks).toHaveBeenCalledWith(mockExistingSurveyDetails.blocks);
+  });
+
+  // Resolve only what the query selects, the way Prisma does. Returning the whole survey regardless
+  // of the `select` would let these tests pass even when a column is never read — which is the bug.
+  const mockSourceSurvey = (columns: Record<string, unknown>) => {
+    const sourceSurvey: Record<string, unknown> = { ...mockExistingSurveyDetails, ...columns };
+    vi.mocked(prisma.survey.findUnique).mockImplementation((({ select }: { select: object }) =>
+      Promise.resolve(
+        Object.fromEntries(Object.keys(select).map((column) => [column, sourceSurvey[column]]))
+      )) as never);
+  };
+
+  test("carries the source survey's behaviour and security settings onto the copy", async () => {
+    const configuredSettings = {
+      pin: "1234",
+      autoComplete: 50,
+      autoClose: 30,
+      delay: 5,
+      redirectUrl: "https://example.com/thanks",
+      displayPercentage: 25,
+      showLanguageSwitch: true,
+      recaptcha: { enabled: true, threshold: 0.5 },
+      isVerifyEmailEnabled: true,
+      isAnonymizeResponsesEnabled: true,
+      isCaptureIpEnabled: true,
+      isBackButtonHidden: true,
+      isAutoProgressingEnabled: true,
+      metadata: { title: { default: "Shared title" } },
+      customHeadScripts: "<script>analytics()</script>",
+      customHeadScriptsMode: "replace",
+      inlineTriggers: { codeConfig: { identifier: "inline" } },
+    };
+    mockSourceSurvey(configuredSettings);
+
+    await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, sourceWorkspaceId, userId);
+
+    expect(prisma.survey.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining(configuredSettings) })
+    );
+  });
+
+  test("does not carry the scheduling dates onto the copy", async () => {
+    // The scheduler closes an `inProgress` survey whose `closeOn` has passed, so a copy that
+    // inherited a past date would complete itself on the first tick after the user publishes it.
+    mockSourceSurvey({ publishOn: new Date("2020-01-01"), closeOn: new Date("2020-02-01") });
+
+    await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, sourceWorkspaceId, userId);
+
+    const { data } = vi.mocked(prisma.survey.create).mock.calls[0][0];
+    expect(data).not.toHaveProperty("publishOn");
+    expect(data).not.toHaveProperty("closeOn");
+  });
+
+  test("keeps head scripts on a copy to another workspace, but adds them to the target's own", async () => {
+    // "replace" would switch off the target workspace's head scripts on the copy. A same-workspace
+    // duplicate keeps "replace"; the settings test above covers that.
+    mockSourceSurvey({ customHeadScripts: "<script>analytics()</script>", customHeadScriptsMode: "replace" });
+
+    await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId);
+
+    expect(prisma.survey.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          customHeadScripts: "<script>analytics()</script>",
+          customHeadScriptsMode: "add",
+        }),
+      })
+    );
+  });
+
+  test("refuses to carry head scripts into a workspace the user cannot manage", async () => {
+    mockSourceSurvey({ customHeadScripts: "<script>analytics()</script>", customHeadScriptsMode: "add" });
+    vi.mocked(can).mockResolvedValue(false);
+
+    await expect(
+      copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId)
+    ).rejects.toThrow(OperationNotAllowedError);
+
+    expect(can).toHaveBeenCalledWith({ type: "user", id: userId }, "workspace.manage", {
+      type: "workspace",
+      id: targetWorkspaceId,
+    });
+    expect(prisma.survey.create).not.toHaveBeenCalled();
+  });
+
+  test("duplicates a survey with head scripts in its own workspace without Manage access", async () => {
+    // The scripts were already approved for this workspace, so a Read & write member can duplicate.
+    vi.mocked(getWorkspaceWithLanguages).mockReset();
+    vi.mocked(getWorkspaceWithLanguages).mockResolvedValue(mockSourceWorkspace);
+    mockSourceSurvey({ customHeadScripts: "<script>analytics()</script>", customHeadScriptsMode: "add" });
+    vi.mocked(can).mockResolvedValue(false);
+
+    await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, sourceWorkspaceId, userId);
+
+    expect(can).not.toHaveBeenCalled();
+    expect(prisma.survey.create).toHaveBeenCalled();
+  });
+
+  test("accounts for every Survey column, so a new one cannot be dropped silently", async () => {
+    // The copy is built by spreading whatever `getExistingSurvey` selects, so a column that is
+    // neither selected nor listed below is reset to its database default without anyone noticing.
+    // That is the ENG-2144 bug, and #6802 before it. Adding a Survey column fails this test until
+    // you decide which side it belongs on.
+    const RESET_ON_COPY = new Set([
+      // Identity and ownership: the copy is a new row in a workspace the caller chose.
+      "id",
+      "createdAt",
+      "updatedAt",
+      "workspaceId",
+      "createdBy",
+      // Not reset: the copy reconnects or recreates the segment through the `segment` relation.
+      "segmentId",
+      // Lifecycle: every copy starts as an unpublished, unarchived draft with its own link.
+      "status",
+      "archivedAt",
+      "slug",
+      "publishOn",
+      "closeOn",
+    ]);
+
+    await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, sourceWorkspaceId, userId);
+
+    const { select } = vi.mocked(prisma.survey.findUnique).mock.calls[0][0];
+    const unaccounted = Object.keys(Prisma.SurveyScalarFieldEnum).filter(
+      (column) => !(column in (select ?? {})) && !RESET_ON_COPY.has(column)
+    );
+
+    expect(unaccounted).toEqual([]);
   });
 
   test("defines the copied survey's embedded data in the TARGET workspace, not the source", async () => {

@@ -1,0 +1,21 @@
+# Version updates for the actions pinned in .github/. Security updates for the npm workspace are
+# configured separately in the repository settings and routed to Linear by dependabot-to-linear.yml.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    # "/" covers .github/workflows; composite actions are only scanned when listed explicitly.
+    directories:
+      - "/"
+      - "/.github/actions/*"
+    schedule:
+      interval: monthly
+    # One PR per month moves every workflow together, so no action ends up on two versions.
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "chore(ci)"
+    labels:
+      - dependencies
+      - github_actions

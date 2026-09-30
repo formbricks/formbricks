@@ -27,7 +27,7 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string; sur
   const params = await props.params;
   const t = await getTranslate();
 
-  const { session, organization, isReadOnly, workspace } = await getSurveyAuth(
+  const { session, organization, isReadOnly, canManage, workspace } = await getSurveyAuth(
     params.workspaceId,
     params.surveyId
   );
@@ -77,6 +77,7 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string; sur
         cta={
           <SurveyAnalysisCTA
             isReadOnly={isReadOnly}
+            canManage={canManage}
             user={user}
             publicDomain={publicDomain}
             responseCount={responseCount}
