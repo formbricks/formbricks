@@ -1,3 +1,4 @@
+import "./__mocks__/brevo.mock";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { IdentityProvider, Prisma } from "@formbricks/database/prisma";
@@ -37,10 +38,6 @@ vi.mock("@/lib/authzed/organization-membership", () => ({
 }));
 vi.mock("@/lib/authzed/team-workspace", () => ({
   deleteUserTeamRelationships: vi.fn(),
-}));
-
-vi.mock("@/modules/auth/lib/brevo", () => ({
-  deleteBrevoCustomerByEmail: vi.fn(),
 }));
 
 describe("User Service", () => {
