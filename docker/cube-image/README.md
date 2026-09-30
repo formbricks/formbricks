@@ -94,10 +94,14 @@ requests that change the image without changing its tag fail before they can mer
 
 After pushing, the job pulls the tag without credentials and fails if that is denied. GitHub creates a new
 package as private, so after the first publish an org admin sets `formbricks/cube` to **public** in the
-package settings and re-runs the job. To check a published image's signature:
+package settings and re-runs the job. A release cannot ship before that: `formbricks-release.yml` pulls the
+tag `charts/formbricks/values.yaml` pins, without credentials, before it builds anything.
+
+To check a published image's signature, pin the exact workflow identity, so a fork's `cube-image.yml` cannot
+satisfy it:
 
 ```bash
 cosign verify ghcr.io/formbricks/cube:1.7.47-1 \
-  --certificate-identity-regexp '.*/\.github/workflows/cube-image\.yml@refs/heads/main$' \
+  --certificate-identity https://github.com/formbricks/formbricks/.github/workflows/cube-image.yml@refs/heads/main \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
