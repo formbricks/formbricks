@@ -33,7 +33,7 @@ Open **Settings → Survey Type** and make sure **Link survey** is selected. A n
 from the workspace channel chosen during onboarding, so a workspace set up for a website or app creates
 **app** surveys by default — check it rather than assuming it.
 
-This matters more than it looks. You are going to post responses to the client API from your own frontend, so nothing here uses the Formbricks widget. An **app** survey cannot be published without a trigger — `survey-menu-bar.tsx` refuses to save one with no triggers — which is why older versions of this guide told you to invent an action that never fires. A link survey has no such requirement, so the workaround is unnecessary.
+This matters more than it looks. You are going to post responses to the client API from your own frontend, so nothing here uses the Formbricks widget. An **app** survey cannot be activated without a trigger — `survey-menu-bar.tsx` refuses to save one with no triggers — which is why older versions of this guide told you to invent an action that never fires. A link survey has no such requirement, so the workaround is unnecessary.
 
 ### Set the question IDs
 
@@ -50,10 +50,10 @@ The frontend below refers to questions by ID, so give them names you will recogn
 </Note>
 
 <Warning>
-  Question IDs can only be changed **before** a survey is published. Afterwards they are fixed, because the responses already collected refer to them. Set them now.
+  Question IDs can only be changed **before** a survey is activated. Afterwards they are fixed, because the responses already collected refer to them. Set them now.
 </Warning>
 
-Publish the survey.
+Activate the survey.
 
 ## 2. Build the frontend
 
