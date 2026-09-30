@@ -691,6 +691,22 @@ Hub's metric attributes are restricted to a fixed, low-cardinality set — for i
 emitted only in correlated JSON logs. Prompt text, feedback, model output, embeddings, credentials, authorization
 tokens, provider response bodies, and collector URLs are never telemetry fields.
 
+## Web container security context
+
+`deployment.containerSecurityContext` applies to the web container. It defaults to a read-only root filesystem,
+`runAsNonRoot`, `runAsUser: 1001` (the image's `nextjs` user), no privilege escalation, and all capabilities
+dropped. With a read-only root, the chart mounts `emptyDir` volumes on `/tmp`, the Next.js cache, and — when
+`migration.enabled=false` — the Prisma migration staging directory. A path you mount yourself through
+`deployment.extraVolumeMounts` replaces the chart's mount.
+
+Upgrading from a chart that did not render this context:
+
+- Container-level fields win over `deployment.securityContext`. If you set a custom
+  `deployment.securityContext.runAsUser`, set `deployment.containerSecurityContext.runAsUser` to the same UID,
+  or the web container runs as `1001`.
+- A custom image or extension that writes anywhere else needs a writable mount through
+  `deployment.extraVolumes` / `deployment.extraVolumeMounts`, or `readOnlyRootFilesystem: false`.
+
 ## Values
 
 | Key                                                                | Type   | Default                                                                     | Description                                               |

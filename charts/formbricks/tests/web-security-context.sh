@@ -82,6 +82,19 @@ if grep -q 'name: writable-tmp' <<<"${operator_tmp_render}"; then
   fail "The chart must not mount /tmp when the operator already does"
 fi
 
+# An extraVolumes entry that already uses a generated name keeps it; the chart's volume is renamed.
+name_clash_render="$(render \
+  --set 'deployment.extraVolumes[0].name=writable-tmp' \
+  --set 'deployment.extraVolumes[0].emptyDir.medium=Memory' \
+  --set 'deployment.extraVolumeMounts[0].name=writable-tmp' \
+  --set 'deployment.extraVolumeMounts[0].mountPath=/scratch')"
+test "$(grep -cE -- '(- | )name: writable-tmp$' <<<"${name_clash_render}")" -eq 2 \
+  || fail "Expected the operator's writable-tmp volume and mount only"
+test "$(grep -c -- '- name: formbricks-writable-tmp$' <<<"${name_clash_render}")" -eq 2 \
+  || fail "Expected the chart's /tmp volume and mount under a non-clashing name"
+grep -A1 -- '- name: formbricks-writable-tmp$' <<<"${name_clash_render}" | grep -q 'mountPath: /tmp$' \
+  || fail "Expected the renamed chart volume to mount /tmp"
+
 # A writable root filesystem needs no extra mounts, and a nulled context renders no block at all.
 writable_root_render="$(render --set deployment.containerSecurityContext.readOnlyRootFilesystem=false)"
 if grep -qE '^ +(volumes|volumeMounts):$' <<<"${writable_root_render}"; then

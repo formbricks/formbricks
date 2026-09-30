@@ -83,12 +83,17 @@ spec:
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.deployment.terminationGracePeriodSeconds | default 30 }}
       {{- /* A read-only root filesystem needs writable mounts on every path the app writes at runtime. A path
-      the operator already mounts through extraVolumeMounts is left to them. */}}
+      the operator already mounts through extraVolumeMounts is left to them, and a generated volume name that
+      an extraVolumes entry already uses gets a prefix so pod volume names stay unique. */}}
       {{- $writableMounts := dict }}
       {{- if dig "readOnlyRootFilesystem" false (default dict .Values.deployment.containerSecurityContext) }}
       {{- $operatorPaths := list }}
       {{- range .Values.deployment.extraVolumeMounts }}
       {{- $operatorPaths = append $operatorPaths (trimSuffix "/" .mountPath) }}
+      {{- end }}
+      {{- $operatorVolumes := list }}
+      {{- range .Values.deployment.extraVolumes }}
+      {{- $operatorVolumes = append $operatorVolumes .name }}
       {{- end }}
       {{- $candidates := dict "writable-tmp" "/tmp" "writable-next-cache" "/home/nextjs/apps/web/.next/cache" }}
       {{- if not .Values.migration.enabled }}
@@ -96,7 +101,11 @@ spec:
       {{- end }}
       {{- range $name, $path := $candidates }}
       {{- if not (has $path $operatorPaths) }}
-      {{- $_ := set $writableMounts $name $path }}
+      {{- $volumeName := ternary (printf "formbricks-%s" $name) $name (has $name $operatorVolumes) }}
+      {{- if has $volumeName $operatorVolumes }}
+      {{- fail (printf "deployment.extraVolumes uses both %s and %s; rename one so the chart can mount %s" $name $volumeName $path) }}
+      {{- end }}
+      {{- $_ := set $writableMounts $volumeName $path }}
       {{- end }}
       {{- end }}
       {{- end }}
