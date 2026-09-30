@@ -284,15 +284,19 @@ async function main(): Promise<void> {
   // visibility operations and the list's visibility fields have real rows in both states.
   await seedSurvey(CONTRACT_IDS.SURVEY_VISIBILITY, "Contract fixture — visibility", false);
   await seedSurvey(CONTRACT_IDS.SURVEY_VISIBILITY_PRIVATE, "Contract fixture — restricted", false);
-  for (const [id, visibility] of [
-    [CONTRACT_IDS.SURVEY_VISIBILITY, "workspace"],
-    [CONTRACT_IDS.SURVEY_VISIBILITY_PRIVATE, "restricted"],
-  ] as const) {
-    await prisma.survey.update({
-      where: { id },
-      data: { ownerId: SEED_IDS.USER_ADMIN, visibility, updatedAt: CONTRACT_FIXTURE_UPDATED_AT },
-    });
-  }
+  await Promise.all(
+    (
+      [
+        [CONTRACT_IDS.SURVEY_VISIBILITY, "workspace"],
+        [CONTRACT_IDS.SURVEY_VISIBILITY_PRIVATE, "restricted"],
+      ] as const
+    ).map(([id, visibility]) =>
+      prisma.survey.update({
+        where: { id },
+        data: { ownerId: SEED_IDS.USER_ADMIN, visibility, updatedAt: CONTRACT_FIXTURE_UPDATED_AT },
+      })
+    )
+  );
 
   await seedWorkflow(CONTRACT_IDS.WORKFLOW_PATCH, "Contract fixture — patch", "draft");
   await seedWorkflow(CONTRACT_IDS.WORKFLOW_DELETE, "Contract fixture — delete", "draft");

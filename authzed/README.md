@@ -9,10 +9,15 @@ Use the repository-pinned Node and pnpm versions, install dependencies, and run 
 local environment defaults, starts Docker, migrates PostgreSQL, and prepares/verifies the bundled SpiceDB
 graph before starting the app. `pnpm db:up` alone starts dependencies; `pnpm dev:authzed` performs preparation.
 
-For an older `.env`, set `AUTHZED_ENABLED=true` and `AUTHZED_CONSISTENCY=fully_consistent`, then rerun
-`pnpm dev:setup`. Existing credentials and custom endpoints are preserved. Restart the development server
-after environment changes. `authzed_disabled` after login means the server is still running without the
-required authorization configuration; it is not a bad password or an enterprise-license requirement.
+For an older `.env`, set `AUTHZED_ENABLED=true` and `AUTHZED_CONSISTENCY=fully_consistent` (replacing
+`minimize_latency`, which v6 rejects at boot), then rerun `pnpm dev:setup`. Existing credentials and custom
+endpoints are preserved. Restart the development server after environment changes. `authzed_disabled` after
+login means the server is still running without the required authorization configuration; it is not a bad
+password or an enterprise-license requirement.
+
+Survey visibility or owner changes written directly in SQL, for example when seeding test data, reach SpiceDB
+only through the outbox worker (the running app, or `pnpm authzed:outbox drain`) or
+`pnpm authzed:backfill --scope=survey --apply`; until then, access checks still see the old values.
 
 Automatic graph preparation targets only the bundled localhost endpoint. For an external development
 datastore, use the existing commands explicitly after reviewing the endpoint and its source database:
@@ -409,7 +414,10 @@ mismatched parent.
   `pg_advisory_xact_lock(hashtext('survey-visibility:' || id))`, the same lock the visibility endpoint
   takes to store a change. The projector acknowledges the exact `visibilityVersion` it wrote into
   `visibilityProjectedVersion`; while the two differ (`visibilityPending`), PostgreSQL treats the survey as
-  restricted on every path.
+  restricted on every path, and direct checks decide it from PostgreSQL facts (its owner along their
+  workspace ladder, else administrators) rather than from the graph. An insert starts one version ahead
+  of its acknowledgement, so a survey that was just created or copied is pending, not an empty graph node,
+  until its first projection lands.
 - **DELETE is not a revocation.** Every survey decision resolves the row first and denies once it is gone,
   so deleting a workspace with many surveys cannot arm the freshness guard. Leftover edges are hygiene.
 - **Repair scope.** Surveys are their own backfill scope, `--scope=survey`, outside `--scope=all`: the
@@ -419,7 +427,9 @@ mismatched parent.
   decisions collapse to workspace permissions exactly as before, so a fresh deploy changes nothing. It is
   set only by `pnpm authzed:backfill --scope=survey --apply --mark-ready`, which marks only after two
   further dry runs come back clean, and cleared with `--scope=survey --clear-ready`.
-  `SURVEY_VISIBILITY_FORCE_DISABLED=1` is the emergency override that ignores the row.
+  `SURVEY_VISIBILITY_FORCE_DISABLED=1` is the emergency override that ignores the row. A failed read of
+  the row never counts as "not set": a process that last saw it set keeps enforcing, and one that has no
+  successful read fails the request instead of deciding.
 
 ## Resource parent resolution during the current-model migration
 

@@ -154,8 +154,8 @@ const run = async (): Promise<void> => {
       organizationExists: async () => true,
       readOrganizationIdPage: async () => [],
       readOrganizationSource: async () => emptySource,
-      readSurveyIdPage: async () => [],
-      readSurveySource: async () => ({ expectedRelationships: [], surveyIds: [] }),
+      readSurveyIdPage: () => Promise.resolve([]),
+      readSurveySource: () => Promise.resolve({ expectedRelationships: [], surveyIds: [] }),
       readWorkspaceSource: async () => ({
         apiKeyWorkspaceGrants: [],
         expectedRelationships: [],

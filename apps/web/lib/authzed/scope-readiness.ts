@@ -28,6 +28,9 @@ export const SURVEY_VISIBILITY_READINESS_MEMO_TTL_MS = 5_000;
 let memoizedAt = Number.NEGATIVE_INFINITY;
 let memoizedValue = false;
 let inFlight: Promise<boolean> | null = null;
+// The last answer a read actually returned, kept past the TTL. Only a successful read changes it, so a
+// failed read can tell "this deployment was enforcing" apart from "this deployment never was".
+let lastReadValue: boolean | null = null;
 
 const readSurveyReadiness = async (): Promise<boolean> => {
   const state = await prisma.authzedProjectionScopeState.findUnique({
@@ -40,8 +43,12 @@ const readSurveyReadiness = async (): Promise<boolean> => {
 /**
  * Whether survey visibility is enforced on this deployment.
  *
- * Fails closed to `false` — Phase 1 behaviour — on a failed read, and does not cache the failure, so
- * the next check retries. `SURVEY_VISIBILITY_FORCE_DISABLED=1` short-circuits before any read.
+ * `false` means exactly two things: the marker is not set, or `SURVEY_VISIBILITY_FORCE_DISABLED=1`
+ * (checked before any read). A failed read is neither — every caller treats `false` as workspace-wide
+ * legacy access, so answering it on an error would release restricted surveys. A failed read therefore
+ * keeps enforcing when the last successful read saw the marker set, and rejects otherwise, so the
+ * caller fails with its own error path (5xx, error page, retried job) rather than deciding. Neither
+ * outcome is memoized: the next check reads again.
  */
 export const isSurveyVisibilityReady = (): Promise<boolean> => {
   if (env.SURVEY_VISIBILITY_FORCE_DISABLED === "1") return Promise.resolve(false);
@@ -54,9 +61,13 @@ export const isSurveyVisibilityReady = (): Promise<boolean> => {
     .then((ready) => {
       memoizedValue = ready;
       memoizedAt = performance.now();
+      lastReadValue = ready;
       return ready;
     })
-    .catch(() => false)
+    .catch((error: unknown) => {
+      if (lastReadValue === true) return true;
+      throw error;
+    })
     .finally(() => {
       inFlight = null;
     });
@@ -69,6 +80,7 @@ export const resetSurveyVisibilityReadinessMemo = (): void => {
   memoizedAt = Number.NEGATIVE_INFINITY;
   memoizedValue = false;
   inFlight = null;
+  lastReadValue = null;
 };
 
 export const setProjectionScopeReady = async (

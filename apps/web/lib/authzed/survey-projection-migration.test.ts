@@ -8,6 +8,7 @@ const readMigration = (name: string): string =>
 
 const outboxMigration = readMigration("20260818120000_add_authzed_projection_outbox");
 const surveyMigration = readMigration("20260928120002_add_survey_projection_trigger");
+const columnsMigration = readMigration("20260928120000_add_survey_visibility_columns");
 
 /** The body of one `CREATE OR REPLACE FUNCTION` statement, up to its `LANGUAGE` clause. */
 const functionBody = (sql: string, name: string): string => {
@@ -43,6 +44,26 @@ describe("survey projection trigger migration (ENG-3282)", () => {
         "\n    WHEN TG_OP = 'DELETE' THEN true"
       )
     ).toBe(functionBody(outboxMigration, "enqueue_authzed_projection"));
+  });
+
+  // A new row has no graph edges until it is projected. Settled versions would send authorization to an
+  // empty survey node and deny even the owner; a pending pair is decided from PostgreSQL facts instead.
+  test("starts every inserted survey one version ahead of its acknowledgement", () => {
+    const pendingFunction =
+      /CREATE OR REPLACE FUNCTION survey_visibility_pending\(\)[\s\S]*?\n\$\$;/.exec(columnsMigration)?.[0] ??
+      "";
+    expect(pendingFunction).toContain(
+      `IF TG_OP = 'INSERT' AND NEW."visibilityVersion" = NEW."visibilityProjectedVersion" THEN
+    NEW."visibilityVersion" := NEW."visibilityProjectedVersion" + 1;
+  END IF;`
+    );
+    // The insert bump runs before the flag is derived, so the flag agrees with it.
+    expect(pendingFunction.indexOf("+ 1;")).toBeLessThan(
+      pendingFunction.indexOf('NEW."visibilityPending" :=')
+    );
+    expect(columnsMigration).toContain(
+      'BEFORE INSERT OR UPDATE OF "visibilityVersion", "visibilityProjectedVersion", "visibilityPending"'
+    );
   });
 
   // The trigger fires on every `ownerId` write. If it existed before the backfill ran, an upgrade

@@ -3,6 +3,8 @@ import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/erro
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { resolveFormbricksMappingsInput } from "./mappings";
 
+// Survey visibility (ENG-3282) is not enforced here: the readiness marker is off, not read from a database.
+vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
 vi.mock("@/lib/survey/service", () => ({
   getSurvey: vi.fn(),
 }));

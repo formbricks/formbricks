@@ -13,6 +13,8 @@ import { POST } from "./route";
  * `withV1ApiWrapper` is reduced to its handler: authentication, rate limiting and audit logging are
  * orthogonal to the survey head-scripts boundary this file proves for API keys.
  */
+// Survey visibility (ENG-3282) is not enforced here: the readiness marker is off, not read from a database.
+vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
 vi.mock("@/app/lib/api/with-api-logging", () => ({
   withV1ApiWrapper: ({ handler }: { handler: unknown }) => handler,
 }));

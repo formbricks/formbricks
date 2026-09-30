@@ -9,15 +9,31 @@ import type { TSurveyActorContext } from "./actor-context";
  *
  * - enforcement off (readiness marker unset): no restriction, as before ENG-3282;
  * - organization owner/manager: no restriction;
- * - other user: workspace-visible surveys with nothing pending, plus the ones they own;
- * - API key: workspace-visible surveys with nothing pending. Never a restricted one.
+ * - other user: effectively workspace-visible surveys, plus the ones they own;
+ * - API key: effectively workspace-visible surveys. Never a restricted one.
+ *
+ * "Effectively workspace-visible" is `getEffectiveVisibility`: stored `workspace` with nothing pending,
+ * or with no projection acknowledged yet (a survey just created or copied).
  *
  * Workspace membership is NOT part of this: callers already scope to a workspace the actor may read.
  */
+/**
+ * `getEffectiveVisibility` as SQL (see `policy.ts`): workspace-visible when stored `workspace` with
+ * nothing pending, or with no projection acknowledged yet; restricted otherwise.
+ */
+export const effectivelyWorkspaceVisibleWhere: Prisma.SurveyWhereInput = {
+  visibility: "workspace",
+  OR: [{ visibilityPending: false }, { visibilityProjectedVersion: 0 }],
+};
+
+export const effectivelyRestrictedWhere: Prisma.SurveyWhereInput = {
+  OR: [{ visibility: "restricted" }, { visibilityPending: true, visibilityProjectedVersion: { gt: 0 } }],
+};
+
 export const buildVisibleSurveyWhere = (ctx: TSurveyActorContext): Prisma.SurveyWhereInput => {
   if (!ctx.enforced) return {};
 
-  const sharedAndSettled: Prisma.SurveyWhereInput = { visibility: "workspace", visibilityPending: false };
+  const sharedAndSettled = effectivelyWorkspaceVisibleWhere;
   if (ctx.kind === "apiKey") return sharedAndSettled;
   if (ctx.isOrganizationAdmin) return {};
 
@@ -36,7 +52,7 @@ export const buildVisibleSurveyWhereAcrossOrganizations = (
   if (!enforced) return {};
   return {
     OR: [
-      { visibility: "workspace", visibilityPending: false },
+      effectivelyWorkspaceVisibleWhere,
       { ownerId: userId },
       {
         workspace: {
@@ -69,7 +85,7 @@ export const visibleSurveySqlPredicate = (ctx: TSurveyActorContext, alias: strin
   if (!ctx.enforced || (ctx.kind === "user" && ctx.isOrganizationAdmin)) return Prisma.sql`TRUE`;
 
   const table = Prisma.raw(`"${alias}"`);
-  const sharedAndSettled = Prisma.sql`(${table}."visibility" = 'workspace' AND ${table}."visibilityPending" = false)`;
+  const sharedAndSettled = Prisma.sql`(${table}."visibility" = 'workspace' AND (${table}."visibilityPending" = false OR ${table}."visibilityProjectedVersion" = 0))`;
   if (ctx.kind === "apiKey") return sharedAndSettled;
 
   return Prisma.sql`(${sharedAndSettled} OR ${table}."ownerId" = ${ctx.userId})`;
@@ -82,17 +98,15 @@ export type TSurveyVisibilityFilter = Readonly<{
 }>;
 
 /**
- * Matches on the *reported* visibility, the one a caller sees on each item: pending counts as restricted,
- * and with enforcement off every survey is workspace-visible.
+ * Matches on the *reported* visibility, the one a caller sees on each item: pending counts as restricted
+ * once a projection has been acknowledged, and with enforcement off every survey is workspace-visible.
  */
 const effectiveVisibilityWhere = (
   visibility: TSurveyVisibility,
   enforced: boolean
 ): Prisma.SurveyWhereInput => {
   if (!enforced) return visibility === "workspace" ? {} : { id: { in: [] } };
-  return visibility === "workspace"
-    ? { visibility: "workspace", visibilityPending: false }
-    : { OR: [{ visibility: "restricted" }, { visibilityPending: true }] };
+  return visibility === "workspace" ? effectivelyWorkspaceVisibleWhere : effectivelyRestrictedWhere;
 };
 
 /**

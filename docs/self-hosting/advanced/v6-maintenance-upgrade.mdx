@@ -83,7 +83,9 @@ configuration into shared CI logs. Prepare and render the exact target manifests
     then runs application migrations, schema preparation, outbox drain, relationship repair, and a
     separate full verification. Preparation reconciles the graph and requires a clean full dry-run
     audit; the wrapper then performs a second independent full dry-run audit through `upgrade check`.
-    `AUTHZED_CONSISTENCY` must be `fully_consistent`.
+    `AUTHZED_CONSISTENCY` must be `fully_consistent`. An existing `.env` that still sets
+    `AUTHZED_CONSISTENCY=minimize_latency` must be changed first: preparation and server startup both
+    reject it.
 
     ```bash
     formbricks-authzed-prepare --backup-confirmed --writers-stopped

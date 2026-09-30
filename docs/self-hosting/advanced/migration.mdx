@@ -90,6 +90,10 @@ and use it only with a runtime that redacts credentials from its logs.
 
 - **DEFAULT_ORGANIZATION_ROLE** has been renamed to **AUTH_SSO_DEFAULT_ORGANIZATION_ROLE**.
 
+- **AUTHZED_CONSISTENCY** must be `fully_consistent`. v6 refuses to start with any other value, or with the
+  variable unset. An existing `.env` that still sets `AUTHZED_CONSISTENCY=minimize_latency` must be changed
+  to `AUTHZED_CONSISTENCY=fully_consistent` before upgrading.
+
 - **BETTER_AUTH_URL** and **BETTER_AUTH_SECRET** are now the documented names for the auth base URL and
   the session-signing secret. This is a documentation change, not a rename: `NEXTAUTH_URL` and
   `NEXTAUTH_SECRET` keep working exactly as before, so **an existing instance needs no action**. New

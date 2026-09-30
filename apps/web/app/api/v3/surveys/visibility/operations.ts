@@ -168,7 +168,12 @@ export async function getV3SurveyVisibility(params: TVisibilityOperationParams):
   }
 }
 
-type TStoredChange = Readonly<{ plan: TVisibilityTransitionPlan; row: TVisibilityRow }>;
+/** `previous` is the row as read under the lock, before this change: what the audit records as old. */
+type TStoredChange = Readonly<{
+  plan: TVisibilityTransitionPlan;
+  previous: TVisibilityRow;
+  row: TVisibilityRow;
+}>;
 
 /**
  * Plan and store the change under the per-survey lock the projector also takes, so the version this
@@ -187,10 +192,13 @@ const storeVisibilityChange = (
 ): Promise<TStoredChange> =>
   prisma.$transaction(async (tx) => {
     await lockSurveyVisibility(tx, surveyId);
-    const row = await tx.survey.findUniqueOrThrow({ where: { id: surveyId }, select: visibilityRowSelect });
-    const plan = planVisibilityTransition({ blockerCount, requested, row });
+    const previous = await tx.survey.findUniqueOrThrow({
+      where: { id: surveyId },
+      select: visibilityRowSelect,
+    });
+    const plan = planVisibilityTransition({ blockerCount, requested, row: previous });
 
-    if (plan.kind !== "change" && plan.kind !== "cancel") return { plan, row };
+    if (plan.kind !== "change" && plan.kind !== "cancel") return { plan, previous, row: previous };
 
     await tx.$executeRaw`
       UPDATE "Survey"
@@ -202,6 +210,7 @@ const storeVisibilityChange = (
     `;
     return {
       plan,
+      previous,
       row: await tx.survey.findUniqueOrThrow({ where: { id: surveyId }, select: visibilityRowSelect }),
     };
   });
@@ -254,7 +263,11 @@ export async function changeV3SurveyVisibility(
     // Read outside the lock: attaching a connection does not take it. A race between a flip and an
     // attach is closed at dispatch instead, which skips a restricted survey whatever references it.
     const blockers = requested === "restricted" ? await findRelevantBlockers(caller.row) : [];
-    const { plan, row: stored } = await storeVisibilityChange(surveyId, requested, blockers.length, userId);
+    const {
+      plan,
+      previous,
+      row: stored,
+    } = await storeVisibilityChange(surveyId, requested, blockers.length, userId);
 
     if (plan.kind === "reject") {
       log.warn({ code: plan.code, statusCode: plan.status }, "Survey visibility change refused");
@@ -286,7 +299,9 @@ export async function changeV3SurveyVisibility(
     if (plan.kind === "retry") {
       skipV3AuditLog(auditLog);
     } else if (auditLog) {
-      auditLog.oldObject = { version: caller.row.visibilityVersion, visibility: caller.row.visibility };
+      // The row read under the lock, not the authorization read: a change that landed in between is the
+      // real previous state.
+      auditLog.oldObject = { version: previous.visibilityVersion, visibility: previous.visibility };
       auditLog.newObject = { version: stored.visibilityVersion, visibility: stored.visibility };
       // Stored and committed whatever the answer below: a 503 for a grant still changed the survey.
       auditLog.status = "success";

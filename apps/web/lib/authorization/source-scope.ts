@@ -67,7 +67,9 @@ const toWorkspaceResourceScope = (
 
 /**
  * A survey decided on the survey's own graph node once visibility is enforced. A pending change falls
- * back to the workspace node plus a policy the evaluator applies from PostgreSQL facts.
+ * back to the workspace node plus a policy the evaluator applies from PostgreSQL facts. That includes a
+ * survey never projected yet: its graph node has no edges, so even its owner would be denied there.
+ * Only its *effective visibility* (lists, outbound, what the UI reports) takes the stored value.
  */
 const toSurveyResourceScope = (row: TSurveyAuthorizationScopeRow | null): TResourceScope | null => {
   if (!row) return null;

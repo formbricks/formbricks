@@ -10,15 +10,16 @@ import { reconcileSurveyRelationships } from "./survey";
 import { reconcileTeamWorkspaceRelationships } from "./team-workspace";
 
 const INERT_RESULT = { passes: 0, status: "projected" } as const;
+const inert = () => Promise.resolve(INERT_RESULT);
 
 /** No-op write capability used when the shared orchestrator runs in dry-run mode. */
 export const createAuthzedBackfillNoopApply = (): TAuthzedBackfillApply => ({
-  deleteFeedbackDirectoryAssignmentResources: async () => INERT_RESULT,
-  reconcileApiKeys: async () => INERT_RESULT,
-  reconcileFeedbackDirectories: async () => INERT_RESULT,
-  reconcileMemberships: async () => INERT_RESULT,
-  reconcileSurveys: async () => INERT_RESULT,
-  reconcileTeamWorkspace: async () => INERT_RESULT,
+  deleteFeedbackDirectoryAssignmentResources: inert,
+  reconcileApiKeys: inert,
+  reconcileFeedbackDirectories: inert,
+  reconcileMemberships: inert,
+  reconcileSurveys: inert,
+  reconcileTeamWorkspace: inert,
 });
 
 /** Internal write capability shared by the operator CLI and the scheduled attributable repair. */

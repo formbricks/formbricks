@@ -58,12 +58,39 @@ describe("isSurveyVisibilityReady", () => {
     now.mockRestore();
   });
 
-  test("fails closed on a failed read, without caching the failure", async () => {
+  test("a failed read with no successful one before it rejects instead of answering not-ready", async () => {
     findUnique.mockRejectedValueOnce(new Error("connection reset"));
-    await expect(isSurveyVisibilityReady()).resolves.toBe(false);
+    await expect(isSurveyVisibilityReady()).rejects.toThrow("connection reset");
 
+    // The failure is not memoized: the next check reads again.
     findUnique.mockResolvedValueOnce({ readyAt: new Date() } as never);
     await expect(isSurveyVisibilityReady()).resolves.toBe(true);
+  });
+
+  test("a failed read after the marker was seen set keeps enforcing, and reads again next time", async () => {
+    const now = vi.spyOn(performance, "now").mockReturnValue(1_000);
+    findUnique.mockResolvedValueOnce({ readyAt: new Date() } as never);
+    await expect(isSurveyVisibilityReady()).resolves.toBe(true);
+
+    now.mockReturnValue(1_000 + SURVEY_VISIBILITY_READINESS_MEMO_TTL_MS + 1);
+    findUnique.mockRejectedValueOnce(new Error("connection reset"));
+    await expect(isSurveyVisibilityReady()).resolves.toBe(true);
+
+    findUnique.mockResolvedValueOnce({ readyAt: null } as never);
+    await expect(isSurveyVisibilityReady()).resolves.toBe(false);
+    expect(findUnique).toHaveBeenCalledTimes(3);
+    now.mockRestore();
+  });
+
+  test("a failed read after the marker was seen cleared rejects rather than assuming it still is", async () => {
+    const now = vi.spyOn(performance, "now").mockReturnValue(1_000);
+    findUnique.mockResolvedValueOnce({ readyAt: null } as never);
+    await expect(isSurveyVisibilityReady()).resolves.toBe(false);
+
+    now.mockReturnValue(1_000 + SURVEY_VISIBILITY_READINESS_MEMO_TTL_MS + 1);
+    findUnique.mockRejectedValueOnce(new Error("connection reset"));
+    await expect(isSurveyVisibilityReady()).rejects.toThrow("connection reset");
+    now.mockRestore();
   });
 
   test("the emergency override wins without reading the database", async () => {
