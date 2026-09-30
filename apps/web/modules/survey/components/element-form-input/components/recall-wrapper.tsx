@@ -18,6 +18,7 @@ import {
 } from "@/lib/utils/recall";
 import { FallbackInput } from "@/modules/survey/components/element-form-input/components/fallback-input";
 import { RecallItemSelect } from "@/modules/survey/components/element-form-input/components/recall-item-select";
+import { computeRecallItemRemoval } from "@/modules/survey/components/element-form-input/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Button } from "@/modules/ui/components/button";
 
@@ -161,39 +162,22 @@ export const RecallWrapper = ({
   /**
    * Drops the recall items whose `@Label` is no longer in the rendered text.
    *
-   * ENG-2931: this runs from an effect keyed on the very state it writes, so it has to be a no-op
-   * when nothing was dropped. The previous version wrote a fresh `{...fallbacks}` object and a
-   * fresh `includedRecallItems` array on *every* item it did not find, which re-triggered that
-   * effect with new identities and re-entered it without bound until React aborted the editor with
-   * "Maximum update depth exceeded". Now the whole removal is computed first and the state is
-   * written once, only when there is something to remove.
+   * ENG-2931: this runs from an effect keyed on the very state it writes, so `null` — nothing
+   * removed — has to leave that state untouched. The previous version wrote a fresh
+   * `{...fallbacks}` object and a fresh items array on *every* item it did not find, which
+   * re-triggered that effect with new identities and re-entered it without bound until React
+   * aborted the editor with "Maximum update depth exceeded". The removal itself lives in
+   * `computeRecallItemRemoval`, where it is unit-tested; here it is written once.
    */
   const filterRecallItems = useCallback(
     (remainingText: string) => {
-      const includedRecallItems: TSurveyRecallItem[] = [];
-      const removedRecallItems: TSurveyRecallItem[] = [];
-      recallItems.forEach((recallItem) => {
-        const bucket = remainingText.includes(`@${recallItem.label}`)
-          ? includedRecallItems
-          : removedRecallItems;
-        bucket.push(recallItem);
-      });
+      const removal = computeRecallItemRemoval(recallItems, remainingText, internalValue, fallbacks);
+      if (!removal) return;
 
-      if (removedRecallItems.length === 0) return;
-
-      let newInternalValue = internalValue;
-      const updatedFallbacks = { ...fallbacks };
-      removedRecallItems.forEach((recallItem) => {
-        // `slice(0, -1)` unchanged: the edit this cleans up is the operator deleting the last
-        // character off a rendered `@Label`, which leaves `@Labe` behind to strip.
-        newInternalValue = newInternalValue.replace(`@${recallItem.label.slice(0, -1)}`, "");
-        delete updatedFallbacks[recallItem.id];
-      });
-
-      setInternalValue(newInternalValue);
-      setRecallItems(includedRecallItems);
-      setFallbacks(updatedFallbacks);
-      onChange(newInternalValue, includedRecallItems, updatedFallbacks);
+      setInternalValue(removal.value);
+      setRecallItems(removal.recallItems);
+      setFallbacks(removal.fallbacks);
+      onChange(removal.value, removal.recallItems, removal.fallbacks);
     },
     [fallbacks, internalValue, onChange, recallItems]
   );

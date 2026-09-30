@@ -5,7 +5,7 @@ import {
   TSurveyMatrixElement,
   TSurveyMultipleChoiceElement,
 } from "@formbricks/types/surveys/elements";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { createI18nString } from "@/lib/i18n/utils";
 import { isLabelValidForAllLanguages } from "@/lib/i18n/utils";
 
@@ -122,4 +122,49 @@ export const isValueIncomplete = (
   // 2. The label is not valid for all provided language codes in the survey.
   // 4. For specific label IDs, the default value is incomplete as defined above.
   return isInvalid && !isLabelValidForAllLanguages(value, surveyLanguageCodes) && isDefaultIncomplete;
+};
+
+/** The state `RecallWrapper` writes when one or more recall items drop out of the rendered text. */
+export interface TRecallItemRemoval {
+  recallItems: TSurveyRecallItem[];
+  fallbacks: Record<string, string>;
+  value: string;
+}
+
+/**
+ * Works out which recall items are no longer present in the rendered text, and what the whole
+ * removal leaves behind: the remaining items, the fallbacks minus the removed ones, and the text
+ * with each removed label stripped.
+ *
+ * Returns `null` when every item is still there, and the caller must then write no state at all.
+ * That is load-bearing (ENG-2931): `RecallWrapper` calls this from an effect keyed on the very
+ * state it writes, so producing a fresh items array and fallbacks object on a pass that removed
+ * nothing re-triggers that effect with new identities and loops until React aborts the editor.
+ *
+ * `label.slice(0, -1)` matches the edit this cleans up after — the operator deleting the last
+ * character off a rendered `@Label`, which leaves `@Labe` behind in the text to strip.
+ */
+export const computeRecallItemRemoval = (
+  recallItems: TSurveyRecallItem[],
+  remainingText: string,
+  internalValue: string,
+  fallbacks: Record<string, string>
+): TRecallItemRemoval | null => {
+  const included: TSurveyRecallItem[] = [];
+  const removed: TSurveyRecallItem[] = [];
+  recallItems.forEach((recallItem) => {
+    const bucket = remainingText.includes(`@${recallItem.label}`) ? included : removed;
+    bucket.push(recallItem);
+  });
+
+  if (removed.length === 0) return null;
+
+  let value = internalValue;
+  const updatedFallbacks = { ...fallbacks };
+  removed.forEach((recallItem) => {
+    value = value.replace(`@${recallItem.label.slice(0, -1)}`, "");
+    delete updatedFallbacks[recallItem.id];
+  });
+
+  return { recallItems: included, fallbacks: updatedFallbacks, value };
 };
