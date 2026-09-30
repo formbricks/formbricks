@@ -5,6 +5,7 @@ import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import {
   checkForEmptyFallBackValue,
+  extractCompleteRecallIds,
   extractFallbackValue,
   extractId,
   extractIds,
@@ -85,6 +86,27 @@ describe("recall utility functions", () => {
       const text = "Text #recall:id1 more text #recall:id2";
       const result = extractIds(text);
       expect(result).toEqual(["id1", "id2"]);
+    });
+  });
+
+  describe("extractCompleteRecallIds", () => {
+    test("extracts the ids of complete recall tokens", () => {
+      const text = "Text #recall:id1/fallback:a# and #recall:id2/fallback:#";
+      expect(extractCompleteRecallIds(text)).toEqual(["id1", "id2"]);
+    });
+
+    test("ignores a token whose closing # was deleted, while extractIds still matches it", () => {
+      const text = "Hi #recall:q1/fallback:there welcome";
+      expect(extractIds(text)).toEqual(["q1"]);
+      expect(extractCompleteRecallIds(text)).toEqual([]);
+    });
+
+    test("ignores a token with no fallback tail", () => {
+      expect(extractCompleteRecallIds("Hi #recall:q1 welcome")).toEqual([]);
+    });
+
+    test("returns empty array when there is no recall token at all", () => {
+      expect(extractCompleteRecallIds("plain text")).toEqual([]);
     });
   });
 
@@ -400,6 +422,46 @@ describe("recall utility functions", () => {
 
       const result = getRecallItems(text, survey, "en");
       expect(result).toEqual([]);
+    });
+
+    // ENG-2931: a half-deleted token must not yield a recall item. `recallToHeadline` leaves it as
+    // raw text, so an item here is one whose `@Label` the editor can never find in the rendered
+    // text — the precondition for RecallWrapper's unbounded update loop.
+    test("ignores a token whose closing # was deleted", () => {
+      const survey: TSurvey = {
+        blocks: [{ id: "b1", elements: [{ id: "q1", headline: { en: "Name" } }] }],
+        hiddenFields: { fieldIds: [] },
+        variables: [],
+      } as unknown as TSurvey;
+
+      const broken = "Hi #recall:q1/fallback:there welcome";
+      expect(recallToHeadline({ en: broken }, survey, false, "en").en).toBe(broken);
+      expect(getRecallItems(broken, survey, "en")).toEqual([]);
+
+      // Control: the intact token still resolves, and still renders as @Name.
+      const intact = "Hi #recall:q1/fallback:there# welcome";
+      expect(recallToHeadline({ en: intact }, survey, false, "en").en).toBe("Hi @Name welcome");
+      expect(getRecallItems(intact, survey, "en")).toHaveLength(1);
+    });
+
+    test("ignores a token that has lost its fallback tail but keeps a later complete one", () => {
+      const survey: TSurvey = {
+        blocks: [
+          {
+            id: "b1",
+            elements: [
+              { id: "q1", headline: { en: "Name" } },
+              { id: "q2", headline: { en: "City" } },
+            ],
+          },
+        ],
+        hiddenFields: { fieldIds: [] },
+        variables: [],
+      } as unknown as TSurvey;
+
+      const result = getRecallItems("Hi #recall:q1 from #recall:q2/fallback:x#", survey, "en");
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe("q2");
     });
   });
 

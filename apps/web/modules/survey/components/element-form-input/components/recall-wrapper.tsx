@@ -158,28 +158,44 @@ export const RecallWrapper = ({
     onAddFallback(newVal);
   }, [fallbacks, recallItems, internalValue, onChange, onAddFallback]);
 
+  /**
+   * Drops the recall items whose `@Label` is no longer in the rendered text.
+   *
+   * ENG-2931: this runs from an effect keyed on the very state it writes, so it has to be a no-op
+   * when nothing was dropped. The previous version wrote a fresh `{...fallbacks}` object and a
+   * fresh `includedRecallItems` array on *every* item it did not find, which re-triggered that
+   * effect with new identities and re-entered it without bound until React aborted the editor with
+   * "Maximum update depth exceeded". Now the whole removal is computed first and the state is
+   * written once, only when there is something to remove.
+   */
   const filterRecallItems = useCallback(
     (remainingText: string) => {
-      let includedRecallItems: TSurveyRecallItem[] = [];
-
+      const includedRecallItems: TSurveyRecallItem[] = [];
+      const removedRecallItems: TSurveyRecallItem[] = [];
       recallItems.forEach((recallItem) => {
-        if (remainingText.includes(`@${recallItem.label}`)) {
-          includedRecallItems.push(recallItem);
-        } else {
-          const recallItemToRemove = recallItem.label.slice(0, -1);
-          const newInternalValue = internalValue.replace(`@${recallItemToRemove}`, "");
-
-          setInternalValue(newInternalValue);
-          onChange(newInternalValue, recallItems, fallbacks);
-
-          let updatedFallback = { ...fallbacks };
-          delete updatedFallback[recallItem.id];
-          setFallbacks(updatedFallback);
-          setRecallItems(includedRecallItems);
-        }
+        const bucket = remainingText.includes(`@${recallItem.label}`)
+          ? includedRecallItems
+          : removedRecallItems;
+        bucket.push(recallItem);
       });
+
+      if (removedRecallItems.length === 0) return;
+
+      let newInternalValue = internalValue;
+      const updatedFallbacks = { ...fallbacks };
+      removedRecallItems.forEach((recallItem) => {
+        // `slice(0, -1)` unchanged: the edit this cleans up is the operator deleting the last
+        // character off a rendered `@Label`, which leaves `@Labe` behind to strip.
+        newInternalValue = newInternalValue.replace(`@${recallItem.label.slice(0, -1)}`, "");
+        delete updatedFallbacks[recallItem.id];
+      });
+
+      setInternalValue(newInternalValue);
+      setRecallItems(includedRecallItems);
+      setFallbacks(updatedFallbacks);
+      onChange(newInternalValue, includedRecallItems, updatedFallbacks);
     },
-    [fallbacks, internalValue, onChange, recallItems, setInternalValue]
+    [fallbacks, internalValue, onChange, recallItems]
   );
 
   useEffect(() => {
