@@ -3,6 +3,7 @@ import type { FeedbackRecordData } from "@/modules/hub/types";
 import {
   serializeV3FeedbackDataset,
   serializeV3FeedbackRecord,
+  serializeV3FeedbackRecordDetail,
   serializeV3FeedbackRecordMatch,
 } from "./serializers";
 
@@ -111,6 +112,31 @@ describe("serializeV3FeedbackRecord", () => {
     const orphan = { id: fullRecord.id } as unknown as FeedbackRecordData;
 
     expect(serializeV3FeedbackRecord(orphan)).toEqual({ id: fullRecord.id });
+  });
+});
+
+describe("serializeV3FeedbackRecordDetail", () => {
+  test("allowlists the active taxonomy path on detail reads only", () => {
+    const taxonomy = {
+      status: "classified" as const,
+      run_id: "run-1",
+      path: [
+        {
+          id: "node-1",
+          label: "Login",
+          level: 1,
+          node_type: "branch" as const,
+          internal_metadata: "must not leak",
+        },
+      ],
+    };
+
+    expect(serializeV3FeedbackRecordDetail(fullRecord, taxonomy).taxonomy).toEqual({
+      status: "classified",
+      run_id: "run-1",
+      path: [{ id: "node-1", label: "Login", level: 1, node_type: "branch" }],
+    });
+    expect(serializeV3FeedbackRecord(fullRecord)).not.toHaveProperty("taxonomy");
   });
 });
 

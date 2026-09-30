@@ -22,6 +22,7 @@ import {
   removeTaxonomyNode,
   renameTaxonomyNode,
   retrieveFeedbackRecord,
+  retrieveFeedbackRecordTaxonomy,
   semanticSearchFeedbackRecords,
   updateFeedbackRecord,
 } from "./service";
@@ -79,6 +80,34 @@ const taxonomyScope = {
 };
 
 describe("hub service", () => {
+  describe("retrieveFeedbackRecordTaxonomy", () => {
+    test("queries Hub with a tenant-scoped, encoded record path", async () => {
+      const get = vi.fn().mockResolvedValue({ status: "no_active_taxonomy", run_id: null, path: [] });
+      vi.mocked(getHubClient).mockReturnValue({ get } as unknown as FormbricksHub);
+
+      const result = await retrieveFeedbackRecordTaxonomy("record/one", "tenant-1");
+
+      expect(get).toHaveBeenCalledWith("/v1/feedback-records/record%2Fone/taxonomy", {
+        query: { tenant_id: "tenant-1" },
+      });
+      expect(result).toEqual({ data: { status: "no_active_taxonomy", run_id: null, path: [] }, error: null });
+    });
+
+    test("preserves Hub errors and missing configuration", async () => {
+      vi.mocked(getHubClient).mockReturnValue(null);
+      expect((await retrieveFeedbackRecordTaxonomy("record-1", "tenant-1")).error).toMatchObject({
+        status: 0,
+      });
+
+      vi.mocked(getHubClient).mockReturnValue({
+        get: vi.fn().mockRejectedValue(new FormbricksHub.APIError(404, {}, "not found", new Headers())),
+      } as unknown as FormbricksHub);
+      expect((await retrieveFeedbackRecordTaxonomy("record-1", "tenant-1")).error).toMatchObject({
+        status: 404,
+      });
+    });
+  });
+
   describe("createFeedbackRecord", () => {
     test("returns error result when getHubClient returns null", async () => {
       vi.mocked(getHubClient).mockReturnValue(null);

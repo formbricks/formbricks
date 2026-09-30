@@ -20,6 +20,7 @@ import {
   deleteFeedbackRecord,
   findSimilarFeedbackRecords,
   listFeedbackRecords,
+  retrieveFeedbackRecordTaxonomy,
   semanticSearchFeedbackRecords,
   updateFeedbackRecord,
 } from "@/modules/hub/service";
@@ -68,6 +69,7 @@ import {
   type TV3FeedbackRecord,
   serializeV3FeedbackDataset,
   serializeV3FeedbackRecord,
+  serializeV3FeedbackRecordDetail,
   serializeV3FeedbackRecordMatch,
 } from "./serializers";
 
@@ -548,7 +550,20 @@ export async function getV3FeedbackRecord({
       return owned.response;
     }
 
-    return successResponse(serializeV3FeedbackRecord(owned.record), { requestId, cache: CACHE });
+    const taxonomy = await retrieveFeedbackRecordTaxonomy(feedbackRecordId, resolution.tenantId);
+    if (!taxonomy.data || taxonomy.error) {
+      if (taxonomy.error?.status === 404) {
+        return forbidFeedbackRecord(requestId, instance);
+      }
+
+      log.warn({ hubStatus: taxonomy.error?.status }, "Hub feedback record taxonomy lookup failed");
+      return hubErrorToProblemResponse(taxonomy.error, requestId, instance);
+    }
+
+    return successResponse(serializeV3FeedbackRecordDetail(owned.record, taxonomy.data), {
+      requestId,
+      cache: CACHE,
+    });
   } catch (err) {
     return handleUnexpectedError(err, log, requestId, instance, "feedbackRecords.get");
   }

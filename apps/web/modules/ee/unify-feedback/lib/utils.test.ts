@@ -7,6 +7,7 @@ import {
   formatFieldTypeLabel,
   formatSourceType,
   getReadOnlyMetadataEntries,
+  getTaxonomyAssignmentDisplay,
   getValueFieldByType,
   isPresetSourceType,
   mapRecordToValues,
@@ -30,6 +31,38 @@ const makeRecord = (overrides: Partial<FeedbackRecordData> = {}): FeedbackRecord
   field_id: "f1",
   field_type: "text",
   ...overrides,
+});
+
+describe("getTaxonomyAssignmentDisplay", () => {
+  test("shows the full ordered visible path", () => {
+    expect(
+      getTaxonomyAssignmentDisplay({
+        status: "classified",
+        run_id: "run-1",
+        path: [
+          { id: "topic", label: "Product", level: 1, node_type: "branch" },
+          { id: "subtopic", label: "Login", level: 2, node_type: "leaf" },
+        ],
+      })
+    ).toEqual({ path: "Product › Login", messageKey: null });
+  });
+
+  test.each([
+    ["no_active_taxonomy", "workspace.unify.taxonomy_assignment_no_active"],
+    ["unclassified", "workspace.unify.taxonomy_assignment_unclassified"],
+  ] as const)("uses the distinct %s state", (status, messageKey) => {
+    expect(getTaxonomyAssignmentDisplay({ status, run_id: null, path: [] })).toEqual({
+      path: null,
+      messageKey,
+    });
+  });
+
+  test("lookup failure is unavailable, not unclassified", () => {
+    expect(getTaxonomyAssignmentDisplay(null)).toEqual({
+      path: null,
+      messageKey: "workspace.unify.taxonomy_assignment_unavailable",
+    });
+  });
 });
 
 describe("getValueFieldByType", () => {

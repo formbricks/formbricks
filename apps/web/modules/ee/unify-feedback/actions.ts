@@ -13,7 +13,11 @@ import {
   ensureReadAccess,
   getWorkspaceDirectoryIds,
 } from "@/modules/ee/unify-feedback/lib/access";
-import { deleteFeedbackRecord, retrieveFeedbackRecord } from "@/modules/hub/service";
+import {
+  deleteFeedbackRecord,
+  retrieveFeedbackRecord,
+  retrieveFeedbackRecordTaxonomy,
+} from "@/modules/hub/service";
 import {
   TRetrieveFeedbackRecordAction,
   ZDeleteFeedbackRecordAction,
@@ -51,7 +55,13 @@ export const retrieveFeedbackRecordAction = authenticatedActionClient
         parsedInput.workspaceId
       );
 
-      return recordResult.data;
+      const taxonomyResult = await retrieveFeedbackRecordTaxonomy(
+        parsedInput.recordId,
+        recordResult.data.tenant_id
+      );
+
+      // Classification is supplementary: a failed lookup must not hide an authorized record.
+      return { record: recordResult.data, taxonomy: taxonomyResult.data };
     }
   );
 

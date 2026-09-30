@@ -457,19 +457,27 @@ describe("list_feedback_records", () => {
 });
 
 describe("get_feedback_record", () => {
-  test("delegates to getV3FeedbackRecord with the record id", async () => {
+  test("delegates to getV3FeedbackRecord and returns its taxonomy projection", async () => {
     vi.mocked(getV3FeedbackRecord).mockResolvedValue(
-      successResponse({ id: "rec-1" }, { requestId: "req_tool" })
+      successResponse(
+        { id: "rec-1", taxonomy: { status: "classified", run_id: "run-1", path: [] } },
+        { requestId: "req_tool" }
+      )
     );
     const { tools } = createToolServer();
 
-    await tools
+    const result = await tools
       .get("get_feedback_record")!
       .handler({ workspaceId, feedbackRecordId: recordId }, { http: { authInfo } });
 
     expect(getV3FeedbackRecord).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId, feedbackRecordId: recordId })
     );
+    expect(result.structuredContent.data.taxonomy).toEqual({
+      status: "classified",
+      run_id: "run-1",
+      path: [],
+    });
   });
 });
 

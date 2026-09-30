@@ -151,6 +151,12 @@ export type TaxonomyNode = {
   children?: TaxonomyNode[];
 };
 
+export type FeedbackRecordTaxonomy = {
+  status: "classified" | "unclassified" | "no_active_taxonomy";
+  run_id: string | null;
+  path: Pick<TaxonomyNode, "id" | "label" | "level" | "node_type">[];
+};
+
 export type TaxonomyFieldsResponse = {
   data: TaxonomyFieldOption[];
 };
