@@ -247,13 +247,18 @@ const expandRankingToRecords = (
   // Guard against malformed/legacy blocks where choices is absent (same class as ENG-1939): the
   // schema requires it, but stored survey.blocks JSON is not re-validated here.
   const choices = element.choices ?? [];
+  const otherChoice = choices.find((choice) => choice.id === "other");
   const groupLabel = mapping.customFieldLabel || getHeadlineFromElement(element);
   const records: FeedbackRecordCreateParams[] = [];
 
   value.forEach((itemLabel, index) => {
     if (typeof itemLabel !== "string" || itemLabel === "") return;
 
-    const choice = findChoiceByLabel<TSurveyElementChoice>(choices, itemLabel, lookupLanguage);
+    const matched = findChoiceByLabel<TSurveyElementChoice>(choices, itemLabel, lookupLanguage);
+    // A ranked "Other" stores the respondent's text in its slot, so an entry that matches no
+    // regular choice is it — ranked under the stable "other" id, with the text kept in metadata.
+    const isOtherText = otherChoice !== undefined && (!matched || matched.id === "other");
+    const choice = isOtherText ? otherChoice : matched;
     if (!choice) return;
 
     records.push({
@@ -263,7 +268,12 @@ const expandRankingToRecords = (
       field_label: getChoiceLabel(choice, "default"),
       field_group_id: element.id,
       field_group_label: groupLabel,
-      metadata: { ...baseFields.metadata, question_type: "ranking", total_items: value.length },
+      metadata: {
+        ...baseFields.metadata,
+        question_type: "ranking",
+        total_items: value.length,
+        ...(isOtherText && { other_text: itemLabel }),
+      },
       value_number: index + 1,
     });
   });

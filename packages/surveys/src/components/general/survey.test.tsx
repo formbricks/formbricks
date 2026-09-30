@@ -51,29 +51,52 @@ vi.mock("@/lib/recall", () => ({
 }));
 
 vi.mock("@/components/general/block-conditional", () => ({
-  BlockConditional: ({ block, onSubmit }: any) => (
-    <button
-      data-testid={`submit-${block.id}`}
-      onClick={() =>
-        onSubmit(
-          { [block.elements[0].id]: `${block.id}-answer` },
-          {
-            [block.elements[0].id]: 123,
-          }
-        )
-      }>
-      Submit {block.id}
-    </button>
+  BlockConditional: ({ block, onSubmit, onBack }: any) => (
+    <>
+      <button
+        data-testid={`submit-${block.id}`}
+        onClick={() =>
+          onSubmit(
+            { [block.elements[0].id]: `${block.id}-answer` },
+            {
+              [block.elements[0].id]: 123,
+            }
+          )
+        }>
+        Submit {block.id}
+      </button>
+      <button data-testid={`back-${block.id}`} onClick={() => onBack()}>
+        Back {block.id}
+      </button>
+    </>
   ),
 }));
 
-vi.mock("@/components/wrappers/stacked-cards-container", () => ({
-  StackedCardsContainer: ({ currentBlockId, getCardContent, survey }: any) => {
-    const blockIndex =
-      currentBlockId === "start" ? -1 : survey.blocks.findIndex((block: any) => block.id === currentBlockId);
-    return <div data-testid="survey-root">{getCardContent(blockIndex, 0)}</div>;
-  },
-}));
+vi.mock("@/components/wrappers/stacked-cards-container", () => {
+  // Mirrors the real container's index math: a `currentBlockId` that is not a block — an ending id,
+  // the "end" sentinel, or a block deleted since progress was saved — maps past the end of the
+  // array. The card before the current one is also rendered with live controls. The real container
+  // makes that card inert (`pointerEvents: "none"`) and simple layouts do not mount it, so clicking
+  // it here is a synthetic way to call the handlers from an off-block position, not a respondent
+  // interaction.
+  const resolveBlockIndex = (survey: any, currentBlockId: string): number => {
+    if (currentBlockId === "start") return -1;
+    const blockIndex = survey.blocks.findIndex((block: any) => block.id === currentBlockId);
+    return blockIndex === -1 ? survey.blocks.length : blockIndex;
+  };
+
+  return {
+    StackedCardsContainer: ({ currentBlockId, getCardContent, survey }: any) => {
+      const blockIndex = resolveBlockIndex(survey, currentBlockId);
+      return (
+        <div data-testid="survey-root">
+          {getCardContent(blockIndex, 0)}
+          {blockIndex > 0 ? getCardContent(blockIndex - 1, 1) : null}
+        </div>
+      );
+    },
+  };
+});
 
 vi.mock("@/components/wrappers/auto-close-wrapper", () => ({
   AutoCloseWrapper: ({ children }: any) => <>{children}</>,
@@ -367,6 +390,48 @@ describe("Survey offline restore", () => {
     });
 
     expect(apiClientMocks.getResponseIdByDisplayId).not.toHaveBeenCalled();
+  });
+
+  test("a submit reaching the handler from the ending card is a no-op instead of throwing", async () => {
+    offlineStorageMocks.getSurveyProgress.mockResolvedValue(makeProgress());
+
+    renderSurvey();
+
+    // Finish the survey, which moves the pointer onto the ending card.
+    fireEvent.click(await screen.findByTestId("submit-block-2"));
+
+    await waitFor(() => {
+      expect(apiClientMocks.createResponse).toHaveBeenCalled();
+    });
+
+    expect(await screen.findByTestId("ending-card")).toBeTruthy();
+
+    // Synthetic: the mock keeps the previous card clickable, so this calls `onSubmit` with the
+    // pointer on the ending. It used to throw "Block not found" (ENG-2818); re-sending instead
+    // would repeat `finished: true`, which the server rejects and which swaps the ending for the
+    // error card. The response is already finished, so nothing is sent.
+    fireEvent.click(await screen.findByTestId("submit-block-2"));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("ending-card")).toBeTruthy();
+    });
+    expect(apiClientMocks.updateResponse).not.toHaveBeenCalled();
+  });
+
+  test("back from the first block with no history is a no-op instead of throwing", async () => {
+    offlineStorageMocks.getSurveyProgress.mockResolvedValue(
+      makeProgress({ blockId: "block-1", history: [] })
+    );
+
+    renderSurvey();
+
+    fireEvent.click(await screen.findByTestId("back-block-1"));
+
+    // Still on the first block, and nothing was submitted — the previous behaviour threw
+    // "Block not found" while reading blocks[-1] (ENG-2818).
+    expect(await screen.findByTestId("submit-block-1")).toBeTruthy();
+    expect(apiClientMocks.createResponse).not.toHaveBeenCalled();
+    expect(apiClientMocks.updateResponse).not.toHaveBeenCalled();
   });
 
   test("clears stale finished progress instead of restoring the ending card", async () => {

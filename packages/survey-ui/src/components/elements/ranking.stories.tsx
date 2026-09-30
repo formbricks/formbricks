@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import React from "react";
 import {
   type BaseStylingOptions,
   type OptionStylingOptions,
@@ -108,6 +109,61 @@ export const FullyRanked: Story = {
     headline: "Rank these items in order of importance",
     options: defaultOptions,
     value: ["5", "2", "1", "4", "3"],
+  },
+};
+
+const optionsWithOther: RankingOption[] = [
+  { id: "1", label: "Price" },
+  { id: "2", label: "Speed" },
+  { id: "3", label: "Support" },
+  { id: "other", label: "Other" },
+];
+
+export const WithOtherOption: Story = {
+  render: () => {
+    const [value, setValue] = React.useState<string[]>([]);
+    const [otherValue, setOtherValue] = React.useState<string>("");
+
+    return (
+      <div className="w-[600px]">
+        <Ranking
+          elementId="ranking-other"
+          inputId="ranking-other-input"
+          headline="What matters most when choosing a tool?"
+          options={optionsWithOther}
+          value={value}
+          onChange={setValue}
+          otherOptionId="other"
+          otherOptionPlaceholder="Please specify"
+          otherValue={otherValue}
+          onOtherValueChange={setOtherValue}
+        />
+      </div>
+    );
+  },
+};
+
+export const WithOtherOptionRanked: Story = {
+  render: () => {
+    const [value, setValue] = React.useState<string[]>(["2", "other", "1"]);
+    const [otherValue, setOtherValue] = React.useState<string>("Integrations");
+
+    return (
+      <div className="w-[600px]">
+        <Ranking
+          elementId="ranking-other-ranked"
+          inputId="ranking-other-ranked-input"
+          headline="What matters most when choosing a tool?"
+          options={optionsWithOther}
+          value={value}
+          onChange={setValue}
+          otherOptionId="other"
+          otherOptionPlaceholder="Please specify"
+          otherValue={otherValue}
+          onOtherValueChange={setOtherValue}
+        />
+      </div>
+    );
   },
 };
 

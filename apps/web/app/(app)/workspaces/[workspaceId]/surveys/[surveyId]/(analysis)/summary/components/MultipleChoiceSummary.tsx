@@ -1,21 +1,17 @@
 "use client";
 
 import { InboxIcon } from "lucide-react";
-import Link from "next/link";
-import { Fragment, type KeyboardEvent, useState } from "react";
+import { Fragment, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyElementSummaryMultipleChoice, TSurveyType } from "@formbricks/types/surveys/types";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getChoiceIdByValue } from "@/lib/response/utils";
-import { getContactIdentifier } from "@/lib/utils/contact";
-import { PersonAvatar } from "@/modules/ui/components/avatars";
-import { Button } from "@/modules/ui/components/button";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
+import { OtherValuesList } from "./OtherValuesList";
 
 interface MultipleChoiceSummaryProps {
   elementSummary: TSurveyElementSummaryMultipleChoice;
@@ -39,8 +35,6 @@ export const MultipleChoiceSummary = ({
   setFilter,
 }: MultipleChoiceSummaryProps) => {
   const { t } = useTranslation();
-  const { workspace } = useWorkspace();
-  const [visibleOtherResponses, setVisibleOtherResponses] = useState(10);
   const otherValue = elementSummary.element.choices.find((choice) => choice.id === "other")?.label.default;
   // sort by count and transform to array
   const results = Object.values(elementSummary.choices).sort((a, b) => {
@@ -54,19 +48,6 @@ export const MultipleChoiceSummary = ({
     // if they’re “tied” on having others, fall back to count
     return b.count - a.count;
   });
-
-  const handleLoadMore = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const lastChoice = results[results.length - 1];
-    const hasOthers = lastChoice.others && lastChoice.others.length > 0;
-
-    if (!hasOthers) return; // If there are no 'others' to show, don't increase the visible options
-
-    // Increase the number of visible responses by 10, not exceeding the total number of responses
-    setVisibleOtherResponses((prevVisibleOptions) =>
-      Math.min(prevVisibleOptions + 10, lastChoice.others?.length || 0)
-    );
-  };
 
   const applyChoiceFilter = (result: ChoiceSummaryResult) => {
     setFilter(
@@ -136,52 +117,7 @@ export const MultipleChoiceSummary = ({
                   </div>
                 </div>
                 {result.others && result.others.length > 0 && (
-                  <div className="mt-4 rounded-lg border border-slate-200">
-                    <div className="grid h-12 grid-cols-2 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
-                      <div className="col-span-1 pl-6">
-                        {t("workspace.surveys.summary.other_values_found")}
-                      </div>
-                      <div className="col-span-1 pl-6">{surveyType === "app" && t("common.user")}</div>
-                    </div>
-                    {result.others
-                      .filter((otherValue) => otherValue.value !== "")
-                      .slice(0, visibleOtherResponses)
-                      .map((otherValue, idx) => (
-                        <div key={`${idx}-${otherValue}`} dir="auto">
-                          {surveyType === "link" && (
-                            <div className="ph-no-capture col-span-1 m-2 flex h-10 items-center rounded-lg pl-4 text-sm font-medium text-slate-900">
-                              <span>{otherValue.value}</span>
-                            </div>
-                          )}
-                          {surveyType === "app" && otherValue.contact && (
-                            <Link
-                              href={
-                                otherValue.contact.id
-                                  ? `/workspaces/${workspace?.id}/contacts/${otherValue.contact.id}`
-                                  : { pathname: null }
-                              }
-                              className="m-2 grid h-16 grid-cols-2 items-center rounded-lg text-sm hover:bg-slate-100">
-                              <div className="ph-no-capture col-span-1 pl-4 font-medium text-slate-900">
-                                <span>{otherValue.value}</span>
-                              </div>
-                              <div className="ph-no-capture col-span-1 flex items-center gap-x-4 pl-6 font-medium text-slate-900">
-                                {otherValue.contact.id && <PersonAvatar personId={otherValue.contact.id} />}
-                                <span>
-                                  {getContactIdentifier(otherValue.contact, otherValue.contactAttributes)}
-                                </span>
-                              </div>
-                            </Link>
-                          )}
-                        </div>
-                      ))}
-                    {visibleOtherResponses < result.others.length && (
-                      <div className="flex justify-center py-4">
-                        <Button onClick={handleLoadMore} variant="secondary" size="sm">
-                          {t("common.load_more")}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+                  <OtherValuesList others={result.others} surveyType={surveyType} />
                 )}
               </Fragment>
             );

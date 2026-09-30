@@ -5,7 +5,7 @@ import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolv
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyElementSummaryRanking, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TLanguage } from "@formbricks/types/workspace";
 import { getQuotasSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/survey";
 import { getDisplayCountBySurveyId } from "@/lib/display/service";
@@ -726,6 +726,170 @@ describe("getQuestionSummary", () => {
       );
       expect(item3.count).toBe(2);
       expect(item3.avgRanking).toBe(3);
+    });
+
+    test("getQuestionSummary aggregates a ranked Other with its average rank and typed values", async () => {
+      const question = {
+        id: "ranking-q1",
+        type: TSurveyElementTypeEnum.Ranking,
+        headline: { default: "Rank these items" },
+        required: true,
+        choices: [
+          { id: "item1", label: { default: "Item 1" } },
+          { id: "item2", label: { default: "Item 2" } },
+          { id: "other", label: { default: "Other" } },
+        ],
+      };
+
+      const survey = {
+        id: "survey-1",
+        blocks: [{ id: "block1", name: "Block 1", elements: [question] }],
+        questions: [],
+        languages: [],
+        welcomeCard: { enabled: false },
+      } as unknown as TSurvey;
+
+      const buildResponse = (id: string, answer: string[]) => ({
+        id,
+        data: { "ranking-q1": answer },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      });
+
+      const responses = [
+        buildResponse("response-1", ["Integrations", "Item 1", "Item 2"]),
+        buildResponse("response-2", ["Item 2", "Item 1", "Self-hosting"]),
+        buildResponse("response-3", ["Item 1", "Item 2"]),
+      ];
+
+      const dropOff = [
+        { elementId: "ranking-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+      ] as unknown as TSurveySummary["dropOff"];
+
+      const summary = await getElementSummary(
+        survey,
+        getElementsFromBlocks(survey.blocks),
+        responses,
+        dropOff
+      );
+
+      const choices = (summary[0] as TSurveyElementSummaryRanking).choices;
+      expect(choices.map((c) => c.value)).toEqual(["Item 1", "Item 2", "Other"]);
+
+      const other = choices[2];
+      // Ranked 1st once and 3rd once
+      expect(other.count).toBe(2);
+      expect(other.avgRanking).toBe(2);
+      expect(other.others?.map((o) => o.value)).toEqual(["Integrations", "Self-hosting"]);
+
+      // The typed text never counts toward a regular choice
+      expect(choices[0]).toMatchObject({ value: "Item 1", count: 3 });
+    });
+
+    test.each([
+      {
+        name: "counts an Other ranked with no text but lists no value, falling back to the Other label",
+        otherLabel: "",
+        answer: ["", "Item 1"],
+        expected: { value: "Other", count: 1, avgRanking: 1, others: [] },
+      },
+      {
+        name: "reports an unranked Other with a zero count and average",
+        otherLabel: "Something else",
+        answer: ["Item 1"],
+        expected: { value: "Something else", count: 0, avgRanking: 0, others: [] },
+      },
+    ])("getQuestionSummary $name", async ({ otherLabel, answer, expected }) => {
+      const survey = {
+        id: "survey-1",
+        blocks: [
+          {
+            id: "block1",
+            name: "Block 1",
+            elements: [
+              {
+                id: "ranking-q1",
+                type: TSurveyElementTypeEnum.Ranking,
+                headline: { default: "Rank these items" },
+                required: true,
+                choices: [
+                  { id: "item1", label: { default: "Item 1" } },
+                  { id: "other", label: { default: otherLabel } },
+                ],
+              },
+            ],
+          },
+        ],
+        questions: [],
+        languages: [],
+        welcomeCard: { enabled: false },
+      } as unknown as TSurvey;
+
+      const responses = [
+        {
+          id: "response-1",
+          data: { "ranking-q1": answer },
+          updatedAt: new Date(),
+          contact: null,
+          contactAttributes: {},
+          language: null,
+          ttc: {},
+          finished: true,
+        },
+      ];
+
+      const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, [
+        { elementId: "ranking-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
+      ] as unknown as TSurveySummary["dropOff"]);
+
+      const other = (summary[0] as TSurveyElementSummaryRanking).choices.at(-1);
+      expect(other).toEqual(expected);
+    });
+
+    test("getQuestionSummary ignores unmatched ranking entries when there is no Other option", async () => {
+      const question = {
+        id: "ranking-q1",
+        type: TSurveyElementTypeEnum.Ranking,
+        headline: { default: "Rank these items" },
+        required: true,
+        choices: [
+          { id: "item1", label: { default: "Item 1" } },
+          { id: "item2", label: { default: "Item 2" } },
+        ],
+      };
+
+      const survey = {
+        id: "survey-1",
+        blocks: [{ id: "block1", name: "Block 1", elements: [question] }],
+        questions: [],
+        languages: [],
+        welcomeCard: { enabled: false },
+      } as unknown as TSurvey;
+
+      const responses = [
+        {
+          id: "response-1",
+          data: { "ranking-q1": ["Renamed item", "Item 1"] },
+          updatedAt: new Date(),
+          contact: null,
+          contactAttributes: {},
+          language: null,
+          ttc: {},
+          finished: true,
+        },
+      ];
+
+      const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, [
+        { elementId: "ranking-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
+      ] as unknown as TSurveySummary["dropOff"]);
+
+      const choices = (summary[0] as TSurveyElementSummaryRanking).choices;
+      expect(choices.map((c) => c.value)).toEqual(["Item 1", "Item 2"]);
+      expect(choices[0].avgRanking).toBe(2);
     });
 
     test("getQuestionSummary correctly processes ranking question with non-default language responses", async () => {

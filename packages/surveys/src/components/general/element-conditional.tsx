@@ -3,7 +3,7 @@ import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
-import { type TSurveyElement, type TSurveyElementChoice } from "@formbricks/types/surveys/elements";
+import { type TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { AddressElement } from "@/components/elements/address-element";
 import { CalElement } from "@/components/elements/cal-element";
@@ -20,7 +20,6 @@ import { OpenTextElement } from "@/components/elements/open-text-element";
 import { PictureSelectionElement } from "@/components/elements/picture-selection-element";
 import { RankingElement } from "@/components/elements/ranking-element";
 import { RatingElement } from "@/components/elements/rating-element";
-import { getLocalizedValue } from "@/lib/i18n";
 
 interface ElementConditionalProps {
   element: TSurveyElement;
@@ -81,19 +80,6 @@ export function ElementConditional({
     if (onTtcCollect && newTtc[element.id] !== undefined) {
       onTtcCollect(element.id, newTtc[element.id]);
     }
-  };
-
-  const getResponseValueForRankingElement = (value: string[], choices: TSurveyElementChoice[]): string[] => {
-    return value
-      .map((entry) => {
-        // First check if entry is already a valid choice ID
-        if (choices.some((c) => c.id === entry)) {
-          return entry;
-        }
-        // Otherwise, treat it as a localized label and find the choice by label
-        return choices.find((choice) => getLocalizedValue(choice.label, languageCode) === entry)?.id;
-      })
-      .filter((id): id is TSurveyElementChoice["id"] => id !== undefined);
   };
 
   const isRecognizedType = Object.values(TSurveyElementTypeEnum).includes(element.type);
@@ -321,7 +307,7 @@ export function ElementConditional({
           <RankingElement
             dir={dir}
             element={element}
-            value={Array.isArray(value) ? getResponseValueForRankingElement(value, element.choices) : []}
+            value={Array.isArray(value) ? value : []}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
