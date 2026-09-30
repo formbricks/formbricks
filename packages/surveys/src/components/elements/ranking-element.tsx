@@ -4,6 +4,7 @@ import { Ranking, type RankingOption } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyRankingElement } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n";
+import { rankingValueToSelection, selectionToRankingValue } from "@/lib/ranking";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { getShuffledChoicesIds } from "@/lib/utils";
 
@@ -71,40 +72,36 @@ export function RankingElement({
       }));
   }, [elementChoices, languageCode]);
 
-  // For the survey-ui component, we need to map labels to IDs
-  const selectedValues = useMemo(() => {
-    if (!value || !Array.isArray(value)) return [];
+  const otherOptionId = element.choices.some((choice) => choice.id === "other") ? "other" : undefined;
 
-    const selected: string[] = [];
-    value.forEach((val) => {
-      // Backwards-compat: if value is already an option ID
-      const idMatch = options.find((opt) => opt.id === val);
-      if (idMatch) {
-        selected.push(idMatch.id);
-        return;
-      }
+  // Stored value is labels in rank order, with the "Other" slot holding the respondent's own text.
+  const { selectedIds, otherValue } = useMemo(
+    () => rankingValueToSelection(Array.isArray(value) ? value : [], options, otherOptionId),
+    [value, options, otherOptionId]
+  );
 
-      // Normal: value is a label
-      const labelMatch = options.find((opt) => opt.label === val);
-      if (labelMatch) selected.push(labelMatch.id);
+  const updateValue = (nextSelectedIds: string[], nextOtherValue: string) => {
+    onChange({
+      [element.id]: selectionToRankingValue(nextSelectedIds, options, otherOptionId, nextOtherValue),
     });
-
-    return selected;
-  }, [value, options]);
-
-  // Handle selection changes - store labels directly instead of IDs
-  const handleChange = (selectedIds: string[]) => {
-    const nextLabels: string[] = [];
-    selectedIds.forEach((id) => {
-      const matchingOption = options.find((opt) => opt.id === id);
-      if (matchingOption) nextLabels.push(matchingOption.label);
-    });
-
-    onChange({ [element.id]: nextLabels });
 
     const updatedTtcObj = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
   };
+
+  const handleChange = (nextSelectedIds: string[]) => {
+    // Un-ranking "Other" discards its text, so ranking it again starts from an empty box.
+    const keepsOther = otherOptionId !== undefined && nextSelectedIds.includes(otherOptionId);
+    updateValue(nextSelectedIds, keepsOther ? otherValue : "");
+  };
+
+  const handleOtherValueChange = (nextOtherValue: string) => {
+    updateValue(selectedIds, nextOtherValue);
+  };
+
+  const otherOptionPlaceholder = element.otherOptionPlaceholder
+    ? getLocalizedValue(element.otherOptionPlaceholder, languageCode)
+    : "";
 
   const handleSubmit = (e: Event) => {
     e.preventDefault();
@@ -122,8 +119,12 @@ export function RankingElement({
         headline={getLocalizedValue(element.headline, languageCode)}
         description={element.subheader ? getLocalizedValue(element.subheader, languageCode) : undefined}
         options={options}
-        value={selectedValues}
+        value={selectedIds}
         onChange={handleChange}
+        otherOptionId={otherOptionId}
+        otherOptionPlaceholder={otherOptionPlaceholder || "Please specify"}
+        otherValue={otherValue}
+        onOtherValueChange={handleOtherValueChange}
         required={isRequired}
         requiredLabel={t("common.required")}
         errorMessage={errorMessage}
