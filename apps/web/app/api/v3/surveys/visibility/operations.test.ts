@@ -227,6 +227,26 @@ describe("POST …/visibility", () => {
     });
   });
 
+  test("audits the previous state read under the lock, not the one the authorization read saw", async () => {
+    // Authorized against workspace v2; another request restricted it (v3, projected) before the lock.
+    const underLock = row({ visibility: "restricted", visibilityProjectedVersion: 3, visibilityVersion: 3 });
+    const stored = row({ visibility: "workspace", visibilityProjectedVersion: 3, visibilityVersion: 4 });
+    store(underLock, stored);
+    vi.mocked(prisma.survey.findUniqueOrThrow).mockResolvedValue({
+      ...stored,
+      visibilityProjectedVersion: 4,
+    } as never);
+    const auditLog: Record<string, unknown> = {};
+
+    const response = await post({ visibility: "workspace" }, session, auditLog);
+
+    expect(response.status).toBe(200);
+    expect(auditLog).toMatchObject({
+      newObject: { version: 4, visibility: "workspace" },
+      oldObject: { version: 3, visibility: "restricted" },
+    });
+  });
+
   test("a grant answers 200 only once the graph acknowledged this exact version", async () => {
     const stored = row({ visibility: "workspace", visibilityVersion: 4, visibilityProjectedVersion: 3 });
     store(row({ visibility: "restricted", visibilityProjectedVersion: 3, visibilityVersion: 3 }), stored);
