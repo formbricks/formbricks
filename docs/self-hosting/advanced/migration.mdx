@@ -232,6 +232,10 @@ strings for them.
   `cube.image.repository`, the chart now pulls a non-existent `ghcr.io/formbricks/cube:<your old tag>` and the
   pod fails with `ImagePullBackOff`. Drop the tag override, or set both values. Pointing them back at an upstream
   `cubejs/cube` release is supported.
+- **Helm security context**: the Cube container now runs with a read-only root filesystem, no privilege
+  escalation and all capabilities dropped. The bundled image and upstream `cubejs/cube` releases need no change.
+  A custom image or configuration that writes files, or dev mode on an upstream image, needs
+  `cube.containerSecurityContext.readOnlyRootFilesystem: false`.
 - **`CUBEJS_DEV_MODE=true`**: not supported on the new image. Dev mode relies on the embedded Cube Store the image
   leaves out, so `/readyz` answers 500 and the Helm probes and Compose healthcheck never pass. Leave it unset in
   production.

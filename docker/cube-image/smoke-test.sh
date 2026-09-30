@@ -93,9 +93,12 @@ wait_for "Postgres to accept connections" 60 docker exec "$postgres" pg_isready 
 node "$helper" run "$work_dir/compose.json" hub-migrate --rm --network "$network"
 node "$helper" seed-sql | docker exec -i "$postgres" psql -v ON_ERROR_STOP=1 -q -U postgres -d formbricks
 
-echo "Starting $image as uid 1000"
+# As the Helm chart's default cube.containerSecurityContext runs it: uid 1000, a read-only root
+# filesystem, no capabilities and no privilege escalation. Cube must need no writable path of its own.
+echo "Starting $image as uid 1000 with a read-only root filesystem"
 node "$helper" run "$work_dir/compose.json" cube --image "$image" \
-  --detach --name "$cube" --network "$network" --user 1000 --publish 127.0.0.1::4000 >/dev/null
+  --detach --name "$cube" --network "$network" --publish 127.0.0.1::4000 \
+  --user 1000 --read-only --cap-drop ALL --security-opt no-new-privileges >/dev/null
 cube_url="http://$(docker port "$cube" 4000/tcp | head -n 1)"
 
 for attempt in $(seq 1 120); do

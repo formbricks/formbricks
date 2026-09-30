@@ -47,7 +47,10 @@ docker/cube-image/smoke-test.sh formbricks-cube:dev
 ```
 
 The smoke test needs Docker with the Compose plugin, curl and Node 20 or later. It reads the `cube`,
-`postgres` and `hub-migrate` services from `docker/docker-compose.yml`, so it tests what Compose would run.
+`postgres` and `hub-migrate` services from `docker/docker-compose.yml`, so it tests what Compose would run. The
+queries run against a Cube started with the Helm chart's default `cube.containerSecurityContext` (uid 1000, a
+read-only root filesystem, no capabilities), so an image that starts writing to its own filesystem fails here
+before it fails in Kubernetes.
 
 ## Bumping Cube
 
