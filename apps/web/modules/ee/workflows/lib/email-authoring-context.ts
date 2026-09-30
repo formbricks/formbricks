@@ -8,6 +8,7 @@ import { getSession } from "@/modules/auth/lib/session";
 import type { TWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/types/email-authoring-context";
 import { getUserEmail, getUserLocale } from "@/modules/survey/editor/lib/user";
 import { getSurvey } from "@/modules/survey/lib/survey";
+import { canReadSurveyInWorkspace } from "@/modules/survey/lib/survey-auth";
 
 const workflowsService = createWorkflowsService({ prisma });
 
@@ -69,11 +70,14 @@ export const getWorkflowEmailAuthoringContext = async ({
     return { ...emptyContext, userEmail: userEmail ?? "", locale: locale ?? DEFAULT_LOCALE };
   }
 
-  // The trigger `surveyId` is author-set but NOT workspace-validated by the workflow patch handler, so a
-  // member could point it at another workspace's survey. Scope by `workspaceId` here (IDOR guard); a
-  // non-matching or missing survey resolves to null and the form degrades to plain inputs.
+  // The trigger `surveyId` is author-set but NOT validated by the workflow patch handler, so a member
+  // could point it at another workspace's survey, or at a restricted survey they cannot see (ENG-3282).
+  // Both go through the same read check as the survey pages before anything is loaded; a survey the
+  // viewer may not read resolves to null exactly like a missing one, and the form degrades to plain
+  // inputs without the survey's title or content ever reaching the client.
   const surveyId = readTriggerSurveyId(workflow.definition);
-  const loadedSurvey = surveyId ? await getSurvey(surveyId).catch(() => null) : null;
+  const canReadSurvey = surveyId ? await canReadSurveyInWorkspace(workspaceId, surveyId) : false;
+  const loadedSurvey = surveyId && canReadSurvey ? await getSurvey(surveyId).catch(() => null) : null;
   const survey = loadedSurvey?.workspaceId === workspaceId ? loadedSurvey : null;
 
   return {
