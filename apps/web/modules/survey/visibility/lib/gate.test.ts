@@ -142,4 +142,19 @@ describe("getSurveyVisibilityViewer", () => {
     expect(viewer.pendingVisibility).toBe(pending);
     expect(viewer.surveyAccess).toEqual({ canManageVisibility: true, via: "organizationRole" });
   });
+
+  // A survey whose first projection was never acknowledged enforces its stored value (policy.ts): a
+  // just-created workspace survey is not held back as restricted while the outbox drains.
+  test("a never-projected workspace survey is effectively workspace-visible", async () => {
+    vi.mocked(getSurveyVisibilityGates).mockResolvedValue(on);
+    vi.mocked(resolveSurveyActorContext).mockResolvedValue(admin);
+
+    const viewer = await getSurveyVisibilityViewer(
+      survey("workspace", "owner", { visibilityVersion: 1, visibilityProjectedVersion: 0 }),
+      "admin",
+      "org"
+    );
+
+    expect(viewer.visibility).toBe("workspace");
+  });
 });

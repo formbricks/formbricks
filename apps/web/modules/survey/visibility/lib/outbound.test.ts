@@ -51,6 +51,16 @@ describe("effective visibility of stored surveys", () => {
     expect(hasRestrictedAttachedSurvey(true, ["s4"], [pendingGrant])).toBe(true);
   });
 
+  test("offers a never-projected workspace survey, which the server already treats as visible", () => {
+    const neverProjected = {
+      id: "s6",
+      visibility: "workspace" as const,
+      visibilityVersion: 1,
+      visibilityProjectedVersion: 0,
+    };
+    expect(isRestrictedSurveyPick(true, neverProjected)).toBe(false);
+  });
+
   test("offers the survey once the change has settled", () => {
     expect(isRestrictedSurveyPick(true, settled)).toBe(false);
   });

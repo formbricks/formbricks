@@ -81,8 +81,6 @@ interface SurveyEditorProps {
   surveyVisibilityGate: TSurveyVisibilityUiGate;
   /** The effective visibility (a change in flight counts as restricted), not the stored flag. */
   visibility: TSurveyVisibility;
-  /** The value a stored change is still settling to, or `null` when nothing is in flight. */
-  pendingVisibility: TSurveyVisibility | null;
   surveyAccess: TSurveyAccess | null;
   ownerName: string | null;
 }
@@ -119,7 +117,6 @@ export const SurveyEditor = ({
   enterpriseLicenseRequestFormUrl,
   surveyVisibilityGate,
   visibility,
-  pendingVisibility,
   surveyAccess,
   ownerName,
 }: Readonly<SurveyEditorProps>) => {
@@ -160,7 +157,6 @@ export const SurveyEditor = ({
   const visibilityGate = isVisibilityTurnedOff
     ? withoutVisibilityControls(surveyVisibilityGate)
     : surveyVisibilityGate;
-  const visibilityState = { visibility, pending: pendingVisibility };
   const handleVisibilityChanged = useCallback(() => router.refresh(), [router]);
   // Stable: the Collaborate modal runs it from an effect.
   const handleVisibilityNotEnabled = useCallback(() => {
@@ -389,7 +385,7 @@ export const SurveyEditor = ({
               userEmail={userEmail}
               teamMemberDetails={teamMemberDetails}
               locale={locale}
-              isRestricted={isOutboundBlocked(visibilityGate.enforced, visibilityState)}
+              isRestricted={isOutboundBlocked(visibilityGate.enforced, { visibility })}
               workspaceName={localWorkspace.name}
             />
           )}
