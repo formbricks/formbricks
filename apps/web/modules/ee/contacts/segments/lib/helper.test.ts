@@ -7,6 +7,7 @@ import {
 } from "@formbricks/types/segment";
 import {
   assertSurveyInteractionSurveyIds,
+  assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter,
   collectSurveyIdsFromSegmentFilters,
 } from "@/modules/ee/contacts/segments/lib/helper";
@@ -417,5 +418,34 @@ describe("assertSurveyInteractionSurveyIds", () => {
 
     const batchSizes = mockSurveyFindMany.mock.calls.map(([args]: any) => args.where.id.in.length);
     expect(batchSizes).toEqual([200, 200, 200, 200, 200]);
+  });
+});
+
+describe("assertSurveysInWorkspace (ENG-3282)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const visibleWhere = { OR: [{ visibility: "workspace" as const }, { ownerId: "user-1" }] };
+
+  test("scopes the lookup to the caller's visibility and rejects a survey it does not admit", async () => {
+    mockSurveyFindMany.mockResolvedValue([{ id: "s1" }]);
+
+    await expect(assertSurveysInWorkspace(["s1", "s2", "s1"], "workspace-1", visibleWhere)).rejects.toThrow(
+      new InvalidInputError("Survey not found in workspace: s2")
+    );
+    expect(mockSurveyFindMany).toHaveBeenCalledOnce();
+    expect(mockSurveyFindMany).toHaveBeenCalledWith({
+      where: { id: { in: ["s1", "s2"] }, workspaceId: "workspace-1", AND: [visibleWhere] },
+      select: { id: true },
+    });
+  });
+
+  test("passes when the caller's visibility admits every survey", async () => {
+    mockSurveyFindMany.mockResolvedValue([{ id: "s1" }, { id: "s2" }]);
+
+    await expect(
+      assertSurveysInWorkspace(["s1", "s2"], "workspace-1", visibleWhere)
+    ).resolves.toBeUndefined();
   });
 });

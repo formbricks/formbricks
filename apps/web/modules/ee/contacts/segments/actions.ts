@@ -24,6 +24,7 @@ import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getDistinctAttributeValues } from "@/modules/ee/contacts/lib/contact-attributes";
 import {
   assertSurveyInteractionSurveyIds,
+  assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter,
 } from "@/modules/ee/contacts/segments/lib/helper";
 import {
@@ -37,6 +38,15 @@ import {
   updateSegment,
 } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+
+/**
+ * ENG-3282: a segment targets surveys by id, and its survey-interaction filters read who answered them —
+ * so every survey a mutation references needs `survey.write`, not just the workspace's. A single survey
+ * is checked directly; an array goes through `assertSurveysInWorkspace`, one batched query with the
+ * caller's visibility predicate (equivalent to `survey.write` once `workspace.write` has passed).
+ */
+const assertCanWriteSurvey = (userId: string, surveyId: string) =>
+  assertCan({ type: "user", id: userId }, "survey.write", { type: "survey", id: surveyId });
 
 const checkAdvancedTargetingPermission = async (organizationId: string) => {
   const organization = await getOrganization(organizationId);
@@ -84,7 +94,13 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
       throw new InvalidInputError(errMsg);
     }
 
-    await assertSurveyInteractionSurveyIds(parsedFilters.data, workspaceId);
+    const userId = ctx.user?.id ?? "";
+    if (parsedInput.surveyId) await assertCanWriteSurvey(userId, parsedInput.surveyId);
+    await assertSurveyInteractionSurveyIds(
+      parsedFilters.data,
+      workspaceId,
+      await getUserVisibleSurveyWhere(userId, organizationId)
+    );
 
     const segment = await createSegment(parsedInput);
 
@@ -137,6 +153,10 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
         throw new InvalidInputError("Survey and segment are not in the same workspace");
       }
     }
+    const visibleSurveyWhere = await getUserVisibleSurveyWhere(ctx.user.id, organizationId);
+    if (parsedInput.data.surveys?.length && Object.keys(visibleSurveyWhere).length > 0) {
+      await assertSurveysInWorkspace(parsedInput.data.surveys, segmentWorkspaceId, visibleSurveyWhere);
+    }
 
     const { filters } = parsedInput.data;
     if (filters) {
@@ -150,8 +170,7 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
 
       await checkForRecursiveSegmentFilter(parsedFilters.data, parsedInput.segmentId);
 
-      const segmentWorkspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
-      await assertSurveyInteractionSurveyIds(parsedFilters.data, segmentWorkspaceId);
+      await assertSurveyInteractionSurveyIds(parsedFilters.data, segmentWorkspaceId, visibleSurveyWhere);
     }
 
     const oldObject = await getSegment(parsedInput.segmentId);
@@ -188,6 +207,7 @@ export const loadNewSegmentAction = authenticatedActionClient.inputSchema(ZLoadN
     await applyRateLimit(rateLimitConfigs.actions.stateMutation, surveyWorkspaceId);
 
     await checkAdvancedTargetingPermission(organizationId);
+    await assertCanWriteSurvey(ctx.user.id, parsedInput.surveyId);
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
@@ -220,6 +240,7 @@ export const cloneSegmentAction = authenticatedActionClient.inputSchema(ZCloneSe
     await applyRateLimit(rateLimitConfigs.actions.stateMutation, surveyWorkspaceId);
 
     await checkAdvancedTargetingPermission(organizationId);
+    await assertCanWriteSurvey(ctx.user.id, parsedInput.surveyId);
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.segmentId = parsedInput.segmentId;
@@ -273,6 +294,7 @@ export const resetSegmentFiltersAction = authenticatedActionClient
       await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
       await checkAdvancedTargetingPermission(organizationId);
+      await assertCanWriteSurvey(ctx.user.id, parsedInput.surveyId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
 
