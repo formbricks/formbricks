@@ -15,6 +15,10 @@ endpoints are preserved. Restart the development server after environment change
 login means the server is still running without the required authorization configuration; it is not a bad
 password or an enterprise-license requirement.
 
+Survey visibility or owner changes written directly in SQL, for example when seeding test data, reach SpiceDB
+only through the outbox worker (the running app, or `pnpm authzed:outbox drain`) or
+`pnpm authzed:backfill --scope=survey --apply`; until then, access checks still see the old values.
+
 Automatic graph preparation targets only the bundled localhost endpoint. For an external development
 datastore, use the existing commands explicitly after reviewing the endpoint and its source database:
 
