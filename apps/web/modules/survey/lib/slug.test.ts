@@ -128,7 +128,10 @@ describe("Slug Library Tests", () => {
       vi.mocked(prisma.survey.findMany).mockResolvedValueOnce(mockSurveys as never);
 
       const result = await getSurveysWithSlugsByOrganizationId("org_123", {
-        OR: [{ visibility: "workspace", visibilityPending: false }, { ownerId: "user_1" }],
+        OR: [
+          { visibility: "workspace", OR: [{ visibilityPending: false }, { visibilityProjectedVersion: 0 }] },
+          { ownerId: "user_1" },
+        ],
       });
       expect(result).toEqual(mockSurveys);
       expect(prisma.survey.findMany).toHaveBeenCalledWith(
@@ -136,7 +139,17 @@ describe("Slug Library Tests", () => {
           where: {
             slug: { not: null },
             workspace: { organizationId: "org_123" },
-            AND: [{ OR: [{ visibility: "workspace", visibilityPending: false }, { ownerId: "user_1" }] }],
+            AND: [
+              {
+                OR: [
+                  {
+                    visibility: "workspace",
+                    OR: [{ visibilityPending: false }, { visibilityProjectedVersion: 0 }],
+                  },
+                  { ownerId: "user_1" },
+                ],
+              },
+            ],
           },
         })
       );

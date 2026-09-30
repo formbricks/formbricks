@@ -30,6 +30,16 @@ describe("isSurveyOutboundAllowed", () => {
       { visibility: "workspace" as const, visibilityProjectedVersion: 2, visibilityVersion: 3 },
       false,
     ],
+    [
+      "a just-created workspace survey, never projected",
+      { visibility: "workspace" as const, visibilityProjectedVersion: 0, visibilityVersion: 1 },
+      true,
+    ],
+    [
+      "a just-created restricted survey, never projected",
+      { visibility: "restricted" as const, visibilityProjectedVersion: 0, visibilityVersion: 1 },
+      false,
+    ],
   ])("%s", (_label, row, expected) => {
     expect(isSurveyOutboundAllowed(row, true)).toBe(expected);
   });
@@ -45,7 +55,13 @@ describe("findNotWorkspaceVisibleSurveyIds", () => {
 
     await expect(findNotWorkspaceVisibleSurveyIds(["s1", "s2", "s1"])).resolves.toEqual(["s2"]);
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
-      where: { id: { in: ["s1", "s2"] }, OR: [{ visibility: "restricted" }, { visibilityPending: true }] },
+      where: {
+        id: { in: ["s1", "s2"] },
+        OR: [
+          { visibility: "restricted" },
+          { visibilityPending: true, visibilityProjectedVersion: { gt: 0 } },
+        ],
+      },
       select: { id: true },
     });
   });

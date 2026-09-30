@@ -110,8 +110,21 @@ describe("getSurveyListPage", () => {
           workspaceId,
           AND: [
             { name: { contains: "nps" } },
-            { OR: [{ visibility: "workspace", visibilityPending: false }, { ownerId: "user_1" }] },
-            { OR: [{ visibility: "restricted" }, { visibilityPending: true }] },
+            {
+              OR: [
+                {
+                  visibility: "workspace",
+                  OR: [{ visibilityPending: false }, { visibilityProjectedVersion: 0 }],
+                },
+                { ownerId: "user_1" },
+              ],
+            },
+            {
+              OR: [
+                { visibility: "restricted" },
+                { visibilityPending: true, visibilityProjectedVersion: { gt: 0 } },
+              ],
+            },
           ],
         },
       })

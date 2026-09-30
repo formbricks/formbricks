@@ -1,6 +1,6 @@
 import "server-only";
 import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
-import { isPending } from "@/lib/survey/visibility/policy";
+import { getEffectiveVisibility, isPending } from "@/lib/survey/visibility/policy";
 import type { TAuthorizationActor, TAuthorizationResource, TAuthorizationResourceType } from "./contract";
 import {
   type TSurveyAuthorizationScopeRow,
@@ -67,10 +67,18 @@ const toWorkspaceResourceScope = (
 
 /**
  * A survey decided on the survey's own graph node once visibility is enforced. A pending change falls
- * back to the workspace node plus a policy the evaluator applies from PostgreSQL facts.
+ * back to the workspace node plus a policy the evaluator applies from PostgreSQL facts. A pending row
+ * that is effectively workspace-visible (no projection acknowledged yet, see `getEffectiveVisibility`)
+ * is decided on the workspace ladder alone, as the list and outbound predicates treat it.
  */
 const toSurveyResourceScope = (row: TSurveyAuthorizationScopeRow | null): TResourceScope | null => {
   if (!row) return null;
+  if (isPending(row) && getEffectiveVisibility(row) === "workspace") {
+    return {
+      organizationId: row.organizationId,
+      permissionResource: { type: "workspace", id: row.workspaceId },
+    };
+  }
   if (isPending(row)) {
     return {
       organizationId: row.organizationId,

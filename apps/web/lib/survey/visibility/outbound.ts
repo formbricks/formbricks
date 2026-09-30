@@ -4,6 +4,7 @@ import type { Prisma } from "@formbricks/database/prisma";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { getEffectiveVisibility } from "./policy";
+import { effectivelyRestrictedWhere } from "./predicate";
 
 /**
  * Outbound plumbing (ENG-3283): webhooks, integrations, feedback sources, follow-ups and workflows
@@ -18,10 +19,8 @@ import { getEffectiveVisibility } from "./policy";
 export const SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE =
   "Outbound connections can only use surveys that are visible to the whole workspace";
 
-/** The rows an outbound check needs: `visibilityPending` is the trigger-kept version mismatch. */
-const notWorkspaceVisibleWhere: Prisma.SurveyWhereInput = {
-  OR: [{ visibility: "restricted" }, { visibilityPending: true }],
-};
+/** The rows an outbound check needs: `getEffectiveVisibility(row) === "restricted"`, as SQL. */
+const notWorkspaceVisibleWhere: Prisma.SurveyWhereInput = effectivelyRestrictedWhere;
 
 /** Of `surveyIds`, the ones outbound plumbing must not serve. `[]` while enforcement is off. */
 export const findNotWorkspaceVisibleSurveyIds = async (
