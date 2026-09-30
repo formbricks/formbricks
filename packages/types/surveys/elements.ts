@@ -145,6 +145,24 @@ export const ZShuffleOption = z.enum([
 ]);
 export type TShuffleOption = z.infer<typeof ZShuffleOption>;
 
+const emptyStringAsUnset = (value: unknown): unknown => (value === "" ? undefined : value);
+
+/**
+ * `shuffleOption` as it must be read back from storage.
+ *
+ * Surveys exist that hold the empty string here — Radix renders `value=""` as an unset dropdown, so
+ * the element looks fine in the editor while publishing fails on it. `prefault` heals only
+ * `undefined`, so the empty string is normalised away before the enum sees it (ENG-2833). Any other
+ * out-of-enum value still fails, and now reports at this field rather than at the whole element.
+ *
+ * The trailing `.optional()` / `.prefault()` are what keep the key optional on the element: a
+ * preprocess step takes `unknown`, so without them Zod would make `shuffleOption` a required key.
+ */
+export const ZStoredShuffleOption = z.preprocess(emptyStringAsUnset, ZShuffleOption.optional()).optional();
+export const ZStoredShuffleOptionWithDefault = z
+  .preprocess(emptyStringAsUnset, ZShuffleOption.optional().prefault("none"))
+  .prefault("none");
+
 export const ZMultipleChoiceOptionDisplayType = z.enum(["list", "dropdown"]);
 export type TMultipleChoiceOptionDisplayType = z.infer<typeof ZMultipleChoiceOptionDisplayType>;
 
@@ -154,7 +172,7 @@ export const ZSurveyMultipleChoiceSingleElement = ZSurveyElementBase.extend({
   choices: z.array(ZSurveyElementChoice).min(2, {
     error: "Multiple Choice Element must have at least two choices",
   }),
-  shuffleOption: ZShuffleOption.optional(),
+  shuffleOption: ZStoredShuffleOption,
   otherOptionPlaceholder: ZI18nString.optional(),
   displayType: ZMultipleChoiceOptionDisplayType.optional(),
 });
@@ -165,7 +183,7 @@ export const ZSurveyMultipleChoiceMultiElement = ZSurveyElementBase.extend({
   choices: z.array(ZSurveyElementChoice).min(2, {
     error: "Multiple Choice Element must have at least two choices",
   }),
-  shuffleOption: ZShuffleOption.optional(),
+  shuffleOption: ZStoredShuffleOption,
   otherOptionPlaceholder: ZI18nString.optional(),
   validation: ZValidation.optional(),
   displayType: ZMultipleChoiceOptionDisplayType.optional(),
@@ -303,7 +321,7 @@ export const ZSurveyMatrixElement = ZSurveyElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.Matrix),
   rows: z.array(ZSurveyMatrixElementChoice),
   columns: z.array(ZSurveyMatrixElementChoice),
-  shuffleOption: ZShuffleOption.optional().prefault("none"),
+  shuffleOption: ZStoredShuffleOptionWithDefault,
   validation: ZValidation.optional(),
 });
 
@@ -343,7 +361,7 @@ export const ZSurveyRankingElement = ZSurveyElementBase.extend({
       error: "Ranking Element can have at most 25 options",
     }),
   otherOptionPlaceholder: ZI18nString.optional(),
-  shuffleOption: ZShuffleOption.optional(),
+  shuffleOption: ZStoredShuffleOption,
   validation: ZValidation.optional(),
 });
 
@@ -386,8 +404,12 @@ export const ZSurveyCesElement = ZSurveyElementBase.extend({
 
 export type TSurveyCesElement = z.infer<typeof ZSurveyCesElement>;
 
-// Union of all element types
-export const ZSurveyElement = z.union([
+// Union of all element types.
+// Discriminated on `type` on purpose: a plain `z.union` reports a single `invalid_union` issue at the
+// element's own path with the bare default message "Invalid input", hiding which field actually failed.
+// Discriminating picks the one member that matches and surfaces its inner issue path (e.g.
+// `blocks.0.elements.0.rows.1.label.de`), which is what the editor needs to name the broken field.
+export const ZSurveyElement = z.discriminatedUnion("type", [
   ZSurveyOpenTextElement,
   ZSurveyConsentElement,
   ZSurveyMultipleChoiceSingleElement,
