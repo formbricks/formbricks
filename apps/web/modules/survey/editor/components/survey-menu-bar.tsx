@@ -69,9 +69,10 @@ interface SurveyMenuBarProps {
    * which the Follow-ups tab reads as well.
    */
   visibilityGate: TSurveyVisibilityUiGate;
-  /** The effective visibility, including a change made from this editor; pending counts as restricted. */
+  /** The effective visibility, from the server; pending counts as restricted. */
   effectiveVisibility: TSurveyVisibility;
-  onVisibilityChanged: (visibility: TSurveyVisibility) => void;
+  /** A change was stored (in effect or pending): the editor refreshes what it shows from the server. */
+  onVisibilityChanged: () => void;
   onVisibilityNotEnabled: () => void;
   /** Why this user can see the survey; `null` while the gate is off. */
   surveyAccess: TSurveyAccess | null;
@@ -745,17 +746,17 @@ export const SurveyMenuBar = ({
   const makeVisibleForActivation = async (choice: TSurveyVisibility): Promise<TActivationStep> => {
     setIsChangingVisibility(true);
     try {
-      const result = await updateSurveyVisibility.mutateAsync({
+      await updateSurveyVisibility.mutateAsync({
         surveyId: localSurvey.id,
         visibility: "workspace",
       });
-      onVisibilityChanged(result.visibility);
+      onVisibilityChanged();
       return planActivation(choice, { ok: true });
     } catch (error) {
       const step = planActivation(choice, { ok: false, error });
       if (step.kind === "activate") {
         // The grant is stored but not in effect yet: the survey stays restricted until it settles.
-        onVisibilityChanged("restricted");
+        onVisibilityChanged();
       } else {
         toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
       }

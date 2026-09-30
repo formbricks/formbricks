@@ -49,8 +49,11 @@ interface CollaborateModalProps {
   workspaceName: string;
   /** The survey list's query, patched optimistically. The editor passes none. */
   listQueryKey?: ReturnType<typeof surveyKeys.list>;
-  /** The effective visibility after a successful (or pending) change — pending reads as restricted. */
-  onVisibilityChanged?: (visibility: TSurveyVisibility) => void;
+  /**
+   * A change was stored, in effect or pending. The caller re-reads the effective visibility from the
+   * server — a pending change keeps reading as restricted until it settles.
+   */
+  onVisibilityChanged?: () => void;
   /** The feature turned out to be off for this organization: hide every visibility control. */
   onVisibilityNotEnabled: () => void;
 }
@@ -107,17 +110,17 @@ export const CollaborateModal = ({
 
   const saveVisibility = async (target: TSurveyVisibility) => {
     try {
-      const result = await updateVisibility.mutateAsync({ surveyId, visibility: target });
+      await updateVisibility.mutateAsync({ surveyId, visibility: target });
       toast.success(t("workspace.surveys.visibility.visibility_updated"));
-      onVisibilityChanged?.(result.visibility);
+      onVisibilityChanged?.();
       closeAll();
     } catch (error) {
       const message = getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"));
       switch (getVisibilityErrorReaction(error)) {
         case "pending":
           toast.success(t("workspace.surveys.visibility.visibility_update_pending"));
-          // Stored, not in effect: nothing changes for anyone until it settles, so it stays restricted.
-          onVisibilityChanged?.("restricted");
+          // Stored, not in effect: the caller's re-read keeps it restricted until it settles.
+          onVisibilityChanged?.();
           closeAll();
           break;
         case "hide_controls":
