@@ -329,6 +329,31 @@ describe("GET …/visibility", () => {
     });
   });
 
+  test.each([
+    ["workspace", ["restricted"]],
+    ["restricted", ["workspace"]],
+  ] as const)(
+    "reports a %s survey in its initial projection as never changed and not pending",
+    async (visibility, allowedTargets) => {
+      authorize(row({ visibility, visibilityProjectedVersion: -1, visibilityVersion: 0 }));
+
+      const response = await getV3SurveyVisibility({
+        authentication: session,
+        instance,
+        requestId,
+        surveyId: SURVEY_ID,
+      });
+
+      expect(response.status).toBe(200);
+      expect((await json(response)).data).toMatchObject({
+        allowedTargets,
+        pending: null,
+        version: 0,
+        visibility,
+      });
+    }
+  );
+
   test("reports no blockers for a settled restricted survey, whose only target is workspace", async () => {
     authorize(row({ visibility: "restricted" }));
 

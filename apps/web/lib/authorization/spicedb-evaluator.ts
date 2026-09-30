@@ -112,22 +112,50 @@ type TSpicedbCheck = Readonly<{
 }>;
 
 /**
- * The single check a pending survey is decided by (ENG-3282, contract §5 "fail closed while pending").
+ * `survey.change_visibility` — `(owner & workspace->read) + workspace->administer` in the schema — for a
+ * survey whose graph node holds no edges yet: the same rule, from PostgreSQL's `ownerId`. Whether the
+ * organization is entitled to change visibility is the endpoint's own gate, as on the settled path.
+ */
+const getChangeVisibilityCheckFromFacts = (
+  actor: TAuthorizationActor,
+  workspaceId: string,
+  ownerId: string | null
+): TSpicedbCheck | null => {
+  if (actor.type === "apiKey") return null;
+  return {
+    permission: ownerId !== null && ownerId === actor.id ? "read" : "administer",
+    resource: { id: workspaceId, type: "workspace" },
+  };
+};
+
+/**
+ * The single check a survey the graph does not hold the current version of is decided by (ENG-3282,
+ * contract §5 "fail closed while pending").
  *
- * - `survey.change_visibility` stays on the survey's own node: who may change visibility does not
- *   depend on which value is in flight, and the owner/administrator edges are unaffected by it.
- * - API keys: never, whichever way the change points (K-1).
+ * - `survey.change_visibility` stays on the survey's own node, whose owner/administrator edges do not
+ *   depend on which value is in flight — unless that node has never been projected (no edges at all),
+ *   when it is decided from PostgreSQL facts by the same rule.
+ * - the initial projection of a workspace-visible survey: the workspace ladder, like any
+ *   workspace-visible survey.
+ * - otherwise API keys: never, whichever way the change points (K-1);
  * - the owner: their workspace ladder for the action, which includes the administrators' arm;
  * - anyone else: organization owners and managers only (`workspace#administer`).
  */
 const getPendingPrivateCheck = (
   actor: TAuthorizationActor,
   action: TAuthorizationAction,
+  resourceType: TAuthorizationResourceType,
   workspaceId: string,
   policy: TPendingPrivateSurveyPolicy
 ): TSpicedbCheck | null => {
   if (action === "survey.change_visibility") {
-    return { permission: "change_visibility", resource: { id: policy.surveyId, type: "survey" } };
+    return policy.neverAcknowledged
+      ? getChangeVisibilityCheckFromFacts(actor, workspaceId, policy.ownerId)
+      : { permission: "change_visibility", resource: { id: policy.surveyId, type: "survey" } };
+  }
+  if (policy.kind === "initialShared") {
+    const permission = getPermission(actor, action, resourceType, "workspace");
+    return permission ? { permission, resource: { id: workspaceId, type: "workspace" } } : null;
   }
   if (actor.type === "apiKey") return null;
 
@@ -147,7 +175,9 @@ const getCheck = (
   resourceType: TAuthorizationResourceType,
   scope: TResolvedAuthorizationScope
 ): TSpicedbCheck | null => {
-  if (scope.policy) return getPendingPrivateCheck(actor, action, scope.permissionResource.id, scope.policy);
+  if (scope.policy) {
+    return getPendingPrivateCheck(actor, action, resourceType, scope.permissionResource.id, scope.policy);
+  }
 
   const permission = getPermission(actor, action, resourceType, scope.permissionResource.type);
   return permission ? { permission, resource: scope.permissionResource } : null;

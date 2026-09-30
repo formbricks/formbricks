@@ -274,13 +274,13 @@ describe("survey and response scopes once survey visibility is enforced (ENG-328
       actorValid: true,
       organizationId: "org-1",
       permissionResource: { type: "workspace", id: "workspace-1" },
-      policy: { kind: "pendingPrivate", ownerId: "owner-1", surveyId: "survey-1" },
+      policy: { kind: "pendingPrivate", neverAcknowledged: false, ownerId: "owner-1", surveyId: "survey-1" },
     });
   });
 
   test("decides a survey inserted workspace-visible on the workspace ladder, not its empty graph node", async () => {
     vi.mocked(getSurveyAuthorizationScopeRow).mockResolvedValue(
-      row({ visibility: "workspace", visibilityProjectedVersion: 0, visibilityVersion: 1 })
+      row({ visibility: "workspace", visibilityProjectedVersion: -1, visibilityVersion: 0 })
     );
 
     await expect(
@@ -289,12 +289,13 @@ describe("survey and response scopes once survey visibility is enforced (ENG-328
       actorValid: true,
       organizationId: "org-1",
       permissionResource: { type: "workspace", id: "workspace-1" },
+      policy: { kind: "initialShared", neverAcknowledged: true, ownerId: "owner-1", surveyId: "survey-1" },
     });
   });
 
   test("keeps a grant made before the first acknowledgement on the pending-restricted policy", async () => {
     vi.mocked(getSurveyAuthorizationScopeRow).mockResolvedValue(
-      row({ visibility: "workspace", visibilityProjectedVersion: 0, visibilityVersion: 2 })
+      row({ visibility: "workspace", visibilityProjectedVersion: -1, visibilityVersion: 2 })
     );
 
     await expect(
@@ -304,9 +305,9 @@ describe("survey and response scopes once survey visibility is enforced (ENG-328
     });
   });
 
-  test("keeps a never-projected restricted survey on the pending-restricted policy", async () => {
+  test("keeps a restricted survey in its initial projection on the pending-restricted policy", async () => {
     vi.mocked(getSurveyAuthorizationScopeRow).mockResolvedValue(
-      row({ visibility: "restricted", visibilityProjectedVersion: 0, visibilityVersion: 1 })
+      row({ visibility: "restricted", visibilityProjectedVersion: -1, visibilityVersion: 0 })
     );
 
     await expect(

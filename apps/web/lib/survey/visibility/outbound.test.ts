@@ -31,18 +31,18 @@ describe("isSurveyOutboundAllowed", () => {
       false,
     ],
     [
-      "a just-created workspace survey, never projected",
-      { visibility: "workspace" as const, visibilityProjectedVersion: 0, visibilityVersion: 1 },
+      "a just-created workspace survey, in its initial projection",
+      { visibility: "workspace" as const, visibilityProjectedVersion: -1, visibilityVersion: 0 },
       true,
     ],
     [
       "a grant made before the first acknowledgement (still pending)",
-      { visibility: "workspace" as const, visibilityProjectedVersion: 0, visibilityVersion: 2 },
+      { visibility: "workspace" as const, visibilityProjectedVersion: -1, visibilityVersion: 2 },
       false,
     ],
     [
-      "a just-created restricted survey, never projected",
-      { visibility: "restricted" as const, visibilityProjectedVersion: 0, visibilityVersion: 1 },
+      "a just-created restricted survey, in its initial projection",
+      { visibility: "restricted" as const, visibilityProjectedVersion: -1, visibilityVersion: 0 },
       false,
     ],
   ])("%s", (_label, row, expected) => {
@@ -64,7 +64,7 @@ describe("findNotWorkspaceVisibleSurveyIds", () => {
         id: { in: ["s1", "s2"] },
         OR: [
           { visibility: "restricted" },
-          { visibilityPending: true, NOT: { visibilityVersion: 1, visibilityProjectedVersion: 0 } },
+          { visibilityPending: true, NOT: { visibilityVersion: 0, visibilityProjectedVersion: { lt: 0 } } },
         ],
       },
       select: { id: true },

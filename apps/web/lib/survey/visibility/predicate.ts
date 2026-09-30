@@ -2,20 +2,23 @@ import { Prisma } from "@formbricks/database/prisma";
 import type { TSurveyVisibility } from "@formbricks/types/surveys/types";
 import type { TSurveyActorContext } from "./actor-context";
 
-/** `isNeverProjected` (see `policy.ts`) as a `Survey` clause. */
-const neverProjectedWhere: Prisma.SurveyWhereInput = { visibilityVersion: 1, visibilityProjectedVersion: 0 };
+/** `isInitialProjection` (see `policy.ts`) as a `Survey` clause. */
+const initialProjectionWhere: Prisma.SurveyWhereInput = {
+  visibilityVersion: 0,
+  visibilityProjectedVersion: { lt: 0 },
+};
 
 /**
  * `getEffectiveVisibility` as SQL (see `policy.ts`): workspace-visible when stored `workspace` with
- * nothing pending, or never projected; restricted otherwise.
+ * nothing pending, or in its initial projection; restricted otherwise.
  */
 export const effectivelyWorkspaceVisibleWhere: Prisma.SurveyWhereInput = {
   visibility: "workspace",
-  OR: [{ visibilityPending: false }, neverProjectedWhere],
+  OR: [{ visibilityPending: false }, initialProjectionWhere],
 };
 
 export const effectivelyRestrictedWhere: Prisma.SurveyWhereInput = {
-  OR: [{ visibility: "restricted" }, { visibilityPending: true, NOT: neverProjectedWhere }],
+  OR: [{ visibility: "restricted" }, { visibilityPending: true, NOT: initialProjectionWhere }],
 };
 
 /**
@@ -29,7 +32,7 @@ export const effectivelyRestrictedWhere: Prisma.SurveyWhereInput = {
  * - API key: effectively workspace-visible surveys. Never a restricted one.
  *
  * "Effectively workspace-visible" is `getEffectiveVisibility`: stored `workspace` with nothing pending,
- * or never projected (a survey just created or copied, see `isNeverProjected`).
+ * or in its initial projection (a survey just created or copied, see `isInitialProjection`).
  *
  * Workspace membership is NOT part of this: callers already scope to a workspace the actor may read.
  */
@@ -88,7 +91,7 @@ export const visibleSurveySqlPredicate = (ctx: TSurveyActorContext, alias: strin
   if (!ctx.enforced || (ctx.kind === "user" && ctx.isOrganizationAdmin)) return Prisma.sql`TRUE`;
 
   const table = Prisma.raw(`"${alias}"`);
-  const sharedAndSettled = Prisma.sql`(${table}."visibility" = 'workspace' AND (${table}."visibilityPending" = false OR (${table}."visibilityVersion" = 1 AND ${table}."visibilityProjectedVersion" = 0)))`;
+  const sharedAndSettled = Prisma.sql`(${table}."visibility" = 'workspace' AND (${table}."visibilityPending" = false OR (${table}."visibilityVersion" = 0 AND ${table}."visibilityProjectedVersion" < 0)))`;
   if (ctx.kind === "apiKey") return sharedAndSettled;
 
   return Prisma.sql`(${sharedAndSettled} OR ${table}."ownerId" = ${ctx.userId})`;

@@ -209,7 +209,7 @@ describe("survey visibility decisions (ENG-3282)", () => {
       actorValid: true,
       organizationId: "org-1",
       permissionResource: { type: "workspace", id: "workspace-1" },
-      policy: { kind: "pendingPrivate", ownerId, surveyId: "survey-1" },
+      policy: { kind: "pendingPrivate", neverAcknowledged: false, ownerId, surveyId: "survey-1" },
     }) as const;
 
   const checked = () => checkPermission.mock.calls.map(([check]) => check);

@@ -2,8 +2,8 @@
 -- from.
 --
 -- Every column is additive and defaults to today's behaviour: `visibility = 'workspace'`, no owner,
--- versions equal. A row inserted from here on starts one version ahead of its acknowledgement instead
--- (see the trigger below). Nothing here writes a row of a migrated database; `ownerId` is backfilled from `createdBy` by the data
+-- versions equal. A row inserted from here on starts in its initial projection instead (see the
+-- trigger below). Nothing here writes a row of a migrated database; `ownerId` is backfilled from `createdBy` by the data
 -- migration that follows, BEFORE the projection trigger exists (the migration after that), so the
 -- backfill enqueues no outbox events.
 --
@@ -42,15 +42,18 @@ ALTER TABLE "Survey" ADD COLUMN IF NOT EXISTS "visibilityPending" BOOLEAN NOT NU
 -- touches either version (or the column itself, so a stray write cannot stick).
 --
 -- A new row (a create or a copy) has no graph edges until the projector has run, so it must not look
--- settled: authorization would consult an empty survey node and deny even its owner. An insert that
--- arrives with equal versions is therefore moved one version ahead of its acknowledgement, and stays
--- pending — decided from these PostgreSQL facts, fail closed — until the projector acknowledges exactly
--- that version. An insert already carrying a pending pair keeps it.
+-- settled: authorization would consult an empty survey node and deny even its owner. Every insert
+-- therefore starts in its initial projection: version 0 ("never changed through the visibility
+-- endpoint") and acknowledged version -1 ("never acknowledged") — a pair no settled survey can have,
+-- distinct from the 0/0 every pre-migration survey carries. The app decides such a row from these
+-- PostgreSQL facts until the projector acknowledges version 0; a visibility change stored before that
+-- is an ordinary pending change (version 1 and up, still unacknowledged).
 CREATE OR REPLACE FUNCTION survey_visibility_pending() RETURNS trigger
 LANGUAGE plpgsql AS $$
 BEGIN
-  IF TG_OP = 'INSERT' AND NEW."visibilityVersion" = NEW."visibilityProjectedVersion" THEN
-    NEW."visibilityVersion" := NEW."visibilityProjectedVersion" + 1;
+  IF TG_OP = 'INSERT' THEN
+    NEW."visibilityVersion" := 0;
+    NEW."visibilityProjectedVersion" := -1;
   END IF;
   NEW."visibilityPending" := NEW."visibilityVersion" <> NEW."visibilityProjectedVersion";
   RETURN NEW;

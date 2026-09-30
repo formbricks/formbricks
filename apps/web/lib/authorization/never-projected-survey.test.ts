@@ -40,9 +40,9 @@ const storeRow = (overrides: Partial<TSurveyAuthorizationScopeRow>) =>
     organizationId: "org-1",
     ownerId: "owner-1",
     visibility: "workspace",
-    // Just inserted: one version ahead of an acknowledgement that has never happened.
-    visibilityProjectedVersion: 0,
-    visibilityVersion: 1,
+    // Just inserted: the initial projection, never changed and never acknowledged.
+    visibilityProjectedVersion: -1,
+    visibilityVersion: 0,
     workspaceId: "workspace-1",
     ...overrides,
   });
@@ -98,5 +98,47 @@ describe("a grant made before the first acknowledgement (restricted, then back t
     await expect(spicedbEvaluator.can(member, "survey.read", survey)).resolves.toBe(false);
     await expect(spicedbEvaluator.can(apiKey, "survey.read", survey)).resolves.toBe(false);
     await expect(spicedbEvaluator.can(owner, "survey.read", survey)).resolves.toBe(true);
+  });
+});
+
+describe.each(["workspace", "restricted"] as const)(
+  "managing the visibility of a %s survey during its initial projection",
+  (visibility) => {
+    beforeEach(() => storeRow({ visibility }));
+
+    test("its owner may change visibility, decided from PostgreSQL rather than the empty node", async () => {
+      await expect(spicedbEvaluator.can(owner, "survey.change_visibility", survey)).resolves.toBe(true);
+      expect(checkPermission).toHaveBeenCalledWith(
+        expect.objectContaining({
+          permission: "read",
+          resource: { objectId: "workspace-1", objectType: "workspace" },
+        })
+      );
+      expect(surveyNodeChecks()).toEqual([]);
+    });
+
+    test("an organization owner or manager may too; a member and an API key may not", async () => {
+      await expect(spicedbEvaluator.can(member, "survey.change_visibility", survey)).resolves.toBe(false);
+      await expect(spicedbEvaluator.can(apiKey, "survey.change_visibility", survey)).resolves.toBe(false);
+
+      checkPermission.mockResolvedValueOnce({ allowed: true });
+      await expect(spicedbEvaluator.can(member, "survey.change_visibility", survey)).resolves.toBe(true);
+      expect(checkPermission).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          permission: "administer",
+          resource: { objectId: "workspace-1", objectType: "workspace" },
+        })
+      );
+      expect(surveyNodeChecks()).toEqual([]);
+    });
+  }
+);
+
+describe("managing the visibility of a survey whose graph node is already projected", () => {
+  test("a pending change keeps change_visibility on the survey's own node", async () => {
+    storeRow({ visibility: "restricted", visibilityProjectedVersion: 1, visibilityVersion: 2 });
+
+    await spicedbEvaluator.can(owner, "survey.change_visibility", survey);
+    expect(surveyNodeChecks()).toEqual([[expect.objectContaining({ permission: "change_visibility" })]]);
   });
 });
