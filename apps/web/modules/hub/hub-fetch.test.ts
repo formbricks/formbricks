@@ -147,18 +147,16 @@ describe("createHubFetch", () => {
     });
   });
 
-  test("does not retry a request the caller aborted", async () => {
+  test("does not retry a request the caller aborted, and rethrows fetch's own error", async () => {
     const controller = new AbortController();
+    const aborted = new DOMException("This operation was aborted", "AbortError");
     const fetchStub = vi.fn(async () => {
       controller.abort();
-      throw new DOMException("This operation was aborted", "AbortError");
+      throw aborted;
     });
     vi.stubGlobal("fetch", fetchStub);
 
-    await expect(createHubFetch()(URL_UNDER_TEST, { signal: controller.signal })).rejects.toHaveProperty(
-      "name",
-      "AbortError"
-    );
+    await expect(createHubFetch()(URL_UNDER_TEST, { signal: controller.signal })).rejects.toBe(aborted);
     expect(fetchStub).toHaveBeenCalledTimes(1);
   });
 
