@@ -114,7 +114,7 @@ describe("getSurveyListPage", () => {
               OR: [
                 {
                   visibility: "workspace",
-                  OR: [{ visibilityPending: false }, { visibilityProjectedVersion: 0 }],
+                  OR: [{ visibilityPending: false }, { visibilityVersion: 1, visibilityProjectedVersion: 0 }],
                 },
                 { ownerId: "user_1" },
               ],
@@ -122,7 +122,7 @@ describe("getSurveyListPage", () => {
             {
               OR: [
                 { visibility: "restricted" },
-                { visibilityPending: true, visibilityProjectedVersion: { gt: 0 } },
+                { visibilityPending: true, NOT: { visibilityVersion: 1, visibilityProjectedVersion: 0 } },
               ],
             },
           ],

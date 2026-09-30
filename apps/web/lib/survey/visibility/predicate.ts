@@ -2,6 +2,22 @@ import { Prisma } from "@formbricks/database/prisma";
 import type { TSurveyVisibility } from "@formbricks/types/surveys/types";
 import type { TSurveyActorContext } from "./actor-context";
 
+/** `isNeverProjected` (see `policy.ts`) as a `Survey` clause. */
+const neverProjectedWhere: Prisma.SurveyWhereInput = { visibilityVersion: 1, visibilityProjectedVersion: 0 };
+
+/**
+ * `getEffectiveVisibility` as SQL (see `policy.ts`): workspace-visible when stored `workspace` with
+ * nothing pending, or never projected; restricted otherwise.
+ */
+export const effectivelyWorkspaceVisibleWhere: Prisma.SurveyWhereInput = {
+  visibility: "workspace",
+  OR: [{ visibilityPending: false }, neverProjectedWhere],
+};
+
+export const effectivelyRestrictedWhere: Prisma.SurveyWhereInput = {
+  OR: [{ visibility: "restricted" }, { visibilityPending: true, NOT: neverProjectedWhere }],
+};
+
 /**
  * The one visibility predicate (ENG-3282, contract §6). Every list, count, export and response read
  * that can return a survey or its responses applies it in SQL — never as a post-filter, so `limit`,
@@ -13,23 +29,10 @@ import type { TSurveyActorContext } from "./actor-context";
  * - API key: effectively workspace-visible surveys. Never a restricted one.
  *
  * "Effectively workspace-visible" is `getEffectiveVisibility`: stored `workspace` with nothing pending,
- * or with no projection acknowledged yet (a survey just created or copied).
+ * or never projected (a survey just created or copied, see `isNeverProjected`).
  *
  * Workspace membership is NOT part of this: callers already scope to a workspace the actor may read.
  */
-/**
- * `getEffectiveVisibility` as SQL (see `policy.ts`): workspace-visible when stored `workspace` with
- * nothing pending, or with no projection acknowledged yet; restricted otherwise.
- */
-export const effectivelyWorkspaceVisibleWhere: Prisma.SurveyWhereInput = {
-  visibility: "workspace",
-  OR: [{ visibilityPending: false }, { visibilityProjectedVersion: 0 }],
-};
-
-export const effectivelyRestrictedWhere: Prisma.SurveyWhereInput = {
-  OR: [{ visibility: "restricted" }, { visibilityPending: true, visibilityProjectedVersion: { gt: 0 } }],
-};
-
 export const buildVisibleSurveyWhere = (ctx: TSurveyActorContext): Prisma.SurveyWhereInput => {
   if (!ctx.enforced) return {};
 
@@ -85,7 +88,7 @@ export const visibleSurveySqlPredicate = (ctx: TSurveyActorContext, alias: strin
   if (!ctx.enforced || (ctx.kind === "user" && ctx.isOrganizationAdmin)) return Prisma.sql`TRUE`;
 
   const table = Prisma.raw(`"${alias}"`);
-  const sharedAndSettled = Prisma.sql`(${table}."visibility" = 'workspace' AND (${table}."visibilityPending" = false OR ${table}."visibilityProjectedVersion" = 0))`;
+  const sharedAndSettled = Prisma.sql`(${table}."visibility" = 'workspace' AND (${table}."visibilityPending" = false OR (${table}."visibilityVersion" = 1 AND ${table}."visibilityProjectedVersion" = 0)))`;
   if (ctx.kind === "apiKey") return sharedAndSettled;
 
   return Prisma.sql`(${sharedAndSettled} OR ${table}."ownerId" = ${ctx.userId})`;

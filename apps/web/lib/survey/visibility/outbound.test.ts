@@ -36,6 +36,11 @@ describe("isSurveyOutboundAllowed", () => {
       true,
     ],
     [
+      "a grant made before the first acknowledgement (still pending)",
+      { visibility: "workspace" as const, visibilityProjectedVersion: 0, visibilityVersion: 2 },
+      false,
+    ],
+    [
       "a just-created restricted survey, never projected",
       { visibility: "restricted" as const, visibilityProjectedVersion: 0, visibilityVersion: 1 },
       false,
@@ -59,7 +64,7 @@ describe("findNotWorkspaceVisibleSurveyIds", () => {
         id: { in: ["s1", "s2"] },
         OR: [
           { visibility: "restricted" },
-          { visibilityPending: true, visibilityProjectedVersion: { gt: 0 } },
+          { visibilityPending: true, NOT: { visibilityVersion: 1, visibilityProjectedVersion: 0 } },
         ],
       },
       select: { id: true },
