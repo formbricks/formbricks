@@ -157,7 +157,17 @@ describe("getSurveys", () => {
           workspaceId,
           status: { not: "completed" },
           archivedAt: null,
-          AND: [{ OR: [{ visibility: "workspace", visibilityPending: false }, { ownerId: userId }] }],
+          AND: [
+            {
+              OR: [
+                {
+                  visibility: "workspace",
+                  OR: [{ visibilityPending: false }, { visibilityProjectedVersion: 0 }],
+                },
+                { ownerId: userId },
+              ],
+            },
+          ],
         },
       })
     );

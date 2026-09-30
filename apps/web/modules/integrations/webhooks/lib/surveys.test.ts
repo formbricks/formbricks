@@ -32,7 +32,12 @@ describe("getWebhookSurveys", () => {
     expect(getUserVisibleSurveyWhere).toHaveBeenCalledWith(memberId, organizationId);
     expect(getSurveys).toHaveBeenCalledWith(
       workspaceId,
-      { OR: [{ visibility: "workspace", visibilityPending: false }, { ownerId: memberId }] },
+      {
+        OR: [
+          { visibility: "workspace", OR: [{ visibilityPending: false }, { visibilityProjectedVersion: 0 }] },
+          { ownerId: memberId },
+        ],
+      },
       200
     );
   });
