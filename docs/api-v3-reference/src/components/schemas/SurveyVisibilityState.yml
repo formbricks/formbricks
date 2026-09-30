@@ -33,8 +33,10 @@ allOf:
           - type: "null"
         description:
           The value a `POST` stored that the graph has not yet acknowledged. While non-null the survey is
-          restricted for everyone but the owner and the organisation's owners and managers, whichever value is
-          pending — `visibility` reads `restricted`. `"restricted"` means the restriction is already enforced and
+          restricted for everyone but the owner (for as long as they keep the workspace access the action needs —
+          read to view, write to edit) and the organisation's owners and managers, whichever value is pending —
+          `visibility` reads `restricted`. Always `null` for a survey just created or copied whose visibility has
+          not been changed yet — its stored value is in effect at once. `"restricted"` means the restriction is already enforced and
           only the graph is catching up; `"workspace"` means the grant is not yet in effect. `null` normally.
           Clears when the outbox delivers (within 60 seconds, or the deployment fails closed), or when a later
           `POST` cancels or supersedes it.
