@@ -75,7 +75,7 @@ describe("executeTenantScopedQuery", () => {
     const { executeTenantScopedQuery } = await import("./cube-client");
     const result = await executeTenantScopedQuery(scopedInput);
 
-    expect(mockLoad).toHaveBeenCalledWith(scopedInput.query);
+    expect(mockLoad).toHaveBeenCalledWith(scopedInput.query, expect.anything());
     expect(mockTablePivot).toHaveBeenCalled();
     expect(result).toEqual([{ id: "1", count: 42 }]);
 
