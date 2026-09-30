@@ -403,11 +403,13 @@ jobs:
             --set-string taxonomy.llm.contextWindowTokens=200000 \
             --set taxonomy.serviceAccount.create=true \
             --set 'taxonomy.serviceAccount.annotations.eks\.amazonaws\.com/role-arn=arn:aws:iam::123456789012:role/taxonomy' \
+            --set taxonomy.serviceAccount.additionalLabels.team=taxonomy \
             --show-only templates/taxonomy-deployment.yaml \
             --show-only templates/taxonomy-serviceaccount.yaml > "$render_dir/taxonomy-bedrock-irsa.yaml"
           grep -q 'serviceAccountName: formbricks-taxonomy$' "$render_dir/taxonomy-bedrock-irsa.yaml"
           grep -q 'eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/taxonomy' "$render_dir/taxonomy-bedrock-irsa.yaml"
           grep -q 'automountServiceAccountToken: false' "$render_dir/taxonomy-bedrock-irsa.yaml"
+          grep -q 'team: taxonomy' "$render_dir/taxonomy-bedrock-irsa.yaml"
           ! grep -q 'serviceAccountName:' "$render_dir/taxonomy-vertex.yaml"
 
           helm template qa "$chart" \
@@ -461,6 +463,11 @@ jobs:
             taxonomy-service-account-annotations-without-create \
             "taxonomy.serviceAccount.annotations and additionalLabels apply only when" \
             --set 'taxonomy.serviceAccount.annotations.eks\.amazonaws\.com/role-arn=arn:aws:iam::123456789012:role/taxonomy'
+
+          expect_taxonomy_render_failure \
+            taxonomy-service-account-labels-without-create \
+            "taxonomy.serviceAccount.annotations and additionalLabels apply only when" \
+            --set taxonomy.serviceAccount.additionalLabels.team=taxonomy
 
           expect_taxonomy_render_failure \
             taxonomy-bedrock-region-conflict \
