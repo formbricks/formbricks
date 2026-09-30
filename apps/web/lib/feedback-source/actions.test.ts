@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { getResponseCountBySurveyId } from "@/lib/response/service";
+import { getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   createFeedbackSourceWithMappingsAction,
   deleteFeedbackSourceAction,
+  getResponseCountAction,
   importHistoricalResponsesAction,
   updateFeedbackSourceWithMappingsAction,
 } from "./actions";
@@ -171,5 +174,38 @@ describe("feedback source mutation safeguards", () => {
     ).rejects.toThrow("not workspace-visible");
     expect(mocks.assertNewlyAttachedSurveysWorkspaceVisible).toHaveBeenCalledWith(["survey-1"]);
     expect(mocks.importHistoricalResponses).not.toHaveBeenCalled();
+  });
+});
+
+describe("getResponseCountAction survey visibility (ENG-3282)", () => {
+  const run = () =>
+    (getResponseCountAction as unknown as (args: object) => Promise<number>)({
+      ctx,
+      parsedInput: { surveyId: "survey-1", workspaceId },
+    });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getWorkspaceIdFromSurveyId).mockResolvedValue(workspaceId);
+    vi.mocked(getResponseCountBySurveyId).mockResolvedValue(7);
+  });
+
+  test("refuses a caller who cannot read the survey's responses, without counting them", async () => {
+    mocks.assertCan.mockImplementation(async (_actor, _action, resource: { type: string }) => {
+      if (resource.type === "survey") throw new Error("Not authorized");
+    });
+
+    await expect(run()).rejects.toThrow("Not authorized");
+    expect(mocks.assertCan).toHaveBeenCalledWith({ type: "user", id: "user-1" }, "survey.response_read", {
+      type: "survey",
+      id: "survey-1",
+    });
+    expect(getResponseCountBySurveyId).not.toHaveBeenCalled();
+  });
+
+  test("returns the count when the caller may read the survey's responses", async () => {
+    mocks.assertCan.mockResolvedValue(undefined);
+
+    await expect(run()).resolves.toBe(7);
   });
 });

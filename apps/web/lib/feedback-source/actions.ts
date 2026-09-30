@@ -299,6 +299,11 @@ export const getResponseCountAction = authenticatedActionClient
         type: "workspace",
         id: surveyWorkspaceId,
       });
+      // ENG-3282: a restricted survey's response count is its owner's and the administrators'.
+      await assertCan({ type: "user", id: ctx.user.id }, "survey.response_read", {
+        type: "survey",
+        id: parsedInput.surveyId,
+      });
 
       return getResponseCountBySurveyId(parsedInput.surveyId);
     }
