@@ -1,7 +1,7 @@
 "use client";
 
 import { type ElementType, type ReactElement, type ReactNode, useMemo } from "react";
-import { CartesianGrid, XAxis, YAxis } from "recharts";
+import { CartesianGrid, ReferenceLine, XAxis, YAxis } from "recharts";
 import {
   AXIS_LABEL_BOX_HEIGHT,
   AXIS_LABEL_GAP,
@@ -27,6 +27,9 @@ import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import type { ChartConfig } from "@/modules/ui/components/chart";
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip } from "@/modules/ui/components/chart";
 import { PolishedChartTooltip } from "./polished-tooltip";
+
+// slate-400: one step darker than the dashed grid, so zero stands out without competing with the series.
+const ZERO_LINE_COLOR = "#94a3b8";
 
 export interface CartesianChartProps {
   data: TChartDataRow[];
@@ -402,6 +405,14 @@ export function CartesianChart({
                 horizontal={!horizontal}
                 syncWithTicks
               />
+              {/* A scale that runs below zero (NPS -100..100) needs its zero drawn solid: the dashed
+              gridline at 0 reads like any other tick, and above/below zero is the point of the chart. */}
+              {(yScale?.domain[0] ?? 0) < 0 &&
+                (horizontal ? (
+                  <ReferenceLine x={0} stroke={ZERO_LINE_COLOR} />
+                ) : (
+                  <ReferenceLine y={0} stroke={ZERO_LINE_COLOR} />
+                ))}
               {/* Flipped charts swap the axis roles: values run along the x-axis and the categories
               stack down the y-axis. */}
               {horizontal ? (

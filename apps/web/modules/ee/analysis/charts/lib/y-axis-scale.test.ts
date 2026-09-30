@@ -1,13 +1,60 @@
 import { describe, expect, test } from "vitest";
-import { computeYAxis } from "./y-axis-scale";
+import { computePinnedAxisDomain, computePinnedTicks, computeYAxis } from "./y-axis-scale";
 
 const RATING_AVG = "FeedbackRecords.ratingAverage";
 const CSAT_AVG = "FeedbackRecords.csatAverage";
 const CES_AVG = "FeedbackRecords.cesAverage";
 const NPS_AVG = "FeedbackRecords.npsAverage";
 const COUNT = "FeedbackRecords.count";
+const NPS_SCORE = "FeedbackRecords.npsScore";
+const CSAT_SCORE = "FeedbackRecords.csatScore";
 
 describe("computeYAxis", () => {
+  describe("bounded scores pin the axis to their full range (ENG-3331)", () => {
+    test("an NPS score of 20 to 60 renders on -100..100, not a zoomed-in 20..60", () => {
+      const data = [{ [NPS_SCORE]: 20 }, { [NPS_SCORE]: 60 }];
+      expect(computeYAxis(data, [NPS_SCORE], false)).toEqual({
+        domain: [-100, 100],
+        ticks: [-100, -50, 0, 50, 100],
+      });
+    });
+
+    test("a negative NPS score still pins instead of falling back to nice scaling", () => {
+      const data = [{ [NPS_SCORE]: -35 }, { [NPS_SCORE]: 12 }];
+      expect(computeYAxis(data, [NPS_SCORE], true)?.domain).toEqual([-100, 100]);
+    });
+
+    test("a CSAT score renders on 0..100 with 20-point ticks", () => {
+      expect(computeYAxis([{ [CSAT_SCORE]: 70 }], [CSAT_SCORE], true)).toEqual({
+        domain: [0, 100],
+        ticks: [0, 20, 40, 60, 80, 100],
+      });
+    });
+
+    test("an NPS score beside an NPS average falls back to the scale they share neither of", () => {
+      const data = [{ [NPS_SCORE]: 40, [NPS_AVG]: 7.5 }];
+      expect(computePinnedAxisDomain(data, [NPS_SCORE, NPS_AVG])).toBeUndefined();
+      expect(computeYAxis(data, [NPS_SCORE, NPS_AVG], false)?.domain).not.toEqual([-100, 100]);
+    });
+
+    test("NPS and CSAT scores on one chart do not share a range, so neither pins", () => {
+      expect(
+        computePinnedAxisDomain([{ [NPS_SCORE]: 40, [CSAT_SCORE]: 70 }], [NPS_SCORE, CSAT_SCORE])
+      ).toBeUndefined();
+    });
+
+    test("a value outside the range falls back rather than clipping the line", () => {
+      expect(computePinnedAxisDomain([{ [CSAT_SCORE]: 130 }], [CSAT_SCORE])).toBeUndefined();
+    });
+
+    test("ticks of a pinned range divide it evenly from its lower bound", () => {
+      expect(computePinnedTicks(-100, 100)).toEqual([-100, -50, 0, 50, 100]);
+      expect(computePinnedTicks(0, 5)).toEqual([0, 1, 2, 3, 4, 5]);
+      expect(computePinnedTicks(0, 7)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+      expect(computePinnedTicks(0, 10)).toEqual([0, 2, 4, 6, 8, 10]);
+    });
+  });
+
   describe("fixed-scale measures pin the axis to the question scale (ENG-1796)", () => {
     test("rating average 3.33 on a 1-5 question renders a 0-5 axis, not a data-driven 0-4 one", () => {
       const scale = computeYAxis([{ [RATING_AVG]: 3.33 }], [RATING_AVG], true);
