@@ -782,7 +782,15 @@ export const assertAuthzedRuntimeConfiguration = (): void => {
     // Report missing credentials even when enablement was omitted.
     validateAuthzedConfiguration({ ...values, AUTHZED_ENABLED: "true" }, ctx);
     if (values.AUTHZED_CONSISTENCY !== "fully_consistent") {
-      addEnvIssue(ctx, "AUTHZED_CONSISTENCY", "Formbricks v6 requires AUTHZED_CONSISTENCY=fully_consistent");
+      // Name the value found: a pre-v6 .env carries `minimize_latency`, and the fix is a one-line edit.
+      // Safe to echo — the schema has already narrowed it to an enum member or undefined.
+      const current =
+        values.AUTHZED_CONSISTENCY === undefined ? "is not set" : `is "${values.AUTHZED_CONSISTENCY}"`;
+      addEnvIssue(
+        ctx,
+        "AUTHZED_CONSISTENCY",
+        `Formbricks v6 requires AUTHZED_CONSISTENCY=fully_consistent, but it ${current}. Set AUTHZED_CONSISTENCY=fully_consistent in your .env or deployment environment and restart. See https://formbricks.com/docs/self-hosting/configuration/authzed-operations`
+      );
     }
   }).safeParse(env);
 

@@ -9,10 +9,11 @@ Use the repository-pinned Node and pnpm versions, install dependencies, and run 
 local environment defaults, starts Docker, migrates PostgreSQL, and prepares/verifies the bundled SpiceDB
 graph before starting the app. `pnpm db:up` alone starts dependencies; `pnpm dev:authzed` performs preparation.
 
-For an older `.env`, set `AUTHZED_ENABLED=true` and `AUTHZED_CONSISTENCY=fully_consistent`, then rerun
-`pnpm dev:setup`. Existing credentials and custom endpoints are preserved. Restart the development server
-after environment changes. `authzed_disabled` after login means the server is still running without the
-required authorization configuration; it is not a bad password or an enterprise-license requirement.
+For an older `.env`, set `AUTHZED_ENABLED=true` and `AUTHZED_CONSISTENCY=fully_consistent` (replacing
+`minimize_latency`, which v6 rejects at boot), then rerun `pnpm dev:setup`. Existing credentials and custom
+endpoints are preserved. Restart the development server after environment changes. `authzed_disabled` after
+login means the server is still running without the required authorization configuration; it is not a bad
+password or an enterprise-license requirement.
 
 Automatic graph preparation targets only the bundled localhost endpoint. For an external development
 datastore, use the existing commands explicitly after reviewing the endpoint and its source database:
