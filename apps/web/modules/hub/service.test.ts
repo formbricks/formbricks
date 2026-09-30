@@ -100,7 +100,7 @@ describe("hub service", () => {
       });
 
       vi.mocked(getHubClient).mockReturnValue({
-        get: vi.fn().mockRejectedValue(new FormbricksHub.APIError(404, {}, "not found", new Headers())),
+        get: vi.fn().mockRejectedValue(Object.assign(new Error("not found"), { status: 404 })),
       } as unknown as FormbricksHub);
       expect((await retrieveFeedbackRecordTaxonomy("record-1", "tenant-1")).error).toMatchObject({
         status: 404,
