@@ -91,6 +91,18 @@ jobs:
       IS_PRERELEASE: ${{ github.event.release.prerelease }}
       MAKE_LATEST: ${{ needs.check-latest-release.outputs.is_latest == 'true' }}
 
+  scan-community-image:
+    name: Scan community docker image
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    uses: ./.github/workflows/docker-security-scan.yml
+    needs:
+      - docker-build-community
+    with:
+      image_ref: ghcr.io/${{ github.repository }}@${{ needs.docker-build-community.outputs.IMAGE_DIGEST }}
+
   docker-build-cloud:
     name: Build & push Formbricks Cloud to ECR
     permissions:
