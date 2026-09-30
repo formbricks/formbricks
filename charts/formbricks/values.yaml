@@ -436,7 +436,8 @@ taxonomy:
   heartbeatIntervalSeconds: "30"
   runDeadlineSeconds: "900"
   # Keep this compatible with the default v0.1.0 image, which does not heartbeat through
-  # terminal Hub callbacks. It can be lowered after pinning a heartbeat-capable image.
+  # terminal Hub callbacks. The chart requires it to exceed runDeadlineSeconds while that
+  # image is pinned; relax that guard when moving to a heartbeat-capable image.
   hubStaleRunTimeoutSeconds: "1800"
   hubReaperIntervalSeconds: "60"
   terminationGracePeriodSeconds: 930
