@@ -4,6 +4,9 @@ import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "./oauth-urls";
 
 type TOauthProviderOptions = Parameters<typeof oauthProvider>[0];
 
+/** Exported so the grant-revocation hooks can recognise the refresh tokens this provider issues. */
+export const MCP_OAUTH_REFRESH_TOKEN_PREFIX = "fbor_";
+
 /**
  * Options for the Better Auth oauthProvider plugin backing the MCP OAuth flow (ENG-1055).
  * Extracted from auth.ts so integration tests can spin up a throwaway Better Auth instance
@@ -84,7 +87,7 @@ export const getMcpOauthProviderOptions = (): TOauthProviderOptions => ({
   storeTokens: "hashed",
   prefix: {
     opaqueAccessToken: "fboa_",
-    refreshToken: "fbor_",
+    refreshToken: MCP_OAUTH_REFRESH_TOKEN_PREFIX,
     clientSecret: "fbocs_",
   },
   customAccessTokenClaims: ({ user }) => ({
