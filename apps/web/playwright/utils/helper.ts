@@ -695,10 +695,11 @@ const ACTIVATION_TRIGGERS = {
  * Activates (or schedules) the survey open in the editor.
  *
  * Survey visibility is enforced in the E2E run, so a survey a person creates starts restricted and the
- * editor asks "Who can view this survey?" before it goes active. Nothing is preselected there, so this
- * answers "Visible to {workspace}" — the state every spec other than survey-visibility.spec.ts
- * expects, and the one webhooks, integrations and other members need. The dialog is required, not
- * optional: a survey that skips it has not started restricted, which is itself a regression.
+ * editor asks "Who can view this survey in your workspace?" before it goes active. Nothing is
+ * preselected there, so this answers "Visible to {workspace}" — the state every spec other than
+ * survey-visibility.spec.ts expects, and the one webhooks, integrations and other members need. The
+ * dialog is required, not optional: a survey that skips it has not started restricted, which is itself
+ * a regression.
  *
  * Returns once the dialog has closed; callers wait for the navigation they expect.
  */
@@ -713,7 +714,7 @@ export const activateSurvey = async (
 
   // The editor validates before it opens the dialog and reports a problem only through a toast, so
   // wait for whichever comes first and fail with the editor's own message rather than a locator timeout.
-  const dialog = page.getByRole("dialog", { name: "Who can view this survey?" });
+  const dialog = page.getByRole("dialog", { name: "Who can view this survey in your workspace?" });
   const errorToast = errorToastsOf(page).first();
   await expect(dialog.or(errorToast).first()).toBeVisible();
   if (await errorToast.isVisible()) {

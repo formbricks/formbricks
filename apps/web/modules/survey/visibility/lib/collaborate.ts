@@ -51,7 +51,7 @@ export const getVisibilityErrorReaction = (error: unknown): TVisibilityErrorReac
 /**
  * Who the Restricted copy names as the person who keeps access: "You" only when the viewer is known to
  * be the author (`via: "owner"`). On a workspace-visible survey everyone reads `via: "workspace"`, so the
- * author is named instead; with no author left the copy says "The author".
+ * author is named instead; with no author left the copy names only the organization's owners and managers.
  */
 export type TRestrictedAuthor = Readonly<
   { kind: "you" } | { kind: "named"; name: string } | { kind: "unknown" }

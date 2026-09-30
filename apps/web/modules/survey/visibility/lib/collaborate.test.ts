@@ -79,7 +79,7 @@ describe("getRestrictedAuthor", () => {
     expect(getRestrictedAuthor({ via }, "Ada")).toEqual({ kind: "named", name: "Ada" });
   });
 
-  test("no author left, or no access known, reads The author", () => {
+  test("no author left, or no access known, is unknown", () => {
     expect(getRestrictedAuthor({ via: "organizationRole" }, null)).toEqual({ kind: "unknown" });
     expect(getRestrictedAuthor(null, null)).toEqual({ kind: "unknown" });
   });

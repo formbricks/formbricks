@@ -486,7 +486,6 @@ export const SurveyDropDownMenu = ({
           open={isCollaborateModalOpen}
           setOpen={setIsCollaborateModalOpen}
           surveyId={survey.id}
-          surveyName={survey.name}
           workspaceName={workspaceName}
           listQueryKey={listQueryKey}
           onVisibilityNotEnabled={onVisibilityNotEnabled}

@@ -12,8 +12,9 @@ interface RoleAccessMarkerProps {
 }
 
 /**
- * The Created by column's mark on a restricted survey. Like the Name marker it lives inside the row's
- * link, so the tooltip text is repeated for screen readers rather than made a second focus target.
+ * The extra detail after a restricted survey's name, next to its restricted marker. Like that marker it
+ * lives inside the row's link, so the tooltip text is repeated for screen readers rather than made a
+ * second focus target.
  */
 export const RoleAccessMarker = ({ kind, workspaceName }: Readonly<RoleAccessMarkerProps>) => {
   const { t } = useTranslation();
@@ -35,7 +36,7 @@ export const RoleAccessMarker = ({ kind, workspaceName }: Readonly<RoleAccessMar
         tooltipContent={text}>
         <Icon className="size-4" aria-hidden="true" />
       </TooltipRenderer>
-      <span className="sr-only">{text}</span>
+      <span className="sr-only">{`, ${text}`}</span>
     </>
   );
 };

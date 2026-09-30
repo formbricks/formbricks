@@ -101,7 +101,7 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string; sur
         gate: surveyVisibilityEnabled,
         visibility: survey.visibility,
         access: surveyAccess,
-      }) && <RestrictedSurveyBanner surveyId={survey.id} ownerName={ownerName} />}
+      }) && <RestrictedSurveyBanner ownerName={ownerName} />}
       <ResponsePage
         survey={survey}
         surveyId={params.surveyId}

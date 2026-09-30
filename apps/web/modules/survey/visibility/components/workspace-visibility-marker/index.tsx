@@ -1,6 +1,6 @@
 "use client";
 
-import { UsersIcon } from "lucide-react";
+import { FoldersIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
@@ -38,7 +38,7 @@ export const WorkspaceVisibilityMarker = ({
             </p>
           </div>
         }>
-        <UsersIcon className="size-4" aria-hidden="true" />
+        <FoldersIcon className="size-4" aria-hidden="true" />
       </TooltipRenderer>
       {children}
       <span className="sr-only">{`, ${label}`}</span>

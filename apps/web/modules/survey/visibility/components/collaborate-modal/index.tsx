@@ -46,7 +46,6 @@ interface CollaborateModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   surveyId: string;
-  surveyName: string;
   workspaceName: string;
   /** The survey list's query, patched optimistically. The editor passes none. */
   listQueryKey?: ReturnType<typeof surveyKeys.list>;
@@ -66,7 +65,6 @@ export const CollaborateModal = ({
   open,
   setOpen,
   surveyId,
-  surveyName,
   workspaceName,
   listQueryKey,
   onVisibilityChanged,
@@ -156,7 +154,9 @@ export const CollaborateModal = ({
         <DialogContent width="narrow">
           <DialogHeader>
             <DialogTitle>{t("common.collaborate")}</DialogTitle>
-            <DialogDescription className="truncate">{surveyName}</DialogDescription>
+            <DialogDescription>
+              {t("workspace.surveys.visibility.collaborate_description", { workspace: workspaceName })}
+            </DialogDescription>
           </DialogHeader>
 
           <DialogBody className="space-y-2">
@@ -198,9 +198,11 @@ export const CollaborateModal = ({
               </SelectContent>
             </Select>
             {state && showBlockersInCollaborate({ selected, current, state }) && (
-              <div className="px-1">
-                <VisibilityBlockersAlert blockers={state.blockers} />
-              </div>
+              // Same inset and width as the select above it, with room from the select and the footer.
+              <VisibilityBlockersAlert
+                blockers={state.blockers}
+                className="mx-1 mt-3 mb-4 w-[calc(100%-0.5rem)]"
+              />
             )}
             {state?.pending && (
               <p className="text-xs text-slate-500">

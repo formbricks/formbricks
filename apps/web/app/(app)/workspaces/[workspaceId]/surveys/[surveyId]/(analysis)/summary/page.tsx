@@ -103,7 +103,7 @@ const SurveyPage = async (
         gate: surveyVisibilityEnabled,
         visibility: survey.visibility,
         access: surveyAccess,
-      }) && <RestrictedSurveyBanner surveyId={survey.id} ownerName={ownerName} />}
+      }) && <RestrictedSurveyBanner ownerName={ownerName} />}
       <SummaryPage
         survey={survey}
         surveyId={params.surveyId}

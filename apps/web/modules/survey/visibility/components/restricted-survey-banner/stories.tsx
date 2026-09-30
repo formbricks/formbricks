@@ -10,16 +10,11 @@ const meta: Meta<typeof RestrictedSurveyBanner> = {
     docs: {
       description: {
         component:
-          "Shown on the editor, summary and responses pages to an organization owner or manager who sees a restricted survey only through their role. Dismissing it lasts for this survey for the rest of the browser session.",
+          "Shown on the editor, summary and responses pages to an organization owner or manager who sees a restricted survey only through their role. A warning that cannot be dismissed; the editor renders it as a full-width strip.",
       },
     },
   },
   argTypes: {
-    surveyId: {
-      control: "text",
-      description: "Keys the per-session dismissal",
-      table: { category: "Behavior", type: { summary: "string" } },
-    },
     className: {
       control: "text",
       description: "Additional CSS classes",
@@ -37,9 +32,14 @@ export default meta;
 type Story = StoryObj<typeof RestrictedSurveyBanner>;
 
 export const Default: Story = {
-  args: { surveyId: "story-survey-1", ownerName: "Ada Lovelace" },
+  args: { ownerName: "Ada Lovelace" },
 };
 
 export const AuthorGone: Story = {
-  args: { surveyId: "story-survey-2", ownerName: null },
+  args: { ownerName: null },
+};
+
+export const EditorStrip: Story = {
+  args: { ownerName: "Ada Lovelace", className: "rounded-none border-x-0 border-t-0" },
+  parameters: { layout: "fullscreen" },
 };

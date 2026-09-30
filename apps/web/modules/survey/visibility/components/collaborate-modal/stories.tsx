@@ -58,14 +58,9 @@ const meta: Meta<typeof CollaborateModal> = {
     onVisibilityNotEnabled: { action: "visibilityNotEnabled", table: { category: "Behavior" } },
     listQueryKey: { control: false, table: { category: "Behavior" } },
     surveyId: { control: false, table: { category: "Behavior", type: { summary: "string" } } },
-    surveyName: {
-      control: "text",
-      description: "Shown under the title",
-      table: { category: "Content", type: { summary: "string" } },
-    },
     workspaceName: {
       control: "text",
-      description: "The workspace named in the options",
+      description: "The workspace named in the subtitle and the options",
       table: { category: "Content", type: { summary: "string" } },
     },
   },
@@ -79,7 +74,6 @@ const baseArgs = {
   setOpen: () => undefined,
   onVisibilityNotEnabled: () => undefined,
   surveyId: SURVEY_ID,
-  surveyName: "Customer satisfaction Q3",
   workspaceName: "Acme",
 };
 

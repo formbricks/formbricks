@@ -4024,15 +4024,17 @@ checksums:
     workspace/surveys/templates/multiple_industries: 7dcb6f6d87feb08f8004dfb5a91e711f
     workspace/surveys/templates/use_this_template: 69020c8b5a521b8f027616bb5c4b64dd
     workspace/surveys/templates/uses_branching_logic: 7ac087d7067d342c17809d4ce497dfe0
-    workspace/surveys/visibility/activate_dialog_title: b92627d0d3dcfc398768179f46cef7b1
+    workspace/surveys/visibility/activate_dialog_title: fe2935ab1a6ad7243a716580224c9573
     workspace/surveys/visibility/all_surveys_skip_restricted: 6cd87ae7348d5de06611ebe3f1b19e67
-    workspace/surveys/visibility/author_and_owners_managers: da606423bd8113aade15aa03cfe9305c
-    workspace/surveys/visibility/author_gone_tooltip: 2e9b799751a0157e26f7905b11417490
-    workspace/surveys/visibility/banner_role_access: 44e53a71944b932ffbc84ad1cea06f63
+    workspace/surveys/visibility/author_and_owners_managers: eb15d67cfb744b051df9769158007a7d
+    workspace/surveys/visibility/author_gone_notice: 4dedc2b102de05031dfb6d59be8e54fc
+    workspace/surveys/visibility/author_gone_tooltip: 92dd0451b429e7b7a4b7512fa4586e69
+    workspace/surveys/visibility/banner_role_access: 5746b1d73a413c88b9549a0ea03ff66f
     workspace/surveys/visibility/banner_role_access_no_author: 911867ece6cf357f6203fbc18744b430
     workspace/surveys/visibility/blocked_by_connections: e983dbf8f732fee71209aed1dd8604e7
     workspace/surveys/visibility/can_collect_responses: 4201a4f548851c8bcd35d4553683b115
     workspace/surveys/visibility/change_to_restricted: 8b5edf5aa98849ef56dcf01d81204d99
+    workspace/surveys/visibility/collaborate_description: e4548c16d517a097d85fa1aa0aaeaf50
     workspace/surveys/visibility/dashboards: 4bc47e48559a6b688684dcb7ac4babc9
     workspace/surveys/visibility/everyone_in_workspace_and_owners_managers: 73ed5ad63b322efe358122bb8273dacc
     workspace/surveys/visibility/feedback_sources: ee5fd409e10c96357b36d5b6535b60c7
@@ -4040,14 +4042,18 @@ checksums:
     workspace/surveys/visibility/make_visible_to_workspace: eb1c19f33fa1a1a80ec71c75fb3a555b
     workspace/surveys/visibility/outbound_paused_tooltip: 8cd2bc228336e7458be7a3a2eb561270
     workspace/surveys/visibility/outbound_restricted_tooltip: cf974a50fa4f3e99d0d929f982c95364
+    workspace/surveys/visibility/owners_managers: 2d444490d1b0a827423cb10c5bf6dc1b
     workspace/surveys/visibility/restrict_dialog_impact: 51c5428d4d6005fd16bb2d05eb2a10f5
     workspace/surveys/visibility/restrict_dialog_title: 924006a0114ef683b37f340b239eb9d9
     workspace/surveys/visibility/restricted: 46ef0eab625fb0ad071c49a163a43b48
-    workspace/surveys/visibility/restricted_description: 15b7c846dcaa010f84bca1a87d0fbac3
-    workspace/surveys/visibility/restricted_description_author: 0e6bbdeacae55b6f4a2b186ea29ecbf3
+    workspace/surveys/visibility/restricted_description: dd5e7305f5e67e3aa6dd3b4d0a51981f
+    workspace/surveys/visibility/restricted_description_author: fb8d3868ee99d3c2ac45924aaf9cc23d
+    workspace/surveys/visibility/restricted_description_no_author: 8f4882cff5ee31a153344e4bae4cfe63
+    workspace/surveys/visibility/restricted_marker_author: ed639acf0fe0e79c02f22e7dbe7bd09c
+    workspace/surveys/visibility/restricted_marker_no_author: 4a165ba0600c4d54d51328857f8762b3
+    workspace/surveys/visibility/restricted_marker_you: db766db0671160733f2c5e5291fb4e7a
     workspace/surveys/visibility/restricted_paused: 20289a41da016631680acedf449f3cbe
-    workspace/surveys/visibility/role_access_tooltip: 911867ece6cf357f6203fbc18744b430
-    workspace/surveys/visibility/the_author: e06b31a53dd90b8db60f3f1d789f72c0
+    workspace/surveys/visibility/role_access_tooltip: 123e37a7c3f873b887070c11b2b5e59c
     workspace/surveys/visibility/unavailable: a91890f6cd8577d39b86f8c0816cfaf2
     workspace/surveys/visibility/visibility_update_pending: 8e7e8c8fa2e530ed0dd284d03c0e4d5e
     workspace/surveys/visibility/visibility_updated: fde01f3a7bf79b5e0ffb9a6b3ec164a8
@@ -4055,7 +4061,7 @@ checksums:
     workspace/surveys/visibility/visible_to_workspace_description: f8e6029a260dd8888f0abaacc6830aee
     workspace/surveys/visibility/who_can_access: 13005c3b65de741965bb34ed92ffdaee
     workspace/surveys/visibility/workspace_description: 151357f47344866560416e92cb2aec72
-    workspace/surveys/visibility/you_and_owners_managers: a9bdfae18973377d01cee1eeda787999
+    workspace/surveys/visibility/you_and_owners_managers: a2dfd317e8d83fc46728f2a2558c0971
     workspace/tags/add: 87c4a663507f2bcbbf79934af8164e13
     workspace/tags/add_tag: 2cfa04ceea966149f2b5d40d9c131141
     workspace/tags/count: 9c5848662eb8024ddf360f7e4001a968

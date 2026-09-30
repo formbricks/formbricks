@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/ale
 
 interface VisibilityBlockersAlertProps {
   blockers: readonly TSurveyVisibilityBlocker[];
+  className?: string;
 }
 
 const BlockerTypeLabel = ({ type }: Readonly<{ type: TSurveyVisibilityBlocker["type"] }>) => {
@@ -30,13 +31,13 @@ const BlockerTypeLabel = ({ type }: Readonly<{ type: TSurveyVisibilityBlocker["t
  * Restrict confirmation and the Collaborate modal so both explain the refusal the same way. Renders
  * nothing without blockers.
  */
-export const VisibilityBlockersAlert = ({ blockers }: Readonly<VisibilityBlockersAlertProps>) => {
+export const VisibilityBlockersAlert = ({ blockers, className }: Readonly<VisibilityBlockersAlertProps>) => {
   const { t } = useTranslation();
   const blockerGroups = groupBlockersByType(blockers);
   if (blockerGroups.length === 0) return null;
 
   return (
-    <Alert variant="warning" size="default" role="status">
+    <Alert variant="warning" size="default" role="status" className={className}>
       <AlertTitle>{t("workspace.surveys.visibility.blocked_by_connections")}</AlertTitle>
       <AlertDescription>
         <ul className="list-disc space-y-0.5 pl-4">

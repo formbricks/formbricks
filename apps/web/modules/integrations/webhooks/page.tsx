@@ -1,11 +1,10 @@
 import { DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS } from "@/lib/constants";
-import { getSurveys } from "@/lib/survey/service";
-import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getTranslate } from "@/lingodotdev/server";
 import { AddWebhookButton } from "@/modules/integrations/webhooks/components/add-webhook-button";
 import { WebhookRowData } from "@/modules/integrations/webhooks/components/webhook-row-data";
 import { WebhookTable } from "@/modules/integrations/webhooks/components/webhook-table";
 import { WebhookTableHeading } from "@/modules/integrations/webhooks/components/webhook-table-heading";
+import { getWebhookSurveys } from "@/modules/integrations/webhooks/lib/surveys";
 import { getWebhooks } from "@/modules/integrations/webhooks/lib/webhook";
 import { getSurveyVisibilityUiGate } from "@/modules/survey/visibility/lib/gate";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
@@ -21,9 +20,7 @@ export const WebhooksPage = async (props: { params: Promise<{ workspaceId: strin
 
   const [webhooks, surveys, surveyVisibilityEnabled] = await Promise.all([
     getWebhooks(workspace.id),
-    getUserVisibleSurveyWhere(session.user.id, organization.id).then((where) =>
-      getSurveys(workspace.id, where, 200)
-    ), // HOTFIX: not getting all surveys for now since it's maxing out the prisma accelerate limit
+    getWebhookSurveys(workspace.id, session.user.id, organization.id),
     getSurveyVisibilityUiGate(organization.id),
   ]);
 

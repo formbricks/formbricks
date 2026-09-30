@@ -6,7 +6,7 @@ import { test } from "./lib/fixtures";
 // ENG-3395: restricted surveys, end to end. Relies on the survey readiness marker, which the E2E job
 // sets before the suite runs (`e2e.yml`, `authzed:backfill --scope=survey --apply --mark-ready`) — the
 // state production runs in. Every other spec activates through `activateSurvey`, which answers the
-// same "Who can view this survey?" dialog with "Visible to {workspace}"; this one keeps it restricted.
+// same "Who can view this survey in your workspace?" dialog with "Visible to {workspace}"; this one keeps it restricted.
 
 const WORKSPACE_NAME = "Visibility Journey";
 const VISIBLE_TO_WORKSPACE = `Visible to ${WORKSPACE_NAME}`;
@@ -100,10 +100,11 @@ test.describe("Restricted surveys", () => {
     const member = await addTeamMember(users, organizationId, workspaceId);
     const memberPage = await openMemberPage(browser, baseURL, member);
 
-    await test.step("the owner's new survey starts restricted, unmarked, with Collaborate in its menu", async () => {
+    await test.step("the owner's new survey starts restricted, marked so, with Collaborate in its menu", async () => {
       await page.goto(surveysUrl);
       const row = surveyRow(page, surveyName);
       await expect(row).toBeVisible();
+      await expect(row.getByRole("link")).toHaveAccessibleName(new RegExp(`${surveyName}, Restricted`));
       await expect(row.getByRole("link")).not.toHaveAccessibleName(new RegExp(VISIBLE_TO_WORKSPACE));
       // The seeded survey is workspace-visible, so the same list does carry the marker elsewhere.
       await expect(surveyRow(page, "E2E Seed Survey").getByRole("link")).toHaveAccessibleName(
@@ -135,7 +136,9 @@ test.describe("Restricted surveys", () => {
       await page.getByRole("menuitem", { name: "Collaborate" }).click();
 
       const dialog = page.getByRole("dialog", { name: "Collaborate" });
-      await expect(dialog.getByText(surveyName)).toBeVisible();
+      await expect(
+        dialog.getByText(`Choose who in ${WORKSPACE_NAME} can see this survey and its responses.`)
+      ).toBeVisible();
       const select = dialog.getByLabel("Visibility");
       await expect(select).toBeEnabled();
       await expect(select).toHaveText("Restricted");
@@ -184,7 +187,7 @@ test.describe("Restricted surveys", () => {
 
       // A restricted survey asks who can view it before it goes active; nothing is preselected.
       await page.getByRole("button", { name: "Activate", exact: true }).click();
-      const activate = page.getByRole("dialog", { name: "Who can view this survey?" });
+      const activate = page.getByRole("dialog", { name: "Who can view this survey in your workspace?" });
       const activateButton = activate.getByRole("button", { name: "Activate", exact: true });
       await expect(activateButton).toBeDisabled();
       await activate.getByRole("radio", { name: /^Restricted/ }).check();

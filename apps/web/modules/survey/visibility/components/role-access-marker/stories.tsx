@@ -10,7 +10,7 @@ const meta: Meta<typeof RoleAccessMarker> = {
     docs: {
       description: {
         component:
-          "The Created by column's marker on a restricted survey: `role` when the viewer sees it only through their organization role, `author_gone` when its author no longer has an account (the row turns amber and, for someone who can change visibility, offers Make visible).",
+          "The detail after a restricted survey's name, next to its restricted marker: `role` when the viewer sees it only through their organization role, `author_gone` when its author no longer has an account (the row turns amber and, for someone who can change visibility, offers Make visible).",
       },
     },
   },
@@ -29,7 +29,7 @@ const meta: Meta<typeof RoleAccessMarker> = {
   },
   render: (args) => (
     <div className="flex items-center text-sm text-slate-600">
-      <span>Ada Lovelace</span>
+      <span>Customer interviews Q3</span>
       <RoleAccessMarker {...args} />
     </div>
   ),
@@ -47,7 +47,7 @@ export const AuthorGone: Story = {
   render: (args) => (
     <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-amber-50 p-4 text-sm text-slate-600">
       <span className="flex items-center">
-        <span>-</span>
+        <span>Customer interviews Q3</span>
         <RoleAccessMarker {...args} />
       </span>
       <MakeVisibleToWorkspaceButton workspaceName={args.workspaceName} onClick={() => undefined} />

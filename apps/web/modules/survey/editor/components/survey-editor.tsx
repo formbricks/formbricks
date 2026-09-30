@@ -267,9 +267,8 @@ export const SurveyEditor = ({
         visibility: survey.visibility,
         access: surveyAccess,
       }) && (
-        <div className="bg-slate-50 px-5 pt-3">
-          <RestrictedSurveyBanner surveyId={survey.id} ownerName={ownerName} />
-        </div>
+        // A full-width strip under the menu bar, like the bar itself.
+        <RestrictedSurveyBanner ownerName={ownerName} className="rounded-none border-x-0 border-t-0 px-5" />
       )}
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main

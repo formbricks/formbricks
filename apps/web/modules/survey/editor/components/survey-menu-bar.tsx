@@ -799,7 +799,13 @@ export const SurveyMenuBar = ({
             const updatedSurvey = { ...localSurvey, name: e.target.value };
             setLocalSurvey(updatedSurvey);
           }}
-          className="h-8 w-72 border-white py-0 hover:border-slate-200"
+          // With Collaborate next to it, the input is sized to the name (so the button sits right after
+          // it) and widens while editing; browsers without field-sizing keep the input's default width.
+          className={
+            canManageVisibility
+              ? "field-sizing-content h-8 w-auto max-w-72 min-w-32 border-white py-0 hover:border-slate-200 focus:max-w-md focus:min-w-72"
+              : "h-8 w-72 border-white py-0 hover:border-slate-200"
+          }
           aria-label={t("workspace.surveys.rename_survey_placeholder")}
         />
         {canManageVisibility && (
@@ -900,7 +906,6 @@ export const SurveyMenuBar = ({
             open={isCollaborateModalOpen}
             setOpen={setIsCollaborateModalOpen}
             surveyId={localSurvey.id}
-            surveyName={localSurvey.name}
             workspaceName={workspace.name}
             onVisibilityChanged={onVisibilityChanged}
             onVisibilityNotEnabled={handleVisibilityNotEnabled}

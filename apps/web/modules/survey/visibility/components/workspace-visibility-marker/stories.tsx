@@ -10,7 +10,7 @@ const meta: Meta<typeof WorkspaceVisibilityMarker> = {
     docs: {
       description: {
         component:
-          "Marks a workspace-visible survey in the survey list's Name column. Restricted surveys carry no marker. Hover for the tooltip with its description.",
+          "Marks a workspace-visible survey in the survey list's Name column. Restricted surveys carry the restricted marker instead. Hover for the tooltip with its description.",
       },
     },
   },
