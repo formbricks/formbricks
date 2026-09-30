@@ -883,9 +883,11 @@ cube:
   enabled: true
   replicas: 1
 
+  # Formbricks' distroless Cube build (docker/cube-image on main), without a shell or Cube Store. Pointing
+  # repository and tag back at an upstream "cubejs/cube" release is supported.
   image:
-    repository: "cubejs/cube"
-    tag: "v1.6.6"
+    repository: "ghcr.io/formbricks/cube"
+    tag: "1.7.47-1"
     pullPolicy: IfNotPresent
 
   imagePullSecrets: []

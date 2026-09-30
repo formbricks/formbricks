@@ -65,6 +65,11 @@ single-replica deployment.
 Cube is part of the baseline Formbricks v5 stack and is deployed by this chart by default
 (`cube.enabled: true`).
 
+- The bundled image is `ghcr.io/formbricks/cube`: the Cube API server and its Postgres driver on a
+  distroless Node runtime, with no shell, Python or Cube Store (built from
+  [`docker/cube-image`](https://github.com/formbricks/formbricks/tree/main/docker/cube-image)). Pointing
+  `cube.image.repository` and `cube.image.tag` back at an upstream `cubejs/cube` release is supported; set
+  both together, since a tag on its own is resolved against `ghcr.io/formbricks/cube`.
 - For the chart-managed Cube, the chart renders `deployment.env.CUBEJS_API_URL` automatically as
   `http://formbricks-cube:4000` when using the default release name.
 - For an external Cube, set `cube.enabled: false` and point `deployment.env.CUBEJS_API_URL` at your
