@@ -4199,7 +4199,7 @@
         "change_to_restricted": "Váltás Korlátozott állapotra",
         "collaborate_description": "Válassza ki, hogy a {workspace} munkaterületen kik láthatják ezt a felmérést és a hozzá tartozó válaszokat.",
         "dashboards": "Irányítópultok",
-        "everyone_in_workspace_and_owners_managers": "Mindenki a(z) {workspace} munkaterületen, valamint az Ön szervezetének tulajdonosai és vezetői",
+        "everyone_in_workspace_and_owners_managers": "Mindenki a(z) {workspace} munkaterületen, valamint a szervezet tulajdonosai és vezetői",
         "feedback_sources": "Visszajelzési források",
         "keep_visible_to_workspace": "Maradjon látható a következő számára: {workspace}",
         "make_visible_to_workspace": "Legyen látható a következő számára: {workspace}",

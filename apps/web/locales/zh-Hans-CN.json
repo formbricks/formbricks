@@ -4199,7 +4199,7 @@
         "change_to_restricted": "更改为受限",
         "collaborate_description": "选择 {workspace} 中谁可以查看此调查及其回复。",
         "dashboards": "仪表板",
-        "everyone_in_workspace_and_owners_managers": "{workspace}中的所有人、你组织的所有者和管理员",
+        "everyone_in_workspace_and_owners_managers": "{workspace}中的所有人以及您组织的所有者和管理员",
         "feedback_sources": "反馈来源",
         "keep_visible_to_workspace": "保持对{workspace}可见",
         "make_visible_to_workspace": "设置为对{workspace}可见",

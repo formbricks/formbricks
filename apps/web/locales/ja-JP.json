@@ -4199,7 +4199,7 @@
         "change_to_restricted": "制限付きに変更",
         "collaborate_description": "{workspace}で誰がこのアンケートとその回答を閲覧できるかを選択してください。",
         "dashboards": "ダッシュボード",
-        "everyone_in_workspace_and_owners_managers": "{workspace}の全員、組織のオーナーとマネージャー",
+        "everyone_in_workspace_and_owners_managers": "{workspace}の全員と組織のオーナーおよびマネージャー",
         "feedback_sources": "フィードバックソース",
         "keep_visible_to_workspace": "{workspace}に公開したままにする",
         "make_visible_to_workspace": "{workspace}に公開する",

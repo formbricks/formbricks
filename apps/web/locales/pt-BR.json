@@ -4199,7 +4199,7 @@
         "change_to_restricted": "Alterar para Restrita",
         "collaborate_description": "Escolha quem em {workspace} pode ver esta pesquisa e suas respostas.",
         "dashboards": "Painéis",
-        "everyone_in_workspace_and_owners_managers": "Todos em {workspace}, os proprietários e gerentes da sua organização",
+        "everyone_in_workspace_and_owners_managers": "Todos em {workspace} e os proprietários e gerentes da sua organização",
         "feedback_sources": "Fontes de feedback",
         "keep_visible_to_workspace": "Manter visível para {workspace}",
         "make_visible_to_workspace": "Tornar visível para {workspace}",

@@ -4199,7 +4199,7 @@
         "change_to_restricted": "Passer en Restreint",
         "collaborate_description": "Choisis qui dans {workspace} peut voir cette enquête et ses réponses.",
         "dashboards": "Tableaux de bord",
-        "everyone_in_workspace_and_owners_managers": "Tous les membres de {workspace}, les propriétaires et gestionnaires de ton organisation",
+        "everyone_in_workspace_and_owners_managers": "Tout le monde dans {workspace} et les propriétaires et gestionnaires de ton organisation",
         "feedback_sources": "Sources de feedback",
         "keep_visible_to_workspace": "Garder visible pour {workspace}",
         "make_visible_to_workspace": "Rendre visible pour {workspace}",

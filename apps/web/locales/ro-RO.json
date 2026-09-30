@@ -4199,7 +4199,7 @@
         "change_to_restricted": "Schimbă în Restricționat",
         "collaborate_description": "Alege cine din {workspace} poate vedea acest chestionar și răspunsurile sale.",
         "dashboards": "Tablouri de bord",
-        "everyone_in_workspace_and_owners_managers": "Toată lumea din {workspace}, proprietarii și managerii organizației tale",
+        "everyone_in_workspace_and_owners_managers": "Toată lumea din {workspace} și proprietarii și managerii organizației tale",
         "feedback_sources": "Surse de feedback",
         "keep_visible_to_workspace": "Păstrează vizibil pentru {workspace}",
         "make_visible_to_workspace": "Fă vizibil pentru {workspace}",

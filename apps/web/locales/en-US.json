@@ -4199,7 +4199,7 @@
         "change_to_restricted": "Change to Restricted",
         "collaborate_description": "Choose who in {workspace} can see this survey and its responses.",
         "dashboards": "Dashboards",
-        "everyone_in_workspace_and_owners_managers": "Everyone in {workspace}, your organization's owners and managers",
+        "everyone_in_workspace_and_owners_managers": "Everyone in {workspace} and your organization's owners and managers",
         "feedback_sources": "Feedback sources",
         "keep_visible_to_workspace": "Keep visible to {workspace}",
         "make_visible_to_workspace": "Make visible to {workspace}",

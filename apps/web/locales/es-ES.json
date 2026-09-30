@@ -4199,7 +4199,7 @@
         "change_to_restricted": "Cambiar a Restringida",
         "collaborate_description": "Elige quién en {workspace} puede ver esta encuesta y sus respuestas.",
         "dashboards": "Paneles",
-        "everyone_in_workspace_and_owners_managers": "Todos en {workspace}, los propietarios y administradores de tu organización",
+        "everyone_in_workspace_and_owners_managers": "Todos en {workspace} y los propietarios y gerentes de tu organización",
         "feedback_sources": "Fuentes de comentarios",
         "keep_visible_to_workspace": "Mantener visible para {workspace}",
         "make_visible_to_workspace": "Hacer visible para {workspace}",

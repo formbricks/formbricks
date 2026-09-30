@@ -4199,7 +4199,7 @@
         "change_to_restricted": "Изменить на Ограниченный",
         "collaborate_description": "Выберите, кто в {workspace} может видеть этот опрос и его ответы.",
         "dashboards": "Дашборды",
-        "everyone_in_workspace_and_owners_managers": "Все в {workspace}, владельцы и менеджеры вашей организации",
+        "everyone_in_workspace_and_owners_managers": "Все в {workspace} и владельцы и менеджеры вашей организации",
         "feedback_sources": "Источники обратной связи",
         "keep_visible_to_workspace": "Оставить видимым для {workspace}",
         "make_visible_to_workspace": "Сделать видимым для {workspace}",

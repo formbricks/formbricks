@@ -4199,7 +4199,7 @@
         "change_to_restricted": "Auf Eingeschränkt ändern",
         "collaborate_description": "Wähle aus, wer in {workspace} diese Umfrage und ihre Antworten sehen kann.",
         "dashboards": "Dashboards",
-        "everyone_in_workspace_and_owners_managers": "Alle in {workspace}, die Inhaber und Manager deiner Organisation",
+        "everyone_in_workspace_and_owners_managers": "Alle in {workspace} und die Inhaber und Manager deiner Organisation",
         "feedback_sources": "Feedback-Quellen",
         "keep_visible_to_workspace": "Für {workspace} sichtbar lassen",
         "make_visible_to_workspace": "Für {workspace} sichtbar machen",
