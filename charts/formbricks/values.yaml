@@ -202,10 +202,18 @@ deployment:
       memory: 1Gi
       cpu: "1"
 
-  # Container security context
+  # Container security context for the web container. The image's `nextjs` user is UID 1001; the kubelet
+  # needs a numeric UID to enforce runAsNonRoot. Container-level fields win over deployment.securityContext.
+  # With readOnlyRootFilesystem, the chart mounts emptyDir volumes on the paths the app writes at runtime
+  # (/tmp, the Next.js cache, and the Prisma migration staging directory when startup migrations run).
   containerSecurityContext:
     readOnlyRootFilesystem: true
     runAsNonRoot: true
+    runAsUser: 1001
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
 
   # Pod security context
   securityContext: {}

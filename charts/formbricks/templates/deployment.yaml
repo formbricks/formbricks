@@ -82,10 +82,41 @@ spec:
         {{ toYaml .Values.deployment.securityContext | nindent 8 }}
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.deployment.terminationGracePeriodSeconds | default 30 }}
+      {{- /* A read-only root filesystem needs writable mounts on every path the app writes at runtime. A path
+      the operator already mounts through extraVolumeMounts is left to them, and a generated volume name that
+      an extraVolumes entry already uses gets a prefix so pod volume names stay unique. */}}
+      {{- $writableMounts := dict }}
+      {{- if dig "readOnlyRootFilesystem" false (default dict .Values.deployment.containerSecurityContext) }}
+      {{- $operatorPaths := list }}
+      {{- range .Values.deployment.extraVolumeMounts }}
+      {{- $operatorPaths = append $operatorPaths (trimSuffix "/" .mountPath) }}
+      {{- end }}
+      {{- $operatorVolumes := list }}
+      {{- range .Values.deployment.extraVolumes }}
+      {{- $operatorVolumes = append $operatorVolumes .name }}
+      {{- end }}
+      {{- $candidates := dict "writable-tmp" "/tmp" "writable-next-cache" "/home/nextjs/apps/web/.next/cache" }}
+      {{- if not .Values.migration.enabled }}
+      {{- $_ := set $candidates "writable-prisma-migrations" "/home/nextjs/packages/database/.prisma-migrations" }}
+      {{- end }}
+      {{- range $name, $path := $candidates }}
+      {{- if not (has $path $operatorPaths) }}
+      {{- $volumeName := ternary (printf "formbricks-%s" $name) $name (has $name $operatorVolumes) }}
+      {{- if has $volumeName $operatorVolumes }}
+      {{- fail (printf "deployment.extraVolumes uses both %s and %s; rename one so the chart can mount %s" $name $volumeName $path) }}
+      {{- end }}
+      {{- $_ := set $writableMounts $volumeName $path }}
+      {{- end }}
+      {{- end }}
+      {{- end }}
       containers:
         - name: {{ template "formbricks.name" . }}
           image: {{ include "formbricks.deploymentImage" . }}
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          {{- with .Values.deployment.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- if .Values.deployment.command }}
           command:
             {{- toYaml .Values.deployment.command | nindent 12 }}
@@ -210,9 +241,15 @@ spec:
           resources:
               {{- toYaml .Values.deployment.resources | nindent 12 }}
           {{- end }}
-          {{- with .Values.deployment.extraVolumeMounts }}
+          {{- if or $writableMounts .Values.deployment.extraVolumeMounts }}
           volumeMounts:
+            {{- range $name, $path := $writableMounts }}
+            - name: {{ $name }}
+              mountPath: {{ $path }}
+            {{- end }}
+            {{- with .Values.deployment.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
+            {{- end }}
           {{- end }}
           {{- with .Values.deployment.probes }}
           {{- if .livenessProbe }}
@@ -228,7 +265,13 @@ spec:
             {{- toYaml .startupProbe | nindent 12 }}
           {{- end }}
           {{- end }}
-      {{- with .Values.deployment.extraVolumes }}
+      {{- if or $writableMounts .Values.deployment.extraVolumes }}
       volumes:
+        {{- range $name, $_ := $writableMounts }}
+        - name: {{ $name }}
+          emptyDir: {}
+        {{- end }}
+        {{- with .Values.deployment.extraVolumes }}
         {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
