@@ -44,24 +44,15 @@ describe("getTaxonomyAssignmentDisplay", () => {
           { id: "subtopic", label: "Login", level: 2, node_type: "leaf" },
         ],
       })
-    ).toEqual({ path: "Product › Login", messageKey: null });
+    ).toEqual({ path: "Product › Login", status: "classified" });
   });
 
-  test.each([
-    ["no_active_taxonomy", "workspace.unify.taxonomy_assignment_no_active"],
-    ["unclassified", "workspace.unify.taxonomy_assignment_unclassified"],
-  ] as const)("uses the distinct %s state", (status, messageKey) => {
-    expect(getTaxonomyAssignmentDisplay({ status, run_id: null, path: [] })).toEqual({
-      path: null,
-      messageKey,
-    });
+  test.each(["no_active_taxonomy", "unclassified"] as const)("uses the distinct %s state", (status) => {
+    expect(getTaxonomyAssignmentDisplay({ status, run_id: null, path: [] })).toEqual({ path: null, status });
   });
 
   test("lookup failure is unavailable, not unclassified", () => {
-    expect(getTaxonomyAssignmentDisplay(null)).toEqual({
-      path: null,
-      messageKey: "workspace.unify.taxonomy_assignment_unavailable",
-    });
+    expect(getTaxonomyAssignmentDisplay(null)).toEqual({ path: null, status: "unavailable" });
   });
 });
 

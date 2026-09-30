@@ -477,14 +477,18 @@ export const FeedbackRecordFormDrawer = ({
                   <div className="flex items-center gap-2">
                     <SparklesIcon className="size-3.5 text-slate-500" aria-hidden="true" />
                     <span className="text-sm font-medium text-slate-700">
-                      {t("workspace.unify.taxonomy_assignment_title")}
+                      {t("workspace.unify.topics_and_subtopics")}
                     </span>
                   </div>
                   {taxonomyDisplay.path ? (
                     <p className="text-sm break-words text-slate-700">{taxonomyDisplay.path}</p>
                   ) : (
                     <p className="text-sm text-slate-500">
-                      {t(taxonomyDisplay.messageKey ?? "workspace.unify.taxonomy_assignment_unavailable")}
+                      {taxonomyDisplay.status === "no_active_taxonomy"
+                        ? t("workspace.unify.taxonomy_assignment_no_active")
+                        : taxonomyDisplay.status === "unclassified"
+                          ? t("workspace.unify.taxonomy_assignment_unclassified")
+                          : t("workspace.unify.taxonomy_assignment_unavailable")}
                     </p>
                   )}
                 </div>
