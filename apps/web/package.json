@@ -38,7 +38,7 @@
     "@formbricks/cache": "workspace:*",
     "@formbricks/database": "workspace:*",
     "@formbricks/email": "workspace:*",
-    "@formbricks/hub": "0.12.0",
+    "@formbricks/hub": "file:/Users/xernobyl/Code/formbricks/hub.worktrees/eng-2092/sdks/typescript/formbricks-hub-0.14.0.tgz",
     "@formbricks/i18n-utils": "workspace:*",
     "@formbricks/jobs": "workspace:*",
     "@formbricks/js": "5.0.0",

@@ -113,7 +113,7 @@ export const UPDATE_FIELD_KEYS = {
  * this one.
  */
 const toUpdateParams = (record: FeedbackRecordCreateParams): FeedbackRecordUpdateParams => ({
-  // The SDK types value_text as nullable on create but not on update. Coerce null to undefined,
+  // The SDK types value_text and value_id as nullable on create but not on update. Coerce null to undefined,
   // which Hub reads as "leave unchanged" — transform.ts never emits a record without a value, so a
   // null here would mean "no answer to send" rather than "clear the stored answer".
   value_text: record.value_text ?? undefined,
@@ -123,7 +123,7 @@ const toUpdateParams = (record: FeedbackRecordCreateParams): FeedbackRecordUpdat
   // Carries the selected choice's id for single/multi select. Omitting it left a reconciled record
   // pointing at the *old* choice while its text showed the new one, and value_id is what the charts
   // group by — so the correction landed everywhere except the place it is read.
-  value_id: record.value_id,
+  value_id: record.value_id ?? undefined,
   metadata: record.metadata,
   language: record.language,
   user_id: record.user_id,

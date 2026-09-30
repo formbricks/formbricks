@@ -1,8 +1,9 @@
 import "server-only";
 import { createCacheKey } from "@formbricks/cache";
+import * as hub from "@formbricks/hub";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
-import { assertRepeatedArrayParams, getHubClient } from "./hub-client";
+import { getHubClient } from "./hub-client";
 import type {
   CreateTaxonomyRunInput,
   CreateTaxonomyRunResponse,
@@ -33,6 +34,7 @@ import {
   type HubResult,
   NO_CONFIG_ERROR,
   createHubResultFromError,
+  getErrorMessage,
   getErrorStatus,
   getHubErrorHint,
 } from "./utils";
@@ -46,8 +48,7 @@ export type HubFeedbackRecordResult = {
  * Create a single feedback record in the Hub.
  * Returns a result shape with data or error; logs failures.
  *
- * value_id (the stable id of the matched choice, ENG-1673) is sent through as-is:
- * the deployed Hub accepts it, and the SDK forwards unknown fields untouched.
+ * value_id is the stable id of the matched choice (ENG-1673).
  */
 export const createFeedbackRecord = async (
   input: FeedbackRecordCreateParams
@@ -57,7 +58,7 @@ export const createFeedbackRecord = async (
     return { data: null, error: { ...NO_CONFIG_ERROR } };
   }
   try {
-    const data = await client.feedbackRecords.create(input);
+    const { data } = await hub.createFeedbackRecord({ client, body: input, throwOnError: true });
     return { data, error: null };
   } catch (err) {
     logger.warn(
@@ -78,7 +79,7 @@ export const retrieveFeedbackRecord = async (id: string): Promise<HubFeedbackRec
   }
 
   try {
-    const data = await client.feedbackRecords.retrieve(id);
+    const { data } = await hub.getFeedbackRecord({ client, path: { id }, throwOnError: true });
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, id, hint: getHubErrorHint(err) }, "Hub: retrieveFeedbackRecord failed");
@@ -99,7 +100,12 @@ export const updateFeedbackRecord = async (
   }
 
   try {
-    const data = await client.feedbackRecords.update(id, input);
+    const { data } = await hub.updateFeedbackRecord({
+      client,
+      path: { id },
+      body: input,
+      throwOnError: true,
+    });
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, id, hint: getHubErrorHint(err) }, "Hub: updateFeedbackRecord failed");
@@ -122,7 +128,7 @@ export const deleteFeedbackRecord = async (id: string): Promise<HubFeedbackRecor
   }
 
   try {
-    await client.feedbackRecords.delete(id);
+    await hub.deleteFeedbackRecord({ client, path: { id }, throwOnError: true });
     return { data: { deleted: true }, error: null };
   } catch (err) {
     logger.warn({ err, id, hint: getHubErrorHint(err) }, "Hub: deleteFeedbackRecord failed");
@@ -141,23 +147,12 @@ export type HubTenantDataDeleteResult = {
   error: HubError | null;
 };
 
-type TenantDataDeleteResponse = {
-  tenant_id: string;
-  deleted_feedback_records: number;
-  deleted_embeddings: number;
-  deleted_webhooks: number;
-  message?: string;
-};
-
 /**
  * Purge ALL Hub-owned data for a tenant: feedback records, derived embeddings, the tenant's entire
  * taxonomy, its webhooks, and its settings. This is the offboarding purge — call it when the owning
  * organization is deleted so Hub-side rows don't become orphaned, not to empty a dataset that stays
  * in use (see `purgeHubFeedbackRecords` for that). Idempotent on the Hub side; the caller treats
  * failures as best-effort.
- *
- * Hits `DELETE /v1/tenants/{tenant_id}/data` directly rather than `client.tenants.deleteData()`
- * purely to keep the call shape identical for both purge helpers; the typed SDK method exists.
  *
  * The Hub also returns per-table taxonomy counts. They are not surfaced because the only caller is
  * the org-delete cascade, which logs nothing and acts on nothing — add them here if a caller ever
@@ -170,9 +165,11 @@ export const deleteHubTenantData = async (tenantId: string): Promise<HubTenantDa
   }
 
   try {
-    const data = await client.delete<TenantDataDeleteResponse>(
-      `/v1/tenants/${encodeURIComponent(tenantId)}/data`
-    );
+    const { data } = await hub.deleteTenantData({
+      client,
+      path: { tenant_id: tenantId },
+      throwOnError: true,
+    });
     return {
       data: {
         deletedFeedbackRecords: data.deleted_feedback_records,
@@ -194,12 +191,6 @@ export type HubFeedbackRecordsPurgeResult = {
   error: HubError | null;
 };
 
-type FeedbackRecordsPurgeResponse = {
-  tenant_id: string;
-  status: string;
-  message?: string;
-};
-
 /**
  * Purge every feedback record for a tenant, everything derived from those records (embeddings and
  * the enrichment stored on each record) and the taxonomy built on them. Unlike `deleteHubTenantData`
@@ -211,9 +202,6 @@ type FeedbackRecordsPurgeResponse = {
  * run, so there is no deleted count to report and the records are still present when it resolves.
  * `countFeedbackRecords` is how a caller can observe completion if it needs to. Safe to call
  * repeatedly — a request while a purge is already running joins it.
- *
- * Hits `DELETE /v1/tenants/{tenant_id}/feedback-records` directly because the SDK has no typed
- * method for it yet (added in hub#122; switch to the typed call after the next SDK release).
  */
 export const purgeHubFeedbackRecords = async (tenantId: string): Promise<HubFeedbackRecordsPurgeResult> => {
   const client = getHubClient();
@@ -222,9 +210,11 @@ export const purgeHubFeedbackRecords = async (tenantId: string): Promise<HubFeed
   }
 
   try {
-    const data = await client.delete<FeedbackRecordsPurgeResponse>(
-      `/v1/tenants/${encodeURIComponent(tenantId)}/feedback-records`
-    );
+    const { data } = await hub.purgeTenantFeedbackRecords({
+      client,
+      path: { tenant_id: tenantId },
+      throwOnError: true,
+    });
     return { data: { tenantId: data.tenant_id, status: data.status }, error: null };
   } catch (err) {
     logger.warn({ err, tenantId, hint: getHubErrorHint(err) }, "Hub: purgeHubFeedbackRecords failed");
@@ -258,11 +248,7 @@ export const listFeedbackRecords = async (
     return { data: null, error: { ...NO_CONFIG_ERROR } };
   }
   try {
-    // Scoped here rather than in getHubClient(): only list/count send array-typed filters, so only they
-    // need to pay for (and fail loudly on) this check. Inside the try so a failure is the same relayed
-    // Hub error as any other, not an uncaught exception.
-    assertRepeatedArrayParams(client);
-    const data = await client.feedbackRecords.list(params);
+    const { data } = await hub.listFeedbackRecords({ client, query: params, throwOnError: true });
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, hint: getHubErrorHint(err) }, "Hub: listFeedbackRecords failed");
@@ -290,9 +276,7 @@ export const countFeedbackRecords = async (
     return { data: null, error: { ...NO_CONFIG_ERROR } };
   }
   try {
-    // See the matching comment in listFeedbackRecords: scoped to the two paths that send array filters.
-    assertRepeatedArrayParams(client);
-    const data = await client.feedbackRecords.count(params);
+    const { data } = await hub.countFeedbackRecords({ client, query: params, throwOnError: true });
     return { data, error: null };
   } catch (err) {
     logger.warn(
@@ -316,8 +300,16 @@ export const semanticSearchFeedbackRecords = async (
   if (!client) {
     return { data: null, error: { ...NO_CONFIG_ERROR } };
   }
+  // The search text travels in the body and the paging controls in the query string.
+  const { query, tenant_id, ...pagination } = input;
+
   try {
-    const data = await client.feedbackRecords.search.performSemanticSearch(input);
+    const { data } = await hub.semanticSearchFeedbackRecords({
+      client,
+      body: { query, tenant_id },
+      query: pagination,
+      throwOnError: true,
+    });
     return { data, error: null };
   } catch (err) {
     logger.warn(
@@ -352,7 +344,12 @@ export const findSimilarFeedbackRecords = async (
     return { data: null, error: { ...NO_CONFIG_ERROR } };
   }
   try {
-    const data = await client.feedbackRecords.retrieveSimilar(id, params);
+    const { data } = await hub.similarFeedbackRecords({
+      client,
+      path: { id },
+      query: params,
+      throwOnError: true,
+    });
     return { data, error: null };
   } catch (err) {
     // "No embedding for this record" is an expected state, not a fault: embedding is asynchronous and
@@ -376,7 +373,11 @@ export const getFeedbackRecordTenant = async (recordId: string): Promise<Feedbac
   try {
     const data = await cache.withCache(
       async () => {
-        const feedbackRecord = await client.feedbackRecords.retrieve(recordId);
+        const { data: feedbackRecord } = await hub.getFeedbackRecord({
+          client,
+          path: { id: recordId },
+          throwOnError: true,
+        });
         return { tenantId: feedbackRecord.tenant_id };
       },
       createCacheKey.hub.feedbackRecordTenant(recordId),
@@ -387,7 +388,7 @@ export const getFeedbackRecordTenant = async (recordId: string): Promise<Feedbac
   } catch (err) {
     logger.warn({ err, recordId, hint: getHubErrorHint(err) }, "Hub: getFeedbackRecordTenant failed");
     const status = getErrorStatus(err);
-    const message = err instanceof Error ? err.message : String(err);
+    const message = getErrorMessage(err);
     return { data: null, error: { status, message, detail: message } };
   }
 };
@@ -409,7 +410,7 @@ export const createFeedbackRecordsBatch = async (
   const results = await Promise.all(
     inputs.map(async (input) => {
       try {
-        const data = await client.feedbackRecords.create(input);
+        const { data } = await hub.createFeedbackRecord({ client, body: input, throwOnError: true });
         return { data, error: null as HubFeedbackRecordResult["error"] };
       } catch (err) {
         logger.warn(
@@ -436,7 +437,11 @@ export const getEnrichmentStatus = async (tenantId: string): Promise<HubResult<E
   }
 
   try {
-    const data = await client.enrichmentStatus.retrieve({ tenant_id: tenantId });
+    const { data } = await hub.getEnrichmentStatus({
+      client,
+      query: { tenant_id: tenantId },
+      throwOnError: true,
+    });
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, tenantId, hint: getHubErrorHint(err) }, "Hub: getEnrichmentStatus failed");
@@ -451,7 +456,11 @@ export const listTaxonomyFields = async (tenantId: string): Promise<HubResult<Ta
   }
 
   try {
-    const data = await client.taxonomy.listFields({ tenant_id: tenantId });
+    const { data } = await hub.listTaxonomyFields({
+      client,
+      query: { tenant_id: tenantId },
+      throwOnError: true,
+    });
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, tenantId, hint: getHubErrorHint(err) }, "Hub: listTaxonomyFields failed");
@@ -468,7 +477,7 @@ export const createTaxonomyRun = async (
   }
 
   try {
-    const data = await client.taxonomy.runs.start(input);
+    const { data } = await hub.createTaxonomyRun({ client, body: input, throwOnError: true });
     return { data, error: null };
   } catch (err) {
     logger.warn(
@@ -495,7 +504,7 @@ export const listTaxonomyRuns = async (
   }
 
   try {
-    const data = await client.taxonomy.runs.list(params);
+    const { data } = await hub.listTaxonomyRuns({ client, query: params, throwOnError: true });
     return { data, error: null };
   } catch (err) {
     logger.warn(
@@ -513,7 +522,12 @@ export const getTaxonomyRun = async (runId: string, tenantId: string): Promise<H
   }
 
   try {
-    const data = await client.taxonomy.runs.retrieve(runId, { tenant_id: tenantId });
+    const { data } = await hub.getTaxonomyRun({
+      client,
+      path: { run_id: runId },
+      query: { tenant_id: tenantId },
+      throwOnError: true,
+    });
     return { data, error: null };
   } catch (err) {
     // A run is polled every few seconds while it generates, so a 404 (the run was deleted, or the id is
@@ -537,7 +551,7 @@ export const getActiveTaxonomyTree = async (
   }
 
   try {
-    const data = await client.taxonomy.runs.active.getTree(scope);
+    const { data } = await hub.getActiveTaxonomyTree({ client, query: scope, throwOnError: true });
     return { data, error: null };
   } catch (err) {
     if (getErrorStatus(err) === 404) {
@@ -562,7 +576,12 @@ export const getTaxonomyTree = async (
   }
 
   try {
-    const data = await client.taxonomy.runs.getTree(runId, { tenant_id: tenantId });
+    const { data } = await hub.getTaxonomyRunTree({
+      client,
+      path: { run_id: runId },
+      query: { tenant_id: tenantId },
+      throwOnError: true,
+    });
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, runId, tenantId, hint: getHubErrorHint(err) }, "Hub: getTaxonomyTree failed");
@@ -580,7 +599,12 @@ export const renameTaxonomyNode = async (
   }
 
   try {
-    const data = await client.taxonomy.nodes.rename(nodeId, input);
+    const { data } = await hub.renameTaxonomyNode({
+      client,
+      path: { node_id: nodeId },
+      body: input,
+      throwOnError: true,
+    });
     return { data, error: null };
   } catch (err) {
     logger.warn(
@@ -601,7 +625,12 @@ export const removeTaxonomyNode = async (
   }
 
   try {
-    const data = await client.taxonomy.nodes.softRemove(nodeId, params);
+    const { data } = await hub.removeTaxonomyNode({
+      client,
+      path: { node_id: nodeId },
+      query: params,
+      throwOnError: true,
+    });
     return { data, error: null };
   } catch (err) {
     logger.warn(
@@ -622,7 +651,12 @@ export const listTaxonomyNodeRecords = async (
   }
 
   try {
-    const data = await client.taxonomy.nodes.listRecords(nodeId, params);
+    const { data } = await hub.listTaxonomyNodeRecords({
+      client,
+      path: { node_id: nodeId },
+      query: params,
+      throwOnError: true,
+    });
     return { data, error: null };
   } catch (err) {
     logger.warn(
@@ -647,7 +681,12 @@ export const listTaxonomyNodeRecordCounts = async (
   }
 
   try {
-    const data = await client.taxonomy.runs.retrieveRecordCounts(runId, { tenant_id: tenantId });
+    const { data } = await hub.countTaxonomyNodeRecords({
+      client,
+      path: { run_id: runId },
+      query: { tenant_id: tenantId },
+      throwOnError: true,
+    });
     return { data, error: null };
   } catch (err) {
     logger.warn(

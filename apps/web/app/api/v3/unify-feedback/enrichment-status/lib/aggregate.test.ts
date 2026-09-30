@@ -8,6 +8,7 @@ const status = (
   >
 ): EnrichmentStatusResponse => ({
   tenant_id: "frd-1",
+  as_of: "2026-09-30T00:00:00Z",
   translation: { enabled: false, eligible: 0, done: 0, ...overrides.translation },
   sentiment: { enabled: false, eligible: 0, done: 0, ...overrides.sentiment },
   emotions: { enabled: false, eligible: 0, done: 0, ...overrides.emotions },
@@ -95,6 +96,7 @@ describe("aggregateEnrichmentStatus", () => {
     // types all three keys as optional for exactly this case.
     const partial: EnrichmentStatusResponse = {
       tenant_id: "frd-1",
+      as_of: "2026-09-30T00:00:00Z",
       translation: { enabled: true, eligible: 50, done: 25 },
     };
 
