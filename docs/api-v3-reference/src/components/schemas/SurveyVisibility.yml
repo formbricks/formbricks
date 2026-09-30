@@ -3,5 +3,7 @@ enum:
   - restricted
   - workspace
 description:
-  "`restricted`: readable by the owner and the organisation's owners and managers only. `workspace`:
-  readable by everyone with access to the workspace — today's behaviour."
+  "`restricted`: readable by the owner and the organisation's owners and managers only. The owner's access
+  is conditional on their workspace access, level for level: they read the survey only while they can read
+  the workspace, and edit it only while they can write to it — being the owner grants nothing the workspace
+  does not. `workspace`: readable by everyone with access to the workspace — today's behaviour."

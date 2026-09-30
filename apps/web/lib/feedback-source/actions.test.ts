@@ -163,6 +163,22 @@ describe("feedback source mutation safeguards", () => {
     });
   });
 
+  test("refuses an import by a caller who cannot read the survey's responses", async () => {
+    mocks.assertCan.mockImplementation(async (_actor, action: string) => {
+      if (action === "survey.response_read") throw new Error("Not authorized");
+    });
+
+    await expect(
+      (importHistoricalResponsesAction as unknown as (args: object) => Promise<unknown>)({
+        ctx,
+        parsedInput: { feedbackSourceId, workspaceId, surveyId: "survey-1" },
+      })
+    ).rejects.toThrow("Not authorized");
+    expect(mocks.assertNewlyAttachedSurveysWorkspaceVisible).not.toHaveBeenCalled();
+    expect(mocks.importHistoricalResponses).not.toHaveBeenCalled();
+    mocks.assertCan.mockReset();
+  });
+
   test("refuses to import a restricted survey's responses", async () => {
     mocks.assertNewlyAttachedSurveysWorkspaceVisible.mockRejectedValue(new Error("not workspace-visible"));
 

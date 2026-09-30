@@ -131,7 +131,10 @@ describe("Slug Library Tests", () => {
         OR: [
           {
             visibility: "workspace",
-            OR: [{ visibilityPending: false }, { visibilityVersion: 1, visibilityProjectedVersion: 0 }],
+            OR: [
+              { visibilityPending: false },
+              { visibilityVersion: 0, visibilityProjectedVersion: { lt: 0 } },
+            ],
           },
           { ownerId: "user_1" },
         ],
@@ -149,7 +152,7 @@ describe("Slug Library Tests", () => {
                     visibility: "workspace",
                     OR: [
                       { visibilityPending: false },
-                      { visibilityVersion: 1, visibilityProjectedVersion: 0 },
+                      { visibilityVersion: 0, visibilityProjectedVersion: { lt: 0 } },
                     ],
                   },
                   { ownerId: "user_1" },

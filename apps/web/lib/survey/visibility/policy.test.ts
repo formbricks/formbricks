@@ -7,15 +7,19 @@ describe("visibility policy", () => {
     ["settled restricted", "restricted", 1, 1, false, "restricted", null],
     ["pending restriction", "restricted", 2, 1, true, "restricted", "restricted"],
     ["pending grant", "workspace", 2, 1, true, "restricted", "workspace"],
-    // No projection acknowledged yet (just created or copied): the stored value is enforced.
-    ["never-projected workspace", "workspace", 1, 0, true, "workspace", "workspace"],
-    ["never-projected restricted", "restricted", 1, 0, true, "restricted", "restricted"],
-    // Changed before its first acknowledgement (created restricted, then granted): a real transition.
+    // Pre-migration surveys: settled at 0/0, and their first change is a real pending restriction.
+    ["pre-migration survey", "workspace", 0, 0, false, "workspace", null],
+    ["pre-migration survey's first restriction", "restricted", 1, 0, true, "restricted", "restricted"],
+    // The initial projection (just created or copied): not pending, and the stored value is enforced.
+    ["initial projection, workspace", "workspace", 0, -1, false, "workspace", null],
+    ["initial projection, restricted", "restricted", 0, -1, false, "restricted", null],
+    // Changed before the first acknowledgement: a real transition, pending as usual.
+    ["restricted before the first acknowledgement", "restricted", 1, -1, true, "restricted", "restricted"],
     [
-      "cancel back to workspace before any acknowledgement",
+      "cancelled back to workspace before the first acknowledgement",
       "workspace",
       2,
-      0,
+      -1,
       true,
       "restricted",
       "workspace",

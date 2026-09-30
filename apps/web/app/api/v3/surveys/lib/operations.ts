@@ -24,7 +24,7 @@ import { recordSurveyListPredicateMismatch } from "@/lib/authorization/metrics";
 import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { WorkspaceSurveyLimitError } from "@/lib/survey/visibility/limit";
-import { isPending } from "@/lib/survey/visibility/policy";
+import { isAwaitingProjection } from "@/lib/survey/visibility/policy";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
@@ -253,13 +253,13 @@ export async function listV3Surveys({
     // one bulk check. A row it denies is dropped and counted — a disagreement between PostgreSQL and
     // SpiceDB is a projection bug to alert on, and failing closed on it is the safe direction.
     //
-    // Only settled rows are confirmed. A pending one (a change in flight, or a survey created or copied a
-    // moment ago) is a version the graph does not hold yet, so every read decides it from PostgreSQL
-    // facts — restricted to its owner and the administrators, which the predicate already applied.
+    // Only settled rows are confirmed. One the graph does not hold yet (a change in flight, or the initial
+    // projection of a survey created or copied a moment ago) is decided from PostgreSQL facts by every
+    // read, which the predicate already applied.
     let surveys = surveyPage.surveys;
     const actor = getV3AuthorizationActor(authentication);
     if (actorContext.enforced && actor) {
-      const settledIds = surveys.filter((survey) => !isPending(survey)).map(({ id }) => id);
+      const settledIds = surveys.filter((survey) => !isAwaitingProjection(survey)).map(({ id }) => id);
       const readable = await filterReadableSurveyIds(actor, settledIds);
       const deniedIds = settledIds.filter((id) => !readable.has(id));
       if (deniedIds.length > 0) {

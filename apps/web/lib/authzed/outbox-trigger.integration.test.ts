@@ -268,14 +268,14 @@ describe("AuthZed projection outbox triggers: survey (ENG-3282)", () => {
     await clearOutbox();
 
     // INSERT → grant. Also proves the `visibilityPending` trigger, not Prisma, decides the column: the
-    // row starts one version ahead of its acknowledgement, pending until the projector has run.
+    // row starts in its initial projection (version 0, never acknowledged) until the projector runs.
     const survey = await prisma.survey.create({
       data: { name: "Transitions", workspaceId: workspace.id, ownerId: owner.id, createdBy: owner.id },
     });
     expect(survey).toMatchObject({
       visibilityPending: true,
-      visibilityProjectedVersion: 0,
-      visibilityVersion: 1,
+      visibilityProjectedVersion: -1,
+      visibilityVersion: 0,
     });
     expect(await surveyEvents()).toEqual([
       { isRevocation: false, primaryId: survey.id, secondaryId: null, targetType: "survey" },
@@ -315,7 +315,7 @@ describe("AuthZed projection outbox triggers: survey (ENG-3282)", () => {
 
   test("keeps visibilityPending in step with the two versions", async () => {
     const { workspace } = await seedSurvey("survey-pending");
-    // Whatever pair the insert supplies, equal versions never survive it: a new row is pending.
+    // Whatever pair the insert supplies, it starts in its initial projection.
     const survey = await prisma.survey.create({
       data: {
         name: "Pending",
@@ -326,8 +326,8 @@ describe("AuthZed projection outbox triggers: survey (ENG-3282)", () => {
     });
     expect(survey).toMatchObject({
       visibilityPending: true,
-      visibilityProjectedVersion: 3,
-      visibilityVersion: 4,
+      visibilityProjectedVersion: -1,
+      visibilityVersion: 0,
     });
 
     const acked = await prisma.survey.update({
@@ -336,12 +336,12 @@ describe("AuthZed projection outbox triggers: survey (ENG-3282)", () => {
     });
     expect(acked.visibilityPending).toBe(false);
 
-    // Only an insert is moved ahead: an update that leaves the versions equal stays settled.
+    // Only an insert is rewritten: an update that leaves the versions equal stays settled.
     const touched = await prisma.survey.update({
       where: { id: survey.id },
       data: { visibilityPending: true },
     });
-    expect(touched).toMatchObject({ visibilityPending: false, visibilityVersion: 4 });
+    expect(touched).toMatchObject({ visibilityPending: false, visibilityVersion: 0 });
 
     const bumped = await prisma.survey.update({
       where: { id: survey.id },

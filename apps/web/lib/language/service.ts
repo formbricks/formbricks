@@ -18,6 +18,7 @@ import {
   ZLanguageUpdate,
 } from "@formbricks/types/workspace";
 import { isWorkspaceDefaultSurveyLanguage } from "../i18n/default-survey-language";
+import { andVisibleSurveys } from "../survey/visibility/predicate";
 import { validateInputs } from "../utils/validate";
 import { getWorkspace } from "../workspace/service";
 
@@ -98,33 +99,42 @@ export const createLanguage = async (
   }
 };
 
-export const getSurveysUsingGivenLanguage = reactCache(async (languageId: string): Promise<string[]> => {
-  try {
-    // Check if the language is used in any survey
-    const surveys = await prisma.surveyLanguage.findMany({
-      where: {
-        languageId: languageId,
-      },
-      select: {
-        survey: {
-          select: {
-            name: true,
+/**
+ * The names of the surveys using a language, limited to the ones `visibleSurveyWhere` admits (the
+ * caller's visibility predicate, ENG-3282): a restricted survey's name and existence are its owner's
+ * and the administrators'. `{}` while visibility is not enforced.
+ */
+export const getSurveysUsingGivenLanguage = reactCache(
+  async (languageId: string, visibleSurveyWhere: Prisma.SurveyWhereInput = {}): Promise<string[]> => {
+    try {
+      const visible = andVisibleSurveys(visibleSurveyWhere);
+      // Check if the language is used in any survey
+      const surveys = await prisma.surveyLanguage.findMany({
+        where: {
+          languageId: languageId,
+          ...(Object.keys(visible).length > 0 ? { survey: visible } : {}),
+        },
+        select: {
+          survey: {
+            select: {
+              name: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    // Extracting survey names
-    const surveyNames = surveys.map((s) => s.survey.name);
-    return surveyNames;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error getting surveys using given language");
-      throw new DatabaseError(error.message);
+      // Extracting survey names
+      const surveyNames = surveys.map((s) => s.survey.name);
+      return surveyNames;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        logger.error(error, "Error getting surveys using given language");
+        throw new DatabaseError(error.message);
+      }
+      throw error;
     }
-    throw error;
   }
-});
+);
 
 export const deleteLanguage = async (languageId: string, workspaceId: string): Promise<TLanguage> => {
   try {

@@ -1747,8 +1747,8 @@ describe("listV3Surveys visibility (ENG-3282)", () => {
     vi.mocked(getSurveyListPage).mockResolvedValue({
       surveys: [
         { id: "survey_ok", ...settled },
-        // Just created: one version ahead of its acknowledgement, so the graph holds nothing for it yet.
-        { id: "survey_fresh", visibilityProjectedVersion: 0, visibilityVersion: 1 },
+        // Just created: its initial projection, so the graph holds nothing for it yet.
+        { id: "survey_fresh", visibilityProjectedVersion: -1, visibilityVersion: 0 },
         { id: "survey_leak", ...settled },
       ],
       nextCursor: null,

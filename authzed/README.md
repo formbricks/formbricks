@@ -413,13 +413,15 @@ mismatched parent.
 - **Fencing.** Each survey is reconciled inside a transaction holding
   `pg_advisory_xact_lock(hashtext('survey-visibility:' || id))`, the same lock the visibility endpoint
   takes to store a change. The projector acknowledges the exact `visibilityVersion` it wrote into
-  `visibilityProjectedVersion`; while the two differ (`visibilityPending`), PostgreSQL treats the survey as
-  restricted on every path, and direct checks decide it from PostgreSQL facts (its owner along their
-  workspace ladder, else administrators) rather than from the graph. An insert starts one version ahead
-  of its acknowledgement, so a survey that was just created or copied is pending, not an empty graph node,
-  until its first projection lands. The one exception is that exact insert pair (version 1, acknowledged 0) on a survey stored `workspace`: it was never anything else, so it is workspace-visible at once and
-  decided on the workspace ladder — the API key or member that created it can use it immediately. A
-  survey created restricted, or changed before its first acknowledgement, stays pending as above.
+  `visibilityProjectedVersion`; while the two differ (`visibilityPending`), direct checks decide the survey
+  from PostgreSQL facts rather than from the graph. A change stored through the visibility endpoint and not
+  yet acknowledged is _pending_: the survey is restricted on every path (its owner along their workspace
+  ladder, else administrators). An insert starts in its _initial projection_ instead — version 0,
+  acknowledged -1, a pair distinct from the settled 0/0 of every pre-migration survey. That is not pending:
+  the stored visibility is enforced at once (a workspace-visible survey is usable by the API key or member
+  that created it), the endpoint reports `pending: null` and `version: 0`, and `change_visibility` is
+  decided from `ownerId` and the workspace, since the survey's graph node has no edges yet. A change stored
+  before the first acknowledgement is pending as usual.
 - **DELETE is not a revocation.** Every survey decision resolves the row first and denies once it is gone,
   so deleting a workspace with many surveys cannot arm the freshness guard. Leftover edges are hygiene.
 - **Repair scope.** Surveys are their own backfill scope, `--scope=survey`, outside `--scope=all`: the

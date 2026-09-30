@@ -1650,9 +1650,9 @@ paths:
       description: |
         Returns the survey's enforced visibility, its owner, the caller's access, and what a change would do: `blockers[]` lists the outbound connections that currently make `restricted` refusable (webhooks, integrations, active feedback sources, and draft or enabled workflows), `impact` carries the numbers the confirmation dialogues show, `allowedTargets[]` the values a `POST` would act on right now, and `pending` / `version` describe a change still in flight. Read this before offering "Make restricted"; the `POST` answers **409** while `blockers[]` is non-empty.
 
-        Requires `survey.change_visibility`, the same permission as the `POST`: the survey's owner or an organisation owner/manager, with the feature enabled. Everyone else — read or write members, team-level managers, every API key, and anyone who cannot see the survey at all — answers **403** with the same body as an unknown id. Connection names and ids are configuration, not survey content, and only the people who may act on them get to read them.
+        Requires `survey.change_visibility`, the same permission as the `POST`: the survey's owner while they still hold read access to the workspace, or an organisation owner/manager, with the feature enabled. Everyone else — read or write members, team-level managers, every API key, and anyone who cannot see the survey at all — answers **403** with the same body as an unknown id. Connection names and ids are configuration, not survey content, and only the people who may act on them get to read them.
 
-        While `pending` is non-null the survey is restricted for everyone but its owner and the organisation's owners and managers, whichever direction is queued — the application fails closed until the graph acknowledges the change — so `visibility` reads `restricted` in that state and `allowedTargets` includes the value that cancels the pending change.
+        While `pending` is non-null the survey is restricted for everyone but its owner (within their workspace access: read to view, write to edit) and the organisation's owners and managers, whichever direction is queued — the application fails closed until the graph acknowledges the change — so `visibility` reads `restricted` in that state and `allowedTargets` includes the value that cancels the pending change.
       tags:
         - V3 Surveys
       parameters:
@@ -1786,7 +1786,7 @@ paths:
       description: |
         Sets the survey to `restricted` or `workspace`.
 
-        **Restrictions take effect at once.** A `workspace → restricted` request stores the flag, a new `version` and a pending marker in one transaction. From that instant the survey is restricted on every path — single reads, lists and counts, responses, exports — for everyone but the owner and the organisation's owners and managers, whether or not the graph has caught up (fail closed). The relationships are then projected; the answer is **200** either way, with `pending: null` when the graph acknowledged this `version` inside the request and `pending: "restricted"` when the outbox will finish it.
+        **Restrictions take effect at once.** A `workspace → restricted` request stores the flag, a new `version` and a pending marker in one transaction. From that instant the survey is restricted on every path — single reads, lists and counts, responses, exports — for everyone but the owner and the organisation's owners and managers, whether or not the graph has caught up (fail closed). The owner keeps only the access their workspace role gives them — read to view, write to edit; an owner who loses workspace access loses the survey too. The relationships are then projected; the answer is **200** either way, with `pending: null` when the graph acknowledged this `version` inside the request and `pending: "restricted"` when the outbox will finish it.
 
         **Grants take effect when enforced.** A `restricted → workspace` request answers **200** only once the graph has acknowledged this exact `version`; until then the survey stays restricted. If the in-request projection fails, the answer is **503** `projection_pending`: the change is stored and queued, `GET …/visibility` shows `pending: "workspace"`, and retrying is safe.
 
@@ -4891,7 +4891,7 @@ components:
       enum:
         - restricted
         - workspace
-      description: '`restricted`: readable by the owner and the organisation''s owners and managers only. `workspace`: readable by everyone with access to the workspace — today''s behaviour.'
+      description: '`restricted`: readable by the owner and the organisation''s owners and managers only. The owner''s access is conditional on their workspace access, level for level: they read the survey only while they can read the workspace, and edit it only while they can write to it — being the owner grants nothing the workspace does not. `workspace`: readable by everyone with access to the workspace — today''s behaviour.'
     SurveyOwner:
       type: object
       description: 'The authorization owner — the person whose restricted surveys these are. Distinct from `creator`, which is attribution only and is never rewritten. Display only, like `creator`: no user id is exposed, because `access.via === "owner"` already answers "is this mine" and `filter[owner][in]=me` filters server-side. Ownership transfer can add an identifier later, additively. Durable source: `Survey.ownerId` in PostgreSQL, projected to `survey#owner@user`; the graph never holds ownership alone, so a rebuild from an empty graph restores it.'
@@ -7530,7 +7530,7 @@ components:
               anyOf:
                 - $ref: '#/components/schemas/SurveyVisibility'
                 - type: 'null'
-              description: The value a `POST` stored that the graph has not yet acknowledged. While non-null the survey is restricted for everyone but the owner and the organisation's owners and managers, whichever value is pending — `visibility` reads `restricted`. `"restricted"` means the restriction is already enforced and only the graph is catching up; `"workspace"` means the grant is not yet in effect. `null` normally. Clears when the outbox delivers (within 60 seconds, or the deployment fails closed), or when a later `POST` cancels or supersedes it.
+              description: The value a `POST` stored that the graph has not yet acknowledged. While non-null the survey is restricted for everyone but the owner (for as long as they keep the workspace access the action needs — read to view, write to edit) and the organisation's owners and managers, whichever value is pending — `visibility` reads `restricted`. Always `null` for a survey just created or copied whose visibility has not been changed yet — its stored value is in effect at once. `"restricted"` means the restriction is already enforced and only the graph is catching up; `"workspace"` means the grant is not yet in effect. `null` normally. Clears when the outbox delivers (within 60 seconds, or the deployment fails closed), or when a later `POST` cancels or supersedes it.
             version:
               type: integer
               minimum: 0

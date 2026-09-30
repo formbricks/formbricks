@@ -386,11 +386,11 @@ model Survey {
   visibility                 SurveyVisibility @default(workspace)
   owner                      User?            @relation("SurveyOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   ownerId                    String?
-  /// Incremented by every accepted visibility change; fences projection work. An INSERT starts one
-  /// ahead of `visibilityProjectedVersion` (the `survey_visibility_pending` trigger), so a new survey
-  /// stays pending until its first projection is acknowledged.
+  /// Incremented by every accepted visibility change; fences projection work. An INSERT starts at 0
+  /// with `visibilityProjectedVersion` -1 (the `survey_visibility_pending` trigger): the initial
+  /// projection, decided from PostgreSQL facts until the projector acknowledges it.
   visibilityVersion          Int              @default(0)
-  /// The `visibilityVersion` SpiceDB last acknowledged.
+  /// The `visibilityVersion` SpiceDB last acknowledged; -1 while none ever was.
   visibilityProjectedVersion Int              @default(0)
   /// "visibilityVersion" <> "visibilityProjectedVersion", kept by the `survey_visibility_pending`
   /// trigger (a BEFORE trigger overrides whatever an INSERT or UPDATE supplies). Read-only: never put it

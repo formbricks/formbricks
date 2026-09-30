@@ -31,13 +31,14 @@ const ZSendEmbedSurveyPreviewEmailAction = z.object({
 export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
   .inputSchema(ZSendEmbedSurveyPreviewEmailAction)
   .action(async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-    const organizationLogoUrl = await getOrganizationLogoUrl(organizationId);
-
+    // Authorized first, so a forbidden survey and a missing one answer alike (ENG-3282).
     await assertCan({ type: "user", id: ctx.user.id }, "survey.read", {
       type: "survey",
       id: parsedInput.surveyId,
     });
+
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+    const organizationLogoUrl = await getOrganizationLogoUrl(organizationId);
 
     const survey = await getSurvey(parsedInput.surveyId);
     if (!survey) {
