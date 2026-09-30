@@ -26,6 +26,13 @@
 {{- if not .Values.taxonomy.llm.contextWindowTokens }}
   {{- fail "taxonomy.llm.contextWindowTokens is required when taxonomy.enabled=true and must match the selected provider/model deployment" }}
 {{- end }}
+{{- /* These two relations span the pod spec and Hub, so neither runtime can check them. */ -}}
+{{- if lt (int .Values.taxonomy.terminationGracePeriodSeconds) (add (int .Values.taxonomy.runDeadlineSeconds) 30) }}
+  {{- fail "taxonomy.terminationGracePeriodSeconds must be at least taxonomy.runDeadlineSeconds + 30" }}
+{{- end }}
+{{- if and .Values.taxonomy.autoConfigureHub (le (int .Values.taxonomy.hubStaleRunTimeoutSeconds) (int .Values.taxonomy.runDeadlineSeconds)) }}
+  {{- fail "taxonomy.hubStaleRunTimeoutSeconds must exceed taxonomy.runDeadlineSeconds when taxonomy.autoConfigureHub=true" }}
+{{- end }}
 {{- if and (eq $provider "openai-compatible") .Values.llm.enabled (not .Values.taxonomy.llm.baseUrl) }}
   {{- $enabledBundledModels := list -}}
   {{- range $modelSpec := .Values.llm.servingEngineSpec.modelSpec }}

@@ -549,8 +549,11 @@ checks it against that selected deployment's `maxModelLen`. Taxonomy startup and
 for the full prompt, output, and reserve calculation and for external provider/model preflight.
 
 `taxonomy.maxClusters` remains configurable for upgrade compatibility, but production Taxonomy images enforce
-the 80-cluster quality invariant at startup. The Taxonomy and Hub runtimes likewise validate retry, timeout,
-heartbeat, stale-run, and total-run settings. Keep the default 30-second heartbeat well below the 1,800-second
+the 80-cluster quality invariant at startup. The Taxonomy and Hub runtimes likewise validate their own retry,
+timeout, heartbeat, stale-run, and total-run settings. Two relations span processes, so the chart checks them at
+render time: `taxonomy.terminationGracePeriodSeconds` must be at least `taxonomy.runDeadlineSeconds` + 30, and,
+when `taxonomy.autoConfigureHub=true`, `taxonomy.hubStaleRunTimeoutSeconds` must exceed
+`taxonomy.runDeadlineSeconds`. Keep the default 30-second heartbeat well below the 1,800-second
 stale-run timeout; a heartbeat value of `0` intentionally disables heartbeats in supporting Taxonomy images.
 
 When `taxonomy.enabled=true`, the chart creates the taxonomy Deployment and Service, creates or uses the

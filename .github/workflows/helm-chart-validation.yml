@@ -430,6 +430,25 @@ jobs:
             --set taxonomy.llm.structuredOutputMode=unsupported-mode
 
           expect_taxonomy_render_failure \
+            taxonomy-grace-period-below-deadline \
+            "taxonomy.terminationGracePeriodSeconds must be at least" \
+            --set taxonomy.terminationGracePeriodSeconds=1
+
+          expect_taxonomy_render_failure \
+            taxonomy-hub-stale-timeout-below-deadline \
+            "taxonomy.hubStaleRunTimeoutSeconds must exceed" \
+            --set-string taxonomy.hubStaleRunTimeoutSeconds=120
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set taxonomy.enabled=true \
+            --set taxonomy.autoConfigureHub=false \
+            --set taxonomy.llm.baseUrl=https://llm.example.com/v1 \
+            --set-string taxonomy.llm.contextWindowTokens=65536 \
+            --set-string taxonomy.hubStaleRunTimeoutSeconds=120 \
+            --show-only templates/taxonomy-deployment.yaml > /dev/null
+
+          expect_taxonomy_render_failure \
             taxonomy-bedrock-region-missing \
             "taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION is required" \
             --set taxonomy.llm.provider=bedrock
