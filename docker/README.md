@@ -58,7 +58,10 @@ default, and all three services start as part of the baseline `docker compose up
   the updater stops before pulling or restarting when the worker is absent. See the
   [migration guide](../docs/self-hosting/advanced/migration.mdx#hub-worker-required-for-docker). Also add
   `CUBEJS_EXTERNAL_DEFAULT: ${CUBEJS_EXTERNAL_DEFAULT:-false}` to the Cube service's `environment` block when
-  upgrading a Compose file that predates that default.
+  upgrading a Compose file that predates that default. The bundled Cube image is now `ghcr.io/formbricks/cube`
+  (built from [`cube-image/`](cube-image/README.md)), which has no shell, so replace the whole `cube` service
+  rather than only its `image:`; see the
+  [migration guide](../docs/self-hosting/advanced/migration.mdx#bundled-cube-image-action-required-for-some-deployments).
 - **Development** (`docker-compose.dev.yml`): Hub uses a dedicated local `hub` database and `HUB_API_KEY` defaults to `dev-api-key`. The dev stack starts `hub` plus `hub-worker`; set `EMBEDDING_PROVIDER`, `EMBEDDING_MODEL`, and any provider credentials in the repo root `.env` to enable Hub embeddings locally. See the [Hub embeddings environment reference](https://hub.formbricks.com/reference/environment-variables/#embeddings) for provider-specific values. Cube starts with the dev stack, `CUBEJS_API_URL` defaults to `http://localhost:4000`, and `pnpm dev:setup` generates `CUBEJS_API_SECRET` in the repo root `.env`. The Hub image is pinned to a semver tag (`hub`, `hub-worker`, and `hub-migrate` share the same value); override `HUB_IMAGE_TAG` in the repo root `.env` to test a specific Hub release.
 
 ## AuthZed / SpiceDB

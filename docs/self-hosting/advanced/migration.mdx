@@ -201,6 +201,46 @@ Completed jobs remain committed and pending jobs remain queued, but all Hub asyn
 again. A fully custom deployment that runs Hub workers outside this Compose project must use its own manual
 upgrade workflow rather than the one-click updater.
 
+### Bundled Cube image (action required for some deployments)
+
+The bundled Cube service now runs `ghcr.io/formbricks/cube:1.7.47-1` instead of `cubejs/cube:v1.6.6`. It
+contains only the Cube 1.7.47 API server and its Postgres driver on a distroless Node 24 runtime, without the
+shell, Python and Cube Store that made image scanners report critical CVEs against the upstream image.
+Cube 1.7 returns every numeric measure and dimension as a JSON string. Formbricks converts number-typed members
+back into numbers, so dashboards need no change; anything else that queries your Cube API directly now receives
+strings for them.
+
+- **Docker Compose and one-click**: `formbricks.sh update` keeps your local `docker-compose.yml`, so the stack
+  stays on `cubejs/cube:v1.6.6` until you replace its whole `cube` service with the one from the release you
+  are upgrading to. Changing only `image:` is not enough. The new image has no shell, so the old
+  `command: sh -c '… exec cubejs server'` wrapper exits with `Error: Cannot find module '/cube/conf/sh'`. The
+  image's own command starts Cube, which still refuses to start without `CUBEJS_API_SECRET`. Keep your own
+  `CUBEJS_*` overrides when you merge the block.
+
+  ```bash
+  cp -p docker-compose.yml docker-compose.yml.before-cube-image
+  curl -fsSL -o docker-compose.release.yml \
+    https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
+  # Copy the release's `cube` service into docker-compose.yml, then:
+  docker compose config >/dev/null
+  docker compose pull cube
+  docker compose up -d --no-deps --force-recreate cube
+  docker compose ps cube
+  ```
+
+- **Helm**: the chart defaults to the new image. If your values set `cube.image.tag` without
+  `cube.image.repository`, the chart now pulls a non-existent `ghcr.io/formbricks/cube:<your old tag>` and the
+  pod fails with `ImagePullBackOff`. Drop the tag override, or set both values. Pointing them back at an upstream
+  `cubejs/cube` release is supported.
+- **`CUBEJS_DEV_MODE=true`**: not supported on the new image. Dev mode relies on the embedded Cube Store the image
+  leaves out, so `/readyz` answers 500 and the Helm probes and Compose healthcheck never pass. Leave it unset in
+  production.
+- **Air-gapped installs and registry mirrors**: mirror `ghcr.io/formbricks/cube:1.7.47-1` along with the other
+  Formbricks images, then point the Compose `image:` or `cube.image.repository` at your mirror.
+
+Cube keeps no state of its own, so rolling back only this change means restoring the backed-up Compose file or
+your previous `cube.image` values and recreating the `cube` service.
+
 ## v5.4
 
 v5.4 carries one application-level breaking change, and it is narrow: it affects **API keys** used against
@@ -1017,8 +1057,9 @@ Common upgrade issues:
   at boot, or — if env vars are present but Cube is unreachable — dashboards and analysis queries fail
   while the rest of the app stays healthy
 - **Cube healthcheck fails with `wget: not found`**: older v5 Docker Compose files used `wget` for the
-  bundled Cube healthcheck, but `cubejs/cube:v1.6.6` does not include it. Sync the Cube healthcheck from the
-  current Docker Compose file so it checks `/readyz` with Node instead.
+  bundled Cube healthcheck, but the bundled Cube image does not include it. Sync the whole `cube` service from
+  the current Docker Compose file so the healthcheck checks `/readyz` with Node instead (see
+  [Bundled Cube image](#bundled-cube-image-action-required-for-some-deployments)).
 
 If you need to roll back:
 
