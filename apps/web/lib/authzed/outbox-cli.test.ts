@@ -54,6 +54,20 @@ describe("AuthZed outbox CLI", () => {
     expect(output).not.toContain("secondaryId");
   });
 
+  test("reports a warning when revocations pass the warning threshold only", async () => {
+    dependencies.status.mockResolvedValue({
+      deadLettered: 0,
+      oldestPendingAgeSeconds: 16,
+      overdueRevocations: 0,
+      pending: 1,
+      revocationsPastCritical: 0,
+      revocationsPastWarning: 1,
+    });
+
+    await expect(runAuthzedOutboxCli({ action: "status" }, dependencies)).resolves.toBe(2);
+    expect(JSON.parse(dependencies.writeOutput.mock.calls[0][0])).toMatchObject({ status: "warning" });
+  });
+
   test("drains and replays with stable exit codes", async () => {
     dependencies.drain.mockResolvedValue({
       claimed: 2,

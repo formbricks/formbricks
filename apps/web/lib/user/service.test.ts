@@ -8,6 +8,7 @@ import { TUserLocale, TUserUpdateInput } from "@formbricks/types/user";
 import { deleteUserOrganizationRelationships } from "@/lib/authzed/organization-membership";
 import { deleteUserTeamRelationships } from "@/lib/authzed/team-workspace";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
+import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
 import { publicUserSelect } from "./public-user";
 import { deleteUser, getUser, getUserByEmail, getUsersWithOrganization, updateUser } from "./service";
 
@@ -36,6 +37,10 @@ vi.mock("@/lib/authzed/organization-membership", () => ({
 }));
 vi.mock("@/lib/authzed/team-workspace", () => ({
   deleteUserTeamRelationships: vi.fn(),
+}));
+
+vi.mock("@/modules/auth/lib/brevo", () => ({
+  deleteBrevoCustomerByEmail: vi.fn(),
 }));
 
 describe("User Service", () => {
@@ -236,6 +241,7 @@ describe("User Service", () => {
       });
       expect(deleteUserOrganizationRelationships).toHaveBeenCalledWith("user1");
       expect(deleteUserTeamRelationships).toHaveBeenCalledWith("user1");
+      expect(deleteBrevoCustomerByEmail).toHaveBeenCalledWith({ email: mockPrismaUser.email });
     });
 
     // Regression for ENG-1057: Invite.creatorId has no onDelete rule, so any
@@ -251,7 +257,10 @@ describe("User Service", () => {
       expect(prisma.invite.deleteMany).toHaveBeenCalledWith({ where: { creatorId: "user1" } });
       const inviteDeleteOrder = vi.mocked(prisma.invite.deleteMany).mock.invocationCallOrder[0];
       const userDeleteOrder = vi.mocked(prisma.user.delete).mock.invocationCallOrder[0];
+      const brevoDeleteOrder = vi.mocked(deleteBrevoCustomerByEmail).mock.invocationCallOrder[0];
       expect(inviteDeleteOrder).toBeLessThan(userDeleteOrder);
+      expect(userDeleteOrder).toBeLessThan(brevoDeleteOrder);
+      expect(deleteBrevoCustomerByEmail).toHaveBeenCalledWith({ email: mockPrismaUser.email });
     });
 
     test("should throw DatabaseError when prisma throws", async () => {

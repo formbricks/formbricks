@@ -33,6 +33,22 @@ const closeDatabase = async (): Promise<void> => {
   await prisma.$disconnect();
 };
 
+const runHealthCommand = async (
+  args: ReadonlyArray<string>,
+  originalConsoleError: typeof console.error
+): Promise<void> => {
+  if (args.length !== 0) {
+    console.error = originalConsoleError;
+    writeResult(HEALTH_INVALID_REQUEST_RESULT);
+    process.exitCode = 1;
+    return;
+  }
+
+  const { runAuthzedHealthCli } = await import("../../lib/authzed/cli");
+  console.error = originalConsoleError;
+  process.exitCode = await runAuthzedHealthCli();
+};
+
 const run = async (): Promise<void> => {
   const [command, ...args] = process.argv.slice(2);
   const originalConsoleError = console.error;
@@ -45,16 +61,7 @@ const run = async (): Promise<void> => {
 
     switch (command) {
       case "health": {
-        if (args.length !== 0) {
-          console.error = originalConsoleError;
-          writeResult(HEALTH_INVALID_REQUEST_RESULT);
-          process.exitCode = 1;
-          return;
-        }
-
-        const { runAuthzedHealthCli } = await import("../../lib/authzed/cli");
-        console.error = originalConsoleError;
-        process.exitCode = await runAuthzedHealthCli();
+        await runHealthCommand(args, originalConsoleError);
         return;
       }
       case "schema": {
