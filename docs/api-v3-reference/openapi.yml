@@ -478,11 +478,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
-          description: 'Unprocessable Content — the document passed schema validation but failed a cross-reference check that requires stored state to detect: duplicate stable ids, dangling logic/jump references, undeclared locale keys used in content, invalid media URLs, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. Also returned when the document passes this endpoint''s request schema but is rejected by the stricter validation the survey service applies on write — for example a CTA `buttonUrl` whose scheme the service does not accept. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).'
+          description: |-
+            Unprocessable Content — the document passed schema validation but failed a cross-reference check that requires stored state to detect: duplicate stable ids, dangling logic/jump references, undeclared locale keys used in content, invalid media URLs, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. Also returned when the document passes this endpoint's request schema but is rejected by the stricter validation the survey service applies on write — for example a CTA `buttonUrl` whose scheme the service does not accept. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).
+            Also returned with `code: workspace_survey_limit_reached` when the workspace already holds the maximum number of surveys. That problem carries no `invalid_params`; instead `details` is `{ count, limit }` — the workspace's current survey count and the limit it has reached — so a client can tell the user how many surveys to archive or delete before retrying.
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+              examples:
+                workspaceSurveyLimitReached:
+                  summary: The workspace has reached its survey limit
+                  value:
+                    title: Unprocessable Content
+                    status: 422
+                    detail: This workspace has reached its survey limit
+                    code: workspace_survey_limit_reached
+                    requestId: req_01j9zq7w3k2m4n5p6r7s8t9v0w
+                    details:
+                      count: 10000
+                      limit: 10000
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
