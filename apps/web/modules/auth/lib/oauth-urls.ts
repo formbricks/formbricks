@@ -124,17 +124,18 @@ export const MCP_OAUTH_SCOPES = [
 /**
  * The resource scopes MCP clients are told about.
  *
- * Deliberately a subset of `MCP_OAUTH_SCOPES`, not a copy of it. A scope must exist here before a
- * client will ever ask for it, and asking is what breaks: the oauth-provider validates `/authorize`
- * as a subset of the scopes a client REGISTERED with, so advertising a new scope to clients that
- * registered before it existed earns them `invalid_scope` on their next consent — not on deploy day,
- * but trickling in across the 30-day refresh window as connections re-authorize.
+ * A scope listed here is one every spec-following client will ask for: the MCP SDK client takes its
+ * scope from the 401 challenge and the protected-resource metadata, both derived from this list. And
+ * asking is what breaks. The oauth-provider validates `/authorize` as a subset of the scopes a client
+ * REGISTERED with, so advertising a scope to clients that registered before it existed earns them
+ * `invalid_scope` — not on deploy day, but trickling in as connections re-authorize.
  *
- * So `responses:read` / `responses:write` are grantable (they are in `MCP_OAUTH_SCOPES`, in the
- * resource's `allowedScopes`, and in the ENG-2862 migration) but **not advertised yet**: there are no
- * response tools behind them until ENG-2852, so there is nothing to gain by asking and a re-
- * registration to cost. Adding them here is the last step of shipping those tools, and it is what the
- * integrator notice announces — see ENG-2852.
+ * **So a scope is added here only together with a migration that grants it to existing client rows**,
+ * on top of the one that grants it on the resource row. `responses:read` / `responses:write` took all
+ * three steps: `MCP_OAUTH_SCOPES` and the resource's `allowedScopes` (ENG-2862, 20260915120000), then
+ * each registered client's `scopes` (ENG-3470, 20260930160000), which mirrors what the client already
+ * holds and skips `skipConsent` clients. Adding a scope to this list without the client migration
+ * reintroduces the `invalid_scope` break for every integration registered before it.
  */
 export const MCP_RESOURCE_SCOPES = [
   "surveys:read",
@@ -143,6 +144,8 @@ export const MCP_RESOURCE_SCOPES = [
   "workflows:write",
   "feedbackRecords:read",
   "feedbackRecords:write",
+  "responses:read",
+  "responses:write",
 ] as const;
 
 // Scopes advertised in the RFC 9728 protected-resource metadata. MCP clients derive their

@@ -134,13 +134,16 @@ system reaches that. The checks that do: a test pins `registerScopedTool` as the
 `guard-scopes.ts`, and `feedback-records.test.ts` drives all ten tools with the opposite scope, which
 goes red if a tool is registered unguarded *or* wired to the wrong scope.
 
-**`responses:read` / `responses:write` are grantable but not yet advertised.** They are in
-`MCP_OAUTH_SCOPES` and in the resource's `allowedScopes`, so a client that asks for one is granted it —
-but they are deliberately absent from `MCP_RESOURCE_SCOPES`, which is what the protected-resource
-metadata publishes. Advertising a scope to clients that registered before it existed earns them
-`invalid_scope` on their next consent, so the pair is added to that list only once the integrator
-notice has gone out (ENG-2862). Until then the response tools are registered and gated but reachable
-only by a client that requests the scope explicitly.
+**A new scope is advertised only together with a migration that grants it to existing clients.**
+`MCP_RESOURCE_SCOPES` is what the protected-resource metadata and the 401 challenge publish, and a
+spec-following client (the MCP SDK takes its scope from exactly those) asks for everything in it. The
+provider validates that request against the scopes the client *registered* with, so advertising a scope
+to clients that registered before it existed earns them `invalid_scope`. `responses:read` /
+`responses:write` show the full sequence: added to `MCP_OAUTH_SCOPES` and to the resource's
+`allowedScopes` (ENG-2862), then to each registered client's `scopes` by a data migration that mirrors
+what the client already holds and skips `skipConsent` clients, and only then to `MCP_RESOURCE_SCOPES`
+(ENG-3470). Skip the client migration and every integration registered before the scope existed
+breaks at its next sign-in.
 
 **There is no single mandatory baseline scope.** Authentication requires *at least one* resource scope
 (`MCP_RESOURCE_SCOPES`), so a workflows-only or `feedbackRecords:read`-only grant is a legitimate MCP
@@ -1716,9 +1719,6 @@ query, like `create_feedback_record`.
   a query and a tenant. Those need Hub-side support first.
 - The search tools require an embedding model configured on the Hub API **and** the Hub worker; without
   one they return 503. Embedding is asynchronous and covers only records with text.
-- The response tools are registered but `responses:read` / `responses:write` are not yet advertised in
-  the protected-resource metadata, so a client following the normal consent flow is not offered them.
-  Adding them to `MCP_RESOURCE_SCOPES` is the rollout step that follows the integrator notice.
 - `outputSchema` is declared on the response tools only. The survey, workflow and feedback-record tools
   still advertise no result shape, so a client has to infer theirs from an example.
 - The response tools cover the v3 operations and nothing more: there is no tool that adds or removes a

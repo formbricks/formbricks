@@ -65,11 +65,10 @@ import { runMcpMutation } from "./run-mcp-mutation";
  * lets a caller reach the delete tools at all, and the operation still requires `manage` on the
  * workspace to carry them out.
  *
- * **The scopes are grantable but not advertised yet.** `MCP_RESOURCE_SCOPES` deliberately omits them
- * until the integrator notice goes out — advertising a scope to clients that registered before it
- * existed earns them `invalid_scope` on their next consent. Registering tools advertises nothing, so
- * this ships safely ahead of that notice; adding the pair to that list is the last step of the
- * rollout.
+ * **The scopes are advertised** (ENG-3470), so a spec-following OAuth client is offered them at
+ * consent. That shipped after these tools, together with a migration granting the pair to clients
+ * registered before it existed; without it those clients would have been refused with `invalid_scope`.
+ * See `MCP_RESOURCE_SCOPES` for the rule a future scope has to follow.
  */
 
 /**
