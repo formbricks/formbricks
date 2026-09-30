@@ -226,11 +226,13 @@ const writeSnapshot = async (
   const deletionFilters: TAuthzedRelationshipFilter[] = [];
   for (const teamId of targets.teamIds) {
     if (!teamsById.has(teamId)) {
-      deletionFilters.push({ resourceId: teamId, resourceType: "team" });
-      deletionFilters.push({
-        resourceType: "workspace",
-        subject: { objectId: teamId, objectType: "team", relation: "member" },
-      });
+      deletionFilters.push(
+        { resourceId: teamId, resourceType: "team" },
+        {
+          resourceType: "workspace",
+          subject: { objectId: teamId, objectType: "team", relation: "member" },
+        }
+      );
     }
   }
   for (const workspaceId of targets.workspaceIds) {

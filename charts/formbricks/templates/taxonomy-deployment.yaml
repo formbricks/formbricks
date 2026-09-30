@@ -26,6 +26,13 @@
 {{- if not .Values.taxonomy.llm.contextWindowTokens }}
   {{- fail "taxonomy.llm.contextWindowTokens is required when taxonomy.enabled=true and must match the selected provider/model deployment" }}
 {{- end }}
+{{- /* These two relations span the pod spec and Hub, so neither runtime can check them. */ -}}
+{{- if lt (int .Values.taxonomy.terminationGracePeriodSeconds) (add (int .Values.taxonomy.runDeadlineSeconds) 30) }}
+  {{- fail "taxonomy.terminationGracePeriodSeconds must be at least taxonomy.runDeadlineSeconds + 30" }}
+{{- end }}
+{{- if and .Values.taxonomy.autoConfigureHub (le (int .Values.taxonomy.hubStaleRunTimeoutSeconds) (int .Values.taxonomy.runDeadlineSeconds)) }}
+  {{- fail "taxonomy.hubStaleRunTimeoutSeconds must exceed taxonomy.runDeadlineSeconds when taxonomy.autoConfigureHub=true" }}
+{{- end }}
 {{- if and (eq $provider "openai-compatible") .Values.llm.enabled (not .Values.taxonomy.llm.baseUrl) }}
   {{- $enabledBundledModels := list -}}
   {{- range $modelSpec := .Values.llm.servingEngineSpec.modelSpec }}
@@ -66,6 +73,10 @@
   {{- if lt $bundledMaxModelLen (int .Values.taxonomy.llm.contextWindowTokens) }}
     {{- fail "the selected bundled vLLM maxModelLen must be >= taxonomy.llm.contextWindowTokens" }}
   {{- end }}
+{{- end }}
+{{- $taxonomyServiceAccount := .Values.taxonomy.serviceAccount | default dict -}}
+{{- if and (not (get $taxonomyServiceAccount "create")) (or (get $taxonomyServiceAccount "annotations") (get $taxonomyServiceAccount "additionalLabels")) }}
+  {{- fail "taxonomy.serviceAccount.annotations and additionalLabels apply only when taxonomy.serviceAccount.create=true; annotate an existing ServiceAccount directly" }}
 {{- end }}
 {{- if and (eq $provider "bedrock") (not $bedrockRegion) (not $bedrockEnvRegion) }}
   {{- fail "taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION is required when taxonomy.llm.provider is 'bedrock'" }}
@@ -156,6 +167,9 @@ spec:
       {{- with .Values.taxonomy.topologySpreadConstraints }}
       topologySpreadConstraints:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with include "formbricks.taxonomyServiceAccountName" . }}
+      serviceAccountName: {{ . }}
       {{- end }}
       {{- if .Values.deployment.imagePullSecrets }}
       imagePullSecrets:

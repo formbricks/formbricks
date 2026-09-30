@@ -1,6 +1,7 @@
 import "server-only";
 import { INVITE_RATE_LIMIT_PER_24_HOURS, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { reserveRateLimitUsage, settleRateLimitUsage } from "@/modules/core/rate-limit/helpers";
+import type { TRateLimitReservation } from "@/modules/core/rate-limit/rate-limit";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { getBulkInvitePermission } from "@/modules/ee/license-check/lib/utils";
@@ -25,6 +26,13 @@ export const getInviteRateLimitConfig = async (organizationId: string): Promise<
   };
 };
 
-export const applyInviteRateLimit = async (organizationId: string, recipients = 1): Promise<void> => {
-  await applyRateLimit(await getInviteRateLimitConfig(organizationId), organizationId, recipients);
-};
+export const reserveInviteRateLimit = async (
+  organizationId: string,
+  recipients = 1
+): Promise<TRateLimitReservation | undefined> =>
+  reserveRateLimitUsage(await getInviteRateLimitConfig(organizationId), organizationId, recipients);
+
+export const settleInviteRateLimit = async (
+  reservation: TRateLimitReservation | undefined,
+  successfulRecipients: number
+): Promise<void> => settleRateLimitUsage(reservation, successfulRecipients);
