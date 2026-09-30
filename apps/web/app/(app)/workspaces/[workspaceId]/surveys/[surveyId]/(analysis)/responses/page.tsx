@@ -71,7 +71,7 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string; sur
   const aiUnavailableReason = getAISmartToolsUnavailableReason(aiConfig) ?? null;
 
   // Fetch initial responses on the server to prevent duplicate client-side fetch
-  const [initialResponses, { surveyVisibilityEnabled, surveyAccess, ownerName }] = await Promise.all([
+  const [initialResponses, { surveyVisibilityGate, surveyAccess, ownerName }] = await Promise.all([
     getResponses(params.surveyId, RESPONSES_PER_PAGE, 0),
     getSurveyVisibilityViewer(survey, session.user.id, organization.id),
   ]);
@@ -98,7 +98,7 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string; sur
         <SurveyAnalysisNavigation survey={survey} activeId="responses" />
       </PageHeader>
       {showRestrictedBanner({
-        gate: surveyVisibilityEnabled,
+        enforced: surveyVisibilityGate.enforced,
         visibility: survey.visibility,
         access: surveyAccess,
       }) && <RestrictedSurveyBanner ownerName={ownerName} />}

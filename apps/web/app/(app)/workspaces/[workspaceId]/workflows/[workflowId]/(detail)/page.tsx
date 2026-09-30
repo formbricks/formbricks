@@ -1,13 +1,13 @@
 import { getWorkflowsRouteAuth } from "@/modules/ee/workflows/lib/auth";
 import { getWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/lib/email-authoring-context";
 import { WorkflowBuilderPage } from "@/modules/ee/workflows/pages/workflow-builder-page";
-import { getSurveyVisibilityUiGate } from "@/modules/survey/visibility/lib/gate";
+import { isSurveyVisibilityEnforced } from "@/modules/survey/visibility/lib/gate";
 
 const WorkflowPage = async (
   props: Readonly<{ params: Promise<{ workspaceId: string; workflowId: string }> }>
 ) => {
   const params = await props.params;
-  const { isReadOnly, isWorkflowsEnabled, organizationId } = await getWorkflowsRouteAuth(params.workspaceId);
+  const { isReadOnly, isWorkflowsEnabled } = await getWorkflowsRouteAuth(params.workspaceId);
 
   // Pages render in parallel with the gating layout; skip the server-side context resolution and
   // contribute nothing when not entitled so the builder never mounts against the now-403 API.
@@ -22,7 +22,7 @@ const WorkflowPage = async (
       workflowId: params.workflowId,
       workspaceId: params.workspaceId,
     }),
-    getSurveyVisibilityUiGate(organizationId),
+    isSurveyVisibilityEnforced(),
   ]);
 
   return (

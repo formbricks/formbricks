@@ -42,7 +42,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
   }
 
   const currentWorkspaceChannel = workspace.config.channel ?? null;
-  const [locale, featuredTemplatesVariant, { isAIAvailable, aiUnavailableReason }, surveyVisibilityEnabled] =
+  const [locale, featuredTemplatesVariant, { isAIAvailable, aiUnavailableReason }, surveyVisibilityGate] =
     await Promise.all([
       getUserLocale(session.user.id).then((l) => l ?? DEFAULT_LOCALE),
       getPostHogFeatureFlag(session.user.id, "a-b_surveys_featured-templates-create-with-ai"),
@@ -70,7 +70,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
       isAIAvailable={isAIAvailable}
       aiUnavailableReason={aiUnavailableReason}
       showFeaturedTemplates={featuredTemplatesVariant === "test"}
-      surveyVisibilityEnabled={surveyVisibilityEnabled}
+      surveyVisibilityGate={surveyVisibilityGate}
       currentUserId={session.user.id}
     />
   );

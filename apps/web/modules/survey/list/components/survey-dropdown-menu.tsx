@@ -33,7 +33,7 @@ import { RenameSurveyModal } from "@/modules/survey/list/components/rename-surve
 import { surveyKeys } from "@/modules/survey/list/lib/query";
 import { TSurveyListItem } from "@/modules/survey/list/types/survey-overview";
 import { CollaborateModal } from "@/modules/survey/visibility/components/collaborate-modal";
-import { showVisibilityControls } from "@/modules/survey/visibility/lib/state";
+import { type TSurveyVisibilityUiGate, showVisibilityControls } from "@/modules/survey/visibility/lib/state";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
@@ -62,7 +62,7 @@ interface SurveyDropDownMenuProps {
   restoreSurvey: (surveyId: string) => Promise<void>;
   renameSurvey: (surveyId: string, name: string) => Promise<void>;
   /** ENG-3395: the restricted-surveys gate; Collaborate also needs the right to change visibility. */
-  surveyVisibilityEnabled: boolean;
+  surveyVisibilityGate: TSurveyVisibilityUiGate;
   workspaceName: string;
   listQueryKey: ReturnType<typeof surveyKeys.list>;
   onVisibilityNotEnabled: () => void;
@@ -82,7 +82,7 @@ export const SurveyDropDownMenu = ({
   archiveSurvey,
   restoreSurvey,
   renameSurvey,
-  surveyVisibilityEnabled,
+  surveyVisibilityGate,
   workspaceName,
   listQueryKey,
   onVisibilityNotEnabled,
@@ -113,7 +113,7 @@ export const SurveyDropDownMenu = ({
   // Show the status submenu for non-draft surveys when the user has write access.
   const canChangeStatus = !isArchived && !isReadOnly && survey.status !== "draft";
   const isInProgress = survey.status === "inProgress";
-  const canCollaborate = showVisibilityControls(surveyVisibilityEnabled, survey.access);
+  const canCollaborate = showVisibilityControls(surveyVisibilityGate, survey.access);
   const hasVisibleActions =
     canCollaborate ||
     (isArchived ? canManageSurvey : canManageSurvey || canPreviewOrCopyLink || canChangeStatus);

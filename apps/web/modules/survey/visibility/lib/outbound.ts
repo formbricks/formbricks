@@ -4,7 +4,9 @@ import type { TSurveyVisibility } from "@formbricks/types/surveys/types";
  * Client side of the outbound rule (ENG-3283, `lib/survey/visibility/outbound.ts`): webhooks,
  * integrations, feedback sources, follow-ups and workflows only serve workspace-visible surveys. The
  * server refuses to attach a restricted survey and skips one at dispatch; these helpers let the UI
- * say so up front instead. Every one of them is false with the gate off, so the UI stays as it was.
+ * say so up front instead. They take `enforced` (`TSurveyVisibilityUiGate.enforced`): the server
+ * keeps refusing restricted surveys while visibility is enforced, whether or not the organization is
+ * still entitled to change it. Every one of them is false while it is not, so the UI stays as it was.
  */
 
 /** A survey as the pickers hold it. `visibility` is optional: some lists only carry it with the gate on. */
@@ -17,18 +19,18 @@ const isRestricted = (survey: TOutboundSurvey | undefined): boolean => survey?.v
  * connection stays selectable so it can be removed, and the server accepts it unchanged.
  */
 export const isRestrictedSurveyPick = (
-  gate: boolean,
+  enforced: boolean,
   survey: TOutboundSurvey,
   attachedSurveyIds: ReadonlyArray<string> = []
-): boolean => gate && isRestricted(survey) && !attachedSurveyIds.includes(survey.id);
+): boolean => enforced && isRestricted(survey) && !attachedSurveyIds.includes(survey.id);
 
 /** Whether a connection serves at least one restricted survey, which dispatch then skips. */
 export const hasRestrictedAttachedSurvey = (
-  gate: boolean,
+  enforced: boolean,
   attachedSurveyIds: ReadonlyArray<string>,
   surveys: ReadonlyArray<TOutboundSurvey>
 ): boolean => {
-  if (!gate || attachedSurveyIds.length === 0) return false;
+  if (!enforced || attachedSurveyIds.length === 0) return false;
   const attached = new Set(attachedSurveyIds);
   return surveys.some((survey) => attached.has(survey.id) && isRestricted(survey));
 };

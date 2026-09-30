@@ -8,38 +8,38 @@ const owner = { via: "owner" };
 describe("getRowVisibilityMarker", () => {
   test.each([
     [
-      "gate off, restricted",
-      { gate: false, visibility: "restricted" as const, access: role, owner: null },
+      "not enforced, restricted",
+      { enforced: false, visibility: "restricted" as const, access: role, owner: null },
       null,
     ],
     [
-      "gate off, workspace",
-      { gate: false, visibility: "workspace" as const, access: role, owner: ada },
+      "not enforced, workspace",
+      { enforced: false, visibility: "workspace" as const, access: role, owner: ada },
       null,
     ],
     [
       "workspace-visible",
-      { gate: true, visibility: "workspace" as const, access: role, owner: null },
+      { enforced: true, visibility: "workspace" as const, access: role, owner: null },
       { kind: "workspace" },
     ],
     [
       "author gone",
-      { gate: true, visibility: "restricted" as const, access: role, owner: null },
+      { enforced: true, visibility: "restricted" as const, access: role, owner: null },
       { kind: "restricted", detail: "author_gone" },
     ],
     [
       "role-only viewer",
-      { gate: true, visibility: "restricted" as const, access: role, owner: ada },
+      { enforced: true, visibility: "restricted" as const, access: role, owner: ada },
       { kind: "restricted", detail: "role" },
     ],
     [
       "the author",
-      { gate: true, visibility: "restricted" as const, access: owner, owner: ada },
+      { enforced: true, visibility: "restricted" as const, access: owner, owner: ada },
       { kind: "restricted", detail: null },
     ],
     [
       "unknown access",
-      { gate: true, visibility: "restricted" as const, access: null, owner: ada },
+      { enforced: true, visibility: "restricted" as const, access: null, owner: ada },
       { kind: "restricted", detail: null },
     ],
   ])("%s", (_label, input, expected) => {
@@ -48,15 +48,15 @@ describe("getRowVisibilityMarker", () => {
 });
 
 describe("showRestrictedBanner", () => {
-  test("restricted, seen through the organization role, gate on", () => {
-    expect(showRestrictedBanner({ gate: true, visibility: "restricted", access: role })).toBe(true);
+  test("restricted, seen through the organization role, while enforced — entitled or not", () => {
+    expect(showRestrictedBanner({ enforced: true, visibility: "restricted", access: role })).toBe(true);
   });
 
   test.each([
-    [{ gate: false, visibility: "restricted" as const, access: role }],
-    [{ gate: true, visibility: "workspace" as const, access: role }],
-    [{ gate: true, visibility: "restricted" as const, access: owner }],
-    [{ gate: true, visibility: "restricted" as const, access: null }],
+    [{ enforced: false, visibility: "restricted" as const, access: role }],
+    [{ enforced: true, visibility: "workspace" as const, access: role }],
+    [{ enforced: true, visibility: "restricted" as const, access: owner }],
+    [{ enforced: true, visibility: "restricted" as const, access: null }],
   ])("not for %o", (input) => {
     expect(showRestrictedBanner(input)).toBe(false);
   });

@@ -4,7 +4,11 @@ import {
   isOutboundBlocked,
   isRoleOnlyAccess,
   showVisibilityControls,
+  withoutVisibilityControls,
 } from "./state";
+
+const manageable = { enforced: true, manageable: true } as const;
+const notEntitled = { enforced: true, manageable: false } as const;
 
 describe("isEffectivelyRestricted", () => {
   test.each([
@@ -20,28 +24,41 @@ describe("isEffectivelyRestricted", () => {
 });
 
 describe("isOutboundBlocked", () => {
-  test("blocks a restricted survey, or one with a change in flight, while the gate is on", () => {
+  test("blocks a restricted survey, or one with a change in flight, while enforced", () => {
     expect(isOutboundBlocked(true, { visibility: "restricted" })).toBe(true);
     expect(isOutboundBlocked(true, { visibility: "workspace", pending: "restricted" })).toBe(true);
     expect(isOutboundBlocked(true, { visibility: "workspace" })).toBe(false);
   });
 
-  test("never blocks with the gate off, so the product looks as it did before", () => {
+  test("never blocks while not enforced, so the product looks as it did before", () => {
     expect(isOutboundBlocked(false, { visibility: "restricted" })).toBe(false);
     expect(isOutboundBlocked(false, { visibility: "workspace", pending: "restricted" })).toBe(false);
   });
 });
 
 describe("showVisibilityControls", () => {
-  test("needs both the gate and the right to manage visibility", () => {
-    expect(showVisibilityControls(true, { canManageVisibility: true })).toBe(true);
-    expect(showVisibilityControls(false, { canManageVisibility: true })).toBe(false);
-    expect(showVisibilityControls(true, { canManageVisibility: false })).toBe(false);
+  test("needs both the entitlement and the right to manage visibility", () => {
+    expect(showVisibilityControls(manageable, { canManageVisibility: true })).toBe(true);
+    expect(showVisibilityControls(manageable, { canManageVisibility: false })).toBe(false);
+  });
+
+  test("is off once the entitlement is lost, although restricted surveys stay enforced", () => {
+    expect(showVisibilityControls(notEntitled, { canManageVisibility: true })).toBe(false);
   });
 
   test("is off when access is unknown", () => {
-    expect(showVisibilityControls(true)).toBe(false);
-    expect(showVisibilityControls(true, null)).toBe(false);
+    expect(showVisibilityControls(manageable)).toBe(false);
+    expect(showVisibilityControls(manageable, null)).toBe(false);
+  });
+});
+
+describe("withoutVisibilityControls", () => {
+  test("takes the controls away and keeps what is enforced", () => {
+    expect(withoutVisibilityControls(manageable)).toEqual(notEntitled);
+    expect(withoutVisibilityControls({ enforced: false, manageable: false })).toEqual({
+      enforced: false,
+      manageable: false,
+    });
   });
 });
 

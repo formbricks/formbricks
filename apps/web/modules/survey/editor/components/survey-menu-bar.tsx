@@ -38,7 +38,7 @@ import {
   shouldAskWhoCanView,
 } from "@/modules/survey/visibility/lib/activate-flow";
 import { getRestrictedAuthor } from "@/modules/survey/visibility/lib/collaborate";
-import { showVisibilityControls } from "@/modules/survey/visibility/lib/state";
+import { type TSurveyVisibilityUiGate, showVisibilityControls } from "@/modules/survey/visibility/lib/state";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
@@ -64,11 +64,11 @@ interface SurveyMenuBarProps {
   setIsCautionDialogOpen: (open: boolean) => void;
   isStorageConfigured: boolean;
   /**
-   * ENG-3395: the restricted-surveys gate — the server-side flag, turned off for the rest of the
-   * session when the server reports visibility as not enabled. Owned by the editor, which the
-   * Follow-ups tab reads as well.
+   * ENG-3395: the restricted-surveys gate — the server-side flags, with the controls turned off for
+   * the rest of the session when the server reports visibility as not enabled. Owned by the editor,
+   * which the Follow-ups tab reads as well.
    */
-  visibilityGate: boolean;
+  visibilityGate: TSurveyVisibilityUiGate;
   /** The stored visibility, including a change made from this editor. */
   storedVisibility: TSurveyVisibility;
   onVisibilityChanged: (visibility: TSurveyVisibility) => void;

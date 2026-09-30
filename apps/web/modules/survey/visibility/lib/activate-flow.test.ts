@@ -6,19 +6,29 @@ const apiError = (status: number, code?: string) => new V3ApiError({ status, det
 
 describe("shouldAskWhoCanView", () => {
   const manager = { canManageVisibility: true };
+  const manageable = { enforced: true, manageable: true } as const;
+  const notEntitled = { enforced: true, manageable: false } as const;
+  const notEnforced = { enforced: false, manageable: false } as const;
 
   test("asks for a restricted survey when the viewer can change its visibility", () => {
-    expect(shouldAskWhoCanView({ gate: true, access: manager, visibility: "restricted" })).toBe(true);
+    expect(shouldAskWhoCanView({ gate: manageable, access: manager, visibility: "restricted" })).toBe(true);
   });
 
   test.each([
-    ["the gate is off", { gate: false, access: manager, visibility: "restricted" as const }],
-    ["the survey is already visible", { gate: true, access: manager, visibility: "workspace" as const }],
+    [
+      "the organization cannot change visibility (entitlement lost)",
+      { gate: notEntitled, access: manager, visibility: "restricted" as const },
+    ],
+    ["visibility is not enforced", { gate: notEnforced, access: manager, visibility: "restricted" as const }],
+    [
+      "the survey is already visible",
+      { gate: manageable, access: manager, visibility: "workspace" as const },
+    ],
     [
       "the viewer cannot change it",
-      { gate: true, access: { canManageVisibility: false }, visibility: "restricted" as const },
+      { gate: manageable, access: { canManageVisibility: false }, visibility: "restricted" as const },
     ],
-    ["access is unknown", { gate: true, access: null, visibility: "restricted" as const }],
+    ["access is unknown", { gate: manageable, access: null, visibility: "restricted" as const }],
   ])("activates as before when %s", (_label, input) => {
     expect(shouldAskWhoCanView(input)).toBe(false);
   });

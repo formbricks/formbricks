@@ -1,6 +1,6 @@
 import type { TSurveyVisibility } from "@formbricks/types/surveys/types";
 import { classifyVisibilityError } from "./errors";
-import { showVisibilityControls } from "./state";
+import { type TSurveyVisibilityUiGate, showVisibilityControls } from "./state";
 
 type TAccess = Readonly<{ canManageVisibility: boolean }>;
 
@@ -12,8 +12,11 @@ export const shouldAskWhoCanView = ({
   gate,
   access,
   visibility,
-}: Readonly<{ gate: boolean; access: TAccess | null; visibility: TSurveyVisibility }>): boolean =>
-  showVisibilityControls(gate, access) && visibility === "restricted";
+}: Readonly<{
+  gate: TSurveyVisibilityUiGate;
+  access: TAccess | null;
+  visibility: TSurveyVisibility;
+}>): boolean => showVisibilityControls(gate, access) && visibility === "restricted";
 
 /** What the visibility change the Activate dialog made (if any) came back with. */
 export type TActivationVisibilityOutcome = Readonly<{ ok: true } | { ok: false; error: unknown }>;

@@ -6,7 +6,7 @@ import { WebhookTable } from "@/modules/integrations/webhooks/components/webhook
 import { WebhookTableHeading } from "@/modules/integrations/webhooks/components/webhook-table-heading";
 import { getWebhookSurveys } from "@/modules/integrations/webhooks/lib/surveys";
 import { getWebhooks } from "@/modules/integrations/webhooks/lib/webhook";
-import { getSurveyVisibilityUiGate } from "@/modules/survey/visibility/lib/gate";
+import { isSurveyVisibilityEnforced } from "@/modules/survey/visibility/lib/gate";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -21,7 +21,7 @@ export const WebhooksPage = async (props: { params: Promise<{ workspaceId: strin
   const [webhooks, surveys, surveyVisibilityEnabled] = await Promise.all([
     getWebhooks(workspace.id),
     getWebhookSurveys(workspace.id, session.user.id, organization.id),
-    getSurveyVisibilityUiGate(organization.id),
+    isSurveyVisibilityEnforced(),
   ]);
 
   const renderAddWebhookButton = () => (

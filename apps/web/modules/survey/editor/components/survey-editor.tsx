@@ -32,7 +32,11 @@ import { LanguageView } from "@/modules/survey/multi-language-surveys/components
 import { type TSurveySchedulingConfig } from "@/modules/survey/scheduling/lib/config";
 import { RestrictedSurveyBanner } from "@/modules/survey/visibility/components/restricted-survey-banner";
 import { showRestrictedBanner } from "@/modules/survey/visibility/lib/markers";
-import { isOutboundBlocked } from "@/modules/survey/visibility/lib/state";
+import {
+  type TSurveyVisibilityUiGate,
+  isOutboundBlocked,
+  withoutVisibilityControls,
+} from "@/modules/survey/visibility/lib/state";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { getWorkspaceLanguagesAction, refetchWorkspaceAction } from "../actions";
 
@@ -73,7 +77,7 @@ interface SurveyEditorProps {
   isExternalUrlsAllowed: boolean;
   publicDomain: string;
   enterpriseLicenseRequestFormUrl: string;
-  surveyVisibilityEnabled: boolean;
+  surveyVisibilityGate: TSurveyVisibilityUiGate;
   surveyAccess: TSurveyAccess | null;
   ownerName: string | null;
 }
@@ -108,7 +112,7 @@ export const SurveyEditor = ({
   isExternalUrlsAllowed,
   publicDomain,
   enterpriseLicenseRequestFormUrl,
-  surveyVisibilityEnabled,
+  surveyVisibilityGate,
   surveyAccess,
   ownerName,
 }: Readonly<SurveyEditorProps>) => {
@@ -142,7 +146,10 @@ export const SurveyEditor = ({
   const [changedVisibility, setChangedVisibility] = useState<TSurveyVisibility | null>(null);
   const storedVisibility = changedVisibility ?? survey.visibility;
   const [isVisibilityTurnedOff, setIsVisibilityTurnedOff] = useState(false);
-  const visibilityGate = surveyVisibilityEnabled && !isVisibilityTurnedOff;
+  // `visibility_not_enabled` only takes the controls away: what is enforced is not decided by it.
+  const visibilityGate = isVisibilityTurnedOff
+    ? withoutVisibilityControls(surveyVisibilityGate)
+    : surveyVisibilityGate;
   // Stable: the Collaborate modal runs it from an effect.
   const handleVisibilityNotEnabled = useCallback(() => setIsVisibilityTurnedOff(true), []);
 
@@ -263,7 +270,7 @@ export const SurveyEditor = ({
         ownerName={ownerName}
       />
       {showRestrictedBanner({
-        gate: surveyVisibilityEnabled,
+        enforced: visibilityGate.enforced,
         visibility: survey.visibility,
         access: surveyAccess,
       }) && (
@@ -367,7 +374,7 @@ export const SurveyEditor = ({
               userEmail={userEmail}
               teamMemberDetails={teamMemberDetails}
               locale={locale}
-              isRestricted={isOutboundBlocked(visibilityGate, { visibility: storedVisibility })}
+              isRestricted={isOutboundBlocked(visibilityGate.enforced, { visibility: storedVisibility })}
               workspaceName={localWorkspace.name}
             />
           )}

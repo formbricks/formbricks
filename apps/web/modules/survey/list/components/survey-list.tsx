@@ -30,6 +30,10 @@ import {
 import { TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
 import { TemplateContainerWithPreview } from "@/modules/survey/templates/components/template-container";
 import { useUpdateSurveyVisibility } from "@/modules/survey/visibility/hooks/use-update-survey-visibility";
+import {
+  type TSurveyVisibilityUiGate,
+  withoutVisibilityControls,
+} from "@/modules/survey/visibility/lib/state";
 import { AiIcon } from "@/modules/ui/components/ai";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -58,8 +62,8 @@ interface SurveysListProps {
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
   showFeaturedTemplates?: boolean;
-  /** ENG-3395: the server-side restricted-surveys gate (readiness marker and entitlement). */
-  surveyVisibilityEnabled: boolean;
+  /** ENG-3395: the server-side restricted-surveys gate — see `TSurveyVisibilityUiGate`. */
+  surveyVisibilityGate: TSurveyVisibilityUiGate;
   currentUserId: string;
 }
 
@@ -164,14 +168,17 @@ export const SurveysList = ({
   isAIAvailable,
   aiUnavailableReason,
   showFeaturedTemplates = false,
-  surveyVisibilityEnabled,
+  surveyVisibilityGate,
 }: Readonly<SurveysListProps>) => {
   const { t } = useTranslation();
   const [surveyFilters, setSurveyFilters] = useState<TSurveyOverviewFilters>(initialFilters);
-  // Set when a visibility request answers `visibility_not_enabled`: the feature was switched off after
-  // this page rendered, so every visibility control goes away until the next load.
+  // Set when a visibility request answers `visibility_not_enabled`: changing visibility was switched off
+  // after this page rendered, so every visibility control goes away until the next load. The markers
+  // stay: what is enforced is not decided by that answer.
   const [isVisibilityTurnedOff, setIsVisibilityTurnedOff] = useState(false);
-  const visibilityGate = surveyVisibilityEnabled && !isVisibilityTurnedOff;
+  const visibilityGate = isVisibilityTurnedOff
+    ? withoutVisibilityControls(surveyVisibilityGate)
+    : surveyVisibilityGate;
   const [isFilterInitialized, setIsFilterInitialized] = useState(false);
   const [parent] = useAutoAnimate();
 
@@ -372,7 +379,7 @@ export const SurveysList = ({
               renameSurvey={handleRenameSurvey}
               publicDomain={publicDomain}
               locale={locale}
-              surveyVisibilityEnabled={visibilityGate}
+              surveyVisibilityGate={visibilityGate}
               workspaceName={workspace.name}
               listQueryKey={queryKey}
               updateSurveyVisibility={handleUpdateSurveyVisibility}
@@ -412,7 +419,7 @@ export const SurveysList = ({
           surveyFilters={normalizedFilters}
           setSurveyFilters={setSurveyFilters}
           currentWorkspaceChannel={currentWorkspaceChannel}
-          surveyVisibilityEnabled={visibilityGate}
+          surveyVisibilityEnabled={visibilityGate.enforced}
         />
         {surveyContent}
       </div>

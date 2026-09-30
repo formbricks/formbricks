@@ -129,7 +129,7 @@ export const SurveyEditorPage = async (props: {
 
   const isCxMode = searchParams.mode === "cx";
   const publicDomain = getPublicDomain();
-  const { surveyVisibilityEnabled, surveyAccess, ownerName } = await getSurveyVisibilityViewer(
+  const { surveyVisibilityGate, surveyAccess, ownerName } = await getSurveyVisibilityViewer(
     survey,
     session.user.id,
     workspaceWithTeamIds.organizationId
@@ -166,7 +166,7 @@ export const SurveyEditorPage = async (props: {
       isExternalUrlsAllowed={isExternalUrlsAllowed}
       publicDomain={publicDomain}
       enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
-      surveyVisibilityEnabled={surveyVisibilityEnabled}
+      surveyVisibilityGate={surveyVisibilityGate}
       surveyAccess={surveyAccess}
       ownerName={ownerName}
     />

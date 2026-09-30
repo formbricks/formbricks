@@ -11,7 +11,7 @@ import { getIntegrations } from "@/lib/integration/service";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSettingsPageMetadata } from "@/modules/settings/lib/metadata";
-import { getSurveyVisibilityUiGate } from "@/modules/survey/visibility/lib/gate";
+import { isSurveyVisibilityEnforced } from "@/modules/survey/visibility/lib/gate";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -31,7 +31,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
     getSurveys(workspace.id, session.user.id, organization.id),
     getIntegrations(workspace.id),
     getUserLocale(session.user.id),
-    getSurveyVisibilityUiGate(organization.id),
+    isSurveyVisibilityEnforced(),
   ]);
 
   const airtableIntegration: TIntegrationAirtable | undefined = integrations?.find(

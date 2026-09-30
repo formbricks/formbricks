@@ -23,6 +23,7 @@ import {
 import { WorkspaceVisibilityMarker } from "@/modules/survey/visibility/components/workspace-visibility-marker";
 import { getRestrictedAuthor, getVisibilityErrorReaction } from "@/modules/survey/visibility/lib/collaborate";
 import { type TRowVisibilityMarker, getRowVisibilityMarker } from "@/modules/survey/visibility/lib/markers";
+import { type TSurveyVisibilityUiGate, showVisibilityControls } from "@/modules/survey/visibility/lib/state";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
 import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 
@@ -36,8 +37,8 @@ interface SurveyCardProps {
   restoreSurvey: (surveyId: string) => Promise<void>;
   renameSurvey: (surveyId: string, name: string) => Promise<void>;
   locale: TUserLocale;
-  /** ENG-3395: the restricted-surveys gate. While it is off the row renders exactly as before. */
-  surveyVisibilityEnabled: boolean;
+  /** ENG-3395: the restricted-surveys gate. While nothing is enforced the row renders exactly as before. */
+  surveyVisibilityGate: TSurveyVisibilityUiGate;
   workspaceName: string;
   listQueryKey: ReturnType<typeof surveyKeys.list>;
   updateSurveyVisibility: (surveyId: string, visibility: TSurveyVisibility) => Promise<void>;
@@ -176,7 +177,7 @@ export const SurveyCard = ({
   restoreSurvey,
   renameSurvey,
   locale,
-  surveyVisibilityEnabled,
+  surveyVisibilityGate,
   workspaceName,
   listQueryKey,
   updateSurveyVisibility,
@@ -190,13 +191,13 @@ export const SurveyCard = ({
   const isSurveyCreationDeletionDisabled = isReadOnly;
 
   const visibilityMarker = getRowVisibilityMarker({
-    gate: surveyVisibilityEnabled,
+    enforced: surveyVisibilityGate.enforced,
     visibility: survey.visibility,
     access: survey.access,
     owner: survey.owner,
   });
   const isAuthorGone = visibilityMarker?.kind === "restricted" && visibilityMarker.detail === "author_gone";
-  const canMakeVisible = isAuthorGone && survey.access.canManageVisibility;
+  const canMakeVisible = isAuthorGone && showVisibilityControls(surveyVisibilityGate, survey.access);
 
   const linkHref = useMemo(() => {
     // Archived surveys are read-only; always send to summary (never the editor).
@@ -282,7 +283,7 @@ export const SurveyCard = ({
           archiveSurvey={archiveSurvey}
           restoreSurvey={restoreSurvey}
           renameSurvey={renameSurvey}
-          surveyVisibilityEnabled={surveyVisibilityEnabled}
+          surveyVisibilityGate={surveyVisibilityGate}
           workspaceName={workspaceName}
           listQueryKey={listQueryKey}
           onVisibilityNotEnabled={onVisibilityNotEnabled}

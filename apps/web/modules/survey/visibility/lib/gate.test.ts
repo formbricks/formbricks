@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { getSurveyVisibilityGates } from "@/lib/survey/visibility/gates";
-import { getSurveyVisibilityUiGate, getSurveyVisibilityViewer } from "./gate";
+import { getSurveyVisibilityUiGate, getSurveyVisibilityViewer, isSurveyVisibilityEnforced } from "./gate";
+
+vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn() }));
 
 vi.mock("server-only", () => ({}));
 vi.mock("@formbricks/database", () => ({ prisma: { user: { findUnique: vi.fn() } } }));
@@ -25,28 +28,58 @@ beforeEach(() => {
 });
 
 describe("getSurveyVisibilityUiGate", () => {
+  // Display and enforcement follow readiness alone; losing the entitlement only takes the controls
+  // that change visibility away, because it never releases a restricted survey (Decision 6).
   test.each([
-    [{ entitled: true, ready: true }, true],
-    [{ entitled: false, ready: true }, false],
-    [{ entitled: false, ready: false }, false],
-  ])("gates %o → %s", async (gates, expected) => {
+    [
+      { entitled: true, ready: true },
+      { enforced: true, manageable: true },
+    ],
+    [
+      { entitled: false, ready: true },
+      { enforced: true, manageable: false },
+    ],
+    [
+      { entitled: false, ready: false },
+      { enforced: false, manageable: false },
+    ],
+  ])("gates %o → %o", async (gates, expected) => {
     vi.mocked(getSurveyVisibilityGates).mockResolvedValue(gates);
-    await expect(getSurveyVisibilityUiGate("org")).resolves.toBe(expected);
+    await expect(getSurveyVisibilityUiGate("org")).resolves.toEqual(expected);
     expect(getSurveyVisibilityGates).toHaveBeenCalledWith("org");
   });
 });
 
+describe("isSurveyVisibilityEnforced", () => {
+  test.each([true, false])("follows the readiness marker alone (%s)", async (ready) => {
+    vi.mocked(isSurveyVisibilityReady).mockResolvedValue(ready);
+    await expect(isSurveyVisibilityEnforced()).resolves.toBe(ready);
+  });
+});
+
 describe("getSurveyVisibilityViewer", () => {
-  test("gate off: answers without resolving the actor or the owner", async () => {
-    vi.mocked(getSurveyVisibilityGates).mockResolvedValue({ entitled: false, ready: true });
+  test("not enforced: answers without resolving the actor or the owner, exactly as before", async () => {
+    vi.mocked(getSurveyVisibilityGates).mockResolvedValue({ entitled: false, ready: false });
 
     await expect(getSurveyVisibilityViewer(survey("restricted"), "admin", "org")).resolves.toEqual({
-      surveyVisibilityEnabled: false,
+      surveyVisibilityGate: { enforced: false, manageable: false },
       surveyAccess: null,
       ownerName: null,
     });
     expect(resolveSurveyActorContext).not.toHaveBeenCalled();
     expect(prisma.user.findUnique).not.toHaveBeenCalled();
+  });
+
+  test("enforced but no longer entitled: still describes the survey, without the right to change it", async () => {
+    vi.mocked(getSurveyVisibilityGates).mockResolvedValue({ entitled: false, ready: true });
+    vi.mocked(resolveSurveyActorContext).mockResolvedValue(admin);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ name: "Ada" } as never);
+
+    await expect(getSurveyVisibilityViewer(survey("restricted"), "admin", "org")).resolves.toEqual({
+      surveyVisibilityGate: { enforced: true, manageable: false },
+      surveyAccess: { canManageVisibility: false, via: "organizationRole" },
+      ownerName: "Ada",
+    });
   });
 
   test("gate on: derives access for the user and looks up the owner's name", async () => {
@@ -55,7 +88,7 @@ describe("getSurveyVisibilityViewer", () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({ name: "Ada" } as never);
 
     await expect(getSurveyVisibilityViewer(survey("restricted"), "admin", "org")).resolves.toEqual({
-      surveyVisibilityEnabled: true,
+      surveyVisibilityGate: { enforced: true, manageable: true },
       surveyAccess: { canManageVisibility: true, via: "organizationRole" },
       ownerName: "Ada",
     });
@@ -70,7 +103,7 @@ describe("getSurveyVisibilityViewer", () => {
     const viewer = await getSurveyVisibilityViewer(survey("workspace", null), "admin", "org");
 
     expect(viewer).toEqual({
-      surveyVisibilityEnabled: true,
+      surveyVisibilityGate: { enforced: true, manageable: true },
       surveyAccess: { canManageVisibility: true, via: "workspace" },
       ownerName: null,
     });
