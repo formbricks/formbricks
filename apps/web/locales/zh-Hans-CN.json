@@ -1820,6 +1820,7 @@
         "field_label_negative_count": "情感：消极",
         "field_label_neutral_count": "情感：中立",
         "field_label_nps_average": "NPS：平均值",
+        "field_label_nps_count": "NPS：记录数",
         "field_label_nps_score": "NPS：得分",
         "field_label_operating_system": "操作系统",
         "field_label_page_url": "页面网址",
@@ -1845,6 +1846,7 @@
         "field_label_unique_responses": "独立回复",
         "field_label_updated_at": "更新时间",
         "field_label_user_identifier": "用户标识",
+        "field_label_value_band": "价值区间",
         "field_label_value_boolean": "值(布尔型)",
         "field_label_value_date": "值(日期)",
         "field_label_value_number": "数值",
@@ -1960,6 +1962,12 @@
         "time_dimension_title_range_only": "添加日期范围筛选",
         "time_dimension_toggle_description": "监控随时间变化的趋势。",
         "time_dimension_toggle_description_range_only": "将此图表限定为某个日期范围，不按时间分组。",
+        "value_band_detractor": "贬损者",
+        "value_band_dissatisfied": "不满意",
+        "value_band_neutral": "中立",
+        "value_band_passive": "被动者",
+        "value_band_promoter": "推荐者",
+        "value_band_satisfied": "满意",
         "vertical_bars": "纵向条形图"
       },
       "dashboards": {

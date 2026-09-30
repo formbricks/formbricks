@@ -11,10 +11,14 @@ import {
   SELECTABLE_VALUE_DIMENSION_IDS,
   SENTIMENT_MEASURE_ORDER,
   SENTIMENT_VALUE_ORDER,
+  VALUE_BAND_VALUES,
   formatCubeColumnHeader,
   getFieldById,
   getFilterOperatorsForType,
+  getMeasureAxisDomain,
   getMeasureAxisLabel,
+  getResponseBaseFamily,
+  getResponseBaseMeasureId,
   getSentimentValueForMeasureId,
   getTranslatedDimensionValueLabel,
   getTranslatedFieldDescription,
@@ -607,6 +611,18 @@ describe("schema-definition", () => {
       }
     });
 
+    test("maps every value band token to its i18n key, and nothing else", () => {
+      for (const band of VALUE_BAND_VALUES) {
+        expect(getTranslatedDimensionValueLabel("FeedbackRecords.valueBand", band, t)).toBe(
+          `workspace.analysis.charts.value_band_${band}`
+        );
+      }
+      expect(
+        getTranslatedDimensionValueLabel("FeedbackRecords.valueBand", "very_positive", t)
+      ).toBeUndefined();
+      expect(getTranslatedDimensionValueLabel("FeedbackRecords.valueBand", "", t)).toBeUndefined();
+    });
+
     test("does not label empty values on non-enrichment dimensions", () => {
       expect(getTranslatedDimensionValueLabel("FeedbackRecords.sourceName", "", t)).toBeUndefined();
       expect(getTranslatedDimensionValueLabel("FeedbackRecords.sourceName", null, t)).toBeUndefined();
@@ -743,6 +759,18 @@ describe("schema-definition", () => {
       ]);
     });
 
+    test("sorts value band rows positive-first with unknowns at the end", () => {
+      const rows = [
+        { "FeedbackRecords.valueBand": "detractor" },
+        { "FeedbackRecords.valueBand": "mystery" },
+        { "FeedbackRecords.valueBand": "promoter" },
+        { "FeedbackRecords.valueBand": "passive" },
+      ];
+      expect(
+        sortRowsByEnumDimension(rows, "FeedbackRecords.valueBand").map((r) => r["FeedbackRecords.valueBand"])
+      ).toEqual(["promoter", "passive", "detractor", "mystery"]);
+    });
+
     test("leaves rows of other dimensions unchanged", () => {
       const rows = [{ "FeedbackRecords.sourceName": "b" }, { "FeedbackRecords.sourceName": "a" }];
       expect(sortRowsByEnumDimension(rows, "FeedbackRecords.sourceName")).toBe(rows);
@@ -816,6 +844,71 @@ describe("schema-definition", () => {
     });
   });
 
+  describe("value band, axis domain and response base registry (ENG-3331)", () => {
+    test("registers valueBand as a selectable string dimension and npsCount as a count", () => {
+      expect(getFieldById("FeedbackRecords.valueBand")?.type).toBe("string");
+      expect(isSelectableValueDimension("FeedbackRecords.valueBand")).toBe(true);
+      expect(FEEDBACK_FIELDS.measures.find((m) => m.id === "FeedbackRecords.npsCount")).toMatchObject({
+        type: "count",
+        group: "count",
+      });
+      const t = ((key: string) => key) as TFunction;
+      expect(getTranslatedFieldLabel("FeedbackRecords.valueBand", t)).toBe(
+        "workspace.analysis.charts.field_label_value_band"
+      );
+      expect(getTranslatedFieldLabel("FeedbackRecords.npsCount", t)).toBe(
+        "workspace.analysis.charts.field_label_nps_count"
+      );
+    });
+
+    test("pins only the two bounded scores to their full range", () => {
+      expect(getMeasureAxisDomain("FeedbackRecords.npsScore")).toEqual([-100, 100]);
+      expect(getMeasureAxisDomain("FeedbackRecords.csatScore")).toEqual([0, 100]);
+      expect(getMeasureAxisDomain("FeedbackRecords.npsAverage")).toBeUndefined();
+      expect(getMeasureAxisDomain("FeedbackRecords.count")).toBeUndefined();
+    });
+
+    test.each([
+      [["FeedbackRecords.npsScore"], "FeedbackRecords.npsCount"],
+      [
+        ["FeedbackRecords.npsScore", "FeedbackRecords.npsAverage", "FeedbackRecords.promoterCount"],
+        "FeedbackRecords.npsCount",
+      ],
+      [["FeedbackRecords.npsCount"], "FeedbackRecords.npsCount"],
+      [["FeedbackRecords.csatScore", "FeedbackRecords.csatNeutralCount"], "FeedbackRecords.csatCount"],
+      [["FeedbackRecords.cesAverage"], "FeedbackRecords.cesCount"],
+      [["FeedbackRecords.ratingAverage"], "FeedbackRecords.ratingCount"],
+    ])("%j has the response base %s", (measures, base) => {
+      expect(getResponseBaseMeasureId(measures)).toBe(base);
+    });
+
+    test.each([
+      ["NPS beside CSAT", ["FeedbackRecords.npsScore", "FeedbackRecords.csatScore"]],
+      ["a score beside a generic count", ["FeedbackRecords.npsScore", "FeedbackRecords.count"]],
+      ["a generic count", ["FeedbackRecords.count"]],
+      ["sentiment", ["FeedbackRecords.sentimentAverage"]],
+      ["no measures", []],
+    ])("%s has no single response base", (_label, measures) => {
+      expect(getResponseBaseMeasureId(measures)).toBeUndefined();
+    });
+
+    test("names the answer type of each response base", () => {
+      expect(getResponseBaseFamily("FeedbackRecords.npsCount")).toBe("nps");
+      expect(getResponseBaseFamily("FeedbackRecords.csatCount")).toBe("csat");
+      expect(getResponseBaseFamily("FeedbackRecords.cesCount")).toBe("ces");
+      expect(getResponseBaseFamily("FeedbackRecords.ratingCount")).toBe("rating");
+      expect(getResponseBaseFamily("FeedbackRecords.count")).toBeUndefined();
+    });
+
+    test("every response base is itself a registered count measure", () => {
+      for (const measure of FEEDBACK_FIELDS.measures) {
+        if (!measure.responseBaseMeasureId) continue;
+        const base = FEEDBACK_FIELDS.measures.find((m) => m.id === measure.responseBaseMeasureId);
+        expect({ measure: measure.id, type: base?.type }).toEqual({ measure: measure.id, type: "count" });
+      }
+    });
+  });
+
   describe("NPS and CSAT bucket predicates (ENG-3147)", () => {
     // `value_number` is an unbounded numeric — the API schema puts no integer or range bound on it,
     // and both ingest paths parse it with Number.parseFloat. So a bucket set that only covers the
@@ -878,7 +971,10 @@ describe("schema-definition", () => {
     const bandArms = (model: CubeDefinition): Record<string, string> => {
       const sql = (model.dimensions.valueBand?.sql ?? "").replace(/\s+/g, " ");
       return Object.fromEntries(
-        [...sql.matchAll(/WHEN (.+?) THEN '([a-z]+)'/g)].map(([, predicate, token]) => [token, predicate.trim()])
+        [...sql.matchAll(/WHEN (.+?) THEN '([a-z]+)'/g)].map(([, predicate, token]) => [
+          token,
+          predicate.trim(),
+        ])
       );
     };
 
@@ -1010,6 +1106,7 @@ describe("schema-definition", () => {
       // "NULL when there are no answered…" sentence that the picker has no room for.
       test.each([
         "npsScore",
+        "npsCount",
         "promoterCount",
         "passiveCount",
         "detractorCount",

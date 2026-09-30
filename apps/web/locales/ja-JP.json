@@ -1820,6 +1820,7 @@
         "field_label_negative_count": "センチメント：否定的",
         "field_label_neutral_count": "センチメント：中立",
         "field_label_nps_average": "NPS：平均",
+        "field_label_nps_count": "NPS: レコード数",
         "field_label_nps_score": "NPS：スコア",
         "field_label_operating_system": "オペレーティングシステム",
         "field_label_page_url": "ページURL",
@@ -1845,6 +1846,7 @@
         "field_label_unique_responses": "ユニーク回答数",
         "field_label_updated_at": "更新日時",
         "field_label_user_identifier": "ユーザー識別子",
+        "field_label_value_band": "評価区分",
         "field_label_value_boolean": "値(ブール値)",
         "field_label_value_date": "値(日付)",
         "field_label_value_number": "値（数値）",
@@ -1960,6 +1962,12 @@
         "time_dimension_title_range_only": "日付範囲フィルターを追加",
         "time_dimension_toggle_description": "時間の経過に伴うトレンドを監視します。",
         "time_dimension_toggle_description_range_only": "このチャートを日付範囲に絞り込みます。時間ごとのグループ化は行いません。",
+        "value_band_detractor": "批判者",
+        "value_band_dissatisfied": "不満足",
+        "value_band_neutral": "中立",
+        "value_band_passive": "中立者",
+        "value_band_promoter": "推奨者",
+        "value_band_satisfied": "満足",
         "vertical_bars": "縦棒"
       },
       "dashboards": {

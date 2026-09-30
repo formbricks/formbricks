@@ -113,6 +113,23 @@ describe("executeTenantScopedQuery", () => {
     expect(typeof payload.jti).toBe("string");
   });
 
+  test("drops the NULL value band from the query sent to Cube, not from the caller's query", async () => {
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const query = {
+      measures: ["FeedbackRecords.count"],
+      dimensions: ["FeedbackRecords.valueBand"],
+      filters: [{ member: "FeedbackRecords.fieldType", operator: "equals", values: ["nps"] }],
+    };
+    await executeTenantScopedQuery({ ...scopedInput, query });
+
+    expect(mockLoad).toHaveBeenCalledWith({
+      ...query,
+      filters: [...query.filters, { member: "FeedbackRecords.valueBand", operator: "set" }],
+      timezone: "UTC",
+    });
+    expect(query.filters).toHaveLength(1);
+  });
+
   test("queries Cube in the organization's display time zone and expands presets in it", async () => {
     // The client reads the clock while expanding the preset, so pin it: 22:30 UTC is still May 21 in UTC
     // but already May 22 in Berlin, which is exactly the rollover this test is about.

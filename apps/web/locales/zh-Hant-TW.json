@@ -1820,6 +1820,7 @@
         "field_label_negative_count": "情感：負面",
         "field_label_neutral_count": "情感：中性",
         "field_label_nps_average": "NPS：平均值",
+        "field_label_nps_count": "NPS:記錄數",
         "field_label_nps_score": "NPS：分數",
         "field_label_operating_system": "作業系統",
         "field_label_page_url": "頁面網址",
@@ -1845,6 +1846,7 @@
         "field_label_unique_responses": "不重複回應",
         "field_label_updated_at": "更新時間",
         "field_label_user_identifier": "使用者識別碼",
+        "field_label_value_band": "價值區間",
         "field_label_value_boolean": "值(布林)",
         "field_label_value_date": "值(日期)",
         "field_label_value_number": "數值",
@@ -1960,6 +1962,12 @@
         "time_dimension_title_range_only": "新增日期範圍篩選",
         "time_dimension_toggle_description": "監控隨時間變化的趨勢。",
         "time_dimension_toggle_description_range_only": "將此圖表限定於某個日期範圍，不依時間分組。",
+        "value_band_detractor": "貶損者",
+        "value_band_dissatisfied": "不滿意",
+        "value_band_neutral": "中立",
+        "value_band_passive": "被動者",
+        "value_band_promoter": "推薦者",
+        "value_band_satisfied": "滿意",
         "vertical_bars": "垂直長條"
       },
       "dashboards": {

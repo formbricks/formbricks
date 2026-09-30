@@ -1820,6 +1820,7 @@
         "field_label_negative_count": "Sentiment: Negativ",
         "field_label_neutral_count": "Sentiment: Neutru",
         "field_label_nps_average": "NPS: Medie",
+        "field_label_nps_count": "NPS: Înregistrări",
         "field_label_nps_score": "NPS: Scor",
         "field_label_operating_system": "Sistem de Operare",
         "field_label_page_url": "URL Pagină",
@@ -1845,6 +1846,7 @@
         "field_label_unique_responses": "Răspunsuri unice",
         "field_label_updated_at": "Actualizat la",
         "field_label_user_identifier": "Identificator utilizator",
+        "field_label_value_band": "Bandă de valoare",
         "field_label_value_boolean": "Valoare (Boolean)",
         "field_label_value_date": "Valoare (Dată)",
         "field_label_value_number": "Valoare (Număr)",
@@ -1960,6 +1962,12 @@
         "time_dimension_title_range_only": "Adaugă un filtru pentru interval de date",
         "time_dimension_toggle_description": "Monitorizează tendințele în timp.",
         "time_dimension_toggle_description_range_only": "Limitează acest grafic la un interval de date, fără grupare pe timp.",
+        "value_band_detractor": "Detractor",
+        "value_band_dissatisfied": "Nemulțumit",
+        "value_band_neutral": "Neutru",
+        "value_band_passive": "Pasiv",
+        "value_band_promoter": "Promotor",
+        "value_band_satisfied": "Mulțumit",
         "vertical_bars": "bare verticale"
       },
       "dashboards": {

@@ -1820,6 +1820,7 @@
         "field_label_negative_count": "Sentiment: Negativ",
         "field_label_neutral_count": "Sentiment: Neutral",
         "field_label_nps_average": "NPS: Medelvärde",
+        "field_label_nps_count": "NPS: Poster",
         "field_label_nps_score": "NPS: Poäng",
         "field_label_operating_system": "Operativsystem",
         "field_label_page_url": "Sid-URL",
@@ -1845,6 +1846,7 @@
         "field_label_unique_responses": "Unika svar",
         "field_label_updated_at": "Uppdaterad",
         "field_label_user_identifier": "Användar-ID",
+        "field_label_value_band": "Värdeband",
         "field_label_value_boolean": "Värde (Boolean)",
         "field_label_value_date": "Värde (Datum)",
         "field_label_value_number": "Värde (Nummer)",
@@ -1960,6 +1962,12 @@
         "time_dimension_title_range_only": "Lägg till ett datumintervallfilter",
         "time_dimension_toggle_description": "Övervaka trender över tid.",
         "time_dimension_toggle_description_range_only": "Begränsa det här diagrammet till ett datumintervall, utan att gruppera efter tid.",
+        "value_band_detractor": "Kritiker",
+        "value_band_dissatisfied": "Missnöjd",
+        "value_band_neutral": "Neutral",
+        "value_band_passive": "Passiv",
+        "value_band_promoter": "Ambassadör",
+        "value_band_satisfied": "Nöjd",
         "vertical_bars": "Vertikala staplar"
       },
       "dashboards": {

@@ -1820,6 +1820,7 @@
         "field_label_negative_count": "Stimmung: Negativ",
         "field_label_neutral_count": "Stimmung: Neutral",
         "field_label_nps_average": "NPS: Durchschnitt",
+        "field_label_nps_count": "NPS: Datensätze",
         "field_label_nps_score": "NPS: Score",
         "field_label_operating_system": "Betriebssystem",
         "field_label_page_url": "Seiten-URL",
@@ -1845,6 +1846,7 @@
         "field_label_unique_responses": "Eindeutige Antworten",
         "field_label_updated_at": "Aktualisiert am",
         "field_label_user_identifier": "Benutzerkennung",
+        "field_label_value_band": "Wertbereich",
         "field_label_value_boolean": "Wert (Boolean)",
         "field_label_value_date": "Wert (Datum)",
         "field_label_value_number": "Wert (Zahl)",
@@ -1960,6 +1962,12 @@
         "time_dimension_title_range_only": "Datumsbereichsfilter hinzufügen",
         "time_dimension_toggle_description": "Beobachte Trends im Zeitverlauf.",
         "time_dimension_toggle_description_range_only": "Begrenze dieses Diagramm auf einen Datumsbereich, ohne nach Zeit zu gruppieren.",
+        "value_band_detractor": "Kritiker",
+        "value_band_dissatisfied": "Unzufrieden",
+        "value_band_neutral": "Neutral",
+        "value_band_passive": "Passiv",
+        "value_band_promoter": "Befürworter",
+        "value_band_satisfied": "Zufrieden",
         "vertical_bars": "Vertikale Balken"
       },
       "dashboards": {

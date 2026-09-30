@@ -11,7 +11,7 @@ import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { type TCubeQuerySource, getCubeApiConfig } from "./cube-config";
-import { getCubeQueryAuditSummary, validateCubeQueryMembers } from "./cube-query";
+import { applyValueBandNullGuard, getCubeQueryAuditSummary, validateCubeQueryMembers } from "./cube-query";
 
 const CUBE_QUERY_ERROR_MESSAGE =
   "Cube query failed. Verify CUBEJS_API_URL and CUBEJS_API_SECRET, and ensure the Cube service is running.";
@@ -155,7 +155,10 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
 
   try {
     const client = cubejs(token, { apiUrl });
-    const resultSet = await client.load(expandPresetDateRanges(input.query, timeZone) as Query);
+    // What Cube runs can differ from what the caller asked for; the audit event and the granular
+    // time dimension still come from `input.query`, which is the chart as saved.
+    const executedQuery = applyValueBandNullGuard(input.query);
+    const resultSet = await client.load(expandPresetDateRanges(executedQuery, timeZone) as Query);
     const measures = input.query.measures ?? [];
     const granular = (input.query.timeDimensions ?? []).filter((td) => Boolean(td.granularity));
     const filled = resultSet.tablePivot({ fillWithValue: NULL_FILL_SENTINEL });

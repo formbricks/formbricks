@@ -1820,6 +1820,7 @@
         "field_label_negative_count": "Sentiment : Négatif",
         "field_label_neutral_count": "Sentiment : Neutre",
         "field_label_nps_average": "NPS : Moyenne",
+        "field_label_nps_count": "NPS : Enregistrements",
         "field_label_nps_score": "NPS : Score",
         "field_label_operating_system": "Système d'exploitation",
         "field_label_page_url": "URL de la page",
@@ -1845,6 +1846,7 @@
         "field_label_unique_responses": "Réponses uniques",
         "field_label_updated_at": "Mis à jour le",
         "field_label_user_identifier": "Identifiant utilisateur",
+        "field_label_value_band": "Tranche de valeur",
         "field_label_value_boolean": "Valeur (booléenne)",
         "field_label_value_date": "Valeur (date)",
         "field_label_value_number": "Valeur (Nombre)",
@@ -1960,6 +1962,12 @@
         "time_dimension_title_range_only": "Ajouter un filtre de plage de dates",
         "time_dimension_toggle_description": "Surveille les tendances dans le temps.",
         "time_dimension_toggle_description_range_only": "Limiter ce graphique à une plage de dates, sans regroupement temporel.",
+        "value_band_detractor": "Détracteur",
+        "value_band_dissatisfied": "Insatisfait",
+        "value_band_neutral": "Neutre",
+        "value_band_passive": "Passif",
+        "value_band_promoter": "Promoteur",
+        "value_band_satisfied": "Satisfait",
         "vertical_bars": "Barres verticales"
       },
       "dashboards": {

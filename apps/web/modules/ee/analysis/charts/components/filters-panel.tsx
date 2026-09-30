@@ -10,6 +10,8 @@ import {
   EMOTIONS_DIMENSION_ID,
   EMOTION_VALUES,
   FEEDBACK_FIELDS,
+  VALUE_BAND_DIMENSION_ID,
+  VALUE_BAND_VALUES,
   getFieldById,
   getFilterOperatorsForType,
   getTranslatedDimensionValueLabel,
@@ -132,6 +134,30 @@ export function FiltersPanel({
             {EMOTION_VALUES.map((emotion) => (
               <SelectItem key={emotion} value={emotion}>
                 {getTranslatedDimensionValueLabel(EMOTIONS_DIMENSION_ID, emotion, t) ?? emotion}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      );
+    }
+
+    // The band vocabulary is fixed and computed by Cube, so there is nothing to look up: offer the six
+    // tokens directly (a distinct-value lookup would also return the NULL band).
+    if (
+      filter.field === VALUE_BAND_DIMENSION_ID &&
+      (filter.operator === "equals" || filter.operator === "notEquals")
+    ) {
+      return (
+        <Select
+          value={currentValue || undefined}
+          onValueChange={(value) => handleUpdateFilter(index, { values: value ? [value] : null })}>
+          <SelectTrigger className="w-[200px] bg-white">
+            <SelectValue placeholder={t("workspace.analysis.charts.enter_value")} />
+          </SelectTrigger>
+          <SelectContent>
+            {VALUE_BAND_VALUES.map((band) => (
+              <SelectItem key={band} value={band}>
+                {getTranslatedDimensionValueLabel(VALUE_BAND_DIMENSION_ID, band, t) ?? band}
               </SelectItem>
             ))}
           </SelectContent>

@@ -1751,6 +1751,7 @@ checksums:
     workspace/analysis/charts/field_label_negative_count: b320d649f521cda6c8261010c402ece3
     workspace/analysis/charts/field_label_neutral_count: b8ee4cd0e5f7a5f2c0a2d7242f4528a2
     workspace/analysis/charts/field_label_nps_average: 6620fa7368f625ebf68e72af30423683
+    workspace/analysis/charts/field_label_nps_count: e05165cfda71885f5135714ccd7a5a0a
     workspace/analysis/charts/field_label_nps_score: 2b0c5712d01ae74ca6171821d3910927
     workspace/analysis/charts/field_label_operating_system: 4eb7b91ecafb7ae1d35c5e54333b7db2
     workspace/analysis/charts/field_label_page_url: be321bd63cf738d3fa413cb66b8106d0
@@ -1776,6 +1777,7 @@ checksums:
     workspace/analysis/charts/field_label_unique_responses: e7bdc5ccacebc4e567a7148486df803a
     workspace/analysis/charts/field_label_updated_at: a3730393cce5adfd9e50123d96640fd6
     workspace/analysis/charts/field_label_user_identifier: b0174469c95038766744fb7e64005aec
+    workspace/analysis/charts/field_label_value_band: ec1ce2d4fbad89e576c674e2135bb5e7
     workspace/analysis/charts/field_label_value_boolean: bbdcd3f46954b6304b9069e94e1371ab
     workspace/analysis/charts/field_label_value_date: c8d705d1975affc01c002324725fec3f
     workspace/analysis/charts/field_label_value_number: 1f14da79d14bd7b1c2324141f4470675
@@ -1891,6 +1893,12 @@ checksums:
     workspace/analysis/charts/time_dimension_title_range_only: c5ddaa8d2cc006c57f027b7d3b87854d
     workspace/analysis/charts/time_dimension_toggle_description: 77251d8b3b564390bad8b76f56905190
     workspace/analysis/charts/time_dimension_toggle_description_range_only: 76ad3bd3bdbf049a2083d0cee5cab8e0
+    workspace/analysis/charts/value_band_detractor: ec5670b4b43c72f9f4155956b2f62b29
+    workspace/analysis/charts/value_band_dissatisfied: 3b97b041e6955cce129354c7bdda65ab
+    workspace/analysis/charts/value_band_neutral: 39e62449e5ad1af5a2630a0a7182dd4d
+    workspace/analysis/charts/value_band_passive: c401ba30de13dc0f53b98a00628d1a1e
+    workspace/analysis/charts/value_band_promoter: 4b75c24739612551bf0c6f342921c18e
+    workspace/analysis/charts/value_band_satisfied: 4d542ba354b85e644acbca5691d2ce45
     workspace/analysis/charts/vertical_bars: 408174fe449ea6f5457988dd218183be
     workspace/analysis/dashboards/add_count_charts: b4ee1f29efce0bb380a060e0bc5d64fa
     workspace/analysis/dashboards/chart_duplicate_failed: 90d7166c85188b52f821c9d9f53ff8c4

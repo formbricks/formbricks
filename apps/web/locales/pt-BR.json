@@ -1820,6 +1820,7 @@
         "field_label_negative_count": "Sentimento: Negativo",
         "field_label_neutral_count": "Sentimento: Neutro",
         "field_label_nps_average": "NPS: Média",
+        "field_label_nps_count": "NPS: Registros",
         "field_label_nps_score": "NPS: Pontuação",
         "field_label_operating_system": "Sistema Operacional",
         "field_label_page_url": "URL da Página",
@@ -1845,6 +1846,7 @@
         "field_label_unique_responses": "Respostas únicas",
         "field_label_updated_at": "Atualizado em",
         "field_label_user_identifier": "Identificador do usuário",
+        "field_label_value_band": "Faixa de valor",
         "field_label_value_boolean": "Valor (Booleano)",
         "field_label_value_date": "Valor (Data)",
         "field_label_value_number": "Valor (Número)",
@@ -1960,6 +1962,12 @@
         "time_dimension_title_range_only": "Adicionar um filtro de intervalo de datas",
         "time_dimension_toggle_description": "Monitore tendências ao longo do tempo.",
         "time_dimension_toggle_description_range_only": "Delimite este gráfico a um intervalo de datas, sem agrupar por tempo.",
+        "value_band_detractor": "Detrator",
+        "value_band_dissatisfied": "Insatisfeito",
+        "value_band_neutral": "Neutro",
+        "value_band_passive": "Passivo",
+        "value_band_promoter": "Promotor",
+        "value_band_satisfied": "Satisfeito",
         "vertical_bars": "Barras verticais"
       },
       "dashboards": {
