@@ -18,12 +18,11 @@ import { type TTrackProperties } from "@/types/survey";
 
 let isSurveyRunning = false;
 
-// The surveys currently on screen, so each "formbricks_survey_closed" can name its own. A set
-// rather than a single id because a second survey can render over a live one: a fired TimeoutStack
-// entry is never pruned, so a later `checkPageUrl` releases `isSurveyRunning` while the first
-// survey is still up, and the renderer appends a second container instead of replacing the first.
-// Ids are added when the widget actually renders — after the delay, after every skip check — so a
-// survey that was never shown never reports a close.
+// The surveys currently on screen, so each "formbricks_survey_closed" can name its own. Normally
+// one, since `isSurveyRunning` is now held for as long as a survey is up (ENG-2849) — but a set
+// rather than a single id because the renderer appends containers instead of replacing them, so
+// nothing here gets to assume it. Ids are added when the widget actually renders — after the delay,
+// after every skip check — so a survey that was never shown never reports a close.
 const openSurveyIds = new Set<string>();
 
 export const setIsSurveyRunning = (value: boolean): void => {
@@ -169,6 +168,12 @@ export const renderWidget = async (
   }
 
   const timeoutId = setTimeout(() => {
+    // First, before anything below can throw: from here the survey is on screen, so its TimeoutStack
+    // entry must stop looking like a cancellable schedule. `checkPageUrl` releases `isSurveyRunning`
+    // for the entries it cancels, and doing that to a live survey lets the next trigger render a
+    // second one over it (ENG-2849).
+    timeoutStack.markFired(timeoutId as unknown as number);
+
     openSurveyIds.add(survey.id);
 
     // Render-gated, paired with "formbricks_survey_closed" off the same set so a host counting opens

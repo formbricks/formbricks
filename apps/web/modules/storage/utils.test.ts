@@ -6,6 +6,7 @@ import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import {
   collectResponseFileUrls,
+  getStorageUrlSurveyId,
   getSurveyFileUploadElementIds,
   isAllowedFileExtension,
   isValidImageFile,
@@ -805,6 +806,30 @@ describe("storage utils", () => {
       "not a url",
     ])("should reject invalid storage URL %s", (fileUrl) => {
       expect(parseStorageFileUrl(fileUrl)).toBeNull();
+    });
+  });
+
+  describe("getStorageUrlSurveyId", () => {
+    test.each([
+      ["a relative current upload", "/storage/ws-1/private/surveys/survey-1/elements/el-1/report.pdf"],
+      [
+        "an absolute current upload",
+        "https://example.com/storage/ws-1/private/surveys/survey-1/elements/el-1/a.png",
+      ],
+      // The delete path decodes before building the key, so these name survey-1's folder too.
+      ["an encoded segment", "/storage/ws-1/private/%73urveys/survey-1/elements/el-1/a.png"],
+      ["encoded slashes", "/storage/ws-1/private/surveys%2Fsurvey-1%2Felements%2Fel-1%2Fa.png"],
+    ])("should read the survey id from %s", (_label, fileUrl) => {
+      expect(getStorageUrlSurveyId(fileUrl)).toBe("survey-1");
+    });
+
+    test.each([
+      ["a flat pre-#8044 key", "/storage/ws-1/private/report--fid--abc.pdf"],
+      ["a flat key named after the folder", "/storage/ws-1/private/surveys"],
+      ["a name that does not decode", "/storage/ws-1/private/surveys%E0%A4%A/survey-1/a.png"],
+      ["a non-storage URL", "https://example.com/files/surveys/survey-1/a.png"],
+    ])("should return null for %s", (_label, fileUrl) => {
+      expect(getStorageUrlSurveyId(fileUrl)).toBeNull();
     });
   });
 

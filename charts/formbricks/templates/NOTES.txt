@@ -43,13 +43,13 @@ Database (PostgreSQL) Access:
    PostgreSQL is deployed within your cluster.
    Retrieve the password using:
    ```sh
-   kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.name" . }}-app-secrets -o jsonpath="{.data.POSTGRES_USER_PASSWORD}" | base64 --decode
+   kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.name" . }}-app-secrets -o jsonpath="{.data.{{ include "formbricks.postgresqlAppPasswordKey" . }}}" | base64 --decode
    ```
    Connection details:
-   - **Host**: `{{ include "formbricks.name" . }}-postgresql`
-   - **Port**: `5432`
-   - **Database**: `{{ .Values.postgresql.auth.database }}`
-   - **Username**: `{{ .Values.postgresql.auth.username }}`
+   - **Host**: `{{ include "formbricks.postgresqlPrimaryHost" . }}`
+   - **Port**: `{{ include "formbricks.postgresqlServicePort" . }}`
+   - **Database**: `{{ include "formbricks.postgresqlDatabase" . }}`
+   - **Username**: `{{ include "formbricks.postgresqlUsername" . }}`
 {{- else if .Values.postgresql.externalDatabaseUrl }}
    You're using an external PostgreSQL database.
    The connection URL is intentionally omitted from these notes because it may contain credentials.
@@ -86,11 +86,11 @@ Environment Variables:
 The following environment variables have been configured:
 
 - `WEBAPP_URL`: {{ .Values.formbricks.webappUrl }}
-- `NEXTAUTH_URL`: {{ .Values.formbricks.webappUrl }}
+- `BETTER_AUTH_URL`: {{ .Values.formbricks.webappUrl }}
 {{- if .Values.formbricks.publicUrl }}
 - `PUBLIC_URL`: {{ .Values.formbricks.publicUrl }}
 {{- end }}
-- `NEXTAUTH_SECRET`: A random 32-character string (auto-generated)
+- `BETTER_AUTH_SECRET`: A random 32-character string (auto-generated)
 - `ENCRYPTION_KEY`: A random 32-character string (auto-generated)
 - `CRON_SECRET`: A random 32-character string (auto-generated)
 - `EMAIL_VERIFICATION_DISABLED`: 1 # By Default email verification is disabled, configure SMTP settings to enable(https://formbricks.com/docs/self-hosting/configuration/smtp)
@@ -98,7 +98,7 @@ The following environment variables have been configured:
 
 Retrieve them using:
 ```sh
-kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.name" . }}-app-secrets -o jsonpath="{.data.NEXTAUTH_SECRET}" | base64 --decode
+kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.name" . }}-app-secrets -o jsonpath="{.data.BETTER_AUTH_SECRET}" | base64 --decode
 kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.name" . }}-app-secrets -o jsonpath="{.data.ENCRYPTION_KEY}" | base64 --decode
 kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.name" . }}-app-secrets -o jsonpath="{.data.CRON_SECRET}" | base64 --decode	
 ```
@@ -172,7 +172,7 @@ External Secrets:
 ---
 
 {{- if .Values.authzed.enabled }}
-AuthZed / SpiceDB Operations:
+SpiceDB Authorization Operations:
 
    SpiceDB is configured in `{{ .Values.authzed.mode }}` mode. It is not part of the Formbricks
    readiness probe, and its gRPC endpoint should remain private.
@@ -187,15 +187,15 @@ AuthZed / SpiceDB Operations:
    kubectl exec -n {{ .Release.Namespace }} deployment/{{ include "formbricks.name" . }} -- formbricks-authzed schema check
    ```
 
-   Before upgrading an existing installation to v6, complete the release-matched preparation and
-   read-only gate, then set `authzed.migrationAcknowledged=true`:
-   ```sh
-   kubectl exec -n {{ .Release.Namespace }} deployment/{{ include "formbricks.name" . }} -- formbricks-authzed upgrade prepare
-   kubectl exec -n {{ .Release.Namespace }} deployment/{{ include "formbricks.name" . }} -- formbricks-authzed upgrade check
-   ```
+   Existing v5 installations: stop all writers/controllers, take recoverable backups, and use an
+   explicit target-image maintenance Job running `formbricks-authzed-prepare`. It delegates graph
+   preparation to `formbricks-authzed upgrade prepare` and `formbricks-authzed upgrade check`.
+   Do not execute the upgrade through the old application pod. After preparation passes, set
+   `authzed.migrationAcknowledged=true` for the v6 upgrade. Follow the complete procedure:
+   https://formbricks.com/docs/self-hosting/advanced/v6-maintenance-upgrade
 
-   Schema application and relationship repair are explicit operator actions and never run as Helm
-   hooks. Read the safeguards and backup requirements before changing authorization state:
+   Fresh installs initialize the graph. The upgrade hook is read-only; schema application and
+   relationship repair during upgrades are explicit maintenance operations:
    https://formbricks.com/docs/self-hosting/advanced/authzed-operations
 
 ---

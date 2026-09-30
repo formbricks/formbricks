@@ -27,6 +27,7 @@ vi.mock("@/lib/constants", () => ({
   get DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS() {
     return constantsMock.dangerouslyAllow;
   },
+  WEBHOOK_DELIVERY_TIMEOUT_MS: 5000,
 }));
 
 vi.mock("@/lib/crypto", () => ({

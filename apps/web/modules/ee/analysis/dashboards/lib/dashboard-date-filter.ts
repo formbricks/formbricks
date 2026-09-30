@@ -1,5 +1,5 @@
 import type { TChartQuery } from "@formbricks/types/analysis";
-import { DASHBOARD_DATE_PRESETS } from "@/modules/ee/analysis/lib/date-presets";
+import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 
 // The dashboard-level date filter only ever overrides the "Collected at" time dimension, as
 // specified by ENG-1553. Other time dimensions (e.g. createdAt) are left untouched.
@@ -102,7 +102,7 @@ export const parseDashboardDateFilter = (
     return null;
   }
 
-  if ((DASHBOARD_DATE_PRESETS as readonly string[]).includes(value)) {
+  if ((DATE_RANGE_PRESETS as readonly string[]).includes(value)) {
     return { type: "preset", value };
   }
 
@@ -143,7 +143,7 @@ export const deserializeStoredDateFilter = (raw: string | null): TDashboardDateF
   if (
     filter.type === "preset" &&
     typeof filter.value === "string" &&
-    (DASHBOARD_DATE_PRESETS as readonly string[]).includes(filter.value)
+    (DATE_RANGE_PRESETS as readonly string[]).includes(filter.value)
   ) {
     return { type: "preset", value: filter.value };
   }

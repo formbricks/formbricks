@@ -1,5 +1,4 @@
 import crypto from "crypto";
-import { authenticator } from "otplib";
 import qrcode from "qrcode";
 import { prisma } from "@formbricks/database";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -8,7 +7,7 @@ import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { getCredentialPasswordHash, verifyUserPassword } from "@/lib/user/password";
 import { auth } from "@/modules/auth/lib/auth";
 import { buildReencodedTwoFactorData } from "@/modules/auth/lib/cutover/reencode-two-factor";
-import { totpAuthenticatorCheck } from "@/modules/auth/lib/totp";
+import { generateTotpKeyUri, generateTotpSecret, totpAuthenticatorCheck } from "@/modules/auth/lib/totp";
 
 export const setupTwoFactorAuth = async (
   userId: string,
@@ -21,7 +20,7 @@ export const setupTwoFactorAuth = async (
 }> => {
   // This generates a secret 32 characters in length. Do not modify the number of
   // bytes without updating the sanity checks in the enable and login endpoints.
-  const secret = authenticator.generateSecret(20);
+  const secret = generateTotpSecret();
 
   // generate backup codes with 10 character length
   const backupCodes = Array.from(Array(10), () => crypto.randomBytes(5).toString("hex"));
@@ -74,7 +73,7 @@ export const setupTwoFactorAuth = async (
   });
 
   const name = user.email || user.name || user.id.toString();
-  const keyUri = authenticator.keyuri(name, "Formbricks", secret);
+  const keyUri = generateTotpKeyUri(name, secret);
   const dataUri = await qrcode.toDataURL(keyUri);
 
   return { secret, keyUri, dataUri, backupCodes };

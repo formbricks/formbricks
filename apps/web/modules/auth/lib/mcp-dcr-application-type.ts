@@ -1,4 +1,5 @@
 import "server-only";
+import { findDisallowedRedirectUri, isLoopbackRedirectUri } from "./mcp-dcr-redirect-policy";
 
 /**
  * Default `application_type` to `"native"` on Dynamic Client Registration when the client asked for
@@ -30,20 +31,14 @@ import "server-only";
  * redirect under `native` too (`native` + `http://evil.example.com` → `invalid_redirect_uri`), so the
  * only URIs this can green-light are loopback and https ones. It never turns a rejected URI into an
  * accepted one; it only stops a native client being misfiled as a web one.
+ *
+ * This module also owns the *rejection* side of dynamic registration — see `prepareDcrRequest` and
+ * mcp-dcr-redirect-policy.ts (ENG-3086). The two live together because a Request body can only be read
+ * once: the allowlist and this inference have to share that single read, and the same read is what
+ * forces both to happen in the route rather than in a Better Auth hook.
  */
 
 const DCR_PATH_SEGMENT = "/api/auth/oauth2/register";
-const NATIVE_HTTP_LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
-
-const isNativeHttpLoopback = (uri: unknown): boolean => {
-  if (typeof uri !== "string") return false;
-  try {
-    const url = new URL(uri);
-    return url.protocol === "http:" && NATIVE_HTTP_LOOPBACK_HOSTS.has(url.hostname);
-  } catch {
-    return false;
-  }
-};
 
 /** Whether this request is a dynamic client registration whose body we should look at. */
 export const isDcrRegistration = (request: Request): boolean => {
@@ -74,19 +69,32 @@ export const withInferredApplicationType = (body: string): string => {
 
   const redirectUris = client.redirect_uris;
   if (!Array.isArray(redirectUris) || redirectUris.length === 0) return body;
-  if (!redirectUris.some(isNativeHttpLoopback)) return body;
+  if (!redirectUris.some(isLoopbackRedirectUri)) return body;
 
   return JSON.stringify({ ...client, application_type: "native" });
 };
 
 /**
- * The request Better Auth should handle. Reads the body only for a DCR POST, and always reconstructs
- * with the body it read — a Request body is single-use, so it cannot be inspected and then reused.
+ * The request Better Auth should handle — or the rejection for a registration whose redirect URIs
+ * fall outside the loopback allowlist (ENG-3086). Reads the body only for a DCR POST, and always
+ * reconstructs with the body it read — a Request body is single-use, so it cannot be inspected and
+ * then reused.
  */
-export const normalizeDcrRequest = async (request: Request): Promise<Request> => {
+export const prepareDcrRequest = async (request: Request): Promise<Request | Response> => {
   if (!isDcrRegistration(request)) return request;
 
   const raw = await request.text();
+  const disallowed = findDisallowedRedirectUri(raw);
+  if (disallowed) {
+    return Response.json(
+      {
+        error: "invalid_redirect_uri",
+        error_description: `"${disallowed.uri}" in ${disallowed.field} is not an allowed loopback redirect URI`,
+      },
+      { status: 400 }
+    );
+  }
+
   return new Request(request.url, {
     method: request.method,
     headers: request.headers,

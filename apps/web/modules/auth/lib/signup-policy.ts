@@ -33,10 +33,20 @@ import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
  * it skips the license lookup and spends exactly one `count`. Evaluating freshness first — as the
  * original fix did — instead made every unauthenticated raw sign-up attempt run `count(*)` on `User`.
  */
-export const isUninvitedSignupAllowed = async (): Promise<boolean> => {
-  if (SIGNUP_ENABLED && (await getIsMultiOrgEnabled())) return true;
-  return getIsFreshInstance();
+export type TUninvitedSignupAdmission = "open" | "fresh-instance" | "denied";
+
+/**
+ * WHY a reason and not a boolean (ENG-2247): the fresh-instance branch is the one the bootstrap marker
+ * gates, and "allowed" alone cannot tell it apart from open sign-up. Marking on plain "allowed" would
+ * write the marker for every Cloud sign-up and collide on the second account ever created.
+ */
+export const resolveUninvitedSignupAdmission = async (): Promise<TUninvitedSignupAdmission> => {
+  if (SIGNUP_ENABLED && (await getIsMultiOrgEnabled())) return "open";
+  return (await getIsFreshInstance()) ? "fresh-instance" : "denied";
 };
+
+export const isUninvitedSignupAllowed = async (): Promise<boolean> =>
+  (await resolveUninvitedSignupAdmission()) !== "denied";
 
 /** Better Auth's native credential sign-up route — the one that bypasses `createUserAction`. */
 const CREDENTIAL_SIGNUP_PATH = "/sign-up/email";

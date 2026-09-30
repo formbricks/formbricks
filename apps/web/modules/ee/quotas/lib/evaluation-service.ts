@@ -29,6 +29,66 @@ export interface QuotaEvaluationInput {
   response?: TEmbeddedValueResponse;
 }
 
+/**
+ * What quota screening decided, without acting on it.
+ *
+ * `passedQuotas` is "this response's content matches the quota's criteria" and nothing more — a
+ * matched quota that is already full screens the response *out*, which is a fact about stored counts
+ * rather than about the payload and is decided by `handleQuotas`.
+ */
+export interface QuotaScreeningResult {
+  quotas: TSurveyQuota[];
+  passedQuotas: TSurveyQuota[];
+  failedQuotas: TSurveyQuota[];
+}
+
+/**
+ * The read half of quota evaluation: which of a survey's quotas this response's content matches.
+ *
+ * Split out so a dry run can ask the question without the write half answering it —
+ * `POST /api/v3/responses/validate` reports the quotas a payload would count against, and a second
+ * implementation of the matching would make that report a guess about the real one rather than a
+ * statement of it. `evaluateResponseQuotas` below is this function plus `handleQuotas`.
+ *
+ * Returns `null` when there is nothing to screen against — no quotas, or no such survey.
+ */
+export const screenResponseQuotas = async ({
+  surveyId,
+  data,
+  variables = {},
+  language = "default",
+  response,
+}: Omit<QuotaEvaluationInput, "responseId" | "responseFinished" | "tx"> & {
+  responseFinished?: boolean;
+}): Promise<QuotaScreeningResult | null> => {
+  const quotas = await getQuotas(surveyId);
+
+  if (!quotas || quotas.length === 0) {
+    return null;
+  }
+
+  const survey = await getSurvey(surveyId);
+  if (!survey) {
+    return null;
+  }
+
+  const isDefaultLanguage = survey.languages.find((lang) => lang.default)?.language.code === language;
+  const jsSurvey = toJsWorkspaceStateSurvey(survey);
+  const { passedQuotas, failedQuotas } = evaluateQuotas(
+    jsSurvey,
+    data,
+    variables,
+    quotas,
+    isDefaultLanguage ? "default" : language,
+    // The survey is what lets a declared field of the same name shadow the reserved read
+    // (ENG-2538); without it a quota on `url` counted the page address for every response whose
+    // declared `url` was left blank.
+    response ? buildServerEmbeddedValues(response, jsSurvey) : {}
+  );
+
+  return { quotas, passedQuotas, failedQuotas };
+};
+
 export interface QuotaEvaluationResult {
   quotaFull?: TSurveyQuota | null;
   shouldEndSurvey: boolean;
@@ -54,31 +114,19 @@ export const evaluateResponseQuotas = async (input: QuotaEvaluationInput): Promi
   const prismaClient = tx ?? prisma;
 
   try {
-    const quotas = await getQuotas(surveyId);
+    const result = await screenResponseQuotas({ surveyId, data, variables, language, response });
 
-    if (!quotas || quotas.length === 0) {
+    if (!result) {
       return { shouldEndSurvey: false };
     }
 
-    const survey = await getSurvey(surveyId);
-    if (!survey) {
-      return { shouldEndSurvey: false };
-    }
-    const isDefaultLanguage = survey.languages.find((lang) => lang.default)?.language.code === language;
-    const jsSurvey = toJsWorkspaceStateSurvey(survey);
-    const result = evaluateQuotas(
-      jsSurvey,
-      data,
-      variables,
-      quotas,
-      isDefaultLanguage ? "default" : language,
-      // The survey is what lets a declared field of the same name shadow the reserved read
-      // (ENG-2538); without it a quota on `url` counted the page address for every response whose
-      // declared `url` was left blank.
-      response ? buildServerEmbeddedValues(response, jsSurvey) : {}
+    const quotaFull = await handleQuotas(
+      surveyId,
+      responseId,
+      { passedQuotas: result.passedQuotas, failedQuotas: result.failedQuotas },
+      responseFinished,
+      prismaClient
     );
-
-    const quotaFull = await handleQuotas(surveyId, responseId, result, responseFinished, prismaClient);
 
     if (quotaFull && quotaFull.action === "endSurvey") {
       const refreshedResponse = await prismaClient.response.findUnique({

@@ -34,6 +34,26 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Input } from "@/modules/ui/components/input";
+import { filterComboboxOption } from "./lib/search";
+
+/**
+ * The height `DropdownMenuContent` caps itself at — mirrors the `max-h` on that component, which
+ * is what keeps a long menu inside the viewport.
+ */
+const POPOVER_MAX_HEIGHT = "min(20rem, var(--radix-dropdown-menu-content-available-height, 20rem))";
+/** The popover's own `p-1`, top and bottom. */
+const POPOVER_PADDING = "0.5rem";
+
+/**
+ * Cap the option list at the popover's height minus its chrome, so the list is the only thing that
+ * can scroll. Sized any taller — it used to be a flat `400px` against a 320px popover — the list
+ * scrolls internally *and* overflows the popover, which then scrolls too, and the dropdown renders
+ * two nested scrollbars. The search row is `h-8` plus its 1px bottom border.
+ */
+const getOptionListMaxHeight = (showSearch: boolean): string =>
+  showSearch
+    ? `calc(${POPOVER_MAX_HEIGHT} - ${POPOVER_PADDING} - 2rem - 1px)`
+    : `calc(${POPOVER_MAX_HEIGHT} - ${POPOVER_PADDING})`;
 
 export interface TComboboxOption {
   icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
@@ -80,6 +100,8 @@ function flattenOptions(options?: TComboboxOption[]): TComboboxOption[] {
   return options.flatMap((option) => [option, ...(option.children ? flattenOptions(option.children) : [])]);
 }
 
+// The search terms for an option. `filterComboboxOption` scores these instead of the item's
+// `value`, which is an opaque id the user never sees.
 function getOptionKeywords(option: TComboboxOption): string[] {
   return [option.label];
 }
@@ -384,9 +406,9 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
         <DropdownMenuContent
           side="bottom"
           align="start"
-          className="w-(--radix-dropdown-menu-trigger-width) min-w-52"
+          className="w-(--radix-dropdown-menu-trigger-width) min-w-52 overflow-y-hidden"
           data-testid="dropdown-menu-content">
-          <Command className="flex h-full w-full flex-col overflow-hidden">
+          <Command className="flex h-full w-full flex-col overflow-hidden" filter={filterComboboxOption}>
             {showSearch ? (
               <div className="border-b border-slate-100">
                 <CommandInput
@@ -401,7 +423,10 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
               <button autoFocus className="sr-only" aria-hidden type="button" />
             )}
 
-            <CommandList ref={listRef} className="max-h-[400px] overflow-y-auto border-0 p-1">
+            <CommandList
+              ref={listRef}
+              className="max-h-none overflow-y-auto border-0 p-1"
+              style={{ maxHeight: getOptionListMaxHeight(showSearch) }}>
               <CommandEmpty className="mx-2 my-0 text-xs font-semibold text-slate-500">
                 {emptyDropdownText ?? t("workspace.surveys.edit.no_option_found")}
               </CommandEmpty>

@@ -11,6 +11,7 @@ declare const scopeFbjs: {
   stripLayerProperties: ScopePluginCreator;
   scopeLayerTheme: ScopePluginCreator;
   replaceAtPropertyWithScoped: ScopePluginCreator;
+  pinThemeVariables: ScopePluginCreator;
   scopeFbjsPlugins: () => AcceptedPlugin[];
 };
 

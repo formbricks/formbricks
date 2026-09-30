@@ -5,6 +5,10 @@ describe("@formbricks/jobs public API", () => {
   test("exports the supported public entry points without leaking registry internals", () => {
     expect(jobs.enqueueTestLogJob).toBeTypeOf("function");
     expect(jobs.enqueueResponsePipelineJob).toBeTypeOf("function");
+    expect(jobs.enqueueWebhookDeliveryJob).toBeTypeOf("function");
+    expect(jobs.processWebhookDeliveryJob).toBeTypeOf("function");
+    expect(jobs.ZWebhookDeliveryJobData).toBeDefined();
+    expect(jobs.ONE_SHOT_JOB_NAMES.webhookDelivery).toBe("webhook-delivery.process");
     expect(jobs.getBackgroundJobProducer).toBeTypeOf("function");
     expect(jobs.startJobsRuntime).toBeTypeOf("function");
     expect(jobs.ZResponsePipelineEvent).toBeDefined();

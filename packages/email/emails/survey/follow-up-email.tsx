@@ -1,4 +1,4 @@
-import { Column, Hr, Row, Text } from "@react-email/components";
+import { Column, Hr, Row, Text } from "react-email";
 import { EmailTemplate } from "../../src/components/email-template";
 import { renderEmailResponseValue } from "../../src/lib/email-utils";
 import { exampleData } from "../../src/lib/example-data";

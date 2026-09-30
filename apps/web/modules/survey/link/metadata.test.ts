@@ -29,6 +29,8 @@ vi.mock("./lib/metadata-utils", async (importOriginal) => {
 describe("getMetadataForLinkSurvey", () => {
   const mockSurveyId = "survey-123";
   const mockSurveyName = "Test Survey";
+  // Distinct from the page title so the tests can tell which one reaches the social previews.
+  const mockOgTitle = "Test Survey | Formbricks";
   const mockDescription = "Please complete this survey.";
   const mockOgImageUrl = "https://example.com/custom-image.png";
 
@@ -37,6 +39,7 @@ describe("getMetadataForLinkSurvey", () => {
 
     vi.mocked(getBasicSurveyMetadata).mockResolvedValue({
       title: mockSurveyName,
+      ogTitle: mockOgTitle,
       description: mockDescription,
       survey: null,
       ogImage: undefined,
@@ -86,7 +89,7 @@ describe("getMetadataForLinkSurvey", () => {
 
     expect(getSurveyWithMetadata).toHaveBeenCalledWith(mockSurveyId);
     expect(getBasicSurveyMetadata).toHaveBeenCalledWith(mockSurveyId, undefined, mockSurvey);
-    expect(getSurveyOpenGraphMetadata).toHaveBeenCalledWith(mockSurveyId, mockSurveyName, undefined);
+    expect(getSurveyOpenGraphMetadata).toHaveBeenCalledWith(mockSurveyId, mockOgTitle, undefined);
 
     expect(result).toEqual({
       title: mockSurveyName,
@@ -127,6 +130,7 @@ describe("getMetadataForLinkSurvey", () => {
     vi.mocked(getSurveyWithMetadata).mockResolvedValue(mockSurvey);
     vi.mocked(getBasicSurveyMetadata).mockResolvedValue({
       title: mockSurveyName,
+      ogTitle: mockOgTitle,
       description: mockDescription,
       survey: null,
       ogImage: mockOgImageUrl as any,

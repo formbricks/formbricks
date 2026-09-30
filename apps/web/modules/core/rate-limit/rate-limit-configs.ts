@@ -57,6 +57,11 @@ export const rateLimitConfigs = {
       allowedPerInterval: 1,
       namespace: "action:generate-example-responses",
     }, // 1 per minute per user — closes the multi-click race and bounds LLM spend
+    aiChartGeneration: {
+      interval: 60,
+      allowedPerInterval: 1,
+      namespace: "action:ai-chart-generation",
+    }, // 1 per minute per user — bounds concurrent and repeated LLM-backed chart generations
     integrationMutation: {
       interval: 60,
       allowedPerInterval: 30,

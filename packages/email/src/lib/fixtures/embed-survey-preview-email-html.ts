@@ -7,10 +7,10 @@ export const embedSurveyPreviewEmailHtml = `
   cellspacing="0"
   role="presentation"
   bgcolor="#4a865f"
-  style="background-color:#4a865f !important;border-color:rgb(74,134,95);border-radius:8px;margin-right:0rem;margin-left:0rem;margin-bottom:0.5rem;margin-top:0.5rem;border-style:solid;border-width:1px;padding:2rem;color:#1f2937 !important;background:#4a865f !important;color-scheme:only light;border:1px solid #4a865f !important;font-family:Inter, Helvetica, Arial, sans-serif">
+  style="background-color:#4a865f !important;border-color:rgb(74,134,95);border-radius:8px;margin-right:0rem;margin-left:0rem;margin-bottom:0.5rem;margin-top:0.5rem;border-style:solid;border-width:1px;color:#1f2937 !important;background:#4a865f !important;color-scheme:only light;border:1px solid #4a865f !important;font-family:Inter, Helvetica, Arial, sans-serif">
   <tbody>
     <tr>
-      <td>
+      <td style="padding:2rem">
         <table
           align="center"
           width="100%"

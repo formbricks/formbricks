@@ -123,13 +123,65 @@ const replaceAtPropertyWithScoped = () => {
 };
 replaceAtPropertyWithScoped.postcss = true;
 
-// Returns the three scoping plugins as instances, in the order they must run
+// Theme variables whose names are common enough that host design systems
+// define them too, and which size the whole survey when they are wrong.
+const PINNED_THEME_VARIABLES = ["--spacing"];
+
+// Pins collision-prone theme variables on every element inside `#fbjs`.
+//
+// Problem: `scopeLayerTheme` declares `--spacing` once on `#fbjs` and relies on
+// inheritance. A host rule that matches the survey's own elements — `* { --spacing: 1rem }`,
+// `div { ... }` — sets the variable on each of them directly, which beats an
+// inherited value regardless of specificity. Every `p-*`, `m-*`, `gap-*`, `h-*`
+// and `w-*` utility is `calc(var(--spacing) * n)`, so the survey renders at the
+// wrong scale (ENG-833). A host rule on `:root` / `html` / `body` is already
+// harmless, because `#fbjs` redeclares the variable below it.
+//
+// Fix: redeclare each pinned variable on `#fbjs` and its descendants with
+// `!important` inside the `theme` layer. Important declarations reverse layer
+// order, so a layered `!important` beats every unlayered host declaration,
+// important or not. The value is copied from the theme rule, so the computed
+// value is unchanged when the host defines nothing.
+const pinThemeVariables = () => {
+  return {
+    postcssPlugin: "postcss-pin-theme-variables",
+    OnceExit(root, { postcss }) {
+      const values = new Map();
+      root.walkAtRules("layer", (atRule) => {
+        if (atRule.params !== "theme") return;
+        atRule.walkDecls((decl) => {
+          if (PINNED_THEME_VARIABLES.includes(decl.prop)) values.set(decl.prop, decl.value);
+        });
+      });
+
+      if (values.size === 0) return;
+      const rule = postcss.rule({
+        selectors: ["#fbjs", "#fbjs *", "#fbjs ::before", "#fbjs ::after"],
+      });
+      for (const [prop, value] of values) {
+        rule.append(postcss.decl({ prop, value, important: true }));
+      }
+      const layer = postcss.atRule({ name: "layer", params: "theme" });
+      layer.append(rule);
+      root.append(layer);
+    },
+  };
+};
+pinThemeVariables.postcss = true;
+
+// Returns the scoping plugins as instances, in the order they must run
 // (after Tailwind has compiled). Spread into a PostCSS `plugins` array.
-const scopeFbjsPlugins = () => [stripLayerProperties(), scopeLayerTheme(), replaceAtPropertyWithScoped()];
+const scopeFbjsPlugins = () => [
+  stripLayerProperties(),
+  scopeLayerTheme(),
+  replaceAtPropertyWithScoped(),
+  pinThemeVariables(),
+];
 
 module.exports = {
   stripLayerProperties,
   scopeLayerTheme,
   replaceAtPropertyWithScoped,
+  pinThemeVariables,
   scopeFbjsPlugins,
 };

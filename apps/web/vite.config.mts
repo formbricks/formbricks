@@ -72,6 +72,11 @@ export default defineConfig({
         "instrumentation-jobs.ts",
         "proxy.ts",
       ],
+      // ENG-2432: `**/route.{ts,tsx}`, `**/actions.ts` and `**/action.ts` used to sit in this list, so
+      // the API route handlers and server actions — the layer that does authorization and input
+      // validation — were the only backend code outside the coverage gate. They are ordinary exported
+      // async functions; the ones that hold logic are unit-testable like anything else. `**/*.tsx`
+      // still covers `route.tsx`.
       exclude: [
         // Build and configuration files
         "**/.next/**", // Next.js build output
@@ -92,7 +97,6 @@ export default defineConfig({
         "**/*.tsx", // All TSX/React component files
 
         // Next.js specific files
-        "**/route.{ts,tsx}", // Next.js API routes
         "**/middleware.ts", // Next.js middleware
         "**/instrumentation.ts", // Next.js instrumentation files
         "**/instrumentation-node.ts", // Next.js Node.js instrumentation files
@@ -110,8 +114,6 @@ export default defineConfig({
         "**/constants.ts", // Constants files
 
         // Server-side code
-        "**/actions.ts", // Server actions (plural)
-        "**/action.ts", // Server actions (singular)
         "lib/env.ts", // Environment configuration
         "lib/env-client.ts", // Environment configuration (client-safe)
         "**/cache.ts", // Cache files

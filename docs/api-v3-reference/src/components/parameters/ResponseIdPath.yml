@@ -1,0 +1,7 @@
+in: path
+name: responseId
+required: true
+schema:
+  type: string
+  format: cuid2
+description: Response identifier.

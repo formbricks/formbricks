@@ -3,11 +3,12 @@ import { renderSsoRecoveryFactorsRemovedEmail } from "@formbricks/email";
 
 const t = (key: string): string => {
   const translations: Record<string, string> = {
-    "emails.sso_recovery_factors_removed_email_heading": "Sign-in factors removed from your account",
+    "emails.sso_recovery_factors_removed_email_heading": "Credentials removed from your account",
     "emails.sso_recovery_factors_removed_email_text":
       "You just signed in with single sign-on for the first time.",
     "emails.sso_recovery_factors_removed_email_password": "Your password was removed.",
     "emails.sso_recovery_factors_removed_email_two_factor": "Two-factor authentication was removed.",
+    "emails.sso_recovery_factors_removed_email_api_keys": "API keys you had created were deleted.",
     "emails.sso_recovery_factors_removed_email_sign_in_hint": "You can keep signing in with single sign-on.",
     "emails.sso_recovery_factors_removed_email_review_security": "Review security settings",
     "emails.sso_recovery_factors_removed_email_did_not_expect":
@@ -26,10 +27,15 @@ const t = (key: string): string => {
  * what the last test here pins.
  */
 describe("renderSsoRecoveryFactorsRemovedEmail", () => {
-  const render = (overrides: { passwordRemoved: boolean; twoFactorRemoved: boolean }) =>
+  const render = (overrides: {
+    passwordRemoved: boolean;
+    twoFactorRemoved: boolean;
+    apiKeysRemoved?: boolean;
+  }) =>
     renderSsoRecoveryFactorsRemovedEmail({
       securitySettingsLink: "https://app.formbricks.com/account/settings/profile",
       t,
+      apiKeysRemoved: false,
       ...overrides,
     });
 
@@ -53,6 +59,26 @@ describe("renderSsoRecoveryFactorsRemovedEmail", () => {
 
     expect(html).not.toContain("Your password was removed.");
     expect(html).toContain("Two-factor authentication was removed.");
+  });
+
+  // ENG-2634: the keys are the removal a legitimate owner feels first (their integrations stop), so the
+  // line has to appear on its own when neither sign-in factor was set — and never when no key was.
+  test("names deleted API keys, and only when keys were actually deleted", async () => {
+    const withKeys = await render({ passwordRemoved: false, twoFactorRemoved: false, apiKeysRemoved: true });
+    const withoutKeys = await render({ passwordRemoved: true, twoFactorRemoved: true });
+
+    expect(withKeys).toContain("API keys you had created were deleted.");
+    expect(withoutKeys).not.toContain("API keys you had created were deleted.");
+  });
+
+  // The profile page hosts the password form and the 2FA card, nothing about API keys. A keys-only
+  // recovery has nothing to re-enrol there, so the hint and the link would send the reader to a dead end.
+  test("drops the security-settings hint and link when only API keys were deleted", async () => {
+    const html = await render({ passwordRemoved: false, twoFactorRemoved: false, apiKeysRemoved: true });
+
+    expect(html).not.toContain("https://app.formbricks.com/account/settings/profile");
+    expect(html).not.toContain("You can keep signing in with single sign-on.");
+    expect(html).toContain("API keys you had created were deleted.");
   });
 
   /**

@@ -11,7 +11,7 @@ export const LanguagesPage = async (props: { params: Promise<{ workspaceId: stri
   const params = await props.params;
   const t = await getTranslate();
 
-  const { session, workspace, isReadOnly } = await getWorkspaceAuth(params.workspaceId);
+  const { session, workspace, canManage } = await getWorkspaceAuth(params.workspaceId);
 
   const user = await getUser(session.user.id);
 
@@ -25,7 +25,7 @@ export const LanguagesPage = async (props: { params: Promise<{ workspaceId: stri
       <SettingsCard
         title={t("workspace.languages.multi_language_surveys")}
         description={t("workspace.languages.multi_language_surveys_description")}>
-        <EditLanguage workspace={workspace} locale={user.locale} isReadOnly={isReadOnly} />
+        <EditLanguage workspace={workspace} locale={user.locale} isReadOnly={!canManage} />
       </SettingsCard>
     </PageContentWrapper>
   );

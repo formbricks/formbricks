@@ -309,6 +309,40 @@ describe("surveyLogic", () => {
     expect(evaluateLogic(multiSurvey, data, vars, condition("doesNotEqual", "opt2"), "en")).toBe(true);
   });
 
+  test("evaluateLogic treats doesNotIncludeAllOf as the inverse of includesAllOf", () => {
+    const vars: TResponseVariables = {};
+    const evaluate = (
+      operator: "includesAllOf" | "doesNotIncludeAllOf" | "doesNotIncludeOneOf",
+      right: string[]
+    ) =>
+      evaluateLogic(
+        mockSurvey,
+        { farr: ["foo", "bar"] },
+        vars,
+        {
+          id: "g",
+          connector: "and",
+          conditions: [
+            {
+              id: "c",
+              leftOperand: { type: "hiddenField", value: "farr" },
+              operator,
+              rightOperand: { type: "static", value: right },
+            },
+          ],
+        },
+        "en"
+      );
+
+    // One of the values is missing, so the answer does not include all of them — but it does include one.
+    expect(evaluate("includesAllOf", ["foo", "baz"])).toBe(false);
+    expect(evaluate("doesNotIncludeAllOf", ["foo", "baz"])).toBe(true);
+    expect(evaluate("doesNotIncludeOneOf", ["foo", "baz"])).toBe(false);
+    // Every value is present.
+    expect(evaluate("includesAllOf", ["foo", "bar"])).toBe(true);
+    expect(evaluate("doesNotIncludeAllOf", ["foo", "bar"])).toBe(false);
+  });
+
   test("performActions calculates, requires, and jumps correctly", () => {
     const data: TResponseData = { q: "5" };
     const initialVars: TResponseVariables = {};

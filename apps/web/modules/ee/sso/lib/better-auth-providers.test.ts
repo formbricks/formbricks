@@ -10,10 +10,11 @@ vi.mock("./sso-request-context", () => ({ captureSsoIdentity }));
 const { loggerWarn } = vi.hoisted(() => ({ loggerWarn: vi.fn() }));
 vi.mock("@formbricks/logger", () => ({ logger: { warn: loggerWarn } }));
 
-// The pinned SSO callback URL is built from `getAuthIssuerUrl()`, which reads `@/lib/env` directly rather
-// than the constants mocked below — it has to, because that helper encodes Better Auth's own base-URL
-// precedence (`BETTER_AUTH_URL ?? NEXTAUTH_URL ?? WEBAPP_URL`). Spread the real env so `@/lib/constants`
-// still validates, and pin only the auth URL so the expected callback URL is deterministic.
+// The pinned SSO callback URL is built from `getAuthIssuerUrl()`, which resolves it from `AUTH_URL` in
+// `@/lib/constants`. Pinning it here rather than in the constants mock below is deliberate and it still
+// works: that mock spreads `importActual("@/lib/constants")`, and the real constants module derives
+// `AUTH_URL` from `@/lib/env` — which is mocked here. So this steers the callback URL transitively.
+// Spread the real env so the rest of `@/lib/constants` still validates.
 vi.mock("@/lib/env", async () => {
   const actual = await vi.importActual<{ env: Record<string, unknown> }>("@/lib/env");
   return { env: { ...actual.env, BETTER_AUTH_URL: "https://app.formbricks.test" } };

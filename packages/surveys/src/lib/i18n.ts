@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next";
 import { TI18nString } from "@formbricks/types/i18n";
-import i18n from "./i18n.config";
+import i18n, { toI18nLanguage } from "./i18n.config";
 
 // Type guard to check if an object is an I18nString
 const isI18nObject = (obj: any): obj is TI18nString => {
@@ -52,7 +52,7 @@ export const getTranslations = (languageCode: string): TFunction => {
   // to a real locale by the I18nProvider or LanguageSwitch). Calling
   // i18n.changeLanguage("default") would cause i18next to fall back to "en", resetting
   // the user's selected language (see issue #7515).
-  const resolvedCode = languageCode === "default" ? i18n.language : languageCode;
+  const resolvedCode = languageCode === "default" ? i18n.language : toI18nLanguage(languageCode);
 
   // Ensure the language is set (i18n.changeLanguage is synchronous when resources are already loaded)
   if (i18n.language !== resolvedCode) {

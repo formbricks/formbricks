@@ -10,7 +10,14 @@ import { recallToHeadline } from "@/lib/utils/recall";
 import { getSurvey } from "@/modules/survey/lib/survey";
 
 type TBasicSurveyMetadata = {
+  /** Bare title for `metadata.title`. The root layout's `title.template` adds the brand suffix. */
   title: string;
+  /**
+   * Title for social previews (og:title / twitter:title and the OG image). These are not run through
+   * `title.template`, so on Cloud this carries the " | Formbricks" suffix itself, unless the author set
+   * a custom link-metadata title.
+   */
+  ogTitle: string;
   description: string;
   survey: Awaited<ReturnType<typeof getSurvey>> | null;
   ogImage?: string;
@@ -38,6 +45,7 @@ export const getBasicSurveyMetadata = async (
   if (!surveyData) {
     return {
       title: "Survey",
+      ogTitle: "Survey",
       description: "Please complete this survey.",
       survey: null,
       ogImage: undefined,
@@ -71,7 +79,7 @@ export const getBasicSurveyMetadata = async (
           getLocalizedValue(recallToHeadline(welcomeCard.headline, surveyData, false, langCode), langCode)
         ) || ""
       : undefined;
-  let title = titleFromMetadata || titleFromWelcome || surveyData.name;
+  const title = titleFromMetadata || titleFromWelcome || surveyData.name;
 
   // Set description - priority: custom link metadata > default
   const descriptionFromMetadata = metadata?.description
@@ -82,14 +90,13 @@ export const getBasicSurveyMetadata = async (
   // Get OG image from link metadata if available
   const ogImage = metadata?.ogImage;
 
-  if (!titleFromMetadata) {
-    if (IS_FORMBRICKS_CLOUD) {
-      title = `${title} | Formbricks`;
-    }
-  }
+  // Only the social-preview title is branded here: `<title>` already gets " | Formbricks" from the
+  // root layout's template, so suffixing `title` too rendered it twice on Cloud.
+  const ogTitle = !titleFromMetadata && IS_FORMBRICKS_CLOUD ? `${title} | Formbricks` : title;
 
   return {
     title,
+    ogTitle,
     description,
     survey: surveyData,
     ogImage,

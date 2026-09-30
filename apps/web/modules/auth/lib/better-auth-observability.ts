@@ -11,6 +11,7 @@ import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { getBetterAuthRequestContext } from "./better-auth-request-context";
 import { finalizeSuccessfulSignIn } from "./sign-in-tracking";
+import { SSO_PROVISIONING_REJECT_REASONS } from "./sso-provisioning-reject-reasons";
 import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
 
 /**
@@ -570,7 +571,21 @@ const SSO_CALLBACK_REASONS = new Set([
   "OAuthAccountNotLinked",
   "account_not_linked",
   "invalid_scope",
+  // The code Better Auth redirected with while the provisioning gate rejected by returning `false`
+  // (ENG-2537). Kept because 5.4.x still emits it, and a self-hoster's logs outlive the upgrade.
   "unable_to_create_user",
+  // Every reason the SSO provisioning gate refuses a sign-up with (ENG-2882). Spread rather than
+  // re-listed so this cannot drift from the gate again — the last copy did, and the whole class
+  // logged as `other`, which is what made "are these rejections correct?" unanswerable.
+  //
+  // These stay on the FAILURE side deliberately. A rejection is a correct decision per sign-up, so
+  // the temptation is to score it as neither — but the operator-misconfiguration reasons in that set
+  // (`missing_default_team_id`, `no_organization_found`) are exactly how a deploy that locks every
+  // new user out presents, and ENG-2089 was that incident. Excluding them would blind the ratio
+  // alert to the outage class it exists for. What was missing was never the severity; it was the
+  // label that separates a policy working as intended from a gate that has started refusing
+  // everyone.
+  ...SSO_PROVISIONING_REJECT_REASONS,
 ]);
 
 /**

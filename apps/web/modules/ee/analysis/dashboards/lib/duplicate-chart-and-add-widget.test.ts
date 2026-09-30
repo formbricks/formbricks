@@ -83,7 +83,6 @@ describe("duplicateChartAndAddWidget", () => {
       chartId: mockDuplicatedChart.id,
       workspaceId: mockWorkspaceId,
       layout: mockLayout,
-      placement: "nextOpenSlot",
     });
   });
 
@@ -104,7 +103,6 @@ describe("duplicateChartAndAddWidget", () => {
       chartId: mockDuplicatedChart.id,
       workspaceId: mockWorkspaceId,
       layout: undefined,
-      placement: "nextOpenSlot",
     });
   });
 

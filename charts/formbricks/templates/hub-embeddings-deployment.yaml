@@ -1,4 +1,4 @@
-{{- if and .Values.hub.enabled .Values.hub.embeddings.enabled }}
+{{- if and .Values.hub.enabled .Values.hub.embeddings.enabled .Values.hub.embeddings.deployRuntime }}
 {{- $embeddingsReplicas := int (.Values.hub.embeddings.replicas | default 1) -}}
 {{- $embeddingsMaxReplicas := int (.Values.hub.embeddings.autoscaling.maxReplicas | default 1) -}}
 {{- include "formbricks.validateHubEmbeddingsHuggingFaceSecret" . }}

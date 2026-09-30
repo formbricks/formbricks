@@ -1,6 +1,7 @@
 {{- if not .Values.hub.enabled }}
 {{- fail "hub.enabled=false is not supported in Formbricks 5; Hub is mandatory." }}
 {{- end }}
+{{- include "formbricks.validateHubEmbeddingsRuntime" . }}
 ---
 apiVersion: apps/v1
 kind: Deployment

@@ -32,6 +32,7 @@ const SINGLE_CHOICES = ["Free", "Pro", "Enterprise"];
 const DROPDOWN_CHOICES = ["Berlin", "Paris", "Madrid", "Lisbon", "Vienna"];
 const MULTI_CHOICES = ["Surveys", "Contacts", "Integrations", "Webhooks", "API"];
 const ENDING_HEADLINE = "Thanks, keyboard friend!";
+const LANGUAGE_SWITCH_HEADLINE = "What should we build next?";
 
 /** Auto-progress fires 350ms after an explicit selection; wait longer to prove a non-event. */
 const AUTO_PROGRESS_SETTLE_MS = 900;
@@ -159,6 +160,59 @@ const seedPictureSurvey = async (
   return survey.id;
 };
 
+/**
+ * Two-language survey (en-US default + de-DE) with the switcher shown, for the language-switcher
+ * keyboard check. Languages go through Prisma because the survey-language relation is keyed by a
+ * real `Language.id` in the workspace (same approach as utils/accessibility.ts).
+ */
+const seedLanguageSwitchSurvey = async (workspaceId: string, createdBy: string): Promise<string> => {
+  const [english, german] = await Promise.all(
+    ["en-US", "de-DE"].map((code) =>
+      prisma.language.upsert({
+        where: { workspaceId_code: { workspaceId, code } },
+        update: {},
+        create: { id: createId(), code, workspaceId },
+      })
+    )
+  );
+  const endings = [
+    { id: createId(), type: "endScreen" as const, headline: { default: ENDING_HEADLINE, "de-DE": "Danke!" } },
+  ] as unknown as TSurveyEnding[];
+  const questions = [
+    {
+      id: createId(),
+      type: "openText",
+      headline: { default: LANGUAGE_SWITCH_HEADLINE, "de-DE": "Was sollen wir als Nächstes bauen?" },
+      required: false,
+      inputType: "text",
+      charLimit: { enabled: false },
+    },
+  ];
+  const blocks = transformQuestionsToBlocks(questions as unknown as TLegacyQuestions, endings);
+
+  const survey = await prisma.survey.create({
+    data: {
+      workspaceId,
+      createdBy,
+      name: "Keyboard language-switch survey",
+      type: "link",
+      status: "inProgress",
+      showLanguageSwitch: true,
+      welcomeCard: { enabled: false, timeToFinish: false, showResponseCount: false },
+      blocks: blocks as unknown as Prisma.InputJsonValue[],
+      endings: endings as unknown as Prisma.InputJsonValue[],
+      languages: {
+        create: [
+          { languageId: english.id, default: true, enabled: true },
+          { languageId: german.id, default: false, enabled: true },
+        ],
+      },
+    },
+    select: { id: true },
+  });
+  return survey.id;
+};
+
 // Off-screen stacked cards render a dummy copy of the nav button with tabindex="-1";
 // only the current card's button is focusable.
 const navButton = (page: Page, name: string) =>
@@ -263,7 +317,7 @@ test.describe("Survey keyboard interaction @slow", () => {
       .poll(async () => page.evaluate(() => document.activeElement?.getAttribute("aria-haspopup")))
       .toBe("menu");
     await page.keyboard.press("Enter");
-    const search = page.getByRole("textbox", { name: "Search..." });
+    const search = page.getByRole("textbox", { name: "Search…" });
     await expect(search).toBeFocused();
 
     // ArrowDown leaves the search and highlights options; Enter selects, the
@@ -277,7 +331,7 @@ test.describe("Survey keyboard interaction @slow", () => {
     // Multi-select dropdown: same path in, Space toggles and keeps the menu open,
     // ArrowUp from the first option returns to the search input.
     await page.keyboard.press("Enter");
-    await expect(page.getByRole("textbox", { name: "Search..." })).toBeFocused();
+    await expect(page.getByRole("textbox", { name: "Search…" })).toBeFocused();
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("Space");
     await expect(page.getByRole("menuitemcheckbox", { name: MULTI_CHOICES[0] })).toHaveAttribute(
@@ -285,11 +339,48 @@ test.describe("Survey keyboard interaction @slow", () => {
       "checked"
     );
     await page.keyboard.press("ArrowUp");
-    await expect(page.getByRole("textbox", { name: "Search..." })).toBeFocused();
+    await expect(page.getByRole("textbox", { name: "Search…" })).toBeFocused();
     await page.keyboard.press("Escape");
 
     await navButton(page, "Next").click();
     await expect(page.getByText("Anything else to add?")).toBeVisible();
+  });
+
+  test("language switcher closes on Escape and hands focus back to its trigger", async ({ page, users }) => {
+    // Seeded here rather than in beforeEach: no other test in the suite needs a multi-language survey.
+    const user = await users.create({ skipSurveySeed: true });
+    if (!user.workspaceId) throw new Error("users.create() did not return a workspaceId");
+    const surveyId = await seedLanguageSwitchSurvey(user.workspaceId, user.id);
+    await page.goto(`/s/${surveyId}`);
+    await expect(page.getByText(LANGUAGE_SWITCH_HEADLINE)).toBeVisible();
+
+    // Not located by name: picking German re-renders the survey UI in German, so the accessible
+    // name stops starting with "Language:". The trigger is the disclosure button that shows the
+    // active language's endonym in a `lang`-tagged span.
+    const trigger = page.locator("button[aria-expanded]").filter({ has: page.locator("span[lang]") });
+    const germanOption = page.locator('button[lang="de-DE"]');
+
+    await test.step("Escape closes the popup without picking and refocuses the trigger", async () => {
+      await trigger.focus();
+      await expect(trigger).toHaveAccessibleName(/^Language:/);
+      await page.keyboard.press("Enter");
+      await expect(germanOption).toBeVisible();
+      await page.keyboard.press("Tab");
+
+      await page.keyboard.press("Escape");
+      await expect(germanOption).toBeHidden();
+      await expect(trigger).toBeFocused();
+      await expect(page.getByText(LANGUAGE_SWITCH_HEADLINE)).toBeVisible();
+    });
+
+    await test.step("picking a language also refocuses the trigger", async () => {
+      await page.keyboard.press("Enter");
+      await germanOption.focus();
+      await page.keyboard.press("Enter");
+      await expect(page.getByText("Was sollen wir als Nächstes bauen?")).toBeVisible();
+      await expect(trigger).toHaveAccessibleName(/Deutsch/);
+      await expect(trigger).toBeFocused();
+    });
   });
 
   test("failed submit focuses the first invalid control", async ({ page }) => {

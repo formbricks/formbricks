@@ -33,6 +33,7 @@ vi.mock("@/lib/common/timeout-stack", () => ({
   TimeoutStack: {
     getInstance: vi.fn(() => ({
       add: vi.fn(),
+      markFired: vi.fn(),
     })),
   },
 }));

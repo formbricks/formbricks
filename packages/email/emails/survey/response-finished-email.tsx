@@ -1,5 +1,5 @@
-import { Column, Container, Heading, Hr, Link, Row, Section, Text } from "@react-email/components";
 import { FileDigitIcon, FileType2Icon } from "lucide-react";
+import { Column, Container, Heading, Hr, Link, Row, Section, Text } from "react-email";
 import { getComputedEmbeddedFields, getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import type { TOrganization } from "@formbricks/types/organizations";
 import type { TResponse } from "@formbricks/types/responses";

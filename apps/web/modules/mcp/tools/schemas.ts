@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
+import { ZSurveyRatingElement } from "@formbricks/types/surveys/elements";
 import { ZSurveyFilters, ZSurveyStatus, ZSurveyType } from "@formbricks/types/surveys/types";
 import {
   MAX_FEEDBACK_RECORDS_PER_BATCH,
@@ -11,6 +13,25 @@ import {
   ZV3FeedbackRecordSimilarityFilters,
   ZV3FeedbackRecordUpdateBodyFields,
 } from "@/app/api/v3/feedbackRecords/lib/schemas";
+import { lengthBoundedArray } from "@/app/api/v3/lib/bounded-array";
+import {
+  V3_SURVEY_MAX_BLOCKS,
+  V3_SURVEY_MAX_ENDINGS,
+  V3_SURVEY_MAX_LANGUAGES,
+  V3_SURVEY_MAX_VARIABLES,
+  ZV3EditSurveyBlocksBody,
+  ZV3SetSurveyBlockOrderBody,
+} from "@/app/api/v3/surveys/schemas";
+
+/**
+ * Every array argument is declared through `lengthBoundedArray`, never a bare `z.array().max()`: the
+ * SDK validates arguments with Zod's `~standard.validate`, which parses every element before an
+ * array-level `.max()` runs and collects one issue per element — ahead of the scope gate, so a
+ * read-only token can trigger it (ENG-3384). The route-level array budget in `app/api/mcp/route.ts` is
+ * the backstop; these bounds are the ones the tool schemas advertise to the model as `maxItems`.
+ */
+const MCP_MAX_FILTER_VALUES = 10;
+const MCP_MAX_LANGUAGE_CODES = 20;
 
 /**
  * Every schema here is `.strict()`, so an argument a tool does not declare is a loud error instead of a
@@ -57,6 +78,8 @@ import {
 export const ZMcpListSurveysInput = z
   .object({
     workspaceId: ZId.describe("Workspace ID whose surveys should be listed."),
+    // Deliberately capped below the HTTP API's 250: for an agent client the binding constraint is
+    // context window, not server cost, so a larger page is a cost rather than a convenience.
     limit: z
       .number()
       .int()
@@ -85,16 +108,19 @@ export const ZMcpListSurveysInput = z
           .optional(),
         status: z
           .strictObject({
-            in: z
-              .array(ZSurveyStatus)
-              .optional()
-              .describe("Survey statuses to include, for example draft or inProgress."),
+            in: lengthBoundedArray(ZSurveyStatus, {
+              max: MCP_MAX_FILTER_VALUES,
+              description: "Survey statuses to include, for example draft or inProgress.",
+            }).optional(),
           })
           .describe("Filter by survey status.")
           .optional(),
         type: z
           .strictObject({
-            in: z.array(ZSurveyType).optional().describe("Survey types to include, for example link."),
+            in: lengthBoundedArray(ZSurveyType, {
+              max: MCP_MAX_FILTER_VALUES,
+              description: "Survey types to include, for example link.",
+            }).optional(),
           })
           .describe("Filter by survey type.")
           .optional(),
@@ -111,10 +137,10 @@ export const ZMcpListSurveysInput = z
 export const ZMcpGetSurveyInput = z
   .object({
     surveyId: z.cuid2().describe("Survey ID to fetch."),
-    lang: z
-      .array(z.string().trim().min(1))
-      .optional()
-      .describe("Optional language codes or configured aliases used to filter translatable survey fields."),
+    lang: lengthBoundedArray(z.string().trim().min(1), {
+      max: MCP_MAX_LANGUAGE_CODES,
+      description: "Optional language codes or configured aliases used to filter translatable survey fields.",
+    }).optional(),
   })
   .strict();
 
@@ -125,6 +151,59 @@ const ZMcpSurveyLanguageInput = z.strictObject({
 });
 
 const ZMcpObjectInput = z.record(z.string(), z.unknown());
+
+/**
+ * The block and element shape, spelled out on the tool surface (ENG-2180).
+ *
+ * `blocks` is the one field a survey cannot omit, and it was advertised as a free-form object pointing
+ * at a "v3 survey document contract" that no tool description defined. The only way to learn the
+ * element types was to probe the live validator — and probing undercounts silently: one agent doing
+ * exactly that reported 16 of the 17 types and had no way to know it had missed one.
+ *
+ * The list is derived from the enum the request is actually validated against, never restated, so the
+ * advertised vocabulary cannot drift from the accepted one. `SURVEY_BLOCK_EXAMPLE` is asserted against
+ * the real create schema in `schemas.test.ts` for the same reason — a worked example that stops
+ * validating is worse than none.
+ */
+const SURVEY_ELEMENT_TYPES = Object.values(TSurveyElementTypeEnum).join(", ");
+
+/** A complete, valid block. Kept minimal: every field here is one the schema requires. */
+export const SURVEY_BLOCK_EXAMPLE = {
+  name: "Feedback",
+  elements: [
+    {
+      id: "improve",
+      type: "openText",
+      headline: { "en-US": "What should we improve?" },
+      required: false,
+    },
+  ],
+};
+
+/**
+ * A `rating`'s two extra fields, read off the element schema rather than restated.
+ *
+ * Restating them would reintroduce the drift this whole description exists to avoid, and would already
+ * be wrong: `ZSurveyRatingElement.range` admits `6`, which the base element's optional `range` and
+ * every prose description of it omit. Deriving keeps the advertised values equal to the accepted ones
+ * by construction, the same rule `SURVEY_ELEMENT_TYPES` follows.
+ */
+const RATING_SCALES = (ZSurveyRatingElement.shape.scale as unknown as { options: string[] }).options;
+const RATING_RANGES = (
+  ZSurveyRatingElement.shape.range as unknown as { options: { value: number }[] }
+).options.map((option) => option.value);
+
+const SURVEY_BLOCKS_DESCRIPTION = [
+  "Survey blocks. A block is `{ name, elements[], id? }` and an element is `{ id, type, headline, ... }`,",
+  `where \`type\` is one of: ${SURVEY_ELEMENT_TYPES}.`,
+  "Element ids are caller-supplied and become immutable once the survey leaves draft; block ids are",
+  'generated when omitted. Translatable fields are keyed by locale code — `{ "en-US": "..." }` — and',
+  "must carry every configured language; the internal `default` key is rejected. Each element type adds",
+  `its own required fields — a \`rating\` needs \`scale\` (${RATING_SCALES.join("|")}) and \`range\``,
+  `(${RATING_RANGES.join("|")}), a \`pictureSelection\` needs two or more choices. An element that is`,
+  "missing one is reported by its position, not by the field name, so add the type's own fields before",
+  `retrying. Example block: ${JSON.stringify(SURVEY_BLOCK_EXAMPLE)}`,
+].join(" ");
 
 export const ZMcpCreateSurveyInput = z
   .object({
@@ -139,21 +218,25 @@ export const ZMcpCreateSurveyInput = z
       .optional()
       .describe("Default language code or configured language alias. Defaults to en-US."),
     metadata: ZMcpObjectInput.optional().describe("Survey metadata using the v3 survey document contract."),
-    languages: z
-      .array(ZMcpSurveyLanguageInput)
-      .optional()
-      .describe("Configured survey languages using the v3 survey document contract."),
+    languages: lengthBoundedArray(ZMcpSurveyLanguageInput, {
+      max: V3_SURVEY_MAX_LANGUAGES,
+      description: "Configured survey languages using the v3 survey document contract.",
+    }).optional(),
     welcomeCard: ZMcpObjectInput.optional().describe("Welcome card using the v3 survey document contract."),
-    blocks: z.array(ZMcpObjectInput).min(1).describe("Survey blocks using the v3 survey document contract."),
-    endings: z
-      .array(ZMcpObjectInput)
-      .optional()
-      .describe("Survey endings using the v3 survey document contract."),
+    blocks: lengthBoundedArray(ZMcpObjectInput, {
+      min: 1,
+      max: V3_SURVEY_MAX_BLOCKS,
+      description: SURVEY_BLOCKS_DESCRIPTION,
+    }),
+    endings: lengthBoundedArray(ZMcpObjectInput, {
+      max: V3_SURVEY_MAX_ENDINGS,
+      description: "Survey endings using the v3 survey document contract.",
+    }).optional(),
     hiddenFields: ZMcpObjectInput.optional().describe("Hidden fields using the v3 survey document contract."),
-    variables: z
-      .array(ZMcpObjectInput)
-      .optional()
-      .describe("Survey variables using the v3 survey document contract."),
+    variables: lengthBoundedArray(ZMcpObjectInput, {
+      max: V3_SURVEY_MAX_VARIABLES,
+      description: "Survey variables using the v3 survey document contract.",
+    }).optional(),
   })
   .strict();
 
@@ -163,18 +246,42 @@ export const ZMcpPatchSurveyInput = z
     data: z
       .record(z.string(), z.unknown())
       .describe(
-        "Strict top-level v3 survey patch payload. Omitted top-level fields are preserved; provided objects and arrays replace that whole subtree."
+        `Strict top-level v3 survey patch payload. Omitted top-level fields are preserved; provided objects and arrays replace that whole subtree. ${SURVEY_BLOCKS_DESCRIPTION}`
       ),
   })
   .strict();
+
+/**
+ * Block-level editing (ENG-3069). The bodies are the v3 REST schemas plus `surveyId`, so the two
+ * surfaces cannot drift: one Zod definition, one set of messages.
+ *
+ * `response_format` defaults to `concise` here but not on REST. A 31-block survey serializes to
+ * ~15k tokens, and returning that from every edit would refill the agent's context as fast as the
+ * old whole-array patch did — the concise payload carries `updatedAt`, which is precisely the
+ * `expectedUpdatedAt` the next call needs, so edits chain without re-reading.
+ */
+const ZMcpBlockResponseFormat = z
+  .enum(["concise", "detailed"])
+  .default("concise")
+  .describe(
+    "concise (default) returns id, updatedAt, blockCount and the ops applied. detailed returns the full survey resource."
+  );
+
+export const ZMcpEditSurveyBlocksInput = ZV3EditSurveyBlocksBody.extend({
+  surveyId: z.cuid2().describe("Survey ID whose blocks should be edited."),
+  response_format: ZMcpBlockResponseFormat.optional(),
+}).strict();
+
+export const ZMcpSetSurveyBlockOrderInput = ZV3SetSurveyBlockOrderBody.extend({
+  surveyId: z.cuid2().describe("Survey ID whose block order should be set."),
+  response_format: ZMcpBlockResponseFormat.optional(),
+}).strict();
 
 export const ZMcpValidateSurveyInput = z
   .object({
     operation: z.enum(["create", "patch"]).describe("Validation operation to run."),
     surveyId: z.cuid2().optional().describe("Survey ID to validate against. Required for patch validation."),
-    data: ZMcpObjectInput.describe(
-      "Create or patch payload to validate using the v3 survey document contract."
-    ),
+    data: ZMcpObjectInput.describe(`Create or patch payload to validate. ${SURVEY_BLOCKS_DESCRIPTION}`),
   })
   .strict();
 
@@ -245,16 +352,14 @@ export const ZMcpCreateFeedbackRecordsInput = z
   .object({
     workspaceId: ZId.describe("Workspace ID to create the feedback records in."),
     datasetId: datasetIdField,
-    records: z
-      // The strict variant: an unknown key *inside a record* must be rejected, not dropped. Without it
-      // the outer `.strict()` below covers only the top level, so a misspelled `user_id` in a batch
-      // import vanished silently — ENG-2256 in the one place it does the most damage.
-      .array(ZV3FeedbackRecordCreateBodyStrict)
-      .min(1)
-      .max(MAX_FEEDBACK_RECORDS_PER_BATCH)
-      .describe(
-        `Feedback records to create, 1–${MAX_FEEDBACK_RECORDS_PER_BATCH} per call. Every record is validated before any is written, so an invalid record fails the whole call rather than storing part of the batch.`
-      ),
+    // The strict variant: an unknown key *inside a record* must be rejected, not dropped. Without it
+    // the outer `.strict()` below covers only the top level, so a misspelled `user_id` in a batch
+    // import vanished silently — ENG-2256 in the one place it does the most damage.
+    records: lengthBoundedArray(ZV3FeedbackRecordCreateBodyStrict, {
+      min: 1,
+      max: MAX_FEEDBACK_RECORDS_PER_BATCH,
+      description: `Feedback records to create, 1–${MAX_FEEDBACK_RECORDS_PER_BATCH} per call. Every record is validated before any is written, so an invalid record fails the whole call rather than storing part of the batch.`,
+    }),
   })
   .strict();
 
@@ -303,6 +408,8 @@ export type TMcpListWorkspacesInput = z.infer<typeof ZMcpListWorkspacesInput>;
 export type TMcpGetSurveyInput = z.infer<typeof ZMcpGetSurveyInput>;
 export type TMcpCreateSurveyInput = z.infer<typeof ZMcpCreateSurveyInput>;
 export type TMcpPatchSurveyInput = z.infer<typeof ZMcpPatchSurveyInput>;
+export type TMcpEditSurveyBlocksInput = z.infer<typeof ZMcpEditSurveyBlocksInput>;
+export type TMcpSetSurveyBlockOrderInput = z.infer<typeof ZMcpSetSurveyBlockOrderInput>;
 export type TMcpValidateSurveyInput = z.infer<typeof ZMcpValidateSurveyInput>;
 export type TMcpDeleteSurveyInput = z.infer<typeof ZMcpDeleteSurveyInput>;
 export type TMcpListFeedbackDatasetsInput = z.infer<typeof ZMcpListFeedbackDatasetsInput>;

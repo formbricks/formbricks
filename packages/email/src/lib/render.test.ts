@@ -335,8 +335,8 @@ describe("follow-up email direction", () => {
 });
 
 describe("Tailwind render engine", () => {
-  // `@react-email/tailwind` — not anything configured in this package — decides which
-  // Tailwind version compiles the template classes. Pin that contract: these utilities
+  // `react-email`'s own `Tailwind` component — not anything configured in this package — decides
+  // which Tailwind version compiles the template classes. Pin that contract: these utilities
   // exist only in v4, so a downgrade would drop the declarations silently.
   test("compiles Tailwind v4 utilities", async () => {
     const html = await render(

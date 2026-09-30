@@ -1,16 +1,4 @@
-import {
-  Body,
-  Column,
-  Container,
-  Head,
-  Html,
-  Img,
-  Link,
-  Row,
-  Section,
-  Tailwind,
-  Text,
-} from "@react-email/components";
+import { Body, Column, Container, Head, Html, Img, Link, Row, Section, Tailwind, Text } from "react-email";
 import { TEmailTemplateLegalProps } from "../types/email";
 import { TFunction } from "../types/translations";
 

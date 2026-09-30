@@ -37,6 +37,7 @@ export const ZWorkspaceAuth = z.object({
   hasReadWriteAccess: z.boolean(),
   hasManageAccess: z.boolean(),
   isReadOnly: z.boolean(),
+  canManage: z.boolean(),
 });
 
 export type TWorkspaceAuth = z.infer<typeof ZWorkspaceAuth>;

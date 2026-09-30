@@ -12,6 +12,7 @@ import {
   deleteApiKey,
   updateApiKey,
 } from "@/modules/organization/settings/api-keys/lib/api-key";
+import { assertCanGrantOrganizationAccess } from "@/modules/organization/settings/api-keys/lib/organization-access";
 import { ZApiKeyCreateInput, ZApiKeyUpdateInput } from "./types/api-keys";
 
 const ZDeleteApiKeyAction = z.object({
@@ -46,6 +47,15 @@ export const createApiKeyAction = authenticatedActionClient.inputSchema(ZCreateA
       type: "organization",
       id: parsedInput.organizationId,
     });
+
+    // Managing API keys and managing organization users are two different capabilities, and a key
+    // carrying `accessControl.write` grants the second. Gate it on the org's user-management floor so
+    // an install that restricts user management to owners cannot have that restriction minted away.
+    await assertCanGrantOrganizationAccess(
+      ctx.user.id,
+      parsedInput.organizationId,
+      parsedInput.apiKeyData.organizationAccess
+    );
 
     ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
 

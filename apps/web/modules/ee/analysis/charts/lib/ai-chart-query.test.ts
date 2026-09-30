@@ -36,6 +36,7 @@ describe("generateAIChartQuery", () => {
   test("returns the AI-generated chart type and normalized query for a clean response", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        answerable: true,
         name: "Responses by Source Type",
         measures: ["FeedbackRecords.count"],
         dimensions: ["FeedbackRecords.sourceType"],
@@ -78,6 +79,7 @@ describe("generateAIChartQuery", () => {
   test("maps NPS score prompts to the NPS score measure", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        answerable: true,
         name: null,
         measures: ["FeedbackRecords.npsScore"],
         dimensions: null,
@@ -104,6 +106,7 @@ describe("generateAIChartQuery", () => {
   test("strips a grouping the model put on a big number, which has no axis for it", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        answerable: true,
         name: null,
         measures: ["FeedbackRecords.npsScore"],
         dimensions: ["FeedbackRecords.sourceName"],
@@ -143,6 +146,7 @@ describe("generateAIChartQuery", () => {
   test("falls back to the total count measure when the AI returns no measures", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        answerable: true,
         name: null,
         measures: [],
         dimensions: null,
@@ -166,6 +170,7 @@ describe("generateAIChartQuery", () => {
   test("normalizes filters and time dimensions, dropping null-only optional fields", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        answerable: true,
         name: null,
         measures: ["FeedbackRecords.count"],
         dimensions: null,
@@ -213,6 +218,7 @@ describe("generateAIChartQuery", () => {
 
   test("rejects value-based filters without a non-empty values array", () => {
     const result = ZAIQueryResponse.safeParse({
+      answerable: true,
       name: null,
       measures: ["FeedbackRecords.count"],
       dimensions: null,
@@ -230,6 +236,7 @@ describe("generateAIChartQuery", () => {
 
   test("rejects valueless filters that include values", () => {
     const result = ZAIQueryResponse.safeParse({
+      answerable: true,
       name: null,
       measures: ["FeedbackRecords.count"],
       dimensions: null,
@@ -245,6 +252,7 @@ describe("generateAIChartQuery", () => {
 
   test("allows valueless filters with omitted values", () => {
     const result = ZAIQueryResponse.safeParse({
+      answerable: true,
       name: null,
       measures: ["FeedbackRecords.count"],
       dimensions: null,
@@ -259,6 +267,7 @@ describe("generateAIChartQuery", () => {
   test("trims the AI-suggested name and caps it at 255 characters", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        answerable: true,
         name: `  ${"a".repeat(300)}  `,
         measures: ["FeedbackRecords.count"],
         dimensions: null,
@@ -282,6 +291,7 @@ describe("generateAIChartQuery", () => {
   test("omits the name when the AI returns a blank name", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        answerable: true,
         name: "   ",
         measures: ["FeedbackRecords.count"],
         dimensions: null,
@@ -336,6 +346,49 @@ describe("generateAIChartQuery", () => {
     });
   });
 
+  test("rejects a prompt the model flags as unanswerable instead of charting the default measure", async () => {
+    // What a model answers for "ASDASDSADASSADASD": a query shape filled in with the defaults,
+    // which used to render as a real-looking count chart.
+    mocks.generateOrganizationAIObject.mockResolvedValueOnce({
+      object: {
+        answerable: false,
+        name: "Total Feedback Records",
+        measures: ["FeedbackRecords.count"],
+        dimensions: null,
+        timeDimensions: null,
+        chartType: "big_number",
+        filters: null,
+      },
+    });
+
+    await expect(
+      generateAIChartQuery({
+        organizationId: "organization-1",
+        workspaceId: "workspace-1",
+        feedbackDirectoryId: "directory-1",
+        userId: "user-1",
+        prompt: "ASDASDSADASSADASD",
+      })
+    ).rejects.toMatchObject({
+      name: InvalidInputError.name,
+      message: AI_CHART_PROMPT_ERROR_CODE,
+    });
+  });
+
+  test("requires the model to state whether the prompt is answerable", () => {
+    const result = ZAIQueryResponse.safeParse({
+      name: null,
+      measures: ["FeedbackRecords.count"],
+      dimensions: null,
+      timeDimensions: null,
+      chartType: "bar",
+      filters: null,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["answerable"]);
+  });
+
   test("does not convert provider failures", async () => {
     const providerError = new Error("billing disabled");
     mocks.generateOrganizationAIObject.mockRejectedValueOnce(providerError);
@@ -378,6 +431,7 @@ describe("generateAIChartQuery", () => {
     });
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        answerable: true,
         name: null,
         measures: ["FeedbackRecords.count"],
         dimensions: null,
@@ -404,6 +458,7 @@ describe("generateAIChartQuery", () => {
   test("turns an explicit window into the tuple the builder reads as a custom range", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        answerable: true,
         name: null,
         measures: ["FeedbackRecords.count"],
         dimensions: null,
@@ -443,6 +498,7 @@ describe("generateAIChartQuery", () => {
   test("drops a date range the model could not express in the fields it was given", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        answerable: true,
         name: null,
         measures: ["FeedbackRecords.count"],
         dimensions: null,
@@ -475,6 +531,7 @@ describe("generateAIChartQuery", () => {
     mocks.getAIDataProfile.mockResolvedValue(null);
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        answerable: true,
         name: null,
         measures: ["FeedbackRecords.count"],
         dimensions: null,

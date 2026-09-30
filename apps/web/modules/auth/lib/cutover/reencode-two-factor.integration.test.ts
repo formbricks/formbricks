@@ -1,6 +1,6 @@
 import { createLocalAccountIssuer } from "@better-auth/core/db";
-import { authenticator } from "otplib";
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { generateSync } from "otplib";
+import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { ENCRYPTION_KEY } from "@/lib/constants";
@@ -11,6 +11,7 @@ import {
   reencodeTwoFactorBackupCodes,
   reencodeTwoFactorSecret,
 } from "@/modules/auth/lib/cutover/reencode-two-factor";
+import { generateTotpSecret } from "@/modules/auth/lib/totp";
 
 /**
  * Integration coverage for the cutover 2FA secret re-encode (ENG-1054, spike S3) against real Postgres.
@@ -23,23 +24,14 @@ const allCookies = (res: Response): string =>
     .map((c) => c.split(";")[0])
     .join("; ");
 
-// authenticator.options is process-global; a test that mutates it must restore the defaults so it
-// can't make later tests order-dependent.
-const defaultAuthenticatorOptions = { ...authenticator.options };
-
 beforeEach(async () => {
   await resetDb();
 });
 
-afterEach(() => {
-  authenticator.options = defaultAuthenticatorOptions;
-});
-
 describe("2FA secret re-encode (real Postgres)", () => {
   test("an existing NextAuth-era 2FA user verifies their current authenticator code via BA after re-encode", async () => {
-    authenticator.options = { digits: 6, step: 30 };
     const password = "TwoFa-User1!";
-    const fbSecret = authenticator.generateSecret(20); // the secret the user's authenticator already holds
+    const fbSecret = generateTotpSecret(); // the secret the user's authenticator already holds
 
     // NextAuth-era 2FA user: otplib secret + backup codes encrypted with ENCRYPTION_KEY, 2FA enabled
     const user = await prisma.user.create({
@@ -88,7 +80,7 @@ describe("2FA secret re-encode (real Postgres)", () => {
 
     // the user's CURRENT authenticator code (from the original Formbricks secret) completes the challenge
     await auth.api.verifyTOTP({
-      body: { code: authenticator.generate(fbSecret) },
+      body: { code: generateSync({ secret: fbSecret }) },
       headers: { cookie: allCookies(challenge) },
     });
     expect(await prisma.session.count()).toBe(1);
@@ -96,7 +88,7 @@ describe("2FA secret re-encode (real Postgres)", () => {
 
   test("an existing user's saved (hyphenated) backup code verifies via BA after re-encode", async () => {
     const password = "Backup-User1!";
-    const fbSecret = authenticator.generateSecret(20);
+    const fbSecret = generateTotpSecret();
     // legacy backup codes are stored bare (10-char hex); the user saved the displayed hyphenated form
     const bareCodes = ["a1b2c3d4e5", "0f1e2d3c4b"];
     const user = await prisma.user.create({
@@ -149,8 +141,7 @@ describe("2FA secret re-encode (real Postgres)", () => {
   });
 
   test("batch re-encode migrates every legacy 2FA user and is idempotent", async () => {
-    authenticator.options = { digits: 6, step: 30 };
-    const fbSecret = authenticator.generateSecret(20);
+    const fbSecret = generateTotpSecret();
     const user = await prisma.user.create({
       data: {
         email: "tfa-batch@example.com",
@@ -180,9 +171,8 @@ describe("2FA secret re-encode (real Postgres)", () => {
   // saved back then still verifies. Drives the real `hooks.after` heal (not a hand-written row) and
   // the real BA verify-backup-code, end to end.
   test("a legacy 2FA user's OLD backup code verifies after the sign-in self-heal (no pre-existing row)", async () => {
-    authenticator.options = { digits: 6, step: 30 };
     const password = "Legacy-Heal1!";
-    const fbSecret = authenticator.generateSecret(20);
+    const fbSecret = generateTotpSecret();
     // Codes as the legacy setup stored them: bare 10-char hex, encrypted with ENCRYPTION_KEY.
     const bareCodes = ["a1b2c3d4e5", "0f1e2d3c4b"];
     const user = await prisma.user.create({
@@ -240,9 +230,8 @@ describe("2FA secret re-encode (real Postgres)", () => {
   // valid codes, and let one of them verify. Reproduces the actual upgrade failure that "TOTP not
   // enabled" masked.
   test("a legacy 2FA user with a CONSUMED (null) backup code still heals and a remaining code verifies", async () => {
-    authenticator.options = { digits: 6, step: 30 };
     const password = "Legacy-Heal2!";
-    const fbSecret = authenticator.generateSecret(20);
+    const fbSecret = generateTotpSecret();
     // First slot nulled = the code the user already spent on the legacy app; second is still valid.
     const storedCodes = [null, "0f1e2d3c4b"];
     const user = await prisma.user.create({

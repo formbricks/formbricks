@@ -458,11 +458,34 @@ describe("validation.isEndingCardValid", () => {
     expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
   });
 
+  test("should return true for endScreen card with a mailto: button link", () => {
+    const card: TSurveyEndScreenCard = {
+      ...baseEndScreenCard,
+      buttonLabel: { default: "Go", en: "Go", de: "Los" },
+      buttonLink: "mailto:hello@example.com",
+    };
+    expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
+  });
+
+  test("should return false for endScreen card with a javascript: button link", () => {
+    const card: TSurveyEndScreenCard = {
+      ...baseEndScreenCard,
+      buttonLabel: { default: "Go", en: "Go", de: "Los" },
+      buttonLink: "javascript:alert(1)",
+    };
+    expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(false);
+  });
+
+  test("should return false for a redirectToUrl card with a mailto: url", () => {
+    const card: TSurveyRedirectUrlCard = { ...baseRedirectUrlCard, url: "mailto:hello@example.com" };
+    expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(false);
+  });
+
   test("should return true for endScreen card with dynamic URL containing recall", () => {
     const card: TSurveyEndScreenCard = {
       ...baseEndScreenCard,
       buttonLabel: { default: "Go", en: "Go", de: "Los" },
-      buttonLink: "https://#recall:test123/fallback:example.com",
+      buttonLink: "https://#recall:test123/fallback:example.com#",
     };
     expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
   });
@@ -483,7 +506,7 @@ describe("validation.isEndingCardValid", () => {
   });
 
   test("should return true for redirectUrl card with dynamic URL containing recall", () => {
-    const card = { ...baseRedirectUrlCard, url: "https://#recall:test123/fallback:example.com" };
+    const card = { ...baseRedirectUrlCard, url: "https://#recall:test123/fallback:example.com#" };
     expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
   });
 

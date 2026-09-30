@@ -4,7 +4,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSurveyUpdateInput } from "@formbricks/types/surveys/types";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { deleteSurvey } from "@/app/api/v1/management/surveys/[surveyId]/lib/surveys";
-import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
+import { checkSurveyWritePermissions } from "@/app/api/v1/management/surveys/lib/utils";
 import {
   addLegacyProjectOverwrites,
   normaliseProjectOverwritesToWorkspace,
@@ -223,9 +223,10 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
-      const featureCheckResult = await checkFeaturePermissions(
-        surveyUpdate as Parameters<typeof checkFeaturePermissions>[0],
+      const featureCheckResult = await checkSurveyWritePermissions(
+        surveyUpdate as Parameters<typeof checkSurveyWritePermissions>[0],
         organization,
+        { apiKeyId: authentication.apiKeyId, workspaceId: result.survey.workspaceId },
         result.survey
       );
       if (featureCheckResult) {

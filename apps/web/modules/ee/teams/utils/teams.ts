@@ -1,10 +1,11 @@
 import { type TTeamRole, ZTeamRole } from "@/modules/ee/teams/team-list/types/team";
 import { type TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 
-export const TeamPermissionMapping = {
-  [ZTeamPermission.enum.read]: "Read",
-  [ZTeamPermission.enum.readWrite]: "Read & write",
-  [ZTeamPermission.enum.manage]: "Manage",
+/** Translation keys rather than labels, so the permission column renders in the viewer's language. */
+export const TeamPermissionTranslationKeys = {
+  [ZTeamPermission.enum.read]: "workspace.settings.teams.read",
+  [ZTeamPermission.enum.readWrite]: "workspace.settings.teams.read_write",
+  [ZTeamPermission.enum.manage]: "workspace.settings.teams.manage",
 };
 
 export const TeamRoleMapping = {

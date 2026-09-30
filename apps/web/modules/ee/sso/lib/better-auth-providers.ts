@@ -141,7 +141,7 @@ const toAccountSubject = (subject: string | number | null | undefined): string |
  *
  * Built off `getAuthIssuerUrl()` rather than `WEBAPP_URL`, deliberately: this URL is where the identity
  * provider delivers the authorization code, so it must name the same origin Better Auth itself considers
- * its base — `env.BETTER_AUTH_URL ?? env.NEXTAUTH_URL` (auth.ts), with WEBAPP_URL only as the last
+ * its base — the resolved `AUTH_URL` (lib/constants.ts), with WEBAPP_URL only as the last
  * fallback, which is exactly the precedence `getAuthIssuerUrl` encodes. Deriving it from WEBAPP_URL alone
  * would let the two diverge: the code would arrive at a host whose signed state cookie was never set, so
  * sign-in fails closed with a state mismatch. `appendPath` also handles the documented subpath shape where
