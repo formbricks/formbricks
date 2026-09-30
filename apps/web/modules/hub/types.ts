@@ -57,8 +57,8 @@ export type SimilarRecordsResultItem = HubSemanticSearchResultItem;
 // it (ENG-2376 tracks auto-requeueing that residual; out of scope here).
 //
 // The SDK types both as always present, which is true of the Hub it was generated from but not of every
-// Hub this app talks to: the chart's Hub version can be overridden, and a Hub older than hub#125 omits
-// them. So they are re-declared optional — via `Omit`, because intersecting an optional member with the
+// Hub this app talks to: the chart's default Hub (0.8.5) omits them, as does anything else older than
+// hub#125. So they are re-declared optional — via `Omit`, because intersecting an optional member with the
 // SDK's required one collapses back to required and silently discards the absence.
 //
 // `failed` is intentionally not read by the aggregator: a transient failure is still going to be
@@ -71,10 +71,13 @@ export type EnrichmentTypeStatus = Omit<HubEnrichmentTypeStatus, "failed" | "fai
 // The three per-enrichment keys are re-declared optional (the SDK types them as always-present)
 // because the aggregator treats an absent key as "disabled" rather than assuming the Hub always
 // answers with all three — matching the `status?.enabled` optional-chaining it already does.
+// `as_of` is optional for the same older-Hub reason as the failure counters: the chart's default Hub
+// (0.8.5) answers without it.
 export type EnrichmentStatusResponse = Omit<
   EnrichmentStatusOutputBody,
-  "translation" | "sentiment" | "emotions"
+  "as_of" | "translation" | "sentiment" | "emotions"
 > & {
+  as_of?: string;
   translation?: EnrichmentTypeStatus;
   sentiment?: EnrichmentTypeStatus;
   emotions?: EnrichmentTypeStatus;

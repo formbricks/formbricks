@@ -28,7 +28,6 @@ const base = { authentication: null, workspaceId, requestId: "req_1", instance: 
 
 const hubStatus = (tenantId: string, done: number): EnrichmentStatusResponse => ({
   tenant_id: tenantId,
-  as_of: "2026-09-30T00:00:00Z",
   translation: { enabled: true, eligible: 100, done },
   sentiment: { enabled: false, eligible: 0, done: 0 },
   emotions: { enabled: false, eligible: 0, done: 0 },
