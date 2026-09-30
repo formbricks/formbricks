@@ -150,7 +150,7 @@ describe("getSurveyVisibilityViewer", () => {
     vi.mocked(resolveSurveyActorContext).mockResolvedValue(admin);
 
     const viewer = await getSurveyVisibilityViewer(
-      survey("workspace", "owner", { visibilityVersion: 1, visibilityProjectedVersion: 0 }),
+      survey("workspace", "owner", { visibilityVersion: 0, visibilityProjectedVersion: -1 }),
       "admin",
       "org"
     );

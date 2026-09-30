@@ -55,8 +55,8 @@ describe("effective visibility of stored surveys", () => {
     const neverProjected = {
       id: "s6",
       visibility: "workspace" as const,
-      visibilityVersion: 1,
-      visibilityProjectedVersion: 0,
+      visibilityVersion: 0,
+      visibilityProjectedVersion: -1,
     };
     expect(isRestrictedSurveyPick(true, neverProjected)).toBe(false);
   });

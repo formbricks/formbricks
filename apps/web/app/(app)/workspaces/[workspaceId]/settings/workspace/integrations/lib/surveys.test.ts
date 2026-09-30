@@ -162,7 +162,10 @@ describe("getSurveys", () => {
               OR: [
                 {
                   visibility: "workspace",
-                  OR: [{ visibilityPending: false }, { visibilityProjectedVersion: 0, visibilityVersion: 1 }],
+                  OR: [
+                    { visibilityPending: false },
+                    { visibilityProjectedVersion: { lt: 0 }, visibilityVersion: 0 },
+                  ],
                 },
                 { ownerId: userId },
               ],
