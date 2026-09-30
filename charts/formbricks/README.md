@@ -481,7 +481,7 @@ No cloud LLM is hardwired into the chart. `taxonomy.llm.provider` defaults to th
 | Provider value | Use case | Provider-specific values |
 | --- | --- | --- |
 | `openai-compatible` | Bundled vLLM, OpenAI, or another compatible `/v1` endpoint | `baseUrl` and `existingSecret` |
-| `bedrock` | A model available through Amazon Bedrock | `bedrock.region`; AWS credentials use the standard SDK chain and must be supplied through workload identity or a Secret |
+| `bedrock` | A model available through Amazon Bedrock | `bedrock.region`; AWS credentials come from an IAM role bound to `taxonomy.serviceAccount`, or from a Secret |
 | `vertex-gemini` | Gemini through Google Vertex AI | `vertex.project`, `vertex.location`, and `vertex.existingSecret` |
 
 Only the selected adapter's environment variables and credentials are rendered. Provider-specific blocks for the
@@ -599,9 +599,28 @@ taxonomy:
       region: us-east-1
 ```
 
-Prefer an IAM role delivered to the pod through EKS Pod Identity, IRSA, or the equivalent workload-identity
-mechanism for your cluster. Configure that association for the Kubernetes service account used by the Taxonomy
-pod. If role-based credentials are unavailable, create a Kubernetes Secret outside the values file and load it
+Bedrock needs a taxonomy image of version 0.1.6 or later; earlier images, including the chart's default `v0.1.0`,
+ship without the AWS SDK and fail on the first Bedrock request whichever way credentials are supplied. Set
+`taxonomy.image.tag` (or `taxonomy.image.digest`) accordingly.
+
+Prefer an IAM role delivered to the pod through EKS Pod Identity or IRSA. Give Taxonomy its own ServiceAccount
+so the role reaches only this pod, not the web app or migration job that share `rbac.serviceAccount`:
+
+```yaml
+taxonomy:
+  serviceAccount:
+    create: true
+    # IRSA only. For EKS Pod Identity, omit the annotation and create a Pod Identity association for
+    # the ServiceAccount (default name: formbricks-taxonomy, or <nameOverride>-taxonomy).
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/formbricks-taxonomy-bedrock
+```
+
+The role needs `bedrock:InvokeModel` on the configured model. For IRSA, its trust policy `sub` must be
+`system:serviceaccount:<namespace>:<ServiceAccount name>`; the name is `formbricks-taxonomy` unless you set
+`nameOverride` or `taxonomy.serviceAccount.name`. To bind a ServiceAccount you manage yourself, set
+`taxonomy.serviceAccount.name` and leave `create: false`; annotate that ServiceAccount directly. If role-based
+credentials are unavailable, create a Kubernetes Secret outside the values file and load it
 through `taxonomy.envFrom` so the AWS SDK can read `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and, when
 required, `AWS_SESSION_TOKEN`:
 
@@ -641,6 +660,10 @@ taxonomy:
 
 The `taxonomy-vertex-credentials` secret must contain `TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON` with service-account
 JSON that can call Vertex AI.
+
+The taxonomy service currently loads Vertex credentials only from that JSON, so GKE Workload Identity cannot replace
+the key yet. `taxonomy.serviceAccount` still gives the pod its own identity, which a key-less Workload Identity
+setup will bind to once the service falls back to Application Default Credentials.
 
 ## Hub and Taxonomy metrics and structured logs
 
@@ -1040,4 +1063,9 @@ Upgrading from a chart that did not render this context:
 | taxonomy.maxClusters                                               | string | `"80"`                                                                      | Compatibility value; production Taxonomy images enforce 80 at startup. |
 | taxonomy.runDeadlineSeconds                                        | string | `"900"`                                                                     | Total taxonomy run deadline.                              |
 | taxonomy.service.type                                              | string | `"ClusterIP"`                                                               | Internal taxonomy service type.                           |
+| taxonomy.serviceAccount.additionalLabels                           | object | `{}`                                                                        | Extra labels on the created ServiceAccount; requires `create=true`. |
+| taxonomy.serviceAccount.annotations                                | object | `{}`                                                                        | Annotations on the created ServiceAccount, e.g. `eks.amazonaws.com/role-arn`; requires `create=true`. |
+| taxonomy.serviceAccount.automountServiceAccountToken               | bool   | `false`                                                                     | Mount a Kubernetes API token through the created ServiceAccount. |
+| taxonomy.serviceAccount.create                                     | bool   | `false`                                                                     | Create a dedicated ServiceAccount for the taxonomy pod. |
+| taxonomy.serviceAccount.name                                       | string | `""`                                                                        | ServiceAccount name; defaults to `<nameOverride or chart name>-taxonomy` (`formbricks-taxonomy`) when created. Empty with `create=false` uses the namespace default. |
 | taxonomy.terminationGracePeriodSeconds                             | int    | `930`                                                                         | Recommended pod grace period for the default 900-second run deadline. |

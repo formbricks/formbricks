@@ -74,6 +74,10 @@
     {{- fail "the selected bundled vLLM maxModelLen must be >= taxonomy.llm.contextWindowTokens" }}
   {{- end }}
 {{- end }}
+{{- $taxonomyServiceAccount := .Values.taxonomy.serviceAccount | default dict -}}
+{{- if and (not (get $taxonomyServiceAccount "create")) (or (get $taxonomyServiceAccount "annotations") (get $taxonomyServiceAccount "additionalLabels")) }}
+  {{- fail "taxonomy.serviceAccount.annotations and additionalLabels apply only when taxonomy.serviceAccount.create=true; annotate an existing ServiceAccount directly" }}
+{{- end }}
 {{- if and (eq $provider "bedrock") (not $bedrockRegion) (not $bedrockEnvRegion) }}
   {{- fail "taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION is required when taxonomy.llm.provider is 'bedrock'" }}
 {{- end }}
@@ -163,6 +167,9 @@ spec:
       {{- with .Values.taxonomy.topologySpreadConstraints }}
       topologySpreadConstraints:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with include "formbricks.taxonomyServiceAccountName" . }}
+      serviceAccountName: {{ . }}
       {{- end }}
       {{- if .Values.deployment.imagePullSecrets }}
       imagePullSecrets:
