@@ -608,12 +608,14 @@ taxonomy:
   serviceAccount:
     create: true
     # IRSA only. For EKS Pod Identity, omit the annotation and create a Pod Identity association for
-    # the ServiceAccount (default name: <release>-taxonomy).
+    # the ServiceAccount (default name: formbricks-taxonomy, or <nameOverride>-taxonomy).
     annotations:
       eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/formbricks-taxonomy-bedrock
 ```
 
-The role needs `bedrock:InvokeModel` on the configured model. To bind a ServiceAccount you manage yourself, set
+The role needs `bedrock:InvokeModel` on the configured model. For IRSA, its trust policy `sub` must be
+`system:serviceaccount:<namespace>:<ServiceAccount name>`; the name is `formbricks-taxonomy` unless you set
+`nameOverride` or `taxonomy.serviceAccount.name`. To bind a ServiceAccount you manage yourself, set
 `taxonomy.serviceAccount.name` and leave `create: false`; annotate that ServiceAccount directly. If role-based
 credentials are unavailable, create a Kubernetes Secret outside the values file and load it
 through `taxonomy.envFrom` so the AWS SDK can read `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and, when
@@ -1043,5 +1045,5 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | taxonomy.serviceAccount.annotations                                | object | `{}`                                                                        | Annotations on the created ServiceAccount, e.g. `eks.amazonaws.com/role-arn`; requires `create=true`. |
 | taxonomy.serviceAccount.automountServiceAccountToken               | bool   | `false`                                                                     | Mount a Kubernetes API token through the created ServiceAccount. |
 | taxonomy.serviceAccount.create                                     | bool   | `false`                                                                     | Create a dedicated ServiceAccount for the taxonomy pod. |
-| taxonomy.serviceAccount.name                                       | string | `""`                                                                        | ServiceAccount name; defaults to `<release>-taxonomy` when created. Empty with `create=false` uses the namespace default. |
+| taxonomy.serviceAccount.name                                       | string | `""`                                                                        | ServiceAccount name; defaults to `<nameOverride or chart name>-taxonomy` (`formbricks-taxonomy`) when created. Empty with `create=false` uses the namespace default. |
 | taxonomy.terminationGracePeriodSeconds                             | int    | `930`                                                                         | Recommended pod grace period for the default 900-second run deadline. |

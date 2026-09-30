@@ -376,8 +376,9 @@ taxonomy:
   # IRSA, GKE Workload Identity) can be bound to taxonomy alone instead of to rbac.serviceAccount,
   # which the web app and migration job share.
   serviceAccount:
-    # Create <release>-taxonomy (or `name`). When false, `name` selects an existing ServiceAccount;
-    # leaving both unset keeps the namespace default ServiceAccount.
+    # Create `name`, or `<nameOverride or chart name>-taxonomy` (formbricks-taxonomy by default).
+    # When false, `name` selects an existing ServiceAccount; leaving both unset keeps the
+    # namespace default ServiceAccount.
     create: false
     name: ""
     # Applied only when create=true, e.g. eks.amazonaws.com/role-arn for IRSA.
