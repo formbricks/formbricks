@@ -133,7 +133,9 @@ export function toFilterRowUpdates(updates: Partial<TGenericCondition>): Partial
     const value = updates.rightOperand?.value;
     if (value === undefined || value === "") return { values: null };
     if (Array.isArray(value)) return { values: value.length > 0 ? value : null };
-    return { values: [value] };
+    // Split by type so the array stays homogeneous (`string[] | number[]`), never `(string | number)[]`.
+    const values: string[] | number[] = typeof value === "number" ? [value] : [String(value)];
+    return { values };
   }
 
   return {};
