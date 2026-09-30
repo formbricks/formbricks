@@ -874,6 +874,28 @@ describe("schema-definition", () => {
     const matchingBuckets = (model: CubeDefinition, buckets: string[], record: CubeRecord): string[] =>
       buckets.filter((measure) => evaluateSqlPredicate(bucketPredicate(model, measure), record));
 
+    /** The `WHEN … THEN '<token>'` arms of the valueBand CASE, keyed by the band token. */
+    const bandArms = (model: CubeDefinition): Record<string, string> => {
+      const sql = (model.dimensions.valueBand?.sql ?? "").replace(/\s+/g, " ");
+      return Object.fromEntries(
+        [...sql.matchAll(/WHEN (.+?) THEN '([a-z]+)'/g)].map(([, predicate, token]) => [token, predicate.trim()])
+      );
+    };
+
+    /** The band the CASE assigns: the first arm that holds, as Postgres evaluates it. */
+    const bandFor = (model: CubeDefinition, record: CubeRecord): string | null =>
+      Object.entries(bandArms(model)).find(([, predicate]) => evaluateSqlPredicate(predicate, record))?.[0] ??
+      null;
+
+    const BAND_OF_BUCKET: Record<string, string> = {
+      promoterCount: "promoter",
+      passiveCount: "passive",
+      detractorCount: "detractor",
+      csatSatisfiedCount: "satisfied",
+      csatNeutralCount: "neutral",
+      csatDissatisfiedCount: "dissatisfied",
+    };
+
     describe.each([
       ["docker", dockerCubeSchemaPath],
       ["helm chart", chartCubeSchemaPath],
@@ -936,6 +958,37 @@ describe("schema-definition", () => {
             "TBL.field_type = 'nps' AND TBL.value_number IS NOT NULL",
           ])
         );
+      });
+
+      test("valueBand assigns each band with the same predicate as its bucket measure (ENG-3331)", () => {
+        // A band written out a second time could drift from its *Count measure, and a breakdown by
+        // band would then disagree with the promoter/passive/detractor counts beside it.
+        expect(bandArms(model)).toEqual(
+          Object.fromEntries(
+            Object.entries(BAND_OF_BUCKET).map(([bucket, band]) => [band, bucketPredicate(model, bucket)])
+          )
+        );
+      });
+
+      test.each([
+        ...NPS_BUCKET_CASES.map(([value, bucket]) => ["nps", value, bucket] as const),
+        ...CSAT_BUCKET_CASES.map(([value, bucket]) => ["csat", value, bucket] as const),
+      ])("valueBand puts a %s value of %p in the band of %s", (fieldType, value, bucket) => {
+        expect(bandFor(model, { fieldType, value })).toBe(BAND_OF_BUCKET[bucket]);
+      });
+
+      test("valueBand leaves unanswered records and other field types without a band", () => {
+        expect(bandFor(model, { fieldType: "nps", value: null })).toBeNull();
+        expect(bandFor(model, { fieldType: "csat", value: null })).toBeNull();
+        expect(bandFor(model, { fieldType: "text", value: 9 })).toBeNull();
+        expect(bandFor(model, { fieldType: "ces", value: 5 })).toBeNull();
+      });
+
+      test("npsCount counts exactly the records npsScore divides by", () => {
+        expect(bucketPredicate(model, "npsCount")).toBe(
+          "TBL.field_type = 'nps' AND TBL.value_number IS NOT NULL"
+        );
+        expect(scoreArms(model, "npsScore")).toContain(bucketPredicate(model, "npsCount"));
       });
 
       test("csatScore counts the same satisfied responses as the bucket measure", () => {
