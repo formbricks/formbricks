@@ -2,7 +2,13 @@ import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { hashString } from "@/lib/hash-string";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
-import { checkRateLimit, peekRateLimit } from "./rate-limit";
+import {
+  type TRateLimitReservation,
+  checkRateLimit,
+  peekRateLimit,
+  reserveRateLimit,
+  settleRateLimit,
+} from "./rate-limit";
 import { rateLimitConfigs } from "./rate-limit-configs";
 import { type TRateLimitConfig, type TRateLimitResponse } from "./types/rate-limit";
 
@@ -33,11 +39,15 @@ export const getClientIdentifier = async (): Promise<string> => {
  * @param requested - Number of units to consume atomically; defaults to one
  * @throws {Error} When rate limit is exceeded or rate limiting system fails
  */
-const throwIfRateLimitExceeded = (result: Awaited<ReturnType<typeof checkRateLimit>>): TRateLimitResponse => {
-  if (!result.ok || !result.data.allowed) {
+const throwIfRateLimitExceeded = <T extends TRateLimitResponse>(result: {
+  data?: T;
+  error?: string;
+  ok: boolean;
+}): T => {
+  if (!result.ok || !result.data || !result.data.allowed) {
     throw new TooManyRequestsError(
       "Maximum number of requests reached. Please try again later.",
-      result.ok ? result.data.retryAfter : undefined
+      result.data?.retryAfter
     );
   }
 
@@ -66,6 +76,26 @@ export const applyRateLimit = async (
       ? await checkRateLimit(config, identifier)
       : await checkRateLimit(config, identifier, requested);
   return throwIfRateLimitExceeded(result);
+};
+
+export const reserveRateLimitUsage = async (
+  config: TRateLimitConfig,
+  identifier: string,
+  requested = 1
+): Promise<TRateLimitReservation | undefined> => {
+  const result = await reserveRateLimit(config, identifier, requested);
+  return throwIfRateLimitExceeded(result).reservation;
+};
+
+export const settleRateLimitUsage = async (
+  reservation: TRateLimitReservation | undefined,
+  successful: number
+): Promise<void> => {
+  if (!reservation) {
+    return;
+  }
+
+  await settleRateLimit(reservation, successful);
 };
 
 /**
