@@ -76,11 +76,19 @@ export const waitForSurveyEditor = async (
     await expect(page).toHaveURL(
       new RegExp(String.raw`/workspaces/[^/]+/surveys/${surveyId}/edit\?.*mode=cx`)
     );
-    await expect(page.getByRole("button", { name: "Save & Close", exact: true })).toBeVisible();
-    return;
   }
 
-  await expect(page.getByRole("button", { name: "Settings", exact: true })).toBeVisible();
+  // A just-created survey the editor refuses renders the 404 page, which would otherwise surface as
+  // a bare "Settings not found" timeout. Name it, so the failure points at authorization, not timing.
+  const editorReady = page.getByRole("button", {
+    name: options.mode === "cx" ? "Save & Close" : "Settings",
+    exact: true,
+  });
+  const notFound = page.getByRole("heading", { name: "Page not found" });
+  await expect(editorReady.or(notFound).first()).toBeVisible();
+  if (await notFound.isVisible()) {
+    throw new Error(`The editor answered 404 for survey ${surveyId}, which was just created by this user`);
+  }
 };
 
 export const createSurveyFromScratch = async (page: Page, options: { mode?: "cx" } = {}): Promise<string> => {
@@ -473,11 +481,16 @@ export const fillRichTextEditor = async (page: Page, labelText: string, content:
   // `fill` on the contenteditable, not `pressSequentially`. One `insertText` replaces the whole
   // value, where per-key typing raced Lexical's own re-render and truncated the text ("Picture
   // Select Question" landing as "Picture S") unless every keystroke was paced by `slowMo`.
-  await editor.fill(content);
-  // Confirms the editor settled before the caller's next action — this assertion, not a delay, is
-  // what keeps the following interactions off a mid-render tree.
-  await expect(editor).toHaveText(content);
-  await flushRender(page);
+  //
+  // Repeated until the value survives a render: Lexical loads the element's stored text after the
+  // editor mounts, and a fill that lands before that load is overwritten by it — the editor then
+  // still reads "What would you like to know?". The assertion after the settle, not a delay, is what
+  // keeps the caller's next action off a mid-render tree.
+  await expect(async () => {
+    await editor.fill(content);
+    await flushRender(page);
+    await expect(editor).toHaveText(content, { timeout: 1000 });
+  }).toPass({ timeout: 20_000 });
 };
 
 /**

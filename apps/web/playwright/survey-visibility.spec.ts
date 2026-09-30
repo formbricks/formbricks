@@ -14,6 +14,10 @@ const VISIBLE_TO_WORKSPACE = `Visible to ${WORKSPACE_NAME}`;
 // viewer's list a moment after the owner's request returns. Waited for as state, never as time.
 const PROJECTION_BUDGET_MS = 60_000;
 
+// The row's link is announced as "{name}, {marker}". The name is a block element, so the computed
+// accessible name carries a space before the comma; the pattern allows it.
+const markedName = (surveyName: string, marker: string): RegExp => new RegExp(`${surveyName}\\s*, ${marker}`);
+
 const surveyRow = (page: Page, surveyName: string): Locator =>
   page.locator("div.relative.block", { has: page.getByText(surveyName, { exact: true }) });
 
@@ -104,11 +108,11 @@ test.describe("Restricted surveys", () => {
       await page.goto(surveysUrl);
       const row = surveyRow(page, surveyName);
       await expect(row).toBeVisible();
-      await expect(row.getByRole("link")).toHaveAccessibleName(new RegExp(`${surveyName}, Restricted`));
+      await expect(row.getByRole("link")).toHaveAccessibleName(markedName(surveyName, "Restricted"));
       await expect(row.getByRole("link")).not.toHaveAccessibleName(new RegExp(VISIBLE_TO_WORKSPACE));
       // The seeded survey is workspace-visible, so the same list does carry the marker elsewhere.
       await expect(surveyRow(page, "E2E Seed Survey").getByRole("link")).toHaveAccessibleName(
-        new RegExp(VISIBLE_TO_WORKSPACE)
+        markedName("E2E Seed Survey", VISIBLE_TO_WORKSPACE)
       );
 
       await row.getByTestId("survey-dropdown-trigger").click();
@@ -148,7 +152,7 @@ test.describe("Restricted surveys", () => {
 
       await expect(dialog).toBeHidden();
       await expect(page.getByRole("dialog")).toHaveCount(0);
-      await expect(row.getByRole("link")).toHaveAccessibleName(new RegExp(VISIBLE_TO_WORKSPACE));
+      await expect(row.getByRole("link")).toHaveAccessibleName(markedName(surveyName, VISIBLE_TO_WORKSPACE));
     });
 
     await test.step("the member now sees it, marked, with the tooltip explaining who can see it", async () => {
@@ -157,7 +161,7 @@ test.describe("Restricted surveys", () => {
         await memberPage.reload();
         await expect(row).toBeVisible({ timeout: 5_000 });
       }).toPass({ timeout: PROJECTION_BUDGET_MS });
-      await expect(row.getByRole("link")).toHaveAccessibleName(new RegExp(VISIBLE_TO_WORKSPACE));
+      await expect(row.getByRole("link")).toHaveAccessibleName(markedName(surveyName, VISIBLE_TO_WORKSPACE));
 
       // The icon is the first tooltip trigger in the row: it precedes the name.
       await row.locator("span[data-state]").first().hover();
