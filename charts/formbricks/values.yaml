@@ -372,6 +372,20 @@ taxonomy:
     annotations: {}
     additionalLabels: {}
 
+  # Dedicated ServiceAccount for the taxonomy pod, so a cloud workload identity (EKS Pod Identity,
+  # IRSA, GKE Workload Identity) can be bound to taxonomy alone instead of to rbac.serviceAccount,
+  # which the web app and migration job share.
+  serviceAccount:
+    # Create <release>-taxonomy (or `name`). When false, `name` selects an existing ServiceAccount;
+    # leaving both unset keeps the namespace default ServiceAccount.
+    create: false
+    name: ""
+    # Applied only when create=true, e.g. eks.amazonaws.com/role-arn for IRSA.
+    annotations: {}
+    additionalLabels: {}
+    # Taxonomy does not call the Kubernetes API. IRSA and Pod Identity project their own token.
+    automountServiceAccountToken: false
+
   auth:
     # Existing secret must contain serviceTokenKey and hubInternalApiTokenKey.
     existingSecret: ""
