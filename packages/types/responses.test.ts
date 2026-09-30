@@ -21,6 +21,7 @@ const fullAutoCapturedMeta = {
   viewportWidth: 1280,
   viewportHeight: 800,
   timezone: "Europe/Berlin",
+  locale: "de-AT",
 };
 
 describe("ZResponseMeta", () => {

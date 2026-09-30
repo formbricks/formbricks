@@ -139,10 +139,13 @@ describe("Embedded Data read seam (real Postgres)", () => {
 
   test("reading a survey writes nothing to the Embedded Data tables", async () => {
     const { surveyId } = await seedSurvey();
-    const before = await prisma.surveyEmbeddedData.findMany({ where: { surveyId } });
+    // Ordered, so the comparison cannot fail on the order Postgres happens to return rows in.
+    const readRows = () =>
+      prisma.surveyEmbeddedData.findMany({ where: { surveyId }, orderBy: { storageKey: "asc" } });
+    const before = await readRows();
 
     await loadSurvey(surveyId);
 
-    expect(await prisma.surveyEmbeddedData.findMany({ where: { surveyId } })).toEqual(before);
+    expect(await readRows()).toEqual(before);
   });
 });

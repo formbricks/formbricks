@@ -389,6 +389,7 @@ export const getResponsesJson = (
     getIngestedEmbeddedFields(survey),
     reservedExportHeaders(survey, responses)
   );
+  const computedFields = getComputedEmbeddedFields(survey);
 
   responses.forEach((response, idx) => {
     // basic response details
@@ -461,7 +462,7 @@ export const getResponsesJson = (
     // The raw slot, uncoerced and with no default substituted: a response written before this field
     // existed has no key, and the cell must stay empty rather than display a value that run never
     // produced. (This is why the export does not read through `resolveEmbeddedValue`.)
-    getComputedEmbeddedFields(survey).forEach(({ field, link }) => {
+    computedFields.forEach(({ field, link }) => {
       const answer = response.variables[link.storageKey];
       jsonData[idx][field.name] = answer;
     });
