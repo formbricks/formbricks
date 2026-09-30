@@ -68,10 +68,10 @@ import {
 } from "./utils";
 
 /**
- * ENG-1839 / ENG-2933: refuse a reserved name, or a name shared by a variable and a hidden field,
- * for newly declared fields — as an `InvalidInputError`, which `handleApiError` maps to a 400
- * carrying this message, and the editor surfaces as a toast. Thrown before any transaction is
- * opened, so a refusal never fails inside an interactive transaction.
+ * ENG-1839 / ENG-2933 / ENG-3142: refuse a reserved name, or a name a hidden field shares with a
+ * variable or an element, for newly declared fields — as an `InvalidInputError`, which
+ * `handleApiError` maps to a 400 carrying this message, and the editor surfaces as a toast. Thrown
+ * before any transaction is opened, so a refusal never fails inside an interactive transaction.
  *
  * Deliberately NOT inside `reconcileEmbeddedData`: that runs in the transaction, and the survey copy
  * flow feeds a whole survey's fields to it as "new" against zero existing rows — guarding there
@@ -459,7 +459,8 @@ export const updateSurveyInternal = async (
     // validation: `ZSurveyHiddenFields` stays lenient by design (the same schema parses surveys
     // loaded from the database), so without this `PUT /api/v1/management/surveys/<id>` can still
     // create a hidden field named `country` or `lang` that can never receive a value, or a variable
-    // named after an existing hidden field. Grandfathering is what makes it safe: `existing` is
+    // named after an existing hidden field. ENG-3142: nor a hidden field under an element's id, which
+    // the answer always owns in `response.data`. Grandfathering is what makes it safe: `existing` is
     // everything this survey already declares, and any name — or clash — in it passes untouched.
     assertValidNewDeclaredFields({ existing: currentSurvey, incoming: updatedSurvey });
 

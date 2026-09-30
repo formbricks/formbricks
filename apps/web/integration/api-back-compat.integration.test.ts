@@ -13,7 +13,7 @@ import {
 import { V3SurveyReferenceValidationError } from "@/app/api/v3/surveys/reference-validation";
 import { resetDb } from "@/integration/reset-db";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
-import { createSurvey, selectSurvey, updateSurvey } from "@/lib/survey/service";
+import { createSurvey, selectSurvey, updateSurvey, updateSurveyDraft } from "@/lib/survey/service";
 import { transformPrismaSurvey } from "@/lib/survey/utils";
 
 /**
@@ -575,6 +575,73 @@ describe("grandfathering at the v1 / v2 write boundary (updateSurvey)", () => {
         ],
       })
     ).toEqual({ refused: "InvalidInputError" });
+  });
+});
+
+// ENG-3142: element ids and hidden field names key the same `response.data`, and the answer always
+// wins it — so a hidden field under an element's id can never hold a value. The editor and v3 refuse
+// it; these pin v1, grandfathered like the variable clash above.
+describe("a hidden field under an element's id, at the v1 / v2 write boundary", () => {
+  const ELEMENT_ID = BLOCKS[0].elements[0].id;
+
+  test("a PUT that gives a hidden field an element's id is refused", async () => {
+    const survey = await seedSurvey();
+
+    expect(await putOutcome(survey, { hiddenFields: { enabled: true, fieldIds: [ELEMENT_ID] } })).toEqual({
+      refused: "InvalidInputError",
+    });
+
+    // Refused before the transaction opened: nothing was written.
+    expect((await readAsLegacyApi(survey.id)).hiddenFields.fieldIds ?? []).toEqual([]);
+  });
+
+  test("a PUT that renames an element onto an existing hidden field is refused", async () => {
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["plan"] } });
+    const renamed = [{ ...BLOCKS[0], elements: [{ ...BLOCKS[0].elements[0], id: "plan" }] }];
+
+    expect(await putOutcome(survey, { blocks: renamed as never })).toEqual({ refused: "InvalidInputError" });
+    expect((await readAsLegacyApi(survey.id)).blocks[0].elements[0].id).toBe(ELEMENT_ID);
+  });
+
+  test("a draft save that sends empty blocks is still checked against the stored ones", async () => {
+    // `updateSurveyInternal` writes `blocks` only when the list is non-empty, so `blocks: []` keeps
+    // the stored elements. A PUT cannot send it (`ZSurvey` refuses a survey with no elements), but
+    // the draft save skips `ZSurvey` and runs the same guard.
+    const survey = await seedSurvey();
+    const { embeddedFields: _embeddedFields, ...draft } = {
+      ...survey,
+      blocks: [],
+      hiddenFields: { enabled: true, fieldIds: [ELEMENT_ID] },
+    };
+
+    await expect(updateSurveyDraft(draft)).rejects.toMatchObject({ name: "InvalidInputError" });
+    expect((await readAsLegacyApi(survey.id)).hiddenFields.fieldIds ?? []).toEqual([]);
+  });
+
+  test("a full PUT that resends a clash the survey already holds is accepted", async () => {
+    // Seeded past the guard, the way v1 created these before this check existed.
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: [ELEMENT_ID] } });
+
+    expect(await putOutcome(survey, { name: "Renamed via PUT" })).toBe("accepted");
+
+    expect((await readAsLegacyApi(survey.id)).hiddenFields.fieldIds).toEqual([ELEMENT_ID]);
+    await expectNoDrift(survey.id);
+  });
+
+  test("a POST that declares a hidden field under an element's id is refused", async () => {
+    const organization = await prisma.organization.create({ data: { name: "Create Org" } });
+    const workspace = await prisma.workspace.create({
+      data: { name: "Create Workspace", organizationId: organization.id },
+    });
+
+    await expect(
+      createSurvey(workspace.id, {
+        name: "Created Survey",
+        blocks: BLOCKS as never,
+        hiddenFields: { enabled: true, fieldIds: [ELEMENT_ID] },
+      })
+    ).rejects.toMatchObject({ name: "InvalidInputError" });
+    expect(await prisma.survey.count({ where: { workspaceId: workspace.id } })).toBe(0);
   });
 });
 

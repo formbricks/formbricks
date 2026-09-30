@@ -282,8 +282,11 @@ describe("listLinkableSharedFields", () => {
     sharedRow({ id: "ed_plan", key: "plan" }),
     sharedRow({ id: "ed_score", key: "score", source: "computed", name: "Score" }),
   ];
-  const linkable = (embeddedFields: TLinkedEmbeddedField[], persistedFields = embeddedFields) =>
-    listLinkableSharedFields({ library, embeddedFields, persistedFields }).map((row) => row.key);
+  const linkable = (
+    embeddedFields: TLinkedEmbeddedField[],
+    persistedFields = embeddedFields,
+    takenIds: string[] = []
+  ) => listLinkableSharedFields({ library, embeddedFields, persistedFields, takenIds }).map((row) => row.key);
 
   test("offers every row a survey with no fields can take", () => {
     expect(linkable([])).toEqual(["plan", "score"]);
@@ -296,6 +299,12 @@ describe("listLinkableSharedFields", () => {
   // `@@unique([surveyId, storageKey])` would refuse the link: an ingested field's address IS its key.
   test("leaves out a row whose address a local field already holds", () => {
     expect(linkable([ingested("plan")])).toEqual(["score"]);
+  });
+
+  // The same ids a new local field is refused against. For the ingested `plan` the save refuses it
+  // too (ENG-3142): a question `plan` owns `response.data.plan`, so the field could never hold a value.
+  test("leaves out a row whose name is an element or ending id, in any case", () => {
+    expect(linkable([], [], ["Plan", "score"])).toEqual([]);
   });
 
   // Recall and logic address fields by name across both namespaces, so a survey with a local

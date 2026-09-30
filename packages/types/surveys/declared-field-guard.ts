@@ -32,6 +32,11 @@ export interface TDeclaredFieldSource {
    * (value required) also satisfies.
    */
   variables?: z.input<typeof ZSurveyVariables> | null;
+  /**
+   * Not a declared-field carrier, but its element ids share `response.data` with the hidden fields
+   * (ENG-3142). `unknown` on purpose: the draft save hands the guard blocks no schema has checked.
+   */
+  blocks?: readonly unknown[] | null;
 }
 
 const isDeclared = <T>(carrier: T | null | undefined): carrier is T =>
@@ -154,10 +159,24 @@ const toNamespace = (names: string[]): TNamespaceNames =>
 const entryNames = (embeddedFields: TLinkedEmbeddedField[], source: "computed" | "ingested"): string[] =>
   embeddedFields.filter((entry) => entry.field.source === source).map(declaredEntryName);
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+/** Every element id in `blocks`, skipping whatever is not shaped like one. */
+const elementIdsOf = (blocks: readonly unknown[]): string[] =>
+  blocks.flatMap((block) => {
+    const elements = isRecord(block) ? block.elements : undefined;
+    if (!Array.isArray(elements)) return [];
+
+    return elements.flatMap((element: unknown) =>
+      isRecord(element) && typeof element.id === "string" ? [element.id] : []
+    );
+  });
+
+type TDeclaredNamespaces = { variables: TNamespaceNames; hiddenFields: TNamespaceNames };
+
 /** What a source declares, split into the two namespaces recall and logic address fields through. */
-const namesByNamespace = (
-  source: TDeclaredFieldSource
-): { variables: TNamespaceNames; hiddenFields: TNamespaceNames } =>
+const namesByNamespace = (source: TDeclaredFieldSource): TDeclaredNamespaces =>
   isDeclared(source.embeddedFields)
     ? {
         variables: toNamespace(entryNames(source.embeddedFields, "computed")),
@@ -170,6 +189,26 @@ const namesByNamespace = (
         hiddenFields: toNamespace(
           isDeclared(source.hiddenFields) ? (source.hiddenFields.fieldIds ?? []) : []
         ),
+      };
+
+/**
+ * What the survey declares once the write lands. An `embeddedFields` payload is the complete set for
+ * both namespaces, so there is nothing to carry over; the per-carrier merge is for the legacy keys,
+ * which arrive independently.
+ */
+const namesAfterWrite = (
+  current: TDeclaredNamespaces,
+  incoming: TDeclaredFieldSource
+): TDeclaredNamespaces =>
+  isDeclared(incoming.embeddedFields)
+    ? namesByNamespace(incoming)
+    : {
+        variables: isDeclared(incoming.variables)
+          ? namesByNamespace({ variables: incoming.variables }).variables
+          : current.variables,
+        hiddenFields: isDeclared(incoming.hiddenFields)
+          ? namesByNamespace({ hiddenFields: incoming.hiddenFields }).hiddenFields
+          : current.hiddenFields,
       };
 
 /**
@@ -207,18 +246,7 @@ export const validateNewDeclaredFieldClashes = ({
   incoming: TDeclaredFieldSource;
 }): TValidateIdError[] => {
   const current = namesByNamespace(existing);
-  // An `embeddedFields` payload is the complete set for both namespaces, so there is nothing to
-  // carry over; the per-carrier merge below is for the legacy keys, which arrive independently.
-  const next = isDeclared(incoming.embeddedFields)
-    ? namesByNamespace(incoming)
-    : {
-        variables: isDeclared(incoming.variables)
-          ? namesByNamespace({ variables: incoming.variables }).variables
-          : current.variables,
-        hiddenFields: isDeclared(incoming.hiddenFields)
-          ? namesByNamespace({ hiddenFields: incoming.hiddenFields }).hiddenFields
-          : current.hiddenFields,
-      };
+  const next = namesAfterWrite(current, incoming);
 
   const errors: TValidateIdError[] = [];
   for (const [lowered, variableName] of next.variables) {
@@ -236,13 +264,64 @@ export const validateNewDeclaredFieldClashes = ({
 };
 
 /**
+ * Refuses a name that a hidden field and an element (a question) would share after the write —
+ * unless the survey already holds that exact clash (ENG-3142).
+ *
+ * Element ids and hidden field names key the same `response.data`, and the answer always owns the
+ * key: the ingest contract drops the hidden field as `element_id_collision`. So the field shows in
+ * the editor and the response table, is empty on every response, and nothing tells the author why.
+ * The editor and v3 refuse it; the v1 management API did not.
+ *
+ * Case-insensitive, like the editor, v3 and the variable clash. Only an exact match is dead at
+ * storage (`Plan` and `plan` are different keys), but recall and logic address both by name, so a
+ * case variant is still ambiguous. Grandfathered and per-save exactly like the variable clash, and
+ * blocks the payload does not carry are the survey's current ones.
+ *
+ * The error names the side the write introduces: the element when the hidden field already existed,
+ * the hidden field otherwise.
+ */
+export const validateNewElementIdClashes = ({
+  existing,
+  incoming,
+}: {
+  existing: TDeclaredFieldSource;
+  incoming: TDeclaredFieldSource;
+}): TValidateIdError[] => {
+  const current = namesByNamespace(existing);
+  const currentElementIds = toNamespace(elementIdsOf(existing.blocks ?? []));
+  const nextHiddenFields = namesAfterWrite(current, incoming).hiddenFields;
+  // An empty list counts as not carried: `updateSurveyInternal` writes `blocks` only when the list is
+  // non-empty, so `blocks: []` leaves the stored elements in place.
+  const nextElementIds =
+    isDeclared(incoming.blocks) && incoming.blocks.length > 0
+      ? toNamespace(elementIdsOf(incoming.blocks))
+      : currentElementIds;
+
+  const errors: TValidateIdError[] = [];
+  for (const [lowered, hiddenFieldId] of nextHiddenFields) {
+    const elementId = nextElementIds.get(lowered);
+    if (elementId === undefined) continue;
+    if (currentElementIds.has(lowered) && current.hiddenFields.has(lowered)) continue;
+
+    errors.push({
+      code: TValidateIdErrorCode.Duplicate,
+      field: current.hiddenFields.has(lowered) ? elementId : hiddenFieldId,
+    });
+  }
+
+  return errors;
+};
+
+/**
  * Everything a write's declared field names must satisfy, for the write seams that hold a whole
  * survey on both sides (`updateSurvey`, `createSurvey`): no new reserved name, and no new clash
- * between a variable and a hidden field. One error per bad name — a name refused as reserved is not
- * reported a second time as a clash.
+ * between a variable and a hidden field, or a hidden field and an element. One error per bad name —
+ * a name refused as reserved is not reported a second time as a clash, and a name in both clashes
+ * is reported once.
  *
  * The v3 patch route calls {@link validateNewDeclaredFieldNames} on its own: its reference validation
- * already refuses the clash as `duplicate_identifier`, so running this there would report it twice.
+ * already refuses both clashes as `duplicate_identifier`, so running this there would report them
+ * twice.
  */
 export const validateNewDeclaredFields = ({
   existing,
@@ -255,10 +334,16 @@ export const validateNewDeclaredFields = ({
     existing: collectDeclaredFieldNames(existing),
     incoming: collectDeclaredFieldNames(incoming),
   });
-  const refused = new Set(reserved.map((error) => error.field.toLowerCase()));
-  const clashes = validateNewDeclaredFieldClashes({ existing, incoming }).filter(
-    (error) => !refused.has(error.field.toLowerCase())
-  );
+  const reported = new Set(reserved.map((error) => error.field.toLowerCase()));
+  const clashes = [
+    ...validateNewDeclaredFieldClashes({ existing, incoming }),
+    ...validateNewElementIdClashes({ existing, incoming }),
+  ].filter((error) => {
+    const lowered = error.field.toLowerCase();
+    if (reported.has(lowered)) return false;
+    reported.add(lowered);
+    return true;
+  });
 
   return [...reserved, ...clashes];
 };
@@ -317,7 +402,7 @@ const DECLARED_FIELD_NAME_REASONS: Record<Exclude<TValidateIdErrorCode, "reserve
   [TValidateIdErrorCode.InvalidChars]: "it may contain only letters, numbers, underscores and hyphens",
   [TValidateIdErrorCode.NotSafeIdentifier]:
     "it must start with a lowercase letter and contain only lowercase letters, numbers and underscores",
-  // Reached from `validateNewDeclaredFieldClashes` (a variable and a hidden field under one name),
+  // Reached from the two clash checks (a hidden field sharing a name with a variable or an element),
   // never from `validateNewDeclaredFieldNames`, which passes empty id lists. Worded for that case
   // without assuming it — on a create both sides are new, so "already uses" would be false there.
   [TValidateIdErrorCode.Duplicate]:

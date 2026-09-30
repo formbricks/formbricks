@@ -75,6 +75,7 @@ export const AddEmbeddedFieldModal = ({
           workspaceId={workspaceId}
           embeddedFields={embeddedFields}
           persistedFields={persistedFields}
+          takenIds={takenIds}
           onLink={onLink}
         />
       ),
