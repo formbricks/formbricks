@@ -10,6 +10,16 @@ describe("visibility policy", () => {
     // No projection acknowledged yet (just created or copied): the stored value is enforced.
     ["never-projected workspace", "workspace", 1, 0, true, "workspace", "workspace"],
     ["never-projected restricted", "restricted", 1, 0, true, "restricted", "restricted"],
+    // Changed before its first acknowledgement (created restricted, then granted): a real transition.
+    [
+      "cancel back to workspace before any acknowledgement",
+      "workspace",
+      2,
+      0,
+      true,
+      "restricted",
+      "workspace",
+    ],
   ] as const)(
     "%s",
     (_label, visibility, visibilityVersion, visibilityProjectedVersion, pending, effective, queued) => {

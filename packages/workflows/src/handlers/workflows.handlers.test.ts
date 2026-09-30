@@ -377,6 +377,98 @@ describe("duplicate", () => {
   });
 });
 
+describe("trigger survey attach-time guard (ENG-3283)", () => {
+  const otherSurveyId = "cm9zr4q7i000108l84gozfggs";
+  const restricted = { surveyExists: true, missingEndingCardIds: [], surveyNotWorkspaceVisible: true };
+  const jsonRequest = (method: string, body: unknown): Request =>
+    new Request("http://localhost/api/v3/workflows", {
+      method,
+      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" },
+    });
+  const boundTo = (id: string) => ({
+    ...definition,
+    trigger: { ...definition.trigger, config: { surveyId: id, endingCardIds: [] } },
+  });
+
+  const expectRefused = async (res: Response) => {
+    expect(res.status).toBe(422);
+    const body = await readJson<{ code: string; invalid_params: Array<{ name: string }> }>(res);
+    expect(body.code).toBe("workflow_not_executable");
+    expect(body.invalid_params).toEqual([
+      expect.objectContaining({ name: "definition.trigger.config.surveyId" }),
+    ]);
+  };
+
+  test("create refuses a draft bound to a survey the workspace cannot see", async () => {
+    verifyTriggerSurvey.mockResolvedValue(restricted);
+
+    const res = await handlers.create({
+      req: jsonRequest("POST", { workspaceId, name: "Notify team", definition }),
+      ctx: makeCtx(),
+    });
+
+    await expectRefused(res);
+    expect(verifyTriggerSurvey).toHaveBeenCalledWith({ workspaceId, surveyId, endingCardIds: [] });
+    expect(service.createWorkflow).not.toHaveBeenCalled();
+  });
+
+  test("patch refuses pointing the trigger at a survey the workspace cannot see", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+    verifyTriggerSurvey.mockResolvedValue(restricted);
+
+    const res = await handlers.patch({
+      req: jsonRequest("PATCH", { definition: boundTo(otherSurveyId) }),
+      ctx: makeCtx(),
+      params: { workflowId },
+    });
+
+    await expectRefused(res);
+    expect(service.updateWorkflow).not.toHaveBeenCalled();
+  });
+
+  test("patch keeps an existing binding editable: an unchanged trigger survey is not re-checked", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+    service.updateWorkflow.mockResolvedValue(makeRow());
+    verifyTriggerSurvey.mockResolvedValue(restricted);
+
+    const res = await handlers.patch({
+      req: jsonRequest("PATCH", { definition: boundTo(surveyId) }),
+      ctx: makeCtx(),
+      params: { workflowId },
+    });
+
+    expect(res.status).toBe(200);
+    expect(verifyTriggerSurvey).not.toHaveBeenCalled();
+  });
+
+  test("duplicate refuses copying a workflow bound to a survey the workspace cannot see", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow());
+    verifyTriggerSurvey.mockResolvedValue(restricted);
+
+    const res = await handlers.duplicate({
+      req: new Request("http://localhost/api/v3/workflows/x/duplicate", { method: "POST" }),
+      ctx: makeCtx(),
+      params: { workflowId },
+    });
+
+    await expectRefused(res);
+    expect(service.duplicateWorkflow).not.toHaveBeenCalled();
+  });
+
+  test("a workspace-visible trigger survey is accepted on create", async () => {
+    service.createWorkflow.mockResolvedValue(makeRow());
+
+    const res = await handlers.create({
+      req: jsonRequest("POST", { workspaceId, name: "Notify team", definition }),
+      ctx: makeCtx(),
+    });
+
+    expect(res.status).toBe(201);
+    expect(verifyTriggerSurvey).toHaveBeenCalledOnce();
+  });
+});
+
 describe("delete", () => {
   test("hard-deletes and returns 204", async () => {
     service.getWorkflowById.mockResolvedValue(makeRow());

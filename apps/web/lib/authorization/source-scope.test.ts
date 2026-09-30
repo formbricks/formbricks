@@ -278,7 +278,7 @@ describe("survey and response scopes once survey visibility is enforced (ENG-328
     });
   });
 
-  test("decides a never-projected workspace survey from PostgreSQL facts, not its empty graph node", async () => {
+  test("decides a survey inserted workspace-visible on the workspace ladder, not its empty graph node", async () => {
     vi.mocked(getSurveyAuthorizationScopeRow).mockResolvedValue(
       row({ visibility: "workspace", visibilityProjectedVersion: 0, visibilityVersion: 1 })
     );
@@ -289,6 +289,17 @@ describe("survey and response scopes once survey visibility is enforced (ENG-328
       actorValid: true,
       organizationId: "org-1",
       permissionResource: { type: "workspace", id: "workspace-1" },
+    });
+  });
+
+  test("keeps a grant made before the first acknowledgement on the pending-restricted policy", async () => {
+    vi.mocked(getSurveyAuthorizationScopeRow).mockResolvedValue(
+      row({ visibility: "workspace", visibilityProjectedVersion: 0, visibilityVersion: 2 })
+    );
+
+    await expect(
+      resolveAuthorizationScope({ type: "user", id: "owner-1" }, { type: "survey", id: "survey-1" })
+    ).resolves.toMatchObject({
       policy: { kind: "pendingPrivate", ownerId: "owner-1", surveyId: "survey-1" },
     });
   });

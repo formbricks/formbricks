@@ -556,8 +556,15 @@ To roll enforcement back to workspace permissions, clear the marker. This touche
 formbricks-authzed backfill --scope=survey --clear-ready
 ```
 
-`formbricks-authzed upgrade check` reports the marker as `scopes.survey`. If PostgreSQL itself is unavailable,
-set `SURVEY_VISIBILITY_FORCE_DISABLED=1` and restart to ignore the marker.
+`formbricks-authzed upgrade check` reports the marker as `scopes.survey`.
+
+<Warning>
+  Do not set `SURVEY_VISIBILITY_FORCE_DISABLED=1` as a workaround when PostgreSQL or SpiceDB is failing. It
+  makes every restricted survey, and its responses, visible to the whole workspace. An outage fails
+  closed, and it should: with PostgreSQL down every decision fails anyway, and the exposure begins as soon
+  as it recovers with the flag still set. Fix the dependency instead, and use the flag only for a deliberate
+  decision to switch survey visibility off.
+</Warning>
 
 ### Interpret drift categories
 

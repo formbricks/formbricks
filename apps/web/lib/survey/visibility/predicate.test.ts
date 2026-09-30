@@ -36,20 +36,26 @@ describe("buildVisibleSurveyWhere", () => {
   test("a member sees settled workspace-visible surveys and their own, pending or not", () => {
     expect(buildVisibleSurveyWhere(member)).toEqual({
       OR: [
-        { visibility: "workspace", OR: [{ visibilityPending: false }, { visibilityProjectedVersion: 0 }] },
+        {
+          visibility: "workspace",
+          OR: [{ visibilityPending: false }, { visibilityVersion: 1, visibilityProjectedVersion: 0 }],
+        },
         { ownerId: "u-1" },
       ],
     });
     expect(buildVisibleResponseWhere(member)).toEqual({
       survey: {
         OR: [
-          { visibility: "workspace", OR: [{ visibilityPending: false }, { visibilityProjectedVersion: 0 }] },
+          {
+            visibility: "workspace",
+            OR: [{ visibilityPending: false }, { visibilityVersion: 1, visibilityProjectedVersion: 0 }],
+          },
           { ownerId: "u-1" },
         ],
       },
     });
     expect(sqlOf(member)).toEqual({
-      text: '(("s"."visibility" = \'workspace\' AND ("s"."visibilityPending" = false OR "s"."visibilityProjectedVersion" = 0)) OR "s"."ownerId" = ?)',
+      text: '(("s"."visibility" = \'workspace\' AND ("s"."visibilityPending" = false OR ("s"."visibilityVersion" = 1 AND "s"."visibilityProjectedVersion" = 0))) OR "s"."ownerId" = ?)',
       values: ["u-1"],
     });
   });
@@ -57,10 +63,10 @@ describe("buildVisibleSurveyWhere", () => {
   test("an API key sees settled workspace-visible surveys only — never a restricted or pending one", () => {
     expect(buildVisibleSurveyWhere(apiKey)).toEqual({
       visibility: "workspace",
-      OR: [{ visibilityPending: false }, { visibilityProjectedVersion: 0 }],
+      OR: [{ visibilityPending: false }, { visibilityVersion: 1, visibilityProjectedVersion: 0 }],
     });
     expect(sqlOf(apiKey)).toEqual({
-      text: '("s"."visibility" = \'workspace\' AND ("s"."visibilityPending" = false OR "s"."visibilityProjectedVersion" = 0))',
+      text: '("s"."visibility" = \'workspace\' AND ("s"."visibilityPending" = false OR ("s"."visibilityVersion" = 1 AND "s"."visibilityProjectedVersion" = 0)))',
       values: [],
     });
   });
@@ -78,7 +84,10 @@ describe("buildVisibleSurveyWhereAcrossOrganizations", () => {
   test("admits shared surveys, owned ones, and every survey of an organization the user administers", () => {
     expect(buildVisibleSurveyWhereAcrossOrganizations(true, "u1")).toEqual({
       OR: [
-        { visibility: "workspace", OR: [{ visibilityPending: false }, { visibilityProjectedVersion: 0 }] },
+        {
+          visibility: "workspace",
+          OR: [{ visibilityPending: false }, { visibilityVersion: 1, visibilityProjectedVersion: 0 }],
+        },
         { ownerId: "u1" },
         {
           workspace: {

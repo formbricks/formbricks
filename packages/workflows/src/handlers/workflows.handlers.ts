@@ -29,7 +29,11 @@ import { isLiteralEmailRecipient } from "../recipients";
 import { createdResponse, dataResponse, listResponse, noContentResponse } from "../responses";
 import type { WorkflowRowWithLastRun } from "../services/ports";
 import type { WorkflowsService } from "../services/workflows.service";
-import { type TWorkflowExecutableDefinition, ZWorkflowExecutableDefinition } from "../types/document";
+import {
+  type TWorkflowDefinition,
+  type TWorkflowExecutableDefinition,
+  ZWorkflowExecutableDefinition,
+} from "../types/document";
 import { redactWorkflowDefinitionPII } from "./audit-redaction";
 import type {
   TriggerSurveyCheck,
@@ -226,6 +230,31 @@ const buildSurveyInvalidParams = (check: TriggerSurveyCheck): WorkflowInvalidPar
 };
 
 /**
+ * Attach-time guard (ENG-3283): a workflow forwards its trigger survey's responses out of the app, so it
+ * may only be bound to a survey the whole workspace can see. Checked when a binding is created — create,
+ * duplicate, and a patch that points the trigger at another survey — so the refusal is immediate; enable
+ * and dispatch re-check, since a survey restricted after it was bound stays bound (as for every other
+ * outbound connection). Existence is not checked here: a draft may still name a survey being built.
+ */
+const assertTriggerSurveyAttachable = async (
+  ctx: WorkflowApiContext,
+  workspaceId: string,
+  definition: TWorkflowDefinition,
+  previous?: TWorkflowDefinition
+): Promise<void> => {
+  const surveyId = definition.trigger?.config.surveyId;
+  if (!surveyId || surveyId === previous?.trigger?.config.surveyId) return;
+
+  const check = await ctx.verifyTriggerSurvey({ workspaceId, surveyId, endingCardIds: [] });
+  if (check.surveyNotWorkspaceVisible) {
+    throw new WorkflowNotExecutableError(
+      [{ name: "definition.trigger.config.surveyId", reason: SURVEY_NOT_WORKSPACE_VISIBLE_REASON }],
+      SURVEY_NOT_WORKSPACE_VISIBLE_REASON
+    );
+  }
+};
+
+/**
  * Handler argument shapes. Every handler takes a single object (never positional args) so call
  * sites are uniform and self-documenting — mirroring the v3 API's single-object handler convention
  * (e.g. `listV3Surveys({ searchParams, authentication, ... })`). Each shape carries only the fields
@@ -297,6 +326,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
 
       const authorized = await ctx.authorize(input.workspaceId, "readWrite");
       if (authorized instanceof Response) return authorized;
+      await assertTriggerSurveyAttachable(ctx, authorized.workspaceId, input.definition);
 
       const created = await service.createWorkflow(
         { ...input, workspaceId: authorized.workspaceId },
@@ -344,6 +374,9 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
           "A workflow's definition can only be updated while it is draft or disabled."
         );
       }
+      if (input.definition !== undefined) {
+        await assertTriggerSurveyAttachable(ctx, loaded.workspaceId, input.definition, loaded.definition);
+      }
 
       const updated = await service.updateWorkflow(
         { workflowId: params.workflowId, workspaceId: loaded.workspaceId },
@@ -369,6 +402,8 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       if (loaded instanceof Response) return loaded;
 
       const input = ZDuplicateWorkflowInput.parse(await readJsonBody(req, { allowEmpty: true }));
+      // The copy is a new binding of the same survey, so it is refused like a new workflow would be.
+      await assertTriggerSurveyAttachable(ctx, loaded.workspaceId, loaded.definition);
       const created = await service.duplicateWorkflow(loaded, { name: input.name, createdBy: ctx.userId });
 
       const resource = validateOutput(ZWorkflowResource, toWorkflowResource(created));

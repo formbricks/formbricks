@@ -129,7 +129,10 @@ describe("Slug Library Tests", () => {
 
       const result = await getSurveysWithSlugsByOrganizationId("org_123", {
         OR: [
-          { visibility: "workspace", OR: [{ visibilityPending: false }, { visibilityProjectedVersion: 0 }] },
+          {
+            visibility: "workspace",
+            OR: [{ visibilityPending: false }, { visibilityVersion: 1, visibilityProjectedVersion: 0 }],
+          },
           { ownerId: "user_1" },
         ],
       });
@@ -144,7 +147,10 @@ describe("Slug Library Tests", () => {
                 OR: [
                   {
                     visibility: "workspace",
-                    OR: [{ visibilityPending: false }, { visibilityProjectedVersion: 0 }],
+                    OR: [
+                      { visibilityPending: false },
+                      { visibilityVersion: 1, visibilityProjectedVersion: 0 },
+                    ],
                   },
                   { ownerId: "user_1" },
                 ],
