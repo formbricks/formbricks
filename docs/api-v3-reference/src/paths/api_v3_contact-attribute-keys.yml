@@ -57,19 +57,7 @@ get:
                 items:
                   $ref: ../components/schemas/ContactAttributeKeyResource.yml
               meta:
-                type: object
-                required:
-                  - limit
-                  - nextCursor
-                properties:
-                  limit:
-                    type: integer
-                  nextCursor:
-                    type:
-                      - string
-                      - "null"
-                    description: >-
-                      Opaque cursor for the next page. `null` when there are no more results.
+                $ref: ../components/schemas/CursorPaginationMeta.yml
     "400":
       $ref: ../components/responses/V3BadRequest.yml
     "401":

@@ -76,6 +76,23 @@ const getFieldLabel = (
 };
 
 /**
+ * Strip trailing whitespace and colons from a field label.
+ *
+ * The label comes from the author's placeholder, which often already ends with a colon
+ * ("Nombre:"), so the separator we append would otherwise render a double colon. Scanning
+ * backwards keeps this linear in the label's length.
+ */
+const stripTrailingColon = (label: string): string => {
+  let end = label.length;
+  while (end > 0) {
+    const char = label[end - 1];
+    if (char !== ":" && char !== "：" && char.trim() !== "") break;
+    end--;
+  }
+  return label.slice(0, end);
+};
+
+/**
  * Get default error message from rule or validator
  */
 const getDefaultErrorMessage = (
@@ -94,8 +111,9 @@ const getDefaultErrorMessage = (
   // For field-specific validation, prepend the field name
   if (rule.field) {
     const fieldLabel = getFieldLabel(element, rule.field, languageCode);
-    if (fieldLabel) {
-      return `${fieldLabel}: ${baseMessage}`;
+    const normalizedLabel = fieldLabel ? stripTrailingColon(fieldLabel) : undefined;
+    if (normalizedLabel) {
+      return `${normalizedLabel}: ${baseMessage}`;
     }
   }
 
@@ -157,6 +175,29 @@ const validateMultiSelectOtherValue = (
 
   const otherText = value[sentinelIndex + 1];
   if (typeof otherText !== "string" || otherText.trim() === "") {
+    return createRequiredError(t);
+  }
+
+  return null;
+};
+
+// A ranked "Other" stores the respondent's text in its slot, so an empty entry means it was ranked
+// but nothing was typed. Ranking stores no other sentinel, so "" is unambiguous.
+const validateRankingOtherValue = (
+  element: TSurveyElement,
+  value: TResponseDataValue,
+  t: TFunction
+): TValidationError | null => {
+  if (element.type !== TSurveyElementTypeEnum.Ranking || !Array.isArray(value)) {
+    return null;
+  }
+
+  const hasOtherOption = element.choices.some((choice) => choice.id === "other");
+  if (!hasOtherOption) {
+    return null;
+  }
+
+  if (value.some((entry) => typeof entry === "string" && entry.trim() === "")) {
     return createRequiredError(t);
   }
 
@@ -503,6 +544,11 @@ export const validateElementResponse = (
   const multiSelectOtherError = validateMultiSelectOtherValue(element, value, t);
   if (multiSelectOtherError) {
     errors.push(multiSelectOtherError);
+  }
+
+  const rankingOtherError = validateRankingOtherValue(element, value, t);
+  if (rankingOtherError) {
+    errors.push(rankingOtherError);
   }
 
   const invalidOptionError = validateChoiceMembership(element, value, languageCode, t);

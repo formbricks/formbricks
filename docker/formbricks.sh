@@ -15,7 +15,7 @@ write_rustfs_init_script() {
 
   if [ -f "$template_path" ]; then
     cp "$template_path" "$target_path"
-    chmod +x "$target_path"
+    chmod 755 "$target_path"
     return
   fi
 
@@ -27,12 +27,14 @@ write_rustfs_init_script() {
 # one-click/self-hosted installs. packages/storage/src/rustfs-init-bootstrap.test.ts
 # also validates that the generated script stays in sync with this file.
 set -e
+
 rustfs_endpoint_url="${RUSTFS_ENDPOINT_URL:-http://rustfs:9000}"
+
 echo '⏳ Waiting for RustFS to be ready...'
 attempts=0
 max_attempts=30
-until mc alias set rustfs "$rustfs_endpoint_url" "$RUSTFS_ADMIN_USER" "$RUSTFS_ADMIN_PASSWORD" >/dev/null 2>&1 \
-  && mc ls rustfs >/dev/null 2>&1; do
+until rc alias set rustfs "$rustfs_endpoint_url" "$RUSTFS_ADMIN_USER" "$RUSTFS_ADMIN_PASSWORD" >/dev/null 2>&1 \
+  && rc bucket list rustfs >/dev/null 2>&1; do
   attempts=$((attempts + 1))
   if [ $attempts -ge $max_attempts ]; then
     printf '❌ Failed to connect to RustFS after %s attempts\n' $max_attempts
@@ -44,7 +46,7 @@ done
 echo '🔗 RustFS reachable; alias configured.'
 
 echo '🪣 Creating bucket (idempotent)...'
-mc mb rustfs/$RUSTFS_BUCKET_NAME --ignore-existing
+rc bucket create "rustfs/$RUSTFS_BUCKET_NAME" --ignore-existing
 
 if [ -n "${RUSTFS_CORS_ALLOWED_ORIGINS:-}" ]; then
   echo '🌐 Applying bucket CORS configuration...'
@@ -78,7 +80,7 @@ EOF
 </CORSConfiguration>
 EOF
 
-  mc cors set rustfs/$RUSTFS_BUCKET_NAME "$cors_file"
+  rc bucket cors set "rustfs/$RUSTFS_BUCKET_NAME" "$cors_file"
   echo 'CORS configuration applied successfully.'
 fi
 
@@ -102,29 +104,28 @@ cat > /tmp/formbricks-policy.json << EOF
 EOF
 
 echo '🔒 Creating policy (idempotent)...'
-if ! mc admin policy info rustfs "$RUSTFS_POLICY_NAME" >/dev/null 2>&1; then
-  mc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json || \
-    mc admin policy add rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json
+if ! rc admin policy info rustfs "$RUSTFS_POLICY_NAME" >/dev/null 2>&1; then
+  rc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json
   echo 'Policy created successfully.'
 else
   echo 'Policy already exists, skipping creation.'
 fi
 
 echo '👤 Creating service user (idempotent)...'
-if ! mc admin user info rustfs "$RUSTFS_SERVICE_USER" >/dev/null 2>&1; then
-  mc admin user add rustfs "$RUSTFS_SERVICE_USER" "$RUSTFS_SERVICE_PASSWORD"
+if ! rc admin user info rustfs "$RUSTFS_SERVICE_USER" >/dev/null 2>&1; then
+  rc admin user add rustfs "$RUSTFS_SERVICE_USER" "$RUSTFS_SERVICE_PASSWORD"
   echo 'User created successfully.'
 else
   echo 'User already exists, skipping creation.'
 fi
 
 echo '🔗 Attaching policy to user (idempotent)...'
-mc admin policy attach rustfs "$RUSTFS_POLICY_NAME" --user "$RUSTFS_SERVICE_USER"
+rc admin policy attach rustfs "$RUSTFS_POLICY_NAME" --user "$RUSTFS_SERVICE_USER"
 
 echo '✅ RustFS setup complete!'
 RUSTFS_SCRIPT_EOF
 
-  chmod +x "$target_path"
+  chmod 755 "$target_path"
 }
 
 upsert_dotenv_var() {
@@ -1042,7 +1043,7 @@ EOF
     if [[ $insert_rustfs_init == "y" ]]; then
       cat >> "$services_snippet_file" << EOF
   rustfs-init:
-    image: quay.io/minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868
+    image: rustfs/rc:v0.1.36@sha256:ab024bfebee49a750ce886b4c70963ccd9ddaa03f491704a90710641d7a26699
     depends_on:
       - rustfs
     environment:
@@ -1307,6 +1308,20 @@ migrate_legacy_valkey_image() {
 update_formbricks() {
   echo "🔄 Updating Formbricks..."
   cd formbricks
+
+  local compose_services
+  if ! compose_services=$(sudo docker compose config --services); then
+    echo "❌ Could not render docker-compose.yml. No images were pulled and no services were stopped." >&2
+    echo "Fix the Compose error, run 'docker compose config', and retry the update." >&2
+    exit 1
+  fi
+
+  if ! printf '%s\n' "$compose_services" | grep -Fxq "hub-worker"; then
+    echo "❌ This installation does not contain the required Hub worker service." >&2
+    echo "Your customized Compose file was not changed. Merge the release-matched hub-worker service, validate it with 'docker compose config', and retry." >&2
+    echo "https://formbricks.com/docs/self-hosting/advanced/migration#hub-worker-required-for-docker" >&2
+    exit 1
+  fi
 
   migrate_legacy_valkey_image docker-compose.yml
 

@@ -53,6 +53,27 @@ describe("resolveSurveyLanguageCode", () => {
     expect(resolveSurveyLanguageCode("en-US", survey)).toBe("default");
   });
 
+  test("serves a sibling variant of the requested language over the survey's default", () => {
+    // A reader of Hong Kong Chinese reads Traditional, so a survey offering Traditional and Simplified
+    // must serve the Traditional one rather than dropping to its English default.
+    const chinese = surveyWith([
+      language("en-US", { isDefault: true }),
+      language("zh-Hans-CN"),
+      language("zh-Hant-TW"),
+    ]);
+    expect(resolveSurveyLanguageCode("zh-Hant-HK", chinese)).toBe("zh-Hant-TW");
+    // The script is never crossed: Simplified is reachable only from a Simplified request.
+    expect(resolveSurveyLanguageCode("zh-CN", chinese)).toBe("zh-Hans-CN");
+  });
+
+  test("keeps a disabled sibling out of the fallback", () => {
+    const traditionalOff = surveyWith([
+      language("en-US", { isDefault: true }),
+      language("zh-Hant-TW", { enabled: false }),
+    ]);
+    expect(resolveSurveyLanguageCode("zh-Hant-HK", traditionalOff)).toBe("default");
+  });
+
   test("prefers an exact code over another language's alias", () => {
     // Without the precedence, the alias row could shadow the row whose code was asked for.
     const shadowed = surveyWith([

@@ -256,6 +256,7 @@ export const SummaryList = ({
               <RankingSummary
                 key={elementSummary.element.id}
                 elementSummary={elementSummary}
+                surveyType={survey.type}
                 survey={survey}
               />
             );

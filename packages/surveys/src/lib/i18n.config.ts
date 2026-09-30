@@ -5,32 +5,9 @@ import {
   DEFAULT_SURVEY_LANGUAGE_CODE,
   SURVEY_RUNTIME_LANGUAGE_CODES,
   resolveSurveyLanguageDefaultTag,
+  resolveSurveyRuntimeBundle,
 } from "@formbricks/i18n-utils/survey-runtime-languages";
-import arEGTranslations from "../../locales/ar-EG.json";
-import daDKTranslations from "../../locales/da-DK.json";
-import deDETranslations from "../../locales/de-DE.json";
 import enUSTranslations from "../../locales/en-US.json";
-import esESTranslations from "../../locales/es-ES.json";
-import etEETranslations from "../../locales/et-EE.json";
-import frFRTranslations from "../../locales/fr-FR.json";
-import hiINTranslations from "../../locales/hi-IN.json";
-import huHUTranslations from "../../locales/hu-HU.json";
-import idIDTranslations from "../../locales/id-ID.json";
-import itITTranslations from "../../locales/it-IT.json";
-import jaJPTranslations from "../../locales/ja-JP.json";
-import kmKHTranslations from "../../locales/km-KH.json";
-import neNPTranslations from "../../locales/ne-NP.json";
-import nlNLTranslations from "../../locales/nl-NL.json";
-import ptBRTranslations from "../../locales/pt-BR.json";
-import roROTranslations from "../../locales/ro-RO.json";
-import ruRUTranslations from "../../locales/ru-RU.json";
-import svSETranslations from "../../locales/sv-SE.json";
-import trTRTranslations from "../../locales/tr-TR.json";
-import urPKTranslations from "../../locales/ur-PK.json";
-import uzUZTranslations from "../../locales/uz-UZ.json";
-import viVNTranslations from "../../locales/vi-VN.json";
-import zhHansCNTranslations from "../../locales/zh-Hans-CN.json";
-import zhHantTWTranslations from "../../locales/zh-Hant-TW.json";
 
 /**
  * Map any requested language tag to the bundle we actually ship, then English.
@@ -55,35 +32,106 @@ i18n
     fallbackLng: resolveFallbackBundles,
     supportedLngs: [...SURVEY_RUNTIME_LANGUAGE_CODES],
 
+    // English only. Every other bundle is fetched on demand by `loadLanguage` — all 38 inlined cost
+    // 254 kB minified (21% of the gzipped widget) to serve one language per respondent. English stays
+    // bundled because it is `fallbackLng`: a failed or skipped fetch then renders English strings
+    // rather than raw translation keys.
     resources: {
-      "ar-EG": { translation: arEGTranslations },
-      "da-DK": { translation: daDKTranslations },
-      "de-DE": { translation: deDETranslations },
       "en-US": { translation: enUSTranslations },
-      "es-ES": { translation: esESTranslations },
-      "et-EE": { translation: etEETranslations },
-      "fr-FR": { translation: frFRTranslations },
-      "hi-IN": { translation: hiINTranslations },
-      "hu-HU": { translation: huHUTranslations },
-      "id-ID": { translation: idIDTranslations },
-      "it-IT": { translation: itITTranslations },
-      "ja-JP": { translation: jaJPTranslations },
-      "km-KH": { translation: kmKHTranslations },
-      "ne-NP": { translation: neNPTranslations },
-      "nl-NL": { translation: nlNLTranslations },
-      "pt-BR": { translation: ptBRTranslations },
-      "ro-RO": { translation: roROTranslations },
-      "ru-RU": { translation: ruRUTranslations },
-      "sv-SE": { translation: svSETranslations },
-      "tr-TR": { translation: trTRTranslations },
-      "ur-PK": { translation: urPKTranslations },
-      "uz-UZ": { translation: uzUZTranslations },
-      "vi-VN": { translation: viVNTranslations },
-      "zh-Hans-CN": { translation: zhHansCNTranslations },
-      "zh-Hant-TW": { translation: zhHantTWTranslations },
     },
 
     interpolation: { escapeValue: false },
   });
+
+/**
+ * Where `loadLanguage` fetches bundles from — `{appUrl}/js/locales`, set once from the host app's
+ * `appUrl` before the first render (see `src/index.ts`).
+ *
+ * It has to be absolute rather than a relative `/js/locales`: the mobile SDKs load this renderer into
+ * a WebView with a null base URL (`location.href` is `about:blank`, see `browser-context.ts`), where a
+ * root-relative path resolves to nothing. Empty until set, and `loadLanguage` then no-ops into the
+ * English fallback rather than firing a request at an unknown origin.
+ */
+let localeBaseUrl = "";
+
+/**
+ * Point the loader at a deployment, from the `appUrl` the host app renders with. Both production
+ * callers pass one (the SDK from its config, the link survey from the public domain); the preview and
+ * editor do not, and fall back to a path relative to the app's own origin, which is where they render.
+ */
+export const setLocaleBaseUrl = (appUrl: string | undefined): void => {
+  localeBaseUrl = `${appUrl ?? ""}/js/locales`;
+};
+
+/**
+ * Cache-busts the locale fetches against the bundle that asks for them.
+ *
+ * `/js/*` is served with `s-maxage=2592000` (30 days, see `apps/web/next.config.mjs`). While the
+ * strings were compiled into the bundle the two could not disagree; fetched separately, a new bundle
+ * can meet a month-old cached bundle and render English for any key added since. The token is a hash
+ * of the locale sources, injected at build time, so the URL changes when — and only when — the strings
+ * do.
+ */
+declare const __FB_LOCALES_HASH__: string;
+const localesVersion = typeof __FB_LOCALES_HASH__ === "string" ? __FB_LOCALES_HASH__ : "dev";
+
+/** In-flight fetches, keyed by bundle tag, so concurrent callers share one request. */
+const pendingLoads = new Map<string, Promise<void>>();
+
+/**
+ * Ensure the strings for a language are in memory, fetching the bundle if this is the first ask.
+ *
+ * Resolves the requested tag to the bundle that actually serves it before doing anything, because a
+ * survey language is stored un-canonicalized (`getI18nLanguage` returns the survey's own code) and
+ * most region variants ship no file of their own: `de-AT`, `en-GB` and `pt-PT` are served by
+ * `de-DE.json`, `en-US.json` and `pt-BR.json`. Fetching the requested tag instead would 404 on every
+ * one of them and silently fall back to English.
+ *
+ * Resolves rather than rejects when a language has no bundle, the base URL is unset, or the request
+ * fails — the caller renders, and i18next falls through to the bundled English strings.
+ */
+export const loadLanguage = async (code: string): Promise<void> => {
+  const bundle = resolveSurveyRuntimeBundle(code);
+  if (!bundle || bundle === DEFAULT_SURVEY_LANGUAGE_CODE) return;
+  if (i18n.hasResourceBundle(bundle, "translation")) return;
+
+  const pending = pendingLoads.get(bundle);
+  if (pending) return pending;
+
+  if (!localeBaseUrl) return;
+
+  const load = (async () => {
+    try {
+      const response = await fetch(`${localeBaseUrl}/${bundle}.json?v=${localesVersion}`);
+      if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
+      i18n.addResourceBundle(bundle, "translation", await response.json());
+    } catch {
+      // eslint-disable-next-line no-console -- the survey still renders; this is the only trace of why it is in English
+      console.warn(`[formbricks] Could not load translations for "${bundle}". Falling back to English.`);
+    } finally {
+      pendingLoads.delete(bundle);
+    }
+  })();
+
+  pendingLoads.set(bundle, load);
+  return load;
+};
+
+/** Whether the strings for a language are already in memory — no fetch, no await. */
+export const hasLanguageLoaded = (code: string): boolean => {
+  const bundle = resolveSurveyRuntimeBundle(code);
+  if (!bundle || bundle === DEFAULT_SURVEY_LANGUAGE_CODE) return true;
+  return i18n.hasResourceBundle(bundle, "translation");
+};
+
+/**
+ * The tag to hand `i18n.changeLanguage` for a survey language: the bundle `loadLanguage` fetched for it.
+ *
+ * Passing the requested tag lets i18next pick the bundle itself, and it takes the first `supportedLngs`
+ * entry sharing the base language — so every Traditional Chinese tag (`zh-TW`, `zh-Hant-HK`) lands on
+ * `zh-Hans-CN`, a bundle nobody fetched, and renders English. A tag with no bundle is passed through and
+ * falls back to English as before.
+ */
+export const toI18nLanguage = (code: string): string => resolveSurveyRuntimeBundle(code) ?? code;
 
 export default i18n;

@@ -172,7 +172,7 @@ External Secrets:
 ---
 
 {{- if .Values.authzed.enabled }}
-AuthZed / SpiceDB Operations:
+SpiceDB Authorization Operations:
 
    SpiceDB is configured in `{{ .Values.authzed.mode }}` mode. It is not part of the Formbricks
    readiness probe, and its gRPC endpoint should remain private.

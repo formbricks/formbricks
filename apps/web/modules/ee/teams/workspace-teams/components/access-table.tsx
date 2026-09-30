@@ -2,7 +2,7 @@
 
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { TeamPermissionMapping } from "@/modules/ee/teams/utils/teams";
+import { TeamPermissionTranslationKeys } from "@/modules/ee/teams/utils/teams";
 import { TWorkspaceTeam } from "@/modules/ee/teams/workspace-teams/types/team";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
@@ -36,7 +36,7 @@ const getWorkspaceTeamColumns = (t: TFunction): TSettingsTableColumn<TWorkspaceT
     header: t("workspace.teams.permission"),
     headerClassName: "w-[25%]",
     cellClassName: "capitalize",
-    cell: (team) => TeamPermissionMapping[team.permission],
+    cell: (team) => t(TeamPermissionTranslationKeys[team.permission]),
   },
 ];
 

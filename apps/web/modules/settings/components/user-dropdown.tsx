@@ -26,7 +26,6 @@ import {
 interface UserDropdownProps {
   user: TUser;
   organizationId: string;
-  publicDomain: string;
   isCollapsed?: boolean;
   isTextVisible?: boolean;
   className?: string;
@@ -43,7 +42,6 @@ interface UserDropdownProps {
 export const UserDropdown = ({
   user,
   organizationId,
-  publicDomain,
   isCollapsed = false,
   isTextVisible = false,
   className,
@@ -136,7 +134,10 @@ export const UserDropdown = ({
         )}
         <DropdownMenuItem
           onClick={async () => {
-            const loginUrl = `${publicDomain}/auth/login`;
+            // Relative on purpose: the admin app and the public survey domain are different hosts when
+            // PUBLIC_URL is set, and Proxy 404s every non-survey route on the public one. An absolute
+            // URL built from publicDomain sent people to a 404 instead of the login page.
+            const loginUrl = "/auth/login";
             const route = await signOutWithAudit({
               reason: "user_initiated",
               redirectUrl: loginUrl,

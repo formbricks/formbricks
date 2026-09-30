@@ -314,7 +314,7 @@ export const ResponseOptionsCard = ({
         "w-full space-y-2 rounded-lg border border-slate-300 bg-white"
       )}>
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
-        <div className="inline-flex px-4 py-4">
+        <button type="button" className="inline-flex px-4 py-4 text-left">
           <div className="flex items-center pr-5 pl-2">
             <CheckIcon
               strokeWidth={3}
@@ -327,7 +327,7 @@ export const ResponseOptionsCard = ({
               {t("workspace.surveys.edit.response_limits_redirections_and_more")}
             </p>
           </div>
-        </div>
+        </button>
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent className="flex flex-col overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
         <hr className="py-1 text-slate-600" />

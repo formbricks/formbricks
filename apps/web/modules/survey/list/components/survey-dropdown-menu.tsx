@@ -26,7 +26,6 @@ import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
-import { copySurveyLink } from "@/modules/survey/lib/client-utils";
 import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
 import { CopySurveyModal } from "@/modules/survey/list/components/copy-survey-modal";
 import { RenameSurveyModal } from "@/modules/survey/list/components/rename-survey-modal";
@@ -179,7 +178,7 @@ export const SurveyDropDownMenu = ({
     try {
       e.preventDefault();
       setIsDropDownOpen(false);
-      await navigator.clipboard.writeText(copySurveyLink(surveyLink));
+      await navigator.clipboard.writeText(surveyLink);
       toast.success(t("common.copied_to_clipboard"));
     } catch (error) {
       logger.error(error);

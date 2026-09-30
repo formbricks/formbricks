@@ -112,6 +112,11 @@ export const ZWorkspaceUpdateInput = z.object({
   overlay: ZOverlay.optional(),
   styling: ZWorkspaceStyling.optional(),
   logo: ZLogo.optional(),
+  // Optimistic-concurrency baseline: the `updatedAt` the caller loaded. Only surfaces that edit a
+  // composite field need it — `logo` carries both a url and a bgColor, so two saves from a stale
+  // page can restore an url the other one just deleted the object for. Coerced because a server
+  // action receives it as a string.
+  expectedUpdatedAt: z.coerce.date().optional(),
   teamIds: z.array(z.string()).optional(),
   customHeadScripts: z.string().nullish(),
 });

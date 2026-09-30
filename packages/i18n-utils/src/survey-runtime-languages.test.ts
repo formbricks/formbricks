@@ -104,3 +104,84 @@ describe("isSurveyRuntimeLanguage", () => {
     expect(isSurveyRuntimeLanguage(null)).toBe(false);
   });
 });
+
+describe("the European market matrix ships runtime strings end to end (ENG-3221)", () => {
+  // Every locale a pan-European rollout asks for. A tag missing from this set renders translated
+  // questions wrapped in English buttons and validation messages (ENG-2325) — the failure this list
+  // exists to catch, since nothing else fails when a market is simply absent.
+  const europeanMarketLocales = [
+    "en-US",
+    "en-AU",
+    "en-GB",
+    "en-IE",
+    "de-DE",
+    "de-AT",
+    "de-CH",
+    "de-LU",
+    "fr-FR",
+    "fr-BE",
+    "fr-CH",
+    "fr-LU",
+    "it-IT",
+    "it-CH",
+    "nl-NL",
+    "nl-BE",
+    "da-DK",
+    "fi-FI",
+    "nb-NO",
+    "sv-SE",
+    "pl-PL",
+    "cs-CZ",
+    "sk-SK",
+    "hu-HU",
+    "hr-HR",
+    "sl-SI",
+    "ro-RO",
+    "bg-BG",
+    "lt-LT",
+    "lv-LV",
+    "et-EE",
+    "es-ES",
+    "pt-PT",
+    "el-GR",
+    "tr-TR",
+    "uk-UA",
+  ];
+
+  test.each(europeanMarketLocales)("%s resolves to a shipped bundle", (code) => {
+    expect(isSurveyRuntimeLanguage(code)).toBe(true);
+  });
+
+  test("the newly shipped languages serve their own bundle rather than English", () => {
+    for (const code of [
+      "bg-BG",
+      "cs-CZ",
+      "el-GR",
+      "fi-FI",
+      "hr-HR",
+      "lt-LT",
+      "lv-LV",
+      "pl-PL",
+      "sk-SK",
+      "sl-SI",
+      "uk-UA",
+    ]) {
+      expect(resolveSurveyRuntimeBundle(code)).toBe(code);
+    }
+  });
+
+  test("both Norwegian spellings ship, so neither falls through to English", () => {
+    // `nb` (Bokmål) and `no` (the macrolanguage) canonicalize to different tags, so a bundle for one
+    // does not serve the other — SDKs send both spellings.
+    expect(resolveSurveyRuntimeBundle("nb-NO")).toBe("nb-NO");
+    expect(resolveSurveyRuntimeBundle("no-NO")).toBe("no-NO");
+    expect(resolveSurveyRuntimeBundle("no")).toBe("no-NO");
+  });
+
+  test("region variants with no bundle of their own borrow their language's", () => {
+    expect(resolveSurveyRuntimeBundle("de-LU")).toBe("de-DE");
+    expect(resolveSurveyRuntimeBundle("fr-LU")).toBe("fr-FR");
+    expect(resolveSurveyRuntimeBundle("it-CH")).toBe("it-IT");
+    expect(resolveSurveyRuntimeBundle("nl-BE")).toBe("nl-NL");
+  });
+});

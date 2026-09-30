@@ -1,4 +1,4 @@
-import { DatabaseError } from "@formbricks/types/errors";
+import { handleApiError } from "@/app/lib/api/handle-api-error";
 import { responses } from "@/app/lib/api/response";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -29,12 +29,7 @@ export const GET = withV1ApiWrapper({
         response: responses.successResponse(attributes),
       };
     } catch (error) {
-      if (error instanceof DatabaseError) {
-        return {
-          response: responses.badRequestResponse(error.message),
-        };
-      }
-      throw error;
+      return handleApiError(error);
     }
   },
 });

@@ -407,6 +407,18 @@ const parsedEnv = createEnv({
     // Cloud-only: when "1", the personal-email sign-up block also applies to invited users.
     // Default (unset/"0") exempts invites — see isSignupEmailDomainBlocked.
     SIGNUP_DOMAIN_CHECK_ON_INVITES: z.enum(["1", "0"]).optional(),
+    /**
+     * Grace window for single-use links minted before the ENG-2758 fix, which carry no `suToken`.
+     *
+     * An ISO 8601 date (`YYYY-MM-DD`); unsigned **encrypted** links are accepted until 00:00 UTC on
+     * it, and rejected from then on. Unset means no grace at all, which is the secure default.
+     *
+     * While it is set the deployment accepts a single-use credential that is bound to no survey, so
+     * a link issued for one survey opens any other on the same instance. On a multi-tenant
+     * deployment that is cross-organisation. Set it only on a single-tenant instance, only long
+     * enough to re-issue the outstanding links, and never without an explicit security decision.
+     */
+    SINGLE_USE_LEGACY_UNSIGNED_UNTIL: z.iso.date().optional(),
     BULLMQ_WORKER_CONCURRENCY: z.coerce.number().int().min(1).optional(),
     BULLMQ_WORKER_COUNT: z.coerce.number().int().min(1).optional(),
     BULLMQ_EXTERNAL_WORKER_ENABLED: z.enum(["1", "0"]).optional(),
@@ -618,6 +630,7 @@ const parsedEnv = createEnv({
     AUTHZED_SYSTEM_KEY: process.env.AUTHZED_SYSTEM_KEY,
     AUTHZED_TOKEN: process.env.AUTHZED_TOKEN,
     SIGNUP_DOMAIN_CHECK_ON_INVITES: process.env.SIGNUP_DOMAIN_CHECK_ON_INVITES,
+    SINGLE_USE_LEGACY_UNSIGNED_UNTIL: process.env.SINGLE_USE_LEGACY_UNSIGNED_UNTIL,
     BULLMQ_EXTERNAL_WORKER_ENABLED: process.env.BULLMQ_EXTERNAL_WORKER_ENABLED,
     BULLMQ_WORKER_CONCURRENCY: process.env.BULLMQ_WORKER_CONCURRENCY,
     BULLMQ_WORKER_COUNT: process.env.BULLMQ_WORKER_COUNT,

@@ -1,0 +1,38 @@
+type: object
+description: >-
+  The pagination half of a v3 list's `meta`, shared by every paginated collection.
+
+
+  Deliberately open, and never an endpoint's `meta` by itself: an endpoint composes it with `allOf`
+  and closes the result with `unevaluatedProperties: false`. A base that closed itself could not be
+  extended — inside an `allOf`, `additionalProperties: false` sees a sibling branch's properties as
+  additional and rejects them. An endpoint that adds nothing still wraps it, so no `meta` anywhere
+  is open.
+
+
+  Every field here is `required`. A shared envelope that makes its fields optional is how v3's
+  predecessor stopped honouring its own pagination contract without the schema gate noticing
+  (ENG-2622): `meta: {}` — or no `meta` at all — validated cleanly while the endpoint returned
+  nothing.
+required:
+  - limit
+  - nextCursor
+properties:
+  limit:
+    type: integer
+    minimum: 1
+    description: >-
+      The page size actually applied. Carries no `maximum`: it echoes what the server used, it does
+      not bound what may be asked for. The request-side bound is the `limit` query parameter on the
+      operation itself and differs per collection — read it there. A shared description cannot state
+      it without being wrong for some of the operations that compose this base.
+  nextCursor:
+    type:
+      - string
+      - "null"
+    description: >-
+      Opaque cursor for the next page. `null` when there are no more results — the only reliable
+      end-of-collection signal, since the server may return fewer items than `limit` without the
+      collection being exhausted. Pass it back verbatim: the encoding is deliberately unspecified
+      and may change without notice, so a client that decodes or constructs one is relying on
+      something this contract does not promise.

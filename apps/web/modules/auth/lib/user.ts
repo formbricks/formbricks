@@ -5,6 +5,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TUserCreateInput, TUserUpdateInput, ZUserEmail, ZUserUpdateInput } from "@formbricks/types/user";
+import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { retryOnDeadlock } from "@/lib/utils/prisma-deadlock";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
@@ -91,13 +92,33 @@ export const updateUserLastLoginAt = async (email: string) => {
   }
 };
 
+/**
+ * Look a user up by email address.
+ *
+ * The address is canonicalized before the query rather than at each call site. Postgres compares
+ * `text` case-sensitively, so a raw `findFirst` on `email` disagrees with Better Auth, which stores
+ * and looks up `email.toLowerCase()` — and Better Auth is who we hand the result to. That
+ * disagreement is the whole defect: `forgotPasswordAction` passed the form input through unchanged,
+ * so `Alice@example.com` matched no row, the action took its enumeration-safe silent-skip branch, and
+ * the user was told to check an inbox nothing had been sent to (ENG-3257).
+ *
+ * Normalizing here, not in the callers, is deliberate. ENG-1548 was the same defect and was fixed by
+ * lowercasing at the call sites it knew about; this call site was not one of them, and nothing made
+ * that visible. Inside the query, every present and future caller is correct by construction.
+ *
+ * This is exact parity with Better Auth, NOT a case-insensitive match. `mode: "insensitive"` would be
+ * strictly worse here: it would find a user whose STORED address contains capitals, then hand that
+ * address back to Better Auth, which lowercases it and finds nobody — mailing nothing while the audit
+ * trail records a password reset that happened. Those accounts need the stored addresses normalized
+ * (deferred; it must reconcile case-variant duplicates first), not a lookup that hides them.
+ */
 export const getUserByEmail = reactCache(async (email: string) => {
   validateInputs([email, ZUserEmail]);
 
   try {
     const user = await prisma.user.findFirst({
       where: {
-        email,
+        email: normalizeEmailForComparison(email),
       },
       select: {
         id: true,

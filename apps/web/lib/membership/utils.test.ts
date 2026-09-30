@@ -1,6 +1,11 @@
+import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
-import { TOrganizationRole } from "@formbricks/types/memberships";
-import { getAccessFlags } from "./utils";
+import { type TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
+import enUS from "@/locales/en-US.json";
+import { getAccessFlags, getOrganizationRoleLabels } from "./utils";
+
+const lookup = (key: string): unknown =>
+  key.split(".").reduce<unknown>((node, part) => (node as Record<string, unknown>)?.[part], enUS);
 
 describe("getAccessFlags", () => {
   test("should return correct flags for owner role", () => {
@@ -54,6 +59,33 @@ describe("getAccessFlags", () => {
       isOwner: false,
       isBilling: false,
       isMember: false,
+    });
+  });
+});
+
+describe("getOrganizationRoleLabels", () => {
+  /** Echoing the key back makes an unresolved key visible instead of silently rendering blank. */
+  const echo = ((key: string) => key) as unknown as TFunction;
+
+  test("covers every role in the enum", () => {
+    expect(Object.keys(getOrganizationRoleLabels(echo)).sort()).toEqual(
+      [...ZOrganizationRole.options].sort()
+    );
+  });
+
+  test("every key it resolves exists in en-US", () => {
+    for (const key of Object.values(getOrganizationRoleLabels(echo))) {
+      expect(lookup(key)).toBeTypeOf("string");
+    }
+  });
+
+  test("renders the English labels", () => {
+    const labels = getOrganizationRoleLabels(((key: string) => lookup(key)) as unknown as TFunction);
+    expect(labels).toEqual({
+      owner: "Owner",
+      manager: "Manager",
+      member: "Member",
+      billing: "Billing",
     });
   });
 });

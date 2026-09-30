@@ -21,8 +21,9 @@ import {
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { isDeepEqual } from "@/lib/utils/object";
+import { reportStaleServerActionError } from "@/lib/utils/stale-server-action";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
-import { hasUnsavedSurveyChanges } from "@/modules/survey/editor/lib/unsaved-changes";
+import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
@@ -30,7 +31,7 @@ import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { updateSurveyAction, updateSurveyDraftAction } from "../actions";
-import { isMissingRequiredTrigger, isSurveyValid } from "../lib/validation";
+import { describeElementIssue, isMissingRequiredTrigger, isSurveyValid } from "../lib/validation";
 import { AutoSaveIndicator } from "./auto-save-indicator";
 
 interface SurveyMenuBarProps {
@@ -120,6 +121,25 @@ export const SurveyMenuBar = ({
       isSuccessfullySavedRef.current = false;
     }
   }, [survey]);
+
+  // An autosave sets the flag above without producing the `survey` prop that clears it, so a later
+  // edit would keep the unload warning suppressed and let a reload discard it (ENG-2330).
+  useEffect(() => {
+    // Guarded rather than folded into the condition: this runs on every keystroke, and there is
+    // nothing to retire while the bypass is not set.
+    if (!isSuccessfullySavedRef.current) {
+      return;
+    }
+
+    const isBypassValid = isJustSavedBypassValid(
+      isSuccessfullySavedRef.current,
+      hasUnsavedSurveyChanges(localSurvey, [survey, lastSavedSurveyRef.current])
+    );
+
+    if (!isBypassValid) {
+      isSuccessfullySavedRef.current = false;
+    }
+  }, [localSurvey, survey]);
 
   useEffect(() => {
     const warningText = t("workspace.surveys.edit.unsaved_changes_warning");
@@ -334,6 +354,18 @@ export const SurveyMenuBar = ({
         return false;
       }
 
+      // Anything else reaches here with a raw Zod default ("Invalid input", "Invalid input: expected
+      // string, received undefined") that names no field. The issue path does, so build the message from it.
+      const elementIssue = describeElementIssue(firstError, t, locale);
+
+      if (elementIssue) {
+        toast.error(elementIssue.message, { className: "w-fit max-w-md!" });
+        if (elementIssue.languageCode && elementIssue.languageCode !== "default") {
+          setActiveId("language");
+        }
+        return false;
+      }
+
       toast.error(firstError.message);
       return false;
     }
@@ -386,6 +418,14 @@ export const SurveyMenuBar = ({
           setLastAutoSaved(new Date());
         }
       } catch (e) {
+        // A stale bundle's action id is rejected by the new deployment: hand it to the reload
+        // prompt rather than failing this tick silently, and stop the interval -- nothing this
+        // bundle sends is accepted until the tab reloads, so retrying every 10s only burns
+        // requests behind a prompt that is already up.
+        if (reportStaleServerActionError(e)) {
+          clearInterval(intervalId);
+          return;
+        }
         console.error(e);
       } finally {
         isAutoSavingRef.current = false;
@@ -420,8 +460,13 @@ export const SurveyMenuBar = ({
       }
       return true;
     } catch (e) {
-      console.error(e);
       setIsSurveySaving(false);
+      // The reload prompt already explains a stale-deployment failure, so don't also claim the
+      // save itself went wrong.
+      if (reportStaleServerActionError(e)) {
+        return false;
+      }
+      console.error(e);
       toast.error(t("workspace.surveys.edit.error_saving_changes"));
       return false;
     }
@@ -492,8 +537,11 @@ export const SurveyMenuBar = ({
 
       return true;
     } catch (e) {
-      console.error(e);
       setIsSurveySaving(false);
+      if (reportStaleServerActionError(e)) {
+        return false;
+      }
+      console.error(e);
       toast.error(t("workspace.surveys.edit.error_saving_changes"));
       return false;
     }
@@ -575,10 +623,13 @@ export const SurveyMenuBar = ({
       isSuccessfullySavedRef.current = true;
       router.push(`${workspaceBasePath}/surveys/${localSurvey.id}/summary?success=true`);
     } catch (error) {
-      console.error(error);
-      toast.error(t("workspace.surveys.edit.error_publishing_survey"));
       isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
+      if (reportStaleServerActionError(error)) {
+        return;
+      }
+      console.error(error);
+      toast.error(t("workspace.surveys.edit.error_publishing_survey"));
     }
   };
 
@@ -627,10 +678,13 @@ export const SurveyMenuBar = ({
       isSuccessfullySavedRef.current = true;
       router.push(`${workspaceBasePath}/surveys/${localSurvey.id}/summary?scheduled=true`);
     } catch (error) {
-      console.error(error);
-      toast.error(t("workspace.surveys.edit.error_publishing_survey"));
       isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
+      if (reportStaleServerActionError(error)) {
+        return;
+      }
+      console.error(error);
+      toast.error(t("workspace.surveys.edit.error_publishing_survey"));
     }
   };
 
@@ -657,6 +711,7 @@ export const SurveyMenuBar = ({
             setLocalSurvey(updatedSurvey);
           }}
           className="h-8 w-72 border-white py-0 hover:border-slate-200"
+          aria-label={t("workspace.surveys.rename_survey_placeholder")}
         />
       </div>
 

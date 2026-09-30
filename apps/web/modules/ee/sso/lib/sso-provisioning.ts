@@ -41,6 +41,11 @@ export type TSsoProvisioningDecision =
        * every other path, where the org was read here and the role is always `member`.
        */
       useDefaultOrganization?: boolean;
+      /**
+       * ENG-2247: the fresh-instance exception, and nothing else, admitted this sign-up — so the row it
+       * creates carries the single-use bootstrap marker. Absent on every other provision path.
+       */
+      isBootstrapAdmin?: boolean;
     };
 
 /**
@@ -78,6 +83,20 @@ const validateSsoInviteToken = async (
       return "invite_token_validation_error"; // "missing" | "verification_error"
   }
 };
+
+/**
+ * ENG-2247: whether the fresh-instance exception — and nothing else — is what admits this sign-up, so
+ * the row it creates carries the single-use bootstrap marker.
+ *
+ * `isFirstUser` alone is not enough. Its caller's branch admits everyone once multi-org is on, where
+ * freshness is incidental rather than the grant, and marking there would make the second SSO account
+ * ever created collide on the unique index.
+ *
+ * A named function rather than an inline expression so `gateSsoProvisioning` stays inside the
+ * cognitive-complexity budget — the same reason `validateSsoInviteToken` sits outside it.
+ */
+const admitsAsBootstrapAdmin = (isFirstUser: boolean, isMultiOrgEnabled: boolean): boolean =>
+  isFirstUser && !isMultiOrgEnabled;
 
 /**
  * Gate for SSO just-in-time user provisioning — the orphan-safe, WRITE-FREE decision logic for the
@@ -142,7 +161,13 @@ export const gateSsoProvisioning = async ({
   // Fresh instance or multi-org: create the user with no org auto-assignment (handled by onboarding
   // / explicit invites elsewhere).
   if (isFirstUser || isMultiOrgEnabled) {
-    return { action: "provision", organizationId: null, assignToDefaultTeam: false, signupSource };
+    return {
+      action: "provision",
+      organizationId: null,
+      assignToDefaultTeam: false,
+      signupSource,
+      isBootstrapAdmin: admitsAsBootstrapAdmin(isFirstUser, isMultiOrgEnabled),
+    };
   }
 
   // Single-org, non-fresh — refuse to auto-provision into an arbitrary org without a default team.

@@ -3,6 +3,7 @@
 import { isAPIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { z } from "zod";
+import { logger } from "@formbricks/logger";
 import {
   INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE,
   InvalidInputError,
@@ -13,6 +14,7 @@ import {
 import { ZUserPassword } from "@formbricks/types/user";
 import { PASSWORD_RESET_DISABLED } from "@/lib/constants";
 import { actionClient } from "@/lib/utils/action-client";
+import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { auth } from "@/modules/auth/lib/auth";
 import { isPasswordCompromisedError } from "@/modules/auth/lib/better-auth-hibp";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -52,6 +54,16 @@ export const resetPasswordAction = actionClient
         throw new InvalidPasswordResetTokenError(
           INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE,
           "invalid_or_expired"
+        );
+      }
+      // ENG-3258: Better Auth could not see the user's credential row and tried to create a second one.
+      // The token is already spent by then, so this is an invalid link, not a server error. Logged
+      // because the sign-in / reset-request heal should have made it impossible.
+      if (isUniqueConstraintError(error)) {
+        logger.error({ error }, "Password reset collided with an existing credential account");
+        throw new InvalidPasswordResetTokenError(
+          INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE,
+          "credential_account_conflict"
         );
       }
       throw error;

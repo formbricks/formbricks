@@ -1,5 +1,7 @@
 import { APIError } from "better-auth/api";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { Prisma } from "@formbricks/database/prisma";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import {
   INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE,
   InvalidInputError,
@@ -115,6 +117,21 @@ describe("resetPasswordAction", () => {
     await expect(result).rejects.toBeInstanceOf(InvalidInputError);
     await expect(result).rejects.toThrow(PASSWORD_COMPROMISED_ERROR_CODE);
     expect(auth.api.resetPassword).toHaveBeenCalledTimes(1);
+  });
+
+  test("maps a unique-constraint violation to the invalid-reset-token error, not a server error", async () => {
+    // ENG-3258: Better Auth could not see the credential row, so it tried to create a second one. The
+    // token is already spent by then, so the user must get the invalid-link message.
+    vi.mocked(auth.api.resetPassword).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+        code: PrismaErrorType.UniqueConstraintViolation,
+        clientVersion: "test",
+      })
+    );
+
+    const result = resetPasswordAction({ parsedInput } as never);
+    await expect(result).rejects.toBeInstanceOf(InvalidPasswordResetTokenError);
+    await expect(result).rejects.toThrow(INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE);
   });
 
   test("propagates an unexpected (non-APIError) error unchanged", async () => {

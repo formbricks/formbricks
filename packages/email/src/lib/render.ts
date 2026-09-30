@@ -67,6 +67,7 @@ export async function renderSsoRecoveryFactorsRemovedEmail(
   props: {
     passwordRemoved: boolean;
     twoFactorRemoved: boolean;
+    apiKeysRemoved: boolean;
     securitySettingsLink: string;
     t: TFunction;
   } & TEmailTemplateLegalProps

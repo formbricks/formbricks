@@ -153,6 +153,10 @@ export const ManageTranslationsModal = ({
         return t("workspace.surveys.edit.ai_translation_quota_exceeded");
       }
 
+      if (errorCode === "ai_output_too_long") {
+        return t("workspace.surveys.edit.ai_translation_output_too_long");
+      }
+
       // Fall back to the generic failure message rather than leaking a raw error code to the user.
       return t("workspace.surveys.edit.ai_translation_failed");
     },

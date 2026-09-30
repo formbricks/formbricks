@@ -182,6 +182,21 @@ describe("getWorkspaceAuth workspace-access gate + isReadOnly (ENG-1769)", () =>
     expect(auth.isReadOnly).toBe(false);
   });
 
+  // canManage mirrors `workspace.manage` (ENG-3191): a readWrite member may write but not manage.
+  test.each([
+    ["member", "read", false],
+    ["member", "readWrite", false],
+    ["member", "manage", true],
+    ["member", null, false],
+    ["owner", null, true],
+    ["manager", null, true],
+  ] as const)("canManage for a %s with a %s grant is %s", async (role, permission, expected) => {
+    primeAuth(role);
+    vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue(permission);
+    const auth = await getWorkspaceAuth(workspaceId);
+    expect(auth.canManage).toBe(expected);
+  });
+
   test("returns the resolved workspace, organization, and session on success", async () => {
     const auth = await getWorkspaceAuth(workspaceId);
     expect(auth.workspace).toMatchObject({ id: workspaceId, organizationId });
@@ -207,6 +222,7 @@ describe("layout navigation gates (ENG-1737)", () => {
     billing: { stripeCustomerId: null, limits: {}, usageCycleAnchor: null, stripe: null },
     isAISmartToolsEnabled: false,
     whitelabel: null,
+    displayTimeZone: "Europe/Berlin",
   };
 
   beforeEach(() => {
@@ -277,6 +293,14 @@ describe("layout navigation gates (ENG-1737)", () => {
         id: layoutWorkspaceId,
         organizationId: layoutOrganizationId,
       });
+    });
+
+    // The organization is rebuilt field by field, and `displayTimeZone` is optional on its type, so dropping
+    // it compiles cleanly — which is how every date filter silently fell back to UTC once (ENG-3215).
+    test("carries the organization's display time zone to the layout, where the date filters read it", async () => {
+      const data = await getWorkspaceLayoutData(layoutWorkspaceId, layoutUserId);
+
+      expect(data.organization.displayTimeZone).toBe("Europe/Berlin");
     });
 
     test("throws AuthorizationError when the user may not navigate there", async () => {

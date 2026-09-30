@@ -196,7 +196,7 @@ export const WhenToSendCard = ({
           className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50"
           id="whenToSendCardTrigger"
           aria-invalid={showError}>
-          <div className="inline-flex px-4 py-4">
+          <button type="button" className="inline-flex px-4 py-4 text-left">
             <div className="flex items-center pr-5 pl-2">
               {containsEmptyTriggers ? (
                 <div
@@ -221,7 +221,7 @@ export const WhenToSendCard = ({
                   : t("workspace.surveys.edit.choose_the_actions_which_trigger_the_survey")}
               </p>
             </div>
-          </div>
+          </button>
         </Collapsible.CollapsibleTrigger>
 
         <Collapsible.CollapsibleContent className="flex flex-col overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">

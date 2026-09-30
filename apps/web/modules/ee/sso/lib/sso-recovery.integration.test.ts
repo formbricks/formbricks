@@ -8,6 +8,11 @@ import { getSessionTokenFromCookieHeader } from "@/modules/auth/lib/session-cook
 import { createSsoRecoveryIntent } from "@/modules/ee/sso/lib/recovery-intent";
 import { completeSsoRecovery } from "@/modules/ee/sso/lib/sso-recovery";
 import { sendPasswordResetLinkEmail } from "@/modules/email";
+import {
+  createApiKey,
+  deleteApiKey,
+  getApiKeyWithPermissions,
+} from "@/modules/organization/settings/api-keys/lib/api-key";
 
 /**
  * The real red-green proof for ENG-2557, against real Postgres and real Redis.
@@ -40,6 +45,16 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => ({
 
 const ATTACKER_PASSWORD = "Passw0rd!squatter";
 const VICTIM_EMAIL = "victim@example.com";
+/** The widest key a squatter can mint: read and write on the whole organization. */
+const FULL_ORGANIZATION_ACCESS = { organizationAccess: { accessControl: { read: true, write: true } } };
+
+/**
+ * `getApiKeyWithPermissions` refreshes `lastUsedAt` fire-and-forget whenever it is null or older than
+ * 30s. Left alone, that write lands after the key has been deleted below and logs a P2025 that reads
+ * like a test failure. Marking the keys as just used makes the lookup skip the write entirely.
+ */
+const markApiKeysAsJustUsed = (organizationId: string) =>
+  prisma.apiKey.updateMany({ where: { organizationId }, data: { lastUsedAt: new Date() } });
 
 /**
  * Only the session-token cookie from a sign-in response, deliberately dropping `session_data`: with
@@ -265,6 +280,48 @@ describe("SSO recovery strips the live local auth factors (real Postgres + Redis
   });
 
   /**
+   * ENG-2634. The one credential that outlived recovery entirely: a key is org-scoped with no expiry and
+   * no session behind it, so after password, 2FA, sessions and OAuth grants had all died the squatter
+   * kept reading and writing through the API. Asserted through the API auth path rather than a row count
+   * — "the row is gone" and "the key no longer authenticates" are only the same fact when the lookup is
+   * the one production uses.
+   */
+  test("an API key the squatter minted stops authenticating, and a colleague's key does not", async () => {
+    const user = await seedUnprovenAccountWithPassword();
+    const organization = await prisma.organization.create({ data: { name: "Squatted Org" } });
+    const colleague = await prisma.user.create({
+      data: { email: "colleague@example.com", name: "Colleague", emailVerified: true },
+    });
+    const { actualKey: squatterKey } = await createApiKey(organization.id, user.id, {
+      label: "squatter",
+      ...FULL_ORGANIZATION_ACCESS,
+    });
+    const { id: colleagueKeyId, actualKey: colleagueKey } = await createApiKey(
+      organization.id,
+      colleague.id,
+      {
+        label: "colleague",
+        ...FULL_ORGANIZATION_ACCESS,
+      }
+    );
+    await markApiKeysAsJustUsed(organization.id);
+    // Anti-vacuity: the key genuinely authenticates before recovery.
+    expect(await getApiKeyWithPermissions(squatterKey)).not.toBeNull();
+
+    await runRecovery(user, await createRecoverySession(user.id));
+
+    // Pre-fix this still resolved: nothing in the sweep touched `ApiKey`.
+    expect(await getApiKeyWithPermissions(squatterKey)).toBeNull();
+    // Narrow on purpose: the sweep is scoped to the keys this user created, not to every key on an
+    // organization they reached, so a colleague sharing the organization keeps theirs.
+    expect(await getApiKeyWithPermissions(colleagueKey)).not.toBeNull();
+
+    // `createApiKey` projects into SpiceDB, which a local run shares with the dev stack and `resetDb`
+    // never touches. Drop the survivor through the production path so its relationships go with it.
+    await deleteApiKey(colleagueKeyId);
+  });
+
+  /**
    * Recovery flips `identityProvider` to the SSO provider and nothing ever flips it back, so without this
    * the fix would trade a takeover for a lockout: no password, and no way to ask for one.
    */
@@ -303,9 +360,15 @@ describe("SSO recovery strips the live local auth factors (real Postgres + Redis
     expect(await prisma.twoFactor.count({ where: { userId: user.id } })).toBe(0);
   });
 
-  test("an already-proven account keeps its password, sessions and 2FA", async () => {
+  test("an already-proven account keeps its password, sessions, 2FA and API keys", async () => {
     const user = await seedUnprovenAccountWithPassword();
     await prisma.user.update({ where: { id: user.id }, data: { emailVerified: true } });
+    const organization = await prisma.organization.create({ data: { name: "Owner Org" } });
+    const { id: ownerKeyId, actualKey: ownerKey } = await createApiKey(organization.id, user.id, {
+      label: "owner",
+      ...FULL_ORGANIZATION_ACCESS,
+    });
+    await markApiKeysAsJustUsed(organization.id);
     // Mint the owner's session BEFORE enrolling 2FA — after enrolment, `signIn` answers with a 2FA
     // challenge instead of a session cookie.
     const ownerCookie = sessionTokenCookie(await signIn(ATTACKER_PASSWORD));
@@ -322,5 +385,7 @@ describe("SSO recovery strips the live local auth factors (real Postgres + Redis
     expect(await prisma.twoFactor.count({ where: { userId: user.id } })).toBe(1);
     const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
     expect(after.twoFactorEnabled).toBe(true);
+    expect(await getApiKeyWithPermissions(ownerKey)).not.toBeNull();
+    await deleteApiKey(ownerKeyId); // shared local SpiceDB, see the squatter-key test above
   });
 });

@@ -70,6 +70,7 @@ export const V3_PROBLEM_CODES = [
   "not_found",
   "payload_too_large",
   "service_unavailable",
+  "stored_survey_invalid",
   "too_many_requests",
   "unprocessable_content",
   "workflow_not_executable",
@@ -111,8 +112,10 @@ export const INVALID_PARAM_CODES = [
   "immutable_identifier",
   "invalid_locale",
   "invalid_reference",
+  "misordered_reference",
   "missing_required_field",
   "missing_translation",
+  "read_only_field",
   "unsupported_field",
   "unsupported_locale",
 ] as const;
@@ -278,10 +281,19 @@ export function problemUnprocessableContent(
   });
 }
 
-export function problemConflict(requestId: string, detail: string, instance?: string): Response {
+export function problemConflict(
+  requestId: string,
+  detail: string,
+  instance?: string,
+  // ENG-3069: `details` carries the machine-readable half of an optimistic-concurrency failure
+  // (`expectedUpdatedAt` / `currentUpdatedAt`). Without it a client can only re-read and guess,
+  // and the human `detail` string is the wrong place for a value a retry has to compare.
+  options?: { details?: Record<string, unknown> }
+): Response {
   return problemResponse(409, "Conflict", detail, requestId, {
     code: "conflict",
     instance,
+    ...(options?.details && { details: options.details }),
   });
 }
 

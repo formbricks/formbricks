@@ -3,6 +3,7 @@
  * Used by the advanced chart builder to provide field metadata and operators.
  */
 import type { TFunction } from "i18next";
+import { type TDateRangePreset } from "@/lib/date-ranges";
 
 export interface FieldDefinition {
   id: string;
@@ -715,17 +716,6 @@ export const GRANULARITY_LABELS: Record<string, string> = {
   year: "Year",
 };
 
-export const DATE_PRESETS = [
-  { label: "Today", value: "today" },
-  { label: "Yesterday", value: "yesterday" },
-  { label: "Last 7 days", value: "last 7 days" },
-  { label: "Last 30 days", value: "last 30 days" },
-  { label: "This month", value: "this month" },
-  { label: "Last month", value: "last month" },
-  { label: "This quarter", value: "this quarter" },
-  { label: "This year", value: "this year" },
-] as const;
-
 /**
  * Get filter operators for a given field type.
  */
@@ -871,7 +861,7 @@ export function getTranslatedGranularityLabel(granularity: string, t: TFunction)
  * Translate a date preset value.
  */
 export function getTranslatedDatePresetLabel(value: string, t: TFunction): string {
-  const labels: Record<string, string> = {
+  const labels: Record<TDateRangePreset, string> = {
     today: t("workspace.analysis.charts.date_preset_today"),
     yesterday: t("workspace.analysis.charts.date_preset_yesterday"),
     "last 24 hours": t("workspace.analysis.charts.date_preset_last_24_hours"),
@@ -885,7 +875,7 @@ export function getTranslatedDatePresetLabel(value: string, t: TFunction): strin
     "this year": t("workspace.analysis.charts.date_preset_this_year"),
     "last year": t("workspace.analysis.charts.date_preset_last_year"),
   };
-  return labels[value] ?? value;
+  return (labels as Record<string, string>)[value] ?? value;
 }
 
 /**

@@ -22,6 +22,7 @@ import {
 import GoogleSheetLogo from "@/images/googleSheetsLogo.png";
 import {
   GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION,
+  GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_SCOPES,
   GOOGLE_SHEET_INTEGRATION_INVALID_GRANT,
 } from "@/lib/googleSheet/constants";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -130,6 +131,8 @@ export const AddIntegrationModal = ({
       toast.error(t("workspace.integrations.google_sheets.token_expired_error"));
     } else if (errorMessage === GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION) {
       toast.error(t("workspace.integrations.google_sheets.spreadsheet_permission_error"));
+    } else if (errorMessage === GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_SCOPES) {
+      toast.error(t("workspace.integrations.google_sheets.spreadsheet_scope_error"));
     } else {
       toast.error(errorMessage);
     }

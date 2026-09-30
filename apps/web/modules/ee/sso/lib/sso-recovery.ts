@@ -2,6 +2,8 @@ import { prisma } from "@formbricks/database";
 import type { IdentityProvider, Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { Account } from "@formbricks/types/auth";
+import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { WEBAPP_URL } from "@/lib/constants";
 import { createEmailToken } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
@@ -86,6 +88,9 @@ const queueSsoRecoveryAuditEvent = ({
             oauthAccessTokensRevoked: reclaimed.oauthAccessTokensRevoked,
             oauthRefreshTokensRevoked: reclaimed.oauthRefreshTokensRevoked,
             oauthConsentsRevoked: reclaimed.oauthConsentsRevoked,
+            // The one credential with no expiry and no session behind it, so this is the field that
+            // tells a responder the squatter's programmatic access ended with the account (ENG-2634).
+            apiKeysRevoked: reclaimed.apiKeysRevoked,
             // `sessionsRevoked: 0` and "the sweep failed" are the same number but opposite incidents,
             // and this is the field a responder reads to confirm the squatter was actually kicked out.
             ...(sessionsRevoked === null ? { sessionRevocationFailed: true } : { sessionsRevoked }),
@@ -114,6 +119,10 @@ type TReclaimOutcome = {
   oauthAccessTokensRevoked: number;
   oauthRefreshTokensRevoked: number;
   oauthConsentsRevoked: number;
+  /** Keys this user minted, deleted outright — `ApiKey` has no revoked state. */
+  apiKeysRevoked: number;
+  /** The same keys by id, for the post-commit SpiceDB cleanup. Not part of the audit record. */
+  revokedApiKeyIds: string[];
 } | null;
 
 /**
@@ -155,6 +164,15 @@ type TReclaimOutcome = {
  * `user.twoFactorEnabled`, which the legacy update already clears, so the orphaned `TwoFactor` row was
  * never reachable at sign-in. Removing it is about not leaving a stale TOTP secret and backup codes at rest
  * on an account that has changed hands — not a live bypass.
+ *
+ * API keys go too (ENG-2634), and they were the one credential that outlived recovery entirely: a key is
+ * org-scoped with no expiry and no session behind it, so a squatter who held a session long enough to
+ * create an organization and a key kept reading and writing through the API after password, 2FA,
+ * sessions and OAuth grants had all died. Scoped to `createdBy: user.id`, NOT to every key on the
+ * organizations the user reached — an organization can have been shared by then, and a colleague's key
+ * is not the squatter's. `ApiKey` has no revoked state, so the rows are deleted the way `deleteApiKey`
+ * does it; the `authzed_projection_api_key` trigger enqueues the SpiceDB cleanup and the caller
+ * reconciles the ids post-commit as well.
  *
  * Sessions are revoked by the caller, after commit — Better Auth resolves its adapter from its own
  * AsyncLocalStorage, so a revocation issued in here would execute outside `tx` and survive a rollback.
@@ -281,6 +299,12 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
   });
   const consentRows = await tx.oauthConsent.deleteMany({ where: { userId: user.id } });
 
+  // The keys this user minted (ENG-2634). Ids first: `deleteMany` reports only a count, and the caller
+  // needs the ids to drop the SpiceDB relationships after commit. Deleting inside the transaction means
+  // a rolled-back link leaves the keys exactly as they were, like every other write here.
+  const apiKeys = await tx.apiKey.findMany({ where: { createdBy: user.id }, select: { id: true } });
+  const apiKeyRows = await tx.apiKey.deleteMany({ where: { createdBy: user.id } });
+
   return {
     credentialPasswordsCleared: credentialRows.count,
     legacyPasswordCleared: legacyPasswordRows.count > 0,
@@ -289,6 +313,8 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
     oauthAccessTokensRevoked: accessRows.count,
     oauthRefreshTokensRevoked: refreshRows.count,
     oauthConsentsRevoked: consentRows.count,
+    apiKeysRevoked: apiKeyRows.count,
+    revokedApiKeyIds: apiKeys.map(({ id }) => id),
   };
 };
 
@@ -634,6 +660,16 @@ export const completeSsoRecovery = async ({
     }
   }
 
+  // The keys are already gone from Postgres, which is what ends their access — the API auth path looks
+  // a key up by hash and now finds nothing. SpiceDB keeps their relationships until the outbox worker
+  // reaches the trigger-enqueued event; reconciling here is the same belt-and-braces `deleteApiKey`
+  // does, and best-effort for the same reason the session sweep is.
+  if (reclaimed && reclaimed.revokedApiKeyIds.length > 0) {
+    await runPostCommitProjection("sso_recovery_api_key_cleanup", () =>
+      reconcileApiKeyRelationships({ apiKeyIds: reclaimed.revokedApiKeyIds })
+    );
+  }
+
   // Tell the account holder what recovery removed (ENG-2633). The strip is correct for a squatter and a
   // silent security downgrade for the owner — and on a default self-hosted install, where verification
   // blocks nothing, the owner is the likelier of the two. Nothing here can distinguish them, so the
@@ -647,20 +683,24 @@ export const completeSsoRecovery = async ({
   const passwordRemoved = Boolean(
     reclaimed && (reclaimed.credentialPasswordsCleared > 0 || reclaimed.legacyPasswordCleared)
   );
-  if (passwordRemoved || twoFactorRemoved) {
+  // For a legitimate owner this is the line with a blast radius: integrations they built stop working,
+  // so the mail has to say so even when neither sign-in factor was set (ENG-2634).
+  const apiKeysRemoved = Boolean(reclaimed && reclaimed.apiKeysRevoked > 0);
+  if (passwordRemoved || twoFactorRemoved || apiKeysRemoved) {
     try {
       const sent = await sendSsoRecoveryFactorsRemovedEmail({
         email: user.email,
         locale: user.locale,
         passwordRemoved,
         twoFactorRemoved,
+        apiKeysRemoved,
       });
       // `sendEmail` returns false without throwing when SMTP is unconfigured, so the catch below never
       // sees it. Silence there would mean a user's second factor was removed and nobody — not them, not
       // the operator — was told, which is the whole failure this notification exists to prevent.
       if (!sent) {
         logger.error(
-          { userId: user.id, passwordRemoved, twoFactorRemoved },
+          { userId: user.id, passwordRemoved, twoFactorRemoved, apiKeysRemoved },
           "SSO recovery removed local sign-in factors but the notification email was not sent"
         );
       }

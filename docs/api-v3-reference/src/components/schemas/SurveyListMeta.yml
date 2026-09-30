@@ -1,0 +1,30 @@
+allOf:
+  - $ref: ./ListPaginationMeta.yml
+  - type: object
+    required:
+      - totalCount
+      - workspaceSurveyCount
+    properties:
+      totalCount:
+        type:
+          - integer
+          - "null"
+        minimum: 0
+        description: >-
+          Total number of surveys matching the current filters
+          across all pages. `null` when `includeTotalCount=false`.
+      workspaceSurveyCount:
+        type:
+          - integer
+          - "null"
+        minimum: 0
+        description: >-
+          Total number of surveys in the workspace, archived
+          (soft-deleted) ones included and independent of the
+          current filters. `null` when `includeTotalCount=false`
+          (the same gate as `totalCount`). Replaces the boolean
+          `hasArchived` field of earlier releases.
+unevaluatedProperties: false
+description: >-
+  The list `meta` for surveys — pagination, the filtered total, and the workspace total. Both
+  counting fields are `required` but nullable, gated on `includeTotalCount`.

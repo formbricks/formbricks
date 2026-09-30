@@ -30,9 +30,11 @@ That's it! After running the command and providing the required information, vis
 
 ## Formbricks Hub and Cube
 
-The stack includes the [Formbricks Hub](https://github.com/formbricks/hub) API (`ghcr.io/formbricks/hub`) and the bundled Cube service. Hub and Cube share the same database as Formbricks by default and both start as part of the baseline `docker compose up`.
+The stack includes the [Formbricks Hub](https://github.com/formbricks/hub) API and worker
+(`ghcr.io/formbricks/hub`) plus the bundled Cube service. Hub and Cube share the same database as Formbricks by
+default, and all three services start as part of the baseline `docker compose up`.
 
-- **Migrations**: A `formbricks-migrate` service runs Formbricks Prisma migrations before `hub-migrate` writes Hub tables to the shared database. `hub-migrate` then runs Hub's database migrations (goose + river) before the Hub API starts. Both migration services run on every `docker compose up` and are idempotent.
+- **Migrations**: A `formbricks-migrate` service runs Formbricks Prisma migrations before `hub-migrate` writes Hub tables to the shared database. `hub-migrate` then runs Hub's database migrations (goose + river) before the Hub API and `hub-worker` start. Both migration services run on every `docker compose up` and are idempotent. The worker consumes PostgreSQL-backed asynchronous jobs such as webhook delivery and configured enrichments.
 - **Production** (`docker/docker-compose.yml`): Set `POSTGRES_PASSWORD` to a unique random value and set
   non-empty `HUB_API_KEY`, `CUBEJS_API_SECRET`, `AUTHZED_TOKEN`, and `AUTHZED_DATABASE_PASSWORD` values in
   `.env` before starting the stack. Keep
@@ -48,12 +50,15 @@ The stack includes the [Formbricks Hub](https://github.com/formbricks/hub) API (
   `CUBEJS_EXTERNAL_DEFAULT` to `false`, so it does not require Cube Store. If you add external pre-aggregations,
   configure Cube Store before overriding `CUBEJS_EXTERNAL_DEFAULT=true`. Override `HUB_DATABASE_URL` and
   `CUBEJS_DB_*` only if Hub or Cube should use a separate database. The Hub image tracks `:latest` by default so
-  `formbricks.sh update` advances Hub in lockstep with the app. `hub` and `hub-migrate` always resolve to the same
-  image. To pin to an immutable reference, set `HUB_IMAGE_REF` in `docker/.env` to either a tag (e.g. `:0.3.0`)
-  or a digest (e.g. `@sha256:14db7b3d...`).
-- **Existing production installs**: Pulling new images does not replace an existing
-  `docker-compose.yml`. Add `CUBEJS_EXTERNAL_DEFAULT: ${CUBEJS_EXTERNAL_DEFAULT:-false}` to the Cube
-  service's `environment` block, then run `docker compose up -d --no-deps --force-recreate cube`.
+  `formbricks.sh update` advances Hub in lockstep with the app. `hub`, `hub-worker`, and `hub-migrate` always
+  resolve to the same image. To pin to an immutable reference, set `HUB_IMAGE_REF` in `docker/.env` to either a
+  tag (e.g. `:0.3.0`) or a digest (e.g. `@sha256:14db7b3d...`).
+- **Existing production installs**: Pulling new images does not replace an existing `docker-compose.yml`.
+  Merge the release-matched Hub runtime anchor and `hub-worker` service before running `formbricks.sh update`;
+  the updater stops before pulling or restarting when the worker is absent. See the
+  [migration guide](../docs/self-hosting/advanced/migration.mdx#hub-worker-required-for-docker). Also add
+  `CUBEJS_EXTERNAL_DEFAULT: ${CUBEJS_EXTERNAL_DEFAULT:-false}` to the Cube service's `environment` block when
+  upgrading a Compose file that predates that default.
 - **Development** (`docker-compose.dev.yml`): Hub uses a dedicated local `hub` database and `HUB_API_KEY` defaults to `dev-api-key`. The dev stack starts `hub` plus `hub-worker`; set `EMBEDDING_PROVIDER`, `EMBEDDING_MODEL`, and any provider credentials in the repo root `.env` to enable Hub embeddings locally. See the [Hub embeddings environment reference](https://hub.formbricks.com/reference/environment-variables/#embeddings) for provider-specific values. Cube starts with the dev stack, `CUBEJS_API_URL` defaults to `http://localhost:4000`, and `pnpm dev:setup` generates `CUBEJS_API_SECRET` in the repo root `.env`. The Hub image is pinned to a semver tag (`hub`, `hub-worker`, and `hub-migrate` share the same value); override `HUB_IMAGE_TAG` in the repo root `.env` to test a specific Hub release.
 
 ## AuthZed / SpiceDB

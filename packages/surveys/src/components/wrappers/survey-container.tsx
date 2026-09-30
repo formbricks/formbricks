@@ -2,8 +2,9 @@ import { type ComponentChildren } from "preact";
 import { type MutableRef, useEffect } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TOverlay, type TPlacement } from "@formbricks/types/common";
+import { isPlainEscape } from "@/lib/keyboard";
 import { ensureLiveRegion } from "@/lib/live-region";
-import { SURVEY_INSTRUCTIONS_ID } from "@/lib/survey-page";
+import { SURVEY_INSTRUCTIONS_ID, getSurveyHeadingName } from "@/lib/survey-page";
 import { useFocusTrap } from "@/lib/use-focus-trap";
 import { cn, mirrorPlacementForDir } from "@/lib/utils";
 
@@ -42,7 +43,9 @@ type UseNoOverlayModalOptions = {
  * this component's modal semantics, so it is not shared code; and its whole behaviour is DOM
  * listeners and a timer, which per AGENTS.md is covered by Playwright rather than unit tests. As a
  * lib/*.ts module it would have added 22 lines the repo does not unit-test on principle, failing the
- * new-code coverage gate for a refactor that changes no behaviour.
+ * new-code coverage gate for a refactor that changes no behaviour. The one piece that IS shared —
+ * which Escape presses count as "close", modifier guard included — lives in lib/keyboard.ts as
+ * `isPlainEscape`, alongside useFocusTrap and the language switcher that also use it.
  */
 const useNoOverlayModal = ({
   enabled,
@@ -57,7 +60,7 @@ const useNoOverlayModal = ({
     if (!container) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (!isPlainEscape(event)) return;
 
       event.preventDefault();
       onClose?.();
@@ -211,13 +214,18 @@ export function SurveyContainer({
   // It is rendered as a sibling of `children` in BOTH branches so that it always ends up inside the
   // dialog on the modal path: `aria-modal="true"` makes assistive tech ignore everything outside
   // the dialog element, so a heading placed on the #fbjs root would be unreachable there.
-  const surveyHeading = surveyName ? <h1 className="sr-only">{surveyName}</h1> : null;
+  //
+  // An inline survey without a name (an app survey, whose name the public API withholds) falls back
+  // to the same generic label the modal dialog uses, so the h1 is always there on inline. A modal
+  // survey still renders it only for a real name — see getSurveyHeadingName.
+  const headingName = getSurveyHeadingName(surveyName, mode, t("common.survey_dialog"));
+  const surveyHeading = headingName ? <h1 className="sr-only">{headingName}</h1> : null;
 
   // The VPAT finding is that "forms themselves have no titles": every input had a label, but the
-  // form they belong to had no accessible name at all. role="form" + the survey name fixes that for
-  // BOTH surfaces — an embedded survey cannot own the host document's <title>, so this is the only
-  // name it can carry. The role is only declared once there is a name to give it: an unnamed form
-  // landmark is noise in a screen reader's landmark list rather than an improvement.
+  // form they belong to had no accessible name at all. role="form" + a name fixes that for BOTH
+  // surfaces — an embedded survey cannot own the host document's <title>, so this is the only name it
+  // can carry. On inline the name always exists (the survey name, or the generic fallback above), so
+  // the form landmark is always named rather than left out of the landmark list.
   // Survey instructions used to appear on the welcome card and never again. Pointing the form at the
   // persistent region means they are announced on entry to every page.
   //
@@ -228,7 +236,7 @@ export function SurveyContainer({
   // the browser drops the inner one, which would silently take this accessible name with it. And a
   // real form makes Enter in any text input submit and navigate away from a half-finished survey.
   // The role gives assistive tech the same landmark without either behaviour.
-  const instructionsId = surveyName && hasInstructions ? SURVEY_INSTRUCTIONS_ID : undefined;
+  const instructionsId = hasInstructions ? SURVEY_INSTRUCTIONS_ID : undefined;
 
   if (!isModal) {
     return (
@@ -238,8 +246,8 @@ export function SurveyContainer({
         style={{ height: "100%", width: "100%" }}
         dir={dir}
         lang={lang ?? undefined}
-        role={surveyName ? "form" : undefined}
-        aria-label={surveyName}
+        role="form"
+        aria-label={headingName}
         aria-describedby={instructionsId}>
         {surveyHeading}
         {children}

@@ -41,10 +41,10 @@ interface CardActionProps {
  * disabled — there is then nothing left to click.
  *
  * The enabled branch keeps the link nested inside the button rather than collapsing the two with
- * `asChild`. That looks like the tidier shape, but the button's hover styles are `enabled:hover:*`
- * variants, which compile to the `:enabled` pseudo-class — and `:enabled` only ever matches form
- * controls, never an `<a>`. Hoisting the Link into the button's place would therefore drop the
- * hover state on every enabled card.
+ * `asChild`. That was once load-bearing: the button's hover styles were `enabled:hover:*`, which
+ * compile to `:enabled` and never match an `<a>`, so hoisting the Link would have dropped hover on
+ * every enabled card. ENG-3138 moved those to `not-disabled:hover:*`, which an `<a>` does match, so
+ * the nesting is no longer needed for hover — collapsing it is a tidy-up left to ENG-2608.
  */
 const CardAction = ({ href, text, newTab, disabled, variant }: Readonly<CardActionProps>) =>
   disabled ? (

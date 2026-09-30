@@ -1,8 +1,15 @@
 import { resolve } from "node:path";
-import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  test: {
+    coverage: {
+      // Sonar reads `coverage/lcov.info`; vitest's default reporters emit clover.xml instead, so this
+      // package's coverage was invisible to the scan until lcov was added (ENG-2432).
+      reporter: ["text", "json", "html", "lcov"],
+    },
+  },
   plugins: [
     dts({
       // Emit declarations rooted at `src` so the types sit next to the JS they describe

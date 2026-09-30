@@ -156,60 +156,7 @@ get:
                 items:
                   $ref: ../components/schemas/ResponseListItem.yml
               meta:
-                type: object
-                required:
-                  - limit
-                  - nextCursor
-                  - totalCount
-                  - totalCountRelation
-                properties:
-                  limit:
-                    type: integer
-                    minimum: 1
-                    description: >-
-                      The page size actually applied. Carries no `maximum` — it echoes what the
-                      server used rather than bounding what may be asked for.
-                  nextCursor:
-                    type:
-                      - string
-                      - "null"
-                    description: >-
-                      Opaque cursor for the next page. `null` when there are no more results — the
-                      only reliable end-of-collection signal. Pass it back verbatim: the encoding is
-                      deliberately unspecified and may change without notice, so a client that
-                      decodes or constructs one is relying on something this contract does not
-                      promise.
-                  totalCount:
-                    type:
-                      - integer
-                      - "null"
-                    minimum: 0
-                    description: >
-                      Responses matching the current scope and filters across all pages, **counted
-                      only up to 10 000**. Exact below that; at the cap the value is exactly `10000`
-                      and means "at least 10 000", which `totalCountRelation` states explicitly.
-                      `null` unless `includeTotalCount=true`.
-
-
-                      The cap is not timidity — an exact count over this table grows superlinearly
-                      with the data while a capped one stays flat, so an uncapped total is the one
-                      part of a page whose cost is unbounded. Read `totalCountRelation` rather than
-                      testing for the magic number.
-                  totalCountRelation:
-                    type:
-                      - string
-                      - "null"
-                    enum:
-                      - eq
-                      - gte
-                      - null
-                    description: >
-                      How to read `totalCount`: `eq` when it is exact, `gte` when the 10 000 cap was
-                      reached and it is a lower bound, `null` when `includeTotalCount=false`. This is
-                      the same eq/gte convention Elasticsearch uses for `hits.total.relation`, so a
-                      consumer can render "10,000+" honestly instead of claiming a precise figure it
-                      does not have.
-                additionalProperties: false
+                $ref: ../components/schemas/ResponseListMeta.yml
           examples:
             page:
               summary: One page of responses, exercising several answer types

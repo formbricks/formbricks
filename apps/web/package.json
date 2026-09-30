@@ -1,7 +1,6 @@
 {
   "name": "@formbricks/web",
   "version": "0.0.0",
-  "packageManager": "pnpm@11.7.0",
   "private": true,
   "scripts": {
     "clean": "rimraf .turbo node_modules .next coverage",
@@ -134,7 +133,7 @@
     "mcp-handler": "2.1.1",
     "next": "16.3.3",
     "next-safe-action": "8.1.10",
-    "nodemailer": "9.1.1",
+    "nodemailer": "10.0.9",
     "otplib": "13.5.0",
     "papaparse": "5.5.3",
     "posthog-js": "1.369.5",
@@ -162,7 +161,7 @@
     "tailwind-merge": "catalog:",
     "tailwindcss": "catalog:",
     "ua-parser-js": "2.0.10",
-    "undici": "7.29.0",
+    "undici": "7.29.1",
     "uuid": "catalog:",
     "xlsx": "file:vendor/xlsx-0.20.3.tgz",
     "yaml": "2.9.0",
@@ -193,6 +192,7 @@
     "cross-env": "catalog:",
     "dotenv": "catalog:",
     "dotenv-cli": "catalog:",
+    "intl-messageformat": "10.7.18",
     "playwright": "1.58.2",
     "jsdom": "catalog:",
     "postcss": "catalog:",

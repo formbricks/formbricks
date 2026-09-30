@@ -112,6 +112,7 @@ describe("rateLimitConfigs", () => {
         "unsplash",
         "inviteMember",
         "generateExampleResponses",
+        "aiChartGeneration",
         "integrationMutation",
         "feedbackSourceMutation",
         "historicalResponseImport",
@@ -133,6 +134,11 @@ describe("rateLimitConfigs", () => {
         interval: 3600 * 24,
         allowedPerInterval: 50,
         namespace: "action:invite-member",
+      });
+      expect(rateLimitConfigs.actions.aiChartGeneration).toEqual({
+        interval: 60,
+        allowedPerInterval: 1,
+        namespace: "action:ai-chart-generation",
       });
       expect(rateLimitConfigs.actions.historicalResponseImport).toEqual({
         interval: 3600,

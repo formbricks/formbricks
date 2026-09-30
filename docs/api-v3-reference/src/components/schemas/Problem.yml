@@ -49,6 +49,7 @@ properties:
       - not_found
       - payload_too_large
       - service_unavailable
+      - stored_survey_invalid
       - too_many_requests
       - unprocessable_content
       - workflow_not_executable

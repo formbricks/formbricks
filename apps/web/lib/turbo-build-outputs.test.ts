@@ -80,7 +80,14 @@ const PUBLIC_JS_DIR = "$TURBO_ROOT$/apps/web/public/js";
 // through the same plugin, so declaring its paths would make it a second writer of the same files.
 const BUNDLE_OUTPUTS: Record<string, string[]> = {
   "@formbricks/js-core#build": [`${PUBLIC_JS_DIR}/formbricks.*`],
-  "@formbricks/surveys#build": [`${PUBLIC_JS_DIR}/surveys.*`, `${PUBLIC_JS_DIR}/validation.*`],
+  "@formbricks/surveys#build": [
+    `${PUBLIC_JS_DIR}/surveys.*`,
+    `${PUBLIC_JS_DIR}/validation.*`,
+    // The survey runtime fetches its locale bundles at display time instead of carrying them, so they
+    // are copied artifacts like the widget itself. Undeclared, a cache hit restores the widget without
+    // them and every non-English survey renders English chrome.
+    `${PUBLIC_JS_DIR}/locales/**`,
+  ],
 };
 
 describe("turbo.json SDK bundle tasks declare the files they copy into apps/web/public/js", () => {
@@ -122,10 +129,16 @@ describe("turbo.json SDK bundle tasks declare the files they copy into apps/web/
   test("no bundle task claims the whole public/js directory", () => {
     // Two writers, one directory: a directory-wide glob makes one task's cache entry capture the
     // other task's files and restore them — possibly stale — over the top.
+    //
+    // What makes a glob dangerous is reaching files another task writes, not ending in `**`. Both
+    // packages write into public/js itself, so a glob rooted there is; a named subdirectory only one
+    // task ever writes (`locales/`) is not, and has to be able to declare its contents.
+    const claimsDirectoryRoot = (glob: string): boolean =>
+      glob.startsWith(PUBLIC_JS_DIR) && glob.slice(PUBLIC_JS_DIR.length + 1).startsWith("*");
+
     const overlapping = Object.keys(BUNDLE_OUTPUTS).flatMap((key) =>
       resolvedOutputsOf(key)
-        .filter((glob) => glob.startsWith(PUBLIC_JS_DIR))
-        .filter((glob) => glob.endsWith("**"))
+        .filter(claimsDirectoryRoot)
         .map((glob) => `${key} → ${glob}`)
     );
     expect(

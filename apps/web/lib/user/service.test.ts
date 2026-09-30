@@ -151,6 +151,19 @@ describe("User Service", () => {
       });
     });
 
+    // ENG-3257: same guard as the sibling lookup in modules/auth/lib/user.ts — callers here already
+    // lowercase, and normalizing at the query is what keeps the next one correct without knowing that.
+    test("should query by the lowercased address when the caller passes mixed case", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(mockPrismaUser);
+
+      await getUserByEmail("Test@Example.COM");
+
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
+        where: { email: "test@example.com" },
+        select: publicUserSelect,
+      });
+    });
+
     test("should return null when user not found by email", async () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
 
