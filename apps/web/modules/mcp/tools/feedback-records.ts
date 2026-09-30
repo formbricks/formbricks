@@ -174,7 +174,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     {
       title: "Get feedback record",
       description:
-        "Get one feedback record by id from a workspace's feedback dataset, including its read-only classification in the active Topics & Subtopics taxonomy. The taxonomy status distinguishes no active taxonomy from a record not classified in the current run.",
+        "Get one feedback record by id from a workspace's feedback dataset, including its read-only classification in the active Topics & Subtopics taxonomy. The taxonomy status distinguishes no active taxonomy from a record not classified in the current run; taxonomy is null when unavailable.",
       inputSchema: ZMcpGetFeedbackRecordInput,
       annotations: {
         readOnlyHint: true,

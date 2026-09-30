@@ -13,7 +13,6 @@ import type {
   FeedbackRecordData,
   FeedbackRecordListParams,
   FeedbackRecordListResponse,
-  FeedbackRecordTaxonomy,
   FeedbackRecordUpdateParams,
   ListTaxonomyRunsResponse,
   RenameTaxonomyNodeInput,
@@ -83,31 +82,6 @@ export const retrieveFeedbackRecord = async (id: string): Promise<HubFeedbackRec
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, id, hint: getHubErrorHint(err) }, "Hub: retrieveFeedbackRecord failed");
-    return createHubResultFromError(err);
-  }
-};
-
-/** Resolve one authorized record against its tenant's active directory taxonomy. */
-export const retrieveFeedbackRecordTaxonomy = async (
-  id: string,
-  tenantId: string
-): Promise<HubResult<FeedbackRecordTaxonomy>> => {
-  const client = getHubClient();
-  if (!client) {
-    return { data: null, error: { ...NO_CONFIG_ERROR } };
-  }
-
-  try {
-    const data = await client.get<FeedbackRecordTaxonomy>(
-      `/v1/feedback-records/${encodeURIComponent(id)}/taxonomy`,
-      { query: { tenant_id: tenantId } }
-    );
-    return { data, error: null };
-  } catch (err) {
-    logger.warn(
-      { err, id, tenantId, hint: getHubErrorHint(err) },
-      "Hub: retrieveFeedbackRecordTaxonomy failed"
-    );
     return createHubResultFromError(err);
   }
 };

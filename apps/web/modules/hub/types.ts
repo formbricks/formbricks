@@ -20,6 +20,8 @@ export type FeedbackRecordData = FormbricksHub.FeedbackRecordData & {
   translation_lang_key?: string | null;
   value_id?: string | null;
   emotions?: string[] | string | null;
+  // Hub #136 adds this only to single-record reads. Older Hub versions omit it.
+  taxonomy?: FeedbackRecordTaxonomy | null;
 };
 
 export type FeedbackRecordListResponse = Omit<FormbricksHub.FeedbackRecordListResponse, "data"> & {

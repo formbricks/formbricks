@@ -12,7 +12,6 @@ const mocks = vi.hoisted(() => {
     ensureReadAccess: vi.fn(),
     getWorkspaceDirectoryIds: vi.fn(),
     retrieveFeedbackRecord: vi.fn(),
-    retrieveFeedbackRecordTaxonomy: vi.fn(),
     deleteFeedbackRecord: vi.fn(),
     assertRecordBelongsToWorkspace: vi.fn(),
     assertFeedbackDirectoryAssignmentAccess: vi.fn(),
@@ -37,7 +36,6 @@ vi.mock("@/modules/ee/unify-feedback/lib/access", () => ({
 vi.mock("@/modules/hub/service", () => ({
   deleteFeedbackRecord: mocks.deleteFeedbackRecord,
   retrieveFeedbackRecord: mocks.retrieveFeedbackRecord,
-  retrieveFeedbackRecordTaxonomy: mocks.retrieveFeedbackRecordTaxonomy,
 }));
 
 describe("retrieveFeedbackRecordAction", () => {
@@ -46,16 +44,17 @@ describe("retrieveFeedbackRecordAction", () => {
     mocks.ensureReadAccess.mockResolvedValue(undefined);
     mocks.getWorkspaceDirectoryIds.mockResolvedValue(["directory-1"]);
     mocks.retrieveFeedbackRecord.mockResolvedValue({
-      data: { id: "record-1", tenant_id: "directory-1", field_type: "text" },
-      error: null,
-    });
-    mocks.retrieveFeedbackRecordTaxonomy.mockResolvedValue({
-      data: { status: "unclassified", run_id: "run-1", path: [] },
+      data: {
+        id: "record-1",
+        tenant_id: "directory-1",
+        field_type: "text",
+        taxonomy: { status: "unclassified", run_id: "run-1", path: [] },
+      },
       error: null,
     });
   });
 
-  test("looks up taxonomy only after workspace and dataset authorization", async () => {
+  test("returns the embedded taxonomy after workspace and dataset authorization", async () => {
     const result = await retrieveFeedbackRecordAction({
       ctx: { user: { id: "user-1" } },
       parsedInput: { recordId: "record-1", workspaceId: "workspace-1" },
@@ -65,16 +64,18 @@ describe("retrieveFeedbackRecordAction", () => {
       record: { id: "record-1" },
       taxonomy: { status: "unclassified", run_id: "run-1", path: [] },
     });
-    expect(mocks.retrieveFeedbackRecordTaxonomy).toHaveBeenCalledWith("record-1", "directory-1");
-    expect(mocks.assertFeedbackDirectoryAssignmentAccess.mock.invocationCallOrder[0]).toBeLessThan(
-      mocks.retrieveFeedbackRecordTaxonomy.mock.invocationCallOrder[0]
+    expect(mocks.retrieveFeedbackRecord).toHaveBeenCalledTimes(1);
+    expect(mocks.assertFeedbackDirectoryAssignmentAccess).toHaveBeenCalledWith(
+      "user-1",
+      "directory-1",
+      "workspace-1"
     );
   });
 
-  test("keeps the record available when taxonomy lookup fails", async () => {
-    mocks.retrieveFeedbackRecordTaxonomy.mockResolvedValue({
-      data: null,
-      error: { status: 503, message: "taxonomy unavailable" },
+  test("keeps the record available when Hub's supplementary lookup failed", async () => {
+    mocks.retrieveFeedbackRecord.mockResolvedValue({
+      data: { id: "record-1", tenant_id: "directory-1", field_type: "text", taxonomy: null },
+      error: null,
     });
 
     const result = await retrieveFeedbackRecordAction({
@@ -85,7 +86,21 @@ describe("retrieveFeedbackRecordAction", () => {
     expect(result).toMatchObject({ record: { id: "record-1" }, taxonomy: null });
   });
 
-  test("does not query taxonomy when dataset access is denied", async () => {
+  test("treats a missing taxonomy field from an older Hub as unavailable", async () => {
+    mocks.retrieveFeedbackRecord.mockResolvedValue({
+      data: { id: "record-1", tenant_id: "directory-1", field_type: "text" },
+      error: null,
+    });
+
+    const result = await retrieveFeedbackRecordAction({
+      ctx: { user: { id: "user-1" } },
+      parsedInput: { recordId: "record-1", workspaceId: "workspace-1" },
+    } as any);
+
+    expect(result).toMatchObject({ record: { id: "record-1" }, taxonomy: null });
+  });
+
+  test("does not return record or taxonomy when dataset access is denied", async () => {
     mocks.assertFeedbackDirectoryAssignmentAccess.mockRejectedValue(new Error("denied"));
 
     await expect(
@@ -94,7 +109,7 @@ describe("retrieveFeedbackRecordAction", () => {
         parsedInput: { recordId: "record-1", workspaceId: "workspace-1" },
       } as any)
     ).rejects.toThrow("denied");
-    expect(mocks.retrieveFeedbackRecordTaxonomy).not.toHaveBeenCalled();
+    expect(mocks.retrieveFeedbackRecord).toHaveBeenCalledTimes(1);
   });
 });
 

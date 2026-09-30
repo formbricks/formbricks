@@ -20,7 +20,6 @@ import {
   deleteFeedbackRecord,
   findSimilarFeedbackRecords,
   listFeedbackRecords,
-  retrieveFeedbackRecordTaxonomy,
   semanticSearchFeedbackRecords,
   updateFeedbackRecord,
 } from "@/modules/hub/service";
@@ -550,17 +549,7 @@ export async function getV3FeedbackRecord({
       return owned.response;
     }
 
-    const taxonomy = await retrieveFeedbackRecordTaxonomy(feedbackRecordId, resolution.tenantId);
-    if (!taxonomy.data || taxonomy.error) {
-      if (taxonomy.error?.status === 404) {
-        return forbidFeedbackRecord(requestId, instance);
-      }
-
-      log.warn({ hubStatus: taxonomy.error?.status }, "Hub feedback record taxonomy lookup failed");
-      return hubErrorToProblemResponse(taxonomy.error, requestId, instance);
-    }
-
-    return successResponse(serializeV3FeedbackRecordDetail(owned.record, taxonomy.data), {
+    return successResponse(serializeV3FeedbackRecordDetail(owned.record), {
       requestId,
       cache: CACHE,
     });

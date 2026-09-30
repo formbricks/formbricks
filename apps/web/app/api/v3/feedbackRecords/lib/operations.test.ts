@@ -16,7 +16,6 @@ import {
   findSimilarFeedbackRecords,
   listFeedbackRecords,
   retrieveFeedbackRecord,
-  retrieveFeedbackRecordTaxonomy,
   semanticSearchFeedbackRecords,
   updateFeedbackRecord,
 } from "@/modules/hub/service";
@@ -55,7 +54,6 @@ vi.mock("@/modules/hub/service", () => ({
   countFeedbackRecords: vi.fn(),
   createFeedbackRecordsBatch: vi.fn(),
   retrieveFeedbackRecord: vi.fn(),
-  retrieveFeedbackRecordTaxonomy: vi.fn(),
   createFeedbackRecord: vi.fn(),
   deleteFeedbackRecord: vi.fn(),
   semanticSearchFeedbackRecords: vi.fn(),
@@ -257,7 +255,11 @@ describe("listV3FeedbackDatasets", () => {
 describe("listV3FeedbackRecords", () => {
   test("auto-resolves the single dataset as the Hub tenant and returns serialized records", async () => {
     vi.mocked(listFeedbackRecords).mockResolvedValue({
-      data: { data: [record], limit: 50, next_cursor: "next" },
+      data: {
+        data: [{ ...record, taxonomy: { status: "unclassified", run_id: "run-1", path: [] } }],
+        limit: 50,
+        next_cursor: "next",
+      },
       error: null,
     });
 
@@ -283,7 +285,7 @@ describe("listV3FeedbackRecords", () => {
     expect(body.data[0].id).toBe(record.id);
     expect(body.data[0].value_text).toBe("Love it");
     expect(body.data[0]).not.toHaveProperty("taxonomy");
-    expect(retrieveFeedbackRecordTaxonomy).not.toHaveBeenCalled();
+    expect(retrieveFeedbackRecord).not.toHaveBeenCalled();
   });
 
   // An empty list used to be ambiguous — a caller could not tell "this dataset has no matching records"
@@ -361,15 +363,11 @@ describe("listV3FeedbackRecords", () => {
 describe("getV3FeedbackRecord", () => {
   const getBase = { ...base, feedbackRecordId: record.id };
 
-  beforeEach(() => {
-    vi.mocked(retrieveFeedbackRecordTaxonomy).mockResolvedValue({
-      data: { status: "no_active_taxonomy", run_id: null, path: [] },
+  test("returns the record when its tenant belongs to the workspace", async () => {
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
+      data: { ...record, taxonomy: { status: "no_active_taxonomy", run_id: null, path: [] } },
       error: null,
     });
-  });
-
-  test("returns the record when its tenant belongs to the workspace", async () => {
-    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({ data: record, error: null });
 
     const response = await getV3FeedbackRecord(getBase);
 
@@ -378,16 +376,18 @@ describe("getV3FeedbackRecord", () => {
       id: record.id,
       taxonomy: { status: "no_active_taxonomy", run_id: null, path: [] },
     });
-    expect(retrieveFeedbackRecordTaxonomy).toHaveBeenCalledWith(record.id, directoryId);
+    expect(retrieveFeedbackRecord).toHaveBeenCalledTimes(1);
   });
 
   test("returns the current classified path", async () => {
-    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({ data: record, error: null });
-    vi.mocked(retrieveFeedbackRecordTaxonomy).mockResolvedValue({
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
       data: {
-        status: "classified",
-        run_id: "run-1",
-        path: [{ id: "node-1", label: "Login", level: 1, node_type: "branch" }],
+        ...record,
+        taxonomy: {
+          status: "classified",
+          run_id: "run-1",
+          path: [{ id: "node-1", label: "Login", level: 1, node_type: "branch" }],
+        },
       },
       error: null,
     });
@@ -402,9 +402,8 @@ describe("getV3FeedbackRecord", () => {
   });
 
   test("distinguishes a record outside the active run", async () => {
-    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({ data: record, error: null });
-    vi.mocked(retrieveFeedbackRecordTaxonomy).mockResolvedValue({
-      data: { status: "unclassified", run_id: "run-2", path: [] },
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
+      data: { ...record, taxonomy: { status: "unclassified", run_id: "run-2", path: [] } },
       error: null,
     });
 
@@ -422,7 +421,6 @@ describe("getV3FeedbackRecord", () => {
     const response = await getV3FeedbackRecord(getBase);
 
     expect(response.status).toBe(403);
-    expect(retrieveFeedbackRecordTaxonomy).not.toHaveBeenCalled();
   });
 
   test("returns 403 when the Hub reports 404 (indistinguishable from cross-tenant)", async () => {
@@ -434,7 +432,6 @@ describe("getV3FeedbackRecord", () => {
     const response = await getV3FeedbackRecord(getBase);
 
     expect(response.status).toBe(403);
-    expect(retrieveFeedbackRecordTaxonomy).not.toHaveBeenCalled();
   });
 
   // The no-existence-oracle guarantee: cross-tenant and not-found must be byte-identical, not merely
@@ -466,33 +463,28 @@ describe("getV3FeedbackRecord", () => {
     const response = await getV3FeedbackRecord(getBase);
 
     expect(response.status).toBe(502);
-    expect(retrieveFeedbackRecordTaxonomy).not.toHaveBeenCalled();
   });
 
-  test("does not reveal a record deleted between ownership and taxonomy lookup", async () => {
+  test("keeps an older Hub's record available with unavailable taxonomy", async () => {
     vi.mocked(retrieveFeedbackRecord).mockResolvedValue({ data: record, error: null });
-    vi.mocked(retrieveFeedbackRecordTaxonomy).mockResolvedValue({
-      data: null,
-      error: { status: 404, message: "not found", detail: "not found" },
-    });
 
     const response = await getV3FeedbackRecord(getBase);
 
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(200);
+    expect((await response.json()).data.taxonomy).toBeNull();
   });
 
-  test("returns an upstream error rather than silently treating lookup failure as unclassified", async () => {
-    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({ data: record, error: null });
-    vi.mocked(retrieveFeedbackRecordTaxonomy).mockResolvedValue({
-      data: null,
-      error: { status: 500, message: "internal host", detail: "internal host" },
+  test("keeps the record available when Hub's supplementary lookup failed", async () => {
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
+      data: { ...record, taxonomy: null },
+      error: null,
     });
 
     const response = await getV3FeedbackRecord(getBase);
     const body = await response.json();
 
-    expect(response.status).toBe(502);
-    expect(JSON.stringify(body)).not.toContain("internal host");
+    expect(response.status).toBe(200);
+    expect(body.data.taxonomy).toBeNull();
   });
 
   test("rejects a record from another directory the workspace owns when a directory is named", async () => {

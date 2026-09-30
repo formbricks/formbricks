@@ -479,6 +479,20 @@ describe("get_feedback_record", () => {
       path: [],
     });
   });
+
+  test("returns null taxonomy without failing when the Hub cannot supply it", async () => {
+    vi.mocked(getV3FeedbackRecord).mockResolvedValue(
+      successResponse({ id: "rec-1", taxonomy: null }, { requestId: "req_tool" })
+    );
+    const { tools } = createToolServer();
+
+    const result = await tools
+      .get("get_feedback_record")!
+      .handler({ workspaceId, feedbackRecordId: recordId }, { http: { authInfo } });
+
+    expect(result.isError).not.toBe(true);
+    expect(result.structuredContent.data.taxonomy).toBeNull();
+  });
 });
 
 describe("create_feedback_record", () => {

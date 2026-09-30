@@ -100,18 +100,22 @@ export const serializeV3FeedbackRecord = (record: FeedbackRecordData): TV3Feedba
 };
 
 /** Only the get-one-record response carries the current taxonomy projection. */
-export type TV3FeedbackRecordDetail = TV3FeedbackRecord & { taxonomy: FeedbackRecordTaxonomy };
+export type TV3FeedbackRecordDetail = TV3FeedbackRecord & { taxonomy: FeedbackRecordTaxonomy | null };
 
-export const serializeV3FeedbackRecordDetail = (
-  record: FeedbackRecordData,
-  taxonomy: FeedbackRecordTaxonomy
-): TV3FeedbackRecordDetail => ({
+export const serializeV3FeedbackRecordDetail = (record: FeedbackRecordData): TV3FeedbackRecordDetail => ({
   ...serializeV3FeedbackRecord(record),
-  taxonomy: {
-    status: taxonomy.status,
-    run_id: taxonomy.run_id,
-    path: taxonomy.path.map(({ id, label, level, node_type }) => ({ id, label, level, node_type })),
-  },
+  taxonomy: record.taxonomy
+    ? {
+        status: record.taxonomy.status,
+        run_id: record.taxonomy.run_id,
+        path: record.taxonomy.path.map(({ id, label, level, node_type }) => ({
+          id,
+          label,
+          level,
+          node_type,
+        })),
+      }
+    : null,
 });
 
 /**

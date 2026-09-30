@@ -131,12 +131,18 @@ describe("serializeV3FeedbackRecordDetail", () => {
       ],
     };
 
-    expect(serializeV3FeedbackRecordDetail(fullRecord, taxonomy).taxonomy).toEqual({
+    const record = { ...fullRecord, taxonomy };
+    expect(serializeV3FeedbackRecordDetail(record).taxonomy).toEqual({
       status: "classified",
       run_id: "run-1",
       path: [{ id: "node-1", label: "Login", level: 1, node_type: "branch" }],
     });
-    expect(serializeV3FeedbackRecord(fullRecord)).not.toHaveProperty("taxonomy");
+    expect(serializeV3FeedbackRecord(record)).not.toHaveProperty("taxonomy");
+  });
+
+  test("uses null when the Hub omits taxonomy or reports a failed lookup", () => {
+    expect(serializeV3FeedbackRecordDetail(fullRecord).taxonomy).toBeNull();
+    expect(serializeV3FeedbackRecordDetail({ ...fullRecord, taxonomy: null }).taxonomy).toBeNull();
   });
 });
 
