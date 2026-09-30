@@ -24,7 +24,9 @@ const nonEmpty = (name: string | null | undefined, fallback: string): string =>
  *
  * Wildcard webhooks (`surveyIds: []`, "every survey") never block: they cannot be resolved at flip time
  * and are skipped at dispatch instead (ENG-3283). Workflows block while they can still run: draft or
- * enabled.
+ * enabled. A disabled or archived one does not: it sends nothing, `enable` re-checks its trigger survey
+ * (and dispatch again), and its builder page loads the survey only for someone who may read it — so
+ * refusing a restriction over it would block the owner for no exposure.
  */
 export const findSurveyOutboundBlockers = async (
   surveyId: string,
