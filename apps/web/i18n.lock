@@ -3292,6 +3292,7 @@ checksums:
     workspace/surveys/edit/fallback_missing: 43dbedbe1a178d455e5f80783a7b6722
     workspace/surveys/edit/fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first: ad4afe2980e1dfeffb20aa78eb892350
     workspace/surveys/edit/fieldId_is_used_in_quota_please_remove_it_from_quota_first: 70d0e1bdd6336b2cfb92c0121416c8d4
+    workspace/surveys/edit/field_label_shuffle_option: bfe6d1a9b805c68736e8cb949044d3c2
     workspace/surveys/edit/field_name_eg_score_price: 8984fbe243eb2184639749281193b7d6
     workspace/surveys/edit/first_name: cf040a5d6a9fd696be400380cc99f54b
     workspace/surveys/edit/five_points_recommended: e2c8118163da89284046638ca9832914
@@ -3379,6 +3380,9 @@ checksums:
     workspace/surveys/edit/input_color: 55a0a092d16a1a6899c07b1b00d08604
     workspace/surveys/edit/input_color_description: fa9f72ea65480c6b6e9e14b89109af03
     workspace/surveys/edit/insert_link: c42ce4cb6ed35d5bd1389523585cc57e
+    workspace/surveys/edit/invalid_field_in_question: 853e08c2c873ec87dde681ad5eb013a7
+    workspace/surveys/edit/invalid_field_in_question_for_languages: 18661336bdf67aea4946cfe930f34968
+    workspace/surveys/edit/invalid_question_in_block: 92a92b3d1f7b77cc716c744e928bf841
     workspace/surveys/edit/invalid_targeting: db9d1143c82a085c5dddf09492ea753c
     workspace/surveys/edit/invalid_video_url_warning: 2e6a8eb121b46d7c3cc79d541b6a3cd5
     workspace/surveys/edit/invalid_youtube_url: b4e509da11418da24afeeed495c999ac
@@ -3397,6 +3401,7 @@ checksums:
     workspace/surveys/edit/is_set: 1c66019bd162201db83aef305ab2a161
     workspace/surveys/edit/is_skipped: 9fb90b6578f603cca37d4e6c912bb401
     workspace/surveys/edit/is_submitted: 13e774a97ad5f5609555e6f99514e70f
+    workspace/surveys/edit/issue_in_question: 9f52350761a715fe867f36d77a1b1fd6
     workspace/surveys/edit/italic: 555c60fb1d12ae305136202afa6deb3d
     workspace/surveys/edit/jump_to_block: 2fc00bd725c44f98861051c57bb2c392
     workspace/surveys/edit/keep_current_order: a7c944ad6b3515f2c4f83a2c81f8fc26

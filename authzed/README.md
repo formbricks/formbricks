@@ -417,8 +417,7 @@ mismatched parent.
   restricted on every path, and direct checks decide it from PostgreSQL facts (its owner along their
   workspace ladder, else administrators) rather than from the graph. An insert starts one version ahead
   of its acknowledgement, so a survey that was just created or copied is pending, not an empty graph node,
-  until its first projection lands. The one exception is that exact insert pair (version 1, acknowledged
-  0) on a survey stored `workspace`: it was never anything else, so it is workspace-visible at once and
+  until its first projection lands. The one exception is that exact insert pair (version 1, acknowledged 0) on a survey stored `workspace`: it was never anything else, so it is workspace-visible at once and
   decided on the workspace ladder — the API key or member that created it can use it immediately. A
   survey created restricted, or changed before its first acknowledgement, stays pending as above.
 - **DELETE is not a revocation.** Every survey decision resolves the row first and denies once it is gone,

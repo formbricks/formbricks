@@ -258,6 +258,12 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       for (let i = 0; i < surveys.createAndSubmit.ranking.choices.length; i++) {
         await page.getByText(surveys.createAndSubmit.ranking.choices[i]).click();
       }
+      // Ranking "Other" opens a required free-text box inside it
+      await page.getByRole("button", { name: "Add Other to ranking" }).click();
+      const rankingOtherInput = page.getByRole("textbox", { name: "Other" });
+      await page.locator("#questionCard-12").getByRole("button", { name: "Finish" }).click();
+      await expect(rankingOtherInput).toHaveAttribute("aria-invalid", "true");
+      await rankingOtherInput.fill(surveys.createAndSubmit.ranking.otherText);
       await page.locator("#questionCard-12").getByRole("button", { name: "Finish" }).click();
       // loading spinner -> wait for it to disappear
       await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
