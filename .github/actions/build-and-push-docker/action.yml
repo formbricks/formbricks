@@ -141,14 +141,14 @@ runs:
 
     - name: Configure AWS credentials (ECR only)
       if: ${{ inputs.registry_type == 'ecr' }}
-      uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.2.0
+      uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v4.2.0
       with:
         role-to-assume: ${{ inputs.aws_role_arn }}
         aws-region: ${{ inputs.ecr_region }}
 
     - name: Log in to Amazon ECR (ECR only)
       if: ${{ inputs.registry_type == 'ecr' }}
-      uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
+      uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
 
     - name: Set up Docker build tools
       uses: ./.github/actions/docker-build-setup
@@ -257,7 +257,7 @@ runs:
     - name: Build GHCR metadata (experimental)
       if: ${{ inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'true' }}
       id: ghcr-meta-experimental
-      uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
+      uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
       with:
         images: ghcr.io/${{ inputs.ghcr_image_name }}
         tags: |
@@ -285,7 +285,7 @@ runs:
 
     - name: Build and push Docker image
       id: build
-      uses: depot/build-push-action@636daae76684e38c301daa0c5eca1c095b24e780 # v1.14.0
+      uses: depot/build-push-action@98e78adca7817480b8185f474a400b451d74e287 # v1.18.0
       with:
         project: tw0fqmsx3c
         token: ${{ env.DEPOT_PROJECT_TOKEN }}
