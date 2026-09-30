@@ -28,6 +28,8 @@ const createMockSurvey = (overrides: Partial<TSurvey> = {}): TSurvey =>
     name: "Test Survey",
     status: "inProgress",
     visibility: "workspace",
+    visibilityVersion: 1,
+    visibilityProjectedVersion: 1,
     createdAt: NOW,
     blocks: [
       {
@@ -55,6 +57,11 @@ describe("transformToUnifySurvey", () => {
     expect(transformToUnifySurvey(createMockSurvey({ visibility: "restricted" })).visibility).toBe(
       "restricted"
     );
+  });
+
+  test("reports a survey whose grant is still settling as restricted, as the server enforces it", () => {
+    const pendingGrant = createMockSurvey({ visibility: "workspace", visibilityVersion: 2 });
+    expect(transformToUnifySurvey(pendingGrant).visibility).toBe("restricted");
   });
 
   test("transforms a survey with basic elements", () => {

@@ -14,11 +14,15 @@ vi.mock("@/lib/survey/visibility/actor-context", () => ({ resolveSurveyActorCont
 
 const on = { entitled: true, ready: true } as const;
 
-const survey = (visibility: "restricted" | "workspace", ownerId: string | null = "owner") => ({
+const survey = (
+  visibility: "restricted" | "workspace",
+  ownerId: string | null = "owner",
+  { visibilityVersion = 1, visibilityProjectedVersion = 1 } = {}
+) => ({
   ownerId,
   visibility,
-  visibilityProjectedVersion: 1,
-  visibilityVersion: 1,
+  visibilityProjectedVersion,
+  visibilityVersion,
 });
 
 const admin = { enforced: true, isOrganizationAdmin: true, kind: "user", userId: "admin" } as const;
@@ -63,6 +67,8 @@ describe("getSurveyVisibilityViewer", () => {
 
     await expect(getSurveyVisibilityViewer(survey("restricted"), "admin", "org")).resolves.toEqual({
       surveyVisibilityGate: { enforced: false, manageable: false },
+      visibility: "workspace",
+      pendingVisibility: null,
       surveyAccess: null,
       ownerName: null,
     });
@@ -77,6 +83,8 @@ describe("getSurveyVisibilityViewer", () => {
 
     await expect(getSurveyVisibilityViewer(survey("restricted"), "admin", "org")).resolves.toEqual({
       surveyVisibilityGate: { enforced: true, manageable: false },
+      visibility: "restricted",
+      pendingVisibility: null,
       surveyAccess: { canManageVisibility: false, via: "organizationRole" },
       ownerName: "Ada",
     });
@@ -89,6 +97,8 @@ describe("getSurveyVisibilityViewer", () => {
 
     await expect(getSurveyVisibilityViewer(survey("restricted"), "admin", "org")).resolves.toEqual({
       surveyVisibilityGate: { enforced: true, manageable: true },
+      visibility: "restricted",
+      pendingVisibility: null,
       surveyAccess: { canManageVisibility: true, via: "organizationRole" },
       ownerName: "Ada",
     });
@@ -104,9 +114,32 @@ describe("getSurveyVisibilityViewer", () => {
 
     expect(viewer).toEqual({
       surveyVisibilityGate: { enforced: true, manageable: true },
+      visibility: "workspace",
+      pendingVisibility: null,
       surveyAccess: { canManageVisibility: true, via: "workspace" },
       ownerName: null,
     });
     expect(prisma.user.findUnique).not.toHaveBeenCalled();
+  });
+
+  // During a pending change the stored flag already holds the new value, but what is enforced does
+  // not: the page reads the effective one, so a pending grant still shows (and blocks) as restricted.
+  test.each([
+    ["a pending grant", "workspace" as const, "workspace" as const],
+    ["a pending restriction", "restricted" as const, "restricted" as const],
+  ])("%s reports restricted as effective and names what it settles to", async (_label, stored, pending) => {
+    vi.mocked(getSurveyVisibilityGates).mockResolvedValue(on);
+    vi.mocked(resolveSurveyActorContext).mockResolvedValue(admin);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ name: "Ada" } as never);
+
+    const viewer = await getSurveyVisibilityViewer(
+      survey(stored, "owner", { visibilityVersion: 2, visibilityProjectedVersion: 1 }),
+      "admin",
+      "org"
+    );
+
+    expect(viewer.visibility).toBe("restricted");
+    expect(viewer.pendingVisibility).toBe(pending);
+    expect(viewer.surveyAccess).toEqual({ canManageVisibility: true, via: "organizationRole" });
   });
 });

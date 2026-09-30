@@ -1,4 +1,5 @@
 import type { TSurveyVisibility } from "@formbricks/types/surveys/types";
+import { getEffectiveVisibility } from "@/lib/survey/visibility/policy";
 
 /**
  * Client side of the outbound rule (ENG-3283, `lib/survey/visibility/outbound.ts`): webhooks,
@@ -9,10 +10,28 @@ import type { TSurveyVisibility } from "@formbricks/types/surveys/types";
  * still entitled to change it. Every one of them is false while it is not, so the UI stays as it was.
  */
 
-/** A survey as the pickers hold it. `visibility` is optional: some lists only carry it with the gate on. */
-export type TOutboundSurvey = Readonly<{ id: string; visibility?: TSurveyVisibility | null }>;
+/**
+ * A survey as the pickers hold it. `visibility` is optional: some lists only carry it with the gate on.
+ * A list of stored surveys (`TSurvey`) also carries the versions, so a change still in flight counts
+ * as restricted here exactly as the server counts it; v3 list items already report the effective value.
+ */
+export type TOutboundSurvey = Readonly<{
+  id: string;
+  visibility?: TSurveyVisibility | null;
+  visibilityVersion?: number;
+  visibilityProjectedVersion?: number;
+}>;
 
-const isRestricted = (survey: TOutboundSurvey | undefined): boolean => survey?.visibility === "restricted";
+const isRestricted = (survey: TOutboundSurvey | undefined): boolean => {
+  if (!survey?.visibility) return false;
+  const { visibility, visibilityVersion, visibilityProjectedVersion } = survey;
+  if (visibilityVersion === undefined || visibilityProjectedVersion === undefined) {
+    return visibility === "restricted";
+  }
+  return (
+    getEffectiveVisibility({ visibility, visibilityVersion, visibilityProjectedVersion }) === "restricted"
+  );
+};
 
 /**
  * Whether a picker must refuse this survey. Only a new attachment is refused: one already on the

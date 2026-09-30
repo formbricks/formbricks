@@ -69,8 +69,8 @@ interface SurveyMenuBarProps {
    * which the Follow-ups tab reads as well.
    */
   visibilityGate: TSurveyVisibilityUiGate;
-  /** The stored visibility, including a change made from this editor. */
-  storedVisibility: TSurveyVisibility;
+  /** The effective visibility, including a change made from this editor; pending counts as restricted. */
+  effectiveVisibility: TSurveyVisibility;
   onVisibilityChanged: (visibility: TSurveyVisibility) => void;
   onVisibilityNotEnabled: () => void;
   /** Why this user can see the survey; `null` while the gate is off. */
@@ -96,7 +96,7 @@ export const SurveyMenuBar = ({
   setIsCautionDialogOpen,
   isStorageConfigured = true,
   visibilityGate,
-  storedVisibility,
+  effectiveVisibility,
   onVisibilityChanged,
   onVisibilityNotEnabled,
   surveyAccess,
@@ -733,7 +733,9 @@ export const SurveyMenuBar = ({
   };
 
   const handleActivateClick = () => {
-    if (!shouldAskWhoCanView({ gate: visibilityGate, access: surveyAccess, visibility: storedVisibility })) {
+    if (
+      !shouldAskWhoCanView({ gate: visibilityGate, access: surveyAccess, visibility: effectiveVisibility })
+    ) {
       void runActivation();
       return;
     }
@@ -747,12 +749,13 @@ export const SurveyMenuBar = ({
         surveyId: localSurvey.id,
         visibility: "workspace",
       });
-      onVisibilityChanged(result.pending ?? result.visibility);
+      onVisibilityChanged(result.visibility);
       return planActivation(choice, { ok: true });
     } catch (error) {
       const step = planActivation(choice, { ok: false, error });
       if (step.kind === "activate") {
-        onVisibilityChanged("workspace");
+        // The grant is stored but not in effect yet: the survey stays restricted until it settles.
+        onVisibilityChanged("restricted");
       } else {
         toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
       }

@@ -3,6 +3,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
+import { getEffectiveVisibility } from "@/lib/survey/visibility/policy";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { TUnifySurvey, TUnifySurveyElement } from "./types";
 
@@ -47,6 +48,7 @@ export const transformToUnifySurvey = (survey: TSurvey): TUnifySurvey => {
     status: mapSurveyStatus(survey.status),
     elements: unifySurveyElements,
     createdAt: survey.createdAt,
-    visibility: survey.visibility,
+    // What is enforced, not the stored flag: a grant still settling keeps the survey restricted.
+    visibility: getEffectiveVisibility(survey),
   };
 };

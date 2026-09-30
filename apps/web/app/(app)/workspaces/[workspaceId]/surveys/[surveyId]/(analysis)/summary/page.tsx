@@ -71,10 +71,11 @@ const SurveyPage = async (
   const aiUnavailableReason = getAISmartToolsUnavailableReason(aiConfig) ?? null;
 
   // Fetch initial survey summary data on the server to prevent duplicate API calls during hydration
-  const [initialSurveySummary, { surveyVisibilityGate, surveyAccess, ownerName }] = await Promise.all([
-    getSurveySummary(surveyId),
-    getSurveyVisibilityViewer(survey, session.user.id, organization.id),
-  ]);
+  const [initialSurveySummary, { surveyVisibilityGate, visibility, surveyAccess, ownerName }] =
+    await Promise.all([
+      getSurveySummary(surveyId),
+      getSurveyVisibilityViewer(survey, session.user.id, organization.id),
+    ]);
 
   const publicDomain = getPublicDomain();
 
@@ -101,7 +102,7 @@ const SurveyPage = async (
       </PageHeader>
       {showRestrictedBanner({
         enforced: surveyVisibilityGate.enforced,
-        visibility: survey.visibility,
+        visibility,
         access: surveyAccess,
       }) && <RestrictedSurveyBanner ownerName={ownerName} />}
       <SummaryPage

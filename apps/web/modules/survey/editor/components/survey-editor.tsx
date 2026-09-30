@@ -78,6 +78,10 @@ interface SurveyEditorProps {
   publicDomain: string;
   enterpriseLicenseRequestFormUrl: string;
   surveyVisibilityGate: TSurveyVisibilityUiGate;
+  /** The effective visibility (a change in flight counts as restricted), not the stored flag. */
+  visibility: TSurveyVisibility;
+  /** The value a stored change is still settling to, or `null` when nothing is in flight. */
+  pendingVisibility: TSurveyVisibility | null;
   surveyAccess: TSurveyAccess | null;
   ownerName: string | null;
 }
@@ -113,6 +117,8 @@ export const SurveyEditor = ({
   publicDomain,
   enterpriseLicenseRequestFormUrl,
   surveyVisibilityGate,
+  visibility,
+  pendingVisibility,
   surveyAccess,
   ownerName,
 }: Readonly<SurveyEditorProps>) => {
@@ -140,11 +146,16 @@ export const SurveyEditor = ({
 
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
 
-  // ENG-3395. The stored visibility is kept apart from `localSurvey`: it is changed through its own
+  // ENG-3395. The effective visibility is kept apart from `localSurvey`: it is changed through its own
   // endpoint, never by a survey save, so it must not make the editor look dirty. It lives here rather
-  // than in the menu bar because the Follow-ups tab reads it too.
+  // than in the menu bar because the banner and the Follow-ups tab read it too. A change made from
+  // this editor replaces the server's value with the effective one it came back with.
   const [changedVisibility, setChangedVisibility] = useState<TSurveyVisibility | null>(null);
-  const storedVisibility = changedVisibility ?? survey.visibility;
+  const effectiveVisibility = changedVisibility ?? visibility;
+  const visibilityState = {
+    visibility: effectiveVisibility,
+    pending: changedVisibility === null ? pendingVisibility : null,
+  };
   const [isVisibilityTurnedOff, setIsVisibilityTurnedOff] = useState(false);
   // `visibility_not_enabled` only takes the controls away: what is enforced is not decided by it.
   const visibilityGate = isVisibilityTurnedOff
@@ -263,7 +274,7 @@ export const SurveyEditor = ({
         setIsCautionDialogOpen={setIsCautionDialogOpen}
         isStorageConfigured={isStorageConfigured}
         visibilityGate={visibilityGate}
-        storedVisibility={storedVisibility}
+        effectiveVisibility={effectiveVisibility}
         onVisibilityChanged={setChangedVisibility}
         onVisibilityNotEnabled={handleVisibilityNotEnabled}
         surveyAccess={surveyAccess}
@@ -271,7 +282,7 @@ export const SurveyEditor = ({
       />
       {showRestrictedBanner({
         enforced: visibilityGate.enforced,
-        visibility: survey.visibility,
+        visibility: effectiveVisibility,
         access: surveyAccess,
       }) && (
         // A full-width strip under the menu bar, like the bar itself.
@@ -374,7 +385,7 @@ export const SurveyEditor = ({
               userEmail={userEmail}
               teamMemberDetails={teamMemberDetails}
               locale={locale}
-              isRestricted={isOutboundBlocked(visibilityGate.enforced, { visibility: storedVisibility })}
+              isRestricted={isOutboundBlocked(visibilityGate.enforced, visibilityState)}
               workspaceName={localWorkspace.name}
             />
           )}

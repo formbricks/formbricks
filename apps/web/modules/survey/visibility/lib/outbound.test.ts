@@ -30,6 +30,32 @@ describe("isRestrictedSurveyPick", () => {
   });
 });
 
+describe("effective visibility of stored surveys", () => {
+  // A stored survey whose grant is still settling already reads `workspace`, but the server keeps
+  // refusing it until the graph catches up — so the picker refuses it too.
+  const pendingGrant = {
+    id: "s4",
+    visibility: "workspace" as const,
+    visibilityVersion: 2,
+    visibilityProjectedVersion: 1,
+  };
+  const settled = {
+    id: "s5",
+    visibility: "workspace" as const,
+    visibilityVersion: 2,
+    visibilityProjectedVersion: 2,
+  };
+
+  test("treats a change still in flight as restricted", () => {
+    expect(isRestrictedSurveyPick(true, pendingGrant)).toBe(true);
+    expect(hasRestrictedAttachedSurvey(true, ["s4"], [pendingGrant])).toBe(true);
+  });
+
+  test("offers the survey once the change has settled", () => {
+    expect(isRestrictedSurveyPick(true, settled)).toBe(false);
+  });
+});
+
 describe("hasRestrictedAttachedSurvey", () => {
   test("is true when an attached survey is restricted", () => {
     expect(hasRestrictedAttachedSurvey(true, ["s1", "s2"], [restricted, visible])).toBe(true);
