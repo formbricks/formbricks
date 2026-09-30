@@ -419,7 +419,9 @@ mismatched parent.
   decisions collapse to workspace permissions exactly as before, so a fresh deploy changes nothing. It is
   set only by `pnpm authzed:backfill --scope=survey --apply --mark-ready`, which marks only after two
   further dry runs come back clean, and cleared with `--scope=survey --clear-ready`.
-  `SURVEY_VISIBILITY_FORCE_DISABLED=1` is the emergency override that ignores the row.
+  `SURVEY_VISIBILITY_FORCE_DISABLED=1` is the emergency override that ignores the row. A failed read of
+  the row never counts as "not set": a process that last saw it set keeps enforcing, and one that has no
+  successful read fails the request instead of deciding.
 
 ## Resource parent resolution during the current-model migration
 
