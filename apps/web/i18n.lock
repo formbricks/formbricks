@@ -1622,7 +1622,6 @@ checksums:
     workspace/analysis/charts/ai_create/dialog_title: ec5f8ea1138dbfb447b98db0c81b49e0
     workspace/analysis/charts/ai_create/discard_generation_body: 9b6db0874c080129e9bf0da8000e0fe6
     workspace/analysis/charts/ai_create/discard_generation_title: 8c5317fdbafda4715e2eb4f983ec0b9c
-    workspace/analysis/charts/ai_create/generate_with_ai_beta: 2cbc2d0622c5fa2353eda6506532531a
     workspace/analysis/charts/ai_create/prompt_helper_aria: 941af5c22696eb9b8aca0354c4271e6f
     workspace/analysis/charts/ai_create/prompt_helper_breakdown: 46ecdc7514c17710f4a786f04944969e
     workspace/analysis/charts/ai_create/prompt_helper_breakdown_label: 3563fa5dc7da1e95f2d7c635b7c98d82
@@ -1647,6 +1646,8 @@ checksums:
     workspace/analysis/charts/area_display_filled: 8a5591fe0fffc8cce37cb422c0a8cf78
     workspace/analysis/charts/area_display_line: b2083b10c8f7d21284e2892b97a5e8f1
     workspace/analysis/charts/bar_direction: d78ce3e340da83ec3904a31a4e01b5cb
+    workspace/analysis/charts/blank_chart: 77c22d50956ad49359f00d0c2eece43a
+    workspace/analysis/charts/blank_chart_hint: 64e9228a9bfcf6a8f37c640e16fd7118
     workspace/analysis/charts/chart: 6f4d9c56e45ceb8fc22d2f74454cd813
     workspace/analysis/charts/chart_added_to_dashboard: 7bc429ab605cb89a9232c26be008cc00
     workspace/analysis/charts/chart_data: 6739a9576b357a58d73ff0c9bf8db0e4
@@ -1669,6 +1670,7 @@ checksums:
     workspace/analysis/charts/configure_type_label: 1fd60a98a0b5a7f54521e7671772e4a3
     workspace/analysis/charts/contains: 06dd606c0a8f81f9a03b414e9ae89440
     workspace/analysis/charts/create_chart: 636969b904e88bef5c93e859dd8a1656
+    workspace/analysis/charts/create_chart_chooser_title: 636969b904e88bef5c93e859dd8a1656
     workspace/analysis/charts/create_chart_description: c9c1e01dfd9c7079a52a8f0324351987
     workspace/analysis/charts/custom_range: 99f4d72b64621406acc162cceeb1fed7
     workspace/analysis/charts/dashboard: c9380ea68c8c76ea451bd9613329a07c
@@ -1678,6 +1680,7 @@ checksums:
     workspace/analysis/charts/date_preset_last_30_days: a738894cfc5e592052f1e16787744568
     workspace/analysis/charts/date_preset_last_6_months: 1be27ca36359a3a8131f2408827f0f69
     workspace/analysis/charts/date_preset_last_7_days: 3631df3109bfecfe358ba15dcf8bd6f5
+    workspace/analysis/charts/date_preset_last_90_days: 92882f227706e946b0c6b92953ff1f0f
     workspace/analysis/charts/date_preset_last_month: 848086395b28875c050d56e3933dae61
     workspace/analysis/charts/date_preset_last_quarter: 2e565a81de9b3d7b1ee709ebb6f6eda1
     workspace/analysis/charts/date_preset_last_year: fe7c268a48bf85bc40da000e6e437637
@@ -1688,6 +1691,8 @@ checksums:
     workspace/analysis/charts/date_preset_yesterday: eeb58908e68ff96c1b7e8f90e389afb7
     workspace/analysis/charts/date_range: 9b3aa5954144de586931f60ef9594e99
     workspace/analysis/charts/delete_chart_confirmation: f7fd7b0a08e81c9b392b08c9c1ad2147
+    workspace/analysis/charts/describe_it: fb932e24d9ffeea219fa4c2b97e5212a
+    workspace/analysis/charts/describe_it_hint: 31e028f745bb40e0a53ca3a71da398b9
     workspace/analysis/charts/dimensions: f09d837ac25f58986a769bd48ea15022
     workspace/analysis/charts/dimensions_toggle_description: 31eb28f3c83c04bbe37799758ca9f595
     workspace/analysis/charts/discard_chart_body: aa841908f9756f3992e1c064a83f376e
@@ -1788,7 +1793,6 @@ checksums:
     workspace/analysis/charts/filter_data: 05cc68ed2896feef60bbe3829cd9063d
     workspace/analysis/charts/filters: acf5accc113ff3c1992688058576732c
     workspace/analysis/charts/filters_toggle_description: ea18bdb212a6a85620125cab89a4b1c1
-    workspace/analysis/charts/from_scratch: a6e76daa106ee261f4a2884bd4869659
     workspace/analysis/charts/go_to_feedback_directories: 5cc9fd9300fa81c7413035e5adea4094
     workspace/analysis/charts/granularity: 9eb09aef092e7803ce4acb7965cbbaa9
     workspace/analysis/charts/granularity_day: 47648cd60fc313bc3f05b70357a1d675
@@ -1869,6 +1873,14 @@ checksums:
     workspace/analysis/charts/please_select_dashboard: 8f062db96f815ed8268584dd8d292fa6
     workspace/analysis/charts/predefined_measures: b1e6cf0f356dda0052c4fef4ad4957a2
     workspace/analysis/charts/prefer_option_grouping: b038e96f37aca68bbcf56e3b3ddaeda2
+    workspace/analysis/charts/preset_csat_breakdown_description: 31e44b60a0447dd67ee5b7671719e6a5
+    workspace/analysis/charts/preset_csat_breakdown_name: 574160e0209f4b07a8298f269fc3f4e6
+    workspace/analysis/charts/preset_csat_over_time_description: 5bb30b2706d0f4917537c4974996ca91
+    workspace/analysis/charts/preset_csat_over_time_name: 816d67e8dba61b3ff73355f38be74e2b
+    workspace/analysis/charts/preset_nps_breakdown_description: 681731cd630c1551c26254d49a13de4b
+    workspace/analysis/charts/preset_nps_breakdown_name: 6023fb49ba780cec57670dd4c4a50f73
+    workspace/analysis/charts/preset_nps_over_time_description: c2666f3e30fe07592e8e7caaf9bf0460
+    workspace/analysis/charts/preset_nps_over_time_name: d980676b5286898e2a34ff9d984a199a
     workspace/analysis/charts/response_base_ces: b19788e420e054497bf825969b685c76
     workspace/analysis/charts/response_base_csat: 7758042a66ad795ba460b4136d666c76
     workspace/analysis/charts/response_base_nps: f79fde6e68c08cacaf148a63c05d54e3
@@ -1892,6 +1904,8 @@ checksums:
     workspace/analysis/charts/sentiment_value_very_negative: d8fc168ac8dee517c9d5960bfdd2c1d0
     workspace/analysis/charts/sentiment_value_very_positive: 0b5952d9b44604c77b74bb1d3eeb29eb
     workspace/analysis/charts/showing_first_n_of: e9c1e76a46d0635f775a5b86bddbe1c3
+    workspace/analysis/charts/start_from_metric: e6ce730dda40bac144512558cbb61ae1
+    workspace/analysis/charts/start_from_metric_hint: 09bd111d936a1eb83f9e20072727b9bf
     workspace/analysis/charts/time_dimension: 5c967f2a6a875b00825068df5cb2ef84
     workspace/analysis/charts/time_dimension_title: 9353ce9a075a0cc8c3ba7dfa9ef19a8d
     workspace/analysis/charts/time_dimension_title_range_only: c5ddaa8d2cc006c57f027b7d3b87854d
@@ -3976,6 +3990,7 @@ checksums:
     workspace/surveys/summary/last_30_days: a738894cfc5e592052f1e16787744568
     workspace/surveys/summary/last_6_months: 1be27ca36359a3a8131f2408827f0f69
     workspace/surveys/summary/last_7_days: 3631df3109bfecfe358ba15dcf8bd6f5
+    workspace/surveys/summary/last_90_days: 92882f227706e946b0c6b92953ff1f0f
     workspace/surveys/summary/last_month: 848086395b28875c050d56e3933dae61
     workspace/surveys/summary/last_quarter: 2e565a81de9b3d7b1ee709ebb6f6eda1
     workspace/surveys/summary/last_year: fe7c268a48bf85bc40da000e6e437637

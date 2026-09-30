@@ -1005,6 +1005,7 @@ export function getTranslatedDatePresetLabel(value: string, t: TFunction): strin
     "last 24 hours": t("workspace.analysis.charts.date_preset_last_24_hours"),
     "last 7 days": t("workspace.analysis.charts.date_preset_last_7_days"),
     "last 30 days": t("workspace.analysis.charts.date_preset_last_30_days"),
+    "last 90 days": t("workspace.analysis.charts.date_preset_last_90_days"),
     "this month": t("workspace.analysis.charts.date_preset_this_month"),
     "last month": t("workspace.analysis.charts.date_preset_last_month"),
     "this quarter": t("workspace.analysis.charts.date_preset_this_quarter"),

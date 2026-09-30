@@ -36,6 +36,11 @@ interface AdvancedChartBuilderProps {
   workspaceId: string;
   chartType: TChartType;
   initialQuery?: TChartQuery;
+  /**
+   * The initial query arrives without rows (a preset), so run it once instead of treating it as
+   * already executed the way a saved or AI-generated chart is.
+   */
+  runInitialQuery?: boolean;
   onChartGenerated?: (data: AnalyticsResponse) => void;
   onQueryStateChange?: (state: ChartQueryState) => void;
   feedbackDirectoryId: string | null;
@@ -96,6 +101,7 @@ export function AdvancedChartBuilder({
   workspaceId,
   chartType,
   initialQuery,
+  runInitialQuery = false,
   onChartGenerated,
   onQueryStateChange,
   feedbackDirectoryId,
@@ -151,8 +157,13 @@ export function AdvancedChartBuilder({
   // The last query that was executed (or arrived pre-executed via initialQuery, e.g. from the
   // AI section or a saved chart). Auto-run only fires when the form drifts away from it.
   const lastRunQueryJsonRef = useRef<string | null>(
-    initialQuery ? toComparableQueryJson(initialQuery, chartType) : null
+    initialQuery && !runInitialQuery ? toComparableQueryJson(initialQuery, chartType) : null
   );
+  // Read by the effect below without re-running it; this effect is declared first, so it runs first.
+  const runInitialQueryRef = useRef(runInitialQuery);
+  useEffect(() => {
+    runInitialQueryRef.current = runInitialQuery;
+  }, [runInitialQuery]);
 
   const appliedInitialQueryRef = useRef<TChartQuery | null>(null);
   useEffect(() => {
@@ -160,9 +171,9 @@ export function AdvancedChartBuilder({
     if (appliedInitialQueryRef.current === initialQuery) return;
     appliedInitialQueryRef.current = initialQuery;
     const parsed = parseQueryToState(initialQuery);
-    lastRunQueryJsonRef.current = JSON.stringify(
-      prepareQueryForChartType(buildCubeQuery({ ...initialState, ...parsed }), chartType)
-    );
+    lastRunQueryJsonRef.current = runInitialQueryRef.current
+      ? null
+      : JSON.stringify(prepareQueryForChartType(buildCubeQuery({ ...initialState, ...parsed }), chartType));
     dispatch({ type: ACTION.INIT_FROM_QUERY, payload: parsed });
     setDimensionsOpen((parsed.selectedDimensions?.length ?? 0) > 0);
     // chartType only feeds the baseline above; a later switch is caught by the guard and left to
