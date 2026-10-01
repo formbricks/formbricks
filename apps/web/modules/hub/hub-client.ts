@@ -1,7 +1,6 @@
 import "server-only";
-import { type Client, createClient, createConfig } from "@formbricks/hub";
+import { type Client, createHubClient } from "@formbricks/hub";
 import { env } from "@/lib/env";
-import { createHubFetch } from "./hub-fetch";
 import { HubApiError } from "./utils";
 
 /**
@@ -19,18 +18,16 @@ const toHubApiError = (error: unknown, response: Response | undefined): unknown 
     ? new HubApiError(response.status, error === "" ? undefined : error, response.headers)
     : error;
 
+/**
+ * The SDK's own client — retries, per-attempt timeout and auth all come from `createHubClient` — plus the
+ * one thing it leaves to consumers: turning a failure into an `Error` with a status.
+ *
+ * The interceptor is added to the returned client rather than built into a `createConfig` of our own,
+ * because the SDK's retries live in the `fetch` it configures; a config that replaced `fetch` would
+ * silently drop them. Interceptors run outside that `fetch`, so this sees only the final response.
+ */
 const buildHubClient = (apiKey: string, baseUrl: string): Client => {
-  const client = createClient(
-    createConfig({
-      baseUrl,
-      auth: () => apiKey,
-      // Retries and a per-attempt timeout; the generated client has neither. See `hub-fetch.ts`.
-      fetch: createHubFetch(),
-      // A runtime default so a call that forgets `throwOnError` still cannot mistake a failure for an
-      // empty success. Call sites pass it too: only the per-call flag narrows `data` in the types.
-      throwOnError: true,
-    })
-  );
+  const client = createHubClient({ apiKey, baseUrl });
 
   client.interceptors.error.use(toHubApiError);
 
