@@ -6,21 +6,30 @@ import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/pe
 import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { SURVEY_ACTION_FOR_METHOD } from "@/lib/survey/visibility/api-key";
 import { getSession } from "@/modules/auth/lib/session";
+import { getStorageFileNameScope } from "@/modules/storage/utils";
 
 /**
  * ENG-3282: a file under `surveys/{surveyId}/…` belongs to that survey, so once visibility is enforced
  * the survey has to be reachable too — a restricted survey's uploads are its owner's and the organization
  * administrators'. Legacy paths name no survey and keep the workspace check alone.
+ *
+ * The survey is read from the decoded, joined name — the key the storage read and delete build — not
+ * from the raw segments: `surveys%2F{id}%2F…` (or `%252F` once the router has decoded it) is a single
+ * segment here but `surveys/{id}/…` in storage. A name that does not decode is refused
+ * outright (storage fails on it too), and so, once enforced, is a `surveys/` key with an empty survey
+ * segment: it names no survey the caller could be checked against.
  */
 const canReachSurveyFile = async (
   actor: TAuthorizationActor,
   filePath: ReadonlyArray<string>,
   action: "GET" | "DELETE"
 ): Promise<boolean> => {
-  const [segment, surveyId] = filePath;
-  if (segment !== "surveys" || !surveyId) return true;
+  const scope = getStorageFileNameScope(filePath.join("/"));
+  if (!scope.decodable) return false;
+  if (!scope.isSurveyScope) return true;
   if (!(await isSurveyVisibilityReady())) return true;
-  return can(actor, SURVEY_ACTION_FOR_METHOD[action], { type: "survey", id: surveyId });
+  if (!scope.surveyId) return false;
+  return can(actor, SURVEY_ACTION_FOR_METHOD[action], { type: "survey", id: scope.surveyId });
 };
 
 export const authorizePrivateDownload = async (
