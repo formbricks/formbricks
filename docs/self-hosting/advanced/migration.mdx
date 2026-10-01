@@ -203,7 +203,7 @@ upgrade workflow rather than the one-click updater.
 
 ### Bundled Cube image (action required for some deployments)
 
-From 6.0.2, the bundled Cube service runs `ghcr.io/formbricks/cube:1.7.47-1` instead of `cubejs/cube:v1.6.6`;
+From 6.0.2, the bundled Cube service runs `ghcr.io/formbricks/cube:1.7.47-2` instead of `cubejs/cube:v1.6.6`;
 6.0.0 and 6.0.1 still run the upstream image. 5.4.5 makes the same change (see
 [Bundled Cube image update](#bundled-cube-image-update-action-required-for-some-deployments)). The new image
 contains only the Cube 1.7.47 API server and its Postgres driver on a distroless Node 24 runtime, without the
@@ -242,7 +242,7 @@ strings for them.
 - **`CUBEJS_DEV_MODE=true`**: not supported on the new image. Dev mode relies on the embedded Cube Store the image
   leaves out, so `/readyz` answers 500 and the Helm probes and Compose healthcheck never pass. Leave it unset in
   production.
-- **Air-gapped installs and registry mirrors**: mirror `ghcr.io/formbricks/cube:1.7.47-1` along with the other
+- **Air-gapped installs and registry mirrors**: mirror `ghcr.io/formbricks/cube:1.7.47-2` along with the other
   Formbricks images, then point the Compose `image:` or `cube.image.repository` at your mirror.
 
 Cube keeps no state of its own, so rolling back only this change means restoring the backed-up Compose file or
@@ -273,7 +273,7 @@ older Compose file or explicitly reuse the previous Helm digest need the one-tim
 ### Bundled Cube image update (action required for some deployments)
 
 5.4.5 makes the same Cube change as 6.0.2: the bundled service moves from `cubejs/cube:v1.6.6` to
-`ghcr.io/formbricks/cube:1.7.47-1`, and Helm runs it with a read-only root filesystem. Follow
+`ghcr.io/formbricks/cube:1.7.47-2`, and Helm runs it with a read-only root filesystem. Follow
 [Bundled Cube image](#bundled-cube-image-action-required-for-some-deployments) with `version=5.4.5`, so the
 `cube` service you copy comes from the 5.4.5 Compose file rather than a 6.x one.
 
