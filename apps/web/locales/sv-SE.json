@@ -2633,6 +2633,7 @@
         "connect_app_banner_title": "Skapar du en undersökning för webbplats och app?"
       },
       "billing": {
+        "billing_currency_not_supported": "Din faktureringsvaluta stöds inte för den här planen ännu. Kontakta supporten för att byta plan.",
         "billing_interval_toggle": "Faktureringsintervall",
         "cancel_at_period_end": "Avsluta vid periodens slut",
         "comparison_addon": "Tillägg",

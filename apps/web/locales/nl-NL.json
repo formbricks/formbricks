@@ -2633,6 +2633,7 @@
         "connect_app_banner_title": "Een Website & App-enquête instellen?"
       },
       "billing": {
+        "billing_currency_not_supported": "Je factureringsvaluta wordt nog niet ondersteund voor dit abonnement. Neem contact op met support om van abonnement te wisselen.",
         "billing_interval_toggle": "Factureringsinterval",
         "cancel_at_period_end": "Opzeggen aan het einde van de periode",
         "comparison_addon": "Add-on",

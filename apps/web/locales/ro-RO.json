@@ -2633,6 +2633,7 @@
         "connect_app_banner_title": "Configurezi un sondaj pentru Site & Aplicație?"
       },
       "billing": {
+        "billing_currency_not_supported": "Moneda ta de facturare nu este încă acceptată pentru acest plan. Te rugăm să contactezi echipa de asistență pentru a schimba planul.",
         "billing_interval_toggle": "Interval de facturare",
         "cancel_at_period_end": "Anulează la sfârșitul perioadei",
         "comparison_addon": "Supliment",

@@ -2633,6 +2633,7 @@
         "connect_app_banner_title": "正在设置网站和应用调查？"
       },
       "billing": {
+        "billing_currency_not_supported": "该套餐暂不支持你的账单币种。如需更换套餐,请联系客服。",
         "billing_interval_toggle": "账单周期",
         "cancel_at_period_end": "在周期结束时取消",
         "comparison_addon": "附加功能",

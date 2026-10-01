@@ -2633,6 +2633,7 @@
         "connect_app_banner_title": "Web Sitesi ve Uygulama anketi mi kuruyorsunuz?"
       },
       "billing": {
+        "billing_currency_not_supported": "Fatura para biriminiz bu plan için henüz desteklenmiyor. Plan değiştirmek için lütfen destek ekibiyle iletişime geçin.",
         "billing_interval_toggle": "Fatura dönemi",
         "cancel_at_period_end": "Dönem sonunda iptal et",
         "comparison_addon": "Eklenti",

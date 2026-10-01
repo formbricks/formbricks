@@ -2633,6 +2633,7 @@
         "connect_app_banner_title": "¿Configurando una encuesta para sitio web y aplicación?"
       },
       "billing": {
+        "billing_currency_not_supported": "Tu moneda de facturación aún no es compatible con este plan. Ponte en contacto con soporte para cambiar de plan.",
         "billing_interval_toggle": "Intervalo de facturación",
         "cancel_at_period_end": "Cancelar al finalizar el período",
         "comparison_addon": "Complemento",

@@ -2633,6 +2633,7 @@
         "connect_app_banner_title": "Tu configures une enquête Site Web & Application ?"
       },
       "billing": {
+        "billing_currency_not_supported": "Ta devise de facturation n'est pas encore prise en charge pour ce forfait. Contacte le support pour changer de forfait.",
         "billing_interval_toggle": "Intervalle de facturation",
         "cancel_at_period_end": "Annuler à la fin de la période",
         "comparison_addon": "Module complémentaire",

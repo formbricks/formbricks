@@ -2633,6 +2633,7 @@
         "connect_app_banner_title": "Richtest du eine Website- & App-Umfrage ein?"
       },
       "billing": {
+        "billing_currency_not_supported": "Deine Abrechnungswährung wird für diesen Tarif noch nicht unterstützt. Bitte kontaktiere den Support, um den Tarif zu wechseln.",
         "billing_interval_toggle": "Abrechnungsintervall",
         "cancel_at_period_end": "Am Ende des Zeitraums kündigen",
         "comparison_addon": "Add-on",

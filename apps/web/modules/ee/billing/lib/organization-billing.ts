@@ -18,12 +18,14 @@ import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import {
+  BILLING_CURRENCY_NOT_SUPPORTED_ERROR_CODE,
   type TStandardCloudPlan,
   getCatalogItemForPlan,
   getCatalogItemsForPlan,
   getIntervalFromPrice,
   getPlanFromPrice,
   getPriceKindFromPrice,
+  resolveCatalogItemCurrency,
 } from "./stripe-billing-catalog";
 import { stripeClient } from "./stripe-client";
 import { CLOUD_PLAN_LEVEL, type TCloudStripePlan, getCloudPlanFromProduct } from "./stripe-plan";
@@ -489,7 +491,14 @@ const ensureHobbySubscription = async (
   subscriptionCount: number
 ): Promise<void> => {
   if (!stripeClient) return;
-  const hobbyItems = await getCatalogItemsForPlan("hobby", "monthly");
+  // A customer billed before (e.g. a canceled trial) keeps its pinned currency, and Stripe rejects
+  // hobby prices that can't be charged in it — resolve it first so that fails as an expected error.
+  const customer = await stripeClient.customers.retrieve(customerId);
+  const { items: hobbyItems, currency } = await getCatalogItemsForPlan(
+    "hobby",
+    "monthly",
+    customer.deleted ? null : customer.currency
+  );
 
   // subscriptionCount in the key: stable across concurrent calls (dedup), but bumps after a
   // cancellation so re-creation isn't blocked by the old key.
@@ -497,6 +506,7 @@ const ensureHobbySubscription = async (
     {
       customer: customerId,
       items: hobbyItems,
+      ...(currency ? { currency } : {}),
       metadata: { organizationId },
     },
     { idempotencyKey: `ensure-hobby-subscription-${organizationId}-${subscriptionCount}` }
@@ -566,10 +576,17 @@ export const createProTrialSubscription = async (
     }
   }
 
+  const { items, currency } = await getCatalogItemsForPlan(
+    "pro",
+    "monthly",
+    customer.deleted ? null : customer.currency
+  );
+
   await stripeClient.subscriptions.create(
     {
       customer: customerId,
-      items: await getCatalogItemsForPlan("pro", "monthly"),
+      items,
+      ...(currency ? { currency } : {}),
       trial_period_days: trialDays,
       trial_settings: {
         end_behavior: {
@@ -608,11 +625,17 @@ export const createPaidPlanCheckoutSession = async (input: {
     throw new OperationNotAllowedError("mixed_interval_checkout_unsupported");
   }
 
-  const items = await getCatalogItemsForPlan(input.plan, input.interval);
+  const customer = await stripeClient.customers.retrieve(input.customerId);
+  const { items, currency } = await getCatalogItemsForPlan(
+    input.plan,
+    input.interval,
+    customer.deleted ? null : customer.currency
+  );
   const session = await stripeClient.checkout.sessions.create({
     mode: "subscription",
     customer: input.customerId,
     line_items: items,
+    ...(currency ? { currency } : {}),
     client_reference_id: input.organizationId,
     billing_address_collection: "required",
     tax_id_collection: {
@@ -702,11 +725,16 @@ const previewFullConversionChargeCents = async (
   targetInterval: TCloudBillingInterval
 ): Promise<{ amountDue: number; currency: string } | null> => {
   if (!stripeClient) return null;
-  const targetItems = await getCatalogItemsForPlan(targetPlan, targetInterval);
+  const { items: targetItems, currency } = await getCatalogItemsForPlan(
+    targetPlan,
+    targetInterval,
+    subscription.currency
+  );
   const existingDeletions = subscription.items.data.map((item) => ({ id: item.id, deleted: true as const }));
   const preview = await stripeClient.invoices.createPreview({
     customer: customerId,
     subscription: subscription.id,
+    ...(currency ? { currency } : {}),
     subscription_details: {
       items: [...existingDeletions, ...targetItems],
       proration_behavior: "always_invoice",
@@ -748,7 +776,13 @@ const updateSubscriptionItemsImmediately = async (
     return { clientSecret: null, requiresAction: false };
   }
 
-  const targetItems = await getCatalogItemsForPlan(targetPlan, targetInterval);
+  // A subscription's currency is fixed, so subscriptions.update takes no currency: Stripe charges each
+  // price's option for subscription.currency. This only verifies (before any mutation) that one exists.
+  const { items: targetItems } = await getCatalogItemsForPlan(
+    targetPlan,
+    targetInterval,
+    subscription.currency
+  );
   const existingDeletions = subscription.items.data.map((item) => ({
     id: item.id,
     deleted: true as const,
@@ -816,13 +850,14 @@ const getScheduleItemsForPlanChange = async (
 ) => {
   const currentItems = mapSubscriptionItemsToScheduleItems(subscription.items.data);
   const targetCatalogItem = await getCatalogItemForPlan(targetPlan, targetInterval);
+  const currency = resolveCatalogItemCurrency(targetCatalogItem, subscription.currency);
   const targetItems = mapSubscriptionItemsToScheduleItems([
     { price: targetCatalogItem.basePrice, quantity: 1 },
     ...(targetCatalogItem.responsePrice ? [{ price: targetCatalogItem.responsePrice }] : []),
     ...(targetCatalogItem.workflowRunsPrice ? [{ price: targetCatalogItem.workflowRunsPrice }] : []),
   ]);
 
-  return { currentItems, targetItems };
+  return { currentItems, targetItems, currency };
 };
 
 const getOrCreatePlanChangeSchedule = async (
@@ -874,18 +909,24 @@ const buildPlanChangePhases = (input: {
   organizationId: string;
   targetPlan: TStandardCloudPlan;
   targetInterval: TCloudBillingInterval;
+  currency: string | undefined;
 }) => {
-  const { currentPhase, currentItems, targetItems, organizationId, targetPlan, targetInterval } = input;
+  const { currentPhase, currentItems, targetItems, organizationId, targetPlan, targetInterval, currency } =
+    input;
+  // Only set when the subscription bills in a non-default currency option of the catalog prices.
+  const currencyParam = currency ? { currency } : {};
 
   return [
     {
       start_date: currentPhase.start_date,
       end_date: currentPhase.end_date,
       items: currentItems,
+      ...currencyParam,
     },
     {
       start_date: currentPhase.end_date,
       items: targetItems,
+      ...currencyParam,
       metadata: {
         organizationId,
         targetPlan,
@@ -947,18 +988,19 @@ const scheduleSubscriptionPlanChange = async (
     throw new Error("Stripe is not configured");
   }
 
+  // Resolved before any mutation so an unsupported currency leaves the subscription untouched.
+  const { currentItems, targetItems, currency } = await getScheduleItemsForPlanChange(
+    subscription,
+    targetPlan,
+    targetInterval
+  );
+
   const hadCancelAtPeriodEnd = subscription.cancel_at_period_end;
   if (hadCancelAtPeriodEnd) {
     await stripeClient.subscriptions.update(subscription.id, {
       cancel_at_period_end: false,
     });
   }
-
-  const { currentItems, targetItems } = await getScheduleItemsForPlanChange(
-    subscription,
-    targetPlan,
-    targetInterval
-  );
   const { schedule, createdSchedule } = await getOrCreatePlanChangeSchedule(subscription);
   const currentPhase = getCurrentSchedulePhase(schedule);
 
@@ -978,6 +1020,7 @@ const scheduleSubscriptionPlanChange = async (
         organizationId,
         targetPlan,
         targetInterval,
+        currency,
       }),
     });
   } catch (error) {
@@ -1048,6 +1091,10 @@ const switchTrialToHobbyImmediately = async (
     throw new Error("Stripe is not configured");
   }
 
+  // Resolved before releasing the schedule or clearing the cancel flag, so an unsupported currency
+  // fails with the trial untouched. No currency param: the subscription's currency is fixed.
+  const { items: hobbyItems } = await getCatalogItemsForPlan("hobby", "monthly", subscription.currency);
+
   if (subscription.schedule) {
     const scheduleId =
       typeof subscription.schedule === "string" ? subscription.schedule : subscription.schedule.id;
@@ -1062,8 +1109,6 @@ const switchTrialToHobbyImmediately = async (
       cancel_at_period_end: false,
     });
   }
-
-  const hobbyItems = await getCatalogItemsForPlan("hobby", "monthly");
   const existingDeletions = subscription.items.data.map((item) => ({
     id: item.id,
     deleted: true as const,
@@ -1185,6 +1230,9 @@ export const switchOrganizationToCloudPlan = async (input: {
   return { mode: "scheduled", pendingChange, clientSecret: null, requiresAction: false };
 };
 
+const isBillingCurrencyNotSupportedError = (error: unknown): boolean =>
+  error instanceof OperationNotAllowedError && error.message === BILLING_CURRENCY_NOT_SUPPORTED_ERROR_CODE;
+
 // Previews the invoice an immediate upgrade or trial conversion would generate; mirrors
 // updateSubscriptionItemsImmediately so the amount matches the real charge (estimate — final invoice
 // is authoritative). Returns null when Stripe can't price the invoice (it can fail on usage-based
@@ -1210,6 +1258,8 @@ export const previewImmediateUpgradeCharge = async (input: {
     input.targetPlan,
     input.targetInterval
   ).catch((error: unknown) => {
+    // Not a pricing hiccup: the upgrade itself would be refused, so let the modal say so up front.
+    if (isBillingCurrencyNotSupportedError(error)) throw error;
     logger.warn(
       { error, organizationId: input.organizationId, targetPlan: input.targetPlan },
       "Upgrade invoice preview failed; the confirmation modal falls back to amount-less copy"
@@ -1956,7 +2006,18 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
     const freshActive = freshSubscriptions.data.filter((sub) => ACTIVE_SUBSCRIPTION_STATUSES.has(sub.status));
 
     if (freshActive.length === 0) {
-      await ensureHobbySubscription(organizationId, customerId, freshSubscriptions.data.length);
+      try {
+        await ensureHobbySubscription(organizationId, customerId, freshSubscriptions.data.length);
+      } catch (error) {
+        if (!isBillingCurrencyNotSupportedError(error)) throw error;
+        // A customer pinned to a currency the hobby price can't be charged in (ENG-3370). Leave it
+        // without a subscription — which already reads as Hobby — rather than failing the caller: a
+        // throw here would 500 the Stripe webhook into endless retries and skip the billing sync.
+        logger.warn(
+          { organizationId, customerId },
+          "Skipping hobby subscription: the hobby price does not support the customer's pinned currency"
+        );
+      }
     }
   }
 };

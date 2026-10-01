@@ -3452,4 +3452,334 @@ describe("organization-billing", () => {
     expect(result.targetPlan).toBeNull();
     expect(mocks.subscriptionsUpdate).not.toHaveBeenCalled();
   });
+
+  // ENG-3370: Stripe pins a customer's currency once it is billed. Catalog prices that can't be charged
+  // in the pinned currency made Stripe reject the call ("The price specified only supports 'usd'...").
+  describe("currency-pinned customers", () => {
+    // An expected error by name, so the action client returns its message instead of reporting it to
+    // Sentry as a fault (isExpectedError in @formbricks/types/errors).
+    const UNSUPPORTED_CURRENCY_ERROR = {
+      name: "OperationNotAllowedError",
+      message: "billing_currency_not_supported",
+    };
+
+    // Every catalog price from the default mock, additionally chargeable in EUR via currency_options.
+    const offerCatalogInEur = async () => {
+      const { data } = (await mocks.pricesList()) as { data: Array<Record<string, unknown>> };
+      mocks.pricesList.mockClear();
+      mocks.pricesList.mockResolvedValue({
+        data: data.map((price) => ({ ...price, currency_options: { usd: {}, eur: {} } })),
+        has_more: false,
+      });
+    };
+
+    const pinCustomerToEur = () => {
+      mocks.customersRetrieve.mockResolvedValue({
+        id: "cus_1",
+        deleted: false,
+        email: "owner@example.com",
+        invoice_settings: { default_payment_method: "pm_1" },
+        currency: "eur",
+      });
+    };
+
+    const mockActiveProSubscription = (currency: string) => {
+      mocks.subscriptionsList.mockResolvedValue({
+        data: [
+          {
+            id: "sub_1",
+            status: "active",
+            currency,
+            billing_cycle_anchor: 1739923200,
+            cancel_at_period_end: true,
+            schedule: null,
+            default_payment_method: "pm_1",
+            items: {
+              data: [
+                {
+                  id: "si_pro_base",
+                  current_period_end: 1742515200,
+                  price: {
+                    id: "price_pro_monthly",
+                    metadata: {
+                      formbricks_plan: "pro",
+                      formbricks_price_kind: "base",
+                      formbricks_interval: "monthly",
+                    },
+                    product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                    recurring: { usage_type: "licensed", interval: "month" },
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      });
+      mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+        stripeCustomerId: "cus_1",
+        limits: { workspaces: 3, monthly: { responses: 1500 } },
+        usageCycleAnchor: new Date(),
+        stripe: { subscriptionId: "sub_1", plan: "pro", interval: "monthly", hasPaymentMethod: true },
+      });
+    };
+
+    test("createProTrialSubscription rejects an EUR-pinned customer on USD-only prices without calling Stripe", async () => {
+      pinCustomerToEur();
+
+      await expect(createProTrialSubscription("org_1", "cus_1", 14)).rejects.toMatchObject(
+        UNSUPPORTED_CURRENCY_ERROR
+      );
+      expect(mocks.subscriptionsCreate).not.toHaveBeenCalled();
+    });
+
+    test("createPaidPlanCheckoutSession rejects an EUR-pinned customer on USD-only prices without calling Stripe", async () => {
+      pinCustomerToEur();
+
+      await expect(
+        createPaidPlanCheckoutSession({
+          organizationId: "org_1",
+          customerId: "cus_1",
+          plan: "pro",
+          interval: "monthly",
+        })
+      ).rejects.toMatchObject(UNSUPPORTED_CURRENCY_ERROR);
+      expect(mocks.checkoutSessionsCreate).not.toHaveBeenCalled();
+    });
+
+    test("createProTrialSubscription bills an EUR-pinned customer in EUR when the prices offer it", async () => {
+      pinCustomerToEur();
+      await offerCatalogInEur();
+
+      await createProTrialSubscription("org_1", "cus_1", 14);
+
+      expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customer: "cus_1",
+          currency: "eur",
+          items: [{ price: "price_pro_monthly", quantity: 1 }, { price: "price_pro_responses" }],
+        }),
+        { idempotencyKey: "create-pro-trial-org_1" }
+      );
+    });
+
+    test("createPaidPlanCheckoutSession opens checkout in EUR when the prices offer it", async () => {
+      pinCustomerToEur();
+      await offerCatalogInEur();
+      mocks.checkoutSessionsCreate.mockResolvedValue({ url: "https://checkout.stripe.test/cs_1" });
+
+      await expect(
+        createPaidPlanCheckoutSession({
+          organizationId: "org_1",
+          customerId: "cus_1",
+          plan: "pro",
+          interval: "monthly",
+        })
+      ).resolves.toBe("https://checkout.stripe.test/cs_1");
+      expect(mocks.checkoutSessionsCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ customer: "cus_1", currency: "eur" })
+      );
+    });
+
+    test("leaves a USD-pinned customer's checkout request without a currency override", async () => {
+      await offerCatalogInEur();
+      mocks.checkoutSessionsCreate.mockResolvedValue({ url: "https://checkout.stripe.test/cs_1" });
+
+      await createPaidPlanCheckoutSession({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        plan: "pro",
+        interval: "monthly",
+      });
+
+      expect(mocks.checkoutSessionsCreate.mock.calls[0][0]).not.toHaveProperty("currency");
+    });
+
+    test("an immediate upgrade on a USD-only target is rejected before the subscription is touched", async () => {
+      mockActiveProSubscription("eur");
+
+      await expect(
+        switchOrganizationToCloudPlan({
+          organizationId: "org_1",
+          customerId: "cus_1",
+          targetPlan: "scale",
+          targetInterval: "monthly",
+        })
+      ).rejects.toMatchObject(UNSUPPORTED_CURRENCY_ERROR);
+      // Not even the cancel_at_period_end reset runs.
+      expect(mocks.subscriptionsUpdate).not.toHaveBeenCalled();
+    });
+
+    test("a scheduled downgrade on a USD-only target is rejected before the subscription is touched", async () => {
+      mockActiveProSubscription("eur");
+
+      await expect(
+        switchOrganizationToCloudPlan({
+          organizationId: "org_1",
+          customerId: "cus_1",
+          targetPlan: "hobby",
+          targetInterval: "monthly",
+        })
+      ).rejects.toMatchObject(UNSUPPORTED_CURRENCY_ERROR);
+      expect(mocks.subscriptionsUpdate).not.toHaveBeenCalled();
+      expect(mocks.subscriptionSchedulesCreate).not.toHaveBeenCalled();
+    });
+
+    test("a scheduled downgrade bills both phases in the subscription's EUR option", async () => {
+      mockActiveProSubscription("eur");
+      await offerCatalogInEur();
+
+      await switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "hobby",
+        targetInterval: "monthly",
+      });
+
+      const phases = mocks.subscriptionSchedulesUpdate.mock.calls[0][1].phases as Array<{
+        currency?: string;
+      }>;
+      expect(phases.map((phase) => phase.currency)).toEqual(["eur", "eur"]);
+    });
+
+    test("previewImmediateUpgradeCharge prices the invoice in the subscription's EUR option", async () => {
+      mockActiveProSubscription("eur");
+      await offerCatalogInEur();
+
+      await previewImmediateUpgradeCharge({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "scale",
+        targetInterval: "monthly",
+      });
+
+      expect(mocks.invoicesCreatePreview).toHaveBeenCalledWith(
+        expect.objectContaining({ subscription: "sub_1", currency: "eur" })
+      );
+    });
+
+    test("previewImmediateUpgradeCharge surfaces an unsupported currency instead of an amount-less preview", async () => {
+      mockActiveProSubscription("eur");
+
+      await expect(
+        previewImmediateUpgradeCharge({
+          organizationId: "org_1",
+          customerId: "cus_1",
+          targetPlan: "scale",
+          targetInterval: "monthly",
+        })
+      ).rejects.toMatchObject(UNSUPPORTED_CURRENCY_ERROR);
+      expect(mocks.invoicesCreatePreview).not.toHaveBeenCalled();
+    });
+
+    test("a trial returning to Hobby on a USD-only Hobby price is rejected before the schedule or cancel flag is touched", async () => {
+      mocks.subscriptionsList.mockResolvedValue({
+        data: [
+          {
+            id: "sub_1",
+            status: "trialing",
+            currency: "eur",
+            billing_cycle_anchor: 1739923200,
+            cancel_at_period_end: true,
+            schedule: "sched_existing",
+            default_payment_method: null,
+            items: {
+              data: [
+                {
+                  id: "si_pro_base",
+                  current_period_end: 1742515200,
+                  price: {
+                    id: "price_pro_monthly",
+                    metadata: {
+                      formbricks_plan: "pro",
+                      formbricks_price_kind: "base",
+                      formbricks_interval: "monthly",
+                    },
+                    product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                    recurring: { usage_type: "licensed", interval: "month" },
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      });
+      mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+        stripeCustomerId: "cus_1",
+        limits: { workspaces: 3, monthly: { responses: 1500 } },
+        usageCycleAnchor: new Date(),
+        stripe: { subscriptionId: "sub_1", plan: "pro", interval: "monthly", hasPaymentMethod: false },
+      });
+
+      await expect(
+        switchOrganizationToCloudPlan({
+          organizationId: "org_1",
+          customerId: "cus_1",
+          targetPlan: "hobby",
+          targetInterval: "monthly",
+        })
+      ).rejects.toMatchObject(UNSUPPORTED_CURRENCY_ERROR);
+      expect(mocks.subscriptionSchedulesRelease).not.toHaveBeenCalled();
+      expect(mocks.subscriptionsUpdate).not.toHaveBeenCalled();
+    });
+
+    const mockCustomerWithoutActiveSubscription = () => {
+      mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+        stripeCustomerId: "cus_1",
+        limits: { workspaces: 1, monthly: { responses: 500 } },
+        usageCycleAnchor: new Date(),
+        stripe: { plan: "hobby" },
+      });
+      mocks.subscriptionsList.mockResolvedValue({
+        data: [{ id: "sub_old", status: "canceled", items: { data: [] } }],
+      });
+    };
+
+    test("reconcile provisions Hobby in EUR for an EUR-pinned customer when the Hobby price offers it", async () => {
+      pinCustomerToEur();
+      await offerCatalogInEur();
+      mockCustomerWithoutActiveSubscription();
+
+      await reconcileCloudStripeSubscriptionsForOrganization("org_1");
+
+      expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
+        {
+          customer: "cus_1",
+          items: [{ price: "price_hobby_monthly", quantity: 1 }],
+          currency: "eur",
+          metadata: { organizationId: "org_1" },
+        },
+        { idempotencyKey: "ensure-hobby-subscription-org_1-1" }
+      );
+    });
+
+    test("reconcile still fails on any other Hobby provisioning error", async () => {
+      mockCustomerWithoutActiveSubscription();
+      mocks.subscriptionsCreate.mockRejectedValue(new Error("stripe is down"));
+
+      await expect(reconcileCloudStripeSubscriptionsForOrganization("org_1")).rejects.toThrow(
+        "stripe is down"
+      );
+      expect(mocks.loggerWarn).not.toHaveBeenCalled();
+    });
+
+    test("reconcile skips hobby provisioning for an EUR-pinned customer instead of failing", async () => {
+      pinCustomerToEur();
+      mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+        stripeCustomerId: "cus_1",
+        limits: { workspaces: 1, monthly: { responses: 500 } },
+        usageCycleAnchor: new Date(),
+        stripe: { plan: "hobby" },
+      });
+      mocks.subscriptionsList.mockResolvedValue({
+        data: [{ id: "sub_old", status: "canceled", items: { data: [] } }],
+      });
+
+      await expect(reconcileCloudStripeSubscriptionsForOrganization("org_1")).resolves.toBeUndefined();
+      expect(mocks.subscriptionsCreate).not.toHaveBeenCalled();
+      expect(mocks.loggerWarn).toHaveBeenCalledWith(
+        { organizationId: "org_1", customerId: "cus_1" },
+        expect.stringContaining("pinned currency")
+      );
+    });
+  });
 });

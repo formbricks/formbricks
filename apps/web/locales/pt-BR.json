@@ -2633,6 +2633,7 @@
         "connect_app_banner_title": "Configurando uma pesquisa de Site & App?"
       },
       "billing": {
+        "billing_currency_not_supported": "Sua moeda de cobrança ainda não é compatível com este plano. Entre em contato com o suporte para alterar planos.",
         "billing_interval_toggle": "Intervalo de cobrança",
         "cancel_at_period_end": "Cancelar ao final do período",
         "comparison_addon": "Complemento",

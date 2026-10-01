@@ -2633,6 +2633,7 @@
         "connect_app_banner_title": "Setting up a Website & App survey?"
       },
       "billing": {
+        "billing_currency_not_supported": "Your billing currency isn't supported for this plan yet. Please contact support to change plans.",
         "billing_interval_toggle": "Billing interval",
         "cancel_at_period_end": "Cancel at period end",
         "comparison_addon": "Add-on",

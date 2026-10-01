@@ -67,6 +67,9 @@ export const SelectPlanCard = ({ nextUrl, organizationId, trialDays }: Readonly<
       } else if (result?.serverError === "trial_already_used") {
         toast.error(t("workspace.settings.billing.trial_already_used"));
         setIsStartingTrial(false);
+      } else if (result?.serverError === "billing_currency_not_supported") {
+        toast.error(t("workspace.settings.billing.billing_currency_not_supported"));
+        setIsStartingTrial(false);
       } else {
         toast.error(t("workspace.settings.billing.failed_to_start_trial"));
         setIsStartingTrial(false);

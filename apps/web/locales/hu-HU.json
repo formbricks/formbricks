@@ -2633,6 +2633,7 @@
         "connect_app_banner_title": "Beállít egy webhelyet és alkalmazás-kérdőívet?"
       },
       "billing": {
+        "billing_currency_not_supported": "Az Ön számlázási pénzneme jelenleg nem támogatott ennél a csomagnál. Kérjük, vegye fel a kapcsolatot az ügyfélszolgálattal a csomagváltáshoz.",
         "billing_interval_toggle": "Számlázási időköz",
         "cancel_at_period_end": "Megszakítás az időszak végén",
         "comparison_addon": "Kiegészítő",

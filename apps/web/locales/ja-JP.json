@@ -2633,6 +2633,7 @@
         "connect_app_banner_title": "ウェブサイト&アプリ調査を設定していますか？"
       },
       "billing": {
+        "billing_currency_not_supported": "お客様の請求通貨は、このプランではまだサポートされていません。プランを変更するには、サポートにお問い合わせください。",
         "billing_interval_toggle": "請求間隔",
         "cancel_at_period_end": "期間終了時にキャンセル",
         "comparison_addon": "アドオン",
