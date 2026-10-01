@@ -617,6 +617,110 @@ JSON-RPC `-32602` error before its arguments are parsed. Fields with a tighter b
 `languages`, `get_survey`'s `lang`, the list filters' `in` arrays, and `create_feedback_records`'
 `records`. A request body may be at most 2 MB, whether or not it declares a `Content-Length`.
 
+## Adding A Tool
+
+A tool is a thin adapter over a v3 operation: it parses its input, calls the operation with the caller's
+authentication, and relays the result. It never queries the database or checks tenancy itself — the
+operation owns both — so what an agent can do through MCP is exactly what the v3 API can do.
+
+<Steps>
+  <Step title="Start from the operation">
+    Find or add the operation in `apps/web/app/api/v3/<resource>/lib/operations.ts`, with its REST route and
+    OpenAPI entry. Operations **return** a `Response` for every outcome, errors included, and never throw: MCP
+    calls them without the route wrapper.
+  </Step>
+  <Step title="Declare the input">
+    In `tools/schemas.ts` (or `tools/<resource>-schemas.ts`). Use `.strict()` on the object and
+    `z.strictObject` on nested ones, `lengthBoundedArray` for arrays, `.describe()` on every field, and
+    `.extend()` the v3 body schema rather than restating it. `schemas.test.ts` fails on any structured object
+    that is not strict. Never take a tenant id from input.
+  </Step>
+  <Step title="Declare the output">
+    `outputSchema: mcpToolOutput(<v3 resource schema>)`, built from the v3 resource schema and never
+    retyped. The SDK validates every structured result against it, so a schema that drifts fails every call.
+  </Step>
+  <Step title="Register it">
+    In `tools/<resource>.ts`, through `registerScopedTool` — the only registration path, which runs the scope
+    gate before the handler. Reads call the operation directly:
+
+    ```ts
+    registerScopedTool(
+      server,
+      "get_response",
+      {
+        title: "Get response",
+        description: "Read one survey response in full. Operates on responses, not feedback records.",
+        inputSchema: ZMcpGetResponseInput,
+        outputSchema: ZMcpResponseOutput,
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+      },
+      ["responses:read"],
+      async (input: TMcpGetResponseInput, ctx) => {
+        const authInfo = getMcpToolAuthInfo(ctx);
+        const requestId = getMcpRequestId(authInfo);
+        const response = await getV3Response({
+          responseId: input.responseId,
+          authentication: getMcpAuthentication(authInfo),
+          requestId,
+          instance: MCP_API_ROUTE,
+        });
+        return await responseToMcpToolResult(response, requestId);
+      }
+    );
+    ```
+
+    A mutation differs in two places, and both are needed: `audit: { action, targetType, targetIdArg? }` in
+    the config (records a call the scope gate refused) and `runMcpMutation(ctx, { action, resource }, ({
+    authentication, requestId, auditLog }) => operation(...))` in the handler (records the outcome). Gate
+    writes on `<resource>:write`. A dry run is `read` only if it is a pure function of its input
+    (`validate_survey`); one that resolves references is `write` (`validate_response`).
+  </Step>
+  <Step title="Test it">
+    Next to the tool, in `tools/<resource>.test.ts`: drive the handler with the opposite scope and assert the
+    403 detail, and assert the roster of registered names (see `responses.test.ts` and
+    `feedback-records.test.ts`). Run `pnpm test`; restart the dev server to see the tool in `tools/list`.
+  </Step>
+  <Step title="Document it">
+    Add its section under [Available Tools](#available-tools), a row in the scope, permission and REST-mapping
+    tables on this page, and in the scope table of `platform/mcp/overview.mdx` if it adds a tool to a scope.
+  </Step>
+</Steps>
+
+### A new scope family
+
+Reusing `<resource>:read` / `<resource>:write` needs nothing more. A new resource family also needs:
+
+1. The scope pair in `MCP_OAUTH_SCOPES` (`modules/auth/lib/oauth-urls.ts`), and a data migration that appends
+   it to existing `oauthResource.allowedScopes` rows — `mcp-oauth-resource-seed.test.ts` fails until the
+   migration is listed in its `REPAIR_MIGRATIONS`. Without it, `/authorize` answers `invalid_scope` on every
+   instance that already upgraded, and nothing logs.
+2. API-key scopes in `getMcpScopes` (`modules/mcp/auth.ts`), the consent label in `getOAuthScopeLabel` plus its
+   en-US string (then `pnpm i18n`), and the `anyOf` list on `list_workspaces`.
+3. `registerXTools(server)` in `modules/mcp/server.ts`, before the final `instrumentMcpServerWithTracing`.
+4. Last, `MCP_RESOURCE_SCOPES`, which advertises the scope. This breaks already-connected clients until they
+   re-register (see the warning under [Authentication](#authentication)), so it ships with a release note.
+
+### What makes a tool good
+
+- **One tool per operation.** A convenience tool is a second surface to document, test and keep in step. Add
+  one only when the operation's shape costs the agent real tokens or errors — `edit_survey_blocks` addresses
+  blocks by id instead of resending the whole array.
+- **Descriptions are paid for on every session.** `tools/list` ships every description and every field
+  `.describe()` to the model each time. State what the tool does, its side effects, and when to prefer another
+  tool. Spend a long description only where the wrong pick is likely *and* silent (`list_responses` against
+  feedback records); everywhere else use the one-line form.
+- **Small pages, cheap counts.** Cap `limit` below the REST maximum (default 20, max 50–100 against 250), keep
+  expensive totals opt-in, use opaque cursors, and give list-shaped resources a `count_*` tool so "how many"
+  never means paging.
+- **Concise by default.** Return the handle for the next call, not the whole resource: `response_format:
+  "concise"` returns `id` and `updatedAt`, which is the next call's `expectedUpdatedAt`. The projection is
+  MCP-only; REST keeps the full resource.
+- **Errors that say what to do next.** Relay the v3 problem document unchanged: `invalid_params` names the
+  field, a `409` carries `currentUpdatedAt`. Reject unknown keys instead of dropping them.
+- **Honest annotations.** `destructiveHint: true` whenever the previous value is unrecoverable from the
+  result, including whole-subtree replaces. For an irreversible delete, confirm first the way
+  `delete_response` does.
+
 ## Available Tools
 
 ### list_surveys
