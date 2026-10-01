@@ -408,7 +408,10 @@ mismatched parent.
 
 - **Fast path and outbox.** The `authzed_projection_survey` trigger enqueues an event on insert, delete, and
   any write to `visibility`, `ownerId` or `workspaceId`. `restricted → workspace` on the same owner and
-  workspace, and a write that leaves all three unchanged, are grants; every other move is a revocation.
+  workspace, and a write that leaves all three unchanged, are grants; every other move is a revocation —
+  except an owner cleared to `NULL`. That only happens through `ON DELETE SET NULL` when the owning user is
+  deleted, and both owner arms intersect `workspace->read`, which that user's own revocation removes; as a
+  revocation it would queue one per owned survey and could arm the freshness guard for every tenant.
   The visibility endpoint also projects in-request.
 - **Fencing.** Each survey is reconciled inside a transaction holding
   `pg_advisory_xact_lock(hashtext('survey-visibility:' || id))`, the same lock the visibility endpoint

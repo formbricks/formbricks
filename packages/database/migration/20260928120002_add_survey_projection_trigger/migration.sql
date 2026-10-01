@@ -44,9 +44,19 @@ CREATE OR REPLACE FUNCTION authzed_projection_is_grant(
     -- three facts as they were projects byte-identical relationships. Every other move takes access
     -- away from someone: an owner change drops the old owner, a workspace move drops the old workspace,
     -- and workspace -> restricted drops the shared edge.
+    --
+    -- Except an owner cleared to NULL. Nothing in the app writes that: it is `ON DELETE SET NULL` when the
+    -- owning user is deleted, once per survey they owned. Both owner arms of the schema intersect
+    -- `workspace->read` (`private_owner & workspace->…`, `owner & workspace->read`), and that user's own
+    -- revocation removes their workspace read, so the dropped owner edge takes nothing the user deletion
+    -- has not already taken. Counting it would queue one revocation per owned survey and let deleting a
+    -- prolific owner arm the freshness guard for every tenant.
     WHEN 'survey' THEN
       (previous_source ->> 'workspaceId') IS NOT DISTINCT FROM (source ->> 'workspaceId')
-      AND (previous_source ->> 'ownerId') IS NOT DISTINCT FROM (source ->> 'ownerId')
+      AND (
+        (previous_source ->> 'ownerId') IS NOT DISTINCT FROM (source ->> 'ownerId')
+        OR (source ->> 'ownerId') IS NULL
+      )
       AND (
         (previous_source ->> 'visibility') IS NOT DISTINCT FROM (source ->> 'visibility')
         OR (

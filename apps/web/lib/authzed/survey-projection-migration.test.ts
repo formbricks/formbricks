@@ -46,6 +46,24 @@ describe("survey projection trigger migration (ENG-3282)", () => {
     ).toBe(functionBody(outboxMigration, "enqueue_authzed_projection"));
   });
 
+  // `ON DELETE SET NULL` writes `ownerId → NULL` once per survey a deleted user owned. As a revocation
+  // that would queue one per survey and could arm the deployment-wide freshness guard; the user's own
+  // revocation already removes the workspace read both owner arms intersect. The behavior itself is
+  // proven against PostgreSQL in outbox-trigger.integration.test.ts.
+  test("classifies an owner cleared to NULL as a grant, and only on the same workspace and visibility", () => {
+    const surveyCase =
+      /WHEN 'survey' THEN([\s\S]*?)\n\n\s*ELSE false/.exec(
+        functionBody(surveyMigration, "authzed_projection_is_grant")
+      )?.[1] ?? "";
+    expect(surveyCase).toContain(
+      `(previous_source ->> 'ownerId') IS NOT DISTINCT FROM (source ->> 'ownerId')
+        OR (source ->> 'ownerId') IS NULL`
+    );
+    // The NULL arm is ANDed with the workspace and visibility conditions, never ORed past them.
+    expect(surveyCase.indexOf("workspaceId")).toBeLessThan(surveyCase.indexOf("IS NULL"));
+    expect(surveyCase.indexOf("IS NULL")).toBeLessThan(surveyCase.indexOf("'visibility'"));
+  });
+
   // A new row has no graph edges until it is projected. Settled versions would send authorization to an
   // empty survey node and deny even the owner; a pending pair is decided from PostgreSQL facts instead.
   test("starts every inserted survey in its initial projection: version 0, never acknowledged", () => {

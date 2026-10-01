@@ -350,17 +350,67 @@ describe("AuthZed projection outbox triggers: survey (ENG-3282)", () => {
     expect(bumped.visibilityPending).toBe(true);
   });
 
-  test("sets the owner to null when the owning user is deleted", async () => {
+  test("sets the owner to null when the owning user is deleted, without a survey revocation", async () => {
     const { owner, workspace } = await seedSurvey("survey-owner-delete");
-    const survey = await prisma.survey.create({
-      data: { name: "Orphan", workspaceId: workspace.id, ownerId: owner.id },
+    const surveys = await Promise.all(
+      ["Orphan 1", "Orphan 2", "Orphan 3"].map((name) =>
+        prisma.survey.create({ data: { name, workspaceId: workspace.id, ownerId: owner.id } })
+      )
+    );
+    const restricted = await prisma.survey.create({
+      data: {
+        name: "Orphan restricted",
+        workspaceId: workspace.id,
+        ownerId: owner.id,
+        visibility: "restricted",
+      },
     });
+    await clearOutbox();
 
     await prisma.user.delete({ where: { id: owner.id } });
 
-    await expect(
-      prisma.survey.findUniqueOrThrow({ where: { id: survey.id }, select: { ownerId: true } })
-    ).resolves.toEqual({ ownerId: null });
+    for (const survey of [...surveys, restricted]) {
+      await expect(
+        prisma.survey.findUniqueOrThrow({ where: { id: survey.id }, select: { ownerId: true } })
+      ).resolves.toEqual({ ownerId: null });
+    }
+    // One reconcile per survey, none of them a revocation: both owner arms intersect workspace read,
+    // which the user's own revocation (below) already takes away.
+    const events = await surveyEvents();
+    expect(events).toHaveLength(4);
+    expect(events.every((event) => !event.isRevocation)).toBe(true);
+    expect((await outboxRows()).some((row) => row.targetType === "user" && row.isRevocation)).toBe(true);
+  });
+
+  test("still counts an owner cleared together with a revoking change as a revocation", async () => {
+    const { owner, workspace } = await seedSurvey("survey-owner-null-restrict");
+    const survey = await prisma.survey.create({
+      data: { name: "Restrict", workspaceId: workspace.id, ownerId: owner.id },
+    });
+    const otherWorkspace = await prisma.workspace.create({
+      data: { name: "Moved", organizationId: workspace.organizationId },
+    });
+
+    await clearOutbox();
+    await prisma.survey.update({
+      where: { id: survey.id },
+      data: { ownerId: null, visibility: "restricted" },
+    });
+    expect(await surveyEvents()).toEqual([
+      { isRevocation: true, primaryId: survey.id, secondaryId: null, targetType: "survey" },
+    ]);
+
+    await clearOutbox();
+    await prisma.survey.update({ where: { id: survey.id }, data: { visibility: "workspace" } });
+    await prisma.survey.update({ where: { id: survey.id }, data: { ownerId: owner.id } });
+    await clearOutbox();
+    await prisma.survey.update({
+      where: { id: survey.id },
+      data: { ownerId: null, workspaceId: otherWorkspace.id },
+    });
+    expect(await surveyEvents()).toEqual([
+      { isRevocation: true, primaryId: survey.id, secondaryId: null, targetType: "survey" },
+    ]);
   });
 });
 
