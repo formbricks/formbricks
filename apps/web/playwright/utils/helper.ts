@@ -950,22 +950,174 @@ const editorElementHeading = (page: Page, name: string): Locator =>
 const blockCardHeader = (page: Page, blockNumber: number): Locator =>
   page.getByTestId("block-card-header").nth(blockNumber - 1);
 
+const formatVisibleMonth = (date: Date): string =>
+  new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(date);
+
+/**
+ * Clicks a day in the calendar an already-open `DatePicker` popover shows.
+ *
+ * Navigates by month rather than assuming the target is on screen: picking "yesterday" on the first
+ * of a month needs the previous one, which is the kind of two-days-a-month flake that reads as
+ * random. The caller opens the popover, because what triggers it differs per surface.
+ */
+export const pickCalendarDay = async (page: Page, target: Date): Promise<void> => {
+  const calendar = page.locator("[data-radix-popper-content-wrapper]").last().locator(".rdp-root");
+  const targetMonthLabel = formatVisibleMonth(target);
+
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const visibleMonthLabel = (await calendar.locator(".rdp-caption_label").textContent())?.trim();
+    if (visibleMonthLabel?.includes(targetMonthLabel)) break;
+
+    const showingLater = visibleMonthLabel ? new Date(`1 ${visibleMonthLabel}`) > target : false;
+    await calendar.locator(showingLater ? ".rdp-button_previous" : ".rdp-button_next").click();
+  }
+
+  // `:not(.rdp-outside)` matters where the grid pads with the neighbouring months' days: a bare
+  // day-number match would otherwise hit the same number in the wrong month.
+  await calendar
+    .locator(".rdp-day:not(.rdp-outside) .rdp-day_button:not([disabled])")
+    .filter({ hasText: new RegExp(`^${target.getDate().toString()}$`) })
+    .click();
+};
+
+/**
+ * Sets the date a logic condition compares against.
+ *
+ * A date condition's right-hand side is a `DatePicker`, not a text input (ENG-1853) — the editor
+ * never renders a raw date input — so the day is chosen from the calendar its trigger opens. The
+ * trigger sits beside the combobox carrying the condition's id.
+ */
+const setConditionDate = async (page: Page, conditionId: string, target: Date): Promise<void> => {
+  await page.locator(`#${conditionId}`).locator("..").getByRole("button").first().click();
+  await pickCalendarDay(page, target);
+};
+
+/**
+ * Driving the editor's Embedded Data card (ENG-1851).
+ *
+ * Shared rather than per-spec: `survey-editor-embedded-fields.spec.ts` exercises the card itself and
+ * `survey.spec.ts` only needs two calculated fields on its way to the logic editor, and a second copy
+ * of "open the card, open the dialog, pick a source" is exactly the duplication that goes stale when
+ * the card changes.
+ */
+
+/** The source a field's value comes from, as the dialog's radios label it. */
+export type EmbeddedFieldSource = "Passed in" | "Calculated";
+
+/**
+ * The radio behind each source label. Clicked by id rather than by its text: the label and the span
+ * inside it both read "Calculated", so a text locator is two elements and fails strict mode.
+ */
+const EMBEDDED_FIELD_SOURCE_IDS: Record<EmbeddedFieldSource, string> = {
+  "Passed in": "embedded-field-source-ingested",
+  Calculated: "embedded-field-source-computed",
+};
+
+/** The kind of value a field holds, as the dialog's Type list labels it. */
+export type EmbeddedFieldType = "Text" | "Number" | "True/false" | "Date";
+
+/** The editor's left panel. Scoping to it keeps the live preview's copies of the same text out. */
+export const editorPanel = (page: Page): Locator => page.getByRole("main");
+
+/**
+ * Opens the Embedded Data card. Only one editor card is open at a time, so this is expressed as
+ * "click until its content is on screen": the click is a toggle, and asserting on the content first
+ * keeps it idempotent whichever card was open before.
+ */
+export const openEmbeddedDataCard = async (page: Page): Promise<void> => {
+  const content = editorPanel(page).getByTestId("embedded-data-card-content");
+
+  await expect(async () => {
+    if (!(await content.isVisible())) {
+      await editorPanel(page).getByTestId("embedded-data-card-trigger").click();
+    }
+    await expect(content).toBeVisible({ timeout: 5000 });
+  }).toPass({ timeout: 30000 });
+};
+
+/** One field's row in the card, addressed by the name it renders. */
+export const embeddedFieldRow = (page: Page, name: string): Locator =>
+  editorPanel(page).getByTestId("embedded-field-row").filter({ hasText: name });
+
+/** The open Add field / edit-field dialog. */
+const embeddedFieldDialog = (page: Page): Locator => page.getByRole("dialog");
+
+/**
+ * Opens the card's one "Add field" control and switches to the create tab.
+ *
+ * Two steps because the card follows the Actions flow: one control opens a dialog whose first tab is
+ * the workspace library, and declaring a field the survey owns is the second tab.
+ */
+export const openCreateEmbeddedFieldTab = async (page: Page): Promise<Locator> => {
+  await openEmbeddedDataCard(page);
+  await editorPanel(page).getByRole("button", { name: "Add field", exact: true }).click();
+
+  const dialog = embeddedFieldDialog(page);
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Create new field", exact: true }).click();
+  await expect(dialog.getByTestId("embedded-field-name")).toBeVisible();
+  return dialog;
+};
+
+/** Fills the dialog that is already open, without submitting it. */
+export const fillEmbeddedFieldDialog = async (
+  page: Page,
+  field: { name?: string; source?: EmbeddedFieldSource; type?: EmbeddedFieldType; defaultValue?: string }
+): Promise<void> => {
+  const dialog = embeddedFieldDialog(page);
+
+  if (field.name !== undefined) await dialog.getByTestId("embedded-field-name").fill(field.name);
+  // Absent when editing: the source and the address a field is stored under are fixed once set.
+  if (field.source !== undefined) {
+    await dialog.locator(`#${EMBEDDED_FIELD_SOURCE_IDS[field.source]}`).click();
+  }
+  if (field.type !== undefined) {
+    await dialog.getByTestId("embedded-field-type").click();
+    await page.getByRole("option", { name: field.type, exact: true }).click();
+  }
+  if (field.defaultValue !== undefined) {
+    await dialog.getByTestId("embedded-field-default").fill(field.defaultValue);
+  }
+};
+
+/** Declares a field the survey owns, and waits for its row to appear. */
+export const addEmbeddedField = async (
+  page: Page,
+  field: { name: string; source: EmbeddedFieldSource; type?: EmbeddedFieldType; defaultValue?: string }
+): Promise<void> => {
+  await openCreateEmbeddedFieldTab(page);
+  await fillEmbeddedFieldDialog(page, field);
+  await embeddedFieldDialog(page).getByRole("button", { name: "Add", exact: true }).click();
+  await expect(embeddedFieldRow(page, field.name)).toBeVisible();
+};
+
+/** Opens one row's menu and picks an action from it. */
+const openEmbeddedFieldAction = async (page: Page, name: string, action: string): Promise<void> => {
+  await openEmbeddedDataCard(page);
+  await embeddedFieldRow(page, name)
+    .getByRole("button", { name: /Open options/ })
+    .click();
+  await page.getByRole("menuitem", { name: action, exact: true }).click();
+};
+
+/** Edits a field through its row menu, and waits for the change to reach the card. */
+export const editEmbeddedField = async (
+  page: Page,
+  name: string,
+  patch: { name?: string; type?: EmbeddedFieldType; defaultValue?: string }
+): Promise<void> => {
+  await openEmbeddedFieldAction(page, name, "Edit");
+  await fillEmbeddedFieldDialog(page, patch);
+  await embeddedFieldDialog(page).getByRole("button", { name: "Save", exact: true }).click();
+  await expect(embeddedFieldRow(page, patch.name ?? name)).toBeVisible();
+};
+
 export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWithLogicParams) => {
   await createSurveyFromScratch(page);
 
-  // Add variables
-  await page.getByText("Variables").click();
-  await page.getByPlaceholder("Field name e.g, score, price").click();
-  await page.getByPlaceholder("Field name e.g, score, price").fill("score");
-  await page.getByRole("button", { name: "Add variable" }).click();
-  await page
-    .locator("form")
-    .filter({ hasText: "Add variable" })
-    .getByPlaceholder("Field name e.g, score, price")
-    .fill("secret");
-  await page.locator("form").filter({ hasText: "Add variable" }).getByRole("combobox").click();
-  await page.getByLabel("Text", { exact: true }).click();
-  await page.getByRole("button", { name: "Add variable" }).click();
+  // Two calculated fields for the logic below to read and write.
+  await addEmbeddedField(page, { name: "score", source: "Calculated", type: "Number" });
+  await addEmbeddedField(page, { name: "secret", source: "Calculated", type: "Text" });
 
   // Welcome Card
   await expect(page.locator("#welcome-toggle")).toBeVisible();
@@ -1463,9 +1615,9 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await blockCardHeader(page, 11).click();
 
   // Block 12 (Date Question)
-  const today = new Date().toISOString().split("T")[0];
-  const yesterday = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split("T")[0];
-  const tomorrow = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split("T")[0];
+  const today = new Date();
+  const yesterday = new Date(new Date().setDate(new Date().getDate() - 1));
+  const tomorrow = new Date(new Date().setDate(new Date().getDate() + 1));
 
   await page.getByRole("main").getByText(params.date.question).click();
   await page.getByText("Show Block settings").first().click();
@@ -1473,28 +1625,28 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   await page.locator("#condition-0-0-conditionValue").click();
   await page.getByRole("option", { name: params.date.question }).click();
-  await page.getByPlaceholder("Value").fill(today);
+  await setConditionDate(page, "condition-0-0-conditionMatchValue", today);
   await page.locator("#condition-0-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
   await page.locator("#condition-0-1-conditionValue").click();
   await page.getByRole("option", { name: params.date.question }).click();
   await page.locator("#condition-0-1-conditionOperator").click();
   await page.getByRole("option", { name: "does not equal" }).click();
-  await page.locator("#condition-0-1-conditionMatchValue-input").fill(yesterday);
+  await setConditionDate(page, "condition-0-1-conditionMatchValue", yesterday);
   await page.locator("#condition-0-1-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
   await page.locator("#condition-0-2-conditionValue").click();
   await page.getByRole("option", { name: params.date.question }).click();
   await page.locator("#condition-0-2-conditionOperator").click();
   await page.getByRole("option", { name: "is before" }).click();
-  await page.locator("#condition-0-2-conditionMatchValue-input").fill(tomorrow);
+  await setConditionDate(page, "condition-0-2-conditionMatchValue", tomorrow);
   await page.locator("#condition-0-2-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
   await page.locator("#condition-0-3-conditionValue").click();
   await page.getByRole("option", { name: params.date.question }).click();
   await page.locator("#condition-0-3-conditionOperator").click();
   await page.getByRole("option", { name: "is after" }).click();
-  await page.locator("#condition-0-3-conditionMatchValue-input").fill(yesterday);
+  await setConditionDate(page, "condition-0-3-conditionMatchValue", yesterday);
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Calculate" }).click();
   await page.locator("#action-0-variableId").click();

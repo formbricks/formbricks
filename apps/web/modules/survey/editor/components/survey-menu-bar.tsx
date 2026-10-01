@@ -2,7 +2,7 @@
 
 import { ArrowLeftIcon, SettingsIcon, UsersIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
@@ -26,6 +26,7 @@ import { isDeepEqual } from "@/lib/utils/object";
 import { reportStaleServerActionError } from "@/lib/utils/stale-server-action";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { getLogicDestinationErrorMessage } from "@/modules/survey/editor/lib/logic-destination-error";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
@@ -50,7 +51,8 @@ import { AutoSaveIndicator } from "./auto-save-indicator";
 interface SurveyMenuBarProps {
   localSurvey: TSurvey;
   survey: TSurvey;
-  setLocalSurvey: (survey: TSurvey) => void;
+  /** React's own setter: the auto-save adopts through the updater form, so a value alone is not enough. */
+  setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   setInvalidElements: React.Dispatch<React.SetStateAction<string[] | null>>;
@@ -240,6 +242,28 @@ export const SurveyMenuBar = ({
     draftPrimaryLabel = t("workspace.surveys.edit.save_and_close");
   }
 
+  /**
+   * **What every payload below sends for Embedded Data (ENG-2628).**
+   *
+   * `localSurvey.embeddedFields` is the editor's Embedded Data state — the Variables and Hidden
+   * Fields cards write it — and on the wire it is the COMPLETE desired set for both sources. The
+   * server writes the rows from it and derives `variables` / `hiddenFields` back off those rows on
+   * every read (`toLegacyEmbeddedFields`), so the two legacy keys travelling in the same payload are
+   * ignored: they are forwarded exactly as they arrived at mount, and nothing here recomputes them.
+   * Deriving them client-side too would give one survey two descriptions that can disagree, which is
+   * the failure this ticket removed.
+   *
+   * There is nothing to spell out at each call site: spreading `localSurvey` carries all three keys.
+   *
+   * The save return does not always replace the working copy, and the dirty check is what closes
+   * that gap. `handleSurveySave` / `handleSurveySaveDraft` both `setLocalSurvey(response)`, so there
+   * the freshly written rows — with their `id`, `key`, `locked` and minted storage keys — land back
+   * in state. The interval auto-save below deliberately does **not**: it updates its refs only, to
+   * avoid re-rendering the editor while the author is typing. So the working copy legitimately keeps
+   * a card-built row with no `id` and the mount-time legacy keys, and `hasUnsavedSurveyChanges`
+   * normalizes all three away before comparing (`editor/lib/unsaved-changes.ts`). Without that
+   * normalization a `isDeepEqual` fails on the key count alone and the auto-save never stops.
+   */
   const getDraftSurveyToPersist = (draftSurvey: TSurvey, segment: TSegment | null): TSurveyDraft => ({
     ...draftSurvey,
     closeOn: draftSurvey.publishOn ? null : draftSurvey.closeOn,
@@ -381,6 +405,12 @@ export const SurveyMenuBar = ({
         return false;
       }
 
+      const logicDestinationMessage = getLogicDestinationErrorMessage(firstError, localSurvey.blocks, t);
+      if (logicDestinationMessage) {
+        toast.error(logicDestinationMessage, { className: "w-fit max-w-md!" });
+        return false;
+      }
+
       if (firstError.code === "custom") {
         const params = firstError.params ?? ({} as { invalidLanguageCodes: string[] });
         if (params.invalidLanguageCodes && params.invalidLanguageCodes.length) {
@@ -449,12 +479,37 @@ export const SurveyMenuBar = ({
         if (updatedSurveyResponse?.data) {
           const savedData = updatedSurveyResponse.data;
 
-          // If the segment changed on the server (e.g., private segment was deleted when
-          // switching from app to link type), update localSurvey to prevent stale segment
-          // references when publishing
-          if (!isDeepEqual(localSurveyRef.current.segment, savedData.segment)) {
-            setLocalSurvey({ ...localSurveyRef.current, segment: savedData.segment });
-          }
+          // The server deletes a private segment when a survey switches from app to link, so the
+          // working copy has to take that back. Skipping it is not a cosmetic loss: the stale id
+          // goes back out on the next save, `assertSurveySegmentBelongsToWorkspace` throws
+          // `ResourceNotFoundError`, and the catch below swallows it — so this block never runs
+          // again and the editor cannot be saved or published until the page is reloaded.
+          //
+          // Through the updater rather than against `localSurveyRef` (ENG-3266), which is written in
+          // a passive effect and so still names the sent object for as long as it takes React to
+          // flush one — a window the response can land in, where the ref would overwrite whatever
+          // the author changed mid-flight. `current` is the state itself, so the spread carries
+          // those edits and replaces only the key the server owns.
+          //
+          // The one edit the spread could still lose is an edit to `segment` itself: `TargetingCard`
+          // writes it on every change and is mounted for app surveys, so an author refining their
+          // targeting while a tick is in flight would get `savedData.segment` — the segment as it
+          // was when the request went out — written back over the newer one. So the guard is on
+          // `segment` alone, against the value the working copy held when it was sent. Guarding on
+          // the survey's object identity instead settles the same race by abandoning the adoption
+          // after any unrelated keystroke, which is what left the editor unsaveable.
+          //
+          // `currentSurvey.segment` rather than what was serialized: a `temp` segment goes out as
+          // `null`, and comparing against the wire value would read that rewrite as an author edit
+          // and never adopt the real segment the server answers with.
+          //
+          // The Embedded Data keys need no such adoption: `hasUnsavedSurveyChanges` normalizes them
+          // on both sides, which settles the dirty check without re-rendering the editor at all.
+          setLocalSurvey((current) => {
+            if (!isDeepEqual(current.segment, currentSurvey.segment)) return current;
+            if (isDeepEqual(current.segment, savedData.segment)) return current;
+            return { ...current, segment: savedData.segment };
+          });
 
           // Update surveyRef (not localSurvey state) to prevent re-renders during auto-save.
           // This keeps the UI stable while still tracking that changes have been saved.

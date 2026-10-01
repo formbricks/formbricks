@@ -149,7 +149,19 @@ test.describe("JS Package Test", async () => {
 
     await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(5000);
+    // The last lifecycle event fires only once the ending card auto-closes the modal, so wait for it
+    // rather than for a fixed time.
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() =>
+            (window as unknown as { formbricksEvents?: { event: string }[] }).formbricksEvents?.some(
+              ({ event }) => event === "formbricks_survey_closed"
+            )
+          ),
+        { timeout: 15000 }
+      )
+      .toBe(true);
 
     // The `responseId` on the events is the PERSISTED id (ENG-1846). This is the only level that
     // can prove it: the id is minted by the server, so `onResponseCreated`/`onFinished` can only

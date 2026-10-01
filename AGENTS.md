@@ -24,6 +24,11 @@ Every `packages/*` workspace therefore exposes the standard `lint` / `typecheck`
 by policy (its components are exercised by the feature journeys in `apps/web/playwright`). Keep new
 packages on this matrix or document the exception here.
 
+The same skip catches test files that sit outside every workspace. Tests for repo-level scripts
+(`scripts/`, `.github/actions/`) run in the root `//#test:root` Turbo task, which `pnpm test` invokes
+and `vitest.root.config.mts` scopes. A new `*.test.ts` anywhere else outside `apps/*`, `packages/*`
+and `docker/` needs that config's `include` widened, or it never runs.
+
 `types` is mostly declarations, but `validation.ts` is runtime logic and is tested like any other
 package — it is in Sonar's scope (ENG-2432), so treat it as covered code, not as a types-only
 workspace.

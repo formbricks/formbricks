@@ -9,7 +9,7 @@ import { getElementsFromBlocks } from "@/lib/survey/utils";
  * The survey slice the ingest contract needs. Narrow on purpose: the three boundaries that call this
  * hold a full survey, but a test should not have to build one.
  */
-export type TIngestContractSurvey = Pick<TSurvey, "id" | "blocks" | "hiddenFields" | "embeddedFields">;
+export type TIngestContractSurvey = Pick<TSurvey, "id" | "blocks" | "embeddedFields">;
 
 /** How many keys one log line carries — the key list is attacker-controlled on a public endpoint. */
 const MAX_LOGGED_KEYS = 20;
@@ -63,50 +63,20 @@ export const applyIngestContractToResponseData = (
   }
 
   // Louder than the line above, on purpose. The allow-list is the joined rows and nothing else, so it
-  // fails closed: if a select drops `embeddedDataLinks`, or the legacy `fieldIds` column and the rows
-  // drift apart, then every incoming value becomes an `unknown_key` and ingestion is dead for every
-  // response on this survey. Through the generic line that reads exactly like one typo'd param, which
-  // is why this gets its own message and level.
+  // fails closed: if a select drops `embeddedDataLinks`, every incoming value becomes an
+  // `unknown_key` and ingestion is dead for every response on this survey. Through the generic line
+  // that reads exactly like one typo'd param, which is why this gets its own message and level.
   //
-  // Gated on something actually having been dropped, so a survey nobody sends params to stays quiet,
-  // and `embeddedFieldCount` separates the two causes: 0 rows means the join is missing, non-zero
-  // means rows loaded but none of them are `ingested`.
-  const legacyFieldIdCount = survey.hiddenFields?.fieldIds?.length ?? 0;
-  if (
-    legacyFieldIdCount > 0 &&
-    ingestedFields.length === 0 &&
-    result.dropped.some(({ reason }) => reason === "unknown_key")
-  ) {
+  // The signal is the missing key itself — `embeddedFields` is absent only when the join was not
+  // selected, while a survey with no fields carries an empty list. (Until ENG-2404 this compared
+  // against the legacy `fieldIds` column; that is derived from the same rows now, so it can no longer
+  // disagree with them.) Gated on something actually having been dropped, so a survey nobody sends
+  // params to stays quiet.
+  if (survey.embeddedFields === undefined && result.dropped.some(({ reason }) => reason === "unknown_key")) {
     logger.warn(
-      {
-        surveyId: survey.id,
-        legacyFieldIdCount,
-        embeddedFieldCount: survey.embeddedFields?.length ?? 0,
-        dropped: capKeys(result.dropped),
-      },
-      "Embedded Data ingest resolved no ingested fields for a survey that declares hidden fields, so every incoming value was dropped"
+      { surveyId: survey.id, dropped: capKeys(result.dropped) },
+      "Embedded Data ingest ran against a survey read without its Embedded Data rows, so every incoming value was dropped"
     );
-  }
-
-  // The allow-list is the stored rows, and a row carries no `enabled` concept — so `locked` is the
-  // per-field control for "stop accepting writes" and the legacy flag is not an ingest gate
-  // (ENG-1845, decision 5). Three of the four readers already ignored it, and the state below is
-  // near-unreachable: the editor writes `enabled: true` whenever a field is added or removed, and a
-  // freshly created survey has the flag off with no field ids and therefore no rows. Only an
-  // API-authored or pre-editor survey can hold both, and for those the flag was never a working kill
-  // switch, because the link-survey URL path has always ignored it. Logged so that if a customer
-  // ever reports it, this is greppable.
-  if (survey.hiddenFields?.enabled === false && Object.keys(result.data).length > 0) {
-    const ingestedKeys = ingestedFields
-      .map(({ link }) => link.storageKey)
-      .filter((storageKey) => storageKey in result.data);
-
-    if (ingestedKeys.length > 0) {
-      logger.info(
-        { surveyId: survey.id, keys: capKeys(ingestedKeys) },
-        "Embedded Data ingested into a survey whose legacy hiddenFields.enabled flag is false"
-      );
-    }
   }
 
   return result;

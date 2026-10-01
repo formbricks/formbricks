@@ -33,6 +33,7 @@ export const ZAuditTarget = z.enum([
   "feedbackDirectory",
   "feedbackRecord",
   "feedbackSource",
+  "embeddedData",
 ]);
 export const ZAuditAction = z.enum([
   "created",

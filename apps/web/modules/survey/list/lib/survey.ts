@@ -6,6 +6,11 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import {
+  linkedToDesiredEmbeddedFields,
+  toLegacyEmbeddedFields,
+} from "@formbricks/types/embedded-data-mapping";
+import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
+import {
   DatabaseError,
   InvalidInputError,
   OperationNotAllowedError,
@@ -53,8 +58,27 @@ const getExistingSurvey = async (surveyId: string) => {
       questions: true,
       blocks: true,
       endings: true,
-      variables: true,
-      hiddenFields: true,
+      // ENG-3228: the copy follows the source's ROWS — the legacy shape cannot say that a field is a
+      // link to the workspace library, so copying it localized every shared field a survey had.
+      // Since ENG-2404 the rows are all there is. Selected with the row's ownership (`key`) and id
+      // so `planCopiedEmbeddedFields` can decide per field whether to re-link it or clone it.
+      embeddedDataLinks: {
+        select: {
+          storageKey: true,
+          embeddedData: {
+            select: {
+              id: true,
+              key: true,
+              name: true,
+              source: true,
+              dataType: true,
+              defaultValue: true,
+              locked: true,
+            },
+          },
+        },
+        orderBy: [{ order: "asc" }, { storageKey: "asc" }],
+      },
       surveyClosedMessage: true,
       singleUse: true,
       workspaceOverwrites: true,
@@ -105,6 +129,94 @@ const getExistingSurvey = async (surveyId: string) => {
         },
       },
     },
+  });
+};
+
+/** The source survey's Embedded Data links, exactly as {@link getExistingSurvey} selects them. */
+type TSourceEmbeddedLinks = NonNullable<Awaited<ReturnType<typeof getExistingSurvey>>>["embeddedDataLinks"];
+
+/**
+ * What the copy's Embedded Data should be, one entry per field the source survey has (ENG-3228).
+ *
+ * The three cases, and why they differ:
+ *
+ * - **A local field** is the survey's own, so the copy gets its own — same definition, no library
+ *   link. This is what every copy did to every field before the rows existed.
+ * - **A shared field, same workspace.** The library row is right there, so the copy links the same
+ *   row under the same storage key and the two surveys go on sharing one definition.
+ * - **A shared field, another workspace.** Definitions do not cross a workspace boundary, so the
+ *   copy looks for the same field in the target's library — same `key`, `source` and `dataType`,
+ *   because a `plan` that is ingested text over here and computed over there is a different field
+ *   wearing the same name — and links it when it finds one. This mirrors what the segment handling
+ *   a few lines below already does for a public segment of the same title.
+ *
+ * When there is no match the field is **localized**: the copy gets a private definition rather than
+ * losing the field. It takes the library `key` as its name, not the display label, because a local
+ * field's name is the legacy variable name or hidden field id the copy's derived `variables` /
+ * `hiddenFields` will carry, and a label like `Plan tier` is not a legal one. The storage key is
+ * preserved either way — it is the address recall tokens and logic operands inside the copied blocks
+ * already point at.
+ */
+const planCopiedEmbeddedFields = async (
+  links: TSourceEmbeddedLinks,
+  { isSameWorkspace, targetWorkspaceId }: { isSameWorkspace: boolean; targetWorkspaceId: string }
+): Promise<TLinkedEmbeddedField[]> => {
+  const sharedKeys = links.map((link) => link.embeddedData.key).filter((key) => key !== null);
+
+  const targetLibrary =
+    !isSameWorkspace && sharedKeys.length > 0
+      ? await prisma.embeddedData.findMany({
+          where: { workspaceId: targetWorkspaceId, surveyId: null, key: { in: sharedKeys } },
+          select: {
+            id: true,
+            key: true,
+            name: true,
+            source: true,
+            dataType: true,
+            defaultValue: true,
+            locked: true,
+          },
+        })
+      : [];
+  const librarySignature = (row: { key: string | null; source: string; dataType: string }): string =>
+    `${row.key}|${row.source}|${row.dataType}`;
+  const targetBySignature = new Map(targetLibrary.map((row) => [librarySignature(row), row]));
+
+  /** The library row the copy should link for this field, or nothing when it has to own one. */
+  const sharedTargetFor = (row: TSourceEmbeddedLinks[number]["embeddedData"]) => {
+    if (row.key === null) return undefined;
+    return isSameWorkspace ? row : targetBySignature.get(librarySignature(row));
+  };
+
+  return links.map(({ storageKey, embeddedData: row }) => {
+    const shared = sharedTargetFor(row);
+
+    if (shared) {
+      return {
+        field: {
+          id: shared.id,
+          key: shared.key,
+          name: shared.name,
+          source: shared.source,
+          dataType: shared.dataType,
+          defaultValue: shared.defaultValue,
+          locked: shared.locked,
+        },
+        link: { storageKey },
+      };
+    }
+
+    return {
+      field: {
+        key: null,
+        name: row.key ?? row.name,
+        source: row.source,
+        dataType: row.dataType,
+        defaultValue: row.defaultValue,
+        locked: row.locked,
+      },
+      link: { storageKey },
+    };
   });
 };
 
@@ -177,9 +289,18 @@ export const copySurveyToOtherWorkspace = async (
       organizationId: targetOrganizationId,
     });
 
-    const { ...restExistingSurvey } = existingSurvey;
+    // The relation is the copy's Embedded Data plan, not a column to clone: `Survey` owns a relation
+    // by this name, so spreading it into `SurveyCreateInput` would be a nested relation write.
+    const { embeddedDataLinks, ...restExistingSurvey } = existingSurvey;
     const hasLanguages = existingSurvey.languages && existingSurvey.languages.length > 0;
     const t = await getTranslate();
+
+    // Zero rows is zero fields (ENG-2404): the migration that dropped the legacy columns gave every
+    // survey still without links the rows its columns described, so there is nothing else to read.
+    const copiedEmbeddedFields = await planCopiedEmbeddedFields(embeddedDataLinks, {
+      isSameWorkspace,
+      targetWorkspaceId: targetWorkspace.id,
+    });
 
     // Prepare survey data
     const surveyData: Prisma.SurveyCreateInput = {
@@ -191,8 +312,6 @@ export const copySurveyToOtherWorkspace = async (
       welcomeCard: structuredClone(existingSurvey.welcomeCard),
       blocks: structuredClone(existingSurvey.blocks),
       endings: structuredClone(existingSurvey.endings),
-      variables: structuredClone(existingSurvey.variables),
-      hiddenFields: structuredClone(existingSurvey.hiddenFields),
       languages: hasLanguages
         ? {
             create: existingSurvey.languages.map((surveyLanguage) => ({
@@ -419,8 +538,6 @@ export const copySurveyToOtherWorkspace = async (
           select: {
             id: true,
             workspaceId: true,
-            variables: true,
-            hiddenFields: true,
             segment: {
               select: {
                 id: true,
@@ -449,22 +566,29 @@ export const copySurveyToOtherWorkspace = async (
           },
         });
 
-        // ENG-1978: the copy carries the source survey's variables and hidden fields, so the new
-        // survey needs its own rows. `workspaceId` is read off the created row rather than the
-        // function's `workspaceId` argument, which is the SOURCE workspace — a copy into a different
-        // workspace must define its fields there.
+        // ENG-1978: the copy carries the source survey's Embedded Data, so the new survey needs its
+        // own rows and links. ENG-3228: from the plan built off the source's ROWS, which is what
+        // lets a shared field stay shared — reading the legacy columns here silently localized every
+        // one of them. `workspaceId` is read off the created row rather than the function's
+        // `workspaceId` argument, which is the SOURCE workspace — a copy into a different workspace
+        // must define its fields there.
         await reconcileEmbeddedData(tx, {
           surveyId: createdSurvey.id,
           workspaceId: createdSurvey.workspaceId,
-          patch: { variables: createdSurvey.variables, hiddenFields: createdSurvey.hiddenFields },
+          patch: { embeddedFields: copiedEmbeddedFields },
         });
 
-        return createdSurvey;
+        // The legacy keys this result has always carried (it is the audit log's `newObject`), derived
+        // from the plan the rows were just written from, as every other read derives them.
+        return {
+          ...createdSurvey,
+          ...toLegacyEmbeddedFields(linkedToDesiredEmbeddedFields(copiedEmbeddedFields)),
+        };
       },
       // This create was untransacted before ENG-1978, so wrapping it introduced Prisma's 5s
       // interactive-transaction ceiling where there had been none. It is the deepest of the
-      // reconcile call sites (enumerated on `getDeclaredEmbeddedFields`) — it clones blocks, endings,
-      // the welcome card, variables, hidden fields, follow-ups and quotas, and resolves an action
+      // reconcile call sites (a `reconcileEmbeddedData(` grep enumerates them) — it clones blocks,
+      // endings, the welcome card, Embedded Data, follow-ups and quotas, and resolves an action
       // class per trigger through `connectOrCreate` — so a large survey could plausibly reach it and
       // fail a copy that used to succeed. Matches the ceiling on `updateSurveyInternal` for the same
       // reason.

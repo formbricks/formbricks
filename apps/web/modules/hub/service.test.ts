@@ -219,8 +219,12 @@ describe("hub service", () => {
       expect(result.error?.message).toContain("HUB_API_KEY");
     });
 
-    test("returns data on success", async () => {
-      const record = { id: "rec-1", field_id: "f1" };
+    test("preserves taxonomy included on the Hub single-record response", async () => {
+      const record = {
+        id: "rec-1",
+        field_id: "f1",
+        taxonomy: { status: "unclassified", run_id: "run-1", path: [] },
+      };
       vi.mocked(getHubClient).mockReturnValue({
         feedbackRecords: { retrieve: vi.fn().mockResolvedValue(record) },
       } as any);

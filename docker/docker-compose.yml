@@ -513,6 +513,7 @@ services:
       TAXONOMY_VERTEX_PROJECT: ${TAXONOMY_VERTEX_PROJECT:-}
       TAXONOMY_VERTEX_LOCATION: ${TAXONOMY_VERTEX_LOCATION:-}
       TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON: ${TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON:-}
+      TAXONOMY_MAX_RECORDS: ${TAXONOMY_MAX_RECORDS:-10000}
       AWS_REGION: ${AWS_REGION:-}
       AWS_BEARER_TOKEN_BEDROCK: ${AWS_BEARER_TOKEN_BEDROCK:-}
     healthcheck:
@@ -582,19 +583,12 @@ services:
       retries: 40
       start_period: 10m
 
-  # Cube semantic-layer API used by Formbricks analytics dashboards.
+  # Cube semantic-layer API used by Formbricks analytics dashboards. The image (built from
+  # docker/cube-image) has no shell: its default command starts the server, and cube.js exits with
+  # "CUBEJS_API_SECRET is required to run Cube" when the secret is empty.
   cube:
     restart: always
-    image: cubejs/cube:v1.6.6
-    command:
-      - sh
-      - -c
-      - |
-        if [ -z "$$CUBEJS_API_SECRET" ]; then
-          echo "CUBEJS_API_SECRET is required for Cube JWT authentication" >&2
-          exit 1
-        fi
-        exec cubejs server
+    image: ghcr.io/formbricks/cube:1.7.47-2
     depends_on:
       hub-migrate:
         condition: service_completed_successfully

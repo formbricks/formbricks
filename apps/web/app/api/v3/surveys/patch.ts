@@ -317,8 +317,6 @@ export async function executeV3SurveyPatch(params: {
     welcomeCard: document.welcomeCard,
     blocks: stripIsDraftFromBlocks(document.blocks),
     endings: document.endings,
-    hiddenFields: document.hiddenFields,
-    variables: document.variables,
     closeOn: normalizedScheduling.closeOn,
     publishOn: normalizedScheduling.publishOn,
     languages: buildSurveyLanguageUpdate(currentSurvey, languages),
@@ -347,7 +345,9 @@ export async function executeV3SurveyPatch(params: {
         ...(precondition ? { updatedAt: precondition.expectedUpdatedAt } : {}),
       },
       data,
-      select: selectSurvey,
+      // Narrow: the survey this returns would describe the Embedded Data rows before the reconcile
+      // below, so the transaction re-reads through `selectSurvey` after it instead.
+      select: { id: true },
     });
 
   try {
@@ -355,11 +355,8 @@ export async function executeV3SurveyPatch(params: {
     //
     // - Segment filters live on a separate row, so a mid-write failure would leave targeting out of
     //   step with the survey it belongs to.
-    // - ENG-1837 made the EmbeddedData tables the read source of truth for definitions, so a patch
-    //   that moves `variables` / `hiddenFields` without reconciling the rows leaves recall, the logic
-    //   engine, export columns and the response filters reading the pre-patch set. This used to be a
-    //   dormant inconsistency (readers used the legacy columns this write does update); it stops
-    //   being dormant the moment the readers point at the rows.
+    // - The EmbeddedData rows are the only place `variables` / `hiddenFields` are stored (ENG-2404),
+    //   so a patch that moves them without reconciling the rows would not persist them at all.
     //
     // The reconcile therefore runs here rather than after the commit — matching `updateSurveyInternal`
     // — which is what makes the unconditional transaction necessary: a same-statement fast path can
@@ -370,32 +367,30 @@ export async function executeV3SurveyPatch(params: {
           await setV3SurveySegmentFilters(segmentFilterWrite.segmentId, segmentFilterWrite.filters, tx);
         }
 
-        const survey = await runSurveyUpdate(tx);
+        await runSurveyUpdate(tx);
 
-        // ENG-2412: from the patch document, which is what makes the rows the write source of
-        // truth rather than a copy of the columns `data` just wrote. Safe on a partial patch for two
-        // reasons: `prepareV3SurveyPatchInput` merges the body over the current survey first, so both
-        // keys arrive populated; and `resolveDesiredEmbeddedFields` carries a group's current rows
-        // over untouched if its key is absent anyway. `workspaceId` comes from the stored survey,
-        // never the client (ENG-1749).
-        //
-        // NOTE for whoever moves the v3 serializer onto the tables (ENG-1853): `survey` was read
-        // BEFORE this reconcile, so the `embeddedDataLinks` it carries — and the `embeddedFields`
-        // inlined from them below — describe the PRE-patch rows. Inert today, because
-        // `serializeV3SurveyResource` and the audit log read the legacy columns and nothing else
-        // consumes them (`updateSurveyInternal` has the same shape). The moment the serializer reads
-        // the rows, this returns a stale PATCH/MCP response and needs a re-read after the reconcile.
+        // ENG-2412: from the patch document — the rows are the only place Embedded Data is stored
+        // (ENG-2404). Safe on a partial patch for two reasons: `prepareV3SurveyPatchInput` merges the
+        // body over the current survey first, so both keys arrive populated; and
+        // `resolveDesiredEmbeddedFields` carries a group's current rows over untouched if its key is
+        // absent anyway. `workspaceId` comes from the stored survey, never the client (ENG-1749).
         await reconcileEmbeddedData(tx, {
           surveyId: currentSurvey.id,
           workspaceId: currentSurvey.workspaceId,
           patch: { variables: document.variables, hiddenFields: document.hiddenFields },
         });
 
-        return survey;
+        // Re-read AFTER the reconcile. The response's `variables` / `hiddenFields` — and the audit
+        // log's — are derived from the rows at the read seam, so a survey selected before the
+        // reconcile would report the pre-patch fields back to the caller that just changed them.
+        return tx.survey.findUniqueOrThrow({
+          where: { id: currentSurvey.id, workspaceId: currentSurvey.workspaceId },
+          select: selectSurvey,
+        });
       },
       // Matched to the other reconcile call sites: this transaction rewrites blocks and languages,
-      // reads back through `selectSurvey`'s deep select, and now adds an indexed read plus a write
-      // per changed field — enough to approach Prisma's 5s default on a large survey.
+      // adds an indexed read plus a write per changed field, then reads back through `selectSurvey`'s
+      // deep select — enough to approach Prisma's 5s default on a large survey.
       { timeout: 20_000, maxWait: 10_000 }
     );
 
@@ -414,8 +409,9 @@ export async function executeV3SurveyPatch(params: {
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      // Only the survey UPDATE can raise a P2025 here: the segment write wraps its own, and the
-      // reconcile and trigger writes are `*Many`/`create`.
+      // Only the survey UPDATE can raise a P2025 here: the segment write wraps its own, the
+      // reconcile and trigger writes are `*Many`/`create`, and the re-read runs inside the
+      // transaction that just updated the row, so it cannot miss.
       if (error.code === "P2025") {
         throw await resolveUpdateMiss(currentSurvey, precondition, error);
       }

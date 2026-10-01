@@ -219,7 +219,10 @@ export const SurveyCard = ({
   const CardBody = (
     <div
       className={cn(
-        "grid w-full grid-cols-8 place-items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 pr-8 shadow-xs transition-colors ease-in-out",
+        // `pr-14` rather than `pr-8`: the options button is absolutely positioned at `right-3` and is
+        // ~34px wide, so it reached into the last column's track. The creator name centred in that
+        // track ran under the button instead of eliding before it.
+        "grid w-full grid-cols-8 place-items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 pr-14 shadow-xs transition-colors ease-in-out",
         !isCardNotClickable && "hover:border-slate-400",
         isAuthorGone && "bg-amber-50",
         canMakeVisible && "rounded-b-none border-b-0"

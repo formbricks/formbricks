@@ -1,4 +1,7 @@
-import { mockSurvey } from "@/app/api/(internal)/pipeline/lib/__mocks__/survey-follow-up.mock";
+import {
+  mockResponseEmailFollowUp,
+  mockSurvey,
+} from "@/app/api/(internal)/pipeline/lib/__mocks__/survey-follow-up.mock";
 import { describe, expect, test } from "vitest";
 import { ZSurvey } from "@formbricks/types/surveys/types";
 
@@ -63,5 +66,96 @@ describe("legacy declared field names still load", () => {
     expect(uppercaseVariable.error?.issues.map((issue) => issue.path.join("."))).toContain(
       "variables.0.variables"
     );
+  });
+});
+
+/**
+ * ENG-2628: a rows-native payload replaces `variables` inside `surveyRefinement`, after `ZSurveyBase`
+ * has already validated the array the caller sent. The derived array is what the survey will hold, so
+ * it is the one that has to satisfy the stored-variable rules — otherwise `ZSurvey` accepts a payload
+ * `updateSurvey` then refuses, and the editor's pre-flight disagrees with the write path.
+ */
+describe("derived legacy variables are validated, not just the ones sent", () => {
+  const rowsNativeSurvey = (embeddedFields: unknown[]) => ({
+    ...mockSurvey,
+    followUps: [],
+    // Deliberately legal and unrelated: the derivation discards them, so anything they said would
+    // hide the thing under test.
+    variables: [],
+    hiddenFields: { enabled: false, fieldIds: [] },
+    embeddedFields,
+  });
+
+  const computed = (storageKey: string, name: string, key: string | null) => ({
+    field: { name, key, source: "computed", dataType: "string", defaultValue: null, locked: false },
+    link: { storageKey },
+  });
+
+  test("two computed fields that derive one variable name are refused", () => {
+    // A local field named `score` beside a library field keyed `score`: distinct storage keys, one
+    // derived name, because a shared field is written into the column under its key.
+    const result = ZSurvey.safeParse(
+      rowsNativeSurvey([
+        computed("rk8w2m4qp1zv7ns3jd0xtybc", "score", null),
+        computed("t5hn9wqk3mz1prdv8bx2cfj7", "Score label", "score"),
+      ])
+    );
+
+    expect(result.success).toBe(false);
+    expect(
+      result.error?.issues.some((issue) => issue.message.includes("Variable names must be unique"))
+    ).toBe(true);
+  });
+
+  test("distinct derived names still parse", () => {
+    const result = ZSurvey.safeParse(
+      rowsNativeSurvey([
+        computed("rk8w2m4qp1zv7ns3jd0xtybc", "score", null),
+        computed("t5hn9wqk3mz1prdv8bx2cfj7", "Plan tier", "plan_tier"),
+      ])
+    );
+
+    expect(result.error).toBeUndefined();
+    expect(result.success).toBe(true);
+  });
+
+  /**
+   * The case the derivation exists for, and the reason it runs on the way *in* rather than only
+   * guarding the way out. The editor's working copy forwards the legacy columns it was loaded with
+   * at mount, so a field added since then lives only in `embeddedFields` — and the refinement
+   * resolves a follow-up recipient against `hiddenFields.fieldIds`. Without the derive, using a
+   * freshly added field is rejected as "an invalid email field" on publish, in the editor's own
+   * pre-flight and again as the server action's input schema.
+   */
+  test("a recipient declared only in the rows is not reported as an invalid email", () => {
+    const ingested = {
+      field: {
+        name: "plan_tier",
+        key: null,
+        source: "ingested",
+        dataType: "string",
+        defaultValue: null,
+        locked: false,
+      },
+      link: { storageKey: "plan_tier" },
+    };
+
+    const result = ZSurvey.safeParse({
+      ...rowsNativeSurvey([ingested]),
+      followUps: [
+        {
+          ...mockResponseEmailFollowUp,
+          action: {
+            ...mockResponseEmailFollowUp.action,
+            properties: { ...mockResponseEmailFollowUp.action.properties, to: "plan_tier" },
+          },
+        },
+      ],
+    });
+
+    // Asserted on the one issue rather than on `success`: this fixture carries legacy `questions`
+    // with `blocks: []`, so an unrelated follow-up refinement failing would otherwise mask this.
+    const messages = result.error?.issues.map((issue) => issue.message) ?? [];
+    expect(messages).not.toContain("The action in follow up 1 has an invalid email field");
   });
 });

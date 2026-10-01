@@ -255,6 +255,11 @@ should keep the default initialization Job enabled.
 Cube is part of the baseline Formbricks v5 stack and is deployed by this chart by default
 (`cube.enabled: true`).
 
+- The bundled image is `ghcr.io/formbricks/cube`: the Cube API server and its Postgres driver on a
+  distroless Node runtime, with no shell, Python or Cube Store (built from
+  [`docker/cube-image`](https://github.com/formbricks/formbricks/tree/main/docker/cube-image)). Pointing
+  `cube.image.repository` and `cube.image.tag` back at an upstream `cubejs/cube` release is supported; set
+  both together, since a tag on its own is resolved against `ghcr.io/formbricks/cube`.
 - For the chart-managed Cube, the chart renders `deployment.env.CUBEJS_API_URL` automatically as
   `http://formbricks-cube:4000` when using the default release name.
 - For an external Cube, set `cube.enabled: false` and point `deployment.env.CUBEJS_API_URL` at your
@@ -270,6 +275,24 @@ Cube is part of the baseline Formbricks v5 stack and is deployed by this chart b
 - Keep `cube.replicas=1` while `cube.env.CUBEJS_CACHE_AND_QUEUE_DRIVER` is `memory`. Configure Cube Store
   and switch cache and queue storage away from memory before running multiple Cube replicas.
 - Keep Hub enabled. Cube should point at the same feedback records database that Hub writes to, unless you intentionally split that storage.
+
+### Cube container security context
+
+`cube.containerSecurityContext` defaults to a read-only root filesystem, `runAsNonRoot`, `runAsUser: 1000`, no
+privilege escalation, and all capabilities dropped. Without Cube Store (the chart's in-memory cache and queue
+driver), Cube writes nothing to its own filesystem, so the chart mounts no writable volumes. This holds for the
+bundled image and for upstream `cubejs/cube` releases.
+
+Upgrading from a chart where the Cube root filesystem was writable:
+
+- `CUBEJS_DEV_MODE=true` on an upstream `cubejs/cube` image starts an embedded Cube Store that writes under
+  `/cube/conf/.cubestore`, so the pod never becomes ready. Leave dev mode off in production, or set
+  `cube.containerSecurityContext.readOnlyRootFilesystem: false`.
+- A custom image or configuration that writes files needs `readOnlyRootFilesystem: false`. A volume you add to
+  the Cube pod yourself, for example through a post-renderer, stays writable: the setting covers only the
+  image's own filesystem.
+- Your `cube.containerSecurityContext` values are merged over these defaults, so a partial override picks up
+  the new fields. Set a field explicitly to keep its old behaviour.
 
 ## Hub worker and self-hosted embeddings
 

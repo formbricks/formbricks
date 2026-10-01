@@ -31,7 +31,7 @@ export const HiddenFieldsSummary = ({ elementSummary, locale }: HiddenFieldsSumm
     <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
       <div className="space-y-2 px-4 pt-6 pb-5 md:px-6">
         <div className={"align-center flex justify-between gap-4"}>
-          <h3 className="pb-1 text-lg font-semibold text-slate-900 md:text-xl">{elementSummary.id}</h3>
+          <h3 className="pb-1 text-lg font-semibold text-slate-900 md:text-xl">{elementSummary.label}</h3>
         </div>
 
         <div className="flex gap-x-2 text-xs font-semibold text-slate-600 md:text-sm">
