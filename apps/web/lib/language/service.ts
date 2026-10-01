@@ -155,10 +155,9 @@ export const describeLanguageInUse = ({
   const parts: string[] = [];
   if (visibleNames.length > 0) {
     const unnamed = visibleCount - visibleNames.length;
-    parts.push(
-      visibleNames.join(", ") +
-        (unnamed > 0 ? ` and ${unnamed} more ${unnamed === 1 ? "survey" : "surveys"}` : "")
-    );
+    const unnamedNoun = unnamed === 1 ? "survey" : "surveys";
+    const more = unnamed > 0 ? ` and ${unnamed} more ${unnamedNoun}` : "";
+    parts.push(visibleNames.join(", ") + more);
   }
   if (hiddenCount > 0) parts.push(`${pluralizeSurveys(hiddenCount)} you can't see`);
   return `This language is still used by ${parts.join(" and ")}. ${LANGUAGE_IN_USE_REMEDY}`;
