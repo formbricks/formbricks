@@ -3536,6 +3536,8 @@
         "load_segment": "Load segment",
         "logic_error_warning": "Changing will cause logic errors",
         "logic_error_warning_text": "Changing the question type will remove the logic conditions from this question",
+        "logic_fallback_destination_missing": "Fallback destination of “{blockName}” no longer exists. Choose a valid destination.",
+        "logic_jump_destination_missing": "Jump destination in rule {ruleNumber} of “{blockName}” no longer exists. Choose a valid destination.",
         "logo_settings": "Logo settings",
         "long_answer": "Long answer",
         "long_answer_toggle_description": "Allow respondents to write longer, multi-line answers.",
