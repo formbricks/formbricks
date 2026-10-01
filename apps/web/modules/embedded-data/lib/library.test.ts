@@ -28,6 +28,7 @@ vi.mock("@formbricks/database", () => ({
       delete: vi.fn(),
     },
     surveyEmbeddedData: { findMany: vi.fn(), findFirst: vi.fn() },
+    survey: { findFirst: vi.fn() },
     response: { findFirst: vi.fn() },
   },
 }));
@@ -367,6 +368,42 @@ describe("promoteEmbeddedDataToShared", () => {
         sharedRow
       );
       expect(prisma.embeddedData.update).toHaveBeenCalled();
+    });
+  });
+
+  // v3 refuses a stored survey whose variable shares a name with a passed-in field, a question, a
+  // block or an ending — case-insensitively — so promote must not create one.
+  describe("a computed field whose survey uses `plan` and `satisfaction` elsewhere", () => {
+    beforeEach(() => {
+      vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue({
+        ...localRow,
+        source: "computed",
+        dataType: "number",
+      } as never);
+      vi.mocked(prisma.surveyEmbeddedData.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([{ storageKey: "Plan" }] as never);
+      vi.mocked(prisma.survey.findFirst).mockResolvedValue({
+        blocks: [{ id: "clbk1234567890123456789012", elements: [{ id: "satisfaction" }] }],
+        endings: [{ id: "clnd1234567890123456789012" }],
+      } as never);
+    });
+
+    test.each(["plan", "satisfaction", "clnd1234567890123456789012"])(
+      "refuses promoting it under %s",
+      async (key) => {
+        await expect(promoteEmbeddedDataToShared(fieldId, workspaceId, { key })).rejects.toThrow(
+          "Key matches a passed-in field, question, block or ending in this survey"
+        );
+        expect(prisma.embeddedData.update).not.toHaveBeenCalled();
+      }
+    );
+
+    test("promotes it under a key nothing in the survey uses", async () => {
+      vi.mocked(prisma.embeddedData.update).mockResolvedValue(sharedRow as never);
+
+      await expect(promoteEmbeddedDataToShared(fieldId, workspaceId, { key: "score" })).resolves.toEqual(
+        sharedRow
+      );
     });
   });
 

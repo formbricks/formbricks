@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { resetDb } from "@/integration/reset-db";
 import {
   createSharedEmbeddedData,
@@ -112,6 +112,39 @@ describe("promoting a local field (real Postgres)", () => {
     expect(await getSharedEmbeddedData(workspaceA)).toEqual([
       expect.objectContaining({ id: fieldId, surveyCount: 1 }),
     ]);
+  });
+
+  test("a calculated field cannot take a key a passed-in field or a question in its survey already uses", async () => {
+    // Promoted under either, the derived `variables` would share a name with that field or question,
+    // and v3 refuses such a stored survey on every PATCH.
+    const { workspaceA, surveyId } = await seed();
+    await prisma.survey.update({
+      where: { id: surveyId },
+      data: {
+        blocks: [{ id: "clbk1234567890123456789012", name: "Block", elements: [{ id: "satisfaction" }] }],
+      },
+    });
+    await seedLocalField(workspaceA, surveyId, "plan");
+    const score = await prisma.embeddedData.create({
+      data: { name: "score", source: "computed", dataType: "number", workspaceId: workspaceA, surveyId },
+    });
+    await prisma.surveyEmbeddedData.create({
+      data: { workspaceId: workspaceA, surveyId, embeddedDataId: score.id, storageKey: score.id, order: 1 },
+    });
+
+    for (const key of ["plan", "satisfaction"]) {
+      await expect(promoteEmbeddedDataToShared(score.id, workspaceA, { key })).rejects.toThrow(
+        InvalidInputError
+      );
+    }
+    expect(await prisma.embeddedData.findUnique({ where: { id: score.id } })).toMatchObject({
+      key: null,
+      surveyId,
+    });
+
+    await expect(promoteEmbeddedDataToShared(score.id, workspaceA, { key: "score" })).resolves.toMatchObject({
+      key: "score",
+    });
   });
 
   test("promoting onto a taken key answers with the id of the library row holding it", async () => {
