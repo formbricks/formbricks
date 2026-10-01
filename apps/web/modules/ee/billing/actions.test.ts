@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   ensureStripeCustomerForOrganization: vi.fn(),
   reconcileCloudStripeSubscriptionsForOrganization: vi.fn(),
   syncOrganizationBillingFromStripe: vi.fn(),
+  capturePostHogEvent: vi.fn(),
   addOptimisticBillingFeature: vi.fn(),
   createCustomerPortalSession: vi.fn(),
   createSetupCheckoutSession: vi.fn(),
@@ -35,7 +36,7 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 vi.mock("@/lib/posthog", () => ({
-  capturePostHogEvent: vi.fn(),
+  capturePostHogEvent: mocks.capturePostHogEvent,
   groupIdentifyPostHog: vi.fn(),
 }));
 
@@ -178,6 +179,25 @@ describe("billing actions", () => {
 
     expect(mocks.createProTrialSubscription).toHaveBeenCalledWith("org_1", "cus_1", 7);
     expect(result).toEqual({ success: true });
+  });
+
+  test("startProTrialAction reports the trial end and length on reverse_trial_started", async () => {
+    mocks.getProTrialDays.mockResolvedValue(7);
+    mocks.syncOrganizationBillingFromStripe.mockResolvedValue({
+      stripe: { trialEnd: "2026-10-07T12:00:00.000Z" },
+    });
+
+    await startProTrialAction({
+      ctx: { user: { id: "user_1" }, auditLoggingCtx: {} },
+      parsedInput: { organizationId: "org_1" },
+    } as never);
+
+    expect(mocks.capturePostHogEvent).toHaveBeenCalledWith(
+      "user_1",
+      "reverse_trial_started",
+      { organization_id: "org_1", trial_end: "2026-10-07T12:00:00.000Z", trial_duration_days: 7 },
+      { organizationId: "org_1" }
+    );
   });
 
   test("startProTrialAction reuses an existing stripe customer id", async () => {
