@@ -114,6 +114,18 @@ const restoreNullMeasures = (
   });
 };
 
+/**
+ * True when Cube's error names a member that was injected into `executed` on top of `plain` — the
+ * "Member 'FeedbackRecords.npsCount' not found" a schema without that measure answers with.
+ */
+const isInjectedMemberRejection = (error: unknown, executed: TChartQuery, plain: TChartQuery): boolean => {
+  const plainMeasures = new Set(plain.measures ?? []);
+  const injected = (executed.measures ?? []).filter((measure) => !plainMeasures.has(measure));
+  if (injected.length === 0) return false;
+  const message = error instanceof Error ? error.message : String(error);
+  return injected.some((measure) => message.includes(measure));
+};
+
 export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
   try {
     validateCubeQueryMembers(input.query);
@@ -175,8 +187,10 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
     } catch (error) {
       // The base is a courtesy, never a reason for the chart itself to fail. A self-hosted Cube whose
       // schema predates the count (the Docker install keeps the schema on the host and upgrades do not
-      // refresh it) rejects the injected member, so run the chart as saved instead.
-      if ((executedQuery.measures?.length ?? 0) === (plainQuery.measures?.length ?? 0)) throw error;
+      // refresh it) rejects the injected member by name, so run the chart as saved instead. Only that
+      // rejection earns a retry: a timeout or a failure in the chart's own members would fail again
+      // and merely double the load on a Cube that is already struggling.
+      if (!isInjectedMemberRejection(error, executedQuery, plainQuery)) throw error;
       logger.warn(error, "Cube rejected the response base measure; retrying without it");
       executedQuery = plainQuery;
       resultSet = await load(executedQuery);

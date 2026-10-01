@@ -459,6 +459,18 @@ describe("executeTenantScopedQuery", () => {
     expect(mockLoggerWarn).toHaveBeenCalledWith(expect.any(Error), expect.stringContaining("response base"));
   });
 
+  test("does not retry when the error is not about the injected measure", async () => {
+    // A timeout or a failure in the chart's own members would fail again; retrying only doubles the
+    // load on a Cube that is already struggling.
+    mockLoad.mockRejectedValue(new Error("Query timeout of 60000ms exceeded"));
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    await expect(
+      executeTenantScopedQuery({ ...scopedInput, query: { measures: ["FeedbackRecords.npsScore"] } })
+    ).rejects.toThrow(/Cube query failed/);
+    expect(mockLoad).toHaveBeenCalledTimes(1);
+    expect(mockLoggerWarn).not.toHaveBeenCalled();
+  });
+
   test("does not retry a failed query that carried no response base", async () => {
     mockLoad.mockRejectedValue(new Error("boom"));
     const { executeTenantScopedQuery } = await import("./cube-client");
