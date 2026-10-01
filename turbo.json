@@ -12,6 +12,10 @@
   "globalEnv": ["MIGRATE_DATABASE_URL", "SHADOW_DATABASE_URL"],
   "globalPassThroughEnv": ["SEED_API_KEY"],
   "tasks": {
+    "//#test:root": {
+      "cache": false,
+      "outputs": []
+    },
     "@formbricks/ai#build": {
       "dependsOn": ["@formbricks/logger#build"],
       "outputs": ["dist/**"]

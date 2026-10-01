@@ -20,6 +20,8 @@ export type FeedbackRecordData = FormbricksHub.FeedbackRecordData & {
   translation_lang_key?: string | null;
   value_id?: string | null;
   emotions?: string[] | string | null;
+  // Hub #136 adds this only to single-record reads. Older Hub versions omit it.
+  taxonomy?: FeedbackRecordTaxonomy | null;
 };
 
 export type FeedbackRecordListResponse = Omit<FormbricksHub.FeedbackRecordListResponse, "data"> & {
@@ -149,6 +151,12 @@ export type TaxonomyNode = {
   created_at: string;
   updated_at: string;
   children?: TaxonomyNode[];
+};
+
+export type FeedbackRecordTaxonomy = {
+  status: "classified" | "unclassified" | "no_active_taxonomy";
+  run_id: string | null;
+  path: Pick<TaxonomyNode, "id" | "label" | "level" | "node_type">[];
 };
 
 export type TaxonomyFieldsResponse = {
