@@ -740,21 +740,26 @@ Hub's metric attributes are restricted to a fixed, low-cardinality set — for i
 emitted only in correlated JSON logs. Prompt text, feedback, model output, embeddings, credentials, authorization
 tokens, provider response bodies, and collector URLs are never telemetry fields.
 
-## Web container security context
+## Web and migration container security context
 
-`deployment.containerSecurityContext` applies to the web container. It defaults to a read-only root filesystem,
+`deployment.containerSecurityContext` applies to the web container and to both migration Job containers
+(`wait-for-database` and `migration`), which run the same image. It defaults to a read-only root filesystem,
 `runAsNonRoot`, `runAsUser: 1001` (the image's `nextjs` user), no privilege escalation, and all capabilities
-dropped. With a read-only root, the chart mounts `emptyDir` volumes on `/tmp`, the Next.js cache, and — when
-`migration.enabled=false` — the Prisma migration staging directory. A path you mount yourself through
-`deployment.extraVolumeMounts` replaces the chart's mount.
+dropped. With a read-only root, the chart mounts `emptyDir` volumes on the paths each container writes:
+
+- Web container: `/tmp`, the Next.js cache, and — when `migration.enabled=false` — the Prisma migration staging
+  directory. A path you mount yourself through `deployment.extraVolumeMounts` replaces the chart's mount.
+- Migration Job: `/tmp` and the Prisma migration staging directory on the `migration` container.
+  `wait-for-database` writes nothing, so it gets no mounts. The Job does not use `deployment.extraVolumes`.
 
 Upgrading from a chart that did not render this context:
 
 - Container-level fields win over `deployment.securityContext`. If you set a custom
   `deployment.securityContext.runAsUser`, set `deployment.containerSecurityContext.runAsUser` to the same UID,
-  or the web container runs as `1001`.
+  or the web container and the migration Job run as `1001`.
 - A custom image or extension that writes anywhere else needs a writable mount through
-  `deployment.extraVolumes` / `deployment.extraVolumeMounts`, or `readOnlyRootFilesystem: false`.
+  `deployment.extraVolumes` / `deployment.extraVolumeMounts`, or `readOnlyRootFilesystem: false`. The
+  migration Job takes no extra mounts, so if it writes elsewhere, set `readOnlyRootFilesystem: false`.
 
 ## Values
 
