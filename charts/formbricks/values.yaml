@@ -915,10 +915,18 @@ cube:
     CUBEJS_JWT_ISSUER: "formbricks-web"
     CUBEJS_JWT_AUDIENCE: "formbricks-cube"
 
+  # Cube writes nothing to its own filesystem without Cube Store (in-memory cache and queue driver), so
+  # the root filesystem is read-only and no writable mounts are needed. main's
+  # docker/cube-image/smoke-test.sh runs the bundled image this way. CUBEJS_DEV_MODE on an upstream image
+  # starts an embedded Cube Store that writes under /cube/conf, and needs readOnlyRootFilesystem: false.
   containerSecurityContext:
-    readOnlyRootFilesystem: false
+    readOnlyRootFilesystem: true
     runAsNonRoot: true
     runAsUser: 1000
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
 
   livenessProbe:
     httpGet:
