@@ -84,6 +84,18 @@ describe("postcss-scope-fbjs", () => {
     expect(flat).toMatch(/@layer theme\s*\{[^}]*#fbjs[^}]*--tw-translate-x: 0/);
   });
 
+  // ENG-833: a host rule such as `* { --spacing: 1rem }` sets the variable on the
+  // survey's own elements, which beats the value inherited from #fbjs.
+  test("pins --spacing on #fbjs descendants with a layered !important", () => {
+    expect(flat).toMatch(
+      /@layer theme\s*\{\s*#fbjs, #fbjs \*, #fbjs ::before, #fbjs ::after\s*\{\s*--spacing: \.25rem !important/
+    );
+  });
+
+  test("pins only the collision-prone variables", () => {
+    expect(flat).not.toMatch(/--color-red-500: [^;]*!important/);
+  });
+
   test("preserves utility classes already scoped to #fbjs", () => {
     expect(out).toMatch(/#fbjs \.flex/);
   });

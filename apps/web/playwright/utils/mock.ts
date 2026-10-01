@@ -173,6 +173,7 @@ export const surveys = {
     ranking: {
       question: "What is most important for you in life?",
       choices: ["Work", "Money", "Travel", "Family", "Friends"],
+      otherText: "Health",
     },
   },
   createWithLogicAndSubmit: {

@@ -358,6 +358,19 @@ Taxonomy service image reference. A configured digest takes precedence over the 
 {{- end -}}
 {{- end }}
 
+{{/*
+Taxonomy ServiceAccount name. Empty when the chart neither creates nor names one, so the pod keeps
+the namespace default ServiceAccount.
+*/}}
+{{- define "formbricks.taxonomyServiceAccountName" -}}
+{{- $serviceAccount := .Values.taxonomy.serviceAccount | default dict -}}
+{{- if get $serviceAccount "create" -}}
+{{- get $serviceAccount "name" | default (include "formbricks.taxonomyName" .) -}}
+{{- else -}}
+{{- get $serviceAccount "name" | default "" -}}
+{{- end -}}
+{{- end }}
+
 {{- define "formbricks.taxonomyManagedSecretName" -}}
 {{- printf "%s-secret" (include "formbricks.taxonomyName" .) -}}
 {{- end }}

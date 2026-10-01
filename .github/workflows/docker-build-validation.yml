@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
@@ -51,8 +51,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
 
-      - name: Test maintenance and development preparation
-        run: pnpm exec vitest run docker/__tests__/maintenance-upgrade.test.ts scripts/setup-dev-env.test.ts scripts/dev-authzed-up.test.ts
+      - name: Test maintenance, development preparation and release tagging
+        run: pnpm exec vitest run docker/__tests__/maintenance-upgrade.test.ts scripts/setup-dev-env.test.ts scripts/dev-authzed-up.test.ts .github/actions/build-and-push-docker/ghcr-tags.test.ts
 
       - name: Build web workspace dependencies
         run: pnpm build --filter=@formbricks/web^...
@@ -96,7 +96,7 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 

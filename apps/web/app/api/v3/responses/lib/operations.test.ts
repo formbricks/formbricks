@@ -66,9 +66,29 @@ vi.mock("./write-service", () => ({
   dispatchV3ResponsePipeline: vi.fn(),
   normalizeV3Ttc: vi.fn(() => ({})),
 }));
+const { mockLogInfo } = vi.hoisted(() => ({ mockLogInfo: vi.fn() }));
 vi.mock("@formbricks/logger", () => ({
-  logger: { withContext: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn() }) },
+  logger: { withContext: () => ({ warn: vi.fn(), error: vi.fn(), info: mockLogInfo }) },
 }));
+
+/**
+ * The read timer is replaced by a recorder: what each operation *observes* about itself is asserted
+ * here, and what the instruments do with it is `metrics.test.ts`'s subject.
+ */
+const { mockStartRead, mockReadDone, observations } = vi.hoisted(() => {
+  const observations: Record<string, unknown>[] = [];
+  const mockReadDone = vi.fn((response: Response) => response);
+  return {
+    observations,
+    mockReadDone,
+    mockStartRead: vi.fn((params: { operation: string }) => {
+      const observation: Record<string, unknown> = { operation: params.operation };
+      observations.push(observation);
+      return { observation, done: mockReadDone };
+    }),
+  };
+});
+vi.mock("./metrics", () => ({ startV3ResponsesRead: mockStartRead }));
 
 const params = {
   responseId: "clrsaaaaaaaaaaaaaaaaaaaa",
@@ -181,17 +201,30 @@ describe("deleteV3Response", () => {
   });
 
   /**
-   * The row is gone after this, so the audit event is the only remaining record of what was destroyed.
-   * v1, v2 and `deleteV3FeedbackRecord` all record `oldObject`; a delete that omits it leaves an entry
-   * saying something was deleted and nothing about what.
+   * The row is gone after this, so the audit event is the only remaining record of what was destroyed —
+   * and the audit store is not where respondent answers belong (ENG-2873). So `oldObject` says which
+   * response, whose, and how much it held, never what it held: the field names of `data` are recorded,
+   * the values are not.
    */
-  test("records the deleted response as the audit event's oldObject", async () => {
+  test("records the deleted response's identity and shape as oldObject, never its answers", async () => {
     mockGetWorkspaceId.mockResolvedValue("ws_1");
-    const auditLog = {} as never;
+    const auditLog = {} as { oldObject?: Record<string, unknown> };
 
-    await deleteV3Response({ ...params, auditLog });
+    await deleteV3Response({ ...params, auditLog: auditLog as never });
 
-    expect(auditLog).toHaveProperty("oldObject", DELETED_ROW);
+    expect(auditLog.oldObject).toMatchObject({
+      id: "clrsaaaaaaaaaaaaaaaaaaaa",
+      surveyId: "svy_1",
+      finished: true,
+      answerFieldNames: ["q1"],
+      answerCount: 1,
+      variableFieldNames: [],
+      variableCount: 0,
+    });
+    expect(auditLog.oldObject).not.toHaveProperty("data");
+    // The fixture's one answer is the string "answer"; the key names carry the same word, so match the
+    // quoted value rather than the bare word.
+    expect(JSON.stringify(auditLog.oldObject)).not.toContain('"answer"');
   });
 
   test("records no oldObject when the delete never happened", async () => {
@@ -579,5 +612,103 @@ describe("countV3ResponsesOperation", () => {
 
     expect(res.status).toBe(400);
     expect(mockCount).not.toHaveBeenCalled();
+  });
+});
+
+describe("the reads are observed for ENG-2898", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    observations.length = 0;
+    mockRequireAccess.mockResolvedValue({ workspaceId: WORKSPACE, organizationId: "org_1" });
+    mockGetSurveys.mockResolvedValue(new Map([[SURVEY.id, SURVEY]]));
+    mockKeysetPage.mockResolvedValue([{ id: ROW.id, createdAt: ROW.createdAt, surveyId: ROW.surveyId }]);
+    mockHydrate.mockResolvedValue([ROW]);
+    mockCount.mockResolvedValue({ count: 1, relation: "eq" });
+    mockGetWorkspaceId.mockResolvedValue(WORKSPACE);
+    mockGetScoped.mockResolvedValue(ROW);
+  });
+
+  test("a list observes its filter, paging flags, survey spread and serialized items", async () => {
+    const res = await listV3Responses({
+      ...read,
+      searchParams: query(`workspaceId=${WORKSPACE}&surveyId=${SURVEY.id}&includeTotalCount=true`),
+    });
+
+    expect(mockStartRead).toHaveBeenCalledWith({
+      operation: "list",
+      authentication: read.authentication,
+      instance: read.instance,
+    });
+    expect(mockReadDone).toHaveBeenCalledTimes(1);
+    expect(mockReadDone).toHaveBeenCalledWith(res);
+    expect(observations[0]).toMatchObject({
+      filter: { workspaceId: WORKSPACE, surveyId: SURVEY.id },
+      cursorUsed: false,
+      includeTotalCount: true,
+      pageSurveyCount: 1,
+    });
+    expect((observations[0].items as { unresolved: unknown[] }[]).map((item) => item.unresolved)).toEqual([
+      [],
+    ]);
+  });
+
+  /**
+   * The names are caller-controlled, so the line carries only key-shaped ones, capped, plus the
+   * total — and never a value. `filter[tags]` is the evidence ENG-2897 needs; the rest is noise.
+   */
+  test("a rejected query logs key-shaped parameter names only, capped, with the total", async () => {
+    const unsafe = encodeURIComponent("email=someone@example.com; drop");
+    const flood = Array.from({ length: 12 }, (_, i) => `filter[x${i}]=1`).join("&");
+    const res = await listV3Responses({
+      ...read,
+      searchParams: query(`workspaceId=${WORKSPACE}&filter[tags][in]=tag_secret&${unsafe}=1&${flood}`),
+    });
+
+    expect(res.status).toBe(400);
+    expect(mockLogInfo).toHaveBeenCalledTimes(1);
+    const [payload] = mockLogInfo.mock.calls[0] as [{ rejectedParamCount: number; rejectedParams: string[] }];
+    expect(payload.rejectedParamCount).toBe(14);
+    expect(payload.rejectedParams).toHaveLength(10);
+    expect(payload.rejectedParams[0]).toBe("filter[tags][in]");
+    expect(JSON.stringify(payload)).not.toContain("tag_secret");
+    expect(JSON.stringify(payload)).not.toContain("someone@example.com");
+  });
+
+  test("a rejected list query is still handed to the timer, with nothing observed", async () => {
+    const res = await listV3Responses({ ...read, searchParams: query(`workspaceId=${WORKSPACE}&limit=x`) });
+
+    expect(res.status).toBe(400);
+    expect(mockReadDone).toHaveBeenCalledWith(res);
+    expect(observations[0]).toEqual({ operation: "list" });
+  });
+
+  test("a count observes its filter and precision", async () => {
+    const res = await countV3ResponsesOperation({
+      ...read,
+      searchParams: query(`workspaceId=${WORKSPACE}&surveyId=${SURVEY.id}&precision=exact`),
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockReadDone).toHaveBeenCalledWith(res);
+    expect(observations[0]).toEqual({
+      operation: "count",
+      filter: expect.objectContaining({ surveyId: SURVEY.id }),
+      precision: "exact",
+    });
+  });
+
+  test("a get observes the one resource it served, and a 403 exit still reaches the timer", async () => {
+    const ok = await getV3Response({ ...read, responseId: ROW.id });
+    expect(ok.status).toBe(200);
+    expect(mockReadDone).toHaveBeenCalledWith(ok);
+    expect(observations[0]).toMatchObject({
+      operation: "get",
+      items: [expect.objectContaining({ id: ROW.id })],
+    });
+
+    mockGetWorkspaceId.mockResolvedValue(null);
+    const denied = await getV3Response({ ...read, responseId: ROW.id });
+    expect(denied.status).toBe(403);
+    expect(mockReadDone).toHaveBeenLastCalledWith(denied);
   });
 });

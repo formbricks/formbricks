@@ -20,7 +20,7 @@ jobs:
     # by comparing it with the latest release from GitHub API
     steps:
       - name: Harden the runner
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
@@ -91,6 +91,18 @@ jobs:
       IS_PRERELEASE: ${{ github.event.release.prerelease }}
       MAKE_LATEST: ${{ needs.check-latest-release.outputs.is_latest == 'true' }}
 
+  scan-community-image:
+    name: Scan community docker image
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    uses: ./.github/workflows/docker-security-scan.yml
+    needs:
+      - docker-build-community
+    with:
+      image_ref: ghcr.io/${{ github.repository }}@${{ needs.docker-build-community.outputs.IMAGE_DIGEST }}
+
   docker-build-cloud:
     name: Build & push Formbricks Cloud to ECR
     permissions:
@@ -127,7 +139,7 @@ jobs:
       - docker-build-cloud
     steps:
       - name: Harden the runner
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
@@ -169,7 +181,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
@@ -287,7 +299,7 @@ jobs:
     if: ${{ !github.event.release.prerelease }}
     steps:
       - name: Harden the runner
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 

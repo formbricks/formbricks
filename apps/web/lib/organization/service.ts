@@ -26,6 +26,7 @@ import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
 import { getWorkspaces } from "@/lib/workspace/service";
 import { cleanupStripeCustomer } from "@/modules/ee/billing/lib/organization-billing";
 import { deleteHubTenantData } from "@/modules/hub/service";
+import { countOrganizationResponses } from "@/modules/organization/usage/lib/response-count";
 import { deleteWorkspaceFilesBestEffort } from "@/modules/storage/service";
 import { validateInputs } from "../utils/validate";
 
@@ -392,25 +393,10 @@ export const getMonthlyOrganizationResponseCount = reactCache(
 
       const usageCycleWindow = getBillingUsageCycleWindow(organization.billing);
 
-      // Get all workspace IDs for the organization
-      const workspaces = await getWorkspaces(organizationId);
-      const workspaceIds = workspaces.map((workspace) => workspace.id);
-
-      // Use Prisma's aggregate to count responses for all workspaces
-      const responseAggregations = await prisma.response.aggregate({
-        _count: {
-          id: true,
-        },
-        where: {
-          AND: [
-            { survey: { workspaceId: { in: workspaceIds } } },
-            { createdAt: { gte: usageCycleWindow.start, lt: usageCycleWindow.end } },
-          ],
-        },
+      return await countOrganizationResponses(organizationId, {
+        gte: usageCycleWindow.start,
+        lt: usageCycleWindow.end,
       });
-
-      // The result is an aggregation of the total count
-      return responseAggregations._count.id;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);

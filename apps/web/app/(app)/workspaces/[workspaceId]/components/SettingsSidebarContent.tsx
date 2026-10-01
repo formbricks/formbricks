@@ -5,6 +5,7 @@ import {
   BlocksIcon,
   BrushIcon,
   Building2Icon,
+  ChartColumnIcon,
   ChevronDownIcon,
   CodeXmlIcon,
   CreditCardIcon,
@@ -415,6 +416,13 @@ export const SettingsSidebarContent = ({
       icon: <ShieldIcon className={iconClassName} />,
       hidden: isFormbricksCloud,
       disabled: isMember || isBilling,
+    },
+    {
+      id: "org-usage",
+      label: t("workspace.settings.usage.nav_label"),
+      href: organizationSettingsPath(organizationId, "usage"),
+      icon: <ChartColumnIcon className={iconClassName} />,
+      hidden: !isOwnerOrManager || isFormbricksCloud,
     },
   ];
 

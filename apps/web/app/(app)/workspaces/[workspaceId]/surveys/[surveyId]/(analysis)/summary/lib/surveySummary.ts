@@ -910,10 +910,17 @@ export const getElementSummary = async (
       }
       case TSurveyElementTypeEnum.Ranking: {
         let values: TSurveyElementSummaryRanking["choices"] = [];
-        const elementChoices = element.choices.map((choice) => getLocalizedValue(choice.label, "default"));
+        const otherOption = element.choices.find((choice) => choice.id === "other");
+        const elementChoices = element.choices
+          .filter((choice) => choice.id !== "other")
+          .map((choice) => getLocalizedValue(choice.label, "default"));
         let totalResponseCount = 0;
         const choiceRankSums: Record<string, number> = {};
         const choiceCountMap: Record<string, number> = {};
+        // A ranked "Other" stores the respondent's text in its slot, so any unmatched entry is it.
+        let otherRankSum = 0;
+        let otherCount = 0;
+        const otherValues: NonNullable<TSurveyElementSummaryRanking["choices"][number]["others"]> = [];
 
         elementChoices.forEach((choice: string) => {
           choiceRankSums[choice] = 0;
@@ -935,6 +942,16 @@ export const getElementSummary = async (
               if (elementChoices.includes(value)) {
                 choiceRankSums[value] += ranking;
                 choiceCountMap[value]++;
+              } else if (otherOption && typeof value === "string") {
+                otherRankSum += ranking;
+                otherCount++;
+                if (value.trim() !== "") {
+                  otherValues.push({
+                    value,
+                    contact: response.contact,
+                    contactAttributes: response.contactAttributes,
+                  });
+                }
               }
             });
           }
@@ -949,6 +966,15 @@ export const getElementSummary = async (
             avgRanking: convertFloatTo2Decimal(avgRanking),
           });
         });
+
+        if (otherOption) {
+          values.push({
+            value: getLocalizedValue(otherOption.label, "default") || "Other",
+            count: otherCount,
+            avgRanking: convertFloatTo2Decimal(otherCount > 0 ? otherRankSum / otherCount : 0),
+            others: otherValues.slice(0, VALUES_LIMIT),
+          });
+        }
 
         summary.push({
           type: element.type,

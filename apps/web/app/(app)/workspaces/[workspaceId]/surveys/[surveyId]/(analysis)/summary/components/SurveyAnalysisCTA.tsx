@@ -28,6 +28,7 @@ import { generateExampleResponsesAction, resetSurveyAction } from "../actions";
 
 interface SurveyAnalysisCTAProps {
   isReadOnly: boolean;
+  canManage: boolean;
   user: TUser;
   publicDomain: string;
   responseCount: number;
@@ -46,6 +47,7 @@ interface ModalState {
 
 export const SurveyAnalysisCTA = ({
   isReadOnly,
+  canManage,
   user,
   publicDomain,
   responseCount,
@@ -55,7 +57,7 @@ export const SurveyAnalysisCTA = ({
   isStorageConfigured,
   enterpriseLicenseRequestFormUrl,
   aiUnavailableReason,
-}: SurveyAnalysisCTAProps) => {
+}: Readonly<SurveyAnalysisCTAProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
@@ -316,6 +318,7 @@ export const SurveyAnalysisCTA = ({
           isContactsEnabled={isContactsEnabled}
           isFormbricksCloud={isFormbricksCloud}
           isReadOnly={isReadOnly}
+          canManage={canManage}
           isStorageConfigured={isStorageConfigured}
           workspaceCustomScripts={workspace.customHeadScripts}
           enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}

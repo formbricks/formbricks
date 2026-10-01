@@ -403,7 +403,7 @@ const evaluateSingleCondition = (
         return (
           Array.isArray(leftValue) &&
           Array.isArray(rightValue) &&
-          rightValue.every((v) => !leftValue.includes(v))
+          !rightValue.every((v) => leftValue.includes(v))
         );
       case "doesNotIncludeOneOf":
         return (

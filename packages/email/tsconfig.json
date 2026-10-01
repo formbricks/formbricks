@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
+    "lib": ["ES2015", "DOM", "ES2021.String"],
     "outDir": "dist",
     "rootDir": "."
   },
