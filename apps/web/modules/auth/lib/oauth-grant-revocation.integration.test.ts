@@ -144,12 +144,12 @@ const liveTokens = async (userId: string, clientId: string): Promise<number> => 
 
 beforeEach(async () => {
   await resetDb();
-  // Instance-level, so resetDb clears it and only the first test gets the boot-time seed. Upserted
-  // because that seed can land between the truncate and this line.
-  await prisma.oauthResource.upsert({
-    where: { identifier: getMcpResourceUrl() },
-    create: { identifier: getMcpResourceUrl(), name: "Formbricks MCP", allowedScopes: [...MCP_OAUTH_SCOPES] },
-    update: {},
+  // Instance-level, so resetDb clears it and only the first test gets the boot-time seed. That seed runs
+  // in the background and can land at any point here, so the insert has to be atomic: `upsert` reads
+  // then inserts and loses the race, `skipDuplicates` is a single INSERT … ON CONFLICT DO NOTHING.
+  await prisma.oauthResource.createMany({
+    data: [{ identifier: getMcpResourceUrl(), name: "Formbricks MCP", allowedScopes: [...MCP_OAUTH_SCOPES] }],
+    skipDuplicates: true,
   });
   await auth.api.signUpEmail({ body: { email: EMAIL, password: PASSWORD, name: "Revoker" } });
   await prisma.user.update({ where: { email: EMAIL }, data: { emailVerified: true } });
