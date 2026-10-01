@@ -1,6 +1,10 @@
 {
-  "features": {},
-  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": false
+    }
+  },
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:5-24-trixie",
   "postAttachCommand": "pnpm go",
-  "postCreateCommand": "cp .env.example .env && sed -i '/^ENCRYPTION_KEY=/c\\ENCRYPTION_KEY='$(openssl rand -hex 32) .env && sed -i '/^BETTER_AUTH_SECRET=/c\\BETTER_AUTH_SECRET='$(openssl rand -hex 32) .env && sed -i '/^CRON_SECRET=/c\\CRON_SECRET='$(openssl rand -hex 32) .env && pnpm install && pnpm db:migrate:dev"
+  "postCreateCommand": "npm install -g $(node -p \"require('./package.json').packageManager\") && cp .env.example .env && sed -i '/^ENCRYPTION_KEY=/c\\ENCRYPTION_KEY='$(openssl rand -hex 32) .env && sed -i '/^BETTER_AUTH_SECRET=/c\\BETTER_AUTH_SECRET='$(openssl rand -hex 32) .env && sed -i '/^CRON_SECRET=/c\\CRON_SECRET='$(openssl rand -hex 32) .env && pnpm install && pnpm db:migrate:dev"
 }
