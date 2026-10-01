@@ -3724,6 +3724,10 @@ const validateBlockConditions = (
   return issues;
 };
 
+/** How a logic error names a block: its editable title, or its position when the title is blank. */
+const getBlockLabel = (block: TSurveyBlock, blockIndex: number): string =>
+  block.name.trim() || `Block ${String(blockIndex + 1)}`;
+
 const validateBlockActions = (
   survey: TSurvey,
   blockIndex: number,
@@ -3848,10 +3852,13 @@ const validateBlockActions = (
       const possibleTargets = [...blockIds, ...endingIds];
 
       if (!possibleTargets.includes(targetBlockId)) {
+        // Named by the owning block's title, never the missing target's id: the id is internal and
+        // the block it pointed at no longer exists to be named.
         return {
           code: "custom",
-          message: `Conditional Logic: Block ID ${targetBlockId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+          message: `Conditional Logic: Jump destination in rule ${String(logicIndex + 1)} of "${getBlockLabel(currentBlock, blockIndex)}" no longer exists. Choose a valid destination.`,
           path: ["blocks", blockIndex, "logic", logicIndex],
+          params: { missingLogicDestination: "jump" },
         };
       }
 
@@ -3922,8 +3929,9 @@ const validateBlockLogicFallback = (
     return [
       {
         code: "custom",
-        message: `Conditional Logic: Fallback block ID ${block.logicFallback} does not exist in block ${String(blockIndex + 1)}`,
+        message: `Conditional Logic: Fallback destination of "${getBlockLabel(block, blockIndex)}" no longer exists. Choose a valid destination.`,
         path: ["blocks", blockIndex],
+        params: { missingLogicDestination: "fallback" },
       },
     ];
   }

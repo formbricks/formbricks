@@ -12,7 +12,7 @@ import {
   SENTIMENT_DIMENSION_ID,
   getTranslatedDimensionValueLabel,
 } from "@/modules/ee/analysis/lib/schema-definition";
-import type { FeedbackRecordData } from "@/modules/hub/types";
+import type { FeedbackRecordData, FeedbackRecordTaxonomy } from "@/modules/hub/types";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { FormControl, FormField, FormItem, FormLabel, FormProvider } from "@/modules/ui/components/form";
@@ -41,6 +41,7 @@ import {
   formatSourceType,
   getEmbeddedDataEntries,
   getReadOnlyMetadataEntries,
+  getTaxonomyAssignmentDisplay,
   getValueFieldByType,
   mapRecordToValues,
   resolveFeedbackDisplayText,
@@ -71,6 +72,7 @@ export const FeedbackRecordFormDrawer = ({
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const [record, setRecord] = useState<FeedbackRecordData | null>(null);
+  const [taxonomy, setTaxonomy] = useState<FeedbackRecordTaxonomy | null>(null);
   const [isLoadingRecord, setIsLoadingRecord] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -82,6 +84,7 @@ export const FeedbackRecordFormDrawer = ({
 
   const readOnlyMetadataEntries = useMemo(() => (record ? getReadOnlyMetadataEntries(record) : []), [record]);
   const embeddedDataEntries = useMemo(() => (record ? getEmbeddedDataEntries(record) : []), [record]);
+  const taxonomyDisplay = getTaxonomyAssignmentDisplay(taxonomy);
 
   // ENG-1253: show the Hub translation read-only beside the original. Shared resolver keeps the
   // empty/identical guards consistent with the other surfaces.
@@ -110,9 +113,14 @@ export const FeedbackRecordFormDrawer = ({
   useEffect(() => {
     if (!open || !recordId) return;
 
+    let active = true;
+
     const loadRecord = async () => {
+      setRecord(null);
+      setTaxonomy(null);
       setIsLoadingRecord(true);
       const result = await retrieveFeedbackRecordAction({ workspaceId, recordId });
+      if (!active) return;
 
       if (!result?.data) {
         toast.error(getFormattedErrorMessage(result) || t("workspace.unify.failed_to_load_feedback_records"));
@@ -121,12 +129,16 @@ export const FeedbackRecordFormDrawer = ({
         return;
       }
 
-      setRecord(result.data);
-      form.reset(mapRecordToValues(result.data));
+      setRecord(result.data.record);
+      setTaxonomy(result.data.taxonomy);
+      form.reset(mapRecordToValues(result.data.record));
       setIsLoadingRecord(false);
     };
 
     void loadRecord();
+    return () => {
+      active = false;
+    };
   }, [form, onOpenChange, open, recordId, t, workspaceId]);
 
   const handleDelete = async () => {
@@ -464,6 +476,26 @@ export const FeedbackRecordFormDrawer = ({
                     </div>
                   </div>
                 )}
+
+                <div className="space-y-1.5 rounded-md bg-slate-50 p-3">
+                  <div className="flex items-center gap-2">
+                    <SparklesIcon className="size-3.5 text-slate-500" aria-hidden="true" />
+                    <span className="text-sm font-medium text-slate-700">
+                      {t("workspace.unify.topics_and_subtopics")}
+                    </span>
+                  </div>
+                  {taxonomyDisplay.path ? (
+                    <p className="text-sm break-words text-slate-700">{taxonomyDisplay.path}</p>
+                  ) : (
+                    <p className="text-sm text-slate-500">
+                      {taxonomyDisplay.status === "no_active_taxonomy"
+                        ? t("workspace.unify.taxonomy_assignment_no_active")
+                        : taxonomyDisplay.status === "unclassified"
+                          ? t("workspace.unify.taxonomy_assignment_unclassified")
+                          : t("workspace.unify.taxonomy_assignment_unavailable")}
+                    </p>
+                  )}
+                </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <FormField

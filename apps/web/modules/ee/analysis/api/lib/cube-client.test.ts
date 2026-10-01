@@ -1,3 +1,5 @@
+import { createCubeTransport } from "./__mocks__/cube-transport.mock";
+import type * as CubeClient from "@cubejs-client/core";
 import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -87,7 +89,7 @@ describe("executeTenantScopedQuery", () => {
     const { executeTenantScopedQuery } = await import("./cube-client");
     const result = await executeTenantScopedQuery(scopedInput);
 
-    expect(mockLoad).toHaveBeenCalledWith({ ...scopedInput.query, timezone: "UTC" });
+    expect(mockLoad).toHaveBeenCalledWith({ ...scopedInput.query, timezone: "UTC" }, expect.anything());
     expect(mockTablePivot).toHaveBeenCalled();
     expect(result).toEqual([{ id: "1", count: 42 }]);
 
@@ -130,13 +132,16 @@ describe("executeTenantScopedQuery", () => {
       });
 
       expect(mockGetOrganization).toHaveBeenCalledWith("organization-1");
-      expect(mockLoad).toHaveBeenCalledWith({
-        measures: ["FeedbackRecords.count"],
-        timezone: "Europe/Berlin",
-        timeDimensions: [
-          { dimension: "FeedbackRecords.collectedAt", dateRange: ["2026-05-22", "2026-05-22"] },
-        ],
-      });
+      expect(mockLoad).toHaveBeenCalledWith(
+        {
+          measures: ["FeedbackRecords.count"],
+          timezone: "Europe/Berlin",
+          timeDimensions: [
+            { dimension: "FeedbackRecords.collectedAt", dateRange: ["2026-05-22", "2026-05-22"] },
+          ],
+        },
+        expect.anything()
+      );
     } finally {
       vi.useRealTimers();
     }
@@ -203,6 +208,90 @@ describe("executeTenantScopedQuery", () => {
     // measure cell was filled by the pivot, so only that one may become null.
     expect(result).toEqual([
       { "FeedbackRecords.valueText": "__formbricks_null__", "FeedbackRecords.count": null },
+    ]);
+  });
+
+  test("returns Cube 1.7's numeric strings as numbers for number members only", async () => {
+    // A /load response from the bundled Cube 1.7.47 image, which serializes every number member as a
+    // string, dimensions included. The real client parses it, so its annotation-driven cast is what is
+    // under test rather than the options it was called with.
+    const loadResponse = {
+      queryType: "regularQuery",
+      pivotQuery: {
+        measures: ["FeedbackRecords.count", "FeedbackRecords.npsAverage"],
+        dimensions: ["FeedbackRecords.valueText", "FeedbackRecords.valueNumber"],
+        timeDimensions: [],
+        queryType: "regularQuery",
+      },
+      results: [
+        {
+          query: {
+            measures: ["FeedbackRecords.count", "FeedbackRecords.npsAverage"],
+            dimensions: ["FeedbackRecords.valueText", "FeedbackRecords.valueNumber"],
+            timeDimensions: [],
+          },
+          annotation: {
+            measures: {
+              "FeedbackRecords.count": { type: "number" },
+              "FeedbackRecords.npsAverage": { type: "number" },
+            },
+            dimensions: {
+              "FeedbackRecords.valueText": { type: "string" },
+              "FeedbackRecords.valueNumber": { type: "number" },
+            },
+            segments: {},
+            timeDimensions: {},
+          },
+          data: [
+            {
+              "FeedbackRecords.valueText": "123",
+              "FeedbackRecords.valueNumber": "3",
+              "FeedbackRecords.count": "2",
+              "FeedbackRecords.npsAverage": null,
+            },
+            {
+              "FeedbackRecords.valueText": null,
+              "FeedbackRecords.valueNumber": "9",
+              "FeedbackRecords.count": "1",
+              "FeedbackRecords.npsAverage": "7.333333333333333",
+            },
+          ],
+        },
+      ],
+    };
+    const transport = createCubeTransport(loadResponse);
+    const { CubeApi } = await vi.importActual<typeof CubeClient>("@cubejs-client/core");
+    mockLoad.mockImplementationOnce((query: CubeClient.Query, options?: CubeClient.LoadMethodOptions) =>
+      new CubeApi("token", { apiUrl: "https://cube.example.com/cubejs-api/v1", transport }).load(
+        query,
+        options
+      )
+    );
+    const { executeTenantScopedQuery } = await import("./cube-client");
+
+    const result = await executeTenantScopedQuery({
+      ...scopedInput,
+      query: {
+        measures: ["FeedbackRecords.count", "FeedbackRecords.npsAverage"],
+        dimensions: ["FeedbackRecords.valueText", "FeedbackRecords.valueNumber"],
+      },
+    });
+
+    // "123" is what a respondent typed, not a number Cube computed, so it keeps its type; the NULL
+    // average still comes back as null rather than 0.
+    expect(result).toEqual([
+      {
+        "FeedbackRecords.valueText": "123",
+        "FeedbackRecords.valueNumber": 3,
+        "FeedbackRecords.count": 2,
+        "FeedbackRecords.npsAverage": null,
+      },
+      {
+        "FeedbackRecords.valueText": null,
+        "FeedbackRecords.valueNumber": 9,
+        "FeedbackRecords.count": 1,
+        "FeedbackRecords.npsAverage": 7.333333333333333,
+      },
     ]);
   });
 

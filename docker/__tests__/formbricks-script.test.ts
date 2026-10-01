@@ -318,6 +318,34 @@ describe("docker/docker-compose.yml Cube configuration", () => {
 
     expect(cubeBlock).toContain("      CUBEJS_EXTERNAL_DEFAULT: ${CUBEJS_EXTERNAL_DEFAULT:-false}");
   });
+
+  test("every deployment runs the image docker/cube-image publishes, with no shell command", () => {
+    const readRepoFile = (path: string) =>
+      readFileSync(fileURLToPath(new URL(`../../${path}`, import.meta.url)), "utf8");
+    const { dependencies } = JSON.parse(readRepoFile("docker/cube-image/package.json")) as {
+      dependencies: Record<string, string>;
+    };
+    const cubeVersion = dependencies["@cubejs-backend/server"];
+    const tag = `${cubeVersion}-${readRepoFile("docker/cube-image/REVISION").trim()}`;
+    type TCubeService = { command?: unknown; image?: string };
+    const compose = load(readFileSync(dockerComposeTemplatePath, "utf8")) as {
+      services?: Record<string, TCubeService>;
+    };
+    const devCompose = load(readRepoFile("docker-compose.dev.yml")) as {
+      services?: Record<string, TCubeService>;
+    };
+    const chartValues = load(readRepoFile("charts/formbricks/values.yaml")) as {
+      cube?: { image?: { repository?: string; tag?: string } };
+    };
+
+    expect(compose.services?.cube?.image).toBe(`ghcr.io/formbricks/cube:${tag}`);
+    expect(chartValues.cube?.image).toMatchObject({ repository: "ghcr.io/formbricks/cube", tag });
+    // Dev mode needs the embedded Cube Store only upstream ships, so dev runs upstream at the same version.
+    expect(devCompose.services?.cube?.image).toBe(`cubejs/cube:v${cubeVersion}`);
+    // The image has no shell and its entrypoint is node, so a `sh -c` command fails with "Cannot find
+    // module '/cube/conf/sh'". The image's own CMD starts Cube.
+    expect(compose.services?.cube?.command).toBeUndefined();
+  });
 });
 
 describe("docker/docker-compose.yml Hub worker configuration", () => {

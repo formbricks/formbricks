@@ -155,7 +155,14 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
 
   try {
     const client = cubejs(token, { apiUrl });
-    const resultSet = await client.load(expandPresetDateRanges(input.query, timeZone) as Query);
+    // Cube 1.7 serializes every numeric result as a JSON string, dimensions included (an average
+    // arrives as "7.333333333333333", a Value (Number) of 3 as "3"), and strings skip the number
+    // formatting charts and tables apply. castNumerics turns back into numbers exactly the members
+    // the response annotates as `number`; string members such as a text answer of "123", and nulls,
+    // are left alone.
+    const resultSet = await client.load(expandPresetDateRanges(input.query, timeZone) as Query, {
+      castNumerics: true,
+    });
     const measures = input.query.measures ?? [];
     const granular = (input.query.timeDimensions ?? []).filter((td) => Boolean(td.granularity));
     const filled = resultSet.tablePivot({ fillWithValue: NULL_FILL_SENTINEL });

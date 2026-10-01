@@ -329,9 +329,8 @@ PY
 This command runs inside the taxonomy container, so `127.0.0.1:8000` refers to the taxonomy service itself.
 The preflight endpoint then checks Hub internal auth and LLM reachability from taxonomy.
 
-The taxonomy service remains internal to the compose network by default. For production workloads,
-`TAXONOMY_MAX_RECORDS` defaults to `50000`; override it only as an advanced safety limit after sizing CPU,
-memory, and LLM capacity.
+The taxonomy service remains internal to the compose network by default. `TAXONOMY_MAX_RECORDS` defaults to
+`10000`; change it only after sizing CPU, memory, and LLM capacity.
 
 <Info>
   The taxonomy service is internal to the Docker network. Formbricks Web still calls Hub with
