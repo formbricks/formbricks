@@ -635,11 +635,15 @@ describe("a hidden field under an element's id, at the v1 / v2 write boundary", 
     });
 
     await expect(
-      createSurvey(workspace.id, {
-        name: "Created Survey",
-        blocks: BLOCKS as never,
-        hiddenFields: { enabled: true, fieldIds: [ELEMENT_ID] },
-      })
+      createSurvey(
+        workspace.id,
+        {
+          name: "Created Survey",
+          blocks: BLOCKS as never,
+          hiddenFields: { enabled: true, fieldIds: [ELEMENT_ID] },
+        },
+        { creationFacts: { ownerId: null, visibility: "workspace" } }
+      )
     ).rejects.toMatchObject({ name: "InvalidInputError" });
     expect(await prisma.survey.count({ where: { workspaceId: workspace.id } })).toBe(0);
   });
@@ -666,11 +670,15 @@ describe("no embeddedFields, no change — one row per legacy write route", () =
       data: { name: "Create Workspace", organizationId: organization.id },
     });
 
-    const created = await createSurvey(workspace.id, {
-      name: "Created Survey",
-      blocks: BLOCKS as never,
-      ...LEGACY_PAYLOAD,
-    });
+    const created = await createSurvey(
+      workspace.id,
+      {
+        name: "Created Survey",
+        blocks: BLOCKS as never,
+        ...LEGACY_PAYLOAD,
+      },
+      { creationFacts: { ownerId: null, visibility: "workspace" } }
+    );
 
     expect(await readAsLegacyApi(created.id)).toMatchObject(LEGACY_PAYLOAD);
     await expectNoDrift(created.id);
