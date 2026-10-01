@@ -35,6 +35,7 @@ vi.mock("@/modules/ee/contacts/lib/contact-attribute-keys", () => ({
 }));
 
 vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
+  ALL_SEGMENT_SURVEY_REFS: {},
   getSegments: vi.fn(),
   getExistingWorkspaceSurveyIds: vi.fn(),
 }));
@@ -354,7 +355,8 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
     const filters = [segmentFilterNode("f1", "seg_known")] as unknown as TFilterTree;
 
     await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters)).resolves.toBeUndefined();
-    expect(getSegments).toHaveBeenCalledWith("ws_1");
+    // Reference validation needs every segment's id, and the result never reaches a browser.
+    expect(getSegments).toHaveBeenCalledWith("ws_1", {});
   });
 
   test("rejects a segment filter referencing an unknown or foreign segment", async () => {

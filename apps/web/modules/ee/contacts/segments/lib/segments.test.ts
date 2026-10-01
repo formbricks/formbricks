@@ -13,6 +13,7 @@ import {
 import { getSurvey } from "@/lib/survey/service";
 import { validateInputs } from "@/lib/utils/validate";
 import {
+  ALL_SEGMENT_SURVEY_REFS,
   PrismaSegment,
   cloneSegment,
   compareValues,
@@ -149,7 +150,7 @@ describe("Segment Service Tests", () => {
   describe("getSegments", () => {
     test("should return a list of segments", async () => {
       vi.mocked(prisma.segment.findMany).mockResolvedValue([mockSegmentPrisma]);
-      const segments = await getSegments("workspace-id-mock");
+      const segments = await getSegments("workspace-id-mock", ALL_SEGMENT_SURVEY_REFS);
       expect(segments).toEqual([mockSegment]);
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
         where: { workspaceId: "workspace-id-mock" },
@@ -158,15 +159,29 @@ describe("Segment Service Tests", () => {
       expect(validateInputs).toHaveBeenCalledWith(["workspace-id-mock", expect.any(Object)]);
     });
 
+    // ENG-3282: segments reach the browser on the survey pages, so their survey references go through the
+    // viewer's visibility clause in SQL.
+    test("reads each segment's survey references through the visibility clause", async () => {
+      vi.mocked(prisma.segment.findMany).mockResolvedValue([]);
+      const visibleSurveyWhere = { OR: [{ visibility: "workspace" as const }, { ownerId: "user-1" }] };
+
+      await getSegments("workspace-id-mock", visibleSurveyWhere);
+
+      expect(prisma.segment.findMany).toHaveBeenCalledWith({
+        where: { workspaceId: "workspace-id-mock" },
+        select: { ...selectSegment, surveys: { ...selectSegment.surveys, where: visibleSurveyWhere } },
+      });
+    });
+
     test("should return an empty array if no segments found", async () => {
       vi.mocked(prisma.segment.findMany).mockResolvedValue([]);
-      const segments = await getSegments("workspace-id-mock");
+      const segments = await getSegments("workspace-id-mock", ALL_SEGMENT_SURVEY_REFS);
       expect(segments).toEqual([]);
     });
 
     test("should throw DatabaseError on Prisma error", async () => {
       vi.mocked(prisma.segment.findMany).mockRejectedValue(new Error("DB error"));
-      await expect(getSegments("workspace-id-mock")).rejects.toThrow(Error);
+      await expect(getSegments("workspace-id-mock", ALL_SEGMENT_SURVEY_REFS)).rejects.toThrow(Error);
     });
   });
 

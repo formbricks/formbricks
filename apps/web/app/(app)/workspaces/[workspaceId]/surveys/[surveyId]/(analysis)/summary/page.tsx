@@ -13,6 +13,7 @@ import {
 } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getSurvey } from "@/lib/survey/service";
+import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
@@ -56,7 +57,10 @@ const SurveyPage = async (
   }
 
   const isContactsEnabled = await getIsContactsEnabled(organization.id);
-  const segments = isContactsEnabled ? await getSegments(workspace.id) : [];
+  // ENG-3282: segments reach the browser, so their survey references name only surveys this viewer sees.
+  const segments = isContactsEnabled
+    ? await getSegments(workspace.id, await getUserVisibleSurveyWhere(session.user.id, organization.id))
+    : [];
 
   if (!organization) {
     throw new ResourceNotFoundError(t("common.organization"), null);

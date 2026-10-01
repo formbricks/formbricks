@@ -116,14 +116,23 @@ export const getSegment = reactCache(async (segmentId: string): Promise<TSegment
 });
 
 /**
- * @param visibleSurveyWhere ENG-3282: when given, each segment's survey references only name surveys
- *   the viewer may see — for the segments page. Targeting and delete guards omit it: they need every
- *   survey a segment is attached to, visible to this viewer or not.
+ * `getSegments`' survey-reference scope for the server-side callers that need every survey a segment is
+ * attached to, visible to the viewer or not — reference validation and copy naming, whose results never
+ * reach a browser. A shared constant, not an inline `{}`, so `reactCache` keeps its dedupe and every
+ * unscoped caller is greppable.
+ */
+export const ALL_SEGMENT_SURVEY_REFS: Prisma.SurveyWhereInput = Object.freeze({});
+
+/**
+ * @param visibleSurveyWhere ENG-3282: the `Survey` clause each segment's `activeSurveys` /
+ *   `inactiveSurveys` are read through. Required, so no page can forget it and ship restricted survey
+ *   names and ids to the browser: pass `getUserVisibleSurveyWhere(...)` for anything a viewer sees, and
+ *   `ALL_SEGMENT_SURVEY_REFS` only where the result stays on the server.
  */
 export const getSegments = reactCache(
   async (
     workspaceId: string,
-    visibleSurveyWhere?: Prisma.SurveyWhereInput
+    visibleSurveyWhere: Prisma.SurveyWhereInput
   ): Promise<TSegmentWithSurveyRefs[]> => {
     validateInputs([workspaceId, ZId]);
     try {
@@ -131,9 +140,10 @@ export const getSegments = reactCache(
         where: {
           workspaceId,
         },
-        select: visibleSurveyWhere
-          ? { ...selectSegment, surveys: { ...selectSegment.surveys, where: visibleSurveyWhere } }
-          : selectSegment,
+        select:
+          Object.keys(visibleSurveyWhere).length > 0
+            ? { ...selectSegment, surveys: { ...selectSegment.surveys, where: visibleSurveyWhere } }
+            : selectSegment,
       });
 
       if (!segments) {
@@ -302,7 +312,7 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
       throw new DatabaseError("Segment is not associated with a workspace");
     }
 
-    const allSegments = await getSegments(segment.workspaceId);
+    const allSegments = await getSegments(segment.workspaceId, ALL_SEGMENT_SURVEY_REFS);
 
     // Find the last "Copy of" title and extract the number from it
     const lastCopyTitle = allSegments

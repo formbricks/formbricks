@@ -9,6 +9,7 @@ import {
   UNSPLASH_ACCESS_KEY,
 } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getTranslate } from "@/lingodotdev/server";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
@@ -55,8 +56,15 @@ export const SurveyEditorPage = async (props: {
   // Gated here rather than by a layout: the editor lives in its own route group
   // ((survey-editor)) with its own layout, so it does not inherit the guard on
   // (app)/workspaces/[workspaceId]/surveys/[surveyId]/layout.tsx.
-  const { session, isMember, hasReadAccess, currentUserMembership, workspacePermission, workspace } =
-    await getSurveyAuth(params.workspaceId, params.surveyId);
+  const {
+    session,
+    isMember,
+    hasReadAccess,
+    currentUserMembership,
+    workspacePermission,
+    workspace,
+    organization,
+  } = await getSurveyAuth(params.workspaceId, params.surveyId);
 
   const t = await getTranslate();
 
@@ -75,7 +83,10 @@ export const SurveyEditorPage = async (props: {
     getContactAttributeKeys(workspace.id),
     getResponseCountBySurveyId(params.surveyId),
     getFinishedResponseCountBySurveyId(params.surveyId),
-    getSegments(workspace.id),
+    // ENG-3282: segments reach the browser, so their survey references name only surveys this viewer sees.
+    getUserVisibleSurveyWhere(session.user.id, organization.id).then((where) =>
+      getSegments(workspace.id, where)
+    ),
   ]);
 
   if (!workspaceWithTeamIds) {

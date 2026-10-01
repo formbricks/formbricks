@@ -12,6 +12,7 @@ import {
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getResponseCountBySurveyId, getResponses } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
+import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getTagsByWorkspaceId } from "@/lib/tag/service";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -55,7 +56,10 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string; sur
     throw new ResourceNotFoundError(t("common.organization"), null);
   }
 
-  const segments = isContactsEnabled ? await getSegments(workspace.id) : [];
+  // ENG-3282: segments reach the browser, so their survey references name only surveys this viewer sees.
+  const segments = isContactsEnabled
+    ? await getSegments(workspace.id, await getUserVisibleSurveyWhere(session.user.id, organization.id))
+    : [];
 
   const publicDomain = getPublicDomain();
 
