@@ -8,7 +8,7 @@ import type { FeedbackRecordCreateParams } from "@/modules/hub/types";
  * The policy is the SDK's (`createHubClient`), not ours. What these pin is that `getHubClient` still gets
  * it — a client assembled any other way gets a bare `fetch` and retries nothing — and the outcomes this
  * app depends on: a re-import must not pay three POSTs per duplicate, and a create must never be re-sent
- * after a failure that may have written it. Only the global transport is stubbed, so the assertion is on
+ * after a failure that may already have stored it. Only the global transport is stubbed, so the assertion is on
  * the number of requests that would actually leave the process.
  */
 vi.mock("server-only", () => ({}));
@@ -91,8 +91,9 @@ describe("Hub client retries, through the SDK's real request path", () => {
     expect(fetchStub).toHaveBeenCalledTimes(3);
   });
 
-  // The Hub has no idempotency keys, so after a 500 the record may already exist: re-sending could write
-  // it twice. The Stainless SDK did re-send here; the caller now decides.
+  // The Hub has no idempotency keys, so after a 500 the record may already be stored. Re-sending it would
+  // come back as a 409 conflict, reporting a record that was saved as failed. The Stainless SDK did re-send
+  // here; the caller now decides.
   test("a create that fails with a 500 is not re-sent", async () => {
     const fetchStub = respondWith(500);
 
@@ -107,6 +108,16 @@ describe("Hub client retries, through the SDK's real request path", () => {
     const fetchStub = respondWith(503, { headers: {} });
 
     await expect(create()).rejects.toMatchObject({ status: 503 });
+
+    expect(fetchStub).toHaveBeenCalledTimes(1);
+  });
+
+  // Envoy answers 408 when its stream idle timeout fires after forwarding, so a bare 408 is as ambiguous
+  // as a bare 503.
+  test("a create that gets a 408 without Retry-After is not re-sent", async () => {
+    const fetchStub = respondWith(408, { headers: {} });
+
+    await expect(create()).rejects.toMatchObject({ status: 408 });
 
     expect(fetchStub).toHaveBeenCalledTimes(1);
   });
