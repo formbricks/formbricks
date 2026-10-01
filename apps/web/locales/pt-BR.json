@@ -2633,9 +2633,10 @@
         "connect_app_banner_title": "Configurando uma pesquisa de Site & App?"
       },
       "billing": {
-        "billing_currency_not_supported": "Sua moeda de cobrança ainda não é compatível com este plano. Entre em contato com o suporte para alterar planos.",
+        "billing_currency_conflict": "Esta mudança de plano entra em conflito com a cobrança em outra moeda na sua conta. Entre em contato com o suporte para trocar de plano.",
         "billing_interval_toggle": "Intervalo de cobrança",
         "cancel_at_period_end": "Cancelar ao final do período",
+        "card_payment_method_required": "Para mudar do seu plano atual, você precisa adicionar um cartão como forma de pagamento. Por favor, adicione um cartão e tente novamente.",
         "comparison_addon": "Complemento",
         "comparison_best_for": "Ideal para",
         "comparison_included": "Incluído",

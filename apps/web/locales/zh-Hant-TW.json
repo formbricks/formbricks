@@ -2633,9 +2633,10 @@
         "connect_app_banner_title": "正在設定網站與應用程式問卷調查？"
       },
       "billing": {
-        "billing_currency_not_supported": "你的帳單幣別目前不支援此方案。請聯絡客服以變更方案。",
+        "billing_currency_conflict": "此方案變更與你帳戶上的其他幣別帳單衝突。請聯絡客服以切換方案。",
         "billing_interval_toggle": "帳單週期",
         "cancel_at_period_end": "在週期結束時取消",
+        "card_payment_method_required": "從目前方案切換需要以信用卡作為付款方式。請新增信用卡後再試一次。",
         "comparison_addon": "附加功能",
         "comparison_best_for": "最適合",
         "comparison_included": "包含",

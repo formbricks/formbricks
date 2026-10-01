@@ -145,14 +145,13 @@ describe("stripe-billing-catalog", () => {
       const { getCatalogItemsForPlan, getStripeBillingCatalogDisplay } =
         await import("./stripe-billing-catalog");
 
-      await expect(getCatalogItemsForPlan("hobby", "monthly", null)).resolves.toEqual({
-        currency: undefined,
-        items: [{ price: "price_hobby_monthly", quantity: 1 }],
-      });
-      await expect(getCatalogItemsForPlan("pro", "yearly", null)).resolves.toEqual({
-        currency: undefined,
-        items: [{ price: "price_pro_yearly", quantity: 1 }, { price: "price_pro_responses" }],
-      });
+      await expect(getCatalogItemsForPlan("hobby", "monthly")).resolves.toEqual([
+        { price: "price_hobby_monthly", quantity: 1 },
+      ]);
+      await expect(getCatalogItemsForPlan("pro", "yearly")).resolves.toEqual([
+        { price: "price_pro_yearly", quantity: 1 },
+        { price: "price_pro_responses" },
+      ]);
       await expect(getStripeBillingCatalogDisplay()).resolves.toEqual({
         hobby: {
           monthly: {
@@ -257,14 +256,11 @@ describe("stripe-billing-catalog", () => {
 
       // Resolves without throwing "found 2"; the workflow_runs price is added as its own metered
       // line item (no quantity), alongside base and responses.
-      await expect(getCatalogItemsForPlan("scale", "monthly", null)).resolves.toEqual({
-        currency: undefined,
-        items: [
-          { price: "price_scale_monthly", quantity: 1 },
-          { price: "price_scale_responses" },
-          { price: "price_scale_workflow_runs" },
-        ],
-      });
+      await expect(getCatalogItemsForPlan("scale", "monthly")).resolves.toEqual([
+        { price: "price_scale_monthly", quantity: 1 },
+        { price: "price_scale_responses" },
+        { price: "price_scale_workflow_runs" },
+      ]);
     },
     TEST_TIMEOUT_MS
   );
@@ -281,10 +277,10 @@ describe("stripe-billing-catalog", () => {
 
       const { getCatalogItemsForPlan } = await import("./stripe-billing-catalog");
 
-      await expect(getCatalogItemsForPlan("scale", "monthly", null)).resolves.toEqual({
-        currency: undefined,
-        items: [{ price: "price_scale_monthly", quantity: 1 }, { price: "price_scale_responses" }],
-      });
+      await expect(getCatalogItemsForPlan("scale", "monthly")).resolves.toEqual([
+        { price: "price_scale_monthly", quantity: 1 },
+        { price: "price_scale_responses" },
+      ]);
     },
     TEST_TIMEOUT_MS
   );
@@ -305,7 +301,7 @@ describe("stripe-billing-catalog", () => {
 
       const { getCatalogItemsForPlan } = await import("./stripe-billing-catalog");
 
-      await expect(getCatalogItemsForPlan("scale", "monthly", null)).rejects.toThrow(
+      await expect(getCatalogItemsForPlan("scale", "monthly")).rejects.toThrow(
         "Expected at most one Stripe price for scale/workflow_runs/monthly, but found 2"
       );
     },
@@ -379,10 +375,10 @@ describe("stripe-billing-catalog", () => {
       expect(display.scale.monthly.workflowRunsOverage).toBeNull();
 
       // New Scale checkout skips the misconfigured workflow price (base + responses only).
-      await expect(getCatalogItemsForPlan("scale", "monthly", null)).resolves.toEqual({
-        currency: undefined,
-        items: [{ price: "price_scale_monthly", quantity: 1 }, { price: "price_scale_responses" }],
-      });
+      await expect(getCatalogItemsForPlan("scale", "monthly")).resolves.toEqual([
+        { price: "price_scale_monthly", quantity: 1 },
+        { price: "price_scale_responses" },
+      ]);
 
       expect(mocks.loggerError).toHaveBeenCalled();
     },
@@ -399,7 +395,7 @@ describe("stripe-billing-catalog", () => {
 
       const { getCatalogItemsForPlan } = await import("./stripe-billing-catalog");
 
-      await expect(getCatalogItemsForPlan("pro", "monthly", null)).rejects.toThrow(
+      await expect(getCatalogItemsForPlan("pro", "monthly")).rejects.toThrow(
         "Expected exactly one Stripe price for pro/base/monthly, but found 0"
       );
     },
@@ -466,84 +462,4 @@ describe("stripe-billing-catalog", () => {
     },
     TEST_TIMEOUT_MS
   );
-
-  // ENG-3370: a Stripe customer's currency is pinned once billed; prices must be chargeable in it.
-  describe("currency-aware line items", () => {
-    const withCurrencyOptions = (prices: typeof STANDARD_CATALOG_PRICES, currencies: string[]) =>
-      prices.map((price) => ({
-        ...price,
-        currency_options: Object.fromEntries(currencies.map((currency) => [currency, {}])),
-      }));
-
-    test(
-      "expands currency_options when listing prices",
-      async () => {
-        mocks.pricesList.mockResolvedValue({ data: STANDARD_CATALOG_PRICES, has_more: false });
-        const { getCatalogItemsForPlan } = await import("./stripe-billing-catalog");
-
-        await getCatalogItemsForPlan("pro", "monthly", null);
-
-        expect(mocks.pricesList).toHaveBeenCalledWith(
-          expect.objectContaining({ expand: expect.arrayContaining(["data.currency_options"]) })
-        );
-      },
-      TEST_TIMEOUT_MS
-    );
-
-    test(
-      "sends no currency override for an unpinned or default-currency customer",
-      async () => {
-        mocks.pricesList.mockResolvedValue({
-          data: withCurrencyOptions(STANDARD_CATALOG_PRICES, ["usd", "eur"]),
-          has_more: false,
-        });
-        const { getCatalogItemsForPlan } = await import("./stripe-billing-catalog");
-
-        await expect(getCatalogItemsForPlan("pro", "monthly", null)).resolves.toMatchObject({
-          currency: undefined,
-        });
-        await expect(getCatalogItemsForPlan("pro", "monthly", "USD")).resolves.toMatchObject({
-          currency: undefined,
-        });
-      },
-      TEST_TIMEOUT_MS
-    );
-
-    test(
-      "bills a pinned customer in a currency every price offers as an option",
-      async () => {
-        mocks.pricesList.mockResolvedValue({
-          data: withCurrencyOptions(STANDARD_CATALOG_PRICES, ["usd", "eur"]),
-          has_more: false,
-        });
-        const { getCatalogItemsForPlan } = await import("./stripe-billing-catalog");
-
-        await expect(getCatalogItemsForPlan("pro", "yearly", "EUR")).resolves.toEqual({
-          currency: "eur",
-          items: [{ price: "price_pro_yearly", quantity: 1 }, { price: "price_pro_responses" }],
-        });
-      },
-      TEST_TIMEOUT_MS
-    );
-
-    test(
-      "rejects a pinned currency that any price in the plan cannot be charged in",
-      async () => {
-        // The base price offers EUR but the metered responses price does not: the whole plan is unbillable.
-        mocks.pricesList.mockResolvedValue({
-          data: STANDARD_CATALOG_PRICES.map((price) =>
-            price.id === "price_pro_monthly" ? { ...price, currency_options: { usd: {}, eur: {} } } : price
-          ),
-          has_more: false,
-        });
-        const { getCatalogItemsForPlan } = await import("./stripe-billing-catalog");
-
-        await expect(getCatalogItemsForPlan("pro", "monthly", "eur")).rejects.toMatchObject({
-          name: "OperationNotAllowedError",
-          message: "billing_currency_not_supported",
-        });
-      },
-      TEST_TIMEOUT_MS
-    );
-  });
 });

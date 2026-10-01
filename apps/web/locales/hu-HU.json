@@ -2633,9 +2633,10 @@
         "connect_app_banner_title": "Beállít egy webhelyet és alkalmazás-kérdőívet?"
       },
       "billing": {
-        "billing_currency_not_supported": "Az Ön számlázási pénzneme jelenleg nem támogatott ennél a csomagnál. Kérjük, vegye fel a kapcsolatot az ügyfélszolgálattal a csomagváltáshoz.",
+        "billing_currency_conflict": "Ez a csomagváltás ütközik a fiókján szereplő másik pénznemben történő számlázással. Kérjük, lépjen kapcsolatba az ügyfélszolgálattal a csomag váltásához.",
         "billing_interval_toggle": "Számlázási időköz",
         "cancel_at_period_end": "Megszakítás az időszak végén",
+        "card_payment_method_required": "A jelenlegi csomagjáról való váltáshoz kártyát kell fizetési módként megadnia. Kérjük, adjon hozzá egy kártyát, majd próbálja újra.",
         "comparison_addon": "Kiegészítő",
         "comparison_best_for": "Legjobb ehhez",
         "comparison_included": "Tartalmazott",

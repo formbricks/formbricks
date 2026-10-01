@@ -2633,9 +2633,10 @@
         "connect_app_banner_title": "Web Sitesi ve Uygulama anketi mi kuruyorsunuz?"
       },
       "billing": {
-        "billing_currency_not_supported": "Fatura para biriminiz bu plan için henüz desteklenmiyor. Plan değiştirmek için lütfen destek ekibiyle iletişime geçin.",
+        "billing_currency_conflict": "Bu plan değişikliği, hesabındaki farklı para birimiyle yapılan faturalandırmayla çakışıyor. Plan değiştirmek için lütfen destek ekibiyle iletişime geç.",
         "billing_interval_toggle": "Fatura dönemi",
         "cancel_at_period_end": "Dönem sonunda iptal et",
+        "card_payment_method_required": "Mevcut planından geçiş yapmak için ödeme yöntemi olarak bir kart gerekiyor. Lütfen bir kart ekle ve tekrar dene.",
         "comparison_addon": "Eklenti",
         "comparison_best_for": "En uygun",
         "comparison_included": "Dahil",

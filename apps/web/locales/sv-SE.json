@@ -2633,9 +2633,10 @@
         "connect_app_banner_title": "Skapar du en undersökning för webbplats och app?"
       },
       "billing": {
-        "billing_currency_not_supported": "Din faktureringsvaluta stöds inte för den här planen ännu. Kontakta supporten för att byta plan.",
+        "billing_currency_conflict": "Den här planändringen är i konflikt med fakturering i en annan valuta på ditt konto. Kontakta supporten för att byta plan.",
         "billing_interval_toggle": "Faktureringsintervall",
         "cancel_at_period_end": "Avsluta vid periodens slut",
+        "card_payment_method_required": "För att byta från din nuvarande plan behöver du ett kort som betalningsmetod. Lägg till ett kort och försök igen.",
         "comparison_addon": "Tillägg",
         "comparison_best_for": "Bäst för",
         "comparison_included": "Ingår",

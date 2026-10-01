@@ -2633,9 +2633,10 @@
         "connect_app_banner_title": "¿Configurando una encuesta para sitio web y aplicación?"
       },
       "billing": {
-        "billing_currency_not_supported": "Tu moneda de facturación aún no es compatible con este plan. Ponte en contacto con soporte para cambiar de plan.",
+        "billing_currency_conflict": "Este cambio de plan entra en conflicto con la facturación en otra moneda de tu cuenta. Por favor, contacta con soporte para cambiar de plan.",
         "billing_interval_toggle": "Intervalo de facturación",
         "cancel_at_period_end": "Cancelar al finalizar el período",
+        "card_payment_method_required": "Para cambiar de tu plan actual necesitas añadir una tarjeta como método de pago. Por favor, añade una tarjeta e inténtalo de nuevo.",
         "comparison_addon": "Complemento",
         "comparison_best_for": "Ideal para",
         "comparison_included": "Incluido",

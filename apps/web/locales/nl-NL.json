@@ -2633,9 +2633,10 @@
         "connect_app_banner_title": "Een Website & App-enquête instellen?"
       },
       "billing": {
-        "billing_currency_not_supported": "Je factureringsvaluta wordt nog niet ondersteund voor dit abonnement. Neem contact op met support om van abonnement te wisselen.",
+        "billing_currency_conflict": "Deze planwijziging conflicteert met facturering in een andere valuta op je account. Neem contact op met support om van plan te wisselen.",
         "billing_interval_toggle": "Factureringsinterval",
         "cancel_at_period_end": "Opzeggen aan het einde van de periode",
+        "card_payment_method_required": "Om over te stappen van je huidige abonnement heb je een kaart als betaalmethode nodig. Voeg een kaart toe en probeer het opnieuw.",
         "comparison_addon": "Add-on",
         "comparison_best_for": "Het beste voor",
         "comparison_included": "Inbegrepen",

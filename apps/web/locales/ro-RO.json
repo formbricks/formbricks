@@ -2633,9 +2633,10 @@
         "connect_app_banner_title": "Configurezi un sondaj pentru Site & Aplicație?"
       },
       "billing": {
-        "billing_currency_not_supported": "Moneda ta de facturare nu este încă acceptată pentru acest plan. Te rugăm să contactezi echipa de asistență pentru a schimba planul.",
+        "billing_currency_conflict": "Această schimbare de plan intră în conflict cu facturarea într-o altă monedă pe contul tău. Te rugăm să contactezi echipa de suport pentru a schimba planurile.",
         "billing_interval_toggle": "Interval de facturare",
         "cancel_at_period_end": "Anulează la sfârșitul perioadei",
+        "card_payment_method_required": "Pentru a schimba planul actual, ai nevoie de un card ca metodă de plată. Te rugăm să adaugi un card și să încerci din nou.",
         "comparison_addon": "Supliment",
         "comparison_best_for": "Ideal pentru",
         "comparison_included": "Inclus",

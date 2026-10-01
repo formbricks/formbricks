@@ -3,7 +3,6 @@ import { cache as reactCache } from "react";
 import Stripe from "stripe";
 import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
 import type { TCloudBillingInterval } from "@formbricks/types/organizations";
 import { cache } from "@/lib/cache";
 import { env } from "@/lib/env";
@@ -84,13 +83,7 @@ export type TStripeBillingCatalogDisplay = {
 const STANDARD_CLOUD_PLANS = new Set<TStandardCloudPlan>(["hobby", "pro", "scale"]);
 const STRIPE_BILLING_CATALOG_CACHE_TTL_MS = 10 * 60 * 1000;
 // v3: catalog item carries workflowRunsPrice (metered workflow overage)
-// v4: prices carry their expanded currency_options, so a cached v3 entry (which lacks them) can't
-// report a currency-pinned customer's currency as unsupported after the option is added (ENG-3370)
-const STRIPE_BILLING_CATALOG_CACHE_VERSION = "v4";
-
-// Sentinel message of the expected error thrown when a currency-pinned Stripe customer can't be billed
-// in that currency by the catalog prices. The billing UI maps it to a localized message.
-export const BILLING_CURRENCY_NOT_SUPPORTED_ERROR_CODE = "billing_currency_not_supported";
+const STRIPE_BILLING_CATALOG_CACHE_VERSION = "v3";
 
 const getStripeBillingCatalogCacheKey = () =>
   createCacheKey.custom(
@@ -184,9 +177,7 @@ const listAllActivePrices = async (): Promise<TStripeCatalogPrice[]> => {
     const result = await stripeClient.prices.list({
       active: true,
       limit: 100,
-      // currency_options is not returned by default; it lists the extra currencies (beyond
-      // price.currency) a price can be charged in, which currency-pinned customers need (ENG-3370).
-      expand: ["data.product", "data.tiers", "data.currency_options"],
+      expand: ["data.product", "data.tiers"],
       ...(startingAfter ? { starting_after: startingAfter } : {}),
     });
 
@@ -427,64 +418,18 @@ export const getCatalogItemForPlan = async (
   return catalog[plan][interval];
 };
 
-// Every currency Stripe can charge this price in: its default currency plus the keys of its
-// currency_options.
-const getPriceCurrencies = (price: Stripe.Price): Set<string> =>
-  new Set(
-    [price.currency, ...Object.keys(price.currency_options ?? {})].map((currency) => currency.toLowerCase())
-  );
-
-/**
- * Resolves the currency to bill a catalog item in for a customer whose Stripe currency may be pinned
- * (Stripe pins `customer.currency` / `subscription.currency` once the customer is billed). Stripe
- * rejects a price that can't be charged in the pinned currency, so every price in the item must
- * support it — otherwise this throws an expected error before any Stripe call (ENG-3370).
- *
- * Returns the currency to pass to Stripe, or undefined when there is no pin or the pin is already
- * every price's default currency — the exact request shape used before currencies were considered.
- */
-export const resolveCatalogItemCurrency = (
-  item: TStripeBillingCatalogItem,
-  customerCurrency: string | null | undefined
-): string | undefined => {
-  if (!customerCurrency) {
-    return undefined;
-  }
-
-  const currency = customerCurrency.toLowerCase();
-  const prices = [item.basePrice, item.responsePrice, item.workflowRunsPrice].filter(
-    (price): price is TStripeCatalogPrice => price != null
-  );
-
-  if (prices.some((price) => !getPriceCurrencies(price).has(currency))) {
-    throw new OperationNotAllowedError(BILLING_CURRENCY_NOT_SUPPORTED_ERROR_CODE);
-  }
-
-  return prices.every((price) => price.currency.toLowerCase() === currency) ? undefined : currency;
-};
-
-/**
- * The line items for a plan, plus the currency to send Stripe alongside them for this customer (see
- * resolveCatalogItemCurrency). Takes the customer's pinned currency explicitly so no caller can send
- * catalog prices without considering it.
- */
 export const getCatalogItemsForPlan = async (
   plan: TStandardCloudPlan,
-  interval: TCloudBillingInterval,
-  customerCurrency: string | null | undefined
-): Promise<{ items: Array<{ price: string; quantity?: number }>; currency: string | undefined }> => {
+  interval: TCloudBillingInterval
+): Promise<Array<{ price: string; quantity?: number }>> => {
   const item = await getCatalogItemForPlan(plan, interval);
-  const currency = resolveCatalogItemCurrency(item, customerCurrency);
 
-  return {
-    items: [
-      { price: item.basePrice.id, quantity: 1 },
-      ...(item.responsePrice ? [{ price: item.responsePrice.id }] : []),
-      // Metered items carry no quantity (usage is reported via meter events).
-      ...(item.workflowRunsPrice ? [{ price: item.workflowRunsPrice.id }] : []),
-    ],
-    currency,
-  };
+  return [
+    { price: item.basePrice.id, quantity: 1 },
+    ...(item.responsePrice ? [{ price: item.responsePrice.id }] : []),
+    // Metered items carry no quantity (usage is reported via meter events).
+    ...(item.workflowRunsPrice ? [{ price: item.workflowRunsPrice.id }] : []),
+  ];
 };
 
 export const getIntervalFromPrice = (

@@ -2633,9 +2633,10 @@
         "connect_app_banner_title": "Richtest du eine Website- & App-Umfrage ein?"
       },
       "billing": {
-        "billing_currency_not_supported": "Deine Abrechnungswährung wird für diesen Tarif noch nicht unterstützt. Bitte kontaktiere den Support, um den Tarif zu wechseln.",
+        "billing_currency_conflict": "Diese Planänderung steht im Konflikt mit einer Abrechnung in einer anderen Währung auf deinem Konto. Bitte kontaktiere den Support, um den Plan zu wechseln.",
         "billing_interval_toggle": "Abrechnungsintervall",
         "cancel_at_period_end": "Am Ende des Zeitraums kündigen",
+        "card_payment_method_required": "Um von deinem aktuellen Tarif zu wechseln, brauchst du eine Karte als Zahlungsmethode. Bitte füge eine Karte hinzu und versuche es erneut.",
         "comparison_addon": "Add-on",
         "comparison_best_for": "Am besten für",
         "comparison_included": "Inbegriffen",
