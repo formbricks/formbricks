@@ -3,16 +3,19 @@ import { BetterAuthError } from "@better-auth/core/error";
 import * as Sentry from "@sentry/nextjs";
 import type { BetterAuthOptions } from "better-auth";
 import { isAPIError } from "better-auth/api";
+import { randomUUID } from "node:crypto";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
+import { AUDIT_LOG_ENABLED, IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
+import { sampleAuthFailure } from "./auth-failure-sampling";
 import { getBetterAuthRequestContext } from "./better-auth-request-context";
+import { nativeAuthAuditContext } from "./native-auth-audit-context";
 import { finalizeSuccessfulSignIn } from "./sign-in-tracking";
 import { SSO_PROVISIONING_REJECT_REASONS } from "./sso-provisioning-reject-reasons";
-import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
+import { logAuthAttempt } from "./utils";
 
 /**
  * Observability parity for the Better Auth cutover (ENG-1054) — re-expresses the audit + Sentry
@@ -82,7 +85,10 @@ export const signInAuditDatabaseHook: NonNullable<
           targetType: "user",
           userId: session.userId,
           targetId: session.userId,
-          organizationId: UNKNOWN_DATA,
+          organizationId: "global",
+          scope: "global",
+          source: "native-auth",
+          requestId: nativeAuthAuditContext.getStore()?.requestId ?? randomUUID(),
           status: "success",
           userType: "user",
           newObject: { authMethod, sessionStrategy: "database" },
@@ -389,9 +395,8 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
  * Failed-login audit (parity with NextAuth's credentials `authorize` → `logAuthAttempt`), emitted from
  * `hooks.after` because a rejected sign-in is a handled `APIError` *response*, not a thrown error (see
  * the header note — it never reaches `onAPIError.onError`). Reusing `logAuthAttempt` +
- * `shouldLogAuthFailure` preserves full parity: the email is hashed (never stored raw), brute-force
- * attempts are rate-limited (fail-closed when Redis is down), and the failure is mirrored to Sentry in
- * production.
+ * `sampleAuthFailure` hashes the email and samples with explicit attempt/omission counts.
+ * A Redis outage emits every failure; these expected denials are not sent to Sentry.
  *
  * Scope: the credential password sign-in (`/sign-in/email`). A failed 2FA challenge
  * (`/two-factor/verify-*`) identifies the user via the two-factor cookie rather than the request body,
@@ -399,7 +404,7 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
  * this branch. Composed with `ssoRecoveryAfter` at the single `hooks.after` slot in auth.ts.
  */
 export const auditFailedAuthAfter = async (ctx: AuthHookContext): Promise<void> => {
-  if (ctx.path !== "/sign-in/email") return;
+  if (!AUDIT_LOG_ENABLED || ctx.path !== "/sign-in/email") return;
 
   // A created session (success) is audited by signInAuditDatabaseHook; only a returned APIError here
   // represents a rejected attempt.
@@ -410,12 +415,20 @@ export const auditFailedAuthAfter = async (ctx: AuthHookContext): Promise<void> 
   const email = typeof body?.email === "string" ? body.email : undefined;
   if (!email) return;
 
-  // Throttle audit volume under brute force (fail-closed on Redis outage), matching the NextAuth path.
-  if (!(await shouldLogAuthFailure(email))) return;
+  // Distributed sampling counts the current attempt; outages emit every failure.
+  const context = nativeAuthAuditContext.getStore();
+  if (context) context.failureAudited = true;
+  const sample = await sampleAuthFailure(email);
+  if (!sample.emit) return;
 
   const code = (returned.body as { code?: unknown } | undefined)?.code;
   const failureReason = (typeof code === "string" ? code : String(returned.status)).toLowerCase();
-  logAuthAttempt(failureReason, "credentials", "password", UNKNOWN_DATA, email);
+  logAuthAttempt(failureReason, "credentials", "password", UNKNOWN_DATA, email, {
+    attemptCount: sample.attemptCount,
+    suppressedCount: sample.suppressedCount,
+    windowStart: sample.windowStart,
+    samplingUnavailable: sample.samplingUnavailable,
+  });
 };
 
 /**
@@ -439,7 +452,10 @@ export const auditVerificationSessionWithheld = async (userId: string, reason: s
       targetType: "user",
       userId,
       targetId: userId,
-      organizationId: UNKNOWN_DATA,
+      organizationId: "global",
+      scope: "global",
+      source: "native-auth",
+      requestId: nativeAuthAuditContext.getStore()?.requestId ?? randomUUID(),
       status: "success",
       userType: "user",
       newObject: { verificationSessionWithheldMarker: true, reason },
@@ -465,7 +481,10 @@ export const auditPasswordReset = async (userId: string): Promise<void> => {
       targetType: "user",
       userId,
       targetId: userId,
-      organizationId: UNKNOWN_DATA,
+      organizationId: "global",
+      scope: "global",
+      source: "native-auth",
+      requestId: nativeAuthAuditContext.getStore()?.requestId ?? randomUUID(),
       status: "success",
       userType: "user",
       newObject: { passwordResetMarker: true },

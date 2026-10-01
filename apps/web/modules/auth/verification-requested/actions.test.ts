@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError, SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE } from "@formbricks/types/errors";
 import { auth } from "@/modules/auth/lib/auth";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 // Import mocked functions
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { sendVerificationEmail } from "@/modules/email";
 import { resendVerificationEmailAction } from "./actions";
 
@@ -76,15 +76,15 @@ vi.mock("@/lib/constants", async (importOriginal) => {
   return {
     ...actual,
     WEBAPP_URL: "http://localhost:3000",
+    AUDIT_LOG_ENABLED: true,
   };
 });
 
-vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
-  withAuditLogging: vi.fn((_type: string, _object: string, fn: Function) => fn),
-}));
+vi.mock("@formbricks/logger", () => ({ logger: { audit: vi.fn(), error: vi.fn() } }));
 
 vi.mock("@/lib/utils/action-client", () => ({
   actionClient: {
+    use: vi.fn().mockReturnThis(),
     inputSchema: vi.fn().mockReturnThis(),
     action: vi.fn((fn) => fn),
   },
@@ -480,12 +480,6 @@ describe("resendVerificationEmailAction", () => {
   });
 
   describe("Audit Logging", () => {
-    test("should be wrapped with audit logging decorator", () => {
-      // withAuditLogging is called at module load time to wrap the action
-      // We just verify the mock was set up correctly
-      expect(withAuditLogging).toBeDefined();
-    });
-
     test("should set audit context userId when sending verification email", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
       vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
@@ -503,7 +497,13 @@ describe("resendVerificationEmailAction", () => {
       } as any);
 
       // The userId should be set in the audit context
-      expect(testCtx.auditLoggingCtx.userId).toBe(mockUser.id);
+      expect(logger.audit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          target: { type: "user", id: mockUser.id },
+          status: "success",
+          scope: "global",
+        })
+      );
     });
 
     test("should not set audit context userId when email is already verified", async () => {
@@ -523,7 +523,7 @@ describe("resendVerificationEmailAction", () => {
       } as any);
 
       // The userId should not be set since no email was sent
-      expect(testCtx.auditLoggingCtx.userId).toBe("");
+      expect(logger.audit).toHaveBeenCalledWith(expect.objectContaining({ status: "noop" }));
     });
   });
 

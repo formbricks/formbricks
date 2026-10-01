@@ -33,6 +33,11 @@ export const ZAuditTarget = z.enum([
   "feedbackDirectory",
   "feedbackRecord",
   "feedbackSource",
+  "session",
+  "oauthConsent",
+  "oauthClient",
+  "oauthToken",
+  "account",
 ]);
 export const ZAuditAction = z.enum([
   "created",
@@ -73,9 +78,10 @@ export const ZAuditAction = z.enum([
   "sso_recovery_started",
   "sso_recovery_completed",
   "sso_recovery_failed",
+  "securityOperation",
 ]);
-export const ZActor = z.enum(["user", "api", "system"]);
-export const ZAuditStatus = z.enum(["success", "failure"]);
+export const ZActor = z.enum(["user", "api", "system", "anonymous", "oauthClient"]);
+export const ZAuditStatus = z.enum(["success", "failure", "denied", "noop", "partial"]);
 
 // Use template literal for the type
 export type TAuditTarget = z.infer<typeof ZAuditTarget>;
@@ -96,6 +102,9 @@ export const ZAuditLogEventSchema = z.object({
   status: ZAuditStatus,
   timestamp: z.iso.datetime(),
   organizationId: z.string(),
+  scope: z.enum(["global", "organization", "unknown"]).optional(),
+  source: z.string().optional(),
+  requestId: z.string().optional(),
   ipAddress: z.string().optional(), // Not using the .ip() here because if we don't enabled it we want to put UNKNOWN_DATA string, to keep the same pattern as the other fields
   changes: z.record(z.string(), z.any()).optional(),
   eventId: z.string().optional(),

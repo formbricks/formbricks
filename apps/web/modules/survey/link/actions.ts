@@ -1,10 +1,14 @@
 "use server";
 
+import { createHash } from "node:crypto";
 import { z } from "zod";
 import { ZLinkSurveyEmailData } from "@formbricks/types/email";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { AUDIT_LOG_ENABLED } from "@/lib/constants";
 import { actionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
+import { type SecurityActionAudit, runSecurityAction } from "@/modules/auth/lib/security-action-audit";
+import { securityActionClient } from "@/modules/auth/lib/security-action-client";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
@@ -45,24 +49,50 @@ const ZValidateSurveyPinAction = z.object({
   pin: z.string(),
 });
 
-export const validateSurveyPinAction = actionClient
+export const validateSurveyPinAction = securityActionClient("survey_pin_verification", "survey", false)
   .inputSchema(ZValidateSurveyPinAction)
-  .action(async ({ parsedInput }) => {
-    await applyIPRateLimit(rateLimitConfigs.actions.validateSurveyPin);
+  .action(async ({ parsedInput, ctx }) => {
+    const audit: SecurityActionAudit = {
+      operation: "survey_pin_verification",
+      source: "server-action",
+      requestId: ctx.auditLoggingCtx.eventId,
+      target: { type: "survey", id: parsedInput.surveyId },
+      scope: "unknown",
+    };
+    return runSecurityAction(audit, async () => {
+      await applyIPRateLimit(rateLimitConfigs.actions.validateSurveyPin);
 
-    // Get survey data which includes pin information
-    const survey = await getSurveyWithMetadata(parsedInput.surveyId);
-    if (!survey) {
-      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
-    }
+      // Get survey data which includes pin information
+      const survey = await getSurveyWithMetadata(parsedInput.surveyId);
+      if (!survey) {
+        throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+      }
 
-    const surveyPin = survey.pin;
-    const originalPin = surveyPin?.toString();
+      if (AUDIT_LOG_ENABLED) {
+        try {
+          audit.organizationId = await getOrganizationIdFromSurveyId(survey.id);
+          audit.scope = "organization";
+        } catch {
+          /* Audit-only tenant resolution must not change PIN verification. */
+        }
+      }
+      const surveyPin = survey.pin;
+      const originalPin = surveyPin?.toString();
 
-    if (!originalPin) return { survey };
-    if (originalPin !== parsedInput.pin) {
-      throw new InvalidInputError("INVALID_PIN");
-    }
+      if (!originalPin) {
+        audit.status = "noop";
+        audit.changes = { reason: "pin_not_required", tokenIssued: false };
+        return { survey };
+      }
+      if (originalPin !== parsedInput.pin) {
+        throw new InvalidInputError("INVALID_PIN");
+      }
 
-    return { survey, pinAuthToken: createLinkSurveyPinToken(survey.id) };
+      const pinAuthToken = createLinkSurveyPinToken(survey.id);
+      audit.changes = {
+        tokenIssued: true,
+        tokenFingerprint: `sha256:${createHash("sha256").update(pinAuthToken).digest("hex")}`,
+      };
+      return { survey, pinAuthToken };
+    });
   });

@@ -38,6 +38,9 @@ import { auditPasswordReset, betterAuthLogger, signInAuditDatabaseHook } from ".
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
+import { withNativeAuthAudit } from "./native-auth-audit";
+import { withNativeAuthAuditAdapter } from "./native-auth-audit-adapter";
+import { captureTwoFactorAuditPrincipal } from "./native-auth-audit-principal";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";
 import { signupPolicyBeforeHandler } from "./signup-policy";
@@ -68,12 +71,11 @@ export const getUserLocale = async (userId: string): Promise<TUserLocale> => {
  * `session.storeSessionInDatabase` is set (the forward-auth proxies need DB sessions); verification
  * stays Redis-only (ephemeral; no Verification Prisma model needed).
  *
- * Known deferral (not blocking): the 2FA-challenge failure audit (`/two-factor/verify-*`) — the user
- * identity lives in the two-factor cookie, not the request body, so it is tracked separately. The
+ * Native account/security operations are audited at the HTTP and server API boundaries. The
  * credential sign-in + sole-owner-deletion failure audits and the signedIn-success / lastLoginAt /
  * analytics / Sentry / logger wiring are all live in better-auth-observability.ts.
  */
-export const auth = betterAuth({
+const nativeAuth = betterAuth({
   appName: "Formbricks",
   // Resolved in lib/constants.ts, which documents the BETTER_AUTH_* / NEXTAUTH_* alias. Passing it
   // explicitly is what keeps BA's cookie signing on the same secret the forward-auth proxy verifies with
@@ -101,7 +103,7 @@ export const auth = betterAuth({
   trustedOrigins: AUTH_TRUSTED_ORIGINS,
   telemetry: { enabled: false },
 
-  database: prismaAdapter(prisma, { provider: "postgresql" }),
+  database: withNativeAuthAuditAdapter(prismaAdapter(prisma, { provider: "postgresql" })),
 
   // Sessions, verification records, and rate-limit counters in Redis (existing infra), shared
   // across instances. Sessions also persist to the DB via session.storeSessionInDatabase below.
@@ -312,6 +314,7 @@ export const auth = betterAuth({
   // recovery rather than a credential failure, so skipping the audit is correct.
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      await captureTwoFactorAuditPrincipal(ctx);
       await ssoLicenseGateBeforeHandler(ctx);
       await requireDeletionConfirmationBeforeHandler(ctx);
       // ENG-2105: reject password-reset requests at the native Better Auth layer when the operator
@@ -424,3 +427,5 @@ export const auth = betterAuth({
     nextCookies(),
   ],
 });
+
+export const auth = withNativeAuthAudit(nativeAuth);

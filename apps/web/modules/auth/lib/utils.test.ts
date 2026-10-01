@@ -1,7 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
-import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import {
   createAuditIdentifier,
   hashPassword,
@@ -9,7 +8,6 @@ import {
   logAuthEvent,
   logAuthSuccess,
   logEmailVerificationAttempt,
-  logSignOut,
   logTwoFactorAttempt,
   shouldLogAuthFailure,
   verifyPassword,
@@ -19,7 +17,7 @@ const PASSWORD_HASH_TEST_TIMEOUT_MS = 45_000;
 
 // Mock the audit event handler
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
-  queueAuditEventBackground: vi.fn(),
+  queueAuditEventBackground: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock crypto for consistent hash testing
@@ -82,6 +80,7 @@ vi.mock("@formbricks/cache", () => ({
 describe("Auth Utils", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(queueAuditEventBackground).mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -244,360 +243,20 @@ describe("Auth Utils", () => {
   });
 
   describe("Rate Limiting", () => {
-    test("should always allow successful authentication logging", async () => {
-      // This test doesn't need Redis to be available as it short-circuits for success
-      mockCache.getRedisClient.mockResolvedValue(null);
-
+    test("successful authentications never need Redis", async () => {
       expect(await shouldLogAuthFailure("user@example.com", true)).toBe(true);
-      expect(await shouldLogAuthFailure("user@example.com", true)).toBe(true);
+      expect(mockCache.getRedisClient).not.toHaveBeenCalled();
     });
-
-    describe("Bucket Time Alignment", () => {
-      test("should align timestamps to bucket boundaries for consistent keys across pods", async () => {
-        mockCache.getRedisClient.mockResolvedValue(null);
-
-        const RATE_LIMIT_WINDOW = 5 * 60 * 1000; // 5 minutes = 300000ms
-
-        // Test with a known aligned timestamp (start of hour for simplicity)
-        const alignedTime = 1700000000000; // Use this as our aligned bucket start
-        const bucketStart = Math.floor(alignedTime / RATE_LIMIT_WINDOW) * RATE_LIMIT_WINDOW;
-
-        // Verify bucket alignment logic with specific test cases
-        const testCases = [
-          { timestamp: bucketStart, expected: bucketStart },
-          { timestamp: bucketStart + 50000, expected: bucketStart }, // 50 seconds later
-          { timestamp: bucketStart + 100000, expected: bucketStart }, // 1 min 40 sec later
-          { timestamp: bucketStart + 200000, expected: bucketStart }, // 3 min 20 sec later
-          { timestamp: bucketStart + RATE_LIMIT_WINDOW, expected: bucketStart + RATE_LIMIT_WINDOW }, // Next bucket
-        ];
-
-        for (const { timestamp, expected } of testCases) {
-          const actualBucketStart = Math.floor(timestamp / RATE_LIMIT_WINDOW) * RATE_LIMIT_WINDOW;
-          expect(actualBucketStart).toBe(expected);
-        }
-      });
-
-      test("should create consistent cache keys with bucketed timestamps", async () => {
-        const { createCacheKey } = await import("@formbricks/cache");
-        const { createAuditIdentifier } = await import("./utils");
-
-        mockCache.getRedisClient.mockResolvedValue(null);
-
-        const identifier = "test@example.com";
-        const hashedIdentifier = createAuditIdentifier(identifier, "ratelimit");
-
-        const RATE_LIMIT_WINDOW = 5 * 60 * 1000; // 5 minutes = 300000ms
-
-        // Use a simple aligned time for testing
-        const baseTime = 1700000000000;
-        const bucketStart = Math.floor(baseTime / RATE_LIMIT_WINDOW) * RATE_LIMIT_WINDOW;
-
-        // Test that cache keys are consistent for the same bucket
-        const timestamp1 = bucketStart;
-        const timestamp2 = bucketStart + 60000; // 1 minute later in same bucket
-
-        const bucketStart1 = Math.floor(timestamp1 / RATE_LIMIT_WINDOW) * RATE_LIMIT_WINDOW;
-        const bucketStart2 = Math.floor(timestamp2 / RATE_LIMIT_WINDOW) * RATE_LIMIT_WINDOW;
-
-        // Both should align to the same bucket
-        expect(bucketStart1).toBe(bucketStart);
-        expect(bucketStart2).toBe(bucketStart);
-
-        // Both should generate the same cache key
-        const key1 = (createCacheKey.rateLimit.core as any)("auth", hashedIdentifier, bucketStart1);
-        const key2 = (createCacheKey.rateLimit.core as any)("auth", hashedIdentifier, bucketStart2);
-        expect(key1).toBe(key2);
-
-        const expectedKey = `rate_limit:auth:${hashedIdentifier}:${bucketStart}`;
-        expect(key1).toBe(expectedKey);
-      });
-    });
-
-    test("should implement fail-closed behavior when Redis is unavailable", async () => {
-      // Set Redis unavailable for this test
+    test("Redis outages emit every failure instead of losing the security trail", async () => {
       mockCache.getRedisClient.mockResolvedValue(null);
-
-      const email = "rate-limit-test@example.com";
-
-      // When Redis is unavailable (mocked as null), the system fails closed for security.
-      // This prevents authentication failure logging when we cannot enforce rate limiting,
-      // ensuring consistent security posture across distributed systems.
-      // All authentication failure attempts should return false (do not log).
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 1st failure - blocked
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 2nd failure - blocked
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 3rd failure - blocked
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 4th failure - blocked
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 5th failure - blocked
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 6th failure - blocked
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 7th failure - blocked
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 8th failure - blocked
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 9th failure - blocked
-      expect(await shouldLogAuthFailure(email, false)).toBe(false); // 10th failure - blocked
+      for (let attempt = 0; attempt < 10; attempt++)
+        expect(await shouldLogAuthFailure("user@example.com")).toBe(true);
     });
-
-    describe("Redis Available - All Branch Coverage", () => {
-      let mockRedis: any;
-      let mockMulti: any;
-
-      beforeEach(() => {
-        // Clear mocks first
-        vi.clearAllMocks();
-
-        // Create comprehensive Redis mock
-        mockMulti = {
-          zRemRangeByScore: vi.fn().mockReturnThis(),
-          zCard: vi.fn().mockReturnThis(),
-          zAdd: vi.fn().mockReturnThis(),
-          expire: vi.fn().mockReturnThis(),
-          exec: vi.fn(),
-        };
-
-        mockRedis = {
-          multi: vi.fn().mockReturnValue(mockMulti),
-          zRange: vi.fn(),
-          isReady: true, // Add isReady property
-        };
-
-        // Reset the Redis mock for these specific tests
-        mockCache.getRedisClient.mockReset();
-        mockCache.getRedisClient.mockResolvedValue(mockRedis); // Use mockResolvedValue since it's now async
-      });
-
-      test("should handle Redis transaction failure - !results branch", async () => {
-        // Create fresh mock objects for this test
-        const testMockMulti = {
-          zRemRangeByScore: vi.fn().mockReturnThis(),
-          zCard: vi.fn().mockReturnThis(),
-          zAdd: vi.fn().mockReturnThis(),
-          expire: vi.fn().mockReturnThis(),
-          exec: vi.fn().mockResolvedValue(null), // Mock transaction returning null
-        };
-
-        const testMockRedis = {
-          multi: vi.fn().mockReturnValue(testMockMulti),
-          zRange: vi.fn(),
-          isReady: true,
-        };
-
-        // Reset and setup mock for this specific test
-        mockCache.getRedisClient.mockReset();
-        mockCache.getRedisClient.mockResolvedValue(testMockRedis);
-
-        const email = "transaction-failure@example.com";
-        const result = await shouldLogAuthFailure(email, false);
-
-        // Function should return false when Redis transaction fails (fail-closed behavior)
-        expect(result).toBe(false);
-        expect(mockCache.getRedisClient).toHaveBeenCalled();
-        expect(testMockRedis.multi).toHaveBeenCalled();
-        expect(testMockMulti.zRemRangeByScore).toHaveBeenCalled();
-        expect(testMockMulti.zCard).toHaveBeenCalled();
-        expect(testMockMulti.zAdd).toHaveBeenCalled();
-        expect(testMockMulti.expire).toHaveBeenCalled();
-        expect(testMockMulti.exec).toHaveBeenCalled();
-      });
-
-      test("should allow logging when currentCount <= AGGREGATION_THRESHOLD", async () => {
-        // Mock Redis transaction returning count <= threshold (assuming threshold is 3)
-        mockMulti.exec.mockResolvedValue([
-          null, // zRemRangeByScore result
-          2, // zCard result - below threshold
-          null, // zAdd result
-          null, // expire result
-        ]);
-
-        const email = "below-threshold@example.com";
-        const result = await shouldLogAuthFailure(email, false);
-
-        expect(result).toBe(true);
-        expect(mockMulti.exec).toHaveBeenCalled();
-      });
-
-      test("should allow logging when recentEntries.length === 0", async () => {
-        // Mock Redis transaction returning count above threshold
-        mockMulti.exec.mockResolvedValue([
-          null, // zRemRangeByScore result
-          5, // zCard result - above threshold
-          null, // zAdd result
-          null, // expire result
-        ]);
-
-        // Mock zRange returning empty array
-        mockRedis.zRange.mockResolvedValue([]);
-
-        const email = "no-recent-entries@example.com";
-        const result = await shouldLogAuthFailure(email, false);
-
-        expect(result).toBe(true);
-        expect(mockRedis.zRange).toHaveBeenCalledWith(expect.stringContaining("rate_limit:auth:"), -10, -1);
-      });
-
-      test("should allow logging on every 10th attempt - currentCount % 10 === 0", async () => {
-        const now = Date.now();
-
-        // Mock Redis transaction returning count that is divisible by 10
-        mockMulti.exec.mockResolvedValue([
-          null, // zRemRangeByScore result
-          10, // zCard result - 10th attempt
-          null, // zAdd result
-          null, // expire result
-        ]);
-
-        // Mock zRange returning recent entries
-        mockRedis.zRange.mockResolvedValue([
-          `${now - 30000}:uuid1`, // 30 seconds ago
-        ]);
-
-        const email = "tenth-attempt@example.com";
-        const result = await shouldLogAuthFailure(email, false);
-
-        expect(result).toBe(true);
-        expect(mockRedis.zRange).toHaveBeenCalled();
-      });
-
-      test("should allow logging after 1 minute gap - timeSinceLastLog > 60000", async () => {
-        const now = Date.now();
-
-        // Mock Redis transaction returning count not divisible by 10
-        mockMulti.exec.mockResolvedValue([
-          null, // zRemRangeByScore result
-          7, // zCard result - 7th attempt (not divisible by 10)
-          null, // zAdd result
-          null, // expire result
-        ]);
-
-        // Mock zRange returning entry older than 1 minute
-        mockRedis.zRange.mockResolvedValue([
-          `${now - 120000}:uuid1`, // 2 minutes ago
-        ]);
-
-        const email = "one-minute-gap@example.com";
-        const result = await shouldLogAuthFailure(email, false);
-
-        expect(result).toBe(true);
-        expect(mockRedis.zRange).toHaveBeenCalled();
-      });
-
-      test("should block logging when neither condition is met", async () => {
-        const now = Date.now();
-
-        // Mock Redis transaction returning count not divisible by 10
-        mockMulti.exec.mockResolvedValue([
-          null, // zRemRangeByScore result
-          7, // zCard result - 7th attempt (not divisible by 10)
-          null, // zAdd result
-          null, // expire result
-        ]);
-
-        // Mock zRange returning recent entry (less than 1 minute)
-        mockRedis.zRange.mockResolvedValue([
-          `${now - 30000}:uuid1`, // 30 seconds ago
-        ]);
-
-        const email = "blocked-logging@example.com";
-        const result = await shouldLogAuthFailure(email, false);
-
-        expect(result).toBe(false);
-        expect(mockRedis.zRange).toHaveBeenCalled();
-      });
-
-      test("should handle Redis operation errors gracefully", async () => {
-        // Mock Redis multi throwing an error
-        mockMulti.exec.mockRejectedValue(new Error("Redis operation failed"));
-
-        const email = "redis-error@example.com";
-        const result = await shouldLogAuthFailure(email, false);
-
-        expect(result).toBe(false);
-        expect(mockMulti.exec).toHaveBeenCalled();
-      });
-
-      test("should handle zRange errors gracefully", async () => {
-        // Mock successful transaction but zRange failing
-        mockMulti.exec.mockResolvedValue([
-          null, // zRemRangeByScore result
-          5, // zCard result - above threshold
-          null, // zAdd result
-          null, // expire result
-        ]);
-
-        mockRedis.zRange.mockRejectedValue(new Error("zRange failed"));
-
-        const email = "zrange-error@example.com";
-        const result = await shouldLogAuthFailure(email, false);
-
-        expect(result).toBe(false);
-        expect(mockRedis.zRange).toHaveBeenCalled();
-      });
-
-      test("should handle malformed timestamp in recent entries", async () => {
-        // Mock Redis transaction returning count not divisible by 10
-        mockMulti.exec.mockResolvedValue([
-          null, // zRemRangeByScore result
-          7, // zCard result - 7th attempt
-          null, // zAdd result
-          null, // expire result
-        ]);
-
-        // Mock zRange returning entry with malformed timestamp
-        mockRedis.zRange.mockResolvedValue(["invalid-timestamp:uuid1"]);
-
-        const email = "malformed-timestamp@example.com";
-        const result = await shouldLogAuthFailure(email, false);
-
-        // Should handle parseInt(NaN) gracefully and still make a decision
-        expect(typeof result).toBe("boolean");
-        expect(mockRedis.zRange).toHaveBeenCalled();
-      });
-
-      test("should verify correct Redis key generation and operations", async () => {
-        mockMulti.exec.mockResolvedValue([
-          null, // zRemRangeByScore result
-          2, // zCard result - below threshold
-          null, // zAdd result
-          null, // expire result
-        ]);
-
-        const email = "key-generation@example.com";
-        await shouldLogAuthFailure(email, false);
-
-        // Verify correct Redis operations were called
-        expect(mockRedis.multi).toHaveBeenCalled();
-        expect(mockMulti.zRemRangeByScore).toHaveBeenCalledWith(
-          expect.stringContaining("rate_limit:auth:"),
-          0,
-          expect.any(Number)
-        );
-        expect(mockMulti.zCard).toHaveBeenCalledWith(expect.stringContaining("rate_limit:auth:"));
-        expect(mockMulti.zAdd).toHaveBeenCalledWith(
-          expect.stringContaining("rate_limit:auth:"),
-          expect.objectContaining({
-            score: expect.any(Number),
-            value: expect.stringMatching(/^\d+:.+$/),
-          })
-        );
-        expect(mockMulti.expire).toHaveBeenCalledWith(
-          expect.stringContaining("rate_limit:auth:"),
-          expect.any(Number)
-        );
-      });
-
-      test("should handle edge case with empty identifier", async () => {
-        const result = await shouldLogAuthFailure("", false);
-        expect(result).toBe(false);
-      });
-
-      test("should handle edge case with null identifier", async () => {
-        // @ts-expect-error - Testing runtime behavior with null
-        const result = await shouldLogAuthFailure(null, false);
-        expect(result).toBe(false);
-      });
-
-      test("should handle edge case with undefined identifier", async () => {
-        // @ts-expect-error - Testing runtime behavior with undefined
-        const result = await shouldLogAuthFailure(undefined, false);
-        expect(result).toBe(false);
-      });
+    test("uses the atomic sampling decision", async () => {
+      const evaluate = vi.fn().mockResolvedValueOnce([1, 3, 0]).mockResolvedValueOnce([0, 4, 1]);
+      mockCache.getRedisClient.mockResolvedValue({ eval: evaluate });
+      expect(await shouldLogAuthFailure("user@example.com")).toBe(true);
+      expect(await shouldLogAuthFailure("user@example.com")).toBe(false);
     });
   });
 
@@ -612,9 +271,12 @@ describe("Auth Utils", () => {
         targetType: "user",
         userId: "email_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         targetId: "email_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        organizationId: "unknown",
+        organizationId: "global",
+        scope: "global",
+        source: "native-auth",
+        requestId: "test-uuid-123",
         status: "failure",
-        userType: "user",
+        userType: "anonymous",
         newObject: {
           failureReason: "invalid_password",
         },
@@ -631,7 +293,10 @@ describe("Auth Utils", () => {
         targetType: "user",
         userId: "user_123",
         targetId: "user_123",
-        organizationId: "unknown",
+        organizationId: "global",
+        scope: "global",
+        source: "native-auth",
+        requestId: "test-uuid-123",
         status: "success",
         userType: "user",
         newObject: {
@@ -744,59 +409,16 @@ describe("Auth Utils", () => {
         userId: "user_123",
         userType: "user",
         targetId: "user_123",
-        organizationId: UNKNOWN_DATA,
+        organizationId: "global",
+        scope: "global",
+        source: "native-auth",
+        requestId: "test-uuid-123",
         status: "failure",
         newObject: {
           failureReason: "invalid_token",
           provider: "token",
           authMethod: "email_verification",
           tokenProvided: true,
-        },
-      });
-    });
-
-    test("should log user sign out event", () => {
-      logSignOut("user_123", "user@example.com", {
-        reason: "user_initiated",
-        redirectUrl: "/auth/login",
-        organizationId: "org_123",
-      });
-
-      expect(queueAuditEventBackground).toHaveBeenCalledWith({
-        action: "userSignedOut",
-        targetType: "user",
-        userId: "user_123",
-        userType: "user",
-        targetId: "user_123",
-        organizationId: UNKNOWN_DATA,
-        status: "success",
-        newObject: {
-          provider: "session",
-          authMethod: "sign_out",
-          reason: "user_initiated",
-          redirectUrl: "/auth/login",
-          organizationId: "org_123",
-        },
-      });
-    });
-
-    test("should log sign out with default reason", () => {
-      logSignOut("user_123", "user@example.com");
-
-      expect(queueAuditEventBackground).toHaveBeenCalledWith({
-        action: "userSignedOut",
-        targetType: "user",
-        userId: "user_123",
-        userType: "user",
-        targetId: "user_123",
-        organizationId: UNKNOWN_DATA,
-        status: "success",
-        newObject: {
-          provider: "session",
-          authMethod: "sign_out",
-          reason: "user_initiated",
-          organizationId: undefined,
-          redirectUrl: undefined,
         },
       });
     });

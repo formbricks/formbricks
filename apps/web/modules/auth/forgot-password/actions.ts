@@ -8,12 +8,12 @@ import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZUserEmail } from "@formbricks/types/user";
 import { EMAIL_AUTH_ENABLED, PASSWORD_RESET_DISABLED, WEBAPP_URL } from "@/lib/constants";
 import { hasCredentialAccount } from "@/lib/user/password";
-import { actionClient } from "@/lib/utils/action-client";
 import { auth } from "@/modules/auth/lib/auth";
+import { type SecurityActionAudit, runSecurityAction } from "@/modules/auth/lib/security-action-audit";
+import { securityActionClient } from "@/modules/auth/lib/security-action-client";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 
 /**
  * Whether this user has a password to reset. Pure SSO users do not, and are silently skipped — Better
@@ -69,42 +69,44 @@ const ZForgotPasswordAction = z.object({
   email: ZUserEmail,
 });
 
-export const forgotPasswordAction = actionClient.inputSchema(ZForgotPasswordAction).action(
-  withAuditLogging("passwordReset", "user", async ({ ctx, parsedInput }) => {
-    await applyIPRateLimit(rateLimitConfigs.auth.forgotPassword);
+export const forgotPasswordAction = securityActionClient("password_reset_request")
+  .inputSchema(ZForgotPasswordAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const audit: SecurityActionAudit = {
+      operation: "password_reset_request",
+      source: "server-action",
+      requestId: ctx.auditLoggingCtx.eventId,
+    };
+    return runSecurityAction(audit, async () => {
+      await applyIPRateLimit(rateLimitConfigs.auth.forgotPassword);
 
-    if (PASSWORD_RESET_DISABLED) {
-      throw new OperationNotAllowedError("Password reset is disabled");
-    }
-
-    const user = await getUserByEmail(parsedInput.email);
-
-    if (user && (await canResetPassword(user))) {
-      // Target the audited event at the account the reset was requested for. The ACTOR stays
-      // `UNKNOWN_DATA` because this action is unauthenticated by design — which is the honest record:
-      // someone who knows the address asked for a reset.
-      ctx.auditLoggingCtx.userId = user.id;
-      try {
-        await auth.api.requestPasswordReset({
-          body: { email: user.email, redirectTo: `${WEBAPP_URL}/auth/forgot-password/reset` },
-          headers: await headers(),
-        });
-      } catch (error) {
-        // The send failed but the action still answers `{ success: true }`, so without suppressing here
-        // the trail would claim a reset link was mailed to this user — the same false record the `else`
-        // branch guards, in the other direction. SMTP being down should not read as "we mailed them".
-        ctx.auditLoggingCtx.suppressEvent = true;
-        logger.error({ error, userId: user.id }, "Password reset request failed");
+      if (PASSWORD_RESET_DISABLED) {
+        throw new OperationNotAllowedError("Password reset is disabled");
       }
-    } else {
-      // No reset was requested — unknown address, or a user with no password to reset. The action still
-      // answers `{ success: true }` to stay enumeration-safe, so without this the wrapper's fixed
-      // `passwordReset` action would record a reset that never happened (the same false-record problem
-      // `suppressEvent` was added for on duplicate sign-up, ENG-2091). A thrown failure is audited
-      // regardless, so this cannot hide one.
-      ctx.auditLoggingCtx.suppressEvent = true;
-    }
 
-    return { success: true };
-  })
-);
+      const user = await getUserByEmail(parsedInput.email);
+
+      if (user && (await canResetPassword(user))) {
+        // Target the audited event at the account the reset was requested for. The ACTOR stays
+        // `UNKNOWN_DATA` because this action is unauthenticated by design — which is the honest record:
+        // someone who knows the address asked for a reset.
+        audit.target = { type: "user", id: user.id };
+        try {
+          await auth.api.requestPasswordReset({
+            body: { email: user.email, redirectTo: `${WEBAPP_URL}/auth/forgot-password/reset` },
+            headers: await headers(),
+          });
+        } catch (error) {
+          // Preserve the enumeration-safe response while recording the failed request.
+          audit.status = "failure";
+          logger.error({ error, userId: user.id }, "Password reset request failed");
+        }
+      } else {
+        // An enumeration-safe response is not a completed reset or a sent message.
+        audit.status = "noop";
+      }
+
+      audit.changes = { requestAccepted: audit.status !== "failure", passwordChanged: false };
+      return { success: true };
+    });
+  });

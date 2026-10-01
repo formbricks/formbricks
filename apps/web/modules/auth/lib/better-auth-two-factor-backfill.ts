@@ -64,7 +64,9 @@ export const twoFactorBackfillAfterHandler = async (ctx: AuthHookContext): Promi
     );
     await prisma.twoFactor.upsert({
       where: { userId: user.id },
-      update: { ...twoFactorRow, verified: true },
+      // Mechanical repair only: never replace an enrollment created concurrently.
+      // No policy, secret or recovery-code rotation occurs, so no independent security event.
+      update: {},
       create: { userId: user.id, ...twoFactorRow, verified: true },
     });
   } catch (error) {

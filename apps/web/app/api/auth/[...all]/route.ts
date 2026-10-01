@@ -8,6 +8,7 @@ import { runWithBetterAuthRequestContext } from "@/modules/auth/lib/better-auth-
 import { runWithEmailVerificationRequestContext } from "@/modules/auth/lib/email-verification-request-context";
 import { mapLegacySsoCallbackRequest } from "@/modules/auth/lib/legacy-sso-callback";
 import { prepareDcrRequest } from "@/modules/auth/lib/mcp-dcr-application-type";
+import { emitSecurityAudit } from "@/modules/auth/lib/security-audit";
 import { runWithSsoRequestContext } from "@/modules/ee/sso/lib/sso-request-context";
 
 // Force-no-store so Better Auth's outbound SSO fetches (token exchange, userinfo, JWKS) are never
@@ -77,7 +78,16 @@ const handler = async (request: Request): Promise<Response> => {
   // was the read this replaced, and so is Better Auth's own, which also runs after the body is
   // buffered. Bounding it belongs to the whole `/api/auth/*` surface rather than this one branch:
   // ENG-3248.
-  if (preparedRequest instanceof Response) return preparedRequest;
+  if (preparedRequest instanceof Response) {
+    await emitSecurityAudit({
+      operation: "oauth2/register",
+      target: { type: "oauthClient", id: "unknown" },
+      status: "denied",
+      source: "native-auth",
+      changes: { reason: "redirect_uri_denied", httpStatus: preparedRequest.status },
+    });
+    return preparedRequest;
+  }
   const mappedRequest = preparedRequest;
   try {
     const response = await runWithBetterAuthRequestContext(

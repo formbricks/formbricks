@@ -27,6 +27,9 @@ export type TAuditEventInput = {
   newObject?: Record<string, unknown> | null;
   eventId?: string;
   apiUrl?: string;
+  scope?: TAuditLogEvent["scope"];
+  source?: string;
+  requestId?: string;
 };
 
 type TBuildAuditEventInput = TAuditEventInput & {
@@ -50,6 +53,9 @@ export const buildAndLogAuditEvent = async ({
   newObject,
   eventId,
   apiUrl,
+  scope,
+  source,
+  requestId,
 }: TBuildAuditEventInput) => {
   if (!AUDIT_LOG_ENABLED && !(await getIsAuditLogsEnabled())) {
     return;
@@ -76,6 +82,9 @@ export const buildAndLogAuditEvent = async ({
       status,
       ipAddress: AUDIT_LOG_GET_USER_IP ? ipAddress : UNKNOWN_DATA,
       apiUrl,
+      scope,
+      source,
+      requestId,
       ...(changes ? { changes } : {}),
       ...(status === "failure" && eventId ? { eventId } : {}),
     };
@@ -102,23 +111,33 @@ export const queueAuditEventBackground = async ({
   status,
   eventId,
   apiUrl,
+  scope,
+  source,
+  requestId,
 }: TAuditEventInput) => {
   setImmediate(async () => {
-    const ipAddress = await getClientIpFromHeaders();
-    await buildAndLogAuditEvent({
-      action,
-      targetType,
-      userId,
-      userType,
-      targetId,
-      organizationId,
-      ipAddress,
-      status,
-      oldObject,
-      newObject,
-      eventId,
-      apiUrl,
-    });
+    try {
+      const ipAddress = await getClientIpFromHeaders();
+      await buildAndLogAuditEvent({
+        action,
+        targetType,
+        userId,
+        userType,
+        targetId,
+        organizationId,
+        ipAddress,
+        status,
+        oldObject,
+        newObject,
+        eventId,
+        apiUrl,
+        scope,
+        source,
+        requestId,
+      });
+    } catch {
+      // A failed sink (including its error logger) must not reject an unobserved background task.
+    }
   });
 };
 
@@ -138,6 +157,9 @@ export const queueAuditEvent = async ({
   status,
   eventId,
   apiUrl,
+  scope,
+  source,
+  requestId,
 }: TAuditEventInput) => {
   const ipAddress = await getClientIpFromHeaders();
 
@@ -154,6 +176,9 @@ export const queueAuditEvent = async ({
     newObject,
     eventId,
     apiUrl,
+    scope,
+    source,
+    requestId,
   });
 };
 
@@ -173,6 +198,9 @@ export const queueAuditEventWithoutRequest = async ({
   status,
   eventId,
   apiUrl,
+  scope,
+  source,
+  requestId,
   ipAddress = UNKNOWN_DATA,
 }: TAuditEventInput & { ipAddress?: string }) => {
   await buildAndLogAuditEvent({
@@ -188,6 +216,9 @@ export const queueAuditEventWithoutRequest = async ({
     newObject,
     eventId,
     apiUrl,
+    scope,
+    source,
+    requestId,
   });
 };
 

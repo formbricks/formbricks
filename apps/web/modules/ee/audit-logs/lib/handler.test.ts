@@ -181,6 +181,17 @@ describe("queueAuditEventBackground", () => {
     vi.resetModules();
   });
 
+  test("a failing sink and error logger cannot reject the background task", async () => {
+    serviceLogAuditEventMockHandle.mockRejectedValueOnce(new Error("sink failed"));
+    loggerErrorMockHandle.mockImplementationOnce(() => {
+      throw new Error("error logger failed");
+    });
+    await expect(OriginalHandler.queueAuditEventBackground(baseEventParams)).resolves.toBeUndefined();
+    await new Promise(setImmediate);
+    expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
+    expect(loggerErrorMockHandle).toHaveBeenCalled();
+  });
+
   test("correctly processes event in background and dependencies are called", async () => {
     await OriginalHandler.queueAuditEventBackground(baseEventParams);
     await new Promise(setImmediate); // Wait for setImmediate to run
