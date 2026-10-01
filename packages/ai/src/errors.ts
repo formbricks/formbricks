@@ -132,15 +132,18 @@ const buildInfo = (error: APICallError): AIProviderErrorInfo => {
 export const classifyAIProviderError = (error: unknown): AIProviderErrorInfo | undefined => {
   if (error instanceof AIOAuthTokenError) {
     // Only a definitive answer from the token endpoint is a credentials problem. A timeout, a network
-    // failure or a 5xx is the identity provider being down: reporting that as "credentials rejected"
-    // would send an administrator to rotate a secret that is fine.
+    // failure or a 5xx is the identity provider being down, and a 429 is it throttling: reporting
+    // either as "credentials rejected" would send an administrator to rotate a secret that is fine.
+    // The 429 is surfaced as quota exhaustion so callers show their rate-limit message for it.
+    const isThrottled = error.statusCode === 429;
     const isTransient =
+      isThrottled ||
       error.code === "token_endpoint_timeout" ||
       error.code === "token_endpoint_unreachable" ||
       (error.statusCode !== undefined && error.statusCode >= 500);
     return {
       isAuthFailure: !isTransient,
-      isQuotaExhausted: false,
+      isQuotaExhausted: isThrottled,
       isRetryable: isTransient,
       ...(error.statusCode === undefined ? {} : { statusCode: error.statusCode }),
     };

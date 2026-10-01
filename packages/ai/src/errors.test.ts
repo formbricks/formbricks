@@ -180,6 +180,19 @@ describe("classifyAIProviderError isAuthFailure", () => {
     expect(classifyAIProviderError(makeApiError(statusCode))?.isAuthFailure).toBe(expected);
   });
 
+  test("treats a token-endpoint 429 as throttling, not rejected credentials", () => {
+    const info = classifyAIProviderError(
+      new AIOAuthTokenError("token_request_failed", { statusCode: 429, tokenUrlHost: "idp.example" })
+    );
+
+    expect(info).toMatchObject({
+      isAuthFailure: false,
+      isQuotaExhausted: true,
+      isRetryable: true,
+      statusCode: 429,
+    });
+  });
+
   test("recovers the auth failure from a RetryError", () => {
     const retryError = new RetryError({
       message: "Failed",

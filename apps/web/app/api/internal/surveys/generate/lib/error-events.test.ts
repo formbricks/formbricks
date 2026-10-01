@@ -28,6 +28,17 @@ describe("toStreamErrorEvent", () => {
     expect(event.invalid_params).toEqual(invalidParams);
   });
 
+  test("does not report a throttled token endpoint as rejected credentials", () => {
+    // The service layer turns this into a TooManyRequestsError before it reaches here; this guards
+    // the raw classification so a 429 can never fall into the credentials branch.
+    const event = toStreamErrorEvent(
+      new AIOAuthTokenError("token_request_failed", { statusCode: 429, tokenUrlHost: "idp" })
+    );
+
+    expect(event.code).not.toBe("ai_provider_auth_failed");
+    expect(event.detail).not.toMatch(/credentials/);
+  });
+
   test.each([
     [
       "an OAuth2 token failure",

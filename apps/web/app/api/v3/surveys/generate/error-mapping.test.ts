@@ -129,6 +129,19 @@ describe("mapV3SurveyGenerateError", () => {
     );
   });
 
+  test("does not report a throttled token endpoint as rejected credentials", async () => {
+    // The service layer turns this into a TooManyRequestsError before it reaches here; this guards
+    // the raw classification so a 429 can never fall into the credentials branch.
+    const response = mapV3SurveyGenerateError(
+      new AIOAuthTokenError("token_request_failed", { statusCode: 429, tokenUrlHost: "idp.example" }),
+      context
+    );
+
+    const problem = (await response.json()) as { code?: string; detail?: string };
+    expect(problem.code).not.toBe("ai_provider_auth_failed");
+    expect(problem.detail).not.toContain("credentials");
+  });
+
   test("maps an OAuth2 token failure to 502 ai_provider_auth_failed instead of prompt advice", async () => {
     const response = mapV3SurveyGenerateError(
       new AIOAuthTokenError("token_request_failed", { statusCode: 401, tokenUrlHost: "idp.example" }),

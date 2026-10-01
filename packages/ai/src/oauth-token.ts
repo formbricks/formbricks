@@ -40,6 +40,8 @@ interface CachedToken {
 interface NegativeCacheEntry {
   error: AIOAuthTokenError;
   until: number;
+  /** A throttle back-off still lets callers use an unexpired cached token; a definitive rejection does not. */
+  fallbackToCached: boolean;
 }
 
 const getTokenUrlHost = (tokenUrl: string): string => {
@@ -81,6 +83,10 @@ const buildTokenRequestInit = (config: OAuthClientCredentialsConfig): RequestIni
     method: "POST",
     headers,
     body: body.toString(),
+    // The credentials travel in this request, in the header or the body. A 307/308 would replay the
+    // body — and with it a `post`-style client_secret — to wherever the endpoint points, so a redirect
+    // is returned as-is and fails below as a non-2xx instead of being followed.
+    redirect: "manual",
     // The token request owns its timeout. It never inherits a caller's signal: one user pressing
     // Stop must not abort a refresh that every concurrent request is waiting on.
     signal: AbortSignal.timeout(OAUTH_TOKEN_REQUEST_TIMEOUT_MS),
@@ -139,20 +145,42 @@ export const createOAuthTokenSource = (
   let inflight: Promise<string> | undefined;
 
   /**
-   * A definitive failure (4xx, malformed response) is negative-cached and thrown. A transient one
-   * (timeout, network, 5xx) is thrown too — unless the refresh started inside the expiry skew and
-   * the cached token has not actually expired yet, in which case that token is still good to use.
+   * How a failed token request is handled:
+   *
+   * - `definitive` (4xx, malformed response): the endpoint has answered, so the answer is
+   *   negative-cached and thrown — a new call will not change it.
+   * - `transient` (timeout, network, 5xx): the endpoint is down; thrown without negative caching so
+   *   the next request tries again.
+   * - `throttled` (429): the endpoint is asking for a pause; negative-cached so the pause is honoured.
+   *
+   * A transient or throttled failure inside the expiry skew, while the cached token has not actually
+   * expired, falls back to that token: it is still good to use. A definitive one never does.
    */
-  const fail = (error: AIOAuthTokenError, { transient }: { transient: boolean }): string => {
+  const fail = (
+    error: AIOAuthTokenError,
+    { kind }: { kind: "definitive" | "transient" | "throttled" }
+  ): string => {
     const currentTime = now();
 
-    if (!transient) {
-      negativeCache = { error, until: currentTime + OAUTH_TOKEN_NEGATIVE_CACHE_MS };
-    } else if (cached && currentTime < cached.expiresAt) {
+    if (kind !== "transient") {
+      negativeCache = {
+        error,
+        until: currentTime + OAUTH_TOKEN_NEGATIVE_CACHE_MS,
+        fallbackToCached: kind === "throttled",
+      };
+    }
+
+    if (kind !== "definitive" && cached && currentTime < cached.expiresAt) {
       return cached.accessToken;
     }
 
     throw error;
+  };
+
+  const classifyStatus = (status: number): "definitive" | "transient" | "throttled" => {
+    if (status === 429) return "throttled";
+    if (status >= 500) return "transient";
+    return "definitive";
   };
 
   const requestToken = async (): Promise<string> => {
@@ -167,21 +195,22 @@ export const createOAuthTokenSource = (
         error instanceof Error && error.name === "TimeoutError"
           ? "token_endpoint_timeout"
           : "token_endpoint_unreachable";
-      return fail(new AIOAuthTokenError(code, { tokenUrlHost }), { transient: true });
+      return fail(new AIOAuthTokenError(code, { tokenUrlHost }), { kind: "transient" });
     }
 
     if (!response.ok) {
-      // A 4xx is the endpoint's definitive answer (bad credentials, unknown scope); a 5xx is transient.
+      // A 4xx is the endpoint's definitive answer (bad credentials, unknown scope), a 429 is a
+      // throttle, a 5xx is transient. A 3xx lands here too: redirects are not followed, see above.
       return fail(
         new AIOAuthTokenError("token_request_failed", { statusCode: response.status, tokenUrlHost }),
-        { transient: response.status >= 500 }
+        { kind: classifyStatus(response.status) }
       );
     }
 
     const token = await parseTokenResponse(response);
 
     if (!token) {
-      return fail(new AIOAuthTokenError("token_response_invalid", { tokenUrlHost }), { transient: false });
+      return fail(new AIOAuthTokenError("token_response_invalid", { tokenUrlHost }), { kind: "definitive" });
     }
 
     const ttl =
@@ -200,6 +229,9 @@ export const createOAuthTokenSource = (
       const currentTime = now();
 
       if (negativeCache && currentTime < negativeCache.until) {
+        if (negativeCache.fallbackToCached && cached && currentTime < cached.expiresAt) {
+          return Promise.resolve(cached.accessToken);
+        }
         return Promise.reject(negativeCache.error);
       }
 

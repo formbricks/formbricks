@@ -151,6 +151,51 @@ describe("createOAuthTokenSource", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  test("backs off a 429 for the negative-cache window and keeps the unexpired cached token", async () => {
+    const clock = createClock();
+    const fetchMock = vi
+      .fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>()
+      .mockResolvedValueOnce(tokenResponse("tok-1", { expires_in: 90 }))
+      .mockResolvedValue(new Response('{"error":"slow_down"}', { status: 429 }));
+    const source = createOAuthTokenSource(baseConfig, { fetch: fetchMock, now: clock.now });
+
+    await source.getToken();
+    clock.advance(90_000 - OAUTH_TOKEN_EXPIRY_SKEW_MS);
+
+    // Throttled inside the skew: the still-valid token is reused and the endpoint is left alone
+    // for the back-off window.
+    await expect(source.getToken()).resolves.toBe("tok-1");
+    await expect(source.getToken()).resolves.toBe("tok-1");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    // Back-off over, token still has 10s: one more attempt, throttled again, token reused again.
+    clock.advance(OAUTH_TOKEN_EXPIRY_SKEW_MS - 10_000);
+    await expect(source.getToken()).resolves.toBe("tok-1");
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+
+    // Token expired while the new back-off still holds: nothing to fall back to, endpoint left alone.
+    clock.advance(10_000);
+    await expect(source.getToken()).rejects.toMatchObject({ code: "token_request_failed", statusCode: 429 });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+
+    clock.advance(OAUTH_TOKEN_NEGATIVE_CACHE_MS - 10_000);
+    await expect(source.getToken()).rejects.toMatchObject({ statusCode: 429 });
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  test("does not follow redirects and treats a 307 from the token endpoint as a definitive failure", async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(
+        new Response(null, { status: 307, headers: { Location: "https://elsewhere.example/" } })
+      )
+    );
+    const source = createOAuthTokenSource({ ...baseConfig, authStyle: "post" }, { fetch: fetchMock });
+
+    await expect(source.getToken()).rejects.toMatchObject({ code: "token_request_failed", statusCode: 307 });
+    expect(getInit(fetchMock).redirect).toBe("manual");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   test("falls back to the unexpired cached token when a refresh inside the skew fails transiently", async () => {
     const clock = createClock();
     const fetchMock = vi
