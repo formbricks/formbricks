@@ -225,6 +225,31 @@ A survey audit that reports
 belong to — another tenant's members can read it. Treat it as an incident: remove that edge with
 `zed relationship delete`, then rerun the survey scope with `--apply`.
 
+**After rolling out the release that adds survey projection.** Once every pod runs the new image — not
+before — check the outbox, and replay any dead letters:
+
+```bash
+pnpm authzed:outbox status   # formbricks-authzed outbox status in the container; exits 2 on any dead letter
+pnpm authzed:outbox replay   # only once the dead letters are understood
+pnpm authzed:outbox drain
+```
+
+Why: the migration creates the `Survey` trigger while pods of the previous release are still claiming outbox
+events. Those pods do not know the `survey` target type, and the claim dead-letters an unknown type on first
+sight (`lastErrorCode = authzed_projection_invalid_event`) instead of retrying it. A dead-lettered survey
+revocation arms the freshness guard and fails every enforced authorization check in the deployment until it is
+replayed; a dead-lettered grant leaves that survey unacknowledged, and the daily survey audit is a dry run that
+does not repair it. The six-hour audit replays dead letters only after a `reconciled` run, so do not wait for
+it. Replaying while an old pod is still up dead-letters the event again. `replay` resets every unresolved dead
+letter, survey or not, and `status` only counts them, so see what they are first:
+
+```sql
+SELECT "targetType", "lastErrorCode", COUNT(*) FROM "AuthzedProjectionOutbox"
+WHERE "deadLetteredAt" IS NOT NULL AND "processedAt" IS NULL GROUP BY 1, 2;
+```
+
+Expect `survey` rows with `authzed_projection_invalid_event`; investigate anything else before replaying.
+
 **Resuming.** A run reports `lastOrganizationId`. Feed it back:
 
 ```bash

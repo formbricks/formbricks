@@ -558,6 +558,29 @@ formbricks-authzed backfill --scope=survey --clear-ready
 
 `formbricks-authzed upgrade check` reports the marker as `scopes.survey`.
 
+After upgrading to the release that adds survey visibility, and once every Formbricks container or pod runs
+the new version, check durable delivery and replay any dead letters:
+
+```bash
+formbricks-authzed outbox status
+formbricks-authzed outbox replay
+formbricks-authzed outbox drain
+```
+
+The database migration adds the survey trigger while containers of the previous version may still be
+delivering outbox events. Those do not know survey events yet and dead-letter them on the spot instead of
+retrying. A dead-lettered survey revocation makes every enforced authorization check fail closed until it is
+replayed, so do not wait for the scheduled audit. Run `replay` only after the rollout has finished, since an
+old container would dead-letter the event again. `replay` resets every unresolved dead letter, and `status`
+only counts them, so check what they are first:
+
+```sql
+SELECT "targetType", "lastErrorCode", COUNT(*) FROM "AuthzedProjectionOutbox"
+WHERE "deadLetteredAt" IS NOT NULL AND "processedAt" IS NULL GROUP BY 1, 2;
+```
+
+Expect `survey` rows with `authzed_projection_invalid_event`; investigate anything else before replaying.
+
 <Warning>
   Do not set `SURVEY_VISIBILITY_FORCE_DISABLED=1` as a workaround when PostgreSQL or SpiceDB is failing. It
   makes every restricted survey, and its responses, visible to the whole workspace. An outage fails

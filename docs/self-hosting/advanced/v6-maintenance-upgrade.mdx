@@ -272,14 +272,29 @@ into SpiceDB as their own scope. Nothing about who can see a survey changes unti
   no way to get access. Enable it once the Formbricks release that adds survey sharing is installed.
 </Warning>
 
-1. After the upgrade, repair the survey scope and mark it ready. This runs the repair, then two further dry
+1. Once every container or pod runs the new version, check durable delivery and replay any dead-lettered
+   survey events. The migration adds the survey trigger while the previous version may still be delivering
+   outbox events, and that version dead-letters the `survey` event type it does not know. A dead-lettered
+   survey revocation makes every enforced authorization check fail closed until it is replayed:
+
+   ```bash
+   formbricks-authzed outbox status
+   formbricks-authzed outbox replay
+   formbricks-authzed outbox drain
+   ```
+
+   `replay` resets every unresolved dead letter, so investigate any that are not survey events first. See
+   [AuthZed operations](/self-hosting/configuration/authzed-operations#audit-and-repair-surveys) for how to
+   list them.
+
+2. After the upgrade, repair the survey scope and mark it ready. This runs the repair, then two further dry
    runs, and sets the marker only if both come back clean:
 
    ```bash
    formbricks-authzed backfill --scope=survey --apply --mark-ready
    ```
 
-2. Confirm `formbricks-authzed upgrade check` reports `scopes.survey` as ready.
+3. Confirm `formbricks-authzed upgrade check` reports `scopes.survey` as ready.
 
 To go back to workspace permissions, run `formbricks-authzed backfill --scope=survey --clear-ready`. See
 [AuthZed operations](/self-hosting/configuration/authzed-operations#audit-and-repair-surveys) for the audit
