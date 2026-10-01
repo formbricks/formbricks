@@ -33,6 +33,43 @@ const ZMcpOauthJwksUrl = z.url().refine(isValidMcpOauthJwksUrl, {
   message: "MCP_OAUTH_JWKS_URL must be a valid http(s) URL without credentials or a fragment",
 });
 
+/**
+ * An exact redirect URI an operator lets anonymous MCP client registration claim (ENG-3471). https only,
+ * because a registered callback is where authorization codes are delivered; no credentials and no
+ * fragment (RFC 6749 §3.1.2); and no `*`, so nobody configures a wildcard expecting it to match — the
+ * allowlist compares exact strings.
+ */
+const isValidDcrRedirectUri = (value: string): boolean => {
+  if (value.includes("*")) return false;
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" &&
+      url.hostname.length > 0 &&
+      url.username === "" &&
+      url.password === "" &&
+      !value.includes("#")
+    );
+  } catch {
+    return false;
+  }
+};
+
+const ZDcrRedirectUri = z.url().refine(isValidDcrRedirectUri, {
+  message:
+    "MCP_DCR_ALLOWED_REDIRECT_URIS entries must be exact https URLs without credentials, a fragment or a wildcard",
+});
+
+/** Comma-separated list; blank, and empty entries from a stray comma, count as unset. */
+const ZDcrRedirectUriList = z.preprocess((value) => {
+  if (typeof value !== "string") return value;
+  const entries = value
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+  return entries.length > 0 ? entries : undefined;
+}, z.array(ZDcrRedirectUri).optional());
+
 const ZAIConfigurationEnv = z.object({
   AI_PROVIDER: ZActiveAIProvider.optional(),
   AI_MODEL: z.string().optional(),
@@ -498,6 +535,7 @@ const parsedEnv = createEnv({
     BETTER_AUTH_SECRET: ZOptionalVerbatimSecret,
     BETTER_AUTH_URL: z.url().optional(),
     MCP_OAUTH_JWKS_URL: ZMcpOauthJwksUrl.optional(),
+    MCP_DCR_ALLOWED_REDIRECT_URIS: ZDcrRedirectUriList,
     MAIL_FROM_NAME: z.string().optional(),
     NOTION_OAUTH_CLIENT_ID: z.string().optional(),
     NOTION_OAUTH_CLIENT_SECRET: z.string().optional(),
@@ -611,6 +649,7 @@ const parsedEnv = createEnv({
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
     MCP_OAUTH_JWKS_URL: process.env.MCP_OAUTH_JWKS_URL,
+    MCP_DCR_ALLOWED_REDIRECT_URIS: process.env.MCP_DCR_ALLOWED_REDIRECT_URIS,
     BREVO_API_KEY: process.env.BREVO_API_KEY,
     BREVO_LIST_ID: process.env.BREVO_LIST_ID,
     CRON_SECRET: process.env.CRON_SECRET,
