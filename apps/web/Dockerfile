@@ -1,20 +1,11 @@
+# syntax=docker/dockerfile:1.20
+# The syntax line must stay first: `COPY --parents` below needs Dockerfile frontend 1.20.
+
 # Node major must stay in sync with .nvmrc (single source of truth for dev + CI + prod).
 FROM node:24-alpine3.23 AS base
 
 #
-## step 1: Prune monorepo
-#
-# FROM base AS builder
-# RUN apk add --no-cache libc6-compat
-# RUN apk update
-# Set working directory
-# WORKDIR /app
-# RUN yarn global add turbo
-# COPY . .
-# RUN turbo prune @formbricks/web --docker
-
-#
-## step 2: Install & build
+## step 1: Install & build
 #
 FROM base AS installer
 
@@ -23,16 +14,36 @@ RUN npm install --ignore-scripts -g corepack@0.35.0
 RUN corepack enable
 RUN corepack prepare pnpm@11.7.0 --activate
 
-# Install necessary build tools and compilers
-RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
+# Increase Node.js memory limit as a regular build argument
+ARG NODE_OPTIONS="--max_old_space_size=8192"
+ENV NODE_OPTIONS=${NODE_OPTIONS}
+
+# pnpm 11 checks node_modules against the manifests before every `pnpm run` and, by default,
+# silently re-installs on drift — without --ignore-scripts or the store mount below. Fail instead.
+ENV pnpm_config_verify_deps_before_run=error
+
+# Set the working directory
+WORKDIR /app
+
+# Copy only what the install reads, so a source-only change reuses the install layer. Everything
+# that busts this layer (the secrets script, BASE_PATH) is declared after it. xlsx is a `file:`
+# dependency on a tarball under apps/web/vendor, so the install needs that directory too.
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY patches ./patches
+COPY --parents apps/*/package.json packages/*/package.json docker/package.json ./
+COPY apps/web/vendor ./apps/web/vendor
+
+# Install the dependencies. The store and metadata cache live in cache mounts rather than the layer:
+# a persistent builder (Depot) re-links from a warm store when a manifest changes, and a cold one
+# just downloads as before. No --offline: the release-age re-check (trustLockfile: false in
+# pnpm-workspace.yaml) needs registry metadata whenever the cache mount is empty.
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+    --mount=type=cache,id=pnpm-cache,target=/root/.cache/pnpm \
+    pnpm install --ignore-scripts --frozen-lockfile --prefer-offline --store-dir=/pnpm/store
 
 # Copy the secrets handling script
 COPY apps/web/scripts/docker/read-secrets.sh /tmp/read-secrets.sh
 RUN chmod +x /tmp/read-secrets.sh
-
-# Increase Node.js memory limit as a regular build argument
-ARG NODE_OPTIONS="--max_old_space_size=8192"
-ENV NODE_OPTIONS=${NODE_OPTIONS}
 
 # Target architecture - automatically provided by Docker in multi-platform builds
 # but needs explicit declaration for some build systems (like Depot)
@@ -42,22 +53,11 @@ ARG TARGETARCH
 ARG BASE_PATH=""
 ENV BASE_PATH=${BASE_PATH}
 
-# Set the working directory
-WORKDIR /app
-
-# Copy the package information
-# COPY .gitignore .gitignore
-# COPY --from=builder /app/out/json/ .
-# COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
-
 # Prepare the build
 COPY . .
 
 # Create a .env file
 RUN touch apps/web/.env
-
-# Install the dependencies
-RUN pnpm install --ignore-scripts --frozen-lockfile
 
 # Build the database package first. `pnpm generate` loads prisma.config.ts, which
 # resolves DATABASE_URL via Prisma's env() helper and throws when it is unset. Mount
@@ -80,7 +80,7 @@ RUN --mount=type=secret,id=database_url \
     /tmp/read-secrets.sh pnpm build --filter=@formbricks/web...
 
 #
-## step 3: setup production runner
+## step 2: setup production runner
 #
 FROM base AS runner
 
