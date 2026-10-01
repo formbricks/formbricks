@@ -52,6 +52,11 @@
       "env": ["DATABASE_URL"],
       "outputs": ["dist/**", "generated/prisma/**"]
     },
+    "@formbricks/database#db:migrate:dev": {
+      "cache": false,
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
     "@formbricks/database#generate": {
       "dependsOn": ["^generate"],
       "env": ["DATABASE_URL"],
