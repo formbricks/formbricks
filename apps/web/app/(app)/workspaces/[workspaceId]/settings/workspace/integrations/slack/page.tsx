@@ -5,10 +5,10 @@ import { SlackWrapper } from "@/app/(app)/workspaces/[workspaceId]/settings/work
 import { DEFAULT_LOCALE, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@/lib/constants";
 import { redactIntegrationCredentials } from "@/lib/integration/redact-credentials";
 import { getIntegrationByType } from "@/lib/integration/service";
-import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSettingsPageMetadata } from "@/modules/settings/lib/metadata";
+import { isSurveyVisibilityEnforced } from "@/modules/survey/visibility/lib/gate";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -25,12 +25,11 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
 
   const { isReadOnly, organization, session, workspace } = await getWorkspaceAuth(params.workspaceId);
 
-  const [surveys, slackIntegration, locale] = await Promise.all([
-    getUserVisibleSurveyWhere(session.user.id, organization.id).then((where) =>
-      getSurveys(workspace.id, where)
-    ),
+  const [surveys, slackIntegration, locale, surveyVisibilityEnabled] = await Promise.all([
+    getSurveys(workspace.id, session.user.id, organization.id),
     getIntegrationByType(workspace.id, "slack"),
     getUserLocale(session.user.id),
+    isSurveyVisibilityEnforced(),
   ]);
 
   if (isReadOnly) {
@@ -46,6 +45,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
           isEnabled={isEnabled}
           workspaceId={workspace.id}
           surveys={surveys}
+          surveyVisibilityEnabled={surveyVisibilityEnabled}
           slackIntegration={redactIntegrationCredentials(slackIntegration as TIntegrationSlack)}
           webAppUrl={WEBAPP_URL}
           locale={locale ?? DEFAULT_LOCALE}

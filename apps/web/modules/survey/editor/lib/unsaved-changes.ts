@@ -5,10 +5,23 @@ import { isDeepEqual } from "@/lib/utils/object";
 const IGNORED_UPDATED_AT = new Date(0);
 
 /**
- * `updatedAt` moves on every write and is never something the user typed, so it can't take part in a
- * dirty check. Flattened to a fixed value rather than stripped, which keeps the result a `TSurvey`.
+ * Fields the user never types and a survey save never writes, so they can't take part in a dirty
+ * check. Flattened to fixed values rather than stripped, which keeps the result a `TSurvey`.
+ *
+ * - `updatedAt` moves on every write.
+ * - The visibility columns (ENG-3395) change only through their own endpoint — the save drops them —
+ *   and the editor refreshes the route after such a change, so the `survey` prop can differ from
+ *   `localSurvey` in them with nothing unsaved.
  */
-const ignoringUpdatedAt = (survey: TSurvey): TSurvey => ({ ...survey, updatedAt: IGNORED_UPDATED_AT });
+const ignoringServerManagedFields = (survey: TSurvey): TSurvey => ({
+  ...survey,
+  updatedAt: IGNORED_UPDATED_AT,
+  visibility: "workspace",
+  visibilityVersion: 0,
+  visibilityProjectedVersion: 0,
+  visibilityChangedAt: null,
+  visibilityChangedById: null,
+});
 
 /**
  * Whether the editor holds changes that are not persisted.
@@ -24,8 +37,10 @@ export const hasUnsavedSurveyChanges = (
   localSurvey: TSurvey,
   persistedSurveys: readonly (TSurvey | null | undefined)[]
 ): boolean => {
-  const local = ignoringUpdatedAt(localSurvey);
-  return !persistedSurveys.some((persisted) => persisted && isDeepEqual(local, ignoringUpdatedAt(persisted)));
+  const local = ignoringServerManagedFields(localSurvey);
+  return !persistedSurveys.some(
+    (persisted) => persisted && isDeepEqual(local, ignoringServerManagedFields(persisted))
+  );
 };
 
 /**

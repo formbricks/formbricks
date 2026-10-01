@@ -1,14 +1,21 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { type Dispatch, type SetStateAction, memo, useCallback, useEffect, useRef, useState } from "react";
 import { ActionClass, Language, OrganizationRole, Workspace } from "@formbricks/database/prisma-browser";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyEditorTabs,
+  TSurveyStyling,
+  TSurveyVisibility,
+} from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
+import type { TSurveyAccess } from "@/lib/survey/visibility/access";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useDocumentVisibility } from "@/lib/useDocumentVisibility";
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
@@ -24,6 +31,13 @@ import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups
 import { shouldShowFollowUpsTab } from "@/modules/survey/follow-ups/lib/deprecation";
 import { LanguageView } from "@/modules/survey/multi-language-surveys/components/language-view";
 import { type TSurveySchedulingConfig } from "@/modules/survey/scheduling/lib/config";
+import { RestrictedSurveyBanner } from "@/modules/survey/visibility/components/restricted-survey-banner";
+import { showRestrictedBanner } from "@/modules/survey/visibility/lib/markers";
+import {
+  type TSurveyVisibilityUiGate,
+  isOutboundBlocked,
+  withoutVisibilityControls,
+} from "@/modules/survey/visibility/lib/state";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { getWorkspaceLanguagesAction, refetchWorkspaceAction } from "../actions";
 
@@ -64,6 +78,11 @@ interface SurveyEditorProps {
   isExternalUrlsAllowed: boolean;
   publicDomain: string;
   enterpriseLicenseRequestFormUrl: string;
+  surveyVisibilityGate: TSurveyVisibilityUiGate;
+  /** The effective visibility (a change in flight counts as restricted), not the stored flag. */
+  visibility: TSurveyVisibility;
+  surveyAccess: TSurveyAccess | null;
+  ownerName: string | null;
 }
 
 export const SurveyEditor = ({
@@ -96,6 +115,10 @@ export const SurveyEditor = ({
   isExternalUrlsAllowed,
   publicDomain,
   enterpriseLicenseRequestFormUrl,
+  surveyVisibilityGate,
+  visibility,
+  surveyAccess,
+  ownerName,
 }: Readonly<SurveyEditorProps>) => {
   const isFollowUpsTabVisible = shouldShowFollowUpsTab({
     followUpCount: survey.followUps.length,
@@ -120,6 +143,26 @@ export const SurveyEditor = ({
   const [hasTriggerError, setHasTriggerError] = useState(false);
 
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
+
+  // ENG-3395. Visibility is changed through its own endpoint, never by a survey save, and the server
+  // decides together what is now enforced and why this user can see the survey. So after a change the
+  // route is refreshed and the banner, the Follow-ups tab and the menu bar all render from the one
+  // server answer (effective visibility, pending value, access), instead of patching one of them
+  // locally. The refresh leaves `localSurvey` alone, and the dirty check ignores the visibility
+  // columns (`unsaved-changes.ts`), so it never makes the editor look dirty.
+  const router = useRouter();
+  const [isVisibilityTurnedOff, setIsVisibilityTurnedOff] = useState(false);
+  // `visibility_not_enabled` takes the controls away at once; what is still enforced comes back from
+  // the refresh, so the banner and the Follow-ups notice follow the server rather than this answer.
+  const visibilityGate = isVisibilityTurnedOff
+    ? withoutVisibilityControls(surveyVisibilityGate)
+    : surveyVisibilityGate;
+  const handleVisibilityChanged = useCallback(() => router.refresh(), [router]);
+  // Stable: the Collaborate modal runs it from an effect.
+  const handleVisibilityNotEnabled = useCallback(() => {
+    setIsVisibilityTurnedOff(true);
+    router.refresh();
+  }, [router]);
 
   // `isFollowUpsTabVisible` tracks the server `survey` prop, which a save refreshes
   // (`survey-menu-bar` calls `router.refresh()`). Deleting the last follow-up therefore hides the
@@ -230,7 +273,21 @@ export const SurveyEditor = ({
         locale={locale}
         setIsCautionDialogOpen={setIsCautionDialogOpen}
         isStorageConfigured={isStorageConfigured}
+        visibilityGate={visibilityGate}
+        effectiveVisibility={visibility}
+        onVisibilityChanged={handleVisibilityChanged}
+        onVisibilityNotEnabled={handleVisibilityNotEnabled}
+        surveyAccess={surveyAccess}
+        ownerName={ownerName}
       />
+      {showRestrictedBanner({
+        enforced: visibilityGate.enforced,
+        visibility,
+        access: surveyAccess,
+      }) && (
+        // A full-width strip under the menu bar, like the bar itself.
+        <RestrictedSurveyBanner ownerName={ownerName} className="rounded-none border-x-0 border-t-0 px-5" />
+      )}
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main
           className="relative z-0 w-full overflow-y-auto bg-slate-50 focus:outline-hidden md:w-2/3"
@@ -328,6 +385,8 @@ export const SurveyEditor = ({
               userEmail={userEmail}
               teamMemberDetails={teamMemberDetails}
               locale={locale}
+              isRestricted={isOutboundBlocked(visibilityGate.enforced, { visibility })}
+              workspaceName={localWorkspace.name}
             />
           )}
         </main>

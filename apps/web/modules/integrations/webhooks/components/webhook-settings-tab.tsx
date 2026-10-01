@@ -27,6 +27,7 @@ interface WebhookSettingsTabProps {
   setOpen: (v: boolean) => void;
   isReadOnly: boolean;
   allowInternalUrls: boolean;
+  surveyVisibilityEnabled: boolean;
 }
 
 export const WebhookSettingsTab = ({
@@ -35,7 +36,8 @@ export const WebhookSettingsTab = ({
   setOpen,
   isReadOnly,
   allowInternalUrls,
-}: WebhookSettingsTabProps) => {
+  surveyVisibilityEnabled,
+}: Readonly<WebhookSettingsTabProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
   const { register, handleSubmit } = useForm({
@@ -299,6 +301,8 @@ export const WebhookSettingsTab = ({
             onSelectAllSurveys={handleSelectAllSurveys}
             onSelectedSurveyChange={handleSelectedSurveyChange}
             allowChanges={webhook.source === "user" && !isReadOnly}
+            surveyVisibilityEnabled={surveyVisibilityEnabled}
+            attachedSurveyIds={webhook.surveyIds}
           />
         </div>
 

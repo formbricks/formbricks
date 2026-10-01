@@ -27,6 +27,28 @@ describe("hasUnsavedSurveyChanges", () => {
     expect(hasUnsavedSurveyChanges(local, [baseSurvey])).toBe(false);
   });
 
+  // ENG-3395: after Collaborate or Activate changes visibility the editor refreshes the route, so the
+  // `survey` prop comes back with new visibility columns while `localSurvey` keeps the old ones. The
+  // save never writes them, so that difference is not unsaved work.
+  test("ignores the visibility columns, which only the visibility endpoint changes", () => {
+    const local = surveyWith({
+      visibility: "restricted",
+      visibilityVersion: 1,
+      visibilityProjectedVersion: 1,
+    });
+    const refreshedProp = surveyWith({
+      visibility: "workspace",
+      visibilityVersion: 2,
+      visibilityProjectedVersion: 1,
+      visibilityChangedAt: new Date("2026-03-01T00:00:00.000Z"),
+      visibilityChangedById: "user_1",
+    });
+
+    expect(hasUnsavedSurveyChanges(local, [refreshedProp])).toBe(false);
+    // A real edit still reads dirty against the same refreshed prop.
+    expect(hasUnsavedSurveyChanges({ ...local, name: "Renamed" }, [refreshedProp])).toBe(true);
+  });
+
   // The reported bug. A draft save sets `localSurvey` from the action's response and then
   // `router.refresh()` re-reads the same survey into the `survey` prop; the two disagree with zero
   // user edits, so comparing against the prop alone warned about work that was already saved.

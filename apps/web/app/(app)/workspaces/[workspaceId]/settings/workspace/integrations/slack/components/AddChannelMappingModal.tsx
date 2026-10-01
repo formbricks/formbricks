@@ -20,6 +20,11 @@ import SlackLogo from "@/images/slacklogo.png";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import {
+  RestrictedSurveyHint,
+  RestrictedSurveysNote,
+} from "@/modules/survey/visibility/components/restricted-survey-hint";
+import { isRestrictedSurveyPick } from "@/modules/survey/visibility/lib/outbound";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
@@ -38,6 +43,7 @@ import { Label } from "@/modules/ui/components/label";
 interface AddChannelMappingModalProps {
   workspaceId: string;
   surveys: TSurvey[];
+  surveyVisibilityEnabled: boolean;
   open: boolean;
   setOpen: (v: boolean) => void;
   slackIntegration: TIntegrationSlack;
@@ -48,13 +54,16 @@ interface AddChannelMappingModalProps {
 export const AddChannelMappingModal = ({
   workspaceId,
   surveys,
+  surveyVisibilityEnabled,
   open,
   setOpen,
   channels,
   slackIntegration,
   selectedIntegration,
-}: AddChannelMappingModalProps) => {
+}: Readonly<AddChannelMappingModalProps>) => {
   const { handleSubmit } = useForm();
+  // The mapping being edited keeps its survey selectable even if it has since been restricted.
+  const attachedSurveyIds = selectedIntegration ? [selectedIntegration.surveyId] : [];
   const { t } = useTranslation();
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [isLinkingChannel, setIsLinkingChannel] = useState(false);
@@ -280,6 +289,15 @@ export const AddChannelMappingModal = ({
                     selectedItem={selectedSurvey}
                     setSelectedItem={setSelectedSurvey}
                     disabled={surveys.length === 0}
+                    isItemDisabled={(survey: TSurvey) =>
+                      isRestrictedSurveyPick(surveyVisibilityEnabled, survey, attachedSurveyIds)
+                    }
+                    disabledItemHint={<RestrictedSurveyHint kind="restricted" />}
+                  />
+                  <RestrictedSurveysNote
+                    surveyVisibilityEnabled={surveyVisibilityEnabled}
+                    surveys={surveys}
+                    attachedSurveyIds={attachedSurveyIds}
                   />
                   <p className="m-1 text-xs text-slate-500">
                     {surveys.length === 0 && t("workspace.integrations.create_survey_warning")}

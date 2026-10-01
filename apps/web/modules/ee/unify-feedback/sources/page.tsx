@@ -8,6 +8,7 @@ import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/
 import { FeedbackDataEmptyState } from "@/modules/ee/unify-feedback/components/feedback-data-empty-state";
 import { UnifyConfigNavigation } from "@/modules/ee/unify-feedback/components/unify-config-navigation";
 import { getAuthorizedWorkspaceFeedbackDirectories } from "@/modules/ee/unify-feedback/lib/access";
+import { isSurveyVisibilityEnforced } from "@/modules/survey/visibility/lib/gate";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
@@ -72,12 +73,13 @@ export const UnifyFeedbackSourcesPage = async (
     );
   }
 
-  const [feedbackSources, surveys, directories] = await Promise.all([
+  const [feedbackSources, surveys, directories, surveyVisibilityEnabled] = await Promise.all([
     getFeedbackSourcesWithMappings(workspaceId),
     getUserVisibleSurveyWhere(session.user.id, organization.id).then((where) =>
       getSurveys(workspaceId, where)
     ),
     getAuthorizedWorkspaceFeedbackDirectories(session.user.id, workspaceId),
+    isSurveyVisibilityEnforced(),
   ]);
 
   if (directories.length === 0) {
@@ -104,6 +106,7 @@ export const UnifyFeedbackSourcesPage = async (
       initialSurveys={unifySurveys}
       directories={directories}
       isReadOnly={isReadOnly}
+      surveyVisibilityEnabled={surveyVisibilityEnabled}
     />
   );
 };

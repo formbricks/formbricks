@@ -11,10 +11,10 @@ import {
 } from "@/lib/constants";
 import { redactIntegrationCredentials } from "@/lib/integration/redact-credentials";
 import { getIntegrations } from "@/lib/integration/service";
-import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSettingsPageMetadata } from "@/modules/settings/lib/metadata";
+import { isSurveyVisibilityEnforced } from "@/modules/survey/visibility/lib/gate";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -30,12 +30,11 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
 
   const { isReadOnly, organization, session, workspace } = await getWorkspaceAuth(params.workspaceId);
 
-  const [surveys, integrations, locale] = await Promise.all([
-    getUserVisibleSurveyWhere(session.user.id, organization.id).then((where) =>
-      getSurveys(workspace.id, where)
-    ),
+  const [surveys, integrations, locale, surveyVisibilityEnabled] = await Promise.all([
+    getSurveys(workspace.id, session.user.id, organization.id),
     getIntegrations(workspace.id),
     getUserLocale(session.user.id),
+    isSurveyVisibilityEnforced(),
   ]);
 
   const googleSheetIntegration: TIntegrationGoogleSheets | undefined = integrations?.find(
@@ -54,6 +53,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
           isEnabled={isEnabled}
           workspaceId={workspace.id}
           surveys={surveys}
+          surveyVisibilityEnabled={surveyVisibilityEnabled}
           googleSheetIntegration={redactIntegrationCredentials(googleSheetIntegration)}
           webAppUrl={WEBAPP_URL}
           locale={locale ?? DEFAULT_LOCALE}

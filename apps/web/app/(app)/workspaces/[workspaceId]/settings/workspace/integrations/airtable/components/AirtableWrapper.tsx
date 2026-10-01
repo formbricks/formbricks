@@ -15,6 +15,7 @@ interface AirtableWrapperProps {
   airtableArray: TIntegrationItem[];
   airtableIntegration?: TIntegrationAirtable;
   surveys: TSurvey[];
+  surveyVisibilityEnabled: boolean;
   isEnabled: boolean;
   webAppUrl: string;
   locale: TUserLocale;
@@ -26,11 +27,12 @@ export const AirtableWrapper = ({
   airtableArray,
   airtableIntegration,
   surveys,
+  surveyVisibilityEnabled,
   isEnabled,
   webAppUrl,
   locale,
   showReconnectButton = false,
-}: AirtableWrapperProps) => {
+}: Readonly<AirtableWrapperProps>) => {
   const [isConnected, setIsConnected] = useState(
     airtableIntegration ? airtableIntegration.config?.key : false
   );
@@ -50,6 +52,7 @@ export const AirtableWrapper = ({
       airtableIntegration={airtableIntegration}
       setIsConnected={setIsConnected}
       surveys={surveys}
+      surveyVisibilityEnabled={surveyVisibilityEnabled}
       locale={locale}
       showReconnectButton={showReconnectButton}
       handleAirtableAuthorization={handleAirtableAuthorization}

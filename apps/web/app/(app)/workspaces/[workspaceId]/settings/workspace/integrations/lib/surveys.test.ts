@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
@@ -6,6 +6,8 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { selectSurvey } from "@/lib/survey/service";
 import { transformPrismaSurvey } from "@/lib/survey/utils";
+import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
+import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
 import { validateInputs } from "@/lib/utils/validate";
 import { getSurveys } from "./surveys";
 
@@ -14,6 +16,7 @@ vi.mock("@/lib/survey/service", () => ({
   selectSurvey: { id: true, name: true, status: true, updatedAt: true }, // Expanded mock based on usage
 }));
 vi.mock("@/lib/survey/utils");
+vi.mock("@/lib/survey/visibility/actor-context", () => ({ getUserVisibleSurveyWhere: vi.fn() }));
 vi.mock("@/lib/utils/validate");
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -36,6 +39,8 @@ vi.mock("react", async (importOriginal) => {
 });
 
 const workspaceId = "test-environment-id";
+const userId = "member-user-id";
+const organizationId = "organization-id";
 // Use 'as any' to bypass complex type matching for mock data
 const mockPrismaSurveys = [
   { id: "survey1", name: "Survey 1", status: "inProgress", updatedAt: new Date() },
@@ -89,6 +94,11 @@ const mockTransformedSurveys: TSurvey[] = [
 ];
 
 describe("getSurveys", () => {
+  beforeEach(() => {
+    // Enforcement off by default: no visibility clause, the query exactly as before ENG-3282.
+    vi.mocked(getUserVisibleSurveyWhere).mockResolvedValue({});
+  });
+
   test("should fetch and transform surveys successfully", async () => {
     vi.mocked(prisma.survey.findMany).mockResolvedValue(mockPrismaSurveys as any);
     vi.mocked(transformPrismaSurvey).mockImplementation((survey) => {
@@ -98,11 +108,15 @@ describe("getSurveys", () => {
       return { ...found } as TSurvey;
     });
 
-    const surveys = await getSurveys(workspaceId, {});
+    const surveys = await getSurveys(workspaceId, userId, organizationId);
 
     expect(surveys).toEqual(mockTransformedSurveys);
     // Use expect.any(ZId) for the Zod schema validation check
-    expect(validateInputs).toHaveBeenCalledWith([workspaceId, expect.any(Object)]); // Adjusted expectation
+    expect(validateInputs).toHaveBeenCalledWith(
+      [workspaceId, expect.any(Object)],
+      [userId, expect.any(Object)],
+      [organizationId, expect.any(Object)]
+    );
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
       where: {
         workspaceId,
@@ -122,6 +136,46 @@ describe("getSurveys", () => {
     // React cache is already mocked globally - no need to check it here
   });
 
+  // ENG-3395: the Slack, Notion, Airtable and Google Sheets pickers load through here. A plain member
+  // must never be offered another user's restricted survey, so the member's clause has to reach SQL.
+  test("offers a member only workspace-visible surveys and their own restricted ones", async () => {
+    const memberClause = buildVisibleSurveyWhere({
+      enforced: true,
+      kind: "user",
+      userId,
+      isOrganizationAdmin: false,
+    });
+    vi.mocked(getUserVisibleSurveyWhere).mockResolvedValue(memberClause);
+    vi.mocked(prisma.survey.findMany).mockResolvedValue([]);
+
+    await getSurveys(workspaceId, userId, organizationId);
+
+    expect(getUserVisibleSurveyWhere).toHaveBeenCalledWith(userId, organizationId);
+    expect(prisma.survey.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          workspaceId,
+          status: { not: "completed" },
+          archivedAt: null,
+          AND: [
+            {
+              OR: [
+                {
+                  visibility: "workspace",
+                  OR: [
+                    { visibilityPending: false },
+                    { visibilityProjectedVersion: { lt: 0 }, visibilityVersion: 0 },
+                  ],
+                },
+                { ownerId: userId },
+              ],
+            },
+          ],
+        },
+      })
+    );
+  });
+
   test("should throw DatabaseError on Prisma known request error", async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("Database connection error", {
       code: "P2002",
@@ -130,7 +184,7 @@ describe("getSurveys", () => {
 
     vi.mocked(prisma.survey.findMany).mockRejectedValueOnce(prismaError);
 
-    await expect(getSurveys(workspaceId, {})).rejects.toThrow(DatabaseError);
+    await expect(getSurveys(workspaceId, userId, organizationId)).rejects.toThrow(DatabaseError);
     expect(logger.error).toHaveBeenCalledWith({ error: prismaError }, "getSurveys: Could not fetch surveys");
     // React cache is already mocked globally - no need to check it here
   });
@@ -140,7 +194,7 @@ describe("getSurveys", () => {
 
     vi.mocked(prisma.survey.findMany).mockRejectedValueOnce(genericError);
 
-    await expect(getSurveys(workspaceId, {})).rejects.toThrow(genericError);
+    await expect(getSurveys(workspaceId, userId, organizationId)).rejects.toThrow(genericError);
     expect(logger.error).not.toHaveBeenCalled();
     // React cache is already mocked globally - no need to check it here
   });

@@ -33,6 +33,7 @@ import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
 import { getSurveyAuth } from "@/modules/survey/lib/survey-auth";
 import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
 import { SURVEY_SCHEDULING_CONFIG } from "@/modules/survey/scheduling/lib/constants";
+import { getSurveyVisibilityViewer } from "@/modules/survey/visibility/lib/gate";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { SurveyEditor } from "./components/survey-editor";
 import { getUserLocale } from "./lib/user";
@@ -128,6 +129,11 @@ export const SurveyEditorPage = async (props: {
 
   const isCxMode = searchParams.mode === "cx";
   const publicDomain = getPublicDomain();
+  const { surveyVisibilityGate, visibility, surveyAccess, ownerName } = await getSurveyVisibilityViewer(
+    survey,
+    session.user.id,
+    workspaceWithTeamIds.organizationId
+  );
 
   return (
     <SurveyEditor
@@ -160,6 +166,10 @@ export const SurveyEditorPage = async (props: {
       isExternalUrlsAllowed={isExternalUrlsAllowed}
       publicDomain={publicDomain}
       enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
+      surveyVisibilityGate={surveyVisibilityGate}
+      visibility={visibility}
+      surveyAccess={surveyAccess}
+      ownerName={ownerName}
     />
   );
 };
