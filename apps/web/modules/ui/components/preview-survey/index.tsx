@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import { getDeclaredEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
+import { resolveOverlayAppearance } from "@formbricks/types/overlay";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurvey, TSurveyLanguage, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -89,7 +90,6 @@ export const PreviewSurvey = ({
   const { workspaceOverwrites } = survey || {};
 
   const { placement: surveyPlacement } = workspaceOverwrites || {};
-  const { overlay: surveyOverlay } = workspaceOverwrites || {};
   const { clickOutsideClose: surveyClickOutsideClose } = workspaceOverwrites || {};
 
   // Placement mirrors with the previewed language, exactly as the shipped widget does — see
@@ -138,7 +138,11 @@ export const PreviewSurvey = ({
     surveyPlacement || workspace.placement,
     isRTLLanguage(jsSurvey, activeLanguageCode) ? "rtl" : "ltr"
   );
-  const overlay = surveyOverlay ?? workspace.overlay;
+  const {
+    overlay,
+    color: overlayColor,
+    opacity: overlayOpacity,
+  } = resolveOverlayAppearance(workspaceOverwrites, workspace);
   const clickOutsideClose = surveyClickOutsideClose ?? workspace.clickOutsideClose;
 
   const styling: TSurveyStyling | TWorkspaceStyling = useMemo(() => {
@@ -338,6 +342,8 @@ export const PreviewSurvey = ({
                     placement={placement}
                     previewMode="mobile"
                     overlay={overlay}
+                    overlayColor={overlayColor}
+                    overlayOpacity={overlayOpacity}
                     clickOutsideClose={clickOutsideClose}
                     borderRadius={styling?.roundness ?? 8}
                     background={styling?.cardBackgroundColor?.light}>
@@ -473,6 +479,8 @@ export const PreviewSurvey = ({
                   placement={placement}
                   clickOutsideClose={clickOutsideClose}
                   overlay={overlay}
+                  overlayColor={overlayColor}
+                  overlayOpacity={overlayOpacity}
                   previewMode="desktop"
                   borderRadius={styling.roundness ?? 8}
                   background={styling.cardBackgroundColor?.light}>

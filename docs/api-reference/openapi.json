@@ -405,6 +405,25 @@
                                 "example": "Start from scratch",
                                 "type": "string"
                               },
+                              "overlayAppearance": {
+                                "description": "Custom overlay color and opacity for modal surveys, already resolved from the survey and workspace. Omitted when neither is set; a null value means the preset for the overlay applies.",
+                                "properties": {
+                                  "color": {
+                                    "example": "#334155",
+                                    "nullable": true,
+                                    "pattern": "^#(?:[A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$",
+                                    "type": "string"
+                                  },
+                                  "opacity": {
+                                    "example": 80,
+                                    "maximum": 100,
+                                    "minimum": 10,
+                                    "nullable": true,
+                                    "type": "integer"
+                                  }
+                                },
+                                "type": "object"
+                              },
                               "questions": {
                                 "items": {
                                   "properties": {

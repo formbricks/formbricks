@@ -3,6 +3,7 @@ import { type MutableRef, useEffect, useRef } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TOverlay, type TPlacement } from "@formbricks/types/common";
 import { type TSurveyCardRect } from "@formbricks/types/formbricks-surveys";
+import { type TOverlayAppearance, getOverlayBackground } from "@formbricks/types/overlay";
 import { isPlainEscape } from "@/lib/keyboard";
 import { ensureLiveRegion } from "@/lib/live-region";
 import { SURVEY_INSTRUCTIONS_ID, getSurveyHeadingName } from "@/lib/survey-page";
@@ -200,13 +201,25 @@ const getModalLayerClass = (isModal: boolean, hasOverlay: boolean): string =>
     isModal && "fixed inset-0 z-999999 flex items-end"
   );
 
-// Only a modal survey paints a backdrop, and the two overlay settings are mutually exclusive, so at
-// most one class can ever apply.
-const getOverlayBackdropClass = (isModal: boolean, overlay: TOverlay): string => {
-  if (!isModal) return "";
+// Only a modal survey paints a backdrop (the inline path returns before this is used), and the two
+// overlay settings are mutually exclusive, so at most one class can ever apply.
+const getOverlayBackdropClass = (overlay: TOverlay): string => {
   if (overlay === "dark") return "bg-slate-700/80";
   if (overlay === "light") return "bg-slate-400/50";
   return "";
+};
+
+// A custom overlay drops the preset class, because the renderer's utilities are `!important` under
+// #fbjs and would beat the inline colour. Not the CSS `opacity` property: the dialog is a child of
+// this backdrop and would fade with it. Only the paint changes; everything keyed on `overlay` stays.
+const getOverlayBackdrop = (
+  overlay: TOverlay,
+  appearance: TOverlayAppearance | null | undefined
+): { className: string; style?: { backgroundColor: string } } => {
+  const backgroundColor = getOverlayBackground({ overlay, ...appearance });
+  if (backgroundColor) return { className: "", style: { backgroundColor } };
+
+  return { className: getOverlayBackdropClass(overlay) };
 };
 
 const getPlacementStyle = (placement: TPlacement): string => {
@@ -230,6 +243,7 @@ interface SurveyContainerProps {
   mode: "modal" | "inline";
   placement?: TPlacement;
   overlay?: TOverlay;
+  overlayAppearance?: TOverlayAppearance | null;
   children: ComponentChildren;
   onClose?: () => void;
   clickOutside?: boolean;
@@ -253,6 +267,7 @@ export function SurveyContainer({
   mode,
   placement = "bottomRight",
   overlay = "none",
+  overlayAppearance,
   children,
   onClose,
   clickOutside,
@@ -369,6 +384,8 @@ export function SurveyContainer({
     );
   }
 
+  const backdrop = getOverlayBackdrop(overlay, overlayAppearance);
+
   return (
     <div id="fbjs" className="formbricks-form" dir={dir} lang={lang ?? undefined}>
       <div
@@ -377,10 +394,8 @@ export function SurveyContainer({
         aria-live="polite"
         className={getModalLayerClass(isModal, hasOverlay)}>
         <div
-          className={cn(
-            "relative h-full w-full transition-all duration-500 ease-in-out",
-            getOverlayBackdropClass(isModal, overlay)
-          )}>
+          className={cn("relative h-full w-full transition-all duration-500 ease-in-out", backdrop.className)}
+          style={backdrop.style}>
           <div
             ref={modalRef}
             role="dialog"

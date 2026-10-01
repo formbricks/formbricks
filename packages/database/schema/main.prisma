@@ -641,6 +641,9 @@ model Workspace {
   placement                   WidgetPlacement              @default(bottomRight)
   clickOutsideClose           Boolean                      @default(true)
   overlay                     SurveyOverlay                @default(none)
+  /// Custom overlay colour (hex, no alpha) and opacity (10-100%). null = the preset for `overlay`.
+  overlayColor                String?
+  overlayOpacity              Int?
   languages                   Language[]
   embeddedData                EmbeddedData[]
   /// [Logo]

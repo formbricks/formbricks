@@ -542,3 +542,87 @@ describe("legacy Embedded Data shape on the wire (ENG-1838)", () => {
     expect(surveySelect.hiddenFields).toBe(true);
   });
 });
+
+/**
+ * ENG-3313: the custom overlay rides inside each survey object, because every SDK forwards the raw
+ * survey JSON to `renderSurvey`. `workspaceSettings` is left as it was, so this is the only place the
+ * new values reach the renderer.
+ */
+describe("custom overlay appearance on the wire (ENG-3313)", () => {
+  test("a preset overlay carries no overlayAppearance key", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      overlay: "dark",
+      overlayColor: null,
+      overlayOpacity: null,
+    } as never);
+
+    const [survey] = (await getWorkspaceStateData(workspaceId)).surveys;
+
+    expect(survey).not.toHaveProperty("overlayAppearance");
+  });
+
+  test.each([
+    ["no overlay with a leftover colour", { overlay: "none", overlayColor: "#ff0000", overlayOpacity: 40 }],
+    ["a stored colour that does not parse", { overlay: "dark", overlayColor: "red", overlayOpacity: null }],
+  ])("%s carries no overlayAppearance key", async (_, overlayFields) => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      ...overlayFields,
+    } as never);
+
+    const [survey] = (await getWorkspaceStateData(workspaceId)).surveys;
+
+    expect(survey).not.toHaveProperty("overlayAppearance");
+  });
+
+  test("a survey that does not override the overlay gets the workspace's custom values", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      overlay: "dark",
+      overlayColor: "#ff0000",
+      overlayOpacity: 40,
+      surveys: [{ ...mockWorkspaceData.surveys[0], workspaceOverwrites: { placement: "center" } }],
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+
+    expect(result.surveys[0].overlayAppearance).toEqual({ color: "#ff0000", opacity: 40 });
+    // The SDK still resolves the enum from here, so it must not change shape.
+    expect(result.workspace.workspaceSettings).not.toHaveProperty("overlayColor");
+    expect(result.workspace.workspaceSettings).not.toHaveProperty("overlayOpacity");
+
+    const [call] = vi.mocked(prisma.workspace.findUnique).mock.calls;
+    const { select } = call[0] as { select: Record<string, unknown> };
+    expect(select.overlayColor).toBe(true);
+    expect(select.overlayOpacity).toBe(true);
+  });
+
+  test("a survey that overrides the overlay uses its own values, never the workspace's", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      overlay: "dark",
+      overlayColor: "#ff0000",
+      overlayOpacity: 40,
+      surveys: [
+        {
+          ...mockWorkspaceData.surveys[0],
+          id: "custom-survey",
+          workspaceOverwrites: { overlay: "light", overlayColor: null, overlayOpacity: 25 },
+        },
+        {
+          ...mockWorkspaceData.surveys[0],
+          id: "preset-survey",
+          workspaceOverwrites: { overlay: "light" },
+        },
+      ],
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+    const byId = Object.fromEntries(result.surveys.map((survey) => [survey.id, survey]));
+
+    expect(byId["custom-survey"].overlayAppearance).toEqual({ color: null, opacity: 25 });
+    // Overriding the overlay with a preset drops the workspace's custom colour along with it.
+    expect(byId["preset-survey"]).not.toHaveProperty("overlayAppearance");
+  });
+});

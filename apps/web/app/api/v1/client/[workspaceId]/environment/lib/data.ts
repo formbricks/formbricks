@@ -10,6 +10,7 @@ import {
   TJsWorkspaceStateWorkspaceSetting,
 } from "@formbricks/types/js";
 import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
+import { isCustomOverlay, resolveOverlayAppearance } from "@formbricks/types/overlay";
 import { type TBaseFilters, buildSurveyInteractionRefreshMap } from "@formbricks/types/segment";
 import { selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
@@ -91,6 +92,8 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
         recontactDays: true,
         clickOutsideClose: true,
         overlay: true,
+        overlayColor: true,
+        overlayOpacity: true,
         placement: true,
         inAppSurveyBranding: true,
         styling: true,
@@ -286,11 +289,18 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
       // targeting — otherwise it's dead weight on every survey in the response.
       const interactionRefresh = hasAny ? refreshBySurveyId[survey.id] : undefined;
 
+      // Sent inside the survey object, not `workspaceSettings`: every SDK forwards the raw survey JSON
+      // to `renderSurvey`, so the renderer gets it with no SDK release. Omitted for a preset overlay.
+      const overlayAppearance = resolveOverlayAppearance(survey.workspaceOverwrites, workspaceData);
+
       return {
         ...transformed,
         name: PUBLIC_API_SURVEY_NAME_PLACEHOLDER,
         segment: sanitizedSegment,
         ...(interactionRefresh ? { interactionRefresh } : {}),
+        ...(isCustomOverlay(overlayAppearance)
+          ? { overlayAppearance: { color: overlayAppearance.color, opacity: overlayAppearance.opacity } }
+          : {}),
       };
     });
 
