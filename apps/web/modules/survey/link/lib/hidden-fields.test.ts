@@ -3,7 +3,7 @@ import {
   LINK_SURVEY_SYSTEM_PARAM_KEYS,
   RESERVED_DECLARED_FIELD_NAMES,
 } from "@formbricks/types/surveys/validation";
-import { getHiddenFieldsFromSearchParams, warnOnMissingIngestRows } from "./hidden-fields";
+import { getHiddenFieldsFromSearchParams, warnOnMissingEmbeddedDataJoin } from "./hidden-fields";
 
 describe("getHiddenFieldsFromSearchParams", () => {
   test("reads params that match a declared field exactly", () => {
@@ -231,7 +231,7 @@ describe("getHiddenFieldsFromSearchParams", () => {
   });
 });
 
-describe("warnOnMissingIngestRows", () => {
+describe("warnOnMissingEmbeddedDataJoin", () => {
   let warnSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
@@ -247,26 +247,20 @@ describe("warnOnMissingIngestRows", () => {
   test("stays quiet during SSR", () => {
     vi.unstubAllGlobals();
 
-    warnOnMissingIngestRows([], ["plan"]);
+    warnOnMissingEmbeddedDataJoin(false);
 
     expect(warnSpy).not.toHaveBeenCalled();
   });
 
-  test("warns when the legacy column declares fields but no ingested rows exist — the dropped-join canary", () => {
-    warnOnMissingIngestRows([], ["plan", "language"]);
+  test("warns when the survey was read without its embeddedFields — the dropped-join canary", () => {
+    warnOnMissingEmbeddedDataJoin(false);
 
     expect(warnSpy).toHaveBeenCalledTimes(1);
-    expect(warnSpy.mock.calls[0][0]).toContain("no ingested Embedded Data rows");
+    expect(warnSpy.mock.calls[0][0]).toContain("without its Embedded Data fields");
   });
 
-  test("stays quiet on a healthy survey (rows present)", () => {
-    warnOnMissingIngestRows(["plan"], ["plan"]);
-
-    expect(warnSpy).not.toHaveBeenCalled();
-  });
-
-  test("stays quiet on a survey that declares nothing at all", () => {
-    warnOnMissingIngestRows([], []);
+  test("stays quiet on a survey read with the join", () => {
+    warnOnMissingEmbeddedDataJoin(true);
 
     expect(warnSpy).not.toHaveBeenCalled();
   });

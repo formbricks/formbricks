@@ -6,7 +6,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
-import { getDeclaredEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import { resolveOverlayAppearance } from "@formbricks/types/overlay";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurvey, TSurveyLanguage, TSurveyStyling } from "@formbricks/types/surveys/types";
@@ -58,25 +57,11 @@ export const PreviewSurvey = ({
   isSpamProtectionAllowed,
   publicDomain,
 }: PreviewSurveyProps) => {
-  // ENG-1837: the preview is an authoring surface — the Variables and Hidden Fields cards are the
-  // live source of truth, and the saved EmbeddedData rows only catch up on save. Overriding the
-  // inlined definitions with the card-derived ones is what makes a rename or a new field show up in
-  // the preview's recall and logic on the next render, without a reload.
-  const previewSurvey = useMemo(
-    () => ({
-      ...survey,
-      embeddedFields: getDeclaredEmbeddedFields({
-        variables: survey.variables,
-        hiddenFields: survey.hiddenFields,
-      }),
-    }),
-    [survey]
-  );
-  const jsSurvey = useMemo(() => toJsWorkspaceStateSurvey(previewSurvey), [previewSurvey]);
-  const jsLinkSurvey = useMemo(
-    () => toJsWorkspaceStateSurvey({ ...previewSurvey, type: "link" }),
-    [previewSurvey]
-  );
+  // Both callers hand over a survey that already carries its `embeddedFields`: the editor's working
+  // copy is rows-native (ENG-2628), and the templates gallery builds its never-written survey through
+  // `getTemplatePreviewSurvey`, which adapts the preset's legacy keys at that boundary (ENG-2404).
+  const jsSurvey = useMemo(() => toJsWorkspaceStateSurvey(survey), [survey]);
+  const jsLinkSurvey = useMemo(() => toJsWorkspaceStateSurvey({ ...survey, type: "link" }), [survey]);
 
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
