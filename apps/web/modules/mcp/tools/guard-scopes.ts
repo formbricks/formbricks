@@ -165,7 +165,7 @@ type ScopedToolConfig<
  * A mutating tool also declares `audit`, and a refusal on it is written to the audit log as a failed
  * attempt before the 403 goes back (ENG-2872).
  *
- * Adding a tool or a scope family: docs/development/technical-handbook/mcp-server.mdx ("Adding A Tool").
+ * Adding a tool or a scope family: docs/development/technical-handbook/mcp-server.mdx ("Adding a tool").
  */
 export function registerScopedTool<
   InputSchema extends StandardSchemaWithJSON,
