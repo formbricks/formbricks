@@ -101,6 +101,19 @@ const candidateRow = (row: Omit<TEmbeddedData, "createdAt" | "updatedAt">): TEmb
   updatedAt: new Date(),
 });
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+/** The ids a survey's structure claims: its blocks, the questions inside them, and its endings. */
+const structureIdsOf = (blocks: readonly unknown[], endings: readonly unknown[]): string[] => {
+  const idOf = (value: unknown): string[] =>
+    isRecord(value) && typeof value.id === "string" ? [value.id] : [];
+  const elementsOf = (block: unknown): unknown[] =>
+    isRecord(block) && Array.isArray(block.elements) ? block.elements : [];
+
+  return [...blocks.flatMap(idOf), ...blocks.flatMap(elementsOf).flatMap(idOf), ...endings.flatMap(idOf)];
+};
+
 /**
  * Whether a Prisma error is the unique violation on `@@unique([workspaceId, key])`.
  *
@@ -410,6 +423,30 @@ export const promoteEmbeddedDataToShared = async (
     });
     if (clash) {
       throw new InvalidInputError("Key matches the name of another variable in this survey");
+    }
+
+    // The key also joins the one namespace v3 checks a stored survey against, case-insensitively:
+    // the other fields' storage keys (a passed-in field's is its name) and the ids of blocks,
+    // questions and endings. A key one of those already uses makes v3 refuse the stored survey, so
+    // every v3 and MCP PATCH of it fails until something is renamed — and v1 and the editor let an
+    // existing clash through as grandfathered, so nothing later would catch it.
+    const [survey, otherLinks] = await Promise.all([
+      prisma.survey.findFirst({
+        where: { id: existing.surveyId, workspaceId },
+        select: { blocks: true, endings: true },
+      }),
+      prisma.surveyEmbeddedData.findMany({
+        where: { workspaceId, surveyId: existing.surveyId, embeddedDataId: { not: id } },
+        select: { storageKey: true },
+      }),
+    ]);
+    const key = input.key.toLowerCase();
+    const taken = [
+      ...otherLinks.map((link) => link.storageKey),
+      ...structureIdsOf(survey?.blocks ?? [], survey?.endings ?? []),
+    ];
+    if (taken.some((name) => name.toLowerCase() === key)) {
+      throw new InvalidInputError("Key matches a passed-in field, question, block or ending in this survey");
     }
   }
 

@@ -4329,7 +4329,10 @@ paths:
       operationId: getFeedbackRecordV3
       summary: Get a feedback record
       description: |
-        Returns one feedback record by id. The gateway looks the record up to learn its dataset and
+        Returns one feedback record by id, with its read-only assignment in the active directory
+        taxonomy. The assignment reflects the current visible path in the active run; editing a record
+        does not reclassify it until another run. `taxonomy` is null if its lookup is unavailable.
+        The gateway looks the record up to learn its dataset and
         authorizes against that, so no `tenant_id` is sent. Requires an API key with **read**
         permission (or higher) on a workspace the record's dataset is assigned to.
 
@@ -4346,7 +4349,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FeedbackRecord'
+                $ref: '#/components/schemas/FeedbackRecordDetail'
               examples:
                 enriched:
                   summary: A text record after enrichment
@@ -4372,6 +4375,18 @@ paths:
                       - anger
                     value_text_translated: Die Warteschlangen am Nordtor waren viel zu lang.
                     translation_lang_key: de
+                    taxonomy:
+                      status: classified
+                      run_id: 018e1234-5678-7abc-8ef0-123456789abe
+                      path:
+                        - id: 018e1234-5678-7abc-8ef0-123456789abf
+                          label: Queueing
+                          level: 1
+                          node_type: branch
+                        - id: 018e1234-5678-7abc-8ef0-123456789ac0
+                          label: North gate
+                          level: 2
+                          node_type: leaf
         '400':
           $ref: '#/components/responses/FeedbackRecordsBadRequest'
         '401':
@@ -9097,9 +9112,53 @@ components:
         - fear
         - surprise
         - disgust
+    FeedbackRecordTaxonomy:
+      type: object
+      description: Read-time view of the record's membership in the active directory taxonomy.
+      additionalProperties: false
+      required:
+        - status
+        - run_id
+        - path
+      properties:
+        status:
+          type: string
+          enum:
+            - classified
+            - unclassified
+            - no_active_taxonomy
+        run_id:
+          oneOf:
+            - type: string
+              format: uuid
+            - type: 'null'
+        path:
+          type: array
+          description: Currently visible non-root nodes in root-to-leaf order; empty unless classified.
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - id
+              - label
+              - level
+              - node_type
+            properties:
+              id:
+                type: string
+                format: uuid
+              label:
+                type: string
+              level:
+                type: integer
+              node_type:
+                type: string
+                enum:
+                  - branch
+                  - leaf
     FeedbackRecord:
       type: object
-      description: 'One piece of feedback in the normalized Feedback Record shape. Field names are `snake_case`: the payload is the Hub''s, passed through the API gateway unchanged. Optional members are **absent** (not `null`) when unset.'
+      description: 'One piece of feedback in the normalized Feedback Record shape. Field names are `snake_case`: the payload is the Hub''s, passed through the API gateway unchanged. Optional members are **absent** (not `null`) when unset, except `taxonomy` on the get-one response, which is null if its lookup fails.'
       additionalProperties: false
       required:
         - id
@@ -9112,6 +9171,11 @@ components:
         - submission_id
         - tenant_id
       properties:
+        taxonomy:
+          description: Read-only active directory taxonomy assignment. Returned only by the get-one operation; null if the lookup is temporarily unavailable.
+          oneOf:
+            - $ref: '#/components/schemas/FeedbackRecordTaxonomy'
+            - type: 'null'
         id:
           type: string
           format: uuid
@@ -9473,6 +9537,12 @@ components:
         next_cursor:
           type: string
           description: Opaque keyset cursor for the next page. Present only when a full page was returned and there may be more results. Pass it back unchanged as `cursor`.
+    FeedbackRecordDetail:
+      allOf:
+        - $ref: '#/components/schemas/FeedbackRecord'
+        - type: object
+          required:
+            - taxonomy
     UpdateFeedbackRecordRequest:
       type: object
       description: A partial update. Only the members sent are changed; an empty body is accepted and changes nothing. Provenance (`tenant_id`, `source_*`, `field_*`, `submission_id`, `collected_at`) is immutable.

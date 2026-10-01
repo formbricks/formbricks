@@ -1,5 +1,5 @@
 import { TFunction } from "i18next";
-import type { FeedbackRecordData } from "@/modules/hub/types";
+import type { FeedbackRecordData, FeedbackRecordTaxonomy } from "@/modules/hub/types";
 import { SOURCE_TYPE_PRESET_OPTIONS, type TFeedbackRecordFormValues } from "./types";
 
 export interface ResolvedFeedbackText {
@@ -8,6 +8,24 @@ export interface ResolvedFeedbackText {
   isTranslated: boolean; // non-empty translation that differs from the original
   langKey: string | null; // set only when isTranslated
 }
+
+export const getTaxonomyAssignmentDisplay = (
+  taxonomy: FeedbackRecordTaxonomy | null
+): { path: string | null; status: FeedbackRecordTaxonomy["status"] | "unavailable" } => {
+  if (taxonomy?.status === "classified" && taxonomy.path.length > 0) {
+    return { path: taxonomy.path.map((node) => node.label).join(" › "), status: "classified" };
+  }
+
+  if (taxonomy?.status === "no_active_taxonomy") {
+    return { path: null, status: "no_active_taxonomy" };
+  }
+
+  if (taxonomy?.status === "unclassified") {
+    return { path: null, status: "unclassified" };
+  }
+
+  return { path: null, status: "unavailable" };
+};
 
 // Pick which feedback text to show (ENG-1253): the translation when usable, else the original.
 export const resolveFeedbackDisplayText = (
