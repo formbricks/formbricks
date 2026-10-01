@@ -57,7 +57,8 @@ delete require the `:write` scope. Everything below is offered on the consent sc
 
 A response is someone's submitted answers, so grant `responses:read` deliberately — it is respondent
 data, which `surveys:read` never exposes. An integration you connected before these scopes existed
-keeps working, and asks you to approve them the next time it signs in.
+keeps working with the access it already has. If it requests the scopes the server advertises, as MCP
+clients like Claude Code do, it asks you to approve the response scopes the next time it signs in.
 
 Scope groups are independent — a client can be granted feedback-record access without survey access, or
 the other way around. `list_workspaces` is available to any read scope, since every other tool needs a
