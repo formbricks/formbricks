@@ -203,7 +203,9 @@ upgrade workflow rather than the one-click updater.
 
 ### Bundled Cube image (action required for some deployments)
 
-The bundled Cube service now runs `ghcr.io/formbricks/cube:1.7.47-1` instead of `cubejs/cube:v1.6.6`. It
+From 6.0.2, the bundled Cube service runs `ghcr.io/formbricks/cube:1.7.47-1` instead of `cubejs/cube:v1.6.6`;
+6.0.0 and 6.0.1 still run the upstream image. 5.4.5 makes the same change (see
+[Bundled Cube image update](#bundled-cube-image-update-action-required-for-some-deployments)). The new image
 contains only the Cube 1.7.47 API server and its Postgres driver on a distroless Node 24 runtime, without the
 shell, Python and Cube Store that made image scanners report critical CVEs against the upstream image.
 Cube 1.7 returns every numeric measure and dimension as a JSON string. Formbricks converts number-typed members
@@ -218,9 +220,10 @@ strings for them.
   `CUBEJS_*` overrides when you merge the block.
 
   ```bash
+  version=6.0.2 # the release you are upgrading to, for example 5.4.5
   cp -p docker-compose.yml docker-compose.yml.before-cube-image
   curl -fsSL -o docker-compose.release.yml \
-    https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
+    "https://raw.githubusercontent.com/formbricks/formbricks/${version}/docker/docker-compose.yml"
   # Copy the release's `cube` service into docker-compose.yml, then:
   docker compose config >/dev/null
   docker compose pull cube
@@ -266,6 +269,13 @@ sessions has to fetch a fresh token — see
 The bundled Valkey image moves from an amd64-only 8.1.1 image to the native amd64/arm64 Valkey 8.1.9 Alpine
 image. Fresh Docker and Helm installations receive it automatically. Existing installations that retain an
 older Compose file or explicitly reuse the previous Helm digest need the one-time update below.
+
+### Bundled Cube image update (action required for some deployments)
+
+5.4.5 makes the same Cube change as 6.0.2: the bundled service moves from `cubejs/cube:v1.6.6` to
+`ghcr.io/formbricks/cube:1.7.47-1`, and Helm runs it with a read-only root filesystem. Follow
+[Bundled Cube image](#bundled-cube-image-action-required-for-some-deployments) with `version=5.4.5`, so the
+`cube` service you copy comes from the 5.4.5 Compose file rather than a 6.x one.
 
 ### Envoy Gateway 1.8.4 CRD Upgrade
 
