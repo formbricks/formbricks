@@ -53,3 +53,14 @@ updates:
     labels:
       - dependencies
       - javascript
+
+  # The dev container's features, pinned by digest in .devcontainer/devcontainer-lock.json. Features run as
+  # root at build time and docker-in-docker runs privileged, so they should track the maintained major.
+  - package-ecosystem: devcontainers
+    directory: "/"
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "chore(devcontainer)"
+    labels:
+      - dependencies
