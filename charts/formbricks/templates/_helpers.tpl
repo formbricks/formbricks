@@ -300,6 +300,23 @@ env:
 {{- end }}
 
 {{/*
+"true" when deployment.containerSecurityContext makes the root filesystem read-only, otherwise empty. The web
+Deployment and the migration Job run the same image under that context, so both mount writable paths on it.
+*/}}
+{{- define "formbricks.readOnlyRootFilesystem" -}}
+{{- if dig "readOnlyRootFilesystem" false (default dict .Values.deployment.containerSecurityContext) -}}
+true
+{{- end -}}
+{{- end }}
+
+{{/*
+Directory the Prisma migration runner stages migrations in. It must be writable wherever migrations run.
+*/}}
+{{- define "formbricks.prismaMigrationsStagingPath" -}}
+/home/nextjs/packages/database/.prisma-migrations
+{{- end }}
+
+{{/*
 Formbricks application image reference. A configured digest takes precedence over the tag.
 */}}
 {{- define "formbricks.deploymentImage" -}}

@@ -45,11 +45,23 @@ spec:
       securityContext:
         {{- toYaml .Values.deployment.securityContext | nindent 8 }}
       {{- end }}
+      {{- /* Both containers run the web image under deployment.containerSecurityContext. With a read-only
+      root, the migration runner writes only to /tmp (jiti's cache for prisma.config.ts) and its staging
+      directory. wait-for-database only opens a TCP socket, so it needs no mounts. */}}
+      {{- $writableMounts := dict }}
+      {{- if include "formbricks.readOnlyRootFilesystem" . }}
+      {{- $_ := set $writableMounts "writable-tmp" "/tmp" }}
+      {{- $_ := set $writableMounts "writable-prisma-migrations" (include "formbricks.prismaMigrationsStagingPath" .) }}
+      {{- end }}
       {{- if .Values.migration.waitForDatabase.enabled }}
       initContainers:
         - name: wait-for-database
           image: {{ include "formbricks.deploymentImage" . }}
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          {{- with .Values.deployment.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           command:
             - node
             - packages/database/dist/scripts/wait-for-database.js
@@ -70,6 +82,10 @@ spec:
         - name: migration
           image: {{ include "formbricks.deploymentImage" . }}
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          {{- with .Values.deployment.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           command:
             - node
             - packages/database/dist/scripts/apply-migrations.js
@@ -78,4 +94,18 @@ spec:
           resources:
             {{- toYaml .Values.migration.resources | nindent 12 }}
           {{- end }}
+          {{- if $writableMounts }}
+          volumeMounts:
+            {{- range $name, $path := $writableMounts }}
+            - name: {{ $name }}
+              mountPath: {{ $path }}
+            {{- end }}
+          {{- end }}
+      {{- if $writableMounts }}
+      volumes:
+        {{- range $name, $_ := $writableMounts }}
+        - name: {{ $name }}
+          emptyDir: {}
+        {{- end }}
+      {{- end }}
 {{- end }}
