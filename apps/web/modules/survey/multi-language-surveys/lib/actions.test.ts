@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { getSurveysUsingGivenLanguage } from "@/lib/language/service";
+import { deleteLanguage, getSurveysUsingGivenLanguage } from "@/lib/language/service";
 import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromLanguageId } from "@/lib/utils/helper";
-import { getSurveysUsingGivenLanguageAction } from "./actions";
+import { deleteLanguageAction, getSurveysUsingGivenLanguageAction } from "./actions";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/utils/action-client", () => ({
@@ -52,5 +52,23 @@ describe("getSurveysUsingGivenLanguageAction (ENG-3282)", () => {
     expect(result).toEqual(["Visible survey"]);
     expect(getUserVisibleSurveyWhere).toHaveBeenCalledWith("user_1", "org_1");
     expect(getSurveysUsingGivenLanguage).toHaveBeenCalledWith("lang_1", visibleSurveyWhere);
+  });
+});
+
+describe("deleteLanguageAction (ENG-3282)", () => {
+  test("passes the caller's visibility clause, so an in-use refusal names only surveys they see", async () => {
+    const visibleSurveyWhere = { OR: [{ visibility: "workspace" as const }, { ownerId: "user_1" }] };
+    vi.mocked(getUserVisibleSurveyWhere).mockResolvedValue(visibleSurveyWhere);
+    vi.mocked(deleteLanguage).mockResolvedValue({ id: "lang_1" } as Awaited<
+      ReturnType<typeof deleteLanguage>
+    >);
+
+    await (deleteLanguageAction as unknown as (args: object) => Promise<unknown>)({
+      ctx: { user: { id: "user_1" }, auditLoggingCtx: {} },
+      parsedInput: { languageId: "lang_1", workspaceId: "ws_1" },
+    });
+
+    expect(getUserVisibleSurveyWhere).toHaveBeenCalledWith("user_1", "org_1");
+    expect(deleteLanguage).toHaveBeenCalledWith("lang_1", "ws_1", visibleSurveyWhere);
   });
 });

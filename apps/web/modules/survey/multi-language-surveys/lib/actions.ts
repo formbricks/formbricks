@@ -77,7 +77,12 @@ export const deleteLanguageAction = authenticatedActionClient.inputSchema(ZDelet
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.languageId = parsedInput.languageId;
-    const result = await deleteLanguage(parsedInput.languageId, parsedInput.workspaceId);
+    // ENG-3282: the in-use refusal names only the surveys this caller may see.
+    const result = await deleteLanguage(
+      parsedInput.languageId,
+      parsedInput.workspaceId,
+      await getUserVisibleSurveyWhere(ctx.user.id, organizationId)
+    );
     ctx.auditLoggingCtx.oldObject = result;
     return result;
   })
