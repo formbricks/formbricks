@@ -76,6 +76,27 @@ Use this for **claude.ai** and **Claude Desktop**, where Formbricks is added as 
     Code** instead — it runs locally.
 </Warning>
 
+## ChatGPT (connectors)
+
+Use this to add Formbricks to **ChatGPT** as a custom connector. Where you add it depends on your
+ChatGPT plan and workspace settings — see OpenAI's
+[connector documentation](https://developers.openai.com/plugins/build/auth) for the current location.
+
+<Steps>
+  <Step title="Add the server URL">
+    Create a custom connector with the MCP URL `https://app.formbricks.com/api/mcp` and **OAuth**
+    authentication. Leave the client ID and secret blank — ChatGPT registers itself.
+  </Step>
+  <Step title="Approve access">
+    ChatGPT opens Formbricks in your browser. Sign in and **approve** the requested access.
+  </Step>
+</Steps>
+
+<Note>
+  Like the Claude apps, ChatGPT connects from OpenAI's servers, so the MCP URL must be a **public
+  HTTPS** address — not `localhost`.
+</Note>
+
 ## Codex
 
 <Steps>
@@ -131,10 +152,15 @@ periodically for safety.
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="claude.ai says it couldn't register / connect">
-    Custom connectors connect from Anthropic's cloud, which can't reach `localhost` or a private
+  <Accordion title="claude.ai or ChatGPT says it couldn't register / connect">
+    Custom connectors connect from the vendor's cloud, which can't reach `localhost` or a private
     network. Use a **public HTTPS** MCP URL (Formbricks Cloud, or a tunnel to a self-hosted instance),
     or connect a local server with **Claude Code** instead.
+
+    If registration fails with `400 invalid_redirect_uri`, the client asked to register a callback
+    Formbricks doesn't allow. Formbricks accepts local (`http://localhost`, `127.0.0.1`, `[::1]`)
+    callbacks and the exact claude.ai and ChatGPT callbacks. To allow another hosted client, a
+    self-hoster can add its exact callback with `MCP_DCR_ALLOWED_REDIRECT_URIS`.
   </Accordion>
   <Accordion title="invalid_client or a stale-registration error after reconnecting">
     The client cached a registration that no longer exists on the server (e.g. the server data was
