@@ -4,6 +4,33 @@ description: "Formbricks Self-hosted version migration"
 icon: "arrow-right"
 ---
 
+## v6.1
+
+### MCP response scopes (no action required)
+
+v6.1 adds MCP tools for survey responses, behind two new OAuth scopes: `responses:read` and
+`responses:write`. Responses carry respondents' answers, so these are separate scopes rather than part
+of `surveys:read` / `surveys:write`, and a client only gets them once a user approves them.
+
+Two data migrations set this up on an existing instance. Both apply automatically during the upgrade
+and are fast, since they touch only OAuth configuration rows:
+
+| Migration | What it does |
+| --- | --- |
+| `eng_2862_grant_responses_scopes` | Adds the two scopes to this instance's MCP resource (`${WEBAPP_URL}/api/mcp`), so the authorization server can grant them. |
+| `eng_3470_grant_responses_scopes_to_clients` | Lets already-registered MCP clients request them, mirroring what each client has today: `responses:read` for clients with a read scope, `responses:write` for clients with a write scope. A read-only client stays read-only. |
+
+What your users see: existing MCP integrations keep working with the access they already have. MCP
+clients discover the new scopes from the server's metadata, so when one next authorizes, the consent
+screen names the response scopes. Access to responses starts only once the user approves.
+
+<Note>
+  The client migration skips OAuth clients registered with consent skipped, which only the admin client
+  API can create. Those clients are authorized without a consent screen, so widening them would grant
+  respondent data with no prompt. If you created one and it should read or write responses, add the
+  scopes to it yourself.
+</Note>
+
 ## v6
 
 Formbricks v6 replaces the legacy authorization evaluator with SpiceDB, maintained by AuthZed. PostgreSQL
