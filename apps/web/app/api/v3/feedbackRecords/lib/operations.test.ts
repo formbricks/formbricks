@@ -255,7 +255,11 @@ describe("listV3FeedbackDatasets", () => {
 describe("listV3FeedbackRecords", () => {
   test("auto-resolves the single dataset as the Hub tenant and returns serialized records", async () => {
     vi.mocked(listFeedbackRecords).mockResolvedValue({
-      data: { data: [record], limit: 50, next_cursor: "next" },
+      data: {
+        data: [{ ...record, taxonomy: { status: "unclassified", run_id: "run-1", path: [] } }],
+        limit: 50,
+        next_cursor: "next",
+      },
       error: null,
     });
 
@@ -280,6 +284,8 @@ describe("listV3FeedbackRecords", () => {
     });
     expect(body.data[0].id).toBe(record.id);
     expect(body.data[0].value_text).toBe("Love it");
+    expect(body.data[0]).not.toHaveProperty("taxonomy");
+    expect(retrieveFeedbackRecord).not.toHaveBeenCalled();
   });
 
   // An empty list used to be ambiguous — a caller could not tell "this dataset has no matching records"
@@ -358,12 +364,52 @@ describe("getV3FeedbackRecord", () => {
   const getBase = { ...base, feedbackRecordId: record.id };
 
   test("returns the record when its tenant belongs to the workspace", async () => {
-    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({ data: record, error: null });
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
+      data: { ...record, taxonomy: { status: "no_active_taxonomy", run_id: null, path: [] } },
+      error: null,
+    });
 
     const response = await getV3FeedbackRecord(getBase);
 
     expect(response.status).toBe(200);
-    expect((await response.json()).data.id).toBe(record.id);
+    expect((await response.json()).data).toMatchObject({
+      id: record.id,
+      taxonomy: { status: "no_active_taxonomy", run_id: null, path: [] },
+    });
+    expect(retrieveFeedbackRecord).toHaveBeenCalledTimes(1);
+  });
+
+  test("returns the current classified path", async () => {
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
+      data: {
+        ...record,
+        taxonomy: {
+          status: "classified",
+          run_id: "run-1",
+          path: [{ id: "node-1", label: "Login", level: 1, node_type: "branch" }],
+        },
+      },
+      error: null,
+    });
+
+    const body = await (await getV3FeedbackRecord(getBase)).json();
+
+    expect(body.data.taxonomy).toEqual({
+      status: "classified",
+      run_id: "run-1",
+      path: [{ id: "node-1", label: "Login", level: 1, node_type: "branch" }],
+    });
+  });
+
+  test("distinguishes a record outside the active run", async () => {
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
+      data: { ...record, taxonomy: { status: "unclassified", run_id: "run-2", path: [] } },
+      error: null,
+    });
+
+    const body = await (await getV3FeedbackRecord(getBase)).json();
+
+    expect(body.data.taxonomy).toEqual({ status: "unclassified", run_id: "run-2", path: [] });
   });
 
   test("returns 403 (no existence oracle) when the record belongs to another tenant", async () => {
@@ -417,6 +463,28 @@ describe("getV3FeedbackRecord", () => {
     const response = await getV3FeedbackRecord(getBase);
 
     expect(response.status).toBe(502);
+  });
+
+  test("keeps an older Hub's record available with unavailable taxonomy", async () => {
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({ data: record, error: null });
+
+    const response = await getV3FeedbackRecord(getBase);
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).data.taxonomy).toBeNull();
+  });
+
+  test("keeps the record available when Hub's supplementary lookup failed", async () => {
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
+      data: { ...record, taxonomy: null },
+      error: null,
+    });
+
+    const response = await getV3FeedbackRecord(getBase);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.taxonomy).toBeNull();
   });
 
   test("rejects a record from another directory the workspace owns when a directory is named", async () => {

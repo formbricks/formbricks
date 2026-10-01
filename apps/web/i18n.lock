@@ -4238,6 +4238,9 @@ checksums:
     workspace/unify/taxonomy_ai_status_grouping: 33601d1cc55cfd13d3a08acc79a828fe
     workspace/unify/taxonomy_ai_status_naming: 781ce960788da11da906a971248cc561
     workspace/unify/taxonomy_ai_status_reading: 571119cfd9cb94ce9968fe1b88f60312
+    workspace/unify/taxonomy_assignment_no_active: d66f8d91a39864d7661baffb7760c3c7
+    workspace/unify/taxonomy_assignment_unavailable: a577f30f419b76ebb9f35a0d1c74f9fe
+    workspace/unify/taxonomy_assignment_unclassified: 42067d3248e25a0ba6e2bbf7cfce554c
     workspace/unify/taxonomy_collapse: d64b33ae34d2ff729b0232220dbd9a99
     workspace/unify/taxonomy_edit_keyword_aria: 930e27f51f2617cbe981f12f24991eb1
     workspace/unify/taxonomy_edit_mode: eee7f39ff90b18852afc1671f21fbaa9
