@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
 import { describe, expect, test } from "vitest";
+import * as yaml from "yaml";
 
 // Keeps every place that picks a Node.js version on the same major as `.nvmrc` (see ENG-1676,
 // ENG-2878). `.nvmrc` is the single source of truth; the rest drifted from it once already:
@@ -35,6 +36,17 @@ const listYaml = (...segments: string[]): string[][] => {
         .map((name) => [...segments, name])
     : [];
 };
+
+interface WorkflowStep {
+  name?: string;
+  uses?: unknown;
+  with?: Record<string, unknown>;
+}
+
+interface WorkflowFile {
+  jobs?: Record<string, { steps?: WorkflowStep[] }>;
+  runs?: { steps?: WorkflowStep[] };
+}
 
 const nvmrcVersion = read(".nvmrc").trim();
 const nodeMajor = /^v?(\d+)\.\d+\.\d+$/.exec(nvmrcVersion)?.[1];
@@ -74,21 +86,28 @@ describe("Node.js version alignment", () => {
         .flatMap((entry) => listYaml(".github", "actions", entry.name)),
     ];
     const offenders: string[] = [];
+    let setupNodeSteps = 0;
 
     for (const file of files) {
-      // Split into steps on "- name:"/"- uses:" boundaries; a setup-node step must carry its own
-      // node-version-file and never a literal node-version.
-      const steps = read(...file).split(/^\s*- (?=name:|uses:)/m);
+      // Workflows keep their steps under jobs.<id>.steps, composite actions under runs.steps. Parsing
+      // rather than pattern-matching the text also catches quoted scalars and flow-style mappings.
+      const doc = (yaml.parse(read(...file)) ?? {}) as WorkflowFile;
+      const steps = [
+        ...Object.values(doc.jobs ?? {}).flatMap((job) => job.steps ?? []),
+        ...(doc.runs?.steps ?? []),
+      ];
+
       for (const step of steps) {
-        if (!/uses:\s*actions\/setup-node@/.test(step)) continue;
-        if (!/node-version-file:\s*["']?\.nvmrc["']?\s*$/m.test(step) || /^\s*node-version:/m.test(step)) {
-          offenders.push(file.join("/"));
+        if (typeof step.uses !== "string" || !step.uses.startsWith("actions/setup-node@")) continue;
+        setupNodeSteps += 1;
+        if (step.with?.["node-version-file"] !== ".nvmrc" || step.with?.["node-version"] !== undefined) {
+          offenders.push(`${file.join("/")} (${step.name ?? step.uses})`);
         }
       }
     }
 
-    expect(files.length).toBeGreaterThan(0);
-
+    // Guards against the parse silently finding nothing (a moved directory, a renamed key).
+    expect(setupNodeSteps).toBeGreaterThan(0);
     expect(offenders).toEqual([]);
   });
 });
