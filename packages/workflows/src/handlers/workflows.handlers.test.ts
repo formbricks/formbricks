@@ -80,6 +80,7 @@ const readJson = async <T>(res: Response): Promise<T> => (await res.json()) as T
 const authorizeAllow = vi.fn<WorkflowApiContext["authorize"]>();
 const verifyTriggerSurvey = vi.fn<WorkflowApiContext["verifyTriggerSurvey"]>();
 const verifyRecipientsAllowed = vi.fn<WorkflowApiContext["verifyRecipientsAllowed"]>();
+const listUnreadableSurveyIds = vi.fn<WorkflowApiContext["listUnreadableSurveyIds"]>();
 const logger: WorkflowsLogger = { warn: vi.fn(), error: vi.fn() };
 
 const authorized: AuthorizedWorkspace = { workspaceId, organizationId: "cm9zr5org00000000000000000" };
@@ -92,6 +93,7 @@ const makeCtx = (overrides: Partial<WorkflowApiContext> = {}): WorkflowApiContex
   authorize: authorizeAllow,
   verifyTriggerSurvey,
   verifyRecipientsAllowed,
+  listUnreadableSurveyIds,
   ...overrides,
 });
 
@@ -106,6 +108,7 @@ beforeEach(() => {
   authorizeAllow.mockResolvedValue(authorized);
   verifyTriggerSurvey.mockResolvedValue({ surveyExists: true, missingEndingCardIds: [] });
   verifyRecipientsAllowed.mockResolvedValue({ disallowedEmails: [] });
+  listUnreadableSurveyIds.mockResolvedValue([]);
 });
 
 describe("get", () => {
@@ -1538,6 +1541,24 @@ describe("listRuns", () => {
 
     expect(res.status).toBe(403);
     expect(service.listWorkflowRuns).not.toHaveBeenCalled();
+    expect(listUnreadableSurveyIds).not.toHaveBeenCalled();
+  });
+
+  // ENG-3282: runs carry their trigger survey's response data, so they follow its visibility.
+  test("excludes runs of surveys the caller may not read in the query, with one lookup per page", async () => {
+    listUnreadableSurveyIds.mockResolvedValue([surveyId]);
+    service.listWorkflowRuns.mockResolvedValue({ runs: [], nextCursor: null });
+
+    await handlers.listRuns({ req: runsRequest(`workspaceId=${workspaceId}`), ctx: makeCtx() });
+
+    expect(listUnreadableSurveyIds).toHaveBeenCalledTimes(1);
+    expect(listUnreadableSurveyIds).toHaveBeenCalledWith({
+      workspaceId,
+      organizationId: authorized.organizationId,
+    });
+    expect(service.listWorkflowRuns).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId, excludeSurveyIds: [surveyId] })
+    );
   });
 });
 
@@ -1566,6 +1587,32 @@ describe("getRun", () => {
     expect(authorizeAllow).not.toHaveBeenCalled();
     const body = await readJson<{ code: string }>(res);
     expect(body.code).toBe("forbidden");
+  });
+
+  test("returns 403 for a run whose trigger survey the caller may not read", async () => {
+    service.getWorkflowRun.mockResolvedValue(makeRunDetail());
+    listUnreadableSurveyIds.mockResolvedValue([surveyId]);
+
+    const res = await handlers.getRun({ ctx: makeCtx(), params: { runId } });
+
+    expect(res.status).toBe(403);
+    expect(listUnreadableSurveyIds).toHaveBeenCalledWith({
+      workspaceId,
+      organizationId: authorized.organizationId,
+      surveyIds: [surveyId],
+    });
+    const body = await readJson<{ code: string; data?: unknown }>(res);
+    expect(body.code).toBe("forbidden");
+    expect(JSON.stringify(body)).not.toContain("jane@example.com");
+  });
+
+  test("returns a run without a trigger survey with no visibility lookup", async () => {
+    service.getWorkflowRun.mockResolvedValue(makeRunDetail({ surveyId: null }));
+
+    const res = await handlers.getRun({ ctx: makeCtx(), params: { runId } });
+
+    expect(res.status).toBe(200);
+    expect(listUnreadableSurveyIds).not.toHaveBeenCalled();
   });
 
   test("authorizes against the loaded run's workspace and returns its denial on mismatch", async () => {

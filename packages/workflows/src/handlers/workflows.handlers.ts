@@ -716,7 +716,17 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       const authorized = await ctx.authorize(input.workspaceId, "read");
       if (authorized instanceof Response) return authorized;
 
-      const runPage = await service.listWorkflowRuns({ ...input, workspaceId: authorized.workspaceId });
+      // ENG-3282: one batched visibility lookup per page, applied in the query so pages stay full and the
+      // cursor stays exact.
+      const excludeSurveyIds = await ctx.listUnreadableSurveyIds({
+        workspaceId: authorized.workspaceId,
+        organizationId: authorized.organizationId,
+      });
+      const runPage = await service.listWorkflowRuns({
+        ...input,
+        workspaceId: authorized.workspaceId,
+        excludeSurveyIds,
+      });
 
       const page = validateOutput(ZWorkflowRunListPage, {
         data: runPage.runs.map(toWorkflowRunListItem),
@@ -739,6 +749,17 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
 
       const authorized = await ctx.authorize(run.workspaceId, "read");
       if (authorized instanceof Response) return authorized;
+
+      // ENG-3282: the run carries its trigger survey's response data, so a caller who may not read
+      // that survey gets the same 403 as an unknown run.
+      if (run.surveyId) {
+        const unreadable = await ctx.listUnreadableSurveyIds({
+          workspaceId: authorized.workspaceId,
+          organizationId: authorized.organizationId,
+          surveyIds: [run.surveyId],
+        });
+        if (unreadable.includes(run.surveyId)) throw new WorkflowForbiddenError();
+      }
 
       return dataResponse(validateOutput(ZWorkflowRunResource, toWorkflowRunResource(run)), ctx.requestId);
     } catch (error) {

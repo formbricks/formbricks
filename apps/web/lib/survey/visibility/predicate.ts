@@ -47,6 +47,22 @@ export const buildVisibleSurveyWhere = (ctx: TSurveyActorContext): Prisma.Survey
 };
 
 /**
+ * The surveys `buildVisibleSurveyWhere` leaves out, as a positive clause — for a table with no `Survey`
+ * relation (workflow runs carry a bare `surveyId`) that has to name the surveys to exclude. `null` when
+ * nothing is hidden. Spelled out rather than as `NOT visible`: `NOT (… OR "ownerId" = $user)` is null,
+ * not true, for a survey with no owner, so the negation would silently keep an ownerless restricted one.
+ */
+export const buildHiddenSurveyWhere = (ctx: TSurveyActorContext): Prisma.SurveyWhereInput | null => {
+  if (!ctx.enforced) return null;
+  if (ctx.kind === "apiKey") return effectivelyRestrictedWhere;
+  if (ctx.isOrganizationAdmin) return null;
+
+  return {
+    AND: [effectivelyRestrictedWhere, { OR: [{ ownerId: null }, { ownerId: { not: ctx.userId } }] }],
+  };
+};
+
+/**
  * The same rule for a query spanning several organizations (the account-level notification settings),
  * where "organization administrator" differs per row: an owner or manager membership in the survey's
  * organization is the same test `organization.manage` makes.

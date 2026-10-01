@@ -3,19 +3,28 @@ import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
 import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { buildWorkflowApiContext } from "./context";
 
-const { surveyFindUnique } = vi.hoisted(() => ({ surveyFindUnique: vi.fn() }));
+const { surveyFindMany, surveyFindUnique } = vi.hoisted(() => ({
+  surveyFindMany: vi.fn(),
+  surveyFindUnique: vi.fn(),
+}));
 vi.mock("@formbricks/database", () => ({
-  prisma: { workflow: {}, survey: { findUnique: surveyFindUnique } },
+  prisma: { workflow: {}, survey: { findMany: surveyFindMany, findUnique: surveyFindUnique } },
 }));
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ warn: vi.fn(), error: vi.fn() })) },
 }));
-vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: vi.fn() }));
+vi.mock("@/app/api/v3/lib/auth", async (importOriginal) => ({
+  getV3AuthorizationActor: (await importOriginal<typeof import("@/app/api/v3/lib/auth")>())
+    .getV3AuthorizationActor,
+  requireV3WorkspaceAccess: vi.fn(),
+}));
+vi.mock("@/lib/survey/visibility/actor-context", () => ({ resolveSurveyActorContext: vi.fn() }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 const visibility = vi.hoisted(() => ({ ready: false }));
 vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: async () => visibility.ready }));
@@ -223,6 +232,78 @@ describe("verifyTriggerSurvey (validates a workflow trigger's referenced survey)
     visibility.ready = false;
 
     expect(result).toEqual({ surveyExists: true, missingEndingCardIds: [], surveyNotWorkspaceVisible: true });
+  });
+});
+
+describe("listUnreadableSurveyIds (run history follows its trigger survey, ENG-3282)", () => {
+  const member = { enforced: true, isOrganizationAdmin: false, kind: "user", userId: "u_1" } as const;
+
+  test("hides nothing, with no query, while visibility is not enforced", async () => {
+    vi.mocked(resolveSurveyActorContext).mockResolvedValue({ ...member, enforced: false });
+
+    const ids = await buildWorkflowApiContext(sessionAuth, "req_1", "inst").listUnreadableSurveyIds({
+      workspaceId: "ws_1",
+      organizationId: "org_1",
+    });
+
+    expect(ids).toEqual([]);
+    expect(surveyFindMany).not.toHaveBeenCalled();
+  });
+
+  test("hides nothing, with no query, for an organization administrator", async () => {
+    vi.mocked(resolveSurveyActorContext).mockResolvedValue({ ...member, isOrganizationAdmin: true });
+
+    const ids = await buildWorkflowApiContext(sessionAuth, "req_1", "inst").listUnreadableSurveyIds({
+      workspaceId: "ws_1",
+      organizationId: "org_1",
+    });
+
+    expect(ids).toEqual([]);
+    expect(surveyFindMany).not.toHaveBeenCalled();
+  });
+
+  test("returns the workspace's surveys a member may not read, in one query scoped to the workspace", async () => {
+    vi.mocked(resolveSurveyActorContext).mockResolvedValue(member);
+    surveyFindMany.mockResolvedValue([{ id: "s_restricted" }]);
+
+    const ids = await buildWorkflowApiContext(sessionAuth, "req_1", "inst").listUnreadableSurveyIds({
+      workspaceId: "ws_1",
+      organizationId: "org_1",
+      surveyIds: ["s_restricted", "s_open"],
+    });
+
+    expect(ids).toEqual(["s_restricted"]);
+    expect(resolveSurveyActorContext).toHaveBeenCalledWith(
+      { type: "user", id: "cm9zr52kh000508l8e3q7bw9j" },
+      "org_1"
+    );
+    expect(surveyFindMany).toHaveBeenCalledTimes(1);
+    const { where } = surveyFindMany.mock.calls[0][0];
+    expect(where).toMatchObject({ workspaceId: "ws_1", id: { in: ["s_restricted", "s_open"] } });
+    // The member's own surveys stay readable: the hidden clause excludes them, nulls included.
+    expect(JSON.stringify(where.AND)).toContain('{"ownerId":{"not":"u_1"}}');
+  });
+
+  test("resolves an API key as its own actor", async () => {
+    vi.mocked(resolveSurveyActorContext).mockResolvedValue({ enforced: true, kind: "apiKey" });
+    surveyFindMany.mockResolvedValue([]);
+
+    await buildWorkflowApiContext(apiKeyAuth, "req_1", "inst").listUnreadableSurveyIds({
+      workspaceId: "ws_1",
+      organizationId: "org_1",
+    });
+
+    expect(resolveSurveyActorContext).toHaveBeenCalledWith({ type: "apiKey", id: "key_1" }, "org_1");
+    expect(surveyFindMany.mock.calls[0][0].where).toMatchObject({ workspaceId: "ws_1" });
+  });
+
+  test("fails closed without an authenticated actor", async () => {
+    await expect(
+      buildWorkflowApiContext(null, "req_1", "inst").listUnreadableSurveyIds({
+        workspaceId: "ws_1",
+        organizationId: "org_1",
+      })
+    ).rejects.toThrow();
   });
 });
 

@@ -1,7 +1,9 @@
 import { describe, expect, test } from "vitest";
 import type { TSurveyActorContext } from "./actor-context";
+import { getEffectiveVisibility } from "./policy";
 import {
   andVisibleSurveys,
+  buildHiddenSurveyWhere,
   buildVisibleResponseWhere,
   buildVisibleSurveyWhere,
   buildVisibleSurveyWhereAcrossOrganizations,
@@ -113,5 +115,75 @@ describe("andVisibleSurveys", () => {
       workspaceId: "mine",
       AND: [clause],
     });
+  });
+});
+
+describe("buildHiddenSurveyWhere", () => {
+  type TRow = Readonly<{
+    ownerId: string | null;
+    visibility: "workspace" | "restricted";
+    visibilityPending: boolean;
+    visibilityProjectedVersion: number;
+    visibilityVersion: number;
+  }>;
+
+  /** Evaluates the clause shapes the predicate emits, with SQL's null semantics for `not`. */
+  const matches = (where: Record<string, unknown>, row: TRow): boolean =>
+    Object.entries(where).every(([key, condition]) => {
+      if (key === "AND") return (condition as Record<string, unknown>[]).every((c) => matches(c, row));
+      if (key === "OR") return (condition as Record<string, unknown>[]).some((c) => matches(c, row));
+      if (key === "NOT") return !matches(condition as Record<string, unknown>, row);
+      const value = row[key as keyof TRow];
+      if (condition !== null && typeof condition === "object") {
+        const operator = condition as { lt?: number; not?: unknown };
+        if ("lt" in operator) return typeof value === "number" && value < (operator.lt ?? 0);
+        if ("not" in operator) return value !== null && value !== operator.not;
+      }
+      return value === condition;
+    });
+
+  const rows: TRow[] = [];
+  for (const visibility of ["workspace", "restricted"] as const) {
+    for (const ownerId of [null, "u-1", "u-other"]) {
+      for (const [visibilityVersion, visibilityProjectedVersion] of [
+        [0, 0],
+        [0, -1],
+        [1, 0],
+        [2, 2],
+      ]) {
+        rows.push({
+          ownerId,
+          visibility,
+          visibilityPending: visibilityVersion !== visibilityProjectedVersion,
+          visibilityProjectedVersion,
+          visibilityVersion,
+        });
+      }
+    }
+  }
+
+  test.each([
+    ["an unenforced member", { ...member, enforced: false }],
+    ["an unenforced API key", { ...apiKey, enforced: false }],
+    ["an organization administrator", admin],
+  ] as const)("hides nothing for %s", (_label, ctx) => {
+    expect(buildHiddenSurveyWhere(ctx)).toBeNull();
+  });
+
+  // The point of the helper: exactly the rows the visible predicate drops, an ownerless restricted
+  // survey included, where `NOT visible` would evaluate to null and keep it.
+  test.each([
+    ["a member", member],
+    ["an API key", apiKey],
+  ] as const)("is the exact complement of the visible predicate for %s", (_label, ctx) => {
+    const hidden = buildHiddenSurveyWhere(ctx);
+    expect(hidden).not.toBeNull();
+
+    for (const row of rows) {
+      const visible =
+        getEffectiveVisibility(row) === "workspace" || (ctx.kind === "user" && row.ownerId === ctx.userId);
+      expect(matches(hidden ?? {}, row)).toBe(!visible);
+      expect(matches(buildVisibleSurveyWhere(ctx), row)).toBe(visible);
+    }
   });
 });
