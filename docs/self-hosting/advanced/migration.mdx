@@ -37,11 +37,11 @@ Surveys can now be restricted to their owner and the organization's owners and m
 `Survey` table record each survey's owner and visibility. The migrations set every existing survey to
 workspace-visible and make its creator the owner, so **access is unchanged after the upgrade**.
 
-<Warning>
-  Do not mark the survey scope ready in production yet. This release has no screen for sharing a
-  survey: once the marker is set, every survey a person creates is restricted to them, and teammates have
-  no way to get access. Enable it once the Formbricks release that adds survey sharing is installed.
-</Warning>
+<Note>
+  Once the marker is set, every survey a person creates starts **Restricted** to its author and the
+  organization's owners and managers. They can make it visible to the workspace from **Collaborate** or
+  when activating it. See [Survey visibility](/surveys/general-features/visibility).
+</Note>
 
 Enforcement stays off until an operator marks the survey scope ready:
 

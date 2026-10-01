@@ -266,11 +266,11 @@ The release that introduces survey visibility changes the canonical SpiceDB sche
 ownership and visibility), so it goes through the maintenance preparation above. Surveys are then projected
 into SpiceDB as their own scope. Nothing about who can see a survey changes until you opt in:
 
-<Warning>
-  Do not mark the survey scope ready in production yet. This release has no screen for sharing a
-  survey: once the marker is set, every survey a person creates is restricted to them, and teammates have
-  no way to get access. Enable it once the Formbricks release that adds survey sharing is installed.
-</Warning>
+<Note>
+  Once the marker is set, every survey a person creates starts **Restricted** to its author and the
+  organization's owners and managers. They can make it visible to the workspace from **Collaborate** or
+  when activating it. See [Survey visibility](/surveys/general-features/visibility).
+</Note>
 
 1. Once every container or pod runs the new version, check durable delivery and replay any dead-lettered
    survey events. The migration adds the survey trigger while the previous version may still be delivering
