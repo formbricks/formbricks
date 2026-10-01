@@ -8,15 +8,51 @@ import { getFilterOperatorLabel, getFilterValueLabel, getOtherFilterLabel } from
 const t = ((key: string, options?: Record<string, unknown>) =>
   options ? `${key}:${JSON.stringify(options)}` : key) as unknown as TFunction;
 
+// Every operator the option generators in `surveys.ts` can put in the left-hand menu, and the key
+// each has to resolve to. A string added there without a label here renders as raw English.
+const OPERATOR_LABELS: [string, string][] = [
+  ["is", "workspace.surveys.summary.response_filters.is"],
+  ["Includes all", "workspace.surveys.summary.includes_all"],
+  ["Includes either", "workspace.surveys.summary.includes_either"],
+  ["Is equal to", "workspace.surveys.summary.is_equal_to"],
+  ["Is less than", "workspace.surveys.summary.is_less_than"],
+  ["Is more than", "workspace.surveys.summary.response_filters.is_more_than"],
+  ["Is greater than", "workspace.surveys.edit.validation.is_greater_than"],
+  ["Is before", "workspace.surveys.edit.is_before"],
+  ["Is after", "workspace.surveys.edit.is_after"],
+  ["Is set", "workspace.surveys.edit.is_set"],
+  ["Is not set", "workspace.surveys.edit.is_not_set"],
+  ["Equals", "workspace.surveys.edit.equals"],
+  ["Not equals", "workspace.surveys.summary.response_filters.not_equals"],
+  ["Contains", "workspace.surveys.edit.contains"],
+  ["Does not contain", "workspace.surveys.edit.does_not_contain"],
+  ["Starts with", "workspace.surveys.edit.starts_with"],
+  ["Does not start with", "workspace.surveys.edit.does_not_start_with"],
+  ["Ends with", "workspace.surveys.edit.ends_with"],
+  ["Does not end with", "workspace.surveys.edit.does_not_end_with"],
+  ["Status", "common.status"],
+  ["Submitted", "workspace.surveys.summary.response_filters.submitted"],
+  ["Skipped", "common.skipped"],
+];
+
+// The same, for the right-hand value menu.
+const VALUE_LABELS: [string, string][] = [
+  ["Filled out", "workspace.surveys.summary.response_filters.filled_out"],
+  ["Skipped", "common.skipped"],
+  ["Submitted", "workspace.surveys.summary.response_filters.submitted"],
+  ["Clicked", "workspace.surveys.summary.response_filters.clicked"],
+  ["Dismissed", "common.dismissed"],
+  ["Applied", "workspace.surveys.summary.response_filters.applied"],
+  ["Not applied", "workspace.surveys.summary.response_filters.not_applied"],
+  ["Accepted", "common.accepted"],
+  ["Screened in", "workspace.surveys.summary.response_filters.screened_in"],
+  ["Screened out (overquota)", "workspace.surveys.summary.response_filters.screened_out"],
+  ["Not in quota", "workspace.surveys.summary.response_filters.not_in_quota"],
+];
+
 describe("getFilterOperatorLabel", () => {
-  test("translates the operators we generate", () => {
-    expect(getFilterOperatorLabel("Includes either", TSurveyElementTypeEnum.NPS, t)).toBe(
-      "workspace.surveys.summary.includes_either"
-    );
-    expect(getFilterOperatorLabel("Does not start with", "Meta", t)).toBe(
-      "workspace.surveys.edit.does_not_start_with"
-    );
-    expect(getFilterOperatorLabel("Status", "Quotas", t)).toBe("common.status");
+  test.each(OPERATOR_LABELS)("translates %s", (value, key) => {
+    expect(getFilterOperatorLabel(value, TSurveyElementTypeEnum.NPS, t)).toBe(key);
   });
 
   test("leaves matrix rows alone — they are the survey author's wording", () => {
@@ -31,16 +67,8 @@ describe("getFilterOperatorLabel", () => {
 });
 
 describe("getFilterValueLabel", () => {
-  test("translates the values we generate", () => {
-    expect(getFilterValueLabel("Filled out", TSurveyElementTypeEnum.OpenText, t)).toBe(
-      "workspace.surveys.summary.response_filters.filled_out"
-    );
-    expect(getFilterValueLabel("Not applied", "Tags", t)).toBe(
-      "workspace.surveys.summary.response_filters.not_applied"
-    );
-    expect(getFilterValueLabel("Screened out (overquota)", "Quotas", t)).toBe(
-      "workspace.surveys.summary.response_filters.screened_out"
-    );
+  test.each(VALUE_LABELS)("translates %s", (value, key) => {
+    expect(getFilterValueLabel(value, "Quotas", t)).toBe(key);
   });
 
   test("numbers and unmapped values pass through", () => {
