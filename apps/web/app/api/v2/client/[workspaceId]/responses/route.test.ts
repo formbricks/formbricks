@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   checkSurveyValidity: vi.fn(),
   createQuotaFullObject: vi.fn(),
   createResponseWithQuotaEvaluation: vi.fn(),
+  findRecentDuplicateResponse: vi.fn(),
   formatValidationErrorsForV1Api: vi.fn((errors) => errors),
   getClientIpFromHeaders: vi.fn(),
   getIsContactsEnabled: vi.fn(),
@@ -77,6 +78,10 @@ vi.mock("@/modules/storage/utils", () => ({
   validateClientFileUploads: mocks.validateClientFileUploads,
 }));
 
+vi.mock("@/app/api/client/[workspaceId]/responses/lib/duplicate-response", () => ({
+  findRecentDuplicateResponse: mocks.findRecentDuplicateResponse,
+}));
+
 vi.mock("./lib/response", () => ({
   createResponseWithQuotaEvaluation: mocks.createResponseWithQuotaEvaluation,
 }));
@@ -111,11 +116,14 @@ const getSurveyWithFields = (embeddedFields: unknown[]) => ({
 });
 
 /** Posts a raw body straight at the endpoint, as a caller that never ran the renderer would. */
-const postRawBody = async (data: Record<string, unknown>): Promise<Response> => {
+const postRawBody = async (
+  data: Record<string, unknown>,
+  extra: Record<string, unknown> = {}
+): Promise<Response> => {
   const request = new Request(`https://api.test/api/v2/client/${workspaceId}/responses`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ surveyId, finished: false, data }),
+    body: JSON.stringify({ surveyId, finished: false, data, ...extra }),
   });
 
   return POST(request, { params: Promise.resolve({ workspaceId }) });
@@ -138,6 +146,7 @@ describe("POST /api/v2/client/[workspaceId]/responses — Embedded Data ingest c
     mocks.validateOtherOptionLengthForMultipleChoice.mockReturnValue(null);
     mocks.validateResponseData.mockReturnValue(null);
     mocks.createQuotaFullObject.mockReturnValue({});
+    mocks.findRecentDuplicateResponse.mockResolvedValue(null);
     mocks.createResponseWithQuotaEvaluation.mockResolvedValue({
       id: responseId,
       surveyId,
@@ -208,5 +217,40 @@ describe("POST /api/v2/client/[workspaceId]/responses — Embedded Data ingest c
       workspaceId,
       expect.objectContaining({ data: { seats: 12 } })
     );
+  });
+});
+
+describe("POST /api/v2/client/[workspaceId]/responses — duplicate submissions (ENG-1147)", () => {
+  const contactId = "clh8ruz3w0000qa8h9x0bt9ry";
+  const existingResponseId = "cm8f4x9mm0001gx9h5b7d7h3q";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    mocks.resolveClientApiIds.mockResolvedValue({ workspaceId });
+    mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue("org_1");
+    mocks.getIsContactsEnabled.mockResolvedValue(true);
+    mocks.getSurvey.mockResolvedValue(getSurveyWithFields([]));
+    mocks.checkSurveyValidity.mockResolvedValue(null);
+    mocks.validateClientFileUploads.mockReturnValue(true);
+    mocks.validateOtherOptionLengthForMultipleChoice.mockReturnValue(null);
+    mocks.validateResponseData.mockReturnValue(null);
+    mocks.createQuotaFullObject.mockReturnValue({ quotaFull: false });
+    mocks.findRecentDuplicateResponse.mockResolvedValue({ id: existingResponseId });
+  });
+
+  test("hands back the earlier response's id instead of creating a second one", async () => {
+    const response = await postRawBody({ q1: 5 }, { contactId, finished: true });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ data: { id: existingResponseId, quotaFull: false } });
+    expect(mocks.findRecentDuplicateResponse).toHaveBeenCalledWith({
+      surveyId,
+      contactId,
+      data: { q1: 5 },
+      finished: true,
+    });
+    expect(mocks.createResponseWithQuotaEvaluation).not.toHaveBeenCalled();
+    expect(mocks.sendToPipeline).not.toHaveBeenCalled();
   });
 });

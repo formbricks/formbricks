@@ -1,8 +1,10 @@
 import { UAParser } from "ua-parser-js";
+import { logger } from "@formbricks/logger";
 import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
 import { InvalidInputError, UniqueConstraintError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { pickAutoCapturedResponseMeta } from "@formbricks/types/responses";
+import { findRecentDuplicateResponse } from "@/app/api/client/[workspaceId]/responses/lib/duplicate-response";
 import { checkSurveyValidity } from "@/app/api/v2/client/[workspaceId]/responses/lib/utils";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { parseAndValidateJsonBody } from "@/app/lib/api/parse-and-validate-json-body";
@@ -258,6 +260,19 @@ export const POST = async (request: Request, context: Context): Promise<Response
     const validationResponse = await validateResponseSubmission(workspaceId, responseInputData, survey);
     if (validationResponse) {
       return validationResponse;
+    }
+
+    // Same fold as the v1 endpoint (ENG-1147): a scanner's click-time check and the contact's own
+    // click submit identical answers seconds apart, and the second gets the first one's id.
+    const duplicate = await findRecentDuplicateResponse({
+      surveyId: survey.id,
+      contactId: responseInputData.contactId,
+      data: responseInputData.data,
+      finished: responseInputData.finished,
+    });
+    if (duplicate) {
+      logger.info({ surveyId: survey.id, responseId: duplicate.id }, "Folded duplicate response submission");
+      return responses.successResponse({ id: duplicate.id, ...createQuotaFullObject() }, true);
     }
 
     const createdResponse = await createResponseForRequest({
