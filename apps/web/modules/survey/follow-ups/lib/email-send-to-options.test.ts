@@ -81,8 +81,22 @@ describe("buildEmailSendToOptions", () => {
   });
 
   test("maps hidden fields to options labelled by id", () => {
+    // ENG-2628: the recipient list is enumerated from the survey's Embedded Data rows, which is what
+    // the editor's Embedded Data card writes — the legacy column no longer decides this.
+    const ingested = (storageKey: string) => ({
+      field: {
+        name: storageKey,
+        source: "ingested" as const,
+        dataType: "string" as const,
+        defaultValue: null,
+        locked: false,
+        key: null,
+      },
+      link: { storageKey },
+    });
+
     const options = buildEmailSendToOptions({
-      survey: makeSurvey({ hiddenFields: { enabled: true, fieldIds: ["utm", "ref"] } }),
+      survey: makeSurvey({ embeddedFields: [ingested("utm"), ingested("ref")] }),
       teamMemberDetails: [],
       userEmail: "me@example.com",
       selectedLanguageCode: "default",
@@ -92,6 +106,83 @@ describe("buildEmailSendToOptions", () => {
     expect(options.filter((o) => o.type === "hiddenField")).toEqual([
       { id: "utm", type: "hiddenField", label: "utm" },
       { id: "ref", type: "hiddenField", label: "ref" },
+    ]);
+  });
+
+  test("labels an Embedded Data recipient by its name, and a shared one carries its library key", () => {
+    // ENG-1853: the row reads as the field's name, not the storage key it is addressed by. The id is
+    // untouched, so a recipient stored before this still resolves — see `findEmailSendToOption`.
+    const options = buildEmailSendToOptions({
+      survey: makeSurvey({
+        embeddedFields: [
+          {
+            field: {
+              name: "Billing contact",
+              source: "ingested" as const,
+              dataType: "string" as const,
+              defaultValue: null,
+              locked: false,
+              key: "billing_contact",
+            },
+            link: { storageKey: "billing" },
+          },
+          {
+            field: {
+              name: "Referrer email",
+              source: "ingested" as const,
+              dataType: "string" as const,
+              defaultValue: null,
+              locked: false,
+              key: null,
+            },
+            link: { storageKey: "ref" },
+          },
+        ],
+      }),
+      teamMemberDetails: [],
+      userEmail: "me@example.com",
+      selectedLanguageCode: "default",
+      t,
+    });
+
+    expect(options.filter((o) => o.type === "hiddenField")).toEqual([
+      {
+        id: "billing",
+        type: "hiddenField",
+        label: "Billing contact",
+        secondaryLabel: "billing_contact",
+      },
+      { id: "ref", type: "hiddenField", label: "Referrer email", secondaryLabel: undefined },
+    ]);
+  });
+
+  test("a blank name falls back to the storage key rather than drawing an unreadable row", () => {
+    // The same rule as the operand picker's, written out a second time here — so it needs its own
+    // case, or one copy can be deleted with the suite still green.
+    const options = buildEmailSendToOptions({
+      survey: makeSurvey({
+        embeddedFields: [
+          {
+            field: {
+              name: "  ",
+              source: "ingested" as const,
+              dataType: "string" as const,
+              defaultValue: null,
+              locked: false,
+              key: null,
+            },
+            link: { storageKey: "billing" },
+          },
+        ],
+      }),
+      teamMemberDetails: [],
+      userEmail: "me@example.com",
+      selectedLanguageCode: "default",
+      t,
+    });
+
+    expect(options.filter((o) => o.type === "hiddenField")).toEqual([
+      { id: "billing", type: "hiddenField", label: "billing", secondaryLabel: undefined },
     ]);
   });
 

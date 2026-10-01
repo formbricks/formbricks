@@ -382,10 +382,6 @@ model Survey {
   blocks              Json[]                  @default([])
   /// [SurveyEnding]
   endings             Json[]                  @default([])
-  /// [SurveyHiddenFields]
-  hiddenFields        Json                    @default("{\"enabled\": false}")
-  /// [SurveyVariables]
-  variables           Json                    @default("[]")
   responses           Response[]
   quotas              SurveyQuota[]
   displayOption       displayOptions          @default(displayOnce)

@@ -136,6 +136,7 @@
                 "icon": "database",
                 "pages": [
                   "surveys/embedded-data/overview",
+                  "surveys/embedded-data/library",
                   "surveys/embedded-data/reserved-fields",
                   "surveys/embedded-data/set-embedded-data",
                   "surveys/embedded-data/mobile-sdks",

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
-import { deriveLegacyEmbeddedData, getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
+import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
+import { type TLinkedEmbeddedField, getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import { resetDb } from "@/integration/reset-db";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
@@ -11,9 +12,9 @@ import { transformPrismaSurvey } from "@/lib/survey/utils";
  * The Embedded Data read seam against real Postgres (ENG-1837).
  *
  * What only a real database can show: that the join in `selectSurvey` actually returns the rows the
- * write bridge wrote, that the inlined list comes back in the order the export headers and pickers
- * depend on, and that a survey whose rows are missing still resolves off its legacy columns. The unit
- * suite mocks `@formbricks/database`, so the join itself is invisible there.
+ * write bridge wrote, that the inlined list — and the legacy `variables` / `hiddenFields` derived from
+ * it since ENG-2404 dropped their columns — comes back in the order the export headers and pickers
+ * depend on. The unit suite mocks `@formbricks/database`, so the join itself is invisible there.
  */
 
 const LEGACY = {
@@ -29,14 +30,7 @@ const seedSurvey = async (): Promise<{ surveyId: string; workspaceId: string }> 
   const workspace = await prisma.workspace.create({
     data: { name: "Read Workspace", organizationId: organization.id },
   });
-  const survey = await prisma.survey.create({
-    data: {
-      name: "Survey",
-      workspaceId: workspace.id,
-      variables: LEGACY.variables,
-      hiddenFields: LEGACY.hiddenFields,
-    },
-  });
+  const survey = await prisma.survey.create({ data: { name: "Survey", workspaceId: workspace.id } });
 
   await prisma.$transaction((tx) =>
     reconcileEmbeddedData(tx, {
@@ -62,14 +56,24 @@ beforeEach(async () => {
   await resetDb();
 });
 
+/**
+ * The pairs without the stored row id. ENG-3228 added it to the read so the editor can hand a shared
+ * link back on the next save, and the legacy derivation has nothing to put there — so a comparison
+ * against derived pairs has to drop it, and assert it separately.
+ */
+const withoutRowIds = (fields: TLinkedEmbeddedField[] | undefined) =>
+  fields?.map(({ field: { id: _id, ...field }, link }) => ({ field, link }));
+
 describe("Embedded Data read seam (real Postgres)", () => {
   test("a loaded survey carries the rows the write bridge wrote", async () => {
     const { surveyId } = await seedSurvey();
 
     const survey = await loadSurvey(surveyId);
 
-    expect(survey.embeddedFields).toEqual(deriveLegacyEmbeddedData(LEGACY));
-    expect(getSurveyEmbeddedFields(survey)).toEqual(deriveLegacyEmbeddedData(LEGACY));
+    expect(withoutRowIds(survey.embeddedFields)).toEqual(embeddedFieldsFromLegacyInput(LEGACY));
+    expect(withoutRowIds(getSurveyEmbeddedFields(survey))).toEqual(embeddedFieldsFromLegacyInput(LEGACY));
+    // Every pair names the row it came from, which is what a save needs to address a shared link.
+    expect(survey.embeddedFields?.every(({ field }) => typeof field.id === "string")).toBe(true);
   });
 
   test("the raw relation never leaks onto the survey object", async () => {
@@ -94,23 +98,33 @@ describe("Embedded Data read seam (real Postgres)", () => {
     ]);
   });
 
-  test("a survey with no rows has no fields, whatever its legacy columns still say", async () => {
-    // ENG-2412 removed the fallback. The rows are the write source of truth now, so deleting them
-    // makes the fields disappear rather than reappear — the behaviour that made the previous model
-    // hard to reason about. `deriveLegacyEmbeddedData` still has the columns; nothing consults it.
+  test("the legacy keys are derived from the rows, in row order", async () => {
+    // ENG-2404: no column holds them any more. What v1/v3 and deployed SDK bundles read is this
+    // projection, so its order is the rows' order — the same one the export and the pickers use.
+    const { surveyId } = await seedSurvey();
+
+    const survey = await loadSurvey(surveyId);
+
+    expect(survey.variables).toEqual(LEGACY.variables);
+    expect(survey.hiddenFields).toEqual(LEGACY.hiddenFields);
+  });
+
+  test("a survey with no rows reads as having no fields — there is no legacy fallback left", async () => {
+    // ENG-2404 removed the zero-row fallback with the columns it fell back to: the migration that
+    // dropped them gave every survey still without links its rows first.
     const { surveyId } = await seedSurvey();
     await prisma.surveyEmbeddedData.deleteMany({ where: { surveyId } });
 
     const survey = await loadSurvey(surveyId);
 
-    expect(survey.embeddedFields).toEqual([]);
     expect(getSurveyEmbeddedFields(survey)).toEqual([]);
-    expect(deriveLegacyEmbeddedData(LEGACY)).not.toEqual([]);
+    expect(survey.variables).toEqual([]);
+    expect(survey.hiddenFields).toEqual({ enabled: false, fieldIds: [] });
   });
 
   test("a partial row set wins outright — the rows are the source of truth once any exist", async () => {
-    // Not reachable today: `reconcileEmbeddedData` writes the whole derived set in one plan. Asserted
-    // so the fallback's "empty list only" rule is a decision on record rather than an accident.
+    // Not reachable today: `reconcileEmbeddedData` writes the whole desired set in one plan. Asserted
+    // so that whatever rows exist are the whole answer, with nothing filling in the gap.
     const { surveyId } = await seedSurvey();
     await prisma.surveyEmbeddedData.deleteMany({ where: { surveyId, storageKey: { in: ["plan"] } } });
 
@@ -123,46 +137,15 @@ describe("Embedded Data read seam (real Postgres)", () => {
     ]);
   });
 
-  /**
-   * `variables` and `hiddenFields` are unvalidated `Json` columns, so a row can hold an object where
-   * an array belongs. That used to matter here: the read seam ranked the joined rows against those
-   * columns, so a malformed one first threw `(variables ?? []).map is not a function` and failed the
-   * whole survey read, and then — once guarded — cost that group its ordering.
-   *
-   * ENG-2401 removes the dependency outright. Order comes from the `order` column, the read never
-   * touches the legacy JSON, and a malformed column is simply irrelevant to it. These stay as the
-   * proof of that, since the guards they were written for are gone.
-   *
-   * The malformation is written with raw SQL on purpose: Prisma's generated types make the bad shape
-   * unrepresentable through the client, so a fixture built in TypeScript would only resemble the row
-   * this is defending against. These write the actual bytes.
-   */
-  describe("a survey whose legacy JSON is malformed", () => {
-    const DECLARED_ORDER = ["clx000000000000000000002", "clx000000000000000000001", "utm_source", "plan"];
-
-    test.each([
-      ["`variables` holds an object instead of an array", `variables = '{}'::jsonb`],
-      [
-        "`hiddenFields.fieldIds` holds a string instead of an array",
-        `"hiddenFields" = '{"enabled": true, "fieldIds": "utm_source"}'::jsonb`,
-      ],
-      ["both columns are malformed", `variables = '"not-an-array"'::jsonb, "hiddenFields" = '[]'::jsonb`],
-    ])("reads in declared order when %s", async (_label, assignment) => {
-      const { surveyId } = await seedSurvey();
-      await prisma.$executeRawUnsafe(`UPDATE "Survey" SET ${assignment} WHERE id = $1`, surveyId);
-
-      const survey = await loadSurvey(surveyId);
-
-      expect(getSurveyEmbeddedFields(survey).map(({ link }) => link.storageKey)).toEqual(DECLARED_ORDER);
-    });
-  });
-
   test("reading a survey writes nothing to the Embedded Data tables", async () => {
     const { surveyId } = await seedSurvey();
-    const before = await prisma.surveyEmbeddedData.findMany({ where: { surveyId } });
+    // Ordered, so the comparison cannot fail on the order Postgres happens to return rows in.
+    const readRows = () =>
+      prisma.surveyEmbeddedData.findMany({ where: { surveyId }, orderBy: { storageKey: "asc" } });
+    const before = await readRows();
 
     await loadSurvey(surveyId);
 
-    expect(await prisma.surveyEmbeddedData.findMany({ where: { surveyId } })).toEqual(before);
+    expect(await readRows()).toEqual(before);
   });
 });
