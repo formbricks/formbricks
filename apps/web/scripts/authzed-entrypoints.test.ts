@@ -75,6 +75,12 @@ describe("AuthZed script entrypoints", () => {
       script: "scripts/docker/authzed-cli.ts",
     },
     {
+      args: ["outbox", "--unknown"],
+      expected: INVALID_REQUEST_RESULT,
+      name: "packaged outbox",
+      script: "scripts/docker/authzed-cli.ts",
+    },
+    {
       args: ["--unknown"],
       expected: INVALID_REQUEST_RESULT,
       name: "development upgrade",

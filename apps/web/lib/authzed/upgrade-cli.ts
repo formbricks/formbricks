@@ -88,6 +88,45 @@ const isOutboxClean = (status: TAuthzedOutboxStatus): boolean =>
   status.revocationsPastCritical === 0 &&
   status.revocationsPastWarning === 0;
 
+const getCheckStatus = (audit: TAuthzedUpgradeAudit): "blocked" | "failed" | "ready" => {
+  if (audit.status === "reconciled") {
+    return "ready";
+  }
+
+  if (audit.status === "failed") {
+    return "failed";
+  }
+
+  return "blocked";
+};
+
+const getPrepareStatus = (
+  audit: TAuthzedUpgradeAudit,
+  outbox: TAuthzedOutboxStatus
+): "blocked" | "failed" | "prepared" => {
+  if (audit.status === "failed") {
+    return "failed";
+  }
+
+  if (audit.status === "reconciled" && isOutboxClean(outbox)) {
+    return "prepared";
+  }
+
+  return "blocked";
+};
+
+const getExitCode = (status: TAuthzedUpgradeResult["status"]): number => {
+  if (status === "ready" || status === "prepared") {
+    return 0;
+  }
+
+  if (status === "blocked") {
+    return 2;
+  }
+
+  return 1;
+};
+
 const assertUpgradeConfiguration = (dependencies: TAuthzedUpgradeCliDependencies): void => {
   if (!dependencies.isEnabled()) {
     throw new AuthzedError({
@@ -137,7 +176,7 @@ const runCheck = async (dependencies: TAuthzedUpgradeCliDependencies): Promise<T
     health,
     outbox,
     schema,
-    status: audit.status === "reconciled" ? "ready" : audit.status === "failed" ? "failed" : "blocked",
+    status: getCheckStatus(audit),
   };
 };
 
@@ -176,12 +215,7 @@ const runPrepare = async (
     health,
     outbox,
     schema,
-    status:
-      audit.status === "failed"
-        ? "failed"
-        : audit.status === "reconciled" && isOutboxClean(outbox)
-          ? "prepared"
-          : "blocked",
+    status: getPrepareStatus(audit, outbox),
   };
 };
 
@@ -214,5 +248,5 @@ export const runAuthzedUpgradeCli = async (
   }
 
   dependencies.writeOutput(`${JSON.stringify(result)}\n`);
-  return result.status === "ready" || result.status === "prepared" ? 0 : result.status === "blocked" ? 2 : 1;
+  return getExitCode(result.status);
 };

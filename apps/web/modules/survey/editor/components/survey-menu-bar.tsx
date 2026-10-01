@@ -23,6 +23,7 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { isDeepEqual } from "@/lib/utils/object";
 import { reportStaleServerActionError } from "@/lib/utils/stale-server-action";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { getLogicDestinationErrorMessage } from "@/modules/survey/editor/lib/logic-destination-error";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
@@ -31,7 +32,7 @@ import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { updateSurveyAction, updateSurveyDraftAction } from "../actions";
-import { isMissingRequiredTrigger, isSurveyValid } from "../lib/validation";
+import { describeElementIssue, isMissingRequiredTrigger, isSurveyValid } from "../lib/validation";
 import { AutoSaveIndicator } from "./auto-save-indicator";
 
 interface SurveyMenuBarProps {
@@ -334,6 +335,12 @@ export const SurveyMenuBar = ({
         return false;
       }
 
+      const logicDestinationMessage = getLogicDestinationErrorMessage(firstError, localSurvey.blocks, t);
+      if (logicDestinationMessage) {
+        toast.error(logicDestinationMessage, { className: "w-fit max-w-md!" });
+        return false;
+      }
+
       if (firstError.code === "custom") {
         const params = firstError.params ?? ({} as { invalidLanguageCodes: string[] });
         if (params.invalidLanguageCodes && params.invalidLanguageCodes.length) {
@@ -351,6 +358,18 @@ export const SurveyMenuBar = ({
           });
         }
 
+        return false;
+      }
+
+      // Anything else reaches here with a raw Zod default ("Invalid input", "Invalid input: expected
+      // string, received undefined") that names no field. The issue path does, so build the message from it.
+      const elementIssue = describeElementIssue(firstError, t, locale);
+
+      if (elementIssue) {
+        toast.error(elementIssue.message, { className: "w-fit max-w-md!" });
+        if (elementIssue.languageCode && elementIssue.languageCode !== "default") {
+          setActiveId("language");
+        }
         return false;
       }
 

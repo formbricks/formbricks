@@ -189,8 +189,15 @@ const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
   // each schema migration into packages/database/.prisma-migrations on demand for
   // `prisma migrate deploy`, then wipe between runs so stale or experimental
   // migrations from a previous local invocation can't influence this one.
-  await fs.rm(PRISMA_MIGRATIONS_DIR, { recursive: true, force: true });
+  // Empty it in place: under a read-only root filesystem the directory is a volume mount point, which
+  // cannot itself be removed.
   await fs.mkdir(PRISMA_MIGRATIONS_DIR, { recursive: true });
+  const staleEntries = await fs.readdir(PRISMA_MIGRATIONS_DIR);
+  await Promise.all(
+    staleEntries.map((entry) =>
+      fs.rm(path.join(PRISMA_MIGRATIONS_DIR, entry), { recursive: true, force: true })
+    )
+  );
 
   const appliedSchemaMigrations = await loadAppliedSchemaMigrations();
 

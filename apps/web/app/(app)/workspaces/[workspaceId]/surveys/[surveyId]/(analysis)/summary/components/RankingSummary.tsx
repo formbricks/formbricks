@@ -1,20 +1,24 @@
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyElementSummaryRanking } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyElementSummaryRanking, TSurveyType } from "@formbricks/types/surveys/types";
 import { getChoiceIdByValue } from "@/lib/response/utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
+import { OtherValuesList } from "./OtherValuesList";
 
 interface RankingSummaryProps {
   elementSummary: TSurveyElementSummaryRanking;
+  surveyType: TSurveyType;
   survey: TSurvey;
 }
 
-export const RankingSummary = ({ elementSummary, survey }: RankingSummaryProps) => {
+export const RankingSummary = ({ elementSummary, surveyType, survey }: RankingSummaryProps) => {
   // sort by count and transform to array
   const { t } = useTranslation();
+  // Best average rank first; a choice nobody ranked has no average, so it goes last.
   const results = Object.values(elementSummary.choices).sort((a, b) => {
-    return a.avgRanking - b.avgRanking; // Sort by count
+    if (a.count === 0 || b.count === 0) return b.count - a.count;
+    return a.avgRanking - b.avgRanking;
   });
 
   return (
@@ -42,6 +46,9 @@ export const RankingSummary = ({ elementSummary, survey }: RankingSummaryProps) 
                   </div>
                 </div>
               </div>
+              {result.others && result.others.length > 0 && (
+                <OtherValuesList others={result.others} surveyType={surveyType} />
+              )}
             </div>
           );
         })}

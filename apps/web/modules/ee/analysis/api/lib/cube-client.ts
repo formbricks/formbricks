@@ -162,9 +162,16 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
     // which is the chart as saved.
     const plainQuery = applyValueBandNullGuard(input.query);
     let executedQuery = applyValueBandNullGuard(withResponseBaseMeasure(input.query));
+    // Cube 1.7 serializes every numeric result as a JSON string, dimensions included (an average
+    // arrives as "7.333333333333333", a Value (Number) of 3 as "3"), and strings skip the number
+    // formatting charts and tables apply. castNumerics turns back into numbers exactly the members
+    // the response annotates as `number`; string members such as a text answer of "123", and nulls,
+    // are left alone.
+    const load = (query: TChartQuery) =>
+      client.load(expandPresetDateRanges(query, timeZone) as Query, { castNumerics: true });
     let resultSet: ResultSet;
     try {
-      resultSet = await client.load(expandPresetDateRanges(executedQuery, timeZone) as Query);
+      resultSet = await load(executedQuery);
     } catch (error) {
       // The base is a courtesy, never a reason for the chart itself to fail. A self-hosted Cube whose
       // schema predates the count (the Docker install keeps the schema on the host and upgrades do not
@@ -172,7 +179,7 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
       if ((executedQuery.measures?.length ?? 0) === (plainQuery.measures?.length ?? 0)) throw error;
       logger.warn(error, "Cube rejected the response base measure; retrying without it");
       executedQuery = plainQuery;
-      resultSet = await client.load(expandPresetDateRanges(executedQuery, timeZone) as Query);
+      resultSet = await load(executedQuery);
     }
     // The injected count is a measure too: an invented date bucket must read 0 answers, not NULL.
     const measures = executedQuery.measures ?? [];

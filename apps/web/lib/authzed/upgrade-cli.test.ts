@@ -100,6 +100,16 @@ describe("runAuthzedUpgradeCli", () => {
   });
 
   test.each([
+    ["drifted", "blocked", 2],
+    ["failed", "failed", 1],
+  ] as const)("maps a %s check audit to %s", async (auditStatus, expectedStatus, expectedExitCode) => {
+    const deps = dependencies({ audit: vi.fn().mockResolvedValue(audit(auditStatus)) });
+
+    await expect(runAuthzedUpgradeCli({ action: "check" }, deps.values)).resolves.toBe(expectedExitCode);
+    expect(JSON.parse(deps.outputs.join(""))).toMatchObject({ status: expectedStatus });
+  });
+
+  test.each([
     [{ isEnabled: vi.fn().mockReturnValue(false) }, "authzed_disabled"],
     [{ consistency: vi.fn().mockReturnValue("minimize_latency") }, "authzed_failed_precondition"],
   ])("fails closed for unsafe configuration", async (override, code) => {
@@ -138,6 +148,22 @@ describe("runAuthzedUpgradeCli", () => {
       audit: { status: "drifted" },
       status: "blocked",
     });
+  });
+
+  test("blocks preparation when the final outbox is not clean", async () => {
+    const deps = dependencies({ outboxStatus: vi.fn().mockResolvedValue({ ...outbox, pending: 1 }) });
+
+    await expect(runAuthzedUpgradeCli({ action: "prepare" }, deps.values)).resolves.toBe(2);
+    expect(JSON.parse(deps.outputs.join(""))).toMatchObject({ status: "blocked" });
+  });
+
+  test("fails preparation when the final audit fails", async () => {
+    const deps = dependencies({
+      audit: vi.fn().mockResolvedValueOnce(audit()).mockResolvedValueOnce(audit("failed")),
+    });
+
+    await expect(runAuthzedUpgradeCli({ action: "prepare" }, deps.values)).resolves.toBe(1);
+    expect(JSON.parse(deps.outputs.join(""))).toMatchObject({ status: "failed" });
   });
 
   test("sanitizes unexpected failures", async () => {

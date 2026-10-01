@@ -382,28 +382,36 @@ overrides:
   # load-bearing: packages/ai's @ai-sdk/* providers (amazon-bedrock, anthropic, azure, gateway, google,
   # google-vertex, openai, openai-compatible) and the `ai` package all resolve the vulnerable 4.0.27.
   "@ai-sdk/provider-utils": 4.0.33
+  # ENG-3461 / GHSA-2gc4-cqfq-p2gv (CVE-2026-102599): engine.io >=6.6.0 <6.6.10 does not check that a
+  # transport upgrade request uses the session's negotiated protocol revision, so a crafted heartbeat
+  # can throw an uncaught exception and crash the process (DoS). Patched in 6.6.10, the lowest fix.
+  # load-bearing: socket.io 4.8.2 (runtime, via react-email in @formbricks/email `dependencies`)
+  # resolves the vulnerable 6.6.7.
+  engine.io@6: 6.6.10
   # === Removed once upstream caught up (kept as a record of what no longer needs a pin) ===
-  # ajv@6, @babel/core, body-parser, engine.io@6, linkify-it, protobufjs@7 and uuid@11
+  # ajv@6, @babel/core, body-parser, linkify-it, protobufjs@7 and uuid@11
   # all resolve to the patched version on their own now.
   # js-cookie, shell-quote and form-data@4 were retired by bumping react-use to 17.6.1 (js-cookie ^3),
   # concurrently to 9.2.4 (shell-quote 1.9.0) and @redocly/cli to 1.34.17 (form-data 4.0.6) instead.
-  # ENG-2234 / GHSA-mh99-v99m-4gvg + GHSA-rgw5-rvv9-x895: brace-expansion's recursive expansion has no
+  # ENG-2234 / GHSA-mh99-v99m-4gvg + GHSA-rgw5-rvv9-x895 and ENG-3458/3459/3460 / GHSA-q2hr-2g5m-vwhr
+  # (CVE-2026-102277): brace-expansion's recursive expansion has no
   # bound on total output length, so a crafted `{a,b}{c,d}...` pattern grows the result set exponentially
   # (DoS). GHSA-rgw5-rvv9-x895 (unbounded intermediate arrays) bypasses the CVE-2026-14257 mitigation and
   # covers all three lines we resolve; GHSA-mh99-v99m-4gvg covers only the 1.x and 2.x lines. Every line
   # reaches brace-expansion via minimatch. Pinned to the lowest maintenance release closing both
-  # advisories on each line.
+  # advisories on each line. GHSA-q2hr-2g5m-vwhr is a quadratic-time rewrite of `{a},b}` input (CPU
+  # DoS) on every line; it raised the pins to 1.1.21, 2.1.7 and 5.0.12.
   # load-bearing: @boxyhq/saml-jackson's typeorm>sqlite3>node-gyp chain (runtime) resolves the vulnerable
   # 1.x line; the eslint plugin graph (dev) is on the same line.
-  brace-expansion@1: 1.1.18
+  brace-expansion@1: 1.1.21
   # load-bearing: @boxyhq/saml-jackson resolves the vulnerable 2.x line both directly (typeorm>glob) and
   # via googleapis/@googleapis/admin (runtime, apps/web and packages/ai `dependencies`); @redocly/cli and
   # vite-plugin-dts>@vue/language-core (dev) are on the same line.
-  brace-expansion@2: 2.1.4
+  brace-expansion@2: 2.1.7
   # load-bearing: @sentry/nextjs (runtime, apps/web `dependencies`, via @fastify/otel>@sentry/node) and
   # react-email (runtime, @formbricks/email `dependencies`) resolve the vulnerable 5.x line, alongside
   # vite-plugin-dts, typescript-eslint and storybook (dev).
-  brace-expansion@5: 5.0.9
+  brace-expansion@5: 5.0.12
   # === Closed by ENG-2343 (kept as a record, like the section above) ===
   # GHSA-p2fr-6hmx-4528 (@better-auth/oauth-provider RFC 8707 resource-indicator confusion) was carried
   # here as an accepted risk for as long as the only patched line was a pre-release. It is fixed as of
