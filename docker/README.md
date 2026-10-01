@@ -254,7 +254,7 @@ Run the authenticated preflight after startup to verify Hub internal auth and LL
 docker compose --profile taxonomy exec -T taxonomy python -c 'import os, urllib.request; req = urllib.request.Request("http://127.0.0.1:8000/v1/preflight", headers={"Authorization": "Bearer " + os.environ["TAXONOMY_SERVICE_TOKEN"]}); print(urllib.request.urlopen(req, timeout=10).read().decode())'
 ```
 
-The taxonomy service remains internal to the compose network by default. For production workloads, `TAXONOMY_MAX_RECORDS` defaults to `50000`. Override it only as an advanced safety limit after sizing CPU, memory, and LLM capacity.
+The taxonomy service remains internal to the compose network by default. `TAXONOMY_MAX_RECORDS` defaults to `10000`; change it only after sizing CPU, memory, and LLM capacity.
 
 For local unreleased taxonomy testing, build the taxonomy image as `ghcr.io/formbricks/taxonomy:local`, set `TAXONOMY_IMAGE_REF=:local` and `COMPOSE_PROFILES=taxonomy` in `.env`, and start the stack.
 
