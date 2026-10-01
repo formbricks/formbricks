@@ -760,6 +760,11 @@ Upgrading from a chart that did not render this context:
 - A custom image or extension that writes anywhere else needs a writable mount through
   `deployment.extraVolumes` / `deployment.extraVolumeMounts`, or `readOnlyRootFilesystem: false`. The
   migration Job takes no extra mounts, so if it writes elsewhere, set `readOnlyRootFilesystem: false`.
+- The migration Job, and the web container when `migration.enabled=false`, need an image whose migration
+  runner empties its staging directory in place: Formbricks 6.1.0 or later. An older image, for example one
+  pinned through `deployment.image.tag` or `deployment.image.digest`, cannot remove the mount point and fails
+  with `EROFS: read-only file system, rmdir '/home/nextjs/packages/database/.prisma-migrations'`, which
+  blocks the upgrade. Set `readOnlyRootFilesystem: false` until you run a matching image.
 
 ## Values
 
