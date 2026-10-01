@@ -7,8 +7,8 @@ const readMigration = (name: string): string =>
   readFileSync(new URL(`${name}/migration.sql`, MIGRATIONS_DIR), "utf8");
 
 const outboxMigration = readMigration("20260818120000_add_authzed_projection_outbox");
-const surveyMigration = readMigration("20260928120002_add_survey_projection_trigger");
-const columnsMigration = readMigration("20260928120000_add_survey_visibility_columns");
+const surveyMigration = readMigration("20261002120002_add_survey_projection_trigger");
+const columnsMigration = readMigration("20261002120000_add_survey_visibility_columns");
 
 /** The body of one `CREATE OR REPLACE FUNCTION` statement, up to its `LANGUAGE` clause. */
 const functionBody = (sql: string, name: string): string => {
@@ -89,13 +89,26 @@ describe("survey projection trigger migration (ENG-3282)", () => {
   // would enqueue one revocation per existing survey and arm the freshness guard deployment-wide.
   test("sorts after the owner backfill it must not observe", () => {
     const ours = [
-      "20260928120000_add_survey_visibility_columns",
-      "20260928120001_backfill_survey_owner",
-      "20260928120002_add_survey_projection_trigger",
+      "20261002120000_add_survey_visibility_columns",
+      "20261002120001_backfill_survey_owner",
+      "20261002120002_add_survey_projection_trigger",
     ];
     const names = readdirSync(MIGRATIONS_DIR)
       .filter((name) => ours.includes(name))
       .sort();
     expect(names).toEqual(ours);
+  });
+
+  // A database that already applied main's latest migrations must not then meet ours out of order.
+  test("sorts after the migrations main shipped while this one was in review", () => {
+    const shippedBefore = [
+      "20260928120000_add_matrix_chart_type",
+      "20260928120000_eng_2404_backfill_remaining_embedded_data",
+      "20260928120001_eng_2404_drop_survey_legacy_embedded_data_columns",
+    ];
+    for (const name of shippedBefore) {
+      expect(readdirSync(MIGRATIONS_DIR)).toContain(name);
+      expect(name < "20261002120000_add_survey_visibility_columns").toBe(true);
+    }
   });
 });
