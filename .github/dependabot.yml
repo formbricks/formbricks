@@ -1,4 +1,5 @@
-# Version updates for the actions pinned in .github/ and for the Cube image built from docker/cube-image.
+# Version updates for the actions pinned in .github/, the Cube image built from docker/cube-image, and the
+# dev container's features.
 # Security updates for the npm workspace are configured separately in the repository settings and routed to
 # Linear by dependabot-to-linear.yml.
 version: 2

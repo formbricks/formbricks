@@ -18,6 +18,7 @@ hash -r
 pnpm install
 # db:up runs `pnpm dev:setup` (creates .env and generates its secrets) and starts the compose services.
 pnpm db:up
-# `up -d` returns before Postgres accepts connections; block on its healthcheck before migrating.
+# db:up already blocks on Postgres's healthcheck today, but only because other services depend on it
+# with `service_healthy`. Wait explicitly so migrating doesn't hinge on those dependents staying put.
 docker compose -f docker-compose.dev.yml up -d --wait postgres
 pnpm db:migrate:dev
