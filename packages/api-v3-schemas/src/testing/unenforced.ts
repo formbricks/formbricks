@@ -19,24 +19,33 @@ export type TUnenforced = {
   /** Fact path inside that component (`$` is the component, `.name` a property, `{}` a map value). */
   path: string;
   keyword: TUnenforcedKeyword;
+  /** The module whose refinements enforce it; its coverage test selects its pins by this path. */
+  enforcedBy: string;
 };
 
 export const unenforcedKey = ({ schema, path, keyword }: TUnenforced): string =>
   `${schema} ${path} ${keyword}`;
 
+const RESPONSES = "apps/web/app/api/v3/responses/lib/schemas.ts";
+
 export const EXPECTED_UNENFORCED: readonly TUnenforced[] = [
-  { schema: "BatchDeleteResponsesRequest", path: "$.ids", keyword: "uniqueItems" },
-  { schema: "CreateResponseRequest", path: "$.data", keyword: "maxProperties" },
-  { schema: "CreateResponseRequest", path: "$.data{}", keyword: "conditional" },
-  { schema: "CreateResponseRequest", path: "$.embeddedData", keyword: "maxProperties" },
-  { schema: "CreateResponseRequest", path: "$.tags", keyword: "uniqueItems" },
-  { schema: "CreateResponseRequest", path: "$.ttc", keyword: "maxProperties" },
-  { schema: "PatchResponseRequest", path: "$", keyword: "minProperties" },
-  { schema: "PatchResponseRequest", path: "$.data", keyword: "maxProperties" },
-  { schema: "PatchResponseRequest", path: "$.data{}", keyword: "conditional" },
-  { schema: "PatchResponseRequest", path: "$.embeddedData", keyword: "maxProperties" },
-  { schema: "ResponseDataMapInput", path: "$", keyword: "maxProperties" },
-  { schema: "ResponseDataMapInput", path: "${}", keyword: "conditional" },
-  { schema: "ResponseEmbeddedDataInput", path: "$", keyword: "maxProperties" },
-  { schema: "ResponseTtcMap", path: "$", keyword: "maxProperties" },
+  { schema: "BatchDeleteResponsesRequest", path: "$.ids", keyword: "uniqueItems", enforcedBy: RESPONSES },
+  { schema: "CreateResponseRequest", path: "$.data", keyword: "maxProperties", enforcedBy: RESPONSES },
+  { schema: "CreateResponseRequest", path: "$.data{}", keyword: "conditional", enforcedBy: RESPONSES },
+  {
+    schema: "CreateResponseRequest",
+    path: "$.embeddedData",
+    keyword: "maxProperties",
+    enforcedBy: RESPONSES,
+  },
+  { schema: "CreateResponseRequest", path: "$.tags", keyword: "uniqueItems", enforcedBy: RESPONSES },
+  { schema: "CreateResponseRequest", path: "$.ttc", keyword: "maxProperties", enforcedBy: RESPONSES },
+  { schema: "PatchResponseRequest", path: "$", keyword: "minProperties", enforcedBy: RESPONSES },
+  { schema: "PatchResponseRequest", path: "$.data", keyword: "maxProperties", enforcedBy: RESPONSES },
+  { schema: "PatchResponseRequest", path: "$.data{}", keyword: "conditional", enforcedBy: RESPONSES },
+  { schema: "PatchResponseRequest", path: "$.embeddedData", keyword: "maxProperties", enforcedBy: RESPONSES },
+  { schema: "ResponseDataMapInput", path: "$", keyword: "maxProperties", enforcedBy: RESPONSES },
+  { schema: "ResponseDataMapInput", path: "${}", keyword: "conditional", enforcedBy: RESPONSES },
+  { schema: "ResponseEmbeddedDataInput", path: "$", keyword: "maxProperties", enforcedBy: RESPONSES },
+  { schema: "ResponseTtcMap", path: "$", keyword: "maxProperties", enforcedBy: RESPONSES },
 ];

@@ -4,10 +4,13 @@ import { problemForbidden } from "@/app/api/v3/lib/response";
 import {
   batchDeleteV3Responses,
   countV3ResponsesOperation,
+  createV3ResponseFromRawInput,
   deleteV3Response,
   getV3Response,
   listV3Responses,
+  updateV3ResponseFromRawInput,
 } from "./operations";
+import { getSurveyForV3Write } from "./write-service";
 
 vi.mock("server-only", () => ({}));
 
@@ -710,5 +713,41 @@ describe("the reads are observed for ENG-2898", () => {
     const denied = await getV3Response({ ...read, responseId: ROW.id });
     expect(denied.status).toBe(403);
     expect(mockReadDone).toHaveBeenLastCalledWith(denied);
+  });
+});
+
+/**
+ * The MCP write tools hand the model's arguments to these without a route wrapper in front, so the
+ * schema's strictness is the whole of the guard against a field the contract does not define. The
+ * shapes are generated, and the generator strips unknown keys unless told otherwise — this proves the
+ * raw-input path still refuses one, before anything is read or written.
+ */
+describe("raw-input writes refuse a field the contract does not define", () => {
+  const SURVEY_ID = "clsv000000000000000000001";
+
+  test.each([
+    [
+      "create",
+      () =>
+        createV3ResponseFromRawInput({
+          ...params,
+          body: { surveyId: SURVEY_ID, finished: true, data: {}, createdAt: "2020-01-01" },
+        }),
+    ],
+    [
+      "patch",
+      () => updateV3ResponseFromRawInput({ ...params, body: { finished: true, createdAt: "2020-01-01" } }),
+    ],
+  ])("%s answers 400 unsupported_field and touches nothing", async (_operation, call) => {
+    const response = await call();
+
+    expect(response.status).toBe(400);
+    const problem = (await response.json()) as { invalid_params: { name: string; code?: string }[] };
+    expect(problem.invalid_params).toContainEqual(
+      expect.objectContaining({ name: "createdAt", code: "unsupported_field" })
+    );
+    expect(mockRequireAccess).not.toHaveBeenCalled();
+    expect(mockGetWorkspaceId).not.toHaveBeenCalled();
+    expect(getSurveyForV3Write).not.toHaveBeenCalled();
   });
 });

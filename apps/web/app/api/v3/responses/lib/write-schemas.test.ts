@@ -1,11 +1,26 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, test, vi } from "vitest";
+import { z } from "zod";
+import * as generated from "@formbricks/api-v3-schemas";
+import {
+  EXPECTED_UNENFORCED,
+  collectOperationExamples,
+  diffAgainstSpec,
+  parametersAsObjectSchema,
+  readBundle,
+  unenforcedKey,
+  validatorFor,
+} from "@formbricks/api-v3-schemas/testing";
 import {
   MAX_RESPONSE_DATA_KEYS,
   MAX_RESPONSE_DATA_VALUES,
+  ZV3BatchDeleteResponsesBody,
+  ZV3BatchDeleteResponsesQuery,
   ZV3CreateResponseBody,
   ZV3PatchResponseBody,
+  ZV3ResponseIdParams,
+  ZV3ResponseValidationRequestBody,
 } from "./schemas";
 
 vi.mock("server-only", () => ({}));
@@ -180,11 +195,10 @@ describe("ZV3PatchResponseBody", () => {
 });
 
 /**
- * The caps live twice: as Zod above, and as `maxProperties` / `maxItems` in the hand-authored
- * contract. `resources.spec-drift.test.ts` guards that seam for the *response* payload, but it
- * compares property names and requiredness — not numeric constraints — and it does not cover request
- * bodies at all. So nothing tied these two numbers together, and a change to one would have published
- * a bound the API does not enforce, or enforced one it never published.
+ * The caps live twice: as the constants above, and as `maxProperties` / `maxItems` in the contract.
+ * The request shapes are generated from the contract, but these keywords are exactly the ones the
+ * generator cannot carry, so the numbers are refinements here — and nothing but these tests ties a
+ * constant to the bound the contract publishes.
  *
  * Read as text rather than parsed as YAML: the values under test are literals, so a regex is enough
  * and it avoids adding a parser to the unit suite. Same approach as `mcp-oauth-resource-seed.test.ts`.
@@ -285,4 +299,171 @@ describe("the other element-keyed maps carry the same key cap", () => {
       expect(over.error.issues[0].path).toEqual([field]);
     }
   });
+});
+
+/**
+ * The generated request shapes cannot enforce `uniqueItems`, `minProperties`/`maxProperties` or the
+ * `if/then` value caps, so the package pins each such constraint (`EXPECTED_UNENFORCED`) and names
+ * this module as its enforcer. Every pin needs a counterexample here that the route schema rejects at
+ * the right path; the set comparison makes a new pin fail until someone writes one.
+ */
+describe("every constraint the generator cannot express is enforced here", () => {
+  const ID = "clrs1234567890123456789012";
+  const keys = (n: number, value: unknown) =>
+    Object.fromEntries(Array.from({ length: n }, (_, i) => [`k${i}`, value]));
+  const tooManyValues = Array.from({ length: MAX_RESPONSE_DATA_VALUES + 1 }, () => "v");
+  const tooManyRows = keys(MAX_RESPONSE_DATA_VALUES + 1, "col");
+  const createBody = (extra: Record<string, unknown>) => ({
+    surveyId: ID,
+    finished: false,
+    data: {},
+    ...extra,
+  });
+
+  type TCase = { schema: z.ZodType; input: unknown; path: (string | number)[] };
+  const createData = (data: unknown): TCase => ({
+    schema: ZV3CreateResponseBody,
+    input: createBody({ data }),
+    path: ["data"],
+  });
+  const CASES: Record<string, TCase[]> = {
+    "BatchDeleteResponsesRequest $.ids uniqueItems": [
+      { schema: ZV3BatchDeleteResponsesBody, input: { ids: [ID, ID] }, path: ["ids"] },
+    ],
+    "CreateResponseRequest $.data maxProperties": [createData(keys(MAX_RESPONSE_DATA_KEYS + 1, "a"))],
+    "CreateResponseRequest $.data{} conditional": [
+      { ...createData({ q: tooManyValues }), path: ["data", "q"] },
+      { ...createData({ q: tooManyRows }), path: ["data", "q"] },
+    ],
+    "CreateResponseRequest $.embeddedData maxProperties": [
+      {
+        schema: ZV3CreateResponseBody,
+        input: createBody({ embeddedData: keys(MAX_RESPONSE_DATA_KEYS + 1, "v") }),
+        path: ["embeddedData"],
+      },
+    ],
+    "CreateResponseRequest $.tags uniqueItems": [
+      { schema: ZV3CreateResponseBody, input: createBody({ tags: [ID, ID] }), path: ["tags"] },
+    ],
+    "CreateResponseRequest $.ttc maxProperties": [
+      {
+        schema: ZV3CreateResponseBody,
+        input: createBody({ ttc: keys(MAX_RESPONSE_DATA_KEYS + 1, 1) }),
+        path: ["ttc"],
+      },
+    ],
+    "PatchResponseRequest $ minProperties": [{ schema: ZV3PatchResponseBody, input: {}, path: [] }],
+    "PatchResponseRequest $.data maxProperties": [
+      {
+        schema: ZV3PatchResponseBody,
+        input: { data: keys(MAX_RESPONSE_DATA_KEYS + 1, "a") },
+        path: ["data"],
+      },
+    ],
+    "PatchResponseRequest $.data{} conditional": [
+      { schema: ZV3PatchResponseBody, input: { data: { q: tooManyValues } }, path: ["data", "q"] },
+      { schema: ZV3PatchResponseBody, input: { data: { q: tooManyRows } }, path: ["data", "q"] },
+    ],
+    "PatchResponseRequest $.embeddedData maxProperties": [
+      {
+        schema: ZV3PatchResponseBody,
+        input: { embeddedData: keys(MAX_RESPONSE_DATA_KEYS + 1, "v") },
+        path: ["embeddedData"],
+      },
+    ],
+    // The input maps are only ever parsed inside a body, so their pins are proven through one.
+    "ResponseDataMapInput $ maxProperties": [createData(keys(MAX_RESPONSE_DATA_KEYS + 1, "a"))],
+    "ResponseDataMapInput ${} conditional": [{ ...createData({ q: tooManyValues }), path: ["data", "q"] }],
+    "ResponseEmbeddedDataInput $ maxProperties": [
+      {
+        schema: ZV3CreateResponseBody,
+        input: createBody({ embeddedData: keys(MAX_RESPONSE_DATA_KEYS + 1, "v") }),
+        path: ["embeddedData"],
+      },
+    ],
+    "ResponseTtcMap $ maxProperties": [
+      {
+        schema: ZV3CreateResponseBody,
+        input: createBody({ ttc: keys(MAX_RESPONSE_DATA_KEYS + 1, 1) }),
+        path: ["ttc"],
+      },
+    ],
+  };
+
+  const pins = EXPECTED_UNENFORCED.filter(
+    (pin) => pin.enforcedBy === "apps/web/app/api/v3/responses/lib/schemas.ts"
+  );
+
+  test("every pin this module enforces has a counterexample, and no counterexample is stale", () => {
+    expect(Object.keys(CASES).sort()).toEqual(pins.map(unenforcedKey).sort());
+  });
+
+  test.each(
+    Object.entries(CASES).flatMap(([key, cases]) => cases.map((c, i) => [`${key} #${i + 1}`, c] as const))
+  )("%s is rejected at its path", (_key, { schema, input, path }) => {
+    const result = schema.safeParse(input);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.path)).toContainEqual(path);
+  });
+});
+
+describe("the route schemas match the contract", () => {
+  const bundle = readBundle();
+  const pinned = (schema: string) =>
+    EXPECTED_UNENFORCED.filter((pin) => pin.schema === schema)
+      .map((pin) => `${pin.path} ${pin.keyword}`)
+      .sort();
+
+  /**
+   * The refinement layer may only add what the contract states and the generator dropped. Diffing the
+   * wrapped schema against the contract — not only the generated one — catches an override that
+   * weakens a field, e.g. a refined `tags` that lost its `max(100)`.
+   */
+  test.each([
+    ["CreateResponseRequest", ZV3CreateResponseBody],
+    ["PatchResponseRequest", ZV3PatchResponseBody],
+    ["BatchDeleteResponsesRequest", ZV3BatchDeleteResponsesBody],
+    ["ValidateResponseRequest", ZV3ResponseValidationRequestBody],
+  ])("%s differs only by its pinned constraints", (name, schema) => {
+    const diffs = diffAgainstSpec(bundle, { $ref: `#/components/schemas/${name}` }, schema);
+    expect(diffs.map((diff) => `${diff.path} ${diff.attr}`).sort()).toEqual(pinned(name));
+  });
+
+  /**
+   * OpenAPI cannot close a parameter list, so the generated parameter objects strip unknown keys. The
+   * routes refuse them instead — the only difference from the contract, and a deliberate one.
+   */
+  test.each([
+    ["getResponseV3", "path", ZV3ResponseIdParams],
+    ["batchDeleteResponsesV3", "query", ZV3BatchDeleteResponsesQuery],
+  ] as const)("%s %s parameters match the contract, closed", (operationId, location, schema) => {
+    const spec = parametersAsObjectSchema(bundle, operationId, location);
+    expect(spec).toBeDefined();
+    if (spec)
+      expect(diffAgainstSpec(bundle, spec, schema)).toEqual([
+        { path: "$", attr: "closed", spec: false, zod: true },
+      ]);
+  });
+
+  const components = new Map<string, z.ZodType>([
+    ...Object.entries(generated as Record<string, unknown>).flatMap(([name, value]) =>
+      value instanceof z.ZodType && name.startsWith("z") ? [[name.slice(1), value] as const] : []
+    ),
+    ["CreateResponseRequest", ZV3CreateResponseBody],
+    ["PatchResponseRequest", ZV3PatchResponseBody],
+    ["BatchDeleteResponsesRequest", ZV3BatchDeleteResponsesBody],
+    ["ValidateResponseRequest", ZV3ResponseValidationRequestBody],
+  ]);
+  const requestExamples = collectOperationExamples(
+    bundle,
+    new Set(["createResponseV3", "updateResponseV3", "batchDeleteResponsesV3", "validateResponseV3"])
+  ).filter((example) => example.label.includes(" request "));
+
+  test.each(requestExamples.map((example) => [example.label, example] as const))(
+    "the contract example %s parses through the route schema",
+    (_label, example) => {
+      const result = validatorFor(example.schema, components).safeParse(example.value);
+      expect(result.error?.issues ?? []).toEqual([]);
+    }
+  );
 });
