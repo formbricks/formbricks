@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import { Client, Pool, type PoolClient, type PoolConfig } from "pg";
+import { Client, Pool, type PoolClient } from "pg";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   DEFAULT_POOL_ACQUIRE_TIMEOUT_MS,
@@ -266,7 +266,7 @@ describe("createPrismaPgAdapter", () => {
     // `pool.options` alone could pass while the server is told something else.
     const startupParams = (pool: Pool): Record<string, string> =>
       (
-        new Client(pool.options as PoolConfig) as unknown as { getStartupConf: () => Record<string, string> }
+        new Client(pool.options) as unknown as { getStartupConf: () => Record<string, string> }
       ).getStartupConf();
 
     test("is never sent for a client that did not opt in, even when DATABASE_URL sets it", async () => {
