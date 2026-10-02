@@ -20,7 +20,9 @@ import {
  * docs/api-v3-reference/src. The spec stays the source of truth for HTTP semantics (status
  * codes, headers, filter syntax); these tests pin the parts both layers must agree on:
  * operation coverage, status enums, resource property sets, and the spec's own examples.
- * Full zod-openapi generation of the spec components is planned once the routes land.
+ * The direction for v3 is the reverse of code-first: Zod generated from the spec
+ * (`@formbricks/api-v3-schemas`, see docs/development/technical-handbook/api-v3-schema-generation.mdx).
+ * Until the workflows tag is adopted there, this guard is what holds the two layers together.
  */
 
 const SPEC_SRC_URL = new URL("../../../../docs/api-v3-reference/src/", import.meta.url);

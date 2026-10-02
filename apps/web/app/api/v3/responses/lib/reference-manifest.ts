@@ -47,8 +47,9 @@ export type TV3Reference = {
 /**
  * A dedicated registry, deliberately not `.meta()`.
  *
- * `.meta()` is read by the OpenAPI generator, so declaring internal authorization facts there would
- * publish them to every client. This carries the same information without reaching the document.
+ * `.meta()` is published by `z.toJSONSchema`, and these request schemas are converted to JSON Schema
+ * for every MCP client, so declaring internal authorization facts there would hand them to every
+ * caller. This carries the same information without reaching any published schema.
  */
 export const v3ResponseReferences = z.registry<TV3Reference>();
 
