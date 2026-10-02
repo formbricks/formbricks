@@ -50,8 +50,8 @@ into the refinement layer.
     `scripts/normalize.ts` rewrites the 3.1 idioms hey-api mis-generates: it flattens `allOf` +
     `unevaluatedProperties: false` into one closed object, collapses branches that only carry keywords the
     generator ignores, drops many-to-one discriminator mappings once the members' own enums prove them redundant,
-    and strips `readOnly`. Anything it does not recognise **throws** — a construct the generator silently drops is a
-    validation hole.
+    and strips `readOnly`. What may reach the generator is an **allowlist** of keywords; anything outside it, and any
+    recursive schema, throws — a construct the generator silently drops is a validation hole.
   </Step>
   <Step title="Generate and format">
     hey-api runs in memory with two resolvers: `format: cuid2` becomes `z.cuid2()`, and `additionalProperties:
@@ -67,10 +67,14 @@ into the refinement layer.
   (generated module vs bundle, byte for byte) on every PR. After editing the spec, `pnpm api:v3:sync` regenerates
   both.
 - **Fidelity.** `src/generated.contract.test.ts` diffs the JSON Schema of every generated component and operation
-  schema against the spec, at every depth: closedness, required, nullability, formats, bounds, enums, union members.
-- **Pinned gaps.** hey-api cannot express `uniqueItems`, `minProperties`/`maxProperties` or `if/then`. Each such
-  constraint is pinned in `src/testing/unenforced.ts` with the module that enforces it. The fidelity test fails on any
-  unpinned difference, and on a pin that no longer differs.
+  schema against the spec, path by path: closedness, required, nullability, formats, bounds, enums, union members
+  (each one, including duplicates), conditionals (fingerprinted) and closed `allOf` branches that others extend.
+  Because JSON Schema shows a `z.unknown()` key as required while Zod accepts it missing, it also asks each required
+  key at runtime. It does not model recursion — the normalizer refuses recursive schemas until it does.
+- **Pinned gaps.** hey-api cannot express `uniqueItems`, `minProperties`/`maxProperties`, `if/then`, or a required
+  key with no type. Each such constraint is pinned in `src/testing/unenforced.ts` with the value the spec states and
+  the module that enforces it. The fidelity test fails on any unpinned difference, on a pin whose value moved, and on
+  a pin that no longer differs.
 
 ## Consuming The Schemas
 
@@ -101,8 +105,9 @@ returns a new instance — so anything keyed on schema identity must be attached
 3. Rebuild the route schemas on the generated ones. Add a counterexample for each pin, a contract diff of each
    route schema, and parse the operation's examples through them (see `write-schemas.test.ts`).
 4. **Before generating request bodies, the resource needs a reference-roster test** like Responses'
-   `reference-manifest.test.ts`. Generation means a spec edit alone can add an accepted field; the roster is what
-   fails until that field's tenancy is classified.
+   `reference-manifest.test.ts`. Generation means a spec edit alone can add an accepted field, top-level or inside a
+   nested object such as `meta`; the roster classifies both, by set equality, so it fails until that field's tenancy is
+   classified and refuses fields the server derives.
 5. Delete the resource's drift test once nothing in it is left that generation does not prove.
 
 ## Upgrading The Generator
@@ -113,7 +118,9 @@ change in the generated code. The fidelity and closedness tests are what catch a
 catalog bump can also change the formatting and require a regenerate; `pnpm lint` reports it.
 
 The generator is a build-time dependency only. ESLint forbids importing it from `src/`, so no generator code can
-reach a served bundle. The pipeline passes an explicit config file that does not exist, so hey-api's loader executes
+reach a served bundle, and a test fails if the generated module ever imports anything but `zod`. The
+`@formbricks/api-v3-schemas/testing` entry point reads the bundle from disk and is lint-banned outside tests in
+`apps/web`. The pipeline passes an explicit config file that does not exist, so hey-api's loader executes
 nothing it finds in the working directory — a test plants a throwing `openapi-ts.config.mjs` and `index.mjs` to keep
 it that way. The loader still reads a `.openapi-tsrc` from the working directory — hey-api offers no way to turn that off, and
 the file's keys survive wherever the pipeline sets none — so the renderer refuses to run when one is present.
