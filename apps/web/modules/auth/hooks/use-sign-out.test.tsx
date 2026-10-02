@@ -105,6 +105,17 @@ describe("useSignOut", () => {
     expect(baSignOut).toHaveBeenCalledTimes(1);
   });
 
+  test("logs and still signs out when the audit action returns a server error", async () => {
+    mockedLogSignOut.mockResolvedValueOnce({ serverError: "Not authenticated" });
+    const { signOut } = useSignOut({ id: "u", email: "e@x.com" });
+
+    await signOut();
+
+    expect(loggerError).toHaveBeenCalled();
+    expect(baSignOut).toHaveBeenCalledTimes(1);
+    expect(window.location.href).toBe("/auth/login");
+  });
+
   test("still signs out and redirects when audit logging throws", async () => {
     mockedLogSignOut.mockRejectedValueOnce(new Error("audit down"));
     const { signOut } = useSignOut({ id: "u", email: "e@x.com" });
