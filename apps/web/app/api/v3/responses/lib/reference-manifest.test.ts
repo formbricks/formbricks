@@ -3,6 +3,8 @@ import type { z } from "zod";
 import {
   V3_RESPONSE_BODY_FIELDS,
   V3_RESPONSE_DENIED_FIELDS,
+  V3_RESPONSE_DENIED_NESTED_FIELDS,
+  V3_RESPONSE_NESTED_FIELDS,
   isIdShaped,
   looksLikeReferenceName,
   referenceFor,
@@ -160,6 +162,69 @@ describe("the roster as a whole", () => {
     const stale = Object.keys(V3_RESPONSE_BODY_FIELDS).filter((field) => !onAnyBody.has(field));
 
     expect(stale).toEqual([]);
+  });
+});
+
+/**
+ * The plain objects nested in a body, flattened to dotted paths. Records are skipped: their keys are
+ * data. Walks through optional/nullable wrappers and refinements the same way `shapeOf` does.
+ */
+const nestedFieldsOf = (schema: z.ZodType, prefix = ""): string[] => {
+  let shape: Record<string, z.ZodType> | undefined;
+  try {
+    shape = shapeOf(schema);
+  } catch {
+    return [];
+  }
+  return Object.entries(shape).flatMap(([name, field]) => {
+    const path = prefix ? `${prefix}.${name}` : name;
+    const inner = nestedFieldsOf(field, path);
+    return prefix ? [path, ...inner] : inner;
+  });
+};
+
+describe.each(BODIES)("%s nested fields", (_name, body) => {
+  const nested = nestedFieldsOf(body);
+
+  /**
+   * Set equality, as for the top level: a key a spec edit adds inside `meta` fails here until it is
+   * classified, rather than being generated, accepted and stored with nothing noticing.
+   */
+  test("every nested field is classified", () => {
+    expect(nested.filter((path) => !(path in V3_RESPONSE_NESTED_FIELDS))).toEqual([]);
+  });
+
+  test("no nested field classified as not-a-reference is visibly an id", () => {
+    const suspicious = nested.filter(
+      (path) =>
+        V3_RESPONSE_NESTED_FIELDS[path] === "none" &&
+        (isIdShaped(nestedSchema(body, path)) || looksLikeReferenceName(path.split(".").pop() ?? ""))
+    );
+
+    expect(suspicious).toEqual([]);
+  });
+
+  test("no denied field appears nested", () => {
+    const denied = new Set<string>([...V3_RESPONSE_DENIED_NESTED_FIELDS]);
+    const deniedNames = new Set<string>(V3_RESPONSE_DENIED_FIELDS);
+    expect(nested.filter((path) => denied.has(path) || deniedNames.has(path.split(".").pop() ?? ""))).toEqual(
+      []
+    );
+  });
+});
+
+function nestedSchema(body: z.ZodType, path: string): z.ZodType {
+  return path.split(".").reduce<z.ZodType>((schema, name) => shapeOf(schema)[name], body);
+}
+
+describe("the nested roster as a whole", () => {
+  test("every nested classification names a field that still exists on one of the bodies", () => {
+    const onAnyBody = new Set(BODIES.flatMap(([, schema]) => nestedFieldsOf(schema)));
+    expect(Object.keys(V3_RESPONSE_NESTED_FIELDS).filter((path) => !onAnyBody.has(path))).toEqual([]);
+  });
+
+  test("the walk reaches meta, so an empty result above would mean something", () => {
+    expect(nestedFieldsOf(ZV3CreateResponseBody)).toContain("meta.source");
   });
 });
 

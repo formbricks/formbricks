@@ -388,6 +388,16 @@ describe("every constraint the generator cannot express is enforced here", () =>
         path: ["ttc"],
       },
     ],
+    "ValidateResponseCreateRequest $ requiredAtRuntime": [
+      { schema: ZV3ResponseValidationRequestBody, input: { operation: "create" }, path: ["data"] },
+    ],
+    "ValidateResponsePatchRequest $ requiredAtRuntime": [
+      {
+        schema: ZV3ResponseValidationRequestBody,
+        input: { operation: "patch", responseId: ID },
+        path: ["data"],
+      },
+    ],
   };
 
   const pins = EXPECTED_UNENFORCED.filter(
@@ -409,8 +419,10 @@ describe("every constraint the generator cannot express is enforced here", () =>
 
 describe("the route schemas match the contract", () => {
   const bundle = readBundle();
+  // A runtime-checked pin disappears once the refinement enforces it; only the structural ones remain,
+  // because JSON Schema cannot show a refinement.
   const pinned = (schema: string) =>
-    EXPECTED_UNENFORCED.filter((pin) => pin.schema === schema)
+    EXPECTED_UNENFORCED.filter((pin) => pin.schema === schema && pin.keyword !== "requiredAtRuntime")
       .map((pin) => `${pin.path} ${pin.keyword}`)
       .sort();
 
@@ -424,6 +436,10 @@ describe("the route schemas match the contract", () => {
     ["PatchResponseRequest", ZV3PatchResponseBody],
     ["BatchDeleteResponsesRequest", ZV3BatchDeleteResponsesBody],
     ["ValidateResponseRequest", ZV3ResponseValidationRequestBody],
+    // The envelope is a union, which the runtime required-key check does not enter; each arm is
+    // compared on its own so the `data` presence rule is proven per variant.
+    ["ValidateResponseCreateRequest", ZV3ResponseValidationRequestBody.options[0]],
+    ["ValidateResponsePatchRequest", ZV3ResponseValidationRequestBody.options[1]],
   ])("%s differs only by its pinned constraints", (name, schema) => {
     const diffs = diffAgainstSpec(bundle, { $ref: `#/components/schemas/${name}` }, schema);
     expect(diffs.map((diff) => `${diff.path} ${diff.attr}`).sort()).toEqual(pinned(name));
