@@ -44,8 +44,8 @@ Under load, the old 5-second limit was cancelling writes that were about to succ
 response updates and survey resets.
 
 - Transactions may run for up to 20 seconds.
-- Waiting for a free database connection is now bounded by the connection pool itself. That's
-  `connect_timeout` in `DATABASE_URL`, 5 seconds by default, plus a one-second margin.
+- Waiting for a free database connection is bounded by `connect_timeout` in `DATABASE_URL` (5 seconds
+  by default). With `connect_timeout=0` the wait is capped at 6 seconds.
 - Formbricks asks PostgreSQL to end any session left idle inside an open transaction for 60 seconds, which
   releases that session's locks. It does this with the `idle_in_transaction_session_timeout` connection
   setting. Migrations are not affected.
@@ -55,10 +55,12 @@ To change the idle timeout, add it to `DATABASE_URL` in **milliseconds**, for ex
 setting.
 
 <Warning>
-  If Formbricks connects to PostgreSQL through **PgBouncer, Supavisor, RDS Proxy or another pooler**, it may
-  reject connections that carry an unknown startup parameter. Before upgrading, either add
-  `idle_in_transaction_session_timeout=0` to `DATABASE_URL`, or allow the parameter in your pooler (for
-  PgBouncer, add it to `ignore_startup_parameters`). A direct connection to PostgreSQL needs no change.
+  If Formbricks connects to PostgreSQL through **PgBouncer, Supavisor, RDS Proxy or another pooler**, the
+  pooler may reject connections that carry an unknown startup parameter. Before upgrading, add
+  `idle_in_transaction_session_timeout=0` to `DATABASE_URL`. If your `DATABASE_URL` already contains
+  `pgbouncer=true`, Formbricks skips the setting automatically. Adding the parameter to PgBouncer's
+  `ignore_startup_parameters` also works, but PgBouncer then drops it, so the 60-second safeguard does
+  not apply. A direct connection to PostgreSQL needs no change.
 </Warning>
 
 ### Changes in Environment Variables

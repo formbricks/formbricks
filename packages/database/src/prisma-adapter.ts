@@ -196,7 +196,7 @@ const sslConfigFromSslAccept = (value: string | null): PoolConfig["ssl"] | undef
 // The effective `idle_in_transaction_session_timeout`, in milliseconds; undefined means "send nothing",
 // leaving the server's own setting in place.
 //   not opted in         → undefined, whatever DATABASE_URL says (migrations and scripts stay unaffected)
-//   URL param absent     → the caller's default
+//   URL param absent     → the caller's default, unless the URL declares PgBouncer (below)
 //   URL param = 0        → undefined: the opt-out for poolers that reject unknown startup parameters
 //   URL param = n        → n
 //   URL param invalid    → warn and fall back to the default rather than take the app down at connect
@@ -207,7 +207,19 @@ const resolveIdleInTransactionSessionTimeout = (
   if (defaultMillis === undefined) return undefined;
 
   const raw = url.searchParams.get(IDLE_IN_TRANSACTION_SESSION_TIMEOUT_PARAM)?.trim() ?? "";
-  if (raw === "") return defaultMillis || undefined;
+  if (raw === "") {
+    // `pgbouncer=true` (Prisma's convention) says a pooler sits in front, and PgBouncer refuses a
+    // connection that carries a startup parameter it does not know. Sending the default there would turn
+    // an upgrade into an outage, so only an explicit value is sent through a declared PgBouncer.
+    if (url.searchParams.get("pgbouncer")?.trim().toLowerCase() === "true") {
+      logger.warn(
+        { [IDLE_IN_TRANSACTION_SESSION_TIMEOUT_PARAM]: "not sent", reason: "pgbouncer=true" },
+        "DATABASE_URL declares PgBouncer; not sending idle_in_transaction_session_timeout. Set it explicitly in DATABASE_URL to send it anyway."
+      );
+      return undefined;
+    }
+    return defaultMillis || undefined;
+  }
 
   // Digits only: parseInt would read "60s" as 60 and pass an off-by-1000 value straight through.
   const value = /^\d+$/.test(raw) ? Number(raw) : Number.NaN;

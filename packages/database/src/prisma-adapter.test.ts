@@ -322,6 +322,27 @@ describe("createPrismaPgAdapter", () => {
       expect(JSON.stringify(loggerWarnMock.mock.calls)).not.toContain("secret");
     });
 
+    test("sends nothing by default through a declared PgBouncer, which rejects unknown startup parameters", async () => {
+      const { pool } = await connectAdapter(`${BASE_URL}?pgbouncer=true`, APP_DEFAULT);
+
+      expect(pool.options).not.toHaveProperty("idle_in_transaction_session_timeout");
+      expect(startupParams(pool)).not.toHaveProperty("idle_in_transaction_session_timeout");
+      expect(loggerWarnMock).toHaveBeenCalledWith(
+        expect.objectContaining({ reason: "pgbouncer=true" }),
+        expect.stringContaining("declares PgBouncer")
+      );
+      expect(JSON.stringify(loggerWarnMock.mock.calls)).not.toContain("secret");
+    });
+
+    test("still sends an explicit value through a declared PgBouncer — the operator asked for it", async () => {
+      const { pool } = await connectAdapter(
+        `${BASE_URL}?pgbouncer=true&idle_in_transaction_session_timeout=5000`,
+        APP_DEFAULT
+      );
+
+      expect(startupParams(pool).idle_in_transaction_session_timeout).toBe("5000");
+    });
+
     test("accepts Postgres's maximum", async () => {
       const { pool } = await connectAdapter(
         `${BASE_URL}?idle_in_transaction_session_timeout=2147483647`,

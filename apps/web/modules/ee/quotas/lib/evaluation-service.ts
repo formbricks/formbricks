@@ -16,7 +16,8 @@ import { evaluateQuotas, handleQuotas } from "./utils";
  * itself. Loaded with `loadQuotaEvaluationContext` **before** the write transaction opens, because these
  * reads go through the root client: issued inside the transaction, each one checked out a second pool
  * connection while the transaction held the first, which stalls the transaction behind the pool when it
- * is saturated (ENG-3285). Nothing here depends on the row being written.
+ * is saturated (ENG-3285). This keeps quota evaluation off that path; it says nothing about other root
+ * reads a caller makes inside its own transaction. Nothing here depends on the row being written.
  */
 export interface TQuotaEvaluationContext {
   quotas: TSurveyQuota[];
