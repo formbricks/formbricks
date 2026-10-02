@@ -9,19 +9,20 @@ import { getUser } from "@/lib/user/service";
 import { getWorkspace } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSession } from "@/modules/auth/lib/session";
-import { getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { ActivityTimeline } from "./activity-timeline";
 
 interface ActivitySectionProps {
   workspaceId: string;
   contactId: string;
   environmentTags: TTag[];
+  isReadOnly: boolean;
 }
 
 export const ActivitySection = async ({
   workspaceId,
   contactId,
   environmentTags,
+  isReadOnly,
 }: Readonly<ActivitySectionProps>) => {
   const [responses, displays, workspace] = await Promise.all([
     getResponsesByContactId(contactId, workspaceId),
@@ -55,7 +56,6 @@ export const ActivitySection = async ({
     throw new Error(t("workspace.contacts.no_responses_found"));
   }
 
-  const workspacePermission = await getWorkspacePermissionByUserId(session.user.id, workspace.id);
   const locale = user.locale ?? DEFAULT_LOCALE;
 
   return (
@@ -67,7 +67,7 @@ export const ActivitySection = async ({
       workspaceId={workspaceId}
       environmentTags={environmentTags}
       locale={locale}
-      workspacePermission={workspacePermission}
+      isReadOnly={isReadOnly}
     />
   );
 };
