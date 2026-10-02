@@ -257,3 +257,60 @@ describe("updateAttributes under concurrent identify calls (ENG-2252)", () => {
     }
   }, 40_000);
 });
+
+/**
+ * ENG-3285: identify writes expired on Prisma's 5 s default transaction budget (P2028) while waiting
+ * on a row lock another transaction held, and the whole identify call 500ed with nothing retrying it.
+ * Prisma's timeout cancels nothing on the server — the waiting upsert completes once the lock is
+ * released either way — so the expiry only threw away a write that was about to commit. The app
+ * client now runs transactions on a deliberate, longer budget (`client-options.ts`); this holds a
+ * lock past the old 5 s and checks the write lands.
+ */
+describe("updateAttributes behind a long-held row lock (ENG-3285)", () => {
+  const LOCK_HELD_MS = 7_000;
+
+  test("commits once the lock is released instead of expiring at Prisma's 5 s default", async () => {
+    const { workspaceId, contactId, attributeKeyIdsSorted } = await seedContactWithAttributes([
+      "userId",
+      "attr_a",
+      "attr_b",
+    ]);
+    const competitorHoldsRow = createGate();
+
+    const competingWriter = prisma.$transaction(
+      async (tx) => {
+        await tx.$queryRaw`
+          SELECT "id" FROM "ContactAttribute"
+          WHERE "contactId" = ${contactId} AND "attributeKeyId" = ${attributeKeyIdsSorted[0]}
+          FOR UPDATE
+        `;
+        competitorHoldsRow.open();
+        await new Promise((resolve) => setTimeout(resolve, LOCK_HELD_MS));
+      },
+      { timeout: 20_000, maxWait: 20_000 }
+    );
+
+    await competitorHoldsRow.wait;
+    const startedAt = Date.now();
+    const identify = updateAttributes(contactId, USER_ID, workspaceId, {
+      userId: USER_ID,
+      attr_a: "after-the-wait",
+      attr_b: "after-the-wait",
+    });
+    // Proves the identify transaction is genuinely queued behind the lock, not racing ahead of it.
+    await waitForBlockedLock();
+
+    const [identifyResult] = await Promise.all([identify, competingWriter]);
+    const elapsed = Date.now() - startedAt;
+
+    expect(identifyResult.success).toBe(true);
+    // It really did wait past the old budget — otherwise this proves nothing about it.
+    expect(elapsed).toBeGreaterThan(6_000);
+    const values = await prisma.contactAttribute.findMany({
+      where: { contactId, attributeKey: { key: { in: ["attr_a", "attr_b"] } } },
+      select: { value: true },
+    });
+    expect(values.map((v) => v.value)).toEqual(["after-the-wait", "after-the-wait"]);
+  }, 40_000);
+});
+
