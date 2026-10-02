@@ -47,9 +47,9 @@ export type TV3Reference = {
 /**
  * A dedicated registry, deliberately not `.meta()`.
  *
- * `.meta()` is published by `z.toJSONSchema`, and these request schemas are converted to JSON Schema
- * for every MCP client, so declaring internal authorization facts there would hand them to every
- * caller. This carries the same information without reaching any published schema.
+ * `.meta()` is part of what `z.toJSONSchema` publishes, so any consumer that turns these schemas into
+ * JSON Schema — a tool definition, a generated document — would hand internal authorization facts to
+ * every caller. This carries the same information without reaching any published schema.
  */
 export const v3ResponseReferences = z.registry<TV3Reference>();
 

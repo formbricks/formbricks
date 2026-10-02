@@ -1,4 +1,5 @@
 import { type Plugins, createClient } from "@hey-api/openapi-ts";
+import { fileURLToPath } from "node:url";
 import type { JsonObject } from "../src/testing/json";
 
 /**
@@ -10,8 +11,16 @@ import type { JsonObject } from "../src/testing/json";
  * is dropped on failure, and the tsconfig lookup is disabled.
  */
 
-/** A path that cannot exist, so c12 loads no `openapi-ts.config.*` from whatever directory runs this. */
-const NO_CONFIG_FILE = "/dev/null/formbricks-api-v3-schemas-has-no-openapi-ts-config";
+/**
+ * An explicit config file that does not exist, so hey-api's config loader (c12, which executes what it
+ * finds through jiti) loads nothing from the working directory.
+ *
+ * Both details are load-bearing. hey-api strips the last dot-segment before handing the name to c12,
+ * so a path without an extension arrives as `""` — and c12 then imports the working directory itself,
+ * executing whatever `index.*` sits there. And the directory must exist, or c12 fails with ENOTDIR.
+ * `render.test.ts` plants a throwing config and a throwing `index.mjs` to keep both true.
+ */
+const NO_CONFIG_FILE = fileURLToPath(new URL("./__no-openapi-ts-config__.ts", import.meta.url));
 
 const resolvers: Plugins.Zod.Resolvers = {
   // The contract's identifier format. hey-api knows only the formats JSON Schema defines.

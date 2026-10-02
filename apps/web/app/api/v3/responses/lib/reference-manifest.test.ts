@@ -6,6 +6,7 @@ import {
   isIdShaped,
   looksLikeReferenceName,
   referenceFor,
+  v3ResponseReferences,
 } from "./reference-manifest";
 import { ZV3CreateResponseBody, ZV3PatchResponseBody, ZV3ResponseValidationRequestBody } from "./schemas";
 
@@ -25,8 +26,8 @@ vi.mock("server-only", () => ({}));
  */
 
 const shapeOf = (schema: z.ZodType): Record<string, z.ZodType> => {
-  // Both bodies are wrapped — `.strict()` on create, `.refine()` on patch — so the object with the
-  // shape sits one or two levels in. Walking beats reaching, since which wrapper is outermost is the
+  // The bodies may be wrapped — `.refine()` on patch — so the object with the shape can sit a level
+  // or two in. Walking beats reaching, since which wrapper is outermost is the
   // schema author's choice and not something this test should pin.
   let current: unknown = schema;
 
@@ -159,6 +160,38 @@ describe("the roster as a whole", () => {
     const stale = Object.keys(V3_RESPONSE_BODY_FIELDS).filter((field) => !onAnyBody.has(field));
 
     expect(stale).toEqual([]);
+  });
+});
+
+/**
+ * The bodies are generated, and a declaration sits on whichever instance a generated field exposes. A
+ * spec edit that points two fields at one shared component would make them share that instance — and
+ * the first field's declaration would then answer for the second without anyone having classified it.
+ * Fields of the same name may share (create and patch reuse one capped `data`); different fields may
+ * not.
+ */
+describe("declarations are each field's own", () => {
+  const declaredInstance = (schema: unknown): unknown => {
+    let current: unknown = schema;
+    for (let depth = 0; current && depth < 10; depth += 1) {
+      if (v3ResponseReferences.get(current as z.ZodType)) return current;
+      const def = (current as { _zod?: { def?: Record<string, unknown> } })._zod?.def;
+      current = def?.innerType ?? def?.in ?? def?.schema;
+    }
+    return undefined;
+  };
+
+  test("no two differently named fields share a declared instance", () => {
+    const owners = new Map<unknown, Set<string>>();
+    for (const [, body] of BODIES) {
+      for (const [field, schema] of Object.entries(shapeOf(body))) {
+        const instance = declaredInstance(schema);
+        if (instance) owners.set(instance, (owners.get(instance) ?? new Set()).add(field));
+      }
+    }
+    const shared = [...owners.values()].filter((fields) => fields.size > 1).map((fields) => [...fields]);
+
+    expect(shared).toEqual([]);
   });
 });
 

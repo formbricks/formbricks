@@ -152,8 +152,8 @@ describe("ZV3CreateResponseBody", () => {
 });
 
 describe("ZV3PatchResponseBody", () => {
-  // The patch body reuses `createFields.data`, so the caps must come with it — a separate schema
-  // here would be the obvious way to lose them.
+  // The patch body reuses the create body's capped `data` schema, so the caps must come with it — a
+  // separate schema here would be the obvious way to lose them.
   test("inherits the create body's data caps", () => {
     const wide = Object.fromEntries(Array.from({ length: 501 }, (_unused, i) => [`q${i}`, "text"]));
 

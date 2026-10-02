@@ -261,7 +261,8 @@ reviews:
           `docs/api-v3-reference/src/**/*.yml`, which CI bundles. For a resource whose tag is in
           `packages/api-v3-schemas/scripts/adopted.ts`, the route's Zod must come from
           `@formbricks/api-v3-schemas` — a hand-written shape there is a finding, and only the
-          refinements the generator cannot express belong beside it. Elsewhere, a handler change
+          refinements the generator cannot express belong beside it. Query-string parsers are the
+          exception until a shared query adapter exists (e.g. `parse-v3-responses-list-query.ts`). Elsewhere, a handler change
           with no spec change is a bug unless the shape is genuinely unchanged.
         - A `/v3` route with no public OpenAPI entry is internal by definition and belongs under
           `apps/web/app/api/(internal)/`. Shipping an internal route as public v3 is a finding.

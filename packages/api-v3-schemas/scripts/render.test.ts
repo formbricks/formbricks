@@ -56,14 +56,17 @@ describe("renderZodModule resolvers", () => {
 });
 
 /**
- * c12 executes any `openapi-ts.config.*` it discovers. The explicit, non-existent `configFile` is what
- * stops that; this runs the renderer from a directory holding a config that throws, in a child process
- * so the working directory is real.
+ * c12 executes any `openapi-ts.config.*` it discovers, and imports the working directory itself when it
+ * is given an empty config name. The explicit, non-existent `configFile` is what stops both; this runs
+ * the renderer, in a child process so the working directory is real, from a directory holding a config
+ * and an `index.mjs` that both throw.
  */
-test("a stray openapi-ts config in the working directory is never executed", () => {
+test("no config or module in the working directory is ever executed", () => {
   const directory = mkdtempSync(join(tmpdir(), "api-v3-schemas-render-"));
   try {
     writeFileSync(join(directory, "openapi-ts.config.mjs"), 'throw new Error("stray config executed");\n');
+    // c12 imports the working directory as a module when it is handed an empty config name.
+    writeFileSync(join(directory, "index.mjs"), 'throw new Error("stray index executed");\n');
     const renderModule = fileURLToPath(new URL("./render.ts", import.meta.url));
     const tsxCli = createRequire(import.meta.url).resolve("tsx/cli");
     const script = join(directory, "run.mts");

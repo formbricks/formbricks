@@ -273,7 +273,7 @@ describe("access modifiers and leftovers", () => {
     expect(() => normalizeForGeneration(spec)).toThrow(/typed additionalProperties is not supported/);
   });
 
-  test.each(["not", "if", "patternProperties", "prefixItems"])(
+  test.each(["not", "if", "patternProperties", "prefixItems", "unevaluatedItems"])(
     "throws when %s would reach the generator",
     (keyword) => {
       const spec = withSchemas({ Bad: { type: "object", [keyword]: { type: "string" } } });

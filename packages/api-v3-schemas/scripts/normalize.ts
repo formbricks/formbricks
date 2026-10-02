@@ -41,6 +41,7 @@ const ANNOTATIONS = new Set([
 const UNSUPPORTED = [
   "allOf",
   "unevaluatedProperties",
+  "unevaluatedItems",
   "if",
   "then",
   "else",

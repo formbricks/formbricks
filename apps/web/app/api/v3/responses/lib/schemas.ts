@@ -86,9 +86,10 @@ export const MAX_RESPONSE_DATA_KEYS = 500;
  *
  * The contract caps each value with `if/then` — an array at most 1000 items, a matrix at most 1000
  * rows — and the map with `maxProperties`. The value caps refine the generated value union and the
- * key cap refines the map, so a value that breaks a cap fails while the map is parsed and the key cap
- * then stays silent, as Zod skips an object-level refinement over a failed parse. The array cap raises
- * Zod's own `too_big` issue, so its `reason` reads the way a `.max()` would.
+ * key cap refines the map, which reports issues exactly as the per-value `.max()` schema did: a value
+ * over its cap and a map over 500 keys are both reported, while a value of the wrong shape fails the
+ * map's parse and Zod then skips the key cap. The array cap raises Zod's own `too_big` issue, so its
+ * `reason` reads the way a `.max()` would.
  */
 const ZV3ResponseDataValue = zResponseDataMapInput.valueType.superRefine((value, ctx) => {
   if (Array.isArray(value)) {
