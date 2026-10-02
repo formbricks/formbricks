@@ -17,7 +17,7 @@ jobs:
     outputs:
       is_latest: ${{ steps.compare_tags.outputs.is_latest }}
     # Decides whether this release was marked "Set as the latest release" by asking the GitHub API
-    # which release is latest. is_latest promotes GHCR :latest, ECR :production and the stable tag,
+    # for its isLatest flag. is_latest promotes GHCR :latest, ECR :production and the stable tag,
     # so the script grants it only on a well-formed answer: an API error or a malformed response
     # fails this job, which holds back the rest of the release until it is re-run, instead of
     # defaulting either way.
