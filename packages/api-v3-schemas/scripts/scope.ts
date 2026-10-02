@@ -14,6 +14,14 @@ const addMappingTargets = (discriminator: JsonValue, into: Set<string>): void =>
   }
 };
 
+/** Keys whose values are names, not keywords: a property called `examples` is still a schema. */
+const NAME_MAPS = new Set(["properties", "patternProperties", "$defs", "dependentSchemas"]);
+
+const collectNamedRefs = (map: JsonValue, into: Set<string>): void => {
+  if (!isJsonObject(map)) return;
+  for (const child of Object.values(map)) collectComponentRefs(child, into);
+};
+
 const collectComponentRefs = (value: JsonValue, into: Set<string>): void => {
   if (Array.isArray(value)) {
     for (const item of value) collectComponentRefs(item, into);
@@ -22,6 +30,7 @@ const collectComponentRefs = (value: JsonValue, into: Set<string>): void => {
   if (!isJsonObject(value)) return;
   for (const [key, child] of Object.entries(value)) {
     if (key === "$ref" && typeof child === "string") into.add(child);
+    else if (NAME_MAPS.has(key)) collectNamedRefs(child, into);
     else if (key === "discriminator") addMappingTargets(child, into);
     else if (!isDataKey(key)) collectComponentRefs(child, into);
   }

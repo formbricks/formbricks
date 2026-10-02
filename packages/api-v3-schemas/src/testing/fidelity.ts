@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { type TFactDiff, type TFacts, collectFacts, diffFacts, pointerResolver } from "./facts";
+import {
+  type TFactDiff,
+  type TFacts,
+  collectFacts,
+  diffFacts,
+  pointerResolver,
+  unionMemberPaths,
+} from "./facts";
 import { type JsonObject, type JsonValue, cloneJson, isJsonObject, resolvePointer } from "./json";
 
 /**
@@ -36,11 +43,22 @@ const unwrap = (schema: z.ZodType): z.ZodType => {
  *
  * `z.toJSONSchema` lists a `z.unknown()` or `z.any()` key as required, but at runtime Zod accepts the
  * key being absent — so a required-but-untyped field (the validate envelopes' `data`) looks faithful
- * in JSON Schema and is not. This walks the Zod object tree the facts describe and asks each required
- * field directly. Union members are not entered: each is a component checked on its own.
+ * in JSON Schema and is not. This walks the Zod object tree the facts describe — union members
+ * included, at the paths the facts give them — and asks each required field directly.
  */
 const runtimeRequiredDiffs = (specFacts: TFacts, schema: z.ZodType, path: string): TFactDiff[] => {
   const current = unwrap(schema);
+  if (current instanceof z.ZodUnion) {
+    const options = current.options as readonly z.ZodType[];
+    const paths = unionMemberPaths(
+      path,
+      options.map((option) => toJsonSchema(option))
+    );
+    return options.flatMap((option, index) => {
+      const memberPath = paths[index];
+      return memberPath === null ? [] : runtimeRequiredDiffs(specFacts, option, memberPath);
+    });
+  }
   if (current instanceof z.ZodArray)
     return runtimeRequiredDiffs(specFacts, current.element as z.ZodType, `${path}[]`);
   if (current instanceof z.ZodRecord)

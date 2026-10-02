@@ -166,4 +166,20 @@ describe("diffAgainstSpec", () => {
       /recursive schema/
     );
   });
+
+  test("a required untyped key inside a union member is reported at runtime too", () => {
+    const member = (kind: string): JsonObject => ({
+      type: "object",
+      required: ["kind", "data"],
+      additionalProperties: false,
+      properties: { kind: { type: "string", enum: [kind] }, data: {} },
+    });
+    const spec: JsonObject = { oneOf: [member("a"), member("b")] };
+    const loose = (kind: string) => z.strictObject({ kind: z.enum([kind]), data: z.unknown() });
+    const strict = (kind: string) =>
+      z.strictObject({ kind: z.enum([kind]), data: z.unknown().refine((value) => value !== undefined) });
+
+    expect(attrs(spec, z.union([loose("a"), strict("b")]))).toEqual(["$|kind=a requiredAtRuntime"]);
+    expect(attrs(spec, z.union([strict("a"), strict("b")]))).toEqual([]);
+  });
 });

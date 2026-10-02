@@ -399,6 +399,34 @@ export const collectFacts = (root: JsonValue, options: TCollectOptions): TFacts 
   return facts;
 };
 
+/**
+ * The fact paths `collectFacts` gives the members of a union of inline schemas, in member order — `null`
+ * for a member it folds into nullability, and the union's own path when it has one real member. Lets
+ * another walk (the runtime required-key check) address the same rows.
+ */
+export const unionMemberPaths = (path: string, members: readonly JsonValue[]): (string | null)[] => {
+  const nonNull = members.map((node, index) => ({ node, index })).filter(({ node }) => !isNullSchema(node));
+  const paths: (string | null)[] = members.map(() => null);
+  if (nonNull.length === 1) {
+    paths[nonNull[0].index] = path;
+    return paths;
+  }
+  const keys = memberKeys(
+    () => undefined,
+    nonNull.map(({ node }) => ({ node, seen: new Set<string>() }))
+  );
+  const used = new Set<string>();
+  nonNull.forEach(({ index }, position) => {
+    keys[position].forEach((key, keyIndex) => {
+      const plain = `${path}|${key}`;
+      const memberPath = used.has(plain) ? `${plain}~${position}` : plain;
+      used.add(plain);
+      if (keyIndex === 0) paths[index] = memberPath;
+    });
+  });
+  return paths;
+};
+
 const isUnder = (path: string, prefix: string): boolean =>
   [".", "[", "{", "|"].some((separator) => path.startsWith(prefix + separator));
 

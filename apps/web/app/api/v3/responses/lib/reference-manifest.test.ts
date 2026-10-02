@@ -169,15 +169,40 @@ describe("the roster as a whole", () => {
  * The plain objects nested in a body, flattened to dotted paths. Records are skipped: their keys are
  * data. Walks through optional/nullable wrappers and refinements the same way `shapeOf` does.
  */
-const nestedFieldsOf = (schema: z.ZodType, prefix = ""): string[] => {
-  let shape: Record<string, z.ZodType> | undefined;
-  try {
-    shape = shapeOf(schema);
-  } catch {
-    return [];
+/** The element of an array field, through optional/nullable wrappers; `undefined` for anything else. */
+const arrayElementOf = (schema: z.ZodType): z.ZodType | undefined => {
+  let current: unknown = schema;
+  for (let depth = 0; current && depth < 10; depth += 1) {
+    const def = (current as { _zod?: { def?: Record<string, unknown> } })._zod?.def;
+    if (def?.type === "array") return def.element as z.ZodType;
+    current = def?.innerType ?? def?.in ?? def?.schema;
   }
-  return Object.entries(shape).flatMap(([name, field]) => {
-    const path = prefix ? `${prefix}.${name}` : name;
+  return undefined;
+};
+
+/** The object shape a field exposes — directly, or as the element of an array of objects. */
+const nestedShapeOf = (
+  schema: z.ZodType
+): { shape: Record<string, z.ZodType>; marker: string } | undefined => {
+  for (const [candidate, marker] of [
+    [schema, ""],
+    [arrayElementOf(schema), "[]"],
+  ] as const) {
+    if (!candidate) continue;
+    try {
+      return { shape: shapeOf(candidate), marker };
+    } catch {
+      // not an object; try the next reading
+    }
+  }
+  return undefined;
+};
+
+const nestedFieldsOf = (schema: z.ZodType, prefix = ""): string[] => {
+  const nested = prefix ? nestedShapeOf(schema) : { shape: shapeOf(schema), marker: "" };
+  if (!nested) return [];
+  return Object.entries(nested.shape).flatMap(([name, field]) => {
+    const path = prefix ? `${prefix}${nested.marker}.${name}` : name;
     const inner = nestedFieldsOf(field, path);
     return prefix ? [path, ...inner] : inner;
   });
@@ -192,6 +217,14 @@ describe.each(BODIES)("%s nested fields", (_name, body) => {
    */
   test("every nested field is classified", () => {
     expect(nested.filter((path) => !(path in V3_RESPONSE_NESTED_FIELDS))).toEqual([]);
+  });
+
+  test("every nested field classified as a reference has a declaration", () => {
+    const missing = nested.filter(
+      (path) => V3_RESPONSE_NESTED_FIELDS[path] !== "none" && !referenceFor(nestedSchema(body, path))
+    );
+
+    expect(missing).toEqual([]);
   });
 
   test("no nested field classified as not-a-reference is visibly an id", () => {
@@ -214,7 +247,11 @@ describe.each(BODIES)("%s nested fields", (_name, body) => {
 });
 
 function nestedSchema(body: z.ZodType, path: string): z.ZodType {
-  return path.split(".").reduce<z.ZodType>((schema, name) => shapeOf(schema)[name], body);
+  return path.split(".").reduce<z.ZodType>((schema, segment) => {
+    const name = segment.replace(/\[\]$/, "");
+    const field = shapeOf(schema)[name];
+    return segment.endsWith("[]") ? (arrayElementOf(field) ?? field) : field;
+  }, body);
 }
 
 describe("the nested roster as a whole", () => {
@@ -276,5 +313,19 @@ describe("the detectors themselves", () => {
   test("the name rule matches id suffixes and not ordinary fields", () => {
     expect(["surveyId", "contactId", "tagIds"].every(looksLikeReferenceName)).toBe(true);
     expect(["finished", "data", "language", "meta"].some(looksLikeReferenceName)).toBe(false);
+  });
+});
+
+describe("the nested walk itself", () => {
+  test("it enters arrays of objects as well as plain objects", async () => {
+    const { z: zod } = await import("zod");
+    const body = zod.strictObject({
+      meta: zod.strictObject({ source: zod.string() }).optional(),
+      items: zod.array(zod.strictObject({ id: zod.cuid2() })).optional(),
+      tags: zod.array(zod.cuid2()),
+    });
+
+    expect(nestedFieldsOf(body).sort()).toEqual(["items[].id", "meta.source"]);
+    expect(isIdShaped(nestedSchema(body, "items[].id"))).toBe(true);
   });
 });

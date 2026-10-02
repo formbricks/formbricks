@@ -83,6 +83,18 @@ describe("scopeToTags", () => {
     expect(Object.keys((scoped.components as Record<string, JsonObject>).schemas)).not.toContain("OnlyB");
   });
 
+  test.each(["examples", "example", "discriminator", "x-note"])(
+    "a property named %s is still a schema whose $ref is followed",
+    (name) => {
+      const spec = document();
+      const schemas = (spec.components as JsonObject).schemas as JsonObject;
+      schemas.Left = { type: "object", properties: { [name]: { $ref: "#/components/schemas/OnlyB" } } };
+      const scoped = scopeToTags(spec, { A: ["getA", "createA"] });
+
+      expect(Object.keys((scoped.components as Record<string, JsonObject>).schemas)).toContain("OnlyB");
+    }
+  );
+
   test("fails on an unresolvable reference rather than generating less", () => {
     const broken = document();
     ((broken.components as JsonObject).schemas as JsonObject).Left = { $ref: "#/components/schemas/Gone" };

@@ -391,6 +391,16 @@ describe("every constraint the generator cannot express is enforced here", () =>
     "ValidateResponseCreateRequest $ requiredAtRuntime": [
       { schema: ZV3ResponseValidationRequestBody, input: { operation: "create" }, path: ["data"] },
     ],
+    "ValidateResponseRequest $|operation=create requiredAtRuntime": [
+      { schema: ZV3ResponseValidationRequestBody, input: { operation: "create" }, path: ["data"] },
+    ],
+    "ValidateResponseRequest $|operation=patch requiredAtRuntime": [
+      {
+        schema: ZV3ResponseValidationRequestBody,
+        input: { operation: "patch", responseId: ID },
+        path: ["data"],
+      },
+    ],
     "ValidateResponsePatchRequest $ requiredAtRuntime": [
       {
         schema: ZV3ResponseValidationRequestBody,

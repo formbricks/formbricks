@@ -68,4 +68,6 @@ export const EXPECTED_UNENFORCED: readonly TUnenforced[] = [
   // `data` is required but untyped; generated as `z.unknown()`, which Zod satisfies with no key at all.
   pin("ValidateResponseCreateRequest", "$", "requiredAtRuntime", "data"),
   pin("ValidateResponsePatchRequest", "$", "requiredAtRuntime", "data"),
+  pin("ValidateResponseRequest", "$|operation=create", "requiredAtRuntime", "data"),
+  pin("ValidateResponseRequest", "$|operation=patch", "requiredAtRuntime", "data"),
 ];
