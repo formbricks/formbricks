@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { OperationNotAllowedError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import {
@@ -261,6 +262,18 @@ describe("Segment Service Tests", () => {
       expect(result).toEqual(new Set(["survey_known"]));
       expect(prisma.survey.findMany).toHaveBeenCalledWith({
         where: { workspaceId: "ws_1", id: { in: ["survey_known", "survey_foreign"] } },
+        select: { id: true },
+      });
+    });
+
+    test("narrows the lookup to the caller's visible surveys when given a clause (ENG-3282)", async () => {
+      vi.mocked(prisma.survey.findMany).mockResolvedValue([] as any);
+      const visible: Prisma.SurveyWhereInput = { OR: [{ visibility: "workspace" }, { ownerId: "user_1" }] };
+
+      await getExistingWorkspaceSurveyIds("ws_1", ["survey_restricted"], visible);
+
+      expect(prisma.survey.findMany).toHaveBeenCalledWith({
+        where: { workspaceId: "ws_1", id: { in: ["survey_restricted"] }, AND: [visible] },
         select: { id: true },
       });
     });

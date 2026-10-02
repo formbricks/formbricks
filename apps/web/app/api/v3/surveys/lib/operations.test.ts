@@ -847,7 +847,9 @@ describe("patchV3SurveyResponse", () => {
       requestId,
       "org_1",
       undefined,
-      serializedSurvey
+      serializedSurvey,
+      // ENG-3282: the caller's visible-survey clause, for targeting references.
+      expect.any(Object)
     );
     expect(auditLog).toMatchObject({
       organizationId: "org_1",
@@ -903,7 +905,9 @@ describe("patchV3SurveyResponse", () => {
       requestId,
       "org_1",
       { expectedUpdatedAt: new Date("2026-01-01T00:00:00.000Z") },
-      expect.anything()
+      expect.anything(),
+      // ENG-3282: the caller's visible-survey clause, for targeting references.
+      expect.any(Object)
     );
   });
 
@@ -1310,7 +1314,9 @@ describe("editV3SurveyBlocksResponse", () => {
       requestId,
       "org_1",
       { expectedUpdatedAt: survey.updatedAt },
-      expect.anything()
+      expect.anything(),
+      // ENG-3282: the caller's visible-survey clause, for targeting references.
+      expect.any(Object)
     );
     expect(auditLog).toMatchObject({
       organizationId: "org_1",
@@ -1362,7 +1368,9 @@ describe("editV3SurveyBlocksResponse", () => {
       requestId,
       "org_1",
       { expectedUpdatedAt: new Date("2026-01-01T00:00:00.000Z") },
-      expect.anything()
+      expect.anything(),
+      // ENG-3282: the caller's visible-survey clause, for targeting references.
+      expect.any(Object)
     );
   });
 
@@ -1585,7 +1593,9 @@ describe("setV3SurveyBlockOrderResponse", () => {
       requestId,
       "org_1",
       { expectedUpdatedAt: survey.updatedAt },
-      expect.anything()
+      expect.anything(),
+      // ENG-3282: the caller's visible-survey clause, for targeting references.
+      expect.any(Object)
     );
   });
 

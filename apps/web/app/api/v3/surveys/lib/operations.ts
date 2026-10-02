@@ -25,6 +25,7 @@ import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { WorkspaceSurveyLimitError } from "@/lib/survey/visibility/limit";
 import { isAwaitingProjection } from "@/lib/survey/visibility/policy";
+import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
@@ -915,7 +916,8 @@ async function runV3SurveyDocumentMutation({
       requestId,
       authResult.organizationId,
       effectivePrecondition,
-      oldResource
+      oldResource,
+      buildVisibleSurveyWhere(visibility.actorContext)
     );
     // Visibility is unchanged by a document write (it is never writable through one), so the
     // request's context still describes the updated survey.

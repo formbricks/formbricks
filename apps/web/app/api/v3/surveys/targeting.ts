@@ -234,7 +234,8 @@ function collectV3TargetingFilterReferences(
  */
 export async function assertV3SurveyTargetingFilterReferences(
   workspaceId: string,
-  filters: TV3SurveyFilters
+  filters: TV3SurveyFilters,
+  visibleSurveyWhere: Prisma.SurveyWhereInput
 ): Promise<void> {
   const references = collectV3TargetingFilterReferences(filters, "targeting.filters");
 
@@ -297,9 +298,12 @@ export async function assertV3SurveyTargetingFilterReferences(
     // Scope to the workspace's own surveys so a survey-interaction filter cannot reference another
     // workspace's survey. Look up by the exact referenced ids (not the picker's bounded recent list)
     // so a valid survey in a large workspace isn't wrongly rejected for being outside that window.
+    // ENG-3282: and only surveys the caller may see. A restricted survey they cannot read answers
+    // exactly like an unknown id, so the response never reveals that it exists.
     const knownSurveyIds = await getExistingWorkspaceSurveyIds(
       workspaceId,
-      surveyRefs.map((ref) => ref.value)
+      surveyRefs.map((ref) => ref.value),
+      visibleSurveyWhere
     );
     for (const reference of surveyRefs.filter((ref) => !knownSurveyIds.has(ref.value))) {
       invalidParams.push({

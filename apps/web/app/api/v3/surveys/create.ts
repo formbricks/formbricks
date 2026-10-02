@@ -23,6 +23,7 @@ import {
 } from "./targeting";
 import { resolveV3SurveyTriggers } from "./triggers";
 import { getV3SurveyMediaInvalidParams } from "./validation";
+import { resolveV3VisibleSurveyWhere } from "./visibility-context";
 
 export type TV3SurveyCreateOptions = {
   skipExternalUrlPermissionCheck?: boolean;
@@ -192,7 +193,15 @@ export async function executeV3SurveyCreate(params: {
   // before any DB write, so an invalid reference fails with a 422 instead of a partial write.
   const appCreateFields = input.type === "app" ? await buildV3AppSurveyCreateFields(input) : {};
   if (input.type === "app") {
-    await assertV3SurveyTargetingFilterReferences(input.workspaceId, input.targeting?.filters ?? []);
+    const visibleSurveyWhere = await resolveV3VisibleSurveyWhere(
+      authentication,
+      params.organizationId ?? (await getOrganizationByWorkspaceId(input.workspaceId))?.id
+    );
+    await assertV3SurveyTargetingFilterReferences(
+      input.workspaceId,
+      input.targeting?.filters ?? [],
+      visibleSurveyWhere
+    );
   }
 
   // ENG-3282: who owns the survey and whether it starts restricted, decided by the principal — never by

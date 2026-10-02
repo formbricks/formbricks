@@ -213,7 +213,11 @@ export const getSurveyRefsForWorkspace = reactCache(
  * hitting the DB.
  */
 export const getExistingWorkspaceSurveyIds = reactCache(
-  async (workspaceId: string, surveyIds: string[]): Promise<Set<string>> => {
+  async (
+    workspaceId: string,
+    surveyIds: string[],
+    visibleSurveyWhere: Prisma.SurveyWhereInput = {}
+  ): Promise<Set<string>> => {
     validateInputs([workspaceId, ZId], [surveyIds, z.array(ZId)]);
     const uniqueSurveyIds = Array.from(new Set(surveyIds));
     const existingSurveyIds = new Set<string>();
@@ -222,7 +226,7 @@ export const getExistingWorkspaceSurveyIds = reactCache(
       for (let i = 0; i < uniqueSurveyIds.length; i += SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE) {
         const batch = uniqueSurveyIds.slice(i, i + SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE);
         const surveys = await prisma.survey.findMany({
-          where: { workspaceId, id: { in: batch } },
+          where: { workspaceId, id: { in: batch }, ...andVisibleSurveys(visibleSurveyWhere) },
           select: { id: true },
         });
         for (const survey of surveys) {
