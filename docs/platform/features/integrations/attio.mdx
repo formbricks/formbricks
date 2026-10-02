@@ -1,0 +1,167 @@
+---
+title: "Attio"
+description: "Learn how to integrate Formbricks with Attio to automatically create or update records when survey responses are submitted."
+icon: "address-book"
+---
+
+<Note>
+  There is no native Attio integration yet. Connect Formbricks to Attio with Attio Workflows, Make, n8n, or a custom webhook.
+</Note>
+
+## Prerequisites
+
+- A Formbricks survey that collects email addresses
+- An Attio plan that includes Workflows or API access
+- An Attio access token (n8n and webhook methods only)
+
+### Attio Access Token
+
+<Steps>
+  <Step title="Create an Integration">
+    In Attio, go to **Workspace Settings** → **Developers** and click **Create a new integration**.
+  </Step>
+  <Step title="Set Scopes and Copy the Token">
+    Grant `record_permission:read-write` and `object_configuration:read`, save, and copy the access token.
+  </Step>
+</Steps>
+
+See [Attio's authentication docs](https://docs.attio.com/rest-api/guides/authentication) for details.
+
+---
+
+## Method 1: Attio Workflows
+
+Attio [Workflows](https://attio.com/help/reference/automations/workflows/overview-of-workflows) can receive Formbricks webhooks directly, so no third-party tool is needed.
+
+<Steps>
+  <Step title="Create a Workflow">
+    In Attio, go to **Workflows** → **Create workflow** and choose **Incoming webhook** as the trigger. Copy the generated URL.
+  </Step>
+  <Step title="Add the Webhook in Formbricks">
+    Go to **Configuration** → **Integrations** → **Manage Webhooks** → **Add Webhook**. Paste the Attio URL, select **Response Finished**, and choose your survey.
+
+    ![Integrations Tab](/images/platform/features/integrations/webhooks/integrations-tab.webp)
+  </Step>
+  <Step title="Send a Sample Response">
+    Submit a test response so Attio can detect the payload fields (`data.*`, `meta.*`, `survey.title`).
+  </Step>
+  <Step title="Add a Create/Update Record Action">
+    Choose **People** or **Companies**, map the fields, and set email as the matching attribute to avoid duplicates.
+  </Step>
+  <Step title="Test and Activate">
+    Submit another response, confirm the record in Attio, and turn the workflow on.
+  </Step>
+</Steps>
+
+---
+
+## Method 2: Make.com
+
+<Steps>
+  <Step title="Set Question IDs">
+    Give each question a meaningful `questionId` so mapping is easier. These can only be changed before publishing; for a published survey, duplicate it first.
+
+    ![Update Question ID](/images/platform/features/integrations/make/update-question-id.webp)
+  </Step>
+  <Step title="Add the Formbricks Trigger">
+    In a new [Make](https://make.com) scenario, add **Formbricks** → **Watch Response Finished**. Click **Create a webhook**, enter your API host (default `https://app.formbricks.com`) and [API key](/api-reference/rest-api#how-to-generate-an-api-key), and select your survey.
+
+    ![Search Formbricks](/images/platform/features/integrations/make/search-formbricks.webp)
+    ![Enter API Key](/images/platform/features/integrations/make/enter-api-key-and-host.webp)
+  </Step>
+  <Step title="Add the Attio Module">
+    Add **Attio** → **Create or Update a Person** (or **Company**) and connect your Attio account.
+  </Step>
+  <Step title="Map Fields">
+    | Attio Attribute | Formbricks Field |
+    | --------------- | ---------------- |
+    | Email Addresses | `data.email` |
+    | Name | `data.firstName` / `data.lastName` |
+    | Custom Attribute | Any `data.*` or `meta.*` field |
+  </Step>
+  <Step title="Test and Activate">
+    Submit a test response, confirm the record in Attio, and turn on the scenario.
+  </Step>
+</Steps>
+
+---
+
+## Method 3: n8n
+
+<Note>
+  The Attio node (`n8n-nodes-attio`) is a community node and only works on self-hosted n8n. On n8n Cloud, use an **HTTP Request** node with the API call from Method 4.
+</Note>
+
+<Steps>
+  <Step title="Add the Formbricks Trigger">
+    Add the **Formbricks** trigger node, connect your API key and host, select **Response Finished**, and choose your survey.
+
+    ![Add Formbricks Trigger](/images/platform/features/integrations/n8n/add-formbricks-trigger.webp)
+  </Step>
+  <Step title="Add the Attio Node">
+    Install `n8n-nodes-attio` via **Settings** → **Community Nodes**, add it with the **Create/Update Record** operation, and authenticate with your access token.
+  </Step>
+  <Step title="Map Fields">
+    ```
+    Email: {{ $json.data.email }}
+    First Name: {{ $json.data.firstName }}
+    Last Name: {{ $json.data.lastName }}
+    ```
+
+    Set email as the matching attribute.
+  </Step>
+  <Step title="Test and Activate">
+    Click **Listen for event**, submit a test response, confirm the record in Attio, and activate the workflow.
+  </Step>
+</Steps>
+
+---
+
+## Method 4: Custom Webhook
+
+<Steps>
+  <Step title="Create a Formbricks Webhook">
+    Go to **Configuration** → **Integrations** → **Manage Webhooks** → **Add Webhook**, enter your endpoint URL, select **Response Finished**, and choose your surveys.
+  </Step>
+  <Step title="Build the Handler">
+    Read the answers from `data.data` (keyed by `questionId`) and call Attio's [Assert Record endpoint](https://docs.attio.com/rest-api/endpoint-reference/records/assert-a-record), which creates or updates in one call:
+
+    ```
+    PUT /v2/objects/people/records?matching_attribute=email_addresses
+    ```
+
+    ```json
+    {
+      "data": {
+        "values": {
+          "email_addresses": ["jane@example.com"],
+          "name": [{ "first_name": "Jane", "last_name": "Doe", "full_name": "Jane Doe" }]
+        }
+      }
+    }
+    ```
+
+    For signature verification, see [Webhooks](/platform/features/integrations/webhooks).
+  </Step>
+  <Step title="Deploy and Test">
+    Deploy the handler to a public URL, submit a test response, and confirm the record in Attio.
+  </Step>
+</Steps>
+
+---
+
+## Troubleshooting
+
+**No record created**
+- Check that you're mapping the correct email `questionId`.
+- Check the token has `record_permission:read-write` and `object_configuration:read`.
+
+**Duplicate records**
+- Use a create-or-update action (or the Assert endpoint) with email as the matching attribute.
+
+**Webhook not firing**
+- Check the URL is public, **Response Finished** is selected, and the survey is linked.
+
+---
+
+Need help? Ask in [GitHub Discussions](https://github.com/formbricks/formbricks/discussions).
