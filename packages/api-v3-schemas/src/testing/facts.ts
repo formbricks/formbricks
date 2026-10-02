@@ -100,12 +100,19 @@ const isNullSchema = (node: JsonValue): boolean =>
 const combine = (a: TSub | undefined, b: TSub): TSub =>
   a ? { node: { allOf: [a.node, b.node] }, seen: new Set([...a.seen, ...b.seen]) } : b;
 
-const canonical = (value: JsonValue): string => {
+/** Key-sorted JSON, so a fingerprint does not depend on the order a spec author wrote keys in. */
+function canonical(value: JsonValue): string {
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
   if (!isJsonObject(value)) return JSON.stringify(value);
-  const keys = Object.keys(value).sort(compareCodeUnits);
-  return `{${keys.map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(",")}}`;
-};
+  const entries = Object.keys(value)
+    .sort(compareCodeUnits)
+    .map((key) => canonicalEntry(key, value[key]));
+  return `{${entries.join(",")}}`;
+}
+
+function canonicalEntry(key: string, value: JsonValue): string {
+  return `${JSON.stringify(key)}:${canonical(value)}`;
+}
 
 const deref = (resolve: TResolver, sub: TSub): TSub => {
   let node = sub.node;
@@ -247,14 +254,20 @@ function mergeInto(resolve: TResolver, flat: IFlat, sub: TSub, depth: number): v
 
 const valueType = (value: JsonValue): string => (typeof value === "object" ? "object" : typeof value);
 
-function flatten(resolve: TResolver, sub: TSub): IFlat {
-  const flat = emptyFlat();
-  mergeInto(resolve, flat, sub, 0);
+const literalsOf = (flat: IFlat): JsonValue[] => {
+  if (flat.hasConst && flat.constValue !== undefined) return [flat.constValue];
+  return flat.enumValues ?? [];
+};
+
+/** A schema that states no `type` still has one: implied by its keywords or by its literal values. */
+const inferTypes = (flat: IFlat, literals: readonly JsonValue[]): void => {
   if (flat.types.size === 0 && (flat.props.size || flat.additional)) flat.types.add("object");
   if (flat.types.size === 0 && flat.items) flat.types.add("array");
-  const literals =
-    flat.hasConst && flat.constValue !== undefined ? [flat.constValue] : (flat.enumValues ?? []);
   if (flat.types.size === 0) for (const value of literals) flat.types.add(valueType(value));
+};
+
+/** Normalize type sets that mean the same thing however they were written. */
+const canonicalizeTypes = (flat: IFlat, literals: readonly JsonValue[]): void => {
   if (flat.types.has("integer") && flat.types.has("number")) flat.types.delete("integer");
   if (ALL_NON_NULL_TYPES.every((type) => flat.types.has(type)) && flat.nullable) {
     flat.types.clear();
@@ -266,6 +279,14 @@ function flatten(resolve: TResolver, sub: TSub): IFlat {
     flat.types.delete("integer");
     flat.types.add("number");
   }
+};
+
+function flatten(resolve: TResolver, sub: TSub): IFlat {
+  const flat = emptyFlat();
+  mergeInto(resolve, flat, sub, 0);
+  const literals = literalsOf(flat);
+  inferTypes(flat, literals);
+  canonicalizeTypes(flat, literals);
   if (flat.hasConst) flat.enumValues = undefined;
   return flat;
 }

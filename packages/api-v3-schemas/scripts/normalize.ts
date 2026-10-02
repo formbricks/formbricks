@@ -374,10 +374,8 @@ const assertGeneratable = (document: JsonObject): void => {
   forEachDocumentSchema(document, (node, path) => {
     const unknown = Object.keys(node).filter((key) => !GENERATABLE.has(key) && !key.startsWith("x-"));
     if (unknown.length) {
-      fail(
-        path,
-        `${unknown.map((key) => `"${key}"`).join(", ")} would reach the generator; extend normalize.ts deliberately`
-      );
+      const names = unknown.map((key) => JSON.stringify(key)).join(", ");
+      fail(path, `${names} would reach the generator; extend normalize.ts deliberately`);
     }
     if (typeof node.$ref === "string") deref(document, node, path);
     // hey-api drops a typed `additionalProperties` whenever `properties` exist; z.object().catchall()

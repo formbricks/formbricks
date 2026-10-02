@@ -53,7 +53,7 @@ const keepAdoptedOperations = (
     const tag = adoptedTagOf(operation, found);
     if (!tag) continue;
     if (typeof operation.operationId !== "string") {
-      throw new Error(`${method.toUpperCase()} ${path} has no operationId`);
+      throw new TypeError(`${method.toUpperCase()} ${path} has no string operationId`);
     }
     found.get(tag)?.add(operation.operationId);
     kept[method] = operation;
