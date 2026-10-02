@@ -115,8 +115,8 @@ catalog bump can also change the formatting and require a regenerate; `pnpm lint
 The generator is a build-time dependency only. ESLint forbids importing it from `src/`, so no generator code can
 reach a served bundle. The pipeline passes an explicit config file that does not exist, so hey-api's loader executes
 nothing it finds in the working directory — a test plants a throwing `openapi-ts.config.mjs` and `index.mjs` to keep
-it that way. The loader still reads a `.openapi-tsrc` from the working directory (hey-api offers no way to turn that
-off); the pipeline's own options override anything such a file sets.
+it that way. The loader still reads a `.openapi-tsrc` from the working directory — hey-api offers no way to turn that off, and
+the file's keys survive wherever the pipeline sets none — so the renderer refuses to run when one is present.
 
 The generator's packages require Node 22.18 or newer, while the repository's `engines` still admit Node 20.19 and
 22.12 until the Node 24 alignment lands. CI and the Docker image run Node 24, as `.nvmrc` does. Generator tooling must be under a permissive licence (MIT, Apache-2.0, BSD or ISC): the generated

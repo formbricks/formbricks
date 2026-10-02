@@ -1,4 +1,6 @@
 import { type Plugins, createClient } from "@hey-api/openapi-ts";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { JsonObject } from "../src/testing/json";
 
@@ -48,7 +50,19 @@ const resolvers: Plugins.Zod.Resolvers = {
   },
 };
 
+/**
+ * The one config source an explicit `configFile` does not switch off: c12 still reads an
+ * `.openapi-tsrc` from the working directory and merges every key the pipeline does not set — a
+ * `parser.filters` entry there silently drops schemas. Refuse to run beside one rather than trust it.
+ */
+const RC_FILE = ".openapi-tsrc";
+
 export const renderZodModule = async (document: JsonObject, header: string): Promise<string> => {
+  if (existsSync(join(process.cwd(), RC_FILE))) {
+    throw new Error(
+      `Refusing to generate: ${join(process.cwd(), RC_FILE)} would change hey-api's configuration`
+    );
+  }
   const contexts = await createClient({
     configFile: NO_CONFIG_FILE,
     // hey-api mutates its input while parsing; the caller's document must survive for the check mode.

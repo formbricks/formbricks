@@ -78,6 +78,12 @@ process.stdout.write(out.includes("zA") ? "ok" : "missing");\n`
     );
     const output = execFileSync(process.execPath, [tsxCli, script], { cwd: directory, encoding: "utf8" });
     expect(output).toBe("ok");
+
+    // The rc file is read regardless of `configFile`, so the renderer refuses to run beside one.
+    writeFileSync(join(directory, ".openapi-tsrc"), "parser.filters.schemas.exclude=A\n");
+    expect(() =>
+      execFileSync(process.execPath, [tsxCli, script], { cwd: directory, encoding: "utf8", stdio: "pipe" })
+    ).toThrow(/Refusing to generate/);
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
