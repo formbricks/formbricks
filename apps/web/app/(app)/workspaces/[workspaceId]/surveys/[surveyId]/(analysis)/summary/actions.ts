@@ -69,7 +69,9 @@ export const resetSurveyAction = authenticatedActionClient.inputSchema(ZResetSur
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
     const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
 
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+    // Reset irreversibly deletes every response and display, so it needs manage access (org owner or
+    // manager, or a team with Manage on the workspace) rather than the write access that edits a survey.
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.manage", {
       type: "workspace",
       id: workspaceId,
     });
