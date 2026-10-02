@@ -1,5 +1,4 @@
 import { describe, expect, test } from "vitest";
-import { NULL_BYTE_REASON } from "@/lib/utils/postgres-text";
 import { encodeSurveyListPageCursor } from "@/modules/survey/list/lib/survey-page";
 import { collectMultiValueQueryParam, parseV3SurveysListQuery } from "./parse-v3-surveys-list-query";
 
@@ -170,7 +169,7 @@ describe("parseV3SurveysListQuery", () => {
     const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&filter[name][contains]=a%00b`));
     expect(r).toEqual({
       ok: false,
-      invalid_params: [{ name: "filter[name][contains]", reason: NULL_BYTE_REASON }],
+      invalid_params: [{ name: "filter[name][contains]", reason: "must not contain NULL bytes" }],
     });
   });
 

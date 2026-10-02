@@ -1,6 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
 import { encodeKeysetCursor } from "@/app/api/v3/lib/keyset-cursor";
-import { NULL_BYTE_REASON } from "@/lib/utils/postgres-text";
 import {
   RESPONSES_CURSOR_KIND,
   parseV3ResponsesCountQuery,
@@ -106,7 +105,7 @@ describe("what is refused", () => {
     const query = `workspaceId=${WORKSPACE}&surveyId=${SURVEY}&filter[language][in]=de,e%00n`;
     const refused = {
       ok: false,
-      invalid_params: [{ name: "filter[language][in].1", reason: NULL_BYTE_REASON }],
+      invalid_params: [{ name: "filter[language][in].1", reason: "must not contain NULL bytes" }],
     };
 
     expect(listQuery(query)).toEqual(refused);
