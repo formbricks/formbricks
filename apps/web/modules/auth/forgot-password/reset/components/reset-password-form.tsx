@@ -11,7 +11,7 @@ import {
   PASSWORD_COMPROMISED_ERROR_CODE,
 } from "@formbricks/types/errors";
 import { ZUserPassword } from "@formbricks/types/user";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { resetPasswordAction } from "@/modules/auth/forgot-password/reset/actions";
 import { PasswordChecks } from "@/modules/auth/signup/components/password-checks";
 import { Button } from "@/modules/ui/components/button";

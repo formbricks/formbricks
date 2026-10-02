@@ -19,7 +19,7 @@ import {
   importHistoricalResponsesAction,
   updateFeedbackSourceWithMappingsAction,
 } from "@/lib/feedback-source/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { Alert, AlertButton, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";

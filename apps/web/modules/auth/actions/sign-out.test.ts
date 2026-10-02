@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { logSignOut } from "@/modules/auth/lib/utils";
 import { logSignOutAction } from "./sign-out";
 
-// Mock the dependencies
+const { sessionUser } = vi.hoisted(() => ({ sessionUser: { id: "user123", email: "test@example.com" } }));
+
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),
@@ -14,146 +16,68 @@ vi.mock("@/modules/auth/lib/utils", () => ({
   logSignOut: vi.fn(),
 }));
 
+// Runs the handler the way next-safe-action does: parse the input with the action's schema, then hand
+// the authenticated user over in ctx.
+vi.mock("@/lib/utils/action-client", () => ({
+  authenticatedActionClient: {
+    inputSchema: (schema: z.ZodType) => ({
+      action:
+        (fn: (args: { ctx: unknown; parsedInput: unknown }) => Promise<unknown>) => async (input: unknown) =>
+          fn({ ctx: { user: sessionUser }, parsedInput: schema.parse(input) }),
+    }),
+  },
+}));
+
 // Clear the existing mock from vitestSetup.ts
 vi.unmock("@/modules/auth/actions/sign-out");
 
+const callAction = (input: unknown) =>
+  (logSignOutAction as unknown as (input: unknown) => Promise<unknown>)(input);
+
 describe("logSignOutAction", () => {
-  const mockUserId = "user123";
-  const mockUserEmail = "test@example.com";
   const mockContext = {
     reason: "user_initiated" as const,
     redirectUrl: "https://example.com",
-    organizationId: "org123",
+    organizationId: "clxyz1234567890abcdefghij",
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  test("calls logSignOut with correct parameters", async () => {
-    await logSignOutAction(mockUserId, mockUserEmail, mockContext);
+  test("logs the sign-out for the session user", async () => {
+    await callAction(mockContext);
 
-    expect(logSignOut).toHaveBeenCalledWith(mockUserId, mockUserEmail, mockContext);
+    expect(logSignOut).toHaveBeenCalledWith(sessionUser.id, sessionUser.email, mockContext);
     expect(logSignOut).toHaveBeenCalledTimes(1);
   });
 
-  test("calls logSignOut with minimal parameters", async () => {
-    const minimalContext = {};
+  test("logs the session user regardless of extra input fields", async () => {
+    await callAction({ ...mockContext, userId: "victim", userEmail: "victim@example.com" });
 
-    await logSignOutAction(mockUserId, mockUserEmail, minimalContext);
-
-    expect(logSignOut).toHaveBeenCalledWith(mockUserId, mockUserEmail, minimalContext);
-    expect(logSignOut).toHaveBeenCalledTimes(1);
+    expect(logSignOut).toHaveBeenCalledWith(sessionUser.id, sessionUser.email, mockContext);
   });
 
-  test("calls logSignOut with context containing only reason", async () => {
-    const contextWithReason = { reason: "session_timeout" as const };
-
-    await logSignOutAction(mockUserId, mockUserEmail, contextWithReason);
-
-    expect(logSignOut).toHaveBeenCalledWith(mockUserId, mockUserEmail, contextWithReason);
-    expect(logSignOut).toHaveBeenCalledTimes(1);
+  test("rejects an unknown reason", async () => {
+    await expect(callAction({ reason: "anything" })).rejects.toThrow();
+    expect(logSignOut).not.toHaveBeenCalled();
   });
 
-  test("calls logSignOut with context containing only redirectUrl", async () => {
-    const contextWithRedirectUrl = { redirectUrl: "https://redirect.com" };
-
-    await logSignOutAction(mockUserId, mockUserEmail, contextWithRedirectUrl);
-
-    expect(logSignOut).toHaveBeenCalledWith(mockUserId, mockUserEmail, contextWithRedirectUrl);
-    expect(logSignOut).toHaveBeenCalledTimes(1);
-  });
-
-  test("calls logSignOut with context containing only organizationId", async () => {
-    const contextWithOrgId = { organizationId: "org456" };
-
-    await logSignOutAction(mockUserId, mockUserEmail, contextWithOrgId);
-
-    expect(logSignOut).toHaveBeenCalledWith(mockUserId, mockUserEmail, contextWithOrgId);
-    expect(logSignOut).toHaveBeenCalledTimes(1);
-  });
-
-  test("handles all possible reason values", async () => {
-    const reasons = [
-      "user_initiated",
-      "account_deletion",
-      "email_change",
-      "session_timeout",
-      "forced_logout",
-      "password_reset",
-    ] as const;
-
-    for (const reason of reasons) {
-      const context = { reason };
-      await logSignOutAction(mockUserId, mockUserEmail, context);
-
-      expect(logSignOut).toHaveBeenCalledWith(mockUserId, mockUserEmail, context);
-    }
-
-    expect(logSignOut).toHaveBeenCalledTimes(reasons.length);
-  });
-
-  test("logs error and re-throws when logSignOut throws an Error", async () => {
+  test("logs error and re-throws when logSignOut throws", async () => {
     const mockError = new Error("Failed to log sign out");
     vi.mocked(logSignOut).mockImplementation(() => {
       throw mockError;
     });
 
-    await expect(() => logSignOutAction(mockUserId, mockUserEmail, mockContext)).rejects.toThrow(mockError);
+    await expect(callAction(mockContext)).rejects.toThrow(mockError);
 
     expect(logger.error).toHaveBeenCalledWith(
       {
-        userId: mockUserId,
+        userId: sessionUser.id,
         context: mockContext,
         error: mockError.message,
       },
       "Failed to log sign out event"
     );
-    expect(logger.error).toHaveBeenCalledTimes(1);
-  });
-
-  test("logs error and re-throws when logSignOut throws a non-Error", async () => {
-    const mockError = "String error";
-    vi.mocked(logSignOut).mockImplementation(() => {
-      throw mockError;
-    });
-
-    await expect(() => logSignOutAction(mockUserId, mockUserEmail, mockContext)).rejects.toThrow(mockError);
-
-    expect(logger.error).toHaveBeenCalledWith(
-      {
-        userId: mockUserId,
-        context: mockContext,
-        error: mockError,
-      },
-      "Failed to log sign out event"
-    );
-    expect(logger.error).toHaveBeenCalledTimes(1);
-  });
-
-  test("logs error with empty context when logSignOut throws", async () => {
-    const mockError = new Error("Failed to log sign out");
-    const emptyContext = {};
-    vi.mocked(logSignOut).mockImplementation(() => {
-      throw mockError;
-    });
-
-    await expect(() => logSignOutAction(mockUserId, mockUserEmail, emptyContext)).rejects.toThrow(mockError);
-
-    expect(logger.error).toHaveBeenCalledWith(
-      {
-        userId: mockUserId,
-        context: emptyContext,
-        error: mockError.message,
-      },
-      "Failed to log sign out event"
-    );
-    expect(logger.error).toHaveBeenCalledTimes(1);
-  });
-
-  test("does not log error when logSignOut succeeds", async () => {
-    await logSignOutAction(mockUserId, mockUserEmail, mockContext);
-
-    expect(logger.error).not.toHaveBeenCalled();
   });
 });

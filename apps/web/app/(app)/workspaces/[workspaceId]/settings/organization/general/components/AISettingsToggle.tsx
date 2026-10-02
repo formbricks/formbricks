@@ -9,7 +9,7 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { updateOrganizationAISettingsAction } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/actions";
 import { getDisplayedOrganizationAISettingValue, getOrganizationAIEnablementState } from "@/lib/ai/utils";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
