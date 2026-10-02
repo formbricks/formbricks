@@ -140,4 +140,32 @@ describe("Hub client retries, through the SDK's real request path", () => {
 
     expect(fetchStub).toHaveBeenCalledTimes(3);
   });
+
+  // Next.js's server `fetch` tees a GET's response body and keeps one branch for its data cache. Cancelling
+  // the other branch only settles once the cached one is drained, so a retry that waited on that cancel
+  // hung forever — on the one runtime this client actually runs under.
+  test("a read retried through a body-teeing fetch, as Next's is, completes", async () => {
+    const cachedBranches: ReadableStream[] = [];
+    let attempt = 0;
+    const fetchStub = vi.fn(async (_request: Request) => {
+      attempt++;
+      const upstream =
+        attempt === 1
+          ? new Response(JSON.stringify({ detail: "stubbed" }), {
+              status: 503,
+              headers: { "content-type": "application/problem+json", "retry-after": "0" },
+            })
+          : Response.json({ id: "rec-1" });
+      const [returned, cached] = upstream.body!.tee();
+      cachedBranches.push(cached); // held unread, like Next's cache entry
+      return new Response(returned, { status: upstream.status, headers: upstream.headers });
+    });
+    vi.stubGlobal("fetch", fetchStub);
+    const client = await getClient();
+
+    const { data } = await hub.getFeedbackRecord({ client, path: { id: "rec-1" }, throwOnError: true });
+
+    expect(data).toMatchObject({ id: "rec-1" });
+    expect(fetchStub).toHaveBeenCalledTimes(2);
+  });
 });
