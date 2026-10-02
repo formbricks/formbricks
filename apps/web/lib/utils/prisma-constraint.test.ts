@@ -97,6 +97,10 @@ describe("getUniqueConstraintFields", () => {
       expect(getUniqueConstraintFields(indexP2002("some_custom_index", "User"))).toEqual([]);
       expect(getUniqueConstraintFields(indexP2002("Other_email_key", "User"))).toEqual([]);
       expect(getUniqueConstraintFields(indexP2002("User__key", "User"))).toEqual([]);
+      expect(getUniqueConstraintFields(indexP2002("User_a__b_key", "User"))).toEqual([]);
+      // A name colliding with an Object.prototype member must not resolve through the prototype.
+      expect(getUniqueConstraintFields(indexP2002("constructor", "User"))).toEqual([]);
+      expect(getUniqueConstraintFields(indexP2002("__proto__", "User"))).toEqual([]);
       // Without a table only the explicit map can resolve a name.
       expect(getUniqueConstraintFields(indexP2002("User_email_key"))).toEqual([]);
       expect(getUniqueConstraintFields(indexP2002("TagsOnResponses_pkey"))).toEqual(["responseId", "tagId"]);

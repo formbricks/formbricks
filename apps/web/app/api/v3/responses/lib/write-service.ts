@@ -334,12 +334,11 @@ export async function collectReferenceIssues(
  * the helper resolves back to columns. The obvious version therefore returns `null` for every real
  * race, and the caller rethrows into the generic 500.
  *
- * **That fallthrough can leak, which is why this matters beyond the status code.** The 500 branch logs
- * the error under `err`, and pino's error serializer copies its enumerable properties — including
- * `meta.driverAdapterError.cause.originalMessage`. Adapters before 7.10 put the Postgres DETAIL there,
- * which carries the offending values: `Key ("surveyId", "singleUseId")=(…, …) already exists`. That
- * is the single-use token in a log line. `prisma-constraint.ts` warns against surfacing that string to
- * a response *or a log*, and reading only the structured column list is how this path honours it.
+ * Mapping the race here, rather than letting it fall through to the generic 500, also keeps the raw
+ * error out of the logs: the 500 branch logs it under `err`, and pino's error serializer copies every
+ * enumerable property of `meta.driverAdapterError.cause`. `prisma-constraint.ts` warns against
+ * surfacing those fields to a response *or a log*, and reading only the structured column list is how
+ * this path honours it.
  */
 function raceIssuesFromUniqueViolation(error: unknown): InvalidParam[] | null {
   if (!isUniqueConstraintError(error)) return null;

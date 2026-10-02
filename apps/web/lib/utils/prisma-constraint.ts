@@ -17,8 +17,9 @@ export const isUniqueConstraintError = (error: unknown): error is PrismaClientKn
 /**
  * Strips one symmetric pair of double quotes from a column name.
  *
- * `@prisma/adapter-pg` derives the column list by regex-scraping the Postgres error DETAIL
- * (`Key ("surveyId", "singleUseId")=(…)`) and never unquotes it. Postgres quotes any identifier
+ * Before 7.10, `@prisma/adapter-pg` derived the column list by regex-scraping the Postgres error
+ * DETAIL (`Key ("surveyId", "singleUseId")=(…)`) and never unquoted it; 7.10+ only does so when
+ * Postgres reports no constraint name. Postgres quotes any identifier
  * `quote_identifier()` does not consider safe to leave bare — not all-lowercase, starting with a
  * digit, containing anything outside `[a-z0-9_]`, or colliding with a keyword — so `singleUseId`
  * arrives as `"singleUseId"` while `token_hash` arrives bare. (`quote_all_identifiers = on` quotes
@@ -68,17 +69,17 @@ const UNIQUE_INDEX_COLUMNS: Readonly<Record<string, readonly string[]>> = {
 };
 
 const columnsFromIndexName = (index: string, table: unknown): string[] => {
-  const known = UNIQUE_INDEX_COLUMNS[index];
-  if (known) return [...known];
+  // Own properties only: a constraint named after an Object.prototype member must not resolve to it.
+  if (Object.hasOwn(UNIQUE_INDEX_COLUMNS, index)) return [...UNIQUE_INDEX_COLUMNS[index]];
   if (typeof table !== "string") return [];
   if (index === `${table}_pkey`) return ["id"];
 
   const prefix = `${table}_`;
   const suffix = "_key";
-  if (index.length > prefix.length + suffix.length && index.startsWith(prefix) && index.endsWith(suffix)) {
-    return index.slice(prefix.length, -suffix.length).split("_");
-  }
-  return [];
+  if (!index.startsWith(prefix) || !index.endsWith(suffix)) return [];
+
+  const columns = index.slice(prefix.length, -suffix.length).split("_");
+  return columns.every((column) => column !== "") ? columns : [];
 };
 
 /**
@@ -97,9 +98,10 @@ const columnsFromIndexName = (index: string, table: unknown): string[] => {
  * unstable shape. Returns `[]` when none resolves (callers must still map P2002 to a
  * conflict/domain error, never a 500).
  *
- * Security: only the structured column names are returned. Never surface `originalMessage`, the
- * constraint name, or any other raw `driverAdapterError.cause` string to a response or log — older
- * adapters put the Postgres unique-violation DETAIL there, which carries the offending value (PII).
+ * Security: only the structured column names are returned. Never surface the constraint name or any
+ * other raw `driverAdapterError.cause` field to a response or log — the Postgres DETAIL behind a
+ * violation carries the offending values (PII), and unmapped errors pass it through as
+ * `cause.detail`.
  */
 export const getUniqueConstraintFields = (error: PrismaClientKnownRequestError): string[] => {
   const meta = error.meta as
