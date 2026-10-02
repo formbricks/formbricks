@@ -12,7 +12,10 @@ import { TResponseInput } from "@formbricks/types/responses";
 import { getOrganization } from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
+import {
+  evaluateResponseQuotas,
+  loadQuotaEvaluationContext,
+} from "@/modules/ee/quotas/lib/evaluation-service";
 import { createResponse, createResponseWithQuotaEvaluation } from "./response";
 
 vi.mock("server-only", () => ({}));
@@ -65,6 +68,7 @@ vi.mock("./contact", () => ({
 
 vi.mock("@/modules/ee/quotas/lib/evaluation-service", () => ({
   evaluateResponseQuotas: vi.fn(),
+  loadQuotaEvaluationContext: vi.fn(),
 }));
 
 const workspaceId = "test-workspace-id";
@@ -368,17 +372,46 @@ describe("createResponseWithQuotaEvaluation", () => {
       quotaFull: undefined,
     });
 
+    const quotaContext = { quotas: [], survey: { id: surveyId } } as unknown as Awaited<
+      ReturnType<typeof loadQuotaEvaluationContext>
+    >;
+
     const result = await createResponseWithQuotaEvaluation(
       mockResponseInput,
-      // No ingest flags on this path; the transaction is the fourth argument.
+      // No ingest flags on this path; the transaction and the quota context it was opened after come
+      // in as the fourth argument.
       undefined,
-      callerTx as unknown as Prisma.TransactionClient
+      { tx: callerTx as unknown as Prisma.TransactionClient, quotaContext }
     );
 
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(callerTx.response.create).toHaveBeenCalled();
     expect(mockTx.response.create).not.toHaveBeenCalled();
-    expect(evaluateResponseQuotas).toHaveBeenCalledWith(expect.objectContaining({ tx: callerTx }));
+    // The caller loaded the context before its transaction, so nothing is read here.
+    expect(loadQuotaEvaluationContext).not.toHaveBeenCalled();
+    expect(evaluateResponseQuotas).toHaveBeenCalledWith(
+      expect.objectContaining({ tx: callerTx, quotaContext })
+    );
     expect(result.id).toBe(responseId);
+  });
+
+  test("reads the quota definitions before opening its own transaction, not inside it (ENG-3285)", async () => {
+    const quotaContext = { quotas: [], survey: { id: surveyId } } as unknown as Awaited<
+      ReturnType<typeof loadQuotaEvaluationContext>
+    >;
+    vi.mocked(loadQuotaEvaluationContext).mockResolvedValue(quotaContext);
+    mockTx.response.create.mockResolvedValue(mockResponsePrisma);
+    vi.mocked(evaluateResponseQuotas).mockResolvedValue({ shouldEndSurvey: false, quotaFull: undefined });
+
+    await createResponseWithQuotaEvaluation(mockResponseInput);
+
+    expect(loadQuotaEvaluationContext).toHaveBeenCalledWith(mockResponseInput.surveyId);
+    expect(vi.mocked(loadQuotaEvaluationContext).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(prisma.$transaction).mock.invocationCallOrder[0]
+    );
+    // Evaluated against the survey of the row actually written, not the request's claim.
+    expect(evaluateResponseQuotas).toHaveBeenCalledWith(
+      expect.objectContaining({ surveyId: mockResponsePrisma.surveyId, quotaContext })
+    );
   });
 });

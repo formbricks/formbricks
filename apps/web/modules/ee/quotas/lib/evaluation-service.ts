@@ -4,13 +4,32 @@ import { Prisma, Response } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { TEmbeddedValueResponse } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyQuota } from "@formbricks/types/quota";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { toJsWorkspaceStateSurvey } from "@/lib/survey/client-utils";
 import { getSurvey } from "@/lib/survey/service";
 import { buildServerEmbeddedValues } from "@/lib/surveyLogic/utils";
 import { getQuotas } from "./quotas";
 import { evaluateQuotas, handleQuotas } from "./utils";
 
+/**
+ * The definitions quota evaluation screens a response against: the survey's quotas and the survey
+ * itself. Loaded with `loadQuotaEvaluationContext` **before** the write transaction opens, because these
+ * reads go through the root client: issued inside the transaction, each one checked out a second pool
+ * connection while the transaction held the first, which stalls the transaction behind the pool when it
+ * is saturated (ENG-3285). This keeps quota evaluation off that path; it says nothing about other root
+ * reads a caller makes inside its own transaction. Nothing here depends on the row being written.
+ */
+export interface TQuotaEvaluationContext {
+  quotas: TSurveyQuota[];
+  survey: TSurvey;
+}
+
 export interface QuotaEvaluationInput {
+  /**
+   * The survey the response belongs to, resolved from the database — the row just written on create, or
+   * the stored response on update — never taken from the request body. The preloaded context must
+   * belong to it, or evaluation is skipped.
+   */
   surveyId: string;
   responseId: string;
   data: Response["data"];
@@ -18,6 +37,12 @@ export interface QuotaEvaluationInput {
   variables?: Response["variables"];
   language?: string;
   tx?: Prisma.TransactionClient;
+  /**
+   * From `loadQuotaEvaluationContext`, called before the transaction. Required so every caller makes
+   * the load explicit (each call site's tests pin that it happens before `$transaction`); `null` means
+   * there is nothing to screen against.
+   */
+  quotaContext: TQuotaEvaluationContext | null;
   /**
    * The persisted response, used only to resolve `reserved` quota operands (ENG-1840) — a quota
    * condition on `country`, `browser` or `finished` reads its value from here via the reserved field
@@ -42,25 +67,9 @@ export interface QuotaScreeningResult {
   failedQuotas: TSurveyQuota[];
 }
 
-/**
- * The read half of quota evaluation: which of a survey's quotas this response's content matches.
- *
- * Split out so a dry run can ask the question without the write half answering it —
- * `POST /api/v3/responses/validate` reports the quotas a payload would count against, and a second
- * implementation of the matching would make that report a guess about the real one rather than a
- * statement of it. `evaluateResponseQuotas` below is this function plus `handleQuotas`.
- *
- * Returns `null` when there is nothing to screen against — no quotas, or no such survey.
- */
-export const screenResponseQuotas = async ({
-  surveyId,
-  data,
-  variables = {},
-  language = "default",
-  response,
-}: Omit<QuotaEvaluationInput, "responseId" | "responseFinished" | "tx"> & {
-  responseFinished?: boolean;
-}): Promise<QuotaScreeningResult | null> => {
+// Returns `null` when there is nothing to screen against — no quotas, or no such survey. Throws on a
+// failed read; the write path's loader below turns that into "skip", the dry run lets it surface.
+const readQuotaEvaluationContext = async (surveyId: string): Promise<TQuotaEvaluationContext | null> => {
   const quotas = await getQuotas(surveyId);
 
   if (!quotas || quotas.length === 0) {
@@ -72,6 +81,37 @@ export const screenResponseQuotas = async ({
     return null;
   }
 
+  return { quotas, survey };
+};
+
+/**
+ * Loads what `evaluateResponseQuotas` screens against. Call it before opening the write transaction and
+ * pass the result in as `quotaContext`.
+ *
+ * Never throws: a failed read skips quota evaluation for this response, exactly as the same read did
+ * when it ran inside `evaluateResponseQuotas`, which swallows its errors so quotas can never fail an
+ * ingest.
+ */
+export const loadQuotaEvaluationContext = async (
+  surveyId: string
+): Promise<TQuotaEvaluationContext | null> => {
+  try {
+    return await readQuotaEvaluationContext(surveyId);
+  } catch (error) {
+    logger.error({ error, surveyId }, "Error loading quota evaluation context");
+    return null;
+  }
+};
+
+const screenWithContext = (
+  { quotas, survey }: TQuotaEvaluationContext,
+  {
+    data,
+    variables = {},
+    language = "default",
+    response,
+  }: Pick<QuotaEvaluationInput, "data" | "variables" | "language" | "response">
+): QuotaScreeningResult => {
   const isDefaultLanguage = survey.languages.find((lang) => lang.default)?.language.code === language;
   const jsSurvey = toJsWorkspaceStateSurvey(survey);
   const { passedQuotas, failedQuotas } = evaluateQuotas(
@@ -87,6 +127,26 @@ export const screenResponseQuotas = async ({
   );
 
   return { quotas, passedQuotas, failedQuotas };
+};
+
+/**
+ * The read half of quota evaluation: which of a survey's quotas this response's content matches.
+ *
+ * Split out so a dry run can ask the question without the write half answering it —
+ * `POST /api/v3/responses/validate` reports the quotas a payload would count against, and a second
+ * implementation of the matching would make that report a guess about the real one rather than a
+ * statement of it. `evaluateResponseQuotas` below runs the same screening plus `handleQuotas`.
+ *
+ * Returns `null` when there is nothing to screen against — no quotas, or no such survey.
+ */
+export const screenResponseQuotas = async ({
+  surveyId,
+  ...input
+}: Pick<QuotaEvaluationInput, "surveyId" | "data" | "variables" | "language" | "response"> & {
+  responseFinished?: boolean;
+}): Promise<QuotaScreeningResult | null> => {
+  const context = await readQuotaEvaluationContext(surveyId);
+  return context ? screenWithContext(context, input) : null;
 };
 
 export interface QuotaEvaluationResult {
@@ -110,15 +170,29 @@ export const evaluateResponseQuotas = async (input: QuotaEvaluationInput): Promi
     responseFinished = false,
     tx,
     response,
+    quotaContext,
   } = input;
   const prismaClient = tx ?? prisma;
 
-  try {
-    const result = await screenResponseQuotas({ surveyId, data, variables, language, response });
+  if (!quotaContext) {
+    return { shouldEndSurvey: false };
+  }
 
-    if (!result) {
-      return { shouldEndSurvey: false };
-    }
+  // Fail closed: definitions loaded for another survey would link this response to that survey's
+  // quotas — possibly another tenant's — and hand its quota back to the respondent as `quotaFull`.
+  if (
+    quotaContext.survey.id !== surveyId ||
+    quotaContext.quotas.some((quota) => quota.surveyId !== surveyId)
+  ) {
+    logger.error(
+      { surveyId, contextSurveyId: quotaContext.survey.id, responseId },
+      "Quota evaluation context does not belong to the response's survey; skipping quota evaluation"
+    );
+    return { shouldEndSurvey: false };
+  }
+
+  try {
+    const result = screenWithContext(quotaContext, { data, variables, language, response });
 
     const quotaFull = await handleQuotas(
       surveyId,

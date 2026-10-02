@@ -6,7 +6,11 @@ import type { TIngestFlag } from "@formbricks/types/embedded-data-ingest";
 import type { TResponse } from "@formbricks/types/responses";
 import type { TTag } from "@formbricks/types/tags";
 import { normalizeResponseLanguage } from "@/lib/response/utils";
-import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
+import {
+  type TQuotaEvaluationContext,
+  evaluateResponseQuotas,
+  loadQuotaEvaluationContext,
+} from "@/modules/ee/quotas/lib/evaluation-service";
 
 type TQuotaEvaluationResponseInput = {
   surveyId: string;
@@ -29,6 +33,12 @@ export const buildClientResponse = (
   tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
 });
 
+/** A caller-owned transaction plus the quota context loaded before it opened. */
+export type TCreateResponseTxContext = {
+  tx: Prisma.TransactionClient;
+  quotaContext: TQuotaEvaluationContext | null;
+};
+
 /**
  * `ingestFlags` rides alongside the parsed input rather than inside it: the server computes them from
  * the incoming data (ENG-1845) and a client-sent list could claim "no flags", which is the same trust
@@ -46,18 +56,19 @@ export const createResponseWithQuotaEvaluation = async <TInput extends TQuotaEva
   // transaction so the response and their surrounding rows share one commit. Prisma has no nested
   // interactive transactions, so opening a second one here would commit independently — the caller's
   // rollback would then leave the response behind. Omitted by the request paths, which own a single
-  // response each and get their own transaction below.
-  tx?: Prisma.TransactionClient
+  // response each and get their own transaction below. The quota context comes with it because it
+  // must be loaded before that transaction opened (see `TQuotaEvaluationContext`).
+  txContext?: TCreateResponseTxContext
 ) => {
   // Canonicalize once so quota evaluation uses the same code persisted on the response (createResponse
   // canonicalizes the stored value via the same helper). Keeps a request internally consistent.
   const canonicalLanguage = normalizeResponseLanguage(responseInput.language) ?? undefined;
 
-  const create = async (txClient: Prisma.TransactionClient) => {
+  const create = async (txClient: Prisma.TransactionClient, quotaContext: TQuotaEvaluationContext | null) => {
     const response = await createResponse(responseInput, txClient, ingestFlags);
 
     const quotaResult = await evaluateResponseQuotas({
-      surveyId: responseInput.surveyId,
+      surveyId: response.surveyId,
       responseId: response.id,
       data: responseInput.data,
       variables: responseInput.variables,
@@ -66,6 +77,7 @@ export const createResponseWithQuotaEvaluation = async <TInput extends TQuotaEva
       // The row just written, so `reserved` quota operands resolve (ENG-1840).
       response,
       tx: txClient,
+      quotaContext,
     });
 
     return {
@@ -74,9 +86,10 @@ export const createResponseWithQuotaEvaluation = async <TInput extends TQuotaEva
     };
   };
 
-  if (tx) {
-    return await create(tx);
+  if (txContext) {
+    return await create(txContext.tx, txContext.quotaContext);
   }
 
-  return await prisma.$transaction(create);
+  const quotaContext = await loadQuotaEvaluationContext(responseInput.surveyId);
+  return await prisma.$transaction((txClient) => create(txClient, quotaContext));
 };

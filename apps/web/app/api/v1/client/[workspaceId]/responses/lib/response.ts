@@ -7,6 +7,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import {
+  type TCreateResponseTxContext,
   buildClientResponse,
   createResponseWithQuotaEvaluation as createClientResponseWithQuotaEvaluation,
 } from "@/app/api/client/[workspaceId]/responses/lib/response";
@@ -61,9 +62,9 @@ export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInput,
   ingestFlags?: readonly TIngestFlag[],
   // Optional caller-owned transaction — see the comment on the client helper this delegates to.
-  tx?: Prisma.TransactionClient
+  txContext?: TCreateResponseTxContext
 ): Promise<TResponseWithQuotaFull> => {
-  return await createClientResponseWithQuotaEvaluation(responseInput, createResponse, ingestFlags, tx);
+  return await createClientResponseWithQuotaEvaluation(responseInput, createResponse, ingestFlags, txContext);
 };
 
 export const createResponse = async (
