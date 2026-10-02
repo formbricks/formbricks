@@ -37,6 +37,30 @@ The Helm chart now defaults `hub.embeddings.env.RUST_LOG` to `warn` because TEI 
 INFO-level startup arguments. If you need a different log level, set `hub.embeddings.env.RUST_LOG` explicitly
 and use it only with a runtime that redacts credentials from its logs.
 
+### Database transaction limits (action required if you connect through a connection pooler)
+
+Formbricks now sets its database transaction limits explicitly instead of relying on library defaults.
+Under load, the old 5-second limit was cancelling writes that were about to succeed: user identification,
+response updates and survey resets.
+
+- Transactions may run for up to 20 seconds.
+- Waiting for a free database connection is now bounded by the connection pool itself. That's
+  `connect_timeout` in `DATABASE_URL`, 5 seconds by default, plus a one-second margin.
+- Formbricks asks PostgreSQL to end any session left idle inside an open transaction for 60 seconds, which
+  releases that session's locks. It does this with the `idle_in_transaction_session_timeout` connection
+  setting. Migrations are not affected.
+
+To change the idle timeout, add it to `DATABASE_URL` in **milliseconds**, for example
+`?idle_in_transaction_session_timeout=30000`. Set it to `0` to send nothing and keep your server's own
+setting.
+
+<Warning>
+  If Formbricks connects to PostgreSQL through **PgBouncer, Supavisor, RDS Proxy or another pooler**, it may
+  reject connections that carry an unknown startup parameter. Before upgrading, either add
+  `idle_in_transaction_session_timeout=0` to `DATABASE_URL`, or allow the parameter in your pooler (for
+  PgBouncer, add it to `ignore_startup_parameters`). A direct connection to PostgreSQL needs no change.
+</Warning>
+
 ### Changes in Environment Variables
 
 <Note>
