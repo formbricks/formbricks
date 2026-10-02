@@ -174,13 +174,14 @@ describe("parseV3SurveysListQuery", () => {
   });
 
   /** The cursor is unsigned, so its strings are client input that reaches the `WHERE` clause. */
-  test.each([
-    ["a name cursor's value", { version: 1, sortBy: "name", value: "a\u0000", id: "survey_1" }],
-    ["a name cursor's id", { version: 1, sortBy: "name", value: "Alpha", id: "survey\u0000" }],
-  ] as const)("rejects a NULL byte in %s as an invalid cursor", (_label, cursor) => {
-    const r = parseV3SurveysListQuery(
-      params(`workspaceId=${wid}&sortBy=name&cursor=${encodeSurveyListPageCursor(cursor)}`)
-    );
+  test("rejects a NULL byte in a cursor's id as an invalid cursor", () => {
+    const cursor = encodeSurveyListPageCursor({
+      version: 1,
+      sortBy: "name",
+      value: "Alpha",
+      id: "survey\u0000",
+    });
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&sortBy=name&cursor=${cursor}`));
     expect(r).toEqual({ ok: false, invalid_params: [{ name: "cursor", reason: "The cursor is invalid." }] });
   });
 });

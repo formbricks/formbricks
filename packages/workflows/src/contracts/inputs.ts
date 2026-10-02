@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ZWorkflowStatus } from "../types/common";
 import { ZWorkflowDefinition } from "../types/document";
 import { ZWorkflowRunStatus } from "../types/runs";
-import { zPostgresText } from "./common";
+import { zPostgresText } from "./postgres-text";
 
 /**
  * Route-agnostic operation inputs for the v3 Workflows API. HTTP concerns (the `filter[...]`

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import type { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 import { zPostgresText } from "@/lib/utils/postgres-text";
@@ -19,20 +20,21 @@ const SURVEY_LIST_CURSOR_VERSION = 1 as const;
 const IN_PROGRESS_BUCKET = "inProgress" as const;
 const OTHER_BUCKET = "other" as const;
 
-// The cursor is unsigned client input whose strings go straight into the `WHERE` clause, so they are
-// `zPostgresText`: a NUL byte must fail decoding (400), not the query (500) — ENG-3550.
+// The cursor is unsigned client input whose strings go straight into the `WHERE` clause, so a NUL byte
+// must fail decoding (400), not the query (500) — ENG-3550. Ids are cuid2 like every survey id, which
+// rules a NUL out too; the name is free text, hence `zPostgresText`.
 const ZDateCursor = z.object({
   version: z.literal(SURVEY_LIST_CURSOR_VERSION),
   sortBy: z.enum(["updatedAt", "createdAt"]),
   value: z.iso.datetime(),
-  id: zPostgresText().min(1),
+  id: ZId,
 });
 
 const ZNameCursor = z.object({
   version: z.literal(SURVEY_LIST_CURSOR_VERSION),
   sortBy: z.literal("name"),
   value: zPostgresText(),
-  id: zPostgresText().min(1),
+  id: ZId,
 });
 
 const ZRelevanceCursor = z.object({
@@ -40,7 +42,7 @@ const ZRelevanceCursor = z.object({
   sortBy: z.literal("relevance"),
   bucket: z.enum([IN_PROGRESS_BUCKET, OTHER_BUCKET]),
   updatedAt: z.iso.datetime(),
-  id: zPostgresText().min(1),
+  id: ZId,
 });
 
 const ZSurveyListPageCursor = z.union([ZDateCursor, ZNameCursor, ZRelevanceCursor]);

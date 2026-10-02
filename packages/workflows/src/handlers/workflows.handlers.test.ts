@@ -263,6 +263,19 @@ describe("list", () => {
     expect(service.listWorkflows).not.toHaveBeenCalled();
   });
 
+  /** Postgres `text` cannot hold U+0000; let through, the name filter fails the query with a 500 (ENG-3550). */
+  test("rejects a NULL byte in the name filter with 400", async () => {
+    const res = await handlers.list({
+      req: listRequest(`workspaceId=${workspaceId}&filter[name][contains]=a%00b`),
+      ctx: makeCtx(),
+    });
+
+    expect(res.status).toBe(400);
+    const body = await readJson<{ invalid_params: unknown[] }>(res);
+    expect(body.invalid_params).toEqual([{ name: "nameContains", reason: "must not contain NULL bytes" }]);
+    expect(service.listWorkflows).not.toHaveBeenCalled();
+  });
+
   test("returns the denial response when access is missing", async () => {
     const ctx = makeCtx({ authorize: vi.fn().mockResolvedValue(deniedResponse()) });
     const res = await handlers.list({ req: listRequest(`workspaceId=${workspaceId}`), ctx });

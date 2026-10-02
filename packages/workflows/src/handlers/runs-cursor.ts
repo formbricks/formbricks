@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { zPostgresText } from "../contracts";
 import { WorkflowInvalidInputError } from "../errors";
 
 /**
@@ -15,7 +14,7 @@ const WORKFLOW_RUN_LIST_CURSOR_VERSION = 1;
 const ZWorkflowRunListCursor = z.object({
   version: z.literal(WORKFLOW_RUN_LIST_CURSOR_VERSION),
   value: z.iso.datetime({ offset: true }),
-  id: zPostgresText().min(1),
+  id: z.cuid2(),
 });
 export type TWorkflowRunListCursor = z.infer<typeof ZWorkflowRunListCursor>;
 

@@ -1,10 +1,11 @@
 import { z } from "zod";
 
 /**
- * The reason a v3 400 gives, matching what the Hub relays for the same input (ENG-2745). Keep it equal to
- * `zPostgresText` in `packages/workflows/src/contracts/common.ts`, which cannot import this module.
+ * The reason a v3 400 gives, matching what the Hub relays for the same input (ENG-2745). The workflows
+ * package keeps its own copy (`packages/workflows/src/contracts/postgres-text.ts`); the tests on both
+ * sides pin this exact literal, so the two cannot drift apart unnoticed.
  */
-export const NULL_BYTE_REASON = "must not contain NULL bytes";
+const NULL_BYTE_REASON = "must not contain NULL bytes";
 
 const NULL_BYTE = "\u0000";
 

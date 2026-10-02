@@ -23,10 +23,10 @@ describe("workflow list cursor", () => {
 
   /** The decoded strings are bound into the page query, where a NUL byte fails it with a 500 (ENG-3550). */
   test.each([
-    ["name", { ...row, name: "Alpha\u0000" }],
-    ["name", { ...row, id: "wf\u0000" }],
-    ["updatedAt", { ...row, id: "wf\u0000" }],
-  ] as const)("rejects a NULL byte in a %s cursor", (sortBy, cursorRow) => {
+    ["name", "value", { ...row, name: "Alpha\u0000" }],
+    ["name", "id", { ...row, id: "wf\u0000" }],
+    ["updatedAt", "id", { ...row, id: "wf\u0000" }],
+  ] as const)("rejects a NULL byte in a %s cursor's %s", (sortBy, _field, cursorRow) => {
     const encoded = encodeWorkflowListCursor(buildNextWorkflowListCursor(cursorRow, sortBy));
     expect(() => decodeWorkflowListCursor(encoded, sortBy)).toThrow(WorkflowInvalidInputError);
   });
