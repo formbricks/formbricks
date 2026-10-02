@@ -22,6 +22,7 @@ const {
   mockLoggerError,
   mockResponseFindFirst,
   mockSurveyFindUnique,
+  mockLoadQuotaContext,
 } = vi.hoisted(() => ({
   mockTransaction: vi.fn(),
   mockSendToPipeline: vi.fn(),
@@ -29,6 +30,7 @@ const {
   mockLoggerError: vi.fn(),
   mockResponseFindFirst: vi.fn(),
   mockSurveyFindUnique: vi.fn(),
+  mockLoadQuotaContext: vi.fn(),
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -56,7 +58,7 @@ vi.mock("@formbricks/logger", () => ({ logger: { error: mockLoggerError, warn: v
 vi.mock("@/app/lib/pipelines", () => ({ sendToPipeline: mockSendToPipeline }));
 vi.mock("@/modules/ee/quotas/lib/evaluation-service", () => ({
   evaluateResponseQuotas: mockEvaluateQuotas,
-  loadQuotaEvaluationContext: vi.fn().mockResolvedValue(null),
+  loadQuotaEvaluationContext: mockLoadQuotaContext,
 }));
 vi.mock("@/lib/embedded-data/survey-fields", () => ({
   inlineSurveyEmbeddedFields: () => [],
@@ -175,6 +177,7 @@ const createInput = (over: Partial<TV3CreateResponsePersist> = {}): TV3CreateRes
 beforeEach(() => {
   vi.clearAllMocks();
   mockEvaluateQuotas.mockResolvedValue({ shouldEndSurvey: false });
+  mockLoadQuotaContext.mockResolvedValue(null);
 });
 
 describe("unique-constraint races", () => {
@@ -511,6 +514,20 @@ describe("createScopedResponse — what actually reaches Prisma", () => {
   });
 
   /** Quotas resolve `reserved` operands off the persisted row, so they run after it exists. */
+  test("quota definitions are read before the transaction opens and handed to the evaluator (ENG-3285)", async () => {
+    const quotaContext = { quotas: [], survey: { id: survey.id } };
+    mockLoadQuotaContext.mockResolvedValueOnce(quotaContext);
+    runTx(txStub());
+
+    await createScopedResponse(createInput());
+
+    expect(mockLoadQuotaContext).toHaveBeenCalledWith(survey.id);
+    expect(mockLoadQuotaContext.mock.invocationCallOrder[0]).toBeLessThan(
+      mockTransaction.mock.invocationCallOrder[0]
+    );
+    expect(mockEvaluateQuotas).toHaveBeenCalledWith(expect.objectContaining({ quotaContext }));
+  });
+
   test("quota evaluation gets the row as persisted, not the request body", async () => {
     const tx = txStub();
     tx.response.create.mockResolvedValueOnce({
@@ -576,6 +593,25 @@ describe("createScopedResponse — what actually reaches Prisma", () => {
 });
 
 describe("updateScopedResponse — what actually reaches Prisma", () => {
+  test("quota definitions are read before the transaction opens and handed to the evaluator (ENG-3285)", async () => {
+    const quotaContext = { quotas: [], survey: { id: survey.id } };
+    mockLoadQuotaContext.mockResolvedValueOnce(quotaContext);
+    runTx(txStub());
+
+    await updateScopedResponse({
+      responseId: "clrs1",
+      workspaceId: survey.workspaceId,
+      survey,
+      patch: { finished: true },
+    });
+
+    expect(mockLoadQuotaContext).toHaveBeenCalledWith(survey.id);
+    expect(mockLoadQuotaContext.mock.invocationCallOrder[0]).toBeLessThan(
+      mockTransaction.mock.invocationCallOrder[0]
+    );
+    expect(mockEvaluateQuotas).toHaveBeenCalledWith(expect.objectContaining({ quotaContext }));
+  });
+
   /** A bare id is how a caller reaches another tenant's response; the scope goes in the `where`. */
   test("the update is scoped by workspace, never by id alone", async () => {
     const tx = runTx(txStub());

@@ -38,8 +38,9 @@ export interface QuotaEvaluationInput {
   language?: string;
   tx?: Prisma.TransactionClient;
   /**
-   * From `loadQuotaEvaluationContext`, called before the transaction. Required so that no caller can
-   * fall back to reading the definitions inside it; `null` means there is nothing to screen against.
+   * From `loadQuotaEvaluationContext`, called before the transaction. Required so every caller makes
+   * the load explicit (each call site's tests pin that it happens before `$transaction`); `null` means
+   * there is nothing to screen against.
    */
   quotaContext: TQuotaEvaluationContext | null;
   /**
