@@ -211,12 +211,16 @@ export const getSurveyRefsForWorkspace = reactCache(
  * wrongly rejected. Ids are deduplicated and looked up in bounded sequential batches (ENG-2305),
  * mirroring {@link getSurveyWorkspaceIdMap}. Returns an empty set for an empty input without
  * hitting the DB.
+ *
+ * @param visibleSurveyWhere ENG-3282: the caller's survey-visibility clause. Required, like
+ *   {@link getSegments}', so a survey reference is never validated against surveys the caller cannot see
+ *   by omission: a hidden id must answer exactly like an unknown one.
  */
 export const getExistingWorkspaceSurveyIds = reactCache(
   async (
     workspaceId: string,
     surveyIds: string[],
-    visibleSurveyWhere: Prisma.SurveyWhereInput = {}
+    visibleSurveyWhere: Prisma.SurveyWhereInput
   ): Promise<Set<string>> => {
     validateInputs([workspaceId, ZId], [surveyIds, z.array(ZId)]);
     const uniqueSurveyIds = Array.from(new Set(surveyIds));

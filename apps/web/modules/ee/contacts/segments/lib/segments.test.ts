@@ -257,7 +257,11 @@ describe("Segment Service Tests", () => {
     test("returns only the referenced ids that belong to the workspace, scoped by workspaceId", async () => {
       vi.mocked(prisma.survey.findMany).mockResolvedValue([{ id: "survey_known" }] as any);
 
-      const result = await getExistingWorkspaceSurveyIds("ws_1", ["survey_known", "survey_foreign"]);
+      const result = await getExistingWorkspaceSurveyIds(
+        "ws_1",
+        ["survey_known", "survey_foreign"],
+        ALL_SEGMENT_SURVEY_REFS
+      );
 
       expect(result).toEqual(new Set(["survey_known"]));
       expect(prisma.survey.findMany).toHaveBeenCalledWith({
@@ -279,7 +283,7 @@ describe("Segment Service Tests", () => {
     });
 
     test("short-circuits to an empty set without querying when no ids are given", async () => {
-      const result = await getExistingWorkspaceSurveyIds("ws_1", []);
+      const result = await getExistingWorkspaceSurveyIds("ws_1", [], ALL_SEGMENT_SURVEY_REFS);
 
       expect(result.size).toBe(0);
       expect(prisma.survey.findMany).not.toHaveBeenCalled();
@@ -288,7 +292,11 @@ describe("Segment Service Tests", () => {
     test("deduplicates ids before querying", async () => {
       vi.mocked(prisma.survey.findMany).mockResolvedValue([{ id: "survey1" }] as any);
 
-      const result = await getExistingWorkspaceSurveyIds("ws_1", ["survey1", "survey1", "survey1"]);
+      const result = await getExistingWorkspaceSurveyIds(
+        "ws_1",
+        ["survey1", "survey1", "survey1"],
+        ALL_SEGMENT_SURVEY_REFS
+      );
 
       expect(result).toEqual(new Set(["survey1"]));
       expect(prisma.survey.findMany).toHaveBeenCalledTimes(1);
@@ -304,7 +312,7 @@ describe("Segment Service Tests", () => {
       vi.mocked(prisma.survey.findMany).mockImplementation((async ({ where }: any) =>
         where.id.in.filter((id: string) => id !== "survey_449").map((id: string) => ({ id }))) as any);
 
-      const result = await getExistingWorkspaceSurveyIds("ws_1", surveyIds);
+      const result = await getExistingWorkspaceSurveyIds("ws_1", surveyIds, ALL_SEGMENT_SURVEY_REFS);
 
       // 450 ids at a batch size of 200 -> 200 / 200 / 50, each query scoped to the workspace.
       const batchSizes = vi
