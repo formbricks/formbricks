@@ -18,6 +18,7 @@ import { describe, expect, test } from "vitest";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const webRoot = path.resolve(here, "..");
 
+const ACTION_CLIENT_MODULE = "@/lib/utils/action-client";
 const ACTION_CLIENTS = new Set(["actionClient", "authenticatedActionClient"]);
 const SKIPPED_DIRS = new Set(["node_modules", ".next", "dist", "coverage", "public", "playwright"]);
 
@@ -57,9 +58,32 @@ const hasUseServerDirective = (sourceFile: ts.SourceFile): boolean => {
 const hasModifier = (node: ts.Node, kind: ts.SyntaxKind): boolean =>
   (ts.canHaveModifiers(node) ? ts.getModifiers(node) : undefined)?.some((m) => m.kind === kind) ?? false;
 
+// Local names bound to the shared action clients by `import { … } from "@/lib/utils/action-client"`,
+// aliases included. A module-level declaration cannot reuse an imported name, so a locally defined
+// `actionClient` is never in this set.
+const getActionClientBindings = (sourceFile: ts.SourceFile): Set<string> => {
+  const bindings = new Set<string>();
+  for (const statement of sourceFile.statements) {
+    if (
+      !ts.isImportDeclaration(statement) ||
+      !ts.isStringLiteral(statement.moduleSpecifier) ||
+      statement.moduleSpecifier.text !== ACTION_CLIENT_MODULE
+    ) {
+      continue;
+    }
+    const namedBindings = statement.importClause?.namedBindings;
+    if (statement.importClause?.isTypeOnly || !namedBindings || !ts.isNamedImports(namedBindings)) continue;
+    for (const element of namedBindings.elements) {
+      const importedName = (element.propertyName ?? element.name).text;
+      if (!element.isTypeOnly && ACTION_CLIENTS.has(importedName)) bindings.add(element.name.text);
+    }
+  }
+  return bindings;
+};
+
 // True for `authenticatedActionClient.inputSchema(...).action(...)` and friends: a call to `.action()`
-// whose chain starts at one of the action clients.
-const isActionClientAction = (expression: ts.Expression): boolean => {
+// whose chain starts at a binding imported from the shared action-client module.
+const isActionClientAction = (expression: ts.Expression, clientBindings: Set<string>): boolean => {
   if (!ts.isCallExpression(expression) || !ts.isPropertyAccessExpression(expression.expression)) {
     return false;
   }
@@ -69,12 +93,13 @@ const isActionClientAction = (expression: ts.Expression): boolean => {
   while (ts.isCallExpression(node) || ts.isPropertyAccessExpression(node)) {
     node = node.expression;
   }
-  return ts.isIdentifier(node) && ACTION_CLIENTS.has(node.text);
+  return ts.isIdentifier(node) && clientBindings.has(node.text);
 };
 
 // Returns the names of runtime exports that are not built from an action client.
 const findRawExports = (sourceFile: ts.SourceFile): string[] => {
   const raw: string[] = [];
+  const clientBindings = getActionClientBindings(sourceFile);
 
   for (const statement of sourceFile.statements) {
     if (ts.isInterfaceDeclaration(statement) || ts.isTypeAliasDeclaration(statement)) continue;
@@ -105,7 +130,8 @@ const findRawExports = (sourceFile: ts.SourceFile): string[] => {
 
     if (ts.isVariableStatement(statement)) {
       for (const declaration of statement.declarationList.declarations) {
-        if (declaration.initializer && isActionClientAction(declaration.initializer)) continue;
+        if (declaration.initializer && isActionClientAction(declaration.initializer, clientBindings))
+          continue;
         raw.push(declaration.name.getText(sourceFile));
       }
       continue;
@@ -138,10 +164,11 @@ describe("use server export detection", () => {
   test("accepts actions built from the action clients and type-only exports", () => {
     const source = `"use server";
       import { z } from "zod";
+      import { actionClient, authenticatedActionClient as authed } from "@/lib/utils/action-client";
       export type TInput = { id: string };
       export interface TOther { id: string }
       export type { TThird } from "./types";
-      export const a = authenticatedActionClient.inputSchema(z.object({})).action(async () => {});
+      export const a = authed.inputSchema(z.object({})).action(async () => {});
       export const b = actionClient.action(async () => {});
       const helper = async () => {};`;
     expect(rawExportsOf(source)).toEqual([]);
@@ -149,6 +176,7 @@ describe("use server export detection", () => {
 
   test("flags every other runtime export", () => {
     const source = `"use server";
+      import { authenticatedActionClient } from "@/lib/utils/action-client";
       export const getThing = reactCache(async (id: string) => id);
       export const deleteThing = async (id: string) => {};
       export async function updateThing() {}
@@ -170,6 +198,19 @@ describe("use server export detection", () => {
       "remote",
       '* from "./everything"',
     ]);
+  });
+
+  test("flags actions built from a client that is not the shared one", () => {
+    const local = `"use server";
+      import { createSafeActionClient } from "next-safe-action";
+      const actionClient = createSafeActionClient();
+      export const unsafe = actionClient.action(async () => {});`;
+    const elsewhere = `"use server";
+      import { authenticatedActionClient } from "./my-client";
+      import type { actionClient } from "@/lib/utils/action-client";
+      export const unsafe = authenticatedActionClient.action(async () => {});`;
+    expect(rawExportsOf(local)).toEqual(["unsafe"]);
+    expect(rawExportsOf(elsewhere)).toEqual(["unsafe"]);
   });
 
   test("flags a default-exported page component", () => {
