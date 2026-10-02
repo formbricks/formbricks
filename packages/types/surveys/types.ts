@@ -14,6 +14,7 @@ import { ZContactAttributes } from "../contact-attribute";
 import { ZLinkedEmbeddedField } from "../embedded-data";
 import { linkedToDesiredEmbeddedFields, toLegacyEmbeddedFields } from "../embedded-data-mapping";
 import { type TI18nString, ZI18nString } from "../i18n";
+import { ZOverlayColor, ZOverlayOpacity } from "../overlay";
 import { isLegacyIdCharset, isLegacyVariableName } from "../safe-identifier";
 import { ZSegment } from "../segment";
 import { ZAllowedFileExtension } from "../storage";
@@ -273,6 +274,9 @@ export const ZSurveyWorkspaceOverwrites = z.object({
   placement: ZPlacement.nullish(),
   clickOutsideClose: z.boolean().nullish(),
   overlay: ZOverlay.nullish(),
+  // Only read when `overlay` is set here too (see resolveOverlayAppearance).
+  overlayColor: ZOverlayColor.nullish(),
+  overlayOpacity: ZOverlayOpacity.nullish(),
 });
 
 export type TSurveyWorkspaceOverwrites = z.infer<typeof ZSurveyWorkspaceOverwrites>;

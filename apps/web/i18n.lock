@@ -240,6 +240,7 @@ checksums:
     common/created: 6045b4ff97fb7dca19ebadfa2e34a700
     common/created_at: f98a3c3bc73494df9bbc14e4e47a018c
     common/created_by: 6775c2fa7d495fea48f1ad816daea93b
+    common/custom_overlay: b7b89901f46267f532600a23cfc54ae2
     common/customer_success: 9b8100f7cc9078702012617237f5b884
     common/dark_overlay: 173e84b526414dbc70dbf9737e443b60
     common/dashboard: c9380ea68c8c76ea451bd9613329a07c
@@ -407,7 +408,9 @@ checksums:
     common/other_filters: 20b09213c131db47eb8b23e72d0c4bea
     common/other_placeholder: f3a0fa2eaaf75aa92b290449c928c081
     common/output: c1e7f08b62c52a91234e00b88f52acc2
+    common/overlay: 0267a35c3f238c3d7839813703cead13
     common/overlay_color: 4b72073285d13fff93d094aabffe05ac
+    common/overlay_opacity: acdbd667ab17e7181c5f31573e4ad742
     common/overview: 30c54e4dc4ce599b87d94be34a8617f5
     common/password: 223a61cf906ab9c40d22612c588dff48
     common/paused: edb1f7b7219e1c9b7aa67159090d6991

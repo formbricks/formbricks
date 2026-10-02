@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { TOverlay, TPlacement } from "@formbricks/types/common";
 import { cn } from "@/lib/cn";
+import { getOverlayPreviewStyle } from "@/modules/ui/components/overlay-settings/lib/utils";
 import { getPlacementStyle } from "../lib/utils";
 
 interface ModalProps {
@@ -12,6 +13,8 @@ interface ModalProps {
   previewMode: string;
   clickOutsideClose: boolean;
   overlay: TOverlay;
+  overlayColor?: string | null;
+  overlayOpacity?: number | null;
   borderRadius?: number | string;
   background?: string;
 }
@@ -23,9 +26,11 @@ export const Modal = ({
   previewMode,
   clickOutsideClose,
   overlay,
+  overlayColor = null,
+  overlayOpacity = null,
   borderRadius,
   background,
-}: ModalProps) => {
+}: Readonly<ModalProps>) => {
   const [show, setShow] = useState(true);
   const modalRef = useRef<HTMLDivElement | null>(null);
   const [windowWidth, setWindowWidth] = useState<number | null>(null);
@@ -123,16 +128,19 @@ export const Modal = ({
           : "-bottom-full"
         : "";
 
+  const customOverlayStyle = getOverlayPreviewStyle({ overlay, overlayColor, overlayOpacity });
+
   return (
     <div
       id="preview-survey-base"
       aria-live="assertive"
       className={cn(
         "relative h-full w-full overflow-hidden rounded-b-md",
-        overlay === "dark" ? "bg-slate-700/80" : "",
-        overlay === "light" ? "bg-slate-400/50" : "",
+        !customOverlayStyle && overlay === "dark" ? "bg-slate-700/80" : "",
+        !customOverlayStyle && overlay === "light" ? "bg-slate-400/50" : "",
         "transition-all duration-500 ease-in-out"
-      )}>
+      )}
+      style={customOverlayStyle}>
       <div
         ref={modalRef}
         style={{
