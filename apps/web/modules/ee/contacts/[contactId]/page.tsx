@@ -70,6 +70,7 @@ export const SingleContactPage = async (props: {
             workspaceId={workspace.id}
             contactId={params.contactId}
             environmentTags={environmentTags}
+            isReadOnly={isReadOnly}
           />
         </div>
       </section>
