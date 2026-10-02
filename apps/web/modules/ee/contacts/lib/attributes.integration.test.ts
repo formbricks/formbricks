@@ -313,4 +313,3 @@ describe("updateAttributes behind a long-held row lock (ENG-3285)", () => {
     expect(values.map((v) => v.value)).toEqual(["after-the-wait", "after-the-wait"]);
   }, 40_000);
 });
-
