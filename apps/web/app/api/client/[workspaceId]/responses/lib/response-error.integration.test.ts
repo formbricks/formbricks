@@ -39,11 +39,12 @@ describe("handleClientResponseCreateError vs real Prisma 7 + adapter-pg (ENG-217
       .catch((e) => e);
 
     expect(error?.code).toBe("P2002");
-    // The premise of the bug: the adapter reports the columns quoted.
-    const rawFields = (
-      error?.meta as { driverAdapterError?: { cause?: { constraint?: { fields?: string[] } } } }
-    )?.driverAdapterError?.cause?.constraint?.fields;
-    expect(rawFields).toContain('"singleUseId"');
+    // The meta shape this resolves from (adapter-pg 7.10+, prisma#29587): the constraint name, not
+    // the quoted column list ENG-2174 was about.
+    const constraint = (
+      error?.meta as { driverAdapterError?: { cause?: { constraint?: Record<string, unknown> } } }
+    )?.driverAdapterError?.cause?.constraint;
+    expect(constraint).toEqual({ index: "Response_surveyId_singleUseId_key" });
 
     expect(() => handleClientResponseCreateError(error)).toThrow(UniqueConstraintError);
     expect(() => handleClientResponseCreateError(error)).toThrow(
@@ -63,10 +64,10 @@ describe("handleClientResponseCreateError vs real Prisma 7 + adapter-pg (ENG-217
       .catch((e) => e);
 
     expect(error?.code).toBe("P2002");
-    const rawFields = (
-      error?.meta as { driverAdapterError?: { cause?: { constraint?: { fields?: string[] } } } }
-    )?.driverAdapterError?.cause?.constraint?.fields;
-    expect(rawFields).toContain('"displayId"');
+    const constraint = (
+      error?.meta as { driverAdapterError?: { cause?: { constraint?: Record<string, unknown> } } }
+    )?.driverAdapterError?.cause?.constraint;
+    expect(constraint).toEqual({ index: "Response_displayId_key" });
 
     expect(() => handleClientResponseCreateError(error, display.id)).toThrow(InvalidInputError);
     expect(() => handleClientResponseCreateError(error, display.id)).not.toThrow(DatabaseError);
