@@ -32,7 +32,7 @@
     "format:check": "prettier --check .",
     "generate": "turbo run generate",
     "catalog:check": "node scripts/check-catalog.mjs",
-    "lint": "turbo run lint && pnpm api:v3:lint && pnpm catalog:check",
+    "lint": "turbo run lint && pnpm api:v3:lint && pnpm api:v3:check && pnpm api:v3:schemas:check && pnpm catalog:check",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test test:root --no-cache",
     "test:root": "vitest run --config vitest.root.config.mts",
@@ -51,6 +51,9 @@
     "api:v3:bundle": "node docs/api-v3-reference/scripts/bundle.mjs",
     "api:v3:lint": "node docs/api-v3-reference/scripts/bundle.mjs --lint",
     "api:v3:check": "node docs/api-v3-reference/scripts/bundle.mjs --check",
+    "api:v3:schemas": "pnpm --filter @formbricks/api-v3-schemas schemas:generate",
+    "api:v3:schemas:check": "pnpm --filter @formbricks/api-v3-schemas schemas:check",
+    "api:v3:sync": "pnpm api:v3:bundle && pnpm api:v3:schemas",
     "dev:setup": "bash scripts/setup-dev-env.sh",
     "dev:authzed": "bash scripts/dev-authzed-up.sh"
   },

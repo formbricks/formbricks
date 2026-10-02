@@ -82,6 +82,9 @@ reviews:
     # docs/api-*-reference/openapi*.{yml,json} are deliberately NOT excluded —
     # oasdiff reviews them for breaking API changes.
     - "!apps/web/vendor/**"
+    # Generated from the reviewed OpenAPI bundle and byte-checked by `pnpm api:v3:schemas:check`;
+    # the review belongs on docs/api-v3-reference/src/ and the generator, not on its output.
+    - "!packages/api-v3-schemas/src/generated/**"
 
   path_instructions:
     - path: "**/*.test.tsx"
