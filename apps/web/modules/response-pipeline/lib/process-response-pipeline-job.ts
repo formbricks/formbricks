@@ -9,7 +9,6 @@ import {
   enqueueWebhookDeliveryJob,
 } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
-import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
 import { POSTHOG_KEY } from "@/lib/constants";
 import { selectSurveyEmbeddedDataLinks, withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
@@ -51,10 +50,9 @@ const pipelineSurveySelect = {
   createdAt: true,
   updatedAt: true,
   blocks: true,
-  hiddenFields: true,
-  variables: true,
   // ENG-1837: the definitions the notification email, follow-ups and integrations below resolve
-  // through. Inlined by `getSurveyForPipeline` so the raw relation never reaches the handlers.
+  // through. Inlined by `getSurveyForPipeline` so the raw relation never reaches the handlers — and
+  // (ENG-2404) the source the legacy `variables` / `hiddenFields` keys are derived from.
   embeddedDataLinks: selectSurveyEmbeddedDataLinks,
   followUps: true,
   autoComplete: true,
@@ -78,9 +76,7 @@ const pipelineSurveySelect = {
 
 type TPipelineOrganization = Prisma.OrganizationGetPayload<{ select: typeof pipelineOrganizationSelect }>;
 type TPipelineSurveyRow = Prisma.SurveyGetPayload<{ select: typeof pipelineSurveySelect }>;
-type TPipelineSurvey = Omit<TPipelineSurveyRow, "embeddedDataLinks"> & {
-  embeddedFields?: TLinkedEmbeddedField[];
-};
+type TPipelineSurvey = ReturnType<typeof withInlinedEmbeddedFields<TPipelineSurveyRow>>;
 
 const getOrganizationForPipeline = async (workspaceId: string): Promise<TPipelineOrganization | null> =>
   prisma.organization.findFirst({

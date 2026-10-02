@@ -328,6 +328,21 @@ describe("withAuditLogging", () => {
     expect(callArgs.target.id).toBe("feedback-source-1");
   });
 
+  test("resolves targetId for embedded data target type", async () => {
+    const embeddedDataCtx = {
+      ...mockCtxBase,
+      auditLoggingCtx: { ...mockCtxBase.auditLoggingCtx, embeddedDataId: "embedded-data-1" },
+    };
+    const handlerImpl = vi.fn().mockResolvedValue("ok");
+    const wrapped = OriginalHandler.withAuditLogging("created", "embeddedData", handlerImpl);
+    await wrapped({ ctx: embeddedDataCtx as any, parsedInput: mockParsedInput });
+    await new Promise(setImmediate);
+    expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
+    const callArgs = serviceLogAuditEventMockHandle.mock.calls[0][0];
+    expect(callArgs.target.type).toBe("embeddedData");
+    expect(callArgs.target.id).toBe("embedded-data-1");
+  });
+
   test("resolves targetId for dashboard target type", async () => {
     const dashCtx = {
       ...mockCtxBase,

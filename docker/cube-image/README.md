@@ -20,7 +20,7 @@ Compared with the upstream `cubejs/cube` image, it leaves out:
 
 ## Tag
 
-Every published image gets an immutable tag `<Cube version>-<revision>`, for example `1.7.47-1`, and moves
+Every published image gets an immutable tag `<Cube version>-<revision>`, for example `1.7.47-2`, and moves
 `latest`. The Cube version is the `@cubejs-backend/server` version pinned in `package.json`; the revision is
 the number in `REVISION`. [`image-tag.sh`](image-tag.sh) prints the current tag.
 
@@ -81,6 +81,11 @@ before it fails in Kubernetes.
 3. Reset `REVISION` to `1`, update the three image references above, and read the Cube changelog for
    breaking changes that reach `apps/web/modules/ee/analysis` or `docker/cube`.
 
+4. Check whether the `overrides` entry in `package.json` is still needed. It moves `gaxios` (pulled in
+   through `@google-cloud/storage`) from `uuid` 9, which scanners report for CVE-2026-41907, onto the
+   `uuid` 11.1.1 Cube already uses. `gaxios` only calls `uuid.v4()`, which the CVE does not affect. Drop
+   the override once `gaxios` requires `uuid` 11 or later itself.
+
 ## Trivy gate and `.trivyignore.yaml`
 
 `.github/workflows/cube-image.yml` fails on any CRITICAL or HIGH finding that has a fix. An entry in
@@ -104,7 +109,7 @@ To check a published image's signature, pin the exact workflow identity, so a fo
 satisfy it:
 
 ```bash
-cosign verify ghcr.io/formbricks/cube:1.7.47-1 \
+cosign verify ghcr.io/formbricks/cube:1.7.47-2 \
   --certificate-identity https://github.com/formbricks/formbricks/.github/workflows/cube-image.yml@refs/heads/main \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```

@@ -202,10 +202,12 @@ deployment:
       memory: 1Gi
       cpu: "1"
 
-  # Container security context for the web container. The image's `nextjs` user is UID 1001; the kubelet
-  # needs a numeric UID to enforce runAsNonRoot. Container-level fields win over deployment.securityContext.
-  # With readOnlyRootFilesystem, the chart mounts emptyDir volumes on the paths the app writes at runtime
-  # (/tmp, the Next.js cache, and the Prisma migration staging directory when startup migrations run).
+  # Container security context for the web container and both migration Job containers (same image). The
+  # image's `nextjs` user is UID 1001; the kubelet needs a numeric UID to enforce runAsNonRoot.
+  # Container-level fields win over deployment.securityContext. With readOnlyRootFilesystem, the chart mounts
+  # emptyDir volumes on the paths each container writes at runtime: /tmp, the Next.js cache, and (when
+  # startup migrations run) the Prisma migration staging directory in the web container; /tmp and that
+  # staging directory in the migration Job.
   containerSecurityContext:
     readOnlyRootFilesystem: true
     runAsNonRoot: true
@@ -1078,7 +1080,7 @@ cube:
   # repository and tag back at an upstream "cubejs/cube" release is supported.
   image:
     repository: "ghcr.io/formbricks/cube"
-    tag: "1.7.47-1"
+    tag: "1.7.47-2"
     pullPolicy: IfNotPresent
 
   imagePullSecrets: []
