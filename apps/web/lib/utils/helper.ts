@@ -1,3 +1,4 @@
+import "server-only";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   getActionClass,
@@ -17,37 +18,6 @@ import {
   getWebhook,
   getWorkspace,
 } from "@/lib/utils/services";
-
-export const getFormattedErrorMessage = (result: {
-  serverError?: string;
-  validationErrors?: unknown;
-}): string => {
-  let message = "";
-
-  if (result.serverError) {
-    message = result.serverError;
-  } else {
-    const errors = result.validationErrors as
-      | Record<string, { _errors?: string[] } | string[] | undefined>
-      | undefined;
-    message = Object.keys(errors || {})
-      .map((key) => {
-        const value = errors?.[key];
-        if (key === "_errors" && Array.isArray(value)) return value.join(", ");
-        const fieldErrors =
-          value && typeof value === "object" && "_errors" in value ? value._errors : undefined;
-        const fieldError = fieldErrors?.join(", ");
-        if (key && fieldError?.toLowerCase().startsWith(key.toLowerCase())) {
-          return fieldError;
-        }
-        const keyPrefix = key ? `${key}: ` : "";
-        return `${keyPrefix}${fieldError}`;
-      })
-      .join("\n");
-  }
-
-  return message;
-};
 
 /**
  * GET organization ID from RESOURCE ID
@@ -280,17 +250,6 @@ export const getWorkspaceIdFromQuotaId = async (quotaId: string) => {
   const quota = await getQuota(quotaId);
 
   return await getWorkspaceIdFromSurveyId(quota.surveyId);
-};
-
-export const isStringMatch = (query: string, value: string): boolean => {
-  // lowercase both query and value
-  // replace all spaces with empty string
-  // replace all underscores with empty string
-  // replace all dashes with empty string
-  const queryModified = query.toLowerCase().replace(/ /g, "").replace(/_/g, "").replace(/-/g, "");
-  const valueModified = value.toLowerCase().replace(/ /g, "").replace(/_/g, "").replace(/-/g, "");
-
-  return valueModified.includes(queryModified);
 };
 
 // FeedbackSource helpers

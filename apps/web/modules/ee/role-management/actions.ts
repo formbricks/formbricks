@@ -4,40 +4,22 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { ZId, ZUuid } from "@formbricks/types/common";
-import {
-  AuthenticationError,
-  OperationNotAllowedError,
-  ResourceNotFoundError,
-  ValidationError,
-} from "@formbricks/types/errors";
+import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
 import { assertCan, can } from "@/lib/authorization";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
-import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { updateInvite } from "@/modules/ee/role-management/lib/invite";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
+import { checkRoleManagementPermission } from "@/modules/ee/role-management/lib/permission";
 import { ZInviteUpdateInput } from "@/modules/ee/role-management/types/invites";
 import { getInvite } from "@/modules/organization/settings/teams/lib/invite";
 import { getOrganizationOwnerCount } from "@/modules/organization/settings/teams/lib/membership";
-
-export const checkRoleManagementPermission = async (organizationId: string) => {
-  const organization = await getOrganization(organizationId);
-  if (!organization) {
-    throw new ResourceNotFoundError("Organization", organizationId);
-  }
-
-  const isAccessControlAllowed = await getAccessControlPermission(organizationId);
-  if (!isAccessControlAllowed) {
-    throw new OperationNotAllowedError("Role management is not allowed for this organization");
-  }
-};
 
 const ZUpdateInviteAction = z.object({
   inviteId: ZUuid,
