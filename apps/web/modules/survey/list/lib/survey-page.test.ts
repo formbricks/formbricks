@@ -73,6 +73,23 @@ describe("survey-page cursor helpers", () => {
 
     expect(() => decodeSurveyListPageCursor(encoded, "updatedAt")).toThrow(InvalidInputError);
   });
+
+  /** The decoded strings are bound into the page query, where a NUL byte fails it with a 500 (ENG-3550). */
+  test.each([
+    { version: 1, sortBy: "updatedAt", value: "2025-01-02T00:00:00.000Z", id: "survey\u0000" },
+    { version: 1, sortBy: "name", value: "Survey\u0000", id: "survey_1" },
+    {
+      version: 1,
+      sortBy: "relevance",
+      bucket: "other",
+      updatedAt: "2025-01-02T00:00:00.000Z",
+      id: "s\u0000",
+    },
+  ] as const)("rejects a NULL byte in a $sortBy cursor", (cursor) => {
+    const encoded = encodeSurveyListPageCursor(cursor);
+
+    expect(() => decodeSurveyListPageCursor(encoded, cursor.sortBy)).toThrow(InvalidInputError);
+  });
 });
 
 describe("getSurveyListPage", () => {

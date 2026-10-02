@@ -21,6 +21,16 @@ describe("workflow list cursor", () => {
     expect(() => decodeWorkflowListCursor(encoded, "createdAt")).toThrow(WorkflowInvalidInputError);
   });
 
+  /** The decoded strings are bound into the page query, where a NUL byte fails it with a 500 (ENG-3550). */
+  test.each([
+    ["name", { ...row, name: "Alpha\u0000" }],
+    ["name", { ...row, id: "wf\u0000" }],
+    ["updatedAt", { ...row, id: "wf\u0000" }],
+  ] as const)("rejects a NULL byte in a %s cursor", (sortBy, cursorRow) => {
+    const encoded = encodeWorkflowListCursor(buildNextWorkflowListCursor(cursorRow, sortBy));
+    expect(() => decodeWorkflowListCursor(encoded, sortBy)).toThrow(WorkflowInvalidInputError);
+  });
+
   test("rejects a malformed cursor", () => {
     expect(() => decodeWorkflowListCursor("@@not-valid@@", "updatedAt")).toThrow(WorkflowInvalidInputError);
   });

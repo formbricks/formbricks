@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { TWorkflowSortBy } from "../contracts";
+import { type TWorkflowSortBy, zPostgresText } from "../contracts";
 import { WorkflowInvalidInputError } from "../errors";
 
 /**
@@ -16,14 +16,14 @@ const ZDateCursor = z.object({
   version: z.literal(WORKFLOW_LIST_CURSOR_VERSION),
   sortBy: z.enum(["createdAt", "updatedAt"]),
   value: z.iso.datetime({ offset: true }),
-  id: z.string().min(1),
+  id: zPostgresText().min(1),
 });
 
 const ZNameCursor = z.object({
   version: z.literal(WORKFLOW_LIST_CURSOR_VERSION),
   sortBy: z.literal("name"),
-  value: z.string(),
-  id: z.string().min(1),
+  value: zPostgresText(),
+  id: zPostgresText().min(1),
 });
 
 const ZWorkflowListCursor = z.union([ZDateCursor, ZNameCursor]);

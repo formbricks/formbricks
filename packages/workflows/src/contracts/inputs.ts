@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ZWorkflowStatus } from "../types/common";
 import { ZWorkflowDefinition } from "../types/document";
 import { ZWorkflowRunStatus } from "../types/runs";
+import { zPostgresText } from "./common";
 
 /**
  * Route-agnostic operation inputs for the v3 Workflows API. HTTP concerns (the `filter[...]`
@@ -82,8 +83,7 @@ export const ZListWorkflowsInput = z
       .min(1)
       .optional()
       .describe("Parsed form of filter[status][in]. Omitting it returns every status except archived."),
-    nameContains: z
-      .string()
+    nameContains: zPostgresText()
       .min(1)
       .max(512)
       .optional()

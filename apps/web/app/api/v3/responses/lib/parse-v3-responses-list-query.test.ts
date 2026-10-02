@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { encodeKeysetCursor } from "@/app/api/v3/lib/keyset-cursor";
+import { NULL_BYTE_REASON } from "@/lib/utils/postgres-text";
 import {
   RESPONSES_CURSOR_KIND,
   parseV3ResponsesCountQuery,
@@ -98,6 +99,18 @@ describe("what is refused", () => {
   test("workspaceId is required and must be a cuid2", () => {
     expect(namesOf(listQuery(""))).toEqual(["workspaceId"]);
     expect(namesOf(listQuery("workspaceId=not-a-cuid"))).toEqual(["workspaceId"]);
+  });
+
+  /** Postgres `text` cannot hold U+0000; let through, the code fails the query and answers 500 (ENG-3550). */
+  test("a NULL byte in a language code is refused, on the list and the count", () => {
+    const query = `workspaceId=${WORKSPACE}&surveyId=${SURVEY}&filter[language][in]=de,e%00n`;
+    const refused = {
+      ok: false,
+      invalid_params: [{ name: "filter[language][in].1", reason: NULL_BYTE_REASON }],
+    };
+
+    expect(listQuery(query)).toEqual(refused);
+    expect(countQuery(query)).toEqual(refused);
   });
 
   test("more than a hundred ids is refused", () => {

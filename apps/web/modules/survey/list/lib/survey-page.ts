@@ -5,6 +5,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import type { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
+import { zPostgresText } from "@/lib/utils/postgres-text";
 import { buildWhereClause } from "@/modules/survey/lib/utils";
 import type { TSurvey } from "../types/surveys";
 import {
@@ -18,18 +19,20 @@ const SURVEY_LIST_CURSOR_VERSION = 1 as const;
 const IN_PROGRESS_BUCKET = "inProgress" as const;
 const OTHER_BUCKET = "other" as const;
 
+// The cursor is unsigned client input whose strings go straight into the `WHERE` clause, so they are
+// `zPostgresText`: a NUL byte must fail decoding (400), not the query (500) — ENG-3550.
 const ZDateCursor = z.object({
   version: z.literal(SURVEY_LIST_CURSOR_VERSION),
   sortBy: z.enum(["updatedAt", "createdAt"]),
   value: z.iso.datetime(),
-  id: z.string().min(1),
+  id: zPostgresText().min(1),
 });
 
 const ZNameCursor = z.object({
   version: z.literal(SURVEY_LIST_CURSOR_VERSION),
   sortBy: z.literal("name"),
-  value: z.string(),
-  id: z.string().min(1),
+  value: zPostgresText(),
+  id: zPostgresText().min(1),
 });
 
 const ZRelevanceCursor = z.object({
@@ -37,7 +40,7 @@ const ZRelevanceCursor = z.object({
   sortBy: z.literal("relevance"),
   bucket: z.enum([IN_PROGRESS_BUCKET, OTHER_BUCKET]),
   updatedAt: z.iso.datetime(),
-  id: z.string().min(1),
+  id: zPostgresText().min(1),
 });
 
 const ZSurveyListPageCursor = z.union([ZDateCursor, ZNameCursor, ZRelevanceCursor]);
