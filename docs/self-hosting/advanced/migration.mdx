@@ -45,7 +45,8 @@ response updates and survey resets.
 
 - Transactions may run for up to 20 seconds.
 - Waiting for a free database connection is bounded by `connect_timeout` in `DATABASE_URL` (5 seconds
-  by default). With `connect_timeout=0` the wait is capped at 6 seconds.
+  by default). With `connect_timeout=0`, transactions give up waiting after 6 seconds; other queries
+  wait until a connection is free.
 - Formbricks asks PostgreSQL to end any session left idle inside an open transaction for 60 seconds, which
   releases that session's locks. It does this with the `idle_in_transaction_session_timeout` connection
   setting. Migrations are not affected.
