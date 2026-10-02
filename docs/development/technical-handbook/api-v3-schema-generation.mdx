@@ -98,8 +98,9 @@ returns a new instance — so anything keyed on schema identity must be attached
 
 ## Adopting A Resource
 
-1. Add the tag and its operationIds to `packages/api-v3-schemas/scripts/adopted.ts`, then run
-   `pnpm api:v3:schemas`. If the normalizer throws, extend it deliberately, with a unit test.
+1. Add the tag and its operationIds to `packages/api-v3-schemas/scripts/adopted.ts`, then run `pnpm api:v3:sync`,
+   which bundles `docs/api-v3-reference/src/` before generating, so spec edits made for the resource are included.
+   If the normalizer throws, extend it deliberately, with a unit test.
 2. Pin every new difference the fidelity test reports in `src/testing/unenforced.ts`, naming your module as the
    enforcer.
 3. Rebuild the route schemas on the generated ones. Add a counterexample for each pin, a contract diff of each
