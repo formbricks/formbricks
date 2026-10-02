@@ -16,7 +16,8 @@ const repository = "formbricks/formbricks";
 // assertion would print it.
 const token = "test-token-not-a-secret";
 
-type StubResponse = { status: number; body: string };
+// `hang` accepts the request and never answers, to exercise curl's per-attempt timeout.
+type StubResponse = { status: number; body: string } | { hang: true };
 type SeenRequest = { url: string | undefined; headers: IncomingHttpHeaders };
 
 let server: Server;
@@ -29,6 +30,7 @@ beforeAll(async () => {
   server = createServer((request, response) => {
     seen.push({ url: request.url, headers: request.headers });
     const next = queue.shift() ?? { status: 599, body: "stub queue exhausted" };
+    if ("hang" in next) return;
     response.writeHead(next.status, { "content-type": "application/json" });
     response.end(next.body);
   });
@@ -38,11 +40,13 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  server.closeAllConnections();
   await new Promise<void>((resolve) => server.close(() => resolve()));
   rmSync(workDir, { recursive: true, force: true });
 });
 
 afterEach(() => {
+  server.closeAllConnections();
   queue = [];
   seen = [];
 });
@@ -51,6 +55,9 @@ const respond = (...responses: StubResponse[]) => {
   queue = responses;
 };
 
+const notFound: StubResponse = { status: 404, body: JSON.stringify({ message: "Not Found" }) };
+const repositoryFound: StubResponse = { status: 200, body: JSON.stringify({ full_name: repository }) };
+
 const latest = (tagName: unknown): StubResponse => ({
   status: 200,
   body: JSON.stringify({ tag_name: tagName }),
@@ -58,7 +65,10 @@ const latest = (tagName: unknown): StubResponse => ({
 
 let runs = 0;
 
-const resolve = async (currentTag: string, { apiUrl = baseUrl, path = process.env.PATH } = {}) => {
+const resolve = async (
+  currentTag: string,
+  { apiUrl = baseUrl, path = process.env.PATH, timeout = "20" } = {}
+) => {
   const outputFile = join(workDir, `output-${++runs}`);
   writeFileSync(outputFile, "");
 
@@ -71,6 +81,7 @@ const resolve = async (currentTag: string, { apiUrl = baseUrl, path = process.en
       GITHUB_API_URL: apiUrl,
       GITHUB_OUTPUT: outputFile,
       RELEASE_LOOKUP_RETRIES: "1",
+      RELEASE_LOOKUP_TIMEOUT: timeout,
     },
   });
   let log = "";
@@ -111,12 +122,36 @@ describe("resolve-latest-release.sh", () => {
   });
 
   test("does not promote when GitHub marks no release as latest", async () => {
-    respond({ status: 404, body: JSON.stringify({ message: "Not Found" }) });
+    respond(notFound, repositoryFound);
 
     const result = await resolve("5.4.6");
 
     expect(result.status).toBe(0);
     expect(result.output).toBe("is_latest=false\n");
+    expect(seen.map((request) => request.url)).toEqual([
+      `/repos/${repository}/releases/latest`,
+      `/repos/${repository}`,
+    ]);
+  });
+
+  // GitHub answers 404 for a repository the token cannot see, too; that is not "nothing is latest".
+  test.each([
+    ["404", [notFound]],
+    ["403", [{ status: 403, body: JSON.stringify({ message: "Forbidden" }) }]],
+    [
+      "500 after the retries",
+      [
+        { status: 500, body: "{}" },
+        { status: 500, body: "{}" },
+      ],
+    ],
+  ])("fails on a 404 when the repository itself answers %s", async (_, repositoryResponses) => {
+    respond(notFound, ...(repositoryResponses as StubResponse[]));
+
+    const result = await resolve("5.4.6");
+
+    expect(result.status).toBe(1);
+    expect(result.output).toBe("");
   });
 
   test.each([
@@ -125,6 +160,10 @@ describe("resolve-latest-release.sh", () => {
     ["an empty tag_name", JSON.stringify({ tag_name: "" })],
     ["a non-string tag_name", JSON.stringify({ tag_name: 5 })],
     ["a body that is not JSON", "<html>unicorn</html>"],
+    ["an array instead of a release", JSON.stringify([{ tag_name: "5.4.6" }])],
+    // jq reads a body as a stream; a second document must not let the first one through.
+    ["two JSON documents", `${JSON.stringify({ tag_name: "5.4.6" })}{}`],
+    ["two releases", `${JSON.stringify({ tag_name: "6.1.0" })}${JSON.stringify({ tag_name: "5.4.6" })}`],
   ])("fails instead of deciding on a 200 with %s", async (_, body) => {
     respond({ status: 200, body });
 
@@ -174,6 +213,19 @@ describe("resolve-latest-release.sh", () => {
     expect(result.status).toBe(0);
     expect(result.output).toBe("is_latest=true\n");
     expect(seen).toHaveLength(2);
+    // The retried request still authenticates.
+    expect(seen.map((request) => request.headers.authorization)).toEqual(Array(2).fill(`Bearer ${token}`));
+  });
+
+  test("fails when every attempt times out", async () => {
+    respond({ hang: true }, { hang: true });
+
+    const result = await resolve("5.4.6", { timeout: "1" });
+
+    expect(result.status).toBe(1);
+    expect(result.output).toBe("");
+    expect(seen).toHaveLength(2);
+    expect(result.log).toContain("curl exit 28");
   });
 
   test("fails when the API cannot be reached", async () => {
@@ -187,7 +239,7 @@ describe("resolve-latest-release.sh", () => {
 
     expect(result.status).toBe(1);
     expect(result.output).toBe("");
-    expect(result.log).toContain("Could not reach the GitHub releases API");
+    expect(result.log).toContain("Could not reach the GitHub API");
   });
 
   test("never echoes an error body into the log, where Actions would parse it", async () => {
