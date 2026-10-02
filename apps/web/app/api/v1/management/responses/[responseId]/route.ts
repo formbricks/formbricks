@@ -194,7 +194,11 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
-      const updated = await updateResponseWithQuotaEvaluation(params.responseId, inputValidation.data);
+      const updated = await updateResponseWithQuotaEvaluation(
+        params.responseId,
+        result.survey.id,
+        inputValidation.data
+      );
       if (auditLog) {
         auditLog.newObject = updated;
       }

@@ -6,7 +6,10 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ok, okVoid } from "@formbricks/types/error-handlers";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { getDisplayForResponseValidation } from "@/lib/display/service";
-import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
+import {
+  evaluateResponseQuotas,
+  loadQuotaEvaluationContext,
+} from "@/modules/ee/quotas/lib/evaluation-service";
 import { deleteDisplay } from "../display";
 import {
   deleteResponse,
@@ -63,6 +66,7 @@ vi.mock("../utils", () => ({
 
 vi.mock("@/modules/ee/quotas/lib/evaluation-service", () => ({
   evaluateResponseQuotas: vi.fn(),
+  loadQuotaEvaluationContext: vi.fn(),
 }));
 
 vi.mock("@/lib/display/service", () => ({
@@ -619,6 +623,9 @@ describe("Response Lib", () => {
       };
     };
     let mockTx: MockTx;
+    const quotaContext = { quotas: [], survey: { id: "survey-id" } } as unknown as Awaited<
+      ReturnType<typeof loadQuotaEvaluationContext>
+    >;
 
     beforeEach(() => {
       vi.clearAllMocks();
@@ -634,8 +641,21 @@ describe("Response Lib", () => {
         },
       };
       vi.mocked(getDisplayForResponseValidation).mockResolvedValue(validDisplay);
+      vi.mocked(loadQuotaEvaluationContext).mockResolvedValue(quotaContext);
 
       prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
+    });
+
+    test("reads the quota definitions before opening the transaction, not inside it (ENG-3285)", async () => {
+      vi.mocked(mockTx.response.update).mockResolvedValue(response);
+      vi.mocked(evaluateResponseQuotas).mockResolvedValue({ shouldEndSurvey: false });
+
+      await updateResponseWithQuotaEvaluation(responseId, response.surveyId, responseInput);
+
+      expect(loadQuotaEvaluationContext).toHaveBeenCalledWith(response.surveyId);
+      expect(vi.mocked(loadQuotaEvaluationContext).mock.invocationCallOrder[0]).toBeLessThan(
+        vi.mocked(prisma.$transaction).mock.invocationCallOrder[0]
+      );
     });
 
     test("update response and continue when quota evaluation says not to end survey", async () => {
@@ -646,7 +666,7 @@ describe("Response Lib", () => {
         refreshedResponse: null,
       });
 
-      const result = await updateResponseWithQuotaEvaluation(responseId, responseInput);
+      const result = await updateResponseWithQuotaEvaluation(responseId, response.surveyId, responseInput);
 
       expect(mockTx.response.update).toHaveBeenCalledWith({
         where: { id: responseId },
@@ -662,6 +682,7 @@ describe("Response Lib", () => {
         // The row just written, so `reserved` quota operands resolve (ENG-1840).
         response,
         tx: mockTx,
+        quotaContext,
       });
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -678,7 +699,7 @@ describe("Response Lib", () => {
         refreshedResponse: null,
       });
 
-      const result = await updateResponseWithQuotaEvaluation(responseId, responseInput);
+      const result = await updateResponseWithQuotaEvaluation(responseId, response.surveyId, responseInput);
 
       expect(evaluateResponseQuotas).toHaveBeenCalledWith({
         surveyId: responseWithoutLanguage.surveyId,
@@ -690,6 +711,7 @@ describe("Response Lib", () => {
         // The row just written, so `reserved` quota operands resolve (ENG-1840).
         response: responseWithoutLanguage,
         tx: mockTx,
+        quotaContext,
       });
       expect(result.ok).toBe(true);
     });
@@ -703,7 +725,7 @@ describe("Response Lib", () => {
         refreshedResponse: refreshedResponse,
       });
 
-      const result = await updateResponseWithQuotaEvaluation(responseId, responseInput);
+      const result = await updateResponseWithQuotaEvaluation(responseId, response.surveyId, responseInput);
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -719,7 +741,7 @@ describe("Response Lib", () => {
         refreshedResponse: null,
       });
 
-      const result = await updateResponseWithQuotaEvaluation(responseId, responseInput);
+      const result = await updateResponseWithQuotaEvaluation(responseId, response.surveyId, responseInput);
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -739,7 +761,7 @@ describe("Response Lib", () => {
         refreshedResponse: null,
       });
 
-      const result = await updateResponseWithQuotaEvaluation(responseId, responseInput);
+      const result = await updateResponseWithQuotaEvaluation(responseId, response.surveyId, responseInput);
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -761,7 +783,7 @@ describe("Response Lib", () => {
         })
       );
 
-      const result = await updateResponseWithQuotaEvaluation(responseId, responseInput);
+      const result = await updateResponseWithQuotaEvaluation(responseId, response.surveyId, responseInput);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {

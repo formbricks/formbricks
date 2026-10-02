@@ -54,7 +54,10 @@ vi.mock("@formbricks/database/prisma", () => ({
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: mockLoggerError, warn: vi.fn() } }));
 vi.mock("@/app/lib/pipelines", () => ({ sendToPipeline: mockSendToPipeline }));
-vi.mock("@/modules/ee/quotas/lib/evaluation-service", () => ({ evaluateResponseQuotas: mockEvaluateQuotas }));
+vi.mock("@/modules/ee/quotas/lib/evaluation-service", () => ({
+  evaluateResponseQuotas: mockEvaluateQuotas,
+  loadQuotaEvaluationContext: vi.fn().mockResolvedValue(null),
+}));
 vi.mock("@/lib/embedded-data/survey-fields", () => ({
   inlineSurveyEmbeddedFields: () => [],
   selectSurveyEmbeddedDataLinks: {},
