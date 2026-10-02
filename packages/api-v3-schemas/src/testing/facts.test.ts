@@ -93,4 +93,77 @@ describe("diffAgainstSpec", () => {
       )
     ).toEqual(["$ maxProperties"]);
   });
+
+  test("reports a looser duplicate member, which would otherwise share its discriminator's row", () => {
+    const schemas: JsonObject = {
+      A: {
+        type: "object",
+        required: ["t"],
+        additionalProperties: false,
+        properties: { t: { type: "string", enum: ["a"] } },
+      },
+    };
+    const spec: JsonObject = { oneOf: [{ $ref: "#/components/schemas/A" }] };
+    const strict = z.strictObject({ t: z.enum(["a"]) });
+    const looser = z.object({ t: z.enum(["a"]) });
+
+    expect(attrs(spec, z.union([strict, looser]), schemas)).toContain("$|t=a~1 missing-in-spec");
+  });
+
+  test("flags a closed allOf branch that another branch extends", () => {
+    const schemas: JsonObject = {
+      Closed: { type: "object", additionalProperties: false, properties: { a: { type: "string" } } },
+    };
+    const spec: JsonObject = {
+      allOf: [{ $ref: "#/components/schemas/Closed" }, { properties: { b: { type: "string" } } }],
+    };
+    expect(attrs(spec, z.object({ a: z.string().optional(), b: z.string().optional() }), schemas)).toContain(
+      "$ closedBranchConflict"
+    );
+  });
+
+  test("an untyped Zod value is not mistaken for a schema that only omits number and null", () => {
+    const spec: JsonObject = { type: ["object", "array", "string", "boolean"] };
+    expect(attrs(spec, z.unknown())).toContain("$ type");
+    expect(attrs({ type: ["object", "array", "string", "boolean", "number", "null"] }, z.unknown())).toEqual(
+      []
+    );
+  });
+
+  test("an enum or const with no type takes its type from its values", () => {
+    expect(attrs({ enum: ["x", "y"] }, z.enum(["x", "y"]))).toEqual([]);
+    expect(attrs({ const: 3 }, z.literal(3))).toEqual([]);
+  });
+
+  test("a conditional is fingerprinted, so changing what it requires changes the row", () => {
+    const facts = (then: JsonObject) =>
+      diffAgainstSpec(document({}), { type: "array", if: { type: "array" }, then }, z.array(z.string()));
+    const before = facts({ maxItems: 1000 }).find((diff) => diff.attr === "conditional")?.spec;
+    const after = facts({ maxItems: 999 }).find((diff) => diff.attr === "conditional")?.spec;
+
+    expect(before).toMatch(/^sha256:[0-9a-f]{16}$/);
+    expect(after).not.toBe(before);
+  });
+
+  test("a required key Zod satisfies with no value is reported at runtime", () => {
+    const spec: JsonObject = {
+      type: "object",
+      required: ["data"],
+      additionalProperties: false,
+      properties: { data: {} },
+    };
+    expect(attrs(spec, z.strictObject({ data: z.unknown() }))).toEqual(["$ requiredAtRuntime"]);
+    expect(attrs(spec, z.strictObject({ data: z.unknown().refine((value) => value !== undefined) }))).toEqual(
+      []
+    );
+  });
+
+  test("a recursive schema throws instead of being compared", () => {
+    const schemas: JsonObject = {
+      Node: { type: "object", properties: { next: { $ref: "#/components/schemas/Node" } } },
+    };
+    expect(() => attrs({ $ref: "#/components/schemas/Node" }, z.object({}), schemas)).toThrow(
+      /recursive schema/
+    );
+  });
 });

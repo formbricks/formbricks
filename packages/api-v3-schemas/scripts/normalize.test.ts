@@ -50,23 +50,40 @@ describe("closed allOf", () => {
     expect(report.flattened).toEqual(["$.components.schemas.Variant"]);
   });
 
-  test("reads a member that is itself a closed allOf", () => {
+  test("reads a member that is itself a closed allOf, when nothing extends it", () => {
     const { document } = normalizeForGeneration(
       withSchemas({
         Inner: {
           allOf: [{ type: "object", properties: { a: { type: "string" } } }],
           unevaluatedProperties: false,
         },
-        Outer: {
-          allOf: [{ $ref: "#/components/schemas/Inner" }, { properties: { b: { type: "string" } } }],
-          unevaluatedProperties: false,
-        },
+        Outer: { allOf: [{ $ref: "#/components/schemas/Inner" }], unevaluatedProperties: false },
       })
     );
-    expect(Object.keys((schemasOf(document).Outer as JsonObject).properties as JsonObject)).toEqual([
-      "a",
-      "b",
-    ]);
+    expect(Object.keys((schemasOf(document).Outer as JsonObject).properties as JsonObject)).toEqual(["a"]);
+  });
+
+  test("throws when another member extends a closed member, which 2020-12 would reject", () => {
+    const spec = withSchemas({
+      Inner: {
+        allOf: [{ type: "object", properties: { a: { type: "string" } } }],
+        unevaluatedProperties: false,
+      },
+      Outer: {
+        allOf: [{ $ref: "#/components/schemas/Inner" }, { properties: { b: { type: "string" } } }],
+        unevaluatedProperties: false,
+      },
+    });
+    expect(() => normalizeForGeneration(spec)).toThrow(
+      /is closed, so it rejects the properties other members add \(b\)/
+    );
+  });
+
+  test("throws on a closed allOf whose type is not just object", () => {
+    const spec = withSchemas({
+      Bad: { type: ["object", "null"], allOf: [{ type: "object" }], unevaluatedProperties: false },
+    });
+    expect(() => normalizeForGeneration(spec)).toThrow(/must have type object/);
   });
 
   test.each([
@@ -273,13 +290,40 @@ describe("access modifiers and leftovers", () => {
     expect(() => normalizeForGeneration(spec)).toThrow(/typed additionalProperties is not supported/);
   });
 
-  test.each(["not", "if", "patternProperties", "prefixItems", "unevaluatedItems"])(
-    "throws when %s would reach the generator",
+  test.each(["not", "if", "patternProperties", "prefixItems", "unevaluatedItems", "multipleOf", "nullable"])(
+    "throws when %s would reach the generator, as it is outside the allowlist",
     (keyword) => {
       const spec = withSchemas({ Bad: { type: "object", [keyword]: { type: "string" } } });
-      expect(() => normalizeForGeneration(spec)).toThrow(new RegExp(`"${keyword}" reached the generator`));
+      expect(() => normalizeForGeneration(spec)).toThrow(
+        new RegExp(`"${keyword}" would reach the generator`)
+      );
     }
   );
+
+  test("vendor extensions and annotations pass", () => {
+    const spec = withSchemas({
+      Ok: { type: "string", description: "d", "x-internal": true, examples: ["a"] },
+    });
+    expect(schemasOf(normalizeForGeneration(spec).document).Ok).toEqual({
+      type: "string",
+      description: "d",
+      "x-internal": true,
+      examples: ["a"],
+    });
+  });
+
+  test.each([
+    ["directly", { Node: { type: "object", properties: { next: { $ref: "#/components/schemas/Node" } } } }],
+    [
+      "through another component",
+      {
+        A: { type: "object", properties: { b: { $ref: "#/components/schemas/B" } } },
+        B: { type: "array", items: { $ref: "#/components/schemas/A" } },
+      },
+    ],
+  ])("throws on a recursive schema, %s", (_how, schemas) => {
+    expect(() => normalizeForGeneration(withSchemas(schemas as JsonObject))).toThrow(/recursive schema/);
+  });
 
   test("leaves the input untouched and shares no subtrees between outputs", () => {
     const spec = withSchemas({

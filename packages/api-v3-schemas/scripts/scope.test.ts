@@ -70,6 +70,19 @@ describe("scopeToTags", () => {
     expect(() => scopeToTags(document(), { Renamed: ["getA", "createA"] })).toThrow(/"Renamed": missing/);
   });
 
+  test("a property named `mapping` and a `$ref` inside example data are not references", () => {
+    const spec = document();
+    const schemas = (spec.components as JsonObject).schemas as JsonObject;
+    schemas.Left = {
+      type: "object",
+      properties: { mapping: { type: "string" }, nested: { $ref: "#/components/schemas/Leaf" } },
+      example: { $ref: "#/components/schemas/OnlyB" },
+    };
+    const scoped = scopeToTags(spec, { A: ["getA", "createA"] });
+
+    expect(Object.keys((scoped.components as Record<string, JsonObject>).schemas)).not.toContain("OnlyB");
+  });
+
   test("fails on an unresolvable reference rather than generating less", () => {
     const broken = document();
     ((broken.components as JsonObject).schemas as JsonObject).Left = { $ref: "#/components/schemas/Gone" };

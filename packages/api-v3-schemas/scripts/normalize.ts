@@ -1,20 +1,24 @@
 import {
   type JsonObject,
   type JsonValue,
+  SCHEMA_REF_PREFIX,
   cloneJson,
+  compareCodeUnits,
   isJsonObject,
   resolvePointer,
 } from "../src/testing/json";
-import { forEachDocumentSchema, mapDocumentSchemas } from "./schema-walk";
+import { forEachDocumentSchema, mapDocumentSchemas, mapSchema } from "./schema-walk";
 
 /**
  * Rewrites the scoped spec into the subset of JSON Schema the generator reproduces faithfully.
  *
  * The committed contract stays idiomatic OpenAPI 3.1; this runs in memory on the way into the generator
  * and never touches the bundle. Each rule exists because hey-api 0.99 mis-generates the original form —
- * see `docs/development/technical-handbook/api-v3-schema-generation.mdx` for the evidence. Anything the
- * rules do not recognise throws rather than passing through, because a construct the generator
- * silently drops is a validation hole, not a cosmetic difference.
+ * see `docs/development/technical-handbook/api-v3-schema-generation.mdx` for the evidence.
+ *
+ * What may reach the generator is an allowlist (`GENERATABLE`): a keyword outside it throws, so a
+ * construct nobody has checked the generator against fails here rather than being dropped. Within the
+ * allowlist, `src/generated.contract.test.ts` is what proves the output faithful.
  */
 
 export type TNormalizationReport = {
@@ -37,22 +41,40 @@ const ANNOTATIONS = new Set([
   "writeOnly",
 ]);
 
-/** Constraints the generator drops or mishandles. Reaching the generator with one of these is a bug. */
-const UNSUPPORTED = [
-  "allOf",
-  "unevaluatedProperties",
-  "unevaluatedItems",
-  "if",
-  "then",
-  "else",
-  "not",
-  "patternProperties",
-  "dependentRequired",
-  "dependentSchemas",
-  "prefixItems",
-  "contains",
-  "$defs",
-] as const;
+/**
+ * Every keyword a schema may carry when it reaches hey-api. Each one either generates faithfully or is
+ * one the fidelity test reports (and `EXPECTED_UNENFORCED` pins) when it does not — `uniqueItems`,
+ * `minProperties` and `maxProperties` are in the second group. `x-` extensions are annotations too.
+ */
+const GENERATABLE = new Set([
+  ...ANNOTATIONS,
+  "$ref",
+  "type",
+  "enum",
+  "const",
+  "default",
+  "format",
+  "pattern",
+  "minLength",
+  "maxLength",
+  "minimum",
+  "maximum",
+  "exclusiveMinimum",
+  "exclusiveMaximum",
+  "items",
+  "minItems",
+  "maxItems",
+  "uniqueItems",
+  "properties",
+  "required",
+  "additionalProperties",
+  "propertyNames",
+  "minProperties",
+  "maxProperties",
+  "oneOf",
+  "anyOf",
+  "discriminator",
+]);
 
 /** Keywords an `allOf` member may carry and still be merged into one object. */
 const MERGEABLE_MEMBER_KEYS = new Set(["type", "properties", "required", ...ANNOTATIONS]);
@@ -75,6 +97,9 @@ const fail = (path: string, message: string): never => {
   throw new Error(`normalize: ${path}: ${message}`);
 };
 
+const annotationsOf = (node: JsonObject): JsonObject =>
+  Object.fromEntries(Object.entries(node).filter(([key]) => ANNOTATIONS.has(key)));
+
 /** Follow `$ref`s to a component schema. A `$ref` may only carry annotations beside it. */
 const deref = (document: JsonObject, node: JsonValue, path: string): JsonObject => {
   let current = node;
@@ -89,7 +114,7 @@ const deref = (document: JsonObject, node: JsonValue, path: string): JsonObject 
     if (target === undefined) fail(path, `unresolvable ${ref}`);
     current = target as JsonValue;
   }
-  return fail(path, "$ref chain too deep (cycle?)");
+  return fail(path, "$ref chain too deep");
 };
 
 const enumValues = (schema: JsonObject): JsonValue[] | undefined => {
@@ -118,57 +143,88 @@ const mergeProperty = (
   return narrower;
 };
 
-const collectClosedMembers = (
+type TMerged = {
+  properties: JsonObject;
+  required: string[];
+  closedMembers: { path: string; names: Set<string> }[];
+};
+
+const mergeObjectMember = (
   document: JsonObject,
-  members: JsonValue,
-  path: string,
-  into: { properties: JsonObject; required: string[] }
+  schema: JsonObject,
+  memberPath: string,
+  into: TMerged
 ): void => {
+  const unsupported = Object.keys(schema).filter((key) => !MERGEABLE_MEMBER_KEYS.has(key));
+  if (unsupported.length)
+    fail(memberPath, `allOf member keyword(s) ${unsupported.join(", ")} cannot be merged`);
+  if ("type" in schema && schema.type !== "object") fail(memberPath, "allOf member is not an object");
+  if ("properties" in schema && !isJsonObject(schema.properties))
+    fail(memberPath, "properties must be an object");
+  const properties = isJsonObject(schema.properties) ? schema.properties : {};
+  for (const [name, property] of Object.entries(properties)) {
+    into.properties[name] =
+      name in into.properties
+        ? mergeProperty(document, into.properties[name], property, `${memberPath}.properties.${name}`)
+        : property;
+  }
+  for (const name of Array.isArray(schema.required) ? schema.required : []) {
+    if (typeof name !== "string") fail(memberPath, "required must list strings");
+    else if (!into.required.includes(name)) into.required.push(name);
+  }
+};
+
+function collectClosedMembers(document: JsonObject, members: JsonValue, path: string, into: TMerged): void {
   if (!Array.isArray(members)) return fail(path, "allOf must be an array");
   members.forEach((member, index) => {
     const memberPath = `${path}.allOf[${index}]`;
     const schema = deref(document, member, memberPath);
-    const keys = Object.keys(schema);
-    if ("allOf" in schema) {
-      const rest = keys.filter(
-        (key) => key !== "allOf" && key !== "unevaluatedProperties" && !ANNOTATIONS.has(key)
-      );
-      if (rest.length) fail(memberPath, `nested allOf with sibling constraints (${rest.join(", ")})`);
-      collectClosedMembers(document, schema.allOf, memberPath, into);
+    if (!("allOf" in schema)) {
+      mergeObjectMember(document, schema, memberPath, into);
       return;
     }
-    const unsupported = keys.filter((key) => !MERGEABLE_MEMBER_KEYS.has(key));
-    if (unsupported.length)
-      fail(memberPath, `allOf member keyword(s) ${unsupported.join(", ")} cannot be merged`);
-    if ("type" in schema && schema.type !== "object") fail(memberPath, "allOf member is not an object");
-    if ("properties" in schema && !isJsonObject(schema.properties))
-      fail(memberPath, "properties must be an object");
-    for (const [name, property] of Object.entries(isJsonObject(schema.properties) ? schema.properties : {})) {
-      into.properties[name] =
-        name in into.properties
-          ? mergeProperty(document, into.properties[name], property, `${memberPath}.properties.${name}`)
-          : property;
+    const rest = Object.keys(schema).filter(
+      (key) => key !== "allOf" && key !== "unevaluatedProperties" && !ANNOTATIONS.has(key)
+    );
+    if (rest.length) fail(memberPath, `nested allOf with sibling constraints (${rest.join(", ")})`);
+    const nested: TMerged = { properties: {}, required: [], closedMembers: [] };
+    collectClosedMembers(document, schema.allOf, memberPath, nested);
+    // A member that closes itself rejects every property it does not declare — the other branches'
+    // included — so it can only be extended with what it already has.
+    if (schema.unevaluatedProperties === false) {
+      nested.closedMembers.push({ path: memberPath, names: new Set(Object.keys(nested.properties)) });
     }
-    for (const name of Array.isArray(schema.required) ? schema.required : []) {
-      if (typeof name !== "string") fail(memberPath, "required must list strings");
-      else if (!into.required.includes(name)) into.required.push(name);
-    }
+    mergeObjectMember(
+      document,
+      { properties: nested.properties, required: nested.required },
+      memberPath,
+      into
+    );
+    into.closedMembers.push(...nested.closedMembers);
   });
-};
+}
 
 const flattenClosedAllOf = (document: JsonObject, node: JsonObject, path: string): JsonObject => {
   const siblings = Object.keys(node).filter(
     (key) => key !== "allOf" && key !== "unevaluatedProperties" && key !== "type" && !ANNOTATIONS.has(key)
   );
   if (siblings.length) fail(path, `closed allOf with sibling constraints (${siblings.join(", ")})`);
-  const merged = { properties: {} as JsonObject, required: [] as string[] };
+  if ("type" in node && node.type !== "object") fail(path, "a closed allOf must have type object");
+  const merged: TMerged = { properties: {}, required: [], closedMembers: [] };
   collectClosedMembers(document, node.allOf, path, merged);
   const missing = merged.required.filter((name) => !(name in merged.properties));
   if (missing.length) fail(path, `required names no merged property: ${missing.join(", ")}`);
-
-  const annotations = Object.fromEntries(Object.entries(node).filter(([key]) => ANNOTATIONS.has(key)));
+  for (const closed of merged.closedMembers) {
+    const extra = Object.keys(merged.properties).filter((name) => !closed.names.has(name));
+    if (extra.length) {
+      fail(
+        path,
+        `${closed.path} is closed, so it rejects the properties other members add (${extra.join(", ")})`
+      );
+    }
+  }
   return {
-    ...annotations,
+    ...annotationsOf(node),
     type: "object",
     properties: merged.properties,
     ...(merged.required.length ? { required: merged.required } : {}),
@@ -194,24 +250,17 @@ const collapseKeywordOnlyAllOf = (node: JsonObject, path: string): JsonObject =>
   }
   const siblings = Object.keys(node).filter((key) => key !== "allOf" && !ANNOTATIONS.has(key));
   if (siblings.length) fail(path, `allOf with sibling constraints (${siblings.join(", ")})`);
-  const annotations = Object.fromEntries(Object.entries(node).filter(([key]) => ANNOTATIONS.has(key)));
-  return { ...annotations, ...(refs[0] as JsonObject) };
+  return { ...annotationsOf(node), ...(refs[0] as JsonObject) };
 };
 
-/**
- * hey-api emits one union option per mapping key, so a many-to-one mapping (seventeen element types onto
- * nine answer shapes) becomes seventeen `.extend({ elementType: z.literal(...) })` copies. That nearly
- * doubles the published JSON Schema the MCP server advertises on every `tools/list`. When each member's
- * own discriminator enum carries exactly the keys that map to it, the mapping restates the members and
- * the union is equivalent without it; the consumer layer rebuilds `z.discriminatedUnion` from the
- * generated members. Any other shape throws.
- */
-const dropRedundantDiscriminator = (document: JsonObject, node: JsonObject, path: string): JsonObject => {
-  const discriminator = node.discriminator;
-  if (!isJsonObject(discriminator)) return node;
-  const property = discriminator.propertyName;
+/** Mapping keys grouped by the member they point at, after checking oneOf and mapping agree. */
+const mappingKeysByMember = (
+  discriminator: JsonObject,
+  members: JsonValue,
+  path: string
+): { property: string; keysByTarget: Map<string, string[]> } => {
   const mapping = discriminator.mapping;
-  const members = node.oneOf;
+  const property = discriminator.propertyName;
   if (typeof property !== "string" || !isJsonObject(mapping) || !Array.isArray(members)) {
     return fail(path, "discriminator needs propertyName, mapping and oneOf");
   }
@@ -233,29 +282,50 @@ const dropRedundantDiscriminator = (document: JsonObject, node: JsonObject, path
       `oneOf and mapping disagree (unmapped: ${unmapped.join(", ")}; not in oneOf: ${stray.join(", ")})`
     );
   }
-  const manyToOne = [...keysByTarget.values()].some((keys) => keys.length > 1);
-  if (!manyToOne) return node;
+  return { property, keysByTarget };
+};
 
-  for (const ref of memberRefs) {
-    const member = deref(document, { $ref: ref }, `${path}(${ref})`);
-    const properties = isJsonObject(member.properties) ? member.properties : {};
-    const required = Array.isArray(member.required) ? member.required : [];
-    const values =
-      property in properties
-        ? enumValues(deref(document, properties[property], `${ref}.${property}`))
-        : undefined;
-    if (!values || !required.includes(property)) {
-      fail(path, `${ref} must require "${property}" as an enum to drop the mapping`);
-    }
-    const expected = [...(keysByTarget.get(ref) ?? [])].sort();
-    const actual = (values ?? []).map(String).sort();
-    if (JSON.stringify(expected) !== JSON.stringify(actual)) {
-      fail(
-        path,
-        `${ref}.${property} enum ${JSON.stringify(actual)} differs from its mapping keys ${JSON.stringify(expected)}`
-      );
-    }
+const assertMemberCarriesItsKeys = (
+  document: JsonObject,
+  ref: string,
+  property: string,
+  keys: readonly string[],
+  path: string
+): void => {
+  const member = deref(document, { $ref: ref }, `${path}(${ref})`);
+  const properties = isJsonObject(member.properties) ? member.properties : {};
+  const required = Array.isArray(member.required) ? member.required : [];
+  const values =
+    property in properties
+      ? enumValues(deref(document, properties[property], `${ref}.${property}`))
+      : undefined;
+  if (!values || !required.includes(property)) {
+    fail(path, `${ref} must require "${property}" as an enum to drop the mapping`);
   }
+  const expected = [...keys].sort(compareCodeUnits);
+  const actual = (values ?? []).map(String).sort(compareCodeUnits);
+  if (JSON.stringify(expected) !== JSON.stringify(actual)) {
+    fail(
+      path,
+      `${ref}.${property} enum ${JSON.stringify(actual)} differs from its mapping keys ${JSON.stringify(expected)}`
+    );
+  }
+};
+
+/**
+ * hey-api emits one union option per mapping key, so a many-to-one mapping (seventeen element types onto
+ * nine answer shapes) becomes seventeen `.extend({ elementType: z.literal(...) })` copies. That nearly
+ * doubles the published JSON Schema the MCP server advertises on every `tools/list`. When each member's
+ * own discriminator enum carries exactly the keys that map to it, the mapping restates the members and
+ * the union is equivalent without it; the consumer layer rebuilds `z.discriminatedUnion` from the
+ * generated members. Any other shape throws.
+ */
+const dropRedundantDiscriminator = (document: JsonObject, node: JsonObject, path: string): JsonObject => {
+  const discriminator = node.discriminator;
+  if (!isJsonObject(discriminator)) return node;
+  const { property, keysByTarget } = mappingKeysByMember(discriminator, node.oneOf, path);
+  if (![...keysByTarget.values()].some((keys) => keys.length > 1)) return node;
+  for (const [ref, keys] of keysByTarget) assertMemberCarriesItsKeys(document, ref, property, keys, path);
   const { discriminator: _dropped, ...rest } = node;
   return rest;
 };
@@ -267,11 +337,76 @@ const stripAccessModifiers = (node: JsonObject): JsonObject => {
   return out;
 };
 
+/**
+ * Recursive schemas are refused until the pipeline and the fidelity differ both support them: hey-api
+ * would emit `z.lazy`, and the differ cannot yet compare a recursion on one side with one on the other.
+ */
+const assertNoRecursion = (document: JsonObject): void => {
+  const schemas =
+    isJsonObject(document.components) && isJsonObject(document.components.schemas)
+      ? document.components.schemas
+      : {};
+  const edges = new Map<string, Set<string>>();
+  for (const [name, schema] of Object.entries(schemas)) {
+    const targets = new Set<string>();
+    const collect = (node: JsonObject): JsonValue => {
+      if (typeof node.$ref === "string" && node.$ref.startsWith(SCHEMA_REF_PREFIX)) {
+        targets.add(node.$ref.slice(SCHEMA_REF_PREFIX.length));
+      }
+      return node;
+    };
+    mapSchema(schema, name, collect);
+    edges.set(name, targets);
+  }
+  const state = new Map<string, "visiting" | "done">();
+  const visit = (name: string, trail: string[]): void => {
+    if (state.get(name) === "done") return;
+    if (state.get(name) === "visiting")
+      fail(`$.components.schemas.${name}`, `recursive schema (${[...trail, name].join(" → ")})`);
+    state.set(name, "visiting");
+    for (const next of edges.get(name) ?? []) visit(next, [...trail, name]);
+    state.set(name, "done");
+  };
+  for (const name of edges.keys()) visit(name, []);
+};
+
+const assertGeneratable = (document: JsonObject): void => {
+  forEachDocumentSchema(document, (node, path) => {
+    const unknown = Object.keys(node).filter((key) => !GENERATABLE.has(key) && !key.startsWith("x-"));
+    if (unknown.length) {
+      fail(
+        path,
+        `${unknown.map((key) => `"${key}"`).join(", ")} would reach the generator; extend normalize.ts deliberately`
+      );
+    }
+    if (typeof node.$ref === "string") deref(document, node, path);
+    // hey-api drops a typed `additionalProperties` whenever `properties` exist; z.object().catchall()
+    // would need its internal walker. No adopted schema uses the shape, so it is refused, not lost.
+    if (
+      isJsonObject(node.properties) &&
+      Object.keys(node.properties).length &&
+      isJsonObject(node.additionalProperties)
+    ) {
+      fail(path, "properties together with a typed additionalProperties is not supported");
+    }
+    if ("propertyNames" in node) {
+      const names = node.propertyNames;
+      if (
+        !isJsonObject(names) ||
+        !Object.keys(names).every((key) => key === "type" || ANNOTATIONS.has(key))
+      ) {
+        fail(path, "only `propertyNames: { type: string }` is supported");
+      }
+    }
+  });
+};
+
 export const normalizeForGeneration = (
   scoped: JsonObject
 ): { document: JsonObject; report: TNormalizationReport } => {
   const original = cloneJson(scoped);
   const report: TNormalizationReport = { flattened: [], collapsed: [], droppedDiscriminators: [] };
+  assertNoRecursion(original);
 
   // Pass 1: allOf. Members resolve against the original document, so a base is read as authored no
   // matter which order the walk reaches it in.
@@ -296,32 +431,9 @@ export const normalizeForGeneration = (
   // Pass 3: access modifiers. `readOnly` becomes `.readonly()` (frozen parse output) and `*Writable`
   // twins in hey-api; the bundle keeps it for documentation.
   const pass3 = mapDocumentSchemas(pass2, stripAccessModifiers);
+  assertGeneratable(pass3);
 
-  forEachDocumentSchema(pass3, (node, path) => {
-    for (const keyword of UNSUPPORTED) {
-      if (keyword in node) fail(path, `"${keyword}" reached the generator; extend normalize.ts deliberately`);
-    }
-    if (typeof node.$ref === "string") deref(pass3, node, path);
-    // hey-api drops a typed `additionalProperties` whenever `properties` exist; z.object().catchall()
-    // would need its internal walker. No adopted schema uses the shape, so it is refused, not lost.
-    if (
-      isJsonObject(node.properties) &&
-      Object.keys(node.properties).length &&
-      isJsonObject(node.additionalProperties)
-    ) {
-      fail(path, "properties together with a typed additionalProperties is not supported");
-    }
-    if ("propertyNames" in node) {
-      const names = node.propertyNames;
-      if (
-        !isJsonObject(names) ||
-        !Object.keys(names).every((key) => key === "type" || ANNOTATIONS.has(key))
-      ) {
-        fail(path, "only `propertyNames: { type: string }` is supported");
-      }
-    }
-  });
-
-  // A JSON round-trip: the walk shares subtrees between flattened schemas, and hey-api mutates its input.
+  // Copied without aliasing: the walk shares subtrees between flattened schemas, and hey-api mutates
+  // its input.
   return { document: cloneJson(pass3), report };
 };

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
 import { z } from "zod";
 import { ADOPTED_OPERATIONS } from "../scripts/adopted";
@@ -72,6 +73,15 @@ describe("generated components match the contract", () => {
     expect(unexpected).toEqual([]);
   });
 
+  test("every pinned constraint carries the value the contract states", () => {
+    // A spec edit that moves a bound must fail here, and so reach the consumer constant that copies it.
+    const byKey = new Map(diffs.map((diff) => [`${diff.schema} ${diff.path} ${diff.attr}`, diff.spec]));
+    const drifted = EXPECTED_UNENFORCED.filter((pin) => byKey.get(unenforcedKey(pin)) !== pin.specValue).map(
+      (pin) => ({ pin: unenforcedKey(pin), pinned: pin.specValue, spec: byKey.get(unenforcedKey(pin)) })
+    );
+    expect(drifted).toEqual([]);
+  });
+
   test("every pinned constraint is still a real gap", () => {
     // A pin that no longer differs means the generator now enforces it: drop the pin and the refinement.
     const actual = new Set(diffs.map((diff) => `${diff.schema} ${diff.path} ${diff.attr}`));
@@ -142,4 +152,20 @@ describe("contract examples", () => {
       ).toBe(true);
     }
   );
+});
+
+/**
+ * The generated module is the one generator-written file that reaches served bundles, and it is
+ * excluded from lint, Sonar and CodeRabbit and collapsed in diffs. Its imports are therefore checked
+ * here: a generator release that started importing anything but Zod would fail the build instead of
+ * relying on someone expanding a collapsed diff.
+ */
+test("the generated module imports nothing but zod", () => {
+  const source = readFileSync(new URL("./generated/zod.gen.ts", import.meta.url), "utf8");
+  const specifiers = [...source.matchAll(/^\s*(?:import|export)\b[^;]*?\bfrom\s*["']([^"']+)["']/gm)].map(
+    (match) => match[1]
+  );
+
+  expect(specifiers).toEqual(["zod"]);
+  expect(source).not.toMatch(/\b(?:require|import)\s*\(/);
 });

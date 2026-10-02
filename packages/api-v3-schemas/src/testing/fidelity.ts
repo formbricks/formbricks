@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type TFactDiff, collectFacts, diffFacts, pointerResolver } from "./facts";
+import { type TFactDiff, type TFacts, collectFacts, diffFacts, pointerResolver } from "./facts";
 import { type JsonObject, type JsonValue, cloneJson, isJsonObject, resolvePointer } from "./json";
 
 /**
@@ -20,17 +20,63 @@ export const toJsonSchema = (schema: z.ZodType): JsonObject => {
   return plain;
 };
 
-/** Facts of the contract schema at `specNode` versus facts of what `schema` enforces. */
+/** Peel optional/nullable/default/readonly wrappers off a schema. */
+const unwrap = (schema: z.ZodType): z.ZodType => {
+  let current: z.ZodType = schema;
+  for (let depth = 0; depth < 16; depth++) {
+    const inner = (current._zod.def as { innerType?: z.ZodType }).innerType;
+    if (!inner) return current;
+    current = inner;
+  }
+  return current;
+};
+
+/**
+ * Required keys that are only required on paper.
+ *
+ * `z.toJSONSchema` lists a `z.unknown()` or `z.any()` key as required, but at runtime Zod accepts the
+ * key being absent — so a required-but-untyped field (the validate envelopes' `data`) looks faithful
+ * in JSON Schema and is not. This walks the Zod object tree the facts describe and asks each required
+ * field directly. Union members are not entered: each is a component checked on its own.
+ */
+const runtimeRequiredDiffs = (specFacts: TFacts, schema: z.ZodType, path: string): TFactDiff[] => {
+  const current = unwrap(schema);
+  if (current instanceof z.ZodArray)
+    return runtimeRequiredDiffs(specFacts, current.element as z.ZodType, `${path}[]`);
+  if (current instanceof z.ZodRecord)
+    return runtimeRequiredDiffs(specFacts, current.valueType as z.ZodType, `${path}{}`);
+  if (!(current instanceof z.ZodObject)) return [];
+  const shape = current.shape as Record<string, z.ZodType>;
+  const required = String(specFacts.get(path)?.required ?? "")
+    .split(",")
+    .filter(Boolean);
+  const looseRequired = required.filter((name) => name in shape && shape[name].safeParse(undefined).success);
+  const own: TFactDiff[] = looseRequired.length
+    ? [{ path, attr: "requiredAtRuntime", spec: looseRequired.join(","), zod: false }]
+    : [];
+  return [
+    ...own,
+    ...Object.entries(shape).flatMap(([name, field]) =>
+      runtimeRequiredDiffs(specFacts, field, `${path}.${name}`)
+    ),
+  ];
+};
+
+/**
+ * Facts of the contract schema at `specNode` versus facts of what `schema` enforces — structurally, from
+ * Zod's own JSON Schema, plus the runtime required-key check above.
+ */
 export const diffAgainstSpec = (
   document: JsonObject,
   specNode: JsonValue,
   schema: z.ZodType
 ): TFactDiff[] => {
   const json = toJsonSchema(schema);
-  return diffFacts(
-    collectFacts(specNode, { resolve: pointerResolver(document), zodSide: false }),
-    collectFacts(json, { resolve: pointerResolver(json), zodSide: true })
-  );
+  const specFacts = collectFacts(specNode, { resolve: pointerResolver(document), zodSide: false });
+  return [
+    ...diffFacts(specFacts, collectFacts(json, { resolve: pointerResolver(json), zodSide: true })),
+    ...runtimeRequiredDiffs(specFacts, schema, "$"),
+  ];
 };
 
 const HTTP_METHODS = ["get", "put", "post", "patch", "delete"] as const;
