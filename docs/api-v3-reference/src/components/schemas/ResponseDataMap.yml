@@ -48,12 +48,4 @@ description: >
   this schema would make `GET /api/v3/responses/{responseId}` promise something it cannot keep for
   those rows.
 additionalProperties:
-  oneOf:
-    - type: string
-    - type: number
-    - type: array
-      items:
-        type: string
-    - type: object
-      additionalProperties:
-        type: string
+  $ref: ./ResponseRawValue.yml
