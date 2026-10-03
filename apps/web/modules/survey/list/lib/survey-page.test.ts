@@ -41,7 +41,7 @@ const workspaceId = "ws_123";
 
 function makeSurveyRow(overrides: Record<string, unknown> = {}) {
   return {
-    id: "survey_1",
+    id: "survey1",
     name: "Survey 1",
     workspaceId,
     type: "link",
@@ -60,14 +60,14 @@ describe("survey-page cursor helpers", () => {
       version: 1,
       sortBy: "updatedAt",
       value: "2025-01-02T00:00:00.000Z",
-      id: "survey_1",
+      id: "survey1",
     });
 
     expect(decodeSurveyListPageCursor(encoded, "updatedAt")).toEqual({
       version: 1,
       sortBy: "updatedAt",
       value: "2025-01-02T00:00:00.000Z",
-      id: "survey_1",
+      id: "survey1",
     });
   });
 
@@ -76,10 +76,27 @@ describe("survey-page cursor helpers", () => {
       version: 1,
       sortBy: "name",
       value: "Survey 1",
-      id: "survey_1",
+      id: "survey1",
     });
 
     expect(() => decodeSurveyListPageCursor(encoded, "updatedAt")).toThrow(InvalidInputError);
+  });
+
+  /** The decoded strings are bound into the page query, where a NUL byte fails it with a 500 (ENG-3550). */
+  test.each([
+    { version: 1, sortBy: "updatedAt", value: "2025-01-02T00:00:00.000Z", id: "survey\u0000" },
+    { version: 1, sortBy: "name", value: "Survey\u0000", id: "survey1" },
+    {
+      version: 1,
+      sortBy: "relevance",
+      bucket: "other",
+      updatedAt: "2025-01-02T00:00:00.000Z",
+      id: "s\u0000",
+    },
+  ] as const)("rejects a NULL byte in a $sortBy cursor", (cursor) => {
+    const encoded = encodeSurveyListPageCursor(cursor);
+
+    expect(() => decodeSurveyListPageCursor(encoded, cursor.sortBy)).toThrow(InvalidInputError);
   });
 });
 
@@ -139,12 +156,12 @@ describe("getSurveyListPage", () => {
 
   test("uses a stable updatedAt order with a next cursor", async () => {
     vi.mocked(prisma.survey.findMany).mockResolvedValue([
-      makeSurveyRow({ id: "survey_2", updatedAt: new Date("2025-01-03T00:00:00.000Z") }),
-      makeSurveyRow({ id: "survey_1", updatedAt: new Date("2025-01-02T00:00:00.000Z") }),
+      makeSurveyRow({ id: "survey2", updatedAt: new Date("2025-01-03T00:00:00.000Z") }),
+      makeSurveyRow({ id: "survey1", updatedAt: new Date("2025-01-02T00:00:00.000Z") }),
     ] as never);
     vi.mocked(prisma.response.groupBy).mockResolvedValue([
-      { surveyId: "survey_2", finished: true, _count: { _all: 2 } },
-      { surveyId: "survey_2", finished: false, _count: { _all: 1 } },
+      { surveyId: "survey2", finished: true, _count: { _all: 2 } },
+      { surveyId: "survey2", finished: false, _count: { _all: 1 } },
     ] as never);
 
     const page = await getSurveyListPage(workspaceId, {
@@ -169,7 +186,7 @@ describe("getSurveyListPage", () => {
       version: 1,
       sortBy: "updatedAt",
       value: "2025-01-03T00:00:00.000Z",
-      id: "survey_2",
+      id: "survey2",
     });
   });
 
@@ -179,16 +196,16 @@ describe("getSurveyListPage", () => {
         version: 1,
         sortBy: "name",
         value: "Bravo",
-        id: "survey_b",
+        id: "surveyb",
       }),
       "name"
     );
 
     vi.mocked(prisma.survey.findMany).mockResolvedValue([
-      makeSurveyRow({ id: "survey_c", name: "Charlie" }),
+      makeSurveyRow({ id: "surveyc", name: "Charlie" }),
     ] as never);
     vi.mocked(prisma.response.groupBy).mockResolvedValue([
-      { surveyId: "survey_c", finished: true, _count: { _all: 3 } },
+      { surveyId: "surveyc", finished: true, _count: { _all: 3 } },
     ] as never);
 
     await getSurveyListPage(workspaceId, {
@@ -202,7 +219,7 @@ describe("getSurveyListPage", () => {
       where: {
         workspaceId: workspaceId,
         AND: [],
-        OR: [{ name: { gt: "Bravo" } }, { name: "Bravo", id: { gt: "survey_b" } }],
+        OR: [{ name: { gt: "Bravo" } }, { name: "Bravo", id: { gt: "surveyb" } }],
       },
       select: expect.any(Object),
       orderBy: [{ name: "asc" }, { id: "asc" }],
@@ -214,26 +231,26 @@ describe("getSurveyListPage", () => {
     vi.mocked(prisma.survey.findMany)
       .mockResolvedValueOnce([
         makeSurveyRow({
-          id: "survey_in_progress",
+          id: "surveyinprogress",
           status: "inProgress",
           updatedAt: new Date("2025-01-03T00:00:00.000Z"),
         }),
       ] as never)
       .mockResolvedValueOnce([
         makeSurveyRow({
-          id: "survey_other_1",
+          id: "surveyother1",
           status: "completed",
           updatedAt: new Date("2025-01-02T00:00:00.000Z"),
         }),
         makeSurveyRow({
-          id: "survey_other_2",
+          id: "surveyother2",
           status: "paused",
           updatedAt: new Date("2025-01-01T00:00:00.000Z"),
         }),
       ] as never);
     vi.mocked(prisma.response.groupBy).mockResolvedValue([
-      { surveyId: "survey_in_progress", finished: true, _count: { _all: 3 } },
-      { surveyId: "survey_other_1", finished: true, _count: { _all: 2 } },
+      { surveyId: "surveyinprogress", finished: true, _count: { _all: 3 } },
+      { surveyId: "surveyother1", finished: true, _count: { _all: 2 } },
     ] as never);
 
     const page = await getSurveyListPage(workspaceId, {
@@ -263,13 +280,13 @@ describe("getSurveyListPage", () => {
       orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
       take: 2,
     });
-    expect(page.surveys.map((survey) => survey.id)).toEqual(["survey_in_progress", "survey_other_1"]);
+    expect(page.surveys.map((survey) => survey.id)).toEqual(["surveyinprogress", "surveyother1"]);
     expect(decodeSurveyListPageCursor(page.nextCursor as string, "relevance")).toEqual({
       version: 1,
       sortBy: "relevance",
       bucket: "other",
       updatedAt: "2025-01-02T00:00:00.000Z",
-      id: "survey_other_1",
+      id: "surveyother1",
     });
   });
 
@@ -277,20 +294,20 @@ describe("getSurveyListPage", () => {
     vi.mocked(prisma.survey.findMany)
       .mockResolvedValueOnce([
         makeSurveyRow({
-          id: "survey_in_progress",
+          id: "surveyinprogress",
           status: "inProgress",
           updatedAt: new Date("2025-01-03T00:00:00.000Z"),
         }),
       ] as never)
       .mockResolvedValueOnce([
         makeSurveyRow({
-          id: "survey_other_1",
+          id: "surveyother1",
           status: "completed",
           updatedAt: new Date("2025-01-02T00:00:00.000Z"),
         }),
       ] as never);
     vi.mocked(prisma.response.groupBy).mockResolvedValue([
-      { surveyId: "survey_in_progress", finished: true, _count: { _all: 3 } },
+      { surveyId: "surveyinprogress", finished: true, _count: { _all: 3 } },
     ] as never);
 
     const page = await getSurveyListPage(workspaceId, {
@@ -300,13 +317,13 @@ describe("getSurveyListPage", () => {
       sortBy: "relevance",
     });
 
-    expect(page.surveys.map((survey) => survey.id)).toEqual(["survey_in_progress"]);
+    expect(page.surveys.map((survey) => survey.id)).toEqual(["surveyinprogress"]);
     expect(decodeSurveyListPageCursor(page.nextCursor as string, "relevance")).toEqual({
       version: 1,
       sortBy: "relevance",
       bucket: "inProgress",
       updatedAt: "2025-01-03T00:00:00.000Z",
-      id: "survey_in_progress",
+      id: "surveyinprogress",
     });
   });
 
@@ -317,20 +334,20 @@ describe("getSurveyListPage", () => {
         sortBy: "relevance",
         bucket: "other",
         updatedAt: "2025-01-02T00:00:00.000Z",
-        id: "survey_other_1",
+        id: "surveyother1",
       }),
       "relevance"
     );
 
     vi.mocked(prisma.survey.findMany).mockResolvedValue([
       makeSurveyRow({
-        id: "survey_other_2",
+        id: "surveyother2",
         status: "completed",
         updatedAt: new Date("2025-01-01T00:00:00.000Z"),
       }),
     ] as never);
     vi.mocked(prisma.response.groupBy).mockResolvedValue([
-      { surveyId: "survey_other_2", finished: true, _count: { _all: 3 } },
+      { surveyId: "surveyother2", finished: true, _count: { _all: 3 } },
     ] as never);
 
     const page = await getSurveyListPage(workspaceId, {
@@ -350,7 +367,7 @@ describe("getSurveyListPage", () => {
           { updatedAt: { lt: new Date("2025-01-02T00:00:00.000Z") } },
           {
             updatedAt: new Date("2025-01-02T00:00:00.000Z"),
-            id: { lt: "survey_other_1" },
+            id: { lt: "surveyother1" },
           },
         ],
       },
@@ -358,7 +375,7 @@ describe("getSurveyListPage", () => {
       orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
       take: 3,
     });
-    expect(page.surveys.map((survey) => survey.id)).toEqual(["survey_other_2"]);
+    expect(page.surveys.map((survey) => survey.id)).toEqual(["surveyother2"]);
     expect(page.nextCursor).toBeNull();
   });
 
