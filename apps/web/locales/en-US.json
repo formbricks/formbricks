@@ -2732,8 +2732,10 @@
         "connect_app_banner_title": "Setting up a Website & App survey?"
       },
       "billing": {
+        "billing_currency_conflict": "This plan change conflicts with billing in another currency on your account. Please contact support to switch plans.",
         "billing_interval_toggle": "Billing interval",
         "cancel_at_period_end": "Cancel at period end",
+        "card_payment_method_required": "Switching from your current plan needs a card as your payment method. Please add a card and try again.",
         "comparison_addon": "Add-on",
         "comparison_best_for": "Best for",
         "comparison_included": "Included",

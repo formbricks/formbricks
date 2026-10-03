@@ -2732,8 +2732,10 @@
         "connect_app_banner_title": "ウェブサイト&アプリ調査を設定していますか？"
       },
       "billing": {
+        "billing_currency_conflict": "このプラン変更は、アカウントの別の通貨での請求と競合しています。プランを切り替えるには、サポートにお問い合わせください。",
         "billing_interval_toggle": "請求間隔",
         "cancel_at_period_end": "期間終了時にキャンセル",
+        "card_payment_method_required": "現在のプランから切り替えるには、お支払い方法としてカードが必要です。カードを追加してから、もう一度お試しください。",
         "comparison_addon": "アドオン",
         "comparison_best_for": "最適な用途",
         "comparison_included": "含まれています",

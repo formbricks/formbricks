@@ -2732,8 +2732,10 @@
         "connect_app_banner_title": "Tu configures une enquête Site Web & Application ?"
       },
       "billing": {
+        "billing_currency_conflict": "Ce changement de forfait est en conflit avec la facturation dans une autre devise sur ton compte. Contacte l'assistance pour changer de forfait.",
         "billing_interval_toggle": "Intervalle de facturation",
         "cancel_at_period_end": "Annuler à la fin de la période",
+        "card_payment_method_required": "Pour changer de formule, tu dois ajouter une carte comme moyen de paiement. Ajoute une carte et réessaie.",
         "comparison_addon": "Module complémentaire",
         "comparison_best_for": "Idéal pour",
         "comparison_included": "Inclus",

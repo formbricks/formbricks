@@ -196,6 +196,16 @@ const getActionErrorMessage = (serverError: string, t: (key: string) => string) 
     return t("workspace.settings.billing.payment_authentication_failed");
   }
 
+  // Stripe refused the change because the customer still holds billing in another currency (ENG-3370).
+  if (serverError === "billing_currency_conflict") {
+    return t("workspace.settings.billing.billing_currency_conflict");
+  }
+
+  // Replacing a legacy plan charges the new subscription to a card; other saved methods can't pay it.
+  if (serverError === "card_payment_method_required") {
+    return t("workspace.settings.billing.card_payment_method_required");
+  }
+
   return t("common.something_went_wrong_please_try_again");
 };
 

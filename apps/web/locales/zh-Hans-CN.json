@@ -2732,8 +2732,10 @@
         "connect_app_banner_title": "正在设置网站和应用调查？"
       },
       "billing": {
+        "billing_currency_conflict": "此套餐变更与你账户中其他货币的账单冲突。请联系客服以切换套餐。",
         "billing_interval_toggle": "账单周期",
         "cancel_at_period_end": "在周期结束时取消",
+        "card_payment_method_required": "从当前套餐切换需要添加银行卡作为支付方式。请添加银行卡后重试。",
         "comparison_addon": "附加功能",
         "comparison_best_for": "最适合",
         "comparison_included": "包含",
