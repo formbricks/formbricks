@@ -62,7 +62,8 @@ const isJsonObject = (value: unknown): value is Record<string, unknown> =>
 type TEnvironmentIssuePath =
   | keyof TAIConfigurationEnv
   | keyof TAuthzedConfigurationEnv
-  | keyof TAuthConfigurationEnv;
+  | keyof TAuthConfigurationEnv
+  | keyof TSesConfigurationEnv;
 
 const addEnvIssue = (ctx: z.RefinementCtx, path: TEnvironmentIssuePath, message: string): void => {
   ctx.addIssue({
@@ -367,6 +368,40 @@ const validateAuthConfiguration = (values: TAuthConfigurationEnv, ctx: z.Refinem
   }
 };
 
+// SES-specific headers are opt-in; validate the pair before any email is sent.
+const ZSesConfigurationEnv = z.object({
+  SES_CONFIGURATION_SET: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[a-zA-Z0-9_-]+$/)
+    .optional(),
+  SES_EMAIL_ENVIRONMENT: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[a-zA-Z0-9_-]+$/)
+    .optional(),
+});
+type TSesConfigurationEnv = z.infer<typeof ZSesConfigurationEnv>;
+
+const validateSesConfiguration = (values: TSesConfigurationEnv, ctx: z.RefinementCtx): void => {
+  if (values.SES_CONFIGURATION_SET && !values.SES_EMAIL_ENVIRONMENT) {
+    addEnvIssue(
+      ctx,
+      "SES_EMAIL_ENVIRONMENT",
+      "SES_EMAIL_ENVIRONMENT is required when SES_CONFIGURATION_SET is set"
+    );
+  }
+  if (values.SES_EMAIL_ENVIRONMENT && !values.SES_CONFIGURATION_SET) {
+    addEnvIssue(
+      ctx,
+      "SES_CONFIGURATION_SET",
+      "SES_CONFIGURATION_SET is required when SES_EMAIL_ENVIRONMENT is set"
+    );
+  }
+};
+
 const parsedEnv = createEnv({
   onValidationError: throwEnvValidationError,
   /*
@@ -541,6 +576,7 @@ const parsedEnv = createEnv({
     SENTRY_DSN: z.string().optional(),
     SLACK_CLIENT_ID: z.string().optional(),
     SLACK_CLIENT_SECRET: z.string().optional(),
+    ...ZSesConfigurationEnv.shape,
     SMTP_HOST: z.string().min(1).optional(),
     SMTP_PORT: z.string().min(1).optional(),
     SMTP_SECURE_ENABLED: z.enum(["1", "0"]).optional(),
@@ -726,6 +762,8 @@ const parsedEnv = createEnv({
     SAML_DATABASE_URL: process.env.SAML_DATABASE_URL,
     SLACK_CLIENT_ID: process.env.SLACK_CLIENT_ID,
     SLACK_CLIENT_SECRET: process.env.SLACK_CLIENT_SECRET,
+    SES_CONFIGURATION_SET: process.env.SES_CONFIGURATION_SET,
+    SES_EMAIL_ENVIRONMENT: process.env.SES_EMAIL_ENVIRONMENT,
     SMTP_HOST: process.env.SMTP_HOST,
     SMTP_PASSWORD: process.env.SMTP_PASSWORD,
     SMTP_PORT: process.env.SMTP_PORT,
@@ -756,8 +794,10 @@ const parsedEnv = createEnv({
 });
 
 const ZPostParseEnv = ZAIConfigurationEnv.extend(ZAuthzedConfigurationEnv.shape)
+  .extend(ZSesConfigurationEnv.shape)
   .superRefine(validateActiveAIProviderConfiguration)
-  .superRefine(validateAuthzedConfiguration);
+  .superRefine(validateAuthzedConfiguration)
+  .superRefine(validateSesConfiguration);
 const postParseResult = ZPostParseEnv.safeParse(parsedEnv);
 
 if (!postParseResult.success) {

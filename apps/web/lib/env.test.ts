@@ -21,6 +21,8 @@ const setTestEnv = (overrides: Record<string, string | undefined> = {}) => {
     AUTHZED_SYSTEM_KEY: undefined,
     AUTHZED_TOKEN: undefined,
     MCP_OAUTH_JWKS_URL: undefined,
+    SES_CONFIGURATION_SET: undefined,
+    SES_EMAIL_ENVIRONMENT: undefined,
     ...overrides,
   };
 };
@@ -33,6 +35,44 @@ describe("env", () => {
   afterEach(() => {
     process.env = ORIGINAL_ENV;
   });
+
+  test("allows SES tagging to remain disabled for ordinary SMTP", async () => {
+    setTestEnv();
+    const { env } = await import("./env");
+    expect(env.SES_CONFIGURATION_SET).toBeUndefined();
+    expect(env.SES_EMAIL_ENVIRONMENT).toBeUndefined();
+  });
+
+  test("accepts a complete SES tagging configuration", async () => {
+    setTestEnv({ SES_CONFIGURATION_SET: "formbricks-email-config", SES_EMAIL_ENVIRONMENT: "production_eu" });
+    const { env } = await import("./env");
+    expect(env.SES_CONFIGURATION_SET).toBe("formbricks-email-config");
+    expect(env.SES_EMAIL_ENVIRONMENT).toBe("production_eu");
+  });
+
+  test.each([{ SES_CONFIGURATION_SET: "formbricks-email-config" }, { SES_EMAIL_ENVIRONMENT: "staging" }])(
+    "rejects incomplete SES tagging configuration %j",
+    async (configuration) => {
+      setTestEnv(configuration);
+      await expect(import("./env")).rejects.toThrow(/SES_CONFIGURATION_SET|SES_EMAIL_ENVIRONMENT/);
+    }
+  );
+
+  test.each(["production, email_type=invite", "staging\r\nX-Injected: value", "staging eu", "a".repeat(65)])(
+    "rejects unsafe SES environment labels %j",
+    async (label) => {
+      setTestEnv({ SES_CONFIGURATION_SET: "formbricks-email-config", SES_EMAIL_ENVIRONMENT: label });
+      await expect(import("./env")).rejects.toThrow("SES_EMAIL_ENVIRONMENT");
+    }
+  );
+
+  test.each(["config,other", "config\r\nX-Injected: value", "a".repeat(65)])(
+    "rejects unsafe SES configuration set names %j",
+    async (name) => {
+      setTestEnv({ SES_CONFIGURATION_SET: name, SES_EMAIL_ENVIRONMENT: "staging" });
+      await expect(import("./env")).rejects.toThrow("SES_CONFIGURATION_SET");
+    }
+  );
 
   test("allows ambient DEBUG values from external tooling", async () => {
     setTestEnv({
