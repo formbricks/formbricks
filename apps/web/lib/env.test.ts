@@ -21,6 +21,7 @@ const setTestEnv = (overrides: Record<string, string | undefined> = {}) => {
     AUTHZED_SYSTEM_KEY: undefined,
     AUTHZED_TOKEN: undefined,
     MCP_OAUTH_JWKS_URL: undefined,
+    MCP_DCR_ALLOWED_REDIRECT_URIS: undefined,
     ...overrides,
   };
 };
@@ -144,6 +145,46 @@ describe("env", () => {
     setTestEnv({ MCP_OAUTH_JWKS_URL: jwksUrl });
 
     await expect(import("./env")).rejects.toThrow("MCP_OAUTH_JWKS_URL");
+  });
+
+  test.each(["", "  ", " , "])(
+    "treats a blank MCP_DCR_ALLOWED_REDIRECT_URIS (%j) as unset",
+    async (value) => {
+      setTestEnv({ MCP_DCR_ALLOWED_REDIRECT_URIS: value });
+
+      const { env } = await import("./env");
+
+      expect(env.MCP_DCR_ALLOWED_REDIRECT_URIS).toBeUndefined();
+    }
+  );
+
+  test("parses MCP_DCR_ALLOWED_REDIRECT_URIS as a trimmed comma-separated list", async () => {
+    setTestEnv({
+      MCP_DCR_ALLOWED_REDIRECT_URIS:
+        " https://client.example.com/oauth/callback ,https://other.example.org/cb?tenant=1,",
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.MCP_DCR_ALLOWED_REDIRECT_URIS).toEqual([
+      "https://client.example.com/oauth/callback",
+      "https://other.example.org/cb?tenant=1",
+    ]);
+  });
+
+  test.each([
+    "http://client.example.com/oauth/callback",
+    "https://*.example.com/oauth/callback",
+    "https://client.example.com/oauth/*",
+    "https://client.example.com/oauth/callback#frag",
+    "https://user:pass@client.example.com/oauth/callback",
+    "com.example.app:/callback",
+    "not a url",
+    "https://client.example.com/ok,http://evil.example.com/cb",
+  ])("rejects an unsafe MCP_DCR_ALLOWED_REDIRECT_URIS value %s", async (value) => {
+    setTestEnv({ MCP_DCR_ALLOWED_REDIRECT_URIS: value });
+
+    await expect(import("./env")).rejects.toThrow("MCP_DCR_ALLOWED_REDIRECT_URIS");
   });
 
   test.each(["true", "1"])("accepts enabled AuthZed boolean value %s", async (enabled) => {

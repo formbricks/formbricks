@@ -105,6 +105,7 @@
         "LOG_LEVEL",
         "MAIL_FROM",
         "MAIL_FROM_NAME",
+        "MCP_DCR_ALLOWED_REDIRECT_URIS",
         "MCP_OAUTH_JWKS_URL",
         "NEXT_PHASE",
         "NEXT_RUNTIME",
