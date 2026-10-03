@@ -34,6 +34,7 @@ import {
   ZSegmentUpdateInput,
 } from "@formbricks/types/segment";
 import { getSurvey } from "@/lib/survey/service";
+import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
@@ -114,29 +115,51 @@ export const getSegment = reactCache(async (segmentId: string): Promise<TSegment
   }
 });
 
-export const getSegments = reactCache(async (workspaceId: string): Promise<TSegmentWithSurveyRefs[]> => {
-  validateInputs([workspaceId, ZId]);
-  try {
-    const segments = await prisma.segment.findMany({
-      where: {
-        workspaceId,
-      },
-      select: selectSegment,
-    });
+/**
+ * `getSegments`' survey-reference scope for the server-side callers that need every survey a segment is
+ * attached to, visible to the viewer or not — reference validation and copy naming, whose results never
+ * reach a browser. A shared constant, not an inline `{}`, so `reactCache` keeps its dedupe and every
+ * unscoped caller is greppable.
+ */
+export const ALL_SEGMENT_SURVEY_REFS: Prisma.SurveyWhereInput = Object.freeze({});
 
-    if (!segments) {
-      return [];
+/**
+ * @param visibleSurveyWhere ENG-3282: the `Survey` clause each segment's `activeSurveys` /
+ *   `inactiveSurveys` are read through. Required, so no page can forget it and ship restricted survey
+ *   names and ids to the browser: pass `getUserVisibleSurveyWhere(...)` for anything a viewer sees, and
+ *   `ALL_SEGMENT_SURVEY_REFS` only where the result stays on the server.
+ */
+export const getSegments = reactCache(
+  async (
+    workspaceId: string,
+    visibleSurveyWhere: Prisma.SurveyWhereInput
+  ): Promise<TSegmentWithSurveyRefs[]> => {
+    validateInputs([workspaceId, ZId]);
+    try {
+      const segments = await prisma.segment.findMany({
+        where: {
+          workspaceId,
+        },
+        select:
+          Object.keys(visibleSurveyWhere).length > 0
+            ? { ...selectSegment, surveys: { ...selectSegment.surveys, where: visibleSurveyWhere } }
+            : selectSegment,
+      });
+
+      if (!segments) {
+        return [];
+      }
+
+      return segments.map((segment) => transformPrismaSegment(segment));
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
     }
-
-    return segments.map((segment) => transformPrismaSegment(segment));
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
   }
-});
+);
 
 export interface TSurveyFilterRef {
   id: string;
@@ -158,11 +181,15 @@ export const SURVEY_FILTER_REF_LIMIT = 1000;
  * is needed. Bounded by {@link SURVEY_FILTER_REF_LIMIT}, most-recently-updated first.
  */
 export const getSurveyRefsForWorkspace = reactCache(
-  async (workspaceId: string): Promise<TSurveyFilterRef[]> => {
+  async (
+    workspaceId: string,
+    /** ENG-3282: the viewer's survey-visibility clause. */
+    visibleSurveyWhere: Prisma.SurveyWhereInput
+  ): Promise<TSurveyFilterRef[]> => {
     validateInputs([workspaceId, ZId]);
     try {
       return await prisma.survey.findMany({
-        where: { workspaceId },
+        where: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) },
         select: { id: true, name: true, status: true },
         orderBy: { updatedAt: "desc" },
         take: SURVEY_FILTER_REF_LIMIT,
@@ -184,9 +211,17 @@ export const getSurveyRefsForWorkspace = reactCache(
  * wrongly rejected. Ids are deduplicated and looked up in bounded sequential batches (ENG-2305),
  * mirroring {@link getSurveyWorkspaceIdMap}. Returns an empty set for an empty input without
  * hitting the DB.
+ *
+ * @param visibleSurveyWhere ENG-3282: the caller's survey-visibility clause. Required, like
+ *   {@link getSegments}', so a survey reference is never validated against surveys the caller cannot see
+ *   by omission: a hidden id must answer exactly like an unknown one.
  */
 export const getExistingWorkspaceSurveyIds = reactCache(
-  async (workspaceId: string, surveyIds: string[]): Promise<Set<string>> => {
+  async (
+    workspaceId: string,
+    surveyIds: string[],
+    visibleSurveyWhere: Prisma.SurveyWhereInput
+  ): Promise<Set<string>> => {
     validateInputs([workspaceId, ZId], [surveyIds, z.array(ZId)]);
     const uniqueSurveyIds = Array.from(new Set(surveyIds));
     const existingSurveyIds = new Set<string>();
@@ -195,7 +230,7 @@ export const getExistingWorkspaceSurveyIds = reactCache(
       for (let i = 0; i < uniqueSurveyIds.length; i += SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE) {
         const batch = uniqueSurveyIds.slice(i, i + SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE);
         const surveys = await prisma.survey.findMany({
-          where: { workspaceId, id: { in: batch } },
+          where: { workspaceId, id: { in: batch }, ...andVisibleSurveys(visibleSurveyWhere) },
           select: { id: true },
         });
         for (const survey of surveys) {
@@ -285,7 +320,7 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
       throw new DatabaseError("Segment is not associated with a workspace");
     }
 
-    const allSegments = await getSegments(segment.workspaceId);
+    const allSegments = await getSegments(segment.workspaceId, ALL_SEGMENT_SURVEY_REFS);
 
     // Find the last "Copy of" title and extract the number from it
     const lastCopyTitle = allSegments

@@ -6,6 +6,14 @@ import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { buildWhereClause } from "@/modules/survey/lib/utils";
 import { decodeSurveyListPageCursor, encodeSurveyListPageCursor, getSurveyListPage } from "./survey-page";
 
+// The readiness marker is off unless a test says otherwise: the predicate restricts nothing.
+const UNENFORCED_CONTEXT = {
+  enforced: false,
+  isOrganizationAdmin: false,
+  kind: "user",
+  userId: "user_1",
+} as const;
+
 vi.mock("server-only", () => ({}));
 
 vi.mock("@/modules/survey/lib/utils", () => ({
@@ -99,6 +107,53 @@ describe("getSurveyListPage", () => {
     vi.mocked(prisma.response.groupBy).mockReset();
   });
 
+  test("adds the visibility predicate to the filter clauses instead of replacing them (ENG-3282)", async () => {
+    vi.mocked(buildWhereClause).mockReturnValueOnce({ AND: [{ name: { contains: "nps" } }] } as never);
+    vi.mocked(prisma.survey.findMany).mockResolvedValue([] as never);
+    vi.mocked(prisma.response.groupBy).mockResolvedValue([] as never);
+
+    await getSurveyListPage(workspaceId, {
+      actorContext: { enforced: true, isOrganizationAdmin: false, kind: "user", userId: "user_1" },
+      visibilityFilter: { visibility: ["restricted"] },
+      limit: 5,
+      cursor: null,
+      sortBy: "updatedAt",
+      filterCriteria: { name: "nps" },
+    });
+
+    expect(prisma.survey.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          workspaceId,
+          AND: [
+            { name: { contains: "nps" } },
+            {
+              OR: [
+                {
+                  visibility: "workspace",
+                  OR: [
+                    { visibilityPending: false },
+                    { visibilityVersion: 0, visibilityProjectedVersion: { lt: 0 } },
+                  ],
+                },
+                { ownerId: "user_1" },
+              ],
+            },
+            {
+              OR: [
+                { visibility: "restricted" },
+                {
+                  visibilityPending: true,
+                  NOT: { visibilityVersion: 0, visibilityProjectedVersion: { lt: 0 } },
+                },
+              ],
+            },
+          ],
+        },
+      })
+    );
+  });
+
   test("uses a stable updatedAt order with a next cursor", async () => {
     vi.mocked(prisma.survey.findMany).mockResolvedValue([
       makeSurveyRow({ id: "survey2", updatedAt: new Date("2025-01-03T00:00:00.000Z") }),
@@ -110,6 +165,7 @@ describe("getSurveyListPage", () => {
     ] as never);
 
     const page = await getSurveyListPage(workspaceId, {
+      actorContext: UNENFORCED_CONTEXT,
       limit: 1,
       cursor: null,
       sortBy: "updatedAt",
@@ -153,6 +209,7 @@ describe("getSurveyListPage", () => {
     ] as never);
 
     await getSurveyListPage(workspaceId, {
+      actorContext: UNENFORCED_CONTEXT,
       limit: 2,
       cursor,
       sortBy: "name",
@@ -197,6 +254,7 @@ describe("getSurveyListPage", () => {
     ] as never);
 
     const page = await getSurveyListPage(workspaceId, {
+      actorContext: UNENFORCED_CONTEXT,
       limit: 2,
       cursor: null,
       sortBy: "relevance",
@@ -253,6 +311,7 @@ describe("getSurveyListPage", () => {
     ] as never);
 
     const page = await getSurveyListPage(workspaceId, {
+      actorContext: UNENFORCED_CONTEXT,
       limit: 1,
       cursor: null,
       sortBy: "relevance",
@@ -292,6 +351,7 @@ describe("getSurveyListPage", () => {
     ] as never);
 
     const page = await getSurveyListPage(workspaceId, {
+      actorContext: UNENFORCED_CONTEXT,
       limit: 2,
       cursor,
       sortBy: "relevance",
@@ -328,6 +388,7 @@ describe("getSurveyListPage", () => {
 
     await expect(
       getSurveyListPage(workspaceId, {
+        actorContext: UNENFORCED_CONTEXT,
         limit: 1,
         cursor: null,
         sortBy: "updatedAt",
@@ -342,6 +403,7 @@ describe("getSurveyListPage", () => {
 
     await expect(
       getSurveyListPage(workspaceId, {
+        actorContext: UNENFORCED_CONTEXT,
         limit: 1,
         cursor: null,
         sortBy: "updatedAt",
@@ -355,6 +417,7 @@ describe("getSurveyListPage", () => {
 
     await expect(
       getSurveyListPage(workspaceId, {
+        actorContext: UNENFORCED_CONTEXT,
         limit: 1,
         cursor: null,
         sortBy: "updatedAt",

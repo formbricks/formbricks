@@ -5,6 +5,8 @@ import { useTranslation } from "react-i18next";
 import { Webhook } from "@formbricks/database/prisma-browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { timeSince } from "@/lib/time";
+import { RestrictedSurveyHint } from "@/modules/survey/visibility/components/restricted-survey-hint";
+import { hasRestrictedAttachedSurvey } from "@/modules/survey/visibility/lib/outbound";
 import { Badge } from "@/modules/ui/components/badge";
 
 const renderSelectedSurveysText = (webhook: Webhook, allSurveys: TSurvey[]) => {
@@ -66,7 +68,11 @@ const renderSelectedTriggersText = (webhook: Webhook, t: TFunction) => {
   }
 };
 
-export const WebhookRowData = ({ webhook, surveys }: { webhook: Webhook; surveys: TSurvey[] }) => {
+export const WebhookRowData = ({
+  webhook,
+  surveys,
+  surveyVisibilityEnabled,
+}: Readonly<{ webhook: Webhook; surveys: TSurvey[]; surveyVisibilityEnabled: boolean }>) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
 
@@ -89,8 +95,11 @@ export const WebhookRowData = ({ webhook, surveys }: { webhook: Webhook; surveys
       <div className="col-span-1 my-auto text-center text-sm text-slate-800">
         <Badge type="gray" size="tiny" text={webhook.source || t("common.user")} className="capitalize" />
       </div>
-      <div className="col-span-4 my-auto text-center text-sm text-slate-800">
+      <div className="col-span-4 my-auto flex min-w-0 items-center justify-center gap-x-2 text-sm text-slate-800">
         {renderSelectedSurveysText(webhook, surveys)}
+        {hasRestrictedAttachedSurvey(surveyVisibilityEnabled, webhook.surveyIds, surveys) && (
+          <RestrictedSurveyHint kind="paused" />
+        )}
       </div>
       <div className="col-span-2 my-auto text-center text-sm text-slate-800">
         {renderSelectedTriggersText(webhook, t)}

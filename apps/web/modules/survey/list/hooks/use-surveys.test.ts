@@ -50,6 +50,9 @@ describe("useSurveys", () => {
                 completedResponseCount: 0,
                 creator: { name: "Alice" },
                 singleUse: null,
+                visibility: "workspace",
+                owner: { name: "Test User" },
+                access: { via: "workspace", canManageVisibility: false },
               },
             ],
             meta: {
@@ -78,6 +81,9 @@ describe("useSurveys", () => {
                 completedResponseCount: 2,
                 creator: { name: "Bob" },
                 singleUse: null,
+                visibility: "workspace",
+                owner: { name: "Test User" },
+                access: { via: "workspace", canManageVisibility: false },
               },
             ],
             meta: {
@@ -108,6 +114,7 @@ describe("useSurveys", () => {
             name: "",
             status: [],
             type: [],
+            visibility: [],
             sortBy: "relevance",
           },
         }),
@@ -161,6 +168,9 @@ describe("useSurveys", () => {
                 completedResponseCount: 0,
                 creator: { name: "Alice" },
                 singleUse: null,
+                visibility: "workspace",
+                owner: { name: "Test User" },
+                access: { via: "workspace", canManageVisibility: false },
               },
             ],
             meta: {
@@ -187,6 +197,7 @@ describe("useSurveys", () => {
       name: "",
       status: [],
       type: [],
+      visibility: [],
       sortBy: "relevance",
     };
 
@@ -233,6 +244,9 @@ describe("useSurveys", () => {
               completedResponseCount: 4,
               creator: { name: "Bob" },
               singleUse: null,
+              visibility: "workspace",
+              owner: { name: "Test User" },
+              access: { via: "workspace", canManageVisibility: false },
             },
           ],
           meta: {
@@ -275,6 +289,9 @@ describe("useSurveys", () => {
                     completedResponseCount: 0,
                     creator: { name: "Alice" },
                     singleUse: null,
+                    visibility: "workspace",
+                    owner: { name: "Test User" },
+                    access: { via: "workspace", canManageVisibility: false },
                   },
                 ],
                 meta: { limit: 20, nextCursor: null, totalCount: 1, workspaceSurveyCount: 3 },
@@ -296,7 +313,7 @@ describe("useSurveys", () => {
         const list = useSurveys({
           workspaceId: "env_1",
           limit: 20,
-          filters: { name: "", status: [], type: [], sortBy: "relevance" },
+          filters: { name: "", status: [], type: [], visibility: [], sortBy: "relevance" },
         });
         const removal = useRemoval({ queryKey: list.queryKey });
 

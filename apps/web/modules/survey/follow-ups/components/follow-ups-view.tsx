@@ -10,6 +10,7 @@ import { TUserLocale } from "@formbricks/types/user";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpItem } from "@/modules/survey/follow-ups/components/follow-up-item";
 import { FollowUpModal } from "@/modules/survey/follow-ups/components/follow-up-modal";
+import { getFollowUpsAvailability } from "@/modules/survey/follow-ups/lib/availability";
 import {
   WORKFLOWS_DOCS_URL,
   formatSurveyFollowUpsSunsetDate,
@@ -33,6 +34,9 @@ interface FollowUpsViewProps {
   userEmail: string;
   teamMemberDetails: TFollowUpEmailToUser[];
   locale: TUserLocale;
+  /** ENG-3395: restricted while the gate is on. The pipeline skips such a survey's follow-ups. */
+  isRestricted: boolean;
+  workspaceName: string;
 }
 
 export const FollowUpsView = ({
@@ -46,6 +50,8 @@ export const FollowUpsView = ({
   userEmail,
   teamMemberDetails,
   locale,
+  isRestricted,
+  workspaceName,
 }: Readonly<FollowUpsViewProps>) => {
   const { t } = useTranslation();
   const [addFollowUpModalOpen, setAddFollowUpModalOpen] = useState(false);
@@ -54,8 +60,13 @@ export const FollowUpsView = ({
 
   // Follow-ups are deprecated, so the only place a new one can still be started is a deployment
   // Workflows cannot reach yet. Everywhere else the entry point is a Workflow — that is what stops
-  // the migration debt growing while nothing is removed.
-  const canCreateFollowUps = isSurveyFollowUpsAllowed && !isWorkflowsAllowed;
+  // the migration debt growing while nothing is removed. A restricted survey keeps the entry point,
+  // disabled: its follow-ups would never send.
+  const { isCreationOffered, canCreate, isSending } = getFollowUpsAvailability({
+    isSurveyFollowUpsAllowed,
+    isWorkflowsAllowed,
+    isRestricted,
+  });
   const sunsetDate = formatSurveyFollowUpsSunsetDate(locale);
 
   return (
@@ -82,6 +93,15 @@ export const FollowUpsView = ({
         </Alert>
       )}
 
+      {isRestricted && (
+        <Alert variant="info" role="status">
+          <AlertTitle>{t("workspace.surveys.edit.follow_ups_restricted_title")}</AlertTitle>
+          <AlertDescription>
+            {t("workspace.surveys.edit.follow_ups_restricted_description", { workspace: workspaceName })}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex justify-end">
         {isWorkflowsAllowed ? (
           <Button size="sm" asChild>
@@ -93,8 +113,8 @@ export const FollowUpsView = ({
             </Link>
           </Button>
         ) : null}
-        {canCreateFollowUps && surveyFollowUps.length > 0 ? (
-          <Button size="sm" onClick={() => setAddFollowUpModalOpen(true)}>
+        {isCreationOffered && surveyFollowUps.length > 0 ? (
+          <Button size="sm" disabled={!canCreate} onClick={() => setAddFollowUpModalOpen(true)}>
             + {t("workspace.surveys.edit.follow_ups_new")}
           </Button>
         ) : null}
@@ -103,7 +123,7 @@ export const FollowUpsView = ({
       {/* Only offered where a new follow-up can still be started. Reachable with Workflows
           available too — delete the last follow-up in-session — and there the promo card would be a
           dead end advertising the very thing this deprecation is trying to stop. */}
-      {!surveyFollowUps.length && canCreateFollowUps && (
+      {!surveyFollowUps.length && isCreationOffered && (
         <div className="flex flex-col items-center gap-y-4 rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center">
           <div className="flex items-center justify-center rounded-full border border-slate-200 bg-slate-100 p-2">
             <MailIcon className="size-6 text-slate-500" />
@@ -117,7 +137,11 @@ export const FollowUpsView = ({
             </p>
           </div>
 
-          <Button className="w-fit" size="sm" onClick={() => setAddFollowUpModalOpen(true)}>
+          <Button
+            className="w-fit"
+            size="sm"
+            disabled={!canCreate}
+            onClick={() => setAddFollowUpModalOpen(true)}>
             {t("workspace.surveys.edit.follow_ups_new")}
           </Button>
         </div>
@@ -137,8 +161,8 @@ export const FollowUpsView = ({
                 userEmail={userEmail}
                 teamMemberDetails={teamMemberDetails}
                 locale={locale}
-                canDuplicate={canCreateFollowUps}
-                isSending={isSurveyFollowUpsAllowed}
+                canDuplicate={canCreate}
+                isSending={isSending}
               />
             );
           })}

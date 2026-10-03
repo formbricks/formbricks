@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { SurveysQueryClientProvider } from "@/app/(app)/workspaces/[workspaceId]/surveys/query-client-provider";
 import { getWorkspace } from "@/lib/workspace/service";
 import { workspaceIdLayoutChecks } from "@/modules/workspaces/lib/utils";
 
@@ -29,7 +30,9 @@ const SurveyEditorWorkspaceLayout = async (props: {
 
   return (
     <div className="flex h-screen flex-col">
-      <div className="h-full overflow-y-auto bg-slate-50">{children}</div>
+      <div className="h-full overflow-y-auto bg-slate-50">
+        <SurveysQueryClientProvider>{children}</SurveysQueryClientProvider>
+      </div>
     </div>
   );
 };

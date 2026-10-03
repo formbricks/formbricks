@@ -12,6 +12,7 @@ import {
   updateLanguage,
 } from "@/lib/language/service";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromLanguageId } from "@/lib/utils/helper";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -76,7 +77,12 @@ export const deleteLanguageAction = authenticatedActionClient.inputSchema(ZDelet
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.languageId = parsedInput.languageId;
-    const result = await deleteLanguage(parsedInput.languageId, parsedInput.workspaceId);
+    // ENG-3282: the in-use refusal names only the surveys this caller may see.
+    const result = await deleteLanguage(
+      parsedInput.languageId,
+      parsedInput.workspaceId,
+      await getUserVisibleSurveyWhere(ctx.user.id, organizationId)
+    );
     ctx.auditLoggingCtx.oldObject = result;
     return result;
   })
@@ -89,12 +95,18 @@ const ZGetSurveysUsingGivenLanguageAction = z.object({
 export const getSurveysUsingGivenLanguageAction = authenticatedActionClient
   .inputSchema(ZGetSurveysUsingGivenLanguageAction)
   .action(async ({ ctx, parsedInput }) => {
+    const workspaceId = await getWorkspaceIdFromLanguageId(parsedInput.languageId);
     await assertCan({ type: "user", id: ctx.user.id }, "workspace.manage", {
       type: "workspace",
-      id: await getWorkspaceIdFromLanguageId(parsedInput.languageId),
+      id: workspaceId,
     });
 
-    return await getSurveysUsingGivenLanguage(parsedInput.languageId);
+    // ENG-3282: workspace manage is not survey access — only the surveys this caller may see are named.
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+    return await getSurveysUsingGivenLanguage(
+      parsedInput.languageId,
+      await getUserVisibleSurveyWhere(ctx.user.id, organizationId)
+    );
   });
 
 const ZUpdateLanguageAction = z.object({

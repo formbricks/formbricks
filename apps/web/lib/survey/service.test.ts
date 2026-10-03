@@ -52,6 +52,8 @@ import {
   updateSurveyInternal,
 } from "./service";
 
+const WORKSPACE_CREATION_FACTS = { ownerId: null, visibility: "workspace" } as const;
+
 const SURVEY_SERVICE_TEST_TIMEOUT_MS = 30_000;
 
 // Mock organization service
@@ -295,13 +297,13 @@ describe("Tests for getSurveysByActionClassId", () => {
   describe("Happy Path", () => {
     test("Returns an array of surveys for a given actionClassId", async () => {
       prisma.survey.findMany.mockResolvedValueOnce([mockSurveyOutput]);
-      const surveys = await getSurveysByActionClassId(mockId);
+      const surveys = await getSurveysByActionClassId(mockId, mockId, {});
       expect(surveys).toEqual([mockTransformedSurveyOutput]);
     });
 
     test("Returns an empty array if no surveys are found", async () => {
       prisma.survey.findMany.mockResolvedValueOnce([]);
-      const surveys = await getSurveysByActionClassId(mockId);
+      const surveys = await getSurveysByActionClassId(mockId, mockId, {});
       expect(surveys).toEqual([]);
     });
   });
@@ -312,7 +314,7 @@ describe("Tests for getSurveysByActionClassId", () => {
     test("should throw an error if there is an unknown error", async () => {
       const mockErrorMessage = "Unknown error occurred";
       prisma.survey.findMany.mockRejectedValue(new Error(mockErrorMessage));
-      await expect(getSurveysByActionClassId(mockId)).rejects.toThrow(Error);
+      await expect(getSurveysByActionClassId(mockId, mockId, {})).rejects.toThrow(Error);
     });
   });
 });
@@ -321,14 +323,14 @@ describe("Tests for getSurveys", () => {
   describe("Happy Path", () => {
     test("Returns an array of surveys for a given workspaceId, limit(optional) and offset(optional)", async () => {
       prisma.survey.findMany.mockResolvedValueOnce([mockSurveyOutput]);
-      const surveys = await getSurveys(mockId);
+      const surveys = await getSurveys(mockId, {});
       expect(surveys).toEqual([mockTransformedSurveyOutput]);
     });
 
     test("Returns an empty array if no surveys are found", async () => {
       prisma.survey.findMany.mockResolvedValueOnce([]);
 
-      const surveys = await getSurveys(mockId);
+      const surveys = await getSurveys(mockId, {});
       expect(surveys).toEqual([]);
     });
   });
@@ -344,13 +346,13 @@ describe("Tests for getSurveys", () => {
       });
 
       prisma.survey.findMany.mockRejectedValue(errToThrow);
-      await expect(getSurveys(mockId)).rejects.toThrow(DatabaseError);
+      await expect(getSurveys(mockId, {})).rejects.toThrow(DatabaseError);
     });
 
     test("should throw an error if there is an unknown error", async () => {
       const mockErrorMessage = "Unknown error occurred";
       prisma.survey.findMany.mockRejectedValue(new Error(mockErrorMessage));
-      await expect(getSurveys(mockId)).rejects.toThrow(Error);
+      await expect(getSurveys(mockId, {})).rejects.toThrow(Error);
     });
   });
 });
@@ -1430,11 +1432,36 @@ describe("Tests for createSurvey", () => {
         ...mockSurveyOutput,
       });
 
-      const result = await createSurvey(mockWorkspaceId, mockCreateSurveyInput);
+      const result = await createSurvey(mockWorkspaceId, mockCreateSurveyInput, {
+        creationFacts: WORKSPACE_CREATION_FACTS,
+      });
 
       expect(prisma.survey.create).toHaveBeenCalled();
       expect(result.name).toEqual(mockSurveyOutput.name);
       expect(subscribeOrganizationMembersToSurveyResponses).toHaveBeenCalled();
+    });
+
+    test("writes the visibility and owner it was handed, not anything from the body (ENG-3282)", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({ ...mockSurveyOutput });
+
+      await createSurvey(
+        mockWorkspaceId,
+        { ...mockCreateSurveyInput, visibility: "workspace", ownerId: "body-owner" } as never,
+        { creationFacts: { ownerId: "user-1", visibility: "restricted" } }
+      );
+
+      const { data } = prisma.survey.create.mock.calls[0][0] as { data: Record<string, unknown> };
+      expect(data).toMatchObject({ owner: { connect: { id: "user-1" } }, visibility: "restricted" });
+      expect(data).not.toHaveProperty("ownerId");
+
+      prisma.survey.create.mockClear();
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({ ...mockSurveyOutput });
+      await createSurvey(mockWorkspaceId, mockCreateSurveyInput, { creationFacts: WORKSPACE_CREATION_FACTS });
+      const { data: ownerless } = prisma.survey.create.mock.calls[0][0] as { data: Record<string, unknown> };
+      expect(ownerless).toMatchObject({ visibility: "workspace" });
+      expect(ownerless).not.toHaveProperty("owner");
     });
 
     test("returns the survey as it stands AFTER its Embedded Data rows are written", async () => {
@@ -1466,7 +1493,9 @@ describe("Tests for createSurvey", () => {
         ],
       } as never);
 
-      const result = await createSurvey(mockWorkspaceId, mockCreateSurveyInput);
+      const result = await createSurvey(mockWorkspaceId, mockCreateSurveyInput, {
+        creationFacts: WORKSPACE_CREATION_FACTS,
+      });
 
       expect(result.embeddedFields).toEqual([
         {
@@ -1493,33 +1522,37 @@ describe("Tests for createSurvey", () => {
         embeddedDataLinks: [],
       } as never);
 
-      await createSurvey(mockWorkspaceId, {
-        ...mockCreateSurveyInput,
-        embeddedFields: [
-          {
-            field: {
-              key: null,
-              name: "plan",
-              source: "ingested",
-              dataType: "string",
-              defaultValue: null,
-              locked: false,
+      await createSurvey(
+        mockWorkspaceId,
+        {
+          ...mockCreateSurveyInput,
+          embeddedFields: [
+            {
+              field: {
+                key: null,
+                name: "plan",
+                source: "ingested",
+                dataType: "string",
+                defaultValue: null,
+                locked: false,
+              },
+              link: { storageKey: "plan" },
             },
-            link: { storageKey: "plan" },
-          },
-          {
-            field: {
-              key: null,
-              name: "score",
-              source: "computed",
-              dataType: "number",
-              defaultValue: "0",
-              locked: false,
+            {
+              field: {
+                key: null,
+                name: "score",
+                source: "computed",
+                dataType: "number",
+                defaultValue: "0",
+                locked: false,
+              },
+              link: { storageKey: "clx000000000000000000001" },
             },
-            link: { storageKey: "clx000000000000000000001" },
-          },
-        ],
-      } as never);
+          ],
+        } as never,
+        { creationFacts: WORKSPACE_CREATION_FACTS }
+      );
 
       const createArg = prisma.survey.create.mock.calls[0][0] as { data: Record<string, unknown> };
 
@@ -1559,24 +1592,28 @@ describe("Tests for createSurvey", () => {
         embeddedDataLinks: [],
       } as never);
 
-      await createSurvey(mockWorkspaceId, {
-        ...mockCreateSurveyInput,
-        embeddedFields: [
-          {
-            field: {
-              id: "clx000000000000000000009",
-              // Every one of these disagrees with the row above, and none of it survives.
-              key: "not_the_rows_key",
-              name: "Not the row's name",
-              source: "computed",
-              dataType: "string",
-              defaultValue: "made up",
-              locked: false,
+      await createSurvey(
+        mockWorkspaceId,
+        {
+          ...mockCreateSurveyInput,
+          embeddedFields: [
+            {
+              field: {
+                id: "clx000000000000000000009",
+                // Every one of these disagrees with the row above, and none of it survives.
+                key: "not_the_rows_key",
+                name: "Not the row's name",
+                source: "computed",
+                dataType: "string",
+                defaultValue: "made up",
+                locked: false,
+              },
+              link: { storageKey: "clx000000000000000000001" },
             },
-            link: { storageKey: "clx000000000000000000001" },
-          },
-        ],
-      } as never);
+          ],
+        } as never,
+        { creationFacts: WORKSPACE_CREATION_FACTS }
+      );
 
       const createArg = prisma.survey.create.mock.calls[0][0] as { data: Record<string, unknown> };
       expect(createArg.data).not.toHaveProperty("variables");
@@ -1612,34 +1649,38 @@ describe("Tests for createSurvey", () => {
       ] as never);
 
       await expect(
-        createSurvey(mockWorkspaceId, {
-          ...mockCreateSurveyInput,
-          embeddedFields: [
-            {
-              field: {
-                key: null,
-                name: "plan_tier",
-                source: "computed",
-                dataType: "number",
-                defaultValue: 0,
-                locked: false,
+        createSurvey(
+          mockWorkspaceId,
+          {
+            ...mockCreateSurveyInput,
+            embeddedFields: [
+              {
+                field: {
+                  key: null,
+                  name: "plan_tier",
+                  source: "computed",
+                  dataType: "number",
+                  defaultValue: 0,
+                  locked: false,
+                },
+                link: { storageKey: "clx000000000000000000002" },
               },
-              link: { storageKey: "clx000000000000000000002" },
-            },
-            {
-              field: {
-                id: "clx000000000000000000009",
-                key: "other_key",
-                name: "Plan tier",
-                source: "computed",
-                dataType: "number",
-                defaultValue: 7,
-                locked: false,
+              {
+                field: {
+                  id: "clx000000000000000000009",
+                  key: "other_key",
+                  name: "Plan tier",
+                  source: "computed",
+                  dataType: "number",
+                  defaultValue: 7,
+                  locked: false,
+                },
+                link: { storageKey: "clx000000000000000000001" },
               },
-              link: { storageKey: "clx000000000000000000001" },
-            },
-          ],
-        } as never)
+            ],
+          } as never,
+          { creationFacts: WORKSPACE_CREATION_FACTS }
+        )
       ).rejects.toThrow(/unique/);
       expect(prisma.survey.create).not.toHaveBeenCalled();
     });
@@ -1650,12 +1691,16 @@ describe("Tests for createSurvey", () => {
         ...mockSurveyOutput,
       });
 
-      await createSurvey(mockWorkspaceId, {
-        ...mockCreateSurveyInput,
-        // archivedAt is not part of the create schema; a supplied value must never reach the DB,
-        // otherwise the purge cron would hard-delete the survey with no archive audit or retention window.
-        archivedAt: new Date("2020-01-01T00:00:00Z"),
-      } as typeof mockCreateSurveyInput);
+      await createSurvey(
+        mockWorkspaceId,
+        {
+          ...mockCreateSurveyInput,
+          // archivedAt is not part of the create schema; a supplied value must never reach the DB,
+          // otherwise the purge cron would hard-delete the survey with no archive audit or retention window.
+          archivedAt: new Date("2020-01-01T00:00:00Z"),
+        } as typeof mockCreateSurveyInput,
+        { creationFacts: WORKSPACE_CREATION_FACTS }
+      );
 
       expect(prisma.survey.create).toHaveBeenCalledTimes(1);
       const createArg = prisma.survey.create.mock.calls[0][0] as { data: Record<string, unknown> };
@@ -1664,7 +1709,11 @@ describe("Tests for createSurvey", () => {
 
     test("throws InvalidInputError when creating a non-draft app survey with no triggers", async () => {
       await expect(
-        createSurvey(mockWorkspaceId, { ...mockCreateSurveyInput, type: "app", status: "inProgress" })
+        createSurvey(
+          mockWorkspaceId,
+          { ...mockCreateSurveyInput, type: "app", status: "inProgress" },
+          { creationFacts: WORKSPACE_CREATION_FACTS }
+        )
       ).rejects.toThrow(InvalidInputError);
       expect(prisma.survey.create).not.toHaveBeenCalled();
     });
@@ -1686,10 +1735,14 @@ describe("Tests for createSurvey", () => {
         updatedAt: new Date(),
       } as unknown as TSegment);
 
-      await createSurvey(mockWorkspaceId, {
-        ...mockCreateSurveyInput,
-        type: "app",
-      });
+      await createSurvey(
+        mockWorkspaceId,
+        {
+          ...mockCreateSurveyInput,
+          type: "app",
+        },
+        { creationFacts: WORKSPACE_CREATION_FACTS }
+      );
 
       expect(prisma.segment.create).toHaveBeenCalled();
       expect(prisma.survey.update).toHaveBeenCalled();
@@ -1724,7 +1777,11 @@ describe("Tests for createSurvey", () => {
         },
       ] as unknown as TBaseFilters;
 
-      await createSurvey(mockWorkspaceId, { ...mockCreateSurveyInput, type: "app" }, filters);
+      await createSurvey(
+        mockWorkspaceId,
+        { ...mockCreateSurveyInput, type: "app" },
+        { creationFacts: WORKSPACE_CREATION_FACTS, privateSegmentFilters: filters }
+      );
 
       expect(prisma.segment.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1764,7 +1821,7 @@ describe("Tests for createSurvey", () => {
         ...mockSurveyOutput,
       });
 
-      await createSurvey(mockWorkspaceId, surveyWithFollowUps);
+      await createSurvey(mockWorkspaceId, surveyWithFollowUps, { creationFacts: WORKSPACE_CREATION_FACTS });
 
       expect(prisma.survey.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1790,23 +1847,27 @@ describe("Tests for createSurvey", () => {
         ...mockSurveyOutput,
       });
 
-      await createSurvey(mockWorkspaceId, {
-        ...mockCreateSurveyInput,
-        languages: [
-          {
-            default: true,
-            enabled: true,
-            language: {
-              id: "cllang12345678901234567890",
-              code: "en-US",
-              alias: null,
-              workspaceId: mockWorkspaceId,
-              createdAt: new Date(),
-              updatedAt: new Date(),
+      await createSurvey(
+        mockWorkspaceId,
+        {
+          ...mockCreateSurveyInput,
+          languages: [
+            {
+              default: true,
+              enabled: true,
+              language: {
+                id: "cllang12345678901234567890",
+                code: "en-US",
+                alias: null,
+                workspaceId: mockWorkspaceId,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              },
             },
-          },
-        ],
-      });
+          ],
+        },
+        { creationFacts: WORKSPACE_CREATION_FACTS }
+      );
 
       expect(prisma.survey.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1845,20 +1906,24 @@ describe("Tests for createSurvey", () => {
         ...mockSurveyOutput,
       });
 
-      await createSurvey(mockWorkspaceId, {
-        ...mockCreateSurveyInput,
-        segment: {
-          id: "clseg123456789012345678901",
-          title: "Segment",
-          description: null,
-          isPrivate: false,
-          filters: [],
-          workspaceId: mockWorkspaceId,
-          surveys: [],
-          createdAt: new Date(),
-          updatedAt: new Date(),
+      await createSurvey(
+        mockWorkspaceId,
+        {
+          ...mockCreateSurveyInput,
+          segment: {
+            id: "clseg123456789012345678901",
+            title: "Segment",
+            description: null,
+            isPrivate: false,
+            filters: [],
+            workspaceId: mockWorkspaceId,
+            surveys: [],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
         },
-      });
+        { creationFacts: WORKSPACE_CREATION_FACTS }
+      );
 
       expect(prisma.survey.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1886,20 +1951,24 @@ describe("Tests for createSurvey", () => {
       });
 
       await expect(
-        createSurvey(mockWorkspaceId, {
-          ...mockCreateSurveyInput,
-          segment: {
-            id: "clseg123456789012345678901",
-            title: "Segment",
-            description: null,
-            isPrivate: false,
-            filters: [],
-            workspaceId: mockWorkspaceId,
-            surveys: [],
-            createdAt: new Date(),
-            updatedAt: new Date(),
+        createSurvey(
+          mockWorkspaceId,
+          {
+            ...mockCreateSurveyInput,
+            segment: {
+              id: "clseg123456789012345678901",
+              title: "Segment",
+              description: null,
+              isPrivate: false,
+              filters: [],
+              workspaceId: mockWorkspaceId,
+              surveys: [],
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
           },
-        })
+          { creationFacts: WORKSPACE_CREATION_FACTS }
+        )
       ).rejects.toThrow(ResourceNotFoundError);
 
       expect(prisma.survey.create).not.toHaveBeenCalled();
@@ -1909,20 +1978,24 @@ describe("Tests for createSurvey", () => {
       prisma.segment.findUnique.mockResolvedValueOnce(null);
 
       await expect(
-        createSurvey(mockWorkspaceId, {
-          ...mockCreateSurveyInput,
-          segment: {
-            id: "clseg123456789012345678901",
-            title: "Segment",
-            description: null,
-            isPrivate: false,
-            filters: [],
-            workspaceId: mockWorkspaceId,
-            surveys: [],
-            createdAt: new Date(),
-            updatedAt: new Date(),
+        createSurvey(
+          mockWorkspaceId,
+          {
+            ...mockCreateSurveyInput,
+            segment: {
+              id: "clseg123456789012345678901",
+              title: "Segment",
+              description: null,
+              isPrivate: false,
+              filters: [],
+              workspaceId: mockWorkspaceId,
+              surveys: [],
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
           },
-        })
+          { creationFacts: WORKSPACE_CREATION_FACTS }
+        )
       ).rejects.toThrow(ResourceNotFoundError);
 
       expect(prisma.survey.create).not.toHaveBeenCalled();
@@ -1930,13 +2003,15 @@ describe("Tests for createSurvey", () => {
   });
 
   describe("Sad Path", () => {
-    testInputValidation(createSurvey, "123#", mockCreateSurveyInput);
+    testInputValidation(createSurvey, "123#", mockCreateSurveyInput, {
+      creationFacts: WORKSPACE_CREATION_FACTS,
+    });
 
     test("throws ResourceNotFoundError if organization not found", async () => {
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(null);
-      await expect(createSurvey(mockWorkspaceId, mockCreateSurveyInput)).rejects.toThrow(
-        ResourceNotFoundError
-      );
+      await expect(
+        createSurvey(mockWorkspaceId, mockCreateSurveyInput, { creationFacts: WORKSPACE_CREATION_FACTS })
+      ).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("rejects survey languages from a different workspace", async () => {
@@ -1946,23 +2021,27 @@ describe("Tests for createSurvey", () => {
       ] as any);
 
       await expect(
-        createSurvey(mockWorkspaceId, {
-          ...mockCreateSurveyInput,
-          languages: [
-            {
-              default: true,
-              enabled: true,
-              language: {
-                id: "cllang12345678901234567890",
-                code: "en-US",
-                alias: null,
-                workspaceId: mockWorkspaceId,
-                createdAt: new Date(),
-                updatedAt: new Date(),
+        createSurvey(
+          mockWorkspaceId,
+          {
+            ...mockCreateSurveyInput,
+            languages: [
+              {
+                default: true,
+                enabled: true,
+                language: {
+                  id: "cllang12345678901234567890",
+                  code: "en-US",
+                  alias: null,
+                  workspaceId: mockWorkspaceId,
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                },
               },
-            },
-          ],
-        })
+            ],
+          },
+          { creationFacts: WORKSPACE_CREATION_FACTS }
+        )
       ).rejects.toThrow(ResourceNotFoundError);
 
       expect(prisma.survey.create).not.toHaveBeenCalled();
@@ -1976,16 +2055,22 @@ describe("Tests for createSurvey", () => {
       });
       prisma.survey.create.mockRejectedValueOnce(mockError);
 
-      await expect(createSurvey(mockWorkspaceId, mockCreateSurveyInput)).rejects.toThrow(DatabaseError);
+      await expect(
+        createSurvey(mockWorkspaceId, mockCreateSurveyInput, { creationFacts: WORKSPACE_CREATION_FACTS })
+      ).rejects.toThrow(DatabaseError);
     });
 
     // ENG-1839. A create authors every name fresh, so there is nothing to grandfather.
     test("rejects a hidden field named after a reserved field, before writing anything", async () => {
       await expect(
-        createSurvey(mockWorkspaceId, {
-          ...mockCreateSurveyInput,
-          hiddenFields: { enabled: true, fieldIds: ["country"] },
-        })
+        createSurvey(
+          mockWorkspaceId,
+          {
+            ...mockCreateSurveyInput,
+            hiddenFields: { enabled: true, fieldIds: ["country"] },
+          },
+          { creationFacts: WORKSPACE_CREATION_FACTS }
+        )
       ).rejects.toThrow(InvalidInputError);
 
       expect(prisma.survey.create).not.toHaveBeenCalled();
@@ -1993,10 +2078,14 @@ describe("Tests for createSurvey", () => {
 
     test("rejects a variable named after a reserved field", async () => {
       await expect(
-        createSurvey(mockWorkspaceId, {
-          ...mockCreateSurveyInput,
-          variables: [{ id: "wcfy2mkgc1ky2rzq7pcpjrxk", name: "browser", type: "text", value: "" }],
-        })
+        createSurvey(
+          mockWorkspaceId,
+          {
+            ...mockCreateSurveyInput,
+            variables: [{ id: "wcfy2mkgc1ky2rzq7pcpjrxk", name: "browser", type: "text", value: "" }],
+          },
+          { creationFacts: WORKSPACE_CREATION_FACTS }
+        )
       ).rejects.toThrow(InvalidInputError);
 
       expect(prisma.survey.create).not.toHaveBeenCalled();
@@ -2007,10 +2096,14 @@ describe("Tests for createSurvey", () => {
       prisma.survey.create.mockResolvedValueOnce(mockSurveyOutput);
 
       await expect(
-        createSurvey(mockWorkspaceId, {
-          ...mockCreateSurveyInput,
-          hiddenFields: { enabled: true, fieldIds: ["team_size"] },
-        })
+        createSurvey(
+          mockWorkspaceId,
+          {
+            ...mockCreateSurveyInput,
+            hiddenFields: { enabled: true, fieldIds: ["team_size"] },
+          },
+          { creationFacts: WORKSPACE_CREATION_FACTS }
+        )
       ).resolves.toBeDefined();
 
       expect(prisma.survey.create).toHaveBeenCalled();

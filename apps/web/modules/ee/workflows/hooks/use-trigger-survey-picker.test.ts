@@ -40,6 +40,19 @@ describe("useWorkflowSurveyOptions", () => {
     expect(listSurveysMock).toHaveBeenLastCalledWith(expect.objectContaining({ cursor: "cursor-1" }));
   });
 
+  test("keeps each survey's visibility so the picker can refuse a restricted one", async () => {
+    listSurveysMock.mockResolvedValueOnce(
+      page([{ id: "s1", name: "One", visibility: "restricted" } as { id: string; name: string }], null)
+    );
+
+    const { result } = renderHook(() => useWorkflowSurveyOptions("ws_1"), {
+      wrapper: createWrapper(newQueryClient()),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.options).toEqual([{ id: "s1", name: "One", visibility: "restricted" }]);
+  });
+
   test("truncates and warns when the cursor never exhausts", async () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     // Always returns a cursor -> the MAX_PAGES break must stop the loop.

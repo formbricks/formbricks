@@ -2,6 +2,8 @@ import { mockValidateFileUploads } from "./__mocks__/storage-utils";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { validateV3Response, validateV3ResponseFromRawInput } from "./validate-operations";
 
+// Survey visibility (ENG-3282) is not enforced here: the readiness marker is off, not read from a database.
+vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
 vi.mock("server-only", () => ({}));
 vi.mock("node:crypto", async (importOriginal) => await importOriginal<typeof import("node:crypto")>());
 vi.mock("crypto", async (importOriginal) => await importOriginal<typeof import("crypto")>());
