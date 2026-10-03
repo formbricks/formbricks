@@ -102,7 +102,12 @@ export function ChartPreview({
         </TabsContent>
 
         <TabsContent value="data" className="mt-0">
-          <DataViewer data={data} optionLabels={chartData.optionLabels} fieldLabels={chartData.fieldLabels} />
+          <DataViewer
+            data={data}
+            optionLabels={chartData.optionLabels}
+            fieldLabels={chartData.fieldLabels}
+            query={chartData.query}
+          />
         </TabsContent>
       </>
     );

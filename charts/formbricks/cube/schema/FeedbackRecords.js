@@ -46,6 +46,12 @@ cube(`FeedbackRecords`, {
       description: `Number of NPS passives (score >= 7 and < 9; NPS scale is 0-10)`,
     },
 
+    npsCount: {
+      type: `count`,
+      filters: [{ sql: `${CUBE}.field_type = 'nps' AND ${CUBE}.value_number IS NOT NULL` }],
+      description: `Answered NPS responses (field_type = 'nps' with a numeric value). The denominator of npsScore.`,
+    },
+
     npsScore: {
       type: `number`,
       sql: `
@@ -431,6 +437,22 @@ cube(`FeedbackRecords`, {
       sql: `value_number`,
       type: `number`,
       description: `Numeric answer value (NPS 0-10, CSAT 1-5, CES 1-5 or 1-7, rating, generic number). Pair with a fieldType filter to keep scales consistent.`,
+    },
+
+    // Each arm is the verbatim filter of the matching *Count bucket measure above, so a band and
+    // its bucket count can never disagree (schema-definition.test.ts compares them textually).
+    valueBand: {
+      sql: `CASE
+        WHEN ${CUBE}.field_type = 'nps' AND ${CUBE}.value_number >= 9 THEN 'promoter'
+        WHEN ${CUBE}.field_type = 'nps' AND ${CUBE}.value_number >= 7 AND ${CUBE}.value_number < 9 THEN 'passive'
+        WHEN ${CUBE}.field_type = 'nps' AND ${CUBE}.value_number < 7 THEN 'detractor'
+        WHEN ${CUBE}.field_type = 'csat' AND ${CUBE}.value_number >= 4 THEN 'satisfied'
+        WHEN ${CUBE}.field_type = 'csat' AND ${CUBE}.value_number >= 3 AND ${CUBE}.value_number < 4 THEN 'neutral'
+        WHEN ${CUBE}.field_type = 'csat' AND ${CUBE}.value_number < 3 THEN 'dissatisfied'
+        ELSE NULL
+      END`,
+      type: `string`,
+      description: `Named band of a numeric answer, derived from field_type and value_number: nps → promoter (9–10), passive (7–8), detractor (0–6); csat → satisfied (4–5), neutral (3), dissatisfied (1–2). NULL for every other field type and for unanswered records.`,
     },
 
     valueText: {

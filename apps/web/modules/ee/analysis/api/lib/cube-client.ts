@@ -1,17 +1,18 @@
 import "server-only";
-import cubejs, { type Query } from "@cubejs-client/core";
+import cubejs, { type Query, type ResultSet } from "@cubejs-client/core";
 import { randomUUID } from "node:crypto";
 import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { getReportingTimeZone } from "@/lib/date-ranges";
 import { getOrganization } from "@/lib/organization/service";
+import { withResponseBaseMeasure } from "@/modules/ee/analysis/charts/lib/response-base";
 import { expandPresetDateRanges } from "@/modules/ee/analysis/lib/date-presets";
 import { isRatioMeasure } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { type TCubeQuerySource, getCubeApiConfig } from "./cube-config";
-import { getCubeQueryAuditSummary, validateCubeQueryMembers } from "./cube-query";
+import { applyValueBandNullGuard, getCubeQueryAuditSummary, validateCubeQueryMembers } from "./cube-query";
 
 const CUBE_QUERY_ERROR_MESSAGE =
   "Cube query failed. Verify CUBEJS_API_URL and CUBEJS_API_SECRET, and ensure the Cube service is running.";
@@ -113,6 +114,18 @@ const restoreNullMeasures = (
   });
 };
 
+/**
+ * True when Cube's error names a member that was injected into `executed` on top of `plain` — the
+ * "Member 'FeedbackRecords.npsCount' not found" a schema without that measure answers with.
+ */
+const isInjectedMemberRejection = (error: unknown, executed: TChartQuery, plain: TChartQuery): boolean => {
+  const plainMeasures = new Set(plain.measures ?? []);
+  const injected = (executed.measures ?? []).filter((measure) => !plainMeasures.has(measure));
+  if (injected.length === 0) return false;
+  const message = error instanceof Error ? error.message : String(error);
+  return injected.some((measure) => message.includes(measure));
+};
+
 export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
   try {
     validateCubeQueryMembers(input.query);
@@ -155,15 +168,35 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
 
   try {
     const client = cubejs(token, { apiUrl });
+    // What Cube runs can differ from what the caller asked for: the response base count rides along
+    // (charts show "Based on N answers" without a second round trip) and the NULL value band is
+    // dropped. The audit event and the granular time dimension still come from `input.query`,
+    // which is the chart as saved.
+    const plainQuery = applyValueBandNullGuard(input.query);
+    let executedQuery = applyValueBandNullGuard(withResponseBaseMeasure(input.query));
     // Cube 1.7 serializes every numeric result as a JSON string, dimensions included (an average
     // arrives as "7.333333333333333", a Value (Number) of 3 as "3"), and strings skip the number
     // formatting charts and tables apply. castNumerics turns back into numbers exactly the members
     // the response annotates as `number`; string members such as a text answer of "123", and nulls,
     // are left alone.
-    const resultSet = await client.load(expandPresetDateRanges(input.query, timeZone) as Query, {
-      castNumerics: true,
-    });
-    const measures = input.query.measures ?? [];
+    const load = (query: TChartQuery) =>
+      client.load(expandPresetDateRanges(query, timeZone) as Query, { castNumerics: true });
+    let resultSet: ResultSet;
+    try {
+      resultSet = await load(executedQuery);
+    } catch (error) {
+      // The base is a courtesy, never a reason for the chart itself to fail. A self-hosted Cube whose
+      // schema predates the count (the Docker install keeps the schema on the host and upgrades do not
+      // refresh it) rejects the injected member by name, so run the chart as saved instead. Only that
+      // rejection earns a retry: a timeout or a failure in the chart's own members would fail again
+      // and merely double the load on a Cube that is already struggling.
+      if (!isInjectedMemberRejection(error, executedQuery, plainQuery)) throw error;
+      logger.warn(error, "Cube rejected the response base measure; retrying without it");
+      executedQuery = plainQuery;
+      resultSet = await load(executedQuery);
+    }
+    // The injected count is a measure too: an invented date bucket must read 0 answers, not NULL.
+    const measures = executedQuery.measures ?? [];
     const granular = (input.query.timeDimensions ?? []).filter((td) => Boolean(td.granularity));
     const filled = resultSet.tablePivot({ fillWithValue: NULL_FILL_SENTINEL });
 
