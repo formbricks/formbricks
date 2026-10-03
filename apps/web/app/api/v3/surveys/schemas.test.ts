@@ -1068,6 +1068,30 @@ describe("block operation bodies are bounded (ENG-1652)", () => {
   });
 });
 
+// ENG-3282 (contract §2): visibility is decided by the principal on create and changed only through
+// `POST …/visibility`, so both write bodies refuse it — and the owner — as an unsupported field.
+describe("survey visibility is not writable through the survey document", () => {
+  test.each(["visibility", "ownerId", "owner"])("create refuses `%s` with unsupported_field", (field) => {
+    const result = ZV3CreateSurveyBody.safeParse({ ...validCreateBody, [field]: "restricted" });
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: field, code: "unsupported_field" })])
+    );
+  });
+
+  test.each(["visibility", "ownerId", "owner"])("PATCH refuses `%s` with unsupported_field", (field) => {
+    const result = ZV3PatchSurveyBody.safeParse({ name: "Renamed", [field]: "restricted" });
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: field, code: "unsupported_field" })])
+    );
+  });
+});
+
 /**
  * The top-level arrays of a survey document had no ceiling, and Zod parses every element before an
  * array-level `.max()` would run — so a 2 MB body of junk entries cost one issue per entry on
