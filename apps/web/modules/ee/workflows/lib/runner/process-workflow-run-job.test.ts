@@ -299,6 +299,7 @@ describe("processWorkflowRunJob", () => {
     // HTML-only send (no `text`), resolved recipient, sanitized subject, stable Message-ID.
     expect(mockSendEmail).toHaveBeenCalledTimes(1);
     const sendArgs = mockSendEmail.mock.calls[0][0];
+    expect(sendArgs.emailType).toBe("workflow_email");
     expect(sendArgs).toMatchObject({
       to: "jane@example.com",
       replyTo: "support@example.com",
