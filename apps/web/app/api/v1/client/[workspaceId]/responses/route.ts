@@ -1,8 +1,10 @@
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
+import { logger } from "@formbricks/logger";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponseInput, ZResponseInput, pickAutoCapturedResponseMeta } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { findRecentDuplicateResponse } from "@/app/api/client/[workspaceId]/responses/lib/duplicate-response";
 import { validateSingleUseResponseInput } from "@/app/api/client/[workspaceId]/responses/lib/single-use";
 import { handleApiError } from "@/app/lib/api/handle-api-error";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
@@ -23,6 +25,7 @@ import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateClientFileUploads } from "@/modules/storage/utils";
 import { verifyLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
 import { enforceVerifiedEmailGate } from "@/modules/survey/link/lib/verify-email-gate";
+import { getContactByUserId } from "./lib/contact";
 import { createResponseWithQuotaEvaluation } from "./lib/response";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -212,6 +215,25 @@ export const POST = withV1ApiWrapper({
     const validationResult = validateResponse(responseInputData, survey);
     if (validationResult) {
       return validationResult;
+    }
+
+    // A mail scanner's click-time check and the recipient's own click submit the same prefilled
+    // answer seconds apart (ENG-1147). Hand the second one the first response's id: the renderer
+    // carries on updating that row, and no second pipeline run fires.
+    const contact = responseInputData.userId
+      ? await getContactByUserId(workspaceId, responseInputData.userId)
+      : null;
+    const duplicate = await findRecentDuplicateResponse({
+      surveyId: survey.id,
+      contactId: contact?.id,
+      data: responseInputData.data,
+      finished: responseInputData.finished,
+    });
+    if (duplicate) {
+      logger.info({ surveyId: survey.id, responseId: duplicate.id }, "Folded duplicate response submission");
+      return {
+        response: responses.successResponse({ id: duplicate.id, ...createQuotaFullObject() }, true),
+      };
     }
 
     let response: TResponseWithQuotaFull;
