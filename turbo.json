@@ -223,6 +223,7 @@
     "@formbricks/web#typecheck": {
       "dependsOn": [
         "@formbricks/ai#build",
+        "@formbricks/api-v3-schemas#typecheck",
         "@formbricks/cache#build",
         "@formbricks/database#build",
         "@formbricks/jobs#build",

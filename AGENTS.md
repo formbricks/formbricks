@@ -19,10 +19,10 @@ Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surf
 Turbo runs a task only in packages that define the matching script and **silently skips** the rest.
 Every `packages/*` workspace therefore exposes the standard `lint` / `typecheck` / `test` /
 `test:coverage` scripts (plus `build` where there is a compile step). Deliberate exceptions:
-`config-*` packages hold only config files (no scripts beyond `clean`); `email`, `types`, and
-`vite-plugins` are consumed from source, so they have no `build`; `apps/storybook` has no unit tests
-by policy (its components are exercised by the feature journeys in `apps/web/playwright`). Keep new
-packages on this matrix or document the exception here.
+`config-*` packages hold only config files (no scripts beyond `clean`); `api-v3-schemas`, `email`,
+`types`, and `vite-plugins` are consumed from source, so they have no `build`; `apps/storybook` has no
+unit tests by policy (its components are exercised by the feature journeys in `apps/web/playwright`).
+Keep new packages on this matrix or document the exception here.
 
 The same skip catches test files that sit outside every workspace. Tests for repo-level scripts
 (`scripts/`, `.github/actions/`) run in the root `//#test:root` Turbo task, which `pnpm test` invokes
@@ -320,6 +320,12 @@ Do:
   exercise a new one against real data rather than its documented 403, add the resource in
   `packages/database/src/scripts/seed-contract-fixtures.ts`. Harness and local run:
   `docs/api-v3-reference/contract-tests/README.md`.
+- API v3 schemas are generated, not handwritten, for the tags listed in
+  `packages/api-v3-schemas/scripts/adopted.ts`: edit the spec under `docs/api-v3-reference/src/`, then
+  run `pnpm api:v3:sync` (bundle + `pnpm api:v3:schemas`) and commit both outputs. `pnpm lint` fails on a
+  stale bundle or stale schemas. Constraints the generator cannot express are pinned in
+  `src/testing/unenforced.ts` and enforced by the consuming route's refinement layer; how to adopt a
+  resource is in `docs/development/technical-handbook/api-v3-schema-generation.mdx`.
 - Manual QA, especially for releases: verify on staging and file bugs. If a bug is critical, backport and
   re-test. For UI detail below the journey level, manual verification plus a screenshot in the PR is the
   expected answer, not a new spec.

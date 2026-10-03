@@ -35,6 +35,7 @@
     "@dnd-kit/sortable": "10.0.0",
     "@dnd-kit/utilities": "3.2.2",
     "@formbricks/ai": "workspace:*",
+    "@formbricks/api-v3-schemas": "workspace:*",
     "@formbricks/cache": "workspace:*",
     "@formbricks/database": "workspace:*",
     "@formbricks/email": "workspace:*",

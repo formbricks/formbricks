@@ -1663,8 +1663,11 @@ survey operations used by the REST routes:
 | `set_survey_block_order` | `PUT /api/v3/surveys/{surveyId}/blocks/order` |
 | `delete_survey`   | `DELETE /api/v3/surveys/{surveyId}` |
 
-When the v3 OpenAPI contract changes, update the MCP schemas and this page together. The hand-maintained
-v3 OpenAPI spec lives at `docs/api-v3-reference/openapi.yml`.
+When the v3 OpenAPI contract changes, update the MCP schemas and this page together. The v3 spec is
+hand-authored under `docs/api-v3-reference/src/` and bundled to `docs/api-v3-reference/openapi.yml`. For
+resources whose schemas are generated (Responses today), the tools' output schemas follow the contract through
+`pnpm api:v3:sync`; their input schemas and this page are still updated by hand. See
+[API v3 Schema Generation](/development/technical-handbook/api-v3-schema-generation).
 
 ## Feedback Records And The Hub
 

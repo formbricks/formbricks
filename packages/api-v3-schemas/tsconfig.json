@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "exclude": ["node_modules", "coverage"],
+  "extends": "@formbricks/config-typescript/js-library.json",
+  "include": ["src", "scripts"]
+}

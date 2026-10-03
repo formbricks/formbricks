@@ -81,6 +81,10 @@ jobs:
                 excluded_files=$((excluded_files + 1))
                 continue
                 ;;
+              */generated/*|docs/api-v3-reference/openapi.yml)
+                excluded_files=$((excluded_files + 1))
+                continue
+                ;;
             esac
             
             total_additions=$((total_additions + additions))

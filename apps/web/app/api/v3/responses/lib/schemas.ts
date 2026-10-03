@@ -1,16 +1,49 @@
 import { z } from "zod";
+import {
+  zBatchDeleteResponsesRequest,
+  zBatchDeleteResponsesV3Query,
+  zCreateResponseRequest,
+  zGetResponseV3Path,
+  zPatchResponseRequest,
+  zResponseDataMapInput,
+  zResponseEmbeddedDataInput,
+  zResponseTtcMap,
+  zValidateResponseCreateRequest,
+  zValidateResponsePatchRequest,
+} from "@formbricks/api-v3-schemas";
 import { declareReference } from "./reference-manifest";
+
+/**
+ * The request schemas of the v3 response routes.
+ *
+ * The shapes are generated from the contract (`@formbricks/api-v3-schemas`); this module adds what a
+ * generated schema cannot carry, and nothing else:
+ *
+ * - the constraints the generator cannot express — `uniqueItems`, `minProperties`/`maxProperties`
+ *   and the `if/then` value caps. Each one is pinned in the package's `EXPECTED_UNENFORCED`, and
+ *   `write-schemas.test.ts` rejects a counterexample for every pin, so a constraint published on the
+ *   contract cannot go unenforced here.
+ * - the messages a caller reads in `invalid_params[].reason`.
+ * - strictness for parameter objects, which the generator emits stripping because OpenAPI has no way to
+ *   close a parameter list.
+ * - the reference declarations of ENG-2861, which must sit on the exact instances the bodies expose.
+ *
+ * Compose first, refine last: Zod 4 refuses `.extend` over a key once a schema has refinements, and a
+ * `.refine` clones its schema — so each declaration below targets the instance that ends up in the
+ * final shape.
+ */
+
+/** `uniqueItems`, as a refinement. Shared with MCP tools that call the operations directly. */
+export const hasUniqueItems = (values: readonly unknown[]): boolean => new Set(values).size === values.length;
+export const RESPONSE_IDS_UNIQUE_MESSAGE = "Response ids must be unique";
 
 /**
  * The response id is a path parameter, so it is validated here rather than trusted: an unparseable id
  * must answer 400 before any query runs, not 500 from Prisma (ENG-483 is that bug on the v1 route).
+ * `GET`, `PATCH` and `DELETE` share the one `ResponseIdPath` parameter, so any of their path schemas
+ * serves.
  */
-export const ZV3ResponseIdParams = z
-  .object({
-    responseId: z.cuid2(),
-  })
-  .strict();
-
+export const ZV3ResponseIdParams = z.strictObject(zGetResponseV3Path.shape);
 export type TV3ResponseIdParams = z.infer<typeof ZV3ResponseIdParams>;
 
 /**
@@ -18,69 +51,71 @@ export type TV3ResponseIdParams = z.infer<typeof ZV3ResponseIdParams>;
  *
  * The cap and the uniqueness rule are the contract's, and both are enforced here rather than left to
  * the service: an oversized batch must answer 400 before it reaches a `deleteMany`, and duplicates
- * would make `deleted` unreconcilable against `ids.length` for no benefit to the caller.
+ * would make `deleted` unreconcilable against `ids.length` for no benefit to the caller. The rule sits
+ * on the array, not the body, so it still reports when another field of the body is also wrong.
  */
-export const ZV3BatchDeleteResponsesQuery = z
-  .object({
-    workspaceId: z.cuid2(),
-  })
-  .strict();
-
+export const ZV3BatchDeleteResponsesQuery = z.strictObject(zBatchDeleteResponsesV3Query.shape);
 export type TV3BatchDeleteResponsesQuery = z.infer<typeof ZV3BatchDeleteResponsesQuery>;
 
-export const ZV3BatchDeleteResponsesBody = z
-  .object({
-    ids: z
-      .array(z.cuid2())
-      .min(1)
-      .max(100)
-      .refine((ids) => new Set(ids).size === ids.length, {
-        message: "Response ids must be unique",
-      }),
-  })
-  .strict();
-
+export const ZV3BatchDeleteResponsesBody = zBatchDeleteResponsesRequest.extend({
+  ids: zBatchDeleteResponsesRequest.shape.ids.refine(hasUniqueItems, {
+    message: RESPONSE_IDS_UNIQUE_MESSAGE,
+  }),
+});
 export type TV3BatchDeleteResponsesBody = z.infer<typeof ZV3BatchDeleteResponsesBody>;
 
 /**
- * The stored answer shapes, as `ResponseDataMap` publishes them.
- *
- * Four, not "any JSON": a scalar for most element types, a string array for the multi-selects and
- * the positional composites, and a label-keyed record for a matrix. Widening this to `z.unknown()`
- * would accept shapes no element can store and push the failure into the serializer, which reports
- * them as `valueShapeMismatch` on a row the caller could have been stopped from writing.
- */
-/**
  * Cardinality caps on a stored answer, per the ENG-1652 input policy — the same reason `tags` and the
- * batch-delete body are capped above.
+ * batch-delete body are capped.
  *
  * Both are far past any real survey: a multi-select answer holds at most one entry per choice, and a
- * response holds at most one entry per element. The point is that neither has a bound today, so a
- * single request inside the 2 MB body limit can store an array of tens of thousands of entries, and
- * every later reader pays for it per entry — the serializer's per-answer mapping, export columns, and
- * the positional probe the "Other" response filter emits (ENG-3161), whose window is sized from the
- * survey's choice count rather than from the stored array.
+ * response holds at most one entry per element. Without them a single request inside the 2 MB body
+ * limit can store an array of tens of thousands of entries, and every later reader pays for it per
+ * entry — the serializer's per-answer mapping, export columns, and the positional probe the "Other"
+ * response filter emits (ENG-3161), whose window is sized from the survey's choice count rather than
+ * from the stored array.
  *
- * v3-only, and additive: these are new endpoints with no callers. The same unbounded shape reaches
- * `ZResponseData` through the v1 and v2 write paths, where capping it would reject payloads that
- * work today — see this PR's open gaps.
+ * v3-only, and additive: the same unbounded shape reaches `ZResponseData` through the v1 and v2 write
+ * paths, where capping it would reject payloads that work today.
  */
 export const MAX_RESPONSE_DATA_VALUES = 1_000;
 export const MAX_RESPONSE_DATA_KEYS = 500;
 
-const ZV3ResponseDataValue = z.union([
-  z.string(),
-  z.number(),
-  z.array(z.string()).max(MAX_RESPONSE_DATA_VALUES),
-  z
-    .record(z.string(), z.string())
-    .refine((entries) => Object.keys(entries).length <= MAX_RESPONSE_DATA_VALUES, {
+/**
+ * `ResponseDataMapInput`: the stored answer map with the write-side bounds.
+ *
+ * The contract caps each value with `if/then` — an array at most 1000 items, a matrix at most 1000
+ * rows — and the map with `maxProperties`. The value caps refine the generated value union and the
+ * key cap refines the map, which reports issues exactly as the per-value `.max()` schema did: a value
+ * over its cap and a map over 500 keys are both reported, while a value of the wrong shape fails the
+ * map's parse and Zod then skips the key cap. The array cap raises Zod's own `too_big` issue, so its
+ * `reason` reads the way a `.max()` would.
+ */
+const ZV3ResponseDataValue = zResponseDataMapInput.valueType.superRefine((value, ctx) => {
+  if (Array.isArray(value)) {
+    if (value.length > MAX_RESPONSE_DATA_VALUES) {
+      ctx.addIssue({
+        code: "too_big",
+        origin: "array",
+        maximum: MAX_RESPONSE_DATA_VALUES,
+        inclusive: true,
+        input: value,
+      });
+    }
+  } else if (typeof value === "object" && Object.keys(value).length > MAX_RESPONSE_DATA_VALUES) {
+    ctx.addIssue({
+      code: "custom",
+      input: value,
       message: `A matrix answer may hold at most ${MAX_RESPONSE_DATA_VALUES} rows`,
-    }),
-]);
+    });
+  }
+});
 
-/** Embedded Data accepts scalars only, plus `null` to clear a field. No arrays, no objects. */
-const ZV3EmbeddedDataValue = z.union([z.string(), z.number(), z.boolean(), z.null()]);
+const ZV3ResponseDataInput = z
+  .record(zResponseDataMapInput.keyType, ZV3ResponseDataValue)
+  .refine((entries) => Object.keys(entries).length <= MAX_RESPONSE_DATA_KEYS, {
+    message: `A response may answer at most ${MAX_RESPONSE_DATA_KEYS} fields`,
+  });
 
 /**
  * The same key cap `data` carries, for the other two element-keyed maps on this body.
@@ -90,138 +125,86 @@ const ZV3EmbeddedDataValue = z.union([z.string(), z.number(), z.boolean(), z.nul
  * `reason`. Uncapped, a 2 MB body of distinct short names answers with a 422 several times its own
  * size — the request is rejected, and the rejection is the expensive part. Only Hub-relayed
  * `invalid_params` are bounded (`hub-errors.ts`); locally generated ones are not.
- *
- * Free to apply here for the same reason the `data` cap is: these endpoints have no callers yet. The
- * v1 and v2 paths still take both maps unbounded, which stays an open gap rather than a silent
- * behaviour change.
  */
 const withKeyCap = <T extends z.ZodType<Record<string, unknown>>>(schema: T, what: string) =>
   schema.refine((entries) => Object.keys(entries).length <= MAX_RESPONSE_DATA_KEYS, {
     message: `A response may carry at most ${MAX_RESPONSE_DATA_KEYS} ${what}`,
   });
 
-/**
- * Submission context a caller may legitimately supply.
- *
- * `.strict()` is the contract's `additionalProperties: false`, and it is what rejects the twelve
- * browser-runtime keys the SDK captures (`pagePath`, the `utm*` family, the screen and viewport
- * dimensions, `timezone`, `locale`). The contract calls that a gap rather than a decision and defers
- * it to this ticket; it stays narrow here deliberately, because widening later is additive and
- * narrowing later would break callers who had come to rely on it.
- *
- * `country`, `userAgent` and `ipAddress` are a different case and stay out permanently: the routes
- * derive them from the request, so a caller-supplied value would be fiction.
- */
-export const ZV3ResponseMetaInput = z
-  .object({
-    source: z.string().max(512).optional(),
-    url: z.string().max(2048).optional(),
-    action: z.string().max(512).optional(),
-  })
-  .strict();
+/** Embedded Data accepts scalars only, plus `null` to clear a field — per `ResponseEmbeddedDataInput`. */
+const ZV3EmbeddedDataInput = withKeyCap(zResponseEmbeddedDataInput, "Embedded Data fields");
 
 /**
- * Per-element timing, in milliseconds.
- *
- * Values are not bounded here on purpose — the contract clamps rather than rejects, because noisy
- * client telemetry should never cost a caller their response. The clamp lives in the service.
- *
- * `z.number()` already rejects `NaN` and both infinities in Zod 4, so the clamp only ever sees a
- * real number; `.finite()` is deprecated and would add nothing.
+ * Per-element timing, in milliseconds. Values are not bounded on purpose — the contract clamps rather
+ * than rejects, because noisy client telemetry should never cost a caller their response. The clamp
+ * lives in the service.
  */
-const ZV3ResponseTtcInput = z.record(z.string(), z.number());
+const ZV3TtcInput = withKeyCap(zResponseTtcMap, "timing entries");
 
-const createFields = {
-  surveyId: z.cuid2(),
-  finished: z.boolean(),
-  data: z
-    .record(z.string(), ZV3ResponseDataValue)
-    .refine((entries) => Object.keys(entries).length <= MAX_RESPONSE_DATA_KEYS, {
-      message: `A response may answer at most ${MAX_RESPONSE_DATA_KEYS} fields`,
-    }),
-  embeddedData: withKeyCap(z.record(z.string(), ZV3EmbeddedDataValue), "Embedded Data fields").optional(),
-  ttc: withKeyCap(ZV3ResponseTtcInput, "timing entries").optional(),
-  meta: ZV3ResponseMetaInput.optional(),
-  /**
-   * Bounded like the batch-delete body in this same file. Without a cap one 2 MB request becomes a
-   * `WHERE id IN (…)` of tens of thousands of ids plus that many join-row inserts, all inside the
-   * write transaction.
-   */
-  tags: z
-    .array(z.cuid2())
-    .max(100)
-    .refine((ids) => new Set(ids).size === ids.length, { message: "Tag ids must be unique" })
-    .optional(),
-  endingId: z.string().nullable().optional(),
-  language: z.string().nullable().optional(),
-  contactId: z.cuid2().optional(),
-  displayId: z.cuid2().optional(),
-  /**
-   * Bounded and non-empty, unlike the free-form string the obvious version of this would be.
-   *
-   * `min(1)` is load-bearing rather than tidiness: the uniqueness pre-check is gated on the value
-   * being truthy, so an empty string would skip it and still be written — and the *second* such
-   * create would reach the unique index instead of the 422. `max(255)` keeps an oversize value from
-   * overflowing the `(surveyId, singleUseId)` btree entry, which raises a Postgres 54000 rather than
-   * a P2002 and so answers 500. A generated id is a cuid2, or an encrypted one at roughly 100
-   * characters, so this is far above anything legitimate.
-   */
-  singleUseId: z.string().min(1).max(255).optional(),
-};
+const createShape = zCreateResponseRequest.shape;
+const patchShape = zPatchResponseRequest.shape;
+
+/**
+ * Bounded like the batch-delete body. Without the cap one 2 MB request becomes a `WHERE id IN (…)` of
+ * tens of thousands of ids plus that many join-row inserts, all inside the write transaction. Unique on
+ * create only, as the contract has it: a patch applies its tags as a set, and the service deduplicates
+ * them before writing the join rows.
+ */
+const ZV3CreateTags = createShape.tags
+  .unwrap()
+  .refine(hasUniqueItems, { message: "Tag ids must be unique" })
+  .optional();
+
+/**
+ * Every value on a body that names something outside it, declared once (ENG-2861).
+ *
+ * `reference-manifest.test.ts` reads the bodies, not this list: a new field — including one a spec edit
+ * adds through generation — fails there until it is classified here. The point is that the set cannot
+ * grow quietly: the twelve response BOLA fixes were each a field nobody knew was a reference.
+ */
+const fk = (resolvedAgainst: string) => ({ kind: "fk" as const, resolvedAgainst });
+const local = (resolvedAgainst: string) => ({ kind: "document-local" as const, resolvedAgainst });
+const TAGS_RESOLVED = "Tag filtered by workspaceId in one query, and connected scoped in the write";
+
+declareReference(createShape.surveyId, fk("Survey, resolved and authorized by workspace before the write"));
+declareReference(
+  createShape.contactId,
+  fk("Contact filtered by workspaceId, and connected scoped in the write")
+);
+declareReference(
+  createShape.displayId,
+  fk("Display filtered by surveyId and unclaimed, and connected scoped in the write")
+);
+declareReference(ZV3CreateTags, fk(TAGS_RESOLVED));
+declareReference(patchShape.tags, fk(TAGS_RESOLVED));
+for (const shape of [createShape, patchShape]) {
+  declareReference(shape.endingId, local("the survey's own endings"));
+  declareReference(shape.language, local("the survey's own enabled languages"));
+}
+declareReference(
+  ZV3ResponseDataInput,
+  local("the survey's element ids; file-upload values additionally carry an embedded-id")
+);
+declareReference(ZV3EmbeddedDataInput, local("the survey's declared Embedded Data field names"));
+declareReference(
+  createShape.singleUseId,
+  local("unused for this survey — a token, scoped by surveyId rather than owned elsewhere")
+);
 
 /**
  * `POST /api/v3/responses`.
  *
  * Three required fields and nothing implied: `surveyId`, `finished` and `data`. Everything the
- * caller may not set is absent from the shape rather than stripped afterwards, so `.strict()` turns
- * an attempt into a 400 naming the key instead of a silent drop — which is the difference between a
+ * caller may not set is absent from the shape rather than stripped afterwards, so strictness turns an
+ * attempt into a 400 naming the key instead of a silent drop — which is the difference between a
  * caller learning that `createdAt` is server-owned and one believing they backdated a response.
  */
-/**
- * Every value on this body that names something outside it, declared once (ENG-2861).
- *
- * `reference-manifest.test.ts` reads the schema, not this list: a new id-shaped field, or one named
- * like a reference, fails there until it appears here. The point is that the set cannot grow quietly
- * — the twelve response BOLA fixes were each a field nobody knew was a reference.
- */
-declareReference(createFields.surveyId, {
-  kind: "fk",
-  resolvedAgainst: "Survey, resolved and authorized by workspace before the write",
+export const ZV3CreateResponseBody = zCreateResponseRequest.extend({
+  data: ZV3ResponseDataInput,
+  embeddedData: ZV3EmbeddedDataInput.optional(),
+  ttc: ZV3TtcInput.optional(),
+  tags: ZV3CreateTags,
 });
-declareReference(createFields.contactId, {
-  kind: "fk",
-  resolvedAgainst: "Contact filtered by workspaceId, and connected scoped in the write",
-});
-declareReference(createFields.displayId, {
-  kind: "fk",
-  resolvedAgainst: "Display filtered by surveyId and unclaimed, and connected scoped in the write",
-});
-declareReference(createFields.tags, {
-  kind: "fk",
-  resolvedAgainst: "Tag filtered by workspaceId in one query, and connected scoped in the write",
-});
-declareReference(createFields.endingId, {
-  kind: "document-local",
-  resolvedAgainst: "the survey's own endings",
-});
-declareReference(createFields.language, {
-  kind: "document-local",
-  resolvedAgainst: "the survey's own enabled languages",
-});
-declareReference(createFields.data, {
-  kind: "document-local",
-  resolvedAgainst: "the survey's element ids; file-upload values additionally carry an embedded-id",
-});
-declareReference(createFields.embeddedData, {
-  kind: "document-local",
-  resolvedAgainst: "the survey's declared Embedded Data field names",
-});
-declareReference(createFields.singleUseId, {
-  kind: "document-local",
-  resolvedAgainst: "unused for this survey — a token, scoped by surveyId rather than owned elsewhere",
-});
-
-export const ZV3CreateResponseBody = z.object(createFields).strict();
 export type TV3CreateResponseBody = z.infer<typeof ZV3CreateResponseBody>;
 
 /**
@@ -229,77 +212,44 @@ export type TV3CreateResponseBody = z.infer<typeof ZV3CreateResponseBody>;
  *
  * Six patchable fields, and at least one of them — an empty body is a 400 rather than a no-op 200,
  * because a caller sending nothing has a bug and a 200 would hide it.
- *
- * `ttc` and `meta` are create-only and so absent here: both describe the original submission event,
- * which a later correction does not change. `contactId`, `displayId` and `singleUseId` are
- * create-only too — re-linking a response to a different contact is the ENG-1923 shape, and
- * `singleUseId` is a security control rather than a label.
  */
-export const ZV3PatchResponseBody = z
-  .object({
-    finished: createFields.finished.optional(),
-    endingId: createFields.endingId,
-    language: createFields.language,
-    data: createFields.data.optional(),
-    embeddedData: createFields.embeddedData,
-    // No uniqueness refinement, matching the contract: the patch set is applied as a set, so a
-    // repeated id is redundant rather than ambiguous. The service deduplicates before writing the
-    // join rows — without that, "redundant" was a composite-primary-key violation and a 500.
-    tags: declareReference(z.array(z.cuid2()).max(100).optional(), {
-      kind: "fk",
-      resolvedAgainst: "Tag filtered by workspaceId in one query, and connected scoped in the write",
-    }),
+export const ZV3PatchResponseBody = zPatchResponseRequest
+  .extend({
+    data: ZV3ResponseDataInput.optional(),
+    embeddedData: ZV3EmbeddedDataInput.optional(),
   })
-  .strict()
   .refine((body) => Object.keys(body).length > 0, { message: "At least one field must be provided" });
 export type TV3PatchResponseBody = z.infer<typeof ZV3PatchResponseBody>;
 
 /**
  * `POST /api/v3/responses/validate`.
  *
- * Deliberately the same shape as `ZV3SurveyValidationRequestBody`: a union discriminated on
- * `operation`, each arm carrying the body the real call would take. The envelope is `.strict()` and
- * its failures are the endpoint's only 400 — `data` is `unknown` here precisely because problems
- * inside it are the point of the endpoint and come back as a `200` with `valid: false`.
+ * A union discriminated on `operation`, each arm carrying the body the real call would take, like
+ * `ZV3SurveyValidationRequestBody`. The envelope is strict and its failures are the endpoint's only
+ * 400 — `data` is any value precisely because problems inside it are the point of the endpoint and come
+ * back as a `200` with `valid: false`.
  *
- * `data` is required rather than merely typed `unknown`: Zod treats an `unknown` field as
- * satisfiable by an absent key, so without the check `{ "operation": "create" }` would validate an
- * empty document and report it as a caller error rather than as the malformed envelope it is.
+ * `data` is required rather than merely `unknown`: Zod treats an `unknown` field as satisfiable by an
+ * absent key, so without the check `{ "operation": "create" }` would validate an empty document and
+ * report it as a caller error rather than as the malformed envelope it is.
  */
-const ZV3ValidationDocument = z.unknown().refine((value) => value !== undefined, {
-  message: "Required",
-});
+const ZV3ValidationDocument = declareReference(
+  z.unknown().refine((value) => value !== undefined, { message: "Required" }),
+  local("the nested create or patch body, whose own fields carry their declarations")
+);
 
 /**
- * The envelope's own `responseId`, declared like any other reference (ENG-2861).
- *
- * A dry run resolves it exactly as a real patch does — `getResponseWorkspaceId`, then the scoped
- * read — so validate cannot be used to probe whether a response exists in someone else's workspace.
- * Declared on its own const rather than inline because the registry keys on the schema instance.
+ * The envelope's own `responseId`. A dry run resolves it exactly as a real patch does —
+ * `getResponseWorkspaceId`, then the scoped read — so validate cannot be used to probe whether a
+ * response exists in someone else's workspace.
  */
-const ZV3ValidationResponseId = declareReference(z.cuid2(), {
-  kind: "fk",
-  resolvedAgainst: "Response, via getResponseWorkspaceId then the workspace-scoped read",
-});
-
-declareReference(ZV3ValidationDocument, {
-  kind: "document-local",
-  resolvedAgainst: "the nested create or patch body, whose own fields carry their declarations",
-});
+declareReference(
+  zValidateResponsePatchRequest.shape.responseId,
+  fk("Response, via getResponseWorkspaceId then the workspace-scoped read")
+);
 
 export const ZV3ResponseValidationRequestBody = z.discriminatedUnion("operation", [
-  z
-    .object({
-      operation: z.literal("create"),
-      data: ZV3ValidationDocument,
-    })
-    .strict(),
-  z
-    .object({
-      operation: z.literal("patch"),
-      responseId: ZV3ValidationResponseId,
-      data: ZV3ValidationDocument,
-    })
-    .strict(),
+  zValidateResponseCreateRequest.extend({ operation: z.literal("create"), data: ZV3ValidationDocument }),
+  zValidateResponsePatchRequest.extend({ operation: z.literal("patch"), data: ZV3ValidationDocument }),
 ]);
 export type TV3ResponseValidationRequestBody = z.infer<typeof ZV3ResponseValidationRequestBody>;
