@@ -15,6 +15,7 @@ export type TSurveyGenerationDraftSnapshot = DeepPartial<z.infer<typeof ZGenerat
 /** Codes that can only be raised mid-stream. Everything else is a pre-stream problem+json. */
 export const SURVEY_GENERATION_STREAM_ERROR_CODES = {
   QUOTA_EXCEEDED: "ai_quota_exceeded",
+  AUTH_FAILED: "ai_provider_auth_failed",
   OUTPUT_TOO_LONG: "ai_output_too_long",
   PAYLOAD_INVALID: "ai_generated_payload_invalid",
   GENERATION_FAILED: "ai_generation_failed",

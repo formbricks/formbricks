@@ -3277,6 +3277,7 @@
         "prompt_helper_website_label": "Feedback site web",
         "prompt_label": "Descrie chestionarul de care ai nevoie",
         "prompt_placeholder": "Descrie chestionarul de care ai nevoie, de ex. Înțelege de ce utilizatorii noi se opresc în timpul onboarding-ului și ce i-ar ajuta să finalizeze configurarea",
+        "provider_auth_failed": "Furnizorul AI a respins acreditările acestei instanțe. Cere administratorului să verifice configurația AI.",
         "regenerate": "Regenerează",
         "request_rejected": "Acea solicitare nu a putut fi utilizată. Încearcă să o reformulezi.",
         "shortcut_hint": "⌘/Ctrl + Enter pentru a genera",

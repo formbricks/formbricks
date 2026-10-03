@@ -3152,6 +3152,7 @@ checksums:
     workspace/surveys/ai_create/prompt_helper_website_label: 4f0df60ed6b5e65b61e060bd6447cf73
     workspace/surveys/ai_create/prompt_label: 7d6d9969f13a0fb453cd63e239dec385
     workspace/surveys/ai_create/prompt_placeholder: 75155ac1c57f46766b8e9c8531a9b25f
+    workspace/surveys/ai_create/provider_auth_failed: 3c6539beae89a928a23c532dd330e4f7
     workspace/surveys/ai_create/regenerate: 79bc737effc16d0546c048c6aa2ec415
     workspace/surveys/ai_create/request_rejected: 9f2ae5777b9b02bdc7777963f2d45353
     workspace/surveys/ai_create/shortcut_hint: 9e726671a699dbd62e0adb05ec2d0c40

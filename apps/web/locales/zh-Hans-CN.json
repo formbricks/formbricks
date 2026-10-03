@@ -3277,6 +3277,7 @@
         "prompt_helper_website_label": "网站反馈",
         "prompt_label": "描述你需要的问卷",
         "prompt_placeholder": "描述你需要的调查，例如：了解新用户在引导过程中为何停止以及哪些因素能帮助他们完成设置",
+        "provider_auth_failed": "AI 提供商拒绝了此实例的凭据。请联系你的管理员检查 AI 配置。",
         "regenerate": "重新生成",
         "request_rejected": "无法使用该提示。请尝试换一种表述方式。",
         "shortcut_hint": "⌘/Ctrl + Enter 生成",

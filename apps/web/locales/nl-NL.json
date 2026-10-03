@@ -3277,6 +3277,7 @@
         "prompt_helper_website_label": "Website feedback",
         "prompt_label": "Beschrijf de enquête die je nodig hebt",
         "prompt_placeholder": "Beschrijf de enquête die je nodig hebt, bijv. Begrijpen waarom nieuwe gebruikers stoppen tijdens de onboarding en wat hen zou helpen de setup af te ronden",
+        "provider_auth_failed": "De AI-provider heeft de inloggegevens van deze instantie afgewezen. Vraag je beheerder om de AI-configuratie te controleren.",
         "regenerate": "Opnieuw genereren",
         "request_rejected": "Die prompt kon niet worden gebruikt. Probeer het anders te formuleren.",
         "shortcut_hint": "⌘/Ctrl + Enter om te genereren",

@@ -8,6 +8,8 @@ export {
   resetLanguageModelCache,
 } from "./provider";
 export {
+  AIOAuthTokenError,
+  type AIOAuthTokenErrorCode,
   AIOutputTokenLimitError,
   type AIOutputTokenLimitErrorDetails,
   type AIProviderErrorInfo,

@@ -547,6 +547,85 @@ describe("env", () => {
     await expect(import("./env")).rejects.toThrow("AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON");
   });
 
+  describe("OpenAI-compatible OAuth2 client-credentials mode", () => {
+    const oauthEnv = {
+      AI_PROVIDER: "openai-compatible",
+      AI_MODEL: "gateway-model",
+      AI_OPENAI_COMPATIBLE_BASE_URL: "https://gateway.example.internal/v1",
+      AI_OPENAI_COMPATIBLE_AUTH_MODE: "oauth2-client-credentials",
+      AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: "https://gateway.example.internal/oauth/token",
+      AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_ID: "test-client",
+      AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET: "secret-sentinel",
+      AI_OPENAI_COMPATIBLE_API_KEY: undefined,
+    };
+
+    const loadError = async (): Promise<string> => {
+      const error = await import("./env").then(
+        () => undefined,
+        (caught: unknown) => caught
+      );
+      expect(error).toBeInstanceOf(Error);
+      return (error as Error).message;
+    };
+
+    test("loads a complete oauth configuration", async () => {
+      setTestEnv({
+        ...oauthEnv,
+        AI_OPENAI_COMPATIBLE_OAUTH_SCOPE: "llm.invoke",
+        AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE: "post",
+        AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON: JSON.stringify({ audience: "https://gateway" }),
+      });
+
+      const { env } = await import("./env");
+
+      expect(env.AI_OPENAI_COMPATIBLE_AUTH_MODE).toBe("oauth2-client-credentials");
+      expect(env.AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET).toBe("secret-sentinel");
+    });
+
+    test("names the missing client secret", async () => {
+      setTestEnv({ ...oauthEnv, AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET: undefined });
+
+      await expect(import("./env")).rejects.toThrow("AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET");
+    });
+
+    test("names a bad token URL without echoing the secret", async () => {
+      setTestEnv({ ...oauthEnv, AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: "ftp://idp.example/token" });
+
+      const message = await loadError();
+
+      expect(message).toContain("AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL");
+      expect(message).not.toContain("secret-sentinel");
+    });
+
+    test.each([
+      ["AI_OPENAI_COMPATIBLE_AUTH_MODE", { AI_OPENAI_COMPATIBLE_AUTH_MODE: "oauth2" }],
+      ["AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE", { AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE: "header" }],
+      [
+        "AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON",
+        { AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON: "[]" },
+      ],
+      ["AI_OPENAI_COMPATIBLE_API_KEY", { AI_OPENAI_COMPATIBLE_API_KEY: "static-key" }],
+    ])("rejects an invalid %s", async (field, overrides) => {
+      setTestEnv({ ...oauthEnv, ...overrides });
+
+      await expect(import("./env")).rejects.toThrow(field);
+    });
+
+    test("ignores stray oauth variables in api-key mode", async () => {
+      setTestEnv({
+        ...oauthEnv,
+        AI_OPENAI_COMPATIBLE_AUTH_MODE: undefined,
+        AI_OPENAI_COMPATIBLE_API_KEY: "static-key",
+        AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: "not-a-url",
+        AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE: "header",
+      });
+
+      const { env } = await import("./env");
+
+      expect(env.AI_OPENAI_COMPATIBLE_API_KEY).toBe("static-key");
+    });
+  });
+
   test("uses the configured Cube environment variables", async () => {
     setTestEnv();
     const { env } = await import("./env");
