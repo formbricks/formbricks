@@ -1,4 +1,5 @@
-# Version updates for the actions pinned in .github/ and for the Cube image built from docker/cube-image.
+# Version updates for the actions pinned in .github/, the Cube image built from docker/cube-image, and the
+# dev container's features.
 # Security updates for the npm workspace are configured separately in the repository settings and routed to
 # Linear by dependabot-to-linear.yml.
 version: 2
@@ -53,3 +54,14 @@ updates:
     labels:
       - dependencies
       - javascript
+
+  # The dev container's features, pinned by digest in .devcontainer/devcontainer-lock.json. Features run as
+  # root at build time and docker-in-docker runs privileged, so they should track the maintained major.
+  - package-ecosystem: devcontainers
+    directory: "/"
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "chore(devcontainer)"
+    labels:
+      - dependencies
