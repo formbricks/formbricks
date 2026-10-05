@@ -1,4 +1,5 @@
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { type TSurvey } from "@formbricks/types/surveys/types";
 import {
   DEFAULT_LOCALE,
   ENTERPRISE_LICENSE_REQUEST_FORM_URL,
@@ -11,6 +12,13 @@ import {
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getTranslate } from "@/lingodotdev/server";
+import { getCustomCssSource } from "@/modules/custom-css/components/lib/draft";
+import { hasStylesInHeadScripts } from "@/modules/custom-css/components/lib/hints";
+import { type TSurveyCustomCssEditorConfig } from "@/modules/custom-css/components/types";
+import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
+import { getCustomCssHealth, toDeliveredCustomCss } from "@/modules/custom-css/lib/delivery";
+import { getIsCustomCssRolledOut } from "@/modules/custom-css/lib/rollout";
+import { parseStoredCustomCss } from "@/modules/custom-css/lib/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import {
@@ -111,6 +119,8 @@ export const SurveyEditorPage = async (props: {
     isExternalUrlsAllowed,
     isUserTargetingAllowed,
     isWorkflowsAllowed,
+    isCustomCssRolledOut,
+    isCustomCssPlanAllowed,
   ] = await Promise.all([
     getSurveyFollowUpsPermission(workspaceWithTeamIds.organizationId),
     getIsSpamProtectionEnabled(workspaceWithTeamIds.organizationId),
@@ -119,6 +129,8 @@ export const SurveyEditorPage = async (props: {
     getIsContactsEnabled(workspaceWithTeamIds.organizationId),
     // Drives the Follow-ups deprecation: the tab only survives where Workflows cannot replace it.
     getIsWorkflowsEnabled(workspaceWithTeamIds.organizationId),
+    getIsCustomCssRolledOut(workspaceWithTeamIds.organizationId),
+    getCustomCssPlanAllowed(workspaceWithTeamIds.organizationId),
   ]);
 
   const quotas = isQuotasAllowed && survey ? await getQuotas(survey.id) : [];
@@ -146,10 +158,27 @@ export const SurveyEditorPage = async (props: {
     workspaceWithTeamIds.organizationId
   );
 
+  // Workspace CSS rides on the workspace row, which the editor would otherwise ship to the browser
+  // whole: source, compiled output and the previous revision. The editor gets only what it shows.
+  const {
+    customCss: storedWorkspaceCustomCss,
+    customCssPrevious: _customCssPrevious,
+    ...workspaceForEditor
+  } = workspaceWithTeamIds;
+  const customCssEditor = isCustomCssRolledOut
+    ? await getSurveyCustomCssEditorConfig({
+        storedWorkspaceCustomCss,
+        survey,
+        workspaceHeadScripts: workspaceWithTeamIds.customHeadScripts,
+        organizationId: workspaceWithTeamIds.organizationId,
+        planAllowed: isCustomCssPlanAllowed,
+      })
+    : null;
+
   return (
     <SurveyEditor
       survey={survey}
-      workspace={workspaceWithTeamIds}
+      workspace={{ ...workspaceForEditor, customCss: null, customCssPrevious: null }}
       actionClasses={actionClasses}
       contactAttributeKeys={contactAttributeKeys}
       responseCount={responseCount}
@@ -181,6 +210,43 @@ export const SurveyEditorPage = async (props: {
       visibility={visibility}
       surveyAccess={surveyAccess}
       ownerName={ownerName}
+      customCssEditor={customCssEditor}
     />
   );
+};
+
+/**
+ * What the survey's Custom CSS card needs (ENG-3553), mirroring the server's own rules: the inherited
+ * workspace CSS as source (read-only) and as delivered compiled output (for the preview), the health
+ * of both saved values, the plan gate, and — self-hosted only — whether either set of Custom Head
+ * Scripts already adds page styles. Survey edit permission is the editor's own: reaching it is it.
+ */
+const getSurveyCustomCssEditorConfig = async (params: {
+  storedWorkspaceCustomCss: unknown;
+  survey: TSurvey;
+  workspaceHeadScripts: string | null;
+  organizationId: string;
+  planAllowed: boolean;
+}): Promise<TSurveyCustomCssEditorConfig> => {
+  const workspaceCustomCss = parseStoredCustomCss(params.storedWorkspaceCustomCss);
+  const [workspaceCompiled, workspaceHealth, surveyHealth] = await Promise.all([
+    toDeliveredCustomCss(workspaceCustomCss, "workspace"),
+    getCustomCssHealth(workspaceCustomCss, "workspace"),
+    getCustomCssHealth(params.survey.customCss, "survey"),
+  ]);
+
+  return {
+    planAllowed: params.planAllowed,
+    billingHref: IS_FORMBRICKS_CLOUD ? `/organizations/${params.organizationId}/settings/billing` : null,
+    hasHeadScriptStyles:
+      !IS_FORMBRICKS_CLOUD &&
+      (hasStylesInHeadScripts(params.workspaceHeadScripts) ||
+        hasStylesInHeadScripts(params.survey.customHeadScripts)),
+    surveyStatus: surveyHealth.status,
+    workspace: {
+      source: getCustomCssSource(workspaceCustomCss),
+      compiled: workspaceCompiled ?? null,
+      status: workspaceHealth.status,
+    },
+  };
 };

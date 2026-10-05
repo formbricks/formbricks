@@ -1,11 +1,18 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import {
+  type TV3SurveyWriteReport,
+  V3CustomCssInvalidError,
+  V3CustomCssPlanRequiredError,
+} from "@/app/api/v3/lib/custom-css";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurvey, getSurvey } from "@/lib/survey/service";
 import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
+import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
+import { processCustomCss } from "@/modules/custom-css/processor";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { V3SurveyCreatePermissionError, V3SurveyInputValidationError, createV3Survey } from "./create";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
@@ -13,6 +20,22 @@ import { ZV3CreateSurveyBody } from "./schemas";
 import { resolveV3ContactsEntitlement } from "./targeting";
 
 vi.mock("server-only", () => ({}));
+
+// ENG-3641: the processor contract and the plan gate; the save rules between them run for real.
+vi.mock("@/modules/custom-css/processor", () => ({
+  CUSTOM_CSS_PROCESSOR_VERSION: 3,
+  processCustomCss: vi.fn(),
+  normalizeCustomCssInput: (input: { light: string | null; dark: string | null } | null | undefined) => {
+    const light = input?.light?.trim() ? input.light : null;
+    const dark = input?.dark?.trim() ? input.dark : null;
+    return light === null && dark === null ? null : { light, dark };
+  },
+}));
+vi.mock("@/modules/custom-css/lib/access", () => ({
+  CUSTOM_CSS_PLAN_REQUIRED_MESSAGE: "Adding or editing custom CSS requires the Scale plan.",
+  getCustomCssPlanAllowed: vi.fn(),
+}));
+vi.mock("@/lib/cache", () => ({ cache: { del: vi.fn() } }));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -214,7 +237,7 @@ describe("createV3Survey", () => {
           expect.objectContaining({ default: false, enabled: true }),
         ],
       }),
-      { creationFacts: WORKSPACE_FACTS, privateSegmentFilters: [] }
+      { creationFacts: WORKSPACE_FACTS, privateSegmentFilters: [], customCss: null }
     );
     expect(getOrganizationByWorkspaceId).not.toHaveBeenCalled();
     expect(getExternalUrlsPermission).not.toHaveBeenCalled();
@@ -270,7 +293,7 @@ describe("createV3Survey", () => {
           expect.objectContaining({ language: expect.objectContaining({ code: "fr-FR" }), enabled: false }),
         ]),
       }),
-      { creationFacts: WORKSPACE_FACTS, privateSegmentFilters: [] }
+      { creationFacts: WORKSPACE_FACTS, privateSegmentFilters: [], customCss: null }
     );
   });
 
@@ -699,7 +722,7 @@ describe("createV3Survey", () => {
           delay: 5,
           triggers: [{ actionClass }],
         }),
-        { creationFacts: WORKSPACE_FACTS, privateSegmentFilters: [] }
+        { creationFacts: WORKSPACE_FACTS, privateSegmentFilters: [], customCss: null }
       );
       // No targeting filters → empty private segment, no entitlement check.
       expect(resolveV3ContactsEntitlement).not.toHaveBeenCalled();
@@ -720,6 +743,7 @@ describe("createV3Survey", () => {
       expect(createSurvey).toHaveBeenCalledWith(workspaceId, expect.objectContaining({ type: "app" }), {
         creationFacts: WORKSPACE_FACTS,
         privateSegmentFilters: attributeFilters,
+        customCss: null,
       });
       expect(getSurvey).toHaveBeenCalledWith(appSurveyId);
       expect(result.segment?.filters).toEqual(attributeFilters);
@@ -788,6 +812,7 @@ describe("createV3Survey", () => {
       expect(createSurvey).toHaveBeenCalledWith(workspaceId, expect.anything(), {
         creationFacts: { ownerId: "user_1", visibility: "restricted" },
         privateSegmentFilters: [],
+        customCss: null,
       });
     });
 
@@ -799,5 +824,118 @@ describe("createV3Survey", () => {
       expect(prisma.language.upsert).not.toHaveBeenCalled();
       expect(createSurvey).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("createV3Survey custom CSS (ENG-3641)", () => {
+  const warning = {
+    code: "import_removed" as const,
+    scope: "survey" as const,
+    appearance: "light" as const,
+    line: 1,
+    column: 1,
+    reason: "@import is not supported",
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(prisma.language.upsert).mockImplementation(((args: TLanguageUpsertArgs) =>
+      Promise.resolve({
+        id: `cllang${String(args.where.workspaceId_code?.code).toLowerCase().replaceAll("-", "")}`,
+        code: args.where.workspaceId_code?.code,
+        alias: null,
+        workspaceId,
+        createdAt: new Date("2026-04-21T10:00:00.000Z"),
+        updatedAt: new Date("2026-04-21T10:00:00.000Z"),
+      })) as unknown as typeof prisma.language.upsert);
+    vi.mocked(createSurvey).mockResolvedValue(createdSurvey);
+    vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);
+    vi.mocked(getActionClasses).mockResolvedValue([]);
+    vi.mocked(resolveSurveyCreationFacts).mockResolvedValue(WORKSPACE_FACTS);
+    vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(true);
+    vi.mocked(processCustomCss).mockResolvedValue({
+      ok: true,
+      compiled: { light: "@layer fb-survey{x}", dark: null },
+      warnings: [warning],
+      processorVersion: 3,
+    });
+  });
+
+  test("processes the source, stores trusted output and reports the warnings", async () => {
+    const report: TV3SurveyWriteReport = {};
+    const body = ZV3CreateSurveyBody.parse({ ...rawCreateBody, customCss: { light: "a{}", dark: null } });
+
+    await createV3Survey(body, null, "req_css", "org_1", { report });
+
+    expect(getCustomCssPlanAllowed).toHaveBeenCalledWith("org_1");
+    expect(processCustomCss).toHaveBeenCalledWith({ scope: "survey", input: { light: "a{}", dark: null } });
+    expect(createSurvey).toHaveBeenCalledWith(
+      workspaceId,
+      expect.not.objectContaining({ customCss: expect.anything() }),
+      {
+        creationFacts: WORKSPACE_FACTS,
+        privateSegmentFilters: [],
+        customCss: {
+          light: { source: "a{}", compiled: "@layer fb-survey{x}" },
+          dark: null,
+          processorVersion: 3,
+        },
+      }
+    );
+    expect(report.customCssWarnings).toEqual([warning]);
+  });
+
+  test("an organization without the plan cannot create a survey with CSS, and nothing is written", async () => {
+    vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(false);
+    const body = ZV3CreateSurveyBody.parse({ ...rawCreateBody, customCss: { light: "a{}", dark: null } });
+
+    await expect(createV3Survey(body, null, "req_css", "org_1")).rejects.toBeInstanceOf(
+      V3CustomCssPlanRequiredError
+    );
+    expect(processCustomCss).not.toHaveBeenCalled();
+    expect(createSurvey).not.toHaveBeenCalled();
+    expect(prisma.language.upsert).not.toHaveBeenCalled();
+  });
+
+  test("CSS the processor rejects fails the create before any write", async () => {
+    vi.mocked(processCustomCss).mockResolvedValue({
+      ok: false,
+      errors: [{ ...warning, code: "syntax_error" as const, reason: "Unexpected token" }],
+    });
+    const body = ZV3CreateSurveyBody.parse({ ...rawCreateBody, customCss: { light: "a{", dark: null } });
+
+    await expect(createV3Survey(body, null, "req_css", "org_1")).rejects.toBeInstanceOf(
+      V3CustomCssInvalidError
+    );
+    expect(createSurvey).not.toHaveBeenCalled();
+  });
+
+  test("no CSS, or empty CSS, needs neither the plan nor the processor", async () => {
+    vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(false);
+    const report: TV3SurveyWriteReport = {};
+
+    await createV3Survey(createBody, null, "req_css", "org_1", { report });
+    await createV3Survey(
+      ZV3CreateSurveyBody.parse({ ...rawCreateBody, customCss: { light: "  ", dark: null } }),
+      null,
+      "req_css",
+      "org_1"
+    );
+
+    expect(getCustomCssPlanAllowed).not.toHaveBeenCalled();
+    expect(processCustomCss).not.toHaveBeenCalled();
+    expect(vi.mocked(createSurvey).mock.calls[0][2]).toMatchObject({ customCss: null });
+    expect(report.customCssWarnings).toBeUndefined();
+  });
+
+  test("the body schema rejects caller-supplied compiled output and processor versions", () => {
+    for (const customCss of [
+      { light: "a{}", dark: null, compiled: "x" },
+      { light: "a{}", dark: null, processorVersion: 1 },
+      { light: { source: "a{}", compiled: "x" }, dark: null },
+      { light: "a{}" },
+    ]) {
+      expect(ZV3CreateSurveyBody.safeParse({ ...rawCreateBody, customCss }).success).toBe(false);
+    }
   });
 });

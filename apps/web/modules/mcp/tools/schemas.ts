@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { ZCustomCssScope } from "@formbricks/types/custom-css";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { ZSurveyRatingElement } from "@formbricks/types/surveys/elements";
 import { ZSurveyFilters, ZSurveyStatus, ZSurveyType } from "@formbricks/types/surveys/types";
@@ -21,7 +22,9 @@ import {
   V3_SURVEY_MAX_VARIABLES,
   ZV3EditSurveyBlocksBody,
   ZV3SetSurveyBlockOrderBody,
+  ZV3SurveyCustomCss,
 } from "@/app/api/v3/surveys/schemas";
+import { ZV3WorkspaceCustomCssPatchBody } from "@/app/api/v3/workspaces/lib/custom-css-schemas";
 
 /**
  * Every array argument is declared through `lengthBoundedArray`, never a bare `z.array().max()`: the
@@ -237,6 +240,7 @@ export const ZMcpCreateSurveyInput = z
       max: V3_SURVEY_MAX_VARIABLES,
       description: "Survey variables using the v3 survey document contract.",
     }).optional(),
+    customCss: ZV3SurveyCustomCss.optional(),
   })
   .strict();
 
@@ -246,7 +250,7 @@ export const ZMcpPatchSurveyInput = z
     data: z
       .record(z.string(), z.unknown())
       .describe(
-        `Strict top-level v3 survey patch payload. Omitted top-level fields are preserved; provided objects and arrays replace that whole subtree. ${SURVEY_BLOCKS_DESCRIPTION}`
+        `Strict top-level v3 survey patch payload. Omitted top-level fields are preserved; provided objects and arrays replace that whole subtree. \`customCss\` is \`{ light, dark }\` source (both keys) or null to clear; omit it to keep the current CSS. ${SURVEY_BLOCKS_DESCRIPTION}`
       ),
   })
   .strict();
@@ -279,11 +283,38 @@ export const ZMcpSetSurveyBlockOrderInput = ZV3SetSurveyBlockOrderBody.extend({
 
 export const ZMcpValidateSurveyInput = z
   .object({
-    operation: z.enum(["create", "patch"]).describe("Validation operation to run."),
-    surveyId: z.cuid2().optional().describe("Survey ID to validate against. Required for patch validation."),
-    data: ZMcpObjectInput.describe(`Create or patch payload to validate. ${SURVEY_BLOCKS_DESCRIPTION}`),
+    operation: z
+      .enum(["create", "patch", "customCss"])
+      .describe(
+        "Validation operation to run. `customCss` processes custom CSS only and returns the compiled result and warnings."
+      ),
+    surveyId: z
+      .cuid2()
+      .optional()
+      .describe(
+        "Survey ID to validate against. Required for patch validation; optional for customCss with scope survey (must belong to workspaceId)."
+      ),
+    workspaceId: ZId.optional().describe(
+      "Workspace ID. Required for, and only accepted by, customCss validation."
+    ),
+    scope: ZCustomCssScope.optional().describe(
+      "customCss validation only: `workspace` (shared survey CSS) or `survey` (one survey's CSS)."
+    ),
+    data: ZMcpObjectInput.describe(
+      `Create or patch payload to validate, or \`{ customCss: { light, dark } | null }\` for customCss. ${SURVEY_BLOCKS_DESCRIPTION}`
+    ),
   })
   .strict();
+
+export const ZMcpGetWorkspaceCustomCssInput = z
+  .object({
+    workspaceId: ZId.describe("Workspace ID whose shared survey CSS should be read."),
+  })
+  .strict();
+
+export const ZMcpPatchWorkspaceCustomCssInput = ZV3WorkspaceCustomCssPatchBody.extend({
+  workspaceId: ZId.describe("Workspace ID whose shared survey CSS should be saved or cleared."),
+}).strict();
 
 export const ZMcpDeleteSurveyInput = z
   .object({
@@ -412,6 +443,8 @@ export type TMcpEditSurveyBlocksInput = z.infer<typeof ZMcpEditSurveyBlocksInput
 export type TMcpSetSurveyBlockOrderInput = z.infer<typeof ZMcpSetSurveyBlockOrderInput>;
 export type TMcpValidateSurveyInput = z.infer<typeof ZMcpValidateSurveyInput>;
 export type TMcpDeleteSurveyInput = z.infer<typeof ZMcpDeleteSurveyInput>;
+export type TMcpGetWorkspaceCustomCssInput = z.infer<typeof ZMcpGetWorkspaceCustomCssInput>;
+export type TMcpPatchWorkspaceCustomCssInput = z.infer<typeof ZMcpPatchWorkspaceCustomCssInput>;
 export type TMcpListFeedbackDatasetsInput = z.infer<typeof ZMcpListFeedbackDatasetsInput>;
 export type TMcpListFeedbackRecordsInput = z.infer<typeof ZMcpListFeedbackRecordsInput>;
 export type TMcpGetFeedbackRecordInput = z.infer<typeof ZMcpGetFeedbackRecordInput>;

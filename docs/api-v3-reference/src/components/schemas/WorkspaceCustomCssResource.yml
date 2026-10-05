@@ -1,0 +1,53 @@
+type: object
+description: >-
+  A workspace's shared survey CSS (ENG-3641): editable source for authorized readers, never compiled
+  output. It applies to every survey in the workspace, beneath each survey's own CSS.
+required:
+  - workspaceId
+  - customCss
+  - previous
+  - status
+  - canEdit
+  - planAllowed
+properties:
+  workspaceId:
+    type: string
+  customCss:
+    anyOf:
+      - $ref: ./CustomCssInput.yml
+      - type: "null"
+    description: Current source; `null` when the workspace has no custom CSS.
+  previous:
+    anyOf:
+      - $ref: ./CustomCssInput.yml
+      - type: "null"
+    description: >-
+      The one recoverable previous revision. Restore it by sending this source back with PATCH; it is
+      processed and authorized like any other save.
+  status:
+    type: string
+    enum:
+      - ok
+      - stale
+      - withheld
+    description: >-
+      `stale`: compiled by an older processor and delivered by recompiling its source. `withheld`: the
+      source no longer passes the current processor, so respondents receive none of it until it is
+      fixed and saved again.
+  errors:
+    type: array
+    maxItems: 50
+    items:
+      $ref: ./CustomCssError.yml
+    description: Present only when `status` is `withheld`.
+  canEdit:
+    type: boolean
+    description: >-
+      Whether this caller may PATCH it: organization owners and managers for signed-in users, a
+      `manage` grant on this workspace for API keys.
+  planAllowed:
+    type: boolean
+    description: >-
+      Whether the organization's plan allows additions and edits (Scale on Formbricks Cloud; every
+      self-hosted plan). Removing CSS is always allowed.
+additionalProperties: false

@@ -7,10 +7,14 @@ import { UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
+import { type TCustomCssStored } from "@formbricks/types/custom-css";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { COLOR_DEFAULTS, STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
 import { type TStylingAppearance } from "@/lib/styling/dark-mode";
+import { type TCustomCssValidationState } from "@/modules/custom-css/components/lib/validation";
+import { SurveyCustomCssCard } from "@/modules/custom-css/components/survey-custom-css-card";
+import { type TSurveyCustomCssEditorConfig } from "@/modules/custom-css/components/types";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
 import { LogoSettingsCard } from "@/modules/survey/editor/components/logo-settings-card";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
@@ -47,6 +51,11 @@ interface StylingViewProps {
   /** Which palette the form edits and the preview shows. Only app surveys can render dark (D4). */
   appearance?: TStylingAppearance;
   setAppearance?: (appearance: TStylingAppearance) => void;
+  /** `null` when the Custom CSS rollout is off for this organization, which hides the card. */
+  customCssEditor?: TSurveyCustomCssEditorConfig | null;
+  customCssValidation?: TCustomCssValidationState;
+  /** The survey's Custom CSS as last persisted. */
+  savedCustomCss?: TCustomCssStored | null;
 }
 
 export const StylingView = ({
@@ -64,6 +73,9 @@ export const StylingView = ({
   isStorageConfigured = true,
   appearance = "light",
   setAppearance,
+  customCssEditor = null,
+  customCssValidation,
+  savedCustomCss = null,
 }: StylingViewProps) => {
   const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
@@ -95,6 +107,9 @@ export const StylingView = ({
   const [stylingOpen, setStylingOpen] = useState(false);
   const [confirmResetStylingModalOpen, setConfirmResetStylingModalOpen] = useState(false);
   const [confirmSuggestColorsOpen, setConfirmSuggestColorsOpen] = useState(false);
+  const [customCssOpen, setCustomCssOpen] = useState(false);
+  // Only app surveys render dark (D4), so a link survey edits and previews base CSS only.
+  const effectiveAppearance = localSurvey.type === "app" ? appearance : "light";
 
   const handleSuggestColors = () => {
     const currentBrandColor =
@@ -248,7 +263,7 @@ export const StylingView = ({
             />
           )}
 
-          <StylingAppearanceProvider appearance={localSurvey.type === "app" ? appearance : "light"}>
+          <StylingAppearanceProvider appearance={effectiveAppearance}>
             <FormStylingSettings
               open={formStylingOpen}
               setOpen={setFormStylingOpen}
@@ -288,6 +303,21 @@ export const StylingView = ({
                 isStorageConfigured={isStorageConfigured}
               />
             </>
+          )}
+
+          {/* Not gated by "Add custom styles": survey CSS adds on top of the workspace CSS either way (D16). */}
+          {customCssEditor && customCssValidation && (
+            <SurveyCustomCssCard
+              config={customCssEditor}
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              savedCustomCss={savedCustomCss}
+              validation={customCssValidation}
+              appearance={effectiveAppearance}
+              lookAndFeelHref={`${workspaceBasePath}/settings/workspace/look`}
+              open={customCssOpen}
+              setOpen={setCustomCssOpen}
+            />
           )}
 
           {!isCxMode && (

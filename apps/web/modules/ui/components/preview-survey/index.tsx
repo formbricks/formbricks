@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
+import type { TRendererCustomCss } from "@formbricks/types/custom-css";
 import { resolveDarkColors } from "@formbricks/types/dark-palette";
 import { resolveOverlayAppearance } from "@formbricks/types/overlay";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
@@ -29,6 +30,7 @@ import { ResetProgressButton } from "@/modules/ui/components/reset-progress-butt
 import { SurveyInline } from "@/modules/ui/components/survey";
 import { Modal } from "./components/modal";
 import { TabOption } from "./components/tab-option";
+import { PREVIEW_BOUNDARY_CLASS_NAME, previewBoundaryProps } from "./lib/containment";
 import { mirrorPlacementForDir } from "./lib/utils";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
@@ -45,6 +47,11 @@ interface PreviewSurveyProps {
   publicDomain: string;
   /** Dark only applies to app surveys; link previews stay light (D4). */
   appearance?: TStylingAppearance;
+  /**
+   * Compiled workspace + survey custom CSS to preview (ENG-3552): the editor's validated draft. Passed
+   * straight to the renderer, which applies CSS from this prop only — never from `survey`.
+   */
+  customCss?: TRendererCustomCss;
 }
 
 let surveyNameTemp: string;
@@ -61,6 +68,7 @@ export const PreviewSurvey = ({
   isSpamProtectionAllowed,
   publicDomain,
   appearance = "light",
+  customCss,
 }: PreviewSurveyProps) => {
   // Both callers hand over a survey that already carries its `embeddedFields`: the editor's working
   // copy is rows-native (ENG-2628), and the templates gallery builds its never-written survey through
@@ -345,6 +353,7 @@ export const PreviewSurvey = ({
                     <SurveyInline
                       appUrl={publicDomain}
                       isPreviewMode={true}
+                      customCss={customCss}
                       survey={jsSurvey}
                       appearance={appearance}
                       isBrandingEnabled={workspace.inAppSurveyBranding}
@@ -364,8 +373,10 @@ export const PreviewSurvey = ({
                   </Modal>
                 ) : (
                   <div
+                    {...previewBoundaryProps}
                     className={cn(
                       "flex h-full w-full flex-col px-1",
+                      PREVIEW_BOUNDARY_CLASS_NAME,
                       isCardless ? "min-h-0 overflow-hidden" : "justify-center"
                     )}>
                     {!styling.isLogoHidden && !isCardless && (
@@ -394,6 +405,7 @@ export const PreviewSurvey = ({
                         <SurveyInline
                           appUrl={publicDomain}
                           isPreviewMode={true}
+                          customCss={customCss}
                           isBrandingEnabled={workspace.linkSurveyBranding}
                           survey={jsLinkSurvey}
                           isRedirectDisabled={true}
@@ -469,94 +481,101 @@ export const PreviewSurvey = ({
                 </div>
               </div>
 
-              {previewType === "modal" ? (
-                <Modal
-                  isOpen={isModalOpen}
-                  placement={placement}
-                  clickOutsideClose={clickOutsideClose}
-                  overlay={overlay}
-                  overlayColor={overlayColor}
-                  overlayOpacity={overlayOpacity}
-                  previewMode="desktop"
-                  borderRadius={styling.roundness ?? 8}
-                  background={modalBackground}>
-                  <SurveyInline
-                    appUrl={publicDomain}
-                    isPreviewMode={true}
-                    survey={jsSurvey}
-                    appearance={appearance}
-                    isBrandingEnabled={workspace.inAppSurveyBranding}
-                    isRedirectDisabled={true}
-                    languageCode={activeLanguageCode}
-                    styling={styling}
-                    isCardBorderVisible={!styling.highlightBorderColor?.light}
-                    onClose={handlePreviewModalClose}
-                    getSetBlockId={(f: (value: string) => void) => {
-                      setBlockId = f;
-                    }}
-                    onFinished={onFinished}
-                    onLanguageChange={setActiveLanguageCode}
-                    isSpamProtectionEnabled={isSpamProtectionEnabled}
+              {/* The trusted box the survey is contained in, below the chrome and its controls. */}
+              <div
+                {...previewBoundaryProps}
+                className={cn("flex min-h-0 w-full flex-1 flex-col", PREVIEW_BOUNDARY_CLASS_NAME)}>
+                {previewType === "modal" ? (
+                  <Modal
+                    isOpen={isModalOpen}
                     placement={placement}
-                  />
-                </Modal>
-              ) : (
-                <MediaBackground
-                  surveyType={survey.type}
-                  styling={styling}
-                  ContentRef={ContentRef as React.RefObject<HTMLDivElement>}
-                  isEditorView
-                  useNaturalHeight={isCardless}>
-                  <div
-                    className={cn(
-                      "flex w-full justify-center",
-                      isCardless
-                        ? "h-full min-h-0 flex-1 flex-col items-stretch overflow-hidden"
-                        : "h-full items-center"
-                    )}>
-                    {!styling.isLogoHidden && !isCardless && (
-                      <div className="absolute top-5 left-5">
-                        <ClientLogo
-                          workspaceLogo={workspace.logo}
-                          workspaceId={workspace.id}
-                          surveyLogo={styling.logo}
-                          previewSurvey
-                        />
-                      </div>
-                    )}
+                    clickOutsideClose={clickOutsideClose}
+                    overlay={overlay}
+                    overlayColor={overlayColor}
+                    overlayOpacity={overlayOpacity}
+                    previewMode="desktop"
+                    borderRadius={styling.roundness ?? 8}
+                    background={modalBackground}>
+                    <SurveyInline
+                      appUrl={publicDomain}
+                      isPreviewMode={true}
+                      customCss={customCss}
+                      survey={jsSurvey}
+                      appearance={appearance}
+                      isBrandingEnabled={workspace.inAppSurveyBranding}
+                      isRedirectDisabled={true}
+                      languageCode={activeLanguageCode}
+                      styling={styling}
+                      isCardBorderVisible={!styling.highlightBorderColor?.light}
+                      onClose={handlePreviewModalClose}
+                      getSetBlockId={(f: (value: string) => void) => {
+                        setBlockId = f;
+                      }}
+                      onFinished={onFinished}
+                      onLanguageChange={setActiveLanguageCode}
+                      isSpamProtectionEnabled={isSpamProtectionEnabled}
+                      placement={placement}
+                    />
+                  </Modal>
+                ) : (
+                  <MediaBackground
+                    surveyType={survey.type}
+                    styling={styling}
+                    ContentRef={ContentRef as React.RefObject<HTMLDivElement>}
+                    isEditorView
+                    useNaturalHeight={isCardless}>
                     <div
                       className={cn(
-                        "w-full",
+                        "flex w-full justify-center",
                         isCardless
-                          ? "flex min-h-0 w-full flex-1 flex-col"
-                          : "z-0 mx-auto rounded-lg border-transparent"
+                          ? "h-full min-h-0 flex-1 flex-col items-stretch overflow-hidden"
+                          : "h-full items-center"
+                      )}>
+                      {!styling.isLogoHidden && !isCardless && (
+                        <div className="absolute top-5 left-5">
+                          <ClientLogo
+                            workspaceLogo={workspace.logo}
+                            workspaceId={workspace.id}
+                            surveyLogo={styling.logo}
+                            previewSurvey
+                          />
+                        </div>
                       )}
-                      style={isCardless ? undefined : { maxWidth: linkSurveyCardMaxWidth }}>
                       <div
                         className={cn(
-                          "flex min-h-0 w-full flex-1 flex-col",
-                          !isCardless && "justify-center"
-                        )}>
-                        <SurveyInline
-                          appUrl={publicDomain}
-                          isPreviewMode={true}
-                          survey={jsLinkSurvey}
-                          isBrandingEnabled={workspace.linkSurveyBranding}
-                          isRedirectDisabled={true}
-                          languageCode={languageCode}
-                          responseCount={42}
-                          styling={styling}
-                          showCardlessPreviewLogoSlot={!styling.isLogoHidden}
-                          getSetBlockId={(f: (value: string) => void) => {
-                            setBlockId = f;
-                          }}
-                          isSpamProtectionEnabled={isSpamProtectionEnabled}
-                        />
+                          "w-full",
+                          isCardless
+                            ? "flex min-h-0 w-full flex-1 flex-col"
+                            : "z-0 mx-auto rounded-lg border-transparent"
+                        )}
+                        style={isCardless ? undefined : { maxWidth: linkSurveyCardMaxWidth }}>
+                        <div
+                          className={cn(
+                            "flex min-h-0 w-full flex-1 flex-col",
+                            !isCardless && "justify-center"
+                          )}>
+                          <SurveyInline
+                            appUrl={publicDomain}
+                            isPreviewMode={true}
+                            customCss={customCss}
+                            survey={jsLinkSurvey}
+                            isBrandingEnabled={workspace.linkSurveyBranding}
+                            isRedirectDisabled={true}
+                            languageCode={languageCode}
+                            responseCount={42}
+                            styling={styling}
+                            showCardlessPreviewLogoSlot={!styling.isLogoHidden}
+                            getSetBlockId={(f: (value: string) => void) => {
+                              setBlockId = f;
+                            }}
+                            isSpamProtectionEnabled={isSpamProtectionEnabled}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </MediaBackground>
-              )}
+                  </MediaBackground>
+                )}
+              </div>
             </div>
           )}
         </motion.div>

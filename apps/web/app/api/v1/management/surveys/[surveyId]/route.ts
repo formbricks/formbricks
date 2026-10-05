@@ -4,7 +4,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSurveyUpdateInput } from "@formbricks/types/surveys/types";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { deleteSurvey } from "@/app/api/v1/management/surveys/[surveyId]/lib/surveys";
-import { checkSurveyWritePermissions } from "@/app/api/v1/management/surveys/lib/utils";
+import { checkSurveyWritePermissions, refuseV1CustomCss } from "@/app/api/v1/management/surveys/lib/utils";
 import {
   addLegacyProjectOverwrites,
   normaliseProjectOverwritesToWorkspace,
@@ -197,6 +197,11 @@ export const PUT = withV1ApiWrapper({
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
         };
+      }
+
+      const customCssRefusal = refuseV1CustomCss(surveyUpdate);
+      if (customCssRefusal) {
+        return { response: customCssRefusal };
       }
 
       // Backwards compat: accept projectOverwrites as alias for workspaceOverwrites

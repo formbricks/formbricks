@@ -3,10 +3,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RotateCcwIcon, SparklesIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { type TCustomCssCompiled } from "@formbricks/types/custom-css";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { TWorkspaceStyling, ZWorkspaceStyling } from "@formbricks/types/workspace";
@@ -14,6 +15,8 @@ import { previewSurvey } from "@/app/lib/templates";
 import { COLOR_DEFAULTS, STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
 import { type TStylingAppearance } from "@/lib/styling/dark-mode";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { type TWorkspaceCustomCssAccess } from "@/modules/custom-css/components/types";
+import { WorkspaceCustomCssCard } from "@/modules/custom-css/components/workspace-custom-css-card";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
@@ -45,6 +48,8 @@ interface ThemeStylingProps {
   isReadOnly: boolean;
   isStorageConfigured: boolean;
   publicDomain: string;
+  /** `null` when the Custom CSS rollout is off for this organization, which hides the card. */
+  customCssAccess: TWorkspaceCustomCssAccess | null;
 }
 
 export const ThemeStyling = ({
@@ -55,6 +60,7 @@ export const ThemeStyling = ({
   isReadOnly,
   isStorageConfigured = true,
   publicDomain,
+  customCssAccess,
 }: ThemeStylingProps) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -95,6 +101,13 @@ export const ThemeStyling = ({
   const [formStylingOpen, setFormStylingOpen] = useState(false);
   const [cardStylingOpen, setCardStylingOpen] = useState(false);
   const [backgroundStylingOpen, setBackgroundStylingOpen] = useState(false);
+  const [customCssOpen, setCustomCssOpen] = useState(false);
+
+  // Workspace Custom CSS is its own resource with its own save; it shares the appearance selector and
+  // the preview, which renders only CSS the server validated for the current draft (ENG-3553).
+  const [customCssPreview, setCustomCssPreview] = useState<TCustomCssCompiled | null>(null);
+  // A stable prop, so the preview only re-applies custom CSS when the validated output changes.
+  const previewCustomCss = useMemo(() => ({ workspace: customCssPreview }), [customCssPreview]);
   const onReset = useCallback(async () => {
     const updatedWorkspaceResponse = await updateWorkspaceAction({
       workspaceId: workspace.id,
@@ -162,11 +175,23 @@ export const ThemeStyling = ({
 
   if (isReadOnly) {
     return (
-      <Alert variant="warning" role="status">
-        <AlertDescription>
-          {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
-        </AlertDescription>
-      </Alert>
+      <div className="flex flex-col gap-4">
+        <Alert variant="warning" role="status">
+          <AlertDescription>
+            {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
+          </AlertDescription>
+        </Alert>
+        {customCssAccess && (
+          <WorkspaceCustomCssCard
+            workspaceId={workspaceId}
+            access={{ ...customCssAccess, canEdit: false }}
+            appearance={appearance}
+            open={customCssOpen}
+            setOpen={setCustomCssOpen}
+            onPreviewCssChange={setCustomCssPreview}
+          />
+        )}
+      </div>
     );
   }
   return (
@@ -256,6 +281,17 @@ export const ThemeStyling = ({
                   form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
                   isStorageConfigured={isStorageConfigured}
                 />
+
+                {customCssAccess && (
+                  <WorkspaceCustomCssCard
+                    workspaceId={workspaceId}
+                    access={customCssAccess}
+                    appearance={appearance}
+                    open={customCssOpen}
+                    setOpen={setCustomCssOpen}
+                    onPreviewCssChange={setCustomCssPreview}
+                  />
+                )}
               </div>
             </div>
 
@@ -289,6 +325,7 @@ export const ThemeStyling = ({
                   },
                 }}
                 appearance={appearance}
+                customCss={customCssAccess ? previewCustomCss : undefined}
                 previewType={previewSurveyType}
                 setPreviewType={setPreviewSurveyType}
                 publicDomain={publicDomain}

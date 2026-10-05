@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import type { TCustomCssStored } from "@formbricks/types/custom-css";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   collectDeclaredFieldNames,
@@ -8,10 +9,12 @@ import {
   validateNewDeclaredFieldNames,
 } from "@formbricks/types/surveys/declared-field-guard";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { type TV3SurveyWriteReport, toV3CustomCssError } from "@/app/api/v3/lib/custom-css";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
 import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { selectSurvey } from "@/lib/survey/service";
 import {
   APP_SURVEY_TRIGGER_REQUIRED_MESSAGE,
@@ -19,6 +22,7 @@ import {
   stripIsDraftFromBlocks,
   transformPrismaSurvey,
 } from "@/lib/survey/utils";
+import { invalidateCustomCssCaches, resolveCustomCssWrite } from "@/modules/custom-css/lib/service";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   isSurveySchedulingDue,
@@ -38,7 +42,11 @@ import {
 import { resolveV3SurveyTriggers } from "./triggers";
 import { getV3SurveyMediaInvalidParams } from "./validation";
 import { NO_VISIBLE_SURVEYS } from "./visibility-context";
-import { assertV3SurveyTargetingWritePermission, assertV3SurveyWritePermissions } from "./write-permissions";
+import {
+  V3SurveyWritePermissionError,
+  assertV3SurveyTargetingWritePermission,
+  assertV3SurveyWritePermissions,
+} from "./write-permissions";
 
 function buildSurveyLanguageUpdate(
   currentSurvey: TSurvey,
@@ -270,6 +278,11 @@ export async function executeV3SurveyPatch(params: {
   precondition?: TV3SurveyWritePrecondition;
   /** The surveys the caller may reference in targeting (ENG-3282). Omitted, nothing is referenceable. */
   visibleSurveyWhere?: Prisma.SurveyWhereInput;
+  /**
+   * ENG-3641: the custom CSS to store, already resolved by the shared custom CSS service. Present only
+   * when the CSS actually changed; absent leaves the column untouched.
+   */
+  customCss?: { stored: TCustomCssStored | null };
 }): Promise<TSurvey> {
   const {
     currentSurvey,
@@ -278,6 +291,7 @@ export async function executeV3SurveyPatch(params: {
     requestId,
     precondition,
     visibleSurveyWhere = NO_VISIBLE_SURVEYS,
+    customCss,
   } = params;
   const mediaInvalidParams = getV3SurveyMediaInvalidParams(document.blocks);
   if (mediaInvalidParams.length > 0) {
@@ -331,6 +345,7 @@ export async function executeV3SurveyPatch(params: {
     closeOn: normalizedScheduling.closeOn,
     publishOn: normalizedScheduling.publishOn,
     languages: buildSurveyLanguageUpdate(currentSurvey, languages),
+    ...(customCss ? { customCss: customCss.stored ?? Prisma.DbNull } : {}),
   };
 
   // App-only runtime/distribution settings (display scalars, triggers); also yields the segment
@@ -414,6 +429,10 @@ export async function executeV3SurveyPatch(params: {
       persistedSurvey.blocks
     );
 
+    if (customCss) {
+      await invalidateCustomCssCaches(currentSurvey.workspaceId);
+    }
+
     return await reconcilePersistedV3SurveyPatch({
       survey: transformPrismaSurvey<TSurvey>(persistedSurvey),
       workspaceId: currentSurvey.workspaceId,
@@ -433,6 +452,40 @@ export async function executeV3SurveyPatch(params: {
   }
 }
 
+/**
+ * ENG-3641: survey CSS through the shared custom CSS service. The merged document carries the stored
+ * source when the patch omits `customCss`, so an unrelated patch is `unchanged` — no plan check, no
+ * processing, no write — and only a real addition or edit needs Scale. Removal needs neither.
+ */
+async function resolveV3SurveyPatchCustomCss(
+  currentSurvey: TSurvey,
+  document: TV3SurveyDocument,
+  organizationId: string | undefined
+) {
+  const outcome = await resolveCustomCssWrite({
+    scope: "survey",
+    organizationId:
+      organizationId ??
+      (async () => {
+        const organization = await getOrganizationByWorkspaceId(currentSurvey.workspaceId);
+        if (!organization) {
+          throw new V3SurveyWritePermissionError(
+            `Unable to verify custom CSS permissions for workspaceId: ${currentSurvey.workspaceId}`
+          );
+        }
+        return organization.id;
+      }),
+    existing: currentSurvey.customCss,
+    input: document.customCss ?? null,
+  });
+
+  if (!outcome.ok) {
+    throw toV3CustomCssError(outcome);
+  }
+
+  return outcome;
+}
+
 export async function patchV3Survey(
   currentSurvey: TSurvey,
   input: unknown,
@@ -440,7 +493,9 @@ export async function patchV3Survey(
   organizationId?: string,
   precondition?: TV3SurveyWritePrecondition,
   reportedVisibility?: TV3SurveyReportedVisibility,
-  visibleSurveyWhere: Prisma.SurveyWhereInput = NO_VISIBLE_SURVEYS
+  visibleSurveyWhere: Prisma.SurveyWhereInput = NO_VISIBLE_SURVEYS,
+  /** Filled with the custom CSS warnings when the patch changed the survey's custom CSS. */
+  report?: TV3SurveyWriteReport
 ): Promise<TSurvey> {
   const preparation = prepareV3SurveyPatchInput(currentSurvey, input, { reportedVisibility });
   if (!preparation.ok) {
@@ -471,13 +526,21 @@ export async function patchV3Survey(
   );
 
   await assertV3SurveyTargetingWritePermission(currentSurvey, preparation.document, organizationId);
+  const customCss = await resolveV3SurveyPatchCustomCss(currentSurvey, preparation.document, organizationId);
 
-  return await executeV3SurveyPatch({
+  const survey = await executeV3SurveyPatch({
     currentSurvey,
     document: preparation.document,
     languageRequests: preparation.languageRequests,
     requestId,
     precondition: effectivePrecondition,
     visibleSurveyWhere,
+    ...(customCss.changed ? { customCss: { stored: customCss.stored } } : {}),
   });
+
+  if (report && customCss.changed) {
+    report.customCssWarnings = customCss.warnings;
+  }
+
+  return survey;
 }

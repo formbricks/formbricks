@@ -5,6 +5,7 @@ import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SurveyType } from "@formbricks/database/prisma-browser";
+import { isSafeThemeColor } from "@formbricks/types/styling-values";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
@@ -86,7 +87,12 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
         return (
           <div
             className={`${baseClasses} ${loadedClass}`}
-            style={{ backgroundColor: background?.bg || "#ffffff", filter: `${filterStyle}` }}
+            // A solid background lands in a server-rendered style attribute: anything that is not a
+            // color (legacy rows predate the write-side check) falls back to white (ENG-2950).
+            style={{
+              backgroundColor: isSafeThemeColor(background?.bg) ? background?.bg : "#ffffff",
+              filter: `${filterStyle}`,
+            }}
           />
         );
       case "animation":

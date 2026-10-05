@@ -204,7 +204,17 @@ export const updateWorkspace = async (
   // owner move their workspace (and all its data) into another organization, so it is stripped.
   // expectedUpdatedAt is a concurrency baseline, not a column — writing it would be nonsense and
   // would also fight Prisma's own @updatedAt.
-  const { organizationId: _organizationId, expectedUpdatedAt, ...data } = inputWorkspace;
+  //
+  // ENG-2949: custom CSS is written only by `updateWorkspaceCustomCss`, which checks the stricter role,
+  // the plan and the processor. `ZWorkspaceUpdateInput` has no such keys, but validation above does not
+  // replace the input, so a caller passing them would otherwise reach the write untouched.
+  const {
+    organizationId: _organizationId,
+    expectedUpdatedAt,
+    customCss: _customCss,
+    customCssPrevious: _customCssPrevious,
+    ...data
+  } = inputWorkspace as TWorkspaceUpdateInput & { customCss?: unknown; customCssPrevious?: unknown };
   let updatedWorkspace;
   let previousLogoUrl: string | undefined;
   try {
@@ -296,7 +306,15 @@ export const createWorkspace = async (
 
   // expectedUpdatedAt shares ZWorkspaceUpdateInput with the update path but is a concurrency
   // baseline, not a column; leaving it in would hand Prisma an unknown field on create.
-  const { teamIds, config: configInput, expectedUpdatedAt: _expectedUpdatedAt, ...data } = workspaceInput;
+  // ENG-2949: a new workspace starts without custom CSS; see `updateWorkspace` for why it is stripped.
+  const {
+    teamIds,
+    config: configInput,
+    expectedUpdatedAt: _expectedUpdatedAt,
+    customCss: _customCss,
+    customCssPrevious: _customCssPrevious,
+    ...data
+  } = workspaceInput as TWorkspaceUpdateInput & { customCss?: unknown; customCssPrevious?: unknown };
   // Captured out here so the guard above still narrows it: inside the transaction callback below,
   // TypeScript widens workspaceInput.name back to `string | undefined`.
   const name = workspaceInput.name;

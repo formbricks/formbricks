@@ -4,12 +4,20 @@ import { Language, Prisma, Workspace } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
-export const getWorkspace = reactCache(async (workspaceId: string): Promise<Workspace | null> => {
+/**
+ * ENG-2949: custom CSS (source, compiled output and the previous revision — up to ~400 KB) is left out.
+ * This feeds the editor's client state on every tab-focus refetch; the CSS editor reads it through
+ * `getWorkspaceCustomCssRecord` instead.
+ */
+export type TEditorWorkspace = Omit<Workspace, "customCss" | "customCssPrevious">;
+
+export const getWorkspace = reactCache(async (workspaceId: string): Promise<TEditorWorkspace | null> => {
   try {
     const workspacePrisma = await prisma.workspace.findUnique({
       where: {
         id: workspaceId,
       },
+      omit: { customCss: true, customCssPrevious: true },
     });
 
     return workspacePrisma;

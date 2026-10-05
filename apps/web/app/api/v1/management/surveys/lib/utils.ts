@@ -97,3 +97,17 @@ export const checkSurveyWritePermissions = async (
   );
   return canWriteScripts ? null : responses.forbiddenResponse(CUSTOM_HEAD_SCRIPTS_PERMISSION_MESSAGE);
 };
+
+export const V1_CUSTOM_CSS_UNSUPPORTED_MESSAGE =
+  "customCss is not supported by the v1 management API. Use PATCH /api/v3/surveys/{surveyId} to read or change survey custom CSS.";
+
+/**
+ * ENG-2949: the legacy API never accepts custom CSS. Every CSS write runs through the shared processor and
+ * plan check, which v1 has no way to report on (no warnings, no CSS errors), so a body carrying the key is
+ * refused rather than silently dropped. v1 responses do not echo the field, so a GET → PUT round trip
+ * never sends it back.
+ */
+export const refuseV1CustomCss = (body: unknown): Response | null =>
+  typeof body === "object" && body !== null && Object.hasOwn(body, "customCss")
+    ? responses.badRequestResponse(V1_CUSTOM_CSS_UNSUPPORTED_MESSAGE)
+    : null;

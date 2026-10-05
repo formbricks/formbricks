@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { V3CustomCssInvalidError, V3CustomCssPlanRequiredError } from "@/app/api/v3/lib/custom-css";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import { recordSurveyListPredicateMismatch } from "@/lib/authorization/metrics";
 import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { previewCustomCss } from "@/modules/custom-css/lib/service";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
@@ -55,6 +57,13 @@ vi.mock("@/app/api/v3/lib/auth", () => ({
 }));
 
 vi.mock("@/lib/authorization/resource-list", () => ({ filterReadableSurveyIds: vi.fn() }));
+
+// ENG-3641: the dry-run half of the custom CSS service; the save rules have their own suite.
+vi.mock("@/modules/custom-css/lib/service", () => ({
+  previewCustomCss: vi.fn(),
+  resolveCustomCssWrite: vi.fn(),
+  invalidateCustomCssCaches: vi.fn(),
+}));
 vi.mock("@/lib/authorization/metrics", () => ({ recordSurveyListPredicateMismatch: vi.fn() }));
 
 vi.mock("@/lib/posthog", () => ({
@@ -425,7 +434,7 @@ describe("createV3SurveyResponse", () => {
       authentication,
       requestId,
       "org_1",
-      undefined
+      { report: {} }
     );
     expect(capturePostHogEvent).not.toHaveBeenCalled();
     expect(auditLog).toMatchObject({
@@ -849,7 +858,9 @@ describe("patchV3SurveyResponse", () => {
       undefined,
       serializedSurvey,
       // ENG-3282: the caller's visible-survey clause, for targeting references.
-      expect.any(Object)
+      expect.any(Object),
+      // ENG-3641: the write report the custom CSS warnings come back through.
+      {}
     );
     expect(auditLog).toMatchObject({
       organizationId: "org_1",
@@ -907,7 +918,9 @@ describe("patchV3SurveyResponse", () => {
       { expectedUpdatedAt: new Date("2026-01-01T00:00:00.000Z") },
       expect.anything(),
       // ENG-3282: the caller's visible-survey clause, for targeting references.
-      expect.any(Object)
+      expect.any(Object),
+      // ENG-3641: the write report the custom CSS warnings come back through.
+      {}
     );
   });
 
@@ -1316,7 +1329,9 @@ describe("editV3SurveyBlocksResponse", () => {
       { expectedUpdatedAt: survey.updatedAt },
       expect.anything(),
       // ENG-3282: the caller's visible-survey clause, for targeting references.
-      expect.any(Object)
+      expect.any(Object),
+      // ENG-3641: the write report the custom CSS warnings come back through.
+      {}
     );
     expect(auditLog).toMatchObject({
       organizationId: "org_1",
@@ -1370,7 +1385,9 @@ describe("editV3SurveyBlocksResponse", () => {
       { expectedUpdatedAt: new Date("2026-01-01T00:00:00.000Z") },
       expect.anything(),
       // ENG-3282: the caller's visible-survey clause, for targeting references.
-      expect.any(Object)
+      expect.any(Object),
+      // ENG-3641: the write report the custom CSS warnings come back through.
+      {}
     );
   });
 
@@ -1595,7 +1612,9 @@ describe("setV3SurveyBlockOrderResponse", () => {
       { expectedUpdatedAt: survey.updatedAt },
       expect.anything(),
       // ENG-3282: the caller's visible-survey clause, for targeting references.
-      expect.any(Object)
+      expect.any(Object),
+      // ENG-3641: the write report the custom CSS warnings come back through.
+      {}
     );
   });
 
@@ -1811,5 +1830,308 @@ describe("listV3Surveys visibility (ENG-3282)", () => {
       expect.objectContaining({ name: "filter[owner][in]" }),
     ]);
     expect(getSurveyListPage).not.toHaveBeenCalled();
+  });
+});
+
+describe("custom CSS (ENG-3641)", () => {
+  const otherWorkspaceSurvey = { ...survey, id: "survey_2", workspaceId: "tz4a98xxat96iws9zmbrgjzz" };
+  const cssWarning = {
+    code: "import_removed",
+    scope: "survey",
+    appearance: "light",
+    line: 1,
+    column: 1,
+    reason: "@import is not supported",
+  } as const;
+  const cssError = {
+    code: "syntax_error",
+    scope: "survey",
+    appearance: "light",
+    line: 2,
+    column: 5,
+    reason: "Unexpected token",
+  } as const;
+  const customCssBody = (overrides: Record<string, unknown> = {}) => ({
+    operation: "customCss" as const,
+    workspaceId,
+    scope: "survey" as const,
+    data: { customCss: { light: "a{}", dark: null } },
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(authResult);
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+      survey,
+      authResult,
+      response: null,
+      visibility: RESOURCE_VISIBILITY,
+    } as never);
+    vi.mocked(previewCustomCss).mockResolvedValue({
+      ok: true,
+      compiled: { light: "@layer fb-survey{a}", dark: null },
+      warnings: [cssWarning],
+    });
+    vi.mocked(prepareV3SurveyCreateInput).mockReturnValue({
+      ok: true,
+      languageRequests: [{ code: "en-US", default: true, enabled: true }],
+    } as never);
+    vi.mocked(prepareV3SurveyPatchInput).mockReturnValue({ ok: true, languageRequests: [] } as never);
+  });
+
+  describe("validate operation customCss", () => {
+    test("needs workspace read only, returns compiled CSS and warnings, and writes nothing", async () => {
+      const response = await validateV3Survey({
+        body: customCssBody(),
+        authentication,
+        requestId,
+        instance,
+      } as never);
+
+      expect(response.status).toBe(200);
+      expect(vi.mocked(requireV3WorkspaceAccess)).toHaveBeenCalledWith(
+        authentication,
+        workspaceId,
+        "read",
+        requestId,
+        instance
+      );
+      expect(previewCustomCss).toHaveBeenCalledWith("survey", { light: "a{}", dark: null });
+      expect(await readJson(response)).toEqual({
+        data: {
+          valid: true,
+          operation: "customCss",
+          invalid_params: [],
+          customCss: { light: "@layer fb-survey{a}", dark: null },
+          warnings: [cssWarning],
+        },
+      });
+      expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
+      expect(vi.mocked(createV3Survey)).not.toHaveBeenCalled();
+    });
+
+    test("a rejected CSS returns errors and invalid_params and no compiled output", async () => {
+      vi.mocked(previewCustomCss).mockResolvedValue({ ok: false, errors: [cssError] });
+
+      const response = await validateV3Survey({
+        body: customCssBody({ scope: "workspace" }),
+        authentication,
+        requestId,
+        instance,
+      } as never);
+
+      const body = await readJson(response);
+      expect(body.data).toEqual({
+        valid: false,
+        operation: "customCss",
+        invalid_params: [{ name: "customCss.light", reason: "Unexpected token (line 2, column 5)" }],
+        errors: [cssError],
+      });
+      expect(body.data).not.toHaveProperty("customCss");
+    });
+
+    test("without workspace read access nothing is processed", async () => {
+      vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(problemForbidden(requestId, "nope", instance));
+
+      const response = await validateV3Survey({
+        body: customCssBody(),
+        authentication,
+        requestId,
+        instance,
+      } as never);
+
+      expect(response.status).toBe(403);
+      expect(previewCustomCss).not.toHaveBeenCalled();
+    });
+
+    test("a named survey needs read access to it, including a private survey", async () => {
+      vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+        survey: null,
+        authResult: null,
+        response: problemForbidden(requestId, "You are not authorized to access this resource", instance),
+      } as never);
+
+      const response = await validateV3Survey({
+        body: customCssBody({ surveyId: validSurveyId }),
+        authentication,
+        requestId,
+        instance,
+      } as never);
+
+      expect(response.status).toBe(403);
+      expect(vi.mocked(getAuthorizedV3Survey)).toHaveBeenCalledWith(
+        expect.objectContaining({ surveyId: validSurveyId, access: "read" })
+      );
+      expect(previewCustomCss).not.toHaveBeenCalled();
+    });
+
+    test("a survey from another workspace is refused like an unknown one", async () => {
+      vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+        survey: otherWorkspaceSurvey,
+        authResult,
+        response: null,
+        visibility: RESOURCE_VISIBILITY,
+      } as never);
+
+      const response = await validateV3Survey({
+        body: customCssBody({ surveyId: validSurveyId }),
+        authentication,
+        requestId,
+        instance,
+      } as never);
+
+      expect(response.status).toBe(403);
+      expect(previewCustomCss).not.toHaveBeenCalled();
+    });
+
+    test("the raw entry point rejects compiled output and a surveyId on workspace scope", async () => {
+      for (const body of [
+        customCssBody({ data: { customCss: { light: "a{}", dark: null, compiled: "x" } } }),
+        customCssBody({ scope: "workspace", surveyId: validSurveyId }),
+        customCssBody({ data: { customCss: { light: "a{}" } } }),
+      ]) {
+        const response = await validateV3SurveyFromRawInput({ body, authentication, requestId, instance });
+        expect(response.status).toBe(400);
+      }
+      expect(previewCustomCss).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("create and patch validation", () => {
+    test("process customCss additively when the payload carries it", async () => {
+      const response = await validateV3Survey({
+        body: { operation: "create", data: { ...createBody, customCss: { light: "a{}", dark: null } } },
+        authentication,
+        requestId,
+        instance,
+      } as never);
+
+      expect((await readJson(response)).data).toMatchObject({
+        valid: true,
+        operation: "create",
+        customCss: { light: "@layer fb-survey{a}", dark: null },
+        warnings: [cssWarning],
+      });
+    });
+
+    test("leave a payload without customCss exactly as before", async () => {
+      const response = await validateV3Survey({
+        body: { operation: "patch", surveyId: validSurveyId, data: { name: "x" } },
+        authentication,
+        requestId,
+        instance,
+      } as never);
+
+      expect(previewCustomCss).not.toHaveBeenCalled();
+      expect((await readJson(response)).data).toEqual({
+        valid: true,
+        operation: "patch",
+        invalid_params: [],
+        languages: [],
+      });
+    });
+
+    test("report a CSS failure as invalid, with no compiled output", async () => {
+      vi.mocked(previewCustomCss).mockResolvedValue({ ok: false, errors: [cssError] });
+
+      const response = await validateV3Survey({
+        body: {
+          operation: "patch",
+          surveyId: validSurveyId,
+          data: { customCss: { light: "a{", dark: null } },
+        },
+        authentication,
+        requestId,
+        instance,
+      } as never);
+
+      const { data } = await readJson(response);
+      expect(data).toMatchObject({ valid: false, operation: "patch", errors: [cssError] });
+      expect(data.invalid_params).toEqual([
+        { name: "customCss.light", reason: "Unexpected token (line 2, column 5)" },
+      ]);
+      expect(data).not.toHaveProperty("customCss");
+    });
+  });
+
+  describe("writes", () => {
+    test("create maps a plan refusal to 403 custom_css_plan_required", async () => {
+      vi.mocked(createV3Survey).mockRejectedValue(new V3CustomCssPlanRequiredError());
+
+      const response = await createV3SurveyResponse({
+        body: parsedCreateBody,
+        authentication,
+        requestId,
+        instance,
+      });
+
+      expect(response.status).toBe(403);
+      expect(await readJson(response)).toMatchObject({ code: "custom_css_plan_required" });
+    });
+
+    test("create maps rejected CSS to 422 with the processor's errors in details", async () => {
+      vi.mocked(createV3Survey).mockRejectedValue(new V3CustomCssInvalidError([cssError]));
+
+      const response = await createV3SurveyResponse({
+        body: parsedCreateBody,
+        authentication,
+        requestId,
+        instance,
+      });
+
+      expect(response.status).toBe(422);
+      expect(await readJson(response)).toMatchObject({
+        code: "unprocessable_content",
+        invalid_params: [{ name: "customCss.light" }],
+        details: { errors: [cssError] },
+      });
+    });
+
+    test("create returns the warnings beside data when CSS was processed", async () => {
+      vi.mocked(createV3Survey).mockImplementation(async (_body, _auth, _req, _org, options) => {
+        options!.report!.customCssWarnings = [cssWarning];
+        return survey as never;
+      });
+      vi.mocked(serializeV3SurveyResource).mockReturnValue(serializedSurvey as never);
+
+      const response = await createV3SurveyResponse({
+        body: parsedCreateBody,
+        authentication,
+        requestId,
+        instance,
+      });
+
+      expect(response.status).toBe(201);
+      expect(await readJson(response)).toEqual({ data: serializedSurvey, warnings: [cssWarning] });
+    });
+
+    test("patch returns the warnings beside data, and maps a plan refusal to 403", async () => {
+      vi.mocked(serializeV3SurveyResource).mockReturnValue(serializedSurvey as never);
+      vi.mocked(patchV3Survey).mockImplementation(async (...args: unknown[]) => {
+        (args[7] as { customCssWarnings?: unknown[] }).customCssWarnings = [cssWarning];
+        return updatedSurvey as never;
+      });
+
+      const ok = await patchV3SurveyResponse({
+        surveyId: "survey_1",
+        body: { customCss: { light: "a{}", dark: null } },
+        authentication,
+        requestId,
+        instance,
+      });
+      expect(await readJson(ok)).toEqual({ data: serializedSurvey, warnings: [cssWarning] });
+
+      vi.mocked(patchV3Survey).mockRejectedValue(new V3CustomCssPlanRequiredError());
+      const refused = await patchV3SurveyResponse({
+        surveyId: "survey_1",
+        body: { customCss: { light: "b{}", dark: null } },
+        authentication,
+        requestId,
+        instance,
+      });
+      expect(refused.status).toBe(403);
+      expect(await readJson(refused)).toMatchObject({ code: "custom_css_plan_required" });
+    });
   });
 });

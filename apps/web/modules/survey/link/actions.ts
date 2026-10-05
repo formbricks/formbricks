@@ -12,6 +12,8 @@ import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { resolveSurveyLanguageCode } from "@/modules/survey/link/lib/language";
 import { createLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
+import { getLinkSurveyCustomCss, omitCustomCssSource } from "@/modules/survey/link/lib/respondent-custom-css";
+import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 
 export const sendLinkSurveyEmailAction = actionClient
   .inputSchema(ZLinkSurveyEmailData)
@@ -59,10 +61,22 @@ export const validateSurveyPinAction = actionClient
     const surveyPin = survey.pin;
     const originalPin = surveyPin?.toString();
 
-    if (!originalPin) return { survey };
-    if (originalPin !== parsedInput.pin) {
+    if (originalPin && originalPin !== parsedInput.pin) {
       throw new InvalidInputError("INVALID_PIN");
     }
 
-    return { survey, pinAuthToken: createLinkSurveyPinToken(survey.id) };
+    // The survey goes to the respondent's browser: without its stored custom CSS (editable source),
+    // with the compiled CSS the link page would otherwise have rendered (ENG-3552). Resolved only after
+    // the PIN matched, so a PIN-protected survey's CSS is not readable before it is unlocked.
+    const workspaceContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
+    const customCss = await getLinkSurveyCustomCss({
+      organizationId: workspaceContext.organizationId,
+      workspaceCustomCss: workspaceContext.customCss,
+      surveyId: survey.id,
+      surveyCustomCss: survey.customCss,
+    });
+    const publicSurvey = omitCustomCssSource(survey);
+
+    if (!originalPin) return { survey: publicSurvey, customCss };
+    return { survey: publicSurvey, customCss, pinAuthToken: createLinkSurveyPinToken(survey.id) };
   });

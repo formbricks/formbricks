@@ -193,6 +193,22 @@ export const getBulkInvitePermission = async (organizationId: string): Promise<b
   );
 };
 
+/**
+ * Custom CSS additions and edits (ENG-2949, D15). Scale-only on Formbricks Cloud; every self-hosted plan,
+ * Community Edition included, may write it without a license. Only the plan half of the rule — the role
+ * and processing checks live in `modules/custom-css/lib`, and removal never needs this.
+ */
+export const getCustomCssPermission = async (organizationId: string): Promise<boolean> => {
+  if (!IS_FORMBRICKS_CLOUD) {
+    return true;
+  }
+
+  return hasOrganizationEntitlementWithLicenseGuard(
+    organizationId,
+    CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.CUSTOM_CSS
+  );
+};
+
 export const getOrganizationWorkspacesLimit = async (organizationId: string): Promise<number> => {
   const entitlementsContext = await getOrganizationEntitlementsContext(organizationId);
 

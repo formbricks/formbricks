@@ -5,6 +5,13 @@ import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
 import { getV3AuthorizationActor, requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import {
+  type TV3SurveyWriteReport,
+  capCustomCssIssues,
+  customCssErrorsToInvalidParams,
+  mapV3CustomCssError,
+  toV3WriteExtensions,
+} from "@/app/api/v3/lib/custom-css";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
   type InvalidParam,
@@ -26,6 +33,7 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { WorkspaceSurveyLimitError } from "@/lib/survey/visibility/limit";
 import { isAwaitingProjection } from "@/lib/survey/visibility/policy";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
+import { type TCustomCssPreview, previewCustomCss } from "@/modules/custom-css/lib/service";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
@@ -62,12 +70,14 @@ import { V3SurveyReferenceValidationError } from "../reference-validation";
 import {
   type TV3CreateSurveyBody,
   type TV3SurveyBlockOp,
+  type TV3SurveyCustomCssValidationRequest,
   type TV3SurveyDocument,
   type TV3SurveyValidationRequestBody,
   ZV3CreateSurveyBody,
   ZV3EditSurveyBlocksBody,
   ZV3ExpectedUpdatedAt,
   ZV3SetSurveyBlockOrderBody,
+  ZV3SurveyCustomCss,
   ZV3SurveyValidationRequestBody,
   formatV3ZodInvalidParams,
 } from "../schemas";
@@ -155,13 +165,19 @@ export function getSessionUserId(authentication: TV3Authentication): string | nu
 
 function serializeValidationResult<TDocument extends TV3SurveyDocument>(
   operation: "create" | "patch",
-  preparation: TV3SurveyPrepareResult<TDocument>
+  preparation: TV3SurveyPrepareResult<TDocument>,
+  customCss?: TCustomCssPreview
 ) {
-  if (!preparation.ok) {
+  if (!preparation.ok || customCss?.ok === false) {
+    // ENG-3641: no compiled CSS on a failed validation; the processor's errors are additive.
     return {
       valid: false,
       operation,
-      invalid_params: preparation.validation.invalidParams,
+      invalid_params: [
+        ...(preparation.ok ? [] : preparation.validation.invalidParams),
+        ...(customCss?.ok === false ? customCssErrorsToInvalidParams(customCss.errors) : []),
+      ],
+      ...(customCss?.ok === false ? { errors: capCustomCssIssues(customCss.errors) } : {}),
     };
   }
 
@@ -173,7 +189,86 @@ function serializeValidationResult<TDocument extends TV3SurveyDocument>(
       ...languageRequest,
       writeBehavior: "connect_or_create" as const,
     })),
+    // ENG-3641: additive, and only when the payload carried custom CSS.
+    ...(customCss?.ok
+      ? { customCss: customCss.compiled, warnings: capCustomCssIssues(customCss.warnings) }
+      : {}),
   };
+}
+
+/**
+ * Custom CSS in a create or patch dry run (ENG-3641): processed only when the payload itself carries a
+ * `customCss` key, so an existing validation request gets exactly the response it always did.
+ */
+async function previewPayloadCustomCss(data: unknown): Promise<TCustomCssPreview | undefined> {
+  if (!isPlainObjectBody(data) || !("customCss" in data)) {
+    return undefined;
+  }
+  const parsed = ZV3SurveyCustomCss.safeParse(data.customCss);
+  // A malformed value is the schema's to report through `invalid_params`; nothing to process.
+  return parsed.success ? await previewCustomCss("survey", parsed.data) : undefined;
+}
+
+/**
+ * The CSS-only validation variant (ENG-3641). Read access to the workspace, and to the survey when one is
+ * named, which must belong to that workspace. Never writes, versions, touches timestamps or caches, and
+ * grants nothing: a valid result does not bypass the write path's own permission and plan checks.
+ */
+async function validateV3SurveyCustomCss({
+  body,
+  authentication,
+  requestId,
+  instance,
+}: Omit<TValidateV3SurveyParams, "body"> & { body: TV3SurveyCustomCssValidationRequest }): Promise<Response> {
+  const authResult = await requireV3WorkspaceAccess(
+    authentication,
+    body.workspaceId,
+    "read",
+    requestId,
+    instance
+  );
+  if (authResult instanceof Response) {
+    return authResult;
+  }
+
+  if (body.surveyId) {
+    const { survey, response } = await getAuthorizedV3Survey({
+      surveyId: body.surveyId,
+      authentication,
+      access: "read",
+      requestId,
+      instance,
+    });
+    if (response) {
+      return response;
+    }
+    // Same answer as an unknown or unreadable survey, so a survey's workspace is not probeable.
+    if (survey.workspaceId !== authResult.workspaceId) {
+      logger
+        .withContext({ requestId, workspaceId: authResult.workspaceId, surveyId: body.surveyId })
+        .warn({ statusCode: 403 }, "Custom CSS validation named a survey from another workspace");
+      return problemForbidden(requestId, "You are not authorized to access this resource", instance);
+    }
+  }
+
+  const preview = await previewCustomCss(body.scope, body.data.customCss);
+  return successResponse(
+    preview.ok
+      ? {
+          valid: true,
+          operation: "customCss" as const,
+          invalid_params: [],
+          customCss: preview.compiled,
+          warnings: capCustomCssIssues(preview.warnings),
+        }
+      : {
+          valid: false,
+          operation: "customCss" as const,
+          invalid_params: customCssErrorsToInvalidParams(preview.errors),
+          errors: capCustomCssIssues(preview.errors),
+        },
+    { requestId, cache: "private, no-store" }
+  );
 }
 
 export async function listV3Surveys({
@@ -301,6 +396,14 @@ function mapV3SurveyCreateError(
     instance,
   }: { log: ReturnType<typeof logger.withContext>; requestId: string; instance: string }
 ): Response {
+  const customCssProblem = mapV3CustomCssError(err, { requestId, instance });
+  if (customCssProblem) {
+    log.warn(
+      { statusCode: customCssProblem.status, errorCode: (err as Error).name },
+      "Survey custom CSS refused"
+    );
+    return customCssProblem;
+  }
   if (err instanceof WorkspaceSurveyLimitError) {
     log.warn({ statusCode: 422, limit: err.limit }, "Workspace survey limit reached");
     return problemWorkspaceSurveyLimit(requestId, err.limit, err.count, instance);
@@ -378,6 +481,7 @@ export async function createV3SurveyResponse({
       return authResult;
     }
 
+    const report: TV3SurveyWriteReport = {};
     const survey = await createV3Survey(
       {
         ...createBody,
@@ -386,7 +490,7 @@ export async function createV3SurveyResponse({
       authentication,
       requestId,
       authResult.organizationId,
-      createOptions
+      { ...createOptions, report }
     );
     const resource = serializeV3SurveyResource(
       survey,
@@ -419,6 +523,7 @@ export async function createV3SurveyResponse({
     return createdResponse(resource, {
       requestId,
       location: `/api/v3/surveys/${survey.id}`,
+      extensions: toV3WriteExtensions(report),
     });
   } catch (err) {
     return mapV3SurveyCreateError(err, { log, requestId, instance });
@@ -646,6 +751,15 @@ function mapV3SurveyPatchError(
     workspaceId: string | undefined;
   }
 ): Response {
+  const customCssProblem = mapV3CustomCssError(err, { requestId, instance });
+  if (customCssProblem) {
+    log.warn(
+      { statusCode: customCssProblem.status, workspaceId, errorCode: (err as Error).name },
+      "Survey custom CSS refused"
+    );
+    return customCssProblem;
+  }
+
   if (err instanceof V3SurveyReferenceValidationError) {
     // Semantic/reference validation failure on a well-formed document → 422 (see create handler).
     log.warn(
@@ -910,6 +1024,7 @@ async function runV3SurveyDocumentMutation({
     remapInvalidParam = built.remapInvalidParam;
     const oldResource = getResource();
 
+    const report: TV3SurveyWriteReport = {};
     const updatedSurvey = await patchV3Survey(
       survey,
       built.input,
@@ -917,7 +1032,8 @@ async function runV3SurveyDocumentMutation({
       authResult.organizationId,
       effectivePrecondition,
       oldResource,
-      buildVisibleSurveyWhere(visibility.actorContext)
+      buildVisibleSurveyWhere(visibility.actorContext),
+      report
     );
     // Visibility is unchanged by a document write (it is never writable through one), so the
     // request's context still describes the updated survey.
@@ -946,6 +1062,7 @@ async function runV3SurveyDocumentMutation({
     return successResponse(resource, {
       requestId,
       cache: "private, no-store",
+      extensions: toV3WriteExtensions(report),
     });
   } catch (error) {
     // A block op or reorder produced this document, so every `blocks.<i>` path is indexed against an
@@ -1203,6 +1320,10 @@ export async function validateV3Survey({
 
   try {
     const validationBody = body;
+    if (validationBody.operation === "customCss") {
+      return await validateV3SurveyCustomCss({ body: validationBody, authentication, requestId, instance });
+    }
+
     if (validationBody.operation === "create") {
       const workspaceResult = createWorkspaceIdSchema.safeParse(validationBody.data);
       if (workspaceResult.success) {
@@ -1221,7 +1342,11 @@ export async function validateV3Survey({
       }
 
       return successResponse(
-        serializeValidationResult("create", prepareV3SurveyCreateInput(validationBody.data)),
+        serializeValidationResult(
+          "create",
+          prepareV3SurveyCreateInput(validationBody.data),
+          await previewPayloadCustomCss(validationBody.data)
+        ),
         {
           requestId,
           cache: "private, no-store",
@@ -1256,7 +1381,8 @@ export async function validateV3Survey({
         "patch",
         prepareV3SurveyPatchInput(survey, validationBody.data, {
           reportedVisibility: serializeV3SurveyVisibilityFields(survey, visibility.ownerName, visibility),
-        })
+        }),
+        await previewPayloadCustomCss(validationBody.data)
       ),
       {
         requestId,

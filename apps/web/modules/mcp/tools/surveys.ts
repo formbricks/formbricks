@@ -136,7 +136,8 @@ export function registerSurveyTools(server: McpServer): void {
     "get_survey",
     {
       title: "Get survey",
-      description: "Get one Formbricks survey using the v3 Surveys API contract.",
+      description:
+        "Get one Formbricks survey using the v3 Surveys API contract, including its custom CSS source (`customCss`).",
       inputSchema: ZMcpGetSurveyInput,
       annotations: {
         readOnlyHint: true,
@@ -166,7 +167,8 @@ export function registerSurveyTools(server: McpServer): void {
     "create_survey",
     {
       title: "Create survey",
-      description: "Create a Formbricks link survey using the v3 Surveys API contract.",
+      description:
+        "Create a Formbricks link survey using the v3 Surveys API contract. Optional `customCss` source is processed by the server; removed constructs come back as top-level `warnings`.",
       inputSchema: ZMcpCreateSurveyInput,
       audit: { action: "created", targetType: "survey" },
       annotations: {
@@ -197,7 +199,8 @@ export function registerSurveyTools(server: McpServer): void {
     "validate_survey",
     {
       title: "Validate survey",
-      description: "Validate a v3 survey create or patch payload without writing survey changes.",
+      description:
+        "Validate a v3 survey create or patch payload, or custom CSS alone (operation customCss: compiled result and warnings), without writing anything.",
       inputSchema: ZMcpValidateSurveyInput,
       annotations: {
         readOnlyHint: true,
@@ -230,7 +233,7 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Patch survey",
       description: [
-        "Update survey-level fields — name, status, languages, endings, welcomeCard, variables, hiddenFields — using the v3 Surveys API patch contract.",
+        "Update survey-level fields — name, status, languages, endings, welcomeCard, variables, hiddenFields, customCss — using the v3 Surveys API patch contract.",
         "For block changes prefer edit_survey_blocks (update, insert, remove) or set_survey_block_order (reorder): they address blocks by id, cost a fraction of the tokens, and cannot drop a block by omission.",
         "Provided top-level arrays and objects replace that whole subtree, so a partial `blocks` array deletes every block it leaves out.",
         "The full get_survey output can be sent back unchanged; `updatedAt` is then an optimistic-concurrency precondition and a mismatch returns 409.",

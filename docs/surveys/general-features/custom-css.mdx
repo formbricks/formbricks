@@ -41,7 +41,7 @@ Each level has two fields, switched with the **Light / Dark** toggle at the top 
     Select **Light** to edit the base CSS or **Dark** to edit the dark CSS.
   </Step>
   <Step title="Write or upload your CSS">
-    Type into the field, or use **Upload** to load a `.css` file. The upload replaces the content of the field that is currently selected; the other field is not touched.
+    Type into the field, or use **Upload .css** to load a `.css` file. The upload replaces the content of the field that is currently selected; the other field is not touched.
   </Step>
   <Step title="Check the preview, then save">
     The preview updates shortly after you stop typing, and lists anything Formbricks removed or rejected, with its line and column. Saving workspace CSS changes every survey in the workspace.
@@ -443,11 +443,14 @@ Define `@keyframes` in the same field as the rules that use them.
 | --- | --- | --- |
 | Base CSS and dark CSS together | 100,000 bytes | 20,000 bytes |
 | Processed output | 100,000 bytes | 20,000 bytes |
+| Rules (base and dark together, after nesting is resolved) | 2,000 | 2,000 |
+| Nesting depth of rules and at-rules | 8 | 8 |
+| Nesting depth of functions such as `calc()` | 16 | 16 |
+| Selectors in one selector list | 64 | 64 |
+| Parts in one selector, such as `.a .b > .c` (3) | 20 | 20 |
+| Universal selectors (`*`) in one selector | 2 | 2 |
 
-{/* TODO(orchestrator): add the named complexity limits from apps/web/modules/custom-css/processor
-    (nesting depth, selector complexity, rule count) as rows of this table once W1's values are final. */}
-
-Sizes are counted in bytes of UTF-8 text, so most characters count as one byte. Very deep nesting, very long selector chains (such as `* * * *`) and very large numbers of rules are rejected as well.
+Sizes are counted in bytes of UTF-8 text, so most characters count as one byte. The processed output adds scoping to every selector, so CSS close to the size limit that consists of many short rules can exceed the output limit. At most 100 warnings are listed per check; anything beyond that is still removed.
 
 ## Browser And App Support
 

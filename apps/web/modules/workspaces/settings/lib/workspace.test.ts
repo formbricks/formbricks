@@ -41,7 +41,9 @@ const baseWorkspace = {
   styling: { allowStyleOverwrite: true },
   logo: null,
   customHeadScripts: null,
-} satisfies TWorkspace;
+  customCss: null,
+  customCssPrevious: null,
+} satisfies TWorkspace & { customCss: null; customCssPrevious: null };
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -412,6 +414,23 @@ describe("workspace lib", () => {
       expect(result).toEqual(baseWorkspace);
       expect(prisma.workspace.update).toHaveBeenCalled();
       expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({ workspaceIds: ["p1"] });
+    });
+
+    test("never writes custom CSS through a general workspace update (ENG-2949)", async () => {
+      vi.mocked(prisma.workspace.update).mockResolvedValueOnce(baseWorkspace);
+
+      await updateWorkspace("p1", {
+        name: "Workspace 1",
+        customCss: {
+          light: { source: "a{}", compiled: "#fbjs{position:fixed}" },
+          dark: null,
+          processorVersion: 1,
+        },
+        customCssPrevious: null,
+      } as never);
+
+      const { data } = vi.mocked(prisma.workspace.update).mock.calls[0][0];
+      expect(data).toEqual({ name: "Workspace 1" });
     });
 
     test("throws DatabaseError on Prisma error", async () => {

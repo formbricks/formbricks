@@ -1,4 +1,5 @@
 import type {
+  TRendererCustomCss,
   TSurveyStyling,
   TUserState,
   TWorkspaceState,
@@ -160,6 +161,20 @@ export const getStyling = (
   // allow style overwrite is disabled from the workspace
   return settings.styling;
 };
+
+/**
+ * The renderer's explicit `customCss` prop (ENG-3552): the workspace CSS, sent once in the workspace
+ * settings, plus this survey's own. Both scopes, independent of theme selection and
+ * `overwriteThemeStyling` — unlike `getStyling`, nothing here picks one object over the other. A state
+ * cached before the server sent CSS simply has neither field, and the renderer then applies none.
+ */
+export const getCustomCss = (
+  settings: TWorkspaceStateSettings,
+  survey: TWorkspaceStateSurvey
+): TRendererCustomCss => ({
+  workspace: settings.customCss,
+  survey: survey.customCss,
+});
 
 export const getDefaultLanguageCode = (survey: TWorkspaceStateSurvey): string | undefined => {
   const defaultSurveyLanguage = survey.languages.find((surveyLanguage) => {

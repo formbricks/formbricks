@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
+import type { TCustomCssStored } from "@formbricks/types/custom-css";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TJsWorkspaceStateActionClass,
@@ -17,6 +18,7 @@ import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
+import { resolveRespondentCustomCss } from "@/modules/survey/link/lib/respondent-custom-css";
 
 /**
  * Optimized data fetcher for environment state
@@ -87,6 +89,7 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
       where: { id: workspaceId },
       select: {
         id: true,
+        organizationId: true,
         legacyEnvironmentId: true,
         appSetupCompleted: true,
         recontactDays: true,
@@ -97,6 +100,9 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
         placement: true,
         inAppSurveyBranding: true,
         styling: true,
+        // Stored custom CSS (ENG-3552). Read here only to derive the compiled output below; the stored
+        // value carries the editable source and never reaches the response.
+        customCss: true,
         // Action classes (optimized for environment state)
         actionClasses: {
           select: {
@@ -182,6 +188,8 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
             displayPercentage: true,
             delay: true,
             workspaceOverwrites: true,
+            // Stored survey custom CSS — see the workspace field above. Replaced by compiled output.
+            customCss: true,
           },
         },
       },
@@ -244,6 +252,17 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
       segmentFiltersById?.get(segmentId)
     );
 
+    // Compiled custom CSS (ENG-3552): the workspace's once, in `workspaceSettings`, each survey's in the
+    // survey. The rollout flag is applied once for the organization, and only when any CSS exists.
+    const customCss = await resolveRespondentCustomCss({
+      organizationId: workspaceData.organizationId,
+      workspaceCustomCss: workspaceData.customCss as TCustomCssStored | null,
+      surveys: workspaceData.surveys.map((survey) => ({
+        id: survey.id,
+        customCss: survey.customCss as TCustomCssStored | null,
+      })),
+    });
+
     const transformedSurveys = workspaceData.surveys.map((survey) => {
       const realHasFilters =
         Array.isArray(survey.segment?.filters) && (survey.segment.filters as unknown[]).length > 0;
@@ -264,7 +283,8 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
           }
         : null;
 
-      const { segment: _segment, ...surveyWithoutSegment } = survey;
+      // `customCss` is the STORED value (source included); only its compiled form is sent, below.
+      const { segment: _segment, customCss: _storedCustomCss, ...surveyWithoutSegment } = survey;
 
       // Older SDKs (e.g. Android ≤ v1.2.0) decode `language.projectId` as a
       // required field. The column was renamed to `workspaceId` in v5, so
@@ -292,10 +312,14 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
       // to `renderSurvey`, so the renderer gets it with no SDK release. Omitted for a preset overlay.
       const overlayAppearance = resolveOverlayAppearance(survey.workspaceOverwrites, workspaceData);
 
+      const surveyCustomCss = customCss.surveys.get(survey.id);
+
       return {
         ...transformed,
         name: PUBLIC_API_SURVEY_NAME_PLACEHOLDER,
         segment: sanitizedSegment,
+        // Omitted entirely when there is none to deliver; never `null` or `{}`.
+        ...(surveyCustomCss ? { customCss: surveyCustomCss } : {}),
         ...(interactionRefresh ? { interactionRefresh } : {}),
         ...(isCustomOverlay(overlayAppearance)
           ? { overlayAppearance: { color: overlayAppearance.color, opacity: overlayAppearance.opacity } }
@@ -315,6 +339,7 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
           placement: workspaceData.placement,
           inAppSurveyBranding: workspaceData.inAppSurveyBranding,
           styling: resolveStorageUrlsInObject(workspaceData.styling),
+          ...(customCss.workspace ? { customCss: customCss.workspace } : {}),
         },
       },
       // The runtime shape carries extra back-compat fields (placeholder

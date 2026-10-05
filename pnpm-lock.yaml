@@ -669,6 +669,9 @@ importers:
       lexical:
         specifier: 0.41.0
         version: 0.41.0
+      lightningcss:
+        specifier: 1.32.0
+        version: 1.32.0
       lucide-react:
         specifier: 'catalog:'
         version: 0.577.0(react@19.2.6)

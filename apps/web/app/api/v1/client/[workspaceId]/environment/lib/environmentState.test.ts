@@ -40,6 +40,8 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 vi.mock("./data");
+// `./data` is auto-mocked, which still loads its imports; keep the custom CSS delivery chain out of it.
+vi.mock("@/modules/survey/link/lib/respondent-custom-css", () => ({ resolveRespondentCustomCss: vi.fn() }));
 vi.mock("@/app/lib/api/api-backwards-compat", () => ({
   addLegacyProjectOverwritesToList: vi.fn((surveys: unknown[]) =>
     surveys.map((survey) => {
@@ -50,10 +52,10 @@ vi.mock("@/app/lib/api/api-backwards-compat", () => ({
       };
     })
   ),
-  addLegacyProjectToEnvironmentState: vi.fn((data: Record<string, unknown>) => ({
-    ...data,
-    project: data.workspace,
-  })),
+  // Same contract as the real helper: an explicitly provided `project` is kept as it is.
+  addLegacyProjectToEnvironmentState: vi.fn((data: Record<string, unknown>) =>
+    "project" in data ? data : { ...data, project: data.workspace }
+  ),
 }));
 vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
 vi.mock("@/modules/storage/utils", () => ({ resolveStorageUrlsInObject: vi.fn((o: unknown) => o) }));
@@ -197,6 +199,25 @@ describe("getWorkspaceState", () => {
     expect(result.data).toEqual(expectedData);
     expect(getWorkspaceStateData).toHaveBeenCalledWith(workspaceId);
     expect(prisma.workspace.update).not.toHaveBeenCalled();
+  });
+
+  test("sends the workspace custom CSS once: not repeated in the legacy project alias (ENG-3552)", async () => {
+    const compiledCss = "@layer fb-workspace { #fbjs .x { color: red !important } }";
+    vi.mocked(getWorkspaceStateData).mockResolvedValue({
+      ...mockWorkspaceStateData,
+      workspace: {
+        ...mockWorkspaceStateData.workspace,
+        workspaceSettings: { ...mockWorkspace, customCss: { light: compiledCss } },
+      },
+    });
+
+    const result = await getWorkspaceState(workspaceId);
+    const data = result.data as typeof result.data & { project: Record<string, unknown> };
+
+    expect(data.workspace.customCss).toEqual({ light: compiledCss });
+    // Old SDKs read `project` and know nothing of custom CSS; everything else in it is unchanged.
+    expect(data.project).toEqual(mockWorkspace);
+    expect(JSON.stringify(data).split(compiledCss)).toHaveLength(2);
   });
 
   test("should throw ResourceNotFoundError if workspace not found", async () => {

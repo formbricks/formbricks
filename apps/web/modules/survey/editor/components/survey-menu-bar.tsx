@@ -80,6 +80,11 @@ interface SurveyMenuBarProps {
   surveyAccess: TSurveyAccess | null;
   /** The author's display name; `null` when the survey has no owner or the gate is off. */
   ownerName: string | null;
+  /**
+   * The survey's Custom CSS draft is known to be invalid (ENG-3553). Saving and publishing are
+   * blocked until it is fixed, and the autosave keeps the last saved CSS so other edits still save.
+   */
+  isCustomCssDraftInvalid?: boolean;
 }
 
 export const SurveyMenuBar = ({
@@ -104,6 +109,7 @@ export const SurveyMenuBar = ({
   onVisibilityNotEnabled,
   surveyAccess,
   ownerName,
+  isCustomCssDraftInvalid = false,
 }: Readonly<SurveyMenuBarProps>) => {
   const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
@@ -159,6 +165,11 @@ export const SurveyMenuBar = ({
   useEffect(() => {
     surveyRef.current = survey;
   }, [survey]);
+
+  const isCustomCssDraftInvalidRef = useRef(isCustomCssDraftInvalid);
+  useEffect(() => {
+    isCustomCssDraftInvalidRef.current = isCustomCssDraftInvalid;
+  }, [isCustomCssDraftInvalid]);
 
   useEffect(() => {
     isSurveySavingRef.current = isSurveySaving;
@@ -230,6 +241,16 @@ export const SurveyMenuBar = ({
     toast.error(t("workspace.surveys.edit.please_set_a_survey_trigger"));
     setHasTriggerError(true);
     setActiveId("settings");
+    return true;
+  };
+
+  // The server re-validates Custom CSS on every save and keeps the previous revision when it fails,
+  // so this only spares the author a round trip and points them at the errors.
+  const blockOnInvalidCustomCss = (): boolean => {
+    if (!isCustomCssDraftInvalid) return false;
+
+    toast.error(t("workspace.custom_css.fix_errors_before_saving"));
+    setActiveId("styling");
     return true;
   };
 
@@ -462,15 +483,23 @@ export const SurveyMenuBar = ({
       // Skip if already saving, publishing, or auto-saving
       if (isAutoSavingRef.current || isSurveySavingRef.current || isSurveyPublishingRef.current) return;
 
+      // An invalid Custom CSS draft cannot be stored, and sending it would fail the whole autosave.
+      // Keep the saved CSS instead, so the survey's other edits still autosave; the draft stays in
+      // the editor, and the leave-page check still counts it as unsaved.
+      const currentSurvey = isCustomCssDraftInvalidRef.current
+        ? {
+            ...localSurveyRef.current,
+            customCss: (lastSavedSurveyRef.current ?? surveyRef.current).customCss,
+          }
+        : localSurveyRef.current;
+
       // Check for changes using refs (avoids re-creating interval on every change), and skip if
       // there are none
-      if (!hasUnsavedSurveyChanges(localSurveyRef.current, [surveyRef.current, lastSavedSurveyRef.current]))
-        return;
+      if (!hasUnsavedSurveyChanges(currentSurvey, [surveyRef.current, lastSavedSurveyRef.current])) return;
 
       isAutoSavingRef.current = true;
 
       try {
-        const currentSurvey = localSurveyRef.current;
         const updatedSurveyResponse = await updateSurveyDraftAction({
           ...currentSurvey,
           segment: currentSurvey.segment?.id === "temp" ? null : currentSurvey.segment,
@@ -539,6 +568,8 @@ export const SurveyMenuBar = ({
 
   // Add new handler after handleSurveySave
   const handleSurveySaveDraft = async (): Promise<boolean> => {
+    if (blockOnInvalidCustomCss()) return false;
+
     setIsSurveySaving(true);
 
     try {
@@ -577,6 +608,7 @@ export const SurveyMenuBar = ({
   const handleSurveySave = async (): Promise<boolean> => {
     // Ahead of the spinner: a click that cannot go through should report why, not appear to work.
     if (blockOnMissingTrigger(localSurvey.status)) return false;
+    if (blockOnInvalidCustomCss()) return false;
 
     setIsSurveySaving(true);
 
@@ -674,6 +706,7 @@ export const SurveyMenuBar = ({
 
   const handleSurveyPublish = async () => {
     if (blockOnMissingTrigger("inProgress")) return;
+    if (blockOnInvalidCustomCss()) return;
 
     isSurveyPublishingRef.current = true;
     setIsSurveyPublishing(true);
@@ -738,6 +771,7 @@ export const SurveyMenuBar = ({
   const handleSurveySchedule = async () => {
     // Scheduling lands on "paused", which is live enough to need a trigger.
     if (blockOnMissingTrigger("paused")) return;
+    if (blockOnInvalidCustomCss()) return;
 
     isSurveyPublishingRef.current = true;
     setIsSurveyPublishing(true);
@@ -796,6 +830,7 @@ export const SurveyMenuBar = ({
   // that could not be activated anyway.
   const isReadyToActivate = (): boolean => {
     if (blockOnMissingTrigger(isPublishScheduled ? "paused" : "inProgress")) return false;
+    if (blockOnInvalidCustomCss()) return false;
     if (!validateSurveyWithZod()) return false;
     return isSurveyValid(localSurvey, selectedLanguageCode, t, finishedResponseCount);
   };

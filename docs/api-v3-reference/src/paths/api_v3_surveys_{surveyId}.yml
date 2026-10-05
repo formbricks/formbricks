@@ -131,6 +131,7 @@ get:
                   hiddenFields:
                     enabled: false
                   variables: []
+                  customCss: null
             filtered:
               summary: Language-filtered projection with ?lang=de-DE
               value:
@@ -176,6 +177,7 @@ get:
                   hiddenFields:
                     enabled: false
                   variables: []
+                  customCss: null
     "400":
       description: >-
         Invalid survey id, unsupported query parameter, unknown language, or
@@ -273,6 +275,16 @@ patch:
                   en-US: Product Feedback
                   de-DE: Produktfeedback
                 cx_operation: product_feedback
+          setCustomCss:
+            summary: Replace the survey's custom CSS
+            value:
+              customCss:
+                light: '[data-fb-part="button-primary"] { border-radius: 999px; }'
+                dark: '#fbjs[data-appearance="dark"] { --acme-ink: #e6eef5; }'
+          clearCustomCss:
+            summary: Clear the survey's custom CSS
+            value:
+              customCss: null
           replaceBlocks:
             summary: Replace survey blocks
             value:
@@ -309,6 +321,8 @@ patch:
             properties:
               data:
                 $ref: ../components/schemas/SurveyResource.yml
+              warnings:
+                $ref: ../components/schemas/CustomCssWarnings.yml
     "400":
       description: >
         Bad Request — the patch failed schema validation, i.e. any rule checkable from the request
@@ -334,7 +348,9 @@ patch:
       description: >-
         Forbidden — no write access, missing external URL permission, missing
         Contacts entitlement for app-survey targeting, or survey does not exist
-        (404 not used; avoids existence leak)
+        (404 not used; avoids existence leak). Adding or editing `customCss` on an
+        organization without the Scale plan (Formbricks Cloud) is refused with
+        `code: custom_css_plan_required`; clearing it, or a patch that leaves it unchanged, is not.
       content:
         application/problem+json:
           schema:
@@ -389,6 +405,12 @@ patch:
         4. The *stored* survey no longer satisfies the v3 document contract — `code:
         stored_survey_invalid`. The reported paths are into the survey, not into the request, so a
         patch that includes corrected values for those fields is the way out.
+
+
+        5. `customCss` could not be processed (a syntax error, the 20 000-byte survey budget, a
+        complexity limit). `invalid_params` names `customCss.light` / `customCss.dark`;
+        `details.errors` carries the processor's located errors. Nothing is written, so the saved CSS
+        stays in effect.
       content:
         application/problem+json:
           schema:

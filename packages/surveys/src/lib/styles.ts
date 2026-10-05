@@ -1,6 +1,7 @@
 // Add this import for survey-ui CSS variables
 import surveyUiCss from "@formbricks/survey-ui/styles?inline";
 import { resolveDarkColors } from "@formbricks/types/dark-palette";
+import { sanitizeThemeStyling } from "@formbricks/types/styling-values";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { type TWorkspaceStyling } from "@formbricks/types/workspace";
 import { ensureReadable, isLight, mixColor } from "@/lib/color";
@@ -65,7 +66,9 @@ export const addStylesToDom = () => {
  * colors (D12) → a value derived from the brand color. The `!important` rules further down only
  * reference these variables, so they pick up the dark values without being duplicated.
  */
-export const getDarkThemeCss = (styling: TWorkspaceStyling | TSurveyStyling): string => {
+export const getDarkThemeCss = (rawStyling: TWorkspaceStyling | TSurveyStyling): string => {
+  // Stored styling can predate write-time validation: unsafe values fall back as if unset (ENG-2950).
+  const styling = sanitizeThemeStyling(rawStyling);
   const dark = resolveDarkColors(styling);
   let css = '#fbjs[data-appearance="dark"] {\n  color-scheme: dark;\n';
   const add = (variableName: string, value?: string | null) => {
@@ -143,7 +146,16 @@ export const getDarkThemeCss = (styling: TWorkspaceStyling | TSurveyStyling): st
   return `${css}}\n`;
 };
 
-export const addCustomThemeToDom = ({ styling }: { styling: TWorkspaceStyling | TSurveyStyling }): void => {
+export const addCustomThemeToDom = ({
+  styling: rawStyling,
+}: {
+  styling: TWorkspaceStyling | TSurveyStyling;
+}): void => {
+  // Every styling value below is written into stylesheet text, and stored styling can predate write-time
+  // validation: an unsafe value (one that could add declarations or rules) falls back as if it were
+  // unset, while valid values pass through unchanged (ENG-2950).
+  const styling = sanitizeThemeStyling(rawStyling);
+
   // Check if the style element already exists
   let styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement | null;
 

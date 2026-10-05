@@ -84,6 +84,8 @@ describe("getWorkspaceWithTeamIds", () => {
           },
         },
       },
+      // ENG-2949: never ships custom CSS to the client props this feeds.
+      omit: { customCss: true, customCssPrevious: true },
     });
 
     expect(workspace).toEqual(mockWorkspaceWithTeam);
@@ -105,6 +107,8 @@ describe("getWorkspaceWithTeamIds", () => {
           },
         },
       },
+      // ENG-2949: never ships custom CSS to the client props this feeds.
+      omit: { customCss: true, customCssPrevious: true },
     });
     expect(workspace).toBeNull();
   });

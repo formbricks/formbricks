@@ -5,6 +5,7 @@ import { type TOverlay, type TPlacement } from "@formbricks/types/common";
 import { type TSurveyCardRect } from "@formbricks/types/formbricks-surveys";
 import { type TOverlayAppearance, getOverlayBackground } from "@formbricks/types/overlay";
 import { getResolvedAppearance, subscribeToAppearance } from "@/lib/appearance";
+import { getCustomCssGeneration, releaseCustomCss } from "@/lib/custom-css";
 import { isPlainEscape } from "@/lib/keyboard";
 import { ensureLiveRegion } from "@/lib/live-region";
 import { SURVEY_INSTRUCTIONS_ID, getSurveyHeadingName } from "@/lib/survey-page";
@@ -286,6 +287,14 @@ export function SurveyContainer({
   // through setAppearance and only touch this attribute.
   const [appearance, setAppearance] = useState(getResolvedAppearance);
   useEffect(() => subscribeToAppearance(setAppearance), []);
+  // Custom CSS is applied by renderSurvey just before each render; this survey owns it until another
+  // render applies newer CSS. Re-read after every render so teardown only removes CSS it still owns —
+  // a survey closing after the next one rendered must not strip that one's styles.
+  const customCssGenerationRef = useRef(getCustomCssGeneration());
+  useEffect(() => {
+    customCssGenerationRef.current = getCustomCssGeneration();
+  });
+  useEffect(() => () => releaseCustomCss(customCssGenerationRef.current), []);
   // The overlay is what makes a survey modal: it covers the host page and the page stops being usable.
   // Without one the page underneath stays visible and clickable, so the survey is a notification, not a
   // modal. Trapping focus there steals the caret and the text selection from the host page — the trap's
@@ -378,7 +387,10 @@ export function SurveyContainer({
         id="fbjs"
         className="formbricks-form"
         data-appearance={appearance}
-        style={{ height: "100%", width: "100%" }}
+        // Root isolation (ENG-3552): customer z-index values stack inside the survey instead of
+        // interleaving with the host page. The modal path needs no equivalent: its fixed, z-indexed
+        // layer is already a stacking context.
+        style={{ height: "100%", width: "100%", isolation: "isolate" }}
         dir={dir}
         lang={lang ?? undefined}
         role="form"
