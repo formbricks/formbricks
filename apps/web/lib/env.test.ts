@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { isSecureCredentialUrl } from "@formbricks/ai";
 
 const ORIGINAL_ENV = process.env;
 
@@ -598,6 +599,28 @@ describe("env", () => {
 
       expect(message).toContain("AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL");
       expect(message).not.toContain("secret-sentinel");
+    });
+
+    // env.ts mirrors the package predicate rather than importing it (see the comment there); this is
+    // what keeps the two from drifting apart.
+    test.each([
+      "https://idp.example.internal/oauth/token",
+      "http://localhost:8765/oauth/token",
+      "http://127.0.0.1:8765/oauth/token",
+      "http://[::1]:8765/oauth/token",
+      "http://idp.localhost/oauth/token",
+      "http://idp.example.internal/oauth/token",
+      "ftp://idp.example.internal/oauth/token",
+      "not-a-url",
+    ])("agrees with @formbricks/ai on whether %s may carry the client secret", async (tokenUrl) => {
+      setTestEnv({ ...oauthEnv, AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: tokenUrl });
+
+      const accepted = await import("./env").then(
+        () => true,
+        () => false
+      );
+
+      expect(accepted).toBe(isSecureCredentialUrl(tokenUrl));
     });
 
     test("accepts a plain-http token endpoint on loopback for local development", async () => {

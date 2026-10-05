@@ -24,7 +24,10 @@ const isLoopbackHost = (hostname: string): boolean =>
   hostname === "::1";
 
 // Mirrors isSecureCredentialUrl in packages/ai: the client secret is sent to this URL, so plain http is
-// only acceptable on loopback.
+// only acceptable on loopback. Not imported from @formbricks/ai on purpose — next.config.mjs and the
+// pre-build scripts load this module, and that package drags the whole AI SDK graph in with it. The
+// two copies are held together by `env.test.ts` ("agrees with @formbricks/ai"), which checks startup
+// validation against the package's predicate over the same table of URLs.
 const isSecureCredentialUrl = (value: string): boolean => {
   try {
     const url = new URL(value);
