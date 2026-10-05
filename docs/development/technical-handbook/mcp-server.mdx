@@ -705,8 +705,11 @@ Reusing `<resource>:read` / `<resource>:write` needs nothing more. A new resourc
 2. API-key scopes in `getMcpScopes` (`modules/mcp/auth.ts`), the consent label in `getOAuthScopeLabel` plus its
    en-US string (then `pnpm i18n`), and the `anyOf` list on `list_workspaces`.
 3. `registerXTools(server)` in `modules/mcp/server.ts`, before the final `instrumentMcpServerWithTracing`.
-4. Last, `MCP_RESOURCE_SCOPES`, which advertises the scope. This breaks already-connected clients until they
-   re-register (see the warning under [Authentication](#authentication)), so it ships with a release note.
+4. Last, `MCP_RESOURCE_SCOPES`, which advertises the scope, in the same release as a data migration that
+   appends the pair to existing `oauthClient.scopes` rows. Mirror read/write (`:read` only for clients that
+   hold a read scope) and skip `skipConsent` clients, as `20261005130000_eng_3470_grant_responses_scopes_to_clients`
+   does. Without it, every client registered before the scope existed requests it and gets `invalid_scope`
+   at its next sign-in (see [Authentication](#authentication)).
 
 ### What makes a tool good
 
