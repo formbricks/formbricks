@@ -463,6 +463,19 @@ describe("chart-utils", () => {
       ]);
     });
 
+    test("carries the response base column onto every pivoted row for the tooltip", () => {
+      const data = [{ "F.promoterCount": 37, "F.detractorCount": 2, "F.npsCount": 48 }];
+      const result = pivotMeasuresToCategories(
+        data,
+        ["F.promoterCount", "F.detractorCount"],
+        label,
+        "F.npsCount"
+      );
+      expect(result.map((row) => row["F.npsCount"])).toEqual([48, 48]);
+      // Without a key nothing extra is carried, so existing pivoted rows keep their shape.
+      expect(pivotMeasuresToCategories(data, ["F.promoterCount"], label)[0]).not.toHaveProperty("F.npsCount");
+    });
+
     test("keeps the given measure order so bars fill the axis from the left", () => {
       const data = [{ b: 2, a: 1 }];
       const result = pivotMeasuresToCategories(data, ["a", "b"], label);

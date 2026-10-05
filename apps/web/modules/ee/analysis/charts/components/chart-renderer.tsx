@@ -182,8 +182,11 @@ const BarChartView = ({
     // Sentiment measures pivot into the scale order the sentiment *dimension* axis uses,
     // so this chart and a dimension-grouped one read in the same direction.
     const axisKeys = sortMeasureIdsForCategoryAxis(dataKeys);
-    const measureData = pivotMeasuresToCategories(sortedData, axisKeys, (key) =>
-      formatCubeColumnHeader(key, t)
+    const measureData = pivotMeasuresToCategories(
+      sortedData,
+      axisKeys,
+      (key) => formatCubeColumnHeader(key, t),
+      responseBaseKey
     );
     // Pivoting collapses every measure onto PIVOTED_VALUE_KEY ("value"), which carries no measure
     // id, so an axis derived from the pivoted rows can't look up fixed-scale candidates and falls
@@ -208,7 +211,8 @@ const BarChartView = ({
         zeroBaseline
         tooltipHideLabel
         horizontal={isHorizontal}
-        xAxisTickFormatter={formatMeasureLabel}>
+        xAxisTickFormatter={formatMeasureLabel}
+        responseBaseKey={responseBaseKey}>
         <Bar dataKey={PIVOTED_VALUE_KEY} fill={CHART_BRAND_DARK} radius={4}>
           <LabelList
             dataKey={PIVOTED_VALUE_KEY}

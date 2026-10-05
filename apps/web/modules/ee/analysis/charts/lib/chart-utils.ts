@@ -294,7 +294,9 @@ export const PIVOTED_VALUE_KEY = "value";
 export function pivotMeasuresToCategories(
   data: TChartDataRow[],
   measureKeys: string[],
-  formatLabel: (measureKey: string) => string
+  formatLabel: (measureKey: string) => string,
+  /** Column to carry onto every pivoted row, so the tooltip can still print "n = …" for each bar. */
+  responseBaseKey?: string
 ): TChartDataRow[] {
   const row = data[0] ?? {};
   // Like preparePieData: semantic buckets (sentiment counts) keep their meaning-bound colors and
@@ -314,6 +316,7 @@ export function pivotMeasuresToCategories(
       [PIVOTED_MEASURE_KEY]: key,
       tooltipLabel: formatLabel(key),
       fill,
+      ...(responseBaseKey ? { [responseBaseKey]: row[responseBaseKey] } : {}),
     };
   });
 }

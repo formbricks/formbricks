@@ -113,6 +113,9 @@ export const OptionsSwitch = ({
       {elementTypes.map((type) => {
         const isActive = currentOption === type.value;
         const showLabel = labelDisplay === "always" || isActive || !type.icon;
+        let stateClassName = "cursor-pointer hover:bg-slate-50";
+        if (type.disabled) stateClassName = "cursor-not-allowed opacity-50";
+        else if (isActive) stateClassName = "";
         return (
           <button
             type="button"
@@ -126,17 +129,11 @@ export const OptionsSwitch = ({
             title={showLabel ? undefined : type.label}
             onClick={(e) => {
               e.preventDefault();
-              !type.disabled && handleOptionChange(type.value);
+              if (!type.disabled) handleOptionChange(type.value);
             }}
             // nowrap: these labels are short by design, and a two-word option breaking across lines
             // ("Vertical / bars", "Area / Chart") makes the whole switch grow a second row.
-            className={`relative z-10 grow rounded-md p-2 text-center whitespace-nowrap transition-colors duration-200 ${
-              type.disabled
-                ? "cursor-not-allowed opacity-50"
-                : isActive
-                  ? ""
-                  : "cursor-pointer hover:bg-slate-50"
-            }`}>
+            className={`relative z-10 grow rounded-md p-2 text-center whitespace-nowrap transition-colors duration-200 ${stateClassName}`}>
             <div className="flex items-center justify-center gap-x-2">
               {showLabel && <span className="text-sm text-slate-900">{type.label}</span>}
               {type.icon && <div className="size-4 text-slate-600 hover:text-slate-800">{type.icon}</div>}
