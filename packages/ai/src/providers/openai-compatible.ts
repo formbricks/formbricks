@@ -37,8 +37,17 @@ const validateOAuthFields = (
 ): void => {
   const tokenUrl = normalizeValue(environment.AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL);
 
-  // The client secret travels to this URL on every token request, so unlike the base URL it must be
-  // https (plain http only on loopback, for local development against a mock endpoint).
+  // Every model request carries the bearer token in this mode, so the base URL is held to the same
+  // rule as the token URL below. Only reported here when it is otherwise a valid http(s) URL — a
+  // malformed one is already flagged by `validate`.
+  const baseURL = normalizeValue(environment.AI_OPENAI_COMPATIBLE_BASE_URL);
+
+  if (baseURL && isValidHttpUrl(baseURL) && !isSecureCredentialUrl(baseURL)) {
+    invalidFields.push("AI_OPENAI_COMPATIBLE_BASE_URL");
+  }
+
+  // The client secret travels to this URL on every token request, so it must be https (plain http
+  // only on loopback, for local development against a mock endpoint).
   if (!tokenUrl) {
     missingFields.push("AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL");
   } else if (!isSecureCredentialUrl(tokenUrl)) {

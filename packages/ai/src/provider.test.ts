@@ -655,6 +655,10 @@ describe("packages/ai provider helpers", () => {
 
     test.each([
       ["AI_OPENAI_COMPATIBLE_API_KEY", { AI_OPENAI_COMPATIBLE_API_KEY: "static-key" }],
+      [
+        "AI_OPENAI_COMPATIBLE_BASE_URL",
+        { AI_OPENAI_COMPATIBLE_BASE_URL: "http://gateway.example.internal/v1" },
+      ],
       ["AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL", { AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: "ftp://idp/token" }],
       [
         "AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL",

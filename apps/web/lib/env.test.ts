@@ -623,6 +623,23 @@ describe("env", () => {
       expect(accepted).toBe(isSecureCredentialUrl(tokenUrl));
     });
 
+    test("rejects a plain-http base URL off loopback in oauth mode, naming the variable", async () => {
+      setTestEnv({ ...oauthEnv, AI_OPENAI_COMPATIBLE_BASE_URL: "http://gateway.example.internal/v1" });
+
+      const message = await loadError();
+
+      expect(message).toContain("AI_OPENAI_COMPATIBLE_BASE_URL");
+      expect(message).not.toContain("secret-sentinel");
+    });
+
+    test("accepts a plain-http base URL on loopback in oauth mode", async () => {
+      setTestEnv({ ...oauthEnv, AI_OPENAI_COMPATIBLE_BASE_URL: "http://localhost:8765/v1" });
+
+      const { env } = await import("./env");
+
+      expect(env.AI_OPENAI_COMPATIBLE_BASE_URL).toBe("http://localhost:8765/v1");
+    });
+
     test("accepts a plain-http token endpoint on loopback for local development", async () => {
       setTestEnv({ ...oauthEnv, AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: "http://localhost:8765/oauth/token" });
 

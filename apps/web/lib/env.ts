@@ -222,6 +222,18 @@ const validateOpenAICompatibleAuthConfiguration = (
     return;
   }
 
+  // In this mode every model request carries a bearer token, so the base URL is held to the same
+  // rule as the token URL. (In api-key mode plain http stays allowed for a keyless internal endpoint.)
+  const baseUrl = values.AI_OPENAI_COMPATIBLE_BASE_URL?.trim();
+
+  if (baseUrl && !isSecureCredentialUrl(baseUrl)) {
+    addEnvIssue(
+      ctx,
+      "AI_OPENAI_COMPATIBLE_BASE_URL",
+      `AI_OPENAI_COMPATIBLE_BASE_URL must be an https URL ${OAUTH_MODE_REQUIREMENT} (plain http is only allowed on localhost)`
+    );
+  }
+
   const tokenUrl = values.AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL?.trim();
 
   if (!tokenUrl) {
