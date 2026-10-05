@@ -46,6 +46,7 @@ export const sendFollowUpEmail = async ({
   });
 
   await sendEmail({
+    emailType: "survey_follow_up",
     to,
     replyTo: replyTo.join(", "),
     subject,

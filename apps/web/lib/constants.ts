@@ -85,6 +85,8 @@ export const NOTION_AUTH_URL = `https://api.notion.com/v1/oauth/authorize?client
 
 export const AIRTABLE_CLIENT_ID = env.AIRTABLE_CLIENT_ID;
 
+export const SES_CONFIGURATION_SET = env.SES_CONFIGURATION_SET;
+export const SES_EMAIL_ENVIRONMENT = env.SES_EMAIL_ENVIRONMENT;
 export const SMTP_HOST = env.SMTP_HOST;
 export const SMTP_PORT = env.SMTP_PORT;
 

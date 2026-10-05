@@ -8,11 +8,15 @@ export {
   resetLanguageModelCache,
 } from "./provider";
 export {
+  AIOAuthTokenError,
+  type AIOAuthTokenErrorCode,
   AIOutputTokenLimitError,
   type AIOutputTokenLimitErrorDetails,
   type AIProviderErrorInfo,
   classifyAIProviderError,
 } from "./errors";
+/** Exposed so apps/web's startup validation can be checked against the adapter's rule by test. */
+export { isSecureCredentialUrl } from "./shared";
 export { generateText } from "./text";
 export { generateObject } from "./object";
 export { streamObject } from "./stream-object";
