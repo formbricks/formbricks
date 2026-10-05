@@ -23,6 +23,11 @@ import { ElementFormInput } from "@/modules/survey/components/element-form-input
 import { BulkEditOptionsModal } from "@/modules/survey/editor/components/bulk-edit-options-modal";
 import { ElementOptionChoice } from "@/modules/survey/editor/components/element-option-choice";
 import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
+import {
+  ensureSpecialChoicesOrder,
+  getShuffleOptionAfterAddingSpecialChoice,
+  getShuffleOptionAfterRemovingSpecialChoice,
+} from "@/modules/survey/editor/lib/special-choices";
 import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
@@ -128,18 +133,6 @@ export const MultipleChoiceElementForm = ({
     return `${t("workspace.surveys.edit.bulk_edit")} (${languageName})`;
   }, [localSurvey.languages, selectedLanguageCode, locale, t]);
 
-  const ensureSpecialChoicesOrder = (choices: TSurveyMultipleChoiceElement["choices"]) => {
-    const regularChoicesFromInput = choices.filter((c) => c.id !== "other" && c.id !== "none");
-    const otherChoice = choices.find((c) => c.id === "other");
-    const noneChoice = choices.find((c) => c.id === "none");
-    // [regularChoices, otherChoice, noneChoice]
-    return [
-      ...regularChoicesFromInput,
-      ...(otherChoice ? [otherChoice] : []),
-      ...(noneChoice ? [noneChoice] : []),
-    ];
-  };
-
   const addChoice = (choiceIdx?: number) => {
     setIsNew(false);
 
@@ -171,6 +164,7 @@ export const MultipleChoiceElementForm = ({
     };
 
     const newChoices = ensureSpecialChoicesOrder([...element.choices, newChoice]);
+    const nextShuffleOption = getShuffleOptionAfterAddingSpecialChoice(element.shuffleOption);
 
     updateElement(elementIdx, {
       choices: newChoices,
@@ -181,12 +175,7 @@ export const MultipleChoiceElementForm = ({
             surveyLanguageCodes
           ),
         }),
-      ...(element.shuffleOption === shuffleOptionsTypes.all.id && {
-        shuffleOption: shuffleOptionsTypes.exceptLast.id,
-      }),
-      ...(element.shuffleOption === shuffleOptionsTypes.reverseOrderOccasionally.id && {
-        shuffleOption: shuffleOptionsTypes.reverseOrderExceptLast.id,
-      }),
+      ...(nextShuffleOption && { shuffleOption: nextShuffleOption }),
     });
   };
 
@@ -211,18 +200,11 @@ export const MultipleChoiceElementForm = ({
       setisInvalidValue(null);
     }
 
-    const hasRemainingSpecialChoices = newChoices.some((c) => c.id === "other" || c.id === "none");
+    const nextShuffleOption = getShuffleOptionAfterRemovingSpecialChoice(element.shuffleOption, newChoices);
 
     updateElement(elementIdx, {
       choices: newChoices,
-      ...(!hasRemainingSpecialChoices &&
-        element.shuffleOption === "reverseOrderExceptLast" && {
-          shuffleOption: "reverseOrderOccasionally",
-        }),
-      ...(!hasRemainingSpecialChoices &&
-        element.shuffleOption === "exceptLast" && {
-          shuffleOption: "all",
-        }),
+      ...(nextShuffleOption && { shuffleOption: nextShuffleOption }),
     });
   };
 

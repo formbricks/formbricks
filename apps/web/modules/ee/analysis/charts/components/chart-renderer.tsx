@@ -10,6 +10,7 @@ import {
   CartesianChart,
   type CartesianChartProps,
 } from "@/modules/ee/analysis/charts/components/cartesian-chart";
+import { MatrixChart } from "@/modules/ee/analysis/charts/components/matrix-chart";
 import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/polished-tooltip";
 import { computeBigNumberValue } from "@/modules/ee/analysis/charts/lib/big-number";
 import { resolveChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
@@ -358,18 +359,21 @@ interface ChartRendererProps {
   query: TChartQuery;
   /** value_id → default-language label map, present when the query groups by valueId. */
   optionLabels?: Record<string, string>;
+  /** Matrix row field_id → statement map, present when the query groups by fieldId. */
+  fieldLabels?: Record<string, string>;
   /** Saved display settings. Charts saved before these existed have an empty config and keep
    * the previous behavior (vertical bars). */
   config?: TChartConfig;
 }
 
-export function ChartRenderer({
+/** Every chart type drawn along a single category or time axis: area, bar, pie and big number. */
+function SeriesChartRenderer({
   chartType,
   data,
   query,
   optionLabels,
   config,
-}: Readonly<ChartRendererProps>) {
+}: Readonly<Omit<ChartRendererProps, "fieldLabels">>) {
   const { t, i18n } = useTranslation();
   const { barOrientation, pieDisplay, areaDisplay } = resolveChartDisplay(config);
   // Unique across charts on the same page so SVG <defs> ids don't collide.
@@ -578,4 +582,20 @@ export function ChartRenderer({
         </div>
       );
   }
+}
+
+export function ChartRenderer({ fieldLabels, ...props }: Readonly<ChartRendererProps>) {
+  // A matrix lays out two groupings on its own two axes, so none of the single-axis setup applies.
+  if (props.chartType === "matrix" && props.data.length > 0) {
+    return (
+      <MatrixChart
+        data={props.data}
+        query={props.query}
+        config={props.config}
+        optionLabels={props.optionLabels}
+        fieldLabels={fieldLabels}
+      />
+    );
+  }
+  return <SeriesChartRenderer {...props} />;
 }

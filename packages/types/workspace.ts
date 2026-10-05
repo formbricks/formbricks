@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZColor, ZOverlay, ZPlacement } from "./common";
+import { ZOverlayColor, ZOverlayOpacity } from "./overlay";
 import { ZBaseStyling, ZLogo } from "./styling";
 
 export const ZWorkspaceStyling = ZBaseStyling.extend({
@@ -83,6 +84,9 @@ export const ZWorkspace = z.object({
   placement: ZPlacement,
   clickOutsideClose: z.boolean(),
   overlay: ZOverlay,
+  // Nullish so workspace objects built without them still type-check. null = the preset.
+  overlayColor: ZOverlayColor.nullish(),
+  overlayOpacity: ZOverlayOpacity.nullish(),
   languages: z.array(ZLanguage),
   appSetupCompleted: z.boolean(),
   logo: ZLogo.nullish(),
@@ -110,6 +114,9 @@ export const ZWorkspaceUpdateInput = z.object({
   placement: ZPlacement.optional(),
   clickOutsideClose: z.boolean().optional(),
   overlay: ZOverlay.optional(),
+  // null clears the custom value back to the preset.
+  overlayColor: ZOverlayColor.nullish(),
+  overlayOpacity: ZOverlayOpacity.nullish(),
   styling: ZWorkspaceStyling.optional(),
   logo: ZLogo.optional(),
   // Optimistic-concurrency baseline: the `updatedAt` the caller loaded. Only surfaces that edit a

@@ -293,6 +293,49 @@ export const parseStorageFileUrl = (fileUrl: string): TParsedStorageFileUrl | nu
   return { storageId, accessType, fileName };
 };
 
+/**
+ * The survey a storage URL's object key is filed under: the `{surveyId}` of a current upload
+ * (`{id}/private/surveys/{surveyId}/…`), or `null` for a key that names no survey — the flat
+ * pre-#8044 keys, and anything that does not parse.
+ *
+ * Reads the key the way the delete path builds it. `deleteResponseFileUrls` decodes the file name
+ * before deleting, so the check decodes too: on the raw URL, `%73urveys/{other}/…` or
+ * `surveys%2F{other}%2F…` would read as a flat key and still delete `surveys/{other}/…`. A name that
+ * does not decode returns `null`, because the delete path fails on it the same way and deletes
+ * nothing.
+ */
+export const getStorageUrlSurveyId = (fileUrl: string): string | null => {
+  const parsed = parseStorageFileUrl(fileUrl);
+  if (!parsed) return null;
+
+  const scope = getStorageFileNameScope(parsed.fileName);
+  return scope.decodable ? scope.surveyId : null;
+};
+
+/**
+ * Which survey an object key's file name is filed under, read from the name the storage layer actually
+ * uses: `getFileStreamForDownload` and `deleteFile` both decode the joined name once more before
+ * building the key, so the check has to decode it too. `decodable: false` for a name that does not
+ * decode — the storage layer fails on it as well, so there is no object it could reach.
+ *
+ * `fileName` is the joined, still-encoded name: a URL path's file part, or the route's catch-all
+ * segments joined with `/`.
+ */
+export const getStorageFileNameScope = (
+  fileName: string
+): { decodable: false } | { decodable: true; isSurveyScope: boolean; surveyId: string | null } => {
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(fileName);
+  } catch {
+    return { decodable: false };
+  }
+
+  const [scope, surveyId] = decoded.split("/");
+  const isSurveyScope = scope === "surveys" && decoded.includes("/");
+  return { decodable: true, isSurveyScope, surveyId: isSurveyScope && surveyId ? surveyId : null };
+};
+
 const isScopedPrivateUploadUrl = ({
   fileUrl,
   workspaceId,

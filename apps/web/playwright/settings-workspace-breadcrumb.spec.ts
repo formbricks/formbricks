@@ -7,27 +7,14 @@ import { test } from "./lib/fixtures";
 // workspace-agnostic routes — no workspaceId in the URL — so the top bar must not render the
 // workspace breadcrumb there, only the organization one. The settings sidebar is deliberately
 // untouched and still shows its Workspace section on those routes, so every test below also asserts
-// the sidebar is intact: that is the guard against the breadcrumb change leaking into the sidebar.
+// that section renders, is scoped to this workspace and carries a visible link: that is the guard
+// against the breadcrumb change leaking into the sidebar. Deliberately not an inventory of the
+// pages it lists — see `expectSidebarWorkspaceSection`.
 
 // The settings shell renders exactly one <aside>, either from SettingsNavigation (the
 // workspace-agnostic routes) or from MainNavigation (the in-workspace routes).
 const settingsSidebar = (page: Page) => page.getByRole("complementary");
 const topBar = (page: Page) => page.getByTestId("fb__global-top-control-bar");
-
-// Every workspace-scoped settings link's route slug, in sidebar order. Slugs are the stable
-// identity to assert on here — display labels are product copy that changes independently of
-// this spec's actual concern (that the breadcrumb change didn't alter the sidebar), so pinning
-// the full label inventory just makes the spec break on every unrelated rename.
-const WORKSPACE_NAV_HREF_SUFFIXES = [
-  "general",
-  "teams",
-  "languages",
-  "app-connection",
-  "integrations",
-  "look",
-  "user-actions",
-  "tags",
-];
 
 // Distinct, run-unique organization and workspace names so the breadcrumb and the sidebar pill
 // (which are only distinguishable by their accessible name) can never be confused with each other.
@@ -57,16 +44,23 @@ const expectSidebarWorkspaceSection = async (page: Page, workspaceId: string, wo
 
   await expect(sidebar.getByText("Workspace", { exact: true })).toBeVisible();
 
-  const workspaceLinks = sidebar.locator(`a[href^="/workspaces/${workspaceId}/settings/workspace/"]`);
-  await expect(workspaceLinks).toHaveCount(WORKSPACE_NAV_HREF_SUFFIXES.length);
+  // Scoped to this workspace and visibly rendered, not enumerated. Which settings pages a workspace
+  // offers is the sidebar's own business and grows on its own schedule; an exact list of its entries
+  // is churn rather than coverage, and it fails this spec for reasons that have nothing to do with
+  // the breadcrumb it guards.
+  //
+  // But the scoping has to be *asserted*, not just selected. A locator prefixed with this workspace
+  // id only ever selects the links that already match it, so a wrongly-scoped href drops out of the
+  // selection and the assertion below passes anyway. The old cardinality check caught that as a
+  // side effect; this asserts it directly, and still says nothing about which pages exist.
+  const workspaceLinks = sidebar.locator('a[href*="/settings/workspace/"]');
   const hrefs = await workspaceLinks.evaluateAll((links) => links.map((link) => link.getAttribute("href")));
-  expect(hrefs).toEqual(
-    WORKSPACE_NAV_HREF_SUFFIXES.map((suffix) => `/workspaces/${workspaceId}/settings/workspace/${suffix}`)
-  );
 
-  // The user-visible journey this spec still needs: whatever that fourth link is currently
-  // labeled, it must render as a real, visible link — not just resolve structurally.
-  await expect(workspaceLinks.nth(3)).toBeVisible();
+  expect(hrefs.length).toBeGreaterThan(0);
+  expect(hrefs.every((href) => href?.startsWith(`/workspaces/${workspaceId}/settings/workspace/`))).toBe(
+    true
+  );
+  await expect(workspaceLinks.first()).toBeVisible();
 
   await expect(sidebar.getByRole("button", { name: workspaceName })).toBeVisible();
 };

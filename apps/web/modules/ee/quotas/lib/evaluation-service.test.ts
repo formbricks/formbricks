@@ -60,6 +60,12 @@ describe("Quota Evaluation Service", () => {
     name: "Test Survey",
     type: "link",
     status: "inProgress",
+    visibility: "workspace",
+    ownerId: null,
+    visibilityVersion: 0,
+    visibilityProjectedVersion: 0,
+    visibilityChangedAt: null,
+    visibilityChangedById: null,
     welcomeCard: {
       enabled: false,
       headline: { default: "Welcome!" },

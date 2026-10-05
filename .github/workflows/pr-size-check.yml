@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Harden the runner
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
@@ -39,8 +39,10 @@ jobs:
           # - Test files (*.test.ts, *.spec.tsx, etc.)
           # - Locale files (locales/*.json, i18n/*.json)
           # - Lock files (pnpm-lock.yaml, package-lock.json, yarn.lock)
-          # - Generated files (dist/, coverage/, build/, .next/)
+          # - Generated files (dist/, coverage/, build/, .next/, etc.)
           # - Storybook stories (*.stories.tsx)
+          # A case pattern must match the whole path, so a root-level name only matches at the root:
+          # lock files and generated dirs list a */ variant to match at any depth too.
 
           total_additions=0
           total_deletions=0
@@ -63,11 +65,15 @@ jobs:
                 excluded_files=$((excluded_files + 1))
                 continue
                 ;;
-              pnpm-lock.yaml|package-lock.json|yarn.lock)
+              pnpm-lock.yaml|package-lock.json|yarn.lock|*/pnpm-lock.yaml|*/package-lock.json|*/yarn.lock)
                 excluded_files=$((excluded_files + 1))
                 continue
                 ;;
               dist/*|coverage/*|build/*|node_modules/*|test-results/*|playwright-report/*|.next/*|*.tsbuildinfo)
+                excluded_files=$((excluded_files + 1))
+                continue
+                ;;
+              */dist/*|*/coverage/*|*/build/*|*/node_modules/*|*/test-results/*|*/playwright-report/*|*/.next/*)
                 excluded_files=$((excluded_files + 1))
                 continue
                 ;;
@@ -86,11 +92,13 @@ jobs:
 
           total_changes=$((total_additions + total_deletions))
 
-          echo "counted_files=${counted_files}" >> "${GITHUB_OUTPUT}"
-          echo "excluded_files=${excluded_files}" >> "${GITHUB_OUTPUT}"
-          echo "total_additions=${total_additions}" >> "${GITHUB_OUTPUT}"
-          echo "total_deletions=${total_deletions}" >> "${GITHUB_OUTPUT}"
-          echo "total_changes=${total_changes}" >> "${GITHUB_OUTPUT}"
+          {
+            echo "counted_files=${counted_files}"
+            echo "excluded_files=${excluded_files}"
+            echo "total_additions=${total_additions}"
+            echo "total_deletions=${total_deletions}"
+            echo "total_changes=${total_changes}"
+          } >> "${GITHUB_OUTPUT}"
 
           # Set flag if PR is too large (> 800 lines)
           if [ ${total_changes} -gt 800 ]; then

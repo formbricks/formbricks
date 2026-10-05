@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
+import { V3_REQUEST_ARRAY_MAX_ITEMS } from "@/app/api/v3/lib/array-budget";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
   createdResponse,
@@ -18,9 +19,15 @@ import { authenticateApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { POST } from "./route";
 
-const { verifyBearerTokenMock, userFindUniqueMock } = vi.hoisted(() => ({
+const { getJwksMock, verifyBearerTokenMock, userFindUniqueMock } = vi.hoisted(() => ({
+  getJwksMock: vi.fn(),
   verifyBearerTokenMock: vi.fn(),
   userFindUniqueMock: vi.fn(),
+}));
+
+vi.mock("better-auth/oauth2", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("better-auth/oauth2")>()),
+  getJwks: getJwksMock,
 }));
 
 vi.mock("@better-auth/oauth-provider/resource-client", () => ({
@@ -168,6 +175,7 @@ describe("POST /api/mcp", () => {
     vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
     userFindUniqueMock.mockResolvedValue({ isActive: true });
+    getJwksMock.mockResolvedValue({ keys: [] });
     verifyBearerTokenMock.mockResolvedValue({
       aud: MCP_AUDIENCE,
       sub: "user_1",
@@ -269,6 +277,79 @@ describe("POST /api/mcp", () => {
     expect(response.status).toBe(413);
     expect(response.headers.get("X-Request-Id")).toBe("req_large");
     expect(authenticateApiKeyFromHeaders).not.toHaveBeenCalled();
+  });
+
+  test("returns 413 for a body without content-length that exceeds the limit (ENG-3384)", async () => {
+    // A chunked upload carries no Content-Length, so the header check passes and the SDK's own
+    // `req.json()` would read the whole body. The route reads it itself, bounded, after authentication.
+    const oversized = new TextEncoder().encode("x".repeat(DEFAULT_REQUEST_BODY_LIMIT_BYTES + 1));
+    const response = await POST(
+      new NextRequest("http://localhost/api/mcp", {
+        method: "POST",
+        headers: {
+          accept: "application/json, text/event-stream",
+          "content-type": "application/json",
+          "mcp-protocol-version": "2025-06-18",
+          "x-api-key": "fbk_test",
+          "x-request-id": "req_chunked",
+        },
+        body: new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(oversized);
+            controller.close();
+          },
+        }),
+        duplex: "half",
+      } as ConstructorParameters<typeof NextRequest>[1])
+    );
+
+    expect(response.status).toBe(413);
+    expect(response.headers.get("X-Request-Id")).toBe("req_chunked");
+    expect(authenticateApiKeyFromHeaders).toHaveBeenCalled();
+    expect(listV3Surveys).not.toHaveBeenCalled();
+  });
+
+  test("refuses an oversized array argument before the SDK validates it (ENG-3384)", async () => {
+    // The SDK validates arguments with Zod's `~standard.validate` ahead of the scope gate, one issue
+    // per element; the route checks the array budget on the raw body first.
+    const response = await POST(
+      createMcpRequest(
+        {
+          jsonrpc: "2.0",
+          id: 7,
+          method: "tools/call",
+          params: {
+            name: "create_survey",
+            arguments: {
+              workspaceId: "clxx1234567890123456789012",
+              name: "Junk",
+              blocks: Array.from({ length: V3_REQUEST_ARRAY_MAX_ITEMS + 1 }, () => ({})),
+            },
+          },
+        },
+        { "x-request-id": "req_budget" }
+      )
+    );
+
+    expect(response.status).toBe(400);
+    expect(response.headers.get("X-Request-Id")).toBe("req_budget");
+    await expect(response.json()).resolves.toMatchObject({
+      jsonrpc: "2.0",
+      id: 7,
+      error: {
+        code: -32602,
+        message: expect.stringContaining("params.arguments.blocks"),
+        data: {
+          invalid_params: [
+            {
+              name: "params.arguments.blocks",
+              reason: `Too big: expected array to have <=${V3_REQUEST_ARRAY_MAX_ITEMS} items`,
+            },
+          ],
+        },
+      },
+    });
+    expect(createV3SurveyResponseFromRawInput).not.toHaveBeenCalled();
   });
 
   test("lists MCP tools for a valid API key", async () => {
@@ -481,6 +562,10 @@ describe("POST /api/mcp", () => {
 
     expect(response.status).toBe(200);
     expect(authenticateApiKeyFromHeaders).not.toHaveBeenCalled();
+    // The key set is pre-loaded from the same URL verification reads, so both share Better Auth's cache.
+    expect(getJwksMock).toHaveBeenCalledWith("eyJhbGciOiJFZERTQSJ9.payload.signature", {
+      jwksFetch: "http://formbricks:3000/api/auth/jwks",
+    });
     expect(verifyBearerTokenMock).toHaveBeenCalledWith(
       "eyJhbGciOiJFZERTQSJ9.payload.signature",
       expect.objectContaining({

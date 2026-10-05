@@ -1,7 +1,8 @@
 import "server-only";
 import { oauthProviderResourceClient } from "@better-auth/oauth-provider/resource-client";
 import type { AuthInfo, ServerContext } from "@modelcontextprotocol/server";
-import type { JWTPayload } from "jose";
+import { getJwks } from "better-auth/oauth2";
+import { type JWTPayload, createLocalJWKSet, decodeProtectedHeader } from "jose";
 import type { NextRequest } from "next/server";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -49,17 +50,6 @@ const JWT_ACCESS_TOKEN_TYPE = "at+jwt";
 
 const oauthResourceClient = oauthProviderResourceClient(auth);
 
-const JWKS_FAILURE_CODES = new Set([
-  "ECONNREFUSED",
-  "ECONNRESET",
-  "ENETUNREACH",
-  "ENOTFOUND",
-  "ETIMEDOUT",
-  "ERR_JWKS_MULTIPLE_MATCHING_KEYS",
-  "ERR_JWKS_NO_MATCHING_KEY",
-  "ERR_JWKS_TIMEOUT",
-]);
-
 const getErrorCode = (error: unknown): string | undefined => {
   if (typeof error !== "object" || error === null || !("code" in error)) {
     return undefined;
@@ -68,17 +58,54 @@ const getErrorCode = (error: unknown): string | undefined => {
   return typeof error.code === "string" ? error.code : undefined;
 };
 
-const getMcpOAuthFailureDetails = (error: unknown) => {
+/**
+ * `failureSource` tells an operator which step failed — `jwks_fetch` means this server could not load
+ * its own signing keys, which is what `MCP_OAUTH_JWKS_URL` fixes. The raw message is never logged.
+ */
+const getMcpOAuthFailureDetails = (error: unknown, failureSource: "jwks_fetch" | "token_verification") => {
   const errorName = error instanceof Error ? error.name : "UnknownError";
   const cause = error instanceof Error ? error.cause : undefined;
   const errorCode = getErrorCode(error) ?? getErrorCode(cause);
-  const failureSource =
-    errorName === "TypeError" || (errorCode !== undefined && JWKS_FAILURE_CODES.has(errorCode))
-      ? "jwks_fetch"
-      : "token_verification";
 
   return { errorCode, errorName, failureSource };
 };
+
+const hasDecodableProtectedHeader = (token: string): boolean => {
+  try {
+    decodeProtectedHeader(token);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Loads the key set before `verifyBearerToken` does, because that call hides every way the load fails:
+ * an endpoint answering non-2xx becomes a bare `Error("Jwks failed: …")`, and an unreachable one (DNS,
+ * refused connection, no hairpin to the public origin) has its `TypeError` swallowed into the same
+ * `no token payload` 401 as a garbage token. `getJwks` is the library's own loader and URL-keyed cache,
+ * so it surfaces the real error, and on success `verifyBearerToken` reads the set cached here instead
+ * of fetching again. `createLocalJWKSet` rejects a 200 that is not a key set (a proxy's login page),
+ * which the library would otherwise cache and trip over later as another swallowed `TypeError`.
+ *
+ * Skipped for a token whose header does not decode: `getJwks` would refuse it before fetching, and
+ * `verifyBearerToken` rejects it anyway.
+ */
+async function loadMcpOAuthJwks(
+  token: string,
+  jwksUrl: string
+): Promise<{ ok: true } | { ok: false; error: unknown }> {
+  if (!hasDecodableProtectedHeader(token)) {
+    return { ok: true };
+  }
+
+  try {
+    createLocalJWKSet(await getJwks(token, { jwksFetch: jwksUrl }));
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error };
+  }
+}
 
 export type TMcpAuthInfo = AuthInfo & {
   extra: {
@@ -449,6 +476,18 @@ async function authenticateMcpOAuthBearer(
   log: ReturnType<typeof logger.withContext>
 ): Promise<TMcpAuthenticationResult> {
   let payload: JWTPayload;
+  const jwksUrl = getMcpOAuthJwksUrl();
+
+  const jwks = await loadMcpOAuthJwks(token, jwksUrl);
+  if (!jwks.ok) {
+    return await rejectUnauthenticatedMcpRequest({
+      requestId,
+      instance,
+      log,
+      logMessage: "MCP OAuth authentication failed",
+      logContext: getMcpOAuthFailureDetails(jwks.error, "jwks_fetch"),
+    });
+  }
 
   try {
     // Renamed from `verifyAccessToken` in Better Auth 1.7 (ENG-2343). `hasAcceptedMcpAudience` below is
@@ -477,7 +516,7 @@ async function authenticateMcpOAuthBearer(
         // purpose is binding token audiences.
         typ: JWT_ACCESS_TOKEN_TYPE,
       },
-      jwksUrl: getMcpOAuthJwksUrl(),
+      jwksUrl,
     });
   } catch (error) {
     return await rejectUnauthenticatedMcpRequest({
@@ -485,7 +524,7 @@ async function authenticateMcpOAuthBearer(
       instance,
       log,
       logMessage: "MCP OAuth authentication failed",
-      logContext: getMcpOAuthFailureDetails(error),
+      logContext: getMcpOAuthFailureDetails(error, "token_verification"),
     });
   }
 

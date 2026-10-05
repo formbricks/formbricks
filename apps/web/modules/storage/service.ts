@@ -201,3 +201,35 @@ export const deleteWorkspaceFilesBestEffort = async (workspace: {
     logger.error({ error, workspaceId: workspace.id }, "Error deleting S3 files");
   }
 };
+
+/**
+ * Best-effort sweep of a deleted survey's upload folder.
+ *
+ * Since #8044 the client upload route keys every response upload as
+ * `{workspaceId}/private/surveys/{surveyId}/elements/{elementId}/{file}`, so this one prefix reaches
+ * files a scan of `response.data` cannot: answers to an upload element since removed from the survey,
+ * and files a respondent uploaded but never submitted. Pre-#8044 uploads sit flat under
+ * `{prefix}/private/` with no survey in the key, so for those the response scan remains the only way.
+ *
+ * Only for a survey that is already deleted. On a live survey (a response reset) the same sweep would
+ * also take the upload of a respondent who is mid-survey. The prefix is built from the survey's own
+ * row, never from response data, and the trailing slash keeps one survey id from matching another
+ * that starts with it. Like the workspace sweep above, errors are logged and swallowed.
+ */
+export const deleteSurveyUploadFilesBestEffort = async ({
+  workspaceId,
+  surveyId,
+}: {
+  workspaceId: string;
+  surveyId: string;
+}): Promise<void> => {
+  try {
+    const result = await deleteFilesByPrefix(`${workspaceId}/private/surveys/${surveyId}/`);
+
+    if (!result.ok) {
+      logger.error({ error: result.error, workspaceId, surveyId }, "Error deleting a survey's S3 files");
+    }
+  } catch (error) {
+    logger.error({ error, workspaceId, surveyId }, "Error deleting a survey's S3 files");
+  }
+};

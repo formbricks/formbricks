@@ -4,6 +4,12 @@ import { validateElementLabels } from "@formbricks/types/surveys/elements-valida
 import {
   V3_SURVEY_BLOCK_OPS_MAX,
   V3_SURVEY_BLOCK_ORDER_MAX,
+  V3_SURVEY_MAX_BLOCKS,
+  V3_SURVEY_MAX_ENDINGS,
+  V3_SURVEY_MAX_HIDDEN_FIELDS,
+  V3_SURVEY_MAX_LANGUAGES,
+  V3_SURVEY_MAX_TRIGGERS,
+  V3_SURVEY_MAX_VARIABLES,
   ZV3CreateSurveyBody,
   ZV3EditSurveyBlocksBody,
   ZV3PatchSurveyBody,
@@ -1059,5 +1065,150 @@ describe("block operation bodies are bounded (ENG-1652)", () => {
       maxItems: V3_SURVEY_BLOCK_OPS_MAX,
     });
     expect(JSON.stringify(json.properties.ops.items)).toContain('"remove"');
+  });
+});
+
+// ENG-3282 (contract §2): visibility is decided by the principal on create and changed only through
+// `POST …/visibility`, so both write bodies refuse it — and the owner — as an unsupported field.
+describe("survey visibility is not writable through the survey document", () => {
+  test.each(["visibility", "ownerId", "owner"])("create refuses `%s` with unsupported_field", (field) => {
+    const result = ZV3CreateSurveyBody.safeParse({ ...validCreateBody, [field]: "restricted" });
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: field, code: "unsupported_field" })])
+    );
+  });
+
+  test.each(["visibility", "ownerId", "owner"])("PATCH refuses `%s` with unsupported_field", (field) => {
+    const result = ZV3PatchSurveyBody.safeParse({ name: "Renamed", [field]: "restricted" });
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: field, code: "unsupported_field" })])
+    );
+  });
+});
+
+/**
+ * The top-level arrays of a survey document had no ceiling, and Zod parses every element before an
+ * array-level `.max()` would run — so a 2 MB body of junk entries cost one issue per entry on
+ * `POST /api/v3/surveys` before workspace authorization (ENG-3384). Each is now length-bounded ahead of
+ * its elements, on create, on patch and through the MCP SDK's `~standard.validate`.
+ */
+describe("top-level array bounds (ENG-3384)", () => {
+  const repeat = <T>(value: T, count: number): T[] => Array.from({ length: count }, () => value);
+  const ending = { id: "clend123456789012345678901", type: "endScreen", headline: { "en-US": "Thanks" } };
+  const variable = { id: "clvar123456789012345678901", name: "score", type: "number", value: 0 };
+  const trigger = { actionClassId: "clact123456789012345678901" };
+  const fieldIds = (count: number) => Array.from({ length: count }, (_unused, index) => `field_${index}`);
+
+  const cases: [string, string[], Record<string, unknown>, Record<string, unknown>][] = [
+    [
+      "languages",
+      ["languages"],
+      { languages: repeat({ code: "de-DE" }, V3_SURVEY_MAX_LANGUAGES + 1) },
+      { languages: repeat({ code: "de-DE" }, V3_SURVEY_MAX_LANGUAGES + 1) },
+    ],
+    [
+      "blocks",
+      ["blocks"],
+      { blocks: repeat(validCreateBody.blocks[0], V3_SURVEY_MAX_BLOCKS + 1) },
+      { blocks: repeat(validCreateBody.blocks[0], V3_SURVEY_MAX_BLOCKS + 1) },
+    ],
+    [
+      "endings",
+      ["endings"],
+      { endings: repeat(ending, V3_SURVEY_MAX_ENDINGS + 1) },
+      { endings: repeat(ending, V3_SURVEY_MAX_ENDINGS + 1) },
+    ],
+    [
+      "variables",
+      ["variables"],
+      { variables: repeat(variable, V3_SURVEY_MAX_VARIABLES + 1) },
+      { variables: repeat(variable, V3_SURVEY_MAX_VARIABLES + 1) },
+    ],
+    [
+      "hiddenFields.fieldIds",
+      ["hiddenFields", "fieldIds"],
+      { hiddenFields: { enabled: true, fieldIds: fieldIds(V3_SURVEY_MAX_HIDDEN_FIELDS + 1) } },
+      { hiddenFields: { enabled: true, fieldIds: fieldIds(V3_SURVEY_MAX_HIDDEN_FIELDS + 1) } },
+    ],
+    [
+      "distribution.triggers",
+      ["distribution", "triggers"],
+      { type: "app", distribution: { triggers: repeat(trigger, V3_SURVEY_MAX_TRIGGERS + 1) } },
+      { distribution: { triggers: repeat(trigger, V3_SURVEY_MAX_TRIGGERS + 1) } },
+    ],
+  ];
+
+  test.each(cases)(
+    "%s over its cap costs one issue on create, on patch and via ~standard.validate",
+    async (_name, path, createExtra, patchExtra) => {
+      const create = ZV3CreateSurveyBody.safeParse({ ...validCreateBody, ...createExtra });
+      expect(create.success).toBe(false);
+      if (!create.success) {
+        expect(create.error.issues).toHaveLength(1);
+        expect(create.error.issues[0]).toMatchObject({
+          path,
+          message: expect.stringMatching(/^Too big: expected array to have <=\d+ items$/),
+        });
+      }
+
+      const patch = ZV3PatchSurveyBody.safeParse(patchExtra);
+      expect(patch.success).toBe(false);
+      if (!patch.success) {
+        expect(patch.error.issues).toHaveLength(1);
+        expect(patch.error.issues[0]).toMatchObject({ path });
+      }
+
+      const viaStandard = await ZV3CreateSurveyBody["~standard"].validate({
+        ...validCreateBody,
+        ...createExtra,
+      });
+      expect(viaStandard.issues).toHaveLength(1);
+    }
+  );
+
+  test("accepts exactly the hidden-field cap and keeps the minimum-blocks message", () => {
+    const atCap = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      hiddenFields: { enabled: true, fieldIds: fieldIds(V3_SURVEY_MAX_HIDDEN_FIELDS) },
+    });
+    expect(atCap.success).toBe(true);
+
+    const noBlocks = ZV3CreateSurveyBody.safeParse({ ...validCreateBody, blocks: [] });
+    expect(noBlocks.success).toBe(false);
+    if (!noBlocks.success) {
+      expect(noBlocks.error.issues[0]).toMatchObject({
+        path: ["blocks"],
+        message: "At least one block is required",
+      });
+    }
+  });
+
+  test("advertises every bound as maxItems in the JSON schema", () => {
+    // `io: "output"` because the body is `z.unknown().pipe(...)`, whose input side is `unknown`; the
+    // MCP tool schemas (advertised as input) are covered in `modules/mcp/tools/schemas.test.ts`.
+    const json = z.toJSONSchema(ZV3CreateSurveyBody, { io: "output", unrepresentable: "any" }) as {
+      properties: Record<string, Record<string, unknown>>;
+    };
+
+    expect(json.properties.blocks).toMatchObject({
+      type: "array",
+      minItems: 1,
+      maxItems: V3_SURVEY_MAX_BLOCKS,
+    });
+    expect(json.properties.endings).toMatchObject({ maxItems: V3_SURVEY_MAX_ENDINGS });
+    expect(json.properties.variables).toMatchObject({ maxItems: V3_SURVEY_MAX_VARIABLES });
+    expect(json.properties.languages).toMatchObject({ maxItems: V3_SURVEY_MAX_LANGUAGES });
+    expect(json.properties.hiddenFields).toMatchObject({
+      properties: { fieldIds: expect.objectContaining({ maxItems: V3_SURVEY_MAX_HIDDEN_FIELDS }) },
+    });
+    expect(json.properties.distribution).toMatchObject({
+      properties: { triggers: expect.objectContaining({ maxItems: V3_SURVEY_MAX_TRIGGERS }) },
+    });
   });
 });

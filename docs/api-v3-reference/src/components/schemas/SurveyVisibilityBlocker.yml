@@ -1,0 +1,21 @@
+type: object
+description: An outbound connection that must be removed before the survey can become restricted.
+required:
+  - type
+  - id
+  - name
+properties:
+  type:
+    type: string
+    enum:
+      - webhook
+      - integration
+      - feedbackSource
+      - dashboard
+      - workflow
+  id:
+    type: string
+  name:
+    type: string
+    description: Display name of the connection, for the UI to list. Never empty; falls back to the type.
+additionalProperties: false

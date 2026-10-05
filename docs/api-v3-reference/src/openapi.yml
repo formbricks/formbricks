@@ -101,6 +101,17 @@ info:
     workflows family does not enforce it today, so treat parameter strictness there as unspecified
     rather than guaranteed.
 
+    **Request limits**
+
+    A request body may be at most **2 MB**; a larger one is refused with **413** before it is read.
+    Inside a body, **no array may hold more than 1 000 items, and all arrays together may hold at
+    most 50 000 elements**, at any depth — a body that exceeds either bound is refused with **400**
+    and a single `invalid_params` entry naming the offending array, before any field is validated.
+    Fields with a tighter bound document it as `maxItems` on the field (a survey's `blocks`,
+    `endings`, `variables`, `languages`, `hiddenFields.fieldIds` and `distribution.triggers` since
+    0.2.0). A 400 or 422 lists at most **50** `invalid_params` entries; when there are more, the last
+    entry says how many were left out. Since 0.2.0.
+
     **Filtering**
 
     Filters use explicit operator-style query parameters under the
@@ -276,7 +287,7 @@ info:
 
     Optional ETag/304, field selection, translation-specific writes, and survey
     version history.
-  version: 0.1.0
+  version: 0.2.0
   x-implementation-notes:
     route: apps/web/app/api/v3/surveys/route.ts
     generate-route: apps/web/app/api/v3/surveys/generate/route.ts
@@ -316,6 +327,8 @@ paths:
     $ref: paths/api_v3_surveys_{surveyId}_archive.yml
   /api/v3/surveys/{surveyId}/restore:
     $ref: paths/api_v3_surveys_{surveyId}_restore.yml
+  /api/v3/surveys/{surveyId}/visibility:
+    $ref: paths/api_v3_surveys_{surveyId}_visibility.yml
   /api/v3/responses:
     $ref: paths/api_v3_responses.yml
   /api/v3/responses/count:

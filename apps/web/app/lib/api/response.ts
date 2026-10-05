@@ -18,7 +18,8 @@ interface ApiErrorResponse {
     | "forbidden"
     | "too_many_requests"
     | "conflict"
-    | "payload_too_large";
+    | "payload_too_large"
+    | "workspace_survey_limit_reached";
   message: string;
   details: {
     [key: string]: string | string[] | number | number[] | boolean | boolean[];
@@ -287,6 +288,17 @@ const conflictResponse = (
   );
 };
 
+/** ENG-3282: the workspace already holds its maximum number of surveys. */
+const workspaceSurveyLimitResponse = (limit: number, count: number, cache: string = "private, no-store") =>
+  Response.json(
+    {
+      code: "workspace_survey_limit_reached",
+      message: "This workspace has reached its survey limit",
+      details: { count, limit },
+    } as ApiErrorResponse,
+    { status: 422, headers: { "Cache-Control": cache } }
+  );
+
 const tooManyRequestsResponse = (
   message: string,
   cors: boolean = false,
@@ -323,4 +335,5 @@ export const responses = {
   tooManyRequestsResponse,
   forbiddenResponse,
   conflictResponse,
+  workspaceSurveyLimitResponse,
 };

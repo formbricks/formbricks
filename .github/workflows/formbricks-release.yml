@@ -20,7 +20,7 @@ jobs:
     # by comparing it with the latest release from GitHub API
     steps:
       - name: Harden the runner
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
@@ -77,6 +77,43 @@ jobs:
             echo "ℹ️  This release (${CURRENT_TAG}) is not the latest release (latest: ${LATEST_TAG})"
             echo "is_latest=false" >> $GITHUB_OUTPUT
           fi
+  # The chart and Compose file pin a Cube image that cube-image.yml publishes separately, and GitHub
+  # creates a new package as private. Pull that pin the way a self-hoster does, without credentials,
+  # before anything is built, so a release never ships an image its installs cannot pull.
+  check-cube-image:
+    name: Check the bundled Cube image is publicly pullable
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Install YQ
+        uses: dcarbone/install-yq-action@4075b4dca348d74bd83f2bf82d30f25d7c54539b # v1.3.1
+
+      # docker/__tests__/formbricks-script.test.ts keeps docker/docker-compose.yml on the same tag.
+      - name: Pull the pinned Cube image without credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="$(yq -r '.cube.image.repository + ":" + .cube.image.tag' charts/formbricks/values.yaml)"
+          DOCKER_CONFIG="$(mktemp -d)"
+          export DOCKER_CONFIG
+          if ! docker manifest inspect "$image" > /dev/null; then
+            echo "::error::$image cannot be pulled without credentials. Publish it with cube-image.yml and make the formbricks/cube package public, then re-run this release."
+            exit 1
+          fi
+          echo "$image is publicly pullable."
+
   docker-build-community:
     name: Build & release community docker image
     permissions:
@@ -87,9 +124,22 @@ jobs:
     secrets: inherit
     needs:
       - check-latest-release
+      - check-cube-image
     with:
       IS_PRERELEASE: ${{ github.event.release.prerelease }}
       MAKE_LATEST: ${{ needs.check-latest-release.outputs.is_latest == 'true' }}
+
+  scan-community-image:
+    name: Scan community docker image
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    uses: ./.github/workflows/docker-security-scan.yml
+    needs:
+      - docker-build-community
+    with:
+      image_ref: ghcr.io/${{ github.repository }}@${{ needs.docker-build-community.outputs.IMAGE_DIGEST }}
 
   docker-build-cloud:
     name: Build & push Formbricks Cloud to ECR
@@ -127,7 +177,7 @@ jobs:
       - docker-build-cloud
     steps:
       - name: Harden the runner
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
@@ -169,7 +219,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
@@ -287,7 +337,7 @@ jobs:
     if: ${{ !github.event.release.prerelease }}
     steps:
       - name: Harden the runner
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 

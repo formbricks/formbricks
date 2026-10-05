@@ -4,6 +4,13 @@ import { prepareV3SurveyCreate, prepareV3SurveyCreateInput, prepareV3SurveyPatch
 import { ZV3CreateSurveyBody } from "./schemas";
 import { serializeV3SurveyResource } from "./serializers";
 
+// ENG-3282: marker off, a session user — every survey reads as workspace-visible, no controls.
+const TEST_VISIBILITY = {
+  actorContext: { enforced: false, isOrganizationAdmin: false, kind: "user", userId: "user_1" },
+  gates: { entitled: false, ready: false },
+  ownerName: null,
+} as const;
+
 vi.mock("server-only", () => ({}));
 
 const workspaceId = "clxx1234567890123456789012";
@@ -319,6 +326,31 @@ describe("v3 survey preparation", () => {
     }
   });
 
+  test("parses a stored survey above a request array cap, and still refuses the cap on the request (ENG-3384)", () => {
+    // The caps bound request input. A survey the editor built with more items than a cap has to stay
+    // editable through v3 and MCP: on the first cut of the fix, a name-only patch of a 101-variable
+    // survey returned 422 `stored_survey_invalid` (review on #9423).
+    const variables = Array.from({ length: 101 }, (_unused, index) => ({
+      id: `clvar${String(index).padStart(21, "0")}`,
+      name: `score_${index}`,
+      type: "number",
+      value: 0,
+    }));
+    const oversizedStoredSurvey = { ...survey, variables } as unknown as TSurvey;
+
+    const renamed = prepareV3SurveyPatchInput(oversizedStoredSurvey, { name: "Renamed" });
+    expect(renamed.ok).toBe(true);
+
+    const resent = prepareV3SurveyPatchInput(oversizedStoredSurvey, { variables });
+    expect(resent.ok).toBe(false);
+    if (!resent.ok) {
+      expect(resent.origin).toBe("request");
+      expect(resent.validation.invalidParams).toEqual([
+        expect.objectContaining({ name: "variables", reason: "Too big: expected array to have <=100 items" }),
+      ]);
+    }
+  });
+
   test("applies a patch over the current document before validating references", () => {
     const preparation = prepareV3SurveyPatchInput(survey, {
       blocks: [
@@ -563,9 +595,11 @@ describe("v3 survey preparation", () => {
   test("accepts its own GET output unchanged — the round trip (ENG-3069)", () => {
     // The regression this whole change exists for: fetch a survey, send it straight back, and the
     // eight server-owned fields GET emits used to produce a 400 naming fields the caller never chose.
-    const resource = serializeV3SurveyResource(survey);
+    const resource = serializeV3SurveyResource(survey, TEST_VISIBILITY);
 
-    const preparation = prepareV3SurveyPatchInput(survey, JSON.parse(JSON.stringify(resource)));
+    const preparation = prepareV3SurveyPatchInput(survey, JSON.parse(JSON.stringify(resource)), {
+      reportedVisibility: resource,
+    });
 
     expect(preparation.ok).toBe(true);
     if (!preparation.ok) {
@@ -584,9 +618,9 @@ describe("v3 survey preparation", () => {
           : entry
       ),
     } as TSurvey;
-    const resource = JSON.parse(JSON.stringify(serializeV3SurveyResource(withAlias)));
+    const resource = JSON.parse(JSON.stringify(serializeV3SurveyResource(withAlias, TEST_VISIBILITY)));
 
-    expect(prepareV3SurveyPatchInput(withAlias, resource).ok).toBe(true);
+    expect(prepareV3SurveyPatchInput(withAlias, resource, { reportedVisibility: resource }).ok).toBe(true);
 
     const german = resource.languages.findIndex((language: { code: string }) => language.code === "de-DE");
     resource.languages[german].alias = "Deutsch";
@@ -944,5 +978,34 @@ describe("patch attribution when a new violation lands on an old one's path", ()
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.origin).toBe("request");
+  });
+});
+
+describe("visibility fields on PATCH (ENG-3282)", () => {
+  const reported = serializeV3SurveyResource(survey, TEST_VISIBILITY);
+
+  test("drops an exact echo of this caller's GET values", () => {
+    const body = {
+      name: "Renamed",
+      visibility: reported.visibility,
+      owner: reported.owner,
+      access: reported.access,
+    };
+
+    expect(prepareV3SurveyPatchInput(survey, body, { reportedVisibility: reported }).ok).toBe(true);
+  });
+
+  test("refuses a changed visibility as an unsupported field — it changes only through POST …/visibility", () => {
+    const preparation = prepareV3SurveyPatchInput(
+      survey,
+      { name: "Renamed", visibility: "restricted" },
+      { reportedVisibility: reported }
+    );
+
+    expect(preparation.ok).toBe(false);
+    if (preparation.ok) return;
+    expect(preparation.validation.invalidParams).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "unsupported_field" })])
+    );
   });
 });

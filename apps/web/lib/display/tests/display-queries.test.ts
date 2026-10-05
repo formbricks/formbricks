@@ -127,7 +127,7 @@ describe("getDisplaysByContactId", () => {
     test("returns displays for a contact ordered by createdAt desc", async () => {
       vi.mocked(prisma.display.findMany).mockResolvedValue(mockDisplaysForContact as any);
 
-      const result = await getDisplaysByContactId(mockContactId, mockWorkspaceId);
+      const result = await getDisplaysByContactId(mockContactId, mockWorkspaceId, {});
 
       expect(result).toEqual(mockDisplaysForContact);
       expect(prisma.display.findMany).toHaveBeenCalledWith({
@@ -144,7 +144,7 @@ describe("getDisplaysByContactId", () => {
     test("returns empty array when contact has no displays", async () => {
       vi.mocked(prisma.display.findMany).mockResolvedValue([]);
 
-      const result = await getDisplaysByContactId(mockContactId, mockWorkspaceId);
+      const result = await getDisplaysByContactId(mockContactId, mockWorkspaceId, {});
 
       expect(result).toEqual([]);
     });
@@ -154,7 +154,7 @@ describe("getDisplaysByContactId", () => {
     test("scopes the query to the workspace of the contact", async () => {
       vi.mocked(prisma.display.findMany).mockResolvedValue([]);
 
-      await getDisplaysByContactId(mockContactId, mockWorkspaceId);
+      await getDisplaysByContactId(mockContactId, mockWorkspaceId, {});
 
       expect(prisma.display.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -166,7 +166,9 @@ describe("getDisplaysByContactId", () => {
 
   describe("Sad Path", () => {
     test("throws a ValidationError if the contactId is invalid", async () => {
-      await expect(getDisplaysByContactId("not-a-cuid", mockWorkspaceId)).rejects.toThrow(ValidationError);
+      await expect(getDisplaysByContactId("not-a-cuid", mockWorkspaceId, {})).rejects.toThrow(
+        ValidationError
+      );
     });
 
     test("throws DatabaseError on PrismaClientKnownRequestError", async () => {
@@ -177,13 +179,13 @@ describe("getDisplaysByContactId", () => {
 
       vi.mocked(prisma.display.findMany).mockRejectedValue(errToThrow);
 
-      await expect(getDisplaysByContactId(mockContactId, mockWorkspaceId)).rejects.toThrow(DatabaseError);
+      await expect(getDisplaysByContactId(mockContactId, mockWorkspaceId, {})).rejects.toThrow(DatabaseError);
     });
 
     test("throws generic Error for other exceptions", async () => {
       vi.mocked(prisma.display.findMany).mockRejectedValue(new Error("Mock error"));
 
-      await expect(getDisplaysByContactId(mockContactId, mockWorkspaceId)).rejects.toThrow(Error);
+      await expect(getDisplaysByContactId(mockContactId, mockWorkspaceId, {})).rejects.toThrow(Error);
     });
   });
 });

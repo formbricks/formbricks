@@ -5,6 +5,7 @@ import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import {
   checkForEmptyFallBackValue,
+  extractCompleteRecallIds,
   extractFallbackValue,
   extractId,
   extractIds,
@@ -47,6 +48,22 @@ vi.mock("@/lib/utils/date-display", () => ({
   }),
 }));
 
+/**
+ * One Embedded Data definition as the readers see it: joined from the tables and inlined onto the
+ * survey at load. ENG-2628 made this the only thing `recall.ts` resolves a token against, in the
+ * editor as well as everywhere else, so the fixtures below declare fields as rows rather than as the
+ * legacy `variables` / `hiddenFields` columns.
+ */
+const embeddedField = (
+  storageKey: string,
+  name: string,
+  source: "computed" | "ingested",
+  dataType: "string" | "number" = "string"
+) => ({
+  field: { name, source, dataType, defaultValue: null, locked: false, key: null },
+  link: { storageKey },
+});
+
 describe("recall utility functions", () => {
   describe("extractId", () => {
     test("extracts ID correctly from a string with recall pattern", () => {
@@ -85,6 +102,27 @@ describe("recall utility functions", () => {
       const text = "Text #recall:id1 more text #recall:id2";
       const result = extractIds(text);
       expect(result).toEqual(["id1", "id2"]);
+    });
+  });
+
+  describe("extractCompleteRecallIds", () => {
+    test("extracts the ids of complete recall tokens", () => {
+      const text = "Text #recall:id1/fallback:a# and #recall:id2/fallback:#";
+      expect(extractCompleteRecallIds(text)).toEqual(["id1", "id2"]);
+    });
+
+    test("ignores a token whose closing # was deleted, while extractIds still matches it", () => {
+      const text = "Hi #recall:q1/fallback:there welcome";
+      expect(extractIds(text)).toEqual(["q1"]);
+      expect(extractCompleteRecallIds(text)).toEqual([]);
+    });
+
+    test("ignores a token with no fallback tail", () => {
+      expect(extractCompleteRecallIds("Hi #recall:q1 welcome")).toEqual([]);
+    });
+
+    test("returns empty array when there is no recall token at all", () => {
+      expect(extractCompleteRecallIds("plain text")).toEqual([]);
     });
   });
 
@@ -174,8 +212,7 @@ describe("recall utility functions", () => {
       const survey: TSurvey = {
         id: "test-survey",
         blocks: [],
-        hiddenFields: { fieldIds: ["email"] },
-        variables: [],
+        embeddedFields: [embeddedField("email", "email", "ingested")],
       } as unknown as TSurvey;
 
       const result = recallToHeadline(headline, survey, false, "en");
@@ -187,8 +224,7 @@ describe("recall utility functions", () => {
       const survey: TSurvey = {
         id: "test-survey",
         blocks: [],
-        hiddenFields: { fieldIds: [] },
-        variables: [{ id: "plan", name: "Subscription Plan" }],
+        embeddedFields: [embeddedField("plan", "Subscription Plan", "computed")],
       } as unknown as TSurvey;
 
       const result = recallToHeadline(headline, survey, false, "en");
@@ -367,8 +403,7 @@ describe("recall utility functions", () => {
       const text = "Text with #recall:hidden1/fallback:val1#";
       const survey: TSurvey = {
         blocks: [],
-        hiddenFields: { fieldIds: ["hidden1"] },
-        variables: [],
+        embeddedFields: [embeddedField("hidden1", "hidden1", "ingested")],
       } as unknown as TSurvey;
 
       const result = getRecallItems(text, survey, "en");
@@ -382,8 +417,7 @@ describe("recall utility functions", () => {
       const text = "Text with #recall:var1/fallback:val1#";
       const survey: TSurvey = {
         blocks: [],
-        hiddenFields: { fieldIds: [] },
-        variables: [{ id: "var1", name: "Variable One" }],
+        embeddedFields: [embeddedField("var1", "Variable One", "computed")],
       } as unknown as TSurvey;
 
       const result = getRecallItems(text, survey, "en");
@@ -401,35 +435,66 @@ describe("recall utility functions", () => {
       const result = getRecallItems(text, survey, "en");
       expect(result).toEqual([]);
     });
+
+    // ENG-2931: a half-deleted token must not yield a recall item. `recallToHeadline` leaves it as
+    // raw text, so an item here is one whose `@Label` the editor can never find in the rendered
+    // text — the precondition for RecallWrapper's unbounded update loop.
+    test("ignores a token whose closing # was deleted", () => {
+      const survey: TSurvey = {
+        blocks: [{ id: "b1", elements: [{ id: "q1", headline: { en: "Name" } }] }],
+        hiddenFields: { fieldIds: [] },
+        variables: [],
+      } as unknown as TSurvey;
+
+      const broken = "Hi #recall:q1/fallback:there welcome";
+      expect(recallToHeadline({ en: broken }, survey, false, "en").en).toBe(broken);
+      expect(getRecallItems(broken, survey, "en")).toEqual([]);
+
+      // Control: the intact token still resolves, and still renders as @Name.
+      const intact = "Hi #recall:q1/fallback:there# welcome";
+      expect(recallToHeadline({ en: intact }, survey, false, "en").en).toBe("Hi @Name welcome");
+      expect(getRecallItems(intact, survey, "en")).toHaveLength(1);
+    });
+
+    test("ignores a token that has lost its fallback tail but keeps a later complete one", () => {
+      const survey: TSurvey = {
+        blocks: [
+          {
+            id: "b1",
+            elements: [
+              { id: "q1", headline: { en: "Name" } },
+              { id: "q2", headline: { en: "City" } },
+            ],
+          },
+        ],
+        hiddenFields: { fieldIds: [] },
+        variables: [],
+      } as unknown as TSurvey;
+
+      const result = getRecallItems("Hi #recall:q1 from #recall:q2/fallback:x#", survey, "en");
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe("q2");
+    });
   });
 
   /**
    * ENG-1837: a recall token's label and type come from the survey's Embedded Data definitions
-   * instead of `hiddenFields.fieldIds` and `variables` — specifically from what the survey
-   * *declares*, because the picker writes `@label` into the text and these functions read it back,
-   * so the two must agree on the same instant. The precedence (ingested → element → computed) is
-   * load-bearing and unchanged.
+   * instead of `hiddenFields.fieldIds` and `variables`. ENG-2628: from the ROWS, the one read every
+   * other reader makes — the editor's cards write them now, so the picker that puts `@label` into
+   * the text and these functions that read it back see the same list again. The precedence
+   * (ingested → element → computed) is load-bearing and unchanged.
    */
-  describe("recall items resolve through the survey's declared Embedded Data", () => {
-    const embeddedField = (
-      storageKey: string,
-      name: string,
-      source: "computed" | "ingested",
-      dataType: "string" | "number" = "string"
-    ) => ({
-      field: { name, source, dataType, defaultValue: null, locked: false },
-      link: { storageKey },
-    });
-
-    test("labels a token from the declarations, not from a stale inlined row", () => {
-      // The editor's working copy carries the rows as of the last save. Labelling from them would
-      // desync this from the recall picker, which offers the current name.
+  describe("recall items resolve through the survey's Embedded Data rows", () => {
+    test("labels a token from the rows, ignoring what the legacy columns still say", () => {
+      // The columns are the survey's last-saved projection and are re-derived from the rows on every
+      // write. A reader that took a name from them would show the author something the survey no
+      // longer declares.
       const survey = {
         blocks: [],
         hiddenFields: { fieldIds: ["hidden1"] },
-        variables: [{ id: "var1", name: "Renamed Variable", type: "text", value: "" }],
+        variables: [{ id: "var1", name: "Stale Column Name", type: "text", value: "" }],
         embeddedFields: [
-          embeddedField("var1", "Stale Name", "computed"),
+          embeddedField("var1", "Renamed Variable", "computed"),
           embeddedField("hidden1", "hidden1", "ingested"),
         ],
       } as unknown as TSurvey;
@@ -446,10 +511,10 @@ describe("recall utility functions", () => {
       ]);
     });
 
-    test("classifies a field declared since the last save, which the rows do not know", () => {
-      // The rows are non-empty and omit `hidden2`, so the stored accessor would not fall back — this
-      // fails if the resolution is switched back to it. Without the declared source the token stays
-      // unclassified and renders as a raw `#recall:…#` tag.
+    test("leaves a token the rows do not declare unclassified", () => {
+      // The legacy column still lists `hidden2`; the rows do not, so the survey does not declare it.
+      // An unclassified token is dropped and the editor renders the raw `#recall:…#` tag — which is
+      // the correct outcome for a field that is not there.
       const survey = {
         blocks: [],
         hiddenFields: { fieldIds: ["hidden1", "hidden2"] },
@@ -457,16 +522,13 @@ describe("recall utility functions", () => {
         embeddedFields: [embeddedField("hidden1", "hidden1", "ingested")],
       } as unknown as TSurvey;
 
-      const result = getRecallItems("Text with #recall:hidden2/fallback:b#", survey, "en");
-
-      expect(result).toEqual([{ id: "hidden2", label: "hidden2", type: "hiddenField" }]);
+      expect(getRecallItems("Text with #recall:hidden2/fallback:b#", survey, "en")).toEqual([]);
     });
 
     test("a storage key that also matches an element id still resolves as a hidden field", () => {
       const survey = {
         blocks: [{ id: "b1", elements: [{ id: "shared", headline: { en: "Question headline" } }] }],
-        hiddenFields: { fieldIds: ["shared"] },
-        variables: [],
+        embeddedFields: [embeddedField("shared", "shared", "ingested")],
       } as unknown as TSurvey;
 
       const result = getRecallItems("Text with #recall:shared/fallback:x#", survey, "en");
@@ -477,8 +539,7 @@ describe("recall utility functions", () => {
     test("an element wins over a computed field on a colliding key", () => {
       const survey = {
         blocks: [{ id: "b1", elements: [{ id: "shared", headline: { en: "Question headline" } }] }],
-        hiddenFields: { fieldIds: [] },
-        variables: [{ id: "shared", name: "Variable One", type: "text", value: "" }],
+        embeddedFields: [embeddedField("shared", "Variable One", "computed")],
       } as unknown as TSurvey;
 
       const result = getRecallItems("Text with #recall:shared/fallback:x#", survey, "en");
@@ -508,8 +569,7 @@ describe("recall utility functions", () => {
       // own field, so the author never sees two identically-named rows.
       const survey = {
         blocks: [],
-        hiddenFields: { fieldIds: ["country"] },
-        variables: [],
+        embeddedFields: [embeddedField("country", "country", "ingested")],
       } as unknown as TSurvey;
 
       const result = getRecallItems("You are in #recall:country/fallback:x#", survey, "en");

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { applyIngestContract } from "@formbricks/types/embedded-data-ingest";
 import {
   RESERVED_FIELD_CATALOG,
+  buildEmbeddedLookup,
   coerceToEmbeddedDataType,
   dropShadowedReservedEntries,
   getComputedEmbeddedFields,
@@ -34,7 +35,10 @@ import { ProgressBar } from "@/components/general/progress-bar";
 import { RecaptchaBranding } from "@/components/general/recaptcha-branding";
 import { ResponseErrorComponent } from "@/components/general/response-error-component";
 import { Subheader } from "@/components/general/subheader";
-import { SurveyCloseButton } from "@/components/general/survey-close-button";
+import {
+  SURVEY_CLOSE_BUTTON_ROW_CLASS_NAME,
+  SurveyCloseButton,
+} from "@/components/general/survey-close-button";
 import { WelcomeCard } from "@/components/general/welcome-card";
 import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
 import { CardlessSurveyLayout } from "@/components/wrappers/cardless-survey-layout";
@@ -53,6 +57,13 @@ import {
 } from "@/lib/offline-storage";
 import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
+import {
+  END_BLOCK_ID,
+  getForwardTargetFromOffBlockId,
+  getPreviousBlockId,
+  getRestorableHistory,
+  isFinishedBlockId,
+} from "@/lib/survey-navigation";
 import { SURVEY_INSTRUCTIONS_ID, getSurveyPagePosition, hasSurveyInstructions } from "@/lib/survey-page";
 import { SurveyState } from "@/lib/survey-state";
 import { useOnlineStatus } from "@/lib/use-online-status";
@@ -288,26 +299,24 @@ export function Survey({
     setlocalSurvey(survey);
   }, [survey]);
 
-  // ENG-1837: computed fields are seeded from their definitions in the EmbeddedData tables, falling
-  // back to the legacy `variables` column for surveys whose rows are not joined in. Only `variables`
-  // and `embeddedFields` are passed (and depended on): a computed field can never be derived from
-  // `hiddenFields`, so nothing else can change this map.
+  // ENG-1837: computed fields are seeded from their definitions in the EmbeddedData tables. Only
+  // `embeddedFields` is passed (and depended on), since nothing else can change this map.
   useEffect(() => {
     setCurrentVariables(
-      getComputedEmbeddedFields({
-        variables: survey.variables,
-        embeddedFields: survey.embeddedFields,
-      }).reduce<TResponseVariables>((acc, { field, link }) => {
-        // Provably the variable's declared value for every field derived from the legacy shape:
-        // ZSurveyVariable pins a number variable to a number and a text one to a string, and both
-        // are pass-throughs here (see the seeding test in embedded-data-mapping.test.ts). Booleans
-        // and dates have no slot in TResponseVariables and no computed field can carry one.
-        const seed = coerceToEmbeddedDataType(field.defaultValue, field.dataType);
-        if (typeof seed === "string" || typeof seed === "number") acc[link.storageKey] = seed;
-        return acc;
-      }, {})
+      getComputedEmbeddedFields({ embeddedFields: survey.embeddedFields }).reduce<TResponseVariables>(
+        (acc, { field, link }) => {
+          // Provably the variable's declared value for every field derived from the legacy shape:
+          // ZSurveyVariable pins a number variable to a number and a text one to a string, and both
+          // are pass-throughs here (see the seeding test in embedded-data-mapping.test.ts). Booleans
+          // and dates have no slot in TResponseVariables and no computed field can carry one.
+          const seed = coerceToEmbeddedDataType(field.defaultValue, field.dataType);
+          if (typeof seed === "string" || typeof seed === "number") acc[link.storageKey] = seed;
+          return acc;
+        },
+        {}
+      )
     );
-  }, [survey.variables, survey.embeddedFields]);
+  }, [survey.embeddedFields]);
 
   const autoFocusEnabled = autoFocus ?? window.self === window.top;
 
@@ -608,7 +617,9 @@ export function Survey({
       // If the survey is fully complete (no pending responses + finished), discard stale
       // progress and start fresh instead of restoring to the ending card.
       if (pendingCount === 0) {
-        const isEndingCard = localSurvey.endings.some((e) => e.id === progress.blockId);
+        // The "end" sentinel counts as an ending card here: a survey with no endings defined
+        // finishes on it, so restoring onto it would resume a session that is already over.
+        const isEndingCard = isFinishedBlockId(localSurvey, progress.blockId);
         const isResponseFinished = progress.surveyStateSnapshot?.responseAcc?.finished === true;
 
         if (isEndingCard || isResponseFinished) {
@@ -650,7 +661,7 @@ export function Survey({
         setResponseData(progress.responseData);
         setTtc(progress.ttc);
         setCurrentVariables(progress.currentVariables);
-        setHistory(progress.history);
+        setHistory(getRestorableHistory(localSurvey, progress.history));
         setSelectedLanguage(progress.selectedLanguage);
 
         // Restore survey state from snapshot
@@ -879,13 +890,28 @@ export function Survey({
       };
 
     if (!currentBlock) {
-      console.error(
-        "Block not found. blockId:",
-        blockId,
-        "available blocks:",
-        localSurvey.blocks.map((b) => b.id)
-      );
-      throw new Error("Block not found");
+      // `blockId` is not a block. `onSubmit` returns before reaching here for an ending id or the
+      // "end" sentinel, so in practice this is a block that no longer exists because the survey was
+      // edited after progress was saved. Nothing is left to advance through, so finish rather than
+      // throw — throwing escaped as an unhandled rejection, which dropped the answer in hand and left
+      // the Next button spinning (ENG-2818).
+      const offBlockTarget = getForwardTargetFromOffBlockId(localSurvey, blockId);
+
+      // An ending or the sentinel is an expected position to submit from. A `blockId` that matches
+      // neither is survey drift, and the only remaining signal that it happened.
+      if (!offBlockTarget && blockId !== END_BLOCK_ID) {
+        console.warn(
+          "Formbricks: blockId no longer resolves to a block, finishing the survey. blockId:",
+          blockId,
+          "available blocks:",
+          localSurvey.blocks.map((b) => b.id)
+        );
+      }
+
+      return {
+        nextBlockId: offBlockTarget,
+        calculatedVariables: { ...currentVariables },
+      };
     }
 
     const localResponseData = { ...responseData, ...data };
@@ -903,9 +929,9 @@ export function Survey({
         calculationResults,
         logic.conditions,
         selectedLanguage,
-        // Merged against the in-flight response data (answers from this block included), so a
+        // Built against the in-flight response data (answers from this block included), so a
         // declared field shadows a same-named reserved entry here exactly as it does in recall.
-        mergeReservedValues(reservedFieldValues, localResponseData)
+        buildEmbeddedLookup(localSurvey, reservedFieldValues, localResponseData)
       );
 
       if (!isLogicMet) {
@@ -1137,10 +1163,15 @@ export function Survey({
   /**
    * Recall's lookup map. The reserved side is already shadow-filtered, so a declared field owns its
    * name whether or not it has a value; the merge order is what still protects a stored `""` or `0`.
+   *
+   * Ingested defaults go underneath both, because they are the answer of last resort: a field the
+   * respondent supplied nothing usable for falls back to what the survey declared. They are kept out
+   * of `responseData` on purpose — that record is what the queue submits, and ingest does not write
+   * defaults (see `projectIngestedDefaults`).
    */
   const recallValues = useMemo(
-    () => mergeReservedValues(reservedValues, responseData),
-    [reservedValues, responseData]
+    () => buildEmbeddedLookup(localSurvey, reservedValues, responseData),
+    [localSurvey, reservedValues, responseData]
   );
 
   useEffect(() => {
@@ -1182,6 +1213,12 @@ export function Survey({
   };
 
   const onSubmit = async (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
+    // The survey is already over — an ending card or the "end" sentinel is showing. Re-sending the
+    // response would repeat `finished: true`, which the server rejects with a 400, and the error card
+    // would then replace the ending. Nothing is left to record, so the submit is a no-op; returning
+    // here also keeps the ending id out of `history`.
+    if (isFinishedBlockId(localSurvey, blockId)) return;
+
     isNavigatingBackRef.current = false;
     hasUserNavigatedRef.current = true;
     blurOutgoingCard();
@@ -1285,22 +1322,22 @@ export function Survey({
   };
 
   const onBack = (): void => {
+    const prevBlockId = getPreviousBlockId(localSurvey, blockId, history);
+
+    // Nothing precedes the current card — the respondent is on the first block, or `blockId` is an
+    // ending / a block that no longer exists and no history was saved. Back is a no-op rather than
+    // a throw (ENG-2818), and nothing is consumed: neither the history nor the variable stack is
+    // popped for a navigation that does not happen.
+    if (!prevBlockId) return;
+
     isNavigatingBackRef.current = true;
     hasUserNavigatedRef.current = true;
     blurOutgoingCard();
 
-    let prevBlockId: string | undefined;
-    // use history if available
     if (history.length > 0) {
-      const newHistory = [...history];
-      prevBlockId = newHistory.pop();
-      setHistory(newHistory);
-    } else {
-      // otherwise go back to previous block in array
-      prevBlockId = localSurvey.blocks[currentBlockIndex - 1]?.id;
+      setHistory(history.slice(0, -1));
     }
     popVariableState();
-    if (!prevBlockId) throw new Error("Block not found");
 
     // Revert required changes by the first element in the previous block
     const prevBlock = localSurvey.blocks.find((b) => b.id === prevBlockId);
@@ -1333,8 +1370,12 @@ export function Survey({
           return (
             <>
               {localSurvey.type !== "link" ? (
-                <div className="bg-survey-bg relative h-8 w-full">
-                  <div className="flex w-full items-center justify-end">
+                <div className="bg-survey-bg relative w-full">
+                  <div
+                    className={cn(
+                      "flex w-full items-center justify-end",
+                      SURVEY_CLOSE_BUTTON_ROW_CLASS_NAME
+                    )}>
                     <SurveyCloseButton
                       onClose={onClose}
                       hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
@@ -1358,8 +1399,12 @@ export function Survey({
           return (
             <>
               {localSurvey.type !== "link" ? (
-                <div className="bg-survey-bg relative h-8 w-full">
-                  <div className="flex w-full items-center justify-end">
+                <div className="bg-survey-bg relative w-full">
+                  <div
+                    className={cn(
+                      "flex w-full items-center justify-end",
+                      SURVEY_CLOSE_BUTTON_ROW_CLASS_NAME
+                    )}>
                     <SurveyCloseButton
                       onClose={onClose}
                       hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
@@ -1485,12 +1530,12 @@ export function Survey({
                 ) : null}
 
                 {isCloseButtonVisible || isLanguageSwitchVisible ? (
-                  <div
-                    className={cn(
-                      "relative w-full",
-                      isCloseButtonVisible || isLanguageSwitchVisible ? "h-8" : "h-5"
-                    )}>
-                    <div className={cn("flex w-full items-center justify-end")}>
+                  <div className="relative w-full">
+                    <div
+                      className={cn(
+                        "flex w-full items-center justify-end",
+                        isCloseButtonVisible ? SURVEY_CLOSE_BUTTON_ROW_CLASS_NAME : "h-8"
+                      )}>
                       {isLanguageSwitchVisible && (
                         <LanguageSwitch
                           survey={localSurvey}
@@ -1556,7 +1601,9 @@ export function Survey({
       <Subheader
         subheader={replaceRecallInfo(
           getLocalizedValue(localSurvey.welcomeCard.subheader, selectedLanguage),
-          responseData,
+          // The same lookup the visible welcome card recalls from, so a reserved token like
+          // `#recall:url#` resolves here too instead of staying literal.
+          recallValues,
           currentVariables,
           selectedLanguage
         )}

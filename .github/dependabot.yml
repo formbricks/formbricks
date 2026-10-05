@@ -1,0 +1,67 @@
+# Version updates for the actions pinned in .github/, the Cube image built from docker/cube-image, and the
+# dev container's features.
+# Security updates for the npm workspace are configured separately in the repository settings and routed to
+# Linear by dependabot-to-linear.yml.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    # "/" covers .github/workflows; composite actions are only scanned when listed explicitly.
+    directories:
+      - "/"
+      - "/.github/actions/*"
+    schedule:
+      interval: monthly
+    # One PR per month moves every workflow together, so no action ends up on two versions.
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "chore(ci)"
+    labels:
+      - dependencies
+      - github_actions
+
+  # The digest-pinned base images of ghcr.io/formbricks/cube, weekly because new digests are where OS
+  # security fixes arrive. A new digest changes the image, so the PR also needs a
+  # docker/cube-image/REVISION bump: cube-image.yml fails until it has one.
+  - package-ecosystem: docker
+    directory: "/docker/cube-image"
+    schedule:
+      interval: weekly
+    # The build stage stays on the runtime's Node major (the distroless base is nodejs24).
+    ignore:
+      - dependency-name: node
+        update-types:
+          - version-update:semver-major
+    commit-message:
+      prefix: "chore(docker)"
+    labels:
+      - dependencies
+
+  # The Cube version inside ghcr.io/formbricks/cube. The server and its driver must move together, and a
+  # new version also needs its native-module checksums (see "Bumping Cube" in docker/cube-image/README.md).
+  - package-ecosystem: npm
+    directory: "/docker/cube-image"
+    schedule:
+      interval: monthly
+    groups:
+      cube:
+        patterns:
+          - "@cubejs-backend/*"
+    commit-message:
+      prefix: "chore(docker)"
+    labels:
+      - dependencies
+      - javascript
+
+  # The dev container's features, pinned by digest in .devcontainer/devcontainer-lock.json. Features run as
+  # root at build time and docker-in-docker runs privileged, so they should track the maintained major.
+  - package-ecosystem: devcontainers
+    directory: "/"
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "chore(devcontainer)"
+    labels:
+      - dependencies

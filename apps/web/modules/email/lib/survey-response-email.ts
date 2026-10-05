@@ -7,7 +7,11 @@ import {
   ProcessedVariable,
   renderFollowUpEmail,
 } from "@formbricks/email";
-import { getComputedEmbeddedFields, getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
+import { labelEmbeddedFields } from "@formbricks/types/embedded-data-label";
+import {
+  getComputedEmbeddedFields,
+  getIngestedEmbeddedFields,
+} from "@formbricks/types/embedded-data-resolver";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -17,6 +21,7 @@ import { getElementResponseMapping } from "@/lib/responses";
 import { buildServerEmbeddedValues } from "@/lib/surveyLogic/utils";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { getTranslate } from "@/lingodotdev/server";
+import { displayEmbeddedValue } from "@/modules/embedded-data/lib/value-display";
 import { resolveStorageUrl } from "@/modules/storage/utils";
 
 /**
@@ -128,15 +133,18 @@ const buildHiddenFields = (
 ): ProcessedHiddenField[] => {
   if (!attachResponseData || !includeHiddenFields) return [];
 
-  return getIngestedStorageKeys(survey)
-    .filter((hiddenFieldId) => {
-      const hiddenFieldResponse = response.data[hiddenFieldId];
-      return hiddenFieldResponse && typeof hiddenFieldResponse === "string";
-    })
-    .map((hiddenFieldId) => ({
-      id: hiddenFieldId,
-      value: response.data[hiddenFieldId] as string,
-    }));
+  // ENG-3233: shown by name, read by storage key. `id` stays the storage key — it is the React key
+  // in the template, and only the key is unique per survey.
+  //
+  // ENG-3266: the same widening as the analysis surfaces — a `number` field stores a JSON number,
+  // which the old `typeof === "string"` gate dropped, so a follow-up email omitted a row the export
+  // wrote. Read once and flat-map rather than filter-then-map: reading the slot twice is what made
+  // the `as string` cast necessary, and the cast is what let the two reads drift apart.
+  return labelEmbeddedFields(getIngestedEmbeddedFields(survey)).flatMap(({ link, label }) => {
+    const value = displayEmbeddedValue(response.data[link.storageKey]);
+    if (!value) return [];
+    return [{ id: link.storageKey, name: label, value }];
+  });
 };
 
 /**

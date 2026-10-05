@@ -3,6 +3,8 @@ import { AuthenticationError } from "@formbricks/types/errors";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { PrettyUrlsTable } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/domain/components/pretty-urls-table";
 import { IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
+import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
+import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
 import { getTranslate } from "@/lingodotdev/server";
 import { getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
 import { FaviconCustomizationSettings } from "@/modules/ee/whitelabel/favicon-customization/components/favicon-customization-settings";
@@ -31,7 +33,9 @@ const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }
 
   const [hasWhiteLabelPermission, surveys, layoutData] = await Promise.all([
     getWhiteLabelPermission(organization.id),
-    getSurveysWithSlugsByOrganizationId(organization.id),
+    resolveSurveyActorContext({ id: session.user.id, type: "user" }, organization.id).then((actorContext) =>
+      getSurveysWithSlugsByOrganizationId(organization.id, buildVisibleSurveyWhere(actorContext))
+    ),
     getSettingsLayoutData(session.user.id, organization.id),
   ]);
   const isOwnerOrManager = isManager || isOwner;

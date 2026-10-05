@@ -4,9 +4,15 @@ on:
   schedule:
     - cron: "0 2 * * *" # Daily at 2 AM UTC
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Docker Release to Github"]
-    types: [completed]
+  # Called by formbricks-release.yml once the community image is published, so a release is
+  # scanned by the digest it actually pushed rather than whatever `:latest` points at. Called
+  # workflows see the caller's github context, so github.ref/github.sha are the release tag.
+  workflow_call:
+    inputs:
+      image_ref:
+        description: "Image to scan, pinned by digest (e.g. ghcr.io/formbricks/formbricks@sha256:...)"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -20,7 +26,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Harden the runner
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
@@ -29,22 +35,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Determine ref and commit for upload
-        id: gitref
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
-          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-        run: |
-          set -euo pipefail
-          if [[ "${EVENT_NAME}" == "workflow_run" ]]; then
-            echo "ref=refs/heads/${HEAD_BRANCH}" >> "$GITHUB_OUTPUT"
-            echo "sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
-          else
-            echo "ref=${GITHUB_REF}" >> "$GITHUB_OUTPUT"
-            echo "sha=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
-          fi
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
         with:
@@ -55,7 +45,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
-          image-ref: "ghcr.io/${{ github.repository }}:latest"
+          image-ref: ${{ inputs.image_ref || format('ghcr.io/{0}:latest', github.repository) }}
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH,MEDIUM,LOW"
@@ -66,6 +56,59 @@ jobs:
         if: ${{ always() && hashFiles('trivy-results.sarif') != '' }}
         with:
           sarif_file: "trivy-results.sarif"
-          ref: ${{ steps.gitref.outputs.ref }}
-          sha: ${{ steps.gitref.outputs.sha }}
+          ref: ${{ github.ref }}
+          sha: ${{ github.sha }}
           category: "trivy-container-scan"
+
+  # The bundled Cube image (docker/cube-image, published by cube-image.yml) on the daily schedule and
+  # manual runs only. A release calls this workflow for its own community image, so the job skips
+  # whenever `image_ref` is passed.
+  scan-cube:
+    name: Vulnerability Scan (Cube)
+    if: ${{ !inputs.image_ref }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout (for SARIF fingerprinting and the pinned tag)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 1
+
+      # Scan what the chart installs, not `latest`, which follows main rather than a release.
+      - name: Resolve the pinned Cube image
+        id: cube
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="$(yq -r '.cube.image.repository + ":" + .cube.image.tag' charts/formbricks/values.yaml)"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          image-ref: ${{ steps.cube.outputs.image }}
+          format: "sarif"
+          output: "trivy-cube-results.sarif"
+          severity: "CRITICAL,HIGH,MEDIUM,LOW"
+          version: "v0.71.2"
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@a4e1a019f5e24960714ff6296aee04b736cbc3cf # v3.29.6
+        if: ${{ always() && hashFiles('trivy-cube-results.sarif') != '' }}
+        with:
+          sarif_file: "trivy-cube-results.sarif"
+          ref: ${{ github.ref }}
+          sha: ${{ github.sha }}
+          category: "trivy-cube-image-scan"

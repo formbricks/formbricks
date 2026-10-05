@@ -95,13 +95,14 @@ export function ChartPreview({
               data={data}
               query={chartData.query}
               optionLabels={chartData.optionLabels}
+              fieldLabels={chartData.fieldLabels}
               config={config}
             />
           </ChartErrorBoundary>
         </TabsContent>
 
         <TabsContent value="data" className="mt-0">
-          <DataViewer data={data} optionLabels={chartData.optionLabels} />
+          <DataViewer data={data} optionLabels={chartData.optionLabels} fieldLabels={chartData.fieldLabels} />
         </TabsContent>
       </>
     );

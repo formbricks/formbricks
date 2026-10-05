@@ -255,6 +255,11 @@ should keep the default initialization Job enabled.
 Cube is part of the baseline Formbricks v5 stack and is deployed by this chart by default
 (`cube.enabled: true`).
 
+- The bundled image is `ghcr.io/formbricks/cube`: the Cube API server and its Postgres driver on a
+  distroless Node runtime, with no shell, Python or Cube Store (built from
+  [`docker/cube-image`](https://github.com/formbricks/formbricks/tree/main/docker/cube-image)). Pointing
+  `cube.image.repository` and `cube.image.tag` back at an upstream `cubejs/cube` release is supported; set
+  both together, since a tag on its own is resolved against `ghcr.io/formbricks/cube`.
 - For the chart-managed Cube, the chart renders `deployment.env.CUBEJS_API_URL` automatically as
   `http://formbricks-cube:4000` when using the default release name.
 - For an external Cube, set `cube.enabled: false` and point `deployment.env.CUBEJS_API_URL` at your
@@ -270,6 +275,24 @@ Cube is part of the baseline Formbricks v5 stack and is deployed by this chart b
 - Keep `cube.replicas=1` while `cube.env.CUBEJS_CACHE_AND_QUEUE_DRIVER` is `memory`. Configure Cube Store
   and switch cache and queue storage away from memory before running multiple Cube replicas.
 - Keep Hub enabled. Cube should point at the same feedback records database that Hub writes to, unless you intentionally split that storage.
+
+### Cube container security context
+
+`cube.containerSecurityContext` defaults to a read-only root filesystem, `runAsNonRoot`, `runAsUser: 1000`, no
+privilege escalation, and all capabilities dropped. Without Cube Store (the chart's in-memory cache and queue
+driver), Cube writes nothing to its own filesystem, so the chart mounts no writable volumes. This holds for the
+bundled image and for upstream `cubejs/cube` releases.
+
+Upgrading from a chart where the Cube root filesystem was writable:
+
+- `CUBEJS_DEV_MODE=true` on an upstream `cubejs/cube` image starts an embedded Cube Store that writes under
+  `/cube/conf/.cubestore`, so the pod never becomes ready. Leave dev mode off in production, or set
+  `cube.containerSecurityContext.readOnlyRootFilesystem: false`.
+- A custom image or configuration that writes files needs `readOnlyRootFilesystem: false`. A volume you add to
+  the Cube pod yourself, for example through a post-renderer, stays writable: the setting covers only the
+  image's own filesystem.
+- Your `cube.containerSecurityContext` values are merged over these defaults, so a partial override picks up
+  the new fields. Set a field explicitly to keep its old behaviour.
 
 ## Hub worker and self-hosted embeddings
 
@@ -481,7 +504,7 @@ No cloud LLM is hardwired into the chart. `taxonomy.llm.provider` defaults to th
 | Provider value | Use case | Provider-specific values |
 | --- | --- | --- |
 | `openai-compatible` | Bundled vLLM, OpenAI, or another compatible `/v1` endpoint | `baseUrl` and `existingSecret` |
-| `bedrock` | A model available through Amazon Bedrock | `bedrock.region`; AWS credentials use the standard SDK chain and must be supplied through workload identity or a Secret |
+| `bedrock` | A model available through Amazon Bedrock | `bedrock.region`; AWS credentials come from an IAM role bound to `taxonomy.serviceAccount`, or from a Secret |
 | `vertex-gemini` | Gemini through Google Vertex AI | `vertex.project`, `vertex.location`, and `vertex.existingSecret` |
 
 Only the selected adapter's environment variables and credentials are rendered. Provider-specific blocks for the
@@ -549,8 +572,11 @@ checks it against that selected deployment's `maxModelLen`. Taxonomy startup and
 for the full prompt, output, and reserve calculation and for external provider/model preflight.
 
 `taxonomy.maxClusters` remains configurable for upgrade compatibility, but production Taxonomy images enforce
-the 80-cluster quality invariant at startup. The Taxonomy and Hub runtimes likewise validate retry, timeout,
-heartbeat, stale-run, and total-run settings. Keep the default 30-second heartbeat well below the 1,800-second
+the 80-cluster quality invariant at startup. The Taxonomy and Hub runtimes likewise validate their own retry,
+timeout, heartbeat, stale-run, and total-run settings. Two relations span processes, so the chart checks them at
+render time: `taxonomy.terminationGracePeriodSeconds` must be at least `taxonomy.runDeadlineSeconds` + 30, and,
+when `taxonomy.autoConfigureHub=true`, `taxonomy.hubStaleRunTimeoutSeconds` must exceed
+`taxonomy.runDeadlineSeconds`. Keep the default 30-second heartbeat well below the 1,800-second
 stale-run timeout; a heartbeat value of `0` intentionally disables heartbeats in supporting Taxonomy images.
 
 When `taxonomy.enabled=true`, the chart creates the taxonomy Deployment and Service, creates or uses the
@@ -596,9 +622,28 @@ taxonomy:
       region: us-east-1
 ```
 
-Prefer an IAM role delivered to the pod through EKS Pod Identity, IRSA, or the equivalent workload-identity
-mechanism for your cluster. Configure that association for the Kubernetes service account used by the Taxonomy
-pod. If role-based credentials are unavailable, create a Kubernetes Secret outside the values file and load it
+Bedrock needs a taxonomy image of version 0.1.6 or later; earlier images, including the chart's default `v0.1.0`,
+ship without the AWS SDK and fail on the first Bedrock request whichever way credentials are supplied. Set
+`taxonomy.image.tag` (or `taxonomy.image.digest`) accordingly.
+
+Prefer an IAM role delivered to the pod through EKS Pod Identity or IRSA. Give Taxonomy its own ServiceAccount
+so the role reaches only this pod, not the web app or migration job that share `rbac.serviceAccount`:
+
+```yaml
+taxonomy:
+  serviceAccount:
+    create: true
+    # IRSA only. For EKS Pod Identity, omit the annotation and create a Pod Identity association for
+    # the ServiceAccount (default name: formbricks-taxonomy, or <nameOverride>-taxonomy).
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/formbricks-taxonomy-bedrock
+```
+
+The role needs `bedrock:InvokeModel` on the configured model. For IRSA, its trust policy `sub` must be
+`system:serviceaccount:<namespace>:<ServiceAccount name>`; the name is `formbricks-taxonomy` unless you set
+`nameOverride` or `taxonomy.serviceAccount.name`. To bind a ServiceAccount you manage yourself, set
+`taxonomy.serviceAccount.name` and leave `create: false`; annotate that ServiceAccount directly. If role-based
+credentials are unavailable, create a Kubernetes Secret outside the values file and load it
 through `taxonomy.envFrom` so the AWS SDK can read `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and, when
 required, `AWS_SESSION_TOKEN`:
 
@@ -638,6 +683,10 @@ taxonomy:
 
 The `taxonomy-vertex-credentials` secret must contain `TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON` with service-account
 JSON that can call Vertex AI.
+
+The taxonomy service currently loads Vertex credentials only from that JSON, so GKE Workload Identity cannot replace
+the key yet. `taxonomy.serviceAccount` still gives the pod its own identity, which a key-less Workload Identity
+setup will bind to once the service falls back to Application Default Credentials.
 
 ## Hub and Taxonomy metrics and structured logs
 
@@ -691,6 +740,46 @@ Hub's metric attributes are restricted to a fixed, low-cardinality set — for i
 emitted only in correlated JSON logs. Prompt text, feedback, model output, embeddings, credentials, authorization
 tokens, provider response bodies, and collector URLs are never telemetry fields.
 
+## Migration Job compatibility rollback
+
+This chart restores a writable root filesystem for the migration Job and stops applying
+`deployment.containerSecurityContext` to its containers. This is a breaking change for namespaces enforcing
+Restricted Pod Security: admission can reject the Job and block an upgrade. Before upgrading, adjust the
+namespace admission policy to permit this Job, or retain a hardened chart with a compatible application image.
+If admission rejects the Job, roll back to the previous compatible chart and image combination before retrying.
+
+The migration Job uses the image's default user unless `deployment.securityContext.runAsUser` overrides it.
+For the Formbricks 6.0.2 image, use UID 1001 (the image default): its migration runner needs ownership of
+`/home/nextjs/packages/database` to remove and recreate the staging directory. An arbitrary UID, such as 1234,
+can fail with a permission error even though the root filesystem is writable. A custom image must provide
+matching ownership for its configured UID.
+
+## Web container security context
+
+`deployment.containerSecurityContext` applies to the web container. It defaults to a read-only root filesystem,
+`runAsNonRoot`, `runAsUser: 1001` (the image's `nextjs` user), no privilege escalation, and all capabilities
+dropped. With a read-only root, the chart mounts `emptyDir` volumes on `/tmp`, the Next.js cache, and — when
+`migration.enabled=false` — the Prisma migration staging directory. A path you mount yourself through
+`deployment.extraVolumeMounts` replaces the chart's mount.
+
+The migration Job uses `deployment.securityContext` at the Pod level and retains a writable root filesystem.
+It does not inherit `deployment.containerSecurityContext` or mount the Prisma staging directory, so older
+migration runners can remove and recreate that directory. Namespaces enforcing the `restricted` Pod Security
+standard may reject the migration Job because it does not enforce the required container-level controls.
+
+Upgrading from a chart that did not render the web container context:
+
+- Container-level fields win over `deployment.securityContext`. If you set a custom
+  `deployment.securityContext.runAsUser`, set `deployment.containerSecurityContext.runAsUser` to the same UID,
+  or the web container runs as `1001`.
+- A custom image or extension that writes anywhere else needs a writable mount through
+  `deployment.extraVolumes` / `deployment.extraVolumeMounts`, or `readOnlyRootFilesystem: false`.
+- When `migration.enabled=false`, the web container needs an image whose migration runner empties its staging
+  directory in place: Formbricks 6.1.0 or later. Older images cannot remove the mount point and fail with
+  `EROFS: read-only file system, rmdir '/home/nextjs/packages/database/.prisma-migrations'`.
+  Keep the migration Job enabled so startup migrations are skipped, or set
+  `deployment.containerSecurityContext.readOnlyRootFilesystem: false` for startup migrations on an older image.
+
 ## Values
 
 | Key                                                                | Type   | Default                                                                     | Description                                               |
@@ -724,8 +813,11 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | deployment.annotations                                             | object | `{}`                                                                        |                                                           |
 | deployment.args                                                    | list   | `[]`                                                                        |                                                           |
 | deployment.command                                                 | list   | `[]`                                                                        |                                                           |
+| deployment.containerSecurityContext.allowPrivilegeEscalation       | bool   | `false`                                                                     |                                                           |
+| deployment.containerSecurityContext.capabilities.drop[0]           | string | `"ALL"`                                                                     |                                                           |
 | deployment.containerSecurityContext.readOnlyRootFilesystem         | bool   | `true`                                                                      |                                                           |
 | deployment.containerSecurityContext.runAsNonRoot                   | bool   | `true`                                                                      |                                                           |
+| deployment.containerSecurityContext.runAsUser                      | int    | `1001`                                                                      |                                                           |
 | deployment.env                                                     | object | `{}`                                                                        | App container environment variables. Supports scalar values and `valueFrom` maps such as `secretKeyRef`. |
 | deployment.envFrom                                                 | string | `nil`                                                                       | Additional app container environment sources from ConfigMaps or Secrets. |
 | deployment.extraVolumeMounts                                       | list   | `[]`                                                                        | Additional app container volume mounts.                   |
@@ -1018,4 +1110,9 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | taxonomy.maxClusters                                               | string | `"80"`                                                                      | Compatibility value; production Taxonomy images enforce 80 at startup. |
 | taxonomy.runDeadlineSeconds                                        | string | `"900"`                                                                     | Total taxonomy run deadline.                              |
 | taxonomy.service.type                                              | string | `"ClusterIP"`                                                               | Internal taxonomy service type.                           |
+| taxonomy.serviceAccount.additionalLabels                           | object | `{}`                                                                        | Extra labels on the created ServiceAccount; requires `create=true`. |
+| taxonomy.serviceAccount.annotations                                | object | `{}`                                                                        | Annotations on the created ServiceAccount, e.g. `eks.amazonaws.com/role-arn`; requires `create=true`. |
+| taxonomy.serviceAccount.automountServiceAccountToken               | bool   | `false`                                                                     | Mount a Kubernetes API token through the created ServiceAccount. |
+| taxonomy.serviceAccount.create                                     | bool   | `false`                                                                     | Create a dedicated ServiceAccount for the taxonomy pod. |
+| taxonomy.serviceAccount.name                                       | string | `""`                                                                        | ServiceAccount name; defaults to `<nameOverride or chart name>-taxonomy` (`formbricks-taxonomy`) when created. Empty with `create=false` uses the namespace default. |
 | taxonomy.terminationGracePeriodSeconds                             | int    | `930`                                                                         | Recommended pod grace period for the default 900-second run deadline. |
