@@ -2679,6 +2679,7 @@
         "comparison_section_scale_unlocks": "Desbloqueios Scale",
         "confirm_hobby_downgrade_body": "O teu período experimental gratuito do plano {plan} terminará agora e mudarás imediatamente para o plano Hobby.",
         "confirm_hobby_downgrade_description": "Podes fazer upgrade novamente a qualquer momento.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Vais mudar para o plano Hobby. O teu plano atual termina definitivamente e não poderá ser restaurado.",
         "confirm_hobby_downgrade_title": "Mudar para o plano Hobby agora?",
         "confirm_trial_continue_body": "Follow-ups, ligações personalizadas e tudo o resto em {plan} — desbloqueado instantaneamente.<br /><b>{chargeNow} hoje</b>, depois {fullPrice} {period} com taxas incluídas. A faturação começa hoje.",
         "confirm_trial_continue_body_fallback": "Follow-ups, ligações personalizadas e tudo o resto em {plan} — desbloqueado instantaneamente.<br /><b>{fullPrice} {period}</b> mais taxas. A faturação começa hoje.",

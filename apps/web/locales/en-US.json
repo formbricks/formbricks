@@ -2679,6 +2679,7 @@
         "comparison_section_scale_unlocks": "Scale unlocks",
         "confirm_hobby_downgrade_body": "Your free {plan} trial will end now and you will switch to the Hobby plan immediately.",
         "confirm_hobby_downgrade_description": "You can upgrade again at any time.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "You will switch to the Hobby plan. Your current plan ends for good and can't be restored.",
         "confirm_hobby_downgrade_title": "Switch to the Hobby plan now?",
         "confirm_trial_continue_body": "Follow-ups, custom links, and everything else in {plan} — unlocked instantly.<br /><b>{chargeNow} today</b>, then {fullPrice} {period} incl. taxes. Billing starts today.",
         "confirm_trial_continue_body_fallback": "Follow-ups, custom links, and everything else in {plan} — unlocked instantly.<br /><b>{fullPrice} {period}</b> plus taxes. Billing starts today.",

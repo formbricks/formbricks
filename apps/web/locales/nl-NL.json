@@ -2679,6 +2679,7 @@
         "comparison_section_scale_unlocks": "Scale-mogelijkheden",
         "confirm_hobby_downgrade_body": "Je gratis proefperiode van {plan} eindigt nu en je schakelt direct over naar het Hobby-abonnement.",
         "confirm_hobby_downgrade_description": "Je kunt op elk moment weer upgraden.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Je schakelt over naar het Hobby-abonnement. Je huidige abonnement eindigt definitief en kan niet worden hersteld.",
         "confirm_hobby_downgrade_title": "Nu overschakelen naar het Hobby-abonnement?",
         "confirm_trial_continue_body": "Opvolgingen, aangepaste links en alles in {plan} — direct ontgrendeld.<br /><b>{chargeNow} vandaag</b>, daarna {fullPrice} {period} incl. btw. Facturering begint vandaag.",
         "confirm_trial_continue_body_fallback": "Opvolgingen, aangepaste links en alles in {plan} — direct ontgrendeld.<br /><b>{fullPrice} {period}</b> plus btw. Facturering begint vandaag.",

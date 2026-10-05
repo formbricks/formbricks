@@ -2679,6 +2679,7 @@
         "comparison_section_scale_unlocks": "Beneficii Scale",
         "confirm_hobby_downgrade_body": "Perioada ta de probă gratuită {plan} se va încheia acum și vei trece imediat la planul Hobby.",
         "confirm_hobby_downgrade_description": "Poți face upgrade oricând dorești.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Vei trece la planul Hobby. Planul tău actual se încheie definitiv și nu mai poate fi restabilit.",
         "confirm_hobby_downgrade_title": "Treci la planul Hobby acum?",
         "confirm_trial_continue_body": "Follow-up-uri, link-uri personalizate și tot ce oferă {plan} — deblocate instantaneu.<br /><b>{chargeNow} astăzi</b>, apoi {fullPrice} {period} taxe incluse. Facturarea începe astăzi.",
         "confirm_trial_continue_body_fallback": "Follow-up-uri, link-uri personalizate și tot ce oferă {plan} — deblocate instantaneu.<br /><b>{fullPrice} {period}</b> plus taxe. Facturarea începe astăzi.",

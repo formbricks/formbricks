@@ -2679,6 +2679,7 @@
         "comparison_section_scale_unlocks": "Fonctionnalités Scale",
         "confirm_hobby_downgrade_body": "Votre essai gratuit {plan} se terminera maintenant et vous passerez immédiatement au forfait Hobby.",
         "confirm_hobby_downgrade_description": "Tu peux repasser à un forfait supérieur à tout moment.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Tu vas passer au forfait Hobby. Ton forfait actuel prendra fin définitivement et ne pourra pas être rétabli.",
         "confirm_hobby_downgrade_title": "Passer au forfait Hobby maintenant ?",
         "confirm_trial_continue_body": "Relances, liens personnalisés et tout le reste dans {plan} — débloqués instantanément.<br /><b>{chargeNow} aujourd'hui</b>, puis {fullPrice} {period} taxes comprises. La facturation commence aujourd'hui.",
         "confirm_trial_continue_body_fallback": "Relances, liens personnalisés et tout le reste dans {plan} — débloqués instantanément.<br /><b>{fullPrice} {period}</b> plus taxes. La facturation commence aujourd'hui.",

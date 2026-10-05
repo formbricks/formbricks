@@ -2679,6 +2679,7 @@
         "comparison_section_scale_unlocks": "Scale låser upp",
         "confirm_hobby_downgrade_body": "Din kostnadsfria provperiod för {plan} avslutas nu och du byter omedelbart till Hobby-planen.",
         "confirm_hobby_downgrade_description": "Du kan uppgradera igen när som helst.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Du byter till Hobby-planen. Din nuvarande plan avslutas för gott och kan inte återställas.",
         "confirm_hobby_downgrade_title": "Byta till Hobby-planen nu?",
         "confirm_trial_continue_body": "Uppföljningar, anpassade länkar och allt annat i {plan} – låses upp direkt.<br /><b>{chargeNow} idag</b>, sedan {fullPrice} {period} inkl. moms. Faktureringen börjar idag.",
         "confirm_trial_continue_body_fallback": "Uppföljningar, anpassade länkar och allt annat i {plan} – låses upp direkt.<br /><b>{fullPrice} {period}</b> plus moms. Faktureringen börjar idag.",

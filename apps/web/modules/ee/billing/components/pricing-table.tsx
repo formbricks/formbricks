@@ -1007,8 +1007,9 @@ export const PricingTable = ({
   const requestPlanAction = (plan: TStandardPlan, interval: TCloudBillingInterval) => {
     if (plan === "hobby") {
       // Returning to Hobby from a Pro trial switches immediately — confirm before ending the trial.
-      // A paid plan just schedules the downgrade for period end, so it needs no dialog.
-      if (isTrialing) {
+      // Leaving a legacy or custom plan ends it for good, so it is confirmed too. A standard paid plan
+      // just schedules the downgrade for period end, so it needs no dialog.
+      if (isTrialing || currentPlanLevel === null) {
         setIsHobbyDowngradeConfirmOpen(true);
         return;
       }
@@ -1021,7 +1022,13 @@ export const PricingTable = ({
       openConfirmation(plan, interval, "trial-continue");
       return;
     }
-    if (willChargeImmediately(plan, interval) || willChargeAfterAddingCard(plan, interval)) {
+    // Switching off a legacy or custom plan ends it for good; the modal says so before any path —
+    // card on file or add-card checkout — replaces it.
+    if (
+      willChargeImmediately(plan, interval) ||
+      willChargeAfterAddingCard(plan, interval) ||
+      currentPlanLevel === null
+    ) {
       openConfirmation(plan, interval, "upgrade");
       return;
     }
@@ -1669,9 +1676,13 @@ export const PricingTable = ({
           }}
           title={t("workspace.settings.billing.confirm_hobby_downgrade_title")}
           description={t("workspace.settings.billing.confirm_hobby_downgrade_description")}
-          body={t("workspace.settings.billing.confirm_hobby_downgrade_body", {
-            plan: getCurrentCloudPlanLabel(currentCloudPlan, t),
-          })}
+          body={
+            isTrialing
+              ? t("workspace.settings.billing.confirm_hobby_downgrade_body", {
+                  plan: getCurrentCloudPlanLabel(currentCloudPlan, t),
+                })
+              : t("workspace.settings.billing.confirm_hobby_downgrade_ends_current_plan_body")
+          }
           buttonText={t("workspace.settings.billing.downgrade_to_hobby")}
           buttonVariant="destructive"
           cancelButtonText={t("common.cancel")}

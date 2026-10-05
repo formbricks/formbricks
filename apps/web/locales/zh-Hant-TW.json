@@ -2679,6 +2679,7 @@
         "comparison_section_scale_unlocks": "Scale 方案解鎖功能",
         "confirm_hobby_downgrade_body": "你的免費 {plan} 試用將立即結束，並立刻切換至 Hobby 方案。",
         "confirm_hobby_downgrade_description": "你隨時可以再次升級。",
+        "confirm_hobby_downgrade_ends_current_plan_body": "你將切換至 Hobby 方案。目前的方案會就此結束，且無法恢復。",
         "confirm_hobby_downgrade_title": "現在切換至 Hobby 方案？",
         "confirm_trial_continue_body": "追蹤功能、自訂連結以及 {plan} 中的所有功能——立即解鎖。<br /><b>今天收費 {chargeNow}</b>,之後每{period} {fullPrice},含稅。計費從今天開始。",
         "confirm_trial_continue_body_fallback": "追蹤功能、自訂連結以及 {plan} 中的所有功能——立即解鎖。<br /><b>每{period} {fullPrice}</b>,另加稅金。計費從今天開始。",

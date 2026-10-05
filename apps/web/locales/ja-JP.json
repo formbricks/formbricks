@@ -2679,6 +2679,7 @@
         "comparison_section_scale_unlocks": "Scaleで解除される機能",
         "confirm_hobby_downgrade_body": "無料の{plan}トライアルは今すぐ終了し、すぐにHobbyプランに切り替わります。",
         "confirm_hobby_downgrade_description": "いつでも再度アップグレードできます。",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Hobbyプランに切り替わります。現在のプランは完全に終了し、元に戻すことはできません。",
         "confirm_hobby_downgrade_title": "今すぐHobbyプランに切り替えますか?",
         "confirm_trial_continue_body": "{plan}のフォローアップ、カスタムリンク、その他すべての機能がすぐに利用可能になります。<br /><b>本日{chargeNow}</b>、その後は{period}ごとに{fullPrice}（税込）。本日より課金が開始されます。",
         "confirm_trial_continue_body_fallback": "{plan}のフォローアップ、カスタムリンク、その他すべての機能がすぐに利用可能になります。<br /><b>{period}ごとに{fullPrice}</b>プラス税金。本日より課金が開始されます。",

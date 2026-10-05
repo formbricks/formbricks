@@ -2679,6 +2679,7 @@
         "comparison_section_scale_unlocks": "Scale özellikleri",
         "confirm_hobby_downgrade_body": "Ücretsiz {plan} deneme süreniz şimdi sona erecek ve hemen Hobby planına geçeceksiniz.",
         "confirm_hobby_downgrade_description": "İstediğiniz zaman yeniden yükseltme yapabilirsiniz.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Hobby planına geçeceksin. Mevcut planın kalıcı olarak sona erer ve geri getirilemez.",
         "confirm_hobby_downgrade_title": "Şimdi Hobby planına geçilsin mi?",
         "confirm_trial_continue_body": "Takipler, özel linkler ve {plan} planındaki diğer her şey — anında kullanıma açılır.<br /><b>Bugün {chargeNow}</b>, ardından vergiler dahil {period} {fullPrice}. Faturalandırma bugün başlar.",
         "confirm_trial_continue_body_fallback": "Takipler, özel linkler ve {plan} planındaki diğer her şey — anında kullanıma açılır.<br /><b>{period} {fullPrice}</b> artı vergiler. Faturalandırma bugün başlar.",

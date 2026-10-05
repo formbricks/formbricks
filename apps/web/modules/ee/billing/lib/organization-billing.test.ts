@@ -3579,7 +3579,12 @@ describe("organization-billing", () => {
           items: PRO_MONTHLY_ITEMS,
           default_payment_method: "pm_legacy",
           payment_behavior: "allow_incomplete",
-          metadata: { organizationId: "org_1" },
+          metadata: {
+            organizationId: "org_1",
+            targetPlan: "pro",
+            targetInterval: "monthly",
+            replacesSubscriptionId: "sub_legacy",
+          },
           expand: ["latest_invoice.confirmation_secret"],
         },
         { idempotencyKey: "replace-subscription-org_1-sub_legacy" }
@@ -3679,6 +3684,13 @@ describe("organization-billing", () => {
       });
       expect(mocks.subscriptionsCancel).not.toHaveBeenCalled();
       expect(mocks.subscriptionsCreate).not.toHaveBeenCalled();
+    });
+
+    test("an unread page of invoice items fails closed before the legacy plan is canceled", async () => {
+      mocks.invoiceItemsList.mockResolvedValue({ data: [], has_more: true });
+
+      await expect(switchTo("pro")).rejects.toMatchObject({ message: "billing_currency_conflict" });
+      expect(mocks.subscriptionsCancel).not.toHaveBeenCalled();
     });
 
     test("a percent-off discount has no currency and does not block the replacement", async () => {
@@ -3891,7 +3903,12 @@ describe("organization-billing", () => {
             id: "sub_new",
             status: "incomplete",
             currency: "usd",
-            metadata: { organizationId: "org_1" },
+            metadata: {
+              organizationId: "org_1",
+              targetPlan: "pro",
+              targetInterval: "monthly",
+              replacesSubscriptionId: "sub_legacy",
+            },
             latest_invoice: "in_new",
           },
           { id: "sub_hobby", status: "active", currency: "usd", metadata: { organizationId: "org_1" } },
@@ -3913,6 +3930,38 @@ describe("organization-billing", () => {
       expect(mocks.subscriptionsUpdate).not.toHaveBeenCalledWith("sub_hobby", expect.anything());
       expect(mocks.subscriptionsCancel).not.toHaveBeenCalled();
       expect(mocks.subscriptionsCreate).not.toHaveBeenCalled();
+    });
+
+    test("a pending replacement for another plan is canceled, not handed to this checkout", async () => {
+      mocks.checkoutSessionsRetrieve.mockResolvedValue({
+        ...setupCheckoutSession,
+        metadata: { ...setupCheckoutSession.metadata, targetPlan: "scale" },
+      });
+      const stalePro = {
+        id: "sub_stale_pro",
+        status: "incomplete",
+        currency: "usd",
+        metadata: {
+          organizationId: "org_1",
+          targetPlan: "pro",
+          targetInterval: "monthly",
+          replacesSubscriptionId: "sub_legacy",
+        },
+        latest_invoice: "in_stale",
+      };
+      mocks.subscriptionsList.mockImplementation(async (params: { status?: string }) => ({
+        data: params?.status === "incomplete" ? [stalePro] : [legacySubscription()],
+      }));
+
+      const result = await applySetupCheckoutUpgrade({ organizationId: "org_1", checkoutSessionId: "cs_1" });
+
+      expect(mocks.invoicesRetrieve).not.toHaveBeenCalledWith("in_stale", expect.anything());
+      expect(mocks.subscriptionsCancel).toHaveBeenCalledWith("sub_stale_pro");
+      expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ metadata: expect.objectContaining({ targetPlan: "scale" }) }),
+        expect.anything()
+      );
+      expect(result).toMatchObject({ targetPlan: "scale" });
     });
 
     test("the upgrade preview returns null (amount-less copy) without asking Stripe to price it", async () => {

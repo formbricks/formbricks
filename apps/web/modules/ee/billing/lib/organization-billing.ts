@@ -1192,7 +1192,10 @@ const assertNoOtherCurrencyBillingObjects = async (
 
   // Only an amount-off coupon carries a currency; a percent-off one doesn't block. Unexpanded counts.
   const coupon = customer.deleted ? null : (customer.discount?.source.coupon ?? null);
+  const lists = [pendingInvoiceItems, draftQuotes, openQuotes, draftInvoices, openInvoices];
   const blockers = {
+    // Each list reads one page; an unread page could hide a blocker, so fail closed on it.
+    unreadPages: lists.some((list) => list.has_more),
     customerDiscount: typeof coupon === "string" || (!!coupon && hasCurrency(coupon)),
     customerBalance: !customer.deleted && customer.balance !== 0,
     pendingInvoiceItems: pendingInvoiceItems.data.filter(hasCurrency).length,
@@ -1201,6 +1204,7 @@ const assertNoOtherCurrencyBillingObjects = async (
   };
 
   if (
+    blockers.unreadPages ||
     blockers.customerDiscount ||
     blockers.customerBalance ||
     blockers.pendingInvoiceItems > 0 ||
@@ -1305,7 +1309,8 @@ const replaceSubscriptionInCatalogCurrency = async (input: {
         // An unpaid first invoice leaves the subscription incomplete with its PaymentIntent open
         // instead of failing, so SCA can still be completed on-session.
         payment_behavior: "allow_incomplete",
-        metadata: { organizationId },
+        // Lets a repeated finalize tell this replacement from one for another plan or checkout.
+        metadata: { organizationId, targetPlan, targetInterval, replacesSubscriptionId: subscription.id },
         expand: ["latest_invoice.confirmation_secret"],
       },
       // Per legacy subscription, not per target: two concurrent submits for different plans must
@@ -1520,23 +1525,37 @@ const NO_SETUP_UPGRADE: TSetupCheckoutUpgradeResult = {
   targetPlan: null,
 };
 
-// A legacy replacement whose first invoice still awaits payment (see replaceSubscriptionInCatalogCurrency).
-const findIncompleteReplacementSubscription = async (
-  organizationId: string,
-  customerId: string
-): Promise<Stripe.Subscription | null> => {
-  if (!stripeClient) return null;
+/**
+ * Legacy replacements whose first invoice still awaits payment (see replaceSubscriptionInCatalogCurrency),
+ * split into the one created for this checkout — same plan, interval and replaced subscription — and
+ * any left behind by an abandoned attempt at another plan.
+ */
+const findIncompleteReplacementSubscriptions = async (input: {
+  organizationId: string;
+  customerId: string;
+  targetPlan: TStandardCloudPlan;
+  targetInterval: TCloudBillingInterval;
+  replacesSubscriptionId: string | undefined;
+}): Promise<{ matching: Stripe.Subscription | null; stale: Stripe.Subscription[] }> => {
+  if (!stripeClient) return { matching: null, stale: [] };
   const { data } = await stripeClient.subscriptions.list({
-    customer: customerId,
+    customer: input.customerId,
     status: "incomplete",
     limit: 10,
   });
-  return (
-    data.find(
-      (subscription) =>
-        subscription.status === "incomplete" && subscription.metadata?.organizationId === organizationId
-    ) ?? null
+  const replacements = data.filter(
+    (subscription) =>
+      subscription.status === "incomplete" && subscription.metadata?.organizationId === input.organizationId
   );
+  const isForThisCheckout = (subscription: Stripe.Subscription) =>
+    subscription.metadata?.targetPlan === input.targetPlan &&
+    subscription.metadata?.targetInterval === input.targetInterval &&
+    (!input.replacesSubscriptionId ||
+      subscription.metadata?.replacesSubscriptionId === input.replacesSubscriptionId);
+  return {
+    matching: replacements.find(isForThisCheckout) ?? null,
+    stale: replacements.filter((subscription) => !isForThisCheckout(subscription)),
+  };
 };
 
 /**
@@ -1598,14 +1617,23 @@ export const applySetupCheckoutUpgrade = async (input: {
   // A reload while 3D Secure is pending finalizes again. By then the legacy plan is canceled and the
   // subscription.deleted webhook may have created Hobby, which the switch below would upgrade into a
   // second paid subscription. Hand back the pending replacement's confirmation instead.
-  const pendingReplacement = await findIncompleteReplacementSubscription(input.organizationId, customerId);
-  if (pendingReplacement) {
+  const pendingReplacements = await findIncompleteReplacementSubscriptions({
+    organizationId: input.organizationId,
+    customerId,
+    targetPlan,
+    targetInterval,
+    replacesSubscriptionId: session.metadata?.subscriptionId,
+  });
+  if (pendingReplacements.matching) {
     const confirmation = await getIncompleteSubscriptionConfirmation(
       input.organizationId,
-      pendingReplacement
+      pendingReplacements.matching
     );
     return { mode: "immediate", ...confirmation, targetPlan };
   }
+  // A replacement for another plan was abandoned unpaid; cancel it (voiding its open invoice) so it
+  // can't be paid later beside the plan chosen now.
+  await Promise.all(pendingReplacements.stale.map((stale) => stripeClient?.subscriptions.cancel(stale.id)));
 
   const result = await switchOrganizationToCloudPlan({
     organizationId: input.organizationId,
