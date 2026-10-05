@@ -54,9 +54,9 @@ export const sendEmail = async ({ emailType, ...emailData }: SendEmailDataProps)
     return false;
   }
   try {
-    const transporter = createTransport({
+    const transportOptions: SMTPTransport.Options = {
       host: SMTP_HOST,
-      port: SMTP_PORT,
+      port: Number.parseInt(SMTP_PORT ?? "", 10),
       secure: SMTP_SECURE_ENABLED,
       ...(SMTP_AUTHENTICATED
         ? {
@@ -72,7 +72,8 @@ export const sendEmail = async ({ emailType, ...emailData }: SendEmailDataProps)
       },
       logger: DEBUG,
       debug: DEBUG,
-    } as SMTPTransport.Options);
+    };
+    const transporter = createTransport(transportOptions);
 
     const defaultFrom = `${MAIL_FROM_NAME ?? "Formbricks"} <${MAIL_FROM ?? "noreply@formbricks.com"}>`;
     await transporter.sendMail({

@@ -3,6 +3,7 @@ import { sendEmail } from "./send-email";
 
 const mocks = vi.hoisted(() => ({
   sendMail: vi.fn(),
+  createTransport: vi.fn(),
   constants: {
     DEBUG: false,
     IS_SMTP_CONFIGURED: true,
@@ -22,7 +23,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/constants", () => mocks.constants);
 vi.mock("nodemailer", () => ({
-  createTransport: () => ({ sendMail: mocks.sendMail }),
+  createTransport: mocks.createTransport,
 }));
 
 const email = {
@@ -34,6 +35,7 @@ const email = {
 
 describe("sendEmail SES event publishing", () => {
   beforeEach(() => {
+    mocks.createTransport.mockReturnValue({ sendMail: mocks.sendMail });
     mocks.sendMail.mockResolvedValue({ messageId: "smtp-message-id" });
     mocks.constants.IS_SMTP_CONFIGURED = true;
     mocks.constants.SES_CONFIGURATION_SET = undefined;
@@ -48,6 +50,21 @@ describe("sendEmail SES event publishing", () => {
       html: email.html,
       from: "Formbricks <hola@example.com>",
     });
+  });
+
+  test("preserves SMTP TLS options with a numeric transport port", async () => {
+    await sendEmail(email);
+    expect(mocks.createTransport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        port: 1025,
+        secure: false,
+        tls: { rejectUnauthorized: true },
+      })
+    );
+    mocks.constants.SMTP_SECURE_ENABLED = true;
+    await sendEmail(email);
+    expect(mocks.createTransport).toHaveBeenLastCalledWith(expect.objectContaining({ secure: true }));
+    mocks.constants.SMTP_SECURE_ENABLED = false;
   });
 
   test("adds the invite category and deployment to SES SMTP headers", async () => {

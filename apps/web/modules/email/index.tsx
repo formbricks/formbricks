@@ -20,15 +20,7 @@ import type { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserEmail, TUserLocale } from "@formbricks/types/user";
-import {
-  IMPRINT_ADDRESS,
-  IMPRINT_URL,
-  IS_SMTP_CONFIGURED,
-  MAIL_FROM,
-  PRIVACY_URL,
-  TERMS_URL,
-  WEBAPP_URL,
-} from "@/lib/constants";
+import { IMPRINT_ADDRESS, IMPRINT_URL, MAIL_FROM, PRIVACY_URL, TERMS_URL, WEBAPP_URL } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import {
   createEmailChangeToken,
@@ -49,7 +41,8 @@ import { sendEmail } from "@/modules/email/lib/send-email";
 import { buildVerifiedLinkSurveyUrl } from "@/modules/email/lib/verified-link-survey-url";
 import { resolveStorageUrl } from "@/modules/storage/utils";
 
-export { IS_SMTP_CONFIGURED, sendEmail };
+export { IS_SMTP_CONFIGURED } from "@/lib/constants";
+export { sendEmail } from "@/modules/email/lib/send-email";
 
 const legalProps: TEmailTemplateLegalProps = {
   privacyUrl: PRIVACY_URL || undefined,
