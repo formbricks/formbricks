@@ -38,6 +38,7 @@ import { auditPasswordReset, betterAuthLogger, signInAuditDatabaseHook } from ".
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
+import { revokeOAuthConsentBeforeHandler } from "./oauth-grant-revocation";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";
 import { signupPolicyBeforeHandler } from "./signup-policy";
@@ -331,6 +332,10 @@ export const auth = betterAuth({
       // ENG-3258: repair a NULL-issuer credential row before sign-in / reset-request looks it up. Last,
       // so only a request every gate above let through can write. See credential-issuer-heal.ts.
       await healCredentialAccountIssuerBeforeHandler(ctx);
+      // ENG-2499: revoking an app deletes its consent AND revokes its tokens, in one transaction. Returns
+      // a response only for /oauth2/delete-consent, short-circuiting the upstream delete, which would
+      // leave the tokens live. See oauth-grant-revocation.ts.
+      return await revokeOAuthConsentBeforeHandler(ctx);
     }),
     after: createAuthMiddleware(runAfterAuthHooks),
   },

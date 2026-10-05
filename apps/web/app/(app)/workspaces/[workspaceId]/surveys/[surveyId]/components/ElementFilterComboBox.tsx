@@ -8,6 +8,7 @@ import { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementsComboBox";
+import { getFilterOperatorLabel, getFilterValueLabel } from "@/app/lib/surveys/filter-labels";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import { Button } from "@/modules/ui/components/button";
@@ -134,6 +135,11 @@ export const ElementFilterComboBox = ({
 
   useClickOutside(commandRef, () => setOpen(false));
 
+  // The stored filter value stays English — only what the user reads is translated (ENG-645).
+  const filterType = typeof type === "string" ? type : undefined;
+  const getOperatorLabel = (value: string): string => getFilterOperatorLabel(value, filterType, t);
+  const getValueLabel = (value: string): string => getFilterValueLabel(value, filterType, t);
+
   const isMultiple = checkIsMultiple(type, filterValue);
 
   // Filter out already selected options for multi-select
@@ -164,10 +170,10 @@ export const ElementFilterComboBox = ({
   const filteredOptions = useMemo(
     () =>
       options?.filter((o) => {
-        const optionValue = getOptionValue(o);
-        return optionValue.toLowerCase().includes(searchQuery.toLowerCase());
+        const optionLabel = getFilterValueLabel(getOptionValue(o), filterType, t);
+        return optionLabel.toLowerCase().includes(searchQuery.toLowerCase());
       }),
-    [options, searchQuery]
+    [options, searchQuery, filterType, t]
   );
 
   const handleCommandItemSelect = (o: string | TI18nString) => {
@@ -191,7 +197,9 @@ export const ElementFilterComboBox = ({
     if (!filterOptions || filterOptions.length <= 1) {
       return (
         <div className="flex h-9 max-w-fit items-center rounded-md rounded-r-none border-r border-slate-300 bg-white px-2 text-sm text-slate-600">
-          <p className="mr-1 max-w-[50px] truncate sm:max-w-[100px]">{filterValue}</p>
+          <p className="mr-1 max-w-[50px] truncate sm:max-w-[100px]">
+            {filterValue ? getOperatorLabel(filterValue) : null}
+          </p>
         </div>
       );
     }
@@ -207,7 +215,7 @@ export const ElementFilterComboBox = ({
             disabled ? "opacity-50" : "cursor-pointer hover:bg-slate-50"
           )}>
           {filterValue ? (
-            <p className="max-w-[50px] truncate sm:max-w-[80px]">{filterValue}</p>
+            <p className="max-w-[50px] truncate sm:max-w-[80px]">{getOperatorLabel(filterValue)}</p>
           ) : (
             <p className="text-slate-400">{t("common.select")}...</p>
           )}
@@ -221,7 +229,7 @@ export const ElementFilterComboBox = ({
                 key={`${optionValue}-${index}`}
                 className="cursor-pointer"
                 onClick={() => onChangeFilterValue(optionValue)}>
-                {optionValue}
+                {getOperatorLabel(optionValue)}
               </DropdownMenuItem>
             );
           })}
@@ -255,7 +263,7 @@ export const ElementFilterComboBox = ({
       type="button"
       onClick={(e) => handleRemoveTag(e, value)}
       className="flex items-center gap-1 rounded-sm bg-slate-100 px-2 py-1 text-sm whitespace-nowrap text-slate-600 hover:bg-slate-200">
-      {value}
+      {getValueLabel(value)}
       <X className="size-3" />
     </button>
   );
@@ -287,7 +295,7 @@ export const ElementFilterComboBox = ({
       return renderMultiSelectTags();
     }
 
-    return <p className="truncate text-sm text-slate-600">{filterComboBoxValue}</p>;
+    return <p className="truncate text-sm text-slate-600">{getValueLabel(filterComboBoxValue)}</p>;
   };
 
   return (
@@ -356,7 +364,7 @@ export const ElementFilterComboBox = ({
                         key={optionValue}
                         onSelect={() => handleCommandItemSelect(o)}
                         className="cursor-pointer">
-                        {optionValue}
+                        {getValueLabel(optionValue)}
                       </CommandItem>
                     );
                   })}

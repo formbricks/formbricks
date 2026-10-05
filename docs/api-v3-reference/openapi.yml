@@ -706,6 +706,14 @@ paths:
                     detail: The AI provider could not generate a valid survey draft. Try again or add more detail.
                     code: bad_gateway
                     requestId: req_123
+                providerAuthFailed:
+                  summary: AI provider rejected the instance's credentials
+                  value:
+                    title: Bad Gateway
+                    status: 502
+                    detail: The AI provider rejected this instance's credentials. Ask your administrator to check the AI provider configuration.
+                    code: ai_provider_auth_failed
+                    requestId: req_123
         '503':
           description: AI is not configured on this Formbricks instance
           content:
@@ -5167,6 +5175,7 @@ components:
             - ai_generated_payload_invalid
             - ai_instance_not_configured
             - ai_output_too_long
+            - ai_provider_auth_failed
             - ai_smart_tools_disabled
             - bad_gateway
             - bad_request

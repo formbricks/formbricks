@@ -79,7 +79,7 @@
     "@posthog/ai": "8.5.0",
     "@posthog/mcp": "0.11.6",
     "@prisma/client": "catalog:",
-    "@prisma/instrumentation": "7.8.0",
+    "@prisma/instrumentation": "7.10.0",
     "@radix-ui/react-checkbox": "catalog:",
     "@radix-ui/react-collapsible": "1.1.12",
     "@radix-ui/react-dialog": "1.1.15",

@@ -21,7 +21,10 @@ const ids = {
   apiKey: "",
   manager: "",
   member: "",
+  orgOwner: "",
   owner: "",
+  ownedPrivateSurvey: "",
+  pendingRestrictionSurvey: "",
   pendingSurvey: "",
   privateResponse: "",
   privateSurvey: "",
@@ -47,7 +50,7 @@ beforeAll(async () => {
     data: { name: "Visibility Workspace", organizationId: organization.id },
   });
 
-  const makeUser = async (label: string, role: "manager" | "member") => {
+  const makeUser = async (label: string, role: "manager" | "member" | "owner") => {
     const created = await prisma.user.create({ data: { email: `${label}@visibility.test`, name: label } });
     await prisma.membership.create({
       data: { accepted: true, organizationId: organization.id, role, userId: created.id },
@@ -62,6 +65,7 @@ beforeAll(async () => {
 
   ids.owner = await makeUser("owner", "member");
   ids.manager = await makeUser("manager", "manager");
+  ids.orgOwner = await makeUser("org-owner", "owner");
   ids.member = await makeUser("member", "member");
   ids.teamManager = await makeUser("team-manager", "member");
   await grantTeam("Writers", ids.owner, "readWrite");
@@ -82,6 +86,17 @@ beforeAll(async () => {
   ids.visibleSurvey = (await survey("Visible", "workspace")).id;
   ids.privateSurvey = (await survey("Restricted", "restricted")).id;
   ids.pendingSurvey = (await survey("Pending grant", "restricted")).id;
+  ids.pendingRestrictionSurvey = (await survey("Pending restriction", "workspace")).id;
+  ids.ownedPrivateSurvey = (
+    await prisma.survey.create({
+      data: {
+        name: "Team manager's restricted survey",
+        ownerId: ids.teamManager,
+        visibility: "restricted",
+        workspaceId: workspace.id,
+      },
+    })
+  ).id;
   ids.privateResponse = (
     await prisma.response.create({ data: { data: {}, finished: true, surveyId: ids.privateSurvey } })
   ).id;
@@ -92,6 +107,11 @@ beforeAll(async () => {
   await prisma.survey.update({
     where: { id: ids.pendingSurvey },
     data: { visibility: "workspace", visibilityVersion: { increment: 1 } },
+  });
+  // A restriction must take effect even while the graph still grants workspace access.
+  await prisma.survey.update({
+    where: { id: ids.pendingRestrictionSurvey },
+    data: { visibility: "restricted", visibilityVersion: { increment: 1 } },
   });
   await prisma.$executeRawUnsafe('TRUNCATE "AuthzedProjectionOutbox";');
 }, 120_000);
@@ -117,6 +137,17 @@ describe("marker off: exactly the workspace ladder, as before ENG-3282", () => {
     await expect(
       can(user(ids.manager), "survey.change_visibility", { id: ids.privateSurvey, type: "survey" })
     ).resolves.toBe(false);
+  });
+
+  test("survey manage follows the workspace manage ladder while visibility is not enforced", async () => {
+    for (const surveyId of [ids.visibleSurvey, ids.privateSurvey, ids.pendingSurvey]) {
+      await expect(
+        can(user(ids.teamManager), "survey.manage", { id: surveyId, type: "survey" })
+      ).resolves.toBe(true);
+      await expect(can(user(ids.owner), "survey.manage", { id: surveyId, type: "survey" })).resolves.toBe(
+        false
+      );
+    }
   });
 });
 
@@ -146,6 +177,40 @@ describe("marker on: the contract's permission matrix", () => {
     await expect(
       can(user(ids.owner), "survey.manage", { id: ids.privateSurvey, type: "survey" })
     ).resolves.toBe(false);
+  });
+
+  test.each([
+    ["organization owner", () => user(ids.orgOwner), true, true],
+    ["organization manager", () => user(ids.manager), true, true],
+    ["team-level manager", () => user(ids.teamManager), true, false],
+    ["readWrite survey owner", () => user(ids.owner), false, false],
+    ["read member", () => user(ids.member), false, false],
+  ] as const)(
+    "survey manage for %s respects visibility and pending changes",
+    async (_label, actor, shared, restricted) => {
+      await expect(can(actor(), "survey.manage", { id: ids.visibleSurvey, type: "survey" })).resolves.toBe(
+        shared
+      );
+      for (const surveyId of [ids.privateSurvey, ids.pendingSurvey, ids.pendingRestrictionSurvey]) {
+        await expect(can(actor(), "survey.manage", { id: surveyId, type: "survey" })).resolves.toBe(
+          restricted
+        );
+      }
+    }
+  );
+
+  test("an owner with workspace manage retains survey manage while restricted or pending", async () => {
+    await expect(
+      can(user(ids.teamManager), "survey.manage", { id: ids.ownedPrivateSurvey, type: "survey" })
+    ).resolves.toBe(true);
+
+    await prisma.survey.update({
+      where: { id: ids.ownedPrivateSurvey },
+      data: { visibility: "workspace", visibilityVersion: { increment: 1 } },
+    });
+    await expect(
+      can(user(ids.teamManager), "survey.manage", { id: ids.ownedPrivateSurvey, type: "survey" })
+    ).resolves.toBe(true);
   });
 
   test("change_visibility is the owner or an administrator, never write, team manage, or a key", async () => {
