@@ -113,6 +113,36 @@ curl "https://app.formbricks.com/api/v3/feedbackRecords?tenant_id=<datasetId>&fi
 Pagination is keyset: pass the response's `next_cursor` back as `cursor` with the same `sort` and `order`. It is
 absent on the last page.
 
+### Incremental extraction
+
+To keep a copy of a dataset in sync without re-reading it, list with `updated_since`. A record's `updated_at`
+is stamped when it is created, corrected, or enriched (translation, sentiment, emotions), so one filter returns
+both new and changed records.
+
+```bash
+# Everything created or changed since the last run, oldest first
+curl "https://app.formbricks.com/api/v3/feedbackRecords?tenant_id=<datasetId>&updated_since=2026-10-05T07:55:00Z&sort=created_at&order=asc&limit=1000" \
+  -H "x-api-key: $FORMBRICKS_API_KEY"
+```
+
+- **Sort by `created_at` or `collected_at`.** `updated_at` is not a sort option, because it changes while you
+  page. The sort columns never change, so every page stays stable.
+- **Next `updated_since`: when this run started, minus a few minutes.** Take the start from the `Date` header
+  of the run's first response, so drift between your clock and ours cannot open a gap. Do not use the newest
+  `updated_at` you received: a record you paged past early can change while later pages are read, and its new
+  `updated_at` is older than the newest one on your last page, so a watermark taken from the results skips it.
+  The overlap covers writes that were still committing when the run began, since `updated_at` is when a write
+  *started*. Five minutes is a safe default.
+- **Let the latest fetch win.** The overlap re-reads some records, so upsert by `id` and keep the copy from the
+  most recent run. Don't compare `updated_at` to choose: two writes to one record can commit in the opposite
+  order to the one they started in, so the newer state can carry the older timestamp.
+- **Deletions are not returned.** A deleted record leaves nothing for `updated_since` to match. To reconcile
+  them, periodically list every record id in the dataset with no `updated_since`, noting when that listing
+  started. Remove the local records that were not returned **and were created before that start, minus the
+  overlap**. Anything newer may have been stored by your sync after the listing passed it, and deleting it would
+  lose it. This catches every kind of delete, including deleting a user's records. It reads the whole dataset,
+  so run it less often than the incremental sync, for example daily against an hourly sync.
+
 ## Feedback
 
 Beta feedback goes to your Formbricks contact or to [hola@formbricks.com](mailto:hola@formbricks.com).

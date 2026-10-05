@@ -146,6 +146,12 @@ export const ZV3FeedbackRecordFilters = z
     created_until: timestampFilter(
       "Only records Hub stored at or before this ISO 8601 timestamp (bounds created_at, inclusive)."
     ),
+    updated_since: timestampFilter(
+      "Only records created or changed at or after this ISO 8601 timestamp (bounds updated_at, inclusive). updated_at is stamped on create, on every correction and on every enrichment result, so this is the filter for incremental extraction. For the next run, pass the time the previous run started minus a few minutes of overlap — not the newest updated_at received, which skips records that changed after being paged past — and sort by created_at or collected_at, never by updated_at. Deleted records are never returned — detect deletions by periodically listing every record id."
+    ),
+    updated_until: timestampFilter(
+      "Only records last created or changed at or before this ISO 8601 timestamp (bounds updated_at, inclusive)."
+    ),
     value_date_min: timestampFilter(
       "Only records whose date answer is at or after this ISO 8601 timestamp (inclusive). Bounds the answer itself, not when it was collected. Excludes every record that carries no date."
     ),

@@ -1362,6 +1362,7 @@ different filters.
 | `emotions`                                    | **any** of the listed emotion labels, never all of them              |
 | `since` / `until`                             | a `collected_at` range (must fall between 1970-01-01 and 2080-12-31) |
 | `created_since` / `created_until`             | a `created_at` range — "what did this import bring in"               |
+| `updated_since` / `updated_until`             | an `updated_at` range — "what was created or changed since"          |
 | `value_date_min` / `value_date_max`           | a range over the date *answer*, not the collection time              |
 | `value_number_min` / `value_number_max`       | a range over the numeric answer                                      |
 | `sentiment_score_min` / `sentiment_score_max` | a sentiment score range, from -1 to 1                                |
@@ -1400,6 +1401,14 @@ looks like a continuation.
 `collected_at` and `created_at` diverge whenever historical data is imported: the feedback was collected
 months ago but stored today. Use `created_since` for "what did this import bring in", and `since` for
 "what did people tell us in this period".
+
+`updated_at` is the third timestamp: it is stamped on create, on every correction and on every enrichment
+result, so `updated_since` answers "what was created or changed since" — incremental extraction. It is a
+filter only, never a sort: pair it with `sort: created_at` so a record that changes mid-traversal cannot
+jump the cursor. The next run's `updated_since` is when the previous run *started*, minus an overlap — not
+the newest `updated_at` received, which skips a record changed after being paged past. It never returns a
+deleted record, since a delete leaves nothing to match; the full procedure, deletions included, is in the
+v3 API introduction.
 
 The workspace/dataset/pagination parameters (`workspaceId`, `datasetId`, `limit`, `cursor`) stay camelCase:
 they name nothing in the record.

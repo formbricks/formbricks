@@ -1405,6 +1405,18 @@ describe("feedback-record filters with meaningful falsy values", () => {
     });
   });
 
+  test("sends the updated_at range on both list and count, for incremental extraction (ENG-3420)", async () => {
+    const range = { updated_since: "2026-10-01T00:00:00Z", updated_until: "2026-10-05T00:00:00Z" };
+
+    await listV3FeedbackRecords({ ...base, ...range, sort: "created_at", order: "asc" });
+    await countV3FeedbackRecords({ ...base, ...range });
+
+    expect(listFeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({ tenant_id: directoryId, ...range })
+    );
+    expect(countFeedbackRecords).toHaveBeenCalledWith({ tenant_id: directoryId, ...range });
+  });
+
   test("rejects a sentiment score outside the Hub's -1..1 range", async () => {
     const response = await listV3FeedbackRecords({ ...base, sentiment_score_min: -2 });
 

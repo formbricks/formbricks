@@ -14,6 +14,16 @@ get:
     are **not** split. Filters on enrichment members (`sentiment`, `emotions`, `sentiment_score_*`)
     never match records that have not been enriched — use `has_sentiment=false` / `has_emotions=false`
     to find those.
+
+    **Incremental extraction.** To keep a copy of a dataset in sync, filter on `updated_since` and
+    page with `sort=created_at` (or `collected_at`): `updated_at` itself is not a sort option, because
+    it changes while you page, but the sort columns never do. For the next run, pass the time the
+    previous run **started** (its first response's `Date` header) minus a few minutes of overlap —
+    not the newest `updated_at` received, which skips a record that changed after you paged past it.
+    Upsert by `id` and let the most recent fetch win. Deleted records leave nothing for
+    `updated_since` to match, so reconcile deletions separately: periodically list every record id
+    with no `updated_since`, and remove the local records that were not returned and were created
+    before that listing started.
   tags:
     - V3 Feedback Records
   parameters:
@@ -156,6 +166,23 @@ get:
         type: string
         format: date-time
       description: "`created_at <= created_until` (ISO 8601, inclusive)."
+    - in: query
+      name: updated_since
+      schema:
+        type: string
+        format: date-time
+      description: >-
+        `updated_at >= updated_since` (ISO 8601, inclusive). `updated_at` is stamped when a record is
+        created, corrected, or enriched (translation, sentiment, emotions), so this selects records
+        created **or changed** since a point — the filter for incremental extraction. Deleted records
+        are never returned; see "Incremental extraction" above for choosing the next value and for
+        detecting deletions.
+    - in: query
+      name: updated_until
+      schema:
+        type: string
+        format: date-time
+      description: "`updated_at <= updated_until` (ISO 8601, inclusive)."
     - in: query
       name: value_number_min
       schema:

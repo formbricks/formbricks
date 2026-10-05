@@ -138,6 +138,8 @@ describe("feedback-record tool input schemas", () => {
       "source_type",
       "submission_id",
       "until",
+      "updated_since",
+      "updated_until",
       "user_id",
       "value_date_max",
       "value_date_min",
