@@ -1,5 +1,13 @@
 import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
+import {
+  type TSurveyAccess,
+  deriveSurveyAccess,
+  getReportedVisibility,
+  serializeSurveyOwner,
+} from "@/lib/survey/visibility/access";
+import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
+import type { TSurveyVisibilityGates } from "@/lib/survey/visibility/gates";
 import type { TSurvey as TSurveyListRecord } from "@/modules/survey/list/types/surveys";
 import { surveyToV3Distribution, surveyToV3Targeting } from "./distribution";
 import { isInternalI18nString, isPlainObject } from "./guards";
@@ -29,9 +37,47 @@ type TV3SurveyListItemBase = Pick<
   | "completedResponseCount"
 >;
 
-export type TV3SurveyListItem = TV3SurveyListItemBase & {
-  creator: TV3SurveyCreator | null;
+/**
+ * ENG-3282: the three fields every survey representation carries (contract §2) — the visibility
+ * enforced on this request, the display-only owner, and why this caller can see it.
+ */
+export type TV3SurveyVisibilityFields = {
+  access: TSurveyAccess;
+  owner: { name: string } | null;
+  visibility: "restricted" | "workspace";
 };
+
+/** Who is asking and which switches are on — resolved once per request, shared by every item. */
+export type TV3SurveyVisibilityContext = Readonly<{
+  actorContext: TSurveyActorContext;
+  gates: TSurveyVisibilityGates;
+}>;
+
+type TV3SurveyVisibilityRow = Readonly<{
+  ownerId: string | null;
+  visibility: "restricted" | "workspace";
+  visibilityProjectedVersion: number;
+  visibilityVersion: number;
+}>;
+
+export function serializeV3SurveyVisibilityFields(
+  survey: TV3SurveyVisibilityRow,
+  ownerName: string | null | undefined,
+  { actorContext, gates }: TV3SurveyVisibilityContext
+): TV3SurveyVisibilityFields {
+  // API keys are always told `workspace`: they cannot see anything else (K-1, contract §2).
+  const visibility = actorContext.kind === "apiKey" ? "workspace" : getReportedVisibility(survey, gates);
+  return {
+    visibility,
+    owner: serializeSurveyOwner(ownerName),
+    access: deriveSurveyAccess(survey, actorContext, gates),
+  };
+}
+
+export type TV3SurveyListItem = TV3SurveyListItemBase &
+  TV3SurveyVisibilityFields & {
+    creator: TV3SurveyCreator | null;
+  };
 
 const DEFAULT_V3_SURVEY_LANGUAGE = "en-US";
 
@@ -74,7 +120,10 @@ export function serializeV3SurveyCreator(creator: TSurveyListRecord["creator"]):
  * Keep the v3 API contract isolated from internal persistence naming.
  * Surveys are scoped by workspaceId.
  */
-export function serializeV3SurveyListItem(survey: TSurveyListRecord): TV3SurveyListItem {
+export function serializeV3SurveyListItem(
+  survey: TSurveyListRecord,
+  visibilityContext: TV3SurveyVisibilityContext
+): TV3SurveyListItem {
   return {
     id: survey.id,
     name: survey.name,
@@ -88,6 +137,7 @@ export function serializeV3SurveyListItem(survey: TSurveyListRecord): TV3SurveyL
     responseCount: survey.responseCount,
     completedResponseCount: survey.completedResponseCount,
     creator: serializeV3SurveyCreator(survey.creator),
+    ...serializeV3SurveyVisibilityFields(survey, survey.owner?.name, visibilityContext),
   };
 }
 
@@ -200,7 +250,14 @@ function resolveRequestedLanguages(
   return requestedLanguages.map((language) => resolveRequestedLanguage(languages, language));
 }
 
-export function serializeV3SurveyResource(survey: TInternalSurvey, options?: { lang?: string[] }) {
+/** The owner's display name for a single-survey resource, looked up by the caller. */
+export type TV3SurveyResourceVisibility = TV3SurveyVisibilityContext & Readonly<{ ownerName: string | null }>;
+
+export function serializeV3SurveyResource(
+  survey: TInternalSurvey,
+  visibility: TV3SurveyResourceVisibility,
+  options?: { lang?: string[] }
+) {
   if (Array.isArray(survey.questions) && survey.questions.length > 0) {
     throw new V3SurveyUnsupportedShapeError(
       "Legacy question-based surveys are not supported by the v3 survey management API"
@@ -227,6 +284,7 @@ export function serializeV3SurveyResource(survey: TInternalSurvey, options?: { l
     type: survey.type,
     status: survey.status,
     archivedAt: survey.archivedAt ? toIsoString(survey.archivedAt) : null,
+    ...serializeV3SurveyVisibilityFields(survey, visibility.ownerName, visibility),
     metadata: serializeMetadata(survey.metadata, defaultLanguage, languageCodes, {
       fallbackMissingTranslations: requestedLanguages.length > 0,
     }),

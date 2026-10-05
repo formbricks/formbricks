@@ -40,10 +40,9 @@ catalog:
   # exclusively plus three new peers), while vite-prerender-plugin — pulled in by
   # @preact/preset-vite for packages/surveys — caps at 7.x. Moving the repo to Vite 8
   # is its own migration, tracked separately; see ENG-1689's follow-ups.
-  # Note: the lockfile still resolves a vite 8 for `@vitest/eslint-plugin`, which declares
-  # `vitest` as an OPTIONAL peer with range `*`; `autoInstallPeers` then materialises the
-  # newest vitest, whose own vite peer picks 8. That predates this catalog, no importer
-  # references it, and nothing builds with it — every workspace resolves 7.3.5.
+  # Note: the workspace root declares `vite` alongside `vitest`. Without it, the root's vitest
+  # (and `@vitest/eslint-plugin`'s optional `vitest` peer, and packages/types' vitest) resolved
+  # their vite peer to the newest 8.x instead of this catalog's 7.3.5.
   vite: 7.3.5
   vitest: 4.1.11
   "@vitest/coverage-v8": 4.1.11
@@ -197,8 +196,14 @@ overrides:
   fast-xml-parser: 5.7.2
   # GHSA-22jq-vg5j-6vgg, GHSA-4xrf-jv44-h6hh and GHSA-mwp4-54f8-5fhr: ip-address parsing
   # vulnerabilities are all patched in 10.3.1.
+  # ENG-3439 / GHSA-2vr4-cq9g-pvrc (CVE-2026-101910): no classifier recognizes the NAT64 local-use range
+  # 64:ff9b:1::/48, so an internal target written through it reads as global (SSRF bypass).
+  # ENG-3437 / GHSA-rpw4-54j3-4h4q (CVE-2026-101913): Address6.isLinkLocal() matches fe80::/64 instead of
+  # fe80::/10. Both are patched in 10.5.1.
+  # GHSA-h3mg-xc3c-68pw and GHSA-j6r3-76f7-8jcv: further ip-address findings, affecting <=10.7.0 and patched
+  # in 10.7.1, which is the lowest version that closes every advisory (raises the pin from 10.3.1).
   # load-bearing: socks and express-rate-limit resolve vulnerable 10.x versions.
-  ip-address@10: 10.3.1
+  ip-address@10: 10.7.1
   # ENG-2403 / GHSA-2v37-7h3g-55p8 (CVE-2026-67213): nanoid <3.3.18 customAlphabet/customRandom loop
   # indefinitely when called with size 0 (DoS). Raises the 3.x pin from 3.3.17 to 3.3.18 (still <4).
   # load-bearing: postcss resolves 3.3.17.
@@ -244,9 +249,13 @@ overrides:
   # GHSA-4cwx-7wf7-3272, GHSA-8xcm-r25x-g524, GHSA-jr45-8vmc-qm54,
   # GHSA-m8rv-5g2x-5cg5 and GHSA-v3r7-h72x-cjcm: undici request handling findings are patched
   # in 6.28.0 and 7.29.0 respectively.
+  # ENG-3440 / ENG-3441 / GHSA-3wwx-pv8p-q78v (CVE-2026-85024): undici >=7.28.0 <7.29.1 crashes the process
+  # on a malformed permessage-deflate WebSocket message after the size limit is crossed; patched in 7.29.1
+  # (7.x). The same advisory also covers 6.x from 6.25.0, together with GHSA-rfgv-xxqx-mfg5 and
+  # GHSA-r53p-7pc4-xj5r (<6.28.1), so the 6.x pin rises from 6.28.0 to 6.28.1.
   # load-bearing: @redocly resolves the vulnerable 6.x line; apps/web uses the 7.x line directly.
-  undici@6: 6.28.0
-  undici@7: 7.29.0
+  undici@6: 6.28.1
+  undici@7: 7.29.1
   # === Dependabot security batch (ENG-1988..ENG-1999) ===
   # ENG-1999 / ENG-1989 / GHSA-f88m-g3jw-g9cj: sharp <0.35.0 inherits libvips vulnerabilities
   # (CVE-2026-33327/33328/35590/35591). apps/web pins 0.35.0 directly; this override also coerces the
@@ -285,7 +294,13 @@ overrides:
   # input carries an explicit scheme, so a scheme-relative reference resolved against a scheme-bearing
   # base emits the host verbatim, letting it re-parse to a different host than resolve() returned.
   # All four patched in 3.1.6.
-  fast-uri@3: 3.1.6
+  # ENG-3442 / GHSA-58mr-gqgx-xq4g (CVE-2026-84394): a host with an unbalanced authority bracket
+  # (`[@127.0.0.1`) is returned by parse() without error while Node's URL resolves it to 127.0.0.1.
+  # ENG-3436 / GHSA-qw65-cvwx-89v3 (CVE-2026-84292): serialize() concatenates the port verbatim, so a
+  # non-digit port can inject authority delimiters. Both patched in 3.1.7.
+  # GHSA-hrr3-gc8f-f4qj: a further fast-uri finding (>=3.0.0 <3.1.8) patched in 3.1.8, the lowest version
+  # that closes every advisory (raises the pin from 3.1.6).
+  fast-uri@3: 3.1.8
   # ENG-2433 / ENG-2430 / GHSA-ggr8-5vv4-36mx (CVE-2026-40345): deepmerge-ts <8.0.0 has no cycle
   # detection in its recursive record-merge routine, so two recursive object graphs sharing a
   # property path exhaust the call stack (DoS); patched in 8.0.0. Pinned to 8.0.1 (lowest patched
@@ -366,28 +381,36 @@ overrides:
   # load-bearing: packages/ai's @ai-sdk/* providers (amazon-bedrock, anthropic, azure, gateway, google,
   # google-vertex, openai, openai-compatible) and the `ai` package all resolve the vulnerable 4.0.27.
   "@ai-sdk/provider-utils": 4.0.33
+  # ENG-3461 / GHSA-2gc4-cqfq-p2gv (CVE-2026-102599): engine.io >=6.6.0 <6.6.10 does not check that a
+  # transport upgrade request uses the session's negotiated protocol revision, so a crafted heartbeat
+  # can throw an uncaught exception and crash the process (DoS). Patched in 6.6.10, the lowest fix.
+  # load-bearing: socket.io 4.8.2 (runtime, via react-email in @formbricks/email `dependencies`)
+  # resolves the vulnerable 6.6.7.
+  engine.io@6: 6.6.10
   # === Removed once upstream caught up (kept as a record of what no longer needs a pin) ===
-  # ajv@6, @babel/core, body-parser, engine.io@6, linkify-it, protobufjs@7 and uuid@11
+  # ajv@6, @babel/core, body-parser, linkify-it, protobufjs@7 and uuid@11
   # all resolve to the patched version on their own now.
   # js-cookie, shell-quote and form-data@4 were retired by bumping react-use to 17.6.1 (js-cookie ^3),
   # concurrently to 9.2.4 (shell-quote 1.9.0) and @redocly/cli to 1.34.17 (form-data 4.0.6) instead.
-  # ENG-2234 / GHSA-mh99-v99m-4gvg + GHSA-rgw5-rvv9-x895: brace-expansion's recursive expansion has no
+  # ENG-2234 / GHSA-mh99-v99m-4gvg + GHSA-rgw5-rvv9-x895 and ENG-3458/3459/3460 / GHSA-q2hr-2g5m-vwhr
+  # (CVE-2026-102277): brace-expansion's recursive expansion has no
   # bound on total output length, so a crafted `{a,b}{c,d}...` pattern grows the result set exponentially
   # (DoS). GHSA-rgw5-rvv9-x895 (unbounded intermediate arrays) bypasses the CVE-2026-14257 mitigation and
   # covers all three lines we resolve; GHSA-mh99-v99m-4gvg covers only the 1.x and 2.x lines. Every line
   # reaches brace-expansion via minimatch. Pinned to the lowest maintenance release closing both
-  # advisories on each line.
+  # advisories on each line. GHSA-q2hr-2g5m-vwhr is a quadratic-time rewrite of `{a},b}` input (CPU
+  # DoS) on every line; it raised the pins to 1.1.21, 2.1.7 and 5.0.12.
   # load-bearing: @boxyhq/saml-jackson's typeorm>sqlite3>node-gyp chain (runtime) resolves the vulnerable
   # 1.x line; the eslint plugin graph (dev) is on the same line.
-  brace-expansion@1: 1.1.18
+  brace-expansion@1: 1.1.21
   # load-bearing: @boxyhq/saml-jackson resolves the vulnerable 2.x line both directly (typeorm>glob) and
   # via googleapis/@googleapis/admin (runtime, apps/web and packages/ai `dependencies`); @redocly/cli and
   # vite-plugin-dts>@vue/language-core (dev) are on the same line.
-  brace-expansion@2: 2.1.4
+  brace-expansion@2: 2.1.7
   # load-bearing: @sentry/nextjs (runtime, apps/web `dependencies`, via @fastify/otel>@sentry/node) and
   # react-email (runtime, @formbricks/email `dependencies`) resolve the vulnerable 5.x line, alongside
   # vite-plugin-dts, typescript-eslint and storybook (dev).
-  brace-expansion@5: 5.0.9
+  brace-expansion@5: 5.0.12
   # === Closed by ENG-2343 (kept as a record, like the section above) ===
   # GHSA-p2fr-6hmx-4528 (@better-auth/oauth-provider RFC 8707 resource-indicator confusion) was carried
   # here as an accepted risk for as long as the only patched line was a pre-release. It is fixed as of

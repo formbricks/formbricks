@@ -228,16 +228,20 @@ export const recordAuthzedOutboxStatus = ({
 export const recordAuthzedReconciliationAudit = ({
   drift,
   failures,
+  scope,
   status,
 }: Readonly<{
   drift: number;
   failures: number;
+  /** Set only by the survey audit (ENG-3282), so the existing full-audit series keep their labels. */
+  scope?: "survey";
   status: "drifted" | "failed" | "reconciled";
 }>): void => {
+  const scopeAttribute = scope ? { scope } : {};
   try {
-    reconciliationAuditTotal.add(1, { status });
-    if (drift > 0) reconciliationDriftTotal.add(drift, { kind: "attributable" });
-    if (failures > 0) reconciliationDriftTotal.add(failures, { kind: "failure" });
+    reconciliationAuditTotal.add(1, { status, ...scopeAttribute });
+    if (drift > 0) reconciliationDriftTotal.add(drift, { kind: "attributable", ...scopeAttribute });
+    if (failures > 0) reconciliationDriftTotal.add(failures, { kind: "failure", ...scopeAttribute });
   } catch {
     // Pruning and dead-letter recovery must still run when the exporter is unavailable.
   }

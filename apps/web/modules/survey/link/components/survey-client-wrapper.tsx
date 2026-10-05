@@ -16,7 +16,7 @@ import { useAppLocale } from "@/modules/survey/link/hooks/use-app-locale";
 import { buildSurveyDocumentTitle } from "@/modules/survey/link/lib/document-title";
 import {
   getHiddenFieldsFromSearchParams,
-  warnOnMissingIngestRows,
+  warnOnMissingEmbeddedDataJoin,
 } from "@/modules/survey/link/lib/hidden-fields";
 import { getPrefillValue } from "@/modules/survey/link/lib/prefill";
 import { getUserIdFromSearchParams } from "@/modules/survey/link/lib/user-id";
@@ -122,10 +122,10 @@ export const SurveyClientWrapper = ({
 
   // Extract ingestible Embedded Data from URL parameters.
   //
-  // The allow-list is the survey's linked `ingested` rows, not the legacy `hiddenFields.fieldIds`
-  // column (ENG-1843). `locked` fields are deliberately included: the renderer's ingest contract
-  // drops their incoming values and logs why, and filtering them out here would silence that
-  // diagnostic while duplicating a rule that already has one home.
+  // The allow-list is the survey's linked `ingested` rows (ENG-1843), which the legacy
+  // `hiddenFields.fieldIds` is only derived from. `locked` fields are deliberately included: the
+  // renderer's ingest contract drops their incoming values and logs why, and filtering them out here
+  // would silence that diagnostic while duplicating a rule that already has one home.
   //
   // Keyed on the ids' contents, not the array identity, which changes on every parent render
   // (ENG-2366).
@@ -138,12 +138,11 @@ export const SurveyClientWrapper = ({
   // The diagnostic is a side effect, so it belongs in an effect rather than in the memo above: a memo
   // body runs twice per mount under StrictMode, so this warning printed twice on every dev page load,
   // and it would re-run on any `searchParams` change even though what it reports depends only on the
-  // survey. Keyed on content rather than array identity, like the memo above.
-  const legacyFieldIds = survey.hiddenFields.fieldIds ?? [];
+  // survey. Keyed on whether the join was read, which is all it reports on.
+  const hasEmbeddedFields = survey.embeddedFields !== undefined;
   useEffect(() => {
-    warnOnMissingIngestRows(ingestedStorageKeys, legacyFieldIds);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on content, not array identity
-  }, [JSON.stringify(ingestedStorageKeys), JSON.stringify(legacyFieldIds)]);
+    warnOnMissingEmbeddedDataJoin(hasEmbeddedFields);
+  }, [hasEmbeddedFields]);
 
   // Include verified email in hidden fields if available
   const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {

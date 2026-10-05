@@ -3,7 +3,10 @@ import { runAuthzedBackfill } from "./backfill";
 import { isAuthzedEnabled } from "./config";
 import { recordAuthzedReconciliationAudit, recordAuthzedReconciliationRepair } from "./metrics";
 import { pruneAuthzedOutboxHistory, replayAuthzedOutboxDeadLetters } from "./outbox-repository";
-import { processAuthzedScheduledReconciliationJob } from "./scheduled-reconciliation";
+import {
+  processAuthzedScheduledReconciliationJob,
+  processAuthzedSurveyAuditJob,
+} from "./scheduled-reconciliation";
 
 vi.mock("@formbricks/logger", () => ({ logger: { warn: vi.fn() } }));
 vi.mock("./backfill", () => ({ runAuthzedBackfill: vi.fn() }));
@@ -107,5 +110,43 @@ describe("scheduled AuthZed reconciliation", () => {
       status: "reconciled",
     });
     expect(recordAuthzedReconciliationRepair).toHaveBeenCalledWith({ failed: 0, repaired: 3 });
+  });
+});
+
+describe("scheduled AuthZed survey audit (ENG-3282)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(isAuthzedEnabled).mockReturnValue(true);
+  });
+
+  test("audits the survey scope as a dry run and never writes or replays", async () => {
+    vi.mocked(runAuthzedBackfill).mockResolvedValue({
+      counters: { failed: 0, mismatchedParents: 1, mismatchedPermissions: 2, missing: 3, orphaned: 4 },
+      status: "drifted",
+    } as Awaited<ReturnType<typeof runAuthzedBackfill>>);
+
+    await processAuthzedSurveyAuditJob();
+
+    expect(runAuthzedBackfill).toHaveBeenCalledOnce();
+    expect(runAuthzedBackfill).toHaveBeenCalledWith(
+      expect.objectContaining({ mode: "dry_run", prune: false, scope: { kind: "survey" } }),
+      { apply: { mode: "dry_run" }, client: { client: true } }
+    );
+    expect(recordAuthzedReconciliationAudit).toHaveBeenCalledWith({
+      drift: 10,
+      failures: 0,
+      scope: "survey",
+      status: "drifted",
+    });
+    expect(replayAuthzedOutboxDeadLetters).not.toHaveBeenCalled();
+    expect(pruneAuthzedOutboxHistory).not.toHaveBeenCalled();
+  });
+
+  test("does nothing while AuthZed is disabled", async () => {
+    vi.mocked(isAuthzedEnabled).mockReturnValue(false);
+
+    await processAuthzedSurveyAuditJob();
+
+    expect(runAuthzedBackfill).not.toHaveBeenCalled();
   });
 });

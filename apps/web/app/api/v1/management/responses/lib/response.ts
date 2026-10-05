@@ -13,6 +13,7 @@ import { RESPONSES_PER_PAGE } from "@/lib/constants";
 import { getResponseContact } from "@/lib/response/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { getSurvey } from "@/lib/survey/service";
+import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
@@ -147,13 +148,20 @@ export const createResponse = async (
 };
 
 export const getResponsesByWorkspaceIds = reactCache(
-  async (workspaceIds: string[], limit?: number, offset?: number): Promise<TResponse[]> => {
+  async (
+    workspaceIds: string[],
+    limit?: number,
+    offset?: number,
+    /** ENG-3282: the API key's visibility clause on the response's survey. */
+    visibleSurveyWhere: Prisma.SurveyWhereInput = {}
+  ): Promise<TResponse[]> => {
     validateInputs([workspaceIds, ZId.array()], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
     try {
       const responses = await prisma.response.findMany({
         where: {
           survey: {
             workspaceId: { in: workspaceIds },
+            ...andVisibleSurveys(visibleSurveyWhere),
           },
         },
         select: responseSelection,

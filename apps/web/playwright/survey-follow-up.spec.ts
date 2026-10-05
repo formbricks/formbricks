@@ -54,7 +54,9 @@ test.describe("Survey Follow-Up deprecation", async () => {
     });
 
     await test.step("Follow-ups tab is still offered and announces the deprecation", async () => {
-      await page.getByText("Follow-ups").click();
+      // The tab by role, not by text: `getByText` matches substrings case-insensitively, so the
+      // editor's Embedded Data card description ("…logic, recall and follow-ups.") is a second hit.
+      await page.getByRole("button", { name: "Follow-ups" }).click();
 
       await expect(page.getByText("Follow-ups are being replaced by Workflows")).toBeVisible();
       // The date itself, not just the sentence: it is rendered from an instant, so a missing

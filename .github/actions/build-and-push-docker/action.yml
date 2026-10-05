@@ -217,40 +217,27 @@ runs:
         IMAGE_NAME: ${{ inputs.ghcr_image_name }}
         IS_PRERELEASE: ${{ inputs.is_prerelease }}
         MAKE_LATEST: ${{ inputs.make_latest }}
+        GH_TOKEN: ${{ env.GITHUB_TOKEN }}
+        SCRIPT: ${{ github.action_path }}/ghcr-tags.sh
       run: |
         set -euo pipefail
 
-        # Start with base version tag
-        TAGS="ghcr.io/${IMAGE_NAME}:${VERSION}"
-
-        # For proper SemVer releases, add major.minor and major tags
-        if [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-          # Extract major and minor versions
-          MAJOR=$(echo "${VERSION}" | cut -d. -f1)
-          MINOR=$(echo "${VERSION}" | cut -d. -f2)
-          
-          TAGS="${TAGS}\nghcr.io/${IMAGE_NAME}:${MAJOR}.${MINOR}"
-          TAGS="${TAGS}\nghcr.io/${IMAGE_NAME}:${MAJOR}"
-          
-          echo "Added SemVer tags: ${MAJOR}.${MINOR}, ${MAJOR}"
+        # Rolling aliases only move forward, so the script needs every published stable release.
+        # A failed lookup fails the build rather than guessing and rolling an alias back.
+        PUBLISHED=""
+        if [[ "${IS_PRERELEASE}" != "true" && "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          PUBLISHED="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+            --jq '.[] | select((.draft or .prerelease) | not) | .tag_name')"
         fi
 
-        # Add latest tag for stable releases marked as latest
-        if [[ "${IS_PRERELEASE}" == "false" && "${MAKE_LATEST}" == "true" ]]; then
-          TAGS="${TAGS}\nghcr.io/${IMAGE_NAME}:latest"
-          echo "Added latest tag for stable release marked as latest"
-        fi
+        TAGS="$(printf '%s\n' "${PUBLISHED}" | bash "${SCRIPT}")"
 
         echo "Generated GHCR tags:"
-        echo -e "${TAGS}"
-
-        # Debug: Show what will be passed to Docker build
-        echo "DEBUG: Tags for Docker build step:"
-        echo -e "${TAGS}"
+        echo "${TAGS}"
 
         {
           echo "tags<<EOF"
-          echo -e "${TAGS}"
+          echo "${TAGS}"
           echo "EOF"
         } >> "${GITHUB_OUTPUT}"
 

@@ -10,8 +10,7 @@ import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/co
 import {
   getOrganizationIdFromQuotaId,
   getOrganizationIdFromSurveyId,
-  getWorkspaceIdFromQuotaId,
-  getWorkspaceIdFromSurveyId,
+  getSurveyIdFromQuotaId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -38,9 +37,9 @@ export const deleteQuotaAction = authenticatedActionClient.inputSchema(ZDeleteQu
   withAuditLogging("deleted", "quota", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromQuotaId(parsedInput.quotaId);
     await checkQuotasEnabled(organizationId);
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-      type: "workspace",
-      id: await getWorkspaceIdFromQuotaId(parsedInput.quotaId),
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
+      type: "survey",
+      id: await getSurveyIdFromQuotaId(parsedInput.quotaId),
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;
@@ -62,9 +61,9 @@ export const updateQuotaAction = authenticatedActionClient.inputSchema(ZUpdateQu
   withAuditLogging("updated", "quota", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromQuotaId(parsedInput.quotaId);
     await checkQuotasEnabled(organizationId);
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-      type: "workspace",
-      id: await getWorkspaceIdFromQuotaId(parsedInput.quotaId),
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
+      type: "survey",
+      id: await getSurveyIdFromQuotaId(parsedInput.quotaId),
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;
@@ -84,9 +83,9 @@ export const createQuotaAction = authenticatedActionClient.inputSchema(ZCreateQu
   withAuditLogging("created", "quota", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.quota.surveyId);
     await checkQuotasEnabled(organizationId);
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-      type: "workspace",
-      id: await getWorkspaceIdFromSurveyId(parsedInput.quota.surveyId),
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
+      type: "survey",
+      id: parsedInput.quota.surveyId,
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;
@@ -113,9 +112,10 @@ export const getQuotaResponseCountAction = authenticatedActionClient
     }) => {
       const organizationId = await getOrganizationIdFromQuotaId(parsedInput.quotaId);
       await checkQuotasEnabled(organizationId);
-      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-        type: "workspace",
-        id: await getWorkspaceIdFromQuotaId(parsedInput.quotaId),
+      // A count of screened-in responses: reading it needs the survey's responses, not write access.
+      await assertCan({ type: "user", id: ctx.user.id }, "survey.response_read", {
+        type: "survey",
+        id: await getSurveyIdFromQuotaId(parsedInput.quotaId),
       });
 
       const count = await getQuotaLinkCountByQuotaId(parsedInput.quotaId);

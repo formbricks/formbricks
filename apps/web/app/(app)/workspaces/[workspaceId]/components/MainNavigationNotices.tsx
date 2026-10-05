@@ -2,10 +2,8 @@
 
 import { RocketIcon } from "lucide-react";
 import Link from "next/link";
-import posthog from "posthog-js";
 import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
-import { TrialAlert } from "@/modules/ee/billing/components/trial-alert";
 import { TRIAL_BASE_RESPONSE_LIMIT, TrialBannerNew } from "@/modules/ee/billing/components/trial-banner-new";
 
 interface MainNavigationNoticesProps {
@@ -17,7 +15,6 @@ interface MainNavigationNoticesProps {
   // Whole days left in the trial, or null when there is no trial to count down. Derived by the
   // server layout rather than here — see the note on MainNavigation's own prop.
   trialDaysRemaining: number | null;
-  newTrialBannerVariant: string | boolean;
   organization: TOrganization;
   responseCount: number;
 }
@@ -38,7 +35,6 @@ export const MainNavigationNotices = ({
   isDevelopment,
   latestVersion,
   trialDaysRemaining,
-  newTrialBannerVariant,
   organization,
   responseCount,
 }: Readonly<MainNavigationNoticesProps>) => {
@@ -50,7 +46,6 @@ export const MainNavigationNotices = ({
   }
 
   const showUpdateNotice = Boolean(latestVersion) && !isFormbricksCloud && !isDevelopment;
-  const billingHref = `/organizations/${organization.id}/settings/billing`;
 
   return (
     <>
@@ -66,26 +61,17 @@ export const MainNavigationNotices = ({
         </Link>
       )}
 
-      {/* Condition kept inline so `trialDaysRemaining` narrows to a number for the two cards. */}
-      {isFormbricksCloud &&
-        trialDaysRemaining !== null &&
-        (newTrialBannerVariant === "test" ? (
-          <TrialBannerNew
-            trialDaysRemaining={trialDaysRemaining}
-            planName={organization.billing.stripe?.plan ?? "pro"}
-            responseCount={responseCount}
-            responseLimit={organization.billing.limits.monthly.responses}
-            baseResponseLimit={TRIAL_BASE_RESPONSE_LIMIT}
-            billingHref={billingHref}
-          />
-        ) : (
-          <Link
-            href={billingHref}
-            className="m-2 block"
-            onClick={() => posthog.capture("main_nav_go_to_billing_clicked")}>
-            <TrialAlert trialDaysRemaining={trialDaysRemaining} size="small" />
-          </Link>
-        ))}
+      {/* Condition kept inline so `trialDaysRemaining` narrows to a number for the card. */}
+      {isFormbricksCloud && trialDaysRemaining !== null && (
+        <TrialBannerNew
+          trialDaysRemaining={trialDaysRemaining}
+          planName={organization.billing.stripe?.plan ?? "pro"}
+          responseCount={responseCount}
+          responseLimit={organization.billing.limits.monthly.responses}
+          baseResponseLimit={TRIAL_BASE_RESPONSE_LIMIT}
+          billingHref={`/organizations/${organization.id}/settings/billing`}
+        />
+      )}
     </>
   );
 };

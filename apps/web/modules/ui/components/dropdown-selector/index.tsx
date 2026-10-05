@@ -1,4 +1,5 @@
 import { ChevronDownIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +17,9 @@ interface DropdownSelectorProps {
   disabled: boolean;
   placeholder?: string;
   refetch?: () => void;
+  /** Items this returns true for are shown disabled, with `disabledItemHint` beside them. */
+  isItemDisabled?: (item: any) => boolean;
+  disabledItemHint?: ReactNode;
 }
 
 export const DropdownSelector = ({
@@ -25,7 +29,9 @@ export const DropdownSelector = ({
   setSelectedItem,
   disabled,
   placeholder,
-}: DropdownSelectorProps) => {
+  isItemDisabled,
+  disabledItemHint,
+}: Readonly<DropdownSelectorProps>) => {
   return (
     <div className="col-span-1">
       {label && <Label htmlFor={label}>{label}</Label>}
@@ -54,14 +60,19 @@ export const DropdownSelector = ({
                 align="start">
                 {items
                   .sort((a, b) => a.name?.localeCompare(b.name))
-                  .map((item) => (
-                    <DropdownMenuItem
-                      key={item.id}
-                      className="flex cursor-pointer items-center p-3 hover:bg-slate-100 hover:outline-hidden data-disabled:cursor-default data-disabled:opacity-50"
-                      onSelect={() => setSelectedItem(item)}>
-                      {item.name}
-                    </DropdownMenuItem>
-                  ))}
+                  .map((item) => {
+                    const isDisabled = isItemDisabled?.(item) ?? false;
+                    return (
+                      <DropdownMenuItem
+                        key={item.id}
+                        disabled={isDisabled}
+                        className="flex cursor-pointer items-center p-3 hover:bg-slate-100 hover:outline-hidden data-disabled:cursor-default data-disabled:opacity-50"
+                        onSelect={() => setSelectedItem(item)}>
+                        {item.name}
+                        {isDisabled && disabledItemHint}
+                      </DropdownMenuItem>
+                    );
+                  })}
               </DropdownMenuContent>
             </DropdownMenuPortal>
           )}

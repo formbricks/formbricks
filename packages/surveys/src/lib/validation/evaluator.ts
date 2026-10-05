@@ -181,6 +181,29 @@ const validateMultiSelectOtherValue = (
   return null;
 };
 
+// A ranked "Other" stores the respondent's text in its slot, so an empty entry means it was ranked
+// but nothing was typed. Ranking stores no other sentinel, so "" is unambiguous.
+const validateRankingOtherValue = (
+  element: TSurveyElement,
+  value: TResponseDataValue,
+  t: TFunction
+): TValidationError | null => {
+  if (element.type !== TSurveyElementTypeEnum.Ranking || !Array.isArray(value)) {
+    return null;
+  }
+
+  const hasOtherOption = element.choices.some((choice) => choice.id === "other");
+  if (!hasOtherOption) {
+    return null;
+  }
+
+  if (value.some((entry) => typeof entry === "string" && entry.trim() === "")) {
+    return createRequiredError(t);
+  }
+
+  return null;
+};
+
 const validateSingleSelectOtherValue = (
   element: TSurveyElement,
   value: TResponseDataValue,
@@ -521,6 +544,11 @@ export const validateElementResponse = (
   const multiSelectOtherError = validateMultiSelectOtherValue(element, value, t);
   if (multiSelectOtherError) {
     errors.push(multiSelectOtherError);
+  }
+
+  const rankingOtherError = validateRankingOtherValue(element, value, t);
+  if (rankingOtherError) {
+    errors.push(rankingOtherError);
   }
 
   const invalidOptionError = validateChoiceMembership(element, value, languageCode, t);

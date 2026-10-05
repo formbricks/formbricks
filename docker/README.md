@@ -58,7 +58,10 @@ default, and all three services start as part of the baseline `docker compose up
   the updater stops before pulling or restarting when the worker is absent. See the
   [migration guide](../docs/self-hosting/advanced/migration.mdx#hub-worker-required-for-docker). Also add
   `CUBEJS_EXTERNAL_DEFAULT: ${CUBEJS_EXTERNAL_DEFAULT:-false}` to the Cube service's `environment` block when
-  upgrading a Compose file that predates that default.
+  upgrading a Compose file that predates that default. The bundled Cube image is now `ghcr.io/formbricks/cube`
+  (built from [`cube-image/`](cube-image/README.md)), which has no shell, so replace the whole `cube` service
+  rather than only its `image:`; see the
+  [migration guide](../docs/self-hosting/advanced/migration.mdx#bundled-cube-image-action-required-for-some-deployments).
 - **Development** (`docker-compose.dev.yml`): Hub uses a dedicated local `hub` database and `HUB_API_KEY` defaults to `dev-api-key`. The dev stack starts `hub` plus `hub-worker`; set `EMBEDDING_PROVIDER`, `EMBEDDING_MODEL`, and any provider credentials in the repo root `.env` to enable Hub embeddings locally. See the [Hub embeddings environment reference](https://hub.formbricks.com/reference/environment-variables/#embeddings) for provider-specific values. Cube starts with the dev stack, `CUBEJS_API_URL` defaults to `http://localhost:4000`, and `pnpm dev:setup` generates `CUBEJS_API_SECRET` in the repo root `.env`. The Hub image is pinned to a semver tag (`hub`, `hub-worker`, and `hub-migrate` share the same value); override `HUB_IMAGE_TAG` in the repo root `.env` to test a specific Hub release.
 
 ## AuthZed / SpiceDB
@@ -251,7 +254,7 @@ Run the authenticated preflight after startup to verify Hub internal auth and LL
 docker compose --profile taxonomy exec -T taxonomy python -c 'import os, urllib.request; req = urllib.request.Request("http://127.0.0.1:8000/v1/preflight", headers={"Authorization": "Bearer " + os.environ["TAXONOMY_SERVICE_TOKEN"]}); print(urllib.request.urlopen(req, timeout=10).read().decode())'
 ```
 
-The taxonomy service remains internal to the compose network by default. For production workloads, `TAXONOMY_MAX_RECORDS` defaults to `50000`. Override it only as an advanced safety limit after sizing CPU, memory, and LLM capacity.
+The taxonomy service remains internal to the compose network by default. `TAXONOMY_MAX_RECORDS` defaults to `10000`; change it only after sizing CPU, memory, and LLM capacity.
 
 For local unreleased taxonomy testing, build the taxonomy image as `ghcr.io/formbricks/taxonomy:local`, set `TAXONOMY_IMAGE_REF=:local` and `COMPOSE_PROFILES=taxonomy` in `.env`, and start the stack.
 

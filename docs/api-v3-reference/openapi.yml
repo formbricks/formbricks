@@ -93,7 +93,14 @@ paths:
       operationId: getSurveysV3
       summary: List surveys
       description: |
-        Returns surveys for the workspace. Session cookie, `x-api-key`, or a Bearer token.
+        Returns the surveys in the workspace **that the caller may read**. A restricted survey is listed only
+        to its owner and to the organisation's owners and managers; to everyone else, API keys included, it
+        does not exist here. `meta.totalCount` and `meta.workspaceSurveyCount` count that same readable set,
+        so neither number reveals a restricted survey to someone who cannot see it. The visibility predicate
+        is applied in the query and the cursor, never after the fact: `limit` keeps its meaning and
+        `meta.nextCursor` being `null` remains the only end-of-collection signal.
+
+        Session cookie, `x-api-key`, or a Bearer token.
       tags:
         - V3 Surveys
       parameters:
@@ -161,6 +168,27 @@ paths:
           style: form
           explode: true
           description: Survey type filter (`link` / `app`). Same repeat-or-comma rules as `filter[status][in]`.
+        - in: query
+          name: filter[visibility][in]
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/SurveyVisibility'
+          style: form
+          explode: true
+          description: 'Keep only surveys with one of these visibilities, as each item reports it (a survey with a change in flight counts as `restricted`). Same repeat-or-comma rules as `filter[status][in]`; unknown values → **400**. Filters within the readable set: a workspace member asking for `restricted` gets their own restricted surveys, an organisation manager gets everyone''s.'
+        - in: query
+          name: filter[owner][in]
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - me
+                - others
+          style: form
+          explode: true
+          description: '`me` keeps surveys whose `owner` is the caller; `others` keeps the rest, ownerless surveys included. Relative to the signed-in user, so an API key sending this parameter gets **400**.'
         - in: query
           name: sortBy
           schema:
@@ -450,11 +478,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
-          description: 'Unprocessable Content — the document passed schema validation but failed a cross-reference check that requires stored state to detect: duplicate stable ids, dangling logic/jump references, undeclared locale keys used in content, invalid media URLs, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. Also returned when the document passes this endpoint''s request schema but is rejected by the stricter validation the survey service applies on write — for example a CTA `buttonUrl` whose scheme the service does not accept. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).'
+          description: |-
+            Unprocessable Content — the document passed schema validation but failed a cross-reference check that requires stored state to detect: duplicate stable ids, dangling logic/jump references, undeclared locale keys used in content, invalid media URLs, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. Also returned when the document passes this endpoint's request schema but is rejected by the stricter validation the survey service applies on write — for example a CTA `buttonUrl` whose scheme the service does not accept. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).
+            Also returned with `code: workspace_survey_limit_reached` when the workspace already holds the maximum number of surveys. That problem carries no `invalid_params`; instead `details` is `{ count, limit }` — the workspace's current survey count and the limit it has reached — so a client can tell the user how many surveys to archive or delete before retrying.
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+              examples:
+                workspaceSurveyLimitReached:
+                  summary: The workspace has reached its survey limit
+                  value:
+                    title: Unprocessable Content
+                    status: 422
+                    detail: This workspace has reached its survey limit
+                    code: workspace_survey_limit_reached
+                    requestId: req_01j9zq7w3k2m4n5p6r7s8t9v0w
+                    details:
+                      count: 10000
+                      limit: 10000
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -879,6 +921,12 @@ paths:
                       createdAt: '2026-05-18T09:24:54.014Z'
                       updatedAt: '2026-05-18T09:24:54.014Z'
                       archivedAt: null
+                      visibility: workspace
+                      owner:
+                        name: Alice Example
+                      access:
+                        via: workspace
+                        canManageVisibility: false
                       name: CSAT Survey
                       type: link
                       status: inProgress
@@ -919,6 +967,12 @@ paths:
                       createdAt: '2026-05-18T09:24:54.014Z'
                       updatedAt: '2026-05-18T09:24:54.014Z'
                       archivedAt: null
+                      visibility: workspace
+                      owner:
+                        name: Alice Example
+                      access:
+                        via: workspace
+                        canManageVisibility: false
                       name: CSAT Survey
                       type: link
                       status: inProgress
@@ -1593,6 +1647,267 @@ paths:
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
           $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/surveys/{surveyId}/visibility:
+    get:
+      operationId: getSurveyVisibilityV3
+      summary: Read a survey's visibility and the impact of changing it
+      description: |
+        Returns the survey's enforced visibility, its owner, the caller's access, and what a change would do: `blockers[]` lists the outbound connections that currently make `restricted` refusable (webhooks, integrations, active feedback sources, and draft or enabled workflows), `impact` carries the numbers the confirmation dialogues show, `allowedTargets[]` the values a `POST` would act on right now, and `pending` / `version` describe a change still in flight. Read this before offering "Make restricted"; the `POST` answers **409** while `blockers[]` is non-empty.
+
+        Requires `survey.change_visibility`, the same permission as the `POST`: the survey's owner while they still hold read access to the workspace, or an organisation owner/manager, with the feature enabled. Everyone else — read or write members, team-level managers, every API key, and anyone who cannot see the survey at all — answers **403** with the same body as an unknown id. Connection names and ids are configuration, not survey content, and only the people who may act on them get to read them.
+
+        While `pending` is non-null the survey is restricted for everyone but its owner (within their workspace access: read to view, write to edit) and the organisation's owners and managers, whichever direction is queued — the application fails closed until the graph acknowledges the change — so `visibility` reads `restricted` in that state and `allowedTargets` includes the value that cancels the pending change.
+      tags:
+        - V3 Surveys
+      parameters:
+        - in: path
+          name: surveyId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Survey identifier.
+      responses:
+        '200':
+          description: Visibility state retrieved
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SurveyVisibilityState'
+              examples:
+                visibleWithBlockers:
+                  summary: Workspace-visible survey that a webhook and a workflow depend on
+                  value:
+                    data:
+                      id: clsv1234567890123456789012
+                      visibility: workspace
+                      owner:
+                        name: Alice Example
+                      access:
+                        via: workspace
+                        canManageVisibility: true
+                      blockers:
+                        - type: webhook
+                          id: clwh1234567890123456789012
+                          name: Zapier — new responses
+                        - type: workflow
+                          id: clwf1234567890123456789012
+                          name: 'Notify #product on completion'
+                      impact:
+                        memberCount: 7
+                        responseCount: 212
+                      pending: null
+                      version: 2
+                      allowedTargets: []
+                privateDraft:
+                  summary: Restricted draft seen by its owner
+                  value:
+                    data:
+                      id: clsv2234567890123456789012
+                      visibility: restricted
+                      owner:
+                        name: Bob Example
+                      access:
+                        via: owner
+                        canManageVisibility: true
+                      blockers: []
+                      impact:
+                        memberCount: 7
+                        responseCount: 0
+                      pending: null
+                      version: 2
+                      allowedTargets:
+                        - workspace
+                pendingGrant:
+                  summary: Owner asked for workspace; the in-request projection failed, the outbox will finish it
+                  value:
+                    data:
+                      id: clsv2234567890123456789012
+                      visibility: restricted
+                      owner:
+                        name: Bob Example
+                      access:
+                        via: owner
+                        canManageVisibility: true
+                      blockers: []
+                      impact:
+                        memberCount: 7
+                        responseCount: 0
+                      pending: workspace
+                      version: 3
+                      allowedTargets:
+                        - workspace
+                        - restricted
+                ownerlessPrivateSeenByManager:
+                  summary: Departed author's restricted survey, read by an organisation manager
+                  value:
+                    data:
+                      id: clsv3234567890123456789012
+                      visibility: restricted
+                      owner: null
+                      access:
+                        via: organizationRole
+                        canManageVisibility: true
+                      blockers: []
+                      impact:
+                        memberCount: 7
+                        responseCount: 41
+                      pending: null
+                      version: 2
+                      allowedTargets:
+                        - workspace
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3VisibilityForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    post:
+      operationId: changeSurveyVisibilityV3
+      summary: Change a survey's visibility
+      description: |
+        Sets the survey to `restricted` or `workspace`.
+
+        **Restrictions take effect at once.** A `workspace → restricted` request stores the flag, a new `version` and a pending marker in one transaction. From that instant the survey is restricted on every path — single reads, lists and counts, responses, exports — for everyone but the owner and the organisation's owners and managers, whether or not the graph has caught up (fail closed). The owner keeps only the access their workspace role gives them — read to view, write to edit; an owner who loses workspace access loses the survey too. The relationships are then projected; the answer is **200** either way, with `pending: null` when the graph acknowledged this `version` inside the request and `pending: "restricted"` when the outbox will finish it.
+
+        **Grants take effect when enforced.** A `restricted → workspace` request answers **200** only once the graph has acknowledged this exact `version`; until then the survey stays restricted. If the in-request projection fails, the answer is **503** `projection_pending`: the change is stored and queued, `GET …/visibility` shows `pending: "workspace"`, and retrying is safe.
+
+        **Fencing.** Every accepted change increments the survey's `version`. Projection work carries the version it was issued for, and a projector holding an older version never writes, so a worker leased before a newer change cannot overtake it — including one that crashed before its verification pass. A **200** for a grant means the graph holds this exact version.
+
+        **No-ops and cancellation.** Requesting the value the survey already enforces, with nothing pending, is a **200** no-op: nothing is written or audited and `changedAt` / `changedBy` are unchanged. Requesting the enforced value while the *opposite* is pending **cancels** the pending change: a new version is stored, the queued work is superseded, and the answer is **200** with `pending: null`. Requesting the pending value again re-attempts the projection (200 or 503).
+
+        When `restricted` is refused for two reasons at once — no owner **and** outbound connections — the **422** wins: the missing owner cannot be fixed, so listing connections to remove would send the caller down a dead end.
+
+        Allowed for the survey's owner (while they still hold read access to the workspace) and for the organisation's owners and managers. **Not** for workspace members with write or team-level manage rights, and never for API keys. Every successful change is audit-logged with the actor.
+
+        Going `workspace → restricted` is refused with **409** while any outbound connection depends on the survey; resolve them first. It is refused with **422** when the survey has no owner, because "restricted" would then mean "administrators only" — duplicate the survey for a restricted copy. Going `restricted → workspace` has no preconditions.
+
+        This is the only way to change visibility: `PATCH /api/v3/surveys/{surveyId}` accepts `visibility`, `owner` and `access` only as the exact values `GET` returned (so a fetched survey round-trips), and rejects any other value as an unsupported field. Publishing does not change visibility; the publish dialogue chains this call before the status change.
+      tags:
+        - V3 Surveys
+      parameters:
+        - in: path
+          name: surveyId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Survey identifier.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyVisibilityChangeRequest'
+            examples:
+              makeVisible:
+                summary: Share with the workspace
+                value:
+                  visibility: workspace
+              makePrivate:
+                summary: Hide from the workspace
+                value:
+                  visibility: restricted
+      responses:
+        '200':
+          description: Visibility changed, or already at the requested value
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SurveyVisibilityChangeResult'
+              examples:
+                madeVisibleByOwner:
+                  summary: Owner shares a draft with the workspace before publishing
+                  value:
+                    data:
+                      id: clsv2234567890123456789012
+                      visibility: workspace
+                      owner:
+                        name: Bob Example
+                      access:
+                        via: workspace
+                        canManageVisibility: true
+                      version: 3
+                      pending: null
+                      changedAt: '2026-09-21T10:15:00.000Z'
+                      changedBy:
+                        type: user
+                        id: clus2234567890123456789012
+                        name: Bob Example
+                madePrivateByManager:
+                  summary: An organisation manager hides a departed colleague's survey
+                  value:
+                    data:
+                      id: clsv1234567890123456789012
+                      visibility: restricted
+                      owner:
+                        name: Alice Example
+                      access:
+                        via: organizationRole
+                        canManageVisibility: true
+                      version: 3
+                      pending: null
+                      changedAt: '2026-09-21T10:20:00.000Z'
+                      changedBy:
+                        type: user
+                        id: clus3234567890123456789012
+                        name: Carol Manager
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3VisibilityForbidden'
+        '409':
+          $ref: '#/components/responses/V3VisibilityBlocked'
+        '422':
+          $ref: '#/components/responses/V3VisibilityNotAllowed'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+        '503':
+          $ref: '#/components/responses/V3ProjectionPending'
       security:
         - sessionAuth: []
         - apiKeyAuth: []
@@ -4337,7 +4652,10 @@ paths:
       operationId: getFeedbackRecordV3
       summary: Get a feedback record
       description: |
-        Returns one feedback record by id. The gateway looks the record up to learn its dataset and
+        Returns one feedback record by id, with its read-only assignment in the active directory
+        taxonomy. The assignment reflects the current visible path in the active run; editing a record
+        does not reclassify it until another run. `taxonomy` is null if its lookup is unavailable.
+        The gateway looks the record up to learn its dataset and
         authorizes against that, so no `tenant_id` is sent. Requires an API key with **read**
         permission (or higher) on a workspace the record's dataset is assigned to.
 
@@ -4354,7 +4672,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FeedbackRecord'
+                $ref: '#/components/schemas/FeedbackRecordDetail'
               examples:
                 enriched:
                   summary: A text record after enrichment
@@ -4380,6 +4698,18 @@ paths:
                       - anger
                     value_text_translated: Die Warteschlangen am Nordtor waren viel zu lang.
                     translation_lang_key: de
+                    taxonomy:
+                      status: classified
+                      run_id: 018e1234-5678-7abc-8ef0-123456789abe
+                      path:
+                        - id: 018e1234-5678-7abc-8ef0-123456789abf
+                          label: Queueing
+                          level: 1
+                          node_type: branch
+                        - id: 018e1234-5678-7abc-8ef0-123456789ac0
+                          label: North gate
+                          level: 2
+                          node_type: leaf
         '400':
           $ref: '#/components/responses/FeedbackRecordsBadRequest'
         '401':
@@ -4579,81 +4909,135 @@ components:
         The same management API key, presented as `Authorization: Bearer <key>` instead of `x-api-key`. Equivalent in every way — same key, same workspace permissions — and offered because it is what most HTTP clients and SDK generators reach for by default.
         A **401** from any operation that accepts it carries `WWW-Authenticate: Bearer realm="formbricks"`. Session-only operations accept neither this nor `x-api-key`.
   schemas:
-    SurveyListItem:
+    SurveyVisibility:
+      type: string
+      enum:
+        - restricted
+        - workspace
+      description: '`restricted`: readable by the owner and the organisation''s owners and managers only. The owner''s access is conditional on their workspace access, level for level: they read the survey only while they can read the workspace, and edit it only while they can write to it — being the owner grants nothing the workspace does not. `workspace`: readable by everyone with access to the workspace — today''s behaviour.'
+    SurveyOwner:
       type: object
-      description: |
-        Shape returned by `GET /api/v3/surveys`. Serialized dates are ISO 8601 strings.
-        The v3 overview contract intentionally omits internal fields such as `_count`.
-        Legacy DB rows may include survey **type** values `website` or `web` (see Prisma); filter **type** only accepts `link` | `app`.
+      description: 'The authorization owner — the person whose restricted surveys these are. Distinct from `creator`, which is attribution only and is never rewritten. Display only, like `creator`: no user id is exposed, because `access.via === "owner"` already answers "is this mine" and `filter[owner][in]=me` filters server-side. Ownership transfer can add an identifier later, additively. Durable source: `Survey.ownerId` in PostgreSQL, projected to `survey#owner@user`; the graph never holds ownership alone, so a rebuild from an empty graph restores it.'
       required:
-        - id
         - name
-        - workspaceId
-        - type
-        - status
-        - publishOn
-        - createdAt
-        - updatedAt
-        - archivedAt
-        - responseCount
-        - completedResponseCount
-        - creator
       properties:
-        id:
-          type: string
         name:
           type: string
-        workspaceId:
+      additionalProperties: false
+    SurveyAccess:
+      type: object
+      description: Why **this caller** can see the survey, and whether they may change its visibility. Derived by the server per request; a rendering hint only — every mutation is re-authorised on the server.
+      required:
+        - via
+        - canManageVisibility
+      properties:
+        via:
           type: string
-        type:
-          type: string
-          enum:
-            - link
-            - app
-            - website
-            - web
-        status:
-          type: string
-          enum:
-            - draft
-            - inProgress
-            - paused
-            - completed
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-        archivedAt:
-          type:
-            - string
-            - 'null'
-          format: date-time
-          description: Soft-delete/archive marker (ISO 8601); `null` when the survey is active.
-        publishOn:
-          type:
-            - string
-            - 'null'
-          format: date-time
-          description: Scheduled publish time (ISO 8601), or null if not scheduled.
-        responseCount:
-          type: integer
-          description: Number of responses, including partial ones.
-        completedResponseCount:
-          type: integer
-          description: Number of responses the respondent finished.
-        creator:
-          type:
-            - object
-            - 'null'
-          description: The user who created the survey, or null for API-key/system-created surveys.
+          description: 'Why this caller can see the survey. Known values today: `workspace` (the survey is workspace-visible and the caller has workspace read — always the value for API keys), `owner` (restricted, the caller owns it), `organizationRole` (restricted, the caller reaches it only as an organisation owner or manager — the case that shows the admin banner). **Open set, deliberately not an enum**: named person and team sharing will add values, so clients treat an unknown string as "some other access path" and never branch exhaustively. Explanatory metadata, not authorization truth — the server re-authorises every call.'
+          examples:
+            - workspace
+            - owner
+            - organizationRole
+        canManageVisibility:
+          type: boolean
+          description: 'Permission only: `true` when this caller holds `survey.change_visibility` — owner or organisation owner/manager, feature enabled for the organisation and deployment. It can be `true` while `allowedTargets` is empty (blockers, or no owner): it answers "may this person manage visibility at all", which is what shows or hides the controls; `allowedTargets` on `GET …/visibility` answers which transitions would succeed now. Stays `true` for an organisation manager on an ownerless restricted survey.'
+      additionalProperties: false
+    SurveyVisibilityFields:
+      type: object
+      description: The three fields every `SurveyListItem` and `SurveyResource` carries, merged into both via `allOf`. All required, always present.
+      required:
+        - visibility
+        - owner
+        - access
+      properties:
+        visibility:
+          allOf:
+            - $ref: '#/components/schemas/SurveyVisibility'
+          description: The **enforced** visibility on this request. `restricted` whenever a change is pending, in either direction (fail closed). `workspace` for every survey while the deployment's readiness marker is unset, whatever the stored flag, and always `workspace` for API keys.
+        owner:
+          anyOf:
+            - $ref: '#/components/schemas/SurveyOwner'
+            - type: 'null'
+          description: '`null` when the author''s account no longer exists (`Survey.ownerId` is set null on user deletion) or the survey was created with an API key. A survey with `owner: null` cannot be restricted; an organisation owner/manager can still make it workspace-visible.'
+        access:
+          $ref: '#/components/schemas/SurveyAccess'
+    SurveyListItem:
+      allOf:
+        - type: object
+          description: |
+            Shape returned by `GET /api/v3/surveys`. Serialized dates are ISO 8601 strings.
+            The v3 overview contract intentionally omits internal fields such as `_count`.
+            Legacy DB rows may include survey **type** values `website` or `web` (see Prisma); filter **type** only accepts `link` | `app`.
           required:
+            - id
             - name
+            - workspaceId
+            - type
+            - status
+            - publishOn
+            - createdAt
+            - updatedAt
+            - archivedAt
+            - responseCount
+            - completedResponseCount
+            - creator
           properties:
+            id:
+              type: string
             name:
               type: string
-          additionalProperties: false
+            workspaceId:
+              type: string
+            type:
+              type: string
+              enum:
+                - link
+                - app
+                - website
+                - web
+            status:
+              type: string
+              enum:
+                - draft
+                - inProgress
+                - paused
+                - completed
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+            archivedAt:
+              type:
+                - string
+                - 'null'
+              format: date-time
+              description: Soft-delete/archive marker (ISO 8601); `null` when the survey is active.
+            publishOn:
+              type:
+                - string
+                - 'null'
+              format: date-time
+              description: Scheduled publish time (ISO 8601), or null if not scheduled.
+            responseCount:
+              type: integer
+              description: Number of responses, including partial ones.
+            completedResponseCount:
+              type: integer
+              description: Number of responses the respondent finished.
+            creator:
+              type:
+                - object
+                - 'null'
+              description: The user who created the survey, or null for API-key/system-created surveys.
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+              additionalProperties: false
+        - $ref: '#/components/schemas/SurveyVisibilityFields'
     ListPaginationMeta:
       type: object
       description: |-
@@ -4801,11 +5185,17 @@ components:
             - not_authenticated
             - not_found
             - payload_too_large
+            - projection_pending
             - service_unavailable
             - stored_survey_invalid
+            - survey_not_workspace_visible
             - too_many_requests
             - unprocessable_content
+            - visibility_blocked_by_connections
+            - visibility_change_not_allowed
+            - visibility_not_enabled
             - workflow_not_executable
+            - workspace_survey_limit_reached
         requestId:
           type: string
         details:
@@ -5875,6 +6265,8 @@ components:
       properties:
         enabled:
           type: boolean
+          description: |
+            Derived, not stored: `true` whenever the survey declares at least one hidden field. A value sent on create or update is ignored; to turn hidden fields off, remove them from `fieldIds`.
         fieldIds:
           type: array
           maxItems: 200
@@ -6519,90 +6911,92 @@ components:
         Survey variable. Variable ids are stable references used by logic and calculation actions.
         Variable names are human-readable labels and must be unique within the survey.
     SurveyResource:
-      type: object
-      required:
-        - id
-        - workspaceId
-        - createdAt
-        - updatedAt
-        - archivedAt
-        - name
-        - type
-        - status
-        - metadata
-        - defaultLanguage
-        - languages
-        - welcomeCard
-        - blocks
-        - endings
-        - hiddenFields
-        - variables
-      properties:
-        id:
-          type: string
-        workspaceId:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-        archivedAt:
-          type:
-            - string
-            - 'null'
-          format: date-time
-          description: Soft-delete/archive marker (ISO 8601); `null` when the survey is active.
-        name:
-          type: string
-        type:
-          type: string
-          enum:
-            - link
-            - app
-        status:
-          type: string
-          enum:
-            - draft
-            - inProgress
-            - paused
-            - completed
-        metadata:
-          anyOf:
-            - $ref: '#/components/schemas/SurveyMetadata'
-            - type: 'null'
-        defaultLanguage:
-          type: string
-          description: Emitted language code/tag for the survey default language. The internal `default` translation key is never exposed.
-        languages:
-          type: array
-          items:
-            $ref: '#/components/schemas/SurveyLanguage'
-        welcomeCard:
-          $ref: '#/components/schemas/SurveyWelcomeCard'
-        blocks:
-          type: array
-          items:
-            $ref: '#/components/schemas/SurveyBlock'
-        endings:
-          type: array
-          items:
-            $ref: '#/components/schemas/SurveyEnding'
-        hiddenFields:
-          $ref: '#/components/schemas/SurveyHiddenFields'
-        variables:
-          type: array
-          items:
-            $ref: '#/components/schemas/SurveyVariable'
-        distribution:
-          allOf:
-            - $ref: '#/components/schemas/SurveyDistribution'
-          description: App-survey runtime/display settings. Present only for app surveys; omitted for link surveys.
-        targeting:
-          allOf:
-            - $ref: '#/components/schemas/SurveyTargeting'
-          description: App-survey contact targeting. Present only for app surveys; omitted for link surveys.
+      allOf:
+        - type: object
+          required:
+            - id
+            - workspaceId
+            - createdAt
+            - updatedAt
+            - archivedAt
+            - name
+            - type
+            - status
+            - metadata
+            - defaultLanguage
+            - languages
+            - welcomeCard
+            - blocks
+            - endings
+            - hiddenFields
+            - variables
+          properties:
+            id:
+              type: string
+            workspaceId:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+            archivedAt:
+              type:
+                - string
+                - 'null'
+              format: date-time
+              description: Soft-delete/archive marker (ISO 8601); `null` when the survey is active.
+            name:
+              type: string
+            type:
+              type: string
+              enum:
+                - link
+                - app
+            status:
+              type: string
+              enum:
+                - draft
+                - inProgress
+                - paused
+                - completed
+            metadata:
+              anyOf:
+                - $ref: '#/components/schemas/SurveyMetadata'
+                - type: 'null'
+            defaultLanguage:
+              type: string
+              description: Emitted language code/tag for the survey default language. The internal `default` translation key is never exposed.
+            languages:
+              type: array
+              items:
+                $ref: '#/components/schemas/SurveyLanguage'
+            welcomeCard:
+              $ref: '#/components/schemas/SurveyWelcomeCard'
+            blocks:
+              type: array
+              items:
+                $ref: '#/components/schemas/SurveyBlock'
+            endings:
+              type: array
+              items:
+                $ref: '#/components/schemas/SurveyEnding'
+            hiddenFields:
+              $ref: '#/components/schemas/SurveyHiddenFields'
+            variables:
+              type: array
+              items:
+                $ref: '#/components/schemas/SurveyVariable'
+            distribution:
+              allOf:
+                - $ref: '#/components/schemas/SurveyDistribution'
+              description: App-survey runtime/display settings. Present only for app surveys; omitted for link surveys.
+            targeting:
+              allOf:
+                - $ref: '#/components/schemas/SurveyTargeting'
+              description: App-survey contact targeting. Present only for app surveys; omitted for link surveys.
+        - $ref: '#/components/schemas/SurveyVisibilityFields'
     AISurveyGenerationLocaleCode:
       type: string
       enum:
@@ -6758,7 +7152,7 @@ components:
         Patch payload shape. Top-level fields are partial; any provided nested object or array
         fully replaces that subtree. Omitted top-level fields are preserved.
 
-        The server-owned fields `GET` returns — `id`, `workspaceId`, `type`, `createdAt`, `updatedAt`, `archivedAt`, `defaultLanguage` and `languages[].alias` — are accepted and verified, so a survey fetched with `GET` can be sent straight back. Echoing the value you were given is a no-op; changing one is a **422** `read_only_field`. A round-tripped `updatedAt` additionally acts as an optimistic-concurrency precondition, and a stale one is rejected with **409**. `questions`, analytics, styling and scripts remain rejected outright. App surveys (stored `type: app`) additionally accept `distribution` and `targeting`; both are rejected for link surveys, and changing `targeting` filters requires the Contacts entitlement.
+        The server-owned fields `GET` returns — `id`, `workspaceId`, `type`, `createdAt`, `updatedAt`, `archivedAt`, `defaultLanguage` and `languages[].alias` — are accepted and verified, so a survey fetched with `GET` can be sent straight back. Echoing the value you were given is a no-op; changing one is a **422** `read_only_field`. `visibility`, `owner` and `access` are accepted the same way, but a changed value is a **422** `unsupported_field`: visibility changes go through `POST /api/v3/surveys/{surveyId}/visibility`. A round-tripped `updatedAt` additionally acts as an optimistic-concurrency precondition, and a stale one is rejected with **409**. `questions`, analytics, styling and scripts remain rejected outright. App surveys (stored `type: app`) additionally accept `distribution` and `targeting`; both are rejected for link surveys, and changing `targeting` filters requires the Contacts entitlement.
 
         `metadata`, `languages`, `welcomeCard`, `blocks`, `endings`, `hiddenFields`, and `variables`
         replace their full top-level value when provided. Missing ids in replaced arrays are deletions.
@@ -6794,6 +7188,19 @@ components:
             - 'null'
           format: date-time
           description: Read-only echo. Use `/archive` and `/restore` to change it.
+        visibility:
+          allOf:
+            - $ref: '#/components/schemas/SurveyVisibility'
+          description: Read-only echo. Accepted only unchanged, so a survey fetched with `GET` can be sent back; any other value is a **422** `unsupported_field`. Change it with `POST /api/v3/surveys/{surveyId}/visibility`.
+        owner:
+          anyOf:
+            - $ref: '#/components/schemas/SurveyOwner'
+            - type: 'null'
+          description: Read-only echo, accepted only unchanged (otherwise **422** `unsupported_field`).
+        access:
+          allOf:
+            - $ref: '#/components/schemas/SurveyAccess'
+          description: Read-only echo, accepted only unchanged (otherwise **422** `unsupported_field`).
         defaultLanguage:
           type: string
           description: Read-only echo of the survey default language, in whatever shape `GET` returned — legacy surveys carry language-only codes, so this is not constrained to `LocaleCode`.
@@ -7079,6 +7486,167 @@ components:
           format: date-time
           description: |
             Optimistic-concurrency precondition: the survey's `updatedAt` from your last read. If the survey changed since, the write is rejected with **409**.
+    SurveyVisibilityBlocker:
+      type: object
+      description: An outbound connection that must be removed before the survey can become restricted.
+      required:
+        - type
+        - id
+        - name
+      properties:
+        type:
+          type: string
+          enum:
+            - webhook
+            - integration
+            - feedbackSource
+            - dashboard
+            - workflow
+        id:
+          type: string
+        name:
+          type: string
+          description: Display name of the connection, for the UI to list. Never empty; falls back to the type.
+      additionalProperties: false
+    SurveyVisibilityImpact:
+      type: object
+      description: The numbers the confirmation dialogues show.
+      required:
+        - memberCount
+        - responseCount
+      properties:
+        memberCount:
+          type: integer
+          minimum: 0
+          description: People other than the owner and the organisation's owners/managers who can see the survey now (if workspace-visible) or would gain access (if restricted).
+        responseCount:
+          type: integer
+          minimum: 0
+          description: Responses on the survey, partial ones included.
+      additionalProperties: false
+    SurveyVisibilityState:
+      allOf:
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              description: Survey identifier.
+        - $ref: '#/components/schemas/SurveyVisibilityFields'
+        - type: object
+          required:
+            - blockers
+            - impact
+          properties:
+            blockers:
+              type: array
+              items:
+                $ref: '#/components/schemas/SurveyVisibilityBlocker'
+              description: Connections that make `restricted` refusable right now. Empty when being restricted is allowed, and always empty for the `workspace` direction.
+            impact:
+              $ref: '#/components/schemas/SurveyVisibilityImpact'
+        - type: object
+          required:
+            - pending
+            - version
+            - allowedTargets
+          properties:
+            pending:
+              anyOf:
+                - $ref: '#/components/schemas/SurveyVisibility'
+                - type: 'null'
+              description: The value a `POST` stored that the graph has not yet acknowledged. While non-null the survey is restricted for everyone but the owner (for as long as they keep the workspace access the action needs — read to view, write to edit) and the organisation's owners and managers, whichever value is pending — `visibility` reads `restricted`. Always `null` for a survey just created or copied whose visibility has not been changed yet — its stored value is in effect at once. `"restricted"` means the restriction is already enforced and only the graph is catching up; `"workspace"` means the grant is not yet in effect. `null` normally. Clears when the outbox delivers (within 60 seconds, or the deployment fails closed), or when a later `POST` cancels or supersedes it.
+            version:
+              type: integer
+              minimum: 0
+              description: 'Monotonic per survey; incremented by every accepted `POST`, including cancellations. Projection work is fenced on it: a projector holding an older version never writes. `0` for a survey whose visibility was never changed through this endpoint.'
+            allowedTargets:
+              type: array
+              items:
+                $ref: '#/components/schemas/SurveyVisibility'
+              uniqueItems: true
+              description: Values a `POST …/visibility` by this caller would act on right now. Never the enforced value — **except** when a different value is pending, in which case the enforced value is listed because requesting it cancels the pending change. Never `restricted` while `blockers[]` is non-empty or `owner` is `null`. Empty when nothing would happen. Drives the row menu and the editor control.
+    SurveyVisibilityChangeRequest:
+      type: object
+      required:
+        - visibility
+      properties:
+        visibility:
+          $ref: '#/components/schemas/SurveyVisibility'
+      additionalProperties: false
+    SurveyVisibilityActor:
+      type: object
+      description: Who made the change. Always a user, since API keys cannot change visibility.
+      required:
+        - type
+        - id
+        - name
+      properties:
+        type:
+          type: string
+          enum:
+            - user
+        id:
+          type: string
+        name:
+          type: string
+      additionalProperties: false
+    SurveyVisibilityChangeResult:
+      allOf:
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              description: Survey identifier.
+        - $ref: '#/components/schemas/SurveyVisibilityFields'
+        - type: object
+          required:
+            - version
+            - pending
+            - changedAt
+            - changedBy
+          properties:
+            version:
+              type: integer
+              minimum: 0
+              description: The survey's visibility version after this call. Unchanged by a no-op.
+            pending:
+              anyOf:
+                - $ref: '#/components/schemas/SurveyVisibility'
+                - type: 'null'
+              description: '`"restricted"` when the restriction is enforced but the graph is still catching up (the outbox will finish it); `null` otherwise. A grant never returns 200 with a pending value.'
+            changedAt:
+              type:
+                - string
+                - 'null'
+              format: date-time
+              description: When the current visibility was last set through this endpoint. `null` when it never was — the survey still has its creation visibility, which is the case for a no-op on a survey nobody has touched. Unchanged by a no-op otherwise.
+            changedBy:
+              anyOf:
+                - $ref: '#/components/schemas/SurveyVisibilityActor'
+                - type: 'null'
+              description: Who last set it. `null` exactly when `changedAt` is `null`.
+    VisibilityBlockedProblem:
+      allOf:
+        - $ref: '#/components/schemas/Problem'
+        - type: object
+          required:
+            - details
+          properties:
+            details:
+              type: object
+              required:
+                - blockers
+              properties:
+                blockers:
+                  type: array
+                  minItems: 1
+                  items:
+                    $ref: '#/components/schemas/SurveyVisibilityBlocker'
+                  description: The same list `GET …/visibility` returns as `blockers[]`.
     ResponseResolution:
       type: object
       description: |
@@ -8962,6 +9530,7 @@ components:
                   - definition_not_executable
                   - survey_not_found
                   - ending_card_not_found
+                  - survey_not_workspace_visible
                   - recipient_not_allowed
                 description: Machine-readable problem category.
               field:
@@ -9104,9 +9673,53 @@ components:
         - fear
         - surprise
         - disgust
+    FeedbackRecordTaxonomy:
+      type: object
+      description: Read-time view of the record's membership in the active directory taxonomy.
+      additionalProperties: false
+      required:
+        - status
+        - run_id
+        - path
+      properties:
+        status:
+          type: string
+          enum:
+            - classified
+            - unclassified
+            - no_active_taxonomy
+        run_id:
+          oneOf:
+            - type: string
+              format: uuid
+            - type: 'null'
+        path:
+          type: array
+          description: Currently visible non-root nodes in root-to-leaf order; empty unless classified.
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - id
+              - label
+              - level
+              - node_type
+            properties:
+              id:
+                type: string
+                format: uuid
+              label:
+                type: string
+              level:
+                type: integer
+              node_type:
+                type: string
+                enum:
+                  - branch
+                  - leaf
     FeedbackRecord:
       type: object
-      description: 'One piece of feedback in the normalized Feedback Record shape. Field names are `snake_case`: the payload is the Hub''s, passed through the API gateway unchanged. Optional members are **absent** (not `null`) when unset.'
+      description: 'One piece of feedback in the normalized Feedback Record shape. Field names are `snake_case`: the payload is the Hub''s, passed through the API gateway unchanged. Optional members are **absent** (not `null`) when unset, except `taxonomy` on the get-one response, which is null if its lookup fails.'
       additionalProperties: false
       required:
         - id
@@ -9119,6 +9732,11 @@ components:
         - submission_id
         - tenant_id
       properties:
+        taxonomy:
+          description: Read-only active directory taxonomy assignment. Returned only by the get-one operation; null if the lookup is temporarily unavailable.
+          oneOf:
+            - $ref: '#/components/schemas/FeedbackRecordTaxonomy'
+            - type: 'null'
         id:
           type: string
           format: uuid
@@ -9480,6 +10098,12 @@ components:
         next_cursor:
           type: string
           description: Opaque keyset cursor for the next page. Present only when a full page was returned and there may be more results. Pass it back unchanged as `cursor`.
+    FeedbackRecordDetail:
+      allOf:
+        - $ref: '#/components/schemas/FeedbackRecord'
+        - type: object
+          required:
+            - taxonomy
     UpdateFeedbackRecordRequest:
       type: object
       description: A partial update. Only the members sent are changed; an empty body is accepted and changes nothing. Provenance (`tenant_id`, `source_*`, `field_*`, `submission_id`, `collected_at`) is immutable.
@@ -9605,6 +10229,109 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+    V3VisibilityForbidden:
+      description: 'Forbidden, one of two codes. `forbidden`: the caller cannot see the survey, **or** sees it but may not change its visibility — workspace members without ownership, team-level managers, and every API key — with the same body as any unreadable survey. `visibility_not_enabled`: the organisation lacks the RBAC / access-control entitlement, or the deployment''s readiness marker for survey visibility is not set; this answer does not depend on the survey.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            notAllowed:
+              summary: Team-level manager, or an API key
+              value:
+                title: Forbidden
+                status: 403
+                detail: You are not authorized to access this resource
+                code: forbidden
+                requestId: req_01j8z3
+            notEnabled:
+              summary: Organisation is not entitled, or the deployment has not enabled visibility
+              value:
+                title: Forbidden
+                status: 403
+                detail: Survey visibility is not enabled for this organization.
+                code: visibility_not_enabled
+                requestId: req_01j8z4
+    V3VisibilityBlocked:
+      description: Conflict — `restricted` was requested while outbound connections depend on the survey. Remove or re-point them, then retry. `details.blockers` matches `blockers[]` from the `GET`.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/VisibilityBlockedProblem'
+          example:
+            title: Conflict
+            status: 409
+            detail: Make this survey visible to the workspace to keep using it in 2 connections, or remove them before restricting it.
+            code: visibility_blocked_by_connections
+            requestId: req_01j8z5
+            details:
+              blockers:
+                - type: webhook
+                  id: clwh1234567890123456789012
+                  name: Zapier — new responses
+                - type: workflow
+                  id: clwf1234567890123456789012
+                  name: 'Notify #product on completion'
+    V3VisibilityNotAllowed:
+      description: 'Unprocessable — `restricted` was requested on a survey with no owner (`owner: null`). Restricted means "the owner and the organisation''s administrators"; with no owner it would mean administrators only, which is not a state the product offers. Duplicate the survey to get a restricted copy you own.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            title: Unprocessable Content
+            status: 422
+            detail: This survey has no author and can't be restricted. Duplicate it to get a restricted copy you own.
+            code: visibility_change_not_allowed
+            requestId: req_01j8z6
+    V3ProjectionPending:
+      description: 'Service Unavailable — only for a **grant** (`restricted → workspace`): the flag and a new `version` were stored, but the graph did not acknowledge the projection within the request. The survey stays restricted meanwhile (fail closed); the change is queued durably and lands within 60 seconds or the deployment fails closed. `GET …/visibility` shows `pending: "workspace"`. Retrying the `POST` is safe: it re-attempts the projection and answers **200** only when the graph holds this exact version. A `POST` for `restricted` cancels the pending grant. A restriction never answers 503 — it is enforced the moment it is stored. Chosen over **202 Accepted** so the pending state stays an exception, not the normal path every client must poll.'
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          example: 5
+        X-Request-Id:
+          schema:
+            type: string
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            title: Service Unavailable
+            status: 503
+            detail: The visibility change is queued but not yet enforced. Re-read the survey's visibility.
+            code: projection_pending
+            requestId: req_01j8z7
     V3UnprocessableContent:
       description: Unprocessable Content — semantic validation failed or the requested lifecycle transition is invalid.
       headers:

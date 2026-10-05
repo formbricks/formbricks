@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import * as React from "react";
 import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
+import { Input } from "@/components/general/input";
 import { cn } from "@/lib/utils";
 
 /**
@@ -49,6 +50,25 @@ interface RankingProps {
   imageUrl?: string;
   /** Video URL to display above the headline */
   videoUrl?: string;
+  /** ID of the 'other' option; once it is ranked, a free-text input appears inside its item */
+  otherOptionId?: string;
+  /** Placeholder text for the 'other' input field */
+  otherOptionPlaceholder?: string;
+  /** Custom value entered in the 'other' input field */
+  otherValue?: string;
+  /** Callback when the 'other' input value changes */
+  onOtherValueChange?: (value: string) => void;
+}
+
+interface RankingOtherInputProps {
+  label: string;
+  placeholder?: string;
+  value: string;
+  onChange: (value: string) => void;
+  disabled: boolean;
+  errorMessage?: string;
+  inputId: string;
+  dir?: TextDirection;
 }
 
 interface RankingItemProps {
@@ -58,6 +78,55 @@ interface RankingItemProps {
   onMove: (itemId: string, direction: "up" | "down") => void;
   disabled: boolean;
   dir?: TextDirection;
+  otherInput?: RankingOtherInputProps;
+}
+
+function RankingOtherInput({
+  label,
+  placeholder,
+  value,
+  onChange,
+  disabled,
+  errorMessage,
+  inputId,
+  dir,
+}: Readonly<RankingOtherInputProps>): React.JSX.Element {
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const errorAria = getElementErrorAria(inputId, errorMessage);
+
+  // Mounts exactly when "Other" gets ranked, so move focus straight into the text box.
+  React.useEffect(() => {
+    if (disabled) return;
+    const timeoutId = globalThis.setTimeout(() => {
+      globalThis.requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
+    }, 0);
+    return () => {
+      globalThis.clearTimeout(timeoutId);
+    };
+  }, [disabled]);
+
+  // The enclosing <fieldset> carries aria-describedby, but an ancestor's description is not part of
+  // a descendant's accessible description, so the input needs its own link to the error message.
+  return (
+    <Input
+      ref={inputRef}
+      type="text"
+      value={value}
+      onChange={(e) => {
+        onChange(e.currentTarget.value);
+      }}
+      placeholder={placeholder}
+      disabled={disabled}
+      aria-required
+      aria-label={label}
+      aria-invalid={errorAria.ariaInvalid}
+      aria-describedby={errorAria.ariaDescribedBy}
+      dir={dir}
+      className="w-full"
+    />
+  );
 }
 
 function RankingItem({
@@ -67,6 +136,7 @@ function RankingItem({
   onMove,
   disabled,
   dir,
+  otherInput,
 }: Readonly<RankingItemProps>): React.ReactNode {
   const isRanked = rankedIds.includes(item.id);
   const rankIndex = rankedIds.indexOf(item.id);
@@ -78,7 +148,7 @@ function RankingItem({
     <li
       dir={dir}
       className={cn(
-        "rounded-option flex h-12 cursor-pointer items-center border px-3 transition-all",
+        "rounded-option flex min-h-12 cursor-pointer flex-col border px-3 transition-all",
         "bg-option-bg border-option-border",
         // No focus-within fill: it repainted the item in the *ranked* colors, so the card's mount
         // autofocus made the first item look already ranked (ENG-2288). Focus has its own uniform
@@ -87,64 +157,73 @@ function RankingItem({
         isRanked && "bg-option-selected-bg border-brand",
         disabled && "cursor-not-allowed opacity-50"
       )}>
-      <button
-        type="button"
-        onClick={() => {
-          onItemClick(item);
-        }}
-        disabled={disabled}
-        onKeyDown={(e) => {
-          if (disabled) return;
-          if (e.key === " " || e.key === "Enter") {
-            e.preventDefault();
+      <div className="flex h-12 items-center">
+        <button
+          type="button"
+          onClick={() => {
             onItemClick(item);
-          }
-        }}
-        className="group flex h-full grow items-center gap-4 text-start focus:outline-none"
-        aria-label={isRanked ? `Remove ${item.label} from ranking` : `Add ${item.label} to ranking`}>
-        <span
-          className={cn(
-            "border-brand flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
-            isRanked
-              ? "bg-brand text-white"
-              : "group-hover:bg-background group-hover:text-foreground border-dashed text-transparent"
-          )}>
-          {displayNumber}
-        </span>
-        <span className="font-option text-option font-option-weight text-option-label shrink grow text-start">
-          {item.label}
-        </span>
-      </button>
-
-      {/* Up/Down buttons for ranked items */}
-      {isRanked ? (
-        <div className={cn("border-option-border -mx-3 flex h-full grow-0 flex-col")} dir={dir}>
-          <button
-            type="button"
-            tabIndex={isFirst ? -1 : 0}
-            onClick={(e) => {
+          }}
+          disabled={disabled}
+          onKeyDown={(e) => {
+            if (disabled) return;
+            if (e.key === " " || e.key === "Enter") {
               e.preventDefault();
-              onMove(item.id, "up");
-            }}
-            disabled={isFirst || disabled}
-            aria-label={`Move ${item.label} up`}
-            className={cn("flex flex-1 items-center justify-center px-2 transition-colors")}>
-            <ChevronUp className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            tabIndex={isLast ? -1 : 0}
-            onClick={(e) => {
-              e.preventDefault();
-              onMove(item.id, "down");
-            }}
-            disabled={isLast || disabled}
-            aria-label={`Move ${item.label} down`}
+              onItemClick(item);
+            }
+          }}
+          className="group flex h-full grow items-center gap-4 text-start focus:outline-none"
+          aria-label={isRanked ? `Remove ${item.label} from ranking` : `Add ${item.label} to ranking`}>
+          <span
             className={cn(
-              "border-option-border flex flex-1 items-center justify-center border-t px-2 transition-colors"
+              "border-brand flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
+              isRanked
+                ? "bg-brand text-white"
+                : "group-hover:bg-background group-hover:text-foreground border-dashed text-transparent"
             )}>
-            <ChevronDown className="h-5 w-5" />
-          </button>
+            {displayNumber}
+          </span>
+          <span className="font-option text-option font-option-weight text-option-label shrink grow text-start">
+            {item.label}
+          </span>
+        </button>
+
+        {/* Up/Down buttons for ranked items */}
+        {isRanked ? (
+          <div className={cn("border-option-border -mx-3 flex h-full grow-0 flex-col")} dir={dir}>
+            <button
+              type="button"
+              tabIndex={isFirst ? -1 : 0}
+              onClick={(e) => {
+                e.preventDefault();
+                onMove(item.id, "up");
+              }}
+              disabled={isFirst || disabled}
+              aria-label={`Move ${item.label} up`}
+              className={cn("flex flex-1 items-center justify-center px-2 transition-colors")}>
+              <ChevronUp className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              tabIndex={isLast ? -1 : 0}
+              onClick={(e) => {
+                e.preventDefault();
+                onMove(item.id, "down");
+              }}
+              disabled={isLast || disabled}
+              aria-label={`Move ${item.label} down`}
+              className={cn(
+                "border-option-border flex flex-1 items-center justify-center border-t px-2 transition-colors"
+              )}>
+              <ChevronDown className="h-5 w-5" />
+            </button>
+          </div>
+        ) : null}
+      </div>
+      {/* The free-text input sits outside the item's <button>: interactive content may not nest
+          inside a button, and clicks in the text box must not toggle "Other" out of the ranking. */}
+      {isRanked && otherInput ? (
+        <div className="pb-3">
+          <RankingOtherInput {...otherInput} />
         </div>
       ) : null}
     </li>
@@ -166,6 +245,10 @@ function Ranking({
   disabled = false,
   imageUrl,
   videoUrl,
+  otherOptionId,
+  otherOptionPlaceholder = "Please specify",
+  otherValue = "",
+  onOtherValueChange,
 }: Readonly<RankingProps>): React.JSX.Element {
   const errorAria = getElementErrorAria(inputId, errorMessage);
 
@@ -256,6 +339,20 @@ function Ranking({
                 onMove={handleMove}
                 disabled={disabled}
                 dir={dir}
+                otherInput={
+                  item.id === otherOptionId && onOtherValueChange
+                    ? {
+                        label: item.label,
+                        placeholder: otherOptionPlaceholder,
+                        value: otherValue,
+                        onChange: onOtherValueChange,
+                        disabled,
+                        errorMessage,
+                        inputId,
+                        dir,
+                      }
+                    : undefined
+                }
               />
             ))}
           </ol>

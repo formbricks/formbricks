@@ -11,55 +11,48 @@ import {
   MOCK_ORGANIZATION_MEMBERSHIP,
 } from "./__mock__/team.mock";
 
-// Setup all mocks
-const setupMocks = () => {
-  // Mock dependencies
-  vi.mock("@formbricks/database", () => ({
-    prisma: {
-      team: {
-        findUnique: vi.fn(),
-      },
-      teamUser: {
-        upsert: vi.fn(),
-      },
+vi.mock("@formbricks/database", () => ({
+  prisma: {
+    team: {
+      findUnique: vi.fn(),
     },
-  }));
-
-  vi.mock("@/lib/constants", () => ({
-    DEFAULT_TEAM_ID: "team-123",
-    DEFAULT_ORGANIZATION_ID: "org-123",
-  }));
-
-  vi.mock("@/lib/membership/service", () => ({
-    getMembershipByUserIdOrganizationId: vi.fn(),
-  }));
-
-  vi.mock("@/lib/authzed/team-workspace", () => ({
-    reconcileTeamWorkspaceRelationships: vi.fn(),
-  }));
-
-  vi.mock("@formbricks/logger", () => ({
-    logger: {
-      error: vi.fn(),
+    teamUser: {
+      upsert: vi.fn(),
     },
-  }));
+  },
+}));
 
-  vi.mock("@/lib/utils/validate", () => ({
-    validateInputs: vi.fn((args) => args),
-  }));
+vi.mock("@/lib/constants", () => ({
+  DEFAULT_TEAM_ID: "team-123",
+  DEFAULT_ORGANIZATION_ID: "org-123",
+}));
 
-  // Mock reactCache to control the getDefaultTeam function
-  vi.mock("react", async () => {
-    const actual = await vi.importActual("react");
-    return {
-      ...actual,
-      cache: vi.fn().mockImplementation((fn) => fn),
-    };
-  });
-};
+vi.mock("@/lib/membership/service", () => ({
+  getMembershipByUserIdOrganizationId: vi.fn(),
+}));
 
-// Set up mocks
-setupMocks();
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  reconcileTeamWorkspaceRelationships: vi.fn(),
+}));
+
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+  },
+}));
+
+vi.mock("@/lib/utils/validate", () => ({
+  validateInputs: vi.fn((args) => args),
+}));
+
+// Keep the cache mock at module scope so Vitest hoists it with the other mocks.
+vi.mock("react", async () => {
+  const actual = await vi.importActual("react");
+  return {
+    ...actual,
+    cache: vi.fn().mockImplementation((fn) => fn),
+  };
+});
 
 describe("Team Management", () => {
   beforeEach(() => {
