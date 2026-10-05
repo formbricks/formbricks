@@ -171,6 +171,8 @@ export interface TConfigInput {
   environmentId?: string;
   workspaceId?: string;
   appUrl: string;
+  /** How surveys render. Defaults to light; can be changed later with `setAppearance`. */
+  appearance?: "light" | "dark" | "system";
 }
 
 export interface TStylingColor {
@@ -236,7 +238,6 @@ export interface TBaseStyling {
   cardBackgroundColor?: TStylingColor | null;
   cardBorderColor?: TStylingColor | null;
   highlightBorderColor?: TStylingColor | null;
-  isDarkModeEnabled?: boolean | null;
   roundness?: TDimension;
   cardArrangement?: {
     // "cardless" is only supported for link surveys.

@@ -1,7 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   important: "#fbjs",
-  darkMode: "class",
+  // `dark:` follows the survey's own appearance attribute (set by the renderer on every #fbjs root),
+  // never the host page's `.dark` class or the OS setting.
+  darkMode: ["variant", "&:where([data-appearance=dark], [data-appearance=dark] *)"],
   content: ["./src/**/*.{tsx,ts,jsx,js}"],
   theme: {
     extend: {

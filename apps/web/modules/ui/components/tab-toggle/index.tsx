@@ -35,7 +35,9 @@ export const TabToggle = <T extends string | number>({
         {options.map((option) => (
           <label
             key={option.value}
-            htmlFor={option.value.toString()}
+            // Scoped by the toggle's id: two toggles with an option of the same value on one page
+            // (the appearance and overlay toggles both have "light"/"dark") must not share ids.
+            htmlFor={`${id}-${option.value.toString()}`}
             className={cn(
               "flex-1 cursor-pointer rounded-md py-2 text-center text-sm text-slate-800",
               selectedOption === option.value && "bg-white",
@@ -46,7 +48,7 @@ export const TabToggle = <T extends string | number>({
               type="radio"
               name={id}
               disabled={disabled}
-              id={option.value.toString()}
+              id={`${id}-${option.value.toString()}`}
               value={option.value.toString()}
               checked={selectedOption === option.value}
               onChange={handleChange}

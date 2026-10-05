@@ -6,12 +6,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
+import { resolveDarkColors } from "@formbricks/types/dark-palette";
 import { resolveOverlayAppearance } from "@formbricks/types/overlay";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurvey, TSurveyLanguage, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
+import { type TStylingAppearance } from "@/lib/styling/dark-mode";
 import { toJsWorkspaceStateSurvey } from "@/lib/survey/client-utils";
 import { isRTLLanguage } from "@/modules/survey/link/lib/utils";
 import { CardlessPreviewLogo } from "@/modules/ui/components/cardless-preview-logo";
@@ -41,6 +43,8 @@ interface PreviewSurveyProps {
   locale?: TUserLocale;
   isSpamProtectionAllowed: boolean;
   publicDomain: string;
+  /** Dark only applies to app surveys; link previews stay light (D4). */
+  appearance?: TStylingAppearance;
 }
 
 let surveyNameTemp: string;
@@ -56,6 +60,7 @@ export const PreviewSurvey = ({
   locale,
   isSpamProtectionAllowed,
   publicDomain,
+  appearance = "light",
 }: PreviewSurveyProps) => {
   // Both callers hand over a survey that already carries its `embeddedFields`: the editor's working
   // copy is rows-native (ENG-2628), and the templates gallery builds its never-written survey through
@@ -151,6 +156,11 @@ export const PreviewSurvey = ({
   }, [workspace.styling, survey.styling]);
 
   const isCardless = styling.cardArrangement?.linkSurveys === "cardless";
+  // The mock modal paints its own card color around the survey, so it has to follow the dark palette.
+  const modalBackground =
+    appearance === "dark"
+      ? resolveDarkColors(styling).cardBackgroundColor
+      : styling.cardBackgroundColor?.light;
   const linkSurveyCardMaxWidth = getLinkSurveyCardMaxWidth(styling.linkSurveyCardWidth);
 
   const updateElementId = useCallback(
@@ -331,11 +341,12 @@ export const PreviewSurvey = ({
                     overlayOpacity={overlayOpacity}
                     clickOutsideClose={clickOutsideClose}
                     borderRadius={styling?.roundness ?? 8}
-                    background={styling?.cardBackgroundColor?.light}>
+                    background={modalBackground}>
                     <SurveyInline
                       appUrl={publicDomain}
                       isPreviewMode={true}
                       survey={jsSurvey}
+                      appearance={appearance}
                       isBrandingEnabled={workspace.inAppSurveyBranding}
                       isRedirectDisabled={true}
                       languageCode={activeLanguageCode}
@@ -468,11 +479,12 @@ export const PreviewSurvey = ({
                   overlayOpacity={overlayOpacity}
                   previewMode="desktop"
                   borderRadius={styling.roundness ?? 8}
-                  background={styling.cardBackgroundColor?.light}>
+                  background={modalBackground}>
                   <SurveyInline
                     appUrl={publicDomain}
                     isPreviewMode={true}
                     survey={jsSurvey}
+                    appearance={appearance}
                     isBrandingEnabled={workspace.inAppSurveyBranding}
                     isRedirectDisabled={true}
                     languageCode={activeLanguageCode}

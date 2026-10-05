@@ -663,6 +663,27 @@ To this:
 
 ![The Connection status card, green, reading "Receiving data" and "Formbricks SDK is connected"](/images/surveys/website-app-surveys/framework-guides/widget-status-connected.webp)
 
+## Dark Mode
+
+Surveys render light unless your app asks for something else. Tell the SDK which appearance to use, either when you set it up or whenever your app's own theme changes:
+
+```javascript Setting the survey appearance
+formbricks.setup({
+  workspaceId: "<workspace-id>",
+  appUrl: "<app-url>",
+  appearance: "dark", // "light" (default), "dark" or "system"
+});
+
+// Later, when the user switches your app's theme:
+formbricks.setAppearance("light");
+```
+
+- `"system"` follows the visitor's browser setting and updates if it changes. If your app has its own light/dark toggle, pass `"light"` or `"dark"` from that toggle instead, because the SDK cannot see your app's theme.
+- A survey that is already open switches in place. Answers, progress and focus are kept.
+- `setAppearance` can be called before `setup`. The value is kept for the page session and survives `logout`.
+- The dark colors are derived from your brand color. Adjust any of them in **Look & Feel** (or a survey's **Styling** tab) by switching the preview to **Dark**.
+- Link surveys always render light.
+
 ## Content Security Policy
 
 If your app serves a strict `Content-Security-Policy` header, the browser can block the Formbricks widget before anything renders. Three directives are involved.

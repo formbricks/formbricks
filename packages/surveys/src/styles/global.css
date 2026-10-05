@@ -168,6 +168,29 @@
   --fb-border-radius: 8px;
 }
 
+/* Dark appearance fallback for the renderer's own tokens. Values match
+   getDerivedDarkColors("#1e40af") (packages/types/dark-palette.ts); styles.ts
+   overrides them from the survey's styling. See survey-ui globals.css. */
+#fbjs[data-appearance="dark"] {
+  --fb-brand-text-color: white;
+  --fb-border-color: #5b6a97;
+  --fb-border-color-highlight: #6b79a1;
+  --fb-heading-color: #dde2f3;
+  --fb-subheading-color: #dde2f3;
+  --fb-placeholder-color: #9fa5b9;
+  --fb-info-text-color: #9fa5b9;
+  --fb-signature-text-color: #b1b5c2;
+  --fb-branding-text-color: #9b9eaa;
+  --fb-survey-background-color: #0d1426;
+  --fb-survey-border-color: #111e45;
+  /* Tailwind's default border color (compat rule at the top of this file). */
+  --color-gray-200: #111e45;
+  --fb-accent-background-color: #101d42;
+  --fb-accent-background-color-selected: #122251;
+  --fb-input-background-color: #0e1832;
+  --fb-input-background-color-selected: #1a243c;
+}
+
 @keyframes shrink-width-to-zero {
   from {
     width: 100%;

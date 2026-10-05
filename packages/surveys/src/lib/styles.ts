@@ -1,5 +1,6 @@
 // Add this import for survey-ui CSS variables
 import surveyUiCss from "@formbricks/survey-ui/styles?inline";
+import { resolveDarkColors } from "@formbricks/types/dark-palette";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { type TWorkspaceStyling } from "@formbricks/types/workspace";
 import { ensureReadable, isLight, mixColor } from "@/lib/color";
@@ -53,6 +54,93 @@ export const addStylesToDom = () => {
       existingStyleElement.setAttribute("nonce", styleNonce);
     }
   }
+};
+
+/**
+ * The dark palette as a second variable block. The light block above it is left exactly as it
+ * was; appearance switches by flipping `data-appearance` on #fbjs, so both palettes are always in
+ * the stylesheet and no CSS is rebuilt on a switch (ENG-2939, ENG-2940).
+ *
+ * Each color resolves through resolveDarkColors: explicit `.dark` → light value for the brand
+ * colors (D12) → a value derived from the brand color. The `!important` rules further down only
+ * reference these variables, so they pick up the dark values without being duplicated.
+ */
+export const getDarkThemeCss = (styling: TWorkspaceStyling | TSurveyStyling): string => {
+  const dark = resolveDarkColors(styling);
+  let css = '#fbjs[data-appearance="dark"] {\n  color-scheme: dark;\n';
+  const add = (variableName: string, value?: string | null) => {
+    if (value !== undefined && value !== null) css += `  --fb-${variableName}: ${value};\n`;
+  };
+
+  const card = dark.cardBackgroundColor;
+  const text = dark.elementHeadlineColor;
+  const inputBg = dark.inputBgColor;
+
+  add("brand-color", dark.brandColor);
+  add("survey-brand-color", dark.brandColor);
+  add("focus-color", dark.brandColor);
+  if (dark.brandColor) add("brand-text-color", isLight(dark.brandColor) ? "black" : "white");
+
+  add("heading-color", text);
+  add("element-headline-color", text);
+  add("element-description-color", dark.elementDescriptionColor);
+  add("subheading-color", dark.elementDescriptionColor);
+  add("label-color", dark.elementUpperLabelColor);
+  add("element-upper-label-color", dark.elementUpperLabelColor);
+  if (text) {
+    add("signature-text-color", mixColor(text, "#000000", 0.2));
+    add("branding-text-color", mixColor(text, "#000000", 0.3));
+  }
+
+  add("survey-background-color", card);
+  add("survey-border-color", dark.cardBorderColor);
+  // Tailwind's default border color (the v3 compatibility rule in global.css). Light gray on a dark
+  // card would outline every default-bordered element, so it follows the dark card border instead.
+  if (dark.cardBorderColor) css += `  --color-gray-200: ${dark.cardBorderColor};\n`;
+  add("card-border-color", dark.cardBorderColor);
+  add("highlight-border-color", dark.highlightBorderColor);
+
+  add("input-color", dark.inputTextColor);
+  add("input-text-color", dark.inputTextColor);
+  if (dark.inputTextColor && inputBg) {
+    // Light mode mixes the placeholder toward white; on a dark field it fades toward the field.
+    const placeholder = mixColor(dark.inputTextColor, inputBg, 0.3);
+    add("placeholder-color", placeholder);
+    add("input-placeholder-color", placeholder);
+  }
+  add("border-color", dark.inputBorderColor);
+  add("input-border-color", dark.inputBorderColor);
+  if (dark.inputBorderColor) add("border-color-highlight", mixColor(dark.inputBorderColor, "#ffffff", 0.1));
+  add("input-background-color", inputBg);
+  add("input-bg-color", inputBg);
+  if (inputBg) {
+    add("input-background-color-selected", mixColor(inputBg, "#ffffff", 0.05));
+    add("hover-bg-color", mixColor(inputBg, "#ffffff", 0.08));
+  }
+  add("input-shadow", "none");
+
+  add("option-bg-color", dark.optionBgColor);
+  add("option-label-color", dark.optionLabelColor);
+  add("option-border-color", dark.optionBorderColor);
+
+  add("accent-background-color", dark.accentBgColor);
+  add("accent-background-color-selected", dark.accentBgColorSelected);
+
+  const buttonBg = dark.buttonBgColor;
+  const buttonText = dark.buttonTextColor ?? (buttonBg && (isLight(buttonBg) ? "#0f172a" : "#ffffff"));
+  add("button-bg-color", buttonBg);
+  add("button-text-color", buttonText);
+  // Same rule as light: the ghost Back button shows the button color as text on the card.
+  if (buttonBg && card) add("back-button-color", ensureReadable(buttonBg, card));
+
+  add("progress-track-bg-color", dark.progressTrackBgColor);
+  add("progress-indicator-bg-color", dark.progressIndicatorBgColor);
+
+  // Hover / selected states lighten a dark surface instead of darkening it (survey-ui tokens).
+  add("shade-color", "white");
+  if (card) add("tint-color", card);
+
+  return `${css}}\n`;
 };
 
 export const addCustomThemeToDom = ({ styling }: { styling: TWorkspaceStyling | TSurveyStyling }): void => {
@@ -427,6 +515,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TWorkspaceStyling | 
   }
 
   addRule("html body #fbjs .cardless-progress-bar div.progress-track", "  border-radius: 0 !important;\n");
+
+  cssVariables += getDarkThemeCss(styling);
 
   // Set the innerHTML of the style element
   styleElement.innerHTML = cssVariables;

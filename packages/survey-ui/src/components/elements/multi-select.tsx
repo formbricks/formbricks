@@ -109,7 +109,7 @@ function CheckboxIndicator(): React.JSX.Element {
     <span
       aria-hidden="true"
       className={cn(
-        "border-input-border text-brand-foreground relative flex size-4 shrink-0 items-center justify-center rounded-[4px] border bg-white shadow-xs transition-colors",
+        "border-input-border text-brand-foreground dark:bg-input-bg relative flex size-4 shrink-0 items-center justify-center rounded-[4px] border bg-white shadow-xs transition-colors",
         "peer-checked:bg-brand peer-checked:border-brand",
         // The tick lives inside this sibling span, so reveal it via a peer-checked descendant rule.
         "[&>svg]:opacity-0 [&>svg]:transition-opacity peer-checked:[&>svg]:opacity-100"
