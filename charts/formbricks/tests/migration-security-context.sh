@@ -44,10 +44,11 @@ override_render="$(render \
 [[ "${default_render}" == "${override_render}" ]] \
   || fail "Web container settings must leave the migration Job unchanged"
 
-# The Job still honors the explicitly configured Pod-level identity.
-pod_context_render="$(render --set deployment.securityContext.runAsUser=1234)"
+# The Job still honors an explicitly configured image-compatible Pod identity.
+# This checks rendering only; it does not establish arbitrary-UID runtime support.
+pod_context_render="$(render --set deployment.securityContext.runAsUser=1001)"
 expect_writable_job "${pod_context_render}"
-grep -q '^        runAsUser: 1234$' <<<"${pod_context_render}" \
+grep -q '^        runAsUser: 1001$' <<<"${pod_context_render}" \
   || fail "Expected the migration Job to retain its Pod security context"
 
 without_wait="$(render --set migration.waitForDatabase.enabled=false)"

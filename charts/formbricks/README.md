@@ -740,6 +740,20 @@ Hub's metric attributes are restricted to a fixed, low-cardinality set — for i
 emitted only in correlated JSON logs. Prompt text, feedback, model output, embeddings, credentials, authorization
 tokens, provider response bodies, and collector URLs are never telemetry fields.
 
+## Migration Job compatibility rollback
+
+This chart restores a writable root filesystem for the migration Job and stops applying
+`deployment.containerSecurityContext` to its containers. This is a breaking change for namespaces enforcing
+Restricted Pod Security: admission can reject the Job and block an upgrade. Before upgrading, adjust the
+namespace admission policy to permit this Job, or retain a hardened chart with a compatible application image.
+If admission rejects the Job, roll back to the previous compatible chart and image combination before retrying.
+
+The migration Job uses the image's default user unless `deployment.securityContext.runAsUser` overrides it.
+For the Formbricks 6.0.2 image, use UID 1001 (the image default): its migration runner needs ownership of
+`/home/nextjs/packages/database` to remove and recreate the staging directory. An arbitrary UID, such as 1234,
+can fail with a permission error even though the root filesystem is writable. A custom image must provide
+matching ownership for its configured UID.
+
 ## Web container security context
 
 `deployment.containerSecurityContext` applies to the web container. It defaults to a read-only root filesystem,
