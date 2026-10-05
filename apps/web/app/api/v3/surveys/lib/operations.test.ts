@@ -1,11 +1,18 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  ResourceNotFoundError,
+  TooManyRequestsError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { V3CustomCssInvalidError, V3CustomCssPlanRequiredError } from "@/app/api/v3/lib/custom-css";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import { recordSurveyListPredicateMismatch } from "@/lib/authorization/metrics";
 import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { previewCustomCss } from "@/modules/custom-css/lib/service";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/lib/survey";
@@ -65,6 +72,7 @@ vi.mock("@/modules/custom-css/lib/service", () => ({
   invalidateCustomCssCaches: vi.fn(),
 }));
 vi.mock("@/lib/authorization/metrics", () => ({ recordSurveyListPredicateMismatch: vi.fn() }));
+vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
 
 vi.mock("@/lib/posthog", () => ({
   capturePostHogEvent: vi.fn(),
@@ -1985,6 +1993,24 @@ describe("custom CSS (ENG-3641)", () => {
       expect(previewCustomCss).not.toHaveBeenCalled();
     });
 
+    test("spends the principal's custom CSS budget first; a spent budget is a 429 and nothing runs", async () => {
+      const cssKey = { apiKeyId: "key_css", organizationId: "org_1", workspacePermissions: [] } as never;
+      vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("Slow down", 30));
+
+      const response = await validateV3Survey({
+        body: customCssBody(),
+        authentication: cssKey,
+        requestId,
+        instance,
+      } as never);
+
+      expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3CustomCss, "key_css");
+      expect(response.status).toBe(429);
+      expect(response.headers.get("Retry-After")).toBe("30");
+      expect(requireV3WorkspaceAccess).not.toHaveBeenCalled();
+      expect(previewCustomCss).not.toHaveBeenCalled();
+    });
+
     test("the raw entry point rejects compiled output and a surveyId on workspace scope", async () => {
       for (const body of [
         customCssBody({ data: { customCss: { light: "a{}", dark: null, compiled: "x" } } }),
@@ -2013,6 +2039,29 @@ describe("custom CSS (ENG-3641)", () => {
         customCss: { light: "@layer fb-survey{a}", dark: null },
         warnings: [cssWarning],
       });
+    });
+
+    test("spend the custom CSS budget only when the payload carries customCss", async () => {
+      const session = { user: { id: "user_css" }, expires: "2099-01-01" } as never;
+      await validateV3Survey({
+        body: { operation: "patch", surveyId: validSurveyId, data: { name: "x" } },
+        authentication: session,
+        requestId,
+        instance,
+      } as never);
+      expect(applyRateLimit).not.toHaveBeenCalled();
+
+      vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("Slow down"));
+      const response = await validateV3Survey({
+        body: { operation: "create", data: { ...createBody, customCss: { light: "a{}", dark: null } } },
+        authentication: session,
+        requestId,
+        instance,
+      } as never);
+
+      expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3CustomCss, "user_css");
+      expect(response.status).toBe(429);
+      expect(previewCustomCss).not.toHaveBeenCalled();
     });
 
     test("leave a payload without customCss exactly as before", async () => {

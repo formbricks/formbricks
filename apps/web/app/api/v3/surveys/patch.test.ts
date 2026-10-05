@@ -83,8 +83,9 @@ vi.mock("@formbricks/database", () => {
 });
 
 vi.mock("@/lib/survey/service", () => ({
-  selectSurvey: {
+  selectSurveyWithCustomCss: {
     id: true,
+    customCss: true,
   },
 }));
 
@@ -792,7 +793,7 @@ describe("patchV3Survey", () => {
 
     expect(prisma.survey.findUnique).toHaveBeenCalledWith({
       where: { id: currentSurvey.id },
-      select: { id: true },
+      select: { id: true, customCss: true },
     });
     expect(result.name).toBe("Published Feedback");
     expect(result.status).toBe("inProgress");

@@ -26,6 +26,12 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "api:v3:surveys:visibility",
     }, // 10 per minute per actor — a loop of workspace → restricted must not be able to arm the freshness guard (ENG-3282)
+    v3CustomCss: {
+      interval: 60,
+      allowedPerInterval: 60,
+      namespace: "api:v3:custom-css",
+    }, // 60 per minute per principal, on top of v3 — custom CSS processing is synchronous and CPU-bound, and
+    // the editor validates ~300 ms after typing stops, so normal editing stays far below this
     internalDatasetPurge: {
       interval: 3600,
       allowedPerInterval: 5,

@@ -749,7 +749,7 @@ paths:
         Use `400` only for malformed validation envelopes, unsupported operations, invalid `surveyId`,
         or unsupported query parameters.
 
-        **Custom CSS.** A create or patch payload that carries `customCss` is also run through the custom CSS processor; the result adds the compiled `customCss` and `warnings`, or `errors` and `valid=false`. `operation: customCss` validates CSS alone for a live preview — with `scope: workspace | survey` and, optionally, an existing `surveyId` in `workspaceId` — and returns the compiled CSS and warnings. Validation never saves, versions, touches timestamps or invalidates caches, needs only read access, and grants nothing: the write itself checks permissions and the plan again.
+        **Custom CSS.** A create or patch payload that carries `customCss` is also run through the custom CSS processor; the result adds the compiled `customCss` and `warnings`, or `errors` and `valid=false`. `operation: customCss` validates CSS alone for a live preview — with `scope: workspace | survey` and, optionally, an existing `surveyId` in `workspaceId` — and returns the compiled CSS and warnings. Validation never saves, versions, touches timestamps or invalidates caches, needs only read access, and grants nothing: the write itself checks permissions and the plan again. Requests that process custom CSS also count against a separate budget of 60 per minute per user or API key, shared with the workspace custom CSS endpoint and the MCP tools; beyond it they return **429**.
       tags:
         - V3 Surveys
       requestBody:
@@ -4220,7 +4220,7 @@ paths:
       description: |
         Saves or clears the workspace's shared survey CSS. `customCss` replaces both fields; `null` clears all of it. The source is processed by the same processor every save path uses: constructs it removes come back as top-level `warnings`, and CSS it rejects is a **422** that leaves the saved CSS in effect. The replaced value becomes `previous`, the one recoverable revision — restore it by sending its source back. Unchanged source writes nothing.
 
-        Workspace CSS reaches every survey in the workspace, so writing it is narrower than writing a survey: **organization owners and managers** for signed-in users (session or OAuth), and a **`manage`** grant on this workspace for API keys — a Read & write grant is refused with **403**. On Formbricks Cloud, adding or editing needs the Scale plan (**403** `custom_css_plan_required`); clearing never does. Successful changes refresh the cached configuration the SDKs receive (they pick it up on their next configuration fetch).
+        Workspace CSS reaches every survey in the workspace, so writing it is narrower than writing a survey: **organization owners and managers** for signed-in users (session or OAuth), and a **`manage`** grant on this workspace for API keys — a Read & write grant is refused with **403**. On Formbricks Cloud, adding or editing needs the Scale plan (**403** `custom_css_plan_required`); clearing never does. Successful changes refresh the cached configuration the SDKs receive (they pick it up on their next configuration fetch). Saves count against a custom CSS budget of 60 per minute per user or API key, shared with custom CSS validation; beyond it they return **429**.
       tags:
         - V3 Workspaces
       parameters:

@@ -297,6 +297,59 @@ describe("selector scoping", () => {
     expect(lightRules(".a { :root & { color: red } }")).toBe("");
   });
 
+  test.each([
+    [".a:has(> .b) { color: red }", "#fbjs .a:has(>.b){color:red!important}"],
+    [
+      '[data-fb-part="option"]:has(+ .x) { color: red }',
+      "#fbjs [data-fb-part=option]:has(+.x){color:red!important}",
+    ],
+    [".a:has(~ .b, .c) { color: red }", "#fbjs .a:has(~.b,.c){color:red!important}"],
+    [":root:has(> .a) { color: red }", "#fbjs:has(>.a){color:red!important}"],
+    [":root:has(.a ~ .b) { color: red }", "#fbjs:has(.a~.b){color:red!important}"],
+    [".a { &:has(> .b) { color: red } }", "#fbjs .a:has(>.b){color:red!important}"],
+    [".a { &:has(+ .b) { color: red } }", "#fbjs .a:has(+.b){color:red!important}"],
+  ])("keeps a relative :has() and scopes it: %s", (source, expected) => {
+    const result = compile(source);
+    expect(result.warnings).toEqual([]);
+    expect(result.compiled.light).toBe(`@layer fb-survey{${expected}}`);
+  });
+
+  test("relative :has() arguments do not count towards the universal-step limit", () => {
+    expect(compile(".a:has(> .b) .c:has(> .d) .e:has(+ .f) { color: red }").warnings).toEqual([]);
+  });
+
+  test.each([
+    ["#fbjs:has(~ .host) { color: red }"],
+    [":root:has(+ x) { color: red }"],
+    ["body:has(~ x) { color: red }"],
+    ["html:has(> .a, + .b) { color: red }"],
+    [":root:not(:has(~ .host)) { color: red }"],
+    [":root:is(.x:has(+ .host)) { color: red }"],
+    [":root { &:has(~ .host) { color: red } }"],
+    [".a, :root { &:has(+ .host) { color: red } }"],
+    [":scope .a { color: red }"],
+    [".a:has(:scope) { color: red }"],
+    [".a:has(:scope .b) { color: red }"],
+    [".a:has(.b :scope) { color: red }"],
+    [".a:has(:scope.x > .b) { color: red }"],
+    [".a:has(:is(:scope) > .b) { color: red }"],
+    [".a:has(> :scope) { color: red }"],
+  ])("removes a :has() that reads the root's siblings, and written-out :scope: %s", (source) => {
+    const result = compile(source);
+    expect(codes(result.warnings)).toEqual(["unsafe_selector_removed"]);
+    expect(result.compiled.light).toBe("@layer fb-survey{}");
+  });
+
+  test("a sibling :has() stays valid once the subject is below the root", () => {
+    expect(lightRules(":root > .a:has(~ .b) { color: red }")).toBe("#fbjs>.a:has(~.b){color:red!important}");
+    expect(darkRules(".a:has(+ .b) { color: red }")).toBe(
+      "#fbjs[data-appearance=dark] .a:has(+.b){color:red!important}"
+    );
+    expect(codes(compile(null, ":root:has(~ .host) { color: red }").warnings)).toEqual([
+      "unsafe_selector_removed",
+    ]);
+  });
+
   test("sibling steps below the root stay inside it", () => {
     expect(lightRules(".a { & + .b { color: red } }")).toBe("#fbjs .a+.b{color:red!important}");
     expect(lightRules(":root { > .a { & ~ .b { color: red } } }")).toBe("#fbjs>.a~.b{color:red!important}");
@@ -368,6 +421,26 @@ describe("at-rules", () => {
     expect(compile('@charset "utf-8"; .a { color: red }').warnings).toEqual([]);
   });
 
+  test.each([
+    ["@supports (background: url(https://cdn.example/a.png)) { .a { color: red } }"],
+    [String.raw`@supports (background: u\72 l(https://cdn.example/a.png)) { .a { color: red } }`],
+    [String.raw`@supports (background: \75 \72 \6c (a.png)) { .a { color: red } }`],
+    ["@supports (display: grid) and (background: IMAGE-SET('a.png' 1x)) { .a { color: red } }"],
+    ["@supports not (background: -webkit-cross-fade(url(a.png), url(b.png), 50%)) { .a { color: red } }"],
+    ["@supports (content: src('a.png')) or (display: flex) { .a { color: red } }"],
+    [".a { @supports (background: image('a.png')) { color: red } }"],
+  ])("removes @supports whose condition names a resource function: %s", (source) => {
+    const result = compile(source);
+    expect(codes(result.warnings)).toEqual(["unsupported_at_rule_removed"]);
+    expect(result.compiled.light).toBe("@layer fb-survey{}");
+  });
+
+  test("keeps @supports conditions without resource functions", () => {
+    expect(lightRules("@supports selector(:has(a)) and (not (display: grid)) { .a { color: red } }")).toBe(
+      "@supports selector(:has(a)) and (not (display:grid)){#fbjs .a{color:red!important}}"
+    );
+  });
+
   test("removes a group rule whose condition loads a resource", () => {
     const result = compile("@container style(--bg: url(x.png)) { .a { color: red } }");
     expect(codes(result.warnings)).toEqual(["external_resource_removed"]);
@@ -419,6 +492,38 @@ describe("declaration values", () => {
     expect(result.compiled.light).not.toMatch(
       /url\(|image-set|image\(|cross-fade|src\(|element\(|attr\(|expression|behavior|binding|fixed|view-transition|<!--/i
     );
+  });
+
+  test.each([
+    ["anchor-name: --menu"],
+    ["anchor-scope: all"],
+    ["position-anchor: --host-logo"],
+    ["position-area: top"],
+    ["inset-area: top"],
+    ["position-try: --flip"],
+    ["position-try-fallbacks: flip-block"],
+    ["position-try-options: flip-block"],
+    ["scroll-timeline-name: --page"],
+    ["scroll-timeline: --page y"],
+    ["view-timeline-name: --card"],
+    ["view-timeline: --card block"],
+    ["timeline-scope: --page"],
+    [String.raw`anch\6f r-name: --menu`],
+  ])("removes properties that register or use page-wide names: %s", (declaration) => {
+    const result = compile(`.a { ${declaration} }`);
+    expect(codes(result.warnings)).toEqual(["unsafe_property_removed"]);
+    expect(result.compiled.light).toBe("@layer fb-survey{}");
+  });
+
+  test.each([
+    ["top: anchor(--host-logo bottom)"],
+    ["width: anchor-size(--host-logo width)"],
+    ["--gap: calc(anchor(--x top) + 1px)"],
+    ["margin-top: max(1px, ANCHOR(--x top))"],
+  ])("removes anchor functions: %s", (declaration) => {
+    const result = compile(`.a { ${declaration} }`);
+    expect(codes(result.warnings)).toEqual(["unsafe_value_removed"]);
+    expect(result.compiled.light).toBe("@layer fb-survey{}");
   });
 
   test("keeps ordinary values, gradients, math, variables and text content", () => {

@@ -12,6 +12,8 @@ declare global {
       setNonce?: (nonce: string | undefined) => void;
       // Optional for the same reason: older renderers have no appearance support.
       setAppearance?: (appearance: "light" | "dark" | "system") => void;
+      // Optional for the same reason: renderers older than custom CSS have nothing to remove.
+      removeCustomCss?: () => void;
     };
   }
 }

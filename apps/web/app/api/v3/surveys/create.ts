@@ -8,7 +8,7 @@ import type { InvalidParam } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
-import { createSurvey, getSurvey } from "@/lib/survey/service";
+import { createSurvey, getSurveyWithCustomCss } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
@@ -177,7 +177,7 @@ async function finalizeV3AppSurveyCreate(survey: TSurvey, input: TV3CreateSurvey
     return survey;
   }
 
-  return (await getSurvey(survey.id)) ?? survey;
+  return (await getSurveyWithCustomCss(survey.id)) ?? survey;
 }
 
 /**

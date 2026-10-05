@@ -7,9 +7,9 @@
  * Generated Tailwind classes and the DOM structure around a hook are not part of the contract.
  *
  * Declare every name here and nowhere else. Components set the attribute from this map, and the
- * customer documentation (docs/xm-and-surveys/surveys/general-features/custom-css.mdx) lists the
- * same names — `parts.test.ts` keeps the two in sync. Renaming or removing a value breaks customer
- * stylesheets, so treat it like a breaking API change.
+ * customer documentation (docs/surveys/general-features/custom-css.mdx) lists the same names —
+ * `parts.test.ts` keeps the two in sync. Renaming or removing a value breaks customer stylesheets, so
+ * treat it like a breaking API change.
  */
 export const FB_PART_ATTRIBUTE = "data-fb-part";
 

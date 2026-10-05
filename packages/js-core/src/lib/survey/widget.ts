@@ -307,6 +307,9 @@ export const closeSurvey = (surveyId?: string): void => {
 
   // remove the survey modal container from DOM
   removeWidgetContainer();
+  // Dropping the container does not unmount the survey, so the renderer's custom CSS would outlive it.
+  // Feature-detected: renderer bundles older than custom CSS have no such function and no such CSS.
+  globalThis.window.formbricksSurveys?.removeCustomCss?.();
 
   const { workspace, user } = config.get();
   const filteredSurveys = filterSurveys(workspace, user);

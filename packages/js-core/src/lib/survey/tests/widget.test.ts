@@ -334,6 +334,24 @@ describe("widget-file", () => {
     expect(mockConfigValue.update).toHaveBeenCalled();
   });
 
+  test("closeSurvey removes the renderer's custom CSS, and tolerates a renderer without that function", () => {
+    getInstanceConfigMock.mockReturnValue({
+      get: vi.fn().mockReturnValue({ workspace: { data: { surveys: [] } }, user: { data: {} } }),
+      update: vi.fn(),
+    } as unknown as Config);
+
+    const removeCustomCss = vi.fn();
+    window.formbricksSurveys = { ...createMockFormbricksSurveys(), removeCustomCss };
+    widget.closeSurvey();
+    expect(removeCustomCss).toHaveBeenCalledTimes(1);
+
+    // An older self-hosted renderer, and no renderer loaded at all.
+    window.formbricksSurveys = createMockFormbricksSurveys();
+    expect(() => widget.closeSurvey()).not.toThrow();
+    delete window.formbricksSurveys;
+    expect(() => widget.closeSurvey()).not.toThrow();
+  });
+
   test("addWidgetContainer creates #formbricks-container in DOM", () => {
     expect(document.getElementById("formbricks-container")).toBeFalsy();
     widget.addWidgetContainer();

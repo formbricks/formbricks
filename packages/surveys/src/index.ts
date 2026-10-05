@@ -5,7 +5,13 @@ import { RenderSurvey } from "@/components/general/render-survey";
 import { I18nProvider } from "@/components/i18n/provider";
 import { setAppearance } from "@/lib/appearance";
 import { FILE_PICK_EVENT } from "@/lib/constants";
-import { applyCustomCss, syncCustomCssNonce } from "@/lib/custom-css";
+import {
+  applyCustomCss,
+  getCustomCssGeneration,
+  releaseCustomCss,
+  removeCustomCss,
+  syncCustomCssNonce,
+} from "@/lib/custom-css";
 import { getI18nLanguage } from "@/lib/i18n-utils";
 import { setLocaleBaseUrl } from "@/lib/i18n.config";
 import { getPreviewPortalContainer } from "@/lib/preview-boundary";
@@ -26,22 +32,38 @@ export const renderSurveyInline = (props: SurveyContainerProps) => {
   renderSurvey(inlineProps);
 };
 
-export const renderSurvey = (props: SurveyContainerProps) => {
+/**
+ * The host's `onClose`, preceded by releasing the custom CSS this render applied. Closing then does not
+ * depend on the survey's tree being unmounted — a host that drops the container without unmounting it
+ * (js-core's `closeSurvey`) would otherwise keep the stylesheet. Guarded by the render's generation, so
+ * a survey that closes after a newer one rendered leaves that one's CSS alone.
+ */
+const withCustomCssRelease = (onClose: SurveyContainerProps["onClose"]): SurveyContainerProps["onClose"] => {
+  if (!onClose) return onClose;
+  const owner = getCustomCssGeneration();
+  return () => {
+    releaseCustomCss(owner);
+    onClose();
+  };
+};
+
+export const renderSurvey = (renderProps: SurveyContainerProps) => {
   // render SurveyNew
   // if survey type is link, we don't pass the placement, overlay, clickOutside, onClose
 
-  const { mode, containerId, languageCode, appUrl } = props;
+  const { mode, containerId, languageCode, appUrl } = renderProps;
 
   // Where the on-demand locale bundles live, beside the renderer itself.
   setLocaleBaseUrl(appUrl);
 
   // Before the first render, so the survey never paints in the wrong appearance.
-  setAppearance(props.appearance);
+  setAppearance(renderProps.appearance);
   addStylesToDom();
-  addCustomThemeToDom({ styling: props.styling });
+  addCustomThemeToDom({ styling: renderProps.styling });
   // Only from the explicit prop (ENG-3552): CSS on `props.survey` or `props.styling` is never read.
   // Before the render, so the first paint already has it; replaces whatever an earlier survey applied.
-  applyCustomCss(props.customCss);
+  applyCustomCss(renderProps.customCss);
+  const props: SurveyContainerProps = { ...renderProps, onClose: withCustomCssRelease(renderProps.onClose) };
 
   const language = getI18nLanguage(languageCode, props.survey.languages);
 
@@ -133,6 +155,12 @@ export const setNonce = (nonce: string | undefined): void => {
   syncCustomCssNonce();
 };
 
+/**
+ * Removes the custom CSS stylesheet, for hosts that tear a survey down without its `onClose` — js-core's
+ * `closeSurvey` on logout or reset — so no stale customer CSS stays in the page.
+ */
+export { removeCustomCss };
+
 export const onFilePick = (files: { name: string; type: string; base64: string }[]) => {
   const fileUploadEvent = new CustomEvent(FILE_PICK_EVENT, { detail: files });
   globalThis.dispatchEvent(fileUploadEvent);
@@ -147,5 +175,6 @@ if (globalThis.window !== undefined) {
     onFilePick,
     setNonce,
     setAppearance,
+    removeCustomCss,
   } as typeof globalThis.window.formbricksSurveys;
 }

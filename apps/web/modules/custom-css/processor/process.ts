@@ -28,6 +28,7 @@ import {
 import {
   type TDeclarationPolicy,
   checkDeclaration,
+  hasResourceInSupportsCondition,
   renameKeyframeReferences,
   scanValue,
 } from "./declarations";
@@ -83,6 +84,8 @@ const LIMIT_REASONS = {
 } as const;
 
 const PROCESSING_FAILED_REASON = "The CSS could not be processed. Nothing was saved.";
+const SUPPORTS_RESOURCE_REASON =
+  "@supports conditions cannot name url(), image-set() or other resource functions; the rule was removed.";
 
 const formatKilobytes = (bytes: number): string => `${(bytes / 1000).toFixed(1).replace(/\.0$/, "")} KB`;
 
@@ -269,6 +272,10 @@ const processRules = (rules: Rule[], parent: TParentStyle | null, ctx: TFieldCon
         const location = fromRuleLocation(rule.value.loc);
         const condition = rule.type === "media" ? rule.value.query : rule.value.condition;
         if (isConditionUnsafe(condition, ctx, location)) break;
+        if (rule.type === "supports" && hasResourceInSupportsCondition(condition)) {
+          ctx.sink.add("unsupported_at_rule_removed", ctx.appearance, SUPPORTS_RESOURCE_REASON, location);
+          break;
+        }
         rule.value.rules = processRules(rule.value.rules, parent, ctx);
         if (rule.value.rules.length > 0) kept.push(rule);
         break;
@@ -426,6 +433,9 @@ const verifyCompiledField = (wrapped: string, ctx: TFieldContext): void => {
         case "supports":
         case "container":
           if (scanValue(rule.type === "media" ? rule.value.query : rule.value.condition, ctx.policy)) {
+            problems.push("condition");
+          }
+          if (rule.type === "supports" && hasResourceInSupportsCondition(rule.value.condition)) {
             problems.push("condition");
           }
           verifyRules(rule.value.rules);

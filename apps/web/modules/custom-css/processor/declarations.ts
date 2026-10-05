@@ -158,6 +158,41 @@ export const scanValue = (value: unknown, policy: TDeclarationPolicy): TValueFin
   return resource;
 };
 
+/** `url(`, `image-set(`, … as written in raw text; `-webkit-` forms contain the plain name. */
+const RESOURCE_FUNCTION_PATTERN = new RegExp(String.raw`(?:${[...RESOURCE_FUNCTIONS].join("|")})\(`, "i");
+
+/** CSS escapes (`\72 `, `\r`) decoded, so an escaped function name reads like the plain one. */
+const decodeCssEscapes = (raw: string): string =>
+  raw.replaceAll(
+    /\\(?:([0-9a-fA-F]{1,6})[ \t\n\r\f]?|([^\n]))/g,
+    (_match, hex: string | undefined, char = "") => {
+      if (!hex) return char;
+      const codePoint = Number.parseInt(hex, 16);
+      const isValid = codePoint > 0 && codePoint <= 0x10ffff && (codePoint < 0xd800 || codePoint > 0xdfff);
+      return String.fromCodePoint(isValid ? codePoint : 0xfffd);
+    }
+  );
+
+/**
+ * Whether an `@supports` condition names a resource function. lightningcss keeps the declarations and
+ * selectors of a feature query as raw text, so `scanValue` never sees a `url()` there; nothing is fetched,
+ * but the rule would carry a URL into the output, so the whole rule is removed instead.
+ */
+export const hasResourceInSupportsCondition = (condition: unknown): boolean => {
+  const stack: unknown[] = [condition];
+  while (stack.length > 0) {
+    const node = stack.pop();
+    if (typeof node === "string") {
+      if (RESOURCE_FUNCTION_PATTERN.test(decodeCssEscapes(node))) return true;
+    } else if (Array.isArray(node)) {
+      stack.push(...node);
+    } else if (isRecord(node)) {
+      stack.push(...Object.values(node));
+    }
+  }
+  return false;
+};
+
 /** Meaningful tokens of an unparsed value (whitespace dropped). */
 const getSignificantTokens = (value: unknown): unknown[] =>
   Array.isArray(value)

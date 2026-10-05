@@ -9,6 +9,7 @@ import {
   customCssErrorsToInvalidParams,
   toV3WriteExtensions,
 } from "@/app/api/v3/lib/custom-css";
+import { applyV3CustomCssRateLimit } from "@/app/api/v3/lib/custom-css-rate-limit";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
   problemBadRequest,
@@ -129,6 +130,11 @@ export async function patchV3WorkspaceCustomCss({
     if (!(await canWriteWorkspaceCustomCss(getV3AuthorizationActor(authentication), context))) {
       log.warn({ statusCode: 403 }, "Workspace custom CSS write refused for this principal");
       return problemForbidden(requestId, WORKSPACE_CUSTOM_CSS_PERMISSION_MESSAGE, instance);
+    }
+
+    const rateLimited = await applyV3CustomCssRateLimit({ authentication, requestId, instance });
+    if (rateLimited) {
+      return rateLimited;
     }
 
     const before = await getWorkspaceCustomCssRecord(context.workspaceId);

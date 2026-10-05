@@ -24,6 +24,10 @@ import {
  * - Arguments of `:is()`, `:where()`, `:not()`, `:has()` and `:nth-*( of …)` only narrow what the
  *   subject matches — they never change which element is styled — but their contents still pass the
  *   same pseudo-class and pseudo-element checks, and root aliases in them are rewritten to `#fbjs`.
+ * - A relative `:has()` argument that starts with a combinator (`:has(> .b)`, `:has(+ .x)`) is parsed with
+ *   a leading `:scope` standing for the element `:has()` is on; that one `:scope` is allowed, every other
+ *   `:scope` is not. A sibling step out of it (`:has(+ …)`, `:has(~ …)`) is removed when that element can
+ *   be the survey root — `#fbjs:has(~ .host)` would read the host page's elements next to the survey.
  *
  * Selectors that fail are removed with `unsafe_selector_removed`; a rule loses only its failing
  * selectors and goes away only when none are left.
@@ -56,6 +60,13 @@ const DARK_ATTRIBUTE_COMPONENT: SelectorComponent = {
 };
 
 const SIBLING_COMBINATORS = new Set(["next-sibling", "later-sibling"]);
+/**
+ * Combinators lightningcss puts after the implicit `:scope` of a relative `:has()` argument. A descendant
+ * argument (`:has(.b)`) gets no `:scope` at all, so `:has(:scope .b)` can only have been written out.
+ */
+const RELATIVE_COMBINATORS = new Set(["child", "next-sibling", "later-sibling"]);
+/** Pseudo-classes whose arguments are matched against the element they are on. */
+const SAME_ELEMENT_KINDS = new Set(["is", "where", "any", "not", "nth-child", "nth-last-child"]);
 const ROOT_ALIAS_TYPES = new Set(["html", "body"]);
 const QUALIFYING_TYPES = new Set(["type", "id", "class", "attribute", "nesting"]);
 const MATCHES_ANY_KINDS = new Set(["is", "where", "any"]);
@@ -82,6 +93,28 @@ const getArgumentSelectors = (component: SelectorComponent): Selector[] => {
   if (Array.isArray(pseudo.selectors)) return pseudo.selectors as Selector[];
   if (Array.isArray(pseudo.of)) return pseudo.of as Selector[];
   return [];
+};
+
+/**
+ * Whether a `:has()` argument starts with the `:scope` lightningcss adds to a relative selector
+ * (`:has(> .b)` parses as `:has(:scope > .b)`): `:scope` alone, followed by a child or sibling step.
+ * lightningcss parses and prints `:has(:scope > .b)` exactly like `:has(> .b)`, so the two are one case.
+ */
+const hasImplicitScope = (argument: Selector): boolean => {
+  const [first, second] = argument;
+  return (
+    first?.type === "pseudo-class" &&
+    first.kind === "scope" &&
+    second?.type === "combinator" &&
+    RELATIVE_COMBINATORS.has(second.value)
+  );
+};
+
+/** The argument selectors a pseudo-class is checked by, without the implicit `:scope` of `:has()`. */
+const getCheckedArguments = (component: SelectorComponent): Selector[] => {
+  const args = getArgumentSelectors(component);
+  if (component.type !== "pseudo-class" || component.kind !== "has") return args;
+  return args.map((argument) => (hasImplicitScope(argument) ? argument.slice(1) : argument));
 };
 
 /** A copy of a pseudo-class with its argument selectors replaced. */
@@ -123,7 +156,7 @@ export const findUnsupportedComponent = (
       default:
         break;
     }
-    for (const argument of getArgumentSelectors(component)) {
+    for (const argument of getCheckedArguments(component)) {
       const reason = findUnsupportedComponent(argument, options);
       if (reason) return reason;
     }
@@ -147,6 +180,28 @@ export const splitCompounds = (
   }
   return { compounds, combinators };
 };
+
+/**
+ * Whether a compound reads the siblings of the element it matches through `:has(+ …)` / `:has(~ …)`,
+ * directly or through arguments matched against that same element (`:not(:has(~ .x))`).
+ */
+const readsSiblingsThroughHas = (compound: SelectorComponent[]): boolean =>
+  compound.some((component) => {
+    if (component.type !== "pseudo-class") return false;
+    if (component.kind === "has") {
+      return getArgumentSelectors(component).some(
+        (argument) =>
+          hasImplicitScope(argument) &&
+          argument[1].type === "combinator" &&
+          SIBLING_COMBINATORS.has(argument[1].value)
+      );
+    }
+    if (!SAME_ELEMENT_KINDS.has(component.kind)) return false;
+    return getArgumentSelectors(component).some((argument) => {
+      const { compounds } = splitCompounds(argument);
+      return readsSiblingsThroughHas(compounds[compounds.length - 1]);
+    });
+  });
 
 const joinCompounds = (compounds: SelectorComponent[][], combinators: string[]): Selector => {
   const selector: Selector = [];
@@ -216,6 +271,9 @@ export const scopeTopLevelSelector = (selector: Selector, dark: boolean): TSelec
 
   const subject = walkFromAnchor("root", restCombinators);
   if (!subject) return { ok: false, reason: SELECTOR_REASONS.siblingOfRoot };
+  if (isAnchored && readsSiblingsThroughHas(compounds[0])) {
+    return { ok: false, reason: SELECTOR_REASONS.siblingOfRoot };
+  }
 
   const scoped = joinCompounds(
     [
@@ -250,6 +308,9 @@ export const scopeNestedSelector = (
 
   const subject = walkFromAnchor(parentSubject, combinators);
   if (!subject) return { ok: false, reason: SELECTOR_REASONS.siblingOfRoot };
+  if (parentSubject === "root" && readsSiblingsThroughHas(compounds[0])) {
+    return { ok: false, reason: SELECTOR_REASONS.siblingOfRoot };
+  }
 
   return { ok: true, selector: selector.map(rewriteRootAliases), subject };
 };
@@ -283,6 +344,7 @@ export const verifyCompiledSelector = (selector: Selector, dark: boolean): TSubj
     }
   }
   if (!anchor) return null;
+  if (anchor === "root" && readsSiblingsThroughHas(first)) return null;
   return walkFromAnchor(anchor, combinators);
 };
 
@@ -327,7 +389,8 @@ export const measureSelector = (selector: Selector): TSelectorMetrics => {
     if (!isQualifiedCompound(compound)) metrics.universals++;
     for (const component of compound) {
       if (component.type === "nesting") metrics.nestingSelectors++;
-      const args = getArgumentSelectors(component);
+      // The implicit `:scope` of `:has(> .b)` is the element itself, not one more compound.
+      const args = getCheckedArguments(component);
       metrics.longestArgumentList = Math.max(metrics.longestArgumentList, args.length);
       for (const argument of args) {
         const inner = measureSelector(argument);

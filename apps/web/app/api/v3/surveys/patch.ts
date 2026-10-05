@@ -15,7 +15,7 @@ import { getActionClasses } from "@/lib/actionClass/service";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
 import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
-import { selectSurvey } from "@/lib/survey/service";
+import { selectSurveyWithCustomCss } from "@/lib/survey/service";
 import {
   APP_SURVEY_TRIGGER_REQUIRED_MESSAGE,
   isAppSurveyMissingTriggersToPublish,
@@ -121,7 +121,7 @@ async function reconcilePersistedV3SurveyPatch({
 
   const reconciledSurvey = await prisma.survey.findUnique({
     where: { id: survey.id },
-    select: selectSurvey,
+    select: selectSurveyWithCustomCss,
   });
 
   if (!reconciledSurvey) {
@@ -411,7 +411,7 @@ export async function executeV3SurveyPatch(params: {
         // reconcile would report the pre-patch fields back to the caller that just changed them.
         return tx.survey.findUniqueOrThrow({
           where: { id: currentSurvey.id, workspaceId: currentSurvey.workspaceId },
-          select: selectSurvey,
+          select: selectSurveyWithCustomCss,
         });
       },
       // Matched to the other reconcile call sites: this transaction rewrites blocks and languages,

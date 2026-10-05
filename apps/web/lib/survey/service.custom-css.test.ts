@@ -17,7 +17,7 @@ import {
   mockSurveyOutput,
   updateSurveyInput,
 } from "./__mock__/survey.mock";
-import { createSurvey, updateSurvey, updateSurveyInternal } from "./service";
+import { createSurvey, getSurvey, updateSurvey, updateSurveyInternal } from "./service";
 
 /**
  * ENG-2949: the editor's save and autosave hand `updateSurveyInternal` the whole survey, custom CSS
@@ -179,6 +179,47 @@ describe("updateSurveyInternal custom CSS", () => {
       } as TSurvey)
     ).rejects.toBeInstanceOf(InvalidInputError);
     expect(prisma.survey.update).not.toHaveBeenCalled();
+  });
+
+  test("reads the stored CSS from the row, so a clear is not mistaken for a no-op", async () => {
+    // `getSurvey` no longer selects the column: only the dedicated read sees the stored CSS.
+    const { customCss: _notSelected, ...rowWithoutCss } = storedRow;
+    vi.mocked(prisma.survey.findUnique).mockImplementation((async (args: {
+      select?: Record<string, unknown>;
+    }) => {
+      const select = args.select ?? {};
+      return Object.keys(select).length === 1 && select.customCss ? { customCss: storedCss } : rowWithoutCss;
+    }) as never);
+    vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(false);
+
+    await updateSurvey({ ...updateSurveyInput, customCss: null } as TSurvey);
+
+    expect(prisma.survey.findUnique).toHaveBeenCalledWith({
+      where: { id: updateSurveyInput.id, workspaceId: mockSurveyOutput.workspaceId },
+      select: { customCss: true },
+    });
+    expect(lastUpdateData().customCss).toBe(Prisma.DbNull);
+  });
+
+  test("a payload without customCss does not read the stored CSS at all", async () => {
+    const { customCss: _omit, ...withoutCss } = { ...updateSurveyInput, customCss: undefined };
+
+    await updateSurvey(withoutCss as TSurvey);
+
+    expect(prisma.survey.findUnique).not.toHaveBeenCalledWith(
+      expect.objectContaining({ select: { customCss: true } })
+    );
+  });
+
+  test("the saved survey handed back to the editor carries its CSS; getSurvey does not load it", async () => {
+    await updateSurvey({ ...updateSurveyInput, customCss: storedCss } as TSurvey);
+    expect(vi.mocked(prisma.survey.findUniqueOrThrow).mock.calls.at(-1)?.[0].select).toMatchObject({
+      customCss: true,
+    });
+
+    vi.mocked(prisma.survey.findUnique).mockClear();
+    await getSurvey("clsurveycss00000000000001");
+    expect(vi.mocked(prisma.survey.findUnique).mock.calls[0][0].select).not.toHaveProperty("customCss");
   });
 
   test("the unvalidated draft save refuses a malformed value instead of storing it", async () => {

@@ -5,7 +5,10 @@ import type { TRendererCustomCss } from "@formbricks/types/custom-css";
 import type { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 
 // What the survey tree sees: the portal container its dropdowns would mount in.
-const seen = vi.hoisted(() => ({ portalContainer: undefined as HTMLElement | null | undefined }));
+const seen = vi.hoisted(() => ({
+  portalContainer: undefined as HTMLElement | null | undefined,
+  onClose: undefined as (() => void) | undefined,
+}));
 
 vi.mock("@formbricks/survey-ui", async () => {
   const { createContext } = await import("preact");
@@ -14,8 +17,9 @@ vi.mock("@formbricks/survey-ui", async () => {
 vi.mock("@/components/general/render-survey", async () => {
   const { SurveyPortalContainerContext } = await import("@formbricks/survey-ui");
   return {
-    RenderSurvey: () => {
+    RenderSurvey: (props: { onClose?: () => void }) => {
       seen.portalContainer = useContext(SurveyPortalContainerContext as never);
+      seen.onClose = props.onClose;
       return null;
     },
   };
@@ -27,8 +31,13 @@ vi.mock("@/lib/styles", () => ({
   addStylesToDom: vi.fn(),
   addCustomThemeToDom: vi.fn(),
   setStyleNonce: vi.fn(),
+  getStyleNonce: () => undefined,
 }));
-vi.mock("@/lib/custom-css", () => ({ applyCustomCss: vi.fn(), syncCustomCssNonce: vi.fn() }));
+// The real module behind spies: the close tests below need the style element it really inserts.
+vi.mock("@/lib/custom-css", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/custom-css")>();
+  return { ...actual, applyCustomCss: vi.fn(actual.applyCustomCss), syncCustomCssNonce: vi.fn() };
+});
 vi.mock("@/lib/i18n.config", () => ({ setLocaleBaseUrl: vi.fn() }));
 vi.mock("@/lib/i18n-utils", () => ({ getI18nLanguage: () => "en" }));
 vi.mock("@/lib/appearance", () => ({ setAppearance: vi.fn() }));
@@ -56,6 +65,8 @@ const renderInline = (overrides: Partial<SurveyContainerProps> = {}) =>
 beforeEach(() => {
   vi.clearAllMocks();
   seen.portalContainer = undefined;
+  seen.onClose = undefined;
+  document.head.innerHTML = "";
   document.body.innerHTML = "";
 });
 
@@ -89,6 +100,61 @@ describe("renderSurvey custom CSS", () => {
 
     expect(setStyleNonce).toHaveBeenCalledWith("late-nonce");
     expect(syncCustomCssNonce).toHaveBeenCalled();
+  });
+});
+
+describe("renderSurvey custom CSS teardown", () => {
+  const getCustomStyle = () => document.getElementById("formbricks__custom-css");
+  const renderModal = (onClose: (() => void) | undefined, customCss: TRendererCustomCss = COMPILED) => {
+    renderSurvey({
+      mode: "modal",
+      languageCode: "default",
+      styling: {},
+      isBrandingEnabled: false,
+      survey: { id: "survey-1", type: "app", languages: [] },
+      customCss,
+      onClose,
+    } as unknown as SurveyContainerProps);
+    return seen.onClose;
+  };
+
+  test("closing removes the CSS the survey applied, then tells the host", () => {
+    const hostOnClose = vi.fn(() => {
+      // The host learns about the close only once the stylesheet is gone.
+      expect(getCustomStyle()).toBeNull();
+    });
+    const onClose = renderModal(hostOnClose);
+    expect(getCustomStyle()?.textContent).toContain("fb-survey");
+
+    onClose?.();
+
+    expect(hostOnClose).toHaveBeenCalledTimes(1);
+    expect(getCustomStyle()).toBeNull();
+  });
+
+  test("a survey closing after a newer one rendered leaves the newer one's CSS in place", () => {
+    const closeOlder = renderModal(vi.fn());
+    const closeNewer = renderModal(vi.fn(), { survey: { light: "@layer fb-survey{#fbjs{color:green}}" } });
+
+    closeOlder?.();
+    expect(getCustomStyle()?.textContent).toContain("green");
+
+    closeNewer?.();
+    expect(getCustomStyle()).toBeNull();
+  });
+
+  test("a host without onClose still gets none", () => {
+    expect(renderModal(undefined)).toBeUndefined();
+  });
+
+  test("exposes removeCustomCss for hosts that tear a survey down without closing it", () => {
+    renderModal(vi.fn());
+    expect(getCustomStyle()).not.toBeNull();
+
+    expect(window.formbricksSurveys?.removeCustomCss).toBeTypeOf("function");
+    window.formbricksSurveys?.removeCustomCss?.();
+
+    expect(getCustomStyle()).toBeNull();
   });
 });
 

@@ -24,8 +24,13 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { isDeepEqual } from "@/lib/utils/object";
 import { reportStaleServerActionError } from "@/lib/utils/stale-server-action";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import type { TCustomCssValidationStatus } from "@/modules/custom-css/components/lib/validation";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import {
+  getSurveyToAutosave,
+  isCustomCssBlockingManualSave,
+} from "@/modules/survey/editor/lib/custom-css-autosave";
 import { getLogicDestinationErrorMessage } from "@/modules/survey/editor/lib/logic-destination-error";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
@@ -81,10 +86,11 @@ interface SurveyMenuBarProps {
   /** The author's display name; `null` when the survey has no owner or the gate is off. */
   ownerName: string | null;
   /**
-   * The survey's Custom CSS draft is known to be invalid (ENG-3553). Saving and publishing are
-   * blocked until it is fixed, and the autosave keeps the last saved CSS so other edits still save.
+   * Where the check of the survey's Custom CSS draft stands (ENG-3553). Saving and publishing are
+   * blocked while it is `invalid`; the autosave sends the draft only once it is `valid` (or there is
+   * no CSS) and keeps the last saved CSS otherwise, so other edits still save.
    */
-  isCustomCssDraftInvalid?: boolean;
+  customCssValidationStatus?: TCustomCssValidationStatus;
 }
 
 export const SurveyMenuBar = ({
@@ -109,7 +115,7 @@ export const SurveyMenuBar = ({
   onVisibilityNotEnabled,
   surveyAccess,
   ownerName,
-  isCustomCssDraftInvalid = false,
+  customCssValidationStatus = "empty",
 }: Readonly<SurveyMenuBarProps>) => {
   const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
@@ -166,10 +172,10 @@ export const SurveyMenuBar = ({
     surveyRef.current = survey;
   }, [survey]);
 
-  const isCustomCssDraftInvalidRef = useRef(isCustomCssDraftInvalid);
+  const customCssValidationStatusRef = useRef(customCssValidationStatus);
   useEffect(() => {
-    isCustomCssDraftInvalidRef.current = isCustomCssDraftInvalid;
-  }, [isCustomCssDraftInvalid]);
+    customCssValidationStatusRef.current = customCssValidationStatus;
+  }, [customCssValidationStatus]);
 
   useEffect(() => {
     isSurveySavingRef.current = isSurveySaving;
@@ -247,7 +253,7 @@ export const SurveyMenuBar = ({
   // The server re-validates Custom CSS on every save and keeps the previous revision when it fails,
   // so this only spares the author a round trip and points them at the errors.
   const blockOnInvalidCustomCss = (): boolean => {
-    if (!isCustomCssDraftInvalid) return false;
+    if (!isCustomCssBlockingManualSave(customCssValidationStatus)) return false;
 
     toast.error(t("workspace.custom_css.fix_errors_before_saving"));
     setActiveId("styling");
@@ -483,15 +489,13 @@ export const SurveyMenuBar = ({
       // Skip if already saving, publishing, or auto-saving
       if (isAutoSavingRef.current || isSurveySavingRef.current || isSurveyPublishingRef.current) return;
 
-      // An invalid Custom CSS draft cannot be stored, and sending it would fail the whole autosave.
-      // Keep the saved CSS instead, so the survey's other edits still autosave; the draft stays in
-      // the editor, and the leave-page check still counts it as unsaved.
-      const currentSurvey = isCustomCssDraftInvalidRef.current
-        ? {
-            ...localSurveyRef.current,
-            customCss: (lastSavedSurveyRef.current ?? surveyRef.current).customCss,
-          }
-        : localSurveyRef.current;
+      // A Custom CSS draft goes out only once its check has passed; until then the saved CSS stands in
+      // for it, so an unchecked or invalid draft cannot fail the survey's other edits.
+      const currentSurvey = getSurveyToAutosave(
+        localSurveyRef.current,
+        lastSavedSurveyRef.current ?? surveyRef.current,
+        customCssValidationStatusRef.current
+      );
 
       // Check for changes using refs (avoids re-creating interval on every change), and skip if
       // there are none

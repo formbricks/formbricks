@@ -16,11 +16,14 @@ export const createDisplay = async (displayInput: TDisplayCreateInputV2): Promis
   try {
     const contactExists = contactId ? await doesContactExistInWorkspace(contactId, workspaceId) : false;
 
+    // Status only: this runs once per survey shown, so it never loads the survey's content or its
+    // stored custom CSS.
     const survey = await prisma.survey.findUnique({
       where: {
         id: surveyId,
         workspaceId,
       },
+      select: { status: true },
     });
     if (!survey) {
       throw new ResourceNotFoundError("Survey", surveyId);

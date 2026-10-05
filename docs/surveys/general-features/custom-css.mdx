@@ -63,7 +63,7 @@ Respondents get saved changes within about an hour, as their browsers and apps r
 Every rule is scoped to the survey root, `#fbjs`. You do not need to write `#fbjs` yourself: Formbricks adds it to every selector that lacks it.
 
 - `:root`, `html` and `body` mean the survey root. `:root { --brand: #1f5f8b; }` sets a variable on the survey, and `body { font-family: … }` sets the survey's font.
-- Your CSS never reaches the page around the survey, and rules that try to (`#fbjs + .x`, `#fbjs ~ .x`, `:host`) are removed.
+- Your CSS never reaches the page around the survey, and rules that try to (`#fbjs + .x`, `#fbjs ~ .x`, `:root:has(~ .x)`, `:host`) are removed. Relative `:has()` such as `:has(> .x)` or `:has(+ .x)` works on any element inside the survey.
 - Open dropdown lists render in their own survey root, so your rules and variables reach them too.
 
 ### Base And Dark
@@ -122,7 +122,7 @@ Target survey parts through their `data-fb-part` attribute. These names are a su
 | `[data-fb-part="option-control"]` | The radio circle or checkbox square of a choice, and the consent checkbox | |
 | `[data-fb-part="input"]` | A single-line text field: free text, contact info, address and "Other" fields | |
 | `[data-fb-part="textarea"]` | A multi-line free text field | |
-| `[data-fb-part="dropdown"]` | The button that opens a dropdown choice list | Its open list holds `option` hooks. |
+| `[data-fb-part="dropdown"]` | The button that opens a dropdown choice list | Its open list holds `option` hooks, so row styles such as borders and backgrounds on `option` also apply to dropdown items. Scope them with `[data-fb-part="option"]:has(input)` to style list rows only. |
 | `[data-fb-part="button-primary"]` | Next and Submit, the welcome and ending buttons, and call-to-action buttons | |
 | `[data-fb-part="button-back"]` | Back | |
 | `[data-fb-part="button-close"]` | The close button of a website or app survey | |
@@ -423,11 +423,12 @@ Formbricks checks your CSS when you preview and when you save.
 | `@import` | Import removed |
 | `@font-face` | Font face removed |
 | `url()`, `image()`, `image-set()` and any other external resource, including `data:` and relative URLs, also inside variables | External resource removed |
-| At-rules other than `@media`, `@supports`, `@container` and `@keyframes` (for example `@layer`, `@property`, `@page`, `@namespace`, `@scope`) | Unsupported at-rule removed |
+| At-rules other than `@media`, `@supports`, `@container` and `@keyframes` (for example `@layer`, `@property`, `@page`, `@namespace`, `@scope`), and `@supports` conditions that name `url()`, `image-set()` or another resource function | Unsupported at-rule removed |
 | `behavior`, `-moz-binding` and similar script-capable properties | Unsafe property removed |
-| `attr()`, `expression()` and similar unsafe values | Unsafe value removed |
+| Properties that use page-wide names: anchor positioning (`anchor-name`, `anchor-scope`, `position-anchor`, `position-area`, `position-try` and its longhands) and scroll-driven timelines (`scroll-timeline`, `view-timeline`, their `-name` longhands, `timeline-scope`) | Unsafe property removed |
+| `attr()`, `expression()`, `anchor()`, `anchor-size()` and similar unsafe values | Unsafe value removed |
 | `position: fixed` | Fixed position removed |
-| Selectors that reach outside the survey (`#fbjs + .x`, `#fbjs ~ .x`, `:host`) | Unsafe selector removed |
+| Selectors that reach outside the survey (`#fbjs + .x`, `#fbjs ~ .x`, `:root:has(~ .x)`, `:host`, `:scope`) | Unsafe selector removed |
 
 Define `@keyframes` in the same field as the rules that use them.
 

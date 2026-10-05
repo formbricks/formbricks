@@ -17,7 +17,7 @@ export const BLOCK_EXTERNAL_CUSTOM_CSS_RESOURCES = true as const;
  * output format — and on every `lightningcss` upgrade (its printer and minifier shape the output).
  * Stored output compiled under another version is reprocessed from source before delivery.
  */
-const CUSTOM_CSS_PROCESSOR_REVISION = 1;
+const CUSTOM_CSS_PROCESSOR_REVISION = 2;
 
 /** The lightningcss version the revision above was produced with; a unit test pins the installed one. */
 export const CUSTOM_CSS_LIGHTNINGCSS_VERSION = "1.32.0";
@@ -122,6 +122,21 @@ export const UNSAFE_PROPERTIES: Record<string, string> = {
   "-moz-binding": "-moz-binding can run script in legacy browsers.",
   "view-transition-name": "view-transition-name registers a page-wide name and can break the host page.",
   "view-transition-class": "view-transition-class applies to page-wide view transitions.",
+  // Anchor positioning and scroll-driven timelines work with page-wide names: survey CSS could re-anchor or
+  // animate host elements, or position survey elements against the host page's anchors.
+  "anchor-name": "anchor-name registers a page-wide anchor name the host page could use.",
+  "anchor-scope": "anchor-scope changes which anchor names are visible on the page.",
+  "position-anchor": "position-anchor can position survey elements against anchors on the host page.",
+  "position-area": "position-area positions an element against an anchor that can be on the host page.",
+  "inset-area": "inset-area positions an element against an anchor that can be on the host page.",
+  "position-try": "position-try refers to page-wide position fallbacks.",
+  "position-try-fallbacks": "position-try-fallbacks refers to page-wide position fallbacks.",
+  "position-try-options": "position-try-options refers to page-wide position fallbacks.",
+  "scroll-timeline-name": "scroll-timeline-name registers a timeline name the host page could use.",
+  "scroll-timeline": "scroll-timeline registers a timeline name the host page could use.",
+  "view-timeline-name": "view-timeline-name registers a timeline name the host page could use.",
+  "view-timeline": "view-timeline registers a timeline name the host page could use.",
+  "timeline-scope": "timeline-scope changes which timeline names are visible on the page.",
 };
 
 /** Value functions removed wherever they appear, whatever the URL policy. */
@@ -131,6 +146,8 @@ export const UNSAFE_FUNCTIONS: Record<string, string> = {
   element: "element() can render other parts of the page.",
   "-moz-element": "-moz-element() can render other parts of the page.",
   "-webkit-canvas": "-webkit-canvas() can render page canvases.",
+  anchor: "anchor() can position survey elements against elements on the host page.",
+  "anchor-size": "anchor-size() can size survey elements from elements on the host page.",
 };
 
 /** Functions whose arguments name resources to load. Blocked outright while the URL policy is on. */

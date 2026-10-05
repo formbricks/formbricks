@@ -52,6 +52,7 @@ import type { TSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import {
   invalidateCustomCssCaches,
+  parseStoredCustomCss,
   readCustomCssPayloadSource,
   resolveCustomCssWriteOrThrow,
 } from "@/modules/custom-css/lib/service";
@@ -171,7 +172,6 @@ export const selectSurvey = {
   metadata: true,
   customHeadScripts: true,
   customHeadScriptsMode: true,
-  customCss: true,
   languages: {
     select: {
       default: true,
@@ -221,6 +221,18 @@ export const selectSurvey = {
   embeddedDataLinks: selectSurveyEmbeddedDataLinks,
 } satisfies Prisma.SurveySelect;
 
+/**
+ * `selectSurvey` plus the stored custom CSS (source and compiled output, up to ~40 KB). Kept out of the
+ * generic selector so the respondent hot paths built on `getSurvey` — response and display writes, file
+ * uploads — never load it. The readers that use it select it on purpose: the save paths (this file and
+ * API v3), whose results go back to the editor and to v3 serializers. A survey loaded without the column
+ * has no `customCss` key at all, which every write path reads as "leave the CSS unchanged".
+ */
+export const selectSurveyWithCustomCss = {
+  ...selectSurvey,
+  customCss: true,
+} satisfies Prisma.SurveySelect;
+
 const reconcilePersistedSurveySchedulingIfDue = async ({
   logSource,
   survey,
@@ -252,7 +264,7 @@ const reconcilePersistedSurveySchedulingIfDue = async ({
 
   const reconciledSurvey = await prisma.survey.findUnique({
     where: { id: survey.id },
-    select: selectSurvey,
+    select: selectSurveyWithCustomCss,
   });
 
   if (!reconciledSurvey) {
@@ -262,7 +274,10 @@ const reconcilePersistedSurveySchedulingIfDue = async ({
   return transformPrismaSurvey<TSurvey>(reconciledSurvey);
 };
 
-export const getSurvey = reactCache(async (surveyId: string): Promise<TSurvey | null> => {
+const findSurveyById = async (
+  surveyId: string,
+  select: typeof selectSurvey | typeof selectSurveyWithCustomCss
+): Promise<TSurvey | null> => {
   validateInputs([surveyId, ZId]);
 
   let surveyPrisma;
@@ -271,7 +286,7 @@ export const getSurvey = reactCache(async (surveyId: string): Promise<TSurvey | 
       where: {
         id: surveyId,
       },
-      select: selectSurvey,
+      select,
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -286,7 +301,21 @@ export const getSurvey = reactCache(async (surveyId: string): Promise<TSurvey | 
   }
 
   return transformPrismaSurvey<TSurvey>(surveyPrisma);
-});
+};
+
+/** A survey without its stored custom CSS — see {@link selectSurveyWithCustomCss}. */
+export const getSurvey = reactCache(
+  async (surveyId: string): Promise<TSurvey | null> => await findSurveyById(surveyId, selectSurvey)
+);
+
+/**
+ * {@link getSurvey} with the stored custom CSS, for the readers that serialize or edit it (API v3). Not for
+ * respondent paths: they receive compiled CSS through the delivery code, never the stored value.
+ */
+export const getSurveyWithCustomCss = reactCache(
+  async (surveyId: string): Promise<TSurvey | null> =>
+    await findSurveyById(surveyId, selectSurveyWithCustomCss)
+);
 
 export const getSurveysByActionClassId = reactCache(
   async (
@@ -398,6 +427,18 @@ export const getSurveyCount = reactCache(async (workspaceId: string): Promise<nu
     throw error;
   }
 });
+
+/** The survey's stored custom CSS, read from the row (tenant-scoped by workspace). */
+const getStoredSurveyCustomCss = async (surveyId: string, workspaceId: string) => {
+  const row = await prisma.survey.findUnique({
+    where: { id: surveyId, workspaceId },
+    select: { customCss: true },
+  });
+  if (!row) {
+    throw new ResourceNotFoundError("Survey", surveyId);
+  }
+  return parseStoredCustomCss(row.customCss);
+};
 
 export const updateSurveyInternal = async (
   updatedSurvey: TSurvey,
@@ -557,7 +598,9 @@ export const updateSurveyInternal = async (
               }
               return organization.id;
             },
-            existing: currentSurvey.customCss,
+            // From the row, never from `currentSurvey`: `getSurvey` does not select the column, and a
+            // missing value read as "no CSS" would turn a clear into a no-op.
+            existing: await getStoredSurveyCustomCss(surveyId, currentSurvey.workspaceId),
             input: customCssSource,
           });
 
@@ -866,7 +909,7 @@ export const updateSurveyInternal = async (
         // copy and short-circuits on differing key counts, so the key shape must be identical.
         return tx.survey.findUniqueOrThrow({
           where: { id: surveyId, workspaceId: currentSurvey.workspaceId },
-          select: selectSurvey,
+          select: selectSurveyWithCustomCss,
         });
       },
       // Prisma's default interactive-transaction ceiling is 5s, which the write above can plausibly
@@ -1208,7 +1251,10 @@ export const createSurvey = async (
         // all. Cheap here in a way it would not be on the editor-save path: creation happens once per
         // survey, and this also picks up the private-segment connect above, which `createdSurvey`
         // predates.
-        return tx.survey.findUniqueOrThrow({ where: { id: createdSurvey.id }, select: selectSurvey });
+        return tx.survey.findUniqueOrThrow({
+          where: { id: createdSurvey.id },
+          select: selectSurveyWithCustomCss,
+        });
       },
       // This transaction predates ENG-1978, but the reconcile above adds a read plus two writes per
       // field inside it, and neither `variables` nor `hiddenFields` is bounded — so a large template or

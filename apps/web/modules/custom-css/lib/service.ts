@@ -320,15 +320,86 @@ export const invalidateCustomCssCaches = async (workspaceId: string): Promise<vo
   }
 };
 
-type TWorkspaceCustomCssLockRow = { customCss: unknown; customCssPrevious: unknown };
+type TWorkspaceCustomCssLockRow = { customCss: unknown };
+
+/** Optimistic saves that process outside the row lock before one falls back to deciding under it. */
+const WORKSPACE_CUSTOM_CSS_OPTIMISTIC_ATTEMPTS = 2;
+
+/**
+ * Whether two stored values are the same revision for a save's purposes: the same normalized source
+ * compiled under the same processor version. Compiled output is never compared.
+ */
+export const isSameStoredCustomCss = (
+  a: TCustomCssStored | null | undefined,
+  b: TCustomCssStored | null | undefined
+): boolean =>
+  classifyCustomCssChange(a, toCustomCssSource(b)) === "unchanged" &&
+  (a?.processorVersion ?? null) === (b?.processorVersion ?? null);
+
+const readWorkspaceCustomCss = async (
+  workspaceId: string,
+  organizationId: string
+): Promise<TCustomCssStored | null> => {
+  const row = await prisma.workspace.findUnique({
+    where: { id: workspaceId, organizationId },
+    select: { customCss: true },
+  });
+  if (!row) {
+    throw new ResourceNotFoundError("Workspace", workspaceId);
+  }
+  return parseStored(row.customCss, "workspace.customCss");
+};
+
+/**
+ * Locks the workspace row, re-reads its CSS and lets `decide` settle the save against it: the outcome to
+ * persist, or `null` when the row is no longer what the outcome was resolved against. On a real change
+ * the value being replaced becomes `customCssPrevious` — the one recoverable revision — unless there was
+ * nothing to replace, in which case the older revision stays recoverable.
+ */
+const commitWorkspaceCustomCss = async <TOutcome extends TCustomCssWriteOutcome | null>(
+  workspaceId: string,
+  organizationId: string,
+  decide: (current: TCustomCssStored | null) => Promise<TOutcome>
+): Promise<{ outcome: TOutcome; current: TCustomCssStored | null }> =>
+  prisma.$transaction(
+    async (tx) => {
+      const [row] = await tx.$queryRaw<TWorkspaceCustomCssLockRow[]>`
+        SELECT "customCss"
+        FROM "Workspace"
+        WHERE "id" = ${workspaceId} AND "organizationId" = ${organizationId}
+        FOR UPDATE
+      `;
+      if (!row) {
+        throw new ResourceNotFoundError("Workspace", workspaceId);
+      }
+
+      const current = parseStored(row.customCss, "workspace.customCss");
+      const outcome = await decide(current);
+      if (outcome?.ok && outcome.changed) {
+        await tx.workspace.update({
+          where: { id: workspaceId, organizationId },
+          data: {
+            customCss: toJsonColumn(outcome.stored),
+            ...(current ? { customCssPrevious: current } : {}),
+          },
+          select: { id: true },
+        });
+      }
+      return { outcome, current };
+    },
+    { timeout: 20_000, maxWait: 10_000 }
+  );
 
 /**
  * Save workspace CSS (ENG-2949). Authorization is the caller's: see `canWriteWorkspaceCustomCss`.
  *
- * Read, decision and write happen in one transaction over the locked row, so two concurrent saves cannot
- * both treat the same value as "previous". On a real change the value being replaced becomes
- * `customCssPrevious` — the one recoverable revision — unless there was nothing to replace, in which case
- * the older revision stays recoverable. Failures write nothing, so the previous revision stays live.
+ * The processor is synchronous and CPU-bound, so it runs before the row is locked: the save reads the
+ * stored value, resolves the write against it, then locks the row in a short transaction and persists
+ * only if the stored revision is still the one it resolved against ({@link isSameStoredCustomCss}). A
+ * concurrent change can make that decision stale — edit or removal, so whether the plan applies, and
+ * what becomes `customCssPrevious` — so the save re-resolves against the newer value, once. A third
+ * contender is settled under the lock, so every save still ends in one serialized decision. Failures
+ * and unchanged source write nothing, so the previous revision stays live.
  */
 export const updateWorkspaceCustomCss = async (args: {
   workspaceId: string;
@@ -336,43 +407,34 @@ export const updateWorkspaceCustomCss = async (args: {
   input: TCustomCssInput | null;
 }): Promise<TCustomCssWriteOutcome> => {
   const { workspaceId, organizationId, input } = args;
+  const resolve = (existing: TCustomCssStored | null) =>
+    resolveCustomCssWrite({ scope: "workspace", organizationId, existing, input });
+  const finish = async (outcome: TCustomCssWriteOutcome): Promise<TCustomCssWriteOutcome> => {
+    if (outcome.ok && outcome.changed) {
+      await invalidateCustomCssCaches(workspaceId);
+    }
+    return outcome;
+  };
 
-  const outcome = await prisma.$transaction(
-    async (tx) => {
-      const [row] = await tx.$queryRaw<TWorkspaceCustomCssLockRow[]>`
-        SELECT "customCss", "customCssPrevious"
-        FROM "Workspace"
-        WHERE "id" = ${workspaceId}
-        FOR UPDATE
-      `;
-      if (!row) {
-        throw new ResourceNotFoundError("Workspace", workspaceId);
-      }
+  let existing = await readWorkspaceCustomCss(workspaceId, organizationId);
+  for (let attempt = 0; attempt < WORKSPACE_CUSTOM_CSS_OPTIMISTIC_ATTEMPTS; attempt++) {
+    const resolved = await resolve(existing);
+    if (!resolved.ok || !resolved.changed) {
+      return resolved;
+    }
 
-      const existing = parseStored(row.customCss, "workspace.customCss");
-      const result = await resolveCustomCssWrite({ scope: "workspace", organizationId, existing, input });
-
-      if (result.ok && result.changed) {
-        await tx.workspace.update({
-          where: { id: workspaceId, organizationId },
-          data: {
-            customCss: toJsonColumn(result.stored),
-            ...(existing ? { customCssPrevious: existing } : {}),
-          },
-          select: { id: true },
-        });
-      }
-
-      return result;
-    },
-    { timeout: 20_000, maxWait: 10_000 }
-  );
-
-  if (outcome.ok && outcome.changed) {
-    await invalidateCustomCssCaches(workspaceId);
+    const expected = existing;
+    const commit = await commitWorkspaceCustomCss(workspaceId, organizationId, async (current) =>
+      isSameStoredCustomCss(current, expected) ? resolved : null
+    );
+    if (commit.outcome) {
+      return await finish(commit.outcome);
+    }
+    existing = commit.current;
   }
 
-  return outcome;
+  const { outcome } = await commitWorkspaceCustomCss(workspaceId, organizationId, resolve);
+  return await finish(outcome);
 };
 
 export type TCopiedSurveyCustomCss = {

@@ -24,7 +24,9 @@ post:
     `scope: workspace | survey` and, optionally, an existing `surveyId` in `workspaceId` — and returns
     the compiled CSS and warnings. Validation never saves, versions, touches timestamps or invalidates
     caches, needs only read access, and grants nothing: the write itself checks permissions and the
-    plan again.
+    plan again. Requests that process custom CSS also count against a separate budget of 60 per
+    minute per user or API key, shared with the workspace custom CSS endpoint and the MCP tools;
+    beyond it they return **429**.
   tags:
     - V3 Surveys
   requestBody:

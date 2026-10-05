@@ -1,9 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TCustomCssStored } from "@formbricks/types/custom-css";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import { can } from "@/lib/authorization";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getCustomCssHealth } from "@/modules/custom-css/lib/delivery";
 import { getWorkspaceCustomCssRecord, updateWorkspaceCustomCss } from "@/modules/custom-css/lib/service";
 import { getCustomCssPermission } from "@/modules/ee/license-check/lib/utils";
@@ -25,6 +28,7 @@ vi.mock("@/app/api/v3/lib/auth", () => ({
 }));
 
 vi.mock("@/app/api/v3/lib/audit", () => ({ skipV3AuditLog: vi.fn() }));
+vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
 
 // The real role rules in `access.ts` run against a mocked authorization engine and plan.
 vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
@@ -193,6 +197,26 @@ describe("patchV3WorkspaceCustomCss", () => {
     expect(response.status).toBe(403);
     expect(await readJson(response)).toMatchObject({ code: "forbidden" });
     expect(updateWorkspaceCustomCss).not.toHaveBeenCalled();
+  });
+
+  test("a save spends the principal's custom CSS budget; a spent budget is a 429 and nothing is processed", async () => {
+    await patch(manageKey, { customCss: { light: "b{}", dark: null } });
+    expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3CustomCss, "key_manage");
+
+    vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("Slow down", 42));
+    vi.mocked(updateWorkspaceCustomCss).mockClear();
+    const response = await patch(owner, { customCss: { light: "c{}", dark: null } });
+
+    expect(applyRateLimit).toHaveBeenLastCalledWith(rateLimitConfigs.api.v3CustomCss, "user_owner");
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("42");
+    expect(await readJson(response)).toMatchObject({ code: "too_many_requests" });
+    expect(updateWorkspaceCustomCss).not.toHaveBeenCalled();
+  });
+
+  test("a refused caller does not spend the custom CSS budget", async () => {
+    await patch(member, { customCss: { light: "b{}", dark: null } });
+    expect(applyRateLimit).not.toHaveBeenCalled();
   });
 
   test("an API key's manage grant is checked on this workspace, a user's role on its organization", async () => {

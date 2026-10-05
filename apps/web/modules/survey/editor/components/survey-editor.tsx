@@ -317,7 +317,7 @@ export const SurveyEditor = ({
         onVisibilityNotEnabled={handleVisibilityNotEnabled}
         surveyAccess={surveyAccess}
         ownerName={ownerName}
-        isCustomCssDraftInvalid={surveyCustomCssValidation.status === "invalid"}
+        customCssValidationStatus={surveyCustomCssValidation.status}
       />
       {showRestrictedBanner({
         enforced: visibilityGate.enforced,

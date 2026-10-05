@@ -8,7 +8,7 @@ import {
 } from "@/app/api/v3/lib/custom-css";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
-import { createSurvey, getSurvey } from "@/lib/survey/service";
+import { createSurvey, getSurveyWithCustomCss } from "@/lib/survey/service";
 import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
 import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
@@ -47,7 +47,7 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("@/lib/survey/service", () => ({
   createSurvey: vi.fn(),
-  getSurvey: vi.fn(),
+  getSurveyWithCustomCss: vi.fn(),
 }));
 
 vi.mock("@/lib/survey/visibility/limit", () => ({
@@ -181,7 +181,7 @@ describe("createV3Survey", () => {
       resolvedOrganizationId: "org_1",
       isContactsEnabled: true,
     });
-    vi.mocked(getSurvey).mockResolvedValue(createdSurvey);
+    vi.mocked(getSurveyWithCustomCss).mockResolvedValue(createdSurvey);
     vi.mocked(resolveSurveyCreationFacts).mockResolvedValue(WORKSPACE_FACTS);
   });
 
@@ -650,7 +650,7 @@ describe("createV3Survey", () => {
       type: "app",
       segment: null,
     } as unknown as TSurvey;
-    // `getSurvey` re-reads it WITH the auto-created segment connected.
+    // `getSurveyWithCustomCss` re-reads it WITH the auto-created segment connected.
     const appSurveyWithSegment = {
       ...createdSurvey,
       id: appSurveyId,
@@ -660,7 +660,7 @@ describe("createV3Survey", () => {
 
     beforeEach(() => {
       vi.mocked(createSurvey).mockResolvedValue(createdAppSurvey);
-      vi.mocked(getSurvey).mockResolvedValue(appSurveyWithSegment);
+      vi.mocked(getSurveyWithCustomCss).mockResolvedValue(appSurveyWithSegment);
     });
 
     const attributeFilters = [
@@ -731,7 +731,7 @@ describe("createV3Survey", () => {
     test("passes targeting filters into createSurvey and returns the re-read survey", async () => {
       // Targeting is created atomically with the survey's private segment inside createSurvey (one
       // transaction); the re-read then surfaces the connected segment + numeric display fields.
-      vi.mocked(getSurvey).mockResolvedValueOnce({
+      vi.mocked(getSurveyWithCustomCss).mockResolvedValueOnce({
         ...appSurveyWithSegment,
         segment: { ...appSegment, filters: attributeFilters },
       } as unknown as TSurvey);
@@ -745,7 +745,7 @@ describe("createV3Survey", () => {
         privateSegmentFilters: attributeFilters,
         customCss: null,
       });
-      expect(getSurvey).toHaveBeenCalledWith(appSurveyId);
+      expect(getSurveyWithCustomCss).toHaveBeenCalledWith(appSurveyId);
       expect(result.segment?.filters).toEqual(attributeFilters);
     });
 
@@ -756,7 +756,7 @@ describe("createV3Survey", () => {
       const body = buildAppBody({ targeting: { filters: attributeFilters } });
 
       await expect(createV3Survey(body, null, "req_app_targeting_fail", "org_1")).rejects.toThrow();
-      expect(getSurvey).not.toHaveBeenCalled();
+      expect(getSurveyWithCustomCss).not.toHaveBeenCalled();
     });
 
     test("rejects targeting when contacts are not enabled, before any write", async () => {

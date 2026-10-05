@@ -10,6 +10,7 @@ import {
   CustomCssPlanRequiredError,
   classifyCustomCssChange,
   getWorkspaceCustomCssRecord,
+  isSameStoredCustomCss,
   previewCustomCss,
   readCustomCssPayloadSource,
   resolveCopiedSurveyCustomCss,
@@ -313,6 +314,14 @@ describe("updateWorkspaceCustomCss", () => {
     $queryRaw: vi.fn(),
     workspace: { update: vi.fn() },
   };
+  /** What the save reads before processing, and what it finds once the row is locked. */
+  const givenStored = (value: TCustomCssStored | null, ...lockedReads: (TCustomCssStored | null)[]) => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({ customCss: value } as never);
+    const reads = lockedReads.length > 0 ? lockedReads : [value];
+    tx.$queryRaw.mockReset();
+    for (const read of reads) tx.$queryRaw.mockResolvedValueOnce([{ customCss: read }]);
+    tx.$queryRaw.mockResolvedValue([{ customCss: reads[reads.length - 1] }]);
+  };
 
   beforeEach(() => {
     vi.mocked(prisma.$transaction).mockImplementation((async (fn: (client: typeof tx) => unknown) =>
@@ -321,7 +330,7 @@ describe("updateWorkspaceCustomCss", () => {
 
   test("an edit moves the replaced value into customCssPrevious atomically and invalidates the workspace state", async () => {
     const existing = stored("old{}", null, 7);
-    tx.$queryRaw.mockResolvedValue([{ customCss: existing, customCssPrevious: null }]);
+    givenStored(existing);
 
     const outcome = await updateWorkspaceCustomCss({
       workspaceId: "ws_1",
@@ -330,6 +339,10 @@ describe("updateWorkspaceCustomCss", () => {
     });
 
     expect(outcome).toMatchObject({ ok: true, changed: true });
+    expect(prisma.workspace.findUnique).toHaveBeenCalledWith({
+      where: { id: "ws_1", organizationId: "org_1" },
+      select: { customCss: true },
+    });
     expect(tx.workspace.update).toHaveBeenCalledWith({
       where: { id: "ws_1", organizationId: "org_1" },
       data: {
@@ -345,8 +358,90 @@ describe("updateWorkspaceCustomCss", () => {
     expect(cache.del).toHaveBeenCalledWith(["fb:env:ws_1:state"]);
   });
 
+  test("processes the CSS before taking the row lock", async () => {
+    givenStored(stored("old{}", null));
+    const order: string[] = [];
+    vi.mocked(processCustomCss).mockImplementation((({ input }: { input: TCustomCssInput }) => {
+      order.push("process");
+      return processedOk(input);
+    }) as never);
+    vi.mocked(prisma.$transaction).mockImplementation((async (fn: (client: typeof tx) => unknown) => {
+      order.push("lock");
+      return fn(tx);
+    }) as never);
+
+    await updateWorkspaceCustomCss({
+      workspaceId: "ws_1",
+      organizationId: "org_1",
+      input: { light: "new{}", dark: null },
+    });
+
+    expect(order).toEqual(["process", "lock"]);
+  });
+
+  test("a concurrent change is re-resolved against the newer value, and that value becomes previous", async () => {
+    const concurrent = stored("theirs{}", null);
+    givenStored(stored("old{}", null), concurrent, concurrent);
+
+    const outcome = await updateWorkspaceCustomCss({
+      workspaceId: "ws_1",
+      organizationId: "org_1",
+      input: { light: "new{}", dark: null },
+    });
+
+    expect(outcome).toMatchObject({ ok: true, changed: true });
+    expect(processCustomCss).toHaveBeenCalledTimes(2);
+    expect(tx.workspace.update).toHaveBeenCalledTimes(1);
+    expect(tx.workspace.update.mock.calls[0][0].data.customCssPrevious).toEqual(concurrent);
+  });
+
+  test("a removal that a concurrent clear turned into an addition needs the plan again", async () => {
+    givenStored(stored("a{}", "d{}"), null, null);
+    vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(false);
+
+    const outcome = await updateWorkspaceCustomCss({
+      workspaceId: "ws_1",
+      organizationId: "org_1",
+      input: { light: "a{}", dark: null },
+    });
+
+    expect(outcome).toEqual({ ok: false, code: "plan_required" });
+    expect(tx.workspace.update).not.toHaveBeenCalled();
+    expect(cache.del).not.toHaveBeenCalled();
+  });
+
+  test("a change in compiled version alone also counts as a concurrent change", async () => {
+    givenStored(stored("old{}", null, 6), stored("old{}", null, 7), stored("old{}", null, 7));
+
+    await updateWorkspaceCustomCss({
+      workspaceId: "ws_1",
+      organizationId: "org_1",
+      input: { light: "new{}", dark: null },
+    });
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+    expect(tx.workspace.update.mock.calls[0][0].data.customCssPrevious).toEqual(stored("old{}", null, 7));
+  });
+
+  test("after one retry, a third contender is settled under the lock", async () => {
+    const latest = stored("latest{}", null);
+    givenStored(stored("old{}", null), stored("second{}", null), latest, latest);
+
+    const outcome = await updateWorkspaceCustomCss({
+      workspaceId: "ws_1",
+      organizationId: "org_1",
+      input: { light: "new{}", dark: null },
+    });
+
+    expect(outcome).toMatchObject({ ok: true, changed: true });
+    expect(prisma.$transaction).toHaveBeenCalledTimes(3);
+    expect(processCustomCss).toHaveBeenCalledTimes(3);
+    expect(tx.workspace.update).toHaveBeenCalledTimes(1);
+    expect(tx.workspace.update.mock.calls[0][0].data.customCssPrevious).toEqual(latest);
+  });
+
   test("the first save keeps an older recoverable revision rather than overwriting it with nothing", async () => {
-    tx.$queryRaw.mockResolvedValue([{ customCss: null, customCssPrevious: stored("older{}", null) }]);
+    givenStored(null);
 
     await updateWorkspaceCustomCss({
       workspaceId: "ws_1",
@@ -359,7 +454,7 @@ describe("updateWorkspaceCustomCss", () => {
 
   test("clearing stores null and keeps what was cleared recoverable", async () => {
     const existing = stored("old{}", "dark{}");
-    tx.$queryRaw.mockResolvedValue([{ customCss: existing, customCssPrevious: null }]);
+    givenStored(existing);
     vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(false);
 
     const outcome = await updateWorkspaceCustomCss({
@@ -376,7 +471,7 @@ describe("updateWorkspaceCustomCss", () => {
 
   test("restoring the previous revision is a normal save of its source", async () => {
     const current = stored("current{}", null);
-    tx.$queryRaw.mockResolvedValue([{ customCss: current, customCssPrevious: stored("restored{}", null) }]);
+    givenStored(current);
 
     await updateWorkspaceCustomCss({
       workspaceId: "ws_1",
@@ -392,8 +487,8 @@ describe("updateWorkspaceCustomCss", () => {
     expect(tx.workspace.update.mock.calls[0][0].data.customCssPrevious).toEqual(current);
   });
 
-  test("malformed CSS writes nothing, so the saved revision stays live", async () => {
-    tx.$queryRaw.mockResolvedValue([{ customCss: stored("good{}", null), customCssPrevious: null }]);
+  test("malformed CSS writes nothing and takes no lock, so the saved revision stays live", async () => {
+    givenStored(stored("good{}", null));
     vi.mocked(processCustomCss).mockResolvedValue({ ok: false, errors: [syntaxError] });
 
     const outcome = await updateWorkspaceCustomCss({
@@ -403,12 +498,13 @@ describe("updateWorkspaceCustomCss", () => {
     });
 
     expect(outcome).toEqual({ ok: false, code: "invalid_css", errors: [syntaxError] });
+    expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(tx.workspace.update).not.toHaveBeenCalled();
     expect(cache.del).not.toHaveBeenCalled();
   });
 
   test("an unchanged save writes nothing and invalidates nothing", async () => {
-    tx.$queryRaw.mockResolvedValue([{ customCss: stored("same{}", null), customCssPrevious: null }]);
+    givenStored(stored("same{}", null));
 
     const outcome = await updateWorkspaceCustomCss({
       workspaceId: "ws_1",
@@ -417,16 +513,41 @@ describe("updateWorkspaceCustomCss", () => {
     });
 
     expect(outcome).toMatchObject({ ok: true, changed: false });
+    expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(tx.workspace.update).not.toHaveBeenCalled();
     expect(cache.del).not.toHaveBeenCalled();
   });
 
-  test("an unknown workspace is a ResourceNotFoundError", async () => {
-    tx.$queryRaw.mockResolvedValue([]);
+  test("an unknown workspace, or one in another organization, is a ResourceNotFoundError", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null);
 
     await expect(
       updateWorkspaceCustomCss({ workspaceId: "ws_x", organizationId: "org_1", input: null })
     ).rejects.toBeInstanceOf(ResourceNotFoundError);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  test("a workspace that disappears before the lock is a ResourceNotFoundError", async () => {
+    givenStored(stored("old{}", null));
+    tx.$queryRaw.mockReset();
+    tx.$queryRaw.mockResolvedValue([]);
+
+    await expect(
+      updateWorkspaceCustomCss({ workspaceId: "ws_1", organizationId: "org_1", input: null })
+    ).rejects.toBeInstanceOf(ResourceNotFoundError);
+    expect(tx.workspace.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("isSameStoredCustomCss", () => {
+  test("compares normalized source and processor version, never compiled output", () => {
+    const a = stored("a{}", null, 7);
+    expect(isSameStoredCustomCss(a, { ...a, light: { source: "a{}", compiled: "other" } })).toBe(true);
+    expect(isSameStoredCustomCss(a, stored("a{}", " ", 7))).toBe(true);
+    expect(isSameStoredCustomCss(a, stored("a{}", null, 8))).toBe(false);
+    expect(isSameStoredCustomCss(a, stored("b{}", null, 7))).toBe(false);
+    expect(isSameStoredCustomCss(null, null)).toBe(true);
+    expect(isSameStoredCustomCss(a, null)).toBe(false);
   });
 });
 

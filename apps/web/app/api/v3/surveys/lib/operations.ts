@@ -12,6 +12,10 @@ import {
   mapV3CustomCssError,
   toV3WriteExtensions,
 } from "@/app/api/v3/lib/custom-css";
+import {
+  applyV3CustomCssRateLimit,
+  isCustomCssValidationRequest,
+} from "@/app/api/v3/lib/custom-css-rate-limit";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
   type InvalidParam,
@@ -1320,6 +1324,11 @@ export async function validateV3Survey({
 
   try {
     const validationBody = body;
+    if (isCustomCssValidationRequest(validationBody)) {
+      const rateLimited = await applyV3CustomCssRateLimit({ authentication, requestId, instance });
+      if (rateLimited) return rateLimited;
+    }
+
     if (validationBody.operation === "customCss") {
       return await validateV3SurveyCustomCss({ body: validationBody, authentication, requestId, instance });
     }
