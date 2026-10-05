@@ -23,17 +23,32 @@ interface TPrescanLimits {
   maxBlocks: number;
 }
 
+/** Where a token ends, and the limit it exceeded if it opened one block too many. */
+interface TScanStep {
+  end: number;
+  failure: TPrescanResult | null;
+}
+
 const isNewline = (c: string): boolean => c === "\n";
 const isWhitespace = (c: string): boolean => c === " " || c === "\t" || c === "\n";
 const isHexDigit = (c: string): boolean => /^[0-9a-fA-F]$/.test(c);
 const isDigit = (c: string): boolean => c >= "0" && c <= "9";
+// `c` is always one UTF-16 code unit (or "" past the end), so `codePointAt(0)` is that unit's value.
 const isIdentStart = (c: string): boolean =>
-  (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || c === "_" || c.charCodeAt(0) >= 0x80;
+  (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || c === "_" || (c.codePointAt(0) ?? 0) >= 0x80;
 const isIdentChar = (c: string): boolean => isIdentStart(c) || isDigit(c) || c === "-";
 const isNonPrintable = (c: string): boolean => {
-  const code = c.charCodeAt(0);
+  const code = c.codePointAt(0);
+  if (code === undefined) return false;
   return code <= 0x08 || code === 0x0b || (code >= 0x0e && code <= 0x1f) || code === 0x7f;
 };
+
+/** The opening bracket each closing bracket matches. */
+const OPENING_BRACKETS = new Map([
+  ["}", "{"],
+  [")", "("],
+  ["]", "["],
+]);
 
 /** CSS Syntax §3.3 preprocessing: CR LF, CR and FF are newlines; NUL is U+FFFD (an ident code point). */
 const preprocess = (source: string): string =>
@@ -71,6 +86,16 @@ export const prescanCustomCss = (rawSource: string, limits: TPrescanLimits): TPr
   let blocks = 0;
 
   const at = (i: number): string => (i < n ? s[i] : "");
+  const skipWhitespace = (start: number): number => {
+    let i = start;
+    while (i < n && isWhitespace(s[i])) i++;
+    return i;
+  };
+  const skipDigits = (start: number): number => {
+    let i = start;
+    while (i < n && isDigit(s[i])) i++;
+    return i;
+  };
   /** §4.3.8: a backslash starts an escape unless a newline follows it. */
   const isValidEscape = (i: number): boolean => at(i) === "\\" && at(i + 1) !== "\n";
 
@@ -141,25 +166,27 @@ export const prescanCustomCss = (rawSource: string, limits: TPrescanLimits): TPr
     return i;
   };
 
+  /** §4.3.6: whitespace inside a url token ends it, so only `)` may follow; anything else is a bad url. */
+  const consumeUrlEnd = (start: number): number => {
+    const i = skipWhitespace(start);
+    if (i >= n || s[i] === ")") return Math.min(i + 1, n);
+    return consumeBadUrlRemnants(i);
+  };
+
   /** §4.3.6: an unquoted url token; `start` is just past `url(`. Nothing inside counts as a bracket. */
   const consumeUrl = (start: number): number => {
-    let i = start;
-    while (i < n && isWhitespace(s[i])) i++;
+    let i = skipWhitespace(start);
     while (i < n) {
       const c = s[i];
       if (c === ")") return i + 1;
-      if (isWhitespace(c)) {
-        while (i < n && isWhitespace(s[i])) i++;
-        if (i >= n || s[i] === ")") return Math.min(i + 1, n);
-        return consumeBadUrlRemnants(i);
-      }
+      if (isWhitespace(c)) return consumeUrlEnd(i);
       if (c === '"' || c === "'" || c === "(" || isNonPrintable(c)) return consumeBadUrlRemnants(i);
       if (c === "\\") {
-        if (isValidEscape(i)) i = consumeEscape(i + 1);
-        else return consumeBadUrlRemnants(i);
-        continue;
+        if (!isValidEscape(i)) return consumeBadUrlRemnants(i);
+        i = consumeEscape(i + 1);
+      } else {
+        i++;
       }
-      i++;
     }
     return i;
   };
@@ -183,22 +210,21 @@ export const prescanCustomCss = (rawSource: string, limits: TPrescanLimits): TPr
     return i;
   };
 
+  /** §4.3.12 step 5: an exponent at the `e` at `i`, taken only when a digit follows (else `e` starts a unit). */
+  const consumeExponent = (i: number): number => {
+    const sign = at(i + 1);
+    if (isDigit(sign)) return skipDigits(i + 1);
+    if ((sign === "+" || sign === "-") && isDigit(at(i + 2))) return skipDigits(i + 2);
+    return i;
+  };
+
   /** §4.3.12: a number, followed by a unit or `%` (a unit is never a url). */
   const consumeNumeric = (start: number): number => {
     let i = start;
     if (s[i] === "+" || s[i] === "-") i++;
-    while (i < n && isDigit(s[i])) i++;
-    if (at(i) === "." && isDigit(at(i + 1))) {
-      i++;
-      while (i < n && isDigit(s[i])) i++;
-    }
-    const e = at(i);
-    if (e === "e" || e === "E") {
-      const sign = at(i + 1);
-      if (isDigit(sign)) i++;
-      else if ((sign === "+" || sign === "-") && isDigit(at(i + 2))) i += 2;
-      if (isDigit(at(i))) while (i < n && isDigit(s[i])) i++;
-    }
+    i = skipDigits(i);
+    if (at(i) === "." && isDigit(at(i + 1))) i = skipDigits(i + 1);
+    if (at(i) === "e" || at(i) === "E") i = consumeExponent(i);
     if (startsIdent(i)) return consumeIdentSequence(i).end;
     if (at(i) === "%") return i + 1;
     return i;
@@ -220,14 +246,14 @@ export const prescanCustomCss = (rawSource: string, limits: TPrescanLimits): TPr
   };
 
   const close = (kind: string): void => {
-    if (stack.length === 0 || stack[stack.length - 1] !== kind) return;
+    if (stack.at(-1) !== kind) return;
     stack.pop();
     if (kind === "{") braceDepth--;
     else functionDepth--;
   };
 
   /** §4.3.4: an ident, a function or a url. */
-  const consumeIdentLike = (start: number): { end: number; failure: TPrescanResult | null } => {
+  const consumeIdentLike = (start: number): TScanStep => {
     const { end, name } = consumeIdentSequence(start);
     if (at(end) !== "(") return { end, failure: null };
     // An ASCII case-insensitive match only: Unicode lowercasing must never turn a function into a url.
@@ -240,62 +266,59 @@ export const prescanCustomCss = (rawSource: string, limits: TPrescanLimits): TPr
     return { end: end + 1, failure: open("(", end) };
   };
 
-  let i = 0;
-  while (i < n) {
+  /** Comments, whitespace and the `<!--` / `-->` markers: nothing to count. Returns the next index, or null. */
+  const skipTrivia = (i: number): number | null => {
     const c = s[i];
-
     if (c === "/" && at(i + 1) === "*") {
       const commentEnd = s.indexOf("*/", i + 2);
-      i = commentEnd === -1 ? n : commentEnd + 2;
-      continue;
+      return commentEnd === -1 ? n : commentEnd + 2;
     }
-    if (isWhitespace(c)) {
-      i++;
-      continue;
-    }
-    if (c === '"' || c === "'") {
-      i = consumeString(i);
-      continue;
-    }
-    if (c === "{" || c === "(" || c === "[") {
-      const failure = open(c, i);
-      if (failure) return failure;
-      i++;
-      continue;
-    }
-    if (c === "}" || c === ")" || c === "]") {
-      close(c === "}" ? "{" : c === ")" ? "(" : "[");
-      i++;
-      continue;
-    }
-    if (c === "#") {
-      // §4.3.1: a hash token takes any ident code point or escape that follows.
-      i = isIdentChar(at(i + 1)) || isValidEscape(i + 1) ? consumeIdentSequence(i + 1).end : i + 1;
-      continue;
-    }
-    if (c === "@") {
-      i = startsIdent(i + 1) ? consumeIdentSequence(i + 1).end : i + 1;
-      continue;
-    }
-    if (c === "<" && s.startsWith("!--", i + 1)) {
-      i += 4;
-      continue;
-    }
-    if (c === "-" && !startsNumber(i) && s.startsWith("->", i + 1)) {
-      i += 3;
-      continue;
-    }
-    if (startsNumber(i)) {
-      i = consumeNumeric(i);
-      continue;
-    }
-    if (startsIdent(i)) {
-      const { end, failure } = consumeIdentLike(i);
-      if (failure) return failure;
-      i = end;
-      continue;
-    }
-    i++;
+    if (isWhitespace(c)) return i + 1;
+    if (c === "<" && s.startsWith("!--", i + 1)) return i + 4;
+    if (c === "-" && !startsNumber(i) && s.startsWith("->", i + 1)) return i + 3;
+    return null;
+  };
+
+  /**
+   * Strings, hashes, at-keywords and numbers: skipped whole, so a bracket inside one is not counted.
+   * Returns the next index, or null.
+   */
+  const skipToken = (i: number): number | null => {
+    const c = s[i];
+    if (c === '"' || c === "'") return consumeString(i);
+    // §4.3.1: a hash token takes any ident code point or escape that follows.
+    if (c === "#")
+      return isIdentChar(at(i + 1)) || isValidEscape(i + 1) ? consumeIdentSequence(i + 1).end : i + 1;
+    if (c === "@") return startsIdent(i + 1) ? consumeIdentSequence(i + 1).end : i + 1;
+    if (startsNumber(i)) return consumeNumeric(i);
+    return null;
+  };
+
+  /** A bracket: an opening one is counted against the limits, a closing one pops its match. Else null. */
+  const consumeBracket = (i: number): TScanStep | null => {
+    const c = s[i];
+    if (c === "{" || c === "(" || c === "[") return { end: i + 1, failure: open(c, i) };
+    const opening = OPENING_BRACKETS.get(c);
+    if (opening === undefined) return null;
+    close(opening);
+    return { end: i + 1, failure: null };
+  };
+
+  /** The token at `i`. Every character the tokenizer would not start a token with is skipped alone. */
+  const consumeToken = (i: number): TScanStep => {
+    const skipped = skipTrivia(i) ?? skipToken(i);
+    if (skipped !== null) return { end: skipped, failure: null };
+    const bracket = consumeBracket(i);
+    if (bracket) return bracket;
+    if (startsIdent(i)) return consumeIdentLike(i);
+    return { end: i + 1, failure: null };
+  };
+
+  let i = 0;
+  while (i < n) {
+    const { end, failure } = consumeToken(i);
+    if (failure) return failure;
+    i = end;
   }
 
   return { ok: true, blocks };

@@ -17,6 +17,9 @@ export interface TCustomCssDraft {
 
 export const EMPTY_CUSTOM_CSS_DRAFT: TCustomCssDraft = { light: "", dark: "" };
 
+/** Editor state or a value from the server, in either shape, or no CSS at all. */
+export type TCustomCssDraftOrInput = TCustomCssDraft | TCustomCssInput | null | undefined;
+
 export const CUSTOM_CSS_APPEARANCES = ["light", "dark"] as const satisfies readonly TCustomCssAppearance[];
 
 const normalizeField = (value: string | null | undefined): string | null =>
@@ -27,9 +30,7 @@ const normalizeField = (value: string | null | undefined): string | null =>
  * trims to empty is `null`, and both fields `null` is no CSS at all. Non-empty source is kept
  * verbatim, so what the creator typed is what gets saved.
  */
-export const normalizeCustomCssInput = (
-  input: TCustomCssDraft | TCustomCssInput | null | undefined
-): TCustomCssInput | null => {
+export const normalizeCustomCssInput = (input: TCustomCssDraftOrInput): TCustomCssInput | null => {
   if (!input) return null;
   const light = normalizeField(input.light);
   const dark = normalizeField(input.dark);
@@ -53,28 +54,24 @@ export const getCustomCssSource = (stored: TCustomCssStored | null | undefined):
 export const getUtf8ByteLength = (value: string): number => {
   let bytes = 0;
   for (let index = 0; index < value.length; index++) {
-    const code = value.charCodeAt(index);
-    if (code < 0x80) {
+    // A surrogate pair reads as one code point above U+FFFF; a lone surrogate reads as itself.
+    const codePoint = value.codePointAt(index) ?? 0;
+    if (codePoint < 0x80) {
       bytes += 1;
-    } else if (code < 0x800) {
+    } else if (codePoint < 0x800) {
       bytes += 2;
-    } else if (code >= 0xd800 && code <= 0xdbff && index + 1 < value.length) {
-      const next = value.charCodeAt(index + 1);
-      if (next >= 0xdc00 && next <= 0xdfff) {
-        bytes += 4;
-        index++;
-      } else {
-        bytes += 3;
-      }
-    } else {
+    } else if (codePoint < 0x10000) {
       bytes += 3;
+    } else {
+      bytes += 4;
+      index++;
     }
   }
   return bytes;
 };
 
 /** Combined light + dark source size, the quantity the per-scope budget applies to. */
-export const getCustomCssByteSize = (input: TCustomCssDraft | TCustomCssInput | null | undefined): number => {
+export const getCustomCssByteSize = (input: TCustomCssDraftOrInput): number => {
   const normalized = normalizeCustomCssInput(input);
   if (!normalized) return 0;
   return getUtf8ByteLength(normalized.light ?? "") + getUtf8ByteLength(normalized.dark ?? "");
@@ -82,15 +79,10 @@ export const getCustomCssByteSize = (input: TCustomCssDraft | TCustomCssInput | 
 
 export const getCustomCssByteLimit = (scope: TCustomCssScope): number => CUSTOM_CSS_MAX_SOURCE_BYTES[scope];
 
-export const isOverCustomCssByteLimit = (
-  scope: TCustomCssScope,
-  input: TCustomCssDraft | TCustomCssInput | null | undefined
-): boolean => getCustomCssByteSize(input) > getCustomCssByteLimit(scope);
+export const isOverCustomCssByteLimit = (scope: TCustomCssScope, input: TCustomCssDraftOrInput): boolean =>
+  getCustomCssByteSize(input) > getCustomCssByteLimit(scope);
 
-export const isSameCustomCss = (
-  a: TCustomCssDraft | TCustomCssInput | null | undefined,
-  b: TCustomCssDraft | TCustomCssInput | null | undefined
-): boolean => {
+export const isSameCustomCss = (a: TCustomCssDraftOrInput, b: TCustomCssDraftOrInput): boolean => {
   const left = normalizeCustomCssInput(a);
   const right = normalizeCustomCssInput(b);
   return left?.light === right?.light && left?.dark === right?.dark;
@@ -104,8 +96,8 @@ export const isSameCustomCss = (
 export type TCustomCssChangeKind = "unchanged" | "removal" | "edit";
 
 export const getCustomCssChangeKind = (
-  saved: TCustomCssDraft | TCustomCssInput | null | undefined,
-  draft: TCustomCssDraft | TCustomCssInput | null | undefined
+  saved: TCustomCssDraftOrInput,
+  draft: TCustomCssDraftOrInput
 ): TCustomCssChangeKind => {
   const before = normalizeCustomCssInput(saved);
   const after = normalizeCustomCssInput(draft);
@@ -143,7 +135,7 @@ export const applyCustomCssDraftToStored = (
   const light = toEntry("light");
   const dark = toEntry("dark");
   if (light === null && dark === null) return null;
-  if (saved && light === saved.light && dark === saved.dark) return saved;
+  if (light === saved?.light && dark === saved?.dark) return saved;
   return { light, dark, processorVersion: saved?.processorVersion ?? 0 };
 };
 

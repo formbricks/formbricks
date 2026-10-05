@@ -1,11 +1,11 @@
 import { type ComponentChildren } from "preact";
-import { type MutableRef, useEffect, useRef, useState } from "preact/hooks";
+import { type MutableRef, useContext, useEffect, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TOverlay, type TPlacement } from "@formbricks/types/common";
 import { type TSurveyCardRect } from "@formbricks/types/formbricks-surveys";
 import { type TOverlayAppearance, getOverlayBackground } from "@formbricks/types/overlay";
 import { getResolvedAppearance, subscribeToAppearance } from "@/lib/appearance";
-import { getCustomCssGeneration, releaseCustomCss } from "@/lib/custom-css";
+import { CustomCssOwnerContext, getCustomCssGeneration, releaseCustomCss } from "@/lib/custom-css";
 import { isPlainEscape } from "@/lib/keyboard";
 import { ensureLiveRegion } from "@/lib/live-region";
 import { SURVEY_INSTRUCTIONS_ID, getSurveyHeadingName } from "@/lib/survey-page";
@@ -287,13 +287,15 @@ export function SurveyContainer({
   // through setAppearance and only touch this attribute.
   const [appearance, setAppearance] = useState(getResolvedAppearance);
   useEffect(() => subscribeToAppearance(setAppearance), []);
-  // Custom CSS is applied by renderSurvey just before each render; this survey owns it until another
-  // render applies newer CSS. Re-read after every render so teardown only removes CSS it still owns —
-  // a survey closing after the next one rendered must not strip that one's styles.
-  const customCssGenerationRef = useRef(getCustomCssGeneration());
+  // Custom CSS is applied by renderSurvey just before each render; this survey owns the generation of
+  // the renderSurvey call that rendered it. It comes from context, not the module counter, so the
+  // survey's own re-renders never adopt the generation of another survey rendered since, and teardown
+  // only removes CSS this survey still owns. A new renderSurvey into the same container updates it.
+  const customCssOwner = useContext(CustomCssOwnerContext);
+  const customCssGenerationRef = useRef(customCssOwner ?? getCustomCssGeneration());
   useEffect(() => {
-    customCssGenerationRef.current = getCustomCssGeneration();
-  });
+    if (customCssOwner !== null) customCssGenerationRef.current = customCssOwner;
+  }, [customCssOwner]);
   useEffect(() => () => releaseCustomCss(customCssGenerationRef.current), []);
   // The overlay is what makes a survey modal: it covers the host page and the page stops being usable.
   // Without one the page underneath stays visible and clickable, so the survey is a notification, not a

@@ -1264,7 +1264,7 @@ describe("patchV3Survey", () => {
     });
 
     test("malformed CSS is rejected and the stored CSS is untouched", async () => {
-      vi.mocked(processCustomCss).mockResolvedValue({
+      vi.mocked(processCustomCss).mockReturnValue({
         ok: false,
         errors: [
           {

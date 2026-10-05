@@ -170,9 +170,10 @@ describe("patchV3WorkspaceCustomCss", () => {
     ["an organization owner or manager", owner],
     ["an API key with manage access", manageKey],
   ])("%s may save; the warnings come back beside the resource", async (_label, authentication) => {
-    vi.mocked(getWorkspaceCustomCssRecord)
-      .mockResolvedValueOnce({ customCss: stored("a{}"), previous: null })
-      .mockResolvedValueOnce({ customCss: stored("b{}"), previous: stored("a{}") });
+    vi.mocked(getWorkspaceCustomCssRecord).mockResolvedValue({
+      customCss: stored("b{}"),
+      previous: stored("a{}"),
+    });
 
     const response = await patch(authentication, { customCss: { light: "b{}", dark: null } });
 
@@ -290,13 +291,23 @@ describe("patchV3WorkspaceCustomCss", () => {
       invalid_params: [{ name: "customCss.light", reason: "Unexpected (line 4, column 2)" }],
       details: { errors: [error] },
     });
-    expect(getWorkspaceCustomCssRecord).toHaveBeenCalledTimes(1);
+    expect(getWorkspaceCustomCssRecord).not.toHaveBeenCalled();
   });
 
-  test("a change is audited as source on both sides", async () => {
-    vi.mocked(getWorkspaceCustomCssRecord)
-      .mockResolvedValueOnce({ customCss: stored("a{}"), previous: null })
-      .mockResolvedValueOnce({ customCss: stored("b{}"), previous: stored("a{}") });
+  test("a change is audited as source on both sides, as the save itself saw them", async () => {
+    // Another writer saved `c{}` right after this save, so the record read for the response is already
+    // newer; the audit pair still describes this save: `a{}` (read under the row lock) to `b{}`.
+    vi.mocked(updateWorkspaceCustomCss).mockResolvedValue({
+      ok: true,
+      stored: stored("b{}"),
+      warnings: [],
+      changed: true,
+      replaced: stored("a{}"),
+    });
+    vi.mocked(getWorkspaceCustomCssRecord).mockResolvedValue({
+      customCss: stored("c{}"),
+      previous: stored("b{}"),
+    });
     const auditLog: Record<string, unknown> = {};
 
     await patch(owner, { customCss: { light: "b{}", dark: null } }, auditLog);

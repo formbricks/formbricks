@@ -215,7 +215,7 @@ describe("resolveCustomCssWrite", () => {
   });
 
   test("invalid CSS returns the processor's errors and nothing to store", async () => {
-    vi.mocked(processCustomCss).mockResolvedValue({ ok: false, errors: [syntaxError] });
+    vi.mocked(processCustomCss).mockReturnValue({ ok: false, errors: [syntaxError] });
 
     const outcome = await resolveCustomCssWrite({
       scope: "survey",
@@ -228,7 +228,9 @@ describe("resolveCustomCssWrite", () => {
   });
 
   test("a processor that throws is a processing failure, not a 500", async () => {
-    vi.mocked(processCustomCss).mockRejectedValue(new Error("boom"));
+    vi.mocked(processCustomCss).mockImplementation(() => {
+      throw new Error("boom");
+    });
 
     const outcome = await resolveCustomCssWrite({
       scope: "survey",
@@ -259,7 +261,7 @@ describe("resolveCustomCssWriteOrThrow", () => {
     expect(planError).toBeInstanceOf(CustomCssPlanRequiredError);
     expect(planError).toBeInstanceOf(OperationNotAllowedError);
 
-    vi.mocked(processCustomCss).mockResolvedValueOnce({ ok: false, errors: [syntaxError] });
+    vi.mocked(processCustomCss).mockReturnValueOnce({ ok: false, errors: [syntaxError] });
     const cssError = await resolveCustomCssWriteOrThrow(args).catch((error: unknown) => error);
     expect(cssError).toBeInstanceOf(CustomCssInvalidError);
     expect(cssError).toBeInstanceOf(InvalidInputError);
@@ -293,15 +295,15 @@ describe("readCustomCssPayloadSource", () => {
 });
 
 describe("previewCustomCss", () => {
-  test("processes without a plan check, and empty input compiles to nothing", async () => {
+  test("processes without a plan check, and empty input compiles to nothing", () => {
     vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(false);
 
-    await expect(previewCustomCss("workspace", { light: " ", dark: null })).resolves.toEqual({
+    expect(previewCustomCss("workspace", { light: " ", dark: null })).toEqual({
       ok: true,
       compiled: { light: null, dark: null },
       warnings: [],
     });
-    await expect(previewCustomCss("workspace", { light: "a{}", dark: null })).resolves.toMatchObject({
+    expect(previewCustomCss("workspace", { light: "a{}", dark: null })).toMatchObject({
       ok: true,
       compiled: { light: "COMPILED(a{})", dark: null },
     });
@@ -389,7 +391,8 @@ describe("updateWorkspaceCustomCss", () => {
       input: { light: "new{}", dark: null },
     });
 
-    expect(outcome).toMatchObject({ ok: true, changed: true });
+    // `replaced` is what the audit entry records as the old value: the locked read, not the first one.
+    expect(outcome).toMatchObject({ ok: true, changed: true, replaced: concurrent });
     expect(processCustomCss).toHaveBeenCalledTimes(2);
     expect(tx.workspace.update).toHaveBeenCalledTimes(1);
     expect(tx.workspace.update.mock.calls[0][0].data.customCssPrevious).toEqual(concurrent);
@@ -433,7 +436,7 @@ describe("updateWorkspaceCustomCss", () => {
       input: { light: "new{}", dark: null },
     });
 
-    expect(outcome).toMatchObject({ ok: true, changed: true });
+    expect(outcome).toMatchObject({ ok: true, changed: true, replaced: latest });
     expect(prisma.$transaction).toHaveBeenCalledTimes(3);
     expect(processCustomCss).toHaveBeenCalledTimes(3);
     expect(tx.workspace.update).toHaveBeenCalledTimes(1);
@@ -463,7 +466,7 @@ describe("updateWorkspaceCustomCss", () => {
       input: null,
     });
 
-    expect(outcome).toEqual({ ok: true, stored: null, warnings: [], changed: true });
+    expect(outcome).toEqual({ ok: true, stored: null, warnings: [], changed: true, replaced: existing });
     const data = tx.workspace.update.mock.calls[0][0].data;
     expect(data.customCssPrevious).toEqual(existing);
     expect(String(data.customCss)).toContain("DbNull");
@@ -489,7 +492,7 @@ describe("updateWorkspaceCustomCss", () => {
 
   test("malformed CSS writes nothing and takes no lock, so the saved revision stays live", async () => {
     givenStored(stored("good{}", null));
-    vi.mocked(processCustomCss).mockResolvedValue({ ok: false, errors: [syntaxError] });
+    vi.mocked(processCustomCss).mockReturnValue({ ok: false, errors: [syntaxError] });
 
     const outcome = await updateWorkspaceCustomCss({
       workspaceId: "ws_1",
@@ -599,7 +602,7 @@ describe("resolveCopiedSurveyCustomCss", () => {
   });
 
   test("source that no longer passes the processor is dropped with a notice", async () => {
-    vi.mocked(processCustomCss).mockResolvedValue({ ok: false, errors: [syntaxError] });
+    vi.mocked(processCustomCss).mockReturnValue({ ok: false, errors: [syntaxError] });
 
     await expect(
       resolveCopiedSurveyCustomCss({ source: stored("a{", null), destinationOrganizationId: "org_dest" })

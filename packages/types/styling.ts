@@ -40,8 +40,9 @@ export const getLinkSurveyCardMaxWidth = (cardWidth?: TLinkSurveyCardWidthOption
 
 /*
  * Free-text theme values are written into generated CSS, so each one must be a valid value for its
- * property and nothing more (ENG-2950, styling-values.ts). These schemas only run on writes — stored rows
- * are not parsed with them — and the renderer drops unsafe legacy values on its own.
+ * property and nothing more (ENG-2950, styling-values.ts). Older stored rows may hold values these reject,
+ * so the survey read seam (`transformPrismaSurvey`) and the Look & Feel page drop them with
+ * `sanitizeThemeStyling` before a save round-trips the row, and the renderer drops them on its own.
  */
 const ZStylingDimension = z
   .union([z.number(), z.string()])

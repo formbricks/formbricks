@@ -53,9 +53,13 @@ describe("getUtf8ByteLength", () => {
     ["a😀é", 7],
     ["\uD800", 3],
     ["\uD800a", 4],
-  ])("%j is %i bytes, like TextEncoder", (value, bytes) => {
+    ["\uDC00", 3],
+    ["\uDE00\uD83D", 6],
+    ["\uD83D\uD83D\uDE00", 7],
+  ])("%j is %i bytes, like TextEncoder and the server's Buffer.byteLength", (value, bytes) => {
     expect(getUtf8ByteLength(value)).toBe(bytes);
     expect(getUtf8ByteLength(value)).toBe(new TextEncoder().encode(value).length);
+    expect(getUtf8ByteLength(value)).toBe(Buffer.byteLength(value, "utf8"));
   });
 });
 

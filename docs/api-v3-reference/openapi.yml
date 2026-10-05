@@ -1206,7 +1206,7 @@ paths:
                   currentUpdatedAt: '2026-04-21T11:30:00.000Z'
         '422':
           description: |-
-            Unprocessable Content — the request cannot be processed against stored state. Four cases:
+            Unprocessable Content — the request cannot be processed against stored state. Five cases:
             1. The target survey is archived (soft-deleted) and therefore read-only; restore it before editing. The `invalid_params` entry reports `name: archivedAt` with the reason `This survey is archived. Restore it before editing.`
             2. The patched document passed schema validation but failed a cross-reference check that requires stored state to detect: an undeclared locale key used in content, a duplicate stable id, an immutable element-id change on a published survey, a dangling logic/jump reference, an invalid media URL, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`). A patch that newly *introduces* a forward reference — a recall of an answer not yet given, a logic condition reading a later block, or a `requireAnswer` target that is not in a later block — is refused with `code: misordered_reference`; a survey that already contains one stays patchable, only newly created violations are rejected.
 

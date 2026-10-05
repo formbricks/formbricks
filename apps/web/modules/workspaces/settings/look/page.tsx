@@ -1,4 +1,5 @@
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { sanitizeThemeStyling } from "@formbricks/types/styling-values";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
 import {
@@ -73,7 +74,9 @@ export const WorkspaceLookSettingsPage = async (props: { params: Promise<{ works
         <CustomCssQueryClientProvider>
           <ThemeStyling
             workspaceId={params.workspaceId}
-            workspace={workspace}
+            // A theme saved before the strict value schemas (ENG-2950) could otherwise fail its next save
+            // on a value the form does not even show.
+            workspace={{ ...workspace, styling: sanitizeThemeStyling(workspace.styling) }}
             colors={SURVEY_BG_COLORS}
             isUnsplashConfigured={!!UNSPLASH_ACCESS_KEY}
             isReadOnly={isReadOnly}

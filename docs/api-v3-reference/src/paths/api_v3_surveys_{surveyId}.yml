@@ -377,7 +377,7 @@ patch:
               currentUpdatedAt: 2026-04-21T11:30:00.000Z
     "422":
       description: >-
-        Unprocessable Content — the request cannot be processed against stored state. Four cases:
+        Unprocessable Content — the request cannot be processed against stored state. Five cases:
 
         1. The target survey is archived (soft-deleted) and therefore read-only; restore it before
         editing. The `invalid_params` entry reports `name: archivedAt` with the reason

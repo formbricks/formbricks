@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { type Response } from "@formbricks/database/prisma-browser";
+import type { TRendererCustomCss } from "@formbricks/types/custom-css";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
@@ -150,16 +151,7 @@ export const renderSurvey = async ({
     allowUrlUserIdLookup && !contactId && hasUserIdSearchParam(searchParams)
       ? getIsContactsEnabled(workspaceContext.organizationId)
       : false,
-    // Workspace + survey CSS, compiled only (ENG-3552). A PIN-protected survey gets it from
-    // validateSurveyPinAction once the PIN is right, together with the survey itself.
-    survey.pin
-      ? undefined
-      : getLinkSurveyCustomCss({
-          organizationId: workspaceContext.organizationId,
-          workspaceCustomCss: workspaceContext.customCss,
-          surveyId: survey.id,
-          surveyCustomCss: survey.customCss,
-        }),
+    getRendererCustomCss(survey, workspaceContext),
   ]);
 
   // Handle PIN-protected surveys
@@ -216,6 +208,25 @@ export const renderSurvey = async ({
     />
   );
 };
+
+/**
+ * Workspace + survey CSS, compiled only (ENG-3552). A PIN-protected survey gets none here: it gets it from
+ * validateSurveyPinAction once the PIN is right, together with the survey itself.
+ */
+async function getRendererCustomCss(
+  survey: TSurvey,
+  workspaceContext: TWorkspaceContextForLinkSurvey
+): Promise<TRendererCustomCss | undefined> {
+  if (survey.pin) {
+    return undefined;
+  }
+  return getLinkSurveyCustomCss({
+    organizationId: workspaceContext.organizationId,
+    workspaceCustomCss: workspaceContext.customCss,
+    surveyId: survey.id,
+    surveyCustomCss: survey.customCss,
+  });
+}
 
 /**
  * Determines which styling to use based on workspace and survey settings.

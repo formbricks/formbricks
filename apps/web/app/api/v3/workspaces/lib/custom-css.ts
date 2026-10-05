@@ -137,7 +137,6 @@ export async function patchV3WorkspaceCustomCss({
       return rateLimited;
     }
 
-    const before = await getWorkspaceCustomCssRecord(context.workspaceId);
     const outcome = await updateWorkspaceCustomCss({
       workspaceId: context.workspaceId,
       organizationId: context.organizationId,
@@ -165,8 +164,9 @@ export async function patchV3WorkspaceCustomCss({
       skipV3AuditLog(auditLog);
     } else if (auditLog) {
       // Source only on both sides: the audit trail records what the creator wrote, not compiled output.
-      auditLog.oldObject = { customCss: toCustomCssSource(before.customCss) };
-      auditLog.newObject = { customCss: resource.customCss };
+      // Both sides come from the save itself, so a concurrent writer cannot skew the pair.
+      auditLog.oldObject = { customCss: toCustomCssSource(outcome.replaced) };
+      auditLog.newObject = { customCss: toCustomCssSource(outcome.stored) };
     }
 
     log.info({ statusCode: 200, changed: outcome.changed }, "Workspace custom CSS saved");

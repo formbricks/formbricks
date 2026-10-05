@@ -95,7 +95,7 @@ describe("toDeliveredCustomCss", () => {
   });
 
   test("stale output whose source fails the current policy is withheld, never served as it was", async () => {
-    vi.mocked(processCustomCss).mockResolvedValue({
+    vi.mocked(processCustomCss).mockReturnValue({
       ok: false,
       errors: [
         { code: "syntax_error", scope: "survey", appearance: "light", line: 1, column: 1, reason: "bad" },
@@ -106,7 +106,9 @@ describe("toDeliveredCustomCss", () => {
   });
 
   test("a processor throw while reprocessing is withheld too", async () => {
-    vi.mocked(processCustomCss).mockRejectedValue(new Error("boom"));
+    vi.mocked(processCustomCss).mockImplementation(() => {
+      throw new Error("boom");
+    });
     await expect(toDeliveredCustomCss(stored(4), "survey")).resolves.toBeUndefined();
   });
 
@@ -136,7 +138,7 @@ describe("getCustomCssHealth", () => {
         reason: "Too many rules",
       },
     ];
-    vi.mocked(processCustomCss).mockResolvedValue({ ok: false, errors });
+    vi.mocked(processCustomCss).mockReturnValue({ ok: false, errors });
     await expect(getCustomCssHealth(stored(4, "c{}"), "workspace")).resolves.toEqual({
       status: "withheld",
       errors,

@@ -853,7 +853,7 @@ describe("createV3Survey custom CSS (ENG-3641)", () => {
     vi.mocked(getActionClasses).mockResolvedValue([]);
     vi.mocked(resolveSurveyCreationFacts).mockResolvedValue(WORKSPACE_FACTS);
     vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(true);
-    vi.mocked(processCustomCss).mockResolvedValue({
+    vi.mocked(processCustomCss).mockReturnValue({
       ok: true,
       compiled: { light: "@layer fb-survey{x}", dark: null },
       warnings: [warning],
@@ -898,7 +898,7 @@ describe("createV3Survey custom CSS (ENG-3641)", () => {
   });
 
   test("CSS the processor rejects fails the create before any write", async () => {
-    vi.mocked(processCustomCss).mockResolvedValue({
+    vi.mocked(processCustomCss).mockReturnValue({
       ok: false,
       errors: [{ ...warning, code: "syntax_error" as const, reason: "Unexpected token" }],
     });

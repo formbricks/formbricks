@@ -31,6 +31,15 @@ const UNIT = /^(?:%|[a-z]+)/i;
 const STRING_CONTENT = /^[\p{L}\p{N} .,_&+-]*$/u;
 const MAX_FUNCTION_DEPTH = 8;
 
+/** The tokens without leading and trailing spaces. */
+const trimSpaces = (tokens: TToken[]): TToken[] => {
+  let start = 0;
+  let end = tokens.length;
+  while (start < end && tokens[start].kind === "space") start++;
+  while (end > start && tokens[end - 1].kind === "space") end--;
+  return tokens.slice(start, end);
+};
+
 /**
  * Tokenizes a theme value into a tree (functions hold their argument tokens). Returns null for anything
  * outside this small token set — which is the point: a value that needs any other character cannot be a
@@ -46,77 +55,84 @@ const tokenize = (input: string): TToken[] | null => {
     return taken;
   };
 
+  /** A quoted string; null when it is unclosed or holds anything outside `STRING_CONTENT`. */
+  const readString = (quote: string): TToken | null => {
+    const end = rest.indexOf(quote, 1);
+    const value = end === -1 ? null : rest.slice(1, end);
+    if (value === null || !STRING_CONTENT.test(value)) return null;
+    take(end + 1);
+    return { kind: "string", value };
+  };
+
+  const readNumber = (): TToken => {
+    const value = Number(take(NUMBER.exec(rest)![0].length));
+    const unit = take(UNIT.exec(rest)?.[0].length ?? 0).toLowerCase();
+    return { kind: "number", value, unit };
+  };
+
+  const readHash = (): TToken | null => {
+    const hash = HASH.exec(rest);
+    return hash ? { kind: "hash", value: take(hash[0].length).slice(1) } : null;
+  };
+
+  /** An identifier, or a function with its parsed arguments when `(` follows the name. */
+  const readIdentOrFunction = (name: string, depth: number): TToken | null => {
+    if (!rest.startsWith("(")) return { kind: "ident", value: name };
+    if (depth >= MAX_FUNCTION_DEPTH) return null;
+    take(1);
+    const args = parse(depth + 1);
+    return args ? { kind: "function", name: name.toLowerCase(), args } : null;
+  };
+
+  /** The token at the start of `rest`, or null when nothing valid starts there. */
+  const readToken = (depth: number): TToken | null => {
+    const char = rest[0];
+    if (char === " " || char === "\t") {
+      rest = rest.trimStart();
+      return { kind: "space" };
+    }
+    if (char === '"' || char === "'") return readString(char);
+    if (STARTS_NUMBER.test(rest)) return readNumber();
+    if (char === "#") return readHash();
+    const ident = IDENT.exec(rest);
+    if (ident) return readIdentOrFunction(take(ident[0].length), depth);
+    if (char === "," || char === "/" || char === "*" || char === "+" || char === "-") {
+      return { kind: "delim", value: take(1) as "," | "/" | "*" | "+" | "-" };
+    }
+    return null;
+  };
+
   const parse = (depth: number): TToken[] | null => {
     const tokens: TToken[] = [];
     while (rest.length > 0) {
-      const char = rest[0];
-      if (char === ")") {
+      if (rest[0] === ")") {
         if (depth === 0) return null;
         take(1);
         return tokens;
       }
-      if (char === " " || char === "\t") {
-        rest = rest.trimStart();
-        tokens.push({ kind: "space" });
-        continue;
-      }
-      if (char === '"' || char === "'") {
-        const end = rest.indexOf(char, 1);
-        const value = end === -1 ? null : rest.slice(1, end);
-        if (value === null || !STRING_CONTENT.test(value)) return null;
-        take(end + 1);
-        tokens.push({ kind: "string", value });
-        continue;
-      }
-      if (STARTS_NUMBER.test(rest)) {
-        const value = Number(take(NUMBER.exec(rest)![0].length));
-        const unit = take(UNIT.exec(rest)?.[0].length ?? 0).toLowerCase();
-        tokens.push({ kind: "number", value, unit });
-        continue;
-      }
-      if (char === "#") {
-        const hash = HASH.exec(rest);
-        if (!hash) return null;
-        tokens.push({ kind: "hash", value: take(hash[0].length).slice(1) });
-        continue;
-      }
-      const ident = IDENT.exec(rest);
-      if (ident) {
-        const name = take(ident[0].length);
-        if (!rest.startsWith("(")) {
-          tokens.push({ kind: "ident", value: name });
-          continue;
-        }
-        if (depth >= MAX_FUNCTION_DEPTH) return null;
-        take(1);
-        const args = parse(depth + 1);
-        if (!args) return null;
-        tokens.push({ kind: "function", name: name.toLowerCase(), args });
-        continue;
-      }
-      if (char === "," || char === "/" || char === "*" || char === "+" || char === "-") {
-        tokens.push({ kind: "delim", value: take(1) as "," | "/" | "*" | "+" | "-" });
-        continue;
-      }
-      return null;
+      const token = readToken(depth);
+      if (!token) return null;
+      tokens.push(token);
     }
     // Running out of input inside a function means an unclosed parenthesis.
     return depth === 0 ? tokens : null;
   };
 
   const tokens = parse(0);
-  if (!tokens) return null;
-  while (tokens[0]?.kind === "space") tokens.shift();
-  while (tokens.length > 0 && tokens[tokens.length - 1].kind === "space") tokens.pop();
-  return tokens;
+  return tokens ? trimSpaces(tokens) : null;
 };
 
 /** Splits on top-level commas; empty items (leading, trailing or doubled commas) make the list invalid. */
 const splitList = (tokens: TToken[]): TToken[][] | null => {
-  const items: TToken[][] = [[]];
+  let current: TToken[] = [];
+  const items: TToken[][] = [current];
   for (const token of tokens) {
-    if (token.kind === "delim" && token.value === ",") items.push([]);
-    else items[items.length - 1].push(token);
+    if (token.kind === "delim" && token.value === ",") {
+      current = [];
+      items.push(current);
+    } else {
+      current.push(token);
+    }
   }
   const trimmed = items.map((item) =>
     item.filter((token, index, all) => !(token.kind === "space" && (index === 0 || index === all.length - 1)))

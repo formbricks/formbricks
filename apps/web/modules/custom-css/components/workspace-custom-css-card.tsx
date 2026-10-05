@@ -142,9 +142,7 @@ export const WorkspaceCustomCssCard = ({
           </Button>
         )}
         {isDirty && (
-          <span className="text-xs text-slate-500" role="status">
-            {t("workspace.custom_css.unsaved_changes")}
-          </span>
+          <output className="text-xs text-slate-500">{t("workspace.custom_css.unsaved_changes")}</output>
         )}
       </div>
     );

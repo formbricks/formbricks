@@ -99,9 +99,8 @@ export const CustomCssIssues = ({
 
   return (
     <div className="flex flex-col gap-2">
-      <p
+      <output
         id={statusId}
-        role="status"
         className={cn(
           "flex items-center gap-1.5 text-xs",
           status === "invalid" ? "text-red-700" : "text-slate-600",
@@ -117,7 +116,7 @@ export const CustomCssIssues = ({
           {statusText}
           {isPreviewBehind && status !== "pending" && ` ${t("workspace.custom_css.status_preview_behind")}`}
         </span>
-      </p>
+      </output>
 
       {issues.length > 0 && (
         <ul id={issuesId} className="flex max-h-60 flex-col gap-1.5 overflow-y-auto">

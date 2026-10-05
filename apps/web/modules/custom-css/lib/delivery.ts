@@ -5,6 +5,7 @@ import { logger } from "@formbricks/logger";
 import type {
   TCustomCssCompiled,
   TCustomCssError,
+  TCustomCssInput,
   TCustomCssScope,
   TCustomCssStored,
 } from "@formbricks/types/custom-css";
@@ -36,6 +37,31 @@ const hashSource = (scope: TCustomCssScope, stored: TCustomCssStored): string =>
     .update(JSON.stringify({ scope, source: toCustomCssSource(stored) }))
     .digest("hex");
 
+/** The current processor on a stored source, with a throw turned into a `processing_failed` error. */
+const reprocess = (scope: TCustomCssScope, input: TCustomCssInput): TReprocessed => {
+  try {
+    const result = processCustomCss({ scope, input });
+    return result.ok
+      ? { ok: true, light: result.compiled.light, dark: result.compiled.dark }
+      : { ok: false, errors: result.errors };
+  } catch (error) {
+    logger.error({ error, scope }, "Reprocessing stored custom CSS threw");
+    return {
+      ok: false,
+      errors: [
+        {
+          code: "processing_failed",
+          scope,
+          appearance: null,
+          line: null,
+          column: null,
+          reason: "The custom CSS could not be processed.",
+        },
+      ],
+    };
+  }
+};
+
 /**
  * Stored output compiled by an older processor (or URL policy) is recompiled from its source under the
  * current one — never served as it is, because it may not pass today's policy. Cached by
@@ -47,32 +73,8 @@ const reprocessStale = async (stored: TCustomCssStored, scope: TCustomCssScope):
     return { ok: true, light: null, dark: null };
   }
 
-  const run = async (): Promise<TReprocessed> => {
-    try {
-      const result = await processCustomCss({ scope, input });
-      return result.ok
-        ? { ok: true, light: result.compiled.light, dark: result.compiled.dark }
-        : { ok: false, errors: result.errors };
-    } catch (error) {
-      logger.error({ error, scope }, "Reprocessing stored custom CSS threw");
-      return {
-        ok: false,
-        errors: [
-          {
-            code: "processing_failed",
-            scope,
-            appearance: null,
-            line: null,
-            column: null,
-            reason: "The custom CSS could not be processed.",
-          },
-        ],
-      };
-    }
-  };
-
   return cache.withCache(
-    run,
+    () => Promise.resolve(reprocess(scope, input)),
     createCacheKey.customCss.reprocessed(scope, CUSTOM_CSS_PROCESSOR_VERSION, hashSource(scope, stored)),
     CUSTOM_CSS_REPROCESS_TTL_MS
   );

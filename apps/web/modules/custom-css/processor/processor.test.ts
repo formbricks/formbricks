@@ -1,3 +1,4 @@
+import type { Declaration } from "lightningcss";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
@@ -10,6 +11,7 @@ import {
   ZCustomCssWarning,
 } from "@formbricks/types/custom-css";
 import { CUSTOM_CSS_LIGHTNINGCSS_VERSION } from "./constants";
+import { checkDeclaration } from "./declarations";
 import {
   BLOCK_EXTERNAL_CUSTOM_CSS_RESOURCES,
   CUSTOM_CSS_MAX_RULES,
@@ -548,6 +550,45 @@ describe("declaration values", () => {
     expect(light).toContain("position:sticky!important");
     expect(light).toContain("position:revert-layer!important");
     expect(light).toContain("light-dark(#000,#fff)");
+  });
+
+  test.each([
+    ["#fbjs { all: inherit }"],
+    [".a { ALL: INHERIT }"],
+    [String.raw`.a { \61ll: inherit }`],
+    [String.raw`.a { all: inh\65 rit }`],
+    [".a { all: inherit !important }"],
+  ])("removes `all` values that could inherit position from the page: %s", (source) => {
+    const result = compile(source);
+    expect(codes(result.warnings)).toEqual(["unsafe_value_removed"]);
+    expect(result.compiled.light).toBe("@layer fb-survey{}");
+  });
+
+  test.each([[".a { all: var(--x) }"], [".a { all: env(x) }"]])(
+    "`all` taken from a function is a syntax error, so nothing is compiled: %s",
+    (source) => {
+      expect(reject(source).errors[0].code).toBe("syntax_error");
+    }
+  );
+
+  test("keeps `all` keywords that reset instead of inheriting", () => {
+    const result = compile(
+      ".a { all: revert } .b { ALL: Initial } .c { all: unset } .d { all: revert-layer }"
+    );
+    expect(result.warnings).toEqual([]);
+    expect(result.compiled.light).toBe(
+      "@layer fb-survey{#fbjs .a{all:revert!important}#fbjs .b{all:initial!important}#fbjs .c{all:unset!important}#fbjs .d{all:revert-layer!important}}"
+    );
+  });
+
+  test.each([
+    [[{ type: "token", value: { type: "ident", value: "inherit" } }], false],
+    [[{ type: "var", value: { name: { ident: "--x" } } }], false],
+    [[{ type: "env", value: { name: { type: "ua", value: "safe-area-inset-top" } } }], false],
+    [[{ type: "token", value: { type: "ident", value: "REVERT" } }], true],
+  ])("holds an unparsed `all` to one allowed keyword: %j → %s", (value, ok) => {
+    const declaration = { property: "unparsed", value: { propertyId: { property: "all" }, value } };
+    expect(checkDeclaration(declaration as Declaration, { blockExternalResources: true }).ok).toBe(ok);
   });
 
   test("a custom property may hold `fixed`, but position never reads a custom property", () => {

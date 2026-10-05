@@ -77,13 +77,16 @@ export const InheritedWorkspaceCss = ({
                   </span>
                 )}
               </p>
-              <pre
-                // Focusable so a keyboard user can scroll a long stylesheet.
-                tabIndex={0}
+              <textarea
+                // Read-only but focusable, so a keyboard user can scroll a long stylesheet. It sizes to its
+                // content where field-sizing is supported; `rows` approximates that elsewhere.
+                readOnly
+                value={css}
+                rows={css.split("\n").length}
+                spellCheck={false}
                 aria-label={`${t("workspace.custom_css.workspace_css_label")}: ${label}`}
-                className="max-h-60 overflow-auto rounded-md border border-slate-200 bg-slate-50 p-3 font-mono text-xs whitespace-pre-wrap text-slate-700 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none">
-                {css}
-              </pre>
+                className="block field-sizing-content max-h-60 w-full resize-none overflow-auto rounded-md border border-slate-200 bg-slate-50 p-3 font-mono text-xs whitespace-pre-wrap text-slate-700 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none"
+              />
             </div>
           ))
         ) : (

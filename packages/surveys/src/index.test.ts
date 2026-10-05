@@ -8,6 +8,7 @@ import type { SurveyContainerProps } from "@formbricks/types/formbricks-surveys"
 const seen = vi.hoisted(() => ({
   portalContainer: undefined as HTMLElement | null | undefined,
   onClose: undefined as (() => void) | undefined,
+  customCssOwner: undefined as number | null | undefined,
 }));
 
 vi.mock("@formbricks/survey-ui", async () => {
@@ -16,9 +17,11 @@ vi.mock("@formbricks/survey-ui", async () => {
 });
 vi.mock("@/components/general/render-survey", async () => {
   const { SurveyPortalContainerContext } = await import("@formbricks/survey-ui");
+  const { CustomCssOwnerContext } = await import("@/lib/custom-css");
   return {
     RenderSurvey: (props: { onClose?: () => void }) => {
       seen.portalContainer = useContext(SurveyPortalContainerContext as never);
+      seen.customCssOwner = useContext(CustomCssOwnerContext);
       seen.onClose = props.onClose;
       return null;
     },
@@ -43,7 +46,7 @@ vi.mock("@/lib/i18n-utils", () => ({ getI18nLanguage: () => "en" }));
 vi.mock("@/lib/appearance", () => ({ setAppearance: vi.fn() }));
 
 const { renderSurvey, setNonce } = await import("./index");
-const { applyCustomCss, syncCustomCssNonce } = await import("@/lib/custom-css");
+const { applyCustomCss, releaseCustomCss, syncCustomCssNonce } = await import("@/lib/custom-css");
 const { setStyleNonce } = await import("@/lib/styles");
 
 const COMPILED: TRendererCustomCss = {
@@ -66,6 +69,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   seen.portalContainer = undefined;
   seen.onClose = undefined;
+  seen.customCssOwner = undefined;
   document.head.innerHTML = "";
   document.body.innerHTML = "";
 });
@@ -141,6 +145,20 @@ describe("renderSurvey custom CSS teardown", () => {
 
     closeNewer?.();
     expect(getCustomStyle()).toBeNull();
+  });
+
+  test("each survey tree owns the generation of the render that mounted it, not a later one's", () => {
+    renderModal(vi.fn());
+    const olderOwner = seen.customCssOwner;
+    renderModal(vi.fn(), { survey: { light: "@layer fb-survey{#fbjs{color:green}}" } });
+    const newerOwner = seen.customCssOwner;
+
+    // The container reads its owner from this context, so its own later re-renders (appearance,
+    // state) keep the older generation, and its teardown cannot remove the newer survey's CSS.
+    expect(typeof olderOwner).toBe("number");
+    expect(newerOwner).toBe((olderOwner as number) + 1);
+    releaseCustomCss(olderOwner as number);
+    expect(getCustomStyle()?.textContent).toContain("green");
   });
 
   test("a host without onClose still gets none", () => {

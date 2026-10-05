@@ -4,7 +4,12 @@ import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyQuestion,
+  TSurveyQuestionTypeEnum,
+  ZSurveyStyling,
+} from "@formbricks/types/surveys/types";
 import * as videoValidation from "@/lib/utils/video-upload";
 import * as fileValidation from "@/modules/storage/utils";
 import {
@@ -111,6 +116,34 @@ describe("transformPrismaSurvey", () => {
       displayPercentage: null,
       segment: null,
     });
+  });
+
+  test("drops stored theme values a save would refuse, so the survey round-trips through ZSurveyStyling", () => {
+    const storedStyling = {
+      brandColor: { light: "#64748b" },
+      buttonHeight: "40px",
+      inputShadow: "0 1px 2px red; } body { display: none",
+      fontFamily: "Inter, sans-serif",
+      elementHeadlineFontWeight: "heavy",
+      background: { bgType: "color", bg: "url(https://example.com/x.png)" },
+    };
+    expect(ZSurveyStyling.safeParse(storedStyling).success).toBe(false);
+
+    const { styling } = transformPrismaSurvey<TSurvey>({ id: "survey1", styling: storedStyling });
+
+    expect(ZSurveyStyling.parse(styling)).toMatchObject({
+      brandColor: { light: "#64748b" },
+      buttonHeight: "40px",
+      fontFamily: "Inter, sans-serif",
+    });
+    expect(styling?.inputShadow).toBeUndefined();
+    expect(styling?.elementHeadlineFontWeight).toBeUndefined();
+    expect(styling?.background?.bg).toBeUndefined();
+  });
+
+  test("leaves a survey read without its styling column without one", () => {
+    expect(transformPrismaSurvey({ id: "survey1" })).not.toHaveProperty("styling");
+    expect(transformPrismaSurvey<TSurvey>({ id: "survey1", styling: null }).styling).toBeNull();
   });
 });
 

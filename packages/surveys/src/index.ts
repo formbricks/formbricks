@@ -6,6 +6,7 @@ import { I18nProvider } from "@/components/i18n/provider";
 import { setAppearance } from "@/lib/appearance";
 import { FILE_PICK_EVENT } from "@/lib/constants";
 import {
+  CustomCssOwnerContext,
   applyCustomCss,
   getCustomCssGeneration,
   releaseCustomCss,
@@ -38,9 +39,11 @@ export const renderSurveyInline = (props: SurveyContainerProps) => {
  * (js-core's `closeSurvey`) would otherwise keep the stylesheet. Guarded by the render's generation, so
  * a survey that closes after a newer one rendered leaves that one's CSS alone.
  */
-const withCustomCssRelease = (onClose: SurveyContainerProps["onClose"]): SurveyContainerProps["onClose"] => {
+const withCustomCssRelease = (
+  onClose: SurveyContainerProps["onClose"],
+  owner: number
+): SurveyContainerProps["onClose"] => {
   if (!onClose) return onClose;
-  const owner = getCustomCssGeneration();
   return () => {
     releaseCustomCss(owner);
     onClose();
@@ -63,7 +66,13 @@ export const renderSurvey = (renderProps: SurveyContainerProps) => {
   // Only from the explicit prop (ENG-3552): CSS on `props.survey` or `props.styling` is never read.
   // Before the render, so the first paint already has it; replaces whatever an earlier survey applied.
   applyCustomCss(renderProps.customCss);
-  const props: SurveyContainerProps = { ...renderProps, onClose: withCustomCssRelease(renderProps.onClose) };
+  const customCssOwner = getCustomCssGeneration();
+  const props: SurveyContainerProps = {
+    ...renderProps,
+    onClose: withCustomCssRelease(renderProps.onClose, customCssOwner),
+  };
+  const withCustomCssOwner = (child: ComponentChild) =>
+    h(CustomCssOwnerContext.Provider, { value: customCssOwner }, child);
 
   const language = getI18nLanguage(languageCode, props.survey.languages);
 
@@ -88,7 +97,7 @@ export const renderSurvey = (renderProps: SurveyContainerProps) => {
     // Respondent surfaces have no boundary, so their menus keep mounting in <body>.
     const portalContainer = props.isPreviewMode ? getPreviewPortalContainer(element) : null;
     const withPortalContainer = (child: ComponentChild) =>
-      h(PortalContainerProvider, { value: portalContainer }, child);
+      withCustomCssOwner(h(PortalContainerProvider, { value: portalContainer }, child));
 
     // if survey type is link, we don't pass the placement, overlay, clickOutside, onClose
     if (props.survey.type === "link") {
@@ -131,13 +140,15 @@ export const renderSurvey = (renderProps: SurveyContainerProps) => {
     document.body.appendChild(modalContainer);
 
     render(
-      h(
-        I18nProvider,
-        { language },
-        h(RenderSurvey, {
-          ...props,
-          languageCode: surveyLanguageCode,
-        })
+      withCustomCssOwner(
+        h(
+          I18nProvider,
+          { language },
+          h(RenderSurvey, {
+            ...props,
+            languageCode: surveyLanguageCode,
+          })
+        )
       ),
       modalContainer
     );

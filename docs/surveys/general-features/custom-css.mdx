@@ -428,6 +428,7 @@ Formbricks checks your CSS when you preview and when you save.
 | Properties that use page-wide names: anchor positioning (`anchor-name`, `anchor-scope`, `position-anchor`, `position-area`, `position-try` and its longhands) and scroll-driven timelines (`scroll-timeline`, `view-timeline`, their `-name` longhands, `timeline-scope`) | Unsafe property removed |
 | `attr()`, `expression()`, `anchor()`, `anchor-size()` and similar unsafe values | Unsafe value removed |
 | `position: fixed` | Fixed position removed |
+| `all` set to anything other than `initial`, `unset`, `revert` or `revert-layer` (for example `all: inherit`, which could copy `position: fixed` from the page) | Unsafe value removed |
 | Selectors that reach outside the survey (`#fbjs + .x`, `#fbjs ~ .x`, `:root:has(~ .x)`, `:host`, `:scope`) | Unsafe selector removed |
 
 Define `@keyframes` in the same field as the rules that use them.

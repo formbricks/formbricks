@@ -1876,7 +1876,7 @@ describe("custom CSS (ENG-3641)", () => {
       response: null,
       visibility: RESOURCE_VISIBILITY,
     } as never);
-    vi.mocked(previewCustomCss).mockResolvedValue({
+    vi.mocked(previewCustomCss).mockReturnValue({
       ok: true,
       compiled: { light: "@layer fb-survey{a}", dark: null },
       warnings: [cssWarning],
@@ -1920,7 +1920,7 @@ describe("custom CSS (ENG-3641)", () => {
     });
 
     test("a rejected CSS returns errors and invalid_params and no compiled output", async () => {
-      vi.mocked(previewCustomCss).mockResolvedValue({ ok: false, errors: [cssError] });
+      vi.mocked(previewCustomCss).mockReturnValue({ ok: false, errors: [cssError] });
 
       const response = await validateV3Survey({
         body: customCssBody({ scope: "workspace" }),
@@ -2082,7 +2082,7 @@ describe("custom CSS (ENG-3641)", () => {
     });
 
     test("report a CSS failure as invalid, with no compiled output", async () => {
-      vi.mocked(previewCustomCss).mockResolvedValue({ ok: false, errors: [cssError] });
+      vi.mocked(previewCustomCss).mockReturnValue({ ok: false, errors: [cssError] });
 
       const response = await validateV3Survey({
         body: {

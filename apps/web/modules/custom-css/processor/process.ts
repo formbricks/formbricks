@@ -1,5 +1,12 @@
 import "server-only";
-import { type Declaration, type DeclarationBlock, type Rule, type StyleSheet, transform } from "lightningcss";
+import {
+  type Declaration,
+  type DeclarationBlock,
+  type Rule,
+  type Selector,
+  type StyleSheet,
+  transform,
+} from "lightningcss";
 import { logger } from "@formbricks/logger";
 import {
   CUSTOM_CSS_MAX_SOURCE_BYTES,
@@ -159,6 +166,31 @@ const addPrintedSelectorSize = (size: number, ctx: TFieldContext): void => {
   }
 };
 
+/**
+ * Measures a scoped selector with its parent's parts counted in, and rejects the field when it is over a
+ * selector limit.
+ */
+const measureScopedSelector = (
+  selector: Selector,
+  parent: TParentStyle | null,
+  ctx: TFieldContext,
+  location: TIssueLocation
+): Omit<TParentStyle, "subject"> => {
+  const metrics = measureSelector(selector);
+  const compounds = metrics.compounds + (parent?.compounds ?? 0);
+  const universals = metrics.universals + (parent?.universals ?? 0);
+  if (metrics.longestArgumentList > CUSTOM_CSS_MAX_SELECTOR_LIST_LENGTH) {
+    rejectLimit(LIMIT_REASONS.selectorList, ctx, location);
+  }
+  if (compounds > CUSTOM_CSS_MAX_SELECTOR_COMPOUNDS)
+    rejectLimit(LIMIT_REASONS.selectorCompounds, ctx, location);
+  if (universals > CUSTOM_CSS_MAX_UNIVERSAL_COMPOUNDS) {
+    rejectLimit(LIMIT_REASONS.selectorUniversals, ctx, location);
+  }
+  const printedSize = metrics.components + metrics.nestingSelectors * (parent?.printedSize ?? 0);
+  return { compounds, universals, printedSize };
+};
+
 const processStyleRule = (
   rule: Extract<Rule, { type: "style" }>["value"],
   parent: TParentStyle | null,
@@ -180,22 +212,11 @@ const processStyleRule = (
       continue;
     }
 
-    const metrics = measureSelector(outcome.selector);
-    const compounds = metrics.compounds + (parent?.compounds ?? 0);
-    const universals = metrics.universals + (parent?.universals ?? 0);
-    if (metrics.longestArgumentList > CUSTOM_CSS_MAX_SELECTOR_LIST_LENGTH) {
-      rejectLimit(LIMIT_REASONS.selectorList, ctx, location);
-    }
-    if (compounds > CUSTOM_CSS_MAX_SELECTOR_COMPOUNDS)
-      rejectLimit(LIMIT_REASONS.selectorCompounds, ctx, location);
-    if (universals > CUSTOM_CSS_MAX_UNIVERSAL_COMPOUNDS) {
-      rejectLimit(LIMIT_REASONS.selectorUniversals, ctx, location);
-    }
-
+    const measured = measureScopedSelector(outcome.selector, parent, ctx, location);
     if (outcome.subject === "root") next.subject = "root";
-    next.compounds = Math.max(next.compounds, compounds);
-    next.universals = Math.max(next.universals, universals);
-    next.printedSize += metrics.components + metrics.nestingSelectors * (parent?.printedSize ?? 0);
+    next.compounds = Math.max(next.compounds, measured.compounds);
+    next.universals = Math.max(next.universals, measured.universals);
+    next.printedSize += measured.printedSize;
     kept.push(outcome.selector);
   }
 
@@ -247,75 +268,92 @@ const splitPseudoElementLists = (rules: Rule[]): Rule[] =>
     );
   });
 
+/** Declarations between or after nested rules, applying to the parent's selector. */
+const processNestedDeclarations = (
+  rule: Extract<Rule, { type: "nested-declarations" }>["value"],
+  parent: TParentStyle | null,
+  ctx: TFieldContext
+): boolean => {
+  if (!parent) return false;
+  processDeclarationBlock(rule.declarations, ctx, { important: true, location: fromRuleLocation(rule.loc) });
+  if (!hasDeclarations(rule.declarations)) return false;
+  addPrintedSelectorSize(parent.printedSize, ctx);
+  return true;
+};
+
+/** `@media`, `@supports` and `@container`: kept while the condition is safe and a nested rule is left. */
+const processConditionalRule = (
+  rule: Extract<Rule, { type: "media" | "supports" | "container" }>,
+  parent: TParentStyle | null,
+  ctx: TFieldContext
+): boolean => {
+  const location = fromRuleLocation(rule.value.loc);
+  const condition = rule.type === "media" ? rule.value.query : rule.value.condition;
+  if (isConditionUnsafe(condition, ctx, location)) return false;
+  if (rule.type === "supports" && hasResourceInSupportsCondition(condition)) {
+    ctx.sink.add("unsupported_at_rule_removed", ctx.appearance, SUPPORTS_RESOURCE_REASON, location);
+    return false;
+  }
+  rule.value.rules = processRules(rule.value.rules, parent, ctx);
+  return rule.value.rules.length > 0;
+};
+
+const reportUnsupportedAtRule = (rule: Rule, ctx: TFieldContext): void => {
+  const name = REMOVED_AT_RULE_NAMES[rule.type];
+  const value = (rule as { value?: { loc?: { line: number; column: number } } }).value;
+  ctx.sink.add(
+    "unsupported_at_rule_removed",
+    ctx.appearance,
+    name
+      ? `${name} is not supported: custom CSS cannot define layers, scopes or page-wide registrations.`
+      : "This at-rule is not supported.",
+    fromRuleLocation(value?.loc)
+  );
+};
+
+/** Applies the policy to one rule, in place. Returns whether the rule stays. */
+const processRule = (rule: Rule, parent: TParentStyle | null, ctx: TFieldContext): boolean => {
+  switch (rule.type) {
+    case "style":
+      return processStyleRule(rule.value, parent, ctx);
+    case "nested-declarations":
+      return processNestedDeclarations(rule.value, parent, ctx);
+    case "media":
+    case "supports":
+    case "container":
+      return processConditionalRule(rule, parent, ctx);
+    case "keyframes":
+      processKeyframes(rule.value, ctx);
+      return true;
+    case "import":
+      ctx.sink.add(
+        "import_removed",
+        ctx.appearance,
+        "@import is not supported; imported stylesheets and fonts are not loaded.",
+        fromRuleLocation(rule.value.loc)
+      );
+      return false;
+    case "font-face":
+      ctx.sink.add(
+        "font_face_removed",
+        ctx.appearance,
+        "@font-face is not supported; use a font that is already available on the page.",
+        fromRuleLocation(rule.value.loc)
+      );
+      return false;
+    case "ignored":
+      // `@charset` and the like: no effect in a stylesheet inserted as text.
+      return false;
+    default:
+      reportUnsupportedAtRule(rule, ctx);
+      return false;
+  }
+};
+
 const processRules = (rules: Rule[], parent: TParentStyle | null, ctx: TFieldContext): Rule[] => {
   const kept: Rule[] = [];
   for (const rule of splitPseudoElementLists(rules)) {
-    switch (rule.type) {
-      case "style":
-        if (processStyleRule(rule.value, parent, ctx)) kept.push(rule);
-        break;
-      case "nested-declarations":
-        // Declarations between or after nested rules, applying to the parent's selector.
-        if (!parent) break;
-        processDeclarationBlock(rule.value.declarations, ctx, {
-          important: true,
-          location: fromRuleLocation(rule.value.loc),
-        });
-        if (hasDeclarations(rule.value.declarations)) {
-          addPrintedSelectorSize(parent.printedSize, ctx);
-          kept.push(rule);
-        }
-        break;
-      case "media":
-      case "supports":
-      case "container": {
-        const location = fromRuleLocation(rule.value.loc);
-        const condition = rule.type === "media" ? rule.value.query : rule.value.condition;
-        if (isConditionUnsafe(condition, ctx, location)) break;
-        if (rule.type === "supports" && hasResourceInSupportsCondition(condition)) {
-          ctx.sink.add("unsupported_at_rule_removed", ctx.appearance, SUPPORTS_RESOURCE_REASON, location);
-          break;
-        }
-        rule.value.rules = processRules(rule.value.rules, parent, ctx);
-        if (rule.value.rules.length > 0) kept.push(rule);
-        break;
-      }
-      case "keyframes":
-        processKeyframes(rule.value, ctx);
-        kept.push(rule);
-        break;
-      case "import":
-        ctx.sink.add(
-          "import_removed",
-          ctx.appearance,
-          "@import is not supported; imported stylesheets and fonts are not loaded.",
-          fromRuleLocation(rule.value.loc)
-        );
-        break;
-      case "font-face":
-        ctx.sink.add(
-          "font_face_removed",
-          ctx.appearance,
-          "@font-face is not supported; use a font that is already available on the page.",
-          fromRuleLocation(rule.value.loc)
-        );
-        break;
-      case "ignored":
-        // `@charset` and the like: no effect in a stylesheet inserted as text.
-        break;
-      default: {
-        const name = REMOVED_AT_RULE_NAMES[rule.type];
-        const value = (rule as { value?: { loc?: { line: number; column: number } } }).value;
-        ctx.sink.add(
-          "unsupported_at_rule_removed",
-          ctx.appearance,
-          name
-            ? `${name} is not supported: custom CSS cannot define layers, scopes or page-wide registrations.`
-            : "This at-rule is not supported.",
-          fromRuleLocation(value?.loc)
-        );
-      }
-    }
+    if (processRule(rule, parent, ctx)) kept.push(rule);
   }
   return kept;
 };
@@ -418,27 +456,35 @@ const verifyCompiledField = (wrapped: string, ctx: TFieldContext): void => {
     }
   };
 
+  const verifyStyleRule = (rule: Extract<Rule, { type: "style" }>["value"]): void => {
+    if ((rule.rules?.length ?? 0) > 0) problems.push("nesting");
+    if (rule.selectors.some((selector) => verifyCompiledSelector(selector, ctx.dark) === null)) {
+      problems.push("selector");
+    }
+    verifyDeclarations(rule.declarations, true);
+  };
+
+  const verifyConditionalRule = (rule: Extract<Rule, { type: "media" | "supports" | "container" }>): void => {
+    if (scanValue(rule.type === "media" ? rule.value.query : rule.value.condition, ctx.policy)) {
+      problems.push("condition");
+    }
+    if (rule.type === "supports" && hasResourceInSupportsCondition(rule.value.condition)) {
+      problems.push("condition");
+    }
+    verifyRules(rule.value.rules);
+  };
+
   const verifyRules = (rules: Rule[]): void => {
     for (const rule of rules) {
       ruleCount++;
       switch (rule.type) {
         case "style":
-          if ((rule.value.rules?.length ?? 0) > 0) problems.push("nesting");
-          if (rule.value.selectors.some((selector) => verifyCompiledSelector(selector, ctx.dark) === null)) {
-            problems.push("selector");
-          }
-          verifyDeclarations(rule.value.declarations, true);
+          verifyStyleRule(rule.value);
           break;
         case "media":
         case "supports":
         case "container":
-          if (scanValue(rule.type === "media" ? rule.value.query : rule.value.condition, ctx.policy)) {
-            problems.push("condition");
-          }
-          if (rule.type === "supports" && hasResourceInSupportsCondition(rule.value.condition)) {
-            problems.push("condition");
-          }
-          verifyRules(rule.value.rules);
+          verifyConditionalRule(rule);
           break;
         case "keyframes":
           ruleCount += rule.value.keyframes.length;
@@ -500,6 +546,84 @@ const toFailure = (scope: TCustomCssScope, rejections: CustomCssRejection[]): TC
   errors: rejections.map((rejection) => rejection.toError(scope)),
 });
 
+interface TField {
+  appearance: TCustomCssAppearance;
+  /** `null` when the field is empty or whitespace only. */
+  source: string | null;
+}
+
+/** The pre-scan, which bounds depth and rule count (across both fields) before the native parser sees the source. */
+const prescanFields = (fields: TField[]): CustomCssRejection[] => {
+  const rejections: CustomCssRejection[] = [];
+  let blocks = 0;
+  for (const field of fields) {
+    if (!field.source) continue;
+    const scan = prescanCustomCss(field.source, {
+      maxNestingDepth: CUSTOM_CSS_MAX_NESTING_DEPTH,
+      maxFunctionDepth: CUSTOM_CSS_MAX_FUNCTION_DEPTH,
+      maxBlocks: CUSTOM_CSS_MAX_RULES - blocks,
+    });
+    if (scan.ok) {
+      blocks += scan.blocks;
+    } else {
+      rejections.push(
+        new CustomCssRejection("limit_exceeded", LIMIT_REASONS[scan.kind], field.appearance, {
+          line: scan.line,
+          column: scan.column,
+        })
+      );
+    }
+  }
+  return rejections;
+};
+
+/** Wraps a compiled field in its layer, then checks it against the budget and verifies it (pass 2). */
+const wrapAndVerifyField = (css: string, ctx: TFieldContext): string => {
+  const wrapped = `@layer ${ctx.layer}{${css}}`;
+  if (Buffer.byteLength(wrapped, "utf8") > ctx.outputBudget) {
+    throw new CustomCssRejection(
+      "output_too_large",
+      `The processed CSS would exceed the ${formatKilobytes(ctx.outputBudget)} limit.`,
+      ctx.appearance
+    );
+  }
+  verifyCompiledField(wrapped, ctx);
+  return wrapped;
+};
+
+/** Compiles and verifies each field; dark CSS may use the keyframes its light CSS defines. */
+const compileFields = (
+  fields: TField[],
+  options: { scope: TCustomCssScope; budget: number; blockExternalResources: boolean; sink: WarningSink }
+): { compiled: Record<TCustomCssAppearance, string | null>; rejections: CustomCssRejection[] } => {
+  const compiled: Record<TCustomCssAppearance, string | null> = { light: null, dark: null };
+  const rejections: CustomCssRejection[] = [];
+  let lightKeyframes = new Map<string, string>();
+  for (const field of fields) {
+    if (!field.source) continue;
+    const ctx: TFieldContext = {
+      appearance: field.appearance,
+      dark: field.appearance === "dark",
+      layer: getCustomCssLayerName(options.scope, field.appearance),
+      policy: { blockExternalResources: options.blockExternalResources },
+      sink: options.sink,
+      keyframes: new Map(),
+      inheritedKeyframes: field.appearance === "dark" ? lightKeyframes : new Map(),
+      printedSelectorSize: 0,
+      outputBudget: options.budget,
+    };
+    try {
+      const css = compileField(field.source, ctx);
+      if (field.appearance === "light") lightKeyframes = ctx.keyframes;
+      compiled[field.appearance] = wrapAndVerifyField(css, ctx);
+    } catch (error) {
+      if (!(error instanceof CustomCssRejection)) throw error;
+      rejections.push(error);
+    }
+  }
+  return { compiled, rejections };
+};
+
 /**
  * The one custom CSS processor (ENG-2950), shared by preview, validation and every save path, and by
  * delivery when stored output predates the current processor version.
@@ -523,7 +647,7 @@ export const processCustomCss = (
     }
 
     const budget = CUSTOM_CSS_MAX_SOURCE_BYTES[scope];
-    const fields = APPEARANCES.map((appearance) => {
+    const fields: TField[] = APPEARANCES.map((appearance) => {
       const value = args.input[appearance];
       return { appearance, source: typeof value === "string" && value.trim() !== "" ? value : null };
     });
@@ -543,64 +667,12 @@ export const processCustomCss = (
       ]);
     }
 
-    // Then the pre-scan, which bounds depth and rule count before the native parser sees the source.
-    const rejections: CustomCssRejection[] = [];
-    let blocks = 0;
-    for (const field of fields) {
-      if (!field.source) continue;
-      const scan = prescanCustomCss(field.source, {
-        maxNestingDepth: CUSTOM_CSS_MAX_NESTING_DEPTH,
-        maxFunctionDepth: CUSTOM_CSS_MAX_FUNCTION_DEPTH,
-        maxBlocks: CUSTOM_CSS_MAX_RULES - blocks,
-      });
-      if (scan.ok) {
-        blocks += scan.blocks;
-      } else {
-        rejections.push(
-          new CustomCssRejection("limit_exceeded", LIMIT_REASONS[scan.kind], field.appearance, {
-            line: scan.line,
-            column: scan.column,
-          })
-        );
-      }
-    }
-    if (rejections.length > 0) return toFailure(scope, rejections);
+    // Then the pre-scan, before the native parser sees the source.
+    const prescanRejections = prescanFields(fields);
+    if (prescanRejections.length > 0) return toFailure(scope, prescanRejections);
 
     const sink = new WarningSink(scope);
-    const compiled: Record<TCustomCssAppearance, string | null> = { light: null, dark: null };
-    let lightKeyframes = new Map<string, string>();
-    for (const field of fields) {
-      if (!field.source) continue;
-      const layer = getCustomCssLayerName(scope, field.appearance);
-      const ctx: TFieldContext = {
-        appearance: field.appearance,
-        dark: field.appearance === "dark",
-        layer,
-        policy: { blockExternalResources },
-        sink,
-        keyframes: new Map(),
-        inheritedKeyframes: field.appearance === "dark" ? lightKeyframes : new Map(),
-        printedSelectorSize: 0,
-        outputBudget: budget,
-      };
-      try {
-        const css = compileField(field.source, ctx);
-        if (field.appearance === "light") lightKeyframes = ctx.keyframes;
-        const wrapped = `@layer ${layer}{${css}}`;
-        if (Buffer.byteLength(wrapped, "utf8") > budget) {
-          throw new CustomCssRejection(
-            "output_too_large",
-            `The processed CSS would exceed the ${formatKilobytes(budget)} limit.`,
-            field.appearance
-          );
-        }
-        verifyCompiledField(wrapped, ctx);
-        compiled[field.appearance] = wrapped;
-      } catch (error) {
-        if (!(error instanceof CustomCssRejection)) throw error;
-        rejections.push(error);
-      }
-    }
+    const { compiled, rejections } = compileFields(fields, { scope, budget, blockExternalResources, sink });
     if (rejections.length > 0) return toFailure(scope, rejections);
 
     const outputBytes = APPEARANCES.reduce(

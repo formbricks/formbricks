@@ -1,6 +1,7 @@
 import type { Declaration } from "lightningcss";
 import type { TCustomCssWarningCode } from "@formbricks/types/custom-css";
 import {
+  ALLOWED_ALL_KEYWORDS,
   ALLOWED_POSITION_KEYWORDS,
   ALLOWED_POSITION_VALUES,
   ALLOWED_URL_PROTOCOLS,
@@ -42,6 +43,8 @@ export const DECLARATION_REASONS = {
   urlScheme: "This URL scheme is not allowed; the declaration was removed.",
   fixedPosition: "position: fixed is not allowed; use absolute or sticky inside the survey instead.",
   positionValue: "position must be static, relative, absolute or sticky written out, not computed.",
+  allValue:
+    "all must be initial, unset, revert or revert-layer, so it cannot inherit position from the page.",
   htmlComment: "HTML comment markers are not allowed in values.",
 } as const;
 
@@ -105,6 +108,44 @@ interface TValueFinding {
   location: TIssueLocation | null;
 }
 
+/** Script-capable functions and HTML comment markers: removed under every policy. */
+const findUnsafeValue = (node: TRecord, functionName: string | null): TValueFinding | null => {
+  if (functionName !== null && Object.hasOwn(UNSAFE_FUNCTIONS, functionName)) {
+    return { code: "unsafe_value_removed", reason: UNSAFE_FUNCTIONS[functionName], location: null };
+  }
+  if (node.type === "cdo" || node.type === "cdc") {
+    return { code: "unsafe_value_removed", reason: DECLARATION_REASONS.htmlComment, location: null };
+  }
+  return null;
+};
+
+/** A resource in this node: removed under the URL policy, scheme-checked without it. */
+const findResource = (
+  node: TRecord,
+  functionName: string | null,
+  policy: TDeclarationPolicy
+): TValueFinding | null => {
+  const url = getUrlNode(node);
+  const location = url ? fromOneBasedLocation(url.loc) : null;
+  const isResourceFunction = functionName !== null && RESOURCE_FUNCTIONS.has(functionName);
+  if (policy.blockExternalResources) {
+    const isResource = url !== null || isResourceFunction || node.type === "image-set";
+    return isResource
+      ? { code: "external_resource_removed", reason: DECLARATION_REASONS.externalResource, location }
+      : null;
+  }
+  const candidates: string[] = url ? [url.url] : [];
+  if (isResourceFunction) collectStringArguments(node.value, candidates);
+  return candidates.some((candidate) => !isAllowedUrl(candidate))
+    ? { code: "unsafe_value_removed", reason: DECLARATION_REASONS.urlScheme, location }
+    : null;
+};
+
+/** Pushes `items` so that they pop off `stack` in their original order. */
+const pushInOrder = (stack: unknown[], items: unknown[]): void => {
+  for (let index = items.length - 1; index >= 0; index--) stack.push(items[index]);
+};
+
 /**
  * Walks a value and returns the first problem: script-capable functions and HTML comment markers first
  * (always removed), then resources (removed under the URL policy, scheme-checked without it).
@@ -115,45 +156,16 @@ export const scanValue = (value: unknown, policy: TDeclarationPolicy): TValueFin
   while (stack.length > 0) {
     const node = stack.pop();
     if (Array.isArray(node)) {
-      for (let index = node.length - 1; index >= 0; index--) stack.push(node[index]);
+      pushInOrder(stack, node);
       continue;
     }
     if (!isRecord(node)) continue;
 
     const functionName = getFunctionName(node);
-    if (functionName !== null && Object.hasOwn(UNSAFE_FUNCTIONS, functionName)) {
-      return { code: "unsafe_value_removed", reason: UNSAFE_FUNCTIONS[functionName], location: null };
-    }
-    if (node.type === "cdo" || node.type === "cdc") {
-      return { code: "unsafe_value_removed", reason: DECLARATION_REASONS.htmlComment, location: null };
-    }
-
-    if (!resource) {
-      const url = getUrlNode(node);
-      const isResourceFunction = functionName !== null && RESOURCE_FUNCTIONS.has(functionName);
-      if (policy.blockExternalResources) {
-        if (url || isResourceFunction || node.type === "image-set") {
-          resource = {
-            code: "external_resource_removed",
-            reason: DECLARATION_REASONS.externalResource,
-            location: url ? fromOneBasedLocation(url.loc) : null,
-          };
-        }
-      } else {
-        const candidates: string[] = url ? [url.url] : [];
-        if (isResourceFunction) collectStringArguments(node.value, candidates);
-        if (candidates.some((candidate) => !isAllowedUrl(candidate))) {
-          resource = {
-            code: "unsafe_value_removed",
-            reason: DECLARATION_REASONS.urlScheme,
-            location: url ? fromOneBasedLocation(url.loc) : null,
-          };
-        }
-      }
-    }
-
-    const children = Object.values(node);
-    for (let index = children.length - 1; index >= 0; index--) stack.push(children[index]);
+    const unsafe = findUnsafeValue(node, functionName);
+    if (unsafe) return unsafe;
+    resource ??= findResource(node, functionName, policy);
+    pushInOrder(stack, Object.values(node));
   }
   return resource;
 };
@@ -201,6 +213,25 @@ const getSignificantTokens = (value: unknown): unknown[] =>
       )
     : [];
 
+/** ASCII lowercasing only, so no non-ASCII letter can lowercase into an allowed keyword. */
+const toAsciiLowerCase = (value: string): string =>
+  value.replaceAll(/[A-Z]/g, (letter) => letter.toLowerCase());
+
+/** The one identifier an unparsed or custom value consists of, ASCII-lowercased; null for anything else. */
+const getSoleKeyword = (declaration: Declaration): string | null => {
+  const tokens =
+    declaration.property === "unparsed" || declaration.property === "custom"
+      ? getSignificantTokens(declaration.value.value)
+      : [];
+  const only = tokens.length === 1 && isRecord(tokens[0]) ? tokens[0] : null;
+  return only?.type === "token" &&
+    isRecord(only.value) &&
+    only.value.type === "ident" &&
+    typeof only.value.value === "string"
+    ? toAsciiLowerCase(only.value.value)
+    : null;
+};
+
 const checkPosition = (declaration: Declaration): TDeclarationVerdict => {
   if (declaration.property === "position") {
     if (declaration.value.type === "fixed") {
@@ -220,15 +251,7 @@ const checkPosition = (declaration: Declaration): TDeclarationVerdict => {
           location: null,
         };
   }
-  const tokens =
-    declaration.property === "unparsed" || declaration.property === "custom"
-      ? getSignificantTokens(declaration.value.value)
-      : [];
-  const only = tokens.length === 1 && isRecord(tokens[0]) ? tokens[0] : null;
-  const keyword =
-    only && only.type === "token" && isRecord(only.value) && only.value.type === "ident"
-      ? String(only.value.value).toLowerCase()
-      : null;
+  const keyword = getSoleKeyword(declaration);
   if (keyword === "fixed") {
     return {
       ok: false,
@@ -246,6 +269,26 @@ const checkPosition = (declaration: Declaration): TDeclarationVerdict => {
   };
 };
 
+/**
+ * `all` sets `position` too, so it gets the same keyword rule. lightningcss parses a keyword `all` into its
+ * own declaration (escapes decoded, keyword lowercased) and rejects `var()` or `env()` there as a syntax
+ * error; an unparsed `all` is still held to a single allowed keyword, so anything else is removed.
+ */
+const checkAll = (declaration: Declaration): TDeclarationVerdict => {
+  const keyword =
+    declaration.property === "all" && typeof declaration.value === "string"
+      ? declaration.value
+      : getSoleKeyword(declaration);
+  if (keyword !== null && ALLOWED_ALL_KEYWORDS.has(keyword)) return { ok: true };
+  return { ok: false, code: "unsafe_value_removed", reason: DECLARATION_REASONS.allValue, location: null };
+};
+
+/** Properties whose value must also pass an allowlist, beyond the value scan every declaration gets. */
+const PROPERTY_CHECKS = new Map<string, (declaration: Declaration) => TDeclarationVerdict>([
+  ["position", checkPosition],
+  ["all", checkAll],
+]);
+
 /** Whether a declaration may stay, and if not, why. Used on the way in and again on the final output. */
 export const checkDeclaration = (
   declaration: Declaration,
@@ -260,8 +303,9 @@ export const checkDeclaration = (
       location: null,
     };
   }
-  if (property === "position") {
-    const verdict = checkPosition(declaration);
+  const checkProperty = PROPERTY_CHECKS.get(property);
+  if (checkProperty) {
+    const verdict = checkProperty(declaration);
     if (!verdict.ok) return verdict;
   }
   const finding = scanValue(declaration.value, policy);
@@ -295,8 +339,7 @@ export const renameKeyframeReferences = (
     ANIMATION_PROPERTIES.has(declaration.value.propertyId.property.toLowerCase())
   ) {
     for (const token of declaration.value.value) {
-      if (token.type === "token") renameNode(token.value);
-      else if (token.type === "animation-name") renameNode(token.value);
+      if (token.type === "token" || token.type === "animation-name") renameNode(token.value);
     }
   }
 };

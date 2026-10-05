@@ -1,3 +1,4 @@
+import { createContext } from "preact";
 import {
   CUSTOM_CSS_LAYER_ORDER,
   type TCustomCssCompiled,
@@ -86,6 +87,13 @@ const recordDiagnostic = (diagnostic: TCustomCssDiagnostic): void => {
 export const getCustomCssDiagnostics = (): readonly TCustomCssDiagnostic[] => [...diagnostics];
 
 export const getCustomCssGeneration = (): number => generation;
+
+/**
+ * The generation of the `renderSurvey` call that mounted a survey tree. Provided by `renderSurvey` per
+ * render, so a survey's own re-renders (state, appearance) keep the generation it was rendered with and
+ * its teardown can never release CSS that a later survey applied. `null` outside `renderSurvey`.
+ */
+export const CustomCssOwnerContext = createContext<number | null>(null);
 
 const isOptionalString = (value: unknown): boolean => value === undefined || typeof value === "string";
 

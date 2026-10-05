@@ -24,6 +24,12 @@ export type TCustomCssWriteOutcome =
   | { ok: false; code: "invalid_css"; errors: TCustomCssError[] }
   | { ok: false; code: "plan_required" };
 
+/**
+ * A workspace save also returns, when it wrote, the revision it replaced as read under the row lock, so
+ * an audit entry describes this save even when another writer changed the CSS just before it.
+ */
+export type TWorkspaceCustomCssWriteOutcome = TCustomCssWriteOutcome & { replaced?: TCustomCssStored | null };
+
 /** What a write does to the stored CSS, judged on normalized source only — never on compiled output. */
 export type TCustomCssChange = "unchanged" | "removal" | "edit";
 
@@ -99,9 +105,9 @@ export type TCustomCssPreview =
   | { ok: false; errors: TCustomCssError[] };
 
 /** The processor, with a throw turned into the same `processing_failed` error a rejection carries. */
-const runProcessor = async (scope: TCustomCssScope, source: TCustomCssInput) => {
+const runProcessor = (scope: TCustomCssScope, source: TCustomCssInput) => {
   try {
-    return await processCustomCss({ scope, input: source });
+    return processCustomCss({ scope, input: source });
   } catch (error) {
     logger.error({ error, scope }, "Custom CSS processor threw");
     return {
@@ -123,16 +129,17 @@ const runProcessor = async (scope: TCustomCssScope, source: TCustomCssInput) => 
 /**
  * Dry run for previews and validation (ENG-3641): the same processor every save uses, with no plan check,
  * no write, no timestamp and no cache invalidation. Empty input is valid and compiles to nothing.
+ * Synchronous, like the processor.
  */
-export const previewCustomCss = async (
+export const previewCustomCss = (
   scope: TCustomCssScope,
   input: TCustomCssInput | null
-): Promise<TCustomCssPreview> => {
+): TCustomCssPreview => {
   const source = toProcessableSource(input);
   if (!source) {
     return { ok: true, compiled: { light: null, dark: null }, warnings: [] };
   }
-  const result = await runProcessor(scope, source);
+  const result = runProcessor(scope, source);
   return result.ok
     ? { ok: true, compiled: result.compiled, warnings: result.warnings }
     : { ok: false, errors: result.errors };
@@ -173,7 +180,7 @@ export const resolveCustomCssWrite = async (args: {
   // An edit always leaves at least one field non-empty (clearing everything is a removal).
   const source = toProcessableSource(input) ?? { light: null, dark: null };
 
-  const result = await runProcessor(scope, source);
+  const result = runProcessor(scope, source);
   if (!result.ok) {
     return { ok: false, code: "invalid_css", errors: result.errors };
   }
@@ -204,22 +211,27 @@ export class CustomCssInvalidError extends InvalidInputError {
   }
 }
 
+/** `line 2:4`, `line 2`, or null when the error has no position. */
+const formatErrorLine = (error: TCustomCssError): string | null => {
+  if (error.line === null) {
+    return null;
+  }
+  const line = `line ${String(error.line)}`;
+  return error.column === null ? line : `${line}:${String(error.column)}`;
+};
+
 /** One bounded sentence for a toast or log line; the processor's reasons never echo customer source. */
 export const formatCustomCssErrorsMessage = (errors: TCustomCssError[]): string => {
   const first = errors[0];
   if (!first) {
     return "Custom CSS could not be processed.";
   }
-  const where = [
-    first.appearance ? `${first.appearance} CSS` : null,
-    first.line === null
-      ? null
-      : `line ${String(first.line)}${first.column === null ? "" : `:${String(first.column)}`}`,
-  ]
+  const where = [first.appearance ? `${first.appearance} CSS` : null, formatErrorLine(first)]
     .filter(Boolean)
     .join(", ");
+  const location = where ? ` (${where})` : "";
   const more = errors.length > 1 ? ` (+${String(errors.length - 1)} more)` : "";
-  return `Custom CSS could not be saved${where ? ` (${where})` : ""}: ${first.reason}${more}`;
+  return `Custom CSS could not be saved${location}: ${first.reason}${more}`;
 };
 
 /** {@link resolveCustomCssWrite} for exception-style callers: the outcome on success, typed errors otherwise. */
@@ -359,7 +371,7 @@ const readWorkspaceCustomCss = async (
 const commitWorkspaceCustomCss = async <TOutcome extends TCustomCssWriteOutcome | null>(
   workspaceId: string,
   organizationId: string,
-  decide: (current: TCustomCssStored | null) => Promise<TOutcome>
+  decide: (current: TCustomCssStored | null) => TOutcome | Promise<TOutcome>
 ): Promise<{ outcome: TOutcome; current: TCustomCssStored | null }> =>
   prisma.$transaction(
     async (tx) => {
@@ -405,36 +417,50 @@ export const updateWorkspaceCustomCss = async (args: {
   workspaceId: string;
   organizationId: string;
   input: TCustomCssInput | null;
-}): Promise<TCustomCssWriteOutcome> => {
+}): Promise<TWorkspaceCustomCssWriteOutcome> => {
   const { workspaceId, organizationId, input } = args;
   const resolve = (existing: TCustomCssStored | null) =>
     resolveCustomCssWrite({ scope: "workspace", organizationId, existing, input });
-  const finish = async (outcome: TCustomCssWriteOutcome): Promise<TCustomCssWriteOutcome> => {
-    if (outcome.ok && outcome.changed) {
-      await invalidateCustomCssCaches(workspaceId);
+  const finish = async (
+    outcome: TCustomCssWriteOutcome,
+    replaced: TCustomCssStored | null
+  ): Promise<TWorkspaceCustomCssWriteOutcome> => {
+    if (!outcome.ok || !outcome.changed) {
+      return outcome;
     }
-    return outcome;
+    await invalidateCustomCssCaches(workspaceId);
+    return { ...outcome, replaced };
   };
 
-  let existing = await readWorkspaceCustomCss(workspaceId, organizationId);
-  for (let attempt = 0; attempt < WORKSPACE_CUSTOM_CSS_OPTIMISTIC_ATTEMPTS; attempt++) {
+  // Resolves against `existing` and persists only if the row still holds it; on a conflict, tries again
+  // against the newer value while optimistic attempts remain, then decides under the lock.
+  const save = async (
+    existing: TCustomCssStored | null,
+    attemptsLeft: number
+  ): Promise<TWorkspaceCustomCssWriteOutcome> => {
+    if (attemptsLeft === 0) {
+      const { outcome, current } = await commitWorkspaceCustomCss(workspaceId, organizationId, resolve);
+      return await finish(outcome, current);
+    }
+
     const resolved = await resolve(existing);
     if (!resolved.ok || !resolved.changed) {
       return resolved;
     }
 
-    const expected = existing;
-    const commit = await commitWorkspaceCustomCss(workspaceId, organizationId, async (current) =>
-      isSameStoredCustomCss(current, expected) ? resolved : null
+    const commit = await commitWorkspaceCustomCss(workspaceId, organizationId, (current) =>
+      isSameStoredCustomCss(current, existing) ? resolved : null
     );
     if (commit.outcome) {
-      return await finish(commit.outcome);
+      return await finish(commit.outcome, commit.current);
     }
-    existing = commit.current;
-  }
+    return await save(commit.current, attemptsLeft - 1);
+  };
 
-  const { outcome } = await commitWorkspaceCustomCss(workspaceId, organizationId, resolve);
-  return await finish(outcome);
+  return await save(
+    await readWorkspaceCustomCss(workspaceId, organizationId),
+    WORKSPACE_CUSTOM_CSS_OPTIMISTIC_ATTEMPTS
+  );
 };
 
 export type TCopiedSurveyCustomCss = {

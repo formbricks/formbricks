@@ -17,7 +17,7 @@ export const BLOCK_EXTERNAL_CUSTOM_CSS_RESOURCES = true as const;
  * output format — and on every `lightningcss` upgrade (its printer and minifier shape the output).
  * Stored output compiled under another version is reprocessed from source before delivery.
  */
-const CUSTOM_CSS_PROCESSOR_REVISION = 2;
+const CUSTOM_CSS_PROCESSOR_REVISION = 3;
 
 /** The lightningcss version the revision above was produced with; a unit test pins the installed one. */
 export const CUSTOM_CSS_LIGHTNINGCSS_VERSION = "1.32.0";
@@ -168,6 +168,12 @@ export const RESOURCE_FUNCTIONS = new Set([
  */
 export const ALLOWED_POSITION_VALUES = new Set(["static", "relative", "absolute", "sticky"]);
 export const ALLOWED_POSITION_KEYWORDS = new Set(["initial", "unset", "revert", "revert-layer"]);
+
+/**
+ * `all` keywords that reset every property instead of copying it: `all: inherit` would take
+ * `position: fixed` from a host container, so `all` is held to the same keywords as `position`.
+ */
+export const ALLOWED_ALL_KEYWORDS = new Set(["initial", "unset", "revert", "revert-layer"]);
 
 /** URL schemes allowed only when the URL policy is off. Relative URLs resolve against the page (https). */
 export const ALLOWED_URL_PROTOCOLS = new Set(["https:", "http:"]);

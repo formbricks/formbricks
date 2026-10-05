@@ -158,7 +158,7 @@ describe("updateSurveyInternal custom CSS", () => {
   });
 
   test("CSS the processor rejects fails the save and keeps the stored revision", async () => {
-    vi.mocked(processCustomCss).mockResolvedValue({
+    vi.mocked(processCustomCss).mockReturnValue({
       ok: false,
       errors: [
         {

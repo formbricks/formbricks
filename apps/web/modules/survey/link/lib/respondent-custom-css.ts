@@ -67,7 +67,7 @@ export const resolveRespondentCustomCss = async ({
 }: {
   organizationId: string;
   workspaceCustomCss: TStoredCustomCss;
-  surveys: ReadonlyArray<{ id: string; customCss?: TStoredCustomCss }>;
+  surveys: ReadonlyArray<{ id: string; customCss?: TCustomCssStored | null }>;
 }): Promise<TRespondentCustomCss> => {
   const result: TRespondentCustomCss = { surveys: new Map() };
   const surveysWithCss = surveys.filter((survey) => Boolean(survey.customCss));
@@ -119,6 +119,6 @@ export const getLinkSurveyCustomCss = async ({
  * The survey object a respondent's browser may receive: its stored custom CSS (which carries the
  * editable source) removed. Compiled CSS travels separately, through the renderer's `customCss` prop.
  */
-export const omitCustomCssSource = <T extends { customCss?: TStoredCustomCss }>(
+export const omitCustomCssSource = <T extends { customCss?: TCustomCssStored | null }>(
   survey: T
 ): Omit<T, "customCss"> & { customCss: null } => ({ ...survey, customCss: null });

@@ -125,40 +125,44 @@ const withArgumentSelectors = (component: SelectorComponent, args: Selector[]): 
   return component;
 };
 
+/** Why the processor does not support this one component (its arguments aside), or null. */
+const getUnsupportedReason = (
+  component: SelectorComponent,
+  options: { allowNesting: boolean }
+): string | null => {
+  switch (component.type) {
+    case "combinator":
+      return ALLOWED_COMBINATORS.has(component.value) ? null : SELECTOR_REASONS.combinator;
+    case "namespace":
+      return SELECTOR_REASONS.namespace;
+    case "attribute":
+      return component.namespace ? SELECTOR_REASONS.namespace : null;
+    case "nesting":
+      return options.allowNesting ? null : SELECTOR_REASONS.nestingAtTopLevel;
+    case "pseudo-class":
+      return Object.hasOwn(UNSAFE_PSEUDO_CLASSES, component.kind)
+        ? `${UNSAFE_PSEUDO_CLASSES[component.kind]} is not supported.`
+        : null;
+    case "pseudo-element":
+      return Object.hasOwn(UNSAFE_PSEUDO_ELEMENTS, component.kind)
+        ? `${UNSAFE_PSEUDO_ELEMENTS[component.kind]} is not supported.`
+        : null;
+    default:
+      return null;
+  }
+};
+
 /** The first construct the processor does not support, as a reason, or null. Recurses into arguments. */
 export const findUnsupportedComponent = (
   selector: Selector,
   options: { allowNesting: boolean }
 ): string | null => {
   for (const component of selector) {
-    switch (component.type) {
-      case "combinator":
-        if (!ALLOWED_COMBINATORS.has(component.value)) return SELECTOR_REASONS.combinator;
-        break;
-      case "namespace":
-        return SELECTOR_REASONS.namespace;
-      case "attribute":
-        if (component.namespace) return SELECTOR_REASONS.namespace;
-        break;
-      case "nesting":
-        if (!options.allowNesting) return SELECTOR_REASONS.nestingAtTopLevel;
-        break;
-      case "pseudo-class":
-        if (Object.hasOwn(UNSAFE_PSEUDO_CLASSES, component.kind)) {
-          return `${UNSAFE_PSEUDO_CLASSES[component.kind]} is not supported.`;
-        }
-        break;
-      case "pseudo-element":
-        if (Object.hasOwn(UNSAFE_PSEUDO_ELEMENTS, component.kind)) {
-          return `${UNSAFE_PSEUDO_ELEMENTS[component.kind]} is not supported.`;
-        }
-        break;
-      default:
-        break;
-    }
+    const reason = getUnsupportedReason(component, options);
+    if (reason) return reason;
     for (const argument of getCheckedArguments(component)) {
-      const reason = findUnsupportedComponent(argument, options);
-      if (reason) return reason;
+      const argumentReason = findUnsupportedComponent(argument, options);
+      if (argumentReason) return argumentReason;
     }
   }
   return null;
@@ -168,18 +172,24 @@ export const findUnsupportedComponent = (
 export const splitCompounds = (
   selector: Selector
 ): { compounds: SelectorComponent[][]; combinators: string[] } => {
-  const compounds: SelectorComponent[][] = [[]];
+  let current: SelectorComponent[] = [];
+  const compounds: SelectorComponent[][] = [current];
   const combinators: string[] = [];
   for (const component of selector) {
     if (component.type === "combinator") {
       combinators.push(component.value);
-      compounds.push([]);
+      current = [];
+      compounds.push(current);
     } else {
-      compounds[compounds.length - 1].push(component);
+      current.push(component);
     }
   }
   return { compounds, combinators };
 };
+
+/** The compound a selector's subject is in: its last one. */
+const getSubjectCompound = (selector: Selector): SelectorComponent[] =>
+  splitCompounds(selector).compounds.at(-1) ?? [];
 
 /**
  * Whether a compound reads the siblings of the element it matches through `:has(+ …)` / `:has(~ …)`,
@@ -197,10 +207,9 @@ const readsSiblingsThroughHas = (compound: SelectorComponent[]): boolean =>
       );
     }
     if (!SAME_ELEMENT_KINDS.has(component.kind)) return false;
-    return getArgumentSelectors(component).some((argument) => {
-      const { compounds } = splitCompounds(argument);
-      return readsSiblingsThroughHas(compounds[compounds.length - 1]);
-    });
+    return getArgumentSelectors(component).some((argument) =>
+      readsSiblingsThroughHas(getSubjectCompound(argument))
+    );
   });
 
 const joinCompounds = (compounds: SelectorComponent[][], combinators: string[]): Selector => {
@@ -315,6 +324,30 @@ export const scopeNestedSelector = (
   return { ok: true, selector: selector.map(rewriteRootAliases), subject };
 };
 
+/** `#fbjs` itself, with the dark attribute when the CSS is dark. */
+const isCompiledRootAnchor = (compound: SelectorComponent[], dark: boolean): boolean =>
+  compound.some((component) => component.type === "id" && component.name === SURVEY_ROOT_ID) &&
+  (!dark || compound.some(isDarkAttribute));
+
+/** An `:is()` whose every argument verifies anchors where its arguments do; anything else is null. */
+const getMatchesAnyAnchor = (component: SelectorComponent, dark: boolean): TSubjectPosition | null => {
+  if (component.type !== "pseudo-class" || !MATCHES_ANY_KINDS.has(component.kind)) return null;
+  const args = getArgumentSelectors(component);
+  const positions = args.map((argument) => verifyCompiledSelector(argument, dark));
+  if (args.length === 0 || !positions.every((position) => position !== null)) return null;
+  return positions.includes("root") ? "root" : "inside";
+};
+
+/** Where a compiled selector's first compound anchors it, or null when it is not anchored. */
+const findCompiledAnchor = (first: SelectorComponent[], dark: boolean): TSubjectPosition | null => {
+  if (isCompiledRootAnchor(first, dark)) return "root";
+  for (const component of first) {
+    const anchor = getMatchesAnyAnchor(component, dark);
+    if (anchor) return anchor;
+  }
+  return null;
+};
+
 /**
  * Verifies a selector in the final, flattened output: anchored on `#fbjs` (with the dark attribute for
  * dark CSS) or on an `:is()` whose every argument is, with no sibling step off the root. Returns where
@@ -326,23 +359,7 @@ export const verifyCompiledSelector = (selector: Selector, dark: boolean): TSubj
   if (compounds.some((compound) => compound.length === 0)) return null;
 
   const first = compounds[0];
-  let anchor: TSubjectPosition | null = null;
-  if (
-    first.some((component) => component.type === "id" && component.name === SURVEY_ROOT_ID) &&
-    (!dark || first.some(isDarkAttribute))
-  ) {
-    anchor = "root";
-  } else {
-    for (const component of first) {
-      if (component.type !== "pseudo-class" || !MATCHES_ANY_KINDS.has(component.kind)) continue;
-      const args = getArgumentSelectors(component);
-      const positions = args.map((argument) => verifyCompiledSelector(argument, dark));
-      if (args.length > 0 && positions.every((position) => position !== null)) {
-        anchor = positions.includes("root") ? "root" : "inside";
-        break;
-      }
-    }
-  }
+  const anchor = findCompiledAnchor(first, dark);
   if (!anchor) return null;
   if (anchor === "root" && readsSiblingsThroughHas(first)) return null;
   return walkFromAnchor(anchor, combinators);
@@ -353,13 +370,7 @@ const isQualifiedCompound = (compound: SelectorComponent[]): boolean =>
     if (QUALIFYING_TYPES.has(component.type)) return true;
     if (component.type !== "pseudo-class" || !MATCHES_ANY_KINDS.has(component.kind)) return false;
     const args = getArgumentSelectors(component);
-    return (
-      args.length > 0 &&
-      args.every((argument) => {
-        const { compounds } = splitCompounds(argument);
-        return isQualifiedCompound(compounds[compounds.length - 1]);
-      })
-    );
+    return args.length > 0 && args.every((argument) => isQualifiedCompound(getSubjectCompound(argument)));
   });
 
 export interface TSelectorMetrics {

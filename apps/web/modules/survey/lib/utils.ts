@@ -2,6 +2,7 @@ import "server-only";
 import { Prisma } from "@formbricks/database/prisma";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
+import { sanitizeThemeStyling } from "@formbricks/types/styling-values";
 import { TSurvey, TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 import { withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 
@@ -24,6 +25,10 @@ export const transformPrismaSurvey = <T extends TSurvey | TJsWorkspaceStateSurve
     displayPercentage: Number(surveyPrisma.displayPercentage) || null,
     segment,
     customHeadScriptsMode: surveyPrisma.customHeadScriptsMode,
+    // Rows saved before the strict theme-value schemas (ENG-2950) may hold values a save now refuses.
+    // Dropping them here keeps an unrelated save of this survey from failing on a field nobody touched;
+    // the renderer drops the same values, so nothing a respondent sees changes.
+    ...(surveyPrisma.styling && { styling: sanitizeThemeStyling(surveyPrisma.styling) }),
   } as T;
 
   return transformedSurvey;

@@ -27,7 +27,7 @@ describe("one processor for preview and save", () => {
   test.each(["survey", "workspace"] as const)("%s scope: preview and save agree", async (scope) => {
     vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(true);
 
-    const preview = await previewCustomCss(scope, SOURCE);
+    const preview = previewCustomCss(scope, SOURCE);
     const saved = await resolveCustomCssWrite({
       scope,
       organizationId: "org_1",
@@ -52,7 +52,7 @@ describe("one processor for preview and save", () => {
     vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(true);
     const broken = { light: '[data-fb-part="headline"] { color: red } }', dark: null };
 
-    const preview = await previewCustomCss("survey", broken);
+    const preview = previewCustomCss("survey", broken);
     const saved = await resolveCustomCssWrite({
       scope: "survey",
       organizationId: "org_1",

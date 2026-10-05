@@ -8,10 +8,11 @@ import { type InvalidParam, problemCustomCssInvalid, problemCustomCssPlanRequire
 /** Bound on the processor's located errors a single response carries. */
 export const V3_CUSTOM_CSS_MAX_REPORTED_ISSUES = 50;
 
-const position = (issue: TCustomCssError | TCustomCssWarning): string =>
-  issue.line === null
-    ? ""
-    : ` (line ${String(issue.line)}${issue.column === null ? "" : `, column ${String(issue.column)}`})`;
+const position = (issue: TCustomCssError | TCustomCssWarning): string => {
+  if (issue.line === null) return "";
+  const line = `line ${String(issue.line)}`;
+  return issue.column === null ? ` (${line})` : ` (${line}, column ${String(issue.column)})`;
+};
 
 /**
  * The processor's errors as `invalid_params`, named after the field they came from

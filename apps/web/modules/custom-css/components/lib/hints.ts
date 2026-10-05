@@ -10,6 +10,29 @@ const isColorDeclaration = (segment: string): boolean => {
   return COLOR_PROPERTIES.has(segment.slice(0, colonIndex).trim().toLowerCase());
 };
 
+/** The index just past the comment that starts at `index`; an unclosed one runs to the end. */
+const skipComment = (css: string, index: number): number => {
+  const end = css.indexOf("*/", index + 2);
+  return end === -1 ? css.length : end + 2;
+};
+
+/** The index just past the string that starts at `index`; a backslash escapes the character after it. */
+const skipString = (css: string, index: number): number => {
+  const quote = css[index];
+  let end = index + 1;
+  while (end < css.length && css[end] !== quote) {
+    end += css[end] === "\\" ? 2 : 1;
+  }
+  return end + 1;
+};
+
+/** Block depth after a `{`, `;` or `}`; a `}` with no open block is ignored. */
+const getDepthAfter = (char: string, depth: number): number => {
+  if (char === "{") return depth + 1;
+  if (char === "}") return Math.max(0, depth - 1);
+  return depth;
+};
+
 /**
  * Whether a stylesheet declares a text or background color anywhere, nested rules and at-rule
  * blocks included. A single linear pass: comments and strings are skipped, a run of text ended by
@@ -29,33 +52,19 @@ export const setsTextOrBackgroundColor = (css: string): boolean => {
     const char = css[index];
 
     if (char === "/" && css[index + 1] === "*") {
-      const end = css.indexOf("*/", index + 2);
-      index = end === -1 ? css.length : end + 2;
-      continue;
-    }
-
-    if (char === '"' || char === "'") {
-      let end = index + 1;
-      while (end < css.length && css[end] !== char) {
-        end += css[end] === "\\" ? 2 : 1;
-      }
+      index = skipComment(css, index);
+    } else if (char === '"' || char === "'") {
       segment += "''";
-      index = end + 1;
-      continue;
-    }
-
-    if (char === "{") {
-      depth++;
+      index = skipString(css, index);
+    } else if (char === "{" || char === ";" || char === "}") {
+      if (char !== "{" && depth > 0 && isColorDeclaration(segment)) return true;
+      depth = getDepthAfter(char, depth);
       segment = "";
-    } else if (char === ";" || char === "}") {
-      if (depth > 0 && isColorDeclaration(segment)) return true;
-      if (char === "}" && depth > 0) depth--;
-      segment = "";
+      index++;
     } else {
       segment += char;
+      index++;
     }
-
-    index++;
   }
 
   return false;

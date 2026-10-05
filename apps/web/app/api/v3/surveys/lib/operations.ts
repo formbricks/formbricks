@@ -204,13 +204,13 @@ function serializeValidationResult<TDocument extends TV3SurveyDocument>(
  * Custom CSS in a create or patch dry run (ENG-3641): processed only when the payload itself carries a
  * `customCss` key, so an existing validation request gets exactly the response it always did.
  */
-async function previewPayloadCustomCss(data: unknown): Promise<TCustomCssPreview | undefined> {
+function previewPayloadCustomCss(data: unknown): TCustomCssPreview | undefined {
   if (!isPlainObjectBody(data) || !("customCss" in data)) {
     return undefined;
   }
   const parsed = ZV3SurveyCustomCss.safeParse(data.customCss);
   // A malformed value is the schema's to report through `invalid_params`; nothing to process.
-  return parsed.success ? await previewCustomCss("survey", parsed.data) : undefined;
+  return parsed.success ? previewCustomCss("survey", parsed.data) : undefined;
 }
 
 /**
@@ -255,7 +255,7 @@ async function validateV3SurveyCustomCss({
     }
   }
 
-  const preview = await previewCustomCss(body.scope, body.data.customCss);
+  const preview = previewCustomCss(body.scope, body.data.customCss);
   return successResponse(
     preview.ok
       ? {
@@ -1354,7 +1354,7 @@ export async function validateV3Survey({
         serializeValidationResult(
           "create",
           prepareV3SurveyCreateInput(validationBody.data),
-          await previewPayloadCustomCss(validationBody.data)
+          previewPayloadCustomCss(validationBody.data)
         ),
         {
           requestId,
@@ -1391,7 +1391,7 @@ export async function validateV3Survey({
         prepareV3SurveyPatchInput(survey, validationBody.data, {
           reportedVisibility: serializeV3SurveyVisibilityFields(survey, visibility.ownerName, visibility),
         }),
-        await previewPayloadCustomCss(validationBody.data)
+        previewPayloadCustomCss(validationBody.data)
       ),
       {
         requestId,

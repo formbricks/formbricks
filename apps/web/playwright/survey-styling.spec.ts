@@ -448,7 +448,7 @@ test.describe("Survey Styling", async () => {
       await page.getByRole("button", { name: /^Custom CSS/ }).click();
 
       await page.getByRole("button", { name: "Inherited workspace CSS" }).click();
-      await expect(page.getByLabel("Inherited workspace CSS: Base CSS")).toContainText("--acme-ink");
+      await expect(page.getByLabel("Inherited workspace CSS: Base CSS")).toHaveValue(/--acme-ink/);
 
       // Not behind "Add custom styles": survey CSS adds on top of the workspace CSS either way (D16).
       await page.getByLabel("Base CSS", { exact: true }).fill(surveyCss);
