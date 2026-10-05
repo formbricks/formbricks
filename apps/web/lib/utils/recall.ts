@@ -32,10 +32,28 @@ export const extractId = (text: string): string | null => {
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 // If there are multiple recall infos in a string extracts all recall question IDs from that string and construct an array out of it.
+// Deliberately lax — it matches an id with no `/fallback:…#` tail, so a half-typed or half-deleted
+// token still names the element it points at. Callers that need the id of a token the rest of the
+// codebase will actually render want `extractCompleteRecallIds` instead.
 export const extractIds = (text: string): string[] => {
   const pattern = /#recall:([A-Za-z0-9_-]+)/g;
   const matches = Array.from(text.matchAll(pattern));
   return matches.map((match) => match[1]).filter((id) => id !== null);
+};
+
+/**
+ * The ids of the *complete* `#recall:<id>/fallback:<x>#` tokens in a text — the same shape
+ * `extractRecallInfo` matches, so what this returns is exactly what `recallToHeadline` will turn
+ * into an `@Label`.
+ *
+ * ENG-2931: `getRecallItems` used to be built on the lax `extractIds`, so a token the operator had
+ * broken by one keystroke (deleting the closing `#`) still produced a recall item whose `@Label`
+ * `recallToHeadline` had left as raw text. `RecallWrapper` then had an item it could never find in
+ * the rendered text and re-entered its own effect without bound.
+ */
+export const extractCompleteRecallIds = (text: string): string[] => {
+  const pattern = /#recall:([A-Za-z0-9_-]+)\/fallback:[^#]*#/g;
+  return Array.from(text.matchAll(pattern), (match) => match[1]);
 };
 
 // Extracts the fallback value from a string containing the "fallback" pattern.
@@ -222,7 +240,9 @@ export const replaceHeadlineRecall = <T extends TSurvey>(survey: T, language: st
 export const getRecallItems = (text: string, survey: TSurvey, languageCode: string): TSurveyRecallItem[] => {
   if (!text.includes("#recall:")) return [];
 
-  const ids = extractIds(text);
+  // Complete tokens only, so this agrees with `recallToHeadline`/`getFallbackValues` about what a
+  // recall tag is (ENG-2931).
+  const ids = extractCompleteRecallIds(text);
   // Both lists are resolved once for the whole text, not once per token.
   const embeddedFields = getSurveyEmbeddedFields(survey);
   const elements = getElementsFromBlocks(survey.blocks);
