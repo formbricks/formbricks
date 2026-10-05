@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZOverlay } from "../../types/common";
+import { ZOverlayColor, ZOverlayOpacity } from "../../types/overlay";
 import { ZLogo } from "../../types/styling";
 import { ZSurveyBlocks } from "../../types/surveys/blocks";
 import {
@@ -110,6 +111,8 @@ const ZSurveyBase = z.object({
       placement: ZPlacement.nullish(),
       clickOutsideClose: z.boolean().nullish(),
       overlay: ZOverlay.nullish(),
+      overlayColor: ZOverlayColor.nullish(),
+      overlayOpacity: ZOverlayOpacity.nullish(),
     })
     .nullable()
     .describe("Workspace specific overwrites"),

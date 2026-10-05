@@ -4,6 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { selectSurvey } from "@/lib/survey/service";
 import { transformPrismaSurvey } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
@@ -177,15 +178,50 @@ describe("getSurveys (Management API)", () => {
 
 /**
  * ENG-1838. `GET /api/v1/management/surveys` is a public contract: external integrations read
- * `variables` and `hiddenFields` off it, and both come straight from `selectSurvey`. The Embedded
- * Data work added the joined rows alongside them; ENG-2404 will drop the columns underneath.
- *
- * Asserting the select rather than a response body keeps this cheap and still catches the only way
- * it breaks — the keys leaving `selectSurvey`. v2 reads the same constant.
+ * `variables` and `hiddenFields` off it. ENG-2404 dropped the columns they came from, so both are now
+ * derived from the Embedded Data rows `selectSurvey` joins — by `transformPrismaSurvey`, which this
+ * file otherwise mocks. v2 reads the same constant.
  */
 describe("legacy Embedded Data shape on the wire (ENG-1838)", () => {
-  test("selectSurvey still carries variables and hiddenFields", () => {
-    expect(selectSurvey.variables).toBe(true);
-    expect(selectSurvey.hiddenFields).toBe(true);
+  test("selectSurvey carries the rows the two keys are derived from", () => {
+    expect(selectSurvey.embeddedDataLinks).toEqual(selectSurveyEmbeddedDataLinks);
+  });
+
+  test("transformPrismaSurvey derives variables and hiddenFields from those rows", async () => {
+    const actual = await vi.importActual<typeof import("@/lib/survey/utils")>("@/lib/survey/utils");
+    const survey = actual.transformPrismaSurvey<TSurvey>({
+      id: surveyId1,
+      embeddedDataLinks: [
+        {
+          storageKey: "clx000000000000000000001",
+          embeddedData: {
+            id: "ed_1",
+            key: null,
+            name: "score",
+            source: "computed",
+            dataType: "number",
+            defaultValue: 7,
+            locked: false,
+          },
+        },
+        {
+          storageKey: "plan",
+          embeddedData: {
+            id: "ed_2",
+            key: null,
+            name: "plan",
+            source: "ingested",
+            dataType: "string",
+            defaultValue: null,
+            locked: false,
+          },
+        },
+      ],
+    });
+
+    expect(survey.variables).toEqual([
+      { id: "clx000000000000000000001", name: "score", type: "number", value: 7 },
+    ]);
+    expect(survey.hiddenFields).toEqual({ enabled: true, fieldIds: ["plan"] });
   });
 });

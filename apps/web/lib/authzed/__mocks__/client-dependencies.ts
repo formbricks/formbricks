@@ -1,6 +1,7 @@
 import { vi } from "vitest";
 
 export const sdkMocks = {
+  checkBulkPermissions: vi.fn(),
   checkPermission: vi.fn(),
   close: vi.fn(),
   deadlineInterceptor: vi.fn((timeoutMs: number) => ({ timeoutMs })),

@@ -10,6 +10,8 @@ import { processResponsePipelineJob } from "./process-response-pipeline-job";
 vi.mock("node:crypto", async (importOriginal) => await importOriginal());
 
 const {
+  mockCan,
+  mockIsSurveyVisibilityReady,
   mockCaptureSurveyResponsePostHogEvent,
   mockEnqueueResponseCompletedWorkflowRuns,
   mockEnqueueWebhookDeliveryJob,
@@ -33,6 +35,8 @@ const {
   process.env.HUB_API_URL ??= "https://hub.test";
 
   return {
+    mockCan: vi.fn(),
+    mockIsSurveyVisibilityReady: vi.fn(),
     mockCaptureSurveyResponsePostHogEvent: vi.fn(),
     mockEnqueueResponseCompletedWorkflowRuns: vi.fn(),
     mockEnqueueWebhookDeliveryJob: vi.fn(),
@@ -140,6 +144,9 @@ vi.mock("@/modules/ee/workflows/lib/runner/dispatch", () => ({
   dispatchWorkflowRunViaJobs: vi.fn(),
 }));
 
+vi.mock("@/lib/authorization", () => ({ can: mockCan }));
+vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: mockIsSurveyVisibilityReady }));
+
 vi.mock("@formbricks/logger", () => ({
   logger: {
     debug: vi.fn(),
@@ -224,6 +231,7 @@ describe("processResponsePipelineJob", () => {
     mockGetIntegrations.mockResolvedValue([]);
     mockPrismaWebhookFindMany.mockResolvedValue([]);
     mockPrismaUserFindMany.mockResolvedValue([]);
+    mockIsSurveyVisibilityReady.mockResolvedValue(false);
     mockGetResponseCountBySurveyId.mockResolvedValue(7);
     mockGetFinishedResponseCountBySurveyId.mockResolvedValue(1);
     mockHandleIntegrations.mockResolvedValue(undefined);
@@ -380,6 +388,46 @@ describe("processResponsePipelineJob", () => {
     expect(mockEnqueueWebhookDeliveryJob).not.toHaveBeenCalled();
   });
 
+  test("sends nothing out of the app for a restricted survey, even to a wildcard webhook", async () => {
+    mockIsSurveyVisibilityReady.mockResolvedValue(true);
+    mockPrismaSurveyFindUnique.mockResolvedValue({
+      ...survey,
+      followUps: [{ id: "followup_123" }],
+      visibility: "restricted",
+      visibilityProjectedVersion: 2,
+      visibilityVersion: 2,
+    });
+    // An all-surveys webhook matches every survey in the workspace, the restricted one included.
+    mockPrismaWebhookFindMany.mockResolvedValue([webhookRow]);
+    mockGetIntegrations.mockResolvedValue([{ id: "integration_123", type: "slack" }]);
+
+    await processResponsePipelineJob({ ...baseData, event: "responseFinished" }, baseContext);
+
+    expect(mockEnqueueWebhookDeliveryJob).not.toHaveBeenCalled();
+    expect(mockGetIntegrations).not.toHaveBeenCalled();
+    expect(mockHandleIntegrations).not.toHaveBeenCalled();
+    expect(mockSendFollowUpsForResponse).not.toHaveBeenCalled();
+    expect(mockEnqueueResponseCompletedWorkflowRuns).not.toHaveBeenCalled();
+  });
+
+  test("alerts only subscribers who may read the survey's responses once visibility is enforced", async () => {
+    mockIsSurveyVisibilityReady.mockResolvedValue(true);
+    mockPrismaUserFindMany.mockResolvedValue([
+      { email: "owner@example.com", id: "user_owner", locale: "en" },
+      { email: "member@example.com", id: "user_member", locale: "en" },
+    ]);
+    mockCan.mockImplementation(async (actor: { id: string }) => actor.id === "user_owner");
+
+    await processResponsePipelineJob({ ...baseData, event: "responseFinished" }, baseContext);
+
+    expect(mockCan).toHaveBeenCalledWith({ id: "user_member", type: "user" }, "survey.response_read", {
+      id: "survey_123",
+      type: "survey",
+    });
+    expect(mockSendResponseFinishedEmail).toHaveBeenCalledTimes(1);
+    expect(mockSendResponseFinishedEmail.mock.calls[0][0]).toBe("owner@example.com");
+  });
+
   test("processes responseFinished jobs and preserves legacy side effects", async () => {
     mockGetIntegrations.mockResolvedValue([{ id: "integration_123", type: "slack" }]);
     mockPrismaSurveyFindUnique.mockResolvedValue({
@@ -417,7 +465,7 @@ describe("processResponsePipelineJob", () => {
       "UTC"
     );
     expect(mockPrismaUserFindMany).toHaveBeenCalledWith({
-      select: { email: true, locale: true },
+      select: { email: true, id: true, locale: true },
       where: {
         memberships: {
           some: {

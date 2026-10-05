@@ -16,6 +16,7 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { validateResponseData } from "@/modules/api/lib/validation";
 import { validateClientFileUploads } from "@/modules/storage/utils";
@@ -46,6 +47,7 @@ import {
   hydrateV3Responses,
   listV3ResponseKeysetPage,
 } from "./service";
+import { refuseUnlessV3SurveyVisible, resolveV3ResponsesActorContext } from "./visibility";
 import {
   normalizeV3Ttc,
   planAnswerDataWrite,
@@ -141,6 +143,15 @@ export async function deleteV3Response({
       return access;
     }
 
+    const refused = await refuseUnlessV3SurveyVisible(
+      authentication,
+      "response.manage",
+      { type: "response", id: responseId },
+      requestId,
+      instance
+    );
+    if (refused) return refused;
+
     const deleted = await deleteScopedResponse(responseId, { workspaceId });
 
     if (auditLog) {
@@ -206,7 +217,12 @@ export async function batchDeleteV3Responses({
       return access;
     }
 
-    const { deleted, deletedIds } = await deleteScopedResponses(ids, { workspaceId });
+    // ENG-3282: responses of a survey this caller cannot see are scope-filtered out like foreign ids —
+    // simply not counted in `deleted` — rather than refused (contract §7).
+    const visibleSurveyWhere = buildVisibleSurveyWhere(
+      await resolveV3ResponsesActorContext(authentication, access.organizationId)
+    );
+    const { deleted, deletedIds } = await deleteScopedResponses(ids, { visibleSurveyWhere, workspaceId });
 
     if (auditLog) {
       auditLog.organizationId = access.organizationId;
@@ -322,7 +338,22 @@ export async function listV3Responses({
       return read.done(access);
     }
 
+    // ENG-3282: a named survey the caller cannot read answers the same 403 as an unknown one; without
+    // one, its responses are simply absent from the page and the total (contract §7).
+    const surveyRefused = parsed.filter.surveyId
+      ? await refuseUnlessV3SurveyVisible(
+          authentication,
+          "survey.response_read",
+          { type: "survey", id: parsed.filter.surveyId },
+          requestId,
+          instance
+        )
+      : null;
+    if (surveyRefused) return read.done(surveyRefused);
+    const actorContext = await resolveV3ResponsesActorContext(authentication, access.organizationId);
+
     const keysetRows = await listV3ResponseKeysetPage({
+      access: actorContext,
       filter: parsed.filter,
       sortBy: parsed.sortBy,
       limit: parsed.limit,
@@ -349,7 +380,7 @@ export async function listV3Responses({
       hydrateV3Responses(page.map((row) => row.id)),
       getV3ResponseSurveys(pageSurveyIds),
       parsed.includeTotalCount
-        ? countV3Responses({ filter: parsed.filter, precision: "capped" })
+        ? countV3Responses({ access: actorContext, filter: parsed.filter, precision: "capped" })
         : Promise.resolve(null),
     ]);
 
@@ -430,7 +461,19 @@ export async function countV3ResponsesOperation({
       return read.done(access);
     }
 
+    const surveyRefused = parsed.filter.surveyId
+      ? await refuseUnlessV3SurveyVisible(
+          authentication,
+          "survey.response_read",
+          { type: "survey", id: parsed.filter.surveyId },
+          requestId,
+          instance
+        )
+      : null;
+    if (surveyRefused) return read.done(surveyRefused);
+
     const { count, relation } = await countV3Responses({
+      access: await resolveV3ResponsesActorContext(authentication, access.organizationId),
       filter: parsed.filter,
       precision: parsed.precision,
     });
@@ -477,6 +520,15 @@ export async function getV3Response({
     if (access instanceof Response) {
       return read.done(access);
     }
+
+    const refused = await refuseUnlessV3SurveyVisible(
+      authentication,
+      "response.read",
+      { type: "response", id: responseId },
+      requestId,
+      instance
+    );
+    if (refused) return read.done(refused);
 
     const row = await getScopedV3Response(responseId, { workspaceId });
 
@@ -741,6 +793,15 @@ export async function createV3Response({
       return access;
     }
 
+    const refused = await refuseUnlessV3SurveyVisible(
+      authentication,
+      "survey.write",
+      { type: "survey", id: survey.id },
+      requestId,
+      instance
+    );
+    if (refused) return refused;
+
     const plan = await planV3ResponseCreate({ survey, body });
 
     if (!plan.ok) {
@@ -925,6 +986,15 @@ export async function updateV3Response({
     if (access instanceof Response) {
       return access;
     }
+
+    const refused = await refuseUnlessV3SurveyVisible(
+      authentication,
+      "response.write",
+      { type: "response", id: responseId },
+      requestId,
+      instance
+    );
+    if (refused) return refused;
 
     const stored = await getScopedV3Response(responseId, { workspaceId });
 

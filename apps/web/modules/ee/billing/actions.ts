@@ -285,7 +285,9 @@ export const startProTrialAction = authenticatedActionClient.inputSchema(ZStartS
 
     await createProTrialSubscription(parsedInput.organizationId, customerId, trialDays);
     await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId);
-    await syncOrganizationBillingFromStripe(parsedInput.organizationId);
+    const syncedBilling = await syncOrganizationBillingFromStripe(parsedInput.organizationId);
+    // The end date as Stripe recorded it, so lifecycle emails can count down to it.
+    const trialEndTime = new Date(syncedBilling?.stripe?.trialEnd ?? "").getTime();
     // Optimistically grant ai-smart-tools so the onboarding survey page sees it
     // on the very next render, even if Stripe's entitlements API hasn't yet
     // surfaced it. The customer.subscription.created webhook will reconcile.
@@ -310,6 +312,8 @@ export const startProTrialAction = authenticatedActionClient.inputSchema(ZStartS
       "reverse_trial_started",
       {
         organization_id: parsedInput.organizationId,
+        trial_end: Number.isFinite(trialEndTime) ? new Date(trialEndTime).toISOString() : null,
+        trial_duration_days: trialDays,
       },
       { organizationId: parsedInput.organizationId }
     );

@@ -58,7 +58,6 @@ interface NavigationProps {
   isNoLicense: boolean;
   isAccessControlAllowed: boolean;
   responseCount: number;
-  newTrialBannerVariant: string | boolean;
   isFormbricksSurveysConfigured: boolean;
   // Whole days left in the trial, or null when there is no trial to count down. Computed by the
   // server layout: deriving it here would mean reading `Date.now()` during render, which diverges
@@ -136,7 +135,6 @@ export const MainNavigation = ({
   isNoLicense,
   isAccessControlAllowed,
   responseCount,
-  newTrialBannerVariant,
   isFormbricksSurveysConfigured,
   trialDaysRemaining,
 }: Readonly<NavigationProps>) => {
@@ -498,7 +496,6 @@ export const MainNavigation = ({
                 isDevelopment={isDevelopment}
                 latestVersion={latestVersion}
                 trialDaysRemaining={trialDaysRemaining}
-                newTrialBannerVariant={newTrialBannerVariant}
                 organization={organization}
                 responseCount={responseCount}
               />

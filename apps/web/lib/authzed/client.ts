@@ -4,6 +4,7 @@ import { env } from "@/lib/env";
 import { type TAuthzedConsistency, isAuthzedEnabled } from "./config";
 import {
   AUTHZED_BULK_REQUEST_TIMEOUT_MS,
+  AUTHZED_MAX_BULK_CHECK_ITEMS,
   AUTHZED_MAX_RELATIONSHIP_READS,
   AUTHZED_MAX_RELATIONSHIP_UPDATES,
   AUTHZED_MAX_RESOURCE_LOOKUP_RESULTS,
@@ -45,6 +46,14 @@ export type TAuthzedResourceLookup = Readonly<{
 
 export type TAuthzedResourceLookupResult = Readonly<{
   resourceIds: ReadonlyArray<string>;
+}>;
+
+/** One permission on many resources of one type, for one subject (ENG-3282). */
+export type TAuthzedBulkPermissionCheck = Readonly<{
+  permission: string;
+  resourceIds: ReadonlyArray<string>;
+  resourceType: string;
+  subject: TAuthzedObjectReference;
 }>;
 
 export type TAuthzedSubjectReference = TAuthzedObjectReference &
@@ -171,6 +180,8 @@ export type TAuthzedClient = Readonly<{
 /** Direct-path authorization infrastructure only; intentionally absent from the public barrel. */
 export type TAuthzedResourceLookupClient = TAuthzedClient &
   Readonly<{
+    /** The subset of `resourceIds` the subject holds `permission` on. Fails whole on any item error. */
+    checkBulkPermissions: (check: TAuthzedBulkPermissionCheck) => Promise<ReadonlySet<string>>;
     lookupResources: (lookup: TAuthzedResourceLookup) => Promise<TAuthzedResourceLookupResult>;
   }>;
 
@@ -279,6 +290,24 @@ const validateResourceLookup = (lookup: TAuthzedResourceLookup): void => {
       attempts: 0,
       code: AUTHZED_ERROR_CODES.INVALID_REQUEST,
       operation: "lookup_resources",
+      retryable: false,
+    });
+  }
+};
+
+const validateBulkPermissionCheck = (check: TAuthzedBulkPermissionCheck): void => {
+  if (
+    !isNonEmpty(check.permission) ||
+    !isNonEmpty(check.resourceType) ||
+    !isNonEmpty(check.subject.objectId) ||
+    !isNonEmpty(check.subject.objectType) ||
+    check.resourceIds.length > AUTHZED_MAX_BULK_CHECK_ITEMS ||
+    !check.resourceIds.every(isNonEmpty)
+  ) {
+    throw new AuthzedError({
+      attempts: 0,
+      code: AUTHZED_ERROR_CODES.INVALID_REQUEST,
+      operation: "check_bulk_permissions",
       retryable: false,
     });
   }
@@ -492,6 +521,63 @@ const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton 
           operation: "check_permission",
           retryable: false,
         });
+      });
+    },
+    checkBulkPermissions: async (check) => {
+      validateBulkPermissionCheck(check);
+      if (check.resourceIds.length === 0) return new Set<string>();
+
+      return executeAuthzedOperation("check_bulk_permissions", async () => {
+        const response = await sdkClient.promises.checkBulkPermissions({
+          consistency: getAuthorizationConsistency(),
+          items: check.resourceIds.map((objectId) => ({
+            context: undefined,
+            permission: check.permission,
+            resource: { objectId, objectType: check.resourceType },
+            subject: {
+              object: { objectId: check.subject.objectId, objectType: check.subject.objectType },
+              optionalRelation: "",
+            },
+          })),
+          withTracing: false,
+        });
+
+        // Pairs answer the items in order. Any gap, reordering, per-item error or caveated answer is
+        // not a decision: fail the whole call rather than read it as a denial (which would hide a
+        // survey) or an allow (which would leak one).
+        const allowed = new Set<string>();
+        if (response.pairs.length !== check.resourceIds.length) {
+          throw new AuthzedError({
+            attempts: 1,
+            code: AUTHZED_ERROR_CODES.INTERNAL,
+            operation: "check_bulk_permissions",
+            retryable: true,
+          });
+        }
+        for (const [index, pair] of response.pairs.entries()) {
+          const objectId = check.resourceIds[index];
+          const echoed = pair.request?.resource?.objectId;
+          if (pair.response.oneofKind !== "item" || (echoed !== undefined && echoed !== objectId)) {
+            throw new AuthzedError({
+              attempts: 1,
+              code: AUTHZED_ERROR_CODES.INTERNAL,
+              operation: "check_bulk_permissions",
+              retryable: true,
+            });
+          }
+          const { permissionship } = pair.response.item;
+          if (permissionship === v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION) {
+            allowed.add(objectId);
+          } else if (permissionship !== v1.CheckPermissionResponse_Permissionship.NO_PERMISSION) {
+            throw new AuthzedError({
+              attempts: 1,
+              code: AUTHZED_ERROR_CODES.UNSUPPORTED,
+              operation: "check_bulk_permissions",
+              retryable: false,
+            });
+          }
+        }
+        return allowed;
       });
     },
     consistency: "fully_consistent",

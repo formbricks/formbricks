@@ -1,6 +1,7 @@
 import { getWorkflowsRouteAuth } from "@/modules/ee/workflows/lib/auth";
 import { getWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/lib/email-authoring-context";
 import { WorkflowBuilderPage } from "@/modules/ee/workflows/pages/workflow-builder-page";
+import { isSurveyVisibilityEnforced } from "@/modules/survey/visibility/lib/gate";
 
 const WorkflowPage = async (
   props: Readonly<{ params: Promise<{ workspaceId: string; workflowId: string }> }>
@@ -16,10 +17,13 @@ const WorkflowPage = async (
 
   // Resolve the bound survey + team/sender context server-side so the send_email inspector renders
   // Follow-Ups-parity controls (recall body, recipient options) from fully-formed props.
-  const emailAuthoringContext = await getWorkflowEmailAuthoringContext({
-    workflowId: params.workflowId,
-    workspaceId: params.workspaceId,
-  });
+  const [emailAuthoringContext, surveyVisibilityEnabled] = await Promise.all([
+    getWorkflowEmailAuthoringContext({
+      workflowId: params.workflowId,
+      workspaceId: params.workspaceId,
+    }),
+    isSurveyVisibilityEnforced(),
+  ]);
 
   return (
     <WorkflowBuilderPage
@@ -27,6 +31,7 @@ const WorkflowPage = async (
       workflowId={params.workflowId}
       isReadOnly={isReadOnly}
       emailAuthoringContext={emailAuthoringContext}
+      surveyVisibilityEnabled={surveyVisibilityEnabled}
     />
   );
 };
