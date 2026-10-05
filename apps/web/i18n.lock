@@ -143,6 +143,7 @@ checksums:
     common/account_settings: df8e9882a1f5c75951f3a05ddfed72ba
     common/act: b6e0bff3738c7597f2500bc124648103
     common/action: c92af0bdf1698b0d10cf5b28d2ad4945
+    common/action_may_not_have_gone_through: f3a758c31965dbb95100271fbe625bb3
     common/actions: c46571856723b03262fd33f511116298
     common/actions_description: 8e35b1538d1006fa8470183310ad21ef
     common/active: 3e1ec025c4a50830bbb9ad57a176630a

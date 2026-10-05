@@ -174,6 +174,7 @@
     "account_settings": "Configurações da conta",
     "act": "Agir",
     "action": "Ação",
+    "action_may_not_have_gone_through": "Sua última ação pode não ter sido concluída. Verifique e tente novamente.",
     "actions": "Ações",
     "actions_description": "Ações de Código e Sem Código são usadas para acionar interceptar pesquisas dentro de apps & em sites.",
     "active": "Ativo",
