@@ -1,12 +1,4 @@
-# Findings the Trivy gate in .github/workflows/cube-image.yml accepts, each with an expiry so the gate
-# turns red again and forces a re-check. Both come from the distroless base's libssl3t64
-# 3.5.7-1~deb13u2; no distroless digest ships the fixed 3.5.7-1~deb13u3 yet. Bump the base digest
-# and delete an entry as soon as that changes. Neither is reachable here: Node links its own OpenSSL
-# statically and Cube's native module does not link libssl, so no process in this image loads it.
-vulnerabilities:
-  - id: CVE-2026-75804
-    statement: QUIC connection flow-control DoS; unreachable, since nothing in this image loads the system libssl or speaks QUIC.
-    expired_at: 2026-10-30
-  - id: CVE-2026-84782
-    statement: DTLS handshake retransmission disclosure; unreachable, since nothing in this image loads the system libssl or uses DTLS.
-    expired_at: 2026-10-30
+# Findings the Trivy gate in .github/workflows/cube-image.yml accepts. Each entry needs a one-line
+# reachability statement and an expired_at at most 30 days out, so the gate turns red again and forces a
+# re-check (see README.md). Delete an entry as soon as a new base digest carries the fix.
+vulnerabilities: []

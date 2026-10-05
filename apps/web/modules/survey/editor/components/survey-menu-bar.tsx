@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
+import { ArrowLeftIcon, SettingsIcon, UsersIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
@@ -14,19 +14,32 @@ import {
   TSurvey,
   TSurveyEditorTabs,
   TSurveyStatus,
+  TSurveyVisibility,
   ZSurvey,
   ZSurveyEndScreenCard,
   ZSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
+import type { TSurveyAccess } from "@/lib/survey/visibility/access";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { isDeepEqual } from "@/lib/utils/object";
 import { reportStaleServerActionError } from "@/lib/utils/stale-server-action";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
 import { getLogicDestinationErrorMessage } from "@/modules/survey/editor/lib/logic-destination-error";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
+import { ActivateDialog } from "@/modules/survey/visibility/components/activate-dialog";
+import { CollaborateModal } from "@/modules/survey/visibility/components/collaborate-modal";
+import { useUpdateSurveyVisibility } from "@/modules/survey/visibility/hooks/use-update-survey-visibility";
+import {
+  type TActivationStep,
+  planActivation,
+  shouldAskWhoCanView,
+} from "@/modules/survey/visibility/lib/activate-flow";
+import { getRestrictedAuthor } from "@/modules/survey/visibility/lib/collaborate";
+import { type TSurveyVisibilityUiGate, showVisibilityControls } from "@/modules/survey/visibility/lib/state";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
@@ -38,7 +51,8 @@ import { AutoSaveIndicator } from "./auto-save-indicator";
 interface SurveyMenuBarProps {
   localSurvey: TSurvey;
   survey: TSurvey;
-  setLocalSurvey: (survey: TSurvey) => void;
+  /** React's own setter: the auto-save adopts through the updater form, so a value alone is not enough. */
+  setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   setInvalidElements: React.Dispatch<React.SetStateAction<string[] | null>>;
@@ -51,6 +65,21 @@ interface SurveyMenuBarProps {
   locale: string;
   setIsCautionDialogOpen: (open: boolean) => void;
   isStorageConfigured: boolean;
+  /**
+   * ENG-3395: the restricted-surveys gate — the server-side flags, with the controls turned off for
+   * the rest of the session when the server reports visibility as not enabled. Owned by the editor,
+   * which the Follow-ups tab reads as well.
+   */
+  visibilityGate: TSurveyVisibilityUiGate;
+  /** The effective visibility, from the server; pending counts as restricted. */
+  effectiveVisibility: TSurveyVisibility;
+  /** A change was stored (in effect or pending): the editor refreshes what it shows from the server. */
+  onVisibilityChanged: () => void;
+  onVisibilityNotEnabled: () => void;
+  /** Why this user can see the survey; `null` while the gate is off. */
+  surveyAccess: TSurveyAccess | null;
+  /** The author's display name; `null` when the survey has no owner or the gate is off. */
+  ownerName: string | null;
 }
 
 export const SurveyMenuBar = ({
@@ -69,6 +98,12 @@ export const SurveyMenuBar = ({
   locale,
   setIsCautionDialogOpen,
   isStorageConfigured = true,
+  visibilityGate,
+  effectiveVisibility,
+  onVisibilityChanged,
+  onVisibilityNotEnabled,
+  surveyAccess,
+  ownerName,
 }: Readonly<SurveyMenuBarProps>) => {
   const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
@@ -92,6 +127,19 @@ export const SurveyMenuBar = ({
   // rather than aliased, so a later in-place edit of the editor's own survey cannot drag the
   // snapshot along with it and hide the change.
   const lastSavedSurveyRef = useRef<TSurvey | null>(null);
+
+  const [isActivateDialogOpen, setIsActivateDialogOpen] = useState(false);
+  const [isCollaborateModalOpen, setIsCollaborateModalOpen] = useState(false);
+  const [isChangingVisibility, setIsChangingVisibility] = useState(false);
+  const updateSurveyVisibility = useUpdateSurveyVisibility();
+  const canManageVisibility = showVisibilityControls(visibilityGate, surveyAccess);
+  const restrictedAuthor = getRestrictedAuthor(surveyAccess, ownerName);
+
+  // Stable: the Collaborate modal runs it from an effect.
+  const handleVisibilityNotEnabled = useCallback(() => {
+    onVisibilityNotEnabled();
+    setIsActivateDialogOpen(false);
+  }, [onVisibilityNotEnabled]);
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -194,6 +242,28 @@ export const SurveyMenuBar = ({
     draftPrimaryLabel = t("workspace.surveys.edit.save_and_close");
   }
 
+  /**
+   * **What every payload below sends for Embedded Data (ENG-2628).**
+   *
+   * `localSurvey.embeddedFields` is the editor's Embedded Data state — the Variables and Hidden
+   * Fields cards write it — and on the wire it is the COMPLETE desired set for both sources. The
+   * server writes the rows from it and derives `variables` / `hiddenFields` back off those rows on
+   * every read (`toLegacyEmbeddedFields`), so the two legacy keys travelling in the same payload are
+   * ignored: they are forwarded exactly as they arrived at mount, and nothing here recomputes them.
+   * Deriving them client-side too would give one survey two descriptions that can disagree, which is
+   * the failure this ticket removed.
+   *
+   * There is nothing to spell out at each call site: spreading `localSurvey` carries all three keys.
+   *
+   * The save return does not always replace the working copy, and the dirty check is what closes
+   * that gap. `handleSurveySave` / `handleSurveySaveDraft` both `setLocalSurvey(response)`, so there
+   * the freshly written rows — with their `id`, `key`, `locked` and minted storage keys — land back
+   * in state. The interval auto-save below deliberately does **not**: it updates its refs only, to
+   * avoid re-rendering the editor while the author is typing. So the working copy legitimately keeps
+   * a card-built row with no `id` and the mount-time legacy keys, and `hasUnsavedSurveyChanges`
+   * normalizes all three away before comparing (`editor/lib/unsaved-changes.ts`). Without that
+   * normalization a `isDeepEqual` fails on the key count alone and the auto-save never stops.
+   */
   const getDraftSurveyToPersist = (draftSurvey: TSurvey, segment: TSegment | null): TSurveyDraft => ({
     ...draftSurvey,
     closeOn: draftSurvey.publishOn ? null : draftSurvey.closeOn,
@@ -409,12 +479,37 @@ export const SurveyMenuBar = ({
         if (updatedSurveyResponse?.data) {
           const savedData = updatedSurveyResponse.data;
 
-          // If the segment changed on the server (e.g., private segment was deleted when
-          // switching from app to link type), update localSurvey to prevent stale segment
-          // references when publishing
-          if (!isDeepEqual(localSurveyRef.current.segment, savedData.segment)) {
-            setLocalSurvey({ ...localSurveyRef.current, segment: savedData.segment });
-          }
+          // The server deletes a private segment when a survey switches from app to link, so the
+          // working copy has to take that back. Skipping it is not a cosmetic loss: the stale id
+          // goes back out on the next save, `assertSurveySegmentBelongsToWorkspace` throws
+          // `ResourceNotFoundError`, and the catch below swallows it — so this block never runs
+          // again and the editor cannot be saved or published until the page is reloaded.
+          //
+          // Through the updater rather than against `localSurveyRef` (ENG-3266), which is written in
+          // a passive effect and so still names the sent object for as long as it takes React to
+          // flush one — a window the response can land in, where the ref would overwrite whatever
+          // the author changed mid-flight. `current` is the state itself, so the spread carries
+          // those edits and replaces only the key the server owns.
+          //
+          // The one edit the spread could still lose is an edit to `segment` itself: `TargetingCard`
+          // writes it on every change and is mounted for app surveys, so an author refining their
+          // targeting while a tick is in flight would get `savedData.segment` — the segment as it
+          // was when the request went out — written back over the newer one. So the guard is on
+          // `segment` alone, against the value the working copy held when it was sent. Guarding on
+          // the survey's object identity instead settles the same race by abandoning the adoption
+          // after any unrelated keystroke, which is what left the editor unsaveable.
+          //
+          // `currentSurvey.segment` rather than what was serialized: a `temp` segment goes out as
+          // `null`, and comparing against the wire value would read that rewrite as an author edit
+          // and never adopt the real segment the server answers with.
+          //
+          // The Embedded Data keys need no such adoption: `hasUnsavedSurveyChanges` normalizes them
+          // on both sides, which settles the dirty check without re-rendering the editor at all.
+          setLocalSurvey((current) => {
+            if (!isDeepEqual(current.segment, currentSurvey.segment)) return current;
+            if (isDeepEqual(current.segment, savedData.segment)) return current;
+            return { ...current, segment: savedData.segment };
+          });
 
           // Update surveyRef (not localSurvey state) to prevent re-renders during auto-save.
           // This keeps the UI stable while still tracking that changes have been saved.
@@ -695,6 +790,64 @@ export const SurveyMenuBar = ({
     }
   };
 
+  const runActivation = () => (isPublishScheduled ? handleSurveySchedule() : handleSurveyPublish());
+
+  // The same checks the activate path runs, done up front so the dialog never opens for a survey
+  // that could not be activated anyway.
+  const isReadyToActivate = (): boolean => {
+    if (blockOnMissingTrigger(isPublishScheduled ? "paused" : "inProgress")) return false;
+    if (!validateSurveyWithZod()) return false;
+    return isSurveyValid(localSurvey, selectedLanguageCode, t, finishedResponseCount);
+  };
+
+  const handleActivateClick = () => {
+    if (
+      !shouldAskWhoCanView({ gate: visibilityGate, access: surveyAccess, visibility: effectiveVisibility })
+    ) {
+      void runActivation();
+      return;
+    }
+    if (isReadyToActivate()) setIsActivateDialogOpen(true);
+  };
+
+  const makeVisibleForActivation = async (choice: TSurveyVisibility): Promise<TActivationStep> => {
+    setIsChangingVisibility(true);
+    try {
+      await updateSurveyVisibility.mutateAsync({
+        surveyId: localSurvey.id,
+        visibility: "workspace",
+      });
+      onVisibilityChanged();
+      return planActivation(choice, { ok: true });
+    } catch (error) {
+      const step = planActivation(choice, { ok: false, error });
+      if (step.kind === "activate") {
+        // The grant is stored but not in effect yet: the survey stays restricted until it settles.
+        onVisibilityChanged();
+      } else {
+        toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+      }
+      return step;
+    } finally {
+      setIsChangingVisibility(false);
+    }
+  };
+
+  const handleActivateConfirm = async (choice: TSurveyVisibility) => {
+    let step = planActivation(choice);
+    if (step.kind === "change_visibility") step = await makeVisibleForActivation(choice);
+
+    if (step.kind === "abort") {
+      if (step.hideControls) handleVisibilityNotEnabled();
+      return;
+    }
+    if (step.kind === "activate" && step.pending) {
+      toast.success(t("workspace.surveys.visibility.visibility_update_pending"));
+    }
+    setIsActivateDialogOpen(false);
+    await runActivation();
+  };
+
   return (
     <div className="border-b border-slate-200 bg-white px-5 py-2.5 sm:flex sm:items-center sm:justify-between">
       <div className="flex h-full items-center gap-x-2 whitespace-nowrap">
@@ -717,9 +870,21 @@ export const SurveyMenuBar = ({
             const updatedSurvey = { ...localSurvey, name: e.target.value };
             setLocalSurvey(updatedSurvey);
           }}
-          className="h-8 w-72 border-white py-0 hover:border-slate-200"
+          // With Collaborate next to it, the input is sized to the name (so the button sits right after
+          // it) and widens while editing; browsers without field-sizing keep the input's default width.
+          className={
+            canManageVisibility
+              ? "field-sizing-content h-8 w-auto max-w-72 min-w-16 border-white py-0 hover:border-slate-200 focus:max-w-md focus:min-w-72"
+              : "h-8 w-72 border-white py-0 hover:border-slate-200"
+          }
           aria-label={t("workspace.surveys.rename_survey_placeholder")}
         />
+        {canManageVisibility && (
+          <Button size="sm" variant="secondary" onClick={() => setIsCollaborateModalOpen(true)}>
+            <UsersIcon />
+            {t("common.collaborate")}
+          </Button>
+        )}
       </div>
 
       <div className="mt-3 flex items-center gap-2 sm:mt-0 sm:ml-4">
@@ -787,7 +952,7 @@ export const SurveyMenuBar = ({
             size="sm"
             disabled={isSurveySaving}
             loading={isSurveyPublishing}
-            onClick={isPublishScheduled ? handleSurveySchedule : handleSurveyPublish}>
+            onClick={handleActivateClick}>
             {draftPrimaryLabel}
           </Button>
         )}
@@ -806,6 +971,27 @@ export const SurveyMenuBar = ({
         }}
         onConfirm={handleSaveAndGoBack}
       />
+      {canManageVisibility && (
+        <>
+          <CollaborateModal
+            open={isCollaborateModalOpen}
+            setOpen={setIsCollaborateModalOpen}
+            surveyId={localSurvey.id}
+            workspaceName={workspace.name}
+            onVisibilityChanged={onVisibilityChanged}
+            onVisibilityNotEnabled={handleVisibilityNotEnabled}
+          />
+          <ActivateDialog
+            open={isActivateDialogOpen}
+            setOpen={setIsActivateDialogOpen}
+            workspaceName={workspace.name}
+            author={restrictedAuthor}
+            isScheduling={isPublishScheduled}
+            isSubmitting={isChangingVisibility || isSurveyPublishing}
+            onConfirm={(choice) => void handleActivateConfirm(choice)}
+          />
+        </>
+      )}
     </div>
   );
 };

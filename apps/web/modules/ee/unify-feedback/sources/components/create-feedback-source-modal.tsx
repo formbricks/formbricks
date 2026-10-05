@@ -11,6 +11,11 @@ import { TFeedbackSourceImportMode, TFeedbackSourceType } from "@formbricks/type
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getResponseCountAction, importHistoricalResponsesAction } from "@/lib/feedback-source/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import {
+  RestrictedSurveyHint,
+  RestrictedSurveysNote,
+} from "@/modules/survey/visibility/components/restricted-survey-hint";
+import { isRestrictedSurveyPick } from "@/modules/survey/visibility/lib/outbound";
 import { Alert } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -93,6 +98,8 @@ interface CreateFeedbackSourceModalProps {
    * (used by the "Select questions for import" suggestion CTA). Falls back to the type picker otherwise.
    */
   initialSurveyId?: string | null;
+  /** ENG-3395: with it on, a restricted survey cannot back a new source. */
+  surveyVisibilityEnabled?: boolean;
 }
 
 const getDialogTitle = (
@@ -137,7 +144,8 @@ export const CreateFeedbackSourceModal = ({
   workspaceId,
   directories,
   initialSurveyId = null,
-}: CreateFeedbackSourceModalProps) => {
+  surveyVisibilityEnabled = false,
+}: Readonly<CreateFeedbackSourceModalProps>) => {
   const { t } = useTranslation();
   const connectedSurveyIdSet = useMemo(() => new Set(connectedSurveyIds), [connectedSurveyIds]);
   const { workspace } = useWorkspace();
@@ -584,8 +592,14 @@ export const CreateFeedbackSourceModal = ({
                             <SelectContent>
                               {surveys.map((survey) => {
                                 const alreadyConnected = connectedSurveyIdSet.has(survey.id);
+                                const isRestrictedPick =
+                                  !alreadyConnected &&
+                                  isRestrictedSurveyPick(surveyVisibilityEnabled, survey);
                                 return (
-                                  <SelectItem key={survey.id} value={survey.id} disabled={alreadyConnected}>
+                                  <SelectItem
+                                    key={survey.id}
+                                    value={survey.id}
+                                    disabled={alreadyConnected || isRestrictedPick}>
                                     <span className="flex items-center gap-2">
                                       {survey.name}
                                       {alreadyConnected && (
@@ -595,6 +609,7 @@ export const CreateFeedbackSourceModal = ({
                                           size="tiny"
                                         />
                                       )}
+                                      {isRestrictedPick && <RestrictedSurveyHint kind="restricted" />}
                                     </span>
                                   </SelectItem>
                                 );
@@ -602,6 +617,11 @@ export const CreateFeedbackSourceModal = ({
                             </SelectContent>
                           </Select>
                         </FormControl>
+                        <RestrictedSurveysNote
+                          surveyVisibilityEnabled={surveyVisibilityEnabled}
+                          surveys={surveys}
+                          attachedSurveyIds={connectedSurveyIds}
+                        />
                         {error?.message && (
                           <FormError>{getTranslatedFeedbackSourceError(error.message, t)}</FormError>
                         )}
@@ -779,7 +799,7 @@ interface NoFeedbackDirectoryAlertProps {
   t: (key: string) => string;
 }
 
-const NoFeedbackDirectoryAlert = ({ organizationId, t }: NoFeedbackDirectoryAlertProps) => {
+const NoFeedbackDirectoryAlert = ({ organizationId, t }: Readonly<NoFeedbackDirectoryAlertProps>) => {
   return (
     <Alert variant="error" size="small" role="status">
       <div>

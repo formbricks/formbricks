@@ -2,6 +2,7 @@ import { z } from "zod";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
+import { RESPONSE_ACTION_FOR_METHOD, canApiKeyReachSurveyResource } from "@/lib/survey/visibility/api-key";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
@@ -47,7 +48,11 @@ export const GET = async (request: Request, props: { params: Promise<{ responseI
           { type: "apiKey", id: authentication.apiKeyId },
           getWorkspaceAuthorizationActionForMethod("GET"),
           { type: "workspace", id: workspaceIdResult.data.workspaceId }
-        ))
+        )) ||
+        !(await canApiKeyReachSurveyResource(authentication.apiKeyId, RESPONSE_ACTION_FOR_METHOD.GET, {
+          type: "response",
+          id: params.responseId,
+        }))
       ) {
         return handleApiError(request, {
           type: "unauthorized",
@@ -101,7 +106,11 @@ export const DELETE = async (request: Request, props: { params: Promise<{ respon
           { type: "apiKey", id: authentication.apiKeyId },
           getWorkspaceAuthorizationActionForMethod("DELETE"),
           { type: "workspace", id: workspaceIdResult.data.workspaceId }
-        ))
+        )) ||
+        !(await canApiKeyReachSurveyResource(authentication.apiKeyId, RESPONSE_ACTION_FOR_METHOD.DELETE, {
+          type: "response",
+          id: params.responseId,
+        }))
       ) {
         return handleApiError(
           request,
@@ -160,7 +169,11 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
           { type: "apiKey", id: authentication.apiKeyId },
           getWorkspaceAuthorizationActionForMethod("PUT"),
           { type: "workspace", id: workspaceIdResult.data.workspaceId }
-        ))
+        )) ||
+        !(await canApiKeyReachSurveyResource(authentication.apiKeyId, RESPONSE_ACTION_FOR_METHOD.PUT, {
+          type: "response",
+          id: params.responseId,
+        }))
       ) {
         return handleApiError(
           request,

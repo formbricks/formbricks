@@ -31,13 +31,14 @@ const ZSendEmbedSurveyPreviewEmailAction = z.object({
 export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
   .inputSchema(ZSendEmbedSurveyPreviewEmailAction)
   .action(async ({ ctx, parsedInput }) => {
+    // Authorized first, so a forbidden survey and a missing one answer alike (ENG-3282).
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.read", {
+      type: "survey",
+      id: parsedInput.surveyId,
+    });
+
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
     const organizationLogoUrl = await getOrganizationLogoUrl(organizationId);
-
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
-      type: "workspace",
-      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-    });
 
     const survey = await getSurvey(parsedInput.surveyId);
     if (!survey) {
@@ -129,9 +130,9 @@ export const generateExampleResponsesAction = authenticatedActionClient
       const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
       const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
 
-      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-        type: "workspace",
-        id: workspaceId,
+      await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
+        type: "survey",
+        id: parsedInput.surveyId,
       });
 
       // Set before the gates below so a rejected or failed attempt is still attributed to the right
@@ -198,9 +199,9 @@ const ZGetEmailHtmlAction = z.object({
 export const getEmailHtmlAction = authenticatedActionClient
   .inputSchema(ZGetEmailHtmlAction)
   .action(async ({ ctx, parsedInput }) => {
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-      type: "workspace",
-      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
+      type: "survey",
+      id: parsedInput.surveyId,
     });
 
     return await getEmailTemplateHtml(parsedInput.surveyId, ctx.user.locale);
@@ -222,9 +223,9 @@ export const generatePersonalLinksAction = authenticatedActionClient
       throw new OperationNotAllowedError("Contacts are not enabled for this workspace");
     }
 
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-      type: "workspace",
-      id: workspaceId,
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
+      type: "survey",
+      id: parsedInput.surveyId,
     });
 
     // Get contacts and generate personal links
@@ -297,9 +298,9 @@ const ZUpdateSingleUseLinksAction = z.object({
 export const updateSingleUseLinksAction = authenticatedActionClient
   .inputSchema(ZUpdateSingleUseLinksAction)
   .action(async ({ ctx, parsedInput }) => {
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-      type: "workspace",
-      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
+      type: "survey",
+      id: parsedInput.surveyId,
     });
 
     const survey = await getSurvey(parsedInput.surveyId);

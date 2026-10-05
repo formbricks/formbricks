@@ -3,6 +3,7 @@
 import { MotionConfig, Variants, motion } from "framer-motion";
 import { Fragment, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { resolveOverlayAppearance } from "@formbricks/types/overlay";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
 import { TWorkspace } from "@formbricks/types/workspace";
@@ -100,11 +101,14 @@ export const ThemeStylingPreviewSurvey = ({
   };
 
   const { placement: surveyPlacement } = workspaceOverwrites || {};
-  const { overlay: surveyOverlay } = workspaceOverwrites || {};
   const { clickOutsideClose: surveyClickOutsideClose } = workspaceOverwrites || {};
 
   const placement = surveyPlacement || workspace.placement;
-  const overlay = surveyOverlay ?? workspace.overlay;
+  const {
+    overlay,
+    color: overlayColor,
+    opacity: overlayOpacity,
+  } = resolveOverlayAppearance(workspaceOverwrites, workspace);
   const clickOutsideClose = surveyClickOutsideClose ?? workspace.clickOutsideClose;
 
   const highlightBorderColor = workspace.styling.highlightBorderColor?.light;
@@ -148,6 +152,8 @@ export const ThemeStylingPreviewSurvey = ({
       placement={placement}
       clickOutsideClose={clickOutsideClose}
       overlay={overlay}
+      overlayColor={overlayColor}
+      overlayOpacity={overlayOpacity}
       previewMode="desktop"
       background={workspace.styling.cardBackgroundColor?.light}
       borderRadius={workspace.styling.roundness ?? 8}>

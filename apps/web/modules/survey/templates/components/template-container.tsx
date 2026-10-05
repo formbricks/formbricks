@@ -12,7 +12,7 @@ import { TemplateCreateQueryClientProvider } from "@/modules/survey/components/t
 import { MenuBar } from "@/modules/survey/templates/components/menu-bar";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { SearchBar } from "@/modules/ui/components/search-bar";
-import { getMinimalSurvey } from "../lib/minimal-survey";
+import { getTemplatePreviewSurvey } from "../lib/minimal-survey";
 
 type TemplateContainerWithPreviewProps = {
   workspace: Workspace;
@@ -83,7 +83,7 @@ export const TemplateContainerWithPreview = ({
         <aside className="group hidden flex-1 shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 md:flex md:flex-col">
           {activeTemplate && (
             <PreviewSurvey
-              survey={{ ...getMinimalSurvey(t), ...activeTemplate.preset }}
+              survey={getTemplatePreviewSurvey(t, activeTemplate.preset)}
               elementId={activeElementId}
               workspace={workspace}
               languageCode={"default"}

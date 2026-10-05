@@ -33,6 +33,7 @@ const writeResult = (result: object): void => {
 
 const run = async (): Promise<void> => {
   const originalConsoleError = console.error;
+  let databaseLoaded = false;
 
   try {
     // Environment validation logs details before throwing. Suppress that duplicate output so this
@@ -47,6 +48,8 @@ const run = async (): Promise<void> => {
       return;
     }
 
+    // Set before the import: loading the command module is what builds the Prisma client and its pool.
+    databaseLoaded = true;
     const { runAuthzedBackfillCli } = await import("../lib/authzed/backfill-cli");
     console.error = originalConsoleError;
     process.exitCode = await runAuthzedBackfillCli(command);
@@ -56,6 +59,18 @@ const run = async (): Promise<void> => {
     process.exitCode = 1;
   } finally {
     console.error = originalConsoleError;
+
+    // The command closes its SpiceDB channel, but the PostgreSQL pool is process-wide. Its idle
+    // connections are referenced sockets kept for `idleTimeoutMillis` (5 minutes by default), so
+    // without this the process prints its result and then lingers until the pool times them out.
+    if (databaseLoaded) {
+      try {
+        const { prisma } = await import("@formbricks/database");
+        await prisma.$disconnect();
+      } catch {
+        // Cleanup failures must not replace the backfill's sanitized result or exit code.
+      }
+    }
   }
 };
 

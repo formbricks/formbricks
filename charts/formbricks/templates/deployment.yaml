@@ -86,7 +86,7 @@ spec:
       the operator already mounts through extraVolumeMounts is left to them, and a generated volume name that
       an extraVolumes entry already uses gets a prefix so pod volume names stay unique. */}}
       {{- $writableMounts := dict }}
-      {{- if dig "readOnlyRootFilesystem" false (default dict .Values.deployment.containerSecurityContext) }}
+      {{- if include "formbricks.readOnlyRootFilesystem" . }}
       {{- $operatorPaths := list }}
       {{- range .Values.deployment.extraVolumeMounts }}
       {{- $operatorPaths = append $operatorPaths (trimSuffix "/" .mountPath) }}
@@ -97,7 +97,7 @@ spec:
       {{- end }}
       {{- $candidates := dict "writable-tmp" "/tmp" "writable-next-cache" "/home/nextjs/apps/web/.next/cache" }}
       {{- if not .Values.migration.enabled }}
-      {{- $_ := set $candidates "writable-prisma-migrations" "/home/nextjs/packages/database/.prisma-migrations" }}
+      {{- $_ := set $candidates "writable-prisma-migrations" (include "formbricks.prismaMigrationsStagingPath" .) }}
       {{- end }}
       {{- range $name, $path := $candidates }}
       {{- if not (has $path $operatorPaths) }}

@@ -63,13 +63,19 @@ export const getDisplayCountBySurveyId = reactCache(
 export const getDisplaysByContactId = reactCache(
   async (
     contactId: string,
-    workspaceId: string
+    workspaceId: string,
+    /** ENG-3282: the viewer's survey-visibility clause, applied to each display's survey. */
+    visibleSurveyWhere: Prisma.SurveyWhereInput
   ): Promise<Pick<TDisplay, "id" | "createdAt" | "surveyId">[]> => {
     validateInputs([contactId, ZId], [workspaceId, ZId]);
 
     try {
       const displays = await prisma.display.findMany({
-        where: { contactId, contact: { workspaceId } },
+        where: {
+          contactId,
+          contact: { workspaceId },
+          ...(Object.keys(visibleSurveyWhere).length > 0 ? { survey: visibleSurveyWhere } : {}),
+        },
         select: {
           id: true,
           createdAt: true,

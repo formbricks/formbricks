@@ -128,7 +128,8 @@
                   "surveys/general-features/quota-management",
                   "surveys/general-features/spam-protection",
                   "surveys/general-features/tags",
-                  "surveys/general-features/validation-rules"
+                  "surveys/general-features/validation-rules",
+                  "surveys/general-features/visibility"
                 ]
               },
               {
@@ -136,6 +137,7 @@
                 "icon": "database",
                 "pages": [
                   "surveys/embedded-data/overview",
+                  "surveys/embedded-data/library",
                   "surveys/embedded-data/reserved-fields",
                   "surveys/embedded-data/set-embedded-data",
                   "surveys/embedded-data/mobile-sdks",

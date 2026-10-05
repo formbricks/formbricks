@@ -4,15 +4,21 @@ import { useTranslation } from "react-i18next";
 import { TOverlay, TPlacement } from "@formbricks/types/common";
 import { cn } from "@/lib/cn";
 import { Label } from "@/modules/ui/components/label";
+import { OverlaySettings } from "@/modules/ui/components/overlay-settings";
+import {
+  TOverlaySettingsValue,
+  getOverlayPreviewStyle,
+} from "@/modules/ui/components/overlay-settings/lib/utils";
 import { getPlacementStyle } from "@/modules/ui/components/preview-survey/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
-import { StylingTabs } from "@/modules/ui/components/styling-tabs";
 
 interface TPlacementProps {
   currentPlacement: TPlacement;
   setCurrentPlacement: (placement: TPlacement) => void;
-  setOverlay: (overlay: TOverlay) => void;
+  setOverlay: (overlay: TOverlaySettingsValue) => void;
   overlay: TOverlay;
+  overlayColor: string | null;
+  overlayOpacity: number | null;
   setClickOutsideClose: (clickOutside: boolean) => void;
   clickOutsideClose: boolean;
 }
@@ -22,9 +28,11 @@ export const Placement = ({
   currentPlacement,
   setOverlay,
   overlay,
+  overlayColor,
+  overlayOpacity,
   setClickOutsideClose,
   clickOutsideClose,
-}: TPlacementProps) => {
+}: Readonly<TPlacementProps>) => {
   const { t } = useTranslation();
   const placements = [
     { name: t("common.bottom_right"), value: "bottomRight", disabled: false },
@@ -35,8 +43,10 @@ export const Placement = ({
   ];
 
   const hasOverlay = overlay !== "none";
+  const customOverlayStyle = getOverlayPreviewStyle({ overlay, overlayColor, overlayOpacity });
 
   const getOverlayStyle = () => {
+    if (customOverlayStyle) return "";
     if (overlay === "dark") return "bg-slate-700/80";
     if (overlay === "light") return "bg-slate-400/50";
     return "bg-slate-200";
@@ -61,7 +71,8 @@ export const Placement = ({
             hasOverlay && !clickOutsideClose ? "cursor-not-allowed" : "",
             "relative ml-8 h-40 w-full rounded-sm",
             getOverlayStyle()
-          )}>
+          )}
+          style={customOverlayStyle}>
           <div
             className={cn(
               "absolute h-16 w-16 cursor-default rounded-sm bg-slate-700",
@@ -70,17 +81,12 @@ export const Placement = ({
         </div>
       </div>
 
-      <div className="mt-6 space-y-2">
-        <StylingTabs
-          id="overlay"
-          options={[
-            { value: "none", label: t("common.no_overlay") },
-            { value: "light", label: t("common.light_overlay") },
-            { value: "dark", label: t("common.dark_overlay") },
-          ]}
-          defaultSelected={overlay}
-          onChange={(value) => setOverlay(value)}
-          label={t("common.overlay_color")}
+      <div className="mt-6">
+        <OverlaySettings
+          overlay={overlay}
+          overlayColor={overlayColor}
+          overlayOpacity={overlayOpacity}
+          onChange={setOverlay}
           activeTabClassName="bg-slate-200"
           inactiveTabClassName="bg-transparent"
         />

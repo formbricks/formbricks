@@ -31,6 +31,45 @@ backups rather than running `helm rollback`. Pin explicit releases and digests, 
 The Helm chart and Formbricks image are versioned independently. A chart-only patch can retain the same
 `appVersion`; review both pins and the rendered image rather than assuming their version numbers match.
 
+### Survey visibility (opt-in)
+
+Surveys can now be restricted to their owner and the organization's owners and managers. New columns on the
+`Survey` table record each survey's owner and visibility. The migrations set every existing survey to
+workspace-visible and make its creator the owner, so **access is unchanged after the upgrade**.
+
+<Note>
+  Once the marker is set, every survey a person creates starts **Restricted** to its author and the
+  organization's owners and managers. They can make it visible to the workspace from **Collaborate** or
+  when activating it. See [Survey visibility](/surveys/general-features/visibility).
+</Note>
+
+Enforcement stays off until an operator marks the survey scope ready:
+
+```bash
+formbricks-authzed backfill --scope=survey --apply --mark-ready
+```
+
+While the marker is set:
+
+- a survey a person creates is restricted to them until they share it with the workspace;
+- API keys never see restricted surveys or their responses;
+- webhooks, integrations, feedback sources, follow-ups and workflows never receive a restricted survey's
+  responses, and cannot be attached to one.
+
+Two new environment variables:
+
+- **SURVEY_VISIBILITY_FORCE_DISABLED**: emergency switch. `1` ignores the marker, so every survey is
+  workspace-visible again. Takes effect on restart.
+- **SURVEY_WORKSPACE_LIMIT**: most surveys one workspace may hold, archived ones included (default `10000`).
+  This applies whether or not visibility is enforced: creating a survey past it answers
+  `422 workspace_survey_limit_reached`. Raise it before upgrading if a workspace is near the default.
+
+To roll back, clear the marker. This touches only PostgreSQL and keeps each survey's stored visibility:
+
+```bash
+formbricks-authzed backfill --scope=survey --clear-ready
+```
+
 ### Bundled TEI log level
 
 The Helm chart now defaults `hub.embeddings.env.RUST_LOG` to `warn` because TEI 1.9 includes its API key in
@@ -50,6 +89,10 @@ and use it only with a runtime that redacts credentials from its logs.
   unchanged. Support for this variable was missing between v3.0 and v5.x, so it takes effect again on v6.
 
 - **DEFAULT_ORGANIZATION_ROLE** has been renamed to **AUTH_SSO_DEFAULT_ORGANIZATION_ROLE**.
+
+- **AUTHZED_CONSISTENCY** must be `fully_consistent`. v6 refuses to start with any other value, or with the
+  variable unset. An existing `.env` that still sets `AUTHZED_CONSISTENCY=minimize_latency` must be changed
+  to `AUTHZED_CONSISTENCY=fully_consistent` before upgrading.
 
 - **BETTER_AUTH_URL** and **BETTER_AUTH_SECRET** are now the documented names for the auth base URL and
   the session-signing secret. This is a documentation change, not a rename: `NEXTAUTH_URL` and
@@ -203,7 +246,9 @@ upgrade workflow rather than the one-click updater.
 
 ### Bundled Cube image (action required for some deployments)
 
-The bundled Cube service now runs `ghcr.io/formbricks/cube:1.7.47-1` instead of `cubejs/cube:v1.6.6`. It
+From 6.0.2, the bundled Cube service runs `ghcr.io/formbricks/cube:1.7.47-2` instead of `cubejs/cube:v1.6.6`;
+6.0.0 and 6.0.1 still run the upstream image. 5.4.5 makes the same change (see
+[Bundled Cube image update](#bundled-cube-image-update-action-required-for-some-deployments)). The new image
 contains only the Cube 1.7.47 API server and its Postgres driver on a distroless Node 24 runtime, without the
 shell, Python and Cube Store that made image scanners report critical CVEs against the upstream image.
 Cube 1.7 returns every numeric measure and dimension as a JSON string. Formbricks converts number-typed members
@@ -218,9 +263,10 @@ strings for them.
   `CUBEJS_*` overrides when you merge the block.
 
   ```bash
+  version=6.0.2 # the release you are upgrading to, for example 5.4.5
   cp -p docker-compose.yml docker-compose.yml.before-cube-image
   curl -fsSL -o docker-compose.release.yml \
-    https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
+    "https://raw.githubusercontent.com/formbricks/formbricks/${version}/docker/docker-compose.yml"
   # Copy the release's `cube` service into docker-compose.yml, then:
   docker compose config >/dev/null
   docker compose pull cube
@@ -239,7 +285,7 @@ strings for them.
 - **`CUBEJS_DEV_MODE=true`**: not supported on the new image. Dev mode relies on the embedded Cube Store the image
   leaves out, so `/readyz` answers 500 and the Helm probes and Compose healthcheck never pass. Leave it unset in
   production.
-- **Air-gapped installs and registry mirrors**: mirror `ghcr.io/formbricks/cube:1.7.47-1` along with the other
+- **Air-gapped installs and registry mirrors**: mirror `ghcr.io/formbricks/cube:1.7.47-2` along with the other
   Formbricks images, then point the Compose `image:` or `cube.image.repository` at your mirror.
 
 Cube keeps no state of its own, so rolling back only this change means restoring the backed-up Compose file or
@@ -266,6 +312,13 @@ sessions has to fetch a fresh token — see
 The bundled Valkey image moves from an amd64-only 8.1.1 image to the native amd64/arm64 Valkey 8.1.9 Alpine
 image. Fresh Docker and Helm installations receive it automatically. Existing installations that retain an
 older Compose file or explicitly reuse the previous Helm digest need the one-time update below.
+
+### Bundled Cube image update (action required for some deployments)
+
+5.4.5 makes the same Cube change as 6.0.2: the bundled service moves from `cubejs/cube:v1.6.6` to
+`ghcr.io/formbricks/cube:1.7.47-2`, and Helm runs it with a read-only root filesystem. Follow
+[Bundled Cube image](#bundled-cube-image-action-required-for-some-deployments) with `version=5.4.5`, so the
+`cube` service you copy comes from the 5.4.5 Compose file rather than a 6.x one.
 
 ### Envoy Gateway 1.8.4 CRD Upgrade
 
