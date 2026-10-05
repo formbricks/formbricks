@@ -421,6 +421,17 @@ describe("storage service", () => {
       expect(deleteFileFromS3).not.toHaveBeenCalled();
     });
 
+    // A backend or proxy that merges `//` or maps `\` to `/` would read these as another survey's key.
+    test.each(["surveys//x/elements/e/f", "/surveys/x/f", "a\\b"])(
+      "should reject an empty segment or a backslash in the file name: %s",
+      async (fileName) => {
+        const result = await deleteFile("ws-456", "private" as TAccessType, fileName);
+
+        expect(result).toEqual({ ok: false, error: { code: StorageErrorCode.InvalidInput } });
+        expect(deleteFileFromS3).not.toHaveBeenCalled();
+      }
+    );
+
     test("should still allow nested file paths without dot segments", async () => {
       const mockSuccess = { ok: true, data: undefined } as MockedDeleteFileReturn;
       vi.mocked(deleteFileFromS3).mockResolvedValue(mockSuccess);
