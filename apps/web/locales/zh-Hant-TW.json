@@ -3304,6 +3304,7 @@
         "prompt_helper_website_label": "網站意見回饋",
         "prompt_label": "描述你需要的問卷",
         "prompt_placeholder": "描述你需要的問卷調查，例如：了解新使用者為何在引導過程中停止操作，以及什麼能幫助他們完成設定",
+        "provider_auth_failed": "AI 供應商拒絕了此實例的憑證。請要求你的管理員檢查 AI 設定。",
         "regenerate": "重新產生",
         "request_rejected": "該提示無法使用，請試著重新表述。",
         "shortcut_hint": "⌘/Ctrl + Enter 生成",

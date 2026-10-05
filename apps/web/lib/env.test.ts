@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { isSecureCredentialUrl } from "@formbricks/ai";
 
 const ORIGINAL_ENV = process.env;
 
@@ -545,6 +546,135 @@ describe("env", () => {
     });
 
     await expect(import("./env")).rejects.toThrow("AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON");
+  });
+
+  describe("OpenAI-compatible OAuth2 client-credentials mode", () => {
+    const oauthEnv = {
+      AI_PROVIDER: "openai-compatible",
+      AI_MODEL: "gateway-model",
+      AI_OPENAI_COMPATIBLE_BASE_URL: "https://gateway.example.internal/v1",
+      AI_OPENAI_COMPATIBLE_AUTH_MODE: "oauth2-client-credentials",
+      AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: "https://gateway.example.internal/oauth/token",
+      AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_ID: "test-client",
+      AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET: "secret-sentinel",
+      AI_OPENAI_COMPATIBLE_API_KEY: undefined,
+    };
+
+    const loadError = async (): Promise<string> => {
+      const error = await import("./env").then(
+        () => undefined,
+        (caught: unknown) => caught
+      );
+      expect(error).toBeInstanceOf(Error);
+      return (error as Error).message;
+    };
+
+    test("loads a complete oauth configuration", async () => {
+      setTestEnv({
+        ...oauthEnv,
+        AI_OPENAI_COMPATIBLE_OAUTH_SCOPE: "llm.invoke",
+        AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE: "post",
+        AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON: JSON.stringify({ audience: "https://gateway" }),
+      });
+
+      const { env } = await import("./env");
+
+      expect(env.AI_OPENAI_COMPATIBLE_AUTH_MODE).toBe("oauth2-client-credentials");
+      expect(env.AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET).toBe("secret-sentinel");
+    });
+
+    test("names the missing client secret", async () => {
+      setTestEnv({ ...oauthEnv, AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET: undefined });
+
+      await expect(import("./env")).rejects.toThrow("AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET");
+    });
+
+    test.each([
+      ["a non-http scheme", "ftp://idp.example/token"],
+      ["a plain-http token endpoint off loopback", "http://idp.example.internal/oauth/token"],
+    ])("names a bad token URL (%s) without echoing the secret", async (_label, tokenUrl) => {
+      setTestEnv({ ...oauthEnv, AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: tokenUrl });
+
+      const message = await loadError();
+
+      expect(message).toContain("AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL");
+      expect(message).not.toContain("secret-sentinel");
+    });
+
+    // env.ts mirrors the package predicate rather than importing it (see the comment there); this is
+    // what keeps the two from drifting apart.
+    test.each([
+      "https://idp.example.internal/oauth/token",
+      "http://localhost:8765/oauth/token",
+      "http://127.0.0.1:8765/oauth/token",
+      "http://[::1]:8765/oauth/token",
+      "http://idp.localhost/oauth/token",
+      "http://idp.example.internal/oauth/token",
+      "ftp://idp.example.internal/oauth/token",
+      "not-a-url",
+    ])("agrees with @formbricks/ai on whether %s may carry the client secret", async (tokenUrl) => {
+      setTestEnv({ ...oauthEnv, AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: tokenUrl });
+
+      const accepted = await import("./env").then(
+        () => true,
+        () => false
+      );
+
+      expect(accepted).toBe(isSecureCredentialUrl(tokenUrl));
+    });
+
+    test("rejects a plain-http base URL off loopback in oauth mode, naming the variable", async () => {
+      setTestEnv({ ...oauthEnv, AI_OPENAI_COMPATIBLE_BASE_URL: "http://gateway.example.internal/v1" });
+
+      const message = await loadError();
+
+      expect(message).toContain("AI_OPENAI_COMPATIBLE_BASE_URL");
+      expect(message).not.toContain("secret-sentinel");
+    });
+
+    test("accepts a plain-http base URL on loopback in oauth mode", async () => {
+      setTestEnv({ ...oauthEnv, AI_OPENAI_COMPATIBLE_BASE_URL: "http://localhost:8765/v1" });
+
+      const { env } = await import("./env");
+
+      expect(env.AI_OPENAI_COMPATIBLE_BASE_URL).toBe("http://localhost:8765/v1");
+    });
+
+    test("accepts a plain-http token endpoint on loopback for local development", async () => {
+      setTestEnv({ ...oauthEnv, AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: "http://localhost:8765/oauth/token" });
+
+      const { env } = await import("./env");
+
+      expect(env.AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL).toBe("http://localhost:8765/oauth/token");
+    });
+
+    test.each([
+      ["AI_OPENAI_COMPATIBLE_AUTH_MODE", { AI_OPENAI_COMPATIBLE_AUTH_MODE: "oauth2" }],
+      ["AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE", { AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE: "header" }],
+      [
+        "AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON",
+        { AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON: "[]" },
+      ],
+      ["AI_OPENAI_COMPATIBLE_API_KEY", { AI_OPENAI_COMPATIBLE_API_KEY: "static-key" }],
+    ])("rejects an invalid %s", async (field, overrides) => {
+      setTestEnv({ ...oauthEnv, ...overrides });
+
+      await expect(import("./env")).rejects.toThrow(field);
+    });
+
+    test("ignores stray oauth variables in api-key mode", async () => {
+      setTestEnv({
+        ...oauthEnv,
+        AI_OPENAI_COMPATIBLE_AUTH_MODE: undefined,
+        AI_OPENAI_COMPATIBLE_API_KEY: "static-key",
+        AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: "not-a-url",
+        AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE: "header",
+      });
+
+      const { env } = await import("./env");
+
+      expect(env.AI_OPENAI_COMPATIBLE_API_KEY).toBe("static-key");
+    });
   });
 
   test("uses the configured Cube environment variables", async () => {

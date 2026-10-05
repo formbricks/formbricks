@@ -3304,6 +3304,7 @@
         "prompt_helper_website_label": "ウェブサイトフィードバック",
         "prompt_label": "必要なアンケートを説明",
         "prompt_placeholder": "必要なアンケートを説明してください。例：新規ユーザーがオンボーディング中に離脱する理由と、セットアップ完了を支援する方法を理解する",
+        "provider_auth_failed": "AIプロバイダーがこのインスタンスの認証情報を拒否しました。管理者にAI設定の確認を依頼してください。",
         "regenerate": "再生成",
         "request_rejected": "そのプロンプトは使用できませんでした。言い換えてみてください。",
         "shortcut_hint": "⌘/Ctrl + Enterで生成",

@@ -3304,6 +3304,7 @@
         "prompt_helper_website_label": "Feedback del sitio web",
         "prompt_label": "Describe la encuesta que necesitas",
         "prompt_placeholder": "Describe la encuesta que necesitas, por ejemplo: Entender por qué los nuevos usuarios abandonan durante la incorporación y qué les ayudaría a completar la configuración",
+        "provider_auth_failed": "El proveedor de IA rechazó las credenciales de esta instancia. Pide a tu administrador que revise la configuración de IA.",
         "regenerate": "Regenerar",
         "request_rejected": "No se pudo usar ese mensaje. Intenta reformularlo.",
         "shortcut_hint": "⌘/Ctrl + Intro para generar",

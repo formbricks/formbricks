@@ -29,6 +29,27 @@ export const isValidHttpUrl = (value: string): boolean => {
   }
 };
 
+const isLoopbackHost = (hostname: string): boolean =>
+  hostname === "localhost" ||
+  hostname.endsWith(".localhost") ||
+  hostname === "127.0.0.1" ||
+  hostname === "[::1]" ||
+  hostname === "::1";
+
+/**
+ * A URL the client secret may be sent to: `https`, or plain `http` only on the loopback interface,
+ * where no network observer exists. Unlike the model endpoint, the token endpoint always carries a
+ * credential, so there is no "takes no credentials" case that would justify cleartext elsewhere.
+ */
+export const isSecureCredentialUrl = (value: string): boolean => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || (url.protocol === "http:" && isLoopbackHost(url.hostname));
+  } catch {
+    return false;
+  }
+};
+
 const isStringRecord = (value: unknown): value is Record<string, string> =>
   typeof value === "object" &&
   value !== null &&
@@ -70,3 +91,31 @@ export const resolveActiveAIProvider = (value?: string | null): ActiveAIProvider
 
   return normalizedValue;
 };
+
+export const OPENAI_COMPATIBLE_AUTH_MODES = ["api-key", "oauth2-client-credentials"] as const;
+export type OpenAICompatibleAuthMode = (typeof OPENAI_COMPATIBLE_AUTH_MODES)[number];
+
+export const OPENAI_COMPATIBLE_OAUTH_AUTH_STYLES = ["basic", "post"] as const;
+export type OpenAICompatibleOAuthAuthStyle = (typeof OPENAI_COMPATIBLE_OAUTH_AUTH_STYLES)[number];
+
+const parseEnumValue = <T extends string>(
+  allowed: readonly T[],
+  fallback: T,
+  value?: string | null
+): T | undefined => {
+  const normalizedValue = normalizeValue(value);
+
+  if (!normalizedValue) {
+    return fallback;
+  }
+
+  return allowed.includes(normalizedValue as T) ? (normalizedValue as T) : undefined;
+};
+
+/** `api-key` when unset; `undefined` for an unrecognised value, so callers fail closed. */
+export const parseAuthMode = (value?: string | null): OpenAICompatibleAuthMode | undefined =>
+  parseEnumValue(OPENAI_COMPATIBLE_AUTH_MODES, "api-key", value);
+
+/** `basic` when unset; `undefined` for an unrecognised value. */
+export const parseAuthStyle = (value?: string | null): OpenAICompatibleOAuthAuthStyle | undefined =>
+  parseEnumValue(OPENAI_COMPATIBLE_OAUTH_AUTH_STYLES, "basic", value);
