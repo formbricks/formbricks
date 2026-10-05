@@ -147,7 +147,7 @@ export const ZV3FeedbackRecordFilters = z
       "Only records Hub stored at or before this ISO 8601 timestamp (bounds created_at, inclusive)."
     ),
     updated_since: timestampFilter(
-      "Only records created or changed at or after this ISO 8601 timestamp (bounds updated_at, inclusive). updated_at is stamped on create, on every correction and on every enrichment result, so this answers 'what was created or changed since'. Take the timestamp from the server (e.g. a previous record's updated_at or a user-supplied time), never from your own idea of the current time. Deleted records are never returned. To find deletions, list every record without this filter and treat as deleted only local records that are missing AND were created before that listing began, minus a few minutes — anything newer may simply have been created during the listing."
+      "Only records created or changed at or after this ISO 8601 timestamp (bounds updated_at, inclusive). updated_at is stamped on create, on every correction and on every enrichment result, so this answers one-off questions like 'what was created or changed since Monday'. Use a time the user gives you. Do not chain calls by feeding the newest updated_at you received back in as the next value: that skips records changed while you were paging. Repeated incremental extraction belongs on the REST API, which documents a safe procedure. Deleted records are never returned."
     ),
     updated_until: timestampFilter(
       "Only records last created or changed at or before this ISO 8601 timestamp (bounds updated_at, inclusive)."

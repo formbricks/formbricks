@@ -138,8 +138,8 @@ curl "https://app.formbricks.com/api/v3/feedbackRecords?tenant_id=<datasetId>&up
   and keep the copy from the most recent run. Don't compare `updated_at` to choose: two writes to one record can
   commit in the opposite order to the one they started in, so the newer state can carry the older timestamp.
 - **Deletions are not returned.** A deleted record leaves nothing for `updated_since` to match. To reconcile
-  them, periodically list every record id in the dataset with no `updated_since`, noting when that listing
-  started from its first response's `Date` header. Remove the local records that were not returned **and were created before that start, minus the
+  them, periodically list every record id in the dataset with no `updated_since`, noting when that
+  listing started from its first response's `Date` header. Remove the local records that were not returned **and were created before that start, minus the
   overlap**. Anything newer may have been stored by your sync after the listing passed it, and deleting it would
   lose it. This catches every kind of delete, including deleting a user's records. It reads the whole dataset,
   so run it less often than the incremental sync, for example daily against an hourly sync.
