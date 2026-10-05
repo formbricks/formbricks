@@ -400,8 +400,8 @@ function SeriesChartRenderer({
       responseBase={responseBase}
     />
   );
-  // Big numbers print their base under the label; a chart with nothing to show has no base.
-  if (!responseBase || chartType === "big_number") return chart;
+  // A chart with nothing to show has no base. Every type that has one prints it in the same place.
+  if (!responseBase) return chart;
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="min-h-0 flex-1">{chart}</div>
@@ -632,9 +632,6 @@ function SeriesChart({
               {formatted}
             </div>
             <div className="text-muted-foreground mt-2 text-sm">{formatCubeColumnHeader(dataKey, t)}</div>
-            {responseBase && (
-              <ResponseBaseFooter family={responseBase.family} count={responseBase.count} inline />
-            )}
           </div>
         </div>
       );

@@ -18,6 +18,12 @@ interface OptionsSwitchProps {
    * dropped. Point this at the label instead.
    */
   "aria-labelledby"?: string;
+  /**
+   * `active` prints the label on the selected option only; the others show just their icon and
+   * carry the label as their accessible name and tooltip. For a row of five chart types, four
+   * extra words are noise next to the one that applies. Every option needs an icon in this mode.
+   */
+  labelDisplay?: "always" | "active";
 }
 
 export const OptionsSwitch = ({
@@ -25,6 +31,7 @@ export const OptionsSwitch = ({
   currentOption,
   handleOptionChange,
   "aria-labelledby": ariaLabelledBy,
+  labelDisplay = "always",
 }: Readonly<OptionsSwitchProps>) => {
   /**
    * Position and animation travel together in one state so they can only ever change in the same
@@ -103,33 +110,40 @@ export const OptionsSwitch = ({
         )}
         style={{ left: highlight.left, width: highlight.width, opacity: highlight.opacity }}
       />
-      {elementTypes.map((type) => (
-        <button
-          type="button"
-          key={type.value}
-          data-value={type.value}
-          // The selected option is otherwise conveyed only by the sliding highlight, which is a
-          // decorative div — nothing tells a screen reader which one is active.
-          aria-pressed={currentOption === type.value}
-          onClick={(e) => {
-            e.preventDefault();
-            !type.disabled && handleOptionChange(type.value);
-          }}
-          // nowrap: these labels are short by design, and a two-word option breaking across lines
-          // ("Vertical / bars", "Area / Chart") makes the whole switch grow a second row.
-          className={`relative z-10 grow rounded-md p-2 text-center whitespace-nowrap transition-colors duration-200 ${
-            type.disabled
-              ? "cursor-not-allowed opacity-50"
-              : currentOption === type.value
-                ? ""
-                : "cursor-pointer hover:bg-slate-50"
-          }`}>
-          <div className="flex items-center justify-center gap-x-2">
-            <span className="text-sm text-slate-900">{type.label}</span>
-            {type.icon && <div className="size-4 text-slate-600 hover:text-slate-800">{type.icon}</div>}
-          </div>
-        </button>
-      ))}
+      {elementTypes.map((type) => {
+        const isActive = currentOption === type.value;
+        const showLabel = labelDisplay === "always" || isActive || !type.icon;
+        return (
+          <button
+            type="button"
+            key={type.value}
+            data-value={type.value}
+            // The selected option is otherwise conveyed only by the sliding highlight, which is a
+            // decorative div — nothing tells a screen reader which one is active.
+            aria-pressed={isActive}
+            // An icon-only option still has to say what it is, to the screen reader and on hover.
+            aria-label={showLabel ? undefined : type.label}
+            title={showLabel ? undefined : type.label}
+            onClick={(e) => {
+              e.preventDefault();
+              !type.disabled && handleOptionChange(type.value);
+            }}
+            // nowrap: these labels are short by design, and a two-word option breaking across lines
+            // ("Vertical / bars", "Area / Chart") makes the whole switch grow a second row.
+            className={`relative z-10 grow rounded-md p-2 text-center whitespace-nowrap transition-colors duration-200 ${
+              type.disabled
+                ? "cursor-not-allowed opacity-50"
+                : isActive
+                  ? ""
+                  : "cursor-pointer hover:bg-slate-50"
+            }`}>
+            <div className="flex items-center justify-center gap-x-2">
+              {showLabel && <span className="text-sm text-slate-900">{type.label}</span>}
+              {type.icon && <div className="size-4 text-slate-600 hover:text-slate-800">{type.icon}</div>}
+            </div>
+          </button>
+        );
+      })}
     </fieldset>
   );
 };
