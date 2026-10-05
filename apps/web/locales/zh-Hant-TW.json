@@ -2691,6 +2691,7 @@
         "confirm_upgrade_button": "確認升級",
         "confirm_upgrade_calculating": "正在計算你的按比例分攤費用…",
         "confirm_upgrade_description": "你可以隨時再次變更方案。",
+        "confirm_upgrade_ends_current_plan": "切換後，你目前的方案就會永久結束，即使這筆付款沒有成功，也無法恢復。",
         "confirm_upgrade_title": "確認升級",
         "contact_sales_cta": "與我們聊聊",
         "contact_sales_description": "了解更多關於 Formbricks 企業版的資訊，以及我們如何為您量身打造解決方案。",

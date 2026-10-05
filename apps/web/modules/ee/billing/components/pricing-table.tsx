@@ -1190,15 +1190,20 @@ export const PricingTable = ({
     // Deliberately period-neutral ("charged {chargeNow} now"): the same modal covers a mid-cycle
     // proration (ordinary upgrade) and a full fresh period (trial conversion). The old "rest of your
     // billing period" wording was false for trial conversions on a payment-consent screen.
-    if (upgradePreview) {
-      return t("workspace.settings.billing.confirm_upgrade_body_with_charge", {
-        plan,
-        period,
-        chargeNow: formatMoney(upgradePreview.currency, upgradePreview.amountDue, locale),
-      });
-    }
+    const body = upgradePreview
+      ? t("workspace.settings.billing.confirm_upgrade_body_with_charge", {
+          plan,
+          period,
+          chargeNow: formatMoney(upgradePreview.currency, upgradePreview.amountDue, locale),
+        })
+      : t("workspace.settings.billing.confirm_upgrade_body", { plan, amount: planCardAmount, period });
 
-    return t("workspace.settings.billing.confirm_upgrade_body", { plan, amount: planCardAmount, period });
+    // A legacy or custom plan has no standard tier; switching off it replaces the subscription, so the
+    // old plan is gone even if the new one's payment never completes.
+    if (currentPlanLevel === null) {
+      return `${body}\n\n${t("workspace.settings.billing.confirm_upgrade_ends_current_plan")}`;
+    }
+    return body;
   };
 
   // Primary button label for the trial-continue modal ("Pay $X now"); falls back while previewing.

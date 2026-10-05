@@ -2588,6 +2588,7 @@ checksums:
     workspace/settings/billing/confirm_upgrade_button: 0c91db4f2f989972d493fed2311cbbc0
     workspace/settings/billing/confirm_upgrade_calculating: a738aa8430b5e2e8022784078d2c4ec3
     workspace/settings/billing/confirm_upgrade_description: 802d3a25618fa1922fdb5ffca0594817
+    workspace/settings/billing/confirm_upgrade_ends_current_plan: 54b7a719a7c7722f832d295cc54dc431
     workspace/settings/billing/confirm_upgrade_title: 0c91db4f2f989972d493fed2311cbbc0
     workspace/settings/billing/contact_sales_cta: 5dc274e84dd0ac81892fe67bf66360fd
     workspace/settings/billing/contact_sales_description: c79ce0fe56b31adcca9c888bdd4fcd52

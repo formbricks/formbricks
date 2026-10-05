@@ -2691,6 +2691,7 @@
         "confirm_upgrade_button": "确认升级",
         "confirm_upgrade_calculating": "正在计算您的按比例费用…",
         "confirm_upgrade_description": "你可以随时再次更改套餐。",
+        "confirm_upgrade_ends_current_plan": "切换后，你当前的套餐将永久终止，即使本次付款未成功，也无法恢复。",
         "confirm_upgrade_title": "确认升级",
         "contact_sales_cta": "联系我们",
         "contact_sales_description": "了解更多关于 Formbricks 企业版的信息，以及我们如何为你量身定制解决方案。",

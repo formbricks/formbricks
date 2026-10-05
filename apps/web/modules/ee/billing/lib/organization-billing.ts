@@ -1147,8 +1147,72 @@ const resolveReplacementCard = async (
   if (paymentMethod.type !== "card") {
     throw new OperationNotAllowedError("card_payment_method_required");
   }
+  // An old card on file is the likely case for these accounts. An expired one would be declined, the
+  // replacement would stay incomplete, and the org would drop to Hobby — so ask for a new card instead.
+  if (paymentMethod.card && isCardExpired(paymentMethod.card.exp_month, paymentMethod.card.exp_year)) {
+    throw new OperationNotAllowedError("payment_method_required");
+  }
 
   return { subscriptionPaymentMethodId };
+};
+
+// A card is valid through the last day of its expiry month.
+const isCardExpired = (expMonth: number, expYear: number): boolean => {
+  const now = new Date();
+  const currentYear = now.getUTCFullYear();
+  const currentMonth = now.getUTCMonth() + 1;
+  return expYear < currentYear || (expYear === currentYear && expMonth < currentMonth);
+};
+
+/**
+ * Stripe refuses a second currency on a customer that still has "an active subscription, subscription
+ * schedule, discount, quote, or invoice item" in the first one. The replacement deals with the
+ * subscription and its schedule; anything else would make the create fail AFTER the cancel — and
+ * reconcile's Hobby create with it — leaving the org with no subscription. Refuse before the cancel
+ * instead, so the legacy plan stays intact for support to move by hand.
+ */
+const assertNoOtherCurrencyBillingObjects = async (
+  subscription: TActiveSubscription,
+  customerId: string
+): Promise<void> => {
+  if (!stripeClient) return;
+
+  const currency = subscription.currency.toLowerCase();
+  const hasCurrency = (object: { currency: string | null }) => object.currency?.toLowerCase() === currency;
+
+  const [customer, pendingInvoiceItems, draftQuotes, openQuotes, draftInvoices, openInvoices] =
+    await Promise.all([
+      stripeClient.customers.retrieve(customerId, { expand: ["discount.source.coupon"] }),
+      stripeClient.invoiceItems.list({ customer: customerId, pending: true, limit: 100 }),
+      stripeClient.quotes.list({ customer: customerId, status: "draft", limit: 100 }),
+      stripeClient.quotes.list({ customer: customerId, status: "open", limit: 100 }),
+      stripeClient.invoices.list({ customer: customerId, status: "draft", limit: 100 }),
+      stripeClient.invoices.list({ customer: customerId, status: "open", limit: 100 }),
+    ]);
+
+  // Only an amount-off coupon carries a currency; a percent-off one doesn't block. Unexpanded counts.
+  const coupon = customer.deleted ? null : (customer.discount?.source.coupon ?? null);
+  const blockers = {
+    customerDiscount: typeof coupon === "string" || (!!coupon && hasCurrency(coupon)),
+    customerBalance: !customer.deleted && customer.balance !== 0,
+    pendingInvoiceItems: pendingInvoiceItems.data.filter(hasCurrency).length,
+    quotes: [...draftQuotes.data, ...openQuotes.data].filter(hasCurrency).length,
+    invoices: [...draftInvoices.data, ...openInvoices.data].filter(hasCurrency).length,
+  };
+
+  if (
+    blockers.customerDiscount ||
+    blockers.customerBalance ||
+    blockers.pendingInvoiceItems > 0 ||
+    blockers.quotes > 0 ||
+    blockers.invoices > 0
+  ) {
+    logger.warn(
+      { customerId, subscriptionId: subscription.id, currency, blockers },
+      "Legacy subscription not replaced: the customer holds other billing in its currency"
+    );
+    throw new OperationNotAllowedError(BILLING_CURRENCY_CONFLICT_ERROR_CODE);
+  }
 };
 
 // An incomplete replacement means its first invoice is unpaid (SCA or decline). Hand the invoice's
@@ -1212,6 +1276,7 @@ const replaceSubscriptionInCatalogCurrency = async (input: {
   const isHobbyTarget = targetPlan === "hobby";
   const targetItems = await getCatalogItemsForPlan(targetPlan, targetInterval);
   const card = isHobbyTarget ? null : await resolveReplacementCard(subscription, customerId);
+  await assertNoOtherCurrencyBillingObjects(subscription, customerId);
 
   // A schedule would keep driving the canceled subscription's phases; release it while it still can be.
   if (subscription.schedule) {
@@ -1455,6 +1520,25 @@ const NO_SETUP_UPGRADE: TSetupCheckoutUpgradeResult = {
   targetPlan: null,
 };
 
+// A legacy replacement whose first invoice still awaits payment (see replaceSubscriptionInCatalogCurrency).
+const findIncompleteReplacementSubscription = async (
+  organizationId: string,
+  customerId: string
+): Promise<Stripe.Subscription | null> => {
+  if (!stripeClient) return null;
+  const { data } = await stripeClient.subscriptions.list({
+    customer: customerId,
+    status: "incomplete",
+    limit: 10,
+  });
+  return (
+    data.find(
+      (subscription) =>
+        subscription.status === "incomplete" && subscription.metadata?.organizationId === organizationId
+    ) ?? null
+  );
+};
+
 /**
  * Finalizes a completed setup-mode Checkout upgrade: attaches the saved card synchronously (no
  * webhook dependency), applies the upgrade, and returns any client_secret for 3DS completion.
@@ -1509,6 +1593,18 @@ export const applySetupCheckoutUpgrade = async (input: {
           if (!isCanceledSubscriptionUpdateError(error)) throw error;
         });
     }
+  }
+
+  // A reload while 3D Secure is pending finalizes again. By then the legacy plan is canceled and the
+  // subscription.deleted webhook may have created Hobby, which the switch below would upgrade into a
+  // second paid subscription. Hand back the pending replacement's confirmation instead.
+  const pendingReplacement = await findIncompleteReplacementSubscription(input.organizationId, customerId);
+  if (pendingReplacement) {
+    const confirmation = await getIncompleteSubscriptionConfirmation(
+      input.organizationId,
+      pendingReplacement
+    );
+    return { mode: "immediate", ...confirmation, targetPlan };
   }
 
   const result = await switchOrganizationToCloudPlan({

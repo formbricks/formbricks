@@ -2691,6 +2691,7 @@
         "confirm_upgrade_button": "Yükseltmeyi onayla",
         "confirm_upgrade_calculating": "Orantılı ücretiniz hesaplanıyor…",
         "confirm_upgrade_description": "Planını istediğin zaman tekrar değiştirebilirsin.",
+        "confirm_upgrade_ends_current_plan": "Geçiş yaptığında mevcut planın kalıcı olarak sona erer: Bu ödeme gerçekleşmese bile geri alınamaz.",
         "confirm_upgrade_title": "Yükseltmeyi onayla",
         "contact_sales_cta": "Bizimle konuş",
         "contact_sales_description": "Kurumlar için Formbricks hakkında daha fazla bilgi edin ve çözümlerimizi sizin için nasıl özelleştirebileceğimizi keşfedin.",

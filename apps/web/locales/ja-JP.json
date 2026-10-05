@@ -2691,6 +2691,7 @@
         "confirm_upgrade_button": "アップグレードを確認",
         "confirm_upgrade_calculating": "日割り請求額を計算中…",
         "confirm_upgrade_description": "プランはいつでも変更できます。",
+        "confirm_upgrade_ends_current_plan": "切り替えると、現在のプランは完全に終了します。今回のお支払いが完了しなかった場合でも、元に戻すことはできません。",
         "confirm_upgrade_title": "アップグレードの確認",
         "contact_sales_cta": "お問い合わせ",
         "contact_sales_description": "エンタープライズ向けのFormbricksについて、お客様に最適なソリューションをご提案いたします。",

@@ -2691,6 +2691,7 @@
         "confirm_upgrade_button": "Frissítés megerősítése",
         "confirm_upgrade_calculating": "Az arányos díj kiszámítása…",
         "confirm_upgrade_description": "Bármikor újra megváltoztathatja a csomagját.",
+        "confirm_upgrade_ends_current_plan": "A váltással jelenlegi előfizetése végleg megszűnik, és azt nem lehet visszaállítani, még akkor sem, ha ez a fizetés nem sikerül.",
         "confirm_upgrade_title": "Frissítés megerősítése",
         "contact_sales_cta": "Vegye fel velünk a kapcsolatot",
         "contact_sales_description": "Tudjon meg többet a vállalatok számára készült Formbricks rendszerről, és arról, hogy hogyan tudjuk az Ön igényeire szabni a megoldásainkat.",
