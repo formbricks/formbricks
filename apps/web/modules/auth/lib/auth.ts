@@ -98,7 +98,12 @@ export const auth = betterAuth({
   // owns the SSO name lock, the verified email-change flow, rate limiting, and the audit entry. The
   // path is HTTP-only — `auth.api.updateUser` stays available to server code (`api/index.mjs` applies
   // `disabledPaths` in the router alone), which is what the SSO hooks and the service layer use.
-  disabledPaths: ["/token", "/update-user"],
+  //
+  // `/request-password-reset` (ENG-3639) for the same reason. It answered after the user lookup, token
+  // write and SMTP send, so its response time told password accounts from everything else, and it
+  // skipped the forgot-password flow's per-account mail limit (ENG-3640). Nothing calls it over HTTP:
+  // forgotPasswordAction and the profile action both use `auth.api.requestPasswordReset` in-process.
+  disabledPaths: ["/token", "/update-user", "/request-password-reset"],
   trustedOrigins: AUTH_TRUSTED_ORIGINS,
   telemetry: { enabled: false },
 
@@ -351,14 +356,13 @@ export const auth = betterAuth({
     customRules: {
       "/sign-in/email": { window: 60, max: 5 },
       "/sign-up/email": { window: 60, max: 3 },
-      "/request-password-reset": { window: 60, max: 3 },
       "/reset-password": { window: 60, max: 5 },
       // ENG-2562: the two verification endpoints, deliberately asymmetric because their risk is.
       //
       // Sending is the amplification vector — unauthenticated, attacker-triggerable, and it puts mail in
       // someone else's inbox. Without a cap the 1-hour link expiry is not a real constraint on
-      // pre-hijacking either, since fresh links can be re-issued until the victim clicks. Same budget as
-      // the sibling reset request.
+      // pre-hijacking either, since fresh links can be re-issued until the victim clicks. Same budget the
+      // reset request had before `disabledPaths` closed it.
       "/send-verification-email": { window: 60, max: 3 },
       // Verifying is the opposite case and must stay generous. It is a top-level GET clicked out of a
       // mail client — frequently behind a corporate NAT shared by many users, and often prefetched by a

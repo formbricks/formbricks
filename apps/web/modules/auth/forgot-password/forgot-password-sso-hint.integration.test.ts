@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { flushAfter } from "@/integration/after";
 import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
 import { sendPasswordResetLinkEmail, sendSsoSignInHintEmail } from "@/modules/email";
@@ -39,20 +40,10 @@ vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
   getIsSamlSsoEnabled: vi.fn(async () => true),
 }));
 
-// `after()` needs a Next request scope. Run the callback straight away instead, and keep its promise so
-// each test can wait for the mail to be sent before asserting that it was (or was not).
-const pendingAfter = vi.hoisted(() => [] as Promise<unknown>[]);
-vi.mock("next/server", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("next/server")>()),
-  after: (callback: () => unknown) => {
-    pendingAfter.push(Promise.resolve(callback()));
-  },
-}));
-
 /** Call the action and let its after-response work finish, as a real request would. */
 const requestReset = async (email: string) => {
   const result = await forgotPasswordAction({ email });
-  await Promise.all(pendingAfter.splice(0));
+  await flushAfter();
   return result;
 };
 

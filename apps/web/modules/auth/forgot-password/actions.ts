@@ -3,75 +3,25 @@
 import { headers } from "next/headers";
 import { after } from "next/server";
 import { z } from "zod";
-import type { IdentityProvider } from "@formbricks/database/prisma";
-import { logger } from "@formbricks/logger";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZUserEmail } from "@formbricks/types/user";
-import { EMAIL_AUTH_ENABLED, PASSWORD_RESET_DISABLED, WEBAPP_URL } from "@/lib/constants";
-import { hasCredentialAccount } from "@/lib/user/password";
+import { PASSWORD_RESET_DISABLED } from "@/lib/constants";
 import { actionClient } from "@/lib/utils/action-client";
-import { sendSsoSignInHint } from "@/modules/auth/forgot-password/lib/sso-sign-in-hint";
-import { auth } from "@/modules/auth/lib/auth";
-import { getUserByEmail } from "@/modules/auth/lib/user";
+import { processPasswordResetRequest } from "@/modules/auth/forgot-password/lib/password-reset-request";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-
-/**
- * Whether this user has a password to reset. Pure SSO users do not: they get a mail naming their identity
- * provider instead (ENG-3262), and the action reports success either way to stay enumeration-safe.
- *
- * The second arm exists because SSO recovery is one-way (ENG-2557): completing it flips
- * `identityProvider` to the SSO provider and nothing ever flips it back, while the recovery also clears
- * the password it found. Gated on `identityProvider` alone, those users could never ask for a reset again
- * — locked to an IdP they might lose access to, with `auth.api.setPassword` being `serverOnly` and
- * unwired. The surviving credential `Account` row identifies them: recovery nulls the password, it does
- * not delete the row.
- *
- * Kept as narrow as that problem, deliberately: gating on the credential row rather than on
- * `emailVerified` means this action grants nothing to a user who has only ever signed in via SSO, and
- * `EMAIL_AUTH_ENABLED` switches the second arm off entirely on an SSO-only instance. Note that gate
- * covers only the second arm — an `identityProvider === "email"` user still receives reset mail on an
- * SSO-only instance, which is pre-existing behaviour this change deliberately leaves alone. So the flag
- * here is about not *widening* that surface, not about closing it.
- *
- * Both are belt-and-braces rather than the enforcement boundary, and it is worth not mistaking one for
- * the other. Better Auth's native `POST /api/auth/request-password-reset` is mounted by the `[...all]`
- * catch-all unconditionally — it is NOT gated on `emailAndPassword.enabled` — and its `resetPassword`
- * CREATES a credential row when none exists. So a password can be minted for any registered address
- * regardless of this action. What actually contains that is `/sign-in/email`, which IS gated, so a minted
- * password is unusable on an SSO-only instance. This relaxation therefore grants no reach that was not
- * already there; it just stops the UI lying to a recovered user.
- */
-const canResetPassword = async (user: {
-  id: string;
-  identityProvider: IdentityProvider;
-}): Promise<boolean | null> => {
-  if (user.identityProvider === "email") {
-    return true;
-  }
-  if (!EMAIL_AUTH_ENABLED) {
-    return false;
-  }
-
-  try {
-    return await hasCredentialAccount(user.id);
-  } catch (error) {
-    // Fail closed rather than letting this escape. Note the action's `{ success: true }` is not an
-    // absolute invariant — `getUserByEmail` above it is unguarded and its `DatabaseError` is not an
-    // expected error, so it surfaces as a server error. That is address-independent, so it is not an
-    // enumeration oracle; this catch just avoids adding a second, narrower failure mode on a path that
-    // only runs for non-email identity providers.
-    logger.error({ error, userId: user.id }, "Credential-account lookup failed during password reset");
-    // `null`, not `false`: we do not know, so the caller must not tell them they have no password either.
-    return null;
-  }
-};
 
 const ZForgotPasswordAction = z.object({
   email: ZUserEmail,
 });
 
+/**
+ * Request a password reset. Enumeration-safe by construction (ENG-3639): before it responds it does only
+ * what is the same for every address — the IP limit and the operator's kill switch — and hands the rest
+ * (lookup, reset link or SSO hint, per-account limit, audit) to `after()`. So neither the answer nor how
+ * long it takes depends on whether the address is registered, has a password, or was just throttled.
+ */
 export const forgotPasswordAction = actionClient.inputSchema(ZForgotPasswordAction).action(
   withAuditLogging("passwordReset", "user", async ({ ctx, parsedInput }) => {
     await applyIPRateLimit(rateLimitConfigs.auth.forgotPassword);
@@ -80,42 +30,15 @@ export const forgotPasswordAction = actionClient.inputSchema(ZForgotPasswordActi
       throw new OperationNotAllowedError("Password reset is disabled");
     }
 
-    const user = await getUserByEmail(parsedInput.email);
-    const resettable = user ? await canResetPassword(user) : false;
+    // The success event is recorded by `processPasswordResetRequest`, and only when a reset was really
+    // requested; the wrapper cannot know that by the time it logs. A thrown failure above is still
+    // audited by the wrapper, which suppression never hides.
+    ctx.auditLoggingCtx.suppressEvent = true;
 
-    if (user && resettable) {
-      // Target the audited event at the account the reset was requested for. The ACTOR stays
-      // `UNKNOWN_DATA` because this action is unauthenticated by design — which is the honest record:
-      // someone who knows the address asked for a reset.
-      ctx.auditLoggingCtx.userId = user.id;
-      try {
-        await auth.api.requestPasswordReset({
-          body: { email: user.email, redirectTo: `${WEBAPP_URL}/auth/forgot-password/reset` },
-          headers: await headers(),
-        });
-      } catch (error) {
-        // The send failed but the action still answers `{ success: true }`, so without suppressing here
-        // the trail would claim a reset link was mailed to this user — the same false record the `else`
-        // branch guards, in the other direction. SMTP being down should not read as "we mailed them".
-        ctx.auditLoggingCtx.suppressEvent = true;
-        logger.error({ error, userId: user.id }, "Password reset request failed");
-      }
-    } else {
-      // No reset was requested — unknown address, or a user with no password to reset. The action still
-      // answers `{ success: true }` to stay enumeration-safe, so without this the wrapper's fixed
-      // `passwordReset` action would record a reset that never happened (the same false-record problem
-      // `suppressEvent` was added for on duplicate sign-up, ENG-2091). A thrown failure is audited
-      // regardless, so this cannot hide one.
-      ctx.auditLoggingCtx.suppressEvent = true;
-
-      if (user && resettable === false) {
-        // A registered user with no password to reset, e.g. Azure AD only. They would otherwise wait for
-        // a link that never comes (ENG-3262), so tell them how they do sign in. By mail, so only the inbox
-        // on file learns it, and after the response, so this branch answers as fast as an unknown address:
-        // awaiting the lookup, render and SMTP round trip here would make SSO accounts stand out by timing.
-        after(() => sendSsoSignInHint(user));
-      }
-    }
+    // Copied while the request is live: Better Auth's hooks read them after the response has gone.
+    const requestHeaders = new Headers(await headers());
+    const { ipAddress } = ctx.auditLoggingCtx;
+    after(() => processPasswordResetRequest({ email: parsedInput.email, requestHeaders, ipAddress }));
 
     return { success: true };
   })

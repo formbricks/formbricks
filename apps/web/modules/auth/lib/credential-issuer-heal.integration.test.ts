@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE } from "@formbricks/types/errors";
+import { flushAfter } from "@/integration/after";
 import { resetDb } from "@/integration/reset-db";
 import { forgotPasswordAction } from "@/modules/auth/forgot-password/actions";
 import { resetPasswordAction } from "@/modules/auth/forgot-password/reset/actions";
@@ -40,6 +41,7 @@ const dropCredentialIssuer = () =>
 /** Requests a reset link through the real action and returns the token from the captured mail. */
 const requestResetToken = async (): Promise<string> => {
   await forgotPasswordAction({ email: EMAIL });
+  await flushAfter(); // the action mails after its response (ENG-3639)
   const link = vi.mocked(sendPasswordResetLinkEmail).mock.calls.at(-1)?.[0].verifyLink ?? "";
   const token = /\/reset-password\/([^?]+)/.exec(link)?.[1];
   if (!token) throw new Error(`No reset token in the captured mail link: "${link}"`);

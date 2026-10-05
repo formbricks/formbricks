@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { flushAfter } from "@/integration/after";
 import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
 import { getUserByEmail } from "@/modules/auth/lib/user";
@@ -69,6 +70,7 @@ beforeEach(async () => {
 describe("forgotPasswordAction with a differently-capitalised email (real Postgres + Better Auth)", () => {
   test("sends the reset mail for an address typed with capitals", async () => {
     const result = await forgotPasswordAction({ email: TYPED_WITH_CAPITALS });
+    await flushAfter();
 
     expect(result?.data).toEqual({ success: true });
     // Addressed to the STORED form: the lookup normalizes to find the row, then hands Better Auth the
@@ -80,6 +82,7 @@ describe("forgotPasswordAction with a differently-capitalised email (real Postgr
     // The control. Without it, a fix that broke the ordinary path would leave the test above passing
     // for the wrong reason.
     const result = await forgotPasswordAction({ email: STORED_EMAIL });
+    await flushAfter();
 
     expect(result?.data).toEqual({ success: true });
     expect(resetMailRecipients()).toEqual([STORED_EMAIL]);
@@ -89,6 +92,7 @@ describe("forgotPasswordAction with a differently-capitalised email (real Postgr
     // The silent-skip branch is correct behaviour and must survive the fix — normalizing the lookup
     // must not turn "no such user" into a send, and the response must stay indistinguishable.
     const result = await forgotPasswordAction({ email: "Nobody@corporate-example.com" });
+    await flushAfter();
 
     expect(result?.data).toEqual({ success: true });
     expect(resetMailRecipients()).toEqual([]);
