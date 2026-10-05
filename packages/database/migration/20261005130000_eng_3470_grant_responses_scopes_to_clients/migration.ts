@@ -50,7 +50,7 @@ const MCP_WRITE_SCOPES = ["surveys:write", "workflows:write", "feedbackRecords:w
 export const eng3470GrantResponsesScopesToClients: MigrationScript = {
   type: "data",
   id: "i1aq86m5aezzheqnztvohsf5",
-  name: "20260930160000_eng_3470_grant_responses_scopes_to_clients",
+  name: "20261005130000_eng_3470_grant_responses_scopes_to_clients",
   run: async ({ tx }) => {
     const migrationTx = tx as unknown as {
       $executeRaw: (query: TemplateStringsArray, ...values: readonly unknown[]) => Promise<number>;

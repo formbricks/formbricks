@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 // The data migration under test (auto-discovered by the migration runner at deploy).
-import { eng3470GrantResponsesScopesToClients } from "../../../packages/database/migration/20260930160000_eng_3470_grant_responses_scopes_to_clients/migration";
+import { eng3470GrantResponsesScopesToClients } from "../../../packages/database/migration/20261005130000_eng_3470_grant_responses_scopes_to_clients/migration";
 
 /**
  * ENG-3470 against real Postgres. Advertising `responses:*` makes spec-following MCP clients ask for

@@ -133,7 +133,7 @@ export const MCP_OAUTH_SCOPES = [
  * **So a scope is added here only together with a migration that grants it to existing client rows**,
  * on top of the one that grants it on the resource row. `responses:read` / `responses:write` took all
  * three steps: `MCP_OAUTH_SCOPES` and the resource's `allowedScopes` (ENG-2862, 20260915120000), then
- * each registered client's `scopes` (ENG-3470, 20260930160000), which mirrors what the client already
+ * each registered client's `scopes` (ENG-3470, 20261005130000), which mirrors what the client already
  * holds and skips `skipConsent` clients. Adding a scope to this list without the client migration
  * reintroduces the `invalid_scope` break for every integration registered before it.
  */
