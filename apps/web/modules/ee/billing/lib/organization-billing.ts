@@ -1538,11 +1538,20 @@ const findIncompleteReplacementSubscriptions = async (input: {
   replacesSubscriptionId: string | undefined;
 }): Promise<{ matching: Stripe.Subscription | null; stale: Stripe.Subscription[] }> => {
   if (!stripeClient) return { matching: null, stale: [] };
-  const { data } = await stripeClient.subscriptions.list({
+  // Incomplete subscriptions expire after 23 hours, so a customer never holds more than a few; read
+  // Stripe's maximum page anyway, and refuse rather than guess if even that isn't all of them.
+  const { data, has_more: hasMore } = await stripeClient.subscriptions.list({
     customer: input.customerId,
     status: "incomplete",
-    limit: 10,
+    limit: 100,
   });
+  if (hasMore) {
+    logger.warn(
+      { organizationId: input.organizationId, customerId: input.customerId },
+      "Too many incomplete subscriptions to match a pending replacement"
+    );
+    throw new OperationNotAllowedError(BILLING_CURRENCY_CONFLICT_ERROR_CODE);
+  }
   const replacements = data.filter(
     (subscription) =>
       subscription.status === "incomplete" && subscription.metadata?.organizationId === input.organizationId
