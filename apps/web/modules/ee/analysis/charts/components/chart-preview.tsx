@@ -121,7 +121,7 @@ export function ChartPreview({
       )}>
       <Tabs value={activeTab} onValueChange={handleTabChange} className="flex min-h-0 flex-1 flex-col gap-0">
         <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-slate-100 px-4 py-3">
-          {typeControl && <div className="min-w-0 flex-1 basis-96">{typeControl}</div>}
+          {typeControl && <div className="min-w-0">{typeControl}</div>}
           {/*
             Always rendered, disabled until there is something to look at: appearing only once the
             query resolves moved everything beside it, and the header is the one row in this dialog
