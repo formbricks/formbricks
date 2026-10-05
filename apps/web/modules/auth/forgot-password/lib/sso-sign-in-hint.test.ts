@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { getAvailableSsoProviders } from "@/modules/ee/sso/lib/available-providers";
 import type { TSsoIdentityProvider } from "@/modules/ee/sso/lib/provider-normalization";
+import { getSsoAvailability } from "@/modules/ee/sso/lib/sso-availability";
 import { sendSsoSignInHintEmail } from "@/modules/email";
 import { getLinkedSsoProviders, sendSsoSignInHint } from "./sso-sign-in-hint";
 
@@ -24,8 +24,8 @@ vi.mock("@/lib/constants", () => ({
   },
 }));
 
-vi.mock("@/modules/ee/sso/lib/available-providers", () => ({
-  getAvailableSsoProviders: vi.fn(),
+vi.mock("@/modules/ee/sso/lib/sso-availability", () => ({
+  getSsoAvailability: vi.fn(),
 }));
 
 vi.mock("@/modules/email", () => ({
@@ -50,8 +50,14 @@ const linkAccounts = (...providers: string[]) =>
     >
   );
 
-const offerOnLoginPage = (...providers: TSsoIdentityProvider[]) =>
-  vi.mocked(getAvailableSsoProviders).mockResolvedValue(new Set(providers));
+const offerOnLoginPage = (...offered: TSsoIdentityProvider[]) =>
+  vi.mocked(getSsoAvailability).mockResolvedValue({
+    isSsoEnabled: offered.length > 0,
+    providers: Object.fromEntries(ALL_PROVIDERS.map((p) => [p, offered.includes(p)])) as Record<
+      TSsoIdentityProvider,
+      boolean
+    >,
+  });
 
 /** The provider names the one mail sent in this test carried. */
 const mailedProviderNames = () => vi.mocked(sendSsoSignInHintEmail).mock.calls[0]?.[0].providerNames;
@@ -182,7 +188,7 @@ describe("sendSsoSignInHint", () => {
   });
 
   test("swallows a failed licence check too", async () => {
-    vi.mocked(getAvailableSsoProviders).mockRejectedValue(new Error("licence server down"));
+    vi.mocked(getSsoAvailability).mockRejectedValue(new Error("licence server down"));
 
     await expect(sendSsoSignInHint(user)).resolves.toBeUndefined();
     expect(sendSsoSignInHintEmail).not.toHaveBeenCalled();

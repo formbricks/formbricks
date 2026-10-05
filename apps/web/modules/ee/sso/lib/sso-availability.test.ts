@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getAvailableSsoProviders } from "./available-providers";
+import { getSsoAvailability, toSsoFormProps } from "./sso-availability";
 
 const mocks = vi.hoisted(() => ({
   configured: { google: true, github: true, azuread: true, openid: true, saml: true },
@@ -38,35 +38,59 @@ beforeEach(() => {
   vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
 });
 
-describe("getAvailableSsoProviders", () => {
+describe("getSsoAvailability", () => {
   test("offers every configured provider when SSO and SAML are licensed", async () => {
-    expect([...(await getAvailableSsoProviders())]).toEqual([
-      "google",
-      "github",
-      "azuread",
-      "openid",
-      "saml",
-    ]);
+    expect(await getSsoAvailability()).toEqual({
+      isSsoEnabled: true,
+      providers: { google: true, github: true, azuread: true, openid: true, saml: true },
+    });
   });
 
-  test("offers none without the SSO licence, as the login page hides the whole block", async () => {
+  test("offers none without the SSO licence, as the pages hide the whole block", async () => {
     vi.mocked(getIsSsoEnabled).mockResolvedValue(false);
 
-    expect(await getAvailableSsoProviders()).toEqual(new Set());
+    expect(await getSsoAvailability()).toEqual({
+      isSsoEnabled: false,
+      providers: { google: false, github: false, azuread: false, openid: false, saml: false },
+    });
   });
 
   test("drops SAML without the SAML licence", async () => {
     vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(false);
 
-    expect((await getAvailableSsoProviders()).has("saml")).toBe(false);
+    expect((await getSsoAvailability()).providers.saml).toBe(false);
+  });
+
+  test("drops SAML when it is licensed but not configured", async () => {
+    mocks.configured.saml = false;
+
+    expect((await getSsoAvailability()).providers.saml).toBe(false);
   });
 
   test("drops a provider that is not configured on this instance", async () => {
     mocks.configured.azuread = false;
 
-    const available = await getAvailableSsoProviders();
+    const { providers } = await getSsoAvailability();
 
-    expect(available.has("azuread")).toBe(false);
-    expect(available.has("google")).toBe(true);
+    expect(providers.azuread).toBe(false);
+    expect(providers.google).toBe(true);
+  });
+});
+
+describe("toSsoFormProps", () => {
+  test("maps each provider onto the prop the login and signup forms read", () => {
+    expect(
+      toSsoFormProps({
+        isSsoEnabled: true,
+        providers: { google: true, github: false, azuread: true, openid: false, saml: true },
+      })
+    ).toEqual({
+      isSsoEnabled: true,
+      googleOAuthEnabled: true,
+      githubOAuthEnabled: false,
+      azureOAuthEnabled: true,
+      oidcOAuthEnabled: false,
+      samlSsoEnabled: true,
+    });
   });
 });

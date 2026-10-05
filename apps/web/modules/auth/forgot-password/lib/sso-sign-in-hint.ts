@@ -3,9 +3,9 @@ import { prisma } from "@formbricks/database";
 import type { IdentityProvider } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { TUserLocale } from "@formbricks/types/user";
-import { getAvailableSsoProviders } from "@/modules/ee/sso/lib/available-providers";
 import { getSsoProviderDisplayName } from "@/modules/ee/sso/lib/provider-display-name";
 import { type TSsoIdentityProvider, normalizeSsoProvider } from "@/modules/ee/sso/lib/provider-normalization";
+import { getSsoAvailability } from "@/modules/ee/sso/lib/sso-availability";
 import { sendSsoSignInHintEmail } from "@/modules/email";
 
 type TSsoSignInHintUser = {
@@ -70,12 +70,10 @@ export const sendSsoSignInHint = async (user: TSsoSignInHintUser): Promise<void>
       return;
     }
 
-    const availableProviders = await getAvailableSsoProviders();
+    const { providers: offered } = await getSsoAvailability();
     // De-duplicated by name too: an operator can call their OIDC provider "Microsoft" alongside Azure AD.
     const providerNames = [
-      ...new Set(
-        linkedProviders.filter((provider) => availableProviders.has(provider)).map(getSsoProviderDisplayName)
-      ),
+      ...new Set(linkedProviders.filter((provider) => offered[provider]).map(getSsoProviderDisplayName)),
     ];
 
     const sent = await sendSsoSignInHintEmail({
