@@ -3,6 +3,8 @@ import {
   getCredentialFingerprint,
   isValidHttpUrl,
   normalizeValue,
+  parseAuthMode,
+  parseAuthStyle,
   parseBooleanFlag,
   parseStringRecordJson,
 } from "./shared";
@@ -75,6 +77,24 @@ describe("packages/ai shared helpers", () => {
 
     test.each([undefined, null, "", "false", "0", "yes", "no"])("returns false for %p", (value) => {
       expect(parseBooleanFlag(value)).toBe(false);
+    });
+  });
+
+  describe("parseAuthMode / parseAuthStyle", () => {
+    test("default when unset", () => {
+      expect(parseAuthMode(undefined)).toBe("api-key");
+      expect(parseAuthMode("  ")).toBe("api-key");
+      expect(parseAuthStyle(undefined)).toBe("basic");
+    });
+
+    test("accept a known value", () => {
+      expect(parseAuthMode(" oauth2-client-credentials ")).toBe("oauth2-client-credentials");
+      expect(parseAuthStyle("post")).toBe("post");
+    });
+
+    test("return undefined for an unrecognised value", () => {
+      expect(parseAuthMode("OAuth2")).toBeUndefined();
+      expect(parseAuthStyle("header")).toBeUndefined();
     });
   });
 });

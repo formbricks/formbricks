@@ -115,6 +115,26 @@ describe("executeTenantScopedQuery", () => {
     expect(typeof payload.jti).toBe("string");
   });
 
+  test("drops the NULL value band from the query sent to Cube, not from the caller's query", async () => {
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const query = {
+      measures: ["FeedbackRecords.count"],
+      dimensions: ["FeedbackRecords.valueBand"],
+      filters: [{ member: "FeedbackRecords.fieldType", operator: "equals", values: ["nps"] }],
+    };
+    await executeTenantScopedQuery({ ...scopedInput, query });
+
+    expect(mockLoad).toHaveBeenCalledWith(
+      {
+        ...query,
+        filters: [...query.filters, { member: "FeedbackRecords.valueBand", operator: "set" }],
+        timezone: "UTC",
+      },
+      expect.anything()
+    );
+    expect(query.filters).toHaveLength(1);
+  });
+
   test("queries Cube in the organization's display time zone and expands presets in it", async () => {
     // The client reads the clock while expanding the preset, so pin it: 22:30 UTC is still May 21 in UTC
     // but already May 22 in Berlin, which is exactly the rollover this test is about.
@@ -368,6 +388,103 @@ describe("executeTenantScopedQuery", () => {
       { [DAY]: "2026-01-01", "FeedbackRecords.count": 12, "FeedbackRecords.npsScore": "50" },
       { [DAY]: "2026-01-02", "FeedbackRecords.count": 0, "FeedbackRecords.npsScore": null },
     ]);
+  });
+
+  test("fetches the response base alongside a score and counts 0 answers in an invented bucket", async () => {
+    const WEEK = "FeedbackRecords.collectedAt.week";
+    mockTablePivot.mockImplementation((pivotConfig?: { fillMissingDates?: boolean }) => {
+      const real = [
+        { [WEEK]: "2026-01-05", "FeedbackRecords.npsScore": "40", "FeedbackRecords.npsCount": 25 },
+      ];
+      if (pivotConfig?.fillMissingDates === false) return real;
+      return [
+        ...real,
+        {
+          [WEEK]: "2026-01-12",
+          "FeedbackRecords.npsScore": "__formbricks_null__",
+          "FeedbackRecords.npsCount": "__formbricks_null__",
+        },
+      ];
+    });
+
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const query = {
+      measures: ["FeedbackRecords.npsScore"],
+      timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", granularity: "week" as const }],
+    };
+    const result = await executeTenantScopedQuery({ ...scopedInput, query });
+
+    expect(mockLoad).toHaveBeenCalledWith(
+      {
+        ...query,
+        measures: ["FeedbackRecords.npsScore", "FeedbackRecords.npsCount"],
+        timezone: "UTC",
+      },
+      expect.anything()
+    );
+    // A week nobody answered has no score, but it genuinely had zero answers.
+    expect(result).toEqual([
+      { [WEEK]: "2026-01-05", "FeedbackRecords.npsScore": "40", "FeedbackRecords.npsCount": 25 },
+      { [WEEK]: "2026-01-12", "FeedbackRecords.npsScore": null, "FeedbackRecords.npsCount": 0 },
+    ]);
+    expect(query.measures).toEqual(["FeedbackRecords.npsScore"]);
+    // The audit trail records the chart as the user built it, not the injected member.
+    expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        newObject: expect.objectContaining({
+          query: expect.objectContaining({ measures: ["FeedbackRecords.npsScore"] }),
+        }),
+      })
+    );
+  });
+
+  test("still renders the chart when Cube does not know the response base measure", async () => {
+    // A self-hosted Cube running an older schema has no npsCount.
+    mockLoad
+      .mockRejectedValueOnce(new Error("Error: 'npsCount' not found for path 'FeedbackRecords.npsCount'"))
+      .mockResolvedValueOnce({ tablePivot: mockTablePivot });
+    mockTablePivot.mockReturnValue([{ "FeedbackRecords.npsScore": "40" }]);
+
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const query = { measures: ["FeedbackRecords.npsScore"] };
+    const result = await executeTenantScopedQuery({ ...scopedInput, query });
+
+    expect(mockLoad).toHaveBeenNthCalledWith(
+      1,
+      { measures: ["FeedbackRecords.npsScore", "FeedbackRecords.npsCount"], timezone: "UTC" },
+      expect.anything()
+    );
+    expect(mockLoad).toHaveBeenNthCalledWith(2, { ...query, timezone: "UTC" }, expect.anything());
+    expect(result).toEqual([{ "FeedbackRecords.npsScore": "40" }]);
+    expect(mockLoggerWarn).toHaveBeenCalledWith(expect.any(Error), expect.stringContaining("response base"));
+  });
+
+  test("does not retry when the error is not about the injected measure", async () => {
+    // A timeout or a failure in the chart's own members would fail again; retrying only doubles the
+    // load on a Cube that is already struggling.
+    mockLoad.mockRejectedValue(new Error("Query timeout of 60000ms exceeded"));
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    await expect(
+      executeTenantScopedQuery({ ...scopedInput, query: { measures: ["FeedbackRecords.npsScore"] } })
+    ).rejects.toThrow(/Cube query failed/);
+    expect(mockLoad).toHaveBeenCalledTimes(1);
+    expect(mockLoggerWarn).not.toHaveBeenCalled();
+  });
+
+  test("does not retry a failed query that carried no response base", async () => {
+    mockLoad.mockRejectedValue(new Error("boom"));
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    await expect(
+      executeTenantScopedQuery({ ...scopedInput, query: { measures: ["FeedbackRecords.count"] } })
+    ).rejects.toThrow(/Cube query failed/);
+    expect(mockLoad).toHaveBeenCalledTimes(1);
+  });
+
+  test("leaves a query with no single response base untouched", async () => {
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const query = { measures: ["FeedbackRecords.npsScore", "FeedbackRecords.count"] };
+    await executeTenantScopedQuery({ ...scopedInput, query });
+    expect(mockLoad).toHaveBeenCalledWith({ ...query, timezone: "UTC" }, expect.anything());
   });
 
   test("keeps a zero-activity day as 0 when every empty bucket was synthesized", async () => {

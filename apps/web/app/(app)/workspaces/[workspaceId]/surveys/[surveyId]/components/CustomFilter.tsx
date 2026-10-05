@@ -69,6 +69,7 @@ const PRESET_LABELS: Record<TDateRangePreset, (t: TFunction) => string> = {
   "last 24 hours": (t) => t("workspace.analysis.charts.date_preset_last_24_hours"),
   "last 7 days": (t) => t("workspace.surveys.summary.last_7_days"),
   "last 30 days": (t) => t("workspace.surveys.summary.last_30_days"),
+  "last 90 days": (t) => t("workspace.surveys.summary.last_90_days"),
   "this month": (t) => t("workspace.surveys.summary.this_month"),
   "last month": (t) => t("workspace.surveys.summary.last_month"),
   "this quarter": (t) => t("workspace.surveys.summary.this_quarter"),

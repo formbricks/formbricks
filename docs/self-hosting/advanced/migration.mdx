@@ -31,6 +31,45 @@ backups rather than running `helm rollback`. Pin explicit releases and digests, 
 The Helm chart and Formbricks image are versioned independently. A chart-only patch can retain the same
 `appVersion`; review both pins and the rendered image rather than assuming their version numbers match.
 
+### Survey visibility (opt-in)
+
+Surveys can now be restricted to their owner and the organization's owners and managers. New columns on the
+`Survey` table record each survey's owner and visibility. The migrations set every existing survey to
+workspace-visible and make its creator the owner, so **access is unchanged after the upgrade**.
+
+<Note>
+  Once the marker is set, every survey a person creates starts **Restricted** to its author and the
+  organization's owners and managers. They can make it visible to the workspace from **Collaborate** or
+  when activating it. See [Survey visibility](/surveys/general-features/visibility).
+</Note>
+
+Enforcement stays off until an operator marks the survey scope ready:
+
+```bash
+formbricks-authzed backfill --scope=survey --apply --mark-ready
+```
+
+While the marker is set:
+
+- a survey a person creates is restricted to them until they share it with the workspace;
+- API keys never see restricted surveys or their responses;
+- webhooks, integrations, feedback sources, follow-ups and workflows never receive a restricted survey's
+  responses, and cannot be attached to one.
+
+Two new environment variables:
+
+- **SURVEY_VISIBILITY_FORCE_DISABLED**: emergency switch. `1` ignores the marker, so every survey is
+  workspace-visible again. Takes effect on restart.
+- **SURVEY_WORKSPACE_LIMIT**: most surveys one workspace may hold, archived ones included (default `10000`).
+  This applies whether or not visibility is enforced: creating a survey past it answers
+  `422 workspace_survey_limit_reached`. Raise it before upgrading if a workspace is near the default.
+
+To roll back, clear the marker. This touches only PostgreSQL and keeps each survey's stored visibility:
+
+```bash
+formbricks-authzed backfill --scope=survey --clear-ready
+```
+
 ### Bundled TEI log level
 
 The Helm chart now defaults `hub.embeddings.env.RUST_LOG` to `warn` because TEI 1.9 includes its API key in
@@ -77,6 +116,10 @@ setting.
   unchanged. Support for this variable was missing between v3.0 and v5.x, so it takes effect again on v6.
 
 - **DEFAULT_ORGANIZATION_ROLE** has been renamed to **AUTH_SSO_DEFAULT_ORGANIZATION_ROLE**.
+
+- **AUTHZED_CONSISTENCY** must be `fully_consistent`. v6 refuses to start with any other value, or with the
+  variable unset. An existing `.env` that still sets `AUTHZED_CONSISTENCY=minimize_latency` must be changed
+  to `AUTHZED_CONSISTENCY=fully_consistent` before upgrading.
 
 - **BETTER_AUTH_URL** and **BETTER_AUTH_SECRET** are now the documented names for the auth base URL and
   the session-signing secret. This is a documentation change, not a rename: `NEXTAUTH_URL` and

@@ -89,6 +89,14 @@ describe("getUniqueConstraintFields", () => {
       ).toEqual(["workspaceId", "feedback_source_id", "source_field_id", "target_field_id"]);
     });
 
+    test("maps the survey projection primary key to scope", () => {
+      expect(
+        getUniqueConstraintFields(
+          indexP2002("AuthzedProjectionScopeState_pkey", "AuthzedProjectionScopeState")
+        )
+      ).toEqual(["scope"]);
+    });
+
     test("maps a single-column primary key to id", () => {
       expect(getUniqueConstraintFields(indexP2002("Survey_pkey", "Survey"))).toEqual(["id"]);
     });

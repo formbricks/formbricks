@@ -22,10 +22,12 @@ import {
 
 export const getResponses = async (
   workspaceIds: string[],
-  params: TGetResponsesFilter
+  params: TGetResponsesFilter,
+  /** ENG-3282: the API key's visibility clause on the response's survey. */
+  visibleSurveyWhere: Prisma.SurveyWhereInput = {}
 ): Promise<Result<ApiResponseWithMeta<Response[]>, ApiErrorResponseV2>> => {
   try {
-    const query = getResponsesQuery(workspaceIds, params);
+    const query = getResponsesQuery(workspaceIds, params, visibleSurveyWhere);
     const whereClause = query.where;
 
     const [responses, totalCount] = await Promise.all([

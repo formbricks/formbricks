@@ -5,6 +5,7 @@ import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getSurvey } from "@/lib/survey/service";
+import { SURVEY_ACTION_FOR_METHOD, canApiKeyReachSurveyResource } from "@/lib/survey/visibility/api-key";
 import { generateSurveySingleUseLinkParamsList } from "@/lib/utils/single-use-surveys";
 
 export const GET = withV1ApiWrapper({
@@ -35,7 +36,13 @@ export const GET = withV1ApiWrapper({
           { type: "apiKey", id: authentication.apiKeyId },
           getWorkspaceAuthorizationActionForMethod("POST"),
           { type: "workspace", id: survey.workspaceId }
-        ))
+        )) ||
+        // ENG-3282: the minted links write responses into this survey, so a restricted one is out of the
+        // key's reach, at the same level as a response write.
+        !(await canApiKeyReachSurveyResource(authentication.apiKeyId, SURVEY_ACTION_FOR_METHOD.POST, {
+          type: "survey",
+          id: survey.id,
+        }))
       ) {
         return {
           response: responses.unauthorizedResponse(),

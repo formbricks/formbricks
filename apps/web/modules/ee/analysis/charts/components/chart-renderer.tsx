@@ -12,6 +12,7 @@ import {
 } from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import { MatrixChart } from "@/modules/ee/analysis/charts/components/matrix-chart";
 import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/polished-tooltip";
+import { ResponseBaseFooter } from "@/modules/ee/analysis/charts/components/response-base-footer";
 import { computeBigNumberValue } from "@/modules/ee/analysis/charts/lib/big-number";
 import { resolveChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
 import {
@@ -25,17 +26,21 @@ import {
   formatPercentShare,
   formatXAxisTick,
   getSemanticDimensionColor,
-  getSentimentMeasureColor,
+  getSemanticMeasureColor,
   pivotMeasuresToCategories,
   prepareMeasureSliceData,
   preparePieData,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import { computeResponseBase } from "@/modules/ee/analysis/charts/lib/response-base";
 import { formatTimeBucket, getTimeGranularityFromKey } from "@/modules/ee/analysis/charts/lib/time-axis";
 import { computeYAxis } from "@/modules/ee/analysis/charts/lib/y-axis-scale";
 import {
   FEEDBACK_MEASURE_IDS,
+  type TResponseBaseFamily,
   formatCubeColumnHeader,
   getMeasureAxisLabel,
+  getResponseBaseFamily,
+  getResponseBaseMeasureId,
   getTranslatedDimensionValueLabel,
   sortMeasureIdsForCategoryAxis,
   sortRowsByEnumDimension,
@@ -140,7 +145,7 @@ const PieCenterLabel = ({
   );
 };
 
-interface BarChartViewProps extends Pick<CartesianChartProps, "timeAxis"> {
+interface BarChartViewProps extends Pick<CartesianChartProps, "timeAxis" | "responseBaseKey"> {
   sortedData: TChartDataRow[];
   dataKeys: string[];
   isMultiMeasure: boolean;
@@ -161,6 +166,7 @@ const BarChartView = ({
   formatDimensionValue,
   isHorizontal = false,
   timeAxis,
+  responseBaseKey,
 }: Readonly<BarChartViewProps>) => {
   const { t } = useTranslation();
   // Value labels sit past the end of the bar, which is the top of a vertical bar and the
@@ -176,8 +182,11 @@ const BarChartView = ({
     // Sentiment measures pivot into the scale order the sentiment *dimension* axis uses,
     // so this chart and a dimension-grouped one read in the same direction.
     const axisKeys = sortMeasureIdsForCategoryAxis(dataKeys);
-    const measureData = pivotMeasuresToCategories(sortedData, axisKeys, (key) =>
-      formatCubeColumnHeader(key, t)
+    const measureData = pivotMeasuresToCategories(
+      sortedData,
+      axisKeys,
+      (key) => formatCubeColumnHeader(key, t),
+      responseBaseKey
     );
     // Pivoting collapses every measure onto PIVOTED_VALUE_KEY ("value"), which carries no measure
     // id, so an axis derived from the pivoted rows can't look up fixed-scale candidates and falls
@@ -202,7 +211,8 @@ const BarChartView = ({
         zeroBaseline
         tooltipHideLabel
         horizontal={isHorizontal}
-        xAxisTickFormatter={formatMeasureLabel}>
+        xAxisTickFormatter={formatMeasureLabel}
+        responseBaseKey={responseBaseKey}>
         <Bar dataKey={PIVOTED_VALUE_KEY} fill={CHART_BRAND_DARK} radius={4}>
           <LabelList
             dataKey={PIVOTED_VALUE_KEY}
@@ -241,6 +251,7 @@ const BarChartView = ({
       horizontal={isHorizontal}
       xAxisTickFormatter={formatDimensionValue}
       timeAxis={timeAxis}
+      responseBaseKey={responseBaseKey}
       chartProps={isMultiMeasure ? { barCategoryGap: "20%" } : {}}>
       {dataKeys.map((key) => (
         <Bar key={key} dataKey={key} fill={chartConfig[key]?.color} radius={4}>
@@ -269,6 +280,7 @@ interface PieChartViewProps {
   xAxisKey: string;
   chartConfig: ChartConfig;
   formatDimensionValue: (value: unknown) => string;
+  responseBaseKey?: string;
 }
 
 const PieChartView = ({
@@ -281,6 +293,7 @@ const PieChartView = ({
   xAxisKey,
   chartConfig,
   formatDimensionValue,
+  responseBaseKey,
 }: Readonly<PieChartViewProps>) => {
   const { t, i18n } = useTranslation();
   const renderPieLabel = createPieLabelRenderer(i18n.language);
@@ -292,7 +305,7 @@ const PieChartView = ({
   const pieDataKey = useMeasureSlices ? PIE_MEASURE_VALUE_KEY : dataKey;
   const pieNameKey = useMeasureSlices ? PIE_MEASURE_NAME_KEY : xAxisKey;
   const pieSource = useMeasureSlices
-    ? prepareMeasureSliceData(sortedData, dataKeys, (key) => formatCubeColumnHeader(key, t))
+    ? prepareMeasureSliceData(sortedData, dataKeys, (key) => formatCubeColumnHeader(key, t), responseBaseKey)
     : sortedData;
   const pieResult = preparePieData(pieSource, pieDataKey, pieNameKey);
   if (!pieResult) {
@@ -337,7 +350,11 @@ const PieChartView = ({
               slice name) would only repeat it — suppress it like the pivoted bar chart does. */}
           <ChartTooltip
             content={
-              <PolishedChartTooltip labelFormatter={formatDimensionValue} hideLabel={useMeasureSlices} />
+              <PolishedChartTooltip
+                labelFormatter={formatDimensionValue}
+                hideLabel={useMeasureSlices}
+                responseBaseKey={responseBaseKey}
+              />
             }
           />
           <Legend
@@ -366,6 +383,8 @@ interface ChartRendererProps {
   config?: TChartConfig;
 }
 
+type TResponseBase = { key: string; family: TResponseBaseFamily; count: number };
+
 /** Every chart type drawn along a single category or time axis: area, bar, pie and big number. */
 function SeriesChartRenderer({
   chartType,
@@ -374,6 +393,48 @@ function SeriesChartRenderer({
   optionLabels,
   config,
 }: Readonly<Omit<ChartRendererProps, "fieldLabels">>) {
+  const responseBase = resolveResponseBase(query, data);
+  const chart = (
+    <SeriesChart
+      chartType={chartType}
+      data={data}
+      query={query}
+      optionLabels={optionLabels}
+      config={config}
+      responseBase={responseBase}
+    />
+  );
+  // A chart with nothing to show has no base. Every type that has one prints it in the same place.
+  if (!responseBase) return chart;
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1">{chart}</div>
+      <ResponseBaseFooter family={responseBase.family} count={responseBase.count} />
+    </div>
+  );
+}
+
+/**
+ * The answers every measure on the chart is computed from, when they share one base count and the
+ * rows carry it (the server adds it to the query; see withResponseBaseMeasure).
+ */
+const resolveResponseBase = (query: TChartQuery, data: TChartDataRow[]): TResponseBase | undefined => {
+  const key = getResponseBaseMeasureId(query.measures ?? []);
+  const family = key ? getResponseBaseFamily(key) : undefined;
+  if (!key || !family) return undefined;
+  const count = computeResponseBase(data ?? [], key);
+  return count === null ? undefined : { key, family, count };
+};
+
+function SeriesChart({
+  chartType,
+  data,
+  query,
+  optionLabels,
+  config,
+  responseBase,
+}: Readonly<Omit<ChartRendererProps, "fieldLabels"> & { responseBase?: TResponseBase }>) {
+  const responseBaseKey = responseBase?.key;
   const { t, i18n } = useTranslation();
   const { barOrientation, pieDisplay, areaDisplay } = resolveChartDisplay(config);
   // Unique across charts on the same page so SVG <defs> ids don't collide.
@@ -442,7 +503,7 @@ function SeriesChartRenderer({
       key,
       {
         label: formatCubeColumnHeader(key, t),
-        color: getSentimentMeasureColor(key) ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length],
+        color: getSemanticMeasureColor(key) ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length],
       },
     ])
   );
@@ -462,6 +523,7 @@ function SeriesChartRenderer({
           formatDimensionValue={formatDimensionValue}
           isHorizontal={barOrientation === "horizontal"}
           timeAxis={timeAxis}
+          responseBaseKey={responseBaseKey}
         />
       );
     // Line is a display style of this type, not a type of its own: both render the same Recharts
@@ -479,6 +541,7 @@ function SeriesChartRenderer({
           hasCategoryAxis={hasCategoryAxis}
           xAxisTickFormatter={formatDimensionValue}
           timeAxis={timeAxis}
+          responseBaseKey={responseBaseKey}
           pointScale>
           {isLine ? (
             <defs>
@@ -535,6 +598,7 @@ function SeriesChartRenderer({
             hasCategoryAxis={hasCategoryAxis}
             xAxisKey={xAxisKey}
             formatDimensionValue={formatDimensionValue}
+            responseBaseKey={responseBaseKey}
           />
         );
       }
@@ -549,6 +613,7 @@ function SeriesChartRenderer({
           xAxisKey={xAxisKey}
           chartConfig={chartConfig}
           formatDimensionValue={formatDimensionValue}
+          responseBaseKey={responseBaseKey}
         />
       );
     case "big_number": {

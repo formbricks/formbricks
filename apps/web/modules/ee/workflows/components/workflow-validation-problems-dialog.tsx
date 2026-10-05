@@ -57,6 +57,7 @@ export const WorkflowValidationProblemsDialog = ({
     name_missing: t("workspace.workflows.validation_problem_name_missing"),
     trigger_missing: t("workspace.workflows.validation_problem_trigger_missing"),
     trigger_survey_unbound: t("workspace.workflows.validation_problem_trigger_survey_unbound"),
+    trigger_survey_restricted: t("workspace.workflows.validation_problem_trigger_survey_restricted"),
     trigger_ending_not_found: t("workspace.workflows.validation_problem_trigger_ending_not_found"),
     trigger_not_connected: t("workspace.workflows.validation_problem_trigger_not_connected"),
     flow_invalid: t("workspace.workflows.validation_problem_flow_invalid"),

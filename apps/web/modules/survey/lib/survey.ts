@@ -16,6 +16,13 @@ export const selectSurvey = {
   type: true,
   workspaceId: true,
   createdBy: true,
+  // ENG-3282: part of TSurvey, so the editor's client-side ZSurvey check needs them on the row.
+  visibility: true,
+  ownerId: true,
+  visibilityVersion: true,
+  visibilityProjectedVersion: true,
+  visibilityChangedAt: true,
+  visibilityChangedById: true,
   status: true,
   welcomeCard: true,
   questions: true,
