@@ -3401,7 +3401,7 @@
         "auto_save_disabled": "Automatisches Speichern deaktiviert",
         "auto_save_disabled_tooltip": "Deine Umfrage wird nur im Entwurfsmodus automatisch gespeichert. So wird sichergestellt, dass aktive Umfragen nicht versehentlich geändert werden.",
         "auto_save_failed": "Änderungen nicht gespeichert",
-        "auto_save_failed_tooltip": "Das automatische Speichern konnte den Server nicht erreichen. Es versucht es weiter, und du kannst auch manuell speichern.",
+        "auto_save_failed_tooltip": "Das letzte automatische Speichern hat nicht geklappt. Es wird weiter versucht, und Du kannst auch manuell speichern.",
         "auto_save_on": "Automatisches Speichern an",
         "automatically_close_survey_after_n_seconds_if_no_response": "Umfrage automatisch nach <autoCloseInput /> Sekunden schließen, wenn nach dem Auslösen keine Antwort erfolgt.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Schließe die Umfrage automatisch nach einer bestimmten Anzahl an Antworten.",

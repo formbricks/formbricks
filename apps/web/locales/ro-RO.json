@@ -3401,7 +3401,7 @@
         "auto_save_disabled": "Salvare automată dezactivată",
         "auto_save_disabled_tooltip": "Sondajul tău este salvat automat doar când este în stadiul de ciornă. Astfel te asiguri că sondajele care nu mai sunt ciorne nu sunt modificate din greșeală.",
         "auto_save_failed": "Modificările nu au fost salvate",
-        "auto_save_failed_tooltip": "Salvarea automată nu a putut contacta serverul. Continuă să încerce, iar tu poți salva și manual.",
+        "auto_save_failed_tooltip": "Ultima salvare automată nu a reușit. Aplicația continuă să încerce, iar tu poți salva și manual.",
         "auto_save_on": "Salvare automată activată",
         "automatically_close_survey_after_n_seconds_if_no_response": "Închide automat chestionarul după <autoCloseInput /> secunde de la declanșare dacă nu există răspuns.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Închideți automat sondajul după un număr anumit de răspunsuri.",

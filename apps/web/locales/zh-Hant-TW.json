@@ -3401,7 +3401,7 @@
         "auto_save_disabled": "自動儲存已停用",
         "auto_save_disabled_tooltip": "你的問卷只會在草稿狀態時自動儲存。這能確保已非草稿的問卷不會被意外修改。",
         "auto_save_failed": "變更尚未儲存",
-        "auto_save_failed_tooltip": "自動儲存無法連線到伺服器。系統會持續重試,你也可以手動儲存。",
+        "auto_save_failed_tooltip": "上一次自動儲存沒有成功。系統會持續重試，你也可以手動儲存。",
         "auto_save_on": "自動儲存已啟用",
         "automatically_close_survey_after_n_seconds_if_no_response": "若觸發後無回應，將在 <autoCloseInput /> 秒後自動關閉問卷。",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "在收到一定數量的回覆後自動關閉問卷。",

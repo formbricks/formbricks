@@ -3274,7 +3274,7 @@ checksums:
     workspace/surveys/edit/auto_save_disabled: f7411fb0dcfb8f7b19b85f0be54f2231
     workspace/surveys/edit/auto_save_disabled_tooltip: d2dcdbb63a8e5db40fff711f85dd4dbd
     workspace/surveys/edit/auto_save_failed: 460812aa4bf51b7888dc7d78bcadad9c
-    workspace/surveys/edit/auto_save_failed_tooltip: b67ea3af5046f342f6d204270a673b82
+    workspace/surveys/edit/auto_save_failed_tooltip: f76fa58455953b344b1f4b114bf9e378
     workspace/surveys/edit/auto_save_on: 1524d466830b00c5d727c701db404963
     workspace/surveys/edit/automatically_close_survey_after_n_seconds_if_no_response: 7f8ea038a731a792f744d79fabba4aa9
     workspace/surveys/edit/automatically_close_the_survey_after_a_certain_number_of_responses: 2beee129dca506f041e5d1e6a1688310

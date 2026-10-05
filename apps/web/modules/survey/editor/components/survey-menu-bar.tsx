@@ -114,10 +114,14 @@ export const SurveyMenuBar = ({
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
   const [lastAutoSaved, setLastAutoSaved] = useState<Date | null>(null);
-  // Set when an auto-save tick fails to reach the server, cleared by the next save that does. The
-  // tick retries on its own (it re-sends the whole draft, so a retry cannot apply anything twice);
-  // this only makes sure the indicator stops claiming the work is safe while it is not (ENG-2899).
+  // Set when an auto-save tick does not land -- the request failed, or the server refused it -- and
+  // cleared by the next save that does. The tick retries on its own (it re-sends the whole draft, so
+  // a retry cannot apply anything twice); this only makes sure the indicator stops claiming the work
+  // is safe while it is not (ENG-2899).
   const [hasAutoSaveFailed, setHasAutoSaveFailed] = useState(false);
+  // Bumped by every save that lands. A tick that fails after a newer save already landed -- a manual
+  // save can run while a slow tick is still in flight -- must not mark that newer save as lost.
+  const saveGenerationRef = useRef(0);
   const isSuccessfullySavedRef = useRef(false);
   const isAutoSavingRef = useRef(false);
   const isSurveyPublishingRef = useRef(false);
@@ -468,10 +472,18 @@ export const SurveyMenuBar = ({
 
       // Check for changes using refs (avoids re-creating interval on every change), and skip if
       // there are none
-      if (!hasUnsavedSurveyChanges(localSurveyRef.current, [surveyRef.current, lastSavedSurveyRef.current]))
+      if (!hasUnsavedSurveyChanges(localSurveyRef.current, [surveyRef.current, lastSavedSurveyRef.current])) {
+        // Nothing is waiting to be saved, so nothing is lost either -- e.g. the author reverted the
+        // edit a failed tick was carrying. (A no-op when the flag is already clear.)
+        setHasAutoSaveFailed(false);
         return;
+      }
 
       isAutoSavingRef.current = true;
+      const generation = saveGenerationRef.current;
+      const reportTickFailed = () => {
+        if (saveGenerationRef.current === generation) setHasAutoSaveFailed(true);
+      };
 
       try {
         const currentSurvey = localSurveyRef.current;
@@ -521,8 +533,13 @@ export const SurveyMenuBar = ({
           surveyRef.current = { ...savedData };
           lastSavedSurveyRef.current = structuredClone(savedData);
           isSuccessfullySavedRef.current = true;
+          saveGenerationRef.current += 1;
           setHasAutoSaveFailed(false);
           setLastAutoSaved(new Date());
+        } else {
+          // The request reached the app and the save was refused (`serverError`, validation, a missing
+          // segment) -- just as unsaved as a failed request.
+          reportTickFailed();
         }
       } catch (e) {
         // A stale bundle's action id is rejected by the new deployment: hand it to the reload
@@ -537,7 +554,7 @@ export const SurveyMenuBar = ({
         // connection. Nothing reaches `unhandledrejection` from here, so the indicator is the only
         // place the author can learn about it.
         console.error(e);
-        setHasAutoSaveFailed(true);
+        reportTickFailed();
       } finally {
         isAutoSavingRef.current = false;
       }
@@ -563,6 +580,7 @@ export const SurveyMenuBar = ({
         lastSavedSurveyRef.current = structuredClone(updatedSurveyResponse.data);
         toast.success(t("workspace.surveys.edit.changes_saved"));
         isSuccessfullySavedRef.current = true;
+        saveGenerationRef.current += 1;
         setHasAutoSaveFailed(false);
         router.refresh();
       } else {
@@ -640,6 +658,7 @@ export const SurveyMenuBar = ({
         toast.success(t("workspace.surveys.edit.changes_saved"));
         // Set flag to prevent beforeunload warning during router.refresh()
         isSuccessfullySavedRef.current = true;
+        saveGenerationRef.current += 1;
         setHasAutoSaveFailed(false);
         router.refresh();
       } else {
@@ -902,7 +921,8 @@ export const SurveyMenuBar = ({
         <AutoSaveIndicator
           isDraft={localSurvey.status === "draft"}
           lastSaved={lastAutoSaved}
-          hasFailed={hasAutoSaveFailed}
+          // Once scheduled the interval is torn down, so the badge must not promise further retries.
+          hasFailed={hasAutoSaveFailed && localSurvey.publishOn === null}
         />
         {!isStorageConfigured && (
           <div>

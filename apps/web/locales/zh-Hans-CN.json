@@ -3401,7 +3401,7 @@
         "auto_save_disabled": "自动保存已禁用",
         "auto_save_disabled_tooltip": "问卷仅在草稿状态下自动保存。这样可以确保已发布的问卷不会被意外更改。",
         "auto_save_failed": "更改未保存",
-        "auto_save_failed_tooltip": "自动保存无法连接到服务器。系统会持续重试，你也可以手动保存。",
+        "auto_save_failed_tooltip": "上次自动保存没有成功。系统会继续尝试，你也可以手动保存。",
         "auto_save_on": "自动保存已启用",
         "automatically_close_survey_after_n_seconds_if_no_response": "如果没有回复，在触发后 <autoCloseInput /> 秒自动关闭调查。",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "自动 关闭 调查 在 达到 一定数量 的 回应 后",

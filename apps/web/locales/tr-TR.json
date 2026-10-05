@@ -3401,7 +3401,7 @@
         "auto_save_disabled": "Otomatik kaydetme devre dışı",
         "auto_save_disabled_tooltip": "Anketin yalnızca taslak halindeyken otomatik kaydedilir. Bu, artık taslak olmayan anketlerin yanlışlıkla değiştirilmemesini sağlar.",
         "auto_save_failed": "Değişiklikler kaydedilmedi",
-        "auto_save_failed_tooltip": "Otomatik kaydetme sunucuya ulaşamadı. Denemeye devam ediyor, istersen manuel olarak da kaydedebilirsin.",
+        "auto_save_failed_tooltip": "Son otomatik kaydetme gerçekleşmedi. Denemeye devam ediyor, istersen manuel olarak da kaydedebilirsin.",
         "auto_save_on": "Otomatik kaydetme açık",
         "automatically_close_survey_after_n_seconds_if_no_response": "Yanıt alınmazsa, tetiklendikten <autoCloseInput /> saniye sonra anketi otomatik olarak kapat.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Belirli sayıda yanıt alındıktan sonra anketi otomatik olarak kapat.",
