@@ -3948,20 +3948,86 @@ describe("organization-billing", () => {
           replacesSubscriptionId: "sub_legacy",
         },
         latest_invoice: "in_stale",
+        items: {
+          data: [
+            {
+              id: "si_stale_pro",
+              current_period_end: 1742515200,
+              price: {
+                id: "price_pro_monthly",
+                unit_amount: 8900,
+                metadata: { formbricks_plan: "pro", formbricks_price_kind: "base" },
+                product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                recurring: { usage_type: "licensed", interval: "month" },
+              },
+            },
+          ],
+        },
+      };
+      // The state the abandoned Pro attempt leaves: legacy canceled, Hobby provisioned by the
+      // subscription.deleted webhook, and the unpaid Pro replacement.
+      const webhookHobby = {
+        id: "sub_hobby",
+        status: "active",
+        currency: "usd",
+        created: 1800000000,
+        cancel_at_period_end: false,
+        schedule: null,
+        default_payment_method: null,
+        metadata: { organizationId: "org_1" },
+        items: {
+          data: [
+            {
+              id: "si_hobby",
+              current_period_end: 1742515200,
+              price: {
+                id: "price_hobby_monthly",
+                unit_amount: 0,
+                metadata: { formbricks_plan: "hobby", formbricks_price_kind: "base" },
+                product: { id: "prod_hobby", metadata: { formbricks_plan: "hobby" }, active: true },
+                recurring: { usage_type: "licensed", interval: "month" },
+              },
+            },
+          ],
+        },
       };
       mocks.subscriptionsList.mockImplementation(async (params: { status?: string }) => ({
-        data: params?.status === "incomplete" ? [stalePro] : [legacySubscription()],
+        data:
+          params?.status === "incomplete"
+            ? [stalePro]
+            : [legacySubscription({ status: "canceled" }), stalePro, webhookHobby],
       }));
+      mocks.subscriptionsUpdate.mockImplementation(async (id: string) => {
+        if (id === "sub_legacy") {
+          throw stripeInvalidRequest(
+            "A canceled subscription can only update its cancellation_details and metadata.",
+            "invalid_canceled_subscription_fields"
+          );
+        }
+        return { id, status: "active", latest_invoice: "in_scale" };
+      });
+      mocks.invoicesRetrieve.mockResolvedValue({ id: "in_scale", confirmation_secret: null });
 
       const result = await applySetupCheckoutUpgrade({ organizationId: "org_1", checkoutSessionId: "cs_1" });
 
-      expect(mocks.invoicesRetrieve).not.toHaveBeenCalledWith("in_stale", expect.anything());
+      // The stale Pro invoice is voided, and the org's one live subscription (Hobby) moves to Scale.
       expect(mocks.subscriptionsCancel).toHaveBeenCalledWith("sub_stale_pro");
-      expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
-        expect.objectContaining({ metadata: expect.objectContaining({ targetPlan: "scale" }) }),
-        expect.anything()
+      expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
+        "sub_hobby",
+        expect.objectContaining({
+          items: expect.arrayContaining([
+            { id: "si_hobby", deleted: true },
+            expect.objectContaining({ price: "price_scale_monthly" }),
+          ]),
+        })
       );
-      expect(result).toMatchObject({ targetPlan: "scale" });
+      expect(mocks.subscriptionsCreate).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        mode: "immediate",
+        clientSecret: null,
+        requiresAction: false,
+        targetPlan: "scale",
+      });
     });
 
     test("the upgrade preview returns null (amount-less copy) without asking Stripe to price it", async () => {
