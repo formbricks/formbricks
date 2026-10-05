@@ -142,7 +142,8 @@ test.describe("JS Package Test", async () => {
     await expect(page.locator("#formbricks-modal-container")).toHaveCount(1, { timeout: 120000 });
 
     await test.step("the SDK receives compiled custom CSS only, workspace CSS once", async () => {
-      const { data } = (await (await environmentResponse).json()) as {
+      // The endpoint wraps the state in its own envelope: `{ data: { data: <state>, expiresAt } }`.
+      const { data } = ((await (await environmentResponse).json()) as { data: unknown }).data as {
         data: {
           workspace: { customCss?: Record<string, string> };
           project?: { customCss?: unknown };

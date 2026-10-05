@@ -28,11 +28,15 @@ export const InheritedWorkspaceCss = ({
 }: Readonly<InheritedWorkspaceCssProps>) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const css = source?.[appearance] ?? null;
-  const fieldLabel =
-    appearance === "dark"
-      ? t("workspace.custom_css.dark_css_label")
-      : t("workspace.custom_css.base_css_label");
+  // Base CSS applies in both appearances, so the Dark tab shows it next to the dark rules it adds to.
+  const fields: TCustomCssAppearance[] = appearance === "dark" ? ["light", "dark"] : ["light"];
+  const inherited = fields.flatMap((field) => {
+    const css = source?.[field] ?? null;
+    if (!css) return [];
+    const label =
+      field === "dark" ? t("workspace.custom_css.dark_css_label") : t("workspace.custom_css.base_css_label");
+    return [{ field, css, label }];
+  });
 
   return (
     <Collapsible.Root open={open} onOpenChange={setOpen} className="rounded-md border border-slate-200">
@@ -61,14 +65,27 @@ export const InheritedWorkspaceCss = ({
         {status === "withheld" && (
           <p className="text-xs text-amber-800">{t("workspace.custom_css.withheld_warning")}</p>
         )}
-        {css ? (
-          <pre
-            // Focusable so a keyboard user can scroll a long stylesheet.
-            tabIndex={0}
-            aria-label={`${t("workspace.custom_css.workspace_css_label")}: ${fieldLabel}`}
-            className="max-h-60 overflow-auto rounded-md border border-slate-200 bg-slate-50 p-3 font-mono text-xs whitespace-pre-wrap text-slate-700 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none">
-            {css}
-          </pre>
+        {inherited.length > 0 ? (
+          inherited.map(({ field, css, label }) => (
+            <div key={field} className="flex flex-col gap-1">
+              <p className="text-xs font-medium text-slate-600">
+                {label}
+                {field === "light" && appearance === "dark" && (
+                  <span className="font-normal text-slate-500">
+                    {" "}
+                    · {t("workspace.custom_css.base_css_help")}
+                  </span>
+                )}
+              </p>
+              <pre
+                // Focusable so a keyboard user can scroll a long stylesheet.
+                tabIndex={0}
+                aria-label={`${t("workspace.custom_css.workspace_css_label")}: ${label}`}
+                className="max-h-60 overflow-auto rounded-md border border-slate-200 bg-slate-50 p-3 font-mono text-xs whitespace-pre-wrap text-slate-700 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none">
+                {css}
+              </pre>
+            </div>
+          ))
         ) : (
           <p className="text-xs text-slate-500">{t("workspace.custom_css.workspace_css_empty")}</p>
         )}
