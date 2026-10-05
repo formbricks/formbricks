@@ -1,19 +1,31 @@
 /**
  * Integration-harness stand-in for Next's `after()`, which throws outside a request scope (ENG-3639).
  *
- * `integration/setup.ts` mocks `next/server` so every `after(callback)` starts the callback straight away
- * and parks its promise here. A test that drives code which defers work past its response awaits
- * `flushAfter()` before asserting on that work — exactly what Next does once the response is sent.
+ * Opt-in per suite, so suites that rely on the real outside-a-request behaviour (code that catches that
+ * throw and runs the work inline, like `scheduleFeedbackSourceReconciliation`) keep it:
+ *
+ *   vi.mock("next/server", async (importOriginal) =>
+ *     (await import("@/integration/after")).withAfterMock(await importOriginal()));
+ *
+ * Callbacks are queued, not started, until `flushAfter()` — the way Next holds them until the response
+ * is sent — so a test can assert that nothing happened before it.
  */
-const pending: Promise<unknown>[] = [];
+const queued: (() => unknown)[] = [];
 
-export const runAfter = (callback: () => unknown): void => {
-  pending.push(Promise.resolve().then(callback));
+const runAfter = (callback: () => unknown): void => {
+  queued.push(callback);
 };
 
-/** Wait for everything scheduled with `after()` so far, including work it scheduled in turn. */
+export const withAfterMock = <T extends object>(nextServer: T): T & { after: typeof runAfter } => ({
+  ...nextServer,
+  after: runAfter,
+});
+
+/** Run everything scheduled with `after()` so far, including work it scheduled in turn. */
 export const flushAfter = async (): Promise<void> => {
-  while (pending.length > 0) {
-    await Promise.all(pending.splice(0));
+  while (queued.length > 0) {
+    for (const callback of queued.splice(0)) {
+      await callback();
+    }
   }
 };

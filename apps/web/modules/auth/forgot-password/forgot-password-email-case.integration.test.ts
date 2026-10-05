@@ -23,6 +23,11 @@ import { forgotPasswordAction } from "./actions";
  */
 
 // No Next request scope under vitest; the action reads headers for rate limiting and for Better Auth.
+// `after()` needs a Next request scope; this suite drives code that defers work with it (ENG-3639).
+vi.mock("next/server", async (importOriginal) =>
+  (await import("@/integration/after")).withAfterMock(await importOriginal<typeof import("next/server")>())
+);
+
 vi.mock("next/headers", () => ({
   cookies: vi.fn(async () => ({ get: () => undefined, delete: () => undefined })),
   headers: vi.fn(async () => new Headers()),

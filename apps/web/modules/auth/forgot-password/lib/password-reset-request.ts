@@ -38,7 +38,7 @@ import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
  *
  * `null` when the lookup failed: we cannot say either way, so the caller sends nothing at all.
  */
-export const canResetPassword = async (user: {
+const canResetPassword = async (user: {
   id: string;
   identityProvider: IdentityProvider;
 }): Promise<boolean | null> => {

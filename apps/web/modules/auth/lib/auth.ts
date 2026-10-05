@@ -144,9 +144,10 @@ export const auth = betterAuth({
       const { sendPasswordResetLinkEmail } = await import("@/modules/email");
       // Same falsy-return trap as sendVerificationEmail below (ENG-2091): `sendEmail` returns false
       // without throwing when SMTP isn't configured, and Better Auth ignores the return value — so a
-      // reset that never went out would leave no trace at all. Throwing makes it attributable; the
-      // caller (forgot-password/actions.ts) already catches and still answers generically, so the
-      // enumeration-safe response is unchanged.
+      // reset that never went out would leave no trace at all. Throwing makes it attributable. Note
+      // Better Auth's `runInBackgroundOrAwait` catches and logs it rather than rethrowing, so the
+      // forgot-password flow (`processPasswordResetRequest`, which runs after the response) sees no
+      // error either way; the caller's answer cannot depend on it.
       const sent = await sendPasswordResetLinkEmail({
         email: user.email,
         locale: await getUserLocale(user.id),

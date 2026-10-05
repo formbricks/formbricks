@@ -17,6 +17,11 @@ import { forgotPasswordAction } from "./actions";
  * against the real `auth` instance: the route is gone, and the in-process call every caller uses is not.
  */
 
+// `after()` needs a Next request scope; this suite drives code that defers work with it (ENG-3639).
+vi.mock("next/server", async (importOriginal) =>
+  (await import("@/integration/after")).withAfterMock(await importOriginal<typeof import("next/server")>())
+);
+
 vi.mock("next/headers", () => ({
   cookies: vi.fn(async () => ({ get: () => undefined, delete: () => undefined })),
   headers: vi.fn(async () => new Headers()),
@@ -71,6 +76,9 @@ describe("password-reset entry points (real Postgres + Better Auth)", () => {
     const result = await forgotPasswordAction({ email: EMAIL });
 
     expect(result?.data).toEqual({ success: true });
+    // Answered, and nothing sent yet: the mail is work Next runs once the response has gone.
+    expect(sendPasswordResetLinkEmail).not.toHaveBeenCalled();
+
     await flushAfter();
     expect(vi.mocked(sendPasswordResetLinkEmail).mock.calls.map((call) => call[0].email)).toEqual([EMAIL]);
   });

@@ -1,3 +1,4 @@
+import "server-only";
 import { OIDC_DISPLAY_NAME } from "@/lib/constants";
 import type { TSsoIdentityProvider } from "./provider-normalization";
 

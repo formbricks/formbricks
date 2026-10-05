@@ -27,14 +27,6 @@ process.env.PASSWORD_HIBP_CHECK_DISABLED ??= "1";
 // server-only is a Next.js build guard; no-op it under vitest.
 vi.mock("server-only", () => ({}));
 
-// `after()` needs a Next request scope. Run the callback instead and let tests await it with
-// `flushAfter()` from `@/integration/after` (ENG-3639). One shared mock, for the same reason as the
-// mailer below: a per-file copy replaces this wholesale and can drift.
-vi.mock("next/server", async (importOriginal) => {
-  const { runAfter } = await import("./after");
-  return { ...(await importOriginal<typeof import("next/server")>()), after: runAfter };
-});
-
 // Capture transactional emails instead of sending via SMTP. These resolve `true` because the real
 // senders return Promise<boolean> and a FALSY result means "not sent" — auth.ts treats that as a send
 // failure (ENG-2091), so a mock resolving undefined would fake an outage.
