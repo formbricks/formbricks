@@ -108,3 +108,10 @@ describe("computeBigNumberValue", () => {
     expect(computeBigNumberValue(rows, "FeedbackRecords.count")).toBe(4);
   });
 });
+
+describe("computeBigNumberValue beside the injected response base (ENG-3331)", () => {
+  test("reads the chart's own measure, not the count that rides along", () => {
+    const rows = [{ "FeedbackRecords.npsScore": "34.68", "FeedbackRecords.npsCount": 346 }];
+    expect(computeBigNumberValue(rows, "FeedbackRecords.npsScore")).toBe(34.68);
+  });
+});

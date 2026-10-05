@@ -25,6 +25,8 @@ import {
 import {
   EMOTIONS_DIMENSION_ID,
   EMOTION_VALUES,
+  VALUE_BAND_DIMENSION_ID,
+  VALUE_BAND_VALUES,
   getFilterOperatorsForType,
   getTranslatedDimensionValueLabel,
   getTranslatedFieldLabel,
@@ -51,6 +53,10 @@ interface FiltersPanelProps {
 
 const RANGE_OPERATORS = new Set(["gt", "gte", "lt", "lte"]);
 
+// Only exact-match operators get the band pick-list; `contains` and the rest keep free text.
+const isFixedValueBandCondition = (field: string, operator: string): boolean =>
+  field === VALUE_BAND_DIMENSION_ID && (operator === "equals" || operator === "notEquals");
+
 /**
  * Chart filters drawn with the same `ConditionsEditor` as survey logic and quotas: connector
  * gutter, per-row menu (add below, remove, duplicate, create group), nested groups. Only the value
@@ -69,6 +75,16 @@ export function FiltersPanel({
   const updateRow = (id: string, updates: Partial<FilterRow>) =>
     onFiltersChange(updateFilterRow(filters, id, updates));
 
+  // One option group per fixed-vocabulary dimension, labelled with the dimension's own name.
+  const fixedVocabularyGroup = (dimensionId: string, values: readonly string[]) => ({
+    label: getTranslatedFieldLabel(dimensionId, t),
+    value: dimensionId,
+    options: values.map((value) => ({
+      value,
+      label: getTranslatedDimensionValueLabel(dimensionId, value, t) ?? value,
+    })),
+  });
+
   const renderValueInput = (condition: TGenericCondition) => {
     const field = condition.leftOperand.value;
     const { operator } = condition;
@@ -81,6 +97,12 @@ export function FiltersPanel({
     // (that returns joined combinations) and free text is error-prone. The editor's own combobox
     // offers the fixed emotion vocabulary (see `getValueProps`); pair with `contains` to match one.
     if (field === EMOTIONS_DIMENSION_ID) {
+      return undefined;
+    }
+
+    // The band vocabulary is fixed and computed by Cube, so there is nothing to look up: the editor's
+    // combobox offers the six tokens (a distinct-value lookup would also return the NULL band).
+    if (isFixedValueBandCondition(field, operator)) {
       return undefined;
     }
 
@@ -138,22 +160,14 @@ export function FiltersPanel({
         label: getFilterOperatorLabel(operator, t),
       })),
     getValueProps: (condition) => {
-      if (condition.leftOperand.value !== EMOTIONS_DIMENSION_ID) {
-        return { show: false, options: [] };
+      const field = condition.leftOperand.value;
+      if (field === EMOTIONS_DIMENSION_ID) {
+        return { show: true, options: [fixedVocabularyGroup(EMOTIONS_DIMENSION_ID, EMOTION_VALUES)] };
       }
-      return {
-        show: true,
-        options: [
-          {
-            label: getTranslatedFieldLabel(EMOTIONS_DIMENSION_ID, t),
-            value: EMOTIONS_DIMENSION_ID,
-            options: EMOTION_VALUES.map((emotion) => ({
-              value: emotion,
-              label: getTranslatedDimensionValueLabel(EMOTIONS_DIMENSION_ID, emotion, t) ?? emotion,
-            })),
-          },
-        ],
-      };
+      if (isFixedValueBandCondition(field, condition.operator)) {
+        return { show: true, options: [fixedVocabularyGroup(VALUE_BAND_DIMENSION_ID, VALUE_BAND_VALUES)] };
+      }
+      return { show: false, options: [] };
     },
     // The editor resets the operator on a field change; `toFilterRowUpdates` then picks the real
     // default for the new field, so this only has to be a valid placeholder.

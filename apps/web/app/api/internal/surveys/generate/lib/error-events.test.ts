@@ -1,5 +1,6 @@
+import { APICallError } from "ai";
 import { describe, expect, test } from "vitest";
-import { AIOutputTokenLimitError } from "@formbricks/ai";
+import { AIOAuthTokenError, AIOutputTokenLimitError } from "@formbricks/ai";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { V3SurveyGeneratedPayloadValidationError } from "@/app/api/v3/surveys/generate/service";
 import { isClientAbort, toStreamErrorEvent } from "./error-events";
@@ -25,6 +26,39 @@ describe("toStreamErrorEvent", () => {
 
     expect(event.code).toBe("ai_generated_payload_invalid");
     expect(event.invalid_params).toEqual(invalidParams);
+  });
+
+  test("does not report a throttled token endpoint as rejected credentials", () => {
+    // The service layer turns this into a TooManyRequestsError before it reaches here; this guards
+    // the raw classification so a 429 can never fall into the credentials branch.
+    const event = toStreamErrorEvent(
+      new AIOAuthTokenError("token_endpoint_throttled", { statusCode: 429, tokenUrlHost: "idp" })
+    );
+
+    expect(event.code).not.toBe("ai_provider_auth_failed");
+    expect(event.detail).not.toMatch(/credentials/);
+  });
+
+  test.each([
+    [
+      "an OAuth2 token failure",
+      new AIOAuthTokenError("token_request_failed", { statusCode: 401, tokenUrlHost: "idp" }),
+    ],
+    [
+      "a provider 401",
+      new APICallError({
+        message: "unauthorized",
+        url: "https://gw/v1",
+        requestBodyValues: {},
+        statusCode: 401,
+      }),
+    ],
+  ])("maps %s to ai_provider_auth_failed with a fixed operator-facing detail", (_label, error) => {
+    const event = toStreamErrorEvent(error);
+
+    expect(event.code).toBe("ai_provider_auth_failed");
+    expect(event.detail).toMatch(/rejected this instance's credentials/);
+    expect(event.detail).not.toMatch(/add more detail/);
   });
 
   test("falls back to ai_generation_failed for anything else", () => {

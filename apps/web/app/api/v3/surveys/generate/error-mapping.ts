@@ -1,4 +1,4 @@
-import { AIOutputTokenLimitError } from "@formbricks/ai";
+import { AIOutputTokenLimitError, classifyAIProviderError } from "@formbricks/ai";
 import { logger } from "@formbricks/logger";
 import {
   OperationNotAllowedError,
@@ -103,6 +103,17 @@ export function mapV3SurveyGenerateError(
       instance,
       operation: "surveys.generate",
     });
+  }
+
+  // Logged with its status by handleAIError already; the caller gets an operator-facing message
+  // instead of the prompt advice below, which cannot fix a credentials problem.
+  if (classifyAIProviderError(error)?.isAuthFailure) {
+    return problemBadGateway(
+      requestId,
+      "The AI provider rejected this instance's credentials. Ask your administrator to check the AI provider configuration.",
+      instance,
+      "ai_provider_auth_failed"
+    );
   }
 
   logger.error(
