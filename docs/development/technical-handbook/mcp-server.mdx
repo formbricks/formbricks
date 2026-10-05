@@ -154,19 +154,20 @@ own memberships and key grants, so admitting any read scope exposes nothing extr
 The authorization server supports all of the above, but the MCP protected-resource metadata
 (`/.well-known/oauth-protected-resource/api/mcp`) advertises only the resource scopes an MCP client
 needs — `surveys:read`, `surveys:write`, `workflows:read`, `workflows:write`, `feedbackRecords:read`,
-`feedbackRecords:write`, and `offline_access`. Clients derive their Dynamic Client Registration scopes
+`feedbackRecords:write`, `responses:read`, `responses:write`, and `offline_access`. Clients derive their Dynamic Client Registration scopes
 from that list, so `offline_access` must be advertised there for clients to be issued refresh tokens
 (`openid`/`profile`/`email` are OIDC scopes the MCP resource does not require).
 
 <Warning>
-  Adding a resource scope breaks already-connected OAuth clients until they re-register. The
-  authorization server validates `/authorize` against the scopes the **client** registered with, so a
-  client registered before the change requests the newly advertised scope and is rejected with
-  `invalid_scope` — it does not fall back to the scopes it already holds, and re-consenting does not help
-  because the same `client_id` is reused. The client has to run Dynamic Client Registration again: remove
-  and re-add the MCP server (for example `claude mcp remove <name>` then `claude mcp add …`), or delete
-  its `oauthClient` row so the next connection re-registers. Ship a release note whenever this list
-  changes.
+  Never advertise a new resource scope without a data migration that grants it to existing `oauthClient`
+  rows. The authorization server validates `/authorize` against the scopes the **client** registered
+  with, so a client registered before the change requests the newly advertised scope and is rejected with
+  `invalid_scope`. It does not fall back to the scopes it already holds, and re-consenting does not help,
+  because the same `client_id` is reused. Ship the migration in the same release as the list change, as
+  `responses:*` did (see [A new scope family](#a-new-scope-family)), and nothing breaks: users see one
+  consent screen naming the new scopes. If a client is already stuck on `invalid_scope`, it recovers by
+  registering again: remove and re-add the MCP server (for example `claude mcp remove <name>`, then
+  `claude mcp add …`).
 </Warning>
 
 OAuth scopes gate MCP tool categories at the token layer. Actual workspace access is still evaluated
