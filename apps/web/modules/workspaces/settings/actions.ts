@@ -15,6 +15,7 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
 import { getTeamsByOrganizationId } from "@/modules/ee/teams/team-list/lib/team";
+import { assertCustomCssAccess, isCustomCssChange } from "@/modules/survey/lib/custom-css-permission";
 import { updateWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 import { ZWorkspaceUpdateActionInput } from "@/modules/workspaces/settings/lib/workspace-update-input";
 
@@ -61,6 +62,9 @@ export const updateWorkspaceAction = authenticatedActionClient.inputSchema(ZUpda
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.workspaceId = parsedInput.workspaceId;
     const oldObject = await getWorkspace(parsedInput.workspaceId);
+    if (isCustomCssChange(parsedInput.data.customCss, oldObject?.customCss)) {
+      await assertCustomCssAccess({ type: "user", id: ctx.user.id }, parsedInput.workspaceId, "workspace");
+    }
 
     // The default survey language has to be one of the workspace's own survey languages, so the setting
     // can never name a language the workspace does not have (ENG-2816). The input schema already limits
@@ -86,7 +90,7 @@ export const updateWorkspaceAction = authenticatedActionClient.inputSchema(ZUpda
       ? { ...parsedInput.data, config: { ...oldObject?.config, ...parsedInput.data.config } }
       : parsedInput.data;
 
-    const result = await updateWorkspace(parsedInput.workspaceId, data);
+    const result = await updateWorkspace(parsedInput.workspaceId, data, { type: "user", id: ctx.user.id });
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
 

@@ -11,6 +11,7 @@ import {
   ValidationError,
 } from "@formbricks/types/errors";
 import { TLogo, TWorkspace, TWorkspaceUpdateInput, ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
+import type { TAuthorizationActor } from "@/lib/authorization";
 import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
@@ -20,6 +21,11 @@ import { validateInputs } from "@/lib/utils/validate";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { deleteFile, deleteWorkspaceFilesBestEffort } from "@/modules/storage/service";
 import { parseStorageFileUrl } from "@/modules/storage/utils";
+import {
+  assertCustomCssAccess,
+  isCustomCssChange,
+  prepareCustomCssForSave,
+} from "@/modules/survey/lib/custom-css-permission";
 
 // Keep v5 defaults aligned with current production camelCase keys.
 // Safe-identifier migration (with backwards compatibility) is intentionally deferred to v5.1.
@@ -83,6 +89,7 @@ const selectWorkspace = {
   styling: true,
   logo: true,
   customHeadScripts: true,
+  customCss: true,
 };
 
 // Identifies an object by what it actually resolves to in the bucket, so two URLs that differ only
@@ -196,7 +203,8 @@ const deleteOrphanedWorkspaceLogoFile = async (
 
 export const updateWorkspace = async (
   workspaceId: string,
-  inputWorkspace: TWorkspaceUpdateInput
+  inputWorkspace: TWorkspaceUpdateInput,
+  actor?: TAuthorizationActor
 ): Promise<TWorkspace> => {
   validateInputs([workspaceId, ZId], [inputWorkspace, ZWorkspaceUpdateInput]);
   // ENG-1919: organizationId is the workspace's tenant anchor, set at creation and immutable on
@@ -204,7 +212,22 @@ export const updateWorkspace = async (
   // owner move their workspace (and all its data) into another organization, so it is stripped.
   // expectedUpdatedAt is a concurrency baseline, not a column — writing it would be nonsense and
   // would also fight Prisma's own @updatedAt.
-  const { organizationId: _organizationId, expectedUpdatedAt, ...data } = inputWorkspace;
+  const { organizationId: _organizationId, expectedUpdatedAt, customCss, ...restData } = inputWorkspace;
+  const existingCss =
+    customCss === undefined
+      ? null
+      : await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { customCss: true } });
+  if (isCustomCssChange(customCss, existingCss?.customCss)) {
+    if (!actor) throw new OperationNotAllowedError("An authorized actor is required to change workspace CSS");
+    await assertCustomCssAccess(actor, workspaceId, "workspace");
+  }
+  const acceptedCss = await prepareCustomCssForSave(
+    customCss,
+    existingCss?.customCss,
+    workspaceId,
+    "workspace"
+  );
+  const data = { ...restData, customCss: acceptedCss === null ? Prisma.DbNull : acceptedCss };
   let updatedWorkspace;
   let previousLogoUrl: string | undefined;
   try {

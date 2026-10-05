@@ -11,7 +11,6 @@ import { cn } from "@/lib/cn";
 import { STYLE_DEFAULTS } from "@/lib/styling/constants";
 import { CardArrangementTabs } from "@/modules/ui/components/card-arrangement-tabs";
 import { CardWidthTabs } from "@/modules/ui/components/card-width-tabs";
-import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { ColorField, DimensionInput } from "@/modules/ui/components/styling-fields";
 import { Switch } from "@/modules/ui/components/switch";
@@ -90,44 +89,18 @@ export const CardStylingSettings = ({
             description={t("workspace.surveys.edit.roundness_description")}
           />
 
-          <FormField
-            control={form.control}
+          <ColorField
+            form={form}
             name="cardBackgroundColor.light"
-            render={({ field }) => (
-              <FormItem className="space-y-1">
-                <FormLabel>{t("workspace.surveys.edit.card_background_color")}</FormLabel>
-                <FormDescription>
-                  {t("workspace.surveys.edit.card_background_color_description")}
-                </FormDescription>
-
-                <FormControl>
-                  <ColorPicker
-                    color={field.value || STYLE_DEFAULTS.cardBackgroundColor?.light || "#ffffff"}
-                    onChange={(color) => field.onChange(color)}
-                    containerClass="max-w-xs"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
+            label={t("workspace.surveys.edit.card_background_color")}
+            description={t("workspace.surveys.edit.card_background_color_description")}
           />
 
-          <FormField
-            control={form.control}
+          <ColorField
+            form={form}
             name="cardBorderColor.light"
-            render={({ field }) => (
-              <FormItem className="space-y-1">
-                <FormLabel>{t("workspace.surveys.edit.card_border_color")}</FormLabel>
-                <FormDescription>{t("workspace.surveys.edit.card_border_color_description")}</FormDescription>
-
-                <FormControl>
-                  <ColorPicker
-                    color={field.value || STYLE_DEFAULTS.cardBorderColor?.light || "#f8fafc"}
-                    onChange={(color) => field.onChange(color)}
-                    containerClass="max-w-xs"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
+            label={t("workspace.surveys.edit.card_border_color")}
+            description={t("workspace.surveys.edit.card_border_color_description")}
           />
 
           <FormField
@@ -222,18 +195,11 @@ export const CardStylingSettings = ({
                   </div>
 
                   {!!field.value && (
-                    <FormControl>
-                      <ColorPicker
-                        color={field.value?.light ?? STYLE_DEFAULTS.highlightBorderColor?.light}
-                        onChange={(color: string) =>
-                          field.onChange({
-                            ...field.value,
-                            light: color,
-                          })
-                        }
-                        containerClass="w-1/2"
-                      />
-                    </FormControl>
+                    <ColorField
+                      form={form}
+                      name="highlightBorderColor.light"
+                      label={t("workspace.surveys.edit.add_highlight_border")}
+                    />
                   )}
                 </FormItem>
               )}

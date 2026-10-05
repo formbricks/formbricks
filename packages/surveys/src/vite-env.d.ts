@@ -8,6 +8,7 @@ declare global {
       renderSurvey: (options: unknown) => void;
       onFilePick: (...args: unknown[]) => unknown;
       setNonce: (nonce: string | undefined) => void;
+      setAppearance: (appearance: "light" | "dark" | "system") => void;
     };
   }
 }

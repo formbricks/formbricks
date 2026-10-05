@@ -16,7 +16,7 @@ import { OTPInput } from "@/modules/ui/components/otp-input";
 
 interface PinScreenProps {
   surveyId: string;
-  workspace: Pick<Workspace, "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts">;
+  workspace: Pick<Workspace, "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts" | "customCss">;
   singleUseId?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
   publicDomain: string;

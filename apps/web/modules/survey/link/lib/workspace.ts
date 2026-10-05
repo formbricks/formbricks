@@ -10,7 +10,7 @@ import { validateInputs } from "@/lib/utils/validate";
 
 type TWorkspaceForLinkSurvey = Pick<
   Workspace,
-  "id" | "name" | "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts"
+  "id" | "name" | "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts" | "customCss"
 >;
 
 export interface TWorkspaceContextForLinkSurvey {
@@ -44,6 +44,7 @@ export const getWorkspaceContextForLinkSurvey = reactCache(
           logo: true,
           linkSurveyBranding: true,
           customHeadScripts: true,
+          customCss: true,
           organizationId: true,
           organization: {
             select: {
@@ -82,6 +83,7 @@ export const getWorkspaceContextForLinkSurvey = reactCache(
           logo: workspace.logo,
           linkSurveyBranding: workspace.linkSurveyBranding,
           customHeadScripts: workspace.customHeadScripts,
+          customCss: workspace.customCss,
         },
         organizationId: workspace.organizationId,
         organizationBilling: {
@@ -108,7 +110,7 @@ export const getWorkspaceById = reactCache(
     workspaceId: string
   ): Promise<Pick<
     Workspace,
-    "styling" | "logo" | "linkSurveyBranding" | "name" | "customHeadScripts"
+    "styling" | "logo" | "linkSurveyBranding" | "name" | "customHeadScripts" | "customCss"
   > | null> => {
     validateInputs([workspaceId, ZId]);
 
@@ -125,6 +127,7 @@ export const getWorkspaceById = reactCache(
           linkSurveyBranding: true,
           name: true,
           customHeadScripts: true,
+          customCss: true,
         },
       });
 

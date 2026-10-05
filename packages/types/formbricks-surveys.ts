@@ -1,3 +1,4 @@
+import type { TRenderedCustomCss } from "./custom-css-runtime";
 import type { TJsFileUploadParams, TJsWorkspaceStateSurvey } from "./js";
 import type { TResponseData, TResponseHiddenFieldValue, TResponseUpdate } from "./responses";
 import type { TUploadFileConfig } from "./storage";
@@ -20,6 +21,8 @@ export interface TSurveyCardRect {
 }
 
 export interface SurveyBaseProps {
+  customCss?: { workspace?: TRenderedCustomCss; survey?: TRenderedCustomCss };
+  appearance?: "light" | "dark" | "system";
   survey: TJsWorkspaceStateSurvey;
   styling: TSurveyStyling | TWorkspaceStyling;
   isBrandingEnabled: boolean;

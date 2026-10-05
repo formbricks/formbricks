@@ -53,6 +53,7 @@ export const selectSurvey = {
   metadata: true,
   slug: true,
   customHeadScripts: true,
+  customCss: true,
   customHeadScriptsMode: true,
   languages: {
     select: {

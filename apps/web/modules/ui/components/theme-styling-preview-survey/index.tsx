@@ -3,6 +3,8 @@
 import { MotionConfig, Variants, motion } from "framer-motion";
 import { Fragment, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { resolveStylingAppearance } from "@formbricks/types/appearance";
+import { getRenderedCustomCss } from "@formbricks/types/custom-css-runtime";
 import { resolveOverlayAppearance } from "@formbricks/types/overlay";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
@@ -17,6 +19,7 @@ import { ResetProgressButton } from "@/modules/ui/components/reset-progress-butt
 import { SurveyInline } from "@/modules/ui/components/survey";
 
 interface ThemeStylingPreviewSurveyProps {
+  appearance?: "light" | "dark";
   survey: TSurvey;
   workspace: TWorkspace;
   previewType: TSurveyType;
@@ -52,6 +55,7 @@ const previewParentContainerVariant: Variants = {
 };
 
 export const ThemeStylingPreviewSurvey = ({
+  appearance = "light",
   survey,
   workspace,
   previewType,
@@ -65,6 +69,10 @@ export const ThemeStylingPreviewSurvey = ({
   const { t } = useTranslation();
   const { workspaceOverwrites } = survey || {};
   const isAppSurvey = previewType === "app"; // Moved up
+  const customCss = {
+    workspace: getRenderedCustomCss(workspace.customCss),
+    survey: getRenderedCustomCss(survey.customCss),
+  };
 
   const previewScreenVariants: Variants = {
     expanded: {
@@ -155,10 +163,12 @@ export const ThemeStylingPreviewSurvey = ({
       overlayColor={overlayColor}
       overlayOpacity={overlayOpacity}
       previewMode="desktop"
-      background={workspace.styling.cardBackgroundColor?.light}
+      background={resolveStylingAppearance(styling, appearance).cardBackgroundColor?.light}
       borderRadius={workspace.styling.roundness ?? 8}>
       <Fragment key={surveyKey}>
         <SurveyInline
+          customCss={customCss}
+          appearance={appearance}
           appUrl={publicDomain}
           isPreviewMode={true}
           survey={toJsWorkspaceStateSurvey({ ...survey, type: "app" })}
@@ -207,6 +217,7 @@ export const ThemeStylingPreviewSurvey = ({
             key={surveyKey}
             className={cn("flex min-h-0 w-full flex-1 flex-col", !isCardless && "justify-center")}>
             <SurveyInline
+              customCss={customCss}
               appUrl={publicDomain}
               isPreviewMode={true}
               survey={toJsWorkspaceStateSurvey({ ...survey, type: "link" })}

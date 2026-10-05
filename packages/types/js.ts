@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ZActionClass } from "./action-classes";
 import { ZId } from "./common";
+import { ZRenderedCustomCss } from "./custom-css-runtime";
 import { ZOverlayAppearance } from "./overlay";
 import { ZUploadFileConfig } from "./storage";
 import { ZSurveyBase, surveyRefinement } from "./surveys/types";
@@ -37,6 +38,7 @@ export const ZJsWorkspaceStateSurvey = ZSurveyBase.pick({
   recaptcha: true,
 })
   .extend({
+    customCss: ZRenderedCustomCss.optional(),
     // Resolved custom overlay, set by the environment endpoint (see environment/lib/data.ts).
     overlayAppearance: ZOverlayAppearance.nullish(),
   })
@@ -64,7 +66,7 @@ export const ZJsWorkspaceStateWorkspaceSetting = ZWorkspace.pick({
   placement: true,
   inAppSurveyBranding: true,
   styling: true,
-});
+}).extend({ customCss: ZRenderedCustomCss.optional() });
 
 export type TJsWorkspaceStateWorkspaceSetting = z.infer<typeof ZJsWorkspaceStateWorkspaceSetting>;
 

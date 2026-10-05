@@ -35,6 +35,7 @@ const baseWorkspace: Workspace = {
   overlayOpacity: null,
   logo: null,
   customHeadScripts: null,
+  customCss: null,
   appSetupCompleted: false,
 };
 

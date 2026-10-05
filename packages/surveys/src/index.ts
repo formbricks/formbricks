@@ -2,10 +2,14 @@ import { h, render } from "preact";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { RenderSurvey } from "@/components/general/render-survey";
 import { I18nProvider } from "@/components/i18n/provider";
+import { disposeAppearance, initializeAppearance, setAppearance } from "@/lib/appearance";
 import { FILE_PICK_EVENT } from "@/lib/constants";
+import { applyCustomCss } from "@/lib/custom-css";
 import { getI18nLanguage } from "@/lib/i18n-utils";
 import { setLocaleBaseUrl } from "@/lib/i18n.config";
-import { addCustomThemeToDom, addStylesToDom, setStyleNonce } from "@/lib/styles";
+import { addStylesToDom, setStyleNonce } from "@/lib/styles";
+
+export { setAppearance };
 
 export const renderSurveyInline = (props: SurveyContainerProps) => {
   const inlineProps: SurveyContainerProps = {
@@ -26,7 +30,8 @@ export const renderSurvey = (props: SurveyContainerProps) => {
   setLocaleBaseUrl(appUrl);
 
   addStylesToDom();
-  addCustomThemeToDom({ styling: props.styling });
+  initializeAppearance(props.styling, props.appearance);
+  applyCustomCss(props.customCss);
 
   const language = getI18nLanguage(languageCode, props.survey.languages);
 
@@ -88,6 +93,10 @@ export const renderSurvey = (props: SurveyContainerProps) => {
         { language },
         h(RenderSurvey, {
           ...props,
+          onClose: () => {
+            disposeAppearance();
+            props.onClose?.();
+          },
           languageCode: surveyLanguageCode,
         })
       ),
@@ -111,5 +120,6 @@ if (globalThis.window !== undefined) {
     renderSurvey,
     onFilePick,
     setNonce: setStyleNonce,
+    setAppearance,
   } as typeof globalThis.window.formbricksSurveys;
 }

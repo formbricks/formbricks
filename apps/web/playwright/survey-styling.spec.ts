@@ -21,10 +21,9 @@ test.describe("Survey Styling", async () => {
   };
 
   const setColor = async (page: any, label: string, hex: string) => {
-    const labelEl = page.locator("label").filter({ hasText: label }).locator("visible=true").last();
-    const container = labelEl.locator("..");
-    await container.getByRole("textbox").fill(hex.replace("#", ""));
-    await container.getByRole("textbox").blur();
+    const input = page.getByRole("textbox", { name: label, exact: true }).last();
+    await input.fill(hex.replace("#", ""));
+    await input.blur();
   };
 
   const setDimension = async (page: any, label: string, value: string) => {
@@ -165,6 +164,30 @@ test.describe("Survey Styling", async () => {
     css = await page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML);
     expect(css).toContain("--fb-progress-track-height: 15px");
     expect(css).toContain("--fb-progress-track-border-radius: 20px");
+
+    await test.step("Save independent dark colors and additive custom CSS", async () => {
+      const lightCss = ".label-headline { letter-spacing: 0.04em; }";
+      await page.getByRole("textbox", { name: "Light custom CSS", exact: true }).fill(lightCss);
+      await page.getByRole("radio", { name: "Dark", exact: true }).first().press("Space");
+      await setColor(page, "Brand color", "8bd5ca");
+      await page
+        .getByRole("textbox", { name: "Dark custom CSS", exact: true })
+        .fill(".label-headline { color: #a7f3d0; }");
+      const headline = page.locator("#fbjs .label-headline").first();
+      await expect(headline).toHaveCSS("color", "rgb(167, 243, 208)");
+      await expect(page.locator("#fbjs").first()).toHaveAttribute("data-appearance", "dark");
+      await page.getByRole("button", { name: "Save", exact: true }).first().click();
+      await expect(page.getByText("Styling updated successfully")).toBeVisible();
+      await page.reload();
+      await expect(page.getByRole("textbox", { name: "Light custom CSS", exact: true })).toHaveValue(
+        lightCss
+      );
+      await page.getByRole("radio", { name: "Dark", exact: true }).first().press("Space");
+      await expect(page.getByRole("textbox", { name: "Brand color", exact: true })).toHaveValue("8bd5ca");
+      await expect(page.locator("#fbjs .label-headline").first()).toHaveCSS("color", "rgb(167, 243, 208)");
+      await page.getByRole("button", { name: "Use derived", exact: true }).first().click();
+      await expect(page.getByRole("textbox", { name: "Brand color", exact: true })).toHaveValue("1e40af");
+    });
   });
 
   test("Suggest Colors derives all colors from brand color without changing non-color properties", async ({

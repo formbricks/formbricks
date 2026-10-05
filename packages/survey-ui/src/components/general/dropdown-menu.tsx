@@ -23,9 +23,21 @@ function DropdownMenuContent({
   ref,
   ...props
 }: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.Content>>) {
+  // Preview portals must stay inside the trusted containment box, outside customer-selectable #fbjs.
+  const previewContainer =
+    typeof document === "undefined"
+      ? undefined
+      : (document.querySelector<HTMLElement>("[data-formbricks-preview-container]") ?? undefined);
   return (
-    <DropdownMenuPrimitive.Portal>
-      <div id="fbjs">
+    <DropdownMenuPrimitive.Portal container={previewContainer}>
+      <div
+        id="fbjs"
+        ref={(node) => {
+          if (node)
+            node.dataset.appearance =
+              document.querySelector(".formbricks-form[data-appearance]")?.getAttribute("data-appearance") ??
+              "light";
+        }}>
         <DropdownMenuPrimitive.Content
           ref={ref}
           data-slot="dropdown-menu-content"

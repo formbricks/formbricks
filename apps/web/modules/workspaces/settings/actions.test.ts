@@ -1,12 +1,22 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
-import { getTeamsByOrganizationIdAction, updateWorkspaceAction } from "./actions";
+import {
+  getTeamsByOrganizationIdAction,
+  updateWorkspaceAction as wrappedUpdateWorkspaceAction,
+} from "./actions";
+
+// The mocked action client exposes its internal handler instead of the public safe-action wrapper.
+const updateWorkspaceAction = wrappedUpdateWorkspaceAction as unknown as (input: {
+  ctx: { user: { id: string }; auditLoggingCtx: Record<string, unknown> };
+  parsedInput: Parameters<typeof wrappedUpdateWorkspaceAction>[0];
+}) => ReturnType<typeof wrappedUpdateWorkspaceAction>;
 
 const mocks = vi.hoisted(() => ({
   getOrganization: vi.fn(),
   getOrganizationIdFromWorkspaceId: vi.fn(),
   getRemoveBrandingPermission: vi.fn(),
+  getCustomCssPermission: vi.fn(),
   getTeamsByOrganizationId: vi.fn(),
   getWorkspace: vi.fn(),
   updateWorkspace: vi.fn(),
@@ -14,6 +24,10 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/authorization", () => ({
   assertCan: vi.fn(),
+}));
+
+vi.mock("@/modules/core/rate-limit/helpers", () => ({
+  applyRateLimit: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/action-client", () => ({
@@ -46,6 +60,7 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getRemoveBrandingPermission: mocks.getRemoveBrandingPermission,
+  getCustomCssPermission: mocks.getCustomCssPermission,
 }));
 
 vi.mock("@/modules/ee/teams/team-list/lib/team", () => ({
@@ -67,6 +82,30 @@ describe("workspace settings authorization", () => {
     mocks.getWorkspace.mockResolvedValue({ id: workspaceId, name: "Old name" });
     mocks.updateWorkspace.mockResolvedValue({ id: workspaceId, name: "New name" });
     mocks.getTeamsByOrganizationId.mockResolvedValue([]);
+    mocks.getCustomCssPermission.mockResolvedValue(true);
+  });
+
+  test("a workspace team manager cannot author shared CSS without organization management", async () => {
+    vi.mocked(assertCan).mockImplementation(async (_actor, action) => {
+      if (action === "organization.manage") throw new AuthorizationError("Not authorized");
+    });
+    await expect(
+      updateWorkspaceAction({
+        ctx,
+        parsedInput: {
+          workspaceId,
+          data: {
+            customCss: {
+              light: { source: ".a{color:red}", compiled: "ignored" },
+              dark: null,
+              processorVersion: 1,
+            },
+          },
+        },
+      })
+    ).rejects.toThrow("Not authorized");
+    expect(mocks.updateWorkspace).not.toHaveBeenCalled();
+    vi.mocked(assertCan).mockResolvedValue(undefined);
   });
 
   test("requires workspace.manage for workspace updates", async () => {
@@ -79,7 +118,11 @@ describe("workspace settings authorization", () => {
       type: "workspace",
       id: workspaceId,
     });
-    expect(mocks.updateWorkspace).toHaveBeenCalledWith(workspaceId, { name: "New name" });
+    expect(mocks.updateWorkspace).toHaveBeenCalledWith(
+      workspaceId,
+      { name: "New name" },
+      { type: "user", id: "user-1" }
+    );
   });
 
   test("does not update the workspace when authorization fails", async () => {
@@ -110,9 +153,13 @@ describe("workspace settings authorization", () => {
 
       await updateDefaultSurveyLanguage("de-DE");
 
-      expect(mocks.updateWorkspace).toHaveBeenCalledWith(workspaceId, {
-        config: { defaultSurveyLanguage: "de-DE" },
-      });
+      expect(mocks.updateWorkspace).toHaveBeenCalledWith(
+        workspaceId,
+        {
+          config: { defaultSurveyLanguage: "de-DE" },
+        },
+        { type: "user", id: "user-1" }
+      );
     });
 
     test("accepts a language the workspace stores under a legacy code", async () => {
@@ -142,9 +189,13 @@ describe("workspace settings authorization", () => {
 
       await updateDefaultSurveyLanguage("de-DE");
 
-      expect(mocks.updateWorkspace).toHaveBeenCalledWith(workspaceId, {
-        config: { channel: "link", industry: "saas", defaultSurveyLanguage: "de-DE" },
-      });
+      expect(mocks.updateWorkspace).toHaveBeenCalledWith(
+        workspaceId,
+        {
+          config: { channel: "link", industry: "saas", defaultSurveyLanguage: "de-DE" },
+        },
+        { type: "user", id: "user-1" }
+      );
     });
 
     test("accepts clearing the setting", async () => {
@@ -152,9 +203,13 @@ describe("workspace settings authorization", () => {
 
       await updateDefaultSurveyLanguage(null);
 
-      expect(mocks.updateWorkspace).toHaveBeenCalledWith(workspaceId, {
-        config: { defaultSurveyLanguage: null },
-      });
+      expect(mocks.updateWorkspace).toHaveBeenCalledWith(
+        workspaceId,
+        {
+          config: { defaultSurveyLanguage: null },
+        },
+        { type: "user", id: "user-1" }
+      );
     });
   });
 

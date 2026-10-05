@@ -1,5 +1,8 @@
 import { createLocalAccountIssuer } from "@better-auth/core/db";
 import bcrypt from "bcryptjs";
+import { execFile } from "node:child_process";
+import path from "node:path";
+import { promisify } from "node:util";
 import { Page } from "playwright";
 import { TestInfo } from "playwright/test";
 import { prisma } from "@formbricks/database";
@@ -162,6 +165,31 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
       }
 
       const userFixture = createUserFixture(user, page, ids);
+
+      // Isolated local QA can run without the authorization outbox worker. Project only this
+      // freshly seeded organization through the canonical reconciler before attempting login.
+      if (process.env.FORMBRICKS_E2E_SYNC_AUTHZED === "1") {
+        const repoRoot = path.resolve(__dirname, "../../../..");
+        await promisify(execFile)(
+          process.execPath,
+          [
+            "--conditions=react-server",
+            "--import=tsx",
+            path.resolve(__dirname, "../../scripts/authzed-backfill.ts"),
+            "--apply",
+            `--organization-id=${user.memberships[0].organizationId}`,
+          ],
+          {
+            cwd: repoRoot,
+            env: {
+              ...process.env,
+              TSX_TSCONFIG_PATH: path.join(repoRoot, "apps/web/tsconfig.json"),
+              LOG_LEVEL: "fatal",
+            },
+            timeout: 30_000,
+          }
+        );
+      }
 
       store.users.push(userFixture);
 

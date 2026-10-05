@@ -2,8 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { TJsWorkspaceStateWorkspaceSetting } from "@formbricks/types/js";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TJsWorkspaceStateSurvey, TJsWorkspaceStateWorkspaceSetting } from "@formbricks/types/js";
 import { cache } from "@/lib/cache";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
@@ -99,41 +98,34 @@ const mockWorkspace: TJsWorkspaceStateWorkspaceSetting = {
   },
 };
 
-const mockSurveys: TSurvey[] = [
+const mockSurveys: TJsWorkspaceStateSurvey[] = [
   {
     id: "survey-app-inProgress",
-    createdAt: new Date(),
-    updatedAt: new Date(),
     name: "App Survey In Progress",
     type: "app",
     status: "inProgress",
     displayLimit: null,
     endings: [],
-    followUps: [],
     isBackButtonHidden: false,
-    isVerifyEmailEnabled: false,
+    isAutoProgressingEnabled: false,
     workspaceOverwrites: null,
     showLanguageSwitch: false,
     questions: [],
+    blocks: [],
     displayOption: "displayOnce",
     recontactDays: null,
     autoClose: null,
     delay: 0,
     displayPercentage: null,
-    autoComplete: null,
-    singleUse: null,
     triggers: [],
     languages: [],
-    pin: null,
     segment: null,
     styling: null,
-    surveyClosedMessage: null,
     hiddenFields: { enabled: false },
     welcomeCard: { enabled: false, showResponseCount: false, timeToFinish: false },
     variables: [],
-    createdBy: null,
     recaptcha: { enabled: false, threshold: 0.5 },
-  } as unknown as TSurvey,
+  },
 ];
 
 const mockActionClasses = [
@@ -267,20 +259,20 @@ describe("getWorkspaceState", () => {
   });
 
   test("should handle different survey types and statuses", async () => {
-    const mixedSurveys = [
+    const mixedSurveys: TJsWorkspaceStateSurvey[] = [
       ...mockSurveys,
       {
         ...mockSurveys[0],
         id: "survey-web-draft",
         type: "app", // Use valid survey type
         status: "draft",
-      } as TSurvey,
+      },
       {
         ...mockSurveys[0],
         id: "survey-link-completed",
         type: "link",
         status: "completed",
-      } as TSurvey,
+      },
     ];
 
     const modifiedData = {

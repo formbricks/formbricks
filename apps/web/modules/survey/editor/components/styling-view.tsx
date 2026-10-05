@@ -7,15 +7,18 @@ import { UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
+import { TSurveyAppearance } from "@formbricks/types/appearance";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { COLOR_DEFAULTS, STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
+import { resetStylingAppearance } from "@/lib/styling/reset-appearance";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
 import { LogoSettingsCard } from "@/modules/survey/editor/components/logo-settings-card";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { BackgroundStylingCard } from "@/modules/ui/components/background-styling-card";
 import { Button } from "@/modules/ui/components/button";
 import { CardStylingSettings } from "@/modules/ui/components/card-styling-settings";
+import { CustomCssCard } from "@/modules/ui/components/custom-css-card";
 import {
   FormControl,
   FormDescription,
@@ -24,9 +27,16 @@ import {
   FormLabel,
   FormProvider,
 } from "@/modules/ui/components/form";
+import {
+  StylingAppearanceContext,
+  StylingAppearanceToggle,
+} from "@/modules/ui/components/styling-appearance";
 import { Switch } from "@/modules/ui/components/switch";
 
 interface StylingViewProps {
+  isCustomCssAllowed?: boolean;
+  appearance: TSurveyAppearance;
+  setAppearance: (appearance: TSurveyAppearance) => void;
   workspaceId: string;
   workspace: Workspace;
   localSurvey: TSurvey;
@@ -42,6 +52,9 @@ interface StylingViewProps {
 }
 
 export const StylingView = ({
+  isCustomCssAllowed = false,
+  appearance,
+  setAppearance,
   colors,
   workspaceId,
   workspace,
@@ -77,6 +90,7 @@ export const StylingView = ({
   });
 
   const overwriteThemeStyling = form.watch("overwriteThemeStyling");
+  const canOverrideTheme = workspace.styling.allowStyleOverwrite && overwriteThemeStyling;
   const setOverwriteThemeStyling = (value: boolean) => form.setValue("overwriteThemeStyling", value);
 
   const [formStylingOpen, setFormStylingOpen] = useState(false);
@@ -87,6 +101,11 @@ export const StylingView = ({
   const [confirmSuggestColorsOpen, setConfirmSuggestColorsOpen] = useState(false);
 
   const handleSuggestColors = () => {
+    if (appearance === "dark") {
+      form.reset(resetStylingAppearance(form.getValues(), STYLE_DEFAULTS, "dark"));
+      setConfirmSuggestColorsOpen(false);
+      return;
+    }
     const currentBrandColor =
       form.getValues().brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
     const suggested = getSuggestedColors(currentBrandColor);
@@ -106,15 +125,12 @@ export const StylingView = ({
   const onResetThemeStyling = () => {
     const { allowStyleOverwrite, ...baseStyling } = workspace.styling ?? {};
 
-    setStyling({
-      ...baseStyling,
+    const reset = {
+      ...resetStylingAppearance(form.getValues(), baseStyling, appearance),
       overwriteThemeStyling: true,
-    });
-
-    form.reset({
-      ...baseStyling,
-      overwriteThemeStyling: true,
-    });
+    };
+    setStyling(reset);
+    form.reset(reset);
 
     setConfirmResetStylingModalOpen(false);
     toast.success(t("workspace.surveys.edit.styling_set_to_theme_styles"));
@@ -194,130 +210,159 @@ export const StylingView = ({
   };
 
   return (
-    <FormProvider {...form}>
-      <form onSubmit={(e) => e.preventDefault()}>
-        <div className="mt-12 space-y-3 p-5">
-          <div className="flex items-center gap-4 rounded-lg border border-slate-300 bg-white p-4">
-            <FormField
-              control={form.control}
-              name="overwriteThemeStyling"
-              render={({ field }) => (
-                <FormItem className="flex items-center gap-4 gap-y-0">
-                  <FormControl>
-                    <Switch
-                      id="overwrite-theme-styling"
-                      checked={!!field.value}
-                      onCheckedChange={handleOverwriteToggle}
-                    />
-                  </FormControl>
+    <StylingAppearanceContext.Provider value={appearance}>
+      <FormProvider {...form}>
+        <form onSubmit={(e) => e.preventDefault()}>
+          <div className="mt-12 space-y-3 p-5">
+            {localSurvey.type === "app" && (
+              <StylingAppearanceToggle appearance={appearance} onChange={setAppearance} />
+            )}
+            <div className="flex items-center gap-4 rounded-lg border border-slate-300 bg-white p-4">
+              <FormField
+                control={form.control}
+                name="overwriteThemeStyling"
+                render={({ field }) => (
+                  <FormItem className="flex items-center gap-4 gap-y-0">
+                    <FormControl>
+                      <Switch
+                        disabled={!workspace.styling.allowStyleOverwrite}
+                        id="overwrite-theme-styling"
+                        checked={!!field.value}
+                        onCheckedChange={handleOverwriteToggle}
+                      />
+                    </FormControl>
 
-                  <div>
-                    <FormLabel
-                      htmlFor="overwrite-theme-styling"
-                      className="text-base font-semibold text-slate-900">
-                      {t("workspace.surveys.edit.add_custom_styles")}
-                    </FormLabel>
-                    <FormDescription className="text-sm text-slate-500">
-                      {t("workspace.surveys.edit.override_theme_with_individual_styles_for_this_survey")}
-                    </FormDescription>
-                  </div>
-                </FormItem>
-              )}
+                    <div>
+                      <FormLabel
+                        htmlFor="overwrite-theme-styling"
+                        className="text-base font-semibold text-slate-900">
+                        {t("workspace.surveys.edit.add_custom_styles")}
+                      </FormLabel>
+                      <FormDescription className="text-sm text-slate-500">
+                        {t("workspace.surveys.edit.override_theme_with_individual_styles_for_this_survey")}
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormStylingSettings
+              open={formStylingOpen}
+              setOpen={setFormStylingOpen}
+              disabled={!canOverrideTheme}
+              form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
+              onSuggestColorsClick={() => setConfirmSuggestColorsOpen(true)}
+            />
+
+            <CardStylingSettings
+              open={cardStylingOpen}
+              setOpen={setCardStylingOpen}
+              surveyType={localSurvey.type}
+              disabled={!canOverrideTheme}
+              form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
+            />
+
+            {localSurvey.type === "link" && (
+              <>
+                <BackgroundStylingCard
+                  open={stylingOpen}
+                  setOpen={setStylingOpen}
+                  workspaceId={workspaceId}
+                  colors={colors}
+                  disabled={!canOverrideTheme}
+                  isUnsplashConfigured={isUnsplashConfigured}
+                  form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
+                  isStorageConfigured={isStorageConfigured}
+                />
+
+                <LogoSettingsCard
+                  open={logoSettingsOpen}
+                  setOpen={setLogoSettingsOpen}
+                  disabled={!canOverrideTheme}
+                  workspaceId={workspaceId}
+                  form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
+                  isStorageConfigured={isStorageConfigured}
+                />
+              </>
+            )}
+
+            <CustomCssCard
+              workspaceId={workspaceId}
+              surveyId={localSurvey.id}
+              value={localSurvey.customCss}
+              workspaceCss={workspace.customCss}
+              appearance={appearance}
+              disabledReason={isCustomCssAllowed ? undefined : "plan"}
+              onChange={(customCss) => setLocalSurvey((previous) => ({ ...previous, customCss }))}
+            />
+            {!isCxMode && (
+              <div className="mt-4 flex h-8 items-center justify-between">
+                <div>
+                  {overwriteThemeStyling && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="flex items-center gap-2"
+                      onClick={() => setConfirmResetStylingModalOpen(true)}>
+                      {t("workspace.surveys.edit.reset_to_theme_styles")}
+                      <RotateCcwIcon className="size-4" />
+                    </Button>
+                  )}
+                </div>
+                <p className="text-sm text-slate-500">
+                  <Trans
+                    i18nKey="workspace.surveys.edit.adjust_theme_in_look_and_feel_settings"
+                    components={{
+                      lookFeelLink: (
+                        <Link
+                          href={`${workspaceBasePath}/settings/workspace/look`}
+                          target="_blank"
+                          className="font-semibold underline"
+                        />
+                      ),
+                    }}
+                  />
+                </p>
+              </div>
+            )}
+            <AlertDialog
+              open={confirmResetStylingModalOpen}
+              setOpen={setConfirmResetStylingModalOpen}
+              headerText={
+                appearance === "dark"
+                  ? t("styling.reset_dark")
+                  : t("workspace.surveys.edit.reset_to_theme_styles")
+              }
+              mainText={
+                appearance === "dark"
+                  ? t("styling.reset_dark_description")
+                  : t("workspace.surveys.edit.reset_to_theme_styles_main_text")
+              }
+              confirmBtnLabel={t("common.confirm")}
+              onDecline={() => setConfirmResetStylingModalOpen(false)}
+              onConfirm={onResetThemeStyling}
+            />
+
+            <AlertDialog
+              open={confirmSuggestColorsOpen}
+              setOpen={setConfirmSuggestColorsOpen}
+              headerText={
+                appearance === "dark" ? t("styling.reset_dark") : t("workspace.look.generate_theme_header")
+              }
+              mainText={
+                appearance === "dark"
+                  ? t("styling.reset_dark_description")
+                  : t("workspace.look.generate_theme_confirmation")
+              }
+              confirmBtnLabel={t("workspace.look.generate_theme_btn")}
+              declineBtnLabel={t("common.cancel")}
+              onConfirm={handleSuggestColors}
+              onDecline={() => setConfirmSuggestColorsOpen(false)}
             />
           </div>
-
-          <FormStylingSettings
-            open={formStylingOpen}
-            setOpen={setFormStylingOpen}
-            disabled={!overwriteThemeStyling}
-            form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
-            onSuggestColorsClick={() => setConfirmSuggestColorsOpen(true)}
-          />
-
-          <CardStylingSettings
-            open={cardStylingOpen}
-            setOpen={setCardStylingOpen}
-            surveyType={localSurvey.type}
-            disabled={!overwriteThemeStyling}
-            form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
-          />
-
-          {localSurvey.type === "link" && (
-            <>
-              <BackgroundStylingCard
-                open={stylingOpen}
-                setOpen={setStylingOpen}
-                workspaceId={workspaceId}
-                colors={colors}
-                disabled={!overwriteThemeStyling}
-                isUnsplashConfigured={isUnsplashConfigured}
-                form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
-                isStorageConfigured={isStorageConfigured}
-              />
-
-              <LogoSettingsCard
-                open={logoSettingsOpen}
-                setOpen={setLogoSettingsOpen}
-                disabled={!overwriteThemeStyling}
-                workspaceId={workspaceId}
-                form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
-                isStorageConfigured={isStorageConfigured}
-              />
-            </>
-          )}
-
-          {!isCxMode && (
-            <div className="mt-4 flex h-8 items-center justify-between">
-              <div>
-                {overwriteThemeStyling && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="flex items-center gap-2"
-                    onClick={() => setConfirmResetStylingModalOpen(true)}>
-                    {t("workspace.surveys.edit.reset_to_theme_styles")}
-                    <RotateCcwIcon className="size-4" />
-                  </Button>
-                )}
-              </div>
-              <p className="text-sm text-slate-500">
-                <Trans
-                  i18nKey="workspace.surveys.edit.adjust_theme_in_look_and_feel_settings"
-                  components={{
-                    lookFeelLink: (
-                      <Link
-                        href={`${workspaceBasePath}/settings/workspace/look`}
-                        target="_blank"
-                        className="font-semibold underline"
-                      />
-                    ),
-                  }}
-                />
-              </p>
-            </div>
-          )}
-          <AlertDialog
-            open={confirmResetStylingModalOpen}
-            setOpen={setConfirmResetStylingModalOpen}
-            headerText={t("workspace.surveys.edit.reset_to_theme_styles")}
-            mainText={t("workspace.surveys.edit.reset_to_theme_styles_main_text")}
-            confirmBtnLabel={t("common.confirm")}
-            onDecline={() => setConfirmResetStylingModalOpen(false)}
-            onConfirm={onResetThemeStyling}
-          />
-
-          <AlertDialog
-            open={confirmSuggestColorsOpen}
-            setOpen={setConfirmSuggestColorsOpen}
-            headerText={t("workspace.look.generate_theme_header")}
-            mainText={t("workspace.look.generate_theme_confirmation")}
-            confirmBtnLabel={t("workspace.look.generate_theme_btn")}
-            declineBtnLabel={t("common.cancel")}
-            onConfirm={handleSuggestColors}
-            onDecline={() => setConfirmSuggestColorsOpen(false)}
-          />
-        </div>
-      </form>
-    </FormProvider>
+        </form>
+      </FormProvider>
+    </StylingAppearanceContext.Provider>
   );
 };

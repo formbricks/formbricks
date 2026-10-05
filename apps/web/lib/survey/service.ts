@@ -50,6 +50,7 @@ import {
 import type { TSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { getSurveyWorkspaceIdMap } from "@/modules/ee/contacts/segments/lib/segments";
+import { prepareCustomCssForSave } from "@/modules/survey/lib/custom-css-permission";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   isSurveySchedulingDue,
@@ -164,6 +165,7 @@ export const selectSurvey = {
   recaptcha: true,
   metadata: true,
   customHeadScripts: true,
+  customCss: true,
   customHeadScriptsMode: true,
   languages: {
     select: {
@@ -417,6 +419,13 @@ export const updateSurveyInternal = async (
       throw new InvalidInputError("This survey is archived. Restore it before editing.");
     }
 
+    const acceptedCustomCss = await prepareCustomCssForSave(
+      updatedSurvey.customCss,
+      currentSurvey.customCss,
+      currentSurvey.workspaceId,
+      "survey"
+    );
+
     // ENG-1749: workspaceId and id are the survey's tenant anchors. Always resolve the workspace from
     // the existing survey (never the client payload), and strip workspaceId/id from the update below,
     // so an authorized editor cannot re-point their own survey into another workspace/organization.
@@ -450,8 +459,13 @@ export const updateSurveyInternal = async (
       visibilityProjectedVersion: _visibilityProjectedVersion,
       visibilityChangedAt: _visibilityChangedAt,
       visibilityChangedById: _visibilityChangedById,
+      customCss: _customCss,
       ...surveyData
     } = updatedSurvey;
+    if (acceptedCustomCss !== undefined)
+      Object.assign(surveyData, {
+        customCss: acceptedCustomCss === null ? Prisma.DbNull : acceptedCustomCss,
+      });
 
     // **Every Embedded Data refusal, before anything is written.** The segment block below writes
     // through `prisma`, not through the transaction further down, so a refusal raised later would
@@ -1008,6 +1022,7 @@ export const createSurvey = async (
       segment,
       followUps,
       styling,
+      customCss,
       // ENG-3228: accepted input, but never spread into Prisma — `Survey` owns relations named
       // `embeddedData` / `embeddedDataLinks`, so it would become a nested relation write. It reaches
       // the database as the rows `reconcileEmbeddedData` writes. ENG-2404: so do the two legacy
@@ -1071,6 +1086,8 @@ export const createSurvey = async (
 
     const baseData = {
       ...restSurveyBody,
+      customCss:
+        (await prepareCustomCssForSave(customCss, null, parsedWorkspaceId, "survey")) ?? Prisma.DbNull,
       styling: styling === null ? Prisma.JsonNull : styling,
       ...normalizeSurveyScheduling({
         closeOn: normalizedCloseOn,

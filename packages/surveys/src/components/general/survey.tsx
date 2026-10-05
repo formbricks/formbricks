@@ -1378,7 +1378,7 @@ export function Survey({
                     )}>
                     <SurveyCloseButton
                       onClose={onClose}
-                      hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
+                      hoverColor="var(--fb-input-bg-color, #f8fafc)"
                       borderRadius={styling.roundness ?? 8}
                     />
                   </div>
@@ -1407,7 +1407,7 @@ export function Survey({
                     )}>
                     <SurveyCloseButton
                       onClose={onClose}
-                      hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
+                      hoverColor="var(--fb-input-bg-color, #f8fafc)"
                       borderRadius={styling.roundness ?? 8}
                     />
                   </div>
@@ -1542,7 +1542,7 @@ export function Survey({
                           surveyLanguages={localSurvey.languages}
                           selectedLanguageCode={selectedLanguage}
                           setSelectedLanguageCode={setSelectedLanguage}
-                          hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
+                          hoverColor="var(--fb-input-bg-color, #f8fafc)"
                           borderRadius={styling.roundness ?? 8}
                           setDir={setDir}
                           dir={dir}
@@ -1555,7 +1555,7 @@ export function Survey({
                       {isCloseButtonVisible && (
                         <SurveyCloseButton
                           onClose={onClose}
-                          hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
+                          hoverColor="var(--fb-input-bg-color, #f8fafc)"
                           borderRadius={styling.roundness ?? 8}
                         />
                       )}

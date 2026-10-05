@@ -14,6 +14,7 @@ import { getTranslate } from "@/lingodotdev/server";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import {
+  getCustomCssPermission,
   getIsContactsEnabled,
   getIsQuotasEnabled,
   getIsSpamProtectionEnabled,
@@ -111,6 +112,7 @@ export const SurveyEditorPage = async (props: {
     isExternalUrlsAllowed,
     isUserTargetingAllowed,
     isWorkflowsAllowed,
+    isCustomCssAllowed,
   ] = await Promise.all([
     getSurveyFollowUpsPermission(workspaceWithTeamIds.organizationId),
     getIsSpamProtectionEnabled(workspaceWithTeamIds.organizationId),
@@ -119,6 +121,7 @@ export const SurveyEditorPage = async (props: {
     getIsContactsEnabled(workspaceWithTeamIds.organizationId),
     // Drives the Follow-ups deprecation: the tab only survives where Workflows cannot replace it.
     getIsWorkflowsEnabled(workspaceWithTeamIds.organizationId),
+    getCustomCssPermission(workspaceWithTeamIds.organizationId),
   ]);
 
   const quotas = isQuotasAllowed && survey ? await getQuotas(survey.id) : [];
@@ -148,6 +151,7 @@ export const SurveyEditorPage = async (props: {
 
   return (
     <SurveyEditor
+      isCustomCssAllowed={isCustomCssAllowed}
       survey={survey}
       workspace={workspaceWithTeamIds}
       actionClasses={actionClasses}

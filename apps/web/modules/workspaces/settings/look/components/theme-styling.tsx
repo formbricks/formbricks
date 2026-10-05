@@ -7,11 +7,14 @@ import { useCallback, useState } from "react";
 import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { TSurveyAppearance } from "@formbricks/types/appearance";
+import { TCustomCss } from "@formbricks/types/custom-css";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { TWorkspaceStyling, ZWorkspaceStyling } from "@formbricks/types/workspace";
 import { previewSurvey } from "@/app/lib/templates";
 import { COLOR_DEFAULTS, STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
+import { resetStylingAppearance } from "@/lib/styling/reset-appearance";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -19,7 +22,7 @@ import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { BackgroundStylingCard } from "@/modules/ui/components/background-styling-card";
 import { Button } from "@/modules/ui/components/button";
 import { CardStylingSettings } from "@/modules/ui/components/card-styling-settings";
-import { ColorPicker } from "@/modules/ui/components/color-picker";
+import { CustomCssCard } from "@/modules/ui/components/custom-css-card";
 import {
   FormControl,
   FormDescription,
@@ -28,11 +31,18 @@ import {
   FormLabel,
   FormProvider,
 } from "@/modules/ui/components/form";
+import {
+  StylingAppearanceContext,
+  StylingAppearanceToggle,
+} from "@/modules/ui/components/styling-appearance";
+import { ColorField } from "@/modules/ui/components/styling-fields";
 import { Switch } from "@/modules/ui/components/switch";
 import { ThemeStylingPreviewSurvey } from "@/modules/ui/components/theme-styling-preview-survey";
 import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
 
 interface ThemeStylingProps {
+  isCustomCssAllowed?: boolean;
+  canEditWorkspaceCss?: boolean;
   workspace: TWorkspace;
   workspaceId: string;
   colors: string[];
@@ -43,6 +53,8 @@ interface ThemeStylingProps {
 }
 
 export const ThemeStyling = ({
+  isCustomCssAllowed = false,
+  canEditWorkspaceCss = false,
   workspace,
   workspaceId,
   colors,
@@ -52,6 +64,8 @@ export const ThemeStyling = ({
   publicDomain,
 }: ThemeStylingProps) => {
   const { t } = useTranslation();
+  const [appearance, setAppearance] = useState<TSurveyAppearance>("light");
+  const [customCss, setCustomCss] = useState<TCustomCss | null>(workspace.customCss ?? null);
   const router = useRouter();
 
   const savedStyling = workspace.styling as Partial<TWorkspaceStyling> | null;
@@ -85,25 +99,31 @@ export const ThemeStyling = ({
   const [cardStylingOpen, setCardStylingOpen] = useState(false);
   const [backgroundStylingOpen, setBackgroundStylingOpen] = useState(false);
   const onReset = useCallback(async () => {
+    const nextStyling = resetStylingAppearance(form.getValues(), STYLE_DEFAULTS, appearance);
     const updatedWorkspaceResponse = await updateWorkspaceAction({
       workspaceId: workspace.id,
       data: {
-        styling: { ...STYLE_DEFAULTS },
+        styling: nextStyling,
       },
     });
 
     if (updatedWorkspaceResponse?.data) {
-      form.reset({ ...STYLE_DEFAULTS });
-      setPreviewBrandColor(STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor);
+      form.reset(nextStyling);
+      setPreviewBrandColor(nextStyling.brandColor?.light ?? COLOR_DEFAULTS.brandColor);
       toast.success(t("workspace.look.styling_updated_successfully"));
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(updatedWorkspaceResponse);
       toast.error(errorMessage);
     }
-  }, [form, workspace.id, router, t]);
+  }, [form, workspace.id, router, t, appearance]);
 
   const handleSuggestColors = () => {
+    if (appearance === "dark") {
+      form.reset(resetStylingAppearance(form.getValues(), STYLE_DEFAULTS, "dark"));
+      setConfirmSuggestColorsOpen(false);
+      return;
+    }
     const brandColor = form.getValues().brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light;
     const suggested = getSuggestedColors(brandColor);
 
@@ -127,6 +147,7 @@ export const ThemeStyling = ({
       workspaceId: workspace.id,
       data: {
         styling: data,
+        customCss,
       },
     });
 
@@ -153,162 +174,183 @@ export const ThemeStyling = ({
     );
   }
   return (
-    <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="flex">
-          {/* Styling settings */}
-          <div className="relative flex w-1/2 flex-col pr-6">
-            <div className="flex flex-1 flex-col gap-4">
-              <div className="flex flex-col gap-4 rounded-lg bg-slate-50 p-4">
-                <div className="flex items-center gap-6">
-                  <FormField
-                    control={form.control}
-                    name="allowStyleOverwrite"
-                    render={({ field }) => (
-                      <FormItem className="flex w-full items-center gap-2 gap-y-0">
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={(value) => {
-                              field.onChange(value);
-                            }}
-                          />
-                        </FormControl>
+    <StylingAppearanceContext.Provider value={appearance}>
+      <FormProvider {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="flex">
+            {/* Styling settings */}
+            <div className="relative flex w-1/2 flex-col pr-6">
+              <div className="flex flex-1 flex-col gap-4">
+                <StylingAppearanceToggle
+                  appearance={appearance}
+                  onChange={(value) => {
+                    setAppearance(value);
+                    if (value === "dark") setPreviewSurveyType("app");
+                  }}
+                />
+                <div className="flex flex-col gap-4 rounded-lg bg-slate-50 p-4">
+                  <div className="flex items-center gap-6">
+                    <FormField
+                      control={form.control}
+                      name="allowStyleOverwrite"
+                      render={({ field }) => (
+                        <FormItem className="flex w-full items-center gap-2 gap-y-0">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={(value) => {
+                                field.onChange(value);
+                              }}
+                            />
+                          </FormControl>
 
-                        <div>
-                          <FormLabel>{t("workspace.look.enable_custom_styling")}</FormLabel>
-                          <FormDescription>
-                            {t("workspace.look.enable_custom_styling_description")}
-                          </FormDescription>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-4 rounded-lg bg-slate-50 p-4">
-                <div className="grid grid-cols-2 items-end gap-4">
-                  <FormField
-                    control={form.control}
-                    name="brandColor.light"
-                    render={({ field }) => (
-                      <FormItem className="space-y-1">
-                        <FormLabel>{t("workspace.surveys.edit.brand_color")}</FormLabel>
-                        <FormDescription>
-                          {t("workspace.surveys.edit.brand_color_description")}
-                        </FormDescription>
-                        <FormControl>
-                          <ColorPicker
-                            color={
-                              field.value ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor
-                            }
-                            onChange={(color) => field.onChange(color)}
-                            containerClass="w-full"
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <div className="flex flex-col gap-1">
-                    <Button
-                      type="button"
-                      variant="default"
-                      className="h-10 justify-center gap-1"
-                      onClick={() => setConfirmSuggestColorsOpen(true)}>
-                      <SparklesIcon className="mr-2 size-4" />
-                      {t("workspace.look.suggest_colors")}
-                    </Button>
+                          <div>
+                            <FormLabel>{t("workspace.look.enable_custom_styling")}</FormLabel>
+                            <FormDescription>
+                              {t("workspace.look.enable_custom_styling_description")}
+                            </FormDescription>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </div>
-                <FormStylingSettings
-                  open={formStylingOpen}
-                  setOpen={setFormStylingOpen}
-                  isSettingsPage
-                  form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
-                />
 
-                <CardStylingSettings
-                  open={cardStylingOpen}
-                  setOpen={setCardStylingOpen}
-                  isSettingsPage
-                  surveyType={previewSurveyType}
-                  form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
-                />
+                <div className="flex flex-col gap-4 rounded-lg bg-slate-50 p-4">
+                  <div className="grid grid-cols-2 items-end gap-4">
+                    <ColorField
+                      form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
+                      name="brandColor.light"
+                      label={t("workspace.surveys.edit.brand_color")}
+                      description={t("workspace.surveys.edit.brand_color_description")}
+                    />
+                    <div className="flex flex-col gap-1">
+                      <Button
+                        type="button"
+                        variant="default"
+                        className="h-10 justify-center gap-1"
+                        onClick={() => setConfirmSuggestColorsOpen(true)}>
+                        <SparklesIcon className="mr-2 size-4" />
+                        {t("workspace.look.suggest_colors")}
+                      </Button>
+                    </div>
+                  </div>
+                  <FormStylingSettings
+                    open={formStylingOpen}
+                    setOpen={setFormStylingOpen}
+                    isSettingsPage
+                    form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
+                  />
 
-                <BackgroundStylingCard
-                  open={backgroundStylingOpen}
-                  setOpen={setBackgroundStylingOpen}
+                  <CardStylingSettings
+                    open={cardStylingOpen}
+                    setOpen={setCardStylingOpen}
+                    isSettingsPage
+                    surveyType={previewSurveyType}
+                    form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
+                  />
+
+                  <BackgroundStylingCard
+                    open={backgroundStylingOpen}
+                    setOpen={setBackgroundStylingOpen}
+                    workspaceId={workspaceId}
+                    colors={colors}
+                    isSettingsPage
+                    isUnsplashConfigured={isUnsplashConfigured}
+                    form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
+                    isStorageConfigured={isStorageConfigured}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <CustomCssCard
                   workspaceId={workspaceId}
-                  colors={colors}
-                  isSettingsPage
-                  isUnsplashConfigured={isUnsplashConfigured}
-                  form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
-                  isStorageConfigured={isStorageConfigured}
+                  appearance={appearance}
+                  value={customCss}
+                  onChange={setCustomCss}
+                  disabledReason={!isCustomCssAllowed ? "plan" : !canEditWorkspaceCss ? "role" : undefined}
+                />
+              </div>
+              <div className="mt-4 flex items-center gap-2">
+                <Button size="sm" type="submit">
+                  {t("common.save")}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="flex items-center gap-2"
+                  onClick={() => setConfirmResetStylingModalOpen(true)}>
+                  {t("common.reset_to_default")}
+                  <RotateCcwIcon className="size-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Survey Preview */}
+
+            <div className="relative w-1/2 rounded-lg bg-slate-100 pt-4">
+              <div className="sticky top-4 mb-4 max-h-[calc(100vh-2rem)]">
+                <ThemeStylingPreviewSurvey
+                  appearance={appearance}
+                  survey={previewSurvey(workspace.name, t)}
+                  workspace={{
+                    ...workspace,
+                    customCss,
+                    styling: {
+                      ...form.watch(),
+                      brandColor: { ...form.watch("brandColor"), light: previewBrandColor },
+                    },
+                  }}
+                  previewType={previewSurveyType}
+                  setPreviewType={(type) => {
+                    setPreviewSurveyType(type);
+                    if (type === "link") setAppearance("light");
+                  }}
+                  publicDomain={publicDomain}
                 />
               </div>
             </div>
 
-            <div className="mt-4 flex items-center gap-2">
-              <Button size="sm" type="submit">
-                {t("common.save")}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className="flex items-center gap-2"
-                onClick={() => setConfirmResetStylingModalOpen(true)}>
-                {t("common.reset_to_default")}
-                <RotateCcwIcon className="size-4" />
-              </Button>
-            </div>
+            {/* Confirm reset styling modal */}
+            <AlertDialog
+              open={confirmSuggestColorsOpen}
+              setOpen={setConfirmSuggestColorsOpen}
+              headerText={
+                appearance === "dark" ? t("styling.reset_dark") : t("workspace.look.generate_theme_header")
+              }
+              mainText={
+                appearance === "dark"
+                  ? t("styling.reset_dark_description")
+                  : t("workspace.look.generate_theme_confirmation")
+              }
+              confirmBtnLabel={t("workspace.look.generate_theme_btn")}
+              declineBtnLabel={t("common.cancel")}
+              onConfirm={handleSuggestColors}
+              onDecline={() => setConfirmSuggestColorsOpen(false)}
+            />
+
+            {/* Confirm reset styling modal */}
+            <AlertDialog
+              open={confirmResetStylingModalOpen}
+              setOpen={setConfirmResetStylingModalOpen}
+              headerText={appearance === "dark" ? t("styling.reset_dark") : t("workspace.look.reset_styling")}
+              mainText={
+                appearance === "dark"
+                  ? t("styling.reset_dark_description")
+                  : t("workspace.look.reset_styling_confirmation")
+              }
+              confirmBtnLabel={t("common.confirm")}
+              onConfirm={() => {
+                onReset();
+                setConfirmResetStylingModalOpen(false);
+              }}
+              onDecline={() => setConfirmResetStylingModalOpen(false)}
+            />
           </div>
-
-          {/* Survey Preview */}
-
-          <div className="relative w-1/2 rounded-lg bg-slate-100 pt-4">
-            <div className="sticky top-4 mb-4 max-h-[calc(100vh-2rem)]">
-              <ThemeStylingPreviewSurvey
-                survey={previewSurvey(workspace.name, t)}
-                workspace={{
-                  ...workspace,
-                  styling: { ...form.watch(), brandColor: { light: previewBrandColor } },
-                }}
-                previewType={previewSurveyType}
-                setPreviewType={setPreviewSurveyType}
-                publicDomain={publicDomain}
-              />
-            </div>
-          </div>
-
-          {/* Confirm reset styling modal */}
-          <AlertDialog
-            open={confirmSuggestColorsOpen}
-            setOpen={setConfirmSuggestColorsOpen}
-            headerText={t("workspace.look.generate_theme_header")}
-            mainText={t("workspace.look.generate_theme_confirmation")}
-            confirmBtnLabel={t("workspace.look.generate_theme_btn")}
-            declineBtnLabel={t("common.cancel")}
-            onConfirm={handleSuggestColors}
-            onDecline={() => setConfirmSuggestColorsOpen(false)}
-          />
-
-          {/* Confirm reset styling modal */}
-          <AlertDialog
-            open={confirmResetStylingModalOpen}
-            setOpen={setConfirmResetStylingModalOpen}
-            headerText={t("workspace.look.reset_styling")}
-            mainText={t("workspace.look.reset_styling_confirmation")}
-            confirmBtnLabel={t("common.confirm")}
-            onConfirm={() => {
-              onReset();
-              setConfirmResetStylingModalOpen(false);
-            }}
-            onDecline={() => setConfirmResetStylingModalOpen(false)}
-          />
-        </div>
-      </form>
-    </FormProvider>
+        </form>
+      </FormProvider>
+    </StylingAppearanceContext.Provider>
   );
 };

@@ -56,6 +56,7 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
         // Styling & branding
         workspaceOverwrites: true,
         styling: true,
+        customCss: true,
         surveyClosedMessage: true,
         showLanguageSwitch: true,
         recaptcha: true,

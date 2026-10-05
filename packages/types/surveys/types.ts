@@ -11,6 +11,7 @@ import {
   getZSafeUrl,
 } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
+import { ZCustomCss } from "../custom-css";
 import { ZLinkedEmbeddedField } from "../embedded-data";
 import { linkedToDesiredEmbeddedFields, toLegacyEmbeddedFields } from "../embedded-data-mapping";
 import { type TI18nString, ZI18nString } from "../i18n";
@@ -1048,6 +1049,7 @@ export const ZSurveyBase = z.object({
   metadata: ZSurveyMetadata,
   slug: ZSurveySlug.nullable(),
   customHeadScripts: z.string().nullish(),
+  customCss: ZCustomCss.nullish(),
   customHeadScriptsMode: z.enum(["add", "replace"]).nullish(),
 });
 

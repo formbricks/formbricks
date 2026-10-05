@@ -5,6 +5,8 @@ import { cn } from "@/lib/cn";
 import { PopoverPicker } from "@/modules/ui/components/color-picker/components/popover-picker";
 
 interface ColorPickerProps {
+  id?: string;
+  "aria-label"?: string;
   color: string;
   onChange: (v: string) => void;
   containerClass?: string;
@@ -12,6 +14,8 @@ interface ColorPickerProps {
   placeholder?: string;
 }
 export const ColorPicker = ({
+  id,
+  "aria-label": ariaLabel = "Primary color",
   color,
   onChange,
   containerClass,
@@ -26,8 +30,8 @@ export const ColorPicker = ({
           className="min-w-0 flex-1 border-0 bg-transparent text-slate-500 outline-hidden focus:border-none"
           color={color}
           onChange={onChange}
-          id="color"
-          aria-label="Primary color"
+          id={id}
+          aria-label={ariaLabel}
           disabled={disabled}
           placeholder={placeholder}
         />

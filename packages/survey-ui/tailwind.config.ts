@@ -65,9 +65,12 @@ export default {
         "option-border":
           "var(--fb-option-border-color, color-mix(in srgb, var(--fb-option-bg-color) 95%, black 5%))",
         "option-label": "var(--fb-option-label-color)",
-        "option-selected-bg": "color-mix(in srgb, var(--fb-option-bg-color) 95%, black)",
-        "option-hover-bg": "color-mix(in srgb, var(--fb-option-bg-color) 95%, black)",
-        "input-selected-bg": "color-mix(in srgb, var(--fb-input-bg-color) 95%, black)",
+        "option-selected-bg":
+          "color-mix(in srgb, var(--fb-option-bg-color) var(--fb-state-base-weight, 95%), var(--fb-state-mix-color, black))",
+        "option-hover-bg":
+          "color-mix(in srgb, var(--fb-option-bg-color) var(--fb-state-base-weight, 95%), var(--fb-state-mix-color, black))",
+        "input-selected-bg":
+          "color-mix(in srgb, var(--fb-input-bg-color) var(--fb-state-base-weight, 95%), var(--fb-state-mix-color, black))",
         // Button CSS variables
         "button-bg": "var(--fb-button-bg-color)",
         "button-text": "var(--fb-button-text-color)",

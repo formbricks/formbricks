@@ -391,7 +391,7 @@ function RadioIndicator(): React.JSX.Element {
     <span
       aria-hidden="true"
       className={cn(
-        "border-input-border relative flex size-4 shrink-0 items-center justify-center rounded-full border bg-white shadow-xs transition-colors",
+        "border-input-border bg-input-bg relative flex size-4 shrink-0 items-center justify-center rounded-full border shadow-xs transition-colors",
         "peer-checked:border-brand",
         "after:size-2 after:rounded-full after:bg-transparent after:transition-colors after:content-['']",
         "peer-checked:after:bg-brand"

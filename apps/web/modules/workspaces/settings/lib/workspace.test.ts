@@ -14,6 +14,7 @@ import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { deleteFile, deleteWorkspaceFilesBestEffort } from "@/modules/storage/service";
+import * as customCssPermissions from "@/modules/survey/lib/custom-css-permission";
 import { createWorkspace, deleteWorkspace, deleteWorkspaceIfNotLast, updateWorkspace } from "./workspace";
 
 vi.mock("server-only", () => ({}));
@@ -41,6 +42,7 @@ const baseWorkspace = {
   styling: { allowStyleOverwrite: true },
   logo: null,
   customHeadScripts: null,
+  customCss: null,
 } satisfies TWorkspace;
 
 vi.mock("@formbricks/database", () => ({
@@ -404,6 +406,44 @@ describe("workspace lib", () => {
   });
 
   describe("updateWorkspace", () => {
+    test("rechecks the CSS author's permission at the persistence boundary after the action's earlier read", async () => {
+      const oldCss = {
+        light: { source: ".a{color:red}", compiled: "ignored" },
+        dark: null,
+        processorVersion: 1,
+      };
+      const currentCss = { ...oldCss, light: { source: ".a{color:blue}", compiled: "trusted" } };
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValueOnce({
+        ...baseWorkspace,
+        customCss: currentCss,
+      });
+      const guard = vi
+        .spyOn(customCssPermissions, "assertCustomCssAccess")
+        .mockRejectedValueOnce(new OperationNotAllowedError("Not authorized"));
+      await expect(
+        updateWorkspace("p1", { customCss: oldCss }, { type: "user", id: "team-manager" })
+      ).rejects.toThrow("Not authorized");
+      expect(guard).toHaveBeenCalledWith({ type: "user", id: "team-manager" }, "p1", "workspace");
+      expect(prisma.workspace.update).not.toHaveBeenCalled();
+      guard.mockRestore();
+    });
+
+    test("does not write a caller's compiled field when the CSS source is unchanged", async () => {
+      const css = {
+        light: { source: ".a{color:red}", compiled: "trusted" },
+        dark: null,
+        processorVersion: 1,
+      };
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValueOnce({ ...baseWorkspace, customCss: css });
+      vi.mocked(prisma.workspace.update).mockResolvedValueOnce({ ...baseWorkspace, customCss: css });
+      await updateWorkspace("p1", {
+        customCss: { ...css, light: { ...css.light, compiled: "body{display:none}" } },
+      });
+      expect(prisma.workspace.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ customCss: undefined }) })
+      );
+    });
+
     test("updates workspace and revalidates cache", async () => {
       vi.mocked(prisma.workspace.update).mockResolvedValueOnce(baseWorkspace);
       const result = await updateWorkspace("p1", {

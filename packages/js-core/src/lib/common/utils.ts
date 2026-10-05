@@ -143,8 +143,8 @@ export const filterSurveys = (workspace: TWorkspaceState, userState: TUserState)
 };
 
 export const getStyling = (
-  settings: TWorkspaceStateSettings,
-  survey: TWorkspaceStateSurvey
+  settings: Pick<TWorkspaceStateSettings, "styling">,
+  survey: Pick<TWorkspaceStateSurvey, "styling">
 ): TWorkspaceStyling | TSurveyStyling => {
   // allow style overwrite is enabled from the workspace
   if (settings.styling.allowStyleOverwrite) {

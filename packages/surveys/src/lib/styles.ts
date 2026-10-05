@@ -1,5 +1,6 @@
 // Add this import for survey-ui CSS variables
 import surveyUiCss from "@formbricks/survey-ui/styles?inline";
+import { type TSurveyAppearance, resolveStylingAppearance } from "@formbricks/types/appearance";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { type TWorkspaceStyling } from "@formbricks/types/workspace";
 import { ensureReadable, isLight, mixColor } from "@/lib/color";
@@ -27,6 +28,8 @@ export const setStyleNonce = (nonce: string | undefined): void => {
   if (existingCustomStyleElement && nonce) {
     existingCustomStyleElement.setAttribute("nonce", nonce);
   }
+  const customerStyle = document.getElementById("formbricks__css__customer");
+  if (customerStyle && nonce) customerStyle.setAttribute("nonce", nonce);
 };
 
 export const getStyleNonce = (): string | undefined => {
@@ -44,7 +47,12 @@ export const addStylesToDom = () => {
     }
 
     // Include survey-ui CSS variables before other styles
-    styleElement.innerHTML = preflight + global + editorCss + surveyUiCss;
+    styleElement.textContent =
+      "@layer fb-survey-dark, fb-survey, fb-workspace-dark, fb-workspace, theme, base, components, utilities;" +
+      preflight +
+      global +
+      editorCss +
+      surveyUiCss;
     document.head.appendChild(styleElement);
   } else {
     // If style element already exists, update its nonce if needed
@@ -55,7 +63,15 @@ export const addStylesToDom = () => {
   }
 };
 
-export const addCustomThemeToDom = ({ styling }: { styling: TWorkspaceStyling | TSurveyStyling }): void => {
+export const addCustomThemeToDom = ({
+  styling: sourceStyling,
+  appearance = "light",
+}: {
+  styling: TWorkspaceStyling | TSurveyStyling;
+  appearance?: TSurveyAppearance;
+}): void => {
+  const styling = resolveStylingAppearance(sourceStyling, appearance);
+  const stateMix = appearance === "dark" ? "#ffffff" : "#000000";
   // Check if the style element already exists
   let styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement | null;
 
@@ -136,6 +152,22 @@ export const addCustomThemeToDom = ({ styling }: { styling: TWorkspaceStyling | 
 
   appendCssVariable("survey-background-color", styling.cardBackgroundColor?.light);
   appendCssVariable("survey-border-color", styling.cardBorderColor?.light);
+  appendCssVariable(
+    "survey-highlight-border-color",
+    styling.highlightBorderColor?.light ?? styling.cardBorderColor?.light
+  );
+  appendCssVariable("focus-ring-inner-color", styling.cardBackgroundColor?.light ?? "#ffffff");
+  appendCssVariable("state-mix-color", stateMix);
+  appendCssVariable("state-base-weight", appearance === "dark" ? "94%" : "95%");
+  if (appearance === "dark") {
+    appendCssVariable(
+      "focus-ring-outer-color",
+      ensureReadable(styling.brandColor!.light, styling.cardBackgroundColor!.light, 3)
+    );
+    cssVariables += `color-scheme: dark;\n--popover-foreground: ${styling.elementHeadlineColor!.light};\n--muted-foreground: ${styling.elementDescriptionColor!.light};\n--destructive: #fca5a5;\n`;
+  } else {
+    cssVariables += "color-scheme: light;\n";
+  }
   appendCssVariable("border-radius", formatDimension(roundness));
   appendCssVariable("input-border-radius", formatDimension(roundness));
   appendCssVariable("option-border-radius", formatDimension(roundness));
@@ -172,7 +204,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TWorkspaceStyling | 
     } else {
       appendCssVariable(
         "input-background-color-selected",
-        mixColor(styling.inputBgColor.light, "#000000", 0.025)
+        mixColor(styling.inputBgColor.light, stateMix, appearance === "dark" ? 0.06 : 0.025)
       );
     }
   }
@@ -180,8 +212,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TWorkspaceStyling | 
   if (styling.brandColor?.light) {
     const brandColor = styling.brandColor.light;
 
-    const accentColor = mixColor(brandColor, "#ffffff", 0.8);
-    const accentColorSelected = mixColor(brandColor, "#ffffff", 0.7);
+    const accentColor = styling.accentBgColor?.light ?? mixColor(brandColor, "#ffffff", 0.8);
+    const accentColorSelected = styling.accentBgColorSelected?.light ?? mixColor(brandColor, "#ffffff", 0.7);
 
     appendCssVariable("accent-background-color", accentColor);
     appendCssVariable("accent-background-color-selected", accentColorSelected);
@@ -223,7 +255,10 @@ export const addCustomThemeToDom = ({ styling }: { styling: TWorkspaceStyling | 
   const inputTextColor = styling.inputTextColor?.light;
   appendCssVariable("input-text-color", inputTextColor);
   if (inputTextColor) {
-    appendCssVariable("input-placeholder-color", mixColor(inputTextColor, "#ffffff", 0.3));
+    appendCssVariable(
+      "input-placeholder-color",
+      appearance === "dark" ? inputTextColor : mixColor(inputTextColor, "#ffffff", 0.3)
+    );
   }
   if (styling.inputBorderRadius !== undefined)
     appendCssVariable("input-border-radius", formatDimension(styling.inputBorderRadius));
@@ -429,5 +464,5 @@ export const addCustomThemeToDom = ({ styling }: { styling: TWorkspaceStyling | 
   addRule("html body #fbjs .cardless-progress-bar div.progress-track", "  border-radius: 0 !important;\n");
 
   // Set the innerHTML of the style element
-  styleElement.innerHTML = cssVariables;
+  styleElement.textContent = cssVariables;
 };

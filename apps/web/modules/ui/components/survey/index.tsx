@@ -93,5 +93,16 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
     }
   }, [isScriptLoaded, renderInline]);
 
-  return <div id={containerId} className="h-full w-full" />;
+  return (
+    <div
+      id={containerId}
+      className="h-full w-full"
+      data-formbricks-preview-container={props.isPreviewMode ? "true" : undefined}
+      style={
+        props.isPreviewMode
+          ? { contain: "layout paint", overflow: "hidden", isolation: "isolate" }
+          : undefined
+      }
+    />
+  );
 };

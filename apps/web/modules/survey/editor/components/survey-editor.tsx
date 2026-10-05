@@ -49,6 +49,7 @@ const PREVIEW_DEBOUNCE_MS = 300;
 const MemoizedPreviewSurvey = memo(PreviewSurvey);
 
 interface SurveyEditorProps {
+  isCustomCssAllowed?: boolean;
   survey: TSurvey;
   workspace: Workspace;
   actionClasses: ActionClass[];
@@ -86,6 +87,7 @@ interface SurveyEditorProps {
 }
 
 export const SurveyEditor = ({
+  isCustomCssAllowed = false,
   survey,
   workspace,
   workspaceLanguages,
@@ -179,6 +181,7 @@ export const SurveyEditor = ({
   const [localWorkspaceLanguages, setLocalWorkspaceLanguages] = useState<Language[]>(workspaceLanguages);
 
   const [styling, setStyling] = useState<TSurveyStyling | null>(localSurvey?.styling ?? null);
+  const [stylingAppearance, setStylingAppearance] = useState<"light" | "dark">("light");
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
 
   const fetchLatestWorkspaceData = useCallback(async () => {
@@ -297,7 +300,7 @@ export const SurveyEditor = ({
             activeId={activeView}
             setActiveId={setActiveView}
             isCxMode={isCxMode}
-            isStylingTabVisible={!!workspace.styling.allowStyleOverwrite}
+            isStylingTabVisible
             isFollowUpsTabVisible={isFollowUpsTabVisible}
             hasLanguageErrors={hasIncompleteTranslations}
           />
@@ -324,8 +327,11 @@ export const SurveyEditor = ({
             />
           )}
 
-          {activeView === "styling" && workspace.styling.allowStyleOverwrite && (
+          {activeView === "styling" && (
             <StylingView
+              isCustomCssAllowed={isCustomCssAllowed}
+              appearance={localSurvey.type === "app" ? stylingAppearance : "light"}
+              setAppearance={setStylingAppearance}
               colors={colors}
               workspaceId={workspace.id}
               localSurvey={localSurvey}
@@ -395,6 +401,7 @@ export const SurveyEditor = ({
 
         <aside className="group hidden w-1/3 shrink-0 items-center justify-center overflow-hidden border-l border-slate-200 bg-slate-100 shadow-inner md:flex md:flex-col">
           <MemoizedPreviewSurvey
+            appearance={previewSurvey.type === "app" ? stylingAppearance : "light"}
             survey={previewSurvey}
             elementId={activeElementId}
             workspace={localWorkspace}

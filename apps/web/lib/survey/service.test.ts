@@ -34,9 +34,9 @@ import {
   mockActionClass,
   mockId,
   mockOrganizationOutput,
+  mockSurveyWithLogic as mockStoredSurveyWithLogic,
   mockSurveyLanguages,
   mockSurveyOutput,
-  mockSurveyWithLogic,
   mockTransformedSurveyOutput,
   updateSurveyInput,
 } from "./__mock__/survey.mock";
@@ -53,6 +53,7 @@ import {
 } from "./service";
 
 const WORKSPACE_CREATION_FACTS = { ownerId: null, visibility: "workspace" } as const;
+const mockSurveyWithLogic = { ...mockStoredSurveyWithLogic, customCss: undefined };
 
 const SURVEY_SERVICE_TEST_TIMEOUT_MS = 30_000;
 

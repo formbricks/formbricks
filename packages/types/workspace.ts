@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZColor, ZOverlay, ZPlacement } from "./common";
+import { ZCustomCss } from "./custom-css";
 import { ZOverlayColor, ZOverlayOpacity } from "./overlay";
 import { ZBaseStyling, ZLogo } from "./styling";
 
@@ -91,6 +92,7 @@ export const ZWorkspace = z.object({
   appSetupCompleted: z.boolean(),
   logo: ZLogo.nullish(),
   customHeadScripts: z.string().nullish(),
+  customCss: ZCustomCss.nullish(),
 });
 
 export type TWorkspace = z.infer<typeof ZWorkspace>;
@@ -126,6 +128,7 @@ export const ZWorkspaceUpdateInput = z.object({
   expectedUpdatedAt: z.coerce.date().optional(),
   teamIds: z.array(z.string()).optional(),
   customHeadScripts: z.string().nullish(),
+  customCss: ZCustomCss.nullish(),
 });
 
 export type TWorkspaceUpdateInput = z.infer<typeof ZWorkspaceUpdateInput>;

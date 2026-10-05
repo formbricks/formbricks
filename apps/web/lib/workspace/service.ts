@@ -34,6 +34,7 @@ const selectWorkspace = {
   styling: true,
   logo: true,
   customHeadScripts: true,
+  customCss: true,
 };
 
 export const getUserWorkspaces = reactCache(

@@ -29,6 +29,7 @@ import { validateInputs } from "@/lib/utils/validate";
 import { getTranslate } from "@/lingodotdev/server";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
+import { prepareCustomCssForSave } from "@/modules/survey/lib/custom-css-permission";
 import { assertCanWriteCustomHeadScripts } from "@/modules/survey/lib/custom-head-scripts-permission";
 import { buildWhereClause } from "@/modules/survey/lib/utils";
 import { doesWorkspaceExist, getWorkspaceWithLanguages } from "@/modules/survey/list/lib/workspace";
@@ -108,6 +109,7 @@ const getExistingSurvey = async (surveyId: string) => {
       isAutoProgressingEnabled: true,
       metadata: true,
       customHeadScripts: true,
+      customCss: true,
       customHeadScriptsMode: true,
       inlineTriggers: true,
       // `publishOn` and `closeOn` are the deliberate exceptions. The scheduler promotes a survey on
@@ -245,6 +247,12 @@ export const copySurveyToOtherWorkspace = async (
     if (!organization) throw new ResourceNotFoundError("Organization", workspaceId);
 
     const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
+    const copiedCustomCss = await prepareCustomCssForSave(
+      existingSurvey.customCss,
+      null,
+      targetWorkspaceId,
+      "survey"
+    );
 
     let targetWorkspace: TWorkspaceWithLanguages | null = null;
 
@@ -458,6 +466,7 @@ export const copySurveyToOtherWorkspace = async (
         ? structuredClone(existingSurvey.workspaceOverwrites)
         : Prisma.JsonNull,
       styling: existingSurvey.styling ? structuredClone(existingSurvey.styling) : Prisma.JsonNull,
+      customCss: copiedCustomCss ?? Prisma.DbNull,
       // "replace" means "run only this survey's scripts, not the workspace's". In another workspace
       // that would silently switch off the target's own head scripts (analytics, consent), so the
       // copy keeps its scripts but adds them to the target's instead.

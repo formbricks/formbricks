@@ -28,19 +28,12 @@ export function StackedCardsContainer({
   currentBlockId,
   survey,
   getCardContent,
-  styling,
   setBlockId,
   shouldResetBlockId = true,
   fullSizeCards = false,
   placement = "bottomRight",
 }: Readonly<StackedCardsContainerProps>) {
   const [hovered, setHovered] = useState(false);
-  const highlightBorderColor = survey.styling?.overwriteThemeStyling
-    ? survey.styling?.highlightBorderColor?.light
-    : styling.highlightBorderColor?.light;
-  const cardBorderColor = survey.styling?.overwriteThemeStyling
-    ? survey.styling?.cardBorderColor?.light
-    : styling.cardBorderColor?.light;
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const resizeObserver = useRef<ResizeObserver | null>(null);
   const [cardHeight, setCardHeight] = useState("auto");
@@ -93,12 +86,14 @@ export function StackedCardsContainer({
     };
     // Determine borderColor based on the survey type and availability of highlightBorderColor
     const borderColor =
-      survey.type === "link" || !highlightBorderColor ? cardBorderColor : highlightBorderColor;
+      survey.type === "link"
+        ? "var(--fb-survey-border-color)"
+        : "var(--fb-survey-highlight-border-color, var(--fb-survey-border-color))";
     return {
       ...baseStyle,
       borderColor,
     };
-  }, [survey.type, cardBorderColor, highlightBorderColor]);
+  }, [survey.type]);
 
   // UseEffect to handle the resize of current block card and set cardHeight accordingly
   useEffect(() => {

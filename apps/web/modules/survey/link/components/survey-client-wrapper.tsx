@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Workspace } from "@formbricks/database/prisma-browser";
+import { getRenderedCustomCss } from "@formbricks/types/custom-css-runtime";
 import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
@@ -25,7 +26,7 @@ import { SurveyInline } from "@/modules/ui/components/survey";
 
 interface SurveyClientWrapperProps {
   survey: TSurvey;
-  workspace: Pick<Workspace, "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts">;
+  workspace: Pick<Workspace, "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts" | "customCss">;
   styling: TWorkspaceStyling | TSurveyStyling;
   publicDomain: string;
   responseCount?: number;
@@ -262,6 +263,10 @@ export const SurveyClientWrapper = ({
         isBrandingEnabled={workspace.linkSurveyBranding}
         dir={logoDir}>
         <SurveyInline
+          customCss={{
+            workspace: getRenderedCustomCss(workspace.customCss),
+            survey: getRenderedCustomCss(survey.customCss),
+          }}
           appUrl={publicDomain}
           workspaceId={survey.workspaceId}
           isPreviewMode={isPreview}

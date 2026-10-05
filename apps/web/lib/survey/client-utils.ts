@@ -1,3 +1,4 @@
+import { getRenderedCustomCss } from "@formbricks/types/custom-css-runtime";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -10,6 +11,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 export const toJsWorkspaceStateSurvey = (survey: TSurvey): TJsWorkspaceStateSurvey => {
   return {
     ...survey,
+    customCss: getRenderedCustomCss(survey.customCss),
     segment: survey.segment ? { id: survey.segment.id, hasFilters: survey.segment.filters.length > 0 } : null,
   } as unknown as TJsWorkspaceStateSurvey;
 };

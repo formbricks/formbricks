@@ -133,7 +133,8 @@ describe("addStylesToDom", () => {
     expect(styleElement.tagName).toBe("STYLE");
     expect(document.head.contains(styleElement)).toBe(true);
 
-    const expectedCss = ".preflight {}.global {}.editor {}";
+    const expectedCss =
+      "@layer fb-survey-dark, fb-survey, fb-workspace-dark, fb-workspace, theme, base, components, utilities;.preflight {}.global {}.editor {}";
     expect(styleElement.innerHTML).toBe(expectedCss);
   });
 

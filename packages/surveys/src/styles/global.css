@@ -1,4 +1,4 @@
-@layer theme, base, components, utilities;
+@layer fb-survey-dark, fb-survey, fb-workspace-dark, fb-workspace, theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities) important;
 

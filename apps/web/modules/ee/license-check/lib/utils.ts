@@ -193,6 +193,14 @@ export const getBulkInvitePermission = async (organizationId: string): Promise<b
   );
 };
 
+export const getCustomCssPermission = async (organizationId: string): Promise<boolean> => {
+  if (!IS_FORMBRICKS_CLOUD) return true;
+  return hasOrganizationEntitlementWithLicenseGuard(
+    organizationId,
+    CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.CUSTOM_CSS
+  );
+};
+
 export const getOrganizationWorkspacesLimit = async (organizationId: string): Promise<number> => {
   const entitlementsContext = await getOrganizationEntitlementsContext(organizationId);
 

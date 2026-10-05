@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { stripCustomCssSource } from "@formbricks/types/custom-css-runtime";
 import { ZLinkSurveyEmailData } from "@formbricks/types/email";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { actionClient } from "@/lib/utils/action-client";
@@ -58,11 +59,12 @@ export const validateSurveyPinAction = actionClient
 
     const surveyPin = survey.pin;
     const originalPin = surveyPin?.toString();
+    const publicSurvey = { ...survey, pin: null, customCss: stripCustomCssSource(survey.customCss) };
 
-    if (!originalPin) return { survey };
+    if (!originalPin) return { survey: publicSurvey };
     if (originalPin !== parsedInput.pin) {
       throw new InvalidInputError("INVALID_PIN");
     }
 
-    return { survey, pinAuthToken: createLinkSurveyPinToken(survey.id) };
+    return { survey: publicSurvey, pinAuthToken: createLinkSurveyPinToken(survey.id) };
   });

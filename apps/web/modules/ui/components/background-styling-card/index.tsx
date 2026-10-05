@@ -164,7 +164,7 @@ export const BackgroundStylingCard = ({
                     onChange={(color) => {
                       // A cleared picker means "auto-adjust": store undefined instead of an
                       // empty string so the strict ZColor schema keeps validating.
-                      field.onChange(color ? { light: color } : undefined);
+                      field.onChange(color ? { ...field.value, light: color } : undefined);
                     }}
                     containerClass="w-full"
                     placeholder={t("workspace.look.advanced_styling_field_link_color_placeholder")}

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { type TOverlay, type TPlacement } from "@formbricks/types/common";
 import { type TSurveyCardRect } from "@formbricks/types/formbricks-surveys";
 import { type TOverlayAppearance, getOverlayBackground } from "@formbricks/types/overlay";
+import { getAppearance } from "@/lib/appearance";
 import { isPlainEscape } from "@/lib/keyboard";
 import { ensureLiveRegion } from "@/lib/live-region";
 import { SURVEY_INSTRUCTIONS_ID, getSurveyHeadingName } from "@/lib/survey-page";
@@ -371,6 +372,7 @@ export function SurveyContainer({
     return (
       <div // NOSONAR(typescript:S6819) - a native <form> would nest inside the host page's own form
         id="fbjs"
+        data-appearance={getAppearance()}
         className="formbricks-form"
         style={{ height: "100%", width: "100%" }}
         dir={dir}
@@ -387,7 +389,12 @@ export function SurveyContainer({
   const backdrop = getOverlayBackdrop(overlay, overlayAppearance);
 
   return (
-    <div id="fbjs" className="formbricks-form" dir={dir} lang={lang ?? undefined}>
+    <div
+      id="fbjs"
+      data-appearance={getAppearance()}
+      className="formbricks-form"
+      dir={dir}
+      lang={lang ?? undefined}>
       <div
         // In-dialog updates (question changes after a submit) should wait for the reader to finish
         // speaking instead of interrupting it. A survey is never urgent enough for assertive speech.

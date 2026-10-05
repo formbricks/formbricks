@@ -10,6 +10,7 @@ import {
   getAccessControlPermission,
   getBiggerUploadFileSizePermission,
   getBulkInvitePermission,
+  getCustomCssPermission,
   getIsAISmartToolsEnabled,
   getIsAuditLogsEnabled,
   getIsContactsEnabled,
@@ -26,6 +27,23 @@ import {
   getRemoveBrandingPermission,
   getWhiteLabelPermission,
 } from "./utils";
+
+describe("custom CSS entitlement", () => {
+  test("is available on self-hosted without a paid license", async () => {
+    vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+    expect(await getCustomCssPermission("org")).toBe(true);
+  });
+
+  test("uses the dedicated Cloud entitlement", async () => {
+    vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+    vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValue(false);
+    expect(await getCustomCssPermission("org")).toBe(false);
+    expect(hasOrganizationEntitlementWithLicenseGuard).toHaveBeenCalledWith("org", "custom-css");
+    vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValue(true);
+    expect(await getCustomCssPermission("org")).toBe(true);
+    vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+  });
+});
 
 vi.mock("@/lib/constants", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/constants")>();

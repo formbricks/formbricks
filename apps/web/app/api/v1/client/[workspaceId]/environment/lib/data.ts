@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
+import { getRenderedCustomCss } from "@formbricks/types/custom-css-runtime";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TJsWorkspaceStateActionClass,
@@ -97,6 +98,7 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
         placement: true,
         inAppSurveyBranding: true,
         styling: true,
+        customCss: true,
         // Action classes (optimized for environment state)
         actionClasses: {
           select: {
@@ -150,6 +152,7 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
             endings: true,
             autoClose: true,
             styling: true,
+            customCss: true,
             status: true,
             recaptcha: true,
             // Only need to know if any filters exist so we can compute
@@ -294,6 +297,7 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
 
       return {
         ...transformed,
+        customCss: getRenderedCustomCss(survey.customCss),
         name: PUBLIC_API_SURVEY_NAME_PLACEHOLDER,
         segment: sanitizedSegment,
         ...(interactionRefresh ? { interactionRefresh } : {}),
@@ -315,6 +319,7 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
           placement: workspaceData.placement,
           inAppSurveyBranding: workspaceData.inAppSurveyBranding,
           styling: resolveStorageUrlsInObject(workspaceData.styling),
+          customCss: getRenderedCustomCss(workspaceData.customCss),
         },
       },
       // The runtime shape carries extra back-compat fields (placeholder

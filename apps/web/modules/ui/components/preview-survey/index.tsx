@@ -6,6 +6,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
+import { resolveStylingAppearance } from "@formbricks/types/appearance";
+import { getRenderedCustomCss } from "@formbricks/types/custom-css-runtime";
 import { resolveOverlayAppearance } from "@formbricks/types/overlay";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurvey, TSurveyLanguage, TSurveyStyling } from "@formbricks/types/surveys/types";
@@ -32,6 +34,7 @@ import { mirrorPlacementForDir } from "./lib/utils";
 type TPreviewType = "modal" | "fullwidth" | "email";
 
 interface PreviewSurveyProps {
+  appearance?: "light" | "dark";
   survey: TSurvey;
   elementId?: string | null;
   previewType?: TPreviewType;
@@ -47,6 +50,7 @@ let surveyNameTemp: string;
 let setBlockId = (_: string) => {};
 
 export const PreviewSurvey = ({
+  appearance = "light",
   elementId,
   survey,
   previewType,
@@ -151,6 +155,11 @@ export const PreviewSurvey = ({
   }, [workspace.styling, survey.styling]);
 
   const isCardless = styling.cardArrangement?.linkSurveys === "cardless";
+  const appearanceStyling = resolveStylingAppearance(styling, appearance);
+  const customCss = {
+    workspace: getRenderedCustomCss(workspace.customCss),
+    survey: getRenderedCustomCss(survey.customCss),
+  };
   const linkSurveyCardMaxWidth = getLinkSurveyCardMaxWidth(styling.linkSurveyCardWidth);
 
   const updateElementId = useCallback(
@@ -331,8 +340,10 @@ export const PreviewSurvey = ({
                     overlayOpacity={overlayOpacity}
                     clickOutsideClose={clickOutsideClose}
                     borderRadius={styling?.roundness ?? 8}
-                    background={styling?.cardBackgroundColor?.light}>
+                    background={appearanceStyling.cardBackgroundColor?.light}>
                     <SurveyInline
+                      customCss={customCss}
+                      appearance={appearance}
                       appUrl={publicDomain}
                       isPreviewMode={true}
                       survey={jsSurvey}
@@ -385,6 +396,7 @@ export const PreviewSurvey = ({
                           isPreviewMode={true}
                           isBrandingEnabled={workspace.linkSurveyBranding}
                           survey={jsLinkSurvey}
+                          customCss={customCss}
                           isRedirectDisabled={true}
                           languageCode={languageCode}
                           responseCount={42}
@@ -468,8 +480,10 @@ export const PreviewSurvey = ({
                   overlayOpacity={overlayOpacity}
                   previewMode="desktop"
                   borderRadius={styling.roundness ?? 8}
-                  background={styling.cardBackgroundColor?.light}>
+                  background={appearanceStyling.cardBackgroundColor?.light}>
                   <SurveyInline
+                    customCss={customCss}
+                    appearance={appearance}
                     appUrl={publicDomain}
                     isPreviewMode={true}
                     survey={jsSurvey}
@@ -529,6 +543,7 @@ export const PreviewSurvey = ({
                           appUrl={publicDomain}
                           isPreviewMode={true}
                           survey={jsLinkSurvey}
+                          customCss={customCss}
                           isBrandingEnabled={workspace.linkSurveyBranding}
                           isRedirectDisabled={true}
                           languageCode={languageCode}

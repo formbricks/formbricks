@@ -5,7 +5,7 @@ import { IS_STORAGE_CONFIGURED, SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@/
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getWorkspace } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
+import { getCustomCssPermission, getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
 import { BrandingSettingsCard } from "@/modules/ee/whitelabel/remove-branding/components/branding-settings-card";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -19,7 +19,7 @@ export const WorkspaceLookSettingsPage = async (props: { params: Promise<{ works
   const params = await props.params;
   const t = await getTranslate();
 
-  const { canManage, organization } = await getWorkspaceAuth(params.workspaceId);
+  const { canManage, organization, isOwner, isManager } = await getWorkspaceAuth(params.workspaceId);
   // Every card on this page saves through an action that asserts `workspace.manage`.
   const isReadOnly = !canManage;
 
@@ -30,6 +30,7 @@ export const WorkspaceLookSettingsPage = async (props: { params: Promise<{ works
   }
 
   const canRemoveBranding = await getRemoveBrandingPermission(organization.id);
+  const isCustomCssAllowed = await getCustomCssPermission(organization.id);
   const publicDomain = getPublicDomain();
 
   return (
@@ -45,6 +46,8 @@ export const WorkspaceLookSettingsPage = async (props: { params: Promise<{ works
         className={cn(!isReadOnly && "max-w-7xl")}
         description={t("workspace.look.theme_settings_description")}>
         <ThemeStyling
+          isCustomCssAllowed={isCustomCssAllowed}
+          canEditWorkspaceCss={isOwner || isManager}
           workspaceId={params.workspaceId}
           workspace={workspace}
           colors={SURVEY_BG_COLORS}

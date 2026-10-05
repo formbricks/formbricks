@@ -463,6 +463,8 @@ model Survey {
   slug String? @unique
 
   customHeadScripts     String?
+  /// [CustomCss]
+  customCss             Json?
   customHeadScriptsMode SurveyScriptMode? @default(add)
 
   @@unique([id, workspaceId])
@@ -674,6 +676,8 @@ model Workspace {
   workspaceTeams              WorkspaceTeam[]
   appSetupCompleted           Boolean                      @default(false)
   customHeadScripts           String? // Custom HTML scripts for link surveys (self-hosted only)
+  /// [CustomCss]
+  customCss                   Json?
   feedbackDirectoryWorkspaces FeedbackDirectoryWorkspace[]
   charts                      Chart[]
   dashboards                  Dashboard[]

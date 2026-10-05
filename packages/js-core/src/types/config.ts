@@ -1,5 +1,11 @@
 type TJsonObject = Record<string, unknown>;
 
+/** Server-processed output only. Editable source never travels in the SDK state. */
+export interface TRenderedCustomCss {
+  light?: string;
+  dark?: string;
+}
+
 export type TActionClassPageUrlRule =
   | "exactMatch"
   | "contains"
@@ -59,6 +65,7 @@ export interface TWorkspaceStateActionClass {
 }
 
 export interface TWorkspaceStateSurvey {
+  customCss?: TRenderedCustomCss;
   id: string;
   // name intentionally omitted: internal label, not needed by SDK
   welcomeCard: TJsonObject | null;
@@ -112,6 +119,7 @@ export interface TWorkspaceStateSurvey {
 }
 
 export interface TWorkspaceStateSettings {
+  customCss?: TRenderedCustomCss;
   // This variable should be called `cooldownPeriod`, not `recontactDays`. It is related to the
   // Survey Cooldown Period feature (across surveys) and not the Recontact Options (per survey).
   recontactDays: number;
