@@ -5,6 +5,12 @@ import type { TSurveyStyling } from "./surveys/types";
 import type { TWorkspaceStyling } from "./workspace";
 
 /**
+ * How the survey renders. "system" follows the browser's dark-mode setting on the web; the native
+ * SDKs resolve their app's own theme and pass "light" or "dark". Omitted means light.
+ */
+export type TSurveyAppearance = "light" | "dark" | "system";
+
+/**
  * Viewport rect of the survey card, in CSS pixels, as the renderer measures it.
  *
  * Consumed by the native SDKs, which embed the renderer in a full-screen WebView. A platform
@@ -99,6 +105,8 @@ export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUploa
   onCardRectChange?: (rect: TSurveyCardRect | null) => void;
   mode?: "modal" | "inline";
   containerId?: string;
+  /** Light by default. Can be changed later without a re-render via `formbricksSurveys.setAppearance`. */
+  appearance?: TSurveyAppearance;
   overlay?: "none" | "light" | "dark";
   placement?: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
   action?: string;

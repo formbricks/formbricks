@@ -1,3 +1,4 @@
+import { getAppearance } from "@/lib/common/appearance";
 import { Config } from "@/lib/common/config";
 import { CONTAINER_ID, LIVE_REGION_ID } from "@/lib/common/constants";
 import { FORMBRICKS_EVENTS, emitFormbricksEvent } from "@/lib/common/events";
@@ -185,6 +186,7 @@ export const renderWidget = async (
     emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: survey.id });
 
     formbricksSurveys.renderSurvey({
+      appearance: getAppearance(),
       appUrl: config.get().appUrl,
       workspaceId: config.get().workspaceId,
       contactId: config.get().user.data.contactId ?? undefined,

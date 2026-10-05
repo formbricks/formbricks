@@ -3,11 +3,13 @@
 import { MotionConfig, Variants, motion } from "framer-motion";
 import { Fragment, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { resolveDarkColors } from "@formbricks/types/dark-palette";
 import { resolveOverlayAppearance } from "@formbricks/types/overlay";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
+import { type TStylingAppearance } from "@/lib/styling/dark-mode";
 import { toJsWorkspaceStateSurvey } from "@/lib/survey/client-utils";
 import { CardlessPreviewLogo } from "@/modules/ui/components/cardless-preview-logo";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
@@ -22,6 +24,8 @@ interface ThemeStylingPreviewSurveyProps {
   previewType: TSurveyType;
   setPreviewType: (type: TSurveyType) => void;
   publicDomain: string;
+  /** Only the app survey renders dark; the link survey preview stays light (D4). */
+  appearance?: TStylingAppearance;
 }
 
 const previewParentContainerVariant: Variants = {
@@ -57,6 +61,7 @@ export const ThemeStylingPreviewSurvey = ({
   previewType,
   setPreviewType,
   publicDomain,
+  appearance = "light",
 }: ThemeStylingPreviewSurveyProps) => {
   const [isFullScreenPreview] = useState(false);
   const [previewPosition] = useState("relative");
@@ -155,13 +160,18 @@ export const ThemeStylingPreviewSurvey = ({
       overlayColor={overlayColor}
       overlayOpacity={overlayOpacity}
       previewMode="desktop"
-      background={workspace.styling.cardBackgroundColor?.light}
+      background={
+        appearance === "dark"
+          ? resolveDarkColors(workspace.styling).cardBackgroundColor
+          : workspace.styling.cardBackgroundColor?.light
+      }
       borderRadius={workspace.styling.roundness ?? 8}>
       <Fragment key={surveyKey}>
         <SurveyInline
           appUrl={publicDomain}
           isPreviewMode={true}
           survey={toJsWorkspaceStateSurvey({ ...survey, type: "app" })}
+          appearance={appearance}
           isBrandingEnabled={workspace.inAppSurveyBranding}
           isRedirectDisabled={true}
           onFileUpload={async (file) => file.name}
@@ -278,7 +288,12 @@ export const ThemeStylingPreviewSurvey = ({
         <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
           <button
             type="button"
-            className={`${previewType === "link" ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
+            // Link surveys always render light (D4), so there is no dark link preview to show.
+            disabled={appearance === "dark"}
+            className={cn(
+              previewType === "link" && "rounded-full bg-slate-200",
+              "cursor-pointer px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+            )}
             onClick={() => setPreviewType("link")}>
             {t("common.link_survey")}
           </button>

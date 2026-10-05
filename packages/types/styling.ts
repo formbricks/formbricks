@@ -118,7 +118,6 @@ export const ZBaseStyling = z.object({
   cardBackgroundColor: ZStylingColor.nullish(),
   cardBorderColor: ZStylingColor.nullish(),
   highlightBorderColor: ZStylingColor.nullish(),
-  isDarkModeEnabled: z.boolean().nullish(),
   roundness: z.union([z.number(), z.string()]).nullish(),
   cardArrangement: ZCardArrangement.nullish(),
   linkSurveyCardWidth: ZLinkSurveyCardWidthOptions.nullish(),

@@ -2510,6 +2510,13 @@ checksums:
     workspace/look/advanced_styling_section_options: a92819a15bc8c3eb44bdd82a5075c9e2
     workspace/look/app_survey_placement: f09cddac6bbb77d4694df223c6edf6b6
     workspace/look/app_survey_placement_settings_description: d81bcff7a866a2f83ff76936dbad4770
+    workspace/look/appearance_automatic: 1cf3b42f4ed743171d3e97c89f408532
+    workspace/look/appearance_automatic_same_as_light: ce22a61f502b5184c0e6d49d52cd116c
+    workspace/look/appearance_dark: 73e6e208ba628b26e90fcf6dce15e1b2
+    workspace/look/appearance_dark_contrast_warning: b199720dce0377613fe278bdf9773ffd
+    workspace/look/appearance_dark_description: 1d0c1f0e0a4bcc7dea116e574ebc8ae1
+    workspace/look/appearance_light: bb78ea2c6edd8662676c81a8a13ecb93
+    workspace/look/appearance_use_automatic: f9b3ffa3285d7819e7295e87111f4a82
     workspace/look/email_customization: ae399f381183a4fe0ffd41ab496b5d8f
     workspace/look/email_customization_description: 5ccaf1769b2c39d7e87f3a08d056a374
     workspace/look/enable_custom_styling: 4774d8fb009c27044aa0191ebcccdcc2

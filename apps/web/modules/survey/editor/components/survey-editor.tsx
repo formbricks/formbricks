@@ -15,6 +15,7 @@ import {
 import { TUserLocale } from "@formbricks/types/user";
 import { extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
+import { type TStylingAppearance } from "@/lib/styling/dark-mode";
 import type { TSurveyAccess } from "@/lib/survey/visibility/access";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useDocumentVisibility } from "@/lib/useDocumentVisibility";
@@ -180,6 +181,8 @@ export const SurveyEditor = ({
 
   const [styling, setStyling] = useState<TSurveyStyling | null>(localSurvey?.styling ?? null);
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
+  // Light / Dark selector of the Styling tab (D14). The preview follows it while that tab is open.
+  const [stylingAppearance, setStylingAppearance] = useState<TStylingAppearance>("light");
 
   const fetchLatestWorkspaceData = useCallback(async () => {
     const [refetchWorkspaceResponse, refetchLanguagesResponse] = await Promise.all([
@@ -338,6 +341,8 @@ export const SurveyEditor = ({
               isUnsplashConfigured={isUnsplashConfigured}
               isCxMode={isCxMode}
               isStorageConfigured={isStorageConfigured}
+              appearance={stylingAppearance}
+              setAppearance={setStylingAppearance}
             />
           )}
 
@@ -404,6 +409,7 @@ export const SurveyEditor = ({
             locale={locale}
             isSpamProtectionAllowed={isSpamProtectionAllowed}
             publicDomain={publicDomain}
+            appearance={activeView === "styling" ? stylingAppearance : "light"}
           />
         </aside>
       </div>

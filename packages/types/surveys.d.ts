@@ -1,4 +1,4 @@
-import { SurveyContainerProps } from "./formbricks-surveys";
+import { SurveyContainerProps, TSurveyAppearance } from "./formbricks-surveys";
 
 declare global {
   interface Window {
@@ -8,6 +8,7 @@ declare global {
       renderSurvey: (props: SurveyContainerProps) => void;
       onFilePick: (files: { name: string; type: string; base64: string }[]) => void;
       setNonce: (nonce: string | undefined) => void;
+      setAppearance: (appearance: TSurveyAppearance) => void;
     };
     __formbricksNonce?: string;
   }

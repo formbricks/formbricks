@@ -181,6 +181,8 @@ describe("widget-file", () => {
         appUrl: "https://fake.app",
         workspaceId: "env_123",
         contactId: "contact_abc",
+        // No setAppearance call means light (ENG-3551).
+        appearance: "light",
       })
     );
     vi.useRealTimers();

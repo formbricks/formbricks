@@ -165,6 +165,60 @@
   --fb-page-bg-color: #e2e8f0;
 }
 
+/* =============================================================================
+   Dark appearance
+
+   The renderer sets data-appearance on every #fbjs root (ENG-2940). These are
+   the fallback values for a survey without styling, so a dark survey paints
+   dark from its first frame. styles.ts overrides them from the styling object
+   exactly as it does for light.
+
+   Color values MUST match getDerivedDarkColors("#1e40af") in
+   packages/types/dark-palette.ts. Brand, button and progress indicator keep
+   their light values (D12), so they are not repeated here.
+
+   `color-scheme` sits on the survey root, never on :root — on :root it can
+   paint a transparent mobile WebView dark over the host app (ENG-3447).
+   ============================================================================= */
+
+#fbjs[data-appearance="dark"] {
+  color-scheme: dark;
+
+  --background: #0d1426;
+  --foreground: #dde2f3;
+  --card: #0d1426;
+  --card-foreground: #dde2f3;
+  --popover: #0e1832;
+  --popover-foreground: #dde2f3;
+  --secondary: #0e1832;
+  --secondary-foreground: #dde2f3;
+  --muted: #0e1832;
+  --muted-foreground: #9fa5b9;
+  --accent: #101d42;
+  --accent-foreground: #dde2f3;
+  --border: #5b6a97;
+  --input: #dde2f3;
+
+  /* Hover / selected states lighten a dark surface instead of darkening it. */
+  --fb-shade-color: white;
+  --fb-tint-color: #0d1426;
+
+  --fb-accent-background-color: #101d42;
+  --fb-accent-background-color-selected: #122251;
+  --fb-element-headline-color: #dde2f3;
+  --fb-element-description-color: #dde2f3;
+  --fb-element-upper-label-color: #dde2f3;
+  --fb-label-color: #dde2f3;
+  --fb-input-bg-color: #0e1832;
+  --fb-input-border-color: #5b6a97;
+  --fb-input-color: #dde2f3;
+  --fb-input-shadow: none;
+  --fb-progress-track-bg-color: #5a6587;
+  --fb-option-bg-color: #0e1832;
+  --fb-option-label-color: #dde2f3;
+  --fb-page-bg-color: #0b0f17;
+}
+
 #fbjs .button-custom {
   width: var(--fb-button-width);
   height: var(--fb-button-height);
@@ -290,6 +344,12 @@
     --fb-focus-ring-outer-color: var(--fb-survey-brand-color, #1e40af);
     --fb-focus-ring-inner-width: 2px;
     --fb-focus-ring-outer-width: 2px;
+  }
+
+  /* The inner ring separates the outer ring from the control; on a dark card
+     it takes the card color instead of white. */
+  #fbjs[data-appearance="dark"] {
+    --fb-focus-ring-inner-color: var(--fb-survey-background-color, #0d1426);
   }
 
   /* Tailwind v4's transition-colors includes outline-color, and the focus rule

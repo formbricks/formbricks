@@ -2,6 +2,7 @@ import { h, render } from "preact";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { RenderSurvey } from "@/components/general/render-survey";
 import { I18nProvider } from "@/components/i18n/provider";
+import { setAppearance } from "@/lib/appearance";
 import { FILE_PICK_EVENT } from "@/lib/constants";
 import { getI18nLanguage } from "@/lib/i18n-utils";
 import { setLocaleBaseUrl } from "@/lib/i18n.config";
@@ -25,6 +26,8 @@ export const renderSurvey = (props: SurveyContainerProps) => {
   // Where the on-demand locale bundles live, beside the renderer itself.
   setLocaleBaseUrl(appUrl);
 
+  // Before the first render, so the survey never paints in the wrong appearance.
+  setAppearance(props.appearance);
   addStylesToDom();
   addCustomThemeToDom({ styling: props.styling });
 
@@ -111,5 +114,6 @@ if (globalThis.window !== undefined) {
     renderSurvey,
     onFilePick,
     setNonce: setStyleNonce,
+    setAppearance,
   } as typeof globalThis.window.formbricksSurveys;
 }
