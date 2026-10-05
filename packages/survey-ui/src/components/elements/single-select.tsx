@@ -16,6 +16,7 @@ import {
 import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
+import { FB_PART } from "@/lib/parts";
 import { useRovingRadioGroup } from "@/lib/use-roving-radio-group";
 import { cn } from "@/lib/utils";
 
@@ -229,6 +230,7 @@ function SingleSelectDropdownVariant({
           <Button
             variant="outline"
             disabled={disabled}
+            data-fb-part={FB_PART.dropdown}
             className="rounded-input min-h-input bg-input-bg border-input-border text-input-text py-input-y px-input-x w-full justify-between"
             aria-invalid={errorAria.ariaInvalid}
             aria-describedby={errorAria.ariaDescribedBy}
@@ -272,7 +274,11 @@ function SingleSelectDropdownVariant({
                   id={`${inputId}-${option.id}`}
                   dir={dir}
                   disabled={disabled}>
-                  <span className="font-input font-input-weight text-input-text">{option.label}</span>
+                  <span
+                    data-fb-part={FB_PART.optionLabel}
+                    className="font-input font-input-weight text-input-text">
+                    {option.label}
+                  </span>
                 </DropdownMenuRadioItem>
               ))}
               {otherMatchesSearch && otherOptionId ? (
@@ -281,7 +287,9 @@ function SingleSelectDropdownVariant({
                   id={`${inputId}-${otherOptionId}`}
                   dir={dir}
                   disabled={disabled}>
-                  <span className="font-input font-input-weight text-input-text">
+                  <span
+                    data-fb-part={FB_PART.optionLabel}
+                    className="font-input font-input-weight text-input-text">
                     {otherValue || otherOptionLabel}
                   </span>
                 </DropdownMenuRadioItem>
@@ -293,7 +301,11 @@ function SingleSelectDropdownVariant({
                   id={`${inputId}-${noneOption.id}`}
                   dir={dir}
                   disabled={disabled}>
-                  <span className="font-input font-input-weight text-input-text">{noneOption.label}</span>
+                  <span
+                    data-fb-part={FB_PART.optionLabel}
+                    className="font-input font-input-weight text-input-text">
+                    {noneOption.label}
+                  </span>
                 </DropdownMenuRadioItem>
               ) : null}
               {hasNoResults ? (
@@ -390,6 +402,7 @@ function RadioIndicator(): React.JSX.Element {
   return (
     <span
       aria-hidden="true"
+      data-fb-part={FB_PART.optionControl}
       className={cn(
         "border-input-border dark:bg-input-bg relative flex size-4 shrink-0 items-center justify-center rounded-full border bg-white shadow-xs transition-colors",
         "peer-checked:border-brand",
@@ -428,10 +441,14 @@ function SingleSelectOptionItem({
   const optionId = `${inputId}-${option.id}`;
 
   return (
+    // The hooked option is the visible row. Its state lives on the native radio inside it, so custom
+    // CSS reads it with `:has(:checked)` / `:has(:focus-visible)` / `:has(:disabled)` — aria-checked
+    // is not allowed on a <label>.
     <label
       key={option.id}
       dir={dir}
       htmlFor={optionId}
+      data-fb-part={FB_PART.option}
       className={cn(getOptionContainerClassName(isSelected, disabled), isSelected && "z-10")}>
       <span className="flex items-center">
         <input
@@ -454,7 +471,9 @@ function SingleSelectOptionItem({
           {...getRadioProps(option.id)}
         />
         <RadioIndicator />
-        <span className={cn("mx-3 grow", OPTION_LABEL_CLASS)}>{option.label}</span>
+        <span data-fb-part={FB_PART.optionLabel} className={cn("mx-3 grow", OPTION_LABEL_CLASS)}>
+          {option.label}
+        </span>
       </span>
     </label>
   );
@@ -594,6 +613,7 @@ function OtherOptionLabel({
     // The bordered box is a plain container; only the option row is the radio's label.
     <div
       dir={dir}
+      data-fb-part={FB_PART.option}
       className={cn(getOptionContainerClassName(isOtherSelected, disabled), isOtherSelected && "z-10")}>
       <label htmlFor={optionId} className="flex cursor-pointer items-center">
         <input
@@ -615,7 +635,9 @@ function OtherOptionLabel({
           {...getRadioProps(otherOptionId)}
         />
         <RadioIndicator />
-        <span className={cn("mr-3 ml-3 grow", OPTION_LABEL_CLASS)}>{otherOptionLabel}</span>
+        <span data-fb-part={FB_PART.optionLabel} className={cn("mr-3 ml-3 grow", OPTION_LABEL_CLASS)}>
+          {otherOptionLabel}
+        </span>
       </label>
       {/* The enclosing <fieldset role="radiogroup"> carries aria-describedby, but an ancestor's
           description is not part of a descendant's accessible description (accname): focusing this

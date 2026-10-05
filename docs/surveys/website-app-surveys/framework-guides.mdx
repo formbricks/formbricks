@@ -683,6 +683,9 @@ formbricks.setAppearance("light");
 - `setAppearance` can be called before `setup`. The value is kept for the page session and survives `logout`.
 - The dark colors are derived from your brand color. Adjust any of them in **Look & Feel** (or a survey's **Styling** tab) by switching the preview to **Dark**.
 - Link surveys always render light.
+- `setAppearance` needs a recent SDK. If you support older SDK versions, check `typeof formbricks.setAppearance === "function"` before calling it.
+
+The iOS, Android, React Native and Flutter SDKs offer the same appearance setting and also apply your [Custom CSS](/surveys/general-features/custom-css). See [SDK Compatibility](/surveys/website-app-surveys/sdk-compatibility) for the versions, how `"system"` is resolved on each platform, and what respondents see while versions are mixed.
 
 ## Content Security Policy
 

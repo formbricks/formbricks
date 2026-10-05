@@ -2,6 +2,7 @@ import * as React from "react";
 import { Checkbox } from "@/components/general/checkbox";
 import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
+import { FB_PART } from "@/lib/parts";
 import { useRovingRadioGroup } from "@/lib/use-roving-radio-group";
 import { cn } from "@/lib/utils";
 
@@ -134,6 +135,7 @@ function PictureSelect({
                 <label
                   key={option.id}
                   htmlFor={optionId}
+                  data-fb-part={FB_PART.option}
                   className={cn(
                     "rounded-option relative aspect-[162/97] w-full cursor-pointer transition-all",
                     disabled && "cursor-not-allowed opacity-50"
@@ -159,6 +161,7 @@ function PictureSelect({
                     }}>
                     <Checkbox
                       id={optionId}
+                      data-fb-part={FB_PART.optionControl}
                       checked={isSelected}
                       onCheckedChange={(checked) => {
                         handleMultiSelectChange(option.id, checked === true);
@@ -191,6 +194,7 @@ function PictureSelect({
                 <label
                   key={option.id}
                   htmlFor={optionId}
+                  data-fb-part={FB_PART.option}
                   className={cn(
                     "rounded-option relative aspect-[162/97] w-full cursor-pointer transition-all",
                     disabled && "cursor-not-allowed opacity-50"
@@ -225,6 +229,7 @@ function PictureSelect({
                   {/* Selection indicator dot, painted from the hidden input's state */}
                   <span
                     aria-hidden="true"
+                    data-fb-part={FB_PART.optionControl}
                     className={cn(
                       "border-input-border dark:bg-input-bg absolute top-[5%] right-[5%] flex size-4 items-center justify-center rounded-full border bg-white shadow-xs transition-colors",
                       isSelected && "border-brand"

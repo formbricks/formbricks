@@ -4,6 +4,7 @@ import * as React from "react";
 import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
+import { FB_PART } from "@/lib/parts";
 import { cn } from "@/lib/utils";
 
 /**
@@ -145,8 +146,11 @@ function RankingItem({
   const displayNumber = isRanked ? rankIndex + 1 : undefined;
 
   return (
+    // Hooked as an option for its box. A ranked item has no native/ARIA state to style from (the
+    // toggle's label already says "Remove … from ranking"), so the ranked look stays built in.
     <li
       dir={dir}
+      data-fb-part={FB_PART.option}
       className={cn(
         "rounded-option flex min-h-12 cursor-pointer flex-col border px-3 transition-all",
         "bg-option-bg border-option-border",
@@ -182,7 +186,9 @@ function RankingItem({
             )}>
             {displayNumber}
           </span>
-          <span className="font-option text-option font-option-weight text-option-label shrink grow text-start">
+          <span
+            data-fb-part={FB_PART.optionLabel}
+            className="font-option text-option font-option-weight text-option-label shrink grow text-start">
             {item.label}
           </span>
         </button>

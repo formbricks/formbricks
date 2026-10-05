@@ -1,3 +1,4 @@
+import { FB_PART } from "@formbricks/survey-ui/parts";
 import { isValidHTML, sanitizeSurveyHtml, stripInlineStyles } from "@/lib/html-utils";
 
 interface SubheaderProps {
@@ -19,12 +20,13 @@ export function Subheader({ subheader }: SubheaderProps) {
   return isHtml ? (
     <div
       className={`${className} htmlbody`}
+      data-fb-part={FB_PART.description}
       data-testid="subheader"
       dir="auto"
       dangerouslySetInnerHTML={{ __html: safeHtml }}
     />
   ) : (
-    <p className={className} data-testid="subheader" dir="auto">
+    <p className={className} data-fb-part={FB_PART.description} data-testid="subheader" dir="auto">
       {subheader}
     </p>
   );

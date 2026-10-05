@@ -1,0 +1,487 @@
+---
+title: "Custom CSS"
+description: "Style every survey in a workspace, or a single survey, with your own CSS: stable hooks, dark mode rules, limits and a migration guide."
+icon: "code"
+---
+
+Custom CSS lets you style surveys beyond what the theme editor offers: a pill-shaped Next button, your own focus ring, a shaded consent box. You write ordinary CSS against a small set of stable hooks, and Formbricks applies it to link surveys, website & app surveys and surveys in mobile apps.
+
+<Note>
+  **Plans.** On Formbricks Cloud, Custom CSS is part of the **Scale** plan. Self-hosted instances get it on
+  every plan, without a license. If a Cloud organization leaves the Scale plan, its saved CSS keeps
+  applying, but it can only be cleared, not changed.
+</Note>
+
+<Tip>
+  Start with the [Styling Theme](/platform/features/styling-theme). Colors, fonts, radii and spacing are all
+  in the theme editor. Use Custom CSS for what the theme editor cannot do.
+</Tip>
+
+## Where To Add CSS
+
+There are two places, and they add up: survey CSS is applied on top of workspace CSS, never instead of it.
+
+| Level | Where | Applies to | Who can edit |
+| --- | --- | --- | --- |
+| Workspace | **Settings → Workspace → Appearance**, card **Custom CSS** | Every survey in the workspace | Organization owners and managers |
+| Survey | Survey editor → **Styling** tab, card **Custom CSS** | This survey only | Anyone who can edit the survey |
+
+Survey CSS applies whether or not the survey overrides the workspace theme with **Add custom styles**.
+
+Each level has two fields, switched with the **Light / Dark** toggle at the top of the styling editor:
+
+- **Base CSS** (Light selected) applies in light **and** dark mode.
+- **Dark CSS** (Dark selected) applies only when the survey is shown dark, on top of the base CSS. Leave it empty and the base CSS alone is used in dark mode.
+
+<Steps>
+  <Step title="Open the Custom CSS card">
+    In the workspace **Appearance** settings or in a survey's **Styling** tab.
+  </Step>
+  <Step title="Pick the field">
+    Select **Light** to edit the base CSS or **Dark** to edit the dark CSS.
+  </Step>
+  <Step title="Write or upload your CSS">
+    Type into the field, or use **Upload** to load a `.css` file. The upload replaces the content of the field that is currently selected; the other field is not touched.
+  </Step>
+  <Step title="Check the preview, then save">
+    The preview updates shortly after you stop typing, and lists anything Formbricks removed or rejected, with its line and column. Saving workspace CSS changes every survey in the workspace.
+  </Step>
+</Steps>
+
+Respondents get saved changes within about an hour, as their browsers and apps refresh the survey configuration. A survey that is already open keeps its styling until the respondent finishes it.
+
+<Info>
+  Custom CSS styles the card. Head scripts are for scripts, tags and page-level styles. If a self-hosted
+  link survey also has [Custom Head Scripts](/surveys/link-surveys/custom-head-scripts) with styles, both
+  apply, and on the survey card your Custom CSS wins.
+</Info>
+
+## How Your CSS Is Applied
+
+### Everything Is Scoped To The Survey
+
+Every rule is scoped to the survey root, `#fbjs`. You do not need to write `#fbjs` yourself: Formbricks adds it to every selector that lacks it.
+
+- `:root`, `html` and `body` mean the survey root. `:root { --brand: #1f5f8b; }` sets a variable on the survey, and `body { font-family: … }` sets the survey's font.
+- Your CSS never reaches the page around the survey, and rules that try to (`#fbjs + .x`, `#fbjs ~ .x`, `:host`) are removed.
+- Open dropdown lists render in their own survey root, so your rules and variables reach them too.
+
+### Base And Dark
+
+The survey's appearance is set by the app or page that shows it (light by default). In dark mode, the survey root carries `data-appearance="dark"`.
+
+- Rules in the **Dark CSS** field are scoped to `#fbjs[data-appearance="dark"]` for you. Write them like base rules: `[data-fb-part="card"] { background: #0f1b24; }`, and `:root { … }` sets variables for dark mode only.
+- In the **Base CSS** field you can also write dark rules yourself, starting with `#fbjs[data-appearance="dark"]`.
+- Anything in base CSS also applies in dark mode, including colors. A base rule that sets a text or background color replaces the dark color Formbricks would otherwise derive, so set the dark value in **Dark CSS**. The editor reminds you when base CSS sets colors and the dark field is empty.
+
+### Nesting
+
+CSS nesting is supported. It is flattened when you save, so it works in every [supported browser](#browser-and-app-support).
+
+```css
+[data-fb-part="option"] {
+  border-radius: 12px;
+
+  &:hover {
+    background-color: #f2f6f9;
+  }
+}
+```
+
+### Precedence
+
+Your declarations are made `!important` automatically and placed in their own cascade layers, so they win over the built-in survey styles and over the CSS of the page that shows the survey. You never need to write `!important` yourself. From lowest to highest:
+
+| Rank | Source | Applies |
+| --- | --- | --- |
+| 1 | Built-in survey styles | Always |
+| 2 | Theme editor (workspace theme, or the survey's own styles) | Always |
+| 3 | Workspace base CSS | Always |
+| 4 | Workspace dark CSS | Dark mode only |
+| 5 | Survey base CSS | Always |
+| 6 | Survey dark CSS | Dark mode only |
+
+Inside one field the normal cascade applies: the more specific selector wins, then the later rule.
+
+Two consequences worth knowing:
+
+- In dark mode, survey base CSS wins over workspace dark CSS. If a survey's base CSS sets colors, give that survey its own dark CSS too.
+- When your CSS sets a property, the theme editor can no longer change it. If changing a color in the theme editor seems to do nothing, check your Custom CSS.
+
+## Stable Hooks
+
+Target survey parts through their `data-fb-part` attribute. These names are a supported contract and stay stable across releases.
+
+| Hook | Element | Notes |
+| --- | --- | --- |
+| `[data-fb-part="card"]` | The card a question, welcome or ending screen sits on | Not present with the **Cardless** card arrangement. |
+| `[data-fb-part="headline"]` | Headlines of questions, welcome and ending cards | See [Headline](#headline) for formatted text. |
+| `[data-fb-part="description"]` | The description under a headline | |
+| `[data-fb-part="option"]` | One choice: a row in single or multi select, a picture tile, a ranking item, an option in an open dropdown | Includes the "Other" and "None" rows. |
+| `[data-fb-part="option-label"]` | The text of a choice, and the consent checkbox label | |
+| `[data-fb-part="option-control"]` | The radio circle or checkbox square of a choice, and the consent checkbox | |
+| `[data-fb-part="input"]` | A single-line text field: free text, contact info, address and "Other" fields | |
+| `[data-fb-part="textarea"]` | A multi-line free text field | |
+| `[data-fb-part="dropdown"]` | The button that opens a dropdown choice list | Its open list holds `option` hooks. |
+| `[data-fb-part="button-primary"]` | Next and Submit, the welcome and ending buttons, and call-to-action buttons | |
+| `[data-fb-part="button-back"]` | Back | |
+| `[data-fb-part="button-close"]` | The close button of a website or app survey | |
+| `[data-fb-part="error"]` | A validation message | Exists only while a message is shown. |
+| `[data-fb-part="consent"]` | The box around the consent checkbox | |
+| `[data-fb-part="branding"]` | The "Powered by Formbricks" link | |
+| `[data-fb-part="progress"]` | The progress bar track | Color the fill with `--fb-progress-indicator-bg-color`. |
+
+Rating and NPS scales, matrix grids, the date picker, the file upload area and Cal.com booking embeds have no part hooks of their own; style them through the [variables](#variables). Their headline, description, error and buttons are hooked like everywhere else.
+
+<Warning>
+  Generated class names (such as `.bg-input-bg` or `.button-custom`) and the HTML structure around a hook
+  are not part of the contract and can change in any release. Target hooks, states and variables only.
+</Warning>
+
+## States
+
+Interactive states are on the hooked element itself, so `:hover`, `:active` and `:focus-visible` work directly on buttons, fields and the dropdown. A choice row is a label around a native control, so its state is read from the control inside it with `:has()`.
+
+| State | Selector |
+| --- | --- |
+| Hover, pressed | `[data-fb-part="button-primary"]:hover`, `…:active` (any hook) |
+| Keyboard focus | `[data-fb-part="input"]:focus-visible` on fields, buttons and the dropdown; `[data-fb-part="option"]:has(:focus-visible)` on choices |
+| Selected choice | `[data-fb-part="option"]:has(:checked)` |
+| Selected option in an open dropdown | `[data-fb-part="option"][aria-checked="true"]` |
+| Checked consent box | `[data-fb-part="consent"]:has([aria-checked="true"])`, or `[data-fb-part="option-control"][aria-checked="true"]` on the checkbox itself |
+| Invalid field | `[data-fb-part="input"][aria-invalid="true"]`, also on `textarea` and `dropdown` |
+| Disabled | `[data-fb-part="button-primary"]:disabled`; on choices `[data-fb-part="option"]:has(:disabled)` |
+| Dark mode | `#fbjs[data-appearance="dark"] [data-fb-part="card"]`, or any rule in **Dark CSS** |
+
+To style selected choices in lists and in dropdowns with one rule, combine both forms: `[data-fb-part="option"]:is([aria-checked="true"], :has(:checked))`.
+
+## Variables
+
+The theme editor writes its values to `--fb-*` variables on the survey root. Setting them in Custom CSS is often the shortest way to restyle a whole group of elements, including the ones without hooks.
+
+| Area | Variables |
+| --- | --- |
+| Brand | `--fb-survey-brand-color` (selected choices, controls, focus ring), `--fb-brand-color` (accents) |
+| Card | `--fb-survey-background-color`, `--fb-border-radius` (style the border on the `card` hook) |
+| Headline | `--fb-element-headline-color`, `--fb-element-headline-font-family`, `--fb-element-headline-font-size`, `--fb-element-headline-font-weight` |
+| Description | `--fb-element-description-color`, `--fb-element-description-font-family`, `--fb-element-description-font-size`, `--fb-element-description-font-weight` |
+| Choices | `--fb-option-bg-color`, `--fb-option-border-color`, `--fb-option-label-color`, `--fb-option-border-radius`, `--fb-option-font-family`, `--fb-option-font-size`, `--fb-option-font-weight`, `--fb-option-padding-x`, `--fb-option-padding-y` |
+| Fields (also rating, NPS, matrix, date) | `--fb-input-bg-color`, `--fb-input-border-color`, `--fb-input-text-color`, `--fb-input-placeholder-color`, `--fb-input-border-radius`, `--fb-input-font-family`, `--fb-input-font-size`, `--fb-input-font-weight`, `--fb-input-height`, `--fb-input-padding-x`, `--fb-input-padding-y`, `--fb-input-shadow` |
+| Buttons | `--fb-button-bg-color`, `--fb-button-text-color`, `--fb-button-border-radius`, `--fb-button-height`, `--fb-button-font-size`, `--fb-button-font-weight`, `--fb-button-padding-x`, `--fb-button-padding-y` |
+| Progress | `--fb-progress-track-bg-color`, `--fb-progress-indicator-bg-color`, `--fb-progress-track-height` |
+| Focus ring | `--fb-focus-ring-outer-color`, `--fb-focus-ring-inner-color`, `--fb-focus-ring-outer-width`, `--fb-focus-ring-inner-width` |
+
+```css
+:root {
+  --fb-survey-brand-color: #1f5f8b;
+  --fb-button-bg-color: #1f5f8b;
+  --fb-button-border-radius: 999px;
+  --fb-option-border-radius: 12px;
+}
+```
+
+You can define your own variables too, such as `--acme-ink`, and use them in your rules.
+
+## Examples
+
+### Option Label And Control
+
+```css
+[data-fb-part="option"] {
+  border-color: #c9d3dc;
+  border-radius: 12px;
+}
+
+[data-fb-part="option"]:hover {
+  background-color: #f2f6f9;
+}
+
+[data-fb-part="option"]:has(:checked) {
+  border-color: #1f5f8b;
+  background-color: #e8f1f7;
+}
+
+[data-fb-part="option-label"] {
+  font-size: 16px;
+  line-height: 24px;
+  color: #10283a;
+}
+
+[data-fb-part="option-control"] {
+  border-color: #8a9aa8;
+}
+
+[data-fb-part="option"]:has(:checked) [data-fb-part="option-control"] {
+  border-color: #1f5f8b;
+}
+```
+
+<Note>
+  If you give `option-control` a background, also give it one for the checked state. Your rule replaces the
+  built-in fill of a checked checkbox, which would otherwise disappear.
+</Note>
+
+### Headline
+
+Headlines can contain formatted text (bold, links, lists). Set the font family, size, weight and color through the headline variables on the hook, so they reach every part of the formatted text. Line height and letter spacing can be set directly.
+
+```css
+[data-fb-part="headline"] {
+  --fb-element-headline-font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --fb-element-headline-font-size: 20px;
+  --fb-element-headline-font-weight: 600;
+  --fb-element-headline-color: #10283a;
+  line-height: 24px;
+  letter-spacing: -0.025em;
+}
+```
+
+The same works for descriptions with the `--fb-element-description-*` variables.
+
+### Primary Button
+
+```css
+[data-fb-part="button-primary"] {
+  --fb-button-height: 44px;
+  background-color: #1f5f8b;
+  color: #ffffff;
+  border-radius: 999px;
+  font-weight: 600;
+  transition: background-color 0.15s ease;
+}
+
+[data-fb-part="button-primary"]:hover {
+  background-color: #194e72;
+  opacity: 1;
+}
+
+[data-fb-part="button-primary"]:active {
+  background-color: #133b57;
+}
+
+[data-fb-part="button-back"] {
+  border: 1px solid #1f5f8b;
+  border-radius: 999px;
+  color: #1f5f8b;
+}
+```
+
+### Focus
+
+Keep a visible focus indicator. Use a transparent outline together with a `box-shadow` ring, rather than `outline: none`: Windows high-contrast mode drops shadows but shows the outline, so the ring never disappears.
+
+```css
+[data-fb-part="input"]:focus-visible,
+[data-fb-part="textarea"]:focus-visible,
+[data-fb-part="dropdown"]:focus-visible,
+[data-fb-part="button-primary"]:focus-visible,
+[data-fb-part="button-back"]:focus-visible,
+[data-fb-part="option"]:has(:focus-visible) {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px #ffffff,
+    0 0 0 4px #7a3fd1;
+}
+```
+
+### Dark Rules
+
+With **Dark** selected, add only what changes in dark mode:
+
+```css
+:root {
+  --acme-ink: #e6eef5;
+  --acme-surface: #0f1b24;
+}
+
+[data-fb-part="card"] {
+  background-color: var(--acme-surface);
+}
+
+[data-fb-part="headline"] {
+  --fb-element-headline-color: var(--acme-ink);
+}
+
+[data-fb-part="option"]:has(:checked) {
+  background-color: #16324a;
+}
+```
+
+Avoid these patterns for dark mode, because they do not follow the survey's appearance:
+
+- `@media (prefers-color-scheme: dark)` follows the device, not the survey. A survey your app shows light would still get the dark rules.
+- Theme classes of your own page, such as `html.dark …`. The survey cannot see them, and `html` means the survey root here.
+- `light-dark()` needs Safari 17.5 or later, above the [supported baseline](#browser-and-app-support).
+- `color-scheme: dark` on the root can paint the transparent survey background in mobile apps.
+
+## Migrating From Qualtrics
+
+Qualtrics stylesheets do not work unchanged. Their selectors (`.QuestionText`, `#NextButton`, …) match nothing in a Formbricks survey. Formbricks accepts them without a warning, but they have no effect until you port them. Move each rule to the matching hook:
+
+| Typical Qualtrics selector | Formbricks hook |
+| --- | --- |
+| `body`, `:root` | Keep as is; both mean the survey root |
+| `.QuestionText` | `[data-fb-part="headline"]` |
+| `.QuestionBody`, question descriptions | `[data-fb-part="description"]` |
+| `.ChoiceStructure .LabelWrapper label` | `[data-fb-part="option"]` and `[data-fb-part="option-label"]` |
+| `.q-radio`, `.q-checkbox` | `[data-fb-part="option-control"]` |
+| `.q-checked` | `[data-fb-part="option"]:has(:checked)` |
+| `.InputText`, `input[type="text"]` | `[data-fb-part="input"]` |
+| `textarea` | `[data-fb-part="textarea"]` |
+| `select` | `[data-fb-part="dropdown"]` |
+| `#NextButton` | `[data-fb-part="button-primary"]` |
+| `#PreviousButton` | `[data-fb-part="button-back"]` |
+| `.ValidationError` | `[data-fb-part="error"]` |
+| `.ProgressBar` | `[data-fb-part="progress"]` |
+| `#Plug` | `[data-fb-part="branding"]` |
+
+Before, written for Qualtrics:
+
+```css
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap");
+
+:root {
+  --acme-brand: #1f5f8b;
+  --acme-ink: #10283a;
+}
+
+body,
+.Skin .QuestionText {
+  font-family: "Inter", Arial, sans-serif;
+}
+
+.Skin .QuestionText {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--acme-ink);
+}
+
+.Skin #NextButton {
+  background: var(--acme-brand);
+  border-radius: 999px;
+}
+
+.Skin .ValidationError {
+  background: #fbe5e6;
+  border: 1px solid #c30000;
+}
+```
+
+After, ported to Formbricks:
+
+```css
+:root {
+  --acme-brand: #1f5f8b;
+  --acme-ink: #10283a;
+}
+
+body {
+  font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+}
+
+[data-fb-part="headline"] {
+  --fb-element-headline-font-size: 20px;
+  --fb-element-headline-font-weight: 600;
+  --fb-element-headline-color: var(--acme-ink);
+}
+
+[data-fb-part="button-primary"] {
+  background: var(--acme-brand);
+  border-radius: 999px;
+}
+
+[data-fb-part="error"] {
+  background: #fbe5e6;
+  border: 1px solid #c30000;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+```
+
+What changed:
+
+- The `@import` is gone. Formbricks removes it, and it would only produce a warning. See [Fonts](#fonts).
+- `:root` and `body` stay, because they mean the survey root.
+- Every Qualtrics selector was replaced by a hook. Nothing was renamed automatically.
+
+## Fonts
+
+Custom CSS cannot load fonts. `@import`, `@font-face` and every `url()` are removed, so name fonts that are already available and always end with a fallback:
+
+- **Website & app surveys** can use any font your page already loads.
+- **Link surveys** and **mobile apps** only have the fonts installed on the respondent's device, so the fallback is what most respondents see.
+
+## What Formbricks Removes Or Rejects
+
+Formbricks checks your CSS when you preview and when you save.
+
+**Removed with a warning.** The save succeeds, and the rest of your CSS applies:
+
+| What | Warning |
+| --- | --- |
+| `@import` | Import removed |
+| `@font-face` | Font face removed |
+| `url()`, `image()`, `image-set()` and any other external resource, including `data:` and relative URLs, also inside variables | External resource removed |
+| At-rules other than `@media`, `@supports`, `@container` and `@keyframes` (for example `@layer`, `@property`, `@page`, `@namespace`, `@scope`) | Unsupported at-rule removed |
+| `behavior`, `-moz-binding` and similar script-capable properties | Unsafe property removed |
+| `attr()`, `expression()` and similar unsafe values | Unsafe value removed |
+| `position: fixed` | Fixed position removed |
+| Selectors that reach outside the survey (`#fbjs + .x`, `#fbjs ~ .x`, `:host`) | Unsafe selector removed |
+
+Define `@keyframes` in the same field as the rules that use them.
+
+**Rejected.** Nothing is saved and the previously saved CSS stays in place:
+
+- Syntax errors, reported with line and column.
+- CSS over the size limit, or over one of the complexity limits below.
+- Anything Formbricks cannot process safely.
+
+### Limits
+
+| Limit | Workspace | Survey |
+| --- | --- | --- |
+| Base CSS and dark CSS together | 100,000 bytes | 20,000 bytes |
+| Processed output | 100,000 bytes | 20,000 bytes |
+
+{/* TODO(orchestrator): add the named complexity limits from apps/web/modules/custom-css/processor
+    (nesting depth, selector complexity, rule count) as rows of this table once W1's values are final. */}
+
+Sizes are counted in bytes of UTF-8 text, so most characters count as one byte. Very deep nesting, very long selector chains (such as `* * * *`) and very large numbers of rules are rejected as well.
+
+## Browser And App Support
+
+Custom CSS works on the same browsers as Formbricks surveys:
+
+| Where | Supported | Renders, may look off |
+| --- | --- | --- |
+| Link surveys, website & app surveys | Chrome and Edge 111+, Safari 16.4+, Firefox 128+ | Chrome 99, Safari 15.4, Firefox 97 and later |
+| iOS apps | iOS 16.4+ | iOS 16.0 to 16.3 |
+| Android apps | Android System WebView 111+ | WebView 99 to 110 |
+| React Native and Flutter apps | As iOS and Android above | As iOS and Android above |
+
+Write CSS those browsers understand. Nesting is flattened for you, but newer features such as `light-dark()` are not.
+
+Link surveys and website & app surveys get your CSS as soon as it is saved. **Mobile apps need an SDK version with Custom CSS support.** Older SDK versions show surveys without any Custom CSS, never with only part of it. See [SDK Compatibility](/surveys/website-app-surveys/sdk-compatibility) for the versions.
+
+## API
+
+The [Management API v3](/api-v3-reference/introduction) reads and writes Custom CSS too: `customCss` on surveys, and the workspace's Custom CSS under `/workspaces/{workspaceId}/custom-css`. Both use the same checks, warnings and limits as the editor.
+
+## Troubleshooting
+
+**A rule has no effect**
+
+- Check the warnings under the field. The rule may have been removed.
+- Make sure it targets a hook, a state or a variable from this page, not a generated class name.
+- For headlines and descriptions, set the typography variables instead of `font-size` or `color` directly.
+
+**Dark mode looks wrong**
+
+- Base CSS also applies in dark mode. Add the dark colors to **Dark CSS**.
+- In dark mode, survey base CSS beats workspace dark CSS. Add survey dark CSS.
+
+**Respondents still see the old styling**
+
+- Saved changes can take up to an hour to reach respondents, and an open survey keeps its styling until it is finished.
+- In a mobile app, check that the app uses an SDK version with Custom CSS support.
