@@ -187,6 +187,13 @@ describe("resolveDateRangePresetBounds", () => {
     });
   });
 
+  test("'last 90 days' spans ninety whole calendar days ending tonight", () => {
+    expect(resolveDateRangePresetBounds("last 90 days", UTC, NOW)).toEqual({
+      from: new Date("2026-02-21T00:00:00.000Z"),
+      to: new Date("2026-05-21T23:59:59.999Z"),
+    });
+  });
+
   test("calendar-day presets end at the last millisecond of their final day", () => {
     expect(resolveDateRangePresetBounds("last month", UTC, NOW)).toEqual({
       from: new Date("2026-04-01T00:00:00.000Z"),

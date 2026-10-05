@@ -1,5 +1,6 @@
 import "server-only";
 import type { TChartQuery } from "@formbricks/types/analysis";
+import { VALUE_BAND_DIMENSION_ID } from "@/modules/ee/analysis/lib/schema-definition";
 
 export const TENANT_MEMBER = "FeedbackRecords.tenantId";
 
@@ -331,5 +332,23 @@ export const getCubeQueryAuditSummary = (query: TChartQuery): TQueryAuditSummary
     filterCount: filters.count,
     orderMembers: uniqueSorted(order.members),
     ...(typeof cubeQuery.limit === "number" ? { limit: cubeQuery.limit } : {}),
+  };
+};
+
+/**
+ * Grouping by valueBand also returns a NULL bucket holding every record that has no band — each
+ * text, choice or CES answer in the directory — which would render as a huge unlabelled slice.
+ * Drop it at execution time with a `set` filter on the band. Applied only to the query sent to Cube,
+ * never to the saved chart, so the builder shows the query exactly as the user wrote it.
+ */
+export const applyValueBandNullGuard = (query: TChartQuery): TChartQuery => {
+  if (!query.dimensions?.includes(VALUE_BAND_DIMENSION_ID)) return query;
+  const hasGuard = (query.filters ?? []).some(
+    (filter) => "member" in filter && filter.member === VALUE_BAND_DIMENSION_ID && filter.operator === "set"
+  );
+  if (hasGuard) return query;
+  return {
+    ...query,
+    filters: [...(query.filters ?? []), { member: VALUE_BAND_DIMENSION_ID, operator: "set" }],
   };
 };

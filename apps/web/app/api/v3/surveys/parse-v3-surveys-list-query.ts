@@ -12,6 +12,7 @@ import {
   ZSurveyVisibility,
 } from "@formbricks/types/surveys/types";
 import type { TSurveyVisibilityFilter } from "@/lib/survey/visibility/predicate";
+import { zPostgresText } from "@/lib/utils/postgres-text";
 import {
   type TSurveyListPageCursor,
   type TSurveyListSort,
@@ -65,8 +66,7 @@ const ZV3SurveysListQuery = z.object({
     .optional()
     .transform((value) => value !== "false")
     .default(true),
-  [FILTER_NAME_CONTAINS_QUERY_PARAM]: z
-    .string()
+  [FILTER_NAME_CONTAINS_QUERY_PARAM]: zPostgresText()
     .max(512)
     .optional()
     .transform((s) => (s === undefined || s.trim() === "" ? undefined : s.trim())),

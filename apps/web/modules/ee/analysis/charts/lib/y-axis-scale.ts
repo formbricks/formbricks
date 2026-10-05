@@ -1,4 +1,7 @@
-import { getMeasureAxisMaxCandidates } from "@/modules/ee/analysis/lib/schema-definition";
+import {
+  getMeasureAxisDomain,
+  getMeasureAxisMaxCandidates,
+} from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 
 const TARGET_TICK_COUNT = 5;
@@ -66,21 +69,43 @@ const computePinnedAxisMax = (data: TChartDataRow[], dataKeys: string[]): number
   return pinnedMax > 0 ? pinnedMax : undefined;
 };
 
-// Integer ticks for a pinned [0, max] scale: the smallest 1/2/5×10ⁿ step that divides the
+/**
+ * Axis range for charts whose every series is a bounded score with the same full range (npsScore
+ * -100..100, csatScore 0..100): the chart shows the whole scale, so a move from 40 to 30 reads as a
+ * tenth of it rather than filling the chart height. Returns undefined — falling back to the other
+ * scales — when any series has no fixed range, the ranges differ, or a value lies outside the range.
+ */
+export const computePinnedAxisDomain = (
+  data: TChartDataRow[],
+  dataKeys: string[]
+): [number, number] | undefined => {
+  if (dataKeys.length === 0) return undefined;
+  const domains = dataKeys.map((key) => getMeasureAxisDomain(key));
+  const [first] = domains;
+  if (!first || domains.some((domain) => domain?.[0] !== first[0] || domain?.[1] !== first[1])) {
+    return undefined;
+  }
+  const values = collectNumericValues(data, dataKeys);
+  if (values.some((value) => value < first[0] || value > first[1])) return undefined;
+  return [first[0], first[1]];
+};
+
+// Integer ticks for a pinned [min, max] scale: the smallest 1/2/5×10ⁿ step that divides the
 // scale evenly without exceeding MAX_PINNED_TICK_COUNT ticks, so every gridline lands on a
-// value of the scale and the top tick is exactly the scale max (never overshoots it).
-const computePinnedTicks = (max: number): number[] => {
-  for (let exponent = 0; 10 ** exponent <= max; exponent++) {
+// value of the scale and the end ticks are exactly the scale bounds (never overshoot them).
+export const computePinnedTicks = (min: number, max: number): number[] => {
+  const span = max - min;
+  for (let exponent = 0; 10 ** exponent <= span; exponent++) {
     for (const base of [1, 2, 5]) {
       const step = base * 10 ** exponent;
-      if (max % step === 0 && max / step + 1 <= MAX_PINNED_TICK_COUNT) {
+      if (span % step === 0 && span / step + 1 <= MAX_PINNED_TICK_COUNT) {
         const ticks: number[] = [];
-        for (let tick = 0; tick <= max; tick += step) ticks.push(tick);
+        for (let tick = min; tick <= max; tick += step) ticks.push(tick);
         return ticks;
       }
     }
   }
-  return [0, max];
+  return [min, max];
 };
 
 export const computeYAxis = (
@@ -94,12 +119,18 @@ export const computeYAxis = (
   const dataMin = Math.min(...values);
   const dataMax = Math.max(...values);
 
+  // Bounded scores render against their full range, negative half included (NPS -100..100).
+  const pinnedDomain = computePinnedAxisDomain(data, dataKeys);
+  if (pinnedDomain) {
+    return { domain: pinnedDomain, ticks: computePinnedTicks(pinnedDomain[0], pinnedDomain[1]) };
+  }
+
   // Fixed-scale measures (rating/CSAT/CES/NPS averages) render against the question's full
   // scale — 0 up to the pinned max — regardless of chart type, so bar heights and line
   // positions read as "3.33 out of 5" rather than being stretched to a data-driven bound.
   const pinnedMax = computePinnedAxisMax(data, dataKeys);
   if (pinnedMax !== undefined) {
-    return { domain: [0, pinnedMax], ticks: computePinnedTicks(pinnedMax) };
+    return { domain: [0, pinnedMax], ticks: computePinnedTicks(0, pinnedMax) };
   }
 
   // Baseline: bars and all-positive series sit on 0; only dip below zero when the
