@@ -1642,7 +1642,8 @@ export const applySetupCheckoutUpgrade = async (input: {
   }
   // A replacement for another plan was abandoned unpaid; cancel it (voiding its open invoice) so it
   // can't be paid later beside the plan chosen now.
-  await Promise.all(pendingReplacements.stale.map((stale) => stripeClient?.subscriptions.cancel(stale.id)));
+  const client = stripeClient;
+  await Promise.all(pendingReplacements.stale.map((stale) => client.subscriptions.cancel(stale.id)));
 
   const result = await switchOrganizationToCloudPlan({
     organizationId: input.organizationId,
