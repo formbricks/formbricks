@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { TJsWorkspaceStateWorkspaceSetting } from "@formbricks/types/js";
+import { TJsWorkspaceStateSurvey, TJsWorkspaceStateWorkspaceSetting } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cache } from "@/lib/cache";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -158,7 +158,8 @@ const mockWorkspaceStateData: WorkspaceStateData = {
     appSetupCompleted: true,
     workspaceSettings: mockWorkspace,
   },
-  surveys: mockSurveys,
+  // The fixtures are full surveys; the state carries the respondent shape (compiled custom CSS only).
+  surveys: mockSurveys as unknown as TJsWorkspaceStateSurvey[],
   actionClasses: mockActionClasses,
 };
 
@@ -306,7 +307,7 @@ describe("getWorkspaceState", () => {
 
     const modifiedData = {
       ...mockWorkspaceStateData,
-      surveys: mixedSurveys,
+      surveys: mixedSurveys as unknown as TJsWorkspaceStateSurvey[],
     };
     vi.mocked(getWorkspaceStateData).mockResolvedValue(modifiedData);
 

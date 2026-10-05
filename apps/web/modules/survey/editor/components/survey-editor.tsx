@@ -11,7 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { ActionClass, Language, OrganizationRole, Workspace } from "@formbricks/database/prisma-browser";
+import { ActionClass, Language, OrganizationRole } from "@formbricks/database/prisma-browser";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";
@@ -39,6 +39,7 @@ import { SettingsView } from "@/modules/survey/editor/components/settings-view";
 import { StylingView } from "@/modules/survey/editor/components/styling-view";
 import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-editor-tabs";
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
+import { type TEditorWorkspace } from "@/modules/survey/editor/lib/workspace";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
 import { shouldShowFollowUpsTab } from "@/modules/survey/follow-ups/lib/deprecation";
@@ -63,7 +64,7 @@ const MemoizedPreviewSurvey = memo(PreviewSurvey);
 
 interface SurveyEditorProps {
   survey: TSurvey;
-  workspace: Workspace;
+  workspace: TEditorWorkspace;
   actionClasses: ActionClass[];
   contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
@@ -191,7 +192,7 @@ export const SurveyEditor = ({
     }
   }, [isFollowUpsTabVisible, activeView]);
   const surveyEditorRef = useRef(null);
-  const [localWorkspace, setLocalWorkspace] = useState<Workspace>(workspace);
+  const [localWorkspace, setLocalWorkspace] = useState<TEditorWorkspace>(workspace);
   const [localWorkspaceLanguages, setLocalWorkspaceLanguages] = useState<Language[]>(workspaceLanguages);
 
   const [styling, setStyling] = useState<TSurveyStyling | null>(localSurvey?.styling ?? null);

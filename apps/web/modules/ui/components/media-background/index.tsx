@@ -90,7 +90,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
             // A solid background lands in a server-rendered style attribute: anything that is not a
             // color (legacy rows predate the write-side check) falls back to white (ENG-2950).
             style={{
-              backgroundColor: isSafeThemeColor(background?.bg) ? background?.bg : "#ffffff",
+              backgroundColor: background?.bg && isSafeThemeColor(background.bg) ? background.bg : "#ffffff",
               filter: `${filterStyle}`,
             }}
           />

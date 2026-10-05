@@ -18,7 +18,7 @@ import { type TSurveyCustomCssEditorConfig } from "@/modules/custom-css/componen
 import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
 import { getCustomCssHealth, toDeliveredCustomCss } from "@/modules/custom-css/lib/delivery";
 import { getIsCustomCssRolledOut } from "@/modules/custom-css/lib/rollout";
-import { parseStoredCustomCss } from "@/modules/custom-css/lib/service";
+import { getWorkspaceCustomCssRecord, parseStoredCustomCss } from "@/modules/custom-css/lib/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import {
@@ -158,16 +158,11 @@ export const SurveyEditorPage = async (props: {
     workspaceWithTeamIds.organizationId
   );
 
-  // Workspace CSS rides on the workspace row, which the editor would otherwise ship to the browser
-  // whole: source, compiled output and the previous revision. The editor gets only what it shows.
-  const {
-    customCss: storedWorkspaceCustomCss,
-    customCssPrevious: _customCssPrevious,
-    ...workspaceForEditor
-  } = workspaceWithTeamIds;
+  // The workspace row reaches the editor without its CSS columns (source, compiled output and the
+  // previous revision); the editor gets only what the Custom CSS card shows, read here on the server.
   const customCssEditor = isCustomCssRolledOut
     ? await getSurveyCustomCssEditorConfig({
-        storedWorkspaceCustomCss,
+        storedWorkspaceCustomCss: (await getWorkspaceCustomCssRecord(workspaceWithTeamIds.id)).customCss,
         survey,
         workspaceHeadScripts: workspaceWithTeamIds.customHeadScripts,
         organizationId: workspaceWithTeamIds.organizationId,
@@ -178,7 +173,7 @@ export const SurveyEditorPage = async (props: {
   return (
     <SurveyEditor
       survey={survey}
-      workspace={{ ...workspaceForEditor, customCss: null, customCssPrevious: null }}
+      workspace={workspaceWithTeamIds}
       actionClasses={actionClasses}
       contactAttributeKeys={contactAttributeKeys}
       responseCount={responseCount}

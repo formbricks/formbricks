@@ -6,7 +6,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
-import { Workspace } from "@formbricks/database/prisma-browser";
 import { type TCustomCssStored } from "@formbricks/types/custom-css";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
@@ -15,6 +14,7 @@ import { type TStylingAppearance } from "@/lib/styling/dark-mode";
 import { type TCustomCssValidationState } from "@/modules/custom-css/components/lib/validation";
 import { SurveyCustomCssCard } from "@/modules/custom-css/components/survey-custom-css-card";
 import { type TSurveyCustomCssEditorConfig } from "@/modules/custom-css/components/types";
+import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
 import { LogoSettingsCard } from "@/modules/survey/editor/components/logo-settings-card";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
@@ -37,7 +37,7 @@ import { Switch } from "@/modules/ui/components/switch";
 
 interface StylingViewProps {
   workspaceId: string;
-  workspace: Workspace;
+  workspace: TWorkspaceWithoutCustomCss;
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   colors: string[];
