@@ -3400,6 +3400,8 @@
         "auto_progress_rating_and_nps_description": "Automatisch doorgaan bij blokken met één vraag. Verplichte vragen verbergen Volgende, behalve wanneer \"Anders\" is geselecteerd.",
         "auto_save_disabled": "Automatisch opslaan uitgeschakeld",
         "auto_save_disabled_tooltip": "Je enquête wordt alleen automatisch opgeslagen als het een concept is. Dit zorgt ervoor dat enquêtes die geen concepten meer zijn niet per ongeluk worden gewijzigd.",
+        "auto_save_failed": "Wijzigingen niet opgeslagen",
+        "auto_save_failed_tooltip": "Automatisch opslaan kon de server niet bereiken. Het blijft het proberen, en je kunt ook handmatig opslaan.",
         "auto_save_on": "Automatisch opslaan aan",
         "automatically_close_survey_after_n_seconds_if_no_response": "Sluit de enquête automatisch na <autoCloseInput /> seconden na activering als er geen reactie is.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Sluit de enquête automatisch af na een bepaald aantal reacties.",

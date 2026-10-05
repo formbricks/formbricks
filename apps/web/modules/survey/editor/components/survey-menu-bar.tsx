@@ -114,6 +114,10 @@ export const SurveyMenuBar = ({
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
   const [lastAutoSaved, setLastAutoSaved] = useState<Date | null>(null);
+  // Set when an auto-save tick fails to reach the server, cleared by the next save that does. The
+  // tick retries on its own (it re-sends the whole draft, so a retry cannot apply anything twice);
+  // this only makes sure the indicator stops claiming the work is safe while it is not (ENG-2899).
+  const [hasAutoSaveFailed, setHasAutoSaveFailed] = useState(false);
   const isSuccessfullySavedRef = useRef(false);
   const isAutoSavingRef = useRef(false);
   const isSurveyPublishingRef = useRef(false);
@@ -517,6 +521,7 @@ export const SurveyMenuBar = ({
           surveyRef.current = { ...savedData };
           lastSavedSurveyRef.current = structuredClone(savedData);
           isSuccessfullySavedRef.current = true;
+          setHasAutoSaveFailed(false);
           setLastAutoSaved(new Date());
         }
       } catch (e) {
@@ -528,7 +533,11 @@ export const SurveyMenuBar = ({
           clearInterval(intervalId);
           return;
         }
+        // Anything else means this tick's save did not land -- a load balancer error page, a dropped
+        // connection. Nothing reaches `unhandledrejection` from here, so the indicator is the only
+        // place the author can learn about it.
         console.error(e);
+        setHasAutoSaveFailed(true);
       } finally {
         isAutoSavingRef.current = false;
       }
@@ -554,6 +563,7 @@ export const SurveyMenuBar = ({
         lastSavedSurveyRef.current = structuredClone(updatedSurveyResponse.data);
         toast.success(t("workspace.surveys.edit.changes_saved"));
         isSuccessfullySavedRef.current = true;
+        setHasAutoSaveFailed(false);
         router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
@@ -630,6 +640,7 @@ export const SurveyMenuBar = ({
         toast.success(t("workspace.surveys.edit.changes_saved"));
         // Set flag to prevent beforeunload warning during router.refresh()
         isSuccessfullySavedRef.current = true;
+        setHasAutoSaveFailed(false);
         router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
@@ -888,7 +899,11 @@ export const SurveyMenuBar = ({
       </div>
 
       <div className="mt-3 flex items-center gap-2 sm:mt-0 sm:ml-4">
-        <AutoSaveIndicator isDraft={localSurvey.status === "draft"} lastSaved={lastAutoSaved} />
+        <AutoSaveIndicator
+          isDraft={localSurvey.status === "draft"}
+          lastSaved={lastAutoSaved}
+          hasFailed={hasAutoSaveFailed}
+        />
         {!isStorageConfigured && (
           <div>
             <Alert variant="warning" size="small" role="status">

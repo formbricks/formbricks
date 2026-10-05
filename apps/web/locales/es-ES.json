@@ -3400,6 +3400,8 @@
         "auto_progress_rating_and_nps_description": "Avance automático en bloques de una sola pregunta. Las preguntas obligatorias ocultan el botón Siguiente, excepto cuando se selecciona \"Otro\".",
         "auto_save_disabled": "Guardado automático desactivado",
         "auto_save_disabled_tooltip": "Tu encuesta solo se guarda automáticamente cuando está en borrador. Esto asegura que las encuestas que ya no son borradores no se cambien por accidente.",
+        "auto_save_failed": "Cambios sin guardar",
+        "auto_save_failed_tooltip": "El guardado automático no ha podido conectar con el servidor. Lo sigue intentando y, además, puedes guardar manualmente.",
         "auto_save_on": "Guardado automático activado",
         "automatically_close_survey_after_n_seconds_if_no_response": "Cerrar automáticamente la encuesta después de <autoCloseInput /> segundos tras el disparador si no hay respuesta.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Cerrar automáticamente la encuesta después de un cierto número de respuestas.",

@@ -3400,6 +3400,8 @@
         "auto_progress_rating_and_nps_description": "Avançar automaticamente em blocos de pergunta única. Perguntas obrigatórias ocultam o botão Próximo, exceto quando \"Outro\" é selecionado.",
         "auto_save_disabled": "Salvamento automático desativado",
         "auto_save_disabled_tooltip": "Sua pesquisa só é salva automaticamente quando está em rascunho. Isso garante que pesquisas que não são mais rascunhos não sejam alteradas por acidente.",
+        "auto_save_failed": "Alterações não salvas",
+        "auto_save_failed_tooltip": "O salvamento automático não conseguiu se conectar ao servidor. Ele continua tentando, e você também pode salvar manualmente.",
         "auto_save_on": "Salvamento automático ativado",
         "automatically_close_survey_after_n_seconds_if_no_response": "Fechar a pesquisa automaticamente após <autoCloseInput /> segundos depois do acionamento, caso não haja resposta.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Fechar automaticamente a pesquisa depois de um certo número de respostas.",
