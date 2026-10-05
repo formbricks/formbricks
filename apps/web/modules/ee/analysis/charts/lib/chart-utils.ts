@@ -188,17 +188,21 @@ export const preparePieData = (
 export const prepareMeasureSliceData = (
   rows: TChartDataRow[],
   measureKeys: string[],
-  labelFor: (key: string) => string
-): TChartDataRow[] =>
-  measureKeys.map((key) => ({
+  labelFor: (key: string) => string,
+  /** Column to carry onto every slice, summed like the measures, so the tooltip can print "n = …". */
+  responseBaseKey?: string
+): TChartDataRow[] => {
+  const sumColumn = (key: string): number =>
+    rows.reduce((sum, row) => sum + (isNumericValue(row[key]) ? Number(row[key]) : 0), 0);
+  const responseBase = responseBaseKey ? { [responseBaseKey]: sumColumn(responseBaseKey) } : {};
+  return measureKeys.map((key) => ({
     [PIE_MEASURE_NAME_KEY]: labelFor(key),
     [PIE_MEASURE_ID_KEY]: key,
-    [PIE_MEASURE_VALUE_KEY]: rows.reduce(
-      (sum, row) => sum + (isNumericValue(row[key]) ? Number(row[key]) : 0),
-      0
-    ),
+    [PIE_MEASURE_VALUE_KEY]: sumColumn(key),
     tooltipLabel: labelFor(key),
+    ...responseBase,
   }));
+};
 
 /**
  * Format a 0-1 share as a percentage for display, in the app's active language. One fraction digit

@@ -67,6 +67,21 @@ describe("chart-utils", () => {
       ]);
     });
 
+    test("carries the response base onto every slice, summed across rows like the measures", () => {
+      const rows = [
+        { "m.promoterCount": 30, "m.detractorCount": 2, "m.npsCount": 40 },
+        { "m.promoterCount": 7, "m.detractorCount": 0, "m.npsCount": 8 },
+      ];
+      const result = prepareMeasureSliceData(
+        rows,
+        ["m.promoterCount", "m.detractorCount"],
+        label,
+        "m.npsCount"
+      );
+      expect(result.map((row) => row["m.npsCount"])).toEqual([48, 48]);
+      expect(prepareMeasureSliceData(rows, ["m.promoterCount"], label)[0]).not.toHaveProperty("m.npsCount");
+    });
+
     // The tooltip labels each row from its dataKey, which for these slices is the internal
     // PIE_MEASURE_VALUE_KEY — without tooltipLabel it renders that raw key (ENG-2346).
     test("labels every slice for the tooltip, never leaving the internal value key exposed", () => {

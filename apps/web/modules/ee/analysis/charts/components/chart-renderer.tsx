@@ -305,7 +305,7 @@ const PieChartView = ({
   const pieDataKey = useMeasureSlices ? PIE_MEASURE_VALUE_KEY : dataKey;
   const pieNameKey = useMeasureSlices ? PIE_MEASURE_NAME_KEY : xAxisKey;
   const pieSource = useMeasureSlices
-    ? prepareMeasureSliceData(sortedData, dataKeys, (key) => formatCubeColumnHeader(key, t))
+    ? prepareMeasureSliceData(sortedData, dataKeys, (key) => formatCubeColumnHeader(key, t), responseBaseKey)
     : sortedData;
   const pieResult = preparePieData(pieSource, pieDataKey, pieNameKey);
   if (!pieResult) {
