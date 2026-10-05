@@ -1,3 +1,4 @@
+import type { Prisma } from "@formbricks/database/prisma";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -16,6 +17,7 @@ interface ActivitySectionProps {
   contactId: string;
   environmentTags: TTag[];
   isReadOnly: boolean;
+  visibleSurveyWhere: Prisma.SurveyWhereInput;
 }
 
 export const ActivitySection = async ({
@@ -23,10 +25,11 @@ export const ActivitySection = async ({
   contactId,
   environmentTags,
   isReadOnly,
+  visibleSurveyWhere,
 }: Readonly<ActivitySectionProps>) => {
   const [responses, displays, workspace] = await Promise.all([
-    getResponsesByContactId(contactId, workspaceId),
-    getDisplaysByContactId(contactId, workspaceId),
+    getResponsesByContactId(contactId, workspaceId, visibleSurveyWhere),
+    getDisplaysByContactId(contactId, workspaceId, visibleSurveyWhere),
     getWorkspace(workspaceId),
   ]);
 
@@ -38,7 +41,8 @@ export const ActivitySection = async ({
     ...new Set([...(responses?.map((r) => r.surveyId) || []), ...displays.map((d) => d.surveyId)]),
   ];
 
-  const surveys: TSurvey[] = allSurveyIds.length === 0 ? [] : ((await getSurveys(workspace.id)) ?? []);
+  const surveys: TSurvey[] =
+    allSurveyIds.length === 0 ? [] : ((await getSurveys(workspace.id, visibleSurveyWhere)) ?? []);
 
   const session = await getSession();
   const t = await getTranslate();

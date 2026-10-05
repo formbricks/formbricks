@@ -16,6 +16,27 @@ const isHttpUrl = (value: string): boolean => {
   }
 };
 
+const isLoopbackHost = (hostname: string): boolean =>
+  hostname === "localhost" ||
+  hostname.endsWith(".localhost") ||
+  hostname === "127.0.0.1" ||
+  hostname === "[::1]" ||
+  hostname === "::1";
+
+// Mirrors isSecureCredentialUrl in packages/ai: the client secret is sent to this URL, so plain http is
+// only acceptable on loopback. Not imported from @formbricks/ai on purpose — next.config.mjs and the
+// pre-build scripts load this module, and that package drags the whole AI SDK graph in with it. The
+// two copies are held together by `env.test.ts` ("agrees with @formbricks/ai"), which checks startup
+// validation against the package's predicate over the same table of URLs.
+const isSecureCredentialUrl = (value: string): boolean => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || (url.protocol === "http:" && isLoopbackHost(url.hostname));
+  } catch {
+    return false;
+  }
+};
+
 const ZOpenAICompatibleBaseUrl = z.url().refine(isHttpUrl, {
   message: "AI_OPENAI_COMPATIBLE_BASE_URL must be a valid http(s) URL",
 });
@@ -52,6 +73,13 @@ const ZAIConfigurationEnv = z.object({
   AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS: z.string().optional(),
   AI_OPENAI_COMPATIBLE_HEADERS_JSON: z.string().optional(),
   AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_AUTH_MODE: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_ID: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_OAUTH_SCOPE: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON: z.string().optional(),
 });
 
 type TAIConfigurationEnv = z.infer<typeof ZAIConfigurationEnv>;
@@ -62,7 +90,8 @@ const isJsonObject = (value: unknown): value is Record<string, unknown> =>
 type TEnvironmentIssuePath =
   | keyof TAIConfigurationEnv
   | keyof TAuthzedConfigurationEnv
-  | keyof TAuthConfigurationEnv;
+  | keyof TAuthConfigurationEnv
+  | keyof TSesConfigurationEnv;
 
 const addEnvIssue = (ctx: z.RefinementCtx, path: TEnvironmentIssuePath, message: string): void => {
   ctx.addIssue({
@@ -165,6 +194,95 @@ const validateStringRecordEnv = (
   }
 };
 
+const OPENAI_COMPATIBLE_AUTH_MODES = ["api-key", "oauth2-client-credentials"] as const;
+const OPENAI_COMPATIBLE_OAUTH_AUTH_STYLES = ["basic", "post"] as const;
+const OAUTH_MODE_REQUIREMENT = "when AI_OPENAI_COMPATIBLE_AUTH_MODE=oauth2-client-credentials";
+
+const isOneOf = (allowed: readonly string[], value: string | undefined): boolean =>
+  !value?.trim() || allowed.includes(value.trim());
+
+// Mirrors the openai-compatible adapter's validate in packages/ai. Messages name the variable and
+// never echo its value: the client secret sits next to these in the same environment.
+const validateOpenAICompatibleAuthConfiguration = (
+  values: TAIConfigurationEnv,
+  ctx: z.RefinementCtx
+): void => {
+  const authMode = values.AI_OPENAI_COMPATIBLE_AUTH_MODE?.trim();
+
+  if (!isOneOf(OPENAI_COMPATIBLE_AUTH_MODES, authMode)) {
+    addEnvIssue(
+      ctx,
+      "AI_OPENAI_COMPATIBLE_AUTH_MODE",
+      `AI_OPENAI_COMPATIBLE_AUTH_MODE must be one of: ${OPENAI_COMPATIBLE_AUTH_MODES.join(", ")}`
+    );
+    return;
+  }
+
+  // Stray OAUTH_* variables in api-key mode are ignored, exactly as the adapter ignores them.
+  if (authMode !== "oauth2-client-credentials") {
+    return;
+  }
+
+  // In this mode every model request carries a bearer token, so the base URL is held to the same
+  // rule as the token URL. (In api-key mode plain http stays allowed for a keyless internal endpoint.)
+  const baseUrl = values.AI_OPENAI_COMPATIBLE_BASE_URL?.trim();
+
+  if (baseUrl && !isSecureCredentialUrl(baseUrl)) {
+    addEnvIssue(
+      ctx,
+      "AI_OPENAI_COMPATIBLE_BASE_URL",
+      `AI_OPENAI_COMPATIBLE_BASE_URL must be an https URL ${OAUTH_MODE_REQUIREMENT} (plain http is only allowed on localhost)`
+    );
+  }
+
+  const tokenUrl = values.AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL?.trim();
+
+  if (!tokenUrl) {
+    addEnvIssue(
+      ctx,
+      "AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL",
+      `AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL is required ${OAUTH_MODE_REQUIREMENT}`
+    );
+  } else if (!isSecureCredentialUrl(tokenUrl)) {
+    addEnvIssue(
+      ctx,
+      "AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL",
+      "AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL must be an https URL (plain http is only allowed on localhost)"
+    );
+  }
+
+  for (const path of [
+    "AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_ID",
+    "AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET",
+  ] as const) {
+    if (!values[path]?.trim()) {
+      addEnvIssue(ctx, path, `${path} is required ${OAUTH_MODE_REQUIREMENT}`);
+    }
+  }
+
+  if (!isOneOf(OPENAI_COMPATIBLE_OAUTH_AUTH_STYLES, values.AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE)) {
+    addEnvIssue(
+      ctx,
+      "AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE",
+      `AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE must be one of: ${OPENAI_COMPATIBLE_OAUTH_AUTH_STYLES.join(", ")}`
+    );
+  }
+
+  validateStringRecordEnv(
+    ctx,
+    "AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON",
+    values.AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON
+  );
+
+  if (values.AI_OPENAI_COMPATIBLE_API_KEY?.trim()) {
+    addEnvIssue(
+      ctx,
+      "AI_OPENAI_COMPATIBLE_API_KEY",
+      "AI_OPENAI_COMPATIBLE_API_KEY must not be set when AI_OPENAI_COMPATIBLE_AUTH_MODE=oauth2-client-credentials"
+    );
+  }
+};
+
 const validateOpenAICompatibleAIConfiguration = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
   if (!values.AI_OPENAI_COMPATIBLE_BASE_URL) {
     addEnvIssue(
@@ -180,6 +298,7 @@ const validateOpenAICompatibleAIConfiguration = (values: TAIConfigurationEnv, ct
     "AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON",
     values.AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON
   );
+  validateOpenAICompatibleAuthConfiguration(values, ctx);
 };
 
 const validateActiveAIProviderConfiguration = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
@@ -367,6 +486,40 @@ const validateAuthConfiguration = (values: TAuthConfigurationEnv, ctx: z.Refinem
   }
 };
 
+// SES-specific headers are opt-in; validate the pair before any email is sent.
+const ZSesConfigurationEnv = z.object({
+  SES_CONFIGURATION_SET: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[a-zA-Z0-9_-]+$/)
+    .optional(),
+  SES_EMAIL_ENVIRONMENT: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[a-zA-Z0-9_-]+$/)
+    .optional(),
+});
+type TSesConfigurationEnv = z.infer<typeof ZSesConfigurationEnv>;
+
+const validateSesConfiguration = (values: TSesConfigurationEnv, ctx: z.RefinementCtx): void => {
+  if (values.SES_CONFIGURATION_SET && !values.SES_EMAIL_ENVIRONMENT) {
+    addEnvIssue(
+      ctx,
+      "SES_EMAIL_ENVIRONMENT",
+      "SES_EMAIL_ENVIRONMENT is required when SES_CONFIGURATION_SET is set"
+    );
+  }
+  if (values.SES_EMAIL_ENVIRONMENT && !values.SES_CONFIGURATION_SET) {
+    addEnvIssue(
+      ctx,
+      "SES_CONFIGURATION_SET",
+      "SES_CONFIGURATION_SET is required when SES_EMAIL_ENVIRONMENT is set"
+    );
+  }
+};
+
 const parsedEnv = createEnv({
   onValidationError: throwEnvValidationError,
   /*
@@ -454,6 +607,13 @@ const parsedEnv = createEnv({
     AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS: z.string().optional(),
     AI_OPENAI_COMPATIBLE_HEADERS_JSON: z.string().optional(),
     AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON: z.string().optional(),
+    AI_OPENAI_COMPATIBLE_AUTH_MODE: z.string().optional(),
+    AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: z.string().optional(),
+    AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_ID: z.string().optional(),
+    AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET: z.string().optional(),
+    AI_OPENAI_COMPATIBLE_OAUTH_SCOPE: z.string().optional(),
+    AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE: z.string().optional(),
+    AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON: z.string().optional(),
     CUBEJS_API_SECRET: z.string().trim().min(1),
     CUBEJS_API_URL: z.url(),
     CUBEJS_JWT_AUDIENCE: ZOptionalNonEmptyString,
@@ -541,6 +701,7 @@ const parsedEnv = createEnv({
     SENTRY_DSN: z.string().optional(),
     SLACK_CLIENT_ID: z.string().optional(),
     SLACK_CLIENT_SECRET: z.string().optional(),
+    ...ZSesConfigurationEnv.shape,
     SMTP_HOST: z.string().min(1).optional(),
     SMTP_PORT: z.string().min(1).optional(),
     SMTP_SECURE_ENABLED: z.enum(["1", "0"]).optional(),
@@ -592,6 +753,11 @@ const parsedEnv = createEnv({
     SURVEY_SCHEDULING_TIME_ZONE: ZSurveySchedulingTimeZone.optional().default("Europe/Berlin"),
     SURVEY_SCHEDULING_LOCAL_HOUR: ZSurveySchedulingLocalHour.optional().default(0),
     SURVEY_SCHEDULING_LOCAL_MINUTE: ZSurveySchedulingLocalMinute.optional().default(0),
+    // ENG-3282 emergency switch: "1" makes the survey-visibility readiness marker read as unset, so the
+    // evaluator collapses to workspace permissions everywhere without touching the database.
+    SURVEY_VISIBILITY_FORCE_DISABLED: z.enum(["1", "0"]).optional(),
+    // ENG-3282: most surveys one workspace may hold (archived included). Unset means 10,000.
+    SURVEY_WORKSPACE_LIMIT: z.coerce.number().int().positive().optional(),
   },
   client: {},
 
@@ -667,6 +833,13 @@ const parsedEnv = createEnv({
       process.env.AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS,
     AI_OPENAI_COMPATIBLE_HEADERS_JSON: process.env.AI_OPENAI_COMPATIBLE_HEADERS_JSON,
     AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON: process.env.AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON,
+    AI_OPENAI_COMPATIBLE_AUTH_MODE: process.env.AI_OPENAI_COMPATIBLE_AUTH_MODE,
+    AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: process.env.AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL,
+    AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_ID: process.env.AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_ID,
+    AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET: process.env.AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET,
+    AI_OPENAI_COMPATIBLE_OAUTH_SCOPE: process.env.AI_OPENAI_COMPATIBLE_OAUTH_SCOPE,
+    AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE: process.env.AI_OPENAI_COMPATIBLE_OAUTH_AUTH_STYLE,
+    AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON: process.env.AI_OPENAI_COMPATIBLE_OAUTH_EXTRA_PARAMS_JSON,
     CUBEJS_API_SECRET: process.env.CUBEJS_API_SECRET,
     CUBEJS_API_URL: process.env.CUBEJS_API_URL,
     CUBEJS_JWT_AUDIENCE: process.env.CUBEJS_JWT_AUDIENCE,
@@ -694,6 +867,8 @@ const parsedEnv = createEnv({
     SURVEY_SCHEDULING_LOCAL_HOUR: process.env.SURVEY_SCHEDULING_LOCAL_HOUR,
     SURVEY_SCHEDULING_LOCAL_MINUTE: process.env.SURVEY_SCHEDULING_LOCAL_MINUTE,
     SURVEY_SCHEDULING_TIME_ZONE: process.env.SURVEY_SCHEDULING_TIME_ZONE,
+    SURVEY_VISIBILITY_FORCE_DISABLED: process.env.SURVEY_VISIBILITY_FORCE_DISABLED,
+    SURVEY_WORKSPACE_LIMIT: process.env.SURVEY_WORKSPACE_LIMIT,
     SENTRY_DSN: process.env.SENTRY_DSN,
     NOTION_OAUTH_CLIENT_ID: process.env.NOTION_OAUTH_CLIENT_ID,
     NOTION_OAUTH_CLIENT_SECRET: process.env.NOTION_OAUTH_CLIENT_SECRET,
@@ -719,6 +894,8 @@ const parsedEnv = createEnv({
     SAML_DATABASE_URL: process.env.SAML_DATABASE_URL,
     SLACK_CLIENT_ID: process.env.SLACK_CLIENT_ID,
     SLACK_CLIENT_SECRET: process.env.SLACK_CLIENT_SECRET,
+    SES_CONFIGURATION_SET: process.env.SES_CONFIGURATION_SET,
+    SES_EMAIL_ENVIRONMENT: process.env.SES_EMAIL_ENVIRONMENT,
     SMTP_HOST: process.env.SMTP_HOST,
     SMTP_PASSWORD: process.env.SMTP_PASSWORD,
     SMTP_PORT: process.env.SMTP_PORT,
@@ -749,8 +926,10 @@ const parsedEnv = createEnv({
 });
 
 const ZPostParseEnv = ZAIConfigurationEnv.extend(ZAuthzedConfigurationEnv.shape)
+  .extend(ZSesConfigurationEnv.shape)
   .superRefine(validateActiveAIProviderConfiguration)
-  .superRefine(validateAuthzedConfiguration);
+  .superRefine(validateAuthzedConfiguration)
+  .superRefine(validateSesConfiguration);
 const postParseResult = ZPostParseEnv.safeParse(parsedEnv);
 
 if (!postParseResult.success) {
@@ -775,7 +954,15 @@ export const assertAuthzedRuntimeConfiguration = (): void => {
     // Report missing credentials even when enablement was omitted.
     validateAuthzedConfiguration({ ...values, AUTHZED_ENABLED: "true" }, ctx);
     if (values.AUTHZED_CONSISTENCY !== "fully_consistent") {
-      addEnvIssue(ctx, "AUTHZED_CONSISTENCY", "Formbricks v6 requires AUTHZED_CONSISTENCY=fully_consistent");
+      // Name the value found: a pre-v6 .env carries `minimize_latency`, and the fix is a one-line edit.
+      // Safe to echo — the schema has already narrowed it to an enum member or undefined.
+      const current =
+        values.AUTHZED_CONSISTENCY === undefined ? "is not set" : `is "${values.AUTHZED_CONSISTENCY}"`;
+      addEnvIssue(
+        ctx,
+        "AUTHZED_CONSISTENCY",
+        `Formbricks v6 requires AUTHZED_CONSISTENCY=fully_consistent, but it ${current}. Set AUTHZED_CONSISTENCY=fully_consistent in your .env or deployment environment and restart. See https://formbricks.com/docs/self-hosting/configuration/authzed-operations`
+      );
     }
   }).safeParse(env);
 

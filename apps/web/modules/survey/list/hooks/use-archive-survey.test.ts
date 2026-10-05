@@ -39,6 +39,9 @@ function createQueryData(): { pages: TSurveyListPage[]; pageParams: (string | nu
             completedResponseCount: 0,
             creator: { name: "Alice" },
             singleUse: null,
+            visibility: "workspace",
+            owner: { name: "Test User" },
+            access: { via: "workspace", canManageVisibility: false },
           },
         ],
         meta: {
@@ -53,7 +56,13 @@ function createQueryData(): { pages: TSurveyListPage[]; pageParams: (string | nu
   };
 }
 
-const listFilters: TSurveyOverviewFilters = { name: "", status: [], type: [], sortBy: "relevance" };
+const listFilters: TSurveyOverviewFilters = {
+  name: "",
+  status: [],
+  type: [],
+  visibility: [],
+  sortBy: "relevance",
+};
 
 const queryKey = surveyKeys.list({
   workspaceId: "env_1",
@@ -173,6 +182,9 @@ describe("useArchiveSurvey with the list mounted", () => {
             completedResponseCount: 0,
             creator: { name: "Alice" },
             singleUse: null,
+            visibility: "workspace",
+            owner: { name: "Test User" },
+            access: { via: "workspace", canManageVisibility: false },
           },
         ],
         meta: { limit: 20, nextCursor: null, totalCount: 1, workspaceSurveyCount: 4 },

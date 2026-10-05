@@ -1,4 +1,6 @@
+import type { Instrumentation } from "next";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 
 const mockRegisterJobsWorker = vi.fn();
 const mockRegisterRecurringJobs = vi.fn();
@@ -12,8 +14,19 @@ vi.mock("@/lib/env", () => ({
   warnOnAuthSecretRisks: mockWarnOnAuthSecretRisks,
 }));
 
+const mockCaptureRequestError = vi.fn();
+const mockGetClient = vi.fn();
+const mockAddEventProcessor = vi.fn();
+const mockGetProxySessionFromCookieHeader = vi.fn();
+
 vi.mock("@sentry/nextjs", () => ({
-  captureRequestError: vi.fn(),
+  captureRequestError: mockCaptureRequestError,
+  getClient: mockGetClient,
+  getGlobalScope: () => ({ addEventProcessor: mockAddEventProcessor }),
+}));
+
+vi.mock("@/modules/auth/lib/proxy-session", () => ({
+  getProxySessionFromCookieHeader: mockGetProxySessionFromCookieHeader,
 }));
 
 vi.mock("@/lib/constants", () => ({
@@ -128,5 +141,100 @@ describe("instrumentation register", () => {
     expect(mockWarnOnAuthSecretRisks).not.toHaveBeenCalled();
     // Same guard, so assert the whole block rather than the two calls this change happened to add.
     expect(mockAssertAuthzedRuntimeConfiguration).not.toHaveBeenCalled();
+  });
+});
+
+describe("instrumentation onRequestError", () => {
+  type TArgs = Parameters<Instrumentation.onRequestError>;
+  const EVENT = { event_id: "e1" };
+  const context: TArgs[2] = {
+    routerKind: "App Router",
+    routePath: "/workspaces/[workspaceId]",
+    routeType: "render",
+    revalidateReason: undefined,
+  };
+  const buildArgs = (error: unknown, path: string, cookie?: string): TArgs => [
+    error,
+    { path, method: "GET", headers: cookie ? { cookie } : {} },
+    context,
+  ];
+
+  const loadInstrumentation = async () => {
+    const { onRequestError } = await import("./instrumentation");
+    const { applyRequestErrorUser } = await import("@/lib/sentry/request-error-user");
+    return {
+      onRequestError,
+      userFor: (error: unknown) => applyRequestErrorUser(EVENT, { originalException: error }).user,
+    };
+  };
+
+  beforeEach(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
+    vi.stubEnv("NEXT_RUNTIME", "nodejs");
+    mockGetClient.mockReturnValue({});
+  });
+
+  afterEach(() => vi.unstubAllEnvs());
+
+  test("captures an authenticated request's error with only the user id attached", async () => {
+    mockGetProxySessionFromCookieHeader.mockResolvedValue({ userId: "user-1" });
+    const { onRequestError, userFor } = await loadInstrumentation();
+    const args = buildArgs(new Error("boom"), "/workspaces/abc", "formbricks.session_token=signed");
+
+    await onRequestError(...args);
+
+    expect(mockGetProxySessionFromCookieHeader).toHaveBeenCalledWith("formbricks.session_token=signed");
+    expect(mockCaptureRequestError).toHaveBeenCalledWith(...args);
+    expect(userFor(args[0])).toEqual({ id: "user-1" });
+  });
+
+  test("captures an anonymous request's error exactly as before, without a user", async () => {
+    mockGetProxySessionFromCookieHeader.mockResolvedValue(null);
+    const { onRequestError, userFor } = await loadInstrumentation();
+    const args = buildArgs(new Error("boom"), "/workspaces/abc", "formbricks.session_token=expired");
+
+    await onRequestError(...args);
+
+    expect(mockCaptureRequestError).toHaveBeenCalledWith(...args);
+    expect(userFor(args[0])).toBeUndefined();
+  });
+
+  test("still captures the error when the session lookup throws", async () => {
+    mockGetProxySessionFromCookieHeader.mockRejectedValue(new Error("db down"));
+    const { onRequestError, userFor } = await loadInstrumentation();
+    const args = buildArgs(new Error("boom"), "/workspaces/abc", "formbricks.session_token=signed");
+
+    await expect(onRequestError(...args)).resolves.toBeUndefined();
+
+    expect(mockCaptureRequestError).toHaveBeenCalledWith(...args);
+    expect(userFor(args[0])).toBeUndefined();
+  });
+
+  test.each([
+    ["a public survey route", "nodejs", {}, "/s/survey-id?lang=de"],
+    ["the edge runtime", "edge", {}, "/workspaces/abc"],
+    ["Sentry being off", "nodejs", undefined, "/workspaces/abc"],
+  ])("does no session lookup for %s", async (_, runtime, client, path) => {
+    vi.stubEnv("NEXT_RUNTIME", runtime);
+    mockGetClient.mockReturnValue(client);
+    const { onRequestError } = await loadInstrumentation();
+    const args = buildArgs(new Error("boom"), path, "formbricks.session_token=signed");
+
+    await onRequestError(...args);
+
+    expect(mockGetProxySessionFromCookieHeader).not.toHaveBeenCalled();
+    expect(mockCaptureRequestError).toHaveBeenCalledWith(...args);
+  });
+
+  test("still skips expected business-logic errors without a lookup", async () => {
+    const { onRequestError } = await loadInstrumentation();
+
+    await onRequestError(
+      ...buildArgs(new ResourceNotFoundError("survey", "1"), "/workspaces/abc", "formbricks.session_token=x")
+    );
+
+    expect(mockGetProxySessionFromCookieHeader).not.toHaveBeenCalled();
+    expect(mockCaptureRequestError).not.toHaveBeenCalled();
   });
 });

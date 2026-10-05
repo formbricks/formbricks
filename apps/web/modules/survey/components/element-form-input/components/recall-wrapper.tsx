@@ -18,6 +18,7 @@ import {
 } from "@/lib/utils/recall";
 import { FallbackInput } from "@/modules/survey/components/element-form-input/components/fallback-input";
 import { RecallItemSelect } from "@/modules/survey/components/element-form-input/components/recall-item-select";
+import { computeRecallItemRemoval } from "@/modules/survey/components/element-form-input/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Button } from "@/modules/ui/components/button";
 
@@ -158,28 +159,27 @@ export const RecallWrapper = ({
     onAddFallback(newVal);
   }, [fallbacks, recallItems, internalValue, onChange, onAddFallback]);
 
+  /**
+   * Drops the recall items whose `@Label` is no longer in the rendered text.
+   *
+   * ENG-2931: this runs from an effect keyed on the very state it writes, so `null` — nothing
+   * removed — has to leave that state untouched. The previous version wrote a fresh
+   * `{...fallbacks}` object and a fresh items array on *every* item it did not find, which
+   * re-triggered that effect with new identities and re-entered it without bound until React
+   * aborted the editor with "Maximum update depth exceeded". The removal itself lives in
+   * `computeRecallItemRemoval`, where it is unit-tested; here it is written once.
+   */
   const filterRecallItems = useCallback(
     (remainingText: string) => {
-      let includedRecallItems: TSurveyRecallItem[] = [];
+      const removal = computeRecallItemRemoval(recallItems, remainingText, internalValue, fallbacks);
+      if (!removal) return;
 
-      recallItems.forEach((recallItem) => {
-        if (remainingText.includes(`@${recallItem.label}`)) {
-          includedRecallItems.push(recallItem);
-        } else {
-          const recallItemToRemove = recallItem.label.slice(0, -1);
-          const newInternalValue = internalValue.replace(`@${recallItemToRemove}`, "");
-
-          setInternalValue(newInternalValue);
-          onChange(newInternalValue, recallItems, fallbacks);
-
-          let updatedFallback = { ...fallbacks };
-          delete updatedFallback[recallItem.id];
-          setFallbacks(updatedFallback);
-          setRecallItems(includedRecallItems);
-        }
-      });
+      setInternalValue(removal.value);
+      setRecallItems(removal.recallItems);
+      setFallbacks(removal.fallbacks);
+      onChange(removal.value, removal.recallItems, removal.fallbacks);
     },
-    [fallbacks, internalValue, onChange, recallItems, setInternalValue]
+    [fallbacks, internalValue, onChange, recallItems]
   );
 
   useEffect(() => {

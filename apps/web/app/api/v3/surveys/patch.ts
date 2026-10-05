@@ -27,7 +27,7 @@ import {
 } from "@/modules/survey/scheduling/lib/survey-scheduling";
 import { v3DistributionToScalars } from "./distribution";
 import { type TV3SurveyLanguageRequest, ensureV3WorkspaceLanguages } from "./languages";
-import { prepareV3SurveyPatchInput } from "./prepare";
+import { type TV3SurveyReportedVisibility, prepareV3SurveyPatchInput } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3SurveyDocument } from "./schemas";
 import {
@@ -37,6 +37,7 @@ import {
 } from "./targeting";
 import { resolveV3SurveyTriggers } from "./triggers";
 import { getV3SurveyMediaInvalidParams } from "./validation";
+import { NO_VISIBLE_SURVEYS } from "./visibility-context";
 import { assertV3SurveyTargetingWritePermission, assertV3SurveyWritePermissions } from "./write-permissions";
 
 function buildSurveyLanguageUpdate(
@@ -138,8 +139,9 @@ async function buildV3AppSurveyPatchWrites(params: {
   currentSurvey: TSurvey;
   document: TV3SurveyDocument;
   data: Prisma.SurveyUpdateInput;
+  visibleSurveyWhere: Prisma.SurveyWhereInput;
 }): Promise<TV3SegmentFilterWrite | null> {
-  const { currentSurvey, document, data } = params;
+  const { currentSurvey, document, data, visibleSurveyWhere } = params;
   const distribution = document.distribution;
   if (!distribution) {
     return null;
@@ -170,7 +172,7 @@ async function buildV3AppSurveyPatchWrites(params: {
   }
 
   // Validate attribute-key references on the changed filters before the write (mirrors trigger ids).
-  await assertV3SurveyTargetingFilterReferences(currentSurvey.workspaceId, nextFilters);
+  await assertV3SurveyTargetingFilterReferences(currentSurvey.workspaceId, nextFilters, visibleSurveyWhere);
 
   return { segmentId, filters: nextFilters };
 }
@@ -266,8 +268,17 @@ export async function executeV3SurveyPatch(params: {
   languageRequests: TV3SurveyLanguageRequest[];
   requestId?: string;
   precondition?: TV3SurveyWritePrecondition;
+  /** The surveys the caller may reference in targeting (ENG-3282). Omitted, nothing is referenceable. */
+  visibleSurveyWhere?: Prisma.SurveyWhereInput;
 }): Promise<TSurvey> {
-  const { currentSurvey, document, languageRequests, requestId, precondition } = params;
+  const {
+    currentSurvey,
+    document,
+    languageRequests,
+    requestId,
+    precondition,
+    visibleSurveyWhere = NO_VISIBLE_SURVEYS,
+  } = params;
   const mediaInvalidParams = getV3SurveyMediaInvalidParams(document.blocks);
   if (mediaInvalidParams.length > 0) {
     throw new V3SurveyReferenceValidationError(mediaInvalidParams);
@@ -326,7 +337,7 @@ export async function executeV3SurveyPatch(params: {
   // targeting write to perform, if any.
   const segmentFilterWrite =
     currentSurvey.type === "app"
-      ? await buildV3AppSurveyPatchWrites({ currentSurvey, document, data })
+      ? await buildV3AppSurveyPatchWrites({ currentSurvey, document, data, visibleSurveyWhere })
       : null;
 
   const runSurveyUpdate = (client: Prisma.TransactionClient) =>
@@ -427,9 +438,11 @@ export async function patchV3Survey(
   input: unknown,
   requestId?: string,
   organizationId?: string,
-  precondition?: TV3SurveyWritePrecondition
+  precondition?: TV3SurveyWritePrecondition,
+  reportedVisibility?: TV3SurveyReportedVisibility,
+  visibleSurveyWhere: Prisma.SurveyWhereInput = NO_VISIBLE_SURVEYS
 ): Promise<TSurvey> {
-  const preparation = prepareV3SurveyPatchInput(currentSurvey, input);
+  const preparation = prepareV3SurveyPatchInput(currentSurvey, input, { reportedVisibility });
   if (!preparation.ok) {
     throw preparation.origin === "storedSurvey"
       ? new V3SurveyStoredDocumentError(preparation.validation.invalidParams)
@@ -465,5 +478,6 @@ export async function patchV3Survey(
     languageRequests: preparation.languageRequests,
     requestId,
     precondition: effectivePrecondition,
+    visibleSurveyWhere,
   });
 }

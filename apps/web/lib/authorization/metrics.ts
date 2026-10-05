@@ -90,3 +90,24 @@ export const recordAuthorizationChecksPerRequest = (
 ): void => {
   checksPerRequest.record(checksIssued, { surface });
 };
+
+const surveyListPredicateMismatches = meter.createCounter(
+  "formbricks_authzed_survey_list_predicate_mismatches_total",
+  {
+    description:
+      "Survey list rows the SQL visibility predicate admitted but the graph denied (ENG-3282); should stay at zero",
+  }
+);
+
+/**
+ * ENG-3282: rows a survey list dropped because `CheckBulkPermissions` denied what the SQL predicate
+ * let through. Any non-zero value means PostgreSQL and SpiceDB disagree about who may read a survey —
+ * a projection bug, not traffic — so it is alerted on, not graphed.
+ */
+export const recordSurveyListPredicateMismatch = (count: number): void => {
+  try {
+    if (count > 0) surveyListPredicateMismatches.add(count);
+  } catch {
+    // Telemetry must never alter the list a caller receives.
+  }
+};

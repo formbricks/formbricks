@@ -128,7 +128,8 @@
                   "surveys/general-features/quota-management",
                   "surveys/general-features/spam-protection",
                   "surveys/general-features/tags",
-                  "surveys/general-features/validation-rules"
+                  "surveys/general-features/validation-rules",
+                  "surveys/general-features/visibility"
                 ]
               },
               {

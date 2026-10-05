@@ -76,11 +76,19 @@ export const waitForSurveyEditor = async (
     await expect(page).toHaveURL(
       new RegExp(String.raw`/workspaces/[^/]+/surveys/${surveyId}/edit\?.*mode=cx`)
     );
-    await expect(page.getByRole("button", { name: "Save & Close", exact: true })).toBeVisible();
-    return;
   }
 
-  await expect(page.getByRole("button", { name: "Settings", exact: true })).toBeVisible();
+  // A just-created survey the editor refuses renders the 404 page, which would otherwise surface as
+  // a bare "Settings not found" timeout. Name it, so the failure points at authorization, not timing.
+  const editorReady = page.getByRole("button", {
+    name: options.mode === "cx" ? "Save & Close" : "Settings",
+    exact: true,
+  });
+  const notFound = page.getByRole("heading", { name: "Page not found" });
+  await expect(editorReady.or(notFound).first()).toBeVisible();
+  if (await notFound.isVisible()) {
+    throw new Error(`The editor answered 404 for survey ${surveyId}, which was just created by this user`);
+  }
 };
 
 export const createSurveyFromScratch = async (page: Page, options: { mode?: "cx" } = {}): Promise<string> => {
@@ -473,11 +481,16 @@ export const fillRichTextEditor = async (page: Page, labelText: string, content:
   // `fill` on the contenteditable, not `pressSequentially`. One `insertText` replaces the whole
   // value, where per-key typing raced Lexical's own re-render and truncated the text ("Picture
   // Select Question" landing as "Picture S") unless every keystroke was paced by `slowMo`.
-  await editor.fill(content);
-  // Confirms the editor settled before the caller's next action — this assertion, not a delay, is
-  // what keeps the following interactions off a mid-render tree.
-  await expect(editor).toHaveText(content);
-  await flushRender(page);
+  //
+  // Repeated until the value survives a render: Lexical loads the element's stored text after the
+  // editor mounts, and a fill that lands before that load is overwritten by it — the editor then
+  // still reads "What would you like to know?". The assertion after the settle, not a delay, is what
+  // keeps the caller's next action off a mid-render tree.
+  await expect(async () => {
+    await editor.fill(content);
+    await flushRender(page);
+    await expect(editor).toHaveText(content, { timeout: 1000 });
+  }).toPass({ timeout: 20_000 });
 };
 
 /**
@@ -678,7 +691,54 @@ export const fillChoiceOptions = async (page: Page, values: string[]) => {
   await fillLabelsUntilCommitted(page, values, (index) => page.getByPlaceholder(`Option ${index + 1}`));
 };
 
-const publishButtonOf = (page: Page): Locator => page.getByRole("button", { name: "Publish", exact: true });
+// Scoped to react-hot-toast's own error class (set in modules/ui/components/toaster-client) rather
+// than `role="status"`, which the shared `Alert` also uses — several of those are on screen in the
+// editor and would be reported as publish failures.
+const errorToastsOf = (page: Page): Locator => page.locator(".formbricks__toast__error");
+
+// The editor button that activates a survey: "Activate", "Schedule survey" once a publish date is set,
+// or the CX editor's "Save & Close".
+const ACTIVATION_TRIGGERS = {
+  activate: "Activate",
+  schedule: "Schedule survey",
+  saveAndClose: "Save & Close",
+} as const;
+
+/**
+ * Activates (or schedules) the survey open in the editor.
+ *
+ * Survey visibility is enforced in the E2E run, so a survey a person creates starts restricted and the
+ * editor asks "Who can view this survey in your workspace?" before it goes active. Nothing is
+ * preselected there, so this answers "Visible to {workspace}" — the state every spec other than
+ * survey-visibility.spec.ts expects, and the one webhooks, integrations and other members need. The
+ * dialog is required, not optional: a survey that skips it has not started restricted, which is itself
+ * a regression.
+ *
+ * Returns once the dialog has closed; callers wait for the navigation they expect.
+ */
+export const activateSurvey = async (
+  page: Page,
+  { via = "activate" }: { via?: keyof typeof ACTIVATION_TRIGGERS } = {}
+) => {
+  const trigger = page.getByRole("button", { name: ACTIVATION_TRIGGERS[via], exact: true });
+  await expect(trigger).toBeEnabled();
+  await trigger.click({ noWaitAfter: true });
+  const actionName = via === "schedule" ? "Schedule survey" : "Activate";
+
+  // The editor validates before it opens the dialog and reports a problem only through a toast, so
+  // wait for whichever comes first and fail with the editor's own message rather than a locator timeout.
+  const dialog = page.getByRole("dialog", { name: "Who can view this survey in your workspace?" });
+  const errorToast = errorToastsOf(page).first();
+  await expect(dialog.or(errorToast).first()).toBeVisible();
+  if (await errorToast.isVisible()) {
+    throw new Error(`${actionName} was rejected by the editor: ${(await errorToast.innerText()).trim()}`);
+  }
+
+  await dialog.getByRole("radio", { name: /^Visible to / }).check();
+  await dialog.getByRole("button", { name: actionName, exact: true }).click({ noWaitAfter: true });
+  // The dialog stays open, loading, while the visibility change is saved; it closes as activation starts.
+  await expect(dialog).toBeHidden({ timeout: 30_000 });
+};
 
 /**
  * Publish the survey being edited and wait for the summary page.
@@ -695,13 +755,9 @@ export const publishSurvey = async (page: Page): Promise<void> => {
   // the suite; a shorter budget would turn a slow-but-passing run red.
   const publishTimeoutMs = 120000;
   const summaryUrl = /\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/;
-  // Scoped to react-hot-toast's own error class (set in modules/ui/components/toaster-client) rather
-  // than `role="status"`, which the shared `Alert` also uses — several of those are on screen in the
-  // editor and would be reported as publish failures.
-  const errorToasts = page.locator(".formbricks__toast__error");
+  const errorToasts = errorToastsOf(page);
 
-  await expect(publishButtonOf(page)).toBeEnabled();
-  await publishButtonOf(page).click();
+  await activateSurvey(page);
 
   const navigated = page
     .waitForURL(summaryUrl, { timeout: publishTimeoutMs })

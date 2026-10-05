@@ -35,6 +35,7 @@ import {
 import { Fragment, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { getOtherFilterLabel } from "@/app/lib/surveys/filter-labels";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import { RESERVED_FIELD_ICONS } from "@/modules/embedded-data/lib/field-display";
@@ -167,7 +168,22 @@ const getLabelClassName = (type: OptionsType | string, label?: string): string =
   return label === "os" || label === "url" ? "uppercase" : "capitalize";
 };
 
+/**
+ * The option's own text, with the one group whose labels we author — "Other filters" — translated
+ * for display. Every other group's label is survey or workspace data, shown verbatim.
+ */
+const getDisplayLabel = (
+  label: ElementOption["label"] | undefined,
+  type: OptionsType | undefined,
+  t: TFunction
+): string => {
+  const resolved = typeof label === "string" ? label : getLocalizedValue(label, "default");
+  return type === OptionsType.OTHERS ? getOtherFilterLabel(resolved, t) : resolved;
+};
+
 export const SelectedCommandItem = ({ label, elementType, type, id }: Partial<ElementOption>) => {
+  const { t } = useTranslation();
+
   const getDisplayIcon = () => {
     if (!type) return null;
     if (type === OptionsType.ELEMENTS && elementType) return getIcon(elementType);
@@ -196,7 +212,7 @@ export const SelectedCommandItem = ({ label, elementType, type, id }: Partial<El
         {getDisplayIcon()}
       </span>
       <p className={clsx("truncate text-sm text-slate-600", getLabelClassName(type ?? "", label))}>
-        {typeof label === "string" ? label : getLocalizedValue(label, "default")}
+        {getDisplayLabel(label, type, t)}
       </p>
     </div>
   );

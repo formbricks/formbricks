@@ -3,9 +3,13 @@ import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/erro
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { resolveFormbricksMappingsInput } from "./mappings";
 
+// Survey visibility (ENG-3282) is not enforced here: the readiness marker is off, not read from a database.
+vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
 vi.mock("@/lib/survey/service", () => ({
   getSurvey: vi.fn(),
 }));
+const outbound = vi.hoisted(() => ({ assertNewlyAttachedSurveysWorkspaceVisible: vi.fn() }));
+vi.mock("@/lib/survey/visibility/outbound", () => outbound);
 
 // Deliberately unmocked: @/lib/survey/utils — getElementsFromBlocks is a plain flatMap over the
 // blocks, so the real one keeps the fixtures honest about the shape it reads.
@@ -138,6 +142,18 @@ describe("resolveFormbricksMappingsInput", () => {
     await expect(
       resolveFormbricksMappingsInput([{ surveyId: SURVEY_ID, elementIds: ["el-text"] }], WORKSPACE_ID)
     ).rejects.toThrow(ResourceNotFoundError);
+  });
+
+  test("answers not-found for a foreign survey before any visibility check can confirm it exists", async () => {
+    getSurvey.mockResolvedValue(buildSurvey(SURVEY_ID, OTHER_WORKSPACE_ID));
+    outbound.assertNewlyAttachedSurveysWorkspaceVisible.mockRejectedValueOnce(
+      new Error("not workspace-visible")
+    );
+
+    await expect(
+      resolveFormbricksMappingsInput([{ surveyId: SURVEY_ID, elementIds: ["el-text"] }], WORKSPACE_ID)
+    ).rejects.toThrow(ResourceNotFoundError);
+    expect(outbound.assertNewlyAttachedSurveysWorkspaceVisible).not.toHaveBeenCalled();
   });
 
   test("rejects the whole input when only one of several surveys is foreign", async () => {

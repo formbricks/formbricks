@@ -270,7 +270,7 @@ export const SurveyAnalysisCTA = ({
       icon: ListRestart,
       tooltip: t("workspace.surveys.summary.reset_survey"),
       onClick: () => setIsResetModalOpen(true),
-      isVisible: !isReadOnly && !survey.archivedAt,
+      isVisible: canManage && !survey.archivedAt,
     },
     {
       icon: SquarePenIcon,

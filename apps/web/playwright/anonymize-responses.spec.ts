@@ -3,7 +3,7 @@ import { prisma } from "@formbricks/database";
 import { RESPONSES_API_URL, SURVEYS_API_URL } from "./api/constants";
 import { test } from "./lib/fixtures";
 import { loginAndGetApiKey } from "./lib/utils";
-import { createSurveyFromScratch } from "./utils/helper";
+import { activateSurvey, createSurveyFromScratch } from "./utils/helper";
 
 /**
  * The "Anonymize responses" survey toggle (ENG-1842), end to end.
@@ -90,7 +90,7 @@ test.describe("Anonymize responses @slow", () => {
     await test.step("publish and copy the link", async () => {
       await Promise.all([
         page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/, { timeout: 120000 }),
-        page.getByRole("button", { name: "Publish", exact: true }).click(),
+        activateSurvey(page),
       ]);
 
       // Remembered here because the steps below navigate away to the public survey page: by the

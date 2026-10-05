@@ -15,6 +15,11 @@ export interface AuthorizedWorkspace {
 export interface TriggerSurveyCheck {
   surveyExists: boolean;
   missingEndingCardIds: string[];
+  /**
+   * The survey exists but is restricted (or has a visibility change pending), so a workflow may not send
+   * its responses anywhere (ENG-3283). Absent means visible, for adapters that have no such concept.
+   */
+  surveyNotWorkspaceVisible?: boolean;
 }
 
 /**
@@ -137,6 +142,19 @@ export interface WorkflowApiContext {
     workspaceId: string;
     emails: string[];
   }) => Promise<{ disallowedEmails: string[] }>;
+  /**
+   * Injected survey visibility check (ENG-3282) so the package stays survey-agnostic: of the surveys in
+   * this workspace (or of `surveyIds`, when given), the ids the caller may not read. A run of a
+   * survey-triggered workflow carries that survey's response data (`triggerPayload`, `data`, step
+   * logs), so the run history follows the survey: runs of these surveys are left out of the list and
+   * refused by id. One call per request, never per run; `[]` when nothing is hidden (visibility not
+   * enforced, an organization administrator, or no restricted survey).
+   */
+  listUnreadableSurveyIds: (input: {
+    workspaceId: string;
+    organizationId: string;
+    surveyIds?: string[];
+  }) => Promise<string[]>;
   recordAudit?: (detail: WorkflowAuditDetail) => void | Promise<void>;
   recordAnalytics?: (detail: WorkflowAnalyticsDetail) => void | Promise<void>;
 }

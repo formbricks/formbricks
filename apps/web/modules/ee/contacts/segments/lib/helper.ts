@@ -1,6 +1,8 @@
 import { prisma } from "@formbricks/database";
+import type { Prisma } from "@formbricks/database/prisma";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TBaseFilters, TSegmentSurveyInteractionFilter } from "@formbricks/types/segment";
+import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import {
   SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
@@ -66,6 +68,46 @@ export const collectSurveyIdsFromSegmentFilters = (filters: TBaseFilters): strin
 };
 
 /**
+ * Ensures every id in `surveyIds` is a survey of `workspaceId` that `visibleSurveyWhere` admits (the
+ * caller's visibility predicate, `getUserVisibleSurveyWhere`), in bounded batches — one query per
+ * batch, never one per survey. A caller that has already passed `workspace.write` on that workspace and
+ * is admitted here holds `survey.write` on each of them: the predicate admits a workspace-visible survey,
+ * the owner's own restricted or pending one, or any survey for an organization owner/manager — the three
+ * arms of `survey#write` (ENG-3282). An id it does not admit is rejected exactly like an unknown one.
+ * @throws {InvalidInputError} When a survey is not found in the workspace or not visible to the caller
+ */
+const findSurveysInWorkspace = (
+  surveyIds: ReadonlyArray<string>,
+  workspaceId: string,
+  visibleSurveyWhere: Prisma.SurveyWhereInput
+) =>
+  prisma.survey.findMany({
+    where: { id: { in: [...surveyIds] }, workspaceId, ...andVisibleSurveys(visibleSurveyWhere) },
+    select: { id: true },
+  });
+
+export const assertSurveysInWorkspace = async (
+  surveyIds: ReadonlyArray<string>,
+  workspaceId: string,
+  visibleSurveyWhere: Prisma.SurveyWhereInput = {}
+) => {
+  const uniqueIds = Array.from(new Set(surveyIds));
+
+  for (let i = 0; i < uniqueIds.length; i += SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE) {
+    const batch = uniqueIds.slice(i, i + SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE);
+    // Sequential on purpose: the first missing id rejects before any further query runs.
+    const foundSurveys = await findSurveysInWorkspace(batch, workspaceId, visibleSurveyWhere); // NOSONAR
+
+    const foundIds = new Set(foundSurveys.map((survey) => survey.id));
+    const missingId = batch.find((id) => !foundIds.has(id));
+
+    if (missingId) {
+      throw new InvalidInputError(`Survey not found in workspace: ${missingId}`);
+    }
+  }
+};
+
+/**
  * Ensures every survey referenced by a "specific" survey-interaction filter belongs to the given
  * workspace. This is the tenancy guard for interaction filters — the runtime evaluation query is
  * already workspace-scoped, but we reject unknown/foreign ids at write time to avoid persisting
@@ -77,21 +119,8 @@ export const collectSurveyIdsFromSegmentFilters = (filters: TBaseFilters): strin
  * future caller that skips the parse.
  * @throws {InvalidInputError} When a referenced survey is not found in the workspace
  */
-export const assertSurveyInteractionSurveyIds = async (filters: TBaseFilters, workspaceId: string) => {
-  const surveyIds = Array.from(new Set(collectSurveyIdsFromSegmentFilters(filters)));
-
-  for (let i = 0; i < surveyIds.length; i += SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE) {
-    const batch = surveyIds.slice(i, i + SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE);
-    const foundSurveys = await prisma.survey.findMany({
-      where: { id: { in: batch }, workspaceId },
-      select: { id: true },
-    });
-
-    const foundIds = new Set(foundSurveys.map((survey) => survey.id));
-    const missingId = batch.find((id) => !foundIds.has(id));
-
-    if (missingId) {
-      throw new InvalidInputError(`Survey not found in workspace: ${missingId}`);
-    }
-  }
-};
+export const assertSurveyInteractionSurveyIds = (
+  filters: TBaseFilters,
+  workspaceId: string,
+  visibleSurveyWhere: Prisma.SurveyWhereInput = {}
+) => assertSurveysInWorkspace(collectSurveyIdsFromSegmentFilters(filters), workspaceId, visibleSurveyWhere);

@@ -18,6 +18,15 @@ import { TWorkspaceWithLanguages } from "../types/surveys";
 // Import the module to be tested
 import { copySurveyToOtherWorkspace, getSurveyCount, getWorkspaceSurveyCount } from "./survey";
 
+const UNENFORCED_CONTEXT = {
+  enforced: false,
+  isOrganizationAdmin: false,
+  kind: "user",
+  userId: "user_1",
+} as const;
+
+// Survey visibility (ENG-3282) is not enforced here: the readiness marker is off, not read from a database.
+vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
 vi.mock("server-only", () => ({}));
 
 vi.mock("react", async (importOriginal) => {
@@ -187,10 +196,10 @@ describe("getSurveyCount", () => {
 
   test("should return survey count successfully", async () => {
     vi.mocked(prisma.survey.count).mockResolvedValue(5);
-    const count = await getSurveyCount(workspaceId);
+    const count = await getSurveyCount(workspaceId, undefined, UNENFORCED_CONTEXT);
     expect(count).toBe(5);
     expect(prisma.survey.count).toHaveBeenCalledWith({
-      where: { workspaceId },
+      where: { workspaceId, AND: [] },
     });
     expect(validateInputs).toHaveBeenCalledWith([workspaceId, expect.any(Object)]);
   });
@@ -198,14 +207,14 @@ describe("getSurveyCount", () => {
   test("should throw DatabaseError on Prisma error", async () => {
     const prismaError = makePrismaKnownError();
     vi.mocked(prisma.survey.count).mockRejectedValue(prismaError);
-    await expect(getSurveyCount(workspaceId)).rejects.toThrow(DatabaseError);
+    await expect(getSurveyCount(workspaceId, undefined, UNENFORCED_CONTEXT)).rejects.toThrow(DatabaseError);
     expect(logger.error).toHaveBeenCalledWith(prismaError, "Error getting survey count");
   });
 
   test("should rethrow unknown error", async () => {
     const unknownError = new Error("Unknown error");
     vi.mocked(prisma.survey.count).mockRejectedValue(unknownError);
-    await expect(getSurveyCount(workspaceId)).rejects.toThrow(unknownError);
+    await expect(getSurveyCount(workspaceId, undefined, UNENFORCED_CONTEXT)).rejects.toThrow(unknownError);
   });
 });
 
@@ -496,6 +505,15 @@ describe("copySurveyToOtherWorkspace", () => {
       "slug",
       "publishOn",
       "closeOn",
+      // Visibility (ENG-3282): the copy gets its own creation facts — owned by the actor, restricted or
+      // workspace-visible by who made it — never the source survey's owner, state or history.
+      "visibility",
+      "ownerId",
+      "visibilityVersion",
+      "visibilityProjectedVersion",
+      "visibilityPending",
+      "visibilityChangedAt",
+      "visibilityChangedById",
     ]);
 
     await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, sourceWorkspaceId, userId);
@@ -934,15 +952,15 @@ describe("getWorkspaceSurveyCount", () => {
   test("counts archived surveys too, so an all-archived workspace is not empty", async () => {
     vi.mocked(prisma.survey.count).mockResolvedValue(3 as never);
 
-    await expect(getWorkspaceSurveyCount(workspaceId)).resolves.toBe(3);
+    await expect(getWorkspaceSurveyCount(workspaceId, UNENFORCED_CONTEXT)).resolves.toBe(3);
     // No archivedAt narrowing: an archived survey still makes the workspace non-empty.
-    expect(prisma.survey.count).toHaveBeenCalledWith({ where: { workspaceId } });
+    expect(prisma.survey.count).toHaveBeenCalledWith({ where: { workspaceId, AND: [] } });
   });
 
   test("returns 0 when the workspace has no surveys at all", async () => {
     vi.mocked(prisma.survey.count).mockResolvedValue(0 as never);
 
-    await expect(getWorkspaceSurveyCount(workspaceId)).resolves.toBe(0);
+    await expect(getWorkspaceSurveyCount(workspaceId, UNENFORCED_CONTEXT)).resolves.toBe(0);
   });
 
   test("throws DatabaseError on a Prisma known request error", async () => {
@@ -952,6 +970,6 @@ describe("getWorkspaceSurveyCount", () => {
     });
     vi.mocked(prisma.survey.count).mockRejectedValue(prismaError);
 
-    await expect(getWorkspaceSurveyCount(workspaceId)).rejects.toThrow(DatabaseError);
+    await expect(getWorkspaceSurveyCount(workspaceId, UNENFORCED_CONTEXT)).rejects.toThrow(DatabaseError);
   });
 });
