@@ -105,7 +105,7 @@ const tokenize = (input: string): TToken[] | null => {
   const parse = (depth: number): TToken[] | null => {
     const tokens: TToken[] = [];
     while (rest.length > 0) {
-      if (rest[0] === ")") {
+      if (rest.startsWith(")")) {
         if (depth === 0) return null;
         take(1);
         return tokens;
