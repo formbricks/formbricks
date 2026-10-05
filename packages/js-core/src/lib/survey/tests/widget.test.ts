@@ -371,8 +371,26 @@ describe("widget-file", () => {
     });
 
     describe("with a surveys bundle that predates the resolver", () => {
-      test("renders the default language when no language is set", async () => {
+      test("renders the default language when no language is set and the survey did not opt in", async () => {
         mockConfigWithLanguage(undefined);
+        const formbricksSurveys = await renderWithResolver(germanEnglishSurvey(false), MISSING_RESOLVER);
+        expect(getBrowserLanguageCodes).not.toHaveBeenCalled();
+        expect(formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+          expect.objectContaining({ languageCode: "default" })
+        );
+      });
+
+      test("matches the browser languages exactly when no language is set and the survey opted in", async () => {
+        mockConfigWithLanguage(undefined);
+        const formbricksSurveys = await renderWithResolver(germanEnglishSurvey(true), MISSING_RESOLVER);
+        expect(formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+          expect.objectContaining({ languageCode: "de-DE" })
+        );
+      });
+
+      test("falls back to the default language when no browser language matches exactly", async () => {
+        mockConfigWithLanguage(undefined);
+        vi.mocked(getBrowserLanguageCodes).mockReturnValue(["fr-FR", "de"]);
         const formbricksSurveys = await renderWithResolver(germanEnglishSurvey(true), MISSING_RESOLVER);
         expect(formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
           expect.objectContaining({ languageCode: "default" })

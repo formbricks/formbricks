@@ -362,8 +362,8 @@ type TFormbricksSurveys = NonNullable<typeof globalThis.window.formbricksSurveys
  * The SDK's pre-ENG-3289 matcher: exact stored code, then alias, case-insensitive, no canonical table.
  * Only used while the instance still serves a cached surveys bundle without `resolveSurveyLanguage`
  * (`/js/*` is CDN-cached for up to 30 days), so explicit languages keep working as they did before
- * instead of every one of them being skipped. No browser languages here — that is new behaviour.
- * Disabled languages (other than the default) are left out, so a disabled alias cannot shadow an
+ * instead of every one of them being skipped; `resolveDisplayLanguage` also runs browser languages
+ * through it when the survey opted in. Disabled languages (other than the default) are left out, so a disabled alias cannot shadow an
  * enabled code.
  */
 const matchLanguageExactly = (survey: TWorkspaceStateSurvey, language: string | undefined): string | null => {
@@ -397,7 +397,15 @@ const resolveDisplayLanguage = (
 ): string | null => {
   if (survey.languages.length <= 1) return "default";
 
-  if (!formbricksSurveys.resolveSurveyLanguage) return matchLanguageExactly(survey, language);
+  if (!formbricksSurveys.resolveSurveyLanguage) {
+    if (language?.trim() || !survey.autoSelectLanguage) return matchLanguageExactly(survey, language);
+    // Exact-only, so a browser tag reaches a survey language only when the codes or alias agree.
+    for (const browserLanguage of getBrowserLanguageCodes()) {
+      const match = matchLanguageExactly(survey, browserLanguage);
+      if (match) return match;
+    }
+    return "default";
+  }
 
   return formbricksSurveys.resolveSurveyLanguage({
     languages: survey.languages,
