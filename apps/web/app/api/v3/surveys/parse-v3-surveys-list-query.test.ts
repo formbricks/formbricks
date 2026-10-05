@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { encodeSurveyListPageCursor } from "@/modules/survey/list/lib/survey-page";
 import { collectMultiValueQueryParam, parseV3SurveysListQuery } from "./parse-v3-surveys-list-query";
 
 const wid = "clxx1234567890123456789012";
@@ -161,6 +162,27 @@ describe("parseV3SurveysListQuery", () => {
         },
       ]);
     }
+  });
+
+  /** Postgres `text` cannot hold U+0000; let through, the code fails the query and answers 500 (ENG-3550). */
+  test("rejects a NULL byte in the name filter", () => {
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&filter[name][contains]=a%00b`));
+    expect(r).toEqual({
+      ok: false,
+      invalid_params: [{ name: "filter[name][contains]", reason: "must not contain NULL bytes" }],
+    });
+  });
+
+  /** The cursor is unsigned, so its strings are client input that reaches the `WHERE` clause. */
+  test("rejects a NULL byte in a cursor's id as an invalid cursor", () => {
+    const cursor = encodeSurveyListPageCursor({
+      version: 1,
+      sortBy: "name",
+      value: "Alpha",
+      id: "survey\u0000",
+    });
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&sortBy=name&cursor=${cursor}`));
+    expect(r).toEqual({ ok: false, invalid_params: [{ name: "cursor", reason: "The cursor is invalid." }] });
   });
 });
 

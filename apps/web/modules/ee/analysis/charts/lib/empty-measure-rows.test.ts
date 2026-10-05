@@ -131,3 +131,14 @@ describe("dropEmptyMeasureRows", () => {
     expect(dropEmptyMeasureRows(rows, groupedQuery)).toEqual([]);
   });
 });
+
+describe("the injected response base (ENG-3331)", () => {
+  test("does not keep a row alive that no selected measure answers for", () => {
+    const query: TChartQuery = { measures: ["FeedbackRecords.npsScore"], dimensions: [FIELD_LABEL] };
+    const rows = [
+      { [FIELD_LABEL]: "Recommend us?", "FeedbackRecords.npsScore": 40, "FeedbackRecords.npsCount": 25 },
+      { [FIELD_LABEL]: "Anything else?", "FeedbackRecords.npsScore": null, "FeedbackRecords.npsCount": 0 },
+    ];
+    expect(dropEmptyMeasureRows(rows, query)).toEqual([rows[0]]);
+  });
+});

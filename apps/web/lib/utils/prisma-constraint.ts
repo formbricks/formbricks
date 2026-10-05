@@ -44,6 +44,7 @@ const toColumnNames = (fields: unknown[]): string[] =>
  * resolving to the wrong columns.
  */
 const UNIQUE_INDEX_COLUMNS: Readonly<Record<string, readonly string[]>> = {
+  AuthzedProjectionScopeState_pkey: ["scope"],
   FeedbackDirectoryWorkspace_pkey: ["feedbackDirectoryId", "workspaceId"],
   FeedbackSourceFieldMapping_workspaceId_feedbackSourceId_sourceF: [
     "workspaceId",
