@@ -4,6 +4,7 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
+import { canApiKeyReachSurveyResource, getApiKeyVisibleSurveyWhere } from "@/lib/survey/visibility/api-key";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
@@ -37,7 +38,7 @@ export const GET = async (request: NextRequest) =>
 
       const workspaceIds = await getAuthorizedApiKeyWorkspaceIds(authentication);
 
-      const res = await getResponses(workspaceIds, query);
+      const res = await getResponses(workspaceIds, query, await getApiKeyVisibleSurveyWhere());
 
       if (!res.ok) {
         return handleApiError(request, res.error);
@@ -83,7 +84,11 @@ export const POST = async (request: Request) =>
           { type: "apiKey", id: authentication.apiKeyId },
           getWorkspaceAuthorizationActionForMethod("POST"),
           { type: "workspace", id: workspaceId }
-        ))
+        )) ||
+        !(await canApiKeyReachSurveyResource(authentication.apiKeyId, "survey.write", {
+          type: "survey",
+          id: body.surveyId,
+        }))
       ) {
         return handleApiError(
           request,

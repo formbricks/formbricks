@@ -34,6 +34,9 @@ const scenario: { organizationId: string; userId: string; workspaceId: string } 
 
 const SURVEY_COUNTS = [50, 3_000] as const;
 
+// The readiness marker is off in this suite, so the visibility predicate restricts nothing.
+const UNENFORCED_OWNER = { enforced: false, isOrganizationAdmin: false, kind: "user", userId: "" } as const;
+
 beforeAll(async () => {
   await resetDb();
 
@@ -77,6 +80,7 @@ describe("survey list authorization amplification, against a real database", () 
           limit: surveyCount,
           cursor: null,
           sortBy: "updatedAt",
+          actorContext: UNENFORCED_OWNER,
         });
         return { checksIssued: getIssuedAuthorizationCheckCount(), rowCount: page.surveys.length };
       });
@@ -108,6 +112,7 @@ describe("survey list authorization amplification, against a real database", () 
           limit: surveyCount,
           cursor: null,
           sortBy: "updatedAt",
+          actorContext: UNENFORCED_OWNER,
         });
         return getIssuedAuthorizationCheckCount() ?? -1;
       });
@@ -182,6 +187,7 @@ describe("survey list authorization amplification (member, not owner), against a
         limit: 100,
         cursor: null,
         sortBy: "updatedAt",
+        actorContext: UNENFORCED_OWNER,
       });
       return { checksIssued: getIssuedAuthorizationCheckCount(), rowCount: page.surveys.length };
     });

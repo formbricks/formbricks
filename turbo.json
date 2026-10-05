@@ -12,6 +12,10 @@
   "globalEnv": ["MIGRATE_DATABASE_URL", "SHADOW_DATABASE_URL"],
   "globalPassThroughEnv": ["SEED_API_KEY"],
   "tasks": {
+    "//#test:root": {
+      "cache": false,
+      "outputs": []
+    },
     "@formbricks/ai#build": {
       "dependsOn": ["@formbricks/logger#build"],
       "outputs": ["dist/**"]
@@ -20,9 +24,11 @@
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/ai#test": {
+      "cache": false,
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/ai#test:coverage": {
+      "cache": false,
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/ai#typecheck": {
@@ -33,15 +39,19 @@
       "outputs": ["dist/**"]
     },
     "@formbricks/cache#go": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "cache": false,
+      "dependsOn": ["@formbricks/logger#build"],
+      "persistent": true
     },
     "@formbricks/cache#lint": {
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/cache#test": {
+      "cache": false,
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/cache#test:coverage": {
+      "cache": false,
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/cache#typecheck": {
@@ -52,6 +62,16 @@
       "env": ["DATABASE_URL"],
       "outputs": ["dist/**", "generated/prisma/**"]
     },
+    "@formbricks/database#db:migrate:dev": {
+      "cache": false,
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "@formbricks/database#db:start": {
+      "cache": false,
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
     "@formbricks/database#generate": {
       "dependsOn": ["^generate"],
       "env": ["DATABASE_URL"],
@@ -61,9 +81,11 @@
       "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
     },
     "@formbricks/database#test": {
+      "cache": false,
       "dependsOn": ["@formbricks/i18n-utils#build"]
     },
     "@formbricks/database#test:coverage": {
+      "cache": false,
       "dependsOn": ["@formbricks/i18n-utils#build"]
     },
     "@formbricks/database#typecheck": {
@@ -77,6 +99,7 @@
       "dependsOn": ["^lint"]
     },
     "@formbricks/i18n-utils#test": {
+      "cache": false,
       "dependsOn": ["@formbricks/i18n-utils#build"]
     },
     "@formbricks/jobs#build": {
@@ -87,9 +110,11 @@
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/jobs#test": {
+      "cache": false,
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/jobs#test:coverage": {
+      "cache": false,
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/jobs#typecheck": {
@@ -121,9 +146,11 @@
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/storage#test": {
+      "cache": false,
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/storage#test:coverage": {
+      "cache": false,
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/storage#typecheck": {
@@ -161,9 +188,11 @@
       "persistent": true
     },
     "@formbricks/surveys#test": {
+      "cache": false,
       "dependsOn": ["@formbricks/i18n-utils#build", "@formbricks/survey-ui#build"]
     },
     "@formbricks/surveys#test:coverage": {
+      "cache": false,
       "dependsOn": ["@formbricks/i18n-utils#build", "@formbricks/survey-ui#build"]
     },
     "@formbricks/surveys#typecheck": {
@@ -195,6 +224,7 @@
       "persistent": true
     },
     "@formbricks/web#test": {
+      "cache": false,
       "dependsOn": [
         "@formbricks/ai#build",
         "@formbricks/logger#build",
@@ -206,6 +236,7 @@
       ]
     },
     "@formbricks/web#test:coverage": {
+      "cache": false,
       "dependsOn": [
         "@formbricks/ai#build",
         "@formbricks/logger#build",
@@ -234,9 +265,11 @@
       "dependsOn": []
     },
     "@formbricks/workflows#test": {
+      "cache": false,
       "dependsOn": []
     },
     "@formbricks/workflows#test:coverage": {
+      "cache": false,
       "dependsOn": []
     },
     "@formbricks/workflows#typecheck": {
@@ -289,6 +322,8 @@
         "S3_REGION",
         "S3_SECRET_KEY",
         "SAML_DATABASE_URL",
+        "SURVEY_VISIBILITY_FORCE_DISABLED",
+        "SURVEY_WORKSPACE_LIMIT",
         "TELEMETRY_DISABLED",
         "VERSION",
         "npm_package_version"
@@ -358,7 +393,9 @@
       "persistent": true
     },
     "storybook#storybook": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "cache": false,
+      "dependsOn": ["@formbricks/logger#build"],
+      "persistent": true
     },
     "test": {
       "cache": false,

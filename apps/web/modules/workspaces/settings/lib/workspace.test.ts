@@ -36,6 +36,8 @@ const baseWorkspace = {
   placement: "bottomRight",
   clickOutsideClose: false,
   overlay: "none",
+  overlayColor: null,
+  overlayOpacity: null,
   styling: { allowStyleOverwrite: true },
   logo: null,
   customHeadScripts: null,

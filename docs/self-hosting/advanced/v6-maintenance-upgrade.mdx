@@ -83,7 +83,9 @@ configuration into shared CI logs. Prepare and render the exact target manifests
     then runs application migrations, schema preparation, outbox drain, relationship repair, and a
     separate full verification. Preparation reconciles the graph and requires a clean full dry-run
     audit; the wrapper then performs a second independent full dry-run audit through `upgrade check`.
-    `AUTHZED_CONSISTENCY` must be `fully_consistent`.
+    `AUTHZED_CONSISTENCY` must be `fully_consistent`. An existing `.env` that still sets
+    `AUTHZED_CONSISTENCY=minimize_latency` must be changed first: preparation and server startup both
+    reject it.
 
     ```bash
     formbricks-authzed-prepare --backup-confirmed --writers-stopped
@@ -257,3 +259,43 @@ explicit maintenance preparation has completed with that target image and a revi
 Use the procedure above again; the persistent acknowledgement is not permission to skip preparation.
 An online, backward-compatible schema rollout would need its own reviewed and tested release procedure;
 neither the Helm hook nor the one-click updater infers that a schema change is safe while writers run.
+
+### Survey visibility
+
+The release that introduces survey visibility changes the canonical SpiceDB schema (it adds survey
+ownership and visibility), so it goes through the maintenance preparation above. Surveys are then projected
+into SpiceDB as their own scope. Nothing about who can see a survey changes until you opt in:
+
+<Note>
+  Once the marker is set, every survey a person creates starts **Restricted** to its author and the
+  organization's owners and managers. They can make it visible to the workspace from **Collaborate** or
+  when activating it. See [Survey visibility](/surveys/general-features/visibility).
+</Note>
+
+1. Once every container or pod runs the new version, check durable delivery and replay any dead-lettered
+   survey events. The migration adds the survey trigger while the previous version may still be delivering
+   outbox events, and that version dead-letters the `survey` event type it does not know. A dead-lettered
+   survey revocation makes every enforced authorization check fail closed until it is replayed:
+
+   ```bash
+   formbricks-authzed outbox status
+   formbricks-authzed outbox replay
+   formbricks-authzed outbox drain
+   ```
+
+   `replay` resets every unresolved dead letter, so investigate any that are not survey events first. See
+   [AuthZed operations](/self-hosting/configuration/authzed-operations#audit-and-repair-surveys) for how to
+   list them.
+
+2. After the upgrade, repair the survey scope and mark it ready. This runs the repair, then two further dry
+   runs, and sets the marker only if both come back clean:
+
+   ```bash
+   formbricks-authzed backfill --scope=survey --apply --mark-ready
+   ```
+
+3. Confirm `formbricks-authzed upgrade check` reports `scopes.survey` as ready.
+
+To go back to workspace permissions, run `formbricks-authzed backfill --scope=survey --clear-ready`. See
+[AuthZed operations](/self-hosting/configuration/authzed-operations#audit-and-repair-surveys) for the audit
+and repair commands.

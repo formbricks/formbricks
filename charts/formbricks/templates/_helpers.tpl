@@ -300,6 +300,23 @@ env:
 {{- end }}
 
 {{/*
+"true" when deployment.containerSecurityContext makes the root filesystem read-only, otherwise empty. The web
+Deployment and the migration Job run the same image under that context, so both mount writable paths on it.
+*/}}
+{{- define "formbricks.readOnlyRootFilesystem" -}}
+{{- if dig "readOnlyRootFilesystem" false (default dict .Values.deployment.containerSecurityContext) -}}
+true
+{{- end -}}
+{{- end }}
+
+{{/*
+Directory the Prisma migration runner stages migrations in. It must be writable wherever migrations run.
+*/}}
+{{- define "formbricks.prismaMigrationsStagingPath" -}}
+/home/nextjs/packages/database/.prisma-migrations
+{{- end }}
+
+{{/*
 Formbricks application image reference. A configured digest takes precedence over the tag.
 */}}
 {{- define "formbricks.deploymentImage" -}}
@@ -391,13 +408,27 @@ the namespace default ServiceAccount.
 {{- printf "http://%s:%v" (include "formbricks.taxonomyName" .) (.Values.taxonomy.service.port | default .Values.taxonomy.port) -}}
 {{- end }}
 
+{{/*
+OpenAI-compatible endpoint for taxonomy: the rendered taxonomy.llm.baseUrl, else the bundled vLLM
+router (llm.formbricks.baseUrl or the router Service) when llm.enabled=true. Each source fails with
+its own message instead of rendering an empty TAXONOMY_LLM_BASE_URL: the raw-value guard in
+taxonomy-deployment.yaml cannot see a templated value that renders empty or whitespace.
+*/}}
 {{- define "formbricks.taxonomyLlmBaseUrl" -}}
 {{- if .Values.taxonomy.llm.baseUrl -}}
-{{- include "formbricks.tplvalues.render" (dict "value" .Values.taxonomy.llm.baseUrl "context" .) -}}
+{{- $baseUrl := include "formbricks.tplvalues.render" (dict "value" .Values.taxonomy.llm.baseUrl "context" .) | trim -}}
+{{- if not $baseUrl -}}
+{{- fail "taxonomy.llm.baseUrl must render to a non-empty URL when taxonomy.llm.provider is 'openai-compatible'" -}}
+{{- end -}}
+{{- $baseUrl -}}
 {{- else if .Values.llm.enabled -}}
-{{- include "formbricks.llmBaseUrl" . -}}
+{{- $baseUrl := include "formbricks.llmBaseUrl" . | trim -}}
+{{- if not $baseUrl -}}
+{{- fail "llm.formbricks.baseUrl must render to a non-empty URL when taxonomy uses the bundled vLLM router" -}}
+{{- end -}}
+{{- $baseUrl -}}
 {{- else -}}
-{{- "" -}}
+{{- fail "taxonomy.llm.baseUrl must render to a non-empty URL when taxonomy.llm.provider is 'openai-compatible'" -}}
 {{- end -}}
 {{- end }}
 

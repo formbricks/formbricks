@@ -308,15 +308,32 @@ export const getStorageUrlSurveyId = (fileUrl: string): string | null => {
   const parsed = parseStorageFileUrl(fileUrl);
   if (!parsed) return null;
 
-  let fileName: string;
+  const scope = getStorageFileNameScope(parsed.fileName);
+  return scope.decodable ? scope.surveyId : null;
+};
+
+/**
+ * Which survey an object key's file name is filed under, read from the name the storage layer actually
+ * uses: `getFileStreamForDownload` and `deleteFile` both decode the joined name once more before
+ * building the key, so the check has to decode it too. `decodable: false` for a name that does not
+ * decode — the storage layer fails on it as well, so there is no object it could reach.
+ *
+ * `fileName` is the joined, still-encoded name: a URL path's file part, or the route's catch-all
+ * segments joined with `/`.
+ */
+export const getStorageFileNameScope = (
+  fileName: string
+): { decodable: false } | { decodable: true; isSurveyScope: boolean; surveyId: string | null } => {
+  let decoded: string;
   try {
-    fileName = decodeURIComponent(parsed.fileName);
+    decoded = decodeURIComponent(fileName);
   } catch {
-    return null;
+    return { decodable: false };
   }
 
-  const [scope, surveyId] = fileName.split("/");
-  return scope === "surveys" && surveyId ? surveyId : null;
+  const [scope, surveyId] = decoded.split("/");
+  const isSurveyScope = scope === "surveys" && decoded.includes("/");
+  return { decodable: true, isSurveyScope, surveyId: isSurveyScope && surveyId ? surveyId : null };
 };
 
 const isScopedPrivateUploadUrl = ({

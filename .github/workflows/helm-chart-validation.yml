@@ -71,7 +71,9 @@ jobs:
           bash charts/formbricks/tests/embeddings-external.sh
           bash charts/formbricks/tests/envoy-gateway.sh
           bash charts/formbricks/tests/pdb-selectors.sh
+          bash charts/formbricks/tests/taxonomy-llm-base-url.sh
           bash charts/formbricks/tests/web-security-context.sh
+          bash charts/formbricks/tests/migration-security-context.sh
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \

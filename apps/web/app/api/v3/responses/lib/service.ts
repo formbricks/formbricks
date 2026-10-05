@@ -8,6 +8,8 @@ import { type TKeysetCursor, keysetOrderBy, keysetPagePredicate } from "@/app/ap
 import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
 import { deleteDisplay } from "@/lib/display/service";
 import { inlineSurveyEmbeddedFields, selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
+import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
+import { andVisibleSurveys, visibleSurveySqlPredicate } from "@/lib/survey/visibility/predicate";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
 import { collectResponseFileUrls, getSurveyFileUploadElementIds } from "@/modules/storage/utils";
 import type { TV3ResponsesFilter } from "./parse-v3-responses-list-query";
@@ -58,7 +60,11 @@ function rethrowScopedPrismaError(error: unknown): never {
   throw error;
 }
 
-type TWorkspaceScope = { workspaceId: string };
+type TWorkspaceScope = {
+  /** ENG-3282: the batch delete's visibility filter; a single delete is authorized per response instead. */
+  visibleSurveyWhere?: Prisma.SurveyWhereInput;
+  workspaceId: string;
+};
 
 /**
  * Resolve which workspace owns a response, without asserting the caller may see it.
@@ -247,7 +253,7 @@ export type TBatchDeleteResult = {
  */
 export async function deleteScopedResponses(
   responseIds: string[],
-  { workspaceId }: TWorkspaceScope
+  { visibleSurveyWhere = {}, workspaceId }: TWorkspaceScope
 ): Promise<TBatchDeleteResult> {
   let outcome: TBatchDeleteResult & { fileUrls: string[] };
 
@@ -256,7 +262,7 @@ export async function deleteScopedResponses(
       // Scoped read first: the file URLs live inside `response.data` and the display ids on the rows,
       // and both are gone once the rows are.
       const rows = await tx.response.findMany({
-        where: { id: { in: responseIds }, survey: { workspaceId } },
+        where: { id: { in: responseIds }, survey: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) } },
         select: { id: true, displayId: true, data: true, surveyId: true },
       });
 
@@ -284,7 +290,7 @@ export async function deleteScopedResponses(
       // Responses before displays — see the note above. Not a correctness constraint: the FK is
       // SET NULL, so the reverse order also works, it just updates rows on their way out.
       const { count } = await tx.response.deleteMany({
-        where: { id: { in: responseIds }, survey: { workspaceId } },
+        where: { id: { in: responseIds }, survey: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) } },
       });
 
       const displayIds = rows
@@ -499,9 +505,11 @@ const idColumn = (): Prisma.Sql => Prisma.raw('r."id"');
  * assumed, and it also means an out-of-scope `surveyId` yields an empty page rather than an error
  * that would confirm the survey exists.
  */
-const scopeAndFilters = (filter: TV3ResponsesFilter): Prisma.Sql[] => {
+const scopeAndFilters = (filter: TV3ResponsesFilter, access: TSurveyActorContext): Prisma.Sql[] => {
+  // ENG-3282: the survey visibility predicate rides inside the scope clause, so a restricted survey's
+  // responses are absent from the page and from the count alike (contract §7) — never post-filtered.
   const clauses: Prisma.Sql[] = [
-    Prisma.sql`EXISTS (SELECT 1 FROM "Survey" s WHERE s."id" = r."surveyId" AND s."workspaceId" = ${filter.workspaceId})`,
+    Prisma.sql`EXISTS (SELECT 1 FROM "Survey" s WHERE s."id" = r."surveyId" AND s."workspaceId" = ${filter.workspaceId} AND ${visibleSurveySqlPredicate(access, "s")})`,
   ];
 
   if (filter.surveyId) clauses.push(Prisma.sql`r."surveyId" = ${filter.surveyId}`);
@@ -551,18 +559,21 @@ export interface TV3ResponseKeysetRow {
  * short page, which the contract makes the only valid signal.
  */
 export async function listV3ResponseKeysetPage({
+  access,
   filter,
   sortBy,
   limit,
   cursor,
 }: {
+  /** Who is reading; required so no page can skip the survey visibility predicate. */
+  access: TSurveyActorContext;
   filter: TV3ResponsesFilter;
   sortBy: "-createdAt" | "createdAt";
   limit: number;
   cursor: Pick<TKeysetCursor, "value" | "id"> | null;
 }): Promise<TV3ResponseKeysetRow[]> {
   const direction = sortBy === "-createdAt" ? "desc" : "asc";
-  const clauses = scopeAndFilters(filter);
+  const clauses = scopeAndFilters(filter, access);
 
   if (cursor) {
     clauses.push(keysetPagePredicate({ sortColumn: sortColumn(), idColumn: idColumn(), direction, cursor }));
@@ -606,10 +617,12 @@ export async function hydrateV3Responses(ids: readonly string[]): Promise<TV3Res
  * reports `eq`.
  */
 export async function countV3Responses({
+  access,
   filter,
   precision,
   cap = V3_RESPONSE_COUNT_CAP,
 }: {
+  access: TSurveyActorContext;
   filter: TV3ResponsesFilter;
   precision: "capped" | "exact";
   /**
@@ -624,7 +637,7 @@ export async function countV3Responses({
    */
   cap?: number;
 }): Promise<{ count: number; relation: "eq" | "gte" }> {
-  const where = Prisma.join(scopeAndFilters(filter), " AND ");
+  const where = Prisma.join(scopeAndFilters(filter, access), " AND ");
   const effectiveCap = Math.min(cap, V3_RESPONSE_COUNT_CAP);
 
   if (precision === "exact") {

@@ -563,7 +563,6 @@ describe("getResponseDownloadFile", () => {
       expect.anything(),
       expect.anything(),
       expect.anything(),
-      expect.anything(),
       false,
       "Asia/Manila"
     );
@@ -575,7 +574,6 @@ describe("getResponseDownloadFile", () => {
     await getResponseDownloadFile("survey-123", "csv");
 
     expect(getResponsesJson).toHaveBeenCalledWith(
-      expect.anything(),
       expect.anything(),
       expect.anything(),
       expect.anything(),

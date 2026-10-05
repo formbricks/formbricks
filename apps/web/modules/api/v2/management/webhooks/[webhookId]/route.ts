@@ -2,10 +2,12 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
+import { findNewlyAttachedNotWorkspaceVisibleSurveyIds } from "@/lib/survey/visibility/outbound";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { getWorkspaceIdFromSurveyIds } from "@/modules/api/v2/management/lib/helper";
+import { surveyNotWorkspaceVisibleError } from "@/modules/api/v2/management/lib/survey-visibility";
 import {
   deleteWebhook,
   getWebhook,
@@ -126,6 +128,14 @@ export const PUT = async (request: NextRequest, props: { params: Promise<{ webho
           },
           auditLog
         );
+      }
+
+      const blockedSurveyIds = await findNewlyAttachedNotWorkspaceVisibleSurveyIds(
+        body.surveyIds,
+        webhook.data.surveyIds
+      );
+      if (blockedSurveyIds.length > 0) {
+        return handleApiError(request, surveyNotWorkspaceVisibleError(blockedSurveyIds), auditLog);
       }
 
       const updatedWebhook = await updateWebhook(params.webhookId, body);

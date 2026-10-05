@@ -513,6 +513,7 @@ services:
       TAXONOMY_VERTEX_PROJECT: ${TAXONOMY_VERTEX_PROJECT:-}
       TAXONOMY_VERTEX_LOCATION: ${TAXONOMY_VERTEX_LOCATION:-}
       TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON: ${TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON:-}
+      TAXONOMY_MAX_RECORDS: ${TAXONOMY_MAX_RECORDS:-10000}
       AWS_REGION: ${AWS_REGION:-}
       AWS_BEARER_TOKEN_BEDROCK: ${AWS_BEARER_TOKEN_BEDROCK:-}
     healthcheck:
@@ -587,7 +588,7 @@ services:
   # "CUBEJS_API_SECRET is required to run Cube" when the secret is empty.
   cube:
     restart: always
-    image: ghcr.io/formbricks/cube:1.7.47-1
+    image: ghcr.io/formbricks/cube:1.7.47-2
     depends_on:
       hub-migrate:
         condition: service_completed_successfully

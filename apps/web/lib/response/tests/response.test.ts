@@ -549,7 +549,7 @@ describe("getResponsesByContactId", () => {
   test("scopes the query to the workspace of the contact", async () => {
     prisma.response.findMany.mockResolvedValue([]);
 
-    await getResponsesByContactId(mockContactId, mockWorkspaceId);
+    await getResponsesByContactId(mockContactId, mockWorkspaceId, {});
 
     expect(prisma.response.findMany).toHaveBeenCalledWith(
       expect.objectContaining({

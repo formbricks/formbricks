@@ -1,0 +1,7 @@
+type: object
+required:
+  - visibility
+properties:
+  visibility:
+    $ref: ./SurveyVisibility.yml
+additionalProperties: false

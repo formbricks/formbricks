@@ -9,16 +9,27 @@ import {
 import { buildWebhookDeliveryBody, processWebhookDeliveryJob } from "./process-webhook-delivery-job";
 import { recordWebhookDeliveryOutcome } from "./webhook-delivery-metrics";
 
-const { mockFindFirst, mockLoggerError, mockLoggerInfo, mockLoggerWarn } = vi.hoisted(() => ({
+const {
+  mockFindFirst,
+  mockSurveyFindUnique,
+  mockVisibilityReady,
+  mockLoggerError,
+  mockLoggerInfo,
+  mockLoggerWarn,
+} = vi.hoisted(() => ({
   mockFindFirst: vi.fn(),
+  mockSurveyFindUnique: vi.fn(),
+  mockVisibilityReady: vi.fn(async () => false),
   mockLoggerError: vi.fn(),
   mockLoggerInfo: vi.fn(),
   mockLoggerWarn: vi.fn(),
 }));
 
 vi.mock("@formbricks/database", () => ({
-  prisma: { webhook: { findFirst: mockFindFirst } },
+  prisma: { survey: { findUnique: mockSurveyFindUnique }, webhook: { findFirst: mockFindFirst } },
 }));
+
+vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: mockVisibilityReady }));
 
 vi.mock("@formbricks/jobs", () => ({
   UnrecoverableError: class UnrecoverableError extends Error {
@@ -311,6 +322,38 @@ describe("processWebhookDeliveryJob", () => {
       expect.objectContaining({ outcome: "skipped_rescoped" }),
       "Webhook delivery skipped: webhook no longer subscribed to this event"
     );
+  });
+
+  test("completes without a request when the survey was restricted after fan-out", async () => {
+    mockFindFirst.mockResolvedValue(target);
+    mockVisibilityReady.mockResolvedValueOnce(true);
+    mockSurveyFindUnique.mockResolvedValue({
+      visibility: "restricted",
+      visibilityProjectedVersion: 1,
+      visibilityVersion: 1,
+    });
+
+    await expect(processWebhookDeliveryJob(data, createContext())).resolves.toBeUndefined();
+
+    expect(mockSend).not.toHaveBeenCalled();
+    expect(mockRecordOutcome).toHaveBeenCalledWith({
+      outcome: "skipped_not_visible",
+      event: "responseFinished",
+    });
+  });
+
+  test("completes without a request when the survey was deleted while the delivery was queued", async () => {
+    mockFindFirst.mockResolvedValue(target);
+    mockVisibilityReady.mockResolvedValueOnce(true);
+    mockSurveyFindUnique.mockResolvedValue(null);
+
+    await expect(processWebhookDeliveryJob(data, createContext())).resolves.toBeUndefined();
+
+    expect(mockSend).not.toHaveBeenCalled();
+    expect(mockRecordOutcome).toHaveBeenCalledWith({
+      outcome: "skipped_not_visible",
+      event: "responseFinished",
+    });
   });
 
   test("treats a webhook that the workspace-scoped read cannot see as gone", async () => {

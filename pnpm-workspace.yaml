@@ -40,10 +40,9 @@ catalog:
   # exclusively plus three new peers), while vite-prerender-plugin — pulled in by
   # @preact/preset-vite for packages/surveys — caps at 7.x. Moving the repo to Vite 8
   # is its own migration, tracked separately; see ENG-1689's follow-ups.
-  # Note: the lockfile still resolves a vite 8 for `@vitest/eslint-plugin`, which declares
-  # `vitest` as an OPTIONAL peer with range `*`; `autoInstallPeers` then materialises the
-  # newest vitest, whose own vite peer picks 8. That predates this catalog, no importer
-  # references it, and nothing builds with it — every workspace resolves 7.3.5.
+  # Note: the workspace root declares `vite` alongside `vitest`. Without it, the root's vitest
+  # (and `@vitest/eslint-plugin`'s optional `vitest` peer, and packages/types' vitest) resolved
+  # their vite peer to the newest 8.x instead of this catalog's 7.3.5.
   vite: 7.3.5
   vitest: 4.1.11
   "@vitest/coverage-v8": 4.1.11
@@ -106,7 +105,7 @@ catalog:
   # --- server runtime ---
   zod: 4.3.6
   zod-openapi: 5.4.6
-  "@prisma/client": 7.8.0
+  "@prisma/client": 7.10.0
   # redis 5.x. apps/web was on 4.7.1 while @formbricks/cache was on 5.11.0, and because
   # apps/web has no nested copy its `import type { RedisClientType } from "redis"` in
   # lib/cache/index.ts resolved to the hoisted v4 type — then used to describe the v5

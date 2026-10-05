@@ -1,6 +1,5 @@
 import "server-only";
 import { cache as reactCache } from "react";
-import { ProxyAgent } from "undici";
 import { z } from "zod";
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
@@ -10,17 +9,12 @@ import { COMMUNITY_WORKSPACE_LIMIT, E2E_TESTING } from "@/lib/constants";
 import { env } from "@/lib/env";
 import { hashString } from "@/lib/hash-string";
 import { getInstanceId } from "@/lib/instance";
+import { type TProxiedRequestInit, proxyDispatcher } from "@/lib/proxy-dispatcher";
 import {
   TEnterpriseLicenseDetails,
   TEnterpriseLicenseFeatures,
   TLicenseStatus,
 } from "@/modules/ee/license-check/types/enterprise-license";
-
-// Module-level ProxyAgent singleton — reused across all license fetches to avoid leaking
-// socket pools on every call (ProxyAgent owns connection pools and should not be created
-// per-request in long-lived processes).
-const _proxyUrl = env.HTTPS_PROXY ?? env.HTTP_PROXY;
-const _proxyDispatcher = _proxyUrl ? new ProxyAgent(_proxyUrl) : undefined;
 
 // Configuration
 const CONFIG = {
@@ -398,11 +392,11 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
 
     const res = await fetch(CONFIG.API.ENDPOINT, {
       body: JSON.stringify(payload),
-      dispatcher: _proxyDispatcher,
+      dispatcher: proxyDispatcher,
       headers: { "Content-Type": "application/json" },
       method: "POST",
       signal: AbortSignal.timeout(CONFIG.API.TIMEOUT_MS),
-    } as RequestInit & { dispatcher?: ProxyAgent });
+    } as TProxiedRequestInit);
 
     if (res.ok) {
       const responseJson = (await res.json()) as { data: unknown };

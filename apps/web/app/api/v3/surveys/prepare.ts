@@ -514,10 +514,32 @@ export function prepareV3SurveyCreateInput(input: unknown): TV3SurveyPrepareResu
   return prepareV3SurveyCreate(parsed.data);
 }
 
+/**
+ * ENG-3282: `visibility`, `owner` and `access` are per-request, server-derived fields GET emits.
+ * Visibility changes only through `POST …/visibility` (contract §2), so a PATCH may carry them only as
+ * the exact values this caller's GET returned — the ENG-3069 round trip — and they are dropped. Any
+ * other value is left in place for the strict patch schema to refuse as `unsupported_field`.
+ */
+const VISIBILITY_ECHO_KEYS = ["visibility", "owner", "access"] as const;
+
+export type TV3SurveyReportedVisibility = Readonly<Record<(typeof VISIBILITY_ECHO_KEYS)[number], unknown>>;
+
+function dropEchoedVisibilityFields(input: unknown, reported?: TV3SurveyReportedVisibility): unknown {
+  if (!reported || typeof input !== "object" || input === null || Array.isArray(input)) return input;
+
+  const body = { ...(input as Record<string, unknown>) };
+  for (const key of VISIBILITY_ECHO_KEYS) {
+    if (key in body && JSON.stringify(body[key]) === JSON.stringify(reported[key])) delete body[key];
+  }
+  return body;
+}
+
 export function prepareV3SurveyPatchInput(
   survey: TInternalSurvey,
-  input: unknown
+  rawInput: unknown,
+  options: Readonly<{ reportedVisibility?: TV3SurveyReportedVisibility }> = {}
 ): TV3SurveyPrepareResult<TV3SurveyDocument> {
+  const input = dropEchoedVisibilityFields(rawInput, options.reportedVisibility);
   const allowedLanguageCodes = getV3SurveyPatchAllowedLanguageCodes(survey);
   const currentDocument = parseStoredV3SurveyDocument(survey, allowedLanguageCodes);
 

@@ -175,7 +175,8 @@ export const exampleData = {
     ],
     hiddenFields: [
       {
-        id: "userId",
+        id: "user_id",
+        name: "User ID",
         value: "user-abc-123",
       },
     ],

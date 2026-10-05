@@ -18,6 +18,7 @@
     "db:up": "pnpm dev:setup && docker compose -f docker-compose.dev.yml up -d",
     "db:down": "docker compose -f docker-compose.dev.yml down",
     "authzed:backfill": "dotenv -e .env -v NODE_OPTIONS=--conditions=react-server -v LOG_LEVEL=fatal -- tsx --tsconfig apps/web/tsconfig.json ./apps/web/scripts/authzed-backfill.ts",
+    "authzed:outbox": "dotenv -e .env -v NODE_OPTIONS=--conditions=react-server -v LOG_LEVEL=fatal -- tsx --tsconfig apps/web/tsconfig.json ./apps/web/scripts/docker/authzed-cli.ts outbox",
     "authzed:perf": "dotenv -e .env -v NODE_OPTIONS=--conditions=react-server -v LOG_LEVEL=fatal -- tsx --tsconfig apps/web/tsconfig.json ./apps/web/scripts/authzed-perf.ts",
     "authzed:health": "dotenv -e .env -v NODE_OPTIONS=--conditions=react-server -v LOG_LEVEL=fatal -- tsx --tsconfig apps/web/tsconfig.json ./apps/web/scripts/authzed-health.ts",
     "authzed:schema": "dotenv -e .env -v NODE_OPTIONS=--conditions=react-server -v LOG_LEVEL=fatal -- tsx --tsconfig apps/web/tsconfig.json ./apps/web/scripts/authzed-schema.ts",
@@ -34,7 +35,8 @@
     "catalog:check": "node scripts/check-catalog.mjs",
     "lint": "turbo run lint && pnpm api:v3:lint && pnpm catalog:check",
     "typecheck": "turbo run typecheck",
-    "test": "turbo run test --no-cache",
+    "test": "turbo run test test:root --no-cache",
+    "test:root": "vitest run --config vitest.root.config.mts",
     "test:coverage": "turbo run test:coverage --no-cache",
     "test:e2e": "playwright test",
     "test-e2e:azure": "pnpm test:e2e -c playwright.service.config.ts --workers=10",
@@ -70,10 +72,12 @@
     "prettier-plugin-tailwindcss": "catalog:",
     "rimraf": "catalog:",
     "tsx": "catalog:",
-    "turbo": "2.9.14"
+    "turbo": "2.9.14",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   },
   "engines": {
-    "node": ">=20.19.0 <21 || >=22.12.0 <23 || >=24.0.0 <25"
+    "node": ">=24.0.0 <25"
   },
   "packageManager": "pnpm@11.7.0"
 }

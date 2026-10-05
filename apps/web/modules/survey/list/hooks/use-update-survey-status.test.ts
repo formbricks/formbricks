@@ -37,6 +37,9 @@ function createQueryData(): { pages: TSurveyListPage[]; pageParams: (string | nu
             completedResponseCount: 5,
             creator: { name: "Alice" },
             singleUse: null,
+            visibility: "workspace",
+            owner: { name: "Test User" },
+            access: { via: "workspace", canManageVisibility: false },
           },
           {
             id: "survey_2",
@@ -52,6 +55,9 @@ function createQueryData(): { pages: TSurveyListPage[]; pageParams: (string | nu
             completedResponseCount: 0,
             creator: { name: "Bob" },
             singleUse: null,
+            visibility: "workspace",
+            owner: { name: "Test User" },
+            access: { via: "workspace", canManageVisibility: false },
           },
         ],
         meta: {
@@ -73,6 +79,7 @@ const queryKeyInput = {
     name: "",
     status: [] as never[],
     type: [] as never[],
+    visibility: [] as never[],
     sortBy: "relevance" as const,
   },
 };
