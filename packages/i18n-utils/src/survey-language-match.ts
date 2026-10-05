@@ -27,10 +27,10 @@ export interface TMatchableSurveyLanguage {
 const cleanRequestedCode = (code: string): string => code.split(";")[0].trim();
 
 /** `_` and `-` are the same separator for matching purposes, and casing never matters. */
-const toComparableCode = (code: string): string => code.trim().replace(/_/g, "-").toLowerCase();
+const toComparableCode = (code: string): string => code.trim().replaceAll("_", "-").toLowerCase();
 
 /** `Intl.Locale` rejects `_`, so the tier-3/4 helpers are fed the hyphenated spelling. */
-const toHyphenatedCode = (code: string): string => code.trim().replace(/_/g, "-");
+const toHyphenatedCode = (code: string): string => code.trim().replaceAll("_", "-");
 
 const toMatchResult = (surveyLanguage: TMatchableSurveyLanguage): string =>
   surveyLanguage.default ? DEFAULT_SURVEY_LANGUAGE_KEY : surveyLanguage.language.code;

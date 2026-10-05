@@ -1,3 +1,4 @@
+import { resolveSurveyLanguage } from "@formbricks/i18n-utils/survey-language-match";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
@@ -143,6 +144,36 @@ interface GateLocaleParams {
   /** The locale negotiated from the Accept-Language header. */
   fallbackLocale: TUserLocale;
 }
+
+/**
+ * The language a link survey renders in, read once on the server.
+ *
+ * Read from Accept-Language rather than the client's `navigator.languages`, so the very first paint is
+ * already in the right language — no flash of the default language, and it works the same inside an
+ * embed. Explicit `?lang=` first; one that matches nothing falls through to the browser languages (when
+ * the survey opted in) and then the default — see `resolveSurveyLanguage`. A repeated `?lang=a&lang=b`
+ * arrives as an array and counts as no explicit language.
+ */
+export const resolveLinkSurveyLanguage = ({
+  survey,
+  lang,
+  acceptedLanguages,
+}: {
+  survey: Pick<TSurvey, "languages" | "autoSelectLanguage">;
+  lang: string | string[] | undefined;
+  acceptedLanguages: string[];
+}): { langParam: string | undefined; languageCode: string } => {
+  const langParam = typeof lang === "string" ? lang : undefined;
+  const languageCode =
+    resolveSurveyLanguage({
+      languages: survey.languages,
+      explicitLanguage: langParam,
+      browserLanguages: acceptedLanguages,
+      autoSelectLanguage: survey.autoSelectLanguage,
+      unmatchedExplicitLanguage: "fallback",
+    }) ?? "default";
+  return { langParam, languageCode };
+};
 
 /**
  * The locale the gate screens in front of a survey (PIN entry, email verification) translate their own

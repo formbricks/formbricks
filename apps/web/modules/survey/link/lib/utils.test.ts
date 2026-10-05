@@ -10,6 +10,7 @@ import {
   getWebAppLocale,
   isRTL,
   isRTLLanguage,
+  resolveLinkSurveyLanguage,
   resolveWebAppLocale,
 } from "./utils";
 
@@ -162,6 +163,38 @@ describe("resolveWebAppLocale", () => {
 
   test("resolves 'default' through the survey's default language", () => {
     expect(resolveWebAppLocale("default", createMockSurvey([createLanguage("de", true)]))).toBe("de-DE");
+  });
+});
+
+describe("resolveLinkSurveyLanguage", () => {
+  const languages = [createLanguage("en-US", true), createLanguage("de-DE")];
+  const optedIn = { ...createMockSurvey(languages), autoSelectLanguage: true };
+
+  test("prefers an explicit ?lang= over the browser languages", () => {
+    expect(
+      resolveLinkSurveyLanguage({ survey: optedIn, lang: "en-US", acceptedLanguages: ["de-DE"] })
+    ).toEqual({ langParam: "en-US", languageCode: "default" });
+  });
+
+  test("falls through an unmatched ?lang= to the browser languages", () => {
+    expect(resolveLinkSurveyLanguage({ survey: optedIn, lang: "xx", acceptedLanguages: ["de-DE"] })).toEqual({
+      langParam: "xx",
+      languageCode: "de-DE",
+    });
+  });
+
+  test("ignores the browser languages when the survey did not opt in", () => {
+    const survey = { ...createMockSurvey(languages), autoSelectLanguage: false };
+    expect(resolveLinkSurveyLanguage({ survey, lang: undefined, acceptedLanguages: ["de-DE"] })).toEqual({
+      langParam: undefined,
+      languageCode: "default",
+    });
+  });
+
+  test("treats a repeated ?lang= as no explicit language", () => {
+    expect(
+      resolveLinkSurveyLanguage({ survey: optedIn, lang: ["en-US", "de-DE"], acceptedLanguages: ["de-DE"] })
+    ).toEqual({ langParam: undefined, languageCode: "de-DE" });
   });
 });
 
