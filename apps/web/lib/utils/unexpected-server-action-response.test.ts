@@ -132,6 +132,17 @@ describe("isUnexpectedServerActionResponseError", () => {
     expect(isUnexpectedServerActionResponseError(rejection)).toBe(false);
   });
 
+  test("leaves a server action's redirect() alone, though it carries the same code", () => {
+    // The real error Next.js rejects an action call with when the action redirects. It shares E394
+    // (Next's code for any `new Error(<dynamic message>)`), and reporting it would put "your last
+    // action may not have gone through" over a navigation that succeeded.
+    const { getRedirectError } = require("next/dist/client/components/redirect");
+    const redirect = getRedirectError("/workspaces/w1/surveys", "push");
+
+    expect(redirect.__NEXT_ERROR_CODE).toBe("E394");
+    expect(isUnexpectedServerActionResponseError(redirect)).toBe(false);
+  });
+
   test("rejects anything that does not carry the framework's code", () => {
     const impostor = new Error("An unexpected response was received from the server.");
 

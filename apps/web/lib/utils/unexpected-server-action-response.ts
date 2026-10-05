@@ -10,11 +10,18 @@
  *
  * The code is matched rather than the message because the message is not stable: Next.js passes the
  * body through as the message when the response is a 4xx/5xx `text/plain`.
+ *
+ * The code alone is not unique, though: `E394` is what Next.js stamps on every `new Error(<dynamic
+ * message>)` it throws, including the `NEXT_REDIRECT` error a server action's `redirect()` rejects
+ * with. Next.js marks each of its control-flow throws (`redirect()`, `notFound()`, ...) with a
+ * `digest`, which is how its own `isRedirectError` recognises them, and the unexpected-response
+ * rejection carries none -- so a `digest` rules an error out.
  */
 const NEXT_UNEXPECTED_ACTION_RESPONSE_ERROR_CODE = "E394";
 
 export const isUnexpectedServerActionResponseError = (error: unknown): error is Error =>
   error instanceof Error &&
+  !("digest" in error) &&
   "__NEXT_ERROR_CODE" in error &&
   error.__NEXT_ERROR_CODE === NEXT_UNEXPECTED_ACTION_RESPONSE_ERROR_CODE;
 

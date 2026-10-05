@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { registerUnexpectedServerActionResponseListener } from "@/lib/utils/unexpected-server-action-response";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -14,31 +14,49 @@ import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/c
  * discard unsaved edits. The user is asked to check and try again, which is the one safe next step.
  *
  * Each new failure remounts the alert, so screen readers announce it again rather than staying
- * silent while an earlier notice is still on screen.
+ * silent while an earlier notice is still on screen. If focus was inside the old one, it moves to the
+ * new one's Close button instead of dropping to the document body.
  */
 export const ServerActionFailureNotice = () => {
   const { t } = useTranslation();
   const [failureCount, setFailureCount] = useState(0);
   const [isDismissed, setIsDismissed] = useState(true);
+  const alertRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const hadFocusRef = useRef(false);
 
   useEffect(
     () =>
       registerUnexpectedServerActionResponseListener(() => {
+        hadFocusRef.current = alertRef.current?.contains(document.activeElement) ?? false;
         setFailureCount((count) => count + 1);
         setIsDismissed(false);
       }),
     []
   );
 
+  useEffect(() => {
+    if (hadFocusRef.current) {
+      hadFocusRef.current = false;
+      closeButtonRef.current?.focus();
+    }
+  }, [failureCount]);
+
   if (isDismissed) {
     return null;
   }
 
   return (
-    <Alert key={failureCount} variant="error" className="pointer-events-auto max-w-sm shadow-lg">
+    <Alert
+      key={failureCount}
+      ref={alertRef}
+      variant="error"
+      className="pointer-events-auto max-w-sm shadow-lg">
       <AlertTitle>{t("common.something_went_wrong")}</AlertTitle>
       <AlertDescription>{t("common.action_may_not_have_gone_through")}</AlertDescription>
-      <AlertButton onClick={() => setIsDismissed(true)}>{t("common.close")}</AlertButton>
+      <AlertButton ref={closeButtonRef} onClick={() => setIsDismissed(true)}>
+        {t("common.close")}
+      </AlertButton>
     </Alert>
   );
 };
