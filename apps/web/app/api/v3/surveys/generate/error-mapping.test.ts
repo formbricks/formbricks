@@ -133,7 +133,7 @@ describe("mapV3SurveyGenerateError", () => {
     // The service layer turns this into a TooManyRequestsError before it reaches here; this guards
     // the raw classification so a 429 can never fall into the credentials branch.
     const response = mapV3SurveyGenerateError(
-      new AIOAuthTokenError("token_request_failed", { statusCode: 429, tokenUrlHost: "idp.example" }),
+      new AIOAuthTokenError("token_endpoint_throttled", { statusCode: 429, tokenUrlHost: "idp.example" }),
       context
     );
 

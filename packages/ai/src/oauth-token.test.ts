@@ -3,6 +3,7 @@ import { AIOAuthTokenError } from "./errors";
 import {
   OAUTH_TOKEN_DEFAULT_TTL_MS,
   OAUTH_TOKEN_EXPIRY_SKEW_MS,
+  OAUTH_TOKEN_MAX_TTL_MS,
   OAUTH_TOKEN_NEGATIVE_CACHE_MS,
   OAUTH_TOKEN_REQUEST_TIMEOUT_MS,
   type OAuthClientCredentialsConfig,
@@ -54,11 +55,11 @@ const getBody = (fetchMock: ReturnType<typeof vi.fn>, call = 0): URLSearchParams
 describe("createOAuthTokenSource", () => {
   test("mints a new token once the cached one reaches the expiry skew", async () => {
     const clock = createClock();
-    const fetchMock = createMintingFetch({ expires_in: 90 });
+    const fetchMock = createMintingFetch({ expires_in: 120 });
     const source = createOAuthTokenSource(baseConfig, { fetch: fetchMock, now: clock.now });
 
     await expect(source.getToken()).resolves.toBe("tok-1");
-    clock.advance(90_000 - OAUTH_TOKEN_EXPIRY_SKEW_MS - 1);
+    clock.advance(120_000 - OAUTH_TOKEN_EXPIRY_SKEW_MS - 1);
     await expect(source.getToken()).resolves.toBe("tok-1");
     clock.advance(1);
     await expect(source.getToken()).resolves.toBe("tok-2");
@@ -77,11 +78,11 @@ describe("createOAuthTokenSource", () => {
 
   test("shares one refresh between concurrent callers at the expiry boundary", async () => {
     const clock = createClock();
-    const fetchMock = createMintingFetch({ expires_in: 90 });
+    const fetchMock = createMintingFetch({ expires_in: 120 });
     const source = createOAuthTokenSource(baseConfig, { fetch: fetchMock, now: clock.now });
 
     await source.getToken();
-    clock.advance(90_000);
+    clock.advance(120_000);
     const tokens = await Promise.all(Array.from({ length: 20 }, () => source.getToken()));
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -146,7 +147,10 @@ describe("createOAuthTokenSource", () => {
       .mockResolvedValueOnce(tokenResponse("tok-1"));
     const source = createOAuthTokenSource(baseConfig, { fetch: fetchMock });
 
-    await expect(source.getToken()).rejects.toMatchObject({ code: "token_request_failed", statusCode: 503 });
+    await expect(source.getToken()).rejects.toMatchObject({
+      code: "token_endpoint_unavailable",
+      statusCode: 503,
+    });
     await expect(source.getToken()).resolves.toBe("tok-1");
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
@@ -155,12 +159,12 @@ describe("createOAuthTokenSource", () => {
     const clock = createClock();
     const fetchMock = vi
       .fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>()
-      .mockResolvedValueOnce(tokenResponse("tok-1", { expires_in: 90 }))
+      .mockResolvedValueOnce(tokenResponse("tok-1", { expires_in: 120 }))
       .mockResolvedValue(new Response('{"error":"slow_down"}', { status: 429 }));
     const source = createOAuthTokenSource(baseConfig, { fetch: fetchMock, now: clock.now });
 
     await source.getToken();
-    clock.advance(90_000 - OAUTH_TOKEN_EXPIRY_SKEW_MS);
+    clock.advance(120_000 - OAUTH_TOKEN_EXPIRY_SKEW_MS);
 
     // Throttled inside the skew: the still-valid token is reused and the endpoint is left alone
     // for the back-off window.
@@ -175,7 +179,10 @@ describe("createOAuthTokenSource", () => {
 
     // Token expired while the new back-off still holds: nothing to fall back to, endpoint left alone.
     clock.advance(10_000);
-    await expect(source.getToken()).rejects.toMatchObject({ code: "token_request_failed", statusCode: 429 });
+    await expect(source.getToken()).rejects.toMatchObject({
+      code: "token_endpoint_throttled",
+      statusCode: 429,
+    });
     expect(fetchMock).toHaveBeenCalledTimes(3);
 
     clock.advance(OAUTH_TOKEN_NEGATIVE_CACHE_MS - 10_000);
@@ -200,12 +207,12 @@ describe("createOAuthTokenSource", () => {
     const clock = createClock();
     const fetchMock = vi
       .fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>()
-      .mockResolvedValueOnce(tokenResponse("tok-1", { expires_in: 90 }))
+      .mockResolvedValueOnce(tokenResponse("tok-1", { expires_in: 120 }))
       .mockRejectedValue(new TypeError("fetch failed"));
     const source = createOAuthTokenSource(baseConfig, { fetch: fetchMock, now: clock.now });
 
     await source.getToken();
-    clock.advance(90_000 - OAUTH_TOKEN_EXPIRY_SKEW_MS);
+    clock.advance(120_000 - OAUTH_TOKEN_EXPIRY_SKEW_MS);
     await expect(source.getToken()).resolves.toBe("tok-1");
     expect(fetchMock).toHaveBeenCalledTimes(2);
 
@@ -213,17 +220,54 @@ describe("createOAuthTokenSource", () => {
     await expect(source.getToken()).rejects.toMatchObject({ code: "token_endpoint_unreachable" });
   });
 
-  test("does not fall back to the cached token when the refresh is rejected outright", async () => {
+  test("keeps serving the unexpired cached token when the refresh is rejected, and fails once it expires", async () => {
     const clock = createClock();
     const fetchMock = vi
       .fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>()
-      .mockResolvedValueOnce(tokenResponse("tok-1", { expires_in: 90 }))
+      .mockResolvedValueOnce(tokenResponse("tok-1", { expires_in: 120 }))
       .mockResolvedValue(new Response("", { status: 401 }));
     const source = createOAuthTokenSource(baseConfig, { fetch: fetchMock, now: clock.now });
 
     await source.getToken();
-    clock.advance(90_000 - OAUTH_TOKEN_EXPIRY_SKEW_MS);
+    clock.advance(120_000 - OAUTH_TOKEN_EXPIRY_SKEW_MS);
+
+    // The endpoint refusing a new token does not revoke the one already issued.
+    await expect(source.getToken()).resolves.toBe("tok-1");
+    await expect(source.getToken()).resolves.toBe("tok-1");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    clock.advance(OAUTH_TOKEN_EXPIRY_SKEW_MS);
     await expect(source.getToken()).rejects.toMatchObject({ code: "token_request_failed", statusCode: 401 });
+  });
+
+  test("reuses a short-lived token between sequential calls instead of minting per call", async () => {
+    const clock = createClock();
+    const fetchMock = createMintingFetch({ expires_in: 30 });
+    const source = createOAuthTokenSource(baseConfig, { fetch: fetchMock, now: clock.now });
+
+    for (let i = 0; i < 5; i += 1) {
+      await expect(source.getToken()).resolves.toBe("tok-1");
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    // Skew is capped at half the lifetime: refresh at 15s, not "immediately" as a fixed 60s would give.
+    clock.advance(15_000 - 1);
+    await expect(source.getToken()).resolves.toBe("tok-1");
+    clock.advance(1);
+    await expect(source.getToken()).resolves.toBe("tok-2");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  test("clamps an oversized expires_in to the maximum lifetime", async () => {
+    const clock = createClock();
+    const fetchMock = createMintingFetch({ expires_in: 1e12 });
+    const source = createOAuthTokenSource(baseConfig, { fetch: fetchMock, now: clock.now });
+
+    await source.getToken();
+    clock.advance(OAUTH_TOKEN_MAX_TTL_MS - OAUTH_TOKEN_EXPIRY_SKEW_MS - 1);
+    await expect(source.getToken()).resolves.toBe("tok-1");
+    clock.advance(1);
+    await expect(source.getToken()).resolves.toBe("tok-2");
   });
 
   test("ignores a stale invalidate once a successor token has been minted", async () => {
@@ -368,6 +412,43 @@ describe("createOAuthFetch", () => {
 
     expect(getInit(tokenFetch).signal).not.toBe(controller.signal);
     expect(getInit(tokenFetch).signal?.aborted).toBe(false);
+  });
+
+  test("releases an aborted caller at once while the shared token request keeps running", async () => {
+    let resolveToken!: (response: Response) => void;
+    const tokenFetch = vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveToken = resolve;
+        })
+    );
+    const source = createOAuthTokenSource(baseConfig, { fetch: tokenFetch });
+    modelFetch.mockResolvedValue(new Response("ok"));
+    const oauthFetch = createOAuthFetch(source);
+    const controller = new AbortController();
+
+    const aborted = oauthFetch(MODEL_URL, { body: "{}", signal: controller.signal });
+    const other = oauthFetch(MODEL_URL, { body: "{}" });
+    controller.abort(new DOMException("stopped", "AbortError"));
+
+    await expect(aborted).rejects.toMatchObject({ name: "AbortError" });
+    expect(modelFetch).not.toHaveBeenCalled();
+
+    resolveToken(tokenResponse("tok-1"));
+    expect((await other).status).toBe(200);
+    expect(tokenFetch).toHaveBeenCalledTimes(1);
+    expect(getInit(tokenFetch).signal?.aborted).toBe(false);
+  });
+
+  test("does not start a token request for an already-aborted caller", async () => {
+    const { source, tokenFetch } = createSource();
+    const controller = new AbortController();
+    controller.abort(new DOMException("stopped", "AbortError"));
+
+    await expect(
+      createOAuthFetch(source)(MODEL_URL, { body: "{}", signal: controller.signal })
+    ).rejects.toMatchObject({ name: "AbortError" });
+    expect(tokenFetch).not.toHaveBeenCalled();
   });
 
   test("refreshes the token and retries once on a 401", async () => {

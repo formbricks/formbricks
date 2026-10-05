@@ -46,17 +46,36 @@ export class AIOutputTokenLimitError extends Error {
 }
 
 export type AIOAuthTokenErrorCode =
+  /** The endpoint answered with a definitive non-2xx (a 4xx, or a 3xx since redirects are not followed). */
   | "token_request_failed"
   | "token_response_invalid"
+  /** The endpoint answered 429. */
+  | "token_endpoint_throttled"
+  /** The endpoint answered 5xx. */
+  | "token_endpoint_unavailable"
   | "token_endpoint_timeout"
   | "token_endpoint_unreachable";
 
+/**
+ * Fixed, status-neutral messages. An administrator reads these in the server log during an incident:
+ * none may claim the credentials were rejected unless the code says so, or an identity-provider
+ * outage sends them to rotate a secret that is fine.
+ */
 const OAUTH_TOKEN_ERROR_MESSAGES: Record<AIOAuthTokenErrorCode, string> = {
-  token_request_failed: "OAuth2 token endpoint rejected the client credentials request",
+  token_request_failed: "OAuth2 token endpoint returned an error status for the token request",
   token_response_invalid: "OAuth2 token endpoint returned a response without a usable bearer token",
+  token_endpoint_throttled: "OAuth2 token endpoint is rate-limiting token requests",
+  token_endpoint_unavailable: "OAuth2 token endpoint returned a server error",
   token_endpoint_timeout: "OAuth2 token endpoint did not respond in time",
   token_endpoint_unreachable: "OAuth2 token endpoint could not be reached",
 };
+
+const TRANSIENT_OAUTH_TOKEN_ERROR_CODES: ReadonlySet<AIOAuthTokenErrorCode> = new Set([
+  "token_endpoint_throttled",
+  "token_endpoint_unavailable",
+  "token_endpoint_timeout",
+  "token_endpoint_unreachable",
+]);
 
 /**
  * Thrown when the OAuth2 client-credentials token for the AI provider cannot be obtained.
@@ -135,12 +154,8 @@ export const classifyAIProviderError = (error: unknown): AIProviderErrorInfo | u
     // failure or a 5xx is the identity provider being down, and a 429 is it throttling: reporting
     // either as "credentials rejected" would send an administrator to rotate a secret that is fine.
     // The 429 is surfaced as quota exhaustion so callers show their rate-limit message for it.
-    const isThrottled = error.statusCode === 429;
-    const isTransient =
-      isThrottled ||
-      error.code === "token_endpoint_timeout" ||
-      error.code === "token_endpoint_unreachable" ||
-      (error.statusCode !== undefined && error.statusCode >= 500);
+    const isThrottled = error.code === "token_endpoint_throttled";
+    const isTransient = TRANSIENT_OAUTH_TOKEN_ERROR_CODES.has(error.code);
     return {
       isAuthFailure: !isTransient,
       isQuotaExhausted: isThrottled,
@@ -154,13 +169,21 @@ export const classifyAIProviderError = (error: unknown): AIProviderErrorInfo | u
   }
 
   // After the SDK exhausts its internal retries it wraps the per-attempt errors in a RetryError;
-  // dig out the most recent APICallError to recover the real status code.
+  // dig out the most recent provider or token error to recover the real cause. The token error is
+  // a candidate too: a retry after a gateway 5xx can fail at the token endpoint instead, and the
+  // latest attempt is the one that describes the current state.
   if (RetryError.isInstance(error)) {
-    const apiError = [...error.errors, error.lastError]
+    const latest = [...error.errors, error.lastError]
       .reverse()
-      .find((candidate): candidate is APICallError => APICallError.isInstance(candidate));
-    if (apiError) {
-      return buildInfo(apiError);
+      .find(
+        (candidate): candidate is APICallError | AIOAuthTokenError =>
+          candidate instanceof AIOAuthTokenError || APICallError.isInstance(candidate)
+      );
+    if (latest instanceof AIOAuthTokenError) {
+      return classifyAIProviderError(latest);
+    }
+    if (latest) {
+      return buildInfo(latest);
     }
     return {
       isAuthFailure: false,

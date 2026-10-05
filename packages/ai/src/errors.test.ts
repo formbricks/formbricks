@@ -162,7 +162,7 @@ describe("AIOAuthTokenError", () => {
   test.each([
     ["a timeout", "token_endpoint_timeout", undefined],
     ["an unreachable endpoint", "token_endpoint_unreachable", undefined],
-    ["a 5xx", "token_request_failed", 503],
+    ["a 5xx", "token_endpoint_unavailable", 503],
   ] as const)("classifies %s as a retryable outage, not an auth failure", (_label, code, statusCode) => {
     expect(
       classifyAIProviderError(new AIOAuthTokenError(code, { statusCode, tokenUrlHost: "idp.example" }))
@@ -182,7 +182,7 @@ describe("classifyAIProviderError isAuthFailure", () => {
 
   test("treats a token-endpoint 429 as throttling, not rejected credentials", () => {
     const info = classifyAIProviderError(
-      new AIOAuthTokenError("token_request_failed", { statusCode: 429, tokenUrlHost: "idp.example" })
+      new AIOAuthTokenError("token_endpoint_throttled", { statusCode: 429, tokenUrlHost: "idp.example" })
     );
 
     expect(info).toMatchObject({
@@ -191,6 +191,34 @@ describe("classifyAIProviderError isAuthFailure", () => {
       isRetryable: true,
       statusCode: 429,
     });
+  });
+
+  test("classifies a token failure that follows a retried gateway 5xx as an auth failure", () => {
+    const retryError = new RetryError({
+      message: "Failed",
+      reason: "errorNotRetryable",
+      errors: [
+        makeApiError(500),
+        new AIOAuthTokenError("token_request_failed", { statusCode: 401, tokenUrlHost: "idp.example" }),
+      ],
+    });
+
+    expect(classifyAIProviderError(retryError)).toMatchObject({
+      isAuthFailure: true,
+      isRetryable: false,
+      statusCode: 401,
+    });
+  });
+
+  test.each([
+    ["token_endpoint_throttled", 429],
+    ["token_endpoint_unavailable", 503],
+    ["token_endpoint_timeout", undefined],
+    ["token_endpoint_unreachable", undefined],
+  ] as const)("never describes %s as rejected credentials in the logged message", (code, statusCode) => {
+    const { message } = new AIOAuthTokenError(code, { statusCode, tokenUrlHost: "idp.example" });
+
+    expect(message).not.toMatch(/rejected|credentials/i);
   });
 
   test("recovers the auth failure from a RetryError", () => {
