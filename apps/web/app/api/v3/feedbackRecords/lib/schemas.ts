@@ -147,7 +147,7 @@ export const ZV3FeedbackRecordFilters = z
       "Only records Hub stored at or before this ISO 8601 timestamp (bounds created_at, inclusive)."
     ),
     updated_since: timestampFilter(
-      "Only records created or changed at or after this ISO 8601 timestamp (bounds updated_at, inclusive). updated_at is stamped on create, on every correction and on every enrichment result, so this is the filter for incremental extraction. For the next run, pass the time the previous run started minus a few minutes of overlap — not the newest updated_at received, which skips records that changed after being paged past — and sort by created_at or collected_at, never by updated_at. Deleted records are never returned — detect deletions by periodically listing every record id."
+      "Only records created or changed at or after this ISO 8601 timestamp (bounds updated_at, inclusive). updated_at is stamped on create, on every correction and on every enrichment result, so this answers 'what was created or changed since'. Take the timestamp from the server (e.g. a previous record's updated_at or a user-supplied time), never from your own idea of the current time. Deleted records are never returned. To find deletions, list every record without this filter and treat as deleted only local records that are missing AND were created before that listing began, minus a few minutes — anything newer may simply have been created during the listing."
     ),
     updated_until: timestampFilter(
       "Only records last created or changed at or before this ISO 8601 timestamp (bounds updated_at, inclusive)."
@@ -235,7 +235,7 @@ export const ZV3FeedbackRecordListFilters = ZV3FeedbackRecordFilters.extend({
     .enum(["collected_at", "created_at"])
     .optional()
     .describe(
-      "Column to order by. Defaults to collected_at. Keep this identical on every page of one traversal: a cursor is a position within one specific ordering, so presenting it with a different sort or order is rejected."
+      "Column to order by. Defaults to collected_at. Keep this identical on every page of one traversal: a cursor is a position within one specific ordering, so presenting it with a different sort or order is rejected. updated_at is deliberately not offered: it changes while you page, so when filtering by updated_since, order by created_at instead."
     ),
   order: z
     .enum(["asc", "desc"])

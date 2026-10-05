@@ -23,7 +23,8 @@ get:
     Upsert by `id` and let the most recent fetch win. Deleted records leave nothing for
     `updated_since` to match, so reconcile deletions separately: periodically list every record id
     with no `updated_since`, and remove the local records that were not returned and were created
-    before that listing started.
+    before that listing's start (its first response's `Date` header) minus the overlap. Run one
+    sync at a time.
   tags:
     - V3 Feedback Records
   parameters:

@@ -131,14 +131,15 @@ curl "https://app.formbricks.com/api/v3/feedbackRecords?tenant_id=<datasetId>&up
   of the run's first response, so drift between your clock and ours cannot open a gap. Do not use the newest
   `updated_at` you received: a record you paged past early can change while later pages are read, and its new
   `updated_at` is older than the newest one on your last page, so a watermark taken from the results skips it.
-  The overlap covers writes that were still committing when the run began, since `updated_at` is when a write
-  *started*. Five minutes is a safe default.
-- **Let the latest fetch win.** The overlap re-reads some records, so upsert by `id` and keep the copy from the
-  most recent run. Don't compare `updated_at` to choose: two writes to one record can commit in the opposite
-  order to the one they started in, so the newer state can carry the older timestamp.
+  The overlap covers writes that were still committing when the run began (`updated_at` is when a write
+  *started*), the time the first response took, and the difference between the clock that stamped `Date` and
+  the database's. Five minutes is a safe default.
+- **Let the latest fetch win, and run one sync at a time.** The overlap re-reads some records, so upsert by `id`
+  and keep the copy from the most recent run. Don't compare `updated_at` to choose: two writes to one record can
+  commit in the opposite order to the one they started in, so the newer state can carry the older timestamp.
 - **Deletions are not returned.** A deleted record leaves nothing for `updated_since` to match. To reconcile
   them, periodically list every record id in the dataset with no `updated_since`, noting when that listing
-  started. Remove the local records that were not returned **and were created before that start, minus the
+  started from its first response's `Date` header. Remove the local records that were not returned **and were created before that start, minus the
   overlap**. Anything newer may have been stored by your sync after the listing passed it, and deleting it would
   lose it. This catches every kind of delete, including deleting a user's records. It reads the whole dataset,
   so run it less often than the incremental sync, for example daily against an hourly sync.
