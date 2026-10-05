@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import { hasCredentialAccount } from "@/lib/user/password";
 import { sendSsoSignInHint } from "@/modules/auth/forgot-password/lib/sso-sign-in-hint";
 import { auth } from "@/modules/auth/lib/auth";
 import { getUserByEmail } from "@/modules/auth/lib/user";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { processPasswordResetRequest } from "./password-reset-request";
 
@@ -28,6 +30,7 @@ vi.mock("@/lib/user/password", () => ({ hasCredentialAccount: vi.fn() }));
 vi.mock("@/modules/auth/lib/user", () => ({ getUserByEmail: vi.fn() }));
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: { api: { requestPasswordReset: vi.fn() } } }));
 vi.mock("@/modules/auth/forgot-password/lib/sso-sign-in-hint", () => ({ sendSsoSignInHint: vi.fn() }));
+vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEventWithoutRequest: vi.fn() }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
 
@@ -74,6 +77,8 @@ describe("processPasswordResetRequest", () => {
 
       expect(auth.api.requestPasswordReset).not.toHaveBeenCalled();
       expect(sendSsoSignInHint).not.toHaveBeenCalled();
+      // Nothing is charged to a budget either: there is no account to charge.
+      expect(applyRateLimit).not.toHaveBeenCalled();
     });
 
     test("sends an SSO user with no credential account the sign-in hint, not a reset (ENG-3262)", async () => {
@@ -125,6 +130,60 @@ describe("processPasswordResetRequest", () => {
       // The hint says "your account does not use a password", which a failed lookup cannot vouch for.
       expect(sendSsoSignInHint).not.toHaveBeenCalled();
       expect(auth.api.requestPasswordReset).not.toHaveBeenCalled();
+      expect(applyRateLimit).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("per-account limit (ENG-3640)", () => {
+    test("charges each mail to the account it is for", async () => {
+      vi.mocked(getUserByEmail).mockResolvedValue(foundUser("email"));
+
+      await process();
+
+      expect(applyRateLimit).toHaveBeenCalledExactlyOnceWith(
+        { interval: 3600, allowedPerInterval: 3, namespace: "auth:forgot:account" },
+        "user123"
+      );
+      expect(applyRateLimit).toHaveBeenCalledBefore(vi.mocked(auth.api.requestPasswordReset));
+    });
+
+    test("sends no reset once the account's budget is spent", async () => {
+      vi.mocked(getUserByEmail).mockResolvedValue(foundUser("email"));
+      vi.mocked(applyRateLimit).mockRejectedValue(new TooManyRequestsError("limit"));
+
+      await expect(process()).resolves.toBeUndefined();
+
+      expect(auth.api.requestPasswordReset).not.toHaveBeenCalled();
+      expect(queueAuditEventWithoutRequest).not.toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(
+        { userId: "user123" },
+        "Forgot-password mail skipped: per-account limit reached"
+      );
+    });
+
+    test("sends no hint once the account's budget is spent — one budget covers both mails", async () => {
+      vi.mocked(getUserByEmail).mockResolvedValue(foundUser("azuread"));
+      vi.mocked(hasCredentialAccount).mockResolvedValue(false);
+      vi.mocked(applyRateLimit).mockRejectedValue(new TooManyRequestsError("limit"));
+
+      await process();
+
+      expect(sendSsoSignInHint).not.toHaveBeenCalled();
+    });
+
+    test("logs, rather than mistaking for a spent budget, any other limiter failure", async () => {
+      vi.mocked(getUserByEmail).mockResolvedValue(foundUser("email"));
+      const error = new Error("unexpected");
+      vi.mocked(applyRateLimit).mockRejectedValue(error);
+
+      await expect(process()).resolves.toBeUndefined();
+
+      expect(auth.api.requestPasswordReset).not.toHaveBeenCalled();
+      expect(logger.warn).not.toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalledWith(
+        { err: error },
+        "Forgot-password request failed after the response"
+      );
     });
   });
 

@@ -1,11 +1,14 @@
 import "server-only";
 import type { IdentityProvider } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import { EMAIL_AUTH_ENABLED, WEBAPP_URL } from "@/lib/constants";
 import { hasCredentialAccount } from "@/lib/user/password";
 import { sendSsoSignInHint } from "@/modules/auth/forgot-password/lib/sso-sign-in-hint";
 import { auth } from "@/modules/auth/lib/auth";
 import { getUserByEmail } from "@/modules/auth/lib/user";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 
@@ -55,11 +58,28 @@ export const canResetPassword = async (user: {
 };
 
 /**
+ * Charge one mail against this account's forgot-password budget (ENG-3640). The IP limit in the action
+ * does not stop someone rotating addresses from flooding one inbox; this does. `false` when the budget is
+ * spent. The limiter fails open if Redis is unavailable, like every other limit in the app.
+ */
+const consumeAccountMailBudget = async (userId: string): Promise<boolean> => {
+  try {
+    await applyRateLimit(rateLimitConfigs.auth.forgotPasswordPerAccount, userId);
+    return true;
+  } catch (error) {
+    if (error instanceof TooManyRequestsError) {
+      return false;
+    }
+    throw error;
+  }
+};
+
+/**
  * Everything a forgot-password request does that depends on the address (ENG-3639).
  *
  * It runs after the response (`after()` in the action), so nothing here — whether the address exists,
- * whether it has a password, the token write, the SMTP round trip — can change what the caller sees or
- * how long they wait. OWASP: "Ensure that responses return in a consistent amount of time
+ * whether it has a password, the token write, the SMTP round trip, a spent budget — can change what the
+ * caller sees or how long they wait. OWASP: "Ensure that responses return in a consistent amount of time
  * to prevent an attacker enumerating which accounts exist."
  *
  * Never throws: nothing after the response would catch it, so every failure is logged instead.
@@ -83,6 +103,11 @@ export const processPasswordResetRequest = async ({
 
     const resettable = await canResetPassword(user);
     if (resettable === null) {
+      return;
+    }
+
+    if (!(await consumeAccountMailBudget(user.id))) {
+      logger.warn({ userId: user.id }, "Forgot-password mail skipped: per-account limit reached");
       return;
     }
 
