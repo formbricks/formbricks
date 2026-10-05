@@ -21,11 +21,14 @@ export const withAfterMock = <T extends object>(nextServer: T): T & { after: typ
   after: runAfter,
 });
 
-/** Run everything scheduled with `after()` so far, including work it scheduled in turn. */
+/**
+ * Run everything scheduled with `after()` so far — concurrently, as Next starts them — and then any work
+ * those callbacks scheduled in turn.
+ */
 export const flushAfter = async (): Promise<void> => {
-  while (queued.length > 0) {
-    for (const callback of queued.splice(0)) {
-      await callback();
-    }
+  if (queued.length === 0) {
+    return;
   }
+  await Promise.all(queued.splice(0).map((callback) => callback()));
+  await flushAfter();
 };
