@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   findMismatchedPermissionRelations,
   getManagedResourceTypes,
+  getOrganizationScopedResourceTypes,
   isUnprojectedResourceType,
   summarizeObservation,
   toSourceRef,
@@ -176,6 +177,7 @@ describe("resource type classification", () => {
     "feedback_directory",
     "feedback_directory_assignment",
     "organization",
+    "survey",
     "team",
     "workspace",
   ])("treats %s as managed", (resourceType) => {
@@ -183,7 +185,7 @@ describe("resource type classification", () => {
     expect(isUnprojectedResourceType(resourceType)).toBe(false);
   });
 
-  test.each(["survey", "dashboard", "response"])(
+  test.each(["dashboard", "response"])(
     "treats %s as deliberately unprojected, not managed",
     (resourceType) => {
       // These exist in the schema for later resource-level sharing. Pruning them would delete
@@ -200,9 +202,19 @@ describe("resource type classification", () => {
       "feedback_directory",
       "feedback_directory_assignment",
       "organization",
+      "survey",
       "team",
       "workspace",
     ]);
+  });
+
+  // ENG-3282: the six-hourly audit runs the full-deployment scope, which must stay proportional to the
+  // number of grants. Surveys are swept only by their own scope.
+  test("keeps surveys out of the organization-scoped sweep", () => {
+    expect(getOrganizationScopedResourceTypes()).not.toContain("survey");
+    expect([...getOrganizationScopedResourceTypes(), "survey"].sort()).toEqual(
+      [...getManagedResourceTypes()].sort()
+    );
   });
 });
 
@@ -293,13 +305,12 @@ describe("summarizeObservation", () => {
 
   test("counts unprojected resource types as ignored without naming a record", () => {
     const summary = summarizeObservation([
-      tuple("survey", "survey-1", "workspace", "workspace", "ws-1"),
       tuple("dashboard", "dash-1", "workspace", "workspace", "ws-1"),
       tuple("response", "resp-1", "survey", "survey", "survey-1"),
     ]);
 
     expect(summary).toEqual({
-      ignored: 3,
+      ignored: 2,
       managedRelationships: [],
       parentEdges: [],
       sourceRefs: [],
@@ -449,6 +460,78 @@ describe("findMismatchedPermissionRelations", () => {
         [tuple("workspace", "ws-1", "organization", "organization", "org-1")],
         [tuple("workspace", "ws-1", "organization", "organization", "org-2")]
       )
+    ).toEqual([]);
+  });
+});
+
+describe("survey relationships (ENG-3282)", () => {
+  test("every survey relation names the survey as its source record", () => {
+    const summary = summarizeObservation([
+      tuple("survey", "survey-1", "workspace", "workspace", "ws-1"),
+      tuple("survey", "survey-1", "shared_workspace", "workspace", "ws-1"),
+      tuple("survey", "survey-1", "owner", "user", "user-1"),
+      tuple("survey", "survey-1", "private_owner", "user", "user-1"),
+    ]);
+
+    expect(summary.sourceRefs).toEqual([{ kind: "survey", surveyId: "survey-1" }]);
+    expect(summary.ignored).toBe(0);
+    expect(summary.unmanaged).toEqual([]);
+  });
+
+  test("reports both workspace-naming edges as parent claims, so a foreign one is caught", () => {
+    const summary = summarizeObservation([
+      tuple("survey", "survey-1", "workspace", "workspace", "ws-1"),
+      tuple("survey", "survey-1", "shared_workspace", "workspace", "ws-foreign"),
+      tuple("survey", "survey-1", "owner", "user", "user-1"),
+    ]);
+
+    expect(summary.parentEdges).toEqual(
+      expect.arrayContaining([
+        { childId: "survey-1", childType: "survey", relation: "workspace", workspaceId: "ws-1" },
+        { childId: "survey-1", childType: "survey", relation: "shared_workspace", workspaceId: "ws-foreign" },
+      ])
+    );
+    expect(summary.parentEdges).toHaveLength(2);
+  });
+
+  test("treats a user on a workspace relation as unrecognized rather than a survey record", () => {
+    const summary = summarizeObservation([tuple("survey", "survey-1", "shared_workspace", "user", "u")]);
+
+    expect(summary.sourceRefs).toEqual([]);
+    expect(summary.unmanaged).toEqual([
+      { objectId: "survey-1", objectType: "survey", relation: "shared_workspace" },
+    ]);
+  });
+
+  test("compares visibility edges exactly but leaves the workspace parent to the parent check", () => {
+    const expected = [
+      tuple("survey", "survey-1", "workspace", "workspace", "ws-1"),
+      tuple("survey", "survey-1", "owner", "user", "user-1"),
+      tuple("survey", "survey-1", "private_owner", "user", "user-1"),
+    ];
+
+    // The graph still says workspace-visible: a visibility change that never landed.
+    expect(
+      findMismatchedPermissionRelations(expected, [
+        tuple("survey", "survey-1", "workspace", "workspace", "ws-other"),
+        tuple("survey", "survey-1", "owner", "user", "user-1"),
+        tuple("survey", "survey-1", "shared_workspace", "workspace", "ws-1"),
+      ])
+    ).toEqual([
+      {
+        expectedRelations: ["owner", "private_owner"],
+        observedRelations: ["owner", "shared_workspace"],
+        source: { kind: "survey", surveyId: "survey-1" },
+      },
+    ]);
+
+    // Only the parent differs: not a permission mismatch.
+    expect(
+      findMismatchedPermissionRelations(expected, [
+        tuple("survey", "survey-1", "workspace", "workspace", "ws-other"),
+        tuple("survey", "survey-1", "owner", "user", "user-1"),
+        tuple("survey", "survey-1", "private_owner", "user", "user-1"),
+      ])
     ).toEqual([]);
   });
 });

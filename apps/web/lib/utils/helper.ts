@@ -246,6 +246,12 @@ export const getWorkspaceIdFromWebhookId = async (webhookId: string) => {
   return webhook.workspaceId;
 };
 
+export const getSurveyIdFromQuotaId = async (quotaId: string) => {
+  const quota = await getQuota(quotaId);
+
+  return quota.surveyId;
+};
+
 export const getWorkspaceIdFromQuotaId = async (quotaId: string) => {
   const quota = await getQuota(quotaId);
 

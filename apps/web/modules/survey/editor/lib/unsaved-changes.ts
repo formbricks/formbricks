@@ -32,12 +32,21 @@ const IGNORED_LEGACY_COLUMNS = {
  *
  * Only ids are dropped from `embeddedFields` — a rename, a retype or a reordered list all still read
  * as the unsaved edits they are.
+ *
+ * The visibility columns (ENG-3395) are not the author's either: they change only through their own
+ * endpoint — the save drops them — and the editor refreshes the route after such a change, so the
+ * `survey` prop can differ from `localSurvey` in them with nothing unsaved.
  */
 const ignoringServerOwned = (survey: TSurvey): TSurvey => ({
   ...survey,
   ...IGNORED_LEGACY_COLUMNS,
   updatedAt: IGNORED_UPDATED_AT,
   embeddedFields: survey.embeddedFields?.map(({ field: { id: _id, ...field }, link }) => ({ field, link })),
+  visibility: "workspace",
+  visibilityVersion: 0,
+  visibilityProjectedVersion: 0,
+  visibilityChangedAt: null,
+  visibilityChangedById: null,
 });
 
 /**

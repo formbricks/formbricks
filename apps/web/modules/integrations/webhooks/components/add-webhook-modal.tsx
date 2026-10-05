@@ -35,6 +35,7 @@ interface AddWebhookModalProps {
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
   allowInternalUrls: boolean;
+  surveyVisibilityEnabled: boolean;
 }
 
 export const AddWebhookModal = ({
@@ -43,7 +44,8 @@ export const AddWebhookModal = ({
   open,
   setOpen,
   allowInternalUrls,
-}: AddWebhookModalProps) => {
+  surveyVisibilityEnabled,
+}: Readonly<AddWebhookModalProps>) => {
   const router = useRouter();
   const {
     handleSubmit,
@@ -271,6 +273,7 @@ export const AddWebhookModal = ({
                 onSelectAllSurveys={handleSelectAllSurveys}
                 onSelectedSurveyChange={handleSelectedSurveyChange}
                 allowChanges={true}
+                surveyVisibilityEnabled={surveyVisibilityEnabled}
               />
             </div>
           </DialogBody>

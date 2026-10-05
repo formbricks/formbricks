@@ -5,6 +5,7 @@
 # Generated artifacts: the tool that writes them would immediately undo any
 # formatting, which would turn `pnpm format:check` red on an unrelated PR.
 pnpm-lock.yaml
+.devcontainer/devcontainer-lock.json
 docs/api-v3-reference/openapi.yml
 docs/api-v3-reference/.redocly.lint-ignore.yaml
 charts/**/README.md

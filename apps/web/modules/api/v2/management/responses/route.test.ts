@@ -19,6 +19,8 @@ const {
   mockSuccessResponse: vi.fn(),
 }));
 
+// Survey visibility (ENG-3282) is not enforced here: the readiness marker is off, not read from a database.
+vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
 vi.mock("@/modules/api/v2/auth/authenticated-api-client", () => ({
   authenticatedApiClient: mockAuthenticatedApiClient,
 }));
@@ -105,7 +107,7 @@ describe("GET /management/responses", () => {
     expect(mockGetAuthorizedApiKeyWorkspaceIds).toHaveBeenCalledWith(
       expect.objectContaining({ apiKeyId: "apiKey123" })
     );
-    expect(mockGetResponses).toHaveBeenCalledWith(["ws123"], query);
+    expect(mockGetResponses).toHaveBeenCalledWith(["ws123"], query, {});
     expect(response.status).toBe(200);
     expect(body).toEqual({
       data: [{ id: "res1", data: { q1: "a", upload: "https://cdn.example.com/file.png" } }],

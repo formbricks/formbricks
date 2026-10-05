@@ -5,16 +5,21 @@ import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
 import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { deleteIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/actions";
 import { timeSince } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { RestrictedSurveyHint } from "@/modules/survey/visibility/components/restricted-survey-hint";
+import { hasRestrictedAttachedSurvey } from "@/modules/survey/visibility/lib/outbound";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 
 interface ManageIntegrationProps {
   slackIntegration: TIntegrationSlack;
+  surveys: TSurvey[];
+  surveyVisibilityEnabled: boolean;
   setOpenAddIntegrationModal: React.Dispatch<React.SetStateAction<boolean>>;
   setIsConnected: React.Dispatch<React.SetStateAction<boolean>>;
   setSelectedIntegration: React.Dispatch<
@@ -28,6 +33,8 @@ interface ManageIntegrationProps {
 
 export const ManageIntegration = ({
   slackIntegration,
+  surveys,
+  surveyVisibilityEnabled,
   setOpenAddIntegrationModal,
   setIsConnected,
   setSelectedIntegration,
@@ -35,7 +42,7 @@ export const ManageIntegration = ({
   showReconnectButton,
   handleSlackAuthorization,
   locale,
-}: ManageIntegrationProps) => {
+}: Readonly<ManageIntegrationProps>) => {
   const { t } = useTranslation();
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const [isDeleting, setisDeleting] = useState(false);
@@ -125,7 +132,12 @@ export const ManageIntegration = ({
                   onClick={() => {
                     editIntegration(index);
                   }}>
-                  <div className="col-span-2 text-center">{data.surveyName}</div>
+                  <div className="col-span-2 flex items-center justify-center gap-x-2 text-center">
+                    {data.surveyName}
+                    {hasRestrictedAttachedSurvey(surveyVisibilityEnabled, [data.surveyId], surveys) && (
+                      <RestrictedSurveyHint kind="paused" />
+                    )}
+                  </div>
                   <div className="col-span-2 text-center">{data.channelName}</div>
                   <div className="col-span-2 text-center">{data.elements}</div>
                   <div className="col-span-2 text-center">{timeSince(data.createdAt.toString(), locale)}</div>

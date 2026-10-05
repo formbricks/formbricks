@@ -7,6 +7,7 @@ import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/type
 import { createI18nString } from "@/lib/i18n/utils";
 import * as i18nUtils from "@/lib/i18n/utils";
 import {
+  computeRecallItemRemoval,
   determineImageUploaderVisibility,
   getChoiceLabel,
   getEndingCardText,
@@ -431,5 +432,66 @@ describe("utils", () => {
       const result = isValueIncomplete("nonLabelId", true, ["en"], value);
       expect(result).toBe(false);
     });
+  });
+});
+
+/**
+ * ENG-2931. `RecallWrapper` calls this from an effect keyed on the state it writes, so the
+ * no-removal case must return `null` — anything else re-enters that effect until React aborts the
+ * editor. The removal case has to hand the caller the complete post-removal state in one object,
+ * because the caller writes it once.
+ */
+describe("computeRecallItemRemoval", () => {
+  const nameItem = { id: "q1", label: "Name", type: "element" } as const;
+  const cityItem = { id: "q2", label: "City", type: "element" } as const;
+
+  test("returns null when every label is still in the rendered text", () => {
+    const result = computeRecallItemRemoval(
+      [{ ...nameItem }, { ...cityItem }],
+      "Hi @Name from @City",
+      "Hi #recall:q1/fallback:a# from #recall:q2/fallback:b#",
+      { q1: "a", q2: "b" }
+    );
+
+    expect(result).toBeNull();
+  });
+
+  test("returns null for an empty item list", () => {
+    expect(computeRecallItemRemoval([], "plain text", "plain text", {})).toBeNull();
+  });
+
+  test("drops the missing item, strips its partial label and deletes its fallback", () => {
+    const result = computeRecallItemRemoval(
+      [{ ...nameItem }, { ...cityItem }],
+      "Hi @Nam from @City",
+      "Hi @Nam from #recall:q2/fallback:b#",
+      { q1: "a", q2: "b" }
+    );
+
+    // Retained items and fallbacks are returned, not the stale ones the caller passed in.
+    expect(result?.recallItems).toEqual([cityItem]);
+    expect(result?.fallbacks).toEqual({ q2: "b" });
+    // `@Nam` is what the operator's backspace left behind, so that is what gets stripped.
+    expect(result?.value).toBe("Hi  from #recall:q2/fallback:b#");
+  });
+
+  test("removes several items in one pass", () => {
+    const result = computeRecallItemRemoval(
+      [{ ...nameItem }, { ...cityItem }],
+      "Hi  from ",
+      "Hi @Nam from @Cit",
+      { q1: "a", q2: "b" }
+    );
+
+    expect(result?.recallItems).toEqual([]);
+    expect(result?.fallbacks).toEqual({});
+    expect(result?.value).toBe("Hi  from ");
+  });
+
+  test("leaves the caller's fallbacks object untouched", () => {
+    const fallbacks = { q1: "a", q2: "b" };
+    computeRecallItemRemoval([{ ...nameItem }], "gone", "gone", fallbacks);
+
+    expect(fallbacks).toEqual({ q1: "a", q2: "b" });
   });
 });

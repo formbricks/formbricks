@@ -11,6 +11,7 @@ describe("AuthZed client facade", () => {
     closeAuthzedClient();
     sdkMocks.close.mockReset();
     sdkMocks.checkPermission.mockReset();
+    sdkMocks.checkBulkPermissions.mockReset();
     sdkMocks.deadlineInterceptor.mockClear();
     sdkMocks.deleteRelationships.mockReset();
     sdkMocks.diffSchema.mockReset();
@@ -30,6 +31,7 @@ describe("AuthZed client facade", () => {
     sdkMocks.newClient.mockReturnValue({
       close: sdkMocks.close,
       promises: {
+        checkBulkPermissions: sdkMocks.checkBulkPermissions,
         checkPermission: sdkMocks.checkPermission,
         deleteRelationships: sdkMocks.deleteRelationships,
         diffSchema: sdkMocks.diffSchema,
@@ -105,6 +107,7 @@ describe("AuthZed client facade", () => {
     expect(first).toBe(second);
     expect(sdkMocks.newClient).toHaveBeenCalledTimes(1);
     expect(Object.keys(first).sort()).toEqual([
+      "checkBulkPermissions",
       "checkPermission",
       "consistency",
       "deleteRelationships",
@@ -207,6 +210,77 @@ describe("AuthZed client facade", () => {
       withTracing: false,
     });
     expect(retryMocks.execute).toHaveBeenCalledWith("check_permission", expect.any(Function));
+  });
+
+  describe("checkBulkPermissions (ENG-3282)", () => {
+    const check = {
+      permission: "read",
+      resourceIds: ["survey-1", "survey-2"],
+      resourceType: "survey",
+      subject: { objectId: "user-1", objectType: "user" },
+    } as const;
+    const pair = (objectId: string, permissionship: number) => ({
+      request: { resource: { objectId, objectType: "survey" } },
+      response: { item: { permissionship }, oneofKind: "item" },
+    });
+
+    test("returns the allowed subset in one fully consistent call", async () => {
+      sdkMocks.checkBulkPermissions.mockResolvedValue({
+        pairs: [
+          pair("survey-1", v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION),
+          pair("survey-2", v1.CheckPermissionResponse_Permissionship.NO_PERMISSION),
+        ],
+      });
+
+      await expect(getAuthzedClient().checkBulkPermissions(check)).resolves.toEqual(new Set(["survey-1"]));
+      expect(sdkMocks.checkBulkPermissions).toHaveBeenCalledWith(
+        expect.objectContaining({
+          consistency: { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" } },
+          items: [
+            expect.objectContaining({
+              permission: "read",
+              resource: { objectId: "survey-1", objectType: "survey" },
+            }),
+            expect.objectContaining({
+              permission: "read",
+              resource: { objectId: "survey-2", objectType: "survey" },
+            }),
+          ],
+        })
+      );
+    });
+
+    test("fails whole on a per-item error rather than reading it as a denial", async () => {
+      sdkMocks.checkBulkPermissions.mockResolvedValue({
+        pairs: [
+          pair("survey-1", v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION),
+          { request: {}, response: { error: { code: 5 }, oneofKind: "error" } },
+        ],
+      });
+
+      await expect(getAuthzedClient().checkBulkPermissions(check)).rejects.toThrow(AuthzedError);
+    });
+
+    test("fails whole when the answers do not line up with the items", async () => {
+      sdkMocks.checkBulkPermissions.mockResolvedValue({
+        pairs: [pair("survey-2", v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION)],
+      });
+
+      await expect(getAuthzedClient().checkBulkPermissions(check)).rejects.toThrow(AuthzedError);
+    });
+
+    test("refuses more items than one call may carry, and asks nothing for none", async () => {
+      await expect(
+        getAuthzedClient().checkBulkPermissions({
+          ...check,
+          resourceIds: Array.from({ length: 251 }, (_unused, index) => `s-${index.toString()}`),
+        })
+      ).rejects.toThrow(AUTHZED_ERROR_CODES.INVALID_REQUEST);
+      await expect(getAuthzedClient().checkBulkPermissions({ ...check, resourceIds: [] })).resolves.toEqual(
+        new Set()
+      );
+      expect(sdkMocks.checkBulkPermissions).not.toHaveBeenCalled();
+    });
   });
 
   test("looks up resources with permission-check consistency and returns sorted unique IDs", async () => {

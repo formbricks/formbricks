@@ -51,6 +51,15 @@ describe("spicedbEvaluator", () => {
                 }
               : { type: resourceType, id: "resource-1" };
 
+          // No workspace permission stands in for it, so on the workspace node it is denied outright.
+          if (action === "survey.change_visibility") {
+            await expect(
+              spicedbEvaluator.can({ type: actorType, id: "actor-1" }, action, resource as never)
+            ).resolves.toBe(false);
+            expect(checkPermission).not.toHaveBeenCalled();
+            continue;
+          }
+
           await expect(
             spicedbEvaluator.can({ type: actorType, id: "actor-1" }, action, resource as never)
           ).resolves.toBe(true);
@@ -184,5 +193,148 @@ describe("spicedbEvaluator", () => {
     await expect(
       spicedbEvaluator.can({ type: "user", id: "user-1" }, "survey.read", { type: "survey", id: "survey-1" })
     ).rejects.toBe(databaseFailure);
+  });
+});
+
+describe("survey visibility decisions (ENG-3282)", () => {
+  const user = { type: "user", id: "user-1" } as const;
+  const apiKey = { type: "apiKey", id: "key-1" } as const;
+  const surveyScope = {
+    actorValid: true,
+    organizationId: "org-1",
+    permissionResource: { type: "survey", id: "survey-1" },
+  } as const;
+  const pendingScope = (ownerId: string | null) =>
+    ({
+      actorValid: true,
+      organizationId: "org-1",
+      permissionResource: { type: "workspace", id: "workspace-1" },
+      policy: { kind: "pendingPrivate", neverAcknowledged: false, ownerId, surveyId: "survey-1" },
+    }) as const;
+
+  const checked = () => checkPermission.mock.calls.map(([check]) => check);
+
+  test("decides a settled survey on its own node with the survey permission itself", async () => {
+    await checkSpicedbPermissionAtScope(
+      user,
+      "survey.change_visibility",
+      { type: "survey", id: "survey-1" },
+      surveyScope
+    );
+    await checkSpicedbPermissionAtScope(
+      user,
+      "survey.delete",
+      { type: "survey", id: "survey-1" },
+      surveyScope
+    );
+
+    expect(checked()).toEqual([
+      expect.objectContaining({
+        permission: "change_visibility",
+        resource: { objectId: "survey-1", objectType: "survey" },
+      }),
+      expect.objectContaining({
+        permission: "delete",
+        resource: { objectId: "survey-1", objectType: "survey" },
+      }),
+    ]);
+  });
+
+  test.each([
+    ["response.read", "response_read"],
+    ["response.write", "write"],
+    ["response.manage", "manage"],
+    ["response.export", "response_export"],
+  ] as const)("maps %s on the survey node to survey#%s", async (action, permission) => {
+    await checkSpicedbPermissionAtScope(user, action, { type: "response", id: "response-1" }, surveyScope);
+
+    expect(checked()).toEqual([
+      expect.objectContaining({ permission, resource: { objectId: "survey-1", objectType: "survey" } }),
+    ]);
+  });
+
+  test("a pending survey lets its owner through along their own workspace ladder", async () => {
+    await checkSpicedbPermissionAtScope(
+      user,
+      "survey.write",
+      { type: "survey", id: "survey-1" },
+      pendingScope("user-1")
+    );
+
+    expect(checked()).toEqual([
+      expect.objectContaining({
+        permission: "write",
+        resource: { objectId: "workspace-1", objectType: "workspace" },
+      }),
+    ]);
+  });
+
+  test("a pending survey admits anyone else only as an organization administrator", async () => {
+    checkPermission.mockResolvedValueOnce({ allowed: false });
+
+    await expect(
+      checkSpicedbPermissionAtScope(
+        user,
+        "survey.read",
+        { type: "survey", id: "survey-1" },
+        pendingScope("owner-2")
+      )
+    ).resolves.toBe(false);
+    expect(checked()).toEqual([
+      expect.objectContaining({
+        permission: "administer",
+        resource: { objectId: "workspace-1", objectType: "workspace" },
+      }),
+    ]);
+  });
+
+  test("a pending ownerless survey is for administrators only", async () => {
+    await checkSpicedbPermissionAtScope(
+      user,
+      "response.read",
+      { type: "response", id: "r-1" },
+      pendingScope(null)
+    );
+
+    expect(checked()).toEqual([expect.objectContaining({ permission: "administer" })]);
+  });
+
+  test("a pending survey never admits an API key, without asking SpiceDB", async () => {
+    await expect(
+      checkSpicedbPermissionAtScope(
+        apiKey,
+        "survey.read",
+        { type: "survey", id: "survey-1" },
+        pendingScope(null)
+      )
+    ).resolves.toBe(false);
+    expect(checkPermission).not.toHaveBeenCalled();
+  });
+
+  test("change_visibility on a pending survey is still decided on the survey node", async () => {
+    await checkSpicedbPermissionAtScope(
+      user,
+      "survey.change_visibility",
+      { type: "survey", id: "survey-1" },
+      pendingScope("user-1")
+    );
+
+    expect(checked()).toEqual([
+      expect.objectContaining({
+        permission: "change_visibility",
+        resource: { objectId: "survey-1", objectType: "survey" },
+      }),
+    ]);
+  });
+
+  test("still rejects an action that does not belong to the resource, pending or not", async () => {
+    await expect(
+      checkSpicedbPermissionAtScope(
+        user,
+        "workspace.read" as never,
+        { type: "survey", id: "survey-1" } as never,
+        pendingScope(null)
+      )
+    ).rejects.toThrow("Invalid authorization action/resource combination");
   });
 });

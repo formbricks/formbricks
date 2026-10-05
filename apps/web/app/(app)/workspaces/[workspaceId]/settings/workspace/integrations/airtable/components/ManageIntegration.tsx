@@ -12,6 +12,8 @@ import { deleteIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/se
 import { AddIntegrationModal } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/airtable/components/AddIntegrationModal";
 import { timeSince } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { RestrictedSurveyHint } from "@/modules/survey/visibility/components/restricted-survey-hint";
+import { hasRestrictedAttachedSurvey } from "@/modules/survey/visibility/lib/outbound";
 import { Alert, AlertButton, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -24,6 +26,7 @@ interface ManageIntegrationProps {
   workspaceId: string;
   setIsConnected: (data: boolean) => void;
   surveys: TSurvey[];
+  surveyVisibilityEnabled: boolean;
   airtableArray: TIntegrationItem[];
   locale: TUserLocale;
   showReconnectButton: boolean;
@@ -35,11 +38,12 @@ export const ManageIntegration = ({
   workspaceId,
   setIsConnected,
   surveys,
+  surveyVisibilityEnabled,
   airtableArray,
   showReconnectButton,
   handleAirtableAuthorization,
   locale,
-}: ManageIntegrationProps) => {
+}: Readonly<ManageIntegrationProps>) => {
   const { t } = useTranslation();
 
   const tableHeaders = [
@@ -152,7 +156,12 @@ export const ManageIntegration = ({
                 });
                 setIsModalOpen(true);
               }}>
-              <div className="col-span-2 text-center">{data.surveyName}</div>
+              <div className="col-span-2 flex items-center justify-center gap-x-2 text-center">
+                {data.surveyName}
+                {hasRestrictedAttachedSurvey(surveyVisibilityEnabled, [data.surveyId], surveys) && (
+                  <RestrictedSurveyHint kind="paused" />
+                )}
+              </div>
               <div className="col-span-2 text-center">{data.tableName}</div>
               <div className="col-span-2 text-center">{data.elements}</div>
               <div className="col-span-2 text-center">{timeSince(data.createdAt.toString(), locale)}</div>
@@ -186,6 +195,7 @@ export const ManageIntegration = ({
           setOpenWithStates={handleModal}
           workspaceId={workspaceId}
           surveys={surveys}
+          surveyVisibilityEnabled={surveyVisibilityEnabled}
           airtableIntegration={airtableIntegration}
           {...data}
         />
