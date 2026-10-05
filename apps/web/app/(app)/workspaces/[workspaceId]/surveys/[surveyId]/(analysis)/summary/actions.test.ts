@@ -63,7 +63,7 @@ const { resetSurveyAction } = await import("./actions");
 const callReset = () =>
   (resetSurveyAction as unknown as (args: unknown) => Promise<unknown>)({
     ctx: { user: { id: "user1" }, auditLoggingCtx: {} },
-    parsedInput: { surveyId: "survey1" },
+    parsedInput: { surveyId: "survey1", workspaceId: "ws1" },
   });
 
 describe("resetSurveyAction", () => {
@@ -97,12 +97,17 @@ describe("resetSurveyAction", () => {
       });
 
       await expect(callReset()).rejects.toThrow(AuthorizationError);
+      expect(mocks.getSurvey).not.toHaveBeenCalled();
       expect(mocks.deleteResponsesAndDisplaysForSurvey).not.toHaveBeenCalled();
     }
   );
 
   test("resets the survey once survey.manage is granted", async () => {
-    await expect(callReset()).resolves.toMatchObject({ success: true, deletedResponsesCount: 3 });
+    await expect(callReset()).resolves.toEqual({
+      success: true,
+      deletedResponsesCount: 3,
+      deletedDisplaysCount: 5,
+    });
     expect(mocks.deleteResponsesAndDisplaysForSurvey).toHaveBeenCalledWith("survey1");
   });
 });
