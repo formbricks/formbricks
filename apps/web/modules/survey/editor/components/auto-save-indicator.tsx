@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface AutoSaveIndicatorProps {
   isDraft: boolean;
@@ -51,28 +51,31 @@ export const AutoSaveIndicator = ({ isDraft, lastSaved, hasFailed }: Readonly<Au
     ? t("workspace.surveys.edit.auto_save_failed_tooltip")
     : t("workspace.surveys.edit.auto_save_disabled_tooltip");
 
-  const badge = (
-    <span
-      // Focusable only while it has a tooltip, so a keyboard user can open it.
-      tabIndex={hasTooltip ? 0 : undefined}
-      className={cn(
-        "inline-flex cursor-default items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap transition-colors duration-300",
-        isSavedState && "border-green-600 bg-green-50 text-green-800",
-        isFailedState && "border-warning/50 bg-warning-background text-warning-foreground",
-        !isSavedState && !isFailedState && "border-slate-200 bg-slate-100 text-slate-600"
-      )}>
-      {text}
-    </span>
+  const badgeClassName = cn(
+    "inline-flex cursor-default items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap transition-colors duration-300",
+    isSavedState && "border-green-600 bg-green-50 text-green-800",
+    isFailedState && "border-warning/50 bg-warning-background text-warning-foreground",
+    !isSavedState && !isFailedState && "border-slate-200 bg-slate-100 text-slate-600"
   );
 
   return (
     <>
-      <TooltipRenderer
-        shouldRender={hasTooltip}
-        tooltipContent={tooltipText}
-        className="max-w-64 text-center">
-        {badge}
-      </TooltipRenderer>
+      {hasTooltip ? (
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              {/* A real button (no action of its own) so keyboard users can reach the tooltip, and
+                  the tooltip's aria-describedby lands on the element that holds focus. */}
+              <button type="button" className={badgeClassName}>
+                {text}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-64 text-center">{tooltipText}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <span className={badgeClassName}>{text}</span>
+      )}
       {/* The live region speaks only when a save fails, with the explanation the tooltip carries. The
           visible badge is not a live region: it changes on every save ("Progress saved", then back
           after 3s), which would talk over an author typing with a screen reader every 10 seconds. */}
