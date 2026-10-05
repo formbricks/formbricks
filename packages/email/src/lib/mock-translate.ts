@@ -74,6 +74,15 @@ const translations: Record<TranslationKey, TranslationValue> = {
   "emails.sso_recovery_factors_removed_email_text":
     "You just signed in with single sign-on for the first time. Because your email address had never been verified, we removed the credentials that were set on the account before:",
   "emails.sso_recovery_factors_removed_email_two_factor": "Two-factor authentication was removed.",
+  "emails.sso_sign_in_hint_email_did_not_request":
+    "If you did not request this, you can ignore this email. Nothing about your account has changed.",
+  "emails.sso_sign_in_hint_email_go_to_login": "Go to sign in",
+  "emails.sso_sign_in_hint_email_heading": "Sign in with single sign-on",
+  "emails.sso_sign_in_hint_email_no_access":
+    "If you can no longer sign in this way, contact your administrator.",
+  "emails.sso_sign_in_hint_email_subject": "How to sign in to your Formbricks account",
+  "emails.sso_sign_in_hint_email_text":
+    "We received a request to reset the password for your Formbricks account. Your account does not use a password, so there is nothing to reset. You sign in with:",
   "emails.response_data": "Response data",
   "emails.response_finished_email_subject": "A response for {surveyName} was completed ✅",
   "emails.schedule_your_meeting": "Schedule your meeting",

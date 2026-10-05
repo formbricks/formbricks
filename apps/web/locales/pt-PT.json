@@ -26,6 +26,7 @@
       "back_to_login": "Voltar ao login",
       "email-sent": {
         "heading": "Pedido de redefinição de palavra-passe efetuado com sucesso",
+        "sso_hint": "Costumas iniciar sessão com o Google, a Microsoft ou outro fornecedor de início de sessão único (SSO)? Então não tens nenhuma palavra-passe para repor. Em vez disso, inicia sessão com esse fornecedor.",
         "text": "Se existir uma conta com este email, receberá instruções para redefinir a palavra-passe em breve."
       },
       "reset": {
@@ -696,6 +697,12 @@
     "sso_recovery_factors_removed_email_subject": "As credenciais foram removidas da tua conta Formbricks",
     "sso_recovery_factors_removed_email_text": "Acabaste de iniciar sessão com autenticação única pela primeira vez. Como o teu endereço de email nunca tinha sido verificado, removemos as credenciais que estavam definidas na conta anteriormente:",
     "sso_recovery_factors_removed_email_two_factor": "A autenticação de dois fatores foi removida.",
+    "sso_sign_in_hint_email_did_not_request": "Se não fizeste este pedido, podes ignorar este email. Nada na tua conta foi alterado.",
+    "sso_sign_in_hint_email_go_to_login": "Ir para o início de sessão",
+    "sso_sign_in_hint_email_heading": "Inicia sessão com o início de sessão único",
+    "sso_sign_in_hint_email_no_access": "Se já não consegues iniciar sessão desta forma, contacta o teu administrador.",
+    "sso_sign_in_hint_email_subject": "Como iniciar sessão na tua conta Formbricks",
+    "sso_sign_in_hint_email_text": "Recebemos um pedido para repor a palavra-passe da tua conta Formbricks. A tua conta não utiliza palavra-passe, por isso não há nada para repor. Inicias sessão com:",
     "survey_response_finished_email_congrats": "Parabéns, recebeu uma nova resposta ao seu inquérito! Alguém acabou de completar o seu inquérito: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Não quer receber estas notificações?",
     "survey_response_finished_email_hey": "Olá 👋",

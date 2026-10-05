@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
+import { sendSsoSignInHint } from "@/modules/auth/forgot-password/lib/sso-sign-in-hint";
 import { auth } from "@/modules/auth/lib/auth";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 // Import mocked functions
@@ -69,6 +70,10 @@ vi.mock("@/modules/auth/lib/user", () => ({
 // Password reset requests now go through Better Auth's native endpoint (ENG-1054).
 vi.mock("@/modules/auth/lib/auth", () => ({
   auth: { api: { requestPasswordReset: vi.fn() } },
+}));
+
+vi.mock("@/modules/auth/forgot-password/lib/sso-sign-in-hint", () => ({
+  sendSsoSignInHint: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -208,6 +213,77 @@ describe("forgotPasswordAction", () => {
       // Short-circuits on `identityProvider === "email"`, so the extra query never runs for the common case.
       expect(mocks.hasCredentialAccount).not.toHaveBeenCalled();
       expect(auth.api.requestPasswordReset).toHaveBeenCalledOnce();
+    });
+  });
+
+  /**
+   * A user with no password would otherwise wait for a reset link that is never sent. The page cannot say
+   * why without revealing the account exists, so the hint goes to their inbox instead (ENG-3262).
+   */
+  describe("SSO sign-in hint (ENG-3262)", () => {
+    type TFoundUser = NonNullable<Awaited<ReturnType<typeof getUserByEmail>>>;
+    const foundUser = (identityProvider: TFoundUser["identityProvider"]): TFoundUser => ({
+      id: "user123",
+      email: "test@example.com",
+      locale: "en-US",
+      emailVerified: true,
+      isActive: true,
+      identityProvider,
+    });
+
+    beforeEach(() => {
+      vi.mocked(applyIPRateLimit).mockResolvedValue(allowedRateLimitResponse);
+    });
+
+    test("mails the hint, not a reset, to an SSO user with no credential account", async () => {
+      const ssoUser = foundUser("azuread");
+      vi.mocked(getUserByEmail).mockResolvedValue(ssoUser);
+      mocks.hasCredentialAccount.mockResolvedValue(false);
+
+      const result = await callAction(validInput);
+
+      expect(sendSsoSignInHint).toHaveBeenCalledExactlyOnceWith(ssoUser);
+      expect(auth.api.requestPasswordReset).not.toHaveBeenCalled();
+      expect(result).toEqual({ success: true });
+    });
+
+    test("mails the hint on an SSO-only instance, where even a credential account cannot reset", async () => {
+      mocks.emailAuthEnabled.value = false;
+      vi.mocked(getUserByEmail).mockResolvedValue(foundUser("google"));
+      mocks.hasCredentialAccount.mockResolvedValue(true);
+
+      await callAction(validInput);
+
+      expect(sendSsoSignInHint).toHaveBeenCalledOnce();
+      expect(auth.api.requestPasswordReset).not.toHaveBeenCalled();
+    });
+
+    test("sends no hint to a user who gets a reset link", async () => {
+      vi.mocked(getUserByEmail).mockResolvedValue(foundUser("google"));
+      mocks.hasCredentialAccount.mockResolvedValue(true);
+
+      await callAction(validInput);
+
+      expect(auth.api.requestPasswordReset).toHaveBeenCalledOnce();
+      expect(sendSsoSignInHint).not.toHaveBeenCalled();
+    });
+
+    test("sends nothing for an address with no account", async () => {
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+
+      await callAction(validInput);
+
+      expect(sendSsoSignInHint).not.toHaveBeenCalled();
+    });
+
+    test("does not audit the hint as a password reset", async () => {
+      vi.mocked(getUserByEmail).mockResolvedValue(foundUser("azuread"));
+      mocks.hasCredentialAccount.mockResolvedValue(false);
+
+      await callAction(validInput);
+
+      expect(auditLoggingCtx.suppressEvent).toBe(true);
+      expect(auditLoggingCtx.userId).toBeUndefined();
     });
   });
 

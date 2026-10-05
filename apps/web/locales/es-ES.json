@@ -26,6 +26,7 @@
       "back_to_login": "Volver al inicio de sesión",
       "email-sent": {
         "heading": "Solicitud de restablecimiento de contraseña realizada correctamente",
+        "sso_hint": "¿Inicias sesión con Google, Microsoft u otro proveedor de inicio de sesión único? Entonces no hay ninguna contraseña que restablecer. Inicia sesión con ese proveedor.",
         "text": "Si existe una cuenta con este correo electrónico, recibirás instrucciones para restablecer la contraseña en breve."
       },
       "reset": {
@@ -696,6 +697,12 @@
     "sso_recovery_factors_removed_email_subject": "Se eliminaron credenciales de tu cuenta de Formbricks",
     "sso_recovery_factors_removed_email_text": "Acabas de iniciar sesión con inicio de sesión único por primera vez. Como tu dirección de correo electrónico nunca había sido verificada, eliminamos las credenciales que estaban configuradas en la cuenta anteriormente:",
     "sso_recovery_factors_removed_email_two_factor": "La autenticación de dos factores fue eliminada.",
+    "sso_sign_in_hint_email_did_not_request": "Si no lo has solicitado tú, puedes ignorar este correo. No ha cambiado nada en tu cuenta.",
+    "sso_sign_in_hint_email_go_to_login": "Ir al inicio de sesión",
+    "sso_sign_in_hint_email_heading": "Inicia sesión con el inicio de sesión único",
+    "sso_sign_in_hint_email_no_access": "Si ya no puedes iniciar sesión de esta forma, ponte en contacto con tu administrador.",
+    "sso_sign_in_hint_email_subject": "Cómo iniciar sesión en tu cuenta de Formbricks",
+    "sso_sign_in_hint_email_text": "Hemos recibido una solicitud para restablecer la contraseña de tu cuenta de Formbricks. Tu cuenta no utiliza contraseña, así que no hay nada que restablecer. Inicias sesión con:",
     "survey_response_finished_email_congrats": "Enhorabuena, has recibido una nueva respuesta a tu encuesta. Alguien acaba de completar tu encuesta: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "¿No quieres recibir estas notificaciones?",
     "survey_response_finished_email_hey": "Hola 👋",

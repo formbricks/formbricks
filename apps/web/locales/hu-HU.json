@@ -26,6 +26,7 @@
       "back_to_login": "Vissza a bejelentkezéshez",
       "email-sent": {
         "heading": "A jelszó-visszaállítás sikeresen kérve",
+        "sso_hint": "Ön a Google, a Microsoft vagy más egyszeri bejelentkezési (SSO) szolgáltató segítségével jelentkezik be? Ebben az esetben nincs visszaállítandó jelszó. Kérjük, ehelyett az adott szolgáltatón keresztül jelentkezzen be.",
         "text": "Ha létezik ilyen e-mail-címmel rendelkező fiók, akkor hamarosan megkapja a jelszó visszaállításához szükséges utasításokat."
       },
       "reset": {
@@ -696,6 +697,12 @@
     "sso_recovery_factors_removed_email_subject": "Hitelesítő adatok eltávolításra kerültek az Ön Formbricks fiókjából",
     "sso_recovery_factors_removed_email_text": "Ön most először jelentkezett be egyszeri bejelentkezéssel. Mivel az e-mail címe korábban sosem került ellenőrzésre, eltávolítottuk a fiókon korábban beállított hitelesítő adatokat:",
     "sso_recovery_factors_removed_email_two_factor": "A kétfaktoros hitelesítés el lett távolítva.",
+    "sso_sign_in_hint_email_did_not_request": "Amennyiben Ön nem kezdeményezte ezt a kérelmet, kérjük, hagyja figyelmen kívül ezt az e-mailt. Fiókjával kapcsolatban semmilyen változás nem történt.",
+    "sso_sign_in_hint_email_go_to_login": "Tovább a bejelentkezéshez",
+    "sso_sign_in_hint_email_heading": "Bejelentkezés egyszeri bejelentkezéssel (SSO)",
+    "sso_sign_in_hint_email_no_access": "Amennyiben Ön már nem tud ilyen módon bejelentkezni, kérjük, forduljon rendszergazdájához.",
+    "sso_sign_in_hint_email_subject": "Hogyan jelentkezhet be Formbricks-fiókjába",
+    "sso_sign_in_hint_email_text": "Kérelmet kaptunk Formbricks-fiókjának jelszó-visszaállítására. Fiókja nem használ jelszót, ezért nincs mit visszaállítani. Ön a következő szolgáltatóval jelentkezik be:",
     "survey_response_finished_email_congrats": "Gratulálunk, új válasz érkezett a kérdőívére! Valaki épp most töltötte ki ezt a kérdőívet: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Nem szeretné megkapni ezeket az értesítéseket?",
     "survey_response_finished_email_hey": "Helló 👋",

@@ -26,6 +26,7 @@
       "back_to_login": "Back to login",
       "email-sent": {
         "heading": "Password reset successfully requested",
+        "sso_hint": "Do you sign in with Google, Microsoft or another single sign-on provider? Then there is no password to reset. Sign in with that provider instead.",
         "text": "If an account with this email exists, you will receive password reset instructions shortly."
       },
       "reset": {
@@ -696,6 +697,12 @@
     "sso_recovery_factors_removed_email_subject": "Credentials were removed from your Formbricks account",
     "sso_recovery_factors_removed_email_text": "You just signed in with single sign-on for the first time. Because your email address had never been verified, we removed the credentials that were set on the account before:",
     "sso_recovery_factors_removed_email_two_factor": "Two-factor authentication was removed.",
+    "sso_sign_in_hint_email_did_not_request": "If you did not request this, you can ignore this email. Nothing about your account has changed.",
+    "sso_sign_in_hint_email_go_to_login": "Go to sign in",
+    "sso_sign_in_hint_email_heading": "Sign in with single sign-on",
+    "sso_sign_in_hint_email_no_access": "If you can no longer sign in this way, contact your administrator.",
+    "sso_sign_in_hint_email_subject": "How to sign in to your Formbricks account",
+    "sso_sign_in_hint_email_text": "We received a request to reset the password for your Formbricks account. Your account does not use a password, so there is nothing to reset. You sign in with:",
     "survey_response_finished_email_congrats": "Congrats, you received a new response to your survey! Someone just completed your survey: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Do not want to get these notifications?",
     "survey_response_finished_email_hey": "Hey 👋",

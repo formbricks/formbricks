@@ -9,6 +9,7 @@ import { ZUserEmail } from "@formbricks/types/user";
 import { EMAIL_AUTH_ENABLED, PASSWORD_RESET_DISABLED, WEBAPP_URL } from "@/lib/constants";
 import { hasCredentialAccount } from "@/lib/user/password";
 import { actionClient } from "@/lib/utils/action-client";
+import { sendSsoSignInHint } from "@/modules/auth/forgot-password/lib/sso-sign-in-hint";
 import { auth } from "@/modules/auth/lib/auth";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -16,8 +17,8 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 
 /**
- * Whether this user has a password to reset. Pure SSO users do not, and are silently skipped — Better
- * Auth's request endpoint is enumeration-safe and the action always reports success either way.
+ * Whether this user has a password to reset. Pure SSO users do not: they get a mail naming their identity
+ * provider instead (ENG-3262), and the action reports success either way to stay enumeration-safe.
  *
  * The second arm exists because SSO recovery is one-way (ENG-2557): completing it flips
  * `identityProvider` to the SSO provider and nothing ever flips it back, while the recovery also clears
@@ -103,6 +104,15 @@ export const forgotPasswordAction = actionClient.inputSchema(ZForgotPasswordActi
       // `suppressEvent` was added for on duplicate sign-up, ENG-2091). A thrown failure is audited
       // regardless, so this cannot hide one.
       ctx.auditLoggingCtx.suppressEvent = true;
+
+      if (user) {
+        // A registered user with no password to reset, e.g. Azure AD only. They would otherwise wait for
+        // a link that never comes (ENG-3262), so tell them how they do sign in. That goes by mail, not in
+        // the response: the inbox is the same one a reset link would reach, so it reveals nothing the
+        // reset flow does not. Awaited, as the reset send is, so this branch does not answer measurably
+        // faster than a real reset.
+        await sendSsoSignInHint(user);
+      }
     }
 
     return { success: true };

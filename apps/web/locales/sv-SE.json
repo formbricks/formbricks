@@ -26,6 +26,7 @@
       "back_to_login": "Tillbaka till inloggning",
       "email-sent": {
         "heading": "Lösenordsåterställning begärd",
+        "sso_hint": "Loggar du in med Google, Microsoft eller en annan leverantör av enkel inloggning (SSO)? Då finns det inget lösenord att återställa. Logga in med den leverantören i stället.",
         "text": "Om ett konto med denna e-postadress finns kommer du att få instruktioner för lösenordsåterställning inom kort."
       },
       "reset": {
@@ -696,6 +697,12 @@
     "sso_recovery_factors_removed_email_subject": "Inloggningsuppgifter togs bort från ditt Formbricks-konto",
     "sso_recovery_factors_removed_email_text": "Du loggade precis in med enkel inloggning för första gången. Eftersom din e-postadress aldrig hade verifierats tog vi bort de inloggningsuppgifter som tidigare var kopplade till kontot:",
     "sso_recovery_factors_removed_email_two_factor": "Tvåfaktorsautentisering togs bort.",
+    "sso_sign_in_hint_email_did_not_request": "Om du inte har begärt det här kan du ignorera det här mejlet. Ingenting har ändrats på ditt konto.",
+    "sso_sign_in_hint_email_go_to_login": "Gå till inloggning",
+    "sso_sign_in_hint_email_heading": "Logga in med enkel inloggning (SSO)",
+    "sso_sign_in_hint_email_no_access": "Om du inte längre kan logga in på det här sättet, kontakta din administratör.",
+    "sso_sign_in_hint_email_subject": "Så här loggar du in på ditt Formbricks-konto",
+    "sso_sign_in_hint_email_text": "Vi har fått en begäran om att återställa lösenordet för ditt Formbricks-konto. Ditt konto använder inget lösenord, så det finns inget att återställa. Du loggar in med:",
     "survey_response_finished_email_congrats": "Grattis, du har fått ett nytt svar på din enkät! Någon har precis slutfört din enkät: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Vill du inte få dessa aviseringar?",
     "survey_response_finished_email_hey": "Hej 👋",
