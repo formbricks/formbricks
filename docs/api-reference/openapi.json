@@ -328,6 +328,10 @@
                                 "example": null,
                                 "type": "boolean"
                               },
+                              "autoSelectLanguage": {
+                                "example": null,
+                                "type": "boolean"
+                              },
                               "delay": {
                                 "example": 0,
                                 "type": "integer"
@@ -4490,6 +4494,7 @@
                     {
                       "autoClose": null,
                       "autoComplete": null,
+                      "autoSelectLanguage": null,
                       "blocks": [
                         {
                           "elements": [
@@ -4732,6 +4737,7 @@
                   "value": {
                     "autoClose": null,
                     "autoComplete": null,
+                    "autoSelectLanguage": null,
                     "createdBy": null,
                     "delay": 0,
                     "displayLimit": null,
@@ -4952,6 +4958,7 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
+                    "autoSelectLanguage": null,
                     "blocks": [
                       {
                         "elements": [
@@ -5276,6 +5283,7 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
+                    "autoSelectLanguage": null,
                     "blocks": [
                       {
                         "elements": [
@@ -5587,6 +5595,7 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
+                    "autoSelectLanguage": null,
                     "blocks": [
                       {
                         "elements": [
@@ -5848,6 +5857,7 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
+                    "autoSelectLanguage": null,
                     "blocks": [
                       {
                         "elements": [

@@ -283,6 +283,8 @@ paths:
                   languages:
                     - code: de-DE
                       enabled: true
+                  showLanguageSwitch: true
+                  autoSelectLanguage: true
                   welcomeCard:
                     enabled: true
                     headline:
@@ -932,6 +934,8 @@ paths:
                           alias: german
                           default: false
                           enabled: false
+                      showLanguageSwitch: false
+                      autoSelectLanguage: null
                       welcomeCard:
                         enabled: false
                       blocks:
@@ -978,6 +982,8 @@ paths:
                           alias: german
                           default: false
                           enabled: false
+                      showLanguageSwitch: false
+                      autoSelectLanguage: null
                       welcomeCard:
                         enabled: false
                       blocks:
@@ -6669,7 +6675,7 @@ components:
       type: object
       description: |
         Strict v3 survey creation document. This endpoint accepts survey structure only: name,
-        metadata, languages, welcome card, blocks/elements/logic, endings, hidden fields, and variables.
+        metadata, languages and language settings, welcome card, blocks/elements/logic, endings, hidden fields, and variables.
         App surveys (`type: app`) additionally accept the `distribution` (display options + triggers) and `targeting` (contact segment filters) objects; these are rejected for `link` surveys.
         It rejects legacy `questions` and out-of-scope settings such as styling, follow-ups, recaptcha, single-use/email verification, slug, custom scripts, analytics fields, timestamps, and `createdBy`.
 
@@ -6729,6 +6735,18 @@ components:
           description: |
             Optional survey language configuration. Every non-default locale used by translatable maps
             must be declared here; omitted languages are not inferred from map keys.
+        showLanguageSwitch:
+          type:
+            - boolean
+            - 'null'
+          default: null
+          description: Show respondents a language switch on multi-language surveys. `null` and `false` both mean off.
+        autoSelectLanguage:
+          type:
+            - boolean
+            - 'null'
+          default: null
+          description: Open link and app surveys in the respondent's browser language when it matches an enabled survey language; otherwise the default language is used. `null` and `false` both mean off.
         welcomeCard:
           allOf:
             - $ref: '#/components/schemas/SurveyWelcomeCard'
@@ -6916,6 +6934,8 @@ components:
             - metadata
             - defaultLanguage
             - languages
+            - showLanguageSwitch
+            - autoSelectLanguage
             - welcomeCard
             - blocks
             - endings
@@ -6963,6 +6983,16 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/SurveyLanguage'
+            showLanguageSwitch:
+              type:
+                - boolean
+                - 'null'
+              description: Show respondents a language switch on multi-language surveys. `null` and `false` both mean off.
+            autoSelectLanguage:
+              type:
+                - boolean
+                - 'null'
+              description: Open link and app surveys in the respondent's browser language when it matches an enabled survey language; otherwise the default language is used. `null` and `false` both mean off.
             welcomeCard:
               $ref: '#/components/schemas/SurveyWelcomeCard'
             blocks:
@@ -7219,6 +7249,16 @@ components:
             by `metadata`, `welcomeCard`, `blocks`, or `endings` translatable maps must be explicitly
             declared here, so remove the locale key from those maps as well when intentionally removing
             a language.
+        showLanguageSwitch:
+          type:
+            - boolean
+            - 'null'
+          description: Show respondents a language switch on multi-language surveys. `null` and `false` both mean off. Omit to keep the stored value.
+        autoSelectLanguage:
+          type:
+            - boolean
+            - 'null'
+          description: Open link and app surveys in the respondent's browser language when it matches an enabled survey language; otherwise the default language is used. `null` and `false` both mean off. Omit to keep the stored value.
         welcomeCard:
           $ref: '#/components/schemas/SurveyWelcomeCard'
         blocks:

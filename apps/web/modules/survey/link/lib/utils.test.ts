@@ -184,6 +184,12 @@ describe("getGateLocale", () => {
     );
   });
 
+  test("follows a language picked from the browser languages, with no `?lang=`", () => {
+    expect(getGateLocale({ langParam: undefined, languageCode: "de", survey, fallbackLocale: "fr-FR" })).toBe(
+      "de-DE"
+    );
+  });
+
   test("keeps the Accept-Language locale when the requested language is not one the app speaks", () => {
     // `?lang=` was given but resolves to a language with no app translation (Hebrew here): the
     // respondent's own browser locale is a better guess than forcing English on them.

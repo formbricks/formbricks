@@ -159,6 +159,23 @@ describe("getWorkspaceStateData", () => {
     expect(select.surveys.select.embeddedDataLinks).toEqual(selectPublicSurveyEmbeddedDataLinks);
   });
 
+  test("carries the survey's language settings, which the SDK resolves the display language from", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      surveys: [{ ...mockWorkspaceData.surveys[0], autoSelectLanguage: true }],
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+
+    const [{ select }] = vi.mocked(prisma.workspace.findUnique).mock.calls[0] as [
+      { select: { surveys: { select: Record<string, unknown> } } },
+    ];
+    expect(select.surveys.select).toEqual(
+      expect.objectContaining({ showLanguageSwitch: true, autoSelectLanguage: true })
+    );
+    expect(result.surveys[0].autoSelectLanguage).toBe(true);
+  });
+
   test("should throw ResourceNotFoundError when workspace is not found", async () => {
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null);
 

@@ -1,4 +1,5 @@
 import { type Locator, type Page, expect } from "@playwright/test";
+import { prisma } from "@formbricks/database";
 import { surveys } from "@/playwright/utils/mock";
 import { test } from "./lib/fixtures";
 import * as helper from "./utils/helper";
@@ -275,7 +276,7 @@ test.describe("Multi Language Survey Create", async () => {
   // 5 minutes
   test.setTimeout(1000 * 60 * 5);
 
-  test("Create Survey", async ({ page, users }) => {
+  test("Create Survey", async ({ browser, page, users }) => {
     const user = await users.create();
     await user.login();
 
@@ -666,6 +667,36 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByLabel("Copy survey link to clipboard").click();
     const germanSurveyUrl = await page.evaluate("navigator.clipboard.readText()");
     expect(germanSurveyUrl).toContain("lang=de");
+
+    await test.step("Browser language picks the survey language when no ?lang= is given", async () => {
+      const surveyUrl = new URL(germanSurveyUrl as string);
+      surveyUrl.search = "";
+      const surveyId = surveyUrl.pathname.split("/").pop()!;
+      const welcomeCard = (respondent: Page) => respondent.locator("#questionCard--1");
+
+      await prisma.survey.update({ where: { id: surveyId }, data: { autoSelectLanguage: true } });
+      // The runner's default `locale` ("en-US") overrides an Accept-Language in extraHTTPHeaders, so
+      // clear it for the header to reach the server as written.
+      const germanBrowser = await browser.newContext({
+        locale: undefined,
+        extraHTTPHeaders: { "Accept-Language": "de-DE,de;q=0.9,en;q=0.8" },
+      });
+      try {
+        const respondent = await germanBrowser.newPage();
+        await respondent.goto(surveyUrl.toString());
+        await expect(
+          welcomeCard(respondent).getByText(surveys.germanCreate.welcomeCard.headline)
+        ).toBeVisible();
+
+        // With the setting off, the same German browser gets the default (English) language —
+        // this survey keeps the template's English welcome headline.
+        await prisma.survey.update({ where: { id: surveyId }, data: { autoSelectLanguage: false } });
+        await respondent.reload();
+        await expect(welcomeCard(respondent).getByText("Welcome!", { exact: true })).toBeVisible();
+      } finally {
+        await germanBrowser.close();
+      }
+    });
   });
 });
 

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { type Response } from "@formbricks/database/prisma-browser";
+import { resolveSurveyLanguage } from "@formbricks/i18n-utils/survey-language-match";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
@@ -19,7 +20,6 @@ import { SurveyCompletedMessage } from "@/modules/survey/link/components/survey-
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
-import { resolveSurveyLanguageCode } from "@/modules/survey/link/lib/language";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { hasUserIdSearchParam } from "@/modules/survey/link/lib/user-id";
 import { getGateLocale } from "@/modules/survey/link/lib/utils";
@@ -36,6 +36,8 @@ interface SurveyRendererProps {
   // New props - pre-fetched in parent
   workspaceContext: TWorkspaceContextForLinkSurvey;
   locale: TUserLocale;
+  /** The respondent's languages from the Accept-Language header, most preferred first. */
+  acceptedLanguages: string[];
   responseCount?: number;
 }
 
@@ -48,6 +50,7 @@ interface SurveyRendererProps {
  *
  * @param workspaceContext - Pre-fetched workspace and organization data
  * @param locale - User's locale from Accept-Language header
+ * @param acceptedLanguages - Every language in the Accept-Language header, for browser language auto-selection
  * @param responseCount - Conditionally fetched if showResponseCount is enabled
  */
 export const renderSurvey = async ({
@@ -60,14 +63,28 @@ export const renderSurvey = async ({
   isPreview,
   workspaceContext,
   locale,
+  acceptedLanguages,
   responseCount,
 }: SurveyRendererProps) => {
-  const langParam = searchParams.lang;
+  // A repeated `?lang=a&lang=b` arrives as an array; treat it as no explicit language rather than
+  // letting a non-string reach the resolver.
+  const langParam = typeof searchParams.lang === "string" ? searchParams.lang : undefined;
   const isEmbed = searchParams.embed === "true";
 
   // The survey's content language, and the locale everything around that content is translated in.
   // Both are resolved once, here, so a gate screen can never disagree with the survey behind it.
-  const languageCode = resolveSurveyLanguageCode(langParam, survey);
+  // Read server-side from Accept-Language rather than the client's `navigator.languages`, so the very
+  // first paint is already in the right language — no flash of the default language, and it works the
+  // same inside an embed. Explicit `?lang=` first; one that matches nothing falls through to the browser
+  // languages (when the survey opted in) and then the default — see `resolveSurveyLanguage`.
+  const languageCode =
+    resolveSurveyLanguage({
+      languages: survey.languages,
+      explicitLanguage: langParam,
+      browserLanguages: acceptedLanguages,
+      autoSelectLanguage: survey.autoSelectLanguage,
+      unmatchedExplicitLanguage: "fallback",
+    }) ?? "default";
   const gateLocale = getGateLocale({ langParam, languageCode, survey, fallbackLocale: locale });
 
   // Archived surveys are absent from the workspace for respondents — treat the public link as a

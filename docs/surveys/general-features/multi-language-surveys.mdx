@@ -10,14 +10,15 @@ results across several summaries.
 
 How a respondent ends up in a given language depends on the survey type:
 
-| Survey type | How the language is chosen | If the translation is missing |
+| Survey type | How the language is chosen | If the requested translation is missing |
 | --- | --- | --- |
-| Link survey | The `lang` URL parameter, or the respondent picks it in the language switch | Falls back to the survey's default language |
-| App & website survey | The `language` attribute you set through the SDK with `setLanguage()` | The survey is **not shown** to that user |
+| Link survey | The `lang` URL parameter, then the browser language (if enabled), or the respondent picks it in the language switch | Falls back to the browser language (if enabled), then the survey's default language |
+| App & website survey | The `language` attribute you set through the SDK with `setLanguage()`, otherwise the browser language (if enabled) | The survey is **not shown** to that user |
 
 That difference is deliberate: a link is a public URL that must always render something, while an app survey
 is targeted at a known user, and showing them a survey in a language they did not ask for is worse than not
-showing it at all. See [App and website surveys](#app-and-website-surveys) for the full rule.
+showing it at all. See [Which language a respondent sees](#which-language-a-respondent-sees) for the full
+rule.
 
 ---
 
@@ -152,6 +153,61 @@ language, so a respondent can find their own language even if they cannot read t
 
 ---
 
+## Use the respondent's browser language
+
+Turn on **Use browser language by default** in the Language tab, right below **Show language switch**, and a
+respondent who arrives without an explicit language sees the survey in their browser's language — as long as
+that language is shown on the survey. If none of their browser languages is, the survey opens in its default
+language.
+
+The setting is switched on for you the first time you activate translations on a survey, and switched off
+again when you deactivate them. It needs at least two visible languages, and it works independently of the
+language switch: you can open the right language automatically without showing respondents a picker.
+
+For link surveys the browser language is read from the request itself, so the survey renders in the right
+language from the first paint, including when it is embedded on another site. For app and website surveys
+the SDK reads it from the browser.
+
+---
+
+## Which language a respondent sees
+
+Formbricks picks the survey language in this order:
+
+1. **An explicit language.** The `lang` URL parameter on a link survey, or the language you set with
+   `setLanguage()` for app and website surveys.
+2. **The browser language**, only when **Use browser language by default** is on. Browser languages are tried
+   in the respondent's order of preference, and each one is matched fully before the next is tried.
+3. **The survey's default language.**
+
+What happens when the explicit language matches nothing differs by survey type:
+
+- **Link surveys** fall through to the next step. A mistyped `?lang=xx`, or a link to a language you have
+  since hidden, opens in the browser language when the setting is on, and in the default language otherwise.
+- **App and website surveys are the exception: the survey is skipped.** If you called `setLanguage("fr")` and
+  the survey has no visible French, the user does not see it — even when their browser language would match.
+  The browser language is only used when no language was set through the SDK.
+
+### How a language is matched
+
+The same matching rules apply to the `lang` parameter, `setLanguage()` and every browser language. Matching
+is case-insensitive, treats `_` and `-` alike, and only ever considers languages that are shown on the survey —
+plus the survey's default language, which always matches. The first rule that finds a language wins:
+
+| Rule | Example request | Matches survey language |
+| --- | --- | --- |
+| 1. Exact identifier | `DE_de` | `de-DE` |
+| 2. Exact alias | `brasil` | `pt-BR` with alias `brasil` |
+| 3. The same language under its canonical identifier | `pt`, `zh-CN` | `pt-BR`, `zh-Hans-CN` |
+| 4. Another regional variant of the same language | `ar`, `en-GB`, `zh-TW` | `ar-SA`, `en-US`, `zh-Hant-TW` |
+
+The fourth rule keeps the writing script: `zh-TW` reaches Traditional Chinese (`zh-Hant-TW`) and never
+Simplified (`zh-Hans-CN`). It also works the other way round — `ar-SA` reaches a survey that only offers
+`ar-EG`. When several variants of the same language are shown, the language's main variant wins (`ar-EG` for
+Arabic, `de-DE` for German), otherwise the first one in the survey's language list.
+
+---
+
 ## Link surveys
 
 A link survey renders in whatever language the `lang` URL parameter asks for:
@@ -165,13 +221,13 @@ survey URL — Formbricks appends the parameter for you, so you can copy one lin
 
 ![Choosing a language for the survey link in the Distribute modal](/images/surveys/general-features/multi-language-surveys/share-link-language.webp)
 
-`lang` accepts the language's identifier (`de-DE`) or its alias, and matching is case-insensitive. Formbricks
-resolves it in a fixed order: an exact identifier first, then an alias, then a canonical match. That last pass
-is what makes a shortened or legacy code work — `?lang=de` reaches `de-DE`, and an old `?lang=pt` link still
-reaches a language since stored as `pt-BR`.
+`lang` accepts the language's identifier (`de-DE`), its alias, or any code that
+[matches](#how-a-language-is-matched) one of them — `?lang=de` reaches `de-DE`, `?lang=ar` reaches `ar-SA`, and
+an old `?lang=pt` link still reaches a language since stored as `pt-BR`.
 
 Without a `lang` parameter — or with one that names a language the survey does not have, or one that is not
-shown — the survey opens in its default language.
+shown — the survey opens in the respondent's browser language when **Use browser language by default** is on
+and that language is shown, and in its default language otherwise.
 
 <Note>
   In **Distribute → Link settings** you can also set the link preview title and description per language,
@@ -198,8 +254,9 @@ Formbricks.setLanguage("de-DE"); // identifier or alias of the language
 Call `setLanguage()` whenever your app's language changes — for example right after the user switches it in
 your own settings — and Formbricks will use the new value for every survey it shows from then on.
 
-`setLanguage()` accepts a language's identifier or its alias, case-insensitively. Unlike the `lang` URL
-parameter, it does not fall back to a canonical match — see the note below.
+`setLanguage()` accepts the same values as the `lang` URL parameter — an identifier, an alias, or any code
+that [matches](#how-a-language-is-matched) one of them — so `setLanguage("ar")` reaches a survey language
+stored as `ar-SA`, exactly like `?lang=ar`.
 
 ### What happens when a translation is missing
 
@@ -207,22 +264,14 @@ For a survey with more than one language, Formbricks resolves the user's `langua
 
 | The user's `language` attribute | What the user sees |
 | --- | --- |
-| Not set | The survey in its default language |
+| Not set | The survey in the browser language when **Use browser language by default** is on and it matches, otherwise in its default language |
 | Matches the survey's default language | The survey in its default language |
 | Matches a visible language on the survey | The survey in that language |
-| Matches nothing on the survey, or a language that is not visible | **Nothing — the survey is skipped** |
+| Matches nothing on the survey, or a language that is not visible | **Nothing — the survey is skipped**, whatever the browser language |
 
 The last row is deliberate: a targeted survey is skipped rather than shown in a language the user did not ask
 for. A survey with only one language, or with translations switched off entirely, is exempt — it ignores the
 `language` attribute and is shown to a matching user whatever their language is set to.
-
-<Note>
-  The value you pass has to match a language's identifier or its alias exactly — Formbricks does not widen a
-  bare code to a region-tagged one here, the way the `lang` parameter does. With a survey language stored as
-  `ar-EG`, `setLanguage("ar")` matches nothing and the survey is skipped, while `?lang=ar` on a link survey
-  still resolves. Pass the identifier exactly as **Survey Languages** shows it; a bare code cannot be papered
-  over with an alias, because `ar` is rejected as one.
-</Note>
 
 ---
 

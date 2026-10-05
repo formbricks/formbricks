@@ -137,7 +137,7 @@ export const getWebAppLocale = (languageCode: string, survey: TSurvey): string =
 interface GateLocaleParams {
   /** The raw `?lang=` value, present only when the respondent asked for a language. */
   langParam: string | undefined;
-  /** That value resolved against the survey's enabled languages, or "default". */
+  /** The language the survey renders in — from `?lang=` or the browser languages — or "default". */
   languageCode: string;
   survey: TSurvey;
   /** The locale negotiated from the Accept-Language header. */
@@ -148,9 +148,11 @@ interface GateLocaleParams {
  * The locale the gate screens in front of a survey (PIN entry, email verification) translate their own
  * chrome in, and the one the verification email is written in.
  *
- * Precedence is deliberate and narrow: an explicit `?lang=` that resolves to a language we translate
- * the app into wins, because that is the language the survey content itself will render in. Everything
- * else — no `lang` at all, or one the app has no translation for — keeps the Accept-Language locale.
+ * Precedence is deliberate and narrow: once a language was selected — by an explicit `?lang=`, or by
+ * "Use browser language by default" picking one from Accept-Language — the gate follows it whenever we
+ * translate the app into it, because that is the language the survey content itself will render in.
+ * Everything else — no language selected at all, or one the app has no translation for — keeps the
+ * Accept-Language locale.
  */
 export const getGateLocale = ({
   langParam,
@@ -158,6 +160,6 @@ export const getGateLocale = ({
   survey,
   fallbackLocale,
 }: GateLocaleParams): TUserLocale => {
-  if (!langParam) return fallbackLocale;
+  if (!langParam && languageCode === "default") return fallbackLocale;
   return resolveWebAppLocale(languageCode, survey) ?? fallbackLocale;
 };
