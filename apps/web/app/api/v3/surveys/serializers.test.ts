@@ -8,6 +8,13 @@ import {
   serializeV3SurveyResource,
 } from "./serializers";
 
+// ENG-3282: marker off, a session user — every survey reads as workspace-visible, no controls.
+const TEST_VISIBILITY = {
+  actorContext: { enforced: false, isOrganizationAdmin: false, kind: "user", userId: "user_1" },
+  gates: { entitled: false, ready: false },
+  ownerName: null,
+} as const;
+
 const baseSurvey = {
   id: "survey_1",
   workspaceId: "workspace_1",
@@ -127,7 +134,7 @@ describe("serializeV3SurveyResource", () => {
       },
     } as unknown as TSurvey;
 
-    const resource = serializeV3SurveyResource(appSurvey);
+    const resource = serializeV3SurveyResource(appSurvey, TEST_VISIBILITY);
 
     expect(resource.distribution).toEqual({
       displayOption: "respondMultiple",
@@ -156,14 +163,14 @@ describe("serializeV3SurveyResource", () => {
   });
 
   test("omits distribution and targeting for link surveys", () => {
-    const resource = serializeV3SurveyResource(baseSurvey);
+    const resource = serializeV3SurveyResource(baseSurvey, TEST_VISIBILITY);
 
     expect(resource).not.toHaveProperty("distribution");
     expect(resource).not.toHaveProperty("targeting");
   });
 
   test("returns multilingual fields using emitted survey language codes", () => {
-    const resource = serializeV3SurveyResource(baseSurvey);
+    const resource = serializeV3SurveyResource(baseSurvey, TEST_VISIBILITY);
 
     expect(resource.defaultLanguage).toBe("en-US");
     expect(resource).not.toHaveProperty("language");
@@ -231,7 +238,7 @@ describe("serializeV3SurveyResource", () => {
       ],
     } as unknown as TSurvey;
 
-    const resource = serializeV3SurveyResource(survey);
+    const resource = serializeV3SurveyResource(survey, TEST_VISIBILITY);
 
     expect(resource.defaultLanguage).toBe("en-US");
     expect(resource.languages).toEqual([{ code: "en-US", default: true, enabled: true }]);
@@ -259,7 +266,7 @@ describe("serializeV3SurveyResource", () => {
       },
     } as unknown as TSurvey;
 
-    const resource = serializeV3SurveyResource(survey, { lang: ["en-US"] });
+    const resource = serializeV3SurveyResource(survey, TEST_VISIBILITY, { lang: ["en-US"] });
 
     expect(resource).not.toHaveProperty("language");
     expect(resource).toMatchObject({ welcomeCard: { headline: { "en-US": "Welcome" } } });
@@ -274,7 +281,7 @@ describe("serializeV3SurveyResource", () => {
       },
     } as unknown as TSurvey;
 
-    const resource = serializeV3SurveyResource(survey);
+    const resource = serializeV3SurveyResource(survey, TEST_VISIBILITY);
 
     expect(resource).toMatchObject({
       welcomeCard: {
@@ -287,7 +294,7 @@ describe("serializeV3SurveyResource", () => {
   });
 
   test("filters fields for case-insensitive underscore language selectors while preserving maps", () => {
-    const resource = serializeV3SurveyResource(baseSurvey, { lang: ["DE_de"] });
+    const resource = serializeV3SurveyResource(baseSurvey, TEST_VISIBILITY, { lang: ["DE_de"] });
 
     expect(resource).not.toHaveProperty("language");
     expect(resource).toMatchObject({
@@ -328,7 +335,7 @@ describe("serializeV3SurveyResource", () => {
       },
     } as unknown as TSurvey;
 
-    const resource = serializeV3SurveyResource(survey, { lang: ["ZH_hans_cn"] });
+    const resource = serializeV3SurveyResource(survey, TEST_VISIBILITY, { lang: ["ZH_hans_cn"] });
 
     expect(resource).toMatchObject({
       welcomeCard: { headline: { "zh-Hans-CN": "欢迎" } },
@@ -336,13 +343,13 @@ describe("serializeV3SurveyResource", () => {
   });
 
   test("filters disabled configured languages for management reads", () => {
-    const resource = serializeV3SurveyResource(baseSurvey, { lang: ["fr-FR"] });
+    const resource = serializeV3SurveyResource(baseSurvey, TEST_VISIBILITY, { lang: ["fr-FR"] });
 
     expect(resource).toMatchObject({ welcomeCard: { headline: { "fr-FR": "Bienvenue" } } });
   });
 
   test("filters multiple requested languages while preserving maps", () => {
-    const resource = serializeV3SurveyResource(baseSurvey, { lang: ["en-US", "de-DE"] });
+    const resource = serializeV3SurveyResource(baseSurvey, TEST_VISIBILITY, { lang: ["en-US", "de-DE"] });
 
     expect(resource).not.toHaveProperty("language");
     expect(resource).toMatchObject({
@@ -368,7 +375,7 @@ describe("serializeV3SurveyResource", () => {
   });
 
   test("filters fields for configured language aliases", () => {
-    const resource = serializeV3SurveyResource(baseSurvey, { lang: ["de"] });
+    const resource = serializeV3SurveyResource(baseSurvey, TEST_VISIBILITY, { lang: ["de"] });
 
     expect(resource).toMatchObject({
       welcomeCard: { headline: { "de-DE": "Willkommen" } },
@@ -406,7 +413,7 @@ describe("serializeV3SurveyResource", () => {
       },
     } as unknown as TSurvey;
 
-    const resource = serializeV3SurveyResource(survey, { lang: ["english"] });
+    const resource = serializeV3SurveyResource(survey, TEST_VISIBILITY, { lang: ["english"] });
 
     expect(resource.languages).toEqual([{ code: "en-US", default: true, enabled: true, alias: "english" }]);
     expect(resource).toMatchObject({
@@ -447,7 +454,7 @@ describe("serializeV3SurveyResource", () => {
       },
     } as unknown as TSurvey;
 
-    const resource = serializeV3SurveyResource(survey, { lang: ["english"] });
+    const resource = serializeV3SurveyResource(survey, TEST_VISIBILITY, { lang: ["english"] });
 
     expect(resource.languages).toEqual([
       { code: "en-US", default: true, enabled: true, alias: "english" },
@@ -476,7 +483,7 @@ describe("serializeV3SurveyResource", () => {
       ],
     } as unknown as Partial<TSurvey>);
 
-    const resource = serializeV3SurveyResource(survey, { lang: ["hi-IN"] });
+    const resource = serializeV3SurveyResource(survey, TEST_VISIBILITY, { lang: ["hi-IN"] });
 
     expect(resource.defaultLanguage).toBe("en-US");
     expect(resource.languages).toEqual([
@@ -500,13 +507,13 @@ describe("serializeV3SurveyResource", () => {
   test("resolves a survey language by legacy code and alias selectors", () => {
     const survey = createHindiSurvey();
 
-    expect(serializeV3SurveyResource(survey, { lang: ["hi"] })).toMatchObject({
+    expect(serializeV3SurveyResource(survey, TEST_VISIBILITY, { lang: ["hi"] })).toMatchObject({
       welcomeCard: { headline: { "hi-IN": "स्वागत है" } },
     });
-    expect(serializeV3SurveyResource(survey, { lang: ["hi-in"] })).toMatchObject({
+    expect(serializeV3SurveyResource(survey, TEST_VISIBILITY, { lang: ["hi-in"] })).toMatchObject({
       welcomeCard: { headline: { "hi-IN": "स्वागत है" } },
     });
-    expect(serializeV3SurveyResource(survey, { lang: ["HI_in"] })).toMatchObject({
+    expect(serializeV3SurveyResource(survey, TEST_VISIBILITY, { lang: ["HI_in"] })).toMatchObject({
       welcomeCard: { headline: { "hi-IN": "स्वागत है" } },
     });
   });
@@ -533,7 +540,7 @@ describe("serializeV3SurveyResource", () => {
       },
     } as unknown as TSurvey;
 
-    const resource = serializeV3SurveyResource(survey, { lang: ["vi"] });
+    const resource = serializeV3SurveyResource(survey, TEST_VISIBILITY, { lang: ["vi"] });
 
     expect(resource.defaultLanguage).toBe("vi");
     expect(resource.languages).toEqual([{ code: "vi", default: true, enabled: true }]);
@@ -564,7 +571,7 @@ describe("serializeV3SurveyResource", () => {
       },
     } as unknown as TSurvey;
 
-    const resource = serializeV3SurveyResource(survey, { lang: ["zh_Hans"] });
+    const resource = serializeV3SurveyResource(survey, TEST_VISIBILITY, { lang: ["zh_Hans"] });
 
     expect(resource.defaultLanguage).toBe("zh-Hans");
     expect(resource.languages).toEqual([{ code: "zh-Hans", default: true, enabled: true }]);
@@ -602,7 +609,7 @@ describe("serializeV3SurveyResource", () => {
       ],
     } as unknown as TSurvey;
 
-    expect(() => serializeV3SurveyResource(survey, { lang: ["en"] })).toThrow(
+    expect(() => serializeV3SurveyResource(survey, TEST_VISIBILITY, { lang: ["en"] })).toThrow(
       "Language 'en' is ambiguous for this survey. Matching languages: en-US, en-GB"
     );
   });
@@ -629,14 +636,14 @@ describe("serializeV3SurveyResource", () => {
       },
     } as unknown as TSurvey;
 
-    expect(() => serializeV3SurveyResource(survey, { lang: ["pt-PT"] })).toThrow(
+    expect(() => serializeV3SurveyResource(survey, TEST_VISIBILITY, { lang: ["pt-PT"] })).toThrow(
       "Language 'pt-PT' is not configured for this survey"
     );
   });
 
   test("exposes the normalized locale code for unknown language errors", () => {
     try {
-      serializeV3SurveyResource(baseSurvey, { lang: ["ES_es"] });
+      serializeV3SurveyResource(baseSurvey, TEST_VISIBILITY, { lang: ["ES_es"] });
     } catch (error) {
       if (!(error instanceof V3SurveyLanguageError)) {
         throw error;
@@ -657,8 +664,8 @@ describe("serializeV3SurveyResource", () => {
       blocks: [],
     } as unknown as TSurvey;
 
-    expect(() => serializeV3SurveyResource(survey)).toThrow(V3SurveyUnsupportedShapeError);
-    expect(() => serializeV3SurveyResource(survey)).toThrow(
+    expect(() => serializeV3SurveyResource(survey, TEST_VISIBILITY)).toThrow(V3SurveyUnsupportedShapeError);
+    expect(() => serializeV3SurveyResource(survey, TEST_VISIBILITY)).toThrow(
       "Legacy question-based surveys are not supported by the v3 survey management API"
     );
   });
@@ -678,6 +685,11 @@ describe("serializeV3SurveyListItem", () => {
     responseCount: 0,
     completedResponseCount: 0,
     singleUse: null,
+    visibility: "workspace",
+    ownerId: null,
+    owner: null,
+    visibilityVersion: 0,
+    visibilityProjectedVersion: 0,
   } satisfies Omit<TSurveyListRecord, "creator">;
 
   test("allowlists nested creator fields", () => {
@@ -690,7 +702,7 @@ describe("serializeV3SurveyListItem", () => {
       },
     } as unknown as TSurveyListRecord;
 
-    expect(serializeV3SurveyListItem(survey).creator).toEqual({ name: "Ada" });
+    expect(serializeV3SurveyListItem(survey, TEST_VISIBILITY).creator).toEqual({ name: "Ada" });
   });
 
   test("preserves null creator", () => {
@@ -699,7 +711,7 @@ describe("serializeV3SurveyListItem", () => {
       creator: null,
     } satisfies TSurveyListRecord;
 
-    expect(serializeV3SurveyListItem(survey).creator).toBeNull();
+    expect(serializeV3SurveyListItem(survey, TEST_VISIBILITY).creator).toBeNull();
   });
 
   test("exposes the total and the completed response counts", () => {
@@ -710,7 +722,7 @@ describe("serializeV3SurveyListItem", () => {
       creator: null,
     } satisfies TSurveyListRecord;
 
-    const serialized = serializeV3SurveyListItem(survey);
+    const serialized = serializeV3SurveyListItem(survey, TEST_VISIBILITY);
 
     expect(serialized.responseCount).toBe(7);
     expect(serialized.completedResponseCount).toBe(4);

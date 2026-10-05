@@ -28,7 +28,7 @@ describe("getPublishedLinkSurveys", () => {
 
     vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys as any);
 
-    const result = await getPublishedLinkSurveys(workspaceId);
+    const result = await getPublishedLinkSurveys(workspaceId, {});
 
     expect(Array.isArray(result)).toBe(true);
     expect(result).toHaveLength(3);
@@ -48,7 +48,7 @@ describe("getPublishedLinkSurveys", () => {
   test("returns empty array if no published link surveys", async () => {
     vi.mocked(prisma.survey.findMany).mockResolvedValue([]);
 
-    const result = await getPublishedLinkSurveys(workspaceId);
+    const result = await getPublishedLinkSurveys(workspaceId, {});
 
     expect(result).toEqual([]);
     expect(Array.isArray(result)).toBe(true);
@@ -63,8 +63,8 @@ describe("getPublishedLinkSurveys", () => {
 
     vi.mocked(prisma.survey.findMany).mockRejectedValue(prismaError);
 
-    await expect(getPublishedLinkSurveys(workspaceId)).rejects.toThrow(DatabaseError);
-    await expect(getPublishedLinkSurveys(workspaceId)).rejects.toThrow("DB error");
+    await expect(getPublishedLinkSurveys(workspaceId, {})).rejects.toThrow(DatabaseError);
+    await expect(getPublishedLinkSurveys(workspaceId, {})).rejects.toThrow("DB error");
   });
 
   test("throws original error on unknown error", async () => {
@@ -72,8 +72,8 @@ describe("getPublishedLinkSurveys", () => {
 
     vi.mocked(prisma.survey.findMany).mockRejectedValue(genericError);
 
-    await expect(getPublishedLinkSurveys(workspaceId)).rejects.toThrow(genericError);
-    await expect(getPublishedLinkSurveys(workspaceId)).rejects.toThrow("Unknown error");
+    await expect(getPublishedLinkSurveys(workspaceId, {})).rejects.toThrow(genericError);
+    await expect(getPublishedLinkSurveys(workspaceId, {})).rejects.toThrow("Unknown error");
   });
 
   test("filters surveys by status inProgress", async () => {
@@ -81,7 +81,7 @@ describe("getPublishedLinkSurveys", () => {
 
     vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys as any);
 
-    await getPublishedLinkSurveys(workspaceId);
+    await getPublishedLinkSurveys(workspaceId, {});
 
     expect(prisma.survey.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -97,7 +97,7 @@ describe("getPublishedLinkSurveys", () => {
 
     vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys as any);
 
-    await getPublishedLinkSurveys(workspaceId);
+    await getPublishedLinkSurveys(workspaceId, {});
 
     expect(prisma.survey.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -113,7 +113,7 @@ describe("getPublishedLinkSurveys", () => {
 
     vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys as any);
 
-    const result = await getPublishedLinkSurveys(workspaceId);
+    const result = await getPublishedLinkSurveys(workspaceId, {});
 
     expect(prisma.survey.findMany).toHaveBeenCalledWith(
       expect.objectContaining({

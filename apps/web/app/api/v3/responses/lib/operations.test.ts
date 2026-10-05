@@ -92,6 +92,12 @@ const { mockStartRead, mockReadDone, observations } = vi.hoisted(() => {
   };
 });
 vi.mock("./metrics", () => ({ startV3ResponsesRead: mockStartRead }));
+// ENG-3282: the readiness marker is off in these tests — nothing is refused and the predicate is open.
+// Plain functions, so the suites' mock resets cannot clear them.
+vi.mock("./visibility", () => ({
+  refuseUnlessV3SurveyVisible: async () => null,
+  resolveV3ResponsesActorContext: async () => ({ enforced: false, kind: "apiKey" }),
+}));
 
 const params = {
   responseId: "clrsaaaaaaaaaaaaaaaaaaaa",
@@ -279,7 +285,10 @@ describe("batchDeleteV3Responses", () => {
   test("filters by exactly the workspace it authorized against", async () => {
     await batchDeleteV3Responses(batchParams);
 
-    expect(mockBatchDelete).toHaveBeenCalledWith(batchParams.ids, { workspaceId: batchParams.workspaceId });
+    expect(mockBatchDelete).toHaveBeenCalledWith(batchParams.ids, {
+      visibleSurveyWhere: {},
+      workspaceId: batchParams.workspaceId,
+    });
   });
 
   test("refuses without touching the data when access is denied", async () => {

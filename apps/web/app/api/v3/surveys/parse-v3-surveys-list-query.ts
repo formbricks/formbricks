@@ -9,7 +9,9 @@ import {
   ZSurveyFilters,
   ZSurveyStatus,
   ZSurveyType,
+  ZSurveyVisibility,
 } from "@formbricks/types/surveys/types";
+import type { TSurveyVisibilityFilter } from "@/lib/survey/visibility/predicate";
 import {
   type TSurveyListPageCursor,
   type TSurveyListSort,
@@ -23,6 +25,8 @@ const V3_SURVEYS_MAX_LIMIT = 250;
 const FILTER_NAME_CONTAINS_QUERY_PARAM = "filter[name][contains]" as const;
 const FILTER_STATUS_IN_QUERY_PARAM = "filter[status][in]" as const;
 const FILTER_TYPE_IN_QUERY_PARAM = "filter[type][in]" as const;
+const FILTER_VISIBILITY_IN_QUERY_PARAM = "filter[visibility][in]" as const;
+const FILTER_OWNER_IN_QUERY_PARAM = "filter[owner][in]" as const;
 
 const SUPPORTED_QUERY_PARAMS = [
   "workspaceId",
@@ -32,6 +36,8 @@ const SUPPORTED_QUERY_PARAMS = [
   FILTER_NAME_CONTAINS_QUERY_PARAM,
   FILTER_STATUS_IN_QUERY_PARAM,
   FILTER_TYPE_IN_QUERY_PARAM,
+  FILTER_VISIBILITY_IN_QUERY_PARAM,
+  FILTER_OWNER_IN_QUERY_PARAM,
   "sortBy",
 ] as const;
 const SUPPORTED_QUERY_PARAM_SET = new Set<string>(SUPPORTED_QUERY_PARAMS);
@@ -68,6 +74,9 @@ const ZV3SurveysListQuery = z.object({
   // into an archivedAt filter (see buildFilterCriteria) rather than a real status match.
   [FILTER_STATUS_IN_QUERY_PARAM]: z.array(z.union([ZSurveyStatus, z.literal("archived")])).optional(),
   [FILTER_TYPE_IN_QUERY_PARAM]: z.array(ZSurveyType).optional(),
+  // ENG-3282 (contract §6): relative to the caller; API keys sending `owner` get 400 in the operation.
+  [FILTER_VISIBILITY_IN_QUERY_PARAM]: z.array(ZSurveyVisibility).optional(),
+  [FILTER_OWNER_IN_QUERY_PARAM]: z.array(z.enum(["me", "others"])).optional(),
   sortBy: ZSurveyFilters.shape.sortBy.optional(),
 });
 
@@ -82,6 +91,7 @@ export type TV3SurveysListQueryParseResult =
       includeTotalCount: boolean;
       sortBy: TSurveyListSort;
       filterCriteria: TSurveyFilterCriteria | undefined;
+      visibilityFilter: TSurveyVisibilityFilter;
     }
   | { ok: false; invalid_params: InvalidParam[] };
 
@@ -121,6 +131,8 @@ export function parseV3SurveysListQuery(searchParams: URLSearchParams): TV3Surve
 
   const statusVals = collectMultiValueQueryParam(searchParams, FILTER_STATUS_IN_QUERY_PARAM);
   const typeVals = collectMultiValueQueryParam(searchParams, FILTER_TYPE_IN_QUERY_PARAM);
+  const visibilityVals = collectMultiValueQueryParam(searchParams, FILTER_VISIBILITY_IN_QUERY_PARAM);
+  const ownerVals = collectMultiValueQueryParam(searchParams, FILTER_OWNER_IN_QUERY_PARAM);
 
   const raw = {
     workspaceId: searchParams.get("workspaceId"),
@@ -130,6 +142,8 @@ export function parseV3SurveysListQuery(searchParams: URLSearchParams): TV3Surve
     [FILTER_NAME_CONTAINS_QUERY_PARAM]: searchParams.get(FILTER_NAME_CONTAINS_QUERY_PARAM) ?? undefined,
     [FILTER_STATUS_IN_QUERY_PARAM]: statusVals.length > 0 ? statusVals : undefined,
     [FILTER_TYPE_IN_QUERY_PARAM]: typeVals.length > 0 ? typeVals : undefined,
+    [FILTER_VISIBILITY_IN_QUERY_PARAM]: visibilityVals.length > 0 ? visibilityVals : undefined,
+    [FILTER_OWNER_IN_QUERY_PARAM]: ownerVals.length > 0 ? ownerVals : undefined,
     sortBy: searchParams.get("sortBy")?.trim() || undefined,
   };
 
@@ -172,5 +186,9 @@ export function parseV3SurveysListQuery(searchParams: URLSearchParams): TV3Surve
     includeTotalCount: q.includeTotalCount,
     sortBy,
     filterCriteria: buildFilterCriteria(q),
+    visibilityFilter: {
+      ...(q[FILTER_VISIBILITY_IN_QUERY_PARAM] && { visibility: q[FILTER_VISIBILITY_IN_QUERY_PARAM] }),
+      ...(q[FILTER_OWNER_IN_QUERY_PARAM] && { owner: q[FILTER_OWNER_IN_QUERY_PARAM] }),
+    },
   };
 }

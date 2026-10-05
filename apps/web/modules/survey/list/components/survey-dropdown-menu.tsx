@@ -13,6 +13,7 @@ import {
   PencilIcon,
   SquarePenIcon,
   TrashIcon,
+  UsersIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -31,6 +32,8 @@ import { CopySurveyModal } from "@/modules/survey/list/components/copy-survey-mo
 import { RenameSurveyModal } from "@/modules/survey/list/components/rename-survey-modal";
 import { surveyKeys } from "@/modules/survey/list/lib/query";
 import { TSurveyListItem } from "@/modules/survey/list/types/survey-overview";
+import { CollaborateModal } from "@/modules/survey/visibility/components/collaborate-modal";
+import { type TSurveyVisibilityUiGate, showVisibilityControls } from "@/modules/survey/visibility/lib/state";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
@@ -58,6 +61,11 @@ interface SurveyDropDownMenuProps {
   archiveSurvey: (surveyId: string) => Promise<void>;
   restoreSurvey: (surveyId: string) => Promise<void>;
   renameSurvey: (surveyId: string, name: string) => Promise<void>;
+  /** ENG-3395: the restricted-surveys gate; Collaborate also needs the right to change visibility. */
+  surveyVisibilityGate: TSurveyVisibilityUiGate;
+  workspaceName: string;
+  listQueryKey: ReturnType<typeof surveyKeys.list>;
+  onVisibilityNotEnabled: () => void;
 }
 
 // Non-draft statuses that can be targeted by a status change from the list.
@@ -74,6 +82,10 @@ export const SurveyDropDownMenu = ({
   archiveSurvey,
   restoreSurvey,
   renameSurvey,
+  surveyVisibilityGate,
+  workspaceName,
+  listQueryKey,
+  onVisibilityNotEnabled,
 }: Readonly<SurveyDropDownMenuProps>) => {
   const { workspace } = useWorkspace();
 
@@ -87,6 +99,7 @@ export const SurveyDropDownMenu = ({
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [isCollaborateModalOpen, setIsCollaborateModalOpen] = useState(false);
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -100,9 +113,10 @@ export const SurveyDropDownMenu = ({
   // Show the status submenu for non-draft surveys when the user has write access.
   const canChangeStatus = !isArchived && !isReadOnly && survey.status !== "draft";
   const isInProgress = survey.status === "inProgress";
-  const hasVisibleActions = isArchived
-    ? canManageSurvey
-    : canManageSurvey || canPreviewOrCopyLink || canChangeStatus;
+  const canCollaborate = showVisibilityControls(surveyVisibilityGate, survey.access);
+  const hasVisibleActions =
+    canCollaborate ||
+    (isArchived ? canManageSurvey : canManageSurvey || canPreviewOrCopyLink || canChangeStatus);
 
   const getStatusLabel = (t: TFunction, status: TSurveyStatus): string => {
     switch (status) {
@@ -111,7 +125,7 @@ export const SurveyDropDownMenu = ({
       case "paused":
         return t("common.paused");
       case "completed":
-        return t("common.completed");
+        return t("common.closed");
       case "draft":
         return t("common.draft");
       default:
@@ -286,6 +300,18 @@ export const SurveyDropDownMenu = ({
                 {t("common.rename")}
               </DropdownMenuItem>
             )}
+            {canCollaborate && (
+              <DropdownMenuItem
+                data-testid="collaborate-survey"
+                icon={<UsersIcon className="size-4" />}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setIsDropDownOpen(false);
+                  setIsCollaborateModalOpen(true);
+                }}>
+                {t("common.collaborate")}
+              </DropdownMenuItem>
+            )}
             {!isArchived && canManageSurvey && (
               <DropdownMenuItem>
                 <button
@@ -452,6 +478,17 @@ export const SurveyDropDownMenu = ({
           surveyId={survey.id}
           surveyName={survey.name}
           renameSurvey={renameSurvey}
+        />
+      )}
+
+      {canCollaborate && (
+        <CollaborateModal
+          open={isCollaborateModalOpen}
+          setOpen={setIsCollaborateModalOpen}
+          surveyId={survey.id}
+          workspaceName={workspaceName}
+          listQueryKey={listQueryKey}
+          onVisibilityNotEnabled={onVisibilityNotEnabled}
         />
       )}
 

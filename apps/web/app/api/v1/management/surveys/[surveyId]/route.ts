@@ -27,6 +27,7 @@ import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
+import { SURVEY_ACTION_FOR_METHOD, canApiKeyReachSurveyResource } from "@/lib/survey/visibility/api-key";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 
 type TSurveyUpdateBody = Record<string, unknown> & {
@@ -49,6 +50,15 @@ const fetchAndAuthorizeSurvey = async (
       { type: "apiKey", id: authentication.apiKeyId },
       getWorkspaceAuthorizationActionForMethod(requiredPermission),
       { type: "workspace", id: survey.workspaceId }
+    )) ||
+    // ENG-3282: an API key never reaches a restricted survey — the same answer as a foreign one.
+    !(await canApiKeyReachSurveyResource(
+      authentication.apiKeyId,
+      SURVEY_ACTION_FOR_METHOD[requiredPermission],
+      {
+        type: "survey",
+        id: survey.id,
+      }
     ))
   ) {
     return { error: responses.unauthorizedResponse() };

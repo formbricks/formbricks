@@ -36,6 +36,9 @@ export const AUTHZED_MAX_RELATIONSHIP_READS = 250;
  */
 export const AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE = 250;
 
+/** Most items one `CheckBulkPermissions` call may carry — the v3 list's page ceiling (ENG-3282). */
+export const AUTHZED_MAX_BULK_CHECK_ITEMS = 250;
+
 /**
  * Resource IDs accumulated by one complete permission lookup.
  *
@@ -57,6 +60,12 @@ export const AUTHZED_MAX_OBSERVED_RELATIONSHIPS_PER_UNIT = 20_000;
 
 /** Organizations fetched per keyset page while enumerating backfill units. */
 export const AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE = 100;
+
+/**
+ * Surveys per page of the `survey` backfill scope (ENG-3282). Each survey is observed and reconciled on
+ * its own, so this bounds the ids held in memory and the resume granularity, not a single query.
+ */
+export const AUTHZED_BACKFILL_SURVEY_PAGE_SIZE = 5_000;
 
 /**
  * Projection targets handed to a reconciler in one call.

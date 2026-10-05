@@ -532,6 +532,19 @@ export const withDerivedQuestions = <
   };
 };
 
+const INTERNAL_SURVEY_PROJECTION_KEYS = [
+  "embeddedFields",
+  "ownerId",
+  "visibility",
+  "visibilityChangedAt",
+  "visibilityChangedById",
+  "visibilityPending",
+  "visibilityProjectedVersion",
+  "visibilityVersion",
+] as const;
+
+type TInternalSurveyProjectionKey = (typeof INTERNAL_SURVEY_PROJECTION_KEYS)[number];
+
 /**
  * Drops read-only projections the v1 survey contract does not describe.
  *
@@ -541,12 +554,16 @@ export const withDerivedQuestions = <
  * other side: `ZSurveyUpdateInput` omits the key, so a v1 PUT reaches `updateSurvey` carrying only
  * the legacy `variables` / `hiddenFields` even though ENG-3228 made the key accepted input
  * elsewhere. Those two stay on the response: since ENG-2404 they are derived from the same rows.
+ * The ENG-3282 authorization facts (visibility, owner, versions) are v3's to describe, and `ownerId`
+ * is an identifier v3 deliberately never exposes; every one of them is omitted from both create schemas
+ * and stripped again in `updateSurveyInternal`.
  */
-export const withoutInternalSurveyProjections = <T extends { embeddedFields?: unknown }>(
+export const withoutInternalSurveyProjections = <T extends object>(
   survey: T
-): Omit<T, "embeddedFields"> => {
-  const { embeddedFields: _embeddedFields, ...rest } = survey;
-  return rest;
+): Omit<T, TInternalSurveyProjectionKey> => {
+  const rest = { ...survey } as Record<string, unknown>;
+  for (const key of INTERNAL_SURVEY_PROJECTION_KEYS) delete rest[key];
+  return rest as Omit<T, TInternalSurveyProjectionKey>;
 };
 
 export const validateSurveyInput = (input: {

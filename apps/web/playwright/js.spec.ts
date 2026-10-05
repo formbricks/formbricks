@@ -3,7 +3,7 @@ import http from "http";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
 import { gotoSurveyList, gotoSurveyTemplates } from "./lib/utils";
-import { useSelectedTemplate } from "./utils/helper";
+import { activateSurvey, useSelectedTemplate } from "./utils/helper";
 
 const HTML_TEMPLATE = `<head>
   <script type="text/javascript">
@@ -109,7 +109,7 @@ test.describe("JS Package Test", async () => {
 
     await Promise.all([
       page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary/, { timeout: 120000 }),
-      page.getByRole("button", { name: "Publish", exact: true }).click(),
+      activateSurvey(page),
     ]);
 
     const surveyId = /\/surveys\/([^/]+)\/summary/.exec(page.url())?.[1];

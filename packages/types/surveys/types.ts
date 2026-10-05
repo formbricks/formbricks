@@ -900,6 +900,12 @@ export const ZSurveyStatus = z.enum(["draft", "inProgress", "paused", "completed
 
 export type TSurveyStatus = z.infer<typeof ZSurveyStatus>;
 
+// ENG-3282: who may read a survey. `workspace` is everyone with workspace access; `restricted` is the
+// owner and the organization's owners and managers only.
+export const ZSurveyVisibility = z.enum(["restricted", "workspace"]);
+
+export type TSurveyVisibility = z.infer<typeof ZSurveyVisibility>;
+
 export const ZSurveyInlineTriggers = z.object({
   codeConfig: z.object({ identifier: z.string() }).optional(),
   noCodeConfig: ZActionClassNoCodeConfig.optional(),
@@ -915,6 +921,15 @@ export const ZSurveyBase = z.object({
   type: ZSurveyType,
   workspaceId: z.cuid2(),
   createdBy: z.string().nullable(),
+  // ENG-3282 authorization facts. Server-owned: omitted from every create/update input below, set only
+  // by the creation-facts resolver and the visibility endpoint. `visibility` is the stored flag, not
+  // the effective one — see `getEffectiveVisibility`.
+  visibility: ZSurveyVisibility,
+  ownerId: z.string().nullable(),
+  visibilityVersion: z.number().int(),
+  visibilityProjectedVersion: z.number().int(),
+  visibilityChangedAt: z.date().nullable(),
+  visibilityChangedById: z.string().nullable(),
   status: ZSurveyStatus,
   displayOption: ZSurveyDisplayOption,
   autoClose: z.number().nullable(),
@@ -3976,6 +3991,9 @@ export const ZSurveyUpdateInput = ZSurveyBase.omit({
   // path. Callers that hand `updateSurvey` a raw `TSurvey` (the editor's save actions) never go
   // through this schema and keep the V2 carrier.
   embeddedFields: true,
+  // The ENG-3282 authorization facts (`visibility`, `ownerId`, the versions) are deliberately NOT
+  // omitted: the v1 PUT round-trip re-parses the loaded survey, which carries them.
+  // `updateSurveyInternal` strips them before the write instead, so none is writable through here.
 })
   .extend({
     followUps: z
@@ -4017,6 +4035,13 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurveyBase)
     // archivedAt is owned exclusively by the archive/restore flows; a create must never set it,
     // otherwise a caller could POST an already-archived, purge-eligible survey.
     archivedAt: true,
+    // Server-owned authorization facts (ENG-3282): never writable through a survey payload.
+    visibility: true,
+    ownerId: true,
+    visibilityVersion: true,
+    visibilityProjectedVersion: true,
+    visibilityChangedAt: true,
+    visibilityChangedById: true,
   })
   .extend({
     name: z.string(), // Keep name required
@@ -4068,6 +4093,13 @@ export const ZSurveyCreateInputWithWorkspaceId = makeSchemaOptional(ZSurveyBase)
     // archivedAt is owned exclusively by the archive/restore flows; a create must never set it,
     // otherwise a caller could POST an already-archived, purge-eligible survey.
     archivedAt: true,
+    // Server-owned authorization facts (ENG-3282): never writable through a survey payload.
+    visibility: true,
+    ownerId: true,
+    visibilityVersion: true,
+    visibilityProjectedVersion: true,
+    visibilityChangedAt: true,
+    visibilityChangedById: true,
   })
   .extend({
     name: z.string(), // Keep name required

@@ -18,6 +18,7 @@
     "db:up": "pnpm dev:setup && docker compose -f docker-compose.dev.yml up -d",
     "db:down": "docker compose -f docker-compose.dev.yml down",
     "authzed:backfill": "dotenv -e .env -v NODE_OPTIONS=--conditions=react-server -v LOG_LEVEL=fatal -- tsx --tsconfig apps/web/tsconfig.json ./apps/web/scripts/authzed-backfill.ts",
+    "authzed:outbox": "dotenv -e .env -v NODE_OPTIONS=--conditions=react-server -v LOG_LEVEL=fatal -- tsx --tsconfig apps/web/tsconfig.json ./apps/web/scripts/docker/authzed-cli.ts outbox",
     "authzed:perf": "dotenv -e .env -v NODE_OPTIONS=--conditions=react-server -v LOG_LEVEL=fatal -- tsx --tsconfig apps/web/tsconfig.json ./apps/web/scripts/authzed-perf.ts",
     "authzed:health": "dotenv -e .env -v NODE_OPTIONS=--conditions=react-server -v LOG_LEVEL=fatal -- tsx --tsconfig apps/web/tsconfig.json ./apps/web/scripts/authzed-health.ts",
     "authzed:schema": "dotenv -e .env -v NODE_OPTIONS=--conditions=react-server -v LOG_LEVEL=fatal -- tsx --tsconfig apps/web/tsconfig.json ./apps/web/scripts/authzed-schema.ts",
@@ -79,7 +80,7 @@
     "vitest": "catalog:"
   },
   "engines": {
-    "node": ">=20.19.0 <21 || >=22.12.0 <23 || >=24.0.0 <25"
+    "node": ">=24.0.0 <25"
   },
   "packageManager": "pnpm@11.7.0"
 }

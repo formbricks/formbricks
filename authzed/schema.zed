@@ -207,6 +207,13 @@ definition workspace {
      * Requires manage today — mirrors the workspace access-management gate.
      */
     permission share: user | api_key = manage
+    /**
+     * Organization owners and managers only (`organization.manage`), never the
+     * team ladder: a team-level `manage` grant does not reach private surveys
+     * (R-10). The arm every survey permission uses to keep private surveys
+     * reachable by the organization's administrators.
+     */
+    permission administer: user = organization->manage
 }
 
 /**
@@ -239,46 +246,81 @@ definition feedback_directory_assignment {
 }
 
 /**
- * A survey, identified by the Prisma `Survey.id`. Surveys carry no access
- * control of their own today (`resultShareKey` was removed): every permission
- * derives from the owning workspace.
+ * A survey, identified by the Prisma `Survey.id`, projected from its row by
+ * `apps/web/lib/authzed/survey.ts` (ENG-3282). PostgreSQL is the durable
+ * source: `Survey.workspaceId`, `Survey.ownerId` and `Survey.visibility`.
  *
- * `response_read` and `response_export` currently both equal workspace read —
- * the export gate (`getResponsesDownloadUrlAction`) is identical to the
- * response-view gate. They are separate permissions so response access keeps a
- * stable vocabulary; splitting them later is a schema change that the
- * assertions in `schema-validation.yaml` will surface.
+ * Visibility is expressed by which relations are written, not by a flag:
+ *
+ * - `workspace` always names the owning workspace;
+ * - `owner` names the owner whenever there is one;
+ * - `shared_workspace` names the owning workspace only while the survey is
+ *   workspace-visible;
+ * - `private_owner` names the owner only while the survey is private.
+ *
+ * So a workspace-visible survey resolves exactly as before, and a private one
+ * is reachable only by its owner (while they still hold workspace access at
+ * the same level) and by the organization's owners and managers.
+ *
+ * `shared_workspace` must only ever name the survey's own workspace: an edge
+ * to another organization's workspace would grant that organization's members
+ * read. The projector derives it from `Survey.workspaceId` alone and the
+ * survey audit reports any other as a mismatched parent.
+ *
+ * `response_read` and `response_export` both equal `read` — the export gate
+ * is identical to the response-view gate. They stay separate permissions so
+ * response access keeps a stable vocabulary. Responses and dashboards remain
+ * unprojected.
  */
 definition survey {
-    /** The owning workspace (`Survey.workspaceId`). */
+    /** The owning workspace (`Survey.workspaceId`). Always written. */
     relation workspace: workspace
 
+    /** The authorization owner (`Survey.ownerId`). Written whenever set. */
+    relation owner: user
+
+    /** The owning workspace, written only while `visibility = workspace`. */
+    relation shared_workspace: workspace
+
+    /** The owner, written only while `visibility = private`. */
+    relation private_owner: user
+
     /** View the survey. */
-    permission read: user | api_key = workspace->read
+    permission read: user | api_key = shared_workspace->read + (private_owner & workspace->read) + workspace->administer
 
     /** Create or edit the survey (workspace readWrite level). */
-    permission write: user | api_key = workspace->write
+    permission write: user | api_key = shared_workspace->write + (private_owner & workspace->write) + workspace->administer
 
     /**
      * Manage-only survey operations, including language configuration and
      * DELETE through the legacy management APIs.
      */
-    permission manage: user | api_key = workspace->manage
+    permission manage: user | api_key = shared_workspace->manage + (private_owner & workspace->manage) + workspace->administer
 
     /**
-     * Delete through the Formbricks web application and V3 API. Both currently
-     * use the workspace readWrite gate rather than the manage gate.
+     * Delete through the Formbricks web application and V3 API. Both use the
+     * readWrite gate rather than the manage gate.
      */
-    permission delete: user | api_key = workspace->write
+    permission delete: user | api_key = write
 
-    /** Publish the survey / change its status — part of survey editing today. */
-    permission publish: user | api_key = workspace->write
+    /** Publish the survey / change its status — part of survey editing. */
+    permission publish: user | api_key = write
 
     /** View the survey's responses and summaries. */
-    permission response_read: user | api_key = workspace->read
+    permission response_read: user | api_key = read
 
-    /** Download/export the survey's responses (CSV/XLSX) — same gate as viewing today. */
-    permission response_export: user | api_key = workspace->read
+    /** Download/export the survey's responses (CSV/XLSX) — same gate as viewing. */
+    permission response_export: user | api_key = read
+
+    /**
+     * Make the survey private or workspace-visible: its owner while they still
+     * hold workspace read, or an organization owner/manager. Never workspace
+     * write or team-level manage alone. `api_key` is in the annotation only
+     * because the type checker reaches it through `workspace->read`; the
+     * intersection with `owner` (a user relation) means no API key can hold it,
+     * which `schema-validation.yaml` asserts.
+     */
+    permission change_visibility: user | api_key = (owner & workspace->read) + workspace->administer
 }
 
 /**
