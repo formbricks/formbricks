@@ -359,6 +359,27 @@ const SURVEYS_POLL_INTERVAL_MS = 200;
 type TFormbricksSurveys = NonNullable<typeof globalThis.window.formbricksSurveys>;
 
 /**
+ * The SDK's pre-ENG-3289 matcher: exact stored code, then alias, case-insensitive, no canonical table.
+ * Only used while the instance still serves a cached surveys bundle without `resolveSurveyLanguage`
+ * (`/js/*` is CDN-cached for up to 30 days), so explicit languages keep working as they did before
+ * instead of every one of them being skipped. No browser languages here — that is new behaviour.
+ * Disabled languages (other than the default) are left out, so a disabled alias cannot shadow an
+ * enabled code.
+ */
+const matchLanguageExactly = (survey: TWorkspaceStateSurvey, language: string | undefined): string | null => {
+  const requested = language?.trim().toLowerCase();
+  if (!requested) return "default";
+  const candidates = survey.languages.filter(
+    (surveyLanguage) => surveyLanguage.default || surveyLanguage.enabled
+  );
+  const match =
+    candidates.find((surveyLanguage) => surveyLanguage.language.code.toLowerCase() === requested) ??
+    candidates.find((surveyLanguage) => surveyLanguage.language.alias?.toLowerCase() === requested);
+  if (!match) return null;
+  return match.default ? "default" : match.language.code;
+};
+
+/**
  * The language a survey renders in, or `null` to skip it.
  *
  * Matching runs in the surveys bundle (`resolveSurveyLanguage`), which already carries the canonical
@@ -369,24 +390,6 @@ type TFormbricksSurveys = NonNullable<typeof globalThis.window.formbricksSurveys
  * A surveys bundle that predates the resolver gets the SDK's previous matcher instead — see
  * `matchLanguageExactly`.
  */
-/**
- * The SDK's pre-ENG-3289 matcher: exact stored code or alias, case-insensitive, no canonical table.
- * Only used while the instance still serves a cached surveys bundle without `resolveSurveyLanguage`
- * (`/js/*` is CDN-cached for up to 30 days), so explicit languages keep working as they did before
- * instead of every one of them being skipped. No browser languages here — that is new behaviour.
- */
-const matchLanguageExactly = (survey: TWorkspaceStateSurvey, language: string | undefined): string | null => {
-  const requested = language?.trim().toLowerCase();
-  if (!requested) return "default";
-  const match = survey.languages.find(
-    (surveyLanguage) =>
-      surveyLanguage.language.code.toLowerCase() === requested ||
-      surveyLanguage.language.alias?.toLowerCase() === requested
-  );
-  if (match?.default) return "default";
-  return match?.enabled ? match.language.code : null;
-};
-
 const resolveDisplayLanguage = (
   survey: TWorkspaceStateSurvey,
   language: string | undefined,

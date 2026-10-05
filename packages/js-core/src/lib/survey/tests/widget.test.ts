@@ -392,6 +392,22 @@ describe("widget-file", () => {
         const formbricksSurveys = await renderWithResolver(germanEnglishSurvey(true), MISSING_RESOLVER);
         expect(formbricksSurveys.renderSurvey).not.toHaveBeenCalled();
       });
+
+      test("does not let a disabled language's alias shadow an enabled code", async () => {
+        mockConfigWithLanguage("de");
+        const survey: TWorkspaceStateSurvey = {
+          ...germanEnglishSurvey(true),
+          languages: [
+            { language: { code: "en-US" }, default: true, enabled: true },
+            { language: { code: "de-AT", alias: "de" }, default: false, enabled: false },
+            { language: { code: "de" }, default: false, enabled: true },
+          ],
+        };
+        const formbricksSurveys = await renderWithResolver(survey, MISSING_RESOLVER);
+        expect(formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+          expect.objectContaining({ languageCode: "de" })
+        );
+      });
     });
   });
 
