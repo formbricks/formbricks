@@ -68,13 +68,13 @@ const ZResetSurveyAction = z.object({
 export const resetSurveyAction = authenticatedActionClient.inputSchema(ZResetSurveyAction).action(
   withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-    const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
 
-    // Reset irreversibly deletes every response and display, so it needs manage access (org owner or
-    // manager, or a team with Manage on the workspace) rather than the write access that edits a survey.
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.manage", {
-      type: "workspace",
-      id: workspaceId,
+    // Reset irreversibly deletes every response and display, so it needs manage access on the survey
+    // rather than the write access that edits it. Checked on the survey, not the workspace, so private
+    // surveys and pending visibility changes stay fail-closed (ENG-3282).
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.manage", {
+      type: "survey",
+      id: parsedInput.surveyId,
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;

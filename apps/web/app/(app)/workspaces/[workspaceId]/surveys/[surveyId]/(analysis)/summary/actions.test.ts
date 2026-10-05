@@ -3,7 +3,6 @@ import { AuthorizationError } from "@formbricks/types/errors";
 
 const mocks = vi.hoisted(() => ({
   assertCan: vi.fn(),
-  getWorkspaceIdFromSurveyId: vi.fn(),
   getSurvey: vi.fn(),
   deleteResponsesAndDisplaysForSurvey: vi.fn(),
 }));
@@ -22,7 +21,7 @@ vi.mock("@/lib/authorization", () => ({ assertCan: mocks.assertCan }));
 
 vi.mock("@/lib/utils/helper", () => ({
   getOrganizationIdFromSurveyId: vi.fn().mockResolvedValue("org1"),
-  getWorkspaceIdFromSurveyId: mocks.getWorkspaceIdFromSurveyId,
+  getWorkspaceIdFromSurveyId: vi.fn(),
 }));
 
 vi.mock("@/lib/survey/service", () => ({ getSurvey: mocks.getSurvey, updateSurvey: vi.fn() }));
@@ -71,7 +70,6 @@ describe("resetSurveyAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.assertCan.mockResolvedValue(undefined);
-    mocks.getWorkspaceIdFromSurveyId.mockResolvedValue("ws1");
     mocks.getSurvey.mockResolvedValue({ id: "survey1", archivedAt: null });
     mocks.deleteResponsesAndDisplaysForSurvey.mockResolvedValue({
       deletedResponsesCount: 3,
@@ -79,19 +77,32 @@ describe("resetSurveyAction", () => {
     });
   });
 
-  test("requires manage access on the survey's workspace, not just write access", async () => {
+  test("requires manage access on the survey itself, not write access or workspace manage", async () => {
     await callReset();
 
-    expect(mocks.assertCan).toHaveBeenCalledWith({ type: "user", id: "user1" }, "workspace.manage", {
-      type: "workspace",
-      id: "ws1",
+    expect(mocks.assertCan).toHaveBeenCalledTimes(1);
+    expect(mocks.assertCan).toHaveBeenCalledWith({ type: "user", id: "user1" }, "survey.manage", {
+      type: "survey",
+      id: "survey1",
     });
   });
 
-  test("deletes nothing when the caller lacks manage access", async () => {
-    mocks.assertCan.mockRejectedValue(new AuthorizationError("Not authorized"));
+  // A non-owner with a team Manage grant passes any workspace-level check; only the survey policy denies
+  // them on a private survey or while a visibility change is pending (ENG-3282).
+  test.each(["a private survey", "a survey with a pending visibility change"])(
+    "deletes nothing for a team Manage member on %s",
+    async () => {
+      mocks.assertCan.mockImplementation(async (_actor: unknown, action: string) => {
+        if (action !== "workspace.manage") throw new AuthorizationError("Not authorized");
+      });
 
-    await expect(callReset()).rejects.toThrow(AuthorizationError);
-    expect(mocks.deleteResponsesAndDisplaysForSurvey).not.toHaveBeenCalled();
+      await expect(callReset()).rejects.toThrow(AuthorizationError);
+      expect(mocks.deleteResponsesAndDisplaysForSurvey).not.toHaveBeenCalled();
+    }
+  );
+
+  test("resets the survey once survey.manage is granted", async () => {
+    await expect(callReset()).resolves.toMatchObject({ success: true, deletedResponsesCount: 3 });
+    expect(mocks.deleteResponsesAndDisplaysForSurvey).toHaveBeenCalledWith("survey1");
   });
 });
