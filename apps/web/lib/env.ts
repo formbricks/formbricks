@@ -55,30 +55,28 @@ const ZMcpOauthJwksUrl = z.url().refine(isValidMcpOauthJwksUrl, {
 });
 
 /**
- * An exact redirect URI an operator lets anonymous MCP client registration claim (ENG-3471). https only,
- * because a registered callback is where authorization codes are delivered; no credentials and no
- * fragment (RFC 6749 §3.1.2); and no `*`, so nobody configures a wildcard expecting it to match — the
- * allowlist compares exact strings.
+ * An exact redirect URI an operator lets anonymous MCP client registration claim (ENG-3471). On top of
+ * the JWKS URL rules (a host, no credentials): https only, because a registered callback is where
+ * authorization codes are delivered; no fragment at all, not even an empty `#` (RFC 6749 §3.1.2); no
+ * `*`, so nobody configures a wildcard expecting it to match — the allowlist compares exact strings;
+ * and not a loopback host, because Better Auth refuses loopback redirects for the `web` clients these
+ * register as, so such an entry could never be used.
  */
+const isLoopbackHostname = (hostname: string): boolean =>
+  hostname === "localhost" ||
+  hostname.endsWith(".localhost") ||
+  hostname === "[::1]" ||
+  hostname.startsWith("127.");
+
 const isValidDcrRedirectUri = (value: string): boolean => {
-  if (value.includes("*")) return false;
-  try {
-    const url = new URL(value);
-    return (
-      url.protocol === "https:" &&
-      url.hostname.length > 0 &&
-      url.username === "" &&
-      url.password === "" &&
-      !value.includes("#")
-    );
-  } catch {
-    return false;
-  }
+  if (!isValidMcpOauthJwksUrl(value) || value.includes("#") || value.includes("*")) return false;
+  const url = new URL(value);
+  return url.protocol === "https:" && !isLoopbackHostname(url.hostname);
 };
 
 const ZDcrRedirectUri = z.url().refine(isValidDcrRedirectUri, {
   message:
-    "MCP_DCR_ALLOWED_REDIRECT_URIS entries must be exact https URLs without credentials, a fragment or a wildcard",
+    "MCP_DCR_ALLOWED_REDIRECT_URIS entries must be exact, non-loopback https URLs without credentials, a fragment or a wildcard",
 });
 
 /** Comma-separated list; blank, and empty entries from a stray comma, count as unset. */

@@ -72,7 +72,7 @@ export const isLoopbackRedirectUri = (uri: unknown): boolean => {
 };
 
 /** The exact-match set: the built-in hosted callbacks plus any operator additions. */
-export const buildAllowedDcrRedirectUris = (operatorUris: readonly string[] = []): ReadonlySet<string> =>
+const buildAllowedDcrRedirectUris = (operatorUris: readonly string[] = []): ReadonlySet<string> =>
   new Set<string>([...HOSTED_MCP_CLIENT_REDIRECT_URIS, ...operatorUris]);
 
 /** Origin and path only: a callback's query string can carry a per-tenant secret, and logs leave the box. */

@@ -76,19 +76,21 @@ Use this for **claude.ai** and **Claude Desktop**, where Formbricks is added as 
     Code** instead — it runs locally.
 </Warning>
 
-## ChatGPT (connectors)
+## ChatGPT (MCP apps)
 
-Use this to add Formbricks to **ChatGPT** as a custom connector. Where you add it depends on your
-ChatGPT plan and workspace settings — see OpenAI's
-[connector documentation](https://developers.openai.com/plugins/build/auth) for the current location.
+Use this to add Formbricks to **ChatGPT** as a custom MCP app. Custom MCP apps need ChatGPT
+**developer mode**, which is available on Business and Enterprise/Edu plans and has to be enabled by
+a workspace admin first — see OpenAI's
+[Developer mode and MCP apps in ChatGPT](https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt).
 
 <Steps>
-  <Step title="Add the server URL">
-    Create a custom connector with the MCP URL `https://app.formbricks.com/api/mcp` and **OAuth**
-    authentication. Leave the client ID and secret blank — ChatGPT registers itself.
+  <Step title="Create the app">
+    In ChatGPT, go to **Settings → Apps → Create**. Enter the MCP URL
+    `https://app.formbricks.com/api/mcp` and choose **OAuth** as the authentication mechanism.
   </Step>
   <Step title="Approve access">
-    ChatGPT opens Formbricks in your browser. Sign in and **approve** the requested access.
+    ChatGPT opens Formbricks in your browser and registers itself. Sign in and **approve** the
+    requested access; ChatGPT then scans the available tools.
   </Step>
 </Steps>
 
