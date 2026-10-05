@@ -83,6 +83,7 @@ function classifyOrganizationAIFailure(
       statusCode: providerError?.statusCode,
       isQuotaExhausted: providerError?.isQuotaExhausted,
       isRetryable: providerError?.isRetryable,
+      isAuthFailure: providerError?.isAuthFailure,
       err: error,
     },
     message

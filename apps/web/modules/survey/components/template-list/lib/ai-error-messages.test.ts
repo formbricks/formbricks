@@ -14,6 +14,7 @@ describe("getAiErrorMessage", () => {
     ["ai_generated_payload_invalid", "workspace.surveys.ai_create.generated_payload_invalid"],
     ["ai_output_too_long", "workspace.surveys.ai_create.ai_output_too_long"],
     ["ai_quota_exceeded", "workspace.surveys.ai_create.ai_rate_limited"],
+    ["ai_provider_auth_failed", "workspace.surveys.ai_create.provider_auth_failed"],
     ["ai_generation_failed", "workspace.surveys.ai_create.generation_failed"],
     ["ai_nothing_generated", "workspace.surveys.ai_create.nothing_generated"],
   ])("gives %s its own message", (code, key) => {
