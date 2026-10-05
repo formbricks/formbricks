@@ -42,7 +42,7 @@ export const GET = async (
 
   // check auth
   if (accessType === "private") {
-    const authResult = await authorizePrivateDownload(request, resolved.workspaceId, "GET");
+    const authResult = await authorizePrivateDownload(request, resolved.workspaceId, "GET", params.filePath);
     if (!authResult.ok) {
       return authResult.error.unauthorized
         ? responses.unauthorizedResponse()
@@ -111,7 +111,7 @@ export const DELETE = async (
 
   const session = await getSession();
 
-  const authResult = await authorizePrivateDownload(request, resolved.workspaceId, "DELETE");
+  const authResult = await authorizePrivateDownload(request, resolved.workspaceId, "DELETE", params.filePath);
 
   if (!authResult.ok) {
     await logFileDeletion({

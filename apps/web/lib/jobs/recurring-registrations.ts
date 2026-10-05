@@ -12,7 +12,10 @@ import {
   recurringJobs,
 } from "@formbricks/jobs";
 import { processAuthzedProjectionDeliveryJob } from "@/lib/authzed/outbox-processor";
-import { processAuthzedScheduledReconciliationJob } from "@/lib/authzed/scheduled-reconciliation";
+import {
+  processAuthzedScheduledReconciliationJob,
+  processAuthzedSurveyAuditJob,
+} from "@/lib/authzed/scheduled-reconciliation";
 import { USAGE_TELEMETRY_DAILY_CRON_PATTERN, USAGE_TELEMETRY_TIME_ZONE } from "@/lib/telemetry/constants";
 import { processUsageTelemetryJob } from "@/lib/telemetry/process-usage-telemetry-job";
 import {
@@ -80,6 +83,15 @@ export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, Recurr
     job: recurringJobs.authzedReconciliationAudit,
     schedule: {
       everyMs: 6 * 60 * 60 * 1_000,
+      kind: "every",
+    },
+  },
+  // ENG-3282: daily rather than six-hourly — its cost grows with the number of surveys, not grants.
+  authzedSurveyAudit: {
+    handler: processAuthzedSurveyAuditJob,
+    job: recurringJobs.authzedSurveyAudit,
+    schedule: {
+      everyMs: 24 * 60 * 60 * 1_000,
       kind: "every",
     },
   },

@@ -10,6 +10,10 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: vi.fn() }));
 vi.mock("@/lib/tag/service", () => ({ getTag: vi.fn(), getTagsByWorkspaceId: vi.fn() }));
 vi.mock("@/lib/tagOnResponse/service", () => ({ getTagsOnResponsesCount: vi.fn() }));
+// Tag counts only cover responses the caller may read (ENG-3282); enforcement off here.
+vi.mock("@/app/api/v3/responses/lib/visibility", () => ({
+  resolveV3ResponsesActorContext: async () => ({ enforced: false, kind: "apiKey" }),
+}));
 vi.mock("@/modules/workspaces/settings/lib/tag", () => ({
   deleteTag: vi.fn(),
   mergeTags: vi.fn(),
@@ -145,7 +149,7 @@ describe("renameV3Tag", () => {
 
     // `count` is part of the documented TagResource; answering 0 for a tag in use is false data.
     expect(body.data).toMatchObject({ id: tagId, name: "Renamed", count: 4 });
-    expect(getTagsOnResponsesCount).toHaveBeenCalledWith(workspaceId);
+    expect(getTagsOnResponsesCount).toHaveBeenCalledWith(workspaceId, {});
   });
 
   test("falls back to zero when the renamed tag is on no responses", async () => {

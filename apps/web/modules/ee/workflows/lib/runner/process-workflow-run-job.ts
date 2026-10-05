@@ -19,10 +19,12 @@ import {
   isLiteralEmailRecipient,
   planExecutableSteps,
 } from "@formbricks/workflows";
+import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
+import { isSurveyOutboundAllowed } from "@/lib/survey/visibility/outbound";
 import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
 import { captureWorkflowRunFailed } from "@/modules/ee/workflows/lib/analytics/run-failure";
@@ -31,6 +33,7 @@ import {
   buildSurveyResponseEmailHtml,
   resolveResponseRecipient,
 } from "@/modules/email/lib/survey-response-email";
+import { recordSurveyOutboundSkipped } from "@/modules/response-pipeline/lib/outbound-visibility-metrics";
 
 /** Strips CR/LF and other control chars from the subject — defense against SMTP header injection. */
 const CONTROL_CHARS_PATTERN = /[\x00-\x1f\x7f\u2028\u2029]/g;
@@ -481,6 +484,15 @@ const loadRunEmailContext = async (
   if (response.surveyId !== triggerPayload.surveyId) {
     throw new WorkflowRunNotExecutableError(
       `Response ${triggerPayload.responseId} does not belong to survey ${triggerPayload.surveyId}`
+    );
+  }
+
+  // ENG-3283: the survey may have been restricted after this run was enqueued. A run forwards the
+  // response out of the app, so it stops here rather than sending a restricted survey's data.
+  if (!isSurveyOutboundAllowed(survey, await isSurveyVisibilityReady())) {
+    recordSurveyOutboundSkipped("workflow");
+    throw new WorkflowRunNotExecutableError(
+      `Survey ${triggerPayload.surveyId} is not visible to the whole workspace`
     );
   }
 

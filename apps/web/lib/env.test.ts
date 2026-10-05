@@ -244,9 +244,12 @@ describe("env", () => {
     }
   );
 
-  test.each([undefined, "minimize_latency"])(
-    "requires fully consistent server configuration, not %s",
-    async (consistency) => {
+  test.each([
+    { consistency: undefined, found: "but it is not set" },
+    { consistency: "minimize_latency", found: 'but it is "minimize_latency"' },
+  ])(
+    "requires fully consistent server configuration, not $consistency, and says what to change",
+    async ({ consistency, found }) => {
       const token = "private-runtime-token";
       setTestEnv({
         AUTHZED_ENABLED: "true",
@@ -259,6 +262,10 @@ describe("env", () => {
       const log = vi.spyOn(console, "error").mockImplementation(() => {});
       try {
         expect(assertAuthzedRuntimeConfiguration).toThrow("AUTHZED_CONSISTENCY=fully_consistent");
+        expect(assertAuthzedRuntimeConfiguration).toThrow(found);
+        expect(assertAuthzedRuntimeConfiguration).toThrow(
+          "Set AUTHZED_CONSISTENCY=fully_consistent in your .env"
+        );
         expect(JSON.stringify(log.mock.calls)).not.toContain(token);
       } finally {
         log.mockRestore();

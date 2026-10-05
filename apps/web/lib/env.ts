@@ -628,6 +628,11 @@ const parsedEnv = createEnv({
     SURVEY_SCHEDULING_TIME_ZONE: ZSurveySchedulingTimeZone.optional().default("Europe/Berlin"),
     SURVEY_SCHEDULING_LOCAL_HOUR: ZSurveySchedulingLocalHour.optional().default(0),
     SURVEY_SCHEDULING_LOCAL_MINUTE: ZSurveySchedulingLocalMinute.optional().default(0),
+    // ENG-3282 emergency switch: "1" makes the survey-visibility readiness marker read as unset, so the
+    // evaluator collapses to workspace permissions everywhere without touching the database.
+    SURVEY_VISIBILITY_FORCE_DISABLED: z.enum(["1", "0"]).optional(),
+    // ENG-3282: most surveys one workspace may hold (archived included). Unset means 10,000.
+    SURVEY_WORKSPACE_LIMIT: z.coerce.number().int().positive().optional(),
   },
   client: {},
 
@@ -730,6 +735,8 @@ const parsedEnv = createEnv({
     SURVEY_SCHEDULING_LOCAL_HOUR: process.env.SURVEY_SCHEDULING_LOCAL_HOUR,
     SURVEY_SCHEDULING_LOCAL_MINUTE: process.env.SURVEY_SCHEDULING_LOCAL_MINUTE,
     SURVEY_SCHEDULING_TIME_ZONE: process.env.SURVEY_SCHEDULING_TIME_ZONE,
+    SURVEY_VISIBILITY_FORCE_DISABLED: process.env.SURVEY_VISIBILITY_FORCE_DISABLED,
+    SURVEY_WORKSPACE_LIMIT: process.env.SURVEY_WORKSPACE_LIMIT,
     SENTRY_DSN: process.env.SENTRY_DSN,
     NOTION_OAUTH_CLIENT_ID: process.env.NOTION_OAUTH_CLIENT_ID,
     NOTION_OAUTH_CLIENT_SECRET: process.env.NOTION_OAUTH_CLIENT_SECRET,
@@ -815,7 +822,15 @@ export const assertAuthzedRuntimeConfiguration = (): void => {
     // Report missing credentials even when enablement was omitted.
     validateAuthzedConfiguration({ ...values, AUTHZED_ENABLED: "true" }, ctx);
     if (values.AUTHZED_CONSISTENCY !== "fully_consistent") {
-      addEnvIssue(ctx, "AUTHZED_CONSISTENCY", "Formbricks v6 requires AUTHZED_CONSISTENCY=fully_consistent");
+      // Name the value found: a pre-v6 .env carries `minimize_latency`, and the fix is a one-line edit.
+      // Safe to echo — the schema has already narrowed it to an enum member or undefined.
+      const current =
+        values.AUTHZED_CONSISTENCY === undefined ? "is not set" : `is "${values.AUTHZED_CONSISTENCY}"`;
+      addEnvIssue(
+        ctx,
+        "AUTHZED_CONSISTENCY",
+        `Formbricks v6 requires AUTHZED_CONSISTENCY=fully_consistent, but it ${current}. Set AUTHZED_CONSISTENCY=fully_consistent in your .env or deployment environment and restart. See https://formbricks.com/docs/self-hosting/configuration/authzed-operations`
+      );
     }
   }).safeParse(env);
 

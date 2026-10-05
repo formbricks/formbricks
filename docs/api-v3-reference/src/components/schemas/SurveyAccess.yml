@@ -1,0 +1,28 @@
+type: object
+description: Why **this caller** can see the survey, and whether they may change its visibility. Derived by
+  the server per request; a rendering hint only — every mutation is re-authorised on the server.
+required:
+  - via
+  - canManageVisibility
+properties:
+  via:
+    type: string
+    description: 'Why this caller can see the survey. Known values today: `workspace` (the survey is
+      workspace-visible and the caller has workspace read — always the value for API keys), `owner` (restricted,
+      the caller owns it), `organizationRole` (restricted, the caller reaches it only as an organisation owner or
+      manager — the case that shows the admin banner). **Open set, deliberately not an enum**: named person
+      and team sharing will add values, so clients treat an unknown string as "some other access path" and
+      never branch exhaustively. Explanatory metadata, not authorization truth — the server re-authorises
+      every call.'
+    examples:
+      - workspace
+      - owner
+      - organizationRole
+  canManageVisibility:
+    type: boolean
+    description: 'Permission only: `true` when this caller holds `survey.change_visibility` — owner or
+      organisation owner/manager, feature enabled for the organisation and deployment. It can be `true` while
+      `allowedTargets` is empty (blockers, or no owner): it answers "may this person manage visibility at
+      all", which is what shows or hides the controls; `allowedTargets` on `GET …/visibility` answers which
+      transitions would succeed now. Stays `true` for an organisation manager on an ownerless restricted survey.'
+additionalProperties: false

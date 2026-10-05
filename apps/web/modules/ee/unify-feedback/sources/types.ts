@@ -2,6 +2,7 @@ import { TFunction } from "i18next";
 import { z } from "zod";
 import { THubFieldType, ZFeedbackSourceImportMode, ZHubFieldType } from "@formbricks/types/feedback-source";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
+import type { TSurveyVisibility } from "@formbricks/types/surveys/types";
 
 export interface TUnifySurveyElement {
   id: string;
@@ -16,6 +17,8 @@ export interface TUnifySurvey {
   status: "draft" | "active" | "paused" | "completed";
   elements: TUnifySurveyElement[];
   createdAt: Date;
+  /** ENG-3395: a restricted survey cannot feed a feedback source while visibility is enforced. */
+  visibility: TSurveyVisibility;
 }
 
 export interface TFieldMapping {

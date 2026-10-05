@@ -11,9 +11,15 @@ interface AddWebhookButtonProps {
   workspaceId: string;
   surveys: TSurvey[];
   allowInternalUrls: boolean;
+  surveyVisibilityEnabled: boolean;
 }
 
-export const AddWebhookButton = ({ workspaceId, surveys, allowInternalUrls }: AddWebhookButtonProps) => {
+export const AddWebhookButton = ({
+  workspaceId,
+  surveys,
+  allowInternalUrls,
+  surveyVisibilityEnabled,
+}: Readonly<AddWebhookButtonProps>) => {
   const { t } = useTranslation();
   const [isAddWebhookModalOpen, setAddWebhookModalOpen] = useState(false);
   return (
@@ -32,6 +38,7 @@ export const AddWebhookButton = ({ workspaceId, surveys, allowInternalUrls }: Ad
         open={isAddWebhookModalOpen}
         setOpen={setAddWebhookModalOpen}
         allowInternalUrls={allowInternalUrls}
+        surveyVisibilityEnabled={surveyVisibilityEnabled}
       />
     </>
   );

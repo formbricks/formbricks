@@ -67,7 +67,7 @@ test.describe("Survey Email Preview", () => {
     const survey = await createSurveySeed(user.workspaceId, user.id, `Email Preview Survey ${timestamp}`);
 
     await page.goto(`/workspaces/${user.workspaceId}/surveys/${survey.id}/summary`);
-    await page.getByRole("button", { name: "Share survey" }).click();
+    await page.getByRole("button", { name: "Distribute" }).click();
     await page.getByRole("button", { name: "Email embed" }).click();
 
     const previewShell = page.getByTestId("survey-email-preview-shell");
@@ -134,7 +134,7 @@ test.describe("Survey Email Preview", () => {
     );
 
     await page.goto(`/workspaces/${user.workspaceId}/surveys/${survey.id}/summary`);
-    await page.getByRole("button", { name: "Share survey" }).click();
+    await page.getByRole("button", { name: "Distribute" }).click();
     await page.getByRole("button", { name: "Email embed" }).click();
 
     const previewFrame = page.frameLocator('[data-testid="survey-email-preview-frame"]');
