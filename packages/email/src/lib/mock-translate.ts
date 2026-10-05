@@ -83,6 +83,8 @@ const translations: Record<TranslationKey, TranslationValue> = {
   "emails.sso_sign_in_hint_email_subject": "How to sign in to your Formbricks account",
   "emails.sso_sign_in_hint_email_text":
     "We received a request to reset the password for your Formbricks account. Your account does not use a password, so there is nothing to reset. You sign in with:",
+  "emails.sso_sign_in_hint_email_text_unavailable":
+    "We received a request to reset the password for your Formbricks account. Your account does not use a password: it signs in with single sign-on, which is not available on this Formbricks instance right now. Contact your administrator to get access again.",
   "emails.response_data": "Response data",
   "emails.response_finished_email_subject": "A response for {surveyName} was completed ✅",
   "emails.schedule_your_meeting": "Schedule your meeting",

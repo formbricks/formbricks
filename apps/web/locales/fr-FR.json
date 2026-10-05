@@ -703,6 +703,7 @@
     "sso_sign_in_hint_email_no_access": "Si tu ne peux plus te connecter de cette manière, contacte ton administrateur.",
     "sso_sign_in_hint_email_subject": "Comment te connecter à ton compte Formbricks",
     "sso_sign_in_hint_email_text": "Nous avons reçu une demande de réinitialisation du mot de passe de ton compte Formbricks. Ton compte n'utilise pas de mot de passe, il n'y a donc rien à réinitialiser. Tu te connectes avec :",
+    "sso_sign_in_hint_email_text_unavailable": "Nous avons reçu une demande de réinitialisation du mot de passe de ton compte Formbricks. Ton compte n'utilise pas de mot de passe : il se connecte via l'authentification unique (SSO), qui n'est pas disponible pour le moment sur cette instance de Formbricks. Contacte ton administrateur pour retrouver l'accès.",
     "survey_response_finished_email_congrats": "Félicitations, vous avez reçu une nouvelle réponse à votre enquête ! Quelqu'un vient de compléter votre enquête : {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Vous ne voulez pas recevoir ces notifications ?",
     "survey_response_finished_email_hey": "Salut 👋",

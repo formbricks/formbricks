@@ -703,6 +703,7 @@
     "sso_sign_in_hint_email_no_access": "Dacă nu te mai poți conecta în acest mod, contactează administratorul.",
     "sso_sign_in_hint_email_subject": "Cum te conectezi la contul tău Formbricks",
     "sso_sign_in_hint_email_text": "Am primit o solicitare de resetare a parolei pentru contul tău Formbricks. Contul tău nu folosește o parolă, deci nu există nimic de resetat. Te conectezi cu:",
+    "sso_sign_in_hint_email_text_unavailable": "Am primit o solicitare de resetare a parolei pentru contul tău Formbricks. Contul tău nu folosește o parolă: te autentifici prin single sign-on (SSO), care nu este disponibil momentan pe această instanță Formbricks. Contactează administratorul pentru a-ți recăpăta accesul.",
     "survey_response_finished_email_congrats": "Felicitări, aţi primit un răspuns nou la sondaj! Cineva tocmai a completat sondajul dumneavoastră: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Nu doriți să primiți aceste notificări?",
     "survey_response_finished_email_hey": "Hei 👋",

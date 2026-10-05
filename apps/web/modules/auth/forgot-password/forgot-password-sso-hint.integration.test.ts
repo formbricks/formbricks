@@ -21,13 +21,40 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(async () => new Headers()),
 }));
 
-// Pinned rather than inherited from `.env`: either flag at its other value routes every user away from
-// the branch under test, and the suite would pass or fail on the developer's env instead of the code.
+// Pinned rather than inherited from `.env`: either reset flag at its other value routes every user away
+// from the branch under test, and a provider the login page does not offer is left out of the mail — so
+// without this the suite would pass or fail on the developer's env instead of the code.
 vi.mock("@/lib/constants", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/constants")>()),
   PASSWORD_RESET_DISABLED: false,
   EMAIL_AUTH_ENABLED: true,
+  AZURE_OAUTH_ENABLED: true,
+  GOOGLE_OAUTH_ENABLED: true,
 }));
+
+// The SSO buttons are licence-gated; there is no licence in this environment.
+vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/license-check/lib/utils")>()),
+  getIsSsoEnabled: vi.fn(async () => true),
+  getIsSamlSsoEnabled: vi.fn(async () => true),
+}));
+
+// `after()` needs a Next request scope. Run the callback straight away instead, and keep its promise so
+// each test can wait for the mail to be sent before asserting that it was (or was not).
+const pendingAfter = vi.hoisted(() => [] as Promise<unknown>[]);
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  after: (callback: () => unknown) => {
+    pendingAfter.push(Promise.resolve(callback()));
+  },
+}));
+
+/** Call the action and let its after-response work finish, as a real request would. */
+const requestReset = async (email: string) => {
+  const result = await forgotPasswordAction({ email });
+  await Promise.all(pendingAfter.splice(0));
+  return result;
+};
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/modules/ee/audit-logs/lib/handler")>();
@@ -65,7 +92,7 @@ describe("forgotPasswordAction for an account without a password (real Postgres 
   test("mails an SSO-only user which provider to sign in with, and no reset link", async () => {
     await seedSsoUser();
 
-    const result = await forgotPasswordAction({ email: SSO_EMAIL });
+    const result = await requestReset(SSO_EMAIL);
 
     expect(result?.data).toEqual({ success: true });
     expect(sendSsoSignInHintEmail).toHaveBeenCalledExactlyOnceWith({
@@ -79,7 +106,7 @@ describe("forgotPasswordAction for an account without a password (real Postgres 
   test("names every provider linked to the account, including a legacy `azure-ad` row only once", async () => {
     await seedSsoUser(["google", "azure-ad"]);
 
-    await forgotPasswordAction({ email: SSO_EMAIL });
+    await requestReset(SSO_EMAIL);
 
     expect(vi.mocked(sendSsoSignInHintEmail).mock.calls[0]?.[0].providerNames).toEqual([
       "Microsoft",
@@ -93,14 +120,14 @@ describe("forgotPasswordAction for an account without a password (real Postgres 
       body: { email: "alice@corporate-example.com", password: "Passw0rd!", name: "Alice" },
     });
 
-    await forgotPasswordAction({ email: "alice@corporate-example.com" });
+    await requestReset("alice@corporate-example.com");
 
     expect(sendPasswordResetLinkEmail).toHaveBeenCalledOnce();
     expect(sendSsoSignInHintEmail).not.toHaveBeenCalled();
   });
 
   test("sends nothing for an address that belongs to no account", async () => {
-    const result = await forgotPasswordAction({ email: "nobody@corporate-example.com" });
+    const result = await requestReset("nobody@corporate-example.com");
 
     expect(result?.data).toEqual({ success: true });
     expect(sendSsoSignInHintEmail).not.toHaveBeenCalled();

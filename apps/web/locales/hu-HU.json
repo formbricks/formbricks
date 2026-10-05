@@ -703,6 +703,7 @@
     "sso_sign_in_hint_email_no_access": "Amennyiben Ön már nem tud ilyen módon bejelentkezni, kérjük, forduljon rendszergazdájához.",
     "sso_sign_in_hint_email_subject": "Hogyan jelentkezhet be Formbricks-fiókjába",
     "sso_sign_in_hint_email_text": "Kérelmet kaptunk Formbricks-fiókjának jelszó-visszaállítására. Fiókja nem használ jelszót, ezért nincs mit visszaállítani. Ön a következő szolgáltatóval jelentkezik be:",
+    "sso_sign_in_hint_email_text_unavailable": "Kérelmet kaptunk a Formbricks-fiókjához tartozó jelszó visszaállítására. Az Ön fiókja nem használ jelszót: egyszeri bejelentkezéssel (SSO) lehet belépni, ez azonban jelenleg nem érhető el ezen a Formbricks-példányon. A hozzáférés visszaállítása érdekében kérjük, forduljon a rendszergazdájához.",
     "survey_response_finished_email_congrats": "Gratulálunk, új válasz érkezett a kérdőívére! Valaki épp most töltötte ki ezt a kérdőívet: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Nem szeretné megkapni ezeket az értesítéseket?",
     "survey_response_finished_email_hey": "Helló 👋",

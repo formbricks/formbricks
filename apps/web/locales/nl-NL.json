@@ -703,6 +703,7 @@
     "sso_sign_in_hint_email_no_access": "Als je op deze manier niet meer kunt inloggen, neem dan contact op met je beheerder.",
     "sso_sign_in_hint_email_subject": "Zo log je in op je Formbricks-account",
     "sso_sign_in_hint_email_text": "We hebben een verzoek ontvangen om het wachtwoord van je Formbricks-account opnieuw in te stellen. Je account gebruikt geen wachtwoord, dus er valt niets opnieuw in te stellen. Je logt in met:",
+    "sso_sign_in_hint_email_text_unavailable": "We hebben een verzoek ontvangen om het wachtwoord van je Formbricks-account opnieuw in te stellen. Je account gebruikt geen wachtwoord: je logt in met single sign-on, en dat is op dit moment niet beschikbaar op deze Formbricks-instantie. Neem contact op met je beheerder om weer toegang te krijgen.",
     "survey_response_finished_email_congrats": "Gefeliciteerd, u heeft een nieuwe reactie op uw enquête ontvangen! Iemand heeft zojuist uw enquête ingevuld: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Wil je deze meldingen niet ontvangen?",
     "survey_response_finished_email_hey": "Hé 👋",

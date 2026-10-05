@@ -16,6 +16,9 @@ const mocks = vi.hoisted(() => ({
   // The wrapper is applied once at module import, so `vi.resetAllMocks()` in beforeEach would wipe the
   // call history before any test could read it. A plain array on the hoisted object survives the reset.
   auditWrapperArgs: [] as [string, string][],
+  // Callbacks handed to `after()`. Captured rather than run, so a test can tell "scheduled for after the
+  // response" from "awaited before it" — which is the whole timing property the hint depends on.
+  afterCallbacks: [] as (() => unknown)[],
 }));
 
 const allowedRateLimitResponse = { allowed: true };
@@ -80,6 +83,20 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
 }));
 
+vi.mock("next/server", () => ({
+  after: vi.fn((callback: () => unknown) => {
+    mocks.afterCallbacks.push(callback);
+  }),
+}));
+
+/** Run what the action deferred past its response, as Next does once the response is sent. */
+const runAfterCallbacks = async () => {
+  const callbacks = mocks.afterCallbacks.splice(0);
+  for (const callback of callbacks) {
+    await callback();
+  }
+};
+
 vi.mock("@formbricks/logger", () => ({
   logger: { error: vi.fn() },
 }));
@@ -98,6 +115,7 @@ describe("forgotPasswordAction", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mocks.emailAuthEnabled.value = true;
+    mocks.afterCallbacks.length = 0;
     // `vi.resetAllMocks()` does not touch this, so reset it here too: a future test that asserts on
     // `auditLoggingCtx` without calling `callAction` would otherwise read the previous test's object.
     auditLoggingCtx = {};
@@ -241,10 +259,38 @@ describe("forgotPasswordAction", () => {
       mocks.hasCredentialAccount.mockResolvedValue(false);
 
       const result = await callAction(validInput);
+      await runAfterCallbacks();
 
       expect(sendSsoSignInHint).toHaveBeenCalledExactlyOnceWith(ssoUser);
       expect(auth.api.requestPasswordReset).not.toHaveBeenCalled();
       expect(result).toEqual({ success: true });
+    });
+
+    test("sends the hint only after the response, so SSO accounts answer as fast as unknown ones", async () => {
+      vi.mocked(getUserByEmail).mockResolvedValue(foundUser("azuread"));
+      mocks.hasCredentialAccount.mockResolvedValue(false);
+
+      const result = await callAction(validInput);
+
+      // The action has returned, and nothing has been sent yet: awaiting the send here is what would
+      // let response time tell a registered SSO address from an unknown one.
+      expect(result).toEqual({ success: true });
+      expect(sendSsoSignInHint).not.toHaveBeenCalled();
+
+      await runAfterCallbacks();
+      expect(sendSsoSignInHint).toHaveBeenCalledOnce();
+    });
+
+    test("sends no hint when it cannot tell whether the user has a password", async () => {
+      vi.mocked(getUserByEmail).mockResolvedValue(foundUser("google"));
+      mocks.hasCredentialAccount.mockRejectedValue(new Error("db down"));
+
+      await callAction(validInput);
+      await runAfterCallbacks();
+
+      // The hint says "your account does not use a password", which a failed lookup cannot vouch for.
+      expect(sendSsoSignInHint).not.toHaveBeenCalled();
+      expect(auth.api.requestPasswordReset).not.toHaveBeenCalled();
     });
 
     test("mails the hint on an SSO-only instance, where even a credential account cannot reset", async () => {
@@ -253,6 +299,7 @@ describe("forgotPasswordAction", () => {
       mocks.hasCredentialAccount.mockResolvedValue(true);
 
       await callAction(validInput);
+      await runAfterCallbacks();
 
       expect(sendSsoSignInHint).toHaveBeenCalledOnce();
       expect(auth.api.requestPasswordReset).not.toHaveBeenCalled();
@@ -263,6 +310,7 @@ describe("forgotPasswordAction", () => {
       mocks.hasCredentialAccount.mockResolvedValue(true);
 
       await callAction(validInput);
+      await runAfterCallbacks();
 
       expect(auth.api.requestPasswordReset).toHaveBeenCalledOnce();
       expect(sendSsoSignInHint).not.toHaveBeenCalled();
@@ -272,6 +320,7 @@ describe("forgotPasswordAction", () => {
       vi.mocked(getUserByEmail).mockResolvedValue(null);
 
       await callAction(validInput);
+      await runAfterCallbacks();
 
       expect(sendSsoSignInHint).not.toHaveBeenCalled();
     });

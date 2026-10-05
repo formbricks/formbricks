@@ -179,6 +179,18 @@ describe("SSO sign-in hint", () => {
     expect(html).toContain(">Acme SSO<");
     expect(html).toContain('href="https://app.formbricks.com/auth/login"');
   });
+
+  test("sends the reader to their administrator, with no login button, when no provider is offered", async () => {
+    const html = await renderSsoSignInHintEmail({
+      providerNames: [],
+      loginLink: "https://app.formbricks.com/auth/login",
+      t,
+    });
+
+    expect(html).toContain("Contact your administrator to get access again.");
+    expect(html).not.toContain("https://app.formbricks.com/auth/login");
+    expect(html).not.toContain("You sign in with:");
+  });
 });
 
 describe("legal footer", () => {

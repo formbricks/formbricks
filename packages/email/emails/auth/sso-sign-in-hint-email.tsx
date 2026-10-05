@@ -8,7 +8,11 @@ import { TEmailTemplateLegalProps } from "../../src/types/email";
 import { TFunction } from "../../src/types/translations";
 
 interface SsoSignInHintEmailProps extends TEmailTemplateLegalProps {
-  /** Display names of the identity providers the account signs in with, e.g. "Microsoft". Never empty. */
+  /**
+   * Display names of the identity providers the account signs in with and the login page offers, e.g.
+   * "Microsoft". Empty when none of them is offered right now — the mail then sends the reader to their
+   * administrator instead of to a login page with no button for them.
+   */
   readonly providerNames: string[];
   /** The login page, where those providers' buttons are. */
   readonly loginLink: string;
@@ -34,16 +38,22 @@ export function SsoSignInHintEmail({
     <EmailTemplate t={t} {...legalProps}>
       <Container>
         <Heading>{t("emails.sso_sign_in_hint_email_heading")}</Heading>
-        <Text className="text-sm">{t("emails.sso_sign_in_hint_email_text")}</Text>
-        <Section className="mb-4">
-          {providerNames.map((providerName) => (
-            <Text key={providerName} className="my-1 text-sm font-bold">
-              {providerName}
-            </Text>
-          ))}
-        </Section>
-        <EmailButton href={loginLink} label={t("emails.sso_sign_in_hint_email_go_to_login")} />
-        <Text className="text-sm">{t("emails.sso_sign_in_hint_email_no_access")}</Text>
+        {providerNames.length > 0 ? (
+          <>
+            <Text className="text-sm">{t("emails.sso_sign_in_hint_email_text")}</Text>
+            <Section className="mb-4">
+              {providerNames.map((providerName) => (
+                <Text key={providerName} className="my-1 text-sm font-bold">
+                  {providerName}
+                </Text>
+              ))}
+            </Section>
+            <EmailButton href={loginLink} label={t("emails.sso_sign_in_hint_email_go_to_login")} />
+            <Text className="text-sm">{t("emails.sso_sign_in_hint_email_no_access")}</Text>
+          </>
+        ) : (
+          <Text className="text-sm">{t("emails.sso_sign_in_hint_email_text_unavailable")}</Text>
+        )}
         <Text className="mb-0 text-sm">{t("emails.sso_sign_in_hint_email_did_not_request")}</Text>
         <EmailFooter t={t} />
       </Container>

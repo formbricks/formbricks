@@ -703,6 +703,7 @@
     "sso_sign_in_hint_email_no_access": "Если ты больше не можешь войти таким способом, обратись к своему администратору.",
     "sso_sign_in_hint_email_subject": "Как войти в твой аккаунт Formbricks",
     "sso_sign_in_hint_email_text": "Мы получили запрос на сброс пароля для твоего аккаунта Formbricks. Для входа в аккаунт пароль не используется, поэтому сбрасывать нечего. Ты входишь через:",
+    "sso_sign_in_hint_email_text_unavailable": "Мы получили запрос на сброс пароля для твоего аккаунта Formbricks. В твоём аккаунте пароль не используется: вход выполняется через единый вход (SSO), который сейчас недоступен в этом экземпляре Formbricks. Свяжись с администратором, чтобы снова получить доступ.",
     "survey_response_finished_email_congrats": "Поздравляем, вы получили новый ответ на свой опрос! Кто-то только что завершил ваш опрос: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Не хотите получать эти уведомления?",
     "survey_response_finished_email_hey": "Привет 👋",

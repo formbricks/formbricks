@@ -703,6 +703,7 @@
     "sso_sign_in_hint_email_no_access": "Se já não consegues iniciar sessão desta forma, contacta o teu administrador.",
     "sso_sign_in_hint_email_subject": "Como iniciar sessão na tua conta Formbricks",
     "sso_sign_in_hint_email_text": "Recebemos um pedido para repor a palavra-passe da tua conta Formbricks. A tua conta não utiliza palavra-passe, por isso não há nada para repor. Inicias sessão com:",
+    "sso_sign_in_hint_email_text_unavailable": "Recebemos um pedido para repor a palavra-passe da tua conta Formbricks. A tua conta não utiliza palavra-passe: o início de sessão é feito através de início de sessão único (SSO), que neste momento não está disponível nesta instância do Formbricks. Contacta o teu administrador para voltares a ter acesso.",
     "survey_response_finished_email_congrats": "Parabéns, recebeu uma nova resposta ao seu inquérito! Alguém acabou de completar o seu inquérito: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Não quer receber estas notificações?",
     "survey_response_finished_email_hey": "Olá 👋",

@@ -703,6 +703,7 @@
     "sso_sign_in_hint_email_no_access": "Artık bu şekilde giriş yapamıyorsan yöneticinle iletişime geç.",
     "sso_sign_in_hint_email_subject": "Formbricks hesabına nasıl giriş yapılır?",
     "sso_sign_in_hint_email_text": "Formbricks hesabının şifresini sıfırlamak için bir talep aldık. Hesabın şifre kullanmıyor, bu yüzden sıfırlanacak bir şey yok. Şu yöntemle giriş yapıyorsun:",
+    "sso_sign_in_hint_email_text_unavailable": "Formbricks hesabının şifresini sıfırlamak için bir talep aldık. Hesabın şifre kullanmıyor: tek oturum açma (SSO) ile giriş yapıyor ve bu özellik şu anda bu Formbricks örneğinde kullanılamıyor. Yeniden erişim sağlamak için yöneticinle iletişime geç.",
     "survey_response_finished_email_congrats": "Tebrikler, survey'inize yeni bir yanıt aldınız! Birisi survey'inizi tamamladı: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Bu bildirimleri almak istemiyor musunuz?",
     "survey_response_finished_email_hey": "Merhaba 👋",

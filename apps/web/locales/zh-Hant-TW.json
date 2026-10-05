@@ -703,6 +703,7 @@
     "sso_sign_in_hint_email_no_access": "如果你無法再用這個方式登入,請聯絡你的管理員。",
     "sso_sign_in_hint_email_subject": "如何登入你的 Formbricks 帳號",
     "sso_sign_in_hint_email_text": "我們收到了重設你 Formbricks 帳號密碼的要求。不過你的帳號並未使用密碼,因此無需重設。你的登入方式為:",
+    "sso_sign_in_hint_email_text_unavailable": "我們收到了重設你 Formbricks 帳號密碼的請求。你的帳號並未使用密碼,而是透過單一登入 (SSO) 來登入,但目前這個 Formbricks 執行個體無法使用單一登入。請聯絡你的管理員,以重新取得存取權限。",
     "survey_response_finished_email_congrats": "恭喜，您收到了新的問卷回應！有人剛完成您的問卷：{surveyName}",
     "survey_response_finished_email_dont_want_notifications": "不想收到這些通知？",
     "survey_response_finished_email_hey": "嗨 👋",

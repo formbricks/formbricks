@@ -703,6 +703,7 @@
     "sso_sign_in_hint_email_no_access": "Se você não conseguir mais entrar dessa forma, fale com o administrador.",
     "sso_sign_in_hint_email_subject": "Como entrar na sua conta do Formbricks",
     "sso_sign_in_hint_email_text": "Recebemos uma solicitação para redefinir a senha da sua conta do Formbricks. Sua conta não usa senha, então não há nada para redefinir. Você entra com:",
+    "sso_sign_in_hint_email_text_unavailable": "Recebemos uma solicitação para redefinir a senha da sua conta do Formbricks. Sua conta não usa senha: o login é feito por single sign-on (SSO), que não está disponível nesta instância do Formbricks no momento. Entre em contato com o administrador para voltar a ter acesso.",
     "survey_response_finished_email_congrats": "Parabéns, você recebeu uma nova resposta na sua pesquisa! Alguém acabou de completar sua pesquisa: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Não quer receber essas notificações?",
     "survey_response_finished_email_hey": "E aí 👋",

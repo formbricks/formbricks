@@ -703,6 +703,7 @@
     "sso_sign_in_hint_email_no_access": "Om du inte längre kan logga in på det här sättet, kontakta din administratör.",
     "sso_sign_in_hint_email_subject": "Så här loggar du in på ditt Formbricks-konto",
     "sso_sign_in_hint_email_text": "Vi har fått en begäran om att återställa lösenordet för ditt Formbricks-konto. Ditt konto använder inget lösenord, så det finns inget att återställa. Du loggar in med:",
+    "sso_sign_in_hint_email_text_unavailable": "Vi har fått en begäran om att återställa lösenordet för ditt Formbricks-konto. Ditt konto använder inget lösenord: du loggar in med enkel inloggning (SSO), som just nu inte är tillgänglig i den här Formbricks-instansen. Kontakta din administratör för att få åtkomst igen.",
     "survey_response_finished_email_congrats": "Grattis, du har fått ett nytt svar på din enkät! Någon har precis slutfört din enkät: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Vill du inte få dessa aviseringar?",
     "survey_response_finished_email_hey": "Hej 👋",

@@ -703,6 +703,7 @@
     "sso_sign_in_hint_email_no_access": "この方法でサインインできなくなった場合は、管理者に連絡してください。",
     "sso_sign_in_hint_email_subject": "Formbricksアカウントへのサインイン方法",
     "sso_sign_in_hint_email_text": "Formbricksアカウントのパスワードリセットのリクエストを受け付けました。お使いのアカウントはパスワードを使用していないため、リセットするものはありません。次の方法でサインインしています:",
+    "sso_sign_in_hint_email_text_unavailable": "Formbricksアカウントのパスワードリセットのリクエストを受け付けました。ただし、このアカウントではパスワードを使用しておらず、シングルサインオン(SSO)でログインする設定になっています。現在、このFormbricksインスタンスではSSOをご利用いただけない状態です。再度アクセスできるようにするには、管理者にお問い合わせください。",
     "survey_response_finished_email_congrats": "おめでとうございます、新しい回答が届きました！{surveyName} アンケートへの回答が完了しました。",
     "survey_response_finished_email_dont_want_notifications": "これらの通知を受け取りたくないですか？",
     "survey_response_finished_email_hey": "こんにちは 👋",

@@ -668,6 +668,7 @@ checksums:
     emails/sso_sign_in_hint_email_no_access: 8461e56a711ca3092dff6bc80b389fce
     emails/sso_sign_in_hint_email_subject: 3c2cd920e0051fb3ff276f573aef90a9
     emails/sso_sign_in_hint_email_text: 00938ea236714676b74db761f501fc0c
+    emails/sso_sign_in_hint_email_text_unavailable: 97a59e235f0b3c212fa00d3950aaa402
     emails/survey_response_finished_email_congrats: 4cc39698d6a16f68cf7d9db902c5978e
     emails/survey_response_finished_email_dont_want_notifications: 749171800180682839896dc04a53ca10
     emails/survey_response_finished_email_hey: 20c5157a424f7d49ceeb27e6fb13d194

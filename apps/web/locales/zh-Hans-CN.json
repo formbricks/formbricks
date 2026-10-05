@@ -703,6 +703,7 @@
     "sso_sign_in_hint_email_no_access": "如果你无法再通过这种方式登录，请联系你的管理员。",
     "sso_sign_in_hint_email_subject": "如何登录你的 Formbricks 账户",
     "sso_sign_in_hint_email_text": "我们收到了重置你 Formbricks 账户密码的请求。你的账户不使用密码，因此无需重置。你的登录方式是：",
+    "sso_sign_in_hint_email_text_unavailable": "我们收到了重置您 Formbricks 账户密码的请求。您的账户不使用密码,而是通过单点登录(SSO)登录,但目前此 Formbricks 实例暂不支持单点登录。请联系您的管理员,以重新获得访问权限。",
     "survey_response_finished_email_congrats": "恭喜，您收到了一份新的问卷回复！有人刚刚完成了您的问卷：{surveyName}",
     "survey_response_finished_email_dont_want_notifications": "不希望收到这些通知？",
     "survey_response_finished_email_hey": "嗨 👋",

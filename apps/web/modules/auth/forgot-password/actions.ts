@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { z } from "zod";
 import type { IdentityProvider } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
@@ -45,7 +46,7 @@ import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 const canResetPassword = async (user: {
   id: string;
   identityProvider: IdentityProvider;
-}): Promise<boolean> => {
+}): Promise<boolean | null> => {
   if (user.identityProvider === "email") {
     return true;
   }
@@ -62,7 +63,8 @@ const canResetPassword = async (user: {
     // enumeration oracle; this catch just avoids adding a second, narrower failure mode on a path that
     // only runs for non-email identity providers.
     logger.error({ error, userId: user.id }, "Credential-account lookup failed during password reset");
-    return false;
+    // `null`, not `false`: we do not know, so the caller must not tell them they have no password either.
+    return null;
   }
 };
 
@@ -79,8 +81,9 @@ export const forgotPasswordAction = actionClient.inputSchema(ZForgotPasswordActi
     }
 
     const user = await getUserByEmail(parsedInput.email);
+    const resettable = user ? await canResetPassword(user) : false;
 
-    if (user && (await canResetPassword(user))) {
+    if (user && resettable) {
       // Target the audited event at the account the reset was requested for. The ACTOR stays
       // `UNKNOWN_DATA` because this action is unauthenticated by design — which is the honest record:
       // someone who knows the address asked for a reset.
@@ -105,13 +108,12 @@ export const forgotPasswordAction = actionClient.inputSchema(ZForgotPasswordActi
       // regardless, so this cannot hide one.
       ctx.auditLoggingCtx.suppressEvent = true;
 
-      if (user) {
+      if (user && resettable === false) {
         // A registered user with no password to reset, e.g. Azure AD only. They would otherwise wait for
-        // a link that never comes (ENG-3262), so tell them how they do sign in. That goes by mail, not in
-        // the response: the inbox is the same one a reset link would reach, so it reveals nothing the
-        // reset flow does not. Awaited, as the reset send is, so this branch does not answer measurably
-        // faster than a real reset.
-        await sendSsoSignInHint(user);
+        // a link that never comes (ENG-3262), so tell them how they do sign in. By mail, so only the inbox
+        // on file learns it, and after the response, so this branch answers as fast as an unknown address:
+        // awaiting the lookup, render and SMTP round trip here would make SSO accounts stand out by timing.
+        after(() => sendSsoSignInHint(user));
       }
     }
 
