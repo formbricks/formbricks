@@ -126,6 +126,6 @@ nothing it finds in the working directory — a test plants a throwing `openapi-
 it that way. The loader still reads a `.openapi-tsrc` from the working directory — hey-api offers no way to turn that off, and
 the file's keys survive wherever the pipeline sets none — so the renderer refuses to run when one is present.
 
-The generator's packages require Node 22.18 or newer, while the repository's `engines` still admit Node 20.19 and
-22.12 until the Node 24 alignment lands. CI and the Docker image run Node 24, as `.nvmrc` does. Generator tooling must be under a permissive licence (MIT, Apache-2.0, BSD or ISC): the generated
-code is part of this AGPL repository, but the tool itself is never distributed.
+The generator's packages require Node 22.18 or newer, which the repository's Node 24 pin (`engines`, `.nvmrc`, CI
+and the Docker image) satisfies. Generator tooling must be under a permissive licence (MIT, Apache-2.0, BSD or ISC):
+the generated code is part of this AGPL repository, but the tool itself is never distributed.
