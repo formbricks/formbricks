@@ -18,6 +18,22 @@ describe("AI schema context", () => {
       '"NPS value", "NPS average", or "NPS average rating" means `FeedbackRecords.npsAverage`',
     ],
     ["the CSAT score alias", '"CSAT score" means `FeedbackRecords.csatScore`'],
+    [
+      "the NPS answer count alias",
+      '"how many NPS answers" or "NPS responses" means `FeedbackRecords.npsCount`',
+    ],
+    [
+      "the NPS breakdown recipe over the value band",
+      '"NPS breakdown" or "promoters vs passives vs detractors" means measure `FeedbackRecords.npsCount`, dimension `FeedbackRecords.valueBand`, filter `FeedbackRecords.fieldType` equals ["nps"]',
+    ],
+    [
+      "the CSAT breakdown recipe over the value band",
+      '"CSAT breakdown" or "satisfied vs neutral vs dissatisfied" means measure `FeedbackRecords.csatCount`, dimension `FeedbackRecords.valueBand`, filter `FeedbackRecords.fieldType` equals ["csat"]',
+    ],
+    [
+      "the exact value band tokens for equals filtering",
+      "promoter, passive, detractor (NPS) and satisfied, neutral, dissatisfied (CSAT)",
+    ],
     ["the CSAT average alias", '"CSAT average" means `FeedbackRecords.csatAverage`'],
     ["the CES alias", '"CES average" or "CES score" means `FeedbackRecords.cesAverage`'],
     [
