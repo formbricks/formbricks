@@ -29,6 +29,27 @@ export const isValidHttpUrl = (value: string): boolean => {
   }
 };
 
+const isLoopbackHost = (hostname: string): boolean =>
+  hostname === "localhost" ||
+  hostname.endsWith(".localhost") ||
+  hostname === "127.0.0.1" ||
+  hostname === "[::1]" ||
+  hostname === "::1";
+
+/**
+ * A URL the client secret may be sent to: `https`, or plain `http` only on the loopback interface,
+ * where no network observer exists. Unlike the model endpoint, the token endpoint always carries a
+ * credential, so there is no "takes no credentials" case that would justify cleartext elsewhere.
+ */
+export const isSecureCredentialUrl = (value: string): boolean => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || (url.protocol === "http:" && isLoopbackHost(url.hostname));
+  } catch {
+    return false;
+  }
+};
+
 const isStringRecord = (value: unknown): value is Record<string, string> =>
   typeof value === "object" &&
   value !== null &&

@@ -588,13 +588,24 @@ describe("env", () => {
       await expect(import("./env")).rejects.toThrow("AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET");
     });
 
-    test("names a bad token URL without echoing the secret", async () => {
-      setTestEnv({ ...oauthEnv, AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: "ftp://idp.example/token" });
+    test.each([
+      ["a non-http scheme", "ftp://idp.example/token"],
+      ["a plain-http token endpoint off loopback", "http://idp.example.internal/oauth/token"],
+    ])("names a bad token URL (%s) without echoing the secret", async (_label, tokenUrl) => {
+      setTestEnv({ ...oauthEnv, AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: tokenUrl });
 
       const message = await loadError();
 
       expect(message).toContain("AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL");
       expect(message).not.toContain("secret-sentinel");
+    });
+
+    test("accepts a plain-http token endpoint on loopback for local development", async () => {
+      setTestEnv({ ...oauthEnv, AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: "http://localhost:8765/oauth/token" });
+
+      const { env } = await import("./env");
+
+      expect(env.AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL).toBe("http://localhost:8765/oauth/token");
     });
 
     test.each([

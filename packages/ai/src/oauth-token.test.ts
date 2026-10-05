@@ -282,6 +282,19 @@ describe("createOAuthTokenSource", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  test("keeps grant_type fixed when extraParams tries to override it", async () => {
+    const fetchMock = createMintingFetch();
+    const source = createOAuthTokenSource(
+      { ...baseConfig, extraParams: { grant_type: "password", audience: "https://gw.example" } },
+      { fetch: fetchMock }
+    );
+
+    await source.getToken();
+
+    expect(getBody(fetchMock).get("grant_type")).toBe("client_credentials");
+    expect(getBody(fetchMock).get("audience")).toBe("https://gw.example");
+  });
+
   test("sends form-urlencoded client credentials in a Basic header per RFC 6749 §2.3.1", async () => {
     const fetchMock = createMintingFetch();
     const source = createOAuthTokenSource(

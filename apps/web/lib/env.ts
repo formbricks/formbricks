@@ -16,6 +16,24 @@ const isHttpUrl = (value: string): boolean => {
   }
 };
 
+const isLoopbackHost = (hostname: string): boolean =>
+  hostname === "localhost" ||
+  hostname.endsWith(".localhost") ||
+  hostname === "127.0.0.1" ||
+  hostname === "[::1]" ||
+  hostname === "::1";
+
+// Mirrors isSecureCredentialUrl in packages/ai: the client secret is sent to this URL, so plain http is
+// only acceptable on loopback.
+const isSecureCredentialUrl = (value: string): boolean => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || (url.protocol === "http:" && isLoopbackHost(url.hostname));
+  } catch {
+    return false;
+  }
+};
+
 const ZOpenAICompatibleBaseUrl = z.url().refine(isHttpUrl, {
   message: "AI_OPENAI_COMPATIBLE_BASE_URL must be a valid http(s) URL",
 });
@@ -209,11 +227,11 @@ const validateOpenAICompatibleAuthConfiguration = (
       "AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL",
       `AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL is required ${OAUTH_MODE_REQUIREMENT}`
     );
-  } else if (!isHttpUrl(tokenUrl)) {
+  } else if (!isSecureCredentialUrl(tokenUrl)) {
     addEnvIssue(
       ctx,
       "AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL",
-      "AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL must be a valid http(s) URL"
+      "AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL must be an https URL (plain http is only allowed on localhost)"
     );
   }
 

@@ -138,8 +138,9 @@ provider configuration, and the server log records the failure without the secre
 </Note>
 
 <Warning>
-  The `https://` advice above applies to the token endpoint too: the client secret is sent to
-  `AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL` on every token request.
+  `AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL` must be an `https://` URL: the client secret is sent to it on every
+  token request, so Formbricks refuses to start with a plain `http://` token endpoint. The one exception is
+  `localhost`, for local development against a mock endpoint.
 </Warning>
 
 ## Google Cloud

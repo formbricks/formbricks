@@ -80,6 +80,10 @@ const buildTokenRequestInit = (config: OAuthClientCredentialsConfig): RequestIni
     body.set(key, value);
   }
 
+  // Extra params may add to the request, never change what it is: the grant type is fixed, and in
+  // `post` style the credentials below are set after them for the same reason.
+  body.set("grant_type", "client_credentials");
+
   const headers: Record<string, string> = {
     "Content-Type": "application/x-www-form-urlencoded",
     Accept: "application/json",

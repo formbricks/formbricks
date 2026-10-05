@@ -5,6 +5,7 @@ import type { AIProviderAdapter } from "../registry";
 import {
   OPENAI_COMPATIBLE_AUTH_MODES,
   getCredentialFingerprint,
+  isSecureCredentialUrl,
   isValidHttpUrl,
   normalizeValue,
   parseAuthMode,
@@ -36,9 +37,11 @@ const validateOAuthFields = (
 ): void => {
   const tokenUrl = normalizeValue(environment.AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL);
 
+  // The client secret travels to this URL on every token request, so unlike the base URL it must be
+  // https (plain http only on loopback, for local development against a mock endpoint).
   if (!tokenUrl) {
     missingFields.push("AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL");
-  } else if (!isValidHttpUrl(tokenUrl)) {
+  } else if (!isSecureCredentialUrl(tokenUrl)) {
     invalidFields.push("AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL");
   }
 
@@ -64,6 +67,66 @@ const validateOAuthFields = (
   if (normalizeValue(environment.AI_OPENAI_COMPATIBLE_API_KEY)) {
     invalidFields.push("AI_OPENAI_COMPATIBLE_API_KEY");
   }
+};
+
+const invalidConfiguration = (message: string, invalidFields: string[]): AIConfigurationError =>
+  new AIConfigurationError("providerNotConfigured", message, {
+    provider: "openai-compatible",
+    invalidFields,
+  });
+
+const resolveBaseUrl = (environment: AIEnvironment): string => {
+  const baseURL = normalizeValue(environment.AI_OPENAI_COMPATIBLE_BASE_URL);
+
+  if (!baseURL) {
+    throw new AIConfigurationError(
+      "providerNotConfigured",
+      "OpenAI-compatible provider is missing the base URL",
+      {
+        provider: "openai-compatible",
+        missingFields: ["AI_OPENAI_COMPATIBLE_BASE_URL"],
+      }
+    );
+  }
+
+  if (!isValidHttpUrl(baseURL)) {
+    throw invalidConfiguration("AI_OPENAI_COMPATIBLE_BASE_URL must be a valid http(s) URL", [
+      "AI_OPENAI_COMPATIBLE_BASE_URL",
+    ]);
+  }
+
+  return baseURL;
+};
+
+/** Parses an optional JSON-object-of-strings variable, naming the variable if it does not parse. */
+const parseOptionalStringRecord = (
+  environment: AIEnvironment,
+  field: "AI_OPENAI_COMPATIBLE_HEADERS_JSON" | "AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON"
+): Record<string, string> | undefined => {
+  const json = normalizeValue(environment[field]);
+
+  if (!json) {
+    return undefined;
+  }
+
+  try {
+    return parseStringRecordJson(json);
+  } catch {
+    throw invalidConfiguration(`${field} must be a JSON object of string values`, [field]);
+  }
+};
+
+const resolveAuthMode = (environment: AIEnvironment): NonNullable<ReturnType<typeof parseAuthMode>> => {
+  const authMode = parseAuthMode(environment.AI_OPENAI_COMPATIBLE_AUTH_MODE);
+
+  if (!authMode) {
+    throw invalidConfiguration(
+      `AI_OPENAI_COMPATIBLE_AUTH_MODE must be one of: ${OPENAI_COMPATIBLE_AUTH_MODES.join(", ")}`,
+      ["AI_OPENAI_COMPATIBLE_AUTH_MODE"]
+    );
+  }
+
+  return authMode;
 };
 
 const buildOAuthConfig = (environment: AIEnvironment): OAuthClientCredentialsConfig => {
@@ -175,84 +238,16 @@ export const openaiCompatibleProviderAdapter: AIProviderAdapter = {
       ),
     }),
   createModel: (model: string, environment: AIEnvironment) => {
-    const baseURL = normalizeValue(environment.AI_OPENAI_COMPATIBLE_BASE_URL);
+    const baseURL = resolveBaseUrl(environment);
     const apiKey = normalizeValue(environment.AI_OPENAI_COMPATIBLE_API_KEY);
     const providerName =
       normalizeValue(environment.AI_OPENAI_COMPATIBLE_PROVIDER_NAME) ?? DEFAULT_PROVIDER_NAME;
-    const headersJson = normalizeValue(environment.AI_OPENAI_COMPATIBLE_HEADERS_JSON);
-    const queryParamsJson = normalizeValue(environment.AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON);
     const supportsStructuredOutputs = parseBooleanFlag(
       environment.AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS
     );
-
-    if (!baseURL) {
-      throw new AIConfigurationError(
-        "providerNotConfigured",
-        "OpenAI-compatible provider is missing the base URL",
-        {
-          provider: "openai-compatible",
-          missingFields: ["AI_OPENAI_COMPATIBLE_BASE_URL"],
-        }
-      );
-    }
-
-    if (!isValidHttpUrl(baseURL)) {
-      throw new AIConfigurationError(
-        "providerNotConfigured",
-        "AI_OPENAI_COMPATIBLE_BASE_URL must be a valid http(s) URL",
-        {
-          provider: "openai-compatible",
-          invalidFields: ["AI_OPENAI_COMPATIBLE_BASE_URL"],
-        }
-      );
-    }
-
-    let headers: Record<string, string> | undefined;
-
-    if (headersJson) {
-      try {
-        headers = parseStringRecordJson(headersJson);
-      } catch {
-        throw new AIConfigurationError(
-          "providerNotConfigured",
-          "AI_OPENAI_COMPATIBLE_HEADERS_JSON must be a JSON object of string values",
-          {
-            provider: "openai-compatible",
-            invalidFields: ["AI_OPENAI_COMPATIBLE_HEADERS_JSON"],
-          }
-        );
-      }
-    }
-
-    let queryParams: Record<string, string> | undefined;
-
-    if (queryParamsJson) {
-      try {
-        queryParams = parseStringRecordJson(queryParamsJson);
-      } catch {
-        throw new AIConfigurationError(
-          "providerNotConfigured",
-          "AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON must be a JSON object of string values",
-          {
-            provider: "openai-compatible",
-            invalidFields: ["AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON"],
-          }
-        );
-      }
-    }
-
-    const authMode = parseAuthMode(environment.AI_OPENAI_COMPATIBLE_AUTH_MODE);
-
-    if (!authMode) {
-      throw new AIConfigurationError(
-        "providerNotConfigured",
-        `AI_OPENAI_COMPATIBLE_AUTH_MODE must be one of: ${OPENAI_COMPATIBLE_AUTH_MODES.join(", ")}`,
-        {
-          provider: "openai-compatible",
-          invalidFields: ["AI_OPENAI_COMPATIBLE_AUTH_MODE"],
-        }
-      );
-    }
+    const headers = parseOptionalStringRecord(environment, "AI_OPENAI_COMPATIBLE_HEADERS_JSON");
+    const queryParams = parseOptionalStringRecord(environment, "AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON");
+    const authMode = resolveAuthMode(environment);
 
     if (authMode === "oauth2-client-credentials") {
       // No apiKey: the fetch wrapper is the only thing that sets Authorization. The token source
