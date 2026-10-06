@@ -163,6 +163,16 @@ Here is what you need to be able to run Formbricks:
 
 3. Open [http://localhost:3000](http://localhost:3000).
 
+#### Hub and Unify
+
+The Hub-backed Unify flow needs no extra setup: `pnpm go` starts Hub (`http://localhost:8080`) from `docker-compose.dev.yml` on the stack's default network, so you do not need to create any Docker network by hand. The defaults in `.env.example` already point the app at it:
+
+- `HUB_API_KEY` (default `dev-api-key`) and `HUB_API_URL` (default `http://localhost:8080`) — how the app reaches Hub.
+- `HUB_DATABASE_URL` — optional; defaults to a `hub` database on the local PostgreSQL service.
+- `HUB_IMAGE_TAG` — optional; pins the Hub image version.
+
+Run `docker compose -f docker-compose.dev.yml ps` to confirm the `hub` services are up. Optional integrations (for example `HUB_GOOGLE_APPLICATION_CREDENTIALS` and `HUB_INTERNAL_API_TOKEN`) are documented next to their entries in `.env.example`.
+
 <a id="contribution"></a>
 
 ## ✍️ Contribution
