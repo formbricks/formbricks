@@ -1,13 +1,12 @@
 export type TAppearance = "light" | "dark" | "system";
 
-const APPEARANCES: readonly TAppearance[] = ["light", "dark", "system"];
+const APPEARANCES: ReadonlySet<unknown> = new Set<TAppearance>(["light", "dark", "system"]);
 
 // Kept in memory for the page session only: appearance is an app setting, not something to store on
 // the contact (unlike setLanguage), and it survives logout (ENG-3452). Default light (ENG-3551).
 let appearance: TAppearance = "light";
 
-export const isAppearance = (value: unknown): value is TAppearance =>
-  APPEARANCES.includes(value as TAppearance);
+export const isAppearance = (value: unknown): value is TAppearance => APPEARANCES.has(value);
 
 export const getAppearance = (): TAppearance => appearance;
 

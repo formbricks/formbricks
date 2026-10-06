@@ -94,11 +94,10 @@ export function StackedCardsContainer({
     // Determine borderColor based on the survey type and availability of highlightBorderColor
     // Read through variables so the dark palette can replace the colors; light mode falls back to
     // the same literal values as before (ENG-2939).
+    const cardBorder = cardBorderColor ? `var(--fb-card-border-color, ${cardBorderColor})` : undefined;
     const borderColor =
       survey.type === "link" || !highlightBorderColor
-        ? cardBorderColor
-          ? `var(--fb-card-border-color, ${cardBorderColor})`
-          : undefined
+        ? cardBorder
         : `var(--fb-highlight-border-color, ${highlightBorderColor})`;
     return {
       ...baseStyle,
