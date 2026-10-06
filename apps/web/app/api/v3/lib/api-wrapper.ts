@@ -5,6 +5,11 @@ import { TooManyRequestsError } from "@formbricks/types/errors";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import {
+  type ConcurrencyLimiter,
+  type TReleaseSlot,
+  releaseWhenBodySettles,
+} from "@/app/lib/api/concurrency-limiter";
+import {
   DEFAULT_REQUEST_BODY_LIMIT_BYTES,
   RequestBodyTooLargeError,
   parseJsonBodyWithLimit,
@@ -24,6 +29,7 @@ import {
   type InvalidParam,
   isInvalidParamCode,
   problemBadRequest,
+  problemCapacityReached,
   problemPayloadTooLarge,
   problemTooManyRequests,
   problemUnauthorized,
@@ -73,6 +79,14 @@ export type TWithV3ApiWrapperParams<S extends TV3Schemas | undefined, TProps = u
    * it, so the caller would get a 400 for malformed JSON instead of a 413.
    */
   bodyLimitBytes?: number;
+  /**
+   * Caps how many requests to this route one server process handles at once; the next one gets a 503
+   * `capacity_reached` with `Retry-After`. The slot is taken after authentication and rate limiting but
+   * **before the body is read**, so it also bounds the memory spent parsing large bodies, and it is held
+   * until the response body is fully sent or cancelled, so a streamed response keeps its slot for as
+   * long as it runs. Share one `ConcurrencyLimiter` per route, created at module scope.
+   */
+  concurrency?: { limiter: ConcurrencyLimiter; retryAfterSeconds: number };
   action?: TAuditAction;
   targetType?: TAuditTarget;
   handler: (params: TV3HandlerParams<TV3ParsedInput<S>, TProps>) => MaybePromise<Response>;
@@ -550,6 +564,7 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
     rateLimit = true,
     customRateLimitConfig,
     bodyLimitBytes = DEFAULT_REQUEST_BODY_LIMIT_BYTES,
+    concurrency,
     handler,
     action,
     targetType,
@@ -562,6 +577,15 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
     throw new Error(`withV3ApiWrapper: bodyLimitBytes must be a positive integer, got ${bodyLimitBytes}`);
   }
 
+  if (
+    concurrency &&
+    (!Number.isSafeInteger(concurrency.retryAfterSeconds) || concurrency.retryAfterSeconds <= 0)
+  ) {
+    throw new Error(
+      `withV3ApiWrapper: concurrency.retryAfterSeconds must be a positive integer, got ${concurrency.retryAfterSeconds}`
+    );
+  }
+
   return async (req: NextRequest, props: TProps): Promise<Response> => {
     const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID();
     const instance = req.nextUrl.pathname;
@@ -571,6 +595,9 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
       path: instance,
     });
     let auditLog: TV3AuditLog | undefined;
+    // Set while this request holds a concurrency slot. Every exit releases it in `finally`, except a
+    // response with a body, which takes it over (see `releaseWhenBodySettles`).
+    let releaseSlot: TReleaseSlot | undefined;
 
     try {
       const authResult = await authenticateV3RequestOrRespond(req, auth, requestId, instance);
@@ -591,6 +618,19 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
       });
       if (rateLimitResponse) {
         return rateLimitResponse;
+      }
+
+      if (concurrency) {
+        const release = concurrency.limiter.tryAcquire();
+        if (!release) {
+          log.warn(
+            { statusCode: 503, maxInFlight: concurrency.limiter.maxInFlight },
+            "V3 API route is at its concurrency limit"
+          );
+          return problemCapacityReached(requestId, concurrency.retryAfterSeconds, instance);
+        }
+
+        releaseSlot = release;
       }
 
       const parsedInputResult = await parseV3Input(req, props, schemas, {
@@ -645,7 +685,15 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
 
       await queueV3AuditLog(auditLog, requestId, log);
       reportServerError(req, response);
-      return ensureRequestIdHeader(response, requestId);
+      const finalResponse = ensureRequestIdHeader(response, requestId);
+
+      if (!releaseSlot) {
+        return finalResponse;
+      }
+
+      const release = releaseSlot;
+      releaseSlot = undefined;
+      return releaseWhenBodySettles(finalResponse, release);
     } catch (error) {
       if (auditLog) {
         auditLog.eventId = requestId;
@@ -657,6 +705,8 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
       const mapped = mapV3ThrownError(error, { log, requestId, instance });
       reportServerError(req, mapped, error);
       return ensureRequestIdHeader(mapped, requestId);
+    } finally {
+      releaseSlot?.();
     }
   };
 };

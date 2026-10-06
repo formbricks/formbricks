@@ -86,8 +86,8 @@ export const V3_PROBLEM_CODES = [
 export type V3ProblemCode = (typeof V3_PROBLEM_CODES)[number];
 
 /**
- * Codes emitted only by routes under `app/api/(internal)`, which reuse these RFC 9457 helpers but are
- * session-only and carry no published contract.
+ * Codes emitted only by internal routes (`app/api/internal` and the older `app/api/(internal)` group),
+ * which reuse these RFC 9457 helpers but are session-only and carry no published contract.
  *
  * Kept apart from `V3_PROBLEM_CODES` rather than folded into it, because that list is held to
  * `Problem.yml` by exact equality in both directions: adding an internal code there would publish, to
@@ -95,7 +95,11 @@ export type V3ProblemCode = (typeof V3_PROBLEM_CODES)[number];
  * as an undocumented code, pointing the other way. `problem-codes.test.ts` asserts the two sets stay
  * disjoint and that none of these reaches the spec.
  */
-export const INTERNAL_PROBLEM_CODES = ["attachment_export_empty", "attachment_export_too_large"] as const;
+export const INTERNAL_PROBLEM_CODES = [
+  "attachment_export_empty",
+  "attachment_export_too_large",
+  "capacity_reached",
+] as const;
 
 export type InternalProblemCode = (typeof INTERNAL_PROBLEM_CODES)[number];
 
@@ -406,6 +410,28 @@ export function problemServiceUnavailable(requestId: string, detail: string, ins
     code: "service_unavailable",
     instance,
   });
+}
+
+/**
+ * 503 for a route that is at its concurrency limit on this server (`concurrency` in
+ * `withV3ApiWrapper`). Unlike `problemServiceUnavailable`, the capability is enabled and the caller
+ * did nothing wrong: the same request succeeds once a slot frees up, and `Retry-After` says when to try.
+ *
+ * `capacity_reached` is an internal code. A public route that adopts the limit has to publish it in
+ * `Problem.yml` first (`problem-codes.test.ts` keeps the two vocabularies apart).
+ */
+export function problemCapacityReached(
+  requestId: string,
+  retryAfterSeconds: number,
+  instance?: string
+): Response {
+  return problemResponse(
+    503,
+    "Service Unavailable",
+    `This server is busy with other requests like this one. Try again in ${retryAfterSeconds} seconds.`,
+    requestId,
+    { code: "capacity_reached", instance, headers: { "Retry-After": String(retryAfterSeconds) } }
+  );
 }
 
 /**

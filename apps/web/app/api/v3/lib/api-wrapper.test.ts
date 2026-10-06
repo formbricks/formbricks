@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { ResourceNotFoundError, TooManyRequestsError } from "@formbricks/types/errors";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
+import { ConcurrencyLimiter } from "@/app/lib/api/concurrency-limiter";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { formatZodIssues, withV3ApiWrapper } from "./api-wrapper";
 import { V3_REQUEST_ARRAY_MAX_ITEMS } from "./array-budget";
@@ -1146,4 +1147,135 @@ describe("per-route body limit (bodyLimitBytes)", () => {
       ).toThrow(/bodyLimitBytes must be a positive integer/);
     }
   );
+});
+
+describe("per-route concurrency limit", () => {
+  const sessionUser = { user: { id: "user_1" }, expires: "2099-01-01" };
+
+  const postJson = (body: string) =>
+    new NextRequest("http://localhost/api/internal/surveys/import/stream", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+    });
+
+  const limitedRoute = (
+    limiter: ConcurrencyLimiter,
+    handler: Parameters<typeof withV3ApiWrapper>[0]["handler"]
+  ) =>
+    withV3ApiWrapper({
+      auth: "session",
+      schemas: { body: z.object({ a: z.string() }) },
+      concurrency: { limiter, retryAfterSeconds: 7 },
+      handler,
+    });
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockGetSession.mockResolvedValue(sessionUser);
+  });
+
+  test("answers 503 capacity_reached with Retry-After when every slot is taken, before reading the body", async () => {
+    const limiter = new ConcurrencyLimiter(1);
+    const held = limiter.tryAcquire();
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+
+    // Not JSON: a 400 here would mean the body was read before admission.
+    const response = await limitedRoute(limiter, handler)(postJson("not json"), {} as never);
+
+    expect(response.status).toBe(503);
+    expect(response.headers.get("Retry-After")).toBe("7");
+    expect(handler).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toMatchObject({ code: "capacity_reached", status: 503 });
+    held?.();
+  });
+
+  test("does not take a slot for an unauthenticated or rate-limited request", async () => {
+    const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
+    const limiter = new ConcurrencyLimiter(1);
+    const route = limitedRoute(limiter, async () => Response.json({ ok: true }));
+
+    mockGetSession.mockResolvedValueOnce(null);
+    expect((await route(postJson('{"a":"x"}'), {} as never)).status).toBe(401);
+
+    vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("slow down", 60));
+    expect((await route(postJson('{"a":"x"}'), {} as never)).status).toBe(429);
+
+    expect(limiter.inFlight).toBe(0);
+  });
+
+  test("frees the slot after a plain response, and after a request that fails validation", async () => {
+    const limiter = new ConcurrencyLimiter(1);
+    const route = limitedRoute(limiter, async () => Response.json({ ok: true }));
+
+    const ok = await route(postJson('{"a":"x"}'), {} as never);
+    await ok.text();
+    const invalid = await route(postJson('{"b":1}'), {} as never);
+
+    expect(ok.status).toBe(200);
+    expect(invalid.status).toBe(400);
+    expect(limiter.inFlight).toBe(0);
+  });
+
+  test("frees the slot when the handler throws", async () => {
+    const limiter = new ConcurrencyLimiter(1);
+    const route = limitedRoute(limiter, async () => {
+      throw new Error("boom");
+    });
+
+    const response = await route(postJson('{"a":"x"}'), {} as never);
+
+    expect(response.status).toBe(500);
+    expect(limiter.inFlight).toBe(0);
+  });
+
+  test("keeps the slot while a streamed body is still being sent, and frees it at the end", async () => {
+    const limiter = new ConcurrencyLimiter(1);
+    let finish: (() => void) | undefined;
+    const route = limitedRoute(
+      limiter,
+      async () =>
+        new Response(
+          new ReadableStream<Uint8Array>({
+            start(controller) {
+              controller.enqueue(new TextEncoder().encode('{"type":"start"}\n'));
+              finish = () => controller.close();
+            },
+          })
+        )
+    );
+
+    const streaming = await route(postJson('{"a":"x"}'), {} as never);
+    const whileStreaming = await route(postJson('{"a":"x"}'), {} as never);
+    const read = streaming.text();
+    finish?.();
+    await read;
+
+    expect(whileStreaming.status).toBe(503);
+    expect(limiter.inFlight).toBe(0);
+  });
+
+  test("frees the slot when the client cancels the stream", async () => {
+    const limiter = new ConcurrencyLimiter(1);
+    const route = limitedRoute(
+      limiter,
+      async () => new Response(new ReadableStream<Uint8Array>({ pull() {} }))
+    );
+
+    const streaming = await route(postJson('{"a":"x"}'), {} as never);
+    expect(limiter.inFlight).toBe(1);
+    await streaming.body?.cancel();
+
+    expect(limiter.inFlight).toBe(0);
+  });
+
+  test.each([0, -3, 1.5])("refuses to build a route with retryAfterSeconds %s", (retryAfterSeconds) => {
+    expect(() =>
+      withV3ApiWrapper({
+        auth: "session",
+        concurrency: { limiter: new ConcurrencyLimiter(1), retryAfterSeconds },
+        handler: async () => new Response(null),
+      })
+    ).toThrow(/retryAfterSeconds must be a positive integer/);
+  });
 });
