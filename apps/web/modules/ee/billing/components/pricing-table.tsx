@@ -873,7 +873,7 @@ export const PricingTable = ({
           toast.error(getActionErrorMessage(response.serverError, t));
           return;
         }
-        trackSubscriptionCancelled((event) => formbricks.track(event));
+        void trackSubscriptionCancelled((event) => formbricks.track(event));
         toast.success(getPlanChangeSuccessMessage(response?.data?.mode, t));
         router.refresh();
         return;
@@ -900,7 +900,7 @@ export const PricingTable = ({
           // Fire an in-app code action so a churn survey can be triggered from the dashboard
           // right after the org drops to the free plan. No reload follows this path, so the SDK
           // has time to deliver it.
-          trackSubscriptionCancelled((event) => formbricks.track(event));
+          void trackSubscriptionCancelled((event) => formbricks.track(event));
         }
 
         if (response.data.mode === "immediate") {
