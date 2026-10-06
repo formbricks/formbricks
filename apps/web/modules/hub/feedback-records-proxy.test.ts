@@ -363,7 +363,9 @@ describe.each(handlerRequestShapes)("proxyFeedbackRecordsRequest with %s", (_sha
       expect(response.status).toBe(200);
       expect(await response.text()).toBe("received");
     } finally {
-      server.close();
+      // fetch keeps its connection alive; drop it so the server actually stops with the test.
+      server.closeAllConnections();
+      await new Promise((resolve) => server.close(resolve));
     }
   });
 

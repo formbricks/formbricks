@@ -12,8 +12,8 @@ const HOP_BY_HOP_REQUEST_HEADERS = [
   "connection",
   "content-length",
   // The 100-continue exchange belongs to the client's hop, which Node has already answered, and
-  // undici refuses the header outright — forwarding it turned every such upload (curl sends it above
-  // 1 MiB) into a 502.
+  // undici refuses the header outright, so forwarding it would fail the Hub call (curl sends it for
+  // bodies above 1 MiB).
   "expect",
   "host",
   "keep-alive",
