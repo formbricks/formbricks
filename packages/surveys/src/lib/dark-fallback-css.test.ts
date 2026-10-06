@@ -61,6 +61,13 @@ describe("dark fallback CSS matches the derived default palette", () => {
     });
   });
 
+  test("a light survey does not inherit the host page's color-scheme", () => {
+    const css = readFileSync(resolve(__dirname, "../styles/global.css"), "utf8");
+    const lightRoot = /#fbjs\s*\{([^}]*)\}/.exec(css.slice(css.indexOf("/* theming */")))?.[1] ?? "";
+    expect(lightRoot).toContain("color-scheme: light;");
+    expect(css).toMatch(/#fbjs\[data-appearance="dark"\]\s*\{\s*color-scheme: dark;/);
+  });
+
   test("focus ring", () => {
     const css = readFileSync(resolve(__dirname, "../../../survey-ui/src/styles/globals.css"), "utf8");
     expect(css).toContain(`--fb-focus-ring-outer-color: ${readable.focusRingColor};`);

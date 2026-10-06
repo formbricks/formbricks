@@ -119,6 +119,9 @@
 /* theming */
 #fbjs {
   font-size: 16px;
+  /* Pin native controls and scrollbars to the survey's own appearance; otherwise a light survey
+     inherits a host page's `color-scheme: dark`. The dark block below switches it to dark. */
+  color-scheme: light;
   --brand-default: #1e40af;
   --slate-50: rgb(248, 250, 252);
   --slate-100: rgb(241 245 249);
@@ -172,6 +175,7 @@
    getDerivedDarkColors("#1e40af") (packages/types/dark-palette.ts); styles.ts
    overrides them from the survey's styling. See survey-ui globals.css. */
 #fbjs[data-appearance="dark"] {
+  color-scheme: dark;
   --fb-brand-text-color: white;
   --fb-border-color: #5b6a97;
   --fb-border-color-highlight: #6b79a1;
