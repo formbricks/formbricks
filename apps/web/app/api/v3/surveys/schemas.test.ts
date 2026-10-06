@@ -4,6 +4,7 @@ import { validateElementLabels } from "@formbricks/types/surveys/elements-valida
 import {
   V3_SURVEY_BLOCK_OPS_MAX,
   V3_SURVEY_BLOCK_ORDER_MAX,
+  V3_SURVEY_CREATED_FROM,
   V3_SURVEY_MAX_BLOCKS,
   V3_SURVEY_MAX_ENDINGS,
   V3_SURVEY_MAX_HIDDEN_FIELDS,
@@ -11,6 +12,7 @@ import {
   V3_SURVEY_MAX_TRIGGERS,
   V3_SURVEY_MAX_VARIABLES,
   ZV3CreateSurveyBody,
+  ZV3CreateSurveyQuery,
   ZV3EditSurveyBlocksBody,
   ZV3PatchSurveyBody,
   ZV3SetSurveyBlockOrderBody,
@@ -1210,5 +1212,19 @@ describe("top-level array bounds (ENG-3384)", () => {
     expect(json.properties.distribution).toMatchObject({
       properties: { triggers: expect.objectContaining({ maxItems: V3_SURVEY_MAX_TRIGGERS }) },
     });
+  });
+});
+
+describe("ZV3CreateSurveyQuery", () => {
+  test.each(V3_SURVEY_CREATED_FROM)("accepts createdFrom=%s", (createdFrom) => {
+    expect(ZV3CreateSurveyQuery.safeParse({ createdFrom }).success).toBe(true);
+  });
+
+  test("accepts a create with no createdFrom", () => {
+    expect(ZV3CreateSurveyQuery.safeParse({}).success).toBe(true);
+  });
+
+  test("rejects an unknown createdFrom, so analytics never records an invented source", () => {
+    expect(ZV3CreateSurveyQuery.safeParse({ createdFrom: "qualtrics" }).success).toBe(false);
   });
 });

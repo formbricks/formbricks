@@ -1316,8 +1316,17 @@ export const ZV3CreateSurveyBody = z
   })
   .pipe(ZV3CreateSurveyBodyBase);
 
+/**
+ * Where a created survey came from, for the `survey_created` analytics event and, through the request
+ * URL the audit log keeps as `apiUrl`, the audit trail. One list so the query schema, the operation and
+ * the clients cannot drift: each used to spell the union out by hand.
+ */
+export const V3_SURVEY_CREATED_FROM = ["blank", "template", "xm-template", "ai", "import"] as const;
+
+export type TV3SurveyCreatedFrom = (typeof V3_SURVEY_CREATED_FROM)[number];
+
 export const ZV3CreateSurveyQuery = z.object({
-  createdFrom: z.enum(["blank", "template", "xm-template", "ai"]).optional(),
+  createdFrom: z.enum(V3_SURVEY_CREATED_FROM).optional(),
 });
 
 export type TV3CreateSurveyQuery = z.infer<typeof ZV3CreateSurveyQuery>;
