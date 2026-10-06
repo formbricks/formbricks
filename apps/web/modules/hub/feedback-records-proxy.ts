@@ -11,6 +11,10 @@ const FORWARDED_CREDENTIAL_HEADERS = ["authorization", "cookie", "x-api-key"] as
 const HOP_BY_HOP_REQUEST_HEADERS = [
   "connection",
   "content-length",
+  // The 100-continue exchange belongs to the client's hop, which Node has already answered, and
+  // undici refuses the header outright — forwarding it turned every such upload (curl sends it above
+  // 1 MiB) into a 502.
+  "expect",
   "host",
   "keep-alive",
   "proxy-authenticate",

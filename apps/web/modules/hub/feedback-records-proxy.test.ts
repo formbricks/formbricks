@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import http from "node:http";
 import v8 from "node:v8";
 import vm from "node:vm";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -324,6 +325,46 @@ describe.each(handlerRequestShapes)("proxyFeedbackRecordsRequest with %s", (_sha
     expect(hubRequest.headers.has("connection")).toBe(false);
     expect(hubRequest.headers.has("host")).toBe(false);
     expect(hubRequest.headers.has("x-client-context")).toBe(false);
+  });
+
+  test("forwards no header undici refuses to send, so large uploads reach the Hub", async () => {
+    // curl adds `expect: 100-continue` above 1 MiB, and undici rejects it (and the others below) at
+    // dispatch, not when the Request is built, so a stubbed fetch cannot catch it: the captured init is
+    // sent for real.
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 201 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await proxyFeedbackRecordsRequest(
+      asHandlerRequest(
+        new NextRequest("http://localhost:3000/api/v3/feedbackRecords", {
+          method: "POST",
+          body: JSON.stringify({ tenant_id: "dir_1" }),
+          headers: {
+            "content-type": "application/json",
+            expect: "100-continue",
+            "keep-alive": "timeout=5",
+            "transfer-encoding": "chunked",
+            upgrade: "h2c",
+          },
+        })
+      )
+    );
+    const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit];
+    vi.unstubAllGlobals();
+
+    const server = http.createServer((req, res) => {
+      req.resume();
+      req.on("end", () => res.end("received"));
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    try {
+      const { port } = server.address() as { port: number };
+      const response = await fetch(`http://127.0.0.1:${port}/v1/feedback-records`, init);
+
+      expect(response.status).toBe(200);
+      expect(await response.text()).toBe("received");
+    } finally {
+      server.close();
+    }
   });
 
   test("passes the Hub response through unchanged", async () => {
