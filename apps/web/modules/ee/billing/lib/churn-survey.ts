@@ -19,9 +19,11 @@ export const getHobbyDowngradeChurnSignal = (plan: string, mode: string | undefi
 };
 
 /** Fire-and-forget: a failed delivery must not turn a successful plan change into an error. */
-export const trackSubscriptionCancelled = (track: TTrack): void => {
-  track(SUBSCRIPTION_CANCELLED_EVENT).catch(() => undefined);
-};
+export const trackSubscriptionCancelled = (track: TTrack): Promise<void> =>
+  track(SUBSCRIPTION_CANCELLED_EVENT).then(
+    () => undefined,
+    () => undefined
+  );
 
 /**
  * Leave the one-shot marker for the post-reload event. Its value is the user who requested the

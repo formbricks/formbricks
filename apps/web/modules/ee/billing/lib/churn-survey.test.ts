@@ -42,8 +42,7 @@ describe("trackSubscriptionCancelled", () => {
 
   test("swallows a rejected delivery instead of leaving an unhandled rejection", async () => {
     const track = vi.fn().mockRejectedValue(new Error("offline"));
-    expect(() => trackSubscriptionCancelled(track)).not.toThrow();
-    await Promise.resolve();
+    await expect(trackSubscriptionCancelled(track)).resolves.toBeUndefined();
   });
 });
 
