@@ -678,10 +678,15 @@ formbricks.setup({
 formbricks.setAppearance("light");
 ```
 
+<Note>
+  Dark mode needs the script-tag SDK for now. The `@formbricks/js` npm package does not yet pass
+  `appearance` through `setup` or expose `setAppearance`, so with it surveys stay light.
+</Note>
+
 - `"system"` follows the visitor's browser setting and updates if it changes. If your app has its own light/dark toggle, pass `"light"` or `"dark"` from that toggle instead, because the SDK cannot see your app's theme.
 - A survey that is already open switches in place. Answers, progress and focus are kept.
 - `setAppearance` can be called before `setup`. The value is kept for the page session and survives `logout`.
-- The dark colors are derived from your brand color. Adjust any of them in **Look & Feel** (or a survey's **Styling** tab) by switching the preview to **Dark**.
+- The dark colors are derived from your brand color, which is the same in light and dark. Override any other color in **Look & Feel** (or a survey's **Styling** tab) with the **Light / Dark** toggle at the top of the styling settings.
 - Link surveys always render light.
 
 ## Content Security Policy

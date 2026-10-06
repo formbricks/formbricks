@@ -1,4 +1,5 @@
 import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { setAppearance } from "@/lib/common/appearance";
 import { Config } from "@/lib/common/config";
 import { onFormbricksEvent, resetFormbricksEventSubscribers } from "@/lib/common/events";
 import { Logger } from "@/lib/common/logger";
@@ -186,6 +187,53 @@ describe("widget-file", () => {
       })
     );
     vi.useRealTimers();
+  });
+
+  test("renderWidget passes the appearance the host set to renderSurvey", async () => {
+    const mockConfigValue = {
+      get: vi.fn().mockReturnValue({
+        appUrl: "https://fake.app",
+        workspaceId: "env_123",
+        workspace: {
+          data: {
+            settings: {
+              clickOutsideClose: true,
+              overlay: "none",
+              placement: "bottomRight",
+              inAppSurveyBranding: true,
+            },
+          },
+        },
+        user: {
+          data: {
+            userId: "user_abc",
+            contactId: "contact_abc",
+            displays: [],
+            responses: [],
+            lastDisplayAt: null,
+            language: "en",
+          },
+        },
+      }),
+      update: vi.fn(),
+    };
+    getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
+    (filterSurveys as Mock).mockReturnValue([]);
+    widget.setIsSurveyRunning(false);
+    window.formbricksSurveys = createMockFormbricksSurveys();
+    setAppearance("dark");
+    vi.useFakeTimers();
+
+    try {
+      await widget.renderWidget(mockSurvey);
+      vi.advanceTimersByTime(mockSurvey.delay * 1000);
+      expect(getFormbricksSurveys().renderSurvey).toHaveBeenCalledWith(
+        expect.objectContaining({ appearance: "dark" })
+      );
+    } finally {
+      setAppearance("light");
+      vi.useRealTimers();
+    }
   });
 
   test("renderWidget short-circuits if isSurveyRunning is already true", async () => {

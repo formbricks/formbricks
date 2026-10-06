@@ -2614,7 +2614,7 @@
       "appearance_dark_contrast_warning": "{field} está difícil de ver no card escuro ({ratio} : 1). Defina um valor escuro para ele.",
       "appearance_dark_contrast_warning_button_text": "{field} está difícil de ler no fundo do botão no modo escuro ({ratio} : 1). Defina um valor escuro para ele.",
       "appearance_dark_contrast_warning_shared": "{field} fica difícil de enxergar no card escuro ({ratio} : 1). Ele é o mesmo no tema claro e no escuro, então escolha uma cor da marca que fique legível nos dois.",
-      "appearance_dark_description": "Exibido quando o app pede o modo escuro. As cores que você deixar em branco são derivadas da cor da sua marca. As pesquisas por link continuam claras.",
+      "appearance_dark_description": "Exibido quando o app solicita o modo escuro. As cores que você deixar em branco são derivadas da cor da sua marca. Tamanhos, fontes e layout valem tanto para o modo claro quanto para o escuro. Pesquisas por link continuam no modo claro.",
       "appearance_light": "Claro",
       "appearance_shared_color": "Igual nos modos claro e escuro",
       "appearance_use_automatic": "Usar cor automática",

@@ -14,6 +14,10 @@ import { type TBaseStyling, type TStylingColor } from "./styling";
 
 export const DEFAULT_DARK_BRAND_COLOR = "#1e40af";
 
+// The input shadow every theme starts with (STYLE_DEFAULTS). Tuned for a white field; dark drops it,
+// while a shadow the creator changed is theirs and stays.
+export const DEFAULT_INPUT_SHADOW = "0 1px 2px 0 rgb(0 0 0 / 0.05)";
+
 // Near-black base the dark surfaces are tinted from.
 export const DARK_BASE_COLOR = "#0b0f17";
 
@@ -145,7 +149,9 @@ export type TDarkContrastWarning = {
  * itself (a preserved color does not mean an accessible one).
  */
 export const getDarkContrastWarnings = (
-  styling: Partial<Record<TStylingColorKey, TStylingColor | null | undefined>>
+  styling: Partial<Record<TStylingColorKey, TStylingColor | null | undefined>> & {
+    hideProgressBar?: boolean | null;
+  }
 ): TDarkContrastWarning[] => {
   const resolved = resolveDarkColors(styling);
   const card = resolved.cardBackgroundColor ?? getDerivedDarkColors().cardBackgroundColor;
@@ -154,6 +160,11 @@ export const getDarkContrastWarnings = (
   for (const key of ["brandColor", "buttonBgColor", "progressIndicatorBgColor"] as const) {
     const color = resolved[key];
     if (!color) continue;
+    // A hidden progress bar has nothing to see, and the editor hides its fields too.
+    if (key === "progressIndicatorBgColor" && styling.hideProgressBar) continue;
+    // Button and indicator in the brand color (the defaults) are covered by the brand warning; one
+    // warning for one color the creator would change in one place.
+    if (key !== "brandColor" && color.toLowerCase() === resolved.brandColor?.toLowerCase()) continue;
     const ratio = getContrastRatio(color, card);
     if (ratio < NON_TEXT_CONTRAST) warnings.push({ key, ratio, minimum: NON_TEXT_CONTRAST });
   }

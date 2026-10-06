@@ -2,6 +2,7 @@
 import surveyUiCss from "@formbricks/survey-ui/styles?inline";
 import {
   DEFAULT_DARK_BRAND_COLOR,
+  DEFAULT_INPUT_SHADOW,
   getDarkReadableColors,
   resolveDarkColors,
 } from "@formbricks/types/dark-palette";
@@ -121,7 +122,9 @@ export const getDarkThemeCss = (styling: TWorkspaceStyling | TSurveyStyling): st
     add("input-background-color-selected", mixColor(inputBg, "#ffffff", 0.05));
     add("hover-bg-color", mixColor(inputBg, "#ffffff", 0.08));
   }
-  add("input-shadow", "none");
+  // The light default shadow reads as a dark smudge on a dark field; a shadow the customer set (often an
+  // outline drawn with an inset shadow) is theirs and stays.
+  if (!styling.inputShadow || styling.inputShadow === DEFAULT_INPUT_SHADOW) add("input-shadow", "none");
 
   add("option-bg-color", dark.optionBgColor);
   add("option-label-color", dark.optionLabelColor);
@@ -143,6 +146,27 @@ export const getDarkThemeCss = (styling: TWorkspaceStyling | TSurveyStyling): st
   // Hover / selected states lighten a dark surface instead of darkening it (survey-ui tokens).
   add("shade-color", "white");
   if (card) add("tint-color", card);
+
+  // survey-ui's base tokens (popover, calendar, muted surfaces) follow the same palette, so a brand or
+  // card override reaches the dropdown and date picker too. Same mapping as the fallback block in
+  // survey-ui globals.css.
+  const base = (name: string, value?: string | null) => {
+    if (value) css += `  --${name}: ${value};\n`;
+  };
+  base("background", card);
+  base("card", card);
+  base("foreground", text);
+  base("card-foreground", text);
+  base("popover", inputBg);
+  base("popover-foreground", text);
+  base("secondary", inputBg);
+  base("secondary-foreground", text);
+  base("muted", inputBg);
+  if (text && inputBg) base("muted-foreground", mixColor(text, inputBg, 0.3));
+  base("accent", dark.accentBgColor);
+  base("accent-foreground", text);
+  base("border", dark.inputBorderColor);
+  base("input", text);
 
   if (card) {
     // The brand stays as typed for fills (D12); text, the focus ring and the error red are

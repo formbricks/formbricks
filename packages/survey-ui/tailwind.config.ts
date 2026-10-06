@@ -10,7 +10,7 @@ function getForeground(color: string) {
 export default {
   // `dark:` follows the survey's own appearance attribute (set by the renderer on every #fbjs root),
   // never the host page's `.dark` class or the OS setting.
-  darkMode: ["variant", "&:where([data-appearance=dark], [data-appearance=dark] *)"],
+  darkMode: ["variant", "&:where([id=fbjs][data-appearance=dark], [id=fbjs][data-appearance=dark] *)"],
   // Scope all utilities to #fbjs when used in surveys package
   // This ensures proper specificity and prevents conflicts with preflight CSS
   important: "#fbjs",

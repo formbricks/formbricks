@@ -263,7 +263,7 @@ export const StylingView = ({
             />
           </StylingAppearanceProvider>
 
-          {localSurvey.type === "app" && setAppearance && (
+          {localSurvey.type === "app" && setAppearance && overwriteThemeStyling && (
             <DarkContrastWarnings appearance={appearance} styling={form.watch()} />
           )}
 

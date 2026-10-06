@@ -69,7 +69,10 @@ export const ColorField = ({
           {description && <FormDescription>{description}</FormDescription>}
           <FormControl>
             <ColorPicker
-              color={field.value || (isDark ? darkDisplayColor : fallbackColor) || ""}
+              // In dark an unset field stays empty and shows the color respondents get as a placeholder,
+              // so an override and an automatic color are told apart at a glance.
+              color={field.value || (isDark ? "" : fallbackColor) || ""}
+              placeholderColor={isDark ? darkDisplayColor : undefined}
               onChange={(color) => (isDark ? setDarkValue(field.onChange, color) : field.onChange(color))}
               containerClass={containerClass || "w-full"}
             />

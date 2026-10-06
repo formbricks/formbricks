@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { DEFAULT_INPUT_SHADOW } from "@formbricks/types/dark-palette";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { type TWorkspaceStyling } from "@formbricks/types/workspace";
 import { AA_CONTRAST_RATIO, getContrastRatio } from "./color";
@@ -729,6 +730,36 @@ describe("addCustomThemeToDom dark palette", () => {
     expect(dark).toContain("--fb-brand-readable-color: #788ccf;");
     expect(dark).toContain("--fb-focus-ring-outer-color: #4b66bf;");
     expect(dark).toContain("--destructive: #ee4d54;");
+  });
+
+  test("survey-ui base tokens follow a dark card override", () => {
+    addCustomThemeToDom({
+      styling: getBaseWorkspaceStyling({
+        brandColor: { light: "#1e40af" },
+        cardBackgroundColor: { light: "#ffffff", dark: "#222222" },
+      }),
+    });
+    const dark = getDarkBlock();
+    expect(dark).toContain("--background: #222222;");
+    expect(dark).toContain("--card: #222222;");
+    expect(dark).toMatch(/--popover: #[0-9a-f]{6};/);
+  });
+
+  test("keeps a customer's input shadow in dark and drops only the default", () => {
+    addCustomThemeToDom({
+      styling: getBaseWorkspaceStyling({
+        brandColor: { light: "#1e40af" },
+        inputShadow: DEFAULT_INPUT_SHADOW,
+      }),
+    });
+    expect(getDarkBlock()).toContain("--fb-input-shadow: none;");
+    addCustomThemeToDom({
+      styling: getBaseWorkspaceStyling({
+        brandColor: { light: "#1e40af" },
+        inputShadow: "inset 0 0 0 1px #000000",
+      }),
+    });
+    expect(getDarkBlock()).not.toContain("--fb-input-shadow");
   });
 
   test("an unparseable dark value does not throw", () => {

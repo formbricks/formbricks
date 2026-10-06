@@ -1,4 +1,5 @@
 // https://github.com/airbnb/javascript/#naming--uppercase
+import { DEFAULT_INPUT_SHADOW } from "@formbricks/types/dark-palette";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { DEFAULT_BRAND_COLOR } from "@/lib/brand-color";
 import { ensureReadable, getReadableTextColor, mixColor } from "@/lib/utils/colors";
@@ -131,7 +132,7 @@ export const STYLE_DEFAULTS: TWorkspaceStyling = {
   inputPaddingX: 8,
   inputPaddingY: 8,
   inputPlaceholderOpacity: 0.5,
-  inputShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+  inputShadow: DEFAULT_INPUT_SHADOW,
 
   // Buttons
   buttonBgColor: { light: _colors["buttonBgColor.light"] },

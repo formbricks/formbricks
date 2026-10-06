@@ -2614,7 +2614,7 @@
       "appearance_dark_contrast_warning": "{field} 在深色卡片上不容易看清楚（{ratio} : 1），請為它設定深色模式的值。",
       "appearance_dark_contrast_warning_button_text": "在深色模式下,{field} 在按鈕背景上不易閱讀 ({ratio} : 1)。請為它設定深色值。",
       "appearance_dark_contrast_warning_shared": "{field} 在深色卡片上不容易看清楚（{ratio} : 1）。這個顏色在淺色和深色模式下都一樣，所以請選擇在兩種模式下都清晰易讀的品牌色。",
-      "appearance_dark_description": "當應用程式要求使用深色模式時顯示。你留空的顏色會根據品牌色彩自動產生。連結問卷則維持淺色。",
+      "appearance_dark_description": "當應用程式要求使用深色模式時顯示。你留空的顏色會根據品牌色自動產生。尺寸、字型和版面配置會同時套用於淺色和深色模式。連結問卷則維持淺色。",
       "appearance_light": "淺色",
       "appearance_shared_color": "淺色與深色模式相同",
       "appearance_use_automatic": "使用自動色彩",

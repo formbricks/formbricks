@@ -33,7 +33,8 @@ describe("appearance", () => {
     document.body.innerHTML = "";
   });
 
-  test("defaults to light when nothing or something invalid is passed", () => {
+  test("defaults to light when nothing or something invalid is passed, even on a dark OS", () => {
+    mockSystemDark(true);
     setAppearance(undefined);
     expect(getResolvedAppearance()).toBe("light");
     setAppearance("sepia");
@@ -71,6 +72,19 @@ describe("appearance", () => {
     expect(listener).toHaveBeenLastCalledWith("dark");
     unsubscribe();
     setAppearance("light");
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  test("a survey removed from the page stops receiving appearance changes", () => {
+    const listener = vi.fn();
+    let connected = true;
+    subscribeToAppearance(listener, () => connected);
+    setAppearance("dark");
+    expect(listener).toHaveBeenCalledTimes(1);
+    connected = false;
+    setAppearance("light");
+    connected = true;
+    setAppearance("dark");
     expect(listener).toHaveBeenCalledTimes(1);
   });
 });

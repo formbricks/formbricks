@@ -2614,7 +2614,7 @@
       "appearance_dark_contrast_warning": "{field} est difficile à distinguer sur la carte sombre ({ratio} : 1). Choisis une valeur sombre pour ce champ.",
       "appearance_dark_contrast_warning_button_text": "{field} est difficile à lire sur l'arrière-plan du bouton en mode sombre ({ratio} : 1). Définis-lui une valeur sombre.",
       "appearance_dark_contrast_warning_shared": "{field} est difficile à voir sur la carte sombre ({ratio} : 1). Il reste identique en mode clair et en mode sombre, alors choisis une couleur de marque lisible dans les deux.",
-      "appearance_dark_description": "Utilisé lorsque l’application demande le mode sombre. Les couleurs que tu ne définis pas sont calculées à partir de la couleur de ta marque. Les enquêtes accessibles par lien restent en mode clair.",
+      "appearance_dark_description": "S'affiche lorsque l'application demande le mode sombre. Les couleurs que tu laisses vides sont déduites de la couleur de ta marque. Les tailles, les polices et la mise en page s'appliquent aux modes clair et sombre. Les sondages par lien restent en mode clair.",
       "appearance_light": "Clair",
       "appearance_shared_color": "Identique en mode clair et sombre",
       "appearance_use_automatic": "Utiliser la couleur automatique",

@@ -285,7 +285,8 @@ export function SurveyContainer({
   // Rendered on the root so the first paint already has the right palette; later changes arrive
   // through setAppearance and only touch this attribute.
   const [appearance, setAppearance] = useState(getResolvedAppearance);
-  useEffect(() => subscribeToAppearance(setAppearance), []);
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => subscribeToAppearance(setAppearance, () => rootRef.current?.isConnected ?? true), []);
   // The overlay is what makes a survey modal: it covers the host page and the page stops being usable.
   // Without one the page underneath stays visible and clickable, so the survey is a notification, not a
   // modal. Trapping focus there steals the caret and the text selection from the host page — the trap's
@@ -376,6 +377,7 @@ export function SurveyContainer({
     return (
       <div // NOSONAR(typescript:S6819) - a native <form> would nest inside the host page's own form
         id="fbjs"
+        ref={rootRef}
         className="formbricks-form"
         data-appearance={appearance}
         style={{ height: "100%", width: "100%" }}
@@ -395,6 +397,7 @@ export function SurveyContainer({
   return (
     <div
       id="fbjs"
+      ref={rootRef}
       className="formbricks-form"
       data-appearance={appearance}
       dir={dir}
