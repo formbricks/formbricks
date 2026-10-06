@@ -15,7 +15,23 @@ const RTL_SCRIPTS =
  * throw escapes mid-stream. It also poisons a per-process font store, so the first such request to a
  * fresh pod breaks every later Arabic render in that process (ENG-2500).
  *
- * We therefore leave the title off the card for these scripts rather than render it wrongly. Revisit
- * if satori ever ships bidi support.
+ * We therefore leave right-to-left text off the card rather than render it wrongly. Revisit if satori
+ * ever ships bidi support.
  */
 export const isRtlText = (value: string | null): boolean => (value ? RTL_SCRIPTS.test(value) : false);
+
+/** Matches how `metadata-utils.ts` joins a survey name and the " | Formbricks" Cloud suffix. */
+const SEGMENT_SEPARATOR = " | ";
+
+/**
+ * The title to draw on the card, or `null` when nothing drawable is left.
+ *
+ * Only the right-to-left segments are dropped, so a Cloud name like `استبيان | Formbricks` still shows
+ * "Formbricks". The brand comes only from the name the caller built - self-hosted instances and custom
+ * link titles never carry it, and hardcoding it here would put our brand on their cards.
+ */
+export const getCardTitle = (name: string | null): string | null => {
+  if (!isRtlText(name)) return name || null;
+  const kept = name!.split(SEGMENT_SEPARATOR).filter((segment) => segment.trim() && !isRtlText(segment));
+  return kept.length > 0 ? kept.join(SEGMENT_SEPARATOR) : null;
+};

@@ -67,6 +67,12 @@ describe("right-to-left survey names", () => {
     expect((await renderOgImage(undefined, "أهلا")).equals(untitled)).toBe(true);
   }, 30_000);
 
+  test("keeps the left-to-right segments of a mixed name", async () => {
+    const brandOnly = await renderOgImage(undefined, "Formbricks");
+
+    expect((await renderOgImage(undefined, "أهلا | Formbricks")).equals(brandOnly)).toBe(true);
+  }, 30_000);
+
   test("still draws the title for a left-to-right name", async () => {
     const untitled = await renderOgImage(undefined, null);
 
