@@ -668,22 +668,7 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         if (!slot.ok) {
           return refuseOverConcurrency(slot.reason, concurrency, { requestId, instance, log });
         }
-        const { release } = slot;
-
-        // Also give the slot back when the client goes away. Next aborts `req.signal` when the response
-        // closes before it finished, and when the client left before sending even started it returns
-        // early from piping the body — neither reading nor cancelling it — so `releaseWhenBodySettles`
-        // alone would hold this slot for good.
-        const releaseOnAbort = () => release();
-        if (req.signal.aborted) {
-          release();
-        } else {
-          req.signal.addEventListener("abort", releaseOnAbort, { once: true });
-        }
-        releaseSlot = () => {
-          req.signal.removeEventListener("abort", releaseOnAbort);
-          release();
-        };
+        releaseSlot = slot.release;
       }
 
       const parsedInputResult = await parseV3Input(req, props, schemas, {
@@ -744,9 +729,23 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         return finalResponse;
       }
 
+      // From here the response body owns the slot. It is also given back when the client goes away:
+      // Next aborts `req.signal` when the response closes before it finished, and when the client left
+      // before sending even started it returns early from piping the body — neither reading nor
+      // cancelling it — so the body alone would hold the slot for good. Attached only now, not when the
+      // slot was taken, so a client that hangs up early still holds its slot while its body is parsed.
       const release = releaseSlot;
       releaseSlot = undefined;
-      return releaseWhenBodySettles(finalResponse, release);
+      const releaseAndDetach = () => {
+        req.signal.removeEventListener("abort", releaseAndDetach);
+        release();
+      };
+      if (req.signal.aborted) {
+        releaseAndDetach();
+      } else {
+        req.signal.addEventListener("abort", releaseAndDetach, { once: true });
+      }
+      return releaseWhenBodySettles(finalResponse, releaseAndDetach);
     } catch (error) {
       if (auditLog) {
         auditLog.eventId = requestId;

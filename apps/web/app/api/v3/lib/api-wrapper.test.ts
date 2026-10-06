@@ -1310,6 +1310,45 @@ describe("per-route concurrency limit", () => {
     expect(limiter.inFlight).toBe(0);
   });
 
+  test("a client that hangs up early keeps its slot until the handler is done with the request", async () => {
+    // Freeing the slot on the abort itself would let a client open a request, hang up straight away and
+    // open the next, each leaving a body parse and handler running past the limit.
+    const limiter = new ConcurrencyLimiter(1);
+    const client = new AbortController();
+    let finishHandler: (() => void) | undefined;
+    let handlerStarted: (() => void) | undefined;
+    const started = new Promise<void>((resolve) => {
+      handlerStarted = resolve;
+    });
+    const route = limitedRoute(limiter, async () => {
+      handlerStarted?.();
+      await new Promise<void>((resolve) => {
+        finishHandler = resolve;
+      });
+      return new Response(new ReadableStream<Uint8Array>({ pull() {} }));
+    });
+
+    const pending = route(
+      new NextRequest("http://localhost/api/internal/surveys/import/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: '{"a":"x"}',
+        signal: client.signal,
+      }),
+      {} as never
+    );
+    await started;
+    client.abort();
+
+    expect(limiter.inFlight).toBe(1);
+    expect((await route(postJson('{"a":"x"}'), {} as never)).status).toBe(503);
+
+    finishHandler?.();
+    await pending;
+
+    expect(limiter.inFlight).toBe(0);
+  });
+
   test("a disconnect after the body settled releases nothing twice", async () => {
     const limiter = new ConcurrencyLimiter(1);
     const client = new AbortController();

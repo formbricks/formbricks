@@ -127,6 +127,40 @@ describe("POST /api/internal/surveys/import/stream", () => {
     await done;
   });
 
+  test("lets the user start again once they stop the import", async () => {
+    mocks.streamQsfImport.mockImplementationOnce(async () => openStream().response);
+
+    const stopped = await post();
+    await stopped.body?.cancel();
+    const next = await post();
+
+    expect(stopped.status).toBe(200);
+    expect(next.status).toBe(200);
+    await next.text();
+  });
+
+  test("lets the user start again once they disconnect, though nothing reads or cancels the body", async () => {
+    // What Next does when the client has already gone: it aborts the request and leaves the body be.
+    mocks.streamQsfImport.mockImplementationOnce(async () => openStream().response);
+    const client = new AbortController();
+
+    const gone = await POST(
+      new NextRequest("http://localhost/api/internal/surveys/import/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: client.signal,
+      }),
+      {} as never
+    );
+    client.abort();
+    const next = await post();
+
+    expect(gone.status).toBe(200);
+    expect(next.status).toBe(200);
+    await next.text();
+  });
+
   test("answers 503 with Retry-After once every import slot is busy, and admits again after one ends", async () => {
     const running = Array.from({ length: QSF_IMPORT_MAX_IN_FLIGHT }, openStream);
     for (const { response } of running) {
