@@ -45,6 +45,7 @@ import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { updateSurveyAction, updateSurveyDraftAction } from "../actions";
+import { type TAutoSaveFailure } from "../lib/auto-save-badge";
 import { createSaveAttemptOrder } from "../lib/save-attempt-order";
 import { describeElementIssue, isMissingRequiredTrigger, isSurveyValid } from "../lib/validation";
 import { AutoSaveIndicator } from "./auto-save-indicator";
@@ -116,10 +117,10 @@ export const SurveyMenuBar = ({
   const [isSurveySaving, setIsSurveySaving] = useState(false);
   const [lastAutoSaved, setLastAutoSaved] = useState<Date | null>(null);
   // Set when an auto-save tick does not land -- the request failed, or the server refused it -- and
-  // cleared by the next save that does. The tick retries on its own (it re-sends the whole draft, so
-  // a retry cannot apply anything twice); this only makes sure the indicator stops claiming the work
-  // is safe while it is not (ENG-2899).
-  const [hasAutoSaveFailed, setHasAutoSaveFailed] = useState(false);
+  // cleared by the next save that does. `retrying` while the tick keeps going (it re-sends the whole
+  // draft, so a retry cannot apply anything twice); `stopped` once a stale deployment has ended it.
+  // This only makes sure the indicator stops claiming the work is safe while it is not (ENG-2899).
+  const [autoSaveFailure, setAutoSaveFailure] = useState<TAutoSaveFailure | null>(null);
   // The indicator follows the newest save attempt to settle, by start order, not whichever response
   // arrives last. Next.js happens to send server actions one at a time today, so they settle in start
   // order anyway; see save-attempt-order.ts for why that is not relied on. One ordering per editor.
@@ -477,7 +478,7 @@ export const SurveyMenuBar = ({
       if (!hasUnsavedSurveyChanges(localSurveyRef.current, [surveyRef.current, lastSavedSurveyRef.current])) {
         // Nothing is waiting to be saved, so nothing is lost either -- e.g. the author reverted the
         // edit a failed tick was carrying. (A no-op when the flag is already clear.)
-        setHasAutoSaveFailed(false);
+        setAutoSaveFailure(null);
         return;
       }
 
@@ -535,13 +536,13 @@ export const SurveyMenuBar = ({
           // The refs above follow what the server stored either way; the indicator only follows the
           // newest attempt, so a tick that lands after a newer save failed does not say "saved".
           if (saveAttemptOrder.settle(attempt)) {
-            setHasAutoSaveFailed(false);
+            setAutoSaveFailure(null);
             setLastAutoSaved(new Date());
           }
         } else if (saveAttemptOrder.settle(attempt)) {
           // The request reached the app and the save was refused (`serverError`, validation, a missing
           // segment) -- just as unsaved as a failed request.
-          setHasAutoSaveFailed(true);
+          setAutoSaveFailure("retrying");
         }
       } catch (e) {
         // A stale bundle's action id is rejected by the new deployment: hand it to the reload
@@ -550,13 +551,16 @@ export const SurveyMenuBar = ({
         // requests behind a prompt that is already up.
         if (reportStaleServerActionError(e)) {
           clearInterval(intervalId);
+          // The edit this tick carried is not saved, and nothing will retry it: say so, without the
+          // "keeps trying" promise the retrying state makes.
+          setAutoSaveFailure("stopped");
           return;
         }
         // Anything else means this tick's save did not land -- a load balancer error page, a dropped
         // connection. Nothing reaches `unhandledrejection` from here, so the indicator is the only
         // place the author can learn about it.
         console.error(e);
-        if (saveAttemptOrder.settle(attempt)) setHasAutoSaveFailed(true);
+        if (saveAttemptOrder.settle(attempt)) setAutoSaveFailure("retrying");
       } finally {
         isAutoSavingRef.current = false;
       }
@@ -583,7 +587,7 @@ export const SurveyMenuBar = ({
         lastSavedSurveyRef.current = structuredClone(updatedSurveyResponse.data);
         toast.success(t("workspace.surveys.edit.changes_saved"));
         isSuccessfullySavedRef.current = true;
-        if (saveAttemptOrder.settle(attempt)) setHasAutoSaveFailed(false);
+        if (saveAttemptOrder.settle(attempt)) setAutoSaveFailure(null);
         router.refresh();
       } else {
         // Recorded so an older tick that lands afterwards cannot report this draft as saved.
@@ -666,7 +670,7 @@ export const SurveyMenuBar = ({
         toast.success(t("workspace.surveys.edit.changes_saved"));
         // Set flag to prevent beforeunload warning during router.refresh()
         isSuccessfullySavedRef.current = true;
-        if (saveAttemptOrder.settle(attempt)) setHasAutoSaveFailed(false);
+        if (saveAttemptOrder.settle(attempt)) setAutoSaveFailure(null);
         router.refresh();
       } else {
         saveAttemptOrder.settle(attempt);
@@ -929,9 +933,12 @@ export const SurveyMenuBar = ({
       <div className="mt-3 flex items-center gap-2 sm:mt-0 sm:ml-4">
         <AutoSaveIndicator
           isDraft={localSurvey.status === "draft"}
+          // Scheduled drafts are not auto-saved (the interval is torn down), so the badge says paused.
+          isScheduled={isPublishScheduled}
           lastSaved={lastAutoSaved}
-          // Once scheduled the interval is torn down, so the badge must not promise further retries.
-          hasFailed={hasAutoSaveFailed && localSurvey.publishOn === null}
+          failure={autoSaveFailure}
+          // CX mode hides the manual save, so the badge must not suggest one.
+          canSaveManually={!isCxMode}
         />
         {!isStorageConfigured && (
           <div>
