@@ -58,11 +58,16 @@ const stackFrames = (error: Error): string[] => {
     return [];
   }
 
-  // Error.prototype.toString's rule, which is what V8 writes as the header.
-  let header = `${name}: ${message}`;
-  if (!name) header = message;
-  else if (!message) header = name;
-  if (!stack.startsWith(`${header}\n`)) {
+  // Error.prototype.toString's rule, which is what V8 writes as the header. Node's own errors put their
+  // code after the name (`TypeError [ERR_INVALID_STATE]: …`), and those are the ones worth locating.
+  const withName = (label: string) => {
+    if (!label) return message;
+    return message ? `${label}: ${message}` : label;
+  };
+  const { code } = error as { code?: unknown };
+  const headers = [withName(name), ...(typeof code === "string" ? [withName(`${name} [${code}]`)] : [])];
+  const header = headers.find((candidate) => stack.startsWith(`${candidate}\n`));
+  if (header === undefined) {
     return [];
   }
 

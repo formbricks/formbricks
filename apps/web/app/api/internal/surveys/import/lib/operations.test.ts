@@ -328,6 +328,30 @@ describe("streamQsfImport", () => {
       expect(allLogged()).not.toContain(FILE_CONTENT_MARKER);
     });
 
+    test("keeps the frames of Node's own coded errors, such as a write to a closed stream", async () => {
+      // Node writes the code into the header; Vitest rewrites stacks without it, so the header is set
+      // here as Node prints it for an enqueue on a closed stream.
+      const closedWrite = Object.assign(new TypeError("Invalid state: Controller is already closed"), {
+        code: "ERR_INVALID_STATE",
+      });
+      closedWrite.stack = [
+        "TypeError [ERR_INVALID_STATE]: Invalid state: Controller is already closed",
+        "    at ReadableStreamDefaultController.enqueue (node:internal/webstreams/readablestream:1077:13)",
+        "    at emit (/app/apps/web/app/api/internal/surveys/import/lib/operations.ts:1:1)",
+      ].join("\n");
+      mocks.runQsfImport.mockRejectedValue(closedWrite);
+
+      await (await call()).text();
+
+      expect(mocks.log.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          errName: "TypeError",
+          errStack: expect.stringContaining("operations.ts:1:1"),
+        }),
+        "QSF import failed"
+      );
+    });
+
     test("still reports and logs a failure whose message is not a string", async () => {
       const error = new Error("boom");
       Object.defineProperty(error, "message", { value: undefined });
