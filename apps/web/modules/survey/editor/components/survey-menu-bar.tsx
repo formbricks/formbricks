@@ -45,6 +45,7 @@ import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { updateSurveyAction, updateSurveyDraftAction } from "../actions";
+import { createSaveAttemptOrder } from "../lib/save-attempt-order";
 import { describeElementIssue, isMissingRequiredTrigger, isSurveyValid } from "../lib/validation";
 import { AutoSaveIndicator } from "./auto-save-indicator";
 
@@ -119,9 +120,10 @@ export const SurveyMenuBar = ({
   // a retry cannot apply anything twice); this only makes sure the indicator stops claiming the work
   // is safe while it is not (ENG-2899).
   const [hasAutoSaveFailed, setHasAutoSaveFailed] = useState(false);
-  // Bumped by every save that lands. A tick that fails after a newer save already landed -- a manual
-  // save can run while a slow tick is still in flight -- must not mark that newer save as lost.
-  const saveGenerationRef = useRef(0);
+  // The indicator follows the newest save attempt to settle, by start order, not whichever response
+  // arrives last. Next.js happens to send server actions one at a time today, so they settle in start
+  // order anyway; see save-attempt-order.ts for why that is not relied on. One ordering per editor.
+  const [saveAttemptOrder] = useState(createSaveAttemptOrder);
   const isSuccessfullySavedRef = useRef(false);
   const isAutoSavingRef = useRef(false);
   const isSurveyPublishingRef = useRef(false);
@@ -480,10 +482,7 @@ export const SurveyMenuBar = ({
       }
 
       isAutoSavingRef.current = true;
-      const generation = saveGenerationRef.current;
-      const reportTickFailed = () => {
-        if (saveGenerationRef.current === generation) setHasAutoSaveFailed(true);
-      };
+      const attempt = saveAttemptOrder.begin();
 
       try {
         const currentSurvey = localSurveyRef.current;
@@ -533,13 +532,16 @@ export const SurveyMenuBar = ({
           surveyRef.current = { ...savedData };
           lastSavedSurveyRef.current = structuredClone(savedData);
           isSuccessfullySavedRef.current = true;
-          saveGenerationRef.current += 1;
-          setHasAutoSaveFailed(false);
-          setLastAutoSaved(new Date());
-        } else {
+          // The refs above follow what the server stored either way; the indicator only follows the
+          // newest attempt, so a tick that lands after a newer save failed does not say "saved".
+          if (saveAttemptOrder.settle(attempt)) {
+            setHasAutoSaveFailed(false);
+            setLastAutoSaved(new Date());
+          }
+        } else if (saveAttemptOrder.settle(attempt)) {
           // The request reached the app and the save was refused (`serverError`, validation, a missing
           // segment) -- just as unsaved as a failed request.
-          reportTickFailed();
+          setHasAutoSaveFailed(true);
         }
       } catch (e) {
         // A stale bundle's action id is rejected by the new deployment: hand it to the reload
@@ -554,18 +556,19 @@ export const SurveyMenuBar = ({
         // connection. Nothing reaches `unhandledrejection` from here, so the indicator is the only
         // place the author can learn about it.
         console.error(e);
-        reportTickFailed();
+        if (saveAttemptOrder.settle(attempt)) setHasAutoSaveFailed(true);
       } finally {
         isAutoSavingRef.current = false;
       }
     }, 10000);
 
     return () => clearInterval(intervalId);
-  }, [localSurvey.publishOn, localSurvey.status, setLocalSurvey]);
+  }, [localSurvey.publishOn, localSurvey.status, saveAttemptOrder, setLocalSurvey]);
 
   // Add new handler after handleSurveySave
   const handleSurveySaveDraft = async (): Promise<boolean> => {
     setIsSurveySaving(true);
+    const attempt = saveAttemptOrder.begin();
 
     try {
       const segment = await handleSegmentUpdate();
@@ -580,10 +583,11 @@ export const SurveyMenuBar = ({
         lastSavedSurveyRef.current = structuredClone(updatedSurveyResponse.data);
         toast.success(t("workspace.surveys.edit.changes_saved"));
         isSuccessfullySavedRef.current = true;
-        saveGenerationRef.current += 1;
-        setHasAutoSaveFailed(false);
+        if (saveAttemptOrder.settle(attempt)) setHasAutoSaveFailed(false);
         router.refresh();
       } else {
+        // Recorded so an older tick that lands afterwards cannot report this draft as saved.
+        saveAttemptOrder.settle(attempt);
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
         toast.error(errorMessage);
         return false;
@@ -591,6 +595,7 @@ export const SurveyMenuBar = ({
       return true;
     } catch (e) {
       setIsSurveySaving(false);
+      saveAttemptOrder.settle(attempt);
       // The reload prompt already explains a stale-deployment failure, so don't also claim the
       // save itself went wrong.
       if (reportStaleServerActionError(e)) {
@@ -607,6 +612,8 @@ export const SurveyMenuBar = ({
     if (blockOnMissingTrigger(localSurvey.status)) return false;
 
     setIsSurveySaving(true);
+    // Begun only once the request is about to go out: a save stopped by validation never raced anything.
+    let attempt: number | undefined;
 
     const isSurveyValidatedWithZod = validateSurveyWithZod();
 
@@ -644,6 +651,7 @@ export const SurveyMenuBar = ({
         }
       });
 
+      attempt = saveAttemptOrder.begin();
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
       const updatedSurveyResponse = await updateSurveyAction({ ...localSurvey, segment });
@@ -658,10 +666,10 @@ export const SurveyMenuBar = ({
         toast.success(t("workspace.surveys.edit.changes_saved"));
         // Set flag to prevent beforeunload warning during router.refresh()
         isSuccessfullySavedRef.current = true;
-        saveGenerationRef.current += 1;
-        setHasAutoSaveFailed(false);
+        if (saveAttemptOrder.settle(attempt)) setHasAutoSaveFailed(false);
         router.refresh();
       } else {
+        saveAttemptOrder.settle(attempt);
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
         toast.error(errorMessage);
         return false;
@@ -670,6 +678,7 @@ export const SurveyMenuBar = ({
       return true;
     } catch (e) {
       setIsSurveySaving(false);
+      if (attempt !== undefined) saveAttemptOrder.settle(attempt);
       if (reportStaleServerActionError(e)) {
         return false;
       }
