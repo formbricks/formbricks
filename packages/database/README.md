@@ -145,8 +145,8 @@ for the one case where PostgreSQL adds one anyway.
 
 `pnpm create-migration` copies Prisma's generated SQL unchanged. Before committing every generated migration:
 
-1. Add `SET lock_timeout = '1s';` at the top, except in a `DROP INDEX CONCURRENTLY` file, where that statement
-   must stand alone.
+1. Add `SET lock_timeout = '1s';` at the top, except in a `DROP INDEX CONCURRENTLY` file, where the drop must be
+   the file's only statement.
 2. Add explicit transaction boundaries when the statements must be atomic.
 3. Change eligible index builds to `CREATE INDEX CONCURRENTLY`, which cannot run inside a transaction. Such a file
    cannot also use step 2, or hold anything Prisma's parser rejects.
