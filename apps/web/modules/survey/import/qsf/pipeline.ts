@@ -85,13 +85,22 @@ export function prepareQsfImport(qsf: Record<string, unknown>, fileName: string)
   return { fileName, surveyName: envelope.data.SurveyEntry.SurveyName };
 }
 
-/** Plan and assemble the survey. Stubbed until ENG-3654 (see the module comment). */
-export async function runQsfImport({
+/**
+ * Plan and assemble the survey. Stubbed until ENG-3654 (see the module comment).
+ *
+ * Asynchronous by contract, since the real pipeline awaits the AI call; the stub has nothing to wait
+ * for, and `Promise.try` keeps its failures rejections rather than throws, as the real one's will be.
+ */
+export function runQsfImport(params: TRunQsfImportParams): Promise<TQsfImportResult> {
+  return Promise.try(() => assembleStubDraft(params));
+}
+
+function assembleStubDraft({
   prepared,
   workspaceId,
   signal,
   onProgress,
-}: TRunQsfImportParams): Promise<TQsfImportResult> {
+}: TRunQsfImportParams): TQsfImportResult {
   signal.throwIfAborted();
   onProgress("ai");
   signal.throwIfAborted();
