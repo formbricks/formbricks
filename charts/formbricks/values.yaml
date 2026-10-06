@@ -640,6 +640,11 @@ authzed:
     # Set this to false only when an operator performs the same guarded cutover externally, and set
     # migrationAcknowledged=true only after that preparation has completed successfully.
     enabled: true
+    # Container-only overrides for the initialization / upgrade-check hook, not the web or migration Job.
+    # Defaults keep non-root enforcement, a read-only root, no privilege escalation, and all capabilities dropped.
+    # UID precedence: this runAsUser override > deployment.securityContext.runAsUser > 1001 (official image).
+    # Custom images using another UID must set it here or in deployment.securityContext.
+    securityContext: {}
 
   # selfHosted creates a SpiceDBCluster. external only configures the app client.
   mode: selfHosted
