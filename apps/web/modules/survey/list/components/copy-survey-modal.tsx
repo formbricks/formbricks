@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { getWritableWorkspacesAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
 import { Button } from "@/modules/ui/components/button";
 import {

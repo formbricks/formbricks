@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { inviteOrganizationMemberAction } from "@/modules/setup/organization/[organizationId]/invite/actions";
 import {
   type TInviteMembersFormSchema,

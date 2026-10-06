@@ -1,5 +1,12 @@
 import { describe, expect, test } from "vitest";
-import { isCapitalized, sanitizeString, startsWithVowel, truncate, truncateText } from "./strings";
+import {
+  isCapitalized,
+  isStringMatch,
+  sanitizeString,
+  startsWithVowel,
+  truncate,
+  truncateText,
+} from "./strings";
 
 describe("String Utilities", () => {
   describe("truncate", () => {
@@ -100,5 +107,39 @@ describe("String Utilities", () => {
     test("handles exact limit match correctly", () => {
       expect(truncateText("hello", 5)).toBe("hello");
     });
+  });
+});
+
+describe("isStringMatch", () => {
+  test("returns true for exact matches", () => {
+    expect(isStringMatch("test", "test")).toBe(true);
+  });
+
+  test("returns true for case-insensitive matches", () => {
+    expect(isStringMatch("TEST", "test")).toBe(true);
+    expect(isStringMatch("test", "TEST")).toBe(true);
+  });
+
+  test("returns true for matches with spaces", () => {
+    expect(isStringMatch("test case", "testcase")).toBe(true);
+    expect(isStringMatch("testcase", "test case")).toBe(true);
+  });
+
+  test("returns true for matches with underscores", () => {
+    expect(isStringMatch("test_case", "testcase")).toBe(true);
+    expect(isStringMatch("testcase", "test_case")).toBe(true);
+  });
+
+  test("returns true for matches with dashes", () => {
+    expect(isStringMatch("test-case", "testcase")).toBe(true);
+    expect(isStringMatch("testcase", "test-case")).toBe(true);
+  });
+
+  test("returns true for partial matches", () => {
+    expect(isStringMatch("test", "testing")).toBe(true);
+  });
+
+  test("returns false for non-matches", () => {
+    expect(isStringMatch("test", "other")).toBe(false);
   });
 });

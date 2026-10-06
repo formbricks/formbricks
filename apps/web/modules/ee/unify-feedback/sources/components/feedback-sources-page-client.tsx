@@ -19,7 +19,7 @@ import {
   importHistoricalResponsesAction,
   updateFeedbackSourceWithMappingsAction,
 } from "@/lib/feedback-source/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import {
   hasRestrictedAttachedSurvey,
   isRestrictedSurveyPick,
