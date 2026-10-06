@@ -512,6 +512,21 @@ describe("storage utils", () => {
       expect(collectResponseFileUrls({ upload: [url] }, fileUploadElementIds, surveyId)).toEqual([]);
     });
 
+    // Write-time validation only stores a key under the element it names, so a this-survey key under any
+    // other answer was pasted there. Collecting it would let deleting one response remove another
+    // respondent's upload.
+    test.each([
+      ["a multi-select answer", { choices: [scopedUrl(surveyId, "victim.png")] }],
+      ["another upload element", { upload: [scopedUrl(surveyId, "victim.png")] }],
+      [
+        "encoded slashes",
+        { upload: [`/storage/ws-1/private/surveys%2F${surveyId}%2Felements%2Fremoved-upload%2Fv.png`] },
+      ],
+      ["a key with no element", { upload: [`/storage/ws-1/private/surveys/${surveyId}/v.png`] }],
+    ])("should refuse this survey's scoped URL under %s", (_label, data) => {
+      expect(collectResponseFileUrls(data, fileUploadElementIds, surveyId)).toEqual([]);
+    });
+
     test("should read an encoded scoped URL naming this survey as this survey's", () => {
       const encodedOwnFile = `/storage/ws-1/private/%73urveys/${surveyId}/elements/removed-upload/own.png`;
 
@@ -543,9 +558,9 @@ describe("storage utils", () => {
         return warnSpy;
       };
 
-      // The count is the only trace an ENG-2291-style plant leaves once survey binding refuses it. Only a
-      // private key naming another survey counts, and the URLs themselves stay out of the log.
-      test("should log once how many URLs were refused for naming another survey, without the URLs", () => {
+      // The count is the only trace a planted URL leaves once the binding refuses it. Only a private key
+      // naming another survey or element counts, and the URLs themselves stay out of the log.
+      test("should log once how many URLs were refused for naming another survey or element, without the URLs", () => {
         const warnSpy = spyOnWarn();
 
         collectResponseFileUrls(
@@ -553,6 +568,7 @@ describe("storage utils", () => {
             upload: [
               scopedUrl(otherSurveyId, "a.png"),
               scopedUrl(otherSurveyId, "p.png", "public"),
+              scopedUrl(surveyId, "c.png"),
               firstUrl,
             ],
             "removed-upload": [scopedUrl("survey-3", "b.png"), secondUrl, "not a url"],
@@ -563,8 +579,8 @@ describe("storage utils", () => {
 
         expect(warnSpy).toHaveBeenCalledTimes(1);
         expect(warnSpy).toHaveBeenCalledWith(
-          { surveyId, refusedCount: 2 },
-          "Refusing response files filed under another survey"
+          { surveyId, refusedCount: 3 },
+          "Refusing response files filed under another survey or element"
         );
       });
 

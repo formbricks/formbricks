@@ -142,18 +142,18 @@ export const getSurveyFileUploadElementIds = (survey: {
   );
 
 /**
- * Whose file one storage URL found in a response's answers is, when cleaning up `surveyId`.
+ * Whose file one storage URL found in the answer to `elementId` is, when cleaning up `surveyId`.
  *
- * A key filed under a survey (`{id}/private/surveys/{surveyId}/…`, every upload since #8044) names its
- * owner, so the key decides, not the answer it sits under. A key naming another survey is `otherSurvey`
- * even under a current upload element: a same-workspace URL planted under a key that only later became
- * an upload element (the ENG-2291 flip) passes `deleteResponseFileUrls`' workspace check, so survey
- * binding is enforced here. A public key is never a response upload.
+ * A key filed under a survey (`{id}/private/surveys/{surveyId}/elements/{elementId}/…`, every upload
+ * since #8044) names the survey and element it was uploaded for, so the key decides, not whether that
+ * element still exists. It is `own` only when both match: the answer it sits under is the element's, and
+ * write-time validation (`isScopedPrivateUploadUrl`) only ever stores a key under its own element. So a
+ * deleted element's files are still collected, while a same-survey URL pasted into another answer (a
+ * multi-select "Other", say) is not.
  *
- * A key naming this survey is `own` from **any** array answer (a multi-select or address answer too),
- * not only one left by a deleted upload element. That lets a respondent plant another same-survey file,
- * which is accepted: an upload answer can already name any same-survey file at write time, and file
- * names carry a random UUID.
+ * Anything else filed under a survey is `refused`. That covers a same-workspace URL planted under a key
+ * that only later became an upload element (the ENG-2291 flip), which passes `deleteResponseFileUrls`'
+ * workspace check, so the binding is enforced here. A public key is never a response upload.
  *
  * A flat pre-#8044 key (`{prefix}/private/{file}`) names no survey, so it is trusted only under a current
  * upload element. One left by a deleted element stays in storage: an accepted legacy leak, since every
@@ -161,22 +161,23 @@ export const getSurveyFileUploadElementIds = (survey: {
  */
 const getResponseFileUrlOwner = ({
   fileUrl,
+  elementId,
   isUploadElementAnswer,
   surveyId,
 }: {
   fileUrl: string;
+  elementId: string;
   isUploadElementAnswer: boolean;
   surveyId: string;
-}): "own" | "otherSurvey" | "none" => {
+}): "own" | "refused" | "none" => {
   // `getStorageUrlSurveyId`'s reading, with the URL parsed once: a name that does not decode names no
   // survey.
   const parsed = parseStorageFileUrl(fileUrl);
   const scope = parsed ? getStorageFileNameScope(parsed.fileName) : undefined;
-  const keySurveyId = scope?.decodable ? scope.surveyId : null;
 
-  if (!parsed || keySurveyId === null) return isUploadElementAnswer ? "own" : "none";
+  if (!parsed || !scope?.decodable || scope.surveyId === null) return isUploadElementAnswer ? "own" : "none";
   if (parsed.accessType !== "private") return "none";
-  return keySurveyId === surveyId ? "own" : "otherSurvey";
+  return scope.surveyId === surveyId && scope.elementId === elementId ? "own" : "refused";
 };
 
 /**
@@ -187,8 +188,8 @@ const getResponseFileUrlOwner = ({
  * only their string entries. Anything else is skipped rather than cast: a plain text answer holding a
  * pasted storage URL never becomes a delete target, and neither does malformed data under an upload key.
  *
- * URLs refused for naming another survey are logged as a count, never the URLs: they are the trace an
- * ENG-2291-style plant leaves.
+ * URLs refused for naming another survey or element are logged as a count, never the URLs: they are the
+ * trace a planted URL leaves.
  *
  * `data` is deliberately `unknown`: callers hand this a raw `Prisma.JsonValue` column or an already
  * typed `TResponseData`, and the shape is checked here either way rather than cast at each call site.
@@ -215,14 +216,14 @@ export const collectResponseFileUrls = (
     for (const fileUrl of answer) {
       if (typeof fileUrl !== "string") continue;
 
-      const owner = getResponseFileUrlOwner({ fileUrl, isUploadElementAnswer, surveyId });
+      const owner = getResponseFileUrlOwner({ fileUrl, elementId, isUploadElementAnswer, surveyId });
       if (owner === "own") fileUrls.push(fileUrl);
-      if (owner === "otherSurvey") refusedCount++;
+      if (owner === "refused") refusedCount++;
     }
   }
 
   if (refusedCount > 0) {
-    logger.warn({ surveyId, refusedCount }, "Refusing response files filed under another survey");
+    logger.warn({ surveyId, refusedCount }, "Refusing response files filed under another survey or element");
   }
 
   return fileUrls;
@@ -370,17 +371,20 @@ export const getStorageUrlSurveyId = (fileUrl: string): string | null => {
 };
 
 /**
- * Which survey an object key's file name is filed under, read from the name the storage layer actually
- * uses: `getFileStreamForDownload` and `deleteFile` both decode the joined name once more before
- * building the key, so the check has to decode it too. `decodable: false` for a name that does not
- * decode — the storage layer fails on it as well, so there is no object it could reach.
+ * Which survey (and, for an upload, which element) an object key's file name is filed under, read from
+ * the name the storage layer actually uses: `getFileStreamForDownload` and `deleteFile` both decode the
+ * joined name once more before building the key, so the check has to decode it too. `decodable: false`
+ * for a name that does not decode — the storage layer fails on it as well, so there is no object it
+ * could reach.
  *
  * `fileName` is the joined, still-encoded name: a URL path's file part, or the route's catch-all
  * segments joined with `/`.
  */
 export const getStorageFileNameScope = (
   fileName: string
-): { decodable: false } | { decodable: true; isSurveyScope: boolean; surveyId: string | null } => {
+):
+  | { decodable: false }
+  | { decodable: true; isSurveyScope: boolean; surveyId: string | null; elementId: string | null } => {
   let decoded: string;
   try {
     decoded = decodeURIComponent(fileName);
@@ -388,9 +392,14 @@ export const getStorageFileNameScope = (
     return { decodable: false };
   }
 
-  const [scope, surveyId] = decoded.split("/");
+  const [scope, surveyId, elementsSegment, elementId] = decoded.split("/");
   const isSurveyScope = scope === "surveys" && decoded.includes("/");
-  return { decodable: true, isSurveyScope, surveyId: isSurveyScope && surveyId ? surveyId : null };
+  return {
+    decodable: true,
+    isSurveyScope,
+    surveyId: isSurveyScope && surveyId ? surveyId : null,
+    elementId: isSurveyScope && elementsSegment === "elements" && elementId ? elementId : null,
+  };
 };
 
 const isScopedPrivateUploadUrl = ({
