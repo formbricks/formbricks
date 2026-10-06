@@ -18,6 +18,12 @@ import { evaluateQuotas, handleQuotas } from "./utils";
  * connection while the transaction held the first, which stalls the transaction behind the pool when it
  * is saturated (ENG-3285). This keeps quota evaluation off that path; it says nothing about other root
  * reads a caller makes inside its own transaction. Nothing here depends on the row being written.
+ *
+ * It is a snapshot, on purpose. A quota edited between the load and the write screens that one response
+ * against the previous definitions — the same staleness the reads always had, since they never ran on
+ * the transaction's connection. The counts a full quota is judged on are not part of it: `handleQuotas`
+ * reads them through the transaction. Do not move the load back inside the transaction to close that
+ * window; that only brings the stall back.
  */
 export interface TQuotaEvaluationContext {
   quotas: TSurveyQuota[];
