@@ -26,7 +26,7 @@ There are two places, and they add up: survey CSS is applied on top of workspace
 | Workspace | **Settings → Workspace → Appearance**, card **Custom CSS** | Every survey in the workspace | Organization owners and managers |
 | Survey | Survey editor → **Styling** tab, card **Custom CSS** | This survey only | Anyone who can edit the survey |
 
-Survey CSS applies whether or not the survey overrides the workspace theme with **Add custom styles**.
+Survey CSS applies whether or not the survey overrides the workspace theme with **Add custom styles**. The survey editor shows the **Styling** tab, and with it the survey's **Custom CSS** card, only while the workspace allows style overrides; the API and MCP tools can set survey CSS either way.
 
 Each level has two fields, switched with the **Light / Dark** toggle at the top of the styling editor:
 
@@ -453,7 +453,7 @@ Define `@keyframes` in the same field as the rules that use them.
 | Parts in one selector, such as `.a .b > .c` (3) | 20 | 20 |
 | Universal selectors (`*`) in one selector | 2 | 2 |
 
-Sizes are counted in bytes of UTF-8 text, so most characters count as one byte. The processed output adds scoping to every selector, so CSS close to the size limit that consists of many short rules can exceed the output limit. At most 100 warnings are listed per check; anything beyond that is still removed.
+Sizes are counted in bytes of UTF-8 text, so most characters count as one byte. The processed output adds scoping to every selector, so CSS close to the size limit that consists of many short rules can exceed the output limit. At most 50 warnings are listed per check; anything beyond that is still removed.
 
 ## Browser And App Support
 
