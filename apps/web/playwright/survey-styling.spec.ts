@@ -177,7 +177,9 @@ test.describe("Survey Styling", async () => {
       css = await page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML);
       const darkBlock = css?.split('#fbjs[data-appearance="dark"]')[1] ?? "";
       expect(darkBlock).toContain("--fb-survey-background-color: #1b1530");
-      // The light palette is untouched by editing dark.
+      // The light palette is untouched by editing dark: the edited field keeps its light value.
+      const lightBlock = css?.split('#fbjs[data-appearance="dark"]')[0] ?? "";
+      expect(lightBlock).not.toContain("#1b1530");
       expect(css).toContain("--fb-option-bg-color: #dddddd");
 
       await page.getByRole("button", { name: "Save", exact: true }).first().click();
@@ -193,6 +195,15 @@ test.describe("Survey Styling", async () => {
         .locator("..")
         .getByRole("textbox");
       await expect(cardBackground).toHaveValue("1b1530");
+      // The saved override reaches the preview after a reload, and "Use automatic color" returns to derived.
+      await expect
+        .poll(() => page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML))
+        .toContain("--fb-survey-background-color: #1b1530");
+      await page.getByRole("button", { name: "Use automatic color" }).first().click();
+      await expect(cardBackground).toHaveValue("");
+      await expect
+        .poll(() => page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML))
+        .not.toContain("--fb-survey-background-color: #1b1530");
     });
   });
 

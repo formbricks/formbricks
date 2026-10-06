@@ -35,6 +35,13 @@ describe("dark fallback CSS matches the derived default palette", () => {
       "--fb-accent-background-color": dark.accentBgColor,
       "--fb-accent-background-color-selected": dark.accentBgColorSelected,
       "--fb-tint-color": dark.cardBackgroundColor,
+      "--card": dark.cardBackgroundColor,
+      "--foreground": dark.elementHeadlineColor,
+      "--popover": dark.inputBgColor,
+      "--muted": dark.inputBgColor,
+      "--muted-foreground": mixColor(dark.inputTextColor, dark.inputBgColor, 0.3),
+      "--accent": dark.accentBgColor,
+      "--border": dark.inputBorderColor,
       "--destructive": readable.errorColor,
       "--fb-brand-readable-color": readable.brandTextColor,
     });

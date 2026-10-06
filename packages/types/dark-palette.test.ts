@@ -102,6 +102,24 @@ describe("getDarkContrastWarnings", () => {
     expect(warnings.map((warning) => warning.key)).toContain("brandColor");
   });
 
+  test("one brand warning covers a button and indicator that use the brand color", () => {
+    const warnings = getDarkContrastWarnings({
+      brandColor: { light: "#1e40af" },
+      buttonBgColor: { light: "#1e40af" },
+      progressIndicatorBgColor: { light: "#1e40af" },
+    });
+    expect(warnings.map((warning) => warning.key)).toEqual(["brandColor"]);
+  });
+
+  test("a hidden progress bar gets no indicator warning", () => {
+    const warnings = getDarkContrastWarnings({
+      brandColor: { light: "#7dd3fc" },
+      progressIndicatorBgColor: { light: "#111111" },
+      hideProgressBar: true,
+    });
+    expect(warnings).toEqual([]);
+  });
+
   test("warns about button text that is hard to read on the button", () => {
     const warnings = getDarkContrastWarnings({
       brandColor: { light: "#00a54f" },

@@ -286,7 +286,8 @@ export function SurveyContainer({
   // Rendered on the root so the first paint already has the right palette; later changes arrive
   // through setAppearance and only touch this attribute.
   const [appearance, setAppearance] = useState(getResolvedAppearance);
-  useEffect(() => subscribeToAppearance(setAppearance), []);
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => subscribeToAppearance(setAppearance, () => rootRef.current?.isConnected ?? true), []);
   // Custom CSS is applied by renderSurvey just before each render; this survey owns the generation of
   // the renderSurvey call that rendered it. It comes from context, not the module counter, so the
   // survey's own re-renders never adopt the generation of another survey rendered since, and teardown
@@ -387,6 +388,7 @@ export function SurveyContainer({
     return (
       <div // NOSONAR(typescript:S6819) - a native <form> would nest inside the host page's own form
         id="fbjs"
+        ref={rootRef}
         className="formbricks-form"
         data-appearance={appearance}
         // Root isolation (ENG-3552): customer z-index values stack inside the survey instead of
@@ -409,6 +411,7 @@ export function SurveyContainer({
   return (
     <div
       id="fbjs"
+      ref={rootRef}
       className="formbricks-form"
       data-appearance={appearance}
       // The root takes no clicks, so survey CSS that stretches it over the page cannot swallow the host

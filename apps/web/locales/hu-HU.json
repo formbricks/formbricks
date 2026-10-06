@@ -2678,7 +2678,7 @@
       "appearance_dark_contrast_warning": "A(z) {field} nehezen látható a sötét kártyán ({ratio} : 1). Kérjük, adjon meg hozzá sötét értéket.",
       "appearance_dark_contrast_warning_button_text": "A(z) {field} nehezen olvasható a gomb hátterén sötét módban ({ratio} : 1). Kérjük, adjon meg hozzá sötét értéket.",
       "appearance_dark_contrast_warning_shared": "A(z) {field} nehezen látható a sötét kártyán ({ratio} : 1). Ez világos és sötét megjelenítésben egyaránt azonos, ezért kérjük, olyan márkaszínt válasszon, amely mindkét esetben jól olvasható.",
-      "appearance_dark_description": "Akkor jelenik meg, amikor az alkalmazás sötét módot kér. Az Ön által üresen hagyott színek az Ön márkaszínéből kerülnek származtatásra. A hivatkozáson keresztül elérhető felmérések világos megjelenésűek maradnak.",
+      "appearance_dark_description": "Akkor jelenik meg, amikor az alkalmazás sötét módot kér. Az Ön által üresen hagyott színeket a rendszer a márkaszínből származtatja. A méretek, a betűtípusok és az elrendezés a világos és a sötét módra egyaránt érvényesek. A hivatkozás alapú felmérések világos megjelenésűek maradnak.",
       "appearance_light": "Világos",
       "appearance_shared_color": "Azonos világos és sötét módban",
       "appearance_use_automatic": "Automatikus szín használata",

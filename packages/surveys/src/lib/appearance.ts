@@ -10,7 +10,11 @@ const DARK_QUERY = "(prefers-color-scheme: dark)";
 
 let requested: TSurveyAppearance = DEFAULT_APPEARANCE;
 let systemQuery: MediaQueryList | undefined;
-const listeners = new Set<(appearance: TResolvedAppearance) => void>();
+type TListener = (appearance: TResolvedAppearance) => void;
+// Each listener carries a check for whether its survey is still on the page. js-core closes a survey by
+// removing its container without unmounting the tree, so the cleanup in an effect never runs; a
+// detached survey is dropped here on the next change instead of being re-rendered forever.
+const listeners = new Map<TListener, () => boolean>();
 
 const isAppearance = (value: unknown): value is TSurveyAppearance =>
   value === "light" || value === "dark" || value === "system";
@@ -36,7 +40,10 @@ const applyToDom = (resolved: TResolvedAppearance) => {
 const notify = () => {
   const resolved = getResolvedAppearance();
   applyToDom(resolved);
-  listeners.forEach((listener) => listener(resolved));
+  listeners.forEach((isConnected, listener) => {
+    if (isConnected()) listener(resolved);
+    else listeners.delete(listener);
+  });
 };
 
 const onSystemChange = () => notify();
@@ -62,8 +69,11 @@ export const setAppearance = (appearance: unknown): void => {
   notify();
 };
 
-export const subscribeToAppearance = (listener: (appearance: TResolvedAppearance) => void): (() => void) => {
-  listeners.add(listener);
+export const subscribeToAppearance = (
+  listener: TListener,
+  isConnected: () => boolean = () => true
+): (() => void) => {
+  listeners.set(listener, isConnected);
   return () => {
     listeners.delete(listener);
   };

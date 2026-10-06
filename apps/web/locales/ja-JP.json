@@ -2678,7 +2678,7 @@
       "appearance_dark_contrast_warning": "{field}はダークカード上で見えにくくなっています（{ratio} : 1）。ダーク用の値を設定してください。",
       "appearance_dark_contrast_warning_button_text": "ダークモードでは、{field}がボタンの背景上で読みにくくなっています({ratio} : 1)。ダークモード用の値を設定してください。",
       "appearance_dark_contrast_warning_shared": "{field}はダークカード上で見づらくなっています（{ratio} : 1）。ライトでもダークでも同じ色が使われるため、どちらでも見やすいブランドカラーを選んでください。",
-      "appearance_dark_description": "アプリがダークモードを要求したときに表示されます。空欄のままの色は、ブランドカラーから自動的に生成されます。リンクアンケートは引き続きライトモードで表示されます。",
+      "appearance_dark_description": "アプリがダークモードを要求したときに表示されます。空欄のままの色は、ブランドカラーから自動的に生成されます。サイズ、フォント、レイアウトはライトモードとダークモードの両方に適用されます。リンクアンケートは常にライトモードで表示されます。",
       "appearance_light": "ライト",
       "appearance_shared_color": "ライトとダークで共通",
       "appearance_use_automatic": "自動カラーを使用",

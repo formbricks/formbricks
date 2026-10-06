@@ -2,6 +2,7 @@
 import surveyUiCss from "@formbricks/survey-ui/styles?inline";
 import {
   DEFAULT_DARK_BRAND_COLOR,
+  DEFAULT_INPUT_SHADOW,
   getDarkReadableColors,
   resolveDarkColors,
 } from "@formbricks/types/dark-palette";
@@ -70,6 +71,52 @@ export const addStylesToDom = () => {
  * colors (D12) → a value derived from the brand color. The `!important` rules further down only
  * reference these variables, so they pick up the dark values without being duplicated.
  */
+/**
+ * survey-ui's base tokens (popover, calendar, muted surfaces) follow the dark palette, so a brand or
+ * card override reaches the dropdown and date picker too. Same mapping as the fallback block in
+ * survey-ui globals.css.
+ */
+const getDarkBaseTokens = (dark: ReturnType<typeof resolveDarkColors>): string => {
+  const card = dark.cardBackgroundColor;
+  const text = dark.elementHeadlineColor;
+  const inputBg = dark.inputBgColor;
+  const tokens: [string, string | undefined][] = [
+    ["background", card],
+    ["card", card],
+    ["foreground", text],
+    ["card-foreground", text],
+    ["popover", inputBg],
+    ["popover-foreground", text],
+    ["secondary", inputBg],
+    ["secondary-foreground", text],
+    ["muted", inputBg],
+    ["muted-foreground", text && inputBg ? mixColor(text, inputBg, 0.3) : undefined],
+    ["accent", dark.accentBgColor],
+    ["accent-foreground", text],
+    ["border", dark.inputBorderColor],
+    ["input", text],
+  ];
+  return tokens
+    .filter(([, value]) => value)
+    .map(([name, value]) => `  --${name}: ${value};\n`)
+    .join("");
+};
+
+/**
+ * The brand stays as typed for fills (D12); text, the focus ring and the error red are lightened just
+ * enough to stay readable on this card.
+ */
+const getDarkReadableTokens = (dark: ReturnType<typeof resolveDarkColors>): string => {
+  const card = dark.cardBackgroundColor;
+  if (!card) return "";
+  const readable = getDarkReadableColors(dark.brandColor ?? DEFAULT_DARK_BRAND_COLOR, card);
+  return (
+    `  --fb-brand-readable-color: ${readable.brandTextColor};\n` +
+    `  --fb-focus-ring-outer-color: ${readable.focusRingColor};\n` +
+    `  --destructive: ${readable.errorColor};\n`
+  );
+};
+
 export const getDarkThemeCss = (rawStyling: TWorkspaceStyling | TSurveyStyling): string => {
   // Stored styling can predate write-time validation: unsafe values fall back as if unset (ENG-2950).
   const styling = sanitizeThemeStyling(rawStyling);
@@ -124,7 +171,9 @@ export const getDarkThemeCss = (rawStyling: TWorkspaceStyling | TSurveyStyling):
     add("input-background-color-selected", mixColor(inputBg, "#ffffff", 0.05));
     add("hover-bg-color", mixColor(inputBg, "#ffffff", 0.08));
   }
-  add("input-shadow", "none");
+  // The light default shadow reads as a dark smudge on a dark field; a shadow the customer set (often an
+  // outline drawn with an inset shadow) is theirs and stays.
+  if (!styling.inputShadow || styling.inputShadow === DEFAULT_INPUT_SHADOW) add("input-shadow", "none");
 
   add("option-bg-color", dark.optionBgColor);
   add("option-label-color", dark.optionLabelColor);
@@ -147,14 +196,9 @@ export const getDarkThemeCss = (rawStyling: TWorkspaceStyling | TSurveyStyling):
   add("shade-color", "white");
   if (card) add("tint-color", card);
 
-  if (card) {
-    // The brand stays as typed for fills (D12); text, the focus ring and the error red are
-    // lightened just enough to stay readable on this card.
-    const readable = getDarkReadableColors(dark.brandColor ?? DEFAULT_DARK_BRAND_COLOR, card);
-    add("brand-readable-color", readable.brandTextColor);
-    add("focus-ring-outer-color", readable.focusRingColor);
-    css += `  --destructive: ${readable.errorColor};\n`;
-  }
+  css += getDarkBaseTokens(dark);
+
+  css += getDarkReadableTokens(dark);
 
   return `${css}}\n`;
 };
