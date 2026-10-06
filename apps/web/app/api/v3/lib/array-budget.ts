@@ -28,7 +28,20 @@ export type TArrayBudgetViolation =
 /** One step of the walk's path, shared by reference so a deep body costs one node per level. */
 type TPathNode = { segment: string; parent: TPathNode | null };
 
-type TWalkFrame = { value: unknown; path: TPathNode | null };
+/**
+ * A container being walked, with a cursor into its children. Objects keep their key list; arrays are
+ * walked by index. Children are visited one at a time rather than expanded up front, so a frame exists
+ * only for a container, and a primitive child — most of any body — costs nothing beyond the read.
+ */
+type TContainerFrame = {
+  container: Record<string, unknown> | unknown[];
+  keys: string[] | null;
+  next: number;
+  path: TPathNode | null;
+};
+
+const isContainer = (value: unknown): value is Record<string, unknown> | unknown[] =>
+  typeof value === "object" && value !== null;
 
 function checkArray(array: unknown[], path: TPathNode | null, total: number): TArrayBudgetViolation | null {
   if (array.length > V3_REQUEST_ARRAY_MAX_ITEMS) {
@@ -38,18 +51,6 @@ function checkArray(array: unknown[], path: TPathNode | null, total: number): TA
     return { kind: "too_many_elements", path: renderPath(path), total };
   }
   return null;
-}
-
-/** Pushed in reverse so the walk visits children in document order. */
-function pushChildren(
-  stack: TWalkFrame[],
-  children: readonly (readonly [string, unknown])[],
-  parent: TPathNode | null
-): void {
-  for (let index = children.length - 1; index >= 0; index -= 1) {
-    const [segment, value] = children[index];
-    stack.push({ value, path: { segment, parent } });
-  }
 }
 
 /**
@@ -62,28 +63,63 @@ function pushChildren(
  * not — nested payloads typed as `unknown` or `z.record`, and every route that never opted in.
  *
  * Iterative on purpose: the input is caller-shaped, and a recursive walk over a deeply nested body
- * would overflow the stack before the budget was ever checked. Paths use the dotted form `invalid_params`
- * already uses (`blocks.3.elements`), cut to the first `MAX_REPORTED_PATH_SEGMENTS`; an empty path means
- * the root value itself.
+ * would overflow the stack before the budget was ever checked. And lazy, for the same reason: expanding
+ * every container's children into frames up front cost ~220 MB of heap and a second of event-loop time
+ * on a 15 MB object with a million keys (ENG-3653, whose route takes bodies that large). Arrays are
+ * checked in document order, when the walk first reaches them.
+ *
+ * Paths use the dotted form `invalid_params` already uses (`blocks.3.elements`), cut to the first
+ * `MAX_REPORTED_PATH_SEGMENTS`; an empty path means the root value itself.
  */
 export function findArrayBudgetViolation(value: unknown): TArrayBudgetViolation | null {
-  const stack: TWalkFrame[] = [{ value, path: null }];
+  if (!isContainer(value)) {
+    return null;
+  }
+
   let total = 0;
 
-  for (let current = stack.pop(); current !== undefined; current = stack.pop()) {
-    if (Array.isArray(current.value)) {
-      total += current.value.length;
-      const violation = checkArray(current.value, current.path, total);
-      if (violation) {
-        return violation;
+  /** A frame for `container`, checking it first when it is an array. */
+  const enter = (
+    container: Record<string, unknown> | unknown[],
+    path: TPathNode | null
+  ): { frame: TContainerFrame; violation: TArrayBudgetViolation | null } => {
+    if (!Array.isArray(container)) {
+      return { frame: { container, keys: Object.keys(container), next: 0, path }, violation: null };
+    }
+
+    total += container.length;
+    return { frame: { container, keys: null, next: 0, path }, violation: checkArray(container, path, total) };
+  };
+
+  const root = enter(value, null);
+  if (root.violation) {
+    return root.violation;
+  }
+
+  const stack: TContainerFrame[] = [root.frame];
+
+  while (stack.length > 0) {
+    const frame = stack[stack.length - 1];
+    const childCount = frame.keys === null ? (frame.container as unknown[]).length : frame.keys.length;
+    if (frame.next >= childCount) {
+      stack.pop();
+      continue;
+    }
+
+    const index = frame.next;
+    frame.next += 1;
+    const segment = frame.keys === null ? String(index) : frame.keys[index];
+    const child =
+      frame.keys === null
+        ? (frame.container as unknown[])[index]
+        : (frame.container as Record<string, unknown>)[segment];
+
+    if (isContainer(child)) {
+      const entered = enter(child, { segment, parent: frame.path });
+      if (entered.violation) {
+        return entered.violation;
       }
-      pushChildren(
-        stack,
-        current.value.map((entry, index) => [String(index), entry] as const),
-        current.path
-      );
-    } else if (typeof current.value === "object" && current.value !== null) {
-      pushChildren(stack, Object.entries(current.value), current.path);
+      stack.push(entered.frame);
     }
   }
 
