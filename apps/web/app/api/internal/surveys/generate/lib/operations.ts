@@ -2,6 +2,9 @@ import "server-only";
 import type { z } from "zod";
 import type { TStreamObjectResult } from "@formbricks/ai";
 import { logger } from "@formbricks/logger";
+import { isClientAbort } from "@/app/api/internal/lib/ai-stream-errors";
+import { createNdjsonResponse } from "@/app/api/internal/lib/ndjson-stream";
+import { createRequestAbort } from "@/app/api/internal/lib/request-abort";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { mapV3SurveyGenerateError } from "@/app/api/v3/surveys/generate/error-mapping";
@@ -18,12 +21,10 @@ import {
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { assertOrganizationAIConfigured, streamOrganizationAIObject } from "@/lib/ai/service";
 import { capturePostHogEvent } from "@/lib/posthog";
-import { isClientAbort, toStreamErrorEvent } from "./error-events";
+import { toStreamErrorEvent } from "./error-events";
 import {
-  SURVEY_GENERATION_STREAM_CONTENT_TYPE,
   type TSurveyGenerationDraftSnapshot,
   type TSurveyGenerationStreamEvent,
-  encodeStreamEvent,
   shouldEmitSnapshot,
 } from "./events";
 
@@ -75,14 +76,9 @@ export async function streamV3SurveyGeneration({
     return mapV3SurveyGenerateError(error, { requestId, instance, workspaceId, organizationId });
   }
 
-  // Chained to req.signal (Next aborts that on client disconnect) but abortable by cancel() too,
-  // which can fire first and would otherwise leave the provider running to its 45s timeout.
-  const generationAbort = new AbortController();
-  const abortGeneration = () => generationAbort.abort();
-  // An abort that already happened is never replayed to a listener added afterwards, so a client
-  // that disconnected during the guards above would otherwise get a full generation billed to it.
-  if (req.signal.aborted) abortGeneration();
-  else req.signal.addEventListener("abort", abortGeneration, { once: true });
+  // Pressing Stop aborts the provider call itself rather than just detaching the reader — this is
+  // what stops the spend. Abortable from the stream's cancel() too, which can fire before req.signal.
+  const generationAbort = createRequestAbort(req);
 
   let generation: TStreamObjectResult<z.infer<typeof ZGeneratedSurveyDraftForAI>>;
   try {
@@ -90,106 +86,73 @@ export async function streamV3SurveyGeneration({
       organizationId,
       aiTracing: buildV3SurveyGenerationTracing({ workspaceId, userId }),
       ...buildV3SurveyGenerationRequest(body),
-      // Next derives this from the client socket closing, so pressing Stop aborts the provider call
-      // itself rather than just detaching the reader — this is what stops the spend.
       abortSignal: generationAbort.signal,
     });
   } catch (error) {
+    generationAbort.dispose();
     return mapV3SurveyGenerateError(error, { requestId, instance, workspaceId, organizationId });
   }
 
-  let closed = false;
-
-  const stream = new ReadableStream<Uint8Array>({
-    async start(controller) {
-      const emit = (event: TSurveyGenerationStreamEvent) => {
-        if (closed) return;
-        controller.enqueue(encodeStreamEvent(event));
-      };
-
+  return createNdjsonResponse<TSurveyGenerationStreamEvent>({
+    produce: async (emit) => {
       emit({ type: "start", requestId });
 
       let seq = 0;
       let lastEmittedAt: number | null = null;
       let lastSerialized: string | null = null;
 
-      try {
-        for await (const snapshot of generation.partialObjectStream) {
-          const serialized = JSON.stringify(snapshot);
-          if (!shouldEmitSnapshot({ now: Date.now(), lastEmittedAt, serialized, lastSerialized })) {
-            continue;
-          }
-
-          seq += 1;
-          lastEmittedAt = Date.now();
-          lastSerialized = serialized;
-          emit({ type: "partial", seq, draft: snapshot });
+      for await (const snapshot of generation.partialObjectStream) {
+        const serialized = JSON.stringify(snapshot);
+        if (!shouldEmitSnapshot({ now: Date.now(), lastEmittedAt, serialized, lastSerialized })) {
+          continue;
         }
 
-        const draft = await generation.completion;
+        seq += 1;
+        lastEmittedAt = Date.now();
+        lastSerialized = serialized;
+        emit({ type: "partial", seq, draft: snapshot });
+      }
 
-        // Always land the completed draft as the final snapshot, whatever the throttle said. Not the
-        // last partial: that one is a `DeepPartial` and can be missing fields the finished object
-        // has, and the review step renders this while saving uses the payload — so the two would
-        // disagree. It also covers a provider that streams no partials at all, where the review step
-        // would otherwise open on an empty list.
-        const finalDraft = draft as TSurveyGenerationDraftSnapshot;
-        const finalSerialized = JSON.stringify(finalDraft);
-        if (finalSerialized !== lastSerialized) {
-          seq += 1;
-          emit({ type: "partial", seq, draft: finalDraft });
-        }
+      const draft = await generation.completion;
 
-        const result = buildV3SurveyCreatePayloadFromDraft(body, draft);
-        emit({ type: "done", ...result });
+      // Always land the completed draft as the final snapshot, whatever the throttle said. Not the
+      // last partial: that one is a `DeepPartial` and can be missing fields the finished object
+      // has, and the review step renders this while saving uses the payload — so the two would
+      // disagree. It also covers a provider that streams no partials at all, where the review step
+      // would otherwise open on an empty list.
+      const finalDraft = draft as TSurveyGenerationDraftSnapshot;
+      if (JSON.stringify(finalDraft) !== lastSerialized) {
+        seq += 1;
+        emit({ type: "partial", seq, draft: finalDraft });
+      }
 
-        if (userId) {
-          capturePostHogEvent(
-            userId,
-            "ai_survey_generated",
-            { prompt_length: body.prompt.length, streamed: true },
-            { organizationId, workspaceId }
-          );
-        }
-      } catch (error) {
-        if (isClientAbort(error, generationAbort.signal)) {
-          // A user pressing Stop is not an incident and must not page anyone. The socket is already
-          // gone, so there is nothing to tell them either.
-          log.info("AI survey generation aborted by the client");
-        } else {
-          log.error({ err: error }, "AI survey generation stream failed");
-          // Enqueue the error and close cleanly. controller.error() would truncate the response and
-          // the client would see a bare network failure with none of the code this event carries.
-          emit(toStreamErrorEvent(error));
-        }
-      } finally {
-        req.signal.removeEventListener("abort", abortGeneration);
-        // close() throws on a stream the consumer already cancelled, and there is nobody left to
-        // tell either way.
-        if (!closed) {
-          closed = true;
-          controller.close();
-        }
+      const result = buildV3SurveyCreatePayloadFromDraft(body, draft);
+      emit({ type: "done", ...result });
+
+      if (userId) {
+        capturePostHogEvent(
+          userId,
+          "ai_survey_generated",
+          { prompt_length: body.prompt.length, streamed: true },
+          { organizationId, workspaceId }
+        );
       }
     },
-    cancel() {
-      // Next aborts its pipeTo on disconnect, which lands here — sometimes before the loop above
-      // observes req.signal. Mark the stream closed first so no in-flight emit enqueues into it.
-      closed = true;
-      abortGeneration();
+    onError: (error) => {
+      if (isClientAbort(error, generationAbort.signal)) {
+        // A user pressing Stop is not an incident and must not page anyone. The socket is already
+        // gone, so there is nothing to tell them either.
+        log.info("AI survey generation aborted by the client");
+        return null;
+      }
+
+      log.error({ err: error }, "AI survey generation stream failed");
+      return toStreamErrorEvent(error);
+    },
+    onCancel: () => {
+      generationAbort.abort();
       log.info("AI survey generation stream cancelled by the client");
     },
-  });
-
-  return new Response(stream, {
-    status: 200,
-    headers: {
-      "Content-Type": SURVEY_GENERATION_STREAM_CONTENT_TYPE,
-      // no-transform is the RFC 9111 signal that forbids an intermediary coalescing or re-encoding
-      // the body; X-Accel-Buffering is for self-hosters fronting Formbricks with nginx-ingress,
-      // where proxy_buffering is on by default and would hold the whole response.
-      "Cache-Control": "no-cache, no-store, no-transform",
-      "X-Accel-Buffering": "no",
-    },
+    onSettled: generationAbort.dispose,
   });
 }

@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import type { DeepPartial } from "@formbricks/ai";
+import { AI_STREAM_FAILURE_CODES } from "@/app/api/internal/lib/ai-stream-errors";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import type { ZGeneratedSurveyDraftForAI } from "@/app/api/v3/surveys/generate/schemas";
 import type { TV3SurveyGenerateValidation } from "@/app/api/v3/surveys/generate/service";
@@ -14,9 +15,7 @@ export type TSurveyGenerationDraftSnapshot = DeepPartial<z.infer<typeof ZGenerat
 
 /** Codes that can only be raised mid-stream. Everything else is a pre-stream problem+json. */
 export const SURVEY_GENERATION_STREAM_ERROR_CODES = {
-  QUOTA_EXCEEDED: "ai_quota_exceeded",
-  AUTH_FAILED: "ai_provider_auth_failed",
-  OUTPUT_TOO_LONG: "ai_output_too_long",
+  ...AI_STREAM_FAILURE_CODES,
   PAYLOAD_INVALID: "ai_generated_payload_invalid",
   GENERATION_FAILED: "ai_generation_failed",
 } as const;
@@ -47,21 +46,8 @@ export type TSurveyGenerationStreamEvent =
       retryAfter?: number;
     };
 
-export const SURVEY_GENERATION_STREAM_CONTENT_TYPE = "application/x-ndjson; charset=utf-8";
-
 /** Minimum gap between partial snapshots. ~10fps reads as live without the per-token flood. */
 export const SURVEY_GENERATION_SNAPSHOT_THROTTLE_MS = 100;
-
-const encoder = new TextEncoder();
-
-/**
- * NDJSON framing: one JSON object, one trailing newline, nothing else. Framing is safe for any
- * model output because `JSON.stringify` escapes newlines inside strings — the single assumption
- * this protocol rests on, and the one `events.test.ts` asserts directly.
- */
-export function encodeStreamEvent(event: TSurveyGenerationStreamEvent): Uint8Array {
-  return encoder.encode(`${JSON.stringify(event)}\n`);
-}
 
 /**
  * Whether a partial snapshot is worth putting on the wire.
