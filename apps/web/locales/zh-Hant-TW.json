@@ -2612,7 +2612,7 @@
       "appearance_automatic_same_as_light": "自動：與淺色相同",
       "appearance_dark": "深色",
       "appearance_dark_contrast_warning": "{field} 在深色卡片上不容易看清楚（{ratio} : 1），請為它設定深色模式的值。",
-      "appearance_dark_contrast_warning_shared": "{field} 在深色卡片上很難看清楚（{ratio} : 1）。它在淺色和深色模式下是一樣的，請選擇一個兩種模式都適用的顏色，或是為按鈕和指示器另外設定深色模式的值。",
+      "appearance_dark_contrast_warning_shared": "{field} 在深色卡片上不容易看清楚（{ratio} : 1）。這個顏色在淺色和深色模式下都一樣，所以請選擇在兩種模式下都清晰易讀的品牌色。",
       "appearance_dark_description": "當應用程式要求使用深色模式時顯示。你留空的顏色會根據品牌色彩自動產生。連結問卷則維持淺色。",
       "appearance_light": "淺色",
       "appearance_shared_color": "淺色與深色模式相同",

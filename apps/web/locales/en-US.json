@@ -2612,7 +2612,7 @@
       "appearance_automatic_same_as_light": "Automatic: same as the light color",
       "appearance_dark": "Dark",
       "appearance_dark_contrast_warning": "{field} is hard to see on the dark card ({ratio} : 1). Set a dark value for it.",
-      "appearance_dark_contrast_warning_shared": "{field} is hard to see on the dark card ({ratio} : 1). It is the same in light and dark, so pick one that works on both, or set dark values for the button and indicator.",
+      "appearance_dark_contrast_warning_shared": "{field} is hard to see on the dark card ({ratio} : 1). It is the same in light and dark, so choose a brand color that is readable on both.",
       "appearance_dark_description": "Shown when the app asks for dark mode. Colors you leave empty are derived from your brand color. Link surveys stay light.",
       "appearance_light": "Light",
       "appearance_shared_color": "Same in light and dark",
