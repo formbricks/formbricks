@@ -298,8 +298,8 @@ the Feedback Records API or the MCP server. If you do not use Unify Feedback, or
 the UI, there is nothing to do for it. The release adds no new environment variables. It does ship
 **seven database migrations**, applied automatically during the upgrade. Six are quick — new columns and
 tables, two of them data migrations that run on their own. The seventh builds an index on the `Response`
-table, and it is the one that needs scheduling: it blocks response writes while it builds. Other
-migrations add indexes too, but only on new or small tables. See
+table, and it is the one that needs planning: it blocks response writes while it builds, unless you build
+the index yourself first. Other migrations add indexes too, but only on new or small tables. See
 [Database migrations](#database-migrations) before scheduling the upgrade.
 
 v5.4 also upgrades the **Better Auth** authentication core to 1.7. That upgrade needs no manual database
@@ -361,7 +361,7 @@ The parent chart no longer repeats the bundled controller's default port list. T
 ### Database migrations
 
 All seven migrations apply automatically during the upgrade. Two want something from you first: one needs
-`WEBAPP_URL` set if you use MCP OAuth, and one deserves a scheduling decision on large instances. So here
+`WEBAPP_URL` set if you use MCP OAuth, and one deserves a step of its own on large instances. So here
 is the full list rather than a summary:
 
 | Migration | What it does | Impact |
@@ -371,25 +371,69 @@ is the full list rather than a summary:
 | `eng_2343_better_auth_17_resource_model` | The Better Auth 1.7 schema: the `oauthResource` tables, resource columns on OAuth tokens and consents, `alg`/`crv` on `jwks`, and `Account.issuer` with its backfill. Details in the Better Auth 1.7 section below. | Additive and fast. The issuer backfill is what keeps password sign-in working on 1.7, so it must not be skipped — it runs on its own, listed here so it is not mistaken for optional |
 | `eng_2343_backfill_oauth_resource_links` | Data migration linking existing MCP OAuth clients, refresh tokens and consents to this instance's `${WEBAPP_URL}/api/mcp` resource, so already-registered MCP clients survive the upgrade. It is a no-op only when the instance has no OAuth client at all, which in practice means a fresh install. | **Set `WEBAPP_URL` before upgrading if you use MCP OAuth.** The resource identifier is derived from it, so on an instance that has OAuth clients an unset or unparseable `WEBAPP_URL` fails this migration and stops the upgrade — set it and re-run |
 | `add_feedback_source_element_scope` | Adds `FeedbackSource.elementScope`, which controls whether a source picks up survey questions added later. Existing sources keep the current behaviour (`specific`). | Instant |
-| `add_response_survey_finished_index` | Adds an index on `Response(surveyId, finished)` so the survey list's response counts are served from the index instead of scanning the table. | **Blocks response writes while it builds — see the warning below** |
+| `add_response_survey_finished_index` | Adds an index on `Response(surveyId, finished)` so the survey list's response counts are served from the index instead of scanning the table. | **Blocks response writes while it builds, unless you build the index first — see below** |
 | `repair_account_issuer` | Data migration rewriting `Account.issuer` rows that were written with a non-canonical value, which locked the affected Google SSO users into a sign-in loop. Idempotent; a no-op when nothing is wrong. | Fast |
 
 <Warning>
-  `add_response_survey_finished_index` builds its index with a plain `CREATE INDEX`, not `CREATE INDEX
-  CONCURRENTLY` — migrations run inside a transaction, and Postgres does not allow concurrent builds
-  there. The build holds a `SHARE` lock on `Response`: reads keep working, but **survey responses cannot
-  be written until the index is built**. `Response` is usually the largest table on an instance. On small
-  instances the build takes seconds; if yours holds millions of responses, run the upgrade in a window
-  where a short pause in response collection is acceptable.
+  `add_response_survey_finished_index` builds its index with a plain `CREATE INDEX`, which holds a `SHARE`
+  lock on `Response` for the whole build: reads keep working, but **survey responses cannot be written until
+  the index is built**. `Response` is usually the largest table on an instance. On small instances the build
+  takes seconds. If yours holds millions of responses, [build the index before you
+  upgrade](#build-the-response-index-before-you-upgrade) so the migration has nothing left to do, or run the
+  upgrade in a window where a pause in response collection is acceptable.
 
-  Neither documented deployment avoids this, so plan the window either way. On Kubernetes the chart runs
-  migrations in their own job while the pods already running keep serving traffic, so the responses
-  arriving during the build are the ones that block. On Docker Compose the app container does **not** wait
-  for `formbricks-migrate` — it has no `depends_on` on that service and skips startup migrations itself —
-  so after the documented `docker compose down && docker compose up -d` the two come up in parallel: you
-  get downtime while the app boots, and then blocked writes for however much of the index build is left
-  once it starts serving.
+  If you leave the build to the migration, neither documented deployment avoids the pause. On Kubernetes the
+  chart runs migrations in their own job while the pods already running keep serving traffic, so the
+  responses arriving during the build are the ones that block. On Docker Compose the app container does
+  **not** wait for `formbricks-migrate` — it has no `depends_on` on that service and skips startup
+  migrations itself — so after the documented `docker compose down && docker compose up -d` the two come up
+  in parallel: you get downtime while the app boots, and then blocked writes for however much of the index
+  build is left once it starts serving.
 </Warning>
+
+#### Build the response index before you upgrade
+
+The migration creates its index only `IF NOT EXISTS`, so an index you build beforehand makes it a no-op. Built
+with `CONCURRENTLY`, the index takes longer but never blocks writes, and the instance keeps running v5.3
+while it builds. Run this before upgrading:
+
+<Tabs>
+  <Tab title="One-Click / Docker Compose">
+    From the directory that contains your `docker-compose.yml` (`formbricks` for One-Click installs):
+
+    ```bash
+    docker compose exec -T postgres psql -U postgres -d formbricks <<'SQL'
+    CREATE INDEX CONCURRENTLY IF NOT EXISTS "Response_surveyId_finished_idx" ON "Response"("surveyId", "finished");
+    SELECT indisvalid FROM pg_index WHERE indexrelid = to_regclass('"Response_surveyId_finished_idx"');
+    SQL
+    ```
+  </Tab>
+  <Tab title="Kubernetes">
+    If you are using the in-cluster PostgreSQL deployed by the Helm chart:
+
+    ```bash
+    kubectl exec -i -n formbricks formbricks-postgresql-0 -- psql -U formbricks -d formbricks <<'SQL'
+    CREATE INDEX CONCURRENTLY IF NOT EXISTS "Response_surveyId_finished_idx" ON "Response"("surveyId", "finished");
+    SELECT indisvalid FROM pg_index WHERE indexrelid = to_regclass('"Response_surveyId_finished_idx"');
+    SQL
+    ```
+
+    With a managed PostgreSQL service, run the same two statements with `psql` as the user that owns the
+    Formbricks tables.
+  </Tab>
+</Tabs>
+
+Leave the build running, which can take a while on a large table. `CONCURRENTLY` cannot run inside a
+transaction, so if you use another SQL client, run the `CREATE INDEX` statement on its own, outside one. Then
+read the `indisvalid` result:
+
+- **`t`**: the index is ready. Upgrade as usual; the migration finds the index and skips the build.
+- **`f`**: the build was interrupted (cancelled, timed out, or the connection dropped) and left an unusable
+  index behind. **Do not upgrade over it**: the migration would see the name, skip the build, and leave
+  `Response` with an index PostgreSQL never uses. Run `DROP INDEX CONCURRENTLY "Response_surveyId_finished_idx";`
+  the same way, then run the commands above again.
+
+An extra index is harmless to v5.3, so building it early needs no rollback plan of its own.
 
 None of the seven constrains a rollback. v5.3 reads none of the new columns and tables, and the two
 `NOT NULL` columns added to existing tables both carry a database default, so a v5.3 instance keeps
