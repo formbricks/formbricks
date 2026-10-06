@@ -1349,6 +1349,23 @@ describe("per-route concurrency limit", () => {
     expect(limiter.inFlight).toBe(0);
   });
 
+  test("frees the slot when the response cannot be handed to its body", async () => {
+    // A locked body cannot be wrapped. Rare, but the slot would otherwise stay taken until a restart.
+    const limiter = new ConcurrencyLimiter(1);
+    const route = limitedRoute(limiter, async () => {
+      const locked = new Response(new ReadableStream<Uint8Array>({ pull() {} }), {
+        headers: { "X-Request-Id": "req_locked" },
+      });
+      locked.body?.getReader();
+      return locked;
+    });
+
+    const response = await route(postJson('{"a":"x"}'), {} as never);
+
+    expect(response.status).toBe(500);
+    expect(limiter.inFlight).toBe(0);
+  });
+
   test("a disconnect after the body settled releases nothing twice", async () => {
     const limiter = new ConcurrencyLimiter(1);
     const client = new AbortController();
