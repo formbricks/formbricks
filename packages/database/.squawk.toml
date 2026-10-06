@@ -1,8 +1,8 @@
 # PostgreSQL 15 is the lowest supported self-hosted major; CI replays the history on PostgreSQL 18.
 pg_version = "15.0"
 
-# Prisma 7.10 adds no transaction around a migration file that it can parse. A file it cannot parse runs as one
-# implicit transaction instead; see "How Prisma applies a migration file" in README.md.
+# Prisma 7.10 adds no transaction around a migration file that it can parse. A multi-statement file it cannot
+# parse runs as one implicit transaction instead; see "How Prisma applies a migration file" in README.md.
 assume_in_transaction = false
 
 excluded_rules = [

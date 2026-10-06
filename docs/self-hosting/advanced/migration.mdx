@@ -395,7 +395,8 @@ is the full list rather than a summary:
 
 The migration creates its index only `IF NOT EXISTS`, so an index you build beforehand makes it a no-op. Built
 with `CONCURRENTLY`, the index takes longer but never blocks writes, and the instance keeps running v5.3
-while it builds. Run this before upgrading:
+while it builds. On a large table that can take a while, so run it from a session that survives a dropped
+connection, such as `tmux` or `screen`:
 
 <Tabs>
   <Tab title="One-Click / Docker Compose">
@@ -403,6 +404,7 @@ while it builds. Run this before upgrading:
 
     ```bash
     docker compose exec -T postgres psql -U postgres -d formbricks <<'SQL'
+    SET statement_timeout = 0;
     CREATE INDEX CONCURRENTLY IF NOT EXISTS "Response_surveyId_finished_idx" ON "Response"("surveyId", "finished");
     SELECT indisvalid FROM pg_index WHERE indexrelid = to_regclass('"Response_surveyId_finished_idx"');
     SQL
@@ -413,25 +415,34 @@ while it builds. Run this before upgrading:
 
     ```bash
     kubectl exec -i -n formbricks formbricks-postgresql-0 -- psql -U formbricks -d formbricks <<'SQL'
+    SET statement_timeout = 0;
     CREATE INDEX CONCURRENTLY IF NOT EXISTS "Response_surveyId_finished_idx" ON "Response"("surveyId", "finished");
     SELECT indisvalid FROM pg_index WHERE indexrelid = to_regclass('"Response_surveyId_finished_idx"');
     SQL
     ```
 
-    With a managed PostgreSQL service, run the same two statements with `psql` as the user that owns the
-    Formbricks tables.
+    <Info>
+      If your PostgreSQL pod has a different name, run `kubectl get pods -n formbricks` to find it.
+    </Info>
   </Tab>
 </Tabs>
 
-Leave the build running, which can take a while on a large table. `CONCURRENTLY` cannot run inside a
-transaction, so if you use another SQL client, run the `CREATE INDEX` statement on its own, outside one. Then
-read the `indisvalid` result:
+With an external or managed PostgreSQL, run the same three statements with `psql` as the user that owns the
+Formbricks tables. `SET statement_timeout = 0` keeps a server-side timeout from cancelling the build. Any other
+SQL client must run the `CREATE INDEX` statement on its own, outside a transaction, because `CONCURRENTLY`
+cannot run inside one.
+
+Then read the `indisvalid` result:
 
 - **`t`**: the index is ready. Upgrade as usual; the migration finds the index and skips the build.
-- **`f`**: the build was interrupted (cancelled, timed out, or the connection dropped) and left an unusable
-  index behind. **Do not upgrade over it**: the migration would see the name, skip the build, and leave
-  `Response` with an index PostgreSQL never uses. Run `DROP INDEX CONCURRENTLY "Response_surveyId_finished_idx";`
-  the same way, then run the commands above again.
+- **`f`**: the index exists but is not usable yet. Do not upgrade over it, because the migration would see the
+  name, skip the build, and leave `Response` with an index PostgreSQL never uses. See below.
+- **No row, or an error before it**: the index was never created. Fix the error and run the commands again.
+
+An `f` means one of two things. If your session dropped, the build can still be running on the server, so
+first check `SELECT phase FROM pg_stat_progress_create_index;`. While that returns a row, wait for it to finish
+and check `indisvalid` again. If it returns nothing, the build was interrupted: run
+`DROP INDEX CONCURRENTLY "Response_surveyId_finished_idx";` the same way, then run the commands above again.
 
 An extra index is harmless to v5.3, so building it early needs no rollback plan of its own.
 
