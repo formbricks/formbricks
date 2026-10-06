@@ -463,12 +463,15 @@ export const sanitizeThemeStyling = <T extends TThemeStylingInput>(styling: T): 
   return result as T;
 };
 
+const MEDIA_BACKGROUND_TYPES = new Set<unknown>(["image", "upload", "animation"]);
+
 /**
- * A solid background (`bgType: "color"`) is written into a style attribute, so it must be a color. Image,
- * upload and animation backgrounds are URLs used as media sources, never as CSS.
+ * Image, upload and animation backgrounds are URLs used as media sources, never as CSS. Any other
+ * background, including one with no `bgType`, is painted as a color (the cardless layout interpolates it
+ * into a gradient), so its value must be a color.
  */
 export const isSafeThemeBackground = (background: { bg?: unknown; bgType?: unknown }): boolean => {
   const { bg, bgType } = background;
-  if (bgType !== "color" || bg === null || bg === undefined || bg === "") return true;
+  if (MEDIA_BACKGROUND_TYPES.has(bgType) || bg === null || bg === undefined || bg === "") return true;
   return isSafeThemeColor(bg);
 };

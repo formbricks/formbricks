@@ -6,8 +6,11 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { problemTooManyRequests } from "./response";
 import type { TV3Authentication } from "./types";
 
-/** The principal CSS processing is charged to: the user (session or OAuth), or the API key. */
-const getPrincipal = (authentication: TV3Authentication): string | null => {
+/**
+ * The principal CSS processing is charged to: the user (session or OAuth), or the API key. Survey writes
+ * pass it to the custom CSS service, which charges the same budget when the write actually processes.
+ */
+export const getV3CustomCssPrincipal = (authentication: TV3Authentication): string | null => {
   if (authentication && "user" in authentication && authentication.user?.id) return authentication.user.id;
   if (authentication && "apiKeyId" in authentication) return authentication.apiKeyId;
   return null;
@@ -26,9 +29,11 @@ export const isCustomCssValidationRequest = (body: { operation: string; data?: u
 
 /**
  * The custom CSS processor runs synchronously on the request thread (up to ~0.8 s on pathological input),
- * so the operations that run it on demand — CSS validation and workspace CSS saves, over REST and MCP —
- * are charged against a tighter per-principal budget on top of the v3 limit. REST and MCP share the
- * budget because they share the identifier. Survey create/patch writes keep their own limits.
+ * so every operation that runs it is charged against a tighter per-principal budget on top of the v3
+ * limit. CSS validation and workspace CSS saves are charged here, once per request. Survey writes — v3
+ * create and patch, the editor's save and autosave, copy — are charged by the custom CSS service
+ * (`resolveCustomCssWrite`), and only when the write adds or edits CSS, since nothing else processes.
+ * REST, MCP and the editor share the budget because they share the identifier.
  *
  * Returns the standard 429 problem when the budget is spent, or `null` to proceed.
  */
@@ -41,7 +46,7 @@ export const applyV3CustomCssRateLimit = async ({
   requestId: string;
   instance: string;
 }): Promise<Response | null> => {
-  const principal = getPrincipal(authentication);
+  const principal = getV3CustomCssPrincipal(authentication);
   if (!principal) return null;
 
   try {

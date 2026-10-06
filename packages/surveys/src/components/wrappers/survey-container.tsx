@@ -411,6 +411,10 @@ export function SurveyContainer({
       id="fbjs"
       className="formbricks-form"
       data-appearance={appearance}
+      // The root takes no clicks, so survey CSS that stretches it over the page cannot swallow the host
+      // page's clicks; the processor removes `pointer-events`, so it cannot turn this back on. Only the
+      // dialog, and the backdrop when the overlay setting asks for one, set their own.
+      style={{ pointerEvents: "none" }}
       dir={dir}
       lang={lang ?? undefined}>
       <div

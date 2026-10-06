@@ -440,9 +440,18 @@ const getStoredSurveyCustomCss = async (surveyId: string, workspaceId: string) =
   return parseStoredCustomCss(row.customCss);
 };
 
+export type TUpdateSurveyOptions = {
+  /**
+   * The acting user's id, charged when the save adds or edits custom CSS — the budget CSS validation
+   * spends, so the editor's save and autosave cannot run the processor outside it.
+   */
+  customCssPrincipal?: string;
+};
+
 export const updateSurveyInternal = async (
   updatedSurvey: TSurvey,
-  skipValidation = false
+  skipValidation = false,
+  options: TUpdateSurveyOptions = {}
 ): Promise<TSurvey> => {
   if (!skipValidation) {
     validateInputs([updatedSurvey, ZSurvey]);
@@ -584,7 +593,8 @@ export const updateSurveyInternal = async (
     // outside the transaction, so a refusal raised later would half-apply the save. Full-object payloads
     // (the editor's save and autosave) are revalidated from source against the stored row: unchanged
     // source costs no plan check and no processing, removal needs no plan, and an addition or edit needs
-    // the plan and a clean processor run. Failures keep the stored revision.
+    // the plan, a unit of the custom CSS budget and a clean processor run. Failures keep the stored
+    // revision.
     const customCssSource = readCustomCssPayloadSource(customCss);
     const customCssWrite =
       customCssSource === undefined
@@ -602,6 +612,7 @@ export const updateSurveyInternal = async (
             // missing value read as "no CSS" would turn a clear into a no-op.
             existing: await getStoredSurveyCustomCss(surveyId, currentSurvey.workspaceId),
             input: customCssSource,
+            principal: options.customCssPrincipal,
           });
 
     if (languages) {

@@ -74,7 +74,7 @@ patch:
     `custom_css_plan_required`); clearing never does. Successful changes refresh the cached
     configuration the SDKs receive (they pick it up on their next configuration fetch). Saves count
     against a custom CSS budget of 60 per minute per user or API key, shared with custom CSS
-    validation; beyond it they return **429**.
+    validation and with survey writes that add or edit custom CSS; beyond it they return **429**.
   tags:
     - V3 Workspaces
   parameters:

@@ -3,11 +3,13 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import type { TActionClass } from "@formbricks/types/action-classes";
 import type { TCustomCssInput, TCustomCssStored } from "@formbricks/types/custom-css";
-import { InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { InvalidInputError, OperationNotAllowedError, TooManyRequestsError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { cache } from "@/lib/cache";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
 import { processCustomCss } from "@/modules/custom-css/processor";
 import {
@@ -34,6 +36,7 @@ vi.mock("@/lib/feedback-source/mapping-reconciliation", () => ({
   scheduleFeedbackSourceReconciliation: vi.fn(),
 }));
 vi.mock("@/lib/cache", () => ({ cache: { del: vi.fn() } }));
+vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
 vi.mock("@/modules/custom-css/processor", () => ({
   CUSTOM_CSS_PROCESSOR_VERSION: 4,
   processCustomCss: vi.fn(),
@@ -220,6 +223,40 @@ describe("updateSurveyInternal custom CSS", () => {
     vi.mocked(prisma.survey.findUnique).mockClear();
     await getSurvey("clsurveycss00000000000001");
     expect(vi.mocked(prisma.survey.findUnique).mock.calls[0][0].select).not.toHaveProperty("customCss");
+  });
+
+  test("an edit is charged to the saving user's custom CSS budget; a spent budget writes nothing", async () => {
+    const save = () =>
+      updateSurveyInternal(
+        {
+          ...updateSurveyInput,
+          customCss: { light: { source: ".a{color:red}", compiled: "" }, dark: null, processorVersion: 4 },
+        } as TSurvey,
+        false,
+        { customCssPrincipal: "user_1" }
+      );
+
+    await save();
+    expect(applyRateLimit).toHaveBeenCalledTimes(1);
+    expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3CustomCss, "user_1");
+
+    vi.mocked(prisma.survey.update).mockClear();
+    vi.mocked(processCustomCss).mockClear();
+    vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("Slow down", 30));
+    await expect(save()).rejects.toBeInstanceOf(TooManyRequestsError);
+    expect(processCustomCss).not.toHaveBeenCalled();
+    expect(prisma.survey.update).not.toHaveBeenCalled();
+  });
+
+  test("an autosave that sends the stored CSS back, or clears it, spends nothing", async () => {
+    vi.mocked(prisma.survey.findUnique).mockResolvedValue({ ...storedRow, status: "draft" } as never);
+    const draft = { ...updateSurveyInput, status: "draft" };
+    const options = { customCssPrincipal: "user_1" };
+
+    await updateSurveyInternal({ ...draft, customCss: storedCss } as TSurvey, true, options);
+    await updateSurveyInternal({ ...draft, customCss: null } as TSurvey, true, options);
+
+    expect(applyRateLimit).not.toHaveBeenCalled();
   });
 
   test("the unvalidated draft save refuses a malformed value instead of storing it", async () => {

@@ -4,6 +4,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma, Workspace } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
+import { sanitizeThemeStyling } from "@formbricks/types/styling-values";
 
 // ENG-2949: custom CSS is left out — this workspace reaches client props on the survey list, templates
 // and editor pages, and the stored CSS with its previous revision can be ~400 KB. The CSS editor reads
@@ -42,6 +43,9 @@ export const getWorkspaceWithTeamIds = reactCache(
 
       return {
         ...workspacePrisma,
+        // The editor copies the workspace theme into the survey it saves, so a value saved before the
+        // strict theme-value schemas (ENG-2950) would otherwise fail every save and autosave.
+        styling: sanitizeThemeStyling(workspacePrisma.styling),
         teamIds,
       };
     } catch (error) {

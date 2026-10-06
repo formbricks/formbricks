@@ -15,6 +15,8 @@ import {
 } from "@formbricks/types/custom-css";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { cache } from "@/lib/cache";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { normalizeCustomCssInput, processCustomCss } from "@/modules/custom-css/processor";
 import { CUSTOM_CSS_PLAN_REQUIRED_MESSAGE, getCustomCssPlanAllowed } from "./access";
 import { toCustomCssSource } from "./source";
@@ -151,14 +153,20 @@ export const previewCustomCss = (
  *
  * - Unchanged normalized source: the existing value back, with no plan check and no reprocessing.
  * - Removal of one field or all CSS: allowed on every plan, without reprocessing.
- * - Addition or edit: the Scale plan on Cloud, then the shared processor. Nothing a caller supplied
- *   beyond the two source strings is ever trusted.
+ * - Addition or edit: the Scale plan on Cloud, then one unit of `principal`'s custom CSS budget, then
+ *   the shared processor. Nothing a caller supplied beyond the two source strings is ever trusted.
  */
 export const resolveCustomCssWrite = async (args: {
   scope: TCustomCssScope;
   organizationId: TOrganizationIdSource;
   existing: TCustomCssStored | null | undefined;
   input: TCustomCssInput | null;
+  /**
+   * The user or API key id the processing is charged to, on the budget CSS validation spends. A spent
+   * budget throws `TooManyRequestsError` before the processor runs. Left out only by a caller that
+   * charges the budget itself, once per request: the workspace save.
+   */
+  principal?: string | null;
 }): Promise<TCustomCssWriteOutcome> => {
   const { scope, existing, input } = args;
   const change = classifyCustomCssChange(existing, input);
@@ -179,6 +187,10 @@ export const resolveCustomCssWrite = async (args: {
   // The source the creator typed is what gets stored; normalization only decides which fields are empty.
   // An edit always leaves at least one field non-empty (clearing everything is a removal).
   const source = toProcessableSource(input) ?? { light: null, dark: null };
+
+  if (args.principal) {
+    await applyRateLimit(rateLimitConfigs.api.v3CustomCss, args.principal);
+  }
 
   const result = runProcessor(scope, source);
   if (!result.ok) {
@@ -419,6 +431,7 @@ export const updateWorkspaceCustomCss = async (args: {
   input: TCustomCssInput | null;
 }): Promise<TWorkspaceCustomCssWriteOutcome> => {
   const { workspaceId, organizationId, input } = args;
+  // No principal: the route charges the custom CSS budget once per request, however often this re-resolves.
   const resolve = (existing: TCustomCssStored | null) =>
     resolveCustomCssWrite({ scope: "workspace", organizationId, existing, input });
   const finish = async (
@@ -472,11 +485,13 @@ export type TCopiedSurveyCustomCss = {
 /**
  * Survey CSS for a copy or duplicate (ENG-2949): the source survey's CSS *source*, processed afresh for
  * the destination under the destination organization's plan. A destination that may not add CSS gets
- * the copy without it, plus a notice; the source survey is never touched.
+ * the copy without it, plus a notice; the source survey is never touched. Processing is charged to
+ * `principal` like any other edit, and a spent budget refuses the copy rather than dropping its CSS.
  */
 export const resolveCopiedSurveyCustomCss = async (args: {
   source: unknown;
   destinationOrganizationId: string;
+  principal?: string | null;
 }): Promise<TCopiedSurveyCustomCss> => {
   const input = toCustomCssSource(parseStored(args.source, "survey.customCss (copy source)"));
   if (!input) {
@@ -488,6 +503,7 @@ export const resolveCopiedSurveyCustomCss = async (args: {
     organizationId: args.destinationOrganizationId,
     existing: null,
     input,
+    principal: args.principal,
   });
 
   if (outcome.ok) {

@@ -14,6 +14,7 @@ import {
 } from "@/app/api/v3/lib/custom-css";
 import {
   applyV3CustomCssRateLimit,
+  getV3CustomCssPrincipal,
   isCustomCssValidationRequest,
 } from "@/app/api/v3/lib/custom-css-rate-limit";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
@@ -1037,7 +1038,8 @@ async function runV3SurveyDocumentMutation({
       effectivePrecondition,
       oldResource,
       buildVisibleSurveyWhere(visibility.actorContext),
-      report
+      report,
+      getV3CustomCssPrincipal(authentication)
     );
     // Visibility is unchanged by a document write (it is never writable through one), so the
     // request's context still describes the updated survey.

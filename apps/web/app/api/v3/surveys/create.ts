@@ -4,6 +4,7 @@ import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import type { TSurvey, TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { type TV3SurveyWriteReport, toV3CustomCssError } from "@/app/api/v3/lib/custom-css";
+import { getV3CustomCssPrincipal } from "@/app/api/v3/lib/custom-css-rate-limit";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getActionClasses } from "@/lib/actionClass/service";
@@ -182,11 +183,13 @@ async function finalizeV3AppSurveyCreate(survey: TSurvey, input: TV3CreateSurvey
 
 /**
  * ENG-3641: survey CSS on create goes through the shared custom CSS service — Scale on Cloud, then the
- * processor — before anything is written. No CSS (omitted, null or empty source) needs neither.
+ * caller's custom CSS budget, then the processor — before anything is written. No CSS (omitted, null or
+ * empty source) needs none of them.
  */
 async function resolveV3SurveyCreateCustomCss(
   input: TV3CreateSurveyBody,
-  organizationId: string | undefined
+  organizationId: string | undefined,
+  authentication: TV3Authentication
 ): Promise<{ stored: TCustomCssStored | null; warnings?: TCustomCssWarning[] }> {
   if (!input.customCss) {
     return { stored: null };
@@ -207,6 +210,7 @@ async function resolveV3SurveyCreateCustomCss(
       }),
     existing: null,
     input: input.customCss,
+    principal: getV3CustomCssPrincipal(authentication),
   });
 
   if (!outcome.ok) {
@@ -317,7 +321,11 @@ export async function createV3Survey(
 
   await assertV3SurveyCreatePermissions(input, organizationId, options);
   await assertV3SurveyTargetingPermission(preparation.document, organizationId);
-  const customCss = await resolveV3SurveyCreateCustomCss(preparation.document, organizationId);
+  const customCss = await resolveV3SurveyCreateCustomCss(
+    preparation.document,
+    organizationId,
+    authentication
+  );
 
   const survey = await executeV3SurveyCreate({
     input: preparation.document,

@@ -579,6 +579,20 @@ describe("createV3SurveyResponse", () => {
     ).toBe(500);
   });
 
+  test("answers a spent custom CSS budget on create with 429 and its Retry-After", async () => {
+    vi.mocked(createV3Survey).mockRejectedValueOnce(new TooManyRequestsError("Slow down", 30));
+
+    const response = await createV3SurveyResponse({
+      body: parsedCreateBody,
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("30");
+  });
+
   // ENG-2587. The document passes `ZV3CreateSurveyBody` but fails the survey service's stricter
   // write schema; `executeV3SurveyCreate` catches that with a pre-write parse and throws this typed
   // error. Before the fix there was no branch for it and it landed on the generic 500.
@@ -868,7 +882,9 @@ describe("patchV3SurveyResponse", () => {
       // ENG-3282: the caller's visible-survey clause, for targeting references.
       expect.any(Object),
       // ENG-3641: the write report the custom CSS warnings come back through.
-      {}
+      {},
+      // The custom CSS budget's principal: this fixture's authentication names no user or key.
+      null
     );
     expect(auditLog).toMatchObject({
       organizationId: "org_1",
@@ -928,8 +944,28 @@ describe("patchV3SurveyResponse", () => {
       // ENG-3282: the caller's visible-survey clause, for targeting references.
       expect.any(Object),
       // ENG-3641: the write report the custom CSS warnings come back through.
-      {}
+      {},
+      // The custom CSS budget's principal: this fixture's authentication names no user or key.
+      null
     );
+  });
+
+  test("charges custom CSS processing to the caller and answers a spent budget with 429", async () => {
+    // The patch decides whether it processes CSS; the operation only names who pays for it — the same
+    // user or key CSS validation charges, so REST, MCP and the editor share one budget.
+    vi.mocked(patchV3Survey).mockRejectedValueOnce(new TooManyRequestsError("Slow down", 30));
+
+    const response = await patchV3SurveyResponse({
+      surveyId: "survey_1",
+      body: { customCss: { light: "a{}", dark: null } },
+      authentication: sessionAuthentication,
+      requestId,
+      instance,
+    });
+
+    expect(vi.mocked(patchV3Survey).mock.lastCall?.[8]).toBe("user_1");
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("30");
   });
 
   test("rejects patches to an archived survey with 422 and does not patch", async () => {
@@ -1339,7 +1375,9 @@ describe("editV3SurveyBlocksResponse", () => {
       // ENG-3282: the caller's visible-survey clause, for targeting references.
       expect.any(Object),
       // ENG-3641: the write report the custom CSS warnings come back through.
-      {}
+      {},
+      // The custom CSS budget's principal: this fixture's authentication names no user or key.
+      null
     );
     expect(auditLog).toMatchObject({
       organizationId: "org_1",
@@ -1395,7 +1433,9 @@ describe("editV3SurveyBlocksResponse", () => {
       // ENG-3282: the caller's visible-survey clause, for targeting references.
       expect.any(Object),
       // ENG-3641: the write report the custom CSS warnings come back through.
-      {}
+      {},
+      // The custom CSS budget's principal: this fixture's authentication names no user or key.
+      null
     );
   });
 
@@ -1622,7 +1662,9 @@ describe("setV3SurveyBlockOrderResponse", () => {
       // ENG-3282: the caller's visible-survey clause, for targeting references.
       expect.any(Object),
       // ENG-3641: the write report the custom CSS warnings come back through.
-      {}
+      {},
+      // The custom CSS budget's principal: this fixture's authentication names no user or key.
+      null
     );
   });
 

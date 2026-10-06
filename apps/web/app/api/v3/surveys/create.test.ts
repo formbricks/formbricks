@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
   type TV3SurveyWriteReport,
@@ -11,6 +12,8 @@ import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurvey, getSurveyWithCustomCss } from "@/lib/survey/service";
 import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
 import { processCustomCss } from "@/modules/custom-css/processor";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
@@ -36,6 +39,7 @@ vi.mock("@/modules/custom-css/lib/access", () => ({
   getCustomCssPlanAllowed: vi.fn(),
 }));
 vi.mock("@/lib/cache", () => ({ cache: { del: vi.fn() } }));
+vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -926,6 +930,33 @@ describe("createV3Survey custom CSS (ENG-3641)", () => {
     expect(processCustomCss).not.toHaveBeenCalled();
     expect(vi.mocked(createSurvey).mock.calls[0][2]).toMatchObject({ customCss: null });
     expect(report.customCssWarnings).toBeUndefined();
+  });
+
+  test("charges processing to the caller's custom CSS budget; a spent budget refuses the create", async () => {
+    const apiKey = { apiKeyId: "key_1", organizationId: "org_1", workspacePermissions: [] } as never;
+    const session = { user: { id: "user_1" }, expires: "2099-01-01" } as never;
+    const body = ZV3CreateSurveyBody.parse({ ...rawCreateBody, customCss: { light: "a{}", dark: null } });
+
+    await createV3Survey(body, apiKey, "req_css", "org_1");
+    expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3CustomCss, "key_1");
+
+    vi.mocked(createSurvey).mockClear();
+    vi.mocked(processCustomCss).mockClear();
+    vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("Slow down", 30));
+    await expect(createV3Survey(body, session, "req_css", "org_1")).rejects.toBeInstanceOf(
+      TooManyRequestsError
+    );
+    expect(applyRateLimit).toHaveBeenLastCalledWith(rateLimitConfigs.api.v3CustomCss, "user_1");
+    expect(processCustomCss).not.toHaveBeenCalled();
+    expect(createSurvey).not.toHaveBeenCalled();
+  });
+
+  test("a create without CSS spends nothing from the custom CSS budget", async () => {
+    const session = { user: { id: "user_1" }, expires: "2099-01-01" } as never;
+
+    await createV3Survey(createBody, session, "req_css", "org_1");
+
+    expect(applyRateLimit).not.toHaveBeenCalled();
   });
 
   test("the body schema rejects caller-supplied compiled output and processor versions", () => {

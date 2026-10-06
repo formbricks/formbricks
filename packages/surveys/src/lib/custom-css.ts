@@ -95,7 +95,9 @@ export const getCustomCssGeneration = (): number => generation;
  */
 export const CustomCssOwnerContext = createContext<number | null>(null);
 
-const isOptionalString = (value: unknown): boolean => value === undefined || typeof value === "string";
+// `null` is the processor's own "no CSS for this appearance"; the server strips it, but it means the same.
+const isOptionalString = (value: unknown): boolean =>
+  value === undefined || value === null || typeof value === "string";
 
 const isCompiledScope = (value: unknown): value is TCustomCssCompiled | null | undefined => {
   if (value === undefined || value === null) return true;

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import type { TCustomCssInput } from "@formbricks/types/custom-css";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError, TooManyRequestsError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
   type TV3SurveyWriteReport,
@@ -13,6 +13,8 @@ import { getActionClasses } from "@/lib/actionClass/service";
 import { cache } from "@/lib/cache";
 import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
 import { processCustomCss } from "@/modules/custom-css/processor";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
@@ -48,6 +50,7 @@ vi.mock("@/modules/custom-css/lib/access", () => ({
   getCustomCssPlanAllowed: vi.fn(),
 }));
 vi.mock("@/lib/cache", () => ({ cache: { del: vi.fn() } }));
+vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
 
 vi.mock("@formbricks/database", () => {
   const prisma = {
@@ -1282,6 +1285,35 @@ describe("patchV3Survey", () => {
         patchV3Survey(surveyWithCss, { customCss: { light: "a{", dark: null } }, "req", "org_1")
       ).rejects.toBeInstanceOf(V3CustomCssInvalidError);
       expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("an edit spends one unit of the caller's custom CSS budget; a spent budget writes nothing", async () => {
+      const edit = { customCss: { light: "a{color:red}", dark: "b{}" } };
+      const patch = () =>
+        patchV3Survey(surveyWithCss, edit, "req", "org_1", undefined, undefined, undefined, {}, "user_1");
+
+      await patch();
+      expect(applyRateLimit).toHaveBeenCalledTimes(1);
+      expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3CustomCss, "user_1");
+
+      vi.mocked(prisma.survey.update).mockClear();
+      vi.mocked(processCustomCss).mockClear();
+      vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("Slow down", 30));
+      await expect(patch()).rejects.toBeInstanceOf(TooManyRequestsError);
+      expect(processCustomCss).not.toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("unchanged CSS and removals spend nothing from the custom CSS budget", async () => {
+      const patch = (input: unknown) =>
+        patchV3Survey(surveyWithCss, input, "req", "org_1", undefined, undefined, undefined, {}, "user_1");
+
+      await patch({ name: "Renamed" });
+      await patch({ customCss: { light: "a{}", dark: "b{}" } });
+      await patch({ customCss: { light: null, dark: "b{}" } });
+      await patch({ customCss: null });
+
+      expect(applyRateLimit).not.toHaveBeenCalled();
     });
 
     test("caller-supplied compiled output is rejected by the strict patch schema", async () => {

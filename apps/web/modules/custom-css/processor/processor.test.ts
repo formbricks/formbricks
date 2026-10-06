@@ -174,6 +174,11 @@ describe("API and URL policy", () => {
 });
 
 describe("selector scoping", () => {
+  test("a leading byte order mark (a file saved with one) stays out of the first selector", () => {
+    expect(lightRules("\uFEFF.a { color: red }")).toBe("#fbjs .a{color:red!important}");
+    expect(lightRules("\uFEFF:root { --a: 1 }")).toBe("#fbjs{--a:1!important}");
+  });
+
   test.each([
     [":root { --a: 1 }", "#fbjs{--a:1!important}"],
     ["html { color: red }", "#fbjs{color:red!important}"],
@@ -513,6 +518,17 @@ describe("declaration values", () => {
     [String.raw`anch\6f r-name: --menu`],
   ])("removes properties that register or use page-wide names: %s", (declaration) => {
     const result = compile(`.a { ${declaration} }`);
+    expect(codes(result.warnings)).toEqual(["unsafe_property_removed"]);
+    expect(result.compiled.light).toBe("@layer fb-survey{}");
+  });
+
+  test.each([
+    ["pointer-events: auto"],
+    ["pointer-events: auto !important"],
+    ["POINTER-EVENTS: all"],
+    [String.raw`pointer-ev\65 nts: auto`],
+  ])("removes pointer-events, which would let a corner survey take the page's clicks: %s", (declaration) => {
+    const result = compile(`#fbjs * { ${declaration} }`);
     expect(codes(result.warnings)).toEqual(["unsafe_property_removed"]);
     expect(result.compiled.light).toBe("@layer fb-survey{}");
   });

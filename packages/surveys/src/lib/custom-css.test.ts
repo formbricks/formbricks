@@ -50,6 +50,8 @@ describe("buildCustomCssText", () => {
     expect(customCss.buildCustomCssText({ workspace: { dark: WORKSPACE_DARK }, survey: null })).toBe(
       WORKSPACE_DARK
     );
+    // The processor's own shape for "no CSS in this appearance".
+    expect(customCss.buildCustomCssText({ survey: { light: SURVEY_LIGHT, dark: null } })).toBe(SURVEY_LIGHT);
   });
 
   test("returns null when there is nothing to apply", () => {

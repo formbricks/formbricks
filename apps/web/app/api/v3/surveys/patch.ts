@@ -455,12 +455,14 @@ export async function executeV3SurveyPatch(params: {
 /**
  * ENG-3641: survey CSS through the shared custom CSS service. The merged document carries the stored
  * source when the patch omits `customCss`, so an unrelated patch is `unchanged` — no plan check, no
- * processing, no write — and only a real addition or edit needs Scale. Removal needs neither.
+ * processing, no write — and only a real addition or edit needs Scale and spends the caller's custom
+ * CSS budget. Removal needs neither.
  */
 async function resolveV3SurveyPatchCustomCss(
   currentSurvey: TSurvey,
   document: TV3SurveyDocument,
-  organizationId: string | undefined
+  organizationId: string | undefined,
+  principal: string | null | undefined
 ) {
   const outcome = await resolveCustomCssWrite({
     scope: "survey",
@@ -477,6 +479,7 @@ async function resolveV3SurveyPatchCustomCss(
       }),
     existing: currentSurvey.customCss,
     input: document.customCss ?? null,
+    principal,
   });
 
   if (!outcome.ok) {
@@ -495,7 +498,9 @@ export async function patchV3Survey(
   reportedVisibility?: TV3SurveyReportedVisibility,
   visibleSurveyWhere: Prisma.SurveyWhereInput = NO_VISIBLE_SURVEYS,
   /** Filled with the custom CSS warnings when the patch changed the survey's custom CSS. */
-  report?: TV3SurveyWriteReport
+  report?: TV3SurveyWriteReport,
+  /** Who processing an added or edited `customCss` is charged to (`getV3CustomCssPrincipal`). */
+  customCssPrincipal?: string | null
 ): Promise<TSurvey> {
   const preparation = prepareV3SurveyPatchInput(currentSurvey, input, { reportedVisibility });
   if (!preparation.ok) {
@@ -526,7 +531,12 @@ export async function patchV3Survey(
   );
 
   await assertV3SurveyTargetingWritePermission(currentSurvey, preparation.document, organizationId);
-  const customCss = await resolveV3SurveyPatchCustomCss(currentSurvey, preparation.document, organizationId);
+  const customCss = await resolveV3SurveyPatchCustomCss(
+    currentSurvey,
+    preparation.document,
+    organizationId,
+    customCssPrincipal
+  );
 
   const survey = await executeV3SurveyPatch({
     currentSurvey,

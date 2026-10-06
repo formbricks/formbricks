@@ -302,6 +302,7 @@ export const copySurveyToOtherWorkspace = async (
     const copiedCustomCss = await resolveCopiedSurveyCustomCss({
       source: sourceCustomCss,
       destinationOrganizationId: targetOrganizationId,
+      principal: userId,
     });
     const hasLanguages = existingSurvey.languages && existingSurvey.languages.length > 0;
     const t = await getTranslate();

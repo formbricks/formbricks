@@ -137,6 +137,9 @@ export const UNSAFE_PROPERTIES: Record<string, string> = {
   "view-timeline-name": "view-timeline-name registers a timeline name the host page could use.",
   "view-timeline": "view-timeline registers a timeline name the host page could use.",
   "timeline-scope": "timeline-scope changes which timeline names are visible on the page.",
+  // The renderer decides which parts of a survey take clicks: a corner survey's full-viewport layer lets
+  // them through to the host page, and survey CSS must not turn that layer into a click shield.
+  "pointer-events": "pointer-events decides which parts of the survey take clicks from the host page.",
 };
 
 /** Value functions removed wherever they appear, whatever the URL policy. */

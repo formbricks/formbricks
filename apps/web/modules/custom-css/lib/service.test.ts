@@ -1,8 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TCustomCssInput, TCustomCssStored } from "@formbricks/types/custom-css";
-import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  InvalidInputError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+  TooManyRequestsError,
+} from "@formbricks/types/errors";
 import { cache } from "@/lib/cache";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { processCustomCss } from "@/modules/custom-css/processor";
 import { getCustomCssPlanAllowed } from "./access";
 import {
@@ -30,6 +37,7 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 vi.mock("@/lib/cache", () => ({ cache: { del: vi.fn() } }));
+vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
 
 // The processor is W1's module; its contract is mocked here so this suite tests the save rules only.
 vi.mock("@/modules/custom-css/processor", () => ({
@@ -244,6 +252,48 @@ describe("resolveCustomCssWrite", () => {
       code: "invalid_css",
       errors: [{ code: "processing_failed" }],
     });
+  });
+});
+
+describe("resolveCustomCssWrite custom CSS budget", () => {
+  const edit = { scope: "survey" as const, organizationId: "org_1", existing: null, principal: "user_1" };
+
+  test("an edit spends one unit of the principal's budget, before the processor runs", async () => {
+    await resolveCustomCssWrite({ ...edit, input: { light: "a{}", dark: null } });
+
+    expect(applyRateLimit).toHaveBeenCalledTimes(1);
+    expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3CustomCss, "user_1");
+    expect(vi.mocked(applyRateLimit).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(processCustomCss).mock.invocationCallOrder[0]
+    );
+  });
+
+  test("a spent budget refuses the write without processing", async () => {
+    vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("Slow down", 30));
+
+    await expect(
+      resolveCustomCssWriteOrThrow({ ...edit, input: { light: "a{}", dark: null } })
+    ).rejects.toBeInstanceOf(TooManyRequestsError);
+    expect(processCustomCss).not.toHaveBeenCalled();
+  });
+
+  test("unchanged source, removals and plan refusals process nothing, so they spend nothing", async () => {
+    const existing = stored("a{}", "b{}");
+
+    await resolveCustomCssWrite({ ...edit, existing, input: { light: "a{}", dark: "b{}" } });
+    await resolveCustomCssWrite({ ...edit, existing, input: { light: null, dark: "b{}" } });
+    await resolveCustomCssWrite({ ...edit, existing, input: null });
+    vi.mocked(getCustomCssPlanAllowed).mockResolvedValueOnce(false);
+    await resolveCustomCssWrite({ ...edit, input: { light: "a{}", dark: null } });
+
+    expect(applyRateLimit).not.toHaveBeenCalled();
+  });
+
+  test("a caller without a principal is not charged here: the workspace save charges per request", async () => {
+    await resolveCustomCssWrite({ ...edit, principal: undefined, input: { light: "a{}", dark: null } });
+
+    expect(processCustomCss).toHaveBeenCalled();
+    expect(applyRateLimit).not.toHaveBeenCalled();
   });
 });
 
@@ -591,6 +641,21 @@ describe("resolveCopiedSurveyCustomCss", () => {
     expect(result).toEqual({
       customCss: { light: { source: "a{}", compiled: "COMPILED(a{})" }, dark: null, processorVersion: 7 },
     });
+  });
+
+  test("charges the copier's budget, and a spent budget refuses the copy rather than dropping its CSS", async () => {
+    const copy = () =>
+      resolveCopiedSurveyCustomCss({
+        source: stored("a{}", null),
+        destinationOrganizationId: "org_dest",
+        principal: "user_1",
+      });
+
+    await copy();
+    expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3CustomCss, "user_1");
+
+    vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("Slow down"));
+    await expect(copy()).rejects.toBeInstanceOf(TooManyRequestsError);
   });
 
   test("a destination without the plan gets no CSS and a notice", async () => {

@@ -158,6 +158,12 @@ describe("isSafeThemeBackground", () => {
     expect(isSafeThemeBackground({ bg: "/animated-bgs/4K/1_4k.mp4", bgType: "animation" })).toBe(true);
     expect(isSafeThemeBackground({ bg: null, bgType: "color" })).toBe(true);
   });
+
+  test("a background without a media type is painted as a color, so it needs one too", () => {
+    expect(isSafeThemeBackground({ bg: "url(https://evil.example/x)" })).toBe(false);
+    expect(isSafeThemeBackground({ bg: "red), url(https://evil.example/x", bgType: null })).toBe(false);
+    expect(isSafeThemeBackground({ bg: "#f1f5f9" })).toBe(true);
+  });
 });
 
 describe("styling schemas validate on write", () => {

@@ -632,6 +632,8 @@ const compileFields = (
  * throws; any internal failure comes back as `processing_failed`, and a failed result never carries
  * compiled output.
  */
+const BYTE_ORDER_MARK = "\uFEFF";
+
 export const processCustomCss = (
   args: { scope: TCustomCssScope; input: TCustomCssInput },
   options: TCustomCssProcessOptions = {}
@@ -649,7 +651,10 @@ export const processCustomCss = (
     const budget = CUSTOM_CSS_MAX_SOURCE_BYTES[scope];
     const fields: TField[] = APPEARANCES.map((appearance) => {
       const value = args.input[appearance];
-      return { appearance, source: typeof value === "string" && value.trim() !== "" ? value : null };
+      if (typeof value !== "string" || value.trim() === "") return { appearance, source: null };
+      // A file saved with a byte order mark would otherwise carry it into the first selector. A space
+      // keeps every line and column where the editor shows it.
+      return { appearance, source: value.startsWith(BYTE_ORDER_MARK) ? ` ${value.slice(1)}` : value };
     });
 
     // The size budget comes first, before anything reads the source.
