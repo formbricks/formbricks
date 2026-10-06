@@ -145,8 +145,10 @@ for the one case where PostgreSQL adds one anyway.
 
 `pnpm create-migration` copies Prisma's generated SQL unchanged. Before committing every generated migration:
 
-1. Add `SET lock_timeout = '1s';` at the top, except in a `DROP INDEX CONCURRENTLY` file, where the drop must be
-   the file's only statement.
+1. Add `SET lock_timeout = '1s';` at the top, and scope it to the file: `SET LOCAL` inside `BEGIN` and `COMMIT`,
+   or `RESET lock_timeout;` at the end. `prisma migrate deploy` applies consecutive files on one connection, so a
+   plain `SET` carries into the next file. Concurrent index builds are the exception; see
+   [How Prisma applies a migration file](#how-prisma-applies-a-migration-file).
 2. Add explicit transaction boundaries when the statements must be atomic.
 3. Change eligible index builds to `CREATE INDEX CONCURRENTLY`, which cannot run inside a transaction. Such a file
    cannot also use step 2, or hold anything Prisma's parser rejects.
@@ -166,6 +168,7 @@ SET lock_timeout = '1s';
 -- A preceding data migration guarantees that Example has no rows.
 -- squawk-ignore adding-required-field
 ALTER TABLE "Example" ADD COLUMN IF NOT EXISTS "slug" TEXT NOT NULL;
+RESET lock_timeout;
 ```
 
 Squawk enforces a short lock timeout, but intentionally does not require a statement timeout. If an operation
@@ -203,11 +206,23 @@ What follows for a migration author:
 
 - Give concurrent index builds a file with nothing the parser rejects. A `DO` guard goes in the next migration,
   as `20260909120001_verify_response_keyset_indexes_valid` does for the file before it.
+- Start a concurrent index build with `SET lock_timeout = 0;` and end the file with `RESET lock_timeout;`.
+  `lock_timeout` does not only bound acquiring the table lock: the build also waits, under the same timeout, for
+  every older transaction in the database to finish, on any table. A short value fails the build whenever a
+  report, a backup or an idle-in-transaction session outlasts it, and leaves an INVALID index that
+  `IF NOT EXISTS` skips on the retry. The build's own lock never blocks reads or writes, so a short timeout
+  protects nothing here.
 - `DROP INDEX CONCURRENTLY` must be the only statement in its file. Even a `SET lock_timeout` before it makes
   the file a multi-statement string, and the drop fails. Squawk then reports `require-lock-timeout`; put
-  `-- squawk-ignore require-lock-timeout` above the drop, with a comment saying why.
+  `-- squawk-ignore require-lock-timeout` above the drop, with a comment saying why. The drop runs with whatever
+  timeout the connection has, which is why every other file must scope its own.
 - Use explicit `BEGIN` and `COMMIT` when statements must succeed or fail together. Never rely on the implicit
   transaction: whether a file gets one depends on the parser's coverage, which can change in any Prisma upgrade.
+  Know how such a file fails ([prisma/prisma#15295](https://github.com/prisma/prisma/issues/15295)): Prisma
+  reports `current transaction is aborted` instead of the real error, records no log, and every later deploy
+  stops with `P3009`. The real error is only in the PostgreSQL server log. The transaction has rolled the file
+  back, so once the cause is fixed, `prisma migrate resolve --rolled-back <migration>` and deploying again
+  applies it.
 - Squawk models only the first case, so it will not flag a `CONCURRENTLY` statement that shares a file with a
   `DO` block. The CI jobs that apply the migrations (E2E, integration and contract tests) fail on it instead.
 
@@ -219,8 +234,9 @@ a `DO` block, so it did run in an implicit transaction, though not for the reaso
 `20260909120000_response_keyset_index_tiebreakers` and the guard after it,
 `20260909120001_verify_response_keyset_indexes_valid`, describe the trigger as Prisma recognising concurrent
 statements. The effects they list are right, but the trigger is whether the file parses, and the guard, being a
-single statement, gets no transaction block. These files are left as
-they are, because editing an applied migration, even a comment, changes its checksum. `prisma migrate deploy`
+single statement, gets no transaction block. `20260909120000` also sets `lock_timeout = '5s'` on the belief that
+it bounds only acquiring the lock; it bounds the build's waits for older transactions too. These files are left
+as they are, because editing an applied migration, even a comment, changes its checksum. `prisma migrate deploy`
 ignores that, but `prisma migrate dev`, which `pnpm create-migration` runs, then asks to reset every development
 database that already applied the old version.
 

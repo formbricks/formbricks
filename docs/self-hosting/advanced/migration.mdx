@@ -394,9 +394,9 @@ is the full list rather than a summary:
 #### Build the response index before you upgrade
 
 The migration creates its index only `IF NOT EXISTS`, so an index you build beforehand makes it a no-op. Built
-with `CONCURRENTLY`, the index takes longer but never blocks writes, and the instance keeps running v5.3
-while it builds. On a large table that can take a while, so run it from a session that survives a dropped
-connection, such as `tmux` or `screen`:
+with `CONCURRENTLY`, the index takes longer but never locks out writes, and the instance keeps running v5.3
+while it builds. It does add disk and WAL load, so some writes can slow down while it runs. On a large table the
+build can take a while, so run it from a session that survives a dropped connection, such as `tmux` or `screen`:
 
 <Tabs>
   <Tab title="One-Click / Docker Compose">
@@ -405,6 +405,7 @@ connection, such as `tmux` or `screen`:
     ```bash
     docker compose exec -T postgres psql -U postgres -d formbricks <<'SQL'
     SET statement_timeout = 0;
+    SET lock_timeout = 0;
     CREATE INDEX CONCURRENTLY IF NOT EXISTS "Response_surveyId_finished_idx" ON "Response"("surveyId", "finished");
     SELECT indisvalid FROM pg_index WHERE indexrelid = to_regclass('"Response_surveyId_finished_idx"');
     SQL
@@ -416,6 +417,7 @@ connection, such as `tmux` or `screen`:
     ```bash
     kubectl exec -i -n formbricks formbricks-postgresql-0 -- psql -U formbricks -d formbricks <<'SQL'
     SET statement_timeout = 0;
+    SET lock_timeout = 0;
     CREATE INDEX CONCURRENTLY IF NOT EXISTS "Response_surveyId_finished_idx" ON "Response"("surveyId", "finished");
     SELECT indisvalid FROM pg_index WHERE indexrelid = to_regclass('"Response_surveyId_finished_idx"');
     SQL
@@ -427,30 +429,37 @@ connection, such as `tmux` or `screen`:
   </Tab>
 </Tabs>
 
-With an external or managed PostgreSQL, run the same three statements with `psql` as the user that owns the
-Formbricks tables. `SET statement_timeout = 0` keeps a server-side timeout from cancelling the build. Any other
-SQL client must run the `CREATE INDEX` statement on its own, outside a transaction, because `CONCURRENTLY`
-cannot run inside one.
+With an external or managed PostgreSQL, run the same statements with `psql` as the user that owns the Formbricks
+tables, connected directly to the primary rather than through a transaction-pooling connection pooler such as
+PgBouncer. A pooler can run the `SET` and the `CREATE` on different server connections. Any other SQL client must
+run the `CREATE INDEX` statement on its own, outside a transaction, because `CONCURRENTLY` cannot run inside one.
+
+The two `SET` lines keep a timeout configured on the server or on your database user from cancelling the build:
+`lock_timeout` also limits how long the build waits for other transactions to finish. On PostgreSQL 17 or later,
+also run `SET transaction_timeout = 0;` first if your server sets one.
 
 Then read the `indisvalid` result:
 
 - **`t`**: the index is ready. Upgrade as usual; the migration finds the index and skips the build.
 - **`f`**: the index exists but is not usable yet. Do not upgrade over it, because the migration would see the
   name, skip the build, and leave `Response` with an index PostgreSQL never uses. See below.
-- **No row** (usually after an error from the `CREATE`): the index was never created. Fix the error and run the
-  commands again.
+- **No row**: the `CREATE` failed before it started, for example under the wrong user or on a read-only replica.
+  Fix the error it printed and run the commands again.
 
-An `f` means one of two things. If your session dropped, the build can still be running on the server, so
-first check, the same way as above:
+An `f` means the build is still running or stopped part-way. If the `CREATE` printed an error, it stopped: fix that
+cause (often a timeout), drop the index as below, and run the commands again. If your session dropped instead,
+the build can still be running on the server, so first check, the same way and as the same user as above:
 
 ```sql
-SELECT phase FROM pg_stat_progress_create_index
+SELECT phase, current_locker_pid FROM pg_stat_progress_create_index
 WHERE datname = current_database() AND relid = '"Response"'::regclass;
 ```
 
-While that returns a row, wait for it to finish and check `indisvalid` again. If it returns nothing, the build
-was interrupted: run `DROP INDEX CONCURRENTLY "Response_surveyId_finished_idx";` the same way, then run the
-commands above again.
+While that returns a row, wait for it to finish and check `indisvalid` again. A phase starting with `waiting for`
+is waiting for older transactions in this database to end, on any table, so a long report or a `pg_dump` backup
+counts too; `current_locker_pid` is the session it waits for, which you can look up in `pg_stat_activity`. If the
+query returns nothing, the build was interrupted: run `DROP INDEX CONCURRENTLY "Response_surveyId_finished_idx";`
+the same way, then run the commands above again.
 
 An extra index is harmless to v5.3, so building it early needs no rollback plan of its own.
 
