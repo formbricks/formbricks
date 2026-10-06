@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { ConcurrencyLimiter, releaseWhenBodySettles } from "./concurrency-limiter";
 
 /** Takes a slot or fails the test, for setups that need one held. */
@@ -155,5 +155,61 @@ describe("releaseWhenBodySettles", () => {
       "producer failed"
     );
     expect(released).toBe(1);
+  });
+
+  describe("with the request's signal", () => {
+    const pending = () => new Response(new ReadableStream<Uint8Array>({ pull() {} }));
+
+    test("releases when the client leaves, though nothing reads or cancels the body", () => {
+      const client = new AbortController();
+      const release = vi.fn();
+
+      releaseWhenBodySettles(pending(), release, client.signal);
+      expect(release).not.toHaveBeenCalled();
+      client.abort();
+
+      expect(release).toHaveBeenCalledTimes(1);
+    });
+
+    test("releases at once when the client already left", () => {
+      const release = vi.fn();
+
+      releaseWhenBodySettles(pending(), release, AbortSignal.abort());
+
+      expect(release).toHaveBeenCalledTimes(1);
+    });
+
+    test("stops listening once the body settled, so a later abort calls nothing", async () => {
+      const client = new AbortController();
+      const release = vi.fn();
+
+      await releaseWhenBodySettles(new Response("done"), release, client.signal).text();
+      client.abort();
+
+      expect(release).toHaveBeenCalledTimes(1);
+    });
+
+    test("does not listen at all for a response without a body", () => {
+      const client = new AbortController();
+      const release = vi.fn();
+      const listen = vi.spyOn(client.signal, "addEventListener");
+
+      releaseWhenBodySettles(new Response(null), release, client.signal);
+
+      expect(release).toHaveBeenCalledTimes(1);
+      expect(listen).not.toHaveBeenCalled();
+    });
+
+    test("throws for a locked body before taking the slot over, leaving it to the caller", () => {
+      const client = new AbortController();
+      const release = vi.fn();
+      const locked = pending();
+      locked.body?.getReader();
+
+      expect(() => releaseWhenBodySettles(locked, release, client.signal)).toThrow();
+      client.abort();
+
+      expect(release).not.toHaveBeenCalled();
+    });
   });
 });

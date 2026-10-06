@@ -729,29 +729,11 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         return finalResponse;
       }
 
-      // From here the response body owns the slot. It is also given back when the client goes away:
-      // Next aborts `req.signal` when the response closes before it finished, and when the client left
-      // before sending even started it returns early from piping the body — neither reading nor
-      // cancelling it — so the body alone would hold the slot for good. Attached only now, not when the
-      // slot was taken, so a client that hangs up early still holds its slot while its body is parsed.
-      const release = releaseSlot;
-      let released = false;
-      const releaseAndDetach = () => {
-        released = true;
-        req.signal.removeEventListener("abort", releaseAndDetach);
-        release();
-      };
-      // Wrapped before the hand-off: if wrapping throws, `finally` still holds the slot to give back.
-      const settling = releaseWhenBodySettles(finalResponse, releaseAndDetach);
+      // From here the response body owns the slot, given back when it settles or the client leaves.
+      // Handed over only once `releaseWhenBodySettles` has wrapped the body: if that throws, `finally`
+      // still holds the slot to give back.
+      const settling = releaseWhenBodySettles(finalResponse, releaseSlot, req.signal);
       releaseSlot = undefined;
-      // A response without a body has already given the slot back.
-      if (!released) {
-        if (req.signal.aborted) {
-          releaseAndDetach();
-        } else {
-          req.signal.addEventListener("abort", releaseAndDetach, { once: true });
-        }
-      }
       return settling;
     } catch (error) {
       if (auditLog) {

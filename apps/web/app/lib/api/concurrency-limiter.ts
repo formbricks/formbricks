@@ -83,13 +83,45 @@ export class ConcurrencyLimiter {
 
 /**
  * Holds `release` until the response body has been read to the end, failed, or been cancelled by
- * the client, then calls it once. A response without a body releases straight away.
+ * the client, or until `signal` aborts — whichever comes first — then calls it once. A response
+ * without a body releases straight away.
  *
  * Needed because a streamed response is still running when the handler returns it: releasing on
  * return would free the slot while the work it guards — an AI call feeding the stream — carries on.
- * Next cancels the body when the client disconnects, which lands in `cancel` here.
+ *
+ * Pass the request's signal: the body alone cannot tell that the client left. Next aborts the request
+ * when the response closes before it finished, but when the client was gone before sending even started
+ * it returns early from piping the body — neither reading nor cancelling it. Hand the slot over only
+ * once the handler is done with the request, so a client that hangs up early holds it until then.
+ *
+ * Throws when the body cannot be wrapped (a locked body), before taking `release` over: the caller still
+ * owns the slot then.
  */
-export function releaseWhenBodySettles(response: Response, release: TReleaseSlot): Response {
+export function releaseWhenBodySettles(
+  response: Response,
+  release: TReleaseSlot,
+  signal?: AbortSignal
+): Response {
+  let released = false;
+  const releaseOnce = () => {
+    released = true;
+    signal?.removeEventListener("abort", releaseOnce);
+    release();
+  };
+
+  const wrapped = wrapBody(response, releaseOnce);
+  // A response without a body has already given the slot back.
+  if (signal && !released) {
+    if (signal.aborted) {
+      releaseOnce();
+    } else {
+      signal.addEventListener("abort", releaseOnce, { once: true });
+    }
+  }
+  return wrapped;
+}
+
+function wrapBody(response: Response, release: TReleaseSlot): Response {
   if (!response.body) {
     release();
     return response;
