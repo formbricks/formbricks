@@ -62,7 +62,7 @@ export const ThemeStyling = ({
   isStorageConfigured = true,
   publicDomain,
   customCssAccess,
-}: ThemeStylingProps) => {
+}: Readonly<ThemeStylingProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
 

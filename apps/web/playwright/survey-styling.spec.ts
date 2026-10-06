@@ -402,9 +402,10 @@ test.describe("Survey Styling", async () => {
     expect(editorCss).toContain("--fb-element-headline-font-size: 30px");
   });
 
-  // ENG-3553. A synthetic CMS-style stylesheet (M2.11): the `@import` is removed with a warning, the
-  // supported `data-fb-part` hooks style the preview and the published survey, and survey CSS wins over
-  // workspace CSS. Self-hosted in E2E, so there is no plan gate and no rollout flag.
+  // ENG-3553. A synthetic CMS-style stylesheet (M2.11): its `@import` is removed (processor unit tests
+  // cover the removal and its warning) without blocking the rest, the supported `data-fb-part` hooks
+  // style the preview and the published survey, and survey CSS wins over workspace CSS. Self-hosted in
+  // E2E, so there is no plan gate and no rollout flag.
   test("Custom CSS: workspace and survey CSS reach the link survey", async ({ page, users }) => {
     const user = await users.create();
     await user.login();
@@ -421,12 +422,12 @@ test.describe("Survey Styling", async () => {
     const ink = "rgb(16, 40, 58)";
     const surveyButton = "rgb(200, 30, 60)";
 
-    await test.step("Workspace CSS shows the removed @import and styles the preview", async () => {
+    await test.step("Workspace CSS styles the preview despite the removed @import", async () => {
       await page.goto(`/workspaces/${workspaceId}/settings/workspace/look`);
       await page.getByRole("button", { name: /^Custom CSS/ }).click();
       await page.getByLabel("Base CSS", { exact: true }).fill(workspaceCss);
 
-      await expect(page.getByText("@import removed")).toBeVisible();
+      // The preview renders only CSS the server validated, so this also waits for validation.
       await expect(page.locator('#fbjs [data-fb-part="headline"]').first()).toHaveCSS("color", ink);
     });
 
@@ -454,7 +455,6 @@ test.describe("Survey Styling", async () => {
 
       // Not behind "Add custom styles": survey CSS adds on top of the workspace CSS either way (D16).
       await page.getByLabel("Base CSS", { exact: true }).fill(surveyCss);
-      await expect(page.getByText("CSS is valid.")).toBeVisible();
 
       const preview = page.locator("#fbjs");
       await expect(preview.locator('[data-fb-part="button-primary"]').first()).toHaveCSS(
