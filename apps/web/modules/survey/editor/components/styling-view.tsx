@@ -26,6 +26,7 @@ import {
   FormProvider,
 } from "@/modules/ui/components/form";
 import {
+  DarkContrastWarnings,
   StylingAppearanceProvider,
   StylingAppearanceToggle,
 } from "@/modules/ui/components/styling-appearance";
@@ -241,11 +242,7 @@ export const StylingView = ({
           </div>
 
           {localSurvey.type === "app" && setAppearance && (
-            <StylingAppearanceToggle
-              appearance={appearance}
-              onChange={setAppearance}
-              styling={form.watch()}
-            />
+            <StylingAppearanceToggle appearance={appearance} onChange={setAppearance} />
           )}
 
           <StylingAppearanceProvider appearance={localSurvey.type === "app" ? appearance : "light"}>
@@ -265,6 +262,10 @@ export const StylingView = ({
               form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
             />
           </StylingAppearanceProvider>
+
+          {localSurvey.type === "app" && setAppearance && (
+            <DarkContrastWarnings appearance={appearance} styling={form.watch()} />
+          )}
 
           {localSurvey.type === "link" && (
             <>

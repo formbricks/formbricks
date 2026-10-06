@@ -4,7 +4,12 @@ import { useTranslation } from "react-i18next";
 import { BRAND_PRESERVED_COLOR_KEYS } from "@formbricks/types/dark-palette";
 import { type TBaseStyling } from "@formbricks/types/styling";
 import { STYLE_DEFAULTS } from "@/lib/styling/constants";
-import { getAppearanceFieldName, getColorKey, getDarkDisplayColor } from "@/lib/styling/dark-mode";
+import {
+  getAppearanceFieldName,
+  getColorKey,
+  getDarkDisplayColor,
+  isSharedColorField,
+} from "@/lib/styling/dark-mode";
 import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { useStylingAppearance } from "@/modules/ui/components/styling-appearance";
@@ -36,6 +41,8 @@ export const ColorField = ({
   const appearance = useStylingAppearance();
   const fieldName = getAppearanceFieldName(name, appearance);
   const isDark = fieldName !== name;
+  // The brand color has one value for both appearances; the Dark tab edits it and says so.
+  const isShared = appearance === "dark" && isSharedColorField(name);
   const darkDisplayColor = isDark ? getDarkDisplayColor(form.watch() as TBaseStyling, name) : undefined;
   // Brand colors keep their light value in dark unless overridden (D12); everything else derives.
   const isBrandColor = (BRAND_PRESERVED_COLOR_KEYS as readonly string[]).includes(getColorKey(name) ?? "");
@@ -67,6 +74,9 @@ export const ColorField = ({
               containerClass={containerClass || "w-full"}
             />
           </FormControl>
+          {isShared && (
+            <p className="text-xs text-slate-500">{t("workspace.look.appearance_shared_color")}</p>
+          )}
           {isDark && (
             <div className="flex items-center gap-2 text-xs text-slate-500">
               {field.value ? (

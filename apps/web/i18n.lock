@@ -2514,8 +2514,10 @@ checksums:
     workspace/look/appearance_automatic_same_as_light: ce22a61f502b5184c0e6d49d52cd116c
     workspace/look/appearance_dark: 73e6e208ba628b26e90fcf6dce15e1b2
     workspace/look/appearance_dark_contrast_warning: b199720dce0377613fe278bdf9773ffd
+    workspace/look/appearance_dark_contrast_warning_shared: dbdddc2201d1bbcfa747acc64c8be960
     workspace/look/appearance_dark_description: 1d0c1f0e0a4bcc7dea116e574ebc8ae1
     workspace/look/appearance_light: bb78ea2c6edd8662676c81a8a13ecb93
+    workspace/look/appearance_shared_color: 2b21150f9a8aea754969a0282af7885e
     workspace/look/appearance_use_automatic: f9b3ffa3285d7819e7295e87111f4a82
     workspace/look/email_customization: ae399f381183a4fe0ffd41ab496b5d8f
     workspace/look/email_customization_description: 5ccaf1769b2c39d7e87f3a08d056a374

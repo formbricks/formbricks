@@ -30,6 +30,7 @@ import {
   FormProvider,
 } from "@/modules/ui/components/form";
 import {
+  DarkContrastWarnings,
   StylingAppearanceProvider,
   StylingAppearanceToggle,
 } from "@/modules/ui/components/styling-appearance";
@@ -206,11 +207,7 @@ export const ThemeStyling = ({
               </div>
 
               <div className="flex flex-col gap-4 rounded-lg bg-slate-50 p-4">
-                <StylingAppearanceToggle
-                  appearance={appearance}
-                  onChange={handleAppearanceChange}
-                  styling={form.watch()}
-                />
+                <StylingAppearanceToggle appearance={appearance} onChange={handleAppearanceChange} />
                 <StylingAppearanceProvider appearance={appearance}>
                   <div className="grid grid-cols-2 items-end gap-4">
                     <ColorField
@@ -247,6 +244,7 @@ export const ThemeStyling = ({
                     form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
                   />
                 </StylingAppearanceProvider>
+                <DarkContrastWarnings appearance={appearance} styling={form.watch()} />
 
                 <BackgroundStylingCard
                   open={backgroundStylingOpen}
