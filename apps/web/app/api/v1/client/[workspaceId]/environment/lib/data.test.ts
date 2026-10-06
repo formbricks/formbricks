@@ -140,6 +140,19 @@ describe("getWorkspaceStateData", () => {
     });
   });
 
+  // The assertion above compares against the shared constant, so it moves with any edit to it and
+  // pins nothing. The text itself ships in an unauthenticated public API response, so changing it is
+  // an API change and has to be deliberate: this literal is what such an edit must get past (ENG-2799).
+  test("substitutes the exact placeholder text for every survey name", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockWorkspaceData as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+
+    expect(result.surveys[0].name).toBe(
+      "[deprecated] survey name omitted from public API - will be removed soon"
+    );
+  });
+
   /**
    * ENG-1845: this payload is the renderer's allow-list for app surveys. `getSurveyEmbeddedFields`
    * fails closed, so a select that loses the join is indistinguishable from a survey with no fields
