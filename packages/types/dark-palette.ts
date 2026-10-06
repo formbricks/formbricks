@@ -82,7 +82,15 @@ export const getDerivedDarkColors = (brandColor: string = DEFAULT_DARK_BRAND_COL
   };
 };
 
+/**
+ * Color fields with one value for both appearances. The brand color identifies the brand, so it is
+ * never edited per appearance and a stored `.dark` is ignored: the editor shows one brand picker and
+ * the preview always matches it. Button and progress colors stay overridable.
+ */
+export const SHARED_COLOR_KEYS = ["brandColor"] as const satisfies readonly TStylingColorKey[];
+
 const BRAND_PRESERVED = new Set<TStylingColorKey>(BRAND_PRESERVED_COLOR_KEYS);
+const SHARED = new Set<TStylingColorKey>(SHARED_COLOR_KEYS);
 
 // Styling reaches the renderer from the API and MCP too, so a stored value can be anything. An
 // unparseable one is treated as unset: the color math downstream throws on it, and one bad dark
@@ -103,7 +111,7 @@ export const resolveDarkColors = (
   return Object.fromEntries(
     (Object.keys(derived) as TStylingColorKey[]).map((key) => {
       const color = styling[key];
-      const darkValue = validColor(color?.dark);
+      const darkValue = SHARED.has(key) ? undefined : validColor(color?.dark);
       if (darkValue) return [key, darkValue];
       if (BRAND_PRESERVED.has(key)) return [key, validColor(color?.light)];
       return [key, derived[key]];

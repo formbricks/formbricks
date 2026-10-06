@@ -1,10 +1,15 @@
 import { describe, expect, test } from "vitest";
 import { getDerivedDarkColors } from "@formbricks/types/dark-palette";
-import { getAppearanceFieldName, getColorKey, getDarkDisplayColor } from "./dark-mode";
+import { getAppearanceFieldName, getColorKey, getDarkDisplayColor, isSharedColorField } from "./dark-mode";
 
 describe("getAppearanceFieldName", () => {
   test("points a light color path at its dark slot in the Dark tab", () => {
-    expect(getAppearanceFieldName("brandColor.light", "dark")).toBe("brandColor.dark");
+    expect(getAppearanceFieldName("cardBackgroundColor.light", "dark")).toBe("cardBackgroundColor.dark");
+  });
+
+  test("keeps the shared brand color on its one value in the Dark tab", () => {
+    expect(isSharedColorField("brandColor.light")).toBe(true);
+    expect(getAppearanceFieldName("brandColor.light", "dark")).toBe("brandColor.light");
   });
 
   test("leaves light mode and non-color fields alone", () => {

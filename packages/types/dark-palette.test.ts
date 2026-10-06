@@ -74,6 +74,11 @@ describe("resolveDarkColors", () => {
     expect(resolved.elementHeadlineColor).toBe(derived.elementHeadlineColor);
   });
 
+  test("the brand color is shared: a stored dark brand value is ignored", () => {
+    const resolved = resolveDarkColors({ brandColor: { light: "#146a5d", dark: "#ff0000" } });
+    expect(resolved.brandColor).toBe("#146a5d");
+  });
+
   test("an unparseable stored color is ignored instead of reaching the color math", () => {
     const resolved = resolveDarkColors({
       brandColor: { light: "zzz" },
@@ -107,7 +112,11 @@ describe("getDarkContrastWarnings", () => {
   });
 
   test("no warning once the creator sets a readable dark value", () => {
-    const warnings = getDarkContrastWarnings({ brandColor: { light: "#111111", dark: "#7dd3fc" } });
+    const warnings = getDarkContrastWarnings({
+      brandColor: { light: "#7dd3fc" },
+      buttonBgColor: { light: "#111111", dark: "#7dd3fc" },
+      buttonTextColor: { light: "#ffffff", dark: "#0f172a" },
+    });
     expect(warnings).toEqual([]);
   });
 });
