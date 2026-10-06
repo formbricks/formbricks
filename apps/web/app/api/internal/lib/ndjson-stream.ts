@@ -70,6 +70,17 @@ export function createNdjsonResponse<TEvent>({
     heartbeatTimer = undefined;
   };
 
+  // A mapper that throws would reject `start` and error the stream, dropping events still queued for
+  // the client; ending without a final event at least delivers those.
+  const finalEventFor = (error: unknown): TEvent | null => {
+    try {
+      return onError(error);
+    } catch (mapperError) {
+      logger.error(loggableError(mapperError), "NDJSON stream error mapper failed");
+      return null;
+    }
+  };
+
   const settle = () => {
     try {
       onSettled?.();
@@ -100,7 +111,7 @@ export function createNdjsonResponse<TEvent>({
       try {
         await produce(emit);
       } catch (error) {
-        const finalEvent = onError(error);
+        const finalEvent = finalEventFor(error);
         if (finalEvent) emit(finalEvent);
       } finally {
         stopHeartbeat();

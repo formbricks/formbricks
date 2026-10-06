@@ -106,6 +106,29 @@ describe("createNdjsonResponse", () => {
     expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("secret-from-the-stream");
   });
 
+  test("still delivers what was written and closes cleanly when the error mapper throws", async () => {
+    const onSettled = vi.fn();
+    const response = createNdjsonResponse<TEvent>({
+      produce: async (emit) => {
+        emit({ type: "start" });
+        throw new Error("produce failed");
+      },
+      onError: () => {
+        throw new TypeError("mapper broke on secret-from-the-stream");
+      },
+      onCancel: vi.fn(),
+      onSettled,
+    });
+
+    await expect(readLines(response)).resolves.toEqual([{ type: "start" }]);
+    expect(onSettled).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ errName: "TypeError" }),
+      "NDJSON stream error mapper failed"
+    );
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("secret-from-the-stream");
+  });
+
   test("turns an escaped failure into a final event and still closes cleanly", async () => {
     const response = createNdjsonResponse<TEvent>({
       produce: async (emit) => {
