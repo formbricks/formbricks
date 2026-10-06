@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { V3_REQUEST_ARRAY_MAX_ITEMS } from "@/app/api/v3/lib/array-budget";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   QSF_IMPORT_BODY_LIMIT_BYTES,
@@ -101,6 +102,19 @@ describe("POST /api/internal/surveys/import/stream", () => {
     const response = await post({ ...body, extra: true });
 
     expect(response.status).toBe(400);
+    expect(mocks.streamQsfImport).not.toHaveBeenCalled();
+  });
+
+  test("holds a QSF to the v3 array budget before any AI is spent, naming the array", async () => {
+    // The dialog tells this 400 apart from a malformed body by its `qsf.` name.
+    const elements = Array.from({ length: V3_REQUEST_ARRAY_MAX_ITEMS + 1 }, () => ({ Element: "SQ" }));
+
+    const response = await post({ ...body, qsf: { ...body.qsf, SurveyElements: elements } });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      invalid_params: [{ name: "qsf.SurveyElements" }],
+    });
     expect(mocks.streamQsfImport).not.toHaveBeenCalled();
   });
 
