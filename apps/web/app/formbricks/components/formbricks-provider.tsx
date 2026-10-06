@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import formbricks from "@formbricks/js";
-import { consumeChurnSurveyMarker } from "@/modules/ee/billing/lib/churn-survey";
+import { consumeChurnSurveyMarker } from "@/lib/churn-survey";
 
 interface FormbricksProviderProps {
   workspaceId: string;

@@ -17,6 +17,11 @@ import {
   type TOrganizationStripeSubscriptionStatus,
 } from "@formbricks/types/organizations";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
+import {
+  getHobbyDowngradeChurnSignal,
+  markChurnSurveyPending,
+  trackSubscriptionCancelled,
+} from "@/lib/churn-survey";
 import { cn } from "@/lib/cn";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -36,11 +41,6 @@ import {
   waitForBillingPaymentMethodAction,
   waitForBillingPlanAction,
 } from "../actions";
-import {
-  getHobbyDowngradeChurnSignal,
-  markChurnSurveyPending,
-  trackSubscriptionCancelled,
-} from "../lib/churn-survey";
 import type {
   TStripeBillingCatalogDisplay,
   TStripeBillingCatalogDisplayItem,

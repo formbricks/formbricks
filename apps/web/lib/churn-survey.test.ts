@@ -1,3 +1,4 @@
+import { createStorage } from "./__mocks__/session-storage";
 import { describe, expect, test, vi } from "vitest";
 import {
   CHURN_SURVEY_PENDING_KEY,
@@ -7,15 +8,6 @@ import {
   markChurnSurveyPending,
   trackSubscriptionCancelled,
 } from "./churn-survey";
-
-const createStorage = (initial: Record<string, string> = {}) => {
-  const items = new Map(Object.entries(initial));
-  return {
-    getItem: vi.fn((key: string) => items.get(key) ?? null),
-    setItem: vi.fn((key: string, value: string) => void items.set(key, value)),
-    removeItem: vi.fn((key: string) => void items.delete(key)),
-  };
-};
 
 describe("getHobbyDowngradeChurnSignal", () => {
   test("a scheduled downgrade to Hobby tracks right away", () => {
