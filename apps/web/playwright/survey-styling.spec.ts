@@ -171,7 +171,9 @@ test.describe("Survey Styling", async () => {
       await expect(page.locator("#fbjs").first()).toHaveAttribute("data-appearance", "dark");
 
       await setColor(page, "Card background color", "1b1530");
-      await page.waitForTimeout(1000);
+      await expect
+        .poll(() => page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML))
+        .toContain("--fb-survey-background-color: #1b1530");
       css = await page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML);
       const darkBlock = css?.split('#fbjs[data-appearance="dark"]')[1] ?? "";
       expect(darkBlock).toContain("--fb-survey-background-color: #1b1530");
