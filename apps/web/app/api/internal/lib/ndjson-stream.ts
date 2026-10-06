@@ -3,6 +3,7 @@
  * Qualtrics import). The browser reads it with `NdjsonParser`.
  */
 import { logger } from "@formbricks/logger";
+import { loggableError } from "./loggable-error";
 
 export const NDJSON_CONTENT_TYPE = "application/x-ndjson; charset=utf-8";
 
@@ -69,6 +70,15 @@ export function createNdjsonResponse<TEvent>({
     heartbeatTimer = undefined;
   };
 
+  const settle = () => {
+    try {
+      onSettled?.();
+    } catch (error) {
+      // No message: the hooks log what the stream carried, so one could repeat it.
+      logger.error(loggableError(error), "NDJSON stream settle hook failed");
+    }
+  };
+
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       // Rescheduled on every write, so the heartbeat fires exactly `intervalMs` after the last event
@@ -94,20 +104,16 @@ export function createNdjsonResponse<TEvent>({
         if (finalEvent) emit(finalEvent);
       } finally {
         stopHeartbeat();
-        // close() throws on a stream the consumer already cancelled, and there is nobody left to tell.
-        if (!closed) {
-          closed = true;
-          controller.close();
-        }
-        // After the close, so a hook that throws cannot turn a finished stream into a truncated one.
         try {
-          onSettled?.();
-        } catch (error) {
-          // The name only: the hooks log what the stream carried, so a message could repeat it.
-          logger.error(
-            { errName: error instanceof Error ? error.name : typeof error },
-            "NDJSON stream settle hook failed"
-          );
+          // close() throws on a stream the consumer already cancelled, and there is nobody left to tell.
+          if (!closed) {
+            closed = true;
+            controller.close();
+          }
+        } finally {
+          // After the close, so a hook that throws cannot turn a finished stream into a truncated one —
+          // and in a `finally`, so the hook's cleanup runs even if closing failed.
+          settle();
         }
       }
     },

@@ -83,7 +83,7 @@ describe("createNdjsonResponse", () => {
     expect(onSettled).toHaveBeenCalledTimes(1);
   });
 
-  test("closes cleanly when the settle hook throws, and logs the hook's failure by name only", async () => {
+  test("closes cleanly when the settle hook throws, and logs where it failed but not what it said", async () => {
     const response = createNdjsonResponse<TEvent>({
       produce: async (emit) => {
         emit({ type: "done" });
@@ -96,7 +96,13 @@ describe("createNdjsonResponse", () => {
     });
 
     await expect(readLines(response)).resolves.toEqual([{ type: "done" }]);
-    expect(logger.error).toHaveBeenCalledWith({ errName: "TypeError" }, "NDJSON stream settle hook failed");
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        errName: "TypeError",
+        errStack: expect.stringContaining("ndjson-stream.test.ts"),
+      }),
+      "NDJSON stream settle hook failed"
+    );
     expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("secret-from-the-stream");
   });
 
