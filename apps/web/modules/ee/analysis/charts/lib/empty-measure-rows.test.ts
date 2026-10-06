@@ -3,7 +3,7 @@ import type { TChartQuery } from "@formbricks/types/analysis";
 import {
   canDropEmptyMeasureRows,
   dropEmptyMeasureRows,
-  dropRowsWithoutOptionId,
+  withOptionIdFilter,
 } from "@/modules/ee/analysis/charts/lib/empty-measure-rows";
 
 const CES_AVG = "FeedbackRecords.cesAverage";
@@ -144,37 +144,34 @@ describe("the injected response base (ENG-3331)", () => {
   });
 });
 
-describe("dropRowsWithoutOptionId", () => {
+describe("withOptionIdFilter", () => {
   const VALUE_ID = "FeedbackRecords.valueId";
   const COUNT = "FeedbackRecords.count";
-  const byOption: TChartQuery = { measures: [COUNT], dimensions: [VALUE_ID] };
+  const optionFilter = { member: VALUE_ID, operator: "set" };
 
-  test("drops the group that carries no option id", () => {
-    const rows = [
-      { [VALUE_ID]: "opt-a", [COUNT]: 3 },
-      { [VALUE_ID]: null, [COUNT]: 40 },
-      { [VALUE_ID]: "", [COUNT]: 2 },
-      { [VALUE_ID]: undefined, [COUNT]: 1 },
-      { [VALUE_ID]: "opt-b", [COUNT]: 5 },
-    ];
-    expect(dropRowsWithoutOptionId(rows, byOption)).toEqual([
-      { [VALUE_ID]: "opt-a", [COUNT]: 3 },
-      { [VALUE_ID]: "opt-b", [COUNT]: 5 },
-    ]);
+  test("requires an option id when grouping by it", () => {
+    expect(withOptionIdFilter({ measures: [COUNT], dimensions: [VALUE_ID] })).toEqual({
+      measures: [COUNT],
+      dimensions: [VALUE_ID],
+      filters: [optionFilter],
+    });
   });
 
-  test("keeps every row of a grouping that is not by option id", () => {
-    const rows = [{ [FIELD_LABEL]: null, [COUNT]: 4 }];
-    expect(dropRowsWithoutOptionId(rows, { measures: [COUNT], dimensions: [FIELD_LABEL] })).toBe(rows);
+  test("keeps the query's own filters and adds the option filter beside them", () => {
+    const own = { member: FIELD_LABEL, operator: "equals" as const, values: ["Plan"] };
+    expect(
+      withOptionIdFilter({ measures: [COUNT], dimensions: [FIELD_LABEL, VALUE_ID], filters: [own] }).filters
+    ).toEqual([own, optionFilter]);
   });
 
-  test("keeps rows whose option id is present when grouped with another dimension", () => {
-    const rows = [
-      { [FIELD_LABEL]: "row", [VALUE_ID]: "col-1", [COUNT]: 1 },
-      { [FIELD_LABEL]: "row", [VALUE_ID]: null, [COUNT]: 1 },
-    ];
-    expect(dropRowsWithoutOptionId(rows, { measures: [COUNT], dimensions: [FIELD_LABEL, VALUE_ID] })).toEqual(
-      [rows[0]]
-    );
+  test("leaves a grouping that is not by option id untouched", () => {
+    const query: TChartQuery = { measures: [COUNT], dimensions: [FIELD_LABEL] };
+    expect(withOptionIdFilter(query)).toEqual(query);
+  });
+
+  test("does not mutate the query it is given", () => {
+    const query: TChartQuery = { measures: [COUNT], dimensions: [VALUE_ID] };
+    withOptionIdFilter(query);
+    expect(query.filters).toBeUndefined();
   });
 });

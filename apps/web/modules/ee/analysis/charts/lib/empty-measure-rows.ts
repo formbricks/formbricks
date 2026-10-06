@@ -63,20 +63,18 @@ export const dropEmptyMeasureRows = (rows: TChartDataRow[], query: TChartQuery):
 const VALUE_ID_DIMENSION = "FeedbackRecords.valueId";
 
 /**
- * Drop the groups of a `valueId` grouping that carry no option id.
+ * The query to execute for a `valueId` grouping: the same query plus a `valueId set` filter.
  *
  * Only choice answers (single/multi-select, matrix columns) write a `value_id`; text, rating, NPS
- * and the rest leave it NULL. Cube still emits one group for all of those rows, so a chart grouped
- * by value option gains a blank-labelled bucket that is not an option and has no label to show. The
- * same bucket is dropped here as in the bar/pie slices and the Chart Data table.
+ * and the rest leave it NULL. Left alone, Cube emits one group for all of those rows, so a chart
+ * grouped by value option gains a blank-labelled bucket that is not an option and can dwarf the
+ * real ones. Filtering in the query, rather than dropping the group afterwards, keeps a `limit`
+ * from being spent on that bucket.
  *
- * Time series are left alone for the reason given on {@link canDropEmptyMeasureRows}: only a
- * grouping the chart draws as option buckets is pruned.
+ * Execution only: callers keep the original query for what they return and save, so the filter
+ * never shows up in the builder. A query that does not group by `valueId` is returned untouched.
  */
-export const dropRowsWithoutOptionId = (rows: TChartDataRow[], query: TChartQuery): TChartDataRow[] => {
-  if (!(query.dimensions ?? []).includes(VALUE_ID_DIMENSION)) return rows;
-  return rows.filter((row) => {
-    const optionId = row[VALUE_ID_DIMENSION];
-    return optionId !== null && optionId !== undefined && optionId !== "";
-  });
+export const withOptionIdFilter = (query: TChartQuery): TChartQuery => {
+  if (!(query.dimensions ?? []).includes(VALUE_ID_DIMENSION)) return query;
+  return { ...query, filters: [...(query.filters ?? []), { member: VALUE_ID_DIMENSION, operator: "set" }] };
 };
