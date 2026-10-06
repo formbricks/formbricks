@@ -147,7 +147,10 @@ for the one case where PostgreSQL adds one anyway.
 
 1. Add `SET lock_timeout = '1s';` at the top, and scope it to the file: `SET LOCAL` inside `BEGIN` and `COMMIT`,
    or `RESET lock_timeout;` at the end. `prisma migrate deploy` applies consecutive files on one connection, so a
-   plain `SET` carries into the next file. Concurrent index operations are the exception: a build sets `0`
+   plain `SET` carries into the next file. That connection must be direct or session-pooled
+   (`MIGRATE_DATABASE_URL`, else `DATABASE_URL`): behind a transaction-mode pooler such as PgBouncer, a `SET` and
+   the statements it guards can run on different server connections. Concurrent index operations are the
+   exception: a build sets `0`
    instead, and a `DROP INDEX CONCURRENTLY` must be alone in its file, so it gets no `SET` at all; see
    [How Prisma applies a migration file](#how-prisma-applies-a-migration-file).
 2. Add explicit transaction boundaries when the statements must be atomic.
@@ -219,8 +222,10 @@ What follows for a migration author:
   the file a multi-statement string, and the drop fails. Squawk then reports `require-lock-timeout`; put
   `-- squawk-ignore require-lock-timeout` above the drop, with a comment saying why. The drop runs with the
   connection's session value (the server, database or role default, plus anything an earlier file in the same
-  deploy left set), which is why every other file must scope its own. An unbounded wait is harmless here: a
-  concurrent drop never blocks reads or writes.
+  deploy left set), which is why every other file must scope its own. With no timeout, a long-lived transaction
+  can stall the deploy indefinitely, though never the application: a concurrent drop does not block reads or
+  writes. A stalled drop shows in `pg_stat_activity` with `wait_event_type = 'Lock'`, and
+  `pg_blocking_pids(pid)` names the session it waits for; end that session, or cancel the deploy.
 - Use explicit `BEGIN` and `COMMIT` when statements must succeed or fail together. Never rely on the implicit
   transaction: whether a file gets one depends on the parser's coverage, which can change in any Prisma upgrade.
   Know how such a file fails ([prisma/prisma#15295](https://github.com/prisma/prisma/issues/15295)): Prisma
