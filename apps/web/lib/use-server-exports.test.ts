@@ -22,19 +22,6 @@ const ACTION_CLIENT_MODULE = "@/lib/utils/action-client";
 const ACTION_CLIENTS = new Set(["actionClient", "authenticatedActionClient"]);
 const SKIPPED_DIRS = new Set(["node_modules", ".next", "dist", "coverage", "public", "playwright"]);
 
-// "file:exportName" entries that are allowed to break the rule, each with its reason. The guard also
-// fails on an entry that no longer matches anything, so the list cannot outlive its reasons.
-const ALLOWED_RAW_EXPORTS = new Map<string, string>([
-  [
-    "lib/membership/hooks/actions.ts:getMembershipByUserIdOrganizationIdAction",
-    "Moves to the action client in ENG-3419; drop this entry with that change.",
-  ],
-  [
-    "lib/membership/hooks/actions.ts:getMembershipRole",
-    "Moves to the action client in ENG-3419; drop this entry with that change.",
-  ],
-]);
-
 const listSourceFiles = (dir: string): string[] =>
   fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     if (entry.isDirectory()) {
@@ -238,13 +225,9 @@ describe('"use server" modules in apps/web', () => {
 
   test("export only actions built from the action client", () => {
     expect(
-      rawExports.filter((entry) => !ALLOWED_RAW_EXPORTS.has(entry)),
+      rawExports,
       'Exports of a "use server" module must be built from the action client. Wrap them in authenticatedActionClient, ' +
         'or move them to a module that uses import "server-only" instead of "use server".'
     ).toEqual([]);
-  });
-
-  test("keeps no stale exceptions", () => {
-    expect([...ALLOWED_RAW_EXPORTS.keys()].filter((entry) => !rawExports.includes(entry))).toEqual([]);
   });
 });
