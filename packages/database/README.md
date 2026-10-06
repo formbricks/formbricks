@@ -139,8 +139,9 @@ pnpm lint:migrations migration/<timestamp>/migration.sql
 
 Squawk checks PostgreSQL 15 syntax, which remains relevant to older one-click installations in the
 [self-hosted migration guide](../../docs/self-hosting/advanced/migration.mdx#v27), while CI replays the complete
-history on PostgreSQL 18. Prisma 7.8 does not add a transaction wrapper around migration SQL, so concurrent index
-checks remain enabled and migrations must add `BEGIN` and `COMMIT` explicitly when atomic execution is required.
+history on PostgreSQL 18. Squawk runs with `assume_in_transaction = false` because Prisma adds no transaction
+around a migration file of its own; see [How Prisma applies a migration file](#how-prisma-applies-a-migration-file)
+for the one case where PostgreSQL adds one anyway.
 
 `pnpm create-migration` copies Prisma's generated SQL unchanged. Before committing every generated migration:
 
@@ -181,6 +182,41 @@ SHADOW_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/formbricks_mi
 
 Pass `SHADOW_DATABASE_URL` inline or through ephemeral CI configuration. Do not persist it in `.env`, because
 `prisma.config.ts` would then activate that shadow database for other Prisma migration commands as well.
+
+### How Prisma applies a migration file
+
+Prisma 7.10 parses each `migration.sql` before applying it
+([engine source](https://github.com/prisma/prisma-engines/blob/0edf323efd1d98336f3f0a68684b56f689b900d3/schema-engine/connectors/sql-schema-connector/src/flavour/postgres/connector/native/mod.rs#L146-L295)),
+and what happens next depends on whether that parse succeeds:
+
+- **The whole file parses.** Prisma sends each statement on its own, in autocommit. Nothing wraps the file:
+  `CREATE INDEX CONCURRENTLY` works, and a failure part-way through leaves the earlier statements applied.
+- **Any statement does not parse.** Prisma sends the whole file as one string, and PostgreSQL runs a
+  multi-statement string as a single implicit transaction. The file becomes atomic, and every `CONCURRENTLY`
+  statement in it fails with `cannot run inside a transaction block`. A `DO $$ ... $$` block and
+  `DROP INDEX CONCURRENTLY` are two statements the parser rejects.
+
+What follows for a migration author:
+
+- Give concurrent index builds a file with nothing the parser rejects. A `DO` guard goes in the next migration,
+  as `20260909120001_verify_response_keyset_indexes_valid` does for the file before it.
+- `DROP INDEX CONCURRENTLY` must be the only statement in its file. Even a `SET lock_timeout` before it makes
+  the file a multi-statement string, and the drop fails.
+- Use explicit `BEGIN` and `COMMIT` when statements must succeed or fail together. Never rely on the implicit
+  transaction: whether a file gets one depends on the parser's coverage, which can change in any Prisma upgrade.
+- Squawk models only the first case, so it will not flag a `CONCURRENTLY` statement that shares a file with a
+  `DO` block. The CI jobs that apply the migrations (E2E, integration and contract tests) fail on it instead.
+
+Older migrations say otherwise. `20260417120000_add_survey_publish_pause_scheduling`,
+`20260706000001_add_feedback_source_directory_workspace_fk` and `20260821000000_add_response_survey_finished_index`
+state that `prisma migrate deploy` always runs a migration inside a transaction, and build write-blocking indexes
+on that basis. The first and last parse, so a concurrent build would have worked in them. The middle one contains
+a `DO` block, so it did run in an implicit transaction, though not for the reason it gives.
+`20260909120000_response_keyset_index_tiebreakers` describes the trigger as Prisma recognising concurrent
+statements; the effects it lists are right, but the trigger is whether the file parses. These files are left as
+they are, because editing an applied migration, even a comment, changes its checksum. `prisma migrate deploy`
+ignores that, but `prisma migrate dev`, which `pnpm create-migration` runs, then asks to reset every development
+database that already applied the old version.
 
 ### Available Scripts
 
