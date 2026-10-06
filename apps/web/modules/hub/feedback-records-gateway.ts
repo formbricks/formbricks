@@ -216,56 +216,62 @@ const getFeedbackRecordsGatewayJwtFromHeaders = (headers: Headers): string | nul
   return getBearerTokenFromHeaders(headers);
 };
 
+type TTenantResolution = { tenantId: string } | { errorResponse: Response };
+
+const invalidOrMissingTenantId = (): TTenantResolution => ({
+  errorResponse: buildGatewayStatusResponse(400, "Invalid or missing tenant_id"),
+});
+
+const resolveQueryTenantId = (
+  route: TParsedGatewayRoute,
+  originalUrl: URL,
+  requestId: string
+): TTenantResolution => {
+  const tenantIds = originalUrl.searchParams.getAll(TENANT_ID_KEY);
+  if (tenantIds.length > 1) {
+    logAmbiguousRequest(requestId, route, "repeated_tenant_id");
+    return { errorResponse: buildGatewayStatusResponse(400, AMBIGUOUS_TENANT_ID_MESSAGE) };
+  }
+
+  const tenantId = parseTenantId(tenantIds[0] ?? null);
+  return tenantId ? { tenantId } : invalidOrMissingTenantId();
+};
+
+const resolveBodyTenantId = async (
+  request: NextRequest,
+  route: TParsedGatewayRoute,
+  requestId: string
+): Promise<TTenantResolution> => {
+  const parseResult = await parseJsonBody(request, route, requestId);
+  if (!parseResult.ok) {
+    return { errorResponse: parseResult.response };
+  }
+
+  // A Hub that decodes with Go's encoding/json v1 (every release before ENG-3658) matches JSON keys
+  // case-insensitively, so `TENANT_ID` next to `tenant_id` would be the tenant it acts on while
+  // `tenant_id` is the one authorized here.
+  if (hasCaseVariantKey(parseResult.keys, TENANT_ID_KEY)) {
+    logAmbiguousRequest(requestId, route, "case_variant_tenant_id");
+    return { errorResponse: buildGatewayStatusResponse(400, AMBIGUOUS_TENANT_ID_MESSAGE) };
+  }
+
+  const tenantValue = parseResult.body?.[TENANT_ID_KEY];
+  const tenantId = parseTenantId(typeof tenantValue === "string" ? tenantValue : null);
+  return tenantId ? { tenantId } : invalidOrMissingTenantId();
+};
+
 const resolveTenantId = async (
   request: NextRequest,
   route: TParsedGatewayRoute,
   originalUrl: URL,
   requestId: string
-): Promise<{ tenantId: string } | { errorResponse: Response }> => {
+): Promise<TTenantResolution> => {
   if (route.tenantSource === "query") {
-    const tenantIds = originalUrl.searchParams.getAll(TENANT_ID_KEY);
-    if (tenantIds.length > 1) {
-      logAmbiguousRequest(requestId, route, "repeated_tenant_id");
-      return {
-        errorResponse: buildGatewayStatusResponse(400, AMBIGUOUS_TENANT_ID_MESSAGE),
-      };
-    }
-
-    const tenantId = parseTenantId(tenantIds[0] ?? null);
-    if (!tenantId) {
-      return {
-        errorResponse: buildGatewayStatusResponse(400, "Invalid or missing tenant_id"),
-      };
-    }
-
-    return { tenantId };
+    return resolveQueryTenantId(route, originalUrl, requestId);
   }
 
   if (route.tenantSource === "body") {
-    const parseResult = await parseJsonBody(request, route, requestId);
-    if (!parseResult.ok) {
-      return { errorResponse: parseResult.response };
-    }
-
-    // A Hub that decodes with Go's encoding/json v1 (every release before ENG-3658) matches JSON keys
-    // case-insensitively, so `TENANT_ID` next to `tenant_id` would be the tenant it acts on while
-    // `tenant_id` is the one authorized here.
-    if (hasCaseVariantKey(parseResult.keys, TENANT_ID_KEY)) {
-      logAmbiguousRequest(requestId, route, "case_variant_tenant_id");
-      return {
-        errorResponse: buildGatewayStatusResponse(400, AMBIGUOUS_TENANT_ID_MESSAGE),
-      };
-    }
-
-    const tenantValue = parseResult.body?.[TENANT_ID_KEY];
-    const tenantId = parseTenantId(typeof tenantValue === "string" ? tenantValue : null);
-    if (!tenantId) {
-      return {
-        errorResponse: buildGatewayStatusResponse(400, "Invalid or missing tenant_id"),
-      };
-    }
-
-    return { tenantId };
+    return resolveBodyTenantId(request, route, requestId);
   }
 
   const tenantLookup = await getFeedbackRecordTenant(route.recordId!);

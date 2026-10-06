@@ -69,57 +69,60 @@ export const scanTopLevelKeys = (json: string): string[] => {
     const charCode = json.charCodeAt(index);
 
     if (charCode === QUOTE) {
-      const start = index;
-      let escaped = false;
-      index++;
-      // Bounded by the length too: on input that broke the precondition, running off the end must
-      // stop rather than spin (`charCodeAt` past the end is NaN, never a quote).
-      while (index < json.length && json.charCodeAt(index) !== QUOTE) {
-        if (json.charCodeAt(index) === BACKSLASH) {
-          // Skip the escaped character, so an escaped quote never ends the string.
-          escaped = true;
-          index += 2;
-        } else {
-          index++;
-        }
-      }
-
-      if (index >= json.length) {
-        throw new SyntaxError("Unterminated string in JSON");
-      }
+      const string = readString(json, index);
 
       // Only ever true at depth 1: it is set by a depth-1 `{` or `,`.
       if (expectingKey) {
         // A key without escapes is exactly its raw text; only an escaped one needs decoding.
         keys.push(
-          escaped ? (JSON.parse(json.slice(start, index + 1)) as string) : json.slice(start + 1, index)
+          string.escaped
+            ? (JSON.parse(json.slice(index, string.end + 1)) as string)
+            : json.slice(index + 1, string.end)
         );
         expectingKey = false;
       }
+
+      index = string.end;
       continue;
     }
 
-    switch (charCode) {
-      case OPEN_OBJECT:
-      case OPEN_ARRAY:
-        depth++;
-        expectingKey = depth === 1;
-        break;
-      case CLOSE_OBJECT:
-      case CLOSE_ARRAY:
-        depth--;
-        break;
-      case COMMA:
-        if (depth === 1) {
-          expectingKey = true;
-        }
-        break;
-      default:
-        break;
+    if (charCode === OPEN_OBJECT || charCode === OPEN_ARRAY) {
+      depth++;
+      expectingKey = depth === 1;
+    } else if (charCode === CLOSE_OBJECT || charCode === CLOSE_ARRAY) {
+      depth--;
+    } else if (charCode === COMMA && depth === 1) {
+      expectingKey = true;
     }
   }
 
   return keys;
+};
+
+/**
+ * Finds the end of the JSON string that opens at `openQuote`: the index of its closing quote, and
+ * whether it holds any escape. An escaped character is skipped, so an escaped quote never ends the
+ * string. Bounded by the length too: on input that broke the scanner's precondition, running off the
+ * end must stop rather than spin (`charCodeAt` past the end is NaN, never a quote).
+ */
+const readString = (json: string, openQuote: number): { end: number; escaped: boolean } => {
+  let escaped = false;
+  let index = openQuote + 1;
+
+  while (index < json.length && json.charCodeAt(index) !== QUOTE) {
+    if (json.charCodeAt(index) === BACKSLASH) {
+      escaped = true;
+      index += 2;
+    } else {
+      index++;
+    }
+  }
+
+  if (index >= json.length) {
+    throw new SyntaxError("Unterminated string in JSON");
+  }
+
+  return { end: index, escaped };
 };
 
 /**
