@@ -56,6 +56,7 @@ const mocks = vi.hoisted(() => ({
   subscriptionSchedulesRetrieve: vi.fn(),
   subscriptionSchedulesUpdate: vi.fn(),
   subscriptionSchedulesRelease: vi.fn(),
+  subscriptionSchedulesList: vi.fn(),
   pricesList: vi.fn(),
   pricesRetrieve: vi.fn(),
   entitlementsList: vi.fn(),
@@ -177,6 +178,7 @@ vi.mock("./stripe-client", () => ({
       retrieve: mocks.subscriptionSchedulesRetrieve,
       update: mocks.subscriptionSchedulesUpdate,
       release: mocks.subscriptionSchedulesRelease,
+      list: mocks.subscriptionSchedulesList,
     },
     prices: { list: mocks.pricesList, retrieve: mocks.pricesRetrieve },
     paymentMethods: { retrieve: mocks.paymentMethodsRetrieve },
@@ -3499,6 +3501,61 @@ describe("organization-billing", () => {
       mocks.subscriptionsList.mockResolvedValue({ data: [legacySubscription(overrides)] });
     };
 
+    const stalePro = {
+      id: "sub_stale_pro",
+      status: "incomplete",
+      currency: "usd",
+      metadata: {
+        organizationId: "org_1",
+        targetPlan: "pro",
+        targetInterval: "monthly",
+        replacesSubscriptionId: "sub_legacy",
+      },
+      latest_invoice: "in_stale",
+      items: {
+        data: [
+          {
+            id: "si_stale_pro",
+            current_period_end: 1742515200,
+            price: {
+              id: "price_pro_monthly",
+              unit_amount: 8900,
+              metadata: { formbricks_plan: "pro", formbricks_price_kind: "base" },
+              product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+              recurring: { usage_type: "licensed", interval: "month" },
+            },
+          },
+        ],
+      },
+    };
+    // The state the abandoned Pro attempt leaves: legacy canceled, Hobby provisioned by the
+    // subscription.deleted webhook, and the unpaid Pro replacement.
+    const webhookHobby = {
+      id: "sub_hobby",
+      status: "active",
+      currency: "usd",
+      created: 1800000000,
+      cancel_at_period_end: false,
+      schedule: null,
+      default_payment_method: null,
+      metadata: { organizationId: "org_1" },
+      items: {
+        data: [
+          {
+            id: "si_hobby",
+            current_period_end: 1742515200,
+            price: {
+              id: "price_hobby_monthly",
+              unit_amount: 0,
+              metadata: { formbricks_plan: "hobby", formbricks_price_kind: "base" },
+              product: { id: "prod_hobby", metadata: { formbricks_plan: "hobby" }, active: true },
+              recurring: { usage_type: "licensed", interval: "month" },
+            },
+          },
+        ],
+      },
+    };
+
     const legacyCustomer = (overrides: Record<string, unknown> = {}) => ({
       id: "cus_1",
       deleted: false,
@@ -3553,6 +3610,7 @@ describe("organization-billing", () => {
       }));
       mocks.customersRetrieve.mockResolvedValue(legacyCustomer());
       mocks.invoiceItemsList.mockResolvedValue({ data: [] });
+      mocks.subscriptionSchedulesList.mockResolvedValue({ data: [] });
       mocks.quotesList.mockResolvedValue({ data: [] });
       mocks.invoicesList.mockResolvedValue({ data: [] });
       mocks.subscriptionsCancel.mockResolvedValue({ id: "sub_legacy", status: "canceled" });
@@ -3688,6 +3746,24 @@ describe("organization-billing", () => {
 
     test("an unread page of invoice items fails closed before the legacy plan is canceled", async () => {
       mocks.invoiceItemsList.mockResolvedValue({ data: [], has_more: true });
+
+      await expect(switchTo("pro")).rejects.toMatchObject({ message: "billing_currency_conflict" });
+      expect(mocks.subscriptionsCancel).not.toHaveBeenCalled();
+    });
+
+    test("another live subscription in the legacy currency is refused before the legacy plan is canceled", async () => {
+      mocks.subscriptionsList.mockResolvedValue({
+        data: [legacySubscription(), legacySubscription({ id: "sub_eur_addon" })],
+      });
+
+      await expect(switchTo("pro")).rejects.toMatchObject({ message: "billing_currency_conflict" });
+      expect(mocks.subscriptionsCancel).not.toHaveBeenCalled();
+    });
+
+    test("a not-started schedule in the legacy currency is refused before the legacy plan is canceled", async () => {
+      mocks.subscriptionSchedulesList.mockResolvedValue({
+        data: [{ id: "sub_sched_future", status: "not_started", phases: [{ currency: "eur" }] }],
+      });
 
       await expect(switchTo("pro")).rejects.toMatchObject({ message: "billing_currency_conflict" });
       expect(mocks.subscriptionsCancel).not.toHaveBeenCalled();
@@ -3937,60 +4013,6 @@ describe("organization-billing", () => {
         ...setupCheckoutSession,
         metadata: { ...setupCheckoutSession.metadata, targetPlan: "scale" },
       });
-      const stalePro = {
-        id: "sub_stale_pro",
-        status: "incomplete",
-        currency: "usd",
-        metadata: {
-          organizationId: "org_1",
-          targetPlan: "pro",
-          targetInterval: "monthly",
-          replacesSubscriptionId: "sub_legacy",
-        },
-        latest_invoice: "in_stale",
-        items: {
-          data: [
-            {
-              id: "si_stale_pro",
-              current_period_end: 1742515200,
-              price: {
-                id: "price_pro_monthly",
-                unit_amount: 8900,
-                metadata: { formbricks_plan: "pro", formbricks_price_kind: "base" },
-                product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
-                recurring: { usage_type: "licensed", interval: "month" },
-              },
-            },
-          ],
-        },
-      };
-      // The state the abandoned Pro attempt leaves: legacy canceled, Hobby provisioned by the
-      // subscription.deleted webhook, and the unpaid Pro replacement.
-      const webhookHobby = {
-        id: "sub_hobby",
-        status: "active",
-        currency: "usd",
-        created: 1800000000,
-        cancel_at_period_end: false,
-        schedule: null,
-        default_payment_method: null,
-        metadata: { organizationId: "org_1" },
-        items: {
-          data: [
-            {
-              id: "si_hobby",
-              current_period_end: 1742515200,
-              price: {
-                id: "price_hobby_monthly",
-                unit_amount: 0,
-                metadata: { formbricks_plan: "hobby", formbricks_price_kind: "base" },
-                product: { id: "prod_hobby", metadata: { formbricks_plan: "hobby" }, active: true },
-                recurring: { usage_type: "licensed", interval: "month" },
-              },
-            },
-          ],
-        },
-      };
       mocks.subscriptionsList.mockImplementation(async (params: { status?: string }) => ({
         data:
           params?.status === "incomplete"
@@ -4030,6 +4052,57 @@ describe("organization-billing", () => {
       });
     });
 
+    describe("a card-on-file retry after abandoned 3D Secure", () => {
+      const mockAbandonedState = () => {
+        mocks.subscriptionsList.mockImplementation(async (params: { status?: string }) => ({
+          data:
+            params?.status === "incomplete"
+              ? [stalePro]
+              : [legacySubscription({ status: "canceled" }), stalePro, webhookHobby],
+        }));
+        mocks.invoicesRetrieve.mockResolvedValue({
+          id: "in_stale",
+          confirmation_secret: { client_secret: "pi_stale_secret" },
+        });
+      };
+
+      test("the same plan returns the pending replacement's confirmation instead of upgrading Hobby", async () => {
+        mockAbandonedState();
+
+        const result = await switchTo("pro");
+
+        expect(result).toEqual({
+          mode: "immediate",
+          pendingChange: null,
+          clientSecret: "pi_stale_secret",
+          requiresAction: true,
+        });
+        expect(mocks.subscriptionsUpdate).not.toHaveBeenCalled();
+        expect(mocks.subscriptionsCancel).not.toHaveBeenCalled();
+      });
+
+      test("another plan cancels the pending replacement and switches the live Hobby", async () => {
+        mockAbandonedState();
+        mocks.subscriptionsUpdate.mockResolvedValue({
+          id: "sub_hobby",
+          status: "active",
+          latest_invoice: null,
+        });
+
+        const result = await switchTo("scale");
+
+        expect(mocks.subscriptionsCancel).toHaveBeenCalledWith("sub_stale_pro");
+        expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
+          "sub_hobby",
+          expect.objectContaining({
+            items: expect.arrayContaining([expect.objectContaining({ price: "price_scale_monthly" })]),
+          })
+        );
+        expect(mocks.subscriptionsCreate).not.toHaveBeenCalled();
+        expect(result).toMatchObject({ mode: "immediate", clientSecret: null, requiresAction: false });
+      });
+    });
+
     test("the upgrade preview returns null (amount-less copy) without asking Stripe to price it", async () => {
       const preview = await previewImmediateUpgradeCharge({
         organizationId: "org_1",
@@ -4044,11 +4117,21 @@ describe("organization-billing", () => {
 
     test("returning to Hobby cancels the EUR subscription and lets reconcile create the one USD Hobby", async () => {
       // resolveCurrentSubscription sees the legacy plan; reconcile then sees it canceled.
-      mocks.subscriptionsList
-        .mockResolvedValueOnce({
-          data: [legacySubscription({ default_payment_method: null, schedule: "sched_legacy" })],
-        })
-        .mockResolvedValue({ data: [legacySubscription({ status: "canceled" })] });
+      let legacyCanceled = false;
+      mocks.subscriptionsCancel.mockImplementation(async (id: string) => {
+        legacyCanceled = true;
+        return { id, status: "canceled" };
+      });
+      mocks.subscriptionsList.mockImplementation(async (params: { status?: string }) => {
+        if (params?.status === "incomplete") return { data: [] };
+        return {
+          data: [
+            legacyCanceled
+              ? legacySubscription({ status: "canceled" })
+              : legacySubscription({ default_payment_method: null, schedule: "sched_legacy" }),
+          ],
+        };
+      });
 
       const result = await switchTo("hobby");
 
