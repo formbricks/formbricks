@@ -1,3 +1,4 @@
+import DOMPurify from "isomorphic-dompurify";
 import type { CSSProperties } from "react";
 import type { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { COLOR_DEFAULTS, STYLE_DEFAULTS } from "@/lib/styling/constants";
@@ -132,6 +133,34 @@ export const suppressNestedListMarkers = (html: string): string =>
 
     return `<li${attributes} style="${NESTED_LIST_ITEM_MARKER_STYLE}">`;
   });
+
+/**
+ * What the editor writes into a headline or subheader. The email renders that HTML raw
+ * (`ElementHeader` in `@formbricks/email`), and an import or the API can store anything there, so
+ * everything else is dropped: forms, images, scripts, event handlers, non-http(s) links.
+ *
+ * `style` is not allowed: an author's inline CSS could restyle the whole email. The email's own
+ * spacing and list styles are inlined after sanitizing, in `prepareEmailRichText`.
+ *
+ * A custom `ALLOWED_URI_REGEXP` also applies to every attribute DOMPurify doesn't consider URI-safe,
+ * so `target`, `rel`, `dir` and `start` are declared URI-safe or they'd be dropped (same trap as
+ * `sanitizeFollowUpBody`). `href` stays checked.
+ */
+const EMAIL_RICH_TEXT_SANITIZE_CONFIG = {
+  ALLOWED_TAGS: ["p", "br", "span", "b", "strong", "i", "em", "u", "a", "ul", "ol", "li", "h1", "h2"],
+  ALLOWED_ATTR: ["class", "dir", "href", "target", "rel", "start", "value"],
+  ALLOWED_URI_REGEXP: /^(?:https?|mailto|tel):/i,
+  ADD_URI_SAFE_ATTR: ["target", "rel", "dir", "start"],
+};
+
+/**
+ * Turns a stored headline or subheader into the HTML the email renders. It sanitizes first and
+ * inlines the spacing and list styles after, so those survive and an author's own CSS doesn't.
+ */
+export const prepareEmailRichText = (html: string): string =>
+  suppressNestedListMarkers(
+    normalizeRichTextSpacing(DOMPurify.sanitize(html, EMAIL_RICH_TEXT_SANITIZE_CONFIG))
+  );
 
 const getPreviewDimension = (value: PreviewStyleValue, fallback: PreviewStyleValue): string => {
   const resolvedValue = value ?? fallback;
