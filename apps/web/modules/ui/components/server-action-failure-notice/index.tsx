@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { type FocusEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { registerUnexpectedServerActionResponseListener } from "@/lib/utils/unexpected-server-action-response";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -14,17 +14,24 @@ interface TServerActionFailures {
   isVisible: boolean;
   /** Whether keyboard focus was inside the notice when the latest failure replaced it. */
   restoreFocus: boolean;
+  /** Records where keyboard focus came from when it enters the notice, to hand it back on dismiss. */
+  onFocusEnter: (event: FocusEvent<HTMLElement>) => void;
   dismiss: () => void;
 }
+
+const isInsideNotice = (element: Element | null) => element?.closest(NOTICE_SELECTOR) != null;
 
 /** Tracks server-action failures nothing else reported (ENG-2899). */
 export const useServerActionFailures = (): TServerActionFailures => {
   const [state, setState] = useState({ failureCount: 0, isVisible: false, restoreFocus: false });
+  // Kept here rather than in the notice: a new failure remounts the notice, and focus moved into the
+  // new one must still return to where it was before the first.
+  const returnFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(
     () =>
       registerUnexpectedServerActionResponseListener(() => {
-        const restoreFocus = document.activeElement?.closest(NOTICE_SELECTOR) != null;
+        const restoreFocus = isInsideNotice(document.activeElement);
         setState((current) => ({ failureCount: current.failureCount + 1, isVisible: true, restoreFocus }));
       }),
     []
@@ -32,12 +39,24 @@ export const useServerActionFailures = (): TServerActionFailures => {
 
   return {
     ...state,
-    dismiss: () => setState((current) => ({ ...current, isVisible: false, restoreFocus: false })),
+    onFocusEnter: (event) => {
+      if (event.relatedTarget instanceof HTMLElement && !isInsideNotice(event.relatedTarget)) {
+        returnFocusRef.current = event.relatedTarget;
+      }
+    },
+    dismiss: () => {
+      const returnFocusTo = returnFocusRef.current;
+      returnFocusRef.current = null;
+      // Only when focus is in the notice: unmounting it would otherwise drop focus to the document body.
+      if (isInsideNotice(document.activeElement) && returnFocusTo?.isConnected) returnFocusTo.focus();
+      setState((current) => ({ ...current, isVisible: false, restoreFocus: false }));
+    },
   };
 };
 
 interface ServerActionFailureNoticeProps {
   restoreFocus: boolean;
+  onFocusEnter: (event: FocusEvent<HTMLElement>) => void;
   onDismiss: () => void;
 }
 
@@ -49,12 +68,14 @@ interface ServerActionFailureNoticeProps {
  * apply a write twice), and it does not offer a reload, which on the survey editor would discard
  * unsaved edits. The copy does not assume the user caused the request: some actions run on their own.
  *
- * Rendered by `ServerActionNotices`, keyed by the failure count: each new failure remounts the alert
- * so screen readers announce it again, and if focus was inside the old one it moves to the new one's
- * Close button instead of dropping to the document body.
+ * Rendered by `ServerActionNotices`, inside its live region and keyed by the failure count: each new
+ * failure remounts the notice so screen readers announce it again, and if focus was inside the old one
+ * it moves to the new one's Close button instead of dropping to the document body. Closing it hands
+ * focus back to where it came from (`useServerActionFailures`), for the same reason.
  */
 export const ServerActionFailureNotice = ({
   restoreFocus,
+  onFocusEnter,
   onDismiss,
 }: Readonly<ServerActionFailureNoticeProps>) => {
   const { t } = useTranslation();
@@ -65,10 +86,13 @@ export const ServerActionFailureNotice = ({
   }, [restoreFocus]);
 
   return (
+    // role="none": the live region around it announces it; role="alert" here would read it twice.
     <Alert
       data-server-action-failure-notice=""
+      role="none"
       variant="error"
-      className="pointer-events-auto max-w-sm shadow-lg">
+      className="pointer-events-auto max-w-sm shadow-lg"
+      onFocus={onFocusEnter}>
       <AlertTitle>{t("common.something_went_wrong")}</AlertTitle>
       <AlertDescription>{t("common.action_may_not_have_gone_through")}</AlertDescription>
       <AlertButton ref={closeButtonRef} onClick={onDismiss}>

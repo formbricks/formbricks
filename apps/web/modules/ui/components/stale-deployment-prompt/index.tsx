@@ -27,11 +27,8 @@ export const StaleDeploymentPrompt = () => {
   const { t } = useTranslation();
 
   return (
-    // role="alert" rather than a live region on a wrapper: the prompt mounts with its content already
-    // in place, which a live region added at the same time does not announce.
-    <div
-      role="alert"
-      className="pointer-events-auto w-full max-w-sm rounded-lg border border-slate-200 bg-white p-4 shadow-lg">
+    // No role="alert": `ServerActionNotices` renders this inside its live region, which announces it.
+    <div className="pointer-events-auto w-full max-w-sm rounded-lg border border-slate-200 bg-white p-4 shadow-lg">
       <div className="flex gap-3">
         <RefreshCwIcon className="mt-0.5 size-5 shrink-0 text-slate-500" aria-hidden="true" />
         <div className="flex flex-col items-start gap-3">

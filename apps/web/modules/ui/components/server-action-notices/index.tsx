@@ -13,26 +13,27 @@ import { StaleDeploymentPrompt, useIsStaleDeployment } from "@/modules/ui/compon
  * no `Toaster`, so these render their own surface rather than a toast. Sharing one region stacks the
  * notices instead of letting them overlap when both are up at once.
  *
- * The region exists only while a notice is showing. A modal dialog marks every element already in
- * `<body>` aria-hidden when it opens (Radix uses `aria-hidden`'s `hideOthers`), and an alert added
- * inside a hidden node is never announced -- so an always-mounted region would silence a failure
- * raised from inside a dialog. Mounting it on demand means it arrives after the dialog did.
+ * The region itself is the live region, always mounted and empty until a notice arrives, so each
+ * notice added to it is announced. It has to carry `aria-live` for a second reason: a modal dialog
+ * marks everything else in `<body>` aria-hidden when it opens (Radix uses `aria-hidden`'s
+ * `hideOthers`), and `[aria-live]` elements are the ones it leaves exposed -- without that, a notice
+ * raised from inside a dialog, or while one is open, would never be read. The notices therefore carry
+ * no `role="alert"` of their own, which would have them announced twice.
  */
 export const ServerActionNotices = () => {
   const isStale = useIsStaleDeployment();
   const failures = useServerActionFailures();
 
-  if (!isStale && !failures.isVisible) {
-    return null;
-  }
-
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-100 flex flex-col items-center gap-3 px-4 py-6 sm:items-end sm:p-6">
+    <div
+      aria-live="assertive"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-100 flex flex-col items-center gap-3 px-4 py-6 sm:items-end sm:p-6">
       {isStale && <StaleDeploymentPrompt />}
       {failures.isVisible && (
         <ServerActionFailureNotice
           key={failures.failureCount}
           restoreFocus={failures.restoreFocus}
+          onFocusEnter={failures.onFocusEnter}
           onDismiss={failures.dismiss}
         />
       )}

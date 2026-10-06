@@ -76,7 +76,7 @@ export const AutoSaveIndicator = ({
             <button
               type="button"
               className={cn(
-                "inline-flex cursor-default items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap transition-colors duration-300",
+                "focus-visible:ring-ring inline-flex cursor-default items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap transition-colors duration-300 focus-visible:ring-1 focus-visible:outline-hidden",
                 toneClassName[badge.tone]
               )}>
               {label}
@@ -87,8 +87,11 @@ export const AutoSaveIndicator = ({
       </TooltipProvider>
       {/* The live region speaks only when a save fails, with the explanation the tooltip carries. The
           visible badge is not a live region: it changes on every save ("Progress saved", then back
-          after 3s), which would talk over an author typing with a screen reader every 10 seconds. */}
-      <output className="sr-only">
+          after 3s), which would talk over an author typing with a screen reader every 10 seconds.
+          aria-live is explicit although <output> implies it: a modal dialog hides everything outside it
+          from screen readers except elements carrying the attribute, and a save can fail while one is
+          open (Radix uses aria-hidden's hideOthers). */}
+      <output aria-live="polite" className="sr-only">
         {badge.announce && (
           <>
             <span>{label}</span> <span>{tooltip}</span>
