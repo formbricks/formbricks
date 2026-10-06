@@ -427,9 +427,6 @@ helm upgrade formbricks oci://ghcr.io/formbricks/helm-charts/formbricks \
   -f values.yaml
 ```
 
-If the `formbricks-migration` Job fails, follow
-[If a migration fails](/self-hosting/advanced/migration#if-a-migration-fails) before upgrading again.
-
 For a Formbricks 4.x to 5.0 migration, confirm the following before running the upgrade:
 
 - Hub remains enabled
@@ -438,6 +435,9 @@ For a Formbricks 4.x to 5.0 migration, confirm the following before running the 
 - any required `AI_*` variables are added
 - `CUBEJS_API_SECRET` is configured (the generated app secret supplies it by default; provide an external
   endpoint if you set `cube.enabled: false`)
+
+If the `formbricks-migration` Job fails during any upgrade, follow
+[If a migration fails](/self-hosting/advanced/migration#if-a-migration-fails) before upgrading again.
 
 ## 5. Key Values
 

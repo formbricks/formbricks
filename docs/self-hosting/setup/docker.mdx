@@ -419,7 +419,8 @@ rollback procedure in [AuthZed Operations](/self-hosting/configuration/authzed-o
    ```
 
 1. Wait for PostgreSQL and complete application migrations before restarting the updated stack. Stop if a
-   command fails; do not restart against a partially migrated database.
+   command fails; do not restart against a partially migrated database. If `formbricks-migrate` fails, follow
+   [If a migration fails](/self-hosting/advanced/migration#if-a-migration-fails).
 
    ```bash
    docker compose up -d --wait postgres &&

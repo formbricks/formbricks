@@ -6,14 +6,16 @@ icon: "arrow-right"
 
 ## If a migration fails
 
-This applies to every version. One runner applies the database migrations in order: the `formbricks-migrate`
-service on Docker Compose, the `formbricks-migration` Job on Kubernetes, or `formbricks-authzed-prepare` during a
-v5 to v6 upgrade. When a migration fails, the runner stops, the database stays at the last migration that
-succeeded, and every later run refuses to continue until you resolve it.
+From Formbricks 5.3 on, one runner applies every database migration in order: the `formbricks-migrate` service on
+Docker Compose, the `formbricks-migration` Job on Kubernetes (the application pods themselves when the chart sets
+`migration.enabled: false`), or `formbricks-authzed-prepare` during a v5 to v6 upgrade. When a migration fails,
+the runner stops and no later migration runs. A failed schema migration then blocks every later run until you
+resolve it; a failed data migration is retried on the next run.
 
 <Warning>
   Do not delete volumes, restore a backup or roll the images back before you know which migration failed and
-  why. Most failures are fixed in place.
+  why. Most failures are fixed in place. The output below can contain SQL and data from your instance, so keep
+  it out of public issues.
 </Warning>
 
 ### Open a SQL session
@@ -30,6 +32,10 @@ The steps below run SQL as the user that owns the Formbricks tables:
     ```bash
     kubectl exec -it -n formbricks formbricks-postgresql-0 -- psql -U formbricks -d formbricks
     ```
+
+    <Info>
+      If your PostgreSQL pod has a different name, run `kubectl get pods -n formbricks` to find it.
+    </Info>
   </Tab>
 </Tabs>
 
@@ -42,15 +48,17 @@ The runner's log names it. Read it with `docker compose logs --tail=200 formbric
 `kubectl logs -n formbricks job/formbricks-migration` (by default the chart deletes the Job 300 seconds after it
 fails). A first failure prints `Schema migration batch failed:` with every migration in that batch; the error
 names the failed one as `Migration name:`, or as `migration_name="…"` when the real error was hidden. Every run
-after that stops with `P3009` and names it again. The database always knows:
+after that stops with `P3009` and names it again. `formbricks-authzed-prepare` prints only
+`upgrade_database_migration_failed`, so go straight to the database, which always knows:
 
 ```sql
 SELECT migration_name, started_at FROM "_prisma_migrations"
 WHERE finished_at IS NULL AND rolled_back_at IS NULL;
 ```
 
-If that returns no row but the log says `Data migration … failed`, see
-[Data migrations](#data-migrations) below.
+If that returns no row but the log says `Data migration … failed`, see [Data migrations](#data-migrations)
+below. If the log just stops without an error, the runner was stopped (Compose stops it after 300 seconds) and
+its last statement may still be running in PostgreSQL: check that first, as step 4 describes.
 
 ### 2. Find the real error
 
@@ -70,19 +78,43 @@ a backup, or an old Formbricks pod still running. Stop it, or retry at a quieter
 
 ### 3. Check what the migration left behind
 
-Open the failed migration's file at the release you are upgrading to, for example
-`https://github.com/formbricks/formbricks/blob/6.0.2/packages/database/migration/<migration_name>/migration.sql`:
+Read the failed migration's file. A released migration never changes, so the copy in your image is the one that
+ran:
 
-- **It starts with `BEGIN;` or contains a `DO $$` block:** PostgreSQL rolled the whole file back, so there is
-  nothing to undo.
-- **Otherwise:** the statements before the failing one may have stayed applied. If every statement is safe to
-  repeat (`IF NOT EXISTS`, `IF EXISTS`, `CREATE OR REPLACE`), there is still nothing to undo. If not, check which
-  of them took effect and undo those before you continue, or the retry fails on them.
+```bash
+docker compose run --rm --no-deps --entrypoint cat formbricks-migrate \
+  packages/database/dist/migration/<migration_name>/migration.sql
+```
+
+It is also on GitHub under any release that ships it, for example
+`https://github.com/formbricks/formbricks/blob/6.0.2/packages/database/migration/<migration_name>/migration.sql`.
+
+- **It starts with `BEGIN;`:** PostgreSQL rolled the whole file back, so there is nothing to undo.
+- **Otherwise:** the statements before the failing one may have stayed applied. Check which took effect
+  (`\d "Table"` for schema changes, a `SELECT` for data) and undo those before you continue, except:
+  - `IF NOT EXISTS`, `IF EXISTS` and `CREATE OR REPLACE` statements are safe to repeat, apart from a failed
+    `CREATE INDEX CONCURRENTLY`. That leaves an invalid index which `IF NOT EXISTS` then skips: find it with
+    `SELECT indexrelid::regclass FROM pg_index WHERE NOT indisvalid;` and drop it with `DROP INDEX CONCURRENTLY`.
+  - An `UPDATE`, `INSERT` or `DELETE` is safe to repeat only if running it twice changes nothing.
 
 ### 4. Mark it rolled back and run the migrations again
 
+First make sure nothing is still running it: the Compose runner has exited, or the Job has no running pod
+(`kubectl get pods -n formbricks -l job-name=formbricks-migration`), and this returns no row:
+
+```sql
+SELECT pid, state, now() - query_start AS running_for, left(query, 80) AS query
+FROM pg_stat_activity
+WHERE pid IN (SELECT pid FROM pg_locks WHERE locktype = 'advisory' AND objid = 72707369);
+```
+
+Prisma holds that lock while it applies migrations, and a statement keeps running after its runner is stopped.
+Wait for it to end, then repeat step 3: a statement that finished after the runner stopped has taken effect,
+though Prisma still records the migration as failed.
+
 Once the cause is fixed, mark the failed migration rolled back. This is what
-`prisma migrate resolve --rolled-back` does:
+`prisma migrate resolve --rolled-back` does. It should report `UPDATE 1`; `UPDATE 0` means the name is wrong or
+the migration is not recorded as failed:
 
 ```sql
 UPDATE "_prisma_migrations" SET rolled_back_at = now()
@@ -97,6 +129,15 @@ Then run the migrations again:
     docker compose run --rm --no-deps formbricks-migrate &&
     docker compose up -d
     ```
+
+    The service stops the runner after 300 seconds. If a migration needs longer, run it without that limit:
+
+    ```bash
+    docker compose run --rm --no-deps formbricks-migrate "node packages/database/dist/scripts/apply-migrations.js"
+    ```
+
+    During a v5 to v6 upgrade, re-run `formbricks-authzed-prepare` as the
+    [v6 maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade) describes instead.
   </Tab>
   <Tab title="Kubernetes">
     Delete the failed Job, then run the same `helm upgrade` (or Argo CD sync) again. Helm does not re-run a Job
@@ -106,7 +147,7 @@ Then run the migrations again:
     kubectl delete job -n formbricks formbricks-migration --ignore-not-found
     ```
 
-    During a v5 to v6 upgrade, re-run the preparation Job as the
+    During a v5 to v6 upgrade, delete and re-create the `formbricks-v6-prepare` Job as the
     [v6 maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade) describes instead.
   </Tab>
 </Tabs>
@@ -116,8 +157,8 @@ Then run the migrations again:
 Most data migrations run in a transaction of their own and leave nothing behind when they fail; the large ones
 commit in batches and are written to resume where they stopped. Either way the runner records the failure and
 retries the migration on the next run: fix the cause and run the migrations again. The exception is
-`Migration is pending. Please resolve the issue manually.`, left by a run that was interrupted. When no other
-migration is running, mark it failed so the next run retries it:
+`Migration is pending. Please resolve the issue manually.`, left by an interrupted run of a version before 5.3.
+Make sure nothing is running it (step 4), then mark it failed so the next run retries it:
 
 ```sql
 SELECT name, status, started_at FROM "DataMigration" WHERE status <> 'applied';
@@ -508,7 +549,8 @@ is the full list rather than a summary:
   **not** wait for `formbricks-migrate` — it has no `depends_on` on that service and skips startup
   migrations itself — so after the documented `docker compose down && docker compose up -d` the two come up
   in parallel: you get downtime while the app boots, and then blocked writes for however much of the index
-  build is left once it starts serving.
+  build is left once it starts serving. Compose also stops the migration runner after 300 seconds, so a longer
+  build ends as a failed migration; see [If a migration fails](#if-a-migration-fails).
 </Warning>
 
 #### Build the response index before you upgrade
