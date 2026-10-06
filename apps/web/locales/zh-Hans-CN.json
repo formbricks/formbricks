@@ -2676,6 +2676,7 @@
       "appearance_automatic_same_as_light": "自动:与浅色相同",
       "appearance_dark": "深色",
       "appearance_dark_contrast_warning": "{field}在深色卡片上不易看清({ratio} : 1)。请为它设置一个深色模式下的值。",
+      "appearance_dark_contrast_warning_button_text": "在深色模式下,{field}与按钮背景的对比度过低,难以辨认({ratio} : 1)。请为其设置一个深色模式的值。",
       "appearance_dark_contrast_warning_shared": "{field}在深色卡片上很难看清（{ratio} : 1）。它在浅色和深色模式下是相同的，所以请选择一种在两种模式下都清晰易读的品牌色。",
       "appearance_dark_description": "当应用请求深色模式时显示。你留空的颜色会根据品牌色自动生成。链接问卷将保持浅色。",
       "appearance_light": "浅色",

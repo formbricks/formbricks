@@ -2676,6 +2676,7 @@
       "appearance_automatic_same_as_light": "Automatiskt: samma som den ljusa färgen",
       "appearance_dark": "Mörkt",
       "appearance_dark_contrast_warning": "{field} syns dåligt mot det mörka kortet ({ratio} : 1). Ange ett mörkt värde för det.",
+      "appearance_dark_contrast_warning_button_text": "{field} är svårt att läsa mot knappbakgrunden i mörkt läge ({ratio} : 1). Ange ett mörkt värde för den.",
       "appearance_dark_contrast_warning_shared": "{field} syns dåligt mot det mörka kortet ({ratio} : 1). Färgen är densamma i både ljust och mörkt läge, så välj en varumärkesfärg som är lättläst i båda.",
       "appearance_dark_description": "Visas när appen ber om mörkt läge. Färger som du lämnar tomma utgår från din varumärkesfärg. Länkenkäter förblir ljusa.",
       "appearance_light": "Ljust",

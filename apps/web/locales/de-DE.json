@@ -2676,6 +2676,7 @@
       "appearance_automatic_same_as_light": "Automatisch: wie die helle Farbe",
       "appearance_dark": "Dunkel",
       "appearance_dark_contrast_warning": "{field} ist auf der dunklen Karte schlecht zu erkennen ({ratio} : 1). Lege dafür einen dunklen Wert fest.",
+      "appearance_dark_contrast_warning_button_text": "{field} ist auf dem Button-Hintergrund im Dunkelmodus schwer zu lesen ({ratio} : 1). Lege dafür einen dunklen Wert fest.",
       "appearance_dark_contrast_warning_shared": "{field} ist auf der dunklen Karte schwer zu erkennen ({ratio} : 1). Die Farbe ist im hellen und im dunklen Modus identisch. Wähl daher eine Markenfarbe, die in beiden Modi gut lesbar ist.",
       "appearance_dark_description": "Wird angezeigt, wenn die App den Dark Mode anfordert. Farben, die Du leer lässt, werden aus Deiner Markenfarbe abgeleitet. Link-Umfragen bleiben hell.",
       "appearance_light": "Hell",

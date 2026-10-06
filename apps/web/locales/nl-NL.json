@@ -2676,6 +2676,7 @@
       "appearance_automatic_same_as_light": "Automatisch: hetzelfde als de lichte kleur",
       "appearance_dark": "Donker",
       "appearance_dark_contrast_warning": "{field} is slecht zichtbaar op de donkere kaart ({ratio} : 1). Stel er een donkere waarde voor in.",
+      "appearance_dark_contrast_warning_button_text": "{field} is slecht leesbaar op de knopachtergrond in de donkere modus ({ratio} : 1). Stel er een donkere waarde voor in.",
       "appearance_dark_contrast_warning_shared": "{field} is slecht zichtbaar op de donkere kaart ({ratio} : 1). Het is hetzelfde in licht en donker, dus kies een merkkleur die op beide goed leesbaar is.",
       "appearance_dark_description": "Wordt getoond wanneer de app om de donkere modus vraagt. Kleuren die je leeg laat, worden afgeleid van je merkkleur. Linkenquêtes blijven licht.",
       "appearance_light": "Licht",
