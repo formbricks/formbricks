@@ -1,9 +1,13 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import { normalizeHex } from "@/lib/utils/colors";
+import { isRtlText } from "./lib/rtl-text";
 
 export const GET = async (req: NextRequest) => {
   const name = req.nextUrl.searchParams.get("name");
+  // Right-to-left names are left off the card entirely - the renderer cannot lay them out, and
+  // Arabic crashes it outright. See `isRtlText` for why this is a drop rather than a fix.
+  const title = isRtlText(name) ? null : name;
   // The value lands unescaped in SVG attributes, so only a canonical #rrggbb may pass; anything else
   // (e.g. a query string mangled by a link-preview fetcher) falls back to the defaults.
   const brandColor = normalizeHex(req.nextUrl.searchParams.get("brandColor") ?? "");
@@ -91,7 +95,9 @@ export const GET = async (req: NextRequest) => {
                   textAlign: "left",
                   marginTop: "3.75rem",
                 }}>
-                {name}
+                {/* Non-breaking space keeps the heading's line height when there is no title, so the
+                    card below it does not shift up and look half-rendered. */}
+                {title || "\u00A0"}
               </h2>
             </div>
           </div>
