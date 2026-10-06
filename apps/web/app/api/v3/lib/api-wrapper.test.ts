@@ -1035,3 +1035,115 @@ describe("request array budget (ENG-3384)", () => {
     });
   });
 });
+
+describe("per-route body limit (bodyLimitBytes)", () => {
+  const ROUTE_LIMIT = DEFAULT_REQUEST_BODY_LIMIT_BYTES * 2;
+
+  /** A JSON body of exactly `bytes` bytes, as `{"a":"xxx…"}`. */
+  const jsonBodyOfSize = (bytes: number) => `{"a":"${"x".repeat(bytes - 8)}"}`;
+
+  /** No Content-Length: the limit has to be enforced while reading, not from the header. */
+  const streamedPost = (body: string) =>
+    new NextRequest("http://localhost/api/internal/surveys/import/stream", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(body));
+          controller.close();
+        },
+      }),
+      duplex: "half",
+    } as ConstructorParameters<typeof NextRequest>[1]);
+
+  const declaredBodyRoute = (handler: Parameters<typeof withV3ApiWrapper>[0]["handler"], limit?: number) =>
+    withV3ApiWrapper({
+      auth: "none",
+      schemas: { body: z.object({ a: z.string() }) },
+      ...(limit === undefined ? {} : { bodyLimitBytes: limit }),
+      handler,
+    });
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  test("a route without bodyLimitBytes still caps a streamed body at the 2 MB default", async () => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+
+    const response = await declaredBodyRoute(handler)(
+      streamedPost(jsonBodyOfSize(DEFAULT_REQUEST_BODY_LIMIT_BYTES + 1)),
+      {} as never
+    );
+
+    expect(response.status).toBe(413);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("accepts a body above the default when the route allows it", async () => {
+    const handler = vi.fn(async ({ parsedInput }) => Response.json({ length: parsedInput.body.a.length }));
+    const body = jsonBodyOfSize(DEFAULT_REQUEST_BODY_LIMIT_BYTES + 1024);
+
+    const response = await declaredBodyRoute(handler, ROUTE_LIMIT)(streamedPost(body), {} as never);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ length: body.length - 8 });
+  });
+
+  test("refuses a streamed body one byte over the route's limit, naming that limit", async () => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+
+    const response = await declaredBodyRoute(handler, ROUTE_LIMIT)(
+      streamedPost(jsonBodyOfSize(ROUTE_LIMIT + 1)),
+      {} as never
+    );
+
+    expect(response.status).toBe(413);
+    expect(handler).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toMatchObject({
+      code: "payload_too_large",
+      detail: `Request body must not exceed ${ROUTE_LIMIT} bytes`,
+    });
+  });
+
+  test("refuses from the Content-Length header before reading the body", async () => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+
+    const response = await declaredBodyRoute(handler, ROUTE_LIMIT)(
+      new NextRequest("http://localhost/api/internal/surveys/import/stream", {
+        method: "POST",
+        body: "{}",
+        headers: { "Content-Type": "application/json", "Content-Length": String(ROUTE_LIMIT + 1) },
+      }),
+      {} as never
+    );
+
+    expect(response.status).toBe(413);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("applies to a route without a body schema too", async () => {
+    const handler = vi.fn(async ({ req }: { req: NextRequest }) =>
+      Response.json({ size: (await req.text()).length })
+    );
+    const body = jsonBodyOfSize(DEFAULT_REQUEST_BODY_LIMIT_BYTES + 1024);
+    const route = withV3ApiWrapper({ auth: "none", bodyLimitBytes: ROUTE_LIMIT, handler });
+
+    const accepted = await route(streamedPost(body), {} as never);
+    const refused = await route(streamedPost(jsonBodyOfSize(ROUTE_LIMIT + 1)), {} as never);
+
+    expect(accepted.status).toBe(200);
+    await expect(accepted.json()).resolves.toEqual({ size: body.length });
+    expect(refused.status).toBe(413);
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  test.each([0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY])(
+    "refuses to build a route with bodyLimitBytes %s",
+    (bodyLimitBytes) => {
+      expect(() =>
+        withV3ApiWrapper({ auth: "none", bodyLimitBytes, handler: async () => new Response(null) })
+      ).toThrow(/bodyLimitBytes must be a positive integer/);
+    }
+  );
+});

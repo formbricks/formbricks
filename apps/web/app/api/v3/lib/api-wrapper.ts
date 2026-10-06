@@ -4,7 +4,11 @@ import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
-import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
+import {
+  DEFAULT_REQUEST_BODY_LIMIT_BYTES,
+  RequestBodyTooLargeError,
+  parseJsonBodyWithLimit,
+} from "@/app/lib/api/request-body";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getSession } from "@/modules/auth/lib/session";
@@ -59,9 +63,26 @@ export type TWithV3ApiWrapperParams<S extends TV3Schemas | undefined, TProps = u
   schemas?: S;
   rateLimit?: boolean;
   customRateLimitConfig?: TRateLimitConfig;
+  /**
+   * The largest request body this route reads, in bytes. Defaults to `DEFAULT_REQUEST_BODY_LIMIT_BYTES`
+   * (2 MB). Applies to declared and undeclared bodies alike, and is enforced while reading, so a body
+   * sent without a `Content-Length` header is cut off at the limit rather than buffered whole.
+   *
+   * Raise it only for a route that genuinely takes a file-sized body, and keep it below Next's
+   * `proxyClientMaxBodySize` (`next.config.mjs`): Next truncates a longer body before this reader sees
+   * it, so the caller would get a 400 for malformed JSON instead of a 413.
+   */
+  bodyLimitBytes?: number;
   action?: TAuditAction;
   targetType?: TAuditTarget;
   handler: (params: TV3HandlerParams<TV3ParsedInput<S>, TProps>) => MaybePromise<Response>;
+};
+
+/** What the input-parsing steps need from the request beyond the request itself. */
+type TV3ParseContext = {
+  requestId: string;
+  instance: string;
+  bodyLimitBytes: number;
 };
 
 function getUnauthenticatedDetail(authMode: TV3AuthMode): string {
@@ -288,12 +309,11 @@ function arrayBudgetFailure(
 async function parseV3Body(
   req: NextRequest,
   schema: TV3Schema,
-  requestId: string,
-  instance: string
+  { requestId, instance, bodyLimitBytes }: TV3ParseContext
 ): Promise<{ ok: true; body: unknown } | TV3InputParseFailure> {
   let bodyData: unknown;
   try {
-    bodyData = await parseJsonBodyWithLimit(req);
+    bodyData = await parseJsonBodyWithLimit(req, bodyLimitBytes);
   } catch (error) {
     if (error instanceof RequestBodyTooLargeError) {
       return bodyTooLargeFailure(error, requestId, instance);
@@ -328,8 +348,7 @@ async function parseV3Body(
  */
 async function preflightUndeclaredBody(
   req: NextRequest,
-  requestId: string,
-  instance: string
+  { requestId, instance, bodyLimitBytes }: TV3ParseContext
 ): Promise<TV3InputParseFailure | null> {
   if (req.method === "GET" || req.method === "HEAD" || req.body === null) {
     return null;
@@ -337,7 +356,7 @@ async function preflightUndeclaredBody(
 
   let bodyData: unknown;
   try {
-    bodyData = await parseJsonBodyWithLimit(req.clone());
+    bodyData = await parseJsonBodyWithLimit(req.clone(), bodyLimitBytes);
   } catch (error) {
     return error instanceof RequestBodyTooLargeError ? bodyTooLargeFailure(error, requestId, instance) : null;
   }
@@ -349,20 +368,20 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
   req: NextRequest,
   props: TProps,
   schemas: S | undefined,
-  requestId: string,
-  instance: string
+  context: TV3ParseContext
 ): Promise<{ ok: true; parsedInput: TV3ParsedInput<S> } | TV3InputParseFailure> {
+  const { requestId, instance } = context;
   const parsedInput = {} as TV3ParsedInput<S>;
 
   if (schemas?.body) {
-    const bodyResult = await parseV3Body(req, schemas.body, requestId, instance);
+    const bodyResult = await parseV3Body(req, schemas.body, context);
     if (!bodyResult.ok) {
       return bodyResult;
     }
 
     parsedInput.body = bodyResult.body as TV3ParsedInput<S>["body"];
   } else {
-    const preflightFailure = await preflightUndeclaredBody(req, requestId, instance);
+    const preflightFailure = await preflightUndeclaredBody(req, context);
     if (preflightFailure) {
       return preflightFailure;
     }
@@ -530,10 +549,18 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
     schemas,
     rateLimit = true,
     customRateLimitConfig,
+    bodyLimitBytes = DEFAULT_REQUEST_BODY_LIMIT_BYTES,
     handler,
     action,
     targetType,
   } = params;
+
+  // A misconfigured limit is a programming error in the route module, so fail when the module loads
+  // rather than on the first request: NaN or a fraction would make every body "too large", and a zero
+  // or negative limit would refuse every request with a body.
+  if (!Number.isSafeInteger(bodyLimitBytes) || bodyLimitBytes <= 0) {
+    throw new Error(`withV3ApiWrapper: bodyLimitBytes must be a positive integer, got ${bodyLimitBytes}`);
+  }
 
   return async (req: NextRequest, props: TProps): Promise<Response> => {
     const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID();
@@ -566,7 +593,11 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         return rateLimitResponse;
       }
 
-      const parsedInputResult = await parseV3Input(req, props, schemas, requestId, instance);
+      const parsedInputResult = await parseV3Input(req, props, schemas, {
+        requestId,
+        instance,
+        bodyLimitBytes,
+      });
       if (!parsedInputResult.ok) {
         // The count and the first few names, never the array: it is as long as the caller made it,
         // and a `reason` can echo caller input (ENG-3384).
