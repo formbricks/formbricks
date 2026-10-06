@@ -66,7 +66,39 @@ const serializeIncludingErrors = (value: unknown): string => {
   });
 };
 
-describe("proxyFeedbackRecordsRequest", () => {
+/**
+ * Wraps a request the way Next's app-route runtime hands it to a route handler. For the default
+ * `dynamic = "auto"`, `proxyNextRequest` (next/dist/server/route-modules/app-route/module.js) puts the
+ * NextRequest behind a Proxy whose getter binds methods to the real target, and whose `clone()` returns
+ * the cloned Request behind another Proxy. Reading through it works; handing it to a Request constructor
+ * as `input` does not, because fetch objects keep their state in private fields a Proxy cannot carry
+ * (nodejs/undici#4290). Building tests from a bare NextRequest is what let that ship unnoticed.
+ */
+const wrapLikeNextAppRoute = (request: NextRequest): NextRequest => {
+  const handlers: ProxyHandler<Request> = {
+    get(target, prop) {
+      if (prop === "clone") return () => new Proxy(target.clone(), handlers);
+      const value: unknown = Reflect.get(target, prop, target);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  };
+
+  return new Proxy(request, handlers) as NextRequest;
+};
+
+const handlerRequestShapes: [string, (request: NextRequest) => NextRequest][] = [
+  ["a plain NextRequest", (request) => request],
+  ["the proxied request Next passes to route handlers", wrapLikeNextAppRoute],
+];
+
+/** The single Hub hop, as the URL and init the proxy handed to `fetch`, plus the Request they make. */
+const hubCall = (fetchMock: ReturnType<typeof vi.fn>) => {
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+  const [url, init] = fetchMock.mock.calls[0] as [URL, RequestInit];
+  return { url, init, request: new Request(url, init) };
+};
+
+describe.each(handlerRequestShapes)("proxyFeedbackRecordsRequest with %s", (_shape, asHandlerRequest) => {
   beforeEach(() => {
     vi.clearAllMocks();
     runtime.isProduction = false;
@@ -98,23 +130,28 @@ describe("proxyFeedbackRecordsRequest", () => {
     const fetchMock = vi.fn().mockResolvedValue(Response.json({ data: [] }));
     vi.stubGlobal("fetch", fetchMock);
 
-    await proxyFeedbackRecordsRequest(new NextRequest(requestUrl));
+    await proxyFeedbackRecordsRequest(asHandlerRequest(new NextRequest(requestUrl)));
 
-    const hubRequest = fetchMock.mock.calls[0][0] as Request;
-    expect(hubRequest.url).toBe(expectedHubUrl);
-    expect(fetchMock).toHaveBeenCalledWith(hubRequest, { cache: "no-store" });
+    const { url, init } = hubCall(fetchMock);
+    expect(url.href).toBe(expectedHubUrl);
+    expect(init.method).toBe("GET");
+    // A bodyless request must not carry `duplex`, which undici only accepts alongside a body.
+    expect(init.body).toBeUndefined();
+    expect(init).not.toHaveProperty("duplex");
   });
 
-  test("authorizes a cloned request before forwarding the original body", async () => {
+  test("authorizes the incoming request and forwards exactly the body it authorized", async () => {
+    // `tenant_id` decides authorization, so the Hub must receive the bytes the authorizer read and no
+    // others — the clone has to be taken before authorization consumes the body.
     const body = JSON.stringify({ tenant_id: "dir_1", text: "Feedback" });
+    let authorizedBody: string | undefined;
     mockAuthorizeGatewayRequest.mockImplementationOnce(async ({ request }: { request: NextRequest }) => {
-      expect(await request.text()).toBe(body);
+      authorizedBody = await request.text();
       return new Response(null, { status: 200 });
     });
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 201 }));
     vi.stubGlobal("fetch", fetchMock);
-
-    await proxyFeedbackRecordsRequest(
+    const request = asHandlerRequest(
       new NextRequest("http://localhost:3000/api/v3/feedbackRecords", {
         method: "POST",
         body,
@@ -125,17 +162,90 @@ describe("proxyFeedbackRecordsRequest", () => {
       })
     );
 
+    await proxyFeedbackRecordsRequest(request);
+
     const authorizationInput = mockAuthorizeGatewayRequest.mock.calls[0][0];
+    // The same object the production ext_authz route passes: no reconstruction in between.
+    expect(authorizationInput.request).toBe(request);
     expect(authorizationInput.originalRequest).toEqual({
       method: "POST",
       url: new URL("http://localhost:3000/api/v3/feedbackRecords"),
     });
     expect(authorizationInput.requestId).toBe("request_1");
+    expect(authorizedBody).toBe(body);
 
-    const hubRequest = fetchMock.mock.calls[0][0] as Request;
+    const { init, request: hubRequest } = hubCall(fetchMock);
+    expect(init).toHaveProperty("duplex", "half");
     expect(hubRequest.method).toBe("POST");
     expect(hubRequest.headers.get("content-type")).toBe("application/json");
-    expect(await hubRequest.text()).toBe(body);
+    expect(await hubRequest.text()).toBe(authorizedBody);
+  });
+
+  test("gives the authorizer the request's cookies for session authentication", async () => {
+    let sessionCookie: string | undefined;
+    mockAuthorizeGatewayRequest.mockImplementationOnce(async ({ request }: { request: NextRequest }) => {
+      sessionCookie = request.cookies.get("formbricks.session_token")?.value;
+      return new Response(null, { status: 200 });
+    });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ data: [] })));
+
+    await proxyFeedbackRecordsRequest(
+      asHandlerRequest(
+        new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1", {
+          headers: { cookie: "formbricks.session_token=session_1" },
+        })
+      )
+    );
+
+    expect(sessionCookie).toBe("session_1");
+  });
+
+  test("aborts the Hub call when the client disconnects", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ data: [] }));
+    vi.stubGlobal("fetch", fetchMock);
+    const clientConnection = new AbortController();
+
+    await proxyFeedbackRecordsRequest(
+      asHandlerRequest(
+        new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1", {
+          signal: clientConnection.signal,
+        })
+      )
+    );
+    const { init } = hubCall(fetchMock);
+    expect(init.signal?.aborted).toBe(false);
+
+    clientConnection.abort();
+
+    expect(init.signal?.aborted).toBe(true);
+  });
+
+  test("never lets Next cache a Hub response, since every hop shares one service credential", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ data: [] }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await proxyFeedbackRecordsRequest(
+      asHandlerRequest(new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1"))
+    );
+
+    expect(hubCall(fetchMock).init.cache).toBe("no-store");
+  });
+
+  test("passes a Hub redirect to the caller instead of following it", async () => {
+    const hubRedirect = new Response(null, {
+      status: 307,
+      headers: { location: "/v1/feedback-records/record_1" },
+    });
+    const fetchMock = vi.fn().mockResolvedValue(hubRedirect);
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await proxyFeedbackRecordsRequest(
+      asHandlerRequest(new NextRequest("http://localhost:3000/api/v3/feedbackRecords/record_1"))
+    );
+
+    expect(hubCall(fetchMock).init.redirect).toBe("manual");
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("/v1/feedback-records/record_1");
   });
 
   test("replaces client credentials with the internal Hub credential", async () => {
@@ -143,19 +253,21 @@ describe("proxyFeedbackRecordsRequest", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1", {
-        headers: {
-          authorization: "Bearer client-token",
-          connection: "keep-alive, X-Client-Context",
-          cookie: "session=secret",
-          host: "localhost:3000",
-          "x-api-key": "fbk_client-key",
-          "x-client-context": "sensitive-client-context",
-        },
-      })
+      asHandlerRequest(
+        new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1", {
+          headers: {
+            authorization: "Bearer client-token",
+            connection: "keep-alive, X-Client-Context",
+            cookie: "session=secret",
+            host: "localhost:3000",
+            "x-api-key": "fbk_client-key",
+            "x-client-context": "sensitive-client-context",
+          },
+        })
+      )
     );
 
-    const hubRequest = fetchMock.mock.calls[0][0] as Request;
+    const { request: hubRequest } = hubCall(fetchMock);
     expect(hubRequest.headers.get("authorization")).toBe("Bearer hub-api-key");
     expect(hubRequest.headers.has("cookie")).toBe(false);
     expect(hubRequest.headers.has("x-api-key")).toBe(false);
@@ -175,7 +287,7 @@ describe("proxyFeedbackRecordsRequest", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(hubResponse));
 
     const response = await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1")
+      asHandlerRequest(new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1"))
     );
 
     expect(response).toBe(hubResponse);
@@ -191,7 +303,7 @@ describe("proxyFeedbackRecordsRequest", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const response = await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1")
+      asHandlerRequest(new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1"))
     );
 
     expect(response).toBe(authorizationResponse);
@@ -206,9 +318,11 @@ describe("proxyFeedbackRecordsRequest", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const response = await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1", {
-        method: "PUT",
-      })
+      asHandlerRequest(
+        new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1", {
+          method: "PUT",
+        })
+      )
     );
 
     expect(response.status).toBe(400);
@@ -221,7 +335,7 @@ describe("proxyFeedbackRecordsRequest", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const response = await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/api/v3/feedbackRecordsFoo")
+      asHandlerRequest(new NextRequest("http://localhost:3000/api/v3/feedbackRecordsFoo"))
     );
 
     expect(response.status).toBe(400);
@@ -242,11 +356,13 @@ describe("proxyFeedbackRecordsRequest", () => {
     );
 
     const response = await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1", {
-        headers: {
-          "x-request-id": "request_1",
-        },
-      })
+      asHandlerRequest(
+        new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1", {
+          headers: {
+            "x-request-id": "request_1",
+          },
+        })
+      )
     );
 
     expect(response.status).toBe(502);
@@ -277,7 +393,7 @@ describe("proxyFeedbackRecordsRequest", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const response = await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1")
+      asHandlerRequest(new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1"))
     );
 
     expect(response.status).toBe(404);
