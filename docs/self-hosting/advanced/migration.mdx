@@ -79,24 +79,28 @@ a backup, or an old Formbricks pod still running. Stop it, or retry at a quieter
 ### 3. Check what the migration left behind
 
 First make sure nothing is still running it: the Compose runner has exited, or the Job has no running pod
-(`kubectl get pods -n formbricks -l job-name=formbricks-migration`), and this returns no row:
+(`kubectl get pods -n formbricks -l job-name=formbricks-migration`). A statement keeps running in PostgreSQL after
+its runner is stopped, so also list what the database is still running:
 
 ```sql
-SELECT pid, state, now() - query_start AS running_for, left(query, 80) AS query
+SELECT pid, now() - query_start AS running_for, left(query, 80) AS query,
+       pid IN (SELECT pid FROM pg_locks WHERE locktype = 'advisory' AND objid = 72707369) AS migration_lock
 FROM pg_stat_activity
-WHERE pid IN (SELECT pid FROM pg_locks WHERE locktype = 'advisory' AND objid = 72707369);
+WHERE datname = current_database() AND state <> 'idle' AND pid <> pg_backend_pid();
 ```
 
-Prisma holds that lock while it applies migrations, and a statement keeps running after its runner is stopped.
-Wait for it to end: a statement that finishes after the runner stopped has taken effect, though Prisma still
-records the migration as failed.
+`migration_lock` marks a schema migration: Prisma holds that lock while it applies one. Data migrations take no
+such lock, so also look for statements on the tables the migration changes. Wait for any migration statement to
+end: one that finishes after the runner stopped has taken effect, though the migration is still recorded as
+failed.
 
 Then read the failed migration's file. A released migration never changes, so the copy in your image is the one
 that ran:
 
 ```bash
+migration_name='<the name from step 1>'
 docker compose run --rm --no-deps --entrypoint cat formbricks-migrate \
-  packages/database/dist/migration/<migration_name>/migration.sql
+  "packages/database/dist/migration/${migration_name}/migration.sql"
 ```
 
 It is also on GitHub under any release that ships it, for example
@@ -160,7 +164,7 @@ Most data migrations run in a transaction of their own and leave nothing behind 
 commit in batches and are written to resume where they stopped. Either way the runner records the failure and
 retries the migration on the next run: fix the cause and run the migrations again. The exception is
 `Migration is pending. Please resolve the issue manually.`, left by an interrupted run of a version before 5.3.
-Make sure the runner has exited, then mark it failed so the next run retries it:
+Make sure nothing is still running it (step 3), then mark it failed so the next run retries it:
 
 ```sql
 SELECT name, status, started_at FROM "DataMigration" WHERE status <> 'applied';
