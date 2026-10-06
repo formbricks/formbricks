@@ -184,14 +184,17 @@ export const ThemeStyling = ({
           </AlertDescription>
         </Alert>
         {customCssAccess && (
-          <WorkspaceCustomCssCard
-            workspaceId={workspaceId}
-            access={{ ...customCssAccess, canEdit: false }}
-            appearance={appearance}
-            open={customCssOpen}
-            setOpen={setCustomCssOpen}
-            onPreviewCssChange={setCustomCssPreview}
-          />
+          <>
+            <StylingAppearanceToggle appearance={appearance} onChange={setAppearance} />
+            <WorkspaceCustomCssCard
+              workspaceId={workspaceId}
+              access={{ ...customCssAccess, canEdit: false }}
+              appearance={appearance}
+              open={customCssOpen}
+              setOpen={setCustomCssOpen}
+              onPreviewCssChange={setCustomCssPreview}
+            />
+          </>
         )}
       </div>
     );
