@@ -67,12 +67,16 @@ export const findRecentDuplicateResponse = async ({
   if (!contactId || !canFoldSubmission({ surveyType, finished })) return null;
 
   // Served by the (contactId, createdAt) index; bounded because a contact has a handful of
-  // responses in any one minute.
+  // responses in any one minute. Unfinished rows are filtered here, not only in the predicate, so
+  // they can't use up `take`. A response a full quota screened out is skipped too: the caller
+  // answers a fold with `quotaFull: false`, which is only the original's outcome when it was not.
   const candidates = await prisma.response.findMany({
     where: {
       surveyId,
       contactId,
+      finished: true,
       createdAt: { gte: new Date(now.getTime() - DUPLICATE_RESPONSE_WINDOW_MS) },
+      quotaLinks: { none: { status: "screenedOut" } },
     },
     select: { id: true, data: true, finished: true },
     orderBy: { createdAt: "desc" },

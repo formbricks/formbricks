@@ -93,7 +93,9 @@ describe("findRecentDuplicateResponse", () => {
         where: {
           surveyId,
           contactId,
+          finished: true,
           createdAt: { gte: new Date(now.getTime() - DUPLICATE_RESPONSE_WINDOW_MS) },
+          quotaLinks: { none: { status: "screenedOut" } },
         },
         take: 10,
       })
