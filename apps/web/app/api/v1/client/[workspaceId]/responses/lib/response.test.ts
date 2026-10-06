@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import {
   DatabaseError,
   InvalidInputError,
@@ -16,7 +17,8 @@ import {
   evaluateResponseQuotas,
   loadQuotaEvaluationContext,
 } from "@/modules/ee/quotas/lib/evaluation-service";
-import { createResponse, createResponseWithQuotaEvaluation } from "./response";
+import { getContactByUserId } from "./contact";
+import { createResponse, createResponseWithQuotaEvaluation, resolveCreateResponseContext } from "./response";
 
 vi.mock("server-only", () => ({}));
 
@@ -111,6 +113,11 @@ const mockResponsePrisma = {
   tags: [],
 };
 
+const noContact = { contact: null };
+
+type TResolvedContact = { id: string; attributes: TContactAttributes };
+type TOrganizationResult = Awaited<ReturnType<typeof getOrganization>>;
+
 type MockTx = {
   response: {
     create: ReturnType<typeof vi.fn>;
@@ -133,7 +140,7 @@ describe("createResponse", () => {
 
   test("should handle finished response and calculate TTC", async () => {
     const finishedInput = { ...mockResponseInput, finished: true };
-    await createResponse(finishedInput, prisma);
+    await createResponse(finishedInput, noContact, prisma);
     expect(calculateTtcTotal).toHaveBeenCalledWith(mockResponseInput.ttc);
     expect(prisma.response.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -143,7 +150,11 @@ describe("createResponse", () => {
   });
 
   test("should persist endingId when provided", async () => {
-    await createResponse({ ...mockResponseInput, finished: true, endingId: "ending-card-id" }, prisma);
+    await createResponse(
+      { ...mockResponseInput, finished: true, endingId: "ending-card-id" },
+      noContact,
+      prisma
+    );
     expect(prisma.response.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ finished: true, endingId: "ending-card-id" }),
@@ -152,17 +163,12 @@ describe("createResponse", () => {
   });
 
   test("should default endingId to null when not provided", async () => {
-    await createResponse(mockResponseInput, prisma);
+    await createResponse(mockResponseInput, noContact, prisma);
     expect(prisma.response.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ endingId: null }),
       })
     );
-  });
-
-  test("should throw ResourceNotFoundError if organization not found", async () => {
-    vi.mocked(getOrganization).mockResolvedValue(null);
-    await expect(createResponse(mockResponseInput, prisma)).rejects.toThrow(ResourceNotFoundError);
   });
 
   test("should throw DatabaseError on Prisma known request error", async () => {
@@ -171,7 +177,7 @@ describe("createResponse", () => {
       clientVersion: "test",
     });
     vi.mocked(prisma.response.create).mockRejectedValue(prismaError);
-    await expect(createResponse(mockResponseInput, prisma)).rejects.toThrow(DatabaseError);
+    await expect(createResponse(mockResponseInput, noContact, prisma)).rejects.toThrow(DatabaseError);
   });
 
   test("should throw UniqueConstraintError on P2002 with singleUseId target", async () => {
@@ -181,7 +187,7 @@ describe("createResponse", () => {
       meta: { driverAdapterError: { cause: { constraint: { fields: ["surveyId", "singleUseId"] } } } },
     });
     vi.mocked(prisma.response.create).mockRejectedValue(prismaError);
-    await expect(createResponse(mockResponseInput, prisma)).rejects.toThrow(UniqueConstraintError);
+    await expect(createResponse(mockResponseInput, noContact, prisma)).rejects.toThrow(UniqueConstraintError);
   });
 
   test("should throw InvalidInputError on P2002 with displayId target (race condition)", async () => {
@@ -191,13 +197,41 @@ describe("createResponse", () => {
       meta: { driverAdapterError: { cause: { constraint: { fields: ["displayId"] } } } },
     });
     vi.mocked(prisma.response.create).mockRejectedValue(prismaError);
-    await expect(createResponse(mockResponseInput, prisma)).rejects.toThrow(InvalidInputError);
+    await expect(createResponse(mockResponseInput, noContact, prisma)).rejects.toThrow(InvalidInputError);
   });
 
   test("should throw original error on other Prisma errors", async () => {
     const genericError = new Error("Generic database error");
     vi.mocked(prisma.response.create).mockRejectedValue(genericError);
-    await expect(createResponse(mockResponseInput, prisma)).rejects.toThrow(genericError);
+    await expect(createResponse(mockResponseInput, noContact, prisma)).rejects.toThrow(genericError);
+  });
+});
+
+describe("resolveCreateResponseContext", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(organizationId);
+    vi.mocked(getOrganization).mockResolvedValue(mockOrganization as TOrganizationResult);
+  });
+
+  test("throws ResourceNotFoundError if the organization is not found", async () => {
+    vi.mocked(getOrganization).mockResolvedValue(null);
+    await expect(resolveCreateResponseContext(mockResponseInput)).rejects.toThrow(ResourceNotFoundError);
+  });
+
+  test("resolves the contact by userId when one is given", async () => {
+    const contact: TResolvedContact = { id: "contact-id", attributes: { userId: "user-1" } };
+    vi.mocked(getContactByUserId).mockResolvedValue(contact);
+
+    await expect(resolveCreateResponseContext({ workspaceId, userId: "user-1" })).resolves.toEqual({
+      contact,
+    });
+    expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, "user-1");
+  });
+
+  test("resolves no contact and skips the lookup without a userId", async () => {
+    await expect(resolveCreateResponseContext(mockResponseInput)).resolves.toEqual({ contact: null });
+    expect(getContactByUserId).not.toHaveBeenCalled();
   });
 });
 
@@ -381,18 +415,41 @@ describe("createResponseWithQuotaEvaluation", () => {
       // No ingest flags on this path; the transaction and the quota context it was opened after come
       // in as the fourth argument.
       undefined,
-      { tx: callerTx as unknown as Prisma.TransactionClient, quotaContext }
+      { tx: callerTx as unknown as Prisma.TransactionClient, quotaContext, responseContext: noContact }
     );
 
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(callerTx.response.create).toHaveBeenCalled();
     expect(mockTx.response.create).not.toHaveBeenCalled();
-    // The caller loaded the context before its transaction, so nothing is read here.
+    // The caller read both contexts before its transaction, so nothing is read here.
     expect(loadQuotaEvaluationContext).not.toHaveBeenCalled();
+    expect(getOrganizationIdFromWorkspaceId).not.toHaveBeenCalled();
+    expect(getOrganization).not.toHaveBeenCalled();
     expect(evaluateResponseQuotas).toHaveBeenCalledWith(
       expect.objectContaining({ tx: callerTx, quotaContext })
     );
     expect(result.id).toBe(responseId);
+  });
+
+  test("reads the organization and contact before opening its own transaction, not inside it (ENG-3285)", async () => {
+    const contact: TResolvedContact = { id: "contact-id", attributes: { userId: "user-1" } };
+    vi.mocked(getContactByUserId).mockResolvedValue(contact);
+    mockTx.response.create.mockResolvedValue(mockResponsePrisma);
+    vi.mocked(evaluateResponseQuotas).mockResolvedValue({ shouldEndSurvey: false, quotaFull: undefined });
+
+    const result = await createResponseWithQuotaEvaluation({ ...mockResponseInput, userId: "user-1" });
+
+    const transactionOpenedAt = vi.mocked(prisma.$transaction).mock.invocationCallOrder[0];
+    for (const read of [getOrganizationIdFromWorkspaceId, getOrganization, getContactByUserId]) {
+      expect(vi.mocked(read).mock.invocationCallOrder[0]).toBeLessThan(transactionOpenedAt);
+    }
+    // The contact read outside still reaches the row written inside.
+    expect(mockTx.response.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ contact: { connect: { id: contact.id } } }),
+      })
+    );
+    expect(result.contact).toEqual({ id: contact.id, userId: "user-1" });
   });
 
   test("reads the quota definitions before opening its own transaction, not inside it (ENG-3285)", async () => {
