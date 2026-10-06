@@ -26,6 +26,7 @@
       "back_to_login": "Girişe geri dön",
       "email-sent": {
         "heading": "Şifre sıfırlama başarıyla istendi",
+        "sso_hint": "Google, Microsoft veya başka bir çoklu oturum açma (SSO) sağlayıcısıyla mı giriş yapıyorsun? O zaman sıfırlanacak bir şifre yok. Bunun yerine o sağlayıcıyla giriş yap.",
         "text": "Bu email ile ilişkili bir hesap varsa, kısa süre içinde şifre sıfırlama talimatlarını alacaksınız."
       },
       "reset": {
@@ -696,6 +697,13 @@
     "sso_recovery_factors_removed_email_subject": "Formbricks hesabından kimlik bilgileri kaldırıldı",
     "sso_recovery_factors_removed_email_text": "Az önce ilk kez tek oturum açma ile giriş yaptın. E-posta adresin daha önce hiç doğrulanmadığı için, hesabında önceden ayarlanmış olan kimlik bilgilerini kaldırdık:",
     "sso_recovery_factors_removed_email_two_factor": "İki faktörlü kimlik doğrulama kaldırıldı.",
+    "sso_sign_in_hint_email_did_not_request": "Bunu sen talep etmediysen bu e-postayı görmezden gelebilirsin. Hesabında hiçbir şey değişmedi.",
+    "sso_sign_in_hint_email_go_to_login": "Giriş yap",
+    "sso_sign_in_hint_email_heading": "Çoklu oturum açma ile giriş yap",
+    "sso_sign_in_hint_email_no_access": "Artık bu şekilde giriş yapamıyorsan yöneticinle iletişime geç.",
+    "sso_sign_in_hint_email_subject": "Formbricks hesabına nasıl giriş yapılır?",
+    "sso_sign_in_hint_email_text": "Formbricks hesabının şifresini sıfırlamak için bir talep aldık. Hesabın şifre kullanmıyor, bu yüzden sıfırlanacak bir şey yok. Şu yöntemle giriş yapıyorsun:",
+    "sso_sign_in_hint_email_text_unavailable": "Formbricks hesabının şifresini sıfırlamak için bir talep aldık. Hesabın şifre kullanmıyor: tek oturum açma (SSO) ile giriş yapıyor ve bu özellik şu anda bu Formbricks örneğinde kullanılamıyor. Yeniden erişim sağlamak için yöneticinle iletişime geç.",
     "survey_response_finished_email_congrats": "Tebrikler, survey'inize yeni bir yanıt aldınız! Birisi survey'inizi tamamladı: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Bu bildirimleri almak istemiyor musunuz?",
     "survey_response_finished_email_hey": "Merhaba 👋",

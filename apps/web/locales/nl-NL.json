@@ -26,6 +26,7 @@
       "back_to_login": "Terug naar inloggen",
       "email-sent": {
         "heading": "Wachtwoord reset succesvol aangevraagd",
+        "sso_hint": "Log je in met Google, Microsoft of een andere single sign-on-provider? Dan is er geen wachtwoord om opnieuw in te stellen. Log in plaats daarvan in met die provider.",
         "text": "Als er een account met dit e-mailadres bestaat, ontvangt u binnenkort instructies voor het opnieuw instellen van het wachtwoord."
       },
       "reset": {
@@ -696,6 +697,13 @@
     "sso_recovery_factors_removed_email_subject": "Inloggegevens zijn verwijderd van je Formbricks-account",
     "sso_recovery_factors_removed_email_text": "Je hebt zojuist voor het eerst ingelogd met single sign-on. Omdat je e-mailadres nog nooit is geverifieerd, hebben we de inloggegevens verwijderd die eerder op het account waren ingesteld:",
     "sso_recovery_factors_removed_email_two_factor": "Tweefactorauthenticatie is verwijderd.",
+    "sso_sign_in_hint_email_did_not_request": "Heb je dit niet aangevraagd? Dan kun je deze e-mail negeren. Er is niets aan je account veranderd.",
+    "sso_sign_in_hint_email_go_to_login": "Naar inloggen",
+    "sso_sign_in_hint_email_heading": "Inloggen met single sign-on",
+    "sso_sign_in_hint_email_no_access": "Als je op deze manier niet meer kunt inloggen, neem dan contact op met je beheerder.",
+    "sso_sign_in_hint_email_subject": "Zo log je in op je Formbricks-account",
+    "sso_sign_in_hint_email_text": "We hebben een verzoek ontvangen om het wachtwoord van je Formbricks-account opnieuw in te stellen. Je account gebruikt geen wachtwoord, dus er valt niets opnieuw in te stellen. Je logt in met:",
+    "sso_sign_in_hint_email_text_unavailable": "We hebben een verzoek ontvangen om het wachtwoord van je Formbricks-account opnieuw in te stellen. Je account gebruikt geen wachtwoord: je logt in met single sign-on, en dat is op dit moment niet beschikbaar op deze Formbricks-instantie. Neem contact op met je beheerder om weer toegang te krijgen.",
     "survey_response_finished_email_congrats": "Gefeliciteerd, u heeft een nieuwe reactie op uw enquête ontvangen! Iemand heeft zojuist uw enquête ingevuld: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Wil je deze meldingen niet ontvangen?",
     "survey_response_finished_email_hey": "Hé 👋",

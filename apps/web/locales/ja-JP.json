@@ -26,6 +26,7 @@
       "back_to_login": "ログインに戻る",
       "email-sent": {
         "heading": "パスワードのリセット要求を送信しました",
+        "sso_hint": "GoogleやMicrosoft、またはその他のシングルサインオン(SSO)プロバイダーでサインインしていますか?その場合、リセットするパスワードはありません。代わりに、そのプロバイダーでサインインしてください。",
         "text": "このメールアドレスにアカウントが存在する場合、パスワードリセットの手順がまもなく送信されます。"
       },
       "reset": {
@@ -696,6 +697,13 @@
     "sso_recovery_factors_removed_email_subject": "Formbricksアカウントから認証情報が削除されました",
     "sso_recovery_factors_removed_email_text": "初めてシングルサインオンでサインインされました。メールアドレスが未確認だったため、以前アカウントに設定されていた認証情報を削除しました:",
     "sso_recovery_factors_removed_email_two_factor": "二要素認証が削除されました。",
+    "sso_sign_in_hint_email_did_not_request": "このリクエストに心当たりがない場合は、このメールを無視してください。アカウントには何も変更はありません。",
+    "sso_sign_in_hint_email_go_to_login": "サインインへ移動",
+    "sso_sign_in_hint_email_heading": "シングルサインオンでサインイン",
+    "sso_sign_in_hint_email_no_access": "この方法でサインインできなくなった場合は、管理者に連絡してください。",
+    "sso_sign_in_hint_email_subject": "Formbricksアカウントへのサインイン方法",
+    "sso_sign_in_hint_email_text": "Formbricksアカウントのパスワードリセットのリクエストを受け付けました。お使いのアカウントはパスワードを使用していないため、リセットするものはありません。次の方法でサインインしています:",
+    "sso_sign_in_hint_email_text_unavailable": "Formbricksアカウントのパスワードリセットのリクエストを受け付けました。ただし、このアカウントではパスワードを使用しておらず、シングルサインオン(SSO)でログインする設定になっています。現在、このFormbricksインスタンスではSSOをご利用いただけない状態です。再度アクセスできるようにするには、管理者にお問い合わせください。",
     "survey_response_finished_email_congrats": "おめでとうございます、新しい回答が届きました！{surveyName} アンケートへの回答が完了しました。",
     "survey_response_finished_email_dont_want_notifications": "これらの通知を受け取りたくないですか？",
     "survey_response_finished_email_hey": "こんにちは 👋",

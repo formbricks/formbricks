@@ -26,6 +26,7 @@
       "back_to_login": "Zurück zur Anmeldung",
       "email-sent": {
         "heading": "Passwort-Zurücksetzung erfolgreich angefordert",
+        "sso_hint": "Meldest Du Dich mit Google, Microsoft oder einem anderen Single-Sign-on-Anbieter an? Dann gibt es kein Passwort, das Du zurücksetzen könntest. Melde Dich stattdessen über diesen Anbieter an.",
         "text": "Falls ein Konto mit dieser E-Mail-Adresse existiert, erhältst du in Kürze Anweisungen zum Zurücksetzen deines Passworts."
       },
       "reset": {
@@ -696,6 +697,13 @@
     "sso_recovery_factors_removed_email_subject": "Anmeldedaten wurden von deinem Formbricks-Konto entfernt",
     "sso_recovery_factors_removed_email_text": "Du hast dich gerade zum ersten Mal per Single Sign-On angemeldet. Da deine E-Mail-Adresse noch nie verifiziert wurde, haben wir die Anmeldedaten entfernt, die zuvor für das Konto hinterlegt waren:",
     "sso_recovery_factors_removed_email_two_factor": "Zwei-Faktor-Authentifizierung wurde entfernt.",
+    "sso_sign_in_hint_email_did_not_request": "Wenn Du das nicht angefordert hast, kannst Du diese E-Mail ignorieren. An Deinem Konto hat sich nichts geändert.",
+    "sso_sign_in_hint_email_go_to_login": "Zur Anmeldung",
+    "sso_sign_in_hint_email_heading": "Mit Single Sign-on anmelden",
+    "sso_sign_in_hint_email_no_access": "Wenn Du Dich auf diesem Weg nicht mehr anmelden kannst, wende Dich an Deinen Administrator.",
+    "sso_sign_in_hint_email_subject": "So meldest Du Dich bei Deinem Formbricks-Konto an",
+    "sso_sign_in_hint_email_text": "Wir haben eine Anfrage erhalten, das Passwort für Dein Formbricks-Konto zurückzusetzen. Dein Konto verwendet kein Passwort, daher gibt es nichts zurückzusetzen. Du meldest Dich an mit:",
+    "sso_sign_in_hint_email_text_unavailable": "Wir haben eine Anfrage zum Zurücksetzen des Passworts für Dein Formbricks-Konto erhalten. Dein Konto nutzt kein Passwort, sondern wird per Single Sign-on angemeldet. Diese Anmeldemethode ist auf dieser Formbricks-Instanz derzeit nicht verfügbar. Wende Dich an Deinen Administrator, um wieder Zugriff zu erhalten.",
     "survey_response_finished_email_congrats": "Glückwunsch, du hast eine neue Antwort auf deine Umfrage erhalten! Jemand hat gerade deine Umfrage ausgefüllt: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Möchtest du diese Benachrichtigungen nicht mehr erhalten?",
     "survey_response_finished_email_hey": "Hey 👋",
