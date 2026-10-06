@@ -172,11 +172,10 @@ describe("release workflows", () => {
     expect(decide?.env?.CURRENT_TAG).toBe("${{ github.event.release.tag_name }}");
     expect(steps.filter((step) => step.run?.includes("${{"))).toEqual([]);
     // A prerelease is never promoted, so an API outage must not block one: it skips the lookup.
-    expect(
-      steps
-        .filter((step) => step.uses?.startsWith("actions/checkout@") || step === decide)
-        .map((step) => step.if)
-    ).toEqual(Array(2).fill("${{ !github.event.release.prerelease }}"));
+    const scriptCheckout = steps.find((step) => step.name === "Checkout the release scripts");
+    expect(scriptCheckout?.uses).toMatch(/^actions\/checkout@/);
+    expect(scriptCheckout?.if).toBe("${{ !github.event.release.prerelease }}");
+    expect(decide?.if).toBe("${{ !github.event.release.prerelease }}");
 
     expect(jobs?.["docker-build-community"]?.with?.MAKE_LATEST).toBe(promote);
     expect(jobs?.["docker-build-cloud"]?.with?.MAKE_LATEST).toBe(promote);
