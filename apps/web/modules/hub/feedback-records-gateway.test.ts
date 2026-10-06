@@ -46,6 +46,7 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
 vi.mock("./service", () => ({ getFeedbackRecordTenant: vi.fn() }));
 
 const directoryId = "clfd1234567890123456789012";
+const otherDirectoryId = "clfe1234567890123456789012";
 const workspaceA = "clwa1234567890123456789012";
 const workspaceB = "clwb1234567890123456789012";
 const recordId = "0197f5c8-9d3a-7b2e-8f41-2c6ad0e4b915";
@@ -74,7 +75,13 @@ const authorize = async (
   const url = new URL(`https://app.test${path}`);
   const request = new NextRequest(url, {
     method,
-    ...(body ? { body: JSON.stringify(body), headers: { "content-type": "application/json" } } : {}),
+    ...(body
+      ? {
+          // A string is sent verbatim, for bodies JSON.stringify cannot produce (a repeated key).
+          body: typeof body === "string" ? body : JSON.stringify(body),
+          headers: { "content-type": "application/json" },
+        }
+      : {}),
   });
 
   return feedbackRecordsGatewayAuthorizer.authorize({
@@ -241,6 +248,114 @@ describe("feedbackRecordsGatewayAuthorizer", () => {
       expect(deleted.status).toBe("deny");
       expect(deleted.status === "deny" && deleted.response.status).toBe(403);
       expect(read.status).toBe("deny");
+    });
+  });
+
+  // The Hub matches JSON keys case-insensitively and keeps the last of a repeated key, while this
+  // authorizer reads exact keys. A body either side could read differently must never reach `can()`
+  // (ENG-3658).
+  describe("ambiguous request bodies", () => {
+    const writeKey = apiKey({
+      workspacePermissions: [{ workspaceId: workspaceA, workspaceName: "A", permission: "manage" }],
+    });
+
+    const expectRefusedBeforeAuthorization = (
+      decision: Awaited<ReturnType<typeof authorize>>,
+      message: string
+    ) => {
+      expect(decision.status).toBe("deny");
+      expect(decision.status === "deny" && decision.response.status).toBe(400);
+      expect(can).not.toHaveBeenCalled();
+      expect(getFeedbackDirectoryAuthContext).not.toHaveBeenCalled();
+      return expect(decision.status === "deny" && decision.response.text()).resolves.toBe(message);
+    };
+
+    test.each([
+      ["create", "/api/v3/feedbackRecords"],
+      ["semanticSearch", "/api/v3/feedbackRecords/search/semantic"],
+    ])("%s refuses a case variant of tenant_id, whichever order the keys come in", async (_op, path) => {
+      const variantLast = await authorize("POST", path, writeKey, {
+        tenant_id: directoryId,
+        TENANT_ID: otherDirectoryId,
+      });
+      await expectRefusedBeforeAuthorization(variantLast, "Ambiguous tenant_id");
+
+      const variantFirst = await authorize("POST", path, writeKey, {
+        Tenant_Id: otherDirectoryId,
+        tenant_id: directoryId,
+      });
+      await expectRefusedBeforeAuthorization(variantFirst, "Ambiguous tenant_id");
+    });
+
+    test.each([
+      ["a repeated tenant_id", `{"tenant_id":"${directoryId}","tenant_id":"${otherDirectoryId}"}`],
+      ["a non-ASCII key", `{"tenant_id":"${directoryId}","tenant_\u0131d":"${otherDirectoryId}"}`],
+      ["trailing data after the object", `{"tenant_id":"${directoryId}"}{"tenant_id":"${otherDirectoryId}"}`],
+      ["a top-level array", `[{"tenant_id":"${directoryId}"}]`],
+    ])("create refuses %s", async (_case, rawBody) => {
+      const decision = await authorize("POST", "/api/v3/feedbackRecords", writeKey, rawBody);
+
+      await expectRefusedBeforeAuthorization(decision, "Invalid request body");
+    });
+
+    test.each([
+      [
+        "case_variant_tenant_id",
+        `{"tenant_id":"${directoryId}","TENANT_ID":"${otherDirectoryId}"}`,
+        "TENANT_ID",
+      ],
+      ["duplicate_key", `{"tenant_id":"${directoryId}","tenant_id":"${otherDirectoryId}"}`, "tenant_id"],
+      ["non_ascii_key", `{"tenant_id":"${directoryId}","tenant_\u0131d":"${otherDirectoryId}"}`, "tenant_"],
+    ])(
+      "logs the %s refusal by reason, never the caller's keys or directory ids",
+      async (reason, rawBody, key) => {
+        await authorize("POST", "/api/v3/feedbackRecords", writeKey, rawBody);
+
+        expect(logger.warn).toHaveBeenCalledWith(
+          { requestId: "req_1", operation: "create", reason },
+          expect.any(String)
+        );
+        const logged = JSON.stringify(vi.mocked(logger.warn).mock.calls);
+        expect(logged).not.toContain(key);
+        expect(logged).not.toContain(directoryId);
+        expect(logged).not.toContain(otherDirectoryId);
+      }
+    );
+
+    test("still authorizes a tenant_id nested keys merely resemble", async () => {
+      const decision = await authorize("POST", "/api/v3/feedbackRecords", writeKey, {
+        tenant_id: directoryId,
+        metadata: { TENANT_ID: otherDirectoryId, tenant_id: otherDirectoryId },
+      });
+
+      expect(decision.status).toBe("allow");
+      expect(can).toHaveBeenLastCalledWith({ type: "apiKey", id: "key-1" }, "feedbackDirectory.write", {
+        type: "feedbackDirectory",
+        id: directoryId,
+      });
+    });
+
+    // The refusal comes before any principal-specific check, so it must hold for a session user too.
+    test("refuses the same ambiguous body from a session principal", async () => {
+      const decision = await authorize("POST", "/api/v3/feedbackRecords", userPrincipal, {
+        tenant_id: directoryId,
+        TENANT_ID: otherDirectoryId,
+      });
+
+      await expectRefusedBeforeAuthorization(decision, "Ambiguous tenant_id");
+    });
+
+    test.each([
+      ["list", "GET"],
+      ["bulkDelete", "DELETE"],
+    ])("%s refuses a repeated tenant_id query parameter", async (_op, method) => {
+      const decision = await authorize(
+        method,
+        `/api/v3/feedbackRecords?tenant_id=${directoryId}&tenant_id=${otherDirectoryId}`,
+        writeKey
+      );
+
+      await expectRefusedBeforeAuthorization(decision, "Ambiguous tenant_id");
     });
   });
 
