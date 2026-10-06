@@ -11,10 +11,11 @@
  * `POST /api/v3/surveys?createdFrom=import`. The rate limit is Create with AI's bucket on purpose; both
  * spend AI tokens.
  *
- * The body keeps the v3 array budget, so a file is held to about 1,000 elements (`SurveyElements` is one
- * flat array of every question, block and setting), far above any survey seen in production. Past
- * it, the 400 names the `qsf.` array, which is how the dialog tells it from a malformed body, and no AI
- * is spent. A lower, question-level limit with its own message belongs to the reader (ENG-3654).
+ * The body keeps the v3 array budget. In a QSF that caps `SurveyElements` — one element per question,
+ * trashed ones included, plus a few survey-wide ones (blocks, flow, options) — so about 1,000 questions,
+ * far above any survey seen in production. Past it, the 400 names the `qsf.` array, so a client can tell
+ * it from a malformed body, and no AI is spent. A lower, question-level limit with its own message
+ * belongs to the reader (ENG-3654).
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { ConcurrencyLimiter } from "@/app/lib/api/concurrency-limiter";

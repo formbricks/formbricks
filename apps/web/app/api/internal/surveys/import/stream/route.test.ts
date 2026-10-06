@@ -106,7 +106,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
   });
 
   test("holds a QSF to the v3 array budget before any AI is spent, naming the array", async () => {
-    // The dialog tells this 400 apart from a malformed body by its `qsf.` name.
+    // The `qsf.` name is what lets a client tell this 400 from a malformed body.
     const elements = Array.from({ length: V3_REQUEST_ARRAY_MAX_ITEMS + 1 }, () => ({ Element: "SQ" }));
 
     const response = await post({ ...body, qsf: { ...body.qsf, SurveyElements: elements } });
