@@ -21,7 +21,7 @@ const render = (styling: Partial<TWorkspaceStyling>): string => {
 };
 
 const TYPICAL: Partial<TWorkspaceStyling> = {
-  brandColor: { light: "#1f5f8b", dark: "#7ab8e0" },
+  brandColor: { light: "#1f5f8b" },
   cardBackgroundColor: { light: "#ffffff", dark: "#0c181e" },
   roundness: "12",
   buttonBorderRadius: "999px",
@@ -53,7 +53,7 @@ describe("theme values in generated CSS", () => {
     expect(css).toContain("--fb-element-upper-label-font-weight: bold;");
     expect(css).toContain("--fb-progress-track-height: 6px;");
     expect(css).toContain('#fbjs[data-appearance="dark"] {');
-    expect(css).toContain("--fb-brand-color: #7ab8e0;");
+    expect(css).toContain("--fb-survey-background-color: #0c181e;");
   });
 
   test("falls back for unsafe legacy values instead of writing them", () => {
