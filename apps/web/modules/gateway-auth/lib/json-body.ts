@@ -65,7 +65,8 @@ export const scanTopLevelKeys = (json: string): string[] => {
   // At depth 1, the next string is a key right after the opening `{` or a `,`; otherwise it is a value.
   let expectingKey = false;
 
-  for (let index = 0; index < json.length; index++) {
+  let index = 0;
+  while (index < json.length) {
     const charCode = json.charCodeAt(index);
 
     if (charCode === QUOTE) {
@@ -82,7 +83,8 @@ export const scanTopLevelKeys = (json: string): string[] => {
         expectingKey = false;
       }
 
-      index = string.end;
+      // Continue after the closing quote: nothing inside a string is structure.
+      index = string.end + 1;
       continue;
     }
 
@@ -94,6 +96,8 @@ export const scanTopLevelKeys = (json: string): string[] => {
     } else if (charCode === COMMA && depth === 1) {
       expectingKey = true;
     }
+
+    index++;
   }
 
   return keys;
