@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { applyIngestContract } from "@formbricks/types/embedded-data-ingest";
 import {
   RESERVED_FIELD_CATALOG,
+  buildEmbeddedLookup,
   coerceToEmbeddedDataType,
   dropShadowedReservedEntries,
   getComputedEmbeddedFields,
@@ -298,26 +299,24 @@ export function Survey({
     setlocalSurvey(survey);
   }, [survey]);
 
-  // ENG-1837: computed fields are seeded from their definitions in the EmbeddedData tables, falling
-  // back to the legacy `variables` column for surveys whose rows are not joined in. Only `variables`
-  // and `embeddedFields` are passed (and depended on): a computed field can never be derived from
-  // `hiddenFields`, so nothing else can change this map.
+  // ENG-1837: computed fields are seeded from their definitions in the EmbeddedData tables. Only
+  // `embeddedFields` is passed (and depended on), since nothing else can change this map.
   useEffect(() => {
     setCurrentVariables(
-      getComputedEmbeddedFields({
-        variables: survey.variables,
-        embeddedFields: survey.embeddedFields,
-      }).reduce<TResponseVariables>((acc, { field, link }) => {
-        // Provably the variable's declared value for every field derived from the legacy shape:
-        // ZSurveyVariable pins a number variable to a number and a text one to a string, and both
-        // are pass-throughs here (see the seeding test in embedded-data-mapping.test.ts). Booleans
-        // and dates have no slot in TResponseVariables and no computed field can carry one.
-        const seed = coerceToEmbeddedDataType(field.defaultValue, field.dataType);
-        if (typeof seed === "string" || typeof seed === "number") acc[link.storageKey] = seed;
-        return acc;
-      }, {})
+      getComputedEmbeddedFields({ embeddedFields: survey.embeddedFields }).reduce<TResponseVariables>(
+        (acc, { field, link }) => {
+          // Provably the variable's declared value for every field derived from the legacy shape:
+          // ZSurveyVariable pins a number variable to a number and a text one to a string, and both
+          // are pass-throughs here (see the seeding test in embedded-data-mapping.test.ts). Booleans
+          // and dates have no slot in TResponseVariables and no computed field can carry one.
+          const seed = coerceToEmbeddedDataType(field.defaultValue, field.dataType);
+          if (typeof seed === "string" || typeof seed === "number") acc[link.storageKey] = seed;
+          return acc;
+        },
+        {}
+      )
     );
-  }, [survey.variables, survey.embeddedFields]);
+  }, [survey.embeddedFields]);
 
   const autoFocusEnabled = autoFocus ?? window.self === window.top;
 
@@ -930,9 +929,9 @@ export function Survey({
         calculationResults,
         logic.conditions,
         selectedLanguage,
-        // Merged against the in-flight response data (answers from this block included), so a
+        // Built against the in-flight response data (answers from this block included), so a
         // declared field shadows a same-named reserved entry here exactly as it does in recall.
-        mergeReservedValues(reservedFieldValues, localResponseData)
+        buildEmbeddedLookup(localSurvey, reservedFieldValues, localResponseData)
       );
 
       if (!isLogicMet) {
@@ -1164,10 +1163,15 @@ export function Survey({
   /**
    * Recall's lookup map. The reserved side is already shadow-filtered, so a declared field owns its
    * name whether or not it has a value; the merge order is what still protects a stored `""` or `0`.
+   *
+   * Ingested defaults go underneath both, because they are the answer of last resort: a field the
+   * respondent supplied nothing usable for falls back to what the survey declared. They are kept out
+   * of `responseData` on purpose — that record is what the queue submits, and ingest does not write
+   * defaults (see `projectIngestedDefaults`).
    */
   const recallValues = useMemo(
-    () => mergeReservedValues(reservedValues, responseData),
-    [reservedValues, responseData]
+    () => buildEmbeddedLookup(localSurvey, reservedValues, responseData),
+    [localSurvey, reservedValues, responseData]
   );
 
   useEffect(() => {
@@ -1597,7 +1601,9 @@ export function Survey({
       <Subheader
         subheader={replaceRecallInfo(
           getLocalizedValue(localSurvey.welcomeCard.subheader, selectedLanguage),
-          responseData,
+          // The same lookup the visible welcome card recalls from, so a reserved token like
+          // `#recall:url#` resolves here too instead of staying literal.
+          recallValues,
           currentVariables,
           selectedLanguage
         )}

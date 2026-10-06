@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { OperationNotAllowedError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import {
@@ -13,6 +14,7 @@ import {
 import { getSurvey } from "@/lib/survey/service";
 import { validateInputs } from "@/lib/utils/validate";
 import {
+  ALL_SEGMENT_SURVEY_REFS,
   PrismaSegment,
   cloneSegment,
   compareValues,
@@ -149,7 +151,7 @@ describe("Segment Service Tests", () => {
   describe("getSegments", () => {
     test("should return a list of segments", async () => {
       vi.mocked(prisma.segment.findMany).mockResolvedValue([mockSegmentPrisma]);
-      const segments = await getSegments("workspace-id-mock");
+      const segments = await getSegments("workspace-id-mock", ALL_SEGMENT_SURVEY_REFS);
       expect(segments).toEqual([mockSegment]);
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
         where: { workspaceId: "workspace-id-mock" },
@@ -158,15 +160,29 @@ describe("Segment Service Tests", () => {
       expect(validateInputs).toHaveBeenCalledWith(["workspace-id-mock", expect.any(Object)]);
     });
 
+    // ENG-3282: segments reach the browser on the survey pages, so their survey references go through the
+    // viewer's visibility clause in SQL.
+    test("reads each segment's survey references through the visibility clause", async () => {
+      vi.mocked(prisma.segment.findMany).mockResolvedValue([]);
+      const visibleSurveyWhere = { OR: [{ visibility: "workspace" as const }, { ownerId: "user-1" }] };
+
+      await getSegments("workspace-id-mock", visibleSurveyWhere);
+
+      expect(prisma.segment.findMany).toHaveBeenCalledWith({
+        where: { workspaceId: "workspace-id-mock" },
+        select: { ...selectSegment, surveys: { ...selectSegment.surveys, where: visibleSurveyWhere } },
+      });
+    });
+
     test("should return an empty array if no segments found", async () => {
       vi.mocked(prisma.segment.findMany).mockResolvedValue([]);
-      const segments = await getSegments("workspace-id-mock");
+      const segments = await getSegments("workspace-id-mock", ALL_SEGMENT_SURVEY_REFS);
       expect(segments).toEqual([]);
     });
 
     test("should throw DatabaseError on Prisma error", async () => {
       vi.mocked(prisma.segment.findMany).mockRejectedValue(new Error("DB error"));
-      await expect(getSegments("workspace-id-mock")).rejects.toThrow(Error);
+      await expect(getSegments("workspace-id-mock", ALL_SEGMENT_SURVEY_REFS)).rejects.toThrow(Error);
     });
   });
 
@@ -241,7 +257,11 @@ describe("Segment Service Tests", () => {
     test("returns only the referenced ids that belong to the workspace, scoped by workspaceId", async () => {
       vi.mocked(prisma.survey.findMany).mockResolvedValue([{ id: "survey_known" }] as any);
 
-      const result = await getExistingWorkspaceSurveyIds("ws_1", ["survey_known", "survey_foreign"]);
+      const result = await getExistingWorkspaceSurveyIds(
+        "ws_1",
+        ["survey_known", "survey_foreign"],
+        ALL_SEGMENT_SURVEY_REFS
+      );
 
       expect(result).toEqual(new Set(["survey_known"]));
       expect(prisma.survey.findMany).toHaveBeenCalledWith({
@@ -250,8 +270,20 @@ describe("Segment Service Tests", () => {
       });
     });
 
+    test("narrows the lookup to the caller's visible surveys when given a clause (ENG-3282)", async () => {
+      vi.mocked(prisma.survey.findMany).mockResolvedValue([] as any);
+      const visible: Prisma.SurveyWhereInput = { OR: [{ visibility: "workspace" }, { ownerId: "user_1" }] };
+
+      await getExistingWorkspaceSurveyIds("ws_1", ["survey_restricted"], visible);
+
+      expect(prisma.survey.findMany).toHaveBeenCalledWith({
+        where: { workspaceId: "ws_1", id: { in: ["survey_restricted"] }, AND: [visible] },
+        select: { id: true },
+      });
+    });
+
     test("short-circuits to an empty set without querying when no ids are given", async () => {
-      const result = await getExistingWorkspaceSurveyIds("ws_1", []);
+      const result = await getExistingWorkspaceSurveyIds("ws_1", [], ALL_SEGMENT_SURVEY_REFS);
 
       expect(result.size).toBe(0);
       expect(prisma.survey.findMany).not.toHaveBeenCalled();
@@ -260,7 +292,11 @@ describe("Segment Service Tests", () => {
     test("deduplicates ids before querying", async () => {
       vi.mocked(prisma.survey.findMany).mockResolvedValue([{ id: "survey1" }] as any);
 
-      const result = await getExistingWorkspaceSurveyIds("ws_1", ["survey1", "survey1", "survey1"]);
+      const result = await getExistingWorkspaceSurveyIds(
+        "ws_1",
+        ["survey1", "survey1", "survey1"],
+        ALL_SEGMENT_SURVEY_REFS
+      );
 
       expect(result).toEqual(new Set(["survey1"]));
       expect(prisma.survey.findMany).toHaveBeenCalledTimes(1);
@@ -276,7 +312,7 @@ describe("Segment Service Tests", () => {
       vi.mocked(prisma.survey.findMany).mockImplementation((async ({ where }: any) =>
         where.id.in.filter((id: string) => id !== "survey_449").map((id: string) => ({ id }))) as any);
 
-      const result = await getExistingWorkspaceSurveyIds("ws_1", surveyIds);
+      const result = await getExistingWorkspaceSurveyIds("ws_1", surveyIds, ALL_SEGMENT_SURVEY_REFS);
 
       // 450 ids at a batch size of 200 -> 200 / 200 / 50, each query scoped to the workspace.
       const batchSizes = vi

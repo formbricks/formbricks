@@ -1,7 +1,7 @@
 "use client";
 
 import { type ElementType, type ReactElement, type ReactNode, useMemo } from "react";
-import { CartesianGrid, XAxis, YAxis } from "recharts";
+import { CartesianGrid, ReferenceLine, XAxis, YAxis } from "recharts";
 import {
   AXIS_LABEL_BOX_HEIGHT,
   AXIS_LABEL_GAP,
@@ -27,6 +27,9 @@ import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import type { ChartConfig } from "@/modules/ui/components/chart";
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip } from "@/modules/ui/components/chart";
 import { PolishedChartTooltip } from "./polished-tooltip";
+
+// slate-400: one step darker than the dashed grid, so zero stands out without competing with the series.
+const ZERO_LINE_COLOR = "#94a3b8";
 
 export interface CartesianChartProps {
   data: TChartDataRow[];
@@ -54,6 +57,8 @@ export interface CartesianChartProps {
    * charts render values under a synthetic key (PIVOTED_VALUE_KEY) that carries no measure id, so
    * they resolve the fixed-scale axis from the original measure columns and pass it here (ENG-2226). */
   yAxisScale?: YAxisScale;
+  /** Response base column on each row; the tooltip prints it as "n = …" for the hovered point. */
+  responseBaseKey?: string;
   /** True for point-scale charts (line/area) where the first/last categories sit on the plot
    * boundary. Anchors the edge x-axis labels inward so they aren't clipped by the plot edge.
    * Leave false for band-scale charts (bars), whose edge categories are already inset. */
@@ -337,6 +342,7 @@ export function CartesianChart({
   hasCategoryAxis = true,
   tooltipHideLabel,
   yAxisScale,
+  responseBaseKey,
   pointScale = false,
   horizontal = false,
   timeAxis,
@@ -402,6 +408,14 @@ export function CartesianChart({
                 horizontal={!horizontal}
                 syncWithTicks
               />
+              {/* A scale that runs below zero (NPS -100..100) needs its zero drawn solid: the dashed
+              gridline at 0 reads like any other tick, and above/below zero is the point of the chart. */}
+              {(yScale?.domain[0] ?? 0) < 0 &&
+                (horizontal ? (
+                  <ReferenceLine x={0} stroke={ZERO_LINE_COLOR} />
+                ) : (
+                  <ReferenceLine y={0} stroke={ZERO_LINE_COLOR} />
+                ))}
               {/* Flipped charts swap the axis roles: values run along the x-axis and the categories
               stack down the y-axis. */}
               {horizontal ? (
@@ -469,6 +483,7 @@ export function CartesianChart({
                   <PolishedChartTooltip
                     labelFormatter={xAxisTickFormatter}
                     hideLabel={tooltipHideLabel ?? !hasCategoryAxis}
+                    responseBaseKey={responseBaseKey}
                   />
                 }
                 cursor={tooltipCursor}

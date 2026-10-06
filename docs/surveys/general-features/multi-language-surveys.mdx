@@ -72,19 +72,19 @@ Languages live on the workspace, so every survey in it can use the same list.
     </Note>
   </Step>
 
-  <Step title="Make languages visible">
+  <Step title="Choose the languages shown">
     Every workspace language shows up as a row with its **Code**, a **Translated** progress bar, and a
-    **Visible** toggle. Turn **Visible** on for each language respondents should be able to answer in.
+    **Shown** toggle. Turn **Shown** on for each language respondents should be able to answer in.
 
-    A visible language must carry a translation for every required field before the survey can be
-    **published**, and before further changes to an already-published survey can be saved. A draft saves
-    either way, so you can stop mid-translation and come back. If a live survey blocks you, switch the
-    unfinished language back to invisible — the translations you already entered are kept.
+    A shown language must carry a translation for every required field before the survey can be
+    **activated**, and before further changes to an active survey can be saved. A draft saves
+    either way, so you can stop mid-translation and come back. If an active survey blocks you, turn
+    **Shown** off for the unfinished language — the translations you already entered are kept.
   </Step>
 </Steps>
 
 The **Translated** bar counts every translatable string on the survey — headlines, descriptions, choices,
-placeholders, button labels and ending cards. While a visible language is incomplete, the **Language** tab
+placeholders, button labels and ending cards. While a shown language is incomplete, the **Language** tab
 carries an amber warning icon so you can see it from any other tab.
 
 ---
@@ -116,7 +116,7 @@ can run it again after adding a question and it will only fill the gap.
   <Step title="Review, then save">
     Read the result before you keep it — tone and product terms are the two things worth a second look — edit
     anything you want to change, and click **Save**. That hands the translations back to the editor; they are
-    only stored once you save or publish the survey itself.
+    only stored once you save or activate the survey itself.
   </Step>
 </Steps>
 
@@ -160,10 +160,10 @@ A link survey renders in whatever language the `lang` URL parameter asks for:
 https://app.formbricks.com/s/<survey-id>?lang=de
 ```
 
-You do not have to build that URL by hand. Open **Share survey** and use the language picker next to the
+You do not have to build that URL by hand. Open **Distribute** and use the language picker next to the
 survey URL — Formbricks appends the parameter for you, so you can copy one link per language:
 
-![Choosing a language for the survey link in the share modal](/images/surveys/general-features/multi-language-surveys/share-link-language.webp)
+![Choosing a language for the survey link in the Distribute modal](/images/surveys/general-features/multi-language-surveys/share-link-language.webp)
 
 `lang` accepts the language's identifier (`de-DE`) or its alias, and matching is case-insensitive. Formbricks
 resolves it in a fixed order: an exact identifier first, then an alias, then a canonical match. That last pass
@@ -171,10 +171,10 @@ is what makes a shortened or legacy code work — `?lang=de` reaches `de-DE`, an
 reaches a language since stored as `pt-BR`.
 
 Without a `lang` parameter — or with one that names a language the survey does not have, or one that is not
-visible — the survey opens in its default language.
+shown — the survey opens in its default language.
 
 <Note>
-  In **Share survey → Link settings** you can also set the link preview title and description per language,
+  In **Distribute → Link settings** you can also set the link preview title and description per language,
   so a survey shared in a German-speaking channel previews in German. The preview image is one image for the
   whole survey — it is not per-language.
 </Note>

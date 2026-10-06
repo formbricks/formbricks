@@ -219,6 +219,11 @@ describe("actionClient handleServerError", () => {
       );
     });
 
+    test("an unauthenticated action's error is captured without a user", async () => {
+      await executeThrowingAction(new Error("Something broke"));
+      expect(vi.mocked(Sentry.captureException).mock.calls[0][1]).not.toHaveProperty("user");
+    });
+
     test("TypeError is sent to Sentry and returns default message", async () => {
       const error = new TypeError("Cannot read properties of undefined");
       const result = await executeThrowingAction(error);
@@ -289,5 +294,24 @@ describe("authenticatedActionClient", () => {
     expect(result?.data).toBe("success");
     expect(result?.serverError).toBeUndefined();
     expect(Sentry.captureException).not.toHaveBeenCalled();
+  });
+
+  test("attributes an unexpected error to the signed-in user by id only", async () => {
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1" }, expires: "2999-01-01T00:00:00.000Z" });
+    vi.mocked(getUser).mockResolvedValue({ id: "user-1", name: "Test", email: "test@example.com" } as Awaited<
+      ReturnType<typeof getUser>
+    >);
+    const error = new Error("Something broke");
+
+    const action = authenticatedActionClient.action(async () => {
+      throw error;
+    });
+    const result = await action();
+
+    expect(result?.serverError).toBe(DEFAULT_SERVER_ERROR_MESSAGE);
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      error,
+      expect.objectContaining({ user: { id: "user-1" } })
+    );
   });
 });

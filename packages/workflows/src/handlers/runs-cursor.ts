@@ -14,7 +14,7 @@ const WORKFLOW_RUN_LIST_CURSOR_VERSION = 1;
 const ZWorkflowRunListCursor = z.object({
   version: z.literal(WORKFLOW_RUN_LIST_CURSOR_VERSION),
   value: z.iso.datetime({ offset: true }),
-  id: z.string().min(1),
+  id: z.cuid2(),
 });
 export type TWorkflowRunListCursor = z.infer<typeof ZWorkflowRunListCursor>;
 

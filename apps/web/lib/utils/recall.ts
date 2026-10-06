@@ -1,7 +1,7 @@
 import {
   RESERVED_FIELD_CATALOG,
   type TLinkedEmbeddedField,
-  getDeclaredEmbeddedFields,
+  getSurveyEmbeddedFields,
 } from "@formbricks/types/embedded-data-resolver";
 import { type TI18nString } from "@formbricks/types/i18n";
 import { TResponseData, TResponseDataValue, TResponseVariables } from "@formbricks/types/responses";
@@ -32,10 +32,28 @@ export const extractId = (text: string): string | null => {
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 // If there are multiple recall infos in a string extracts all recall question IDs from that string and construct an array out of it.
+// Deliberately lax — it matches an id with no `/fallback:…#` tail, so a half-typed or half-deleted
+// token still names the element it points at. Callers that need the id of a token the rest of the
+// codebase will actually render want `extractCompleteRecallIds` instead.
 export const extractIds = (text: string): string[] => {
   const pattern = /#recall:([A-Za-z0-9_-]+)/g;
   const matches = Array.from(text.matchAll(pattern));
   return matches.map((match) => match[1]).filter((id) => id !== null);
+};
+
+/**
+ * The ids of the *complete* `#recall:<id>/fallback:<x>#` tokens in a text — the same shape
+ * `extractRecallInfo` matches, so what this returns is exactly what `recallToHeadline` will turn
+ * into an `@Label`.
+ *
+ * ENG-2931: `getRecallItems` used to be built on the lax `extractIds`, so a token the operator had
+ * broken by one keystroke (deleting the closing `#`) still produced a recall item whose `@Label`
+ * `recallToHeadline` had left as raw text. `RecallWrapper` then had an item it could never find in
+ * the rendered text and re-entered its own effect without bound.
+ */
+export const extractCompleteRecallIds = (text: string): string[] => {
+  const pattern = /#recall:([A-Za-z0-9_-]+)\/fallback:[^#]*#/g;
+  return Array.from(text.matchAll(pattern), (match) => match[1]);
 };
 
 // Extracts the fallback value from a string containing the "fallback" pattern.
@@ -74,14 +92,12 @@ export const findRecallInfoById = (text: string, id: string): string | null => {
  * key means through the resolver rather than reading `hiddenFields.fieldIds` / `variables` directly;
  * `source` is what used to be the array a key was found in.
  *
- * Deliberately `getDeclaredEmbeddedFields`, not `getSurveyEmbeddedFields`: a token's label is
- * authoring syntax. The recall picker writes `@label` into the text and these functions read it back
- * (`headlineToRecall` matches on the label), so both sides must see the same instant's definitions —
- * against the editor's working copy the stored rows are one save behind, which would render a
- * just-added field as a raw `#recall:…#` token and stop a just-renamed one from matching. For a
- * saved survey the two agree element for element, because every write path that persists those
- * columns reconciles the rows in the same transaction. See the accessor's own doc block for the
- * enumeration of those paths and for when the two stop agreeing (ENG-1851/ENG-1853).
+ * `getSurveyEmbeddedFields`, the one read every other reader makes. A token's label is authoring
+ * syntax — the recall picker writes `@label` into the text and these functions read it back
+ * (`headlineToRecall` matches on the label), so both sides must see the same instant's definitions.
+ * Until ENG-2628 that forced a derive here, because the editor's working copy carried rows one save
+ * behind its cards; now the cards edit the rows, so the picker and this resolver read the same list
+ * in the editor exactly as they already did for a saved survey.
  */
 const findEmbeddedField = (
   embeddedFields: TLinkedEmbeddedField[],
@@ -133,7 +149,7 @@ export const getRecallItemLabel = <T extends TSurvey>(
     recallItemId,
     getElementsFromBlocks(survey.blocks),
     languageCode,
-    getDeclaredEmbeddedFields(survey)
+    getSurveyEmbeddedFields(survey)
   );
 
 // Converts recall information in a headline to a corresponding recall question headline, with or without a slash.
@@ -148,7 +164,7 @@ export const recallToHeadline = <T extends TSurvey>(
 
   if (!localizedHeadline?.includes("#recall:")) return headline;
 
-  const embeddedFields = getDeclaredEmbeddedFields(survey);
+  const embeddedFields = getSurveyEmbeddedFields(survey);
   const elements = getElementsFromBlocks(survey.blocks);
 
   const replaceNestedRecalls = (text: string): string => {
@@ -224,9 +240,11 @@ export const replaceHeadlineRecall = <T extends TSurvey>(survey: T, language: st
 export const getRecallItems = (text: string, survey: TSurvey, languageCode: string): TSurveyRecallItem[] => {
   if (!text.includes("#recall:")) return [];
 
-  const ids = extractIds(text);
+  // Complete tokens only, so this agrees with `recallToHeadline`/`getFallbackValues` about what a
+  // recall tag is (ENG-2931).
+  const ids = extractCompleteRecallIds(text);
   // Both lists are resolved once for the whole text, not once per token.
-  const embeddedFields = getDeclaredEmbeddedFields(survey);
+  const embeddedFields = getSurveyEmbeddedFields(survey);
   const elements = getElementsFromBlocks(survey.blocks);
   let recallItems: TSurveyRecallItem[] = [];
   ids.forEach((recallItemId) => {

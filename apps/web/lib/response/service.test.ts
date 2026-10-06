@@ -4,12 +4,16 @@ import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseUpdateInput } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys/types";
+import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
 import { getOrganization } from "../organization/service";
-import { getResponseDownloadFile, responseSelection, updateResponse } from "./service";
+import { getSurvey } from "../survey/service";
+import { deleteResponse, getResponseDownloadFile, responseSelection, updateResponse } from "./service";
 import { calculateTtcTotal, getResponsesJson } from "./utils";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
+    $transaction: vi.fn(),
     response: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
@@ -66,6 +70,10 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
 
 vi.mock("../organization/service", () => ({
   getOrganization: vi.fn(),
+}));
+
+vi.mock("@/modules/storage/lib/delete-response-files", () => ({
+  deleteResponseFileUrls: vi.fn(),
 }));
 
 vi.mock("../utils/file-conversion", () => ({
@@ -547,6 +555,36 @@ describe("updateResponse", () => {
   });
 });
 
+describe("deleteResponse", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // The survey's only upload element was deleted, so no current element id matches the answer it left.
+  // Its key is filed under the response's own survey, which is what makes the file this response's to
+  // delete; matching on current element ids alone orphaned it in storage for good.
+  test("deletes an upload left by a removed element of the response's own survey", async () => {
+    const ownFile = "/storage/workspace-123/private/surveys/survey-123/elements/removed-upload/a.png";
+    const deletedRow = {
+      ...createMockCurrentResponse({ displayId: null, data: { "removed-upload": [ownFile] } }),
+      quotaLinks: [],
+    };
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      callback({ response: { delete: vi.fn().mockResolvedValue(deletedRow) } } as never)
+    );
+    vi.mocked(getSurvey).mockResolvedValueOnce({
+      id: "survey-123",
+      workspaceId: "workspace-123",
+      blocks: [],
+      questions: [],
+    } as unknown as TSurvey);
+
+    await deleteResponse(mockResponseId);
+
+    expect(deleteResponseFileUrls).toHaveBeenCalledWith([ownFile], "workspace-123");
+  });
+});
+
 describe("getResponseDownloadFile", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -563,7 +601,6 @@ describe("getResponseDownloadFile", () => {
       expect.anything(),
       expect.anything(),
       expect.anything(),
-      expect.anything(),
       false,
       "Asia/Manila"
     );
@@ -575,7 +612,6 @@ describe("getResponseDownloadFile", () => {
     await getResponseDownloadFile("survey-123", "csv");
 
     expect(getResponsesJson).toHaveBeenCalledWith(
-      expect.anything(),
       expect.anything(),
       expect.anything(),
       expect.anything(),

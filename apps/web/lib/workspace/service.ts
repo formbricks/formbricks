@@ -28,6 +28,8 @@ const selectWorkspace = {
   placement: true,
   clickOutsideClose: true,
   overlay: true,
+  overlayColor: true,
+  overlayOpacity: true,
   appSetupCompleted: true,
   styling: true,
   logo: true,

@@ -59,6 +59,7 @@ export const V3_PROBLEM_CODES = [
   "ai_generated_payload_invalid",
   "ai_instance_not_configured",
   "ai_output_too_long",
+  "ai_provider_auth_failed",
   "ai_smart_tools_disabled",
   "bad_gateway",
   "bad_request",
@@ -69,11 +70,17 @@ export const V3_PROBLEM_CODES = [
   "not_authenticated",
   "not_found",
   "payload_too_large",
+  "projection_pending",
   "service_unavailable",
   "stored_survey_invalid",
+  "survey_not_workspace_visible",
   "too_many_requests",
   "unprocessable_content",
+  "visibility_blocked_by_connections",
+  "visibility_change_not_allowed",
+  "visibility_not_enabled",
   "workflow_not_executable",
+  "workspace_survey_limit_reached",
 ] as const;
 
 export type V3ProblemCode = (typeof V3_PROBLEM_CODES)[number];
@@ -281,6 +288,87 @@ export function problemUnprocessableContent(
   });
 }
 
+/**
+ * ENG-3282: survey visibility is not available here — the organization lacks the entitlement or the
+ * deployment's readiness marker is unset (contract §5). Independent of the survey, so it reveals
+ * nothing about it.
+ */
+export function problemVisibilityNotEnabled(requestId: string, instance?: string): Response {
+  return problemResponse(
+    403,
+    "Forbidden",
+    "Survey visibility is not enabled for this organization",
+    requestId,
+    {
+      code: "visibility_not_enabled",
+      instance,
+    }
+  );
+}
+
+/** ENG-3282: `restricted` refused while outbound connections depend on the survey; lists them. */
+export function problemVisibilityBlocked(
+  requestId: string,
+  blockers: ReadonlyArray<Readonly<{ id: string; name: string; type: string }>>,
+  instance?: string
+): Response {
+  return problemResponse(
+    409,
+    "Conflict",
+    "Remove the connections that use this survey before restricting it",
+    requestId,
+    { code: "visibility_blocked_by_connections", details: { blockers }, instance }
+  );
+}
+
+/** ENG-3282: `restricted` refused because the survey has no owner (Decision log #3). */
+export function problemVisibilityChangeNotAllowed(requestId: string, instance?: string): Response {
+  return problemResponse(
+    422,
+    "Unprocessable Content",
+    "A survey without an author can't be restricted. Duplicate it to get a restricted copy you own.",
+    requestId,
+    { code: "visibility_change_not_allowed", instance }
+  );
+}
+
+/**
+ * ENG-3282: a grant was stored but the graph did not acknowledge it in-request. The survey stays
+ * restricted until the outbox delivers it; retrying is safe.
+ */
+export function problemProjectionPending(requestId: string, instance?: string): Response {
+  return problemResponse(
+    503,
+    "Service Unavailable",
+    "The change is stored and will take effect shortly; the survey stays restricted until it does",
+    requestId,
+    { code: "projection_pending", headers: { "Retry-After": "5" }, instance }
+  );
+}
+
+/**
+ * ENG-3282: the workspace already holds `SURVEY_WORKSPACE_LIMIT` surveys. `details` carries the limit
+ * and the current count so a client can say how many to archive or delete without a second call.
+ */
+export function problemWorkspaceSurveyLimit(
+  requestId: string,
+  limit: number,
+  count: number,
+  instance?: string
+): Response {
+  return problemResponse(
+    422,
+    "Unprocessable Content",
+    "This workspace has reached its survey limit",
+    requestId,
+    {
+      code: "workspace_survey_limit_reached",
+      details: { count, limit },
+      instance,
+    }
+  );
+}
+
 export function problemConflict(
   requestId: string,
   detail: string,
@@ -297,9 +385,14 @@ export function problemConflict(
   });
 }
 
-export function problemBadGateway(requestId: string, detail: string, instance?: string): Response {
+export function problemBadGateway(
+  requestId: string,
+  detail: string,
+  instance?: string,
+  code: V3ProblemCode = "bad_gateway"
+): Response {
   return problemResponse(502, "Bad Gateway", detail, requestId, {
-    code: "bad_gateway",
+    code,
     instance,
   });
 }

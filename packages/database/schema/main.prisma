@@ -343,6 +343,13 @@ enum displayOptions {
   respondMultiple
 }
 
+/// Who may read a survey. `workspace` is everyone with workspace access (the behaviour before ENG-3282);
+/// `restricted` is the owner and the organization's owners and managers only.
+enum SurveyVisibility {
+  restricted
+  workspace
+}
+
 enum SurveyScriptMode {
   add
   replace
@@ -363,16 +370,35 @@ enum SurveyScriptMode {
 /// @property customHeadScripts - Survey-specific custom HTML scripts (self-hosted only)
 /// @property customHeadScriptsMode - "add" (merge with workspace) or "replace" (override workspace)
 model Survey {
-  id                  String                  @id @default(cuid())
-  createdAt           DateTime                @default(now()) @map(name: "created_at")
-  updatedAt           DateTime                @updatedAt @map(name: "updated_at")
-  name                String
-  redirectUrl         String?
-  type                SurveyType              @default(app)
-  workspace           Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId         String
-  creator             User?                   @relation(fields: [createdBy], references: [id])
-  createdBy           String?
+  id          String     @id @default(cuid())
+  createdAt   DateTime   @default(now()) @map(name: "created_at")
+  updatedAt   DateTime   @updatedAt @map(name: "updated_at")
+  name        String
+  redirectUrl String?
+  type        SurveyType @default(app)
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+  creator     User?      @relation("SurveyCreator", fields: [createdBy], references: [id])
+  createdBy   String?
+
+  /// ENG-3282: authorization facts, projected into SpiceDB by the survey outbox trigger. `ownerId` is
+  /// the durable ownership source; `createdBy` stays pure attribution and is never rewritten.
+  visibility                 SurveyVisibility @default(workspace)
+  owner                      User?            @relation("SurveyOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  ownerId                    String?
+  /// Incremented by every accepted visibility change; fences projection work. An INSERT starts at 0
+  /// with `visibilityProjectedVersion` -1 (the `survey_visibility_pending` trigger): the initial
+  /// projection, decided from PostgreSQL facts until the projector acknowledges it.
+  visibilityVersion          Int              @default(0)
+  /// The `visibilityVersion` SpiceDB last acknowledged; -1 while none ever was.
+  visibilityProjectedVersion Int              @default(0)
+  /// "visibilityVersion" <> "visibilityProjectedVersion", kept by the `survey_visibility_pending`
+  /// trigger (a BEFORE trigger overrides whatever an INSERT or UPDATE supplies). Read-only: never put it
+  /// in create/update data.
+  visibilityPending          Boolean          @default(false)
+  visibilityChangedAt        DateTime?
+  visibilityChangedById      String?
+
   status              SurveyStatus            @default(draft)
   /// [SurveyWelcomeCard]
   welcomeCard         Json                    @default("{\"enabled\": false}")
@@ -382,10 +408,6 @@ model Survey {
   blocks              Json[]                  @default([])
   /// [SurveyEnding]
   endings             Json[]                  @default([])
-  /// [SurveyHiddenFields]
-  hiddenFields        Json                    @default("{\"enabled\": false}")
-  /// [SurveyVariables]
-  variables           Json                    @default("[]")
   responses           Response[]
   quotas              SurveyQuota[]
   displayOption       displayOptions          @default(displayOnce)
@@ -445,6 +467,7 @@ model Survey {
 
   @@unique([id, workspaceId])
   @@index([workspaceId, updatedAt])
+  @@index([workspaceId, ownerId])
   @@index([segmentId])
   @@index([status, publishOn])
   @@index([status, closeOn])
@@ -641,6 +664,9 @@ model Workspace {
   placement                   WidgetPlacement              @default(bottomRight)
   clickOutsideClose           Boolean                      @default(true)
   overlay                     SurveyOverlay                @default(none)
+  /// Custom overlay colour (hex, no alpha) and opacity (10-100%). null = the preset for `overlay`.
+  overlayColor                String?
+  overlayOpacity              Int?
   languages                   Language[]
   embeddedData                EmbeddedData[]
   /// [Logo]
@@ -1228,7 +1254,8 @@ model User {
   notificationSettings      Json                @default("{}")
   /// [Locale]
   locale                    String              @default("en-US")
-  surveys                   Survey[]
+  surveys                   Survey[]            @relation("SurveyCreator")
+  ownedSurveys              Survey[]            @relation("SurveyOwner")
   charts                    Chart[]             @relation("chartCreatedBy")
   dashboards                Dashboard[]         @relation("dashboardCreatedBy")
   feedbackSources           FeedbackSource[]
@@ -1752,6 +1779,15 @@ model FeedbackDirectoryWorkspace {
 
   @@id([feedbackDirectoryId, workspaceId])
   @@index([workspaceId])
+}
+
+/// ENG-3282: per-scope readiness of a SpiceDB projection. A row with `readyAt` set means the scope was
+/// backfilled and audited clean, so the evaluator may enforce it. Written only by the backfill CLI.
+model AuthzedProjectionScopeState {
+  scope     String    @id
+  readyAt   DateTime?
+  readyBy   String?
+  updatedAt DateTime  @updatedAt
 }
 
 /// Durable PostgreSQL queue for rebuilding SpiceDB relationships after an authorization source changes.

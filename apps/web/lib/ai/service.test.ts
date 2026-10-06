@@ -252,6 +252,7 @@ describe("AI organization service", () => {
         statusCode: undefined,
         isQuotaExhausted: undefined,
         isRetryable: undefined,
+        isAuthFailure: undefined,
         err: modelError,
       },
       "Failed to generate organization AI text"
@@ -277,6 +278,7 @@ describe("AI organization service", () => {
         statusCode: undefined,
         isQuotaExhausted: undefined,
         isRetryable: undefined,
+        isAuthFailure: undefined,
         err: modelError,
       },
       "Failed to generate organization AI object"
