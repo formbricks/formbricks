@@ -2612,6 +2612,7 @@
       "appearance_automatic_same_as_light": "Automat: la fel ca în modul luminos",
       "appearance_dark": "Întunecat",
       "appearance_dark_contrast_warning": "{field} se vede greu pe cardul întunecat ({ratio} : 1). Setează o valoare pentru tema întunecată.",
+      "appearance_dark_contrast_warning_button_text": "{field} este greu de citit pe fundalul butonului în modul întunecat ({ratio} : 1). Setează o valoare pentru modul întunecat.",
       "appearance_dark_contrast_warning_shared": "{field} se vede greu pe cardul închis la culoare ({ratio} : 1). Este la fel atât în modul luminos, cât și în cel închis, așa că alege o culoare de brand care să se citească bine în ambele.",
       "appearance_dark_description": "Se afișează când aplicația solicită modul întunecat. Culorile pe care le lași necompletate sunt derivate din culoarea brandului tău. Sondajele prin link rămân în modul luminos.",
       "appearance_light": "Luminos",

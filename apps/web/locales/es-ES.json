@@ -2612,6 +2612,7 @@
       "appearance_automatic_same_as_light": "Automático: igual que el color claro",
       "appearance_dark": "Oscuro",
       "appearance_dark_contrast_warning": "{field} se ve mal sobre la tarjeta oscura ({ratio} : 1). Define un valor oscuro para este elemento.",
+      "appearance_dark_contrast_warning_button_text": "{field} es difícil de leer sobre el fondo del botón en modo oscuro ({ratio} : 1). Establece un valor oscuro para él.",
       "appearance_dark_contrast_warning_shared": "{field} se ve con dificultad sobre la tarjeta oscura ({ratio} : 1). Es igual en modo claro y oscuro, así que elige un color de marca que se lea bien en ambos.",
       "appearance_dark_description": "Se muestra cuando la aplicación solicita el modo oscuro. Los colores que dejes vacíos se derivan del color de tu marca. Las encuestas por enlace se mantienen en modo claro.",
       "appearance_light": "Claro",

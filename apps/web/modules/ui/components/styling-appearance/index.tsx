@@ -78,6 +78,18 @@ export const DarkContrastWarnings = ({
     progressIndicatorBgColor: t("workspace.look.advanced_styling_field_indicator_bg"),
   };
 
+  // The brand color is shared by both appearances, and button text is measured against the button
+  // rather than the card, so each gets its own wording. Literal keys keep the i18n scanner happy.
+  const getMessage = (warning: TDarkContrastWarning): string => {
+    const values = { field: labels[warning.key], ratio: warning.ratio.toFixed(1) };
+    if (warning.key === "brandColor")
+      return t("workspace.look.appearance_dark_contrast_warning_shared", values);
+    if (warning.key === "buttonTextColor") {
+      return t("workspace.look.appearance_dark_contrast_warning_button_text", values);
+    }
+    return t("workspace.look.appearance_dark_contrast_warning", values);
+  };
+
   if (warnings.length === 0) return null;
 
   return (
@@ -87,17 +99,7 @@ export const DarkContrastWarnings = ({
           key={warning.key}
           className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
           <AlertTriangleIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-          <span>
-            {warning.key === "brandColor"
-              ? t("workspace.look.appearance_dark_contrast_warning_shared", {
-                  field: labels[warning.key],
-                  ratio: warning.ratio.toFixed(1),
-                })
-              : t("workspace.look.appearance_dark_contrast_warning", {
-                  field: labels[warning.key],
-                  ratio: warning.ratio.toFixed(1),
-                })}
-          </span>
+          <span>{getMessage(warning)}</span>
         </output>
       ))}
     </div>
