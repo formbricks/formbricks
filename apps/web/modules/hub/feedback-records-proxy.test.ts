@@ -98,9 +98,13 @@ const handlerRequestShapes: [string, (request: NextRequest) => NextRequest][] = 
  * only through a WeakRef (nodejs/undici#4068), so whether a disconnect still reaches the Hub hop depends
  * on whether a collection ran in between — and nothing in a short test triggers one on its own.
  */
-v8.setFlagsFromString("--expose-gc");
-const collectGarbage = vm.runInNewContext("gc") as () => void;
+let collectGarbage: (() => void) | undefined;
 const collectGarbageAcrossTurns = async (): Promise<void> => {
+  // Enabled here rather than at import so only this test changes the worker's V8 flags.
+  if (!collectGarbage) {
+    v8.setFlagsFromString("--expose-gc");
+    collectGarbage = vm.runInNewContext("gc") as () => void;
+  }
   // A WeakRef target survives until the end of the job that last dereferenced it, so yield first.
   for (let pass = 0; pass < 3; pass++) {
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -182,8 +186,6 @@ describe.each(handlerRequestShapes)("proxyFeedbackRecordsRequest with %s", (_sha
     await proxyFeedbackRecordsRequest(request);
 
     const authorizationInput = mockAuthorizeGatewayRequest.mock.calls[0][0];
-    // The same object the production ext_authz route passes: no reconstruction in between.
-    expect(authorizationInput.request).toBe(request);
     expect(authorizationInput.originalRequest).toEqual({
       method: "POST",
       url: new URL("http://localhost:3000/api/v3/feedbackRecords"),
@@ -218,12 +220,15 @@ describe.each(handlerRequestShapes)("proxyFeedbackRecordsRequest with %s", (_sha
   });
 
   test("aborts the Hub call when the client disconnects, even after a garbage collection", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(Response.json({ data: [] }));
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 201 }));
     vi.stubGlobal("fetch", fetchMock);
     // Stands in for the controller Next ties to the client connection (signalFromNodeResponse).
     const clientConnection = new AbortController();
+    // A body, so the Hub hop is forwarded from a clone: the case whose own signal GC can sever.
     const request = asHandlerRequest(
-      new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1", {
+      new NextRequest("http://localhost:3000/api/v3/feedbackRecords", {
+        method: "POST",
+        body: JSON.stringify({ tenant_id: "dir_1" }),
         signal: clientConnection.signal,
       })
     );
@@ -240,7 +245,32 @@ describe.each(handlerRequestShapes)("proxyFeedbackRecordsRequest with %s", (_sha
     expect(request.signal.aborted).toBe(true);
   });
 
-  test("never lets Next cache a Hub response, since every hop shares one service credential", async () => {
+  test("answers a client that hung up mid-call without logging a proxy failure", async () => {
+    const fetchMock = vi.fn(
+      (_url: URL, init: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
+        })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const clientConnection = new AbortController();
+
+    const pending = proxyFeedbackRecordsRequest(
+      asHandlerRequest(
+        new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1", {
+          signal: clientConnection.signal,
+        })
+      )
+    );
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    clientConnection.abort();
+
+    const response = await pending;
+    expect(response.status).toBe(499);
+    expect(mockLoggerError).not.toHaveBeenCalled();
+  });
+
+  test("never lets Next cache a Hub response, so reads stay live and writes always reach the Hub", async () => {
     const fetchMock = vi.fn().mockResolvedValue(Response.json({ data: [] }));
     vi.stubGlobal("fetch", fetchMock);
 

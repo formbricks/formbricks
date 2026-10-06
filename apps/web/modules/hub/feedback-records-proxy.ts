@@ -66,9 +66,9 @@ const buildHubRequestInit = (request: Request, signal: AbortSignal): RequestInit
     // Envoy never follows an upstream redirect; neither does this stand-in, so a Hub 3xx reaches the
     // caller instead of being chased server-side with the service credential attached.
     redirect: "manual",
-    // Load-bearing for isolation, not a performance knob: every Hub hop carries the same service
-    // credential, so nothing about the caller is in a cache key and a cached response would be served
-    // across callers and tenants.
+    // This is a pass-through for live records and writes: a cached response would keep serving
+    // updated or deleted records, and `force-cache` would let a POST be answered without reaching
+    // the Hub.
     cache: "no-store",
     // `duplex` is absent from TypeScript's RequestInit; cast only that property so the rest keeps its
     // checking. undici requires it for a stream body.
@@ -92,13 +92,13 @@ export const proxyFeedbackRecordsRequest = async (request: NextRequest): Promise
 
   // `request` is not a plain NextRequest: Next's app-route runtime wraps every handler's request in a
   // Proxy, and `clone()` returns another one. Fetch objects keep their state in private fields a Proxy
-  // cannot carry, so neither may become a Request constructor's `input` (nodejs/undici#4290) —
-  // `new NextRequest(request.clone())` threw on every call. Reading through the Proxy is fine.
+  // cannot carry, so neither may become a Request constructor's `input` (nodejs/undici#4290).
+  // Reading through the Proxy is fine.
   //
   // The authorizer gets the request itself, as the production ext_authz route does: it needs the real
-  // cookies for session auth and may consume the body (POST routes read `tenant_id` from it), so the
-  // Hub hop is forwarded from a clone taken before authorization reads anything.
-  const hubBoundRequest = request.clone();
+  // cookies for session auth and may consume the body (POST routes read `tenant_id` from it), so a
+  // request with a body is forwarded from a clone taken before authorization reads anything.
+  const hubBoundRequest = request.body ? request.clone() : request;
 
   const authorizationResponse = await authorizeGatewayRequest({
     request,
@@ -123,6 +123,13 @@ export const proxyFeedbackRecordsRequest = async (request: NextRequest): Promise
     // whole handler, and with it the link to the connection.
     return await fetch(hubUrl, buildHubRequestInit(hubBoundRequest, request.signal));
   } catch (err) {
+    // The caller hung up and the abort cancelled the Hub call: nothing failed upstream and nobody is
+    // left to answer, so this is not logged as a proxy failure. 499 is the conventional "client closed
+    // request" status.
+    if (request.signal.aborted) {
+      return new Response(null, { status: 499 });
+    }
+
     // Deliberately still does not log `err`: a fetch failure embeds the target URL in its message,
     // which can carry credentials or query parameters, and keeping it out of the logs is the point
     // of this payload being hand-built. The hint is derived from the error's errno alone and is a
