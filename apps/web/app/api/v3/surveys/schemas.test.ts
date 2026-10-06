@@ -4,7 +4,6 @@ import { validateElementLabels } from "@formbricks/types/surveys/elements-valida
 import {
   V3_SURVEY_BLOCK_OPS_MAX,
   V3_SURVEY_BLOCK_ORDER_MAX,
-  V3_SURVEY_CREATED_FROM,
   V3_SURVEY_MAX_BLOCKS,
   V3_SURVEY_MAX_ENDINGS,
   V3_SURVEY_MAX_HIDDEN_FIELDS,
@@ -1216,7 +1215,9 @@ describe("top-level array bounds (ENG-3384)", () => {
 });
 
 describe("ZV3CreateSurveyQuery", () => {
-  test.each(V3_SURVEY_CREATED_FROM)("accepts createdFrom=%s", (createdFrom) => {
+  // Spelled out rather than read from the schema's own list, so dropping a value the dashboard sends —
+  // `import` comes from the Qualtrics import dialog (ENG-3653) — fails here.
+  test.each(["blank", "template", "xm-template", "ai", "import"])("accepts createdFrom=%s", (createdFrom) => {
     expect(ZV3CreateSurveyQuery.safeParse({ createdFrom }).success).toBe(true);
   });
 
