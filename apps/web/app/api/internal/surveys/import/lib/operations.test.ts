@@ -313,6 +313,35 @@ describe("streamQsfImport", () => {
       expect(allLogged()).not.toContain("second line");
     });
 
+    test("logs no frames when the message changed after the stack was taken, rather than risk a line of it", async () => {
+      const error = new Error(`Failed\n    at ${FILE_CONTENT_MARKER} (looks:1:1)`);
+      void error.stack; // V8 writes the header from the message as it is now.
+      error.message = "rewritten";
+      mocks.runQsfImport.mockRejectedValue(error);
+
+      await (await call()).text();
+
+      expect(mocks.log.error).toHaveBeenCalledWith(
+        expect.not.objectContaining({ errStack: expect.anything() }),
+        "QSF import failed"
+      );
+      expect(allLogged()).not.toContain(FILE_CONTENT_MARKER);
+    });
+
+    test("still reports and logs a failure whose message is not a string", async () => {
+      const error = new Error("boom");
+      Object.defineProperty(error, "message", { value: undefined });
+      mocks.runQsfImport.mockRejectedValue(error);
+
+      const events = await readEvents(await call());
+
+      expect(events.at(-1)).toMatchObject({ type: "error", code: "import_failed" });
+      expect(mocks.log.error).toHaveBeenCalledWith(
+        expect.objectContaining({ errName: "Error" }),
+        "QSF import failed"
+      );
+    });
+
     test("logs a provider error by name and status only, since its message can echo the prompt", async () => {
       mocks.runQsfImport.mockRejectedValue(
         new APICallError({

@@ -43,6 +43,36 @@ const parseContentLength = (value: string | null): number | null => {
 };
 
 /**
+ * The stack frames of an error, without the header V8 puts above them, or none when that header cannot
+ * be told apart from them.
+ *
+ * The header is `${name}: ${message}` as it stood when `stack` was first read, and spans as many lines
+ * as the message did — a message line indented like a frame would pass a frame filter. It is matched
+ * whole rather than counted: a message changed after the stack was read would otherwise shift the cut,
+ * letting old message lines through or dropping real frames. Anything unexpected — a rewritten stack, a
+ * non-string message — logs no frames rather than risk a line of the message.
+ */
+const stackFrames = (error: Error): string[] => {
+  const { name, message, stack } = error;
+  if (typeof stack !== "string" || typeof name !== "string" || typeof message !== "string") {
+    return [];
+  }
+
+  // Error.prototype.toString's rule, which is what V8 writes as the header.
+  let header = `${name}: ${message}`;
+  if (!name) header = message;
+  else if (!message) header = name;
+  if (!stack.startsWith(`${header}\n`)) {
+    return [];
+  }
+
+  return stack
+    .slice(header.length + 1)
+    .split("\n")
+    .filter((line) => /^\s+at /.test(line));
+};
+
+/**
  * What an import failure may put in the log: its name, the provider's status, and its stack frames —
  * never a message. A message can carry the file's questions: the AI SDK's errors keep the prompt or the
  * model's output in their message and fields (`NoObjectGeneratedError.text`, `TypeValidationError.value`),
@@ -55,16 +85,10 @@ const loggableError = (error: unknown): Record<string, unknown> => {
   }
 
   const providerStatusCode = classifyAIProviderError(error)?.statusCode;
-  // V8 starts the stack with `${name}: ${message}`, which spans as many lines as the message does.
-  // Those lines go first: a message line indented like a frame would otherwise pass the filter.
-  const headerLines = error.message.split("\n").length;
-  const frames = (error.stack ?? "")
-    .split("\n")
-    .slice(headerLines)
-    .filter((line) => /^\s+at /.test(line));
+  const frames = stackFrames(error);
 
   return {
-    errName: error.name,
+    errName: typeof error.name === "string" ? error.name : typeof error.name,
     ...(providerStatusCode === undefined ? {} : { providerStatusCode }),
     ...(frames.length > 0 ? { errStack: frames.join("\n") } : {}),
   };
