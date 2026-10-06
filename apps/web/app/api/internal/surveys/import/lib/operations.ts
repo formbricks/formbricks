@@ -55,7 +55,13 @@ const loggableError = (error: unknown): Record<string, unknown> => {
   }
 
   const providerStatusCode = classifyAIProviderError(error)?.statusCode;
-  const frames = (error.stack ?? "").split("\n").filter((line) => /^\s+at /.test(line));
+  // V8 starts the stack with `${name}: ${message}`, which spans as many lines as the message does.
+  // Those lines go first: a message line indented like a frame would otherwise pass the filter.
+  const headerLines = error.message.split("\n").length;
+  const frames = (error.stack ?? "")
+    .split("\n")
+    .slice(headerLines)
+    .filter((line) => /^\s+at /.test(line));
 
   return {
     errName: error.name,

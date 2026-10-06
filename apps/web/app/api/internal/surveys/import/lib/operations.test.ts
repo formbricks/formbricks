@@ -294,7 +294,9 @@ describe("streamQsfImport", () => {
     test("reports any other failure with a fixed message, and logs where it failed, never what it said", async () => {
       // Any error can carry file content in its message — the AI SDK's validation errors carry the
       // model's output — so no error message reaches the log, only its name and frames.
-      mocks.runQsfImport.mockRejectedValue(new Error(`Failed on ${FILE_CONTENT_MARKER}\nsecond line`));
+      mocks.runQsfImport.mockRejectedValue(
+        new Error(`Failed on ${FILE_CONTENT_MARKER}\nsecond line\n    at ${FILE_CONTENT_MARKER} (looks:1:1)`)
+      );
 
       const events = await readEvents(await call());
 
