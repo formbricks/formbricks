@@ -434,9 +434,10 @@ tables, connected directly to the primary rather than through a transaction-pool
 PgBouncer. A pooler can run the `SET` and the `CREATE` on different server connections. Any other SQL client must
 run the `CREATE INDEX` statement on its own, outside a transaction, because `CONCURRENTLY` cannot run inside one.
 
-The two `SET` lines keep a timeout configured on the server or on your database user from cancelling the build:
-`lock_timeout` also limits how long the build waits for other transactions to finish. On PostgreSQL 17 or later,
-also run `SET transaction_timeout = 0;` first if your server sets one.
+The two `SET` lines keep a timeout configured on the server, the database or your user from cancelling the
+build: `lock_timeout` also limits how long the build waits for other transactions to finish. On PostgreSQL 17 or
+later, if `SHOW transaction_timeout;` returns anything other than `0`, add `SET transaction_timeout = 0;` before
+the `CREATE` line too.
 
 Then read the `indisvalid` result:
 
@@ -445,21 +446,32 @@ Then read the `indisvalid` result:
   name, skip the build, and leave `Response` with an index PostgreSQL never uses. See below.
 - **No row**: the `CREATE` failed before it started, for example under the wrong user or on a read-only replica.
   Fix the error it printed and run the commands again.
+- **No result at all**: the connection was lost before the check ran. Read on under `f`.
 
-An `f` means the build is still running or stopped part-way. If the `CREATE` printed an error, it stopped: fix that
-cause (often a timeout), drop the index as below, and run the commands again. If your session dropped instead,
-the build can still be running on the server, so first check, the same way and as the same user as above:
+An `f`, or no result at all, means the build is still running or stopped part-way. If the `CREATE` printed an
+error, it stopped: fix that cause (often a timeout), drop the index as below, and run the commands again. If your
+session dropped instead, the build can still be running on the server, so first check, the same way and as the
+same user as above:
 
 ```sql
 SELECT phase, current_locker_pid FROM pg_stat_progress_create_index
 WHERE datname = current_database() AND relid = '"Response"'::regclass;
 ```
 
-While that returns a row, wait for it to finish and check `indisvalid` again. A phase starting with `waiting for`
-is waiting for older transactions in this database to end, on any table, so a long report or a `pg_dump` backup
-counts too; `current_locker_pid` is the session it waits for, which you can look up in `pg_stat_activity`. If the
-query returns nothing, the build was interrupted: run `DROP INDEX CONCURRENTLY "Response_surveyId_finished_idx";`
-the same way, then run the commands above again.
+While that returns a row, wait for it to finish and check `indisvalid` again. A `waiting for writers` phase is
+waiting for transactions that wrote to `Response`. `waiting for old snapshots` waits for every older transaction
+in this database that still holds a snapshot, on any table, so a long report or a `pg_dump` backup counts too.
+Either way, `current_locker_pid` is the session it waits for, which you can look up in `pg_stat_activity`. If the
+query returns nothing, the build was interrupted. Drop the index the same way, with the same `SET` lines first,
+since a concurrent drop waits under `lock_timeout` too:
+
+```sql
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+DROP INDEX CONCURRENTLY IF EXISTS "Response_surveyId_finished_idx";
+```
+
+Then run the commands above again.
 
 An extra index is harmless to v5.3, so building it early needs no rollback plan of its own.
 

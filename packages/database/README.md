@@ -147,7 +147,8 @@ for the one case where PostgreSQL adds one anyway.
 
 1. Add `SET lock_timeout = '1s';` at the top, and scope it to the file: `SET LOCAL` inside `BEGIN` and `COMMIT`,
    or `RESET lock_timeout;` at the end. `prisma migrate deploy` applies consecutive files on one connection, so a
-   plain `SET` carries into the next file. Concurrent index builds are the exception; see
+   plain `SET` carries into the next file. Concurrent index operations are the exception: a build sets `0`
+   instead, and a `DROP INDEX CONCURRENTLY` must be alone in its file, so it gets no `SET` at all; see
    [How Prisma applies a migration file](#how-prisma-applies-a-migration-file).
 2. Add explicit transaction boundaries when the statements must be atomic.
 3. Change eligible index builds to `CREATE INDEX CONCURRENTLY`, which cannot run inside a transaction. Such a file
@@ -171,7 +172,8 @@ ALTER TABLE "Example" ADD COLUMN IF NOT EXISTS "slug" TEXT NOT NULL;
 RESET lock_timeout;
 ```
 
-Squawk enforces a short lock timeout, but intentionally does not require a statement timeout. If an operation
+Squawk requires a `SET lock_timeout` before locking statements (it does not check the value), but intentionally
+does not require a statement timeout. If an operation
 needs one, size it for that operation and table; a blanket value can abort legitimate large-table index builds.
 
 The drift check replays only checked-in `migration.sql` files, so interleaved TypeScript data migrations are
@@ -208,21 +210,24 @@ What follows for a migration author:
   as `20260909120001_verify_response_keyset_indexes_valid` does for the file before it.
 - Start a concurrent index build with `SET lock_timeout = 0;` and end the file with `RESET lock_timeout;`.
   `lock_timeout` does not only bound acquiring the table lock: the build also waits, under the same timeout, for
-  every older transaction in the database to finish, on any table. A short value fails the build whenever a
-  report, a backup or an idle-in-transaction session outlasts it, and leaves an INVALID index that
-  `IF NOT EXISTS` skips on the retry. The build's own lock never blocks reads or writes, so a short timeout
-  protects nothing here.
+  transactions that wrote to the table, and for every transaction in the database that still holds an older
+  snapshot, on any table. A short value fails the build whenever a long query, a `pg_dump` backup or a
+  `REPEATABLE READ` transaction left open outlasts it, and leaves an INVALID index that `IF NOT EXISTS` skips on
+  the retry. The build's own lock never blocks reads or writes, so a short timeout protects nothing here. With
+  `0`, such a deploy waits instead of failing, and `pg_stat_progress_create_index` shows what it waits for.
 - `DROP INDEX CONCURRENTLY` must be the only statement in its file. Even a `SET lock_timeout` before it makes
   the file a multi-statement string, and the drop fails. Squawk then reports `require-lock-timeout`; put
-  `-- squawk-ignore require-lock-timeout` above the drop, with a comment saying why. The drop runs with whatever
-  timeout the connection has, which is why every other file must scope its own.
+  `-- squawk-ignore require-lock-timeout` above the drop, with a comment saying why. The drop runs with the
+  connection's session value (the server, database or role default, plus anything an earlier file in the same
+  deploy left set), which is why every other file must scope its own. An unbounded wait is harmless here: a
+  concurrent drop never blocks reads or writes.
 - Use explicit `BEGIN` and `COMMIT` when statements must succeed or fail together. Never rely on the implicit
   transaction: whether a file gets one depends on the parser's coverage, which can change in any Prisma upgrade.
   Know how such a file fails ([prisma/prisma#15295](https://github.com/prisma/prisma/issues/15295)): Prisma
   reports `current transaction is aborted` instead of the real error, records no log, and every later deploy
   stops with `P3009`. The real error is only in the PostgreSQL server log. The transaction has rolled the file
-  back, so once the cause is fixed, `prisma migrate resolve --rolled-back <migration>` and deploying again
-  applies it.
+  back, so once the cause is fixed, run `prisma migrate resolve --rolled-back <migration>` and deploy again to
+  apply it.
 - Squawk models only the first case, so it will not flag a `CONCURRENTLY` statement that shares a file with a
   `DO` block. The CI jobs that apply the migrations (E2E, integration and contract tests) fail on it instead.
 
