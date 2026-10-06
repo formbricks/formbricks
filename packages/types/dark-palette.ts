@@ -9,7 +9,7 @@
 //   their light value in dark (D12). The editor warns instead of changing them.
 // - Only explicit dark overrides are stored. `dark: null` means "derived", so derived values
 //   follow the light brand color and are never persisted.
-import { ensureReadable, getContrastRatio, mixColor } from "./colors";
+import { ensureReadable, getContrastRatio, mixColor, normalizeHex } from "./colors";
 import { type TBaseStyling, type TStylingColor } from "./styling";
 
 export const DEFAULT_DARK_BRAND_COLOR = "#1e40af";
@@ -84,6 +84,12 @@ export const getDerivedDarkColors = (brandColor: string = DEFAULT_DARK_BRAND_COL
 
 const BRAND_PRESERVED = new Set<TStylingColorKey>(BRAND_PRESERVED_COLOR_KEYS);
 
+// Styling reaches the renderer from the API and MCP too, so a stored value can be anything. An
+// unparseable one is treated as unset: the color math downstream throws on it, and one bad dark
+// value must not take the whole survey down.
+const validColor = (color: string | null | undefined): string | undefined =>
+  color && normalizeHex(color) ? color : undefined;
+
 /**
  * Resolves every color field for dark mode: explicit dark override → light value for brand
  * colors (D12) → derived value. `undefined` only for a brand color with no light value either,
@@ -92,17 +98,32 @@ const BRAND_PRESERVED = new Set<TStylingColorKey>(BRAND_PRESERVED_COLOR_KEYS);
 export const resolveDarkColors = (
   styling: Partial<Record<TStylingColorKey, TStylingColor | null | undefined>>
 ): Record<TStylingColorKey, string | undefined> => {
-  const derived = getDerivedDarkColors(styling.brandColor?.light ?? DEFAULT_DARK_BRAND_COLOR);
+  const derived = getDerivedDarkColors(validColor(styling.brandColor?.light) ?? DEFAULT_DARK_BRAND_COLOR);
 
   return Object.fromEntries(
     (Object.keys(derived) as TStylingColorKey[]).map((key) => {
       const color = styling[key];
-      if (color?.dark) return [key, color.dark];
-      if (BRAND_PRESERVED.has(key)) return [key, color?.light ?? undefined];
+      const darkValue = validColor(color?.dark);
+      if (darkValue) return [key, darkValue];
+      if (BRAND_PRESERVED.has(key)) return [key, validColor(color?.light)];
       return [key, derived[key]];
     })
   ) as Record<TStylingColorKey, string | undefined>;
 };
+
+// The light error color (survey-ui `--destructive`, Tailwind red-600).
+const LIGHT_ERROR_COLOR = "#e7000b";
+
+/**
+ * Colors that must stay readable on the dark card whatever the brand is. The brand itself is
+ * preserved for fills (D12), but brand-colored text and the focus ring are lightened just enough
+ * to clear WCAG, and the error red likewise.
+ */
+export const getDarkReadableColors = (brandColor: string, cardColor: string) => ({
+  brandTextColor: ensureReadable(brandColor, cardColor, TEXT_CONTRAST),
+  focusRingColor: ensureReadable(brandColor, cardColor, NON_TEXT_CONTRAST),
+  errorColor: ensureReadable(LIGHT_ERROR_COLOR, cardColor, TEXT_CONTRAST),
+});
 
 export type TDarkContrastWarning = {
   key: "brandColor" | "buttonBgColor" | "buttonTextColor" | "progressIndicatorBgColor";

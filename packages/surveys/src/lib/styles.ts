@@ -1,6 +1,10 @@
 // Add this import for survey-ui CSS variables
 import surveyUiCss from "@formbricks/survey-ui/styles?inline";
-import { resolveDarkColors } from "@formbricks/types/dark-palette";
+import {
+  DEFAULT_DARK_BRAND_COLOR,
+  getDarkReadableColors,
+  resolveDarkColors,
+} from "@formbricks/types/dark-palette";
 import { sanitizeThemeStyling } from "@formbricks/types/styling-values";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { type TWorkspaceStyling } from "@formbricks/types/workspace";
@@ -142,6 +146,15 @@ export const getDarkThemeCss = (rawStyling: TWorkspaceStyling | TSurveyStyling):
   // Hover / selected states lighten a dark surface instead of darkening it (survey-ui tokens).
   add("shade-color", "white");
   if (card) add("tint-color", card);
+
+  if (card) {
+    // The brand stays as typed for fills (D12); text, the focus ring and the error red are
+    // lightened just enough to stay readable on this card.
+    const readable = getDarkReadableColors(dark.brandColor ?? DEFAULT_DARK_BRAND_COLOR, card);
+    add("brand-readable-color", readable.brandTextColor);
+    add("focus-ring-outer-color", readable.focusRingColor);
+    css += `  --destructive: ${readable.errorColor};\n`;
+  }
 
   return `${css}}\n`;
 };

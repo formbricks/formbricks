@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, test } from "vitest";
-import { getDerivedDarkColors } from "@formbricks/types/dark-palette";
+import { getDarkReadableColors, getDerivedDarkColors } from "@formbricks/types/dark-palette";
 import { mixColor } from "./color";
 
 // The dark fallback blocks in the two stylesheets are written out by hand (CSS cannot import the
@@ -16,6 +16,7 @@ const readDarkBlock = (path: string): Record<string, string> => {
 };
 
 const dark = getDerivedDarkColors("#1e40af");
+const readable = getDarkReadableColors("#1e40af", dark.cardBackgroundColor);
 
 describe("dark fallback CSS matches the derived default palette", () => {
   test("survey-ui tokens", () => {
@@ -34,6 +35,8 @@ describe("dark fallback CSS matches the derived default palette", () => {
       "--fb-accent-background-color": dark.accentBgColor,
       "--fb-accent-background-color-selected": dark.accentBgColorSelected,
       "--fb-tint-color": dark.cardBackgroundColor,
+      "--destructive": readable.errorColor,
+      "--fb-brand-readable-color": readable.brandTextColor,
     });
   });
 
@@ -54,6 +57,19 @@ describe("dark fallback CSS matches the derived default palette", () => {
       "--fb-input-background-color-selected": mixColor(dark.inputBgColor, "#ffffff", 0.05),
       "--fb-accent-background-color": dark.accentBgColor,
       "--fb-accent-background-color-selected": dark.accentBgColorSelected,
+      "--fb-brand-readable-color": readable.brandTextColor,
     });
+  });
+
+  test("a light survey does not inherit the host page's color-scheme", () => {
+    const css = readFileSync(resolve(__dirname, "../styles/global.css"), "utf8");
+    const lightRoot = /#fbjs\s*\{([^}]*)\}/.exec(css.slice(css.indexOf("/* theming */")))?.[1] ?? "";
+    expect(lightRoot).toContain("color-scheme: light;");
+    expect(css).toMatch(/#fbjs\[data-appearance="dark"\]\s*\{\s*color-scheme: dark;/);
+  });
+
+  test("focus ring", () => {
+    const css = readFileSync(resolve(__dirname, "../../../survey-ui/src/styles/globals.css"), "utf8");
+    expect(css).toContain(`--fb-focus-ring-outer-color: ${readable.focusRingColor};`);
   });
 });

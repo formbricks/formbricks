@@ -225,6 +225,11 @@
   --fb-option-bg-color: #0e1832;
   --fb-option-label-color: #dde2f3;
   --fb-page-bg-color: #0b0f17;
+
+  /* Readable variants of the brand and the error red on the dark card
+     (getDarkReadableColors in dark-palette.ts). */
+  --destructive: #ee4d54;
+  --fb-brand-readable-color: #788ccf;
 }
 
 #fbjs .button-custom {
@@ -358,6 +363,8 @@
      it takes the card color instead of white. */
   #fbjs[data-appearance="dark"] {
     --fb-focus-ring-inner-color: var(--fb-survey-background-color, #0d1426);
+    /* The brand can sit below 3 : 1 on the dark card; styles.ts emits the readable variant. */
+    --fb-focus-ring-outer-color: #4b66bf;
   }
 
   /* Tailwind v4's transition-colors includes outline-color, and the focus rule
