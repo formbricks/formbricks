@@ -1,0 +1,131 @@
+---
+title: "API v3 Schema Generation"
+description: "Why the v3 Zod schemas are generated from the OpenAPI spec, how the pipeline works, and how to adopt a resource"
+icon: "file-code"
+---
+
+## Decision
+
+The v3 OpenAPI spec under `docs/api-v3-reference/src/` is the single source of truth for v3 request and
+response shapes. Zod schemas and their TypeScript types are **generated from it**, not written by hand and not
+the other way round (ENG-3335).
+
+This replaces the earlier plan to generate the spec from Zod with `zod-openapi`, as v2 does. Spec-first keeps
+the contract as the reviewed artifact that Schemathesis, Mintlify and the MCP server already read. It also keeps
+the prose, examples and error documentation where they live today, and makes contract drift a build failure
+instead of something a bespoke drift test may or may not cover.
+
+v2 keeps its code-first `zod-openapi` setup. Only v3 is in scope.
+
+## Generator
+
+`@hey-api/openapi-ts` (MIT) with its `zod` plugin, exact-pinned in `packages/api-v3-schemas`. It was chosen
+after running every serious candidate against the real bundle:
+
+| Generator | Result on the v3 bundle |
+| --- | --- |
+| **hey-api 0.99** | Typechecks, deterministic, smallest install (+11 MB), no telemetry. Faithful once the pipeline below fixes strictness and composition. |
+| kubb 5 | Drops a base `required` on `.extend` (an element with no `type` validated), turns an open `metadata` object into `{}`, output fails `tsc`, telemetry on by default. |
+| orval 8 | No hook for custom formats (`cuid2`), strictness only all-or-nothing, `z.coerce.boolean` turns `"false"` into `true`. |
+| typed-openapi, `z.fromJSONSchema` | Crash on import / throw on `unevaluatedProperties` and `if/then`. |
+
+If hey-api's pre-1.0 churn ever outweighs its fidelity, orval is the fallback, with strictness and `cuid2` moved
+into the refinement layer.
+
+## Pipeline
+
+`pnpm api:v3:schemas` runs `packages/api-v3-schemas/scripts/generate.ts`:
+
+<Steps>
+  <Step title="Read the committed bundle">
+    `docs/api-v3-reference/openapi.yml` — the same file Schemathesis reads, so the schemas and the contract tests
+    can never be generated from different inputs.
+  </Step>
+  <Step title="Scope to the adopted tags">
+    `scripts/adopted.ts` lists each tag with its exact operationIds. Only those operations and the components they
+    reach are generated, so an edit elsewhere in the contract cannot break the pipeline, and a renamed tag or
+    operation fails it instead of silently generating less.
+  </Step>
+  <Step title="Normalize">
+    `scripts/normalize.ts` rewrites the 3.1 idioms hey-api mis-generates: it flattens `allOf` +
+    `unevaluatedProperties: false` into one closed object, collapses branches that only carry keywords the
+    generator ignores, drops many-to-one discriminator mappings once the members' own enums prove them redundant,
+    and strips `readOnly`. What may reach the generator is an **allowlist** of keywords; anything outside it, and any
+    recursive schema, throws — a construct the generator silently drops is a validation hole.
+  </Step>
+  <Step title="Generate and format">
+    hey-api runs in memory with two resolvers: `format: cuid2` becomes `z.cuid2()`, and `additionalProperties:
+    false` becomes `z.strictObject`. Without the second, unknown keys would be stripped instead of answering 400
+    `unsupported_field` — a mass-assignment guard lost. The output is formatted with the repository's Prettier
+    config into `src/generated/zod.gen.ts`.
+  </Step>
+</Steps>
+
+## Guards
+
+- **Freshness.** `pnpm lint` runs `pnpm api:v3:check` (bundle vs `src/`) and `pnpm api:v3:schemas:check`
+  (generated module vs bundle, byte for byte) on every PR. After editing the spec, `pnpm api:v3:sync` regenerates
+  both.
+- **Fidelity.** `src/generated.contract.test.ts` diffs the JSON Schema of every generated component and operation
+  schema against the spec, path by path: closedness, required, nullability, formats, bounds, enums, union members
+  (each one, including duplicates), conditionals (fingerprinted) and closed `allOf` branches that others extend.
+  Because JSON Schema shows a `z.unknown()` key as required while Zod accepts it missing, it also asks each required
+  key at runtime. It does not model recursion — the normalizer refuses recursive schemas until it does.
+- **Pinned gaps.** hey-api cannot express `uniqueItems`, `minProperties`/`maxProperties`, `if/then`, or a required
+  key with no type. Each such constraint is pinned in `src/testing/unenforced.ts` with the value the spec states and
+  the module that enforces it. The fidelity test fails on any unpinned difference, on a pin whose value moved, and on
+  a pin that no longer differs.
+
+## Consuming The Schemas
+
+A route keeps its own small module (Responses: `apps/web/app/api/v3/responses/lib/schemas.ts` and
+`resources.ts`) that imports the generated schemas and adds only what they cannot carry:
+
+- refinements for the pinned constraints, with the messages clients read in `invalid_params[].reason`;
+- strict parameter objects (`z.strictObject(generated.shape)`), because OpenAPI cannot close a parameter list;
+- compositions the generator cannot emit, such as a many-to-one discriminated union rebuilt from the generated
+  members (`z.discriminatedUnion("elementType", zResponseAnswer.options)`);
+- security declarations such as the ENG-2861 reference manifest.
+
+Query strings are the one exception. A query arrives as strings, sometimes repeated, and bracketed
+families such as `filter[finished][eq]` need coercion and repeated-key handling the generated typed schemas do
+not do. So `GET /api/v3/responses` and `/count` keep their hand-written parser
+(`parse-v3-responses-list-query.ts`), and the generated `zGetResponsesV3Query` / `zCountResponsesV3Query` are
+unused until a shared query adapter derives that parsing from them.
+
+Compose first, refine last: Zod 4 refuses to `.extend` over a key once a schema has refinements, and `.refine`
+returns a new instance — so anything keyed on schema identity must be attached to the final instance.
+
+## Adopting A Resource
+
+1. Add the tag and its operationIds to `packages/api-v3-schemas/scripts/adopted.ts`, then run `pnpm api:v3:sync`,
+   which bundles `docs/api-v3-reference/src/` before generating, so spec edits made for the resource are included.
+   If the normalizer throws, extend it deliberately, with a unit test.
+2. Pin every new difference the fidelity test reports in `src/testing/unenforced.ts`, naming your module as the
+   enforcer.
+3. Rebuild the route schemas on the generated ones. Add a counterexample for each pin, a contract diff of each
+   route schema, and parse the operation's examples through them (see `write-schemas.test.ts`).
+4. **Before generating request bodies, the resource needs a reference-roster test** like Responses'
+   `reference-manifest.test.ts`. Generation means a spec edit alone can add an accepted field, top-level or inside a
+   nested object such as `meta`; the roster classifies both, by set equality, so it fails until that field's tenancy is
+   classified and refuses fields the server derives.
+5. Delete the resource's drift test once nothing in it is left that generation does not prove.
+
+## Upgrading The Generator
+
+The version is exact-pinned and the output is committed, so an upgrade is a deliberate PR whose diff shows every
+change in the generated code. The fidelity and closedness tests are what catch a regression. The pipeline uses
+`ctx.gen.render()` with `dryRun`, which is not a documented API — check it on every bump. A TypeScript or Prettier
+catalog bump can also change the formatting and require a regenerate; `pnpm lint` reports it.
+
+The generator is a build-time dependency only. ESLint forbids importing it from `src/`, so no generator code can
+reach a served bundle, and a test fails if the generated module ever imports anything but `zod`. The
+`@formbricks/api-v3-schemas/testing` entry point reads the bundle from disk and is lint-banned outside tests in
+`apps/web`. The pipeline passes an explicit config file that does not exist, so hey-api's loader executes
+nothing it finds in the working directory — a test plants a throwing `openapi-ts.config.mjs` and `index.mjs` to keep
+it that way. The loader still reads a `.openapi-tsrc` from the working directory — hey-api offers no way to turn that off, and
+the file's keys survive wherever the pipeline sets none — so the renderer refuses to run when one is present.
+
+The generator's packages require Node 22.18 or newer, which the repository's Node 24 pin (`engines`, `.nvmrc`, CI
+and the Docker image) satisfies. Generator tooling must be under a permissive licence (MIT, Apache-2.0, BSD or ISC):
+the generated code is part of this AGPL repository, but the tool itself is never distributed.

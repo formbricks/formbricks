@@ -405,6 +405,7 @@
             "pages": [
               "development/technical-handbook/overview",
               "development/technical-handbook/api-gateway",
+              "development/technical-handbook/api-v3-schema-generation",
               "development/technical-handbook/mcp-server",
               "development/technical-handbook/cube-tenant-isolation",
               "development/technical-handbook/database-model",
