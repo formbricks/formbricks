@@ -2,6 +2,7 @@
  * NDJSON streaming for internal routes that report progress while a long call runs (Create with AI, the
  * Qualtrics import). The browser reads it with `NdjsonParser`.
  */
+import { logger } from "@formbricks/logger";
 
 export const NDJSON_CONTENT_TYPE = "application/x-ndjson; charset=utf-8";
 
@@ -25,7 +26,10 @@ export interface TNdjsonStreamOptions<TEvent> {
   onError: (error: unknown) => TEvent | null;
   /** The client went away. Stop the work that feeds the stream, so it stops costing anything. */
   onCancel: () => void;
-  /** Runs once, after `produce` has settled, however the stream ended. */
+  /**
+   * Runs once, after `produce` has settled and the stream has closed, however it ended. A throw here is
+   * logged and goes no further: the client already has every event.
+   */
   onSettled?: () => void;
   /**
    * Re-sends `event()` whenever nothing was written for `intervalMs`. Proxies drop a response that
@@ -90,11 +94,20 @@ export function createNdjsonResponse<TEvent>({
         if (finalEvent) emit(finalEvent);
       } finally {
         stopHeartbeat();
-        onSettled?.();
         // close() throws on a stream the consumer already cancelled, and there is nobody left to tell.
         if (!closed) {
           closed = true;
           controller.close();
+        }
+        // After the close, so a hook that throws cannot turn a finished stream into a truncated one.
+        try {
+          onSettled?.();
+        } catch (error) {
+          // The name only: the hooks log what the stream carried, so a message could repeat it.
+          logger.error(
+            { errName: error instanceof Error ? error.name : typeof error },
+            "NDJSON stream settle hook failed"
+          );
         }
       }
     },

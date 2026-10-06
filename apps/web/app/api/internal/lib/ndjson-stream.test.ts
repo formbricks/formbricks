@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import { NDJSON_CONTENT_TYPE, createNdjsonResponse, encodeNdjsonLine } from "./ndjson-stream";
+
+vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn() } }));
 
 const decoder = new TextDecoder();
 const decode = (event: unknown) => decoder.decode(encodeNdjsonLine(event));
@@ -78,6 +81,23 @@ describe("createNdjsonResponse", () => {
     expect(response.headers.get("X-Accel-Buffering")).toBe("no");
     await expect(readLines(response)).resolves.toEqual([{ type: "start" }, { type: "done" }]);
     expect(onSettled).toHaveBeenCalledTimes(1);
+  });
+
+  test("closes cleanly when the settle hook throws, and logs the hook's failure by name only", async () => {
+    const response = createNdjsonResponse<TEvent>({
+      produce: async (emit) => {
+        emit({ type: "done" });
+      },
+      onError: () => null,
+      onCancel: vi.fn(),
+      onSettled: () => {
+        throw new TypeError("settle hook broke on secret-from-the-stream");
+      },
+    });
+
+    await expect(readLines(response)).resolves.toEqual([{ type: "done" }]);
+    expect(logger.error).toHaveBeenCalledWith({ errName: "TypeError" }, "NDJSON stream settle hook failed");
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("secret-from-the-stream");
   });
 
   test("turns an escaped failure into a final event and still closes cleanly", async () => {
