@@ -192,7 +192,8 @@ export async function deleteScopedResponse(
         row: deletedRow,
         fileUrls: collectResponseFileUrls(
           deletedRow.data,
-          getSurveyFileUploadElementIds({ blocks: survey?.blocks, questions: survey?.questions })
+          getSurveyFileUploadElementIds({ blocks: survey?.blocks, questions: survey?.questions }),
+          deletedRow.surveyId
         ),
       };
     });
@@ -284,7 +285,11 @@ export async function deleteScopedResponses(
       );
 
       const fileUrls = rows.flatMap((row) =>
-        collectResponseFileUrls(row.data, uploadElementIds.get(row.surveyId) ?? new Set<string>())
+        collectResponseFileUrls(
+          row.data,
+          uploadElementIds.get(row.surveyId) ?? new Set<string>(),
+          row.surveyId
+        )
       );
 
       // Responses before displays — see the note above. Not a correctness constraint: the FK is
