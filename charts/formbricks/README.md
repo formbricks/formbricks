@@ -250,6 +250,23 @@ the initialization hook so a GitOps sync cannot mutate the authorization graph o
 window. The acknowledgement must be set only after the external preparation succeeds. Fresh self-hosted installs
 should keep the default initialization Job enabled.
 
+The AuthZed initialization / upgrade-check hook defaults to `runAsNonRoot: true` and UID `1001`, matching
+the official image's `nextjs` user. An explicit `deployment.securityContext.runAsUser` is inherited instead;
+`authzed.initialization.securityContext.runAsUser` takes precedence over both. Custom images with a different
+UID must configure one of those overrides. The hook does not inherit the web container's
+`deployment.containerSecurityContext` or change the database migration Job's security settings.
+
+Use `authzed.initialization.securityContext` for hook-only container overrides. Unspecified fields retain
+the hook defaults: read-only root filesystem, non-root enforcement, no privilege escalation, and all
+capabilities dropped. For example, for a custom image built to run as UID `2000`:
+
+```yaml
+authzed:
+  initialization:
+    securityContext:
+      runAsUser: 2000
+```
+
 ## Cube
 
 Cube is part of the baseline Formbricks v5 stack and is deployed by this chart by default
@@ -740,31 +757,45 @@ Hub's metric attributes are restricted to a fixed, low-cardinality set — for i
 emitted only in correlated JSON logs. Prompt text, feedback, model output, embeddings, credentials, authorization
 tokens, provider response bodies, and collector URLs are never telemetry fields.
 
-## Web and migration container security context
+## Migration Job compatibility rollback
 
-`deployment.containerSecurityContext` applies to the web container and to both migration Job containers
-(`wait-for-database` and `migration`), which run the same image. It defaults to a read-only root filesystem,
+This chart restores a writable root filesystem for the migration Job and stops applying
+`deployment.containerSecurityContext` to its containers. This is a breaking change for namespaces enforcing
+Restricted Pod Security: admission can reject the Job and block an upgrade. Before upgrading, adjust the
+namespace admission policy to permit this Job, or retain a hardened chart with a compatible application image.
+If admission rejects the Job, roll back to the previous compatible chart and image combination before retrying.
+
+The migration Job uses the image's default user unless `deployment.securityContext.runAsUser` overrides it.
+For the Formbricks 6.0.2 image, use UID 1001 (the image default): its migration runner needs ownership of
+`/home/nextjs/packages/database` to remove and recreate the staging directory. An arbitrary UID, such as 1234,
+can fail with a permission error even though the root filesystem is writable. A custom image must provide
+matching ownership for its configured UID.
+
+## Web container security context
+
+`deployment.containerSecurityContext` applies to the web container. It defaults to a read-only root filesystem,
 `runAsNonRoot`, `runAsUser: 1001` (the image's `nextjs` user), no privilege escalation, and all capabilities
-dropped. With a read-only root, the chart mounts `emptyDir` volumes on the paths each container writes:
+dropped. With a read-only root, the chart mounts `emptyDir` volumes on `/tmp`, the Next.js cache, and — when
+`migration.enabled=false` — the Prisma migration staging directory. A path you mount yourself through
+`deployment.extraVolumeMounts` replaces the chart's mount.
 
-- Web container: `/tmp`, the Next.js cache, and — when `migration.enabled=false` — the Prisma migration staging
-  directory. A path you mount yourself through `deployment.extraVolumeMounts` replaces the chart's mount.
-- Migration Job: `/tmp` and the Prisma migration staging directory on the `migration` container.
-  `wait-for-database` writes nothing, so it gets no mounts. The Job does not use `deployment.extraVolumes`.
+The migration Job uses `deployment.securityContext` at the Pod level and retains a writable root filesystem.
+It does not inherit `deployment.containerSecurityContext` or mount the Prisma staging directory, so older
+migration runners can remove and recreate that directory. Namespaces enforcing the `restricted` Pod Security
+standard may reject the migration Job because it does not enforce the required container-level controls.
 
-Upgrading from a chart that did not render this context:
+Upgrading from a chart that did not render the web container context:
 
 - Container-level fields win over `deployment.securityContext`. If you set a custom
   `deployment.securityContext.runAsUser`, set `deployment.containerSecurityContext.runAsUser` to the same UID,
-  or the web container and the migration Job run as `1001`.
+  or the web container runs as `1001`.
 - A custom image or extension that writes anywhere else needs a writable mount through
-  `deployment.extraVolumes` / `deployment.extraVolumeMounts`, or `readOnlyRootFilesystem: false`. The
-  migration Job takes no extra mounts, so if it writes elsewhere, set `readOnlyRootFilesystem: false`.
-- The migration Job, and the web container when `migration.enabled=false`, need an image whose migration
-  runner empties its staging directory in place: Formbricks 6.1.0 or later. An older image, for example one
-  pinned through `deployment.image.tag` or `deployment.image.digest`, cannot remove the mount point and fails
-  with `EROFS: read-only file system, rmdir '/home/nextjs/packages/database/.prisma-migrations'`, which
-  blocks the upgrade. Set `readOnlyRootFilesystem: false` until you run a matching image.
+  `deployment.extraVolumes` / `deployment.extraVolumeMounts`, or `readOnlyRootFilesystem: false`.
+- When `migration.enabled=false`, the web container needs an image whose migration runner empties its staging
+  directory in place: Formbricks 6.1.0 or later. Older images cannot remove the mount point and fail with
+  `EROFS: read-only file system, rmdir '/home/nextjs/packages/database/.prisma-migrations'`.
+  Keep the migration Job enabled so startup migrations are skipped, or set
+  `deployment.containerSecurityContext.readOnlyRootFilesystem: false` for startup migrations on an older image.
 
 ## Values
 

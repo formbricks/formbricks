@@ -1,5 +1,7 @@
+import { disconnect, runBackfill } from "./__mocks__/authzed-backfill.mock";
 import { readFileSync } from "node:fs";
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { INVALID_CONFIGURATION_RESULT, INVALID_REQUEST_RESULT } from "./authzed-schema-results";
 
 /**
  * `apps/web/scripts/**` is excluded from coverage, so this is a contract test rather than a behavioural
@@ -26,5 +28,61 @@ describe("authzed backfill script", () => {
     // process.exit would skip the single-JSON-line output contract the automation depends on.
     expect(scriptSource).toContain("process.exitCode");
     expect(scriptSource).not.toContain("process.exit(");
+  });
+});
+
+describe("authzed backfill entrypoint", () => {
+  const originalArgv = process.argv;
+  const originalExitCode = process.exitCode;
+
+  beforeEach(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
+    vi.stubEnv("LOG_LEVEL", "fatal");
+    disconnect.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    process.argv = originalArgv;
+    process.exitCode = originalExitCode;
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+  });
+
+  test.each([
+    { args: ["--apply"], exitCode: 0 },
+    { args: ["--scope=survey", "--apply", "--mark-ready"], exitCode: 2 },
+  ])("runs $args, keeps its exit code, and disconnects the database", async ({ args, exitCode }) => {
+    // The PostgreSQL pool's idle sockets would otherwise keep the process alive after the result.
+    process.argv = ["node", "authzed-backfill.ts", ...args];
+    runBackfill.mockResolvedValue(exitCode);
+
+    await import("./authzed-backfill");
+    await vi.waitFor(() => expect(disconnect).toHaveBeenCalledOnce());
+    expect(runBackfill).toHaveBeenCalledOnce();
+    expect(process.exitCode).toBe(exitCode);
+  });
+
+  test("disconnects after a failed run without masking the sanitized result", async () => {
+    process.argv = ["node", "authzed-backfill.ts", "--apply"];
+    const stdout = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    runBackfill.mockRejectedValue(new Error("private-sdk-error"));
+    disconnect.mockRejectedValue(new Error("private-database-error"));
+
+    await import("./authzed-backfill");
+    await vi.waitFor(() => expect(disconnect).toHaveBeenCalledOnce());
+    expect(stdout).toHaveBeenCalledExactlyOnceWith(`${JSON.stringify(INVALID_CONFIGURATION_RESULT)}\n`);
+    expect(process.exitCode).toBe(1);
+  });
+
+  test("rejects invalid arguments without loading the database", async () => {
+    process.argv = ["node", "authzed-backfill.ts", "--unknown"];
+    const stdout = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+
+    await import("./authzed-backfill");
+    await vi.waitFor(() => expect(process.exitCode).toBe(1));
+    expect(stdout).toHaveBeenCalledExactlyOnceWith(`${JSON.stringify(INVALID_REQUEST_RESULT)}\n`);
+    expect(runBackfill).not.toHaveBeenCalled();
+    expect(disconnect).not.toHaveBeenCalled();
   });
 });

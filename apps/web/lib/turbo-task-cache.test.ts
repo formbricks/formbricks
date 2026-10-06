@@ -28,6 +28,15 @@ import { describe, expect, test } from "vitest";
 //
 //   dev, go, clean, db:up, db:down, db:start, db:setup, storybook — cache: false
 //     All are either persistent (dev server) or side-effectful (Docker, file ops).
+//
+// A root `<pkg>#<task>` block replaces the shared task outright — no field is inherited — so every
+// override has to restate `cache: false` and `persistent: true` itself, or that one package silently
+// caches its tests or treats a watch server as a task that finishes.
+//
+// @formbricks/database#db:migrate:dev, @formbricks/database#db:start — dependsOn ^build
+//   Both scripts run `pnpm build` inside packages/database, outside the task graph. Without the edge
+//   a fresh clone has no dist/ for the package's workspace dependencies and the build fails to resolve
+//   `@formbricks/i18n-utils/canonical` (ENG-2878).
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, "..", "..", "..");
@@ -36,6 +45,7 @@ const webTurboJsonPath = path.join(repoRoot, "apps", "web", "turbo.json");
 
 interface TurboTask {
   cache?: boolean;
+  dependsOn?: string[];
   persistent?: boolean;
   env?: string[];
   inputs?: string[];
@@ -87,6 +97,10 @@ describe("turbo.json task caching policy", () => {
     "storybook",
   ];
 
+  // `<pkg>#<task>` → `<task>`; a shared task name has no `#`.
+  const sharedTaskName = (name: string): string => name.slice(name.indexOf("#") + 1);
+  const packageOverrides = Object.entries(turboJson.tasks).filter(([name]) => name.includes("#"));
+
   test("side-effectful and test tasks are explicitly uncached", () => {
     const cachedButShouldNotBe: string[] = [];
     for (const taskName of REQUIRED_UNCACHED) {
@@ -95,12 +109,30 @@ describe("turbo.json task caching policy", () => {
         cachedButShouldNotBe.push(taskName);
       }
     }
+    for (const [name, task] of packageOverrides) {
+      if (REQUIRED_UNCACHED.includes(sharedTaskName(name)) && task.cache !== false) {
+        cachedButShouldNotBe.push(name);
+      }
+    }
     expect(
       cachedButShouldNotBe,
       `These tasks must have "cache": false because they are either side-effectful ` +
         "(db operations, Docker, file deletion) or non-deterministic (tests). " +
         `Missing or cached: ${cachedButShouldNotBe.join(", ")}.`
     ).toEqual([]);
+  });
+
+  test("package overrides of a persistent task stay persistent", () => {
+    const notPersistent = packageOverrides
+      .filter(([name, task]) => turboJson.tasks[sharedTaskName(name)]?.persistent && task.persistent !== true)
+      .map(([name]) => name);
+    expect(notPersistent, `Restate "persistent": true in: ${notPersistent.join(", ")}.`).toEqual([]);
+  });
+
+  test("database tasks that build the package in their script depend on ^build", () => {
+    for (const name of ["@formbricks/database#db:migrate:dev", "@formbricks/database#db:start"]) {
+      expect(turboJson.tasks[name]?.dependsOn, `${name} must declare dependsOn ^build`).toContain("^build");
+    }
   });
 
   test("db:seed declares DATABASE_URL so strict env mode does not strip it", () => {

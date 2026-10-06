@@ -27,6 +27,7 @@ import {
 } from "./schemas";
 import { getResponseWorkspaceId, getScopedV3Response } from "./service";
 import { type TV3ResponseValidationEffects, createEffects, patchEffects } from "./validate-effects";
+import { refuseUnlessV3SurveyVisible } from "./visibility";
 import { normalizeV3Ttc, totalStoredV3Ttc } from "./write-plan";
 import { collectReferenceIssues, getSurveyForV3Write } from "./write-service";
 
@@ -160,6 +161,15 @@ async function validateCreate({
     return access;
   }
 
+  const refused = await refuseUnlessV3SurveyVisible(
+    authentication,
+    "survey.write",
+    { type: "survey", id: survey.id },
+    requestId,
+    instance
+  );
+  if (refused) return refused;
+
   const parsed = ZV3CreateResponseBody.safeParse(document);
 
   if (!parsed.success) {
@@ -232,6 +242,15 @@ async function validatePatch({
   if (access instanceof Response) {
     return access;
   }
+
+  const refused = await refuseUnlessV3SurveyVisible(
+    authentication,
+    "response.write",
+    { type: "response", id: responseId },
+    requestId,
+    instance
+  );
+  if (refused) return refused;
 
   const stored = await getScopedV3Response(responseId, { workspaceId });
 

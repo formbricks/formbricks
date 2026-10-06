@@ -47,6 +47,8 @@ import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
+import type { TSurveyCreationFacts } from "@/lib/survey/visibility/creation";
+import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { getSurveyWorkspaceIdMap } from "@/modules/ee/contacts/segments/lib/segments";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
@@ -126,6 +128,12 @@ export const selectSurvey = {
   type: true,
   workspaceId: true,
   createdBy: true,
+  visibility: true,
+  ownerId: true,
+  visibilityVersion: true,
+  visibilityProjectedVersion: true,
+  visibilityChangedAt: true,
+  visibilityChangedById: true,
   status: true,
   welcomeCard: true,
   questions: true,
@@ -274,13 +282,22 @@ export const getSurvey = reactCache(async (surveyId: string): Promise<TSurvey | 
 });
 
 export const getSurveysByActionClassId = reactCache(
-  async (actionClassId: string, page?: number): Promise<TSurvey[]> => {
-    validateInputs([actionClassId, ZId], [page, ZOptionalNumber]);
+  async (
+    actionClassId: string,
+    workspaceId: string,
+    /** ENG-3282: the caller's survey-visibility clause. */
+    visibleSurveyWhere: Prisma.SurveyWhereInput,
+    page?: number
+  ): Promise<TSurvey[]> => {
+    validateInputs([actionClassId, ZId], [workspaceId, ZId], [page, ZOptionalNumber]);
 
     let surveysPrisma;
     try {
       surveysPrisma = await prisma.survey.findMany({
         where: {
+          // An action class belongs to one workspace; scope to it rather than trusting the join alone.
+          workspaceId,
+          ...andVisibleSurveys(visibleSurveyWhere),
           triggers: {
             some: {
               actionClass: {
@@ -314,7 +331,13 @@ export const getSurveysByActionClassId = reactCache(
 );
 
 export const getSurveys = reactCache(
-  async (workspaceId: string, limit?: number, offset?: number): Promise<TSurvey[]> => {
+  async (
+    workspaceId: string,
+    /** ENG-3282: the caller's survey-visibility clause; see `lib/survey/visibility/predicate.ts`. */
+    visibleSurveyWhere: Prisma.SurveyWhereInput,
+    limit?: number,
+    offset?: number
+  ): Promise<TSurvey[]> => {
     validateInputs([workspaceId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
 
     try {
@@ -323,6 +346,7 @@ export const getSurveys = reactCache(
           workspaceId,
           // Archived surveys are hidden by default across the app.
           archivedAt: null,
+          ...andVisibleSurveys(visibleSurveyWhere),
         },
         select: selectSurvey,
         orderBy: {
@@ -418,6 +442,14 @@ export const updateSurveyInternal = async (
       embeddedFields,
       variables,
       hiddenFields,
+      // ENG-3282: authorization facts are server-owned. Visibility changes go through the dedicated
+      // endpoint under the per-survey lock; a survey save must never write them, or it would race it.
+      visibility: _visibility,
+      ownerId: _ownerId,
+      visibilityVersion: _visibilityVersion,
+      visibilityProjectedVersion: _visibilityProjectedVersion,
+      visibilityChangedAt: _visibilityChangedAt,
+      visibilityChangedById: _visibilityChangedById,
       ...surveyData
     } = updatedSurvey;
 
@@ -858,6 +890,15 @@ const attachSurveyCreatorToCreateData = (
   };
 };
 
+const attachSurveyCreationFactsToCreateData = (
+  data: Omit<Prisma.SurveyCreateInput, "workspace">,
+  { ownerId, visibility }: TSurveyCreationFacts
+): Omit<Prisma.SurveyCreateInput, "workspace"> => ({
+  ...data,
+  visibility,
+  ...(ownerId ? { owner: { connect: { id: ownerId } } } : {}),
+});
+
 const attachSurveyFollowUpsToCreateData = (
   data: Omit<Prisma.SurveyCreateInput, "workspace">,
   followUps?: TSurveyCreateInput["followUps"]
@@ -941,10 +982,19 @@ const assertSurveySegmentBelongsToWorkspace = async (
   }
 };
 
+export type TCreateSurveyOptions = Readonly<{
+  /**
+   * ENG-3282: visibility and owner, from `resolveSurveyCreationFacts` — never from the request body,
+   * whose schema does not carry them. Required so no creation path can forget it.
+   */
+  creationFacts: TSurveyCreationFacts;
+  privateSegmentFilters?: TBaseFilters;
+}>;
+
 export const createSurvey = async (
   workspaceId: string,
   surveyBody: TSurveyCreateInput,
-  privateSegmentFilters: TBaseFilters = []
+  { creationFacts, privateSegmentFilters = [] }: TCreateSurveyOptions
 ): Promise<TSurvey> => {
   const [parsedWorkspaceId, parsedSurveyBody] = validateInputs(
     [workspaceId, ZId],
@@ -1035,7 +1085,13 @@ export const createSurvey = async (
       attributeFilters: undefined,
     } as Omit<Prisma.SurveyCreateInput, "workspace">;
     const data = validateSurveyCreateDataMedia(
-      attachSurveyFollowUpsToCreateData(attachSurveyCreatorToCreateData(baseData, createdBy), followUps)
+      attachSurveyFollowUpsToCreateData(
+        attachSurveyCreationFactsToCreateData(
+          attachSurveyCreatorToCreateData(baseData, createdBy),
+          creationFacts
+        ),
+        followUps
+      )
     );
 
     const organization = await getOrganizationByWorkspaceId(parsedWorkspaceId);

@@ -13,12 +13,16 @@ import {
 } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getSurvey } from "@/lib/survey/service";
+import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { getSurveyAuth } from "@/modules/survey/lib/survey-auth";
+import { RestrictedSurveyBanner } from "@/modules/survey/visibility/components/restricted-survey-banner";
+import { getSurveyVisibilityViewer } from "@/modules/survey/visibility/lib/gate";
+import { showRestrictedBanner } from "@/modules/survey/visibility/lib/markers";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -53,7 +57,10 @@ const SurveyPage = async (
   }
 
   const isContactsEnabled = await getIsContactsEnabled(organization.id);
-  const segments = isContactsEnabled ? await getSegments(workspace.id) : [];
+  // ENG-3282: segments reach the browser, so their survey references name only surveys this viewer sees.
+  const segments = isContactsEnabled
+    ? await getSegments(workspace.id, await getUserVisibleSurveyWhere(session.user.id, organization.id))
+    : [];
 
   if (!organization) {
     throw new ResourceNotFoundError(t("common.organization"), null);
@@ -68,7 +75,11 @@ const SurveyPage = async (
   const aiUnavailableReason = getAISmartToolsUnavailableReason(aiConfig) ?? null;
 
   // Fetch initial survey summary data on the server to prevent duplicate API calls during hydration
-  const initialSurveySummary = await getSurveySummary(surveyId);
+  const [initialSurveySummary, { surveyVisibilityGate, visibility, surveyAccess, ownerName }] =
+    await Promise.all([
+      getSurveySummary(surveyId),
+      getSurveyVisibilityViewer(survey, session.user.id, organization.id),
+    ]);
 
   const publicDomain = getPublicDomain();
 
@@ -93,6 +104,11 @@ const SurveyPage = async (
         }>
         <SurveyAnalysisNavigation survey={survey} activeId="summary" />
       </PageHeader>
+      {showRestrictedBanner({
+        enforced: surveyVisibilityGate.enforced,
+        visibility,
+        access: surveyAccess,
+      }) && <RestrictedSurveyBanner ownerName={ownerName} />}
       <SummaryPage
         survey={survey}
         surveyId={params.surveyId}

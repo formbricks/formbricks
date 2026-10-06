@@ -105,7 +105,7 @@ catalog:
   # --- server runtime ---
   zod: 4.3.6
   zod-openapi: 5.4.6
-  "@prisma/client": 7.8.0
+  "@prisma/client": 7.10.0
   # redis 5.x. apps/web was on 4.7.1 while @formbricks/cache was on 5.11.0, and because
   # apps/web has no nested copy its `import type { RedisClientType } from "redis"` in
   # lib/cache/index.ts resolved to the hoisted v4 type — then used to describe the v5
@@ -151,8 +151,11 @@ overrides:
   # nesting, so a deeply nested form field can exhaust CPU/memory building the resulting object (DoS).
   # ENG-3092 / GHSA-gqvv-2mrq-wpjv (CVE-2026-84365): incomplete fix for CVE-2026-39408 — toSSG() can
   # still write generated files outside its configured output directory. All three patched in 4.13.5.
+  # ENG-3486 / GHSA-hxh3-vqpv-xpqv (CVE-2026-93981): hono/jsx renders plain strings unescaped as children of
+  # Suspense/ErrorBoundary/Context.Provider and as the renderToString() root (XSS); patched in 4.13.7.
+  # Pinned to the lowest release covering all the advisories above.
   # load-bearing: @hono/node-server resolves 4.x via @modelcontextprotocol/sdk and @prisma/dev (dev/MCP-only).
-  hono: 4.13.5
+  hono: 4.13.7
   # OpenTelemetry / protobuf chains.
   # ENG-1962 / GHSA-j3f2-48v5-ccww (CVE-2026-59877): protobufjs .proto option-parsing infinite-loop DoS,
   # patched in 8.6.6. ENG-1963 / GHSA-jfj6-75fj-8934 (CVE-2026-59876): text-format map prototype

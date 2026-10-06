@@ -30,6 +30,7 @@ export function ChartTypeSwitch({ selectedChartType, onChartTypeSelect }: Readon
       </Label>
       <OptionsSwitch
         aria-labelledby={labelId}
+        labelDisplay="active"
         options={chartTypes.map((chart) => ({
           value: chart.id,
           label: chart.label,

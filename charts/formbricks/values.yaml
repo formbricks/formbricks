@@ -202,12 +202,11 @@ deployment:
       memory: 1Gi
       cpu: "1"
 
-  # Container security context for the web container and both migration Job containers (same image). The
-  # image's `nextjs` user is UID 1001; the kubelet needs a numeric UID to enforce runAsNonRoot.
+  # Container security context for the web container. The image's `nextjs` user is UID 1001;
+  # the kubelet needs a numeric UID to enforce runAsNonRoot.
   # Container-level fields win over deployment.securityContext. With readOnlyRootFilesystem, the chart mounts
-  # emptyDir volumes on the paths each container writes at runtime: /tmp, the Next.js cache, and (when
-  # startup migrations run) the Prisma migration staging directory in the web container; /tmp and that
-  # staging directory in the migration Job.
+  # emptyDir volumes on /tmp, the Next.js cache, and (when startup migrations run) the Prisma migration
+  # staging directory. The migration Job retains a writable root and uses deployment.securityContext only.
   containerSecurityContext:
     readOnlyRootFilesystem: true
     runAsNonRoot: true
@@ -666,6 +665,11 @@ authzed:
     # Set this to false only when an operator performs the same guarded cutover externally, and set
     # migrationAcknowledged=true only after that preparation has completed successfully.
     enabled: true
+    # Container-only overrides for the initialization / upgrade-check hook, not the web or migration Job.
+    # Defaults keep non-root enforcement, a read-only root, no privilege escalation, and all capabilities dropped.
+    # UID precedence: this runAsUser override > deployment.securityContext.runAsUser > 1001 (official image).
+    # Custom images using another UID must set it here or in deployment.securityContext.
+    securityContext: {}
 
   # selfHosted creates a SpiceDBCluster. external only configures the app client.
   mode: selfHosted

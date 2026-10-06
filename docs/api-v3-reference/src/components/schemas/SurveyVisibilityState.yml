@@ -1,0 +1,59 @@
+allOf:
+  - type: object
+    required:
+      - id
+    properties:
+      id:
+        type: string
+        description: Survey identifier.
+  - $ref: ./SurveyVisibilityFields.yml
+  - type: object
+    required:
+      - blockers
+      - impact
+    properties:
+      blockers:
+        type: array
+        items:
+          $ref: ./SurveyVisibilityBlocker.yml
+        description:
+          Connections that make `restricted` refusable right now. Empty when being restricted is allowed, and
+          always empty for the `workspace` direction.
+      impact:
+        $ref: ./SurveyVisibilityImpact.yml
+  - type: object
+    required:
+      - pending
+      - version
+      - allowedTargets
+    properties:
+      pending:
+        anyOf:
+          - $ref: ./SurveyVisibility.yml
+          - type: "null"
+        description:
+          The value a `POST` stored that the graph has not yet acknowledged. While non-null the survey is
+          restricted for everyone but the owner (for as long as they keep the workspace access the action needs —
+          read to view, write to edit) and the organisation's owners and managers, whichever value is pending —
+          `visibility` reads `restricted`. Always `null` for a survey just created or copied whose visibility has
+          not been changed yet — its stored value is in effect at once. `"restricted"` means the restriction is already enforced and
+          only the graph is catching up; `"workspace"` means the grant is not yet in effect. `null` normally.
+          Clears when the outbox delivers (within 60 seconds, or the deployment fails closed), or when a later
+          `POST` cancels or supersedes it.
+      version:
+        type: integer
+        minimum: 0
+        description:
+          "Monotonic per survey; incremented by every accepted `POST`, including cancellations. Projection
+          work is fenced on it: a projector holding an older version never writes. `0` for a survey whose
+          visibility was never changed through this endpoint."
+      allowedTargets:
+        type: array
+        items:
+          $ref: ./SurveyVisibility.yml
+        uniqueItems: true
+        description:
+          Values a `POST …/visibility` by this caller would act on right now. Never the enforced value —
+          **except** when a different value is pending, in which case the enforced value is listed because
+          requesting it cancels the pending change. Never `restricted` while `blockers[]` is non-empty or `owner`
+          is `null`. Empty when nothing would happen. Drives the row menu and the editor control.

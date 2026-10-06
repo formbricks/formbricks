@@ -1,0 +1,34 @@
+description: "Forbidden, one of two codes. `forbidden`: the caller cannot see the survey, **or** sees it but
+  may not change its visibility — workspace members without ownership, team-level managers, and every
+  API key — with the same body as any unreadable survey. `visibility_not_enabled`: the organisation
+  lacks the RBAC / access-control entitlement, or the deployment's readiness marker for survey visibility is
+  not set; this answer does not depend on the survey."
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+  Cache-Control:
+    schema:
+      type: string
+    example: private, no-store
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/Problem.yml
+    examples:
+      notAllowed:
+        summary: Team-level manager, or an API key
+        value:
+          title: Forbidden
+          status: 403
+          detail: You are not authorized to access this resource
+          code: forbidden
+          requestId: req_01j8z3
+      notEnabled:
+        summary: Organisation is not entitled, or the deployment has not enabled visibility
+        value:
+          title: Forbidden
+          status: 403
+          detail: Survey visibility is not enabled for this organization.
+          code: visibility_not_enabled
+          requestId: req_01j8z4

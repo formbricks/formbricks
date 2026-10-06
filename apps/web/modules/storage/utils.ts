@@ -1,4 +1,5 @@
 import "server-only";
+import { logger } from "@formbricks/logger";
 import { type StorageError, StorageErrorCode } from "@formbricks/storage";
 import { TResponseData } from "@formbricks/types/responses";
 import {
@@ -126,8 +127,9 @@ const getAllowedFileExtensionFromFileName = (fileName: string): TAllowedFileExte
  * union of `blocks` and `questions` — the same source write-time validation reads — because keying off
  * a single shape silently skips deletes for the other.
  *
- * Split from `collectResponseFileUrls` so a caller scanning many responses builds the set once, and so
- * it can skip its scan entirely when the set is empty.
+ * Split from `collectResponseFileUrls` so a caller scanning many responses builds the set once. An empty
+ * set does not mean there is nothing to collect: a survey-scoped key is collected without it. Only a scan
+ * that wants flat keys alone may skip on an empty set.
  */
 export const getSurveyFileUploadElementIds = (survey: {
   blocks?: TSurveyBlock[] | null;
@@ -140,29 +142,88 @@ export const getSurveyFileUploadElementIds = (survey: {
   );
 
 /**
- * Pulls the storage URLs out of one response's answers, ready to hand to `deleteResponseFileUrls`.
+ * Whose file one storage URL found in the answer to `elementId` is, when cleaning up `surveyId`.
  *
- * Only file-upload answers hold storage URLs, and they are always stored as an array of strings.
- * Anything else under a matching key is skipped rather than cast, so malformed data cannot produce a
- * bogus delete target.
+ * A key filed under a survey (`{id}/private/surveys/{surveyId}/elements/{elementId}/…`, every upload
+ * since #8044) names the survey and element it was uploaded for, so the key decides, not whether that
+ * element still exists. It is `own` only when both match: the answer it sits under is the element's, and
+ * write-time validation (`isScopedPrivateUploadUrl`) only ever stores a key under its own element. So a
+ * deleted element's files are still collected, while a same-survey URL pasted into another answer (a
+ * multi-select "Other", say) is not.
+ *
+ * Anything else filed under a survey is `refused`. That covers a same-workspace URL planted under a key
+ * that only later became an upload element (the ENG-2291 flip), which passes `deleteResponseFileUrls`'
+ * workspace check, so the binding is enforced here. A public key is never a response upload.
+ *
+ * A flat pre-#8044 key (`{prefix}/private/{file}`) names no survey, so it is trusted only under a current
+ * upload element. One left by a deleted element stays in storage: an accepted legacy leak, since every
+ * upload since #8044 gets a scoped key.
+ */
+const getResponseFileUrlOwner = ({
+  fileUrl,
+  elementId,
+  isUploadElementAnswer,
+  surveyId,
+}: {
+  fileUrl: string;
+  elementId: string;
+  isUploadElementAnswer: boolean;
+  surveyId: string;
+}): "own" | "refused" | "none" => {
+  // `getStorageUrlSurveyId`'s reading, with the URL parsed once: a name that does not decode names no
+  // survey.
+  const parsed = parseStorageFileUrl(fileUrl);
+  const scope = parsed ? getStorageFileNameScope(parsed.fileName) : undefined;
+
+  if (!parsed || !scope?.decodable || scope.surveyId === null) return isUploadElementAnswer ? "own" : "none";
+  if (parsed.accessType !== "private") return "none";
+  return scope.surveyId === surveyId && scope.elementId === elementId ? "own" : "refused";
+};
+
+/**
+ * Pulls the storage URLs one response of `surveyId` owns out of its answers, ready to hand to
+ * `deleteResponseFileUrls`. Which URLs count is `getResponseFileUrlOwner`'s rule.
+ *
+ * File-upload answers are always stored as an array of strings, so only array answers are read, and
+ * only their string entries. Anything else is skipped rather than cast: a plain text answer holding a
+ * pasted storage URL never becomes a delete target, and neither does malformed data under an upload key.
+ *
+ * URLs refused for naming another survey or element are logged as a count, never the URLs: they are the
+ * trace a planted URL leaves.
  *
  * `data` is deliberately `unknown`: callers hand this a raw `Prisma.JsonValue` column or an already
  * typed `TResponseData`, and the shape is checked here either way rather than cast at each call site.
  */
-export const collectResponseFileUrls = (data: unknown, fileUploadElementIds: Set<string>): string[] => {
-  if (fileUploadElementIds.size === 0 || !data || typeof data !== "object" || Array.isArray(data)) {
+export const collectResponseFileUrls = (
+  data: unknown,
+  fileUploadElementIds: Set<string>,
+  surveyId: string
+): string[] => {
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
     return [];
   }
 
   const fileUrls: string[] = [];
+  let refusedCount = 0;
   // Typed rather than left as `Object.entries`' implicit `any` values, so the guards below are the only
   // thing that narrows an answer to a string.
   const answers: [string, unknown][] = Object.entries(data);
 
   for (const [elementId, answer] of answers) {
-    if (fileUploadElementIds.has(elementId) && Array.isArray(answer)) {
-      fileUrls.push(...answer.filter((url): url is string => typeof url === "string"));
+    if (!Array.isArray(answer)) continue;
+
+    const isUploadElementAnswer = fileUploadElementIds.has(elementId);
+    for (const fileUrl of answer) {
+      if (typeof fileUrl !== "string") continue;
+
+      const owner = getResponseFileUrlOwner({ fileUrl, elementId, isUploadElementAnswer, surveyId });
+      if (owner === "own") fileUrls.push(fileUrl);
+      if (owner === "refused") refusedCount++;
     }
+  }
+
+  if (refusedCount > 0) {
+    logger.warn({ surveyId, refusedCount }, "Refusing response files filed under another survey or element");
   }
 
   return fileUrls;
@@ -265,13 +326,10 @@ type TParsedStorageFileUrl = {
 };
 
 export const parseStorageFileUrl = (fileUrl: string): TParsedStorageFileUrl | null => {
-  let pathname: string;
-
-  try {
-    pathname = fileUrl.startsWith("/storage/") ? fileUrl : new URL(fileUrl).pathname;
-  } catch {
-    return null;
-  }
+  // `URL.parse` returns null instead of throwing. Response-file collection runs this on every string of
+  // every array answer, so a throw per non-URL string would add up fast on a row holding thousands.
+  const pathname = fileUrl.startsWith("/storage/") ? fileUrl : URL.parse(fileUrl)?.pathname;
+  if (!pathname) return null;
 
   const pathWithoutSearch = pathname.split(/[?#]/)[0];
   if (!pathWithoutSearch.startsWith("/storage/")) return null;
@@ -308,15 +366,40 @@ export const getStorageUrlSurveyId = (fileUrl: string): string | null => {
   const parsed = parseStorageFileUrl(fileUrl);
   if (!parsed) return null;
 
-  let fileName: string;
+  const scope = getStorageFileNameScope(parsed.fileName);
+  return scope.decodable ? scope.surveyId : null;
+};
+
+/**
+ * Which survey (and, for an upload, which element) an object key's file name is filed under, read from
+ * the name the storage layer actually uses: `getFileStreamForDownload` and `deleteFile` both decode the
+ * joined name once more before building the key, so the check has to decode it too. `decodable: false`
+ * for a name that does not decode — the storage layer fails on it as well, so there is no object it
+ * could reach.
+ *
+ * `fileName` is the joined, still-encoded name: a URL path's file part, or the route's catch-all
+ * segments joined with `/`.
+ */
+export const getStorageFileNameScope = (
+  fileName: string
+):
+  | { decodable: false }
+  | { decodable: true; isSurveyScope: boolean; surveyId: string | null; elementId: string | null } => {
+  let decoded: string;
   try {
-    fileName = decodeURIComponent(parsed.fileName);
+    decoded = decodeURIComponent(fileName);
   } catch {
-    return null;
+    return { decodable: false };
   }
 
-  const [scope, surveyId] = fileName.split("/");
-  return scope === "surveys" && surveyId ? surveyId : null;
+  const [scope, surveyId, elementsSegment, elementId] = decoded.split("/");
+  const isSurveyScope = scope === "surveys" && decoded.includes("/");
+  return {
+    decodable: true,
+    isSurveyScope,
+    surveyId: isSurveyScope && surveyId ? surveyId : null,
+    elementId: isSurveyScope && elementsSegment === "elements" && elementId ? elementId : null,
+  };
 };
 
 const isScopedPrivateUploadUrl = ({

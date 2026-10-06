@@ -318,9 +318,12 @@ describe("Response Lib", () => {
       });
       expect(deleteDisplay).toHaveBeenCalledWith(response.displayId);
       expect(getSurveyQuestions).toHaveBeenCalledWith(response.surveyId);
+      // The survey id comes from the deleted row: it is what binds a survey-scoped upload key to this
+      // response, and the survey read here does not select one.
       expect(findAndDeleteUploadedFilesInResponse).toHaveBeenCalledWith(
         response.data,
         survey,
+        response.surveyId,
         survey.workspaceId
       );
       expect(result.ok).toBe(true);

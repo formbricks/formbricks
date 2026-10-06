@@ -7,9 +7,10 @@ import { collectResponseFileUrls, getSurveyFileUploadElementIds } from "@/module
 export const findAndDeleteUploadedFilesInResponse = async (
   responseData: Response["data"],
   survey: Pick<Survey, "blocks" | "questions">,
+  surveyId: string,
   workspaceId?: string
 ): Promise<Result<void, ApiErrorResponseV2>> => {
-  const fileUrls = collectResponseFileUrls(responseData, getSurveyFileUploadElementIds(survey));
+  const fileUrls = collectResponseFileUrls(responseData, getSurveyFileUploadElementIds(survey), surveyId);
 
   await deleteResponseFileUrls(fileUrls, workspaceId);
 

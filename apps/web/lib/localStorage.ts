@@ -8,3 +8,10 @@ export const FORMBRICKS_LOGGED_IN_WITH_LS = "formbricks-logged-in-with";
 // /workspaces/[workspaceId] path so server components (e.g. the workspace-agnostic org-settings
 // shell) can resolve the current workspace during render — localStorage is browser-only.
 export const FORMBRICKS_WORKSPACE_ID_COOKIE = "formbricks-workspace-id";
+
+// Server-readable "last active organization", set by the proxy from /organizations/[organizationId]
+// paths and cleared again on any /workspaces/[workspaceId] visit. It only exists while the most recent
+// org-scoped visit is newer than the last workspace visit — e.g. an organization with no workspace
+// yet (its landing page) — which is exactly when the workspace cookie above names the wrong
+// organization. Account settings, which carry no organization in the URL, read it first.
+export const FORMBRICKS_ORGANIZATION_ID_COOKIE = "formbricks-organization-id";

@@ -1,12 +1,15 @@
 import "server-only";
 import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import type { TSurvey, TSurveyCreateInput } from "@formbricks/types/surveys/types";
+import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurvey, getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
+import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
+import { assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { v3DistributionToScalars } from "./distribution";
 import { type TV3SurveyLanguageRequest, ensureV3WorkspaceLanguages } from "./languages";
@@ -20,6 +23,7 @@ import {
 } from "./targeting";
 import { resolveV3SurveyTriggers } from "./triggers";
 import { getV3SurveyMediaInvalidParams } from "./validation";
+import { resolveV3VisibleSurveyWhere } from "./visibility-context";
 
 export type TV3SurveyCreateOptions = {
   skipExternalUrlPermissionCheck?: boolean;
@@ -175,6 +179,7 @@ export async function executeV3SurveyCreate(params: {
   input: TV3CreateSurveyBody;
   authentication: TV3Authentication;
   languageRequests: TV3SurveyLanguageRequest[];
+  organizationId?: string;
   requestId?: string;
   surveyCreateInputOverrides?: Partial<TSurveyCreateInput>;
 }) {
@@ -188,8 +193,31 @@ export async function executeV3SurveyCreate(params: {
   // before any DB write, so an invalid reference fails with a 422 instead of a partial write.
   const appCreateFields = input.type === "app" ? await buildV3AppSurveyCreateFields(input) : {};
   if (input.type === "app") {
-    await assertV3SurveyTargetingFilterReferences(input.workspaceId, input.targeting?.filters ?? []);
+    const visibleSurveyWhere = await resolveV3VisibleSurveyWhere(
+      authentication,
+      params.organizationId ?? (await getOrganizationByWorkspaceId(input.workspaceId))?.id
+    );
+    await assertV3SurveyTargetingFilterReferences(
+      input.workspaceId,
+      input.targeting?.filters ?? [],
+      visibleSurveyWhere
+    );
   }
+
+  // ENG-3282: who owns the survey and whether it starts restricted, decided by the principal — never by
+  // the body, whose schema has no such fields. Both reads happen before any write, as does the cap.
+  const actor = getV3AuthorizationActor(authentication);
+  const organizationId =
+    actor?.type === "user"
+      ? (params.organizationId ?? (await getOrganizationByWorkspaceId(input.workspaceId))?.id ?? null)
+      : null;
+  if (actor?.type === "user" && !organizationId) {
+    throw new V3SurveyCreatePermissionError(
+      `Unable to resolve the organization for workspaceId '${input.workspaceId}'.`
+    );
+  }
+  await assertWorkspaceSurveyLimit(input.workspaceId);
+  const creationFacts = await resolveSurveyCreationFacts({ actor, organizationId });
 
   const languages = await ensureV3WorkspaceLanguages(input.workspaceId, languageRequests, requestId);
   const surveyCreateInput: TSurveyCreateInput = {
@@ -222,7 +250,10 @@ export async function executeV3SurveyCreate(params: {
   // App targeting filters are created atomically with the survey's private segment inside
   // `createSurvey` (a single transaction), so a failed targeting write can't leave a partial survey.
   const privateSegmentFilters = input.type === "app" ? (input.targeting?.filters ?? []) : [];
-  const survey = await createSurvey(input.workspaceId, surveyCreateInput, privateSegmentFilters);
+  const survey = await createSurvey(input.workspaceId, surveyCreateInput, {
+    creationFacts,
+    privateSegmentFilters,
+  });
 
   return await finalizeV3AppSurveyCreate(survey, input);
 }
@@ -246,6 +277,7 @@ export async function createV3Survey(
     input: preparation.document,
     authentication,
     languageRequests: preparation.languageRequests,
+    organizationId,
     requestId,
     surveyCreateInputOverrides: options.surveyCreateInputOverrides,
   });

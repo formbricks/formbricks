@@ -115,7 +115,13 @@ const mapResponsePrismaToResponse = (
  * filtered through the workspace of the contact they belong to.
  */
 export const getResponsesByContactId = reactCache(
-  async (contactId: string, workspaceId: string, page?: number): Promise<TResponseWithQuotas[]> => {
+  async (
+    contactId: string,
+    workspaceId: string,
+    /** ENG-3282: the viewer's survey-visibility clause, applied to each response's survey. */
+    visibleSurveyWhere: Prisma.SurveyWhereInput,
+    page?: number
+  ): Promise<TResponseWithQuotas[]> => {
     validateInputs([contactId, ZId], [workspaceId, ZId], [page, ZOptionalNumber]);
 
     try {
@@ -123,6 +129,7 @@ export const getResponsesByContactId = reactCache(
         where: {
           contactId,
           contact: { workspaceId },
+          ...(Object.keys(visibleSurveyWhere).length > 0 ? { survey: visibleSurveyWhere } : {}),
         },
         select: {
           ...responseSelection,
@@ -677,7 +684,7 @@ export const updateResponse = async (
 };
 
 const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey: TSurvey): Promise<void> => {
-  const fileUrls = collectResponseFileUrls(response.data, getSurveyFileUploadElementIds(survey));
+  const fileUrls = collectResponseFileUrls(response.data, getSurveyFileUploadElementIds(survey), survey.id);
 
   await deleteResponseFileUrls(fileUrls, survey.workspaceId);
 };
