@@ -174,7 +174,7 @@
     "account_settings": "Setări cont",
     "act": "Acționează",
     "action": "Acțiune",
-    "action_may_not_have_gone_through": "Este posibil ca ultima ta acțiune să nu fi fost procesată. Verifică și încearcă din nou.",
+    "action_may_not_have_gone_through": "O solicitare către server nu a fost procesată. Dacă tocmai ai făcut o modificare, verifică dacă a fost salvată și încearcă din nou.",
     "actions": "Acțiuni",
     "actions_description": "Acțiunile Cod și No-Code sunt utilizate pentru a declanșa chestionare de interceptare în aplicații și pe site-uri web.",
     "active": "Activ",

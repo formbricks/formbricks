@@ -6,22 +6,25 @@ import { useTranslation } from "react-i18next";
 import { registerStaleServerActionListener } from "@/lib/utils/stale-server-action";
 import { Button } from "@/modules/ui/components/button";
 
-/**
- * Prompts the user to reload once their tab has outlived the deployment it was served by.
- *
- * Rendered inside `ServerActionNotices`, which positions it: a stale bundle can invoke a server
- * action from any route. Reloading is offered rather than done automatically -- the survey editor is
- * the surface this fires on most, and a silent reload there would discard unsaved edits.
- */
-export const StaleDeploymentPrompt = () => {
-  const { t } = useTranslation();
+/** Whether this tab has outlived the deployment it was served by (latched until reload). */
+export const useIsStaleDeployment = (): boolean => {
   const [isStale, setIsStale] = useState(false);
 
   useEffect(() => registerStaleServerActionListener(() => setIsStale(true)), []);
 
-  if (!isStale) {
-    return null;
-  }
+  return isStale;
+};
+
+/**
+ * Prompts the user to reload once their tab has outlived the deployment it was served by.
+ *
+ * Rendered by `ServerActionNotices`, which decides when it shows and positions it: a stale bundle can
+ * invoke a server action from any route. Reloading is offered rather than done automatically -- the
+ * survey editor is the surface this fires on most, and a silent reload there would discard unsaved
+ * edits.
+ */
+export const StaleDeploymentPrompt = () => {
+  const { t } = useTranslation();
 
   return (
     // role="alert" rather than a live region on a wrapper: the prompt mounts with its content already

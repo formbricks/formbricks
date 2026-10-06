@@ -174,7 +174,7 @@
     "account_settings": "Paramètres du compte",
     "act": "Agir",
     "action": "Action",
-    "action_may_not_have_gone_through": "Il se peut que ta dernière action n'ait pas été prise en compte. Vérifie et réessaie.",
+    "action_may_not_have_gone_through": "Une requête vers le serveur n'a pas abouti. Si tu viens de faire une modification, vérifie qu'elle a bien été enregistrée et réessaie.",
     "actions": "Actions",
     "actions_description": "Les actions avec et sans code permettent de déclencher des enquêtes dans des applications et sur des sites Web.",
     "active": "Actif",

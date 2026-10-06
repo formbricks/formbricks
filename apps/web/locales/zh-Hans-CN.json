@@ -174,7 +174,7 @@
     "account_settings": "帐户设置",
     "act": "行动",
     "action": "操作",
-    "action_may_not_have_gone_through": "你刚才的操作可能没有成功，请检查后重试。",
+    "action_may_not_have_gone_through": "向服务器发送的请求未能成功。如果你刚刚做了修改，请检查是否已保存，然后再试一次。",
     "actions": "操作",
     "actions_description": "代码 和 无代码 操作 用于 触发 拦截 调查 在 应用程序 和 网站 中。",
     "active": "活跃",

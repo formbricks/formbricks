@@ -174,7 +174,7 @@
     "account_settings": "Fiókbeállítások",
     "act": "Cselekvés",
     "action": "Művelet",
-    "action_may_not_have_gone_through": "Előfordulhat, hogy az Ön legutóbbi művelete nem lett végrehajtva. Kérjük, ellenőrizze, majd próbálja meg újra.",
+    "action_may_not_have_gone_through": "A szerver felé irányuló kérés nem jutott át. Amennyiben az imént módosítást hajtott végre, kérjük, ellenőrizze, hogy az mentésre került-e, majd próbálkozzon újra.",
     "actions": "Műveletek",
     "actions_description": "A kód vagy kód nélküli műveleteket arra használják, hogy aktiválják a kérdőívek alkalmazásokon és webhelyeken belüli elfogását.",
     "active": "Aktív",

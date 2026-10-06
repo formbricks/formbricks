@@ -174,7 +174,7 @@
     "account_settings": "アカウント設定",
     "act": "行動",
     "action": "アクション",
-    "action_may_not_have_gone_through": "直前の操作が完了していない可能性があります。確認してから、もう一度お試しください。",
+    "action_may_not_have_gone_through": "サーバーへのリクエストが完了しませんでした。変更を加えたばかりの場合は、保存されているか確認して、もう一度お試しください。",
     "actions": "アクション",
     "actions_description": "コードとノーコードアクションは、アプリ内やウェブサイト上で調査を発動するために使用されます。",
     "active": "アクティブ",

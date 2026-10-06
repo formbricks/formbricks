@@ -174,7 +174,7 @@
     "account_settings": "Account settings",
     "act": "Act",
     "action": "Action",
-    "action_may_not_have_gone_through": "Your last action may not have gone through. Please check and try again.",
+    "action_may_not_have_gone_through": "A request to the server didn't go through. If you just made a change, check that it was saved and try again.",
     "actions": "Actions",
     "actions_description": "Code and No-Code Actions are used to trigger intercept surveys within apps & on websites.",
     "active": "Active",

@@ -174,7 +174,7 @@
     "account_settings": "Accountinstellingen",
     "act": "Handelen",
     "action": "Actie",
-    "action_may_not_have_gone_through": "Je laatste actie is mogelijk niet doorgekomen. Controleer het even en probeer het opnieuw.",
+    "action_may_not_have_gone_through": "Een verzoek aan de server is niet doorgekomen. Als je zojuist een wijziging hebt gemaakt, controleer dan of die is opgeslagen en probeer het opnieuw.",
     "actions": "Acties",
     "actions_description": "Code- en no-code-acties worden gebruikt om onderscheppingsenquêtes in apps en op websites te activeren.",
     "active": "Actief",

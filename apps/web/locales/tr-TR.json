@@ -174,7 +174,7 @@
     "account_settings": "Hesap ayarları",
     "act": "Hareket Et",
     "action": "Eylem",
-    "action_may_not_have_gone_through": "Son işlemin gerçekleşmemiş olabilir. Lütfen kontrol edip tekrar dene.",
+    "action_may_not_have_gone_through": "Sunucuya gönderilen bir istek tamamlanamadı. Az önce bir değişiklik yaptıysan, kaydedildiğinden emin ol ve tekrar dene.",
     "actions": "Eylemler",
     "actions_description": "Kod ve Kodsuz Eylemler, uygulamalarda ve web sitelerinde survey'leri tetiklemek için kullanılır.",
     "active": "Aktif",

@@ -174,7 +174,7 @@
     "account_settings": "Kontoinställningar",
     "act": "Agera",
     "action": "Åtgärd",
-    "action_may_not_have_gone_through": "Din senaste åtgärd kanske inte gick igenom. Kontrollera och försök igen.",
+    "action_may_not_have_gone_through": "En förfrågan till servern gick inte igenom. Om du precis har gjort en ändring, kontrollera att den har sparats och försök igen.",
     "actions": "Åtgärder",
     "actions_description": "Kod- och No-Code-åtgärder används för att utlösa enkäter i appar och på webbplatser.",
     "active": "Aktiv",
