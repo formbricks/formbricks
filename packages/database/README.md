@@ -173,8 +173,8 @@ RESET lock_timeout;
 ```
 
 Squawk requires a `SET lock_timeout` before locking statements (it does not check the value), but intentionally
-does not require a statement timeout. If an operation
-needs one, size it for that operation and table; a blanket value can abort legitimate large-table index builds.
+does not require a statement timeout. If an operation needs one, size it for that operation and table; a blanket
+value can abort legitimate large-table index builds.
 
 The drift check replays only checked-in `migration.sql` files, so interleaved TypeScript data migrations are
 excluded. Data migrations must remain data-only: DDL in a `migration.ts` file is invisible to the replay and

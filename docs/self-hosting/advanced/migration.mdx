@@ -446,7 +446,7 @@ Then read the `indisvalid` result:
   name, skip the build, and leave `Response` with an index PostgreSQL never uses. See below.
 - **No row**: the `CREATE` failed before it started, for example under the wrong user or on a read-only replica.
   Fix the error it printed and run the commands again.
-- **No result at all**: the connection was lost before the check ran. Read on under `f`.
+- **No result at all**: `psql` lost its connection, or never got one, before the check ran. Read on under `f`.
 
 An `f`, or no result at all, means the build is still running or stopped part-way. If the `CREATE` printed an
 error, it stopped: fix that cause (often a timeout), drop the index as below, and run the commands again. If your
@@ -471,7 +471,7 @@ SET lock_timeout = 0;
 DROP INDEX CONCURRENTLY IF EXISTS "Response_surveyId_finished_idx";
 ```
 
-Then run the commands above again.
+Add `SET transaction_timeout = 0;` here too if you needed it for the build. Then run the commands above again.
 
 An extra index is harmless to v5.3, so building it early needs no rollback plan of its own.
 
