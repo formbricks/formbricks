@@ -4,7 +4,10 @@ import { logger } from "@formbricks/logger";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponseInput, ZResponseInput, pickAutoCapturedResponseMeta } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { findRecentDuplicateResponse } from "@/app/api/client/[workspaceId]/responses/lib/duplicate-response";
+import {
+  canFoldSubmission,
+  findRecentDuplicateResponse,
+} from "@/app/api/client/[workspaceId]/responses/lib/duplicate-response";
 import { validateSingleUseResponseInput } from "@/app/api/client/[workspaceId]/responses/lib/single-use";
 import { handleApiError } from "@/app/lib/api/handle-api-error";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
@@ -220,9 +223,11 @@ export const POST = withV1ApiWrapper({
     // A mail scanner's click-time check and the recipient's own click submit the same prefilled
     // answer seconds apart (ENG-1147). Hand the second one the first finished response's id, so no
     // second row is stored and no second pipeline run fires.
-    const contact = responseInputData.userId
-      ? await getContactByUserId(workspaceId, responseInputData.userId)
-      : null;
+    const contact =
+      responseInputData.userId &&
+      canFoldSubmission({ surveyType: survey.type, finished: responseInputData.finished })
+        ? await getContactByUserId(workspaceId, responseInputData.userId)
+        : null;
     const duplicate = await findRecentDuplicateResponse({
       surveyId: survey.id,
       surveyType: survey.type,

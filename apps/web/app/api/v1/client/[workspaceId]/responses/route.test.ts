@@ -90,7 +90,8 @@ vi.mock("@/modules/survey/link/lib/verify-email-gate", () => ({
   VERIFIED_EMAIL_RESPONSE_KEY: "verifiedEmail",
 }));
 
-vi.mock("@/app/api/client/[workspaceId]/responses/lib/duplicate-response", () => ({
+vi.mock("@/app/api/client/[workspaceId]/responses/lib/duplicate-response", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   findRecentDuplicateResponse: mocks.findRecentDuplicateResponse,
 }));
 
@@ -268,6 +269,13 @@ describe("POST /api/v1/client/[workspaceId]/responses — duplicate submissions 
     });
     expect(mocks.createResponseWithQuotaEvaluation).not.toHaveBeenCalled();
     expect(mocks.sendToPipeline).not.toHaveBeenCalled();
+  });
+
+  test("skips the contact lookup for a submission that cannot fold", async () => {
+    await postRawBody({ q1: 5 }, { userId: "customer-1", finished: false });
+
+    expect(mocks.getContactByUserId).not.toHaveBeenCalled();
+    expect(mocks.createResponseWithQuotaEvaluation).toHaveBeenCalledTimes(1);
   });
 
   test("creates the response and runs the pipeline when nothing matches", async () => {

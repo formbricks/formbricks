@@ -37,11 +37,17 @@ export const isDuplicateOfCandidate = (
 };
 
 /**
+ * Only finished submissions to link surveys can fold. An app survey on "keep showing" can
+ * legitimately collect the same answer from the same contact twice in a minute (e.g. on two pages).
+ * Exported so a caller can skip resolving the contact when the submission can't fold anyway.
+ */
+export const canFoldSubmission = ({ surveyType, finished }: { surveyType: TSurveyType; finished: boolean }) =>
+  surveyType === "link" && finished;
+
+/**
  * Finds a response the same contact just submitted to the same survey with identical answers, so
- * the caller can hand back its id instead of creating a second row. Only identified submissions to
- * link surveys are checked: without a contact there is no way to tell two recipients of the same
- * prefilled link apart, and an app survey on "keep showing" can legitimately collect the same
- * answer from the same contact twice in a minute (e.g. on two pages).
+ * the caller can hand back its id instead of creating a second row. Only identified submissions are
+ * checked: without a contact there is no way to tell two recipients of the same prefilled link apart.
  */
 export const findRecentDuplicateResponse = async ({
   surveyId,
@@ -58,7 +64,7 @@ export const findRecentDuplicateResponse = async ({
   finished: boolean;
   now?: Date;
 }): Promise<{ id: string } | null> => {
-  if (surveyType !== "link" || !contactId || !finished) return null;
+  if (!contactId || !canFoldSubmission({ surveyType, finished })) return null;
 
   // Served by the (contactId, createdAt) index; bounded because a contact has a handful of
   // responses in any one minute.
