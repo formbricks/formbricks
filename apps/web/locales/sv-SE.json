@@ -2759,8 +2759,10 @@
         "connect_app_banner_title": "Skapar du en undersökning för webbplats och app?"
       },
       "billing": {
+        "billing_currency_conflict": "Den här planändringen är i konflikt med fakturering i en annan valuta på ditt konto. Kontakta supporten för att byta plan.",
         "billing_interval_toggle": "Faktureringsintervall",
         "cancel_at_period_end": "Avsluta vid periodens slut",
+        "card_payment_method_required": "För att byta från din nuvarande plan behöver du ett kort som betalningsmetod. Lägg till ett kort och försök igen.",
         "comparison_addon": "Tillägg",
         "comparison_best_for": "Bäst för",
         "comparison_included": "Ingår",
@@ -2803,6 +2805,7 @@
         "comparison_section_scale_unlocks": "Scale låser upp",
         "confirm_hobby_downgrade_body": "Din kostnadsfria provperiod för {plan} avslutas nu och du byter omedelbart till Hobby-planen.",
         "confirm_hobby_downgrade_description": "Du kan uppgradera igen när som helst.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Du byter till Hobby-planen. Din nuvarande plan avslutas för gott och kan inte återställas.",
         "confirm_hobby_downgrade_title": "Byta till Hobby-planen nu?",
         "confirm_trial_continue_body": "Uppföljningar, anpassade länkar och allt annat i {plan} – låses upp direkt.<br /><b>{chargeNow} idag</b>, sedan {fullPrice} {period} inkl. moms. Faktureringen börjar idag.",
         "confirm_trial_continue_body_fallback": "Uppföljningar, anpassade länkar och allt annat i {plan} – låses upp direkt.<br /><b>{fullPrice} {period}</b> plus moms. Faktureringen börjar idag.",
@@ -2815,6 +2818,7 @@
         "confirm_upgrade_button": "Bekräfta uppgradering",
         "confirm_upgrade_calculating": "Beräknar din proportionella avgift…",
         "confirm_upgrade_description": "Du kan ändra din plan igen när som helst.",
+        "confirm_upgrade_ends_current_plan": "När du byter avslutas din nuvarande plan för gott. Den kan inte återställas, även om betalningen inte går igenom.",
         "confirm_upgrade_title": "Bekräfta uppgradering",
         "contact_sales_cta": "Prata med oss",
         "contact_sales_description": "Läs mer om Formbricks för företag och hur vi kan skräddarsy våra lösningar för dig.",

@@ -2759,8 +2759,10 @@
         "connect_app_banner_title": "A configurar um inquérito para Website e App?"
       },
       "billing": {
+        "billing_currency_conflict": "Esta alteração de plano está em conflito com a faturação noutra moeda na tua conta. Por favor, contacta o suporte para mudar de plano.",
         "billing_interval_toggle": "Intervalo de faturação",
         "cancel_at_period_end": "Cancelar no fim do período",
+        "card_payment_method_required": "Mudar do teu plano atual requer um cartão como método de pagamento. Por favor, adiciona um cartão e tenta novamente.",
         "comparison_addon": "Complemento",
         "comparison_best_for": "Ideal para",
         "comparison_included": "Incluído",
@@ -2803,6 +2805,7 @@
         "comparison_section_scale_unlocks": "Desbloqueios Scale",
         "confirm_hobby_downgrade_body": "O teu período experimental gratuito do plano {plan} terminará agora e mudarás imediatamente para o plano Hobby.",
         "confirm_hobby_downgrade_description": "Podes fazer upgrade novamente a qualquer momento.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Vais mudar para o plano Hobby. O teu plano atual termina definitivamente e não poderá ser restaurado.",
         "confirm_hobby_downgrade_title": "Mudar para o plano Hobby agora?",
         "confirm_trial_continue_body": "Follow-ups, ligações personalizadas e tudo o resto em {plan} — desbloqueado instantaneamente.<br /><b>{chargeNow} hoje</b>, depois {fullPrice} {period} com taxas incluídas. A faturação começa hoje.",
         "confirm_trial_continue_body_fallback": "Follow-ups, ligações personalizadas e tudo o resto em {plan} — desbloqueado instantaneamente.<br /><b>{fullPrice} {period}</b> mais taxas. A faturação começa hoje.",
@@ -2815,6 +2818,7 @@
         "confirm_upgrade_button": "Confirmar atualização",
         "confirm_upgrade_calculating": "A calcular o teu custo proporcionado…",
         "confirm_upgrade_description": "Podes alterar o teu plano novamente a qualquer momento.",
+        "confirm_upgrade_ends_current_plan": "Ao mudar, o teu plano atual termina definitivamente: não poderá ser restaurado, mesmo que este pagamento não seja concluído.",
         "confirm_upgrade_title": "Confirmar atualização",
         "contact_sales_cta": "Fala connosco",
         "contact_sales_description": "Descobre mais sobre o Formbricks para empresas e como podemos adaptar as nossas soluções para ti.",

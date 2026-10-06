@@ -2759,8 +2759,10 @@
         "connect_app_banner_title": "Richtest du eine Website- & App-Umfrage ein?"
       },
       "billing": {
+        "billing_currency_conflict": "Diese Planänderung steht im Konflikt mit einer Abrechnung in einer anderen Währung auf deinem Konto. Bitte kontaktiere den Support, um den Plan zu wechseln.",
         "billing_interval_toggle": "Abrechnungsintervall",
         "cancel_at_period_end": "Am Ende des Zeitraums kündigen",
+        "card_payment_method_required": "Um von deinem aktuellen Tarif zu wechseln, brauchst du eine Karte als Zahlungsmethode. Bitte füge eine Karte hinzu und versuche es erneut.",
         "comparison_addon": "Add-on",
         "comparison_best_for": "Am besten für",
         "comparison_included": "Inbegriffen",
@@ -2803,6 +2805,7 @@
         "comparison_section_scale_unlocks": "Scale freischalten",
         "confirm_hobby_downgrade_body": "Deine kostenlose {plan}-Testphase endet jetzt und du wechselst sofort zum Hobby-Plan.",
         "confirm_hobby_downgrade_description": "Du kannst jederzeit wieder upgraden.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Du wechselst zum Hobby-Tarif. Dein aktueller Tarif endet endgültig und kann nicht wiederhergestellt werden.",
         "confirm_hobby_downgrade_title": "Jetzt zum Hobby-Plan wechseln?",
         "confirm_trial_continue_body": "Follow-ups, benutzerdefinierte Links und alles andere in {plan} – sofort freigeschaltet.<br /><b>{chargeNow} heute</b>, dann {fullPrice} {period} inkl. Steuern. Die Abrechnung beginnt heute.",
         "confirm_trial_continue_body_fallback": "Follow-ups, benutzerdefinierte Links und alles andere in {plan} – sofort freigeschaltet.<br /><b>{fullPrice} {period}</b> zzgl. Steuern. Die Abrechnung beginnt heute.",
@@ -2815,6 +2818,7 @@
         "confirm_upgrade_button": "Upgrade bestätigen",
         "confirm_upgrade_calculating": "Deine anteilige Gebühr wird berechnet …",
         "confirm_upgrade_description": "Du kannst deinen Plan jederzeit wieder ändern.",
+        "confirm_upgrade_ends_current_plan": "Mit dem Wechsel endet Dein aktuelles Abo endgültig: Es lässt sich nicht wiederherstellen, auch wenn diese Zahlung nicht durchgeht.",
         "confirm_upgrade_title": "Upgrade bestätigen",
         "contact_sales_cta": "Sprich mit uns",
         "contact_sales_description": "Erfahre mehr über Formbricks für Unternehmen und wie wir unsere Lösungen für dich anpassen können.",

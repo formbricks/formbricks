@@ -2759,8 +2759,10 @@
         "connect_app_banner_title": "Beállít egy webhelyet és alkalmazás-kérdőívet?"
       },
       "billing": {
+        "billing_currency_conflict": "Ez a csomagváltás ütközik a fiókján szereplő másik pénznemben történő számlázással. Kérjük, lépjen kapcsolatba az ügyfélszolgálattal a csomag váltásához.",
         "billing_interval_toggle": "Számlázási időköz",
         "cancel_at_period_end": "Megszakítás az időszak végén",
+        "card_payment_method_required": "A jelenlegi csomagjáról való váltáshoz kártyát kell fizetési módként megadnia. Kérjük, adjon hozzá egy kártyát, majd próbálja újra.",
         "comparison_addon": "Kiegészítő",
         "comparison_best_for": "Legjobb ehhez",
         "comparison_included": "Tartalmazott",
@@ -2803,6 +2805,7 @@
         "comparison_section_scale_unlocks": "Scale feloldja",
         "confirm_hobby_downgrade_body": "Az ingyenes {plan} próbaidőszaka most véget ér, és azonnal átvált a Hobby csomagra.",
         "confirm_hobby_downgrade_description": "Bármikor újra átválthat a magasabb csomagra.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Ön át fog váltani a Hobbi csomagra. Jelenlegi előfizetése véglegesen megszűnik, és nem állítható vissza.",
         "confirm_hobby_downgrade_title": "Átvált a Hobby csomagra most?",
         "confirm_trial_continue_body": "Utókövetések, egyéni hivatkozások és minden más a {plan} csomagban – azonnal feloldva.<br /><b>{chargeNow} ma</b>, majd {fullPrice} {period}, amely tartalmazza az adókat is. A számlázás ma indul.",
         "confirm_trial_continue_body_fallback": "Utókövetések, egyéni hivatkozások és minden más a {plan} csomagban – azonnal feloldva.<br /><b>{fullPrice} {period}</b> plusz adók. A számlázás ma indul.",
@@ -2815,6 +2818,7 @@
         "confirm_upgrade_button": "Frissítés megerősítése",
         "confirm_upgrade_calculating": "Az arányos díj kiszámítása…",
         "confirm_upgrade_description": "Bármikor újra megváltoztathatja a csomagját.",
+        "confirm_upgrade_ends_current_plan": "A váltással jelenlegi előfizetése végleg megszűnik, és azt nem lehet visszaállítani, még akkor sem, ha ez a fizetés nem sikerül.",
         "confirm_upgrade_title": "Frissítés megerősítése",
         "contact_sales_cta": "Vegye fel velünk a kapcsolatot",
         "contact_sales_description": "Tudjon meg többet a vállalatok számára készült Formbricks rendszerről, és arról, hogy hogyan tudjuk az Ön igényeire szabni a megoldásainkat.",

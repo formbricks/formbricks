@@ -2759,8 +2759,10 @@
         "connect_app_banner_title": "¿Configurando una encuesta para sitio web y aplicación?"
       },
       "billing": {
+        "billing_currency_conflict": "Este cambio de plan entra en conflicto con la facturación en otra moneda de tu cuenta. Por favor, contacta con soporte para cambiar de plan.",
         "billing_interval_toggle": "Intervalo de facturación",
         "cancel_at_period_end": "Cancelar al finalizar el período",
+        "card_payment_method_required": "Para cambiar de tu plan actual necesitas añadir una tarjeta como método de pago. Por favor, añade una tarjeta e inténtalo de nuevo.",
         "comparison_addon": "Complemento",
         "comparison_best_for": "Ideal para",
         "comparison_included": "Incluido",
@@ -2803,6 +2805,7 @@
         "comparison_section_scale_unlocks": "Desbloqueos Scale",
         "confirm_hobby_downgrade_body": "Tu prueba gratuita del plan {plan} terminará ahora y cambiarás al plan Hobby inmediatamente.",
         "confirm_hobby_downgrade_description": "Puedes actualizar de nuevo en cualquier momento.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Cambiarás al plan Hobby. Tu plan actual finalizará definitivamente y no se podrá recuperar.",
         "confirm_hobby_downgrade_title": "¿Cambiar al plan Hobby ahora?",
         "confirm_trial_continue_body": "Seguimientos, enlaces personalizados y todo lo demás en {plan} — desbloqueado al instante.<br /><b>{chargeNow} hoy</b>, después {fullPrice} {period} impuestos incluidos. La facturación comienza hoy.",
         "confirm_trial_continue_body_fallback": "Seguimientos, enlaces personalizados y todo lo demás en {plan} — desbloqueado al instante.<br /><b>{fullPrice} {period}</b> más impuestos. La facturación comienza hoy.",
@@ -2815,6 +2818,7 @@
         "confirm_upgrade_button": "Confirmar actualización",
         "confirm_upgrade_calculating": "Calculando tu cargo prorrateado…",
         "confirm_upgrade_description": "Puedes cambiar tu plan en cualquier momento.",
+        "confirm_upgrade_ends_current_plan": "Al cambiar, tu plan actual finaliza definitivamente: no se podrá restaurar, aunque este pago no se complete.",
         "confirm_upgrade_title": "Confirmar actualización",
         "contact_sales_cta": "Habla con nosotros",
         "contact_sales_description": "Descubre más sobre Formbricks para empresas y cómo podemos adaptar nuestras soluciones para ti.",

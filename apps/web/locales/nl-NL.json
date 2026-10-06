@@ -2759,8 +2759,10 @@
         "connect_app_banner_title": "Een Website & App-enquête instellen?"
       },
       "billing": {
+        "billing_currency_conflict": "Deze planwijziging conflicteert met facturering in een andere valuta op je account. Neem contact op met support om van plan te wisselen.",
         "billing_interval_toggle": "Factureringsinterval",
         "cancel_at_period_end": "Opzeggen aan het einde van de periode",
+        "card_payment_method_required": "Om over te stappen van je huidige abonnement heb je een kaart als betaalmethode nodig. Voeg een kaart toe en probeer het opnieuw.",
         "comparison_addon": "Add-on",
         "comparison_best_for": "Het beste voor",
         "comparison_included": "Inbegrepen",
@@ -2803,6 +2805,7 @@
         "comparison_section_scale_unlocks": "Scale-mogelijkheden",
         "confirm_hobby_downgrade_body": "Je gratis proefperiode van {plan} eindigt nu en je schakelt direct over naar het Hobby-abonnement.",
         "confirm_hobby_downgrade_description": "Je kunt op elk moment weer upgraden.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Je schakelt over naar het Hobby-abonnement. Je huidige abonnement eindigt definitief en kan niet worden hersteld.",
         "confirm_hobby_downgrade_title": "Nu overschakelen naar het Hobby-abonnement?",
         "confirm_trial_continue_body": "Opvolgingen, aangepaste links en alles in {plan} — direct ontgrendeld.<br /><b>{chargeNow} vandaag</b>, daarna {fullPrice} {period} incl. btw. Facturering begint vandaag.",
         "confirm_trial_continue_body_fallback": "Opvolgingen, aangepaste links en alles in {plan} — direct ontgrendeld.<br /><b>{fullPrice} {period}</b> plus btw. Facturering begint vandaag.",
@@ -2815,6 +2818,7 @@
         "confirm_upgrade_button": "Upgrade bevestigen",
         "confirm_upgrade_calculating": "Je naar rato berekende kosten worden berekend…",
         "confirm_upgrade_description": "Je kunt je abonnement op elk moment weer wijzigen.",
+        "confirm_upgrade_ends_current_plan": "Als je overstapt, wordt je huidige abonnement definitief beëindigd: het kan niet worden hersteld, ook niet als deze betaling niet lukt.",
         "confirm_upgrade_title": "Upgrade bevestigen",
         "contact_sales_cta": "Praat met ons",
         "contact_sales_description": "Ontdek meer over Formbricks voor ondernemingen en hoe we onze oplossingen op maat kunnen maken voor jou.",

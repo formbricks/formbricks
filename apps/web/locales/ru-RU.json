@@ -2759,8 +2759,10 @@
         "connect_app_banner_title": "Настраиваете опрос для сайта или приложения?"
       },
       "billing": {
+        "billing_currency_conflict": "Это изменение плана конфликтует с биллингом в другой валюте в вашем аккаунте. Пожалуйста, свяжитесь с поддержкой, чтобы сменить план.",
         "billing_interval_toggle": "Интервал выставления счетов",
         "cancel_at_period_end": "Отменить в конце периода",
+        "card_payment_method_required": "Для смены текущего тарифа требуется привязать карту в качестве способа оплаты. Пожалуйста, добавь карту и попробуй снова.",
         "comparison_addon": "Дополнение",
         "comparison_best_for": "Подходит для",
         "comparison_included": "Включено",
@@ -2803,6 +2805,7 @@
         "comparison_section_scale_unlocks": "Возможности Scale",
         "confirm_hobby_downgrade_body": "Ваша бесплатная пробная версия тарифа {plan} завершится сейчас, и вы сразу перейдёте на тариф Hobby.",
         "confirm_hobby_downgrade_description": "Вы можете снова повысить тариф в любое время.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Вы перейдёте на тариф Hobby. Ваш текущий тариф закончится навсегда, и восстановить его будет нельзя.",
         "confirm_hobby_downgrade_title": "Перейти на тариф Hobby сейчас?",
         "confirm_trial_continue_body": "Последующие действия, персонализированные ссылки и всё остальное в {plan} — доступно мгновенно.<br /><b>{chargeNow} сегодня</b>, затем {fullPrice} {period} включая налоги. Выставление счетов начинается сегодня.",
         "confirm_trial_continue_body_fallback": "Последующие действия, персонализированные ссылки и всё остальное в {plan} — доступно мгновенно.<br /><b>{fullPrice} {period}</b> плюс налоги. Выставление счетов начинается сегодня.",
@@ -2815,6 +2818,7 @@
         "confirm_upgrade_button": "Подтвердить обновление",
         "confirm_upgrade_calculating": "Рассчитываем пропорциональную сумму списания…",
         "confirm_upgrade_description": "Ты можешь изменить свой тариф в любое время.",
+        "confirm_upgrade_ends_current_plan": "После перехода ваш текущий тариф будет прекращён навсегда: его нельзя будет восстановить, даже если платёж не пройдёт.",
         "confirm_upgrade_title": "Подтвердить обновление",
         "contact_sales_cta": "Поговорить с нами",
         "contact_sales_description": "Узнайте больше о Formbricks для предприятий и о том, как мы можем адаптировать наши решения под ваши задачи.",

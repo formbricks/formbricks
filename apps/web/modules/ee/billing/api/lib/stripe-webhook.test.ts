@@ -1,3 +1,4 @@
+import Stripe from "stripe";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { webhookHandler } from "./stripe-webhook";
 
@@ -97,6 +98,31 @@ describe("webhookHandler setup checkout upgrade", () => {
     expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.syncOrganizationBillingFromStripe).toHaveBeenCalled();
     expect(mocks.loggerError).not.toHaveBeenCalled();
+  });
+
+  test("still syncs when the subscription was already replaced (canceled) by the finalized upgrade", async () => {
+    mocks.subscriptionsUpdate.mockRejectedValue(
+      new Stripe.errors.StripeInvalidRequestError({
+        type: "invalid_request_error",
+        code: "invalid_canceled_subscription_fields",
+        message: "A canceled subscription can only update its cancellation_details and metadata.",
+      })
+    );
+
+    const result = await webhookHandler("body", "sig");
+
+    expect(result.status).toBe(200);
+    expect(mocks.loggerWarn).toHaveBeenCalled();
+    expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith("org_1");
+    expect(mocks.syncOrganizationBillingFromStripe).toHaveBeenCalled();
+  });
+
+  test("still 500s when attaching the card fails for another reason", async () => {
+    mocks.subscriptionsUpdate.mockRejectedValue(new Error("network down"));
+
+    const result = await webhookHandler("body", "sig");
+
+    expect(result.status).toBe(500);
   });
 
   test("still 500s when the snapshot sync fails (retryable)", async () => {

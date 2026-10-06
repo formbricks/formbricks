@@ -2759,8 +2759,10 @@
         "connect_app_banner_title": "Configurezi un sondaj pentru Site & Aplicație?"
       },
       "billing": {
+        "billing_currency_conflict": "Această schimbare de plan intră în conflict cu facturarea într-o altă monedă pe contul tău. Te rugăm să contactezi echipa de suport pentru a schimba planurile.",
         "billing_interval_toggle": "Interval de facturare",
         "cancel_at_period_end": "Anulează la sfârșitul perioadei",
+        "card_payment_method_required": "Pentru a schimba planul actual, ai nevoie de un card ca metodă de plată. Te rugăm să adaugi un card și să încerci din nou.",
         "comparison_addon": "Supliment",
         "comparison_best_for": "Ideal pentru",
         "comparison_included": "Inclus",
@@ -2803,6 +2805,7 @@
         "comparison_section_scale_unlocks": "Beneficii Scale",
         "confirm_hobby_downgrade_body": "Perioada ta de probă gratuită {plan} se va încheia acum și vei trece imediat la planul Hobby.",
         "confirm_hobby_downgrade_description": "Poți face upgrade oricând dorești.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Vei trece la planul Hobby. Planul tău actual se încheie definitiv și nu mai poate fi restabilit.",
         "confirm_hobby_downgrade_title": "Treci la planul Hobby acum?",
         "confirm_trial_continue_body": "Follow-up-uri, link-uri personalizate și tot ce oferă {plan} — deblocate instantaneu.<br /><b>{chargeNow} astăzi</b>, apoi {fullPrice} {period} taxe incluse. Facturarea începe astăzi.",
         "confirm_trial_continue_body_fallback": "Follow-up-uri, link-uri personalizate și tot ce oferă {plan} — deblocate instantaneu.<br /><b>{fullPrice} {period}</b> plus taxe. Facturarea începe astăzi.",
@@ -2815,6 +2818,7 @@
         "confirm_upgrade_button": "Confirmă upgrade-ul",
         "confirm_upgrade_calculating": "Se calculează taxa proporțională…",
         "confirm_upgrade_description": "Poți schimba planul oricând dorești.",
+        "confirm_upgrade_ends_current_plan": "Prin schimbare, planul tău actual se încheie definitiv: nu mai poate fi restabilit, chiar dacă plata nu se efectuează cu succes.",
         "confirm_upgrade_title": "Confirmă upgrade-ul",
         "contact_sales_cta": "Vorbește cu noi",
         "contact_sales_description": "Află mai multe despre Formbricks pentru întreprinderi și cum putem personaliza soluțiile noastre pentru tine.",

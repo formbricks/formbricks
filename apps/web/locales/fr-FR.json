@@ -2759,8 +2759,10 @@
         "connect_app_banner_title": "Tu configures une enquête Site Web & Application ?"
       },
       "billing": {
+        "billing_currency_conflict": "Ce changement de forfait est en conflit avec la facturation dans une autre devise sur ton compte. Contacte l'assistance pour changer de forfait.",
         "billing_interval_toggle": "Intervalle de facturation",
         "cancel_at_period_end": "Annuler à la fin de la période",
+        "card_payment_method_required": "Pour changer de formule, tu dois ajouter une carte comme moyen de paiement. Ajoute une carte et réessaie.",
         "comparison_addon": "Module complémentaire",
         "comparison_best_for": "Idéal pour",
         "comparison_included": "Inclus",
@@ -2803,6 +2805,7 @@
         "comparison_section_scale_unlocks": "Fonctionnalités Scale",
         "confirm_hobby_downgrade_body": "Votre essai gratuit {plan} se terminera maintenant et vous passerez immédiatement au forfait Hobby.",
         "confirm_hobby_downgrade_description": "Tu peux repasser à un forfait supérieur à tout moment.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Tu vas passer au forfait Hobby. Ton forfait actuel prendra fin définitivement et ne pourra pas être rétabli.",
         "confirm_hobby_downgrade_title": "Passer au forfait Hobby maintenant ?",
         "confirm_trial_continue_body": "Relances, liens personnalisés et tout le reste dans {plan} — débloqués instantanément.<br /><b>{chargeNow} aujourd'hui</b>, puis {fullPrice} {period} taxes comprises. La facturation commence aujourd'hui.",
         "confirm_trial_continue_body_fallback": "Relances, liens personnalisés et tout le reste dans {plan} — débloqués instantanément.<br /><b>{fullPrice} {period}</b> plus taxes. La facturation commence aujourd'hui.",
@@ -2815,6 +2818,7 @@
         "confirm_upgrade_button": "Confirmer la mise à niveau",
         "confirm_upgrade_calculating": "Calcul de ton montant au prorata…",
         "confirm_upgrade_description": "Tu peux modifier ton forfait à tout moment.",
+        "confirm_upgrade_ends_current_plan": "Le changement met définitivement fin à ton offre actuelle : impossible de la récupérer, même si ce paiement n'aboutit pas.",
         "confirm_upgrade_title": "Confirmer la mise à niveau",
         "contact_sales_cta": "Discutons ensemble",
         "contact_sales_description": "Découvre Formbricks pour les entreprises et comment nous pouvons adapter nos solutions à tes besoins.",
