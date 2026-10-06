@@ -53,6 +53,18 @@ function checkArray(array: unknown[], path: TPathNode | null, total: number): TA
   return null;
 }
 
+// A frame's children, read the same way whether it walks an array (by index) or an object (by key).
+const childCount = (frame: TContainerFrame): number =>
+  frame.keys === null ? (frame.container as unknown[]).length : frame.keys.length;
+
+const segmentAt = (frame: TContainerFrame, index: number): string =>
+  frame.keys === null ? String(index) : frame.keys[index];
+
+const childAt = (frame: TContainerFrame, index: number, segment: string): unknown =>
+  frame.keys === null
+    ? (frame.container as unknown[])[index]
+    : (frame.container as Record<string, unknown>)[segment];
+
 /**
  * Checks every array in a parsed JSON value against the two budgets above, before any schema sees it.
  *
@@ -98,21 +110,16 @@ export function findArrayBudgetViolation(value: unknown): TArrayBudgetViolation 
 
   const stack: TContainerFrame[] = [root.frame];
 
-  while (stack.length > 0) {
-    const frame = stack[stack.length - 1];
-    const childCount = frame.keys === null ? (frame.container as unknown[]).length : frame.keys.length;
-    if (frame.next >= childCount) {
+  for (let frame = stack.at(-1); frame !== undefined; frame = stack.at(-1)) {
+    if (frame.next >= childCount(frame)) {
       stack.pop();
       continue;
     }
 
     const index = frame.next;
     frame.next += 1;
-    const segment = frame.keys === null ? String(index) : frame.keys[index];
-    const child =
-      frame.keys === null
-        ? (frame.container as unknown[])[index]
-        : (frame.container as Record<string, unknown>)[segment];
+    const segment = segmentAt(frame, index);
+    const child = childAt(frame, index, segment);
 
     if (isContainer(child)) {
       const entered = enter(child, { segment, parent: frame.path });
