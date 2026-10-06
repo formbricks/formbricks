@@ -14,10 +14,15 @@
 export const QSF_IMPORT_BODY_LIMIT_BYTES = 15.5 * 1024 * 1024;
 
 /**
- * Imports one server process runs at once. A parsed 15 MB JSON body can briefly take 100 MB or more of
- * heap, and the per-user rate limit does not cover many users importing at the same time.
+ * Imports one server process runs at once. Measured on a pathological 15.5 MiB body (one object with
+ * 1.3M keys): about 80 MB of heap once parsed, plus about 20 MB for the request's array check — so
+ * three in flight stay around 300 MB, well inside the pod's memory. The per-user rate limit does not
+ * cover many users importing at the same time; this does.
  */
 export const QSF_IMPORT_MAX_IN_FLIGHT = 3;
+
+/** Imports one user runs at once on a server process, so one user cannot take every slot. */
+export const QSF_IMPORT_MAX_IN_FLIGHT_PER_USER = 1;
 
 /** `Retry-After` when every import slot is taken: about how long a typical import takes. */
 export const QSF_IMPORT_RETRY_AFTER_SECONDS = 15;

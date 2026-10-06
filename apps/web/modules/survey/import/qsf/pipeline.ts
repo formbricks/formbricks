@@ -51,7 +51,11 @@ export interface TRunQsfImportParams {
   workspaceId: string;
   organizationId: string;
   userId: string | null;
-  /** Aborts on Stop, client disconnect and the route's deadline. Pass it to the AI call. */
+  /**
+   * Aborts on Stop, client disconnect and the route's deadline. Pass it to the AI call, and stop
+   * promptly when it fires: the route gives the import's concurrency slot back as soon as the client
+   * leaves, so work that carries on after that is work the limit no longer counts.
+   */
   signal: AbortSignal;
   onProgress: (stage: TQsfImportStage) => void;
 }

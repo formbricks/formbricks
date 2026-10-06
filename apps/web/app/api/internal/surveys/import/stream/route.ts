@@ -17,6 +17,7 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   QSF_IMPORT_BODY_LIMIT_BYTES,
   QSF_IMPORT_MAX_IN_FLIGHT,
+  QSF_IMPORT_MAX_IN_FLIGHT_PER_USER,
   QSF_IMPORT_RETRY_AFTER_SECONDS,
 } from "../lib/constants";
 import { streamQsfImport } from "../lib/operations";
@@ -27,8 +28,13 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-/** One per server process: the limit bounds what a pod spends on imports, not what a user does. */
-const importConcurrency = new ConcurrencyLimiter(QSF_IMPORT_MAX_IN_FLIGHT);
+/**
+ * One per server process: the limit bounds what a pod spends on imports, and the per-user share keeps
+ * one user from taking every slot.
+ */
+const importConcurrency = new ConcurrencyLimiter(QSF_IMPORT_MAX_IN_FLIGHT, {
+  maxPerKey: QSF_IMPORT_MAX_IN_FLIGHT_PER_USER,
+});
 
 export const POST = withV3ApiWrapper({
   auth: "session",

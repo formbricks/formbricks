@@ -111,14 +111,34 @@ describe("POST /api/internal/surveys/import/stream", () => {
     expect(mocks.streamQsfImport).not.toHaveBeenCalled();
   });
 
+  test("answers 429 when the same user starts a second import while one is running", async () => {
+    const running = openStream();
+    mocks.streamQsfImport.mockImplementationOnce(async () => running.response);
+
+    const first = await post();
+    const second = await post();
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(429);
+    expect(second.headers.get("Retry-After")).toBe(String(QSF_IMPORT_RETRY_AFTER_SECONDS));
+
+    const done = first.text();
+    running.finish();
+    await done;
+  });
+
   test("answers 503 with Retry-After once every import slot is busy, and admits again after one ends", async () => {
     const running = Array.from({ length: QSF_IMPORT_MAX_IN_FLIGHT }, openStream);
     for (const { response } of running) {
       mocks.streamQsfImport.mockImplementationOnce(async () => response);
     }
+    const asUser = (id: string) => {
+      mocks.getSession.mockResolvedValueOnce({ user: { id }, expires: "2099-01-01" });
+      return post();
+    };
 
-    const admitted = await Promise.all(running.map(() => post()));
-    const refused = await post();
+    const admitted = await Promise.all(running.map((_, index) => asUser(`user_${index}`)));
+    const refused = await asUser("user_late");
 
     expect(admitted.map((response) => response.status)).toEqual(running.map(() => 200));
     expect(refused.status).toBe(503);
@@ -128,7 +148,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
     const first = admitted[0].text();
     running[0].finish();
     await first;
-    const afterOneEnded = await post();
+    const afterOneEnded = await asUser("user_late");
     expect(afterOneEnded.status).toBe(200);
 
     await afterOneEnded.text();

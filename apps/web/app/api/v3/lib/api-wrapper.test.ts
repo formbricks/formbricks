@@ -1177,7 +1177,7 @@ describe("per-route concurrency limit", () => {
 
   test("answers 503 capacity_reached with Retry-After when every slot is taken, before reading the body", async () => {
     const limiter = new ConcurrencyLimiter(1);
-    const held = limiter.tryAcquire();
+    const held = limiter.tryAcquire("someone_else");
     const handler = vi.fn(async () => Response.json({ ok: true }));
 
     // Not JSON: a 400 here would mean the body was read before admission.
@@ -1187,7 +1187,21 @@ describe("per-route concurrency limit", () => {
     expect(response.headers.get("Retry-After")).toBe("7");
     expect(handler).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toMatchObject({ code: "capacity_reached", status: 503 });
-    held?.();
+    if (held.ok) held.release();
+  });
+
+  test("answers 429 with Retry-After when the caller already holds its share, while others still get in", async () => {
+    const limiter = new ConcurrencyLimiter(3, { maxPerKey: 1 });
+    const mine = limiter.tryAcquire("user_1");
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+
+    const response = await limitedRoute(limiter, handler)(postJson('{"a":"x"}'), {} as never);
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("7");
+    expect(handler).not.toHaveBeenCalled();
+    expect(limiter.tryAcquire("user_2").ok).toBe(true);
+    if (mine.ok) mine.release();
   });
 
   test("does not take a slot for an unauthenticated or rate-limited request", async () => {
@@ -1267,6 +1281,55 @@ describe("per-route concurrency limit", () => {
     await streaming.body?.cancel();
 
     expect(limiter.inFlight).toBe(0);
+  });
+
+  test("frees the slot when the client disconnects, even though nobody reads or cancels the body", async () => {
+    // Next returns early from piping a body to a response the client already closed: it neither reads
+    // nor cancels it. The request signal is the only thing that fires.
+    const limiter = new ConcurrencyLimiter(1);
+    const client = new AbortController();
+    const route = limitedRoute(
+      limiter,
+      async () => new Response(new ReadableStream<Uint8Array>({ pull() {} }))
+    );
+
+    const response = await route(
+      new NextRequest("http://localhost/api/internal/surveys/import/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: '{"a":"x"}',
+        signal: client.signal,
+      }),
+      {} as never
+    );
+    expect(response.status).toBe(200);
+    expect(limiter.inFlight).toBe(1);
+
+    client.abort();
+
+    expect(limiter.inFlight).toBe(0);
+  });
+
+  test("a disconnect after the body settled releases nothing twice", async () => {
+    const limiter = new ConcurrencyLimiter(1);
+    const client = new AbortController();
+    const route = limitedRoute(limiter, async () => Response.json({ ok: true }));
+
+    const response = await route(
+      new NextRequest("http://localhost/api/internal/surveys/import/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: '{"a":"x"}',
+        signal: client.signal,
+      }),
+      {} as never
+    );
+    await response.text();
+    const other = limiter.tryAcquire("someone_else");
+    client.abort();
+
+    expect(limiter.inFlight).toBe(1);
+    if (other.ok) other.release();
   });
 
   test.each([0, -3, 1.5])("refuses to build a route with retryAfterSeconds %s", (retryAfterSeconds) => {

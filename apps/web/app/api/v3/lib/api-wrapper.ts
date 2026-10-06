@@ -84,10 +84,14 @@ export type TWithV3ApiWrapperParams<S extends TV3Schemas | undefined, TProps = u
    * `capacity_reached` with `Retry-After`. The slot is taken after authentication and rate limiting but
    * **before the body is read**, so it also bounds the memory spent parsing large bodies, and it is held
    * until the response body is fully sent or cancelled, so a streamed response keeps its slot for as
-   * long as it runs. Share one `ConcurrencyLimiter` per route, created at module scope.
+   * long as it runs, or until the client disconnects. Share one `ConcurrencyLimiter` per route, created at
+   * module scope.
+   *
+   * With `maxPerKey` on the limiter, one caller (session user or API key) can hold only that many slots;
+   * the next of theirs gets a 429 with `Retry-After` instead.
    *
    * Rate limiting runs first on purpose, so a rate-limited caller never holds a slot; the price is that
-   * a 503 still spends one rate-limit token.
+   * a refusal still spends one rate-limit token.
    */
   concurrency?: { limiter: ConcurrencyLimiter; retryAfterSeconds: number };
   action?: TAuditAction;
@@ -558,6 +562,40 @@ const reportServerError = (req: NextRequest, response: Response, error?: unknown
   }
 };
 
+/**
+ * The answer to a request the route's concurrency limit turned away. Over the caller's own share it is
+ * the caller sending too many (429); with every slot on the process taken it is this server being busy
+ * (503 `capacity_reached`). Both carry `Retry-After`.
+ */
+function refuseOverConcurrency(
+  reason: "capacity" | "per_key",
+  concurrency: NonNullable<TWithV3ApiWrapperParams<undefined>["concurrency"]>,
+  {
+    requestId,
+    instance,
+    log,
+  }: { requestId: string; instance: string; log: ReturnType<typeof logger.withContext> }
+): Response {
+  if (reason === "per_key") {
+    log.warn(
+      { statusCode: 429, maxPerKey: concurrency.limiter.maxPerKey },
+      "V3 API caller is at its concurrency limit for this route"
+    );
+    return problemTooManyRequests(
+      requestId,
+      "You already have as many of these requests running as this route allows. Wait for one to finish.",
+      concurrency.retryAfterSeconds,
+      instance
+    );
+  }
+
+  log.warn(
+    { statusCode: 503, maxInFlight: concurrency.limiter.maxInFlight },
+    "V3 API route is at its concurrency limit"
+  );
+  return problemCapacityReached(requestId, concurrency.retryAfterSeconds, instance);
+}
+
 export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unknown>(
   params: TWithV3ApiWrapperParams<S, TProps>
 ): ((req: NextRequest, props: TProps) => Promise<Response>) => {
@@ -624,16 +662,28 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
       }
 
       if (concurrency) {
-        const release = concurrency.limiter.tryAcquire();
-        if (!release) {
-          log.warn(
-            { statusCode: 503, maxInFlight: concurrency.limiter.maxInFlight },
-            "V3 API route is at its concurrency limit"
-          );
-          return problemCapacityReached(requestId, concurrency.retryAfterSeconds, instance);
+        const slot = concurrency.limiter.tryAcquire(
+          getRateLimitIdentifier(authResult.authentication) ?? undefined
+        );
+        if (!slot.ok) {
+          return refuseOverConcurrency(slot.reason, concurrency, { requestId, instance, log });
         }
+        const { release } = slot;
 
-        releaseSlot = release;
+        // Also give the slot back when the client goes away. Next aborts `req.signal` when the response
+        // closes before it finished, and when the client left before sending even started it returns
+        // early from piping the body — neither reading nor cancelling it — so `releaseWhenBodySettles`
+        // alone would hold this slot for good.
+        const releaseOnAbort = () => release();
+        if (req.signal.aborted) {
+          release();
+        } else {
+          req.signal.addEventListener("abort", releaseOnAbort, { once: true });
+        }
+        releaseSlot = () => {
+          req.signal.removeEventListener("abort", releaseOnAbort);
+          release();
+        };
       }
 
       const parsedInputResult = await parseV3Input(req, props, schemas, {

@@ -6,6 +6,7 @@ import {
   QSF_IMPORT_DEADLINE_MS,
   QSF_IMPORT_HEARTBEAT_MS,
   QSF_IMPORT_MAX_IN_FLIGHT,
+  QSF_IMPORT_MAX_IN_FLIGHT_PER_USER,
   QSF_IMPORT_RETRY_AFTER_SECONDS,
 } from "./constants";
 
@@ -39,5 +40,7 @@ describe("QSF import limits", () => {
     expect(QSF_IMPORT_MAX_IN_FLIGHT).toBeGreaterThanOrEqual(2);
     expect(QSF_IMPORT_MAX_IN_FLIGHT).toBeLessThanOrEqual(4);
     expect(QSF_IMPORT_RETRY_AFTER_SECONDS).toBeGreaterThan(0);
+    // One user must never be able to take every slot on a pod.
+    expect(QSF_IMPORT_MAX_IN_FLIGHT_PER_USER).toBeLessThan(QSF_IMPORT_MAX_IN_FLIGHT);
   });
 });

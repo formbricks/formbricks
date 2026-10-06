@@ -1,42 +1,83 @@
 import { describe, expect, test } from "vitest";
 import { ConcurrencyLimiter, releaseWhenBodySettles } from "./concurrency-limiter";
 
+/** Takes a slot or fails the test, for setups that need one held. */
+const take = (limiter: ConcurrencyLimiter, key?: string) => {
+  const slot = limiter.tryAcquire(key);
+  if (!slot.ok) throw new Error(`expected a slot, got ${slot.reason}`);
+  return slot.release;
+};
+
 describe("ConcurrencyLimiter", () => {
-  test("hands out slots up to the limit, then refuses", () => {
+  test("hands out slots up to the limit, then refuses for capacity", () => {
     const limiter = new ConcurrencyLimiter(2);
 
-    expect(limiter.tryAcquire()).toBeTypeOf("function");
-    expect(limiter.tryAcquire()).toBeTypeOf("function");
-    expect(limiter.tryAcquire()).toBeNull();
+    take(limiter);
+    take(limiter);
+
+    expect(limiter.tryAcquire()).toEqual({ ok: false, reason: "capacity" });
     expect(limiter.inFlight).toBe(2);
   });
 
   test("a released slot can be taken again", () => {
     const limiter = new ConcurrencyLimiter(1);
-    const release = limiter.tryAcquire();
 
-    release?.();
+    take(limiter)();
 
     expect(limiter.inFlight).toBe(0);
-    expect(limiter.tryAcquire()).toBeTypeOf("function");
+    expect(limiter.tryAcquire().ok).toBe(true);
   });
 
   test("releasing twice frees one slot, not two", () => {
     // Every exit path may release, so a double release must not hand out a slot that is still held.
     const limiter = new ConcurrencyLimiter(1);
-    const first = limiter.tryAcquire();
-    first?.();
-    const second = limiter.tryAcquire();
+    const first = take(limiter);
+    first();
+    const second = take(limiter);
 
-    first?.();
+    first();
 
     expect(limiter.inFlight).toBe(1);
-    expect(limiter.tryAcquire()).toBeNull();
-    second?.();
+    expect(limiter.tryAcquire().ok).toBe(false);
+    second();
+  });
+
+  test("caps one key at maxPerKey while other keys still get slots", () => {
+    const limiter = new ConcurrencyLimiter(3, { maxPerKey: 1 });
+
+    const alice = take(limiter, "alice");
+
+    expect(limiter.tryAcquire("alice")).toEqual({ ok: false, reason: "per_key" });
+    expect(limiter.tryAcquire("bob").ok).toBe(true);
+    alice();
+    expect(limiter.inFlightFor("alice")).toBe(0);
+    expect(limiter.tryAcquire("alice").ok).toBe(true);
+  });
+
+  test("a refusal for one key takes no slot", () => {
+    const limiter = new ConcurrencyLimiter(2, { maxPerKey: 1 });
+    take(limiter, "alice");
+
+    limiter.tryAcquire("alice");
+
+    expect(limiter.inFlight).toBe(1);
+  });
+
+  test("without a key only the process-wide limit applies", () => {
+    const limiter = new ConcurrencyLimiter(2, { maxPerKey: 1 });
+
+    take(limiter);
+    take(limiter);
+
+    expect(limiter.tryAcquire()).toEqual({ ok: false, reason: "capacity" });
   });
 
   test.each([0, -1, 2.5, Number.NaN])("refuses a limit of %s", (maxInFlight) => {
-    expect(() => new ConcurrencyLimiter(maxInFlight)).toThrow(/positive integer/);
+    expect(() => new ConcurrencyLimiter(maxInFlight)).toThrow(/maxInFlight must be a positive integer/);
+  });
+
+  test.each([0, -1, 2.5])("refuses a per-key limit of %s", (maxPerKey) => {
+    expect(() => new ConcurrencyLimiter(2, { maxPerKey })).toThrow(/maxPerKey must be a positive integer/);
   });
 });
 
