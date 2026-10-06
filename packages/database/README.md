@@ -150,9 +150,8 @@ for the one case where PostgreSQL adds one anyway.
    plain `SET` carries into the next file. That connection must be direct or session-pooled
    (`MIGRATE_DATABASE_URL`, else `DATABASE_URL`): behind a transaction-mode pooler such as PgBouncer, a `SET` and
    the statements it guards can run on different server connections. Concurrent index operations are the
-   exception: a build sets `0`
-   instead, and a `DROP INDEX CONCURRENTLY` must be alone in its file, so it gets no `SET` at all; see
-   [How Prisma applies a migration file](#how-prisma-applies-a-migration-file).
+   exception: a build sets `0` instead, and a `DROP INDEX CONCURRENTLY` must be alone in its file, so it gets no
+   `SET` at all; see [How Prisma applies a migration file](#how-prisma-applies-a-migration-file).
 2. Add explicit transaction boundaries when the statements must be atomic.
 3. Change eligible index builds to `CREATE INDEX CONCURRENTLY`, which cannot run inside a transaction. Such a file
    cannot also use step 2, or hold anything Prisma's parser rejects.

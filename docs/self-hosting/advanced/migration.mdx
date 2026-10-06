@@ -58,7 +58,7 @@ WHERE finished_at IS NULL AND rolled_back_at IS NULL;
 
 If that returns no row but the log says `Data migration … failed`, see [Data migrations](#data-migrations)
 below. If the log just stops without an error, the runner was stopped (Compose stops it after 300 seconds) and
-its last statement may still be running in PostgreSQL: check that first, as step 4 describes.
+its last statement may still be running in PostgreSQL: check that first, as step 3 describes.
 
 ### 2. Find the real error
 
@@ -78,27 +78,6 @@ a backup, or an old Formbricks pod still running. Stop it, or retry at a quieter
 
 ### 3. Check what the migration left behind
 
-Read the failed migration's file. A released migration never changes, so the copy in your image is the one that
-ran:
-
-```bash
-docker compose run --rm --no-deps --entrypoint cat formbricks-migrate \
-  packages/database/dist/migration/<migration_name>/migration.sql
-```
-
-It is also on GitHub under any release that ships it, for example
-`https://github.com/formbricks/formbricks/blob/6.0.2/packages/database/migration/<migration_name>/migration.sql`.
-
-- **It starts with `BEGIN;`:** PostgreSQL rolled the whole file back, so there is nothing to undo.
-- **Otherwise:** the statements before the failing one may have stayed applied. Check which took effect
-  (`\d "Table"` for schema changes, a `SELECT` for data) and undo those before you continue, except:
-  - `IF NOT EXISTS`, `IF EXISTS` and `CREATE OR REPLACE` statements are safe to repeat, apart from a failed
-    `CREATE INDEX CONCURRENTLY`. That leaves an invalid index which `IF NOT EXISTS` then skips: find it with
-    `SELECT indexrelid::regclass FROM pg_index WHERE NOT indisvalid;` and drop it with `DROP INDEX CONCURRENTLY`.
-  - An `UPDATE`, `INSERT` or `DELETE` is safe to repeat only if running it twice changes nothing.
-
-### 4. Mark it rolled back and run the migrations again
-
 First make sure nothing is still running it: the Compose runner has exited, or the Job has no running pod
 (`kubectl get pods -n formbricks -l job-name=formbricks-migration`), and this returns no row:
 
@@ -109,8 +88,30 @@ WHERE pid IN (SELECT pid FROM pg_locks WHERE locktype = 'advisory' AND objid = 7
 ```
 
 Prisma holds that lock while it applies migrations, and a statement keeps running after its runner is stopped.
-Wait for it to end, then repeat step 3: a statement that finished after the runner stopped has taken effect,
-though Prisma still records the migration as failed.
+Wait for it to end: a statement that finishes after the runner stopped has taken effect, though Prisma still
+records the migration as failed.
+
+Then read the failed migration's file. A released migration never changes, so the copy in your image is the one
+that ran:
+
+```bash
+docker compose run --rm --no-deps --entrypoint cat formbricks-migrate \
+  packages/database/dist/migration/<migration_name>/migration.sql
+```
+
+It is also on GitHub under any release that ships it, for example
+`https://github.com/formbricks/formbricks/blob/6.0.2/packages/database/migration/<migration_name>/migration.sql`.
+
+- **Its first statement is `BEGIN;`:** PostgreSQL rolled the whole file back, so there is nothing to undo.
+- **Otherwise:** the statements before the failing one may have stayed applied. Check which took effect
+  (`\d "Table"` for schema changes, a `SELECT` for data) and undo those before you continue, except:
+  - `IF NOT EXISTS`, `IF EXISTS` and `CREATE OR REPLACE` statements are safe to repeat, apart from a failed
+    `CREATE INDEX CONCURRENTLY`. That leaves an invalid index which `IF NOT EXISTS` then skips: list invalid
+    indexes with `SELECT indexrelid::regclass FROM pg_index WHERE NOT indisvalid;` and drop, with
+    `DROP INDEX CONCURRENTLY`, only those the migration's file creates.
+  - An `UPDATE`, `INSERT` or `DELETE` is safe to repeat only if running it twice changes nothing.
+
+### 4. Mark it rolled back and run the migrations again
 
 Once the cause is fixed, mark the failed migration rolled back. This is what
 `prisma migrate resolve --rolled-back` does. It should report `UPDATE 1`; `UPDATE 0` means the name is wrong or
@@ -133,7 +134,8 @@ Then run the migrations again:
     The service stops the runner after 300 seconds. If a migration needs longer, run it without that limit:
 
     ```bash
-    docker compose run --rm --no-deps formbricks-migrate "node packages/database/dist/scripts/apply-migrations.js"
+    docker compose run --rm --no-deps formbricks-migrate "node packages/database/dist/scripts/apply-migrations.js" &&
+    docker compose up -d
     ```
 
     During a v5 to v6 upgrade, re-run `formbricks-authzed-prepare` as the
@@ -158,7 +160,7 @@ Most data migrations run in a transaction of their own and leave nothing behind 
 commit in batches and are written to resume where they stopped. Either way the runner records the failure and
 retries the migration on the next run: fix the cause and run the migrations again. The exception is
 `Migration is pending. Please resolve the issue manually.`, left by an interrupted run of a version before 5.3.
-Make sure nothing is running it (step 4), then mark it failed so the next run retries it:
+Make sure the runner has exited, then mark it failed so the next run retries it:
 
 ```sql
 SELECT name, status, started_at FROM "DataMigration" WHERE status <> 'applied';
