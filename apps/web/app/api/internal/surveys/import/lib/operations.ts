@@ -50,7 +50,11 @@ const parseContentLength = (value: string | null): number | null => {
  * as the message did — a message line indented like a frame would pass a frame filter. It is matched
  * whole rather than counted: a message changed after the stack was read would otherwise shift the cut,
  * letting old message lines through or dropping real frames. Anything unexpected — a rewritten stack, a
- * non-string message — logs no frames rather than risk a line of the message.
+ * non-string message — logs no frames.
+ *
+ * One case is out of reach: a message cut back at a line break after the stack was read still matches,
+ * and the lines it lost pass as frames. A string stack does not say where its header ended, so nothing
+ * here can tell; no code in the import path rewrites a message that way.
  */
 const stackFrames = (error: Error): string[] => {
   const { name, message, stack } = error;
