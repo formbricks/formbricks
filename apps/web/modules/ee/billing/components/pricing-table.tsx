@@ -17,7 +17,11 @@ import {
   type TOrganizationStripeSubscriptionStatus,
 } from "@formbricks/types/organizations";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
-import { CHURN_SURVEY_PENDING_KEY } from "@/app/formbricks/components/formbricks-provider";
+import {
+  getHobbyDowngradeChurnSignal,
+  markChurnSurveyPending,
+  trackSubscriptionCancelled,
+} from "@/lib/churn-survey";
 import { cn } from "@/lib/cn";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -869,7 +873,7 @@ export const PricingTable = ({
           toast.error(getActionErrorMessage(response.serverError, t));
           return;
         }
-        formbricks.track("subscription_cancelled").catch(() => undefined);
+        void trackSubscriptionCancelled((event) => formbricks.track(event));
         toast.success(getPlanChangeSuccessMessage(response?.data?.mode, t));
         router.refresh();
         return;
@@ -891,11 +895,12 @@ export const PricingTable = ({
           return;
         }
 
-        if (plan === "hobby" && response.data.mode !== "immediate") {
+        const churnSignal = getHobbyDowngradeChurnSignal(plan, response.data.mode);
+        if (churnSignal === "track-now") {
           // Fire an in-app code action so a churn survey can be triggered from the dashboard
           // right after the org drops to the free plan. No reload follows this path, so the SDK
           // has time to deliver it.
-          formbricks.track("subscription_cancelled").catch(() => undefined);
+          void trackSubscriptionCancelled((event) => formbricks.track(event));
         }
 
         if (response.data.mode === "immediate") {
@@ -905,13 +910,13 @@ export const PricingTable = ({
           await waitForBillingPlanAction({ organizationId, targetPlan: plan });
           if (globalThis.window !== undefined) {
             globalThis.window.sessionStorage.setItem(BILLING_UPGRADE_RESULT_KEY, JSON.stringify({ plan }));
-            if (plan === "hobby") {
+            if (churnSignal === "defer-until-reload") {
               // formbricks.track() only queues the action; a call here would be lost or interrupted
               // by the reload below. Persist a one-shot marker instead and let FormbricksProvider
               // fire the code action once the SDK is set up again after reload. Scoped to the
               // originating user so a logout/login in the same tab before it's consumed can't
               // attribute the cancellation to whoever is signed in when it fires.
-              globalThis.window.sessionStorage.setItem(CHURN_SURVEY_PENDING_KEY, userId);
+              markChurnSurveyPending(globalThis.window.sessionStorage, userId);
             }
             globalThis.window.location.reload();
             return;
