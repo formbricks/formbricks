@@ -291,13 +291,24 @@ describe("streamQsfImport", () => {
       );
     });
 
-    test("reports any other failure with a fixed message, not the error's", async () => {
-      mocks.runQsfImport.mockRejectedValue(new Error(`Failed on ${FILE_CONTENT_MARKER}`));
+    test("reports any other failure with a fixed message, and logs where it failed, never what it said", async () => {
+      // Any error can carry file content in its message — the AI SDK's validation errors carry the
+      // model's output — so no error message reaches the log, only its name and frames.
+      mocks.runQsfImport.mockRejectedValue(new Error(`Failed on ${FILE_CONTENT_MARKER}\nsecond line`));
 
       const events = await readEvents(await call());
 
       expect(events.at(-1)).toMatchObject({ type: "error", code: "import_failed" });
       expect(JSON.stringify(events)).not.toContain(FILE_CONTENT_MARKER);
+      expect(mocks.log.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          errName: "Error",
+          errStack: expect.stringContaining("operations.test.ts"),
+        }),
+        "QSF import failed"
+      );
+      expect(allLogged()).not.toContain(FILE_CONTENT_MARKER);
+      expect(allLogged()).not.toContain("second line");
     });
 
     test("logs a provider error by name and status only, since its message can echo the prompt", async () => {

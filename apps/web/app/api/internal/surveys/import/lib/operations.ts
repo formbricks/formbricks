@@ -43,19 +43,24 @@ const parseContentLength = (value: string | null): number | null => {
 };
 
 /**
- * Error fields that are safe to log. A provider error's message can echo the prompt, and the prompt
- * carries the file's questions, so those log only their name and status; anything else is our own
- * error and is logged whole.
+ * What an import failure may put in the log: its name, the provider's status, and its stack frames —
+ * never a message. A message can carry the file's questions: the AI SDK's errors keep the prompt or the
+ * model's output in their message and fields (`NoObjectGeneratedError.text`, `TypeValidationError.value`),
+ * and pino's error serializer would log all of it. Frames are file paths, so a bug still points at its
+ * line.
  */
 const loggableError = (error: unknown): Record<string, unknown> => {
-  const providerError = classifyAIProviderError(error);
-  if (!providerError) {
-    return { err: error };
+  if (!(error instanceof Error)) {
+    return { errType: typeof error };
   }
 
+  const providerStatusCode = classifyAIProviderError(error)?.statusCode;
+  const frames = (error.stack ?? "").split("\n").filter((line) => /^\s+at /.test(line));
+
   return {
-    errName: error instanceof Error ? error.name : typeof error,
-    ...(providerError.statusCode === undefined ? {} : { providerStatusCode: providerError.statusCode }),
+    errName: error.name,
+    ...(providerStatusCode === undefined ? {} : { providerStatusCode }),
+    ...(frames.length > 0 ? { errStack: frames.join("\n") } : {}),
   };
 };
 
