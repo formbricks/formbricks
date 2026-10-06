@@ -266,6 +266,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     // click submit identical answers seconds apart, and the second gets the first one's id.
     const duplicate = await findRecentDuplicateResponse({
       surveyId: survey.id,
+      surveyType: survey.type,
       contactId: responseInputData.contactId,
       data: responseInputData.data,
       finished: responseInputData.finished,

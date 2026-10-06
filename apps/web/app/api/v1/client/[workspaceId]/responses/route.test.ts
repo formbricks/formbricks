@@ -235,7 +235,7 @@ describe("POST /api/v1/client/[workspaceId]/responses — duplicate submissions 
     mocks.resolveClientApiIds.mockResolvedValue({ workspaceId });
     mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue("org_1");
     mocks.getIsContactsEnabled.mockResolvedValue(true);
-    mocks.getSurvey.mockResolvedValue(getSurveyWithFields([]));
+    mocks.getSurvey.mockResolvedValue({ ...getSurveyWithFields([]), type: "link" });
     mocks.verifyLinkSurveyPinToken.mockReturnValue(true);
     mocks.enforceVerifiedEmailGate.mockReturnValue(null);
     mocks.verifyResponseRecaptcha.mockResolvedValue(null);
@@ -261,6 +261,7 @@ describe("POST /api/v1/client/[workspaceId]/responses — duplicate submissions 
     expect(await result.response.json()).toEqual({ data: { id: existingResponseId, quotaFull: false } });
     expect(mocks.findRecentDuplicateResponse).toHaveBeenCalledWith({
       surveyId,
+      surveyType: "link",
       contactId,
       data: { q1: 5 },
       finished: true,

@@ -218,13 +218,14 @@ export const POST = withV1ApiWrapper({
     }
 
     // A mail scanner's click-time check and the recipient's own click submit the same prefilled
-    // answer seconds apart (ENG-1147). Hand the second one the first response's id: the renderer
-    // carries on updating that row, and no second pipeline run fires.
+    // answer seconds apart (ENG-1147). Hand the second one the first finished response's id, so no
+    // second row is stored and no second pipeline run fires.
     const contact = responseInputData.userId
       ? await getContactByUserId(workspaceId, responseInputData.userId)
       : null;
     const duplicate = await findRecentDuplicateResponse({
       surveyId: survey.id,
+      surveyType: survey.type,
       contactId: contact?.id,
       data: responseInputData.data,
       finished: responseInputData.finished,

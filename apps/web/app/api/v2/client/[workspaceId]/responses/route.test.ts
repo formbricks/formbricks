@@ -230,7 +230,7 @@ describe("POST /api/v2/client/[workspaceId]/responses — duplicate submissions 
     mocks.resolveClientApiIds.mockResolvedValue({ workspaceId });
     mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue("org_1");
     mocks.getIsContactsEnabled.mockResolvedValue(true);
-    mocks.getSurvey.mockResolvedValue(getSurveyWithFields([]));
+    mocks.getSurvey.mockResolvedValue({ ...getSurveyWithFields([]), type: "link" });
     mocks.checkSurveyValidity.mockResolvedValue(null);
     mocks.validateClientFileUploads.mockReturnValue(true);
     mocks.validateOtherOptionLengthForMultipleChoice.mockReturnValue(null);
@@ -246,6 +246,7 @@ describe("POST /api/v2/client/[workspaceId]/responses — duplicate submissions 
     expect(await response.json()).toEqual({ data: { id: existingResponseId, quotaFull: false } });
     expect(mocks.findRecentDuplicateResponse).toHaveBeenCalledWith({
       surveyId,
+      surveyType: "link",
       contactId,
       data: { q1: 5 },
       finished: true,
