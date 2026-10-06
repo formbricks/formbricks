@@ -3,6 +3,7 @@ import { getContrastRatio, mixColor } from "./colors";
 import {
   DARK_BASE_COLOR,
   getDarkContrastWarnings,
+  getDarkReadableColors,
   getDerivedDarkColors,
   resolveDarkColors,
 } from "./dark-palette";
@@ -73,6 +74,17 @@ describe("resolveDarkColors", () => {
     expect(resolved.elementHeadlineColor).toBe(derived.elementHeadlineColor);
   });
 
+  test("an unparseable stored color is ignored instead of reaching the color math", () => {
+    const resolved = resolveDarkColors({
+      brandColor: { light: "zzz" },
+      buttonBgColor: { light: "#146a5d", dark: "not-a-color" },
+      cardBackgroundColor: { light: "#ffffff", dark: "nope" },
+    });
+    expect(resolved.brandColor).toBeUndefined();
+    expect(resolved.buttonBgColor).toBe("#146a5d");
+    expect(resolved.cardBackgroundColor).toBe(getDerivedDarkColors().cardBackgroundColor);
+  });
+
   test("a brand color without any value stays undefined so the CSS default applies", () => {
     expect(resolveDarkColors({}).buttonBgColor).toBeUndefined();
     expect(resolveDarkColors({}).cardBackgroundColor).toBe(getDerivedDarkColors().cardBackgroundColor);
@@ -97,5 +109,20 @@ describe("getDarkContrastWarnings", () => {
   test("no warning once the creator sets a readable dark value", () => {
     const warnings = getDarkContrastWarnings({ brandColor: { light: "#111111", dark: "#7dd3fc" } });
     expect(warnings).toEqual([]);
+  });
+});
+
+describe("getDarkReadableColors", () => {
+  test.each(BRAND_SWEEP)("brand text, focus ring and error text stay readable for brand %s", (brand) => {
+    const card = getDerivedDarkColors(brand).cardBackgroundColor;
+    const readable = getDarkReadableColors(brand, card);
+    expect(getContrastRatio(readable.brandTextColor, card)).toBeGreaterThanOrEqual(4.5);
+    expect(getContrastRatio(readable.errorColor, card)).toBeGreaterThanOrEqual(4.5);
+    expect(getContrastRatio(readable.focusRingColor, card)).toBeGreaterThanOrEqual(3);
+  });
+
+  test("a brand that is already readable is kept as typed", () => {
+    const card = getDerivedDarkColors("#fbbf24").cardBackgroundColor;
+    expect(getDarkReadableColors("#fbbf24", card).brandTextColor).toBe("#fbbf24");
   });
 });

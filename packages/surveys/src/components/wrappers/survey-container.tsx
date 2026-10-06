@@ -422,7 +422,7 @@ export function SurveyContainer({
             className={cn(
               getPlacementStyle(mirrorPlacementForDir(placement, dir)),
               isOpen ? "opacity-100" : "opacity-0",
-              "rounded-custom dark:bg-survey-bg pointer-events-auto absolute bottom-0 h-fit w-full overflow-visible bg-white shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
+              "rounded-custom pointer-events-auto absolute bottom-0 h-fit w-full overflow-visible bg-(--fb-dialog-background-color,white) shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
             )}>
             <div>
               {surveyHeading}

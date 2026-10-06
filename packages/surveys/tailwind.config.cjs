@@ -9,6 +9,8 @@ module.exports = {
     extend: {
       colors: {
         brand: "var(--fb-brand-color)",
+        // Brand as text: only set in dark, where the raw brand can be unreadable on the card.
+        "brand-readable": "var(--fb-brand-readable-color, var(--fb-brand-color))",
         "on-brand": "var(--fb-brand-text-color)",
         border: "var(--fb-border-color)",
         "border-highlight": "var(--fb-border-color-highlight)",
