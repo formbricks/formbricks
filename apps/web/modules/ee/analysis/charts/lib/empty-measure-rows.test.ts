@@ -3,6 +3,7 @@ import type { TChartQuery } from "@formbricks/types/analysis";
 import {
   canDropEmptyMeasureRows,
   dropEmptyMeasureRows,
+  dropRowsWithoutOptionId,
 } from "@/modules/ee/analysis/charts/lib/empty-measure-rows";
 
 const CES_AVG = "FeedbackRecords.cesAverage";
@@ -140,5 +141,40 @@ describe("the injected response base (ENG-3331)", () => {
       { [FIELD_LABEL]: "Anything else?", "FeedbackRecords.npsScore": null, "FeedbackRecords.npsCount": 0 },
     ];
     expect(dropEmptyMeasureRows(rows, query)).toEqual([rows[0]]);
+  });
+});
+
+describe("dropRowsWithoutOptionId", () => {
+  const VALUE_ID = "FeedbackRecords.valueId";
+  const COUNT = "FeedbackRecords.count";
+  const byOption: TChartQuery = { measures: [COUNT], dimensions: [VALUE_ID] };
+
+  test("drops the group that carries no option id", () => {
+    const rows = [
+      { [VALUE_ID]: "opt-a", [COUNT]: 3 },
+      { [VALUE_ID]: null, [COUNT]: 40 },
+      { [VALUE_ID]: "", [COUNT]: 2 },
+      { [VALUE_ID]: undefined, [COUNT]: 1 },
+      { [VALUE_ID]: "opt-b", [COUNT]: 5 },
+    ];
+    expect(dropRowsWithoutOptionId(rows, byOption)).toEqual([
+      { [VALUE_ID]: "opt-a", [COUNT]: 3 },
+      { [VALUE_ID]: "opt-b", [COUNT]: 5 },
+    ]);
+  });
+
+  test("keeps every row of a grouping that is not by option id", () => {
+    const rows = [{ [FIELD_LABEL]: null, [COUNT]: 4 }];
+    expect(dropRowsWithoutOptionId(rows, { measures: [COUNT], dimensions: [FIELD_LABEL] })).toBe(rows);
+  });
+
+  test("keeps rows whose option id is present when grouped with another dimension", () => {
+    const rows = [
+      { [FIELD_LABEL]: "row", [VALUE_ID]: "col-1", [COUNT]: 1 },
+      { [FIELD_LABEL]: "row", [VALUE_ID]: null, [COUNT]: 1 },
+    ];
+    expect(dropRowsWithoutOptionId(rows, { measures: [COUNT], dimensions: [FIELD_LABEL, VALUE_ID] })).toEqual(
+      [rows[0]]
+    );
   });
 });

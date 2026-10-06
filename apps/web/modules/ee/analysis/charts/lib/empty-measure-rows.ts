@@ -59,3 +59,24 @@ export const dropEmptyMeasureRows = (rows: TChartDataRow[], query: TChartQuery):
 
   return rows.filter((row) => measures.some((measure) => !isEmptyMeasureValue(row[measure])));
 };
+
+const VALUE_ID_DIMENSION = "FeedbackRecords.valueId";
+
+/**
+ * Drop the groups of a `valueId` grouping that carry no option id.
+ *
+ * Only choice answers (single/multi-select, matrix columns) write a `value_id`; text, rating, NPS
+ * and the rest leave it NULL. Cube still emits one group for all of those rows, so a chart grouped
+ * by value option gains a blank-labelled bucket that is not an option and has no label to show. The
+ * same bucket is dropped here as in the bar/pie slices and the Chart Data table.
+ *
+ * Time series are left alone for the reason given on {@link canDropEmptyMeasureRows}: only a
+ * grouping the chart draws as option buckets is pruned.
+ */
+export const dropRowsWithoutOptionId = (rows: TChartDataRow[], query: TChartQuery): TChartDataRow[] => {
+  if (!(query.dimensions ?? []).includes(VALUE_ID_DIMENSION)) return rows;
+  return rows.filter((row) => {
+    const optionId = row[VALUE_ID_DIMENSION];
+    return optionId !== null && optionId !== undefined && optionId !== "";
+  });
+};
