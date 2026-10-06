@@ -40,7 +40,7 @@ const buildHubRequestUrl = (requestUrl: URL): URL | null => {
 // proxied route request (see proxyFeedbackRecordsRequest), and an explicit init forwards only what the
 // Hub hop needs. Paired with `fetch(url, init)`, it also keeps Next's patched fetch from rebuilding a
 // Request input around the body stream.
-const buildHubRequestInit = (request: Request): RequestInit => {
+const buildHubRequestInit = (request: Request, signal: AbortSignal): RequestInit => {
   const headers = new Headers(request.headers);
   const connectionHeaders = (request.headers.get("connection") ?? "")
     .split(",")
@@ -62,7 +62,7 @@ const buildHubRequestInit = (request: Request): RequestInit => {
     method: request.method,
     headers,
     // A client disconnect keeps aborting the Hub call.
-    signal: request.signal,
+    signal,
     // Envoy never follows an upstream redirect; neither does this stand-in, so a Hub 3xx reaches the
     // caller instead of being chased server-side with the service credential attached.
     redirect: "manual",
@@ -117,7 +117,11 @@ export const proxyFeedbackRecordsRequest = async (request: NextRequest): Promise
   }
 
   try {
-    return await fetch(hubUrl, buildHubRequestInit(hubBoundRequest));
+    // The signal is the incoming request's own, not the clone's: undici makes a clone's signal follow
+    // the original only through a WeakRef, so a garbage collection mid-flight silently stops a client
+    // disconnect from aborting the Hub call (nodejs/undici#4068). Next keeps `request` alive for the
+    // whole handler, and with it the link to the connection.
+    return await fetch(hubUrl, buildHubRequestInit(hubBoundRequest, request.signal));
   } catch (err) {
     // Deliberately still does not log `err`: a fetch failure embeds the target URL in its message,
     // which can carry credentials or query parameters, and keeping it out of the logs is the point

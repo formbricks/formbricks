@@ -1,4 +1,6 @@
 import { NextRequest } from "next/server";
+import v8 from "node:v8";
+import vm from "node:vm";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { proxyFeedbackRecordsRequest } from "@/modules/hub/feedback-records-proxy";
 
@@ -90,6 +92,21 @@ const handlerRequestShapes: [string, (request: NextRequest) => NextRequest][] = 
   ["a plain NextRequest", (request) => request],
   ["the proxied request Next passes to route handlers", wrapLikeNextAppRoute],
 ];
+
+/**
+ * A real garbage collection, for the abort test. undici links a cloned Request's signal to its source
+ * only through a WeakRef (nodejs/undici#4068), so whether a disconnect still reaches the Hub hop depends
+ * on whether a collection ran in between — and nothing in a short test triggers one on its own.
+ */
+v8.setFlagsFromString("--expose-gc");
+const collectGarbage = vm.runInNewContext("gc") as () => void;
+const collectGarbageAcrossTurns = async (): Promise<void> => {
+  // A WeakRef target survives until the end of the job that last dereferenced it, so yield first.
+  for (let pass = 0; pass < 3; pass++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    collectGarbage();
+  }
+};
 
 /** The single Hub hop, as the URL and init the proxy handed to `fetch`, plus the Request they make. */
 const hubCall = (fetchMock: ReturnType<typeof vi.fn>) => {
@@ -200,24 +217,27 @@ describe.each(handlerRequestShapes)("proxyFeedbackRecordsRequest with %s", (_sha
     expect(sessionCookie).toBe("session_1");
   });
 
-  test("aborts the Hub call when the client disconnects", async () => {
+  test("aborts the Hub call when the client disconnects, even after a garbage collection", async () => {
     const fetchMock = vi.fn().mockResolvedValue(Response.json({ data: [] }));
     vi.stubGlobal("fetch", fetchMock);
+    // Stands in for the controller Next ties to the client connection (signalFromNodeResponse).
     const clientConnection = new AbortController();
-
-    await proxyFeedbackRecordsRequest(
-      asHandlerRequest(
-        new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1", {
-          signal: clientConnection.signal,
-        })
-      )
+    const request = asHandlerRequest(
+      new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1", {
+        signal: clientConnection.signal,
+      })
     );
-    const { init } = hubCall(fetchMock);
+
+    await proxyFeedbackRecordsRequest(request);
+    const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit];
     expect(init.signal?.aborted).toBe(false);
 
+    await collectGarbageAcrossTurns();
     clientConnection.abort();
 
     expect(init.signal?.aborted).toBe(true);
+    // Next keeps the incoming request alive for the whole handler; so does this test.
+    expect(request.signal.aborted).toBe(true);
   });
 
   test("never lets Next cache a Hub response, since every hop shares one service credential", async () => {
