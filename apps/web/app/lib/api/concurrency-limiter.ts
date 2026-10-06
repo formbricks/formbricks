@@ -79,7 +79,9 @@ export function releaseWhenBodySettles(response: Response, release: TReleaseSlot
     },
     async cancel(reason) {
       release();
-      await reader.cancel(reason);
+      // A source that already failed rejects its cancel; the client is gone, so there is nobody to
+      // tell, and letting it reject would only surface as an unhandled rejection.
+      await reader.cancel(reason).catch(() => undefined);
     },
   });
 

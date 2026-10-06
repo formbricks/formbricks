@@ -88,6 +88,20 @@ describe("releaseWhenBodySettles", () => {
     expect(sourceCancelled).toBe(true);
   });
 
+  test("a client cancelling a body whose source already failed does not reject", async () => {
+    let released = 0;
+    const failing = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.error(new Error("producer failed"));
+      },
+    });
+
+    await expect(
+      releaseWhenBodySettles(new Response(failing), () => released++).body?.cancel()
+    ).resolves.toBeUndefined();
+    expect(released).toBe(1);
+  });
+
   test("releases when the body fails", async () => {
     let released = 0;
     const failing = new ReadableStream<Uint8Array>({

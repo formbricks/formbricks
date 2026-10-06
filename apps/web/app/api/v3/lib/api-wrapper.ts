@@ -85,6 +85,9 @@ export type TWithV3ApiWrapperParams<S extends TV3Schemas | undefined, TProps = u
    * **before the body is read**, so it also bounds the memory spent parsing large bodies, and it is held
    * until the response body is fully sent or cancelled, so a streamed response keeps its slot for as
    * long as it runs. Share one `ConcurrencyLimiter` per route, created at module scope.
+   *
+   * Rate limiting runs first on purpose, so a rate-limited caller never holds a slot; the price is that
+   * a 503 still spends one rate-limit token.
    */
   concurrency?: { limiter: ConcurrencyLimiter; retryAfterSeconds: number };
   action?: TAuditAction;
