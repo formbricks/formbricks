@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 
 interface ImageDownIconProps {
-  className?: string;
-  size?: number;
+  readonly className?: string;
+  readonly size?: number;
 }
 
 export const ImageDownIcon = ({ className = "", size = 24 }: ImageDownIconProps) => {

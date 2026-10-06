@@ -1,7 +1,8 @@
 import jsxA11y from "eslint-plugin-jsx-a11y";
+import reactPlugin from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
-import { base, commonIgnores, reactCompilerRulesOptOut, typescriptParsing } from "./base.mjs";
+import { base, commonIgnores, reactCompilerRulesOptOut, readOnlyProps, typescriptParsing } from "./base.mjs";
 
 /*
  * Flat config mirroring the old `legacy-react.js` tier: turbo + prettier +
@@ -19,6 +20,8 @@ export const reactHooksConfig = [
   // survey-ui: `packages/surveys` renders the survey respondents actually see, so it gets the
   // same static a11y floor as the component library it renders (ENG-2262).
   jsxA11y.flatConfigs.recommended,
+  // Only the one rule: this tier deliberately skips the full react rule set.
+  { ...readOnlyProps, plugins: { react: reactPlugin }, settings: { react: { version: "detect" } } },
   {
     languageOptions: {
       globals: {

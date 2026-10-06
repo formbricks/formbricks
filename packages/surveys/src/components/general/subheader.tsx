@@ -1,7 +1,7 @@
 import { isValidHTML, sanitizeSurveyHtml, stripInlineStyles } from "@/lib/html-utils";
 
 interface SubheaderProps {
-  subheader?: string;
+  readonly subheader?: string;
 }
 
 export function Subheader({ subheader }: SubheaderProps) {

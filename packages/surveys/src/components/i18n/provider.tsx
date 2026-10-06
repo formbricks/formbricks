@@ -3,7 +3,13 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { I18nextProvider } from "react-i18next";
 import i18n, { hasLanguageLoaded, loadLanguage, toI18nLanguage } from "../../lib/i18n.config";
 
-export const I18nProvider = ({ language, children }: { language: string; children?: ComponentChildren }) => {
+export const I18nProvider = ({
+  language,
+  children,
+}: {
+  readonly language: string;
+  readonly children?: ComponentChildren;
+}) => {
   const isFirstRender = useRef(true);
   // The language i18next has been pointed at on this provider's behalf. Null until that happens, and
   // deliberately not re-read from `i18n.language`: after mount the language switch owns that, and this

@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 
 type TextareaProps = React.ComponentProps<"textarea"> & {
-  dir?: "ltr" | "rtl" | "auto";
-  errorMessage?: string;
+  readonly dir?: "ltr" | "rtl" | "auto";
+  readonly errorMessage?: string;
 };
 
 function Textarea({ className, dir = "auto", ...props }: TextareaProps): React.JSX.Element {

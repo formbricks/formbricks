@@ -13,28 +13,28 @@ import { Headline } from "./headline";
 import { Subheader } from "./subheader";
 
 interface WelcomeCardProps {
-  headline?: TI18nString;
-  subheader?: TI18nString;
-  fileUrl?: string;
-  videoUrl?: string;
-  buttonLabel?: TI18nString;
-  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
-  survey: TJsWorkspaceStateSurvey;
-  languageCode: string;
-  responseCount?: number;
-  autoFocusEnabled: boolean;
-  isCurrent: boolean;
+  readonly headline?: TI18nString;
+  readonly subheader?: TI18nString;
+  readonly fileUrl?: string;
+  readonly videoUrl?: string;
+  readonly buttonLabel?: TI18nString;
+  readonly onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
+  readonly survey: TJsWorkspaceStateSurvey;
+  readonly languageCode: string;
+  readonly responseCount?: number;
+  readonly autoFocusEnabled: boolean;
+  readonly isCurrent: boolean;
   /**
    * The recall lookup map, not the raw response: `survey.tsx` merges reserved-field values UNDER the
    * response data (`mergeReservedValues`) before passing it, so `#recall:url#` resolves here while a
    * declared field of the same name still wins. Read only by `replaceRecallInfo` — anything that
    * needs the respondent's actual answers must take its own prop rather than reusing this one.
    */
-  responseData: TResponseData;
-  variablesData: TResponseVariables;
-  fullSizeCards: boolean;
-  isCardless?: boolean;
-  isPreviewMode?: boolean;
+  readonly responseData: TResponseData;
+  readonly variablesData: TResponseVariables;
+  readonly fullSizeCards: boolean;
+  readonly isCardless?: boolean;
+  readonly isPreviewMode?: boolean;
 }
 
 function TimerIcon() {

@@ -1,0 +1,1962 @@
+{
+  "app/(app)/(onboarding)/organizations/[organizationId]/landing/layout.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "app/(app)/(onboarding)/organizations/[organizationId]/landing/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/(onboarding)/organizations/[organizationId]/layout.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/ai/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/layout.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/plan/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/survey/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/templates/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/(survey-editor)/workspaces/[workspaceId]/layout.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "app/(app)/components/LoadingCard.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/components/NavigationLink.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/components/SettingsSidebarContent.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 21
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/components/WidgetStatusIndicator.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/components/WorkspaceLayout.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/components/WorkspaceNavItem.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/components/WorkspaceStorageHandler.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/components/workspace-breadcrumb.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 11
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/layout.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/settings/account/notifications/components/NotificationSwitch.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/settings/account/profile/components/AccountSecurity.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/settings/account/profile/components/EditProfileDetailsForm.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/settings/account/profile/components/password-confirmation-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/settings/components/SettingsTitle.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/settings/layout.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/settings/organization/enterprise/components/EnterpriseLicenseStatus.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/settings/organization/general/components/DeleteOrganization.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/airtable/components/AddIntegrationModal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/airtable/components/BaseSelectDropdown.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/airtable/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/google-sheets/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/notion/components/MappingRow.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 11
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/notion/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/slack/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 12
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseDataView.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 13
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 10
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 16
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/AddressSummary.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/CESSummary.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/CSATSummary.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/CTASummary.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/CalSummary.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/ClickableBarSegment.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/ConsentSummary.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/ContactInfoSummary.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/DateElementSummary.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/ElementSummaryHeader.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/FileUploadSummary.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/HiddenFieldsSummary.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/MatrixElementSummary.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/MultipleChoiceSummary.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/NPSSummary.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/PictureChoiceSummary.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/RankingSummary.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/RatingLikeSummary.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/RatingScaleLegend.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/RatingSummary.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/SatisfactionIndicator.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/SummaryImpressions.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 7
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/SummaryMetadata.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/base-card.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/interactive-card.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/anonymous-links-tab.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/app-tab.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/disable-link-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links-section.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/dynamic-popup-tab.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/email-tab.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/link-settings-tab.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/personal-links-tab.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/pretty-url-input.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/pretty-url-tab.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/qr-code-tab.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/share-view.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/success-view.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/tab-container.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/website-embed-tab.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/stat-card.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementFilterComboBox.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 11
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementsComboBox.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ResponseFilter.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/layout.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/query-client-provider.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/workflows/layout.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/workflows/query-client-provider.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/ClientWorkspaceRedirect.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/components/NoScriptWarning.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/layout.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "app/posthog/PostHogGroupIdentify.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "app/posthog/PostHogIdentify.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "lingodotdev/client.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/analysis/components/ShareSurveyLink/components/LanguageDropdown.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/analysis/components/ShareSurveyLink/components/SurveyLinkDisplay.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/analysis/components/ShareSurveyLink/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 7
+    }
+  },
+  "modules/analysis/components/SingleResponseCard/components/RenderResponse.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 7
+    }
+  },
+  "modules/analysis/components/SingleResponseCard/components/ResponseTagsWrapper.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/analysis/components/SingleResponseCard/components/SingleResponseCardHeader.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 7
+    }
+  },
+  "modules/analysis/components/SingleResponseCard/components/VerifiedEmail.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/auth/signup/components/password-checks.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/auth/signup/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/auth/verification-requested/components/request-verification-email.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/auth/verify-email-change/components/email-change-sign-in.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/auth/verify-email-change/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ee/analysis/charts/components/chart-error-boundary.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ee/analysis/charts/components/chart-renderer.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "modules/ee/billing/components/billing-slider.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ee/billing/components/pricing-table.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 17
+    }
+  },
+  "modules/ee/billing/components/trial-banner-new.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/ee/billing/components/trial-ending-warning-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ee/billing/components/trial-response-warning-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ee/billing/components/usage-card.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/ee/billing/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ee/contacts/[contactId]/components/contact-control-bar.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/ee/contacts/[contactId]/components/delete-contact-button.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ee/contacts/[contactId]/components/generate-personal-link-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/ee/contacts/[contactId]/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ee/contacts/attributes/components/attributes-table.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/ee/contacts/attributes/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ee/contacts/components/attribute-field-row.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 10
+    }
+  },
+  "modules/ee/contacts/components/contact-data-view.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 7
+    }
+  },
+  "modules/ee/contacts/components/contacts-page-layout.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 11
+    }
+  },
+  "modules/ee/contacts/components/contacts-secondary-navigation.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ee/contacts/components/contacts-table.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 11
+    }
+  },
+  "modules/ee/contacts/components/edit-contact-attributes-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/ee/contacts/components/upload-contacts-attribute-combobox.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/ee/contacts/components/upload-contacts-attribute.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/ee/contacts/components/upload-contacts-button.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ee/contacts/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ee/contacts/segments/components/add-filter-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/ee/contacts/segments/components/attribute-tab-content.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 13
+    }
+  },
+  "modules/ee/contacts/segments/components/attribute-value-input.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/ee/contacts/segments/components/date-filter-value.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/ee/contacts/segments/components/edit-segment-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/ee/contacts/segments/components/filter-button.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/ee/contacts/segments/components/segment-activity-tab.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ee/contacts/segments/components/segment-editor.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/ee/contacts/segments/components/segment-settings.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/ee/contacts/segments/components/segment-table-data-row.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/ee/contacts/segments/components/segment-table.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/ee/contacts/segments/components/targeting-card.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/ee/contacts/segments/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ee/feedback-directory/components/feedback-directory-settings/archive-feedback-directory.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ee/feedback-directory/components/feedback-directory-view.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ee/feedback-directory/components/frd-picker.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ee/feedback-directory/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ee/quotas/components/ending-card-selector.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ee/quotas/components/quota-condition-builder.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/ee/quotas/components/quota-list.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/ee/quotas/components/quota-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "modules/ee/quotas/components/quotas-card.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 11
+    }
+  },
+  "modules/ee/quotas/components/quotas-summary.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ee/quotas/components/single-response-card-quotas.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ee/role-management/components/add-member-role.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/ee/role-management/components/edit-membership-role.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 10
+    }
+  },
+  "modules/ee/sso/components/sso-options.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/ee/teams/team-list/components/create-team-button.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ee/teams/team-list/components/create-team-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/ee/teams/team-list/components/manage-team-button.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ee/teams/team-list/components/team-settings/delete-team.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ee/teams/team-list/components/team-settings/team-settings-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/ee/teams/team-list/components/teams-view.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/ee/teams/workspace-teams/components/access-view.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ee/teams/workspace-teams/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ee/two-factor-auth/components/confirm-password-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/ee/two-factor-auth/components/disable-two-factor-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ee/two-factor-auth/components/display-backup-codes.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ee/two-factor-auth/components/enable-two-factor-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ee/two-factor-auth/components/enter-code.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ee/two-factor-auth/components/scan-qr-code.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/ee/two-factor-auth/components/two-factor-backup.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ee/two-factor-auth/components/two-factor.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ee/unify-feedback/components/unify-config-navigation.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ee/unify-feedback/sources/components/csv-import-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 7
+    }
+  },
+  "modules/ee/unify-feedback/sources/components/mapping-field.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 11
+    }
+  },
+  "modules/ee/unify-feedback/sources/components/mapping-ui.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 13
+    }
+  },
+  "modules/ee/whitelabel/email-customization/components/email-customization-settings.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "modules/ee/whitelabel/favicon-customization/components/favicon-customization-settings.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/ee/whitelabel/remove-branding/components/edit-branding.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/email/components/preview-email-template.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/integrations/webhooks/components/trigger-checkbox-group.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/integrations/webhooks/components/webhook-created-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/integrations/webhooks/components/webhook-overview-tab.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/integrations/webhooks/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/organization/components/CreateOrganizationModal/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/organization/settings/api-keys/components/view-permission-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/organization/settings/teams/components/edit-memberships/edit-memberships.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/organization/settings/teams/components/edit-memberships/member-actions.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/organization/settings/teams/components/edit-memberships/organization-actions.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 14
+    }
+  },
+  "modules/organization/settings/teams/components/invite-member/individual-invite-tab.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "modules/organization/settings/teams/components/invite-member/share-invite-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/organization/settings/teams/components/members-view.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/setup/layout.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/setup/organization/[organizationId]/invite/components/invite-members.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/setup/organization/[organizationId]/invite/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/survey/components/edit-public-survey-alert-dialog/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 7
+    }
+  },
+  "modules/survey/components/element-form-input/components/fallback-input.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 7
+    }
+  },
+  "modules/survey/components/element-form-input/components/recall-wrapper.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/survey/components/element-form-input/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 22
+    }
+  },
+  "modules/survey/components/template-list/components/template-filters.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/survey/components/template-list/components/template-tags.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/survey/editor/components/add-action-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/survey/editor/components/add-element-button.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/survey/editor/components/add-element-to-block-button.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/survey/editor/components/add-ending-card-button.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/survey/editor/components/address-element-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/survey/editor/components/advanced-settings.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/survey/editor/components/animated-survey-bg.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/survey/editor/components/auto-save-indicator.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/survey/editor/components/block-menu.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 7
+    }
+  },
+  "modules/survey/editor/components/bulk-edit-options-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/survey/editor/components/cal-element-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "modules/survey/editor/components/ces-element-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/survey/editor/components/color-survey-bg.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/survey/editor/components/conditional-logic.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/survey/editor/components/consent-element-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/survey/editor/components/contact-info-element-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "modules/survey/editor/components/create-new-action-tab.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/survey/editor/components/csat-element-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/survey/editor/components/cta-element-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "modules/survey/editor/components/date-element-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/survey/editor/components/edit-ending-card.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 12
+    }
+  },
+  "modules/survey/editor/components/edit-welcome-card.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/survey/editor/components/editor-card-menu.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 16
+    }
+  },
+  "modules/survey/editor/components/element-option-choice.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 14
+    }
+  },
+  "modules/survey/editor/components/end-screen-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "modules/survey/editor/components/file-upload-element-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 10
+    }
+  },
+  "modules/survey/editor/components/form-styling-settings.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/survey/editor/components/how-to-send-card.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/survey/editor/components/image-survey-bg.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/survey/editor/components/logic-editor-actions.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 7
+    }
+  },
+  "modules/survey/editor/components/logic-editor-conditions.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 7
+    }
+  },
+  "modules/survey/editor/components/logic-editor.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/survey/editor/components/logo-settings-card.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/survey/editor/components/matrix-element-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/survey/editor/components/matrix-sortable-item.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 13
+    }
+  },
+  "modules/survey/editor/components/multiple-choice-element-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "modules/survey/editor/components/nps-element-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/survey/editor/components/open-element-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "modules/survey/editor/components/picture-selection-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/survey/editor/components/ranking-element-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "modules/survey/editor/components/rating-element-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "modules/survey/editor/components/rating-type-dropdown.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/survey/editor/components/recontact-options-card.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/survey/editor/components/redirect-url-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/survey/editor/components/saved-actions-tab.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/survey/editor/components/styling-view.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 12
+    }
+  },
+  "modules/survey/editor/components/survey-placement-card.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/survey/editor/components/unsplash-images.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/survey/editor/components/update-element-id.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/survey/editor/components/validation-logic-selector.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/survey/editor/components/validation-rules-editor.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/survey/editor/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/survey/follow-ups/components/follow-up-action-multi-email-input.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/survey/follow-ups/components/follow-up-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 11
+    }
+  },
+  "modules/survey/link/components/custom-scripts-injector.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/survey/link/components/survey-client-wrapper.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 20
+    }
+  },
+  "modules/survey/link/components/survey-completed-message.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/survey/link/components/survey-inactive.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/survey/link/components/survey-loading-animation.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/survey/link/components/verify-email.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 7
+    }
+  },
+  "modules/survey/link/contact-survey/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/survey/link/layout.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/survey/link/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/survey/list/components/sort-option.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/survey/list/components/survey-type-indicator.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/survey/list/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/survey/multi-language-surveys/components/edit-language.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/survey/multi-language-surveys/components/language-row.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/survey/multi-language-surveys/components/language-select.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/survey/multi-language-surveys/components/language-view.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/survey/multi-language-surveys/components/manage-translations-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 10
+    }
+  },
+  "modules/survey/multi-language-surveys/components/rich-text-translation-input.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 7
+    }
+  },
+  "modules/survey/multi-language-surveys/components/translation-row.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "modules/survey/templates/components/back-button.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ui/components/action-class-info/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ui/components/action-name-description-fields/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/ui/components/additional-integration-settings/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 10
+    }
+  },
+  "modules/ui/components/advanced-option-toggle/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 10
+    }
+  },
+  "modules/ui/components/alert-dialog/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "modules/ui/components/array-response/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ui/components/background-styling-card/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "modules/ui/components/background-styling-card/survey-bg-selector-tab.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 7
+    }
+  },
+  "modules/ui/components/breadcrumb/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/ui/components/button/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ui/components/card-arrangement-tabs/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/ui/components/card-styling-settings/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/ui/components/card/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 11
+    }
+  },
+  "modules/ui/components/chart/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 17
+    }
+  },
+  "modules/ui/components/code-action-form/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ui/components/code-block/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/ui/components/color-picker/components/popover-picker.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ui/components/color-picker/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/ui/components/command/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/ui/components/confetti/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ui/components/confirm-delete-segment-modal/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/ui/components/confirmation-modal/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 16
+    }
+  },
+  "modules/ui/components/connect-integration/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/ui/components/data-table/components/column-settings-dropdown.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ui/components/data-table/components/data-table-header.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ui/components/data-table/components/data-table-settings-modal-item.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ui/components/data-table/components/data-table-settings-modal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/ui/components/data-table/components/data-table-toolbar.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 11
+    }
+  },
+  "modules/ui/components/data-table/components/selected-row-settings.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/ui/components/decrement-quotas-checkbox/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ui/components/delete-dialog/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 13
+    }
+  },
+  "modules/ui/components/dialog/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ui/components/dropdown-menu/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/ui/components/editor/components/editor-content-checker.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ui/components/editor/components/editor.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 22
+    }
+  },
+  "modules/ui/components/editor/components/link-editor.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/ui/components/editor/components/recall-plugin.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 11
+    }
+  },
+  "modules/ui/components/editor/components/toolbar-plugin.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "modules/ui/components/element-toggle-table/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/ui/components/empty-state/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ui/components/file-input/components/uploader.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 12
+    }
+  },
+  "modules/ui/components/file-input/components/video-settings.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/ui/components/file-input/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 12
+    }
+  },
+  "modules/ui/components/file-upload-response/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ui/components/formbricks-logo/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ui/components/header/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ui/components/highlighted-text/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ui/components/iconbar/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ui/components/id-badge/components/badge-content.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 9
+    }
+  },
+  "modules/ui/components/id-badge/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/ui/components/input-combo-box/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 19
+    }
+  },
+  "modules/ui/components/input/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ui/components/limits-reached-banner/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ui/components/load-segment-modal/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 16
+    }
+  },
+  "modules/ui/components/loading-spinner/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ui/components/media-background/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/ui/components/modal-with-tabs/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 7
+    }
+  },
+  "modules/ui/components/no-code-action-form/components/css-selector.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ui/components/no-code-action-form/components/inner-html-selector.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ui/components/no-code-action-form/components/page-url-selector.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/ui/components/no-code-action-form/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ui/components/otp-input/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/ui/components/page-content-wrapper/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ui/components/page-header/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ui/components/password-input/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ui/components/picture-selection-response/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/ui/components/preview-survey/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 13
+    }
+  },
+  "modules/ui/components/progress-bar/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ui/components/ranking-response/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ui/components/rating-response/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ui/components/reset-progress-button/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ui/components/response-badges/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/ui/components/save-as-new-segment-modal/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/ui/components/search-bar/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/ui/components/secondary-navigation/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/ui/components/segment-title/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "modules/ui/components/select/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ui/components/sidebar/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 17
+    }
+  },
+  "modules/ui/components/skeleton-loader/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ui/components/styling-fields/components/color-field.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/ui/components/styling-fields/components/dimension-input.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/ui/components/styling-fields/components/number-field.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/ui/components/styling-fields/components/text-field.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/ui/components/styling-fields/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/ui/components/styling-tabs/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 10
+    }
+  },
+  "modules/ui/components/survey-status-indicator/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/ui/components/tab-toggle/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/ui/components/tag/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 7
+    }
+  },
+  "modules/ui/components/tags-combobox/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 8
+    }
+  },
+  "modules/ui/components/targeting-indicator/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ui/components/textarea/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/ui/components/theme-styling-preview-survey/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/ui/components/tooltip/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 6
+    }
+  },
+  "modules/ui/components/typography/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/ui/components/upgrade-prompt/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/workspaces/components/create-workspace-modal/index.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/workspaces/settings/(setup)/app-connection/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/workspaces/settings/(setup)/components/ActionActivityTab.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/workspaces/settings/(setup)/components/AddActionModal.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 5
+    }
+  },
+  "modules/workspaces/settings/(setup)/components/action-settings-card.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/workspaces/settings/(setup)/user-actions/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/workspaces/settings/components/workspace-config-navigation.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/workspaces/settings/general/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/workspaces/settings/languages/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/workspaces/settings/look/components/edit-logo.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "modules/workspaces/settings/look/components/edit-placement-form.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/workspaces/settings/look/components/theme-styling.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 7
+    }
+  },
+  "modules/workspaces/settings/look/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "modules/workspaces/settings/tags/components/merge-tags-combobox.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "modules/workspaces/settings/tags/page.tsx": {
+    "react/prefer-read-only-props": {
+      "count": 1
+    }
+  }
+}

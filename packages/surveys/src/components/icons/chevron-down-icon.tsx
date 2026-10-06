@@ -1,5 +1,5 @@
 interface ChevronDownIconProps {
-  className?: string;
+  readonly className?: string;
 }
 
 export const ChevronDownIcon = ({ className }: ChevronDownIconProps) => {

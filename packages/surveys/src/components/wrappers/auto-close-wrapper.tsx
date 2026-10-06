@@ -4,12 +4,12 @@ import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { AutoCloseProgressBar } from "@/components/general/auto-close-progress-bar";
 
 interface AutoCloseProps {
-  survey: TJsWorkspaceStateSurvey;
-  questionIdx: number;
-  onClose?: () => void;
-  children: React.ReactNode;
-  hasInteracted: boolean;
-  setHasInteracted: (hasInteracted: boolean) => void;
+  readonly survey: TJsWorkspaceStateSurvey;
+  readonly questionIdx: number;
+  readonly onClose?: () => void;
+  readonly children: React.ReactNode;
+  readonly hasInteracted: boolean;
+  readonly setHasInteracted: (hasInteracted: boolean) => void;
 }
 
 export function AutoCloseWrapper({

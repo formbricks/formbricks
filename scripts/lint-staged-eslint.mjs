@@ -50,10 +50,15 @@ function groupByPackage(files) {
 let failed = false;
 for (const [pkgDir, relFiles] of groupByPackage(process.argv.slice(2))) {
   if (!hasEslintConfig(pkgDir)) continue;
-  const { status, error } = spawnSync(process.execPath, [ESLINT_CLI, ...relFiles], {
-    cwd: pkgDir,
-    stdio: "inherit",
-  });
+  // Same flag as apps/web's `lint` script: fixing a baselined violation must not fail the commit.
+  const { status, error } = spawnSync(
+    process.execPath,
+    [ESLINT_CLI, "--pass-on-unpruned-suppressions", ...relFiles],
+    {
+      cwd: pkgDir,
+      stdio: "inherit",
+    }
+  );
   if (error) throw error;
   if (status !== 0) failed = true;
 }

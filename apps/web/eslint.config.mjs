@@ -69,6 +69,15 @@ const PROCESS_ENV_EXEMPT_FILES = [
   "**/__mocks__/**",
 ];
 
+// `unstable_cache` has no key convention, no Redis backing and no explicit invalidation; every
+// cached read goes through the cache service instead.
+const UNSTABLE_CACHE_IMPORT = {
+  name: "next/cache",
+  importNames: ["unstable_cache"],
+  message:
+    "Use `cache.withCache()` from `@/lib/cache` with a key from `createCacheKey.*` (or React `cache()` for request-level dedupe) instead of Next.js `unstable_cache()`.",
+};
+
 const config = [
   // carried over from the legacy .eslintignore / ignorePatterns
   {
@@ -117,6 +126,8 @@ const config = [
       // web lint script has no `--max-warnings 0`, so it surfaces violations without blocking.
       "react-hooks/exhaustive-deps": "warn",
       "no-restricted-syntax": ["error", ...noDirectProcessEnv],
+      // The block below redefines this rule for non-test files, so it repeats this entry.
+      "no-restricted-imports": ["error", { paths: [UNSTABLE_CACHE_IMPORT] }],
     },
   },
   {
@@ -135,6 +146,7 @@ const config = [
         "error",
         {
           paths: [
+            UNSTABLE_CACHE_IMPORT,
             {
               name: "@formbricks/api-v3-schemas/testing",
               message: "Test-only entry point; import the generated schemas from @formbricks/api-v3-schemas.",

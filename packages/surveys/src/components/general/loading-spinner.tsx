@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-export function LoadingSpinner({ className }: { className?: string }) {
+export function LoadingSpinner({ className }: { readonly className?: string }) {
   return (
     <div
       data-testid="loading-spinner"

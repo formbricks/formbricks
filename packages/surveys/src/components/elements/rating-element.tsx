@@ -11,15 +11,15 @@ import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface RatingElementProps {
-  element: TSurveyRatingElement | TSurveyCsatElement | TSurveyCesElement;
-  value?: number;
-  onChange: (responseData: TResponseData) => void;
-  languageCode: string;
-  ttc: TResponseTtc;
-  setTtc: (ttc: TResponseTtc) => void;
-  currentElementId: string;
-  dir?: "ltr" | "rtl" | "auto";
-  errorMessage?: string;
+  readonly element: TSurveyRatingElement | TSurveyCsatElement | TSurveyCesElement;
+  readonly value?: number;
+  readonly onChange: (responseData: TResponseData) => void;
+  readonly languageCode: string;
+  readonly ttc: TResponseTtc;
+  readonly setTtc: (ttc: TResponseTtc) => void;
+  readonly currentElementId: string;
+  readonly dir?: "ltr" | "rtl" | "auto";
+  readonly errorMessage?: string;
 }
 
 export function RatingElement({

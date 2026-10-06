@@ -1,7 +1,7 @@
 import { Text } from "react-email";
 import { TFunction } from "../types/translations";
 
-export function EmailFooter({ t }: { t: TFunction }): React.JSX.Element {
+export function EmailFooter({ t }: { readonly t: TFunction }): React.JSX.Element {
   return (
     <Text className="text-sm">
       {t("emails.email_footer_text_1")}

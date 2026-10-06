@@ -7,18 +7,18 @@ import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 
 interface StackedCardProps {
-  cardRefs: MutableRef<(HTMLDivElement | null)[]>;
-  dynamicQuestionIndex: number;
-  offset: number;
-  fullSizeCards: boolean;
-  borderStyles: React.CSSProperties;
-  getCardContent: (questionIdxTemp: number, offset: number) => JSX.Element | undefined;
-  cardHeight: string;
-  survey: TJsWorkspaceStateSurvey;
-  cardWidth: number;
-  hovered: boolean;
-  cardArrangement: TCardArrangementOptions;
-  placement: TPlacement;
+  readonly cardRefs: MutableRef<(HTMLDivElement | null)[]>;
+  readonly dynamicQuestionIndex: number;
+  readonly offset: number;
+  readonly fullSizeCards: boolean;
+  readonly borderStyles: React.CSSProperties;
+  readonly getCardContent: (questionIdxTemp: number, offset: number) => JSX.Element | undefined;
+  readonly cardHeight: string;
+  readonly survey: TJsWorkspaceStateSurvey;
+  readonly cardWidth: number;
+  readonly hovered: boolean;
+  readonly cardArrangement: TCardArrangementOptions;
+  readonly placement: TPlacement;
 }
 
 export const StackedCard = ({

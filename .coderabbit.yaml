@@ -108,7 +108,6 @@ reviews:
         - New client data flows go through an `/api/v3` route with TanStack Query, not a new Server
           Action. Server data lives in the query cache only — flag it being mirrored into
           `useState` or Jotai, and flag `router.refresh()` used as a data-refresh mechanism.
-        - Component props must be `Readonly<>` (e.g. `({ children }: Readonly<Props>)`).
         - All user-facing strings must go through `t()` from `react-i18next` with lowercase
           dot-nested keys, never hardcoded text.
         - Dates and times must use the shared formatting helpers, never ad-hoc `date-fns`, `Intl`,
@@ -180,8 +179,8 @@ reviews:
         - Count and data queries run in parallel via `Promise.all`, not sequentially.
         - Large datasets use cursor pagination rather than offset pagination.
         - `createdAt` filters are combined with an indexed column (e.g. `surveyId` + `createdAt`).
-        - Caching uses `cache.withCache()` with a key from `createCacheKey.*`. Next.js
-          `unstable_cache()` is banned, and cache keys are never built by string concatenation.
+        - Caching uses `cache.withCache()` with a key from `createCacheKey.*`, and cache keys
+          are never built by string concatenation.
 
     - path: "{apps/web,packages}/**/*.{ts,tsx}"
       instructions: |

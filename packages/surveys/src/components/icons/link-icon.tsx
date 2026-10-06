@@ -1,5 +1,5 @@
 interface LinkIconProps {
-  className?: string;
+  readonly className?: string;
 }
 
 export const LinkIcon = ({ className }: LinkIconProps) => {

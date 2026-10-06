@@ -1,5 +1,5 @@
 interface CloseIconProps {
-  className?: string;
+  readonly className?: string;
 }
 
 export const CloseIcon = ({ className }: CloseIconProps) => {

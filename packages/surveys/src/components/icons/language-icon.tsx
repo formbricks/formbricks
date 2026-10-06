@@ -1,5 +1,5 @@
 interface LanguageIconProps {
-  className?: string;
+  readonly className?: string;
 }
 
 export const LanguageIcon = ({ className }: LanguageIconProps) => {

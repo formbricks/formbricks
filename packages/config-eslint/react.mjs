@@ -4,7 +4,13 @@ import reactPlugin from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 import tseslint from "typescript-eslint";
-import { base, commonIgnores, reactCompilerRulesOptOut, unusedVarsConvention } from "./base.mjs";
+import {
+  base,
+  commonIgnores,
+  reactCompilerRulesOptOut,
+  readOnlyProps,
+  unusedVarsConvention,
+} from "./base.mjs";
 
 /*
  * Flat config for React component libraries — the successor of the
@@ -41,6 +47,7 @@ export const react = ({ tsconfigRootDir }) => [
   unusedVarsConvention,
   reactPlugin.configs.flat.recommended,
   reactPlugin.configs.flat["jsx-runtime"],
+  readOnlyProps,
   // Accessibility rules (parity with the old @vercel/style-guide/react config; eslint-config-next
   // already provides these for the app, so this brings the react-library tier in line).
   jsxA11y.flatConfigs.recommended,

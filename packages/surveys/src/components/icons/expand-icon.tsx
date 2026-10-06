@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 
 interface ExpandIconProps {
-  className?: string;
-  size?: number;
+  readonly className?: string;
+  readonly size?: number;
 }
 
 export const ExpandIcon = ({ className = "", size = 24 }: ExpandIconProps) => {

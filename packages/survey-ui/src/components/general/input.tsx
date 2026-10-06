@@ -3,9 +3,9 @@ import { cn } from "@/lib/utils";
 
 interface InputProps extends React.ComponentProps<"input"> {
   /** Text direction for RTL language support */
-  dir?: "ltr" | "rtl" | "auto";
+  readonly dir?: "ltr" | "rtl" | "auto";
   /** Error message to display above the input */
-  errorMessage?: string;
+  readonly errorMessage?: string;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(

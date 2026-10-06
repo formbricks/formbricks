@@ -54,6 +54,17 @@ export const commonIgnores = {
   ignores: ["**/node_modules/**", "**/dist/**", "**/coverage/**", "**/.turbo/**", "**/.local/**"],
 };
 
+// Component props are read-only. The tier that spreads this must register the `react` plugin
+// (`react.mjs` and `next.mjs` get it from their presets, `react-hooks.mjs` adds it itself). The
+// autofix inserts `readonly` on each prop; wrapping the props type in `Readonly<>` satisfies the
+// rule too.
+export const readOnlyProps = {
+  files: ["**/*.tsx"],
+  // Test fixtures are not components anyone consumes; Sonar leaves them out too.
+  ignores: ["**/*.{test,spec}.tsx"],
+  rules: { "react/prefer-read-only-props": "error" },
+};
+
 // Surface stale `eslint-disable` comments everywhere as warnings (non-blocking) so obsolete
 // suppressions can't silently accumulate again after the flat-config migration cleanup.
 export const unusedDirectivesConvention = {

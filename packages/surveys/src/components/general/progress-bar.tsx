@@ -3,8 +3,8 @@ import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { Progress } from "@/components/general/progress";
 
 interface ProgressBarProps {
-  survey: TJsWorkspaceStateSurvey;
-  blockId: string;
+  readonly survey: TJsWorkspaceStateSurvey;
+  readonly blockId: string;
 }
 
 export function ProgressBar({ survey, blockId }: ProgressBarProps) {
