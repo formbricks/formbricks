@@ -131,6 +131,8 @@ Formbricks is available Open-Source under AGPLv3 license. You can host Formbrick
 
 To get started with self-hosting with Docker, take a look at our [self-hosting docs](https://formbricks.com/docs/self-hosting/deployment).
 
+<a id="development"></a>
+
 ## 👨‍💻 Development
 
 ### Prerequisites
