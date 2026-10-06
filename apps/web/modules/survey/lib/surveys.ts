@@ -11,7 +11,6 @@ import {
   deleteSurveyResponseFiles,
 } from "@/modules/storage/lib/survey-response-files";
 import { deleteSurveyUploadFilesBestEffort } from "@/modules/storage/service";
-import { getStorageUrlSurveyId } from "@/modules/storage/utils";
 
 /**
  * Permanently deletes a survey, cascades private-segment cleanup, and removes its respondents' uploads
@@ -29,8 +28,10 @@ export const deleteSurvey = async (surveyId: string, options?: { requireArchived
   try {
     // The responses go by FK cascade, taking the upload URLs in `response.data` with them, so read those
     // first. Outside the transaction on purpose: a large scan must not hold the row lock the guard
-    // takes, or run into the interactive-transaction timeout.
-    const { fileUrls } = await collectSurveyResponseFileUrls(surveyId);
+    // takes, or run into the interactive-transaction timeout. Flat keys only: see the sweep below.
+    const { fileUrls: flatKeyFileUrls } = await collectSurveyResponseFileUrls(surveyId, {
+      flatKeysOnly: true,
+    });
 
     const deletedSurvey = await prisma.$transaction(async (tx) => {
       if (options?.requireArchivedBefore) {
@@ -81,7 +82,6 @@ export const deleteSurvey = async (surveyId: string, options?: { requireArchived
     // per-file delete only gets the flat pre-#8044 keys the folder does not hold; a key filed under a
     // survey is either this survey's (swept) or another survey's (never ours to delete).
     await deleteSurveyUploadFilesBestEffort({ workspaceId: deletedSurvey.workspaceId, surveyId });
-    const flatKeyFileUrls = fileUrls.filter((fileUrl) => getStorageUrlSurveyId(fileUrl) === null);
     await deleteSurveyResponseFiles(flatKeyFileUrls, deletedSurvey.workspaceId, surveyId);
 
     return deletedSurvey;

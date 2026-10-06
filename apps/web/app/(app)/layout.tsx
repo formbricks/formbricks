@@ -8,10 +8,13 @@ import {
   FORMBRICKS_WORKSPACE_ID,
   IS_FORMBRICKS_SURVEYS_CONFIGURED,
   IS_PLAIN_CHAT_CONFIGURED,
+  IS_PRODUCTION,
   PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID,
   PLAIN_APP_ID,
   POSTHOG_KEY,
+  SENTRY_DSN,
 } from "@/lib/constants";
+import { SentryUser } from "@/lib/sentry/SentryUser";
 import { getUser } from "@/lib/user/service";
 import { getSession } from "@/modules/auth/lib/session";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
@@ -40,6 +43,8 @@ const AppLayout = async ({ children }: Readonly<{ children: React.ReactNode }>) 
   return (
     <>
       <NoMobileOverlay />
+      {/* Same gate as the root layout's SentryClientConfigScript: browser Sentry only runs there. */}
+      {IS_PRODUCTION && SENTRY_DSN && user && <SentryUser userId={user.id} />}
       {POSTHOG_KEY && user && (
         <PostHogIdentify posthogKey={POSTHOG_KEY} userId={user.id} email={user.email} name={user.name} />
       )}
