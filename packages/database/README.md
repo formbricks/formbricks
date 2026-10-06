@@ -227,7 +227,8 @@ What follows for a migration author:
   reports `current transaction is aborted` instead of the real error, records no log, and every later deploy
   stops with `P3009`. The real error is only in the PostgreSQL server log. The transaction has rolled the file
   back, so once the cause is fixed, run `prisma migrate resolve --rolled-back <migration>` and deploy again to
-  apply it.
+  apply it. The self-hosting guide walks operators through the same recovery:
+  [If a migration fails](../../docs/self-hosting/advanced/migration.mdx#if-a-migration-fails).
 - Squawk models only the first case, so it will not flag a `CONCURRENTLY` statement that shares a file with a
   `DO` block. The CI jobs that apply the migrations (E2E, integration and contract tests) fail on it instead.
 

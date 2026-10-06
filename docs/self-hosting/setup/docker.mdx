@@ -708,7 +708,8 @@ Common checks:
 - **Missing or empty secrets**: Confirm `.env` contains `BETTER_AUTH_SECRET`, `ENCRYPTION_KEY`, `CRON_SECRET`,
   `HUB_API_KEY`, and `CUBEJS_API_SECRET`.
 - **Migration failures**: Check `formbricks-migrate`, `hub-migrate`, and `postgres` logs. Do not remove Docker
-  volumes on an existing install unless you intend to delete its data.
+  volumes on an existing install unless you intend to delete its data. For a failed `formbricks-migrate`, follow
+  [If a migration fails](/self-hosting/advanced/migration#if-a-migration-fails).
 - **Cube is unhealthy**: Confirm `cube/cube.js`, `cube/schema/FeedbackRecords.js`, and `CUBEJS_API_SECRET`
   exist, then inspect `docker compose logs cube`.
 - **Hub auth errors**: Confirm the same `HUB_API_KEY` from `.env` is used by Formbricks Web and the Hub

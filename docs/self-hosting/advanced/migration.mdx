@@ -4,6 +4,126 @@ description: "Formbricks Self-hosted version migration"
 icon: "arrow-right"
 ---
 
+## If a migration fails
+
+This applies to every version. One runner applies the database migrations in order: the `formbricks-migrate`
+service on Docker Compose, the `formbricks-migration` Job on Kubernetes, or `formbricks-authzed-prepare` during a
+v5 to v6 upgrade. When a migration fails, the runner stops, the database stays at the last migration that
+succeeded, and every later run refuses to continue until you resolve it.
+
+<Warning>
+  Do not delete volumes, restore a backup or roll the images back before you know which migration failed and
+  why. Most failures are fixed in place.
+</Warning>
+
+### Open a SQL session
+
+The steps below run SQL as the user that owns the Formbricks tables:
+
+<Tabs>
+  <Tab title="One-Click / Docker Compose">
+    ```bash
+    docker compose exec postgres psql -U postgres -d formbricks
+    ```
+  </Tab>
+  <Tab title="Kubernetes">
+    ```bash
+    kubectl exec -it -n formbricks formbricks-postgresql-0 -- psql -U formbricks -d formbricks
+    ```
+  </Tab>
+</Tabs>
+
+With an external or managed PostgreSQL, connect with `psql` as the user in `MIGRATE_DATABASE_URL`, or in
+`DATABASE_URL` if you do not set it.
+
+### 1. Find the failed migration
+
+The runner's log names it. Read it with `docker compose logs --tail=200 formbricks-migrate`, or
+`kubectl logs -n formbricks job/formbricks-migration` (by default the chart deletes the Job 300 seconds after it
+fails). A first failure prints `Schema migration batch failed:` with every migration in that batch; the error
+names the failed one as `Migration name:`, or as `migration_name="…"` when the real error was hidden. Every run
+after that stops with `P3009` and names it again. The database always knows:
+
+```sql
+SELECT migration_name, started_at FROM "_prisma_migrations"
+WHERE finished_at IS NULL AND rolled_back_at IS NULL;
+```
+
+If that returns no row but the log says `Data migration … failed`, see
+[Data migrations](#data-migrations) below.
+
+### 2. Find the real error
+
+The runner's error usually shows it after `Database error:`. If it shows only `current transaction is aborted,
+commands ignored until end of transaction block`, the migration runs in a transaction of its own and the
+[real error was hidden](https://github.com/prisma/prisma/issues/15295). Find it in the PostgreSQL log, on the
+`ERROR` line just before that one:
+
+```bash
+docker compose logs postgres | grep -E "ERROR|STATEMENT"
+kubectl logs -n formbricks formbricks-postgresql-0 | grep -E "ERROR|STATEMENT"
+```
+
+On a managed service, use your provider's database log. `canceling statement due to lock timeout` is the most
+common cause: another session held a lock on the table the migration changes, for example a long-running query,
+a backup, or an old Formbricks pod still running. Stop it, or retry at a quieter time.
+
+### 3. Check what the migration left behind
+
+Open the failed migration's file at the release you are upgrading to, for example
+`https://github.com/formbricks/formbricks/blob/6.0.2/packages/database/migration/<migration_name>/migration.sql`:
+
+- **It starts with `BEGIN;` or contains a `DO $$` block:** PostgreSQL rolled the whole file back, so there is
+  nothing to undo.
+- **Otherwise:** the statements before the failing one may have stayed applied. If every statement is safe to
+  repeat (`IF NOT EXISTS`, `IF EXISTS`, `CREATE OR REPLACE`), there is still nothing to undo. If not, check which
+  of them took effect and undo those before you continue, or the retry fails on them.
+
+### 4. Mark it rolled back and run the migrations again
+
+Once the cause is fixed, mark the failed migration rolled back. This is what
+`prisma migrate resolve --rolled-back` does:
+
+```sql
+UPDATE "_prisma_migrations" SET rolled_back_at = now()
+WHERE migration_name = '<migration_name>' AND finished_at IS NULL AND rolled_back_at IS NULL;
+```
+
+Then run the migrations again:
+
+<Tabs>
+  <Tab title="One-Click / Docker Compose">
+    ```bash
+    docker compose run --rm --no-deps formbricks-migrate &&
+    docker compose up -d
+    ```
+  </Tab>
+  <Tab title="Kubernetes">
+    Delete the failed Job, then run the same `helm upgrade` (or Argo CD sync) again. Helm does not re-run a Job
+    that still exists, and refuses to change one (`field is immutable`):
+
+    ```bash
+    kubectl delete job -n formbricks formbricks-migration --ignore-not-found
+    ```
+
+    During a v5 to v6 upgrade, re-run the preparation Job as the
+    [v6 maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade) describes instead.
+  </Tab>
+</Tabs>
+
+### Data migrations
+
+Most data migrations run in a transaction of their own and leave nothing behind when they fail; the large ones
+commit in batches and are written to resume where they stopped. Either way the runner records the failure and
+retries the migration on the next run: fix the cause and run the migrations again. The exception is
+`Migration is pending. Please resolve the issue manually.`, left by a run that was interrupted. When no other
+migration is running, mark it failed so the next run retries it:
+
+```sql
+SELECT name, status, started_at FROM "DataMigration" WHERE status <> 'applied';
+UPDATE "DataMigration" SET status = 'failed' WHERE name = '<name>' AND status = 'pending';
+```
+
 ## v6
 
 Formbricks v6 replaces the legacy authorization evaluator with SpiceDB, maintained by AuthZed. PostgreSQL
