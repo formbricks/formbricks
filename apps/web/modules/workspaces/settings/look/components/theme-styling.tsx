@@ -11,6 +11,7 @@ import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { TWorkspaceStyling, ZWorkspaceStyling } from "@formbricks/types/workspace";
 import { previewSurvey } from "@/app/lib/templates";
+import { cn } from "@/lib/cn";
 import { COLOR_DEFAULTS, STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
 import { type TStylingAppearance } from "@/lib/styling/dark-mode";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -219,7 +220,8 @@ export const ThemeStyling = ({
                       description={t("workspace.surveys.edit.brand_color_description")}
                       fallbackColor={STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor}
                     />
-                    <div className="flex flex-col gap-1">
+                    {/* Level with the input: in Dark the brand field adds an "Automatic" hint below it. */}
+                    <div className={cn("flex flex-col gap-1", appearance === "dark" && "mb-5")}>
                       <Button
                         type="button"
                         variant="default"
