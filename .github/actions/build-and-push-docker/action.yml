@@ -141,7 +141,7 @@ runs:
 
     - name: Configure AWS credentials (ECR only)
       if: ${{ inputs.registry_type == 'ecr' }}
-      uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v4.2.0
+      uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
       with:
         role-to-assume: ${{ inputs.aws_role_arn }}
         aws-region: ${{ inputs.ecr_region }}
