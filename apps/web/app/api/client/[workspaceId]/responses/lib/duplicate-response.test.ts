@@ -76,7 +76,7 @@ describe("findRecentDuplicateResponse", () => {
     vi.mocked(prisma.response.findMany).mockResolvedValue([
       { id: "other", data: { q1: 3 }, finished: true },
       { id: "match", data: { q1: 5 }, finished: true },
-    ]);
+    ] as never);
 
     const result = await findRecentDuplicateResponse({
       surveyId,
@@ -101,7 +101,9 @@ describe("findRecentDuplicateResponse", () => {
   });
 
   test("returns null when no recent response matches", async () => {
-    vi.mocked(prisma.response.findMany).mockResolvedValue([{ id: "other", data: { q1: 3 }, finished: true }]);
+    vi.mocked(prisma.response.findMany).mockResolvedValue([
+      { id: "other", data: { q1: 3 }, finished: true },
+    ] as never);
 
     const result = await findRecentDuplicateResponse({
       surveyId,
