@@ -2,7 +2,7 @@ import "server-only";
 import { z } from "zod";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { prepareV3SurveyCreateInput } from "@/app/api/v3/surveys/prepare";
-import type { TV3CreateSurveyBody } from "@/app/api/v3/surveys/schemas";
+import type { TV3CreateSurveyRequestBody } from "@/app/api/v3/surveys/schemas";
 import type { TQsfImportReport, TQsfImportStage } from "../types";
 
 /**
@@ -37,11 +37,10 @@ export interface TPreparedQsfImport {
 
 export interface TQsfImportResult {
   /**
-   * The draft in the public shape `POST /api/v3/surveys` takes — locale-keyed texts, not the internal
-   * `default` key — because the dialog sends it there unchanged. Typed as `TV3CreateSurveyBody` to match
-   * Create with AI's `done` payload, which follows the same rule.
+   * The draft in the shape `POST /api/v3/surveys` takes — locale-keyed texts, not the internal `default`
+   * key — because the dialog sends it there unchanged.
    */
-  payload: TV3CreateSurveyBody;
+  payload: TV3CreateSurveyRequestBody;
   report: TQsfImportReport;
   /** Tokens the AI call used, for the route's log line. Absent when no AI call ran. */
   usage?: { inputTokens: number; outputTokens: number };
@@ -94,7 +93,7 @@ export async function runQsfImport({
   signal.throwIfAborted();
   onProgress("assembling");
 
-  const payload = {
+  const payload: TV3CreateSurveyRequestBody = {
     workspaceId,
     name: `${prepared.surveyName} (imported)`,
     type: "link",
@@ -124,7 +123,7 @@ export async function runQsfImport({
   }
 
   return {
-    payload: payload as TV3CreateSurveyBody,
+    payload,
     report: {
       source: { kind: "qsf", fileName: prepared.fileName },
       summary: { blocks: 1, questions: 1, languages: ["en-US"], logicRules: 0, hiddenFields: 0 },

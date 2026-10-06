@@ -2,6 +2,7 @@ import type { TSurveyStatus, TSurveyVisibility } from "@formbricks/types/surveys
 import type { TV3SurveyGenerateBody } from "@/app/api/v3/surveys/generate/schemas";
 import type {
   TV3CreateSurveyBody,
+  TV3CreateSurveyRequestBody,
   TV3SurveyCreatedFrom,
   TV3SurveyValidationRequestBody,
 } from "@/app/api/v3/surveys/schemas";
@@ -363,7 +364,7 @@ export async function validateSurveyCreatePayload(
 }
 
 export async function createV3Survey(
-  payload: TV3CreateSurveyBody,
+  payload: TV3CreateSurveyRequestBody,
   createdFrom?: TV3SurveyCreatedFrom
 ): Promise<TV3CreateSurveyResponse["data"]> {
   const url = createdFrom

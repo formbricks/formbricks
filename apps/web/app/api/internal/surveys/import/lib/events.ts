@@ -1,5 +1,5 @@
 import { AI_STREAM_FAILURE_CODES } from "@/app/api/internal/lib/ai-stream-errors";
-import type { TV3CreateSurveyBody } from "@/app/api/v3/surveys/schemas";
+import type { TV3CreateSurveyRequestBody } from "@/app/api/v3/surveys/schemas";
 import type { TQsfImportReport, TQsfImportStage } from "@/modules/survey/import/types";
 
 /** Codes that can only be raised after the stream opened. Everything else is a pre-stream problem+json. */
@@ -22,5 +22,5 @@ export type TQsfImportStreamEvent =
   /** A new stage, or the current one repeated as a heartbeat while a stage runs long. */
   | { type: "progress"; stage: TQsfImportStage }
   /** The draft to review and create with `POST /api/v3/surveys?createdFrom=import`, and its report. */
-  | { type: "done"; payload: TV3CreateSurveyBody; report: TQsfImportReport }
+  | { type: "done"; payload: TV3CreateSurveyRequestBody; report: TQsfImportReport }
   | { type: "error"; code: TQsfImportStreamErrorCode; detail: string; retryAfter?: number };
