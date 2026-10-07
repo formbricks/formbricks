@@ -30,7 +30,7 @@ describe("loggableAIError", () => {
     expect(findPlantedContent(logged)).toBeUndefined();
     expect(logged).toMatchObject({
       errName: error.name,
-      errStack: expect.stringContaining("leaky-ai-errors"),
+      errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
     });
   });
 

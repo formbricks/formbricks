@@ -260,7 +260,7 @@ describe("AI organization service", () => {
         isRetryable: undefined,
         isAuthFailure: undefined,
         errName: "Error",
-        errStack: expect.stringContaining("service.test.ts"),
+        errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
       },
       "Failed to generate organization AI text"
     );
@@ -287,7 +287,7 @@ describe("AI organization service", () => {
         isRetryable: undefined,
         isAuthFailure: undefined,
         errName: "Error",
-        errStack: expect.stringContaining("service.test.ts"),
+        errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
       },
       "Failed to generate organization AI object"
     );
@@ -426,7 +426,7 @@ describe("AI organization service", () => {
       expect(mocks.loggerError.mock.calls[0][0]).toMatchObject({
         organizationId: "org_1",
         errName: error.name,
-        errStack: expect.stringContaining("leaky-ai-errors"),
+        errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
       });
       expect(findPlantedContent([mocks.loggerError.mock.calls, mocks.loggerWarn.mock.calls])).toBeUndefined();
     };

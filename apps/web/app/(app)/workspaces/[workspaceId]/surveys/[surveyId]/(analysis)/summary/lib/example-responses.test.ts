@@ -306,7 +306,7 @@ describe("generateExampleResponseDataset", () => {
     expect(mocks.loggerError).toHaveBeenCalledWith(
       {
         errName: "Error",
-        errStack: expect.stringContaining("example-responses.test.ts"),
+        errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
         organizationId: "org_1",
       },
       "Failed to generate open-text example responses with AI; using fallback answers"
@@ -446,7 +446,7 @@ describe("generateExampleResponseDataset", () => {
     expect(mocks.loggerError).toHaveBeenCalledWith(
       {
         errName: "Error",
-        errStack: expect.stringContaining("example-responses.test.ts"),
+        errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
         organizationId: "org_1",
       },
       "Failed to generate open-text example responses with AI; using fallback answers"

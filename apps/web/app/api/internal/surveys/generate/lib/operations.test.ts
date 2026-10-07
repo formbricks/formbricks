@@ -222,7 +222,7 @@ describe("streamV3SurveyGeneration", () => {
       expect(mocks.logError).toHaveBeenCalledWith(
         expect.objectContaining({
           errName: error.name,
-          errStack: expect.stringContaining("leaky-ai-errors"),
+          errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
         }),
         "AI survey generation stream failed"
       );
