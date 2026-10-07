@@ -66,3 +66,6 @@ packages/database/schema-test-boolean
 apps/storybook/**
 !apps/storybook/package.json
 apps/web/playwright
+
+# Local output of the post-deployment check
+apps/deployment-check/report

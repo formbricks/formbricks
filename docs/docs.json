@@ -314,6 +314,7 @@
               "self-hosting/setup/one-click",
               "self-hosting/setup/docker",
               "self-hosting/setup/monitoring",
+              "self-hosting/setup/deployment-check",
               "self-hosting/setup/cluster-setup",
               "self-hosting/setup/kubernetes"
             ]
