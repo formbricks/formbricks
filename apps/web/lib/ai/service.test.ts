@@ -371,14 +371,26 @@ describe("AI organization service", () => {
     ).rejects.toBe(serverError);
   });
 
-  // Cast rather than `any`: `@formbricks/ai` is mocked here, so the schema is never read — but the input
-  // type still requires a real one.
+  // Casts rather than `any`: `@formbricks/ai` is mocked here, so the schema is never read — but the input
+  // types still require a real one.
   const objectInput = () =>
     ({
       organizationId: "org_1",
       schema: { type: "object" },
       prompt: "Generate a survey",
     }) as unknown as Parameters<typeof generateOrganizationAIObject>[0];
+
+  const streamInput = () =>
+    ({ organizationId: "org_1", prompt: "Generate", schema: { type: "object" } }) as unknown as Parameters<
+      typeof streamOrganizationAIObject
+    >[0];
+
+  const streamResult = (completion: Promise<unknown>) => {
+    // The service hands this promise back untouched; keep it handled so a rejection asserted on
+    // later does not surface as an unhandled rejection first.
+    completion.catch(() => undefined);
+    return { partialObjectStream: {}, completion };
+  };
 
   test("logs which part of the AI configuration is wrong by field name, never the message", async () => {
     const { AIConfigurationError } = await import("@formbricks/ai");
@@ -439,15 +451,9 @@ describe("AI organization service", () => {
 
     test.each(LEAKY_AI_ERRORS)("a streamed generation whose completion fails with %s", async (_, build) => {
       const error = build();
-      const completion = Promise.reject(error);
-      completion.catch(() => undefined);
-      mocks.streamObject.mockReturnValueOnce({ partialObjectStream: {}, completion });
+      mocks.streamObject.mockReturnValueOnce(streamResult(Promise.reject(error)));
 
-      const result = await streamOrganizationAIObject({
-        organizationId: "org_1",
-        prompt: "Generate",
-        schema: { type: "object" },
-      } as unknown as Parameters<typeof streamOrganizationAIObject>[0]);
+      const result = await streamOrganizationAIObject(streamInput());
 
       await expect(result.completion).rejects.toBe(error);
       expectCleanFailureLog(error);
@@ -469,20 +475,6 @@ describe("AI organization service", () => {
   });
 
   describe("streamOrganizationAIObject", () => {
-    // Cast rather than `any`: `@formbricks/ai` is mocked here, so the schema is never read — but the
-    // input type still requires one.
-    const streamInput = () =>
-      ({ organizationId: "org_1", prompt: "Generate", schema: { type: "object" } }) as unknown as Parameters<
-        typeof streamOrganizationAIObject
-      >[0];
-
-    const streamResult = (completion: Promise<unknown>) => {
-      // The service hands this promise back untouched; keep it handled so a rejection asserted on
-      // later does not surface as an unhandled rejection first.
-      completion.catch(() => undefined);
-      return { partialObjectStream: {}, completion };
-    };
-
     test("a cancelled generation is not an error: no error log, and the rejection is untouched", async () => {
       // Stop and tab-close both land here. Logging them at error level pages someone for a user
       // doing exactly what the button offers.
