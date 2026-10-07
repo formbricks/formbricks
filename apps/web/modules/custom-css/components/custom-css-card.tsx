@@ -85,10 +85,6 @@ export const CustomCssCard = ({
   // Clearing or replacing CSS that is already there asks first: a wiped field is saved by the survey
   // editor's auto-save before anyone notices.
   const [pendingReplace, setPendingReplace] = useState<{ title: string; apply: () => void } | null>(null);
-  const confirmReplace = (title: string, apply: () => void, needsConfirm: boolean) => {
-    if (needsConfirm) setPendingReplace({ title, apply });
-    else apply();
-  };
 
   const byteLimit = getCustomCssByteLimit(scope);
   const byteSize = getCustomCssByteSize(draft);
@@ -131,11 +127,9 @@ export const CustomCssCard = ({
     try {
       const text = stripByteOrderMark(await file.text());
       setUploadError(null);
-      confirmReplace(
-        t("workspace.custom_css.confirm_replace_title"),
-        () => setField(appearance, text),
-        draft[appearance].trim() !== ""
-      );
+      const apply = () => setField(appearance, text);
+      if (draft[appearance].trim() === "") apply();
+      else setPendingReplace({ title: t("workspace.custom_css.confirm_replace_title"), apply });
     } catch {
       setUploadError(t("workspace.custom_css.upload_read_failed"));
     }
@@ -277,11 +271,10 @@ export const CustomCssCard = ({
                         variant="ghost"
                         disabled={value === ""}
                         onClick={() =>
-                          confirmReplace(
-                            t("workspace.custom_css.confirm_clear_field_title", { field: fieldLabel }),
-                            () => setField(appearance, ""),
-                            true
-                          )
+                          setPendingReplace({
+                            title: t("workspace.custom_css.confirm_clear_field_title", { field: fieldLabel }),
+                            apply: () => setField(appearance, ""),
+                          })
                         }>
                         <EraserIcon aria-hidden />
                         {t("workspace.custom_css.clear_field")}
@@ -292,11 +285,10 @@ export const CustomCssCard = ({
                         variant="ghost"
                         disabled={draft.light === "" && draft.dark === ""}
                         onClick={() =>
-                          confirmReplace(
-                            t("workspace.custom_css.confirm_clear_all_title"),
-                            () => onDraftChange({ light: "", dark: "" }),
-                            true
-                          )
+                          setPendingReplace({
+                            title: t("workspace.custom_css.confirm_clear_all_title"),
+                            apply: () => onDraftChange({ light: "", dark: "" }),
+                          })
                         }>
                         {t("workspace.custom_css.clear_all")}
                       </Button>
