@@ -319,9 +319,13 @@ export const CssCodeField = ({
                 ref={(element) => {
                   if (index === suggestions.active) element?.scrollIntoView({ block: "nearest" });
                 }}
-                // Keeps focus in the field, so typing goes on after a click.
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => acceptSuggestion(index)}
+                // Taken on press, with the default prevented, so focus stays in the field and typing goes
+                // on. Keyboard users never focus the options: the field moves through them (arrows,
+                // Enter) and points at the active one with `aria-activedescendant`.
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  acceptSuggestion(index);
+                }}
                 className="cursor-pointer truncate px-3 py-1 text-slate-700 aria-selected:bg-slate-100 aria-selected:text-slate-900">
                 {suggestion}
               </li>
