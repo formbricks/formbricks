@@ -194,6 +194,7 @@
   --fb-input-background-color: #0e1832;
   --fb-input-background-color-selected: #1a243c;
   --fb-brand-readable-color: #788ccf;
+  --fb-back-button-color: #788ccf;
   /* The modal shell behind the card; white in light. A `dark:` utility cannot do this: it ties
      with bg-white on specificity and loses on stylesheet order. */
   --fb-dialog-background-color: var(--fb-survey-background-color);

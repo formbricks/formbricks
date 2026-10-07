@@ -169,8 +169,10 @@ export const getDarkThemeCss = (styling: TWorkspaceStyling | TSurveyStyling): st
     add("hover-bg-color", mixColor(inputBg, "#ffffff", 0.08));
   }
   // The light default shadow reads as a dark smudge on a dark field; a shadow the customer set (often an
-  // outline drawn with an inset shadow) is theirs and stays.
-  if (!styling.inputShadow || styling.inputShadow === DEFAULT_INPUT_SHADOW) add("input-shadow", "none");
+  // outline drawn with an inset shadow) is theirs and stays. Written out either way: the dark fallback in
+  // survey-ui globals.css sets `none` with a more specific selector than the light value.
+  const isDefaultShadow = !styling.inputShadow || styling.inputShadow === DEFAULT_INPUT_SHADOW;
+  add("input-shadow", isDefaultShadow ? "none" : styling.inputShadow);
 
   add("option-bg-color", dark.optionBgColor);
   add("option-label-color", dark.optionLabelColor);
@@ -183,8 +185,11 @@ export const getDarkThemeCss = (styling: TWorkspaceStyling | TSurveyStyling): st
   const buttonText = dark.buttonTextColor ?? (buttonBg && (isLight(buttonBg) ? "#0f172a" : "#ffffff"));
   add("button-bg-color", buttonBg);
   add("button-text-color", buttonText);
-  // Same rule as light: the ghost Back button shows the button color as text on the card.
-  if (buttonBg && card) add("back-button-color", ensureReadable(buttonBg, card));
+  // Same rule as light: the ghost Back button shows the button color as text on the card. Without a
+  // button color it is the brand (or the default brand), which on a dark card is never readable as is.
+  if (card) {
+    add("back-button-color", ensureReadable(buttonBg ?? dark.brandColor ?? DEFAULT_DARK_BRAND_COLOR, card));
+  }
 
   add("progress-track-bg-color", dark.progressTrackBgColor);
   add("progress-indicator-bg-color", dark.progressIndicatorBgColor);

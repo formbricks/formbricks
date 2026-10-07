@@ -65,6 +65,7 @@ describe("dark fallback CSS matches the derived default palette", () => {
       "--fb-accent-background-color": dark.accentBgColor,
       "--fb-accent-background-color-selected": dark.accentBgColorSelected,
       "--fb-brand-readable-color": readable.brandTextColor,
+      "--fb-back-button-color": readable.brandTextColor,
     });
   });
 
