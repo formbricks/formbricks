@@ -2276,6 +2276,7 @@
       "survey_precedence": "Il est ajouté après le CSS de l'espace de travail et l'emporte lorsque les deux stylisent le même élément.",
       "title": "CSS personnalisé",
       "unsaved_changes": "Modifications non enregistrées",
+      "unsaved_changes_restored": "Les modifications non enregistrées précédentes ont été restaurées",
       "upload": "Importer un fichier .css",
       "upload_invalid_type": "Choisissez un fichier .css.",
       "upload_read_failed": "Impossible de lire le fichier.",

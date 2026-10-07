@@ -2276,6 +2276,7 @@
       "survey_precedence": "Es wird nach dem CSS des Workspace hinzugefügt und hat Vorrang, wenn beide dasselbe Element gestalten.",
       "title": "Benutzerdefiniertes CSS",
       "unsaved_changes": "Nicht gespeicherte Änderungen",
+      "unsaved_changes_restored": "Nicht gespeicherte Änderungen von zuvor wiederhergestellt",
       "upload": ".css hochladen",
       "upload_invalid_type": "Wähle eine .css-Datei aus.",
       "upload_read_failed": "Die Datei konnte nicht gelesen werden.",

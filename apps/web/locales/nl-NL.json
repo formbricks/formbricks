@@ -2276,6 +2276,7 @@
       "survey_precedence": "Deze wordt toegevoegd na de CSS van de werkruimte en wint waar beide hetzelfde element opmaken.",
       "title": "Aangepaste CSS",
       "unsaved_changes": "Niet-opgeslagen wijzigingen",
+      "unsaved_changes_restored": "Niet-opgeslagen wijzigingen van eerder zijn hersteld",
       "upload": "Upload .css",
       "upload_invalid_type": "Kies een .css-bestand.",
       "upload_read_failed": "Het bestand kon niet worden gelezen.",

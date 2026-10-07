@@ -9,6 +9,7 @@ import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
+import { useBeforeUnloadPrompt } from "@/modules/ui/hooks/use-before-unload-prompt";
 import { CustomCssCard } from "./custom-css-card";
 import { CustomCssPlanNotice } from "./custom-css-plan-notice";
 import { useWorkspaceCustomCssEditor } from "./hooks/use-workspace-custom-css";
@@ -64,6 +65,9 @@ export const WorkspaceCustomCssCard = ({
     status: editor.validation.status,
   });
   const isDirty = editor.changeKind !== "unchanged";
+  // In-app navigation keeps the draft for the next visit (see `unsaved-draft.ts`); a reload, a closed
+  // tab or a full navigation would lose it, so those ask first.
+  useBeforeUnloadPrompt(() => isDirty, { enabled: mode !== "read-only" });
 
   const handleSave = async () => {
     try {
@@ -142,7 +146,11 @@ export const WorkspaceCustomCssCard = ({
           </Button>
         )}
         {isDirty && (
-          <output className="text-xs text-slate-500">{t("workspace.custom_css.unsaved_changes")}</output>
+          <output className="text-xs text-slate-500">
+            {editor.isDraftRestored
+              ? t("workspace.custom_css.unsaved_changes_restored")
+              : t("workspace.custom_css.unsaved_changes")}
+          </output>
         )}
       </div>
     );

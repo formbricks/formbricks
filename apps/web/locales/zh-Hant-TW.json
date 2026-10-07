@@ -2276,6 +2276,7 @@
       "survey_precedence": "它會加在工作區 CSS 之後,若兩者設定了相同的樣式,則以它為準。",
       "title": "自訂 CSS",
       "unsaved_changes": "尚未儲存的變更",
+      "unsaved_changes_restored": "已還原先前未儲存的變更",
       "upload": "上傳 .css 檔案",
       "upload_invalid_type": "請選擇 .css 檔案。",
       "upload_read_failed": "無法讀取該檔案。",

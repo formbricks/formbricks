@@ -2276,6 +2276,7 @@
       "survey_precedence": "A munkaterület CSS-e után kerül hozzáadásra, és ott érvényesül, ahol mindkettő ugyanazt az elemet formázza.",
       "title": "Egyéni CSS",
       "unsaved_changes": "Nem mentett módosítások",
+      "unsaved_changes_restored": "A korábbi nem mentett módosítások visszaállításra kerültek",
       "upload": ".css fájl feltöltése",
       "upload_invalid_type": "Kérjük, válasszon egy .css fájlt.",
       "upload_read_failed": "A fájl olvasása nem sikerült.",

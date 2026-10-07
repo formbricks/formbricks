@@ -2276,6 +2276,7 @@
       "survey_precedence": "Çalışma alanı CSS'inden sonra eklenir ve ikisi de aynı öğeyi biçimlendiriyorsa bu CSS geçerli olur.",
       "title": "Özel CSS",
       "unsaved_changes": "Kaydedilmemiş değişiklikler",
+      "unsaved_changes_restored": "Daha önceki kaydedilmemiş değişiklikler geri yüklendi",
       "upload": ".css yükle",
       "upload_invalid_type": "Bir .css dosyası seç.",
       "upload_read_failed": "Dosya okunamadı.",

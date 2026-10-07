@@ -2276,6 +2276,7 @@
       "survey_precedence": "Den läggs till efter arbetsytans CSS och gäller före den där båda styler samma sak.",
       "title": "Anpassad CSS",
       "unsaved_changes": "Osparade ändringar",
+      "unsaved_changes_restored": "Osparade ändringar från tidigare har återställts",
       "upload": "Ladda upp .css",
       "upload_invalid_type": "Välj en .css-fil.",
       "upload_read_failed": "Det gick inte att läsa filen.",

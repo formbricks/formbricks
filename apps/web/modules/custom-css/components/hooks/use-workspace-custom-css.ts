@@ -9,6 +9,7 @@ import {
   updateWorkspaceCustomCss,
 } from "../lib/api-client";
 import { type TCustomCssDraft, getCustomCssChangeKind, toCustomCssDraft } from "../lib/draft";
+import { getUnsavedWorkspaceCssDraft, keepUnsavedWorkspaceCssDraft } from "../lib/unsaved-draft";
 import { customCssKeys } from "../lib/validation";
 import { useCustomCssValidation } from "./use-custom-css-validation";
 
@@ -18,7 +19,8 @@ import { useCustomCssValidation } from "./use-custom-css-validation";
  * styling component because the preview there renders the draft's validated output.
  *
  * The draft is `null` until the creator changes something, so it follows the saved CSS when that
- * loads or is saved, and the preview starts from exactly what respondents get.
+ * loads or is saved, and the preview starts from exactly what respondents get. A draft left unsaved
+ * on an earlier visit in this session stands in until then (see `unsaved-draft.ts`).
  */
 export const useWorkspaceCustomCssEditor = (params: { workspaceId: string; enabled: boolean }) => {
   const { workspaceId, enabled } = params;
@@ -32,16 +34,23 @@ export const useWorkspaceCustomCssEditor = (params: { workspaceId: string; enabl
     refetchOnWindowFocus: false,
   });
 
+  const saved = resourceQuery.data?.customCss ?? null;
+  const keptDraft = resourceQuery.isSuccess ? getUnsavedWorkspaceCssDraft(workspaceId, saved) : null;
+  const draft = editedDraft ?? keptDraft ?? toCustomCssDraft(saved);
+
+  const setDraft = (next: TCustomCssDraft | null) => {
+    setEditedDraft(next);
+    keepUnsavedWorkspaceCssDraft(workspaceId, saved, next);
+  };
+
   const saveMutation = useMutation({
     mutationFn: (customCss: TCustomCssInput | null) => updateWorkspaceCustomCss({ workspaceId, customCss }),
     onSuccess: ({ resource }) => {
       queryClient.setQueryData<TWorkspaceCustomCssResource>(customCssKeys.workspace(workspaceId), resource);
       setEditedDraft(null);
+      keepUnsavedWorkspaceCssDraft(workspaceId, resource.customCss, null);
     },
   });
-
-  const saved = resourceQuery.data?.customCss ?? null;
-  const draft = editedDraft ?? toCustomCssDraft(saved);
 
   const validation = useCustomCssValidation({
     workspaceId,
@@ -55,8 +64,10 @@ export const useWorkspaceCustomCssEditor = (params: { workspaceId: string; enabl
     isLoading: resourceQuery.isPending && enabled,
     loadError: resourceQuery.error,
     draft,
-    setDraft: setEditedDraft,
-    resetDraft: () => setEditedDraft(null),
+    /** The draft was left unsaved on an earlier visit, and not edited since. */
+    isDraftRestored: editedDraft === null && keptDraft !== null,
+    setDraft,
+    resetDraft: () => setDraft(null),
     changeKind: getCustomCssChangeKind(saved, draft),
     validation,
     save: saveMutation.mutateAsync,

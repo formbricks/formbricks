@@ -2276,6 +2276,7 @@
       "survey_precedence": "It is added after the workspace CSS and wins where both style the same thing.",
       "title": "Custom CSS",
       "unsaved_changes": "Unsaved changes",
+      "unsaved_changes_restored": "Unsaved changes from earlier restored",
       "upload": "Upload .css",
       "upload_invalid_type": "Choose a .css file.",
       "upload_read_failed": "The file could not be read.",

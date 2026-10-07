@@ -2276,6 +2276,7 @@
       "survey_precedence": "它会添加在工作区 CSS 之后,两者样式冲突时以它为准。",
       "title": "自定义 CSS",
       "unsaved_changes": "有未保存的更改",
+      "unsaved_changes_restored": "已恢复之前未保存的更改",
       "upload": "上传 .css 文件",
       "upload_invalid_type": "请选择 .css 文件。",
       "upload_read_failed": "无法读取该文件。",
