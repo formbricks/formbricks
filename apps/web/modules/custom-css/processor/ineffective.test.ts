@@ -11,6 +11,15 @@ describe("findIneffectiveDeclarations", () => {
     expect(findIneffectiveDeclarations(".a{colr:red}".repeat(500), 20)).toHaveLength(20);
   });
 
+  test("relative colors and calc-size(), which browsers support ahead of the grammar, get no note", () => {
+    expect(
+      findIneffectiveDeclarations(
+        ".a{color:rgb(from red r g b / 50%);background:OKLCH(from #123 l c h);width:calc-size(auto, size)}"
+      )
+    ).toEqual([]);
+    expect(findIneffectiveDeclarations(".a{color:rgb(fromred)}")).toHaveLength(1);
+  });
+
   test("a grammar check that throws keeps the notes found so far instead of failing", () => {
     const matchProperty = lexer.matchProperty.bind(lexer);
     let calls = 0;

@@ -8,8 +8,8 @@ export interface TIneffectiveDeclaration {
   location: TIssueLocation;
 }
 
-// Values that only resolve in the browser, or that the declaration policy already removes: neither can
-// be judged against the property grammar here.
+// Values that only resolve in the browser, that the declaration policy already removes, or that browsers
+// support ahead of the bundled grammar: none can be judged against the property grammar here.
 const UNCHECKABLE_FUNCTIONS = [
   "var",
   "env",
@@ -19,11 +19,14 @@ const UNCHECKABLE_FUNCTIONS = [
   "image-set",
   "-webkit-image-set",
   "cross-fade",
+  "calc-size",
 ];
 const UNCHECKABLE_VALUE = new RegExp(
   String.raw`(?:^|[^\w-])(?:${[...UNCHECKABLE_FUNCTIONS, ...Object.keys(UNSAFE_FUNCTIONS)].join("|")})\(`,
   "i"
 );
+// Relative colors (`rgb(from red r g b / 50%)`) work in every current browser but not in the grammar.
+const RELATIVE_COLOR = /(?:^|[^\w-])(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(\s*from\s/i;
 // Properties the declaration policy checks itself, and escaped names (decoded only by lightningcss): the
 // policy's own warning covers them.
 const POLICY_PROPERTIES = new Set(["position", "all", ...Object.keys(UNSAFE_PROPERTIES)]);
@@ -79,7 +82,9 @@ const walkDeclarations = (ast: CssNode, notes: TIneffectiveDeclaration[], limit:
         });
         return;
       }
-      if (node.value.type === "Raw" || UNCHECKABLE_VALUE.test(generate(node.value))) return;
+      if (node.value.type === "Raw") return;
+      const value = generate(node.value);
+      if (UNCHECKABLE_VALUE.test(value) || RELATIVE_COLOR.test(value)) return;
       const match = lexer.matchProperty(node.property, node.value);
       if (match.error?.name === "SyntaxMatchError") {
         notes.push({
