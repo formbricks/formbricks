@@ -2,7 +2,7 @@ import "server-only";
 import type { z } from "zod";
 import type { TStreamObjectResult } from "@formbricks/ai";
 import { logger } from "@formbricks/logger";
-import { isClientAbort } from "@/app/api/internal/lib/ai-stream-errors";
+import { isClientAbort, loggableAIError } from "@/app/api/internal/lib/ai-stream-errors";
 import { createNdjsonResponse } from "@/app/api/internal/lib/ndjson-stream";
 import { createRequestAbort } from "@/app/api/internal/lib/request-abort";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
@@ -146,7 +146,8 @@ export async function streamV3SurveyGeneration({
         return null;
       }
 
-      log.error({ err: error }, "AI survey generation stream failed");
+      // Name, frames and provider status only: the message can repeat the prompt or the model's output.
+      log.error(loggableAIError(error), "AI survey generation stream failed");
       return toStreamErrorEvent(error);
     },
     onCancel: () => {
