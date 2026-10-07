@@ -54,7 +54,7 @@ model RetentionPolicy {
   enabledAt      DateTime?
   /// How long before the action the notice goes out. The action never runs before the notice has
   /// been out for this long, so the warning always runs in full.
-  warnDays       Int                        @default(30)
+  warnDays       Int                        @default(60)
   /// The reversible step, counted from the clock: archive a survey, deactivate a member.
   archiveDays    Int?
   /// Counted from the actual archive when there is one, otherwise from the clock.

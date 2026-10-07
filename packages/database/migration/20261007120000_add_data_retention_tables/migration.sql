@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS "RetentionPolicy" (
     "entity" "RetentionEntity" NOT NULL,
     "enabled" BOOLEAN NOT NULL DEFAULT false,
     "enabledAt" TIMESTAMP(3),
-    "warnDays" INTEGER NOT NULL DEFAULT 30,
+    "warnDays" INTEGER NOT NULL DEFAULT 60,
     "archiveDays" INTEGER,
     "deleteDays" INTEGER,
     "conditions" "RetentionSurveyCondition"[] DEFAULT ARRAY[]::"RetentionSurveyCondition"[],
