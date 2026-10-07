@@ -6,6 +6,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Webhook } from "@formbricks/database/prisma-browser";
+import { copyToClipboard } from "@/lib/utils/clipboard";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -29,8 +30,11 @@ export const WebhookCreatedModal = ({ open, webhook, onClose }: WebhookCreatedMo
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
-  const copyToClipboard = async (text: string) => {
-    await navigator.clipboard.writeText(text);
+  const handleCopySecret = async (text: string) => {
+    if (!(await copyToClipboard(text))) {
+      toast.error(t("common.failed_to_copy_to_clipboard"));
+      return;
+    }
     setCopied(true);
     toast.success(t("common.copied_to_clipboard"));
     setTimeout(() => setCopied(false), 2000);
@@ -54,7 +58,7 @@ export const WebhookCreatedModal = ({ open, webhook, onClose }: WebhookCreatedMo
                 type="button"
                 variant="secondary"
                 className="ml-2 whitespace-nowrap"
-                onClick={() => copyToClipboard(webhook.secret ?? "")}>
+                onClick={() => handleCopySecret(webhook.secret ?? "")}>
                 {copied ? (
                   <>
                     <CheckIcon className="size-4" />
