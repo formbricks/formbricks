@@ -1,8 +1,8 @@
 /**
- * Errors as internal routes may log them: name and stack frames, never the message. These routes stream
- * AI output and user files, and a message can carry either — the AI SDK's errors repeat the prompt or the
- * model's output — so a message is not safe to log however the error arose. Frames are file paths, so a
- * bug still points at its line.
+ * Errors as the internal routes that stream AI output or a user's file (Create with AI, the Qualtrics
+ * import) log them: name and stack frames, never the message. A message can carry either — the AI SDK's
+ * errors repeat the prompt or the model's output — so it is not safe to log however the error arose.
+ * Frames are file paths, so a bug still points at its line.
  */
 
 /**

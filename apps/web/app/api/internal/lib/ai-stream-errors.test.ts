@@ -1,7 +1,8 @@
+import { APICallError } from "ai";
 import { describe, expect, test } from "vitest";
 import { AIOAuthTokenError, AIOutputTokenLimitError } from "@formbricks/ai";
 import { TooManyRequestsError } from "@formbricks/types/errors";
-import { classifyAIStreamFailure, isClientAbort } from "./ai-stream-errors";
+import { classifyAIStreamFailure, isClientAbort, loggableAIError } from "./ai-stream-errors";
 
 describe("classifyAIStreamFailure", () => {
   test("classifies quota exhaustion and keeps Retry-After", () => {
@@ -50,5 +51,25 @@ describe("isClientAbort", () => {
     expect(
       isClientAbort(new TooManyRequestsError("ai_quota_exceeded", 30), new AbortController().signal)
     ).toBe(false);
+  });
+});
+
+describe("loggableAIError", () => {
+  test("logs a provider error by name, frames and status, never the prompt it echoes", () => {
+    const logged = loggableAIError(
+      new APICallError({
+        message: "Provider rejected the prompt: secret-from-the-prompt",
+        url: "https://provider.example/v1/chat",
+        requestBodyValues: { prompt: "secret-from-the-prompt" },
+        statusCode: 500,
+      })
+    );
+
+    expect(logged).toMatchObject({ errName: "AI_APICallError", providerStatusCode: 500 });
+    expect(JSON.stringify(logged)).not.toContain("secret-from-the-prompt");
+  });
+
+  test("adds no status to an error that is not the provider's", () => {
+    expect(loggableAIError(new Error("boom"))).not.toHaveProperty("providerStatusCode");
   });
 });

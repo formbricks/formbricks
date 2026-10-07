@@ -1,8 +1,6 @@
 import "server-only";
-import { classifyAIProviderError } from "@formbricks/ai";
 import { logger } from "@formbricks/logger";
-import { isClientAbort } from "@/app/api/internal/lib/ai-stream-errors";
-import { loggableError } from "@/app/api/internal/lib/loggable-error";
+import { isClientAbort, loggableAIError } from "@/app/api/internal/lib/ai-stream-errors";
 import { createNdjsonResponse } from "@/app/api/internal/lib/ndjson-stream";
 import { createRequestAbort } from "@/app/api/internal/lib/request-abort";
 import { mapV3AIError } from "@/app/api/v3/lib/ai-errors";
@@ -41,20 +39,6 @@ const parseContentLength = (value: string | null): number | null => {
   if (value === null) return null;
   const parsed = Number(value);
   return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null;
-};
-
-/**
- * What an import failure may put in the log: `loggableError`'s name and frames, plus the AI provider's
- * status. Never a message — a message can carry the file's questions: the AI SDK's errors keep the
- * prompt or the model's output in their message and fields (`NoObjectGeneratedError.text`,
- * `TypeValidationError.value`), and pino's error serializer would log all of it.
- */
-const loggableImportError = (error: unknown): Record<string, unknown> => {
-  const providerStatusCode = error instanceof Error ? classifyAIProviderError(error)?.statusCode : undefined;
-  return {
-    ...loggableError(error),
-    ...(providerStatusCode === undefined ? {} : { providerStatusCode }),
-  };
 };
 
 /**
@@ -114,7 +98,7 @@ export async function streamQsfImport({
 
     // Not through mapV3ThrownError, which logs the error whole: a reader that fails on the file can
     // quote it in the message.
-    log.error(loggableImportError(error), "QSF import could not read the file");
+    log.error(loggableAIError(error), "QSF import could not read the file");
     return problemInternalError(requestId, undefined, instance);
   }
 
@@ -167,7 +151,7 @@ export async function streamQsfImport({
 
       const event = toQsfImportStreamErrorEvent(error);
       errorCode = event.code;
-      log.error(loggableImportError(error), "QSF import failed");
+      log.error(loggableAIError(error), "QSF import failed");
       return event;
     },
     onCancel: importAbort.abort,
