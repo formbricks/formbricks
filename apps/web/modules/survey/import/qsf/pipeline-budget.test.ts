@@ -8,6 +8,7 @@ import { QsfImportFailedError, QsfImportInputError, prepareQsfImport, runQsfImpo
 const budget = vi.hoisted(() => ({
   estimate: null as number | null,
   noLimits: false,
+  coarsest: false,
   maxCallChars: null as number | null,
   maxTotalChars: null as number | null,
 }));
@@ -29,8 +30,10 @@ vi.mock("./prompt", async (importOriginal) => {
     },
     estimateQsfMinimumPromptChars: (...args: Parameters<typeof original.estimateQsfMinimumPromptChars>) =>
       budget.estimate ?? original.estimateQsfMinimumPromptChars(...args),
-    chooseQsfPromptLimits: (...args: Parameters<typeof original.chooseQsfPromptLimits>) =>
-      budget.noLimits ? null : original.chooseQsfPromptLimits(...args),
+    chooseQsfPromptLimits: (...args: Parameters<typeof original.chooseQsfPromptLimits>) => {
+      if (budget.noLimits) return null;
+      return budget.coarsest ? original.QSF_COARSEST_PROMPT_LIMITS : original.chooseQsfPromptLimits(...args);
+    },
   };
 });
 
@@ -173,4 +176,94 @@ describe("a large, ordinary survey over the full prompt budget", () => {
       expect(logicLines.every((issue) => issue.params === undefined)).toBe(true);
     }
   );
+});
+
+describe("the coarsest tier", () => {
+  test("still shows the model an Other choice past the options it lists, so it is planned as one", async () => {
+    const choices = Object.fromEntries(
+      Array.from({ length: 10 }, (_, index) => [
+        String(index + 1),
+        index === 9
+          ? { Display: "Other, please specify", TextEntry: "true" }
+          : { Display: `Option ${index + 1}` },
+      ])
+    );
+    const qsf = {
+      SurveyEntry: { SurveyName: "Other last", SurveyLanguage: "EN" },
+      SurveyElements: [
+        {
+          Element: "SQ",
+          PrimaryAttribute: "QID1",
+          Payload: {
+            QuestionText: "Where did you hear about us?",
+            DataExportTag: "Q1",
+            QuestionType: "MC",
+            Selector: "SAVR",
+            Choices: choices,
+            ChoiceOrder: Object.keys(choices),
+          },
+        },
+        {
+          Element: "BL",
+          Payload: [{ ID: "BL_1", BlockElements: [{ Type: "Question", QuestionID: "QID1" }] }],
+        },
+        { Element: "FL", Payload: { Flow: [{ Type: "Block", ID: "BL_1" }] } },
+      ],
+    };
+    // A model that names the text-entry choice it is shown as the other choice, as the prompt asks.
+    const prompts: string[] = [];
+    const generate: TQsfPlanGenerate = async (request) => {
+      prompts.push(request.prompt);
+      const data = JSON.parse(
+        /<qualtrics_questions>\n(.*)\n<\/qualtrics_questions>/s.exec(request.prompt)?.[1] ?? "{}"
+      ) as {
+        questions: { ref: string; choices?: { key: string; textEntry?: boolean }[] }[];
+      };
+      return {
+        object: {
+          questions: data.questions.map((question) => ({
+            ref: question.ref,
+            type: "multipleChoiceSingle",
+            required: false,
+            choicesFrom: "choices",
+            rowsFrom: null,
+            columnsFrom: null,
+            otherChoiceKey: question.choices?.find((choice) => choice.textEntry)?.key ?? null,
+            noneChoiceKey: null,
+            labelKey: null,
+            excludedKeys: [],
+            contactFields: [],
+            inputType: null,
+            scale: null,
+            range: null,
+            format: null,
+            logicNotes: [],
+          })),
+          skipped: [],
+          pages: [],
+        },
+      };
+    };
+    budget.coarsest = true;
+
+    const result = await runQsfImport({
+      prepared: prepareQsfImport(qsf, "other-last.qsf"),
+      workspaceId: "clxx1234567890123456789012",
+      organizationId: "org_1",
+      userId: null,
+      signal: new AbortController().signal,
+      deadlineMs: 120_000,
+      onProgress: () => undefined,
+      generate,
+    });
+    budget.coarsest = false;
+
+    // Four options listed, then the Other one past them; the count covers only what is left out.
+    expect(prompts[0]).toContain('"moreChoices":5');
+    expect(prompts[0]).toContain('"textEntry":true');
+    const element = result.payload.blocks[0].elements[0];
+    if (element.type !== "multipleChoiceSingle") throw new Error("type");
+    expect(element.choices).toHaveLength(10);
+    expect(element.choices.at(-1)).toEqual({ id: "other", label: { "en-US": "Other, please specify" } });
+  });
 });

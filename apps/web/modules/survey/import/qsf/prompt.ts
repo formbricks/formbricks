@@ -79,8 +79,16 @@ export interface TQsfPromptTexts {
   plainDefault: ReadonlyMap<TQsfTextKey, string>;
 }
 
+/**
+ * The options a call lists: the first `limits.options`, and every text-entry or exclusive option past
+ * them. Those are the ones a plan singles out (as the other or none choice), and they usually come
+ * last, where a plain cut would hide them.
+ */
+const listedOptions = (options: TQsfOption[], limits: TPromptLimits): TQsfOption[] =>
+  options.filter((option, index) => index < limits.options || option.textEntry || option.exclusive);
+
 function describeOptions(options: TQsfOption[], texts: TQsfPromptTexts, limits: TPromptLimits) {
-  return options.slice(0, limits.options).map((option) => ({
+  return listedOptions(options, limits).map((option) => ({
     key: option.key,
     text: cut(texts.plainDefault.get(option.key) ?? "", limits.option),
     ...(option.textEntry ? { textEntry: true } : {}),
@@ -136,12 +144,12 @@ function describeQuestion(question: TQsfQuestion, texts: TQsfPromptTexts, limits
     ...(question.subSelector ? { subSelector: question.subSelector } : {}),
     text: cut(texts.plainDefault.get(question.textKey) ?? "", limits.text),
     ...(question.choices.length > 0 ? { choices: describeOptions(question.choices, texts, limits) } : {}),
-    ...(question.choices.length > limits.options
-      ? { moreChoices: question.choices.length - limits.options }
+    ...(question.choices.length > listedOptions(question.choices, limits).length
+      ? { moreChoices: question.choices.length - listedOptions(question.choices, limits).length }
       : {}),
     ...(question.answers.length > 0 ? { answers: describeOptions(question.answers, texts, limits) } : {}),
-    ...(question.answers.length > limits.options
-      ? { moreAnswers: question.answers.length - limits.options }
+    ...(question.answers.length > listedOptions(question.answers, limits).length
+      ? { moreAnswers: question.answers.length - listedOptions(question.answers, limits).length }
       : {}),
     ...(question.forceResponse ? { forceResponse: question.forceResponse } : {}),
     ...(question.contentType ? { contentType: question.contentType } : {}),
@@ -211,6 +219,8 @@ export const describedQuestionChars = (
 
 /** The loosest limits: what the AI call cap is sized for, since it describes the most rules. */
 export const QSF_LOOSEST_PROMPT_LIMITS = PROMPT_LIMITS[0];
+/** The coarsest limits, which still import a survey every other tier is too large for. */
+export const QSF_COARSEST_PROMPT_LIMITS = PROMPT_LIMITS[PROMPT_LIMITS.length - 1];
 
 /** The data one call carries, as a string, at the tightest limits the whole import needs. */
 export function describeQsfQuestions(
@@ -266,7 +276,7 @@ export function estimateQsfMinimumPromptChars(survey: TQsfSurvey): number {
     survey,
     [...survey.questions.keys()],
     { plainDefault },
-    PROMPT_LIMITS[PROMPT_LIMITS.length - 1]
+    QSF_COARSEST_PROMPT_LIMITS
   ).length;
 }
 
