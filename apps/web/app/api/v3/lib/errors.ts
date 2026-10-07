@@ -106,8 +106,8 @@ export function mapV3ThrownError(err: unknown, ctx: TV3ErrorContext): Response {
     return problemForbidden(requestId, undefined, instance);
   }
 
-  // Raised by a dependency the operation called, or by the custom CSS budget a survey write spends when
-  // it processes CSS — not by this API's own request limit, which answers in `withV3ApiWrapper` before
+  // Raised by a dependency the operation called, or by the custom CSS budget a survey or workspace write
+  // spends when it processes CSS — not by this API's own request limit, which answers in `withV3ApiWrapper` before
   // the handler runs. Passing `retryAfter` through is what stops an agent retry-looping blind.
   if (err instanceof TooManyRequestsError) {
     log.warn({ ...context, statusCode: 429, errorCode: err.name }, "V3 upstream rate limit");

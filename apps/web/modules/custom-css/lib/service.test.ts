@@ -92,6 +92,7 @@ const syntaxError = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(applyRateLimit).mockReset();
   vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(true);
   vi.mocked(processCustomCss).mockImplementation((({ input }: { input: TCustomCssInput }) =>
     processedOk(input)) as never);
@@ -491,6 +492,55 @@ describe("updateWorkspaceCustomCss", () => {
     expect(processCustomCss).toHaveBeenCalledTimes(3);
     expect(tx.workspace.update).toHaveBeenCalledTimes(1);
     expect(tx.workspace.update.mock.calls[0][0].data.customCssPrevious).toEqual(latest);
+  });
+
+  test("an edit is charged to the principal once, even when a concurrent change makes it re-resolve", async () => {
+    givenStored(stored("old{}", null), stored("second{}", null), stored("latest{}", null));
+
+    await updateWorkspaceCustomCss({
+      workspaceId: "ws_1",
+      organizationId: "org_1",
+      input: { light: "new{}", dark: null },
+      principal: "user_1",
+    });
+
+    expect(processCustomCss).toHaveBeenCalledTimes(3);
+    expect(applyRateLimit).toHaveBeenCalledTimes(1);
+    expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3CustomCss, "user_1");
+  });
+
+  test.each([
+    ["re-saving the same CSS", { light: "old{}", dark: "" }],
+    ["clearing it", null],
+  ])("%s is not charged, so it still works on a spent budget", async (_label, input) => {
+    givenStored(stored("old{}", null));
+    vi.mocked(applyRateLimit).mockRejectedValue(new TooManyRequestsError("Slow down", 30));
+
+    const outcome = await updateWorkspaceCustomCss({
+      workspaceId: "ws_1",
+      organizationId: "org_1",
+      input,
+      principal: "user_1",
+    });
+
+    expect(outcome.ok).toBe(true);
+    expect(applyRateLimit).not.toHaveBeenCalled();
+  });
+
+  test("an edit on a spent budget throws before anything is processed or written", async () => {
+    givenStored(stored("old{}", null));
+    vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("Slow down", 30));
+
+    await expect(
+      updateWorkspaceCustomCss({
+        workspaceId: "ws_1",
+        organizationId: "org_1",
+        input: { light: "new{}", dark: null },
+        principal: "user_1",
+      })
+    ).rejects.toBeInstanceOf(TooManyRequestsError);
+    expect(processCustomCss).not.toHaveBeenCalled();
+    expect(tx.workspace.update).not.toHaveBeenCalled();
   });
 
   test("the first save keeps an older recoverable revision rather than overwriting it with nothing", async () => {

@@ -7,8 +7,9 @@ import { problemTooManyRequests } from "./response";
 import type { TV3Authentication } from "./types";
 
 /**
- * The principal CSS processing is charged to: the user (session or OAuth), or the API key. Survey writes
- * pass it to the custom CSS service, which charges the same budget when the write actually processes.
+ * The principal CSS processing is charged to: the user (session or OAuth), or the API key. Survey and
+ * workspace writes pass it to the custom CSS service, which charges the same budget when the write
+ * actually processes.
  */
 export const getV3CustomCssPrincipal = (authentication: TV3Authentication): string | null => {
   if (authentication && "user" in authentication && authentication.user?.id) return authentication.user.id;
@@ -30,7 +31,7 @@ export const isCustomCssValidationRequest = (body: { operation: string; data?: u
 /**
  * The custom CSS processor runs synchronously on the request thread (up to ~0.8 s on pathological input),
  * so every operation that runs it is charged against a tighter per-principal budget on top of the v3
- * limit. CSS validation and workspace CSS saves are charged here, once per request. Survey writes — v3
+ * limit. CSS validation is charged here, once per request. Writes — the workspace CSS save, v3 survey
  * create and patch, the editor's save and autosave, copy — are charged by the custom CSS service
  * (`resolveCustomCssWrite`), and only when the write adds or edits CSS, since nothing else processes.
  * REST, MCP and the editor share the budget because they share the identifier.

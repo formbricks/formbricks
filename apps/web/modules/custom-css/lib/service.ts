@@ -163,8 +163,8 @@ export const resolveCustomCssWrite = async (args: {
   input: TCustomCssInput | null;
   /**
    * The user or API key id the processing is charged to, on the budget CSS validation spends. A spent
-   * budget throws `TooManyRequestsError` before the processor runs. Left out only by a caller that
-   * charges the budget itself, once per request: the workspace save.
+   * budget throws `TooManyRequestsError` before the processor runs. Left out only when this request has
+   * already been charged: a workspace save that re-resolves after a concurrent change.
    */
   principal?: string | null;
 }): Promise<TCustomCssWriteOutcome> => {
@@ -424,16 +424,24 @@ const commitWorkspaceCustomCss = async <TOutcome extends TCustomCssWriteOutcome 
  * what becomes `customCssPrevious` — so the save re-resolves against the newer value, once. A third
  * contender is settled under the lock, so every save still ends in one serialized decision. Failures
  * and unchanged source write nothing, so the previous revision stays live.
+ *
+ * Like every other write, only processing is charged to `principal`'s custom CSS budget: re-saving the
+ * same CSS or clearing it is free, so a spent budget never stops anyone from removing their CSS.
  */
 export const updateWorkspaceCustomCss = async (args: {
   workspaceId: string;
   organizationId: string;
   input: TCustomCssInput | null;
+  principal?: string | null;
 }): Promise<TWorkspaceCustomCssWriteOutcome> => {
   const { workspaceId, organizationId, input } = args;
-  // No principal: the route charges the custom CSS budget once per request, however often this re-resolves.
-  const resolve = (existing: TCustomCssStored | null) =>
-    resolveCustomCssWrite({ scope: "workspace", organizationId, existing, input });
+  // Charged at most once per save, however often a concurrent change makes it re-resolve.
+  let uncharged = args.principal ?? null;
+  const resolve = (existing: TCustomCssStored | null) => {
+    const principal = uncharged;
+    if (classifyCustomCssChange(existing, input) === "edit") uncharged = null;
+    return resolveCustomCssWrite({ scope: "workspace", organizationId, existing, input, principal });
+  };
   const finish = async (
     outcome: TCustomCssWriteOutcome,
     replaced: TCustomCssStored | null

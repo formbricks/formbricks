@@ -9,7 +9,7 @@ import {
   customCssErrorsToInvalidParams,
   toV3WriteExtensions,
 } from "@/app/api/v3/lib/custom-css";
-import { applyV3CustomCssRateLimit } from "@/app/api/v3/lib/custom-css-rate-limit";
+import { getV3CustomCssPrincipal } from "@/app/api/v3/lib/custom-css-rate-limit";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
   problemBadRequest,
@@ -132,15 +132,13 @@ export async function patchV3WorkspaceCustomCss({
       return problemForbidden(requestId, WORKSPACE_CUSTOM_CSS_PERMISSION_MESSAGE, instance);
     }
 
-    const rateLimited = await applyV3CustomCssRateLimit({ authentication, requestId, instance });
-    if (rateLimited) {
-      return rateLimited;
-    }
-
+    // The service charges the custom CSS budget only when the save processes CSS; a spent budget throws
+    // `TooManyRequestsError`, which answers 429 below.
     const outcome = await updateWorkspaceCustomCss({
       workspaceId: context.workspaceId,
       organizationId: context.organizationId,
       input: parsed.data.customCss,
+      principal: getV3CustomCssPrincipal(authentication),
     });
 
     if (!outcome.ok) {

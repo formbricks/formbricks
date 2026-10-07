@@ -72,9 +72,10 @@ patch:
     **`manage`** grant on this workspace for API keys — a Read & write grant is refused with **403**.
     On Formbricks Cloud, adding or editing needs the Scale plan (**403**
     `custom_css_plan_required`); clearing never does. Successful changes refresh the cached
-    configuration the SDKs receive (they pick it up on their next configuration fetch). Saves count
-    against a custom CSS budget of 60 per minute per user or API key, shared with custom CSS
-    validation and with survey writes that add or edit custom CSS; beyond it they return **429**.
+    configuration the SDKs receive (they pick it up on their next configuration fetch). Saves that
+    add or edit CSS count against a custom CSS budget of 60 per minute per user or API key, shared
+    with custom CSS validation and with survey writes that add or edit custom CSS; beyond it they
+    return **429**. Re-saving the same CSS and clearing it are never counted.
   tags:
     - V3 Workspaces
   parameters:

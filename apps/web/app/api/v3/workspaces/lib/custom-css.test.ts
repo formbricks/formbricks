@@ -6,7 +6,6 @@ import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import { can } from "@/lib/authorization";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
-import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getCustomCssHealth } from "@/modules/custom-css/lib/delivery";
 import { getWorkspaceCustomCssRecord, updateWorkspaceCustomCss } from "@/modules/custom-css/lib/service";
 import { getCustomCssPermission } from "@/modules/ee/license-check/lib/utils";
@@ -182,6 +181,7 @@ describe("patchV3WorkspaceCustomCss", () => {
       workspaceId,
       organizationId: "org_1",
       input: { light: "b{}", dark: null },
+      principal: authentication === owner ? "user_owner" : "key_manage",
     });
     expect(await readJson(response)).toMatchObject({
       data: { customCss: { light: "b{}", dark: null }, previous: { light: "a{}", dark: null } },
@@ -200,19 +200,29 @@ describe("patchV3WorkspaceCustomCss", () => {
     expect(updateWorkspaceCustomCss).not.toHaveBeenCalled();
   });
 
-  test("a save spends the principal's custom CSS budget; a spent budget is a 429 and nothing is processed", async () => {
+  test("a save is charged to the caller by the service, which spends the budget only when it processes", async () => {
     await patch(manageKey, { customCss: { light: "b{}", dark: null } });
-    expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3CustomCss, "key_manage");
+    await patch(owner, { customCss: null });
 
-    vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("Slow down", 42));
-    vi.mocked(updateWorkspaceCustomCss).mockClear();
+    expect(updateWorkspaceCustomCss).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ principal: "key_manage" })
+    );
+    expect(updateWorkspaceCustomCss).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ principal: "user_owner" })
+    );
+    // Not charged up front: an unchanged save or a clear must still work on a spent budget.
+    expect(applyRateLimit).not.toHaveBeenCalled();
+  });
+
+  test("a spent budget is a 429 with Retry-After", async () => {
+    vi.mocked(updateWorkspaceCustomCss).mockRejectedValueOnce(new TooManyRequestsError("Slow down", 42));
     const response = await patch(owner, { customCss: { light: "c{}", dark: null } });
 
-    expect(applyRateLimit).toHaveBeenLastCalledWith(rateLimitConfigs.api.v3CustomCss, "user_owner");
     expect(response.status).toBe(429);
     expect(response.headers.get("Retry-After")).toBe("42");
     expect(await readJson(response)).toMatchObject({ code: "too_many_requests" });
-    expect(updateWorkspaceCustomCss).not.toHaveBeenCalled();
   });
 
   test("a refused caller does not spend the custom CSS budget", async () => {
