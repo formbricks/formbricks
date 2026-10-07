@@ -78,13 +78,13 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
           e.preventDefault();
           void form.handleSubmit(inviteTeamMembers)(e);
         }}
-        className="space-y-4">
+        className="w-full space-y-4">
         <div className="flex flex-col items-center gap-y-4">
           <h2 className="text-2xl font-medium">{t("setup.invite.invite_your_organization_members")}</h2>
           <p>{t("setup.invite.life_s_no_fun_alone")}</p>
 
           {Array.from({ length: membersCount }).map((_, index) => (
-            <div key={`member-${index.toString()}`} className="space-y-2">
+            <div key={`member-${index.toString()}`} className="w-full max-w-80 space-y-2">
               <FormField
                 control={form.control}
                 name={`member-${index.toString()}.email`}
@@ -96,7 +96,7 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
                           <Input
                             {...field}
                             placeholder={`user@example.com`}
-                            className="w-80"
+                            className="w-full"
                             isInvalid={Boolean(error?.message)}
                           />
                         </div>
@@ -117,7 +117,7 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
                           <Input
                             {...field}
                             placeholder={t("common.full_name")}
-                            className="w-80"
+                            className="w-full"
                             isInvalid={Boolean(error?.message)}
                           />
                         </div>
@@ -143,15 +143,15 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
 
           <hr className="my-6 w-full border-slate-200" />
 
-          <div className="space-y-2">
+          <div className="w-full max-w-80 space-y-2">
             <Button
-              className="flex w-80 justify-center"
+              className="flex w-full justify-center"
               type="submit"
               loading={isSubmitting}
               disabled={isSubmitting}>
               {t("setup.invite.continue")}
             </Button>
-            <Button type="button" variant="ghost" className="flex w-80 justify-center" onClick={handleSkip}>
+            <Button type="button" variant="ghost" className="flex w-full justify-center" onClick={handleSkip}>
               {t("setup.invite.skip")}
             </Button>
           </div>
