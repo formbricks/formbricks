@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import { type Stripe as StripeJs, loadStripe } from "@stripe/stripe-js";
 import type { TFunction } from "i18next";
 import { CheckIcon } from "lucide-react";
@@ -528,6 +529,10 @@ export const PricingTable = ({
       void (async () => {
         try {
           await waitForBillingPaymentMethodAction({ organizationId });
+        } catch (error) {
+          // Best-effort: the reload below renders whatever has synced. Reported rather than left to
+          // raise the global "check that it was saved and try again" notice right after checkout.
+          Sentry.captureException(error);
         } finally {
           toast.dismiss(cardSyncToastId);
           // Full reload strips checkout_success (blocks re-run on back-nav/refresh) and
@@ -631,7 +636,13 @@ export const PricingTable = ({
       }
     };
 
-    void run();
+    // A rejection means the outcome is unknown -- the server may have applied the upgrade. Settle like a
+    // poll that timed out (the webhook still lands the plan) and report it, rather than leaving the
+    // loading toast up and raising the global "try again" notice for a customer who just paid (ENG-2899).
+    void run().catch((error: unknown) => {
+      Sentry.captureException(error);
+      settleWithoutReload(t("workspace.settings.billing.upgrade_checkout_pending"));
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, router, t, organizationId]);
 
