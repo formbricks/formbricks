@@ -358,6 +358,13 @@ describe("resolveCreateResponseContext V2", () => {
     });
   });
 
+  test("maps a Prisma error from the contact lookup to DatabaseError", async () => {
+    vi.mocked(getContact).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("lookup failed", { code: "P2039", clientVersion: "test" })
+    );
+    await expect(resolveCreateResponseContext({ workspaceId, contactId })).rejects.toThrow(DatabaseError);
+  });
+
   test("skips the contact lookup without a contactId", async () => {
     await expect(resolveCreateResponseContext(mockResponseInput)).resolves.toEqual({ contact: null });
     expect(getContact).not.toHaveBeenCalled();

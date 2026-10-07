@@ -54,7 +54,12 @@ export type TClientResponseWriter<TInput> = {
   ) => Promise<TResponse>;
 };
 
-/** A caller-owned transaction plus everything that had to be read before it opened. */
+/**
+ * A caller-owned transaction plus everything that had to be read before it opened. Nothing here is
+ * re-checked against the response input: `responseContext` must come from the version's
+ * `resolveCreateResponseContext` for the same workspace and respondent, or its contact is linked to a
+ * response it does not belong to.
+ */
 export type TCreateResponseTxContext = {
   tx: Prisma.TransactionClient;
   quotaContext: TQuotaEvaluationContext | null;
