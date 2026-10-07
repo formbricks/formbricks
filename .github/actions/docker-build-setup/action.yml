@@ -74,7 +74,7 @@ runs:
       # Install cosign when requested AND when we might actually sign images
       # (i.e., non-PR contexts or when we login on PRs)
       if: ${{ inputs.setup_cosign == 'true' && (inputs.skip_login_on_pr == 'false' || github.event_name != 'pull_request') }}
-      uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+      uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
 
     - name: Log into registry
       if: ${{ inputs.registry != '' && (inputs.skip_login_on_pr == 'false' || github.event_name != 'pull_request') }}

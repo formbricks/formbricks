@@ -238,7 +238,7 @@ jobs:
 
       - name: Install cosign
         if: steps.existing.outputs.exists == 'false'
-        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
 
       # Mirrors .github/actions/build-and-push-docker: sign every pushed tag by the digest it points at.
       - name: Sign the image
