@@ -26,8 +26,9 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
         <SentryClientConfigScript />
         <NoScriptWarning locale={locale} />
         <I18nProvider language={locale} defaultLanguage={DEFAULT_LOCALE}>
-          <ServerActionNotices />
           {children}
+          {/* After the page, so keyboard users reach the notices by tabbing on from its content. */}
+          <ServerActionNotices />
         </I18nProvider>
       </body>
     </html>

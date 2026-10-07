@@ -21,7 +21,7 @@ interface AutoSaveIndicatorProps {
 
 const toneClassName = {
   neutral: "border-slate-200 bg-slate-100 text-slate-600",
-  success: "border-green-600 bg-green-50 text-green-800",
+  success: "border-success bg-success-background text-success-foreground",
   warning: "border-warning/50 bg-warning-background text-warning-foreground",
 } as const;
 
