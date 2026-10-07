@@ -76,6 +76,17 @@ describe("isScannerMultipartNoise", () => {
     );
   });
 
+  test("keeps a parse failure when another link in the chain carries no stack", () => {
+    expect(
+      isScannerMultipartNoise(
+        errorEvent([
+          { type: "Error", value: "missing boundary in content-type header" },
+          parseFailure([undiciFrame("formData")]),
+        ])
+      )
+    ).toBe(false);
+  });
+
   test("keeps an unrelated error even when its stack is entirely undici", () => {
     expect(
       isScannerMultipartNoise(

@@ -26,9 +26,10 @@ const isNodeUndiciFrame = (frame: { filename?: string; abs_path?: string }): boo
  * no first-party frame at all, while a real `request.formData()` failure is reached from one of our
  * route handlers and carries its frame.
  *
- * So: the message has to appear, and *nothing anywhere in the chain* may sit outside undici. An event
- * with no stack at all is not evidence of a scanner either -- a parse failure we cannot place keeps
- * reporting, because being unable to attribute it is a reason to look, not a reason to drop it.
+ * So: the message has to appear, and *nothing anywhere in the chain* may sit outside undici. A link we
+ * cannot place keeps the event reporting -- where a value carries no stack, the frame our handler
+ * would have contributed may simply be missing, and being unable to attribute it is a reason to look,
+ * not a reason to drop.
  */
 export const isScannerMultipartNoise = (event: ErrorEvent): boolean => {
   const values = event.exception?.values;
@@ -41,7 +42,9 @@ export const isScannerMultipartNoise = (event: ErrorEvent): boolean => {
     return false;
   }
 
-  const frames = values.flatMap((value) => value.stacktrace?.frames ?? []);
+  if (values.some((value) => !value.stacktrace?.frames?.length)) {
+    return false;
+  }
 
-  return frames.length > 0 && frames.every(isNodeUndiciFrame);
+  return values.flatMap((value) => value.stacktrace?.frames ?? []).every(isNodeUndiciFrame);
 };
