@@ -118,6 +118,17 @@ describe("POST /api/internal/surveys/import/stream", () => {
     expect(mocks.streamQsfImport).not.toHaveBeenCalled();
   });
 
+  test("reads a file past the 2 MB default, since the import sets its own limit", async () => {
+    // No Content-Length, so the limit applies while the body streams in rather than from the header.
+    const threeMegabytes = "x".repeat(3 * 1024 * 1024);
+
+    const response = await post({ ...body, qsf: { ...body.qsf, Padding: threeMegabytes } });
+
+    expect(response.status).toBe(200);
+    expect(mocks.streamQsfImport).toHaveBeenCalledTimes(1);
+    await response.text();
+  });
+
   test("answers 413 over the import's body limit", async () => {
     const response = await post(body, { "Content-Length": String(QSF_IMPORT_BODY_LIMIT_BYTES + 1) });
 
