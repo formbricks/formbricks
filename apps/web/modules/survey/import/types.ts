@@ -20,6 +20,7 @@ export type TQsfImportStage = "reading" | "ai" | "assembling";
  * - `formatting_dropped` — text colors and other inline styles; at most one per survey (ENG-3607)
  * - `headline_fallback` — the headline was empty after sanitizing, so the export tag stands in (ENG-3607)
  * - `field_renamed` — an embedded data name Formbricks refuses, renamed (ENG-3606)
+ * - `field_dropped` — embedded data names past the most a survey can hold, left out (`params.count`)
  * - `external_url_removed` — a link the organization's plan does not allow, removed (ENG-3411)
  * - `language_skipped` — a Qualtrics language code with no Formbricks equivalent; its translations are
  *   left out (`params.code`; `params.fallback` when it was the survey's default language)
@@ -45,6 +46,7 @@ export type TQsfImportIssueCode =
   | "formatting_dropped"
   | "headline_fallback"
   | "field_renamed"
+  | "field_dropped"
   | "external_url_removed"
   | "language_skipped"
   | "translation_fallback"

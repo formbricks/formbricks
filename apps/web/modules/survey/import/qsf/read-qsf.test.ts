@@ -146,6 +146,28 @@ describe("readQsf", () => {
     expect(survey.embeddedDataNames).toEqual(["firstName", "Store-Name", "userId", "plan tier"]);
   });
 
+  test("keeps the first 200 embedded data names and reports the rest, instead of refusing the file", () => {
+    const fields = Array.from({ length: 205 }, (_, index) => ({ Field: `field_${index + 1}` }));
+    const survey = readQsf(
+      minimalQsf([
+        sq("QID1", { QuestionText: "Hi ${e://Field/piped_extra}" }),
+        bl(["QID1"]),
+        fl([
+          { Type: "EmbeddedData", EmbeddedData: fields },
+          { Type: "Block", ID: "BL_1" },
+        ]),
+      ])
+    );
+
+    expect(survey.embeddedDataNames).toHaveLength(200);
+    expect(survey.embeddedDataNames.at(-1)).toBe("field_200");
+    expect(survey.issues).toContainEqual({
+      code: "field_dropped",
+      severity: "warning",
+      params: { count: 6 },
+    });
+  });
+
   test("ignores a message library reference as the end message", () => {
     const survey = readQsf(
       minimalQsf([sq("QID1"), bl(["QID1"]), fl(), { Element: "SO", Payload: { EOSMessage: "MS_abc123" } }])

@@ -787,11 +787,15 @@ class QsfReader {
       for (const raw of text.byLanguage.values()) collectEmbeddedDataReferences(raw).forEach(add);
     }
 
+    // Past what a survey can hold, the first ones are kept — the flow's, then the ones texts pipe in —
+    // and the rest dropped with one line. Piped text that names a dropped field is then removed.
     if (names.length > QSF_MAX_HIDDEN_FIELDS) {
-      throw inputError(
-        "qsf.SurveyElements",
-        `The survey has more than ${QSF_MAX_HIDDEN_FIELDS} embedded data fields, the most a Formbricks survey can have`
-      );
+      this.issues.push({
+        code: "field_dropped",
+        severity: "warning",
+        params: { count: names.length - QSF_MAX_HIDDEN_FIELDS },
+      });
+      return names.slice(0, QSF_MAX_HIDDEN_FIELDS);
     }
     return names;
   }

@@ -18,7 +18,7 @@ export const QSF_MAX_OPTIONS_PER_QUESTION = 200;
 /** Languages, the default included: the v3 survey document's own cap. */
 export const QSF_MAX_LANGUAGES = V3_SURVEY_MAX_LANGUAGES;
 
-/** Embedded data fields, which become hidden fields: the v3 survey document's own cap. */
+/** Embedded data fields kept as hidden fields: the v3 survey document's own cap. The rest are dropped. */
 export const QSF_MAX_HIDDEN_FIELDS = V3_SURVEY_MAX_HIDDEN_FIELDS;
 
 /** Nesting of the survey flow (branches, groups and randomizers inside each other). */
