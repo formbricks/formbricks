@@ -27,6 +27,7 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
+import { PreviewAppearanceSwitch } from "@/modules/ui/components/styling-appearance";
 import { SurveyInline } from "@/modules/ui/components/survey";
 import { Modal } from "./components/modal";
 import { TabOption } from "./components/tab-option";
@@ -47,6 +48,8 @@ interface PreviewSurveyProps {
   publicDomain: string;
   /** Dark only applies to app surveys; link previews stay light (D4). */
   appearance?: TStylingAppearance;
+  /** Shows the sun / moon switch next to the device toggle when set. */
+  onAppearanceChange?: (appearance: TStylingAppearance) => void;
   /**
    * Compiled workspace + survey custom CSS to preview (ENG-3552): the editor's validated draft. Passed
    * straight to the renderer, which applies CSS from this prop only — never from `survey`.
@@ -68,6 +71,7 @@ export const PreviewSurvey = ({
   isSpamProtectionAllowed,
   publicDomain,
   appearance = "light",
+  onAppearanceChange,
   customCss,
 }: PreviewSurveyProps) => {
   // Both callers hand over a survey that already carries its `embeddedFields`: the editor's working
@@ -589,20 +593,29 @@ export const PreviewSurvey = ({
           />
         )}
 
-        {/* for toggling between mobile and desktop mode  */}
-        <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
-          <TabOption
-            active={previewMode === "mobile"}
-            icon={<SmartphoneIcon className="mx-4 my-2 size-4 text-slate-700" />}
-            label={t("workspace.surveys.edit.mobile_preview")}
-            onClick={() => handlePreviewModeChange("mobile")}
-          />
-          <TabOption
-            active={previewMode === "desktop"}
-            icon={<MonitorIcon className="mx-4 my-2 size-4 text-slate-700" />}
-            label={t("workspace.surveys.edit.desktop_preview")}
-            onClick={() => handlePreviewModeChange("desktop")}
-          />
+        <div
+          className={cn(
+            "mt-2 flex items-center",
+            onAppearanceChange ? "w-5/6 justify-between" : "justify-center"
+          )}>
+          {/* for toggling between mobile and desktop mode  */}
+          <div className="flex rounded-full border-2 border-slate-300 p-1">
+            <TabOption
+              active={previewMode === "mobile"}
+              icon={<SmartphoneIcon className="mx-4 my-2 size-4 text-slate-700" />}
+              label={t("workspace.surveys.edit.mobile_preview")}
+              onClick={() => handlePreviewModeChange("mobile")}
+            />
+            <TabOption
+              active={previewMode === "desktop"}
+              icon={<MonitorIcon className="mx-4 my-2 size-4 text-slate-700" />}
+              label={t("workspace.surveys.edit.desktop_preview")}
+              onClick={() => handlePreviewModeChange("desktop")}
+            />
+          </div>
+          {onAppearanceChange && (
+            <PreviewAppearanceSwitch appearance={appearance} onChange={onAppearanceChange} />
+          )}
         </div>
       </div>
     </MotionConfig>

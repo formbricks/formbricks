@@ -25,6 +25,8 @@ type FormStylingSettingsProps = {
   disabled?: boolean;
   form: UseFormReturn<TWorkspaceStyling | TSurveyStyling>;
   onSuggestColorsClick?: () => void;
+  /** Rendered right under the brand color, e.g. its dark contrast warnings. */
+  brandColorNotice?: React.ReactNode;
 };
 
 export const FormStylingSettings = ({
@@ -34,6 +36,7 @@ export const FormStylingSettings = ({
   setOpen,
   form,
   onSuggestColorsClick,
+  brandColorNotice,
 }: FormStylingSettingsProps) => {
   const { t } = useTranslation();
   // In Dark the brand color field shows an "Automatic" hint under the input; the button keeps the
@@ -104,6 +107,7 @@ export const FormStylingSettings = ({
               </Button>
             </div>
           )}
+          {!isSettingsPage && brandColorNotice}
 
           {/* Headlines & Descriptions */}
           <StylingSection

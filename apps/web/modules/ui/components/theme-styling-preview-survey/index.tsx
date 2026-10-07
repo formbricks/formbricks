@@ -1,7 +1,6 @@
 "use client";
 
 import { MotionConfig, Variants, motion } from "framer-motion";
-import { MoonIcon, SunIcon } from "lucide-react";
 import { Fragment, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TRendererCustomCss } from "@formbricks/types/custom-css";
@@ -22,6 +21,7 @@ import {
   previewBoundaryProps,
 } from "@/modules/ui/components/preview-survey/lib/containment";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
+import { PreviewAppearanceSwitch } from "@/modules/ui/components/styling-appearance";
 import { SurveyInline } from "@/modules/ui/components/survey";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
@@ -333,28 +333,7 @@ export const ThemeStylingPreviewSurvey = ({
           </div>
 
           {onAppearanceChange && (
-            <div className="flex rounded-full border-2 border-slate-300 p-1">
-              {(
-                [
-                  ["light", SunIcon, t("workspace.look.appearance_light")],
-                  ["dark", MoonIcon, t("workspace.look.appearance_dark")],
-                ] as const
-              ).map(([value, Icon, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  aria-label={label}
-                  aria-pressed={appearance === value}
-                  title={label}
-                  className={cn(
-                    "cursor-pointer rounded-full px-3 py-1 text-slate-700",
-                    appearance === value && "bg-slate-200"
-                  )}
-                  onClick={() => onAppearanceChange(value)}>
-                  <Icon className="size-4" aria-hidden />
-                </button>
-              ))}
-            </div>
+            <PreviewAppearanceSwitch appearance={appearance} onChange={onAppearanceChange} />
           )}
         </div>
       </div>

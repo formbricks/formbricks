@@ -1,10 +1,11 @@
 "use client";
 
-import { AlertTriangleIcon } from "lucide-react";
+import { AlertTriangleIcon, MoonIcon, SunIcon } from "lucide-react";
 import { type ReactNode, createContext, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { type TDarkContrastWarning, getDarkContrastWarnings } from "@formbricks/types/dark-palette";
 import { type TBaseStyling } from "@formbricks/types/styling";
+import { cn } from "@/lib/cn";
 import { type TStylingAppearance } from "@/lib/styling/dark-mode";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -52,6 +53,36 @@ export const StylingAppearanceToggle = ({ appearance, onChange }: Readonly<Styli
           </AlertDescription>
         </Alert>
       )}
+    </div>
+  );
+};
+
+/** Sun / moon switch under a styling preview; drives the same appearance as the Light / Dark toggle. */
+export const PreviewAppearanceSwitch = ({ appearance, onChange }: Readonly<StylingAppearanceToggleProps>) => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex rounded-full border-2 border-slate-300 p-1">
+      {(
+        [
+          ["light", SunIcon, t("workspace.look.appearance_light")],
+          ["dark", MoonIcon, t("workspace.look.appearance_dark")],
+        ] as const
+      ).map(([value, Icon, label]) => (
+        <button
+          key={value}
+          type="button"
+          aria-label={label}
+          aria-pressed={appearance === value}
+          title={label}
+          className={cn(
+            "cursor-pointer rounded-full px-3 py-1 text-slate-700",
+            appearance === value && "bg-slate-200"
+          )}
+          onClick={() => onChange(value)}>
+          <Icon className="size-4" aria-hidden />
+        </button>
+      ))}
     </div>
   );
 };
