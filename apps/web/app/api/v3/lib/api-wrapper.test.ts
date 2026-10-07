@@ -1218,6 +1218,24 @@ describe("per-route concurrency limit", () => {
     expect(limiter.inFlight).toBe(0);
   });
 
+  test("refuses a rate-limited caller for its rate limit even when every slot is taken", async () => {
+    // The rate limit answers first: a caller over it hears 429 and when to retry, not that the server
+    // is busy, and never takes a slot it was not going to use.
+    const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
+    const limiter = new ConcurrencyLimiter(1);
+    const held = limiter.tryAcquire("someone_else");
+    vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("slow down", 60));
+
+    const response = await limitedRoute(limiter, async () => Response.json({ ok: true }))(
+      postJson('{"a":"x"}'),
+      {} as never
+    );
+
+    expect(response.status).toBe(429);
+    await expect(response.json()).resolves.toMatchObject({ code: "too_many_requests" });
+    if (held.ok) held.release();
+  });
+
   test("frees the slot after a plain response, and after a request that fails validation", async () => {
     const limiter = new ConcurrencyLimiter(1);
     const route = limitedRoute(limiter, async () => Response.json({ ok: true }));
