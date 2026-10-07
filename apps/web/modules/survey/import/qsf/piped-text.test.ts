@@ -48,6 +48,24 @@ describe("replacePipedText", () => {
     );
   });
 
+  test("breaks up a recall token that forms when a pipe between its letters is removed", () => {
+    const result = replacePipedText("#rec${lm://x}all:Q1/fallback:FILE TEXT#", context);
+
+    expect(result.text).toBe("# recall:Q1/fallback:FILE TEXT#");
+    expect(result.text).not.toContain("#recall:");
+  });
+
+  test("keeps file text that runs on from one of its own recalls from reading as another", () => {
+    const result = replacePipedText("${q://QID1/ChoiceTextEntryValue}recall:Q9/fallback:FILE#", context);
+
+    expect(result.text).toBe(`#recall:Q1/fallback:${QSF_RECALL_FALLBACK}# recall:Q9/fallback:FILE#`);
+    expect(result.text.match(/#recall:/g)).toHaveLength(1);
+  });
+
+  test("ignores placeholder characters the file wrote itself", () => {
+    expect(replacePipedText("\uE0000\uE001 ${lm://x}", context).text).toBe("0");
+  });
+
   test("keeps the fallback free of what the editor or the token format refuses", () => {
     expect(QSF_RECALL_FALLBACK.length).toBeGreaterThan(0);
     expect(QSF_RECALL_FALLBACK).not.toMatch(/[#\s]/);

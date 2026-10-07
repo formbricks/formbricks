@@ -34,12 +34,23 @@ export interface TPipedTextContext {
 const recallToken = (id: string): string => `#recall:${id}/fallback:${QSF_RECALL_FALLBACK}#`;
 
 /**
+ * Stand-ins for the recall tokens this import writes, while file text around them is made safe. From
+ * Unicode's private use area, and removed from the text first, so the file cannot forge one.
+ */
+const PLACEHOLDER_START = "\uE000";
+const PLACEHOLDER_END = "\uE001";
+const PLACEHOLDER_PATTERN = /\uE000(\d+)\uE001/g;
+
+/**
  * Qualtrics piped text → Formbricks recall. `${q://QID3/…}` recalls the element QID3 became, when that
  * element is in an earlier block; `${e://Field/name}` recalls the hidden field the name became; every
  * other pipe (`lm://`, `rand://`, `date://`, a later question) has no equivalent and is removed.
  *
- * A `#recall:` already in the text is broken up first: it is the file's text, and must not become a
- * live reference.
+ * Any `#recall:` left in the text afterwards is the file's own, and is broken up: whether it was there
+ * from the start or formed when a pipe between its letters was removed (`#rec${lm://x}all:…`), it must
+ * not become a live reference with a fallback the file wrote. The import's own tokens sit behind
+ * placeholders meanwhile, and file text that would run on from one of them (`…#recall:…`) is broken
+ * up too.
  *
  * Without a context (choice labels, which do not render recall) every pipe is removed.
  */
@@ -50,20 +61,34 @@ export function replacePipedText(
   if (!text.includes("${") && !text.includes("#recall:")) return { text, removed: 0 };
 
   let removed = 0;
-  const replaced = text
-    .replaceAll("#recall:", "# recall:")
+  const tokens: string[] = [];
+  const placeholder = (token: string) => {
+    tokens.push(token);
+    return `${PLACEHOLDER_START}${tokens.length - 1}${PLACEHOLDER_END}`;
+  };
+
+  let replaced = text
+    .replaceAll(PLACEHOLDER_START, "")
+    .replaceAll(PLACEHOLDER_END, "")
     .replaceAll(PIPED_TEXT_PATTERN, (_token: string, scheme: string, body: string) => {
       if (context && scheme === "q") {
         const id = context.recallElement(body.split("/")[0]);
-        if (id) return recallToken(id);
+        if (id) return placeholder(recallToken(id));
       } else if (context && scheme === "e") {
         const [kind, name] = body.split("/");
         const id = kind === "Field" && name ? context.hiddenField(name) : null;
-        if (id) return recallToken(id);
+        if (id) return placeholder(recallToken(id));
       }
       removed += 1;
       return "";
     });
 
-  return { text: removed > 0 ? replaced.replaceAll(/ {2,}/g, " ").trim() : replaced, removed };
+  if (removed > 0) replaced = replaced.replaceAll(/ {2,}/g, " ").trim();
+  replaced = replaced
+    .replaceAll("#recall:", "# recall:")
+    // Our token ends with `#`: file text starting `recall:` right after it would read as another one.
+    .replaceAll(`${PLACEHOLDER_END}recall:`, `${PLACEHOLDER_END} recall:`)
+    .replaceAll(PLACEHOLDER_PATTERN, (_match: string, index: string) => tokens[Number(index)] ?? "");
+
+  return { text: replaced, removed };
 }
