@@ -2276,8 +2276,6 @@
       "status_valid_with_notes": "CSSは保存できます。以下の注意事項を確認してください:",
       "status_valid_with_warnings": "CSSは保存できます。{count, plural, other {{count}件のルールが}}削除されます:",
       "survey_precedence": "ワークスペースのCSSの後に適用されるため、両方で同じ要素にスタイルを指定している場合は、こちらが優先されます。",
-      "tidy": "整形",
-      "tidy_failed": "このCSSは整形できませんでした。まずエラーを修正してください。",
       "title": "カスタムCSS",
       "unsaved_changes_restored": "以前の未保存の変更を復元しました",
       "upload": ".cssをアップロード",

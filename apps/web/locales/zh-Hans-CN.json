@@ -2276,8 +2276,6 @@
       "status_valid_with_notes": "CSS 可以保存。请查看以下说明:",
       "status_valid_with_warnings": "CSS 可以保存。{count, plural, other {有 {count} 条规则将被移除:}}",
       "survey_precedence": "它位于工作区 CSS 之后,因此当两者对同一元素设置样式时,将以它为准。",
-      "tidy": "整理",
-      "tidy_failed": "无法整理此 CSS,请先修复其中的错误。",
       "title": "自定义 CSS",
       "unsaved_changes_restored": "已恢复之前未保存的更改",
       "upload": "上传 .css 文件",

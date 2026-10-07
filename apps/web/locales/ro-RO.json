@@ -2276,8 +2276,6 @@
       "status_valid_with_notes": "CSS-ul poate fi salvat. Verifică notele de mai jos:",
       "status_valid_with_warnings": "CSS-ul poate fi salvat. {count, plural, one {A fost eliminată {count} regulă} few {Au fost eliminate {count} reguli} other {Au fost eliminate {count} de reguli}}:",
       "survey_precedence": "Se aplică după CSS-ul spațiului de lucru, deci îl suprascrie acolo unde ambele stilizează același element.",
-      "tidy": "Formatează",
-      "tidy_failed": "Acest CSS nu a putut fi formatat. Remediază mai întâi erorile.",
       "title": "CSS personalizat",
       "unsaved_changes_restored": "Modificările nesalvate anterioare au fost restaurate",
       "upload": "Încarcă .css",

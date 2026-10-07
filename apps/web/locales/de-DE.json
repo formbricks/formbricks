@@ -2276,8 +2276,6 @@
       "status_valid_with_notes": "CSS kann gespeichert werden. Beachte die folgenden Hinweise:",
       "status_valid_with_warnings": "CSS kann gespeichert werden. {count, plural, one {{count} Regel wird} other {{count} Regeln werden}} entfernt:",
       "survey_precedence": "Es kommt nach dem Workspace-CSS und überschreibt es daher, wenn beide dasselbe Element formatieren.",
-      "tidy": "Aufräumen",
-      "tidy_failed": "Dieses CSS konnte nicht aufgeräumt werden. Behebe zuerst die Fehler.",
       "title": "Benutzerdefiniertes CSS",
       "unsaved_changes_restored": "Nicht gespeicherte Änderungen von zuvor wiederhergestellt",
       "upload": ".css hochladen",

@@ -1,10 +1,9 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { CheckIcon, ExternalLinkIcon, UploadIcon, WandSparklesIcon } from "lucide-react";
+import { CheckIcon, ExternalLinkIcon, UploadIcon } from "lucide-react";
 import Link from "next/link";
 import { type ChangeEvent, type ReactNode, useId, useRef, useState } from "react";
-import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { type TCustomCssAppearance, type TCustomCssScope } from "@formbricks/types/custom-css";
 import { cn } from "@/lib/cn";
@@ -19,7 +18,6 @@ import { CUSTOM_CSS_DOCS_URL } from "./lib/constants";
 import { type TCustomCssDraft, getCustomCssByteLimit, getCustomCssByteSize } from "./lib/draft";
 import { type TCustomCssEditMode } from "./lib/edit-mode";
 import { shouldShowDarkPreviewHint } from "./lib/hints";
-import { tidyCss } from "./lib/tidy";
 import { CUSTOM_CSS_FILE_ACCEPT, checkCustomCssFile, stripByteOrderMark } from "./lib/upload";
 import { type TCustomCssValidationState } from "./lib/validation";
 
@@ -52,7 +50,7 @@ interface CustomCssCardProps {
 
 /**
  * The Custom CSS card shared by the Appearance settings and the survey editor's Styling tab (ENG-3553,
- * ENG-3723). One code field per appearance, with upload and tidy. It renders what it is given; the
+ * ENG-3723). One code field per appearance, with upload. It renders what it is given; the
  * check, the preview and saving belong to the caller.
  */
 export const CustomCssCard = ({
@@ -84,7 +82,6 @@ export const CustomCssCard = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fieldRef = useRef<TCssCodeFieldHandle>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [isTidying, setIsTidying] = useState(false);
 
   const byteLimit = getCustomCssByteLimit(scope);
   const byteSize = getCustomCssByteSize(draft);
@@ -132,18 +129,6 @@ export const CustomCssCard = ({
       else setField(text);
     } catch {
       setUploadError(t("workspace.custom_css.upload_read_failed"));
-    }
-  };
-
-  const handleTidy = async () => {
-    setIsTidying(true);
-    try {
-      const tidied = await tidyCss(value);
-      if (tidied !== value) fieldRef.current?.replaceAll(tidied);
-    } catch {
-      toast.error(t("workspace.custom_css.tidy_failed"));
-    } finally {
-      setIsTidying(false);
     }
   };
 
@@ -288,16 +273,6 @@ export const CustomCssCard = ({
                       onClick={() => fileInputRef.current?.click()}>
                       <UploadIcon aria-hidden />
                       {t("workspace.custom_css.upload")}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      disabled={value.trim() === ""}
-                      loading={isTidying}
-                      onClick={handleTidy}>
-                      <WandSparklesIcon aria-hidden />
-                      {t("workspace.custom_css.tidy")}
                     </Button>
                   </>
                 )}

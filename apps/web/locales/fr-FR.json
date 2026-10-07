@@ -2276,8 +2276,6 @@
       "status_valid_with_notes": "Le CSS peut être enregistré. Consulte les remarques ci-dessous :",
       "status_valid_with_warnings": "Le CSS peut être enregistré. {count, plural, one {{count} règle est supprimée} many {{count} règles sont supprimées} other {{count} règles sont supprimées}} :",
       "survey_precedence": "Il passe après le CSS de l'espace de travail, donc il le remplace lorsque les deux stylisent le même élément.",
-      "tidy": "Nettoyer",
-      "tidy_failed": "Impossible de nettoyer ce CSS. Corrige d'abord ses erreurs.",
       "title": "CSS personnalisé",
       "unsaved_changes_restored": "Les modifications non enregistrées précédentes ont été restaurées",
       "upload": "Importer un fichier .css",

@@ -2276,8 +2276,6 @@
       "status_valid_with_notes": "El CSS se puede guardar. Revisa las notas de abajo:",
       "status_valid_with_warnings": "El CSS se puede guardar. {count, plural, one {Se elimina {count} regla} other {Se eliminan {count} reglas}}:",
       "survey_precedence": "Va después del CSS del espacio de trabajo, así que lo sobrescribe donde ambos den estilo al mismo elemento.",
-      "tidy": "Ordenar",
-      "tidy_failed": "No se ha podido ordenar este CSS. Corrige primero sus errores.",
       "title": "CSS personalizado",
       "unsaved_changes_restored": "Se han restaurado los cambios sin guardar de antes",
       "upload": "Subir .css",

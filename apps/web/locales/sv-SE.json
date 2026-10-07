@@ -2276,8 +2276,6 @@
       "status_valid_with_notes": "CSS-koden kan sparas. Kolla anteckningarna nedan:",
       "status_valid_with_warnings": "CSS-koden kan sparas. {count, plural, one {{count} regel tas} other {{count} regler tas}} bort:",
       "survey_precedence": "Den läses in efter arbetsytans CSS och åsidosätter den därför där båda styr samma sak.",
-      "tidy": "Städa upp",
-      "tidy_failed": "Den här CSS-koden kunde inte städas upp. Åtgärda felen i den först.",
       "title": "Anpassad CSS",
       "unsaved_changes_restored": "Osparade ändringar från tidigare har återställts",
       "upload": "Ladda upp .css",

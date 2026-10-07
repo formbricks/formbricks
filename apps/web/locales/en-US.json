@@ -2276,8 +2276,6 @@
       "status_valid_with_notes": "CSS can be saved. Check the notes below:",
       "status_valid_with_warnings": "CSS can be saved. {count, plural, one {{count} rule is} other {{count} rules are}} removed:",
       "survey_precedence": "It comes after the workspace CSS, so it overrides it where both style the same thing.",
-      "tidy": "Tidy",
-      "tidy_failed": "This CSS could not be tidied. Fix its errors first.",
       "title": "Custom CSS",
       "unsaved_changes_restored": "Unsaved changes from earlier restored",
       "upload": "Upload .css",

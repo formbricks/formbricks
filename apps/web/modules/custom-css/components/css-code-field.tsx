@@ -87,7 +87,7 @@ export const CssCodeField = ({
   const pendingSelection = useRef<[number, number] | null>(null);
   // Set by Escape so the next Tab leaves the field instead of indenting.
   const releaseTab = useRef(false);
-  // An edit the field applies itself (indent, suggestion, Tidy, upload) offers no suggestions.
+  // An edit the field applies itself (indent, suggestion, upload) offers no suggestions.
   const isApplyingEdit = useRef(false);
   const [suggestions, setSuggestions] = useState<TOpenSuggestions | null>(null);
   const isEditable = onChange !== undefined;

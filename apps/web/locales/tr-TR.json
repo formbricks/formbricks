@@ -2276,8 +2276,6 @@
       "status_valid_with_notes": "CSS kaydedilebilir. Aşağıdaki notlara göz at:",
       "status_valid_with_warnings": "CSS kaydedilebilir. {count, plural, one {{count} kural} other {{count} kural}} kaldırıldı:",
       "survey_precedence": "Çalışma alanı CSS'inden sonra gelir, bu yüzden ikisi de aynı öğeyi biçimlendirdiğinde onu geçersiz kılar.",
-      "tidy": "Düzenle",
-      "tidy_failed": "Bu CSS düzenlenemedi. Önce hatalarını düzelt.",
       "title": "Özel CSS",
       "unsaved_changes_restored": "Daha önceki kaydedilmemiş değişiklikler geri yüklendi",
       "upload": ".css yükle",

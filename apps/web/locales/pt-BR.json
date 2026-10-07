@@ -2276,8 +2276,6 @@
       "status_valid_with_notes": "O CSS pode ser salvo. Confira as observações abaixo:",
       "status_valid_with_warnings": "O CSS pode ser salvo. {count, plural, one {{count} regra será removida} many {{count} de regras serão removidas} other {{count} regras serão removidas}}:",
       "survey_precedence": "Ele vem depois do CSS do workspace, então o substitui quando ambos estilizam o mesmo elemento.",
-      "tidy": "Organizar",
-      "tidy_failed": "Não foi possível organizar este CSS. Corrija os erros primeiro.",
       "title": "CSS personalizado",
       "unsaved_changes_restored": "Alterações não salvas de antes foram restauradas",
       "upload": "Enviar .css",

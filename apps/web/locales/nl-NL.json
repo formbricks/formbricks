@@ -2276,8 +2276,6 @@
       "status_valid_with_notes": "De CSS kan worden opgeslagen. Bekijk de opmerkingen hieronder:",
       "status_valid_with_warnings": "De CSS kan worden opgeslagen. {count, plural, one {{count} regel wordt} other {{count} regels worden}} verwijderd:",
       "survey_precedence": "Deze komt na de CSS van de werkruimte, dus overschrijft hij die wanneer beide dezelfde opmaak bepalen.",
-      "tidy": "Opschonen",
-      "tidy_failed": "Deze CSS kon niet worden opgeschoond. Los eerst de fouten op.",
       "title": "Aangepaste CSS",
       "unsaved_changes_restored": "Niet-opgeslagen wijzigingen van eerder zijn hersteld",
       "upload": "Upload .css",

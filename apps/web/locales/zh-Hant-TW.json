@@ -2276,8 +2276,6 @@
       "status_valid_with_notes": "CSS 可以儲存。請查看下方的注意事項:",
       "status_valid_with_warnings": "CSS 可以儲存。{count, plural, other {有 {count} 條規則將被移除:}}",
       "survey_precedence": "此 CSS 會排在工作區 CSS 之後,因此當兩者設定相同的樣式時,會以此處為準。",
-      "tidy": "整理",
-      "tidy_failed": "無法整理這段 CSS,請先修正其中的錯誤。",
       "title": "自訂 CSS",
       "unsaved_changes_restored": "已還原先前未儲存的變更",
       "upload": "上傳 .css 檔案",

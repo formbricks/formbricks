@@ -2196,8 +2196,6 @@ checksums:
     workspace/custom_css/status_valid_with_notes: a1ec39c04f97334190d52bd2018a2c88
     workspace/custom_css/status_valid_with_warnings: ef79344aa40d913f3604ed35d2bd3bd4
     workspace/custom_css/survey_precedence: 4ed9db7347f5190d4b8c4f95919e3964
-    workspace/custom_css/tidy: 555ba0880f3f9de246dfa1e0ff48c1fa
-    workspace/custom_css/tidy_failed: ba6c46d7193f5143f01ccef0bae2e745
     workspace/custom_css/title: d43a2cc2f8f47dd96d03099dcc6e68bb
     workspace/custom_css/unsaved_changes_restored: 5d998f41e9df609206a1ab43438442db
     workspace/custom_css/upload: e4dc342e180b57b5fca6f2ea0ab64259
