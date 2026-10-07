@@ -2,6 +2,7 @@ import { NoObjectGeneratedError, NoOutputGeneratedError, TypeValidationError } f
 import { AIOutputTokenLimitError } from "@formbricks/ai";
 import type { TQsfImportIssue } from "../types";
 import { QsfImportFailedError, QsfImportTimeoutError } from "./errors";
+import { QSF_MAX_QUESTIONS } from "./limits";
 import {
   type TQsfCheckedPlan,
   type TQsfPlanFailure,
@@ -11,6 +12,7 @@ import {
 } from "./plan-checks";
 import { ZQsfImportPlanForAI } from "./plan-schema";
 import {
+  QSF_LOOSEST_PROMPT_LIMITS,
   QSF_PROMPT_MAX_CALL_CHARS,
   QSF_PROMPT_MAX_TOTAL_CHARS,
   type TQsfPromptLimits,
@@ -18,15 +20,17 @@ import {
   buildQsfPlanPrompt,
   buildQsfPlanSystemPrompt,
   chooseQsfPromptLimits,
+  describedQuestionChars,
+  describedRuleCount,
 } from "./prompt";
 import type { TQsfSurvey } from "./qsf-model";
 
 /**
  * The AI half of the import (ENG-3479): ask for the plan, check it, retry what failed once.
  *
- * The questions are split into chunks by the output they are expected to need, and up to three run
- * in parallel. The provider's tokens-per-minute is the real limit there, and nothing in the app holds
- * it back, so the cap stays small. Per chunk:
+ * The questions are split into chunks by the output they are expected to need — a fixed budget per
+ * chunk, as many chunks as the survey needs — and at most three run at once. The provider's
+ * tokens-per-minute is the real limit there, and nothing in the app holds it back. Per chunk:
  *
  * - 429, provider auth and any other provider failure propagate unwrapped, and a shared abort cancels
  *   the sibling calls, so the route's classification keeps working;
@@ -36,32 +40,56 @@ import type { TQsfSurvey } from "./qsf-model";
  *   match) becomes `QsfImportTimeoutError`, the route's timeout event;
  * - output that fails the schema fails the chunk's questions, which go to the retry round.
  *
- * Every call counts against `QSF_MAX_AI_CALLS` — chunks, splits and the retry round together — so a
- * hostile file cannot multiply provider cost. Hitting it fails the import.
+ * Every call counts against a cap — chunks, splits and the retry round together — sized from the
+ * import's own chunks and never above `QSF_MAX_AI_CALLS`, so a hostile file cannot cost more than the
+ * costliest valid one. Past the cap, the prompt budget or the deadline, the questions left are
+ * dropped with a report line; the import fails only when none survives (ENG-3411).
  */
 
 /** The model's output budget per call. Room for reasoning tokens as well as the plan. */
 export const QSF_PLAN_MAX_OUTPUT_TOKENS = 8192;
-/** Output a chunk is sized to expect: well under the budget, which reasoning shares. */
+/**
+ * Output a chunk is sized to expect. Reasoning models (Gemini 2.5 Flash, the default) spend part of
+ * the same 8,192-token budget thinking before they write, and Create with AI needs that headroom for
+ * its ~3–4k-token drafts; 3,000 keeps more than 60% of the budget for reasoning and for a plan that
+ * runs long. About 40 questions without logic, or 15 with two rules each.
+ */
 export const QSF_CHUNK_OUTPUT_TOKENS = 3_000;
-/** Chunks of the first round. */
-export const QSF_MAX_INITIAL_CHUNKS = 3;
+/** Data characters per chunk: one call's cap, less room for the system prompt and instructions. */
+const QSF_CHUNK_DATA_CHARS = QSF_PROMPT_MAX_CALL_CHARS - 20_000;
 /** Calls in flight at once, per import. */
 export const QSF_MAX_PARALLEL_CALLS = 3;
-/** Calls per import, everything included. */
-export const QSF_MAX_AI_CALLS = 8;
 /** One call's time budget. */
 export const QSF_AI_CALL_TIMEOUT_MS = 45_000;
-/** Time kept back for assembly when a retry round is sized against the deadline. */
+/** Time kept back for assembly when a call is sized against the deadline. */
 export const QSF_ASSEMBLY_RESERVE_MS = 5_000;
 
 /**
  * Expected output tokens, measured on hand-authored plans: about 70 per question with every field
- * spelled out, 45 per logic note, 15 per block and 45 per page note.
+ * spelled out, 45 per logic note and 10 for a page's entry.
  */
 const TOKENS_PER_QUESTION = 70;
 const TOKENS_PER_NOTE = 45;
-const TOKENS_PER_BLOCK = 15;
+const TOKENS_PER_PAGE = 10;
+
+/**
+ * Calls one import may make: each chunk once, each split into two halves, and two more for the retry
+ * round — `3 × chunks + 2`, which a survey whose every chunk overflows still fits.
+ */
+const callCapFor = (chunks: number): number => 3 * chunks + 2;
+
+/**
+ * The ceiling on calls, whatever the file: the cap of the costliest valid survey — the reader's
+ * question limit, each question on its own page, every question and page with as many rules as the
+ * prompt describes at its loosest.
+ */
+export const QSF_MAX_AI_CALLS = callCapFor(
+  Math.ceil(
+    (QSF_MAX_QUESTIONS *
+      (TOKENS_PER_QUESTION + TOKENS_PER_PAGE + 2 * TOKENS_PER_NOTE * QSF_LOOSEST_PROMPT_LIMITS.rules)) /
+      QSF_CHUNK_OUTPUT_TOKENS
+  )
+);
 
 /**
  * Qualtrics types Formbricks has no element for. Skipped without asking the model: fewer tokens, and
@@ -126,13 +154,14 @@ interface TPlanContext {
   signal: AbortSignal;
   usage: TQsfPlanUsage;
   calls: number;
+  callCap: number;
 }
 
 type TCallOutcome =
   | { kind: "ok"; response: TQsfPlanResponse }
   | { kind: "too_long" }
   | { kind: "invalid" }
-  /** Not sent: the import's prompt budget is spent. */
+  /** Not sent: the import's call cap, prompt budget or time is spent. */
   | { kind: "budget" };
 
 const isTimeoutError = (error: unknown): boolean =>
@@ -144,59 +173,62 @@ const isInvalidOutput = (error: unknown): boolean =>
   NoOutputGeneratedError.isInstance(error) ||
   TypeValidationError.isInstance(error);
 
-const expectedOutputTokens = (survey: TQsfSurvey, refs: readonly string[]): number => {
-  const pages = new Set<string>();
-  let tokens = 0;
-  for (const ref of refs) {
-    const question = survey.questions.get(ref);
-    if (!question) continue;
-    tokens += TOKENS_PER_QUESTION + TOKENS_PER_NOTE * question.logic.length;
-    if (!pages.has(question.pageId)) {
-      pages.add(question.pageId);
-      const page = survey.pages.find((candidate) => candidate.id === question.pageId);
-      tokens += TOKENS_PER_BLOCK + TOKENS_PER_NOTE * (page?.logic.length ?? 0);
+/** What a question adds to a chunk: expected output tokens and prompt characters. */
+function questionCost(
+  context: Pick<TPlanContext, "survey" | "texts" | "limits">,
+  ref: string,
+  pagesSeen: Set<string>
+) {
+  const question = context.survey.questions.get(ref);
+  if (!question) return { tokens: 0, chars: 0 };
+  let tokens = TOKENS_PER_QUESTION + TOKENS_PER_NOTE * describedRuleCount(question.logic, context.limits);
+  if (!pagesSeen.has(question.pageId)) {
+    pagesSeen.add(question.pageId);
+    const page = context.survey.pages.find((candidate) => candidate.id === question.pageId);
+    if (page && page.logic.length > 0) {
+      tokens += TOKENS_PER_PAGE + TOKENS_PER_NOTE * describedRuleCount(page.logic, context.limits);
     }
   }
-  return tokens;
-};
+  return { tokens, chars: describedQuestionChars(question, context.texts, context.limits) };
+}
 
 /**
- * Group questions into chunks of about `budget` expected output tokens, breaking at page boundaries
- * where it can. A page bigger than a chunk is split across chunks. Never more than `maxChunks`: the
- * budget grows until the survey fits.
+ * Group questions into chunks of at most `QSF_CHUNK_OUTPUT_TOKENS` expected output and
+ * `QSF_CHUNK_DATA_CHARS` of prompt data, in survey order, as many as it takes. A page bigger than a
+ * chunk is split across chunks; the assembly still makes it one block.
  */
 export function chunkQuestions(
-  survey: TQsfSurvey,
-  refs: readonly string[],
-  maxChunks: number,
-  budget = QSF_CHUNK_OUTPUT_TOKENS
+  context: Pick<TPlanContext, "survey" | "texts" | "limits">,
+  refs: readonly string[]
 ): string[][] {
-  if (refs.length === 0) return [];
-  const byPage = new Map<string, string[]>();
-  for (const ref of refs) {
-    const pageId = survey.questions.get(ref)?.pageId ?? "";
-    byPage.set(pageId, [...(byPage.get(pageId) ?? []), ref]);
-  }
+  const chunks: string[][] = [];
+  let current: string[] = [];
+  let tokens = 0;
+  let chars = 0;
+  let pagesSeen = new Set<string>();
 
-  for (let attempt = budget; ; attempt = Math.ceil(attempt * 1.25)) {
-    const chunks: string[][] = [];
-    let current: string[] = [];
-    for (const pageRefs of byPage.values()) {
-      if (current.length > 0 && expectedOutputTokens(survey, [...current, ...pageRefs]) > attempt) {
-        chunks.push(current);
-        current = [];
-      }
-      for (const ref of pageRefs) {
-        if (current.length > 0 && expectedOutputTokens(survey, [...current, ref]) > attempt) {
-          chunks.push(current);
-          current = [];
-        }
-        current.push(ref);
-      }
+  for (const ref of refs) {
+    const cost = questionCost(context, ref, pagesSeen);
+    if (
+      current.length > 0 &&
+      (tokens + cost.tokens > QSF_CHUNK_OUTPUT_TOKENS || chars + cost.chars > QSF_CHUNK_DATA_CHARS)
+    ) {
+      chunks.push(current);
+      current = [];
+      // The question opens the next chunk, and its page's notes are asked there.
+      pagesSeen = new Set();
+      const reopened = questionCost(context, ref, pagesSeen);
+      current.push(ref);
+      tokens = reopened.tokens;
+      chars = reopened.chars;
+      continue;
     }
-    if (current.length > 0) chunks.push(current);
-    if (chunks.length <= maxChunks) return chunks;
+    current.push(ref);
+    tokens += cost.tokens;
+    chars += cost.chars;
   }
+  if (current.length > 0) chunks.push(current);
+  return chunks;
 }
 
 /** Run tasks, `limit` at a time. The first failure aborts the rest and is rethrown once they settle. */
@@ -226,7 +258,7 @@ async function callOnce(
   timeout: number,
   failures?: ReadonlyMap<string, readonly TQsfPlanFailure[]>
 ): Promise<TCallOutcome> {
-  if (context.calls >= QSF_MAX_AI_CALLS) throw new QsfImportFailedError("ai_call_budget");
+  if (context.calls >= context.callCap || timeout <= 0) return { kind: "budget" };
 
   const system = buildQsfPlanSystemPrompt();
   const prompt = buildQsfPlanPrompt({
@@ -273,7 +305,7 @@ async function callOnce(
 async function planChunk(
   context: TPlanContext,
   refs: string[],
-  timeout: number,
+  timeout: () => number,
   failures?: ReadonlyMap<string, readonly TQsfPlanFailure[]>
 ): Promise<{ responses: TQsfPlanResponse[]; failed: Map<string, TQsfPlanFailure[]> }> {
   const responses: TQsfPlanResponse[] = [];
@@ -283,7 +315,8 @@ async function planChunk(
     for (const ref of chunkRefs) failed.set(ref, [reason]);
   };
 
-  const outcome = await callOnce(context, refs, timeout, failures);
+  // The timeout is sized again for every call: a chunk and its two halves run one after another.
+  const outcome = await callOnce(context, refs, timeout(), failures);
   if (outcome.kind === "ok") {
     responses.push(outcome.response);
   } else if (outcome.kind !== "too_long" || refs.length === 1) {
@@ -291,7 +324,7 @@ async function planChunk(
   } else {
     const middle = Math.ceil(refs.length / 2);
     for (const half of [refs.slice(0, middle), refs.slice(middle)]) {
-      const halfOutcome = await callOnce(context, half, timeout, failures);
+      const halfOutcome = await callOnce(context, half, timeout(), failures);
       if (halfOutcome.kind === "ok") responses.push(halfOutcome.response);
       else fail(half, halfOutcome);
     }
@@ -302,13 +335,11 @@ async function planChunk(
 
 async function planRound(
   context: TPlanContext,
-  refs: string[],
-  maxChunks: number,
-  timeout: number,
+  chunks: string[][],
+  timeout: () => number,
   abort: AbortController,
   failures?: ReadonlyMap<string, readonly TQsfPlanFailure[]>
 ): Promise<TQsfCheckedPlan> {
-  const chunks = chunkQuestions(context.survey, refs, maxChunks);
   const outcomes = await runPool(
     chunks.map((chunk) => () => planChunk(context, chunk, timeout, failures)),
     QSF_MAX_PARALLEL_CALLS,
@@ -372,20 +403,27 @@ export async function planQsfImport(params: {
     signal: AbortSignal.any([params.signal, abort.signal]),
     usage: { inputTokens: 0, outputTokens: 0 },
     calls: 0,
+    callCap: 0,
   };
+  const chunks = chunkQuestions(context, refs);
+  context.callCap = Math.min(callCapFor(chunks.length), QSF_MAX_AI_CALLS);
 
   const callTimeout = () =>
     Math.min(QSF_AI_CALL_TIMEOUT_MS, Math.floor(deadline - performance.now() - QSF_ASSEMBLY_RESERVE_MS));
 
-  let plan = await planRound(context, refs, QSF_MAX_INITIAL_CHUNKS, Math.max(callTimeout(), 1), abort);
+  let plan = await planRound(context, chunks, callTimeout, abort);
 
   // A question the budget left unplanned is not retried: there is no budget left to retry it with.
   const unplanned = new Map([...plan.failures].filter(([, reasons]) => reasons.includes("ai_budget")));
   const failing = [...plan.failures.keys()].filter((ref) => !unplanned.has(ref));
-  const retryTimeout = callTimeout();
-  if (failing.length > 0 && retryTimeout > 0) {
-    const remaining = Math.max(QSF_MAX_AI_CALLS - context.calls, 1);
-    const retry = await planRound(context, failing, remaining, retryTimeout, abort, plan.failures);
+  if (failing.length > 0) {
+    const retry = await planRound(
+      context,
+      chunkQuestions(context, failing),
+      callTimeout,
+      abort,
+      plan.failures
+    );
     plan = mergeCheckedPlans(plan, retry);
     for (const [ref, reasons] of unplanned) plan.failures.set(ref, reasons);
   }

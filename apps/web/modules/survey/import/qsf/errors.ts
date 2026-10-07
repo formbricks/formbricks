@@ -17,13 +17,12 @@ export class QsfImportInputError extends Error {
 }
 
 /**
- * The import could not produce a survey: no question survived, the AI call budget ran out, the
- * survey's data cannot fit the prompt budget at any limits, or the assembled draft failed the create
- * check twice. Streamed as `import_failed`. The message is fixed
+ * The import could not produce a survey: no question survived, the survey's data cannot fit the
+ * prompt budget at any limits, or the assembled draft failed the create check twice. Streamed as `import_failed`. The message is fixed
  * on purpose: the route logs an error's name and frames only, and nothing here quotes the file.
  */
 export class QsfImportFailedError extends Error {
-  readonly reason: "no_questions" | "ai_call_budget" | "prompt_budget" | "draft_invalid";
+  readonly reason: "no_questions" | "prompt_budget" | "draft_invalid";
 
   constructor(reason: QsfImportFailedError["reason"]) {
     super(`The QSF import failed: ${reason}`);

@@ -7,14 +7,21 @@ import { buildOversizedLogicQsf } from "./__fixtures__/oversized-logic";
 import { loadRecordedPlan, recordedGenerate, refsInPrompt } from "./__fixtures__/recorded-plans";
 import {
   QSF_AI_CALL_TIMEOUT_MS,
+  QSF_CHUNK_OUTPUT_TOKENS,
   QSF_MAX_AI_CALLS,
+  QSF_PLAN_MAX_OUTPUT_TOKENS,
   type TQsfPlanGenerate,
   type TQsfPlanRequest,
   chunkQuestions,
   planQsfImport,
 } from "./ai-plan";
-import { QsfImportFailedError, QsfImportTimeoutError } from "./errors";
-import { QSF_PROMPT_MAX_CALL_CHARS, QSF_PROMPT_MAX_TOTAL_CHARS } from "./prompt";
+import { QsfImportTimeoutError } from "./errors";
+import {
+  QSF_PROMPT_MAX_CALL_CHARS,
+  QSF_PROMPT_MAX_TOTAL_CHARS,
+  chooseQsfPromptLimits,
+  describeQsfQuestions,
+} from "./prompt";
 import { readQsf } from "./read-qsf";
 import { sanitizeQsfTexts } from "./sanitize-text";
 
@@ -39,18 +46,91 @@ const plan = async (
   });
 };
 
+const planSurvey = async (qsf: Record<string, unknown>, generate: TQsfPlanGenerate) => {
+  const survey = readQsf(qsf);
+  const texts = await sanitizeQsfTexts(survey, new AbortController().signal);
+  return planQsfImport({
+    survey,
+    texts,
+    generate,
+    signal: new AbortController().signal,
+    deadline: performance.now() + 120_000,
+  });
+};
+
 const tooLong = () => new AIOutputTokenLimitError({ maxOutputTokens: 8192, outputTokens: 8192 });
 
+/** A model that answers every question asked as a two-choice question. */
+const answerEverything: TQsfPlanGenerate = async (request) => ({
+  object: {
+    questions: refsInPrompt(request.prompt).map((ref) => ({
+      ref,
+      type: "multipleChoiceSingle",
+      required: false,
+      choicesFrom: "choices",
+      rowsFrom: null,
+      columnsFrom: null,
+      otherChoiceKey: null,
+      noneChoiceKey: null,
+      labelKey: null,
+      excludedKeys: [],
+      contactFields: [],
+      inputType: null,
+      scale: null,
+      range: null,
+      format: null,
+      logicNotes: [],
+    })),
+    skipped: [],
+    pages: [],
+  },
+});
+
 describe("chunkQuestions", () => {
-  test("splits a large survey at page boundaries into at most three chunks", async () => {
-    const { survey } = await prepare("large-150.qsf");
+  test("cuts a large survey into chunks of a fixed expected output, as many as it takes", async () => {
+    const { survey, texts } = await prepare("large-150.qsf");
+    const refs = [...survey.questions.keys()];
+    const limits = chooseQsfPromptLimits(survey, refs, texts);
+    if (!limits) throw new Error("limits");
 
-    const chunks = chunkQuestions(survey, [...survey.questions.keys()], 3);
+    const chunks = chunkQuestions({ survey, texts, limits }, refs);
 
-    expect(chunks).toHaveLength(3);
-    expect(chunks.flat()).toEqual([...survey.questions.keys()]);
-    // Each chunk ends on a page boundary (pages of five).
-    for (const chunk of chunks.slice(0, -1)) expect(chunk.length % 5).toBe(0);
+    // 70 expected tokens a question: 42 to a 3,000-token chunk.
+    expect(chunks.map((chunk) => chunk.length)).toEqual([42, 42, 42, 24]);
+    expect(chunks.flat()).toEqual(refs);
+    expect(QSF_CHUNK_OUTPUT_TOKENS).toBeLessThan(QSF_PLAN_MAX_OUTPUT_TOKENS / 2);
+  });
+});
+
+describe("chunkQuestions and the per-call prompt cap", () => {
+  test("cuts by prompt size too, so no call is too large to send", async () => {
+    const { survey, texts } = await prepare("large-150.qsf");
+    // 35 questions with 40 long choices each: ~6k characters a question, ~210k in all — within the
+    // import's budget at the loosest limits, but not in one call.
+    const refs = [...survey.questions.keys()].slice(0, 35);
+    const plainDefault = new Map(texts.plainDefault);
+    for (const ref of refs) {
+      const question = survey.questions.get(ref);
+      if (!question) continue;
+      question.choices = Array.from({ length: 40 }, (_, index) => {
+        const key = `c_${ref}_${index}`;
+        plainDefault.set(key, "x".repeat(120));
+        return { key, textEntry: false, exclusive: false };
+      });
+    }
+    const wideTexts = { ...texts, plainDefault };
+    const limits = chooseQsfPromptLimits(survey, refs, wideTexts);
+    if (!limits) throw new Error("limits");
+
+    const chunks = chunkQuestions({ survey, texts: wideTexts, limits }, refs);
+
+    expect(limits.options).toBe(40);
+    expect(chunks.length).toBeGreaterThan(1);
+    for (const chunk of chunks) {
+      expect(describeQsfQuestions(survey, chunk, wideTexts, limits).length).toBeLessThanOrEqual(
+        QSF_PROMPT_MAX_CALL_CHARS - 20_000
+      );
+    }
   });
 });
 
@@ -110,7 +190,7 @@ describe("planQsfImport", () => {
     }
   );
 
-  test("plans every question of the largest fixture in three parallel calls, summing usage", async () => {
+  test("plans every question of the largest fixture in four calls, three at a time, summing usage", async () => {
     const requests: TQsfPlanRequest[] = [];
     let inFlight = 0;
     let maxInFlight = 0;
@@ -130,7 +210,7 @@ describe("planQsfImport", () => {
 
     const result = await plan("large-150.qsf", generate);
 
-    expect(result.calls).toBe(3);
+    expect(result.calls).toBe(4);
     expect(maxInFlight).toBe(3);
     expect(result.plan.questions.size).toBe(150);
     expect(result.plan.failures.size).toBe(0);
@@ -268,16 +348,58 @@ describe("planQsfImport", () => {
     expect(result.plan.questions.size).toBe(5);
   });
 
-  test("never makes more than the cap of calls, and fails the import when it is reached", async () => {
+  test("never makes more calls than the cap, and drops what is left instead of failing", async () => {
     const generate = vi.fn<TQsfPlanGenerate>(async () => {
       throw tooLong();
     });
 
-    const error = await plan("large-150.qsf", generate).catch((caught: unknown) => caught);
+    const result = await plan("large-150.qsf", generate);
 
-    expect(error).toBeInstanceOf(QsfImportFailedError);
-    expect((error as QsfImportFailedError).reason).toBe("ai_call_budget");
-    expect(generate.mock.calls.length).toBeLessThanOrEqual(QSF_MAX_AI_CALLS);
+    // Four chunks: 3 × 4 + 2 = 14 calls, every one of them too long.
+    expect(generate).toHaveBeenCalledTimes(14);
+    expect(result.calls).toBe(14);
+    expect(result.plan.questions.size).toBe(0);
+    // What the retry round could not ask for is dropped as unplanned, not failed.
+    expect(result.issues.length).toBe(150);
+    expect(result.issues.map((issue) => issue.params?.cause)).toContain("ai_budget");
+  });
+
+  describe("a survey at the question limit with two rules on every question", () => {
+    const logicHeavy = () =>
+      buildOversizedLogicQsf({ groups: 1, conditions: 1, skipRules: 1, branches: false, valueLength: 10 });
+
+    test("plans every question within the cap", async () => {
+      const result = await planSurvey(logicHeavy(), vi.fn(answerEverything));
+
+      expect(result.plan.questions.size).toBe(200);
+      expect(result.calls).toBeLessThanOrEqual(QSF_MAX_AI_CALLS);
+    });
+
+    test("still plans every question when every chunk has to be split", async () => {
+      const asked = new Set<string>();
+      const generate = vi.fn<TQsfPlanGenerate>(async (request) => {
+        // The first ask of each chunk runs out of tokens; its halves fit.
+        const key = refsInPrompt(request.prompt)[0];
+        const isWholeChunk = !asked.has(key);
+        for (const ref of refsInPrompt(request.prompt)) asked.add(ref);
+        if (isWholeChunk && refsInPrompt(request.prompt).length > 1) throw tooLong();
+        return answerEverything(request);
+      });
+
+      const result = await planSurvey(logicHeavy(), generate);
+
+      expect(result.plan.questions.size).toBe(200);
+      expect(result.plan.failures.size).toBe(0);
+      expect(result.calls).toBeLessThanOrEqual(QSF_MAX_AI_CALLS);
+      // Each chunk asked once whole and once per half.
+      expect(result.calls % 3).toBe(0);
+    });
+  });
+
+  test("sizes the call ceiling from the reader's limits", () => {
+    // 200 questions on 200 pages, three rules described on each: 200 × (70 + 10 + 2 × 3 × 45) tokens
+    // in 3,000-token chunks, asked once, split once and retried twice.
+    expect(QSF_MAX_AI_CALLS).toBe(3 * Math.ceil((200 * (70 + 10 + 270)) / 3_000) + 2);
   });
 
   test("lets a quota failure through unwrapped, and cancels the calls running beside it", async () => {
@@ -346,12 +468,34 @@ describe("planQsfImport", () => {
 
   test("skips the retry when no time is left for it, dropping what failed", async () => {
     const hostile = loadRecordedPlan("hostile");
-    const generate = vi.fn<TQsfPlanGenerate>(async () => ({ object: hostile }));
+    // The first call takes the time there was: 5.4 s to the deadline, 5 s kept for assembly.
+    const generate = vi.fn<TQsfPlanGenerate>(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      return { object: hostile };
+    });
 
-    const result = await plan("simple.qsf", generate, { deadlineInMs: 4_000 });
+    const result = await plan("simple.qsf", generate, { deadlineInMs: 5_400 });
 
     expect(generate).toHaveBeenCalledTimes(1);
     expect(result.plan.failures.size).toBe(5);
-    expect(result.issues.map((issue) => issue.params?.cause)).toEqual(Array(5).fill("plan_invalid"));
+    expect(result.issues.map((issue) => issue.params?.cause)).toEqual(Array(5).fill("ai_budget"));
+  });
+
+  test("sizes the timeout of each half of a split again, so the halves cannot pass the deadline", async () => {
+    const timeouts: number[] = [];
+    const recorded = recordedGenerate(loadRecordedPlan("simple.qsf"));
+    const generate: TQsfPlanGenerate = async (request) => {
+      timeouts.push(request.timeout);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      if (timeouts.length === 1) throw tooLong();
+      return recorded(request);
+    };
+
+    await plan("simple.qsf", generate, { deadlineInMs: 6_000 });
+
+    expect(timeouts).toHaveLength(3);
+    // Each later call gets what is left, not the first call's budget again.
+    expect(timeouts[1]).toBeLessThanOrEqual(timeouts[0] - 250);
+    expect(timeouts[2]).toBeLessThanOrEqual(timeouts[1] - 250);
   });
 });

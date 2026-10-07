@@ -61,10 +61,11 @@ export const QSF_PROMPT_BUDGET_CHARS = 240_000;
 /** One call, system prompt and instructions included. Never sent above this. */
 export const QSF_PROMPT_MAX_CALL_CHARS = 120_000;
 /**
- * All calls of one import together, system prompts, context and the retry round included. Twice the
- * data budget: what a chunked import with a retry needs, and no more.
+ * All calls of one import together, system prompts, context and the retry round included: four times
+ * the data budget. A survey at the budget whose every chunk overflows sends its data three times
+ * (whole, then in halves), a retry round at most once more, and a system prompt with every call.
  */
-export const QSF_PROMPT_MAX_TOTAL_CHARS = 2 * QSF_PROMPT_BUDGET_CHARS;
+export const QSF_PROMPT_MAX_TOTAL_CHARS = 4 * QSF_PROMPT_BUDGET_CHARS;
 
 const cut = (text: string, max: number): string => (text.length > max ? `${text.slice(0, max - 1)}…` : text);
 
@@ -194,6 +195,16 @@ function describeContext(
 
 /** JSON whose `<` cannot close the data block, whatever the file says. */
 const safeJson = (value: unknown): string => JSON.stringify(value).replaceAll("<", "\\u003c");
+
+/** The characters one question adds to a call's data block, at the given limits. */
+export const describedQuestionChars = (
+  question: TQsfQuestion,
+  texts: TQsfPromptTexts,
+  limits: TPromptLimits
+): number => safeJson(describeQuestion(question, texts, limits)).length;
+
+/** The loosest limits: what the AI call cap is sized for, since it describes the most rules. */
+export const QSF_LOOSEST_PROMPT_LIMITS = PROMPT_LIMITS[0];
 
 /** The data one call carries, as a string, at the tightest limits the whole import needs. */
 export function describeQsfQuestions(
