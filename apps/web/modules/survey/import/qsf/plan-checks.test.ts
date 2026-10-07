@@ -207,6 +207,18 @@ describe("cleanNote", () => {
     );
   });
 
+  test("replaces bare domains, with or without a path", () => {
+    expect(cleanNote("Log in at evil.com/login or Mail.Evil-Example.org now, user@evil.co")).toBe(
+      "Log in at … or … now, user@…"
+    );
+  });
+
+  test("leaves prose without links alone", () => {
+    const note = "Shown only if 'Do you use it?' is 'Yes', e.g. for daily users (v2.0).";
+
+    expect(cleanNote(note)).toBe(note);
+  });
+
   test("drops control characters, bidi overrides and markup characters", () => {
     expect(cleanNote("a\u0007b\u202ec<script>")).toBe("a b cscript");
   });

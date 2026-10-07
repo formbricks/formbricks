@@ -90,7 +90,11 @@ export interface TQsfPlanResponse {
 // Control characters and the bidi overrides, which can make a report line read as something else.
 // eslint-disable-next-line no-control-regex -- matching control characters is the point
 const CONTROL_CHARACTERS = /[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2066-\u2069]/g;
-const URL_LIKE = /\b(?:[a-z][a-z0-9+.-]{1,20}:\/\/|(?:javascript|data|vbscript|mailto):|www\.)\S*/gi;
+// A scheme or `www.` and what follows, or a bare domain (`evil.com/login`): labels of letters, digits
+// and hyphens, a 2–24 letter top-level label, then an optional path. Each label is bounded and dots
+// separate them, so a long run backtracks a bounded amount per position.
+const URL_LIKE =
+  /\b(?:[a-z][a-z0-9+.-]{1,20}:\/\/|(?:javascript|data|vbscript|mailto):|www\.)\S*|\b(?:[a-z0-9-]{1,63}\.)+[a-z]{2,24}\b(?:[/:?#]\S*)?/gi;
 
 /**
  * Free text from the AI, made safe for a report line: control characters gone, anything that looks
