@@ -13,9 +13,15 @@
  * The same pass finds every top-level `@import` rule. lightningcss rejects one that follows another rule
  * as a syntax error, while browsers ignore it, and stylesheets put together from several files often have
  * one. The processor removes them all before parsing, so its position no longer matters.
+ *
+ * It also catches a `{` that is never closed. The end of the input closes it silently, for browsers and
+ * for lightningcss alike, so a missing `}` would nest every rule after it inside the rule it belongs to.
+ * That is almost never what the creator meant, so it is reported as a syntax error at the brace.
  */
 
 export type TPrescanLimitKind = "nesting" | "function" | "rules";
+
+export type TPrescanFailureKind = TPrescanLimitKind | "unclosed-block";
 
 /** A top-level `@import` rule: its span in the preprocessed source, and where it starts (1-based). */
 export interface TPrescanImport {
@@ -27,7 +33,7 @@ export interface TPrescanImport {
 
 export type TPrescanResult =
   | { ok: true; blocks: number; imports: TPrescanImport[] }
-  | { ok: false; kind: TPrescanLimitKind; line: number; column: number };
+  | { ok: false; kind: TPrescanFailureKind; line: number; column: number };
 
 interface TPrescanLimits {
   maxNestingDepth: number;
@@ -140,6 +146,8 @@ export const prescanCustomCss = (rawSource: string, limits: TPrescanLimits): TPr
   const s = preprocess(rawSource);
   const n = s.length;
   const stack: string[] = [];
+  /** Where each bracket on the stack was opened. */
+  const openedAt: number[] = [];
   let braceDepth = 0;
   let functionDepth = 0;
   let blocks = 0;
@@ -291,6 +299,7 @@ export const prescanCustomCss = (rawSource: string, limits: TPrescanLimits): TPr
 
   const open = (kind: string, index: number): TPrescanResult | null => {
     stack.push(kind);
+    openedAt.push(index);
     if (kind === "{") {
       braceDepth++;
       blocks++;
@@ -307,6 +316,7 @@ export const prescanCustomCss = (rawSource: string, limits: TPrescanLimits): TPr
   const close = (kind: string): void => {
     if (stack.at(-1) !== kind) return;
     stack.pop();
+    openedAt.pop();
     if (kind === "{") braceDepth--;
     else functionDepth--;
   };
@@ -396,6 +406,9 @@ export const prescanCustomCss = (rawSource: string, limits: TPrescanLimits): TPr
     i = end;
   }
   if (importStart !== null) importSpans.push({ start: importStart, end: n });
+
+  const unclosed = stack.lastIndexOf("{");
+  if (unclosed !== -1) return { ok: false, kind: "unclosed-block", ...locate(s, openedAt[unclosed]) };
 
   const starts = locateAscending(
     s,

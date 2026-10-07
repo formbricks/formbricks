@@ -51,10 +51,12 @@ describe("prescanCustomCss", () => {
     });
     // An escaped "url" is still a url; a dimension ending in "url" is not.
     expect(scan(String.raw`.a { b: u\72 l(/*) } .c { .d { .e { .f {} } } }`)).toMatchObject({ ok: false });
+    // Here the comment hides every bracket after it, so only the first block opens (and never closes).
     expect(scan(".a { b: 1url(/*) } .c { .d { .e { .f {} } } } */")).toEqual({
-      ok: true,
-      blocks: 1,
-      imports: [],
+      ok: false,
+      kind: "unclosed-block",
+      line: 1,
+      column: 4,
     });
     // A bad string ends at the newline, so the braces on the next line count.
     expect(scan('.a { b: "unterminated\n} .c { .d { .e { .f {} } } }')).toMatchObject({ ok: false });
@@ -65,7 +67,20 @@ describe("prescanCustomCss", () => {
   test("handles escapes at the end of input and out-of-range hex escapes", () => {
     expect(scan(".a\\")).toEqual({ ok: true, blocks: 0, imports: [] });
     expect(scan(String.raw`.\110000 { color: red }`)).toEqual({ ok: true, blocks: 1, imports: [] });
-    expect(scan('.a { content: "\\')).toEqual({ ok: true, blocks: 1, imports: [] });
+    expect(scan('.a { content: "\\')).toMatchObject({ ok: false, kind: "unclosed-block" });
+  });
+
+  test("reports the innermost block still open at the end, at its brace", () => {
+    expect(scan(".a { color: red }\n.b { color: blue\n.c { color: green }")).toEqual({
+      ok: false,
+      kind: "unclosed-block",
+      line: 2,
+      column: 4,
+    });
+    expect(scan(".a { .b { .c {")).toMatchObject({ kind: "unclosed-block", line: 1, column: 14 });
+    // Brackets inside strings, comments and url tokens are not blocks, and other brackets are not braces.
+    expect(scan('.a { content: "{" } /* { */ .b { background: url({) }')).toMatchObject({ ok: true });
+    expect(scan(".a { color: red }\n.b[x")).toMatchObject({ ok: true });
   });
 
   test("rejects pathological depth in linear time", () => {

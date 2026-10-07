@@ -92,6 +92,7 @@ const LIMIT_REASONS = {
 
 const PROCESSING_FAILED_REASON = "The CSS could not be processed. Nothing was saved.";
 const IMPORT_REMOVED_REASON = "@import is not supported; imported stylesheets and fonts are not loaded.";
+const UNCLOSED_BLOCK_REASON = "This block is never closed; a } is probably missing.";
 const SUPPORTS_RESOURCE_REASON =
   "@supports conditions cannot name url(), image-set() or other resource functions; the rule was removed.";
 
@@ -568,11 +569,11 @@ const prescanFields = (
       maxBlocks: CUSTOM_CSS_MAX_RULES - blocks,
     });
     if (!scan.ok) {
+      const location = { line: scan.line, column: scan.column };
       rejections.push(
-        new CustomCssRejection("limit_exceeded", LIMIT_REASONS[scan.kind], field.appearance, {
-          line: scan.line,
-          column: scan.column,
-        })
+        scan.kind === "unclosed-block"
+          ? new CustomCssRejection("syntax_error", UNCLOSED_BLOCK_REASON, field.appearance, location)
+          : new CustomCssRejection("limit_exceeded", LIMIT_REASONS[scan.kind], field.appearance, location)
       );
       return field;
     }

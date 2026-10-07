@@ -436,7 +436,7 @@ Define `@keyframes` in the same field as the rules that use them.
 
 **Rejected.** Nothing is saved and the previously saved CSS stays in place:
 
-- Syntax errors, reported with line and column.
+- Syntax errors, reported with line and column. This includes a block left without its closing `}`, which browsers would quietly close at the end and nest every rule after it inside.
 - CSS over the size limit, or over one of the complexity limits below.
 - Anything Formbricks cannot process safely.
 

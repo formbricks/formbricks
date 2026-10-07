@@ -673,6 +673,16 @@ describe("limits and failures", () => {
     expect(reject(".a { color: red } }").errors[0].code).toBe("syntax_error");
   });
 
+  test("rejects a block left open at the end, at its brace, rather than nesting what follows", () => {
+    // Browsers and lightningcss both close it at the end of the input, so `.b` would become `.a .b`.
+    const result = reject(".a { color: red\n.b { color: blue }", ".c { color: red");
+    expect(result.errors).toEqual([
+      expect.objectContaining({ code: "syntax_error", appearance: "light", line: 1, column: 4 }),
+      expect.objectContaining({ code: "syntax_error", appearance: "dark", line: 1, column: 4 }),
+    ]);
+    expect(result.errors[0].reason).toBe("This block is never closed; a } is probably missing.");
+  });
+
   test("reports errors from both fields and never returns partial output", () => {
     const result = reject(".a { color: red } }", ".b { color: red } }");
     expect(result.errors.map((error) => error.appearance)).toEqual(["light", "dark"]);
