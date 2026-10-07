@@ -43,6 +43,21 @@ describe("loggableAIError", () => {
     });
   });
 
+  test("finds the provider status of an AI SDK error under a cause", () => {
+    const wrapped = new Error("outer", {
+      cause: new Error("middle", { cause: buildProviderCallError(429) }),
+    });
+
+    expect(loggableAIError(wrapped)).toMatchObject({ providerStatusCode: 429 });
+  });
+
+  test("stops on a cause cycle that carries no status, without one", () => {
+    const error = new Error("loop");
+    error.cause = error;
+
+    expect(loggableAIError(error)).not.toHaveProperty("providerStatusCode");
+  });
+
   test("names the token-endpoint failure that ended the retries by its code", () => {
     const error = new RetryError({
       message: "Failed after 2 attempts. Last error: OAuth2 token endpoint did not respond in time",
@@ -107,6 +122,15 @@ describe("redactAIError", () => {
     ["something that is not an Error", "boom"],
   ])("passes %s through unchanged, so callers can still branch on it", (_, error) => {
     expect(redactAIError(error)).toBe(error);
+  });
+
+  test("keeps the provider status of an AI SDK error wrapped under an app error", () => {
+    const wrapped = new Error("Translation failed", { cause: buildProviderCallError(503) });
+
+    const redacted = redactAIError(wrapped) as RedactedAIError;
+
+    expect(redacted).toMatchObject({ originalName: "Error", providerStatusCode: 503 });
+    expect(redacted.message).toContain("(provider status 503)");
   });
 });
 

@@ -82,9 +82,25 @@ export const describeAIError = (error: unknown): TAIErrorDescription => {
   };
 };
 
+/**
+ * The provider's HTTP status for a failure, read from the first link of its `cause` chain that carries
+ * one. `classifyAIProviderError` reads only the error it is given, so an app error wrapping an
+ * `APICallError` would otherwise report no status at all. Bounded, so a cause cycle stops.
+ */
+const providerStatusCodeOf = (error: unknown): number | undefined => {
+  let current: unknown = error;
+  for (let depth = 0; depth <= MAX_CAUSE_DEPTH; depth += 1) {
+    const statusCode = classifyAIProviderError(current)?.statusCode;
+    if (statusCode !== undefined) return statusCode;
+    if (!(current instanceof Error)) return undefined;
+    current = current.cause;
+  }
+  return undefined;
+};
+
 /** `describeAIError` plus the provider's HTTP status: everything an AI failure may log. */
 export const loggableAIError = (error: unknown): TLoggableAIError => {
-  const providerStatusCode = classifyAIProviderError(error)?.statusCode;
+  const providerStatusCode = providerStatusCodeOf(error);
   return {
     ...describeAIError(error),
     ...(providerStatusCode === undefined ? {} : { providerStatusCode }),
@@ -105,16 +121,17 @@ export const isAISDKErrorChain = (error: unknown): boolean => {
 /**
  * Stands in for an AI SDK error on its way to a sink that logs or reports errors whole — the server
  * action client's `handleServerError` writes a thrown error to pino and to Sentry as it is. It keeps
- * what locates the failure — the original name, the provider status, and the original frames under a
+ * what locates the failure — the original name (or, for something thrown that is not an `Error`, its
+ * type), the provider status found anywhere down the `cause` chain, and the original frames under a
  * header of its own — and nothing the call filled in: no message, no fields, no `cause`.
  */
 export class RedactedAIError extends Error {
   readonly originalName: string;
   readonly providerStatusCode?: number;
 
-  constructor(original: Error) {
+  constructor(original: unknown) {
     const originalName = nameOf(original);
-    const providerStatusCode = classifyAIProviderError(original)?.statusCode;
+    const providerStatusCode = providerStatusCodeOf(original);
     super(
       `AI call failed with ${originalName}${
         providerStatusCode === undefined ? "" : ` (provider status ${providerStatusCode})`
@@ -128,7 +145,7 @@ export class RedactedAIError extends Error {
 
     // The original's frames under this error's own header, so a report still points at the failing call
     // rather than at the line that redacted it. Without readable frames, this error's own stack stands.
-    const frames = stackFrames(original);
+    const frames = original instanceof Error ? stackFrames(original) : [];
     if (frames.length > 0) {
       this.stack = [`${this.name}: ${this.message}`, ...frames].join("\n");
     }
