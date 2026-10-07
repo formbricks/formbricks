@@ -2293,9 +2293,11 @@
       "warning_unsafe_value_removed": "Az érték eltávolításra került",
       "warning_unsupported_at_rule_removed": "Az at-szabály eltávolításra került",
       "withheld_warning": "A mentett CSS már nem felel meg a jelenlegi ellenőrzéseknek, ezért a válaszadók nem kapják meg. Kérjük, javítsa ki, majd mentse el ismét.",
+      "workspace_base_css_label": "Munkaterület alap CSS",
       "workspace_css_empty": "Ehhez a munkaterülethez nem tartozik egyedi CSS.",
       "workspace_css_help": "A kérdőív CSS-e előtt kerül alkalmazásra, ezért a kérdőív CSS-e felülírja azt. A tulajdonosok és a kezelők a <lookFeelLink>Megjelenés</lookFeelLink> beállításaiban szerkeszthetik.",
-      "workspace_css_label": "Örökölt munkaterület-CSS"
+      "workspace_css_label": "Örökölt munkaterület-CSS",
+      "workspace_dark_css_label": "Munkaterület sötét CSS"
     },
     "embedded_data": {
       "add_field": "Mező hozzáadása",

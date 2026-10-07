@@ -2293,9 +2293,11 @@
       "warning_unsafe_value_removed": "Value removed",
       "warning_unsupported_at_rule_removed": "At-rule removed",
       "withheld_warning": "The saved CSS no longer passes the current checks, so respondents don't get it. Fix it and save it again.",
+      "workspace_base_css_label": "Workspace base CSS",
       "workspace_css_empty": "This workspace has no custom CSS.",
       "workspace_css_help": "Comes before the survey CSS, so the survey CSS overrides it. Owners and managers edit it in the <lookFeelLink>Appearance</lookFeelLink> settings.",
-      "workspace_css_label": "Inherited workspace CSS"
+      "workspace_css_label": "Inherited workspace CSS",
+      "workspace_dark_css_label": "Workspace dark CSS"
     },
     "embedded_data": {
       "add_field": "Add field",

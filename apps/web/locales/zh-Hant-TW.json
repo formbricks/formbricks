@@ -2293,9 +2293,11 @@
       "warning_unsafe_value_removed": "已移除值",
       "warning_unsupported_at_rule_removed": "已移除 at-rule",
       "withheld_warning": "已儲存的 CSS 未通過目前的檢查，因此不會提供給受訪者。請修正後再重新儲存。",
+      "workspace_base_css_label": "工作區基礎 CSS",
       "workspace_css_empty": "此工作區沒有自訂 CSS。",
       "workspace_css_help": "會排在問卷 CSS 之前,因此問卷 CSS 會覆蓋它。擁有者和管理員可以在<lookFeelLink>外觀</lookFeelLink>設定中編輯。",
-      "workspace_css_label": "繼承的工作區 CSS"
+      "workspace_css_label": "繼承的工作區 CSS",
+      "workspace_dark_css_label": "工作區深色 CSS"
     },
     "embedded_data": {
       "add_field": "新增欄位",

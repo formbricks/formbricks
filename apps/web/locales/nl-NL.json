@@ -2293,9 +2293,11 @@
       "warning_unsafe_value_removed": "Waarde verwijderd",
       "warning_unsupported_at_rule_removed": "At-regel verwijderd",
       "withheld_warning": "De opgeslagen CSS voldoet niet meer aan de huidige controles, dus respondenten krijgen deze niet te zien. Pas de CSS aan en sla hem opnieuw op.",
+      "workspace_base_css_label": "Basis-CSS van werkruimte",
       "workspace_css_empty": "Deze werkruimte heeft geen aangepaste CSS.",
       "workspace_css_help": "Komt vóór de CSS van de enquête, dus de enquête-CSS overschrijft deze. Eigenaren en beheerders bewerken deze in de instellingen voor <lookFeelLink>Weergave</lookFeelLink>.",
-      "workspace_css_label": "Overgenomen werkruimte-CSS"
+      "workspace_css_label": "Overgenomen werkruimte-CSS",
+      "workspace_dark_css_label": "Donkere CSS van werkruimte"
     },
     "embedded_data": {
       "add_field": "Veld toevoegen",

@@ -2293,9 +2293,11 @@
       "warning_unsafe_value_removed": "Valoarea a fost eliminată",
       "warning_unsupported_at_rule_removed": "Regula at a fost eliminată",
       "withheld_warning": "CSS-ul salvat nu mai trece verificările curente, așa că respondenții nu îl primesc. Corectează-l și salvează-l din nou.",
+      "workspace_base_css_label": "CSS de bază pentru spațiul de lucru",
       "workspace_css_empty": "Acest spațiu de lucru nu are CSS personalizat.",
       "workspace_css_help": "Se aplică înaintea CSS-ului chestionarului, deci acesta din urmă îl suprascrie. Proprietarii și managerii îl editează din setările <lookFeelLink>Aspect</lookFeelLink>.",
-      "workspace_css_label": "CSS moștenit din spațiul de lucru"
+      "workspace_css_label": "CSS moștenit din spațiul de lucru",
+      "workspace_dark_css_label": "CSS pentru tema întunecată a spațiului de lucru"
     },
     "embedded_data": {
       "add_field": "Adaugă câmp",

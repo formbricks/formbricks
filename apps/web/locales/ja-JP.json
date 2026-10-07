@@ -2293,9 +2293,11 @@
       "warning_unsafe_value_removed": "値を削除しました",
       "warning_unsupported_at_rule_removed": "アットルールを削除しました",
       "withheld_warning": "保存されたCSSが現在のチェックに合格しなくなったため、回答者には適用されません。修正して、もう一度保存してください。",
+      "workspace_base_css_label": "ワークスペースのベースCSS",
       "workspace_css_empty": "このワークスペースにはカスタムCSSがありません。",
       "workspace_css_help": "アンケートのCSSよりも前に適用されるため、アンケートのCSSによって上書きされます。オーナーとマネージャーは、<lookFeelLink>外観</lookFeelLink>設定で編集できます。",
-      "workspace_css_label": "継承されたワークスペースCSS"
+      "workspace_css_label": "継承されたワークスペースCSS",
+      "workspace_dark_css_label": "ワークスペースのダークCSS"
     },
     "embedded_data": {
       "add_field": "フィールドを追加",

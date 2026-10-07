@@ -2293,9 +2293,11 @@
       "warning_unsafe_value_removed": "Valeur supprimée",
       "warning_unsupported_at_rule_removed": "Règle @ supprimée",
       "withheld_warning": "Le CSS enregistré ne passe plus les vérifications actuelles, donc les répondants ne le reçoivent pas. Corrige-le et enregistre-le à nouveau.",
+      "workspace_base_css_label": "CSS de base de l'espace de travail",
       "workspace_css_empty": "Cet espace de travail n'a pas de CSS personnalisé.",
       "workspace_css_help": "Il passe avant le CSS de l'enquête, donc le CSS de l'enquête le remplace. Les propriétaires et les gestionnaires le modifient dans les paramètres d'<lookFeelLink>Apparence</lookFeelLink>.",
-      "workspace_css_label": "CSS hérité de l'espace de travail"
+      "workspace_css_label": "CSS hérité de l'espace de travail",
+      "workspace_dark_css_label": "CSS sombre de l'espace de travail"
     },
     "embedded_data": {
       "add_field": "Ajouter un champ",

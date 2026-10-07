@@ -2213,9 +2213,11 @@ checksums:
     workspace/custom_css/warning_unsafe_value_removed: f8c62690c9b838ef852edb1d12ac0f98
     workspace/custom_css/warning_unsupported_at_rule_removed: e01738a2e6b8b7f2fb351e31a914c378
     workspace/custom_css/withheld_warning: 0f1bc69d892c0a71fddc4e5339319d6d
+    workspace/custom_css/workspace_base_css_label: ef435952b7a5ee0c9ded44bd2cfa596b
     workspace/custom_css/workspace_css_empty: 09b996d04cfc4eba3fefb000da67c9c2
     workspace/custom_css/workspace_css_help: e85114e48d31e10650db3eccc140f74a
     workspace/custom_css/workspace_css_label: fc3b18b095945b66b5da2c6b825b727f
+    workspace/custom_css/workspace_dark_css_label: 55c423a8f97b75ed00b1c1effbaa3e29
     workspace/embedded_data/add_field: dc802a39c55c111c7c9639c6fe5c4292
     workspace/embedded_data/add_field_description: 01969ef5e35d7f537c82cf0657aaf0cd
     workspace/embedded_data/add_to_library: eaa0b09943650123d1aa1c5c518f3e09

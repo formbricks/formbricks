@@ -2293,9 +2293,11 @@
       "warning_unsafe_value_removed": "Значение удалено",
       "warning_unsupported_at_rule_removed": "At-правило удалено",
       "withheld_warning": "Сохранённый CSS больше не проходит текущие проверки, поэтому респонденты его не получают. Исправь его и сохрани снова.",
+      "workspace_base_css_label": "Базовый CSS рабочего пространства",
       "workspace_css_empty": "В этом рабочем пространстве нет пользовательского CSS.",
       "workspace_css_help": "Идёт перед CSS опроса, поэтому CSS опроса переопределяет его. Владельцы и менеджеры редактируют его в настройках <lookFeelLink>оформления</lookFeelLink>.",
-      "workspace_css_label": "Унаследованный CSS рабочего пространства"
+      "workspace_css_label": "Унаследованный CSS рабочего пространства",
+      "workspace_dark_css_label": "Тёмный CSS рабочего пространства"
     },
     "embedded_data": {
       "add_field": "Добавить поле",

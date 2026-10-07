@@ -2293,9 +2293,11 @@
       "warning_unsafe_value_removed": "Valor removido",
       "warning_unsupported_at_rule_removed": "Regra-at removida",
       "withheld_warning": "O CSS guardado já não passa nas verificações atuais, por isso os inquiridos não o recebem. Corrija-o e guarde-o novamente.",
+      "workspace_base_css_label": "CSS base do espaço de trabalho",
       "workspace_css_empty": "Este espaço de trabalho não tem CSS personalizado.",
       "workspace_css_help": "Vem antes do CSS do inquérito, por isso o CSS do inquérito substitui-o. Os proprietários e gestores editam-no nas definições de <lookFeelLink>Aparência</lookFeelLink>.",
-      "workspace_css_label": "CSS do espaço de trabalho herdado"
+      "workspace_css_label": "CSS do espaço de trabalho herdado",
+      "workspace_dark_css_label": "CSS escuro do espaço de trabalho"
     },
     "embedded_data": {
       "add_field": "Adicionar campo",

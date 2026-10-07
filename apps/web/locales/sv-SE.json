@@ -2293,9 +2293,11 @@
       "warning_unsafe_value_removed": "Värde borttaget",
       "warning_unsupported_at_rule_removed": "At-regel borttagen",
       "withheld_warning": "Den sparade CSS-koden klarar inte längre de aktuella kontrollerna, så respondenterna får den inte. Åtgärda den och spara igen.",
+      "workspace_base_css_label": "Grundläggande CSS för arbetsyta",
       "workspace_css_empty": "Den här arbetsytan har ingen anpassad CSS.",
       "workspace_css_help": "Läses in före enkätens CSS, så enkätens CSS åsidosätter den. Ägare och chefer redigerar den i inställningarna för <lookFeelLink>Utseende</lookFeelLink>.",
-      "workspace_css_label": "Ärvd CSS från arbetsytan"
+      "workspace_css_label": "Ärvd CSS från arbetsytan",
+      "workspace_dark_css_label": "CSS för mörkt läge i arbetsytan"
     },
     "embedded_data": {
       "add_field": "Lägg till fält",

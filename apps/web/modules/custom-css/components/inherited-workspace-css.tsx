@@ -40,9 +40,14 @@ export const InheritedWorkspaceCss = ({
     const css = source?.[field] ?? null;
     if (!css) return [];
     const label =
-      field === "dark" ? t("workspace.custom_css.dark_css_label") : t("workspace.custom_css.base_css_label");
+      field === "dark"
+        ? t("workspace.custom_css.workspace_dark_css_label")
+        : t("workspace.custom_css.workspace_base_css_label");
     return [{ field, css, label }];
   });
+  // Light shows the base CSS alone, which the panel title already names. Dark shows both, so each gets a
+  // label, prefixed so neither repeats the survey field's own "Base CSS" or "Dark CSS" title below.
+  const showLabels = fields.length > 1;
 
   return (
     <Collapsible.Root open={open} onOpenChange={setOpen} className="rounded-md border border-slate-200">
@@ -74,22 +79,24 @@ export const InheritedWorkspaceCss = ({
         {inherited.length > 0 ? (
           inherited.map(({ field, css, label }) => (
             <div key={field} className="flex flex-col gap-1">
-              <p className="text-xs font-medium text-slate-600">
-                {label}
-                {field === "light" && appearance === "dark" && (
-                  <span className="font-normal text-slate-500">
-                    {" "}
-                    · {t("workspace.custom_css.base_css_help")}
-                  </span>
-                )}
-              </p>
+              {showLabels && (
+                <p className="text-xs font-medium text-slate-600">
+                  {label}
+                  {field === "light" && (
+                    <span className="font-normal text-slate-500">
+                      {" "}
+                      · {t("workspace.custom_css.base_css_help")}
+                    </span>
+                  )}
+                </p>
+              )}
               <CssCodeField
                 // Read-only but focusable, so a keyboard user can scroll a long stylesheet.
                 id={`${id}-${field}`}
                 value={css}
                 rows={Math.min(countLines(css), MAX_VISIBLE_LINES)}
                 resizable={false}
-                aria-label={`${t("workspace.custom_css.workspace_css_label")}: ${label}`}
+                aria-label={label}
               />
             </div>
           ))

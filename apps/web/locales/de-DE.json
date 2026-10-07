@@ -2293,9 +2293,11 @@
       "warning_unsafe_value_removed": "Wert entfernt",
       "warning_unsupported_at_rule_removed": "At-Regel entfernt",
       "withheld_warning": "Das gespeicherte CSS besteht die aktuellen Prüfungen nicht mehr und wird deshalb nicht an die Teilnehmenden ausgeliefert. Korrigiere es und speichere es erneut.",
+      "workspace_base_css_label": "Basis-CSS des Workspace",
       "workspace_css_empty": "Dieser Workspace hat kein benutzerdefiniertes CSS.",
       "workspace_css_help": "Kommt vor dem Umfrage-CSS, sodass das Umfrage-CSS es überschreibt. Eigentümer und Manager bearbeiten es in den <lookFeelLink>Darstellungseinstellungen</lookFeelLink>.",
-      "workspace_css_label": "Geerbtes Workspace-CSS"
+      "workspace_css_label": "Geerbtes Workspace-CSS",
+      "workspace_dark_css_label": "Dunkles CSS des Workspace"
     },
     "embedded_data": {
       "add_field": "Feld hinzufügen",

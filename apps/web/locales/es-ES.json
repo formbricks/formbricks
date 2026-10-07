@@ -2293,9 +2293,11 @@
       "warning_unsafe_value_removed": "Valor eliminado",
       "warning_unsupported_at_rule_removed": "Regla @ eliminada",
       "withheld_warning": "El CSS guardado ya no supera las comprobaciones actuales, así que los encuestados no lo reciben. Corrígelo y vuelve a guardarlo.",
+      "workspace_base_css_label": "CSS base del espacio de trabajo",
       "workspace_css_empty": "Este espacio de trabajo no tiene CSS personalizado.",
       "workspace_css_help": "Va antes del CSS de la encuesta, por lo que este lo sobrescribe. Los propietarios y los gestores lo editan en los ajustes de <lookFeelLink>Apariencia</lookFeelLink>.",
-      "workspace_css_label": "CSS heredado del espacio de trabajo"
+      "workspace_css_label": "CSS heredado del espacio de trabajo",
+      "workspace_dark_css_label": "CSS oscuro del espacio de trabajo"
     },
     "embedded_data": {
       "add_field": "Añadir campo",

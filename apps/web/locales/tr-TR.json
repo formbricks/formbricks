@@ -2293,9 +2293,11 @@
       "warning_unsafe_value_removed": "Değer kaldırıldı",
       "warning_unsupported_at_rule_removed": "At-kuralı kaldırıldı",
       "withheld_warning": "Kaydedilen CSS artık güncel kontrolleri geçemiyor, bu yüzden katılımcılara gösterilmiyor. Düzeltip tekrar kaydet.",
+      "workspace_base_css_label": "Çalışma alanı temel CSS'i",
       "workspace_css_empty": "Bu çalışma alanında özel CSS yok.",
       "workspace_css_help": "Anket CSS'inden önce gelir, bu yüzden anket CSS'i onu geçersiz kılar. Sahipler ve yöneticiler bunu <lookFeelLink>Görünüm</lookFeelLink> ayarlarından düzenleyebilir.",
-      "workspace_css_label": "Devralınan çalışma alanı CSS'i"
+      "workspace_css_label": "Devralınan çalışma alanı CSS'i",
+      "workspace_dark_css_label": "Çalışma alanı koyu tema CSS'i"
     },
     "embedded_data": {
       "add_field": "Alan ekle",
