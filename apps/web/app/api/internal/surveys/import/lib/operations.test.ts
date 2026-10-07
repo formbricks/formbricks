@@ -328,7 +328,7 @@ describe("streamQsfImport", () => {
       expect(mocks.log.error).toHaveBeenCalledWith(
         expect.objectContaining({
           errName: "Error",
-          errStack: expect.stringContaining("operations.test.ts"),
+          errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
         }),
         "QSF import failed"
       );

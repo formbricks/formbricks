@@ -99,7 +99,7 @@ describe("createNdjsonResponse", () => {
     expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({
         errName: "TypeError",
-        errStack: expect.stringContaining("ndjson-stream.test.ts"),
+        errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
       }),
       "NDJSON stream settle hook failed"
     );

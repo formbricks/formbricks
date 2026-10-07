@@ -261,7 +261,10 @@ describe("streamV3SurveyGeneration", () => {
     await readEvents(await call());
 
     expect(mocks.log.error).toHaveBeenCalledWith(
-      expect.objectContaining({ errName: "Error", errStack: expect.stringContaining("operations.test.ts") }),
+      expect.objectContaining({
+        errName: "Error",
+        errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
+      }),
       "AI survey generation stream failed"
     );
     expect(JSON.stringify(mocks.log.error.mock.calls)).not.toContain("secret-from-the-prompt");

@@ -126,7 +126,7 @@ describe("mapV3SurveyGenerateError", () => {
     expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({
         errName: "Error",
-        errStack: expect.stringContaining("error-mapping.test.ts"),
+        errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
         requestId: context.requestId,
       }),
       "Failed to generate v3 survey create payload"
