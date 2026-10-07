@@ -14,6 +14,14 @@ export const V3_REQUEST_ARRAY_MAX_ITEMS = 1000;
 export const V3_REQUEST_ARRAY_MAX_TOTAL_ELEMENTS = 50_000;
 
 /**
+ * Deepest nesting a v3 request may carry, counted in containers from the root. The walk holds a little
+ * state for every open level, so depth is what bounds it: without a cap, a 15 MB body nested one level
+ * per few bytes keeps millions of levels open at once (ENG-3653). Real bodies sit far below this — a
+ * survey document, its logic's condition groups and a Qualtrics export nest a few dozen levels at most.
+ */
+export const V3_REQUEST_MAX_DEPTH = 128;
+
+/**
  * How much of the offending array's path a violation reports. The path is caller-shaped too: a 120 KB
  * body of 60k nested arrays would otherwise put a 100 KB `name` into the 400, twice into the MCP error,
  * and once more into the warn log.
@@ -23,7 +31,8 @@ const MAX_REPORTED_SEGMENT_CHARS = 64;
 
 export type TArrayBudgetViolation =
   | { kind: "array_too_long"; path: string; length: number }
-  | { kind: "too_many_elements"; path: string; total: number };
+  | { kind: "too_many_elements"; path: string; total: number }
+  | { kind: "too_deep"; path: string };
 
 /** One step of the walk's path, shared by reference so a deep body costs one node per level. */
 type TPathNode = { segment: string; parent: TPathNode | null };
@@ -38,6 +47,8 @@ type TContainerFrame = {
   keys: string[] | null;
   next: number;
   path: TPathNode | null;
+  /** Containers from the root to this one, itself included. */
+  depth: number;
 };
 
 const isContainer = (value: unknown): value is Record<string, unknown> | unknown[] =>
@@ -66,7 +77,8 @@ const childAt = (frame: TContainerFrame, index: number, segment: string): unknow
     : (frame.container as Record<string, unknown>)[segment];
 
 /**
- * Checks every array in a parsed JSON value against the two budgets above, before any schema sees it.
+ * Checks a parsed JSON value against the budgets above — every array's length, the elements across all
+ * arrays, and the nesting depth — before any schema sees it.
  *
  * Zod parses every element of an array before an array-level `.max()` runs, so an oversized array
  * costs one issue per element — ~500 MB of transient heap and a multi-megabyte 400 for a 200k-entry
@@ -77,8 +89,9 @@ const childAt = (frame: TContainerFrame, index: number, segment: string): unknow
  * Iterative on purpose: the input is caller-shaped, and a recursive walk over a deeply nested body
  * would overflow the stack before the budget was ever checked. And lazy, for the same reason: expanding
  * every container's children into frames up front cost ~220 MB of heap and a second of event-loop time
- * on a 15 MB object with a million keys (ENG-3653, whose route takes bodies that large). Arrays are
- * checked in document order, when the walk first reaches them.
+ * on a 15 MB object with a million keys (ENG-3653, whose route takes bodies that large). The depth cap
+ * bounds what stays open: at most `V3_REQUEST_MAX_DEPTH` frames and path nodes, whatever the shape.
+ * Containers are checked in document order, when the walk first reaches them.
  *
  * Paths use the dotted form `invalid_params` already uses (`blocks.3.elements`), cut to the first
  * `MAX_REPORTED_PATH_SEGMENTS`; an empty path means the root value itself.
@@ -93,17 +106,28 @@ export function findArrayBudgetViolation(value: unknown): TArrayBudgetViolation 
   /** A frame for `container`, checking it first when it is an array. */
   const enter = (
     container: Record<string, unknown> | unknown[],
-    path: TPathNode | null
+    path: TPathNode | null,
+    depth: number
   ): { frame: TContainerFrame; violation: TArrayBudgetViolation | null } => {
+    if (depth > V3_REQUEST_MAX_DEPTH) {
+      return {
+        frame: { container, keys: [], next: 0, path, depth },
+        violation: { kind: "too_deep", path: renderPath(path) },
+      };
+    }
+
     if (!Array.isArray(container)) {
-      return { frame: { container, keys: Object.keys(container), next: 0, path }, violation: null };
+      return { frame: { container, keys: Object.keys(container), next: 0, path, depth }, violation: null };
     }
 
     total += container.length;
-    return { frame: { container, keys: null, next: 0, path }, violation: checkArray(container, path, total) };
+    return {
+      frame: { container, keys: null, next: 0, path, depth },
+      violation: checkArray(container, path, total),
+    };
   };
 
-  const root = enter(value, null);
+  const root = enter(value, null, 1);
   if (root.violation) {
     return root.violation;
   }
@@ -127,7 +151,7 @@ export function findArrayBudgetViolation(value: unknown): TArrayBudgetViolation 
     }
 
     if (isContainer(child)) {
-      const entered = enter(child, { segment, parent: frame.path });
+      const entered = enter(child, { segment, parent: frame.path }, frame.depth + 1);
       if (entered.violation) {
         return entered.violation;
       }
@@ -173,6 +197,10 @@ export function arrayBudgetInvalidParam(
 
   if (violation.kind === "array_too_long") {
     return { name, reason: `Too big: expected array to have <=${V3_REQUEST_ARRAY_MAX_ITEMS} items` };
+  }
+
+  if (violation.kind === "too_deep") {
+    return { name, reason: `Too deep: expected the request to nest <=${V3_REQUEST_MAX_DEPTH} levels` };
   }
 
   return {

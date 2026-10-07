@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   V3_REQUEST_ARRAY_MAX_ITEMS,
   V3_REQUEST_ARRAY_MAX_TOTAL_ELEMENTS,
+  V3_REQUEST_MAX_DEPTH,
   arrayBudgetInvalidParam,
   findArrayBudgetViolation,
 } from "./array-budget";
@@ -45,15 +46,33 @@ describe("findArrayBudgetViolation", () => {
     expect(findArrayBudgetViolation(body)?.path).toBe("first.0.nested");
   });
 
-  test("walks deep nesting without recursing", () => {
-    // A recursive walk overflows the stack somewhere around ten thousand frames; the budget has to be
-    // checked before that can happen, because the nesting is the caller's choice.
+  const nest = (levels: number, wrap: (inner: unknown) => unknown) => {
     let value: unknown = 0;
-    for (let depth = 0; depth < 40_000; depth += 1) {
-      value = [value];
+    for (let level = 0; level < levels; level += 1) {
+      value = wrap(value);
     }
+    return value;
+  };
 
-    expect(findArrayBudgetViolation(value)).toBeNull();
+  test("accepts nesting at the depth cap and refuses one level more, naming where", () => {
+    expect(findArrayBudgetViolation(nest(V3_REQUEST_MAX_DEPTH, (inner) => ({ a: inner })))).toBeNull();
+
+    const violation = findArrayBudgetViolation(nest(V3_REQUEST_MAX_DEPTH + 1, (inner) => ({ a: inner })));
+
+    expect(violation).toMatchObject({ kind: "too_deep", path: "a.a.a.a.a.a.a.a.a.a.…" });
+    expect(violation && arrayBudgetInvalidParam(violation, "body").reason).toBe(
+      `Too deep: expected the request to nest <=${V3_REQUEST_MAX_DEPTH} levels`
+    );
+  });
+
+  test("refuses deep nesting whatever its shape, without recursing", () => {
+    // A sibling on every level keeps each level's frame open; the cap is what bounds that. And a
+    // recursive walk would overflow the stack around ten thousand levels, so the walk stays iterative.
+    const withSiblings = nest(40_000, (inner) => ({ a: inner, b: 0 }));
+    const arrays = nest(40_000, (inner) => [inner, 0]);
+
+    expect(findArrayBudgetViolation(withSiblings)?.kind).toBe("too_deep");
+    expect(findArrayBudgetViolation(arrays)?.kind).toBe("too_deep");
   });
 
   test("clips the reported path to ten segments and 64 characters per key", () => {
