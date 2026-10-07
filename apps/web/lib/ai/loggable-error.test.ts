@@ -1,5 +1,6 @@
 import {
   LEAKY_AI_ERRORS,
+  PLANTED_USER_CONTENT,
   buildNoObjectError,
   buildProviderCallError,
   buildRetryError,
@@ -119,9 +120,23 @@ describe("redactAIError", () => {
     ["a token-limit error", new AIOutputTokenLimitError({ maxOutputTokens: 10 })],
     ["a token-endpoint error", new AIOAuthTokenError("token_request_failed", { tokenUrlHost: "idp" })],
     ["a plain error", new Error("boom")],
-    ["something that is not an Error", "boom"],
   ])("passes %s through unchanged, so callers can still branch on it", (_, error) => {
     expect(redactAIError(error)).toBe(error);
+  });
+
+  // A provider's streamed error can reach a caller as a plain object holding the provider's message, and
+  // a whole-error sink would log every field of it. Nothing that is not an Error is let through.
+  test.each([
+    ["a string", PLANTED_USER_CONTENT],
+    ["a provider's error object", { error: { message: PLANTED_USER_CONTENT, code: "invalid_request" } }],
+    ["undefined", undefined],
+    ["null", null],
+  ])("replaces %s with an error naming only its type", (_, thrown) => {
+    const redacted = redactAIError(thrown);
+
+    expect(redacted).toBeInstanceOf(RedactedAIError);
+    expect(redacted).toMatchObject({ originalName: typeof thrown });
+    expect(findPlantedContent(redacted)).toBeUndefined();
   });
 
   test("keeps the provider status of an AI SDK error wrapped under an app error", () => {

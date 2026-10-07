@@ -153,10 +153,12 @@ export class RedactedAIError extends Error {
 }
 
 /**
- * The error to rethrow past code that may log or report it whole: a `RedactedAIError` for an AI SDK
- * error (or an error wrapping one), anything else unchanged — the app's own errors carry no prompt and
- * callers still branch on them. Log the original with `loggableAIError` first if it is worth a line of
- * its own; the redacted error cannot be turned back.
+ * The error to rethrow past code that may log or report it whole. Fails closed: an AI SDK error (or an
+ * error wrapping one) and anything thrown that is not an `Error` at all — a provider's streamed error
+ * can be a plain object holding its own message — become a `RedactedAIError`. Only the app's own
+ * `Error`s pass through unchanged: they carry no prompt, and callers still branch on them. Log the
+ * original with `loggableAIError` first if it is worth a line of its own; the redacted error cannot be
+ * turned back.
  */
 export const redactAIError = (error: unknown): unknown =>
-  error instanceof Error && isAISDKErrorChain(error) ? new RedactedAIError(error) : error;
+  !(error instanceof Error) || isAISDKErrorChain(error) ? new RedactedAIError(error) : error;

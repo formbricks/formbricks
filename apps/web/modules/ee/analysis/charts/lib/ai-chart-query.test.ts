@@ -422,18 +422,24 @@ describe("generateAIChartQuery", () => {
     expect(findPlantedContent(rejection)).toBeUndefined();
   });
 
-  test("does not convert non-Error rejections", async () => {
-    mocks.generateOrganizationAIObject.mockRejectedValueOnce("string failure");
+  // What the user sees: a non-Error rejection is not their prompt's fault, so it must not become the
+  // "could not be converted" prompt error — it stays an unexpected failure. And since the action client
+  // logs and reports that failure whole, it arrives redacted rather than as the raw value.
+  test("does not turn a non-Error rejection into a prompt error, and redacts it", async () => {
+    mocks.generateOrganizationAIObject.mockRejectedValueOnce({ error: { message: "string failure" } });
 
-    await expect(
-      generateAIChartQuery({
-        organizationId: "organization-1",
-        workspaceId: "workspace-1",
-        feedbackDirectoryId: "directory-1",
-        userId: "user-1",
-        prompt: "anything",
-      })
-    ).rejects.toBe("string failure");
+    const rejection = await generateAIChartQuery({
+      organizationId: "organization-1",
+      workspaceId: "workspace-1",
+      feedbackDirectoryId: "directory-1",
+      userId: "user-1",
+      prompt: "anything",
+    }).catch((thrown: unknown) => thrown);
+
+    expect(rejection).not.toBeInstanceOf(InvalidInputError);
+    expect(rejection).toMatchObject({ name: "RedactedAIError", originalName: "object" });
+    expect(JSON.stringify(rejection)).not.toContain("string failure");
+    expect(String((rejection as Error).message)).not.toContain("string failure");
   });
 
   test("puts the directory's real sources and questions in the system prompt", async () => {
