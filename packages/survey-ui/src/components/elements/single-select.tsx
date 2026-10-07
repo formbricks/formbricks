@@ -384,7 +384,7 @@ function getOptionContainerClassName(isSelected: boolean, disabled: boolean): st
   return cn(
     "relative flex cursor-pointer flex-col border transition-colors outline-none",
     "rounded-option px-option-x py-option-y",
-    isSelected ? "bg-option-selected-bg border-brand" : "bg-option-bg border-option-border",
+    isSelected ? "bg-option-selected-bg border-brand-readable" : "bg-option-bg border-option-border",
     // No focus-within fill: it repainted the option in the *selected* colors, so the card's
     // mount autofocus made option 1 look answered (ENG-2288). Focus has its own uniform ring
     // on the option label, from survey-ui's globals.css.
@@ -405,9 +405,9 @@ function RadioIndicator(): React.JSX.Element {
       data-fb-part={FB_PART.optionControl}
       className={cn(
         "border-input-border dark:bg-input-bg relative flex size-4 shrink-0 items-center justify-center rounded-full border bg-white shadow-xs transition-colors",
-        "peer-checked:border-brand",
+        "peer-checked:border-brand-readable",
         "after:size-2 after:rounded-full after:bg-transparent after:transition-colors after:content-['']",
-        "peer-checked:after:bg-brand"
+        "peer-checked:after:bg-brand-readable"
       )}
     />
   );

@@ -90,6 +90,8 @@ export function CalEmbed({ element, onSuccessfulBooking }: Readonly<CalEmbedProp
     [containerId]
   );
 
+  // `appearance` is a dependency: a live switch rebuilds the scheduler, because the embed's theme is fixed
+  // when it loads and the forwarded text colors changed with the survey's variables.
   useEffect(() => {
     // Initialize a namespaced Cal instance; `cal.ns[namespace]` is created
     // synchronously by the snippet so all further commands stay scoped to it.
@@ -99,7 +101,7 @@ export function CalEmbed({ element, onSuccessfulBooking }: Readonly<CalEmbedProp
     const ns = cal.ns[namespace];
 
     const embedContainer = document.getElementById(containerId);
-    ns("ui", getCalUiConfig(embedContainer, getResolvedAppearance()));
+    ns("ui", getCalUiConfig(embedContainer, appearance));
 
     const handleBooking = (): void => {
       onSuccessfulBookingRef.current();
@@ -109,6 +111,10 @@ export function CalEmbed({ element, onSuccessfulBooking }: Readonly<CalEmbedProp
     ns("inline", {
       elementOrSelector: `#${containerId}`,
       calLink: element.calUserName,
+      // `ui` alone only switches Cal's color tokens; a Cal account whose booking page is set to a light
+      // theme keeps its white background and ends up with light text on white. The embed's own `theme`
+      // overrides the account setting.
+      config: { theme: appearance },
     });
 
     // The snippet injects the iframe asynchronously without a title, so screen
@@ -134,18 +140,7 @@ export function CalEmbed({ element, onSuccessfulBooking }: Readonly<CalEmbedProp
       // Remove only this scheduler's injected embed, not every cal-inline on the page.
       embedContainer?.querySelector("cal-inline")?.remove();
     };
-  }, [cal, namespace, containerId, element.calHost, element.calUserName, iframeTitle]);
-
-  // A live appearance switch re-themes the open scheduler; the text colors are re-read because the
-  // survey's variables changed with it.
-  const isFirstAppearance = useRef(true);
-  useEffect(() => {
-    if (isFirstAppearance.current) {
-      isFirstAppearance.current = false;
-      return;
-    }
-    cal.ns[namespace]?.("ui", getCalUiConfig(document.getElementById(containerId), appearance));
-  }, [appearance, cal, namespace, containerId]);
+  }, [cal, namespace, containerId, element.calHost, element.calUserName, iframeTitle, appearance]);
 
   return (
     <div className="relative mt-4 overflow-auto">

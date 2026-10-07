@@ -793,7 +793,14 @@ describe("addCustomThemeToDom dark palette", () => {
         inputShadow: "inset 0 0 0 1px #000000",
       }),
     });
-    expect(getDarkBlock()).not.toContain("--fb-input-shadow");
+    expect(getDarkBlock()).toContain("--fb-input-shadow: inset 0 0 0 1px #000000;");
+  });
+
+  test("the Back button is readable in dark without a button color (automatic palette)", () => {
+    addCustomThemeToDom({ styling: getBaseWorkspaceStyling({}) });
+    const back = /--fb-back-button-color: (#[0-9a-f]{6});/.exec(getDarkBlock())?.[1];
+    expect(back).toBeDefined();
+    expect(getContrastRatio(back ?? "", "#0d1426")).toBeGreaterThanOrEqual(AA_CONTRAST_RATIO);
   });
 
   test("an unparseable dark value does not throw", () => {
