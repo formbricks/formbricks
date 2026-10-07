@@ -16,7 +16,7 @@ icon: "salesforce"
 
 ---
 
-## Method 1: Make.com (Recommended)
+## Method 1: Make.com (recommended)
 
 Make is a registered Salesforce app, so you only need to log in and click **Allow**. No Salesforce app setup is required.
 
@@ -41,7 +41,8 @@ Make is a registered Salesforce app, so you only need to log in and click **Allo
     | Email | `data.email` |
     | First Name | `data.firstName` |
     | Last Name (required) | `data.lastName` |
-    | Account | Optional, but Contacts without one are private to their owner |
+    | Account (Contact only) | Optional, but Contacts without one are private to their owner |
+    | Company (Lead only) | Required unless your org uses Person Accounts |
     | Custom Field | Any `data.*` or `meta.*` field |
   </Step>
   <Step title="Avoid Duplicates">
@@ -58,11 +59,11 @@ Make is a registered Salesforce app, so you only need to log in and click **Allo
 
 ## Method 2: n8n
 
-The built-in Salesforce node works on n8n Cloud and self-hosted, but needs a Salesforce app for OAuth login.
+The built-in Salesforce node works on n8n Cloud and self-hosted, but needs a Salesforce app for OAuth login. The Formbricks trigger is a community node for self-hosted n8n; on n8n Cloud, use a **Webhook** node as the trigger with a Formbricks webhook pointing at it.
 
 <Steps>
   <Step title="Add the Formbricks Trigger">
-    Add the **Formbricks** trigger node, connect your API key and host, select **Response Finished**, and choose your survey.
+    Install `@formbricks/n8n-nodes-formbricks` via **Settings** → **Community Nodes**. Then add the **Formbricks** trigger node, connect your API key and host, select **Response Finished**, and choose your survey.
 
     ![Add Formbricks Trigger](/images/platform/features/integrations/n8n/add-formbricks-trigger.webp)
   </Step>
@@ -73,12 +74,12 @@ The built-in Salesforce node works on n8n Cloud and self-hosted, but needs a Sal
     Choose **Contact** → **Create or Update**, create a Salesforce OAuth2 credential with the key and secret, and click **Connect my account**.
   </Step>
   <Step title="Map Fields">
-    Create or Update needs an external ID field to match on, such as a custom `Email__c` field on Contact marked as External ID and Unique.
+    Create or Update needs an external ID field to match on, such as a custom `Email__c` field on Contact marked as External ID and Unique. Set **Match Against** to `Email__c` and **Value to Match** to `{{ $json.data.data.email }}`, then map:
 
     ```
-    Email: {{ $json.data.email }}
-    First Name: {{ $json.data.firstName }}
-    Last Name: {{ $json.data.lastName }}
+    Email: {{ $json.data.data.email }}
+    First Name: {{ $json.data.data.firstName }}
+    Last Name: {{ $json.data.data.lastName }}
     ```
   </Step>
   <Step title="Test and Activate">
@@ -88,11 +89,11 @@ The built-in Salesforce node works on n8n Cloud and self-hosted, but needs a Sal
 
 ---
 
-## Method 3: Custom Webhook (Advanced)
+## Method 3: Custom webhook (advanced)
 
 Use this only if you want to avoid Make or n8n. Your handler authenticates with the OAuth 2.0 Client Credentials Flow.
 
-### Set Up an External Client App
+### Set up an External Client App
 
 <Steps>
   <Step title="Create the App">
@@ -111,7 +112,7 @@ Use this only if you want to avoid Make or n8n. Your handler authenticates with 
 
 See [Salesforce's Client Credentials Flow guide](https://help.salesforce.com/s/articleView?id=xcloud.configure_client_credentials_flow_for_external_client_apps.htm) for details.
 
-### Build the Handler
+### Build the handler
 
 <Steps>
   <Step title="Create a Formbricks Webhook">
@@ -136,7 +137,7 @@ See [Salesforce's Client Credentials Flow guide](https://help.salesforce.com/s/a
 
 **No record created**
 - Check that you're mapping the correct email `questionId`.
-- Contacts require `LastName`. Your org may also require an Account via a validation rule.
+- Contacts require `LastName`; Leads also require `Company` unless your org uses Person Accounts.
 
 **Duplicate records**
 - Add a search-then-update step, or upsert on an external ID.

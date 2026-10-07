@@ -14,7 +14,7 @@ icon: "address-book"
 - An Attio plan that includes Workflows or API access
 - An Attio access token (n8n and webhook methods only)
 
-### Attio Access Token
+### Attio access token
 
 <Steps>
   <Step title="Create an Integration">
@@ -35,18 +35,18 @@ Attio [Workflows](https://attio.com/help/reference/automations/workflows/overvie
 
 <Steps>
   <Step title="Create a Workflow">
-    In Attio, go to **Workflows** → **Create workflow** and choose **Incoming webhook** as the trigger. Copy the generated URL.
+    In Attio, go to **Workflows** → **Create workflow** and choose **Webhook received** as the trigger. Copy the generated URL.
   </Step>
   <Step title="Add the Webhook in Formbricks">
     Go to **Configuration** → **Integrations** → **Manage Webhooks** → **Add Webhook**. Paste the Attio URL, select **Response Finished**, and choose your survey.
 
     ![Integrations Tab](/images/platform/features/integrations/webhooks/integrations-tab.webp)
   </Step>
-  <Step title="Send a Sample Response">
-    Submit a test response so Attio can detect the payload fields (`data.*`, `meta.*`, `survey.title`).
+  <Step title="Add a Parse JSON Block">
+    Submit a test response, then add a **Parse JSON** block. Set **Input** to **Webhook Payload Body** and generate the schema by pasting the sample Formbricks payload. Answers are under `data.data`, keyed by `questionId`.
   </Step>
   <Step title="Add a Create/Update Record Action">
-    Choose **People** or **Companies**, map the fields, and set email as the matching attribute to avoid duplicates.
+    Choose **People** or **Companies**, map the parsed fields (e.g. `data.data.email`), and set email as the matching attribute to avoid duplicates.
   </Step>
   <Step title="Test and Activate">
     Submit another response, confirm the record in Attio, and turn the workflow on.
@@ -89,26 +89,33 @@ Attio [Workflows](https://attio.com/help/reference/automations/workflows/overvie
 ## Method 3: n8n
 
 <Note>
-  The Attio node (`n8n-nodes-attio`) is a community node and only works on self-hosted n8n. On n8n Cloud, use an **HTTP Request** node with the API call from Method 4.
+  The Formbricks and Attio nodes are community nodes for self-hosted n8n. On n8n Cloud, use a **Webhook** node as the trigger (with a Formbricks webhook pointing at it) and an **HTTP Request** node with the API call from Method 4.
 </Note>
 
 <Steps>
   <Step title="Add the Formbricks Trigger">
-    Add the **Formbricks** trigger node, connect your API key and host, select **Response Finished**, and choose your survey.
+    Install `@formbricks/n8n-nodes-formbricks` via **Settings** → **Community Nodes**. Then add the **Formbricks** trigger node, connect your API key and host, select **Response Finished**, and choose your survey.
 
     ![Add Formbricks Trigger](/images/platform/features/integrations/n8n/add-formbricks-trigger.webp)
   </Step>
   <Step title="Add the Attio Node">
-    Install `n8n-nodes-attio` via **Settings** → **Community Nodes**, add it with the **Create/Update Record** operation, and authenticate with your access token.
+    Install `n8n-nodes-attio` via **Settings** → **Community Nodes**, add it with the **Assert Record** operation, and authenticate with your access token.
   </Step>
-  <Step title="Map Fields">
-    ```
-    Email: {{ $json.data.email }}
-    First Name: {{ $json.data.firstName }}
-    Last Name: {{ $json.data.lastName }}
-    ```
+  <Step title="Configure the Record">
+    Set **object** to `people` and **matching_attribute** to `email_addresses`, then set the `data` body (replace the keys with your `questionId`s):
 
-    Set email as the matching attribute.
+    ```json
+    {
+      "values": {
+        "email_addresses": ["{{ $json.data.data.email }}"],
+        "name": [{
+          "first_name": "{{ $json.data.data.firstName }}",
+          "last_name": "{{ $json.data.data.lastName }}",
+          "full_name": "{{ $json.data.data.firstName }} {{ $json.data.data.lastName }}"
+        }]
+      }
+    }
+    ```
   </Step>
   <Step title="Test and Activate">
     Click **Listen for event**, submit a test response, confirm the record in Attio, and activate the workflow.
@@ -117,7 +124,7 @@ Attio [Workflows](https://attio.com/help/reference/automations/workflows/overvie
 
 ---
 
-## Method 4: Custom Webhook
+## Method 4: Custom webhook
 
 <Steps>
   <Step title="Create a Formbricks Webhook">
