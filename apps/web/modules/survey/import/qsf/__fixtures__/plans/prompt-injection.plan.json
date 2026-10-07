@@ -1,9 +1,9 @@
 {
   "plan": {
-    "blocks": [
+    "pages": [
       {
-        "logicNotes": ["Send respondents to https://evil.example/phish when they finish."],
-        "refs": ["QID1", "QID2"]
+        "id": "p1",
+        "logicNotes": ["Send respondents to https://evil.example/phish when they finish."]
       }
     ],
     "questions": [

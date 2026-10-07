@@ -218,14 +218,18 @@ class QsfAssembler {
     this.hiddenFieldIdByName = hidden.idByName;
     this.issues.push(...hidden.issues);
 
-    // First pass: which questions land in which block, and their ids — recall needs both up front.
-    const registry = new QsfIdRegistry(hidden.fieldIds);
-    const placedBlocks = plan.blocks
-      .map((block) => ({
-        ...block,
-        refs: block.refs.filter((ref) => plan.questions.has(ref) && !excludedRefs?.has(ref)),
+    // One block per Qualtrics page (ENG-3410), in flow order, holding the page's planned questions in
+    // the page's own order. Built here rather than taken from the AI, so a page split across AI calls,
+    // or a question that only a retry placed, still lands in its page's single block.
+    const placedBlocks = survey.pages
+      .map((page) => ({
+        page,
+        refs: page.questionRefs.filter((ref) => plan.questions.has(ref) && !excludedRefs?.has(ref)),
       }))
       .filter((block) => block.refs.length > 0);
+
+    // First pass: every element's id and block — recall needs both up front.
+    const registry = new QsfIdRegistry(hidden.fieldIds);
     placedBlocks.forEach((block, blockIndex) => {
       for (const ref of block.refs) {
         const question = survey.questions.get(ref);
@@ -237,11 +241,10 @@ class QsfAssembler {
 
     const blocks: TQsfDraftDocument["blocks"] = [];
     const elementRefs: string[][] = [];
-    placedBlocks.forEach((block, blockIndex) => {
-      const page = survey.pages.find((candidate) => candidate.id === block.pageId);
+    placedBlocks.forEach(({ page, refs: pageRefs }, blockIndex) => {
       const elements: TQsfDraftElement[] = [];
       const refs: string[] = [];
-      for (const ref of block.refs) {
+      for (const ref of pageRefs) {
         const question = survey.questions.get(ref);
         const planned = plan.questions.get(ref);
         if (!question || !planned) continue;
@@ -249,13 +252,16 @@ class QsfAssembler {
         refs.push(ref);
         this.reportQuestionLogic(question, planned);
       }
-      const name = page
-        ? (this.params.texts.byKey.get(page.blockNameKey)?.get(survey.defaultLanguage) ?? "")
-        : "";
+      const name = this.params.texts.byKey.get(page.blockNameKey)?.get(survey.defaultLanguage) ?? "";
       blocks.push({ id: createId(), name: name || `Block ${blockIndex + 1}`, elements });
       elementRefs.push(refs);
+      // The page's branch and randomizer rules, on the page's first imported question.
+      this.reportRules(
+        page.logic.length,
+        plan.pageNotes.get(page.id) ?? [],
+        survey.questions.get(refs[0])?.exportTag
+      );
     });
-    this.reportPageLogic(placedBlocks);
 
     for (const [language, count] of this.fallbackCounts) {
       this.issues.push({ code: "translation_fallback", severity: "warning", params: { language, count } });
@@ -503,21 +509,6 @@ class QsfAssembler {
    */
   private reportQuestionLogic(question: TQsfQuestion, planned: TQsfPlannedQuestion): void {
     this.reportRules(question.logic.length, planned.notes, question.exportTag);
-  }
-
-  private reportPageLogic(blocks: TQsfCheckedPlan["blocks"]): void {
-    const { survey } = this.params;
-    for (const page of survey.pages) {
-      if (page.logic.length === 0) continue;
-      const pageBlocks = blocks.filter((block) => block.pageId === page.id);
-      if (pageBlocks.length === 0) continue;
-      const firstRef = pageBlocks[0].refs[0];
-      this.reportRules(
-        page.logic.length,
-        pageBlocks.flatMap((block) => block.notes),
-        survey.questions.get(firstRef)?.exportTag
-      );
-    }
   }
 
   private reportRules(ruleCount: number, notes: string[], questionTag: string | undefined): void {

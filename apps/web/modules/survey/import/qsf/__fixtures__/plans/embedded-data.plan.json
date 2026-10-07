@@ -1,15 +1,6 @@
 {
   "plan": {
-    "blocks": [
-      {
-        "logicNotes": [],
-        "refs": ["QID1"]
-      },
-      {
-        "logicNotes": [],
-        "refs": ["QID2"]
-      }
-    ],
+    "pages": [],
     "questions": [
       {
         "choicesFrom": null,

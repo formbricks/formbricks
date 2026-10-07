@@ -1,21 +1,9 @@
 {
   "plan": {
-    "blocks": [
+    "pages": [
       {
-        "logicNotes": [],
-        "refs": ["QID1", "QID2"]
-      },
-      {
-        "logicNotes": [],
-        "refs": ["QID3"]
-      },
-      {
-        "logicNotes": ["Shown only to respondents who chose 'EU' for 'Which region are you in?'."],
-        "refs": ["QID4"]
-      },
-      {
-        "logicNotes": [],
-        "refs": ["QID5", "QID6"]
+        "id": "p3",
+        "logicNotes": ["Shown only to respondents who chose 'EU' for 'Which region are you in?'."]
       }
     ],
     "questions": [

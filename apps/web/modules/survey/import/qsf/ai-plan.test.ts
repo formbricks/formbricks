@@ -76,7 +76,6 @@ describe("planQsfImport", () => {
     expect(result.calls).toBe(3);
     expect(maxInFlight).toBe(3);
     expect(result.plan.questions.size).toBe(150);
-    expect(result.plan.blocks).toHaveLength(30);
     expect(result.plan.failures.size).toBe(0);
     expect(Number.isFinite(result.usage.inputTokens) && result.usage.inputTokens > 0).toBe(true);
     expect(result.usage.outputTokens).toBeGreaterThan(0);

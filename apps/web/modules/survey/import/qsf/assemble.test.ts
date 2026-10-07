@@ -216,7 +216,8 @@ describe("assembleQsfDraft", () => {
     });
 
     const lines = issues.filter((issue) => issue.code === "logic_not_imported");
-    expect(lines.map((issue) => issue.questionTag)).toEqual(["Q1", "Q2", "Q3", "Q4", "Q6", "Q4"]);
+    // Page p3's branch is reported with its page, on the page's first question.
+    expect(lines.map((issue) => issue.questionTag)).toEqual(["Q1", "Q2", "Q3", "Q4", "Q4", "Q6"]);
     expect(lines.find((issue) => issue.questionTag === "Q2")?.params).toBeUndefined();
     expect(JSON.stringify(lines)).not.toContain("Invented rule");
   });

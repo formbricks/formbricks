@@ -8,7 +8,6 @@ import {
   type TQsfPlanResponse,
   checkPlanResponses,
   mergeCheckedPlans,
-  orderBlocks,
 } from "./plan-checks";
 import { ZQsfImportPlanForAI } from "./plan-schema";
 import {
@@ -361,9 +360,7 @@ export async function planQsfImport(params: {
   if (failing.length > 0 && retryTimeout > 0) {
     const remaining = Math.max(QSF_MAX_AI_CALLS - context.calls, 1);
     const retry = await planRound(context, failing, remaining, retryTimeout, abort, plan.failures);
-    plan = mergeCheckedPlans(survey, plan, retry);
-  } else {
-    plan = { ...plan, blocks: orderBlocks(survey, plan.blocks) };
+    plan = mergeCheckedPlans(plan, retry);
   }
 
   for (const [ref, description] of plan.skipped) {

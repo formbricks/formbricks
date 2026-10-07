@@ -6,9 +6,9 @@ import type { TQsfPlanGenerate, TQsfPlanRequest } from "../ai-plan";
 const PLAN_DIR = join(dirname(fileURLToPath(import.meta.url)), "plans");
 
 interface TRecordedPlan {
-  blocks: { refs: string[]; logicNotes: string[] }[];
   questions: { ref: string; [key: string]: unknown }[];
   skipped: { ref: string; reason: string }[];
+  pages: { id: string; logicNotes: string[] }[];
 }
 
 /** The recorded plan for a fixture (`simple.qsf` → `plans/simple.plan.json`), or a named one. */
@@ -29,12 +29,12 @@ export const refsInPrompt = (prompt: string): string[] => {
 /** The part of a recorded plan one call is about: what a model asked about those questions returns. */
 export const planForRefs = (plan: TRecordedPlan, refs: readonly string[]): TRecordedPlan => {
   const wanted = new Set(refs);
+  // Pages are answered as the model would: every page with logic it was shown, here all of them. The
+  // checks keep only the pages the call holds questions of.
   return {
-    blocks: plan.blocks
-      .map((block) => ({ ...block, refs: block.refs.filter((ref) => wanted.has(ref)) }))
-      .filter((block) => block.refs.length > 0),
     questions: plan.questions.filter((question) => wanted.has(question.ref)),
     skipped: plan.skipped.filter((skip) => wanted.has(skip.ref)),
+    pages: plan.pages,
   };
 };
 

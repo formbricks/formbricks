@@ -3,8 +3,9 @@ import type { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants
 
 /**
  * The AI plan for a Qualtrics import (ENG-3479, option B): which Formbricks type each question
- * becomes, which of its option lists plays which role, how a page's questions group into blocks, and
- * one plain-language line per logic rule. Nothing more.
+ * becomes, which of its option lists plays which role, and one plain-language line per logic rule.
+ * Nothing more. Blocks are not the AI's to decide: one Qualtrics page is one block (ENG-3410), and the
+ * assembly builds them from the reader's pages.
  *
  * The plan holds refs (`QID3`), text keys (`c12`), enums, booleans and numbers. No field in it is a URL
  * or text that lands in the survey: the assembly copies every text from the file by key. The only free
@@ -54,14 +55,6 @@ const ZOptionSource = z.enum(["choices", "answers"]);
  * the JSON-schema conversion structured output goes through.
  */
 export const ZQsfImportPlanForAI = z.object({
-  blocks: z
-    .array(
-      z.object({
-        refs: z.array(z.string()).describe("Question refs in this block, in page order"),
-        logicNotes: z.array(z.string()).describe("One sentence per branch or randomizer rule of the page"),
-      })
-    )
-    .describe("Survey blocks in order. One block per page; never mix pages in one block."),
   questions: z
     .array(
       z.object({
@@ -87,6 +80,14 @@ export const ZQsfImportPlanForAI = z.object({
   skipped: z
     .array(z.object({ ref: z.string(), reason: z.string().describe("Why, in one short sentence") }))
     .describe("Questions Formbricks cannot represent"),
+  pages: z
+    .array(
+      z.object({
+        id: z.string().describe("The page's id, e.g. p3"),
+        logicNotes: z.array(z.string()).describe("One sentence per branch or randomizer rule of the page"),
+      })
+    )
+    .describe("Only pages that have logic rules"),
 });
 
 /** Bounds on what comes back, so a hostile or broken response costs a bounded amount to check. */
@@ -107,9 +108,10 @@ const ZRawNotes = z
  * including a provider without structured output, or a response that skipped schema validation.
  */
 export const ZQsfImportPlanEnvelope = z.object({
-  blocks: z.array(z.unknown()).max(MAX_PLAN_ENTRIES),
   questions: z.array(z.unknown()).max(MAX_PLAN_ENTRIES),
   skipped: z.array(z.unknown()).max(MAX_PLAN_ENTRIES),
+  // Optional here: a plan for questions with no page rules has nothing to say about pages.
+  pages: z.array(z.unknown()).max(MAX_PLAN_ENTRIES).optional(),
 });
 
 export const ZQsfPlanQuestion = z.object({
@@ -133,8 +135,8 @@ export const ZQsfPlanQuestion = z.object({
   logicNotes: ZRawNotes,
 });
 
-export const ZQsfPlanBlock = z.object({
-  refs: z.array(ZRef).max(MAX_PLAN_ENTRIES),
+export const ZQsfPlanPage = z.object({
+  id: ZRef,
   logicNotes: ZRawNotes,
 });
 

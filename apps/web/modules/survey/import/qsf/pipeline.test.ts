@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { prepareV3SurveyCreateInput } from "@/app/api/v3/surveys/prepare";
 import type { TQsfImportReport } from "../types";
 import {
@@ -301,6 +302,33 @@ describe("runQsfImport on recorded plans", () => {
     expect(result.report.issues).toEqual([
       { code: "question_skipped", severity: "warning", questionTag: "Q4", params: { cause: "plan_invalid" } },
       { code: "question_skipped", severity: "warning", questionTag: "Q5", params: { cause: "plan_invalid" } },
+    ]);
+  });
+
+  test("a page split across AI calls, or a question only the retry placed, still makes one block", async () => {
+    const recorded = recordedGenerate(loadRecordedPlan("simple.qsf"));
+    let calls = 0;
+    mocks.generateOrganizationAIObject.mockImplementation(
+      async (request: Parameters<TQsfPlanGenerate>[0]) => {
+        calls += 1;
+        // The whole page is too long for one call, so it is split in two; the first half then leaves
+        // QID2 out, which only the retry places.
+        if (calls === 1) throw new AIOutputTokenLimitError({ maxOutputTokens: 8192 });
+        const result = await recorded(request);
+        if (calls !== 2) return result;
+        const object = result.object as { questions: { ref: string }[] };
+        return {
+          ...result,
+          object: { ...object, questions: object.questions.filter((entry) => entry.ref !== "QID2") },
+        };
+      }
+    );
+
+    const result = await run("simple.qsf");
+
+    expect(calls).toBe(4);
+    expect(result.payload.blocks.map((block) => block.elements.map((element) => element.id))).toEqual([
+      ["Q1", "Q2", "Q3", "Q4", "Q5"],
     ]);
   });
 

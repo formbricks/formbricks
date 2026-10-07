@@ -1,17 +1,9 @@
 {
   "plan": {
-    "blocks": [
+    "pages": [
       {
-        "logicNotes": [],
-        "refs": ["QID3"]
-      },
-      {
-        "logicNotes": ["In Qualtrics this block was shown in random order with the blocks around it."],
-        "refs": ["QID1"]
-      },
-      {
-        "logicNotes": [],
-        "refs": ["QID2"]
+        "id": "p2",
+        "logicNotes": ["In Qualtrics this block was shown in random order with the blocks around it."]
       }
     ],
     "questions": [

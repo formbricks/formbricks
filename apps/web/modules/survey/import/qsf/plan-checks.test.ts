@@ -3,12 +3,10 @@ import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { loadRecordedPlan } from "./__fixtures__/recorded-plans";
 import {
   QSF_MAX_NOTE_CHARS,
-  type TQsfPlannedBlock,
   checkPlanResponses,
   checkQuestionRoles,
   cleanNote,
   mergeCheckedPlans,
-  orderBlocks,
 } from "./plan-checks";
 import type { TQsfPlanQuestion } from "./plan-schema";
 import { readQsf } from "./read-qsf";
@@ -229,7 +227,7 @@ describe("checkPlanResponses", () => {
 
     expect([...plan.questions.keys()]).toEqual(["QID1", "QID2", "QID3", "QID4", "QID5"]);
     expect(plan.failures.size).toBe(0);
-    expect(plan.blocks).toEqual([{ pageId: "p1", refs: [...allRefs], notes: [] }]);
+    expect(plan.pageNotes.size).toBe(0);
   });
 
   test("drops, neutralizes or caps every part of a hostile plan", () => {
@@ -244,8 +242,11 @@ describe("checkPlanResponses", () => {
     });
     expect(plan.questions.size).toBe(0);
     expect(plan.skipped.size).toBe(0);
-    // Refs outside the call — an unknown QID, `__proto__`, `constructor` — are ignored, not placed.
-    expect(plan.blocks).toEqual([]);
+    // Refs and pages outside the call — an unknown QID or page, `__proto__`, `constructor` — are
+    // ignored. The call's own page keeps its notes, cleaned and capped.
+    expect([...plan.pageNotes.keys()]).toEqual(["p1"]);
+    expect(JSON.stringify([...plan.pageNotes.values()])).not.toMatch(/https?:|evil|<|javascript/);
+    expect(plan.pageNotes.get("p1")?.every((note) => note.length <= QSF_MAX_NOTE_CHARS)).toBe(true);
   });
 
   test("ignores refs another call was asked about", () => {
@@ -253,7 +254,7 @@ describe("checkPlanResponses", () => {
 
     const plan = checkPlanResponses(simple, [
       { refs: new Set(["QID1", "QID2"]), object: recorded },
-      { refs: new Set(["QID3", "QID4", "QID5"]), object: { blocks: [], questions: [], skipped: [] } },
+      { refs: new Set(["QID3", "QID4", "QID5"]), object: { questions: [], skipped: [] } },
     ]);
 
     expect([...plan.questions.keys()]).toEqual(["QID1", "QID2"]);
@@ -270,29 +271,24 @@ describe("checkPlanResponses", () => {
     expect(Object.fromEntries(plan.failures)).toEqual({ QID1: ["invalid_output"] });
   });
 
-  test("fails the questions of a block that mixes pages", () => {
+  test("keeps page notes only for the pages the call holds questions of, first answer first", () => {
+    const refs = new Set(["QID4"]);
     const recorded = loadRecordedPlan("logic-skip-display-branch.qsf");
-    const refs = new Set(["QID1", "QID2", "QID3", "QID4", "QID5", "QID6"]);
 
     const plan = checkPlanResponses(logic, [
-      { refs, object: { ...recorded, blocks: [{ refs: [...refs], logicNotes: [] }] } },
-    ]);
-
-    expect([...plan.failures.values()].every((reasons) => reasons.includes("block_mixes_pages"))).toBe(true);
-    expect(plan.questions.size).toBe(0);
-  });
-
-  test("puts a block's questions in survey order whatever order the model used", () => {
-    const recorded = loadRecordedPlan("simple.qsf");
-
-    const plan = checkPlanResponses(simple, [
       {
-        refs: allRefs,
-        object: { ...recorded, blocks: [{ refs: ["QID5", "QID1", "QID3", "QID2", "QID4"], logicNotes: [] }] },
+        refs,
+        object: {
+          ...recorded,
+          pages: [{ id: "p1", logicNotes: ["Not this call's page"] }, ...recorded.pages],
+        },
       },
+      { refs, object: { ...recorded, pages: [{ id: "p3", logicNotes: ["A later answer"] }] } },
     ]);
 
-    expect(plan.blocks[0].refs).toEqual(["QID1", "QID2", "QID3", "QID4", "QID5"]);
+    expect(Object.fromEntries(plan.pageNotes)).toEqual({
+      p3: ["Shown only to respondents who chose 'EU' for 'Which region are you in?'."],
+    });
   });
 
   test("keeps a skip with its cleaned reason", () => {
@@ -300,7 +296,6 @@ describe("checkPlanResponses", () => {
       {
         refs: new Set(["QID1"]),
         object: {
-          blocks: [],
           questions: [],
           skipped: [{ ref: "QID1", reason: "Not supported, see https://x.y" }],
         },
@@ -311,22 +306,7 @@ describe("checkPlanResponses", () => {
   });
 });
 
-describe("orderBlocks and mergeCheckedPlans", () => {
-  const block = (pageId: string, refs: string[]): TQsfPlannedBlock => ({ pageId, refs, notes: [] });
-
-  test("merges a retried question back into the block it fell inside", () => {
-    expect(orderBlocks(simple, [block("p1", ["QID1", "QID3"]), block("p1", ["QID2"])])).toEqual([
-      block("p1", ["QID1", "QID2", "QID3"]),
-    ]);
-  });
-
-  test("keeps the model's split of a page when it does not interleave", () => {
-    expect(orderBlocks(simple, [block("p1", ["QID4", "QID5"]), block("p1", ["QID1", "QID2"])])).toEqual([
-      block("p1", ["QID1", "QID2"]),
-      block("p1", ["QID4", "QID5"]),
-    ]);
-  });
-
+describe("mergeCheckedPlans", () => {
   test("a retry's results replace the first round's failures", () => {
     const first = checkPlanResponses(simple, [
       { refs: allRefsOf(simple), object: loadRecordedPlan("hostile") },
@@ -335,10 +315,12 @@ describe("orderBlocks and mergeCheckedPlans", () => {
       { refs: new Set(first.failures.keys()), object: loadRecordedPlan("simple.qsf") },
     ]);
 
-    const merged = mergeCheckedPlans(simple, first, retry);
+    const merged = mergeCheckedPlans(first, retry);
 
     expect(merged.failures.size).toBe(0);
-    expect(merged.blocks).toEqual([block("p1", ["QID1", "QID2", "QID3", "QID4", "QID5"])]);
+    expect([...merged.questions.keys()].sort()).toEqual(["QID1", "QID2", "QID3", "QID4", "QID5"]);
+    // The first round's page notes stay.
+    expect([...merged.pageNotes.keys()]).toEqual(["p1"]);
   });
 });
 

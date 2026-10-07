@@ -4,7 +4,7 @@ import {
   type TQsfPlanElementType,
   type TQsfPlanQuestion,
   ZQsfImportPlanEnvelope,
-  ZQsfPlanBlock,
+  ZQsfPlanPage,
   ZQsfPlanQuestion,
   ZQsfPlanSkip,
 } from "./plan-schema";
@@ -14,8 +14,7 @@ import type { TQsfQuestion, TQsfSurvey, TQsfTextKey } from "./qsf-model";
  * The code checks on an AI plan (ENG-3479). The plan is untrusted output — the file it was made from
  * can say anything to the model — so nothing in it is used until it passes here:
  *
- * - each question exactly once: placed in one block with one entry, or skipped; refs outside the call
- *   are ignored;
+ * - each question exactly once: one entry, or skipped; refs outside the call are ignored;
  * - each text key owned by that question and used once;
  * - the type on the allowlist, and the roles fitting the type (counts included);
  * - free text (notes, skip reasons) cleaned and capped, for the report only.
@@ -39,9 +38,6 @@ export type TQsfPlanFailure =
   | "missing"
   | "duplicate_ref"
   | "placed_and_skipped"
-  | "not_placed"
-  | "no_entry"
-  | "block_mixes_pages"
   | "type_not_allowed"
   | "foreign_key"
   | "key_reused"
@@ -74,16 +70,10 @@ export interface TQsfPlannedQuestion {
   notes: string[];
 }
 
-export interface TQsfPlannedBlock {
-  pageId: string;
-  /** In survey order. */
-  refs: string[];
-  notes: string[];
-}
-
 export interface TQsfCheckedPlan {
   questions: Map<string, TQsfPlannedQuestion>;
-  blocks: TQsfPlannedBlock[];
+  /** Notes on each page's branch and randomizer rules, by page id. */
+  pageNotes: Map<string, string[]>;
   /** Skipped by the AI, with its cleaned reason (or `null`). */
   skipped: Map<string, string | null>;
   failures: Map<string, TQsfPlanFailure[]>;
@@ -254,7 +244,7 @@ const readRef = (entry: unknown): string | null =>
 export function checkPlanResponses(survey: TQsfSurvey, responses: TQsfPlanResponse[]): TQsfCheckedPlan {
   const plan: TQsfCheckedPlan = {
     questions: new Map(),
-    blocks: [],
+    pageNotes: new Map(),
     skipped: new Map(),
     failures: new Map(),
   };
@@ -290,14 +280,12 @@ export function checkPlanResponses(survey: TQsfSurvey, responses: TQsfPlanRespon
       skips.set(parsed.data.ref, [...(skips.get(parsed.data.ref) ?? []), parsed.data.reason]);
     }
 
-    const placements = new Map<string, number>();
-    const blocks: { refs: string[]; notes: string[] }[] = [];
-    for (const raw of envelope.data.blocks) {
-      const parsed = ZQsfPlanBlock.safeParse(raw);
-      if (!parsed.success) continue;
-      const refs = parsed.data.refs.filter((ref) => response.refs.has(ref));
-      for (const ref of refs) placements.set(ref, (placements.get(ref) ?? 0) + 1);
-      blocks.push({ refs, notes: cleanNotes(parsed.data.logicNotes) });
+    // Notes for the pages this call holds questions of. A page split across calls keeps the first.
+    const pageIds = new Set([...response.refs].map((ref) => survey.questions.get(ref)?.pageId));
+    for (const raw of envelope.data.pages ?? []) {
+      const parsed = ZQsfPlanPage.safeParse(raw);
+      if (!parsed.success || !pageIds.has(parsed.data.id) || plan.pageNotes.has(parsed.data.id)) continue;
+      plan.pageNotes.set(parsed.data.id, cleanNotes(parsed.data.logicNotes));
     }
 
     for (const ref of response.refs) {
@@ -305,91 +293,37 @@ export function checkPlanResponses(survey: TQsfSurvey, responses: TQsfPlanRespon
       const question = survey.questions.get(ref);
       const entryList = entries.get(ref) ?? [];
       const skipList = skips.get(ref) ?? [];
-      const placed = placements.get(ref) ?? 0;
 
       if (!question) continue;
-      if (entryList.length > 1 || skipList.length > 1 || placed > 1) {
+      if (entryList.length > 1 || skipList.length > 1) {
         addFailure(ref, "duplicate_ref");
-      } else if (skipList.length === 1 && (entryList.length > 0 || placed > 0)) {
+      } else if (skipList.length === 1 && entryList.length > 0) {
         addFailure(ref, "placed_and_skipped");
       } else if (skipList.length === 1) {
         const reason = cleanNote(skipList[0]);
         plan.skipped.set(ref, reason.length > 0 ? reason : null);
-      } else if (entryList.length === 0 && placed === 0) {
-        addFailure(ref, "missing");
       } else if (entryList.length === 0) {
-        addFailure(ref, "no_entry");
-      } else if (placed === 0) {
-        addFailure(ref, "not_placed");
+        addFailure(ref, "missing");
       } else {
         const result = checkQuestionRoles(question, entryList[0]);
         if (result.ok) plan.questions.set(ref, result.question);
         else for (const reason of result.reasons) addFailure(ref, reason);
       }
     }
-
-    for (const block of blocks) {
-      const refs = block.refs.filter((ref) => plan.questions.has(ref));
-      const pages = new Set(refs.map((ref) => survey.questions.get(ref)?.pageId));
-      if (pages.size > 1) {
-        // ENG-3410: one page is one block. A block across pages would reorder what Qualtrics showed.
-        for (const ref of refs) {
-          plan.questions.delete(ref);
-          addFailure(ref, "block_mixes_pages");
-        }
-        continue;
-      }
-      const [pageId] = pages;
-      if (pageId === undefined) continue;
-      plan.blocks.push({ pageId, refs: sortByPosition(survey, refs), notes: block.notes });
-    }
   }
 
   return plan;
 }
 
-const position = (survey: TQsfSurvey, ref: string): number =>
-  survey.questions.get(ref)?.position ?? Number.MAX_SAFE_INTEGER;
-
-const sortByPosition = (survey: TQsfSurvey, refs: string[]): string[] =>
-  [...refs].sort((left, right) => position(survey, left) - position(survey, right));
-
 /**
- * Merge a retry round into the first one and put blocks in survey order. A retried question lands in a
- * block of its own; when that block falls inside another block of the same page, the two merge, so the
- * questions keep the order Qualtrics showed them in.
+ * Merge a retry round into the first one. The retry's verdicts replace the first round's failures;
+ * page notes the first round already had stay.
  */
-export function mergeCheckedPlans(
-  survey: TQsfSurvey,
-  first: TQsfCheckedPlan,
-  retry: TQsfCheckedPlan
-): TQsfCheckedPlan {
-  const failures = new Map(retry.failures);
+export function mergeCheckedPlans(first: TQsfCheckedPlan, retry: TQsfCheckedPlan): TQsfCheckedPlan {
   return {
     questions: new Map([...first.questions, ...retry.questions]),
     skipped: new Map([...first.skipped, ...retry.skipped]),
-    blocks: orderBlocks(survey, [...first.blocks, ...retry.blocks]),
-    failures,
+    pageNotes: new Map([...retry.pageNotes, ...first.pageNotes]),
+    failures: new Map(retry.failures),
   };
-}
-
-export function orderBlocks(survey: TQsfSurvey, blocks: TQsfPlannedBlock[]): TQsfPlannedBlock[] {
-  const nonEmpty = blocks.filter((block) => block.refs.length > 0);
-  nonEmpty.sort((left, right) => position(survey, left.refs[0]) - position(survey, right.refs[0]));
-
-  const ordered: TQsfPlannedBlock[] = [];
-  for (const block of nonEmpty) {
-    const previous = ordered.at(-1);
-    if (
-      previous &&
-      previous.pageId === block.pageId &&
-      position(survey, block.refs[0]) < position(survey, previous.refs[previous.refs.length - 1])
-    ) {
-      previous.refs = sortByPosition(survey, [...previous.refs, ...block.refs]);
-      previous.notes = [...previous.notes, ...block.notes];
-    } else {
-      ordered.push({ ...block, refs: [...block.refs], notes: [...block.notes] });
-    }
-  }
-  return ordered;
 }

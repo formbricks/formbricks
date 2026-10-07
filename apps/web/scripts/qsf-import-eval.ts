@@ -78,18 +78,18 @@ const environmentGenerate =
   };
 
 interface TRecordedPlan {
-  blocks: unknown[];
   questions: { ref?: unknown }[];
   skipped: unknown[];
+  pages: unknown[];
 }
 
 /** One plan from every answer of a run, a question's last answer winning (the retry's). */
 const mergeResponses = (responses: unknown[]): TRecordedPlan => {
   const questions = new Map<unknown, { ref?: unknown }>();
-  const plan: TRecordedPlan = { blocks: [], questions: [], skipped: [] };
+  const plan: TRecordedPlan = { questions: [], skipped: [], pages: [] };
   for (const response of responses) {
     const object = response as Partial<TRecordedPlan>;
-    plan.blocks.push(...(object.blocks ?? []));
+    plan.pages.push(...(object.pages ?? []));
     plan.skipped.push(...(object.skipped ?? []));
     for (const question of object.questions ?? []) questions.set(question.ref, question);
   }
