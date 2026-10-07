@@ -56,7 +56,8 @@ export default {
           DEFAULT: "var(--fb-survey-brand-color)",
           "20": "color-mix(in srgb, var(--fb-survey-brand-color) 20%, var(--fb-tint-color, white))",
           foreground: getForeground("var(--fb-survey-brand-color)"),
-          // Brand as text: only set in dark, where the raw brand can be unreadable on the card.
+          // Brand as text and selection indicators: only set in dark, where the raw brand can be unreadable
+          // on the card. Fills (buttons, checked boxes) keep the typed brand (D12).
           readable: "var(--fb-brand-readable-color, var(--fb-survey-brand-color))",
         },
         // Input CSS variables (shorter names)
