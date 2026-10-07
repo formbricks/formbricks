@@ -3,8 +3,8 @@
   "private": true,
   "description": "Runtime dependencies of ghcr.io/formbricks/cube. Not a pnpm workspace; see README.md.",
   "dependencies": {
-    "@cubejs-backend/postgres-driver": "1.7.47",
-    "@cubejs-backend/server": "1.7.47"
+    "@cubejs-backend/postgres-driver": "1.7.50",
+    "@cubejs-backend/server": "1.7.50"
   },
   "overrides": {
     "gaxios": {
