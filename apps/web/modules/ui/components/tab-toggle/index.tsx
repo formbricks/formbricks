@@ -10,6 +10,8 @@ interface TabToggleProps<T> {
   id: string;
   options: Option<T>[];
   defaultSelected?: T;
+  /** Makes the toggle controlled, for a selection that can also change elsewhere on the page. */
+  value?: T;
   onChange: (value: T) => void;
   disabled?: boolean;
 }
@@ -18,10 +20,12 @@ export const TabToggle = <T extends string | number>({
   id,
   options,
   defaultSelected,
+  value,
   onChange,
   disabled,
 }: TabToggleProps<T>) => {
-  const [selectedOption, setSelectedOption] = useState<T | undefined>(defaultSelected);
+  const [uncontrolledOption, setSelectedOption] = useState<T | undefined>(defaultSelected);
+  const selectedOption = value ?? uncontrolledOption;
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value as T;

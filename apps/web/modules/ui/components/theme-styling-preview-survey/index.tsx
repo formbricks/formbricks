@@ -1,6 +1,7 @@
 "use client";
 
 import { MotionConfig, Variants, motion } from "framer-motion";
+import { MoonIcon, SunIcon } from "lucide-react";
 import { Fragment, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TRendererCustomCss } from "@formbricks/types/custom-css";
@@ -22,6 +23,7 @@ import {
 } from "@/modules/ui/components/preview-survey/lib/containment";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
 import { SurveyInline } from "@/modules/ui/components/survey";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface ThemeStylingPreviewSurveyProps {
   survey: TSurvey;
@@ -31,6 +33,8 @@ interface ThemeStylingPreviewSurveyProps {
   publicDomain: string;
   /** Only the app survey renders dark; the link survey preview stays light (D4). */
   appearance?: TStylingAppearance;
+  /** Switches the editor's Light / Dark selection from the preview; without it no switch is shown. */
+  onAppearanceChange?: (appearance: TStylingAppearance) => void;
   /**
    * Compiled workspace (+ survey) custom CSS to preview (ENG-3552), e.g. the look & feel page's
    * validated workspace draft. Passed straight to the renderer, which applies CSS from this prop only.
@@ -72,6 +76,7 @@ export const ThemeStylingPreviewSurvey = ({
   setPreviewType,
   publicDomain,
   appearance = "light",
+  onAppearanceChange,
   customCss,
 }: ThemeStylingPreviewSurveyProps) => {
   const [isFullScreenPreview] = useState(false);
@@ -300,26 +305,57 @@ export const ThemeStylingPreviewSurvey = ({
           />
         )}
 
-        {/* for toggling between mobile and desktop mode  */}
-        <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
-          <button
-            type="button"
-            // Link surveys always render light (D4), so there is no dark link preview to show.
-            disabled={appearance === "dark"}
-            className={cn(
-              previewType === "link" && "rounded-full bg-slate-200",
-              "cursor-pointer px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-            )}
-            onClick={() => setPreviewType("link")}>
-            {t("common.link_survey")}
-          </button>
+        {/* Survey type on the left, Light / Dark on the right. */}
+        <div className="mt-2 flex w-5/6 items-center justify-between gap-2">
+          <div className="flex rounded-full border-2 border-slate-300 p-1">
+            <TooltipRenderer
+              shouldRender={appearance === "dark"}
+              tooltipContent={t("workspace.look.link_survey_light_only")}>
+              <button
+                type="button"
+                // Link surveys always render light (D4), so there is no dark link preview to show.
+                disabled={appearance === "dark"}
+                className={cn(
+                  previewType === "link" && "rounded-full bg-slate-200",
+                  "cursor-pointer px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                )}
+                onClick={() => setPreviewType("link")}>
+                {t("common.link_survey")}
+              </button>
+            </TooltipRenderer>
 
-          <button
-            type="button"
-            className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
-            onClick={() => setPreviewType("app")}>
-            {t("common.app_survey")}
-          </button>
+            <button
+              type="button"
+              className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
+              onClick={() => setPreviewType("app")}>
+              {t("common.app_survey")}
+            </button>
+          </div>
+
+          {onAppearanceChange && (
+            <div className="flex rounded-full border-2 border-slate-300 p-1">
+              {(
+                [
+                  ["light", SunIcon, t("workspace.look.appearance_light")],
+                  ["dark", MoonIcon, t("workspace.look.appearance_dark")],
+                ] as const
+              ).map(([value, Icon, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-label={label}
+                  aria-pressed={appearance === value}
+                  title={label}
+                  className={cn(
+                    "cursor-pointer rounded-full px-3 py-1 text-slate-700",
+                    appearance === value && "bg-slate-200"
+                  )}
+                  onClick={() => onAppearanceChange(value)}>
+                  <Icon className="size-4" aria-hidden />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </MotionConfig>

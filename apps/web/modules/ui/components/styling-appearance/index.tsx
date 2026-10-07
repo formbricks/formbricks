@@ -7,6 +7,7 @@ import { type TDarkContrastWarning, getDarkContrastWarnings } from "@formbricks/
 import { type TBaseStyling } from "@formbricks/types/styling";
 import { type TStylingAppearance } from "@/lib/styling/dark-mode";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
 
 const StylingAppearanceContext = createContext<TStylingAppearance>("light");
@@ -41,11 +42,15 @@ export const StylingAppearanceToggle = ({ appearance, onChange }: Readonly<Styli
           { value: "light", label: t("workspace.look.appearance_light") },
           { value: "dark", label: t("workspace.look.appearance_dark") },
         ]}
-        defaultSelected={appearance}
+        value={appearance}
         onChange={onChange}
       />
       {appearance === "dark" && (
-        <p className="text-xs text-slate-500">{t("workspace.look.appearance_dark_description")}</p>
+        <Alert variant="info" size="small">
+          <AlertDescription className="whitespace-normal">
+            {t("workspace.look.appearance_dark_description")}
+          </AlertDescription>
+        </Alert>
       )}
     </div>
   );

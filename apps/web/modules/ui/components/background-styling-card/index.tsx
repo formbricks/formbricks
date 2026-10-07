@@ -19,6 +19,8 @@ interface BackgroundStylingCardProps {
   colors: string[];
   isSettingsPage?: boolean;
   disabled?: boolean;
+  /** Shown under the description while the card is disabled, saying why. */
+  disabledReason?: string;
   workspaceId: string;
   isUnsplashConfigured: boolean;
   form: UseFormReturn<TWorkspaceStyling | TSurveyStyling>;
@@ -31,6 +33,7 @@ export const BackgroundStylingCard = ({
   colors,
   isSettingsPage = false,
   disabled,
+  disabledReason,
   workspaceId,
   isUnsplashConfigured,
   form,
@@ -46,7 +49,8 @@ export const BackgroundStylingCard = ({
         setOpen(openState);
       }}
       className={cn(
-        open ? "" : "hover:bg-slate-50",
+        // No hover effect while disabled: the card cannot be opened.
+        open || disabled ? "" : "hover:bg-slate-50",
         "w-full space-y-2 rounded-lg border border-slate-300 bg-white"
       )}>
       <Collapsible.CollapsibleTrigger
@@ -76,6 +80,11 @@ export const BackgroundStylingCard = ({
             <p className={cn("mt-1 text-slate-500", isSettingsPage ? "text-xs" : "text-sm")}>
               {t("workspace.surveys.edit.change_the_background_to_a_color_image_or_animation")}
             </p>
+            {disabled && disabledReason && (
+              <p className={cn("mt-1 text-slate-600", isSettingsPage ? "text-xs" : "text-sm")}>
+                {disabledReason}
+              </p>
+            )}
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>

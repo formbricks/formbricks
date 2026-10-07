@@ -2593,6 +2593,7 @@ checksums:
     workspace/look/appearance_light: bb78ea2c6edd8662676c81a8a13ecb93
     workspace/look/appearance_shared_color: 2b21150f9a8aea754969a0282af7885e
     workspace/look/appearance_use_automatic: f9b3ffa3285d7819e7295e87111f4a82
+    workspace/look/background_link_surveys_light: c41e1c242351d64fe5adacd1307ee186
     workspace/look/email_customization: ae399f381183a4fe0ffd41ab496b5d8f
     workspace/look/email_customization_description: 5ccaf1769b2c39d7e87f3a08d056a374
     workspace/look/enable_custom_styling: 4774d8fb009c27044aa0191ebcccdcc2
@@ -2606,6 +2607,7 @@ checksums:
     workspace/look/generate_theme_btn: 0345bf322c191e70d01fd6607ec5c2f8
     workspace/look/generate_theme_confirmation: f119dbb85fb2bda1c0bcdc581724ef3b
     workspace/look/generate_theme_header: 4df5f30a20cf78e248465915f222fd1b
+    workspace/look/link_survey_light_only: d5b49bd1a1feb6232f918f8861e07307
     workspace/look/logo_removed_successfully: f3a7f9d226affa91121e90ff360553aa
     workspace/look/logo_settings_description: da155953f55cb44d0e563d9e740241aa
     workspace/look/logo_updated_successfully: 170250f18062b79be6ac0481ec9d4368

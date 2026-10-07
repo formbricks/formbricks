@@ -668,14 +668,13 @@ To this:
 Surveys render light unless your app asks for something else. Tell the SDK which appearance to use, either when you set it up or whenever your app's own theme changes:
 
 ```javascript Setting the survey appearance
-formbricks.setup({
-  workspaceId: "<workspace-id>",
-  appUrl: "<app-url>",
-  appearance: "dark", // "light" (default), "dark" or "system"
-});
+// In the HTML snippet above, pass the appearance to setup in the onload call:
+t.onload = function () {
+  window.formbricks.setup({ workspaceId: workspaceId, appUrl: appUrl, appearance: "dark" }); // "light" (default), "dark" or "system"
+};
 
 // Later, when the user switches your app's theme:
-formbricks.setAppearance("light");
+window.formbricks?.setAppearance("light");
 ```
 
 <Note>
@@ -685,12 +684,13 @@ formbricks.setAppearance("light");
 
 - `"system"` follows the visitor's browser setting and updates if it changes. If your app has its own light/dark toggle, pass `"light"` or `"dark"` from that toggle instead, because the SDK cannot see your app's theme.
 - A survey that is already open switches in place. Answers, progress and focus are kept.
-- `setAppearance` can be called before `setup`. The value is kept for the page session and survives `logout`.
-- The dark colors are derived from your brand color, which is the same in light and dark. Override any other color in **Look & Feel** (or a survey's **Styling** tab) with the **Light / Dark** toggle at the top of the styling settings.
-- Link surveys always render light.
-- `setAppearance` needs a recent SDK. If you support older SDK versions, check `typeof formbricks.setAppearance === "function"` before calling it.
+- The value is kept for the page session and survives `logout`. With the script tag, pass `appearance` in the `setup` call inside `onload`: `window.formbricks` does not exist before the script loads.
+- An unknown value is ignored with a console warning, and the current appearance stays.
+- The brand color is the same in light and dark. Button and progress-bar colors keep their light value unless you set a dark one. All other dark colors are derived from the brand color. To override them, open **Settings → Workspace → Appearance** (or an app survey's **Styling** tab) and select **Dark** at the top. Empty fields show the derived color as a placeholder, and the editor warns when a brand color is hard to see on the dark card.
+- Link surveys always render light: they do not follow dark mode. For a dark link survey, design it dark in the light theme: pick a dark color in **Background styling**, set light text, input and button colors, and use the **Cardless** card arrangement so the background fills the page.
+- `setAppearance` needs a recent SDK. If you support older SDK versions, check `typeof window.formbricks?.setAppearance === "function"` before calling it.
 
-The iOS, Android, React Native and Flutter SDKs offer the same appearance setting and also apply your [Custom CSS](/surveys/general-features/custom-css). See [SDK Compatibility](/surveys/website-app-surveys/sdk-compatibility) for the versions, how `"system"` is resolved on each platform, and what respondents see while versions are mixed.
+Dark mode and Custom CSS support for the iOS, Android, React Native and Flutter SDKs is not released yet. See [SDK Compatibility](/surveys/website-app-surveys/sdk-compatibility) for the status, how `"system"` will be resolved on each platform, and what respondents see while versions are mixed.
 
 ## Content Security Policy
 
