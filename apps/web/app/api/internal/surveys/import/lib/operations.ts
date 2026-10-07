@@ -6,6 +6,7 @@ import { createRequestAbort } from "@/app/api/internal/lib/request-abort";
 import { loggableAIError, mapV3AIError } from "@/app/api/v3/lib/ai-errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
+import { loggableError } from "@/app/api/v3/lib/loggable-error";
 import { problemInternalError, problemUnprocessableContent } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
@@ -98,7 +99,10 @@ export async function streamQsfImport({
 
     // Not through mapV3ThrownError, which logs the error whole: a reader that fails on the file can
     // quote it in the message.
-    log.error(loggableAIError(error), "QSF import could not read the file");
+    log.error(
+      { ...loggableError(error), operation: OPERATION, statusCode: 500 },
+      "QSF import could not read the file"
+    );
     return problemInternalError(requestId, undefined, instance);
   }
 

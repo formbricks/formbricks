@@ -11,13 +11,13 @@
  * `POST /api/v3/surveys?createdFrom=import`. The rate limit is Create with AI's bucket on purpose; both
  * spend AI tokens.
  *
- * The body keeps the v3 array budget: at most 1,000 items in any one array and 50,000 across the file.
- * In a QSF that means about 1,000 questions (`SurveyElements` holds one element per question, trashed
- * ones included, plus a few survey-wide ones) and 1,000 choices per question (`Payload.ChoiceOrder`).
- * `POST /api/v3/surveys` applies the same budget to the survey the import becomes, so a question with
- * more choices than that could not be created anyway. Past either limit, the 400 names the `qsf.` array,
- * so a client can tell it from a malformed body, and no AI is spent. A lower, question-level limit with its own message belongs
- * to the reader (ENG-3654).
+ * The body keeps the v3 request budget: at most 1,000 items in any one array, 50,000 across the file,
+ * and 128 levels of nesting. In a QSF that means about 1,000 questions (`SurveyElements` holds one
+ * element per question, trashed ones included, plus a few survey-wide ones) and 1,000 choices per
+ * question (`Payload.ChoiceOrder`). `POST /api/v3/surveys` applies the same budget to the survey the
+ * import becomes, so a question with more choices than that could not be created anyway. Past a limit,
+ * the 400 names the `qsf.` path, so a client can tell it from a malformed body, and no AI is spent. A
+ * lower, question-level limit with its own message belongs to the reader (ENG-3654).
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { ConcurrencyLimiter } from "@/app/lib/api/concurrency-limiter";

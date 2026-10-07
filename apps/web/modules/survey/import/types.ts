@@ -38,7 +38,10 @@ export interface TQsfImportIssue {
   severity: "warning" | "info";
   /** The Qualtrics question the line is about (its export tag, e.g. `Q12`), when there is one. */
   questionTag?: string;
-  /** Values the dialog interpolates into the translated line, e.g. `{ from: "Customer ID", to: "customer_id" }`. */
+  /**
+   * Values the dialog interpolates into the translated line, e.g.
+   * `{ from: "Customer ID", to: "customer_id" }`.
+   */
   params?: Record<string, string | number>;
 }
 

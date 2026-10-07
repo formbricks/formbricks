@@ -49,7 +49,8 @@ export interface TV3AIErrorContext {
  *
  * - provider or Formbricks quota exhausted → 429 with `Retry-After`
  * - not in the plan (`ai_features_not_enabled`) or switched off for the organization
- *   (`ai_smart_tools_disabled`) → 403; no AI provider on the instance (`ai_instance_not_configured`) → 503
+ *   (`ai_smart_tools_disabled`) → 403; no AI provider on the instance
+ *   (`ai_instance_not_configured`) → 503
  * - the workspace's organization is gone → 403, the same as every other v3 surface
  * - the provider rejected this instance's credentials → 502 `ai_provider_auth_failed`, with an
  *   operator-facing message instead of advice the user cannot act on

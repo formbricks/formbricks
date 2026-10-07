@@ -174,7 +174,7 @@ describe("streamQsfImport", () => {
       expect(response.status).toBe(500);
       expect(JSON.stringify(await response.json())).not.toContain(FILE_CONTENT_MARKER);
       expect(mocks.log.error).toHaveBeenCalledWith(
-        expect.objectContaining({ errName: "SyntaxError" }),
+        expect.objectContaining({ errName: "SyntaxError", operation: "surveys.import", statusCode: 500 }),
         "QSF import could not read the file"
       );
       expect(allLogged()).not.toContain(FILE_CONTENT_MARKER);

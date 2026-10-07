@@ -12,7 +12,10 @@ export const QSF_IMPORT_STREAM_ERROR_CODES = {
 export type TQsfImportStreamErrorCode =
   (typeof QSF_IMPORT_STREAM_ERROR_CODES)[keyof typeof QSF_IMPORT_STREAM_ERROR_CODES];
 
-/** The NDJSON events of `POST /api/internal/surveys/import/stream`, in order: start, progress…, done or error. */
+/**
+ * The NDJSON events of `POST /api/internal/surveys/import/stream`, in order: start, progress…, done or
+ * error.
+ */
 export type TQsfImportStreamEvent =
   /**
    * Written before any work starts. Next only flushes response headers on the first chunk, so without
