@@ -4277,7 +4277,7 @@ paths:
                   planAllowed: true
                 warnings: []
         '400':
-          description: Bad Request — malformed body, a missing `customCss` key or a missing `light` / `dark` key, an unsupported field (including `compiled` or `processorVersion`), or a field over 100 000 characters. Every offending field is itemized in `invalid_params`.
+          description: Bad Request — malformed body, a missing `customCss` key or a missing `light` / `dark` key, an unsupported field (including `compiled` or `processorVersion`), or a field that is neither a string nor null. Every offending field is itemized in `invalid_params`. CSS over the size budget is a **422** `source_too_large`.
           content:
             application/problem+json:
               schema:
