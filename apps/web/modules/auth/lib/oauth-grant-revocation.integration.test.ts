@@ -6,8 +6,9 @@ import { auth } from "@/modules/auth/lib/auth";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "./oauth-urls";
 
 /**
- * ENG-2499 against the real Better Auth instance and a real Postgres: revoking an app on Authorized
- * Apps must end its access, not only delete the consent row.
+ * ENG-2499 and ENG-3529 against the real Better Auth instance and a real Postgres: revoking an app on
+ * Authorized Apps must end its access, not only delete the consent row, and narrowing an app's consent
+ * must end every token that reaches past it.
  *
  * Every token here is minted by the provider through the real authorize → consent → token flow, never
  * seeded, because the refresh hook finds the presented token by restating the provider's storage hash.
@@ -68,18 +69,26 @@ const redirectTarget = async (response: Response): Promise<URL> => {
 
 type TTokens = { access_token: string; refresh_token: string; scope: string };
 
-/** authorize → consent → code exchange, as the signed-in user. */
-const grant = async (cookie: string, clientId: string): Promise<TTokens> => {
+/**
+ * authorize → consent → code exchange, as the signed-in user. `prompt: "consent"` forces the consent
+ * screen even when an existing consent covers `scope`, which is how a client re-asks for fewer scopes.
+ */
+const grant = async (
+  cookie: string,
+  clientId: string,
+  { scope = SCOPE, prompt }: { scope?: string; prompt?: "consent" } = {}
+): Promise<TTokens> => {
   const verifier = base64Url(randomBytes(32));
   const query = new URLSearchParams({
     response_type: "code",
     client_id: clientId,
     redirect_uri: REDIRECT_URI,
-    scope: SCOPE,
+    scope,
     code_challenge: base64Url(createHash("sha256").update(verifier).digest()),
     code_challenge_method: "S256",
     resource: getMcpResourceUrl(),
     state: "state",
+    ...(prompt ? { prompt } : {}),
   });
 
   let target = await redirectTarget(await handle(`/oauth2/authorize?${query}`, { headers: { cookie } }));
@@ -119,8 +128,13 @@ const token = async (
   return { status: response.status, body: (await response.json()) as Record<string, unknown> };
 };
 
-const refresh = (clientId: string, refreshToken: string) =>
-  token({ grant_type: "refresh_token", refresh_token: refreshToken, client_id: clientId });
+const refresh = (clientId: string, refreshToken: string, scope?: string) =>
+  token({
+    grant_type: "refresh_token",
+    refresh_token: refreshToken,
+    client_id: clientId,
+    ...(scope ? { scope } : {}),
+  });
 
 const deleteConsentOverHttp = (cookie: string, id: string): Promise<Response> =>
   handle("/oauth2/delete-consent", {
@@ -130,7 +144,7 @@ const deleteConsentOverHttp = (cookie: string, id: string): Promise<Response> =>
   });
 
 const consentOf = (userId: string, clientId: string) =>
-  prisma.oauthConsent.findFirstOrThrow({ where: { userId, clientId }, select: { id: true } });
+  prisma.oauthConsent.findFirstOrThrow({ where: { userId, clientId }, select: { id: true, scopes: true } });
 
 /** Refresh and access tokens that still work: not revoked and not expired. */
 const liveTokens = async (userId: string, clientId: string): Promise<number> => {
@@ -141,6 +155,12 @@ const liveTokens = async (userId: string, clientId: string): Promise<number> => 
   ]);
   return refreshTokens + accessTokens;
 };
+
+/** Live refresh tokens carrying `scope`, i.e. ones that could still mint an access token with it. */
+const liveRefreshTokensWith = (userId: string, clientId: string, scope: string): Promise<number> =>
+  prisma.oauthRefreshToken.count({
+    where: { userId, clientId, revoked: null, expiresAt: { gt: new Date() }, scopes: { has: scope } },
+  });
 
 beforeEach(async () => {
   await resetDb();
@@ -296,5 +316,129 @@ describe("revoking an OAuth app ends its access (ENG-2499, real Postgres)", () =
 
     expect(response.status).toBe(401);
     expect(await prisma.oauthConsent.count({ where: { id } })).toBe(1);
+  });
+});
+
+describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, real Postgres)", () => {
+  // The same grant without respondent data. It keeps `offline_access`, so the narrowed grant still gets
+  // a refresh token, which has to keep working.
+  const NARROW = ["surveys:read", "offline_access"].join(" ");
+
+  test("re-approving with fewer scopes revokes the older tokens; the narrowed grant keeps refreshing", async () => {
+    const { cookie, userId } = await signIn();
+    const clientId = await registerClient();
+    const wide = await grant(cookie, clientId);
+    const rotated = await refresh(clientId, wide.refresh_token);
+
+    const narrow = await grant(cookie, clientId, { scope: NARROW, prompt: "consent" });
+
+    expect((await consentOf(userId, clientId)).scopes.sort()).toEqual(NARROW.split(" ").sort());
+    expect(await liveRefreshTokensWith(userId, clientId, "responses:read")).toBe(0);
+    // The client still holds the older chain, the token it rotated away included. Presenting either is
+    // refused, and doesn't trip the provider's reuse detection, which would end the narrowed grant too.
+    for (const stale of [rotated.body.refresh_token as string, wide.refresh_token]) {
+      const after = await refresh(clientId, stale);
+      expect(after.status).toBe(400);
+      expect(after.body.error).toBe("invalid_grant");
+      expect(after.body).not.toHaveProperty("access_token");
+    }
+    const kept = await refresh(clientId, narrow.refresh_token);
+    expect(kept.status, JSON.stringify(kept.body)).toBe(200);
+    expect((kept.body.scope as string).split(" ").sort()).toEqual(NARROW.split(" ").sort());
+  });
+
+  test("narrowing through update-consent revokes the tokens beyond it", async () => {
+    const { cookie, userId } = await signIn();
+    const clientId = await registerClient();
+    const wide = await grant(cookie, clientId);
+    const { id } = await consentOf(userId, clientId);
+
+    const response = await handle("/oauth2/update-consent", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie, origin: ORIGIN },
+      body: JSON.stringify({ id, update: { scopes: NARROW.split(" ") } }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(await liveTokens(userId, clientId)).toBe(0);
+    expect((await refresh(clientId, wide.refresh_token)).body.error).toBe("invalid_grant");
+  });
+
+  test("a grant narrowed before this fix (consent narrowed, tokens live) is refused at its next refresh", async () => {
+    const { cookie, userId } = await signIn();
+    const clientId = await registerClient();
+    const wide = await grant(cookie, clientId);
+    // What a narrowed approval used to leave behind: the consent replaced, every token untouched.
+    await prisma.oauthConsent.updateMany({
+      where: { userId, clientId },
+      data: { scopes: NARROW.split(" ") },
+    });
+
+    const after = await refresh(clientId, wide.refresh_token);
+
+    expect(after.status).toBe(400);
+    expect(after.body.error).toBe("invalid_grant");
+    expect(after.body).not.toHaveProperty("access_token");
+    // The refresh token the provider minted during that request is revoked along with the rest.
+    expect(await liveTokens(userId, clientId)).toBe(0);
+  });
+
+  test("asking for fewer scopes on refresh doesn't rescue a token from before the narrowing", async () => {
+    const { cookie, userId } = await signIn();
+    const clientId = await registerClient();
+    const wide = await grant(cookie, clientId);
+    await prisma.oauthConsent.updateMany({
+      where: { userId, clientId },
+      data: { scopes: NARROW.split(" ") },
+    });
+
+    // Every scope asked for is inside the consent, but the token presented was minted beyond it.
+    const after = await refresh(clientId, wide.refresh_token, NARROW);
+
+    expect(after.status).toBe(400);
+    expect(after.body.error).toBe("invalid_grant");
+    // Including the narrower refresh token the provider minted for this request, which never left.
+    expect(await liveTokens(userId, clientId)).toBe(0);
+  });
+
+  test("a refresh racing an uncommitted narrowing waits for it and is refused", async () => {
+    const { cookie, userId } = await signIn();
+    const clientId = await registerClient();
+    const wide = await grant(cookie, clientId);
+
+    let settled = false;
+    let raced: Promise<Awaited<ReturnType<typeof refresh>>> | undefined;
+    // The narrowing's consent update holds the row lock while the refresh rotates, as the provider's own
+    // update does between its write and its commit.
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.oauthConsent.updateMany({
+          where: { userId, clientId },
+          data: { scopes: NARROW.split(" ") },
+        });
+        raced = refresh(clientId, wide.refresh_token).finally(() => {
+          settled = true;
+        });
+        await new Promise((resolve) => setTimeout(resolve, 1_500));
+        expect(settled, "the refresh answered before the narrowing committed").toBe(false);
+      },
+      { timeout: 10_000 }
+    );
+
+    const after = await (raced as Promise<Awaited<ReturnType<typeof refresh>>>);
+    expect(after.body.error).toBe("invalid_grant");
+    expect(await liveTokens(userId, clientId)).toBe(0);
+  });
+
+  test("re-approving the same scopes, or more, leaves the older tokens working", async () => {
+    const { cookie } = await signIn();
+    const clientId = await registerClient();
+    const first = await grant(cookie, clientId, { scope: NARROW });
+
+    await grant(cookie, clientId, { prompt: "consent" });
+    await grant(cookie, clientId, { prompt: "consent" });
+
+    const after = await refresh(clientId, first.refresh_token);
+    expect(after.status, JSON.stringify(after.body)).toBe(200);
   });
 });
