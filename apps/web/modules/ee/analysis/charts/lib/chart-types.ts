@@ -1,5 +1,5 @@
 import type { TFunction } from "i18next";
-import { ActivityIcon, AreaChartIcon, BarChart3Icon, PieChartIcon } from "lucide-react";
+import { ActivityIcon, AreaChartIcon, BarChart3Icon, Grid3x3Icon, PieChartIcon } from "lucide-react";
 import type React from "react";
 import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 
@@ -13,6 +13,7 @@ export const CHART_TYPE_ICONS: Record<
   bar: BarChart3Icon,
   pie: PieChartIcon,
   big_number: ActivityIcon,
+  matrix: Grid3x3Icon,
 };
 
 export function getChartTypes(t: TFunction): readonly {
@@ -31,5 +32,6 @@ export function getChartTypes(t: TFunction): readonly {
       icon: CHART_TYPE_ICONS.big_number,
       label: t("workspace.analysis.charts.chart_type_big_number"),
     },
+    { id: "matrix", icon: CHART_TYPE_ICONS.matrix, label: t("workspace.analysis.charts.chart_type_matrix") },
   ];
 }

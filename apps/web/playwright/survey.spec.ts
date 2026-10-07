@@ -14,10 +14,9 @@ test.beforeEach(async ({ page }) => {
   await helper.mockStorageUploads(page);
 });
 
-// The rendered alt is the human-readable form of the file name (decoded, no
-// extension or separator noise) — see getImageAltFromUrl in @formbricks/surveys.
-const firstPictureChoiceAlt = "logo transparent";
-const secondPictureChoiceAlt = "android chrome 192x192";
+// Picture choices are named by position, never by file name (a file name can carry personal data).
+const firstPictureChoiceAlt = "Option 1";
+const secondPictureChoiceAlt = "Option 2";
 
 const selectPictureChoice = async (pictureSelectQuestion: Locator, choiceAlt: string) => {
   const choiceImage = pictureSelectQuestion.getByRole("img", { name: choiceAlt });
@@ -204,7 +203,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
         buffer: Buffer.from("this is test"),
       });
 
-      await page.getByText("Uploading...").waitFor({ state: "hidden" });
+      await page.getByText("Uploading…").waitFor({ state: "hidden" });
       await page.locator("#questionCard-8").getByRole("button", { name: "Next" }).click();
 
       // Matrix Question
@@ -259,6 +258,12 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       for (let i = 0; i < surveys.createAndSubmit.ranking.choices.length; i++) {
         await page.getByText(surveys.createAndSubmit.ranking.choices[i]).click();
       }
+      // Ranking "Other" opens a required free-text box inside it
+      await page.getByRole("button", { name: "Add Other to ranking" }).click();
+      const rankingOtherInput = page.getByRole("textbox", { name: "Other" });
+      await page.locator("#questionCard-12").getByRole("button", { name: "Finish" }).click();
+      await expect(rankingOtherInput).toHaveAttribute("aria-invalid", "true");
+      await rankingOtherInput.fill(surveys.createAndSubmit.ranking.otherText);
       await page.locator("#questionCard-12").getByRole("button", { name: "Finish" }).click();
       // loading spinner -> wait for it to disappear
       await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
@@ -904,7 +909,7 @@ test.describe("Testing Survey with advanced logic", async () => {
         mimeType: "application/msword",
         buffer: Buffer.from("this is test"),
       });
-      await page.getByText("Uploading...").waitFor({ state: "hidden" });
+      await page.getByText("Uploading…").waitFor({ state: "hidden" });
       await page.locator("#questionCard-10").getByRole("button", { name: "Next" }).click();
 
       // Date Question

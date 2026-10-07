@@ -1,6 +1,8 @@
 import { parse } from "node-html-parser";
 import { type z } from "zod";
 import type { TI18nString } from "../i18n";
+import { RESERVED_FIELD_NAMES } from "../reserved-field-names";
+import { isLegacyIdCharset, isSafeIdentifier } from "../safe-identifier";
 import type { TConditionGroup, TSingleCondition } from "./logic";
 import type {
   TActionJumpToQuestion,
@@ -64,6 +66,43 @@ export const FORBIDDEN_IDS = [
   "embed",
   "verify",
 ];
+
+/**
+ * Link-survey params that drive the runtime rather than carrying response data, spelled exactly as
+ * the link survey reads them (`page.tsx`, `survey-renderer.tsx`, `survey-client-wrapper.tsx`).
+ * `suId`/`suToken` are the single-use credential pair, and the rest would silently capture UI state.
+ * `suId` is listed although `FORBIDDEN_IDS` holds `suid`: the exact-spelling set below needs the
+ * casing the runtime actually reads.
+ */
+export const LINK_SURVEY_SYSTEM_PARAMS = [
+  "suId",
+  "suToken",
+  "lang",
+  "preview",
+  "startAt",
+  "skipPrefilled",
+  "offlineSupport",
+];
+
+/**
+ * The exact spellings under which the link survey reads its own URL params: `FORBIDDEN_IDS` plus
+ * `LINK_SURVEY_SYSTEM_PARAMS`, case preserved. `getHiddenFieldsFromSearchParams` never fills a
+ * hidden field declared under one of these, whatever casing the param arrives in — the param IS the
+ * system param (`?lang=` is the language switch, not data).
+ */
+export const LINK_SURVEY_SYSTEM_PARAM_KEYS = new Set([...FORBIDDEN_IDS, ...LINK_SURVEY_SYSTEM_PARAMS]);
+
+/**
+ * Every name a declared field must never take, lowercased. The single source of truth shared by the
+ * two ends that have to agree: `validateId` refuses to create such a name in any casing, and
+ * `getHiddenFieldsFromSearchParams` refuses to fill a field from a param that matches it only
+ * case-insensitively (`Verify` from `?verify=`). A field a survey already declares under a case
+ * variant keeps being filled by that exact spelling (`Source` from `?Source=`) — the grandfather
+ * rule, and the reason this set gates the case-insensitive path only.
+ */
+export const RESERVED_DECLARED_FIELD_NAMES = new Set(
+  [...LINK_SURVEY_SYSTEM_PARAM_KEYS].map((key) => key.toLowerCase())
+);
 
 const FIELD_TO_LABEL_MAP: Record<string, string> = {
   headline: "question",
@@ -323,11 +362,22 @@ export enum TValidateIdErrorCode {
   Reserved = "reserved",
   HasSpaces = "has_spaces",
   InvalidChars = "invalid_chars",
+  NotSafeIdentifier = "not_safe_identifier",
 }
 
 export interface TValidateIdError {
   code: TValidateIdErrorCode;
   field: string;
+}
+
+export interface TValidateIdOptions {
+  /**
+   * Applies the strict shared naming rule (`isSafeIdentifier`) on top of the lenient character
+   * check. Use it wherever a *new* declared field name is created — hidden fields, variables,
+   * Embedded Data fields — so every new name follows one rule. Element and question ids stay
+   * lenient, otherwise renaming a question to `Q1` would start failing.
+   */
+  requireSafeIdentifier?: boolean;
 }
 
 // function to validate hidden field or question id or element id
@@ -336,7 +386,8 @@ export const validateId = (
   existingElementIds: string[],
   existingEndingCardIds: string[],
   existingHiddenFieldIds: string[],
-  existingVariableNames: string[] = []
+  existingVariableNames: string[] = [],
+  { requireSafeIdentifier = false }: TValidateIdOptions = {}
 ): TValidateIdError | null => {
   if (field.trim() === "") {
     return { code: TValidateIdErrorCode.Empty, field };
@@ -353,7 +404,22 @@ export const validateId = (
     return { code: TValidateIdErrorCode.Duplicate, field };
   }
 
-  if (FORBIDDEN_IDS.includes(field)) {
+  // Reserved names stay case-sensitive on the lenient path so element and question id renames keep
+  // behaving exactly as before. New declared field names are matched case-insensitively and against
+  // the link-survey system params too: `getHiddenFieldsFromSearchParams` never fills a field named
+  // exactly like one of those params, and never fills any field from a case variant of one (`Verify`
+  // from `?verify=`), so a new name colliding with one in any casing must not be creatable.
+  //
+  // `RESERVED_FIELD_NAMES` (the Tier-1 Embedded Data catalog: country, url, browser, ...) joins them
+  // on the strict path ONLY. It must never move into `RESERVED_DECLARED_FIELD_NAMES`, which is also
+  // the capture-refusal list read by `getHiddenFieldsFromSearchParams` — putting `country` there
+  // would stop `?country=DE` from filling the hidden field of a survey that legitimately declares
+  // `country` today. Refused at authoring time; whatever a survey already declares keeps working.
+  const isReserved = requireSafeIdentifier
+    ? RESERVED_DECLARED_FIELD_NAMES.has(field.toLowerCase()) || RESERVED_FIELD_NAMES.has(field.toLowerCase())
+    : FORBIDDEN_IDS.includes(field);
+
+  if (isReserved) {
     return { code: TValidateIdErrorCode.Reserved, field };
   }
 
@@ -361,8 +427,12 @@ export const validateId = (
     return { code: TValidateIdErrorCode.HasSpaces, field };
   }
 
-  if (!/^[a-zA-Z0-9_-]+$/.test(field)) {
+  if (!isLegacyIdCharset(field)) {
     return { code: TValidateIdErrorCode.InvalidChars, field };
+  }
+
+  if (requireSafeIdentifier && !isSafeIdentifier(field)) {
+    return { code: TValidateIdErrorCode.NotSafeIdentifier, field };
   }
 
   return null;

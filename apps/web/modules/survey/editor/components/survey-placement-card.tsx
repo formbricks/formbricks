@@ -5,11 +5,12 @@ import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { TOverlay, TPlacement } from "@formbricks/types/common";
+import { TPlacement } from "@formbricks/types/common";
 import { TSurvey, TSurveyWorkspaceOverwrites } from "@formbricks/types/surveys/types";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { Placement } from "@/modules/survey/editor/components/placement";
 import { Label } from "@/modules/ui/components/label";
+import { TOverlaySettingsValue } from "@/modules/ui/components/overlay-settings/lib/utils";
 import { Switch } from "@/modules/ui/components/switch";
 
 interface SurveyPlacementCardProps {
@@ -24,7 +25,7 @@ export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlace
   const [open, setOpen] = useState(false);
 
   const { workspaceOverwrites } = localSurvey ?? {};
-  const { placement, clickOutsideClose, overlay } = workspaceOverwrites ?? {};
+  const { placement, clickOutsideClose, overlay, overlayColor, overlayOpacity } = workspaceOverwrites ?? {};
 
   const setWorkspaceOverwrites = (workspaceOverwrites: TSurveyWorkspaceOverwrites | null) => {
     setLocalSurvey({ ...localSurvey, workspaceOverwrites: workspaceOverwrites });
@@ -53,11 +54,11 @@ export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlace
     }
   };
 
-  const handleOverlay = (overlayValue: TOverlay) => {
+  const handleOverlay = (overlayValue: TOverlaySettingsValue) => {
     if (setWorkspaceOverwrites) {
       setWorkspaceOverwrites({
         ...workspaceOverwrites,
-        overlay: overlayValue,
+        ...overlayValue,
       });
     }
   };
@@ -83,7 +84,7 @@ export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlace
       <Collapsible.CollapsibleTrigger
         asChild
         className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
-        <div className="inline-flex px-4 py-4">
+        <button type="button" className="inline-flex px-4 py-4 text-left">
           <div className="flex items-center pr-5 pl-2">
             <CheckIcon
               strokeWidth={3}
@@ -96,7 +97,7 @@ export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlace
               {t("workspace.surveys.edit.overwrite_the_global_placement_of_the_survey")}
             </p>
           </div>
-        </div>
+        </button>
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent
         className={`flex ${open && "pb-3"} overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down`}>
@@ -127,6 +128,8 @@ export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlace
                       setCurrentPlacement={handlePlacementChange}
                       setOverlay={handleOverlay}
                       overlay={overlay ?? "none"}
+                      overlayColor={overlayColor ?? null}
+                      overlayOpacity={overlayOpacity ?? null}
                       setClickOutsideClose={handleClickOutsideClose}
                       clickOutsideClose={!!clickOutsideClose}
                     />

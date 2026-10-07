@@ -1,8 +1,12 @@
 import "server-only";
 import { z } from "zod";
 import { type TChartQuery } from "@formbricks/types/analysis";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
+import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
+import { formatDataProfile } from "@/modules/ee/analysis/lib/ai-data-profile";
+import { getAIDataProfile } from "@/modules/ee/analysis/lib/ai-data-profile.server";
 import { generateSchemaContext } from "@/modules/ee/analysis/lib/ai-schema-context";
 import {
   FEEDBACK_DIMENSION_IDS,
@@ -10,13 +14,24 @@ import {
   FEEDBACK_TIME_DIMENSION_IDS,
 } from "@/modules/ee/analysis/lib/schema-definition";
 import { type TChartType, ZChartType } from "@/modules/ee/analysis/types/analysis";
+import { resolveAIDateRange } from "./ai-chart-date-range";
+import { AI_CHART_PROMPT_ERROR_CODE } from "./ai-chart-errors";
 import { getAIChartPromptError } from "./ai-chart-errors.server";
 import { prepareQueryForChartType } from "./big-number";
 
 const CUBE_NAME = "FeedbackRecords";
 const DEFAULT_MEASURE = `${CUBE_NAME}.count`;
 const AI_CHART_GENERATION_TIMEOUT_MS = 30_000;
-const AI_CHART_GENERATION_MAX_OUTPUT_TOKENS = 1024;
+/**
+ * Output budget for one generation.
+ *
+ * This counts reasoning tokens, not just the JSON — and the answer is a query object that fits in a
+ * few hundred. At 1024 a thinking model (the default `gemini-2.5-flash` deployment spent 982 of them
+ * on a two-clause prompt) exhausted the budget mid-thought and threw `AIOutputTokenLimitError`
+ * before writing a single field. Sized for a model that thinks, since the provider and model are
+ * deployment configuration and a non-reasoning one simply never approaches the cap.
+ */
+const AI_CHART_GENERATION_MAX_OUTPUT_TOKENS = 8192;
 // Matches the maxLength of the chart-name input and the persisted chart name.
 const MAX_CHART_NAME_LENGTH = 255;
 
@@ -30,6 +45,7 @@ const toEnumTuple = (values: readonly string[]): [string, ...string[]] => {
 const ZMeasureId = z.enum(toEnumTuple(FEEDBACK_MEASURE_IDS));
 const ZDimensionId = z.enum(toEnumTuple(FEEDBACK_DIMENSION_IDS));
 const ZTimeDimensionId = z.enum(toEnumTuple(FEEDBACK_TIME_DIMENSION_IDS));
+const ZDatePreset = z.enum(toEnumTuple(DATE_RANGE_PRESETS));
 const ZFilterMemberId = z.enum(toEnumTuple([...FEEDBACK_MEASURE_IDS, ...FEEDBACK_DIMENSION_IDS]));
 const ZFilterOperator = z.enum([
   "equals",
@@ -74,6 +90,14 @@ const ZFilter = z
   });
 
 export const ZAIQueryResponse = z.object({
+  // First on purpose: the model writes fields in schema order, so it commits to "can this be charted
+  // at all" before it has filled in a query, rather than justifying one it already wrote. Without it
+  // gibberish came back as the default count measure — a real-looking chart for a request nobody made.
+  answerable: z
+    .boolean()
+    .describe(
+      "False only when the request is gibberish or asks for something the feedback data cannot answer (weather, jokes, general knowledge). Vague but on-topic requests are answerable. When false, still fill every other field with placeholders (null, an empty measures array, any chartType); they are ignored."
+    ),
   name: z
     .string()
     .nullable()
@@ -85,7 +109,30 @@ export const ZAIQueryResponse = z.object({
       z.object({
         dimension: ZTimeDimensionId,
         granularity: z.enum(["hour", "day", "week", "month", "quarter", "year"]).nullable(),
-        dateRange: z.string().nullable(),
+        // Three flat fields rather than one union: the preset is an enum the model cannot spell
+        // wrong, the explicit pair is the escape hatch for a window no preset covers, and both
+        // encode in every provider's structured-output dialect. A single `dateRange: string` is what
+        // let the model answer with an ISO 8601 interval nothing downstream could read.
+        // The descriptions carry the exclusivity rule because they are the only part of this that
+        // reaches the model: `Output.object` sends the schema to the provider as JSON Schema, which
+        // cannot express "one of these, never both". A cross-field refinement would therefore
+        // constrain nothing at generation time and only turn a model that answered with both into a
+        // failed request — so the rule is stated here, and `resolveAIDateRange` breaks the tie.
+        dateRangePreset: ZDatePreset.nullable().describe(
+          "Named range covering the request. Use this OR the explicit start/end pair, never both; prefer a preset whenever one fits. Null when giving explicit dates."
+        ),
+        dateRangeStart: z
+          .string()
+          .nullable()
+          .describe(
+            "Inclusive start as YYYY-MM-DD. Only when no preset covers the request, and only with dateRangePreset null and dateRangeEnd also given."
+          ),
+        dateRangeEnd: z
+          .string()
+          .nullable()
+          .describe(
+            "Inclusive end as YYYY-MM-DD. Only when no preset covers the request, and only with dateRangePreset null and dateRangeStart also given."
+          ),
       })
     )
     .nullable(),
@@ -105,6 +152,7 @@ export type AIChartQueryResult = {
 type GenerateAIChartQueryInput = {
   organizationId: string;
   workspaceId: string;
+  feedbackDirectoryId: string;
   userId: string;
   prompt: string;
 };
@@ -112,16 +160,28 @@ type GenerateAIChartQueryInput = {
 /**
  * Translate a natural-language prompt into a normalized Cube.js chart query.
  * Throws an InvalidInputError carrying a stable AI chart error code when
- * structured output cannot be generated; provider/config/network failures
- * stay on the existing error path.
+ * structured output cannot be generated or the model flags the prompt as
+ * unanswerable; provider/config/network failures stay on the existing error path.
  */
 export const generateAIChartQuery = async ({
   organizationId,
   workspaceId,
+  feedbackDirectoryId,
   userId,
   prompt,
 }: GenerateAIChartQueryInput): Promise<AIChartQueryResult> => {
-  const schemaContext = generateSchemaContext();
+  // What the cube *could* hold, then what this directory actually does. The second half is what
+  // stops the model filtering on a source name it invented; it is best-effort, and an empty string
+  // leaves the schema-only prompt this feature shipped with.
+  const dataProfile = await getAIDataProfile({
+    feedbackDirectoryId,
+    workspaceId,
+    organizationId,
+    userId,
+  });
+  const schemaContext = [generateSchemaContext(), formatDataProfile(dataProfile)]
+    .filter((section) => section.length > 0)
+    .join("\n\n");
 
   let output: AIQueryResponse;
   try {
@@ -147,6 +207,10 @@ export const generateAIChartQuery = async ({
     throw error;
   }
 
+  if (!output.answerable) {
+    throw new InvalidInputError(AI_CHART_PROMPT_ERROR_CODE);
+  }
+
   return normalizeChartQuery(output);
 };
 
@@ -167,11 +231,21 @@ const normalizeChartQuery = (output: AIQueryResponse): AIChartQueryResult => {
   }
 
   if (output.timeDimensions?.length) {
-    query.timeDimensions = output.timeDimensions.map(({ dimension, granularity, dateRange }) => ({
-      dimension,
-      ...(granularity == null ? {} : { granularity }),
-      ...(dateRange == null ? {} : { dateRange }),
-    }));
+    query.timeDimensions = output.timeDimensions.map(
+      ({ dimension, granularity, dateRangePreset, dateRangeStart, dateRangeEnd }) => {
+        const dateRange = resolveAIDateRange({
+          preset: dateRangePreset,
+          start: dateRangeStart,
+          end: dateRangeEnd,
+        });
+
+        return {
+          dimension,
+          ...(granularity == null ? {} : { granularity }),
+          ...(dateRange === undefined ? {} : { dateRange }),
+        };
+      }
+    );
   }
 
   // A big number has no axis for a grouping, so the model asking for one (a granularity, a

@@ -1,8 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
-import { FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL } from "@/modules/account/constants";
+import {
+  ACCOUNT_DELETED_PATH,
+  FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL,
+} from "@/modules/account/constants";
 import { auth } from "@/modules/auth/lib/auth";
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendDeleteAccountConfirmationEmail } from "@/modules/email";
 import { requestSsoAccountDeletionEmail } from "./better-auth-account-deletion-request";
 
@@ -15,7 +19,9 @@ vi.mock("@/modules/auth/lib/session", () => ({ getSession: getSessionMock }));
 // Toggle IS_FORMBRICKS_CLOUD per test to cover both post-deletion redirect targets; every other
 // constant (WEBAPP_URL, etc.) stays real so the Better Auth harness is untouched (auth.ts does not
 // read IS_FORMBRICKS_CLOUD).
-const { constantsOverrides } = vi.hoisted(() => ({ constantsOverrides: { isFormbricksCloud: false } }));
+const { constantsOverrides } = vi.hoisted(() => ({
+  constantsOverrides: { isFormbricksCloud: false, signupEnabled: false },
+}));
 vi.mock("@/lib/constants", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/constants")>();
   return {
@@ -23,7 +29,22 @@ vi.mock("@/lib/constants", async (importOriginal) => {
     get IS_FORMBRICKS_CLOUD() {
       return constantsOverrides.isFormbricksCloud;
     },
+    // Derived from IS_FORMBRICKS_CLOUD / IS_DEVELOPMENT / E2E_TESTING, all false under vitest, so the
+    // closed-signup policy (ENG-2293) otherwise admits only the first user on a fresh instance. The one
+    // test that needs two accounts raises this together with the multi-org license above.
+    get SIGNUP_ENABLED() {
+      return constantsOverrides.signupEnabled;
+    },
   };
+});
+
+// The closed-signup policy (ENG-2293) only lets an uninvited sign-up through on a fresh instance, or
+// when the license permits multiple organizations — so a test that needs a SECOND user has to say which.
+// Mirrors the mock in better-auth-account-deletion.integration.test.ts; defaults to false (single-org,
+// the real local shape) and is raised only by the test that needs two accounts.
+vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return { ...actual, getIsMultiOrgEnabled: vi.fn() };
 });
 
 // @/modules/email is mocked in integration/setup.ts (captures mail instead of hitting SMTP); grab the
@@ -55,6 +76,8 @@ beforeEach(async () => {
   await resetDb();
   vi.clearAllMocks();
   constantsOverrides.isFormbricksCloud = false;
+  constantsOverrides.signupEnabled = false;
+  vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
 });
 
 describe("requestSsoAccountDeletionEmail (real Postgres)", () => {
@@ -81,8 +104,9 @@ describe("requestSsoAccountDeletionEmail (real Postgres)", () => {
     const mailArgs = sendDeleteAccountConfirmationEmailMock.mock.calls[0][0];
     expect(mailArgs.email).toBe(email);
     expect(mailArgs.deleteLink).toContain("/api/auth/delete-user/callback?token=");
-    // Self-hosted (IS_FORMBRICKS_CLOUD is false under test): the callback returns to the login page.
-    expect(mailArgs.deleteLink).toContain(`callbackURL=${encodeURIComponent("/auth/login")}`);
+    // The callback returns to the post-deletion page, which is where the deployment-specific hop
+    // happens (ENG-3260).
+    expect(mailArgs.deleteLink).toContain(`callbackURL=${encodeURIComponent(ACCOUNT_DELETED_PATH)}`);
     const token = new URL(mailArgs.deleteLink).searchParams.get("token");
     expect(token).toBeTruthy();
 
@@ -104,7 +128,7 @@ describe("requestSsoAccountDeletionEmail (real Postgres)", () => {
     expect(await prisma.user.findUnique({ where: { id: userId } })).toBeNull();
   });
 
-  test("on Formbricks Cloud, the emailed link returns to the account-deletion survey (ENG-1780)", async () => {
+  test("on Formbricks Cloud, the emailed link still carries a relative callbackURL (ENG-3260)", async () => {
     constantsOverrides.isFormbricksCloud = true;
     const email = "ssocloud@example.com";
     const userId = await createVerifiedUser(email, "Passw0rd!");
@@ -115,10 +139,134 @@ describe("requestSsoAccountDeletionEmail (real Postgres)", () => {
 
     expect(sendDeleteAccountConfirmationEmailMock).toHaveBeenCalledTimes(1);
     const mailArgs = sendDeleteAccountConfirmationEmailMock.mock.calls[0][0];
-    // Cloud: the callback redirects to the offboarding survey instead of the login page.
-    expect(mailArgs.deleteLink).toContain(
+    // The Cloud flag must not change the callbackURL: the offboarding survey is reached from the
+    // /auth/account-deleted page in the browser, never through Better Auth's origin-checked redirect.
+    expect(mailArgs.deleteLink).toContain(`callbackURL=${encodeURIComponent(ACCOUNT_DELETED_PATH)}`);
+    expect(mailArgs.deleteLink).not.toContain(
+      encodeURIComponent(FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL)
+    );
+  });
+
+  /**
+   * The bug lived in Better Auth's HTTP middleware, not in the string this module returns, so these two
+   * drive the REAL handler over a REAL Request. Two things make that work, and neither is optional:
+   *
+   *  1. `auth.handler(new Request(...))`, never `auth.api.deleteUserCallback({ query, headers })`.
+   *     `originCheck` opens with `if (!ctx.request) return`
+   *     (better-auth/dist/api/middlewares/origin-check.mjs), and the direct `auth.api.*` call carries
+   *     headers but no Request — so the gate never runs and the call succeeds with the bug fully present.
+   *  2. `withOriginCheck`. Better Auth disables the gate outright under NODE_ENV=test
+   *     (`skipOriginCheck: … isTest() ? true : false`, context/create-context.mjs), which is every
+   *     vitest run, so even a real Request sails through. Re-arming it restores the production
+   *     behaviour on the real `auth` instance and its real `trustedOrigins`.
+   *
+   * Between them, a test written the obvious way is green before and after the fix. The negative
+   * control is what keeps this honest: it proves the gate really is armed here, so the positive test's
+   * 302 means something.
+   */
+  const withOriginCheck = async <T>(run: () => Promise<T>): Promise<T> => {
+    const ctx = await auth.$context;
+    const previous = ctx.skipOriginCheck;
+    ctx.skipOriginCheck = false;
+    try {
+      return await run();
+    } finally {
+      ctx.skipOriginCheck = previous;
+    }
+  };
+
+  const requestDeleteLinkFor = async (email: string): Promise<{ deleteLink: string; userId: string }> => {
+    const userId = await createVerifiedUser(email, "Passw0rd!");
+    await prisma.user.update({ where: { id: userId }, data: { identityProvider: "google" } });
+    getSessionMock.mockResolvedValue({ user: { id: userId, email } });
+
+    await requestSsoAccountDeletionEmail();
+
+    return { deleteLink: sendDeleteAccountConfirmationEmailMock.mock.calls[0][0].deleteLink, userId };
+  };
+
+  test("the emailed link survives originCheck end to end on a Cloud deployment and deletes the user", async () => {
+    constantsOverrides.isFormbricksCloud = true;
+    const email = "ssocloudhttp@example.com";
+    const { deleteLink, userId } = await requestDeleteLinkFor(email);
+    const cookie = await signInCookie(email, "Passw0rd!");
+
+    // Exactly what clicking the link in the inbox does.
+    const response = await withOriginCheck(() =>
+      auth.handler(new Request(deleteLink, { headers: { cookie } }))
+    );
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe(ACCOUNT_DELETED_PATH);
+    expect(await prisma.user.findUnique({ where: { id: userId } })).toBeNull();
+  });
+
+  test("negative control: an absolute, cross-origin callbackURL is rejected before the token is read", async () => {
+    const email = "ssocrossorigin@example.com";
+    const { deleteLink, userId } = await requestDeleteLinkFor(email);
+    const cookie = await signInCookie(email, "Passw0rd!");
+
+    // Swap in the hardcoded Cloud survey URL the old code sent — the staging failure, byte for byte.
+    const crossOriginLink = deleteLink.replace(
+      `callbackURL=${encodeURIComponent(ACCOUNT_DELETED_PATH)}`,
       `callbackURL=${encodeURIComponent(FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL)}`
     );
+    const response = await withOriginCheck(() =>
+      auth.handler(new Request(crossOriginLink, { headers: { cookie } }))
+    );
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({ code: "INVALID_CALLBACK_URL" });
+    // And the account survives — which is what made account deletion untestable on staging.
+    expect(await prisma.user.findUnique({ where: { id: userId } })).not.toBeNull();
+  });
+
+  /**
+   * Who the emailed link works for. Better Auth binds the token to its requester
+   * (`token.value !== session.user.id` → INVALID_TOKEN) and needs a session at all, so the link is
+   * useless to anyone but the person who asked for it, in their own browser. Asserted here because this
+   * PR reshapes that link, and a reviewer should not have to take the binding on trust.
+   */
+  test("another signed-in user cannot spend someone else's deletion token", async () => {
+    // Two accounts on one instance: the closed-signup policy admits the second only when public
+    // sign-up is open AND the license allows multiple organizations.
+    constantsOverrides.signupEnabled = true;
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+    const victimEmail = "tokenvictim@example.com";
+    const { deleteLink, userId: victimId } = await requestDeleteLinkFor(victimEmail);
+
+    const attackerEmail = "tokenattacker@example.com";
+    const attackerId = await createVerifiedUser(attackerEmail, "Passw0rd!");
+    const attackerCookie = await signInCookie(attackerEmail, "Passw0rd!");
+
+    const response = await withOriginCheck(() =>
+      auth.handler(new Request(deleteLink, { headers: { cookie: attackerCookie } }))
+    );
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toMatchObject({ code: "INVALID_TOKEN" });
+    // Neither account is touched: not the victim the token names, nor the attacker who presented it.
+    expect(await prisma.user.findUnique({ where: { id: victimId } })).not.toBeNull();
+    expect(await prisma.user.findUnique({ where: { id: attackerId } })).not.toBeNull();
+  });
+
+  test("the emailed link does nothing without a session, and stays usable afterwards", async () => {
+    const email = "tokennosession@example.com";
+    const { deleteLink, userId } = await requestDeleteLinkFor(email);
+
+    const anonymous = await withOriginCheck(() => auth.handler(new Request(deleteLink)));
+
+    expect(anonymous.status).toBe(404);
+    expect(await anonymous.json()).toMatchObject({ code: "FAILED_TO_GET_USER_INFO" });
+    expect(await prisma.user.findUnique({ where: { id: userId } })).not.toBeNull();
+
+    // The rejected attempt must not have burned the token — the real user still has to be able to
+    // finish from their own browser after a mail scanner or a logged-out click hits the link first.
+    const cookie = await signInCookie(email, "Passw0rd!");
+    const owner = await withOriginCheck(() => auth.handler(new Request(deleteLink, { headers: { cookie } })));
+
+    expect(owner.status).toBe(302);
+    expect(await prisma.user.findUnique({ where: { id: userId } })).toBeNull();
   });
 
   test("rejects a credential (email-identity) user — they must confirm with their password", async () => {

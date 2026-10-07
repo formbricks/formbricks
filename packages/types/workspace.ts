@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZColor, ZOverlay, ZPlacement } from "./common";
+import { ZOverlayColor, ZOverlayOpacity } from "./overlay";
 import { ZBaseStyling, ZLogo } from "./styling";
 
 export const ZWorkspaceStyling = ZBaseStyling.extend({
@@ -20,6 +21,16 @@ export type TWorkspaceMode = z.infer<typeof ZWorkspaceMode>;
 export const ZWorkspaceConfig = z.object({
   channel: ZWorkspaceConfigChannel.optional(),
   industry: ZWorkspaceConfigIndustry.optional(),
+  /**
+   * The language new surveys in this workspace are authored in (ENG-2816). Unset/null means "whichever
+   * language the person clicking New survey uses the app in".
+   *
+   * A canonical BCP-47 tag limited to the languages the survey runtime ships strings for. The allowed
+   * set lives in `@formbricks/i18n-utils` and is enforced on write by `updateWorkspaceAction` — not
+   * here, because `packages/types` deliberately depends on no other workspace package. Readers must
+   * still treat an unsupported value as unset; `resolveDefaultSurveyLanguage` does.
+   */
+  defaultSurveyLanguage: z.string().trim().min(1).nullish(),
 });
 
 export type TWorkspaceConfig = z.infer<typeof ZWorkspaceConfig>;
@@ -73,6 +84,9 @@ export const ZWorkspace = z.object({
   placement: ZPlacement,
   clickOutsideClose: z.boolean(),
   overlay: ZOverlay,
+  // Nullish so workspace objects built without them still type-check. null = the preset.
+  overlayColor: ZOverlayColor.nullish(),
+  overlayOpacity: ZOverlayOpacity.nullish(),
   languages: z.array(ZLanguage),
   appSetupCompleted: z.boolean(),
   logo: ZLogo.nullish(),
@@ -100,8 +114,16 @@ export const ZWorkspaceUpdateInput = z.object({
   placement: ZPlacement.optional(),
   clickOutsideClose: z.boolean().optional(),
   overlay: ZOverlay.optional(),
+  // null clears the custom value back to the preset.
+  overlayColor: ZOverlayColor.nullish(),
+  overlayOpacity: ZOverlayOpacity.nullish(),
   styling: ZWorkspaceStyling.optional(),
   logo: ZLogo.optional(),
+  // Optimistic-concurrency baseline: the `updatedAt` the caller loaded. Only surfaces that edit a
+  // composite field need it — `logo` carries both a url and a bgColor, so two saves from a stale
+  // page can restore an url the other one just deleted the object for. Coerced because a server
+  // action receives it as a string.
+  expectedUpdatedAt: z.coerce.date().optional(),
   teamIds: z.array(z.string()).optional(),
   customHeadScripts: z.string().nullish(),
 });

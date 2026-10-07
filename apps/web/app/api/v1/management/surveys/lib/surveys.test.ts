@@ -4,6 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { selectSurvey } from "@/lib/survey/service";
 import { transformPrismaSurvey } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
@@ -172,5 +173,55 @@ describe("getSurveys (Management API)", () => {
 
     await expect(getSurveys([invalidEnvId])).rejects.toThrow(validationError);
     expect(prisma.survey.findMany).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * ENG-1838. `GET /api/v1/management/surveys` is a public contract: external integrations read
+ * `variables` and `hiddenFields` off it. ENG-2404 dropped the columns they came from, so both are now
+ * derived from the Embedded Data rows `selectSurvey` joins — by `transformPrismaSurvey`, which this
+ * file otherwise mocks. v2 reads the same constant.
+ */
+describe("legacy Embedded Data shape on the wire (ENG-1838)", () => {
+  test("selectSurvey carries the rows the two keys are derived from", () => {
+    expect(selectSurvey.embeddedDataLinks).toEqual(selectSurveyEmbeddedDataLinks);
+  });
+
+  test("transformPrismaSurvey derives variables and hiddenFields from those rows", async () => {
+    const actual = await vi.importActual<typeof import("@/lib/survey/utils")>("@/lib/survey/utils");
+    const survey = actual.transformPrismaSurvey<TSurvey>({
+      id: surveyId1,
+      embeddedDataLinks: [
+        {
+          storageKey: "clx000000000000000000001",
+          embeddedData: {
+            id: "ed_1",
+            key: null,
+            name: "score",
+            source: "computed",
+            dataType: "number",
+            defaultValue: 7,
+            locked: false,
+          },
+        },
+        {
+          storageKey: "plan",
+          embeddedData: {
+            id: "ed_2",
+            key: null,
+            name: "plan",
+            source: "ingested",
+            dataType: "string",
+            defaultValue: null,
+            locked: false,
+          },
+        },
+      ],
+    });
+
+    expect(survey.variables).toEqual([
+      { id: "clx000000000000000000001", name: "score", type: "number", value: 7 },
+    ]);
+    expect(survey.hiddenFields).toEqual({ enabled: true, fieldIds: ["plan"] });
   });
 });

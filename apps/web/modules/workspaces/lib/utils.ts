@@ -112,6 +112,12 @@ const resolveWorkspaceAuth = async (workspaceId: string): Promise<TWorkspaceAuth
   // the most restricted, never mislabeled as a writer.
   const isReadOnly = isMember && !hasReadWriteAccess && !hasManageAccess;
 
+  // The UI counterpart of `workspace.manage`: owners and managers, or a member with a manage
+  // grant. Forms whose action asserts `workspace.manage` must gate on this, not on `isReadOnly`,
+  // or a readWrite member gets an editable form that is refused on save. Derived from the
+  // presence of a grant, so a member with no resolved permission cannot manage.
+  const canManage = isOwner || isManager || hasManageAccess;
+
   return {
     workspace,
     organization,
@@ -126,6 +132,7 @@ const resolveWorkspaceAuth = async (workspaceId: string): Promise<TWorkspaceAuth
     hasReadWriteAccess,
     hasManageAccess,
     isReadOnly,
+    canManage,
   };
 };
 
@@ -219,6 +226,8 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
         placement: true,
         clickOutsideClose: true,
         overlay: true,
+        overlayColor: true,
+        overlayOpacity: true,
         appSetupCompleted: true,
         styling: true,
         logo: true,
@@ -239,6 +248,7 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
             },
             isAISmartToolsEnabled: true,
             whitelabel: true,
+            displayTimeZone: true,
             memberships: {
               where: { userId },
               select: {
@@ -275,6 +285,8 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
         placement: data.placement,
         clickOutsideClose: data.clickOutsideClose,
         overlay: data.overlay,
+        overlayColor: data.overlayColor,
+        overlayOpacity: data.overlayOpacity,
         styling: data.styling,
         logo: data.logo,
         customHeadScripts: data.customHeadScripts,
@@ -288,6 +300,7 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
         billing: data.organization.billing,
         isAISmartToolsEnabled: data.organization.isAISmartToolsEnabled,
         whitelabel: data.organization.whitelabel,
+        displayTimeZone: data.organization.displayTimeZone,
       },
       membership: data.organization.memberships[0] || null,
     };

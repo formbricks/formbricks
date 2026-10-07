@@ -22,11 +22,17 @@ import {
 import GoogleSheetLogo from "@/images/googleSheetsLogo.png";
 import {
   GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION,
+  GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_SCOPES,
   GOOGLE_SHEET_INTEGRATION_INVALID_GRANT,
 } from "@/lib/googleSheet/constants";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import {
+  RestrictedSurveyHint,
+  RestrictedSurveysNote,
+} from "@/modules/survey/visibility/components/restricted-survey-hint";
+import { isRestrictedSurveyPick } from "@/modules/survey/visibility/lib/outbound";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
@@ -47,6 +53,7 @@ interface AddIntegrationModalProps {
   workspaceId: string;
   open: boolean;
   surveys: TSurvey[];
+  surveyVisibilityEnabled: boolean;
   setOpen: (v: boolean) => void;
   googleSheetIntegration: TIntegrationGoogleSheets;
   selectedIntegration?: (TIntegrationGoogleSheetsConfigData & { index: number }) | null;
@@ -55,11 +62,12 @@ interface AddIntegrationModalProps {
 export const AddIntegrationModal = ({
   workspaceId,
   surveys,
+  surveyVisibilityEnabled,
   open,
   setOpen,
   googleSheetIntegration,
   selectedIntegration,
-}: AddIntegrationModalProps) => {
+}: Readonly<AddIntegrationModalProps>) => {
   const { t } = useTranslation();
   const integrationData: TIntegrationGoogleSheetsConfigData = {
     spreadsheetId: "",
@@ -71,6 +79,8 @@ export const AddIntegrationModal = ({
     createdAt: new Date(),
   };
   const { handleSubmit } = useForm();
+  // The mapping being edited keeps its survey selectable even if it has since been restricted.
+  const attachedSurveyIds = selectedIntegration ? [selectedIntegration.surveyId] : [];
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [isLinkingSheet, setIsLinkingSheet] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
@@ -130,6 +140,8 @@ export const AddIntegrationModal = ({
       toast.error(t("workspace.integrations.google_sheets.token_expired_error"));
     } else if (errorMessage === GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION) {
       toast.error(t("workspace.integrations.google_sheets.spreadsheet_permission_error"));
+    } else if (errorMessage === GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_SCOPES) {
+      toast.error(t("workspace.integrations.google_sheets.spreadsheet_scope_error"));
     } else {
       toast.error(errorMessage);
     }
@@ -286,6 +298,15 @@ export const AddIntegrationModal = ({
                     selectedItem={selectedSurvey}
                     setSelectedItem={setSelectedSurvey}
                     disabled={surveys.length === 0}
+                    isItemDisabled={(survey: TSurvey) =>
+                      isRestrictedSurveyPick(surveyVisibilityEnabled, survey, attachedSurveyIds)
+                    }
+                    disabledItemHint={<RestrictedSurveyHint kind="restricted" />}
+                  />
+                  <RestrictedSurveysNote
+                    surveyVisibilityEnabled={surveyVisibilityEnabled}
+                    surveys={surveys}
+                    attachedSurveyIds={attachedSurveyIds}
                   />
                   <p className="m-1 text-xs text-slate-500">
                     {surveys.length === 0 && t("workspace.integrations.create_survey_warning")}

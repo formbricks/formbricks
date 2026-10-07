@@ -8,6 +8,7 @@ import {
   JOBS_PREFIX,
   JOBS_QUEUE_NAME,
   JOB_NAMES,
+  WEBHOOK_DELIVERY_JOB_OPTIONS,
 } from "@/src/constants";
 import type { BackgroundJobProducer, EnqueuedJob } from "@/src/contracts";
 import { getBackgroundJobDefinition } from "@/src/definitions";
@@ -20,7 +21,12 @@ import {
   getRecurringJobSchedulerId,
   toBullMQRepeatOptions,
 } from "@/src/schedules";
-import { type TResponsePipelineJobData, type TTestLogJobData, type TWorkflowRunJobData } from "@/src/types";
+import {
+  type TResponsePipelineJobData,
+  type TTestLogJobData,
+  type TWebhookDeliveryJobData,
+  type TWorkflowRunJobData,
+} from "@/src/types";
 
 export interface JobsQueueHandle {
   connection: IORedis;
@@ -248,6 +254,35 @@ export const enqueueWorkflowRunJob = async (
   }
 };
 
+export const enqueueWebhookDeliveryJob = async (
+  data: TWebhookDeliveryJobData,
+  options: { jobId: string }
+): Promise<Job> => {
+  try {
+    // Per-job retry policy (see WEBHOOK_DELIVERY_JOB_OPTIONS) instead of the queue defaults: a single
+    // endpoint's retries are its own budget. The jobId is mandatory and deterministic (derived by the
+    // pipeline job from its own id + the webhookId), so a pipeline retry after a partial fan-out re-adds
+    // only the children that were never enqueued — BullMQ treats an existing jobId as a no-op.
+    return await enqueueBackgroundJob(JOB_NAMES.webhookDelivery, data, {
+      ...WEBHOOK_DELIVERY_JOB_OPTIONS,
+      jobId: options.jobId,
+    });
+  } catch (error) {
+    logger.error(
+      {
+        err: error,
+        event: data.event,
+        jobName: JOB_NAMES.webhookDelivery,
+        responseId: data.response.id,
+        webhookId: data.webhookId,
+        workspaceId: data.workspaceId,
+      },
+      "Failed to enqueue BullMQ webhook delivery job"
+    );
+    throw error;
+  }
+};
+
 export const scheduleTestLogJobAt = async (
   schedule: TRunAtBackgroundJobSchedule,
   data: TTestLogJobData
@@ -358,6 +393,7 @@ export const recurringJobs = Object.freeze(
  */
 export const ONE_SHOT_JOB_NAMES = Object.freeze({
   responsePipeline: JOB_NAMES.responsePipeline,
+  webhookDelivery: JOB_NAMES.webhookDelivery,
   workflowRun: JOB_NAMES.workflowRun,
 });
 

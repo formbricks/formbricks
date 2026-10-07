@@ -1,4 +1,5 @@
 import { logger } from "@formbricks/logger";
+import { getComputedEmbeddedFields, getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { Result } from "@formbricks/types/error-handlers";
 import { TIntegration, TIntegrationType } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
@@ -17,16 +18,39 @@ import { writeData as writeNotionData } from "@/lib/notion/service";
 import { processResponseData } from "@/lib/responses";
 import { writeDataToSlack } from "@/lib/slack/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
+import { buildServerEmbeddedValues } from "@/lib/surveyLogic/utils";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { truncateText } from "@/lib/utils/strings";
 import { resolveStorageUrlAuto } from "@/modules/storage/utils";
 
 type TIntegrationPipelineData = {
-  response: Pick<TResponse, "createdAt" | "data" | "meta" | "variables" | "contactAttributes">;
+  // Widened from five keys to cover `TEmbeddedValueResponse` (ENG-2538): the Slack path resolves
+  // reserved recall values off the response, and the caller already hands us a whole
+  // `ZResponsePipelineJobResponse`, so this pick was under-declaring what is really there rather than
+  // guarding anything.
+  response: Pick<
+    TResponse,
+    | "id"
+    | "surveyId"
+    | "createdAt"
+    | "updatedAt"
+    | "finished"
+    | "language"
+    | "data"
+    | "meta"
+    | "variables"
+    | "ttc"
+    | "contactAttributes"
+  >;
   surveyId: string;
 };
-type TPipelineIntegrationSurvey = Pick<TSurvey, "blocks" | "hiddenFields" | "variables" | "name">;
+// `hiddenFields` / `variables` stay in the pick as the resolver's fallback; `embeddedFields` carries
+// the joined EmbeddedData rows the definitions are resolved through (ENG-1837).
+type TPipelineIntegrationSurvey = Pick<
+  TSurvey,
+  "blocks" | "hiddenFields" | "variables" | "embeddedFields" | "name"
+>;
 
 const NOTION_PERSON_ATTRIBUTE_PREFIX = "person.";
 
@@ -88,10 +112,8 @@ const processDataForIntegration = async (
     includeVariables,
     includeContactAttributes,
   } = selection;
-  const ids =
-    includeHiddenFields && survey.hiddenFields.fieldIds
-      ? [...elementIds, ...survey.hiddenFields.fieldIds]
-      : elementIds;
+  const ingestedStorageKeys = getIngestedStorageKeys(survey);
+  const ids = includeHiddenFields ? [...elementIds, ...ingestedStorageKeys] : elementIds;
   const { responses, elements } = await extractResponses(integrationType, data, ids, survey);
 
   if (includeMetadata) {
@@ -99,11 +121,13 @@ const processDataForIntegration = async (
     elements.push("Metadata");
   }
   if (includeVariables) {
-    survey.variables?.forEach((variable) => {
-      const value = data.response.variables[variable.id];
+    // The raw slot, uncoerced and with no default substituted — a response that never captured this
+    // field is skipped rather than exported with a value that run never produced.
+    getComputedEmbeddedFields(survey).forEach(({ field, link }) => {
+      const value = data.response.variables[link.storageKey];
       if (value !== undefined) {
-        responses.push(String(data.response.variables[variable.id]));
-        elements.push(variable.name);
+        responses.push(String(value));
+        elements.push(field.name);
       }
     });
   }
@@ -344,10 +368,40 @@ const extractResponses = async (
   const surveyElements = getElementsFromBlocks(survey.blocks);
   const emptyResponseObject = createEmptyResponseObject(pipelineData.response.data);
 
+  const ingestedStorageKeys = getIngestedStorageKeys(survey);
+
+  // Slack posts one message per response, so its labels are per-response text and recall is
+  // interpolated for real — including reserved fields, which used to render their fallback here
+  // (ENG-2538). Every other integration writes `elements` as the SHEET/TABLE HEADER, which has to
+  // read identically for every response, so the empty object stays: a header that interpolated this
+  // response's answers would rename the column on every write. Reserved values are per response too,
+  // so they belong on the Slack side only.
+  //
+  // Hoisted alongside `emptyResponseObject` because neither depends on the element: built inside the
+  // loop this re-projected the whole catalog and re-walked `survey.blocks` once per element, per
+  // response.
+  const responseDataForRecall =
+    integrationType === "slack"
+      ? buildServerEmbeddedValues(pipelineData.response, survey)
+      : emptyResponseObject;
+  const variablesForRecall = integrationType === "slack" ? pipelineData.response.variables : {};
+
   for (const elementId of elementIds) {
-    // Check for hidden field Ids
-    if (survey.hiddenFields.fieldIds?.includes(elementId)) {
+    // Check for ingested (hidden) field storage keys
+    if (ingestedStorageKeys.includes(elementId)) {
       responses.push(processResponseData(pipelineData.response.data[elementId]));
+      // Labelled by storage key, while a computed field above is labelled by `field.name`. The
+      // asymmetry is deliberate: a computed field's storage key is an opaque cuid, whereas an
+      // ingested field's storage key IS its name today (`toDesiredEmbeddedFields` sets both to the
+      // hidden field id), so the two spellings are still identical here. They diverge once the
+      // shared library lands (ENG-1851), and these columns then keep showing the key — relabelling
+      // is its own ticket, because `elements` IS the spreadsheet/Airtable column header and moving
+      // it would silently re-header every already-configured integration, so it needs a migration
+      // for existing mappings.
+      //
+      // The Notion picker moved to the name in ENG-3233 and does not force this side to follow: it
+      // labels by name but still keys its saved mapping on `link.storageKey`, which is the
+      // `element.id` `buildNotionPayloadProperties` reads each value from.
       elements.push(elementId);
       continue;
     }
@@ -359,10 +413,6 @@ const extractResponses = async (
 
     const responseValue = pipelineData.response.data[elementId];
     responses.push(processElementResponse(element, responseValue));
-
-    const responseDataForRecall =
-      integrationType === "slack" ? pipelineData.response.data : emptyResponseObject;
-    const variablesForRecall = integrationType === "slack" ? pipelineData.response.variables : {};
 
     elements.push(
       parseRecallInfo(

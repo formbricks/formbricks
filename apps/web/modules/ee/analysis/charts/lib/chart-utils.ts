@@ -2,9 +2,13 @@ import { format, isValid, parseISO } from "date-fns";
 import {
   SENTIMENT_DIMENSION_ID,
   type TSentimentValue,
+  type TValueBandPolarity,
+  VALUE_BAND_DIMENSION_ID,
+  VALUE_BAND_POLARITY,
   getSentimentValueForMeasureId,
   isNotEnrichedDimensionValue,
   isSentimentValue,
+  isValueBandValue,
 } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
@@ -55,14 +59,29 @@ export const CHART_SENTIMENT_COLORS: Record<TSentimentValue, string> = {
 };
 
 /**
+ * Polarity colors for NPS and CSAT bands: promoter/satisfied teal, passive/neutral yellow,
+ * detractor/dissatisfied red — the palette's own teal, yellow and red, so they keep its CVD
+ * validation. Neutral is deliberately yellow here and blue in sentiment: a passive NPS answer is a
+ * lukewarm 7 or 8, not "no opinion", and a traffic-light reading is what NPS readers expect.
+ */
+export const CHART_VALUE_BAND_COLORS: Record<TValueBandPolarity, string> = {
+  positive: CHART_BRAND_DARK,
+  neutral: "#eda100",
+  negative: "#e34948",
+};
+
+/**
  * Semantic color for an enum dimension value: gray for the "not enriched" bucket, the sentiment
- * scale for sentiment values. Returns undefined when the value has no semantic color (other
+ * scale for sentiment values, polarity colors for value bands. Returns undefined when the value has no semantic color (other
  * dimensions, unknown tokens) so callers fall back to the generic palette.
  */
 export const getSemanticDimensionColor = (dimensionId: string, value: unknown): string | undefined => {
   if (isNotEnrichedDimensionValue(dimensionId, value)) return CHART_NOT_ENRICHED_COLOR;
   if (dimensionId === SENTIMENT_DIMENSION_ID && typeof value === "string" && isSentimentValue(value)) {
     return CHART_SENTIMENT_COLORS[value];
+  }
+  if (dimensionId === VALUE_BAND_DIMENSION_ID && typeof value === "string" && isValueBandValue(value)) {
+    return CHART_VALUE_BAND_COLORS[VALUE_BAND_POLARITY[value]];
   }
   return undefined;
 };
@@ -73,6 +92,25 @@ export const getSentimentMeasureColor = (measureId: string): string | undefined 
   const value = getSentimentValueForMeasureId(measureId);
   return value ? CHART_SENTIMENT_COLORS[value] : undefined;
 };
+
+const BAND_MEASURE_POLARITY = new Map<string, TValueBandPolarity>([
+  ["FeedbackRecords.promoterCount", "positive"],
+  ["FeedbackRecords.passiveCount", "neutral"],
+  ["FeedbackRecords.detractorCount", "negative"],
+  ["FeedbackRecords.csatSatisfiedCount", "positive"],
+  ["FeedbackRecords.csatNeutralCount", "neutral"],
+  ["FeedbackRecords.csatDissatisfiedCount", "negative"],
+]);
+
+/** Band polarity color for the NPS/CSAT bucket count measures, matching the valueBand dimension. */
+export const getBandMeasureColor = (measureId: string): string | undefined => {
+  const polarity = BAND_MEASURE_POLARITY.get(measureId);
+  return polarity ? CHART_VALUE_BAND_COLORS[polarity] : undefined;
+};
+
+/** Meaning-bound series color for a measure (sentiment or band counts), or undefined for the palette. */
+export const getSemanticMeasureColor = (measureId: string): string | undefined =>
+  getSentimentMeasureColor(measureId) ?? getBandMeasureColor(measureId);
 
 /**
  * Chart types that no longer exist, mapped to the type that replaced them. `line` merged into
@@ -93,6 +131,18 @@ const isNumericValue = (val: unknown): boolean => {
   if (val === null || val === undefined || val === "") return false;
   const num = Number(val);
   return !Number.isNaN(num) && Number.isFinite(num);
+};
+
+export const PIE_MEASURE_NAME_KEY = "__measureName";
+export const PIE_MEASURE_VALUE_KEY = "__measureValue";
+/** The measure a slice came from, so the slice can take the measure's semantic color. */
+export const PIE_MEASURE_ID_KEY = "__measureId";
+
+/** A slice's meaning-bound color: its measure's (measure slices) or its dimension value's. */
+const getSliceSemanticColor = (row: TChartDataRow, nameKey?: string): string | undefined => {
+  const measureId = row[PIE_MEASURE_ID_KEY];
+  if (typeof measureId === "string") return getSemanticMeasureColor(measureId);
+  return nameKey ? getSemanticDimensionColor(nameKey, row[nameKey]) : undefined;
 };
 
 export const preparePieData = (
@@ -117,7 +167,7 @@ export const preparePieData = (
   // consume a categorical hue.
   let paletteIndex = 0;
   const colors = processedData.map((row) => {
-    const semanticColor = nameKey ? getSemanticDimensionColor(nameKey, row[nameKey]) : undefined;
+    const semanticColor = getSliceSemanticColor(row, nameKey);
     if (semanticColor) return semanticColor;
     const color = CHART_MEASURE_COLORS[paletteIndex % CHART_MEASURE_COLORS.length];
     paletteIndex++;
@@ -125,9 +175,6 @@ export const preparePieData = (
   });
   return { processedData, colors };
 };
-
-export const PIE_MEASURE_NAME_KEY = "__measureName";
-export const PIE_MEASURE_VALUE_KEY = "__measureValue";
 
 /**
  * Pivot several measures (one/few rows, N measure columns) into one row per measure, so a pie
@@ -141,16 +188,21 @@ export const PIE_MEASURE_VALUE_KEY = "__measureValue";
 export const prepareMeasureSliceData = (
   rows: TChartDataRow[],
   measureKeys: string[],
-  labelFor: (key: string) => string
-): TChartDataRow[] =>
-  measureKeys.map((key) => ({
+  labelFor: (key: string) => string,
+  /** Column to carry onto every slice, summed like the measures, so the tooltip can print "n = …". */
+  responseBaseKey?: string
+): TChartDataRow[] => {
+  const sumColumn = (key: string): number =>
+    rows.reduce((sum, row) => sum + (isNumericValue(row[key]) ? Number(row[key]) : 0), 0);
+  const responseBase = responseBaseKey ? { [responseBaseKey]: sumColumn(responseBaseKey) } : {};
+  return measureKeys.map((key) => ({
     [PIE_MEASURE_NAME_KEY]: labelFor(key),
-    [PIE_MEASURE_VALUE_KEY]: rows.reduce(
-      (sum, row) => sum + (isNumericValue(row[key]) ? Number(row[key]) : 0),
-      0
-    ),
+    [PIE_MEASURE_ID_KEY]: key,
+    [PIE_MEASURE_VALUE_KEY]: sumColumn(key),
     tooltipLabel: labelFor(key),
+    ...responseBase,
   }));
+};
 
 /**
  * Format a 0-1 share as a percentage for display, in the app's active language. One fraction digit
@@ -246,7 +298,9 @@ export const PIVOTED_VALUE_KEY = "value";
 export function pivotMeasuresToCategories(
   data: TChartDataRow[],
   measureKeys: string[],
-  formatLabel: (measureKey: string) => string
+  formatLabel: (measureKey: string) => string,
+  /** Column to carry onto every pivoted row, so the tooltip can still print "n = …" for each bar. */
+  responseBaseKey?: string
 ): TChartDataRow[] {
   const row = data[0] ?? {};
   // Like preparePieData: semantic buckets (sentiment counts) keep their meaning-bound colors and
@@ -254,7 +308,7 @@ export function pivotMeasuresToCategories(
   let paletteIndex = 0;
   return measureKeys.map((key) => {
     const num = Number(row[key]);
-    let fill = getSentimentMeasureColor(key);
+    let fill = getSemanticMeasureColor(key);
     if (!fill) {
       fill = CHART_MEASURE_COLORS[paletteIndex % CHART_MEASURE_COLORS.length];
       paletteIndex++;
@@ -266,6 +320,7 @@ export function pivotMeasuresToCategories(
       [PIVOTED_MEASURE_KEY]: key,
       tooltipLabel: formatLabel(key),
       fill,
+      ...(responseBaseKey ? { [responseBaseKey]: row[responseBaseKey] } : {}),
     };
   });
 }
@@ -312,23 +367,136 @@ export function formatCellValue(value: unknown): string {
 // maximum: a flat gutter reads as a broken layout when the labels are short (three numeric
 // categories left ~150px of empty space before the bars started).
 
-/** Approximate advance width (px) of one character at `text-xs`. Errs wide on purpose:
- * over-estimating leaves a little slack, under-estimating clips or wraps text that had room. */
+/** Approximate advance width (px) of one character at `text-xs`, for sizing a gutter to the text
+ * that will sit in it. Errs narrow on purpose: over-estimating the gutter steals plot width from
+ * the bars, and the cap below is what a long label really lands on anyway. */
 const AXIS_CHAR_WIDTH = 6.5;
-/** Gap (px) between a tick's text and the axis line. */
-const AXIS_TICK_GAP = 8;
 
-/** Ceiling (px) for the category gutter: wide enough for a short question label, capped so the bars
- * keep most of the plot. Longer labels wrap inside it. */
-export const CATEGORY_AXIS_MAX_WIDTH = 160;
+/** The same advance width for deciding how much text *fits* a box, where the bias has to run the
+ * other way: measured against the rendered ui-sans-serif at 12px, a mixed-case question label
+ * averages ~6.6px per character, so sizing capacity with the gutter's estimate let a label that
+ * only just overran its box escape truncation and paint outside it. */
+const AXIS_CHAR_WIDTH_WIDE = 7;
+/** Gap (px) between a tick's text and the axis line. Exported so the flipped tick positions its box
+ * with the same clearance this module budgets for it, rather than borrowing {@link AXIS_LABEL_GAP},
+ * which measures the space between two neighbouring labels. */
+export const AXIS_TICK_GAP = 8;
+
+/** Share of the chart's width the category gutter may claim at most, so the bars keep the clear
+ * majority of the plot however long the labels run. Labels longer than that share are cut inside
+ * the gutter (see `truncateLabelToBox`). */
+export const CATEGORY_AXIS_MAX_SHARE = 1 / 3;
+/** Least ceiling (px) for the category gutter: what the share above may never cut below, so a
+ * narrow dashboard widget keeps the gutter it always had, and what the gutter caps at while the
+ * chart's width is not known yet (the server render and the responsive container's first pass).
+ * Wide enough for a short question label; longer labels are cut inside it. */
+export const CATEGORY_AXIS_MIN_CEILING = 160;
 /** Floor (px), so a one-character label still has a readable gutter. */
 export const CATEGORY_AXIS_MIN_WIDTH = 28;
 
-/** Width (px) for the left-hand category gutter of a flipped bar chart, from the labels present. */
-export const getCategoryAxisWidth = (labels: string[]): number => {
+/**
+ * Width (px) for the left-hand category gutter of a flipped bar chart: what the longest label
+ * needs, capped at `CATEGORY_AXIS_MAX_SHARE` of the chart's width or `CATEGORY_AXIS_MIN_CEILING`,
+ * whichever is more.
+ *
+ * The cap scales with the chart because the gutter is the half that needs the room: widening a chart
+ * from a dashboard widget to the full-screen editor used to hand every new pixel to bars that were
+ * already legible while the labels stayed cut at the same point (ENG-3223). It never claims more
+ * than the longest label needs, so short labels keep a narrow gutter on any chart, and it never
+ * drops below the flat ceiling it used to have, so narrow widgets read exactly as before.
+ *
+ * `chartWidth` has to be the width recharts is about to lay the chart out with — the tick boxes and
+ * the plot offset are both derived from this number in the same render, so a width that arrives
+ * later leaves the two disagreeing about where the gutter ends and the labels paint under the bars.
+ * Unknown (`undefined`, non-finite or non-positive) means the flat ceiling alone.
+ */
+export const getCategoryAxisWidth = (labels: string[], chartWidth?: number): number => {
   const longest = labels.reduce((max, label) => Math.max(max, label.length), 0);
   const needed = Math.ceil(longest * AXIS_CHAR_WIDTH) + AXIS_TICK_GAP * 2;
-  return Math.min(CATEGORY_AXIS_MAX_WIDTH, Math.max(CATEGORY_AXIS_MIN_WIDTH, needed));
+  const measured = chartWidth !== undefined && Number.isFinite(chartWidth) && chartWidth > 0;
+  const share = measured ? Math.floor(chartWidth * CATEGORY_AXIS_MAX_SHARE) : 0;
+  const ceiling = Math.max(CATEGORY_AXIS_MIN_CEILING, share);
+  return Math.min(ceiling, Math.max(CATEGORY_AXIS_MIN_WIDTH, needed));
+};
+
+// ── Wrapped axis label sizing ─────────────────────────────────────────────────
+// Both axes render their category labels into a `foreignObject` so long question text can wrap.
+// These describe that box, and are shared with the tick components so the space a chart reserves
+// and the space a label is allowed to use are derived from the same numbers.
+
+/** Line height (px) of a wrapped axis label at `text-xs`/`leading-tight`: ~15px for 12px text, plus
+ * a hair of headroom so descenders on the last line are not clipped. */
+export const AXIS_LABEL_LINE_HEIGHT = 16;
+/** Lines a wrapped axis label may use before it clamps. */
+export const AXIS_LABEL_MAX_LINES = 3;
+/** Gap (px) kept between adjacent axis labels so wrapped text never touches its neighbour. */
+export const AXIS_LABEL_GAP = 8;
+/** Height (px) of a label box using the full line budget. */
+export const AXIS_LABEL_BOX_HEIGHT = AXIS_LABEL_MAX_LINES * AXIS_LABEL_LINE_HEIGHT;
+
+/** Height (px) a chart legend occupies — the `height` handed to `<ChartLegend>`. */
+export const CHART_LEGEND_HEIGHT = 36;
+
+/**
+ * Lines a flipped category label uses: one, whatever the row count.
+ *
+ * This is the whole of ENG-3148. Deriving the budget from the band — `plotHeight / rowCount` —
+ * meant the same question rendered differently depending on how many rows sat beside it: a CES
+ * chart wrapped over three lines while a CSAT chart of the same questions at the same width used
+ * one, so the two charts could not be read the same way. A fixed single line takes row count out of
+ * the treatment entirely; what a label shows then depends only on the gutter and its own length,
+ * and {@link truncateLabelToBox} makes one line carry the distinguishing words.
+ *
+ * The x-axis is unaffected — its labels sit side by side, where the constraint is width, not
+ * density, and {@link AXIS_LABEL_MAX_LINES} still applies.
+ */
+export const CATEGORY_AXIS_LABEL_LINES = 1;
+
+/**
+ * Height (px) of the label box inside a category band of `band` px.
+ *
+ * One line's worth, less whatever a band too tight to hold even that leaves — bands that small
+ * belong to a chart with more rows than its container can show, where the labels overlap whatever
+ * we do. A missing or non-finite band means recharts has not measured the axis yet, which changes
+ * nothing now that the budget no longer depends on it.
+ */
+export const getCategoryLabelBoxHeight = (band?: number): number => {
+  const fullBudget = CATEGORY_AXIS_LABEL_LINES * AXIS_LABEL_LINE_HEIGHT;
+  if (band === undefined || !Number.isFinite(band)) return fullBudget;
+  return Math.max(1, Math.min(fullBudget, band - AXIS_LABEL_GAP));
+};
+
+/** Lines a flipped category label may use. Constant by design — see {@link CATEGORY_AXIS_LABEL_LINES}. */
+export const getCategoryLabelLineClamp = (): number => CATEGORY_AXIS_LABEL_LINES;
+
+/** Marks where the middle of a label was dropped. One character wide for the capacity arithmetic. */
+const ELLIPSIS = "…";
+
+/**
+ * A category label cut to what its box can show, from the middle.
+ *
+ * Question labels in one survey share their opening words — "CSAT with clarity of screening
+ * procedures", "CSAT with clarity of information" — so a tail-truncated axis prints the same
+ * "CSAT with clarity of…" against every bar and the rows stop being tellable apart (ENG-3148). The
+ * distinguishing words sit at the end, so the middle is what goes: "CSAT with clarity o…rocedures".
+ *
+ * Capacity is estimated from {@link AXIS_CHAR_WIDTH_WIDE}, which over-estimates each character so
+ * a label that only just overruns its box is still cut. The CSS line clamp stays as the backstop
+ * for anything wider still; this keeps that clamp from being what the reader normally meets.
+ */
+export const truncateLabelToBox = (label: string, boxWidth: number, lines: number): string => {
+  if (!Number.isFinite(boxWidth) || !Number.isFinite(lines) || boxWidth <= 0 || lines <= 0) return label;
+
+  const capacity = Math.max(1, Math.floor(boxWidth / AXIS_CHAR_WIDTH_WIDE)) * Math.floor(lines);
+  if (label.length <= capacity) return label;
+  // Too little room to say anything from both ends: one end plus the mark reads better than two
+  // single characters around it.
+  if (capacity <= ELLIPSIS.length + 1) return label.slice(0, capacity - ELLIPSIS.length) + ELLIPSIS;
+
+  const kept = capacity - ELLIPSIS.length;
+  const head = Math.ceil(kept / 2);
+  const tail = kept - head;
+  return label.slice(0, head) + ELLIPSIS + label.slice(label.length - tail);
 };
 
 /** Ceiling (px) for the value-label gutter — enough for a grouped number like "1,234,567". */

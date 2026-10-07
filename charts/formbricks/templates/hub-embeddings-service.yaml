@@ -1,4 +1,4 @@
-{{- if and .Values.hub.enabled .Values.hub.embeddings.enabled }}
+{{- if and .Values.hub.enabled .Values.hub.embeddings.enabled .Values.hub.embeddings.deployRuntime }}
 ---
 apiVersion: v1
 kind: Service

@@ -1,23 +1,37 @@
 "use client";
 
 import { InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
-import { removeSurveyFromInfiniteData, surveyKeys } from "@/modules/survey/list/lib/query";
+import {
+  removeSurveyFromInfiniteData,
+  surveyKeys,
+  surveyMutationKeys,
+} from "@/modules/survey/list/lib/query";
 import { TSurveyListPage } from "@/modules/survey/list/lib/v3-surveys-client";
 
 // Shared optimistic-mutation hook for survey actions that remove a survey from the current list view
 // (delete, archive, restore). Each optimistically drops the survey from the cached infinite data,
 // rolls back on error, and re-fetches on settle so mixed-filter views reconcile. Callers supply only
 // the v3 client request for their specific action.
+//
+// The cache patch is the immediate half of the removal; it is not enough on its own, because a list
+// fetch starting after the patch resolves with server data that still lists the survey (ENG-2583).
+// `mutationKey` is what lets `usePendingSurveyRemovals` suppress the row for the whole in-flight
+// window, so `onSettled` must keep awaiting its invalidation — that await is what holds the mutation
+// pending until the cache carries server truth again.
 export const useSurveyRemovalMutation = ({
   queryKey,
   mutationFn,
+  removesFromWorkspace = false,
 }: {
   queryKey: ReturnType<typeof surveyKeys.list>;
   mutationFn: (surveyId: string) => Promise<unknown>;
+  /** True only for delete: archive and restore keep the survey in the workspace. */
+  removesFromWorkspace?: boolean;
 }) => {
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: surveyMutationKeys.removal(),
     mutationFn: async ({ surveyId }: { surveyId: string }) => mutationFn(surveyId),
     onMutate: async ({ surveyId }) => {
       await queryClient.cancelQueries({ queryKey });
@@ -25,7 +39,7 @@ export const useSurveyRemovalMutation = ({
       const previousData = queryClient.getQueryData<InfiniteData<TSurveyListPage>>(queryKey);
 
       queryClient.setQueryData<InfiniteData<TSurveyListPage> | undefined>(queryKey, (currentData) =>
-        removeSurveyFromInfiniteData(currentData, surveyId)
+        removeSurveyFromInfiniteData(currentData, surveyId, { removesFromWorkspace })
       );
 
       return {

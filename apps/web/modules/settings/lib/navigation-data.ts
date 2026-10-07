@@ -6,8 +6,7 @@ import type { TWorkspace } from "@formbricks/types/workspace";
 import { getOrganizationsByUserId } from "@/app/(app)/workspaces/[workspaceId]/lib/organization";
 import { getWorkspacesByUserId } from "@/app/(app)/workspaces/[workspaceId]/lib/workspace";
 import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { getPublicDomain } from "@/lib/getPublicUrl";
-import { FORMBRICKS_WORKSPACE_ID_COOKIE } from "@/lib/localStorage";
+import { FORMBRICKS_ORGANIZATION_ID_COOKIE, FORMBRICKS_WORKSPACE_ID_COOKIE } from "@/lib/localStorage";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getMonthlyOrganizationResponseCount, getOrganization } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
@@ -36,7 +35,6 @@ export interface TSettingsLayoutData {
   responseCount: number;
   isFormbricksCloud: boolean;
   isDevelopment: boolean;
-  publicDomain: string;
   // The "current" workspace used to render the sidebar's Workspace section, back link, and the
   // WorkspaceContext that reused settings components depend on. Null when the user has no workspace
   // (the org/account settings still render — Phase 2 handles that empty state).
@@ -45,19 +43,29 @@ export interface TSettingsLayoutData {
 }
 
 /**
- * Resolves the organization for the routes that carry none in the URL (account settings). The
- * organization of the last active workspace is the organization the user is currently in, so
- * opening a profile/notifications page keeps the sidebar, banners and billing links on that
- * organization instead of switching a multi-organization user to their first one.
+ * Resolves the organization for the routes that carry none in the URL (account settings), so opening
+ * a profile/notifications page — and the reload after changing the language there — keeps the
+ * sidebar, banners, back link and billing links on the organization the user is in instead of
+ * switching a multi-organization user to their first one.
  *
- * The cookie outlives both leaving an organization and deleting a workspace, so it is only trusted
- * when the workspace still exists and its organization is still one the user is a member of.
+ * The organization cookie wins when present: the proxy only keeps it while an organization-scoped
+ * page (e.g. the landing page of an organization with no workspace yet) was visited after the last
+ * workspace. Otherwise the organization of the last active workspace is the one the user is in.
+ *
+ * Both cookies outlive leaving an organization and the workspace cookie outlives deleting a
+ * workspace, so each is only trusted while it still resolves to an organization the user is a
+ * member of.
  */
 const resolveActiveOrganizationId = async (
   userId: string,
-  activeWorkspaceId: string | undefined
+  activeWorkspaceId: string | undefined,
+  activeOrganizationId: string | undefined
 ): Promise<string | undefined> => {
   const organizations = await getOrganizationsByUserId(userId);
+
+  if (activeOrganizationId && organizations.some((org) => org.id === activeOrganizationId)) {
+    return activeOrganizationId;
+  }
 
   if (activeWorkspaceId) {
     const activeWorkspace = await getWorkspace(activeWorkspaceId);
@@ -76,7 +84,7 @@ const resolveActiveOrganizationId = async (
  * the user's first accessible workspace so the sidebar's Workspace section renders identically.
  *
  * `organizationId` is optional — account settings don't carry one, so it is resolved from the last
- * active workspace (see `resolveActiveOrganizationId`).
+ * active organization or workspace (see `resolveActiveOrganizationId`).
  *
  * The "current" workspace is resolved from the same `formbricks-workspace-id` cookie (set by the
  * proxy from the last visited `/workspaces/[workspaceId]` path), so navigating into the
@@ -92,8 +100,10 @@ export const getSettingsLayoutData = async (
 
   const cookieStore = await cookies();
   const activeWorkspaceId = cookieStore.get(FORMBRICKS_WORKSPACE_ID_COOKIE)?.value;
+  const activeOrganizationId = cookieStore.get(FORMBRICKS_ORGANIZATION_ID_COOKIE)?.value;
 
-  const orgId = organizationId ?? (await resolveActiveOrganizationId(userId, activeWorkspaceId));
+  const orgId =
+    organizationId ?? (await resolveActiveOrganizationId(userId, activeWorkspaceId, activeOrganizationId));
   if (!orgId) return null;
 
   const [user, organization, membership] = await Promise.all([
@@ -136,8 +146,11 @@ export const getSettingsLayoutData = async (
     responseCount,
     isFormbricksCloud: IS_FORMBRICKS_CLOUD,
     isDevelopment: IS_DEVELOPMENT,
-    publicDomain: getPublicDomain(),
     currentWorkspace,
-    backUrl: currentWorkspace ? `/workspaces/${currentWorkspace.id}/surveys` : "/",
+    // Without a workspace, "/" would root-redirect into the user's first organization; the landing
+    // page keeps the user in the organization these settings were resolved for.
+    backUrl: currentWorkspace
+      ? `/workspaces/${currentWorkspace.id}/surveys`
+      : `/organizations/${organization.id}/landing`,
   };
 };

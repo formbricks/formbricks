@@ -1,4 +1,17 @@
-import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
+import { labelEmbeddedFields } from "@formbricks/types/embedded-data-label";
+import {
+  RESERVED_FIELD_CATALOG,
+  type TEmbeddedValueResponse,
+  type TReservedFieldCatalogEntry,
+  dropShadowedReservedEntries,
+  getComputedEmbeddedFields,
+  getIngestedEmbeddedFields,
+  getIngestedStorageKeys,
+  getSurveyEmbeddedFields,
+  listShadowingNames,
+  projectReservedValues,
+} from "@formbricks/types/embedded-data-resolver";
 import {
   TResponse,
   TResponseDataValue,
@@ -8,6 +21,7 @@ import {
   TSurveyContactAttributes,
   TSurveyMetaFieldFilter,
 } from "@formbricks/types/responses";
+import { formatFieldNameToTitleCase } from "@formbricks/types/safe-identifier";
 import {
   TSurveyElement,
   TSurveyMultipleChoiceElement,
@@ -18,6 +32,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
+import { displayEmbeddedValue } from "@/modules/embedded-data/lib/value-display";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { processResponseData } from "../responses";
 import { getTodaysDateTimeFormatted } from "../time";
@@ -119,29 +134,149 @@ export const getResponsesFileName = (surveyName: string, extension: string) => {
   return `export-${sanitizedSurveyName.split(" ").join("-")}-${formattedDateString}.${extension}`.toLocaleLowerCase();
 };
 
-export const extracMetadataKeys = (obj: TResponse["meta"]) => {
-  let keys: string[] = [];
+/**
+ * The four catalog entries whose values the export's fixed basic columns already carry — "Response
+ * ID", "Survey ID", "Finished" and "Timestamp" (`createdAt`, which is what `startedAt` reads).
+ * Skipped from the reserved column set so one fact never gets two columns.
+ */
+const EXPORT_BASICS_COVERED_RESERVED_NAMES = new Set(["responseId", "surveyId", "finished", "startedAt"]);
 
-  Object.entries(obj ?? {}).forEach(([key, value]) => {
-    if (typeof value === "object" && value !== null) {
-      Object.entries(value).forEach(([subKey]) => {
-        keys.push(key + " - " + subKey);
-      });
-    } else {
-      keys.push(key);
-    }
+/**
+ * The gates every reserved-entry consumer shares: shadowed entries drop (a declared field owns its
+ * name) and `ipAddress` needs its capture toggle. What differs per surface is `isEligible` — which
+ * entries are offered at all, and whether the anonymize toggle hides `privacy: "drop"` entries: the
+ * filter picker does (`getReservedFilterEntries`), the export deliberately does not
+ * (`getReservedExportEntries`).
+ */
+const gateReservedEntries = (
+  survey: TSurvey,
+  isEligible: (entry: TReservedFieldCatalogEntry) => boolean
+): TReservedFieldCatalogEntry[] => {
+  const elementIds = getElementsFromBlocks(survey.blocks).map((element) => element.id);
+  const shadowingNames = listShadowingNames(getSurveyEmbeddedFields(survey), elementIds);
+
+  return dropShadowedReservedEntries(RESERVED_FIELD_CATALOG, shadowingNames).filter((entry) => {
+    if (!isEligible(entry)) return false;
+    if (entry.name === "ipAddress" && !survey.isCaptureIpEnabled) return false;
+    return true;
   });
-
-  return keys;
 };
 
-export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) => {
-  const metaDataFields = responses.length > 0 ? extracMetadataKeys(responses[0].meta) : [];
+/**
+ * The reserved fields one survey's export carries as columns — the catalog, minus what cannot or
+ * must not appear (ENG-1847).
+ *
+ * Catalog-derived on purpose: the previous column set was the FIRST response's `meta` keys, so a
+ * first response missing `utmSource` meant no column at all, however many later responses carried
+ * it — and headers came out as raw key paths (`userAgent - browser`). This set is stable per
+ * survey, whatever any individual response holds.
+ *
+ * The filters, each a decision already made elsewhere and reused here:
+ * - shadowed entries drop (`dropShadowedReservedEntries`) — a survey declaring `url` keeps its
+ *   declared column and never gets the reserved one, same rule as the renderer and response table;
+ * - the four facts the fixed basic columns already carry are skipped (one column per fact);
+ * - `ipAddress` is only a column when the survey captures it (`isCaptureIpEnabled`).
+ *
+ * The anonymize toggle is deliberately NOT a gate here (ENG-2892). It acts at ingest
+ * (`applyAnonymizePolicy`), so responses collected before it was turned on still hold `country`,
+ * `browser`, `os` and `deviceType`; the response card and table keep showing them, and the toggle's
+ * own description promises that responses already collected are not changed. Dropping the columns
+ * hid that history from the CSV/XLSX alone. The columns stay, and anonymized responses export empty
+ * cells for them through `projectReservedValues`.
+ */
+export const getReservedExportEntries = (survey: TSurvey): TReservedFieldCatalogEntry[] =>
+  gateReservedEntries(survey, (entry) => !EXPORT_BASICS_COVERED_RESERVED_NAMES.has(entry.name));
+
+/**
+ * The export header for a reserved column. `formatFieldNameToTitleCase` rather than the localized
+ * `getReservedFieldLabel`: export headers are a machine-facing contract, and localizing them would
+ * make the column names depend on whichever operator happened to click download.
+ */
+export const getReservedExportHeader = (entry: TReservedFieldCatalogEntry): string =>
+  formatFieldNameToTitleCase(entry.name);
+
+/**
+ * The reserved fields one survey's response filter may offer (ENG-1848) — the same list the
+ * response table shows (`display !== "none"`), plus `durationSeconds`, whose `ttc._total` path the
+ * ticket names explicitly even though the table hides it. The gates:
+ * - shadowed entries drop — filters fail closed on a name the survey's declared fields own
+ *   (`buildWhereClause` enforces the same rule server-side against crafted criteria);
+ * - on an anonymized survey, `privacy: "drop"` entries are no longer captured, and `ipAddress` is
+ *   only captured when `isCaptureIpEnabled` — offering either would let users build filters on what
+ *   the survey no longer collects. The picker follows what the survey captures; the export
+ *   (`getReservedExportEntries`) follows what its responses hold, so it keeps those columns.
+ */
+export const getReservedFilterEntries = (survey: TSurvey): TReservedFieldCatalogEntry[] =>
+  gateReservedEntries(
+    survey,
+    (entry) =>
+      (entry.display !== "none" || entry.name === "durationSeconds") &&
+      !(survey.isAnonymizeResponsesEnabled && entry.privacy === "drop")
+  );
+
+/**
+ * Upper bound on distinct dropdown options collected per field. Free-text fields like `url` or
+ * `pageReferrer` are unbounded in practice, and the whole record ships to the client when the
+ * filter opens; past this many options a dropdown is no better than the free-text input anyway.
+ */
+const MAX_FILTER_VALUE_OPTIONS = 50;
+
+const addBoundedValue = (values: Record<string, Set<string>>, key: string, value: string): void => {
+  values[key] ??= new Set();
+  if (values[key].size >= MAX_FILTER_VALUE_OPTIONS) return;
+  values[key].add(value);
+};
+
+/**
+ * Observed values for the string-typed reserved filter fields, through the shared projection — so
+ * `redactQuery` entries (url, pageReferrer) never leak query strings into the filter dropdown.
+ * Number-typed entries are skipped: they get a numeric input, not an options list.
+ */
+export const getResponseReservedFilterValues = (
+  survey: TSurvey,
+  responses: TEmbeddedValueResponse[]
+): TSurveyMetaFieldFilter => {
+  const entries = getReservedFilterEntries(survey).filter((entry) => entry.dataType === "string");
+  const values: Record<string, Set<string>> = {};
+
+  responses.forEach((response) => {
+    const projected = projectReservedValues(entries, response);
+    entries.forEach((entry) => {
+      const value = projected[entry.name];
+      if (typeof value !== "string" || value.length === 0) return;
+      addBoundedValue(values, entry.name, value);
+    });
+  });
+
+  return Object.fromEntries(Object.entries(values).map(([name, set]) => [name, Array.from(set)]));
+};
+
+/** Observed values for string-typed computed embedded fields, keyed by storageKey (ENG-1848). */
+export const getResponseVariableFilterValues = (
+  survey: TSurvey,
+  responses: Pick<TResponse, "variables">[]
+): TSurveyMetaFieldFilter => {
+  const stringFields = getComputedEmbeddedFields(survey).filter(({ field }) => field.dataType === "string");
+  const values: Record<string, Set<string>> = {};
+
+  responses.forEach((response) => {
+    stringFields.forEach(({ link }) => {
+      const value = response.variables?.[link.storageKey];
+      if (typeof value !== "string" || value.length === 0) return;
+      addBoundedValue(values, link.storageKey, value);
+    });
+  });
+
+  return Object.fromEntries(Object.entries(values).map(([key, set]) => [key, Array.from(set)]));
+};
+
+/** The export's element column headers, one row per element — two for the types that add an Option ID. */
+const exportElementHeadlines = (survey: TSurvey): string[][] => {
   const modifiedSurvey = replaceHeadlineRecall(survey, "default");
 
   const modifiedElements = getElementsFromBlocks(modifiedSurvey.blocks);
 
-  const elements = modifiedElements.map((element, idx) => {
+  return modifiedElements.map((element, idx) => {
     const headline = getTextContent(getLocalizedValue(element.headline, "default")) ?? element.id;
     if (element.type === "matrix") {
       return element.rows.map((row) => {
@@ -157,53 +292,130 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
       return [`${idx + 1}. ${headline}`];
     }
   });
+};
 
-  const hiddenFields = survey.hiddenFields?.fieldIds || [];
+/** Written unconditionally or not at all, so they are not derivable from the survey. */
+const FIXED_EXPORT_HEADERS = [
+  "No.",
+  "Response ID",
+  "Timestamp",
+  "Finished",
+  "Survey ID",
+  "Formbricks ID (internal)",
+  "User ID",
+  "Tags",
+  // The two conditional columns, reserved whether or not this survey has them — see below.
+  "Quotas",
+  "Verified Email",
+];
+
+/**
+ * Every export column an Embedded Data label must not land on (ENG-3233).
+ *
+ * `getResponsesJson` builds each row as one flat object keyed by header, so two columns sharing a
+ * string are not two columns: the later write wins and the earlier value never reaches the file. A
+ * *storage* key could never collide with `Response ID` — it is a safe identifier — but a library
+ * field's display name is free text, so labelling the ingested group by name made it reachable.
+ * Seeding `labelEmbeddedFields` with the rest of the schema keeps its collision rule covering the
+ * whole row rather than only its own group.
+ *
+ * Deterministic on `(survey, responses)` alone, which is what stops the header row and the cells
+ * disagreeing — they are built by two functions and must reach the same labels. That is also why
+ * `Quotas` and `Verified Email` are reserved unconditionally: over-reserving only disambiguates a
+ * label that need not have been, while reserving in one caller and not the other would put a value
+ * back under the wrong header.
+ */
+export const reservedExportHeaders = (survey: TSurvey, responses: TResponse[]): ReadonlySet<string> =>
+  new Set([
+    ...FIXED_EXPORT_HEADERS,
+    ...getReservedExportEntries(survey).map(getReservedExportHeader),
+    ...exportElementHeadlines(survey).flat(),
+    ...getComputedEmbeddedFields(survey).map(({ field }) => field.name),
+    ...responses
+      .flatMap((response) => Object.keys(response.contactAttributes ?? {}))
+      .map((a) => `person.${a}`),
+  ]);
+
+export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) => {
+  const metaDataFields = getReservedExportEntries(survey).map(getReservedExportHeader);
+  const elements = exportElementHeadlines(survey);
+
+  // ENG-1837: the two column groups keep today's order, which `inlineSurveyEmbeddedFields`
+  // preserves. Both are labelled by name — ENG-3233 moved the ingested group off its storage key,
+  // which stays the address `getResponsesJson` reads each cell from.
+  const hiddenFields = labelEmbeddedFields(
+    getIngestedEmbeddedFields(survey),
+    reservedExportHeaders(survey, responses)
+  ).map(({ label }) => label);
   const userAttributes = Array.from(
     new Set(responses.map((response) => Object.keys(response.contactAttributes ?? {})).flat())
   );
-  const variables = survey.variables?.map((variable) => variable.name) || [];
+  const variables = getComputedEmbeddedFields(survey).map(({ field }) => field.name);
 
   return { metaDataFields, elements, hiddenFields, variables, userAttributes };
 };
+
+/**
+ * One export row, keyed by column label.
+ *
+ * Null-prototype on purpose. Most keys written into a row below are user-supplied text — a question
+ * headline, an embedded field's display name, a contact attribute — and on an ordinary object the
+ * key `__proto__` does not create an own property: the assignment runs `Object.prototype`'s
+ * inherited setter and the value is discarded. The column then renders as `{}` in CSV and as no cell
+ * at all in XLSX. Storage keys are safe identifiers and were never affected, so this only reaches a
+ * surface where a *display name* becomes a key.
+ *
+ * Fixed here rather than by sanitizing each label: the label is legitimate data and should survive
+ * into the file under the name its author gave it.
+ *
+ * Both writers stay happy — `convertToCsv` and `convertToXlsxBuffer` read cells as `row[header]`
+ * against the header list, and neither iterates the row nor calls `hasOwnProperty` on it.
+ */
+const newExportRow = (fixedColumns: Record<string, string | number>): Record<string, string | number> =>
+  Object.assign(Object.create(null) as Record<string, string | number>, fixedColumns);
 
 export const getResponsesJson = (
   survey: TSurvey,
   responses: TResponseWithQuotas[],
   elementsHeadlines: string[][],
   userAttributes: string[],
-  hiddenFields: string[],
   isQuotasAllowed: boolean = false,
   timeZone: string = "UTC"
 ): Record<string, string | number>[] => {
   const jsonData: Record<string, string | number>[] = [];
+  const reservedEntries = getReservedExportEntries(survey);
+  // Hoisted out of the per-response loop: the definitions are the survey's, not the response's.
+  const ingestedFields = labelEmbeddedFields(
+    getIngestedEmbeddedFields(survey),
+    reservedExportHeaders(survey, responses)
+  );
+  const computedFields = getComputedEmbeddedFields(survey);
 
   responses.forEach((response, idx) => {
     // basic response details
-    jsonData.push({
-      "No.": idx + 1,
-      "Response ID": response.id,
-      Timestamp: getFormattedDateTimeString(response.createdAt, timeZone),
-      Finished: response.finished ? "Yes" : "No",
-      "Survey ID": response.surveyId,
-      "Formbricks ID (internal)": response.contact?.id || "",
-      "User ID": response.contact?.userId || "",
-      Tags: response.tags.map((tag) => tag.name).join(", "),
-    });
+    jsonData.push(
+      newExportRow({
+        "No.": idx + 1,
+        "Response ID": response.id,
+        Timestamp: getFormattedDateTimeString(response.createdAt, timeZone),
+        Finished: response.finished ? "Yes" : "No",
+        "Survey ID": response.surveyId,
+        "Formbricks ID (internal)": response.contact?.id || "",
+        "User ID": response.contact?.userId || "",
+        Tags: response.tags.map((tag) => tag.name).join(", "),
+      })
+    );
 
     if (isQuotasAllowed) {
       jsonData[idx]["Quotas"] = response.quotas?.map((quota) => quota.name).join(", ") || "";
     }
 
-    // meta details
-    Object.entries(response.meta ?? {}).forEach(([key, value]) => {
-      if (typeof value === "object" && value !== null) {
-        Object.entries(value).forEach(([subKey, subValue]) => {
-          jsonData[idx][key + " - " + subKey] = subValue;
-        });
-      } else {
-        jsonData[idx][key] = value;
-      }
+    // Reserved fields, through the same projection recall/logic read (coercion to the declared
+    // dataType, booleans stringified, `redactQuery` honoured). Every column gets a cell — absent
+    // values as "" — so rows stay aligned with the stable header set.
+    const reservedValues = projectReservedValues(reservedEntries, response);
+    reservedEntries.forEach((entry) => {
+      jsonData[idx][getReservedExportHeader(entry)] = reservedValues[entry.name] ?? "";
     });
 
     // survey response data
@@ -247,22 +459,32 @@ export const getResponsesJson = (
       }
     });
 
-    survey.variables?.forEach((variable) => {
-      const answer = response.variables[variable.id];
-      jsonData[idx][variable.name] = answer;
+    // The raw slot, uncoerced and with no default substituted: a response written before this field
+    // existed has no key, and the cell must stay empty rather than display a value that run never
+    // produced. (This is why the export does not read through `resolveEmbeddedValue`.)
+    computedFields.forEach(({ field, link }) => {
+      const answer = response.variables[link.storageKey];
+      jsonData[idx][field.name] = answer;
     });
 
     userAttributes.forEach((attribute) => {
       jsonData[idx][`person.${attribute}`] = response.contactAttributes?.[attribute] || "";
     });
 
-    // hidden fields
-    hiddenFields.forEach((field) => {
-      const value = response.data[field];
+    // Hidden fields, keyed by the same labels `extractSurveyDetails` put in the header row — derived
+    // from the survey here rather than taken as an argument, exactly like the computed group above,
+    // so a cell and its column cannot be built from two different lists.
+    //
+    // A number stays a number (the ingest contract stores coerced values, so a `dataType: "number"`
+    // field holds a real number and the XLSX cell should be numeric, not text).
+    ingestedFields.forEach(({ link, label }) => {
+      const value = response.data[link.storageKey];
       if (Array.isArray(value)) {
-        jsonData[idx][field] = value.join("; ");
+        jsonData[idx][label] = value.join("; ");
+      } else if (typeof value === "number") {
+        jsonData[idx][label] = value;
       } else {
-        jsonData[idx][field] = processResponseData(value);
+        jsonData[idx][label] = processResponseData(value);
       }
     });
 
@@ -352,23 +574,25 @@ export const getResponseHiddenFields = (
   try {
     const hiddenFields: { [key: string]: Set<string> } = {};
 
-    const surveyHiddenFields = survey?.hiddenFields.fieldIds;
-    const hasHiddenFields = surveyHiddenFields && surveyHiddenFields.length > 0;
+    const surveyHiddenFields = getIngestedStorageKeys(survey);
+    const hasHiddenFields = surveyHiddenFields.length > 0;
 
     if (hasHiddenFields) {
       // adding hidden fields to meta
-      survey?.hiddenFields.fieldIds?.forEach((fieldId) => {
+      surveyHiddenFields.forEach((fieldId) => {
         hiddenFields[fieldId] = new Set();
       });
 
       responses.forEach((response) => {
         // Handling data fields(Hidden fields)
-        surveyHiddenFields?.forEach((fieldId) => {
-          const hiddenFieldValue = response.data[fieldId];
+        surveyHiddenFields.forEach((fieldId) => {
+          // Same widening as the three analysis surfaces (ENG-3266): a `number` field stores a JSON
+          // number, so the old `typeof === "string"` gate offered no values at all for one, leaving
+          // it filterable in name only. `boolean` never reaches here — `surveys.ts` hardcodes its
+          // two options — but it costs nothing to read the same way.
+          const hiddenFieldValue = displayEmbeddedValue(response.data[fieldId]);
           if (hiddenFieldValue) {
-            if (typeof hiddenFieldValue === "string") {
-              hiddenFields[fieldId].add(hiddenFieldValue);
-            }
+            hiddenFields[fieldId].add(hiddenFieldValue);
           }
         });
       });
@@ -383,53 +607,6 @@ export const getResponseHiddenFields = (
   } catch (error) {
     throw error;
   }
-};
-
-export const generateAllPermutationsOfSubsets = (array: string[]): string[][] => {
-  const subsets: string[][] = [];
-
-  // Helper function to generate permutations of an array
-  const generatePermutations = (arr: string[]): string[][] => {
-    const permutations: string[][] = [];
-
-    // Recursive function to generate permutations
-    const permute = (current: string[], remaining: string[]): void => {
-      if (remaining.length === 0) {
-        permutations.push(current.slice()); // Make a copy of the current permutation
-        return;
-      }
-
-      for (let i = 0; i < remaining.length; i++) {
-        current.push(remaining[i]);
-        permute(current, remaining.slice(0, i).concat(remaining.slice(i + 1)));
-        current.pop();
-      }
-    };
-
-    permute([], arr);
-    return permutations;
-  };
-
-  // Recursive function to generate subsets
-  const findSubsets = (currentIndex: number, currentSubset: string[]): void => {
-    if (currentIndex === array.length) {
-      if (currentSubset.length > 0) {
-        // Skip empty subset if not needed
-        const allPermutations = generatePermutations(currentSubset);
-        subsets.push(...allPermutations); // Spread operator to add all permutations individually
-      }
-      return;
-    }
-
-    // Include the current element
-    findSubsets(currentIndex + 1, currentSubset.concat(array[currentIndex]));
-
-    // Exclude the current element
-    findSubsets(currentIndex + 1, currentSubset);
-  };
-
-  findSubsets(0, []);
-  return subsets;
 };
 
 /**

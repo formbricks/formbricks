@@ -1,0 +1,16 @@
+type: object
+required:
+  - operation
+  - data
+properties:
+  operation:
+    type: string
+    enum:
+      - create
+  data:
+    description: >-
+      Intended create payload, checked against `CreateResponseRequest` by the operation rather than by this
+      envelope. Any JSON value is accepted here so the endpoint can return repairable validation
+      errors: a document that is not an object, or that breaks `CreateResponseRequest`, is a **200** with
+      `valid: false`, never a 400.
+additionalProperties: false

@@ -1,4 +1,13 @@
 import "server-only";
+import { logger } from "@formbricks/logger";
+import {
+  type TEmbeddedFieldsSurvey,
+  type TEmbeddedValueResponse,
+  type TLinkedEmbeddedField,
+  getComputedEmbeddedFields,
+  getIngestedEmbeddedFields,
+  resolveEmbeddedValue,
+} from "@formbricks/types/embedded-data-resolver";
 import type { TResponse } from "@formbricks/types/responses";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -20,7 +29,9 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
  *    `contactAttributes` (arbitrary customer-set values — the richest dimension set here, and the
  *    one most likely to carry personal data, so it needs its own decision rather than riding along),
  *    `tags` (curated in the UI after submission, so at `responseFinished` they are near-always empty
- *    and would publish a stale value), `variables` (per-survey and unbounded), and `displayId` /
+ *    and would publish a stale value), `variables` (never spread flat — per-survey and unbounded;
+ *    but the subset a survey *declares* as computed Embedded Data is published under the nested
+ *    `embedded_data` key since ENG-3290, see {@link buildEmbeddedDataMetadata}), and `displayId` /
  *    `singleUseId` / `updatedAt` (internal plumbing, and `singleUseId` is itself a link token).
  * 2. Values are bounded here. `source`, `url` and `action` are client-supplied on the public
  *    response endpoint (`ZResponseInput.meta` declares no maximum lengths) and Hub caps only the
@@ -45,6 +56,23 @@ type TMetadataValue = string | number | boolean | null | undefined;
 
 export type TResponseMetadata = Record<string, string | number | boolean>;
 
+/** One response's resolved Embedded Data, keyed by `field.name` — the ENG-3233 labelling rule. */
+export type TEmbeddedDataMetadata = Record<string, string | number | boolean>;
+
+/**
+ * What one FeedbackRecord's `metadata` carries: the flat response context above, plus the
+ * response's Embedded Data under a single nested key (ENG-3290).
+ *
+ * Nested rather than flattened because field names are author-chosen and unconstrained — a survey
+ * declaring a field called `country` or `source` would otherwise overwrite the context key of the
+ * same name, and which one won would depend on spread order rather than on anything a reader can
+ * see on the record.
+ */
+export type TRecordMetadata = {
+  [key: string]: string | number | boolean | TEmbeddedDataMetadata | undefined;
+  embedded_data?: TEmbeddedDataMetadata;
+};
+
 export type TMetadataContext = {
   response: Pick<TResponse, "meta" | "finished" | "ttc" | "endingId">;
   survey: Pick<TSurvey, "type">;
@@ -67,6 +95,18 @@ export type TMetadataFieldSpec = {
 const MAX_METADATA_TEXT_LENGTH = 256;
 /** URLs are legitimately longer than other values, even after the query string is stripped. */
 const MAX_METADATA_URL_LENGTH = 512;
+/**
+ * Serialized ceiling for the whole `embedded_data` object — **self-imposed**: nothing on this path
+ * would catch the overflow.
+ *
+ * Truncating each value is no bound on the object, because a survey may declare any number of
+ * fields and 256 characters apiece adds up. The only upstream limit the pipeline actually meets is
+ * the Hub SDK's 512 KiB request-body cap (`createFeedbackRecordsBatch`), and the metadata object is
+ * repeated on every record of the submission, so reaching it would cost the response its records
+ * rather than that one field. The v3 route's 32 KiB `metadata` check is a different lane and never
+ * runs here, so do not raise this expecting that guard to backstop it.
+ */
+const MAX_EMBEDDED_DATA_BYTES = 8 * 1024;
 /**
  * Per-element `ttc` is clamped to 24h at the response boundary (ENG-1083), but stored rows keep the
  * unbounded schema so historical data still parses — and `_total` sums every element. A duration
@@ -242,3 +282,132 @@ export const buildResponseMetadata = (
   response: TMetadataContext["response"],
   survey: TMetadataContext["survey"]
 ): TResponseMetadata => projectMetadataFields(HUB_METADATA_FIELDS, { response, survey });
+
+/**
+ * Build the `embedded_data` object shared by every FeedbackRecord of one response (ENG-3290).
+ *
+ * Ingested and computed fields only, since a record already carries the reserved catalog's entries
+ * by other routes and repeating one here would give a dimension two answers. Nine are published
+ * flat by {@link HUB_METADATA_FIELDS} (`source`, `url`, `country`, `action`, `browser`, `os`,
+ * `deviceType`, `finished`, `durationSeconds`), and four ride on the record itself as first-class
+ * columns rather than in `metadata` at all — `responseId` as `submission_id`, `surveyId` as
+ * `source_id`, `startedAt` as `collected_at`, and `language` (`buildBaseFields` in ./transform).
+ *
+ * What no route publishes: `ipAddress`, by the decision in rule 1 above; `finishedAt`; and the
+ * ENG-1841 browser-runtime entries (`utm*`, `pagePath`, `pageReferrer`, `timezone`, `locale`, the
+ * screen and viewport sizes), because widening the allowlist is its own privacy decision. Their
+ * absence is scope, not duplication.
+ *
+ * Values come from {@link resolveEmbeddedValue}, so `locked`, `defaultValue` and the coercion rules
+ * are the ones recall, logic and export already apply — a locked field publishes its default rather
+ * than whatever a crafted URL supplied, and a value that cannot honestly represent its `dataType` is
+ * omitted instead of published as text. A survey still on the legacy columns needs no branch here:
+ * its fields are inlined from them at load (`inlineSurveyEmbeddedFields`).
+ *
+ * Rule 2 of the module comment governs this object too, and both the value bound and the object
+ * bound are applied per field rather than by abandoning the rest: a field that overflows the budget
+ * or whose read throws costs only itself. `response.data` and `response.variables` are `Json`
+ * columns whose stored rows are never re-validated on read, so a `null` where the type says object
+ * throws here — and an uncaught throw would abort the whole transform, which is how a response
+ * loses every one of its records.
+ */
+export const buildEmbeddedDataMetadata = (
+  response: TEmbeddedValueResponse,
+  survey: TEmbeddedFieldsSurvey
+): TEmbeddedDataMetadata => {
+  const logContext = { surveyId: response.surveyId, responseId: response.id };
+
+  let fields: TLinkedEmbeddedField[];
+  try {
+    fields = [...getIngestedEmbeddedFields(survey), ...getComputedEmbeddedFields(survey)];
+  } catch (error) {
+    logger.warn({ err: error, ...logContext }, "Failed to read a survey's Embedded Data fields");
+    return {};
+  }
+
+  // A Map, read back through Object.fromEntries, so no field name can reach an object literal's
+  // prototype setter while the object is built.
+  const values = new Map<string, string | number | boolean>();
+  // Names are claimed before their value is read. Checking `values` instead would make a clash "the
+  // first field with a value wins": an empty ingested field would hand its name to a computed one,
+  // and one Hub dimension would mix both sources depending on the response.
+  const claimed = new Set<string>();
+  let usedBytes = 2; // The enclosing "{}".
+  let overBudget = 0;
+  let unreadable = 0;
+  let unpublishable = 0;
+  let firstError: unknown;
+
+  for (const entry of fields) {
+    // The whole body, not just the read: the pipeline's select reads the rows without a Zod parse,
+    // so a `name` that is not a string makes `.replaceAll` throw, and outside a guard that throw
+    // leaves this function, `buildBaseFields` and the transform, so the response publishes no
+    // records to any feedback source at all.
+    try {
+      const { field, link } = entry;
+
+      // NUL bytes are unstorable in a key for the same reason sanitizeValue strips them from a
+      // value: the jsonb insert reaches Postgres and fails as a 500 rather than a rejected field.
+      // Trimmed like the values are, so `" brand "` and `"brand"` cannot become two Hub dimensions.
+      const key = field.name.replaceAll("\u0000", "").trim();
+      // Blank, or `__proto__`. Hub stores that one fine, but React drops an own `__proto__` key when it
+      // serializes props, as does any reader that spreads the object or parses it into a plain one, so
+      // the record drawer would show one field fewer than the record holds.
+      if (!key || key === "__proto__") {
+        unpublishable += 1;
+        continue;
+      }
+      // On a name collision the first field to reach here wins. The list is every ingested field
+      // followed by every computed one, so ingested beats computed, and within one source the earlier
+      // declaration beats the later — whether or not the winner has a value on this response.
+      if (claimed.has(key)) continue;
+      claimed.add(key);
+
+      const value = sanitizeValue(resolveEmbeddedValue({ field, link }, response), MAX_METADATA_TEXT_LENGTH);
+      if (value === undefined) continue;
+
+      // Key, value, the `:` between them and the `,` before the next entry.
+      const entryBytes =
+        Buffer.byteLength(JSON.stringify(key), "utf8") + Buffer.byteLength(JSON.stringify(value), "utf8") + 2;
+      // Skip and keep going rather than stop: `name` has no declared maximum, so one field with a
+      // huge name declared first would otherwise silence Embedded Data for that survey entirely —
+      // and among ordinary fields, whether a later one published would depend on how much the
+      // respondent happened to type into the earlier ones.
+      if (usedBytes + entryBytes > MAX_EMBEDDED_DATA_BYTES) {
+        overBudget += 1;
+        continue;
+      }
+
+      usedBytes += entryBytes;
+      values.set(key, value);
+    } catch (error) {
+      // Counted rather than logged per field: one malformed column makes every field of its source
+      // throw, and a survey with forty of them would write forty identical lines per response.
+      unreadable += 1;
+      firstError ??= error;
+    }
+  }
+
+  // Once per response, not per field: a dropped field is a Hub dimension that exists on some
+  // responses and not others, which is invisible downstream unless it is said here.
+  if (overBudget > 0) {
+    logger.warn(
+      { ...logContext, overBudget, published: values.size, maxBytes: MAX_EMBEDDED_DATA_BYTES },
+      "Embedded Data fields dropped from FeedbackRecord metadata: object size budget reached"
+    );
+  }
+  if (unreadable > 0) {
+    logger.warn(
+      { err: firstError, ...logContext, unreadable, published: values.size },
+      "Embedded Data fields dropped from FeedbackRecord metadata: field could not be read"
+    );
+  }
+  if (unpublishable > 0) {
+    logger.warn(
+      { ...logContext, unpublishable, published: values.size },
+      "Embedded Data fields dropped from FeedbackRecord metadata: name cannot be published"
+    );
+  }
+
+  return Object.fromEntries(values);
+};

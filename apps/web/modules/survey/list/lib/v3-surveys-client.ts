@@ -1,9 +1,13 @@
-import type { TSurveyStatus } from "@formbricks/types/surveys/types";
+import type { TSurveyStatus, TSurveyVisibility } from "@formbricks/types/surveys/types";
 import type { TV3SurveyGenerateBody } from "@/app/api/v3/surveys/generate/schemas";
 import type { TV3CreateSurveyBody, TV3SurveyValidationRequestBody } from "@/app/api/v3/surveys/schemas";
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 import { normalizeSurveyFilters } from "@/modules/survey/list/lib/utils";
 import { TSurveyListItem, TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
+import type {
+  TSurveyVisibilityChangeResult,
+  TSurveyVisibilityState,
+} from "@/modules/survey/visibility/types";
 
 type TV3SurveyListItemResponse = Omit<
   TSurveyListItem,
@@ -61,10 +65,13 @@ export type TSurveyListPage = {
   meta: {
     limit: number;
     nextCursor: string | null;
+    // Surveys matching the current filter.
     totalCount: number | null;
-    // Whether the workspace has any archived surveys. Only computed on the first
-    // page (when includeTotalCount is not false); null on subsequent pages.
-    hasArchived: boolean | null;
+    // Every survey in the workspace, archived ones included — filter-independent, so the list can
+    // tell an empty workspace from an empty result.
+    // Both counts are null when the request sets includeTotalCount=false, which this client does for
+    // every page after the first.
+    workspaceSurveyCount: number | null;
   };
 };
 
@@ -116,6 +123,10 @@ export function buildSurveyListSearchParams({
 
   normalizedFilters.type.forEach((type) => {
     searchParams.append("filter[type][in]", type);
+  });
+
+  normalizedFilters.visibility.forEach((visibility) => {
+    searchParams.append("filter[visibility][in]", visibility);
   });
 
   return searchParams;
@@ -188,6 +199,66 @@ export async function updateSurveyStatus(
   }
 
   const responseBody = (await response.json()) as TV3UpdateSurveyStatusResponse;
+  return responseBody.data;
+}
+
+export async function getSurveyVisibility(surveyId: string): Promise<TSurveyVisibilityState> {
+  const response = await fetch(`/api/v3/surveys/${surveyId}/visibility`, {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw await parseV3ApiError(response);
+  }
+
+  const responseBody = (await response.json()) as { data: TSurveyVisibilityState };
+  return responseBody.data;
+}
+
+export async function updateSurveyVisibility(
+  surveyId: string,
+  visibility: TSurveyVisibility
+): Promise<TSurveyVisibilityChangeResult> {
+  const response = await fetch(`/api/v3/surveys/${surveyId}/visibility`, {
+    method: "POST",
+    cache: "no-store",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ visibility }),
+  });
+
+  if (!response.ok) {
+    throw await parseV3ApiError(response);
+  }
+
+  const responseBody = (await response.json()) as { data: TSurveyVisibilityChangeResult };
+  return responseBody.data;
+}
+
+type TV3RenameSurveyResponse = {
+  data: {
+    id: string;
+    name: string;
+  };
+};
+
+export async function renameSurvey(surveyId: string, name: string): Promise<{ id: string; name: string }> {
+  const response = await fetch(`/api/v3/surveys/${surveyId}`, {
+    method: "PATCH",
+    cache: "no-store",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name }),
+  });
+
+  if (!response.ok) {
+    throw await parseV3ApiError(response);
+  }
+
+  const responseBody = (await response.json()) as TV3RenameSurveyResponse;
   return responseBody.data;
 }
 

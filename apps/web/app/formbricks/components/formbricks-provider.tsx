@@ -1,8 +1,9 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import formbricks from "@formbricks/js";
+import { consumeChurnSurveyMarker } from "@/lib/churn-survey";
 
 interface FormbricksProviderProps {
   workspaceId: string;
@@ -24,6 +25,9 @@ export const FormbricksProvider = ({
   userName,
 }: Readonly<FormbricksProviderProps>) => {
   const pathname = usePathname();
+  // Guards against a second effect run (deps changing mid-flight) reading and tracking the same
+  // marker again before the first run has cleared it.
+  const churnTrackInFlightRef = useRef(false);
 
   // Set up the SDK and identify the user.
   useEffect(() => {
@@ -36,10 +40,17 @@ export const FormbricksProvider = ({
         await formbricks.setUserId(userId);
         const attributes: Record<string, string> = {};
         if (userEmail) attributes.email = userEmail;
-        if (userName) attributes.name = userName;
-        if (Object.keys(attributes).length > 0) {
-          await formbricks.setAttributes(attributes);
-        }
+        const [firstName = "", ...rest] = (userName ?? "").trim().split(/\s+/);
+        attributes.firstName = firstName;
+        attributes.lastName = rest.join(" ");
+        await formbricks.setAttributes(attributes);
+
+        await consumeChurnSurveyMarker({
+          storage: globalThis.window?.sessionStorage,
+          userId,
+          track: (event) => formbricks.track(event),
+          inFlight: churnTrackInFlightRef,
+        });
       }
     };
 

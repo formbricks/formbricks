@@ -6,10 +6,12 @@ import { AuthenticationError } from "@formbricks/types/errors";
 import { ZUserEmail, ZUserName } from "@formbricks/types/user";
 import { INVITE_DISABLED } from "@/lib/constants";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
-import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { sendInviteMemberEmail } from "@/modules/email";
+import {
+  reserveInviteRateLimit,
+  settleInviteRateLimit,
+} from "@/modules/organization/settings/teams/lib/invite-rate-limit";
 import { checkSetupInviteAuthorization } from "@/modules/setup/organization/[organizationId]/invite/lib/authorization";
 import { inviteUser } from "@/modules/setup/organization/[organizationId]/invite/lib/invite";
 
@@ -33,18 +35,24 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
 
       ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
 
-      // Shares the inviteMember namespace so the per-org cap bounds invite-spam across both the
-      // settings and onboarding invite paths combined (abusive orgs sit in this setup flow).
-      await applyRateLimit(rateLimitConfigs.actions.inviteMember, parsedInput.organizationId);
+      // Shares one recipient-counted budget with settings, bulk, and resend invite paths.
+      const rateLimitReservation = await reserveInviteRateLimit(parsedInput.organizationId);
 
-      const invitedUserId = await inviteUser({
-        organizationId: parsedInput.organizationId,
-        invitee: {
-          email: parsedInput.email,
-          name: parsedInput.name,
-        },
-        currentUserId: ctx.user.id,
-      });
+      let invitedUserId: Awaited<ReturnType<typeof inviteUser>>;
+      try {
+        invitedUserId = await inviteUser({
+          organizationId: parsedInput.organizationId,
+          invitee: {
+            email: parsedInput.email,
+            name: parsedInput.name,
+          },
+          currentUserId: ctx.user.id,
+        });
+      } catch (error) {
+        await settleInviteRateLimit(rateLimitReservation, 0);
+        throw error;
+      }
+      await settleInviteRateLimit(rateLimitReservation, 1);
 
       await sendInviteMemberEmail(invitedUserId, parsedInput.email, ctx.user.name, "");
 

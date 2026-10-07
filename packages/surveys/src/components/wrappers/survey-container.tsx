@@ -1,11 +1,14 @@
 import { type ComponentChildren } from "preact";
-import { type MutableRef, useEffect } from "preact/hooks";
+import { type MutableRef, useEffect, useRef } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TOverlay, type TPlacement } from "@formbricks/types/common";
+import { type TSurveyCardRect } from "@formbricks/types/formbricks-surveys";
+import { type TOverlayAppearance, getOverlayBackground } from "@formbricks/types/overlay";
+import { isPlainEscape } from "@/lib/keyboard";
 import { ensureLiveRegion } from "@/lib/live-region";
 import { SURVEY_INSTRUCTIONS_ID } from "@/lib/survey-page";
 import { useFocusTrap } from "@/lib/use-focus-trap";
-import { cn } from "@/lib/utils";
+import { cn, mirrorPlacementForDir } from "@/lib/utils";
 
 // Give a fallback-created live region (older SDK, see live-region.ts) a beat to be registered by
 // assistive tech before the message lands. Harmless when the region already exists.
@@ -42,7 +45,9 @@ type UseNoOverlayModalOptions = {
  * this component's modal semantics, so it is not shared code; and its whole behaviour is DOM
  * listeners and a timer, which per AGENTS.md is covered by Playwright rather than unit tests. As a
  * lib/*.ts module it would have added 22 lines the repo does not unit-test on principle, failing the
- * new-code coverage gate for a refactor that changes no behaviour.
+ * new-code coverage gate for a refactor that changes no behaviour. The one piece that IS shared —
+ * which Escape presses count as "close", modifier guard included — lives in lib/keyboard.ts as
+ * `isPlainEscape`, alongside useFocusTrap and the language switcher that also use it.
  */
 const useNoOverlayModal = ({
   enabled,
@@ -57,7 +62,7 @@ const useNoOverlayModal = ({
     if (!container) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (!isPlainEscape(event)) return;
 
       event.preventDefault();
       onClose?.();
@@ -85,6 +90,106 @@ const useNoOverlayModal = ({
   }, [enabled, announcement]);
 };
 
+// The card animates in over 500ms (`transition-all duration-500`) and changes height with every
+// question, so a rect read once on open is wrong almost immediately. Sample per frame until it holds
+// still for this many frames (~0.65s at 60fps, comfortably past the transition), then stop — the
+// observers restart the loop on any later change, so idling costs nothing.
+const STABLE_FRAMES_BEFORE_IDLE = 40;
+
+type UseCardRectOptions = {
+  /** True only for a modal survey that is open and whose host actually wants the rect. */
+  enabled: boolean;
+  containerRef: MutableRef<HTMLDivElement | null>;
+  onChange?: (rect: TSurveyCardRect | null) => void;
+};
+
+/**
+ * Reports the card's viewport rect to a native host so it can pass touches outside the card through
+ * to the app (see `TSurveyCardRect`).
+ *
+ * It is a prop rather than something the host reads off the DOM itself, and that is the whole point.
+ * Flutter used to scrape `#fbjs [role="dialog"][aria-modal="true"]`; making `aria-modal` conditional
+ * on the overlay — a correct a11y fix — silently matched nothing in the one case the scrape existed
+ * for, and the survey card became untappable in a shipped SDK. Nothing could catch it: the selector
+ * lived in a string, and the renderer is fetched at runtime so there was no version to pin. A typed
+ * prop moves that break to compile time and lets this markup change freely.
+ *
+ * Lives in this file rather than lib/ for the same reason as `useNoOverlayModal` above: one call
+ * site, and its whole behaviour is observers and a frame loop, which per AGENTS.md is Playwright's
+ * job rather than a unit test's.
+ */
+const useCardRect = ({ enabled, containerRef, onChange }: UseCardRectOptions): void => {
+  // Held in a ref so an inline callback from the host does not re-run the effect on every render.
+  // That matters more here than elsewhere: the cleanup reports `null`, so a spurious teardown would
+  // tell the host the card had gone and make it stop accepting touches mid-survey.
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const card = containerRef.current;
+    if (!card) return;
+    // Nothing to report to, so do not spin a frame loop for a web host.
+    if (!onChangeRef.current) return;
+
+    let frame: number | null = null;
+    let lastKey = "";
+    let stableFrames = 0;
+
+    const measure = () => {
+      const box = card.getBoundingClientRect();
+      // A zero-area card is not on screen — mid-animation, or already torn down. Report it as
+      // absent rather than as a degenerate rect the host would mask touches against.
+      const rect: TSurveyCardRect | null =
+        box.width > 0 && box.height > 0
+          ? { x: box.left, y: box.top, width: box.width, height: box.height }
+          : null;
+
+      // Compare on whole pixels: sub-pixel jitter during the transition is not a change worth a
+      // bridge hop to native.
+      const key = rect
+        ? `${Math.round(rect.x)},${Math.round(rect.y)},${Math.round(rect.width)},${Math.round(rect.height)}`
+        : "none";
+
+      if (key === lastKey) {
+        stableFrames += 1;
+      } else {
+        lastKey = key;
+        stableFrames = 0;
+        onChangeRef.current?.(rect);
+      }
+
+      frame = stableFrames > STABLE_FRAMES_BEFORE_IDLE ? null : requestAnimationFrame(measure);
+    };
+
+    const restart = () => {
+      if (frame !== null) return;
+      stableFrames = 0;
+      frame = requestAnimationFrame(measure);
+    };
+
+    // ResizeObserver catches the card growing or shrinking with the question; the window listeners
+    // catch it moving without resizing, which rotation and a keyboard-driven viewport change do.
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(restart);
+    observer?.observe(card);
+    window.addEventListener("resize", restart);
+    window.addEventListener("orientationchange", restart);
+    restart();
+
+    return () => {
+      if (frame !== null) cancelAnimationFrame(frame);
+      observer?.disconnect();
+      window.removeEventListener("resize", restart);
+      window.removeEventListener("orientationchange", restart);
+      // The card is gone. Without this the host keeps masking touches to a rect that is no longer
+      // on screen, which leaves a dead region over the app after the survey closes.
+      onChangeRef.current?.(null);
+    };
+  }, [enabled, containerRef]);
+};
+
 // Class computations for the modal chrome, at module scope alongside getPlacementStyle. They read
 // nothing but their arguments, and keeping them out of the component body is what actually moves
 // SonarQube's cognitive-complexity number (S3776): it scores each function separately, so a
@@ -96,13 +201,25 @@ const getModalLayerClass = (isModal: boolean, hasOverlay: boolean): string =>
     isModal && "fixed inset-0 z-999999 flex items-end"
   );
 
-// Only a modal survey paints a backdrop, and the two overlay settings are mutually exclusive, so at
-// most one class can ever apply.
-const getOverlayBackdropClass = (isModal: boolean, overlay: TOverlay): string => {
-  if (!isModal) return "";
+// Only a modal survey paints a backdrop (the inline path returns before this is used), and the two
+// overlay settings are mutually exclusive, so at most one class can ever apply.
+const getOverlayBackdropClass = (overlay: TOverlay): string => {
   if (overlay === "dark") return "bg-slate-700/80";
   if (overlay === "light") return "bg-slate-400/50";
   return "";
+};
+
+// A custom overlay drops the preset class, because the renderer's utilities are `!important` under
+// #fbjs and would beat the inline colour. Not the CSS `opacity` property: the dialog is a child of
+// this backdrop and would fade with it. Only the paint changes; everything keyed on `overlay` stays.
+const getOverlayBackdrop = (
+  overlay: TOverlay,
+  appearance: TOverlayAppearance | null | undefined
+): { className: string; style?: { backgroundColor: string } } => {
+  const backgroundColor = getOverlayBackground({ overlay, ...appearance });
+  if (backgroundColor) return { className: "", style: { backgroundColor } };
+
+  return { className: getOverlayBackdropClass(overlay) };
 };
 
 const getPlacementStyle = (placement: TPlacement): string => {
@@ -126,6 +243,7 @@ interface SurveyContainerProps {
   mode: "modal" | "inline";
   placement?: TPlacement;
   overlay?: TOverlay;
+  overlayAppearance?: TOverlayAppearance | null;
   children: ComponentChildren;
   onClose?: () => void;
   clickOutside?: boolean;
@@ -140,12 +258,16 @@ interface SurveyContainerProps {
   hasInstructions?: boolean;
   /** Language tag of the survey's active language, or null when the survey declares no language. */
   lang?: string | null;
+  /** Notifies a native host where the card is, so it can pass touches outside it through to the
+   *  app. Omitted by web hosts, and then nothing is measured. */
+  onCardRectChange?: (rect: TSurveyCardRect | null) => void;
 }
 
 export function SurveyContainer({
   mode,
   placement = "bottomRight",
   overlay = "none",
+  overlayAppearance,
   children,
   onClose,
   clickOutside,
@@ -154,6 +276,7 @@ export function SurveyContainer({
   surveyName,
   hasInstructions = false,
   lang,
+  onCardRectChange,
 }: Readonly<SurveyContainerProps>) {
   const isModal = mode === "modal";
   const { t } = useTranslation();
@@ -199,6 +322,15 @@ export function SurveyContainer({
     announcement: t("common.survey_opened_announcement"),
   });
 
+  // Measured for any modal survey, not just the no-overlay case: an overlaid survey still needs a
+  // rect so the host can drop its mask the moment the card goes away, and a host that switches
+  // overlay per survey would otherwise get rects for some and not others.
+  useCardRect({
+    enabled: isModal && isOpen,
+    containerRef: modalRef,
+    onChange: onCardRectChange,
+  });
+
   if (!isOpen) return null;
 
   // The survey's one top-level heading. Card headlines (welcome, element prompts, ending) are all
@@ -211,13 +343,20 @@ export function SurveyContainer({
   // It is rendered as a sibling of `children` in BOTH branches so that it always ends up inside the
   // dialog on the modal path: `aria-modal="true"` makes assistive tech ignore everything outside
   // the dialog element, so a heading placed on the #fbjs root would be unreachable there.
-  const surveyHeading = surveyName ? <h1 className="sr-only">{surveyName}</h1> : null;
+  //
+  // A survey without a name — an app survey, whose name the public API withholds (see
+  // getSurveyDisplayName) — falls back to a generic label on both surfaces rather than dropping the
+  // heading. A generic h1 still tells a respondent pressing H that they have reached the survey;
+  // no h1 leaves the card headings orphaned on the delivery path most app respondents take (ENG-2799).
+  // The same label names the inline form landmark and the modal dialog, so the three never disagree.
+  const surveyLabel = surveyName ?? t("common.survey_dialog");
+  const surveyHeading = <h1 className="sr-only">{surveyLabel}</h1>;
 
   // The VPAT finding is that "forms themselves have no titles": every input had a label, but the
-  // form they belong to had no accessible name at all. role="form" + the survey name fixes that for
-  // BOTH surfaces — an embedded survey cannot own the host document's <title>, so this is the only
-  // name it can carry. The role is only declared once there is a name to give it: an unnamed form
-  // landmark is noise in a screen reader's landmark list rather than an improvement.
+  // form they belong to had no accessible name at all. role="form" + a name fixes that for BOTH
+  // surfaces — an embedded survey cannot own the host document's <title>, so this is the only name it
+  // can carry. The name always exists (the survey name, or the generic fallback above), so the form
+  // landmark is always named rather than left out of the landmark list.
   // Survey instructions used to appear on the welcome card and never again. Pointing the form at the
   // persistent region means they are announced on entry to every page.
   //
@@ -228,7 +367,7 @@ export function SurveyContainer({
   // the browser drops the inner one, which would silently take this accessible name with it. And a
   // real form makes Enter in any text input submit and navigate away from a half-finished survey.
   // The role gives assistive tech the same landmark without either behaviour.
-  const instructionsId = surveyName && hasInstructions ? SURVEY_INSTRUCTIONS_ID : undefined;
+  const instructionsId = hasInstructions ? SURVEY_INSTRUCTIONS_ID : undefined;
 
   if (!isModal) {
     return (
@@ -238,14 +377,16 @@ export function SurveyContainer({
         style={{ height: "100%", width: "100%" }}
         dir={dir}
         lang={lang ?? undefined}
-        role={surveyName ? "form" : undefined}
-        aria-label={surveyName}
+        role="form"
+        aria-label={surveyLabel}
         aria-describedby={instructionsId}>
         {surveyHeading}
         {children}
       </div>
     );
   }
+
+  const backdrop = getOverlayBackdrop(overlay, overlayAppearance);
 
   return (
     <div id="fbjs" className="formbricks-form" dir={dir} lang={lang ?? undefined}>
@@ -255,10 +396,8 @@ export function SurveyContainer({
         aria-live="polite"
         className={getModalLayerClass(isModal, hasOverlay)}>
         <div
-          className={cn(
-            "relative h-full w-full transition-all duration-500 ease-in-out",
-            getOverlayBackdropClass(isModal, overlay)
-          )}>
+          className={cn("relative h-full w-full transition-all duration-500 ease-in-out", backdrop.className)}
+          style={backdrop.style}>
           <div
             ref={modalRef}
             role="dialog"
@@ -266,13 +405,11 @@ export function SurveyContainer({
             // assistive tech ignore everything outside it, so setting it on a corner survey hides the
             // host page from screen-reader users while they can still see and use it.
             aria-modal={hasOverlay ? "true" : undefined}
-            // The survey name is strictly more informative than the generic "Survey Dialog", which
-            // stays as the fallback for a survey rendered without one (previews).
-            aria-label={surveyName ?? t("common.survey_dialog")}
+            aria-label={surveyLabel}
             aria-describedby={hasInstructions ? SURVEY_INSTRUCTIONS_ID : undefined}
             tabIndex={-1}
             className={cn(
-              getPlacementStyle(placement),
+              getPlacementStyle(mirrorPlacementForDir(placement, dir)),
               isOpen ? "opacity-100" : "opacity-0",
               "rounded-custom pointer-events-auto absolute bottom-0 h-fit w-full overflow-visible bg-white shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
             )}>

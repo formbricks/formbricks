@@ -1,6 +1,7 @@
 import "server-only";
 import {
   AIConfigurationError,
+  AIOutputTokenLimitError,
   type AIResolvedLanguageModel,
   type TGenerateObjectOptions,
   type TGenerateObjectResult,
@@ -65,6 +66,14 @@ function classifyOrganizationAIFailure(
   // not be logged at error level and it carries no provider status to map.
   if (isAbortError(error)) throw error;
 
+  // Running out of output budget is a size problem every caller maps to a user-facing message, not a
+  // provider incident. Warn with the token counts — they tell a too-large request apart from
+  // reasoning tokens eating the budget — instead of an error-level entry.
+  if (error instanceof AIOutputTokenLimitError) {
+    logger.warn({ organizationId, ...error.details }, `${message}: output token limit reached`);
+    throw error;
+  }
+
   const providerError = classifyAIProviderError(error);
   logger.error(
     {
@@ -74,6 +83,7 @@ function classifyOrganizationAIFailure(
       statusCode: providerError?.statusCode,
       isQuotaExhausted: providerError?.isQuotaExhausted,
       isRetryable: providerError?.isRetryable,
+      isAuthFailure: providerError?.isAuthFailure,
       err: error,
     },
     message

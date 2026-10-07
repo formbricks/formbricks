@@ -6,6 +6,111 @@
 const PROBLEM_JSON = "application/problem+json" as const;
 const CACHE_NO_STORE = "private, no-store" as const;
 
+/**
+ * Authentication scheme advertised on a 401. RFC 9110 §15.5.2 requires "a WWW-Authenticate header field
+ * containing at least one challenge **applicable to the target resource**" — the qualifier is the whole
+ * point, so quote it in full: an inapplicable challenge does not satisfy the requirement, it just makes
+ * a false statement about the endpoint.
+ *
+ * Bearer is applicable wherever this API accepts `Authorization: Bearer <fbk_…>`, which `api-key-auth.ts`
+ * does — so on the `apiKey` and `both` auth modes, and nowhere else. RFC 6750 §3 requires at least one
+ * auth-param, so the realm stays; a bare `Bearer` would be non-conformant.
+ *
+ * Deliberately NOT sent on `session` routes, and not by `problemUnauthorized` itself: cookies are not an
+ * HTTP authentication scheme (they appear nowhere in the IANA HTTP Authentication Scheme Registry), so a
+ * cookie-only endpoint has no applicable challenge and the MUST is unsatisfiable there. The repo's own
+ * OpenAPI already concedes this by modelling the session as `type: apiKey, in: cookie` rather than
+ * `type: http`. Omitting beats advertising a scheme the route will never honour.
+ *
+ * The MCP surface builds its own richer challenge (`resource_metadata` and `scope`, which its spec
+ * MUSTs and its SDK parses) in `withOAuthChallenge` — see `@/modules/mcp/auth`.
+ */
+export const BEARER_CHALLENGE = 'Bearer realm="formbricks"' as const;
+
+/** Attach the bearer challenge to a 401. Applied by the wrapper for the auth modes it is true of. */
+export function withBearerChallenge(response: Response): Response {
+  const headers = new Headers(response.headers);
+  headers.set("WWW-Authenticate", BEARER_CHALLENGE);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+/**
+ * The `code` vocabulary of this API's problem responses: a stable, locale-independent discriminator that
+ * clients switch on instead of parsing `detail` (see `parseV3ApiError` in `@/modules/api/lib/v3-client`
+ * and `responseToMcpToolResult` in `@/modules/mcp/errors`).
+ *
+ * This list is the source of truth. `Problem.yml` in the OpenAPI spec publishes the same set, and
+ * `problem-codes.test.ts` fails if the two drift — the spec used to be hand-maintained, with nothing
+ * checking it against the emitters. Codes are additive: removing or renaming one is a breaking change
+ * for every client that branches on it.
+ *
+ * `invalid_workflow_state` and `workflow_not_executable` are emitted only by `@formbricks/workflows`,
+ * which mirrors this vocabulary rather than importing it (it is a leaf package, deliberately
+ * dependency-free) and also emits five of the codes above; its own `WORKFLOW_PROBLEM_CODES` is held to
+ * this set by a drift test on the same spec file. Named rather than counted: the array is kept sorted by
+ * `problem-codes.test.ts`, so any positional claim falsifies itself on the next insertion.
+ */
+export const V3_PROBLEM_CODES = [
+  "ai_features_not_enabled",
+  "ai_generated_payload_invalid",
+  "ai_instance_not_configured",
+  "ai_output_too_long",
+  "ai_provider_auth_failed",
+  "ai_smart_tools_disabled",
+  "bad_gateway",
+  "bad_request",
+  "conflict",
+  "forbidden",
+  "internal_server_error",
+  "invalid_workflow_state",
+  "not_authenticated",
+  "not_found",
+  "payload_too_large",
+  "projection_pending",
+  "service_unavailable",
+  "stored_survey_invalid",
+  "survey_not_workspace_visible",
+  "too_many_requests",
+  "unprocessable_content",
+  "visibility_blocked_by_connections",
+  "visibility_change_not_allowed",
+  "visibility_not_enabled",
+  "workflow_not_executable",
+  "workspace_survey_limit_reached",
+] as const;
+
+export type V3ProblemCode = (typeof V3_PROBLEM_CODES)[number];
+
+/**
+ * Codes emitted only by routes under `app/api/(internal)`, which reuse these RFC 9457 helpers but are
+ * session-only and carry no published contract.
+ *
+ * Kept apart from `V3_PROBLEM_CODES` rather than folded into it, because that list is held to
+ * `Problem.yml` by exact equality in both directions: adding an internal code there would publish, to
+ * every public client, a discriminator no public operation can ever return — which is the same defect
+ * as an undocumented code, pointing the other way. `problem-codes.test.ts` asserts the two sets stay
+ * disjoint and that none of these reaches the spec.
+ */
+export const INTERNAL_PROBLEM_CODES = ["attachment_export_empty", "attachment_export_too_large"] as const;
+
+export type InternalProblemCode = (typeof INTERNAL_PROBLEM_CODES)[number];
+
+/**
+ * What the shared helpers accept. A public v3 route should only ever pass a `V3ProblemCode`; the union
+ * exists so an internal route can reuse the same helpers without widening the field back to `string`.
+ */
+export type ProblemCode = V3ProblemCode | InternalProblemCode;
+
+const V3_PROBLEM_CODE_SET = new Set<V3ProblemCode>(V3_PROBLEM_CODES);
+
+export function isV3ProblemCode(value: unknown): value is V3ProblemCode {
+  return typeof value === "string" && V3_PROBLEM_CODE_SET.has(value as V3ProblemCode);
+}
+
 export const INVALID_PARAM_CODES = [
   "dangling_reference",
   "duplicate_identifier",
@@ -14,8 +119,10 @@ export const INVALID_PARAM_CODES = [
   "immutable_identifier",
   "invalid_locale",
   "invalid_reference",
+  "misordered_reference",
   "missing_required_field",
   "missing_translation",
+  "read_only_field",
   "unsupported_field",
   "unsupported_locale",
 ] as const;
@@ -48,7 +155,7 @@ export type InvalidParam = {
 };
 
 export type ProblemExtension = {
-  code?: string;
+  code?: ProblemCode;
   requestId: string;
   details?: Record<string, unknown>;
   invalid_params?: InvalidParam[];
@@ -70,7 +177,7 @@ function problemResponse(
   options?: {
     type?: string;
     instance?: string;
-    code?: string;
+    code?: ProblemCode;
     details?: Record<string, unknown>;
     invalid_params?: InvalidParam[];
     headers?: Record<string, string>;
@@ -143,24 +250,36 @@ export function problemForbidden(
   });
 }
 
+/**
+ * An AI capability the caller cannot use: 503 when this deployment has no AI configured at all, 403 when
+ * it is configured but not enabled for the organization.
+ *
+ * `title` is the HTTP reason phrase for the status, not a description of the cause. RFC 9457 §4.2.1
+ * requires that of a problem whose `type` is absent (and therefore `about:blank`), which is every v3
+ * problem. The cause is carried by `code`, which is what clients branch on anyway — see
+ * `getAiErrorMessage` in `@/modules/survey/components/template-list/lib/ai-error-messages`.
+ */
 export function problemAIUnavailable(
   requestId: string,
   detail: string,
-  code: string,
+  code: V3ProblemCode,
   instance?: string
 ): Response {
-  const status = code === "ai_instance_not_configured" ? 503 : 403;
+  const isNotConfigured = code === "ai_instance_not_configured";
 
-  return problemResponse(status, "AI Unavailable", detail, requestId, {
-    code,
-    instance,
-  });
+  return problemResponse(
+    isNotConfigured ? 503 : 403,
+    isNotConfigured ? "Service Unavailable" : "Forbidden",
+    detail,
+    requestId,
+    { code, instance }
+  );
 }
 
 export function problemUnprocessableContent(
   requestId: string,
   detail: string,
-  options?: { invalid_params?: InvalidParam[]; instance?: string; code?: string }
+  options?: { invalid_params?: InvalidParam[]; instance?: string; code?: ProblemCode }
 ): Response {
   return problemResponse(422, "Unprocessable Content", detail, requestId, {
     code: options?.code ?? "unprocessable_content",
@@ -169,16 +288,111 @@ export function problemUnprocessableContent(
   });
 }
 
-export function problemConflict(requestId: string, detail: string, instance?: string): Response {
+/**
+ * ENG-3282: survey visibility is not available here — the organization lacks the entitlement or the
+ * deployment's readiness marker is unset (contract §5). Independent of the survey, so it reveals
+ * nothing about it.
+ */
+export function problemVisibilityNotEnabled(requestId: string, instance?: string): Response {
+  return problemResponse(
+    403,
+    "Forbidden",
+    "Survey visibility is not enabled for this organization",
+    requestId,
+    {
+      code: "visibility_not_enabled",
+      instance,
+    }
+  );
+}
+
+/** ENG-3282: `restricted` refused while outbound connections depend on the survey; lists them. */
+export function problemVisibilityBlocked(
+  requestId: string,
+  blockers: ReadonlyArray<Readonly<{ id: string; name: string; type: string }>>,
+  instance?: string
+): Response {
+  return problemResponse(
+    409,
+    "Conflict",
+    "Remove the connections that use this survey before restricting it",
+    requestId,
+    { code: "visibility_blocked_by_connections", details: { blockers }, instance }
+  );
+}
+
+/** ENG-3282: `restricted` refused because the survey has no owner (Decision log #3). */
+export function problemVisibilityChangeNotAllowed(requestId: string, instance?: string): Response {
+  return problemResponse(
+    422,
+    "Unprocessable Content",
+    "A survey without an author can't be restricted. Duplicate it to get a restricted copy you own.",
+    requestId,
+    { code: "visibility_change_not_allowed", instance }
+  );
+}
+
+/**
+ * ENG-3282: a grant was stored but the graph did not acknowledge it in-request. The survey stays
+ * restricted until the outbox delivers it; retrying is safe.
+ */
+export function problemProjectionPending(requestId: string, instance?: string): Response {
+  return problemResponse(
+    503,
+    "Service Unavailable",
+    "The change is stored and will take effect shortly; the survey stays restricted until it does",
+    requestId,
+    { code: "projection_pending", headers: { "Retry-After": "5" }, instance }
+  );
+}
+
+/**
+ * ENG-3282: the workspace already holds `SURVEY_WORKSPACE_LIMIT` surveys. `details` carries the limit
+ * and the current count so a client can say how many to archive or delete without a second call.
+ */
+export function problemWorkspaceSurveyLimit(
+  requestId: string,
+  limit: number,
+  count: number,
+  instance?: string
+): Response {
+  return problemResponse(
+    422,
+    "Unprocessable Content",
+    "This workspace has reached its survey limit",
+    requestId,
+    {
+      code: "workspace_survey_limit_reached",
+      details: { count, limit },
+      instance,
+    }
+  );
+}
+
+export function problemConflict(
+  requestId: string,
+  detail: string,
+  instance?: string,
+  // ENG-3069: `details` carries the machine-readable half of an optimistic-concurrency failure
+  // (`expectedUpdatedAt` / `currentUpdatedAt`). Without it a client can only re-read and guess,
+  // and the human `detail` string is the wrong place for a value a retry has to compare.
+  options?: { details?: Record<string, unknown> }
+): Response {
   return problemResponse(409, "Conflict", detail, requestId, {
     code: "conflict",
     instance,
+    ...(options?.details && { details: options.details }),
   });
 }
 
-export function problemBadGateway(requestId: string, detail: string, instance?: string): Response {
+export function problemBadGateway(
+  requestId: string,
+  detail: string,
+  instance?: string,
+  code: V3ProblemCode = "bad_gateway"
+): Response {
   return problemResponse(502, "Bad Gateway", detail, requestId, {
-    code: "bad_gateway",
+    code,
     instance,
   });
 }
@@ -223,13 +437,19 @@ export function problemInternalError(
   });
 }
 
-export function problemTooManyRequests(requestId: string, detail: string, retryAfter?: number): Response {
+export function problemTooManyRequests(
+  requestId: string,
+  detail: string,
+  retryAfter?: number,
+  instance?: string
+): Response {
   const headers: Record<string, string> = {};
   if (retryAfter !== undefined) {
     headers["Retry-After"] = String(retryAfter);
   }
   return problemResponse(429, "Too Many Requests", detail, requestId, {
     code: "too_many_requests",
+    instance,
     headers,
   });
 }

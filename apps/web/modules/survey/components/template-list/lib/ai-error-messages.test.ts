@@ -7,12 +7,14 @@ const t = (key: string) => key;
 
 describe("getAiErrorMessage", () => {
   test.each([
-    ["ai_features_not_enabled", "workspace.surveys.ai_create.ai_not_in_plan"],
-    ["ai_smart_tools_disabled", "workspace.surveys.ai_create.ai_not_enabled"],
-    ["ai_instance_not_configured", "workspace.surveys.ai_create.ai_instance_not_configured"],
+    // The three "AI is unavailable" codes read the shared copy, not a survey-specific sentence.
+    ["ai_features_not_enabled", "common.ai_unavailable.not_in_plan"],
+    ["ai_smart_tools_disabled", "common.ai_unavailable.not_enabled"],
+    ["ai_instance_not_configured", "common.ai_unavailable.instance_not_configured"],
     ["ai_generated_payload_invalid", "workspace.surveys.ai_create.generated_payload_invalid"],
     ["ai_output_too_long", "workspace.surveys.ai_create.ai_output_too_long"],
     ["ai_quota_exceeded", "workspace.surveys.ai_create.ai_rate_limited"],
+    ["ai_provider_auth_failed", "workspace.surveys.ai_create.provider_auth_failed"],
     ["ai_generation_failed", "workspace.surveys.ai_create.generation_failed"],
     ["ai_nothing_generated", "workspace.surveys.ai_create.nothing_generated"],
   ])("gives %s its own message", (code, key) => {

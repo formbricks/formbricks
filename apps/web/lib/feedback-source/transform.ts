@@ -1,4 +1,5 @@
 import "server-only";
+import type { TEmbeddedFieldsSurvey } from "@formbricks/types/embedded-data-resolver";
 import { TFeedbackSourceFormbricksMapping, THubFieldType } from "@formbricks/types/feedback-source";
 import { TResponse, TResponseData, TResponseDataValue } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
@@ -15,7 +16,19 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLanguageCode, getLocalizedValue } from "@/lib/i18n/utils";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import type { FeedbackRecordCreateParams } from "@/modules/hub";
-import { type TResponseMetadata, buildResponseMetadata } from "./response-metadata";
+import { type TRecordMetadata, buildEmbeddedDataMetadata, buildResponseMetadata } from "./response-metadata";
+
+/**
+ * The survey slice this module reads. `embeddedFields` is inlined by `withInlinedEmbeddedFields`
+ * and rides along on the object every caller already loads.
+ *
+ * Naming it here documents the expectation; it does not enforce it. The property is optional —
+ * `TEmbeddedFieldsSurvey` has to be, because the same shape serves surveys loaded through narrower
+ * selects — so a caller whose select drops the join still type-checks and simply publishes no
+ * Embedded Data. All three call sites carry it today.
+ */
+export type TFeedbackRecordSurvey = Pick<TSurvey, "id" | "name" | "type" | "blocks" | "languages"> &
+  TEmbeddedFieldsSurvey;
 
 const getHeadlineFromElement = (element?: TSurveyElement): string => {
   if (!element?.headline) return "Untitled";
@@ -159,16 +172,21 @@ type BaseRecordFields = Pick<
 > & {
   language?: string;
   user_id?: string;
-  metadata?: TResponseMetadata;
+  metadata?: TRecordMetadata;
 };
 
 const buildBaseFields = (
   response: TResponse,
-  survey: Pick<TSurvey, "id" | "name" | "type">,
+  survey: Pick<TSurvey, "id" | "name" | "type"> & TEmbeddedFieldsSurvey,
   tenantId: string
 ): BaseRecordFields => {
-  // Built once per response and shared by every record of the submission (ENG-1554).
-  const metadata = buildResponseMetadata(response, survey);
+  // Both built once per response and shared by every record of the submission (ENG-1554, ENG-3290).
+  const embeddedData = buildEmbeddedDataMetadata(response, survey);
+  const metadata: TRecordMetadata = {
+    ...buildResponseMetadata(response, survey),
+    // Omitted rather than sent as {} for the same reason the whole object is, below.
+    ...(Object.keys(embeddedData).length > 0 ? { embedded_data: embeddedData } : {}),
+  };
 
   return {
     collected_at: getCollectedAt(response),
@@ -247,13 +265,18 @@ const expandRankingToRecords = (
   // Guard against malformed/legacy blocks where choices is absent (same class as ENG-1939): the
   // schema requires it, but stored survey.blocks JSON is not re-validated here.
   const choices = element.choices ?? [];
+  const otherChoice = choices.find((choice) => choice.id === "other");
   const groupLabel = mapping.customFieldLabel || getHeadlineFromElement(element);
   const records: FeedbackRecordCreateParams[] = [];
 
   value.forEach((itemLabel, index) => {
     if (typeof itemLabel !== "string" || itemLabel === "") return;
 
-    const choice = findChoiceByLabel<TSurveyElementChoice>(choices, itemLabel, lookupLanguage);
+    const matched = findChoiceByLabel<TSurveyElementChoice>(choices, itemLabel, lookupLanguage);
+    // A ranked "Other" stores the respondent's text in its slot, so an entry that matches no
+    // regular choice is it — ranked under the stable "other" id, with the text kept in metadata.
+    const isOtherText = otherChoice !== undefined && (!matched || matched.id === "other");
+    const choice = isOtherText ? otherChoice : matched;
     if (!choice) return;
 
     records.push({
@@ -263,7 +286,12 @@ const expandRankingToRecords = (
       field_label: getChoiceLabel(choice, "default"),
       field_group_id: element.id,
       field_group_label: groupLabel,
-      metadata: { ...baseFields.metadata, question_type: "ranking", total_items: value.length },
+      metadata: {
+        ...baseFields.metadata,
+        question_type: "ranking",
+        total_items: value.length,
+        ...(isOtherText && { other_text: itemLabel }),
+      },
       value_number: index + 1,
     });
   });
@@ -370,7 +398,7 @@ const normalizeElementValue = (
  */
 export function transformResponseToFeedbackRecords(
   response: TResponse,
-  survey: Pick<TSurvey, "id" | "name" | "type" | "blocks" | "languages">,
+  survey: TFeedbackRecordSurvey,
   mappings: TFeedbackSourceFormbricksMapping[],
   tenantId: string
 ): FeedbackRecordCreateParams[] {

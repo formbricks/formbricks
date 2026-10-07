@@ -3,6 +3,7 @@
  * Used by the advanced chart builder to provide field metadata and operators.
  */
 import type { TFunction } from "i18next";
+import { type TDateRangePreset } from "@/lib/date-ranges";
 
 export interface FieldDefinition {
   id: string;
@@ -31,6 +32,16 @@ export interface MeasureDefinition {
    * ratingAverage below), so multi-candidate lists are a best-effort inference from the data max.
    */
   axisMaxCandidates?: readonly number[];
+  /**
+   * The full range a score can take (e.g. NPS -100..100). Charts pin the Y-axis to it instead of
+   * zooming into the data, so a drop from 40 to 30 does not fill the whole chart height.
+   */
+  axisDomain?: readonly [number, number];
+  /**
+   * The count measure that says how many answers this measure is computed from. Charts fetch it
+   * alongside the measure and show it as the response base ("Based on 312 NPS answers").
+   */
+  responseBaseMeasureId?: string;
 }
 
 /**
@@ -102,14 +113,50 @@ const SENTIMENT_COUNT_MEASURES: MeasureDefinition[] = SENTIMENT_MEASURE_ORDER.ma
   description: `Number of feedback records with "${sentiment}" sentiment`,
 }));
 
+export const VALUE_BAND_DIMENSION_ID = "FeedbackRecords.valueBand";
+
+/**
+ * The tokens the Cube `valueBand` dimension emits, positive-first per scale: this is the legend and
+ * slice order of a band breakdown. Mirrors the CASE in docker/cube/schema/FeedbackRecords.js.
+ */
+export const VALUE_BAND_VALUES = [
+  "promoter",
+  "passive",
+  "detractor",
+  "satisfied",
+  "neutral",
+  "dissatisfied",
+] as const;
+
+export type TValueBandValue = (typeof VALUE_BAND_VALUES)[number];
+export type TValueBandPolarity = "positive" | "neutral" | "negative";
+
+export const isValueBandValue = (value: string): value is TValueBandValue =>
+  (VALUE_BAND_VALUES as readonly string[]).includes(value);
+
+export const VALUE_BAND_POLARITY: Record<TValueBandValue, TValueBandPolarity> = {
+  promoter: "positive",
+  passive: "neutral",
+  detractor: "negative",
+  satisfied: "positive",
+  neutral: "neutral",
+  dissatisfied: "negative",
+};
+
+const NPS_COUNT_MEASURE_ID = "FeedbackRecords.npsCount";
+const CSAT_COUNT_MEASURE_ID = "FeedbackRecords.csatCount";
+const CES_COUNT_MEASURE_ID = "FeedbackRecords.cesCount";
+const RATING_COUNT_MEASURE_ID = "FeedbackRecords.ratingCount";
+
 export const FEEDBACK_FIELDS = {
   // Ordered by filter/group-by relevance (ENG-1673 follow-up): the fields people reach for most
   // lead the list, so the first entry doubles as the default filter field. Tiers: question →
-  // answer values → AI enrichment → source → time/language → identifiers & Hub meta.
+  // answer values → AI enrichment → source → response context (ENG-1555) → time/language →
+  // identifiers & Hub meta.
   dimensions: [
     {
       id: "FeedbackRecords.fieldLabel",
-      label: "Question",
+      label: "Field Label",
       type: "string",
       description: "Human-readable label of the question/field",
     },
@@ -139,6 +186,13 @@ export const FEEDBACK_FIELDS = {
       type: "number",
       description:
         "Numeric answer value (NPS 0-10, CSAT 1-5, CES 1-5 or 1-7, rating, number). Pair with a fieldType filter to keep scales consistent.",
+    },
+    {
+      id: VALUE_BAND_DIMENSION_ID,
+      label: "Value band",
+      type: "string",
+      description:
+        "Named band of a numeric answer. nps: promoter (9–10), passive (7–8), detractor (0–6). csat: satisfied (4–5), neutral (3), dissatisfied (1–2). Empty for other field types. Pair with a fieldType filter to keep one scale.",
     },
     {
       id: "FeedbackRecords.valueBoolean",
@@ -192,6 +246,78 @@ export const FEEDBACK_FIELDS = {
       description: "Stable id of the source (e.g. the survey id).",
     },
     {
+      id: "FeedbackRecords.metadataDevice",
+      label: "Device",
+      type: "string",
+      description: "Device class the response was answered on (e.g. desktop, mobile)",
+    },
+    {
+      id: "FeedbackRecords.metadataCountry",
+      label: "Country",
+      type: "string",
+      description: "Country the response was collected from, as resolved at collection time",
+    },
+    {
+      id: "FeedbackRecords.metadataSource",
+      label: "Channel",
+      type: "string",
+      description:
+        "Channel the response came in through (e.g. link, app, email). Distinct from Source Type, which names the system the record came from (formbricks_survey, csv).",
+    },
+    {
+      id: "FeedbackRecords.metadataSurveyType",
+      label: "Survey Type",
+      type: "string",
+      description:
+        "Type of the survey the response came from (link, app, website). Distinct from Source Type, which names the ingesting system.",
+    },
+    {
+      id: "FeedbackRecords.metadataFinished",
+      label: "Completed",
+      type: "boolean",
+      description:
+        "Whether the respondent completed the survey. Live ingestion only publishes finished responses, so this is true for everything except records from a historical import run over all responses.",
+    },
+    {
+      id: "FeedbackRecords.metadataDurationSeconds",
+      label: "Time To Complete (s)",
+      type: "number",
+      description:
+        "Seconds the respondent took to complete the survey. A response-level value repeated on every record of the submission, so an average across records is weighted by question count.",
+    },
+    {
+      id: "FeedbackRecords.metadataBrowser",
+      label: "Browser",
+      type: "string",
+      description: "Browser reported by the respondent's user agent (e.g. Chrome, Safari)",
+    },
+    {
+      id: "FeedbackRecords.metadataOs",
+      label: "Operating System",
+      type: "string",
+      description: "Operating system reported by the respondent's user agent (e.g. macOS, Android)",
+    },
+    {
+      id: "FeedbackRecords.metadataUrl",
+      label: "Page URL",
+      type: "string",
+      description:
+        "Page the survey was answered on, reduced to origin + path — the query string and any personal-link token are stripped at ingestion. One bucket per path, so expect high cardinality.",
+    },
+    {
+      id: "FeedbackRecords.metadataAction",
+      label: "Trigger Action",
+      type: "string",
+      description: "Name of the action that triggered the survey. App surveys only.",
+    },
+    {
+      id: "FeedbackRecords.metadataEndingId",
+      label: "Ending",
+      type: "string",
+      description:
+        "Id of the ending the respondent reached — the branch they came out of. Stored as the id, not the ending's text.",
+    },
+    {
       id: "FeedbackRecords.collectedAt",
       label: "Collected At",
       type: "time",
@@ -205,14 +331,14 @@ export const FEEDBACK_FIELDS = {
     },
     {
       id: "FeedbackRecords.fieldId",
-      label: "Field ID/Question ID",
+      label: "Field ID",
       type: "string",
       description:
         "Stable question/field identifier (the survey element id). Unlike the label it is consistent across languages and duplicate labels, so group or filter by this to treat them as one question.",
     },
     {
       id: "FeedbackRecords.fieldGroupLabel",
-      label: "Question Group",
+      label: "Field Group",
       type: "string",
       description: "Label of the parent composite question for matrix/ranking rows",
     },
@@ -270,7 +396,9 @@ export const FEEDBACK_FIELDS = {
       label: "NPS: Score",
       type: "number",
       group: "score",
-      description: "Net Promoter Score: ((Promoters - Detractors) / Total NPS responses) * 100",
+      description: "Net Promoter Score: ((Promoters - Detractors) / Answered NPS responses) * 100",
+      axisDomain: [-100, 100],
+      responseBaseMeasureId: NPS_COUNT_MEASURE_ID,
     },
     {
       id: "FeedbackRecords.npsAverage",
@@ -279,34 +407,49 @@ export const FEEDBACK_FIELDS = {
       group: "average",
       description: "Average NPS rating (0-10)",
       axisMaxCandidates: [10],
+      responseBaseMeasureId: NPS_COUNT_MEASURE_ID,
     },
     {
       id: "FeedbackRecords.promoterCount",
       label: "NPS: Promoters",
       type: "count",
       group: "count",
-      description: "Number of NPS promoters (score 9-10)",
+      description: "Number of NPS promoters (score >= 9; NPS scale is 0-10)",
+      responseBaseMeasureId: NPS_COUNT_MEASURE_ID,
     },
     {
       id: "FeedbackRecords.passiveCount",
       label: "NPS: Passives",
       type: "count",
       group: "count",
-      description: "Number of NPS passives (score 7-8)",
+      description: "Number of NPS passives (score >= 7 and < 9; NPS scale is 0-10)",
+      responseBaseMeasureId: NPS_COUNT_MEASURE_ID,
+    },
+    {
+      id: NPS_COUNT_MEASURE_ID,
+      label: "NPS: Records",
+      type: "count",
+      group: "count",
+      description:
+        "Answered NPS responses (field_type = 'nps' with a numeric value). The denominator of npsScore.",
+      responseBaseMeasureId: NPS_COUNT_MEASURE_ID,
     },
     {
       id: "FeedbackRecords.detractorCount",
       label: "NPS: Detractors",
       type: "count",
       group: "count",
-      description: "Number of NPS detractors (score 0-6)",
+      description: "Number of NPS detractors (score < 7; NPS scale is 0-10)",
+      responseBaseMeasureId: NPS_COUNT_MEASURE_ID,
     },
     {
       id: "FeedbackRecords.csatScore",
       label: "CSAT: Score",
       type: "number",
       group: "score",
-      description: "CSAT Score: % of CSAT responses rated 4 or 5 (top-2-box on the 1-5 scale)",
+      description: "CSAT Score: % of answered CSAT responses scoring >= 4 (CSAT scale is 1-5)",
+      axisDomain: [0, 100],
+      responseBaseMeasureId: CSAT_COUNT_MEASURE_ID,
     },
     {
       id: "FeedbackRecords.csatAverage",
@@ -315,27 +458,31 @@ export const FEEDBACK_FIELDS = {
       group: "average",
       description: "Average CSAT rating (1-5)",
       axisMaxCandidates: [5],
+      responseBaseMeasureId: CSAT_COUNT_MEASURE_ID,
     },
     {
       id: "FeedbackRecords.csatSatisfiedCount",
       label: "CSAT: Satisfied",
       type: "count",
       group: "count",
-      description: "Number of satisfied CSAT responses (top-2-box on the 1-5 scale)",
+      description: "Number of satisfied CSAT responses (score >= 4; CSAT scale is 1-5)",
+      responseBaseMeasureId: CSAT_COUNT_MEASURE_ID,
     },
     {
       id: "FeedbackRecords.csatDissatisfiedCount",
       label: "CSAT: Dissatisfied",
       type: "count",
       group: "count",
-      description: "Number of dissatisfied CSAT responses (bottom-2-box on the 1-5 scale)",
+      description: "Number of dissatisfied CSAT responses (score < 3; CSAT scale is 1-5)",
+      responseBaseMeasureId: CSAT_COUNT_MEASURE_ID,
     },
     {
       id: "FeedbackRecords.csatNeutralCount",
       label: "CSAT: Neutral",
       type: "count",
       group: "count",
-      description: "Number of neutral CSAT responses (middle box on the 1-5 scale)",
+      description: "Number of neutral CSAT responses (score >= 3 and < 4; CSAT scale is 1-5)",
+      responseBaseMeasureId: CSAT_COUNT_MEASURE_ID,
     },
     {
       id: "FeedbackRecords.csatCount",
@@ -343,6 +490,7 @@ export const FEEDBACK_FIELDS = {
       type: "count",
       group: "count",
       description: "Number of answered feedback records from CSAT questions (dismissed excluded)",
+      responseBaseMeasureId: CSAT_COUNT_MEASURE_ID,
     },
     {
       id: "FeedbackRecords.cesAverage",
@@ -351,6 +499,7 @@ export const FEEDBACK_FIELDS = {
       group: "average",
       description: "Average CES rating (scale is 1-5 or 1-7 depending on the question)",
       axisMaxCandidates: [5, 7],
+      responseBaseMeasureId: CES_COUNT_MEASURE_ID,
     },
     {
       id: "FeedbackRecords.cesCount",
@@ -358,6 +507,7 @@ export const FEEDBACK_FIELDS = {
       type: "count",
       group: "count",
       description: "Number of answered feedback records from CES questions (dismissed excluded)",
+      responseBaseMeasureId: CES_COUNT_MEASURE_ID,
     },
     {
       id: "FeedbackRecords.ratingAverage",
@@ -370,6 +520,7 @@ export const FEEDBACK_FIELDS = {
       // (ENG-1796). A 1-10 question whose averages stay <= 7 will render on a 0-7 axis until
       // the scale is ingested as record metadata - see the measure docs on axisMaxCandidates.
       axisMaxCandidates: [5, 7, 10],
+      responseBaseMeasureId: RATING_COUNT_MEASURE_ID,
     },
     {
       id: "FeedbackRecords.ratingCount",
@@ -377,6 +528,7 @@ export const FEEDBACK_FIELDS = {
       type: "count",
       group: "count",
       description: "Number of answered feedback records from rating questions (dismissed excluded)",
+      responseBaseMeasureId: RATING_COUNT_MEASURE_ID,
     },
     {
       id: "FeedbackRecords.sentimentAverage",
@@ -392,6 +544,38 @@ export const FEEDBACK_FIELDS = {
 };
 
 export const FEEDBACK_MEASURE_IDS: string[] = FEEDBACK_FIELDS.measures.map((m) => m.id);
+
+/** The fixed Y-axis range of a bounded score (see MeasureDefinition.axisDomain), or undefined. */
+export const getMeasureAxisDomain = (measureId: string): readonly [number, number] | undefined =>
+  FEEDBACK_FIELDS.measures.find((m) => m.id === measureId)?.axisDomain;
+
+/**
+ * The one count that is the response base of every measure on a chart, or undefined when there is
+ * none: a measure without a base (a generic count) or two measures with different bases (NPS next to
+ * CSAT) would make a single "Based on N answers" line wrong for part of the chart.
+ */
+export const getResponseBaseMeasureId = (measureIds: readonly string[]): string | undefined => {
+  if (measureIds.length === 0) return undefined;
+  const bases = new Set(
+    measureIds.map((id) => FEEDBACK_FIELDS.measures.find((m) => m.id === id)?.responseBaseMeasureId)
+  );
+  if (bases.size !== 1) return undefined;
+  const [base] = bases;
+  return base;
+};
+
+export type TResponseBaseFamily = "nps" | "csat" | "ces" | "rating";
+
+const RESPONSE_BASE_FAMILIES = new Map<string, TResponseBaseFamily>([
+  [NPS_COUNT_MEASURE_ID, "nps"],
+  [CSAT_COUNT_MEASURE_ID, "csat"],
+  [CES_COUNT_MEASURE_ID, "ces"],
+  [RATING_COUNT_MEASURE_ID, "rating"],
+]);
+
+/** Which answer type a response base counts — picks the noun in "Based on N NPS answers". */
+export const getResponseBaseFamily = (baseMeasureId: string): TResponseBaseFamily | undefined =>
+  RESPONSE_BASE_FAMILIES.get(baseMeasureId);
 
 /** Candidate Y-axis maxima for fixed-scale measures (see MeasureDefinition.axisMaxCandidates),
  * or undefined for measures whose axis should stay data-driven. */
@@ -483,6 +667,18 @@ const getTranslatedEmotionValueLabel = (value: string, t: TFunction): string | u
   return isEmotionValue(value) ? labels[value] : undefined;
 };
 
+const getTranslatedValueBandLabel = (value: string, t: TFunction): string | undefined => {
+  const labels: Record<TValueBandValue, string> = {
+    promoter: t("workspace.analysis.charts.value_band_promoter"),
+    passive: t("workspace.analysis.charts.value_band_passive"),
+    detractor: t("workspace.analysis.charts.value_band_detractor"),
+    satisfied: t("workspace.analysis.charts.value_band_satisfied"),
+    neutral: t("workspace.analysis.charts.value_band_neutral"),
+    dissatisfied: t("workspace.analysis.charts.value_band_dissatisfied"),
+  };
+  return isValueBandValue(value) ? labels[value] : undefined;
+};
+
 /**
  * Translate an enum dimension value for display (chart axes, tooltips, tables).
  * Emotions values are comma-separated multi-label sets, so each token is translated
@@ -504,6 +700,9 @@ export function getTranslatedDimensionValueLabel(
   if (typeof value !== "string" || value.length === 0) return undefined;
   if (dimensionId === SENTIMENT_DIMENSION_ID) {
     return getTranslatedSentimentValueLabel(value, t);
+  }
+  if (dimensionId === VALUE_BAND_DIMENSION_ID) {
+    return getTranslatedValueBandLabel(value, t);
   }
   if (dimensionId === EMOTIONS_DIMENSION_ID) {
     const tokens = value.split(",").map((token) => token.trim());
@@ -554,23 +753,32 @@ export function getMeasureAxisLabel(measureId: string, t: TFunction): string {
   );
 }
 
-/**
- * Sort chart rows into the sentiment scale order (very_negative → very_positive, mixed
- * last) when the x-axis is the sentiment dimension. Unknown values keep their relative
- * position at the end; other dimensions are returned unchanged.
- */
-export function sortRowsByEnumDimension<T extends Record<string, unknown>>(
+const sortRowsByOrder = <T extends Record<string, unknown>>(
   rows: T[],
-  dimensionId: string
-): T[] {
-  if (dimensionId !== SENTIMENT_DIMENSION_ID) return rows;
-  const order = SENTIMENT_VALUE_ORDER as readonly string[];
+  dimensionId: string,
+  order: readonly string[]
+): T[] => {
   const rank = (row: T): number => {
     const value = row[dimensionId];
     const index = typeof value === "string" ? order.indexOf(value) : -1;
     return index === -1 ? order.length : index;
   };
   return [...rows].sort((a, b) => rank(a) - rank(b));
+};
+
+/**
+ * Sort chart rows into an enum dimension's own order when it is the x-axis: sentiment by its scale
+ * (very_negative → very_positive, mixed last), value bands positive-first (promoter → detractor).
+ * Unknown values keep their relative position at the end; other dimensions are returned unchanged.
+ */
+export function sortRowsByEnumDimension<T extends Record<string, unknown>>(
+  rows: T[],
+  dimensionId: string
+): T[] {
+  if (dimensionId === SENTIMENT_DIMENSION_ID)
+    return sortRowsByOrder(rows, dimensionId, SENTIMENT_VALUE_ORDER);
+  if (dimensionId === VALUE_BAND_DIMENSION_ID) return sortRowsByOrder(rows, dimensionId, VALUE_BAND_VALUES);
+  return rows;
 }
 
 /**
@@ -592,6 +800,19 @@ export const SELECTABLE_VALUE_DIMENSION_IDS = [
   // multi-label sets, so `equals` on a picked combination is a trap — filter it with
   // `contains` instead.
   SENTIMENT_DIMENSION_ID,
+  // A fixed enum of six machine tokens, like sentiment.
+  VALUE_BAND_DIMENSION_ID,
+  // Response context (ENG-1555). Every one of these buckets into a small, stable set — user-agent
+  // classes, a country, a channel, an author-defined ending. metadataUrl is excluded for the same
+  // reason valueText is: one bucket per path is not a pick-list.
+  "FeedbackRecords.metadataSource",
+  "FeedbackRecords.metadataSurveyType",
+  "FeedbackRecords.metadataBrowser",
+  "FeedbackRecords.metadataOs",
+  "FeedbackRecords.metadataDevice",
+  "FeedbackRecords.metadataCountry",
+  "FeedbackRecords.metadataAction",
+  "FeedbackRecords.metadataEndingId",
 ] as const;
 
 export type TSelectableValueDimensionId = (typeof SELECTABLE_VALUE_DIMENSION_IDS)[number];
@@ -630,17 +851,6 @@ export const GRANULARITY_LABELS: Record<string, string> = {
   quarter: "Quarter",
   year: "Year",
 };
-
-export const DATE_PRESETS = [
-  { label: "Today", value: "today" },
-  { label: "Yesterday", value: "yesterday" },
-  { label: "Last 7 days", value: "last 7 days" },
-  { label: "Last 30 days", value: "last 30 days" },
-  { label: "This month", value: "this month" },
-  { label: "Last month", value: "last month" },
-  { label: "This quarter", value: "this quarter" },
-  { label: "This year", value: "this year" },
-] as const;
 
 /**
  * Get filter operators for a given field type.
@@ -685,6 +895,14 @@ export function getTranslatedFieldDescription(
       t("workspace.analysis.charts.field_description_unique_respondents"),
     ],
     ["FeedbackRecords.uniqueResponses", t("workspace.analysis.charts.field_description_unique_responses")],
+    // Two response-context dimensions read wrong without their caveat: "Completed" is true for
+    // everything the live pipeline publishes, and the duration is a per-response value repeated on
+    // each of the submission's records.
+    ["FeedbackRecords.metadataFinished", t("workspace.analysis.charts.field_description_completed")],
+    [
+      "FeedbackRecords.metadataDurationSeconds",
+      t("workspace.analysis.charts.field_description_time_to_complete"),
+    ],
   ]);
   return descriptions.get(id) ?? fallback;
 }
@@ -695,8 +913,9 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
     "FeedbackRecords.sourceName": t("workspace.analysis.charts.field_label_source_name"),
     "FeedbackRecords.sourceId": t("workspace.analysis.charts.field_label_source_id"),
     "FeedbackRecords.fieldType": t("workspace.analysis.charts.field_label_field_type"),
-    "FeedbackRecords.fieldLabel": t("workspace.analysis.charts.field_label_question"),
-    "FeedbackRecords.fieldGroupLabel": t("workspace.analysis.charts.field_label_question_group"),
+    "FeedbackRecords.fieldLabel": t("workspace.analysis.charts.field_label_field_label"),
+    "FeedbackRecords.fieldGroupLabel": t("workspace.analysis.charts.field_label_field_group"),
+    "FeedbackRecords.fieldId": t("workspace.analysis.charts.field_label_field_id"),
     "FeedbackRecords.language": t("workspace.analysis.charts.field_label_language"),
     "FeedbackRecords.sentiment": t("workspace.analysis.charts.field_label_sentiment"),
     "FeedbackRecords.sentimentScore": t("workspace.analysis.charts.field_label_sentiment_score"),
@@ -704,10 +923,22 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
     "FeedbackRecords.userId": t("workspace.analysis.charts.field_label_user_identifier"),
     "FeedbackRecords.responseId": t("workspace.analysis.charts.field_label_response_id"),
     "FeedbackRecords.valueNumber": t("workspace.analysis.charts.field_label_value_number"),
+    [VALUE_BAND_DIMENSION_ID]: t("workspace.analysis.charts.field_label_value_band"),
     "FeedbackRecords.valueText": t("workspace.analysis.charts.field_label_value_text"),
     "FeedbackRecords.valueId": t("workspace.analysis.charts.field_label_value_option"),
     "FeedbackRecords.valueBoolean": t("workspace.analysis.charts.field_label_value_boolean"),
     "FeedbackRecords.valueDate": t("workspace.analysis.charts.field_label_value_date"),
+    "FeedbackRecords.metadataSource": t("workspace.analysis.charts.field_label_response_channel"),
+    "FeedbackRecords.metadataUrl": t("workspace.analysis.charts.field_label_page_url"),
+    "FeedbackRecords.metadataBrowser": t("workspace.analysis.charts.field_label_browser"),
+    "FeedbackRecords.metadataOs": t("workspace.analysis.charts.field_label_operating_system"),
+    "FeedbackRecords.metadataDevice": t("workspace.analysis.charts.field_label_device"),
+    "FeedbackRecords.metadataCountry": t("workspace.analysis.charts.field_label_country"),
+    "FeedbackRecords.metadataAction": t("workspace.analysis.charts.field_label_trigger_action"),
+    "FeedbackRecords.metadataFinished": t("workspace.analysis.charts.field_label_completed"),
+    "FeedbackRecords.metadataDurationSeconds": t("workspace.analysis.charts.field_label_time_to_complete"),
+    "FeedbackRecords.metadataEndingId": t("workspace.analysis.charts.field_label_ending"),
+    "FeedbackRecords.metadataSurveyType": t("workspace.analysis.charts.field_label_survey_type"),
     "FeedbackRecords.collectedAt": t("workspace.analysis.charts.field_label_collected_at"),
     "FeedbackRecords.createdAt": t("workspace.analysis.charts.field_label_created_at"),
     "FeedbackRecords.updatedAt": t("workspace.analysis.charts.field_label_updated_at"),
@@ -719,6 +950,7 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
     "FeedbackRecords.promoterCount": t("workspace.analysis.charts.field_label_promoter_count"),
     "FeedbackRecords.passiveCount": t("workspace.analysis.charts.field_label_passive_count"),
     "FeedbackRecords.detractorCount": t("workspace.analysis.charts.field_label_detractor_count"),
+    [NPS_COUNT_MEASURE_ID]: t("workspace.analysis.charts.field_label_nps_count"),
     "FeedbackRecords.csatScore": t("workspace.analysis.charts.field_label_csat_score"),
     "FeedbackRecords.csatAverage": t("workspace.analysis.charts.field_label_csat_average"),
     "FeedbackRecords.csatSatisfiedCount": t("workspace.analysis.charts.field_label_csat_satisfied_count"),
@@ -767,12 +999,13 @@ export function getTranslatedGranularityLabel(granularity: string, t: TFunction)
  * Translate a date preset value.
  */
 export function getTranslatedDatePresetLabel(value: string, t: TFunction): string {
-  const labels: Record<string, string> = {
+  const labels: Record<TDateRangePreset, string> = {
     today: t("workspace.analysis.charts.date_preset_today"),
     yesterday: t("workspace.analysis.charts.date_preset_yesterday"),
     "last 24 hours": t("workspace.analysis.charts.date_preset_last_24_hours"),
     "last 7 days": t("workspace.analysis.charts.date_preset_last_7_days"),
     "last 30 days": t("workspace.analysis.charts.date_preset_last_30_days"),
+    "last 90 days": t("workspace.analysis.charts.date_preset_last_90_days"),
     "this month": t("workspace.analysis.charts.date_preset_this_month"),
     "last month": t("workspace.analysis.charts.date_preset_last_month"),
     "this quarter": t("workspace.analysis.charts.date_preset_this_quarter"),
@@ -781,7 +1014,7 @@ export function getTranslatedDatePresetLabel(value: string, t: TFunction): strin
     "this year": t("workspace.analysis.charts.date_preset_this_year"),
     "last year": t("workspace.analysis.charts.date_preset_last_year"),
   };
-  return labels[value] ?? value;
+  return (labels as Record<string, string>)[value] ?? value;
 }
 
 /**

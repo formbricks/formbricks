@@ -15,7 +15,8 @@ import {
 } from "@formbricks/types/organizations";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
-import { capturePostHogEvent } from "@/lib/posthog";
+import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
+import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import {
   type TStandardCloudPlan,
   getCatalogItemForPlan,
@@ -26,6 +27,13 @@ import {
 } from "./stripe-billing-catalog";
 import { stripeClient } from "./stripe-client";
 import { CLOUD_PLAN_LEVEL, type TCloudStripePlan, getCloudPlanFromProduct } from "./stripe-plan";
+import {
+  BILLING_CURRENCY_CONFLICT_ERROR_CODE,
+  isCanceledSubscriptionUpdateError,
+  isFreeSubscription,
+  isSubscriptionCurrencyMismatch,
+  toBillingCurrencyConflictError,
+} from "./subscription-currency";
 
 const BILLING_SYNC_STALE_MS = 5 * 60 * 1000;
 // Single-flight lock TTL for the stale read-through Stripe sync: long enough to cover a few Stripe
@@ -534,9 +542,21 @@ const hasEmailUsedProTrial = async (email: string, proProductId: string): Promis
   return false;
 };
 
+export const DEFAULT_PRO_TRIAL_DAYS = 14;
+// A/B test: shortening the Pro trial from 14 to 7 days. "test" variant gets the short trial.
+const SHORTENED_PRO_TRIAL_DAYS = 7;
+
+export const getProTrialDays = async (organizationId: string): Promise<number> => {
+  const shortenTrialVariant = await getPostHogFeatureFlag(organizationId, "a-b_billing_shorten-trial-days", {
+    organizationId,
+  });
+  return shortenTrialVariant === "test" ? SHORTENED_PRO_TRIAL_DAYS : DEFAULT_PRO_TRIAL_DAYS;
+};
+
 export const createProTrialSubscription = async (
   organizationId: string,
-  customerId: string
+  customerId: string,
+  trialDays: number = DEFAULT_PRO_TRIAL_DAYS
 ): Promise<void> => {
   if (!stripeClient) return;
   const proCatalogItem = await getCatalogItemForPlan("pro", "monthly");
@@ -557,7 +577,7 @@ export const createProTrialSubscription = async (
     {
       customer: customerId,
       items: await getCatalogItemsForPlan("pro", "monthly"),
-      trial_period_days: 14,
+      trial_period_days: trialDays,
       trial_settings: {
         end_behavior: {
           missing_payment_method: "cancel",
@@ -596,35 +616,39 @@ export const createPaidPlanCheckoutSession = async (input: {
   }
 
   const items = await getCatalogItemsForPlan(input.plan, input.interval);
-  const session = await stripeClient.checkout.sessions.create({
-    mode: "subscription",
-    customer: input.customerId,
-    line_items: items,
-    client_reference_id: input.organizationId,
-    billing_address_collection: "required",
-    tax_id_collection: {
-      enabled: true,
-      required: "if_supported",
-    },
-    customer_update: {
-      address: "auto",
-      name: "auto",
-    },
-    // Carries the purchased plan so the confirmation page can force a Stripe sync — the read-
-    // through sync only refreshes a >5min-stale snapshot and would otherwise serve the old plan.
-    success_url: `${WEBAPP_URL}/billing-confirmation?organizationId=${input.organizationId}&checkout_success=1&plan=${input.plan}`,
-    cancel_url: `${WEBAPP_URL}/organizations/${input.organizationId}/settings/billing`,
-    metadata: {
-      organizationId: input.organizationId,
-      targetPlan: input.plan,
-      targetInterval: input.interval,
-    },
-    subscription_data: {
+  const session = await stripeClient.checkout.sessions
+    .create({
+      mode: "subscription",
+      customer: input.customerId,
+      line_items: items,
+      client_reference_id: input.organizationId,
+      billing_address_collection: "required",
+      tax_id_collection: {
+        enabled: true,
+        required: "if_supported",
+      },
+      customer_update: {
+        address: "auto",
+        name: "auto",
+      },
+      // Carries the purchased plan so the confirmation page can force a Stripe sync — the read-
+      // through sync only refreshes a >5min-stale snapshot and would otherwise serve the old plan.
+      success_url: `${WEBAPP_URL}/billing-confirmation?organizationId=${input.organizationId}&checkout_success=1&plan=${input.plan}`,
+      cancel_url: `${WEBAPP_URL}/organizations/${input.organizationId}/settings/billing`,
       metadata: {
         organizationId: input.organizationId,
+        targetPlan: input.plan,
+        targetInterval: input.interval,
       },
-    },
-  });
+      subscription_data: {
+        metadata: {
+          organizationId: input.organizationId,
+        },
+      },
+    })
+    .catch((error: unknown) => {
+      throw toBillingCurrencyConflictError(error);
+    });
 
   if (!session.url) {
     throw new Error("Stripe did not return a Checkout Session URL");
@@ -689,6 +713,13 @@ const previewFullConversionChargeCents = async (
   targetInterval: TCloudBillingInterval
 ): Promise<{ amountDue: number; currency: string } | null> => {
   if (!stripeClient) return null;
+  // A legacy EUR subscription is replaced rather than changed (see replaceSubscriptionInCatalogCurrency),
+  // and Stripe can't preview the USD replacement while the EUR one is still active ("doesn't match the
+  // invoice's currency"). Return null so the modal shows its amount-less copy.
+  const targetCatalogItem = await getCatalogItemForPlan(targetPlan, targetInterval);
+  if (isSubscriptionCurrencyMismatch(subscription.currency, targetCatalogItem.basePrice.currency)) {
+    return null;
+  }
   const targetItems = await getCatalogItemsForPlan(targetPlan, targetInterval);
   const existingDeletions = subscription.items.data.map((item) => ({ id: item.id, deleted: true as const }));
   const preview = await stripeClient.invoices.createPreview({
@@ -765,18 +796,22 @@ const updateSubscriptionItemsImmediately = async (
         payment_behavior: "error_if_incomplete",
       });
     } catch (error) {
-      throw toTrialConversionError(error);
+      throw toBillingCurrencyConflictError(toTrialConversionError(error));
     }
     return { clientSecret: null, requiresAction: false };
   }
 
-  const updated = await stripeClient.subscriptions.update(subscription.id, {
-    items: [...existingDeletions, ...targetItems],
-    proration_behavior: "always_invoice",
-    // Records a pending_update; the plan isn't granted until the invoice is paid (SCA-safe).
-    // Only pending-update-supported attributes are allowed (no metadata/cancel_at_period_end).
-    payment_behavior: "pending_if_incomplete",
-  });
+  const updated = await stripeClient.subscriptions
+    .update(subscription.id, {
+      items: [...existingDeletions, ...targetItems],
+      proration_behavior: "always_invoice",
+      // Records a pending_update; the plan isn't granted until the invoice is paid (SCA-safe).
+      // Only pending-update-supported attributes are allowed (no metadata/cancel_at_period_end).
+      payment_behavior: "pending_if_incomplete",
+    })
+    .catch((error: unknown) => {
+      throw toBillingCurrencyConflictError(error);
+    });
 
   const invoiceId =
     typeof updated.latest_invoice === "string"
@@ -976,7 +1011,7 @@ const scheduleSubscriptionPlanChange = async (
       hadCancelAtPeriodEnd,
     });
 
-    throw error;
+    throw toBillingCurrencyConflictError(error);
   }
 
   const nextPhase = updatedSchedule.phases.find((phase) => phase.start_date >= currentPhase.end_date);
@@ -1074,6 +1109,258 @@ const switchTrialToHobbyImmediately = async (
   await updatePendingPlanChangeSnapshot(organizationId, null);
 };
 
+type TActiveSubscription = NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>;
+
+const getPaymentMethodId = (
+  paymentMethod: string | Stripe.PaymentMethod | null | undefined
+): string | null => (typeof paymentMethod === "string" ? paymentMethod : (paymentMethod?.id ?? null));
+
+/**
+ * The card a replacement subscription will charge, checked BEFORE the legacy subscription is
+ * canceled so a failure leaves it intact. The SCA flow (stripe.confirmCardPayment) and the
+ * card-only setup checkout only support cards, so a saved non-card method (e.g. a EUR-only SEPA
+ * mandate, which also can't pay in USD) is refused. Returns the subscription-level method to carry
+ * over, or null when the card is the customer default (Stripe falls back to it on its own).
+ */
+const resolveReplacementCard = async (
+  subscription: TActiveSubscription,
+  customerId: string
+): Promise<{ subscriptionPaymentMethodId: string | null }> => {
+  if (!stripeClient) {
+    throw new Error("Stripe is not configured");
+  }
+
+  const subscriptionPaymentMethodId = getPaymentMethodId(subscription.default_payment_method);
+  let paymentMethodId = subscriptionPaymentMethodId;
+  if (!paymentMethodId) {
+    const customer = await stripeClient.customers.retrieve(customerId);
+    paymentMethodId = customer.deleted
+      ? null
+      : getPaymentMethodId(customer.invoice_settings?.default_payment_method);
+  }
+
+  if (!paymentMethodId) {
+    throw new OperationNotAllowedError("payment_method_required");
+  }
+
+  const paymentMethod = await stripeClient.paymentMethods.retrieve(paymentMethodId);
+  if (paymentMethod.type !== "card") {
+    throw new OperationNotAllowedError("card_payment_method_required");
+  }
+  // An old card on file is the likely case for these accounts. An expired one would be declined, the
+  // replacement would stay incomplete, and the org would drop to Hobby — so ask for a new card instead.
+  if (paymentMethod.card && isCardExpired(paymentMethod.card.exp_month, paymentMethod.card.exp_year)) {
+    throw new OperationNotAllowedError("payment_method_required");
+  }
+
+  return { subscriptionPaymentMethodId };
+};
+
+// A card is valid through the last day of its expiry month.
+const isCardExpired = (expMonth: number, expYear: number): boolean => {
+  const now = new Date();
+  const currentYear = now.getUTCFullYear();
+  const currentMonth = now.getUTCMonth() + 1;
+  return expYear < currentYear || (expYear === currentYear && expMonth < currentMonth);
+};
+
+/**
+ * Stripe refuses a second currency on a customer that still has "an active subscription, subscription
+ * schedule, discount, quote, or invoice item" in the first one. The replacement deals with the
+ * subscription and its schedule; anything else would make the create fail AFTER the cancel — and
+ * reconcile's Hobby create with it — leaving the org with no subscription. Refuse before the cancel
+ * instead, so the legacy plan stays intact for support to move by hand.
+ */
+const assertNoOtherCurrencyBillingObjects = async (
+  subscription: TActiveSubscription,
+  customerId: string
+): Promise<void> => {
+  if (!stripeClient) return;
+
+  const currency = subscription.currency.toLowerCase();
+  const hasCurrency = (object: { currency: string | null }) => object.currency?.toLowerCase() === currency;
+
+  const [
+    customer,
+    subscriptions,
+    notStartedSchedules,
+    pendingInvoiceItems,
+    draftQuotes,
+    openQuotes,
+    draftInvoices,
+    openInvoices,
+  ] = await Promise.all([
+    stripeClient.customers.retrieve(customerId, { expand: ["discount.source.coupon"] }),
+    stripeClient.subscriptions.list({ customer: customerId, status: "all", limit: 100 }),
+    stripeClient.subscriptionSchedules.list({ customer: customerId, scheduled: true, limit: 100 }),
+    stripeClient.invoiceItems.list({ customer: customerId, pending: true, limit: 100 }),
+    stripeClient.quotes.list({ customer: customerId, status: "draft", limit: 100 }),
+    stripeClient.quotes.list({ customer: customerId, status: "open", limit: 100 }),
+    stripeClient.invoices.list({ customer: customerId, status: "draft", limit: 100 }),
+    stripeClient.invoices.list({ customer: customerId, status: "open", limit: 100 }),
+  ]);
+
+  // Only an amount-off coupon carries a currency; a percent-off one doesn't block. Unexpanded counts.
+  const coupon = customer.deleted ? null : (customer.discount?.source.coupon ?? null);
+  const lists = [
+    subscriptions,
+    notStartedSchedules,
+    pendingInvoiceItems,
+    draftQuotes,
+    openQuotes,
+    draftInvoices,
+    openInvoices,
+  ];
+  const blockers = {
+    // Each list reads one page; an unread page could hide a blocker, so fail closed on it.
+    unreadPages: lists.some((list) => list.has_more),
+    customerDiscount: typeof coupon === "string" || (!!coupon && hasCurrency(coupon)),
+    customerBalance: !customer.deleted && customer.balance !== 0,
+    // Another live subscription in this currency (an add-on, a second legacy plan) outlives the cancel.
+    otherSubscriptions: subscriptions.data.filter(
+      (other) =>
+        other.id !== subscription.id && ACTIVE_SUBSCRIPTION_STATUSES.has(other.status) && hasCurrency(other)
+    ).length,
+    notStartedSchedules: notStartedSchedules.data.filter((schedule) =>
+      schedule.phases.some((phase) => phase.currency?.toLowerCase() === currency)
+    ).length,
+    pendingInvoiceItems: pendingInvoiceItems.data.filter(hasCurrency).length,
+    quotes: [...draftQuotes.data, ...openQuotes.data].filter(hasCurrency).length,
+    invoices: [...draftInvoices.data, ...openInvoices.data].filter(hasCurrency).length,
+  };
+
+  if (
+    blockers.unreadPages ||
+    blockers.customerDiscount ||
+    blockers.customerBalance ||
+    blockers.otherSubscriptions > 0 ||
+    blockers.notStartedSchedules > 0 ||
+    blockers.pendingInvoiceItems > 0 ||
+    blockers.quotes > 0 ||
+    blockers.invoices > 0
+  ) {
+    logger.warn(
+      { customerId, subscriptionId: subscription.id, currency, blockers },
+      "Legacy subscription not replaced: the customer holds other billing in its currency"
+    );
+    throw new OperationNotAllowedError(BILLING_CURRENCY_CONFLICT_ERROR_CODE);
+  }
+};
+
+// An incomplete replacement means its first invoice is unpaid (SCA or decline). Hand the invoice's
+// PaymentIntent secret to the billing page to confirm on-session, like any other upgrade.
+const getIncompleteSubscriptionConfirmation = async (
+  organizationId: string,
+  created: Stripe.Subscription
+): Promise<TUpgradePaymentConfirmation> => {
+  if (!stripeClient) {
+    return { clientSecret: null, requiresAction: false };
+  }
+
+  logger.warn(
+    { organizationId, subscriptionId: created.id },
+    "Legacy subscription replacement is incomplete; its first invoice awaits payment confirmation"
+  );
+
+  const invoice =
+    typeof created.latest_invoice === "string"
+      ? await stripeClient.invoices.retrieve(created.latest_invoice, { expand: ["confirmation_secret"] })
+      : created.latest_invoice;
+  const clientSecret = invoice?.confirmation_secret?.client_secret ?? null;
+
+  // Nothing to confirm, so the payment can't be completed here: never report the upgrade as applied.
+  if (!clientSecret) {
+    throw new OperationNotAllowedError("card_authentication_required");
+  }
+
+  return { clientSecret, requiresAction: true };
+};
+
+/**
+ * Moves a free subscription billed in another currency than the catalog (a €0 legacy EUR plan) onto
+ * the target plan by replacing it: cancel it, then create the target subscription in the catalog
+ * currency (ENG-3370).
+ *
+ * Its items can't be swapped — Stripe rejects a USD price on a EUR subscription — and the new
+ * subscription can't be created first: Stripe refuses a second currency on a customer while the EUR
+ * one is active ("You cannot combine currencies on a single customer"). So the cancel has to come
+ * first; everything that can fail without Stripe's help (catalog, card) is checked before it, and the
+ * create follows immediately. If the create fails anyway, the org has no active subscription, which
+ * reads as Hobby, and reconcile provisions the USD Hobby plan. The plan is €0 (see isFreeSubscription),
+ * so canceling without proration or a final invoice forfeits nothing.
+ *
+ * Hobby is not created here: canceling and running reconcile lets ensureHobbySubscription create it
+ * under the same idempotency key a concurrent reconcile (the subscription.deleted webhook) uses, so
+ * the two can't provision two Hobby subscriptions.
+ */
+const replaceSubscriptionInCatalogCurrency = async (input: {
+  organizationId: string;
+  customerId: string;
+  subscription: TActiveSubscription;
+  targetPlan: TStandardCloudPlan;
+  targetInterval: TCloudBillingInterval;
+}): Promise<TUpgradePaymentConfirmation> => {
+  if (!stripeClient) {
+    return { clientSecret: null, requiresAction: false };
+  }
+
+  const { organizationId, customerId, subscription, targetPlan, targetInterval } = input;
+  const isHobbyTarget = targetPlan === "hobby";
+  const targetItems = await getCatalogItemsForPlan(targetPlan, targetInterval);
+  const card = isHobbyTarget ? null : await resolveReplacementCard(subscription, customerId);
+  await assertNoOtherCurrencyBillingObjects(subscription, customerId);
+
+  // A schedule would keep driving the canceled subscription's phases; release it while it still can be.
+  if (subscription.schedule) {
+    const scheduleId =
+      typeof subscription.schedule === "string" ? subscription.schedule : subscription.schedule.id;
+    await stripeClient.subscriptionSchedules.release(scheduleId, { preserve_cancel_date: false });
+  }
+
+  await stripeClient.subscriptions.cancel(subscription.id, { invoice_now: false, prorate: false });
+  await updatePendingPlanChangeSnapshot(organizationId, null);
+
+  if (isHobbyTarget) {
+    await reconcileCloudStripeSubscriptionsForOrganization(organizationId);
+    return { clientSecret: null, requiresAction: false };
+  }
+
+  let created: Stripe.Subscription;
+  try {
+    created = await stripeClient.subscriptions.create(
+      {
+        customer: customerId,
+        items: targetItems,
+        ...(card?.subscriptionPaymentMethodId
+          ? { default_payment_method: card.subscriptionPaymentMethodId }
+          : {}),
+        // An unpaid first invoice leaves the subscription incomplete with its PaymentIntent open
+        // instead of failing, so SCA can still be completed on-session.
+        payment_behavior: "allow_incomplete",
+        // Lets a repeated finalize tell this replacement from one for another plan or checkout.
+        metadata: { organizationId, targetPlan, targetInterval, replacesSubscriptionId: subscription.id },
+        expand: ["latest_invoice.confirmation_secret"],
+      },
+      // Per legacy subscription, not per target: two concurrent submits for different plans must
+      // not both create a paid subscription.
+      { idempotencyKey: `replace-subscription-${organizationId}-${subscription.id}` }
+    );
+  } catch (error) {
+    logger.error(
+      { error, organizationId, canceledSubscriptionId: subscription.id, targetPlan },
+      "Legacy subscription canceled but replacement failed"
+    );
+    throw toBillingCurrencyConflictError(error);
+  }
+
+  // A paid invoice still carries a confirmation secret, so only an incomplete subscription needs action.
+  if (created.status !== "incomplete") {
+    return { clientSecret: null, requiresAction: false };
+  }
+
+  return getIncompleteSubscriptionConfirmation(organizationId, created);
+};
+
 // Immediate upgrade / trial conversion: bills the full target-plan price via a single Stripe update,
 // then clears any pending downgrade. Extracted from switchOrganizationToCloudPlan for Sonar's
 // complexity budget.
@@ -1107,17 +1394,116 @@ const performImmediateUpgradeOrTrialConversion = async (input: {
   };
 };
 
+// Currency-mismatch branch of switchOrganizationToCloudPlan, extracted for Sonar's complexity budget.
+const replaceSubscriptionForCloudPlan = async (
+  input: {
+    organizationId: string;
+    customerId: string;
+    targetPlan: TStandardCloudPlan;
+    targetInterval: TCloudBillingInterval;
+  },
+  subscription: TActiveSubscription
+): Promise<{
+  mode: "immediate";
+  pendingChange: null;
+  clientSecret: string | null;
+  requiresAction: boolean;
+}> => {
+  // Replacing cancels without proration or a final invoice, which is only harmless for a €0 plan. A
+  // paid subscription in another currency is left alone for support to move by hand.
+  if (!isFreeSubscription(subscription.items.data)) {
+    throw new OperationNotAllowedError(BILLING_CURRENCY_CONFLICT_ERROR_CODE);
+  }
+
+  const confirmation = await replaceSubscriptionInCatalogCurrency({ ...input, subscription });
+  return { mode: "immediate", pendingChange: null, ...confirmation };
+};
+
+/**
+ * Legacy replacements whose first invoice still awaits payment (see replaceSubscriptionInCatalogCurrency),
+ * split into the one created for this checkout — same plan, interval and replaced subscription — and
+ * any left behind by an abandoned attempt at another plan.
+ */
+const findIncompleteReplacementSubscriptions = async (input: {
+  organizationId: string;
+  customerId: string;
+  targetPlan: TStandardCloudPlan;
+  targetInterval: TCloudBillingInterval;
+  replacesSubscriptionId?: string;
+}): Promise<{ matching: Stripe.Subscription | null; stale: Stripe.Subscription[] }> => {
+  if (!stripeClient) return { matching: null, stale: [] };
+  // Incomplete subscriptions expire after 23 hours, so a customer never holds more than a few; read
+  // Stripe's maximum page anyway, and refuse rather than guess if even that isn't all of them.
+  const { data, has_more: hasMore } = await stripeClient.subscriptions.list({
+    customer: input.customerId,
+    status: "incomplete",
+    limit: 100,
+  });
+  if (hasMore) {
+    logger.warn(
+      { organizationId: input.organizationId, customerId: input.customerId },
+      "Too many incomplete subscriptions to match a pending replacement"
+    );
+    throw new OperationNotAllowedError(BILLING_CURRENCY_CONFLICT_ERROR_CODE);
+  }
+  const replacements = data.filter(
+    (subscription) =>
+      subscription.status === "incomplete" && subscription.metadata?.organizationId === input.organizationId
+  );
+  const isForThisCheckout = (subscription: Stripe.Subscription) =>
+    subscription.metadata?.targetPlan === input.targetPlan &&
+    subscription.metadata?.targetInterval === input.targetInterval &&
+    (!input.replacesSubscriptionId ||
+      subscription.metadata?.replacesSubscriptionId === input.replacesSubscriptionId);
+  return {
+    matching: replacements.find(isForThisCheckout) ?? null,
+    stale: replacements.filter((subscription) => !isForThisCheckout(subscription)),
+  };
+};
+
+/**
+ * A retry after an abandoned 3D Secure — a reload of the add-card checkout or a second click on a
+ * saved card — finds the legacy plan already canceled and, often, the Hobby the subscription.deleted
+ * webhook created. Switching that Hobby would start a second paid subscription beside the unpaid
+ * replacement. Hand back the matching replacement's confirmation instead, and cancel one for another
+ * plan (voiding its open invoice) so it can't be paid later beside the plan chosen now.
+ */
+const settlePendingReplacements = async (input: {
+  organizationId: string;
+  customerId: string;
+  targetPlan: TStandardCloudPlan;
+  targetInterval: TCloudBillingInterval;
+  replacesSubscriptionId?: string;
+}): Promise<TUpgradePaymentConfirmation | null> => {
+  const client = stripeClient;
+  if (!client) return null;
+
+  const { matching, stale } = await findIncompleteReplacementSubscriptions(input);
+  if (matching) {
+    return getIncompleteSubscriptionConfirmation(input.organizationId, matching);
+  }
+  await Promise.all(stale.map((replacement) => client.subscriptions.cancel(replacement.id)));
+  return null;
+};
+
 export const switchOrganizationToCloudPlan = async (input: {
   organizationId: string;
   customerId: string;
   targetPlan: TStandardCloudPlan;
   targetInterval: TCloudBillingInterval;
+  /** The legacy subscription a setup checkout was opened to replace, when there is one. */
+  replacesSubscriptionId?: string;
 }): Promise<{
   mode: "immediate" | "scheduled";
   pendingChange: TOrganizationStripePendingChange | null;
   clientSecret?: string | null;
   requiresAction?: boolean;
 }> => {
+  const pendingConfirmation = await settlePendingReplacements(input);
+  if (pendingConfirmation) {
+    return { mode: "immediate", pendingChange: null, ...pendingConfirmation };
+  }
+
   const subscription = await getRequiredActiveSubscription(input.organizationId, input.customerId);
   const currentPlan = resolveCloudPlanFromSubscription(subscription);
   const currentInterval = resolveSubscriptionInterval(subscription);
@@ -1134,6 +1520,14 @@ export const switchOrganizationToCloudPlan = async (input: {
   // A same plan+interval selection is a no-op — except a trial conversion, which must still charge.
   if (isSameSelection && !isTrialConversion) {
     return { mode: "immediate", pendingChange: null, clientSecret: null, requiresAction: false };
+  }
+
+  // Legacy plans are €0 EUR subscriptions; any move onto the USD catalog — upgrade, Hobby or a would-be
+  // scheduled downgrade — replaces the subscription immediately, as no item swap or schedule phase can
+  // carry it.
+  const targetCatalogItem = await getCatalogItemForPlan(input.targetPlan, input.targetInterval);
+  if (isSubscriptionCurrencyMismatch(subscription.currency, targetCatalogItem.basePrice.currency)) {
+    return replaceSubscriptionForCloudPlan(input, subscription);
   }
 
   // Trial -> Hobby switches immediately to the free Hobby plan (no schedule, no charge): the user
@@ -1279,9 +1673,13 @@ export const applySetupCheckoutUpgrade = async (input: {
     });
     const subscriptionId = session.metadata?.subscriptionId;
     if (subscriptionId) {
-      await stripeClient.subscriptions.update(subscriptionId, {
-        default_payment_method: paymentMethodId,
-      });
+      // A repeated finalize finds this (legacy) subscription already replaced and canceled; the card is
+      // the customer default either way, and the switch below then no-ops on the new subscription.
+      await stripeClient.subscriptions
+        .update(subscriptionId, { default_payment_method: paymentMethodId })
+        .catch((error: unknown) => {
+          if (!isCanceledSubscriptionUpdateError(error)) throw error;
+        });
     }
   }
 
@@ -1290,6 +1688,7 @@ export const applySetupCheckoutUpgrade = async (input: {
     customerId,
     targetPlan,
     targetInterval,
+    replacesSubscriptionId: session.metadata?.subscriptionId,
   });
 
   return {
@@ -1675,6 +2074,16 @@ export const syncOrganizationBillingFromStripe = async (
   });
 
   await invalidateOrganizationBillingCache(organizationId);
+
+  // Keep the PostHog organization group's plan facts current on every sync (ENG-2851). The daily
+  // workflows snapshot refreshes them too, but a plan change should be breakdown-able the same day.
+  // Additive merge: `name` and `email_domain` set at signup stay untouched. Never throws.
+  groupIdentifyPostHog("organization", organizationId, {
+    plan: cloudPlan,
+    billing_interval: billingInterval,
+    subscription_status: subscriptionStatus,
+    has_payment_method: hasPaymentMethod,
+  });
 
   await emitSubscriptionLifecycleEvent({
     organizationId,

@@ -71,6 +71,8 @@ authzed_cli() {
   local script="$2"
   shift 2
 
+  # Use one Node import hook; tsx's CLI adds a CommonJS preflight as well, which
+  # can race with its ESM loader in workers when the backfill loads Prisma/Pino.
   env \
     AUTHZED_CONSISTENCY="${AUTHZED_SMOKE_CONSISTENCY:-minimize_latency}" \
     AUTHZED_ENABLED=true \
@@ -87,7 +89,7 @@ authzed_cli() {
     LOG_LEVEL=fatal \
     NODE_ENV="${AUTHZED_SMOKE_NODE_ENV:-test}" \
     NODE_OPTIONS=--conditions=react-server \
-    pnpm --dir "${REPO_ROOT}/apps/web" exec tsx "${script}" "$@"
+    pnpm --dir "${REPO_ROOT}/apps/web" exec node --import tsx "${script}" "$@"
 }
 
 assert_health_result() {
@@ -569,6 +571,10 @@ jq --exit-status '.status == "projected"' <<<"${persisted_feedback_seed}" >/dev/
 zed relationship create organization:smoke owner user:alice
 zed relationship create workspace:smoke organization organization:smoke
 zed relationship create survey:smoke workspace workspace:smoke
+# ENG-3282: a workspace-visible survey carries its workspace twice, the second edge being what shares it.
+# Hand-written, so there is no Survey row behind it: only the `--scope=survey` audit sweeps surveys, and
+# this harness never runs that scope, so the edge is never reported as an orphan.
+zed relationship create survey:smoke shared_workspace workspace:smoke
 
 alice_result="$(zed permission check survey:smoke read user:alice --consistency-full)"
 bob_result="$(zed permission check survey:smoke read user:bob --consistency-full)"

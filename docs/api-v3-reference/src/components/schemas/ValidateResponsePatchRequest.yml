@@ -1,0 +1,20 @@
+type: object
+required:
+  - operation
+  - responseId
+  - data
+properties:
+  operation:
+    type: string
+    enum:
+      - patch
+  responseId:
+    type: string
+    format: cuid2
+  data:
+    description: >-
+      Intended patch payload, checked against `PatchResponseRequest` by the operation rather than by this
+      envelope. Any JSON value is accepted here so the endpoint can return repairable validation
+      errors: a document that is not an object, or that breaks `PatchResponseRequest`, is a **200** with
+      `valid: false`, never a 400.
+additionalProperties: false

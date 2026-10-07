@@ -10,7 +10,7 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { PipelineTriggers, Webhook } from "@formbricks/database/prisma-browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { SurveyCheckboxGroup } from "@/modules/integrations/webhooks/components/survey-checkbox-group";
 import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
 import { validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
@@ -27,6 +27,7 @@ interface WebhookSettingsTabProps {
   setOpen: (v: boolean) => void;
   isReadOnly: boolean;
   allowInternalUrls: boolean;
+  surveyVisibilityEnabled: boolean;
 }
 
 export const WebhookSettingsTab = ({
@@ -35,7 +36,8 @@ export const WebhookSettingsTab = ({
   setOpen,
   isReadOnly,
   allowInternalUrls,
-}: WebhookSettingsTabProps) => {
+  surveyVisibilityEnabled,
+}: Readonly<WebhookSettingsTabProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
   const { register, handleSubmit } = useForm({
@@ -299,6 +301,8 @@ export const WebhookSettingsTab = ({
             onSelectAllSurveys={handleSelectAllSurveys}
             onSelectedSurveyChange={handleSelectedSurveyChange}
             allowChanges={webhook.source === "user" && !isReadOnly}
+            surveyVisibilityEnabled={surveyVisibilityEnabled}
+            attachedSurveyIds={webhook.surveyIds}
           />
         </div>
 

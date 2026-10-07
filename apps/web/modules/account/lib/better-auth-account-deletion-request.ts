@@ -3,8 +3,8 @@ import crypto from "node:crypto";
 import { prisma } from "@formbricks/database";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import type { TUserLocale } from "@formbricks/types/user";
-import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
-import { FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL } from "@/modules/account/constants";
+import { WEBAPP_URL } from "@/lib/constants";
+import { ACCOUNT_DELETED_PATH } from "@/modules/account/constants";
 import { requiresPasswordConfirmationForAccountDeletion } from "@/modules/account/lib/account-deletion-auth";
 import { auth } from "@/modules/auth/lib/auth";
 import { getSession } from "@/modules/auth/lib/session";
@@ -67,13 +67,14 @@ export const requestSsoAccountDeletionEmail = async (): Promise<void> => {
     expiresAt: new Date(Date.now() + DELETE_ACCOUNT_LINK_VALIDITY_MS),
   });
 
-  // Match the credential delete path's post-deletion redirect (DeleteAccountModal): survey on
-  // Formbricks Cloud, /auth/login otherwise. Better Auth's delete-user/callback only accepts
-  // same-origin callbackURLs (trustedOrigins); the survey is served from the Cloud app's own origin,
-  // so it passes there. (It is rejected when WEBAPP_URL differs from the survey origin — e.g. a local
-  // build with the Cloud flag forced on.)
-  const callbackURL = IS_FORMBRICKS_CLOUD ? FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL : "/auth/login";
-  const deleteLink = `${WEBAPP_URL}/api/auth/delete-user/callback?token=${token}&callbackURL=${encodeURIComponent(callbackURL)}`;
+  // The callbackURL must be RELATIVE, and must not depend on the deployment. Better Auth runs
+  // `originCheck` on the callback GET before it looks at the token, accepting only `trustedOrigins`
+  // (BETTER_AUTH_URL / NEXTAUTH_URL) or a relative path — so an absolute, deployment-specific URL here
+  // answers INVALID_CALLBACK_URL and the account is never deleted on any host but the one it names.
+  // Sending the Cloud offboarding survey URL from here did exactly that everywhere except production
+  // Cloud (ENG-3260). The post-deletion page picks the final destination in the browser instead, which
+  // is what the credential path in DeleteAccountModal has always done.
+  const deleteLink = `${WEBAPP_URL}/api/auth/delete-user/callback?token=${token}&callbackURL=${encodeURIComponent(ACCOUNT_DELETED_PATH)}`;
 
   await sendDeleteAccountConfirmationEmail({
     email,

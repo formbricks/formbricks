@@ -11,6 +11,8 @@ import {
 } from "./__mock__/survey.mock";
 import { createSurvey, updateSurveyInternal } from "./service";
 
+const WORKSPACE_CREATION_FACTS = { ownerId: null, visibility: "workspace" } as const;
+
 const { mockQueueAuditEventWithoutRequest } = vi.hoisted(() => ({
   mockQueueAuditEventWithoutRequest: vi.fn(),
 }));
@@ -59,9 +61,27 @@ describe("survey service scheduling", () => {
     vi.mocked(getActionClasses).mockResolvedValue([mockActionClass] as never);
     vi.mocked(getOrganizationByWorkspaceId).mockResolvedValue({ id: "org123" } as never);
     mockQueueAuditEventWithoutRequest.mockResolvedValue(undefined);
-    // createSurvey now wraps its core writes in prisma.$transaction; run the callback with the same
-    // mocked client so per-test prisma.survey/segment mocks still apply inside the transaction.
+    // createSurvey and updateSurveyInternal wrap their core writes in prisma.$transaction; run the
+    // callback with the same mocked client so per-test prisma.survey/segment mocks still apply inside
+    // the transaction.
     vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
+    // Both paths also reconcile the Embedded Data tables (ENG-1978); no existing links means the
+    // reconcile is a no-op and scheduling behaviour is what these tests still measure.
+    vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.embeddedData.create).mockResolvedValue({ id: "ed_1" } as never);
+    vi.mocked(prisma.surveyEmbeddedData.create).mockResolvedValue({} as never);
+    // Both `createSurvey` (ENG-2412) and `updateSurveyInternal` (ENG-3228) re-read the survey after
+    // that reconcile, so the read has to be answered too. Echoing the last value the test's own
+    // `survey.update` or `survey.create` resolved to keeps each fixture in charge of both paths.
+    vi.mocked(prisma.survey.findUniqueOrThrow).mockImplementation((async () => {
+      for (const fn of [prisma.survey.update, prisma.survey.create]) {
+        for (const result of [...vi.mocked(fn).mock.results].reverse()) {
+          const value = result.value instanceof Promise ? await result.value : result.value;
+          if (value) return value;
+        }
+      }
+      return undefined;
+    }) as never);
   });
 
   afterEach(() => {
@@ -321,13 +341,17 @@ describe("survey service scheduling", () => {
       type: "link",
     } as never);
 
-    const createdSurvey = await createSurvey(updateSurveyInput.workspaceId, {
-      ...createSurveyInput,
-      name: "Scheduled survey",
-      publishOn: dueSelection,
-      status: "paused",
-      type: "link",
-    });
+    const createdSurvey = await createSurvey(
+      updateSurveyInput.workspaceId,
+      {
+        ...createSurveyInput,
+        name: "Scheduled survey",
+        publishOn: dueSelection,
+        status: "paused",
+        type: "link",
+      },
+      { creationFacts: WORKSPACE_CREATION_FACTS }
+    );
 
     expect(createdSurvey.status).toBe("inProgress");
     expect(prisma.survey.create).toHaveBeenCalledWith(
@@ -370,14 +394,18 @@ describe("survey service scheduling", () => {
     const sameDaySelection = new Date(Date.UTC(2026, 3, 17, 12, 0, 0));
 
     await expect(
-      createSurvey(updateSurveyInput.workspaceId, {
-        ...createSurveyInput,
-        closeOn: sameDaySelection,
-        name: "Scheduled survey",
-        publishOn: sameDaySelection,
-        status: "paused",
-        type: "link",
-      })
+      createSurvey(
+        updateSurveyInput.workspaceId,
+        {
+          ...createSurveyInput,
+          closeOn: sameDaySelection,
+          name: "Scheduled survey",
+          publishOn: sameDaySelection,
+          status: "paused",
+          type: "link",
+        },
+        { creationFacts: WORKSPACE_CREATION_FACTS }
+      )
     ).rejects.toThrow(ValidationError);
 
     expect(prisma.survey.create).not.toHaveBeenCalled();

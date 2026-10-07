@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { CHART_TYPE_IDS } from "@/modules/ee/analysis/types/analysis";
 import { generateSchemaContext } from "./ai-schema-context";
 
@@ -17,6 +18,22 @@ describe("AI schema context", () => {
       '"NPS value", "NPS average", or "NPS average rating" means `FeedbackRecords.npsAverage`',
     ],
     ["the CSAT score alias", '"CSAT score" means `FeedbackRecords.csatScore`'],
+    [
+      "the NPS answer count alias",
+      '"how many NPS answers" or "NPS responses" means `FeedbackRecords.npsCount`',
+    ],
+    [
+      "the NPS breakdown recipe over the value band",
+      '"NPS breakdown" or "promoters vs passives vs detractors" means measure `FeedbackRecords.npsCount`, dimension `FeedbackRecords.valueBand`, filter `FeedbackRecords.fieldType` equals ["nps"]',
+    ],
+    [
+      "the CSAT breakdown recipe over the value band",
+      '"CSAT breakdown" or "satisfied vs neutral vs dissatisfied" means measure `FeedbackRecords.csatCount`, dimension `FeedbackRecords.valueBand`, filter `FeedbackRecords.fieldType` equals ["csat"]',
+    ],
+    [
+      "the exact value band tokens for equals filtering",
+      "promoter, passive, detractor (NPS) and satisfied, neutral, dissatisfied (CSAT)",
+    ],
     ["the CSAT average alias", '"CSAT average" means `FeedbackRecords.csatAverage`'],
     ["the CES alias", '"CES average" or "CES score" means `FeedbackRecords.cesAverage`'],
     [
@@ -44,6 +61,15 @@ describe("AI schema context", () => {
     ["sourceName among the free-text dimensions", "`FeedbackRecords.sourceName`"],
   ])("documents %s", (_description, expectedSnippet) => {
     expect(generateSchemaContext()).toContain(expectedSnippet);
+  });
+
+  // The prompt and the output schema both derive from the shared preset list, so the model can only ask
+  // for windows the summary filter and the dashboards offer too. Hardcode either and this fails.
+  test("offers every shared date preset", () => {
+    const context = generateSchemaContext();
+    for (const preset of DATE_RANGE_PRESETS) {
+      expect(context).toContain(`"${preset}"`);
+    }
   });
 
   test("offers exactly the chart types the output schema accepts", () => {

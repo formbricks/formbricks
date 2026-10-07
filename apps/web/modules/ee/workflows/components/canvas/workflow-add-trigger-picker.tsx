@@ -4,6 +4,8 @@ import { type LucideIcon, PlusIcon, ZapIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { type TWorkflowTriggerType, WORKFLOW_TRIGGERS } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
+import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
+import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,7 +69,12 @@ export const WorkflowAddTriggerPicker = ({ onSelect }: Readonly<WorkflowAddTrigg
         <DropdownMenuLabel>{t("workspace.workflows.triggers")}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {options.map((option) => (
-          <DropdownMenuItem key={option.triggerType} onClick={() => onSelect(option.triggerType)}>
+          <DropdownMenuItem
+            key={option.triggerType}
+            onClick={() => {
+              trackWorkflowEvent(WORKFLOW_CLIENT_EVENTS.triggerAdded, { trigger_type: option.triggerType });
+              onSelect(option.triggerType);
+            }}>
             <span
               className={cn(
                 "flex size-6 shrink-0 items-center justify-center rounded-md",

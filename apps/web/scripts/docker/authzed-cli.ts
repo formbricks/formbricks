@@ -1,6 +1,11 @@
 import "server-only";
 import { configureCanonicalAuthzedSchemaUrl } from "../../lib/authzed/schema-source";
+import { exitAfterStdoutFlush } from "../authzed-health-process";
 import { INVALID_CONFIGURATION_RESULT, INVALID_REQUEST_RESULT } from "../authzed-schema-results";
+
+// Operator commands have a single-JSON output contract. Suppress application logging before loading
+// runtime modules so retries cannot add diagnostic lines to stdout.
+process.env.LOG_LEVEL = "fatal";
 
 configureCanonicalAuthzedSchemaUrl(import.meta.url, "./schema.zed");
 
@@ -28,6 +33,22 @@ const closeDatabase = async (): Promise<void> => {
   await prisma.$disconnect();
 };
 
+const runHealthCommand = async (
+  args: ReadonlyArray<string>,
+  originalConsoleError: typeof console.error
+): Promise<void> => {
+  if (args.length !== 0) {
+    console.error = originalConsoleError;
+    writeResult(HEALTH_INVALID_REQUEST_RESULT);
+    process.exitCode = 1;
+    return;
+  }
+
+  const { runAuthzedHealthCli } = await import("../../lib/authzed/cli");
+  console.error = originalConsoleError;
+  process.exitCode = await runAuthzedHealthCli();
+};
+
 const run = async (): Promise<void> => {
   const [command, ...args] = process.argv.slice(2);
   const originalConsoleError = console.error;
@@ -40,16 +61,7 @@ const run = async (): Promise<void> => {
 
     switch (command) {
       case "health": {
-        if (args.length !== 0) {
-          console.error = originalConsoleError;
-          writeResult(HEALTH_INVALID_REQUEST_RESULT);
-          process.exitCode = 1;
-          return;
-        }
-
-        const { runAuthzedHealthCli } = await import("../../lib/authzed/cli");
-        console.error = originalConsoleError;
-        process.exitCode = await runAuthzedHealthCli();
+        await runHealthCommand(args, originalConsoleError);
         return;
       }
       case "schema": {
@@ -141,4 +153,8 @@ const run = async (): Promise<void> => {
   }
 };
 
-void run();
+void run().then(() => {
+  if (process.argv[2] === "health") {
+    exitAfterStdoutFlush(process.exitCode ?? 1);
+  }
+});

@@ -152,6 +152,108 @@ describe("proxy", () => {
     expect(response.cookies.get("formbricks-workspace-id")?.value).toBe("ws-456");
   });
 
+  test.each([
+    ["next-router-prefetch"],
+    ["next-router-segment-prefetch"],
+    ["next-instant-navigation-testing-prefetch"],
+  ])("leaves the active-workspace cookie alone on a %s request", async (prefetchHeader) => {
+    mockGetProxySession.mockResolvedValue(null);
+
+    // The router keeps prefetching the links of a tree it rendered earlier, so after a workspace is
+    // deleted it still prefetches that workspace's links. Honouring one would overwrite the
+    // surviving workspace the delete action stored with a workspace that no longer exists.
+    const request = new NextRequest("http://localhost:3000/workspaces/ws-deleted/settings/workspace/tags", {
+      headers: { [prefetchHeader]: "1" },
+    });
+    request.cookies.set("formbricks-workspace-id", "ws-surviving");
+
+    const response = await proxy(request);
+
+    expect(response.cookies.get("formbricks-workspace-id")).toBeUndefined();
+  });
+
+  test("still sets the active-workspace cookie on a client-side navigation to a workspace", async () => {
+    mockGetProxySession.mockResolvedValue(null);
+
+    // A soft navigation is an RSC request too; only the prefetch headers separate it from a
+    // prefetch, so excluding prefetches must not stop the cookie from following a real route change.
+    const request = new NextRequest("http://localhost:3000/workspaces/ws-456/surveys", {
+      headers: { rsc: "1", "next-router-state-tree": "%5B%22%22%5D" },
+    });
+    request.cookies.set("formbricks-workspace-id", "ws-123");
+
+    const response = await proxy(request);
+
+    expect(response.cookies.get("formbricks-workspace-id")?.value).toBe("ws-456");
+  });
+
+  test("sets the active-organization cookie from an /organizations/[organizationId] path", async () => {
+    mockGetProxySession.mockResolvedValue({
+      userId: "user-1",
+      expires: new Date(Date.now() + 60_000),
+    });
+
+    // An organization with no workspace lands here; without this cookie, account settings would
+    // follow the workspace cookie back into the previously visited organization.
+    const request = new NextRequest("http://localhost:3000/organizations/org-2/landing");
+    request.cookies.set("formbricks-workspace-id", "ws-of-org-1");
+
+    const response = await proxy(request);
+
+    expect(response.cookies.get("formbricks-organization-id")?.value).toBe("org-2");
+    expect(response.cookies.get("formbricks-workspace-id")).toBeUndefined();
+  });
+
+  test("does not re-set the active-organization cookie when the request already carries the same value", async () => {
+    mockGetProxySession.mockResolvedValue(null);
+
+    const request = new NextRequest("http://localhost:3000/organizations/org-2/settings/general");
+    request.cookies.set("formbricks-organization-id", "org-2");
+
+    const response = await proxy(request);
+
+    expect(response.cookies.get("formbricks-organization-id")).toBeUndefined();
+  });
+
+  test("clears the active-organization cookie when a workspace is visited", async () => {
+    mockGetProxySession.mockResolvedValue(null);
+
+    const request = new NextRequest("http://localhost:3000/workspaces/ws-1/surveys");
+    request.cookies.set("formbricks-organization-id", "org-2");
+
+    const response = await proxy(request);
+
+    // A deletion is a Set-Cookie with an empty value that has already expired.
+    expect(response.cookies.get("formbricks-organization-id")?.value).toBe("");
+    expect(response.cookies.get("formbricks-workspace-id")?.value).toBe("ws-1");
+  });
+
+  test("writes no organization cookie on a workspace request whose cookies are already current", async () => {
+    mockGetProxySession.mockResolvedValue(null);
+
+    // A Set-Cookie on a server-action POST forces a router refresh; with no organization cookie to
+    // clear and the workspace cookie unchanged, the response must not carry one.
+    const request = new NextRequest("http://localhost:3000/workspaces/ws-1/surveys");
+    request.cookies.set("formbricks-workspace-id", "ws-1");
+
+    const response = await proxy(request);
+
+    expect(response.cookies.get("formbricks-organization-id")).toBeUndefined();
+    expect(response.cookies.get("formbricks-workspace-id")).toBeUndefined();
+  });
+
+  test("leaves the active-organization cookie alone on a prefetch", async () => {
+    mockGetProxySession.mockResolvedValue(null);
+
+    const request = new NextRequest("http://localhost:3000/organizations/org-2/settings/general", {
+      headers: { "next-router-prefetch": "1" },
+    });
+
+    const response = await proxy(request);
+
+    expect(response.cookies.get("formbricks-organization-id")).toBeUndefined();
+  });
+
   test("overwrites a caller-supplied private IP header with the canonical trusted hop", async () => {
     mockGetProxySession.mockResolvedValue(null);
     const request = new NextRequest("http://localhost:3000/api/auth/sign-in/email", {

@@ -15,7 +15,7 @@ partOfOverride: ""
 ##########################################################
 formbricks:
   # REQUIRED: Base URL of the site (e.g., https://formbricks.example.com)
-  # This is used for WEBAPP_URL and NEXTAUTH_URL
+  # This is used for WEBAPP_URL and BETTER_AUTH_URL
   webappUrl: ""
 
   # Optional: Public URL for surveys (defaults to webappUrl if not set)
@@ -202,10 +202,19 @@ deployment:
       memory: 1Gi
       cpu: "1"
 
-  # Container security context
+  # Container security context for the web container. The image's `nextjs` user is UID 1001;
+  # the kubelet needs a numeric UID to enforce runAsNonRoot.
+  # Container-level fields win over deployment.securityContext. With readOnlyRootFilesystem, the chart mounts
+  # emptyDir volumes on /tmp, the Next.js cache, and (when startup migrations run) the Prisma migration
+  # staging directory. The migration Job retains a writable root and uses deployment.securityContext only.
   containerSecurityContext:
     readOnlyRootFilesystem: true
     runAsNonRoot: true
+    runAsUser: 1001
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
 
   # Pod security context
   securityContext: {}
@@ -372,6 +381,21 @@ taxonomy:
     annotations: {}
     additionalLabels: {}
 
+  # Dedicated ServiceAccount for the taxonomy pod, so a cloud workload identity (EKS Pod Identity,
+  # IRSA, GKE Workload Identity) can be bound to taxonomy alone instead of to rbac.serviceAccount,
+  # which the web app and migration job share.
+  serviceAccount:
+    # Create `name`, or `<nameOverride or chart name>-taxonomy` (formbricks-taxonomy by default).
+    # When false, `name` selects an existing ServiceAccount; leaving both unset keeps the
+    # namespace default ServiceAccount.
+    create: false
+    name: ""
+    # Applied only when create=true, e.g. eks.amazonaws.com/role-arn for IRSA.
+    annotations: {}
+    additionalLabels: {}
+    # Taxonomy does not call the Kubernetes API. IRSA and Pod Identity project their own token.
+    automountServiceAccountToken: false
+
   auth:
     # Existing secret must contain serviceTokenKey and hubInternalApiTokenKey.
     existingSecret: ""
@@ -436,7 +460,8 @@ taxonomy:
   heartbeatIntervalSeconds: "30"
   runDeadlineSeconds: "900"
   # Keep this compatible with the default v0.1.0 image, which does not heartbeat through
-  # terminal Hub callbacks. It can be lowered after pinning a heartbeat-capable image.
+  # terminal Hub callbacks. The chart requires it to exceed runDeadlineSeconds while that
+  # image is pinned; relax that guard when moving to a heartbeat-capable image.
   hubStaleRunTimeoutSeconds: "1800"
   hubReaperIntervalSeconds: "60"
   terminationGracePeriodSeconds: 930
@@ -625,7 +650,7 @@ externalSecret:
   files: {}
 
 ##########################################################
-# AuthZed / SpiceDB Authorization Configuration
+# SpiceDB Authorization Configuration
 ##########################################################
 authzed:
   # Formbricks v6 uses SpiceDB as its sole authorization decision engine.
@@ -640,6 +665,11 @@ authzed:
     # Set this to false only when an operator performs the same guarded cutover externally, and set
     # migrationAcknowledged=true only after that preparation has completed successfully.
     enabled: true
+    # Container-only overrides for the initialization / upgrade-check hook, not the web or migration Job.
+    # Defaults keep non-root enforcement, a read-only root, no privilege escalation, and all capabilities dropped.
+    # UID precedence: this runAsUser override > deployment.securityContext.runAsUser > 1001 (official image).
+    # Custom images using another UID must set it here or in deployment.securityContext.
+    securityContext: {}
 
   # selfHosted creates a SpiceDBCluster. external only configures the app client.
   mode: selfHosted
@@ -743,6 +773,8 @@ authzed:
 # Values passed to the bundled spicedb-operator dependency when
 # authzed.operator.install=true.
 spicedbOperator:
+  # The camelCase dependency alias is a values key, not a valid Kubernetes name.
+  nameOverride: spicedb-operator
   watchNamespaces: []
   serviceMonitor:
     enabled: false
@@ -773,6 +805,16 @@ envoy:
   controller:
     enabled: false
 
+  # Install the Gateway API and Envoy Gateway CRDs bundled with the controller.
+  # Set this to false when the platform manages both CRD sets separately.
+  crds:
+    enabled: true
+    gatewayAPI:
+      # Cluster-wide policy that denies Gateway API CRD versions older than v1.5.0.
+      # Enable only after confirming that no other release reconciles an older bundle.
+      safeUpgradePolicy:
+        enabled: false
+
   createNamespace: false
 
   deployment:
@@ -784,23 +826,10 @@ envoy:
         requests:
           cpu: 100m
           memory: 256Mi
-      pod:
-        topologySpreadConstraints: []
-        tolerations: []
-        nodeSelector: {}
-    ports:
-      - name: grpc
-        port: 18000
-        targetPort: 18000
-      - name: ratelimit
-        port: 18001
-        targetPort: 18001
-      - name: wasm
-        port: 18002
-        targetPort: 18002
-      - name: metrics
-        port: 19001
-        targetPort: 19001
+    pod:
+      topologySpreadConstraints: []
+      tolerations: []
+      nodeSelector: {}
 
   service:
     type: ClusterIP
@@ -1051,9 +1080,11 @@ cube:
   enabled: true
   replicas: 1
 
+  # Formbricks' distroless Cube build (docker/cube-image), without a shell or Cube Store. Pointing
+  # repository and tag back at an upstream "cubejs/cube" release is supported.
   image:
-    repository: "cubejs/cube"
-    tag: "v1.6.6"
+    repository: "ghcr.io/formbricks/cube"
+    tag: "1.7.47-3"
     pullPolicy: IfNotPresent
 
   imagePullSecrets: []
@@ -1083,10 +1114,18 @@ cube:
     CUBEJS_JWT_ISSUER: "formbricks-web"
     CUBEJS_JWT_AUDIENCE: "formbricks-cube"
 
+  # Cube writes nothing to its own filesystem without Cube Store (in-memory cache and queue driver), so
+  # the root filesystem is read-only and no writable mounts are needed. docker/cube-image/smoke-test.sh
+  # runs the bundled image this way. CUBEJS_DEV_MODE on an upstream image starts an embedded Cube Store
+  # that writes under /cube/conf, and needs readOnlyRootFilesystem: false.
   containerSecurityContext:
-    readOnlyRootFilesystem: false
+    readOnlyRootFilesystem: true
     runAsNonRoot: true
     runAsUser: 1000
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
 
   livenessProbe:
     httpGet:
@@ -1279,8 +1318,11 @@ hub:
     topologySpreadConstraints: []
 
   embeddings:
-    # Optional self-hosted OpenAI-compatible embeddings runtime for Hub.
+    # Optional OpenAI-compatible embeddings integration for Hub.
     enabled: false
+    # Deploy the bundled TEI workloads. Set false when baseUrl points to an
+    # externally managed runtime. Embedding env wiring remains enabled.
+    deployRuntime: true
     runtime: tei
     model: Alibaba-NLP/gte-multilingual-base
     revision: ""
@@ -1365,7 +1407,11 @@ hub:
     extraArgs:
       - --dtype
       - float16
-    env: {}
+    # TEI 1.9 includes parsed arguments in INFO startup logs. Keep the secure
+    # default below so API_KEY is not copied into container logs. Override only
+    # when the selected runtime is known to redact credentials.
+    env:
+      RUST_LOG: warn
 
     port: 8080
     prometheusPort: 9000

@@ -3,12 +3,12 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { MainNavigation } from "@/app/(app)/workspaces/[workspaceId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/workspaces/[workspaceId]/components/TopControlBar";
 import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD, IS_FORMBRICKS_SURVEYS_CONFIGURED } from "@/lib/constants";
-import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
+import { getTrialDaysRemaining } from "@/lib/trial-countdown";
 import { getTranslate } from "@/lingodotdev/server";
 import { TrialEndingWarningModal } from "@/modules/ee/billing/components/trial-ending-warning-modal";
 import { TrialResponseWarningModal } from "@/modules/ee/billing/components/trial-response-warning-modal";
+import { getPendingDowngradeSchedule } from "@/modules/ee/license-check/lib/license";
 import { getOrganizationWorkspacesLimit } from "@/modules/ee/license-check/lib/utils";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
 import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
@@ -41,13 +41,13 @@ const getResponseWarningThreshold = (
 
 // Show the loss-aversion trial-ending modal once on each of the last 3 days of the trial.
 const getTrialEndingDaysRemaining = (trialEnd: string | Date, cookieStore: TCookieStore): number | null => {
-  const MS_PER_DAY = 86_400_000;
-  const trialEndTime = new Date(trialEnd).getTime();
-  if (!Number.isFinite(trialEndTime)) {
-    return null;
-  }
-  const daysRemaining = Math.ceil((trialEndTime - Date.now()) / MS_PER_DAY);
-  if (daysRemaining >= 1 && daysRemaining <= 3 && !cookieStore.get(`trial_ending_shown_${daysRemaining}`)) {
+  const daysRemaining = getTrialDaysRemaining(trialEnd);
+  if (
+    daysRemaining !== null &&
+    daysRemaining >= 1 &&
+    daysRemaining <= 3 &&
+    !cookieStore.get(`trial_ending_shown_${daysRemaining}`)
+  ) {
     return daysRemaining;
   }
   return null;
@@ -55,7 +55,6 @@ const getTrialEndingDaysRemaining = (trialEnd: string | Date, cookieStore: TCook
 
 export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutProps) => {
   const t = await getTranslate();
-  const publicDomain = getPublicDomain();
 
   // Destructure all data from props (NO database queries)
   const {
@@ -78,17 +77,8 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
   // Hobby (free) plan only — excludes trial and paid (Pro/Scale) orgs.
   const isHobby = IS_FORMBRICKS_CLOUD && organization.billing?.stripe?.plan === "hobby";
 
-  const [
-    organizationWorkspacesLimit,
-    newTrialBannerVariant,
-    responseWarningVariant,
-    trialEndingVariant,
-    cookieStore,
-  ] = await Promise.all([
+  const [organizationWorkspacesLimit, cookieStore] = await Promise.all([
     getOrganizationWorkspacesLimit(organization.id),
-    getPostHogFeatureFlag(user.id, "a-b_navigation_rich-trial-banner-v2"),
-    isHobby ? getPostHogFeatureFlag(user.id, "a-b_workspace_trial-response-warning") : Promise.resolve(null),
-    isTrialing ? getPostHogFeatureFlag(user.id, "a-b_workspace_trial-ending-warning") : Promise.resolve(null),
     isTrialing || isHobby ? cookies() : Promise.resolve(null),
   ]);
   const isOwnerOrManager = isOwner || isManager;
@@ -100,28 +90,28 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
 
   // (Hobby response warning and trial-ending target mutually exclusive audiences, so no stacking.)
   const responseWarningThreshold =
-    isHobby && responseWarningVariant === "test" && cookieStore
-      ? getResponseWarningThreshold(responseCount, cookieStore)
-      : null;
+    isHobby && cookieStore ? getResponseWarningThreshold(responseCount, cookieStore) : null;
 
   const trialEnd = organization.billing?.stripe?.trialEnd;
   const trialEndingDaysRemaining =
-    isTrialing && trialEndingVariant === "test" && cookieStore && trialEnd
-      ? getTrialEndingDaysRemaining(trialEnd, cookieStore)
-      : null;
+    isTrialing && cookieStore && trialEnd ? getTrialEndingDaysRemaining(trialEnd, cookieStore) : null;
+
+  // Countdown for the sidebar's trial banner. `isTrialing` already carries the same cloud +
+  // "trialing" subscription guard the sidebar used to apply itself.
+  const trialDaysRemaining = isTrialing && trialEnd ? getTrialDaysRemaining(trialEnd) : null;
 
   const billingHref = `/workspaces/${workspace.id}/settings/organization/billing`;
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
-      {/* Hide the limits-reached toast for Hobby users in the response-warning test variant — the modal replaces it with richer copy + CTAs. */}
-      {IS_FORMBRICKS_CLOUD && !isTrialing && !(isHobby && responseWarningVariant === "test") && (
+      {/* Hide the limits-reached toast for Hobby users: the response-warning modal replaces it with richer copy + CTAs. */}
+      {IS_FORMBRICKS_CLOUD && !isTrialing && !isHobby && (
         <LimitsReachedBanner organization={organization} responseCount={responseCount} />
       )}
 
       <PendingDowngradeBanner
         organizationId={organization.id}
-        lastChecked={lastChecked}
+        {...getPendingDowngradeSchedule(lastChecked)}
         isPendingDowngrade={isPendingDowngrade ?? false}
         active={active}
         locale={user.locale}
@@ -148,13 +138,13 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           isDevelopment={IS_DEVELOPMENT}
           membershipRole={membership.role}
-          publicDomain={publicDomain}
           organizationWorkspacesLimit={organizationWorkspacesLimit}
           isLicenseActive={active}
+          isNoLicense={status === "no-license"}
           isAccessControlAllowed={isAccessControlAllowed}
           responseCount={responseCount}
-          newTrialBannerVariant={newTrialBannerVariant}
           isFormbricksSurveysConfigured={IS_FORMBRICKS_SURVEYS_CONFIGURED}
+          trialDaysRemaining={trialDaysRemaining}
         />
         <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
           <TopControlBar
@@ -163,6 +153,7 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
             organizationWorkspacesLimit={organizationWorkspacesLimit}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
             isLicenseActive={active}
+            isNoLicense={status === "no-license"}
             isOwnerOrManager={isOwnerOrManager}
             isAccessControlAllowed={isAccessControlAllowed}
             membershipRole={membership.role}

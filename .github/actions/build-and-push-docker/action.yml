@@ -50,6 +50,10 @@ inputs:
     description: "Tag image for staging deployment"
     required: false
     default: "false"
+  deployment_tag:
+    description: "Additional mutable environment tag (staging or staging-artemis)"
+    required: false
+    default: ""
   is_prerelease:
     description: "Whether this is a prerelease (auto-tags for staging/production)"
     required: false
@@ -92,6 +96,7 @@ runs:
         ECR_REGION: ${{ inputs.ecr_region }}
         AWS_ROLE_ARN: ${{ inputs.aws_role_arn }}
         GHCR_IMAGE_NAME: ${{ inputs.ghcr_image_name }}
+        DEPLOYMENT_TAG: ${{ inputs.deployment_tag }}
       run: |
         set -euo pipefail
 
@@ -114,6 +119,11 @@ runs:
           fi
         fi
 
+        if [[ -n "$DEPLOYMENT_TAG" && "$DEPLOYMENT_TAG" != "staging" && "$DEPLOYMENT_TAG" != "staging-artemis" ]]; then
+          echo "ERROR: deployment_tag must be 'staging' or 'staging-artemis', got: $DEPLOYMENT_TAG"
+          exit 1
+        fi
+
         echo "SUCCESS: Input validation passed for $REGISTRY_TYPE build"
 
     - name: Resolve Docker version
@@ -131,14 +141,14 @@ runs:
 
     - name: Configure AWS credentials (ECR only)
       if: ${{ inputs.registry_type == 'ecr' }}
-      uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.2.0
+      uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
       with:
         role-to-assume: ${{ inputs.aws_role_arn }}
         aws-region: ${{ inputs.ecr_region }}
 
     - name: Log in to Amazon ECR (ECR only)
       if: ${{ inputs.registry_type == 'ecr' }}
-      uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
+      uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
 
     - name: Set up Docker build tools
       uses: ./.github/actions/docker-build-setup
@@ -157,6 +167,7 @@ runs:
         ECR_REPOSITORY: ${{ inputs.ecr_repository }}
         DEPLOY_PRODUCTION: ${{ inputs.deploy_production }}
         DEPLOY_STAGING: ${{ inputs.deploy_staging }}
+        DEPLOYMENT_TAG: ${{ inputs.deployment_tag }}
         IS_PRERELEASE: ${{ inputs.is_prerelease }}
         MAKE_LATEST: ${{ inputs.make_latest }}
       run: |
@@ -183,6 +194,10 @@ runs:
           TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:staging"
           echo "Adding staging tag (manual override)"
         fi
+        if [[ -n "${DEPLOYMENT_TAG}" ]]; then
+          TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:${DEPLOYMENT_TAG}"
+          echo "Adding ${DEPLOYMENT_TAG} environment tag"
+        fi
 
         echo "ECR tags generated:"
         echo -e "${TAGS}"
@@ -202,47 +217,34 @@ runs:
         IMAGE_NAME: ${{ inputs.ghcr_image_name }}
         IS_PRERELEASE: ${{ inputs.is_prerelease }}
         MAKE_LATEST: ${{ inputs.make_latest }}
+        GH_TOKEN: ${{ env.GITHUB_TOKEN }}
+        SCRIPT: ${{ github.action_path }}/ghcr-tags.sh
       run: |
         set -euo pipefail
 
-        # Start with base version tag
-        TAGS="ghcr.io/${IMAGE_NAME}:${VERSION}"
-
-        # For proper SemVer releases, add major.minor and major tags
-        if [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-          # Extract major and minor versions
-          MAJOR=$(echo "${VERSION}" | cut -d. -f1)
-          MINOR=$(echo "${VERSION}" | cut -d. -f2)
-          
-          TAGS="${TAGS}\nghcr.io/${IMAGE_NAME}:${MAJOR}.${MINOR}"
-          TAGS="${TAGS}\nghcr.io/${IMAGE_NAME}:${MAJOR}"
-          
-          echo "Added SemVer tags: ${MAJOR}.${MINOR}, ${MAJOR}"
+        # Rolling aliases only move forward, so the script needs every published stable release.
+        # A failed lookup fails the build rather than guessing and rolling an alias back.
+        PUBLISHED=""
+        if [[ "${IS_PRERELEASE}" != "true" && "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          PUBLISHED="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+            --jq '.[] | select((.draft or .prerelease) | not) | .tag_name')"
         fi
 
-        # Add latest tag for stable releases marked as latest
-        if [[ "${IS_PRERELEASE}" == "false" && "${MAKE_LATEST}" == "true" ]]; then
-          TAGS="${TAGS}\nghcr.io/${IMAGE_NAME}:latest"
-          echo "Added latest tag for stable release marked as latest"
-        fi
+        TAGS="$(printf '%s\n' "${PUBLISHED}" | bash "${SCRIPT}")"
 
         echo "Generated GHCR tags:"
-        echo -e "${TAGS}"
-
-        # Debug: Show what will be passed to Docker build
-        echo "DEBUG: Tags for Docker build step:"
-        echo -e "${TAGS}"
+        echo "${TAGS}"
 
         {
           echo "tags<<EOF"
-          echo -e "${TAGS}"
+          echo "${TAGS}"
           echo "EOF"
         } >> "${GITHUB_OUTPUT}"
 
     - name: Build GHCR metadata (experimental)
       if: ${{ inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'true' }}
       id: ghcr-meta-experimental
-      uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
+      uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
       with:
         images: ghcr.io/${{ inputs.ghcr_image_name }}
         tags: |
@@ -270,7 +272,7 @@ runs:
 
     - name: Build and push Docker image
       id: build
-      uses: depot/build-push-action@636daae76684e38c301daa0c5eca1c095b24e780 # v1.14.0
+      uses: depot/build-push-action@98e78adca7817480b8185f474a400b451d74e287 # v1.18.0
       with:
         project: tw0fqmsx3c
         token: ${{ env.DEPOT_PROJECT_TOKEN }}
@@ -319,12 +321,16 @@ runs:
         REGISTRY_TYPE: ${{ inputs.registry_type }}
         IMAGE_TAG: ${{ steps.version.outputs.version }}
         VERSION_SOURCE: ${{ steps.version.outputs.source }}
+        DEPLOYMENT_TAG: ${{ inputs.deployment_tag }}
       run: |
         echo "SUCCESS: Built and pushed Docker image to $REGISTRY_TYPE"
         echo "Image Tag: $IMAGE_TAG (source: $VERSION_SOURCE)"
         if [[ "$REGISTRY_TYPE" == "ecr" ]]; then
           echo "ECR Registry: ${{ inputs.ecr_registry }}"
           echo "ECR Repository: ${{ inputs.ecr_repository }}"
+          if [[ -n "$DEPLOYMENT_TAG" ]]; then
+            echo "Environment Tag: $DEPLOYMENT_TAG"
+          fi
         else
           echo "GHCR Image: ghcr.io/${{ inputs.ghcr_image_name }}"
         fi

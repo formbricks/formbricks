@@ -38,13 +38,16 @@ function createQueryData(): { pages: TSurveyListPage[]; pageParams: (string | nu
             completedResponseCount: 0,
             creator: { name: "Alice" },
             singleUse: null,
+            visibility: "workspace",
+            owner: { name: "Test User" },
+            access: { via: "workspace", canManageVisibility: false },
           },
         ],
         meta: {
           limit: 20,
           nextCursor: null,
           totalCount: 1,
-          hasArchived: true,
+          workspaceSurveyCount: 4,
         },
       },
     ],
@@ -55,7 +58,7 @@ function createQueryData(): { pages: TSurveyListPage[]; pageParams: (string | nu
 const queryKey = surveyKeys.list({
   workspaceId: "env_1",
   limit: 20,
-  filters: { name: "", status: ["archived"], type: [], sortBy: "relevance" },
+  filters: { name: "", status: ["archived"], type: [], visibility: [], sortBy: "relevance" },
 });
 
 describe("useRestoreSurvey", () => {

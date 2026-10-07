@@ -10,7 +10,9 @@ import {
   TJsWorkspaceStateWorkspaceSetting,
 } from "@formbricks/types/js";
 import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
+import { isCustomOverlay, resolveOverlayAppearance } from "@formbricks/types/overlay";
 import { type TBaseFilters, buildSurveyInteractionRefreshMap } from "@formbricks/types/segment";
+import { selectPublicSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
@@ -90,6 +92,8 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
         recontactDays: true,
         clickOutsideClose: true,
         overlay: true,
+        overlayColor: true,
+        overlayOpacity: true,
         placement: true,
         inAppSurveyBranding: true,
         styling: true,
@@ -125,7 +129,6 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
             // decoded `Survey.name` as a required field keep working.
             questions: true,
             blocks: true,
-            variables: true,
             type: true,
             showLanguageSwitch: true,
             languages: {
@@ -161,7 +164,10 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
             recontactDays: true,
             displayLimit: true,
             displayOption: true,
-            hiddenFields: true,
+            // ENG-1837: the definitions the SDK-rendered survey's recall and logic engines resolve
+            // through. ENG-2404: also what `transformPrismaSurvey` derives the legacy `variables` /
+            // `hiddenFields` from, which deployed SDK bundles still read (ENG-1838).
+            embeddedDataLinks: selectPublicSurveyEmbeddedDataLinks,
             isBackButtonHidden: true,
             isAutoProgressingEnabled: true,
             triggers: {
@@ -282,11 +288,18 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
       // targeting — otherwise it's dead weight on every survey in the response.
       const interactionRefresh = hasAny ? refreshBySurveyId[survey.id] : undefined;
 
+      // Sent inside the survey object, not `workspaceSettings`: every SDK forwards the raw survey JSON
+      // to `renderSurvey`, so the renderer gets it with no SDK release. Omitted for a preset overlay.
+      const overlayAppearance = resolveOverlayAppearance(survey.workspaceOverwrites, workspaceData);
+
       return {
         ...transformed,
         name: PUBLIC_API_SURVEY_NAME_PLACEHOLDER,
         segment: sanitizedSegment,
         ...(interactionRefresh ? { interactionRefresh } : {}),
+        ...(isCustomOverlay(overlayAppearance)
+          ? { overlayAppearance: { color: overlayAppearance.color, opacity: overlayAppearance.opacity } }
+          : {}),
       };
     });
 

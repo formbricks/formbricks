@@ -1,5 +1,5 @@
 {
-  "exclude": ["../../.env", ".next", "node_modules", "playwright"],
+  "exclude": ["../../.env", ".next", "node_modules"],
   "extends": "./tsconfig.json",
   "files": ["lib/authorization/contract.typecheck.test.ts", "lib/authzed/index.typecheck.test.ts"],
   "include": [
@@ -13,6 +13,7 @@
     "lib/**/*.tsx",
     "modules/**/*.ts",
     "modules/**/*.tsx",
+    "playwright/**/*.ts",
     "scripts/**/*.ts",
     "../../packages/types/*.d.ts"
   ]

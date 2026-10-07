@@ -1,6 +1,10 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
+import { TFunction } from "i18next";
 import { afterEach, describe, expect, test } from "vitest";
+import { normalizeIngestedValue } from "@formbricks/types/embedded-data-ingest";
+import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
+import { coerceToEmbeddedDataType } from "@formbricks/types/embedded-data-resolver";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -10,7 +14,34 @@ import {
   SelectedFilterValue,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementsComboBox";
-import { generateElementAndFilterOptions, getFormattedFilters, getTodayDate } from "./surveys";
+import {
+  buildDateFieldCondition,
+  generateElementAndFilterOptions,
+  getFormattedFilters,
+  getTodayDate,
+} from "./surveys";
+
+const t = ((key: string) => key) as TFunction;
+
+/** A survey as readers receive it: EmbeddedData rows inlined from the legacy columns (ENG-2412). */
+const asRead = (survey: TSurvey): TSurvey =>
+  ({ ...survey, embeddedFields: embeddedFieldsFromLegacyInput(survey) }) as TSurvey;
+
+const genOptions = (
+  survey: TSurvey,
+  extra: Partial<Parameters<typeof generateElementAndFilterOptions>[0]> = {}
+) =>
+  generateElementAndFilterOptions({
+    survey: asRead(survey),
+    environmentTags: undefined,
+    attributes: {},
+    reservedValues: {},
+    hiddenFields: {},
+    variableValues: {},
+    quotas: [],
+    t,
+    ...extra,
+  });
 
 describe("surveys", () => {
   afterEach(() => {
@@ -44,12 +75,13 @@ describe("surveys", () => {
         status: "draft",
       } as unknown as TSurvey;
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, []);
+      const result = genOptions(survey);
 
       expect(result.elementOptions.length).toBeGreaterThan(0);
       expect(result.elementOptions[0].header).toBe(OptionsType.ELEMENTS);
-      expect(result.elementFilterOptions.length).toBe(1);
-      expect(result.elementFilterOptions[0].id).toBe("q1");
+      const elementRows = result.elementFilterOptions.filter((o) => o.type !== "Meta");
+      expect(elementRows).toHaveLength(1);
+      expect(elementRows[0].id).toBe("q1");
     });
 
     test("should include tags in options when provided", () => {
@@ -67,7 +99,7 @@ describe("surveys", () => {
         { id: "tag1", name: "Tag 1", workspaceId: "env1", createdAt: new Date(), updatedAt: new Date() },
       ];
 
-      const result = generateElementAndFilterOptions(survey, tags, {}, {}, {}, []);
+      const result = genOptions(survey, { environmentTags: tags });
 
       const tagsHeader = result.elementOptions.find((opt) => opt.header === OptionsType.TAGS);
       expect(tagsHeader).toBeDefined();
@@ -90,7 +122,7 @@ describe("surveys", () => {
         role: ["admin", "user"],
       };
 
-      const result = generateElementAndFilterOptions(survey, undefined, attributes, {}, {}, []);
+      const result = genOptions(survey, { attributes });
 
       const attributesHeader = result.elementOptions.find((opt) => opt.header === OptionsType.ATTRIBUTES);
       expect(attributesHeader).toBeDefined();
@@ -98,7 +130,7 @@ describe("surveys", () => {
       expect(attributesHeader?.option[0].label).toBe("role");
     });
 
-    test("should include meta in options when provided", () => {
+    test("meta options are catalog-driven, not derived from observed response values (ENG-1848)", () => {
       const survey = {
         id: "survey1",
         name: "Test Survey",
@@ -107,21 +139,31 @@ describe("surveys", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         status: "draft",
+        isCaptureIpEnabled: true,
       } as unknown as TSurvey;
 
-      const meta = {
-        source: ["web", "mobile"],
-      };
-
-      const result = generateElementAndFilterOptions(survey, undefined, {}, meta, {}, []);
+      // No observed values passed at all — the fields must still be offered.
+      const result = genOptions(survey);
 
       const metaHeader = result.elementOptions.find((opt) => opt.header === OptionsType.META);
       expect(metaHeader).toBeDefined();
-      expect(metaHeader?.option.length).toBe(1);
-      expect(metaHeader?.option[0].label).toBe("source");
+      const ids = metaHeader?.option.map((o) => o.id) ?? [];
+      expect(ids).toContain("utmSource");
+      expect(ids).toContain("browser");
+      expect(ids).toContain("durationSeconds");
+      // Covered elsewhere (response status, date range) or meaningless as user filters.
+      for (const excluded of ["responseId", "surveyId", "finished", "startedAt", "language"]) {
+        expect(ids).not.toContain(excluded);
+      }
+
+      // Observed values feed the combobox when provided.
+      const withValues = genOptions(survey, { reservedValues: { utmSource: ["newsletter", "ads"] } });
+      const utmSource = withValues.elementFilterOptions.find((o) => o.id === "utmSource");
+      expect(utmSource?.filterComboBoxOptions).toEqual(["newsletter", "ads"]);
+      expect(utmSource?.fieldDataType).toBe("string");
     });
 
-    test("should include hidden fields in options when provided", () => {
+    test("labels every meta option through `t()`, the filter-only durationSeconds included", () => {
       const survey = {
         id: "survey1",
         name: "Test Survey",
@@ -130,20 +172,121 @@ describe("surveys", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         status: "draft",
+        isCaptureIpEnabled: true,
       } as unknown as TSurvey;
 
-      const hiddenFields = {
-        segment: ["free", "paid"],
-      };
+      const metaOptions =
+        genOptions(survey).elementOptions.find((opt) => opt.header === OptionsType.META)?.option ?? [];
+      expect(metaOptions.length).toBeGreaterThan(20);
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, hiddenFields, []);
-
-      const hiddenFieldsHeader = result.elementOptions.find(
-        (opt) => opt.header === OptionsType.HIDDEN_FIELDS
+      // `t` here is the identity, so each label IS the key it was routed through — a label derived from
+      // the catalog name, such as `Duration Seconds`, carries no key and fails the pattern (ENG-2894).
+      for (const { id, label } of metaOptions) {
+        expect(label, id).toMatch(/^(workspace\.surveys\.responses|common)\.[a-z_]+$/);
+      }
+      expect(metaOptions.find((option) => option.id === "durationSeconds")?.label).toBe(
+        "workspace.surveys.responses.duration_seconds"
       );
-      expect(hiddenFieldsHeader).toBeDefined();
-      expect(hiddenFieldsHeader?.option.length).toBe(1);
-      expect(hiddenFieldsHeader?.option[0].label).toBe("segment");
+    });
+
+    test("reserved options drop shadowed names and respect the IP capture toggle", () => {
+      const survey = {
+        id: "survey1",
+        name: "Test Survey",
+        blocks: [],
+        questions: [],
+        hiddenFields: { enabled: true, fieldIds: ["url"] },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        status: "draft",
+        isCaptureIpEnabled: false,
+      } as unknown as TSurvey;
+
+      const result = genOptions(survey);
+
+      const metaIds =
+        result.elementOptions.find((opt) => opt.header === OptionsType.META)?.option.map((o) => o.id) ?? [];
+      expect(metaIds).not.toContain("url"); // the declared field owns the name
+      expect(metaIds).not.toContain("ipAddress");
+      expect(metaIds).toContain("pagePath");
+    });
+
+    test("hidden fields enumerate from the survey's declared ingested fields", () => {
+      const survey = {
+        id: "survey1",
+        name: "Test Survey",
+        blocks: [],
+        questions: [],
+        hiddenFields: { enabled: true, fieldIds: ["segment"] },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        status: "draft",
+      } as unknown as TSurvey;
+
+      // A declared field is filterable even before observed values exist.
+      const bare = genOptions(survey);
+      const bareHeader = bare.elementOptions.find((opt) => opt.header === OptionsType.HIDDEN_FIELDS);
+      expect(bareHeader?.option.length).toBe(1);
+      expect(bareHeader?.option[0].label).toBe("segment");
+
+      const result = genOptions(survey, { hiddenFields: { segment: ["free", "paid"] } });
+      const segment = result.elementFilterOptions.find(
+        (o) => o.type === "Hidden Fields" && o.id === "segment"
+      );
+      expect(segment?.filterComboBoxOptions).toEqual(["free", "paid"]);
+      expect(segment?.filterOptions).toContain("Contains");
+      expect(segment?.filterOptions).toContain("Is set");
+    });
+
+    test("variables enumerate from the survey's computed fields, keyed by storageKey", () => {
+      const survey = {
+        id: "survey1",
+        name: "Test Survey",
+        blocks: [],
+        questions: [],
+        variables: [{ id: "var_score", name: "score", type: "number", value: 0 }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        status: "draft",
+      } as unknown as TSurvey;
+
+      const result = genOptions(survey);
+
+      const variablesHeader = result.elementOptions.find((opt) => opt.header === OptionsType.VARIABLES);
+      expect(variablesHeader?.option).toEqual([
+        { label: "score", type: OptionsType.VARIABLES, id: "var_score" },
+      ]);
+      const score = result.elementFilterOptions.find((o) => o.type === "Variables" && o.id === "var_score");
+      expect(score?.fieldDataType).toBe("number");
+      expect(score?.filterOptions).toEqual([
+        "Equals",
+        "Not equals",
+        "Is greater than",
+        "Is less than",
+        "Is set",
+        "Is not set",
+      ]);
+    });
+
+    test("lists Hidden Fields and Variables above Meta in the filter picker", () => {
+      const survey = {
+        id: "survey1",
+        name: "Test Survey",
+        blocks: [],
+        questions: [],
+        hiddenFields: { enabled: true, fieldIds: ["plan"] },
+        variables: [{ id: "var_score", name: "score", type: "number", value: 0 }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        status: "draft",
+      } as unknown as TSurvey;
+
+      const headers = genOptions(survey).elementOptions.map((opt) => opt.header);
+
+      expect(headers.indexOf(OptionsType.HIDDEN_FIELDS)).toBeGreaterThan(-1);
+      expect(headers.indexOf(OptionsType.VARIABLES)).toBeGreaterThan(-1);
+      expect(headers.indexOf(OptionsType.HIDDEN_FIELDS)).toBeLessThan(headers.indexOf(OptionsType.META));
+      expect(headers.indexOf(OptionsType.VARIABLES)).toBeLessThan(headers.indexOf(OptionsType.META));
     });
 
     test("should include language options when survey has languages", () => {
@@ -158,7 +301,7 @@ describe("surveys", () => {
         languages: [{ language: { code: "en" } as unknown as TLanguage } as unknown as TSurveyLanguage],
       } as unknown as TSurvey;
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, []);
+      const result = genOptions(survey);
 
       const othersHeader = result.elementOptions.find((opt) => opt.header === OptionsType.OTHERS);
       expect(othersHeader).toBeDefined();
@@ -255,16 +398,16 @@ describe("surveys", () => {
         status: "draft",
       } as unknown as TSurvey;
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, []);
+      const result = genOptions(survey);
 
-      expect(result.elementFilterOptions.length).toBe(8);
+      expect(result.elementFilterOptions.filter((o) => o.type !== "Meta")).toHaveLength(8);
       expect(result.elementFilterOptions.some((o) => o.id === "q1")).toBeTruthy();
       expect(result.elementFilterOptions.some((o) => o.id === "q2")).toBeTruthy();
       expect(result.elementFilterOptions.some((o) => o.id === "q7")).toBeTruthy();
       expect(result.elementFilterOptions.some((o) => o.id === "q8")).toBeTruthy();
     });
 
-    test("should provide extended filter options for URL meta field", () => {
+    test("reserved fields get operators per dataType (ENG-1848)", () => {
       const survey = {
         id: "survey1",
         name: "Test Survey",
@@ -275,17 +418,9 @@ describe("surveys", () => {
         status: "draft",
       } as unknown as TSurvey;
 
-      const meta = {
-        url: ["https://example.com", "https://test.com"],
-        source: ["web", "mobile"],
-      };
+      const result = genOptions(survey);
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, meta, {}, []);
-
-      const urlFilterOption = result.elementFilterOptions.find((o) => o.id === "url");
-      const sourceFilterOption = result.elementFilterOptions.find((o) => o.id === "source");
-
-      expect(urlFilterOption).toBeDefined();
+      const urlFilterOption = result.elementFilterOptions.find((o) => o.type === "Meta" && o.id === "url");
       expect(urlFilterOption?.filterOptions).toEqual([
         "Equals",
         "Not equals",
@@ -295,10 +430,22 @@ describe("surveys", () => {
         "Does not start with",
         "Ends with",
         "Does not end with",
+        "Is set",
+        "Is not set",
       ]);
 
-      expect(sourceFilterOption).toBeDefined();
-      expect(sourceFilterOption?.filterOptions).toEqual(["Equals", "Not equals"]);
+      const screenWidthOption = result.elementFilterOptions.find(
+        (o) => o.type === "Meta" && o.id === "screenWidth"
+      );
+      expect(screenWidthOption?.fieldDataType).toBe("number");
+      expect(screenWidthOption?.filterOptions).toEqual([
+        "Equals",
+        "Not equals",
+        "Is greater than",
+        "Is less than",
+        "Is set",
+        "Is not set",
+      ]);
     });
 
     test("should include quota options in filter options when quotas are provided", () => {
@@ -313,7 +460,7 @@ describe("surveys", () => {
 
       const quotas = [{ id: "quota1" }];
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, quotas as any);
+      const result = genOptions(survey, { quotas: quotas as any });
 
       const quotaFilterOption = result.elementFilterOptions.find((o) => o.id === "quota1");
       expect(quotaFilterOption).toBeDefined();
@@ -338,7 +485,7 @@ describe("surveys", () => {
 
       const quotas = [{ id: "quota1" }, { id: "quota2" }];
 
-      const result = generateElementAndFilterOptions(survey, undefined, {}, {}, {}, quotas as any);
+      const result = genOptions(survey, { quotas: quotas as any });
 
       const quota1 = result.elementFilterOptions.find((o) => o.id === "quota1");
       const quota2 = result.elementFilterOptions.find((o) => o.id === "quota2");
@@ -359,7 +506,7 @@ describe("surveys", () => {
   });
 
   describe("getFormattedFilters", () => {
-    const survey = {
+    const survey = asRead({
       id: "survey1",
       name: "Test Survey",
       blocks: [
@@ -477,10 +624,12 @@ describe("surveys", () => {
         },
       ],
       questions: [],
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+      variables: [{ id: "var_score", name: "score", type: "number", value: 0 }],
       createdAt: new Date(),
       updatedAt: new Date(),
       status: "draft",
-    } as unknown as TSurvey;
+    } as unknown as TSurvey);
 
     const dateRange: DateRange = {
       from: new Date("2023-01-01"),
@@ -843,12 +992,12 @@ describe("surveys", () => {
       expect(result.others?.Language).toEqual({ op: "equals", value: "en" });
     });
 
-    test("should filter by meta fields", () => {
+    test("reserved fields land in the reserved group, keyed by catalog name (ENG-1848)", () => {
       const selectedFilter: SelectedFilterValue = {
         responseStatus: "all",
         filter: [
           {
-            elementType: { type: "Meta", label: "source", id: "source" },
+            elementType: { type: "Meta", label: "Source", id: "source" },
             filterType: { filterValue: "Not equals", filterComboBoxValue: "web" },
           },
         ],
@@ -856,7 +1005,238 @@ describe("surveys", () => {
 
       const result = getFormattedFilters(survey, selectedFilter, {} as any);
 
-      expect(result.meta?.source).toEqual({ op: "notEquals", value: "web" });
+      expect(result.reserved?.source).toEqual({ op: "notEquals", value: "web" });
+      expect(result.meta).toBeUndefined();
+    });
+
+    test("number-typed reserved values are sent as numbers, presence ops carry no value", () => {
+      const selectedFilter: SelectedFilterValue = {
+        responseStatus: "all",
+        filter: [
+          {
+            elementType: { type: "Meta", label: "Screen Width", id: "screenWidth" },
+            filterType: { filterValue: "Is greater than", filterComboBoxValue: "1000" },
+          },
+          {
+            elementType: { type: "Meta", label: "UTM Source", id: "utmSource" },
+            filterType: { filterValue: "Is set", filterComboBoxValue: undefined },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+
+      expect(result.reserved?.screenWidth).toEqual({ op: "greaterThan", value: 1000 });
+      expect(result.reserved?.utmSource).toEqual({ op: "isSet" });
+    });
+
+    test("fails closed: an unknown or shadowed reserved id emits nothing", () => {
+      const selectedFilter: SelectedFilterValue = {
+        responseStatus: "all",
+        filter: [
+          {
+            elementType: { type: "Meta", label: "Nope", id: "notInCatalog" },
+            filterType: { filterValue: "Equals", filterComboBoxValue: "x" },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+
+      expect(result.reserved).toBeUndefined();
+    });
+
+    test("variables land in the variables group keyed by storageKey, coerced to their dataType", () => {
+      const selectedFilter: SelectedFilterValue = {
+        responseStatus: "all",
+        filter: [
+          {
+            elementType: { type: "Variables", label: "score", id: "var_score" },
+            filterType: { filterValue: "Is less than", filterComboBoxValue: "5" },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+
+      expect(result.variables?.var_score).toEqual({ op: "lessThan", value: 5 });
+    });
+
+    // Legacy-derived fields are all string-typed, so craft the typed rows directly.
+    const typedSurvey = {
+      ...survey,
+      embeddedFields: [
+        ...(survey.embeddedFields ?? []),
+        {
+          field: {
+            name: "is_pro",
+            source: "ingested",
+            dataType: "boolean",
+            defaultValue: null,
+            locked: false,
+          },
+          link: { storageKey: "is_pro" },
+        },
+        {
+          field: {
+            name: "signup_date",
+            source: "ingested",
+            dataType: "date",
+            defaultValue: null,
+            locked: false,
+          },
+          link: { storageKey: "signup_date" },
+        },
+      ],
+    } as TSurvey;
+
+    const boolFilter = (filterValue: string, filterComboBoxValue: string) => {
+      const selectedFilter: SelectedFilterValue = {
+        responseStatus: "all",
+        filter: [
+          {
+            elementType: { type: OptionsType.HIDDEN_FIELDS, label: "is_pro", id: "is_pro" },
+            filterType: { filterValue, filterComboBoxValue },
+          },
+        ],
+      };
+
+      return getFormattedFilters(typedSurvey, selectedFilter, { from: undefined });
+    };
+
+    test("boolean and date ingested fields coerce per dataType; invalid numbers drop the row", () => {
+      const result = getFormattedFilters(
+        typedSurvey,
+        {
+          responseStatus: "all",
+          filter: [
+            {
+              elementType: { type: "Hidden Fields", label: "is_pro", id: "is_pro" },
+              filterType: { filterValue: "Equals", filterComboBoxValue: "true" },
+            },
+            {
+              elementType: { type: "Hidden Fields", label: "signup_date", id: "signup_date" },
+              filterType: { filterValue: "Is before", filterComboBoxValue: "2026-01-01" },
+            },
+            {
+              elementType: { type: "Variables", label: "score", id: "var_score" },
+              filterType: { filterValue: "Is less than", filterComboBoxValue: "abc" },
+            },
+          ],
+        } as any,
+        {} as any
+      );
+
+      // Booleans are stored as the strings the ingest contract writes, so the filter value is one
+      // too — a jsonb boolean here matched no row (ENG-3231).
+      expect(result.data?.is_pro).toEqual({ op: "equals", value: "true" });
+      // Dates ride the comparison ops with the ISO string.
+      expect(result.data?.signup_date).toEqual({ op: "lessThan", value: "2026-01-01" });
+      // A non-numeric value for a number field cannot form a condition — the row drops.
+      expect(result.variables).toBeUndefined();
+
+      // A text op makes no sense on a boolean — dropped rather than matching wrongly.
+      expect(boolFilter("Contains", "tru").data?.is_pro).toBeUndefined();
+
+      // Only the exact literals are booleans — "yes" must drop, not coerce to false.
+      expect(boolFilter("Equals", "yes").data?.is_pro).toBeUndefined();
+    });
+
+    test("a boolean condition carries the same spelling the ingest contract stores", () => {
+      // The bug this pins (ENG-3231): the filter sent a real jsonb boolean while every write path
+      // stores the string, so `is_pro equals true` matched nothing the moment a boolean field held a
+      // value. Asserting against `normalizeIngestedValue` rather than a hand-written "true" is what
+      // keeps the two seams from drifting apart again — whatever the ingest contract decides the
+      // canonical spelling is, this is the value the filter has to compare against.
+      for (const [label, incoming] of [
+        ["true", "1"],
+        ["false", "off"],
+      ] as const) {
+        const stored = normalizeIngestedValue(incoming, "boolean");
+        expect(stored).toEqual({ value: label });
+
+        expect(boolFilter("Equals", label).data?.is_pro).toEqual({ op: "equals", value: stored?.value });
+        expect(boolFilter("Not equals", label).data?.is_pro).toEqual({
+          op: "notEquals",
+          value: stored?.value,
+        });
+      }
+    });
+
+    test("the picker offers a boolean field exactly the spellings the condition builder accepts", () => {
+      // The other half of the contract above. `buildTypedFieldCondition` takes only these two
+      // literals and drops the row for anything else, so the picker is what guarantees the value
+      // arrives in its stored form. Change this list — to `Yes`/`No`, or back to real booleans —
+      // and every boolean filter row silently stops reaching the query instead of failing loudly.
+      //
+      // Called directly rather than through `genOptions`, whose `asRead` replaces `embeddedFields`
+      // with the legacy-derived rows — and those are all string-typed, so the boolean branch under
+      // test would never run.
+      const { elementFilterOptions } = generateElementAndFilterOptions({
+        survey: typedSurvey as TSurvey,
+        environmentTags: undefined,
+        attributes: {},
+        reservedValues: {},
+        hiddenFields: {},
+        variableValues: {},
+        quotas: [],
+        t,
+      });
+
+      expect(elementFilterOptions.find((option) => option.id === "is_pro")?.filterComboBoxOptions).toEqual([
+        "true",
+        "false",
+      ]);
+    });
+
+    test("a date row reaches the data group as the window its value names", () => {
+      // The bug this pins (ENG-3232): the row's value is day-granular — the picker is an
+      // `<input type="date">` — while the column stores whatever arrived, so `equals` compared a day
+      // against an instant and missed it, and `Is after` matched instants on the day it excluded.
+      const dateFilter = (filterValue: string, filterComboBoxValue: string) =>
+        getFormattedFilters(
+          typedSurvey,
+          {
+            responseStatus: "all",
+            filter: [
+              {
+                elementType: {
+                  type: OptionsType.HIDDEN_FIELDS,
+                  label: "signup_date",
+                  id: "signup_date",
+                },
+                filterType: { filterValue, filterComboBoxValue },
+              },
+            ],
+          },
+          { from: undefined }
+        ).data?.signup_date;
+
+      const min = "2026-09-01";
+      const max = "2026-09-02";
+
+      expect(dateFilter("Equals", min)).toEqual({ op: "inRange", min, max });
+      expect(dateFilter("Not equals", min)).toEqual({ op: "notInRange", min, max });
+      expect(dateFilter("Is after", min)).toEqual({ op: "greaterEqual", value: max });
+      expect(dateFilter("Is before", min)).toEqual({ op: "lessThan", value: min });
+      // Presence still answers on the data group's own vocabulary, window or not.
+      expect(dateFilter("Is set", "")).toEqual({ op: "submitted" });
+    });
+
+    test("ingested presence maps onto the data group's submitted/skipped vocabulary", () => {
+      const selectedFilter: SelectedFilterValue = {
+        responseStatus: "all",
+        filter: [
+          {
+            elementType: { type: "Hidden Fields", label: "plan", id: "plan" },
+            filterType: { filterValue: "Is not set", filterComboBoxValue: undefined },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+
+      expect(result.data?.plan).toEqual({ op: "skipped" });
     });
 
     test("should handle multiple filters together", () => {
@@ -900,7 +1280,7 @@ describe("surveys", () => {
 
       const result = getFormattedFilters(survey, selectedFilter, dateRange);
 
-      expect(result.meta?.url).toEqual({ op: "contains", value: "example.com" });
+      expect(result.reserved?.url).toEqual({ op: "contains", value: "example.com" });
     });
 
     test("should format URL meta filters with all supported string operations", () => {
@@ -927,7 +1307,7 @@ describe("surveys", () => {
         } as any;
 
         const result = getFormattedFilters(survey, selectedFilter, dateRange);
-        expect(result.meta?.url).toEqual(expected);
+        expect(result.reserved?.url).toEqual(expected);
       });
     });
 
@@ -944,7 +1324,7 @@ describe("surveys", () => {
 
       const result = getFormattedFilters(survey, selectedFilter, dateRange);
 
-      expect(result.meta?.url).toBeUndefined();
+      expect(result.reserved?.url).toBeUndefined();
     });
 
     test("should handle URL meta filters with whitespace-only values", () => {
@@ -960,7 +1340,8 @@ describe("surveys", () => {
 
       const result = getFormattedFilters(survey, selectedFilter, dateRange);
 
-      expect(result.meta?.url).toEqual({ op: "contains", value: "" });
+      // A whitespace-only value cannot form a condition; the row drops instead of matching nothing.
+      expect(result.reserved?.url).toBeUndefined();
     });
 
     test("should still handle existing meta filters with array values", () => {
@@ -976,7 +1357,7 @@ describe("surveys", () => {
 
       const result = getFormattedFilters(survey, selectedFilter, dateRange);
 
-      expect(result.meta?.source).toEqual({ op: "equals", value: "google" });
+      expect(result.reserved?.source).toEqual({ op: "equals", value: "google" });
     });
 
     test("should handle mixed URL and traditional meta filters", () => {
@@ -996,8 +1377,8 @@ describe("surveys", () => {
 
       const result = getFormattedFilters(survey, selectedFilter, dateRange);
 
-      expect(result.meta?.url).toEqual({ op: "contains", value: "formbricks.com" });
-      expect(result.meta?.source).toEqual({ op: "equals", value: "newsletter" });
+      expect(result.reserved?.url).toEqual({ op: "contains", value: "formbricks.com" });
+      expect(result.reserved?.source).toEqual({ op: "equals", value: "newsletter" });
     });
 
     test("should filter by quota with screened in status", () => {
@@ -1067,6 +1448,136 @@ describe("surveys", () => {
 
       expect(result.quotas?.quota1).toEqual({ op: "screenedIn" });
       expect(result.quotas?.quota2).toEqual({ op: "screenedOutNotInQuota" });
+    });
+  });
+
+  describe("buildDateFieldCondition", () => {
+    test("a day-granular value becomes the day-wide window it means", () => {
+      const min = "2026-09-01";
+      const max = "2026-09-02";
+
+      expect(buildDateFieldCondition("equals", min)).toEqual({ op: "inRange", min, max });
+      expect(buildDateFieldCondition("notEquals", min)).toEqual({ op: "notInRange", min, max });
+      // "after 1 Sep" starts at the next day, so an instant *on* 1 Sep is not after it (ENG-3232).
+      expect(buildDateFieldCondition("greaterThan", min)).toEqual({ op: "greaterEqual", value: max });
+      // "before 1 Sep" already ends at the bare date: every stored value on that day sorts at or
+      // after it, so this one arm needs no rewriting.
+      expect(buildDateFieldCondition("lessThan", min)).toEqual({ op: "lessThan", value: min });
+    });
+
+    test("the last representable day is still a day, not a point", () => {
+      // `new Date("9999-12-31Z")` plus a day is year 10000, which `toISOString` writes in ISO 8601's
+      // expanded form (`+010000-01-01T…`). Sliced to ten characters that is `+010000-01`, and `+`
+      // sorts below every digit — so as a `max` it would empty the window. Comparing against the
+      // bare date instead is the other failure: `9999-12-31T10:30:00Z` is an instant *on* that day,
+      // and it would miss "on" and match "after". The bound only has to sort above every value the
+      // day can hold, and it is never a stored value itself, so it does not have to be a real date.
+      const lastDay = "9999-12-31";
+      const bound = "9999-12-32";
+      const instantOnLastDay = "9999-12-31T10:30:00.000Z";
+
+      expect(buildDateFieldCondition("equals", lastDay)).toEqual({
+        op: "inRange",
+        min: lastDay,
+        max: bound,
+      });
+      expect(buildDateFieldCondition("notEquals", lastDay)).toEqual({
+        op: "notInRange",
+        min: lastDay,
+        max: bound,
+      });
+      expect(buildDateFieldCondition("greaterThan", lastDay)).toEqual({
+        op: "greaterEqual",
+        value: bound,
+      });
+      expect(buildDateFieldCondition("lessThan", lastDay)).toEqual({ op: "lessThan", value: lastDay });
+
+      // The property the bound exists for, read the way Postgres compares the strings.
+      expect(instantOnLastDay >= lastDay && instantOnLastDay < bound).toBe(true);
+      expect(instantOnLastDay >= bound).toBe(false);
+      // And nothing can be stored on the bound itself.
+      expect(coerceToEmbeddedDataType(bound, "date")).toBeUndefined();
+    });
+
+    test("the window covers both spellings a date field stores", () => {
+      const condition = buildDateFieldCondition("equals", "2026-09-01");
+      if (condition?.op !== "inRange") throw new Error("expected a range condition");
+
+      // Asserted against the ingest contract rather than hand-written strings: these are the exact
+      // values the column holds for `?signup_date=…`, and `>=`/`<` on them is the lexicographic
+      // comparison Postgres runs. A datetime upper bound would fail the last row — "2026-09-02"
+      // sorts before "2026-09-02T00:00:00.000Z", so a stored date-only 2 Sep would land in 1 Sep's
+      // window.
+      const stored = (raw: string) => normalizeIngestedValue(raw, "date")?.value as string;
+      const isInWindow = (raw: string) => stored(raw) >= condition.min && stored(raw) < condition.max;
+
+      expect(isInWindow("2026-09-01")).toBe(true);
+      expect(isInWindow("2026-09-01T10:30:00Z")).toBe(true);
+      expect(isInWindow("2026-09-01T00:00:00.000Z")).toBe(true);
+      expect(isInWindow("2026-09-01T23:59:59.999Z")).toBe(true);
+      expect(isInWindow("2026-08-31T23:59:59Z")).toBe(false);
+      expect(isInWindow("2026-09-02")).toBe(false);
+    });
+
+    test("the day after rolls over months, years and a leap day", () => {
+      const maxOf = (value: string) => {
+        const condition = buildDateFieldCondition("equals", value);
+        return condition?.op === "inRange" ? condition.max : null;
+      };
+
+      expect(maxOf("2026-09-30")).toBe("2026-10-01");
+      expect(maxOf("2026-12-31")).toBe("2027-01-01");
+      expect(maxOf("2024-02-28")).toBe("2024-02-29");
+      expect(maxOf("2024-02-29")).toBe("2024-03-01");
+    });
+
+    test("the window is UTC wherever the machine running it happens to be", () => {
+      // The boundary is read off the UTC clock on purpose: `new Date(2026, 8, 1)` is midnight
+      // wherever the process sits, so in a positive-offset zone it lands on the previous day and
+      // the same saved filter would answer differently per viewer.
+      //
+      // Pinned under a zone that is not UTC, deliberately. Under UTC the local-zone and UTC
+      // constructors agree to the day, so the mistake is invisible there — and UTC is what CI runs,
+      // which would leave this the one guarantee nothing could catch.
+      /* eslint-disable turbo/no-undeclared-env-vars -- the zone under test, not app config */
+      const original = process.env.TZ;
+      process.env.TZ = "Australia/Sydney";
+
+      try {
+        expect(buildDateFieldCondition("equals", "2026-09-01")).toEqual({
+          op: "inRange",
+          min: "2026-09-01",
+          max: "2026-09-02",
+        });
+      } finally {
+        process.env.TZ = original;
+      }
+      /* eslint-enable turbo/no-undeclared-env-vars */
+    });
+
+    test("a full datetime names its own instant, so it is compared as-is", () => {
+      const value = "2026-09-01T10:30:00Z";
+
+      expect(buildDateFieldCondition("equals", value)).toEqual({ op: "equals", value });
+      expect(buildDateFieldCondition("notEquals", value)).toEqual({ op: "notEquals", value });
+      expect(buildDateFieldCondition("lessThan", value)).toEqual({ op: "lessThan", value });
+      expect(buildDateFieldCondition("greaterThan", value)).toEqual({ op: "greaterThan", value });
+    });
+
+    test("a value outside the stored subset, or an operator the menu never offers, drops the row", () => {
+      // Each of these would otherwise cut the ISO ordering at a point no stored value sits on.
+      for (const value of [
+        "2026-02-30", // a day that does not exist
+        "01/09/2026",
+        "2026-9-1",
+        "2026-09-01T10:30:00+02:00", // an offset datetime: the read seam takes UTC only
+        "2026-09-01T10:30:00", // and no zone-less one either
+        "tomorrow",
+      ]) {
+        expect(buildDateFieldCondition("equals", value)).toBeNull();
+      }
+
+      expect(buildDateFieldCondition("contains", "2026-09-01")).toBeNull();
     });
   });
 

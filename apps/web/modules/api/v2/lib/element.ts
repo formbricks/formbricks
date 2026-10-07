@@ -19,15 +19,22 @@ export const validateOtherOptionLength = (
   language?: string
 ): string | undefined => {
   // Check if this is an "other" option (not in predefined choices)
-  const matchingChoice = choices.find(
-    (choice) =>
-      typeof choice === "object" &&
-      choice !== null &&
-      "label" in choice &&
-      typeof choice.label === "object" &&
-      choice.label !== null &&
-      getLocalizedValue(choice.label as Record<string, string>, language ?? "default") === value
-  );
+  const matchingChoice = choices.find((choice) => {
+    if (
+      typeof choice !== "object" ||
+      choice === null ||
+      !("label" in choice) ||
+      typeof choice.label !== "object" ||
+      choice.label === null
+    ) {
+      return false;
+    }
+    const label = choice.label as Record<string, string>;
+    const localizedLabel = getLocalizedValue(label, language ?? "default");
+    // The survey renders the default label when a translation is blank, so that is what gets stored.
+    const renderedLabel = localizedLabel.trim() ? localizedLabel : getLocalizedValue(label, "default");
+    return renderedLabel === value;
+  });
 
   // If this is an "other" option with value that's too long, reject the response
   if (!matchingChoice && value.length > MAX_OTHER_OPTION_LENGTH) {
@@ -49,9 +56,13 @@ export const validateOtherOptionLengthForMultipleChoice = ({
     const question = surveyQuestions.find((q) => q.id === questionId);
     if (!question) continue;
 
-    const isMultiChoice = question.type === "multipleChoiceMulti" || question.type === "multipleChoiceSingle";
+    // Ranking stores a ranked "Other" as free text in place of a label, like multiple choice.
+    const hasOtherText =
+      question.type === "multipleChoiceMulti" ||
+      question.type === "multipleChoiceSingle" ||
+      question.type === "ranking";
 
-    if (!isMultiChoice || !question.choices) continue;
+    if (!hasOtherText || !question.choices) continue;
 
     const error = validateAnswer(answer, question.choices, questionId, responseLanguage);
     if (error) return error;

@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyElementSummaryRanking, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TLanguage } from "@formbricks/types/workspace";
 import { getQuotasSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/survey";
 import { getDisplayCountBySurveyId } from "@/lib/display/service";
@@ -489,6 +490,8 @@ describe("getQuestionSummary", () => {
     ],
     questions: [],
     hiddenFields: { enabled: true, fieldIds: ["hidden1"] },
+    // The rows are what the accessors read since ENG-2412; a real survey read carries both.
+    embeddedFields: embeddedFieldsFromLegacyInput({ hiddenFields: { enabled: true, fieldIds: ["hidden1"] } }),
   };
   const responses = [
     {
@@ -636,6 +639,50 @@ describe("getQuestionSummary", () => {
     expect(hiddenFieldSummary?.samples[0].value).toBe("Hidden val");
   });
 
+  /**
+   * ENG-3233. The card is titled by `label`; `id` stays the storage key the samples were read from,
+   * because that is what addresses `response.data`. Red on main, where there was no `label` and the
+   * card showed `utm_campaign`.
+   */
+  test("titles a hidden-field summary by the field's name, keeping the storage key on id", async () => {
+    const renamedSurvey = {
+      ...survey,
+      embeddedFields: [
+        {
+          field: {
+            name: "Campaign",
+            key: null,
+            source: "ingested",
+            dataType: "string",
+            defaultValue: null,
+            locked: false,
+          },
+          link: { storageKey: "utm_campaign" },
+        },
+      ],
+    };
+    const renamedResponses = [
+      { ...responses[0], data: { utm_campaign: "spring_sale" } },
+    ] as unknown as typeof responses;
+
+    const summary = await getElementSummary(
+      renamedSurvey as unknown as TSurvey,
+      getElementsFromBlocks((renamedSurvey as unknown as TSurvey).blocks),
+      renamedResponses,
+      mockDropOff
+    );
+
+    const hiddenFieldSummary = summary.find((s) => s.type === "hiddenField");
+    // `samples` as well as the metadata: the point of the rename is that the *label* changed while
+    // the key the value is read by did not, so an implementation that looked values up by label
+    // would still produce this id and label — with an empty sample list.
+    expect(hiddenFieldSummary).toMatchObject({
+      id: "utm_campaign",
+      label: "Campaign",
+      samples: [expect.objectContaining({ value: "spring_sale" })],
+    });
+  });
+
   describe("Ranking question type tests", () => {
     test("getQuestionSummary correctly processes ranking question with default language responses", async () => {
       const question = {
@@ -723,6 +770,170 @@ describe("getQuestionSummary", () => {
       );
       expect(item3.count).toBe(2);
       expect(item3.avgRanking).toBe(3);
+    });
+
+    test("getQuestionSummary aggregates a ranked Other with its average rank and typed values", async () => {
+      const question = {
+        id: "ranking-q1",
+        type: TSurveyElementTypeEnum.Ranking,
+        headline: { default: "Rank these items" },
+        required: true,
+        choices: [
+          { id: "item1", label: { default: "Item 1" } },
+          { id: "item2", label: { default: "Item 2" } },
+          { id: "other", label: { default: "Other" } },
+        ],
+      };
+
+      const survey = {
+        id: "survey-1",
+        blocks: [{ id: "block1", name: "Block 1", elements: [question] }],
+        questions: [],
+        languages: [],
+        welcomeCard: { enabled: false },
+      } as unknown as TSurvey;
+
+      const buildResponse = (id: string, answer: string[]) => ({
+        id,
+        data: { "ranking-q1": answer },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      });
+
+      const responses = [
+        buildResponse("response-1", ["Integrations", "Item 1", "Item 2"]),
+        buildResponse("response-2", ["Item 2", "Item 1", "Self-hosting"]),
+        buildResponse("response-3", ["Item 1", "Item 2"]),
+      ];
+
+      const dropOff = [
+        { elementId: "ranking-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+      ] as unknown as TSurveySummary["dropOff"];
+
+      const summary = await getElementSummary(
+        survey,
+        getElementsFromBlocks(survey.blocks),
+        responses,
+        dropOff
+      );
+
+      const choices = (summary[0] as TSurveyElementSummaryRanking).choices;
+      expect(choices.map((c) => c.value)).toEqual(["Item 1", "Item 2", "Other"]);
+
+      const other = choices[2];
+      // Ranked 1st once and 3rd once
+      expect(other.count).toBe(2);
+      expect(other.avgRanking).toBe(2);
+      expect(other.others?.map((o) => o.value)).toEqual(["Integrations", "Self-hosting"]);
+
+      // The typed text never counts toward a regular choice
+      expect(choices[0]).toMatchObject({ value: "Item 1", count: 3 });
+    });
+
+    test.each([
+      {
+        name: "counts an Other ranked with no text but lists no value, falling back to the Other label",
+        otherLabel: "",
+        answer: ["", "Item 1"],
+        expected: { value: "Other", count: 1, avgRanking: 1, others: [] },
+      },
+      {
+        name: "reports an unranked Other with a zero count and average",
+        otherLabel: "Something else",
+        answer: ["Item 1"],
+        expected: { value: "Something else", count: 0, avgRanking: 0, others: [] },
+      },
+    ])("getQuestionSummary $name", async ({ otherLabel, answer, expected }) => {
+      const survey = {
+        id: "survey-1",
+        blocks: [
+          {
+            id: "block1",
+            name: "Block 1",
+            elements: [
+              {
+                id: "ranking-q1",
+                type: TSurveyElementTypeEnum.Ranking,
+                headline: { default: "Rank these items" },
+                required: true,
+                choices: [
+                  { id: "item1", label: { default: "Item 1" } },
+                  { id: "other", label: { default: otherLabel } },
+                ],
+              },
+            ],
+          },
+        ],
+        questions: [],
+        languages: [],
+        welcomeCard: { enabled: false },
+      } as unknown as TSurvey;
+
+      const responses = [
+        {
+          id: "response-1",
+          data: { "ranking-q1": answer },
+          updatedAt: new Date(),
+          contact: null,
+          contactAttributes: {},
+          language: null,
+          ttc: {},
+          finished: true,
+        },
+      ];
+
+      const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, [
+        { elementId: "ranking-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
+      ] as unknown as TSurveySummary["dropOff"]);
+
+      const other = (summary[0] as TSurveyElementSummaryRanking).choices.at(-1);
+      expect(other).toEqual(expected);
+    });
+
+    test("getQuestionSummary ignores unmatched ranking entries when there is no Other option", async () => {
+      const question = {
+        id: "ranking-q1",
+        type: TSurveyElementTypeEnum.Ranking,
+        headline: { default: "Rank these items" },
+        required: true,
+        choices: [
+          { id: "item1", label: { default: "Item 1" } },
+          { id: "item2", label: { default: "Item 2" } },
+        ],
+      };
+
+      const survey = {
+        id: "survey-1",
+        blocks: [{ id: "block1", name: "Block 1", elements: [question] }],
+        questions: [],
+        languages: [],
+        welcomeCard: { enabled: false },
+      } as unknown as TSurvey;
+
+      const responses = [
+        {
+          id: "response-1",
+          data: { "ranking-q1": ["Renamed item", "Item 1"] },
+          updatedAt: new Date(),
+          contact: null,
+          contactAttributes: {},
+          language: null,
+          ttc: {},
+          finished: true,
+        },
+      ];
+
+      const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, [
+        { elementId: "ranking-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
+      ] as unknown as TSurveySummary["dropOff"]);
+
+      const choices = (summary[0] as TSurveyElementSummaryRanking).choices;
+      expect(choices.map((c) => c.value)).toEqual(["Item 1", "Item 2"]);
+      expect(choices[0].avgRanking).toBe(2);
     });
 
     test("getQuestionSummary correctly processes ranking question with non-default language responses", async () => {
@@ -1182,6 +1393,7 @@ describe("getResponsesForSummary", () => {
       contactId: null,
       personAttributes: {},
       singleUseId: null,
+      ingestFlags: null,
       isFinished: true,
       displayId: "display-1",
       endingId: null,
@@ -1225,6 +1437,7 @@ describe("getResponsesForSummary", () => {
       contactId: "contact-1",
       personAttributes: {},
       singleUseId: null,
+      ingestFlags: null,
       isFinished: true,
       displayId: "display-1",
       endingId: null,
@@ -1263,6 +1476,7 @@ describe("getResponsesForSummary", () => {
       contactId: "contact-1",
       personAttributes: {},
       singleUseId: null,
+      ingestFlags: null,
       isFinished: true,
       displayId: "display-1",
       endingId: null,
@@ -1383,6 +1597,7 @@ describe("getResponsesForSummary", () => {
         contactId: null,
         personAttributes: {},
         singleUseId: null,
+        ingestFlags: null,
         isFinished: true,
         displayId: "display-1",
         endingId: null,
@@ -1435,6 +1650,7 @@ describe("getResponsesForSummary", () => {
       contactId: null,
       personAttributes: {},
       singleUseId: null,
+      ingestFlags: null,
       isFinished: true,
       displayId: "display-1",
       endingId: null,

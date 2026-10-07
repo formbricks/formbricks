@@ -18,6 +18,11 @@ import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { ElementOptionChoice } from "@/modules/survey/editor/components/element-option-choice";
 import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
+import {
+  ensureSpecialChoicesOrder,
+  getShuffleOptionAfterAddingSpecialChoice,
+  getShuffleOptionAfterRemovingSpecialChoice,
+} from "@/modules/survey/editor/lib/special-choices";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
@@ -63,8 +68,10 @@ export const RankingElementForm = ({
     }
   };
 
+  const hasOtherChoice = element.choices.some((choice) => choice.id === "other");
+
   const addChoice = (choiceIdx: number) => {
-    let newChoices = !element.choices ? [] : element.choices;
+    const choices = !element.choices ? [] : element.choices;
 
     const newChoice = {
       id: createId(),
@@ -72,7 +79,11 @@ export const RankingElementForm = ({
     };
 
     updateElement(elementIdx, {
-      choices: [...newChoices.slice(0, choiceIdx + 1), newChoice, ...newChoices.slice(choiceIdx + 1)],
+      choices: ensureSpecialChoicesOrder([
+        ...choices.slice(0, choiceIdx + 1),
+        newChoice,
+        ...choices.slice(choiceIdx + 1),
+      ]),
     });
   };
 
@@ -88,7 +99,28 @@ export const RankingElementForm = ({
       label: createI18nString("", surveyLanguageCodes),
     };
 
-    updateElement(elementIdx, { choices: [...choices, newChoice] });
+    updateElement(elementIdx, { choices: ensureSpecialChoicesOrder([...choices, newChoice]) });
+  };
+
+  const addOtherChoice = () => {
+    if (hasOtherChoice || element.choices.length >= 25) return;
+
+    const otherChoice = {
+      id: "other",
+      label: createI18nString(t("common.other"), surveyLanguageCodes),
+    };
+    const nextShuffleOption = getShuffleOptionAfterAddingSpecialChoice(element.shuffleOption);
+
+    updateElement(elementIdx, {
+      choices: ensureSpecialChoicesOrder([...element.choices, otherChoice]),
+      ...(!element.otherOptionPlaceholder && {
+        otherOptionPlaceholder: createI18nString(
+          t("workspace.surveys.edit.please_specify"),
+          surveyLanguageCodes
+        ),
+      }),
+      ...(nextShuffleOption && { shuffleOption: nextShuffleOption }),
+    });
   };
 
   const deleteChoice = (choiceIdx: number) => {
@@ -99,7 +131,12 @@ export const RankingElementForm = ({
       setIsInvalidValue(null);
     }
 
-    updateElement(elementIdx, { choices: newChoices });
+    const nextShuffleOption = getShuffleOptionAfterRemovingSpecialChoice(element.shuffleOption, newChoices);
+
+    updateElement(elementIdx, {
+      choices: newChoices,
+      ...(nextShuffleOption && { shuffleOption: nextShuffleOption }),
+    });
   };
 
   const shuffleOptionsTypes = {
@@ -111,7 +148,8 @@ export const RankingElementForm = ({
     all: {
       id: "all",
       label: t("workspace.surveys.edit.randomize_all"),
-      show: element.choices.length > 0,
+      // "Other" stays last, so a shuffle that can move the last choice is not offered alongside it.
+      show: element.choices.length > 0 && !hasOtherChoice,
     },
     exceptLast: {
       id: "exceptLast",
@@ -121,7 +159,7 @@ export const RankingElementForm = ({
     reverseOrderOccasionally: {
       id: "reverseOrderOccasionally",
       label: t("workspace.surveys.edit.reverse_order_occasionally"),
-      show: true,
+      show: !hasOtherChoice,
     },
     reverseOrderExceptLast: {
       id: "reverseOrderExceptLast",
@@ -199,7 +237,7 @@ export const RankingElementForm = ({
             onDragEnd={(event) => {
               const { active, over } = event;
 
-              if (!active || !over) {
+              if (!active || !over || active.id === "other" || over.id === "other") {
                 return;
               }
 
@@ -239,15 +277,27 @@ export const RankingElementForm = ({
           </DndContext>
 
           <div className="mt-2 flex flex-1 items-center justify-between gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              type="button"
-              disabled={element.choices?.length >= 25}
-              onClick={() => addOption()}>
-              {t("workspace.surveys.edit.add_option")}
-              <PlusIcon />
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                type="button"
+                disabled={element.choices?.length >= 25}
+                onClick={() => addOption()}>
+                {t("workspace.surveys.edit.add_option")}
+                <PlusIcon />
+              </Button>
+              {!hasOtherChoice && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  type="button"
+                  disabled={element.choices?.length >= 25}
+                  onClick={addOtherChoice}>
+                  {t("workspace.surveys.edit.add_other")}
+                </Button>
+              )}
+            </div>
             <ShuffleOptionSelect
               shuffleOptionsTypes={shuffleOptionsTypes}
               updateElement={updateElement}

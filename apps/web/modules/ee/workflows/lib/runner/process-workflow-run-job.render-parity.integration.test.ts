@@ -77,6 +77,9 @@ vi.unmock("@/modules/email");
 
 // The integration config doesn't load the unit-suite vitestSetup, so pin the sender constants this
 // file's assertions were written against (everything else stays the real .env-backed constants).
+// Survey visibility (ENG-3282) is not enforced here: the readiness marker is off, not read from the
+// stubbed database (which has no readiness table, so a real read now fails closed instead of resolving off).
+vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
 vi.mock("@/lib/constants", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/constants")>()),
   MAIL_FROM: "mock@mail.com",

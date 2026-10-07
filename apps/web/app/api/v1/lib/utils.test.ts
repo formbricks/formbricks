@@ -31,3 +31,25 @@ describe("buildPrismaResponseData — language canonicalization (ENG-1067)", () 
     expect(buildPrismaResponseData(input("   "), null, {}).language).toBeUndefined();
   });
 });
+
+/**
+ * ENG-1845. Omitted means "no ingest boundary ran", which has to leave the column alone — the
+ * authenticated management create goes through this builder without running the contract. An empty
+ * array is the other claim: the contract ran and found nothing, so a response is not left looking
+ * like one nothing ever checked.
+ */
+describe("buildPrismaResponseData — Embedded Data ingest flags", () => {
+  test("omits the column entirely when no contract ran", () => {
+    expect(buildPrismaResponseData(input(), null, {})).not.toHaveProperty("ingestFlags");
+  });
+
+  test("writes an empty list when the contract ran and found nothing", () => {
+    expect(buildPrismaResponseData(input(), null, {}, []).ingestFlags).toEqual([]);
+  });
+
+  test("writes the flags the contract computed", () => {
+    expect(
+      buildPrismaResponseData(input(), null, {}, [{ key: "seats", reason: "coercion_failed" }]).ingestFlags
+    ).toEqual([{ key: "seats", reason: "coercion_failed" }]);
+  });
+});

@@ -1,4 +1,6 @@
+import type { WorkflowDefinitionOptions, WorkflowDefinitionSummary } from "../analytics/definition-summary";
 import type { WorkflowsLogger } from "../services/ports";
+import type { TWorkflowStatus } from "../types/common";
 
 /** Permission level required for an operation, mirroring the v3 team-permission vocabulary. */
 export type WorkflowApiAccess = "read" | "readWrite" | "manage";
@@ -13,6 +15,11 @@ export interface AuthorizedWorkspace {
 export interface TriggerSurveyCheck {
   surveyExists: boolean;
   missingEndingCardIds: string[];
+  /**
+   * The survey exists but is restricted (or has a visibility change pending), so a workflow may not send
+   * its responses anywhere (ENG-3283). Absent means visible, for adapters that have no such concept.
+   */
+  surveyNotWorkspaceVisible?: boolean;
 }
 
 /**
@@ -35,6 +42,45 @@ export interface WorkflowAuditDetail {
   newObject?: Record<string, unknown>;
 }
 
+/** The lifecycle operations the analytics sink is told about. `patch` is deliberately absent. */
+export type WorkflowAnalyticsOperation =
+  | "created"
+  | "duplicated"
+  | "enabled"
+  | "disabled"
+  | "archived"
+  | "unarchived"
+  | "deleted"
+  | "tested";
+
+/**
+ * Product-analytics detail a handler surfaces to the adapter after a successful operation
+ * (ENG-2851). Like `WorkflowAuditDetail` it is app-agnostic, but unlike it the detail is built
+ * from PII-free facts only: ids, the status transition, timestamps and the definition's *shape*
+ * (trigger type, step types, counts, option flags). The definition itself never crosses this seam,
+ * so an adapter cannot forward an email body or recipient to an analytics vendor by accident.
+ *
+ * `patch` has no operation on purpose: the builder autosaves every couple of seconds, so a
+ * per-save event would measure typing cadence, not intent. The final shape is reported on
+ * `enabled`; the client reports the individual editing steps.
+ */
+export interface WorkflowAnalyticsDetail {
+  operation: WorkflowAnalyticsOperation;
+  workflowId: string;
+  workspaceId: string;
+  /** Lifecycle status after the operation; for `deleted` and `tested`, the status the row had. */
+  status: TWorkflowStatus;
+  /** Status before the operation, where the operation changed it. */
+  previousStatus?: TWorkflowStatus;
+  createdAt: Date;
+  definition: WorkflowDefinitionSummary;
+  options: WorkflowDefinitionOptions;
+  /** `duplicated` only: the workflow the copy was made from. */
+  sourceWorkflowId?: string;
+  /** `tested` only: whether the dry run reported zero problems. */
+  testOk?: boolean;
+}
+
 /**
  * Per-request context the Next.js adapter builds and passes to the framework-agnostic handlers.
  *
@@ -55,6 +101,11 @@ export interface WorkflowAuditDetail {
  * is simply a no-op. Keeping it a narrow port preserves the package's framework-agnosticism — it
  * never imports the app's audit module. The adapter must never let an audit failure throw, since
  * these calls run on the success path of an already-completed mutation.
+ *
+ * `recordAnalytics` is the product-analytics twin of `recordAudit`: same optional-sink shape, same
+ * call discipline (once, after success, never allowed to fail the request), bound by the adapter to
+ * its analytics client. It exists as a separate port rather than a flag on the audit sink because
+ * the two have different consumers and different data rules; see `WorkflowAnalyticsDetail`.
  *
  * `auditRedactionKey` is the secret the adapter injects (the app's audit/encryption secret) so the
  * package can HMAC PII markers in audit snapshots instead of a plain hash — a plain `sha256` of a
@@ -91,5 +142,19 @@ export interface WorkflowApiContext {
     workspaceId: string;
     emails: string[];
   }) => Promise<{ disallowedEmails: string[] }>;
+  /**
+   * Injected survey visibility check (ENG-3282) so the package stays survey-agnostic: of the surveys in
+   * this workspace (or of `surveyIds`, when given), the ids the caller may not read. A run of a
+   * survey-triggered workflow carries that survey's response data (`triggerPayload`, `data`, step
+   * logs), so the run history follows the survey: runs of these surveys are left out of the list and
+   * refused by id. One call per request, never per run; `[]` when nothing is hidden (visibility not
+   * enforced, an organization administrator, or no restricted survey).
+   */
+  listUnreadableSurveyIds: (input: {
+    workspaceId: string;
+    organizationId: string;
+    surveyIds?: string[];
+  }) => Promise<string[]>;
   recordAudit?: (detail: WorkflowAuditDetail) => void | Promise<void>;
+  recordAnalytics?: (detail: WorkflowAnalyticsDetail) => void | Promise<void>;
 }

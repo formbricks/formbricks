@@ -27,9 +27,9 @@ export const getResponsesDownloadUrlAction = authenticatedActionClient
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
     const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
 
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
-      type: "workspace",
-      id: workspaceId,
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.response_export", {
+      type: "survey",
+      id: parsedInput.surveyId,
     });
 
     const result = await getResponseDownloadFile(
@@ -61,6 +61,13 @@ const ZGetSurveyFilterDataAction = z.object({
 export const getSurveyFilterDataAction = authenticatedActionClient
   .inputSchema(ZGetSurveyFilterDataAction)
   .action(async ({ ctx, parsedInput }) => {
+    // Authorized first: the resolver denies an unknown id too, so a forbidden survey and a missing one
+    // answer alike (ENG-3282) instead of "not found" confirming which ids exist.
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.response_read", {
+      type: "survey",
+      id: parsedInput.surveyId,
+    });
+
     const survey = await getSurvey(parsedInput.surveyId);
 
     if (!survey) {
@@ -69,11 +76,6 @@ export const getSurveyFilterDataAction = authenticatedActionClient
 
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
 
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
-      type: "workspace",
-      id: survey.workspaceId,
-    });
-
     const organizationBilling = await getOrganizationBilling(organizationId);
     if (!organizationBilling) {
       throw new ResourceNotFoundError("Organization", organizationId);
@@ -81,11 +83,15 @@ export const getSurveyFilterDataAction = authenticatedActionClient
 
     const isQuotasAllowed = await getIsQuotasEnabled(organizationId);
 
-    const [tags, { contactAttributes: attributes, meta, hiddenFields }, quotas = []] = await Promise.all([
+    const [
+      tags,
+      { contactAttributes: attributes, meta, hiddenFields, reservedValues, variableValues },
+      quotas = [],
+    ] = await Promise.all([
       getTagsByWorkspaceId(survey.workspaceId),
       getResponseFilteringValues(parsedInput.surveyId),
       isQuotasAllowed ? getQuotas(parsedInput.surveyId) : [],
     ]);
 
-    return { environmentTags: tags, attributes, meta, hiddenFields, quotas };
+    return { environmentTags: tags, attributes, meta, hiddenFields, reservedValues, variableValues, quotas };
   });

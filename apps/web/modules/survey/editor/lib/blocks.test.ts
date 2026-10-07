@@ -9,6 +9,7 @@ import {
   deleteElementFromBlock,
   duplicateBlock,
   duplicateElementInBlock,
+  fillEmptyBlockButtonLabels,
   findElementLocation,
   getBlockDisplayName,
   isAutoBlockName,
@@ -53,6 +54,12 @@ const createMockSurvey = (blocks: TSurveyBlock[] = []): TSurvey => ({
   workspaceId: "ws-1",
   createdBy: null,
   status: "draft",
+  visibility: "workspace",
+  ownerId: null,
+  visibilityVersion: 0,
+  visibilityProjectedVersion: 0,
+  visibilityChangedAt: null,
+  visibilityChangedById: null,
   displayOption: "respondMultiple",
   autoClose: null,
   publishOn: null,
@@ -89,6 +96,7 @@ const createMockSurvey = (blocks: TSurveyBlock[] = []): TSurvey => ({
   isBackButtonHidden: false,
   metadata: {},
   isCaptureIpEnabled: false,
+  isAnonymizeResponsesEnabled: false,
   slug: null,
 });
 
@@ -892,5 +900,35 @@ describe("moveElementInBlock", () => {
     if (!result.ok) {
       expect(result.error.message).toContain('Element with ID "nonexistent" not found');
     }
+  });
+});
+
+describe("fillEmptyBlockButtonLabels", () => {
+  const label = { default: "Continue" };
+
+  test("fills missing and blank labels but keeps filled ones and the skipped block", () => {
+    const survey = createMockSurvey([
+      { ...createMockBlock("b0", "Block 1"), buttonLabel: { default: "" } },
+      createMockBlock("b1", "Block 2"),
+      { ...createMockBlock("b2", "Block 3"), buttonLabel: { default: "Go" } },
+      createMockBlock("b3", "Block 4"),
+    ]);
+
+    const result = fillEmptyBlockButtonLabels(survey, "buttonLabel", label, 3, "default");
+
+    expect(result.blocks.map((block) => block.buttonLabel)).toEqual([
+      label,
+      label,
+      { default: "Go" },
+      undefined,
+    ]);
+  });
+
+  test("leaves a label without the language untouched and returns the same survey when nothing changes", () => {
+    const survey = createMockSurvey([
+      { ...createMockBlock("b0", "Block 1"), backButtonLabel: { de: "Zurück" } },
+    ]);
+
+    expect(fillEmptyBlockButtonLabels(survey, "backButtonLabel", label, -1, "default")).toBe(survey);
   });
 });

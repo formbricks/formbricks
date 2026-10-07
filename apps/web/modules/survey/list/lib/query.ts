@@ -12,6 +12,12 @@ export const surveyKeys = {
   all: ["surveys"] as const,
   lists: () => [...surveyKeys.all, "list"] as const,
   list: (input: TSurveyListKeyInput) => [...surveyKeys.lists(), input] as const,
+  visibility: (surveyId: string) => [...surveyKeys.all, "visibility", surveyId] as const,
+};
+
+export const surveyMutationKeys = {
+  /** Shared by archive, restore and delete so the list can see a removal that is still in flight. */
+  removal: () => [...surveyKeys.all, "removal"] as const,
 };
 
 export function flattenSurveyPages(data?: InfiniteData<TSurveyListPage>): TSurveyListItem[] {
@@ -54,9 +60,14 @@ export function updateSurveyInInfiniteData(
   };
 }
 
+/**
+ * Drop a survey from the cached pages. `removesFromWorkspace` separates a delete, which takes the
+ * survey out of the workspace, from an archive or restore, which only takes it out of this view.
+ */
 export function removeSurveyFromInfiniteData(
   data: InfiniteData<TSurveyListPage> | undefined,
-  surveyId: string
+  surveyId: string,
+  { removesFromWorkspace = false }: { removesFromWorkspace?: boolean } = {}
 ): InfiniteData<TSurveyListPage> | undefined {
   if (!data) {
     return data;
@@ -80,13 +91,18 @@ export function removeSurveyFromInfiniteData(
     return data;
   }
 
+  const decrement = (count: number | null) => (count === null ? null : Math.max(0, count - 1));
+
   return {
     ...data,
     pages: pages.map((page) => ({
       ...page,
       meta: {
         ...page.meta,
-        totalCount: page.meta.totalCount === null ? null : Math.max(0, page.meta.totalCount - 1),
+        totalCount: decrement(page.meta.totalCount),
+        workspaceSurveyCount: removesFromWorkspace
+          ? decrement(page.meta.workspaceSurveyCount)
+          : page.meta.workspaceSurveyCount,
       },
     })),
   };

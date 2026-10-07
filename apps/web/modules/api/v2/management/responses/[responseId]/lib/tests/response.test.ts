@@ -318,9 +318,12 @@ describe("Response Lib", () => {
       });
       expect(deleteDisplay).toHaveBeenCalledWith(response.displayId);
       expect(getSurveyQuestions).toHaveBeenCalledWith(response.surveyId);
+      // The survey id comes from the deleted row: it is what binds a survey-scoped upload key to this
+      // response, and the survey read here does not select one.
       expect(findAndDeleteUploadedFilesInResponse).toHaveBeenCalledWith(
         response.data,
         survey,
+        response.surveyId,
         survey.workspaceId
       );
       expect(result.ok).toBe(true);
@@ -659,6 +662,8 @@ describe("Response Lib", () => {
         variables: response.variables,
         language: response.language,
         responseFinished: response.finished,
+        // The row just written, so `reserved` quota operands resolve (ENG-1840).
+        response,
         tx: mockTx,
       });
       expect(result.ok).toBe(true);
@@ -685,6 +690,8 @@ describe("Response Lib", () => {
         variables: responseWithoutLanguage.variables,
         language: "default",
         responseFinished: responseWithoutLanguage.finished,
+        // The row just written, so `reserved` quota operands resolve (ENG-1840).
+        response: responseWithoutLanguage,
         tx: mockTx,
       });
       expect(result.ok).toBe(true);

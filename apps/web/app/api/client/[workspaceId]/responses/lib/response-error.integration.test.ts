@@ -7,14 +7,16 @@ import { handleClientResponseCreateError } from "./response-error";
 /**
  * ENG-2174, against the REAL Prisma 7 + @prisma/adapter-pg stack.
  *
- * The adapter builds the P2002 column list by regex-scraping the Postgres error DETAIL
- * (`Key ("surveyId", "singleUseId")=(…)`) and never unquotes it, so every camelCase column arrives
- * wrapped in double quotes. The exact-equality checks in `response-error.ts` therefore never matched
- * and a routine duplicate submission fell through to `DatabaseError` — a 500, plus a Sentry report,
- * instead of the documented 409.
+ * Before 7.10 the adapter built the P2002 column list by regex-scraping the Postgres error DETAIL
+ * (`Key ("surveyId", "singleUseId")=(…)`) and never unquoted it, so every camelCase column arrived
+ * wrapped in double quotes; since 7.10 it reports only the constraint name (ENG-3285). Either way the
+ * exact-equality checks in `response-error.ts` stop matching whenever the shape moves, and a routine
+ * duplicate submission falls through to `DatabaseError` — a 500, plus a Sentry report, instead of the
+ * documented 409.
  *
- * The unit tests could not have caught this: they build the meta by hand, and every fixture in the
- * repo passed unquoted names. Only a genuine violation produces the quoting, so this drives one.
+ * The unit tests cannot catch this: they build the meta by hand. Only a genuine violation produces the
+ * real shape, so this drives one. The raw shape itself is pinned in `prisma-constraint.integration.test.ts`;
+ * this file asserts only the classification.
  */
 beforeEach(async () => {
   await resetDb();
@@ -39,11 +41,6 @@ describe("handleClientResponseCreateError vs real Prisma 7 + adapter-pg (ENG-217
       .catch((e) => e);
 
     expect(error?.code).toBe("P2002");
-    // The premise of the bug: the adapter reports the columns quoted.
-    const rawFields = (
-      error?.meta as { driverAdapterError?: { cause?: { constraint?: { fields?: string[] } } } }
-    )?.driverAdapterError?.cause?.constraint?.fields;
-    expect(rawFields).toContain('"singleUseId"');
 
     expect(() => handleClientResponseCreateError(error)).toThrow(UniqueConstraintError);
     expect(() => handleClientResponseCreateError(error)).toThrow(
@@ -63,10 +60,6 @@ describe("handleClientResponseCreateError vs real Prisma 7 + adapter-pg (ENG-217
       .catch((e) => e);
 
     expect(error?.code).toBe("P2002");
-    const rawFields = (
-      error?.meta as { driverAdapterError?: { cause?: { constraint?: { fields?: string[] } } } }
-    )?.driverAdapterError?.cause?.constraint?.fields;
-    expect(rawFields).toContain('"displayId"');
 
     expect(() => handleClientResponseCreateError(error, display.id)).toThrow(InvalidInputError);
     expect(() => handleClientResponseCreateError(error, display.id)).not.toThrow(DatabaseError);

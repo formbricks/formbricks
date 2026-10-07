@@ -5,6 +5,8 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
+import { type TIngestFlag, mergeIngestFlags } from "@formbricks/types/embedded-data-ingest";
+import { type TEmbeddedValueResponse } from "@formbricks/types/embedded-data-resolver";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TResponse,
@@ -20,7 +22,11 @@ import { TTag } from "@formbricks/types/tags";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
-import { getSurveyFileUploadConfigs, resolveStorageUrlsInObject } from "@/modules/storage/utils";
+import {
+  collectResponseFileUrls,
+  getSurveyFileUploadElementIds,
+  resolveStorageUrlsInObject,
+} from "@/modules/storage/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { ITEMS_PER_PAGE } from "../constants";
@@ -35,6 +41,8 @@ import {
   getResponseContactAttributes,
   getResponseHiddenFields,
   getResponseMeta,
+  getResponseReservedFilterValues,
+  getResponseVariableFilterValues,
   getResponsesFileName,
   getResponsesJson,
   normalizeResponseLanguage,
@@ -107,7 +115,13 @@ const mapResponsePrismaToResponse = (
  * filtered through the workspace of the contact they belong to.
  */
 export const getResponsesByContactId = reactCache(
-  async (contactId: string, workspaceId: string, page?: number): Promise<TResponseWithQuotas[]> => {
+  async (
+    contactId: string,
+    workspaceId: string,
+    /** ENG-3282: the viewer's survey-visibility clause, applied to each response's survey. */
+    visibleSurveyWhere: Prisma.SurveyWhereInput,
+    page?: number
+  ): Promise<TResponseWithQuotas[]> => {
     validateInputs([contactId, ZId], [workspaceId, ZId], [page, ZOptionalNumber]);
 
     try {
@@ -115,6 +129,7 @@ export const getResponsesByContactId = reactCache(
         where: {
           contactId,
           contact: { workspaceId },
+          ...(Object.keys(visibleSurveyWhere).length > 0 ? { survey: visibleSurveyWhere } : {}),
         },
         select: {
           ...responseSelection,
@@ -284,6 +299,24 @@ export const getResponseSnapshotForPipeline = async (responseId: string): Promis
   }
 };
 
+// The full TEmbeddedValueResponse shape, so reserved values run through the shared projection
+// (redactQuery, type coercion) instead of raw meta reads (ENG-1848). Kept as a named selection so
+// the row type stays checked against TEmbeddedValueResponse — a field added there without being
+// selected here must fail the build, not read undefined at runtime.
+const filteringValuesSelection = {
+  id: true,
+  surveyId: true,
+  createdAt: true,
+  updatedAt: true,
+  finished: true,
+  language: true,
+  data: true,
+  variables: true,
+  ttc: true,
+  meta: true,
+  contactAttributes: true,
+} satisfies Prisma.ResponseSelect;
+
 export const getResponseFilteringValues = reactCache(async (surveyId: string) => {
   validateInputs([surveyId, ZId]);
 
@@ -297,18 +330,17 @@ export const getResponseFilteringValues = reactCache(async (surveyId: string) =>
       where: {
         surveyId,
       },
-      select: {
-        data: true,
-        meta: true,
-        contactAttributes: true,
-      },
+      select: filteringValuesSelection,
     });
 
+    const embeddedValueResponses: TEmbeddedValueResponse[] = responses;
     const contactAttributes = getResponseContactAttributes(responses);
     const meta = getResponseMeta(responses);
     const hiddenFields = getResponseHiddenFields(survey, responses);
+    const reservedValues = getResponseReservedFilterValues(survey, embeddedValueResponses);
+    const variableValues = getResponseVariableFilterValues(survey, embeddedValueResponses);
 
-    return { contactAttributes, meta, hiddenFields };
+    return { contactAttributes, meta, hiddenFields, reservedValues, variableValues };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -479,7 +511,6 @@ export const getResponseDownloadFile = async (
       resolvedResponses,
       elements,
       userAttributes,
-      hiddenFields,
       isQuotasAllowed,
       organization?.displayTimeZone ?? "UTC"
     );
@@ -549,10 +580,20 @@ export const getResponsesByWorkspaceId = reactCache(
   }
 );
 
+/**
+ * `ingestFlags` is the Embedded Data ingest contract's verdict on `responseInput.data` (ENG-1845),
+ * computed server-side by the caller and passed separately so it can never arrive from the client.
+ *
+ * Omitting it leaves the stored column untouched — the authenticated management routes update a
+ * response without running the contract, and must not clear what a client ingest wrote. Passing it
+ * unions by key: a key this payload rewrote takes its new verdict, including none at all, so a value
+ * corrected on a later block stops being flagged.
+ */
 export const updateResponse = async (
   responseId: string,
   responseInput: TResponseUpdateInput,
-  tx?: Prisma.TransactionClient
+  tx?: Prisma.TransactionClient,
+  ingestFlags?: readonly TIngestFlag[]
 ): Promise<TResponse> => {
   validateInputs([responseId, ZId], [responseInput, ZResponseUpdateInput]);
   try {
@@ -562,7 +603,10 @@ export const updateResponse = async (
       where: {
         id: responseId,
       },
-      select: responseSelection,
+      // `ingestFlags` is read here and nowhere else: it is not part of `responseSelection`, so it
+      // stays off every response this module returns rather than riding along into API payloads that
+      // never declared it.
+      select: { ...responseSelection, ingestFlags: true },
     });
 
     if (!currentResponse) {
@@ -590,6 +634,13 @@ export const updateResponse = async (
       ...currentResponse.variables,
       ...responseInput.variables,
     };
+    const mergedIngestFlags =
+      ingestFlags === undefined
+        ? undefined
+        : mergeIngestFlags(currentResponse.ingestFlags ?? [], {
+            data: responseInput.data ?? {},
+            flags: ingestFlags,
+          });
 
     const responsePrisma = await prismaClient.response.update({
       where: {
@@ -602,6 +653,9 @@ export const updateResponse = async (
         ttc,
         language,
         variables,
+        // Written whenever the contract ran, empty included — see `buildPrismaResponseData` for why
+        // `null` has to stay reserved for "no ingest boundary has written this".
+        ...(mergedIngestFlags !== undefined && { ingestFlags: mergedIngestFlags }),
       },
       select: responseSelection,
     });
@@ -630,18 +684,7 @@ export const updateResponse = async (
 };
 
 const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey: TSurvey): Promise<void> => {
-  // Match write-time validation: a survey holds file uploads in either blocks or questions, so build
-  // the id set from the union of both rather than one shape (getSurveyFileUploadConfigs is exactly what
-  // validateClientFileUploads uses). Keying off a single shape silently skips deletes for the other.
-  const fileUploadElementIds = new Set(
-    getSurveyFileUploadConfigs({ blocks: survey.blocks, questions: survey.questions }).map(
-      (config) => config.id
-    )
-  );
-
-  const fileUrls = Object.entries(response.data)
-    .filter(([elementId]) => fileUploadElementIds.has(elementId))
-    .flatMap(([, elementResponse]) => elementResponse as string[]);
+  const fileUrls = collectResponseFileUrls(response.data, getSurveyFileUploadElementIds(survey), survey.id);
 
   await deleteResponseFileUrls(fileUrls, survey.workspaceId);
 };

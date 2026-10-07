@@ -1,0 +1,48 @@
+oneOf:
+  - $ref: ./ResponseAnswerText.yml
+  - $ref: ./ResponseAnswerNumber.yml
+  - $ref: ./ResponseAnswerBoolean.yml
+  - $ref: ./ResponseAnswerSelection.yml
+  - $ref: ./ResponseAnswerDate.yml
+  - $ref: ./ResponseAnswerFileUpload.yml
+  - $ref: ./ResponseAnswerBooking.yml
+  - $ref: ./ResponseAnswerMatrix.yml
+  - $ref: ./ResponseAnswerComposite.yml
+discriminator:
+  propertyName: elementType
+  mapping:
+    openText: ./ResponseAnswerText.yml
+    nps: ./ResponseAnswerNumber.yml
+    rating: ./ResponseAnswerNumber.yml
+    csat: ./ResponseAnswerNumber.yml
+    ces: ./ResponseAnswerNumber.yml
+    consent: ./ResponseAnswerBoolean.yml
+    cta: ./ResponseAnswerBoolean.yml
+    multipleChoiceSingle: ./ResponseAnswerSelection.yml
+    multipleChoiceMulti: ./ResponseAnswerSelection.yml
+    pictureSelection: ./ResponseAnswerSelection.yml
+    ranking: ./ResponseAnswerSelection.yml
+    date: ./ResponseAnswerDate.yml
+    fileUpload: ./ResponseAnswerFileUpload.yml
+    cal: ./ResponseAnswerBooking.yml
+    matrix: ./ResponseAnswerMatrix.yml
+    address: ./ResponseAnswerComposite.yml
+    contactInfo: ./ResponseAnswerComposite.yml
+description: >
+  One answer, carrying the element's id, its label, its type and its value. `elementType` selects the
+  shape: switch on it rather than probing for which value field is present.
+
+
+  Answers are a **typed array**, not a map keyed by element id, because a consumer holding only a
+  response would otherwise see bare ids and have to fetch the survey and join to learn what was
+  asked — a join that is easy to get wrong and that agent clients cannot make cheaply. The array also
+  separates answers from hidden fields and variables, which the stored representation mixes into one
+  flat map. Non-answer data lives in `embeddedData[]`.
+
+
+  Several element types share a value shape and therefore a schema — the four numeric scales, the
+  four choice styles, the two composites. All seventeen element types are covered.
+
+
+  Only elements the respondent actually reached appear here. Data whose element has since been
+  deleted appears in `unresolved[]` instead.

@@ -6,6 +6,7 @@ import { E2E_TESTING, IS_DEVELOPMENT, TELEMETRY_DISABLED } from "@/lib/constants
 import { env } from "@/lib/env";
 import { hashString } from "@/lib/hash-string";
 import { getInstanceInfo } from "@/lib/instance";
+import { type TProxiedRequestInit, proxyDispatcher } from "@/lib/proxy-dispatcher";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import packageJson from "@/package.json";
 
@@ -78,11 +79,12 @@ const executeTelemetrySend = async (cache: CacheService, lastSent: number, now: 
     // Update in-memory check to prevent this instance from checking again for 24h.
     nextTelemetryCheck = now + TELEMETRY_INTERVAL_MS;
   } catch (e) {
-    // Log as warning since telemetry is non-essential
+    // Error, not warning: for a licensed instance this report is what the license server bills and
+    // audits against, and a failure repeats silently every day until someone reads the logs.
     const errorMessage = e instanceof Error ? e.message : String(e);
-    logger.warn(
+    logger.error(
       { error: e, message: errorMessage, lastSent, now, hashedLicenseKey },
-      "Failed to send telemetry - applying 1h cooldown"
+      "Failed to send usage update to the license server - applying 1h cooldown"
     );
 
     // Failure cooldown: Prevent retrying immediately to avoid hammering the endpoint.
@@ -193,6 +195,40 @@ export const sendTelemetryEvents = async () => {
 };
 
 /**
+ * Distinct trigger and step types across the instance's live workflows, read straight from the JSONB
+ * definitions so a new node kind reports itself. Fail-soft on purpose: this is a nice-to-have on top
+ * of the counts, and a malformed definition must not cost the instance its whole usage report.
+ */
+const getWorkflowNodeTypesInUse = async (): Promise<{ triggerTypes: string[]; actionTypes: string[] }> => {
+  try {
+    const [row] = await prisma.$queryRaw<[{ triggerTypes: unknown; actionTypes: unknown }]>`
+      SELECT
+        COALESCE(
+          (SELECT array_agg(DISTINCT w."definition"->'trigger'->>'triggerType')
+             FROM "Workflow" w
+            WHERE w.status <> 'archived' AND w."definition"->'trigger'->>'triggerType' IS NOT NULL),
+          ARRAY[]::text[]
+        ) as "triggerTypes",
+        COALESCE(
+          (SELECT array_agg(DISTINCT COALESCE(n->>'actionType', n->>'type'))
+             FROM (SELECT "definition" FROM "Workflow"
+                    WHERE status <> 'archived' AND jsonb_typeof("definition"->'nodes') = 'array') w,
+                  jsonb_array_elements(w."definition"->'nodes') n),
+          ARRAY[]::text[]
+        ) as "actionTypes"
+    `;
+    const toStrings = (value: unknown): string[] =>
+      Array.isArray(value)
+        ? value.filter((item): item is string => typeof item === "string").sort((a, b) => a.localeCompare(b))
+        : [];
+    return { triggerTypes: toStrings(row?.triggerTypes), actionTypes: toStrings(row?.actionTypes) };
+  } catch (error) {
+    logger.warn({ error }, "Failed to read workflow node types for the usage update");
+    return { triggerTypes: [], actionTypes: [] };
+  }
+};
+
+/**
  * Gathers telemetry data and sends it to Formbricks Enterprise endpoint.
  * @param lastSent - Timestamp of last telemetry send (used to calculate incremental metrics)
  * @returns `true` when a usage update was accepted by the endpoint, `false` when there was nothing to
@@ -210,8 +246,8 @@ const sendTelemetry = async (lastSent: number): Promise<boolean> => {
   // Optimize database queries to reduce connection pool usage:
   // Instead of 15 parallel queries (which could exhaust the connection pool),
   // we batch all count queries into a single raw SQL query.
-  // This reduces connection usage from 15 → 3 (batch counts + integrations + accounts).
-  const [countsResult, integrations, ssoProviders] = await Promise.all([
+  // This reduces connection usage from 15 → 4 (batch counts + integrations + accounts + workflow node types).
+  const [countsResult, integrations, ssoProviders, workflowNodeTypes] = await Promise.all([
     // Single query for all counts (13 metrics in one round-trip)
     prisma.$queryRaw<
       [
@@ -229,6 +265,10 @@ const sendTelemetry = async (lastSent: number): Promise<boolean> => {
           contactCount: bigint;
           segmentCount: bigint;
           newestResponseAt: Date | null;
+          workflowCount: bigint;
+          enabledWorkflowCount: bigint;
+          workflowRunCountSinceLastUpdate: bigint;
+          workflowRunFailedCountSinceLastUpdate: bigint;
         },
       ]
     >`
@@ -245,11 +285,20 @@ const sendTelemetry = async (lastSent: number): Promise<boolean> => {
         (SELECT COUNT(*) FROM "Display") as "displayCount",
         (SELECT COUNT(*) FROM "Contact") as "contactCount",
         (SELECT COUNT(*) FROM "Segment") as "segmentCount",
-        (SELECT MAX("created_at") FROM "Response") as "newestResponseAt"
+        (SELECT MAX("created_at") FROM "Response") as "newestResponseAt",
+        (SELECT COUNT(*) FROM "Workflow" WHERE status <> 'archived') as "workflowCount",
+        (SELECT COUNT(*) FROM "Workflow" WHERE status = 'enabled') as "enabledWorkflowCount",
+        (SELECT COUNT(*) FROM "WorkflowRun" WHERE "isDryRun" = false AND "created_at" > ${new Date(lastSent || 0)}) as "workflowRunCountSinceLastUpdate",
+        -- Failures are windowed on "finishedAt", not "created_at": status is mutable, so a run
+        -- created inside this window that only fails after this read would count in the volume and
+        -- never in the failures — one-way loss. Every terminal write sets "finishedAt", so each
+        -- failure is counted once, in the window it settled in.
+        (SELECT COUNT(*) FROM "WorkflowRun" WHERE "isDryRun" = false AND status = 'failed' AND "finishedAt" > ${new Date(lastSent || 0)}) as "workflowRunFailedCountSinceLastUpdate"
     `,
     // Keep these as separate queries since they need DISTINCT which is harder to optimize
     prisma.integration.findMany({ select: { type: true }, distinct: ["type"] }),
     prisma.account.findMany({ select: { provider: true }, distinct: ["provider"] }),
+    getWorkflowNodeTypesInUse(),
   ]);
 
   // Extract metrics from the batched query result and convert bigints to numbers
@@ -303,6 +352,14 @@ const sendTelemetry = async (lastSent: number): Promise<boolean> => {
     displayCount,
     contactCount,
     segmentCount,
+    // Workflows adoption for self-hosted instances, which send nothing to PostHog (ENG-2851).
+    workflows: {
+      workflowCount: Number(counts.workflowCount),
+      enabledWorkflowCount: Number(counts.enabledWorkflowCount),
+      runCountSinceLastUsageUpdate: Number(counts.workflowRunCountSinceLastUpdate),
+      failedRunCountSinceLastUsageUpdate: Number(counts.workflowRunFailedCountSinceLastUpdate),
+      ...workflowNodeTypes,
+    },
     integrations: integrationMap,
     infrastructure: {
       smtp: !!env.SMTP_HOST,
@@ -330,6 +387,8 @@ const sendTelemetry = async (lastSent: number): Promise<boolean> => {
   const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
   try {
+    // Same dispatcher as the license check: on a network whose only egress is a proxy, a bare
+    // `fetch` here validates the license but never delivers a single usage update.
     const res = await fetch(url, {
       method: "POST",
       headers: {
@@ -337,7 +396,8 @@ const sendTelemetry = async (lastSent: number): Promise<boolean> => {
       },
       body: JSON.stringify(payload),
       signal: controller.signal,
-    });
+      dispatcher: proxyDispatcher,
+    } as TProxiedRequestInit);
 
     // A rejected update must not be recorded as sent, or the instance stays silent for another 24h
     // while the license server still has no usage for it.

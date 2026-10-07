@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ZActionClass } from "./action-classes";
 import { ZId } from "./common";
+import { ZOverlayAppearance } from "./overlay";
 import { ZUploadFileConfig } from "./storage";
 import { ZSurveyBase, surveyRefinement } from "./surveys/types";
 import { ZWorkspace } from "./workspace";
@@ -24,6 +25,9 @@ export const ZJsWorkspaceStateSurvey = ZSurveyBase.pick({
   displayLimit: true,
   displayOption: true,
   hiddenFields: true,
+  // The inlined Embedded Data definitions (ENG-1837). Picked so the join survives this parse and
+  // reaches the renderer's logic/recall engines, which resolve definitions through it.
+  embeddedFields: true,
   triggers: true,
   displayPercentage: true,
   delay: true,
@@ -31,9 +35,14 @@ export const ZJsWorkspaceStateSurvey = ZSurveyBase.pick({
   isBackButtonHidden: true,
   isAutoProgressingEnabled: true,
   recaptcha: true,
-}).superRefine((survey, ctx) => {
-  surveyRefinement(survey as z.infer<typeof ZSurveyBase>, ctx);
-});
+})
+  .extend({
+    // Resolved custom overlay, set by the environment endpoint (see environment/lib/data.ts).
+    overlayAppearance: ZOverlayAppearance.nullish(),
+  })
+  .superRefine((survey, ctx) => {
+    surveyRefinement(survey as z.infer<typeof ZSurveyBase>, ctx);
+  });
 
 export type TJsWorkspaceStateSurvey = z.infer<typeof ZJsWorkspaceStateSurvey>;
 

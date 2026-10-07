@@ -2,7 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 import type { TUserLocale } from "@formbricks/types/user";
-import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
+import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { AiIcon } from "@/modules/ui/components/ai";
 import { CreateWithAIDialog } from "./create-with-ai-dialog";
 

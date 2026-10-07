@@ -23,7 +23,7 @@ The Open Source Qualtrics Alternative
 <a href="https://github.com/formbricks/formbricks/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-AGPL-purple" alt="License"></a> <a href="https://github.com/formbricks/formbricks/stargazers"><img src="https://img.shields.io/github/stars/formbricks/formbricks?logo=github" alt="Github Stars"></a>
 <a href="https://insights.linuxfoundation.org/project/formbricks"><img src="https://insights.linuxfoundation.org/api/badge/health-score?project=formbricks"></a>
 <a href="https://news.ycombinator.com/item?id=32303986"><img src="https://img.shields.io/badge/Hacker%20News-122-%23FF6600" alt="Hacker News"></a>
-<a href="[https://www.producthunt.com/products/formbricks](https://www.producthunt.com/posts/formbricks)"><img src="https://img.shields.io/badge/Product%20Hunt-455-orange?logo=producthunt&logoColor=%23fff" alt="Product Hunt"></a>
+<a href="https://www.producthunt.com/products/formbricks"><img src="https://img.shields.io/badge/Product%20Hunt-455-orange?logo=producthunt&logoColor=%23fff" alt="Product Hunt"></a>
 <a href="https://github.blog/2023-04-12-github-accelerator-our-first-cohort-and-whats-next/"><img src="https://img.shields.io/badge/2023-blue?logo=github&label=Github%20Accelerator" alt="Github Accelerator"></a>
 <a href="https://github.com/formbricks/formbricks/issues?q=is:issue+is:open+label:%22%F0%9F%99%8B%F0%9F%8F%BB%E2%80%8D%E2%99%82%EF%B8%8Fhelp+wanted%22"><img src="https://img.shields.io/badge/Help%20Wanted-Contribute-blue"></a>
 </p>
@@ -35,7 +35,7 @@ The Open Source Qualtrics Alternative
 <i>Trusted by</i><br/>
   <img width="867" alt="clients-hi-res" src="https://github.com/formbricks/formbricks/assets/72809645/924d3693-f66a-4063-bb31-6e5789a8175a">
 </p>
-<div>
+</div>
 
 <p align="center">
 <a href="https://trendshift.io/repositories/2570" target="_blank"><img src="https://trendshift.io/api/badge/repositories/2570" alt="Trendshift Badge for formbricks/formbricks" style="width: 250px; height: 55px;" width="250" height="55"/></a>
@@ -131,29 +131,37 @@ Formbricks is available Open-Source under AGPLv3 license. You can host Formbrick
 
 To get started with self-hosting with Docker, take a look at our [self-hosting docs](https://formbricks.com/docs/self-hosting/deployment).
 
+<a id="development"></a>
+
 ## 👨‍💻 Development
 
 ### Prerequisites
 
 Here is what you need to be able to run Formbricks:
 
-- [Node.js](https://nodejs.org/en) (Version: >=18.x)
+- [Node.js](https://nodejs.org/en) - use the version range in [`package.json`](./package.json) or the pinned version in [`.nvmrc`](./.nvmrc)
 
 - [Pnpm](https://pnpm.io/)
 
-- [Docker](https://www.docker.com/) - to run PostgreSQL and MailHog
+- [Docker](https://www.docker.com/) - to run the local development stack, including PostgreSQL, SpiceDB, MailHog, Valkey, RustFS, Hub and Cube services
 
 ### Local Setup
 
-To get started locally, we've got a [guide to help you](https://formbricks.com/docs/developer-docs/contributing/get-started#local-machine-setup).
+1. Install dependencies:
 
-### Gitpod Setup
+   ```bash
+   pnpm install
+   ```
 
-1. Click the button below to open this project in Gitpod.
+2. Start the local development stack and app:
 
-2. This will open a fully configured workspace in your browser with all the necessary dependencies already installed.
+   ```bash
+   pnpm go
+   ```
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/formbricks/formbricks)
+   `pnpm go` runs `pnpm db:up` first. That command creates `.env` from `.env.example` when needed, generates the required local secrets, and starts the Docker services from `docker-compose.dev.yml`.
+
+3. Open [http://localhost:3000](http://localhost:3000).
 
 <a id="contribution"></a>
 
@@ -195,8 +203,6 @@ Let's have a chat about your survey needs and get you started.
 
 <a href="https://cal.com/johannes/onboarding?utm_source=banner&utm_campaign=oss"><img alt="Book us with Cal.com" src="https://cal.com/book-with-cal-dark.svg" /></a>
 
-<a id="license"></a>
-
 <a id="security"></a>
 
 ## 🔒 Security
@@ -222,5 +228,3 @@ We currently do not offer Formbricks white-labeled. That means that we don't sel
 ### Why charge for Enterprise Features?
 
 The Enterprise Edition allows us to fund the development of Formbricks sustainably. It guarantees that the free and open-source surveying infrastructure we're building will be around for decades to come.
-
-<a id="readme-de"></a>

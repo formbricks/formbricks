@@ -4,9 +4,11 @@ import clsx from "clsx";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementsComboBox";
+import { getFilterOperatorLabel, getFilterValueLabel } from "@/app/lib/surveys/filter-labels";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import { Button } from "@/modules/ui/components/button";
@@ -46,6 +48,48 @@ type ElementFilterComboBoxProps = {
   handleRemoveMultiSelect: (value: string[]) => void;
   disabled?: boolean;
   fieldId?: string;
+  /** Embedded Data / reserved fields: picks the value input (number/date/free text) per dataType. */
+  fieldDataType?: TEmbeddedDataType;
+};
+
+// Operators whose value is free text rather than a pick from observed values.
+const TEXT_FAMILY_OPERATORS = new Set([
+  "Contains",
+  "Does not contain",
+  "Starts with",
+  "Does not start with",
+  "Ends with",
+  "Does not end with",
+]);
+
+// Operators that take no value at all; the value box is disabled while one is selected.
+const NO_VALUE_OPERATORS = new Set(["Is set", "Is not set"]);
+
+const getFreeTextInputType = (fieldDataType?: TEmbeddedDataType): "number" | "date" | "text" => {
+  if (fieldDataType === "number") return "number";
+  if (fieldDataType === "date") return "date";
+  return "text";
+};
+
+/**
+ * Free-form value input instead of the observed-values combobox: the URL meta field (its value set
+ * is deliberately not enumerated), any text-family operator, number/date typed fields, and a typed
+ * field with no observed values to offer.
+ */
+const checkIsFreeTextValueInput = (params: {
+  type?: TSurveyElementTypeEnum | Omit<OptionsType, OptionsType.ELEMENTS>;
+  fieldId?: string;
+  fieldDataType?: TEmbeddedDataType;
+  filterValue?: string;
+  hasComboBoxOptions: boolean;
+  isNoValueOperator: boolean;
+}): boolean => {
+  if (params.isNoValueOperator) return false;
+  if (params.type === OptionsType.META && params.fieldId === "url") return true;
+  if (TEXT_FAMILY_OPERATORS.has(params.filterValue ?? "")) return true;
+  if (params.fieldDataType === undefined) return false;
+  if (params.fieldDataType !== "boolean" && params.fieldDataType !== "string") return true;
+  return !params.hasComboBoxOptions;
 };
 
 // Helper function to check if multiple selection is allowed
@@ -82,6 +126,7 @@ export const ElementFilterComboBox = ({
   handleRemoveMultiSelect,
   disabled = false,
   fieldId,
+  fieldDataType,
 }: ElementFilterComboBoxProps) => {
   const [open, setOpen] = useState(false);
   const commandRef = useRef(null);
@@ -89,6 +134,11 @@ export const ElementFilterComboBox = ({
   const { t } = useTranslation();
 
   useClickOutside(commandRef, () => setOpen(false));
+
+  // The stored filter value stays English — only what the user reads is translated (ENG-645).
+  const filterType = typeof type === "string" ? type : undefined;
+  const getOperatorLabel = (value: string): string => getFilterOperatorLabel(value, filterType, t);
+  const getValueLabel = (value: string): string => getFilterValueLabel(value, filterType, t);
 
   const isMultiple = checkIsMultiple(type, filterValue);
 
@@ -102,19 +152,28 @@ export const ElementFilterComboBox = ({
     });
   }, [isMultiple, filterComboBoxOptions, filterComboBoxValue]);
 
-  const isDisabledComboBox = checkIsDisabledComboBox(type, filterValue);
+  const isNoValueOperator = NO_VALUE_OPERATORS.has(filterValue ?? "");
+  const isDisabledComboBox = checkIsDisabledComboBox(type, filterValue) || isNoValueOperator;
 
-  // Check if this is a text input field (URL meta field)
-  const isTextInputField = type === OptionsType.META && fieldId === "url";
+  const isTextInputField = checkIsFreeTextValueInput({
+    type,
+    fieldId,
+    fieldDataType,
+    filterValue,
+    hasComboBoxOptions: (filterComboBoxOptions?.length ?? 0) > 0,
+    isNoValueOperator,
+  });
+
+  const textInputType = getFreeTextInputType(fieldDataType);
 
   // Filter options based on search query
   const filteredOptions = useMemo(
     () =>
       options?.filter((o) => {
-        const optionValue = getOptionValue(o);
-        return optionValue.toLowerCase().includes(searchQuery.toLowerCase());
+        const optionLabel = getFilterValueLabel(getOptionValue(o), filterType, t);
+        return optionLabel.toLowerCase().includes(searchQuery.toLowerCase());
       }),
-    [options, searchQuery]
+    [options, searchQuery, filterType, t]
   );
 
   const handleCommandItemSelect = (o: string | TI18nString) => {
@@ -138,7 +197,9 @@ export const ElementFilterComboBox = ({
     if (!filterOptions || filterOptions.length <= 1) {
       return (
         <div className="flex h-9 max-w-fit items-center rounded-md rounded-r-none border-r border-slate-300 bg-white px-2 text-sm text-slate-600">
-          <p className="mr-1 max-w-[50px] truncate sm:max-w-[100px]">{filterValue}</p>
+          <p className="mr-1 max-w-[50px] truncate sm:max-w-[100px]">
+            {filterValue ? getOperatorLabel(filterValue) : null}
+          </p>
         </div>
       );
     }
@@ -154,7 +215,7 @@ export const ElementFilterComboBox = ({
             disabled ? "opacity-50" : "cursor-pointer hover:bg-slate-50"
           )}>
           {filterValue ? (
-            <p className="max-w-[50px] truncate sm:max-w-[80px]">{filterValue}</p>
+            <p className="max-w-[50px] truncate sm:max-w-[80px]">{getOperatorLabel(filterValue)}</p>
           ) : (
             <p className="text-slate-400">{t("common.select")}...</p>
           )}
@@ -168,7 +229,7 @@ export const ElementFilterComboBox = ({
                 key={`${optionValue}-${index}`}
                 className="cursor-pointer"
                 onClick={() => onChangeFilterValue(optionValue)}>
-                {optionValue}
+                {getOperatorLabel(optionValue)}
               </DropdownMenuItem>
             );
           })}
@@ -202,7 +263,7 @@ export const ElementFilterComboBox = ({
       type="button"
       onClick={(e) => handleRemoveTag(e, value)}
       className="flex items-center gap-1 rounded-sm bg-slate-100 px-2 py-1 text-sm whitespace-nowrap text-slate-600 hover:bg-slate-200">
-      {value}
+      {getValueLabel(value)}
       <X className="size-3" />
     </button>
   );
@@ -234,7 +295,7 @@ export const ElementFilterComboBox = ({
       return renderMultiSelectTags();
     }
 
-    return <p className="truncate text-sm text-slate-600">{filterComboBoxValue}</p>;
+    return <p className="truncate text-sm text-slate-600">{getValueLabel(filterComboBoxValue)}</p>;
   };
 
   return (
@@ -243,11 +304,11 @@ export const ElementFilterComboBox = ({
 
       {isTextInputField ? (
         <Input
-          type="text"
+          type={textInputType}
           value={typeof filterComboBoxValue === "string" ? filterComboBoxValue : ""}
           onChange={(e) => onChangeFilterComboBoxValue(e.target.value)}
           disabled={isComboBoxDisabled}
-          placeholder={t("common.enter_url")}
+          placeholder={type === OptionsType.META && fieldId === "url" ? t("common.enter_url") : undefined}
           className="h-9 rounded-l-none border-none bg-white text-sm focus:ring-offset-0"
         />
       ) : (
@@ -303,7 +364,7 @@ export const ElementFilterComboBox = ({
                         key={optionValue}
                         onSelect={() => handleCommandItemSelect(o)}
                         className="cursor-pointer">
-                        {optionValue}
+                        {getValueLabel(optionValue)}
                       </CommandItem>
                     );
                   })}

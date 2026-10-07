@@ -4,6 +4,7 @@ import {
   TResponseUpdate,
   TResponseVariables,
 } from "@formbricks/types/responses";
+import { type TWebSurveyMeta } from "./browser-context";
 
 const DB_NAME = "formbricks-offline";
 const DB_VERSION = 1;
@@ -38,6 +39,17 @@ export interface SurveyProgressEntry {
   history: string[];
   selectedLanguage: string;
   surveyStateSnapshot: SerializedSurveyState;
+  /**
+   * The frozen browser-runtime context (ENG-1841), persisted for the same reason `responseId` is: a
+   * resumed offline session keeps writing to the response it already created, so the meta it reports
+   * must keep describing the display that created it. Without this, a reload rebuilds the snapshot
+   * from the *new* page — a different URL, referrer or viewport — and the second write overwrites the
+   * first one's answer to "where was this survey shown".
+   *
+   * Optional because entries written before this field existed must still restore; those resume with
+   * the freshly measured snapshot, which is the behaviour they already had.
+   */
+  webSurveyMeta?: TWebSurveyMeta;
   updatedAt: number;
 }
 

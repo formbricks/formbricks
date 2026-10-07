@@ -19,6 +19,8 @@ export const ZResponseFilterCondition = z.enum([
   "lessEqual",
   "greaterThan",
   "greaterEqual",
+  "inRange",
+  "notInRange",
   "includesAll",
   "includesOne",
   "uploaded",
@@ -84,36 +86,80 @@ export const ZResponseHiddenFieldsFilter = z.record(z.string(), z.array(z.string
 
 export type TResponseHiddenFieldsFilter = z.infer<typeof ZResponseHiddenFieldsFilter>;
 
+// Comparison values are numbers for number-typed fields, ISO-8601 strings for date-typed ones —
+// jsonb compares same-format ISO strings lexicographically, which is chronological (ENG-1848).
 const ZResponseFilterCriteriaDataLessThan = z.object({
   op: z.literal(ZResponseFilterCondition.enum.lessThan),
-  value: z.number(),
+  value: z.union([z.number(), z.string()]),
 });
 
 const ZResponseFilterCriteriaDataLessEqual = z.object({
   op: z.literal(ZResponseFilterCondition.enum.lessEqual),
-  value: z.number(),
+  value: z.union([z.number(), z.string()]),
 });
 
 const ZResponseFilterCriteriaDataGreaterEqual = z.object({
   op: z.literal(ZResponseFilterCondition.enum.greaterEqual),
-  value: z.number(),
+  value: z.union([z.number(), z.string()]),
 });
 
 const ZResponseFilterCriteriaDataGreaterThan = z.object({
   op: z.literal(ZResponseFilterCondition.enum.greaterThan),
-  value: z.number(),
+  value: z.union([z.number(), z.string()]),
+});
+
+/**
+ * Response filters are client-supplied and every entry below is expanded into Prisma filter clauses
+ * by buildWhereClause, so unbounded arrays and records are a denial-of-service vector (ENG-3161).
+ * These caps are defence in depth behind that builder's own clause budget — deliberately far above
+ * any real survey, since the budget is what makes the cost provably finite.
+ */
+const MAX_FILTER_VALUES = 1_000;
+const MAX_FILTER_KEYS = 500;
+
+/**
+ * A half-open `[min, max)` window over the stored value — `min` matches, `max` does not.
+ *
+ * It exists because a date-typed field is filtered at a coarser granularity than it is stored: the
+ * response filter's date input emits a day (`2026-09-01`) while the column holds whatever arrived,
+ * which is a day *or* an instant on it (`2026-09-01T10:30:00Z`). "On 2026-09-01" is therefore a
+ * range over the instants of that day rather than an equality, and one condition per key is all the
+ * grammar can carry — so the range is the condition (ENG-3232). `buildDateFieldCondition` is the
+ * only producer; `buildWhereClause` expands it into `gte`/`lt`.
+ *
+ * Both bounds are written in the same ISO spelling as the stored values, which is what lets a single
+ * lexicographic window cover both stored forms: `"2026-09-01" <= "2026-09-01T10:30:00Z" <
+ * "2026-09-02"` holds as text exactly as it does in time.
+ */
+const ZResponseFilterCriteriaDataInRange = z.object({
+  op: z.literal(ZResponseFilterCondition.enum.inRange),
+  min: z.string(),
+  max: z.string(),
+});
+
+/** The complement of {@link ZResponseFilterCriteriaDataInRange}; an absent value matches, as with `notEquals`. */
+const ZResponseFilterCriteriaDataNotInRange = z.object({
+  op: z.literal(ZResponseFilterCondition.enum.notInRange),
+  min: z.string(),
+  max: z.string(),
 });
 
 const ZResponseFilterCriteriaDataIncludesOne = z.object({
   op: z.literal(ZResponseFilterCondition.enum.includesOne),
-  value: z.union([z.array(z.string()), z.array(z.number())]),
+  value: z.union([z.array(z.string()).max(MAX_FILTER_VALUES), z.array(z.number()).max(MAX_FILTER_VALUES)]),
 });
 
 const ZResponseFilterCriteriaDataIncludesAll = z.object({
   op: z.literal(ZResponseFilterCondition.enum.includesAll),
-  value: z.array(z.string()),
+  value: z.array(z.string()).max(MAX_FILTER_VALUES),
 });
 
+// An equality value is compared against the value as it is *stored*, so there is no boolean member:
+// a boolean-typed Embedded Data field stores the strings "true" / "false", never a jsonb boolean.
+// ZResponseDataValue has no boolean member, so `normalizeBoolean` canonicalizes onto those two
+// spellings at ingest and `coerceToEmbeddedDataType` reads them back — and neither `variables`
+// (string | number) nor `meta` can hold one either. A jsonb boolean here could therefore only ever
+// describe a condition that matches no row, which is exactly what it did (ENG-3231).
 const ZResponseFilterCriteriaDataEquals = z.object({
   op: z.literal(ZResponseFilterCondition.enum.equals),
   value: z.union([z.string(), z.number()]),
@@ -204,6 +250,43 @@ const ZResponseFilterCriteriaFilledOut = z.object({
   op: z.literal("filledOut"),
 });
 
+const ZResponseFilterCriteriaIsSet = z.object({
+  op: z.literal("isSet"),
+});
+
+const ZResponseFilterCriteriaIsNotSet = z.object({
+  op: z.literal("isNotSet"),
+});
+
+/**
+ * Condition grammar for the typed Embedded Data + reserved-field filter groups (ENG-1848). One
+ * union serves both groups: which subset a field actually offers is decided by its `dataType` at
+ * the UI (string → equality + text ops, number → equality + comparisons, date → equality +
+ * before/after over ISO strings), and `buildWhereClause` only translates.
+ *
+ * A date-typed field is the exception to "the UI picks the op": its *value* decides too, because a
+ * day-granular value cannot be compared to a stored instant by equality. `buildDateFieldCondition`
+ * rewrites those rows onto the range members below (ENG-3232).
+ */
+const ZTypedFieldFilterCondition = z.union([
+  ZResponseFilterCriteriaDataEquals,
+  ZResponseFilterCriteriaDataNotEquals,
+  ZResponseFilterCriteriaContains,
+  ZResponseFilterCriteriaDoesNotContain,
+  ZResponseFilterCriteriaStartsWith,
+  ZResponseFilterCriteriaDoesNotStartWith,
+  ZResponseFilterCriteriaEndsWith,
+  ZResponseFilterCriteriaDoesNotEndWith,
+  ZResponseFilterCriteriaDataLessThan,
+  ZResponseFilterCriteriaDataLessEqual,
+  ZResponseFilterCriteriaDataGreaterEqual,
+  ZResponseFilterCriteriaDataGreaterThan,
+  ZResponseFilterCriteriaDataInRange,
+  ZResponseFilterCriteriaDataNotInRange,
+  ZResponseFilterCriteriaIsSet,
+  ZResponseFilterCriteriaIsNotSet,
+]);
+
 const ZQuotasFilterCriteriaScreenedIn = z.object({
   op: z.literal("screenedIn"),
 });
@@ -216,7 +299,7 @@ const ZQuotasFilterCriteriaScreenedOutNotInQuota = z.object({
   op: z.literal("screenedOutNotInQuota"),
 });
 
-export const ZResponseFilterCriteria = z.object({
+const ZResponseFilterCriteriaFields = z.object({
   finished: z.boolean().optional(),
   responseIds: z.array(ZId).optional(),
   createdAt: z
@@ -244,6 +327,10 @@ export const ZResponseFilterCriteria = z.object({
         ZResponseFilterCriteriaDataLessEqual,
         ZResponseFilterCriteriaDataGreaterEqual,
         ZResponseFilterCriteriaDataGreaterThan,
+        // An ingested date field filters through `data` under its storage key, so the day window a
+        // date-only filter value means has to be expressible here too (ENG-3232).
+        ZResponseFilterCriteriaDataInRange,
+        ZResponseFilterCriteriaDataNotInRange,
         ZResponseFilterCriteriaDataIncludesOne,
         ZResponseFilterCriteriaDataIncludesAll,
         ZResponseFilterCriteriaDataEquals,
@@ -260,14 +347,34 @@ export const ZResponseFilterCriteria = z.object({
         ZResponseFilterCriteriaIsNotEmpty,
         ZResponseFilterCriteriaIsAnyOf,
         ZResponseFilterCriteriaFilledOut,
+        // Text ops for string-typed ingested Embedded Data fields, which filter through `data`
+        // under their storage key (ENG-1848).
+        ZResponseFilterCriteriaContains,
+        ZResponseFilterCriteriaDoesNotContain,
+        ZResponseFilterCriteriaStartsWith,
+        ZResponseFilterCriteriaDoesNotStartWith,
+        ZResponseFilterCriteriaEndsWith,
+        ZResponseFilterCriteriaDoesNotEndWith,
       ])
     )
     .optional(),
 
+  /**
+   * Typed filters on Embedded Data + reserved fields (ENG-1848).
+   * - `variables`: computed embedded fields, keyed by storageKey (values live in `Response.variables`).
+   * - `reserved`: reserved catalog fields, keyed by catalog entry name (`utmSource`, `deviceType`, …).
+   *   The name→storage-path mapping is owned by `buildWhereClause`, which also drops names the
+   *   survey's declared fields shadow — filters fail closed, consistent with recall/logic.
+   */
+  variables: z.record(z.string(), ZTypedFieldFilterCondition).optional(),
+  reserved: z.record(z.string(), ZTypedFieldFilterCondition).optional(),
+
   tags: z
     .object({
-      applied: z.array(z.string()).optional(),
-      notApplied: z.array(z.string()).optional(),
+      // `applied` expands to one relation subquery per tag in createFilterTags, so it carries the
+      // same clause-expansion risk as the data filters above.
+      applied: z.array(z.string()).max(MAX_FILTER_VALUES).optional(),
+      notApplied: z.array(z.string()).max(MAX_FILTER_VALUES).optional(),
     })
     .optional(),
 
@@ -309,6 +416,25 @@ export const ZResponseFilterCriteria = z.object({
     .optional(),
 });
 
+/**
+ * Every record field above is iterated per key by buildWhereClause, so an unbounded key count
+ * multiplies the filter clauses it emits. z.record carries no size check in Zod 4, hence the
+ * refinement — kept separate from the shape so the object literal stays untouched.
+ */
+export const ZResponseFilterCriteria = ZResponseFilterCriteriaFields.refine(
+  (criteria) =>
+    [
+      criteria.contactAttributes,
+      criteria.data,
+      criteria.reserved,
+      criteria.variables,
+      criteria.others,
+      criteria.meta,
+      criteria.quotas,
+    ].every((record) => !record || Object.keys(record).length <= MAX_FILTER_KEYS),
+  { error: `A response filter may not carry more than ${MAX_FILTER_KEYS} conditions per field` }
+);
+
 export const ZResponseContact = z.object({
   id: ZId,
   userId: z.string().optional(),
@@ -318,7 +444,52 @@ export type TResponseContact = z.infer<typeof ZResponseContact>;
 
 export type TResponseFilterCriteria = z.infer<typeof ZResponseFilterCriteria>;
 
-export const ZResponseMeta = z.object({
+/**
+ * The browser-runtime context the survey renderer snapshots once, at display time, and attaches to
+ * every write of the response (ENG-1841). Kept as its own schema because three shapes need exactly
+ * this set of keys and must not drift: the stored `ZResponseMeta`, the ingest input
+ * `ZResponseInput.meta`, and the renderer-to-queue `ZResponseUpdate.meta`.
+ *
+ * Every key is optional, and deliberately so on two counts. Responses collected before this shipped
+ * carry none of them and must keep validating — there is no migration and nothing to backfill, since
+ * the values only ever existed in a browser that has long since closed. And a live capture is
+ * best-effort per key: a runtime without `Intl` or `screen` omits that key rather than storing a
+ * placeholder, so "absent" always reads as "we could not observe this", never as an empty string.
+ *
+ * Both link and app surveys render through the same component, so all of these are captured for
+ * both. Their *meaning* differs: on a link survey they describe the Formbricks-hosted survey page
+ * and how the respondent arrived at it; on an app survey they describe the host page the survey was
+ * triggered on.
+ */
+export const ZAutoCapturedResponseMeta = z.object({
+  /** `location.pathname` — the query-free page identity analytics usually groups on. */
+  pagePath: z.string().optional(),
+  /** `document.referrer`. Empty when there is no referrer, which we omit rather than store as "". */
+  pageReferrer: z.string().optional(),
+  utmSource: z.string().optional(),
+  utmMedium: z.string().optional(),
+  utmCampaign: z.string().optional(),
+  utmTerm: z.string().optional(),
+  utmContent: z.string().optional(),
+  /** Physical screen, in CSS pixels (`screen.width`/`screen.height`). */
+  screenWidth: z.number().optional(),
+  screenHeight: z.number().optional(),
+  /** Visible viewport, in CSS pixels (`window.innerWidth`/`innerHeight`). Frozen at display. */
+  viewportWidth: z.number().optional(),
+  viewportHeight: z.number().optional(),
+  /** IANA zone from `Intl.DateTimeFormat().resolvedOptions().timeZone`, e.g. `Europe/Berlin`. */
+  timezone: z.string().optional(),
+  /**
+   * The device's configured locale from `navigator.language`, e.g. `de-AT`. Not validated as a BCP-47
+   * tag: what the runtime reports is the finding, and rejecting an unusual tag would store nothing
+   * rather than something imperfect.
+   */
+  locale: z.string().optional(),
+});
+
+export type TAutoCapturedResponseMeta = z.infer<typeof ZAutoCapturedResponseMeta>;
+
+export const ZResponseMeta = ZAutoCapturedResponseMeta.extend({
   source: z.string().optional(),
   url: z.string().optional(),
   userAgent: z
@@ -334,6 +505,23 @@ export const ZResponseMeta = z.object({
 });
 
 export type TResponseMeta = z.infer<typeof ZResponseMeta>;
+
+/**
+ * The client-supplied half of `meta`, narrowed to exactly the auto-captured keys.
+ *
+ * Both client ingest routes rebuild `meta` from scratch rather than passing the caller's object
+ * through, because these endpoints are public and anything not explicitly re-listed must not reach
+ * the database. That whitelist is hand-written in the route, which is how a field could be added to
+ * the schema, captured by the SDK, accepted by the parser — and then silently dropped one line
+ * before the write. Deriving this part of it from the schema instead means the auto-captured list
+ * cannot fall behind the shape it is supposed to mirror.
+ *
+ * Only the keys a browser can honestly observe live here. `country`, `userAgent` and `ipAddress`
+ * stay out: the routes derive those from the request itself and must keep overriding whatever the
+ * client claimed.
+ */
+export const pickAutoCapturedResponseMeta = (meta: TResponseMeta | undefined): TAutoCapturedResponseMeta =>
+  ZAutoCapturedResponseMeta.parse(meta ?? {});
 
 export const ZResponse = z.object({
   id: z.cuid2(),
@@ -374,22 +562,11 @@ export const ZResponseInput = z.object({
   data: ZResponseData,
   variables: ZResponseVariables.optional(),
   ttc: ZResponseTtcInput.optional(),
-  meta: z
-    .object({
-      source: z.string().optional(),
-      url: z.string().optional(),
-      userAgent: z
-        .object({
-          browser: z.string().optional(),
-          device: z.string().optional(),
-          os: z.string().optional(),
-        })
-        .optional(),
-      country: z.string().optional(),
-      action: z.string().optional(),
-      ipAddress: z.string().optional(),
-    })
-    .optional(),
+  // The same shape as the stored `ZResponseMeta`, and now literally it: this used to be a hand-copied
+  // duplicate, which is how a field added to one could pass review and still fail to parse on the way
+  // in. The ingest routes rebuild `meta` from a whitelist afterwards, so accepting a key here is not
+  // the same as trusting it — `country`, `userAgent` and `ipAddress` are always re-derived server-side.
+  meta: ZResponseMeta.optional(),
 });
 
 export type TResponseInput = z.infer<typeof ZResponseInput>;
@@ -424,14 +601,19 @@ export const ZResponseUpdate = z.object({
   language: z.string().optional(),
   variables: ZResponseVariables.optional(),
   ttc: ZResponseTtcInput.optional(),
-  meta: z
-    .object({
-      url: z.string().optional(),
-      source: z.string().optional(),
-      action: z.string().optional(),
-    })
-    .optional(),
-  hiddenFields: ZResponseHiddenFieldValue.optional(),
+  // Only what a browser can actually observe. The server-derived keys (`country`, `userAgent`,
+  // `ipAddress`) stay out on purpose: this is the renderer-to-queue shape, and the renderer has no
+  // business claiming a value the ingest route derives from the request itself.
+  meta: ZAutoCapturedResponseMeta.extend({
+    url: z.string().optional(),
+    source: z.string().optional(),
+    action: z.string().optional(),
+  }).optional(),
+  // `ZResponseData`, not the narrower `ZResponseHiddenFieldValue`: `ResponseQueue` merges this map
+  // over `data` on every submit, so `data`'s value shape is literally its type. The renderer now
+  // sends the record the ingest contract produced (ENG-1845), which — like `data` — can carry a
+  // question answer's shape for a key that collided with an element id.
+  hiddenFields: ZResponseData.optional(),
   displayId: z.string().nullish(),
   endingId: z.string().nullish(),
 });
@@ -451,6 +633,14 @@ export const ZResponseTableData = z.object({
   person: ZResponseContact.nullable(),
   contactAttributes: ZResponseContactAttributes,
   meta: ZResponseMeta,
+  /**
+   * Reserved-field values already resolved and rendered, keyed by column id (ENG-2540). Precomputed
+   * on the row like `variables` and `responseData`, rather than read out of `meta` by a per-column
+   * switch: resolution belongs to the catalog's own accessors, which apply the `redactQuery` policy
+   * and the dataType coercion, and `meta` alone cannot express a field that is not stored under its
+   * own name (`deviceType` lives at `meta.userAgent.device`).
+   */
+  reservedValues: z.record(z.string(), z.string()),
   quotas: z.array(z.string()).optional(),
 });
 

@@ -112,7 +112,7 @@ describe("TagOnResponse Service", () => {
 
     vi.mocked(prisma.tagsOnResponses.groupBy).mockResolvedValue(mockTagsCount as any);
 
-    const result = await getTagsOnResponsesCount("env1");
+    const result = await getTagsOnResponsesCount("env1", {});
 
     expect(result).toEqual([
       { tagId: "tag1", count: 5 },
@@ -242,12 +242,12 @@ describe("TagOnResponse Service", () => {
     });
     vi.mocked(prisma.tagsOnResponses.groupBy).mockRejectedValue(prismaError);
 
-    await expect(getTagsOnResponsesCount("env1")).rejects.toThrow(DatabaseError);
+    await expect(getTagsOnResponsesCount("env1", {})).rejects.toThrow(DatabaseError);
   });
 
   test("getTagsOnResponsesCount should rethrow non-prisma errors", async () => {
     vi.mocked(prisma.tagsOnResponses.groupBy).mockRejectedValue(new Error("boom"));
 
-    await expect(getTagsOnResponsesCount("env1")).rejects.toThrow("boom");
+    await expect(getTagsOnResponsesCount("env1", {})).rejects.toThrow("boom");
   });
 });

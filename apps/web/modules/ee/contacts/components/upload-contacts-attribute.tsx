@@ -4,7 +4,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
+import { isSafeIdentifier } from "@formbricks/types/safe-identifier";
 import { UploadContactsAttributeCombobox } from "@/modules/ee/contacts/components/upload-contacts-attribute-combobox";
 import { Badge } from "@/modules/ui/components/badge";
 

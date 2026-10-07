@@ -68,6 +68,11 @@ export const recurringJobDescriptors = {
     name: JOB_NAMES.authzedReconciliationAudit,
     scheduleId: "authzed-reconciliation-audit",
   }),
+  authzedSurveyAudit: defineRecurringJob({
+    label: "AuthZed survey audit",
+    name: JOB_NAMES.authzedSurveyAudit,
+    scheduleId: "daily-authzed-survey-audit",
+  }),
   surveyArchivePurge: defineRecurringJob({
     label: "survey archive purge",
     name: JOB_NAMES.surveyArchivePurge,
@@ -87,6 +92,11 @@ export const recurringJobDescriptors = {
     label: "workflow run reconcile",
     name: JOB_NAMES.workflowRunReconcile,
     scheduleId: "workflow-run-reconcile",
+  }),
+  workflowsUsageSnapshot: defineRecurringJob({
+    label: "workflows usage snapshot",
+    name: JOB_NAMES.workflowsUsageSnapshot,
+    scheduleId: "daily-workflows-usage-snapshot",
   }),
 } as const satisfies Record<string, RecurringJobDescriptor>;
 

@@ -1,3 +1,4 @@
+import type { Prisma } from "@formbricks/database/prisma";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getDisplaysByContactId } from "@/lib/display/service";
 import { getResponsesByContactId } from "@/lib/response/service";
@@ -12,9 +13,14 @@ import { IdBadge } from "@/modules/ui/components/id-badge";
 interface AttributesSectionProps {
   contactId: string;
   workspaceId: string;
+  visibleSurveyWhere: Prisma.SurveyWhereInput;
 }
 
-export const AttributesSection = async ({ contactId, workspaceId }: Readonly<AttributesSectionProps>) => {
+export const AttributesSection = async ({
+  contactId,
+  workspaceId,
+  visibleSurveyWhere,
+}: Readonly<AttributesSectionProps>) => {
   const t = await getTranslate();
   const [locale, contact, attributesWithKeyInfo] = await Promise.all([
     getLocale(),
@@ -27,8 +33,8 @@ export const AttributesSection = async ({ contactId, workspaceId }: Readonly<Att
   }
 
   const [responses, displays] = await Promise.all([
-    getResponsesByContactId(contactId, workspaceId),
-    getDisplaysByContactId(contactId, workspaceId),
+    getResponsesByContactId(contactId, workspaceId, visibleSurveyWhere),
+    getDisplaysByContactId(contactId, workspaceId, visibleSurveyWhere),
   ]);
   const numberOfResponses = responses?.length || 0;
   const numberOfDisplays = displays?.length || 0;

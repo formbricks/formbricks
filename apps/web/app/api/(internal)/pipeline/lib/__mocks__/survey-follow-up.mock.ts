@@ -90,6 +90,12 @@ export const mockSurvey: TSurvey = {
   workspaceId: "cm98djl8e000919hpzi6a80zp",
   createdBy: "cm98dg3xm000019hpubj39vfi",
   status: "inProgress",
+  visibility: "workspace",
+  ownerId: null,
+  visibilityVersion: 0,
+  visibilityProjectedVersion: 0,
+  visibilityChangedAt: null,
+  visibilityChangedById: null,
   welcomeCard: {
     subheader: {
       default: "Thanks for providing your feedback - let's go!‌‌‍‍‌‍‍‍‌‌‌‍‍‌‌‌‍‌‌‌‌‌‍‌‍‌‌",
@@ -170,6 +176,7 @@ export const mockSurvey: TSurvey = {
   metadata: {},
   blocks: [],
   isCaptureIpEnabled: false,
+  isAnonymizeResponsesEnabled: false,
   isAutoProgressingEnabled: false,
   publishOn: null,
   closeOn: null,

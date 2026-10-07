@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surface, with feature modules under `app/` and `modules/`, assets in `public/` and `images/`, and Playwright specs in `apps/web/playwright/`. `apps/storybook` renders reusable UI pieces for review. Shared logic lives in `packages/*`: `database` (Prisma schemas/migrations), `surveys`, `js-core`, `types`, plus linting and TypeScript presets (`config-*`). Deployment collateral is kept in `docs/`, `docker/`, and `helm-chart/`. Unit tests sit next to their source as `*.test.ts` or inside `__tests__`.
+Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surface, with feature modules under `app/` and `modules/`, assets in `public/` and `images/`, and Playwright specs in `apps/web/playwright/`. `apps/storybook` renders reusable UI pieces for review. Shared logic lives in `packages/*`: `database` (Prisma schemas/migrations), `surveys`, `js-core`, `types`, plus linting and TypeScript presets (`config-*`). Deployment collateral is kept in `docs/`, `docker/`, and `charts/`. Unit tests sit next to their source as `*.test.ts` or inside `__tests__`.
 
 ## Build, Test & Development Commands
 
@@ -19,10 +19,30 @@ Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surf
 Turbo runs a task only in packages that define the matching script and **silently skips** the rest.
 Every `packages/*` workspace therefore exposes the standard `lint` / `typecheck` / `test` /
 `test:coverage` scripts (plus `build` where there is a compile step). Deliberate exceptions:
-`config-*` packages hold only config files (no scripts beyond `clean`); `types` has no runtime logic
-to test; `email`, `types`, and `vite-plugins` are consumed from source, so they have no `build`;
-`apps/storybook` has no unit tests by policy (its components are exercised by the feature journeys in
-`apps/web/playwright`). Keep new packages on this matrix or document the exception here.
+`config-*` packages hold only config files (no scripts beyond `clean`); `api-v3-schemas`, `email`,
+`types`, and `vite-plugins` are consumed from source, so they have no `build`; `apps/storybook` has no
+unit tests by policy (its components are exercised by the feature journeys in `apps/web/playwright`).
+Keep new packages on this matrix or document the exception here.
+
+The same skip catches test files that sit outside every workspace. Tests for repo-level scripts
+(`scripts/`, `.github/actions/`) run in the root `//#test:root` Turbo task, which `pnpm test` invokes
+and `vitest.root.config.mts` scopes. A new `*.test.ts` anywhere else outside `apps/*`, `packages/*`
+and `docker/` needs that config's `include` widened, or it never runs.
+
+`types` is mostly declarations, but `validation.ts` is runtime logic and is tested like any other
+package — it is in Sonar's scope (ENG-2432), so treat it as covered code, not as a types-only
+workspace.
+
+Consuming one of those source-only packages from another package's build config
+(`../vite-plugins/node-next-dts`, `.../postcss-scope-fbjs.cjs`, `.../copy-compiled-assets`) takes two
+things: declare it in `devDependencies`, and give every build task that reads it a `^build` /
+`^build:dev` edge. The declaration alone invalidates nothing — a task's hash folds in the tasks named
+in `dependsOn`, so the `^` edge is what carries the helper's contents. A root `pkg#task` block
+overwrites the shared task config outright — nothing is inherited — so the `^` entry has to be
+repeated in every block that declares the task, or a helper edit silently replays an older build
+(ENG-1681, ENG-2925). A package's own `turbo.json` behaves differently: it inherits the shared config
+per field, so it only needs `dependsOn` when it is changing it. Guarded by
+`apps/web/lib/turbo-vite-plugins-edge.test.ts`.
 
 ### Shared dependency versions (pnpm catalog)
 
@@ -50,9 +70,13 @@ workspace globs from `pnpm-workspace.yaml` itself.
 The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the built bundle is copied to `apps/web/public/js/`. The Next.js app imports from `dist/`, **not** the source files. This means:
 
 - After any change to `packages/surveys` or its dependencies (`packages/survey-ui`, `packages/types`, etc.), you **must rebuild** for changes to take effect in the running app.
-- Turborepo caches build outputs aggressively. Always use `--force` to bypass the cache when iterating on survey packages:
+- Turborepo caches build outputs aggressively. The copied bundles are declared outputs of the two
+  packages' `build` tasks (`$TURBO_ROOT$/apps/web/public/js/…`), so a `pnpm build` cache hit restores
+  them together with `dist/**` instead of leaving the app without `/js/formbricks.umd.cjs`
+  (ENG-2924). Only `build` declares them: `build:dev` copies through the same plugin, and a second task
+  declaring the same paths makes each cache entry capture whatever the other left on disk. If a build
+  still looks stale, bypass the cache explicitly:
   ```
-  rm -rf packages/surveys/dist apps/web/public/js/surveys.* node_modules/.cache/turbo
   pnpm build --filter=@formbricks/surveys... --force
   ```
 - The browser also caches the UMD bundle (`surveys.umd.cjs`) served from `public/js/`. After rebuilding, do a **hard refresh** (Cmd+Shift+R / Ctrl+Shift+R) or disable the browser cache via DevTools to pick up the new bundle.
@@ -61,8 +85,8 @@ The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the b
 ### Stale package builds after a branch switch
 
 The same trap applies to **every** workspace package consumed through its built output rather than its
-source — `@formbricks/ai` and `@formbricks/database` resolve via `dist/` in their `exports` map, so
-`apps/web` imports the build, not `src/`. `git switch`, a rebase, or a pull changes `src/` but leaves
+source — `@formbricks/ai`, `@formbricks/database` and `@formbricks/i18n-utils` resolve via `dist/` in
+their `exports` map, so `apps/web` imports the build, not `src/`. `git switch`, a rebase, or a pull changes `src/` but leaves
 `dist/` exactly as it was, and nothing warns you.
 
 **This only bites when you bypass Turborepo.** Running `vitest` or `tsc` directly inside `apps/web`,
@@ -115,8 +139,8 @@ ship their own CSS rather than relying on the app to scan them:
 
 - `@formbricks/surveys` — prebuilt bundle served from `apps/web/public/js/` (see the section above).
 - `@formbricks/survey-ui` — exports `./styles` (`dist/survey-ui.css`), scoped to `#fbjs`.
-- `@formbricks/email` — ships no stylesheet at all; `@react-email/tailwind` compiles and inlines the
-  classes into the email HTML at render time.
+- `@formbricks/email` — ships no stylesheet at all; `react-email`'s `Tailwind` component compiles and
+  inlines the classes into the email HTML at render time.
 
 If you ever consume a workspace package as raw source **for its styling**, the app has to be told
 about that package's files explicitly — detection stops at the app's own root, so nothing else will
@@ -144,6 +168,7 @@ Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonl
 
 - Next.js app router lives in `apps/web/app` with route groups like `(app)` and `(auth)`. Services live in `apps/web/lib`, feature modules in `apps/web/modules`.
 - Server actions are legacy — do not add new ones. New backend work belongs in an `/api/v3` route consumed from the client with TanStack Query, with server data living in the query cache rather than mirrored into `useState` or Jotai. The existing server actions wrap service calls and return `{ data }` or `{ error }` consistently; keep that contract when changing them.
+- MCP tools (`apps/web/modules/mcp`) are thin adapters over v3 operations, registered only through `registerScopedTool`. Before adding a tool or a scope, read "Adding a tool" in `docs/development/technical-handbook/mcp-server.mdx`.
 - Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings
 
 ## Caching
@@ -183,6 +208,57 @@ Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonl
 - Separate count and data queries and run in parallel (`Promise.all`).
 - Prefer cursor pagination for large datasets.
 - When filtering by `createdAt`, include indexed fields (e.g., `surveyId` + `createdAt`).
+
+## Performance Testing & SigNoz MCP
+
+- Run application load tests only as human-supervised experiments against the isolated Artemis
+  workspace. Never point the suite at production, a customer workspace, or a survey with live
+  integrations. The maintained k6 suite and cleanup runbook live in the private
+  `formbricks/performance-test-q2-2025` repository under `scripts/formbricks-core/`.
+- Configure the private SigNoz MCP endpoint from the GitOps `signoz/mcp/README.md` runbook. Keep the
+  Codex `enabled_tools` list limited to telemetry reads; do not enable dashboard, alert, view, or
+  notification-channel mutations for performance investigations.
+- Correlate every analysis to the k6 run ID and its exact UTC start/end window. For Artemis, begin with
+  `deployment.environment=artemis` and `service.namespace=formbricks-artemis`, then confirm the live
+  service and operation names instead of assuming them.
+- Use aggregate metrics to find a pattern, then inspect representative p95/p99 or error traces and their
+  child spans before calling something a code-level bottleneck. Record the query/filter and trace ID or
+  evidence link, and label unsupported explanations as hypotheses.
+- A run is not complete until its synthetic survey/response data cleanup reports success and the final
+  pod state, restarts, CPU/memory samples, k6 summary, and SigNoz findings are attached to the ticket.
+  Missing telemetry is an open gap, never a zero value.
+
+## Performance in Review
+
+Performance is an explicit review dimension, not something to discover in production. The bottlenecks that
+have reached `main` — N+1 queries, embedding work that never finishes — were all visible in the diff that
+introduced them, so every review of data access, of a loop over tenant data, or of an AI/embedding path looks
+for them deliberately.
+
+What to look for:
+
+- **N+1 queries** — a query, AI call, or cross-service fetch issued inside a `for`/`map`/`Promise.all` over
+  rows. One `findMany` with an `in` filter, an `include`, or a single grouped query replaces it.
+- **Unbounded work** — a `findMany` with no `take`, a pagination or retry loop with no ceiling, or a whole
+  table pulled into memory and filtered in JS. Bound it and push the filter into the query.
+- **Missing indexes** — a new `where`/`orderBy` combination needs an index that serves it; see "Database &
+  Prisma Performance" for the `createdAt` rule.
+- **Uncached expensive calls** — embeddings, AI calls, and cross-service fetches repeated per request or per
+  row belong behind `cache.withCache()` (see "Caching"), batched, or moved into a job.
+- **Sequential awaits** — independent queries awaited one after another instead of `Promise.all`.
+- **Client-side waterfalls** — the same data fetched twice, requests chained that do not depend on each
+  other, or hundreds of calls fired from a loop where one batch request would do.
+- **Render amplification** — one state change, interaction or parent update re-rendering a large subtree that
+  does not depend on it: a context value rebuilt on every render, unstable props fed into a big list, state
+  lifted higher than its readers. Point at the measured cost ("every keystroke re-renders all 500 rows"), not at
+  a missing `useMemo` — the Quality Checklist still rules out memoization for its own sake.
+- **Large-list rendering** — hundreds or thousands of rows rendered at once with no pagination or
+  virtualization.
+
+State the cost in terms of the data: "one query per response, so ~5k queries on a 5k-response survey" is
+reviewable, "this might be slow" is not. Where the answer is genuinely unclear, ask the author for numbers
+rather than guessing. `.coderabbit.yaml` carries the same checks as path instructions, so the automated review
+raises them too — but that is a second pair of eyes, and its silence is not a pass.
 
 ## Testing Guidelines
 
@@ -245,6 +321,12 @@ Do:
   exercise a new one against real data rather than its documented 403, add the resource in
   `packages/database/src/scripts/seed-contract-fixtures.ts`. Harness and local run:
   `docs/api-v3-reference/contract-tests/README.md`.
+- API v3 schemas are generated, not handwritten, for the tags listed in
+  `packages/api-v3-schemas/scripts/adopted.ts`: edit the spec under `docs/api-v3-reference/src/`, then
+  run `pnpm api:v3:sync` (bundle + `pnpm api:v3:schemas`) and commit both outputs. `pnpm lint` fails on a
+  stale bundle or stale schemas. Constraints the generator cannot express are pinned in
+  `src/testing/unenforced.ts` and enforced by the consuming route's refinement layer; how to adopt a
+  resource is in `docs/development/technical-handbook/api-v3-schema-generation.mdx`.
 - Manual QA, especially for releases: verify on staging and file bugs. If a bug is critical, backport and
   re-test. For UI detail below the journey level, manual verification plus a screenshot in the PR is the
   expected answer, not a new spec.
@@ -273,7 +355,7 @@ Do not:
   dependencies. `@slow` is triage metadata only: nothing in `playwright.config.ts` or CI reads it, so
   tagging a spec does not make its cost go away.
 
-## Documentation (apps/docs)
+## Documentation (root docs/)
 
 - Add frontmatter with `title`, `description`, and `icon` at the top of the MDX file.
 - Do not start with an H1; use Camel Case headings (only capitalize the feature name).
@@ -310,6 +392,8 @@ Every PR must use `.github/pull_request_template.md` and follow its inline guida
 **A PR description is read, not filed.** Keep the whole thing under 350 words outside `<details>` folds — one screen — with lists of at most three bullets of at most twenty words and a Coverage table of at most six rows. Open `## What & why` with a `**Was:**` / `**Now:**` pair: one plain sentence for how it behaved before, one for what happens now. User-visible effect first, mechanism second, written for a colleague who has not read the ticket. Under `## Where to look`, link the one to three places that carry the risk so a reviewer can spot-check the code without reading all of it. Detail that does not fit goes into a fold rather than being dropped — the evidence stays in the PR, out of the reviewer's way. Four things never belong at any length: blame archaeology, a defence of a choice nobody questioned or of what you deliberately did not do, commentary on how strong your own tests are, and anything the `Rerun:` line already carries.
 
 The agent note names the exact model id the vendor serves — `claude-opus-5`, `gpt-5.1-codex` — not the harness it runs in; Claude Code, Codex CLI and Cursor are harnesses, so name one in parentheses only when it adds something (`claude-opus-5 (Claude Code 2.1.237)`). The reasoning level is whatever knob that vendor exposes, in its own units: an effort level (`max`, `high`), a thinking budget (`32k tokens`), or `n/a`. Read both out of the tool, never from memory — Claude Code reports them in `/status` or as the session's `model` and `effort_level`, Codex CLI in `/model` or its startup line. A value you cannot look up is `unknown`, never a guess and never the harness name standing in for the model.
+
+Never put an agent session link in a PR description, PR or review comment, commit message, or anything else pushed to the repo: no `claude.ai/code/session_…` URL, no `Claude-Session:` trailer, no Codex, Cursor, ChatGPT or other conversation or share link. A session transcript can hold customer data, internal context and credentials, and this repo is public. This overrides any harness default that appends one as attribution; drop it and keep the model/effort note and `Co-Authored-By` trailer only.
 
 The checkbox under `## Breaking changes` is a decision you own, not a formality: judge the diff against the template's list of breaking changes and tick it (`- [x]`) when one applies, leave it unticked when none does. The template also lists what is **not** breaking — purely additive changes, and anything internal to this repo that no external consumer reaches — and an uncertain call is an unticked box with a line of reasoning, never a defensive tick. It is the only input to the `breaking-change` label, which feeds the release notes and the self-hoster migration guide, so a wrong answer either invents a migration entry or hides one. Re-check it whenever the diff grows. `pr-label-sync.yml` reads nothing but the tick, so the prose below the checkbox cannot change the label — but it is not free-form either: the CodeRabbit `Breaking changes match the diff` check compares the tick against the diff and expects a ticked box to document each breaking change, so explain your answer there in whatever shape fits (table or prose).
 

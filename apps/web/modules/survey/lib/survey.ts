@@ -4,6 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 
@@ -15,13 +16,18 @@ export const selectSurvey = {
   type: true,
   workspaceId: true,
   createdBy: true,
+  // ENG-3282: part of TSurvey, so the editor's client-side ZSurvey check needs them on the row.
+  visibility: true,
+  ownerId: true,
+  visibilityVersion: true,
+  visibilityProjectedVersion: true,
+  visibilityChangedAt: true,
+  visibilityChangedById: true,
   status: true,
   welcomeCard: true,
   questions: true,
   blocks: true,
   endings: true,
-  hiddenFields: true,
-  variables: true,
   displayOption: true,
   recontactDays: true,
   displayLimit: true,
@@ -33,6 +39,7 @@ export const selectSurvey = {
   closeOn: true,
   isVerifyEmailEnabled: true,
   isCaptureIpEnabled: true,
+  isAnonymizeResponsesEnabled: true,
   redirectUrl: true,
   workspaceOverwrites: true,
   styling: true,
@@ -98,6 +105,9 @@ export const selectSurvey = {
     },
   },
   followUps: true,
+  // ENG-1837: the definitions every reader resolves through, joined and inlined by
+  // `transformPrismaSurvey`. Read-only — the rows are written by `reconcileEmbeddedData`.
+  embeddedDataLinks: selectSurveyEmbeddedDataLinks,
 } satisfies Prisma.SurveySelect;
 
 export const getOrganizationBilling = reactCache(

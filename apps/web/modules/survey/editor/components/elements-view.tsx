@@ -11,7 +11,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import React, { SetStateAction, useEffect, useMemo } from "react";
+import React, { SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
@@ -32,8 +32,7 @@ import { AddEndingCardButton } from "@/modules/survey/editor/components/add-endi
 import { BlocksDroppable } from "@/modules/survey/editor/components/blocks-droppable";
 import { EditEndingCard } from "@/modules/survey/editor/components/edit-ending-card";
 import { EditWelcomeCard } from "@/modules/survey/editor/components/edit-welcome-card";
-import { HiddenFieldsCard } from "@/modules/survey/editor/components/hidden-fields-card";
-import { SurveyVariablesCard } from "@/modules/survey/editor/components/survey-variables-card";
+import { EmbeddedDataCard } from "@/modules/survey/editor/components/embedded-data-card";
 import {
   addElementToBlock,
   deleteBlock,
@@ -55,6 +54,7 @@ import {
 } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
+import { useStableCallback } from "@/modules/ui/hooks/use-stable-callback";
 import {
   isBlockLogicItemValid,
   isEndingCardValid,
@@ -62,9 +62,15 @@ import {
   validateElement,
 } from "../lib/validation";
 
+// Module-level so the sensor descriptor keeps its identity: a fresh options object per render gives
+// DndContext new activators, which re-renders every useSortable consumer (each BlockCard) on every edit.
+const POINTER_SENSOR_OPTIONS = { activationConstraint: { distance: 5 } };
+
 interface ElementsViewProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<SetStateAction<TSurvey>>;
+  /** The survey as stored. The Embedded Data card reads it for promote and for the name guard. */
+  persistedSurvey: TSurvey;
   activeElementId: string | null;
   setActiveElementId: (elementId: string | null) => void;
   workspace: Workspace;
@@ -86,6 +92,7 @@ export const ElementsView = ({
   setActiveElementId,
   localSurvey,
   setLocalSurvey,
+  persistedSurvey,
   workspace,
   invalidElements,
   setInvalidElements,
@@ -98,7 +105,7 @@ export const ElementsView = ({
   isStorageConfigured = true,
   quotas,
   isExternalUrlsAllowed,
-}: ElementsViewProps) => {
+}: Readonly<ElementsViewProps>) => {
   const { t } = useTranslation();
   const [logicDeletionWarning, setLogicDeletionWarning] = React.useState<{
     open: boolean;
@@ -823,13 +830,7 @@ export const ElementsView = ({
     }
   }, [activeElementId, setActiveElementId, localSurvey, selectedLanguageCode, t]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    })
-  );
+  const sensors = useSensors(useSensor(PointerSensor, POINTER_SENSOR_OPTIONS));
 
   const onBlockCardDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -865,6 +866,25 @@ export const ElementsView = ({
   // Auto animate
   const [parent] = useAutoAnimate();
 
+  // BlockCard is memoized, so everything handed to it must keep its identity across renders. These
+  // wrappers always run the handler from the latest render, i.e. against the current localSurvey.
+  const [lastInteractedBlockId, setLastInteractedBlockId] = useState<string | null>(null);
+  const stableMoveElement = useStableCallback(moveElement);
+  const stableUpdateElement = useStableCallback(updateElement);
+  const stableUpdateBlockLogic = useStableCallback(updateBlockLogic);
+  const stableUpdateBlockLogicFallback = useStableCallback(updateBlockLogicFallback);
+  const stableUpdateBlockName = useStableCallback(updateBlockName);
+  const stableUpdateBlockButtonLabel = useStableCallback(updateBlockButtonLabel);
+  const stableDuplicateElement = useStableCallback(duplicateElement);
+  const stableDeleteElement = useStableCallback(deleteElement);
+  const stableAddElement = useStableCallback(addElement);
+  const stableOnAlertTrigger = useStableCallback(() => setIsCautionDialogOpen(true));
+  const stableDuplicateBlock = useStableCallback(duplicateBlock);
+  const stableDeleteBlock = useStableCallback(deleteBlockById);
+  const stableMoveBlock = useStableCallback(moveBlockById);
+  const stableAddElementToBlock = useStableCallback(_addElementToBlock);
+  const stableMoveElementToBlock = useStableCallback(moveElementToBlock);
+
   return (
     <div className="mt-12 w-full px-5 py-4">
       {!isCxMode && (
@@ -891,30 +911,32 @@ export const ElementsView = ({
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
           workspace={workspace}
-          moveElement={moveElement}
-          updateElement={updateElement}
-          updateBlockLogic={updateBlockLogic}
-          updateBlockLogicFallback={updateBlockLogicFallback}
-          updateBlockName={updateBlockName}
-          updateBlockButtonLabel={updateBlockButtonLabel}
-          duplicateElement={duplicateElement}
-          deleteElement={deleteElement}
+          moveElement={stableMoveElement}
+          updateElement={stableUpdateElement}
+          updateBlockLogic={stableUpdateBlockLogic}
+          updateBlockLogicFallback={stableUpdateBlockLogicFallback}
+          updateBlockName={stableUpdateBlockName}
+          updateBlockButtonLabel={stableUpdateBlockButtonLabel}
+          duplicateElement={stableDuplicateElement}
+          deleteElement={stableDeleteElement}
           activeElementId={activeElementId}
           setActiveElementId={setActiveElementId}
           invalidElements={invalidElements}
-          addElement={addElement}
+          addElement={stableAddElement}
           isFormbricksCloud={isFormbricksCloud}
           isCxMode={isCxMode}
           locale={locale}
           responseCount={responseCount}
-          onAlertTrigger={() => setIsCautionDialogOpen(true)}
+          onAlertTrigger={stableOnAlertTrigger}
           isStorageConfigured={isStorageConfigured}
           isExternalUrlsAllowed={isExternalUrlsAllowed}
-          duplicateBlock={duplicateBlock}
-          deleteBlock={deleteBlockById}
-          moveBlock={moveBlockById}
-          addElementToBlock={_addElementToBlock}
-          moveElementToBlock={moveElementToBlock}
+          duplicateBlock={stableDuplicateBlock}
+          deleteBlock={stableDeleteBlock}
+          moveBlock={stableMoveBlock}
+          addElementToBlock={stableAddElementToBlock}
+          moveElementToBlock={stableMoveElementToBlock}
+          lastInteractedBlockId={lastInteractedBlockId}
+          onBlockInteract={setLastInteractedBlockId}
         />
       </DndContext>
 
@@ -953,19 +975,16 @@ export const ElementsView = ({
           <>
             <AddEndingCardButton localSurvey={localSurvey} addEndingCard={addEndingCard} />
             <hr />
-            <HiddenFieldsCard
+            <EmbeddedDataCard
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
-              setActiveElementId={setActiveElementId}
-              activeElementId={activeElementId}
-              quotas={quotas}
-            />
-            <SurveyVariablesCard
-              localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
+              persistedSurvey={persistedSurvey}
               activeElementId={activeElementId}
               setActiveElementId={setActiveElementId}
               quotas={quotas}
+              responseCount={responseCount}
+              workspaceId={workspace.id}
+              locale={locale}
             />
           </>
         )}

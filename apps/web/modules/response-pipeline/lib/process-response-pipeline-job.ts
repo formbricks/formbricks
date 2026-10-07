@@ -1,18 +1,25 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { prisma } from "@formbricks/database";
-import { PipelineTriggers, Prisma, type Webhook } from "@formbricks/database/prisma";
-import { type JobHandler, type TResponsePipelineJobData, UnrecoverableError } from "@formbricks/jobs";
+import { PipelineTriggers, Prisma } from "@formbricks/database/prisma";
+import {
+  type JobHandler,
+  type TResponsePipelineJobData,
+  UnrecoverableError,
+  enqueueWebhookDeliveryJob,
+} from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
-import { DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS, POSTHOG_KEY } from "@/lib/constants";
-import { generateStandardWebhookSignature } from "@/lib/crypto";
+import { can } from "@/lib/authorization";
+import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
+import { POSTHOG_KEY } from "@/lib/constants";
+import { selectSurveyEmbeddedDataLinks, withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { handleFeedbackSourcePipeline } from "@/lib/feedback-source/pipeline-handler";
 import { getIntegrations } from "@/lib/integration/service";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
+import { isSurveyOutboundAllowed, surveyOutboundVisibilitySelect } from "@/lib/survey/visibility/outbound";
 import { sendTelemetryEvents } from "@/lib/telemetry/usage-update";
-import { createPinnedDispatcher, validateAndResolveWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { type TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { recordResponseCreatedMeterEvent } from "@/modules/ee/billing/lib/metering";
@@ -20,13 +27,12 @@ import { dispatchWorkflowRunViaJobs } from "@/modules/ee/workflows/lib/runner/di
 import { enqueueResponseCompletedWorkflowRuns } from "@/modules/ee/workflows/lib/runner/enqueue-response-completed-runs";
 import { sendResponseFinishedEmail } from "@/modules/email";
 import { captureSurveyResponsePostHogEvent } from "@/modules/response-pipeline/lib/posthog";
-import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { getFinishedResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { handleIntegrations } from "./handle-integrations";
+import { recordSurveyOutboundSkipped } from "./outbound-visibility-metrics";
 
-const WEBHOOK_TIMEOUT_MS = 5_000;
 const DEFAULT_NOTIFICATION_LOCALE: TUserLocale = "en-US";
 
 const pipelineOrganizationSelect = {
@@ -41,6 +47,7 @@ const pipelineOrganizationSelect = {
 
 const pipelineSurveySelect = {
   id: true,
+  ...surveyOutboundVisibilitySelect,
   workspaceId: true,
   name: true,
   type: true,
@@ -48,8 +55,10 @@ const pipelineSurveySelect = {
   createdAt: true,
   updatedAt: true,
   blocks: true,
-  hiddenFields: true,
-  variables: true,
+  // ENG-1837: the definitions the notification email, follow-ups and integrations below resolve
+  // through. Inlined by `getSurveyForPipeline` so the raw relation never reaches the handlers — and
+  // (ENG-2404) the source the legacy `variables` / `hiddenFields` keys are derived from.
+  embeddedDataLinks: selectSurveyEmbeddedDataLinks,
   followUps: true,
   autoComplete: true,
   languages: {
@@ -71,7 +80,8 @@ const pipelineSurveySelect = {
 } satisfies Prisma.SurveySelect;
 
 type TPipelineOrganization = Prisma.OrganizationGetPayload<{ select: typeof pipelineOrganizationSelect }>;
-type TPipelineSurvey = Prisma.SurveyGetPayload<{ select: typeof pipelineSurveySelect }>;
+type TPipelineSurveyRow = Prisma.SurveyGetPayload<{ select: typeof pipelineSurveySelect }>;
+type TPipelineSurvey = ReturnType<typeof withInlinedEmbeddedFields<TPipelineSurveyRow>>;
 
 const getOrganizationForPipeline = async (workspaceId: string): Promise<TPipelineOrganization | null> =>
   prisma.organization.findFirst({
@@ -85,13 +95,16 @@ const getOrganizationForPipeline = async (workspaceId: string): Promise<TPipelin
     select: pipelineOrganizationSelect,
   });
 
-const getSurveyForPipeline = async (surveyId: string): Promise<TPipelineSurvey | null> =>
-  prisma.survey.findUnique({
+const getSurveyForPipeline = async (surveyId: string): Promise<TPipelineSurvey | null> => {
+  const survey = await prisma.survey.findUnique({
     where: {
       id: surveyId,
     },
     select: pipelineSurveySelect,
   });
+
+  return survey ? withInlinedEmbeddedFields(survey) : null;
+};
 
 const getPipelineLogContext = (
   data: TResponsePipelineJobData,
@@ -116,6 +129,11 @@ const toUserLocale = (locale: string): TUserLocale => {
   return parsedLocale.success ? parsedLocale.data : DEFAULT_NOTIFICATION_LOCALE;
 };
 
+/**
+ * The Standard Webhooks `webhook-id`, derived from this pipeline job's id. Unchanged from when this job
+ * delivered webhooks itself, so receivers see the same ids — and because it is fixed here and carried
+ * into the delivery job, it stays constant across every retry of either job.
+ */
 const createWebhookMessageId = ({
   event,
   jobId,
@@ -126,153 +144,50 @@ const createWebhookMessageId = ({
   webhookId: string;
 }): string => createHash("sha256").update(`${jobId}:${webhookId}:${event}`).digest("hex");
 
-type WebhookFetchOptions = RequestInit & {
-  dispatcher?: ReturnType<typeof createPinnedDispatcher>;
-};
+/**
+ * Deterministic per (pipeline job, webhook): BullMQ ignores an `add` whose jobId already exists, so a
+ * pipeline retry after a partial fan-out re-enqueues only the deliveries that never made it. Keyed on the
+ * pipeline job id rather than the response, because `responseUpdated` legitimately fires once per update
+ * and each must be delivered.
+ *
+ * That dedupe holds only while BullMQ still has the completed job: delivery jobs inherit the queue's
+ * `removeOnComplete` of 24 h **or 1000 jobs**, and at high throughput the count arm can trim a completed
+ * delivery inside the pipeline job's own ~15 s retry window, after which a retry re-adds the id and the
+ * receiver sees the event twice. The duplicate carries the same `webhook-id` (it is derived from the
+ * pipeline job id), so a receiver deduping as the docs describe is unaffected — delivery is at-least-once,
+ * not exactly-once. ENG-2829 tracks moving this onto BullMQ deduplication, which does not depend on
+ * retention.
+ */
+const createWebhookDeliveryJobId = (jobId: string, webhookId: string): string => `whd-${jobId}-${webhookId}`;
 
-const fetchWithTimeout = async (
-  url: string,
-  options: WebhookFetchOptions,
-  timeoutMs: number = WEBHOOK_TIMEOUT_MS
-): Promise<Response> => {
-  const abortController = new AbortController();
-  const signal = options.signal
-    ? AbortSignal.any([options.signal, abortController.signal])
-    : abortController.signal;
-  const timeoutId = setTimeout(() => {
-    abortController.abort(new Error("Timeout"));
-  }, timeoutMs);
+type TPipelineWebhook = { id: string };
 
-  try {
-    return await fetch(url, {
-      ...options,
-      signal,
-    } as RequestInit);
-  } finally {
-    clearTimeout(timeoutId);
-  }
-};
-
+// Ids only: the delivery job re-reads url and secret at send time, so the secret never enters Redis.
 const getWebhooksForPipeline = async (
   workspaceId: string,
   event: PipelineTriggers,
   surveyId: string
-): Promise<Webhook[]> => {
+): Promise<TPipelineWebhook[]> => {
   return await prisma.webhook.findMany({
     where: {
       workspaceId,
       triggers: { has: event },
       OR: [{ surveyIds: { has: surveyId } }, { surveyIds: { isEmpty: true } }],
     },
+    select: { id: true },
   });
 };
 
-const createWebhookDeliveryTask = async ({
-  webhook,
-  data,
-  survey,
-  logContext,
-}: {
-  webhook: Webhook;
-  data: TResponsePipelineJobData;
-  survey: TPipelineSurvey;
-  logContext: ReturnType<typeof getPipelineLogContext>;
-}): Promise<void> => {
-  try {
-    const body = JSON.stringify({
-      webhookId: webhook.id,
-      event: data.event,
-      data: {
-        ...data.response,
-        data: resolveStorageUrlsInObject(data.response.data),
-        survey: {
-          title: survey?.name,
-          type: survey?.type,
-          status: survey?.status,
-          createdAt: survey?.createdAt,
-          updatedAt: survey?.updatedAt,
-        },
-      },
-    });
-
-    const webhookMessageId = createWebhookMessageId({
-      event: data.event,
-      jobId: logContext.jobId,
-      webhookId: webhook.id,
-    });
-    const webhookTimestamp = Math.floor(Date.now() / 1000);
-    const requestHeaders: Record<string, string> = {
-      "content-type": "application/json",
-      "webhook-id": webhookMessageId,
-      "webhook-timestamp": webhookTimestamp.toString(),
-    };
-
-    if (webhook.secret) {
-      requestHeaders["webhook-signature"] = generateStandardWebhookSignature(
-        webhookMessageId,
-        webhookTimestamp,
-        body,
-        webhook.secret
-      );
-    }
-
-    const address = await validateAndResolveWebhookUrl(webhook.url);
-    // Pin TCP connect to the validated IP — closes DNS-rebinding TOCTOU between
-    // validation and fetch. Skip pinning when address is null (DANGEROUSLY flag +
-    // blocked name resolved via /etc/hosts).
-    const dispatcher = address ? createPinnedDispatcher(address) : undefined;
-    // `redirect: "manual"` blocks 30x-based SSRF to private/internal hosts.
-    // Gated on the same env var as URL validation for self-hosters who opted in.
-    const redirectMode: RequestRedirect = DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS ? "follow" : "manual";
-
-    try {
-      const response = await fetchWithTimeout(webhook.url, {
-        method: "POST",
-        headers: requestHeaders,
-        body,
-        redirect: redirectMode,
-        dispatcher,
-      });
-
-      // With `redirect: "manual"`, undici returns the actual 30x (not opaqueredirect).
-      // Treat as delivery failure so redirect-based SSRF cannot silently succeed.
-      if (response.status >= 300 && response.status < 400) {
-        throw new Error(`Webhook delivery blocked: redirect status ${response.status}`);
-      }
-
-      if (!response.ok) {
-        throw new Error(`Webhook delivery failed with status ${response.status}`);
-      }
-    } finally {
-      try {
-        await dispatcher?.destroy();
-      } catch (cleanupError) {
-        logger.warn(
-          {
-            ...logContext,
-            err: cleanupError,
-            webhookId: webhook.id,
-            webhookUrl: webhook.url,
-          },
-          "Response pipeline webhook dispatcher cleanup failed"
-        );
-      }
-    }
-  } catch (error) {
-    logger.error(
-      {
-        ...logContext,
-        err: error,
-        webhookId: webhook.id,
-        webhookUrl: webhook.url,
-      },
-      "Response pipeline webhook delivery failed"
-    );
-    throw error;
-  }
-};
-
-const deliverWebhooks = async ({
+/**
+ * Fans the event out as one `webhook-delivery.process` job per matching webhook and returns without
+ * waiting on any HTTP. Each delivery then retries on its own budget, so a dead endpoint neither delays
+ * the side effects below nor causes the healthy endpoints to be re-sent.
+ *
+ * Enqueue failures (Redis unavailable) fail this job while attempts remain — the deterministic child
+ * ids make the retry idempotent — and on the final attempt are logged and skipped so the remaining
+ * side effects still run, as before.
+ */
+const enqueueWebhookDeliveryJobs = async ({
   data,
   logContext,
   survey,
@@ -281,34 +196,61 @@ const deliverWebhooks = async ({
   data: TResponsePipelineJobData;
   logContext: ReturnType<typeof getPipelineLogContext>;
   survey: TPipelineSurvey;
-  webhooks: Webhook[];
+  webhooks: TPipelineWebhook[];
 }): Promise<void> => {
+  if (webhooks.length === 0) {
+    return;
+  }
+
   const results = await Promise.allSettled(
     webhooks.map((webhook) =>
-      createWebhookDeliveryTask({
-        webhook,
-        data,
-        survey,
-        logContext,
-      })
+      enqueueWebhookDeliveryJob(
+        {
+          webhookId: webhook.id,
+          workspaceId: data.workspaceId,
+          surveyId: data.surveyId,
+          event: data.event,
+          webhookMessageId: createWebhookMessageId({
+            event: data.event,
+            jobId: logContext.jobId,
+            webhookId: webhook.id,
+          }),
+          response: data.response,
+          survey: {
+            name: survey.name,
+            type: survey.type,
+            status: survey.status,
+            createdAt: survey.createdAt,
+            updatedAt: survey.updatedAt,
+          },
+        },
+        { jobId: createWebhookDeliveryJobId(logContext.jobId, webhook.id) }
+      )
     )
   );
 
   const failedResults = results.filter((result) => result.status === "rejected");
   if (failedResults.length === 0) {
+    logger.debug(
+      { ...logContext, webhookCount: webhooks.length },
+      "Response pipeline webhook deliveries enqueued"
+    );
     return;
   }
 
   if (logContext.attempt < logContext.maxAttempts) {
-    throw toError(failedResults[0].reason, "Response pipeline webhook delivery failed");
+    throw toError(failedResults[0].reason, "Response pipeline webhook delivery enqueue failed");
   }
 
   logger.error(
     {
       ...logContext,
+      // The cause only reaches the operator on the earlier attempts, via the error this throws above.
+      // The final attempt is the one that drops the deliveries, so it has to carry the reason itself.
+      err: failedResults[0].reason,
       failedWebhookCount: failedResults.length,
     },
-    "Response pipeline webhook delivery exhausted retries; continuing with remaining side effects"
+    "Response pipeline webhook delivery enqueue exhausted retries; continuing with remaining side effects"
   );
 };
 
@@ -360,6 +302,25 @@ const loadResponseCountSafely = async ({
 
     return null;
   }
+};
+
+/**
+ * ENG-3282: an alert carries the response, so it only goes to someone who may read it — for a restricted
+ * survey, its owner and the organization administrators. A subscription made while the survey was
+ * workspace-visible does not survive a restriction. Bounded by the subscriber count; a no-op while
+ * survey visibility is not enforced.
+ */
+const keepRecipientsWhoMayReadResponses = async <TUser extends { id: string }>(
+  users: TUser[],
+  surveyId: string
+): Promise<TUser[]> => {
+  if (users.length === 0 || !(await isSurveyVisibilityReady())) return users;
+  const allowed = await Promise.all(
+    users.map((user) =>
+      can({ id: user.id, type: "user" }, "survey.response_read", { id: surveyId, type: "survey" })
+    )
+  );
+  return users.filter((_, index) => allowed[index]);
 };
 
 const getUsersWithNotifications = async ({
@@ -423,10 +384,10 @@ const getUsersWithNotifications = async ({
           equals: true,
         },
       },
-      select: { email: true, locale: true },
+      select: { email: true, id: true, locale: true },
     });
 
-    return users.map((user) => ({
+    return (await keepRecipientsWhoMayReadResponses(users, data.surveyId)).map((user) => ({
       email: user.email,
       locale: toUserLocale(user.locale),
     }));
@@ -617,58 +578,33 @@ const handleSurveyAutoCompleteSafely = async ({
   }
 };
 
-const runResponseFinishedSideEffects = async ({
+/**
+ * The responseFinished work that sends the response out of the app: integrations, the feedback-source
+ * pipeline and follow-ups. ENG-3283: none of it runs for a survey that is not workspace-visible.
+ */
+const runOutboundResponseFinishedEffects = async ({
   data,
   displayTimeZone,
+  integrations,
   logContext,
-  organizationId,
-  stripeCustomerId,
+  outboundAllowed,
   survey,
   workspaceId,
 }: {
   data: TResponsePipelineJobData;
   displayTimeZone: string | null;
+  integrations: Awaited<ReturnType<typeof loadIntegrationsSafely>>;
   logContext: ReturnType<typeof getPipelineLogContext>;
-  organizationId: string;
-  stripeCustomerId: string | null | undefined;
+  outboundAllowed: boolean;
   survey: TPipelineSurvey;
   workspaceId: string;
-}) => {
-  const [integrations, usersWithNotifications] = await Promise.all([
-    loadIntegrationsSafely({
-      logContext,
-      workspaceId,
-    }),
-    getUsersWithNotifications({
-      data,
-      logContext,
-      workspaceId,
-    }),
-  ]);
-
-  // Neither count is consumed until the notification/auto-complete steps at the end, so start
-  // them here to overlap with the integration and follow-up work below. Each is skipped
-  // entirely when nothing would consume it, keeping this off the hot path for the common case.
-  const autoCompleteThreshold = getAutoCompleteThreshold(survey);
-
-  const responseCountPromise =
-    usersWithNotifications.length > 0
-      ? loadResponseCountSafely({
-          count: () => getResponseCountBySurveyId(data.surveyId),
-          failureMessage: "Response pipeline response count lookup failed",
-          logContext,
-        })
-      : Promise.resolve(null);
-
-  const finishedResponseCountPromise =
-    autoCompleteThreshold !== null
-      ? loadResponseCountSafely({
-          count: () => getFinishedResponseCountBySurveyId(survey.id),
-          failureMessage:
-            "Response pipeline survey auto-complete skipped because the finished response count could not be loaded",
-          logContext: { ...logContext, autoCompleteThreshold },
-        })
-      : Promise.resolve(null);
+}): Promise<void> => {
+  if (!outboundAllowed) {
+    recordSurveyOutboundSkipped("integration");
+    recordSurveyOutboundSkipped("feedback_source");
+    if (survey.followUps?.length) recordSurveyOutboundSkipped("follow_up", survey.followUps.length);
+    return;
+  }
 
   if (integrations.length > 0) {
     try {
@@ -701,6 +637,70 @@ const runResponseFinishedSideEffects = async ({
     logContext,
     survey,
   });
+};
+
+const runResponseFinishedSideEffects = async ({
+  data,
+  displayTimeZone,
+  logContext,
+  organizationId,
+  stripeCustomerId,
+  survey,
+  outboundAllowed,
+  workspaceId,
+}: {
+  data: TResponsePipelineJobData;
+  displayTimeZone: string | null;
+  logContext: ReturnType<typeof getPipelineLogContext>;
+  organizationId: string;
+  stripeCustomerId: string | null | undefined;
+  survey: TPipelineSurvey;
+  /** ENG-3283: false for a survey that is not workspace-visible — nothing leaves the app for it. */
+  outboundAllowed: boolean;
+  workspaceId: string;
+}) => {
+  const [integrations, usersWithNotifications] = await Promise.all([
+    outboundAllowed ? loadIntegrationsSafely({ logContext, workspaceId }) : Promise.resolve([]),
+    getUsersWithNotifications({
+      data,
+      logContext,
+      workspaceId,
+    }),
+  ]);
+
+  // Neither count is consumed until the notification/auto-complete steps at the end, so start
+  // them here to overlap with the integration and follow-up work below. Each is skipped
+  // entirely when nothing would consume it, keeping this off the hot path for the common case.
+  const autoCompleteThreshold = getAutoCompleteThreshold(survey);
+
+  const responseCountPromise =
+    usersWithNotifications.length > 0
+      ? loadResponseCountSafely({
+          count: () => getResponseCountBySurveyId(data.surveyId),
+          failureMessage: "Response pipeline response count lookup failed",
+          logContext,
+        })
+      : Promise.resolve(null);
+
+  const finishedResponseCountPromise =
+    autoCompleteThreshold !== null
+      ? loadResponseCountSafely({
+          count: () => getFinishedResponseCountBySurveyId(survey.id),
+          failureMessage:
+            "Response pipeline survey auto-complete skipped because the finished response count could not be loaded",
+          logContext: { ...logContext, autoCompleteThreshold },
+        })
+      : Promise.resolve(null);
+
+  await runOutboundResponseFinishedEffects({
+    data,
+    displayTimeZone,
+    integrations,
+    logContext,
+    outboundAllowed,
+    survey,
+    workspaceId,
+  });
 
   await sendNotificationEmailsSafely({
     data,
@@ -717,6 +717,11 @@ const runResponseFinishedSideEffects = async ({
     organizationId,
     survey,
   });
+
+  if (!outboundAllowed) {
+    recordSurveyOutboundSkipped("workflow");
+    return;
+  }
 
   // Workflow runner (producer): enqueue runs for matching enabled workflows. Isolated so a runner
   // failure never breaks the response pipeline job, its retries, or the other side-effects above.
@@ -827,12 +832,24 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
       );
     }
 
-    await deliverWebhooks({
-      data,
-      logContext,
-      survey,
-      webhooks,
-    });
+    // ENG-3283: a restricted survey's responses never leave the app — no webhook, integration, feedback
+    // source, follow-up or workflow. Metering, telemetry, auto-complete and the (already filtered)
+    // alert emails are internal and still run.
+    const outboundAllowed = isSurveyOutboundAllowed(survey, await isSurveyVisibilityReady());
+    if (outboundAllowed) {
+      await enqueueWebhookDeliveryJobs({
+        data,
+        logContext,
+        survey,
+        webhooks,
+      });
+    } else {
+      logger.info(
+        { ...logContext, reason: "survey_not_workspace_visible" },
+        "Response pipeline skipped outbound delivery for a survey that is not workspace-visible"
+      );
+      recordSurveyOutboundSkipped("webhook", webhooks.length);
+    }
 
     if (data.event === "responseFinished") {
       await runResponseFinishedSideEffects({
@@ -840,6 +857,7 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
         displayTimeZone: organization.displayTimeZone,
         logContext,
         organizationId: organization.id,
+        outboundAllowed,
         stripeCustomerId: organization.billing?.stripeCustomerId,
         survey,
         workspaceId: data.workspaceId,

@@ -5,19 +5,25 @@ import { useTranslation } from "react-i18next";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { DimensionsPanel } from "@/modules/ee/analysis/charts/components/dimensions-panel";
 import { FiltersPanel } from "@/modules/ee/analysis/charts/components/filters-panel";
+import { MatrixQuestionPicker } from "@/modules/ee/analysis/charts/components/matrix-question-picker";
 import { MeasuresPanel } from "@/modules/ee/analysis/charts/components/measures-panel";
 import { TimeDimensionPanel } from "@/modules/ee/analysis/charts/components/time-dimension-panel";
 import { useChartQuery } from "@/modules/ee/analysis/charts/hooks/use-chart-query";
 import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
 import { supportsTimeGrouping } from "@/modules/ee/analysis/charts/lib/chart-display";
+import { createDefaultFilterRow } from "@/modules/ee/analysis/charts/lib/filter-conditions";
+import {
+  buildMatrixQuestionQuery,
+  getMatrixQuestionLabel,
+} from "@/modules/ee/analysis/charts/lib/matrix-pivot";
 import {
   type ChartBuilderState,
-  type FilterRow,
+  type FilterNode,
   type TimeDimensionConfig,
   buildCubeQuery,
+  hasIncompleteFilterRow,
   parseQueryToState,
 } from "@/modules/ee/analysis/lib/query-builder";
-import { FEEDBACK_FIELDS } from "@/modules/ee/analysis/lib/schema-definition";
 import type { AnalyticsResponse, TChartType } from "@/modules/ee/analysis/types/analysis";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 
@@ -31,6 +37,11 @@ interface AdvancedChartBuilderProps {
   workspaceId: string;
   chartType: TChartType;
   initialQuery?: TChartQuery;
+  /**
+   * The initial query arrives without rows (a preset), so run it once instead of treating it as
+   * already executed the way a saved or AI-generated chart is.
+   */
+  runInitialQuery?: boolean;
   onChartGenerated?: (data: AnalyticsResponse) => void;
   onQueryStateChange?: (state: ChartQueryState) => void;
   feedbackDirectoryId: string | null;
@@ -50,7 +61,7 @@ const ACTION = {
 type Action =
   | { type: typeof ACTION.SET_MEASURES; payload: string[] }
   | { type: typeof ACTION.SET_DIMENSIONS; payload: string[] }
-  | { type: typeof ACTION.SET_FILTERS; payload: FilterRow[] }
+  | { type: typeof ACTION.SET_FILTERS; payload: FilterNode[] }
   | { type: typeof ACTION.SET_FILTER_LOGIC; payload: "and" | "or" }
   | { type: typeof ACTION.SET_TIME_DIMENSION; payload: TimeDimensionConfig | null }
   | { type: typeof ACTION.INIT_FROM_QUERY; payload: Partial<ChartBuilderState> };
@@ -91,6 +102,7 @@ export function AdvancedChartBuilder({
   workspaceId,
   chartType,
   initialQuery,
+  runInitialQuery = false,
   onChartGenerated,
   onQueryStateChange,
   feedbackDirectoryId,
@@ -146,8 +158,13 @@ export function AdvancedChartBuilder({
   // The last query that was executed (or arrived pre-executed via initialQuery, e.g. from the
   // AI section or a saved chart). Auto-run only fires when the form drifts away from it.
   const lastRunQueryJsonRef = useRef<string | null>(
-    initialQuery ? toComparableQueryJson(initialQuery, chartType) : null
+    initialQuery && !runInitialQuery ? toComparableQueryJson(initialQuery, chartType) : null
   );
+  // Read by the effect below without re-running it; this effect is declared first, so it runs first.
+  const runInitialQueryRef = useRef(runInitialQuery);
+  useEffect(() => {
+    runInitialQueryRef.current = runInitialQuery;
+  }, [runInitialQuery]);
 
   const appliedInitialQueryRef = useRef<TChartQuery | null>(null);
   useEffect(() => {
@@ -155,9 +172,9 @@ export function AdvancedChartBuilder({
     if (appliedInitialQueryRef.current === initialQuery) return;
     appliedInitialQueryRef.current = initialQuery;
     const parsed = parseQueryToState(initialQuery);
-    lastRunQueryJsonRef.current = JSON.stringify(
-      prepareQueryForChartType(buildCubeQuery({ ...initialState, ...parsed }), chartType)
-    );
+    lastRunQueryJsonRef.current = runInitialQueryRef.current
+      ? null
+      : JSON.stringify(prepareQueryForChartType(buildCubeQuery({ ...initialState, ...parsed }), chartType));
     dispatch({ type: ACTION.INIT_FROM_QUERY, payload: parsed });
     setDimensionsOpen((parsed.selectedDimensions?.length ?? 0) > 0);
     // chartType only feeds the baseline above; a later switch is caught by the guard and left to
@@ -169,9 +186,8 @@ export function AdvancedChartBuilder({
   const isConfigComplete = useMemo(() => {
     if (state.selectedMeasures.length === 0) return false;
     if (dimensionsOpen && state.selectedDimensions.length === 0) return false;
-    return !state.filters.some(
-      (f) => f.operator !== "set" && f.operator !== "notSet" && (f.values === null || f.values.length === 0)
-    );
+    // Walks into filter groups too, so a half-filled row nested in a group also holds the run back.
+    return !hasIncompleteFilterRow(state.filters);
   }, [state, dimensionsOpen]);
 
   // Latest-value ref so the debounce timer is not reset by parent re-renders or
@@ -201,14 +217,31 @@ export function AdvancedChartBuilder({
     return () => clearTimeout(timeout);
   }, [currentQueryJson, isConfigComplete, feedbackDirectoryId]);
 
+  const isMatrix = chartType === "matrix";
+  // Picking a matrix question replaces the form with the matrix recipe — rows, columns, measure and
+  // the question filter — and keeps the date range. The auto-run below then draws it.
+  const applyMatrixQuestion = (label: string) => {
+    const parsed = parseQueryToState(buildMatrixQuestionQuery(label, currentQuery.timeDimensions));
+    dispatch({ type: ACTION.INIT_FROM_QUERY, payload: { ...initialState, ...parsed } });
+    setDimensionsOpen(true);
+  };
+
   return (
-    <div className="mx-1 space-y-2">
-      <div className="mt-4 flex w-full flex-col gap-3 overflow-hidden rounded-lg border bg-slate-50 p-4">
-        <MeasuresPanel
-          selectedMeasures={state.selectedMeasures}
-          onMeasuresChange={(measures) => dispatch({ type: ACTION.SET_MEASURES, payload: measures })}
+    <div className="space-y-2">
+      {isMatrix && feedbackDirectoryId && (
+        <MatrixQuestionPicker
+          workspaceId={workspaceId}
+          feedbackDirectoryId={feedbackDirectoryId}
+          selectedLabel={getMatrixQuestionLabel(currentQuery)}
+          onSelect={applyMatrixQuestion}
         />
-      </div>
+      )}
+      {/* Flat, like every other control in the rail: a filled box here read as a card inside a card. */}
+      <MeasuresPanel
+        hideTitle
+        selectedMeasures={state.selectedMeasures}
+        onMeasuresChange={(measures) => dispatch({ type: ACTION.SET_MEASURES, payload: measures })}
+      />
 
       <AdvancedOptionToggle
         isChecked={filtersOpen}
@@ -216,18 +249,7 @@ export function AdvancedChartBuilder({
           if (filtersOpen) {
             dispatch({ type: ACTION.SET_FILTERS, payload: [] });
           } else if (state.filters.length === 0) {
-            const firstField = FEEDBACK_FIELDS.dimensions[0] ?? FEEDBACK_FIELDS.measures[0];
-            dispatch({
-              type: ACTION.SET_FILTERS,
-              payload: [
-                {
-                  id: crypto.randomUUID(),
-                  field: firstField?.id ?? "",
-                  operator: "equals" as const,
-                  values: null,
-                },
-              ],
-            });
+            dispatch({ type: ACTION.SET_FILTERS, payload: [createDefaultFilterRow()] });
           }
         }}
         htmlId="chart-filters-toggle"
@@ -237,7 +259,6 @@ export function AdvancedChartBuilder({
         childrenContainerClass="flex-col gap-3 p-4"
         childBorder>
         <FiltersPanel
-          hideTitle
           workspaceId={workspaceId}
           feedbackDirectoryId={feedbackDirectoryId}
           filters={state.filters}
@@ -261,6 +282,7 @@ export function AdvancedChartBuilder({
         childBorder>
         <DimensionsPanel
           hideTitle
+          isMatrix={isMatrix}
           selectedDimensions={state.selectedDimensions}
           onDimensionsChange={(dimensions) => dispatch({ type: ACTION.SET_DIMENSIONS, payload: dimensions })}
         />

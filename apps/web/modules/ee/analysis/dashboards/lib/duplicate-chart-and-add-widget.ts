@@ -12,6 +12,9 @@ import { addChartToDashboard } from "./dashboards";
  * Deep-copies a chart (new UUID, "(copy)" name suffix, copied query/config) and adds the
  * new chart as a widget on the given dashboard. The dashboard is verified first so a
  * missing dashboard does not leave an orphaned chart copy behind.
+ *
+ * `layout` is only used for the copy's size: the position comes from the first gap on the dashboard,
+ * so the copy never lands on top of its original.
  */
 export const duplicateChartAndAddWidget = async ({
   dashboardId,
@@ -56,6 +59,8 @@ export const duplicateChartAndAddWidget = async ({
     dashboardId,
     chartId: chart.id,
     workspaceId,
+    // Placed in the first open slot, chosen inside the insert transaction off the layouts read there,
+    // so two concurrent duplicates cannot settle on the same spot.
     layout,
   });
 

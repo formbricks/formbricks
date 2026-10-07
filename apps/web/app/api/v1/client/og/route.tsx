@@ -1,9 +1,19 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
+import { normalizeHex } from "@/lib/utils/colors";
+import { getCardTitle } from "./lib/rtl-text";
+
+// Drawn when there is no title to show: an empty card reads as an image that failed to load.
+const PLACEHOLDER_LINE_WIDTHS = ["70%", "45%"];
 
 export const GET = async (req: NextRequest) => {
-  let name = req.nextUrl.searchParams.get("name");
-  let brandColor = req.nextUrl.searchParams.get("brandColor");
+  const name = req.nextUrl.searchParams.get("name");
+  // Right-to-left text never reaches the renderer - it cannot lay it out, and Arabic crashes it outright.
+  // See `isRtlText` for why this is a drop rather than a fix.
+  const title = getCardTitle(name);
+  // The value lands unescaped in SVG attributes, so only a canonical #rrggbb may pass; anything else
+  // (e.g. a query string mangled by a link-preview fetcher) falls back to the defaults.
+  const brandColor = normalizeHex(req.nextUrl.searchParams.get("brandColor") ?? "");
 
   return new ImageResponse(
     <div
@@ -88,7 +98,20 @@ export const GET = async (req: NextRequest) => {
                   textAlign: "left",
                   marginTop: "3.75rem",
                 }}>
-                {name}
+                {title ??
+                  PLACEHOLDER_LINE_WIDTHS.map((width) => (
+                    <div
+                      key={width}
+                      style={{
+                        display: "flex",
+                        width,
+                        height: "1.6rem",
+                        borderRadius: "0.5rem",
+                        backgroundColor: "#e2e8f0",
+                        marginTop: "0.6rem",
+                      }}
+                    />
+                  ))}
               </h2>
             </div>
           </div>

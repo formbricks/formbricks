@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarIcon, XIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { type Matcher } from "react-day-picker";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
@@ -33,11 +33,18 @@ interface DatePickerProps {
   placeholder?: string;
   disabled?: boolean;
   triggerClassName?: string;
+  /** The wrapper around trigger and clear button — this is the flex item when one is laid out. */
+  className?: string;
   align?: "start" | "center" | "end";
   /** Renders a clear button next to the trigger. */
   onClear?: () => void;
   clearButtonId?: string;
   clearButtonLabel?: string;
+  /**
+   * The clear button's own classes. Its `outline` variant draws a border, which is a second hairline
+   * when this picker is embedded inside a control that already has one.
+   */
+  clearButtonClassName?: string;
 }
 
 export const DatePicker = ({
@@ -49,10 +56,12 @@ export const DatePicker = ({
   placeholder,
   disabled,
   triggerClassName,
+  className,
   align = "start",
   onClear,
   clearButtonId,
   clearButtonLabel,
+  clearButtonClassName,
 }: Readonly<DatePickerProps>) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -60,7 +69,7 @@ export const DatePicker = ({
   const label = value ? formatDateForDisplay(value, locale, DISPLAY_OPTIONS) : undefined;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className={cn("flex items-center gap-2", className)}>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -100,7 +109,7 @@ export const DatePicker = ({
           size="sm"
           disabled={disabled}
           onClick={onClear}
-          className="size-8 shrink-0 p-0">
+          className={cn("size-8 shrink-0 p-0", clearButtonClassName)}>
           <XIcon className="size-4" />
         </Button>
       )}
@@ -203,10 +212,13 @@ export const DateRangePicker = ({
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState<TDateRangeValue>({ from: value?.from, to: value?.to });
 
-  const label = useMemo(() => {
-    if (!value?.from || !value.to) return undefined;
-    return `${formatDateForDisplay(value.from, locale, DISPLAY_OPTIONS)} – ${formatDateForDisplay(value.to, locale, DISPLAY_OPTIONS)}`;
-  }, [value?.from, value?.to, locale]);
+  // Not memoized: the parent hands down a fresh `value` object on most renders, so a memo keyed on
+  // it would recompute anyway — and keying it on `value?.from`/`value?.to` instead (as it used to)
+  // is a narrower dependency than the body reads, which is how a memo goes stale (ENG-2366).
+  const label =
+    value?.from && value.to
+      ? `${formatDateForDisplay(value.from, locale, DISPLAY_OPTIONS)} – ${formatDateForDisplay(value.to, locale, DISPLAY_OPTIONS)}`
+      : undefined;
 
   return (
     <Popover

@@ -7,19 +7,27 @@ import { WorkflowCanvas } from "@/modules/ee/workflows/components/canvas/workflo
 import { WorkflowInspectorPanel } from "@/modules/ee/workflows/components/inspector/workflow-inspector-panel";
 import { WorkflowEmailAuthoringProvider } from "@/modules/ee/workflows/components/workflow-email-authoring-context";
 import { useReconcileTriggerEndingCards } from "@/modules/ee/workflows/hooks/use-reconcile-trigger-ending-cards";
+import { useTrackWorkflowSurface } from "@/modules/ee/workflows/hooks/use-track-workflow-surface";
 import { useWorkflowSurveyOptions } from "@/modules/ee/workflows/hooks/use-trigger-survey-picker";
 import { useWorkflowBuilder } from "@/modules/ee/workflows/hooks/use-workflow-builder";
 import { useWorkflowNodeUrlSync } from "@/modules/ee/workflows/hooks/use-workflow-node-url-sync";
 import { resolveBoundTriggerSurvey } from "@/modules/ee/workflows/lib/bound-survey";
 import { WorkflowBuilderBodyLoading } from "@/modules/ee/workflows/loading";
-import { hasBoundTriggerSurveyAtom } from "@/modules/ee/workflows/state/editor";
+import {
+  hasBoundTriggerSurveyAtom,
+  isSurveyVisibilityEnabledAtom,
+  isTriggerSurveyRestrictedAtom,
+} from "@/modules/ee/workflows/state/editor";
 import type { TWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/types/email-authoring-context";
+import { isRestrictedSurveyPick } from "@/modules/survey/visibility/lib/outbound";
 
 interface WorkflowBuilderPageProps {
   workspaceId: string;
   workflowId: string;
   isReadOnly: boolean;
   emailAuthoringContext: TWorkflowEmailAuthoringContext;
+  /** ENG-3395: the restricted-surveys gate. */
+  surveyVisibilityEnabled: boolean;
 }
 
 export const WorkflowBuilderPage = ({
@@ -27,10 +35,13 @@ export const WorkflowBuilderPage = ({
   workflowId,
   isReadOnly,
   emailAuthoringContext,
+  surveyVisibilityEnabled,
 }: Readonly<WorkflowBuilderPageProps>) => {
   const { t } = useTranslation();
   const builder = useWorkflowBuilder({ workspaceId, workflowId, isReadOnly });
   const setHasBoundTriggerSurvey = useSetAtom(hasBoundTriggerSurveyAtom);
+  const setIsTriggerSurveyRestricted = useSetAtom(isTriggerSurveyRestrictedAtom);
+  const setIsSurveyVisibilityEnabled = useSetAtom(isSurveyVisibilityEnabledAtom);
   const surveyOptionsQuery = useWorkflowSurveyOptions(workspaceId);
 
   // This page owns pushing the "does the trigger's survey resolve" fact into the shared atom the
@@ -51,12 +62,36 @@ export const WorkflowBuilderPage = ({
     setHasBoundTriggerSurvey(isBound);
   }, [emailAuthoringContext, definition, surveyOptions, setHasBoundTriggerSurvey]);
 
+  // ENG-3395: a restricted trigger survey is refused by enable and test and skipped by the runner, so
+  // the editor reports it as a problem up front. Same keying as above, for the same reason.
+  useEffect(() => {
+    const triggerSurveyId = definition?.trigger?.config.surveyId ?? null;
+    const triggerSurvey = surveyOptions.find((option) => option.id === triggerSurveyId);
+    setIsSurveyVisibilityEnabled(surveyVisibilityEnabled);
+    setIsTriggerSurveyRestricted(
+      triggerSurvey ? isRestrictedSurveyPick(surveyVisibilityEnabled, triggerSurvey) : false
+    );
+  }, [
+    definition,
+    surveyOptions,
+    surveyVisibilityEnabled,
+    setIsSurveyVisibilityEnabled,
+    setIsTriggerSurveyRestricted,
+  ]);
+
   // Prune trigger ending-card ids whose endings were deleted. On the page (not the trigger form) so
   // the canvas summary and enable gate stay correct without opening the inspector.
   useReconcileTriggerEndingCards({ definition, isEditable: builder.canEditDefinition });
 
   // Deep-link the inspected node (?node=…) once the editor is hydrated.
   useWorkflowNodeUrlSync({ isEnabled: Boolean(builder.workflow) });
+
+  // Analytics: the builder counts as visited once the workflow is loaded, not while the skeleton shows.
+  useTrackWorkflowSurface(builder.workflow ? "builder" : null, {
+    workflowId,
+    workflowStatus: builder.workflow?.status,
+    isReadOnly,
+  });
 
   if (builder.isLoading) {
     return <WorkflowBuilderBodyLoading />;

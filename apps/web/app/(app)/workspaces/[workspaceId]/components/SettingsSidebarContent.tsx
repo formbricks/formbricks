@@ -5,8 +5,11 @@ import {
   BlocksIcon,
   BrushIcon,
   Building2Icon,
+  ChartColumnIcon,
   ChevronDownIcon,
+  CodeXmlIcon,
   CreditCardIcon,
+  DatabaseIcon,
   FoldersIcon,
   GlobeIcon,
   KeyIcon,
@@ -82,19 +85,21 @@ const SettingsNavLink = ({
   isCollapsed,
   isTextVisible,
   disabledMessage,
-}: {
+}: Readonly<{
   item: NavItem;
   isActive: boolean;
   isCollapsed: boolean;
   isTextVisible: boolean;
   disabledMessage?: string;
-}) => {
+}>) => {
   const activeClass = "bg-slate-50 border-r-4 border-brand-dark font-semibold text-slate-900";
   const inactiveClass =
     "hover:bg-slate-50 border-r-4 border-transparent hover:border-slate-300 transition-all duration-150 ease-in-out";
   const disabledClass = "cursor-not-allowed border-r-4 border-transparent text-slate-400";
 
   const isDisabled = item.disabled;
+  // Workspace requests update the active workspace cookie, so only fetch them on navigation.
+  const prefetch = item.href.startsWith("/workspaces/") ? false : null;
 
   const getStateClass = () => {
     if (isDisabled) return disabledClass;
@@ -110,7 +115,10 @@ const SettingsNavLink = ({
               {isDisabled ? (
                 <div className="flex items-center">{item.icon}</div>
               ) : (
-                <Link href={item.href} className="flex items-center text-slate-600 hover:text-slate-900">
+                <Link
+                  href={item.href}
+                  prefetch={prefetch}
+                  className="flex items-center text-slate-600 hover:text-slate-900">
                   {item.icon}
                 </Link>
               )}
@@ -155,7 +163,7 @@ const SettingsNavLink = ({
         isActive ? activeClass : inactiveClass,
         "text-slate-600 hover:text-slate-900"
       )}>
-      <Link href={item.href} className="flex items-center">
+      <Link href={item.href} prefetch={prefetch} className="flex items-center">
         {item.icon}
         <span
           className={cn("ml-2 transition-opacity duration-100", isTextVisible ? "opacity-0" : "opacity-100")}>
@@ -311,11 +319,20 @@ export const SettingsSidebarContent = ({
       icon: <LanguagesIcon className={iconClassName} />,
       disabled: isBilling,
     },
+    // Directly below Survey Languages: both are things a survey is composed from rather than things
+    // the workspace is connected to, and an author reaches for them at the same point.
+    {
+      id: "embedded-data",
+      label: t("common.embedded_data"),
+      href: workspaceSettingsPath(workspaceId, "embedded-data"),
+      icon: <DatabaseIcon className={iconClassName} />,
+      disabled: isBilling,
+    },
     {
       id: "app-connection",
-      label: t("common.connect_your_app"),
+      label: t("common.web_and_mobile_sdk"),
       href: workspaceSettingsPath(workspaceId, "app-connection"),
-      icon: <UnplugIcon className={iconClassName} />,
+      icon: <CodeXmlIcon className={iconClassName} />,
       disabled: isBilling,
     },
     {
@@ -399,6 +416,13 @@ export const SettingsSidebarContent = ({
       icon: <ShieldIcon className={iconClassName} />,
       hidden: isFormbricksCloud,
       disabled: isMember || isBilling,
+    },
+    {
+      id: "org-usage",
+      label: t("workspace.settings.usage.nav_label"),
+      href: organizationSettingsPath(organizationId, "usage"),
+      icon: <ChartColumnIcon className={iconClassName} />,
+      hidden: !isOwnerOrManager || isFormbricksCloud,
     },
   ];
 

@@ -19,7 +19,11 @@ import {
   importHistoricalResponsesAction,
   updateFeedbackSourceWithMappingsAction,
 } from "@/lib/feedback-source/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import {
+  hasRestrictedAttachedSurvey,
+  isRestrictedSurveyPick,
+} from "@/modules/survey/visibility/lib/outbound";
 import { Alert, AlertButton, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -45,6 +49,8 @@ interface FeedbackSourcesSectionProps {
   initialSurveys: TUnifySurvey[];
   directories: { id: string; name: string }[];
   isReadOnly: boolean;
+  /** ENG-3395: the restricted-surveys gate. */
+  surveyVisibilityEnabled: boolean;
 }
 
 export function FeedbackSourcesSection({
@@ -53,6 +59,7 @@ export function FeedbackSourcesSection({
   initialSurveys,
   directories,
   isReadOnly,
+  surveyVisibilityEnabled,
 }: Readonly<FeedbackSourcesSectionProps>) {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
@@ -82,6 +89,15 @@ export function FeedbackSourcesSection({
   const suggestedSurveys = useMemo(
     () => getSuggestedSurveys(initialSurveys, connectedSurveyIds),
     [initialSurveys, connectedSurveyIds]
+  );
+  // Sources that replay a restricted survey: the pipeline skips them and a historical import must not
+  // copy the survey's responses out, so they are marked paused and cannot re-import.
+  const restrictedSourceIds = new Set(
+    initialFeedbackSources
+      .filter((source) =>
+        hasRestrictedAttachedSurvey(surveyVisibilityEnabled, getMappedSurveyIds(source), initialSurveys)
+      )
+      .map((source) => source.id)
   );
   const directoryNames = directories.map((directory) => directory.name).join(", ");
   const feedbackDirectoryAccessText =
@@ -185,6 +201,10 @@ export function FeedbackSourcesSection({
 
   // "Import responses": one-click create the source (all supported questions) and import historical data.
   const handleImportResponses = async (survey: TUnifySurvey): Promise<void> => {
+    if (isRestrictedSurveyPick(surveyVisibilityEnabled, survey)) {
+      toast.error(t("workspace.surveys.visibility.outbound_restricted_tooltip"));
+      return;
+    }
     const feedbackDirectoryId = directories[0]?.id;
     if (!feedbackDirectoryId) {
       toast.error(t("workspace.unify.no_feedback_directory_available"));
@@ -258,6 +278,11 @@ export function FeedbackSourcesSection({
    * its original type and only gains the new value column. Fixing that belongs in `reconcile.ts`.
    */
   const handleReimportHistoricalData = async (feedbackSource: TFeedbackSourceWithMappings): Promise<void> => {
+    // Unreachable from the menu, which disables the item for such a source; kept for any other caller.
+    if (restrictedSourceIds.has(feedbackSource.id)) {
+      toast.error(t("workspace.surveys.visibility.outbound_restricted_tooltip"));
+      return;
+    }
     const surveyIds = getMappedSurveyIds(feedbackSource);
     // Unreachable from the menu, which renders the item only under `canReimportHistoricalData` —
     // itself this same predicate. Kept so a future caller of `onReimport` that does not gate fails
@@ -342,6 +367,8 @@ export function FeedbackSourcesSection({
         onSelectQuestions={handleSelectQuestions}
         isLoading={false}
         isReadOnly={isReadOnly}
+        surveyVisibilityEnabled={surveyVisibilityEnabled}
+        restrictedSourceIds={restrictedSourceIds}
       />
       {directories.length > 0 && (
         <Alert size="small" className="mt-4" role="status">
@@ -369,6 +396,7 @@ export function FeedbackSourcesSection({
         directories={directories}
         initialSurveyId={prefillSurveyId}
         showTrigger={false}
+        surveyVisibilityEnabled={surveyVisibilityEnabled}
       />
 
       <EditFeedbackSourceModal
@@ -378,6 +406,7 @@ export function FeedbackSourcesSection({
         onOpenChange={(open) => !open && setEditingFeedbackSource(null)}
         onUpdateFeedbackSource={handleUpdateFeedbackSource}
         surveys={initialSurveys}
+        surveyVisibilityEnabled={surveyVisibilityEnabled}
         onOpenCsvImport={() => {
           if (editingFeedbackSource) {
             setCsvImportFeedbackSource(editingFeedbackSource);

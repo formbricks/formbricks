@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
+import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import type { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
@@ -52,7 +54,18 @@ const survey = {
   languages: [],
   variables: [{ id: "var1", name: "plan", type: "text" }],
   hiddenFields: { enabled: true, fieldIds: ["utm"] },
+  // The rows are what the accessors read since ENG-2412; a real survey read carries both.
+  embeddedFields: embeddedFieldsFromLegacyInput({
+    variables: [{ id: "var1", name: "plan", type: "text", value: "" }],
+    hiddenFields: { enabled: true, fieldIds: ["utm"] },
+  }),
 } as unknown as TSurvey;
+
+/** One stored ingested row whose display name need not match the key its value lives under. */
+const ingestedRow = (name: string, storageKey: string): TLinkedEmbeddedField => ({
+  field: { name, key: null, source: "ingested", dataType: "string", defaultValue: null, locked: false },
+  link: { storageKey },
+});
 
 describe("resolveResponseRecipient", () => {
   test("uses a literal email `to` directly", () => {
@@ -129,15 +142,24 @@ describe("buildSurveyResponseEmailHtml", () => {
     // allowlist below permits `<a href>` for author-written body HTML, so without escaping a
     // respondent could smuggle a clickable link through an open-text answer into an owner-facing
     // email. The locale is passed explicitly so recalled date answers aren't formatted as en-US.
+    //
+    // The lookup map is `buildServerEmbeddedValues(response, survey)`, not `response.data`
+    // (ENG-2538): a reserved token in a notification body used to render its fallback here while
+    // resolving correctly in the live survey. Asserted as a superset — every answer still reachable,
+    // plus the reserved values — rather than a literal object, so a catalog addition (ENG-1858) does
+    // not fail this test for saying nothing about sanitization.
     expect(mockParseRecallInfo).toHaveBeenCalledWith(
       "#recall:name/fallback:there#",
-      response.data,
+      expect.objectContaining({ ...response.data, responseId: response.id, surveyId: response.surveyId }),
       response.variables,
       false,
       "en-US",
       undefined,
       true
     );
+    // The declared answers are not merely present, they still WIN: `name` is the respondent's, and
+    // nothing reserved may overwrite it.
+    expect(mockParseRecallInfo.mock.calls[0][1]).toMatchObject(response.data);
     const rendered = mockRenderFollowUpEmail.mock.calls[0][0];
     expect(rendered.body).toBe("<p>Hi Jane</p>");
     expect(rendered.body).not.toContain("<script>");
@@ -273,7 +295,58 @@ describe("buildSurveyResponseEmailHtml", () => {
     });
     rendered = mockRenderFollowUpEmail.mock.calls[0][0];
     expect(rendered.variables).toEqual([]);
-    expect(rendered.hiddenFields).toEqual([{ id: "utm", value: "newsletter" }]);
+    expect(rendered.hiddenFields).toEqual([{ id: "utm", name: "utm", value: "newsletter" }]);
+  });
+
+  /**
+   * ENG-3233. A shared library field carries a display name the survey does not own, and a renamed
+   * local one diverges the same way; the email block is titled by that name while the value is still
+   * read from the storage key. Red on main, which titled it `utm_campaign`.
+   */
+  test("titles a hidden field by its name and reads its value by storage key", async () => {
+    const renamedSurvey = {
+      ...survey,
+      embeddedFields: [ingestedRow("Campaign", "utm_campaign")],
+    } as unknown as TSurvey;
+    const renamedResponse = {
+      ...response,
+      data: { ...response.data, utm_campaign: "spring_sale" },
+    } as unknown as TResponse;
+
+    await buildSurveyResponseEmailHtml({
+      body: "Body",
+      survey: renamedSurvey,
+      response: renamedResponse,
+      attachResponseData: true,
+      includeHiddenFields: true,
+    });
+
+    expect(mockRenderFollowUpEmail.mock.calls[0][0].hiddenFields).toEqual([
+      { id: "utm_campaign", name: "Campaign", value: "spring_sale" },
+    ]);
+  });
+
+  test("two hidden fields sharing a name stay tellable apart in the email", async () => {
+    const collidingSurvey = {
+      ...survey,
+      embeddedFields: [ingestedRow("Source", "utm_source"), ingestedRow("Source", "referrer")],
+    } as unknown as TSurvey;
+    const collidingResponse = {
+      ...response,
+      data: { utm_source: "newsletter", referrer: "google" },
+    } as unknown as TResponse;
+
+    await buildSurveyResponseEmailHtml({
+      body: "Body",
+      survey: collidingSurvey,
+      response: collidingResponse,
+      attachResponseData: true,
+      includeHiddenFields: true,
+    });
+
+    expect(
+      mockRenderFollowUpEmail.mock.calls[0][0].hiddenFields.map((f: { name: string }) => f.name)
+    ).toEqual(["Source", "Source (referrer)"]);
   });
 
   test("falls back to the default locale when none is provided", async () => {

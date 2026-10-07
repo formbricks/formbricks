@@ -1,6 +1,8 @@
 import { Prisma } from "@formbricks/database/prisma";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
+import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
@@ -206,6 +208,7 @@ const baseSurveyProperties = {
   isBackButtonHidden: false,
   isAutoProgressingEnabled: false,
   isCaptureIpEnabled: false,
+  isAnonymizeResponsesEnabled: false,
   endings: [
     {
       id: "umyknohldc7w26ocjdhaa62c",
@@ -243,6 +246,13 @@ export const mockOrganizationOutput: TOrganization = {
 export const mockSyncSurveyOutput: SurveyMock = {
   type: "app",
   status: "inProgress",
+  visibility: "workspace",
+  ownerId: null,
+  visibilityVersion: 0,
+  visibilityProjectedVersion: 0,
+  visibilityChangedAt: null,
+  visibilityChangedById: null,
+  visibilityPending: false,
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
   workspaceOverwrites: null,
@@ -256,9 +266,11 @@ export const mockSyncSurveyOutput: SurveyMock = {
   segmentId: null,
   inlineTriggers: null,
   languages: mockSurveyLanguages,
+  // ENG-1837: the join `selectSurvey` now carries — and, since ENG-2404, the only source of the
+  // survey's `variables` / `hiddenFields`. Empty here: these fixtures declare no fields.
+  embeddedDataLinks: [],
   ...baseSurveyProperties,
   followUps: [],
-  variables: [],
   showLanguageSwitch: null,
   metadata: {},
   slug: null,
@@ -269,6 +281,13 @@ export const mockSyncSurveyOutput: SurveyMock = {
 export const mockSurveyOutput: SurveyMock = {
   type: "link",
   status: "inProgress",
+  visibility: "workspace",
+  ownerId: null,
+  visibilityVersion: 0,
+  visibilityProjectedVersion: 0,
+  visibilityChangedAt: null,
+  visibilityChangedById: null,
+  visibilityPending: false,
   displayOption: "respondMultiple",
   metadata: {},
   triggers: [{ actionClass: mockActionClass }],
@@ -283,8 +302,8 @@ export const mockSurveyOutput: SurveyMock = {
   segmentId: null,
   inlineTriggers: null,
   languages: mockSurveyLanguages,
+  embeddedDataLinks: [],
   followUps: [],
-  variables: [],
   showLanguageSwitch: null,
   ...baseSurveyProperties,
   slug: null,
@@ -303,6 +322,12 @@ export const createSurveyInput: TSurveyCreateInput = {
 export const updateSurveyInput: TSurvey = {
   type: "link",
   status: "inProgress",
+  visibility: "workspace",
+  ownerId: null,
+  visibilityVersion: 0,
+  visibilityProjectedVersion: 0,
+  visibilityChangedAt: null,
+  visibilityChangedById: null,
   displayOption: "respondMultiple",
   metadata: {},
   triggers: [{ actionClass: mockActionClass }],
@@ -326,13 +351,24 @@ export const updateSurveyInput: TSurvey = {
   customHeadScriptsMode: null,
 };
 
-export const mockTransformedSurveyOutput = {
-  ...mockSurveyOutput,
-};
+/**
+ * What `transformPrismaSurvey` returns: the raw `embeddedDataLinks` relation is replaced by the
+ * inlined `embeddedFields` the read seam consumes (ENG-1837), and the legacy `variables` /
+ * `hiddenFields` are derived from those (here: no) rows (ENG-2404).
+ */
+const withInlinedEmbeddedFields = <T extends { embeddedDataLinks: unknown[] }>({
+  embeddedDataLinks,
+  ...survey
+}: T) => ({
+  ...survey,
+  embeddedFields: [] as TLinkedEmbeddedField[],
+  variables: [] as TSurvey["variables"],
+  hiddenFields: { enabled: false, fieldIds: [] as string[] },
+});
 
-export const mockTransformedSyncSurveyOutput = {
-  ...mockSyncSurveyOutput,
-};
+export const mockTransformedSurveyOutput = withInlinedEmbeddedFields(mockSurveyOutput);
+
+export const mockTransformedSyncSurveyOutput = withInlinedEmbeddedFields(mockSyncSurveyOutput);
 
 export const mockSurveyWithLogic: TSurvey = {
   ...mockSyncSurveyOutput,
@@ -576,6 +612,14 @@ export const mockSurveyWithLogic: TSurvey = {
     { id: "siog1dabtpo3l0a3xoxw2922", type: "text", name: "var1", value: "lmao" },
     { id: "km1srr55owtn2r7lkoh5ny1u", type: "number", name: "var2", value: 32 },
   ],
+  // Since ENG-2412 the rows are the only thing `getSurveyEmbeddedFields` reads, so a survey that
+  // declares variables has to carry the matching rows — that is what a real read returns.
+  embeddedFields: embeddedFieldsFromLegacyInput({
+    variables: [
+      { id: "siog1dabtpo3l0a3xoxw2922", type: "text", name: "var1", value: "lmao" },
+      { id: "km1srr55owtn2r7lkoh5ny1u", type: "number", name: "var2", value: 32 },
+    ],
+  }),
   customHeadScripts: null,
   customHeadScriptsMode: null,
 };

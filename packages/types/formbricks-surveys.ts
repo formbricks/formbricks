@@ -4,6 +4,21 @@ import type { TUploadFileConfig } from "./storage";
 import type { TSurveyStyling } from "./surveys/types";
 import type { TWorkspaceStyling } from "./workspace";
 
+/**
+ * Viewport rect of the survey card, in CSS pixels, as the renderer measures it.
+ *
+ * Consumed by the native SDKs, which embed the renderer in a full-screen WebView. A platform
+ * WebView hit-tests its whole rectangle and ignores the `pointer-events: none` this renderer puts
+ * outside the card, so a survey with no overlay freezes the host app unless the host masks touches
+ * itself — and the host cannot know where the card is, because CSS decides that inside the page.
+ */
+export interface TSurveyCardRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface SurveyBaseProps {
   survey: TJsWorkspaceStateSurvey;
   styling: TSurveyStyling | TWorkspaceStyling;
@@ -14,7 +29,11 @@ export interface SurveyBaseProps {
   getSetResponseData?: (getSetResponseData: (value: TResponseData) => void) => void;
   onDisplay?: () => Promise<void>;
   onResponse?: (response: TResponseUpdate) => void;
-  onFinished?: () => void;
+  /**
+   * Fires when the finished response has been sent. `responseId` is the persisted id when one exists
+   * (it always does outside preview/offline, since this is gated on the send completing) — ENG-1846.
+   */
+  onFinished?: (responseId?: string) => void;
   onClose?: () => void;
   onRetry?: () => void;
   autoFocus?: boolean;
@@ -62,9 +81,22 @@ export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUploa
   userId?: string;
   contactId?: string;
   onDisplayCreated?: () => void | Promise<void>;
-  onResponseCreated?: () => void | Promise<void>;
+  /**
+   * Fires once per survey lifecycle when the response exists. Outside preview mode that is the
+   * server's creation ack, so `responseId` is the persisted id (ENG-1846 — the host uses it to link
+   * session replays); in preview mode it fires at submit time with no id, since nothing is stored.
+   */
+  onResponseCreated?: (responseId?: string) => void | Promise<void>;
   onFileUpload?: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
   onOpenExternalURL?: (url: string) => void | Promise<void>;
+  /** Notifies the host where the survey card is, and `null` once no card is on screen (while it
+   *  animates out, or before the first paint). Exists so a native host can pass touches outside the
+   *  card through to the app — see `TSurveyCardRect` for why it cannot work that out for itself.
+   *
+   *  Modal mode only, and nothing is measured unless a host passes it: web hosts omit it, because
+   *  CSS `pointer-events` already does the job inside a page. Reported on open, on every resize of
+   *  the card (each question changes its height), and on viewport resize or rotation. */
+  onCardRectChange?: (rect: TSurveyCardRect | null) => void;
   mode?: "modal" | "inline";
   containerId?: string;
   overlay?: "none" | "light" | "dark";

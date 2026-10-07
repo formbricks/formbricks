@@ -165,7 +165,7 @@ post:
             aiDisabled:
               summary: AI smart tools disabled
               value:
-                title: AI Unavailable
+                title: Forbidden
                 status: 403
                 detail: AI smart tools are disabled for this organization.
                 code: ai_smart_tools_disabled
@@ -173,9 +173,9 @@ post:
             aiNotInPlan:
               summary: AI features not enabled for the plan
               value:
-                title: AI Unavailable
+                title: Forbidden
                 status: 403
-                detail: AI features are not enabled for this organization's plan.
+                detail: AI smart tools are not available for this organization.
                 code: ai_features_not_enabled
                 requestId: req_123
     "422":
@@ -231,6 +231,16 @@ post:
                   again or add more detail.
                 code: bad_gateway
                 requestId: req_123
+            providerAuthFailed:
+              summary: AI provider rejected the instance's credentials
+              value:
+                title: Bad Gateway
+                status: 502
+                detail: >-
+                  The AI provider rejected this instance's credentials. Ask your
+                  administrator to check the AI provider configuration.
+                code: ai_provider_auth_failed
+                requestId: req_123
     "503":
       description: AI is not configured on this Formbricks instance
       content:
@@ -241,7 +251,7 @@ post:
             instanceNotConfigured:
               summary: AI instance configuration missing
               value:
-                title: AI Unavailable
+                title: Service Unavailable
                 status: 503
                 detail: AI is not configured for this Formbricks instance.
                 code: ai_instance_not_configured
@@ -249,3 +259,4 @@ post:
   security:
     - sessionAuth: []
     - apiKeyAuth: []
+    - bearerAuth: []

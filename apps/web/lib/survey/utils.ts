@@ -17,6 +17,7 @@ import {
   TSurveyStatus,
   TSurveyType,
 } from "@formbricks/types/surveys/types";
+import { withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { isValidVideoUrl } from "@/lib/utils/video-upload";
 import { isValidImageFile } from "@/modules/storage/utils";
 
@@ -54,7 +55,11 @@ export const transformPrismaSurvey = <T extends TSurvey | TJsWorkspaceStateSurve
   }
 
   const transformedSurvey = {
-    ...surveyPrisma,
+    // ENG-1837: swaps the raw `embeddedDataLinks` relation for the inlined `embeddedFields` the read
+    // seam consumes, so the Prisma relation shape never leaks onto TSurvey, and derives the legacy
+    // `variables` / `hiddenFields` from the same rows (ENG-2404). A no-op for surveys read through a
+    // select without the join — those carry no Embedded Data at all.
+    ...withInlinedEmbeddedFields(surveyPrisma),
     displayPercentage: Number(surveyPrisma.displayPercentage) || null,
     segment,
     customHeadScriptsMode: surveyPrisma.customHeadScriptsMode,

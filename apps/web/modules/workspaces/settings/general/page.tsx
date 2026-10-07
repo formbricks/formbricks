@@ -14,7 +14,7 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ workspaceId
   const params = await props.params;
   const t = await getTranslate();
 
-  const { isReadOnly, isOwner, isManager, workspace, organization } = await getWorkspaceAuth(
+  const { canManage, isOwner, isManager, workspace, organization } = await getWorkspaceAuth(
     params.workspaceId
   );
 
@@ -26,12 +26,12 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ workspaceId
       <SettingsCard
         title={t("common.workspace_name")}
         description={t("workspace.general.workspace_name_settings_description")}>
-        <EditWorkspaceNameForm workspace={workspace} isReadOnly={isReadOnly} />
+        <EditWorkspaceNameForm workspace={workspace} isReadOnly={!canManage} />
       </SettingsCard>
       <SettingsCard
         title={t("workspace.general.recontact_cooldown_period")}
         description={t("workspace.general.recontact_cooldown_period_settings_description")}>
-        <EditCooldownPeriodForm workspace={workspace} isReadOnly={isReadOnly} />
+        <EditCooldownPeriodForm workspace={workspace} isReadOnly={!canManage} />
       </SettingsCard>
       {!IS_FORMBRICKS_CLOUD && (
         <SettingsCard

@@ -2,26 +2,35 @@
 
 import { EyeOffIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { labelEmbeddedFields } from "@formbricks/types/embedded-data-label";
+import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { TResponseData } from "@formbricks/types/responses";
-import { TSurveyHiddenFields } from "@formbricks/types/surveys/types";
+import { displayEmbeddedValue } from "@/modules/embedded-data/lib/value-display";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface HiddenFieldsProps {
-  hiddenFields: TSurveyHiddenFields;
+  /** The survey's ingested Embedded Data fields, resolved through `getSurveyEmbeddedFields`. */
+  hiddenFields: TLinkedEmbeddedField[];
   responseData: TResponseData;
 }
 
-export const HiddenFields = ({ hiddenFields, responseData }: HiddenFieldsProps) => {
+export const HiddenFields = ({ hiddenFields, responseData }: Readonly<HiddenFieldsProps>) => {
   const { t } = useTranslation();
-  const fieldIds = hiddenFields.fieldIds ?? [];
 
-  let hiddenFieldsData: { field: string; value: string }[] = [];
+  // ENG-3233: labelled over the survey's whole field list, *before* the empty-value filter below.
+  // Allocating over the filtered list instead would make a label depend on which fields this one
+  // response happened to capture, so the card would name a field differently from the table header
+  // above it. `storageKey` stays the React key: it is unique per survey by `@@unique([surveyId,
+  // storageKey])`, whereas a display name carries no uniqueness constraint.
+  const hiddenFieldsData: { storageKey: string; label: string; value: string }[] = [];
 
-  fieldIds.forEach((field) => {
-    if (responseData[field]) {
+  labelEmbeddedFields(hiddenFields).forEach(({ link, label }) => {
+    const value = displayEmbeddedValue(responseData[link.storageKey]);
+    if (value) {
       hiddenFieldsData.push({
-        field,
-        value: typeof responseData[field] === "string" ? responseData[field] : "",
+        storageKey: link.storageKey,
+        label,
+        value,
       });
     }
   });
@@ -34,9 +43,9 @@ export const HiddenFields = ({ hiddenFields, responseData }: HiddenFieldsProps) 
     <div data-testid="main-hidden-fields-div" className="mt-6 flex flex-col gap-6">
       {hiddenFieldsData.map((fieldData) => {
         return (
-          <div key={fieldData.field}>
+          <div key={fieldData.storageKey}>
             <div className="flex gap-x-2 text-sm text-slate-500">
-              <p>{fieldData.field}</p>
+              <p>{fieldData.label}</p>
               <div className="flex items-center gap-x-2 rounded-full bg-slate-100 px-2">
                 <TooltipProvider delayDuration={50}>
                   <Tooltip>

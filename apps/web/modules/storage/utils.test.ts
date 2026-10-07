@@ -1,10 +1,14 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, onTestFinished, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import { StorageErrorCode } from "@formbricks/storage";
 import { TResponseData } from "@formbricks/types/responses";
 import { ZAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import {
+  collectResponseFileUrls,
+  getStorageUrlSurveyId,
+  getSurveyFileUploadElementIds,
   isAllowedFileExtension,
   isValidImageFile,
   parseStorageFileUrl,
@@ -409,6 +413,191 @@ describe("storage utils", () => {
     });
   });
 
+  describe("getSurveyFileUploadElementIds", () => {
+    test("should union the file-upload ids from blocks and questions", () => {
+      const blocks = [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            { id: "block-upload", type: "fileUpload" as const },
+            { id: "block-text", type: "openText" as const },
+          ],
+        },
+      ] as unknown as TSurveyBlock[];
+      const questions = [
+        { id: "question-upload", type: "fileUpload" as const },
+        { id: "question-text", type: "openText" as const },
+      ] as unknown as TSurveyQuestion[];
+
+      expect(getSurveyFileUploadElementIds({ blocks, questions })).toEqual(
+        new Set(["block-upload", "question-upload"])
+      );
+    });
+
+    test("should be empty for a survey with no file-upload element", () => {
+      expect(getSurveyFileUploadElementIds({ blocks: [], questions: [] }).size).toBe(0);
+      expect(getSurveyFileUploadElementIds({}).size).toBe(0);
+    });
+  });
+
+  describe("collectResponseFileUrls", () => {
+    const surveyId = "survey-1";
+    const otherSurveyId = "survey-2";
+    const fileUploadElementIds = new Set(["upload"]);
+    const firstUrl = "https://example.com/storage/ws-1/private/one.png";
+    const secondUrl = "https://example.com/storage/ws-1/private/two.pdf";
+    const scopedUrl = (keySurveyId: string, fileName: string, accessType = "private") =>
+      `/storage/ws-1/${accessType}/surveys/${keySurveyId}/elements/removed-upload/${fileName}`;
+
+    test("should collect the URLs under file-upload keys and ignore every other answer", () => {
+      const data: TResponseData = {
+        upload: [firstUrl, secondUrl],
+        text: "not a file",
+        "not-an-upload-element": ["https://example.com/storage/ws-1/private/other.png"],
+      };
+
+      expect(collectResponseFileUrls(data, fileUploadElementIds, surveyId)).toEqual([firstUrl, secondUrl]);
+    });
+
+    // The delete paths used to cast a matching answer straight to string[]. A non-array value therefore
+    // became a delete target instead of being skipped, so a plain string holding a valid same-workspace
+    // URL was deleted off malformed data.
+    test("should skip a non-array answer under a file-upload key", () => {
+      expect(collectResponseFileUrls({ upload: firstUrl }, fileUploadElementIds, surveyId)).toEqual([]);
+      expect(collectResponseFileUrls({ upload: { url: firstUrl } }, fileUploadElementIds, surveyId)).toEqual(
+        []
+      );
+      expect(collectResponseFileUrls({ upload: 42 }, fileUploadElementIds, surveyId)).toEqual([]);
+    });
+
+    test("should drop non-string entries inside a file-upload array", () => {
+      expect(
+        collectResponseFileUrls({ upload: [42, null, firstUrl] }, fileUploadElementIds, surveyId)
+      ).toEqual([firstUrl]);
+    });
+
+    test("should collect no flat key when the survey has no file-upload element", () => {
+      expect(collectResponseFileUrls({ upload: [firstUrl] }, new Set(), surveyId)).toEqual([]);
+    });
+
+    test("should collect nothing for data that is not a response object", () => {
+      for (const data of [null, undefined, "", "a string", 42, [firstUrl]]) {
+        expect(collectResponseFileUrls(data, fileUploadElementIds, surveyId)).toEqual([]);
+      }
+    });
+
+    // The key names the survey that owns the file, so an answer left by an upload element since deleted
+    // from the survey is still this survey's to clean up. Matching on current element ids alone orphaned
+    // these files in storage for good.
+    test("should collect this survey's private scoped URL under a key that is no longer an upload element", () => {
+      const ownFile = scopedUrl(surveyId, "own.png");
+
+      expect(
+        collectResponseFileUrls({ "removed-upload": [ownFile] }, fileUploadElementIds, surveyId)
+      ).toEqual([ownFile]);
+      expect(collectResponseFileUrls({ "removed-upload": [ownFile] }, new Set(), surveyId)).toEqual([
+        ownFile,
+      ]);
+    });
+
+    // A same-workspace URL planted under a key that later became an upload element (ENG-2291) passes
+    // `deleteResponseFileUrls`' workspace check, so collection is what keeps it from deleting another
+    // survey's file — encoded spellings included, since the delete path decodes before building the key.
+    test.each([
+      ["a plain key", scopedUrl(otherSurveyId, "victim.png")],
+      ["an encoded segment", `/storage/ws-1/private/%73urveys/${otherSurveyId}/elements/upload/victim.png`],
+      ["encoded slashes", `/storage/ws-1/private/surveys%2F${otherSurveyId}%2Felements%2Fupload%2Fv.png`],
+    ])("should refuse another survey's scoped URL under a current upload element (%s)", (_label, url) => {
+      expect(collectResponseFileUrls({ upload: [url] }, fileUploadElementIds, surveyId)).toEqual([]);
+    });
+
+    // Write-time validation only stores a key under the element it names, so a this-survey key under any
+    // other answer was pasted there. Collecting it would let deleting one response remove another
+    // respondent's upload.
+    test.each([
+      ["a multi-select answer", { choices: [scopedUrl(surveyId, "victim.png")] }],
+      ["another upload element", { upload: [scopedUrl(surveyId, "victim.png")] }],
+      [
+        "encoded slashes",
+        { upload: [`/storage/ws-1/private/surveys%2F${surveyId}%2Felements%2Fremoved-upload%2Fv.png`] },
+      ],
+      ["a key with no element", { upload: [`/storage/ws-1/private/surveys/${surveyId}/v.png`] }],
+    ])("should refuse this survey's scoped URL under %s", (_label, data) => {
+      expect(collectResponseFileUrls(data, fileUploadElementIds, surveyId)).toEqual([]);
+    });
+
+    test("should read an encoded scoped URL naming this survey as this survey's", () => {
+      const encodedOwnFile = `/storage/ws-1/private/%73urveys/${surveyId}/elements/removed-upload/own.png`;
+
+      expect(collectResponseFileUrls({ "removed-upload": [encodedOwnFile] }, new Set(), surveyId)).toEqual([
+        encodedOwnFile,
+      ]);
+    });
+
+    // Respondent uploads are always private, so a public key filed under a survey is never one of them.
+    test("should never collect a public scoped URL", () => {
+      const publicFile = scopedUrl(surveyId, "public.png", "public");
+
+      expect(collectResponseFileUrls({ upload: [publicFile] }, fileUploadElementIds, surveyId)).toEqual([]);
+      expect(collectResponseFileUrls({ "removed-upload": [publicFile] }, new Set(), surveyId)).toEqual([]);
+    });
+
+    // Only array answers can hold uploads, so a URL pasted into a text answer is never a delete target,
+    // even one that names this survey.
+    test("should never collect a scoped URL from a non-array answer", () => {
+      expect(
+        collectResponseFileUrls({ text: scopedUrl(surveyId, "pasted.png") }, fileUploadElementIds, surveyId)
+      ).toEqual([]);
+    });
+
+    describe("refusal log", () => {
+      const spyOnWarn = () => {
+        const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+        onTestFinished(() => warnSpy.mockRestore());
+        return warnSpy;
+      };
+
+      // The count is the only trace a planted URL leaves once the binding refuses it. Only a private key
+      // naming another survey or element counts, and the URLs themselves stay out of the log.
+      test("should log once how many URLs were refused for naming another survey or element, without the URLs", () => {
+        const warnSpy = spyOnWarn();
+
+        collectResponseFileUrls(
+          {
+            upload: [
+              scopedUrl(otherSurveyId, "a.png"),
+              scopedUrl(otherSurveyId, "p.png", "public"),
+              scopedUrl(surveyId, "c.png"),
+              firstUrl,
+            ],
+            "removed-upload": [scopedUrl("survey-3", "b.png"), secondUrl, "not a url"],
+          },
+          fileUploadElementIds,
+          surveyId
+        );
+
+        expect(warnSpy).toHaveBeenCalledTimes(1);
+        expect(warnSpy).toHaveBeenCalledWith(
+          { surveyId, refusedCount: 3 },
+          "Refusing response files filed under another survey or element"
+        );
+      });
+
+      test("should not log for a multi-select answer of plain labels", () => {
+        const warnSpy = spyOnWarn();
+
+        collectResponseFileUrls(
+          { choices: ["Option A", "Option B", "Other"], upload: [firstUrl] },
+          fileUploadElementIds,
+          surveyId
+        );
+
+        expect(warnSpy).not.toHaveBeenCalled();
+      });
+    });
+  });
+
   describe("validateClientFileUploads", () => {
     const workspaceId = "clxworkspace123";
     const surveyId = "clxsurvey123";
@@ -734,6 +923,30 @@ describe("storage utils", () => {
       "not a url",
     ])("should reject invalid storage URL %s", (fileUrl) => {
       expect(parseStorageFileUrl(fileUrl)).toBeNull();
+    });
+  });
+
+  describe("getStorageUrlSurveyId", () => {
+    test.each([
+      ["a relative current upload", "/storage/ws-1/private/surveys/survey-1/elements/el-1/report.pdf"],
+      [
+        "an absolute current upload",
+        "https://example.com/storage/ws-1/private/surveys/survey-1/elements/el-1/a.png",
+      ],
+      // The delete path decodes before building the key, so these name survey-1's folder too.
+      ["an encoded segment", "/storage/ws-1/private/%73urveys/survey-1/elements/el-1/a.png"],
+      ["encoded slashes", "/storage/ws-1/private/surveys%2Fsurvey-1%2Felements%2Fel-1%2Fa.png"],
+    ])("should read the survey id from %s", (_label, fileUrl) => {
+      expect(getStorageUrlSurveyId(fileUrl)).toBe("survey-1");
+    });
+
+    test.each([
+      ["a flat pre-#8044 key", "/storage/ws-1/private/report--fid--abc.pdf"],
+      ["a flat key named after the folder", "/storage/ws-1/private/surveys"],
+      ["a name that does not decode", "/storage/ws-1/private/surveys%E0%A4%A/survey-1/a.png"],
+      ["a non-storage URL", "https://example.com/files/surveys/survey-1/a.png"],
+    ])("should return null for %s", (_label, fileUrl) => {
+      expect(getStorageUrlSurveyId(fileUrl)).toBeNull();
     });
   });
 

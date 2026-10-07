@@ -10,23 +10,27 @@ jobs:
   validate:
     name: Validate Helm Chart
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Set up Helm
-        uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
+        uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         with:
           version: v3.15.4
+
+      - name: Validate default operator against Kubernetes API
+        run: bash charts/formbricks/tests/authzed-api-server.sh
 
       - name: Validate chart renders
         shell: bash
@@ -62,7 +66,15 @@ jobs:
           }
 
           helm lint "$chart" --set formbricks.webappUrl=https://qa.example.com
+          bash charts/formbricks/tests/postgresql-overrides.sh
           bash charts/formbricks/tests/authzed-operations.sh
+          bash charts/formbricks/tests/authzed-security-context.sh
+          bash charts/formbricks/tests/embeddings-external.sh
+          bash charts/formbricks/tests/envoy-gateway.sh
+          bash charts/formbricks/tests/pdb-selectors.sh
+          bash charts/formbricks/tests/taxonomy-llm-base-url.sh
+          bash charts/formbricks/tests/web-security-context.sh
+          bash charts/formbricks/tests/migration-security-context.sh
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
@@ -72,8 +84,6 @@ jobs:
             echo "Expected no lifecycle block in the default render" >&2
             exit 1
           fi
-          ! grep -q '^          volumeMounts:$' "$render_dir/deployment-default.yaml"
-          ! grep -q '^      volumes:$' "$render_dir/deployment-default.yaml"
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
@@ -384,6 +394,25 @@ jobs:
           ! grep -q 'TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON' "$render_dir/taxonomy-bedrock.yaml"
           ! grep -q 'name: TAXONOMY_LLM_BASE_URL' "$render_dir/taxonomy-bedrock.yaml"
           ! grep -q 'name: TAXONOMY_LLM_API_KEY' "$render_dir/taxonomy-bedrock.yaml"
+          ! grep -q 'serviceAccountName:' "$render_dir/taxonomy-bedrock.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set taxonomy.enabled=true \
+            --set taxonomy.llm.provider=bedrock \
+            --set taxonomy.llm.model=anthropic.claude-test \
+            --set taxonomy.llm.bedrock.region=eu-central-1 \
+            --set-string taxonomy.llm.contextWindowTokens=200000 \
+            --set taxonomy.serviceAccount.create=true \
+            --set 'taxonomy.serviceAccount.annotations.eks\.amazonaws\.com/role-arn=arn:aws:iam::123456789012:role/taxonomy' \
+            --set taxonomy.serviceAccount.additionalLabels.team=taxonomy \
+            --show-only templates/taxonomy-deployment.yaml \
+            --show-only templates/taxonomy-serviceaccount.yaml > "$render_dir/taxonomy-bedrock-irsa.yaml"
+          grep -q 'serviceAccountName: formbricks-taxonomy$' "$render_dir/taxonomy-bedrock-irsa.yaml"
+          grep -q 'eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/taxonomy' "$render_dir/taxonomy-bedrock-irsa.yaml"
+          grep -q 'automountServiceAccountToken: false' "$render_dir/taxonomy-bedrock-irsa.yaml"
+          grep -q 'team: taxonomy' "$render_dir/taxonomy-bedrock-irsa.yaml"
+          ! grep -q 'serviceAccountName:' "$render_dir/taxonomy-vertex.yaml"
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
@@ -422,6 +451,25 @@ jobs:
             --set taxonomy.llm.structuredOutputMode=unsupported-mode
 
           expect_taxonomy_render_failure \
+            taxonomy-grace-period-below-deadline \
+            "taxonomy.terminationGracePeriodSeconds must be at least" \
+            --set taxonomy.terminationGracePeriodSeconds=1
+
+          expect_taxonomy_render_failure \
+            taxonomy-hub-stale-timeout-below-deadline \
+            "taxonomy.hubStaleRunTimeoutSeconds must exceed" \
+            --set-string taxonomy.hubStaleRunTimeoutSeconds=120
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set taxonomy.enabled=true \
+            --set taxonomy.autoConfigureHub=false \
+            --set taxonomy.llm.baseUrl=https://llm.example.com/v1 \
+            --set-string taxonomy.llm.contextWindowTokens=65536 \
+            --set-string taxonomy.hubStaleRunTimeoutSeconds=120 \
+            --show-only templates/taxonomy-deployment.yaml > /dev/null
+
+          expect_taxonomy_render_failure \
             taxonomy-bedrock-region-missing \
             "taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION is required" \
             --set taxonomy.llm.provider=bedrock
@@ -431,6 +479,16 @@ jobs:
             "taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION is required" \
             --set taxonomy.llm.provider=bedrock \
             --set-string taxonomy.env.AWS_REGION=
+
+          expect_taxonomy_render_failure \
+            taxonomy-service-account-annotations-without-create \
+            "taxonomy.serviceAccount.annotations and additionalLabels apply only when" \
+            --set 'taxonomy.serviceAccount.annotations.eks\.amazonaws\.com/role-arn=arn:aws:iam::123456789012:role/taxonomy'
+
+          expect_taxonomy_render_failure \
+            taxonomy-service-account-labels-without-create \
+            "taxonomy.serviceAccount.annotations and additionalLabels apply only when" \
+            --set taxonomy.serviceAccount.additionalLabels.team=taxonomy
 
           expect_taxonomy_render_failure \
             taxonomy-bedrock-region-conflict \
@@ -531,6 +589,24 @@ jobs:
             test "$(grep -c 'mountPath: /var/run/qa-credentials' "$manifest")" -eq 1
             test "$(grep -c 'readOnly: true' "$manifest")" -eq 1
           done
+
+          # ENG-2599: the app Secret carries the documented BETTER_AUTH_* keys and the legacy NEXTAUTH_*
+          # alias, and the secret MUST be the same value under both. formbricks.authSecret ends in
+          # `randAlphaNum`, so including it twice instead of resolving it once would emit two different
+          # secrets here and the legacy key would sign nothing the app ever verifies.
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --show-only templates/secrets.yaml > "$render_dir/app-secrets.yaml"
+
+          for key in BETTER_AUTH_SECRET NEXTAUTH_SECRET BETTER_AUTH_URL NEXTAUTH_URL; do
+            test "$(grep -c "^  ${key}: " "$render_dir/app-secrets.yaml")" -eq 1
+          done
+          auth_secret="$(grep '^  BETTER_AUTH_SECRET: ' "$render_dir/app-secrets.yaml")"
+          legacy_secret="$(grep '^  NEXTAUTH_SECRET: ' "$render_dir/app-secrets.yaml")"
+          test "${auth_secret#*: }" = "${legacy_secret#*: }"
+          auth_url="$(grep '^  BETTER_AUTH_URL: ' "$render_dir/app-secrets.yaml")"
+          legacy_url="$(grep '^  NEXTAUTH_URL: ' "$render_dir/app-secrets.yaml")"
+          test "${auth_url#*: }" = "${legacy_url#*: }"
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \

@@ -6,20 +6,34 @@ import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
+import {
+  collectSurveyResponseFileUrls,
+  deleteSurveyResponseFiles,
+} from "@/modules/storage/lib/survey-response-files";
+import { deleteSurveyUploadFilesBestEffort } from "@/modules/storage/service";
 
 /**
- * Permanently deletes a survey and cascades private-segment cleanup.
+ * Permanently deletes a survey, cascades private-segment cleanup, and removes its respondents' uploads
+ * from storage.
  *
  * `options.requireArchivedBefore` guards the purge cron against a restore-vs-purge race: the survey
  * row is locked FOR UPDATE and its `archivedAt` re-checked inside the same transaction as the delete,
  * so a survey restored (archivedAt cleared) after the purge batch was selected is skipped rather than
- * hard-deleted. When the guard fails the row is treated as gone (ResourceNotFoundError), never deleted.
+ * hard-deleted. When the guard fails the row is treated as gone (ResourceNotFoundError), never deleted,
+ * and none of its files are touched.
  */
 export const deleteSurvey = async (surveyId: string, options?: { requireArchivedBefore?: Date }) => {
   validateInputs([surveyId, ZId]);
 
   try {
-    return await prisma.$transaction(async (tx) => {
+    // The responses go by FK cascade, taking the upload URLs in `response.data` with them, so read those
+    // first. Outside the transaction on purpose: a large scan must not hold the row lock the guard
+    // takes, or run into the interactive-transaction timeout. Flat keys only: see the sweep below.
+    const { fileUrls: flatKeyFileUrls } = await collectSurveyResponseFileUrls(surveyId, {
+      flatKeysOnly: true,
+    });
+
+    const deletedSurvey = await prisma.$transaction(async (tx) => {
       if (options?.requireArchivedBefore) {
         // Lock the row so a concurrent restore blocks until this transaction resolves, then re-read
         // the current archivedAt. If the survey was restored (or moved out of the retention window),
@@ -58,6 +72,19 @@ export const deleteSurvey = async (surveyId: string, options?: { requireArchived
 
       return deletedSurvey;
     });
+
+    // Only reached once the delete has committed, so no file goes while its survey survives. Both calls
+    // log and swallow storage errors: the survey is already gone, and reporting a failure would only
+    // make the caller retry a delete that happened.
+    //
+    // The sweep deletes the survey's upload folder in batches, including files the scan cannot see
+    // (removed upload elements, uploads never submitted, a response that landed after the scan). So the
+    // per-file delete only gets the flat pre-#8044 keys the folder does not hold; a key filed under a
+    // survey is either this survey's (swept) or another survey's (never ours to delete).
+    await deleteSurveyUploadFilesBestEffort({ workspaceId: deletedSurvey.workspaceId, surveyId });
+    await deleteSurveyResponseFiles(flatKeyFileUrls, deletedSurvey.workspaceId, surveyId);
+
+    return deletedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.RecordNotFound) {

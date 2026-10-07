@@ -166,7 +166,7 @@ test.describe("Survey overview", () => {
     // Edit is a Link, not a button; its onClick preventDefaults and opens the caution dialog instead
     // of navigating, precisely because the survey has responses.
     await page.getByRole("link", { name: "Edit", exact: true }).click();
-    await expect(page.getByText("Edit a published survey?")).toBeVisible();
+    await expect(page.getByText("Edit an active survey?")).toBeVisible();
   });
 
   test("loads surveys, applies filters and sort, and paginates with load more", async ({ page, users }) => {
@@ -333,6 +333,48 @@ test.describe("Survey overview", () => {
 
     releaseDeleteRequest?.();
     await expect(page.getByText("Survey deleted successfully", { exact: true })).toBeVisible();
+  });
+
+  test("duplicating a survey from the list keeps its PIN", async ({ page, users }) => {
+    const timestamp = Date.now();
+    const email = `overview-duplicate-${timestamp}@example.com`;
+    const name = `overview-duplicate-${timestamp}`;
+    const surveyName = `Protected Survey ${timestamp}`;
+
+    const user = await users.create({ email, name, workspaceName: "Duplicate Settings Workspace" });
+    const userId = await getUserIdForEmail(email);
+
+    await user.login();
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    const workspaceId =
+      /\/workspaces\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
+      (() => {
+        throw new Error("Unable to determine workspace id from surveys URL");
+      })();
+
+    // The field-by-field copy policy is unit-tested. This proves the list's Duplicate action reaches
+    // the database with a setting intact — the PIN, whose loss mattered most (ENG-2144).
+    await prisma.survey.create({
+      data: { workspaceId, createdBy: userId, name: surveyName, status: "draft", type: "link", pin: "1234" },
+    });
+
+    await page.reload();
+    await expect(page.getByText(surveyName, { exact: true })).toBeVisible({ timeout: 10000 });
+
+    // Scoped to this survey's own actions menu — the workspace is seeded with another survey.
+    const surveyActions = page.locator(`#${surveyName.toLowerCase().split(" ").join("-")}-survey-actions`);
+    await surveyActions.getByTestId("survey-dropdown-trigger").click();
+    await page.getByTestId("duplicate-survey").click();
+    await expect(page.getByText("Survey duplicated successfully", { exact: true })).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(page.getByText(`${surveyName} (copy)`, { exact: true })).toBeVisible();
+
+    const copy = await prisma.survey.findFirst({
+      where: { workspaceId, name: `${surveyName} (copy)` },
+      select: { pin: true },
+    });
+    expect(copy?.pin).toBe("1234");
   });
 
   test("restores the survey when delete fails", async ({ page, users }) => {

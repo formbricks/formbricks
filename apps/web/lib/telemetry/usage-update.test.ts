@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { getCacheService } from "@formbricks/cache";
+import { type CacheService, getCacheService } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
-import { IntegrationType } from "@formbricks/database/prisma";
+import { IntegrationType, type Organization } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { sendTelemetryEvents } from "./usage-update";
 
@@ -65,6 +65,12 @@ vi.mock("@/lib/hash-string", () => ({
 vi.mock("@/modules/ee/license-check/lib/license", () => ({
   getEnterpriseLicense: vi.fn(),
 }));
+// A sentinel rather than a real ProxyAgent: the test only has to prove the shared dispatcher reaches
+// the fetch call, which is what a proxied self-hoster's usage update depends on.
+const { proxyDispatcherSentinel } = vi.hoisted(() => ({
+  proxyDispatcherSentinel: { kind: "proxy-dispatcher" },
+}));
+vi.mock("@/lib/proxy-dispatcher", () => ({ proxyDispatcher: proxyDispatcherSentinel }));
 
 // Mock fetch
 const fetchMock = vi.fn();
@@ -116,6 +122,10 @@ describe("sendTelemetryEvents", () => {
         contactCount: BigInt(20),
         segmentCount: BigInt(4),
         newestResponseAt: new Date("2024-01-01T00:00:00.000Z"),
+        workflowCount: BigInt(3),
+        enabledWorkflowCount: BigInt(2),
+        workflowRunCountSinceLastUpdate: BigInt(40),
+        workflowRunFailedCountSinceLastUpdate: BigInt(4),
       },
     ] as any);
 
@@ -146,18 +156,112 @@ describe("sendTelemetryEvents", () => {
 
     // Check fetch call
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    // The usage update must go out through the same proxy dispatcher as the license check.
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: "POST", dispatcher: proxyDispatcherSentinel });
     const payload = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(payload.organizationCount).toBe(1);
     expect(payload.userCount).toBe(5);
     expect(payload.integrations.notion).toBe(true);
     expect(payload.sso.github).toBe(true);
     expect(payload.sso.saml).toBe(true);
+    // Workflows adoption rides along; node types fall back to empty when their query yields nothing.
+    expect(payload.workflows).toEqual({
+      workflowCount: 3,
+      enabledWorkflowCount: 2,
+      runCountSinceLastUsageUpdate: 40,
+      failedRunCountSinceLastUsageUpdate: 4,
+      triggerTypes: [],
+      actionTypes: [],
+    });
 
     // Check cache update (no TTL parameter)
     expect(mockCacheService.set).toHaveBeenCalledWith("telemetry_last_sent_ts", expect.any(String));
 
     // Check lock release
     expect(mockCacheService.del).toHaveBeenCalledWith(["telemetry_lock"]);
+  });
+
+  // Node-type tests need a fresh module (the in-memory 24h guard is module state) and their own pair
+  // of `$queryRaw` results: the batched counts row, then whatever the node-type query yields.
+  const countsRow = {
+    organizationCount: BigInt(1),
+    userCount: BigInt(5),
+    teamCount: BigInt(2),
+    workspaceCount: BigInt(3),
+    surveyCount: BigInt(10),
+    inProgressSurveyCount: BigInt(4),
+    completedSurveyCount: BigInt(6),
+    responseCountAllTime: BigInt(100),
+    responseCountSinceLastUpdate: BigInt(10),
+    displayCount: BigInt(50),
+    contactCount: BigInt(20),
+    segmentCount: BigInt(4),
+    newestResponseAt: new Date("2024-01-01T00:00:00.000Z"),
+    workflowCount: BigInt(3),
+    enabledWorkflowCount: BigInt(2),
+    workflowRunCountSinceLastUpdate: BigInt(40),
+    workflowRunFailedCountSinceLastUpdate: BigInt(4),
+  };
+  const importFreshSendTelemetryEvents = async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/constants", () => ({
+      E2E_TESTING: false,
+      IS_DEVELOPMENT: false,
+      TELEMETRY_DISABLED: false,
+    }));
+    vi.doMock("@/modules/ee/license-check/lib/license", () => ({
+      getEnterpriseLicense: vi.fn().mockResolvedValue({ active: false }),
+    }));
+    const { sendTelemetryEvents: freshSendTelemetryEvents } = await import("./usage-update");
+
+    vi.mocked(getCacheService).mockResolvedValue({
+      ok: true,
+      data: mockCacheService as unknown as CacheService,
+    });
+    mockCacheService.tryLock.mockResolvedValue({ ok: true, data: true });
+    mockCacheService.del.mockResolvedValue({ ok: true, data: undefined });
+    mockCacheService.get.mockResolvedValue({ ok: true, data: null });
+    mockCacheService.set.mockResolvedValue({ ok: true, data: undefined });
+    // `getInstanceInfo` selects only `id` and `createdAt`; the row is narrowed to the model type it reads.
+    vi.mocked(prisma.organization.findFirst).mockResolvedValue({
+      id: "org-123",
+      createdAt: new Date("2023-01-01"),
+    } as Organization);
+    vi.mocked(prisma.integration.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.account.findMany).mockResolvedValue([]);
+    fetchMock.mockResolvedValue({ ok: true });
+    return freshSendTelemetryEvents;
+  };
+
+  test("reports the distinct workflow trigger and step types in use", async () => {
+    const freshSendTelemetryEvents = await importFreshSendTelemetryEvents();
+    vi.mocked(prisma.$queryRaw)
+      .mockResolvedValueOnce([countsRow] as never)
+      .mockResolvedValueOnce([
+        { triggerTypes: ["response.completed"], actionTypes: ["send_email", "if_else"] },
+      ] as never);
+
+    await freshSendTelemetryEvents();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(payload.workflows.triggerTypes).toEqual(["response.completed"]);
+    expect(payload.workflows.actionTypes).toEqual(["if_else", "send_email"]);
+  });
+
+  test("still sends the usage update when the workflow node-type query fails", async () => {
+    const freshSendTelemetryEvents = await importFreshSendTelemetryEvents();
+    vi.mocked(prisma.$queryRaw)
+      .mockResolvedValueOnce([countsRow] as never)
+      .mockRejectedValueOnce(new Error("jsonb_array_elements: cannot extract elements from a scalar"));
+
+    await freshSendTelemetryEvents();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(payload.workflows.workflowCount).toBe(3);
+    expect(payload.workflows.triggerTypes).toEqual([]);
+    expect(logger.warn).toHaveBeenCalled();
   });
 
   test("should skip if in-memory check fails", async () => {
@@ -235,15 +339,15 @@ describe("sendTelemetryEvents", () => {
     // Verify lock was acquired
     expect(mockCacheService.tryLock).toHaveBeenCalledWith("telemetry_lock", "locked", 60 * 1000);
 
-    // The error should be caught in the inner catch block
-    // The actual implementation logs as warning, not error
-    expect(logger.warn).toHaveBeenCalledWith(
+    // The error is caught in the inner catch block and logged at error level, since a licensed
+    // instance that cannot deliver its usage update is a compliance problem, not a nicety.
+    expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({
         error: networkError,
         message: "Network error",
         hashedLicenseKey: "hashed-test-license-key",
       }),
-      "Failed to send telemetry - applying 1h cooldown"
+      "Failed to send usage update to the license server - applying 1h cooldown"
     );
 
     // Lock should be released in finally block
@@ -330,6 +434,10 @@ describe("sendTelemetryEvents", () => {
         contactCount: BigInt(0),
         segmentCount: BigInt(0),
         newestResponseAt: null,
+        workflowCount: BigInt(3),
+        enabledWorkflowCount: BigInt(2),
+        workflowRunCountSinceLastUpdate: BigInt(40),
+        workflowRunFailedCountSinceLastUpdate: BigInt(4),
       },
     ] as any);
     vi.mocked(prisma.integration.findMany).mockResolvedValue([] as any);
@@ -361,9 +469,9 @@ describe("sendTelemetryEvents", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     // A rejected update is a failure, not a send: the timestamp stays put so the next run retries.
     expect(mockCacheService.set).not.toHaveBeenCalled();
-    expect(logger.warn).toHaveBeenCalledWith(
+    expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({ message: "Usage update endpoint responded with status 503" }),
-      "Failed to send telemetry - applying 1h cooldown"
+      "Failed to send usage update to the license server - applying 1h cooldown"
     );
     expect(mockCacheService.del).toHaveBeenCalledWith(["telemetry_lock"]);
   });
@@ -428,6 +536,10 @@ describe("sendTelemetryEvents", () => {
         contactCount: BigInt(20),
         segmentCount: BigInt(4),
         newestResponseAt: new Date("2024-01-01T00:00:00.000Z"),
+        workflowCount: BigInt(3),
+        enabledWorkflowCount: BigInt(2),
+        workflowRunCountSinceLastUpdate: BigInt(40),
+        workflowRunFailedCountSinceLastUpdate: BigInt(4),
       },
     ] as any);
     vi.mocked(prisma.integration.findMany).mockResolvedValue([{ type: IntegrationType.notion }] as any);

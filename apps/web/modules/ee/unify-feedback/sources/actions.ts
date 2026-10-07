@@ -5,6 +5,7 @@ import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
 import { getSurveys } from "@/lib/survey/service";
+import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -28,6 +29,9 @@ export const getSurveysForUnifyAction = authenticatedActionClient
       id: parsedInput.workspaceId,
     });
 
-    const surveys = await getSurveys(parsedInput.workspaceId);
+    const surveys = await getSurveys(
+      parsedInput.workspaceId,
+      await getUserVisibleSurveyWhere(ctx.user.id, organizationId)
+    );
     return surveys.map((survey) => transformToUnifySurvey(survey));
   });

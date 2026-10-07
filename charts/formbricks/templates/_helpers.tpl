@@ -136,6 +136,34 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- printf "%s-app-secrets" (include "formbricks.name" .) -}}
 {{- end }}
 
+{{/*
+Resolve bundled PostgreSQL connection details through the dependency's own helpers so every
+consumer follows the same override and global-value precedence as the rendered Service.
+*/}}
+{{- define "formbricks.postgresqlPrimaryHost" -}}
+{{- include "postgresql.v1.primary.fullname" .Subcharts.postgresql -}}
+{{- end }}
+
+{{- define "formbricks.postgresqlServicePort" -}}
+{{- include "postgresql.v1.service.port" .Subcharts.postgresql -}}
+{{- end }}
+
+{{- define "formbricks.postgresqlUsername" -}}
+{{- include "postgresql.v1.username" .Subcharts.postgresql | default "postgres" -}}
+{{- end }}
+
+{{- define "formbricks.postgresqlDatabase" -}}
+{{- include "postgresql.v1.database" .Subcharts.postgresql -}}
+{{- end }}
+
+{{- define "formbricks.postgresqlAppPasswordKey" -}}
+{{- if eq (include "formbricks.postgresqlUsername" .) "postgres" -}}
+{{- "POSTGRES_ADMIN_PASSWORD" -}}
+{{- else -}}
+{{- "POSTGRES_USER_PASSWORD" -}}
+{{- end -}}
+{{- end }}
+
 {{- define "formbricks.authzedClusterName" -}}
 {{- .Values.authzed.cluster.name | default (printf "%s-spicedb" (include "formbricks.name" .)) | trunc 63 | trimSuffix "-" -}}
 {{- end }}
@@ -272,6 +300,23 @@ env:
 {{- end }}
 
 {{/*
+"true" when deployment.containerSecurityContext makes the root filesystem read-only, otherwise empty. The web
+Deployment and the migration Job run the same image under that context, so both mount writable paths on it.
+*/}}
+{{- define "formbricks.readOnlyRootFilesystem" -}}
+{{- if dig "readOnlyRootFilesystem" false (default dict .Values.deployment.containerSecurityContext) -}}
+true
+{{- end -}}
+{{- end }}
+
+{{/*
+Directory the Prisma migration runner stages migrations in. It must be writable wherever migrations run.
+*/}}
+{{- define "formbricks.prismaMigrationsStagingPath" -}}
+/home/nextjs/packages/database/.prisma-migrations
+{{- end }}
+
+{{/*
 Formbricks application image reference. A configured digest takes precedence over the tag.
 */}}
 {{- define "formbricks.deploymentImage" -}}
@@ -330,6 +375,19 @@ Taxonomy service image reference. A configured digest takes precedence over the 
 {{- end -}}
 {{- end }}
 
+{{/*
+Taxonomy ServiceAccount name. Empty when the chart neither creates nor names one, so the pod keeps
+the namespace default ServiceAccount.
+*/}}
+{{- define "formbricks.taxonomyServiceAccountName" -}}
+{{- $serviceAccount := .Values.taxonomy.serviceAccount | default dict -}}
+{{- if get $serviceAccount "create" -}}
+{{- get $serviceAccount "name" | default (include "formbricks.taxonomyName" .) -}}
+{{- else -}}
+{{- get $serviceAccount "name" | default "" -}}
+{{- end -}}
+{{- end }}
+
 {{- define "formbricks.taxonomyManagedSecretName" -}}
 {{- printf "%s-secret" (include "formbricks.taxonomyName" .) -}}
 {{- end }}
@@ -350,13 +408,27 @@ Taxonomy service image reference. A configured digest takes precedence over the 
 {{- printf "http://%s:%v" (include "formbricks.taxonomyName" .) (.Values.taxonomy.service.port | default .Values.taxonomy.port) -}}
 {{- end }}
 
+{{/*
+OpenAI-compatible endpoint for taxonomy: the rendered taxonomy.llm.baseUrl, else the bundled vLLM
+router (llm.formbricks.baseUrl or the router Service) when llm.enabled=true. Each source fails with
+its own message instead of rendering an empty TAXONOMY_LLM_BASE_URL: the raw-value guard in
+taxonomy-deployment.yaml cannot see a templated value that renders empty or whitespace.
+*/}}
 {{- define "formbricks.taxonomyLlmBaseUrl" -}}
 {{- if .Values.taxonomy.llm.baseUrl -}}
-{{- include "formbricks.tplvalues.render" (dict "value" .Values.taxonomy.llm.baseUrl "context" .) -}}
+{{- $baseUrl := include "formbricks.tplvalues.render" (dict "value" .Values.taxonomy.llm.baseUrl "context" .) | trim -}}
+{{- if not $baseUrl -}}
+{{- fail "taxonomy.llm.baseUrl must render to a non-empty URL when taxonomy.llm.provider is 'openai-compatible'" -}}
+{{- end -}}
+{{- $baseUrl -}}
 {{- else if .Values.llm.enabled -}}
-{{- include "formbricks.llmBaseUrl" . -}}
+{{- $baseUrl := include "formbricks.llmBaseUrl" . | trim -}}
+{{- if not $baseUrl -}}
+{{- fail "llm.formbricks.baseUrl must render to a non-empty URL when taxonomy uses the bundled vLLM router" -}}
+{{- end -}}
+{{- $baseUrl -}}
 {{- else -}}
-{{- "" -}}
+{{- fail "taxonomy.llm.baseUrl must render to a non-empty URL when taxonomy.llm.provider is 'openai-compatible'" -}}
 {{- end -}}
 {{- end }}
 
@@ -498,6 +570,18 @@ Secret used by the embeddings runtime for Hugging Face access.
 {{- define "formbricks.validateHubEmbeddingsHuggingFaceSecret" -}}
 {{- if and .Values.hub.embeddings.auth.existingSecret .Values.hub.embeddings.huggingFace.token (not .Values.hub.embeddings.huggingFace.existingSecret) -}}
 {{- fail "hub.embeddings.huggingFace.token cannot be stored when hub.embeddings.auth.existingSecret is set; put HF_TOKEN in the existing auth secret or set hub.embeddings.huggingFace.existingSecret" -}}
+{{- end -}}
+{{- end }}
+
+{{/* Require explicit endpoints when the chart does not deploy the bundled TEI runtime. */}}
+{{- define "formbricks.validateHubEmbeddingsRuntime" -}}
+{{- if and .Values.hub.embeddings.enabled (not .Values.hub.embeddings.deployRuntime) -}}
+  {{- if not .Values.hub.embeddings.baseUrl -}}
+    {{- fail "hub.embeddings.baseUrl is required when hub.embeddings.enabled=true and hub.embeddings.deployRuntime=false" -}}
+  {{- end -}}
+  {{- if and .Values.hub.embeddings.background.enabled (not .Values.hub.embeddings.background.baseUrl) -}}
+    {{- fail "hub.embeddings.background.baseUrl is required when background embeddings are enabled without the bundled runtime" -}}
+  {{- end -}}
 {{- end -}}
 {{- end }}
 
@@ -669,13 +753,24 @@ true
 {{- end -}}
 {{- end }}
 
-{{- define "formbricks.nextAuthSecret" -}}
+{{/*
+Resolve the auth secret, preferring the documented BETTER_AUTH_SECRET and accepting the legacy
+NEXTAUTH_SECRET an existing release already stores. Reading the legacy key is what keeps `helm upgrade`
+from minting a fresh secret on an instance installed before the rename — which would log every user out
+and invalidate outstanding invite and verification links.
+
+Include this ONCE per render and reuse the value: the final branch is `randAlphaNum`, so a second
+`include` on a fresh install returns a different secret.
+*/}}
+{{- define "formbricks.authSecret" -}}
 {{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
 {{- $secretData := dig "data" dict $secret }}
-{{- if index $secretData "NEXTAUTH_SECRET" }}
+{{- if index $secretData "BETTER_AUTH_SECRET" }}
+    {{- index $secretData "BETTER_AUTH_SECRET" | b64dec -}}
+{{- else if index $secretData "NEXTAUTH_SECRET" }}
     {{- index $secretData "NEXTAUTH_SECRET" | b64dec -}}
 {{- else if and $secret (hasKey $secret "data") }}
-    {{- fail (printf "Secret %q exists in namespace %q but is missing NEXTAUTH_SECRET" (include "formbricks.appSecretName" .) .Release.Namespace) -}}
+    {{- fail (printf "Secret %q exists in namespace %q but is missing BETTER_AUTH_SECRET (the legacy NEXTAUTH_SECRET is also accepted)" (include "formbricks.appSecretName" .) .Release.Namespace) -}}
 {{- else }}
     {{- randAlphaNum 32 -}}
 {{- end -}}

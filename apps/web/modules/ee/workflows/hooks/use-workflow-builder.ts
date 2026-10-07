@@ -12,6 +12,8 @@ import {
   ZWorkflowDefinition,
 } from "@formbricks/workflows";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
+import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
+import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
 import {
   MUTATION_TIMEOUT_MS,
   archiveWorkflow,
@@ -21,7 +23,11 @@ import {
   unarchiveWorkflow,
   updateWorkflow,
 } from "@/modules/ee/workflows/lib/api-client";
-import { classifyWorkflowSaveError, getWorkflowApiErrorMessage } from "@/modules/ee/workflows/lib/api-error";
+import {
+  classifyWorkflowSaveError,
+  getWorkflowApiErrorMessage,
+  isTriggerSurveyRestrictedRefusal,
+} from "@/modules/ee/workflows/lib/api-error";
 import { workflowDefinitionToFlowNodes } from "@/modules/ee/workflows/lib/definition-to-flow";
 import {
   hydrateWorkflowEditorAtom,
@@ -280,11 +286,13 @@ export const useWorkflowBuilder = ({
         // effect then re-runs seeing both, with no reliance on microtask-vs-render ordering.
         // Doubles as the effect's no-retry guard, keeping a broken draft from looping one PATCH per
         // debounce window.
+        const errorKind = classifyWorkflowSaveError(error);
         setSaveError({
           draftSignature: attemptedSignature,
-          kind: classifyWorkflowSaveError(error),
+          kind: errorKind,
           detail: describeSaveErrorDetail(error, t),
         });
+        trackWorkflowEvent(WORKFLOW_CLIENT_EVENTS.autosaveFailed, { error_kind: errorKind, silent });
         if (!silent) toast.error(getWorkflowApiErrorMessage(error, t("workspace.workflows.save_failed")));
         return false;
       } finally {
@@ -457,7 +465,13 @@ export const useWorkflowBuilder = ({
         setWorkflow(transitioned);
         toast.success(op.success());
       } catch (error) {
-        toast.error(getWorkflowApiErrorMessage(error, op.failure()));
+        // The generic "not executable" detail says nothing about why; a restricted trigger survey
+        // (ENG-3395) gets copy that names the fix.
+        toast.error(
+          isTriggerSurveyRestrictedRefusal(error)
+            ? t("workspace.workflows.enable_failed_survey_restricted")
+            : getWorkflowApiErrorMessage(error, op.failure())
+        );
       } finally {
         setIsTransitioning(false);
       }

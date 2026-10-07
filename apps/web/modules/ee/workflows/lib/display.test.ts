@@ -176,6 +176,33 @@ describe("problem field paths stay shared between producer and consumer", () => 
     });
   });
 
+  test("a restricted trigger survey is a problem that blocks enable and resolves to the survey picker", () => {
+    const { problems, validity } = deriveWorkflowValidation({
+      workflowName: "wf",
+      definition,
+      hasBoundTriggerSurvey: true,
+      isTriggerSurveyRestricted: true,
+    });
+    const surveyProblem = problems.find((p) => p.code === "trigger_survey_restricted");
+    expect(surveyProblem).toBeDefined();
+    expect(validity.isReady).toBe(false);
+    expect(getWorkflowValidationProblemFocusTarget(surveyProblem!, definition)).toEqual({
+      nodeId: "trigger-1",
+      field: "surveyId",
+    });
+  });
+
+  test("an unbound survey reports only as unbound, not also as restricted", () => {
+    const { problems } = deriveWorkflowValidation({
+      workflowName: "wf",
+      definition,
+      hasBoundTriggerSurvey: false,
+      isTriggerSurveyRestricted: true,
+    });
+    expect(problems.map((p) => p.code)).toContain("trigger_survey_unbound");
+    expect(problems.map((p) => p.code)).not.toContain("trigger_survey_restricted");
+  });
+
   test("a stale-ending problem the producer emitted resolves to the endings control", () => {
     const [endingProblem] = deriveTriggerEndingProblems(["gone"], ["kept"]);
     expect(endingProblem).toBeDefined();

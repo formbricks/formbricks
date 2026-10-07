@@ -3,7 +3,6 @@ import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/comp
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { EditBranding } from "@/modules/ee/whitelabel/remove-branding/components/edit-branding";
-import { RemoveBrandingLicenseTip } from "@/modules/ee/whitelabel/remove-branding/components/remove-branding-license-tip";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 
@@ -11,14 +10,12 @@ interface BrandingSettingsCardProps {
   canRemoveBranding: boolean;
   workspace: TWorkspace;
   isReadOnly: boolean;
-  showLiteLicenseTip?: boolean;
 }
 
 export const BrandingSettingsCard = async ({
   canRemoveBranding,
   workspace,
   isReadOnly,
-  showLiteLicenseTip = false,
 }: Readonly<BrandingSettingsCardProps>) => {
   const t = await getTranslate();
   const buttons: [ModalButton, ModalButton] = [
@@ -52,8 +49,6 @@ export const BrandingSettingsCard = async ({
         />
       </div>
     );
-  } else if (showLiteLicenseTip) {
-    brandingContent = <RemoveBrandingLicenseTip licenseRequestUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL} />;
   } else {
     brandingContent = (
       <UpgradePrompt
@@ -68,8 +63,7 @@ export const BrandingSettingsCard = async ({
   return (
     <SettingsCard
       title={t("workspace.look.formbricks_branding")}
-      description={t("workspace.look.formbricks_branding_settings_description")}
-      bodyVariant={showLiteLicenseTip ? "bleed" : "padded"}>
+      description={t("workspace.look.formbricks_branding_settings_description")}>
       {brandingContent}
       {isReadOnly && (
         <Alert variant="warning" className="mt-4" role="status">

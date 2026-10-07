@@ -4,6 +4,8 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
+import { selectPublicSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
+import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import { getWorkspaceStateData } from "./data";
 
 vi.mock("server-only", () => ({}));
@@ -67,7 +69,6 @@ const mockWorkspaceData = {
       welcomeCard: { enabled: false },
       questions: [],
       blocks: null,
-      variables: [],
       showLanguageSwitch: false,
       languages: [],
       endings: [],
@@ -78,7 +79,7 @@ const mockWorkspaceData = {
       recontactDays: null,
       displayLimit: null,
       displayOption: "displayOnce",
-      hiddenFields: { enabled: false },
+      embeddedDataLinks: [],
       isBackButtonHidden: false,
       triggers: [],
       displayPercentage: null,
@@ -137,6 +138,38 @@ describe("getWorkspaceStateData", () => {
         surveys: expect.any(Object),
       }),
     });
+  });
+
+  // The assertion above compares against the shared constant, so it moves with any edit to it and
+  // pins nothing. The text itself ships in an unauthenticated public API response, so changing it is
+  // an API change and has to be deliberate: this literal is what such an edit must get past (ENG-2799).
+  test("substitutes the exact placeholder text for every survey name", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockWorkspaceData as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+
+    expect(result.surveys[0].name).toBe(
+      "[deprecated] survey name omitted from public API - will be removed soon"
+    );
+  });
+
+  /**
+   * ENG-1845: this payload is the renderer's allow-list for app surveys. `getSurveyEmbeddedFields`
+   * fails closed, so a select that loses the join is indistinguishable from a survey with no fields
+   * — and every value passed through `setEmbeddedData` or `track({ hiddenFields })` would be silently
+   * dropped instead of ingested. This is where that has to fail.
+   */
+  test("carries the Embedded Data join, which is the renderer's ingest allow-list", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockWorkspaceData as never);
+
+    await getWorkspaceStateData(workspaceId);
+
+    const [{ select }] = vi.mocked(prisma.workspace.findUnique).mock.calls[0] as [
+      { select: { surveys: { select: Record<string, unknown> } } },
+    ];
+    // The public selector, not the write-path one: this payload reaches anonymous SDK clients, and
+    // the workspace-library row id is of no use to a renderer.
+    expect(select.surveys.select.embeddedDataLinks).toEqual(selectPublicSurveyEmbeddedDataLinks);
   });
 
   test("should throw ResourceNotFoundError when workspace is not found", async () => {
@@ -479,5 +512,165 @@ describe("getWorkspaceStateData", () => {
       "zh-Hant",
       "zh-TW",
     ]);
+  });
+});
+
+/**
+ * ENG-1838. Already-deployed SDK bundles on customer sites read `survey.variables` and
+ * `survey.hiddenFields.fieldIds` straight off this payload, and we do not control when a customer
+ * upgrades their embed. ENG-2404 dropped the columns those keys came from, so they are now derived
+ * from the EmbeddedData rows by `transformPrismaSurvey` — which is why these cases run the real
+ * transform rather than the identity mock the rest of this file uses.
+ *
+ * If the derivation ever stops, this fails: without it the payload would quietly stop carrying the
+ * two keys and every old bundle in the wild would break silently.
+ */
+describe("legacy Embedded Data shape on the wire (ENG-1838)", () => {
+  const ingested = (storageKey: string) => ({
+    storageKey,
+    embeddedData: {
+      key: null,
+      name: storageKey,
+      source: "ingested",
+      dataType: "string",
+      defaultValue: null,
+      locked: false,
+    },
+  });
+
+  const surveyWithRows = {
+    ...mockWorkspaceData.surveys[0],
+    embeddedDataLinks: [
+      {
+        storageKey: "clx000000000000000000001",
+        embeddedData: {
+          key: null,
+          name: "score",
+          source: "computed",
+          dataType: "number",
+          defaultValue: 7,
+          locked: false,
+        },
+      },
+      ingested("utm_source"),
+      ingested("plan"),
+    ],
+  };
+
+  beforeEach(async () => {
+    const actual = await vi.importActual<typeof import("@/modules/survey/lib/utils")>(
+      "@/modules/survey/lib/utils"
+    );
+    vi.mocked(transformPrismaSurvey).mockImplementation(actual.transformPrismaSurvey);
+  });
+
+  test("the workspace-state payload still carries variables and hiddenFields, derived from the rows", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      surveys: [surveyWithRows],
+    } as never);
+
+    const [survey] = (await getWorkspaceStateData(workspaceId)).surveys;
+
+    expect(survey.variables).toEqual([
+      { id: "clx000000000000000000001", name: "score", type: "number", value: 7 },
+    ]);
+    // In row order, which is the order the old bundle iterates `fieldIds` in.
+    expect(survey.hiddenFields).toEqual({ enabled: true, fieldIds: ["utm_source", "plan"] });
+  });
+
+  test("a survey with no rows still carries both keys, empty", async () => {
+    // An old bundle reads `hiddenFields.fieldIds` without a guard, so an absent key is a crash, not
+    // "no hidden fields".
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockWorkspaceData as never);
+
+    const [survey] = (await getWorkspaceStateData(workspaceId)).surveys;
+
+    expect(survey.variables).toEqual([]);
+    expect(survey.hiddenFields).toEqual({ enabled: false, fieldIds: [] });
+  });
+});
+
+/**
+ * ENG-3313: the custom overlay rides inside each survey object, because every SDK forwards the raw
+ * survey JSON to `renderSurvey`. `workspaceSettings` is left as it was, so this is the only place the
+ * new values reach the renderer.
+ */
+describe("custom overlay appearance on the wire (ENG-3313)", () => {
+  test("a preset overlay carries no overlayAppearance key", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      overlay: "dark",
+      overlayColor: null,
+      overlayOpacity: null,
+    } as never);
+
+    const [survey] = (await getWorkspaceStateData(workspaceId)).surveys;
+
+    expect(survey).not.toHaveProperty("overlayAppearance");
+  });
+
+  test.each([
+    ["no overlay with a leftover colour", { overlay: "none", overlayColor: "#ff0000", overlayOpacity: 40 }],
+    ["a stored colour that does not parse", { overlay: "dark", overlayColor: "red", overlayOpacity: null }],
+  ])("%s carries no overlayAppearance key", async (_, overlayFields) => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      ...overlayFields,
+    } as never);
+
+    const [survey] = (await getWorkspaceStateData(workspaceId)).surveys;
+
+    expect(survey).not.toHaveProperty("overlayAppearance");
+  });
+
+  test("a survey that does not override the overlay gets the workspace's custom values", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      overlay: "dark",
+      overlayColor: "#ff0000",
+      overlayOpacity: 40,
+      surveys: [{ ...mockWorkspaceData.surveys[0], workspaceOverwrites: { placement: "center" } }],
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+
+    expect(result.surveys[0].overlayAppearance).toEqual({ color: "#ff0000", opacity: 40 });
+    // The SDK still resolves the enum from here, so it must not change shape.
+    expect(result.workspace.workspaceSettings).not.toHaveProperty("overlayColor");
+    expect(result.workspace.workspaceSettings).not.toHaveProperty("overlayOpacity");
+
+    const [call] = vi.mocked(prisma.workspace.findUnique).mock.calls;
+    const { select } = call[0] as { select: Record<string, unknown> };
+    expect(select.overlayColor).toBe(true);
+    expect(select.overlayOpacity).toBe(true);
+  });
+
+  test("a survey that overrides the overlay uses its own values, never the workspace's", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      overlay: "dark",
+      overlayColor: "#ff0000",
+      overlayOpacity: 40,
+      surveys: [
+        {
+          ...mockWorkspaceData.surveys[0],
+          id: "custom-survey",
+          workspaceOverwrites: { overlay: "light", overlayColor: null, overlayOpacity: 25 },
+        },
+        {
+          ...mockWorkspaceData.surveys[0],
+          id: "preset-survey",
+          workspaceOverwrites: { overlay: "light" },
+        },
+      ],
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+    const byId = Object.fromEntries(result.surveys.map((survey) => [survey.id, survey]));
+
+    expect(byId["custom-survey"].overlayAppearance).toEqual({ color: null, opacity: 25 });
+    // Overriding the overlay with a preset drops the workspace's custom colour along with it.
+    expect(byId["preset-survey"]).not.toHaveProperty("overlayAppearance");
   });
 });

@@ -31,25 +31,28 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
       - name: Checkout Repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Setup Node.js 22.x
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - name: Setup repository Node.js version
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22.x
+          node-version-file: .nvmrc
 
       - name: Install pnpm
-        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
+
+      - name: Test maintenance, development preparation and release tagging
+        run: pnpm exec vitest run docker/__tests__/maintenance-upgrade.test.ts scripts/setup-dev-env.test.ts scripts/dev-authzed-up.test.ts .github/actions/build-and-push-docker/ghcr-tags.test.ts
 
       - name: Build web workspace dependencies
         run: pnpm build --filter=@formbricks/web^...
@@ -93,18 +96,17 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
       - name: Checkout Repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
           persist-credentials: false
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Verify Valkey Image Platforms
         shell: bash
@@ -125,16 +127,16 @@ jobs:
           ' <<<"$manifest"
 
       # NOTE: deliberately no `cache-from`/`cache-to: type=gha`. Measured over four runs, exporting
-      # the cache cost 222-407s per run while the layers it could restore add up to 12s of work: the
-      # only steps that ever reported CACHED were the apk/corepack prelude, because `COPY . .` sits
-      # ahead of `pnpm install` in apps/web/Dockerfile and invalidates everything after it on any
-      # diff. Nothing populates a cache scope this job can read either — no workflow runs on pushes
-      # to main, and merge_group runs write to throwaway `gh-readonly-queue/...` scopes. Restoring
-      # the cache is worth revisiting only together with both halves of the fix: reorder the
-      # Dockerfile so the install layer survives a source change, and give the cache a producer PRs
-      # can read (a push-to-main build, or a registry cache, which is not branch-scoped).
+      # the cache cost 222-407s per run while the layers it could restore added up to 12s of work,
+      # because `COPY . .` used to sit ahead of `pnpm install` and invalidated everything after it.
+      # apps/web/Dockerfile now installs from the manifests alone, so the install layer survives a
+      # source-only change (ENG-587). What is still missing is a producer this job can read: no
+      # workflow runs on pushes to main, and merge_group runs write to throwaway
+      # `gh-readonly-queue/...` scopes. Revisit together with a push-to-main build or a registry
+      # cache, which is not branch-scoped. The pnpm store sits in a cache mount, and no exported
+      # cache carries those, so a restored install layer is the whole of the win.
       - name: Build Docker Image
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         env:
           GITHUB_SHA: ${{ github.sha }}
         with:
@@ -204,6 +206,29 @@ jobs:
           test "$status" -eq 1
           test "$output" = '{"status":"disabled"}'
 
+          UNREACHABLE_TOKEN="authzed-cli-validation-secret"
+          set +e
+          unreachable_output="$(timeout 10s docker run --rm \
+            --entrypoint formbricks-authzed \
+            "${AUTHZED_CLI_ENV[@]}" \
+            -e AUTHZED_ENABLED="true" \
+            -e AUTHZED_ENDPOINT="192.0.2.1:50051" \
+            -e AUTHZED_INSECURE="true" \
+            -e AUTHZED_SYSTEM_KEY="formbricks" \
+            -e AUTHZED_TOKEN="$UNREACHABLE_TOKEN" \
+            "$IMAGE" health 2>&1)"
+          unreachable_status=$?
+          set -e
+
+          test "$unreachable_status" -eq 1
+          test "$(printf '%s\n' "$unreachable_output" | wc -l)" -eq 1
+          ! printf '%s' "$unreachable_output" | grep -F "$UNREACHABLE_TOKEN"
+          printf '%s' "$unreachable_output" | jq -e '
+            .status == "unhealthy" and
+            .retryable == true and
+            (.latencyMs | type == "number")
+          ' >/dev/null
+
           set +e
           upgrade_output="$(docker run --rm \
             --entrypoint formbricks-authzed \
@@ -270,6 +295,25 @@ jobs:
             fi
           }
 
+          run_invalid_case "missing AuthZed configuration" "AUTHZED_ENABLED=true" ""
+          run_invalid_case "disabled AuthZed" "AUTHZED_ENABLED=true" "" -e AUTHZED_ENABLED=false
+          run_invalid_case "missing AuthZed token" "AUTHZED_TOKEN" "" \
+            -e AUTHZED_ENABLED=true -e AUTHZED_ENDPOINT=spicedb:50051 -e AUTHZED_SYSTEM_KEY=formbricks
+          run_invalid_case "weak AuthZed consistency" "AUTHZED_CONSISTENCY=fully_consistent" "authzed-secret-sentinel" \
+            -e AUTHZED_ENABLED=true -e AUTHZED_ENDPOINT=spicedb:50051 -e AUTHZED_SYSTEM_KEY=formbricks \
+            -e AUTHZED_TOKEN=authzed-secret-sentinel -e AUTHZED_CONSISTENCY=minimize_latency
+
+          # Valid configuration succeeds even without networking: this is not a readiness RPC.
+          docker run --rm --network none --entrypoint node "${COMMON_ENV[@]}" \
+            -e AUTHZED_ENABLED=true -e AUTHZED_ENDPOINT=spicedb:50051 -e AUTHZED_SYSTEM_KEY=formbricks \
+            -e AUTHZED_TOKEN=authzed-secret-sentinel -e AUTHZED_CONSISTENCY=fully_consistent \
+            "$IMAGE" /home/nextjs/validate-env.mjs --server
+
+          # Migration-only preflight must accept the same base environment without
+          # AuthZed credentials. It must not construct a client or contact a database.
+          docker run --rm --network none --entrypoint node "${COMMON_ENV[@]}" \
+            "$IMAGE" /home/nextjs/validate-env.mjs
+
           run_invalid_case \
             "invalid provider" \
             "AI_PROVIDER" \
@@ -303,6 +347,17 @@ jobs:
             -e AI_OPENAI_COMPATIBLE_BASE_URL="base-url-secret-sentinel"
 
           run_invalid_case \
+            "oauth mode missing token URL" \
+            "AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL" \
+            "oauth-client-secret-sentinel" \
+            -e AI_PROVIDER="openai-compatible" \
+            -e AI_MODEL="test-model" \
+            -e AI_OPENAI_COMPATIBLE_BASE_URL="https://gateway.example/v1" \
+            -e AI_OPENAI_COMPATIBLE_AUTH_MODE="oauth2-client-credentials" \
+            -e AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_ID="test-client" \
+            -e AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET="oauth-client-secret-sentinel"
+
+          run_invalid_case \
             "invalid Azure base URL" \
             "AI_AZURE_BASE_URL" \
             "azure-base-url-secret-sentinel" \
@@ -323,7 +378,7 @@ jobs:
           trap 'rm -f docker/.env' EXIT
           printf '%s\n' \
             'WEBAPP_URL=http://localhost:3000' \
-            'NEXTAUTH_URL=http://localhost:3000' \
+            'BETTER_AUTH_URL=http://localhost:3000' \
             'POSTGRES_PASSWORD=compose-postgres-placeholder' \
             "ENCRYPTION_KEY=$DUMMY_ENCRYPTION_KEY" \
             "BETTER_AUTH_SECRET=$DUMMY_ENCRYPTION_KEY" \
@@ -379,6 +434,11 @@ jobs:
             -e CUBEJS_API_URL="http://192.0.2.1:4000" \
             -e CUBEJS_API_SECRET="build-time-placeholder" \
             -e SKIP_STARTUP_MIGRATION="true" \
+            -e AUTHZED_ENABLED=true \
+            -e AUTHZED_ENDPOINT=127.0.0.1:50051 \
+            -e AUTHZED_TOKEN=startup-test-placeholder \
+            -e AUTHZED_SYSTEM_KEY=formbricks \
+            -e AUTHZED_CONSISTENCY=fully_consistent \
             -d "formbricks-test:$GITHUB_SHA"
 
           trap 'docker rm -f formbricks-skip-test >/dev/null 2>&1 || true' EXIT
@@ -483,6 +543,11 @@ jobs:
             -e HUB_API_KEY="build-time-placeholder" \
             -e CUBEJS_API_URL="http://localhost:4000" \
             -e CUBEJS_API_SECRET="build-time-placeholder" \
+            -e AUTHZED_ENABLED=true \
+            -e AUTHZED_ENDPOINT=127.0.0.1:50051 \
+            -e AUTHZED_TOKEN=startup-test-placeholder \
+            -e AUTHZED_SYSTEM_KEY=formbricks \
+            -e AUTHZED_CONSISTENCY=fully_consistent \
             -d "formbricks-test:$GITHUB_SHA"
 
           # Start health check polling immediately (every 5 seconds for up to 5 minutes)

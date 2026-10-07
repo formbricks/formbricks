@@ -82,6 +82,9 @@ reviews:
     # docs/api-*-reference/openapi*.{yml,json} are deliberately NOT excluded —
     # oasdiff reviews them for breaking API changes.
     - "!apps/web/vendor/**"
+    # Generated from the reviewed OpenAPI bundle and byte-checked by `pnpm api:v3:schemas:check`;
+    # the review belongs on docs/api-v3-reference/src/ and the generator, not on its output.
+    - "!packages/api-v3-schemas/src/generated/**"
 
   path_instructions:
     - path: "**/*.test.tsx"
@@ -180,6 +183,31 @@ reviews:
         - Caching uses `cache.withCache()` with a key from `createCacheKey.*`. Next.js
           `unstable_cache()` is banned, and cache keys are never built by string concatenation.
 
+    - path: "{apps/web,packages}/**/*.{ts,tsx}"
+      instructions: |
+        Performance is an explicit review dimension in this repo (AGENTS.md "Performance in Review"):
+        the patterns below reach `main` when nobody looks for them. Raise one where the diff
+        introduces it:
+        - N+1 work: a query, AI call or cross-service fetch issued inside a `for`/`map`/`Promise.all`
+          over rows. Ask for one `findMany` with an `in` filter, an `include`, or a single grouped
+          query.
+        - Unbounded work: a `findMany` with no `take`, a pagination or retry loop with no ceiling, or
+          a whole table pulled into memory and filtered in JS.
+        - A new `where`/`orderBy` combination with no index that serves it.
+        - Expensive calls repeated per request or per row — embeddings, AI calls, cross-service
+          fetches — that are not behind `cache.withCache()`, batched, or moved into a job.
+        - Independent queries awaited sequentially instead of `Promise.all`.
+        - Client-side waterfalls: duplicate fetches of the same data, requests chained that do not
+          depend on each other, or many calls fired from a loop where one batch request would do.
+        - Render amplification: one state change or parent update re-rendering a large subtree that
+          does not depend on it (a context value rebuilt every render, unstable props into a big list).
+          Name the measured cost, not a missing `useMemo`; AGENTS.md rules out memoization for its
+          own sake.
+        - Large lists rendered in full with no pagination or virtualization.
+        Quantify the cost against the data ("one query per response, ~5k on a 5k-response survey").
+        If you cannot, ask the author for numbers instead of speculating. Do not raise these on
+        `*.test.ts`, `*.test.tsx`, `__mocks__`, or seed scripts, where looping over fixtures is expected.
+
     - path: "packages/database/schema/*.prisma"
       instructions: |
         - Every tenant-owned model needs a workspace/organization scope column, and cross-model
@@ -229,9 +257,13 @@ reviews:
         - Return **403, not 404**, for a resource the caller may not see — a 404 leaks existence.
         - Responses come from the RFC 9457 problem builders in `app/api/v3/lib/response.ts`. No
           invented error envelopes, and no internal or database types leaking into a public shape.
-        - Any change to a request or response shape must be mirrored in the hand-authored spec
-          under `docs/api-v3-reference/src/**/*.yml`, which CI bundles. A handler change with no
-          spec change is a bug unless the shape is genuinely unchanged.
+        - Request and response shapes start in the hand-authored spec under
+          `docs/api-v3-reference/src/**/*.yml`, which CI bundles. For a resource whose tag is in
+          `packages/api-v3-schemas/scripts/adopted.ts`, the route's Zod must come from
+          `@formbricks/api-v3-schemas` — a hand-written shape there is a finding, and only the
+          refinements the generator cannot express belong beside it. Query-string parsers are the
+          exception until a shared query adapter exists (e.g. `parse-v3-responses-list-query.ts`). Elsewhere, a handler change
+          with no spec change is a bug unless the shape is genuinely unchanged.
         - A `/v3` route with no public OpenAPI entry is internal by definition and belongs under
           `apps/web/app/api/(internal)/`. Shipping an internal route as public v3 is a finding.
 

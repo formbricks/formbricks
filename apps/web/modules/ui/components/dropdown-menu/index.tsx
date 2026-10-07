@@ -4,6 +4,7 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { Check, ChevronLeft, ChevronRight, Circle } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/cn";
+import { Kbd } from "@/modules/ui/components/kbd";
 
 const DropdownMenu: React.ComponentType<DropdownMenuPrimitive.DropdownMenuProps> = DropdownMenuPrimitive.Root;
 
@@ -196,7 +197,9 @@ type DropdownMenuShortcutProps = React.HTMLAttributes<HTMLSpanElement> & {
 };
 
 const DropdownMenuShortcut = ({ className, ...props }: DropdownMenuShortcutProps) => {
-  return <span className={cn("ml-auto text-xs tracking-widest text-slate-500", className)} {...props} />;
+  // The same key cap the icon bars render, so one shortcut does not look like two different things
+  // depending on where it is shown.
+  return <Kbd className={cn("ml-auto", className)} {...props} />;
 };
 DropdownMenuShortcut.displayName = "DropdownMenuShortcut";
 

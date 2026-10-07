@@ -37,13 +37,16 @@ function createQueryData(): { pages: TSurveyListPage[]; pageParams: (string | nu
             completedResponseCount: 0,
             creator: { name: "Alice" },
             singleUse: null,
+            visibility: "workspace",
+            owner: { name: "Test User" },
+            access: { via: "workspace", canManageVisibility: false },
           },
         ],
         meta: {
           limit: 20,
           nextCursor: null,
           totalCount: 1,
-          hasArchived: false,
+          workspaceSurveyCount: 4,
         },
       },
     ],
@@ -83,6 +86,7 @@ describe("useDeleteSurvey", () => {
         name: "",
         status: [],
         type: [],
+        visibility: [],
         sortBy: "relevance",
       },
     });
@@ -99,9 +103,11 @@ describe("useDeleteSurvey", () => {
     await waitFor(() =>
       expect(queryClient.getQueryData<{ pages: TSurveyListPage[] }>(queryKey)?.pages[0]?.data).toEqual([])
     );
-    expect(queryClient.getQueryData<{ pages: TSurveyListPage[] }>(queryKey)?.pages[0]?.meta.totalCount).toBe(
-      0
-    );
+    const meta = queryClient.getQueryData<{ pages: TSurveyListPage[] }>(queryKey)?.pages[0]?.meta;
+    expect(meta?.totalCount).toBe(0);
+    // Deleting takes the survey out of the workspace, so the onboarding empty state can appear
+    // before the server answers.
+    expect(meta?.workspaceSurveyCount).toBe(3);
 
     resolveFetch?.(new Response(null, { status: 204 }));
 
@@ -139,6 +145,7 @@ describe("useDeleteSurvey", () => {
         name: "",
         status: [],
         type: [],
+        visibility: [],
         sortBy: "relevance",
       },
     });

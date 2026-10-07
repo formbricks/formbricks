@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { PipelineTriggers, Webhook } from "@formbricks/database/prisma-browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { SurveyCheckboxGroup } from "@/modules/integrations/webhooks/components/survey-checkbox-group";
 import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
 import { WebhookCreatedModal } from "@/modules/integrations/webhooks/components/webhook-created-modal";
@@ -35,6 +35,7 @@ interface AddWebhookModalProps {
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
   allowInternalUrls: boolean;
+  surveyVisibilityEnabled: boolean;
 }
 
 export const AddWebhookModal = ({
@@ -43,7 +44,8 @@ export const AddWebhookModal = ({
   open,
   setOpen,
   allowInternalUrls,
-}: AddWebhookModalProps) => {
+  surveyVisibilityEnabled,
+}: Readonly<AddWebhookModalProps>) => {
   const router = useRouter();
   const {
     handleSubmit,
@@ -271,6 +273,7 @@ export const AddWebhookModal = ({
                 onSelectAllSurveys={handleSelectAllSurveys}
                 onSelectedSurveyChange={handleSelectedSurveyChange}
                 allowChanges={true}
+                surveyVisibilityEnabled={surveyVisibilityEnabled}
               />
             </div>
           </DialogBody>

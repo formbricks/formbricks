@@ -8,6 +8,7 @@ import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { GRACE_PERIOD_MS, getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
+import { getLiteLicenseRequestUrl } from "@/modules/ee/license-check/lib/lite-license";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { getSettingsLayoutData } from "@/modules/settings/lib/navigation-data";
 import { getOrganizationBillingPath } from "@/modules/settings/lib/routes";
@@ -78,12 +79,6 @@ const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }
     t("workspace.settings.enterprise.support_slas"),
   ];
 
-  const liteLicenseUrl = new URL(ENTERPRISE_LICENSE_REQUEST_FORM_URL);
-  liteLicenseUrl.searchParams.set("type", "lite");
-
-  const trialLicenseUrl = new URL(ENTERPRISE_LICENSE_REQUEST_FORM_URL);
-  trialLicenseUrl.searchParams.set("type", "trial");
-
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.enterprise_license")} />
@@ -146,7 +141,7 @@ const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }
               </p>
               <Button asChild className="mt-6 w-fit">
                 <Link
-                  href={liteLicenseUrl.toString()}
+                  href={getLiteLicenseRequestUrl("enterprise_settings")}
                   target="_blank"
                   rel="noopener noreferrer nofollow"
                   referrerPolicy="no-referrer">
@@ -166,7 +161,7 @@ const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }
               </p>
               <Button asChild variant="outline" className="mt-6 w-fit bg-white">
                 <Link
-                  href={trialLicenseUrl.toString()}
+                  href={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
                   target="_blank"
                   rel="noopener noreferrer nofollow"
                   referrerPolicy="no-referrer">

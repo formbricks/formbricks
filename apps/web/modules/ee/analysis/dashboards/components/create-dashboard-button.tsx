@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { createDashboardAction } from "@/modules/ee/analysis/dashboards/actions";
 import { CreateDashboardDialog } from "@/modules/ee/analysis/dashboards/components/create-dashboard-dialog";
 import { Button, type ButtonProps } from "@/modules/ui/components/button";
@@ -66,8 +66,8 @@ export const CreateDashboardButton = ({
   return (
     <>
       <Button size="sm" onClick={() => handleOpenChange(true)} disabled={disabled} {...buttonProps}>
-        <PlusIcon className="mr-2 size-4" />
-        {t("workspace.analysis.dashboards.create_dashboard")}
+        {t("workspace.analysis.dashboards.new_dashboard")}
+        <PlusIcon />
       </Button>
       <CreateDashboardDialog
         open={isCreateDialogOpen}

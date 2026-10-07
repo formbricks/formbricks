@@ -6,6 +6,10 @@ import {
   ZWorkflowSortBy,
   ZWorkflowStatus,
 } from "@formbricks/workflows";
+import { lengthBoundedArray } from "@/app/api/v3/lib/bounded-array";
+
+// Array arguments go through `lengthBoundedArray`, as in `./schemas.ts` (ENG-3384).
+const MCP_MAX_FILTER_VALUES = 10;
 
 // Every schema here rejects undeclared arguments, for the reasons documented at the top of
 // `./schemas.ts` (ENG-2256): an undeclared argument must fail loudly rather than be silently dropped.
@@ -24,6 +28,10 @@ import {
 export const ZMcpListWorkflowsInput = z
   .object({
     workspaceId: z.cuid2().describe("Workspace ID whose workflows should be listed."),
+    // Matches the HTTP workflows lists, which also cap at 100 — the 250 the rest of v3 moved to did
+    // not reach them, because their bound lives in the shared `packages/workflows` contracts. For an
+    // agent client that is the right ceiling anyway: the binding constraint is context window rather
+    // than server cost, so a larger page would be a cost rather than a convenience.
     limit: z
       .number()
       .int()
@@ -51,11 +59,11 @@ export const ZMcpListWorkflowsInput = z
           .optional(),
         status: z
           .strictObject({
-            in: z
-              .array(ZWorkflowStatus)
-              .min(1)
-              .optional()
-              .describe("Workflow statuses to include. Omitting returns every status except archived."),
+            in: lengthBoundedArray(ZWorkflowStatus, {
+              min: 1,
+              max: MCP_MAX_FILTER_VALUES,
+              description: "Workflow statuses to include. Omitting returns every status except archived.",
+            }).optional(),
           })
           .describe("Filter by workflow status.")
           .optional(),
@@ -79,6 +87,10 @@ export type TMcpGetWorkflowInput = z.infer<typeof ZMcpGetWorkflowInput>;
 export const ZMcpListWorkflowRunsInput = z
   .object({
     workspaceId: z.cuid2().describe("Workspace ID whose workflow runs should be listed."),
+    // Matches the HTTP workflows lists, which also cap at 100 — the 250 the rest of v3 moved to did
+    // not reach them, because their bound lives in the shared `packages/workflows` contracts. For an
+    // agent client that is the right ceiling anyway: the binding constraint is context window rather
+    // than server cost, so a larger page would be a cost rather than a convenience.
     limit: z
       .number()
       .int()
@@ -97,11 +109,11 @@ export const ZMcpListWorkflowRunsInput = z
       .strictObject({
         status: z
           .strictObject({
-            in: z
-              .array(ZWorkflowRunStatus)
-              .min(1)
-              .optional()
-              .describe("Run statuses to include, for example queued or completed."),
+            in: lengthBoundedArray(ZWorkflowRunStatus, {
+              min: 1,
+              max: MCP_MAX_FILTER_VALUES,
+              description: "Run statuses to include, for example queued or completed.",
+            }).optional(),
           })
           .describe("Filter by run status.")
           .optional(),

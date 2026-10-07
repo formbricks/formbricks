@@ -33,6 +33,7 @@ export const ZAuditTarget = z.enum([
   "feedbackDirectory",
   "feedbackRecord",
   "feedbackSource",
+  "embeddedData",
 ]);
 export const ZAuditAction = z.enum([
   "created",
@@ -67,9 +68,14 @@ export const ZAuditAction = z.enum([
   // in the audit trail.
   "purged",
   "queried",
+  // A bulk export of stored data out of the product (e.g. the response-attachment ZIP). Distinct
+  // from "queried": this leaves the system as files the actor keeps.
+  "exported",
   "sso_recovery_started",
   "sso_recovery_completed",
   "sso_recovery_failed",
+  // ENG-3282: a survey's visibility changed through `POST /api/v3/surveys/{id}/visibility`.
+  "visibilityChanged",
 ]);
 export const ZActor = z.enum(["user", "api", "system"]);
 export const ZAuditStatus = z.enum(["success", "failure"]);

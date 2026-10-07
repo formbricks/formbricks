@@ -1,9 +1,11 @@
 import { describe, expect, test, vi } from "vitest";
+import { mergeReservedValues } from "@formbricks/types/embedded-data-resolver";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import {
   checkForEmptyFallBackValue,
+  extractCompleteRecallIds,
   extractFallbackValue,
   extractId,
   extractIds,
@@ -46,6 +48,22 @@ vi.mock("@/lib/utils/date-display", () => ({
   }),
 }));
 
+/**
+ * One Embedded Data definition as the readers see it: joined from the tables and inlined onto the
+ * survey at load. ENG-2628 made this the only thing `recall.ts` resolves a token against, in the
+ * editor as well as everywhere else, so the fixtures below declare fields as rows rather than as the
+ * legacy `variables` / `hiddenFields` columns.
+ */
+const embeddedField = (
+  storageKey: string,
+  name: string,
+  source: "computed" | "ingested",
+  dataType: "string" | "number" = "string"
+) => ({
+  field: { name, source, dataType, defaultValue: null, locked: false, key: null },
+  link: { storageKey },
+});
+
 describe("recall utility functions", () => {
   describe("extractId", () => {
     test("extracts ID correctly from a string with recall pattern", () => {
@@ -84,6 +102,27 @@ describe("recall utility functions", () => {
       const text = "Text #recall:id1 more text #recall:id2";
       const result = extractIds(text);
       expect(result).toEqual(["id1", "id2"]);
+    });
+  });
+
+  describe("extractCompleteRecallIds", () => {
+    test("extracts the ids of complete recall tokens", () => {
+      const text = "Text #recall:id1/fallback:a# and #recall:id2/fallback:#";
+      expect(extractCompleteRecallIds(text)).toEqual(["id1", "id2"]);
+    });
+
+    test("ignores a token whose closing # was deleted, while extractIds still matches it", () => {
+      const text = "Hi #recall:q1/fallback:there welcome";
+      expect(extractIds(text)).toEqual(["q1"]);
+      expect(extractCompleteRecallIds(text)).toEqual([]);
+    });
+
+    test("ignores a token with no fallback tail", () => {
+      expect(extractCompleteRecallIds("Hi #recall:q1 welcome")).toEqual([]);
+    });
+
+    test("returns empty array when there is no recall token at all", () => {
+      expect(extractCompleteRecallIds("plain text")).toEqual([]);
     });
   });
 
@@ -173,8 +212,7 @@ describe("recall utility functions", () => {
       const survey: TSurvey = {
         id: "test-survey",
         blocks: [],
-        hiddenFields: { fieldIds: ["email"] },
-        variables: [],
+        embeddedFields: [embeddedField("email", "email", "ingested")],
       } as unknown as TSurvey;
 
       const result = recallToHeadline(headline, survey, false, "en");
@@ -186,8 +224,7 @@ describe("recall utility functions", () => {
       const survey: TSurvey = {
         id: "test-survey",
         blocks: [],
-        hiddenFields: { fieldIds: [] },
-        variables: [{ id: "plan", name: "Subscription Plan" }],
+        embeddedFields: [embeddedField("plan", "Subscription Plan", "computed")],
       } as unknown as TSurvey;
 
       const result = recallToHeadline(headline, survey, false, "en");
@@ -366,8 +403,7 @@ describe("recall utility functions", () => {
       const text = "Text with #recall:hidden1/fallback:val1#";
       const survey: TSurvey = {
         blocks: [],
-        hiddenFields: { fieldIds: ["hidden1"] },
-        variables: [],
+        embeddedFields: [embeddedField("hidden1", "hidden1", "ingested")],
       } as unknown as TSurvey;
 
       const result = getRecallItems(text, survey, "en");
@@ -381,8 +417,7 @@ describe("recall utility functions", () => {
       const text = "Text with #recall:var1/fallback:val1#";
       const survey: TSurvey = {
         blocks: [],
-        hiddenFields: { fieldIds: [] },
-        variables: [{ id: "var1", name: "Variable One" }],
+        embeddedFields: [embeddedField("var1", "Variable One", "computed")],
       } as unknown as TSurvey;
 
       const result = getRecallItems(text, survey, "en");
@@ -399,6 +434,227 @@ describe("recall utility functions", () => {
 
       const result = getRecallItems(text, survey, "en");
       expect(result).toEqual([]);
+    });
+
+    // ENG-2931: a half-deleted token must not yield a recall item. `recallToHeadline` leaves it as
+    // raw text, so an item here is one whose `@Label` the editor can never find in the rendered
+    // text — the precondition for RecallWrapper's unbounded update loop.
+    test("ignores a token whose closing # was deleted", () => {
+      const survey: TSurvey = {
+        blocks: [{ id: "b1", elements: [{ id: "q1", headline: { en: "Name" } }] }],
+        hiddenFields: { fieldIds: [] },
+        variables: [],
+      } as unknown as TSurvey;
+
+      const broken = "Hi #recall:q1/fallback:there welcome";
+      expect(recallToHeadline({ en: broken }, survey, false, "en").en).toBe(broken);
+      expect(getRecallItems(broken, survey, "en")).toEqual([]);
+
+      // Control: the intact token still resolves, and still renders as @Name.
+      const intact = "Hi #recall:q1/fallback:there# welcome";
+      expect(recallToHeadline({ en: intact }, survey, false, "en").en).toBe("Hi @Name welcome");
+      expect(getRecallItems(intact, survey, "en")).toHaveLength(1);
+    });
+
+    test("ignores a token that has lost its fallback tail but keeps a later complete one", () => {
+      const survey: TSurvey = {
+        blocks: [
+          {
+            id: "b1",
+            elements: [
+              { id: "q1", headline: { en: "Name" } },
+              { id: "q2", headline: { en: "City" } },
+            ],
+          },
+        ],
+        hiddenFields: { fieldIds: [] },
+        variables: [],
+      } as unknown as TSurvey;
+
+      const result = getRecallItems("Hi #recall:q1 from #recall:q2/fallback:x#", survey, "en");
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe("q2");
+    });
+  });
+
+  /**
+   * ENG-1837: a recall token's label and type come from the survey's Embedded Data definitions
+   * instead of `hiddenFields.fieldIds` and `variables`. ENG-2628: from the ROWS, the one read every
+   * other reader makes — the editor's cards write them now, so the picker that puts `@label` into
+   * the text and these functions that read it back see the same list again. The precedence
+   * (ingested → element → computed) is load-bearing and unchanged.
+   */
+  describe("recall items resolve through the survey's Embedded Data rows", () => {
+    test("labels a token from the rows, ignoring what the legacy columns still say", () => {
+      // The columns are the survey's last-saved projection and are re-derived from the rows on every
+      // write. A reader that took a name from them would show the author something the survey no
+      // longer declares.
+      const survey = {
+        blocks: [],
+        hiddenFields: { fieldIds: ["hidden1"] },
+        variables: [{ id: "var1", name: "Stale Column Name", type: "text", value: "" }],
+        embeddedFields: [
+          embeddedField("var1", "Renamed Variable", "computed"),
+          embeddedField("hidden1", "hidden1", "ingested"),
+        ],
+      } as unknown as TSurvey;
+
+      const result = getRecallItems(
+        "Text with #recall:var1/fallback:a# and #recall:hidden1/fallback:b#",
+        survey,
+        "en"
+      );
+
+      expect(result).toEqual([
+        { id: "var1", label: "Renamed Variable", type: "variable" },
+        { id: "hidden1", label: "hidden1", type: "hiddenField" },
+      ]);
+    });
+
+    test("leaves a token the rows do not declare unclassified", () => {
+      // The legacy column still lists `hidden2`; the rows do not, so the survey does not declare it.
+      // An unclassified token is dropped and the editor renders the raw `#recall:…#` tag — which is
+      // the correct outcome for a field that is not there.
+      const survey = {
+        blocks: [],
+        hiddenFields: { fieldIds: ["hidden1", "hidden2"] },
+        variables: [],
+        embeddedFields: [embeddedField("hidden1", "hidden1", "ingested")],
+      } as unknown as TSurvey;
+
+      expect(getRecallItems("Text with #recall:hidden2/fallback:b#", survey, "en")).toEqual([]);
+    });
+
+    test("a storage key that also matches an element id still resolves as a hidden field", () => {
+      const survey = {
+        blocks: [{ id: "b1", elements: [{ id: "shared", headline: { en: "Question headline" } }] }],
+        embeddedFields: [embeddedField("shared", "shared", "ingested")],
+      } as unknown as TSurvey;
+
+      const result = getRecallItems("Text with #recall:shared/fallback:x#", survey, "en");
+
+      expect(result).toEqual([{ id: "shared", label: "shared", type: "hiddenField" }]);
+    });
+
+    test("an element wins over a computed field on a colliding key", () => {
+      const survey = {
+        blocks: [{ id: "b1", elements: [{ id: "shared", headline: { en: "Question headline" } }] }],
+        embeddedFields: [embeddedField("shared", "Variable One", "computed")],
+      } as unknown as TSurvey;
+
+      const result = getRecallItems("Text with #recall:shared/fallback:x#", survey, "en");
+
+      expect(result).toEqual([{ id: "shared", label: "Question headline", type: "element" }]);
+    });
+  });
+
+  describe("reserved fields in recall (ENG-1840)", () => {
+    test("a reserved token is labelled and typed, not left as a raw tag", () => {
+      // `getRecallItems` drops any id it cannot label, and the editor then renders the untouched
+      // `#recall:country/fallback:x#` as literal text. This is the test that catches that.
+      const survey = {
+        blocks: [],
+        hiddenFields: { fieldIds: [] },
+        variables: [],
+      } as unknown as TSurvey;
+
+      const result = getRecallItems("You are in #recall:country/fallback:your-country#", survey, "en");
+
+      expect(result).toEqual([{ id: "country", label: "Country", type: "reserved" }]);
+      expect(result[0].label).not.toContain("#recall:");
+    });
+
+    test("a declared field of the same name shadows the reserved entry", () => {
+      // The grandfather rule, label side: a survey that already declares `country` keeps showing its
+      // own field, so the author never sees two identically-named rows.
+      const survey = {
+        blocks: [],
+        embeddedFields: [embeddedField("country", "country", "ingested")],
+      } as unknown as TSurvey;
+
+      const result = getRecallItems("You are in #recall:country/fallback:x#", survey, "en");
+
+      expect(result).toEqual([{ id: "country", label: "country", type: "hiddenField" }]);
+    });
+
+    test("an unknown reserved-looking name stays unresolved", () => {
+      const survey = {
+        blocks: [],
+        hiddenFields: { fieldIds: [] },
+        variables: [],
+      } as unknown as TSurvey;
+
+      expect(getRecallItems("#recall:notACatalogEntry/fallback:x#", survey, "en")).toEqual([]);
+    });
+  });
+
+  describe("the grandfather rule at value-resolution time (ENG-1840)", () => {
+    // These exercise `mergeReservedValues` — the one expression the guarantee rests on. Flip the two
+    // spreads there and the second test goes red:
+    //   pnpm --filter=@formbricks/web test lib/utils/recall.test.ts
+    const reserved = { country: "DE", url: "https://app.test/s/abc" };
+
+    test("a reserved token resolves from the projected value", () => {
+      const result = parseRecallInfo(
+        "You are in #recall:country/fallback:your-country#",
+        mergeReservedValues(reserved, {})
+      );
+
+      expect(result).toBe("You are in DE");
+    });
+
+    test("a survey declaring its own `country` resolves from response.data instead", () => {
+      const responseData: TResponseData = { country: "Declared answer" };
+
+      const result = parseRecallInfo(
+        "You are in #recall:country/fallback:your-country#",
+        mergeReservedValues(reserved, responseData)
+      );
+
+      expect(result).toBe("You are in Declared answer");
+      expect(result).not.toContain("DE");
+    });
+
+    test("shadowing is per-key: other reserved values still resolve", () => {
+      const result = parseRecallInfo(
+        "#recall:country/fallback:a# at #recall:url/fallback:b#",
+        mergeReservedValues(reserved, { country: "Declared answer" })
+      );
+
+      expect(result).toBe("Declared answer at https://app.test/s/abc");
+    });
+
+    test("a declared field that is present but empty still wins", () => {
+      // The respondent left the declared hidden field blank. That is an answer, and it must not fall
+      // back to reserved metadata just because the string is empty.
+      const result = parseRecallInfo(
+        "You are in #recall:country/fallback:your-country#",
+        mergeReservedValues(reserved, { country: "" })
+      );
+
+      // Asserted exactly, not as "does not contain DE": that weaker form also passes on an empty
+      // string or an unrendered raw token, neither of which would prove the declared field won.
+      expect(result).toBe("You are in your-country");
+    });
+
+    test("A DECLARED FIELD WITH NO VALUE AT ALL still owns its name (ENG-2538)", () => {
+      // The bug this ticket exists for, at the layer it was visible from. Every test above passes a
+      // key that *exists* — the asymmetry that hid it through review, unit tests and E2E. An optional
+      // hidden field the respondent never filled has no key at all, so the spread had nothing to lose
+      // to and the reserved value survived into respondent-facing copy.
+      //
+      // The fix is upstream of this call: `buildServerEmbeddedValues` / the renderer's projection now
+      // drop an entry the survey declares, so the map handed here has no `url` key. Simulated by
+      // omitting it, which is exactly what those functions now produce.
+      const withoutDeclaredUrl = { country: "DE" };
+
+      const result = parseRecallInfo(
+        "url=#recall:url/fallback:FALLBACK-HIT#",
+        mergeReservedValues(withoutDeclaredUrl, {})
+      );
+
+      expect(result).toBe("url=FALLBACK-HIT");
+      expect(result).not.toContain("app.test");
     });
   });
 

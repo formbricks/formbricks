@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
+import { RestrictedSurveyHint } from "@/modules/survey/visibility/components/restricted-survey-hint";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
@@ -33,6 +34,8 @@ interface FeedbackSourceRowDropdownProps {
   onReimport: () => Promise<void>;
   onToggleStatus: () => Promise<void>;
   onDelete: () => Promise<void>;
+  /** ENG-3395: the source replays a restricted survey, so a historical import is not offered. */
+  isRestricted?: boolean;
 }
 
 export function FeedbackSourceRowDropdown({
@@ -42,6 +45,7 @@ export function FeedbackSourceRowDropdown({
   onReimport,
   onToggleStatus,
   onDelete,
+  isRestricted = false,
 }: Readonly<FeedbackSourceRowDropdownProps>) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -118,10 +122,10 @@ export function FeedbackSourceRowDropdown({
                 {/* Disabled while a run is in flight: re-opening the dialog would show a spinning,
                     disabled Re-import button with nothing explaining why, and the in-flight run's
                     `finally` would then close the dialog the user had just re-opened. */}
-                <DropdownMenuItem disabled={isReimporting}>
+                <DropdownMenuItem disabled={isReimporting || isRestricted}>
                   <button
                     type="button"
-                    disabled={isReimporting}
+                    disabled={isReimporting || isRestricted}
                     className="flex w-full items-center"
                     onClick={(e) => {
                       e.preventDefault();
@@ -130,6 +134,11 @@ export function FeedbackSourceRowDropdown({
                     }}>
                     <RefreshCwIcon className="mr-2 size-4" />
                     {t("workspace.unify.reimport_historic_data")}
+                    {isRestricted && (
+                      <span className="ml-2">
+                        <RestrictedSurveyHint kind="restricted" />
+                      </span>
+                    )}
                   </button>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -150,7 +159,7 @@ export function FeedbackSourceRowDropdown({
                       );
                     }}>
                     <EyeIcon className="mr-2 size-4" />
-                    {`${t("common.view")} ${t("common.survey")}`}
+                    {t("workspace.unify.view_survey")}
                   </button>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

@@ -48,6 +48,12 @@ describe("runs-cursor", () => {
     expect(() => decodeWorkflowRunListCursor(bad)).toThrow(WorkflowInvalidInputError);
   });
 
+  /** The decoded id is bound into the page query, where a NUL byte fails it with a 500 (ENG-3550). */
+  test("rejects a NULL byte in the id", () => {
+    const bad = encodeWorkflowRunListCursor(buildNextWorkflowRunListCursor({ id: "run\u0000", createdAt }));
+    expect(() => decodeWorkflowRunListCursor(bad)).toThrow(WorkflowInvalidInputError);
+  });
+
   test("rejects a cursor from an unknown version", () => {
     const bad = Buffer.from(
       JSON.stringify({ version: 2, value: createdAt.toISOString(), id: runId }),

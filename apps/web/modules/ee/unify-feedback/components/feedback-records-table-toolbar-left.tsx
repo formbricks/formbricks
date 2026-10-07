@@ -24,9 +24,7 @@ export const FeedbackRecordsTableToolbarLeft = ({
   if (selectedCount > 0) {
     return (
       <div className="flex items-center gap-x-2 rounded-md bg-primary p-1 px-2 text-xs text-white">
-        <span className="lowercase">
-          {`${selectedCount} ${t("workspace.unify.feedback_records").toLowerCase()} ${t("common.selected")}`}
-        </span>
+        <span>{t("workspace.unify.feedback_records_count_selected", { count: selectedCount })}</span>
         <span>|</span>
         <Button variant="outline" size="sm" className="h-6 border-none px-2" onClick={onClearSelection}>
           {t("common.clear_selection")}

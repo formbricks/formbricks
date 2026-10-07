@@ -9,6 +9,8 @@ const mockRemoveUsageTelemetry = vi.fn();
 const mockUpsertUsageTelemetry = vi.fn();
 const mockRemoveWorkflowRunReconcile = vi.fn();
 const mockUpsertWorkflowRunReconcile = vi.fn();
+const mockRemoveWorkflowsUsageSnapshot = vi.fn();
+const mockUpsertWorkflowsUsageSnapshot = vi.fn();
 const mockUpsertAuthzedProjectionDelivery = vi.fn();
 const mockUpsertAuthzedReconciliationAudit = vi.fn();
 const mockDebug = vi.fn();
@@ -22,6 +24,7 @@ const mockProcessSurveyArchivePurgeJob = vi.fn();
 const mockProcessUsageTelemetryJob = vi.fn();
 const mockProcessWorkflowRunJob = vi.fn();
 const mockProcessWorkflowRunReconcileJob = vi.fn();
+const mockProcessWorkflowsUsageSnapshotJob = vi.fn();
 const mockProcessAuthzedProjectionDeliveryJob = vi.fn();
 const mockProcessAuthzedScheduledReconciliationJob = vi.fn();
 const TEST_TIMEOUT_MS = 15_000;
@@ -35,6 +38,7 @@ const slowTest = (name: string, fn: () => Promise<void>): void => {
 vi.mock("@formbricks/jobs", () => ({
   ONE_SHOT_JOB_NAMES: {
     responsePipeline: "response-pipeline.process",
+    webhookDelivery: "webhook-delivery.process",
     workflowRun: "workflow-run.process",
   },
   recurringJobs: {
@@ -49,6 +53,12 @@ vi.mock("@formbricks/jobs", () => ({
       scheduleId: "authzed-reconciliation-audit",
       scope: "global",
       upsert: mockUpsertAuthzedReconciliationAudit,
+    },
+    authzedSurveyAudit: {
+      name: "authzed-survey.audit",
+      scheduleId: "daily-authzed-survey-audit",
+      scope: "global",
+      upsert: vi.fn(),
     },
     surveyArchivePurge: {
       name: "survey-archive-purge.process",
@@ -77,6 +87,13 @@ vi.mock("@formbricks/jobs", () => ({
       scheduleId: "workflow-run-reconcile",
       scope: "global",
       upsert: mockUpsertWorkflowRunReconcile,
+    },
+    workflowsUsageSnapshot: {
+      name: "workflows-usage.snapshot",
+      remove: mockRemoveWorkflowsUsageSnapshot,
+      scheduleId: "daily-workflows-usage-snapshot",
+      scope: "global",
+      upsert: mockUpsertWorkflowsUsageSnapshot,
     },
   },
   startJobsRuntime: mockStartJobsRuntime,
@@ -120,12 +137,17 @@ vi.mock("@/modules/ee/workflows/lib/runner/process-workflow-run-reconcile-job", 
   processWorkflowRunReconcileJob: mockProcessWorkflowRunReconcileJob,
 }));
 
+vi.mock("@/modules/ee/workflows/lib/analytics/process-workflows-usage-snapshot-job", () => ({
+  processWorkflowsUsageSnapshotJob: mockProcessWorkflowsUsageSnapshotJob,
+}));
+
 vi.mock("@/lib/authzed/outbox-processor", () => ({
   processAuthzedProjectionDeliveryJob: mockProcessAuthzedProjectionDeliveryJob,
 }));
 
 vi.mock("@/lib/authzed/scheduled-reconciliation", () => ({
   processAuthzedScheduledReconciliationJob: mockProcessAuthzedScheduledReconciliationJob,
+  processAuthzedSurveyAuditJob: vi.fn(),
 }));
 
 describe("instrumentation-jobs", () => {
@@ -147,6 +169,12 @@ describe("instrumentation-jobs", () => {
       queueName: "background-jobs",
     });
     mockRemoveWorkflowRunReconcile.mockResolvedValue(true);
+    mockRemoveWorkflowsUsageSnapshot.mockResolvedValue(true);
+    mockUpsertWorkflowsUsageSnapshot.mockResolvedValue({
+      id: "workflows-usage-snapshot-schedule-1",
+      name: "workflows-usage.snapshot",
+      queueName: "background-jobs",
+    });
     mockGetJobsQueueingConfig.mockReturnValue({
       enabled: false,
       redisUrl: null,
@@ -222,13 +250,16 @@ describe("instrumentation-jobs", () => {
       jobHandlerOverrides: {
         "authzed-projection.deliver": expect.any(Function),
         "authzed-reconciliation.audit": expect.any(Function),
+        "authzed-survey.audit": expect.any(Function),
         "response-pipeline.process": expect.any(Function),
         "survey-scheduling.reconcile": expect.any(Function),
         "survey-archive-purge.process": expect.any(Function),
+        "webhook-delivery.process": expect.any(Function),
         "workflow-run.process": expect.any(Function),
         "test-log.process": mockExistingOverride,
         "usage-telemetry.process": expect.any(Function),
         "workflow-run.reconcile": expect.any(Function),
+        "workflows-usage.snapshot": expect.any(Function),
       },
       redisUrl: "redis://localhost:6379",
       workerCount: 2,
@@ -480,6 +511,8 @@ describe("instrumentation-jobs", () => {
         await import("@/lib/telemetry/constants");
       const { WORKFLOW_RUN_RECONCILE_INTERVAL_MS } =
         await import("@/modules/ee/workflows/lib/runner/reconcile-constants");
+      const { WORKFLOWS_USAGE_SNAPSHOT_DAILY_CRON_PATTERN, WORKFLOWS_USAGE_SNAPSHOT_TIME_ZONE } =
+        await import("@/modules/ee/workflows/lib/analytics/constants");
 
       await registerRecurringJobs();
       await registerRecurringJobs();
@@ -527,12 +560,19 @@ describe("instrumentation-jobs", () => {
         everyMs: WORKFLOW_RUN_RECONCILE_INTERVAL_MS,
         kind: "every",
       });
+      expect(mockUpsertWorkflowsUsageSnapshot).toHaveBeenCalledTimes(1);
+      expect(mockUpsertWorkflowsUsageSnapshot).toHaveBeenCalledWith({
+        cronPattern: WORKFLOWS_USAGE_SNAPSHOT_DAILY_CRON_PATTERN,
+        kind: "cron",
+        timeZone: WORKFLOWS_USAGE_SNAPSHOT_TIME_ZONE,
+      });
       // Upsert is idempotent and updates repeat options in place; removing first risks leaving the
       // scheduler with no delayed job (bullmq#3063).
       expect(mockRemoveSurveyScheduling).not.toHaveBeenCalled();
       expect(mockRemoveSurveyArchivePurge).not.toHaveBeenCalled();
       expect(mockRemoveUsageTelemetry).not.toHaveBeenCalled();
       expect(mockRemoveWorkflowRunReconcile).not.toHaveBeenCalled();
+      expect(mockRemoveWorkflowsUsageSnapshot).not.toHaveBeenCalled();
     }
   );
 

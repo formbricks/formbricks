@@ -9,6 +9,7 @@ import {
   UNSPLASH_ACCESS_KEY,
 } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getTranslate } from "@/lingodotdev/server";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
@@ -16,6 +17,7 @@ import {
   getIsContactsEnabled,
   getIsQuotasEnabled,
   getIsSpamProtectionEnabled,
+  getIsWorkflowsEnabled,
 } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getTeamMemberDetails } from "@/modules/survey/editor/lib/team";
@@ -32,6 +34,7 @@ import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
 import { getSurveyAuth } from "@/modules/survey/lib/survey-auth";
 import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
 import { SURVEY_SCHEDULING_CONFIG } from "@/modules/survey/scheduling/lib/constants";
+import { getSurveyVisibilityViewer } from "@/modules/survey/visibility/lib/gate";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { SurveyEditor } from "./components/survey-editor";
 import { getUserLocale } from "./lib/user";
@@ -53,8 +56,15 @@ export const SurveyEditorPage = async (props: {
   // Gated here rather than by a layout: the editor lives in its own route group
   // ((survey-editor)) with its own layout, so it does not inherit the guard on
   // (app)/workspaces/[workspaceId]/surveys/[surveyId]/layout.tsx.
-  const { session, isMember, hasReadAccess, currentUserMembership, workspacePermission, workspace } =
-    await getSurveyAuth(params.workspaceId, params.surveyId);
+  const {
+    session,
+    isMember,
+    hasReadAccess,
+    currentUserMembership,
+    workspacePermission,
+    workspace,
+    organization,
+  } = await getSurveyAuth(params.workspaceId, params.surveyId);
 
   const t = await getTranslate();
 
@@ -73,7 +83,10 @@ export const SurveyEditorPage = async (props: {
     getContactAttributeKeys(workspace.id),
     getResponseCountBySurveyId(params.surveyId),
     getFinishedResponseCountBySurveyId(params.surveyId),
-    getSegments(workspace.id),
+    // ENG-3282: segments reach the browser, so their survey references name only surveys this viewer sees.
+    getUserVisibleSurveyWhere(session.user.id, organization.id).then((where) =>
+      getSegments(workspace.id, where)
+    ),
   ]);
 
   if (!workspaceWithTeamIds) {
@@ -97,12 +110,15 @@ export const SurveyEditorPage = async (props: {
     isQuotasAllowed,
     isExternalUrlsAllowed,
     isUserTargetingAllowed,
+    isWorkflowsAllowed,
   ] = await Promise.all([
     getSurveyFollowUpsPermission(workspaceWithTeamIds.organizationId),
     getIsSpamProtectionEnabled(workspaceWithTeamIds.organizationId),
     getIsQuotasEnabled(workspaceWithTeamIds.organizationId),
     getExternalUrlsPermission(workspaceWithTeamIds.organizationId),
     getIsContactsEnabled(workspaceWithTeamIds.organizationId),
+    // Drives the Follow-ups deprecation: the tab only survives where Workflows cannot replace it.
+    getIsWorkflowsEnabled(workspaceWithTeamIds.organizationId),
   ]);
 
   const quotas = isQuotasAllowed && survey ? await getQuotas(survey.id) : [];
@@ -124,6 +140,11 @@ export const SurveyEditorPage = async (props: {
 
   const isCxMode = searchParams.mode === "cx";
   const publicDomain = getPublicDomain();
+  const { surveyVisibilityGate, visibility, surveyAccess, ownerName } = await getSurveyVisibilityViewer(
+    survey,
+    session.user.id,
+    workspaceWithTeamIds.organizationId
+  );
 
   return (
     <SurveyEditor
@@ -147,6 +168,7 @@ export const SurveyEditorPage = async (props: {
       locale={locale ?? DEFAULT_LOCALE}
       mailFrom={MAIL_FROM ?? "hola@formbricks.com"}
       isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
+      isWorkflowsAllowed={isWorkflowsAllowed}
       userEmail={userEmail}
       teamMemberDetails={teamMemberDetails}
       isStorageConfigured={IS_STORAGE_CONFIGURED}
@@ -155,6 +177,10 @@ export const SurveyEditorPage = async (props: {
       isExternalUrlsAllowed={isExternalUrlsAllowed}
       publicDomain={publicDomain}
       enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
+      surveyVisibilityGate={surveyVisibilityGate}
+      visibility={visibility}
+      surveyAccess={surveyAccess}
+      ownerName={ownerName}
     />
   );
 };

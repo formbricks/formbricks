@@ -3,6 +3,17 @@ description: >-
   RFC 9457 Problem Details for HTTP APIs (`application/problem+json`). Responses
   typically include a machine-readable `code` field alongside `title`, `status`,
   `detail`, and `requestId`.
+
+
+  Branch on `code`, not on `detail` or `title`: `code` is stable and
+  locale-independent, whereas `detail` is prose that may be reworded. No problem
+  sets `type`, so per RFC 9457 §4.2.1 `title` is always the HTTP reason phrase
+  for `status` and carries no information of its own.
+
+
+  Member naming is frozen as published, mixed conventions included
+  (`requestId` alongside `invalid_params` and `details.resource_type`):
+  renaming any of them would break every client that reads them.
 required:
   - title
   - status
@@ -27,6 +38,7 @@ properties:
       - ai_generated_payload_invalid
       - ai_instance_not_configured
       - ai_output_too_long
+      - ai_provider_auth_failed
       - ai_smart_tools_disabled
       - bad_gateway
       - bad_request
@@ -37,10 +49,17 @@ properties:
       - not_authenticated
       - not_found
       - payload_too_large
+      - projection_pending
       - service_unavailable
+      - stored_survey_invalid
+      - survey_not_workspace_visible
       - too_many_requests
       - unprocessable_content
+      - visibility_blocked_by_connections
+      - visibility_change_not_allowed
+      - visibility_not_enabled
       - workflow_not_executable
+      - workspace_survey_limit_reached
   requestId:
     type: string
   details:

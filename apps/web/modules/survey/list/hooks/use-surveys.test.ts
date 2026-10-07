@@ -5,7 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { surveyKeys } from "@/modules/survey/list/lib/query";
 import type { TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
+import { useDeleteSurvey } from "./use-delete-survey";
+import { useRestoreSurvey } from "./use-restore-survey";
 import { useSurveys } from "./use-surveys";
 
 function createWrapper(queryClient: QueryClient) {
@@ -47,12 +50,16 @@ describe("useSurveys", () => {
                 completedResponseCount: 0,
                 creator: { name: "Alice" },
                 singleUse: null,
+                visibility: "workspace",
+                owner: { name: "Test User" },
+                access: { via: "workspace", canManageVisibility: false },
               },
             ],
             meta: {
               limit: 20,
               nextCursor: "cursor_1",
               totalCount: 2,
+              workspaceSurveyCount: 5,
             },
           }),
           { status: 200, headers: { "Content-Type": "application/json" } }
@@ -74,12 +81,16 @@ describe("useSurveys", () => {
                 completedResponseCount: 2,
                 creator: { name: "Bob" },
                 singleUse: null,
+                visibility: "workspace",
+                owner: { name: "Test User" },
+                access: { via: "workspace", canManageVisibility: false },
               },
             ],
             meta: {
               limit: 20,
               nextCursor: null,
               totalCount: null,
+              workspaceSurveyCount: null,
             },
           }),
           { status: 200, headers: { "Content-Type": "application/json" } }
@@ -103,6 +114,7 @@ describe("useSurveys", () => {
             name: "",
             status: [],
             type: [],
+            visibility: [],
             sortBy: "relevance",
           },
         }),
@@ -111,7 +123,7 @@ describe("useSurveys", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.surveys).toHaveLength(1);
-    expect(result.current.totalCount).toBe(2);
+    expect(result.current.workspaceSurveyCount).toBe(5);
     expect(result.current.hasNextPage).toBe(true);
 
     await act(async () => {
@@ -120,6 +132,8 @@ describe("useSurveys", () => {
 
     await waitFor(() => expect(result.current.surveys).toHaveLength(2));
     expect(result.current.hasNextPage).toBe(false);
+    // The cursor page came back with null counts; the hook keeps reading the workspace count from page one.
+    expect(result.current.workspaceSurveyCount).toBe(5);
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
       "/api/v3/surveys?workspaceId=env_1&limit=20&sortBy=relevance&cursor=cursor_1&includeTotalCount=false",
@@ -154,12 +168,16 @@ describe("useSurveys", () => {
                 completedResponseCount: 0,
                 creator: { name: "Alice" },
                 singleUse: null,
+                visibility: "workspace",
+                owner: { name: "Test User" },
+                access: { via: "workspace", canManageVisibility: false },
               },
             ],
             meta: {
               limit: 20,
               nextCursor: null,
               totalCount: 1,
+              workspaceSurveyCount: 3,
             },
           }),
           { status: 200, headers: { "Content-Type": "application/json" } }
@@ -179,6 +197,7 @@ describe("useSurveys", () => {
       name: "",
       status: [],
       type: [],
+      visibility: [],
       sortBy: "relevance",
     };
 
@@ -225,12 +244,16 @@ describe("useSurveys", () => {
               completedResponseCount: 4,
               creator: { name: "Bob" },
               singleUse: null,
+              visibility: "workspace",
+              owner: { name: "Test User" },
+              access: { via: "workspace", canManageVisibility: false },
             },
           ],
           meta: {
             limit: 20,
             nextCursor: null,
             totalCount: 1,
+            workspaceSurveyCount: 3,
           },
         }),
         { status: 200, headers: { "Content-Type": "application/json" } }
@@ -238,5 +261,75 @@ describe("useSurveys", () => {
     );
 
     await waitFor(() => expect(result.current.surveys[0]?.name).toBe("Survey 2"));
+  });
+
+  // ENG-2583: archive, restore and delete all run through `useSurveyRemovalMutation`, so the list
+  // suppresses the row for whichever of them is in flight. Archive's own file drives the full
+  // reappear-mid-flight scenario; this covers the other two inheriting it.
+  test.each([
+    ["delete", useDeleteSurvey],
+    ["restore", useRestoreSurvey],
+  ] as const)("leaves out a survey whose %s is still running", async (_action, useRemoval) => {
+    const fetchMock = vi.mocked(global.fetch);
+    fetchMock.mockImplementation((input) =>
+      String(input).includes("/api/v3/surveys?")
+        ? Promise.resolve(
+            new Response(
+              JSON.stringify({
+                data: [
+                  {
+                    id: "survey_1",
+                    name: "Survey 1",
+                    workspaceId: "env_1",
+                    type: "link",
+                    status: "inProgress",
+                    createdAt: "2026-04-15T10:00:00.000Z",
+                    updatedAt: "2026-04-15T10:00:00.000Z",
+                    responseCount: 0,
+                    completedResponseCount: 0,
+                    creator: { name: "Alice" },
+                    singleUse: null,
+                    visibility: "workspace",
+                    owner: { name: "Test User" },
+                    access: { via: "workspace", canManageVisibility: false },
+                  },
+                ],
+                meta: { limit: 20, nextCursor: null, totalCount: 1, workspaceSurveyCount: 3 },
+              }),
+              { status: 200, headers: { "Content-Type": "application/json" } }
+            )
+          )
+        : new Promise<Response>(() => {
+            // The removal request never settles, so the whole assertion runs inside its window.
+          })
+    );
+
+    const queryClient = new QueryClient({
+      defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
+    });
+
+    const { result } = renderHook(
+      () => {
+        const list = useSurveys({
+          workspaceId: "env_1",
+          limit: 20,
+          filters: { name: "", status: [], type: [], visibility: [], sortBy: "relevance" },
+        });
+        const removal = useRemoval({ queryKey: list.queryKey });
+
+        return { list, removal };
+      },
+      { wrapper: createWrapper(queryClient) }
+    );
+
+    await waitFor(() => expect(result.current.list.surveys).toHaveLength(1));
+
+    result.current.removal.mutate({ surveyId: "survey_1" });
+
+    await waitFor(() => expect(result.current.removal.isPending).toBe(true));
+    await queryClient.refetchQueries({ queryKey: surveyKeys.lists() });
+    await waitFor(() => expect(result.current.list.data?.pages[0]?.meta.totalCount).toBe(1));
+
+    expect(result.current.list.surveys).toHaveLength(0);
   });
 });

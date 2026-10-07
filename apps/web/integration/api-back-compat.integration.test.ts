@@ -1,0 +1,743 @@
+import { beforeEach, describe, expect, test } from "vitest";
+import { prisma } from "@formbricks/database";
+import {
+  embeddedFieldsFromLegacyInput,
+  toDesiredEmbeddedFields,
+} from "@formbricks/types/embedded-data-mapping";
+import { type TSurvey } from "@formbricks/types/surveys/types";
+import {
+  V3SurveyArchivedError,
+  V3SurveyStoredDocumentError,
+  patchV3Survey,
+} from "@/app/api/v3/surveys/patch";
+import { V3SurveyReferenceValidationError } from "@/app/api/v3/surveys/reference-validation";
+import { resetDb } from "@/integration/reset-db";
+import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
+import { createSurvey, selectSurvey, updateSurvey, updateSurveyDraft } from "@/lib/survey/service";
+import { transformPrismaSurvey } from "@/lib/survey/utils";
+
+/**
+ * Management API back-compat for Embedded Data, against real Postgres.
+ *
+ * Two things only a real database can show, and neither is covered anywhere else:
+ *
+ * 1. **What v1 and v2 keep serving.** ENG-2404 dropped the `hiddenFields` / `variables` columns, so
+ *    `transformPrismaSurvey` derives both from the rows it inlines as `embeddedFields`. What can
+ *    regress is the *shape* of that projection and whether it still describes the stored rows — at
+ *    which point v1 and v2 would describe a survey the app itself no longer agrees with. These tests
+ *    are what makes that a checked property rather than a convention.
+ *
+ * 2. **Which names a write may newly declare (ENG-1839).** The guard is grandfathered, so its
+ *    behaviour depends on what the survey already holds — which means a fixture with real stored rows
+ *    is the only honest way to test it. The table below is the contract an integrator (and the MCP
+ *    `patch_survey` tool, which comes through this same path) actually meets.
+ */
+
+/** A variable's storage key is its cuid, so a rename moves the name but never the address. */
+const VARIABLE_ID = "clvar123456789012345678902";
+
+const BLOCKS = [
+  {
+    id: "clbk1234567890123456789013",
+    name: "Main Block",
+    elements: [
+      {
+        id: "satisfaction",
+        type: "openText",
+        headline: { default: "What should we improve?" },
+        required: true,
+        inputType: "text",
+        charLimit: { enabled: false },
+      },
+    ],
+  },
+];
+
+const seedSurvey = async (legacy?: {
+  variables?: unknown[];
+  hiddenFields?: { enabled: boolean; fieldIds?: string[] };
+}): Promise<TSurvey> => {
+  const organization = await prisma.organization.create({ data: { name: "Back-compat Org" } });
+  const workspace = await prisma.workspace.create({
+    data: { name: "Back-compat Workspace", organizationId: organization.id },
+  });
+  const survey = await prisma.survey.create({
+    data: {
+      name: "Back-compat Survey",
+      type: "link",
+      status: "draft",
+      workspaceId: workspace.id,
+      blocks: BLOCKS,
+    },
+    select: { id: true },
+  });
+
+  // The survey's fields exist only as rows (ENG-2404): write them the way a legacy save would.
+  await prisma.$transaction((tx) =>
+    reconcileEmbeddedData(tx, {
+      surveyId: survey.id,
+      workspaceId: workspace.id,
+      patch: { variables: legacy?.variables as never, hiddenFields: legacy?.hiddenFields },
+    })
+  );
+
+  // Read back AFTER the reconcile, because `survey` above predates the rows. Both write boundaries
+  // take a loaded survey as `existing`, and since ENG-3228 the naming guard reads its `embeddedFields`
+  // rather than its columns — so a fixture holding the pre-reconcile object would grandfather nothing
+  // and refuse names every real caller may send.
+  return readAsLegacyApi(survey.id);
+};
+
+/**
+ * The survey as `GET /api/v1/management/surveys/{id}` and the v2 equivalent serve it. Both read
+ * through `selectSurvey`, whose Embedded Data join `transformPrismaSurvey` derives `hiddenFields` and
+ * `variables` from, so this is the payload an integration written before V1 parses.
+ */
+const readAsLegacyApi = async (surveyId: string): Promise<TSurvey> =>
+  prisma.survey
+    .findUniqueOrThrow({ where: { id: surveyId }, select: selectSurvey })
+    .then((survey) => transformPrismaSurvey<TSurvey>(survey));
+
+/** The rows, in the shape `toDesiredEmbeddedFields` produces, so columns and rows can be compared. */
+const readRows = async (surveyId: string) =>
+  prisma.surveyEmbeddedData
+    .findMany({
+      where: { surveyId },
+      orderBy: [{ order: "asc" }, { storageKey: "asc" }],
+      select: {
+        storageKey: true,
+        embeddedData: {
+          select: {
+            name: true,
+            source: true,
+            dataType: true,
+            defaultValue: true,
+            // Part of what `toDesiredEmbeddedFields` describes since ENG-3228, and part of what a
+            // legacy write must not change: every column-derived field is local and unlocked.
+            locked: true,
+            key: true,
+          },
+        },
+      },
+    })
+    .then((links) => links.map(({ storageKey, embeddedData }) => ({ storageKey, ...embeddedData })));
+
+/**
+ * The assertion that catches drift: what the served legacy keys say, turned into rows, must equal the
+ * rows actually stored. A projection that stopped describing the rows fails here.
+ */
+const expectNoDrift = async (surveyId: string) => {
+  const served = await readAsLegacyApi(surveyId);
+  const fromColumns = toDesiredEmbeddedFields({
+    variables: served.variables,
+    hiddenFields: served.hiddenFields,
+  });
+
+  expect(await readRows(surveyId)).toEqual(fromColumns);
+};
+
+/**
+ * Runs a patch and reports whether the naming guard refused it, so the table reads as a table.
+ *
+ * The two refusals are reported separately because they are not the same answer: `refused` means the
+ * request was evaluated and rejected, `storedSurveyRefused` (ENG-3070) means it never was, because
+ * the survey already on disk does not satisfy the contract. Both are 422s; only the first is the
+ * caller's to fix.
+ */
+const patchOutcome = async (
+  survey: TSurvey,
+  document: Parameters<typeof patchV3Survey>[1],
+  requestId: string
+): Promise<"accepted" | { refused: string[] } | { storedSurveyRefused: string[] }> => {
+  try {
+    await patchV3Survey(survey, document, requestId);
+    return "accepted";
+  } catch (error) {
+    if (error instanceof V3SurveyStoredDocumentError) {
+      return { storedSurveyRefused: error.invalidParams.map((param) => param.code) };
+    }
+    if (error instanceof V3SurveyReferenceValidationError) {
+      return { refused: error.invalidParams.map((param) => param.code) };
+    }
+    throw error;
+  }
+};
+
+beforeEach(async () => {
+  await resetDb();
+});
+
+describe("what v1 and v2 keep serving for a survey with Embedded Data", () => {
+  test("hiddenFields keeps main's { enabled, fieldIds } shape", async () => {
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["plan", "utm_source"] } });
+
+    const served = await readAsLegacyApi(survey.id);
+
+    // Order is part of the contract: it is the export column order and the recall picker order.
+    expect(served.hiddenFields).toEqual({ enabled: true, fieldIds: ["plan", "utm_source"] });
+  });
+
+  test("variables keep main's array-of-objects shape", async () => {
+    const survey = await seedSurvey({
+      variables: [{ id: VARIABLE_ID, name: "score", type: "number", value: 7 }],
+    });
+
+    const served = await readAsLegacyApi(survey.id);
+
+    expect(served.variables).toEqual([{ id: VARIABLE_ID, name: "score", type: "number", value: 7 }]);
+  });
+
+  test("a survey with no Embedded Data still reports hiddenFields rather than omitting it", async () => {
+    const survey = await seedSurvey();
+
+    const served = await readAsLegacyApi(survey.id);
+
+    // An absent key breaks a consumer doing `survey.hiddenFields.fieldIds`, which is why this is
+    // asserted rather than left to the schema.
+    expect(served.hiddenFields).toBeDefined();
+    expect(served.hiddenFields.fieldIds ?? []).toEqual([]);
+  });
+
+  test("the raw row relation never leaks into the payload", async () => {
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["plan"] } });
+
+    const served = await readAsLegacyApi(survey.id);
+
+    expect(served).not.toHaveProperty("embeddedDataLinks");
+  });
+
+  test("what v1 serves and what the rows hold agree after a seed", async () => {
+    const survey = await seedSurvey({
+      variables: [{ id: VARIABLE_ID, name: "score", type: "number", value: 7 }],
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+    });
+
+    await expectNoDrift(survey.id);
+  });
+
+  test("a v3 patch moves the rows, and v1 serves what it moved", async () => {
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["plan"] } });
+
+    await patchV3Survey(
+      survey,
+      { hiddenFields: { enabled: true, fieldIds: ["plan", "utm_source"] } },
+      "req_backcompat_patch_adds"
+    );
+
+    const served = await readAsLegacyApi(survey.id);
+    expect(served.hiddenFields.fieldIds).toEqual(["plan", "utm_source"]);
+    await expectNoDrift(survey.id);
+  });
+
+  test("a v3 patch that removes a field drops it from the v1 payload too", async () => {
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["plan", "utm_source"] } });
+
+    await patchV3Survey(
+      survey,
+      { hiddenFields: { enabled: true, fieldIds: ["plan"] } },
+      "req_backcompat_patch_removes"
+    );
+
+    const served = await readAsLegacyApi(survey.id);
+    expect(served.hiddenFields.fieldIds).toEqual(["plan"]);
+    await expectNoDrift(survey.id);
+  });
+
+  test("deriving the legacy shape back off the rows reproduces what v1 serves", async () => {
+    // The round trip ENG-2404 depends on: the columns are gone, so the served legacy shape and the
+    // input adapter have to describe the same fields at the same addresses.
+    const survey = await seedSurvey({
+      variables: [{ id: VARIABLE_ID, name: "score", type: "number", value: 7 }],
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+    });
+
+    const served = await readAsLegacyApi(survey.id);
+    const derived = embeddedFieldsFromLegacyInput({
+      variables: served.variables,
+      hiddenFields: served.hiddenFields,
+    });
+
+    expect(derived.map(({ link }) => link.storageKey)).toEqual([VARIABLE_ID, "plan"]);
+  });
+});
+
+describe("which names a write may newly declare (ENG-1839)", () => {
+  test("a survey that already declares a reserved name keeps patching", async () => {
+    // `url` names an auto-captured system field. A survey that predates the rule keeps it, and
+    // re-sending it unchanged must never fail — this is the case an integrator hits on every write.
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["url"] } });
+
+    expect(
+      await patchOutcome(
+        survey,
+        { hiddenFields: { enabled: true, fieldIds: ["url"] } },
+        "req_backcompat_gf_unchanged"
+      )
+    ).toBe("accepted");
+  });
+
+  test("a grandfathered name survives a patch that adds a conforming field beside it", async () => {
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["url"] } });
+
+    expect(
+      await patchOutcome(
+        survey,
+        { hiddenFields: { enabled: true, fieldIds: ["url", "new_field"] } },
+        "req_backcompat_gf_plus_ok"
+      )
+    ).toBe("accepted");
+  });
+
+  test("a NEW camelCase field is refused, even beside a grandfathered one", async () => {
+    // The half most likely to surprise a caller: `firstName` is an ordinary name, and the MCP
+    // `patch_survey` tool comes through this same path, so an agent naming a field this way gets a
+    // 400 where it would have worked before V1.
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["url"] } });
+
+    expect(
+      await patchOutcome(
+        survey,
+        { hiddenFields: { enabled: true, fieldIds: ["url", "firstName"] } },
+        "req_backcompat_new_camel"
+      )
+    ).toEqual({ refused: ["forbidden_identifier"] });
+  });
+
+  test("a NEW reserved name is refused", async () => {
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["url"] } });
+
+    expect(
+      await patchOutcome(
+        survey,
+        { hiddenFields: { enabled: true, fieldIds: ["url", "country"] } },
+        "req_backcompat_new_reserved"
+      )
+    ).toEqual({ refused: ["forbidden_identifier"] });
+  });
+
+  test("grandfathering is case-insensitive", async () => {
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["URL"] } });
+
+    expect(
+      await patchOutcome(
+        survey,
+        { hiddenFields: { enabled: true, fieldIds: ["url"] } },
+        "req_backcompat_gf_case"
+      )
+    ).toBe("accepted");
+  });
+
+  test("removing a grandfathered name spends the reprieve — it cannot be re-added", async () => {
+    // The second gotcha, and the one an integration that rebuilds `hiddenFields` across two calls
+    // will hit: the removal succeeds, and the re-add is then a new declaration.
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["url"] } });
+
+    expect(
+      await patchOutcome(
+        survey,
+        { hiddenFields: { enabled: true, fieldIds: [] } },
+        "req_backcompat_gf_remove"
+      )
+    ).toBe("accepted");
+
+    const afterRemoval = await readAsLegacyApi(survey.id);
+
+    expect(
+      await patchOutcome(
+        afterRemoval,
+        { hiddenFields: { enabled: true, fieldIds: ["url"] } },
+        "req_backcompat_gf_readd"
+      )
+    ).toEqual({ refused: ["forbidden_identifier"] });
+  });
+
+  test("renaming a grandfathered field to a conforming name works", async () => {
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["url"] } });
+
+    expect(
+      await patchOutcome(
+        survey,
+        { hiddenFields: { enabled: true, fieldIds: ["page_url"] } },
+        "req_backcompat_gf_rename_ok"
+      )
+    ).toBe("accepted");
+  });
+
+  test("renaming a grandfathered field to another non-conforming name is refused", async () => {
+    // So a legacy camelCase name may be kept forever, but the moment it is renamed the new
+    // convention becomes mandatory.
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["userRegion"] } });
+
+    expect(
+      await patchOutcome(
+        survey,
+        { hiddenFields: { enabled: true, fieldIds: ["userRegionV2"] } },
+        "req_backcompat_gf_rename_bad"
+      )
+    ).toEqual({ refused: ["forbidden_identifier"] });
+  });
+
+  test("a variable may NOT take the name of an existing hidden field", async () => {
+    // Refused as `duplicate_identifier`, and NOT by the ENG-1839 guard: a variable is addressed by
+    // its cuid and a hidden field by its name, so the two storage keys never collide and the
+    // reconcile would accept both. v3's reference validation is what refuses it, because recall and
+    // logic address both by name and two entries under one name are ambiguous.
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["plan"] } });
+
+    expect(
+      await patchOutcome(
+        survey,
+        { variables: [{ id: VARIABLE_ID, name: "plan", type: "text", value: "free" }] },
+        "req_backcompat_variable_shadows_hidden_field"
+      )
+    ).toEqual({ refused: ["duplicate_identifier"] });
+  });
+
+  test("a survey that already holds the clash is refused against the stored survey, not the request", async () => {
+    // The counterpart to the row above: there, the patch *introduces* the clash and is the caller's
+    // fault; here the survey already holds one — a variable and a hidden field both named `plan` —
+    // and v3 refuses EVERY patch of it, including the one below, which only renames the survey and
+    // resends neither key. Reference validation runs over the whole merged document, so there is no
+    // patch small enough to slip past it.
+    //
+    // The editor refuses to CREATE such a survey — the Embedded Data card checks it through
+    // `validateEmbeddedFieldName`, which passes both namespaces' declared names and so reports the
+    // generic `Duplicate` (ENG-1851; the two legacy cards had a message each). But surveys holding
+    // the clash already exist — as of the September 2026 production copy, 46 of them, 28 `inProgress`,
+    // with names like `first_name`, `brand`, `score` — and v3 then refuses EVERY patch of one,
+    // including a patch that resends neither key: the one below only renames the survey and is still
+    // rejected, because reference validation runs over the whole merged document.
+    //
+    // What ENG-3070 changed is the attribution, not the refusal. This used to come back as
+    // `duplicate_identifier` in `invalid_params`, which reads as "your request is malformed" and sent
+    // integrators looking for a payload bug that was not there. It is now a `stored_survey_invalid`
+    // 422 whose paths point into the stored survey, with a detail saying a patch that supplies the fix
+    // is accepted. Still 422 for this `{ name }` patch — but now honestly attributed.
+    const survey = await seedSurvey({
+      variables: [{ id: VARIABLE_ID, name: "plan", type: "text", value: "free" }],
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+    });
+
+    expect(await patchOutcome(survey, { name: "Renamed" }, "req_backcompat_clash_untouched")).toEqual({
+      storedSurveyRefused: ["duplicate_identifier"],
+    });
+  });
+});
+
+/**
+ * The same grandfathering, proven at the v1 / v2 write boundary rather than v3's.
+ *
+ * `PUT /api/v1/management/surveys/{id}` and the v2 equivalent both land in `updateSurvey`, whose
+ * guard (`lib/survey/service.ts`, the `assertNoReservedNewDeclaredFieldNames` call) is a second call
+ * site of the same function v3 uses. Shared code is not shared coverage: the two sites build
+ * `existing` differently — v3 from the current survey and the patch *document*, this one from the
+ * current survey and the *whole* replacement survey — and a PUT replaces rather than merges, so a
+ * key the caller omits is a removal here and a no-op there. That difference is exactly what decides
+ * whether a legacy integration's every-field PUT keeps working, so it gets its own tests.
+ */
+const putOutcome = async (
+  survey: TSurvey,
+  patch: Partial<TSurvey>
+): Promise<"accepted" | { refused: string }> => {
+  // `embeddedFields` is dropped for the same reason the route drops it: `ZSurveyUpdateInput` omits
+  // the key, so what a v1 PUT hands `updateSurvey` is the legacy columns and nothing else. Leaving
+  // it on would put every test below on the V2 carrier and stop testing this boundary at all.
+  const { embeddedFields: _embeddedFields, ...legacyPut } = { ...survey, ...patch };
+  try {
+    await updateSurvey(legacyPut);
+    return "accepted";
+  } catch (error) {
+    // The guard throws InvalidInputError, which `handleApiError` maps to a 400 for both APIs.
+    return { refused: (error as Error).name };
+  }
+};
+
+describe("grandfathering at the v1 / v2 write boundary (updateSurvey)", () => {
+  test("a full PUT that resends a grandfathered reserved name is accepted", async () => {
+    // The case every legacy integration hits: read the survey, change something unrelated, PUT it
+    // all back. `url` is reserved, and re-sending it must not fail.
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["url"] } });
+
+    expect(await putOutcome(survey, { name: "Renamed via PUT" })).toBe("accepted");
+
+    const served = await readAsLegacyApi(survey.id);
+    expect(served.hiddenFields.fieldIds).toEqual(["url"]);
+    await expectNoDrift(survey.id);
+  });
+
+  test("a PUT that adds a conforming field beside a grandfathered one is accepted", async () => {
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["url"] } });
+
+    expect(
+      await putOutcome(survey, { hiddenFields: { enabled: true, fieldIds: ["url", "new_field"] } })
+    ).toBe("accepted");
+    await expectNoDrift(survey.id);
+  });
+
+  test("a PUT that adds a NEW reserved name is refused", async () => {
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["url"] } });
+
+    expect(
+      await putOutcome(survey, { hiddenFields: { enabled: true, fieldIds: ["url", "country"] } })
+    ).toEqual({ refused: "InvalidInputError" });
+  });
+
+  test("a PUT that adds a NEW camelCase field is refused", async () => {
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["url"] } });
+
+    expect(
+      await putOutcome(survey, { hiddenFields: { enabled: true, fieldIds: ["url", "firstName"] } })
+    ).toEqual({ refused: "InvalidInputError" });
+  });
+
+  test("a PUT that omits a grandfathered field removes it, and it cannot be PUT back", async () => {
+    // The PUT-specific shape of "removal spends the reprieve": omission is removal on this path,
+    // so an integration that rebuilds the field list can lose a reserved name it cannot restore.
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["url"] } });
+
+    expect(await putOutcome(survey, { hiddenFields: { enabled: true, fieldIds: [] } })).toBe("accepted");
+
+    const afterRemoval = await readAsLegacyApi(survey.id);
+    expect(afterRemoval.hiddenFields.fieldIds).toEqual([]);
+
+    expect(await putOutcome(afterRemoval, { hiddenFields: { enabled: true, fieldIds: ["url"] } })).toEqual({
+      refused: "InvalidInputError",
+    });
+  });
+
+  test("a PUT keeps the rows in step, so v1 never serves a stale field list", async () => {
+    const survey = await seedSurvey({
+      variables: [{ id: VARIABLE_ID, name: "score", type: "number", value: 7 }],
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+    });
+
+    expect(await putOutcome(survey, { hiddenFields: { enabled: true, fieldIds: ["plan", "tier"] } })).toBe(
+      "accepted"
+    );
+
+    const served = await readAsLegacyApi(survey.id);
+    expect(served.hiddenFields.fieldIds).toEqual(["plan", "tier"]);
+    expect(served.variables).toHaveLength(1);
+    await expectNoDrift(survey.id);
+  });
+
+  // ENG-2933: the one write this boundary accepted and no other surface did. The reconcile cannot see
+  // it — a variable is stored under its cuid, a hidden field under its name — so the name guard is
+  // where it is refused, grandfathered exactly like a reserved name.
+  test("a PUT that gives a variable an existing hidden field's name is refused", async () => {
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["plan"] } });
+
+    expect(
+      await putOutcome(survey, { variables: [{ id: VARIABLE_ID, name: "plan", type: "text", value: "" }] })
+    ).toEqual({ refused: "InvalidInputError" });
+
+    // Refused before the transaction opened: nothing was written.
+    expect((await readAsLegacyApi(survey.id)).variables).toEqual([]);
+  });
+
+  test("a PUT that gives a hidden field an existing variable's name is refused", async () => {
+    const survey = await seedSurvey({
+      variables: [{ id: VARIABLE_ID, name: "score", type: "number", value: 7 }],
+    });
+
+    expect(await putOutcome(survey, { hiddenFields: { enabled: true, fieldIds: ["score"] } })).toEqual({
+      refused: "InvalidInputError",
+    });
+  });
+
+  test("a full PUT that resends a clash the survey already holds is accepted", async () => {
+    // The 46 production surveys: written straight into the columns before any surface checked. Their
+    // read-modify-write PUT resends both sides and must keep working.
+    const survey = await seedSurvey({
+      variables: [{ id: VARIABLE_ID, name: "first_name", type: "text", value: "" }],
+      hiddenFields: { enabled: true, fieldIds: ["first_name"] },
+    });
+
+    expect(await putOutcome(survey, { name: "Renamed via PUT" })).toBe("accepted");
+
+    const served = await readAsLegacyApi(survey.id);
+    expect(served.variables.map((variable) => variable.name)).toEqual(["first_name"]);
+    expect(served.hiddenFields.fieldIds).toEqual(["first_name"]);
+    await expectNoDrift(survey.id);
+  });
+
+  test("a grandfathered clash does not license a new one", async () => {
+    const survey = await seedSurvey({
+      variables: [{ id: VARIABLE_ID, name: "first_name", type: "text", value: "" }],
+      hiddenFields: { enabled: true, fieldIds: ["first_name", "plan"] },
+    });
+
+    expect(
+      await putOutcome(survey, {
+        variables: [
+          ...survey.variables,
+          { id: "clvar123456789012345678903", name: "plan", type: "text", value: "" },
+        ],
+      })
+    ).toEqual({ refused: "InvalidInputError" });
+  });
+});
+
+// ENG-3142: element ids and hidden field names key the same `response.data`, and the answer always
+// wins it — so a hidden field under an element's id can never hold a value. The editor and v3 refuse
+// it; these pin v1, grandfathered like the variable clash above.
+describe("a hidden field under an element's id, at the v1 / v2 write boundary", () => {
+  const ELEMENT_ID = BLOCKS[0].elements[0].id;
+
+  test("a PUT that gives a hidden field an element's id is refused", async () => {
+    const survey = await seedSurvey();
+
+    expect(await putOutcome(survey, { hiddenFields: { enabled: true, fieldIds: [ELEMENT_ID] } })).toEqual({
+      refused: "InvalidInputError",
+    });
+
+    // Refused before the transaction opened: nothing was written.
+    expect((await readAsLegacyApi(survey.id)).hiddenFields.fieldIds ?? []).toEqual([]);
+  });
+
+  test("a PUT that renames an element onto an existing hidden field is refused", async () => {
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: ["plan"] } });
+    const renamed = [{ ...BLOCKS[0], elements: [{ ...BLOCKS[0].elements[0], id: "plan" }] }];
+
+    expect(await putOutcome(survey, { blocks: renamed as never })).toEqual({ refused: "InvalidInputError" });
+    expect((await readAsLegacyApi(survey.id)).blocks[0].elements[0].id).toBe(ELEMENT_ID);
+  });
+
+  test("a draft save that sends empty blocks is still checked against the stored ones", async () => {
+    // `updateSurveyInternal` writes `blocks` only when the list is non-empty, so `blocks: []` keeps
+    // the stored elements. A PUT cannot send it (`ZSurvey` refuses a survey with no elements), but
+    // the draft save skips `ZSurvey` and runs the same guard.
+    const survey = await seedSurvey();
+    const { embeddedFields: _embeddedFields, ...draft } = {
+      ...survey,
+      blocks: [],
+      hiddenFields: { enabled: true, fieldIds: [ELEMENT_ID] },
+    };
+
+    await expect(updateSurveyDraft(draft)).rejects.toMatchObject({ name: "InvalidInputError" });
+    expect((await readAsLegacyApi(survey.id)).hiddenFields.fieldIds ?? []).toEqual([]);
+  });
+
+  test("a full PUT that resends a clash the survey already holds is accepted", async () => {
+    // Seeded past the guard, the way v1 created these before this check existed.
+    const survey = await seedSurvey({ hiddenFields: { enabled: true, fieldIds: [ELEMENT_ID] } });
+
+    expect(await putOutcome(survey, { name: "Renamed via PUT" })).toBe("accepted");
+
+    expect((await readAsLegacyApi(survey.id)).hiddenFields.fieldIds).toEqual([ELEMENT_ID]);
+    await expectNoDrift(survey.id);
+  });
+
+  test("a POST that declares a hidden field under an element's id is refused", async () => {
+    const organization = await prisma.organization.create({ data: { name: "Create Org" } });
+    const workspace = await prisma.workspace.create({
+      data: { name: "Create Workspace", organizationId: organization.id },
+    });
+
+    await expect(
+      createSurvey(
+        workspace.id,
+        {
+          name: "Created Survey",
+          blocks: BLOCKS as never,
+          hiddenFields: { enabled: true, fieldIds: [ELEMENT_ID] },
+        },
+        { creationFacts: { ownerId: null, visibility: "workspace" } }
+      )
+    ).rejects.toMatchObject({ name: "InvalidInputError" });
+    expect(await prisma.survey.count({ where: { workspaceId: workspace.id } })).toBe(0);
+  });
+});
+
+/**
+ * ENG-3228 made `embeddedFields` accepted input on the survey write path. One row per legacy write
+ * route, proving that a payload which does not carry it writes exactly what it always wrote — the
+ * legacy keys decide the rows, and v1 serves them back in the same shape.
+ *
+ * The fourth route, the duplicate, needs two workspaces and two libraries to say anything
+ * interesting, so its rows live in embedded-data-reconcile.integration.test.ts beside the shared-link
+ * cases they exist to contrast with.
+ */
+describe("no embeddedFields, no change — one row per legacy write route", () => {
+  const LEGACY_PAYLOAD = {
+    variables: [{ id: VARIABLE_ID, name: "score", type: "number" as const, value: 7 }],
+    hiddenFields: { enabled: true, fieldIds: ["plan"] },
+  };
+
+  test("POST /api/v1/management/surveys — createSurvey", async () => {
+    const organization = await prisma.organization.create({ data: { name: "Create Org" } });
+    const workspace = await prisma.workspace.create({
+      data: { name: "Create Workspace", organizationId: organization.id },
+    });
+
+    const created = await createSurvey(
+      workspace.id,
+      {
+        name: "Created Survey",
+        blocks: BLOCKS as never,
+        ...LEGACY_PAYLOAD,
+      },
+      { creationFacts: { ownerId: null, visibility: "workspace" } }
+    );
+
+    expect(await readAsLegacyApi(created.id)).toMatchObject(LEGACY_PAYLOAD);
+    await expectNoDrift(created.id);
+  });
+
+  test("PUT /api/v1/management/surveys/{id} — updateSurvey", async () => {
+    const survey = await seedSurvey();
+
+    expect(await putOutcome(survey, LEGACY_PAYLOAD)).toBe("accepted");
+
+    expect(await readAsLegacyApi(survey.id)).toMatchObject(LEGACY_PAYLOAD);
+    await expectNoDrift(survey.id);
+  });
+
+  test("PATCH /api/v3/.../surveys/{id} — patchV3Survey, the route MCP comes through", async () => {
+    const survey = await seedSurvey();
+
+    expect(await patchOutcome(survey, LEGACY_PAYLOAD, "req_backcompat_v3_no_embedded_fields")).toBe(
+      "accepted"
+    );
+
+    expect(await readAsLegacyApi(survey.id)).toMatchObject(LEGACY_PAYLOAD);
+    await expectNoDrift(survey.id);
+  });
+});
+
+describe("the compare-and-set holds against real Postgres (ENG-3069)", () => {
+  // The mocked tests pin the UPDATE's `where`; only a real row shows that a mismatch is a P2025 the
+  // re-read then resolves — and that nothing landed. `expectedUpdatedAt` here is the survey as the
+  // caller read it, so the pre-flight passes and the UPDATE itself is what refuses.
+  test("a write on a survey that moved on since the read is refused as stale, at the write", async () => {
+    const stale = await seedSurvey();
+    await prisma.survey.update({
+      where: { id: stale.id },
+      data: { name: "Moved on", updatedAt: new Date(stale.updatedAt.getTime() + 1000) },
+    });
+
+    await expect(
+      patchV3Survey(stale, { name: "Late" }, "req_cas_stale", undefined, {
+        expectedUpdatedAt: stale.updatedAt,
+      })
+    ).rejects.toMatchObject({ name: "V3SurveyStaleError", detectedAt: "write" });
+
+    const row = await prisma.survey.findUniqueOrThrow({ where: { id: stale.id }, select: { name: true } });
+    expect(row.name).toBe("Moved on");
+  });
+
+  test("a survey archived between the authorized read and the write is refused as archived", async () => {
+    const stale = await seedSurvey();
+    await prisma.survey.update({ where: { id: stale.id }, data: { archivedAt: new Date() } });
+
+    await expect(patchV3Survey(stale, { name: "Late" }, "req_cas_archived")).rejects.toBeInstanceOf(
+      V3SurveyArchivedError
+    );
+
+    const row = await prisma.survey.findUniqueOrThrow({
+      where: { id: stale.id },
+      select: { name: true, status: true },
+    });
+    expect(row).toEqual({ name: "Back-compat Survey", status: "draft" });
+  });
+});

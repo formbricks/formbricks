@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TChartConfig } from "@formbricks/types/analysis";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import {
   createChartAction,
   deleteChartAction,
@@ -162,6 +162,7 @@ export function useChartDialog({
           chartType: resolveChartType(chart.type),
           data: queryRows.rows,
           ...(queryRows.optionLabels ? { optionLabels: queryRows.optionLabels } : {}),
+          ...(queryRows.fieldLabels ? { fieldLabels: queryRows.fieldLabels } : {}),
         });
       } catch (error: unknown) {
         if (cancelled) return;
@@ -188,6 +189,7 @@ export function useChartDialog({
   const handleChartGenerated = (data: AnalyticsResponse) => {
     setChartData(data);
     setSelectedChartType(data.chartType);
+    if (data.config) setChartConfig(data.config);
     const suggestedName = data.suggestedName?.trim();
     if (suggestedName) {
       // Functional updater: the AI response lands async, so a closure over chartName could be
@@ -279,7 +281,7 @@ export function useChartDialog({
         toast.success(t("workspace.analysis.charts.chart_added_to_dashboard"));
       }
 
-      onOpenChange(false);
+      closeDialog();
       if (autoAddToDashboardId) {
         const dashboardPath = `/workspaces/${workspaceId}/dashboards/${autoAddToDashboardId}`;
         if (pathname !== dashboardPath) {
@@ -372,7 +374,7 @@ export function useChartDialog({
 
       toast.success(t("workspace.analysis.charts.chart_added_to_dashboard"));
       setIsAddToDashboardDialogOpen(false);
-      onOpenChange(false);
+      closeDialog();
       startTransition(() => {
         router.refresh();
       });
@@ -389,19 +391,31 @@ export function useChartDialog({
     }
   };
 
+  /**
+   * Every close goes through here. A chart left behind after one close is not just stale data: the
+   * next open renders one frame carrying it, and anything that reads the state on that frame — the
+   * unsaved-changes baseline above all — sees the previous session's chart and concludes the fresh,
+   * untouched builder already has work in it.
+   */
+  const resetDialogState = () => {
+    setChartData(null);
+    setChartName("");
+    setSavedChartName("");
+    lastSuggestedNameRef.current = null;
+    setSelectedChartType(undefined);
+    setCurrentChartId(undefined);
+    setChartConfig({});
+    setChartLoadError(null);
+    setSelectedDirectoryId(directories?.[0]?.id ?? null);
+  };
+
+  const closeDialog = () => {
+    resetDialogState();
+    onOpenChange(false);
+  };
+
   const handleClose = () => {
-    if (!isSaving) {
-      setChartData(null);
-      setChartName("");
-      setSavedChartName("");
-      lastSuggestedNameRef.current = null;
-      setSelectedChartType(undefined);
-      setCurrentChartId(undefined);
-      setChartConfig({});
-      setChartLoadError(null);
-      setSelectedDirectoryId(directories?.[0]?.id ?? null);
-      onOpenChange(false);
-    }
+    if (!isSaving) closeDialog();
   };
 
   const handleChartTypeChange = (type: TChartType) => {

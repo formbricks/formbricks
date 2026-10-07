@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { getActiveInactiveSurveysAction } from "@/modules/workspaces/settings/(setup)/app-connection/actions";
 

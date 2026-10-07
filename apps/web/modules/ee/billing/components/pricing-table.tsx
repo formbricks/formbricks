@@ -9,6 +9,7 @@ import posthog from "posthog-js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
+import formbricks from "@formbricks/js";
 import {
   type TCloudBillingInterval,
   type TOrganization,
@@ -16,6 +17,11 @@ import {
   type TOrganizationStripeSubscriptionStatus,
 } from "@formbricks/types/organizations";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
+import {
+  getHobbyDowngradeChurnSignal,
+  markChurnSurveyPending,
+  trackSubscriptionCancelled,
+} from "@/lib/churn-survey";
 import { cn } from "@/lib/cn";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -67,6 +73,7 @@ type TDisplayPlan = "hobby" | "pro" | "scale" | "custom" | "unknown";
 type TStandardPlan = "hobby" | "pro" | "scale";
 
 interface PricingTableProps {
+  userId: string;
   organization: TOrganization;
   responseCount: number;
   workspaceCount: number;
@@ -193,6 +200,16 @@ const getActionErrorMessage = (serverError: string, t: (key: string) => string) 
     return t("workspace.settings.billing.payment_authentication_failed");
   }
 
+  // Stripe refused the change because the customer still holds billing in another currency (ENG-3370).
+  if (serverError === "billing_currency_conflict") {
+    return t("workspace.settings.billing.billing_currency_conflict");
+  }
+
+  // Replacing a legacy plan charges the new subscription to a card; other saved methods can't pay it.
+  if (serverError === "card_payment_method_required") {
+    return t("workspace.settings.billing.card_payment_method_required");
+  }
+
   return t("common.something_went_wrong_please_try_again");
 };
 
@@ -296,6 +313,7 @@ const PlanFeatureContent = ({
 };
 
 export const PricingTable = ({
+  userId,
   organization,
   responseCount,
   workspaceCount,
@@ -865,6 +883,7 @@ export const PricingTable = ({
           toast.error(getActionErrorMessage(response.serverError, t));
           return;
         }
+        void trackSubscriptionCancelled((event) => formbricks.track(event));
         toast.success(getPlanChangeSuccessMessage(response?.data?.mode, t));
         router.refresh();
         return;
@@ -885,6 +904,15 @@ export const PricingTable = ({
           router.refresh();
           return;
         }
+
+        const churnSignal = getHobbyDowngradeChurnSignal(plan, response.data.mode);
+        if (churnSignal === "track-now") {
+          // Fire an in-app code action so a churn survey can be triggered from the dashboard
+          // right after the org drops to the free plan. No reload follows this path, so the SDK
+          // has time to deliver it.
+          void trackSubscriptionCancelled((event) => formbricks.track(event));
+        }
+
         if (response.data.mode === "immediate") {
           // Force-sync until the converted plan lands, then hand the success toast across a full
           // reload — router.refresh() alone doesn't reliably refetch the billing snapshot, so "current
@@ -892,6 +920,14 @@ export const PricingTable = ({
           await waitForBillingPlanAction({ organizationId, targetPlan: plan });
           if (globalThis.window !== undefined) {
             globalThis.window.sessionStorage.setItem(BILLING_UPGRADE_RESULT_KEY, JSON.stringify({ plan }));
+            if (churnSignal === "defer-until-reload") {
+              // formbricks.track() only queues the action; a call here would be lost or interrupted
+              // by the reload below. Persist a one-shot marker instead and let FormbricksProvider
+              // fire the code action once the SDK is set up again after reload. Scoped to the
+              // originating user so a logout/login in the same tab before it's consumed can't
+              // attribute the cancellation to whoever is signed in when it fires.
+              markChurnSurveyPending(globalThis.window.sessionStorage, userId);
+            }
             globalThis.window.location.reload();
             return;
           }
@@ -976,8 +1012,9 @@ export const PricingTable = ({
   const requestPlanAction = (plan: TStandardPlan, interval: TCloudBillingInterval) => {
     if (plan === "hobby") {
       // Returning to Hobby from a Pro trial switches immediately — confirm before ending the trial.
-      // A paid plan just schedules the downgrade for period end, so it needs no dialog.
-      if (isTrialing) {
+      // Leaving a legacy or custom plan ends it for good, so it is confirmed too. A standard paid plan
+      // just schedules the downgrade for period end, so it needs no dialog.
+      if (isTrialing || currentPlanLevel === null) {
         setIsHobbyDowngradeConfirmOpen(true);
         return;
       }
@@ -990,7 +1027,13 @@ export const PricingTable = ({
       openConfirmation(plan, interval, "trial-continue");
       return;
     }
-    if (willChargeImmediately(plan, interval) || willChargeAfterAddingCard(plan, interval)) {
+    // Switching off a legacy or custom plan ends it for good; the modal says so before any path —
+    // card on file or add-card checkout — replaces it.
+    if (
+      willChargeImmediately(plan, interval) ||
+      willChargeAfterAddingCard(plan, interval) ||
+      currentPlanLevel === null
+    ) {
       openConfirmation(plan, interval, "upgrade");
       return;
     }
@@ -1159,15 +1202,20 @@ export const PricingTable = ({
     // Deliberately period-neutral ("charged {chargeNow} now"): the same modal covers a mid-cycle
     // proration (ordinary upgrade) and a full fresh period (trial conversion). The old "rest of your
     // billing period" wording was false for trial conversions on a payment-consent screen.
-    if (upgradePreview) {
-      return t("workspace.settings.billing.confirm_upgrade_body_with_charge", {
-        plan,
-        period,
-        chargeNow: formatMoney(upgradePreview.currency, upgradePreview.amountDue, locale),
-      });
-    }
+    const body = upgradePreview
+      ? t("workspace.settings.billing.confirm_upgrade_body_with_charge", {
+          plan,
+          period,
+          chargeNow: formatMoney(upgradePreview.currency, upgradePreview.amountDue, locale),
+        })
+      : t("workspace.settings.billing.confirm_upgrade_body", { plan, amount: planCardAmount, period });
 
-    return t("workspace.settings.billing.confirm_upgrade_body", { plan, amount: planCardAmount, period });
+    // A legacy or custom plan has no standard tier; switching off it replaces the subscription, so the
+    // old plan is gone even if the new one's payment never completes.
+    if (currentPlanLevel === null) {
+      return `${body}\n\n${t("workspace.settings.billing.confirm_upgrade_ends_current_plan")}`;
+    }
+    return body;
   };
 
   // Primary button label for the trial-continue modal ("Pay $X now"); falls back while previewing.
@@ -1633,9 +1681,13 @@ export const PricingTable = ({
           }}
           title={t("workspace.settings.billing.confirm_hobby_downgrade_title")}
           description={t("workspace.settings.billing.confirm_hobby_downgrade_description")}
-          body={t("workspace.settings.billing.confirm_hobby_downgrade_body", {
-            plan: getCurrentCloudPlanLabel(currentCloudPlan, t),
-          })}
+          body={
+            isTrialing
+              ? t("workspace.settings.billing.confirm_hobby_downgrade_body", {
+                  plan: getCurrentCloudPlanLabel(currentCloudPlan, t),
+                })
+              : t("workspace.settings.billing.confirm_hobby_downgrade_ends_current_plan_body")
+          }
           buttonText={t("workspace.settings.billing.downgrade_to_hobby")}
           buttonVariant="destructive"
           cancelButtonText={t("common.cancel")}

@@ -154,7 +154,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
         asChild
         className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50"
         id="recontactOptionsCardTrigger">
-        <div className="inline-flex px-4 py-4">
+        <button type="button" className="inline-flex px-4 py-4 text-left">
           <div className="flex items-center pr-5 pl-2">
             <CheckIcon
               strokeWidth={3}
@@ -169,7 +169,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
               {t("workspace.surveys.edit.visibility_and_recontact_description")}
             </p>
           </div>
-        </div>
+        </button>
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent
         className={`flex flex-col ${open && "pb-3"} overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down`}>

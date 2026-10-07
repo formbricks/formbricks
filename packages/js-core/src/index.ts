@@ -1,7 +1,14 @@
 import { CommandQueue, CommandType } from "@/lib/common/command-queue";
+import {
+  type TFormbricksEventName,
+  type TFormbricksEventPayloads,
+  offFormbricksEvent,
+  onFormbricksEvent,
+} from "@/lib/common/events";
 import * as Setup from "@/lib/common/setup";
 import { getIsDebug } from "@/lib/common/utils";
 import * as Action from "@/lib/survey/action";
+import { EmbeddedDataStore, type TEmbeddedDataInput } from "@/lib/survey/embedded-data";
 import { checkPageUrl } from "@/lib/survey/no-code-action";
 import * as Attribute from "@/lib/user/attribute";
 import * as User from "@/lib/user/user";
@@ -82,6 +89,65 @@ const registerRouteChange = async (): Promise<void> => {
 };
 
 /**
+ * Attach Embedded Data to future responses without tying it to a trigger (ENG-1844). Merges into the
+ * in-memory bag, last write wins per key; `{ key: null }` removes a key and `undefined` values are
+ * skipped. Values land only on the survey's declared *ingested* fields — anything else is dropped
+ * and logged by the renderer, never fatal.
+ *
+ * Synchronous and network-free on purpose (like `setNonce`, unlike the queued methods): calling it
+ * on every SPA route change is free, and routing it through the command queue would silently drop
+ * calls made before `setup()` completes — the exact failure the `formbricks_setup_successful`
+ * readiness event exists to prevent (ENG-1846).
+ */
+const setEmbeddedData = (data: TEmbeddedDataInput): void => {
+  EmbeddedDataStore.getInstance().setEmbeddedData(data);
+};
+
+/**
+ * Remove one Embedded Data key, or clear the whole bag when called with no argument — logout, or a
+ * hard context switch. Synchronous, no network. A key that evaluated to `undefined` is a no-op, not
+ * a full clear: the arity is forwarded, so only a literal zero-argument call wipes everything.
+ */
+const clearEmbeddedData = (...args: [] | [key: string]): void => {
+  EmbeddedDataStore.getInstance().clearEmbeddedData(...args);
+};
+
+/**
+ * Subscribe to a Formbricks event (ENG-1814).
+ *
+ * The host application is notified about what the SDK actually did — a survey reached the screen
+ * (`formbricks_survey_shown`), was answered (`formbricks_response_submitted`, with the persisted
+ * `responseId` and a `finished` flag), was dismissed or completed (`formbricks_survey_closed`), an
+ * action was tracked, or setup finished — so it can drive frequency capping and analytics off
+ * reality rather than off the `track()` calls it made. The same events, under the same names, go
+ * out as `window.dataLayer` pushes for Google Tag Manager.
+ *
+ * Subscriptions are independent of setup(): registering before or after setup() both work, and a
+ * handler stays registered across logout() until it is removed.
+ *
+ * @param event - Full event name, e.g. "formbricks_survey_shown"
+ * @param handler - Called with that event's payload (survey id, and where it applies the response id)
+ * @returns A function that removes this subscription. `off()` with the same arguments does the same.
+ */
+const on = <E extends TFormbricksEventName>(
+  event: E,
+  handler: (payload: TFormbricksEventPayloads[E]) => void
+): (() => void) => onFormbricksEvent(event, handler);
+
+/**
+ * Remove a subscription registered with on().
+ *
+ * @param event - The event name the handler was registered for
+ * @param handler - The same function reference that was passed to on()
+ */
+const off = <E extends TFormbricksEventName>(
+  event: E,
+  handler: (payload: TFormbricksEventPayloads[E]) => void
+): void => {
+  offFormbricksEvent(event, handler);
+};
+
+/**
  * Set the CSP nonce for inline styles
  * @param nonce - The CSP nonce value (without 'nonce-' prefix), or undefined to clear
  */
@@ -107,6 +173,10 @@ const formbricks = {
   logout,
   registerRouteChange,
   setNonce,
+  setEmbeddedData,
+  clearEmbeddedData,
+  on,
+  off,
 };
 
 // Explicitly assign to globalThis so the wrapper SDK (@formbricks/js) can
@@ -118,4 +188,5 @@ const formbricks = {
 
 type TFormbricks = typeof formbricks;
 export type { TFormbricks };
+export type { TFormbricksEventName, TFormbricksEventPayloads } from "@/lib/common/events";
 export default formbricks;

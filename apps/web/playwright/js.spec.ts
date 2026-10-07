@@ -1,8 +1,10 @@
 import { expect } from "@playwright/test";
 import http from "http";
+import { prisma } from "@formbricks/database";
+import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
 import { test } from "./lib/fixtures";
 import { gotoSurveyList, gotoSurveyTemplates } from "./lib/utils";
-import { useSelectedTemplate } from "./utils/helper";
+import { activateSurvey, useSelectedTemplate } from "./utils/helper";
 
 const HTML_TEMPLATE = `<head>
   <script type="text/javascript">
@@ -12,6 +14,16 @@ const HTML_TEMPLATE = `<head>
       var e = document.getElementsByTagName("script")[0];
       t.onload = function(){
         if (window.formbricks) {
+          // formbricks.on() is the only JS subscription surface (ENG-1814); registered before
+          // setup(), which the API promises works. Same names as the GTM dataLayer pushes.
+          window.formbricksEvents = [];
+          ["formbricks_survey_shown", "formbricks_response_submitted", "formbricks_survey_closed"].forEach(
+            function (name) {
+              window.formbricks.on(name, function (payload) {
+                window.formbricksEvents.push(Object.assign({ event: name }, payload));
+              });
+            }
+          );
           window.formbricks.setup({workspaceId: "WORKSPACE_ID", appUrl: "http://localhost:3000"});
         } else {
           console.error("Formbricks library failed to load properly. The formbricks object is not available.");
@@ -98,8 +110,11 @@ test.describe("JS Package Test", async () => {
 
     await Promise.all([
       page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary/, { timeout: 120000 }),
-      page.getByRole("button", { name: "Publish", exact: true }).click(),
+      activateSurvey(page),
     ]);
+
+    const surveyId = /\/surveys\/([^/]+)\/summary/.exec(page.url())?.[1];
+    if (!surveyId) throw new Error(`Unable to parse surveyId from ${page.url()}`);
 
     await page.goto("http://localhost:3004");
     await expect(page.locator("#formbricks-modal-container")).toHaveCount(1, { timeout: 120000 });
@@ -108,10 +123,15 @@ test.describe("JS Package Test", async () => {
     // every survey name so names are not exposed over an unauthenticated endpoint. This is the only
     // place the real API, the widget and the dialog are wired together, so it is the only place that
     // can catch the placeholder leaking into what a screen reader announces: the dialog falls back
-    // to its generic name instead, and no heading carries the placeholder either.
+    // to its generic name instead, and the survey's one h1 carries that same name (ENG-2799). The h1
+    // is looked up inside the dialog, because aria-modal hides anything outside it from assistive tech.
+    // The placeholder is matched through the shared constant, not a literal, so a change to its text
+    // cannot turn this into a matcher that finds nothing and passes vacuously.
     const widget = page.locator("#formbricks-modal-container");
-    await expect(widget.getByRole("dialog")).toHaveAttribute("aria-label", "Survey Dialog");
-    await expect(widget.getByText(/\[deprecated] survey name omitted/)).toHaveCount(0);
+    const dialog = widget.getByRole("dialog");
+    await expect(dialog).toHaveAttribute("aria-label", "Survey Dialog");
+    await expect(dialog.getByRole("heading", { level: 1 })).toHaveText("Survey Dialog");
+    await expect(widget.getByText(PUBLIC_API_SURVEY_NAME_PLACEHOLDER)).toHaveCount(0);
 
     await expect(
       page.locator("#questionCard-0").getByRole("link", { name: "Powered by Formbricks" })
@@ -135,7 +155,65 @@ test.describe("JS Package Test", async () => {
 
     await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(5000);
+    // The last lifecycle event fires only once the ending card auto-closes the modal, so wait for it
+    // rather than for a fixed time.
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() =>
+            (window as unknown as { formbricksEvents?: { event: string }[] }).formbricksEvents?.some(
+              ({ event }) => event === "formbricks_survey_closed"
+            )
+          ),
+        { timeout: 15000 }
+      )
+      .toBe(true);
+
+    // The `responseId` on the events is the PERSISTED id (ENG-1846). This is the only level that
+    // can prove it: the id is minted by the server, so `onResponseCreated`/`onFinished` can only
+    // carry it by firing from the response queue's creation ack — and the renderer that passes it
+    // lives in a .tsx, which the repo does not unit-test. Asserted against the stored row rather
+    // than for self-consistency, so a client-minted or dropped id fails here (ENG-1814: the
+    // formbricks.on() surface, registered before setup(), is what captured them).
+    await test.step("the journey reaches formbricks.on subscribers with the persisted responseId", async () => {
+      const events = await page.evaluate(
+        () =>
+          (
+            window as unknown as {
+              formbricksEvents: {
+                event: string;
+                surveyId: string;
+                responseId?: string;
+                finished?: boolean;
+              }[];
+            }
+          ).formbricksEvents
+      );
+
+      const storedResponse = await prisma.response.findFirst({
+        where: { surveyId },
+        orderBy: { createdAt: "desc" },
+        select: { id: true },
+      });
+      // A hard throw rather than expect().not.toBeNull(): it narrows the type, so the id
+      // comparisons below cannot silently compare undefined against undefined.
+      if (!storedResponse) throw new Error("No response was persisted for the survey");
+
+      // Shown, first answer, completion, and — after the ending card auto-closes the modal —
+      // closed exactly once. One vocabulary, in order.
+      expect(events.map((event) => event.event)).toEqual([
+        "formbricks_survey_shown",
+        "formbricks_response_submitted",
+        "formbricks_response_submitted",
+        "formbricks_survey_closed",
+      ]);
+      expect(events.map((event) => event.finished)).toEqual([undefined, false, true, undefined]);
+      for (const event of events) {
+        expect(event.surveyId).toBe(surveyId);
+      }
+      expect(events[1].responseId).toBe(storedResponse.id);
+      expect(events[2].responseId).toBe(storedResponse.id);
+    });
 
     // Validate displays and response
     await page.goto("/");

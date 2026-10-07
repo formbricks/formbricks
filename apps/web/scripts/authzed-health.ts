@@ -1,4 +1,8 @@
 import "server-only";
+import { exitAfterStdoutFlush } from "./authzed-health-process";
+
+// Keep this automation-oriented command to exactly one JSON line, including failed retry paths.
+process.env.LOG_LEVEL = "fatal";
 
 const INVALID_CONFIGURATION_RESULT = {
   code: "authzed_internal",
@@ -27,4 +31,4 @@ const run = async (): Promise<void> => {
   }
 };
 
-void run();
+void run().then(() => exitAfterStdoutFlush(process.exitCode ?? 1));

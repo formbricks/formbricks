@@ -2,9 +2,9 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { formatSnakeCaseToTitleCase } from "@formbricks/types/safe-identifier";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
-import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
 import { TContactAttributeKeyCreateInput } from "@/modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import {
   getReservedFutureDefaultAttributeKeyIssue,
@@ -62,7 +62,8 @@ export const createContactAttributeKey = async (
     return contactAttributeKey;
   } catch (error) {
     if (isUniqueConstraintError(error)) {
-      throw new DatabaseError("Attribute key already exists");
+      // A caller mistake, not a server fault: the route shows this message at 400.
+      throw new InvalidInputError("Attribute key already exists");
     }
     if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);

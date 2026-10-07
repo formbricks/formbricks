@@ -27,6 +27,9 @@ describe("Survey Lib", () => {
           questions: true,
           blocks: true,
           workspaceId: true,
+          // The response routes read the survey's Anonymize setting off this same query rather than
+          // making a second one, so it has to be selected here (ENG-1842).
+          isAnonymizeResponsesEnabled: true,
         },
       });
       expect(result.ok).toBe(true);

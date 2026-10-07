@@ -1,5 +1,6 @@
 import { fileUploadQuestion, openTextQuestion, responseData, workspaceId } from "./__mocks__/utils.mock";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { Response } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { okVoid } from "@formbricks/types/error-handlers";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -23,6 +24,7 @@ vi.mock("@/modules/storage/service", () => ({
 
 // The delete helper takes a survey shape ({ blocks, questions }); most cases here only use questions.
 const questionsSurvey = (questions: unknown[]) => ({ questions, blocks: [] }) as any;
+const surveyId = "kbr8tnr2q2vgztyrfnqlgfjt";
 
 describe("findAndDeleteUploadedFilesInResponse", () => {
   beforeEach(() => {
@@ -39,6 +41,7 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
     const result = await findAndDeleteUploadedFilesInResponse(
       responseData,
       questionsSurvey([fileUploadQuestion]),
+      surveyId,
       workspaceId
     );
 
@@ -60,10 +63,55 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
       [elementId]: [`https://example.com/storage/${workspaceId}/private/block-file.png`],
     } as any;
 
-    const result = await findAndDeleteUploadedFilesInResponse(blockResponseData, blockSurvey, workspaceId);
+    const result = await findAndDeleteUploadedFilesInResponse(
+      blockResponseData,
+      blockSurvey,
+      surveyId,
+      workspaceId
+    );
 
     expect(deleteFile).toHaveBeenCalledTimes(1);
     expect(deleteFile).toHaveBeenCalledWith(workspaceId, "private", "block-file.png", workspaceId);
+    expect(result).toEqual(okVoid());
+  });
+
+  // Before ENG-2547 this path cast a matching answer straight to string[], so a non-array value became
+  // a delete target: a bare string holding a valid same-workspace URL was deleted off malformed data.
+  test("not call deleteFile for a non-array answer under a file-upload key", async () => {
+    // A plain string is a valid TResponseData value, so this needs no cast — which is exactly why the
+    // old `as string[]` cast was unsafe.
+    const malformedData: Response["data"] = {
+      [fileUploadQuestion.id]: `https://example.com/storage/${workspaceId}/private/file1.png`,
+    };
+
+    const result = await findAndDeleteUploadedFilesInResponse(
+      malformedData,
+      questionsSurvey([fileUploadQuestion]),
+      surveyId,
+      workspaceId
+    );
+
+    expect(deleteFile).not.toHaveBeenCalled();
+    expect(result).toEqual(okVoid());
+  });
+
+  // The survey's only upload element was deleted, so no current element id matches the answer it left.
+  // Its key is filed under this survey, which is what makes the file this response's to delete.
+  test("delete an upload left by a removed element of the response's own survey", async () => {
+    const fileName = `surveys/${surveyId}/elements/removed-upload/a.png`;
+    const removedElementData: Response["data"] = {
+      "removed-upload": [`https://example.com/storage/${workspaceId}/private/${fileName}`],
+    };
+
+    const result = await findAndDeleteUploadedFilesInResponse(
+      removedElementData,
+      questionsSurvey([openTextQuestion]),
+      surveyId,
+      workspaceId
+    );
+
+    expect(deleteFile).toHaveBeenCalledTimes(1);
+    expect(deleteFile).toHaveBeenCalledWith(workspaceId, "private", fileName, workspaceId);
     expect(result).toEqual(okVoid());
   });
 
@@ -71,6 +119,7 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
     const result = await findAndDeleteUploadedFilesInResponse(
       responseData,
       questionsSurvey([openTextQuestion]),
+      surveyId,
       workspaceId
     );
 
@@ -94,6 +143,7 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
     const result = await findAndDeleteUploadedFilesInResponse(
       plantedData,
       questionsSurvey([fileUploadQuestion]),
+      surveyId,
       workspaceId
     );
 
@@ -112,6 +162,7 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
     const result = await findAndDeleteUploadedFilesInResponse(
       invalidResponseData,
       questionsSurvey([fileUploadQuestion]),
+      surveyId,
       workspaceId
     );
 
@@ -126,6 +177,7 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
     const result = await findAndDeleteUploadedFilesInResponse(
       responseData,
       questionsSurvey([fileUploadQuestion]),
+      surveyId,
       workspaceId
     );
 

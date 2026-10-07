@@ -1,0 +1,4 @@
+# Findings the Trivy gate in .github/workflows/cube-image.yml accepts. Each entry needs a one-line
+# reachability statement and an expired_at at most 30 days out, so the gate turns red again and forces a
+# re-check (see README.md). Delete an entry as soon as a new base digest carries the fix.
+vulnerabilities: []

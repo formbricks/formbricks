@@ -5,7 +5,7 @@ type: application
 # Helm chart Version
 version: 0.0.0-dev
 # This is the version number of the application being deployed.
-appVersion: "5.3.4"
+appVersion: "6.0.0"
 icon: https://formbricks.com/favicon.ico
 keywords:
   - formbricks
@@ -27,7 +27,7 @@ dependencies:
     condition: postgresql.enabled
   - name: gateway-helm
     alias: envoy
-    version: "v1.7.1"
+    version: "v1.8.4"
     repository: "oci://docker.io/envoyproxy"
     condition: envoy.controller.enabled
   - name: redis

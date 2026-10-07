@@ -2,19 +2,32 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import { capturePostHogEvent } from "@/lib/posthog";
+import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
 import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { buildWorkflowApiContext } from "./context";
 
-const { surveyFindUnique } = vi.hoisted(() => ({ surveyFindUnique: vi.fn() }));
+const { surveyFindMany, surveyFindUnique } = vi.hoisted(() => ({
+  surveyFindMany: vi.fn(),
+  surveyFindUnique: vi.fn(),
+}));
 vi.mock("@formbricks/database", () => ({
-  prisma: { workflow: {}, survey: { findUnique: surveyFindUnique } },
+  prisma: { workflow: {}, survey: { findMany: surveyFindMany, findUnique: surveyFindUnique } },
 }));
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ warn: vi.fn(), error: vi.fn() })) },
 }));
-vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: vi.fn() }));
+vi.mock("@/app/api/v3/lib/auth", async (importOriginal) => ({
+  getV3AuthorizationActor: (await importOriginal<typeof import("@/app/api/v3/lib/auth")>())
+    .getV3AuthorizationActor,
+  requireV3WorkspaceAccess: vi.fn(),
+}));
+vi.mock("@/lib/survey/visibility/actor-context", () => ({ resolveSurveyActorContext: vi.fn() }));
+vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
+const visibility = vi.hoisted(() => ({ ready: false }));
+vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: async () => visibility.ready }));
 vi.mock("@/lib/utils/helper", () => ({ getOrganizationIdFromWorkspaceId: vi.fn() }));
 vi.mock("@/lib/workspace/service", () => ({ getWorkspaceMemberEmails: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsWorkflowsEnabled: vi.fn() }));
@@ -112,6 +125,50 @@ describe("buildWorkflowApiContext", () => {
   });
 });
 
+describe("recordAnalytics (product-analytics sink, ENG-2851)", () => {
+  const detail = {
+    operation: "created" as const,
+    workflowId: "wf_1",
+    workspaceId: "ws_1",
+    status: "draft" as const,
+    createdAt: new Date("2026-09-01T10:00:00.000Z"),
+    definition: { triggerType: null, actionTypes: [], actionCount: 0, nodeCount: 0 },
+    options: {
+      endingScope: null,
+      emailRecipientKind: null,
+      attachResponseData: null,
+      includeVariables: null,
+      includeHiddenFields: null,
+    },
+  };
+
+  test("is always bound, even without an audit log, and captures under the acting user", async () => {
+    vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue("org_1");
+    const ctx = buildWorkflowApiContext(sessionAuth, "req_1", "https://app.formbricks.com/api/v3/workflows");
+
+    expect(ctx.recordAudit).toBeUndefined();
+    await ctx.recordAnalytics?.(detail);
+
+    expect(capturePostHogEvent).toHaveBeenCalledWith(
+      "cm9zr52kh000508l8e3q7bw9j",
+      "workflow_created",
+      expect.objectContaining({ via: "ui", workflow_id: "wf_1", organization_id: "org_1" }),
+      { organizationId: "org_1", workspaceId: "ws_1" }
+    );
+  });
+
+  test("tells the MCP surface apart from a plain API call made with the same key", async () => {
+    await buildWorkflowApiContext(apiKeyAuth, "req_1", "/api/mcp").recordAnalytics?.(detail);
+
+    expect(capturePostHogEvent).toHaveBeenCalledWith(
+      "org_1",
+      "workflow_created",
+      expect.objectContaining({ via: "mcp" }),
+      expect.anything()
+    );
+  });
+});
+
 describe("verifyTriggerSurvey (validates a workflow trigger's referenced survey)", () => {
   const verify = (input: { workspaceId: string; surveyId: string; endingCardIds: string[] }) =>
     buildWorkflowApiContext(apiKeyAuth, "req_1", "inst").verifyTriggerSurvey(input);
@@ -130,7 +187,7 @@ describe("verifyTriggerSurvey (validates a workflow trigger's referenced survey)
     expect(result).toEqual({ surveyExists: false, missingEndingCardIds: [] });
     expect(surveyFindUnique).toHaveBeenCalledWith({
       where: { id_workspaceId: { id: "s_1", workspaceId: "ws_1" } },
-      select: { endings: true },
+      select: { endings: true, visibility: true, visibilityProjectedVersion: true, visibilityVersion: true },
     });
   });
 
@@ -143,7 +200,11 @@ describe("verifyTriggerSurvey (validates a workflow trigger's referenced survey)
       endingCardIds: [endingId1, "ending_missing"],
     });
 
-    expect(result).toEqual({ surveyExists: true, missingEndingCardIds: ["ending_missing"] });
+    expect(result).toEqual({
+      surveyExists: true,
+      missingEndingCardIds: ["ending_missing"],
+      surveyNotWorkspaceVisible: false,
+    });
   });
 
   test("accepts a workflow trigger whose survey and ending cards all exist", async () => {
@@ -151,7 +212,98 @@ describe("verifyTriggerSurvey (validates a workflow trigger's referenced survey)
 
     const result = await verify({ workspaceId: "ws_1", surveyId: "s_1", endingCardIds: [endingId1] });
 
-    expect(result).toEqual({ surveyExists: true, missingEndingCardIds: [] });
+    expect(result).toEqual({
+      surveyExists: true,
+      missingEndingCardIds: [],
+      surveyNotWorkspaceVisible: false,
+    });
+  });
+
+  test("flags a restricted trigger survey once survey visibility is enforced (ENG-3283)", async () => {
+    visibility.ready = true;
+    surveyFindUnique.mockResolvedValue({
+      endings: [endScreen(endingId1)],
+      visibility: "restricted",
+      visibilityProjectedVersion: 1,
+      visibilityVersion: 1,
+    });
+
+    const result = await verify({ workspaceId: "ws_1", surveyId: "s_1", endingCardIds: [endingId1] });
+    visibility.ready = false;
+
+    expect(result).toEqual({ surveyExists: true, missingEndingCardIds: [], surveyNotWorkspaceVisible: true });
+  });
+});
+
+describe("listUnreadableSurveyIds (run history follows its trigger survey, ENG-3282)", () => {
+  const member = { enforced: true, isOrganizationAdmin: false, kind: "user", userId: "u_1" } as const;
+
+  test("hides nothing, with no query, while visibility is not enforced", async () => {
+    vi.mocked(resolveSurveyActorContext).mockResolvedValue({ ...member, enforced: false });
+
+    const ids = await buildWorkflowApiContext(sessionAuth, "req_1", "inst").listUnreadableSurveyIds({
+      workspaceId: "ws_1",
+      organizationId: "org_1",
+    });
+
+    expect(ids).toEqual([]);
+    expect(surveyFindMany).not.toHaveBeenCalled();
+  });
+
+  test("hides nothing, with no query, for an organization administrator", async () => {
+    vi.mocked(resolveSurveyActorContext).mockResolvedValue({ ...member, isOrganizationAdmin: true });
+
+    const ids = await buildWorkflowApiContext(sessionAuth, "req_1", "inst").listUnreadableSurveyIds({
+      workspaceId: "ws_1",
+      organizationId: "org_1",
+    });
+
+    expect(ids).toEqual([]);
+    expect(surveyFindMany).not.toHaveBeenCalled();
+  });
+
+  test("returns the workspace's surveys a member may not read, in one query scoped to the workspace", async () => {
+    vi.mocked(resolveSurveyActorContext).mockResolvedValue(member);
+    surveyFindMany.mockResolvedValue([{ id: "s_restricted" }]);
+
+    const ids = await buildWorkflowApiContext(sessionAuth, "req_1", "inst").listUnreadableSurveyIds({
+      workspaceId: "ws_1",
+      organizationId: "org_1",
+      surveyIds: ["s_restricted", "s_open"],
+    });
+
+    expect(ids).toEqual(["s_restricted"]);
+    expect(resolveSurveyActorContext).toHaveBeenCalledWith(
+      { type: "user", id: "cm9zr52kh000508l8e3q7bw9j" },
+      "org_1"
+    );
+    expect(surveyFindMany).toHaveBeenCalledTimes(1);
+    const { where } = surveyFindMany.mock.calls[0][0];
+    expect(where).toMatchObject({ workspaceId: "ws_1", id: { in: ["s_restricted", "s_open"] } });
+    // The member's own surveys stay readable: the hidden clause excludes them, nulls included.
+    expect(JSON.stringify(where.AND)).toContain('{"ownerId":{"not":"u_1"}}');
+  });
+
+  test("resolves an API key as its own actor", async () => {
+    vi.mocked(resolveSurveyActorContext).mockResolvedValue({ enforced: true, kind: "apiKey" });
+    surveyFindMany.mockResolvedValue([]);
+
+    await buildWorkflowApiContext(apiKeyAuth, "req_1", "inst").listUnreadableSurveyIds({
+      workspaceId: "ws_1",
+      organizationId: "org_1",
+    });
+
+    expect(resolveSurveyActorContext).toHaveBeenCalledWith({ type: "apiKey", id: "key_1" }, "org_1");
+    expect(surveyFindMany.mock.calls[0][0].where).toMatchObject({ workspaceId: "ws_1" });
+  });
+
+  test("fails closed without an authenticated actor", async () => {
+    await expect(
+      buildWorkflowApiContext(null, "req_1", "inst").listUnreadableSurveyIds({
+        workspaceId: "ws_1",
+        organizationId: "org_1",
+      })
+    ).rejects.toThrow();
   });
 });
 

@@ -9,7 +9,7 @@ import { ApiKeyPermission } from "@formbricks/database/prisma-browser";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { ViewPermissionModal } from "@/modules/organization/settings/api-keys/components/view-permission-modal";
 import {
   TApiKeyUpdateInput,
@@ -136,6 +136,7 @@ interface EditAPIKeysProps {
   locale: TUserLocale;
   workspaces: TOrganizationWorkspace[];
   isFormbricksCloud: boolean;
+  canGrantOrganizationWriteAccess: boolean;
 }
 
 export const EditAPIKeys = ({
@@ -144,6 +145,7 @@ export const EditAPIKeys = ({
   locale,
   workspaces,
   isFormbricksCloud,
+  canGrantOrganizationWriteAccess,
 }: Readonly<EditAPIKeysProps>) => {
   const { t } = useTranslation();
   const [isAddAPIKeyModalOpen, setIsAddAPIKeyModalOpen] = useState(false);
@@ -276,6 +278,7 @@ export const EditAPIKeys = ({
         workspaces={workspaces}
         isCreatingAPIKey={isLoading}
         isFormbricksCloud={isFormbricksCloud}
+        canGrantOrganizationWriteAccess={canGrantOrganizationWriteAccess}
       />
       {activeKey && (
         <ViewPermissionModal

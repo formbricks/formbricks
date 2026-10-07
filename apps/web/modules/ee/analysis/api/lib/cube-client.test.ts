@@ -1,16 +1,25 @@
+import { createCubeTransport } from "./__mocks__/cube-transport.mock";
+import type * as CubeClient from "@cubejs-client/core";
 import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { mockLoad, mockLoggerError, mockLoggerWarn, mockQueueAuditEventWithoutRequest, mockTablePivot } =
-  vi.hoisted(() => ({
-    mockLoad: vi.fn(),
-    mockLoggerError: vi.fn(),
-    mockLoggerWarn: vi.fn(),
-    mockQueueAuditEventWithoutRequest: vi.fn(),
-    mockTablePivot: vi.fn(),
-  }));
+const {
+  mockGetOrganization,
+  mockLoad,
+  mockLoggerError,
+  mockLoggerWarn,
+  mockQueueAuditEventWithoutRequest,
+  mockTablePivot,
+} = vi.hoisted(() => ({
+  mockGetOrganization: vi.fn(),
+  mockLoad: vi.fn(),
+  mockLoggerError: vi.fn(),
+  mockLoggerWarn: vi.fn(),
+  mockQueueAuditEventWithoutRequest: vi.fn(),
+  mockTablePivot: vi.fn(),
+}));
 
 vi.mock("@cubejs-client/core", () => ({
   default: vi.fn(() => ({
@@ -27,6 +36,10 @@ vi.mock("@formbricks/logger", () => ({
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   queueAuditEventWithoutRequest: mockQueueAuditEventWithoutRequest,
+}));
+
+vi.mock("@/lib/organization/service", () => ({
+  getOrganization: mockGetOrganization,
 }));
 
 const scopedInput = {
@@ -63,6 +76,7 @@ describe("executeTenantScopedQuery", () => {
     vi.stubEnv("CUBEJS_JWT_AUDIENCE", "formbricks-cube-test");
     vi.stubEnv("CUBEJS_JWT_ISSUER", "formbricks-web-test");
     mockLoad.mockResolvedValue({ tablePivot: mockTablePivot });
+    mockGetOrganization.mockResolvedValue({ displayTimeZone: null });
     mockQueueAuditEventWithoutRequest.mockResolvedValue(undefined);
     mockTablePivot.mockReturnValue([{ id: "1", count: 42 }]);
   });
@@ -75,7 +89,7 @@ describe("executeTenantScopedQuery", () => {
     const { executeTenantScopedQuery } = await import("./cube-client");
     const result = await executeTenantScopedQuery(scopedInput);
 
-    expect(mockLoad).toHaveBeenCalledWith(scopedInput.query);
+    expect(mockLoad).toHaveBeenCalledWith({ ...scopedInput.query, timezone: "UTC" }, expect.anything());
     expect(mockTablePivot).toHaveBeenCalled();
     expect(result).toEqual([{ id: "1", count: 42 }]);
 
@@ -99,6 +113,69 @@ describe("executeTenantScopedQuery", () => {
       source: "charts.executeQueryAction",
     });
     expect(typeof payload.jti).toBe("string");
+  });
+
+  test("drops the NULL value band from the query sent to Cube, not from the caller's query", async () => {
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const query = {
+      measures: ["FeedbackRecords.count"],
+      dimensions: ["FeedbackRecords.valueBand"],
+      filters: [{ member: "FeedbackRecords.fieldType", operator: "equals", values: ["nps"] }],
+    };
+    await executeTenantScopedQuery({ ...scopedInput, query });
+
+    expect(mockLoad).toHaveBeenCalledWith(
+      {
+        ...query,
+        filters: [...query.filters, { member: "FeedbackRecords.valueBand", operator: "set" }],
+        timezone: "UTC",
+      },
+      expect.anything()
+    );
+    expect(query.filters).toHaveLength(1);
+  });
+
+  test("queries Cube in the organization's display time zone and expands presets in it", async () => {
+    // The client reads the clock while expanding the preset, so pin it: 22:30 UTC is still May 21 in UTC
+    // but already May 22 in Berlin, which is exactly the rollover this test is about.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-21T22:30:00Z"));
+    try {
+      mockGetOrganization.mockResolvedValue({ displayTimeZone: "Europe/Berlin" });
+      const { executeTenantScopedQuery } = await import("./cube-client");
+      await executeTenantScopedQuery({
+        ...scopedInput,
+        query: {
+          measures: ["FeedbackRecords.count"],
+          timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", dateRange: "today" }],
+        },
+      });
+
+      expect(mockGetOrganization).toHaveBeenCalledWith("organization-1");
+      expect(mockLoad).toHaveBeenCalledWith(
+        {
+          measures: ["FeedbackRecords.count"],
+          timezone: "Europe/Berlin",
+          timeDimensions: [
+            { dimension: "FeedbackRecords.collectedAt", dateRange: ["2026-05-22", "2026-05-22"] },
+          ],
+        },
+        expect.anything()
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("reports a failed time zone lookup as a failed query instead of querying in the wrong zone", async () => {
+    mockGetOrganization.mockRejectedValue(new Error("db down"));
+    const { executeTenantScopedQuery } = await import("./cube-client");
+
+    await expect(executeTenantScopedQuery(scopedInput)).rejects.toThrow("db down");
+    expect(mockLoad).not.toHaveBeenCalled();
+    expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "failure", targetType: "cubeQuery" })
+    );
   });
 
   test("pivots with a sentinel fill value, because a null fill would still resolve to 0", async () => {
@@ -151,6 +228,90 @@ describe("executeTenantScopedQuery", () => {
     // measure cell was filled by the pivot, so only that one may become null.
     expect(result).toEqual([
       { "FeedbackRecords.valueText": "__formbricks_null__", "FeedbackRecords.count": null },
+    ]);
+  });
+
+  test("returns Cube 1.7's numeric strings as numbers for number members only", async () => {
+    // A /load response from the bundled Cube 1.7.47 image, which serializes every number member as a
+    // string, dimensions included. The real client parses it, so its annotation-driven cast is what is
+    // under test rather than the options it was called with.
+    const loadResponse = {
+      queryType: "regularQuery",
+      pivotQuery: {
+        measures: ["FeedbackRecords.count", "FeedbackRecords.npsAverage"],
+        dimensions: ["FeedbackRecords.valueText", "FeedbackRecords.valueNumber"],
+        timeDimensions: [],
+        queryType: "regularQuery",
+      },
+      results: [
+        {
+          query: {
+            measures: ["FeedbackRecords.count", "FeedbackRecords.npsAverage"],
+            dimensions: ["FeedbackRecords.valueText", "FeedbackRecords.valueNumber"],
+            timeDimensions: [],
+          },
+          annotation: {
+            measures: {
+              "FeedbackRecords.count": { type: "number" },
+              "FeedbackRecords.npsAverage": { type: "number" },
+            },
+            dimensions: {
+              "FeedbackRecords.valueText": { type: "string" },
+              "FeedbackRecords.valueNumber": { type: "number" },
+            },
+            segments: {},
+            timeDimensions: {},
+          },
+          data: [
+            {
+              "FeedbackRecords.valueText": "123",
+              "FeedbackRecords.valueNumber": "3",
+              "FeedbackRecords.count": "2",
+              "FeedbackRecords.npsAverage": null,
+            },
+            {
+              "FeedbackRecords.valueText": null,
+              "FeedbackRecords.valueNumber": "9",
+              "FeedbackRecords.count": "1",
+              "FeedbackRecords.npsAverage": "7.333333333333333",
+            },
+          ],
+        },
+      ],
+    };
+    const transport = createCubeTransport(loadResponse);
+    const { CubeApi } = await vi.importActual<typeof CubeClient>("@cubejs-client/core");
+    mockLoad.mockImplementationOnce((query: CubeClient.Query, options?: CubeClient.LoadMethodOptions) =>
+      new CubeApi("token", { apiUrl: "https://cube.example.com/cubejs-api/v1", transport }).load(
+        query,
+        options
+      )
+    );
+    const { executeTenantScopedQuery } = await import("./cube-client");
+
+    const result = await executeTenantScopedQuery({
+      ...scopedInput,
+      query: {
+        measures: ["FeedbackRecords.count", "FeedbackRecords.npsAverage"],
+        dimensions: ["FeedbackRecords.valueText", "FeedbackRecords.valueNumber"],
+      },
+    });
+
+    // "123" is what a respondent typed, not a number Cube computed, so it keeps its type; the NULL
+    // average still comes back as null rather than 0.
+    expect(result).toEqual([
+      {
+        "FeedbackRecords.valueText": "123",
+        "FeedbackRecords.valueNumber": 3,
+        "FeedbackRecords.count": 2,
+        "FeedbackRecords.npsAverage": null,
+      },
+      {
+        "FeedbackRecords.valueText": null,
+        "FeedbackRecords.valueNumber": 9,
+        "FeedbackRecords.count": 1,
+        "FeedbackRecords.npsAverage": 7.333333333333333,
+      },
     ]);
   });
 
@@ -227,6 +388,103 @@ describe("executeTenantScopedQuery", () => {
       { [DAY]: "2026-01-01", "FeedbackRecords.count": 12, "FeedbackRecords.npsScore": "50" },
       { [DAY]: "2026-01-02", "FeedbackRecords.count": 0, "FeedbackRecords.npsScore": null },
     ]);
+  });
+
+  test("fetches the response base alongside a score and counts 0 answers in an invented bucket", async () => {
+    const WEEK = "FeedbackRecords.collectedAt.week";
+    mockTablePivot.mockImplementation((pivotConfig?: { fillMissingDates?: boolean }) => {
+      const real = [
+        { [WEEK]: "2026-01-05", "FeedbackRecords.npsScore": "40", "FeedbackRecords.npsCount": 25 },
+      ];
+      if (pivotConfig?.fillMissingDates === false) return real;
+      return [
+        ...real,
+        {
+          [WEEK]: "2026-01-12",
+          "FeedbackRecords.npsScore": "__formbricks_null__",
+          "FeedbackRecords.npsCount": "__formbricks_null__",
+        },
+      ];
+    });
+
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const query = {
+      measures: ["FeedbackRecords.npsScore"],
+      timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", granularity: "week" as const }],
+    };
+    const result = await executeTenantScopedQuery({ ...scopedInput, query });
+
+    expect(mockLoad).toHaveBeenCalledWith(
+      {
+        ...query,
+        measures: ["FeedbackRecords.npsScore", "FeedbackRecords.npsCount"],
+        timezone: "UTC",
+      },
+      expect.anything()
+    );
+    // A week nobody answered has no score, but it genuinely had zero answers.
+    expect(result).toEqual([
+      { [WEEK]: "2026-01-05", "FeedbackRecords.npsScore": "40", "FeedbackRecords.npsCount": 25 },
+      { [WEEK]: "2026-01-12", "FeedbackRecords.npsScore": null, "FeedbackRecords.npsCount": 0 },
+    ]);
+    expect(query.measures).toEqual(["FeedbackRecords.npsScore"]);
+    // The audit trail records the chart as the user built it, not the injected member.
+    expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        newObject: expect.objectContaining({
+          query: expect.objectContaining({ measures: ["FeedbackRecords.npsScore"] }),
+        }),
+      })
+    );
+  });
+
+  test("still renders the chart when Cube does not know the response base measure", async () => {
+    // A self-hosted Cube running an older schema has no npsCount.
+    mockLoad
+      .mockRejectedValueOnce(new Error("Error: 'npsCount' not found for path 'FeedbackRecords.npsCount'"))
+      .mockResolvedValueOnce({ tablePivot: mockTablePivot });
+    mockTablePivot.mockReturnValue([{ "FeedbackRecords.npsScore": "40" }]);
+
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const query = { measures: ["FeedbackRecords.npsScore"] };
+    const result = await executeTenantScopedQuery({ ...scopedInput, query });
+
+    expect(mockLoad).toHaveBeenNthCalledWith(
+      1,
+      { measures: ["FeedbackRecords.npsScore", "FeedbackRecords.npsCount"], timezone: "UTC" },
+      expect.anything()
+    );
+    expect(mockLoad).toHaveBeenNthCalledWith(2, { ...query, timezone: "UTC" }, expect.anything());
+    expect(result).toEqual([{ "FeedbackRecords.npsScore": "40" }]);
+    expect(mockLoggerWarn).toHaveBeenCalledWith(expect.any(Error), expect.stringContaining("response base"));
+  });
+
+  test("does not retry when the error is not about the injected measure", async () => {
+    // A timeout or a failure in the chart's own members would fail again; retrying only doubles the
+    // load on a Cube that is already struggling.
+    mockLoad.mockRejectedValue(new Error("Query timeout of 60000ms exceeded"));
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    await expect(
+      executeTenantScopedQuery({ ...scopedInput, query: { measures: ["FeedbackRecords.npsScore"] } })
+    ).rejects.toThrow(/Cube query failed/);
+    expect(mockLoad).toHaveBeenCalledTimes(1);
+    expect(mockLoggerWarn).not.toHaveBeenCalled();
+  });
+
+  test("does not retry a failed query that carried no response base", async () => {
+    mockLoad.mockRejectedValue(new Error("boom"));
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    await expect(
+      executeTenantScopedQuery({ ...scopedInput, query: { measures: ["FeedbackRecords.count"] } })
+    ).rejects.toThrow(/Cube query failed/);
+    expect(mockLoad).toHaveBeenCalledTimes(1);
+  });
+
+  test("leaves a query with no single response base untouched", async () => {
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const query = { measures: ["FeedbackRecords.npsScore", "FeedbackRecords.count"] };
+    await executeTenantScopedQuery({ ...scopedInput, query });
+    expect(mockLoad).toHaveBeenCalledWith({ ...query, timezone: "UTC" }, expect.anything());
   });
 
   test("keeps a zero-activity day as 0 when every empty bucket was synthesized", async () => {

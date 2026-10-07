@@ -115,6 +115,7 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
     await findAndDeleteUploadedFilesInResponse(
       deletedResponse.data,
       surveyQuestionsResult.data,
+      deletedResponse.surveyId,
       surveyQuestionsResult.data.workspaceId
     );
 
@@ -318,6 +319,8 @@ export const updateResponseWithQuotaEvaluation = async (
       variables: response.variables,
       language: response.language || "default",
       responseFinished: response.finished,
+      // The row just written, so `reserved` quota operands resolve (ENG-1840).
+      response,
       tx,
     });
 

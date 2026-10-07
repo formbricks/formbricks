@@ -1,3 +1,4 @@
+import "./__mocks__/brevo.mock";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { IdentityProvider, Prisma } from "@formbricks/database/prisma";
@@ -8,6 +9,7 @@ import { TUserLocale, TUserUpdateInput } from "@formbricks/types/user";
 import { deleteUserOrganizationRelationships } from "@/lib/authzed/organization-membership";
 import { deleteUserTeamRelationships } from "@/lib/authzed/team-workspace";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
+import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
 import { publicUserSelect } from "./public-user";
 import { deleteUser, getUser, getUserByEmail, getUsersWithOrganization, updateUser } from "./service";
 
@@ -151,6 +153,19 @@ describe("User Service", () => {
       });
     });
 
+    // ENG-3257: same guard as the sibling lookup in modules/auth/lib/user.ts — callers here already
+    // lowercase, and normalizing at the query is what keeps the next one correct without knowing that.
+    test("should query by the lowercased address when the caller passes mixed case", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(mockPrismaUser);
+
+      await getUserByEmail("Test@Example.COM");
+
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
+        where: { email: "test@example.com" },
+        select: publicUserSelect,
+      });
+    });
+
     test("should return null when user not found by email", async () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
 
@@ -223,6 +238,7 @@ describe("User Service", () => {
       });
       expect(deleteUserOrganizationRelationships).toHaveBeenCalledWith("user1");
       expect(deleteUserTeamRelationships).toHaveBeenCalledWith("user1");
+      expect(deleteBrevoCustomerByEmail).toHaveBeenCalledWith({ email: mockPrismaUser.email });
     });
 
     // Regression for ENG-1057: Invite.creatorId has no onDelete rule, so any
@@ -238,7 +254,10 @@ describe("User Service", () => {
       expect(prisma.invite.deleteMany).toHaveBeenCalledWith({ where: { creatorId: "user1" } });
       const inviteDeleteOrder = vi.mocked(prisma.invite.deleteMany).mock.invocationCallOrder[0];
       const userDeleteOrder = vi.mocked(prisma.user.delete).mock.invocationCallOrder[0];
+      const brevoDeleteOrder = vi.mocked(deleteBrevoCustomerByEmail).mock.invocationCallOrder[0];
       expect(inviteDeleteOrder).toBeLessThan(userDeleteOrder);
+      expect(userDeleteOrder).toBeLessThan(brevoDeleteOrder);
+      expect(deleteBrevoCustomerByEmail).toHaveBeenCalledWith({ email: mockPrismaUser.email });
     });
 
     test("should throw DatabaseError when prisma throws", async () => {

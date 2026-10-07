@@ -76,6 +76,29 @@ Use this for **claude.ai** and **Claude Desktop**, where Formbricks is added as 
     Code** instead — it runs locally.
 </Warning>
 
+## ChatGPT (MCP apps)
+
+Use this to add Formbricks to **ChatGPT** as a custom MCP app. Custom MCP apps need ChatGPT
+**developer mode**, which is available on Business and Enterprise/Edu plans and has to be enabled by
+a workspace admin first — see OpenAI's
+[Developer mode and MCP apps in ChatGPT](https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt).
+
+<Steps>
+  <Step title="Create the app">
+    In ChatGPT, go to **Settings → Apps → Create**. Enter the MCP URL
+    `https://app.formbricks.com/api/mcp` and choose **OAuth** as the authentication mechanism.
+  </Step>
+  <Step title="Approve access">
+    ChatGPT opens Formbricks in your browser and registers itself. Sign in and **approve** the
+    requested access; ChatGPT then scans the available tools.
+  </Step>
+</Steps>
+
+<Note>
+  Like the Claude apps, ChatGPT connects from OpenAI's servers, so the MCP URL must be a **public
+  HTTPS** address — not `localhost`.
+</Note>
+
 ## Codex
 
 <Steps>
@@ -125,15 +148,21 @@ to connect again.
 Tokens are short-lived by design: an access token lasts **15 minutes** and the client refreshes it
 silently in the background for up to **30 days** (the refresh window). After that — or after you
 revoke — the client re-runs the sign-in and consent flow. Approving the write scopes
-(`surveys:write`, `workflows:write`, `feedbackRecords:write`) is re-confirmed periodically for safety.
+(`surveys:write`, `workflows:write`, `feedbackRecords:write`, `responses:write`) is re-confirmed
+periodically for safety.
 
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="claude.ai says it couldn't register / connect">
-    Custom connectors connect from Anthropic's cloud, which can't reach `localhost` or a private
+  <Accordion title="claude.ai or ChatGPT says it couldn't register / connect">
+    Custom connectors connect from the vendor's cloud, which can't reach `localhost` or a private
     network. Use a **public HTTPS** MCP URL (Formbricks Cloud, or a tunnel to a self-hosted instance),
     or connect a local server with **Claude Code** instead.
+
+    If registration fails with `400 invalid_redirect_uri`, the client asked to register a callback
+    Formbricks doesn't allow. Formbricks accepts local (`http://localhost`, `127.0.0.1`, `[::1]`)
+    callbacks and the exact claude.ai and ChatGPT callbacks. To allow another hosted client, a
+    self-hoster can add its exact callback with `MCP_DCR_ALLOWED_REDIRECT_URIS`.
   </Accordion>
   <Accordion title="invalid_client or a stale-registration error after reconnecting">
     The client cached a registration that no longer exists on the server (e.g. the server data was
@@ -145,6 +174,10 @@ revoke — the client re-runs the sign-in and consent flow. Approving the write 
     The client requested a scope it isn't registered for. Reconnect from scratch so it re-registers
     with the scopes the server advertises (`surveys:read`, `surveys:write`, `workflows:read`,
     `workflows:write`, `feedbackRecords:read`, `feedbackRecords:write`, `offline_access`).
+
+    `responses:read` and `responses:write` are deliberately **not** in that list yet. They can be
+    granted, but the server does not advertise them, so a client that asks for them by name is the
+    one case where this error is expected rather than a misconfiguration.
   </Accordion>
   <Accordion title="Stuck in a consent loop / keeps asking you to sign in">
     Usually a cookie or stale-session issue. Make sure you're signed in to Formbricks in the same
@@ -167,8 +200,9 @@ revoke — the client re-runs the sign-in and consent flow. Approving the write 
     [environment variables](/self-hosting/configuration/environment-variables) reference.
 
     If the Formbricks container or pod cannot resolve that public origin when it verifies a token, set
-    `MCP_OAUTH_JWKS_URL` to the internal `/api/auth/jwks` endpoint. Keep `WEBAPP_URL`, `NEXTAUTH_URL`, and
-    `BETTER_AUTH_URL` public: the internal override is only used for the server-side signing-key fetch.
+    `MCP_OAUTH_JWKS_URL` to the internal `/api/auth/jwks` endpoint. Keep `WEBAPP_URL` and your auth base
+    URL public: the internal override is only used for the server-side signing-key fetch. On an instance
+    that still configures the auth URL under its older name, that is the one that has to stay public.
     `/api/auth/jwks` is correct only when no custom application subpath is configured. If Formbricks is
     mounted at `/formbricks`, use the complete internal URL, such as
     `http://formbricks:3000/formbricks/api/auth/jwks`.

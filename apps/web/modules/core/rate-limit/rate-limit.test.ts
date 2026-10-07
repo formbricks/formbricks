@@ -1,7 +1,13 @@
 // Import modules after mocking
 import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 // Import after mocking
-import { checkRateLimit, peekRateLimit } from "./rate-limit";
+import {
+  type TRateLimitReservation,
+  checkRateLimit,
+  peekRateLimit,
+  reserveRateLimit,
+  settleRateLimit,
+} from "./rate-limit";
 import { TRateLimitConfig } from "./types/rate-limit";
 
 const { mockEval, mockGet, mockRedisClient, mockCache } = vi.hoisted(() => {
@@ -148,10 +154,10 @@ describe("checkRateLimit", () => {
     await checkRateLimit(testConfig, "test-user");
 
     expect(mockEval).toHaveBeenCalledWith(
-      expect.stringContaining("redis.call('INCR', key)"),
+      expect.any(String),
       expect.objectContaining({
         keys: [expect.stringMatching(/^fb:rate_limit:test:test-user:\d+$/)],
-        arguments: ["5", expect.any(String)],
+        arguments: ["5", expect.any(String), "1"],
       })
     );
   });
@@ -171,7 +177,7 @@ describe("checkRateLimit", () => {
       expect.any(String),
       expect.objectContaining({
         keys: [expect.stringMatching(/^fb:rate_limit:custom:test-user:\d+$/)],
-        arguments: ["5", expect.any(String)],
+        arguments: ["5", expect.any(String), "1"],
       })
     );
   });
@@ -187,20 +193,111 @@ describe("checkRateLimit", () => {
     expect(ttlUsed).toBeLessThanOrEqual(300);
   });
 
-  test("should set TTL only on first increment", async () => {
-    mockEval.mockResolvedValue([1, 1]);
+  test("should count multiple recipients in one atomic request", async () => {
+    mockEval.mockResolvedValue([5, 1]);
 
-    await checkRateLimit(testConfig, "test-user");
+    const result = await checkRateLimit(testConfig, "test-user", 5);
 
-    // Verify the Lua script contains the conditional TTL logic
-    const luaScript = mockEval.mock.calls[0][0];
-    expect(luaScript).toContain("if current == 1 then");
-    expect(luaScript).toContain("redis.call('EXPIRE', key, ttl)");
-    expect(luaScript).toContain("end");
+    expect(result).toEqual({ ok: true, data: { allowed: true, retryAfter: undefined } });
+    expect(mockEval).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        arguments: ["5", expect.any(String), "5"],
+      })
+    );
+  });
 
-    // Verify script structure for atomic increment and conditional expire
-    expect(luaScript).toContain("redis.call('INCR', key)");
-    expect(luaScript).toContain("return {current, current <= limit and 1 or 0}");
+  test("should return an exact-window receipt for a weighted reservation", async () => {
+    mockEval.mockResolvedValue([5, 1]);
+
+    const result = await reserveRateLimit(testConfig, "test-user", 5);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data).toEqual({
+      allowed: true,
+      retryAfter: undefined,
+      reservation: {
+        identifier: "test-user",
+        key: expect.stringMatching(/^fb:rate_limit:test:test-user:\d+$/),
+        namespace: "test",
+        requested: 5,
+        settled: false,
+      },
+    });
+  });
+
+  test("should atomically release only unused reserved units", async () => {
+    const reservation: TRateLimitReservation = {
+      identifier: "test-user",
+      key: "fb:rate_limit:test:test-user:123",
+      namespace: "test",
+      requested: 5,
+      settled: false,
+    };
+    mockEval.mockResolvedValue([2, 3]);
+
+    await settleRateLimit(reservation, 2);
+
+    expect(mockEval).toHaveBeenCalledWith(expect.any(String), {
+      keys: [reservation.key],
+      arguments: ["3"],
+    });
+    expect(reservation.settled).toBe(true);
+  });
+
+  test("should settle a receipt only once", async () => {
+    const reservation: TRateLimitReservation = {
+      identifier: "test-user",
+      key: "fb:rate_limit:test:test-user:123",
+      namespace: "test",
+      requested: 5,
+      settled: false,
+    };
+    mockEval.mockResolvedValue([2, 3]);
+
+    await settleRateLimit(reservation, 2);
+    await settleRateLimit(reservation, 2);
+
+    expect(mockEval).toHaveBeenCalledOnce();
+  });
+
+  test("should not touch Redis when all reserved units succeed", async () => {
+    const reservation: TRateLimitReservation = {
+      identifier: "test-user",
+      key: "fb:rate_limit:test:test-user:123",
+      namespace: "test",
+      requested: 5,
+      settled: false,
+    };
+
+    await settleRateLimit(reservation, 5);
+
+    expect(mockEval).not.toHaveBeenCalled();
+    expect(reservation.settled).toBe(true);
+  });
+
+  test.each([-1, 1.5, 6])("should reject invalid successful usage %s", async (successful) => {
+    const reservation: TRateLimitReservation = {
+      identifier: "test-user",
+      key: "fb:rate_limit:test:test-user:123",
+      namespace: "test",
+      requested: 5,
+      settled: false,
+    };
+
+    await expect(settleRateLimit(reservation, successful)).rejects.toThrow(
+      "Successful rate limit usage must be an integer within the reserved amount"
+    );
+    expect(mockEval).not.toHaveBeenCalled();
+    expect(reservation.settled).toBe(false);
+  });
+
+  test.each([0, -1, 1.5])("should reject invalid usage %s", async (requested) => {
+    await expect(checkRateLimit(testConfig, "test-user", requested)).rejects.toThrow(
+      "Rate limit usage must be a positive integer"
+    );
+    expect(mockEval).not.toHaveBeenCalled();
   });
 
   test("should not call Sentry when SENTRY_DSN is not configured", async () => {

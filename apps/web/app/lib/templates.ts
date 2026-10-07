@@ -4901,6 +4901,12 @@ export const previewSurvey = (workspaceName: string, t: TFunction): TSurvey => {
     workspaceId: "cmnh38nzx00003b6r3svd9pv2",
     createdBy: "cltwumfbz0000echxysz6ptvq",
     status: "inProgress" as const,
+    visibility: "workspace" as const,
+    ownerId: null,
+    visibilityVersion: 0,
+    visibilityProjectedVersion: 0,
+    visibilityChangedAt: null,
+    visibilityChangedById: null,
     publishOn: null,
     closeOn: null,
     welcomeCard: {
@@ -5005,6 +5011,7 @@ export const previewSurvey = (workspaceName: string, t: TFunction): TSurvey => {
     isBackButtonHidden: false,
     isAutoProgressingEnabled: true,
     isCaptureIpEnabled: false,
+    isAnonymizeResponsesEnabled: false,
     metadata: {},
     questions: [], // Required for build-time type checking (Zod defaults to [] at runtime)
     slug: null,

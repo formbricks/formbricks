@@ -10,9 +10,14 @@ properties:
       - element
       - variable
       - hiddenField
+      - reserved
   value:
     type: string
-    description: Element id, variable id, or hidden field id depending on `type`.
+    description: >-
+      Element id, variable id, hidden field id, or — for `reserved` — the name of an Embedded Data
+      field-catalog entry (`country`, `deviceType`, `utmSource`, …). Reserved names are checked for
+      non-emptiness only, deliberately not against the catalog, so a survey authored against a newer
+      catalog still parses on an older self-hosted deployment.
   meta:
     type: object
     additionalProperties:

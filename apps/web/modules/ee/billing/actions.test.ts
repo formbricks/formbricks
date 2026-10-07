@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { createTrialPaymentCheckoutAction, startHobbyAction, startProTrialAction } from "./actions";
 
 const mocks = vi.hoisted(() => ({
@@ -11,11 +12,14 @@ const mocks = vi.hoisted(() => ({
   ensureStripeCustomerForOrganization: vi.fn(),
   reconcileCloudStripeSubscriptionsForOrganization: vi.fn(),
   syncOrganizationBillingFromStripe: vi.fn(),
+  capturePostHogEvent: vi.fn(),
   addOptimisticBillingFeature: vi.fn(),
   createCustomerPortalSession: vi.fn(),
   createSetupCheckoutSession: vi.fn(),
   isSubscriptionCancelled: vi.fn(),
   stripeCustomerSessionsCreate: vi.fn(),
+  getProTrialDays: vi.fn(),
+  applyRateLimit: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/action-client", () => ({
@@ -32,7 +36,8 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 vi.mock("@/lib/posthog", () => ({
-  capturePostHogEvent: vi.fn(),
+  capturePostHogEvent: mocks.capturePostHogEvent,
+  groupIdentifyPostHog: vi.fn(),
 }));
 
 vi.mock("@/lib/authorization", () => ({
@@ -55,6 +60,10 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn((_eventName, _objectType, fn) => fn),
 }));
 
+vi.mock("@/modules/core/rate-limit/helpers", () => ({
+  applyRateLimit: mocks.applyRateLimit,
+}));
+
 vi.mock("@/modules/ee/billing/api/lib/create-customer-portal-session", () => ({
   createCustomerPortalSession: mocks.createCustomerPortalSession,
 }));
@@ -74,6 +83,7 @@ vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   reconcileCloudStripeSubscriptionsForOrganization: mocks.reconcileCloudStripeSubscriptionsForOrganization,
   syncOrganizationBillingFromStripe: mocks.syncOrganizationBillingFromStripe,
   addOptimisticBillingFeature: mocks.addOptimisticBillingFeature,
+  getProTrialDays: mocks.getProTrialDays,
 }));
 
 vi.mock("@/modules/ee/billing/lib/stripe-client", () => ({
@@ -99,6 +109,8 @@ describe("billing actions", () => {
     mocks.reconcileCloudStripeSubscriptionsForOrganization.mockResolvedValue(undefined);
     mocks.syncOrganizationBillingFromStripe.mockResolvedValue({ stripe: { features: ["ai-smart-tools"] } });
     mocks.addOptimisticBillingFeature.mockResolvedValue(undefined);
+    mocks.getProTrialDays.mockResolvedValue(14);
+    mocks.applyRateLimit.mockResolvedValue(undefined);
   });
 
   test("startHobbyAction ensures a customer, reconciles hobby, and syncs billing", async () => {
@@ -138,18 +150,54 @@ describe("billing actions", () => {
   });
 
   test("startProTrialAction uses ensured customer when org snapshot has no stripe customer id", async () => {
+    const auditLoggingCtx: { organizationId?: string; newObject?: Record<string, unknown> } = {};
     const result = await startProTrialAction({
-      ctx: { user: { id: "user_1" } },
+      ctx: { user: { id: "user_1" }, auditLoggingCtx },
       parsedInput: { organizationId: "org_1" },
     } as any);
 
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.actions.stateMutation, "org_1");
     expect(mocks.getOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.ensureStripeCustomerForOrganization).toHaveBeenCalledWith("org_1");
-    expect(mocks.createProTrialSubscription).toHaveBeenCalledWith("org_1", "cus_1");
+    expect(mocks.getProTrialDays).toHaveBeenCalledWith("org_1");
+    expect(mocks.createProTrialSubscription).toHaveBeenCalledWith("org_1", "cus_1", 14);
     expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.syncOrganizationBillingFromStripe).toHaveBeenCalledWith("org_1");
     expect(mocks.addOptimisticBillingFeature).toHaveBeenCalledWith("org_1", "ai-smart-tools");
+    expect(auditLoggingCtx.organizationId).toBe("org_1");
+    expect(auditLoggingCtx.newObject).toEqual({ plan: "pro", trialDurationDays: 14 });
     expect(result).toEqual({ success: true });
+  });
+
+  test("startProTrialAction passes the shortened trial length when the A/B test variant is active", async () => {
+    mocks.getProTrialDays.mockResolvedValue(7);
+
+    const result = await startProTrialAction({
+      ctx: { user: { id: "user_1" }, auditLoggingCtx: {} },
+      parsedInput: { organizationId: "org_1" },
+    } as any);
+
+    expect(mocks.createProTrialSubscription).toHaveBeenCalledWith("org_1", "cus_1", 7);
+    expect(result).toEqual({ success: true });
+  });
+
+  test("startProTrialAction reports the trial end and length on reverse_trial_started", async () => {
+    mocks.getProTrialDays.mockResolvedValue(7);
+    mocks.syncOrganizationBillingFromStripe.mockResolvedValue({
+      stripe: { trialEnd: "2026-10-07T12:00:00.000Z" },
+    });
+
+    await startProTrialAction({
+      ctx: { user: { id: "user_1" }, auditLoggingCtx: {} },
+      parsedInput: { organizationId: "org_1" },
+    } as never);
+
+    expect(mocks.capturePostHogEvent).toHaveBeenCalledWith(
+      "user_1",
+      "reverse_trial_started",
+      { organization_id: "org_1", trial_end: "2026-10-07T12:00:00.000Z", trial_duration_days: 7 },
+      { organizationId: "org_1" }
+    );
   });
 
   test("startProTrialAction reuses an existing stripe customer id", async () => {
@@ -161,12 +209,12 @@ describe("billing actions", () => {
     });
 
     const result = await startProTrialAction({
-      ctx: { user: { id: "user_1" } },
+      ctx: { user: { id: "user_1" }, auditLoggingCtx: {} },
       parsedInput: { organizationId: "org_1" },
     } as any);
 
     expect(mocks.ensureStripeCustomerForOrganization).not.toHaveBeenCalled();
-    expect(mocks.createProTrialSubscription).toHaveBeenCalledWith("org_1", "cus_existing");
+    expect(mocks.createProTrialSubscription).toHaveBeenCalledWith("org_1", "cus_existing", 14);
     expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.syncOrganizationBillingFromStripe).toHaveBeenCalledWith("org_1");
     expect(mocks.addOptimisticBillingFeature).toHaveBeenCalledWith("org_1", "ai-smart-tools");

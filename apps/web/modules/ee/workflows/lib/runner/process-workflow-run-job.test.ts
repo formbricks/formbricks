@@ -19,6 +19,7 @@ const {
   mockGetSurvey,
   mockGetOrganizationByWorkspaceId,
   mockGetWorkspaceMemberEmails,
+  mockCapturePostHogEvent,
 } = vi.hoisted(() => ({
   mockSendEmail: vi.fn(),
   mockBuildHtml: vi.fn(),
@@ -35,8 +36,11 @@ const {
   mockGetSurvey: vi.fn(),
   mockGetOrganizationByWorkspaceId: vi.fn(),
   mockGetWorkspaceMemberEmails: vi.fn(),
+  mockCapturePostHogEvent: vi.fn(),
 }));
 
+// Survey visibility (ENG-3282) is not enforced here: the readiness marker is off, not read from a database.
+vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
 vi.mock("@formbricks/database", () => ({
   prisma: {
     workflowRun: {
@@ -114,6 +118,10 @@ vi.mock("@/lib/workspace/service", () => ({
   getWorkspaceMemberEmails: mockGetWorkspaceMemberEmails,
 }));
 
+vi.mock("@/lib/posthog", () => ({
+  capturePostHogEvent: mockCapturePostHogEvent,
+}));
+
 vi.mock("@formbricks/logger", () => {
   const mockLogger = {
     debug: vi.fn(),
@@ -176,6 +184,7 @@ const baseRun = {
   id: "cm9zr4run000908l8q9b9d3pm",
   status: "queued",
   attempt: 0,
+  triggerType: "response.completed",
   triggerPayload,
   workflowVersion: { definition: executableDefinition },
   workflow: { definition: executableDefinition },
@@ -292,6 +301,7 @@ describe("processWorkflowRunJob", () => {
     // HTML-only send (no `text`), resolved recipient, sanitized subject, stable Message-ID.
     expect(mockSendEmail).toHaveBeenCalledTimes(1);
     const sendArgs = mockSendEmail.mock.calls[0][0];
+    expect(sendArgs.emailType).toBe("workflow_email");
     expect(sendArgs).toMatchObject({
       to: "jane@example.com",
       replyTo: "support@example.com",
@@ -773,6 +783,50 @@ describe("processWorkflowRunJob", () => {
       status: "failed",
       error: "SMTP provider rejected the message",
     });
+  });
+
+  test("reports one workflow_run_failed with the failed step on the final attempt (ENG-2851)", async () => {
+    mockSendEmail.mockRejectedValue(new Error("SMTP provider rejected the message for jane@example.com"));
+    mockGetOrganizationByWorkspaceId.mockResolvedValue({ id: "org_1" });
+
+    await expect(processWorkflowRunJob(data, finalAttemptContext)).resolves.toBeUndefined();
+
+    expect(mockCapturePostHogEvent).toHaveBeenCalledTimes(1);
+    const [distinctId, event, properties, groups] = mockCapturePostHogEvent.mock.calls[0];
+    expect(distinctId).toBe("org_1");
+    expect(event).toBe("workflow_run_failed");
+    expect(properties).toEqual({
+      workflow_id: data.workflowId,
+      workspace_id: data.workspaceId,
+      organization_id: "org_1",
+      run_id: baseRun.id,
+      trigger_type: "response.completed",
+      failed_step_type: "send_email",
+      error_kind: "step_failed",
+      attempt: finalAttemptContext.attempt,
+    });
+    // The message can name a recipient, so it never travels; only the coarse kind does.
+    expect(JSON.stringify(properties)).not.toContain("jane@example.com");
+    expect(groups).toEqual({ organizationId: "org_1", workspaceId: data.workspaceId });
+  });
+
+  test("does not report a failure on a non-final attempt (retries must not inflate the rate)", async () => {
+    mockSendEmail.mockRejectedValue(new Error("SMTP provider rejected the message"));
+
+    await expect(processWorkflowRunJob(data, baseContext)).rejects.toThrow();
+
+    expect(mockCapturePostHogEvent).not.toHaveBeenCalled();
+  });
+
+  test("does not report a failure when another delivery already finalized the run (0-row terminal write)", async () => {
+    mockSendEmail.mockRejectedValue(new Error("SMTP provider rejected the message"));
+    mockGetOrganizationByWorkspaceId.mockResolvedValue({ id: "org_1" });
+    // First updateMany is the queued→running claim; the second is this delivery's terminal write, which loses.
+    mockWorkflowRunUpdateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ count: 0 });
+
+    await expect(processWorkflowRunJob(data, finalAttemptContext)).resolves.toBeUndefined();
+
+    expect(mockCapturePostHogEvent).not.toHaveBeenCalled();
   });
 
   test("marks the run failed for an invalid / non-executable definition (final attempt)", async () => {

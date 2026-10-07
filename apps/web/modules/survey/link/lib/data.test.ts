@@ -4,6 +4,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { selectPublicSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import {
@@ -123,6 +124,27 @@ describe("data", () => {
         })
       );
       expect(transformPrismaSurvey).toHaveBeenCalledWith(mockSurveyData);
+    });
+
+    /**
+     * ENG-1845: this payload is the renderer's allow-list for link surveys. `getSurveyEmbeddedFields`
+     * fails closed, so a select that loses the join is indistinguishable from a survey with no fields
+     * — and every value in the URL would be silently dropped instead of ingested.
+     *
+     * Pinned to the *public* selector on purpose: an anonymous respondent has no use for the
+     * workspace-library row id, so swapping this for the write-path selector is a regression even
+     * though every field the renderer reads would still be there.
+     */
+    test("carries the Embedded Data join, which is the renderer's ingest allow-list", async () => {
+      const surveyId = "survey-1";
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockSurveyData as any);
+      vi.mocked(transformPrismaSurvey).mockReturnValue(mockTransformedSurvey);
+
+      await getSurveyWithMetadata(surveyId);
+
+      expect(vi.mocked(prisma.survey.findUnique).mock.calls[0][0].select).toEqual(
+        expect.objectContaining({ embeddedDataLinks: selectPublicSurveyEmbeddedDataLinks })
+      );
     });
 
     test("should throw ResourceNotFoundError when survey not found", async () => {
@@ -411,5 +433,51 @@ describe("data", () => {
 
       await expect(getOrganizationBilling(organizationId)).rejects.toThrow(prismaError);
     });
+  });
+});
+
+/**
+ * ENG-1838. The link-survey page renders through a bundled `packages/surveys`, so this payload is
+ * never version-skewed the way an embedded SDK bundle is — but the shape is still a contract the
+ * renderer's recall and logic engines read. ENG-2404 dropped the two columns it came from, so
+ * `variables` / `hiddenFields` are now derived from the Embedded Data rows by `transformPrismaSurvey`
+ * (mocked in this file) — which makes the rows in the select the whole contract.
+ */
+describe("legacy Embedded Data shape on the wire (ENG-1838)", () => {
+  test("the link-survey query asks for the rows the legacy keys are derived from", async () => {
+    vi.mocked(prisma.survey.findUnique).mockResolvedValue({ id: "survey-1" } as never);
+    vi.mocked(transformPrismaSurvey).mockReturnValue({ id: "survey-1" } as never);
+
+    await getSurveyWithMetadata("survey-1");
+
+    const [call] = vi.mocked(prisma.survey.findUnique).mock.calls;
+    const select = (call[0] as { select: Record<string, unknown> }).select;
+
+    expect(select.embeddedDataLinks).toEqual(selectPublicSurveyEmbeddedDataLinks);
+  });
+
+  test("transformPrismaSurvey derives both legacy keys from those rows", async () => {
+    const actual = await vi.importActual<typeof import("@/modules/survey/lib/utils")>(
+      "@/modules/survey/lib/utils"
+    );
+    const survey = actual.transformPrismaSurvey<TSurvey>({
+      id: "survey-1",
+      embeddedDataLinks: [
+        {
+          storageKey: "plan",
+          embeddedData: {
+            key: null,
+            name: "plan",
+            source: "ingested",
+            dataType: "string",
+            defaultValue: null,
+            locked: false,
+          },
+        },
+      ],
+    });
+
+    expect(survey.variables).toEqual([]);
+    expect(survey.hiddenFields).toEqual({ enabled: true, fieldIds: ["plan"] });
   });
 });

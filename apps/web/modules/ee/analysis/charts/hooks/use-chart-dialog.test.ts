@@ -37,7 +37,7 @@ vi.mock("@/modules/ee/analysis/charts/lib/chart-utils", () => ({
   resolveChartType: (type: string) => type,
 }));
 
-vi.mock("@/lib/utils/helper", () => ({
+vi.mock("@/lib/utils/error-message", () => ({
   getFormattedErrorMessage: (result: any) => result?.serverError ?? "formatted-error",
 }));
 
@@ -223,6 +223,81 @@ describe("useChartDialog", () => {
       expect(mockCreateChartAction).not.toHaveBeenCalled();
       expect(mockDeleteChartAction).not.toHaveBeenCalled();
       expect(mockToastError).toHaveBeenCalled();
+    });
+  });
+
+  describe("closing clears the session", () => {
+    // A chart left behind after a close is not just stale data: the next open renders one frame
+    // still carrying it, and the unsaved-changes baseline captured on that frame concludes a fresh,
+    // untouched builder already has work in it — which is how "Discard chart?" appeared on an
+    // empty dialog nobody had touched.
+    test("a successful save leaves nothing behind for the next open", async () => {
+      mockCreateChartAction.mockResolvedValue({ data: { id: NEW_CHART_ID } });
+
+      const onOpenChange = vi.fn();
+      const { result } = renderHook(() => useChartDialog({ ...baseProps, onOpenChange }));
+
+      await setHookReady(result);
+      expect(result.current.chartName).toBe("My Chart");
+      expect(result.current.chartData).not.toBeNull();
+
+      await act(async () => {
+        await result.current.handleSaveChart();
+      });
+
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+      expect(result.current.chartName).toBe("");
+      expect(result.current.chartData).toBeNull();
+      expect(result.current.selectedChartType).toBeUndefined();
+      expect(result.current.chartConfig).toEqual({});
+    });
+
+    test("handleClose clears it too, and does nothing mid-save", async () => {
+      const onOpenChange = vi.fn();
+      const { result } = renderHook(() => useChartDialog({ ...baseProps, onOpenChange }));
+
+      await setHookReady(result);
+      act(() => result.current.handleClose());
+
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+      expect(result.current.chartName).toBe("");
+      expect(result.current.chartData).toBeNull();
+    });
+  });
+
+  describe("starting from a preset (ENG-3331)", () => {
+    test("adopts the preset's chart type, display settings and name, and saves them", async () => {
+      mockCreateChartAction.mockResolvedValue({ data: { id: NEW_CHART_ID } });
+      const { result } = renderHook(() => useChartDialog(baseProps));
+
+      act(() =>
+        result.current.handleChartGenerated({
+          query: { measures: ["FeedbackRecords.npsScore"] },
+          chartType: "area",
+          config: { areaDisplay: "line" },
+          suggestedName: "NPS over time",
+        })
+      );
+
+      expect(result.current.selectedChartType).toBe("area");
+      expect(result.current.chartConfig).toEqual({ areaDisplay: "line" });
+      expect(result.current.chartName).toBe("NPS over time");
+
+      await act(async () => {
+        await result.current.handleSaveChart();
+      });
+      expect(mockCreateChartAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          chartInput: expect.objectContaining({ type: "area", config: { areaDisplay: "line" } }),
+        })
+      );
+    });
+
+    test("an AI chart without display settings keeps the ones already set", () => {
+      const { result } = renderHook(() => useChartDialog(baseProps));
+      act(() => result.current.setChartConfig({ barOrientation: "horizontal" }));
+      act(() => result.current.handleChartGenerated(sampleChartData));
+      expect(result.current.chartConfig).toEqual({ barOrientation: "horizontal" });
     });
   });
 

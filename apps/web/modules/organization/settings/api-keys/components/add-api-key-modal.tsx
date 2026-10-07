@@ -42,6 +42,13 @@ interface AddApiKeyModalProps {
   workspaces: TOrganizationWorkspace[];
   isCreatingAPIKey: boolean;
   isFormbricksCloud: boolean;
+  /**
+   * Whether the signed-in user clears USER_MANAGEMENT_MINIMUM_ROLE (ENG-3075). A key with
+   * organization write access can manage the org's users, teams and workspace-team grants, so the
+   * toggle is withheld rather than disabled when the floor is not cleared — `createApiKeyAction`
+   * refuses the same request, and this keeps the form from offering it. Read access is not gated.
+   */
+  canGrantOrganizationWriteAccess: boolean;
 }
 
 interface WorkspaceOption {
@@ -64,7 +71,8 @@ export const AddApiKeyModal = ({
   workspaces,
   isCreatingAPIKey,
   isFormbricksCloud,
-}: AddApiKeyModalProps) => {
+  canGrantOrganizationWriteAccess,
+}: Readonly<AddApiKeyModalProps>) => {
   const { t } = useTranslation();
   const { register, getValues, handleSubmit, reset, watch } = useForm<{ label: string }>();
   const apiKeyLabel = watch("label");
@@ -326,14 +334,16 @@ export const AddApiKeyModal = ({
                       disabled={selectedOrganizationAccess[key].write}
                     />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Label>Write</Label>
-                    <Switch
-                      data-testid={`organization-access-${key}-write`}
-                      checked={selectedOrganizationAccess[key].write}
-                      onCheckedChange={(newVal) => setSelectedOrganizationAccessValue(key, "write", newVal)}
-                    />
-                  </div>
+                  {canGrantOrganizationWriteAccess && (
+                    <div className="flex items-center gap-2">
+                      <Label>Write</Label>
+                      <Switch
+                        data-testid={`organization-access-${key}-write`}
+                        checked={selectedOrganizationAccess[key].write}
+                        onCheckedChange={(newVal) => setSelectedOrganizationAccessValue(key, "write", newVal)}
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
               {isFormbricksCloud && (

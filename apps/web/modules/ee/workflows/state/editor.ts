@@ -28,6 +28,8 @@ export type TWorkflowNodeIssue = {
 export type TWorkflowNodeData = {
   category: TWorkflowNodeCategory;
   icon: TWorkflowNodeIcon;
+  /** Concrete type for analytics (`response.completed`, `send_email`, `if_else`), never shown. */
+  nodeType: string;
   title: string;
   summary: string;
   isLeaf: boolean;
@@ -143,6 +145,13 @@ export const isWorkflowTransitioningAtom = atom((get) => get(workflowEditorAtom)
 // flashes as broken before the page syncs it.
 export const hasBoundTriggerSurveyAtom = atom<boolean>(true);
 
+// ENG-3395: the trigger's survey is restricted while survey visibility is enforced, so the server
+// refuses to enable or test the workflow and the runner skips its responses. Owned by the builder
+// page, which holds the server-side gate and the survey list; false (today's behaviour) until synced.
+export const isTriggerSurveyRestrictedAtom = atom<boolean>(false);
+// The restricted-surveys gate itself, for the trigger's survey picker. Set by the builder page.
+export const isSurveyVisibilityEnabledAtom = atom<boolean>(false);
+
 // Trigger ending-card ids the reconcile dropped this session (see useReconcileTriggerEndingCards).
 // Client-only, not part of the definition: it records that the user's "specific endings" intent was
 // emptied by now-deleted ids — which an empty `endingCardIds` ("all endings") can't express — so the
@@ -233,6 +242,7 @@ export type TWorkflowValidationProblemCode =
   | "name_missing"
   | "trigger_missing"
   | "trigger_survey_unbound"
+  | "trigger_survey_restricted"
   | "trigger_ending_not_found"
   | "trigger_not_connected"
   | "flow_invalid"
@@ -326,6 +336,29 @@ export type TWorkflowValidation = {
 };
 
 /**
+ * The trigger survey's own problem, if any. Unbound wins: a survey that cannot be resolved has no
+ * visibility worth reporting. Restricted mirrors the server's `survey_not_workspace_visible`.
+ */
+const getTriggerSurveyProblem = ({
+  hasTrigger,
+  hasBoundTriggerSurvey,
+  isTriggerSurveyRestricted,
+}: {
+  hasTrigger: boolean;
+  hasBoundTriggerSurvey: boolean;
+  isTriggerSurveyRestricted: boolean;
+}): TWorkflowValidationProblem | null => {
+  if (!hasTrigger) return null;
+  if (!hasBoundTriggerSurvey) {
+    return { code: "trigger_survey_unbound", field: workflowProblemFields.triggerSurveyId };
+  }
+  if (isTriggerSurveyRestricted) {
+    return { code: "trigger_survey_restricted", field: workflowProblemFields.triggerSurveyId };
+  }
+  return null;
+};
+
+/**
  * The single implementation of the editor's live readiness rules (name, survey binding,
  * executable-subset schema): one safeParse produces both the typed problem list the canvas
  * status indicator counts and the boolean validity the header's Enable gate reads. `isReady`
@@ -335,10 +368,13 @@ export const deriveWorkflowValidation = ({
   workflowName,
   definition,
   hasBoundTriggerSurvey,
+  isTriggerSurveyRestricted = false,
 }: {
   workflowName: string;
   definition: TWorkflowDefinition | null;
   hasBoundTriggerSurvey: boolean;
+  /** ENG-3395: the bound survey is restricted, which the server's enable/test pre-flight refuses. */
+  isTriggerSurveyRestricted?: boolean;
 }): TWorkflowValidation => {
   const problems: TWorkflowValidationProblem[] = [];
 
@@ -354,9 +390,12 @@ export const deriveWorkflowValidation = ({
     const hasTrigger = definition.trigger !== null;
     // The survey binding is only meaningful once a trigger exists — for trigger-less drafts the
     // builder page reports it unbound, but `trigger_missing` already says everything.
-    if (hasTrigger && !hasBoundTriggerSurvey) {
-      problems.push({ code: "trigger_survey_unbound", field: workflowProblemFields.triggerSurveyId });
-    }
+    const triggerSurveyProblem = getTriggerSurveyProblem({
+      hasTrigger,
+      hasBoundTriggerSurvey,
+      isTriggerSurveyRestricted,
+    });
+    if (triggerSurveyProblem) problems.push(triggerSurveyProblem);
 
     const parsed = ZWorkflowExecutableDefinition.safeParse(definition);
     isDefinitionExecutable = parsed.success;
@@ -417,6 +456,7 @@ const workflowValidationAtom = atom<TWorkflowValidation>((get) => {
     workflowName: state.workflowName,
     definition: state.definition,
     hasBoundTriggerSurvey: get(hasBoundTriggerSurveyAtom),
+    isTriggerSurveyRestricted: get(isTriggerSurveyRestrictedAtom),
   });
 });
 
@@ -500,6 +540,7 @@ export const hydrateWorkflowEditorAtom = atom(
     // Optimistic default until the builder page re-syncs it from the authoring context;
     // without the reset, a previous workflow's "unbound" state would flash on the next one.
     set(hasBoundTriggerSurveyAtom, true);
+    set(isTriggerSurveyRestrictedAtom, false);
     // Same reasoning: a previous workflow's pruned ids must not leak into this one's trigger form.
     set(prunedTriggerEndingCardIdsAtom, []);
     // Set outside the produce below so the nodes stay unfrozen (see workflowFlowNodesAtom).

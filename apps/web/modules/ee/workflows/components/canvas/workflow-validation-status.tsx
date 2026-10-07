@@ -6,6 +6,8 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { useWorkflowSurveyEndings } from "@/modules/ee/workflows/hooks/use-trigger-survey-picker";
+import { summarizeValidationProblems, trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
+import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
 import {
   deriveTriggerEndingProblems,
   workflowAtom,
@@ -75,7 +77,13 @@ export const WorkflowValidationStatus = () => {
             "border-amber-200 bg-amber-100 text-amber-800 transition-colors hover:bg-amber-200",
             "focus-visible:ring-ring focus-visible:ring-1 focus-visible:outline-hidden"
           )}
-          onClick={() => setIsProblemsDialogOpen(true)}>
+          onClick={() => {
+            trackWorkflowEvent(
+              WORKFLOW_CLIENT_EVENTS.validationProblemsViewed,
+              summarizeValidationProblems(problems)
+            );
+            setIsProblemsDialogOpen(true);
+          }}>
           <TriangleAlertIcon className="size-3.5" aria-hidden="true" />
           {t("workspace.workflows.validation_problems_count", { count: problems.length })}
         </button>

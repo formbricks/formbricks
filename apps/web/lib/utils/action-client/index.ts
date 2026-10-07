@@ -19,11 +19,16 @@ export const actionClient = createSafeActionClient({
       return e.message;
     }
 
+    // Attribute to the signed-in user by opaque id only (ENG-2326); `user` is set by
+    // `authenticatedActionClient`, so plain `actionClient` actions stay anonymous.
+    const userId = (utils.ctx as { user?: { id?: string } } | undefined)?.user?.id;
+
     // Only capture unexpected errors to Sentry
     Sentry.captureException(e, {
       extra: {
         eventId,
       },
+      ...(userId ? { user: { id: userId } } : {}),
     });
 
     logger.withContext({ eventId }).error(e, "SERVER ERROR");

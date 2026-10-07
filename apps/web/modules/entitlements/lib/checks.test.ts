@@ -28,6 +28,7 @@ const baseContext: TOrganizationEntitlementsContext = {
   source: "cloud_stripe",
   features: ["rbac", "spam-protection"],
   limits: { workspaces: 3, monthlyResponses: 500, monthlyWorkflowRuns: null },
+  licenseActive: false,
   licenseStatus: "no-license",
   licenseFeatures: null,
   stripeCustomerId: "cus_1",
