@@ -1,3 +1,4 @@
+import { LEAKY_AI_ERRORS, findPlantedContent } from "@/lib/ai/__mocks__/leaky-ai-errors";
 import { NoObjectGeneratedError } from "ai";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError } from "@formbricks/types/errors";
@@ -402,6 +403,23 @@ describe("generateAIChartQuery", () => {
         prompt: "anything",
       })
     ).rejects.toBe(providerError);
+  });
+
+  // ENG-3720: a rejection from here reaches the server action client, which writes a thrown error whole
+  // to the logs and to Sentry — and an AI SDK error carries the user's question and the model's answer.
+  test.each(LEAKY_AI_ERRORS)("rethrows a failure with %s without what the call carried", async (_, build) => {
+    mocks.generateOrganizationAIObject.mockRejectedValueOnce(build());
+
+    const rejection = await generateAIChartQuery({
+      organizationId: "organization-1",
+      workspaceId: "workspace-1",
+      feedbackDirectoryId: "directory-1",
+      userId: "user-1",
+      prompt: "anything",
+    }).catch((thrown: unknown) => thrown);
+
+    expect(rejection).toBeInstanceOf(Error);
+    expect(findPlantedContent(rejection)).toBeUndefined();
   });
 
   test("does not convert non-Error rejections", async () => {
