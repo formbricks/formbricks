@@ -593,11 +593,7 @@ export const PreviewSurvey = ({
           />
         )}
 
-        <div
-          className={cn(
-            "mt-2 flex items-center",
-            onAppearanceChange ? "w-5/6 justify-between" : "justify-center"
-          )}>
+        <div className="mt-2 flex items-center justify-center gap-2">
           {/* for toggling between mobile and desktop mode  */}
           <div className="flex rounded-full border-2 border-slate-300 p-1">
             <TabOption
