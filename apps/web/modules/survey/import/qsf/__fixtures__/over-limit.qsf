@@ -1,0 +1,7172 @@
+{
+  "SurveyEntry": {
+    "SurveyID": "SV_fixture000000000",
+    "SurveyName": "Over the limit",
+    "SurveyDescription": null,
+    "SurveyOwnerID": "UR_fixture",
+    "SurveyBrandID": "fixture",
+    "DivisionID": null,
+    "SurveyLanguage": "EN",
+    "SurveyActiveResponseSet": "RS_fixture",
+    "SurveyStatus": "Active",
+    "SurveyStartDate": "0000-00-00 00:00:00",
+    "SurveyExpirationDate": "0000-00-00 00:00:00",
+    "SurveyCreationDate": "2026-09-01 10:00:00",
+    "CreatorID": "UR_fixture",
+    "LastModified": "2026-09-08 10:00:00",
+    "LastAccessed": "0000-00-00 00:00:00",
+    "LastActivated": "2026-09-01 10:00:00",
+    "Deleted": null
+  },
+  "SurveyElements": [
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID1",
+      "SecondaryAttribute": "Question 1",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 1",
+        "DataExportTag": "Q1",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 1",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID1",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID2",
+      "SecondaryAttribute": "Question 2",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 2",
+        "DataExportTag": "Q2",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 2",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID2",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID3",
+      "SecondaryAttribute": "Question 3",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 3",
+        "DataExportTag": "Q3",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 3",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID3",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID4",
+      "SecondaryAttribute": "Question 4",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 4",
+        "DataExportTag": "Q4",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 4",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID4",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID5",
+      "SecondaryAttribute": "Question 5",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 5",
+        "DataExportTag": "Q5",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 5",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID5",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID6",
+      "SecondaryAttribute": "Question 6",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 6",
+        "DataExportTag": "Q6",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 6",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID6",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID7",
+      "SecondaryAttribute": "Question 7",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 7",
+        "DataExportTag": "Q7",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 7",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID7",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID8",
+      "SecondaryAttribute": "Question 8",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 8",
+        "DataExportTag": "Q8",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 8",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID8",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID9",
+      "SecondaryAttribute": "Question 9",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 9",
+        "DataExportTag": "Q9",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 9",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID9",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID10",
+      "SecondaryAttribute": "Question 10",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 10",
+        "DataExportTag": "Q10",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 10",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID10",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID11",
+      "SecondaryAttribute": "Question 11",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 11",
+        "DataExportTag": "Q11",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 11",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID11",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID12",
+      "SecondaryAttribute": "Question 12",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 12",
+        "DataExportTag": "Q12",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 12",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID12",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID13",
+      "SecondaryAttribute": "Question 13",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 13",
+        "DataExportTag": "Q13",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 13",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID13",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID14",
+      "SecondaryAttribute": "Question 14",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 14",
+        "DataExportTag": "Q14",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 14",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID14",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID15",
+      "SecondaryAttribute": "Question 15",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 15",
+        "DataExportTag": "Q15",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 15",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID15",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID16",
+      "SecondaryAttribute": "Question 16",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 16",
+        "DataExportTag": "Q16",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 16",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID16",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID17",
+      "SecondaryAttribute": "Question 17",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 17",
+        "DataExportTag": "Q17",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 17",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID17",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID18",
+      "SecondaryAttribute": "Question 18",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 18",
+        "DataExportTag": "Q18",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 18",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID18",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID19",
+      "SecondaryAttribute": "Question 19",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 19",
+        "DataExportTag": "Q19",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 19",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID19",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID20",
+      "SecondaryAttribute": "Question 20",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 20",
+        "DataExportTag": "Q20",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 20",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID20",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID21",
+      "SecondaryAttribute": "Question 21",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 21",
+        "DataExportTag": "Q21",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 21",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID21",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID22",
+      "SecondaryAttribute": "Question 22",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 22",
+        "DataExportTag": "Q22",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 22",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID22",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID23",
+      "SecondaryAttribute": "Question 23",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 23",
+        "DataExportTag": "Q23",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 23",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID23",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID24",
+      "SecondaryAttribute": "Question 24",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 24",
+        "DataExportTag": "Q24",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 24",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID24",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID25",
+      "SecondaryAttribute": "Question 25",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 25",
+        "DataExportTag": "Q25",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 25",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID25",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID26",
+      "SecondaryAttribute": "Question 26",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 26",
+        "DataExportTag": "Q26",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 26",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID26",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID27",
+      "SecondaryAttribute": "Question 27",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 27",
+        "DataExportTag": "Q27",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 27",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID27",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID28",
+      "SecondaryAttribute": "Question 28",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 28",
+        "DataExportTag": "Q28",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 28",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID28",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID29",
+      "SecondaryAttribute": "Question 29",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 29",
+        "DataExportTag": "Q29",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 29",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID29",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID30",
+      "SecondaryAttribute": "Question 30",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 30",
+        "DataExportTag": "Q30",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 30",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID30",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID31",
+      "SecondaryAttribute": "Question 31",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 31",
+        "DataExportTag": "Q31",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 31",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID31",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID32",
+      "SecondaryAttribute": "Question 32",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 32",
+        "DataExportTag": "Q32",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 32",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID32",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID33",
+      "SecondaryAttribute": "Question 33",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 33",
+        "DataExportTag": "Q33",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 33",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID33",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID34",
+      "SecondaryAttribute": "Question 34",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 34",
+        "DataExportTag": "Q34",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 34",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID34",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID35",
+      "SecondaryAttribute": "Question 35",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 35",
+        "DataExportTag": "Q35",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 35",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID35",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID36",
+      "SecondaryAttribute": "Question 36",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 36",
+        "DataExportTag": "Q36",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 36",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID36",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID37",
+      "SecondaryAttribute": "Question 37",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 37",
+        "DataExportTag": "Q37",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 37",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID37",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID38",
+      "SecondaryAttribute": "Question 38",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 38",
+        "DataExportTag": "Q38",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 38",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID38",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID39",
+      "SecondaryAttribute": "Question 39",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 39",
+        "DataExportTag": "Q39",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 39",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID39",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID40",
+      "SecondaryAttribute": "Question 40",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 40",
+        "DataExportTag": "Q40",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 40",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID40",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID41",
+      "SecondaryAttribute": "Question 41",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 41",
+        "DataExportTag": "Q41",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 41",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID41",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID42",
+      "SecondaryAttribute": "Question 42",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 42",
+        "DataExportTag": "Q42",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 42",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID42",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID43",
+      "SecondaryAttribute": "Question 43",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 43",
+        "DataExportTag": "Q43",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 43",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID43",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID44",
+      "SecondaryAttribute": "Question 44",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 44",
+        "DataExportTag": "Q44",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 44",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID44",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID45",
+      "SecondaryAttribute": "Question 45",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 45",
+        "DataExportTag": "Q45",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 45",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID45",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID46",
+      "SecondaryAttribute": "Question 46",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 46",
+        "DataExportTag": "Q46",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 46",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID46",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID47",
+      "SecondaryAttribute": "Question 47",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 47",
+        "DataExportTag": "Q47",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 47",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID47",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID48",
+      "SecondaryAttribute": "Question 48",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 48",
+        "DataExportTag": "Q48",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 48",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID48",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID49",
+      "SecondaryAttribute": "Question 49",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 49",
+        "DataExportTag": "Q49",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 49",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID49",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID50",
+      "SecondaryAttribute": "Question 50",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 50",
+        "DataExportTag": "Q50",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 50",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID50",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID51",
+      "SecondaryAttribute": "Question 51",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 51",
+        "DataExportTag": "Q51",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 51",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID51",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID52",
+      "SecondaryAttribute": "Question 52",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 52",
+        "DataExportTag": "Q52",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 52",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID52",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID53",
+      "SecondaryAttribute": "Question 53",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 53",
+        "DataExportTag": "Q53",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 53",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID53",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID54",
+      "SecondaryAttribute": "Question 54",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 54",
+        "DataExportTag": "Q54",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 54",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID54",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID55",
+      "SecondaryAttribute": "Question 55",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 55",
+        "DataExportTag": "Q55",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 55",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID55",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID56",
+      "SecondaryAttribute": "Question 56",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 56",
+        "DataExportTag": "Q56",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 56",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID56",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID57",
+      "SecondaryAttribute": "Question 57",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 57",
+        "DataExportTag": "Q57",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 57",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID57",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID58",
+      "SecondaryAttribute": "Question 58",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 58",
+        "DataExportTag": "Q58",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 58",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID58",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID59",
+      "SecondaryAttribute": "Question 59",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 59",
+        "DataExportTag": "Q59",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 59",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID59",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID60",
+      "SecondaryAttribute": "Question 60",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 60",
+        "DataExportTag": "Q60",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 60",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID60",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID61",
+      "SecondaryAttribute": "Question 61",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 61",
+        "DataExportTag": "Q61",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 61",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID61",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID62",
+      "SecondaryAttribute": "Question 62",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 62",
+        "DataExportTag": "Q62",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 62",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID62",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID63",
+      "SecondaryAttribute": "Question 63",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 63",
+        "DataExportTag": "Q63",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 63",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID63",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID64",
+      "SecondaryAttribute": "Question 64",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 64",
+        "DataExportTag": "Q64",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 64",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID64",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID65",
+      "SecondaryAttribute": "Question 65",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 65",
+        "DataExportTag": "Q65",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 65",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID65",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID66",
+      "SecondaryAttribute": "Question 66",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 66",
+        "DataExportTag": "Q66",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 66",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID66",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID67",
+      "SecondaryAttribute": "Question 67",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 67",
+        "DataExportTag": "Q67",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 67",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID67",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID68",
+      "SecondaryAttribute": "Question 68",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 68",
+        "DataExportTag": "Q68",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 68",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID68",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID69",
+      "SecondaryAttribute": "Question 69",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 69",
+        "DataExportTag": "Q69",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 69",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID69",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID70",
+      "SecondaryAttribute": "Question 70",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 70",
+        "DataExportTag": "Q70",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 70",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID70",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID71",
+      "SecondaryAttribute": "Question 71",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 71",
+        "DataExportTag": "Q71",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 71",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID71",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID72",
+      "SecondaryAttribute": "Question 72",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 72",
+        "DataExportTag": "Q72",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 72",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID72",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID73",
+      "SecondaryAttribute": "Question 73",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 73",
+        "DataExportTag": "Q73",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 73",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID73",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID74",
+      "SecondaryAttribute": "Question 74",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 74",
+        "DataExportTag": "Q74",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 74",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID74",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID75",
+      "SecondaryAttribute": "Question 75",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 75",
+        "DataExportTag": "Q75",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 75",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID75",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID76",
+      "SecondaryAttribute": "Question 76",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 76",
+        "DataExportTag": "Q76",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 76",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID76",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID77",
+      "SecondaryAttribute": "Question 77",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 77",
+        "DataExportTag": "Q77",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 77",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID77",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID78",
+      "SecondaryAttribute": "Question 78",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 78",
+        "DataExportTag": "Q78",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 78",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID78",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID79",
+      "SecondaryAttribute": "Question 79",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 79",
+        "DataExportTag": "Q79",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 79",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID79",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID80",
+      "SecondaryAttribute": "Question 80",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 80",
+        "DataExportTag": "Q80",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 80",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID80",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID81",
+      "SecondaryAttribute": "Question 81",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 81",
+        "DataExportTag": "Q81",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 81",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID81",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID82",
+      "SecondaryAttribute": "Question 82",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 82",
+        "DataExportTag": "Q82",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 82",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID82",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID83",
+      "SecondaryAttribute": "Question 83",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 83",
+        "DataExportTag": "Q83",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 83",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID83",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID84",
+      "SecondaryAttribute": "Question 84",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 84",
+        "DataExportTag": "Q84",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 84",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID84",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID85",
+      "SecondaryAttribute": "Question 85",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 85",
+        "DataExportTag": "Q85",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 85",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID85",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID86",
+      "SecondaryAttribute": "Question 86",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 86",
+        "DataExportTag": "Q86",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 86",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID86",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID87",
+      "SecondaryAttribute": "Question 87",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 87",
+        "DataExportTag": "Q87",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 87",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID87",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID88",
+      "SecondaryAttribute": "Question 88",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 88",
+        "DataExportTag": "Q88",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 88",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID88",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID89",
+      "SecondaryAttribute": "Question 89",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 89",
+        "DataExportTag": "Q89",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 89",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID89",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID90",
+      "SecondaryAttribute": "Question 90",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 90",
+        "DataExportTag": "Q90",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 90",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID90",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID91",
+      "SecondaryAttribute": "Question 91",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 91",
+        "DataExportTag": "Q91",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 91",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID91",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID92",
+      "SecondaryAttribute": "Question 92",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 92",
+        "DataExportTag": "Q92",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 92",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID92",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID93",
+      "SecondaryAttribute": "Question 93",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 93",
+        "DataExportTag": "Q93",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 93",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID93",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID94",
+      "SecondaryAttribute": "Question 94",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 94",
+        "DataExportTag": "Q94",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 94",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID94",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID95",
+      "SecondaryAttribute": "Question 95",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 95",
+        "DataExportTag": "Q95",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 95",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID95",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID96",
+      "SecondaryAttribute": "Question 96",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 96",
+        "DataExportTag": "Q96",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 96",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID96",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID97",
+      "SecondaryAttribute": "Question 97",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 97",
+        "DataExportTag": "Q97",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 97",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID97",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID98",
+      "SecondaryAttribute": "Question 98",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 98",
+        "DataExportTag": "Q98",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 98",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID98",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID99",
+      "SecondaryAttribute": "Question 99",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 99",
+        "DataExportTag": "Q99",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 99",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID99",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID100",
+      "SecondaryAttribute": "Question 100",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 100",
+        "DataExportTag": "Q100",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 100",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID100",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID101",
+      "SecondaryAttribute": "Question 101",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 101",
+        "DataExportTag": "Q101",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 101",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID101",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID102",
+      "SecondaryAttribute": "Question 102",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 102",
+        "DataExportTag": "Q102",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 102",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID102",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID103",
+      "SecondaryAttribute": "Question 103",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 103",
+        "DataExportTag": "Q103",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 103",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID103",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID104",
+      "SecondaryAttribute": "Question 104",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 104",
+        "DataExportTag": "Q104",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 104",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID104",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID105",
+      "SecondaryAttribute": "Question 105",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 105",
+        "DataExportTag": "Q105",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 105",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID105",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID106",
+      "SecondaryAttribute": "Question 106",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 106",
+        "DataExportTag": "Q106",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 106",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID106",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID107",
+      "SecondaryAttribute": "Question 107",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 107",
+        "DataExportTag": "Q107",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 107",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID107",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID108",
+      "SecondaryAttribute": "Question 108",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 108",
+        "DataExportTag": "Q108",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 108",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID108",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID109",
+      "SecondaryAttribute": "Question 109",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 109",
+        "DataExportTag": "Q109",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 109",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID109",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID110",
+      "SecondaryAttribute": "Question 110",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 110",
+        "DataExportTag": "Q110",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 110",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID110",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID111",
+      "SecondaryAttribute": "Question 111",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 111",
+        "DataExportTag": "Q111",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 111",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID111",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID112",
+      "SecondaryAttribute": "Question 112",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 112",
+        "DataExportTag": "Q112",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 112",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID112",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID113",
+      "SecondaryAttribute": "Question 113",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 113",
+        "DataExportTag": "Q113",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 113",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID113",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID114",
+      "SecondaryAttribute": "Question 114",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 114",
+        "DataExportTag": "Q114",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 114",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID114",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID115",
+      "SecondaryAttribute": "Question 115",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 115",
+        "DataExportTag": "Q115",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 115",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID115",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID116",
+      "SecondaryAttribute": "Question 116",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 116",
+        "DataExportTag": "Q116",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 116",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID116",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID117",
+      "SecondaryAttribute": "Question 117",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 117",
+        "DataExportTag": "Q117",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 117",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID117",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID118",
+      "SecondaryAttribute": "Question 118",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 118",
+        "DataExportTag": "Q118",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 118",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID118",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID119",
+      "SecondaryAttribute": "Question 119",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 119",
+        "DataExportTag": "Q119",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 119",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID119",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID120",
+      "SecondaryAttribute": "Question 120",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 120",
+        "DataExportTag": "Q120",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 120",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID120",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID121",
+      "SecondaryAttribute": "Question 121",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 121",
+        "DataExportTag": "Q121",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 121",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID121",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID122",
+      "SecondaryAttribute": "Question 122",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 122",
+        "DataExportTag": "Q122",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 122",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID122",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID123",
+      "SecondaryAttribute": "Question 123",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 123",
+        "DataExportTag": "Q123",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 123",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID123",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID124",
+      "SecondaryAttribute": "Question 124",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 124",
+        "DataExportTag": "Q124",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 124",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID124",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID125",
+      "SecondaryAttribute": "Question 125",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 125",
+        "DataExportTag": "Q125",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 125",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID125",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID126",
+      "SecondaryAttribute": "Question 126",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 126",
+        "DataExportTag": "Q126",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 126",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID126",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID127",
+      "SecondaryAttribute": "Question 127",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 127",
+        "DataExportTag": "Q127",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 127",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID127",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID128",
+      "SecondaryAttribute": "Question 128",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 128",
+        "DataExportTag": "Q128",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 128",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID128",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID129",
+      "SecondaryAttribute": "Question 129",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 129",
+        "DataExportTag": "Q129",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 129",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID129",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID130",
+      "SecondaryAttribute": "Question 130",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 130",
+        "DataExportTag": "Q130",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 130",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID130",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID131",
+      "SecondaryAttribute": "Question 131",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 131",
+        "DataExportTag": "Q131",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 131",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID131",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID132",
+      "SecondaryAttribute": "Question 132",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 132",
+        "DataExportTag": "Q132",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 132",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID132",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID133",
+      "SecondaryAttribute": "Question 133",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 133",
+        "DataExportTag": "Q133",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 133",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID133",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID134",
+      "SecondaryAttribute": "Question 134",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 134",
+        "DataExportTag": "Q134",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 134",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID134",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID135",
+      "SecondaryAttribute": "Question 135",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 135",
+        "DataExportTag": "Q135",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 135",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID135",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID136",
+      "SecondaryAttribute": "Question 136",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 136",
+        "DataExportTag": "Q136",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 136",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID136",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID137",
+      "SecondaryAttribute": "Question 137",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 137",
+        "DataExportTag": "Q137",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 137",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID137",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID138",
+      "SecondaryAttribute": "Question 138",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 138",
+        "DataExportTag": "Q138",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 138",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID138",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID139",
+      "SecondaryAttribute": "Question 139",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 139",
+        "DataExportTag": "Q139",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 139",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID139",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID140",
+      "SecondaryAttribute": "Question 140",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 140",
+        "DataExportTag": "Q140",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 140",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID140",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID141",
+      "SecondaryAttribute": "Question 141",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 141",
+        "DataExportTag": "Q141",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 141",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID141",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID142",
+      "SecondaryAttribute": "Question 142",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 142",
+        "DataExportTag": "Q142",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 142",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID142",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID143",
+      "SecondaryAttribute": "Question 143",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 143",
+        "DataExportTag": "Q143",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 143",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID143",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID144",
+      "SecondaryAttribute": "Question 144",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 144",
+        "DataExportTag": "Q144",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 144",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID144",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID145",
+      "SecondaryAttribute": "Question 145",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 145",
+        "DataExportTag": "Q145",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 145",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID145",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID146",
+      "SecondaryAttribute": "Question 146",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 146",
+        "DataExportTag": "Q146",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 146",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID146",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID147",
+      "SecondaryAttribute": "Question 147",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 147",
+        "DataExportTag": "Q147",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 147",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID147",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID148",
+      "SecondaryAttribute": "Question 148",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 148",
+        "DataExportTag": "Q148",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 148",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID148",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID149",
+      "SecondaryAttribute": "Question 149",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 149",
+        "DataExportTag": "Q149",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 149",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID149",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID150",
+      "SecondaryAttribute": "Question 150",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 150",
+        "DataExportTag": "Q150",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 150",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID150",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID151",
+      "SecondaryAttribute": "Question 151",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 151",
+        "DataExportTag": "Q151",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 151",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID151",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID152",
+      "SecondaryAttribute": "Question 152",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 152",
+        "DataExportTag": "Q152",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 152",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID152",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID153",
+      "SecondaryAttribute": "Question 153",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 153",
+        "DataExportTag": "Q153",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 153",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID153",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID154",
+      "SecondaryAttribute": "Question 154",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 154",
+        "DataExportTag": "Q154",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 154",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID154",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID155",
+      "SecondaryAttribute": "Question 155",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 155",
+        "DataExportTag": "Q155",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 155",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID155",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID156",
+      "SecondaryAttribute": "Question 156",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 156",
+        "DataExportTag": "Q156",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 156",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID156",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID157",
+      "SecondaryAttribute": "Question 157",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 157",
+        "DataExportTag": "Q157",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 157",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID157",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID158",
+      "SecondaryAttribute": "Question 158",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 158",
+        "DataExportTag": "Q158",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 158",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID158",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID159",
+      "SecondaryAttribute": "Question 159",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 159",
+        "DataExportTag": "Q159",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 159",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID159",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID160",
+      "SecondaryAttribute": "Question 160",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 160",
+        "DataExportTag": "Q160",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 160",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID160",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID161",
+      "SecondaryAttribute": "Question 161",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 161",
+        "DataExportTag": "Q161",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 161",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID161",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID162",
+      "SecondaryAttribute": "Question 162",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 162",
+        "DataExportTag": "Q162",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 162",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID162",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID163",
+      "SecondaryAttribute": "Question 163",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 163",
+        "DataExportTag": "Q163",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 163",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID163",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID164",
+      "SecondaryAttribute": "Question 164",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 164",
+        "DataExportTag": "Q164",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 164",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID164",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID165",
+      "SecondaryAttribute": "Question 165",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 165",
+        "DataExportTag": "Q165",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 165",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID165",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID166",
+      "SecondaryAttribute": "Question 166",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 166",
+        "DataExportTag": "Q166",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 166",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID166",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID167",
+      "SecondaryAttribute": "Question 167",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 167",
+        "DataExportTag": "Q167",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 167",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID167",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID168",
+      "SecondaryAttribute": "Question 168",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 168",
+        "DataExportTag": "Q168",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 168",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID168",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID169",
+      "SecondaryAttribute": "Question 169",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 169",
+        "DataExportTag": "Q169",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 169",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID169",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID170",
+      "SecondaryAttribute": "Question 170",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 170",
+        "DataExportTag": "Q170",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 170",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID170",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID171",
+      "SecondaryAttribute": "Question 171",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 171",
+        "DataExportTag": "Q171",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 171",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID171",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID172",
+      "SecondaryAttribute": "Question 172",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 172",
+        "DataExportTag": "Q172",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 172",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID172",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID173",
+      "SecondaryAttribute": "Question 173",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 173",
+        "DataExportTag": "Q173",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 173",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID173",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID174",
+      "SecondaryAttribute": "Question 174",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 174",
+        "DataExportTag": "Q174",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 174",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID174",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID175",
+      "SecondaryAttribute": "Question 175",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 175",
+        "DataExportTag": "Q175",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 175",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID175",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID176",
+      "SecondaryAttribute": "Question 176",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 176",
+        "DataExportTag": "Q176",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 176",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID176",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID177",
+      "SecondaryAttribute": "Question 177",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 177",
+        "DataExportTag": "Q177",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 177",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID177",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID178",
+      "SecondaryAttribute": "Question 178",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 178",
+        "DataExportTag": "Q178",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 178",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID178",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID179",
+      "SecondaryAttribute": "Question 179",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 179",
+        "DataExportTag": "Q179",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 179",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID179",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID180",
+      "SecondaryAttribute": "Question 180",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 180",
+        "DataExportTag": "Q180",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 180",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID180",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID181",
+      "SecondaryAttribute": "Question 181",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 181",
+        "DataExportTag": "Q181",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 181",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID181",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID182",
+      "SecondaryAttribute": "Question 182",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 182",
+        "DataExportTag": "Q182",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 182",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID182",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID183",
+      "SecondaryAttribute": "Question 183",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 183",
+        "DataExportTag": "Q183",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 183",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID183",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID184",
+      "SecondaryAttribute": "Question 184",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 184",
+        "DataExportTag": "Q184",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 184",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID184",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID185",
+      "SecondaryAttribute": "Question 185",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 185",
+        "DataExportTag": "Q185",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 185",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID185",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID186",
+      "SecondaryAttribute": "Question 186",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 186",
+        "DataExportTag": "Q186",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 186",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID186",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID187",
+      "SecondaryAttribute": "Question 187",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 187",
+        "DataExportTag": "Q187",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 187",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID187",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID188",
+      "SecondaryAttribute": "Question 188",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 188",
+        "DataExportTag": "Q188",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 188",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID188",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID189",
+      "SecondaryAttribute": "Question 189",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 189",
+        "DataExportTag": "Q189",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 189",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID189",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID190",
+      "SecondaryAttribute": "Question 190",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 190",
+        "DataExportTag": "Q190",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 190",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID190",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID191",
+      "SecondaryAttribute": "Question 191",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 191",
+        "DataExportTag": "Q191",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 191",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID191",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID192",
+      "SecondaryAttribute": "Question 192",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 192",
+        "DataExportTag": "Q192",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 192",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID192",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID193",
+      "SecondaryAttribute": "Question 193",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 193",
+        "DataExportTag": "Q193",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 193",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID193",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID194",
+      "SecondaryAttribute": "Question 194",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 194",
+        "DataExportTag": "Q194",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 194",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID194",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID195",
+      "SecondaryAttribute": "Question 195",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 195",
+        "DataExportTag": "Q195",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 195",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID195",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID196",
+      "SecondaryAttribute": "Question 196",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 196",
+        "DataExportTag": "Q196",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 196",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID196",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID197",
+      "SecondaryAttribute": "Question 197",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 197",
+        "DataExportTag": "Q197",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 197",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID197",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID198",
+      "SecondaryAttribute": "Question 198",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 198",
+        "DataExportTag": "Q198",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 198",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID198",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID199",
+      "SecondaryAttribute": "Question 199",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 199",
+        "DataExportTag": "Q199",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 199",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID199",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID200",
+      "SecondaryAttribute": "Question 200",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 200",
+        "DataExportTag": "Q200",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 200",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID200",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID201",
+      "SecondaryAttribute": "Question 201",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question 201",
+        "DataExportTag": "Q201",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question 201",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID201",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "BL",
+      "PrimaryAttribute": "Survey Blocks",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": [
+        {
+          "Type": "Default",
+          "Description": "All",
+          "ID": "BL_1",
+          "BlockElements": [
+            {
+              "Type": "Question",
+              "QuestionID": "QID1"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID2"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID3"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID4"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID5"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID6"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID7"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID8"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID9"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID10"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID11"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID12"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID13"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID14"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID15"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID16"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID17"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID18"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID19"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID20"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID21"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID22"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID23"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID24"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID25"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID26"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID27"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID28"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID29"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID30"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID31"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID32"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID33"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID34"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID35"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID36"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID37"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID38"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID39"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID40"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID41"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID42"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID43"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID44"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID45"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID46"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID47"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID48"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID49"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID50"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID51"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID52"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID53"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID54"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID55"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID56"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID57"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID58"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID59"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID60"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID61"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID62"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID63"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID64"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID65"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID66"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID67"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID68"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID69"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID70"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID71"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID72"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID73"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID74"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID75"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID76"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID77"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID78"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID79"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID80"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID81"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID82"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID83"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID84"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID85"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID86"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID87"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID88"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID89"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID90"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID91"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID92"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID93"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID94"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID95"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID96"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID97"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID98"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID99"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID100"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID101"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID102"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID103"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID104"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID105"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID106"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID107"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID108"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID109"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID110"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID111"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID112"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID113"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID114"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID115"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID116"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID117"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID118"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID119"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID120"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID121"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID122"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID123"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID124"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID125"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID126"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID127"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID128"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID129"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID130"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID131"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID132"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID133"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID134"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID135"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID136"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID137"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID138"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID139"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID140"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID141"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID142"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID143"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID144"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID145"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID146"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID147"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID148"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID149"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID150"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID151"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID152"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID153"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID154"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID155"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID156"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID157"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID158"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID159"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID160"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID161"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID162"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID163"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID164"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID165"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID166"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID167"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID168"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID169"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID170"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID171"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID172"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID173"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID174"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID175"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID176"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID177"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID178"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID179"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID180"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID181"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID182"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID183"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID184"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID185"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID186"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID187"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID188"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID189"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID190"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID191"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID192"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID193"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID194"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID195"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID196"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID197"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID198"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID199"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID200"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID201"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "FL",
+      "PrimaryAttribute": "Survey Flow",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "Type": "Root",
+        "FlowID": "FL_root",
+        "Flow": [
+          {
+            "Type": "Block",
+            "ID": "BL_1",
+            "FlowID": "FL_1"
+          },
+          {
+            "Type": "EndSurvey",
+            "FlowID": "FL_2"
+          }
+        ],
+        "Properties": {
+          "Count": 2
+        }
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SO",
+      "PrimaryAttribute": "Survey Options",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "BackButton": "false",
+        "SaveAndContinue": "true",
+        "SurveyProtection": "PublicSurvey",
+        "ProgressBarDisplay": "None",
+        "PartialData": "+1 week",
+        "EOSMessage": "",
+        "EOSRedirectURL": "",
+        "NextButton": "→",
+        "PreviousButton": "←",
+        "ShowExportTags": "false"
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "QC",
+      "PrimaryAttribute": "Survey Question Count",
+      "SecondaryAttribute": "201",
+      "TertiaryAttribute": null,
+      "Payload": null
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "STAT",
+      "PrimaryAttribute": "Survey Statistics",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "MobileCompatible": true,
+        "ID": "Survey Statistics"
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "RS",
+      "PrimaryAttribute": "RS_fixture",
+      "SecondaryAttribute": "Default Response Set",
+      "TertiaryAttribute": null,
+      "Payload": null
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SCO",
+      "PrimaryAttribute": "Scoring",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "ScoringCategories": [],
+        "ScoringCategoryGroups": [],
+        "ScoringSummaryCategory": null,
+        "ScoringSummaryAfterQuestions": 0,
+        "ScoringSummaryAfterSurvey": 0,
+        "DefaultScoringCategory": null,
+        "AutoScoringCategory": null
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "PROJ",
+      "PrimaryAttribute": "CORE",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": "1.1.0",
+      "Payload": {
+        "ProjectCategory": "CORE",
+        "SchemaVersion": "1.1.0"
+      }
+    }
+  ]
+}

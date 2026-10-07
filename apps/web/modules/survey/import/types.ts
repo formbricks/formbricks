@@ -21,6 +21,20 @@ export type TQsfImportStage = "reading" | "ai" | "assembling";
  * - `headline_fallback` — the headline was empty after sanitizing, so the export tag stands in (ENG-3607)
  * - `field_renamed` — an embedded data name Formbricks refuses, renamed (ENG-3606)
  * - `external_url_removed` — a link the organization's plan does not allow, removed (ENG-3411)
+ * - `language_skipped` — a Qualtrics language code with no Formbricks equivalent; its translations are
+ *   left out (`params.code`; `params.fallback` when it was the survey's default language)
+ * - `translation_fallback` — texts missing in a language, filled with the default language's text,
+ *   one line per language (`params.language`, `params.count`)
+ * - `piped_text_removed` — piped text with no Formbricks equivalent, removed (`params.count`)
+ * - `choice_label_renamed` — duplicate labels in one question, numbered so each is distinct
+ * - `choice_dropped` — a choice whose id the reader refuses
+ * - `text_too_long` — a text past the size the import sanitizes, left out
+ * - `markup_escaped` — plain text that would have rendered as HTML, shown as typed instead
+ *
+ * `question_skipped` carries `params.cause`, a fixed code (`unsupported_type`, `ai_skipped`,
+ * `plan_invalid`, `not_in_flow`, `invalid_id`, `validation_failed`). Params that carry text from the
+ * file or the AI — `field_renamed`'s `from`, `description` on `logic_not_imported` and
+ * `question_skipped`, `questionTag` — must be rendered as plain text, never as rich text.
  */
 export type TQsfImportIssueCode =
   | "logic_not_imported"
@@ -30,7 +44,14 @@ export type TQsfImportIssueCode =
   | "formatting_dropped"
   | "headline_fallback"
   | "field_renamed"
-  | "external_url_removed";
+  | "external_url_removed"
+  | "language_skipped"
+  | "translation_fallback"
+  | "piped_text_removed"
+  | "choice_label_renamed"
+  | "choice_dropped"
+  | "text_too_long"
+  | "markup_escaped";
 
 export interface TQsfImportIssue {
   code: TQsfImportIssueCode;
