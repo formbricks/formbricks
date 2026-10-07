@@ -97,10 +97,10 @@ describe("prepareEmailRichText", () => {
     expect(prepareEmailRichText(html)).toBe(html);
   });
 
-  test("leaves later DOMPurify calls elsewhere in the app without the email's styles", () => {
+  test("leaves later DOMPurify calls elsewhere in the app without the email's hooks", () => {
     prepareEmailRichText("<p>email</p>");
 
-    expect(DOMPurify.sanitize("<p>app</p>")).toBe("<p>app</p>");
+    expect(DOMPurify.sanitize('<p title="1 < 2">app</p>')).toBe('<p title="1 < 2">app</p>');
   });
 
   test("keeps encoded markup as text", () => {

@@ -89,13 +89,27 @@ export const importantStyle = (value: string): string => `${value} !important`;
  *
  * A custom `ALLOWED_URI_REGEXP` also applies to every attribute DOMPurify doesn't consider URI-safe,
  * so `target`, `rel`, `dir` and `start` are declared URI-safe or they'd be dropped (same trap as
- * `sanitizeFollowUpBody`). `href` stays checked.
+ * `sanitizeFollowUpBody`). `href` stays checked. `data-*` and `aria-*`, which DOMPurify allows by
+ * default, are off: the editor writes neither.
  */
 const EMAIL_RICH_TEXT_SANITIZE_CONFIG = {
   ALLOWED_TAGS: ["p", "br", "span", "b", "strong", "i", "em", "u", "a", "ul", "ol", "li", "h1", "h2"],
   ALLOWED_ATTR: ["class", "dir", "href", "target", "rel", "start", "value"],
   ALLOWED_URI_REGEXP: /^(?:https?|mailto|tel):/i,
   ADD_URI_SAFE_ATTR: ["target", "rel", "dir", "start"],
+  ALLOW_DATA_ATTR: false,
+  ALLOW_ARIA_ATTR: false,
+};
+
+/**
+ * Drops any attribute whose value holds `<` or `>`. jsdom leaves both unescaped inside attribute
+ * values, and two later steps scan the rendered email as a string: react-email's `render` removes the
+ * first `<!DOCTYPE…>` it finds, and `extractEmailBodyFragment` cuts at the first `<body` and the next
+ * `</body>`. Either can end a tag inside a value and turn the rest of it into live markup. Nothing the
+ * editor writes puts these characters in an attribute.
+ */
+const dropMarkupInAttributeValues = (_node: Element, data: { attrValue: string; keepAttr: boolean }) => {
+  if (/[<>]/.test(data.attrValue)) data.keepAttr = false;
 };
 
 /**
@@ -116,15 +130,17 @@ const inlineEmailRichTextStyles = (node: Element): void => {
 };
 
 /**
- * Turns a stored headline or subheader into the HTML the email renders. The hook is added only for
+ * Turns a stored headline or subheader into the HTML the email renders. The hooks are added only for
  * this call, so other DOMPurify callers in the process are unaffected.
  */
 export const prepareEmailRichText = (html: string): string => {
+  DOMPurify.addHook("uponSanitizeAttribute", dropMarkupInAttributeValues);
   DOMPurify.addHook("afterSanitizeAttributes", inlineEmailRichTextStyles);
   try {
     return DOMPurify.sanitize(html, EMAIL_RICH_TEXT_SANITIZE_CONFIG);
   } finally {
     DOMPurify.removeHook("afterSanitizeAttributes", inlineEmailRichTextStyles);
+    DOMPurify.removeHook("uponSanitizeAttribute", dropMarkupInAttributeValues);
   }
 };
 
