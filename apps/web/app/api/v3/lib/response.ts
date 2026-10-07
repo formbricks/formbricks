@@ -99,6 +99,7 @@ export const INTERNAL_PROBLEM_CODES = [
   "attachment_export_empty",
   "attachment_export_too_large",
   "capacity_reached",
+  "concurrency_limit_reached",
 ] as const;
 
 export type InternalProblemCode = (typeof INTERNAL_PROBLEM_CODES)[number];
@@ -431,6 +432,27 @@ export function problemCapacityReached(
     `This server is busy with other requests like this one. Try again in ${retryAfterSeconds} seconds.`,
     requestId,
     { code: "capacity_reached", instance, headers: { "Retry-After": String(retryAfterSeconds) } }
+  );
+}
+
+/**
+ * 429 for a caller that already runs as many requests on a route as it may at once (`maxPerKey` in
+ * `withV3ApiWrapper`'s `concurrency`). Its own code, not the rate limit's `too_many_requests`: the fix is
+ * to wait for the caller's own request to finish, not to slow down, and a client says so.
+ *
+ * `concurrency_limit_reached` is an internal code, published the same way as `capacity_reached`.
+ */
+export function problemConcurrencyLimitReached(
+  requestId: string,
+  retryAfterSeconds: number,
+  instance?: string
+): Response {
+  return problemResponse(
+    429,
+    "Too Many Requests",
+    "You already have as many of these requests running as this route allows. Wait for one to finish.",
+    requestId,
+    { code: "concurrency_limit_reached", instance, headers: { "Retry-After": String(retryAfterSeconds) } }
   );
 }
 

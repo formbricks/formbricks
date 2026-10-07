@@ -1199,6 +1199,8 @@ describe("per-route concurrency limit", () => {
 
     expect(response.status).toBe(429);
     expect(response.headers.get("Retry-After")).toBe("7");
+    // Its own code, not the rate limit's: the caller waits for its own request rather than slowing down.
+    await expect(response.json()).resolves.toMatchObject({ code: "concurrency_limit_reached" });
     expect(handler).not.toHaveBeenCalled();
     expect(limiter.tryAcquire("user_2").ok).toBe(true);
     if (mine.ok) mine.release();

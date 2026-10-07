@@ -30,6 +30,7 @@ import {
   isInvalidParamCode,
   problemBadRequest,
   problemCapacityReached,
+  problemConcurrencyLimitReached,
   problemPayloadTooLarge,
   problemTooManyRequests,
   problemUnauthorized,
@@ -581,12 +582,7 @@ function refuseOverConcurrency(
       { statusCode: 429, maxPerKey: concurrency.limiter.maxPerKey },
       "V3 API caller is at its concurrency limit for this route"
     );
-    return problemTooManyRequests(
-      requestId,
-      "You already have as many of these requests running as this route allows. Wait for one to finish.",
-      concurrency.retryAfterSeconds,
-      instance
-    );
+    return problemConcurrencyLimitReached(requestId, concurrency.retryAfterSeconds, instance);
   }
 
   log.warn(

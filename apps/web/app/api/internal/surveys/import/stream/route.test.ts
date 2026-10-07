@@ -146,6 +146,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
     expect(first.status).toBe(200);
     expect(second.status).toBe(429);
     expect(second.headers.get("Retry-After")).toBe(String(QSF_IMPORT_RETRY_AFTER_SECONDS));
+    await expect(second.json()).resolves.toMatchObject({ code: "concurrency_limit_reached" });
 
     const done = first.text();
     running.finish();
