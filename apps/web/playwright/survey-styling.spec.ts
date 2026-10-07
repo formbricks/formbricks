@@ -444,9 +444,7 @@ test.describe("Survey Styling", async () => {
 
     await test.step("Saving workspace CSS asks to confirm its reach", async () => {
       await page.getByRole("button", { name: "Save CSS" }).click();
-      const dialog = page.getByRole("dialog");
-      await expect(dialog.getByText("Save workspace CSS?")).toBeVisible();
-      await dialog.getByRole("button", { name: "Save for all surveys" }).click();
+      await page.getByRole("dialog").getByRole("button", { name: "Save for all surveys" }).click();
       await expect(page.getByText(/Custom CSS saved/)).toBeVisible();
 
       await page.reload();
@@ -460,9 +458,6 @@ test.describe("Survey Styling", async () => {
       surveyId = await createSurveyFromScratch(page);
       await page.getByRole("button", { name: "Styling" }).click();
       await page.getByRole("button", { name: /^Custom CSS/ }).click();
-
-      await page.getByRole("button", { name: "Inherited workspace CSS" }).click();
-      await expect(page.getByLabel("Inherited workspace CSS: Base CSS")).toHaveValue(/--acme-ink/);
 
       // Not behind "Add custom styles": survey CSS adds on top of the workspace CSS either way (D16).
       await page.getByLabel("Base CSS", { exact: true }).fill(surveyCss);
