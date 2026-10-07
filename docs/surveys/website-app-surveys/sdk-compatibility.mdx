@@ -32,22 +32,22 @@ Every SDK shares one appearance contract:
 - The choice is kept in memory for the current app or page session. It survives logout and identity reset, and is forgotten when the app restarts or the page reloads. It is not stored as a contact attribute and sends no request to Formbricks.
 - The appearance is applied before the survey first appears. Changing it while a survey is open switches the colors in place and keeps the respondent's answers, progress and focus.
 
-```javascript Setting the appearance with the JavaScript SDK (script tag)
-window.formbricks.setup({
+```javascript Setting the appearance with the JavaScript SDK
+formbricks.setup({
   workspaceId: "<workspace-id>",
   appUrl: "<app-url>",
   appearance: "system", // "light" (default), "dark" or "system"
 });
 
 // When the user switches your app's theme:
-window.formbricks?.setAppearance("dark");
+formbricks.setAppearance("dark");
 ```
 
-Once released, the mobile SDKs will expose the same `setAppearance` method and setup option, using each platform's usual enum or type.
+The mobile SDKs expose the same `setAppearance` method and setup option, using each platform's usual enum or type. Their READMEs show the exact syntax.
 
 ### What "system" Follows
 
-`"system"` means the appearance your app is currently showing, which is not always the phone's setting. Once each SDK ships, it resolves it like this:
+`"system"` means the appearance your app is currently showing, which is not always the phone's setting:
 
 | Platform | `"system"` follows |
 | --- | --- |
@@ -64,8 +64,8 @@ If your app keeps its theme only in its own code, such as a React context or an 
 Check that the method exists before calling it, so older SDK versions keep working:
 
 ```javascript Feature-detecting setAppearance
-if (typeof window.formbricks?.setAppearance === "function") {
-  window.formbricks.setAppearance("dark");
+if (typeof formbricks.setAppearance === "function") {
+  formbricks.setAppearance("dark");
 }
 ```
 
