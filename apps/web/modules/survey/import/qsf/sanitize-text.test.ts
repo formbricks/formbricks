@@ -146,17 +146,20 @@ describe("sanitizeQsfTexts", () => {
     { timeout: 30_000 },
     async () => {
       const survey = readQsf(loadQsfFixture("large-150.qsf"));
-      // Twenty questions of the costliest text the limits admit (500 tags, ~20 ms each on jsdom): about
-      // 400 ms of sanitizing, which must not run as one block.
-      let costly = 0;
+      // Every headline 240 tags long (a few ms each on jsdom): over half a second of sanitizing in
+      // all, which must not run as one block.
       for (const text of survey.texts.values()) {
-        if (text.format !== "rich" || costly++ >= 20) continue;
-        text.byLanguage.set(survey.defaultLanguage, "<span>x</span>".repeat(250));
+        if (text.format === "rich") text.byLanguage.set(survey.defaultLanguage, "<span>x</span>".repeat(120));
       }
       const histogram = monitorEventLoopDelay({ resolution: 1 });
 
+      // The histogram measures between ticks of its own timer, so it needs a tick before the work
+      // starts and one after it, or a block at either end goes unrecorded.
+      const tick = () => new Promise((resolve) => setTimeout(resolve, 20));
       histogram.enable();
+      await tick();
       await sanitizeQsfTexts(survey, new AbortController().signal);
+      await tick();
       histogram.disable();
 
       // Each slice runs ~10 ms plus one text; a loose bound that still fails if nothing yields.

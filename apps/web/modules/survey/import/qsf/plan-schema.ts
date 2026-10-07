@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
+import type { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 
 /**
  * The AI plan for a Qualtrics import (ENG-3479, option B): which Formbricks type each question
@@ -20,21 +20,21 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
  * external host) or `address`; a CTA is always built without an external button.
  */
 export const QSF_PLAN_ELEMENT_TYPES = [
-  TSurveyElementTypeEnum.OpenText,
-  TSurveyElementTypeEnum.MultipleChoiceSingle,
-  TSurveyElementTypeEnum.MultipleChoiceMulti,
-  TSurveyElementTypeEnum.Matrix,
-  TSurveyElementTypeEnum.NPS,
-  TSurveyElementTypeEnum.Rating,
-  TSurveyElementTypeEnum.CSAT,
-  TSurveyElementTypeEnum.CES,
-  TSurveyElementTypeEnum.Ranking,
-  TSurveyElementTypeEnum.Date,
-  TSurveyElementTypeEnum.FileUpload,
-  TSurveyElementTypeEnum.ContactInfo,
-  TSurveyElementTypeEnum.Consent,
-  TSurveyElementTypeEnum.CTA,
-] as const;
+  "openText",
+  "multipleChoiceSingle",
+  "multipleChoiceMulti",
+  "matrix",
+  "nps",
+  "rating",
+  "csat",
+  "ces",
+  "ranking",
+  "date",
+  "fileUpload",
+  "contactInfo",
+  "consent",
+  "cta",
+] as const satisfies readonly `${TSurveyElementTypeEnum}`[];
 
 export type TQsfPlanElementType = (typeof QSF_PLAN_ELEMENT_TYPES)[number];
 
