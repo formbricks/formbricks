@@ -212,6 +212,8 @@ describe("cleanNote", () => {
     ["an email address", "Write to user@evil.co today", "Write to … today"],
     ["a domain with a port", "Open evil.example:8080 first", "Open … first"],
     ["a bare domain with a common top-level domain", "See Mail.Evil-Example.org or evil.io.", "See … or …."],
+    ["an English-word top-level domain with a path", "Go to evil.it/x or evil.me/a", "Go to … or …"],
+    ["an English-word top-level domain after an @", "Mail user@evil.it", "Mail …"],
   ])("replaces %s", (_case, raw, cleaned) => {
     expect(cleanNote(raw)).toBe(cleaned);
   });
@@ -220,6 +222,9 @@ describe("cleanNote", () => {
     "Shown only if 'Do you use it?' is 'Yes', e.g. for daily users (v2.0).",
     "Asked of Node.js users only.",
     "Skips to the next answer.Then ends the survey.",
+    "If they selected.It then skips to the end.",
+    "Shown to users.In Berlin only, answered.At least once, and asked.Me too.",
+    "Skips if chosen.Is shown to.Us and skips.To the end.",
   ])("leaves prose alone: %s", (note) => {
     expect(cleanNote(note)).toBe(note);
   });

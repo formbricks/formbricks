@@ -90,7 +90,12 @@ export interface TQsfPlanResponse {
 // Control characters and the bidi overrides, which can make a report line read as something else.
 // eslint-disable-next-line no-control-regex -- matching control characters is the point
 const CONTROL_CHARACTERS = /[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2066-\u2069]/g;
-/** Top-level domains common enough that a bare `name.tld` in a note is taken for a link. */
+/**
+ * Top-level domains common enough that a bare `name.tld` in a note is taken for a link. Two-letter ones
+ * that are English words (`it`, `in`, `at`, `me`, `us`, `is`, `to`, `no`, `be`, `do`, `so`, …) are
+ * left out: "selected.It then skips" is a missing space, not a link. Those still count with a path,
+ * port, `@` or `www.` (`evil.it/x`).
+ */
 const COMMON_TLDS = [
   "com",
   "net",
@@ -102,7 +107,6 @@ const COMMON_TLDS = [
   "app",
   "dev",
   "xyz",
-  "me",
   "ai",
   "ly",
   "gg",
@@ -117,19 +121,15 @@ const COMMON_TLDS = [
   "store",
   "eu",
   "uk",
-  "us",
   "de",
   "fr",
   "nl",
   "ch",
-  "at",
   "es",
-  "it",
   "ru",
   "cn",
   "jp",
   "br",
-  "in",
   "au",
   "ca",
 ].join("|");
