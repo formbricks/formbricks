@@ -120,6 +120,11 @@ export function findArrayBudgetViolation(value: unknown): TArrayBudgetViolation 
     frame.next += 1;
     const segment = segmentAt(frame, index);
     const child = childAt(frame, index, segment);
+    // Done with this container once its last child is taken, so nesting holds one frame per open
+    // sibling list rather than one per level: a 15 MB `{"a":{"a":…}}` is millions of levels deep.
+    if (frame.next >= childCount(frame)) {
+      stack.pop();
+    }
 
     if (isContainer(child)) {
       const entered = enter(child, { segment, parent: frame.path });

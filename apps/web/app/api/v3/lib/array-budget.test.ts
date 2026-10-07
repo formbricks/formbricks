@@ -32,7 +32,17 @@ describe("findArrayBudgetViolation", () => {
     const violation = findArrayBudgetViolation(body);
 
     expect(violation?.kind).toBe("too_many_elements");
-    expect(violation?.path).toMatch(/^blocks\.\d+\.elements$/);
+    expect(violation?.path).toBe("blocks.49.elements");
+  });
+
+  test("reports the first offending array in document order", () => {
+    // `invalid_params[].name` on every v3 route depends on this order.
+    const body = {
+      first: [{ nested: junk(V3_REQUEST_ARRAY_MAX_ITEMS + 1) }],
+      second: junk(V3_REQUEST_ARRAY_MAX_ITEMS + 1),
+    };
+
+    expect(findArrayBudgetViolation(body)?.path).toBe("first.0.nested");
   });
 
   test("walks deep nesting without recursing", () => {
