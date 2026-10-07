@@ -1,3 +1,4 @@
+import { LEAKY_AI_ERRORS, buildRetryError, findPlantedContent } from "@/lib/ai/__mocks__/leaky-ai-errors";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
@@ -25,13 +26,18 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("@formbricks/ai", () => ({
+vi.mock("@formbricks/ai", async (importOriginal) => ({
+  // Real: the service and its log helper only check `instanceof` against it.
+  AIOAuthTokenError: (await importOriginal<typeof import("@formbricks/ai")>()).AIOAuthTokenError,
   AIConfigurationError: class AIConfigurationError extends Error {
     code: string;
+    details: Record<string, unknown>;
 
-    constructor(code: string, message: string) {
+    constructor(code: string, message: string, details: Record<string, unknown> = {}) {
       super(message);
+      this.name = "AIConfigurationError";
       this.code = code;
+      this.details = details;
     }
   },
   AIOutputTokenLimitError: class AIOutputTokenLimitError extends Error {
@@ -234,7 +240,7 @@ describe("AI organization service", () => {
     });
   });
 
-  test("logs and rethrows generation errors", async () => {
+  test("logs generation errors by name and frames, never the message, and rethrows them", async () => {
     const modelError = new Error("provider boom");
     mocks.generateText.mockRejectedValueOnce(modelError);
 
@@ -253,13 +259,14 @@ describe("AI organization service", () => {
         isQuotaExhausted: undefined,
         isRetryable: undefined,
         isAuthFailure: undefined,
-        err: modelError,
+        errName: "Error",
+        errStack: expect.stringContaining("service.test.ts"),
       },
       "Failed to generate organization AI text"
     );
   });
 
-  test("logs and rethrows object generation errors", async () => {
+  test("logs object generation errors by name and frames, never the message, and rethrows them", async () => {
     const modelError = new Error("provider boom");
     mocks.generateObject.mockRejectedValueOnce(modelError);
 
@@ -279,7 +286,8 @@ describe("AI organization service", () => {
         isQuotaExhausted: undefined,
         isRetryable: undefined,
         isAuthFailure: undefined,
-        err: modelError,
+        errName: "Error",
+        errStack: expect.stringContaining("service.test.ts"),
       },
       "Failed to generate organization AI object"
     );
@@ -361,6 +369,103 @@ describe("AI organization service", () => {
         prompt: "Generate a survey",
       } as any)
     ).rejects.toBe(serverError);
+  });
+
+  // Cast rather than `any`: `@formbricks/ai` is mocked here, so the schema is never read — but the input
+  // type still requires a real one.
+  const objectInput = () =>
+    ({
+      organizationId: "org_1",
+      schema: { type: "object" },
+      prompt: "Generate a survey",
+    }) as unknown as Parameters<typeof generateOrganizationAIObject>[0];
+
+  test("logs which part of the AI configuration is wrong by field name, never the message", async () => {
+    const { AIConfigurationError } = await import("@formbricks/ai");
+    const configurationError = new AIConfigurationError(
+      "providerNotConfigured",
+      "AWS Bedrock credentials are incomplete",
+      { provider: "aws", missingFields: ["AI_AWS_REGION"] }
+    );
+    mocks.generateObject.mockRejectedValueOnce(configurationError);
+
+    await expect(generateOrganizationAIObject(objectInput())).rejects.toBe(configurationError);
+
+    const [logged] = mocks.loggerError.mock.calls[0];
+    expect(logged).toMatchObject({
+      errorCode: "providerNotConfigured",
+      configuration: { provider: "aws", missingFields: ["AI_AWS_REGION"] },
+      errName: "AIConfigurationError",
+    });
+    expect(JSON.stringify(logged)).not.toContain("credentials are incomplete");
+  });
+
+  // ENG-3720: an AI SDK error carries the prompt (`requestBodyValues`, once per retry attempt) and the
+  // model's output (`text`, `value`, and the messages built from them). The failure log must locate and
+  // classify the failure without any of it — and the caller still gets the original error to branch on.
+  describe("never logs what the AI call carried", () => {
+    beforeEach(async () => {
+      const actual = await vi.importActual<typeof import("@formbricks/ai")>("@formbricks/ai");
+      mocks.classifyAIProviderError.mockImplementation(actual.classifyAIProviderError);
+    });
+
+    const expectCleanFailureLog = (error: Error) => {
+      expect(mocks.loggerError).toHaveBeenCalledTimes(1);
+      expect(mocks.loggerError.mock.calls[0][0]).toMatchObject({
+        organizationId: "org_1",
+        errName: error.name,
+        errStack: expect.stringContaining("leaky-ai-errors"),
+      });
+      expect(findPlantedContent([mocks.loggerError.mock.calls, mocks.loggerWarn.mock.calls])).toBeUndefined();
+    };
+
+    test.each(LEAKY_AI_ERRORS)("text generation failing with %s", async (_, build) => {
+      const error = build();
+      mocks.generateText.mockRejectedValueOnce(error);
+
+      await expect(
+        generateOrganizationAIText({ organizationId: "org_1", prompt: "Translate this survey" })
+      ).rejects.toBe(error);
+      expectCleanFailureLog(error);
+    });
+
+    test.each(LEAKY_AI_ERRORS)("object generation failing with %s", async (_, build) => {
+      const error = build();
+      mocks.generateObject.mockRejectedValueOnce(error);
+
+      await expect(generateOrganizationAIObject(objectInput())).rejects.toBe(error);
+      expectCleanFailureLog(error);
+    });
+
+    test.each(LEAKY_AI_ERRORS)("a streamed generation whose completion fails with %s", async (_, build) => {
+      const error = build();
+      const completion = Promise.reject(error);
+      completion.catch(() => undefined);
+      mocks.streamObject.mockReturnValueOnce({ partialObjectStream: {}, completion });
+
+      const result = await streamOrganizationAIObject({
+        organizationId: "org_1",
+        prompt: "Generate",
+        schema: { type: "object" },
+      } as unknown as Parameters<typeof streamOrganizationAIObject>[0]);
+
+      await expect(result.completion).rejects.toBe(error);
+      expectCleanFailureLog(error);
+    });
+
+    test("keeps the provider status and the retry outcome in the log", async () => {
+      mocks.generateObject.mockRejectedValueOnce(buildRetryError());
+
+      await expect(generateOrganizationAIObject(objectInput())).rejects.toThrow();
+
+      expect(mocks.loggerError.mock.calls[0][0]).toMatchObject({
+        statusCode: 500,
+        isRetryable: true,
+        retryReason: "maxRetriesExceeded",
+        retryAttempts: 3,
+        lastErrName: "AI_APICallError",
+      });
+    });
   });
 
   describe("streamOrganizationAIObject", () => {

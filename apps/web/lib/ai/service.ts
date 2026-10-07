@@ -1,6 +1,7 @@
 import "server-only";
 import {
   AIConfigurationError,
+  AIOAuthTokenError,
   AIOutputTokenLimitError,
   type AIResolvedLanguageModel,
   type TGenerateObjectOptions,
@@ -19,6 +20,7 @@ import {
   ResourceNotFoundError,
   TooManyRequestsError,
 } from "@formbricks/types/errors";
+import { describeAIError } from "@/lib/ai/loggable-error";
 import { env } from "@/lib/env";
 import { getOrganization } from "@/lib/organization/service";
 import { type AITracingContext, wrapAiModelWithTracing } from "@/lib/posthog/ai-tracing";
@@ -43,14 +45,15 @@ export interface TOrganizationAIConfig {
 export const isInstanceAIConfigured = (): boolean => isAiConfigured(env);
 
 /**
- * A cancelled generation, as it reaches us: the fetch the provider is holding rejects with an
- * `AbortError`, and the SDK sometimes hands it back wrapped one level down as the `cause`.
- */
-/**
  * The one place a provider failure is turned into a log line and, for a 429, a typed error. Shared
  * by all three generation paths: they differ only in the log message, and drifting on which fields
  * get logged — or on whether a cancellation is exempt — is exactly how one path ends up paging
  * someone for a user pressing Stop.
+ *
+ * The error itself is never logged: an AI SDK error carries the prompt and the model's output in its
+ * message and fields, so the line records what locates and classifies the failure (`describeAIError`)
+ * and the caller still gets the original to branch on. A caller that lets it travel further — to the
+ * server action client, which logs and reports a thrown error whole — rethrows `redactAIError(error)`.
  */
 // A function declaration, not an arrow const: TypeScript only treats a call as terminating — so the
 // catch blocks below need no unreachable `throw` after it — when the callee is declared this way.
@@ -70,7 +73,11 @@ function classifyOrganizationAIFailure(
   // provider incident. Warn with the token counts — they tell a too-large request apart from
   // reasoning tokens eating the budget — instead of an error-level entry.
   if (error instanceof AIOutputTokenLimitError) {
-    logger.warn({ organizationId, ...error.details }, `${message}: output token limit reached`);
+    const { maxOutputTokens, outputTokens, reasoningTokens } = error.details;
+    logger.warn(
+      { organizationId, maxOutputTokens, outputTokens, reasoningTokens },
+      `${message}: output token limit reached`
+    );
     throw error;
   }
 
@@ -79,12 +86,13 @@ function classifyOrganizationAIFailure(
     {
       organizationId,
       isInstanceConfigured: aiConfig.isInstanceConfigured,
-      errorCode: error instanceof AIConfigurationError ? error.code : undefined,
+      errorCode: getAIErrorCode(error),
+      ...(error instanceof AIConfigurationError ? { configuration: getConfigurationDetails(error) } : {}),
       statusCode: providerError?.statusCode,
       isQuotaExhausted: providerError?.isQuotaExhausted,
       isRetryable: providerError?.isRetryable,
       isAuthFailure: providerError?.isAuthFailure,
-      err: error,
+      ...describeAIError(error),
     },
     message
   );
@@ -96,6 +104,29 @@ function classifyOrganizationAIFailure(
   throw error;
 }
 
+/**
+ * The fixed code of one of `@formbricks/ai`'s own errors — a closed vocabulary, unlike a message.
+ */
+const getAIErrorCode = (error: unknown): string | undefined => {
+  if (error instanceof AIConfigurationError || error instanceof AIOAuthTokenError) return error.code;
+  return undefined;
+};
+
+/**
+ * Which part of the instance's AI configuration is wrong: the provider and model it names and the
+ * environment fields that are missing or invalid — names, never values.
+ */
+const getConfigurationDetails = ({ details }: AIConfigurationError) => ({
+  provider: details.provider,
+  model: details.model,
+  missingFields: details.missingFields,
+  invalidFields: details.invalidFields,
+});
+
+/**
+ * A cancelled generation, as it reaches us: the fetch the provider is holding rejects with an
+ * `AbortError`, and the SDK sometimes hands it back wrapped one level down as the `cause`.
+ */
 const isAbortError = (error: unknown): boolean => {
   if (!(error instanceof Error)) return false;
   if (error.name === "AbortError") return true;
