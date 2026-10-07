@@ -47,7 +47,7 @@ import {
   fromRuleLocation,
   toSyntaxRejection,
 } from "./issues";
-import { prescanCustomCss } from "./prescan";
+import { prescanCustomCss, removePrescanImports } from "./prescan";
 import {
   type TSubjectPosition,
   measureSelector,
@@ -91,6 +91,7 @@ const LIMIT_REASONS = {
 } as const;
 
 const PROCESSING_FAILED_REASON = "The CSS could not be processed. Nothing was saved.";
+const IMPORT_REMOVED_REASON = "@import is not supported; imported stylesheets and fonts are not loaded.";
 const SUPPORTS_RESOURCE_REASON =
   "@supports conditions cannot name url(), image-set() or other resource functions; the rule was removed.";
 
@@ -326,12 +327,8 @@ const processRule = (rule: Rule, parent: TParentStyle | null, ctx: TFieldContext
       processKeyframes(rule.value, ctx);
       return true;
     case "import":
-      ctx.sink.add(
-        "import_removed",
-        ctx.appearance,
-        "@import is not supported; imported stylesheets and fonts are not loaded.",
-        fromRuleLocation(rule.value.loc)
-      );
+      // The pre-scan already removed every top-level @import; this keeps any it could not recognize out.
+      ctx.sink.add("import_removed", ctx.appearance, IMPORT_REMOVED_REASON, fromRuleLocation(rule.value.loc));
       return false;
     case "font-face":
       ctx.sink.add(
@@ -552,29 +549,40 @@ interface TField {
   source: string | null;
 }
 
-/** The pre-scan, which bounds depth and rule count (across both fields) before the native parser sees the source. */
-const prescanFields = (fields: TField[]): CustomCssRejection[] => {
+/**
+ * The pre-scan, which bounds depth and rule count (across both fields) before the native parser sees the
+ * source, and takes out every top-level `@import` with a warning: lightningcss would reject one that
+ * follows another rule as a syntax error, which browsers simply ignore.
+ */
+const prescanFields = (
+  fields: TField[],
+  sink: WarningSink
+): { fields: TField[]; rejections: CustomCssRejection[] } => {
   const rejections: CustomCssRejection[] = [];
   let blocks = 0;
-  for (const field of fields) {
-    if (!field.source) continue;
+  const scanned = fields.map((field): TField => {
+    if (!field.source) return field;
     const scan = prescanCustomCss(field.source, {
       maxNestingDepth: CUSTOM_CSS_MAX_NESTING_DEPTH,
       maxFunctionDepth: CUSTOM_CSS_MAX_FUNCTION_DEPTH,
       maxBlocks: CUSTOM_CSS_MAX_RULES - blocks,
     });
-    if (scan.ok) {
-      blocks += scan.blocks;
-    } else {
+    if (!scan.ok) {
       rejections.push(
         new CustomCssRejection("limit_exceeded", LIMIT_REASONS[scan.kind], field.appearance, {
           line: scan.line,
           column: scan.column,
         })
       );
+      return field;
     }
-  }
-  return rejections;
+    blocks += scan.blocks;
+    for (const { line, column } of scan.imports) {
+      sink.add("import_removed", field.appearance, IMPORT_REMOVED_REASON, { line, column });
+    }
+    return { ...field, source: removePrescanImports(field.source, scan.imports) };
+  });
+  return { fields: scanned, rejections };
 };
 
 /** Wraps a compiled field in its layer, then checks it against the budget and verifies it (pass 2). */
@@ -673,11 +681,16 @@ export const processCustomCss = (
     }
 
     // Then the pre-scan, before the native parser sees the source.
-    const prescanRejections = prescanFields(fields);
-    if (prescanRejections.length > 0) return toFailure(scope, prescanRejections);
-
     const sink = new WarningSink(scope);
-    const { compiled, rejections } = compileFields(fields, { scope, budget, blockExternalResources, sink });
+    const prescan = prescanFields(fields, sink);
+    if (prescan.rejections.length > 0) return toFailure(scope, prescan.rejections);
+
+    const { compiled, rejections } = compileFields(prescan.fields, {
+      scope,
+      budget,
+      blockExternalResources,
+      sink,
+    });
     if (rejections.length > 0) return toFailure(scope, rejections);
 
     const outputBytes = APPEARANCES.reduce(

@@ -9,12 +9,24 @@
  * a comment start inside `url(…)` does not hide the brackets that follow it. Blocks are matched with a
  * stack the way the parser matches them, so a stray `)` cannot cancel a `{`. Counting is never lower
  * than the parser's: wherever this scan is unsure it treats the character as a bracket.
+ *
+ * The same pass finds every top-level `@import` rule. lightningcss rejects one that follows another rule
+ * as a syntax error, while browsers ignore it, and stylesheets put together from several files often have
+ * one. The processor removes them all before parsing, so its position no longer matters.
  */
 
 export type TPrescanLimitKind = "nesting" | "function" | "rules";
 
+/** A top-level `@import` rule: its span in the preprocessed source, and where it starts (1-based). */
+export interface TPrescanImport {
+  start: number;
+  end: number;
+  line: number;
+  column: number;
+}
+
 export type TPrescanResult =
-  | { ok: true; blocks: number }
+  | { ok: true; blocks: number; imports: TPrescanImport[] }
   | { ok: false; kind: TPrescanLimitKind; line: number; column: number };
 
 interface TPrescanLimits {
@@ -77,6 +89,53 @@ const locate = (source: string, index: number): { line: number; column: number }
   return { line, column: index - lineStart + 1 };
 };
 
+/** {@link locate} for many ascending indices in one pass, so a stylesheet of imports stays linear. */
+const locateAscending = (source: string, indices: number[]): { line: number; column: number }[] => {
+  const locations: { line: number; column: number }[] = [];
+  let line = 1;
+  let lineStart = 0;
+  let i = 0;
+  for (const index of indices) {
+    for (; i < index; i++) {
+      if (source[i] === "\n") {
+        line++;
+        lineStart = i + 1;
+      }
+    }
+    locations.push({ line, column: index - lineStart + 1 });
+  }
+  return locations;
+};
+
+/**
+ * The raw source with each import replaced by spaces, its line breaks kept, so every line and column
+ * after it stays where the editor shows it. Spans index the preprocessed source, which differs from the
+ * raw one only where a CR LF pair became a single newline.
+ */
+export const removePrescanImports = (rawSource: string, imports: readonly TPrescanImport[]): string => {
+  if (imports.length === 0) return rawSource;
+
+  // The raw index of every span boundary, in one pass (spans are ascending and never overlap).
+  const rawBoundaries: number[] = [];
+  let raw = 0;
+  let index = 0;
+  for (const boundary of imports.flatMap(({ start, end }) => [start, end])) {
+    for (; index < boundary && raw < rawSource.length; index++) {
+      raw += rawSource[raw] === "\r" && rawSource[raw + 1] === "\n" ? 2 : 1;
+    }
+    rawBoundaries.push(raw);
+  }
+
+  let result = "";
+  let kept = 0;
+  for (let k = 0; k < rawBoundaries.length; k += 2) {
+    const [from, to] = [rawBoundaries[k], rawBoundaries[k + 1]];
+    result += rawSource.slice(kept, from) + rawSource.slice(from, to).replaceAll(/[^\r\n\f]/g, " ");
+    kept = to;
+  }
+  return result + rawSource.slice(kept);
+};
+
 export const prescanCustomCss = (rawSource: string, limits: TPrescanLimits): TPrescanResult => {
   const s = preprocess(rawSource);
   const n = s.length;
@@ -132,19 +191,19 @@ export const prescanCustomCss = (rawSource: string, limits: TPrescanLimits): TPr
     return isDigit(c);
   };
 
-  /** §4.3.11: consume an ident sequence, returning its end and (up to 4 chars of) its decoded name. */
-  const consumeIdentSequence = (start: number): { end: number; name: string } => {
+  /** §4.3.11: consume an ident sequence, returning its end and (up to `maxName` chars of) its decoded name. */
+  const consumeIdentSequence = (start: number, maxName = 4): { end: number; name: string } => {
     let i = start;
     let name = "";
     while (i < n) {
       const c = s[i];
       if (isIdentChar(c)) {
-        if (name.length < 4) name += c;
+        if (name.length < maxName) name += c;
         i++;
       } else if (isValidEscape(i)) {
         const escapeStart = i + 1;
         i = consumeEscape(escapeStart);
-        if (name.length < 4) {
+        if (name.length < maxName) {
           const raw = s.slice(escapeStart, i).trim();
           name += isHexDigit(raw[0] ?? "") ? decodeHexEscape(raw) : raw;
         }
@@ -314,12 +373,33 @@ export const prescanCustomCss = (rawSource: string, limits: TPrescanLimits): TPr
     return { end: i + 1, failure: null };
   };
 
+  /** Whether an `@import` at-keyword starts at `i`: ASCII case-insensitive, with escapes decoded. */
+  const startsImportRule = (i: number): boolean =>
+    s[i] === "@" &&
+    startsIdent(i + 1) &&
+    /^[iI][mM][pP][oO][rR][tT]$/.test(consumeIdentSequence(i + 1, 7).name);
+
+  const importSpans: { start: number; end: number }[] = [];
+  let importStart: number | null = null;
   let i = 0;
   while (i < n) {
+    if (importStart === null && stack.length === 0 && startsImportRule(i)) importStart = i;
+    const depthBefore = stack.length;
     const { end, failure } = consumeToken(i);
     if (failure) return failure;
+    // §5.4.2: a top-level at-rule ends at its `;`, or with the block it opened.
+    const endsRule = depthBefore === 0 ? s[i] === ";" : s[i] === "}" && stack.length === 0;
+    if (importStart !== null && endsRule) {
+      importSpans.push({ start: importStart, end });
+      importStart = null;
+    }
     i = end;
   }
+  if (importStart !== null) importSpans.push({ start: importStart, end: n });
 
-  return { ok: true, blocks };
+  const starts = locateAscending(
+    s,
+    importSpans.map(({ start }) => start)
+  );
+  return { ok: true, blocks, imports: importSpans.map((span, k) => ({ ...span, ...starts[k] })) };
 };

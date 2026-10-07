@@ -130,6 +130,24 @@ describe("API and URL policy", () => {
     expect(!tooDeep.ok && tooDeep.errors[0].code).toBe("limit_exceeded");
   });
 
+  test("an @import after other rules is removed with the same warning, not rejected as a syntax error", () => {
+    // Concatenated stylesheets put an @import mid-file; browsers ignore it there and the rest applies.
+    const result = compile(
+      '.a { color: red }\n@import url("https://cdn.example/b.css");\n.b { color: red }',
+      '.c { color: red }\r\n  @import "d.css" screen;\r\n.d { color: red }'
+    );
+    expect(result.warnings).toEqual([
+      expect.objectContaining({ code: "import_removed", appearance: "light", line: 2, column: 1 }),
+      expect.objectContaining({ code: "import_removed", appearance: "dark", line: 2, column: 3 }),
+    ]);
+    expect(result.compiled.light).toBe("@layer fb-survey{#fbjs .a,#fbjs .b{color:red!important}}");
+
+    // Line and column numbers after the removed rule still point at the creator's source.
+    expect(reject('.a {}\n@import "b.css";\n.b { color: red } }').errors).toEqual([
+      expect.objectContaining({ code: "syntax_error", line: 3, column: 20 }),
+    ]);
+  });
+
   test("the processor version changes with the URL policy", () => {
     expect(getCustomCssProcessorVersion(true)).toBe(CUSTOM_CSS_PROCESSOR_VERSION);
     expect(getCustomCssProcessorVersion(false)).not.toBe(getCustomCssProcessorVersion(true));
