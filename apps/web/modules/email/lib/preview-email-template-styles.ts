@@ -1,8 +1,8 @@
+import DOMPurify from "isomorphic-dompurify";
 import type { CSSProperties } from "react";
 import type { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { COLOR_DEFAULTS, STYLE_DEFAULTS } from "@/lib/styling/constants";
 import { isLight, mixColor } from "@/lib/utils/colors";
-import { replaceOpeningTags } from "@/lib/utils/html-opening-tag";
 import {
   NESTED_LIST_ITEM_CLASS,
   NESTED_LIST_ITEM_MARKER_STYLE,
@@ -77,61 +77,77 @@ const EMAIL_PREVIEW_ACCENT_COLORS = {
   "rose-100": "#ffe4e6",
 } as const;
 
-const RICH_TEXT_STYLE_ATTRIBUTE_REGEX = /\sstyle=(["'])(.*?)\1/i;
-const RICH_TEXT_STYLE_ATTRIBUTE_REPLACE_REGEX = /\sstyle=(["'])(.*?)\1/gi;
-const RICH_TEXT_CLASS_ATTRIBUTE_REGEX = /\sclass=(["'])(.*?)\1/i;
-
 export const importantStyle = (value: string): string => `${value} !important`;
 
-export const normalizeRichTextSpacing = (html: string): string =>
-  replaceOpeningTags(html, "p", (attributes) => {
-    if (RICH_TEXT_STYLE_ATTRIBUTE_REGEX.test(attributes)) {
-      return `<p${attributes.replaceAll(
-        RICH_TEXT_STYLE_ATTRIBUTE_REPLACE_REGEX,
-        (_styleAttribute, quote: string, styleValue: string) => {
-          const trimmedStyle = styleValue.trim();
-          const styleWithMargin = trimmedStyle ? `${trimmedStyle};margin:0` : "margin:0";
-
-          return ` style=${quote}${styleWithMargin}${quote}`;
-        }
-      )}>`;
-    }
-
-    return `<p${attributes} style="margin:0">`;
-  });
+/**
+ * What the editor writes into a headline or subheader, its markdown shortcuts included (headings,
+ * quotes, code, strikethrough, highlight). The email renders that HTML raw (`ElementHeader` in
+ * `@formbricks/email`), and an import or the API can store anything there, so everything else is
+ * dropped: forms, images, scripts, event handlers, non-http(s) links.
+ *
+ * `style` is not allowed: an author's inline CSS could restyle the whole email. The email's own
+ * styles are set by `inlineEmailRichTextStyles` instead.
+ *
+ * A custom `ALLOWED_URI_REGEXP` also applies to every attribute DOMPurify doesn't consider URI-safe,
+ * so `target`, `rel`, `dir` and `start` are declared URI-safe or they'd be dropped (same trap as
+ * `sanitizeFollowUpBody`). `href` stays checked. `data-*` and `aria-*`, which DOMPurify allows by
+ * default, are off: the editor writes neither.
+ */
+const EMAIL_RICH_TEXT_SANITIZE_CONFIG = {
+  ALLOWED_TAGS: [
+    ...["p", "br", "span", "a", "ul", "ol", "li", "blockquote", "pre", "code"],
+    ...["b", "strong", "i", "em", "u", "s", "mark"],
+    ...["h1", "h2", "h3", "h4", "h5", "h6"],
+  ],
+  ALLOWED_ATTR: ["class", "dir", "href", "target", "rel", "start", "value"],
+  ALLOWED_URI_REGEXP: /^(?:https?|mailto|tel):/i,
+  ADD_URI_SAFE_ATTR: ["target", "rel", "dir", "start"],
+  ALLOW_DATA_ATTR: false,
+  ALLOW_ARIA_ATTR: false,
+};
 
 /**
- * Lexical wraps a nested list in a structural <li> (NESTED_LIST_ITEM_CLASS) that must not show its
- * own bullet/number. Email clients ignore the app stylesheets, so the suppression is inlined per
- * list item (best effort: legacy Outlook's Word engine ignores list-style-type).
+ * Drops any attribute whose value holds `<` or `>`. jsdom leaves both unescaped inside attribute
+ * values, and two later steps scan the rendered email as a string: react-email's `render` removes the
+ * first `<!DOCTYPE…>` it finds, and `extractEmailBodyFragment` cuts at the first `<body` and the next
+ * `</body>`. Either can end a tag inside a value and turn the rest of it into live markup. Nothing the
+ * editor writes puts these characters in an attribute.
  */
-export const suppressNestedListMarkers = (html: string): string =>
-  replaceOpeningTags(html, "li", (attributes, tag) => {
-    const classMatch = RICH_TEXT_CLASS_ATTRIBUTE_REGEX.exec(attributes);
-    const classNames = classMatch ? classMatch[2].split(/\s+/) : [];
-    if (!classNames.includes(NESTED_LIST_ITEM_CLASS)) {
-      return tag;
-    }
+const dropMarkupInAttributeValues = (_node: Element, data: { attrValue: string; keepAttr: boolean }) => {
+  if (/[<>]/.test(data.attrValue)) data.keepAttr = false;
+};
 
-    if (RICH_TEXT_STYLE_ATTRIBUTE_REGEX.test(attributes)) {
-      return `<li${attributes.replaceAll(
-        RICH_TEXT_STYLE_ATTRIBUTE_REPLACE_REGEX,
-        (_styleAttribute, quote: string, styleValue: string) => {
-          const trimmedStyle = styleValue.trim();
-          if (trimmedStyle.includes(NESTED_LIST_ITEM_MARKER_STYLE)) {
-            return ` style=${quote}${styleValue}${quote}`;
-          }
-          const styleWithMarker = trimmedStyle
-            ? `${trimmedStyle};${NESTED_LIST_ITEM_MARKER_STYLE}`
-            : NESTED_LIST_ITEM_MARKER_STYLE;
+/**
+ * Email clients ignore the app stylesheets, so the email inlines what they would do: no margin on a
+ * paragraph, and no marker on the structural <li> Lexical wraps a nested list in (best effort:
+ * legacy Outlook's Word engine ignores list-style-type).
+ *
+ * This runs on the DOM as a DOMPurify hook, not on the returned string. jsdom leaves `<` and `>`
+ * unescaped inside attribute values, so editing the string by tag boundaries could end a tag inside
+ * a value and turn the rest of that value into live markup.
+ */
+const inlineEmailRichTextStyles = (node: Element): void => {
+  if (node.tagName === "P") {
+    node.setAttribute("style", "margin:0");
+  } else if (node.tagName === "LI" && node.classList.contains(NESTED_LIST_ITEM_CLASS)) {
+    node.setAttribute("style", NESTED_LIST_ITEM_MARKER_STYLE);
+  }
+};
 
-          return ` style=${quote}${styleWithMarker}${quote}`;
-        }
-      )}>`;
-    }
-
-    return `<li${attributes} style="${NESTED_LIST_ITEM_MARKER_STYLE}">`;
-  });
+/**
+ * Turns a stored headline or subheader into the HTML the email renders. The hooks are added only for
+ * this call, so other DOMPurify callers in the process are unaffected.
+ */
+export const prepareEmailRichText = (html: string): string => {
+  DOMPurify.addHook("uponSanitizeAttribute", dropMarkupInAttributeValues);
+  DOMPurify.addHook("afterSanitizeAttributes", inlineEmailRichTextStyles);
+  try {
+    return DOMPurify.sanitize(html, EMAIL_RICH_TEXT_SANITIZE_CONFIG);
+  } finally {
+    DOMPurify.removeHook("afterSanitizeAttributes", inlineEmailRichTextStyles);
+    DOMPurify.removeHook("uponSanitizeAttribute", dropMarkupInAttributeValues);
+  }
+};
 
 const getPreviewDimension = (value: PreviewStyleValue, fallback: PreviewStyleValue): string => {
   const resolvedValue = value ?? fallback;
