@@ -24,8 +24,9 @@ import { StaleDeploymentPrompt, useIsStaleDeployment } from "@/modules/ui/compon
  * It is also a dismissable-layer branch, as Radix's own toast viewport is: an open dialog, popover or
  * menu treats a click or focus here as inside itself rather than as an outside interaction that closes
  * it. Without that, closing a notice raised by a dialog's Save would close the dialog too and throw
- * away what the user typed. This only works while the package is the same copy the Radix components
- * use (`@radix-ui/react-dialog` pins it exactly), so bump the two together.
+ * away what the user typed. This only works while the package is the one copy that every Radix
+ * component with a dismissable layer (dialog, popover, menu, select, tooltip) resolves: they pin it
+ * exactly, so a Radix bump moves it, and `dismissable-layer-copy.test.ts` fails when they drift apart.
  */
 export const ServerActionNotices = () => {
   const isStale = useIsStaleDeployment();
