@@ -160,6 +160,7 @@ describe("License Core Logic", () => {
       feedbackDirectories: false,
       dashboards: false,
       workflows: false,
+      dataRetention: false,
     };
     const mockFetchedLicenseDetails: TEnterpriseLicenseDetails = {
       status: "active",
@@ -216,6 +217,45 @@ describe("License Core Logic", () => {
       expect(mockCache.tryLock).toHaveBeenCalled();
       expect(mockCache.set).toHaveBeenCalled();
       expect(license).toEqual(expectedActiveLicenseState);
+    });
+
+    test("parses data retention as granted when the license server sends it", async () => {
+      const { getEnterpriseLicense } = await import("./license");
+      const fetch = global.fetch as Mock;
+
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            ...mockFetchedLicenseDetails,
+            features: { ...mockFetchedLicenseDetailsFeatures, dataRetention: true },
+          },
+        }),
+      } as any);
+
+      const license = await getEnterpriseLicense();
+
+      expect(license.features?.dataRetention).toBe(true);
+    });
+
+    // A license server that predates the flag omits the key; it must parse as not granted rather than
+    // fail validation and take the license down with it.
+    test("defaults data retention to off when the license server omits it", async () => {
+      const { getEnterpriseLicense } = await import("./license");
+      const fetch = global.fetch as Mock;
+      const { dataRetention: _omitted, ...featuresWithoutDataRetention } = mockFetchedLicenseDetailsFeatures;
+
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: { ...mockFetchedLicenseDetails, features: featuresWithoutDataRetention },
+        }),
+      } as any);
+
+      const license = await getEnterpriseLicense();
+
+      expect(license.active).toBe(true);
+      expect(license.features?.dataRetention).toBe(false);
     });
 
     // Tripwire for the `NODE_ENV: "test"` key in the `@/lib/env` mock at the top of this file.
@@ -390,6 +430,7 @@ describe("License Core Logic", () => {
             feedbackDirectories: false,
             dashboards: false,
             workflows: false,
+            dataRetention: false,
           },
           lastChecked: expect.any(Date),
         },
@@ -414,6 +455,7 @@ describe("License Core Logic", () => {
           feedbackDirectories: false,
           dashboards: false,
           workflows: false,
+          dataRetention: false,
         },
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
@@ -447,6 +489,7 @@ describe("License Core Logic", () => {
         feedbackDirectories: false,
         dashboards: false,
         workflows: false,
+        dataRetention: false,
       };
       expect(mockCache.set).toHaveBeenCalledWith(
         expect.stringContaining("fb:license:"),
@@ -639,6 +682,7 @@ describe("License Core Logic", () => {
           feedbackDirectories: false,
           dashboards: false,
           workflows: false,
+          dataRetention: false,
         },
       };
 
@@ -706,6 +750,7 @@ describe("License Core Logic", () => {
           feedbackDirectories: false,
           dashboards: false,
           workflows: false,
+          dataRetention: false,
         },
       };
 
@@ -764,6 +809,7 @@ describe("License Core Logic", () => {
           feedbackDirectories: false,
           dashboards: false,
           workflows: false,
+          dataRetention: false,
         },
       };
 
@@ -967,6 +1013,7 @@ describe("License Core Logic", () => {
                   feedbackDirectories: false,
                   dashboards: false,
                   workflows: false,
+                  dataRetention: false,
                 },
               },
             },
@@ -1148,6 +1195,7 @@ describe("License Core Logic", () => {
           feedbackDirectories: false,
           dashboards: false,
           workflows: false,
+          dataRetention: false,
         },
       };
 
@@ -1277,6 +1325,7 @@ describe("License Core Logic", () => {
         feedbackDirectories: false,
         dashboards: false,
         workflows: false,
+        dataRetention: false,
       },
     };
 

@@ -13,5 +13,6 @@ export const CLOUD_STRIPE_FEATURE_LOOKUP_KEYS = {
   FEEDBACK_DIRECTORIES: "feedback-directories",
   DASHBOARDS: "dashboards",
   WORKFLOWS: "workflows",
+  DATA_RETENTION: "data-retention",
   BULK_INVITE: "bulk-invite",
 } as const;

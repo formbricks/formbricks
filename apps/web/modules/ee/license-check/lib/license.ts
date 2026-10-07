@@ -101,6 +101,7 @@ const LicenseFeaturesSchema = z.object({
   feedbackDirectories: z.boolean().default(false),
   dashboards: z.boolean().default(false),
   workflows: z.boolean().default(false),
+  dataRetention: z.boolean().default(false),
 });
 
 const LicenseDetailsSchema = z.object({
@@ -171,6 +172,7 @@ const DEFAULT_FEATURES: TEnterpriseLicenseFeatures = {
   feedbackDirectories: false,
   dashboards: false,
   workflows: false,
+  dataRetention: false,
 };
 
 // Helper functions
