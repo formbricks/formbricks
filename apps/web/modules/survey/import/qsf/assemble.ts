@@ -156,7 +156,7 @@ function buildHiddenFields(names: string[]): {
 }
 
 /** Disambiguate labels that repeat within a language: `N/A`, `N/A (2)`. Returns whether any changed. */
-function disambiguateLabels(
+export function disambiguateLabels(
   items: TDraftChoice[],
   languageCodes: string[],
   surveyLanguages: TSurveyLanguage[]
@@ -173,12 +173,22 @@ function disambiguateLabels(
 
   for (const flagged of duplicated) {
     const code = flagged === "default" ? defaultCode : flagged;
-    const seen = new Map<string, number>();
+    // Every label the language already has, so a number added never lands on one of them: `N/A`,
+    // `N/A`, `N/A (2)` becomes `N/A`, `N/A (3)`, `N/A (2)`.
+    const taken = new Set(items.map((item) => (item.label[code] ?? "").trim()));
+    const seen = new Set<string>();
     for (const item of items) {
       const text = (item.label[code] ?? "").trim();
-      const count = (seen.get(text) ?? 0) + 1;
-      seen.set(text, count);
-      if (count > 1) item.label[code] = `${text} (${count})`;
+      if (!seen.has(text)) {
+        seen.add(text);
+        continue;
+      }
+      let counter = 2;
+      while (taken.has(`${text} (${counter})`)) counter += 1;
+      const renamed = `${text} (${counter})`;
+      item.label[code] = renamed;
+      taken.add(renamed);
+      seen.add(renamed);
     }
   }
   return true;

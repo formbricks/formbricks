@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { loadRecordedPlan, recordedGenerate } from "./__fixtures__/recorded-plans";
 import { planQsfImport } from "./ai-plan";
-import { type TQsfDraftElement, assembleQsfDraft } from "./assemble";
+import { type TQsfDraftElement, assembleQsfDraft, disambiguateLabels } from "./assemble";
 import { checkQsfDraft } from "./final-gate";
 import { isObjectMemberName } from "./id-registry";
 import type { TQsfCheckedPlan } from "./plan-checks";
@@ -122,6 +122,32 @@ describe("assembleQsfDraft", () => {
     // Distinct in Chinese already: left alone.
     expect(q1.choices.map((choice) => choice.label["zh-Hans-CN"])).toEqual(["茶", "不适用", "咖啡", "无"]);
     expect(issues).toContainEqual({ code: "choice_label_renamed", severity: "info", questionTag: "Q1" });
+  });
+
+  test("numbers a duplicate past any label already taken, until every label is unique", () => {
+    const items = ["N/A", "N/A", "N/A (2)", "N/A"].map((text, index) => ({
+      id: String(index),
+      label: { "en-US": text },
+    }));
+    const languages = [
+      {
+        language: {
+          id: "en",
+          code: "en-US",
+          alias: null,
+          workspaceId: WORKSPACE_ID,
+          createdAt: new Date(0),
+          updatedAt: new Date(0),
+        },
+        default: true,
+        enabled: true,
+      },
+    ];
+
+    expect(disambiguateLabels(items, ["en-US"], languages)).toBe(true);
+    const labels = items.map((item) => item.label["en-US"]);
+    expect(labels).toEqual(["N/A", "N/A (3)", "N/A (2)", "N/A (4)"]);
+    expect(new Set(labels).size).toBe(labels.length);
   });
 
   test("pipes earlier answers and hidden fields in as recall, and removes what has no equivalent", async () => {
