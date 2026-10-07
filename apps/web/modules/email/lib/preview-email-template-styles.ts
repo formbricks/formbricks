@@ -80,9 +80,10 @@ const EMAIL_PREVIEW_ACCENT_COLORS = {
 export const importantStyle = (value: string): string => `${value} !important`;
 
 /**
- * What the editor writes into a headline or subheader. The email renders that HTML raw
- * (`ElementHeader` in `@formbricks/email`), and an import or the API can store anything there, so
- * everything else is dropped: forms, images, scripts, event handlers, non-http(s) links.
+ * What the editor writes into a headline or subheader, its markdown shortcuts included (headings,
+ * quotes, code, strikethrough, highlight). The email renders that HTML raw (`ElementHeader` in
+ * `@formbricks/email`), and an import or the API can store anything there, so everything else is
+ * dropped: forms, images, scripts, event handlers, non-http(s) links.
  *
  * `style` is not allowed: an author's inline CSS could restyle the whole email. The email's own
  * styles are set by `inlineEmailRichTextStyles` instead.
@@ -93,7 +94,11 @@ export const importantStyle = (value: string): string => `${value} !important`;
  * default, are off: the editor writes neither.
  */
 const EMAIL_RICH_TEXT_SANITIZE_CONFIG = {
-  ALLOWED_TAGS: ["p", "br", "span", "b", "strong", "i", "em", "u", "a", "ul", "ol", "li", "h1", "h2"],
+  ALLOWED_TAGS: [
+    ...["p", "br", "span", "a", "ul", "ol", "li", "blockquote", "pre", "code"],
+    ...["b", "strong", "i", "em", "u", "s", "mark"],
+    ...["h1", "h2", "h3", "h4", "h5", "h6"],
+  ],
   ALLOWED_ATTR: ["class", "dir", "href", "target", "rel", "start", "value"],
   ALLOWED_URI_REGEXP: /^(?:https?|mailto|tel):/i,
   ADD_URI_SAFE_ATTR: ["target", "rel", "dir", "start"],
