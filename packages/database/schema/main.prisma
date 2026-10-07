@@ -462,6 +462,8 @@ model Survey {
   /// [SurveyLinkMetadata]
   metadata                    Json                              @default("{}")
   feedbackSourceMappings      FeedbackSourceFormbricksMapping[]
+  retentionExemptions         RetentionExemption[]
+  retentionNotices            RetentionNotice[]
 
   slug String? @unique
 
@@ -725,6 +727,10 @@ model Organization {
   teams                 Team[]
   apiKeys               ApiKey[]
   feedbackDirectories   FeedbackDirectory[]
+  retentionPolicies     RetentionPolicy[]
+  retentionExemptions   RetentionExemption[]
+  retentionRuns         RetentionRun[]
+  retentionNotices      RetentionNotice[]
 }
 
 /// Stores billing and Stripe synchronization data for an organization.
@@ -1236,37 +1242,41 @@ model User {
   legacyEmailVerifiedAt DateTime? @map(name: "email_verified_at") @ignore
 
   twoFactorSecret           String?
-  twoFactorEnabled          Boolean             @default(false)
+  twoFactorEnabled          Boolean              @default(false)
   backupCodes               String?
   password                  String?
-  identityProvider          IdentityProvider    @default(email)
+  identityProvider          IdentityProvider     @default(email)
   identityProviderAccountId String?
   memberships               Membership[]
   accounts                  Account[]
   sessions                  Session[]
   twoFactor                 TwoFactor?
-  oauthClients              oauthClient[]       @relation("OAuthClientUser")
-  oauthAccessTokens         oauthAccessToken[]  @relation("OAuthAccessTokenUser")
-  oauthRefreshTokens        oauthRefreshToken[] @relation("OAuthRefreshTokenUser")
-  oauthConsents             oauthConsent[]      @relation("OAuthConsentUser")
+  oauthClients              oauthClient[]        @relation("OAuthClientUser")
+  oauthAccessTokens         oauthAccessToken[]   @relation("OAuthAccessTokenUser")
+  oauthRefreshTokens        oauthRefreshToken[]  @relation("OAuthRefreshTokenUser")
+  oauthConsents             oauthConsent[]       @relation("OAuthConsentUser")
   passwordResetToken        PasswordResetToken?
   groupId                   String?
-  invitesCreated            Invite[]            @relation("inviteCreatedBy")
-  invitesAccepted           Invite[]            @relation("inviteAcceptedBy")
+  invitesCreated            Invite[]             @relation("inviteCreatedBy")
+  invitesAccepted           Invite[]             @relation("inviteAcceptedBy")
   /// [UserNotificationSettings]
-  notificationSettings      Json                @default("{}")
+  notificationSettings      Json                 @default("{}")
   /// [Locale]
-  locale                    String              @default("en-US")
-  surveys                   Survey[]            @relation("SurveyCreator")
-  ownedSurveys              Survey[]            @relation("SurveyOwner")
-  charts                    Chart[]             @relation("chartCreatedBy")
-  dashboards                Dashboard[]         @relation("dashboardCreatedBy")
+  locale                    String               @default("en-US")
+  surveys                   Survey[]             @relation("SurveyCreator")
+  ownedSurveys              Survey[]             @relation("SurveyOwner")
+  charts                    Chart[]              @relation("chartCreatedBy")
+  dashboards                Dashboard[]          @relation("dashboardCreatedBy")
   feedbackSources           FeedbackSource[]
   teamUsers                 TeamUser[]
-  workflows                 Workflow[]          @relation("workflowCreatedBy")
-  workflowVersionsPublished WorkflowVersion[]   @relation("workflowVersionPublishedBy")
+  workflows                 Workflow[]           @relation("workflowCreatedBy")
+  workflowVersionsPublished WorkflowVersion[]    @relation("workflowVersionPublishedBy")
+  retentionPoliciesUpdated  RetentionPolicy[]    @relation("retentionPolicyUpdatedBy")
+  exemptionsCreated         RetentionExemption[] @relation("retentionExemptionCreatedBy")
+  exemptionsRevoked         RetentionExemption[] @relation("retentionExemptionRevokedBy")
+  retentionNotices          RetentionNotice[]
   lastLoginAt               DateTime?
-  isActive                  Boolean             @default(true)
+  isActive                  Boolean              @default(true)
 
   // ENG-2247: marks the ONE account admitted by the fresh-instance exception (closed instance, no
   // invite, zero users). The unique index is the serialization: two concurrent uninvited sign-ups

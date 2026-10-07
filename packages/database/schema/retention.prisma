@@ -1,0 +1,169 @@
+/// Data retention (ENG-3697). The kind of data a policy governs.
+enum RetentionEntity {
+  responses
+  surveys
+  members
+}
+
+/// The surveys policy's conditions. Every ticked one must hold, and they share the policy's period.
+enum RetentionSurveyCondition {
+  noResponse
+  noChange
+  createdBefore
+}
+
+/// What a `RetentionRunItem` row points at. Response deletions are grouped into one `survey` row per
+/// survey, with the number of responses in `count`.
+enum RetentionTargetType {
+  survey
+  user
+}
+
+enum RetentionRunItemAction {
+  notified
+  archived
+  deactivated
+  deleted
+  skipped
+}
+
+enum RetentionSkipReason {
+  exempt
+  lastOwner
+  otherOrganization
+}
+
+/// One policy per organisation and kind of data. Every policy has the same three stages, stored in
+/// whole days: warn → archive (reversible) → delete. The dates themselves are never stored; they are
+/// computed by the shared helper in `apps/web/modules/ee/data-retention/lib/schedule.ts`, so the UI,
+/// the emails and the sweep always agree.
+///
+/// Which stages each entity uses (responses have no archive, members are never deleted) and the
+/// allowed ranges are validated by the API, not here: they are product rules that are expected to
+/// widen. The migration only enforces the structural invariants (positive days, at least one action
+/// stage, conditions on the surveys policy only) as CHECK constraints, which Prisma cannot express.
+model RetentionPolicy {
+  id             String                     @id @default(cuid(2))
+  createdAt      DateTime                   @default(now()) @map(name: "created_at")
+  updatedAt      DateTime                   @updatedAt @map(name: "updated_at")
+  organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  entity         RetentionEntity
+  enabled        Boolean                    @default(false)
+  /// When the policy was last switched on. The clock for members with no recorded sign-in.
+  enabledAt      DateTime?
+  /// How long before the action the notice goes out. The action never runs before the notice has
+  /// been out for this long, so the warning always runs in full.
+  warnDays       Int                        @default(30)
+  /// The reversible step, counted from the clock: archive a survey, deactivate a member.
+  archiveDays    Int?
+  /// Counted from the actual archive when there is one, otherwise from the clock.
+  deleteDays     Int?
+  /// Surveys policy only.
+  conditions     RetentionSurveyCondition[] @default([])
+  updatedBy      User?                      @relation("retentionPolicyUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedById    String?
+
+  @@unique([organizationId, entity])
+  @@index([updatedById])
+}
+
+/// Holds one survey back from one policy until `until`. Keyed by organisation + entity rather than a
+/// policy id, so removing and re-adding a policy doesn't orphan its exemptions.
+///
+/// Active means `revokedAt IS NULL AND until > now()`, so expiry needs no job. "One active exemption
+/// per survey and policy" is the partial unique index `RetentionExemption_surveyId_entity_active_key`
+/// (`WHERE "revokedAt" IS NULL`) in
+/// `migration/20261007120000_add_data_retention_tables/migration.sql`; Prisma's `@@unique` has no
+/// `where`, so it is deliberately not declared here (see "Indexes Prisma cannot express" in the
+/// README). An expired row still holds that slot until it is revoked, so creating a new exemption
+/// must close an expired one in the same transaction.
+///
+/// `surveyId` is nullable and a CHECK requires exactly one target, so a later `workflowId` is one more
+/// column in that CHECK. The survey's organisation can't be tied to `organizationId` in the database
+/// (a survey carries its workspace, not its organisation): writers derive it from the survey.
+model RetentionExemption {
+  id             String          @id @default(cuid(2))
+  createdAt      DateTime        @default(now()) @map(name: "created_at")
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  entity         RetentionEntity
+  survey         Survey?         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId       String?
+  until          DateTime
+  reason         String?
+  createdBy      User?           @relation("retentionExemptionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdById    String?
+  revokedAt      DateTime?
+  revokedBy      User?           @relation("retentionExemptionRevokedBy", fields: [revokedById], references: [id], onDelete: SetNull)
+  revokedById    String?
+
+  @@index([organizationId, createdAt, id])
+  @@index([surveyId])
+  @@index([createdById])
+  @@index([revokedById])
+}
+
+/// One sweep of one policy for one organisation: the History tab's rows. `finishedAt` stays null
+/// while the run is in progress, or if it never finished.
+model RetentionRun {
+  id             String             @id @default(cuid(2))
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  entity         RetentionEntity
+  startedAt      DateTime           @default(now())
+  finishedAt     DateTime?
+  notifiedCount  Int                @default(0)
+  /// Archived surveys, or deactivated members.
+  archivedCount  Int                @default(0)
+  /// Deleted responses or surveys.
+  deletedCount   Int                @default(0)
+  skippedCount   Int                @default(0)
+  /// False when the run changed nothing. History hides those by default.
+  hasChanges     Boolean            @default(false)
+  items          RetentionRunItem[]
+
+  @@index([organizationId, startedAt, id])
+}
+
+/// What a run did, one row per target: the History CSV. Ids, counts, names and the recipient's email,
+/// never response content. `targetId` is not a foreign key on purpose: the target is often gone, and
+/// `targetName` is a snapshot taken when the row is written so the CSV still says what it was.
+model RetentionRunItem {
+  id         String                 @id @default(cuid(2))
+  run        RetentionRun           @relation(fields: [runId], references: [id], onDelete: Cascade)
+  runId      String
+  targetType RetentionTargetType
+  targetId   String
+  targetName String?
+  action     RetentionRunItemAction
+  /// 1, except for grouped response deletions, where it is the number of responses deleted.
+  count      Int                    @default(1)
+  /// Who was emailed, for `notified` rows.
+  recipient  String?
+  skipReason RetentionSkipReason?
+
+  @@index([runId, id])
+}
+
+/// "Notice sent" for one survey or member under one policy, so each notice goes out once. Nothing
+/// else about a notice is stored. A notice older than its target's clock is void (the clock was
+/// reset after it went out); the sweep then deletes the row, and a later cycle sends a new one.
+///
+/// A CHECK in the migration ties each entity to its target: `surveys` → `surveyId`, `members` →
+/// `userId`, and responses never get a notice.
+model RetentionNotice {
+  id             String          @id @default(cuid(2))
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  entity         RetentionEntity
+  survey         Survey?         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId       String?
+  user           User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String?
+  sentAt         DateTime        @default(now())
+
+  @@unique([surveyId, entity])
+  @@unique([userId, entity])
+  @@index([organizationId])
+}
