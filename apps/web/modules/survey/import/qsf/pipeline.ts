@@ -61,12 +61,14 @@ export interface TRunQsfImportParams {
 }
 
 /**
- * The part of the QSF envelope every Qualtrics export has. Loose on purpose: QSF has no published
- * schema and Qualtrics adds keys between versions (ENG-3609); the reader in ENG-3654 decides what the
- * rest means.
+ * The part of the QSF envelope every Qualtrics export has. Other keys are allowed, since QSF has no
+ * published schema and Qualtrics adds keys between versions (ENG-3609), but dropped rather than copied:
+ * this check reads one name, and a loose parse would copy every top-level key of a file up to 15 MB into
+ * a new object — through ordinary assignment, where an own `__proto__` key swaps the copy's prototype.
+ * The reader in ENG-3654 reads the file itself, not this result.
  */
-const ZQsfEnvelope = z.looseObject({
-  SurveyEntry: z.looseObject({ SurveyName: z.string().trim().min(1) }),
+const ZQsfEnvelope = z.object({
+  SurveyEntry: z.object({ SurveyName: z.string().trim().min(1) }),
   SurveyElements: z.array(z.unknown()),
 });
 

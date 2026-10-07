@@ -28,6 +28,19 @@ describe("prepareQsfImport", () => {
     ).not.toThrow();
   });
 
+  test("never reads the keys it does not check, so a large file is not copied", () => {
+    // A key that cannot be read stands in for the rest of a 15 MB file: copying it is what costs.
+    const qsf: Record<string, unknown> = { ...minimalQsf };
+    Object.defineProperty(qsf, "SurveyFlow", {
+      enumerable: true,
+      get: () => {
+        throw new Error("an unchecked key was read");
+      },
+    });
+
+    expect(prepareQsfImport(qsf, "a.qsf").surveyName).toBe("Customer onboarding");
+  });
+
   test.each([
     ["any other JSON file", { name: "not a survey" }, "qsf.SurveyEntry"],
     [
