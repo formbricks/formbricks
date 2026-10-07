@@ -221,24 +221,11 @@ const nextConfig = {
         ],
       },
       {
-        // matching all API routes
+        // Public client API (JS SDK, surveys): any origin, deliberately without
+        // Access-Control-Allow-Credentials — these routes read no session, and browsers
+        // reject credentials paired with a wildcard origin anyway (ENG-2784).
         source: "/api/(v1|v2)/client/:path*",
         headers: [
-          { key: "Access-Control-Allow-Credentials", value: "true" },
-          { key: "Access-Control-Allow-Origin", value: "*" },
-          { key: "Access-Control-Allow-Methods", value: "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
-          {
-            key: "Access-Control-Allow-Headers",
-            value:
-              "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Cache-Control",
-          },
-        ],
-      },
-      {
-        // matching all API routes
-        source: "/api/capture/:path*",
-        headers: [
-          { key: "Access-Control-Allow-Credentials", value: "true" },
           { key: "Access-Control-Allow-Origin", value: "*" },
           { key: "Access-Control-Allow-Methods", value: "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
           {
