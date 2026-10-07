@@ -9,6 +9,7 @@ import {
   QSF_AI_CALL_TIMEOUT_MS,
   QSF_CHUNK_OUTPUT_TOKENS,
   QSF_MAX_AI_CALLS,
+  QSF_MAX_OUTPUT_TOKENS,
   QSF_PLAN_MAX_OUTPUT_TOKENS,
   type TQsfPlanGenerate,
   type TQsfPlanRequest,
@@ -388,8 +389,9 @@ describe("planQsfImport", () => {
   });
 
   test("never makes more calls than the cap, and drops what is left instead of failing", async () => {
+    // Out of tokens after a hundred, so the output budget is not what stops it.
     const generate = vi.fn<TQsfPlanGenerate>(async () => {
-      throw tooLong();
+      throw new AIOutputTokenLimitError({ maxOutputTokens: 8192, outputTokens: 100 });
     });
 
     const result = await plan("large-150.qsf", generate);
@@ -435,10 +437,25 @@ describe("planQsfImport", () => {
     });
   });
 
-  test("sizes the call ceiling from the reader's limits", () => {
-    // 200 questions on 200 pages, three rules described on each: 200 × (70 + 10 + 2 × 3 × 45) tokens
-    // in 3,000-token chunks, asked once, split once and retried twice.
-    expect(QSF_MAX_AI_CALLS).toBe(3 * Math.ceil((200 * (70 + 10 + 270)) / 3_000) + 2);
+  test("sizes the ceilings from the reader's limits", () => {
+    // 200 questions on 200 pages, three rules described on each: 200 × (70 + 10 + 2 × 3 × 45) =
+    // 70,000 tokens in 3,000-token chunks, 24 of them.
+    expect(QSF_MAX_AI_CALLS).toBe(74);
+    expect(QSF_MAX_OUTPUT_TOKENS).toBe(409_600);
+  });
+
+  test("stops calling once the import's output tokens are spent, dropping the rest", async () => {
+    const generate = vi.fn<TQsfPlanGenerate>(async () => {
+      throw tooLong();
+    });
+
+    const result = await plan("large-150.qsf", generate);
+
+    // Four chunks: (2 × 4 + 2) × 8,192 tokens, ten calls that use all of theirs, before the call cap
+    // of 14. At most the calls already in flight run past it.
+    expect(generate.mock.calls.length).toBeLessThanOrEqual(10 + 2);
+    expect(result.usage.outputTokens).toBeLessThanOrEqual(12 * 8192);
+    expect(result.issues.map((issue) => issue.params?.cause)).toContain("ai_budget");
   });
 
   test("lets a quota failure through unwrapped, and cancels the calls running beside it", async () => {

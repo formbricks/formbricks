@@ -40,10 +40,11 @@ import type { TQsfSurvey } from "./qsf-model";
  *   match) becomes `QsfImportTimeoutError`, the route's timeout event;
  * - output that fails the schema fails the chunk's questions, which go to the retry round.
  *
- * Every call counts against a cap — chunks, splits and the retry round together — sized from the
- * import's own chunks and never above `QSF_MAX_AI_CALLS`, so a hostile file cannot cost more than the
- * costliest valid one. Past the cap, the prompt budget or the deadline, the questions left are
- * dropped with a report line; the import fails only when none survives (ENG-3411).
+ * Every call counts against a call cap and an output-token budget — chunks, splits and the retry
+ * round together, failed calls included — sized from the import's own chunks and never above
+ * `QSF_MAX_AI_CALLS` and `QSF_MAX_OUTPUT_TOKENS`, so a hostile file cannot cost more than the costliest
+ * valid one. Past either, the prompt budget or the deadline, the questions left are dropped with a
+ * report line; the import fails only when none survives (ENG-3411).
  */
 
 /** The model's output budget per call. Room for reasoning tokens as well as the plan. */
@@ -73,23 +74,37 @@ const TOKENS_PER_NOTE = 45;
 const TOKENS_PER_PAGE = 10;
 
 /**
+ * Chunks of the costliest valid survey: the reader's 200 questions, each on its own page, every
+ * question and page with as many rules as the loosest prompt describes (3) — 70 + 10 + 2 × 3 × 45 =
+ * 350 expected tokens a question, 70,000 in all, in 3,000-token chunks: 24.
+ */
+const QSF_MAX_CHUNKS = Math.ceil(
+  (QSF_MAX_QUESTIONS *
+    (TOKENS_PER_QUESTION + TOKENS_PER_PAGE + 2 * TOKENS_PER_NOTE * QSF_LOOSEST_PROMPT_LIMITS.rules)) /
+    QSF_CHUNK_OUTPUT_TOKENS
+);
+
+/**
  * Calls one import may make: each chunk once, each split into two halves, and two more for the retry
  * round — `3 × chunks + 2`, which a survey whose every chunk overflows still fits.
  */
 const callCapFor = (chunks: number): number => 3 * chunks + 2;
 
 /**
- * The ceiling on calls, whatever the file: the cap of the costliest valid survey — the reader's
- * question limit, each question on its own page, every question and page with as many rules as the
- * prompt describes at its loosest.
+ * Output tokens one import may spend, reasoning and failed calls included: every chunk's whole call
+ * budget twice (an overflow, then its halves or its retry), and two more calls for the retry round —
+ * `(2 × chunks + 2) × 8,192`. Checked before each call, so at most the calls already in flight run
+ * past it.
  */
-export const QSF_MAX_AI_CALLS = callCapFor(
-  Math.ceil(
-    (QSF_MAX_QUESTIONS *
-      (TOKENS_PER_QUESTION + TOKENS_PER_PAGE + 2 * TOKENS_PER_NOTE * QSF_LOOSEST_PROMPT_LIMITS.rules)) /
-      QSF_CHUNK_OUTPUT_TOKENS
-  )
-);
+const outputBudgetFor = (chunks: number): number => (2 * chunks + 2) * QSF_PLAN_MAX_OUTPUT_TOKENS;
+
+/**
+ * The ceilings, whatever the file: the costliest valid survey's own allowance, so a hostile file
+ * cannot cost more than it. 74 calls (3 × 24 + 2) and 409,600 output tokens ((2 × 24 + 2) × 8,192) —
+ * about six times the 70,000 that survey is expected to need.
+ */
+export const QSF_MAX_AI_CALLS = callCapFor(QSF_MAX_CHUNKS);
+export const QSF_MAX_OUTPUT_TOKENS = outputBudgetFor(QSF_MAX_CHUNKS);
 
 /**
  * Qualtrics types Formbricks has no element for. Skipped without asking the model: fewer tokens, and
@@ -192,6 +207,8 @@ interface TPlanContext {
   usage: TQsfPlanUsage;
   calls: number;
   callCap: number;
+  /** Output tokens this import may spend. */
+  outputBudget: number;
 }
 
 type TCallOutcome =
@@ -300,7 +317,13 @@ async function callOnce(
   timeout: number,
   failures?: ReadonlyMap<string, readonly TQsfPlanFailure[]>
 ): Promise<TCallOutcome> {
-  if (context.calls >= context.callCap || timeout <= 0) return { kind: "budget" };
+  if (
+    context.calls >= context.callCap ||
+    context.usage.outputTokens >= context.outputBudget ||
+    timeout <= 0
+  ) {
+    return { kind: "budget" };
+  }
 
   const system = buildQsfPlanSystemPrompt();
   const prompt = buildQsfPlanPrompt({
@@ -447,9 +470,11 @@ export async function planQsfImport(params: {
     usage: { inputTokens: 0, outputTokens: 0 },
     calls: 0,
     callCap: 0,
+    outputBudget: 0,
   };
   const chunks = chunkQuestions(context, refs);
   context.callCap = Math.min(callCapFor(chunks.length), QSF_MAX_AI_CALLS);
+  context.outputBudget = Math.min(outputBudgetFor(chunks.length), QSF_MAX_OUTPUT_TOKENS);
 
   const callTimeout = () =>
     Math.min(QSF_AI_CALL_TIMEOUT_MS, Math.floor(deadline - performance.now() - QSF_ASSEMBLY_RESERVE_MS));
