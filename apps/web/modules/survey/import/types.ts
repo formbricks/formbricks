@@ -31,8 +31,9 @@ export type TQsfImportStage = "reading" | "ai" | "assembling";
  * - `text_too_long` — a text past the size the import sanitizes, left out
  * - `markup_escaped` — plain text that would have rendered as HTML, shown as typed instead
  *
- * `question_skipped` carries `params.cause`, a fixed code (`unsupported_type`, `ai_skipped`,
- * `plan_invalid`, `not_in_flow`, `invalid_id`, `validation_failed`). Params that carry text from the
+ * `question_skipped` carries `params.cause`, a fixed code (`unsupported_type` with the Qualtrics
+ * `params.qualtricsType`, `ai_skipped`, `plan_invalid`, `not_in_flow`, `invalid_id`,
+ * `validation_failed`); `choice_dropped` carries `invalid_id`. Params that carry text from the
  * file or the AI — `field_renamed`'s `from`, `description` on `logic_not_imported` and
  * `question_skipped`, `questionTag` — must be rendered as plain text, never as rich text.
  */

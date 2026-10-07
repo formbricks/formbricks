@@ -1,4 +1,5 @@
 import "server-only";
+import { setImmediate as yieldToEventLoop } from "node:timers/promises";
 import { logger } from "@formbricks/logger";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
@@ -89,12 +90,22 @@ const countElements = (document: TQsfDraftDocument): number =>
  * Assemble the draft and hold it to the create's checks. A problem with one element drops that
  * element (reported) and the draft is assembled again once; a problem anywhere else, or a second
  * failure, fails the import. Only the problems' paths are logged: their reasons can quote the file.
+ *
+ * Assembly and each check are synchronous (~20 ms apiece for 150 questions), so it yields to the event
+ * loop between them rather than holding it for all of them at once.
  */
-function assembleCheckedDraft(
+async function assembleCheckedDraft(
   build: (excludedRefs: ReadonlySet<string>) => TQsfAssembly,
-  survey: TQsfSurvey
-): { assembly: TQsfAssembly; dropped: TQsfImportIssue[] } {
+  survey: TQsfSurvey,
+  signal: AbortSignal
+): Promise<{ assembly: TQsfAssembly; dropped: TQsfImportIssue[] }> {
+  const pause = async () => {
+    await yieldToEventLoop();
+    signal.throwIfAborted();
+  };
+
   const first = build(new Set());
+  await pause();
   const problems = checkQsfDraft(first.document);
   if (problems.length === 0) return { assembly: first, dropped: [] };
 
@@ -110,7 +121,9 @@ function assembleCheckedDraft(
     { invalidParamNames: names, droppedElements: excluded.size },
     "QSF import dropped elements the create would refuse"
   );
+  await pause();
   const second = build(excluded);
+  await pause();
   if (checkQsfDraft(second.document).length > 0) {
     throw new QsfImportFailedError("draft_invalid");
   }
@@ -153,10 +166,11 @@ export async function runQsfImport(params: TRunQsfImportParams): Promise<TQsfImp
   const allowExternalUrls = survey.endRedirectUrl ? await getExternalUrlsPermission(organizationId) : false;
   signal.throwIfAborted();
 
-  const { assembly, dropped } = assembleCheckedDraft(
+  const { assembly, dropped } = await assembleCheckedDraft(
     (excludedRefs) =>
       assembleQsfDraft({ survey, texts, plan: planned.plan, workspaceId, allowExternalUrls, excludedRefs }),
-    survey
+    survey,
+    signal
   );
   if (countElements(assembly.document) === 0) throw new QsfImportFailedError("no_questions");
 

@@ -146,10 +146,10 @@ describe("sanitizeQsfTexts", () => {
     { timeout: 30_000 },
     async () => {
       const survey = readQsf(loadQsfFixture("large-150.qsf"));
-      // Every headline 240 tags long (a few ms each on jsdom): over half a second of sanitizing in
-      // all, which must not run as one block.
+      // Every text of the survey, choices included, 60 tags long: about 600 small texts, over half a
+      // second of sanitizing in all, which must not run as one block.
       for (const text of survey.texts.values()) {
-        if (text.format === "rich") text.byLanguage.set(survey.defaultLanguage, "<span>x</span>".repeat(120));
+        text.byLanguage.set(survey.defaultLanguage, "<span>x</span>".repeat(30));
       }
       const histogram = monitorEventLoopDelay({ resolution: 1 });
 
@@ -162,8 +162,9 @@ describe("sanitizeQsfTexts", () => {
       await tick();
       histogram.disable();
 
-      // Each slice runs ~10 ms plus one text; a loose bound that still fails if nothing yields.
-      expect(histogram.max / 1e6).toBeLessThan(100);
+      // Each slice runs ~10 ms plus one small text. Loose, for a loaded CI runner, and still far under
+      // the whole run, which is what a sanitizer that stops yielding blocks for.
+      expect(histogram.max / 1e6).toBeLessThan(200);
     }
   );
 });
