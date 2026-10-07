@@ -119,6 +119,9 @@
 /* theming */
 #fbjs {
   font-size: 16px;
+  /* Pin native controls and scrollbars to the survey's own appearance; otherwise a light survey
+     inherits a host page's `color-scheme: dark`. The dark block below switches it to dark. */
+  color-scheme: light;
   --brand-default: #1e40af;
   --slate-50: rgb(248, 250, 252);
   --slate-100: rgb(241 245 249);
@@ -166,6 +169,34 @@
   --fb-close-btn-color-hover: var(--slate-700);
   --fb-calendar-tile-color: var(--slate-50);
   --fb-border-radius: 8px;
+}
+
+/* Dark appearance fallback for the renderer's own tokens. Values match
+   getDerivedDarkColors("#1e40af") (packages/types/dark-palette.ts); styles.ts
+   overrides them from the survey's styling. See survey-ui globals.css. */
+#fbjs[data-appearance="dark"] {
+  color-scheme: dark;
+  --fb-brand-text-color: white;
+  --fb-border-color: #5b6a97;
+  --fb-border-color-highlight: #6b79a1;
+  --fb-heading-color: #dde2f3;
+  --fb-subheading-color: #dde2f3;
+  --fb-placeholder-color: #9fa5b9;
+  --fb-info-text-color: #9fa5b9;
+  --fb-signature-text-color: #b1b5c2;
+  --fb-branding-text-color: #9b9eaa;
+  --fb-survey-background-color: #0d1426;
+  --fb-survey-border-color: #111e45;
+  /* Tailwind's default border color (compat rule at the top of this file). */
+  --color-gray-200: #111e45;
+  --fb-accent-background-color: #101d42;
+  --fb-accent-background-color-selected: #122251;
+  --fb-input-background-color: #0e1832;
+  --fb-input-background-color-selected: #1a243c;
+  --fb-brand-readable-color: #788ccf;
+  /* The modal shell behind the card; white in light. A `dark:` utility cannot do this: it ties
+     with bg-white on specificity and loses on stylesheet order. */
+  --fb-dialog-background-color: var(--fb-survey-background-color);
 }
 
 @keyframes shrink-width-to-zero {

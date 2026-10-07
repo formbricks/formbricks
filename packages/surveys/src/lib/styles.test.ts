@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { DEFAULT_INPUT_SHADOW } from "@formbricks/types/dark-palette";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { type TWorkspaceStyling } from "@formbricks/types/workspace";
 import { AA_CONTRAST_RATIO, getContrastRatio } from "./color";
@@ -662,5 +663,111 @@ describe("getBaseWorkspaceStyling_Helper", () => {
     // Check a property not in overrides retains its default
     expect(styled.cardBackgroundColor).toBeNull();
     expect(styled.isLogoHidden).toBeNull();
+  });
+});
+
+describe("addCustomThemeToDom dark palette", () => {
+  const getCss = () => document.getElementById("formbricks__css__custom")?.innerHTML ?? "";
+  const getDarkBlock = () => getCss().split('#fbjs[data-appearance="dark"]')[1] ?? "";
+
+  afterEach(() => {
+    document.getElementById("formbricks__css__custom")?.remove();
+  });
+
+  test("keeps the light block unchanged and appends a separate dark block", () => {
+    const styling = getBaseWorkspaceStyling({ brandColor: { light: "#1e40af" } });
+    addCustomThemeToDom({ styling });
+    const css = getCss();
+    const [light] = css.split('#fbjs[data-appearance="dark"]');
+
+    expect(light).toContain("--fb-brand-color: #1e40af;");
+    expect(light).not.toContain("color-scheme");
+    expect(getDarkBlock()).toContain("color-scheme: dark;");
+  });
+
+  test("derives dark surfaces and readable text from the brand color", () => {
+    addCustomThemeToDom({ styling: getBaseWorkspaceStyling({ brandColor: { light: "#1e40af" } }) });
+    const dark = getDarkBlock();
+
+    expect(dark).toContain("--fb-survey-background-color: #0d1426;");
+    expect(dark).toContain("--fb-element-headline-color: #dde2f3;");
+    expect(getContrastRatio("#dde2f3", "#0d1426")).toBeGreaterThanOrEqual(AA_CONTRAST_RATIO);
+  });
+
+  test("an explicit dark value wins over the derived one", () => {
+    addCustomThemeToDom({
+      styling: getBaseWorkspaceStyling({
+        brandColor: { light: "#1e40af" },
+        cardBackgroundColor: { light: "#ffffff", dark: "#222222" },
+      }),
+    });
+    expect(getDarkBlock()).toContain("--fb-survey-background-color: #222222;");
+  });
+
+  test("brand and button colors keep their light value in dark (D12)", () => {
+    addCustomThemeToDom({
+      styling: getBaseWorkspaceStyling({
+        brandColor: { light: "#146a5d" },
+        buttonBgColor: { light: "#146a5d" },
+        buttonTextColor: { light: "#ffffff" },
+      }),
+    });
+    const dark = getDarkBlock();
+    expect(dark).toContain("--fb-brand-color: #146a5d;");
+    expect(dark).toContain("--fb-button-bg-color: #146a5d;");
+    expect(dark).toContain("--fb-button-text-color: #ffffff;");
+  });
+
+  test("dark hover and selected states lighten instead of darken", () => {
+    addCustomThemeToDom({ styling: getBaseWorkspaceStyling({ brandColor: { light: "#1e40af" } }) });
+    expect(getDarkBlock()).toContain("--fb-shade-color: white;");
+  });
+
+  test("brand text, focus ring and error text get readable variants while fills keep the brand", () => {
+    addCustomThemeToDom({ styling: getBaseWorkspaceStyling({ brandColor: { light: "#1e40af" } }) });
+    const dark = getDarkBlock();
+    expect(dark).toContain("--fb-brand-color: #1e40af;");
+    expect(dark).toContain("--fb-brand-readable-color: #788ccf;");
+    expect(dark).toContain("--fb-focus-ring-outer-color: #4b66bf;");
+    expect(dark).toContain("--destructive: #ee4d54;");
+  });
+
+  test("survey-ui base tokens follow a dark card override", () => {
+    addCustomThemeToDom({
+      styling: getBaseWorkspaceStyling({
+        brandColor: { light: "#1e40af" },
+        cardBackgroundColor: { light: "#ffffff", dark: "#222222" },
+      }),
+    });
+    const dark = getDarkBlock();
+    expect(dark).toContain("--background: #222222;");
+    expect(dark).toContain("--card: #222222;");
+    expect(dark).toMatch(/--popover: #[0-9a-f]{6};/);
+  });
+
+  test("keeps a customer's input shadow in dark and drops only the default", () => {
+    addCustomThemeToDom({
+      styling: getBaseWorkspaceStyling({
+        brandColor: { light: "#1e40af" },
+        inputShadow: DEFAULT_INPUT_SHADOW,
+      }),
+    });
+    expect(getDarkBlock()).toContain("--fb-input-shadow: none;");
+    addCustomThemeToDom({
+      styling: getBaseWorkspaceStyling({
+        brandColor: { light: "#1e40af" },
+        inputShadow: "inset 0 0 0 1px #000000",
+      }),
+    });
+    expect(getDarkBlock()).not.toContain("--fb-input-shadow");
+  });
+
+  test("an unparseable dark value does not throw", () => {
+    const styling = getBaseWorkspaceStyling({
+      brandColor: { light: "#146a5d" },
+      buttonBgColor: { light: "#146a5d", dark: "not-a-color" },
+    });
+    expect(() => addCustomThemeToDom({ styling })).not.toThrow();
+    expect(getDarkBlock()).toContain("--fb-button-bg-color: #146a5d;");
   });
 });

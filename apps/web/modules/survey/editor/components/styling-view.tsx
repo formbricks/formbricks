@@ -10,6 +10,7 @@ import { Workspace } from "@formbricks/database/prisma-browser";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { COLOR_DEFAULTS, STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
+import { type TStylingAppearance } from "@/lib/styling/dark-mode";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
 import { LogoSettingsCard } from "@/modules/survey/editor/components/logo-settings-card";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
@@ -24,6 +25,11 @@ import {
   FormLabel,
   FormProvider,
 } from "@/modules/ui/components/form";
+import {
+  DarkContrastWarnings,
+  StylingAppearanceProvider,
+  StylingAppearanceToggle,
+} from "@/modules/ui/components/styling-appearance";
 import { Switch } from "@/modules/ui/components/switch";
 
 interface StylingViewProps {
@@ -39,6 +45,9 @@ interface StylingViewProps {
   isUnsplashConfigured: boolean;
   isCxMode: boolean;
   isStorageConfigured: boolean;
+  /** Which palette the form edits and the preview shows. Only app surveys can render dark (D4). */
+  appearance?: TStylingAppearance;
+  setAppearance?: (appearance: TStylingAppearance) => void;
 }
 
 export const StylingView = ({
@@ -54,6 +63,8 @@ export const StylingView = ({
   isUnsplashConfigured,
   isCxMode,
   isStorageConfigured = true,
+  appearance = "light",
+  setAppearance,
 }: StylingViewProps) => {
   const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
@@ -93,6 +104,10 @@ export const StylingView = ({
 
     for (const [key, value] of Object.entries(suggested)) {
       form.setValue(key as keyof TSurveyStyling, value, { shouldDirty: true });
+      // The dark palette derives from the new light colors, so stale dark overrides are cleared.
+      if (key.endsWith(".light")) {
+        form.setValue(key.replace(/\.light$/, ".dark") as keyof TSurveyStyling, null, { shouldDirty: true });
+      }
     }
 
     // Footer link color auto-adjusts for contrast when unset; clear any override so it
@@ -226,21 +241,31 @@ export const StylingView = ({
             />
           </div>
 
-          <FormStylingSettings
-            open={formStylingOpen}
-            setOpen={setFormStylingOpen}
-            disabled={!overwriteThemeStyling}
-            form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
-            onSuggestColorsClick={() => setConfirmSuggestColorsOpen(true)}
-          />
+          {localSurvey.type === "app" && setAppearance && (
+            <StylingAppearanceToggle appearance={appearance} onChange={setAppearance} />
+          )}
 
-          <CardStylingSettings
-            open={cardStylingOpen}
-            setOpen={setCardStylingOpen}
-            surveyType={localSurvey.type}
-            disabled={!overwriteThemeStyling}
-            form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
-          />
+          <StylingAppearanceProvider appearance={localSurvey.type === "app" ? appearance : "light"}>
+            <FormStylingSettings
+              open={formStylingOpen}
+              setOpen={setFormStylingOpen}
+              disabled={!overwriteThemeStyling}
+              form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
+              onSuggestColorsClick={() => setConfirmSuggestColorsOpen(true)}
+            />
+
+            <CardStylingSettings
+              open={cardStylingOpen}
+              setOpen={setCardStylingOpen}
+              surveyType={localSurvey.type}
+              disabled={!overwriteThemeStyling}
+              form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
+            />
+          </StylingAppearanceProvider>
+
+          {localSurvey.type === "app" && setAppearance && overwriteThemeStyling && (
+            <DarkContrastWarnings appearance={appearance} styling={form.watch()} />
+          )}
 
           {localSurvey.type === "link" && (
             <>

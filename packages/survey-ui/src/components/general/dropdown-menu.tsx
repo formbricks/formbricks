@@ -23,9 +23,16 @@ function DropdownMenuContent({
   ref,
   ...props
 }: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.Content>>) {
+  // The portal renders outside the survey root, so it copies the survey's light/dark appearance
+  // (set by the renderer on the first #fbjs) to keep the menu in the same palette.
+  const appearance =
+    typeof document === "undefined"
+      ? undefined
+      : (document.getElementById("fbjs")?.dataset.appearance ?? undefined);
+
   return (
     <DropdownMenuPrimitive.Portal>
-      <div id="fbjs">
+      <div id="fbjs" data-appearance={appearance}>
         <DropdownMenuPrimitive.Content
           ref={ref}
           data-slot="dropdown-menu-content"

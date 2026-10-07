@@ -1,9 +1,10 @@
 import { type ComponentChildren } from "preact";
-import { type MutableRef, useEffect, useRef } from "preact/hooks";
+import { type MutableRef, useEffect, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TOverlay, type TPlacement } from "@formbricks/types/common";
 import { type TSurveyCardRect } from "@formbricks/types/formbricks-surveys";
 import { type TOverlayAppearance, getOverlayBackground } from "@formbricks/types/overlay";
+import { getResolvedAppearance, subscribeToAppearance } from "@/lib/appearance";
 import { isPlainEscape } from "@/lib/keyboard";
 import { ensureLiveRegion } from "@/lib/live-region";
 import { SURVEY_INSTRUCTIONS_ID, getSurveyHeadingName } from "@/lib/survey-page";
@@ -281,6 +282,11 @@ export function SurveyContainer({
   const isModal = mode === "modal";
   const { t } = useTranslation();
   const hasOverlay = overlay !== "none";
+  // Rendered on the root so the first paint already has the right palette; later changes arrive
+  // through setAppearance and only touch this attribute.
+  const [appearance, setAppearance] = useState(getResolvedAppearance);
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => subscribeToAppearance(setAppearance, () => rootRef.current?.isConnected ?? true), []);
   // The overlay is what makes a survey modal: it covers the host page and the page stops being usable.
   // Without one the page underneath stays visible and clickable, so the survey is a notification, not a
   // modal. Trapping focus there steals the caret and the text selection from the host page — the trap's
@@ -371,7 +377,9 @@ export function SurveyContainer({
     return (
       <div // NOSONAR(typescript:S6819) - a native <form> would nest inside the host page's own form
         id="fbjs"
+        ref={rootRef}
         className="formbricks-form"
+        data-appearance={appearance}
         style={{ height: "100%", width: "100%" }}
         dir={dir}
         lang={lang ?? undefined}
@@ -387,7 +395,13 @@ export function SurveyContainer({
   const backdrop = getOverlayBackdrop(overlay, overlayAppearance);
 
   return (
-    <div id="fbjs" className="formbricks-form" dir={dir} lang={lang ?? undefined}>
+    <div
+      id="fbjs"
+      ref={rootRef}
+      className="formbricks-form"
+      data-appearance={appearance}
+      dir={dir}
+      lang={lang ?? undefined}>
       <div
         // In-dialog updates (question changes after a submit) should wait for the reader to finish
         // speaking instead of interrupting it. A survey is never urgent enough for assertive speech.
@@ -411,7 +425,7 @@ export function SurveyContainer({
             className={cn(
               getPlacementStyle(mirrorPlacementForDir(placement, dir)),
               isOpen ? "opacity-100" : "opacity-0",
-              "rounded-custom pointer-events-auto absolute bottom-0 h-fit w-full overflow-visible bg-white shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
+              "rounded-custom pointer-events-auto absolute bottom-0 h-fit w-full overflow-visible bg-(--fb-dialog-background-color,white) shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
             )}>
             <div>
               {surveyHeading}

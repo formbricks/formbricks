@@ -165,6 +165,46 @@ test.describe("Survey Styling", async () => {
     css = await page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML);
     expect(css).toContain("--fb-progress-track-height: 15px");
     expect(css).toContain("--fb-progress-track-border-radius: 20px");
+
+    await test.step("Dark tab edits dark overrides and previews the app survey in dark", async () => {
+      await page.locator('label[for="styling-appearance-dark"]').click();
+      await expect(page.locator("#fbjs").first()).toHaveAttribute("data-appearance", "dark");
+
+      await setColor(page, "Card background color", "1b1530");
+      await expect
+        .poll(() => page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML))
+        .toContain("--fb-survey-background-color: #1b1530");
+      css = await page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML);
+      const darkBlock = css?.split('#fbjs[data-appearance="dark"]')[1] ?? "";
+      expect(darkBlock).toContain("--fb-survey-background-color: #1b1530");
+      // The light palette is untouched by editing dark: the edited field keeps its light value.
+      const lightBlock = css?.split('#fbjs[data-appearance="dark"]')[0] ?? "";
+      expect(lightBlock).not.toContain("#1b1530");
+      expect(css).toContain("--fb-option-bg-color: #dddddd");
+
+      await page.getByRole("button", { name: "Save", exact: true }).first().click();
+      await expect(page.getByText("Styling updated successfully")).toBeVisible();
+      await page.reload();
+      await page.locator('label[for="styling-appearance-dark"]').click();
+      await openAccordion(page, "Card styling");
+      const cardBackground = page
+        .locator("label")
+        .filter({ hasText: "Card background color" })
+        .locator("visible=true")
+        .last()
+        .locator("..")
+        .getByRole("textbox");
+      await expect(cardBackground).toHaveValue("1b1530");
+      // The saved override reaches the preview after a reload, and "Use automatic color" returns to derived.
+      await expect
+        .poll(() => page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML))
+        .toContain("--fb-survey-background-color: #1b1530");
+      await page.getByRole("button", { name: "Use automatic color" }).first().click();
+      await expect(cardBackground).toHaveValue("");
+      await expect
+        .poll(() => page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML))
+        .not.toContain("--fb-survey-background-color: #1b1530");
+    });
   });
 
   test("Suggest Colors derives all colors from brand color without changing non-color properties", async ({

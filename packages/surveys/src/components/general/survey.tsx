@@ -99,6 +99,11 @@ interface VariableStackEntry {
   variables: TResponseVariables;
 }
 
+// Close-button and language-switch hover tint. Read through a variable so the dark palette can
+// replace it; light mode resolves to the same literal as before (ENG-2939).
+const getHoverColor = (styling: SurveyContainerProps["styling"]) =>
+  `var(--fb-hover-bg-color, ${styling.inputBgColor?.light ?? "#f8fafc"})`;
+
 export function Survey({
   appUrl,
   workspaceId: workspaceIdProp,
@@ -1378,7 +1383,7 @@ export function Survey({
                     )}>
                     <SurveyCloseButton
                       onClose={onClose}
-                      hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
+                      hoverColor={getHoverColor(styling)}
                       borderRadius={styling.roundness ?? 8}
                     />
                   </div>
@@ -1407,7 +1412,7 @@ export function Survey({
                     )}>
                     <SurveyCloseButton
                       onClose={onClose}
-                      hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
+                      hoverColor={getHoverColor(styling)}
                       borderRadius={styling.roundness ?? 8}
                     />
                   </div>
@@ -1542,7 +1547,7 @@ export function Survey({
                           surveyLanguages={localSurvey.languages}
                           selectedLanguageCode={selectedLanguage}
                           setSelectedLanguageCode={setSelectedLanguage}
-                          hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
+                          hoverColor={getHoverColor(styling)}
                           borderRadius={styling.roundness ?? 8}
                           setDir={setDir}
                           dir={dir}
@@ -1555,7 +1560,7 @@ export function Survey({
                       {isCloseButtonVisible && (
                         <SurveyCloseButton
                           onClose={onClose}
-                          hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
+                          hoverColor={getHoverColor(styling)}
                           borderRadius={styling.roundness ?? 8}
                         />
                       )}
