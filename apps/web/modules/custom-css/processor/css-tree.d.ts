@@ -18,13 +18,17 @@ declare module "css-tree" {
     options?: { positions?: boolean; context?: string; onParseError?: (error: unknown) => void }
   ): CssNode;
   export function generate(node: CssNode): string;
-  export function walk(
-    ast: CssNode,
-    options: {
-      visit?: string;
-      enter: (this: { rule: CssNode | null; atrule: CssNode | null }, node: CssNode) => void;
-    }
-  ): void;
+  export const walk: {
+    (
+      ast: CssNode,
+      options: {
+        visit?: string;
+        /** Returning `walk.break` stops the walk. */
+        enter: (this: { rule: CssNode | null; atrule: CssNode | null }, node: CssNode) => symbol | void;
+      }
+    ): void;
+    readonly break: symbol;
+  };
   export const lexer: {
     checkPropertyName(name: string): Error | undefined;
     matchProperty(name: string, value: CssNode): { error: (Error & { name: string }) | null };

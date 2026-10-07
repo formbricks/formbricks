@@ -39,6 +39,7 @@ import {
   renameKeyframeReferences,
   scanValue,
 } from "./declarations";
+import { type TIneffectiveDeclaration, findIneffectiveDeclarations } from "./ineffective";
 import {
   CustomCssRejection,
   NO_LOCATION,
@@ -47,7 +48,6 @@ import {
   fromRuleLocation,
   toSyntaxRejection,
 } from "./issues";
-import { findIneffectiveDeclarations } from "./ineffective";
 import { prescanCustomCss, removePrescanImports } from "./prescan";
 import {
   type TSubjectPosition,
@@ -608,6 +608,8 @@ const compileFields = (
 ): { compiled: Record<TCustomCssAppearance, string | null>; rejections: CustomCssRejection[] } => {
   const compiled: Record<TCustomCssAppearance, string | null> = { light: null, dark: null };
   const rejections: CustomCssRejection[] = [];
+  // Added after every removal, so the capped warning list never trades a removal for a note.
+  const notes: { appearance: TCustomCssAppearance; note: TIneffectiveDeclaration }[] = [];
   let lightKeyframes = new Map<string, string>();
   for (const field of fields) {
     if (!field.source) continue;
@@ -623,7 +625,7 @@ const compileFields = (
       outputBudget: options.budget,
     };
     for (const note of findIneffectiveDeclarations(field.source)) {
-      options.sink.add(note.code, field.appearance, note.reason, note.location);
+      notes.push({ appearance: field.appearance, note });
     }
     try {
       const css = compileField(field.source, ctx);
@@ -633,6 +635,9 @@ const compileFields = (
       if (!(error instanceof CustomCssRejection)) throw error;
       rejections.push(error);
     }
+  }
+  for (const { appearance, note } of notes) {
+    options.sink.add(note.code, appearance, note.reason, note.location);
   }
   return { compiled, rejections };
 };

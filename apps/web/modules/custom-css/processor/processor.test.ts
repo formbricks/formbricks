@@ -804,6 +804,15 @@ describe("declarations that do nothing", () => {
     );
     expect(warnings).toEqual([]);
   });
+
+  test("removals come first, so a file full of notes cannot push one out of the capped list", () => {
+    const { warnings } = compile(
+      `${".a{colr:red}".repeat(120)}\n.b{position:fixed}`,
+      '@import "x.css";\n.c{colr:red}'
+    );
+    expect(codes(warnings).slice(0, 2)).toEqual(["import_removed", "fixed_position_removed"]);
+    expect(warnings).toHaveLength(CUSTOM_CSS_MAX_WARNINGS);
+  });
 });
 
 describe("normalizeCustomCssInput", () => {

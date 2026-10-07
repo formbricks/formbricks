@@ -1,5 +1,5 @@
 import { type CssNode, type DeclarationNode, generate, lexer, parse, walk } from "css-tree";
-import { UNSAFE_FUNCTIONS, UNSAFE_PROPERTIES } from "./constants";
+import { CUSTOM_CSS_MAX_WARNINGS, UNSAFE_FUNCTIONS, UNSAFE_PROPERTIES } from "./constants";
 import { type TIssueLocation, fromOneBasedLocation } from "./issues";
 
 export interface TIneffectiveDeclaration {
@@ -10,7 +10,16 @@ export interface TIneffectiveDeclaration {
 
 // Values that only resolve in the browser, or that the declaration policy already removes: neither can
 // be judged against the property grammar here.
-const UNCHECKABLE_FUNCTIONS = ["var", "env", "url", "src", "image", "image-set", "-webkit-image-set", "cross-fade"];
+const UNCHECKABLE_FUNCTIONS = [
+  "var",
+  "env",
+  "url",
+  "src",
+  "image",
+  "image-set",
+  "-webkit-image-set",
+  "cross-fade",
+];
 const UNCHECKABLE_VALUE = new RegExp(
   String.raw`(?:^|[^\w-])(?:${[...UNCHECKABLE_FUNCTIONS, ...Object.keys(UNSAFE_FUNCTIONS)].join("|")})\(`,
   "i"
@@ -25,8 +34,14 @@ const POLICY_PROPERTIES = new Set(["position", "all", ...Object.keys(UNSAFE_PROP
  * Browsers drop these silently, so they are reported instead of removed. Checked against the MDN property
  * grammar (css-tree) on the customer's own source, which also gives each note its exact line and column.
  * Custom and vendor-prefixed properties are left alone.
+ *
+ * Advice only, so it is bounded and can never fail a save: it stops at `limit` notes (no more can be
+ * reported), and a grammar check that throws keeps the notes found so far.
  */
-export const findIneffectiveDeclarations = (source: string): TIneffectiveDeclaration[] => {
+export const findIneffectiveDeclarations = (
+  source: string,
+  limit: number = CUSTOM_CSS_MAX_WARNINGS
+): TIneffectiveDeclaration[] => {
   let ast: CssNode;
   try {
     // Syntax errors are lightningcss's to report; this pass only reads what parses.
@@ -36,9 +51,19 @@ export const findIneffectiveDeclarations = (source: string): TIneffectiveDeclara
   }
 
   const notes: TIneffectiveDeclaration[] = [];
+  try {
+    walkDeclarations(ast, notes, limit);
+  } catch {
+    // Keep what was found: a note is never worth failing the save over.
+  }
+  return notes;
+};
+
+const walkDeclarations = (ast: CssNode, notes: TIneffectiveDeclaration[], limit: number): void => {
   walk(ast, {
     visit: "Declaration",
     enter(cssNode) {
+      if (notes.length >= limit) return walk.break;
       // Only style rules: @font-face, @property, @counter-style and the like hold descriptors, which are
       // not properties (and are removed with their at-rule anyway).
       if (cssNode.type !== "Declaration" || !this.rule) return;
@@ -65,5 +90,4 @@ export const findIneffectiveDeclarations = (source: string): TIneffectiveDeclara
       }
     },
   });
-  return notes;
 };
