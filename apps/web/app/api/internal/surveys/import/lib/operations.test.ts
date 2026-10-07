@@ -11,6 +11,9 @@ const mocks = vi.hoisted(() => ({
   requireV3WorkspaceAccess: vi.fn(),
   assertOrganizationAIConfigured: vi.fn(),
   runQsfImport: vi.fn(),
+  prepareQsfImport: vi.fn(),
+  realPrepareQsfImport:
+    undefined as unknown as typeof import("@/modules/survey/import/qsf/pipeline").prepareQsfImport,
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
@@ -23,11 +26,12 @@ vi.mock("@/lib/ai/service", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   assertOrganizationAIConfigured: mocks.assertOrganizationAIConfigured,
 }));
-// The real reader runs; only the AI-backed part is replaced.
-vi.mock("@/modules/survey/import/qsf/pipeline", async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  runQsfImport: mocks.runQsfImport,
-}));
+// The real reader runs, behind a spy a test can make fail; only the AI-backed part is replaced.
+vi.mock("@/modules/survey/import/qsf/pipeline", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/modules/survey/import/qsf/pipeline")>();
+  mocks.realPrepareQsfImport = original.prepareQsfImport;
+  return { ...original, prepareQsfImport: mocks.prepareQsfImport, runQsfImport: mocks.runQsfImport };
+});
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => mocks.log), error: vi.fn(), warn: vi.fn() },
 }));
@@ -95,6 +99,7 @@ describe("streamQsfImport", () => {
       workspaceId: body.workspaceId,
     });
     mocks.assertOrganizationAIConfigured.mockResolvedValue({ isInstanceConfigured: true });
+    mocks.prepareQsfImport.mockImplementation(mocks.realPrepareQsfImport);
     mocks.runQsfImport.mockImplementation(async ({ onProgress }: TRunQsfImportParams) => {
       onProgress("ai");
       onProgress("assembling");
@@ -156,6 +161,24 @@ describe("streamQsfImport", () => {
       const response = await call(undefined, { not: "a qsf" });
 
       expect(response.status).toBe(403);
+    });
+
+    test("answers 500 when reading the file fails unexpectedly, and logs where, never what it said", async () => {
+      // A reader that fails on the file can quote it, so the message stays out of the log.
+      mocks.prepareQsfImport.mockImplementationOnce(() => {
+        throw new SyntaxError(`Unexpected token in ${FILE_CONTENT_MARKER}`);
+      });
+
+      const response = await call();
+
+      expect(response.status).toBe(500);
+      expect(JSON.stringify(await response.json())).not.toContain(FILE_CONTENT_MARKER);
+      expect(mocks.log.error).toHaveBeenCalledWith(
+        expect.objectContaining({ errName: "SyntaxError" }),
+        "QSF import could not read the file"
+      );
+      expect(allLogged()).not.toContain(FILE_CONTENT_MARKER);
+      expect(mocks.runQsfImport).not.toHaveBeenCalled();
     });
 
     test("answers a file that is not a QSF with 422 and what is missing", async () => {

@@ -8,7 +8,7 @@ import { createRequestAbort } from "@/app/api/internal/lib/request-abort";
 import { mapV3AIError } from "@/app/api/v3/lib/ai-errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
-import { problemUnprocessableContent } from "@/app/api/v3/lib/response";
+import { problemInternalError, problemUnprocessableContent } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { assertOrganizationAIConfigured } from "@/lib/ai/service";
@@ -112,7 +112,10 @@ export async function streamQsfImport({
       });
     }
 
-    return mapV3ThrownError(error, { log, requestId, instance, operation: OPERATION });
+    // Not through mapV3ThrownError, which logs the error whole: a reader that fails on the file can
+    // quote it in the message.
+    log.error(loggableImportError(error), "QSF import could not read the file");
+    return problemInternalError(requestId, undefined, instance);
   }
 
   const importAbort = createRequestAbort(req, { deadlineMs: QSF_IMPORT_DEADLINE_MS });
