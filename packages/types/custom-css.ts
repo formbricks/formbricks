@@ -23,17 +23,16 @@ export const CUSTOM_CSS_MAX_SOURCE_BYTES: Record<TCustomCssScope, number> = {
 };
 
 /**
- * A cheap pre-parse bound on each field so oversized payloads are rejected before any byte counting or
- * parsing. A UTF-8 character is at least one byte, so a field longer than the scope's byte budget in
- * characters can never be valid; the exact byte budget is enforced by the processor.
+ * Write input. Both keys are required; `null` or an empty/whitespace string means "no CSS" for that field.
+ *
+ * No length bound on the fields: the byte budget is the processor's, which measures it before reading
+ * anything else and answers with a located `source_too_large`. A schema bound would turn the same
+ * mistake into a generic validation error. The request body limit (2 MB) still caps the work.
  */
-const ZCustomCssSourceField = z.string().max(CUSTOM_CSS_MAX_SOURCE_BYTES.workspace);
-
-/** Write input. Both keys are required; `null` or an empty/whitespace string means "no CSS" for that field. */
 export const ZCustomCssInput = z
   .object({
-    light: ZCustomCssSourceField.nullable(),
-    dark: ZCustomCssSourceField.nullable(),
+    light: z.string().nullable(),
+    dark: z.string().nullable(),
   })
   .strict();
 export type TCustomCssInput = z.infer<typeof ZCustomCssInput>;

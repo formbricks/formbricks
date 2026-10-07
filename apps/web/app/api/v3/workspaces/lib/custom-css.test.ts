@@ -258,7 +258,6 @@ describe("patchV3WorkspaceCustomCss", () => {
     ["a processor version", { customCss: { light: "a{}", dark: null, processorVersion: 9 } }],
     ["a missing key", { customCss: { light: "a{}" } }],
     ["no customCss at all", {}],
-    ["an oversized field", { customCss: { light: "a".repeat(100_001), dark: null } }],
   ])("rejects %s with 400 before authorization or processing", async (_label, body) => {
     const response = await patch(owner, body);
 
@@ -302,6 +301,31 @@ describe("patchV3WorkspaceCustomCss", () => {
       details: { errors: [error] },
     });
     expect(getWorkspaceCustomCssRecord).not.toHaveBeenCalled();
+  });
+
+  test("CSS over the size budget is not cut short by the schema: it gets the processor's 422 source_too_large", async () => {
+    const oversized = "a".repeat(104_000);
+    const error = {
+      ...warning,
+      code: "source_too_large" as const,
+      appearance: null,
+      line: null,
+      column: null,
+      reason: "The CSS is 104 KB (light and dark together); the limit is 100 KB.",
+    };
+    vi.mocked(updateWorkspaceCustomCss).mockResolvedValue({
+      ok: false,
+      code: "invalid_css",
+      errors: [error],
+    });
+
+    const response = await patch(owner, { customCss: { light: oversized, dark: null } });
+
+    expect(updateWorkspaceCustomCss).toHaveBeenCalledWith(
+      expect.objectContaining({ input: { light: oversized, dark: null } })
+    );
+    expect(response.status).toBe(422);
+    expect(await readJson(response)).toMatchObject({ details: { errors: [error] } });
   });
 
   test("a change is audited as source on both sides, as the save itself saw them", async () => {

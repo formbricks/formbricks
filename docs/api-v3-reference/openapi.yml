@@ -6908,7 +6908,7 @@ components:
       additionalProperties: false
     CustomCssInput:
       type: object
-      description: 'Custom CSS **source** as a caller writes it (ENG-3641). Both keys are required. `light` is base CSS that applies in both appearances; `dark` adds overrides on top of it when the survey renders dark. `null`, an empty string or whitespace means "no CSS" for that field. Source only: compiled output and the processor version are computed by the server on every write, and a request that supplies either is rejected. The combined source is limited to 100 000 UTF-8 bytes for a workspace and 20 000 for a survey; each field is bounded at 100 000 characters before processing.'
+      description: 'Custom CSS **source** as a caller writes it (ENG-3641). Both keys are required. `light` is base CSS that applies in both appearances; `dark` adds overrides on top of it when the survey renders dark. `null`, an empty string or whitespace means "no CSS" for that field. Source only: compiled output and the processor version are computed by the server on every write, and a request that supplies either is rejected. The combined source is limited to 100 000 UTF-8 bytes for a workspace and 20 000 for a survey; larger CSS is a **422** with error code `source_too_large`.'
       required:
         - light
         - dark
@@ -6917,13 +6917,11 @@ components:
           type:
             - string
             - 'null'
-          maxLength: 100000
           description: Base CSS, applied in light and dark appearance.
         dark:
           type:
             - string
             - 'null'
-          maxLength: 100000
           description: Additional CSS applied only in dark appearance.
       additionalProperties: false
     CreateSurveyRequest:
