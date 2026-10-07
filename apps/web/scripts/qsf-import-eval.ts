@@ -19,7 +19,8 @@ import { prepareQsfImport, runQsfImport } from "@/modules/survey/import/qsf/pipe
  *   pnpm qsf:eval                          every fixture, once
  *   pnpm qsf:eval --fixture=large-150      one fixture
  *   pnpm qsf:eval --runs=3                 each fixture three times, for latency spread
- *   pnpm qsf:eval --record                 also rewrite the fixtures' recorded plans from the model
+ *   pnpm qsf:eval --record                 also rewrite the fixtures' recorded plans from the model,
+ *                                          except the hand-made hostile, injection and pollution ones
  *   pnpm qsf:eval --file=/path/to/x.qsf    a local file; never recorded
  *
  * It runs the real pipeline — reader, sanitizer, chunking, checks, retry, assembly and the final
@@ -39,6 +40,13 @@ const FIXTURE_DIR = join(
   "../modules/survey/import/qsf/__fixtures__"
 );
 const DEADLINE_MS = 120_000;
+
+/**
+ * Plans `--record` never rewrites. The hostile plan has no fixture of its own and is written by hand;
+ * the injection and pollution plans are hand-authored to play a model that went wrong, and a
+ * well-behaved model's answer would quietly turn their tests into tests of nothing.
+ */
+const NEVER_RECORDED: ReadonlySet<string> = new Set(["hostile", "prompt-injection", "pollution"]);
 
 interface TArgs {
   fixtures: string[];
@@ -150,10 +158,19 @@ const main = async () => {
           recordable: false,
         },
       ]
-    : args.fixtures.map((name) => ({ name, qsf: loadQsfFixture(name), recordable: true }));
+    : args.fixtures.map((name) => ({
+        name,
+        qsf: loadQsfFixture(name),
+        recordable: !NEVER_RECORDED.has(basename(name, ".qsf")),
+      }));
 
   if (args.record && args.file) {
     console.log("--record is ignored for --file: a recorded plan would paraphrase the file.");
+  }
+  if (args.record) {
+    for (const source of sources) {
+      if (!source.recordable && !args.file) console.log(`--record leaves ${source.name}'s plan as it is.`);
+    }
   }
 
   for (const source of sources) {
