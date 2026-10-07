@@ -125,4 +125,14 @@ properties:
     allOf:
       - $ref: ./SurveyTargeting.yml
     description: App-survey contact targeting. Only valid when `type` is `app`.
+  customCss:
+    anyOf:
+      - $ref: ./CustomCssInput.yml
+      - type: "null"
+    description: >-
+      Optional survey custom CSS source. Processed by the server; constructs it removes come back as
+      top-level `warnings` on the 201. Adding CSS needs the Scale plan on Formbricks Cloud (403
+      `custom_css_plan_required`); CSS that cannot be processed is a 422 with `details.errors`.
+      Processing counts against the custom CSS budget of 60 per minute per user or API key, shared
+      with custom CSS validation; beyond it the create is a 429 and nothing is written.
 additionalProperties: false

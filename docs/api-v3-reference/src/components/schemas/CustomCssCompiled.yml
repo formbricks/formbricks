@@ -1,0 +1,18 @@
+type: object
+description: >-
+  Compiled custom CSS returned by a successful validation: complete stylesheets wrapped in the custom
+  CSS cascade layers and scoped to the survey root. `null` for a field with no CSS. Never returned on a
+  failed validation, and never part of an authenticated resource (those carry source).
+required:
+  - light
+  - dark
+properties:
+  light:
+    type:
+      - string
+      - "null"
+  dark:
+    type:
+      - string
+      - "null"
+additionalProperties: false

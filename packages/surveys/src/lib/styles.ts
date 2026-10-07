@@ -6,6 +6,7 @@ import {
   getDarkReadableColors,
   resolveDarkColors,
 } from "@formbricks/types/dark-palette";
+import { sanitizeThemeStyling } from "@formbricks/types/styling-values";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { type TWorkspaceStyling } from "@formbricks/types/workspace";
 import { ensureReadable, isLight, mixColor } from "@/lib/color";
@@ -116,7 +117,9 @@ const getDarkReadableTokens = (dark: ReturnType<typeof resolveDarkColors>): stri
   );
 };
 
-export const getDarkThemeCss = (styling: TWorkspaceStyling | TSurveyStyling): string => {
+export const getDarkThemeCss = (rawStyling: TWorkspaceStyling | TSurveyStyling): string => {
+  // Stored styling can predate write-time validation: unsafe values fall back as if unset (ENG-2950).
+  const styling = sanitizeThemeStyling(rawStyling);
   const dark = resolveDarkColors(styling);
   let css = '#fbjs[data-appearance="dark"] {\n  color-scheme: dark;\n';
   const add = (variableName: string, value?: string | null) => {
@@ -169,8 +172,10 @@ export const getDarkThemeCss = (styling: TWorkspaceStyling | TSurveyStyling): st
     add("hover-bg-color", mixColor(inputBg, "#ffffff", 0.08));
   }
   // The light default shadow reads as a dark smudge on a dark field; a shadow the customer set (often an
-  // outline drawn with an inset shadow) is theirs and stays.
-  if (!styling.inputShadow || styling.inputShadow === DEFAULT_INPUT_SHADOW) add("input-shadow", "none");
+  // outline drawn with an inset shadow) is theirs and stays. Written out either way: the dark fallback in
+  // survey-ui globals.css sets `none` with a more specific selector than the light value.
+  const isDefaultShadow = !styling.inputShadow || styling.inputShadow === DEFAULT_INPUT_SHADOW;
+  add("input-shadow", isDefaultShadow ? "none" : styling.inputShadow);
 
   add("option-bg-color", dark.optionBgColor);
   add("option-label-color", dark.optionLabelColor);
@@ -183,8 +188,11 @@ export const getDarkThemeCss = (styling: TWorkspaceStyling | TSurveyStyling): st
   const buttonText = dark.buttonTextColor ?? (buttonBg && (isLight(buttonBg) ? "#0f172a" : "#ffffff"));
   add("button-bg-color", buttonBg);
   add("button-text-color", buttonText);
-  // Same rule as light: the ghost Back button shows the button color as text on the card.
-  if (buttonBg && card) add("back-button-color", ensureReadable(buttonBg, card));
+  // Same rule as light: the ghost Back button shows the button color as text on the card. Without a
+  // button color it is the brand (or the default brand), which on a dark card is never readable as is.
+  if (card) {
+    add("back-button-color", ensureReadable(buttonBg ?? dark.brandColor ?? DEFAULT_DARK_BRAND_COLOR, card));
+  }
 
   add("progress-track-bg-color", dark.progressTrackBgColor);
   add("progress-indicator-bg-color", dark.progressIndicatorBgColor);
@@ -200,7 +208,16 @@ export const getDarkThemeCss = (styling: TWorkspaceStyling | TSurveyStyling): st
   return `${css}}\n`;
 };
 
-export const addCustomThemeToDom = ({ styling }: { styling: TWorkspaceStyling | TSurveyStyling }): void => {
+export const addCustomThemeToDom = ({
+  styling: rawStyling,
+}: {
+  styling: TWorkspaceStyling | TSurveyStyling;
+}): void => {
+  // Every styling value below is written into stylesheet text, and stored styling can predate write-time
+  // validation: an unsafe value (one that could add declarations or rules) falls back as if it were
+  // unset, while valid values pass through unchanged (ENG-2950).
+  const styling = sanitizeThemeStyling(rawStyling);
+
   // Check if the style element already exists
   let styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement | null;
 
@@ -451,6 +468,12 @@ export const addCustomThemeToDom = ({ styling }: { styling: TWorkspaceStyling | 
     }
   };
 
+  // Formatted text inside the headline and description hooks inherits these from the hook element, as in
+  // survey-ui's globals.css, so Custom CSS on the hook reaches it. Same specificity as the `.label-* *`
+  // rule it follows, so it wins by order while the bold rule (`.label-headline strong`) still wins.
+  const toInherited = (declarations: string) =>
+    declarations.replaceAll(/: var\([^)]*\) !important;/g, ": inherit !important;");
+
   // --- Headlines ---
   let headlineDecls = "";
   if (styling.elementHeadlineFontSize !== undefined)
@@ -460,6 +483,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TWorkspaceStyling | 
   if (styling.elementHeadlineColor?.light)
     headlineDecls += "  color: var(--fb-element-headline-color) !important;\n";
   addRule("#fbjs .label-headline,\n#fbjs .label-headline *", headlineDecls);
+  addRule('#fbjs [data-fb-part="headline"] *', toInherited(headlineDecls));
 
   // --- Descriptions ---
   let descriptionDecls = "";
@@ -470,6 +494,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TWorkspaceStyling | 
   if (styling.elementDescriptionColor?.light)
     descriptionDecls += "  color: var(--fb-element-description-color) !important;\n";
   addRule("#fbjs .label-description,\n#fbjs .label-description *", descriptionDecls);
+  addRule('#fbjs [data-fb-part="description"] *', toInherited(descriptionDecls));
 
   // --- Upper labels ---
   let upperDecls = "";

@@ -6,6 +6,7 @@ import {
   diffInDays,
   evaluateNoCodeConfigClick,
   filterSurveys,
+  getCustomCss,
   getDefaultLanguageCode,
   getIsDebug,
   getLanguageCode,
@@ -344,6 +345,34 @@ describe("utils.ts", () => {
       // only the one that matches user's segment
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe(mockSurveyId1);
+    });
+  });
+
+  // ---------------------------------------------------------------------------------
+  // getCustomCss
+  // ---------------------------------------------------------------------------------
+  describe("getCustomCss()", () => {
+    const workspaceCss = { light: "@layer fb-workspace {}" };
+    const surveyCss = { light: "@layer fb-survey {}", dark: "@layer fb-survey-dark {}" };
+
+    test.each([
+      ["styling overwrite disabled", { allowStyleOverwrite: false }, null],
+      ["survey overwrites the theme", { allowStyleOverwrite: true }, { overwriteThemeStyling: true }],
+    ])("sends both scopes whatever the theme selection (%s)", (_, workspaceStyling, surveyStyling) => {
+      const settings = {
+        styling: workspaceStyling,
+        customCss: workspaceCss,
+      } as unknown as TWorkspaceStateSettings;
+      const survey = { styling: surveyStyling, customCss: surveyCss } as unknown as TWorkspaceStateSurvey;
+
+      expect(getCustomCss(settings, survey)).toEqual({ workspace: workspaceCss, survey: surveyCss });
+    });
+
+    test("leaves a scope the server did not send undefined", () => {
+      const settings = { styling: { allowStyleOverwrite: true } } as unknown as TWorkspaceStateSettings;
+      const survey = { customCss: surveyCss } as unknown as TWorkspaceStateSurvey;
+
+      expect(getCustomCss(settings, survey)).toEqual({ workspace: undefined, survey: surveyCss });
     });
   });
 

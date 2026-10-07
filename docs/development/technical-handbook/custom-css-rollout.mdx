@@ -1,0 +1,83 @@
+---
+title: "Custom CSS & Dark Mode Rollout"
+description: "Release order, cache purges, entitlements and flags for shipping Custom CSS, dark mode and the SDK updates"
+icon: "rocket"
+---
+
+## Context
+
+Custom CSS and dark mode touch the server, the survey renderer, the styling editors and five SDK packages. Mobile apps and self-hosted servers upgrade on their own schedule, so mixed versions are normal, not an edge case. This page is the release checklist; the customer-facing behavior lives in [Custom CSS](/surveys/general-features/custom-css) and [SDK Compatibility](/surveys/website-app-surveys/sdk-compatibility).
+
+## What Ships Where
+
+| Component | Delivered by | Reaches users |
+| --- | --- | --- |
+| Database columns `Workspace.customCss`, `Workspace.customCssPrevious`, `Survey.customCss` | Server migration (nullable, no backfill) | On deploy |
+| CSS processor, API v3 and MCP endpoints, delivery in the environment state | Server | On deploy |
+| Survey renderer (`/js/surveys.umd.cjs`): cascade layers, `customCss` prop, `setAppearance`, `data-fb-part` hooks | Server, cached by the CDN | On deploy **and** CDN purge |
+| js-core (`/js/formbricks.umd.cjs`): appearance state, passes both CSS scopes | Server, cached by the CDN | On deploy **and** CDN purge |
+| `@formbricks/js` wrapper: `appearance` option, `setAppearance` | npm release | When customers upgrade |
+| iOS, Android, React Native, Flutter SDKs: appearance, both CSS scopes | Package releases | When apps ship an update |
+| Editor cards (workspace Appearance, survey Styling) | Server, behind the Cloud flag | When the flag is on |
+
+## Deployment Order
+
+Data and renderer first, so no editor can save something a renderer does not understand yet.
+
+1. **Server and renderer.** Deploy the migration, processor, API and renderer together. Existing surveys must look exactly the same: nothing is saved yet and the flag is off.
+2. **Purge the CDN** for `/js/surveys.umd.cjs` and `/js/formbricks.umd.cjs`. Both URLs are unversioned and cached for up to 30 days at the edge, so without a purge some apps and websites keep the old renderer for weeks. Repeat the purge after any renderer rollback.
+3. **SDK packages:** `@formbricks/js`, then the iOS, Android, React Native and Flutter SDKs, each from its own repository. Publication does not have to be atomic. Record every released version in [SDK Compatibility](/surveys/website-app-surveys/sdk-compatibility), replacing "Pending release".
+4. **Editor rollout on Cloud**, behind the `custom-css` flag: design partners first, then every Scale organization. Customers whose apps use the mobile SDKs need to ship an app update before their Custom CSS shows in the app; tell them early.
+5. **Self-hosted** gets everything with the release that contains steps 1 to 4. There is no flag and no environment variable. Add one release-note line: Custom CSS styles the card; Custom Head Scripts keep scripts, tags and page-level styles.
+
+## Before Enabling On Cloud
+
+- **Stripe entitlement.** Attach the entitlement feature with lookup key `custom-css` to the Scale and Custom products. Without it, saving Custom CSS fails with "plan required" for every organization, Scale included. Self-hosted instances skip the plan check.
+- **PostHog flag.** Create the flag `custom-css` on the `organization` group type. It gates two things only: delivery to respondents and the visibility of the editor cards. Saved CSS, permissions, the plan check and the API work regardless of the flag.
+
+| PostHog answer | Result |
+| --- | --- |
+| On | CSS delivered, editor cards shown |
+| Off, or flag missing | CSS withheld from respondents, editor cards hidden, saved CSS kept |
+| PostHog unreachable | Last answer PostHog gave for that organization, for up to 24 hours; none, off |
+
+Decisions are cached per organization for one minute.
+
+## Turning It Off
+
+| Problem | Action | Saved CSS |
+| --- | --- | --- |
+| Custom CSS misbehaves for one organization | Turn the flag off for it | Kept |
+| Renderer bug | Roll back the server deploy, then purge the CDN again | Kept |
+| Processor policy must change | Change the processor and bump `CUSTOM_CSS_PROCESSOR_VERSION` | Kept as source |
+
+Switching off is not instant: up to one minute of server cache, then each SDK keeps its configuration until it refreshes (up to 30 minutes on the web, up to an hour in the mobile SDKs).
+
+A processor version bump marks every stored compiled output as stale. Delivery reprocesses stale CSS from its saved source; if the current processor rejects it, the CSS is withheld (never the old output) and creators see a warning in the editor. `BLOCK_EXTERNAL_CUSTOM_CSS_RESOURCES` in `apps/web/modules/custom-css/processor` is a code constant, deliberately without an environment variable or setting. It is part of the effective processor version, so changing it also requires the bump.
+
+## Smoke Checks
+
+Run before each step above:
+
+1. Existing surveys look exactly the same, in light mode, with no Custom CSS saved.
+2. Old SDK with the new renderer: a survey opens and answers save, on web, iOS and Android. Mobile shows no Custom CSS.
+3. New SDK with an old self-hosted server: surveys stay light, with no errors.
+4. Flag off: Custom CSS and the editor cards disappear; saved values are back when the flag is on again.
+5. Self-hosted: existing Custom Head Scripts still run.
+6. A CMS-style stylesheet (synthetic, never a customer's file) shows one removed-import warning, and its ported hooks style the preview and the live survey in light and dark.
+
+## SDK Handoff
+
+| SDK | Repository | Package | Version | Status |
+| --- | --- | --- | --- | --- |
+| JavaScript | `formbricks/js` | `@formbricks/js` | Pending release | Not published |
+| iOS | `formbricks/ios` | `FormbricksSDK` | Pending release | Not published |
+| Android | `formbricks/android` | `com.formbricks:android` | Pending release | Not published |
+| React Native | `formbricks/react-native` | `@formbricks/react-native` | Pending release | Not published |
+| Flutter | `formbricks/flutter` | `formbricks` | Pending release | Not published |
+
+Every mobile SDK must pass `customCss: { workspace, survey }` explicitly, from `workspaceSettings.customCss` and each `survey.customCss`, and feature-detect `formbricksSurveys.setAppearance`. The renderer applies Custom CSS only from that prop, so an SDK that does not pass it renders no Custom CSS at all rather than half of it.
+
+## Styling Contract
+
+The `data-fb-part` hook names are declared once, in `FB_PART` (`packages/survey-ui/src/lib/parts.ts`), exported from `@formbricks/survey-ui` and, without any components, from `@formbricks/survey-ui/parts`. Customers' stylesheets depend on these names: renaming or removing one is a breaking change. `parts.test.ts` fails when the customer docs and the constant disagree.

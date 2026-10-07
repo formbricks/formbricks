@@ -7,6 +7,7 @@ import { executeRecaptcha, loadRecaptchaScript } from "@/lib/common/recaptcha";
 import { TimeoutStack } from "@/lib/common/timeout-stack";
 import {
   filterSurveys,
+  getCustomCss,
   getLanguageCode,
   getStyling,
   shouldDisplayBasedOnPercentage,
@@ -198,6 +199,8 @@ export const renderWidget = async (
       languageCode,
       placement,
       styling: getStyling(settings, survey),
+      // Both scopes from the cached workspace state; the renderer applies CSS from this prop only.
+      customCss: getCustomCss(settings, survey),
       // The ambient Embedded Data bag (ENG-1844) under the per-trigger `track({ hiddenFields })`
       // values — explicit beats ambient, case-insensitively (see `buildDisplayHiddenFields`).
       // Built here, inside the delay timeout at the moment the survey actually shows, from a
@@ -304,6 +307,9 @@ export const closeSurvey = (surveyId?: string): void => {
 
   // remove the survey modal container from DOM
   removeWidgetContainer();
+  // Dropping the container does not unmount the survey, so the renderer's custom CSS would outlive it.
+  // Feature-detected: renderer bundles older than custom CSS have no such function and no such CSS.
+  globalThis.window.formbricksSurveys?.removeCustomCss?.();
 
   const { workspace, user } = config.get();
   const filteredSurveys = filterSurveys(workspace, user);

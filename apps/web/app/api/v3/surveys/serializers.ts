@@ -8,6 +8,7 @@ import {
 } from "@/lib/survey/visibility/access";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import type { TSurveyVisibilityGates } from "@/lib/survey/visibility/gates";
+import { toCustomCssSource } from "@/modules/custom-css/lib/source";
 import type { TSurvey as TSurveyListRecord } from "@/modules/survey/list/types/surveys";
 import { surveyToV3Distribution, surveyToV3Targeting } from "./distribution";
 import { isInternalI18nString, isPlainObject } from "./guards";
@@ -305,5 +306,8 @@ export function serializeV3SurveyResource(
     ...(survey.type === "app"
       ? { distribution: surveyToV3Distribution(survey), targeting: surveyToV3Targeting(survey) }
       : {}),
+    // ENG-3641: editable source for authorized readers. Compiled output and the processor version are
+    // internal and go only to respondents, through the delivery path.
+    customCss: toCustomCssSource(survey.customCss),
   };
 }

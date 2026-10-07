@@ -618,6 +618,9 @@ importers:
       cmdk:
         specifier: 1.1.1
         version: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      css-tree:
+        specifier: 3.2.1
+        version: 3.2.1
       csv-parse:
         specifier: 7.0.2
         version: 7.0.2
@@ -669,6 +672,9 @@ importers:
       lexical:
         specifier: 0.41.0
         version: 0.41.0
+      lightningcss:
+        specifier: 1.32.0
+        version: 1.32.0
       lucide-react:
         specifier: 'catalog:'
         version: 0.577.0(react@19.2.6)

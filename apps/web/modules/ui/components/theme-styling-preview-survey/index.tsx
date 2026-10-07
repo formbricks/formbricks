@@ -3,6 +3,7 @@
 import { MotionConfig, Variants, motion } from "framer-motion";
 import { Fragment, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TRendererCustomCss } from "@formbricks/types/custom-css";
 import { resolveDarkColors } from "@formbricks/types/dark-palette";
 import { resolveOverlayAppearance } from "@formbricks/types/overlay";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
@@ -15,6 +16,10 @@ import { CardlessPreviewLogo } from "@/modules/ui/components/cardless-preview-lo
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { Modal } from "@/modules/ui/components/preview-survey/components/modal";
+import {
+  PREVIEW_BOUNDARY_CLASS_NAME,
+  previewBoundaryProps,
+} from "@/modules/ui/components/preview-survey/lib/containment";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
 import { SurveyInline } from "@/modules/ui/components/survey";
 
@@ -26,6 +31,11 @@ interface ThemeStylingPreviewSurveyProps {
   publicDomain: string;
   /** Only the app survey renders dark; the link survey preview stays light (D4). */
   appearance?: TStylingAppearance;
+  /**
+   * Compiled workspace (+ survey) custom CSS to preview (ENG-3552), e.g. the look & feel page's
+   * validated workspace draft. Passed straight to the renderer, which applies CSS from this prop only.
+   */
+  customCss?: TRendererCustomCss;
 }
 
 const previewParentContainerVariant: Variants = {
@@ -62,6 +72,7 @@ export const ThemeStylingPreviewSurvey = ({
   setPreviewType,
   publicDomain,
   appearance = "light",
+  customCss,
 }: ThemeStylingPreviewSurveyProps) => {
   const [isFullScreenPreview] = useState(false);
   const [previewPosition] = useState("relative");
@@ -170,6 +181,7 @@ export const ThemeStylingPreviewSurvey = ({
         <SurveyInline
           appUrl={publicDomain}
           isPreviewMode={true}
+          customCss={customCss}
           survey={toJsWorkspaceStateSurvey({ ...survey, type: "app" })}
           appearance={appearance}
           isBrandingEnabled={workspace.inAppSurveyBranding}
@@ -219,6 +231,7 @@ export const ThemeStylingPreviewSurvey = ({
             <SurveyInline
               appUrl={publicDomain}
               isPreviewMode={true}
+              customCss={customCss}
               survey={toJsWorkspaceStateSurvey({ ...survey, type: "link" })}
               isBrandingEnabled={workspace.linkSurveyBranding}
               isRedirectDisabled={true}
@@ -270,7 +283,10 @@ export const ThemeStylingPreviewSurvey = ({
               </div>
             </div>
           </div>
-          <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-b-lg">
+          {/* The trusted box the survey is contained in, below the chrome and its controls. */}
+          <div
+            {...previewBoundaryProps}
+            className={cn("flex min-h-0 w-full flex-1 flex-col rounded-b-lg", PREVIEW_BOUNDARY_CLASS_NAME)}>
             {isAppSurvey ? renderAppPreview() : renderLinkPreview()}
           </div>
         </motion.div>

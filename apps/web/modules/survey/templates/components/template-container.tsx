@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { Workspace } from "@formbricks/database/prisma-browser";
 import type { TTemplate } from "@formbricks/types/templates";
 import type { TUserLocale } from "@formbricks/types/user";
 import { customSurveyTemplate } from "@/app/lib/templates";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
+import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { TemplateList } from "@/modules/survey/components/template-list";
 import { TemplateCreateQueryClientProvider } from "@/modules/survey/components/template-list/query-client-provider";
 import { MenuBar } from "@/modules/survey/templates/components/menu-bar";
@@ -15,7 +15,7 @@ import { SearchBar } from "@/modules/ui/components/search-bar";
 import { getTemplatePreviewSurvey } from "../lib/minimal-survey";
 
 type TemplateContainerWithPreviewProps = {
-  workspace: Workspace;
+  workspace: TWorkspaceWithoutCustomCss;
   isTemplatePage?: boolean;
   publicDomain: string;
   /** The language surveys created here are authored in — see `resolveDefaultSurveyLanguage`. */

@@ -7,7 +7,6 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
 import { type Dispatch, type KeyboardEvent, type SetStateAction, memo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Workspace } from "@formbricks/database/prisma-browser";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -16,6 +15,7 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { recallToHeadline } from "@/lib/utils/recall";
+import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { AddElementToBlockButton } from "@/modules/survey/editor/components/add-element-to-block-button";
 import { AddressElementForm } from "@/modules/survey/editor/components/address-element-form";
 import { AdvancedSettings } from "@/modules/survey/editor/components/advanced-settings";
@@ -47,7 +47,7 @@ import { Input } from "@/modules/ui/components/input";
 
 interface BlockCardProps {
   localSurvey: TSurvey;
-  workspace: Workspace;
+  workspace: TWorkspaceWithoutCustomCss;
   block: TSurveyBlock;
   blockIdx: number;
   moveElement: (elementIdx: number, up: boolean) => void;

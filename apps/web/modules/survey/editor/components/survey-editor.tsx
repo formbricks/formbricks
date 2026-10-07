@@ -1,8 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { type Dispatch, type SetStateAction, memo, useCallback, useEffect, useRef, useState } from "react";
-import { ActionClass, Language, OrganizationRole, Workspace } from "@formbricks/database/prisma-browser";
+import {
+  type Dispatch,
+  type SetStateAction,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { ActionClass, Language, OrganizationRole } from "@formbricks/database/prisma-browser";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";
@@ -19,6 +28,10 @@ import { type TStylingAppearance } from "@/lib/styling/dark-mode";
 import type { TSurveyAccess } from "@/lib/survey/visibility/access";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useDocumentVisibility } from "@/lib/useDocumentVisibility";
+import { useCustomCssValidation } from "@/modules/custom-css/components/hooks/use-custom-css-validation";
+import { useLiveWorkspaceCustomCss } from "@/modules/custom-css/components/hooks/use-live-workspace-custom-css";
+import { getCustomCssSource, toCustomCssDraft } from "@/modules/custom-css/components/lib/draft";
+import { type TSurveyCustomCssEditorConfig } from "@/modules/custom-css/components/types";
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { ElementsView } from "@/modules/survey/editor/components/elements-view";
@@ -27,6 +40,7 @@ import { SettingsView } from "@/modules/survey/editor/components/settings-view";
 import { StylingView } from "@/modules/survey/editor/components/styling-view";
 import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-editor-tabs";
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
+import { type TEditorWorkspace } from "@/modules/survey/editor/lib/workspace";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
 import { shouldShowFollowUpsTab } from "@/modules/survey/follow-ups/lib/deprecation";
@@ -51,7 +65,7 @@ const MemoizedPreviewSurvey = memo(PreviewSurvey);
 
 interface SurveyEditorProps {
   survey: TSurvey;
-  workspace: Workspace;
+  workspace: TEditorWorkspace;
   actionClasses: ActionClass[];
   contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
@@ -84,6 +98,8 @@ interface SurveyEditorProps {
   visibility: TSurveyVisibility;
   surveyAccess: TSurveyAccess | null;
   ownerName: string | null;
+  /** `null` when the Custom CSS rollout is off for this organization, which hides the card. */
+  customCssEditor?: TSurveyCustomCssEditorConfig | null;
 }
 
 export const SurveyEditor = ({
@@ -120,6 +136,7 @@ export const SurveyEditor = ({
   visibility,
   surveyAccess,
   ownerName,
+  customCssEditor = null,
 }: Readonly<SurveyEditorProps>) => {
   const isFollowUpsTabVisible = shouldShowFollowUpsTab({
     followUpCount: survey.followUps.length,
@@ -176,13 +193,54 @@ export const SurveyEditor = ({
     }
   }, [isFollowUpsTabVisible, activeView]);
   const surveyEditorRef = useRef(null);
-  const [localWorkspace, setLocalWorkspace] = useState<Workspace>(workspace);
+  const [localWorkspace, setLocalWorkspace] = useState<TEditorWorkspace>(workspace);
   const [localWorkspaceLanguages, setLocalWorkspaceLanguages] = useState<Language[]>(workspaceLanguages);
 
   const [styling, setStyling] = useState<TSurveyStyling | null>(localSurvey?.styling ?? null);
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
   // Light / Dark selector of the Styling tab (D14). The preview follows it while that tab is open.
   const [stylingAppearance, setStylingAppearance] = useState<TStylingAppearance>("light");
+
+  // Survey Custom CSS is checked here rather than in the Styling tab because the preview needs its
+  // output on every tab: the preview only ever renders CSS the server validated for the current draft
+  // (ENG-3553). Workspace CSS is inherited whether or not the survey overrides the theme (D16).
+  const surveyCustomCssValidation = useCustomCssValidation({
+    workspaceId: workspace.id,
+    scope: "survey",
+    surveyId: survey.id,
+    draft: toCustomCssDraft(getCustomCssSource(localSurvey?.customCss)),
+    enabled: customCssEditor !== null,
+  });
+  // Workspace CSS saved in another tab reaches the preview and the inherited panel without a reload.
+  const liveWorkspaceCss = useLiveWorkspaceCustomCss({
+    workspaceId: workspace.id,
+    enabled: customCssEditor !== null,
+    initial: {
+      source: customCssEditor?.workspace.source ?? null,
+      compiled: customCssEditor?.workspace.compiled ?? null,
+    },
+  });
+  const workspaceCompiledCss = liveWorkspaceCss.compiled;
+  const liveCustomCssEditor = useMemo(
+    () =>
+      customCssEditor
+        ? {
+            ...customCssEditor,
+            workspace: {
+              ...customCssEditor.workspace,
+              source: liveWorkspaceCss.source,
+              compiled: workspaceCompiledCss,
+            },
+          }
+        : null,
+    [customCssEditor, liveWorkspaceCss.source, workspaceCompiledCss]
+  );
+  const surveyPreviewCss = surveyCustomCssValidation.previewCss;
+  // Stable, so the memoized preview re-mounts the survey only when the validated CSS changes.
+  const previewCustomCss = useMemo(
+    () => (customCssEditor ? { workspace: workspaceCompiledCss, survey: surveyPreviewCss } : undefined),
+    [customCssEditor, workspaceCompiledCss, surveyPreviewCss]
+  );
 
   const fetchLatestWorkspaceData = useCallback(async () => {
     const [refetchWorkspaceResponse, refetchLanguagesResponse] = await Promise.all([
@@ -283,6 +341,7 @@ export const SurveyEditor = ({
         onVisibilityNotEnabled={handleVisibilityNotEnabled}
         surveyAccess={surveyAccess}
         ownerName={ownerName}
+        customCssValidationStatus={surveyCustomCssValidation.status}
       />
       {showRestrictedBanner({
         enforced: visibilityGate.enforced,
@@ -343,6 +402,9 @@ export const SurveyEditor = ({
               isStorageConfigured={isStorageConfigured}
               appearance={stylingAppearance}
               setAppearance={setStylingAppearance}
+              customCssEditor={liveCustomCssEditor}
+              customCssValidation={surveyCustomCssValidation}
+              savedCustomCss={survey.customCss}
             />
           )}
 
@@ -410,6 +472,7 @@ export const SurveyEditor = ({
             isSpamProtectionAllowed={isSpamProtectionAllowed}
             publicDomain={publicDomain}
             appearance={activeView === "styling" ? stylingAppearance : "light"}
+            customCss={previewCustomCss}
           />
         </aside>
       </div>

@@ -1,4 +1,12 @@
-@layer theme, base, components, utilities;
+/*
+  Cascade layer order (ENG-3449 / ENG-3552). The first statement in this stylesheet, so wherever the
+  host page has not named these layers yet, it fixes their order before anything below registers
+  them. Customer CSS lives in the four fb-* layers and is all `!important`, and for important
+  declarations the earlier layer wins: survey dark > survey > workspace dark > workspace > the
+  theme editor and every built-in style. Keep in sync with CUSTOM_CSS_LAYER_ORDER in
+  packages/types/custom-css.ts; the renderer also puts the fb-* names first in <head>.
+*/
+@layer fb-survey-dark, fb-survey, fb-workspace-dark, fb-workspace, theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities) important;
 
@@ -53,6 +61,23 @@
   @apply block text-sm leading-6 font-normal;
   /* need to use !important because in packages/survey-ui/components/editor/styles-editor-frontend.css the color is defined for some classes */
   color: var(--fb-subheading-color) !important;
+}
+
+/*
+ * A rich-text headline or description is the hook element its formatted text inherits from (see
+ * survey-ui's globals.css), so it carries the headline or description values, not the body-text
+ * defaults above. Its own text is all inside that markup, so this only changes what it passes down.
+ */
+#fbjs .htmlbody.label-headline {
+  font-size: var(--fb-element-headline-font-size);
+  font-weight: var(--fb-element-headline-font-weight);
+  color: var(--fb-element-headline-color) !important;
+}
+
+#fbjs .htmlbody.label-description {
+  font-size: var(--fb-element-description-font-size);
+  font-weight: var(--fb-element-description-font-weight);
+  color: var(--fb-element-description-color) !important;
 }
 
 /*
@@ -194,6 +219,7 @@
   --fb-input-background-color: #0e1832;
   --fb-input-background-color-selected: #1a243c;
   --fb-brand-readable-color: #788ccf;
+  --fb-back-button-color: #788ccf;
   /* The modal shell behind the card; white in light. A `dark:` utility cannot do this: it ties
      with bg-white on specificity and loses on stylesheet order. */
   --fb-dialog-background-color: var(--fb-survey-background-color);

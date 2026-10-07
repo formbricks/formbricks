@@ -189,6 +189,63 @@ describe("widget-file", () => {
     vi.useRealTimers();
   });
 
+  test("renderWidget forwards workspace and survey custom CSS from the cached state as one explicit prop", async () => {
+    const workspaceCss = { light: "@layer fb-workspace { #fbjs { color: red !important } }" };
+    const surveyCss = {
+      dark: '@layer fb-survey-dark { #fbjs[data-appearance="dark"] { color: blue !important } }',
+    };
+    const baseConfig = {
+      appUrl: "https://fake.app",
+      workspaceId: "env_123",
+      user: {
+        data: {
+          userId: null,
+          contactId: null,
+          displays: [],
+          responses: [],
+          lastDisplayAt: null,
+          language: "en",
+        },
+      },
+    };
+    const settings = {
+      clickOutsideClose: true,
+      overlay: "none",
+      placement: "bottomRight",
+      inAppSurveyBranding: true,
+      // ENG-3552: independent of theme selection, so neither styling flag may gate it.
+      styling: { allowStyleOverwrite: false },
+    };
+    const configGet = vi.fn().mockReturnValue({
+      ...baseConfig,
+      workspace: { data: { settings: { ...settings, customCss: workspaceCss } } },
+    });
+    getInstanceConfigMock.mockReturnValue({ get: configGet, update: vi.fn() } as unknown as Config);
+    window.formbricksSurveys = createMockFormbricksSurveys();
+    widget.setIsSurveyRunning(false);
+    vi.useFakeTimers();
+
+    await widget.renderWidget({ ...mockSurvey, delay: 0, customCss: surveyCss });
+    vi.advanceTimersByTime(0);
+
+    expect(getFormbricksSurveys().renderSurvey).toHaveBeenCalledWith(
+      expect.objectContaining({ customCss: { workspace: workspaceCss, survey: surveyCss } })
+    );
+
+    // A state cached before the server sent custom CSS has neither field: nothing to apply, no half.
+    vi.mocked(getFormbricksSurveys().renderSurvey).mockClear();
+    configGet.mockReturnValue({ ...baseConfig, workspace: { data: { settings } } });
+    widget.setIsSurveyRunning(false);
+
+    await widget.renderWidget({ ...mockSurvey, delay: 0 });
+    vi.advanceTimersByTime(0);
+
+    expect(getFormbricksSurveys().renderSurvey).toHaveBeenCalledWith(
+      expect.objectContaining({ customCss: { workspace: undefined, survey: undefined } })
+    );
+    vi.useRealTimers();
+  });
+
   test("renderWidget passes the appearance the host set to renderSurvey", async () => {
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
@@ -323,6 +380,24 @@ describe("widget-file", () => {
     expect(document.getElementById("formbricks-container")).toBeFalsy();
 
     expect(mockConfigValue.update).toHaveBeenCalled();
+  });
+
+  test("closeSurvey removes the renderer's custom CSS, and tolerates a renderer without that function", () => {
+    getInstanceConfigMock.mockReturnValue({
+      get: vi.fn().mockReturnValue({ workspace: { data: { surveys: [] } }, user: { data: {} } }),
+      update: vi.fn(),
+    } as unknown as Config);
+
+    const removeCustomCss = vi.fn();
+    window.formbricksSurveys = { ...createMockFormbricksSurveys(), removeCustomCss };
+    widget.closeSurvey();
+    expect(removeCustomCss).toHaveBeenCalledTimes(1);
+
+    // An older self-hosted renderer, and no renderer loaded at all.
+    window.formbricksSurveys = createMockFormbricksSurveys();
+    expect(() => widget.closeSurvey()).not.toThrow();
+    delete window.formbricksSurveys;
+    expect(() => widget.closeSurvey()).not.toThrow();
   });
 
   test("addWidgetContainer creates #formbricks-container in DOM", () => {

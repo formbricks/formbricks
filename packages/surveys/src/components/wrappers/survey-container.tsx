@@ -1,10 +1,11 @@
 import { type ComponentChildren } from "preact";
-import { type MutableRef, useEffect, useRef, useState } from "preact/hooks";
+import { type MutableRef, useContext, useEffect, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TOverlay, type TPlacement } from "@formbricks/types/common";
 import { type TSurveyCardRect } from "@formbricks/types/formbricks-surveys";
 import { type TOverlayAppearance, getOverlayBackground } from "@formbricks/types/overlay";
 import { getResolvedAppearance, subscribeToAppearance } from "@/lib/appearance";
+import { CustomCssOwnerContext, getCustomCssGeneration, releaseCustomCss } from "@/lib/custom-css";
 import { isPlainEscape } from "@/lib/keyboard";
 import { ensureLiveRegion } from "@/lib/live-region";
 import { SURVEY_INSTRUCTIONS_ID, getSurveyHeadingName } from "@/lib/survey-page";
@@ -287,6 +288,16 @@ export function SurveyContainer({
   const [appearance, setAppearance] = useState(getResolvedAppearance);
   const rootRef = useRef<HTMLDivElement>(null);
   useEffect(() => subscribeToAppearance(setAppearance, () => rootRef.current?.isConnected ?? true), []);
+  // Custom CSS is applied by renderSurvey just before each render; this survey owns the generation of
+  // the renderSurvey call that rendered it. It comes from context, not the module counter, so the
+  // survey's own re-renders never adopt the generation of another survey rendered since, and teardown
+  // only removes CSS this survey still owns. A new renderSurvey into the same container updates it.
+  const customCssOwner = useContext(CustomCssOwnerContext);
+  const customCssGenerationRef = useRef(customCssOwner ?? getCustomCssGeneration());
+  useEffect(() => {
+    if (customCssOwner !== null) customCssGenerationRef.current = customCssOwner;
+  }, [customCssOwner]);
+  useEffect(() => () => releaseCustomCss(customCssGenerationRef.current), []);
   // The overlay is what makes a survey modal: it covers the host page and the page stops being usable.
   // Without one the page underneath stays visible and clickable, so the survey is a notification, not a
   // modal. Trapping focus there steals the caret and the text selection from the host page — the trap's
@@ -380,7 +391,10 @@ export function SurveyContainer({
         ref={rootRef}
         className="formbricks-form"
         data-appearance={appearance}
-        style={{ height: "100%", width: "100%" }}
+        // Root isolation (ENG-3552): customer z-index values stack inside the survey instead of
+        // interleaving with the host page. The modal path needs no equivalent: its fixed, z-indexed
+        // layer is already a stacking context.
+        style={{ height: "100%", width: "100%", isolation: "isolate" }}
         dir={dir}
         lang={lang ?? undefined}
         role="form"
@@ -400,6 +414,10 @@ export function SurveyContainer({
       ref={rootRef}
       className="formbricks-form"
       data-appearance={appearance}
+      // The root takes no clicks, so survey CSS that stretches it over the page cannot swallow the host
+      // page's clicks; the processor removes `pointer-events`, so it cannot turn this back on. Only the
+      // dialog, and the backdrop when the overlay setting asks for one, set their own.
+      style={{ pointerEvents: "none" }}
       dir={dir}
       lang={lang ?? undefined}>
       <div

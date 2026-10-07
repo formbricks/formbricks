@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { JSX } from "react";
+import { FB_PART } from "@formbricks/survey-ui/parts";
 import { type TPlacement } from "@formbricks/types/common";
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TCardArrangementOptions } from "@formbricks/types/styling";
@@ -165,6 +166,8 @@ export function StackedCardsContainer({
         <div
           id={`questionCard-${blockIdxTemp.toString()}`}
           data-testid={`questionCard-${blockIdxTemp.toString()}`}
+          // Public styling hook (ENG-3554). A cardless layout has no card surface to style.
+          data-fb-part={isCardless ? undefined : FB_PART.card}
           className={cn(
             "w-full",
             !isCardless && "bg-survey-bg overflow-hidden",

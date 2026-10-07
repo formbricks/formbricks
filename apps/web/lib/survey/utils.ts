@@ -4,6 +4,7 @@ import { InvalidInputError } from "@formbricks/types/errors";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
 import { IMAGE_FILE_EXTENSIONS } from "@formbricks/types/storage";
+import { sanitizeThemeStyling } from "@formbricks/types/styling-values";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
   TSurveyElement,
@@ -63,6 +64,10 @@ export const transformPrismaSurvey = <T extends TSurvey | TJsWorkspaceStateSurve
     displayPercentage: Number(surveyPrisma.displayPercentage) || null,
     segment,
     customHeadScriptsMode: surveyPrisma.customHeadScriptsMode,
+    // Rows saved before the strict theme-value schemas (ENG-2950) may hold values a save now refuses.
+    // Dropping them here keeps an unrelated save of this survey from failing on a field nobody touched;
+    // the renderer drops the same values, so nothing a respondent sees changes.
+    ...(surveyPrisma.styling && { styling: sanitizeThemeStyling(surveyPrisma.styling) }),
   } as T;
 
   return transformedSurvey;

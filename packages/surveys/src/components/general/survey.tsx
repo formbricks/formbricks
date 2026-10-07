@@ -1522,9 +1522,11 @@ export function Survey({
         hasInteracted={hasInteracted}
         setHasInteracted={setHasInteracted}>
         <div
+          // No background of its own: the card wrapper around it (the `card` styling hook) already
+          // paints bg-survey-bg, and a second fill here would cover a background set on that hook.
           className={cn(
             "no-scrollbar flex w-full flex-col justify-between transition-opacity duration-1000 ease-in-out",
-            isCardless ? "" : "bg-survey-bg h-full overflow-hidden",
+            isCardless ? "" : "h-full overflow-hidden",
             offset === 0 || cardArrangement === "simple" || isCardless ? "opacity-100" : "opacity-0"
           )}>
           <div className={cn("relative")}>

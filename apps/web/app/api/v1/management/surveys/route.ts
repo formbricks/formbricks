@@ -1,7 +1,7 @@
 import { logger } from "@formbricks/logger";
 import { ZSurveyCreateInputWithWorkspaceId } from "@formbricks/types/surveys/types";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
-import { checkSurveyWritePermissions } from "@/app/api/v1/management/surveys/lib/utils";
+import { checkSurveyWritePermissions, refuseV1CustomCss } from "@/app/api/v1/management/surveys/lib/utils";
 import {
   addLegacyProjectOverwrites,
   addLegacyProjectOverwritesToList,
@@ -95,6 +95,9 @@ export const POST = withV1ApiWrapper({
       const parsedBody = await parseSurveyBody(req);
       if ("response" in parsedBody) return { response: parsedBody.response };
       let surveyInput = parsedBody.body;
+
+      const customCssRefusal = refuseV1CustomCss(surveyInput);
+      if (customCssRefusal) return { response: customCssRefusal };
 
       // Backwards compat: accept projectOverwrites as alias for workspaceOverwrites
       surveyInput = normaliseProjectOverwritesToWorkspace(surveyInput);

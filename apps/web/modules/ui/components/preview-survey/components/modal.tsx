@@ -4,7 +4,8 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import { TOverlay, TPlacement } from "@formbricks/types/common";
 import { cn } from "@/lib/cn";
 import { getOverlayPreviewStyle } from "@/modules/ui/components/overlay-settings/lib/utils";
-import { getPlacementStyle } from "../lib/utils";
+import { PREVIEW_BOUNDARY_CLASS_NAME, previewBoundaryProps } from "../lib/containment";
+import { getPlacementStyle, isInsideSurveyRoot } from "../lib/utils";
 
 interface ModalProps {
   children: ReactNode;
@@ -92,7 +93,10 @@ export const Modal = ({
         modalRef.current &&
         previewBase &&
         previewBase.contains(e.target as Node) &&
-        !modalRef.current.contains(e.target as Node)
+        !modalRef.current.contains(e.target as Node) &&
+        // An open dropdown mounts its own #fbjs root inside this box, outside the card (ENG-3552).
+        // Picking an option there is a click in the survey, not outside it.
+        !isInsideSurveyRoot(e.target)
       ) {
         setShow(false);
         setTimeout(() => {
@@ -134,8 +138,11 @@ export const Modal = ({
     <div
       id="preview-survey-base"
       aria-live="assertive"
+      // The mock page is the survey's trusted, contained box (see lib/containment.ts).
+      {...previewBoundaryProps}
       className={cn(
-        "relative h-full w-full overflow-hidden rounded-b-md",
+        "h-full w-full rounded-b-md",
+        PREVIEW_BOUNDARY_CLASS_NAME,
         !customOverlayStyle && overlay === "dark" ? "bg-slate-700/80" : "",
         !customOverlayStyle && overlay === "light" ? "bg-slate-400/50" : "",
         "transition-all duration-500 ease-in-out"

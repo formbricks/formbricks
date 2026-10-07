@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
-import { createSurveyFromScratch } from "./utils/helper";
+import { createSurveyFromScratch, publishSurvey } from "./utils/helper";
 
 test.describe("Survey Styling", async () => {
   // Shared Helpers
@@ -405,14 +405,80 @@ test.describe("Survey Styling", async () => {
     // Verify color override applied (computed style)
     await expect(headlinePreview).toHaveCSS("color", "rgb(0, 0, 255)"); // Blue
 
-    // Verify font-size override via CSS variable.
-    // The computed style can't be checked directly because Tailwind's `text-base`
-    // utility is imported with `important` (CSS layer), which outranks the
-    // unlayered `!important` from addCustomThemeToDom.  The variable IS set
-    // correctly though, proving the form → preview pipeline works.
+    // The editor's headline size reaches the welcome card headline too (ENG-3554 headline fix).
+    await expect(headlinePreview).toHaveCSS("font-size", "30px");
     const editorCss = await page.evaluate(
       () => document.getElementById("formbricks__css__custom")?.innerHTML
     );
     expect(editorCss).toContain("--fb-element-headline-font-size: 30px");
+  });
+
+  // ENG-3553. A synthetic CMS-style stylesheet (M2.11): its `@import` is removed (processor unit tests
+  // cover the removal and its warning) without blocking the rest, the supported `data-fb-part` hooks
+  // style the preview and the published survey, and survey CSS wins over workspace CSS. Self-hosted in
+  // E2E, so there is no plan gate and no rollout flag.
+  test("Custom CSS: workspace and survey CSS reach the link survey", async ({ page, users }) => {
+    const user = await users.create();
+    await user.login();
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
+
+    const workspaceCss = [
+      '@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap");',
+      ":root { --acme-ink: #10283a; --acme-brand: #1f5f8b; }",
+      '[data-fb-part="headline"] { color: var(--acme-ink); font-weight: 600; }',
+      '[data-fb-part="button-primary"] { background: var(--acme-brand); border-radius: 999px; }',
+    ].join("\n");
+    const surveyCss = '[data-fb-part="button-primary"] { background-color: rgb(200, 30, 60); }';
+    const ink = "rgb(16, 40, 58)";
+    const surveyButton = "rgb(200, 30, 60)";
+
+    await test.step("Workspace CSS styles the preview despite the removed @import", async () => {
+      await page.goto(`/workspaces/${workspaceId}/settings/workspace/look`);
+      await page.getByRole("button", { name: /^Custom CSS/ }).click();
+      await page.getByLabel("Base CSS", { exact: true }).fill(workspaceCss);
+
+      // The preview renders only CSS the server validated, so this also waits for validation.
+      await expect(page.locator('#fbjs [data-fb-part="headline"]').first()).toHaveCSS("color", ink);
+    });
+
+    await test.step("Saving workspace CSS asks to confirm its reach", async () => {
+      await page.getByRole("button", { name: "Save CSS" }).click();
+      await page.getByRole("dialog").getByRole("button", { name: "Save for all surveys" }).click();
+      await expect(page.getByText(/Custom CSS saved/)).toBeVisible();
+
+      await page.reload();
+      await page.getByRole("button", { name: /^Custom CSS/ }).click();
+      await expect(page.getByLabel("Base CSS", { exact: true })).toHaveValue(workspaceCss);
+    });
+
+    let surveyId = "";
+    await test.step("The survey inherits workspace CSS and adds its own", async () => {
+      await page.goto(`/workspaces/${workspaceId}/surveys`);
+      surveyId = await createSurveyFromScratch(page);
+      await page.getByRole("button", { name: "Styling" }).click();
+      await page.getByRole("button", { name: /^Custom CSS/ }).click();
+
+      // Not behind "Add custom styles": survey CSS adds on top of the workspace CSS either way (D16).
+      await page.getByLabel("Base CSS", { exact: true }).fill(surveyCss);
+
+      const preview = page.locator("#fbjs");
+      await expect(preview.locator('[data-fb-part="button-primary"]').first()).toHaveCSS(
+        "background-color",
+        surveyButton
+      );
+      await expect(preview.locator('[data-fb-part="headline"]').first()).toHaveCSS("color", ink);
+    });
+
+    await test.step("Respondents get both, with the survey CSS winning", async () => {
+      await publishSurvey(page);
+      await page.goto(`/s/${surveyId}`);
+
+      await expect(page.locator('[data-fb-part="headline"]').first()).toHaveCSS("color", ink);
+      await expect(page.locator('[data-fb-part="button-primary"]').first()).toHaveCSS(
+        "background-color",
+        surveyButton
+      );
+    });
   });
 });

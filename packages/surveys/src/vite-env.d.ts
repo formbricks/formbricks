@@ -9,6 +9,7 @@ declare global {
       onFilePick: (...args: unknown[]) => unknown;
       setNonce: (nonce: string | undefined) => void;
       setAppearance: (appearance: unknown) => void;
+      removeCustomCss?: () => void;
     };
   }
 }

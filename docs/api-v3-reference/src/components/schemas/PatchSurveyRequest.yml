@@ -150,4 +150,15 @@ properties:
     allOf:
       - $ref: ./SurveyTargeting.yml
     description: App-survey contact targeting. Only valid for stored app surveys.
+  customCss:
+    anyOf:
+      - $ref: ./CustomCssInput.yml
+      - type: "null"
+    description: >-
+      Survey custom CSS source. Omitted: unchanged. `null`: clears both fields. An object replaces both
+      fields and needs both keys. Change is judged on normalized source, so echoing the value `GET`
+      returned is a no-op that needs no plan. Adding or editing needs the Scale plan on Formbricks
+      Cloud (403 `custom_css_plan_required`); clearing never does. A failed write keeps the saved CSS.
+      Only an addition or edit is processed, so only it counts against the custom CSS budget of 60 per
+      minute per user or API key, shared with custom CSS validation; beyond it the patch is a 429.
 additionalProperties: false
