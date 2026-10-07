@@ -148,7 +148,7 @@ describe("the prompt the draft came from", () => {
   test("SUBMIT records the prompt that was sent", () => {
     const state = aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT", prompt: "measure onboarding" });
 
-    expect(state.submittedPrompt).toBe("measure onboarding");
+    expect(state.sourceLabel).toBe("measure onboarding");
   });
 
   test("editing the prompt leaves the kept draft labelled with the prompt that produced it", () => {
@@ -158,15 +158,15 @@ describe("the prompt the draft came from", () => {
     );
 
     // The user is now typing something else; the chip above the kept draft must not follow along.
-    expect(aiCreateReducer(reviewed, { type: "BACK_TO_DRAFT" }).submittedPrompt).toBe("a prompt");
+    expect(aiCreateReducer(reviewed, { type: "BACK_TO_DRAFT" }).sourceLabel).toBe("a prompt");
   });
 
   test("Stop restores the prompt belonging to the draft it puts back", () => {
     const reviewed = aiCreateReducer(generatingWithOneQuestion(), { type: "DONE", payload });
     const regenerating = aiCreateReducer(reviewed, { type: "REGENERATE", prompt: "something else" });
-    expect(regenerating.submittedPrompt).toBe("something else");
+    expect(regenerating.sourceLabel).toBe("something else");
 
-    expect(aiCreateReducer(regenerating, { type: "STOP" }).submittedPrompt).toBe("a prompt");
+    expect(aiCreateReducer(regenerating, { type: "STOP" }).sourceLabel).toBe("a prompt");
   });
 });
 
@@ -307,5 +307,38 @@ describe("regenerating does not cost you the draft you had", () => {
 
     expect(state.status).toBe("review");
     expect(state.draft.questions).toHaveLength(1);
+  });
+});
+
+describe("a file source", () => {
+  test("SUBMIT records the source kind, and DONE carries the report", () => {
+    const submitted = aiCreateReducer(INITIAL_AI_CREATE_STATE, {
+      type: "SUBMIT",
+      prompt: "survey.qsf",
+      sourceKind: "file",
+    });
+    expect(submitted.sourceKind).toBe("file");
+    expect(submitted.sourceLabel).toBe("survey.qsf");
+    expect(submitted.report).toBeNull();
+
+    const report = { source: { kind: "qsf", fileName: "survey.qsf" }, issues: [] };
+    const done = aiCreateReducer(submitted, { type: "DONE", payload, report });
+    expect(done.status).toBe("review");
+    expect(done.report).toBe(report);
+
+    // A new run clears the report; a regeneration holds it aside with the previous draft.
+    const regenerating = aiCreateReducer(done, { type: "REGENERATE", prompt: "survey.qsf" });
+    expect(regenerating.report).toBeNull();
+    expect(regenerating.previous?.report).toBe(report);
+    expect(aiCreateReducer(regenerating, { type: "STOP" }).report).toBe(report);
+    expect(aiCreateReducer(done, { type: "SUBMIT", prompt: "other" }).report).toBeNull();
+  });
+
+  test("a prompt run defaults to the prompt kind and carries no report", () => {
+    const submitted = aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT", prompt: "a prompt" });
+    const done = aiCreateReducer(submitted, { type: "DONE", payload });
+
+    expect(submitted.sourceKind).toBe("prompt");
+    expect(done.report).toBeNull();
   });
 });
