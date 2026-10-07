@@ -14,7 +14,8 @@ export type TQsfImportStage = "reading" | "ai" | "assembling";
  * renders and translates them by code, so the server never sends user-facing English.
  *
  * - `logic_not_imported` — one per Qualtrics skip, display or branch rule; `params.description` is the
- *   rule in plain language, for the user to rebuild in the editor (ENG-3410)
+ *   rule in plain language, for the user to rebuild in the editor (ENG-3410). A rule of a page none
+ *   of whose questions was imported has no `questionTag`; `params.block` names its block instead
  * - `question_skipped` — a question that could not be turned into a Formbricks question (ENG-3479)
  * - `image_dropped`, `script_dropped` — removed from a question text (ENG-3607)
  * - `formatting_dropped` — text colors and other inline styles; at most one per survey (ENG-3607)
@@ -36,7 +37,8 @@ export type TQsfImportStage = "reading" | "ai" | "assembling";
  * `params.qualtricsType`, `ai_skipped`, `plan_invalid`, `ai_budget`, `not_in_flow`, `invalid_id`,
  * `validation_failed`); `choice_dropped` carries `invalid_id`. Params that carry text from the
  * file or the AI — `field_renamed`'s `from`, `description` on `logic_not_imported` and
- * `question_skipped`, `questionTag` — must be rendered as plain text, never as rich text.
+ * `question_skipped`, `logic_not_imported`'s `block`, `questionTag` — must be rendered as plain text,
+ * never as rich text.
  */
 export type TQsfImportIssueCode =
   | "logic_not_imported"

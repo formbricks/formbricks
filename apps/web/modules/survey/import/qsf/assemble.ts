@@ -273,6 +273,15 @@ class QsfAssembler {
       );
     });
 
+    // A page none of whose questions was imported still had its branch or randomizer: the user
+    // rebuilds it around whatever replaces the page. No question to name, so its block's name instead.
+    const placedPages = new Set(placedBlocks.map(({ page }) => page.id));
+    for (const page of survey.pages) {
+      if (placedPages.has(page.id) || page.logic.length === 0) continue;
+      const blockName = this.params.texts.byKey.get(page.blockNameKey)?.get(survey.defaultLanguage) ?? "";
+      this.reportRules(page.logic.length, plan.pageNotes.get(page.id) ?? [], undefined, blockName);
+    }
+
     for (const [language, count] of this.fallbackCounts) {
       this.issues.push({ code: "translation_fallback", severity: "warning", params: { language, count } });
     }
@@ -521,14 +530,22 @@ class QsfAssembler {
     this.reportRules(question.logic.length, planned.notes, question.exportTag);
   }
 
-  private reportRules(ruleCount: number, notes: string[], questionTag: string | undefined): void {
+  private reportRules(
+    ruleCount: number,
+    notes: string[],
+    questionTag: string | undefined,
+    blockName?: string
+  ): void {
     for (let index = 0; index < ruleCount; index++) {
-      const description = notes[index];
+      const params = {
+        ...(notes[index] ? { description: notes[index] } : {}),
+        ...(blockName ? { block: blockName } : {}),
+      };
       this.issues.push({
         code: "logic_not_imported",
         severity: "warning",
         ...(questionTag ? { questionTag } : {}),
-        ...(description ? { params: { description } } : {}),
+        ...(Object.keys(params).length > 0 ? { params } : {}),
       });
     }
   }

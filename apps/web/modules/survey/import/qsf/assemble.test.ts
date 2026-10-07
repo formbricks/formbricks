@@ -248,6 +248,24 @@ describe("assembleQsfDraft", () => {
     expect(JSON.stringify(lines)).not.toContain("Invented rule");
   });
 
+  test("still reports a page's rules when none of its questions was imported", async () => {
+    const { issues } = await assembleFixture("logic-skip-display-branch.qsf", {
+      // QID4 is page p3's only question, behind the EU branch.
+      editPlan: (plan) => plan.questions.delete("QID4"),
+    });
+
+    const lines = issues.filter((issue) => issue.code === "logic_not_imported");
+    expect(lines.map((issue) => issue.questionTag)).toEqual(["Q1", "Q2", "Q3", "Q6", undefined]);
+    expect(lines.at(-1)).toEqual({
+      code: "logic_not_imported",
+      severity: "warning",
+      params: {
+        description: "Shown only to respondents who chose 'EU' for 'Which region are you in?'.",
+        block: "Compliance",
+      },
+    });
+  });
+
   test("leaves out questions the final gate refused", async () => {
     const { document, elementRefs } = await assembleFixture("simple.qsf", {
       excludedRefs: new Set(["QID2"]),
