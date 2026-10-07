@@ -453,6 +453,9 @@ model Survey {
   embeddedData                EmbeddedData[]
   embeddedDataLinks           SurveyEmbeddedData[]
   showLanguageSwitch          Boolean?
+  /// Open the survey in the respondent's browser language when it matches an enabled survey
+  /// language. Null on surveys that predate the setting, which reads as off.
+  autoSelectLanguage          Boolean?
   followUps                   SurveyFollowUp[]
   /// [SurveyRecaptcha]
   recaptcha                   Json?                             @default("{\"enabled\": false, \"threshold\":0.1}")

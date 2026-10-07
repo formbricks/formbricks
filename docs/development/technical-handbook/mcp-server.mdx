@@ -68,11 +68,19 @@ issuer under `/api/auth`.
 ### OAuth 2.1
 
 OAuth clients use Authorization Code + PKCE with Dynamic Client Registration. Registration is open
-(no initial access token — MCP clients self-register), so it accepts only `http` loopback redirect
-URIs: `localhost`, `127.0.0.1` or `[::1]` on any port, which is what every MCP client uses. A
-registration claiming any other redirect URI — including an `https` one — is refused with
-`400 invalid_redirect_uri`, because a remote address is one an attacker could receive an
-authorization code at. The MCP protected resource is:
+(no initial access token — MCP clients self-register), so it accepts only redirect URIs an attacker
+can never receive an authorization code at:
+
+- `http` loopback — `localhost`, `127.0.0.1` or `[::1]` on any port — which local clients (Claude
+  Code, Codex, MCP Inspector) use.
+- An exact hosted-connector callback: `https://claude.ai/api/mcp/auth_callback`,
+  `https://claude.com/api/mcp/auth_callback` and `https://chatgpt.com/connector_platform_oauth_redirect`
+  (`HOSTED_MCP_CLIENT_REDIRECT_URIS` in `apps/web/modules/auth/lib/mcp-dcr-redirect-policy.ts`), plus
+  any a self-hoster adds with `MCP_DCR_ALLOWED_REDIRECT_URIS`. These match by exact string, so a code
+  can only ever reach the vendor.
+
+Any other redirect URI is refused with `400 invalid_redirect_uri` before Better Auth sees the
+request. `post_logout_redirect_uris` stays loopback-only. The MCP protected resource is:
 
 ```text
 https://app.formbricks.com/api/mcp
@@ -1848,8 +1856,11 @@ survey operations used by the REST routes:
 | `get_workspace_custom_css` | `GET /api/v3/workspaces/{workspaceId}/custom-css` |
 | `patch_workspace_custom_css` | `PATCH /api/v3/workspaces/{workspaceId}/custom-css` |
 
-When the v3 OpenAPI contract changes, update the MCP schemas and this page together. The hand-maintained
-v3 OpenAPI spec lives at `docs/api-v3-reference/openapi.yml`.
+When the v3 OpenAPI contract changes, update the MCP schemas and this page together. The v3 spec is
+hand-authored under `docs/api-v3-reference/src/` and bundled to `docs/api-v3-reference/openapi.yml`. For
+resources whose schemas are generated (Responses today), the tools' output schemas follow the contract through
+`pnpm api:v3:sync`; their input schemas and this page are still updated by hand. See
+[API v3 Schema Generation](/development/technical-handbook/api-v3-schema-generation).
 
 ## Feedback Records And The Hub
 

@@ -4,6 +4,7 @@ import { ForgotPasswordEmail } from "../../emails/auth/forgot-password-email";
 import { NewEmailVerification } from "../../emails/auth/new-email-verification";
 import { PasswordResetNotifyEmail } from "../../emails/auth/password-reset-notify-email";
 import { SsoRecoveryFactorsRemovedEmail } from "../../emails/auth/sso-recovery-factors-removed-email";
+import { SsoSignInHintEmail } from "../../emails/auth/sso-sign-in-hint-email";
 import { VerificationEmail } from "../../emails/auth/verification-email";
 import { EmailCustomizationPreviewEmail } from "../../emails/general/email-customization-preview-email";
 import { InviteAcceptedEmail } from "../../emails/invite/invite-accepted-email";
@@ -73,6 +74,16 @@ export async function renderSsoRecoveryFactorsRemovedEmail(
   } & TEmailTemplateLegalProps
 ): Promise<string> {
   return await render(SsoRecoveryFactorsRemovedEmail(props));
+}
+
+export async function renderSsoSignInHintEmail(
+  props: {
+    providerNames: string[];
+    loginLink: string;
+    t: TFunction;
+  } & TEmailTemplateLegalProps
+): Promise<string> {
+  return await render(SsoSignInHintEmail(props));
 }
 
 export async function renderInviteEmail(

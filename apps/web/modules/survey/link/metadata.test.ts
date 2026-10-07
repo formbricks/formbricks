@@ -89,7 +89,7 @@ describe("getMetadataForLinkSurvey", () => {
     const result = await getMetadataForLinkSurvey(mockSurveyId);
 
     expect(getSurveyWithMetadata).toHaveBeenCalledWith(mockSurveyId);
-    expect(getBasicSurveyMetadata).toHaveBeenCalledWith(mockSurveyId, undefined, mockSurvey);
+    expect(getBasicSurveyMetadata).toHaveBeenCalledWith(mockSurveyId, undefined, mockSurvey, []);
     expect(getSurveyOpenGraphMetadata).toHaveBeenCalledWith(mockSurveyId, mockOgTitle, undefined);
 
     expect(result).toEqual({

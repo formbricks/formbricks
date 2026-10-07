@@ -41,18 +41,24 @@ const afterCursor = (cursor: ResponseScanCursor) => ({
 });
 
 /**
- * Collects the storage URLs a survey's file-upload answers point at, so they can be deleted once the
- * responses themselves are gone.
+ * Collects the storage URLs a survey's responses own, so they can be deleted once the responses
+ * themselves are gone.
  *
  * Must run *before* the responses are deleted: the URLs only exist inside `response.data`, so once the
  * rows are gone there is nothing left to tell storage which objects are now unreferenced.
  *
- * The extraction itself is shared with the single-response delete paths
- * (`getSurveyFileUploadElementIds` + `collectResponseFileUrls` in modules/storage/utils), so all of them
- * read the same id set and skip the same malformed answers.
+ * Which URLs a response owns is `collectResponseFileUrls`' rule, shared with the single-response delete
+ * paths: a survey-scoped key is bound to the survey it names, whatever answer it sits under, and a flat
+ * pre-#8044 key only counts under a current file-upload element.
+ *
+ * `flatKeysOnly` is for survey delete, whose folder sweep (`deleteSurveyUploadFilesBestEffort`) already
+ * removes every key filed under the survey. It returns only the flat keys the sweep cannot reach, and
+ * since those can only match a current upload element, it skips the scan when there is none rather than
+ * reading every response for nothing.
  */
 export const collectSurveyResponseFileUrls = async (
-  surveyId: string
+  surveyId: string,
+  { flatKeysOnly = false }: { flatKeysOnly?: boolean } = {}
 ): Promise<{ fileUrls: string[]; workspaceId: string | undefined }> => {
   // getSurvey is reactCache'd, so a caller that fetched the same survey earlier in the request (the
   // reset action does) resolves it from the request cache rather than a second round-trip — and it
@@ -66,13 +72,13 @@ export const collectSurveyResponseFileUrls = async (
 
   const fileUploadElementIds = getSurveyFileUploadElementIds(survey);
 
-  // No file-upload element in the survey's *current* definition, so there is no key this scan would
-  // match — skip it. Note this is about today's blocks/questions, not the response history: answers
-  // left by an upload element that was since deleted sit under an id no longer in the set, and are not
-  // cleaned up here or by the single-response path. Widening the match to "any answer shaped like a
-  // storage URL" is deliberately not the fix — it would let one survey's cleanup delete another's
-  // live files.
-  if (fileUploadElementIds.size === 0) {
+  // Only the flat-key scan may skip on an empty set: a flat key is matched by element id, so with no
+  // current upload element it has nothing to match. The full scan (reset) runs anyway, because a survey
+  // whose only upload element was deleted still has answers holding keys filed under it. Those are bound
+  // to this survey by the key itself, not by the answer's shape, so the scan never reaches another
+  // survey's files. Reset cannot use a folder sweep instead: a respondent still filling in the survey has
+  // uploads whose response row does not exist yet, and a sweep would delete them.
+  if (flatKeysOnly && fileUploadElementIds.size === 0) {
     return { fileUrls: [], workspaceId: survey.workspaceId };
   }
 
@@ -92,7 +98,9 @@ export const collectSurveyResponseFileUrls = async (
     }
 
     for (const response of responses) {
-      fileUrls.push(...collectResponseFileUrls(response.data, fileUploadElementIds));
+      for (const fileUrl of collectResponseFileUrls(response.data, fileUploadElementIds, surveyId)) {
+        if (!flatKeysOnly || getStorageUrlSurveyId(fileUrl) === null) fileUrls.push(fileUrl);
+      }
     }
 
     // A short page means the last one. The `lastRow` check only guards the cursor from going undefined
@@ -111,9 +119,8 @@ export const collectSurveyResponseFileUrls = async (
 /**
  * Deletes the files `collectSurveyResponseFileUrls` found, in chunks of STORAGE_DELETE_CHUNK_SIZE.
  *
- * A URL whose key is filed under a different survey is dropped first. `deleteResponseFileUrls` only
- * checks the workspace, and an answer can hold another survey's URL: one written under a key that
- * only later became a file-upload element is never checked against its survey.
+ * Survey binding is not re-checked here: the collection already refuses a key filed under another
+ * survey, and `deleteResponseFileUrls` still enforces the workspace.
  *
  * Callers run this after the responses are committed as deleted, so it never throws: turning a
  * completed delete into a failed one would only make the caller retry against rows that are gone.
@@ -125,20 +132,8 @@ export const deleteSurveyResponseFiles = async (
   workspaceId: string | undefined,
   surveyId: string
 ): Promise<void> => {
-  const ownFileUrls = fileUrls.filter((fileUrl) => {
-    const keySurveyId = getStorageUrlSurveyId(fileUrl);
-    return keySurveyId === null || keySurveyId === surveyId;
-  });
-
-  if (ownFileUrls.length < fileUrls.length) {
-    logger.error(
-      { surveyId, workspaceId, fileCount: fileUrls.length - ownFileUrls.length },
-      "Refusing to delete response files stored under another survey"
-    );
-  }
-
-  for (let i = 0; i < ownFileUrls.length; i += STORAGE_DELETE_CHUNK_SIZE) {
-    const chunk = ownFileUrls.slice(i, i + STORAGE_DELETE_CHUNK_SIZE);
+  for (let i = 0; i < fileUrls.length; i += STORAGE_DELETE_CHUNK_SIZE) {
+    const chunk = fileUrls.slice(i, i + STORAGE_DELETE_CHUNK_SIZE);
     try {
       await deleteResponseFileUrls(chunk, workspaceId);
     } catch (error) {

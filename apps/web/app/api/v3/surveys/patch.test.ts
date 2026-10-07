@@ -344,6 +344,34 @@ describe("patchV3Survey", () => {
     );
   });
 
+  test("writes a patched language setting and keeps the omitted one as stored", async () => {
+    await patchV3Survey(
+      { ...currentSurvey, showLanguageSwitch: true, autoSelectLanguage: null },
+      { autoSelectLanguage: true },
+      "req_1",
+      "org_1"
+    );
+
+    expect(prisma.survey.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ showLanguageSwitch: true, autoSelectLanguage: true }),
+      })
+    );
+  });
+
+  test("clears a stored language setting when the patch sets it to null", async () => {
+    await patchV3Survey(
+      { ...currentSurvey, autoSelectLanguage: true },
+      { autoSelectLanguage: null },
+      "req_1",
+      "org_1"
+    );
+
+    expect(prisma.survey.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ autoSelectLanguage: null }) })
+    );
+  });
+
   test("never writes the dropped legacy columns, and returns the survey read back after the reconcile", async () => {
     // ENG-2404: `Survey` has no `variables` / `hiddenFields` column, so Prisma would refuse either
     // key. They reach the database as rows, and the response is re-read after the reconcile so the
@@ -601,6 +629,8 @@ describe("patchV3Survey", () => {
         metadata: currentSurvey.metadata,
         defaultLanguage: "en-US",
         languages: [{ code: "en-US", enabled: true }],
+        showLanguageSwitch: null,
+        autoSelectLanguage: null,
         welcomeCard: currentSurvey.welcomeCard,
         blocks: currentSurvey.blocks,
         endings: currentSurvey.endings,

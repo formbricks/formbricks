@@ -29,6 +29,7 @@ export type TEmailType =
   | "password_reset_notification"
   | "account_deletion"
   | "sso_recovery_notification"
+  | "sso_sign_in_hint"
   | "response_notification"
   | "survey_preview"
   | "customization_preview"

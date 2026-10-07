@@ -26,6 +26,7 @@
       "back_to_login": "Girişe geri dön",
       "email-sent": {
         "heading": "Şifre sıfırlama başarıyla istendi",
+        "sso_hint": "Google, Microsoft veya başka bir çoklu oturum açma (SSO) sağlayıcısıyla mı giriş yapıyorsun? O zaman sıfırlanacak bir şifre yok. Bunun yerine o sağlayıcıyla giriş yap.",
         "text": "Bu email ile ilişkili bir hesap varsa, kısa süre içinde şifre sıfırlama talimatlarını alacaksınız."
       },
       "reset": {
@@ -696,6 +697,13 @@
     "sso_recovery_factors_removed_email_subject": "Formbricks hesabından kimlik bilgileri kaldırıldı",
     "sso_recovery_factors_removed_email_text": "Az önce ilk kez tek oturum açma ile giriş yaptın. E-posta adresin daha önce hiç doğrulanmadığı için, hesabında önceden ayarlanmış olan kimlik bilgilerini kaldırdık:",
     "sso_recovery_factors_removed_email_two_factor": "İki faktörlü kimlik doğrulama kaldırıldı.",
+    "sso_sign_in_hint_email_did_not_request": "Bunu sen talep etmediysen bu e-postayı görmezden gelebilirsin. Hesabında hiçbir şey değişmedi.",
+    "sso_sign_in_hint_email_go_to_login": "Giriş yap",
+    "sso_sign_in_hint_email_heading": "Çoklu oturum açma ile giriş yap",
+    "sso_sign_in_hint_email_no_access": "Artık bu şekilde giriş yapamıyorsan yöneticinle iletişime geç.",
+    "sso_sign_in_hint_email_subject": "Formbricks hesabına nasıl giriş yapılır?",
+    "sso_sign_in_hint_email_text": "Formbricks hesabının şifresini sıfırlamak için bir talep aldık. Hesabın şifre kullanmıyor, bu yüzden sıfırlanacak bir şey yok. Şu yöntemle giriş yapıyorsun:",
+    "sso_sign_in_hint_email_text_unavailable": "Formbricks hesabının şifresini sıfırlamak için bir talep aldık. Hesabın şifre kullanmıyor: tek oturum açma (SSO) ile giriş yapıyor ve bu özellik şu anda bu Formbricks örneğinde kullanılamıyor. Yeniden erişim sağlamak için yöneticinle iletişime geç.",
     "survey_response_finished_email_congrats": "Tebrikler, survey'inize yeni bir yanıt aldınız! Birisi survey'inizi tamamladı: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Bu bildirimleri almak istemiyor musunuz?",
     "survey_response_finished_email_hey": "Merhaba 👋",
@@ -2844,8 +2852,10 @@
         "connect_app_banner_title": "Web Sitesi ve Uygulama anketi mi kuruyorsunuz?"
       },
       "billing": {
+        "billing_currency_conflict": "Bu plan değişikliği, hesabındaki farklı para birimiyle yapılan faturalandırmayla çakışıyor. Plan değiştirmek için lütfen destek ekibiyle iletişime geç.",
         "billing_interval_toggle": "Fatura dönemi",
         "cancel_at_period_end": "Dönem sonunda iptal et",
+        "card_payment_method_required": "Mevcut planından geçiş yapmak için ödeme yöntemi olarak bir kart gerekiyor. Lütfen bir kart ekle ve tekrar dene.",
         "comparison_addon": "Eklenti",
         "comparison_best_for": "En uygun",
         "comparison_included": "Dahil",
@@ -2888,6 +2898,7 @@
         "comparison_section_scale_unlocks": "Scale özellikleri",
         "confirm_hobby_downgrade_body": "Ücretsiz {plan} deneme süreniz şimdi sona erecek ve hemen Hobby planına geçeceksiniz.",
         "confirm_hobby_downgrade_description": "İstediğiniz zaman yeniden yükseltme yapabilirsiniz.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Hobby planına geçeceksin. Mevcut planın kalıcı olarak sona erer ve geri getirilemez.",
         "confirm_hobby_downgrade_title": "Şimdi Hobby planına geçilsin mi?",
         "confirm_trial_continue_body": "Takipler, özel linkler ve {plan} planındaki diğer her şey — anında kullanıma açılır.<br /><b>Bugün {chargeNow}</b>, ardından vergiler dahil {period} {fullPrice}. Faturalandırma bugün başlar.",
         "confirm_trial_continue_body_fallback": "Takipler, özel linkler ve {plan} planındaki diğer her şey — anında kullanıma açılır.<br /><b>{period} {fullPrice}</b> artı vergiler. Faturalandırma bugün başlar.",
@@ -2900,6 +2911,7 @@
         "confirm_upgrade_button": "Yükseltmeyi onayla",
         "confirm_upgrade_calculating": "Orantılı ücretiniz hesaplanıyor…",
         "confirm_upgrade_description": "Planını istediğin zaman tekrar değiştirebilirsin.",
+        "confirm_upgrade_ends_current_plan": "Geçiş yaptığında mevcut planın kalıcı olarak sona erer: Bu ödeme gerçekleşmese bile geri alınamaz.",
         "confirm_upgrade_title": "Yükseltmeyi onayla",
         "contact_sales_cta": "Bizimle konuş",
         "contact_sales_description": "Kurumlar için Formbricks hakkında daha fazla bilgi edin ve çözümlerimizi sizin için nasıl özelleştirebileceğimizi keşfedin.",
@@ -3487,6 +3499,8 @@
         "auto_save_disabled": "Otomatik kaydetme devre dışı",
         "auto_save_disabled_tooltip": "Anketin yalnızca taslak halindeyken otomatik kaydedilir. Bu, artık taslak olmayan anketlerin yanlışlıkla değiştirilmemesini sağlar.",
         "auto_save_on": "Otomatik kaydetme açık",
+        "auto_select_browser_language": "Varsayılan olarak tarayıcı dilini kullan",
+        "auto_select_browser_language_description": "Anket, katılımcının tarayıcı dili etkin olduğunda anketi otomatik olarak bu dilde açar. Aksi takdirde varsayılan dile geçer.",
         "automatically_close_survey_after_n_seconds_if_no_response": "Yanıt alınmazsa, tetiklendikten <autoCloseInput /> saniye sonra anketi otomatik olarak kapat.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Belirli sayıda yanıt alındıktan sonra anketi otomatik olarak kapat.",
         "automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds": "Kullanıcı belirli saniye içinde yanıt vermezse anketi otomatik olarak kapat.",

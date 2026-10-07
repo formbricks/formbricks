@@ -8,7 +8,7 @@ import { getResolvedAppearance, subscribeToAppearance } from "@/lib/appearance";
 import { CustomCssOwnerContext, getCustomCssGeneration, releaseCustomCss } from "@/lib/custom-css";
 import { isPlainEscape } from "@/lib/keyboard";
 import { ensureLiveRegion } from "@/lib/live-region";
-import { SURVEY_INSTRUCTIONS_ID, getSurveyHeadingName } from "@/lib/survey-page";
+import { SURVEY_INSTRUCTIONS_ID } from "@/lib/survey-page";
 import { useFocusTrap } from "@/lib/use-focus-trap";
 import { cn, mirrorPlacementForDir } from "@/lib/utils";
 
@@ -361,17 +361,19 @@ export function SurveyContainer({
   // dialog on the modal path: `aria-modal="true"` makes assistive tech ignore everything outside
   // the dialog element, so a heading placed on the #fbjs root would be unreachable there.
   //
-  // An inline survey without a name (an app survey, whose name the public API withholds) falls back
-  // to the same generic label the modal dialog uses, so the h1 is always there on inline. A modal
-  // survey still renders it only for a real name — see getSurveyHeadingName.
-  const headingName = getSurveyHeadingName(surveyName, mode, t("common.survey_dialog"));
-  const surveyHeading = headingName ? <h1 className="sr-only">{headingName}</h1> : null;
+  // A survey without a name — an app survey, whose name the public API withholds (see
+  // getSurveyDisplayName) — falls back to a generic label on both surfaces rather than dropping the
+  // heading. A generic h1 still tells a respondent pressing H that they have reached the survey;
+  // no h1 leaves the card headings orphaned on the delivery path most app respondents take (ENG-2799).
+  // The same label names the inline form landmark and the modal dialog, so the three never disagree.
+  const surveyLabel = surveyName ?? t("common.survey_dialog");
+  const surveyHeading = <h1 className="sr-only">{surveyLabel}</h1>;
 
   // The VPAT finding is that "forms themselves have no titles": every input had a label, but the
   // form they belong to had no accessible name at all. role="form" + a name fixes that for BOTH
   // surfaces — an embedded survey cannot own the host document's <title>, so this is the only name it
-  // can carry. On inline the name always exists (the survey name, or the generic fallback above), so
-  // the form landmark is always named rather than left out of the landmark list.
+  // can carry. The name always exists (the survey name, or the generic fallback above), so the form
+  // landmark is always named rather than left out of the landmark list.
   // Survey instructions used to appear on the welcome card and never again. Pointing the form at the
   // persistent region means they are announced on entry to every page.
   //
@@ -398,7 +400,7 @@ export function SurveyContainer({
         dir={dir}
         lang={lang ?? undefined}
         role="form"
-        aria-label={headingName}
+        aria-label={surveyLabel}
         aria-describedby={instructionsId}>
         {surveyHeading}
         {children}
@@ -435,9 +437,7 @@ export function SurveyContainer({
             // assistive tech ignore everything outside it, so setting it on a corner survey hides the
             // host page from screen-reader users while they can still see and use it.
             aria-modal={hasOverlay ? "true" : undefined}
-            // The survey name is strictly more informative than the generic "Survey Dialog", which
-            // stays as the fallback for a survey rendered without one (previews).
-            aria-label={surveyName ?? t("common.survey_dialog")}
+            aria-label={surveyLabel}
             aria-describedby={hasInstructions ? SURVEY_INSTRUCTIONS_ID : undefined}
             tabIndex={-1}
             className={cn(

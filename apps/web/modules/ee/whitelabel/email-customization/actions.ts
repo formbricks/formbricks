@@ -2,33 +2,19 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
 import {
   removeOrganizationEmailLogoUrl,
   updateOrganizationEmailLogoUrl,
 } from "@/modules/ee/whitelabel/email-customization/lib/organization";
+import { checkWhiteLabelPermission } from "@/modules/ee/whitelabel/email-customization/lib/permission";
 import { sendEmailCustomizationPreviewEmail } from "@/modules/email";
-
-export const checkWhiteLabelPermission = async (organizationId: string) => {
-  const organization = await getOrganization(organizationId);
-
-  if (!organization) {
-    throw new ResourceNotFoundError("Organization", organizationId);
-  }
-
-  const isWhiteLabelAllowed = await getWhiteLabelPermission(organizationId);
-
-  if (!isWhiteLabelAllowed) {
-    throw new OperationNotAllowedError("White label is not allowed for this organization");
-  }
-};
 
 const ZUpdateOrganizationEmailLogoUrlAction = z.object({
   organizationId: ZId,

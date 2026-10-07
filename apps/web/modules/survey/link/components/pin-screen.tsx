@@ -9,7 +9,7 @@ import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { validateSurveyPinAction } from "@/modules/survey/link/actions";
 import { SurveyClientWrapper } from "@/modules/survey/link/components/survey-client-wrapper";
 import { useAppLocale } from "@/modules/survey/link/hooks/use-app-locale";

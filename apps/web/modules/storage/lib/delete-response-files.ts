@@ -5,8 +5,8 @@ import { deleteFile } from "@/modules/storage/service";
 import { parseStorageFileUrl } from "@/modules/storage/utils";
 
 /**
- * Deletes the storage objects a response's file-upload answers point at, restricted to the survey's own
- * workspace.
+ * Deletes the storage objects a response's answers point at, as picked by `collectResponseFileUrls`,
+ * restricted to the survey's own workspace.
  *
  * The file URLs come out of `response.data`, i.e. from whoever wrote the response, and the S3 key is
  * built from the id in the *URL* rather than the survey's workspace. Write-time validation
@@ -20,6 +20,7 @@ import { parseStorageFileUrl } from "@/modules/storage/utils";
  * that does not belong to this survey's workspace, regardless of which write path produced the data. The
  * id may be a workspace id or a legacy environment id (older uploads were prefixed with the environment
  * id), which is why it goes through `findWorkspaceByIdOrLegacyEnvId` rather than a plain string compare.
+ * Binding to the survey is enforced earlier, when `collectResponseFileUrls` picks the URLs.
  */
 export const deleteResponseFileUrls = async (
   fileUrls: string[],

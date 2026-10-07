@@ -24,7 +24,7 @@ import type {
 } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
-import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { BlockConditional } from "@/components/general/block-conditional";
 import { EndingCard } from "@/components/general/ending-card";
@@ -44,10 +44,10 @@ import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
 import { CardlessSurveyLayout } from "@/components/wrappers/cardless-survey-layout";
 import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
 import { ApiClient } from "@/lib/api-client";
+import { advanceFromBlock } from "@/lib/block-flow";
 import { type TWebSurveyMeta, createWebSurveyMetaSnapshot } from "@/lib/browser-context";
 import { getLocalizedValue } from "@/lib/i18n";
 import { INGEST_DROP_MESSAGES, logIngestResult } from "@/lib/ingest-logging";
-import { evaluateLogic, performActions } from "@/lib/logic";
 import {
   type SerializedSurveyState,
   clearSurveyProgress,
@@ -57,13 +57,7 @@ import {
 } from "@/lib/offline-storage";
 import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
-import {
-  END_BLOCK_ID,
-  getForwardTargetFromOffBlockId,
-  getPreviousBlockId,
-  getRestorableHistory,
-  isFinishedBlockId,
-} from "@/lib/survey-navigation";
+import { getPreviousBlockId, getRestorableHistory, isFinishedBlockId } from "@/lib/survey-navigation";
 import { SURVEY_INSTRUCTIONS_ID, getSurveyPagePosition, hasSurveyInstructions } from "@/lib/survey-page";
 import { SurveyState } from "@/lib/survey-state";
 import { useOnlineStatus } from "@/lib/use-online-status";
@@ -877,140 +871,6 @@ export function Survey({
     });
   };
 
-  const evaluateLogicAndGetNextBlockId = (
-    data: TResponseData,
-    /**
-     * Reserved-field values, passed in rather than closed over: this is declared above the memo that
-     * produces them, and taking them as a parameter keeps the sole call site explicit about the fact
-     * that logic reads the same map recall does.
-     */
-    reservedFieldValues: Record<string, string | number>
-  ): { nextBlockId: string | undefined; calculatedVariables: TResponseVariables } => {
-    const firstEndingId = survey.endings.length > 0 ? survey.endings[0].id : undefined;
-
-    if (blockId === "start")
-      return {
-        nextBlockId: localSurvey.blocks[0]?.id || firstEndingId,
-        calculatedVariables: {},
-      };
-
-    if (!currentBlock) {
-      // `blockId` is not a block. `onSubmit` returns before reaching here for an ending id or the
-      // "end" sentinel, so in practice this is a block that no longer exists because the survey was
-      // edited after progress was saved. Nothing is left to advance through, so finish rather than
-      // throw — throwing escaped as an unhandled rejection, which dropped the answer in hand and left
-      // the Next button spinning (ENG-2818).
-      const offBlockTarget = getForwardTargetFromOffBlockId(localSurvey, blockId);
-
-      // An ending or the sentinel is an expected position to submit from. A `blockId` that matches
-      // neither is survey drift, and the only remaining signal that it happened.
-      if (!offBlockTarget && blockId !== END_BLOCK_ID) {
-        console.warn(
-          "Formbricks: blockId no longer resolves to a block, finishing the survey. blockId:",
-          blockId,
-          "available blocks:",
-          localSurvey.blocks.map((b) => b.id)
-        );
-      }
-
-      return {
-        nextBlockId: offBlockTarget,
-        calculatedVariables: { ...currentVariables },
-      };
-    }
-
-    const localResponseData = { ...responseData, ...data };
-    let calculationResults = { ...currentVariables };
-
-    // Process a single logic rule
-    const processLogicRule = (
-      logic: TSurveyBlockLogic,
-      currentJumpTarget: string | undefined,
-      currentRequiredIds: string[]
-    ): { jumpTarget: string | undefined; requiredIds: string[]; updatedCalculations: TResponseVariables } => {
-      const isLogicMet = evaluateLogic(
-        localSurvey,
-        localResponseData,
-        calculationResults,
-        logic.conditions,
-        selectedLanguage,
-        // Built against the in-flight response data (answers from this block included), so a
-        // declared field shadows a same-named reserved entry here exactly as it does in recall.
-        buildEmbeddedLookup(localSurvey, reservedFieldValues, localResponseData)
-      );
-
-      if (!isLogicMet) {
-        return {
-          jumpTarget: currentJumpTarget,
-          requiredIds: currentRequiredIds,
-          updatedCalculations: calculationResults,
-        };
-      }
-
-      const { jumpTarget, requiredQuestionIds, calculations } = performActions(
-        localSurvey,
-        logic.actions,
-        localResponseData,
-        calculationResults
-      );
-
-      const newJumpTarget = jumpTarget && !currentJumpTarget ? jumpTarget : currentJumpTarget;
-      const newRequiredIds = [...currentRequiredIds, ...requiredQuestionIds];
-      const updatedCalculations = { ...calculationResults, ...calculations };
-
-      return {
-        jumpTarget: newJumpTarget,
-        requiredIds: newRequiredIds,
-        updatedCalculations,
-      };
-    };
-
-    // Evaluate block-level logic
-    const evaluateBlockLogic = () => {
-      let firstJumpTarget: string | undefined;
-      const allRequiredQuestionIds: string[] = [];
-
-      if (currentBlock.logic && currentBlock.logic.length > 0) {
-        for (const logic of currentBlock.logic) {
-          const result = processLogicRule(logic, firstJumpTarget, allRequiredQuestionIds);
-          firstJumpTarget = result.jumpTarget;
-          allRequiredQuestionIds.length = 0;
-          allRequiredQuestionIds.push(...result.requiredIds);
-          calculationResults = result.updatedCalculations;
-        }
-      }
-
-      // Use logicFallback if no jump target was set
-      if (!firstJumpTarget && currentBlock.logicFallback) {
-        firstJumpTarget = currentBlock.logicFallback;
-      }
-
-      return { firstJumpTarget, allRequiredQuestionIds };
-    };
-
-    const { firstJumpTarget, allRequiredQuestionIds } = evaluateBlockLogic();
-
-    // Handle required questions
-    const handleRequiredQuestions = (requiredIds: string[]) => {
-      if (requiredIds.length > 0) {
-        if (currentBlock.elements[0]) {
-          questionRequiredByMap.current[currentBlock.elements[0].id] = requiredIds;
-        }
-        makeQuestionsRequired(requiredIds);
-      }
-    };
-
-    handleRequiredQuestions(allRequiredQuestionIds);
-
-    // Return the jump target (which is a block ID) or the next block in sequence
-    const nextBlockId = firstJumpTarget || localSurvey.blocks[currentBlockIndex + 1]?.id;
-
-    return {
-      nextBlockId,
-      calculatedVariables: calculationResults,
-    };
-  };
-
   /**
    * The browser-runtime context, snapshotted **once on this survey's first render** and frozen for
    * the rest of its life. `onResponseCreateOrUpdate` runs on every submit, so reading the runtime
@@ -1248,26 +1108,30 @@ export function Survey({
 
     pushVariableState(firstRespondedElementId);
 
-    const { nextBlockId: rawNextBlockId, calculatedVariables } = evaluateLogicAndGetNextBlockId(
-      surveyResponseData,
-      reservedValues
-    );
-    // A jump target may reference a deleted block or ending; treat such stale ids as "no target"
-    // so the shown ending and the persisted endingId stay in sync
-    const targetIsBlock = localSurvey.blocks.some((block) => block.id === rawNextBlockId);
-    const targetIsEnding = localSurvey.endings.some((ending) => ending.id === rawNextBlockId);
-    const isValidTarget = targetIsBlock || targetIsEnding;
-    const nextBlockId = isValidTarget ? rawNextBlockId : undefined;
-    const finished =
-      nextBlockId === undefined || !localSurvey.blocks.map((block) => block.id).includes(nextBlockId);
+    const {
+      nextCardId,
+      finished,
+      endingId,
+      variables: calculatedVariables,
+      requiredQuestionIds,
+    } = advanceFromBlock({
+      survey: localSurvey,
+      blockId,
+      responseData,
+      submittedData: surveyResponseData,
+      variables: currentVariables,
+      selectedLanguage,
+      reservedFieldValues: reservedValues,
+    });
+
+    if (requiredQuestionIds.length > 0) {
+      if (currentBlock?.elements[0]) {
+        questionRequiredByMap.current[currentBlock.elements[0].id] = requiredQuestionIds;
+      }
+      makeQuestionsRequired(requiredQuestionIds);
+    }
 
     setIsSurveyFinished(finished);
-
-    // The ending that will be shown: an explicit jump target, or the first ending when the survey
-    // falls off the last block (mirrors the display fallback below so the persisted endingId matches it)
-    const endingId = finished
-      ? (localSurvey.endings.find((ending) => ending.id === nextBlockId)?.id ?? localSurvey.endings[0]?.id)
-      : undefined;
 
     onChange(surveyResponseData);
     onChangeVariables(calculatedVariables);
@@ -1281,29 +1145,16 @@ export function Survey({
       endingId,
     });
 
-    if (nextBlockId) {
-      setBlockId(nextBlockId);
-    } else if (finished) {
-      // Survey is finished, show the first ending or set to a value > blocks.length
-      const firstEndingId = localSurvey.endings[0]?.id as string | undefined;
-      if (firstEndingId) {
-        setBlockId(firstEndingId);
-      } else {
-        // No endings defined, set blockId to trigger ending screen
-        setBlockId("end");
-      }
-    }
+    setBlockId(nextCardId);
     // add current block to history
     const newHistory = [...history, blockId];
     setHistory(newHistory);
 
     // --- Offline support: save progress on each submit ---
     if (offlinePersistEnabled) {
-      const newBlockId = finished ? endingId || localSurvey.endings[0]?.id || "end" : nextBlockId || blockId;
-
       void saveSurveyProgress({
         surveyId: survey.id,
-        blockId: newBlockId,
+        blockId: nextCardId,
         responseData: { ...responseData, ...surveyResponseData },
         ttc: { ...ttc, ...responsettc },
         currentVariables: calculatedVariables,

@@ -49,6 +49,8 @@ describe("ZV3CreateSurveyBody", () => {
       metadata: {},
       defaultLanguage: "en-US",
       languages: [],
+      showLanguageSwitch: null,
+      autoSelectLanguage: null,
       welcomeCard: { enabled: false },
       endings: [],
       hiddenFields: { enabled: false },
@@ -163,6 +165,17 @@ describe("ZV3CreateSurveyBody", () => {
         ])
       );
     }
+  });
+
+  test("accepts the language settings on create", () => {
+    const parsed = ZV3CreateSurveyBody.parse({
+      ...validCreateBody,
+      showLanguageSwitch: true,
+      autoSelectLanguage: true,
+    });
+
+    expect(parsed).toMatchObject({ showLanguageSwitch: true, autoSelectLanguage: true });
+    expect(ZV3CreateSurveyBody.safeParse({ ...validCreateBody, autoSelectLanguage: 1 }).success).toBe(false);
   });
 
   test("rejects unsupported top-level fields instead of silently ignoring them", () => {
@@ -723,6 +736,15 @@ describe("ZV3PatchSurveyBody", () => {
     });
 
     expect(parsed).toEqual({ name: "Updated survey" });
+  });
+
+  test("accepts the language settings, with null clearing and omission leaving them unchanged", () => {
+    expect(ZV3PatchSurveyBody.parse({ showLanguageSwitch: true, autoSelectLanguage: false })).toEqual({
+      showLanguageSwitch: true,
+      autoSelectLanguage: false,
+    });
+    expect(ZV3PatchSurveyBody.parse({ autoSelectLanguage: null })).toEqual({ autoSelectLanguage: null });
+    expect(ZV3PatchSurveyBody.safeParse({ autoSelectLanguage: "yes" }).success).toBe(false);
   });
 
   test("rejects an empty patch body", () => {

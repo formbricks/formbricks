@@ -420,6 +420,7 @@ describe("copySurveyToOtherWorkspace", () => {
       redirectUrl: "https://example.com/thanks",
       displayPercentage: 25,
       showLanguageSwitch: true,
+      autoSelectLanguage: true,
       recaptcha: { enabled: true, threshold: 0.5 },
       isVerifyEmailEnabled: true,
       isAnonymizeResponsesEnabled: true,
