@@ -42,7 +42,8 @@ export const ZJsWorkspaceStateSurvey = ZSurveyBase.pick({
     // Resolved custom overlay, set by the environment endpoint (see environment/lib/data.ts).
     overlayAppearance: ZOverlayAppearance.nullish(),
     // Compiled survey custom CSS (ENG-3552). Respondent-facing, so compiled output only — never the
-    // editable source. Absent when the survey has none, when it is withheld, or when rollout is off.
+    // editable source. Absent when the survey has none, when it is withheld, or while the survey's
+    // style overrides are off.
     customCss: ZCustomCssCompiled.optional(),
   })
   .superRefine((survey, ctx) => {

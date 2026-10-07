@@ -26,7 +26,7 @@ There are two places, and they add up: survey CSS is applied on top of workspace
 | Workspace | **Settings → Workspace → Appearance**, card **Custom CSS** | Every survey in the workspace | Organization owners and managers |
 | Survey | Survey editor → **Styling** tab, card **Custom CSS** | This survey only | Anyone who can edit the survey |
 
-Survey CSS applies whether or not the survey overrides the workspace theme with **Add custom styles**. The survey editor shows the **Styling** tab, and with it the survey's **Custom CSS** card, only while the workspace allows style overrides; the API and MCP tools can set survey CSS either way.
+Survey CSS follows the survey's other style overrides. It applies only while the workspace allows them (**Enable custom styling** in **Appearance**) and the survey uses them (**Add custom styles** in its **Styling** tab). With either one off, respondents get the workspace CSS only, and the survey's **Custom CSS** card is greyed out like the other styling cards. Nothing is deleted: the survey's CSS applies again once both are on. The API and MCP tools can set survey CSS either way.
 
 Each level has two fields, switched with the **Light / Dark** toggle at the top of the styling editor:
 
@@ -41,10 +41,10 @@ Each level has two fields, switched with the **Light / Dark** toggle at the top 
     Select **Light** to edit the base CSS or **Dark** to edit the dark CSS.
   </Step>
   <Step title="Write or upload your CSS">
-    Type into the field, or use **Upload .css** to load a `.css` file. The upload replaces the content of the field that is currently selected; the other field is not touched.
+    Type into the field, or use **Upload .css** to load a `.css` file. The upload replaces the content of the field that is currently selected; the other field is not touched, and undo brings the replaced CSS back. Type `[` or `--fb` to get suggestions for the [stable hooks](#stable-hooks), [states](#states) and [variables](#variables), and use **Tidy** to format the CSS. Tab indents; press Esc, then Tab, to leave the field.
   </Step>
   <Step title="Check the preview, then save">
-    The preview updates shortly after you stop typing, and lists anything Formbricks removed or rejected, with its line and column. Saving workspace CSS changes every survey in the workspace.
+    The preview updates shortly after you stop typing. Lines with an error get a red line number, and lines with a removed rule an amber one; the list under the field says what Formbricks removed or rejected, and why. Survey CSS is saved with the survey. Workspace CSS is saved with the **Save** button of the **Appearance** page, together with the theme, and changes every survey in the workspace. **Restore previous version** loads the workspace CSS from before the last save.
   </Step>
 </Steps>
 
@@ -90,16 +90,18 @@ CSS nesting is supported. It is flattened when you save, so it works in every [s
 
 ### Precedence
 
-Your declarations are made `!important` automatically and placed in their own cascade layers, so they win over the built-in survey styles and over the CSS of the page that shows the survey. You never need to write `!important` yourself. From lowest to highest:
+Your declarations are made `!important` automatically and placed in their own cascade layers, so they win over the built-in survey styles and over the CSS of the page that shows the survey. You never need to write `!important` yourself.
 
-| Rank | Source | Applies |
+The sources apply in this order. Where two style the same thing, the later one wins, so each source overrides everything above it:
+
+| Order | Source | Applies |
 | --- | --- | --- |
 | 1 | Built-in survey styles | Always |
 | 2 | Theme editor (workspace theme, or the survey's own styles) | Always |
 | 3 | Workspace base CSS | Always |
 | 4 | Workspace dark CSS | Dark mode only |
-| 5 | Survey base CSS | Always |
-| 6 | Survey dark CSS | Dark mode only |
+| 5 | Survey base CSS | While the survey's style overrides apply |
+| 6 | Survey dark CSS | Dark mode only, while the survey's style overrides apply |
 
 Inside one field the normal cascade applies: the more specific selector wins, then the later rule.
 
@@ -455,7 +457,7 @@ Define `@keyframes` in the same field as the rules that use them.
 
 Sizes are counted in bytes of UTF-8 text, so most characters count as one byte. The processed output adds scoping to every selector, so CSS close to the size limit that consists of many short rules can exceed the output limit. At most 50 warnings are listed per check; anything beyond that is still removed.
 
-The editor shows both sizes under the field: the source size (base and dark together) and, once the CSS is checked, the processed size, also base and dark together.
+The editor only mentions sizes when CSS goes over a limit, with the size it counted and the limit.
 
 Two notes do not remove anything: **Unknown property** (for example a typo like `colr`) and **Invalid value** (for example `color: notacolor`). The declaration stays, but browsers ignore it, so it has no effect.
 

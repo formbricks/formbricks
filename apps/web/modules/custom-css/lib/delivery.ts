@@ -84,7 +84,7 @@ const reprocessStale = async (stored: TCustomCssStored, scope: TCustomCssScope):
  * The respondent-facing CSS for one stored value (ENG-3552): compiled output only, never source. Absent
  * keys mean "no CSS" for that appearance, and `undefined` means no custom layer at all — no CSS, invalid
  * stored data, or stale output whose source no longer passes the current processor (withheld, never
- * served in its old form). The rollout flag is the caller's to apply, once per organization.
+ * served in its old form). Whether a survey's CSS applies at all is the caller's to decide.
  */
 export const toDeliveredCustomCss = async (
   stored: TCustomCssStored | null | undefined,

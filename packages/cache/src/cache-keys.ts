@@ -41,11 +41,6 @@ export const createCacheKey = {
 
   // Custom CSS (ENG-2949, ENG-3552)
   customCss: {
-    /** Fresh per-organization rollout decision, kept briefly so delivery does not ask PostHog per request. */
-    rollout: (organizationId: string): CacheKey => makeCacheKey("org", organizationId, "custom-css-rollout"),
-    /** The last decision PostHog actually returned, reused for a bounded period while it is unreachable. */
-    rolloutLastKnown: (organizationId: string): CacheKey =>
-      makeCacheKey("org", organizationId, "custom-css-rollout-last-known"),
     /**
      * Output of reprocessing stored source under the current processor. Keyed by the processor version and
      * a hash of the source, so a processor or policy change can never be answered from an older entry.

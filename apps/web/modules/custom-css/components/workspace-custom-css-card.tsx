@@ -1,7 +1,7 @@
 "use client";
 
 import { HistoryIcon, Loader2Icon } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, type Ref, useEffect, useImperativeHandle } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import {
@@ -12,14 +12,23 @@ import {
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
-import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { useBeforeUnloadPrompt } from "@/modules/ui/hooks/use-before-unload-prompt";
 import { CustomCssCard } from "./custom-css-card";
 import { CustomCssPlanNotice } from "./custom-css-plan-notice";
 import { useWorkspaceCustomCssEditor } from "./hooks/use-workspace-custom-css";
 import { normalizeCustomCssInput, toCustomCssDraft } from "./lib/draft";
-import { canSubmitCustomCssDraft, getCustomCssEditMode } from "./lib/edit-mode";
+import { getCustomCssEditMode, getWorkspaceCssSaveStep } from "./lib/edit-mode";
 import { type TWorkspaceCustomCssAccess } from "./types";
+
+/** `stopped`: the CSS could not be saved and the page's Save stops with it, after saying why. */
+export type TWorkspaceCustomCssSaveOutcome =
+  | { status: "skipped" }
+  | { status: "saved"; removedCount: number }
+  | { status: "stopped" };
+
+export interface TWorkspaceCustomCssSaveHandle {
+  save: () => Promise<TWorkspaceCustomCssSaveOutcome>;
+}
 
 interface WorkspaceCustomCssCardProps {
   workspaceId: string;
@@ -29,12 +38,14 @@ interface WorkspaceCustomCssCardProps {
   setOpen: (open: boolean) => void;
   /** Receives the validated compiled CSS for the page's preview, only when it changes. */
   onPreviewCssChange: (css: TCustomCssCompiled | null) => void;
+  /** The Appearance page's single Save runs this before it saves the theme (ENG-3723). */
+  saveRef?: Ref<TWorkspaceCustomCssSaveHandle>;
 }
 
 /**
- * Workspace Custom CSS in Look & Feel. Saved on its own, through `PATCH …/custom-css` and an explicit
- * confirmation, because it reaches every survey in the workspace; the theme form's Save is unrelated.
- * The draft previews in the page's theme preview and never publishes until saved.
+ * Workspace Custom CSS on the Appearance page. It is saved by the page's one Save, together with the
+ * theme, through `PATCH …/custom-css`; "Restore previous version" undoes the last save. The draft
+ * previews in the page's theme preview and never publishes until saved.
  *
  * The draft lives here, not in the page's styling form, so typing re-renders this card only: the
  * preview hears about the CSS when its validated output changes, about once per debounced check,
@@ -47,9 +58,9 @@ export const WorkspaceCustomCssCard = ({
   open,
   setOpen,
   onPreviewCssChange,
+  saveRef,
 }: Readonly<WorkspaceCustomCssCardProps>) => {
   const { t } = useTranslation();
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const editor = useWorkspaceCustomCssEditor({ workspaceId, enabled: true });
   const { resource } = editor;
   const previewCss = editor.validation.previewCss;
@@ -63,32 +74,36 @@ export const WorkspaceCustomCssCard = ({
     canEdit: access.canEdit && (resource?.canEdit ?? true),
     planAllowed: access.planAllowed && (resource?.planAllowed ?? true),
   });
-  const canSubmit = canSubmitCustomCssDraft({
-    mode,
-    changeKind: editor.changeKind,
-    status: editor.validation.status,
-  });
   const isDirty = editor.changeKind !== "unchanged";
   // In-app navigation keeps the draft for the next visit (see `unsaved-draft.ts`); a reload, a closed
   // tab or a full navigation would lose it, so those ask first.
   useBeforeUnloadPrompt(() => isDirty, { enabled: mode !== "read-only" });
 
-  const handleSave = async () => {
-    try {
-      const { warnings } = await editor.save(normalizeCustomCssInput(editor.draft));
-      // Notes leave their declaration in place, so only removals are counted as removed.
-      const removedCount = warnings.filter((warning) => !CUSTOM_CSS_NOTE_CODES.has(warning.code)).length;
-      toast.success(
-        removedCount > 0
-          ? t("workspace.custom_css.saved_with_warnings", { count: removedCount })
-          : t("workspace.custom_css.saved")
-      );
-    } catch (error) {
-      toast.error(getV3ApiErrorMessage(error, t("workspace.custom_css.save_failed")));
-    } finally {
-      setIsConfirmOpen(false);
-    }
-  };
+  useImperativeHandle(saveRef, () => ({
+    save: async () => {
+      const step = getWorkspaceCssSaveStep({
+        mode,
+        changeKind: editor.changeKind,
+        status: editor.validation.status,
+      });
+      if (step === "skip") return { status: "skipped" };
+      if (step === "block") {
+        setOpen(true);
+        toast.error(t("workspace.custom_css.fix_errors_before_saving_workspace"));
+        return { status: "stopped" };
+      }
+      try {
+        const { warnings } = await editor.save(normalizeCustomCssInput(editor.draft));
+        // Notes leave their declaration in place, so only removals are counted as removed.
+        const removedCount = warnings.filter((warning) => !CUSTOM_CSS_NOTE_CODES.has(warning.code)).length;
+        return { status: "saved", removedCount };
+      } catch (error) {
+        setOpen(true);
+        toast.error(getV3ApiErrorMessage(error, t("workspace.custom_css.save_failed")));
+        return { status: "stopped" };
+      }
+    },
+  }));
 
   const handleRestorePrevious = () => {
     if (!resource?.previous) return;
@@ -129,67 +144,46 @@ export const WorkspaceCustomCssCard = ({
     );
   }
 
+  const canRestore = mode === "full" && Boolean(resource?.previous);
+  const showRestoredDraft = mode !== "read-only" && editor.isDraftRestored;
   const footer =
-    mode === "read-only" ? null : (
+    canRestore || showRestoredDraft ? (
       <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 pt-4">
-        <Button
-          type="button"
-          size="sm"
-          disabled={!canSubmit}
-          loading={editor.isSaving}
-          onClick={() => setIsConfirmOpen(true)}>
-          {t("workspace.custom_css.save")}
-        </Button>
-        {isDirty && (
-          <Button type="button" size="sm" variant="ghost" onClick={editor.resetDraft}>
-            {t("workspace.custom_css.discard_changes")}
-          </Button>
-        )}
-        {mode === "full" && resource?.previous && (
+        {canRestore && (
           <Button type="button" size="sm" variant="ghost" onClick={handleRestorePrevious}>
             <HistoryIcon aria-hidden />
             {t("workspace.custom_css.restore_previous")}
           </Button>
         )}
-        {isDirty && (
-          <output className="text-xs text-slate-500">
-            {editor.isDraftRestored
-              ? t("workspace.custom_css.unsaved_changes_restored")
-              : t("workspace.custom_css.unsaved_changes")}
-          </output>
+        {showRestoredDraft && (
+          <>
+            <output className="text-xs text-slate-500">
+              {t("workspace.custom_css.unsaved_changes_restored")}
+            </output>
+            <Button type="button" size="sm" variant="ghost" onClick={editor.resetDraft}>
+              {t("workspace.custom_css.discard_changes")}
+            </Button>
+          </>
         )}
       </div>
-    );
+    ) : null;
 
   return (
-    <>
-      <CustomCssCard
-        scope="workspace"
-        appearance={appearance}
-        draft={editor.draft}
-        onDraftChange={editor.setDraft}
-        validation={editor.validation}
-        mode={mode}
-        savedStatus={resource?.status}
-        hasHeadScriptStyles={access.hasHeadScriptStyles}
-        notice={notice}
-        footer={footer}
-        lockedContent={lockedContent}
-        open={open}
-        setOpen={setOpen}
-        isSettingsPage
-      />
-      <ConfirmationModal
-        open={isConfirmOpen}
-        setOpen={setIsConfirmOpen}
-        title={t("workspace.custom_css.confirm_save_title")}
-        description={t("workspace.custom_css.confirm_save_text")}
-        body={t("workspace.custom_css.confirm_save_restore_hint")}
-        buttonText={t("workspace.custom_css.confirm_save_button")}
-        buttonVariant="default"
-        buttonLoading={editor.isSaving}
-        onConfirm={handleSave}
-      />
-    </>
+    <CustomCssCard
+      scope="workspace"
+      appearance={appearance}
+      draft={editor.draft}
+      onDraftChange={editor.setDraft}
+      validation={editor.validation}
+      mode={mode}
+      savedStatus={resource?.status}
+      hasHeadScriptStyles={access.hasHeadScriptStyles}
+      notice={notice}
+      footer={footer}
+      lockedContent={lockedContent}
+      open={open}
+      setOpen={setOpen}
+      isSettingsPage
+    />
   );
 };

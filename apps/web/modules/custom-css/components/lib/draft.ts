@@ -1,7 +1,6 @@
 import {
   CUSTOM_CSS_MAX_SOURCE_BYTES,
   type TCustomCssAppearance,
-  type TCustomCssCompiled,
   type TCustomCssInput,
   type TCustomCssScope,
   type TCustomCssStored,
@@ -153,11 +152,3 @@ export const toComparableStoredCustomCss = (
   const toEntry = (source: string | null) => (source === null ? null : { source, compiled: "" });
   return { light: toEntry(normalized.light), dark: toEntry(normalized.dark), processorVersion: 0 };
 };
-
-/**
- * Bytes of the compiled output, base and dark together, which has its own limit: scoping and
- * `!important` make it larger than the source, so a source under its limit can still be rejected (the
- * source counter alone would not show it). Counted the way the processor checks it.
- */
-export const getCompiledByteSize = (compiled: TCustomCssCompiled | null | undefined): number =>
-  getUtf8ByteLength(compiled?.light ?? "") + getUtf8ByteLength(compiled?.dark ?? "");

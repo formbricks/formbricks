@@ -52,11 +52,10 @@ interface StylingViewProps {
   /** Which palette the form edits and the preview shows. Only app surveys can render dark (D4). */
   appearance?: TStylingAppearance;
   setAppearance?: (appearance: TStylingAppearance) => void;
-  /** `null` when the Custom CSS rollout is off for this organization, which hides the card. */
-  customCssEditor?: TSurveyCustomCssEditorConfig | null;
-  customCssValidation?: TCustomCssValidationState;
+  customCssEditor: TSurveyCustomCssEditorConfig;
+  customCssValidation: TCustomCssValidationState;
   /** The survey's Custom CSS as last persisted. */
-  savedCustomCss?: TCustomCssStored | null;
+  savedCustomCss: TCustomCssStored | null;
 }
 
 export const StylingView = ({
@@ -74,9 +73,9 @@ export const StylingView = ({
   isStorageConfigured = true,
   appearance = "light",
   setAppearance,
-  customCssEditor = null,
+  customCssEditor,
   customCssValidation,
-  savedCustomCss = null,
+  savedCustomCss,
 }: StylingViewProps) => {
   const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
@@ -156,6 +155,7 @@ export const StylingView = ({
       setLogoSettingsOpen(false);
       setCardStylingOpen(false);
       setStylingOpen(false);
+      setCustomCssOpen(false);
     }
   }, [overwriteThemeStyling]);
 
@@ -306,20 +306,19 @@ export const StylingView = ({
             </>
           )}
 
-          {/* Not gated by "Add custom styles": survey CSS adds on top of the workspace CSS either way (D16). */}
-          {customCssEditor && customCssValidation && (
-            <SurveyCustomCssCard
-              config={customCssEditor}
-              localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
-              savedCustomCss={savedCustomCss}
-              validation={customCssValidation}
-              appearance={effectiveAppearance}
-              lookAndFeelHref={`${workspaceBasePath}/settings/workspace/look`}
-              open={customCssOpen}
-              setOpen={setCustomCssOpen}
-            />
-          )}
+          {/* Like the cards above, survey CSS only applies while "Add custom styles" is on (ENG-3723). */}
+          <SurveyCustomCssCard
+            config={customCssEditor}
+            localSurvey={localSurvey}
+            setLocalSurvey={setLocalSurvey}
+            savedCustomCss={savedCustomCss}
+            validation={customCssValidation}
+            appearance={effectiveAppearance}
+            appearanceHref={`${workspaceBasePath}/settings/workspace/look`}
+            disabled={!overwriteThemeStyling}
+            open={customCssOpen}
+            setOpen={setCustomCssOpen}
+          />
 
           {!isCxMode && (
             <div className="mt-4 flex h-8 items-center justify-between">

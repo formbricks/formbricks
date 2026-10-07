@@ -14,7 +14,7 @@ import { customCssKeys } from "../lib/validation";
 import { useCustomCssValidation } from "./use-custom-css-validation";
 
 /**
- * Everything the workspace Custom CSS card and the Look & Feel preview share: the saved resource
+ * Everything the workspace Custom CSS card and the Appearance preview share: the saved resource
  * (`GET`), the creator's draft, its live validation and the save (`PATCH`). Lives in the page's
  * styling component because the preview there renders the draft's validated output.
  *

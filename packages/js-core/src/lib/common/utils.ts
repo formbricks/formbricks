@@ -164,9 +164,9 @@ export const getStyling = (
 
 /**
  * The renderer's explicit `customCss` prop (ENG-3552): the workspace CSS, sent once in the workspace
- * settings, plus this survey's own. Both scopes, independent of theme selection and
- * `overwriteThemeStyling` — unlike `getStyling`, nothing here picks one object over the other. A state
- * cached before the server sent CSS simply has neither field, and the renderer then applies none.
+ * settings, plus this survey's own. Unlike `getStyling`, nothing here picks one object over the other:
+ * the server already leaves out a survey's CSS while its style overrides are off. A state cached before
+ * the server sent CSS simply has neither field, and the renderer then applies none.
  */
 export const getCustomCss = (
   settings: TWorkspaceStateSettings,

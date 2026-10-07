@@ -25,16 +25,19 @@ interface SurveyCustomCssCardProps {
   /** Run by the editor, which also feeds the preview from it. */
   validation: TCustomCssValidationState;
   appearance: TCustomCssAppearance;
-  lookAndFeelHref: string;
+  /** The Appearance settings, where the inherited workspace CSS is edited. */
+  appearanceHref: string;
+  /** "Add custom styles" is off, so the survey's CSS does not apply (ENG-3723). */
+  disabled: boolean;
   open: boolean;
   setOpen: (open: boolean) => void;
 }
 
 /**
- * Survey Custom CSS in the Styling tab (ENG-3553). Independent of "Add custom styles": survey CSS
- * adds on top of the workspace CSS whether or not the survey overrides the theme (D16). Edits go into
- * the working copy of the survey and are saved — and validated again — by the editor's normal save
- * and publish, which is what the survey's own edit permission already governs.
+ * Survey Custom CSS in the Styling tab (ENG-3553). Like the tab's other styling cards it is only
+ * available while "Add custom styles" is on; turned off, the saved CSS stays but stops applying
+ * (ENG-3723). Edits go into the working copy of the survey and are saved — and validated again — by
+ * the editor's normal save and publish, which is what the survey's own edit permission already governs.
  */
 export const SurveyCustomCssCard = ({
   config,
@@ -43,7 +46,8 @@ export const SurveyCustomCssCard = ({
   savedCustomCss,
   validation,
   appearance,
-  lookAndFeelHref,
+  appearanceHref,
+  disabled,
   open,
   setOpen,
 }: Readonly<SurveyCustomCssCardProps>) => {
@@ -64,7 +68,7 @@ export const SurveyCustomCssCard = ({
       source={config.workspace.source}
       status={config.workspace.status}
       appearance={appearance}
-      lookAndFeelHref={lookAndFeelHref}
+      appearanceHref={appearanceHref}
     />
   );
 
@@ -93,6 +97,7 @@ export const SurveyCustomCssCard = ({
         ) : undefined
       }
       inherited={inherited}
+      disabled={disabled}
       open={open}
       setOpen={setOpen}
     />

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { canSubmitCustomCssDraft, getCustomCssEditMode } from "./edit-mode";
+import { getCustomCssEditMode, getWorkspaceCssSaveStep } from "./edit-mode";
 
 describe("getCustomCssEditMode", () => {
   test("role decides first, then the plan", () => {
@@ -10,30 +10,32 @@ describe("getCustomCssEditMode", () => {
   });
 });
 
-describe("canSubmitCustomCssDraft", () => {
-  test("submits a valid edit with full access", () => {
-    expect(canSubmitCustomCssDraft({ mode: "full", changeKind: "edit", status: "valid" })).toBe(true);
-  });
-
-  test("never submits an unchanged draft or from read-only", () => {
-    expect(canSubmitCustomCssDraft({ mode: "full", changeKind: "unchanged", status: "valid" })).toBe(false);
-    expect(canSubmitCustomCssDraft({ mode: "read-only", changeKind: "removal", status: "empty" })).toBe(
-      false
+describe("getWorkspaceCssSaveStep", () => {
+  test("submits an edit with full access, including one whose check is still running", () => {
+    expect(getWorkspaceCssSaveStep({ mode: "full", changeKind: "edit", status: "valid" })).toBe("submit");
+    expect(getWorkspaceCssSaveStep({ mode: "full", changeKind: "edit", status: "pending" })).toBe("submit");
+    expect(getWorkspaceCssSaveStep({ mode: "full", changeKind: "edit", status: "unavailable" })).toBe(
+      "submit"
     );
   });
 
-  test("after a downgrade, allows clearing but not adding or editing", () => {
-    expect(canSubmitCustomCssDraft({ mode: "clear-only", changeKind: "removal", status: "empty" })).toBe(
-      true
-    );
-    expect(canSubmitCustomCssDraft({ mode: "clear-only", changeKind: "removal", status: "valid" })).toBe(
-      true
-    );
-    expect(canSubmitCustomCssDraft({ mode: "clear-only", changeKind: "edit", status: "valid" })).toBe(false);
+  test("stops the page's Save for a draft known to be invalid", () => {
+    expect(getWorkspaceCssSaveStep({ mode: "full", changeKind: "edit", status: "invalid" })).toBe("block");
   });
 
-  test("waits for an invalid or pending draft", () => {
-    expect(canSubmitCustomCssDraft({ mode: "full", changeKind: "edit", status: "invalid" })).toBe(false);
-    expect(canSubmitCustomCssDraft({ mode: "full", changeKind: "edit", status: "pending" })).toBe(false);
+  test("skips an unchanged draft and a read-only role, so the theme saves alone", () => {
+    expect(getWorkspaceCssSaveStep({ mode: "full", changeKind: "unchanged", status: "invalid" })).toBe(
+      "skip"
+    );
+    expect(getWorkspaceCssSaveStep({ mode: "read-only", changeKind: "removal", status: "empty" })).toBe(
+      "skip"
+    );
+  });
+
+  test("after a downgrade, saves a removal and nothing else", () => {
+    expect(getWorkspaceCssSaveStep({ mode: "clear-only", changeKind: "removal", status: "empty" })).toBe(
+      "submit"
+    );
+    expect(getWorkspaceCssSaveStep({ mode: "clear-only", changeKind: "edit", status: "valid" })).toBe("skip");
   });
 });

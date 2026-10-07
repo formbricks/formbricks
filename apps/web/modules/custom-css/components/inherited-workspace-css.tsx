@@ -3,30 +3,36 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { type TCustomCssAppearance, type TCustomCssInput } from "@formbricks/types/custom-css";
 import { cn } from "@/lib/cn";
+import { CssCodeField } from "./css-code-field";
 import { type TCustomCssHealthStatus } from "./lib/api-client";
+import { countLines } from "./lib/code-field";
+
+// Long enough to read a rule or two at a glance; a longer stylesheet scrolls inside the field.
+const MAX_VISIBLE_LINES = 10;
 
 interface InheritedWorkspaceCssProps {
   source: TCustomCssInput | null;
   status: TCustomCssHealthStatus;
   appearance: TCustomCssAppearance;
-  lookAndFeelHref: string;
+  appearanceHref: string;
 }
 
 /**
  * The workspace CSS a survey inherits, read-only and collapsed by default (ENG-3553). It applies
- * whether or not the survey overrides the theme (D16), so it is shown either way.
+ * whether or not the survey overrides the theme, so it is shown either way.
  */
 export const InheritedWorkspaceCss = ({
   source,
   status,
   appearance,
-  lookAndFeelHref,
+  appearanceHref,
 }: Readonly<InheritedWorkspaceCssProps>) => {
   const { t } = useTranslation();
+  const id = useId();
   const [open, setOpen] = useState(false);
   // Base CSS applies in both appearances, so the Dark tab shows it next to the dark rules it adds to.
   const fields: TCustomCssAppearance[] = appearance === "dark" ? ["light", "dark"] : ["light"];
@@ -54,7 +60,7 @@ export const InheritedWorkspaceCss = ({
             components={{
               lookFeelLink: (
                 <Link
-                  href={lookAndFeelHref}
+                  href={appearanceHref}
                   target="_blank"
                   className="font-medium text-slate-700 underline underline-offset-2"
                 />
@@ -77,15 +83,13 @@ export const InheritedWorkspaceCss = ({
                   </span>
                 )}
               </p>
-              <textarea
-                // Read-only but focusable, so a keyboard user can scroll a long stylesheet. It sizes to its
-                // content where field-sizing is supported; `rows` approximates that elsewhere.
-                readOnly
+              <CssCodeField
+                // Read-only but focusable, so a keyboard user can scroll a long stylesheet.
+                id={`${id}-${field}`}
                 value={css}
-                rows={css.split("\n").length}
-                spellCheck={false}
+                rows={Math.min(countLines(css), MAX_VISIBLE_LINES)}
+                resizable={false}
                 aria-label={`${t("workspace.custom_css.workspace_css_label")}: ${label}`}
-                className="block field-sizing-content max-h-60 w-full resize-none overflow-auto rounded-md border border-slate-200 bg-slate-50 p-3 font-mono text-xs whitespace-pre-wrap text-slate-700 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none"
               />
             </div>
           ))

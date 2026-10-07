@@ -232,7 +232,3 @@ export const getNextLastValid = (
   }
   return previous;
 };
-
-/** Whether a draft in this state may be saved. The server validates again either way. */
-export const canSaveCustomCssDraft = (status: TCustomCssValidationStatus): boolean =>
-  status === "valid" || status === "empty" || status === "unavailable";

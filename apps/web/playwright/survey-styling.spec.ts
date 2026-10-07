@@ -416,7 +416,7 @@ test.describe("Survey Styling", async () => {
   // ENG-3553. A synthetic CMS-style stylesheet (M2.11): its `@import` is removed (processor unit tests
   // cover the removal and its warning) without blocking the rest, the supported `data-fb-part` hooks
   // style the preview and the published survey, and survey CSS wins over workspace CSS. Self-hosted in
-  // E2E, so there is no plan gate and no rollout flag.
+  // E2E, so there is no plan gate.
   test("Custom CSS: workspace and survey CSS reach the link survey", async ({ page, users }) => {
     const user = await users.create();
     await user.login();
@@ -442,10 +442,14 @@ test.describe("Survey Styling", async () => {
       await expect(page.locator('#fbjs [data-fb-part="headline"]').first()).toHaveCSS("color", ink);
     });
 
-    await test.step("Saving workspace CSS asks to confirm its reach", async () => {
-      await page.getByRole("button", { name: "Save CSS" }).click();
-      await page.getByRole("dialog").getByRole("button", { name: "Save for all surveys" }).click();
-      await expect(page.getByText(/Custom CSS saved/)).toBeVisible();
+    await test.step("The page's one Save stores the workspace CSS with the theme", async () => {
+      await page
+        .locator("form")
+        .filter({ has: page.getByRole("button", { name: /^Custom CSS/ }) })
+        .getByRole("button", { name: "Save", exact: true })
+        .click();
+      // The removed @import is counted in the page's one confirmation.
+      await expect(page.getByText("Styling saved. 1 CSS rule was removed.")).toBeVisible();
 
       await page.reload();
       await page.getByRole("button", { name: /^Custom CSS/ }).click();
@@ -457,17 +461,23 @@ test.describe("Survey Styling", async () => {
       await page.goto(`/workspaces/${workspaceId}/surveys`);
       surveyId = await createSurveyFromScratch(page);
       await page.getByRole("button", { name: "Styling" }).click();
+      // Survey CSS follows the survey's other style overrides (ENG-3723).
+      const addCustomStyles = page.getByRole("switch", { name: "Add custom styles" });
+      await addCustomStyles.click();
       await page.getByRole("button", { name: /^Custom CSS/ }).click();
-
-      // Not behind "Add custom styles": survey CSS adds on top of the workspace CSS either way (D16).
       await page.getByLabel("Base CSS", { exact: true }).fill(surveyCss);
 
       const preview = page.locator("#fbjs");
-      await expect(preview.locator('[data-fb-part="button-primary"]').first()).toHaveCSS(
-        "background-color",
-        surveyButton
-      );
+      const previewButton = preview.locator('[data-fb-part="button-primary"]').first();
+      await expect(previewButton).toHaveCSS("background-color", surveyButton);
       await expect(preview.locator('[data-fb-part="headline"]').first()).toHaveCSS("color", ink);
+
+      // Off, the survey's CSS stops applying while the workspace CSS stays; on again, it is back.
+      await addCustomStyles.click();
+      await expect(previewButton).not.toHaveCSS("background-color", surveyButton);
+      await expect(preview.locator('[data-fb-part="headline"]').first()).toHaveCSS("color", ink);
+      await addCustomStyles.click();
+      await expect(previewButton).toHaveCSS("background-color", surveyButton);
     });
 
     await test.step("Respondents get both, with the survey CSS winning", async () => {

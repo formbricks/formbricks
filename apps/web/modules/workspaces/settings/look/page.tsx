@@ -15,7 +15,6 @@ import { CustomCssQueryClientProvider } from "@/modules/custom-css/components/cu
 import { hasStylesInHeadScripts } from "@/modules/custom-css/components/lib/hints";
 import { type TWorkspaceCustomCssAccess } from "@/modules/custom-css/components/types";
 import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
-import { getIsCustomCssRolledOut } from "@/modules/custom-css/lib/rollout";
 import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
 import { BrandingSettingsCard } from "@/modules/ee/whitelabel/remove-branding/components/branding-settings-card";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -40,24 +39,20 @@ export const WorkspaceLookSettingsPage = async (props: { params: Promise<{ works
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
-  const [canRemoveBranding, isCustomCssRolledOut, isCustomCssPlanAllowed] = await Promise.all([
+  const [canRemoveBranding, isCustomCssPlanAllowed] = await Promise.all([
     getRemoveBrandingPermission(organization.id),
-    getIsCustomCssRolledOut(organization.id),
     getCustomCssPlanAllowed(organization.id),
   ]);
   const publicDomain = getPublicDomain();
 
-  // Mirrors the server's checks for `PATCH …/custom-css` (ENG-2949), which stay authoritative. The
-  // rollout flag only hides the card; it never decides what may be saved.
-  const customCssAccess: TWorkspaceCustomCssAccess | null = isCustomCssRolledOut
-    ? {
-        canEdit: isOwner || isManager,
-        planAllowed: isCustomCssPlanAllowed,
-        // Head scripts exist only on self-hosted, and the check is a plain string match (ENG-3415).
-        hasHeadScriptStyles: !IS_FORMBRICKS_CLOUD && hasStylesInHeadScripts(workspace.customHeadScripts),
-        billingHref: IS_FORMBRICKS_CLOUD ? `/organizations/${organization.id}/settings/billing` : null,
-      }
-    : null;
+  // Mirrors the server's checks for `PATCH …/custom-css` (ENG-2949), which stay authoritative.
+  const customCssAccess: TWorkspaceCustomCssAccess = {
+    canEdit: isOwner || isManager,
+    planAllowed: isCustomCssPlanAllowed,
+    // Head scripts exist only on self-hosted, and the check is a plain string match (ENG-3415).
+    hasHeadScriptStyles: !IS_FORMBRICKS_CLOUD && hasStylesInHeadScripts(workspace.customHeadScripts),
+    billingHref: IS_FORMBRICKS_CLOUD ? `/organizations/${organization.id}/settings/billing` : null,
+  };
 
   return (
     <PageContentWrapper>

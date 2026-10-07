@@ -708,6 +708,9 @@ importers:
       posthog-node:
         specifier: 5.28.11
         version: 5.28.11(rxjs@7.8.2)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.3
       prismjs:
         specifier: 1.30.0
         version: 1.30.0

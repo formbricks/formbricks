@@ -2,7 +2,6 @@ import { describe, expect, test } from "vitest";
 import { type TCustomCssStored } from "@formbricks/types/custom-css";
 import {
   applyCustomCssDraftToStored,
-  getCompiledByteSize,
   getCustomCssByteSize,
   getCustomCssChangeKind,
   getCustomCssSource,
@@ -152,14 +151,5 @@ describe("toComparableStoredCustomCss", () => {
   test("reduces no CSS to null", () => {
     expect(toComparableStoredCustomCss(null)).toBeNull();
     expect(toComparableStoredCustomCss(undefined)).toBeNull();
-  });
-});
-
-describe("getCompiledByteSize", () => {
-  test("counts base and dark together in UTF-8 bytes, as the output limit does", () => {
-    expect(getCompiledByteSize({ light: "@layer fb-survey{#fbjs a{color:red!important}}" })).toBe(46);
-    expect(getCompiledByteSize({ light: "é", dark: "abc" })).toBe(5);
-    expect(getCompiledByteSize({ dark: "abc" })).toBe(3);
-    expect(getCompiledByteSize(null)).toBe(0);
   });
 });

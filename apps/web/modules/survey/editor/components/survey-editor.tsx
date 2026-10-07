@@ -32,6 +32,7 @@ import { useCustomCssValidation } from "@/modules/custom-css/components/hooks/us
 import { useLiveWorkspaceCustomCss } from "@/modules/custom-css/components/hooks/use-live-workspace-custom-css";
 import { getCustomCssSource, toCustomCssDraft } from "@/modules/custom-css/components/lib/draft";
 import { type TSurveyCustomCssEditorConfig } from "@/modules/custom-css/components/types";
+import { isSurveyCustomCssApplied } from "@/modules/custom-css/lib/survey-css-gate";
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { ElementsView } from "@/modules/survey/editor/components/elements-view";
@@ -98,8 +99,7 @@ interface SurveyEditorProps {
   visibility: TSurveyVisibility;
   surveyAccess: TSurveyAccess | null;
   ownerName: string | null;
-  /** `null` when the Custom CSS rollout is off for this organization, which hides the card. */
-  customCssEditor?: TSurveyCustomCssEditorConfig | null;
+  customCssEditor: TSurveyCustomCssEditorConfig;
 }
 
 export const SurveyEditor = ({
@@ -136,7 +136,7 @@ export const SurveyEditor = ({
   visibility,
   surveyAccess,
   ownerName,
-  customCssEditor = null,
+  customCssEditor,
 }: Readonly<SurveyEditorProps>) => {
   const isFollowUpsTabVisible = shouldShowFollowUpsTab({
     followUpCount: survey.followUps.length,
@@ -203,43 +203,41 @@ export const SurveyEditor = ({
 
   // Survey Custom CSS is checked here rather than in the Styling tab because the preview needs its
   // output on every tab: the preview only ever renders CSS the server validated for the current draft
-  // (ENG-3553). Workspace CSS is inherited whether or not the survey overrides the theme (D16).
+  // (ENG-3553). Workspace CSS always applies; the survey's own only while its style overrides do.
   const surveyCustomCssValidation = useCustomCssValidation({
     workspaceId: workspace.id,
     scope: "survey",
     surveyId: survey.id,
     draft: toCustomCssDraft(getCustomCssSource(localSurvey?.customCss)),
-    enabled: customCssEditor !== null,
+    enabled: true,
   });
   // Workspace CSS saved in another tab reaches the preview and the inherited panel without a reload.
   const liveWorkspaceCss = useLiveWorkspaceCustomCss({
     workspaceId: workspace.id,
-    enabled: customCssEditor !== null,
-    initial: {
-      source: customCssEditor?.workspace.source ?? null,
-      compiled: customCssEditor?.workspace.compiled ?? null,
-    },
+    enabled: true,
+    initial: { source: customCssEditor.workspace.source, compiled: customCssEditor.workspace.compiled },
   });
   const workspaceCompiledCss = liveWorkspaceCss.compiled;
   const liveCustomCssEditor = useMemo(
-    () =>
-      customCssEditor
-        ? {
-            ...customCssEditor,
-            workspace: {
-              ...customCssEditor.workspace,
-              source: liveWorkspaceCss.source,
-              compiled: workspaceCompiledCss,
-            },
-          }
-        : null,
+    () => ({
+      ...customCssEditor,
+      workspace: {
+        ...customCssEditor.workspace,
+        source: liveWorkspaceCss.source,
+        compiled: workspaceCompiledCss,
+      },
+    }),
     [customCssEditor, liveWorkspaceCss.source, workspaceCompiledCss]
   );
-  const surveyPreviewCss = surveyCustomCssValidation.previewCss;
+  const isSurveyCssApplied = isSurveyCustomCssApplied({
+    allowStyleOverwrite: workspace.styling.allowStyleOverwrite,
+    overwriteThemeStyling: localSurvey?.styling?.overwriteThemeStyling,
+  });
+  const surveyPreviewCss = isSurveyCssApplied ? surveyCustomCssValidation.previewCss : null;
   // Stable, so the memoized preview re-mounts the survey only when the validated CSS changes.
   const previewCustomCss = useMemo(
-    () => (customCssEditor ? { workspace: workspaceCompiledCss, survey: surveyPreviewCss } : undefined),
-    [customCssEditor, workspaceCompiledCss, surveyPreviewCss]
+    () => ({ workspace: workspaceCompiledCss, survey: surveyPreviewCss }),
+    [workspaceCompiledCss, surveyPreviewCss]
   );
 
   const fetchLatestWorkspaceData = useCallback(async () => {
@@ -404,7 +402,7 @@ export const SurveyEditor = ({
               setAppearance={setStylingAppearance}
               customCssEditor={liveCustomCssEditor}
               customCssValidation={surveyCustomCssValidation}
-              savedCustomCss={survey.customCss}
+              savedCustomCss={survey.customCss ?? null}
             />
           )}
 

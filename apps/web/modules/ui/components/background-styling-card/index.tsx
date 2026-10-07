@@ -46,7 +46,7 @@ export const BackgroundStylingCard = ({
         setOpen(openState);
       }}
       className={cn(
-        open ? "" : "hover:bg-slate-50",
+        !open && !disabled && "hover:bg-slate-50",
         "w-full space-y-2 rounded-lg border border-slate-300 bg-white"
       )}>
       <Collapsible.CollapsibleTrigger

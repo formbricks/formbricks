@@ -24,7 +24,9 @@ interface CustomCssIssuesProps {
 /**
  * The live check's outcome under the CSS field: one status line (a polite live region, so a screen
  * reader hears "valid" or "fix the errors" without losing its place) and the located list of errors
- * and removed rules the field's `aria-describedby` points at.
+ * and removed rules the field's `aria-describedby` points at. The field's gutter already marks the
+ * lines (ENG-3723), so the status line is only shown when something blocks saving; otherwise it is
+ * read out but not displayed.
  */
 export const CustomCssIssues = ({
   statusId,
@@ -104,15 +106,17 @@ export const CustomCssIssues = ({
     ...errors.map((issue) => ({ issue, label: errorLabels[issue.code], isError: true })),
     ...warnings.map((issue) => ({ issue, label: warningLabels[issue.code], isError: false })),
   ];
+  const isStatusShown = status === "invalid" || status === "unavailable";
 
   return (
-    <div className="flex flex-col gap-2">
+    // Nothing to show: the wrapper leaves the layout too, so the card keeps no empty gap for it.
+    <div className={cn("flex flex-col gap-2", !isStatusShown && issues.length === 0 && "sr-only")}>
       <output
         id={statusId}
         className={cn(
           "flex items-center gap-1.5 text-xs",
           status === "invalid" ? "text-red-700" : "text-slate-600",
-          !statusText && "sr-only"
+          !isStatusShown && "sr-only"
         )}>
         {statusText && (
           <StatusIcon

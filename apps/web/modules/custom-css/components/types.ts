@@ -2,8 +2,8 @@ import { type TCustomCssCompiled, type TCustomCssInput } from "@formbricks/types
 import { type TCustomCssHealthStatus } from "./lib/api-client";
 
 /**
- * Computed by the Look & Feel page loader. The card is not rendered at all when the rollout flag is
- * off; everything here mirrors the server's own checks, which stay authoritative.
+ * Computed by the Appearance page loader. Everything here mirrors the server's own checks, which stay
+ * authoritative.
  */
 export interface TWorkspaceCustomCssAccess {
   /** Organization owner or manager (D15). */
@@ -16,7 +16,7 @@ export interface TWorkspaceCustomCssAccess {
   billingHref: string | null;
 }
 
-/** Computed by the survey editor page loader; `null` there when the rollout flag hides the card. */
+/** Computed by the survey editor page loader. */
 export interface TSurveyCustomCssEditorConfig {
   /** Cloud: the Scale `custom-css` entitlement. Self-hosted: always true. */
   planAllowed: boolean;

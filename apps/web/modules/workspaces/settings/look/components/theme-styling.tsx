@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RotateCcwIcon, SparklesIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -17,7 +17,10 @@ import { COLOR_DEFAULTS, STYLE_DEFAULTS, getSuggestedColors } from "@/lib/stylin
 import { type TStylingAppearance } from "@/lib/styling/dark-mode";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { type TWorkspaceCustomCssAccess } from "@/modules/custom-css/components/types";
-import { WorkspaceCustomCssCard } from "@/modules/custom-css/components/workspace-custom-css-card";
+import {
+  type TWorkspaceCustomCssSaveHandle,
+  WorkspaceCustomCssCard,
+} from "@/modules/custom-css/components/workspace-custom-css-card";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
@@ -50,8 +53,7 @@ interface ThemeStylingProps {
   isReadOnly: boolean;
   isStorageConfigured: boolean;
   publicDomain: string;
-  /** `null` when the Custom CSS rollout is off for this organization, which hides the card. */
-  customCssAccess: TWorkspaceCustomCssAccess | null;
+  customCssAccess: TWorkspaceCustomCssAccess;
 }
 
 export const ThemeStyling = ({
@@ -105,8 +107,10 @@ export const ThemeStyling = ({
   const [backgroundStylingOpen, setBackgroundStylingOpen] = useState(false);
   const [customCssOpen, setCustomCssOpen] = useState(false);
 
-  // Workspace Custom CSS is its own resource with its own save; it shares the appearance selector and
-  // the preview, which renders only CSS the server validated for the current draft (ENG-3553).
+  // Workspace Custom CSS is its own resource, saved by this form's Save before the theme (ENG-3723). It
+  // shares the appearance selector and the preview, which renders only CSS the server validated for
+  // the current draft (ENG-3553).
+  const customCssSaveRef = useRef<TWorkspaceCustomCssSaveHandle>(null);
   const [customCssPreview, setCustomCssPreview] = useState<TCustomCssCompiled | null>(null);
   // A stable prop, so the preview only re-applies custom CSS when the validated output changes.
   const previewCustomCss = useMemo(() => ({ workspace: customCssPreview }), [customCssPreview]);
@@ -155,6 +159,10 @@ export const ThemeStyling = ({
   };
 
   const onSubmit: SubmitHandler<TWorkspaceStyling> = async (data) => {
+    // CSS first: when it cannot be saved, nothing is, so the page never ends up half saved.
+    const customCss = (await customCssSaveRef.current?.save()) ?? { status: "skipped" };
+    if (customCss.status === "stopped") return;
+
     const updatedWorkspaceResponse = await updateWorkspaceAction({
       workspaceId: workspace.id,
       data: {
@@ -168,7 +176,11 @@ export const ThemeStyling = ({
       setPreviewBrandColor(
         saved?.brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor
       );
-      toast.success(t("workspace.look.styling_updated_successfully"));
+      toast.success(
+        customCss.status === "saved" && customCss.removedCount > 0
+          ? t("workspace.custom_css.saved_with_warnings", { count: customCss.removedCount })
+          : t("workspace.look.styling_updated_successfully")
+      );
     } else {
       const errorMessage = getFormattedErrorMessage(updatedWorkspaceResponse);
       toast.error(errorMessage);
@@ -183,19 +195,15 @@ export const ThemeStyling = ({
             {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
           </AlertDescription>
         </Alert>
-        {customCssAccess && (
-          <>
-            <StylingAppearanceToggle appearance={appearance} onChange={setAppearance} />
-            <WorkspaceCustomCssCard
-              workspaceId={workspaceId}
-              access={{ ...customCssAccess, canEdit: false }}
-              appearance={appearance}
-              open={customCssOpen}
-              setOpen={setCustomCssOpen}
-              onPreviewCssChange={setCustomCssPreview}
-            />
-          </>
-        )}
+        <StylingAppearanceToggle appearance={appearance} onChange={setAppearance} />
+        <WorkspaceCustomCssCard
+          workspaceId={workspaceId}
+          access={{ ...customCssAccess, canEdit: false }}
+          appearance={appearance}
+          open={customCssOpen}
+          setOpen={setCustomCssOpen}
+          onPreviewCssChange={setCustomCssPreview}
+        />
       </div>
     );
   }
@@ -285,21 +293,20 @@ export const ThemeStyling = ({
                   isStorageConfigured={isStorageConfigured}
                 />
 
-                {customCssAccess && (
-                  <WorkspaceCustomCssCard
-                    workspaceId={workspaceId}
-                    access={customCssAccess}
-                    appearance={appearance}
-                    open={customCssOpen}
-                    setOpen={setCustomCssOpen}
-                    onPreviewCssChange={setCustomCssPreview}
-                  />
-                )}
+                <WorkspaceCustomCssCard
+                  workspaceId={workspaceId}
+                  access={customCssAccess}
+                  appearance={appearance}
+                  open={customCssOpen}
+                  setOpen={setCustomCssOpen}
+                  onPreviewCssChange={setCustomCssPreview}
+                  saveRef={customCssSaveRef}
+                />
               </div>
             </div>
 
             <div className="mt-4 flex items-center gap-2">
-              <Button size="sm" type="submit">
+              <Button size="sm" type="submit" loading={form.formState.isSubmitting}>
                 {t("common.save")}
               </Button>
               <Button
@@ -328,7 +335,7 @@ export const ThemeStyling = ({
                   },
                 }}
                 appearance={appearance}
-                customCss={customCssAccess ? previewCustomCss : undefined}
+                customCss={previewCustomCss}
                 previewType={previewSurveyType}
                 setPreviewType={setPreviewSurveyType}
                 publicDomain={publicDomain}
