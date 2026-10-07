@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
+import { applyAutoSelectLanguageRule } from "../lib/auto-select-language";
 import {
   computeTranslationProgress,
   extractTranslatableStrings,
@@ -145,10 +146,16 @@ export const LanguageView = ({
     setHasIncompleteTranslations(hasIncomplete);
   }, [localSurvey.languages, translatableStrings, isMultiLanguageActivated, setHasIncompleteTranslations]);
 
+  // Every language change made here goes through this, so "Use browser language by default" turns on
+  // when multi-language is first activated and off when it is deactivated (see the rule's docs).
+  const updateLocalSurvey = (updatedSurvey: TSurvey) => {
+    setLocalSurvey(applyAutoSelectLanguageRule(localSurvey, updatedSurvey));
+  };
+
   const updateSurveyTranslations = (survey: TSurvey, updatedLanguages: TSurveyLanguage[]) => {
     const translatedSurveyResult = addMultiLanguageLabels(survey, extractLanguageCodes(updatedLanguages));
     const updatedSurvey = { ...translatedSurveyResult, languages: updatedLanguages };
-    setLocalSurvey(updatedSurvey as TSurvey);
+    updateLocalSurvey(updatedSurvey as TSurvey);
   };
 
   const handleActivationSwitch = () => {
@@ -168,7 +175,7 @@ export const LanguageView = ({
                 cleanedSurvey = removeLanguageKeysFromSurvey(cleanedSurvey, lang.language.code);
               }
             }
-            setLocalSurvey({ ...cleanedSurvey, languages: [] });
+            updateLocalSurvey({ ...cleanedSurvey, languages: [] });
             setIsMultiLanguageActivated(false);
             setConfirmationModalInfo((prev) => ({ ...prev, open: false }));
           },
@@ -206,7 +213,7 @@ export const LanguageView = ({
     const cleanedSurvey = removeLanguageKeysFromSurvey(localSurvey, language.code);
 
     setConfirmationModalInfo((prev) => ({ ...prev, open: false }));
-    setLocalSurvey({ ...cleanedSurvey, languages: newLanguages });
+    updateLocalSurvey({ ...cleanedSurvey, languages: newLanguages });
   };
 
   const handleToggleLanguage = (code: string) => {
@@ -221,12 +228,12 @@ export const LanguageView = ({
           const updatedLanguages = localSurvey.languages.map((l) =>
             l.language.code === code ? { ...l, enabled: false } : l
           );
-          setLocalSurvey({ ...localSurvey, languages: updatedLanguages });
+          updateLocalSurvey({ ...localSurvey, languages: updatedLanguages });
         } else {
           // No translations — remove from survey object and clean up i18n keys
           const cleanedSurvey = removeLanguageKeysFromSurvey(localSurvey, code);
           const updatedLanguages = localSurvey.languages.filter((l) => l.language.code !== code);
-          setLocalSurvey({ ...cleanedSurvey, languages: updatedLanguages });
+          updateLocalSurvey({ ...cleanedSurvey, languages: updatedLanguages });
         }
       } else {
         // Re-enabling — ensure i18n keys exist for any new translatable strings
@@ -265,7 +272,7 @@ export const LanguageView = ({
         // removed language can never linger and later corrupt the default (ENG-2001).
         const cleanedSurvey = removeLanguageKeysFromSurvey(localSurvey, code);
         const updatedLanguages = localSurvey.languages.filter((l) => l.language.code !== code);
-        setLocalSurvey({ ...cleanedSurvey, languages: updatedLanguages });
+        updateLocalSurvey({ ...cleanedSurvey, languages: updatedLanguages });
         setConfirmationModalInfo((prev) => ({ ...prev, open: false }));
       },
     });
@@ -288,7 +295,7 @@ export const LanguageView = ({
             cleanedSurvey = removeLanguageKeysFromSurvey(cleanedSurvey, lang.language.code);
           }
         }
-        setLocalSurvey({ ...cleanedSurvey, languages: [] });
+        updateLocalSurvey({ ...cleanedSurvey, languages: [] });
         setIsMultiLanguageActivated(false);
         setConfirmationModalInfo((prev) => ({ ...prev, open: false }));
       },
@@ -297,6 +304,10 @@ export const LanguageView = ({
 
   const handleLanguageSwitchToggle = () => {
     setLocalSurvey({ ...localSurvey, showLanguageSwitch: !localSurvey.showLanguageSwitch });
+  };
+
+  const handleAutoSelectLanguageToggle = () => {
+    setLocalSurvey({ ...localSurvey, autoSelectLanguage: !localSurvey.autoSelectLanguage });
   };
 
   const openTranslationModal = (code: string) => {
@@ -516,6 +527,18 @@ export const LanguageView = ({
             description={t(
               "workspace.surveys.edit.enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey"
             )}
+            childBorder={true}
+          />
+
+          {/* Use browser language by default toggle */}
+          <AdvancedOptionToggle
+            customContainerClass="px-0 pt-0"
+            htmlId="autoSelectLanguage"
+            disabled={enabledLanguages.length <= 1}
+            isChecked={!!localSurvey.autoSelectLanguage}
+            onToggle={handleAutoSelectLanguageToggle}
+            title={t("workspace.surveys.edit.auto_select_browser_language")}
+            description={t("workspace.surveys.edit.auto_select_browser_language_description")}
             childBorder={true}
           />
         </div>

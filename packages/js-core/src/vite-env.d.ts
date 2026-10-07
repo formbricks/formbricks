@@ -10,6 +10,21 @@ declare global {
       // Optional: the surveys bundle is served by the (possibly self-hosted, older)
       // Formbricks instance, so it may predate setNonce.
       setNonce?: (nonce: string | undefined) => void;
+      // The shared survey language resolver. Lives in the surveys bundle so the SDK never ships the
+      // canonical language table; optional for the same reason as setNonce. Hand-mirrors the signature
+      // of `resolveSurveyLanguage` in @formbricks/i18n-utils (js-core deliberately has no dependency on
+      // it) — keep the two identical.
+      resolveSurveyLanguage?: (input: {
+        languages: readonly {
+          default: boolean;
+          enabled: boolean;
+          language: { code: string; alias?: string | null };
+        }[];
+        explicitLanguage?: string | null;
+        browserLanguages?: readonly string[];
+        autoSelectLanguage?: boolean | null;
+        unmatchedExplicitLanguage: "fallback" | "skip";
+      }) => string | null;
     };
   }
 }

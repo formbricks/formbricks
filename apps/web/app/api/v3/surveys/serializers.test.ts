@@ -162,6 +162,21 @@ describe("serializeV3SurveyResource", () => {
     });
   });
 
+  test("exposes the language settings, mapping unset columns to null", () => {
+    expect(
+      serializeV3SurveyResource(
+        { ...baseSurvey, showLanguageSwitch: true, autoSelectLanguage: true } as TSurvey,
+        TEST_VISIBILITY
+      )
+    ).toMatchObject({ showLanguageSwitch: true, autoSelectLanguage: true });
+    expect(
+      serializeV3SurveyResource(
+        { ...baseSurvey, showLanguageSwitch: null, autoSelectLanguage: undefined } as TSurvey,
+        TEST_VISIBILITY
+      )
+    ).toMatchObject({ showLanguageSwitch: null, autoSelectLanguage: null });
+  });
+
   test("omits distribution and targeting for link surveys", () => {
     const resource = serializeV3SurveyResource(baseSurvey, TEST_VISIBILITY);
 

@@ -3412,6 +3412,8 @@
         "auto_save_disabled": "Otomatik kaydetme devre dışı",
         "auto_save_disabled_tooltip": "Anketin yalnızca taslak halindeyken otomatik kaydedilir. Bu, artık taslak olmayan anketlerin yanlışlıkla değiştirilmemesini sağlar.",
         "auto_save_on": "Otomatik kaydetme açık",
+        "auto_select_browser_language": "Varsayılan olarak tarayıcı dilini kullan",
+        "auto_select_browser_language_description": "Anket, katılımcının tarayıcı dili etkin olduğunda anketi otomatik olarak bu dilde açar. Aksi takdirde varsayılan dile geçer.",
         "automatically_close_survey_after_n_seconds_if_no_response": "Yanıt alınmazsa, tetiklendikten <autoCloseInput /> saniye sonra anketi otomatik olarak kapat.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Belirli sayıda yanıt alındıktan sonra anketi otomatik olarak kapat.",
         "automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds": "Kullanıcı belirli saniye içinde yanıt vermezse anketi otomatik olarak kapat.",
