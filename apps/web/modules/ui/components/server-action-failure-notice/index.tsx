@@ -1,9 +1,10 @@
 "use client";
 
-import { type FocusEvent, useEffect, useRef, useState } from "react";
+import { type FocusEvent, type MouseEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { registerUnexpectedServerActionResponseListener } from "@/lib/utils/unexpected-server-action-response";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
+import { createFocusReturn } from "./focus-return";
 
 /** Matches the notice below, which carries `data-server-action-failure-notice`. */
 const NOTICE_SELECTOR = "[data-server-action-failure-notice]";
@@ -19,19 +20,19 @@ interface TServerActionFailures {
   dismiss: () => void;
 }
 
-const isInsideNotice = (element: Element | null) => element?.closest(NOTICE_SELECTOR) != null;
+const isInsideNotice = (element: Element) => element.closest(NOTICE_SELECTOR) !== null;
 
 /** Tracks server-action failures nothing else reported (ENG-2899). */
 export const useServerActionFailures = (): TServerActionFailures => {
   const [state, setState] = useState({ failureCount: 0, isVisible: false, restoreFocus: false });
-  // Kept here rather than in the notice: a new failure remounts the notice, and focus moved into the
-  // new one must still return to where it was before the first.
-  const returnFocusRef = useRef<HTMLElement | null>(null);
+  // Kept here rather than in the notice, which each new failure remounts.
+  const [focusReturn] = useState(() => createFocusReturn(isInsideNotice));
 
   useEffect(
     () =>
       registerUnexpectedServerActionResponseListener(() => {
-        const restoreFocus = isInsideNotice(document.activeElement);
+        const focused = document.activeElement;
+        const restoreFocus = focused !== null && isInsideNotice(focused);
         setState((current) => ({ failureCount: current.failureCount + 1, isVisible: true, restoreFocus }));
       }),
     []
@@ -39,20 +40,20 @@ export const useServerActionFailures = (): TServerActionFailures => {
 
   return {
     ...state,
-    onFocusEnter: (event) => {
-      if (event.relatedTarget instanceof HTMLElement && !isInsideNotice(event.relatedTarget)) {
-        returnFocusRef.current = event.relatedTarget;
-      }
-    },
+    onFocusEnter: (event) => focusReturn.recordEntry(event.relatedTarget),
     dismiss: () => {
-      const returnFocusTo = returnFocusRef.current;
-      returnFocusRef.current = null;
-      // Only when focus is in the notice: unmounting it would otherwise drop focus to the document body.
-      if (isInsideNotice(document.activeElement) && returnFocusTo?.isConnected) returnFocusTo.focus();
+      focusReturn.restore(document.activeElement);
       setState((current) => ({ ...current, isVisible: false, restoreFocus: false }));
     },
   };
 };
+
+/**
+ * A mouse click on Close must not move focus into the notice: with a modal dialog open, its focus trap
+ * would pull focus straight back into the dialog and select the text of the input it lands on, so the
+ * user's next keystroke replaces what they typed. Keyboard activation is unaffected.
+ */
+const keepFocusWhereItIs = (event: MouseEvent<HTMLButtonElement>) => event.preventDefault();
 
 interface ServerActionFailureNoticeProps {
   restoreFocus: boolean;
@@ -95,7 +96,7 @@ export const ServerActionFailureNotice = ({
       onFocus={onFocusEnter}>
       <AlertTitle>{t("common.something_went_wrong")}</AlertTitle>
       <AlertDescription>{t("common.action_may_not_have_gone_through")}</AlertDescription>
-      <AlertButton ref={closeButtonRef} onClick={onDismiss}>
+      <AlertButton ref={closeButtonRef} onMouseDown={keepFocusWhereItIs} onClick={onDismiss}>
         {t("common.close")}
       </AlertButton>
     </Alert>
