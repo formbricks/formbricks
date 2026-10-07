@@ -3,11 +3,9 @@ import { prisma } from "@formbricks/database";
 import { Prisma, Response } from "@formbricks/database/prisma";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { calculateTtcTotal, normalizeResponseLanguage } from "@/lib/response/utils";
 import { getContactByUserId } from "@/modules/api/v2/management/responses/lib/contact";
 import {
-  getMonthlyOrganizationResponseCount,
   getOrganizationBilling,
   getOrganizationIdFromWorkspaceId,
 } from "@/modules/api/v2/management/responses/lib/organization";
@@ -53,15 +51,57 @@ export const getResponses = async (
   }
 };
 
-export const createResponse = async (
+/**
+ * What a create reads before its transaction opens: the contact the response links to, and the
+ * workspace's organization with its billing row (both checked to exist). These go through the root
+ * client, so reading them inside the transaction would check out a second pool connection while the
+ * transaction holds the first, and on a saturated pool that read queues behind the very transaction
+ * waiting for it (ENG-3722).
+ *
+ * Each is kept as a `Result` rather than failing the resolve, so `createResponse` still reports the
+ * failures in the order it always has: display, then contact, then organization.
+ */
+export type TCreateResponseContext = {
+  contact: Result<{ id: string; attributes: TContactAttributes } | null, ApiErrorResponseV2>;
+  organization: Result<string, ApiErrorResponseV2>;
+};
+
+const NO_CONTACT: TCreateResponseContext["contact"] = ok(null);
+
+const resolveOrganization = async (workspaceId: string): Promise<Result<string, ApiErrorResponseV2>> => {
+  const organizationIdResult = await getOrganizationIdFromWorkspaceId(workspaceId);
+  if (!organizationIdResult.ok) {
+    return err(organizationIdResult.error as ApiErrorResponseV2);
+  }
+
+  const billing = await getOrganizationBilling(organizationIdResult.data);
+  if (!billing.ok) {
+    return err(billing.error as ApiErrorResponseV2);
+  }
+
+  return ok(organizationIdResult.data);
+};
+
+/** The reads a create needs, made before its transaction opens — see `TCreateResponseContext`. */
+export const resolveCreateResponseContext = async (
   workspaceId: string,
+  userId: string | null | undefined
+): Promise<TCreateResponseContext> => {
+  const [contact, organization] = await Promise.all([
+    userId ? getContactByUserId(workspaceId, userId) : NO_CONTACT,
+    resolveOrganization(workspaceId),
+  ]);
+  return { contact, organization };
+};
+
+export const createResponse = async (
   responseInput: TResponseInput,
+  context: TCreateResponseContext,
   tx?: Prisma.TransactionClient
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
   const {
     surveyId,
     displayId,
-    userId,
     finished,
     data,
     language,
@@ -97,16 +137,10 @@ export const createResponse = async (
       }
     }
 
-    let contact: { id: string; attributes: TContactAttributes } | null = null;
-
-    // If userId is provided, look up the contact by userId
-    if (userId) {
-      const contactResult = await getContactByUserId(workspaceId, userId);
-      if (!contactResult.ok) {
-        return err(contactResult.error);
-      }
-      contact = contactResult.data;
+    if (!context.contact.ok) {
+      return err(context.contact.error);
     }
+    const contact = context.contact.data;
 
     let ttc = {};
     if (initialTtc) {
@@ -144,14 +178,8 @@ export const createResponse = async (
       endingId,
     };
 
-    const organizationIdResult = await getOrganizationIdFromWorkspaceId(workspaceId);
-    if (!organizationIdResult.ok) {
-      return err(organizationIdResult.error as ApiErrorResponseV2);
-    }
-
-    const billing = await getOrganizationBilling(organizationIdResult.data);
-    if (!billing.ok) {
-      return err(billing.error as ApiErrorResponseV2);
+    if (!context.organization.ok) {
+      return err(context.organization.error);
     }
 
     const prismaClient = tx ?? prisma;
@@ -159,15 +187,6 @@ export const createResponse = async (
     const response = await prismaClient.response.create({
       data: prismaData,
     });
-
-    if (IS_FORMBRICKS_CLOUD) {
-      const responsesCountResult = await getMonthlyOrganizationResponseCount(organizationIdResult.data);
-      if (!responsesCountResult.ok) {
-        return err(responsesCountResult.error as ApiErrorResponseV2);
-      }
-
-      // Limit check completed
-    }
 
     return ok(response);
   } catch (error) {
@@ -187,10 +206,15 @@ export const createResponseWithQuotaEvaluation = async (
   // Canonicalize once so quota evaluation uses the same code persisted on the response (createResponse
   // canonicalizes the stored value via the same helper). Keeps a request internally consistent.
   const canonicalLanguage = normalizeResponseLanguage(responseInput.language);
-  // Read before the transaction opens; evaluation checks it against the survey of the row written.
-  const quotaContext = await loadQuotaEvaluationContext(responseInput.surveyId);
+  // Independent reads, so in parallel and before the transaction opens. Neither rejects: the context
+  // carries its failures as results, and the quota load logs and returns null. Evaluation checks the
+  // quota context against the survey of the row written.
+  const [responseContext, quotaContext] = await Promise.all([
+    resolveCreateResponseContext(workspaceId, responseInput.userId),
+    loadQuotaEvaluationContext(responseInput.surveyId),
+  ]);
   const txResponse = await prisma.$transaction<Result<Response, ApiErrorResponseV2>>(async (tx) => {
-    const responseResult = await createResponse(workspaceId, responseInput, tx);
+    const responseResult = await createResponse(responseInput, responseContext, tx);
     if (!responseResult.ok) {
       return responseResult;
     }
