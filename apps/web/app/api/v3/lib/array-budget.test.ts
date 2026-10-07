@@ -1,4 +1,6 @@
+import { createId } from "@paralleldrive/cuid2";
 import { describe, expect, test } from "vitest";
+import { MAX_SEGMENT_FILTER_DEPTH, ZSegmentFilters } from "@formbricks/types/segment";
 import {
   V3_REQUEST_ARRAY_MAX_ITEMS,
   V3_REQUEST_ARRAY_MAX_TOTAL_ELEMENTS,
@@ -63,6 +65,36 @@ describe("findArrayBudgetViolation", () => {
     expect(violation && arrayBudgetInvalidParam(violation, "body").reason).toBe(
       `Too deep: expected the request to nest <=${V3_REQUEST_MAX_DEPTH} levels`
     );
+  });
+
+  test("accepts the deepest body the API takes: a full-depth segment filter tree, inside an MCP batch", () => {
+    // The cap has to stay above this, or valid targeting payloads start getting a 400.
+    let filters: unknown[] = [
+      {
+        id: createId(),
+        connector: null,
+        resource: {
+          id: createId(),
+          root: { type: "attribute", contactAttributeKey: "email" },
+          value: "user@example.com",
+          qualifier: { operator: "equals" },
+        },
+      },
+    ];
+    for (let level = 1; level < MAX_SEGMENT_FILTER_DEPTH; level += 1) {
+      filters = [{ id: createId(), connector: null, resource: filters }];
+    }
+    expect(ZSegmentFilters.safeParse(filters).success).toBe(true);
+    const mcpBatch = [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: { name: "update_survey", arguments: { body: { targeting: { filters } } } },
+      },
+    ];
+
+    expect(findArrayBudgetViolation(mcpBatch)).toBeNull();
   });
 
   test("refuses deep nesting whatever its shape, without recursing", () => {

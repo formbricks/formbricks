@@ -16,10 +16,12 @@ export const V3_REQUEST_ARRAY_MAX_TOTAL_ELEMENTS = 50_000;
 /**
  * Deepest nesting a v3 request may carry, counted in containers from the root. The walk holds a little
  * state for every open level, so depth is what bounds it: without a cap, a 15 MB body nested one level
- * per few bytes keeps millions of levels open at once (ENG-3653). Real bodies sit far below this — a
- * survey document, its logic's condition groups and a Qualtrics export nest a few dozen levels at most.
+ * per few bytes keeps millions of levels open at once (ENG-3653). The cap costs one frame per level, so
+ * it sits well clear of the deepest valid body rather than close to it: a segment-filter tree at
+ * `MAX_SEGMENT_FILTER_DEPTH` in a survey's `targeting.filters` nests about 105 levels, 109 inside an MCP
+ * batch. Keep it above that — the test that walks such a tree fails first.
  */
-export const V3_REQUEST_MAX_DEPTH = 128;
+export const V3_REQUEST_MAX_DEPTH = 256;
 
 /**
  * How much of the offending array's path a violation reports. The path is caller-shaped too: a 120 KB

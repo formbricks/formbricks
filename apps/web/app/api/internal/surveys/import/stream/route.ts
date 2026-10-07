@@ -12,7 +12,7 @@
  * spend AI tokens.
  *
  * The body keeps the v3 request budget: at most 1,000 items in any one array, 50,000 across the file,
- * and 128 levels of nesting. In a QSF that means about 1,000 questions (`SurveyElements` holds one
+ * and 256 levels of nesting. In a QSF that means about 1,000 questions (`SurveyElements` holds one
  * element per question, trashed ones included, plus a few survey-wide ones) and 1,000 choices per
  * question (`Payload.ChoiceOrder`). `POST /api/v3/surveys` applies the same budget to the survey the
  * import becomes, so a question with more choices than that could not be created anyway. Past a limit,
