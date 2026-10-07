@@ -1,13 +1,8 @@
 import { Metadata } from "next";
 import {
-  AZURE_OAUTH_ENABLED,
   EMAIL_AUTH_ENABLED,
-  GITHUB_OAUTH_ENABLED,
-  GOOGLE_OAUTH_ENABLED,
   OIDC_DISPLAY_NAME,
-  OIDC_OAUTH_ENABLED,
   PASSWORD_RESET_DISABLED,
-  SAML_OAUTH_ENABLED,
   SIGNUP_ENABLED,
   WEBAPP_URL,
 } from "@/lib/constants";
@@ -18,11 +13,8 @@ import {
   getSearchParamString,
   resolveAuthCallbackUrl,
 } from "@/modules/auth/lib/callback-url";
-import {
-  getIsMultiOrgEnabled,
-  getIsSamlSsoEnabled,
-  getIsSsoEnabled,
-} from "@/modules/ee/license-check/lib/utils";
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getSsoAvailability, toSsoFormProps } from "@/modules/ee/sso/lib/sso-availability";
 import { LoginForm } from "./components/login-form";
 
 export const metadata: Metadata = {
@@ -35,10 +27,9 @@ export const LoginPage = async ({
 }: Readonly<{
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }>) => {
-  const [isMultiOrgEnabled, isSsoEnabled, isSamlSsoEnabled, searchParams] = await Promise.all([
+  const [isMultiOrgEnabled, ssoAvailability, searchParams] = await Promise.all([
     getIsMultiOrgEnabled(),
-    getIsSsoEnabled(),
-    getIsSamlSsoEnabled(),
+    getSsoAvailability(),
     searchParamsProps,
   ]);
   const oauthError = getSearchParamString(searchParams.error);
@@ -50,7 +41,6 @@ export const LoginPage = async ({
     }) ?? WEBAPP_URL;
   const resolvedCallbackPath = getRelativeCallbackUrl(resolvedCallbackUrl, WEBAPP_URL);
   const inviteToken = getInviteTokenFromCallbackUrl(resolvedCallbackUrl, WEBAPP_URL);
-  const samlSsoEnabled = isSamlSsoEnabled && SAML_OAUTH_ENABLED;
 
   return (
     <FormWrapper>
@@ -58,14 +48,9 @@ export const LoginPage = async ({
         emailAuthEnabled={EMAIL_AUTH_ENABLED}
         publicSignUpEnabled={SIGNUP_ENABLED}
         passwordResetEnabled={!PASSWORD_RESET_DISABLED}
-        googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
-        githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
-        azureOAuthEnabled={AZURE_OAUTH_ENABLED}
-        oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
+        {...toSsoFormProps(ssoAvailability)}
         oidcDisplayName={OIDC_DISPLAY_NAME}
         isMultiOrgEnabled={isMultiOrgEnabled}
-        isSsoEnabled={isSsoEnabled}
-        samlSsoEnabled={samlSsoEnabled}
         oauthError={oauthError}
         // ENG-2562: set when a verification succeeded but the session was withheld, because the
         // browser presenting the link was not the one that signed up. Without it the user is bounced

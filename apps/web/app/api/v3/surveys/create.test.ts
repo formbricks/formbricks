@@ -220,6 +220,21 @@ describe("createV3Survey", () => {
     expect(getExternalUrlsPermission).not.toHaveBeenCalled();
   });
 
+  test("persists the language settings from the body", async () => {
+    await createV3Survey(
+      { ...createBody, showLanguageSwitch: true, autoSelectLanguage: true },
+      { user: { id: "user_1", email: "user@example.com", name: "User" }, expires: "2026-05-01" },
+      "req_1",
+      "org_1"
+    );
+
+    expect(createSurvey).toHaveBeenCalledWith(
+      workspaceId,
+      expect.objectContaining({ showLanguageSwitch: true, autoSelectLanguage: true }),
+      expect.anything()
+    );
+  });
+
   test("keeps createdBy null for API key calls and honors explicit disabled languages", async () => {
     const body = ZV3CreateSurveyBody.parse({
       ...rawCreateBody,

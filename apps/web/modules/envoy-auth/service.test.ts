@@ -150,6 +150,38 @@ describe("authorizeEnvoyRequest", () => {
     });
   });
 
+  // ENG-3658: Envoy forwards this body verbatim, and the Hub reads keys case-insensitively, so the
+  // authorizer must refuse it rather than check only the exact `tenant_id`.
+  test.each([
+    ["create", "/api/v3/feedbackRecords"],
+    ["semanticSearch", "/api/v3/feedbackRecords/search/semantic"],
+  ])("refuses a %s body carrying a case variant of tenant_id", async (_op, path) => {
+    mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
+    mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: false, write: false } },
+      workspacePermissions: [{ workspaceId: "workspace_1", workspaceName: "Linked", permission: "manage" }],
+    });
+
+    const response = await authorizeEnvoyRequest(
+      createRequest(`http://localhost/api/envoy-auth${path}`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: "Bearer fbk_test",
+        },
+        body: JSON.stringify({ tenant_id: feedbackDirectoryId, TENANT_ID: "clyy1234567890123456789012" }),
+      })
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe("Ambiguous tenant_id");
+    expect(response.headers.get("x-envoy-auth-headers-to-remove")).toBeNull();
+    expect(mockCan).not.toHaveBeenCalled();
+  });
+
   test("returns 400 when bulkDelete is missing tenant_id", async () => {
     mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
     mockAuthenticateApiKeyFromHeaders.mockResolvedValue({

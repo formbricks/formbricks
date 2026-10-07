@@ -1,4 +1,5 @@
 import { h, render } from "preact";
+import { resolveSurveyLanguage } from "@formbricks/i18n-utils/survey-language-match";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { RenderSurvey } from "@/components/general/render-survey";
 import { I18nProvider } from "@/components/i18n/provider";
@@ -111,5 +112,11 @@ if (globalThis.window !== undefined) {
     renderSurvey,
     onFilePick,
     setNonce: setStyleNonce,
+    // The SDK resolves an app survey's display language through this, so js-core stays free of the
+    // canonical language table this bundle already carries for the renderer. `satisfies` keeps what
+    // is assigned here in step with the declared global (./vite-env.d.ts).
+    resolveSurveyLanguage: resolveSurveyLanguage satisfies NonNullable<
+      Window["formbricksSurveys"]
+    >["resolveSurveyLanguage"],
   } as typeof globalThis.window.formbricksSurveys;
 }

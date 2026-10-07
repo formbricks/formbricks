@@ -202,8 +202,8 @@ the correct language, so they do not need to use the switcher. See
 
 ### Semantic Headings
 
-**Affected criterion:** 2.4.6 — **Fixed for link surveys, not yet released. Still open for website and in-app
-surveys.**
+**Affected criterion:** 2.4.6 — **Fixed, not yet released.** Website and in-app surveys use a generic
+top-level heading rather than the survey's name.
 
 As assessed, the survey UI used no semantic heading elements, so a respondent using a screen reader could not
 navigate the survey by heading and question headlines were not exposed as headings.
@@ -211,21 +211,21 @@ navigate the survey by heading and question headlines were not exposed as headin
 Card headlines — the welcome card, each question prompt, and the ending — are now second-level headings on
 every survey, so a respondent can navigate between them by heading.
 
-The survey name sits above them as the survey's single top-level heading, but **only on a link survey**. A
-website or in-app survey is delivered by the JavaScript widget, which loads the survey from an endpoint that
-deliberately withholds survey names, so that a survey's name is not readable by anyone who can reach that
-endpoint. The widget has no name to use:
+Every survey has a single top-level heading above them. On a link survey it is the survey's name. A website or
+in-app survey is delivered by the JavaScript widget, which loads the survey from an endpoint that deliberately
+withholds survey names, so that a survey's name is not readable by anyone who can reach that endpoint. The
+widget has no name to use, so it uses the generic label "Survey Dialog" instead:
 
-- **Shown as a pop-up** (the widget's default): the dialog is named with the generic label "Survey Dialog",
-  and there is no top-level heading above the second-level card headings. A respondent can still move between
-  prompts by heading; what they do not get is a heading naming the survey they are answering.
-- **Rendered inline** into a container on the page: the survey now carries "Survey Dialog" as its top-level
-  heading and as the name of its form landmark, so the landmark is always named and the card headings always
-  sit under a top-level heading — **Fixed, not yet released**. It is a generic label, not the survey's name.
+- **Shown as a pop-up** (the widget's default): "Survey Dialog" names the dialog and is its top-level heading.
+- **Rendered inline** into a container on the page: "Survey Dialog" is the top-level heading and names the
+  form landmark, so the landmark is always named.
+
+Either way the card headings always sit under a top-level heading, but on a website or in-app survey that
+heading does not name the survey being answered.
 
 **Workaround for released versions, and for website and in-app surveys:** Keeping surveys short and putting one
 question on each screen reduces the amount of navigation a respondent has to do. Repeating the survey's purpose
-in the first question's headline gives a respondent the context that the missing top-level heading would
+in the first question's headline gives a respondent the context that a heading naming the survey would
 otherwise carry.
 
 ### Language of Parts

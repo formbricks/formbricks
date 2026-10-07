@@ -1,4 +1,8 @@
-import { createResponseWithQuotaEvaluation } from "./__mocks__/example-response-create.mock";
+import {
+  createResponseWithQuotaEvaluation,
+  resolveCreateResponseContext,
+} from "./__mocks__/example-response-create.mock";
+import { loadQuotaEvaluationContext } from "./__mocks__/quota-evaluation-context.mock";
 import { prisma } from "@/lib/__mocks__/database";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
@@ -12,6 +16,10 @@ vi.mock("@/lib/ai/service", () => ({ generateOrganizationAIObject: vi.fn() }));
 const surveyId = "survey_1";
 const workspaceId = "workspace_1";
 const tagId = "tag_1";
+const quotaContext = { quotas: [], survey: { id: surveyId } } as unknown as Awaited<
+  ReturnType<typeof loadQuotaEvaluationContext>
+>;
+const responseContext = { contact: null };
 
 /**
  * Stand-in for the interactive transaction client, holding only the writes the persistence path
@@ -69,6 +77,10 @@ beforeEach(() => {
   tx = buildTxClient();
   runTransactionAgainstTx();
   createResponseWithQuotaEvaluation.mockReset();
+  loadQuotaEvaluationContext.mockReset();
+  loadQuotaEvaluationContext.mockResolvedValue(quotaContext);
+  resolveCreateResponseContext.mockReset();
+  resolveCreateResponseContext.mockResolvedValue(responseContext);
   let responseIndex = 0;
   tx.display.create.mockImplementation(() => Promise.resolve({ id: `display_${responseIndex}` }));
   createResponseWithQuotaEvaluation.mockImplementation(() => {
@@ -136,7 +148,21 @@ describe("persistExampleResponseDataset", () => {
       // transaction is the third argument — ingest flags sit in front of it, and are absent here.
       for (const call of createResponseWithQuotaEvaluation.mock.calls) {
         expect(call[1]).toBeUndefined();
-        expect(call[2]).toBe(tx);
+        expect(call[2]?.tx).toBe(tx);
+        expect(call[2]?.quotaContext).toBe(quotaContext);
+        expect(call[2]?.responseContext).toBe(responseContext);
+      }
+      // The quota definitions and the organization/contact context are each read once, before the
+      // transaction opens, not once per response inside it, where each read held a second pool
+      // connection (ENG-3285).
+      expect(loadQuotaEvaluationContext).toHaveBeenCalledTimes(1);
+      expect(loadQuotaEvaluationContext).toHaveBeenCalledWith(surveyId);
+      expect(resolveCreateResponseContext).toHaveBeenCalledTimes(1);
+      expect(resolveCreateResponseContext).toHaveBeenCalledWith({ workspaceId });
+      for (const read of [loadQuotaEvaluationContext, resolveCreateResponseContext]) {
+        expect(read.mock.invocationCallOrder[0]).toBeLessThan(
+          prisma.$transaction.mock.invocationCallOrder[0]
+        );
       }
     });
   });

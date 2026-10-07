@@ -10,7 +10,7 @@ import { useTranslation } from "react-i18next";
 import type { TFeedbackSourceFieldMapping } from "@formbricks/types/feedback-source";
 import { getFeedbackRecordContactsAction, listFeedbackRecordsAction } from "@/lib/feedback-source/actions";
 import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { enrichmentStatusKeys } from "@/modules/ee/unify-feedback/enrichment-status/lib/query";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import { Badge } from "@/modules/ui/components/badge";

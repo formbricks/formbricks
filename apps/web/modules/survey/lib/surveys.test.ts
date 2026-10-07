@@ -309,6 +309,10 @@ describe("deleteSurvey", () => {
           createdAt: new Date("2026-06-01T00:00:00.000Z"),
           data: {
             [fileUploadElementId]: [fileUrl("a.png"), flatFileUrl("b.pdf"), otherSurveyFileUrl("c.png")],
+            // Left by an upload element since removed from the survey: still filed under its folder.
+            "removed-upload": [
+              `/storage/${workspaceId}/private/surveys/${surveyId}/elements/removed-upload/d.png`,
+            ],
           },
         },
       ] as never);
@@ -319,16 +323,18 @@ describe("deleteSurvey", () => {
 
       await deleteSurvey(surveyId);
 
-      // This survey's own upload is swept with its folder, so deleting it one by one as well would
-      // double the storage calls; the other survey's upload is not this survey's to delete at all.
+      // This survey's own uploads are swept with its folder, removed element included, so deleting them
+      // one by one as well would double the storage calls; the other survey's upload is not this
+      // survey's to delete at all.
       expect(deleteResponseFileUrls).toHaveBeenCalledTimes(1);
       expect(deleteResponseFileUrls).toHaveBeenCalledWith([flatFileUrl("b.pdf")], workspaceId);
       expect(deleteSurveyUploadFilesBestEffort).toHaveBeenCalledWith({ workspaceId, surveyId });
     });
 
     test("still sweeps the upload folder when no current element is a file upload", async () => {
-      // An upload element removed from the survey leaves its files under the survey's folder, where
-      // the response scan (which matches current element ids) cannot see them.
+      // An upload element removed from the survey leaves its files under the survey's folder, which the
+      // sweep removes. The flat-key scan has no element id to match, so it is skipped rather than reading
+      // every response for nothing.
       vi.mocked(getSurvey).mockResolvedValue(surveyWithoutFileUpload);
       mockTransaction({
         survey: { delete: vi.fn().mockResolvedValue(mockDeletedSurveyLink) },

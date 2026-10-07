@@ -144,6 +144,8 @@ function parseStoredV3SurveyDocument(
     metadata: survey.metadata ?? {},
     defaultLanguage,
     languages: getV3SurveyDocumentLanguages(survey),
+    showLanguageSwitch: survey.showLanguageSwitch ?? null,
+    autoSelectLanguage: survey.autoSelectLanguage ?? null,
     welcomeCard: survey.welcomeCard,
     blocks: survey.blocks,
     endings: survey.endings,

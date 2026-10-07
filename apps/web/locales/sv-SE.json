@@ -26,6 +26,7 @@
       "back_to_login": "Tillbaka till inloggning",
       "email-sent": {
         "heading": "Lösenordsåterställning begärd",
+        "sso_hint": "Loggar du in med Google, Microsoft eller en annan leverantör av enkel inloggning (SSO)? Då finns det inget lösenord att återställa. Logga in med den leverantören i stället.",
         "text": "Om ett konto med denna e-postadress finns kommer du att få instruktioner för lösenordsåterställning inom kort."
       },
       "reset": {
@@ -697,6 +698,13 @@
     "sso_recovery_factors_removed_email_subject": "Inloggningsuppgifter togs bort från ditt Formbricks-konto",
     "sso_recovery_factors_removed_email_text": "Du loggade precis in med enkel inloggning för första gången. Eftersom din e-postadress aldrig hade verifierats tog vi bort de inloggningsuppgifter som tidigare var kopplade till kontot:",
     "sso_recovery_factors_removed_email_two_factor": "Tvåfaktorsautentisering togs bort.",
+    "sso_sign_in_hint_email_did_not_request": "Om du inte har begärt det här kan du ignorera det här mejlet. Ingenting har ändrats på ditt konto.",
+    "sso_sign_in_hint_email_go_to_login": "Gå till inloggning",
+    "sso_sign_in_hint_email_heading": "Logga in med enkel inloggning (SSO)",
+    "sso_sign_in_hint_email_no_access": "Om du inte längre kan logga in på det här sättet, kontakta din administratör.",
+    "sso_sign_in_hint_email_subject": "Så här loggar du in på ditt Formbricks-konto",
+    "sso_sign_in_hint_email_text": "Vi har fått en begäran om att återställa lösenordet för ditt Formbricks-konto. Ditt konto använder inget lösenord, så det finns inget att återställa. Du loggar in med:",
+    "sso_sign_in_hint_email_text_unavailable": "Vi har fått en begäran om att återställa lösenordet för ditt Formbricks-konto. Ditt konto använder inget lösenord: du loggar in med enkel inloggning (SSO), som just nu inte är tillgänglig i den här Formbricks-instansen. Kontakta din administratör för att få åtkomst igen.",
     "survey_response_finished_email_congrats": "Grattis, du har fått ett nytt svar på din enkät! Någon har precis slutfört din enkät: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Vill du inte få dessa aviseringar?",
     "survey_response_finished_email_hey": "Hej 👋",
@@ -2760,8 +2768,10 @@
         "connect_app_banner_title": "Skapar du en undersökning för webbplats och app?"
       },
       "billing": {
+        "billing_currency_conflict": "Den här planändringen är i konflikt med fakturering i en annan valuta på ditt konto. Kontakta supporten för att byta plan.",
         "billing_interval_toggle": "Faktureringsintervall",
         "cancel_at_period_end": "Avsluta vid periodens slut",
+        "card_payment_method_required": "För att byta från din nuvarande plan behöver du ett kort som betalningsmetod. Lägg till ett kort och försök igen.",
         "comparison_addon": "Tillägg",
         "comparison_best_for": "Bäst för",
         "comparison_included": "Ingår",
@@ -2804,6 +2814,7 @@
         "comparison_section_scale_unlocks": "Scale låser upp",
         "confirm_hobby_downgrade_body": "Din kostnadsfria provperiod för {plan} avslutas nu och du byter omedelbart till Hobby-planen.",
         "confirm_hobby_downgrade_description": "Du kan uppgradera igen när som helst.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Du byter till Hobby-planen. Din nuvarande plan avslutas för gott och kan inte återställas.",
         "confirm_hobby_downgrade_title": "Byta till Hobby-planen nu?",
         "confirm_trial_continue_body": "Uppföljningar, anpassade länkar och allt annat i {plan} – låses upp direkt.<br /><b>{chargeNow} idag</b>, sedan {fullPrice} {period} inkl. moms. Faktureringen börjar idag.",
         "confirm_trial_continue_body_fallback": "Uppföljningar, anpassade länkar och allt annat i {plan} – låses upp direkt.<br /><b>{fullPrice} {period}</b> plus moms. Faktureringen börjar idag.",
@@ -2816,6 +2827,7 @@
         "confirm_upgrade_button": "Bekräfta uppgradering",
         "confirm_upgrade_calculating": "Beräknar din proportionella avgift…",
         "confirm_upgrade_description": "Du kan ändra din plan igen när som helst.",
+        "confirm_upgrade_ends_current_plan": "När du byter avslutas din nuvarande plan för gott. Den kan inte återställas, även om betalningen inte går igenom.",
         "confirm_upgrade_title": "Bekräfta uppgradering",
         "contact_sales_cta": "Prata med oss",
         "contact_sales_description": "Läs mer om Formbricks för företag och hur vi kan skräddarsy våra lösningar för dig.",
@@ -3409,6 +3421,8 @@
         "auto_save_paused": "Automatisk sparning pausad",
         "auto_save_paused_tooltip": "Automatisk sparning är pausad medan den här enkäten är schemalagd för publicering.",
         "auto_save_stopped_tooltip": "Automatisk sparning har stoppats eftersom Formbricks har uppdaterats. Ladda om sidan för att fortsätta spara.",
+        "auto_select_browser_language": "Använd webbläsarens språk som standard",
+        "auto_select_browser_language_description": "Öppna enkäten automatiskt på respondentens webbläsarspråk när det språket är aktivt. Annars används standardspråket.",
         "automatically_close_survey_after_n_seconds_if_no_response": "Stäng enkäten automatiskt efter <autoCloseInput /> sekunder om inget svar ges.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Stäng enkäten automatiskt efter ett visst antal svar.",
         "automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds": "Stäng enkäten automatiskt om användaren inte svarar efter ett visst antal sekunder.",

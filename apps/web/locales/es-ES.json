@@ -26,6 +26,7 @@
       "back_to_login": "Volver al inicio de sesión",
       "email-sent": {
         "heading": "Solicitud de restablecimiento de contraseña realizada correctamente",
+        "sso_hint": "¿Inicias sesión con Google, Microsoft u otro proveedor de inicio de sesión único? Entonces no hay ninguna contraseña que restablecer. Inicia sesión con ese proveedor.",
         "text": "Si existe una cuenta con este correo electrónico, recibirás instrucciones para restablecer la contraseña en breve."
       },
       "reset": {
@@ -697,6 +698,13 @@
     "sso_recovery_factors_removed_email_subject": "Se eliminaron credenciales de tu cuenta de Formbricks",
     "sso_recovery_factors_removed_email_text": "Acabas de iniciar sesión con inicio de sesión único por primera vez. Como tu dirección de correo electrónico nunca había sido verificada, eliminamos las credenciales que estaban configuradas en la cuenta anteriormente:",
     "sso_recovery_factors_removed_email_two_factor": "La autenticación de dos factores fue eliminada.",
+    "sso_sign_in_hint_email_did_not_request": "Si no lo has solicitado tú, puedes ignorar este correo. No ha cambiado nada en tu cuenta.",
+    "sso_sign_in_hint_email_go_to_login": "Ir al inicio de sesión",
+    "sso_sign_in_hint_email_heading": "Inicia sesión con el inicio de sesión único",
+    "sso_sign_in_hint_email_no_access": "Si ya no puedes iniciar sesión de esta forma, ponte en contacto con tu administrador.",
+    "sso_sign_in_hint_email_subject": "Cómo iniciar sesión en tu cuenta de Formbricks",
+    "sso_sign_in_hint_email_text": "Hemos recibido una solicitud para restablecer la contraseña de tu cuenta de Formbricks. Tu cuenta no utiliza contraseña, así que no hay nada que restablecer. Inicias sesión con:",
+    "sso_sign_in_hint_email_text_unavailable": "Hemos recibido una solicitud para restablecer la contraseña de tu cuenta de Formbricks. Tu cuenta no utiliza contraseña: inicia sesión mediante inicio de sesión único (SSO), que no está disponible en esta instancia de Formbricks en este momento. Ponte en contacto con tu administrador para volver a tener acceso.",
     "survey_response_finished_email_congrats": "Enhorabuena, has recibido una nueva respuesta a tu encuesta. Alguien acaba de completar tu encuesta: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "¿No quieres recibir estas notificaciones?",
     "survey_response_finished_email_hey": "Hola 👋",
@@ -2760,8 +2768,10 @@
         "connect_app_banner_title": "¿Configurando una encuesta para sitio web y aplicación?"
       },
       "billing": {
+        "billing_currency_conflict": "Este cambio de plan entra en conflicto con la facturación en otra moneda de tu cuenta. Por favor, contacta con soporte para cambiar de plan.",
         "billing_interval_toggle": "Intervalo de facturación",
         "cancel_at_period_end": "Cancelar al finalizar el período",
+        "card_payment_method_required": "Para cambiar de tu plan actual necesitas añadir una tarjeta como método de pago. Por favor, añade una tarjeta e inténtalo de nuevo.",
         "comparison_addon": "Complemento",
         "comparison_best_for": "Ideal para",
         "comparison_included": "Incluido",
@@ -2804,6 +2814,7 @@
         "comparison_section_scale_unlocks": "Desbloqueos Scale",
         "confirm_hobby_downgrade_body": "Tu prueba gratuita del plan {plan} terminará ahora y cambiarás al plan Hobby inmediatamente.",
         "confirm_hobby_downgrade_description": "Puedes actualizar de nuevo en cualquier momento.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Cambiarás al plan Hobby. Tu plan actual finalizará definitivamente y no se podrá recuperar.",
         "confirm_hobby_downgrade_title": "¿Cambiar al plan Hobby ahora?",
         "confirm_trial_continue_body": "Seguimientos, enlaces personalizados y todo lo demás en {plan} — desbloqueado al instante.<br /><b>{chargeNow} hoy</b>, después {fullPrice} {period} impuestos incluidos. La facturación comienza hoy.",
         "confirm_trial_continue_body_fallback": "Seguimientos, enlaces personalizados y todo lo demás en {plan} — desbloqueado al instante.<br /><b>{fullPrice} {period}</b> más impuestos. La facturación comienza hoy.",
@@ -2816,6 +2827,7 @@
         "confirm_upgrade_button": "Confirmar actualización",
         "confirm_upgrade_calculating": "Calculando tu cargo prorrateado…",
         "confirm_upgrade_description": "Puedes cambiar tu plan en cualquier momento.",
+        "confirm_upgrade_ends_current_plan": "Al cambiar, tu plan actual finaliza definitivamente: no se podrá restaurar, aunque este pago no se complete.",
         "confirm_upgrade_title": "Confirmar actualización",
         "contact_sales_cta": "Habla con nosotros",
         "contact_sales_description": "Descubre más sobre Formbricks para empresas y cómo podemos adaptar nuestras soluciones para ti.",
@@ -3409,6 +3421,8 @@
         "auto_save_paused": "Guardado automático en pausa",
         "auto_save_paused_tooltip": "El guardado automático está en pausa mientras esta encuesta esté programada para publicarse.",
         "auto_save_stopped_tooltip": "El guardado automático se ha detenido porque Formbricks se ha actualizado. Recarga la página para seguir guardando.",
+        "auto_select_browser_language": "Usar el idioma del navegador por defecto",
+        "auto_select_browser_language_description": "Abre la encuesta automáticamente en el idioma del navegador del encuestado cuando ese idioma esté activo. Si no, se usa el idioma predeterminado.",
         "automatically_close_survey_after_n_seconds_if_no_response": "Cerrar automáticamente la encuesta después de <autoCloseInput /> segundos tras el disparador si no hay respuesta.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Cerrar automáticamente la encuesta después de un cierto número de respuestas.",
         "automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds": "Cerrar automáticamente la encuesta si el usuario no responde después de cierto número de segundos.",

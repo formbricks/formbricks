@@ -21,6 +21,7 @@ import {
   renderPasswordResetNotifyEmail,
   renderResponseFinishedEmail,
   renderSsoRecoveryFactorsRemovedEmail,
+  renderSsoSignInHintEmail,
   renderVerificationEmail,
 } from "../index";
 import { exampleData } from "./example-data";
@@ -67,6 +68,10 @@ const renderers: [string, () => Promise<string>][] = [
         ...legal,
         t,
       }),
+  ],
+  [
+    "renderSsoSignInHintEmail",
+    () => renderSsoSignInHintEmail({ ...exampleData.ssoSignInHintEmail, ...legal, t }),
   ],
   ["renderInviteEmail", () => renderInviteEmail({ ...exampleData.inviteEmail, ...legal, t })],
   [
@@ -159,6 +164,32 @@ describe("translation threading", () => {
 
     expect(html).toContain("View survey summary");
     expect(html).not.toContain("more responses");
+  });
+});
+
+describe("SSO sign-in hint", () => {
+  test("names every provider the account signs in with and links to the login page", async () => {
+    const html = await renderSsoSignInHintEmail({
+      providerNames: ["Microsoft", "Acme SSO"],
+      loginLink: "https://app.formbricks.com/auth/login",
+      t,
+    });
+
+    expect(html).toContain(">Microsoft<");
+    expect(html).toContain(">Acme SSO<");
+    expect(html).toContain('href="https://app.formbricks.com/auth/login"');
+  });
+
+  test("sends the reader to their administrator, with no login button, when no provider is offered", async () => {
+    const html = await renderSsoSignInHintEmail({
+      providerNames: [],
+      loginLink: "https://app.formbricks.com/auth/login",
+      t,
+    });
+
+    expect(html).toContain("Contact your administrator to get access again.");
+    expect(html).not.toContain("https://app.formbricks.com/auth/login");
+    expect(html).not.toContain("You sign in with:");
   });
 });
 

@@ -19,10 +19,9 @@ import { SurveyCompletedMessage } from "@/modules/survey/link/components/survey-
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
-import { resolveSurveyLanguageCode } from "@/modules/survey/link/lib/language";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { hasUserIdSearchParam } from "@/modules/survey/link/lib/user-id";
-import { getGateLocale } from "@/modules/survey/link/lib/utils";
+import { getGateLocale, resolveLinkSurveyLanguage } from "@/modules/survey/link/lib/utils";
 import { TWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 
 interface SurveyRendererProps {
@@ -36,6 +35,8 @@ interface SurveyRendererProps {
   // New props - pre-fetched in parent
   workspaceContext: TWorkspaceContextForLinkSurvey;
   locale: TUserLocale;
+  /** The respondent's languages from the Accept-Language header, most preferred first. */
+  acceptedLanguages: string[];
   responseCount?: number;
 }
 
@@ -48,6 +49,7 @@ interface SurveyRendererProps {
  *
  * @param workspaceContext - Pre-fetched workspace and organization data
  * @param locale - User's locale from Accept-Language header
+ * @param acceptedLanguages - Every language in the Accept-Language header, for browser language auto-selection
  * @param responseCount - Conditionally fetched if showResponseCount is enabled
  */
 export const renderSurvey = async ({
@@ -60,14 +62,18 @@ export const renderSurvey = async ({
   isPreview,
   workspaceContext,
   locale,
+  acceptedLanguages,
   responseCount,
 }: SurveyRendererProps) => {
-  const langParam = searchParams.lang;
   const isEmbed = searchParams.embed === "true";
 
   // The survey's content language, and the locale everything around that content is translated in.
   // Both are resolved once, here, so a gate screen can never disagree with the survey behind it.
-  const languageCode = resolveSurveyLanguageCode(langParam, survey);
+  const { langParam, languageCode } = resolveLinkSurveyLanguage({
+    survey,
+    lang: searchParams.lang,
+    acceptedLanguages,
+  });
   const gateLocale = getGateLocale({ langParam, languageCode, survey, fallbackLocale: locale });
 
   // Archived surveys are absent from the workspace for respondents — treat the public link as a

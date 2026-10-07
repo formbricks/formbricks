@@ -21,7 +21,7 @@ import {
 } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import type { TSurveyAccess } from "@/lib/survey/visibility/access";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { isDeepEqual } from "@/lib/utils/object";
 import { reportStaleServerActionError } from "@/lib/utils/stale-server-action";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";

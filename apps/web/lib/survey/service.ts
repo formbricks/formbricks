@@ -161,6 +161,7 @@ export const selectSurvey = {
   singleUse: true,
   pin: true,
   showLanguageSwitch: true,
+  autoSelectLanguage: true,
   recaptcha: true,
   metadata: true,
   customHeadScripts: true,

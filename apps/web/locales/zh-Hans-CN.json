@@ -26,6 +26,7 @@
       "back_to_login": "返回 登录",
       "email-sent": {
         "heading": "密码 重置 成功 请求",
+        "sso_hint": "你是通过 Google、Microsoft 或其他单点登录服务商登录的吗？那就无需重置密码，直接使用该服务商登录即可。",
         "text": "如果 这个 邮箱 存在 账户，您 将 很快 收到 密码 重置 说明。"
       },
       "reset": {
@@ -697,6 +698,13 @@
     "sso_recovery_factors_removed_email_subject": "凭据已从你的 Formbricks 账户中移除",
     "sso_recovery_factors_removed_email_text": "你刚刚首次使用单点登录进行了登录。由于你的邮箱地址此前从未经过验证，我们已移除了之前在该账户上设置的凭据：",
     "sso_recovery_factors_removed_email_two_factor": "双因素认证已被移除。",
+    "sso_sign_in_hint_email_did_not_request": "如果这不是你本人的操作，请忽略这封邮件。你的账户没有任何变化。",
+    "sso_sign_in_hint_email_go_to_login": "前往登录",
+    "sso_sign_in_hint_email_heading": "使用单点登录进行登录",
+    "sso_sign_in_hint_email_no_access": "如果你无法再通过这种方式登录，请联系你的管理员。",
+    "sso_sign_in_hint_email_subject": "如何登录你的 Formbricks 账户",
+    "sso_sign_in_hint_email_text": "我们收到了重置你 Formbricks 账户密码的请求。你的账户不使用密码，因此无需重置。你的登录方式是：",
+    "sso_sign_in_hint_email_text_unavailable": "我们收到了重置您 Formbricks 账户密码的请求。您的账户不使用密码,而是通过单点登录(SSO)登录,但目前此 Formbricks 实例暂不支持单点登录。请联系您的管理员,以重新获得访问权限。",
     "survey_response_finished_email_congrats": "恭喜，您收到了一份新的问卷回复！有人刚刚完成了您的问卷：{surveyName}",
     "survey_response_finished_email_dont_want_notifications": "不希望收到这些通知？",
     "survey_response_finished_email_hey": "嗨 👋",
@@ -2760,8 +2768,10 @@
         "connect_app_banner_title": "正在设置网站和应用调查？"
       },
       "billing": {
+        "billing_currency_conflict": "此套餐变更与你账户中其他货币的账单冲突。请联系客服以切换套餐。",
         "billing_interval_toggle": "账单周期",
         "cancel_at_period_end": "在周期结束时取消",
+        "card_payment_method_required": "从当前套餐切换需要添加银行卡作为支付方式。请添加银行卡后重试。",
         "comparison_addon": "附加功能",
         "comparison_best_for": "最适合",
         "comparison_included": "包含",
@@ -2804,6 +2814,7 @@
         "comparison_section_scale_unlocks": "企业版功能",
         "confirm_hobby_downgrade_body": "你的免费 {plan} 试用将立即结束，并立即切换到 Hobby 套餐。",
         "confirm_hobby_downgrade_description": "你可以随时再次升级。",
+        "confirm_hobby_downgrade_ends_current_plan_body": "你将切换到 Hobby 套餐。当前套餐将永久结束,且无法恢复。",
         "confirm_hobby_downgrade_title": "立即切换到 Hobby 套餐？",
         "confirm_trial_continue_body": "后续跟进、自定义链接以及 {plan} 中的所有功能 — 即刻解锁。<br /><b>今日支付 {chargeNow}</b>，之后每{period} {fullPrice}（含税）。计费从今日开始。",
         "confirm_trial_continue_body_fallback": "后续跟进、自定义链接以及 {plan} 中的所有功能 — 即刻解锁。<br /><b>每{period} {fullPrice}</b>（另加税费）。计费从今日开始。",
@@ -2816,6 +2827,7 @@
         "confirm_upgrade_button": "确认升级",
         "confirm_upgrade_calculating": "正在计算您的按比例费用…",
         "confirm_upgrade_description": "你可以随时再次更改套餐。",
+        "confirm_upgrade_ends_current_plan": "切换后，你当前的套餐将永久终止，即使本次付款未成功，也无法恢复。",
         "confirm_upgrade_title": "确认升级",
         "contact_sales_cta": "联系我们",
         "contact_sales_description": "了解更多关于 Formbricks 企业版的信息，以及我们如何为你量身定制解决方案。",
@@ -3409,6 +3421,8 @@
         "auto_save_paused": "自动保存已暂停",
         "auto_save_paused_tooltip": "此问卷已设定定时发布，自动保存已暂停。",
         "auto_save_stopped_tooltip": "由于 Formbricks 已更新，自动保存已停止。请重新加载页面以继续保存。",
+        "auto_select_browser_language": "默认使用浏览器语言",
+        "auto_select_browser_language_description": "当受访者浏览器的语言已启用时,自动以该语言打开问卷;否则会回退到默认语言。",
         "automatically_close_survey_after_n_seconds_if_no_response": "如果没有回复，在触发后 <autoCloseInput /> 秒自动关闭调查。",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "自动 关闭 调查 在 达到 一定数量 的 回应 后",
         "automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds": "用户未在一定秒数内应答时 自动关闭 问卷",

@@ -28,7 +28,7 @@ import { ResponseTableCell } from "@/app/(app)/workspaces/[workspaceId]/surveys/
 import { generateResponseTableColumns } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/actions";
 import { downloadResponsesFile } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
 import { Button } from "@/modules/ui/components/button";
 import {

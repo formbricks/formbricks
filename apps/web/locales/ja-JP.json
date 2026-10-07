@@ -26,6 +26,7 @@
       "back_to_login": "ログインに戻る",
       "email-sent": {
         "heading": "パスワードのリセット要求を送信しました",
+        "sso_hint": "GoogleやMicrosoft、またはその他のシングルサインオン(SSO)プロバイダーでサインインしていますか?その場合、リセットするパスワードはありません。代わりに、そのプロバイダーでサインインしてください。",
         "text": "このメールアドレスにアカウントが存在する場合、パスワードリセットの手順がまもなく送信されます。"
       },
       "reset": {
@@ -697,6 +698,13 @@
     "sso_recovery_factors_removed_email_subject": "Formbricksアカウントから認証情報が削除されました",
     "sso_recovery_factors_removed_email_text": "初めてシングルサインオンでサインインされました。メールアドレスが未確認だったため、以前アカウントに設定されていた認証情報を削除しました:",
     "sso_recovery_factors_removed_email_two_factor": "二要素認証が削除されました。",
+    "sso_sign_in_hint_email_did_not_request": "このリクエストに心当たりがない場合は、このメールを無視してください。アカウントには何も変更はありません。",
+    "sso_sign_in_hint_email_go_to_login": "サインインへ移動",
+    "sso_sign_in_hint_email_heading": "シングルサインオンでサインイン",
+    "sso_sign_in_hint_email_no_access": "この方法でサインインできなくなった場合は、管理者に連絡してください。",
+    "sso_sign_in_hint_email_subject": "Formbricksアカウントへのサインイン方法",
+    "sso_sign_in_hint_email_text": "Formbricksアカウントのパスワードリセットのリクエストを受け付けました。お使いのアカウントはパスワードを使用していないため、リセットするものはありません。次の方法でサインインしています:",
+    "sso_sign_in_hint_email_text_unavailable": "Formbricksアカウントのパスワードリセットのリクエストを受け付けました。ただし、このアカウントではパスワードを使用しておらず、シングルサインオン(SSO)でログインする設定になっています。現在、このFormbricksインスタンスではSSOをご利用いただけない状態です。再度アクセスできるようにするには、管理者にお問い合わせください。",
     "survey_response_finished_email_congrats": "おめでとうございます、新しい回答が届きました！{surveyName} アンケートへの回答が完了しました。",
     "survey_response_finished_email_dont_want_notifications": "これらの通知を受け取りたくないですか？",
     "survey_response_finished_email_hey": "こんにちは 👋",
@@ -2760,8 +2768,10 @@
         "connect_app_banner_title": "ウェブサイト&アプリ調査を設定していますか？"
       },
       "billing": {
+        "billing_currency_conflict": "このプラン変更は、アカウントの別の通貨での請求と競合しています。プランを切り替えるには、サポートにお問い合わせください。",
         "billing_interval_toggle": "請求間隔",
         "cancel_at_period_end": "期間終了時にキャンセル",
+        "card_payment_method_required": "現在のプランから切り替えるには、お支払い方法としてカードが必要です。カードを追加してから、もう一度お試しください。",
         "comparison_addon": "アドオン",
         "comparison_best_for": "最適な用途",
         "comparison_included": "含まれています",
@@ -2804,6 +2814,7 @@
         "comparison_section_scale_unlocks": "Scaleで解除される機能",
         "confirm_hobby_downgrade_body": "無料の{plan}トライアルは今すぐ終了し、すぐにHobbyプランに切り替わります。",
         "confirm_hobby_downgrade_description": "いつでも再度アップグレードできます。",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Hobbyプランに切り替わります。現在のプランは完全に終了し、元に戻すことはできません。",
         "confirm_hobby_downgrade_title": "今すぐHobbyプランに切り替えますか?",
         "confirm_trial_continue_body": "{plan}のフォローアップ、カスタムリンク、その他すべての機能がすぐに利用可能になります。<br /><b>本日{chargeNow}</b>、その後は{period}ごとに{fullPrice}（税込）。本日より課金が開始されます。",
         "confirm_trial_continue_body_fallback": "{plan}のフォローアップ、カスタムリンク、その他すべての機能がすぐに利用可能になります。<br /><b>{period}ごとに{fullPrice}</b>プラス税金。本日より課金が開始されます。",
@@ -2816,6 +2827,7 @@
         "confirm_upgrade_button": "アップグレードを確認",
         "confirm_upgrade_calculating": "日割り請求額を計算中…",
         "confirm_upgrade_description": "プランはいつでも変更できます。",
+        "confirm_upgrade_ends_current_plan": "切り替えると、現在のプランは完全に終了します。今回のお支払いが完了しなかった場合でも、元に戻すことはできません。",
         "confirm_upgrade_title": "アップグレードの確認",
         "contact_sales_cta": "お問い合わせ",
         "contact_sales_description": "エンタープライズ向けのFormbricksについて、お客様に最適なソリューションをご提案いたします。",
@@ -3409,6 +3421,8 @@
         "auto_save_paused": "自動保存を一時停止中",
         "auto_save_paused_tooltip": "このアンケートは公開が予約されているため、自動保存は一時停止中です。",
         "auto_save_stopped_tooltip": "Formbricksが更新されたため、自動保存が停止しました。保存を続けるには、ページを再読み込みしてください。",
+        "auto_select_browser_language": "ブラウザの言語をデフォルトで使用",
+        "auto_select_browser_language_description": "回答者のブラウザの言語が有効になっている場合、その言語でアンケートを自動的に開きます。該当しない場合は、デフォルト言語で表示されます。",
         "automatically_close_survey_after_n_seconds_if_no_response": "トリガー後、応答がない場合は<autoCloseInput />秒後に自動的にアンケートを閉じます。",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "一定の回答数に達した後にアンケートを自動的に閉じます。",
         "automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds": "ユーザーが一定秒数応答しない場合、アンケートを自動的に閉じます。",

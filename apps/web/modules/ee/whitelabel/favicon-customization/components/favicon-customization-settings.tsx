@@ -9,7 +9,7 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { isExternalImageSrc } from "@/lib/image-hosts";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import {
   removeOrganizationFaviconUrlAction,
   updateOrganizationFaviconUrlAction,
