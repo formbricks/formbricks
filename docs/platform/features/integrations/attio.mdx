@@ -46,7 +46,7 @@ Attio [Workflows](https://attio.com/help/reference/automations/workflows/overvie
     Submit a test response, then add a **Parse JSON** block. Set **Input** to **Webhook Payload Body** and generate the schema by pasting the sample Formbricks payload. Answers are under `data.data`, keyed by `questionId`.
   </Step>
   <Step title="Add a Create/Update Record Action">
-    Choose **People** or **Companies**, map the parsed fields (e.g. `data.data.email`), and set email as the matching attribute to avoid duplicates.
+    Choose **People** or **Companies** and map the parsed fields. To avoid duplicates, match People on email (e.g. `data.data.email`) and Companies on domain.
   </Step>
   <Step title="Test and Activate">
     Submit another response, confirm the record in Attio, and turn the workflow on.
@@ -89,7 +89,7 @@ Attio [Workflows](https://attio.com/help/reference/automations/workflows/overvie
 ## Method 3: n8n
 
 <Note>
-  The Formbricks and Attio nodes are community nodes for self-hosted n8n. On n8n Cloud, use a **Webhook** node as the trigger (with a Formbricks webhook pointing at it) and an **HTTP Request** node with the API call from Method 4.
+  The Formbricks and Attio nodes are community nodes for self-hosted n8n. On n8n Cloud, use a **Webhook** node as the trigger (with a Formbricks webhook pointing at it) and an **HTTP Request** node with the API call from Method 4. The Webhook node nests the request under `body`, so use `$json.body.data.data.*` in place of `$json.data.data.*`.
 </Note>
 
 <Steps>
@@ -164,7 +164,7 @@ Attio [Workflows](https://attio.com/help/reference/automations/workflows/overvie
 - Check the token has `record_permission:read-write` and `object_configuration:read`.
 
 **Duplicate records**
-- Use a create-or-update action (or the Assert endpoint) with email as the matching attribute.
+- Use a create-or-update action (or the Assert endpoint) matching People on email and Companies on domain.
 
 **Webhook not firing**
 - Check the URL is public, **Response Finished** is selected, and the survey is linked.

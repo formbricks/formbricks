@@ -59,7 +59,7 @@ Make is a registered Salesforce app, so you only need to log in and click **Allo
 
 ## Method 2: n8n
 
-The built-in Salesforce node works on n8n Cloud and self-hosted, but needs a Salesforce app for OAuth login. The Formbricks trigger is a community node for self-hosted n8n; on n8n Cloud, use a **Webhook** node as the trigger with a Formbricks webhook pointing at it.
+The built-in Salesforce node works on n8n Cloud and self-hosted, but needs a Salesforce app for OAuth login. The Formbricks trigger is a community node for self-hosted n8n; on n8n Cloud, use a **Webhook** node as the trigger with a Formbricks webhook pointing at it. The Webhook node nests the request under `body`, so use `$json.body.data.data.*` in place of `$json.data.data.*` in the expressions below.
 
 <Steps>
   <Step title="Add the Formbricks Trigger">
