@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { createResponseWithQuotaEvaluation as createV1ManagementResponse } from "@/app/api/v1/management/responses/lib/response";
 import { resetDb } from "@/integration/reset-db";
 import { createResponseWithQuotaEvaluation as createV2ManagementResponse } from "@/modules/api/v2/management/responses/lib/response";
+import { ZResponseInput as ZV2ManagementResponseInput } from "@/modules/api/v2/management/responses/types/responses";
 
 /**
  * ENG-3722, against the real pool. The v1 and v2 management response creates used to read the
@@ -29,6 +30,10 @@ vi.hoisted(() => {
 
 beforeEach(async () => {
   await resetDb();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 const USER_ID = "eng-3722-user";
@@ -103,12 +108,12 @@ describe("management response creates on a saturated pool (ENG-3722)", () => {
     const { workspaceId, surveyId, quotaId, contactId } = await seed();
     const loggedError = vi.spyOn(logger, "error");
 
-    const result = await createV2ManagementResponse(workspaceId, {
-      surveyId,
-      userId: USER_ID,
-      finished: false,
-      data: {},
-    } as Parameters<typeof createV2ManagementResponse>[1]);
+    // Parsed with the route's own schema, so the fixture is the shape the route would hand over (this
+    // directory is outside the typecheck).
+    const result = await createV2ManagementResponse(
+      workspaceId,
+      ZV2ManagementResponseInput.parse({ surveyId, userId: USER_ID, finished: false, data: {} })
+    );
 
     expect(result.ok).toBe(true);
     expect(loggedError).not.toHaveBeenCalled();
