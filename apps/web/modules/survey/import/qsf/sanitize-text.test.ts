@@ -22,7 +22,7 @@ describe("sanitizeText", () => {
       // `textContent` decodes this into a live `<script>`; survey-ui's Label would render it as HTML.
       const result = sanitizeText("&lt;script&gt;alert(1)&lt;/script&gt;", "plain");
 
-      expect(result.text).toBe("＜script>alert(1)＜/script>");
+      expect(result.text).toBe("\uFF1Cscript>alert(1)\uFF1C/script>");
       expect(result.escaped).toBe(true);
       expect(containsMarkup(result.text)).toBe(false);
     });
@@ -30,7 +30,7 @@ describe("sanitizeText", () => {
     test("an escaped image with an onerror handler is neutralized the same way", () => {
       const result = sanitizeText("&lt;img src=x onerror=alert(1)&gt; typed", "plain");
 
-      expect(result.text.startsWith("＜img")).toBe(true);
+      expect(result.text.startsWith("\uFF1Cimg")).toBe(true);
       expect(result.escaped).toBe(true);
     });
 
@@ -76,7 +76,7 @@ describe("sanitizeText", () => {
     test("an escaped script is neutralized like plain text", () => {
       const result = sanitizeText("&lt;script&gt;alert(1)&lt;/script&gt;", "rich");
 
-      expect(result.text).toBe("＜script>alert(1)＜/script>");
+      expect(result.text).toBe("\uFF1Cscript>alert(1)\uFF1C/script>");
       expect(result.escaped).toBe(true);
     });
   });

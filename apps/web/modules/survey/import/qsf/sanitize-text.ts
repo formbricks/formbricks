@@ -32,7 +32,7 @@ const RICH_CONFIG = {
 const PLAIN_CONFIG = { ALLOWED_TAGS: [] as string[], FORCE_BODY: true, RETURN_DOM_FRAGMENT: true as const };
 
 /** Stands in for `<` in plain text that would otherwise parse as markup. */
-const NEUTRAL_LESS_THAN = "＜";
+const NEUTRAL_LESS_THAN = "\uFF1C";
 
 /** How long a run of sanitizing may hold the event loop before it yields. */
 const SANITIZE_SLICE_MS = 10;
