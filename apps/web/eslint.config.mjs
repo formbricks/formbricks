@@ -125,6 +125,25 @@ const config = [
       "no-restricted-syntax": "off",
     },
   },
+  {
+    // The contract-test helpers read the OpenAPI bundle from disk with js-yaml. Tests only — served code
+    // takes the generated schemas from the package root.
+    files: ["**/*.{ts,tsx,mts,mjs,js}"],
+    ignores: ["**/*.test.{ts,tsx}", "**/__mocks__/**", "integration/**", "scripts/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@formbricks/api-v3-schemas/testing",
+              message: "Test-only entry point; import the generated schemas from @formbricks/api-v3-schemas.",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ];
 
 export default config;

@@ -1,6 +1,7 @@
 # GENERATED FILE — do not edit. Source of truth: docs/api-v3-reference/src/ (one file per path/schema).
 # Regenerate with `pnpm api:v3:bundle`; CI verifies freshness with `pnpm api:v3:check`.
-# V3 API — surveys, workflows, action classes, contact attribute keys, tags and feedback records (hand-maintained source; not produced by generate-api-specs).
+# V3 API — surveys, responses, workflows, action classes, contact attribute keys, tags and feedback records (hand-maintained source; not produced by generate-api-specs).
+# Zod schemas for the adopted tags are generated from this file: `pnpm api:v3:schemas` (`pnpm api:v3:sync` runs both steps).
 openapi: 3.1.1
 info:
   title: Formbricks API v3
@@ -283,6 +284,8 @@ paths:
                   languages:
                     - code: de-DE
                       enabled: true
+                  showLanguageSwitch: true
+                  autoSelectLanguage: true
                   welcomeCard:
                     enabled: true
                     headline:
@@ -940,6 +943,8 @@ paths:
                           alias: german
                           default: false
                           enabled: false
+                      showLanguageSwitch: false
+                      autoSelectLanguage: null
                       welcomeCard:
                         enabled: false
                       blocks:
@@ -986,6 +991,8 @@ paths:
                           alias: german
                           default: false
                           enabled: false
+                      showLanguageSwitch: false
+                      autoSelectLanguage: null
                       welcomeCard:
                         enabled: false
                       blocks:
@@ -6678,7 +6685,7 @@ components:
       type: object
       description: |
         Strict v3 survey creation document. This endpoint accepts survey structure only: name,
-        metadata, languages, welcome card, blocks/elements/logic, endings, hidden fields, and variables.
+        metadata, languages and language settings, welcome card, blocks/elements/logic, endings, hidden fields, and variables.
         App surveys (`type: app`) additionally accept the `distribution` (display options + triggers) and `targeting` (contact segment filters) objects; these are rejected for `link` surveys.
         It rejects legacy `questions` and out-of-scope settings such as styling, follow-ups, recaptcha, single-use/email verification, slug, custom scripts, analytics fields, timestamps, and `createdBy`.
 
@@ -6738,6 +6745,18 @@ components:
           description: |
             Optional survey language configuration. Every non-default locale used by translatable maps
             must be declared here; omitted languages are not inferred from map keys.
+        showLanguageSwitch:
+          type:
+            - boolean
+            - 'null'
+          default: null
+          description: Show respondents a language switch on multi-language surveys. `null` and `false` both mean off.
+        autoSelectLanguage:
+          type:
+            - boolean
+            - 'null'
+          default: null
+          description: Open link and app surveys in the respondent's browser language when it matches an enabled survey language; otherwise the default language is used. `null` and `false` both mean off.
         welcomeCard:
           allOf:
             - $ref: '#/components/schemas/SurveyWelcomeCard'
@@ -6925,6 +6944,8 @@ components:
             - metadata
             - defaultLanguage
             - languages
+            - showLanguageSwitch
+            - autoSelectLanguage
             - welcomeCard
             - blocks
             - endings
@@ -6972,6 +6993,16 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/SurveyLanguage'
+            showLanguageSwitch:
+              type:
+                - boolean
+                - 'null'
+              description: Show respondents a language switch on multi-language surveys. `null` and `false` both mean off.
+            autoSelectLanguage:
+              type:
+                - boolean
+                - 'null'
+              description: Open link and app surveys in the respondent's browser language when it matches an enabled survey language; otherwise the default language is used. `null` and `false` both mean off.
             welcomeCard:
               $ref: '#/components/schemas/SurveyWelcomeCard'
             blocks:
@@ -7228,6 +7259,16 @@ components:
             by `metadata`, `welcomeCard`, `blocks`, or `endings` translatable maps must be explicitly
             declared here, so remove the locale key from those maps as well when intentionally removing
             a language.
+        showLanguageSwitch:
+          type:
+            - boolean
+            - 'null'
+          description: Show respondents a language switch on multi-language surveys. `null` and `false` both mean off. Omit to keep the stored value.
+        autoSelectLanguage:
+          type:
+            - boolean
+            - 'null'
+          description: Open link and app surveys in the respondent's browser language when it matches an enabled survey language; otherwise the default language is used. `null` and `false` both mean off. Omit to keep the stored value.
         welcomeCard:
           $ref: '#/components/schemas/SurveyWelcomeCard'
         blocks:
@@ -8155,6 +8196,20 @@ components:
 
             There is no `null` member: a declared key that resolves to nothing is **omitted** from the collection rather than carried with a null. So `embeddedData[]` enumerates what the response actually holds, not what the survey declares — a survey with twelve declared fields and two filled in yields two entries. A field with a default value is never unset, since the default is the fallback before the key is considered missing.
       additionalProperties: false
+    ResponseRawValue:
+      description: |
+        One stored answer or field value, in the four shapes the v3 contract can carry: a string, a number, a list of strings, or a string-to-string map.
+
+        Declared once and referenced by `ResponseDataMap` and `ResponseUnresolvedEntry.rawValue`, so the two places that publish stored JSON cannot drift apart. A stored value outside these shapes (a legacy JSON `null`, an array with non-string items, a map with non-string values) is not published at all rather than reaching a client as a body this contract would reject.
+      oneOf:
+        - type: string
+        - type: number
+        - type: array
+          items:
+            type: string
+        - type: object
+          additionalProperties:
+            type: string
     ResponseUnresolvedEntry:
       type: object
       description: |
@@ -8172,15 +8227,7 @@ components:
           description: The key as stored on the response. For `elementNotInSurvey` it is a former element id or hidden-field name; for `variableNotInSurvey` a variable's cuid, since that map is keyed by id rather than by name; and for `valueShapeMismatch` the id or name of the element or declared field that *does* still exist — that reason means the key resolved and the value did not.
         rawValue:
           description: The stored value, returned verbatim and untyped because nothing describes it any more.
-          oneOf:
-            - type: string
-            - type: number
-            - type: array
-              items:
-                type: string
-            - type: object
-              additionalProperties:
-                type: string
+          $ref: '#/components/schemas/ResponseRawValue'
         reason:
           type: string
           enum:
@@ -8373,15 +8420,7 @@ components:
 
         **Bounds are a write-side concern and live on `ResponseDataMapInput`, not here.** This schema is the stored shape, and a read must describe what the API can actually return: the v1 and v2 write paths store this same map with no cardinality limit, so a response written through them can carry more keys — or a longer multi-select — than a v3 write would accept. Declaring the write bounds on this schema would make `GET /api/v3/responses/{responseId}` promise something it cannot keep for those rows.
       additionalProperties:
-        oneOf:
-          - type: string
-          - type: number
-          - type: array
-            items:
-              type: string
-          - type: object
-            additionalProperties:
-              type: string
+        $ref: '#/components/schemas/ResponseRawValue'
     ResponseDataMapInput:
       allOf:
         - $ref: '#/components/schemas/ResponseDataMap'
@@ -8547,6 +8586,7 @@ components:
           description: Contact to attribute the response to. **Create-only** — a response cannot later be re-linked to a different contact. Must be a contact in the same workspace.
         displayId:
           type: string
+          format: cuid2
           description: Display (survey impression) this response answers. Create-only. Each display can back at most one response.
         singleUseId:
           type: string
@@ -8631,47 +8671,7 @@ components:
           enum:
             - create
         data:
-          description: Intended create payload. Invalid documents are allowed so the endpoint can return repairable validation errors.
-          anyOf:
-            - $ref: '#/components/schemas/CreateResponseRequest'
-            - type: object
-              additionalProperties: true
-      additionalProperties: false
-    PatchResponseRequest:
-      type: object
-      description: |
-        Partially updates a response. Strict at the top level: unknown keys return **400** rather than being ignored, and at least one patchable field must be present.
-
-        `data` is **replaced wholesale**, not deep-merged — send the complete answer map you want stored. `embeddedData` is the exception and merges by name: it addresses individual fields, so a field the payload omits keeps its value rather than being cleared.
-
-        v3 replaces on purpose, where v1 and v2 merge: a merge makes it impossible to delete an answer, which a correction flow needs.
-
-        **Every patch runs the response pipeline**, emitting `responseUpdated` — so webhooks, integrations and follow-ups fire for a correction as much as for a substantive edit. A patch that *transitions* the response to finished additionally emits `responseFinished`; one that patches an already-finished response does not re-emit it.
-
-        Not patchable, and rejected if sent: `createdAt`, `updatedAt`, `surveyId`, `contactId`, `displayId`, `singleUseId`, `contactAttributes`, and the create-only `ttc` and `meta` — timing and submission context describe the original submission event, so they are set once and not revised. `contactId` is create-only deliberately — re-attributing an existing response to a different person is a capability only v2 offers, and it is not carried forward.
-      minProperties: 1
-      properties:
-        finished:
-          type: boolean
-        endingId:
-          type:
-            - string
-            - 'null'
-        language:
-          type:
-            - string
-            - 'null'
-        data:
-          $ref: '#/components/schemas/ResponseDataMapInput'
-        embeddedData:
-          $ref: '#/components/schemas/ResponseEmbeddedDataInput'
-        tags:
-          type: array
-          maxItems: 100
-          description: Complete set of tag ids for this response, replacing whatever is currently applied. Repeats are allowed and collapse, because the set is applied as a set. Tags must already exist in the same workspace — create them via `POST /api/v3/tags`.
-          items:
-            type: string
-            format: cuid2
+          description: 'Intended create payload, checked against `CreateResponseRequest` by the operation rather than by this envelope. Any JSON value is accepted here so the endpoint can return repairable validation errors: a document that is not an object, or that breaks `CreateResponseRequest`, is a **200** with `valid: false`, never a 400.'
       additionalProperties: false
     ValidateResponsePatchRequest:
       type: object
@@ -8688,11 +8688,7 @@ components:
           type: string
           format: cuid2
         data:
-          description: Intended patch payload. Invalid documents are allowed so the endpoint can return repairable validation errors.
-          anyOf:
-            - $ref: '#/components/schemas/PatchResponseRequest'
-            - type: object
-              additionalProperties: true
+          description: 'Intended patch payload, checked against `PatchResponseRequest` by the operation rather than by this envelope. Any JSON value is accepted here so the endpoint can return repairable validation errors: a document that is not an object, or that breaks `PatchResponseRequest`, is a **200** with `valid: false`, never a 400.'
       additionalProperties: false
     ValidateResponseRequest:
       oneOf:
@@ -8804,6 +8800,42 @@ components:
           maxItems: 100
           uniqueItems: true
           description: Response ids to delete, at most 100 per call.
+          items:
+            type: string
+            format: cuid2
+      additionalProperties: false
+    PatchResponseRequest:
+      type: object
+      description: |
+        Partially updates a response. Strict at the top level: unknown keys return **400** rather than being ignored, and at least one patchable field must be present.
+
+        `data` is **replaced wholesale**, not deep-merged — send the complete answer map you want stored. `embeddedData` is the exception and merges by name: it addresses individual fields, so a field the payload omits keeps its value rather than being cleared.
+
+        v3 replaces on purpose, where v1 and v2 merge: a merge makes it impossible to delete an answer, which a correction flow needs.
+
+        **Every patch runs the response pipeline**, emitting `responseUpdated` — so webhooks, integrations and follow-ups fire for a correction as much as for a substantive edit. A patch that *transitions* the response to finished additionally emits `responseFinished`; one that patches an already-finished response does not re-emit it.
+
+        Not patchable, and rejected if sent: `createdAt`, `updatedAt`, `surveyId`, `contactId`, `displayId`, `singleUseId`, `contactAttributes`, and the create-only `ttc` and `meta` — timing and submission context describe the original submission event, so they are set once and not revised. `contactId` is create-only deliberately — re-attributing an existing response to a different person is a capability only v2 offers, and it is not carried forward.
+      minProperties: 1
+      properties:
+        finished:
+          type: boolean
+        endingId:
+          type:
+            - string
+            - 'null'
+        language:
+          type:
+            - string
+            - 'null'
+        data:
+          $ref: '#/components/schemas/ResponseDataMapInput'
+        embeddedData:
+          $ref: '#/components/schemas/ResponseEmbeddedDataInput'
+        tags:
+          type: array
+          maxItems: 100
+          description: Complete set of tag ids for this response, replacing whatever is currently applied. Repeats are allowed and collapse, because the set is applied as a set. Tags must already exist in the same workspace — create them via `POST /api/v3/tags`.
           items:
             type: string
             format: cuid2
@@ -10398,7 +10430,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     FeedbackRecordsBadRequest:
-      description: 'Bad Request. From the **gateway** (`text/plain`): a missing or malformed `tenant_id`, a request body that is not JSON, or a path under `/api/v3/feedbackRecords` that is not one of the documented operations. A record id that is not a UUID and a path such as `/count` both fall in that last case and share the one `Unsupported FeedbackRecords route` body, so the two cannot be told apart from the response. From the **feedback store** (`application/problem+json`): schema validation failures — an unknown enum value, an inverted range, a malformed or re-ordered cursor, or a string with NULL bytes or invalid UTF-8.'
+      description: 'Bad Request. From the **gateway** (`text/plain`): a missing or malformed `tenant_id`; a request body that is not a single JSON object; a body whose top-level keys can be read more than one way (a repeated key, a key with non-ASCII characters, or a key that differs from `tenant_id` only in letter case); a `tenant_id` query parameter given more than once; or a path under `/api/v3/feedbackRecords` that is not one of the documented operations. A record id that is not a UUID and a path such as `/count` both fall in that last case and share the one `Unsupported FeedbackRecords route` body, so the two cannot be told apart from the response. From the **feedback store** (`application/problem+json`): schema validation failures — an unknown enum value, an inverted range, a malformed or re-ordered cursor, or a string with NULL bytes or invalid UTF-8.'
       content:
         text/plain:
           schema:
@@ -10407,6 +10439,12 @@ components:
             missingTenant:
               summary: Gateway — tenant_id missing or malformed
               value: Invalid or missing tenant_id
+            invalidBody:
+              summary: Gateway — body is not a single JSON object, or has a repeated or non-ASCII key
+              value: Invalid request body
+            ambiguousTenant:
+              summary: Gateway — tenant_id given in more than one spelling, or repeated in the query
+              value: Ambiguous tenant_id
             unsupportedRoute:
               summary: Gateway — not a documented operation
               value: Unsupported FeedbackRecords route

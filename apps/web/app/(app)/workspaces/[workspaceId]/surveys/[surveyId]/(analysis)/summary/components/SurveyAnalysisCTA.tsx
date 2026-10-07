@@ -15,7 +15,7 @@ import { SurveyStatusDropdown } from "@/app/(app)/workspaces/[workspaceId]/surve
 import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
 import { getAIUnavailableMessage } from "@/lib/ai/availability";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
 import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
@@ -270,7 +270,7 @@ export const SurveyAnalysisCTA = ({
       icon: ListRestart,
       tooltip: t("workspace.surveys.summary.reset_survey"),
       onClick: () => setIsResetModalOpen(true),
-      isVisible: !isReadOnly && !survey.archivedAt,
+      isVisible: canManage && !survey.archivedAt,
     },
     {
       icon: SquarePenIcon,

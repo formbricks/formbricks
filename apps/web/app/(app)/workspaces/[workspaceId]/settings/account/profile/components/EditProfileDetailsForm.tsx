@@ -10,7 +10,7 @@ import { z } from "zod";
 import { TUser, TUserUpdateInput, ZUser, ZUserEmail } from "@formbricks/types/user";
 import { PasswordConfirmationModal } from "@/app/(app)/workspaces/[workspaceId]/settings/account/profile/components/password-confirmation-modal";
 import { appLanguages, sortedAppLanguages } from "@/lib/i18n/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { Button } from "@/modules/ui/components/button";
 import {

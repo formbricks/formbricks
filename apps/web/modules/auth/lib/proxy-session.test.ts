@@ -1,6 +1,10 @@
 import { createHmac } from "node:crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { getProxySession, getSessionTokenFromRequest } from "./proxy-session";
+import {
+  getProxySession,
+  getProxySessionFromCookieHeader,
+  getSessionTokenFromRequest,
+} from "./proxy-session";
 
 const { TEST_SECRET, mockFindUnique } = vi.hoisted(() => ({
   TEST_SECRET: "proxy-session-test-secret-at-least-32-characters",
@@ -101,5 +105,25 @@ describe("proxy-session", () => {
 
     expect(session).toEqual(validSession);
     expect(mockFindUnique).toHaveBeenCalledWith({ where: { sessionToken: "valid-token" }, select: SELECT });
+  });
+
+  test("resolves the same active session from a raw Cookie header", async () => {
+    const validSession = {
+      userId: "user-1",
+      expires: new Date(Date.now() + 60_000),
+      user: { isActive: true },
+    };
+    mockFindUnique.mockResolvedValue(validSession);
+
+    const cookieHeader = `other=1; formbricks.session_token=${encodeURIComponent(sign("header-token"))}`;
+
+    expect(await getProxySessionFromCookieHeader(cookieHeader)).toEqual(validSession);
+    expect(mockFindUnique).toHaveBeenCalledWith({ where: { sessionToken: "header-token" }, select: SELECT });
+  });
+
+  test("returns null from a Cookie header without a verified session cookie, without a query", async () => {
+    expect(await getProxySessionFromCookieHeader(null)).toBeNull();
+    expect(await getProxySessionFromCookieHeader("formbricks.session_token=forged.signature")).toBeNull();
+    expect(mockFindUnique).not.toHaveBeenCalled();
   });
 });

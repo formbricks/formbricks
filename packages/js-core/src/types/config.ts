@@ -66,6 +66,7 @@ export interface TWorkspaceStateSurvey {
   variables: TJsonObject[];
   type: "link" | "app";
   showLanguageSwitch: boolean | null;
+  autoSelectLanguage?: boolean | null;
   endings: TJsonObject[];
   autoClose: number | null;
   status: "draft" | "inProgress" | "paused" | "completed";

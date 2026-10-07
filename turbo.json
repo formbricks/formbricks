@@ -250,6 +250,7 @@
     "@formbricks/web#typecheck": {
       "dependsOn": [
         "@formbricks/ai#build",
+        "@formbricks/api-v3-schemas#typecheck",
         "@formbricks/cache#build",
         "@formbricks/database#build",
         "@formbricks/jobs#build",
@@ -312,6 +313,7 @@
         "OTEL_SERVICE_NAME",
         "OTEL_TRACES_SAMPLER",
         "OTEL_TRACES_SAMPLER_ARG",
+        "MCP_DCR_ALLOWED_REDIRECT_URIS",
         "MCP_OAUTH_JWKS_URL",
         "PROMETHEUS_ENABLED",
         "PROMETHEUS_EXPORTER_PORT",

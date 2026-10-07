@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { getSessionTokenFromCookieStore } from "./session-cookie";
+import { getSessionTokenFromCookieHeader, getSessionTokenFromCookieStore } from "./session-cookie";
 
 type TCookieStore = {
   get: (name: string) => { value: string } | undefined;
@@ -13,9 +13,7 @@ export const getSessionTokenFromRequest = (request: TRequestWithCookies): string
   return getSessionTokenFromCookieStore(request.cookies);
 };
 
-export const getProxySession = async (request: TRequestWithCookies) => {
-  const sessionToken = getSessionTokenFromRequest(request);
-
+const getActiveSessionByToken = async (sessionToken: string | null) => {
   if (!sessionToken) {
     return null;
   }
@@ -40,4 +38,13 @@ export const getProxySession = async (request: TRequestWithCookies) => {
   }
 
   return session;
+};
+
+export const getProxySession = async (request: TRequestWithCookies) => {
+  return getActiveSessionByToken(getSessionTokenFromRequest(request));
+};
+
+/** Same lookup as `getProxySession`, for callers that only hold the raw `Cookie` header. */
+export const getProxySessionFromCookieHeader = async (cookieHeader: string | null) => {
+  return getActiveSessionByToken(getSessionTokenFromCookieHeader(cookieHeader));
 };

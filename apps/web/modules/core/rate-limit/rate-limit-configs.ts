@@ -4,6 +4,10 @@ export const rateLimitConfigs = {
     login: { interval: 900, allowedPerInterval: 10, namespace: "auth:login" }, // 10 per 15 minutes
     signup: { interval: 3600, allowedPerInterval: 30, namespace: "auth:signup" }, // 30 per hour
     forgotPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:forgot" }, // 5 per hour
+    // Mail a single account can receive from forgot-password (reset link or SSO hint), keyed by user id, so
+    // rotating IPs cannot flood one inbox (ENG-3640). Checked after the response, so hitting it is
+    // invisible. Three covers a user who retries a couple of times while the 30-minute link is still live.
+    forgotPasswordPerAccount: { interval: 3600, allowedPerInterval: 3, namespace: "auth:forgot:account" }, // 3 per hour
     // Keep redemption independent so requesting an email cannot exhaust the budget to use its token.
     resetPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:reset-password" }, // 5 per hour
     verifyEmail: { interval: 3600, allowedPerInterval: 10, namespace: "auth:verify" }, // 10 per hour

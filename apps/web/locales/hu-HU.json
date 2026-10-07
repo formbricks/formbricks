@@ -26,6 +26,7 @@
       "back_to_login": "Vissza a bejelentkezéshez",
       "email-sent": {
         "heading": "A jelszó-visszaállítás sikeresen kérve",
+        "sso_hint": "Ön a Google, a Microsoft vagy más egyszeri bejelentkezési (SSO) szolgáltató segítségével jelentkezik be? Ebben az esetben nincs visszaállítandó jelszó. Kérjük, ehelyett az adott szolgáltatón keresztül jelentkezzen be.",
         "text": "Ha létezik ilyen e-mail-címmel rendelkező fiók, akkor hamarosan megkapja a jelszó visszaállításához szükséges utasításokat."
       },
       "reset": {
@@ -696,6 +697,13 @@
     "sso_recovery_factors_removed_email_subject": "Hitelesítő adatok eltávolításra kerültek az Ön Formbricks fiókjából",
     "sso_recovery_factors_removed_email_text": "Ön most először jelentkezett be egyszeri bejelentkezéssel. Mivel az e-mail címe korábban sosem került ellenőrzésre, eltávolítottuk a fiókon korábban beállított hitelesítő adatokat:",
     "sso_recovery_factors_removed_email_two_factor": "A kétfaktoros hitelesítés el lett távolítva.",
+    "sso_sign_in_hint_email_did_not_request": "Amennyiben Ön nem kezdeményezte ezt a kérelmet, kérjük, hagyja figyelmen kívül ezt az e-mailt. Fiókjával kapcsolatban semmilyen változás nem történt.",
+    "sso_sign_in_hint_email_go_to_login": "Tovább a bejelentkezéshez",
+    "sso_sign_in_hint_email_heading": "Bejelentkezés egyszeri bejelentkezéssel (SSO)",
+    "sso_sign_in_hint_email_no_access": "Amennyiben Ön már nem tud ilyen módon bejelentkezni, kérjük, forduljon rendszergazdájához.",
+    "sso_sign_in_hint_email_subject": "Hogyan jelentkezhet be Formbricks-fiókjába",
+    "sso_sign_in_hint_email_text": "Kérelmet kaptunk Formbricks-fiókjának jelszó-visszaállítására. Fiókja nem használ jelszót, ezért nincs mit visszaállítani. Ön a következő szolgáltatóval jelentkezik be:",
+    "sso_sign_in_hint_email_text_unavailable": "Kérelmet kaptunk a Formbricks-fiókjához tartozó jelszó visszaállítására. Az Ön fiókja nem használ jelszót: egyszeri bejelentkezéssel (SSO) lehet belépni, ez azonban jelenleg nem érhető el ezen a Formbricks-példányon. A hozzáférés visszaállítása érdekében kérjük, forduljon a rendszergazdájához.",
     "survey_response_finished_email_congrats": "Gratulálunk, új válasz érkezett a kérdőívére! Valaki épp most töltötte ki ezt a kérdőívet: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Nem szeretné megkapni ezeket az értesítéseket?",
     "survey_response_finished_email_hey": "Helló 👋",
@@ -2759,8 +2767,10 @@
         "connect_app_banner_title": "Beállít egy webhelyet és alkalmazás-kérdőívet?"
       },
       "billing": {
+        "billing_currency_conflict": "Ez a csomagváltás ütközik a fiókján szereplő másik pénznemben történő számlázással. Kérjük, lépjen kapcsolatba az ügyfélszolgálattal a csomag váltásához.",
         "billing_interval_toggle": "Számlázási időköz",
         "cancel_at_period_end": "Megszakítás az időszak végén",
+        "card_payment_method_required": "A jelenlegi csomagjáról való váltáshoz kártyát kell fizetési módként megadnia. Kérjük, adjon hozzá egy kártyát, majd próbálja újra.",
         "comparison_addon": "Kiegészítő",
         "comparison_best_for": "Legjobb ehhez",
         "comparison_included": "Tartalmazott",
@@ -2803,6 +2813,7 @@
         "comparison_section_scale_unlocks": "Scale feloldja",
         "confirm_hobby_downgrade_body": "Az ingyenes {plan} próbaidőszaka most véget ér, és azonnal átvált a Hobby csomagra.",
         "confirm_hobby_downgrade_description": "Bármikor újra átválthat a magasabb csomagra.",
+        "confirm_hobby_downgrade_ends_current_plan_body": "Ön át fog váltani a Hobbi csomagra. Jelenlegi előfizetése véglegesen megszűnik, és nem állítható vissza.",
         "confirm_hobby_downgrade_title": "Átvált a Hobby csomagra most?",
         "confirm_trial_continue_body": "Utókövetések, egyéni hivatkozások és minden más a {plan} csomagban – azonnal feloldva.<br /><b>{chargeNow} ma</b>, majd {fullPrice} {period}, amely tartalmazza az adókat is. A számlázás ma indul.",
         "confirm_trial_continue_body_fallback": "Utókövetések, egyéni hivatkozások és minden más a {plan} csomagban – azonnal feloldva.<br /><b>{fullPrice} {period}</b> plusz adók. A számlázás ma indul.",
@@ -2815,6 +2826,7 @@
         "confirm_upgrade_button": "Frissítés megerősítése",
         "confirm_upgrade_calculating": "Az arányos díj kiszámítása…",
         "confirm_upgrade_description": "Bármikor újra megváltoztathatja a csomagját.",
+        "confirm_upgrade_ends_current_plan": "A váltással jelenlegi előfizetése végleg megszűnik, és azt nem lehet visszaállítani, még akkor sem, ha ez a fizetés nem sikerül.",
         "confirm_upgrade_title": "Frissítés megerősítése",
         "contact_sales_cta": "Vegye fel velünk a kapcsolatot",
         "contact_sales_description": "Tudjon meg többet a vállalatok számára készült Formbricks rendszerről, és arról, hogy hogyan tudjuk az Ön igényeire szabni a megoldásainkat.",
@@ -3400,6 +3412,8 @@
         "auto_save_disabled": "Az automatikus mentés letiltva",
         "auto_save_disabled_tooltip": "A felmérése csak piszkozat állapotban kerül automatikusan mentésre. Ez biztosítja, hogy a már nem piszkozat állapotban lévő felmérések ne módosuljanak véletlenül.",
         "auto_save_on": "Automatikus mentés bekapcsolva",
+        "auto_select_browser_language": "A böngésző nyelvének használata alapértelmezettként",
+        "auto_select_browser_language_description": "A felmérés automatikusan a válaszadó böngészőjének nyelvén nyílik meg, amennyiben az adott nyelv aktív. Ellenkező esetben az alapértelmezett nyelv kerül alkalmazásra.",
         "automatically_close_survey_after_n_seconds_if_no_response": "Kérdőív automatikus lezárása az aktiváló utáni <autoCloseInput /> másodperc után, ha nincs válasz.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "A kérdőív automatikus lezárása egy bizonyos számú válasz után.",
         "automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds": "A kérdőív automatikus lezárása, ha a felhasználó nem válaszol egy bizonyos másodpercnyi idő után.",

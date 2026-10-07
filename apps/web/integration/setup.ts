@@ -39,6 +39,8 @@ vi.mock("@/modules/email", () => ({
   // The SSO-recovery pair (ENG-2783): startSsoRecovery sends the first, completeSsoRecovery the second.
   sendVerificationEmail: vi.fn(async () => true),
   sendSsoRecoveryFactorsRemovedEmail: vi.fn(async () => true),
+  // ENG-3262: forgot-password sends this instead of a reset link to an account with no password.
+  sendSsoSignInHintEmail: vi.fn(async () => true),
   sendPasswordResetLinkEmail: vi.fn(async () => true),
   sendPasswordResetNotifyEmail: vi.fn(async () => true),
   sendDeleteAccountConfirmationEmail: vi.fn(async () => true),

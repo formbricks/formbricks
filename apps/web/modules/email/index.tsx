@@ -10,6 +10,7 @@ import {
   renderPasswordResetNotifyEmail,
   renderResponseFinishedEmail,
   renderSsoRecoveryFactorsRemovedEmail,
+  renderSsoSignInHintEmail,
   renderVerificationEmail,
 } from "@formbricks/email";
 import { TEmailTemplateLegalProps } from "@formbricks/email/src/types/email";
@@ -249,6 +250,35 @@ export const sendSsoRecoveryFactorsRemovedEmail = async ({
     emailType: "sso_recovery_notification",
     to: email,
     subject: t("emails.sso_recovery_factors_removed_email_subject"),
+    html,
+  });
+};
+
+/**
+ * Tell a user who asked for a password reset that their account has no password and signs in with an
+ * identity provider instead (ENG-3262). Goes only to the address on file, so naming the provider here
+ * reveals nothing the forgot-password page does not — that page answers identically for every address.
+ */
+export const sendSsoSignInHintEmail = async ({
+  email,
+  locale,
+  providerNames,
+}: {
+  email: string;
+  locale: TUserLocale;
+  providerNames: string[];
+}): Promise<boolean> => {
+  const t = await getTranslate(locale);
+  const html = await renderSsoSignInHintEmail({
+    providerNames,
+    loginLink: `${WEBAPP_URL}/auth/login`,
+    t,
+    ...legalProps,
+  });
+  return await sendEmail({
+    emailType: "sso_sign_in_hint",
+    to: email,
+    subject: t("emails.sso_sign_in_hint_email_subject"),
     html,
   });
 };

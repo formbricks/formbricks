@@ -9,7 +9,7 @@ import { ApiKeyPermission } from "@formbricks/database/prisma-browser";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { ViewPermissionModal } from "@/modules/organization/settings/api-keys/components/view-permission-modal";
 import {
   TApiKeyUpdateInput,

@@ -3,6 +3,7 @@ import type { TChartQuery } from "@formbricks/types/analysis";
 import {
   canDropEmptyMeasureRows,
   dropEmptyMeasureRows,
+  withOptionIdFilter,
 } from "@/modules/ee/analysis/charts/lib/empty-measure-rows";
 
 const CES_AVG = "FeedbackRecords.cesAverage";
@@ -140,5 +141,37 @@ describe("the injected response base (ENG-3331)", () => {
       { [FIELD_LABEL]: "Anything else?", "FeedbackRecords.npsScore": null, "FeedbackRecords.npsCount": 0 },
     ];
     expect(dropEmptyMeasureRows(rows, query)).toEqual([rows[0]]);
+  });
+});
+
+describe("withOptionIdFilter", () => {
+  const VALUE_ID = "FeedbackRecords.valueId";
+  const COUNT = "FeedbackRecords.count";
+  const optionFilter = { member: VALUE_ID, operator: "set" };
+
+  test("requires an option id when grouping by it", () => {
+    expect(withOptionIdFilter({ measures: [COUNT], dimensions: [VALUE_ID] })).toEqual({
+      measures: [COUNT],
+      dimensions: [VALUE_ID],
+      filters: [optionFilter],
+    });
+  });
+
+  test("keeps the query's own filters and adds the option filter beside them", () => {
+    const own = { member: FIELD_LABEL, operator: "equals" as const, values: ["Plan"] };
+    expect(
+      withOptionIdFilter({ measures: [COUNT], dimensions: [FIELD_LABEL, VALUE_ID], filters: [own] }).filters
+    ).toEqual([own, optionFilter]);
+  });
+
+  test("leaves a grouping that is not by option id untouched", () => {
+    const query: TChartQuery = { measures: [COUNT], dimensions: [FIELD_LABEL] };
+    expect(withOptionIdFilter(query)).toEqual(query);
+  });
+
+  test("does not mutate the query it is given", () => {
+    const query: TChartQuery = { measures: [COUNT], dimensions: [VALUE_ID] };
+    withOptionIdFilter(query);
+    expect(query.filters).toBeUndefined();
   });
 });
