@@ -3,6 +3,7 @@ import { describe, expect, test, vi } from "vitest";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
+import { buildOversizedLogicQsf } from "./__fixtures__/oversized-logic";
 import { loadRecordedPlan, recordedGenerate, refsInPrompt } from "./__fixtures__/recorded-plans";
 import {
   QSF_AI_CALL_TIMEOUT_MS,
@@ -13,6 +14,7 @@ import {
   planQsfImport,
 } from "./ai-plan";
 import { QsfImportFailedError, QsfImportTimeoutError } from "./errors";
+import { QSF_PROMPT_MAX_CALL_CHARS, QSF_PROMPT_MAX_TOTAL_CHARS } from "./prompt";
 import { readQsf } from "./read-qsf";
 import { sanitizeQsfTexts } from "./sanitize-text";
 
@@ -53,6 +55,61 @@ describe("chunkQuestions", () => {
 });
 
 describe("planQsfImport", () => {
+  test(
+    "keeps every call and the whole import under the prompt budget, however large the logic",
+    { timeout: 60_000 },
+    async () => {
+      // 200 questions, each with 21 rules of up to 400 conditions on 200-character values, behind a
+      // branch just as large: ~67 MB of logic in memory.
+      const survey = readQsf(buildOversizedLogicQsf());
+      const texts = await sanitizeQsfTexts(survey, new AbortController().signal);
+      const sizes: number[] = [];
+      const generate: TQsfPlanGenerate = async (request) => {
+        sizes.push(request.system.length + request.prompt.length);
+        // Conditions, rules and operands are cut to the tier's bounds.
+        expect(request.prompt).not.toContain("v".repeat(61));
+        expect(request.prompt).toContain('"moreConditions"');
+        return {
+          object: {
+            questions: refsInPrompt(request.prompt).map((ref) => ({
+              ref,
+              type: "multipleChoiceSingle",
+              required: false,
+              choicesFrom: "choices",
+              rowsFrom: null,
+              columnsFrom: null,
+              otherChoiceKey: null,
+              noneChoiceKey: null,
+              labelKey: null,
+              excludedKeys: [],
+              contactFields: [],
+              inputType: null,
+              scale: null,
+              range: null,
+              format: null,
+              logicNotes: [],
+            })),
+            skipped: [],
+            pages: [],
+          },
+        };
+      };
+
+      const result = await planQsfImport({
+        survey,
+        texts,
+        generate,
+        signal: new AbortController().signal,
+        deadline: performance.now() + 120_000,
+      });
+
+      expect(sizes.length).toBeGreaterThan(0);
+      expect(Math.max(...sizes)).toBeLessThanOrEqual(QSF_PROMPT_MAX_CALL_CHARS);
+      expect(sizes.reduce((total, size) => total + size, 0)).toBeLessThanOrEqual(QSF_PROMPT_MAX_TOTAL_CHARS);
+      expect(result.plan.questions.size).toBe(200);
+    }
+  );
+
   test("plans every question of the largest fixture in three parallel calls, summing usage", async () => {
     const requests: TQsfPlanRequest[] = [];
     let inFlight = 0;

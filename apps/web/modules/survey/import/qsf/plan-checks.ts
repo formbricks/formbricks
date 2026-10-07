@@ -33,6 +33,8 @@ const ALLOWED_RANGES: Record<string, readonly number[]> = {
 export const QSF_MAX_NOTE_CHARS = 300;
 
 export type TQsfPlanFailure =
+  /** Never asked: the import's AI budget (calls, prompt size or time) ran out first. */
+  | "ai_budget"
   | "invalid_output"
   | "invalid_entry"
   | "missing"

@@ -11,6 +11,8 @@ import {
 } from "./plan-checks";
 import { ZQsfImportPlanForAI } from "./plan-schema";
 import {
+  QSF_PROMPT_MAX_CALL_CHARS,
+  QSF_PROMPT_MAX_TOTAL_CHARS,
   type TQsfPromptLimits,
   type TQsfPromptTexts,
   buildQsfPlanPrompt,
@@ -118,13 +120,20 @@ interface TPlanContext {
   survey: TQsfSurvey;
   texts: TQsfPromptTexts;
   limits: TQsfPromptLimits;
+  /** Prompt characters sent so far, system prompts included. */
+  promptChars: number;
   generate: TQsfPlanGenerate;
   signal: AbortSignal;
   usage: TQsfPlanUsage;
   calls: number;
 }
 
-type TCallOutcome = { kind: "ok"; response: TQsfPlanResponse } | { kind: "too_long" } | { kind: "invalid" };
+type TCallOutcome =
+  | { kind: "ok"; response: TQsfPlanResponse }
+  | { kind: "too_long" }
+  | { kind: "invalid" }
+  /** Not sent: the import's prompt budget is spent. */
+  | { kind: "budget" };
 
 const isTimeoutError = (error: unknown): boolean =>
   error instanceof Error &&
@@ -218,18 +227,27 @@ async function callOnce(
   failures?: ReadonlyMap<string, readonly TQsfPlanFailure[]>
 ): Promise<TCallOutcome> {
   if (context.calls >= QSF_MAX_AI_CALLS) throw new QsfImportFailedError("ai_call_budget");
+
+  const system = buildQsfPlanSystemPrompt();
+  const prompt = buildQsfPlanPrompt({
+    survey: context.survey,
+    refs,
+    texts: context.texts,
+    limits: context.limits,
+    failures,
+  });
+  // Never send an over-budget prompt: too big for one call means smaller calls; past the import's
+  // total, what is left goes unplanned.
+  const size = system.length + prompt.length;
+  if (size > QSF_PROMPT_MAX_CALL_CHARS) return { kind: "too_long" };
+  if (context.promptChars + size > QSF_PROMPT_MAX_TOTAL_CHARS) return { kind: "budget" };
+  context.promptChars += size;
   context.calls += 1;
 
   try {
     const result = await context.generate({
-      system: buildQsfPlanSystemPrompt(),
-      prompt: buildQsfPlanPrompt({
-        survey: context.survey,
-        refs,
-        texts: context.texts,
-        limits: context.limits,
-        failures,
-      }),
+      system,
+      prompt,
       schema: ZQsfImportPlanForAI,
       schemaName: "QualtricsImportPlan",
       schemaDescription: "How each question of a Qualtrics survey becomes a Formbricks question.",
@@ -260,21 +278,22 @@ async function planChunk(
 ): Promise<{ responses: TQsfPlanResponse[]; failed: Map<string, TQsfPlanFailure[]> }> {
   const responses: TQsfPlanResponse[] = [];
   const failed = new Map<string, TQsfPlanFailure[]>();
-  const fail = (chunkRefs: string[]) => {
-    for (const ref of chunkRefs) failed.set(ref, ["invalid_output"]);
+  const fail = (chunkRefs: string[], outcome: TCallOutcome) => {
+    const reason: TQsfPlanFailure = outcome.kind === "budget" ? "ai_budget" : "invalid_output";
+    for (const ref of chunkRefs) failed.set(ref, [reason]);
   };
 
   const outcome = await callOnce(context, refs, timeout, failures);
   if (outcome.kind === "ok") {
     responses.push(outcome.response);
-  } else if (outcome.kind === "invalid" || refs.length === 1) {
-    fail(refs);
+  } else if (outcome.kind !== "too_long" || refs.length === 1) {
+    fail(refs, outcome);
   } else {
     const middle = Math.ceil(refs.length / 2);
     for (const half of [refs.slice(0, middle), refs.slice(middle)]) {
       const halfOutcome = await callOnce(context, half, timeout, failures);
       if (halfOutcome.kind === "ok") responses.push(halfOutcome.response);
-      else fail(half);
+      else fail(half, halfOutcome);
     }
   }
 
@@ -339,11 +358,16 @@ export async function planQsfImport(params: {
 }): Promise<TQsfPlanResult> {
   const { survey, texts, generate, deadline } = params;
   const { refs, issues } = preSkip(survey);
+  // Refused before any AI call when no limits fit the survey into the prompt budget.
+  const limits = chooseQsfPromptLimits(survey, refs, texts);
+  if (!limits) throw new QsfImportFailedError("prompt_budget");
+
   const abort = new AbortController();
   const context: TPlanContext = {
     survey,
     texts,
-    limits: chooseQsfPromptLimits(survey, refs, texts),
+    limits,
+    promptChars: 0,
     generate,
     signal: AbortSignal.any([params.signal, abort.signal]),
     usage: { inputTokens: 0, outputTokens: 0 },
@@ -355,12 +379,15 @@ export async function planQsfImport(params: {
 
   let plan = await planRound(context, refs, QSF_MAX_INITIAL_CHUNKS, Math.max(callTimeout(), 1), abort);
 
-  const failing = [...plan.failures.keys()];
+  // A question the budget left unplanned is not retried: there is no budget left to retry it with.
+  const unplanned = new Map([...plan.failures].filter(([, reasons]) => reasons.includes("ai_budget")));
+  const failing = [...plan.failures.keys()].filter((ref) => !unplanned.has(ref));
   const retryTimeout = callTimeout();
   if (failing.length > 0 && retryTimeout > 0) {
     const remaining = Math.max(QSF_MAX_AI_CALLS - context.calls, 1);
     const retry = await planRound(context, failing, remaining, retryTimeout, abort, plan.failures);
     plan = mergeCheckedPlans(plan, retry);
+    for (const [ref, reasons] of unplanned) plan.failures.set(ref, reasons);
   }
 
   for (const [ref, description] of plan.skipped) {
@@ -371,12 +398,12 @@ export async function planQsfImport(params: {
       params: { cause: "ai_skipped", ...(description ? { description } : {}) },
     });
   }
-  for (const ref of plan.failures.keys()) {
+  for (const [ref, reasons] of plan.failures) {
     issues.push({
       code: "question_skipped",
       severity: "warning",
       questionTag: survey.questions.get(ref)?.exportTag ?? ref,
-      params: { cause: "plan_invalid" },
+      params: { cause: reasons.includes("ai_budget") ? "ai_budget" : "plan_invalid" },
     });
   }
 

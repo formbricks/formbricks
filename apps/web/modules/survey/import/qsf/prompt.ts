@@ -1,6 +1,13 @@
 import type { TQsfPlanFailure } from "./plan-checks";
 import { QSF_PLAN_ELEMENT_TYPES } from "./plan-schema";
-import type { TQsfLogicRule, TQsfOption, TQsfQuestion, TQsfSurvey, TQsfTextKey } from "./qsf-model";
+import type {
+  TQsfLogicCondition,
+  TQsfLogicRule,
+  TQsfOption,
+  TQsfQuestion,
+  TQsfSurvey,
+  TQsfTextKey,
+} from "./qsf-model";
 
 /**
  * The prompt for the import plan (ENG-3479).
@@ -26,21 +33,38 @@ interface TPromptLimits {
   option: number;
   /** Choices or answers listed per question; the rest are counted, not listed. */
   options: number;
+  /** Logic rules described per question or page; the rest are counted. Also the notes asked for. */
+  rules: number;
+  /** Conditions described per rule; the rest are counted. */
+  conditions: number;
+  /** Characters of one condition operand (a field name, a compared value). */
+  operand: number;
+  /** Other questions a call's logic mentions, described for context. */
+  context: number;
 }
 
 /**
  * Tighter and tighter limits, tried in order until the whole import fits `QSF_PROMPT_BUDGET_CHARS`.
  * Fewer listed options costs the model little: roles map whole lists, so it only needs to see the
- * options it might single out (an "Other", a "None of these").
+ * options it might single out (an "Other", a "None of these"). Every part of the data is bounded —
+ * texts, options, rules, conditions, operands, context — so the tightest tier has a size ceiling of
+ * its own: about 1.2k characters a question, under the budget for a survey at the reader's limits.
  */
 const PROMPT_LIMITS: readonly TPromptLimits[] = [
-  { text: 400, option: 120, options: 40 },
-  { text: 160, option: 60, options: 12 },
-  { text: 60, option: 30, options: 6 },
+  { text: 400, option: 120, options: 40, rules: 3, conditions: 6, operand: 60, context: 20 },
+  { text: 160, option: 60, options: 12, rules: 2, conditions: 3, operand: 40, context: 10 },
+  { text: 60, option: 30, options: 6, rules: 1, conditions: 2, operand: 30, context: 5 },
 ];
 
-/** Prompt characters for one import, all calls together (~60k tokens). */
+/** The question data of one import, all questions together, at the limits chosen (~60k tokens). */
 export const QSF_PROMPT_BUDGET_CHARS = 240_000;
+/** One call, system prompt and instructions included. Never sent above this. */
+export const QSF_PROMPT_MAX_CALL_CHARS = 120_000;
+/**
+ * All calls of one import together, system prompts, context and the retry round included. Twice the
+ * data budget: what a chunked import with a retry needs, and no more.
+ */
+export const QSF_PROMPT_MAX_TOTAL_CHARS = 2 * QSF_PROMPT_BUDGET_CHARS;
 
 const cut = (text: string, max: number): string => (text.length > max ? `${text.slice(0, max - 1)}…` : text);
 
@@ -58,13 +82,43 @@ function describeOptions(options: TQsfOption[], texts: TQsfPromptTexts, limits: 
   }));
 }
 
-function describeRule(rule: TQsfLogicRule) {
+function describeCondition(condition: TQsfLogicCondition, limits: TPromptLimits) {
+  return {
+    ...condition,
+    ...(condition.field === undefined ? {} : { field: cut(condition.field, limits.operand) }),
+    ...(condition.value === undefined ? {} : { value: cut(condition.value, limits.operand) }),
+  };
+}
+
+function describeRule(rule: TQsfLogicRule, limits: TPromptLimits) {
   return {
     kind: rule.kind,
-    ...(rule.conditions.length > 0 ? { conditions: rule.conditions } : {}),
+    ...(rule.conditions.length > 0
+      ? {
+          conditions: rule.conditions
+            .slice(0, limits.conditions)
+            .map((condition) => describeCondition(condition, limits)),
+        }
+      : {}),
+    ...(rule.conditions.length > limits.conditions
+      ? { moreConditions: rule.conditions.length - limits.conditions }
+      : {}),
     ...(rule.destination ? { goesTo: rule.destination } : {}),
   };
 }
+
+/** The rules a call describes, and how many it leaves out. */
+function describeRules(rules: TQsfLogicRule[], limits: TPromptLimits) {
+  if (rules.length === 0) return {};
+  return {
+    logic: rules.slice(0, limits.rules).map((rule) => describeRule(rule, limits)),
+    ...(rules.length > limits.rules ? { moreRules: rules.length - limits.rules } : {}),
+  };
+}
+
+/** How many of a question's or page's rules a call describes, and asks a note for. */
+export const describedRuleCount = (rules: readonly TQsfLogicRule[], limits: TPromptLimits): number =>
+  Math.min(rules.length, limits.rules);
 
 function describeQuestion(question: TQsfQuestion, texts: TQsfPromptTexts, limits: TPromptLimits) {
   return {
@@ -86,21 +140,29 @@ function describeQuestion(question: TQsfQuestion, texts: TQsfPromptTexts, limits
     ...(question.contentType ? { contentType: question.contentType } : {}),
     ...(question.dateFormat ? { dateFormat: question.dateFormat } : {}),
     ...(question.slider ? { slider: question.slider } : {}),
-    ...(question.logic.length > 0 ? { logic: question.logic.map(describeRule) } : {}),
+    ...describeRules(question.logic, limits),
   };
 }
 
 /** Questions a chunk's logic mentions that the chunk does not hold, so notes can name them. */
-function describeContext(survey: TQsfSurvey, refs: readonly string[], texts: TQsfPromptTexts) {
+function describeContext(
+  survey: TQsfSurvey,
+  refs: readonly string[],
+  texts: TQsfPromptTexts,
+  limits: TPromptLimits
+) {
   const inChunk = new Set(refs);
   const mentioned = new Map<string, Set<TQsfTextKey>>();
   const pageIds = new Set(refs.map((ref) => survey.questions.get(ref)?.pageId));
+  // Only what the call describes: rules and conditions past the limits name nothing in the prompt.
   const rules = [
-    ...refs.flatMap((ref) => survey.questions.get(ref)?.logic ?? []),
-    ...survey.pages.filter((page) => pageIds.has(page.id)).flatMap((page) => page.logic),
+    ...refs.flatMap((ref) => survey.questions.get(ref)?.logic.slice(0, limits.rules) ?? []),
+    ...survey.pages
+      .filter((page) => pageIds.has(page.id))
+      .flatMap((page) => page.logic.slice(0, limits.rules)),
   ];
   for (const rule of rules) {
-    for (const condition of rule.conditions) {
+    for (const condition of rule.conditions.slice(0, limits.conditions)) {
       if (!condition.questionRef || inChunk.has(condition.questionRef)) continue;
       const keys = mentioned.get(condition.questionRef) ?? new Set<TQsfTextKey>();
       if (condition.choiceKey) keys.add(condition.choiceKey);
@@ -111,7 +173,7 @@ function describeContext(survey: TQsfSurvey, refs: readonly string[], texts: TQs
     }
   }
 
-  return [...mentioned].flatMap(([ref, keys]) => {
+  return [...mentioned].slice(0, limits.context).flatMap(([ref, keys]) => {
     const question = survey.questions.get(ref);
     if (!question) return [];
     return [
@@ -119,7 +181,11 @@ function describeContext(survey: TQsfSurvey, refs: readonly string[], texts: TQs
         ref,
         text: cut(texts.plainDefault.get(question.textKey) ?? "", 100),
         ...(keys.size > 0
-          ? { choices: [...keys].map((key) => ({ key, text: cut(texts.plainDefault.get(key) ?? "", 60) })) }
+          ? {
+              choices: [...keys]
+                .slice(0, limits.conditions)
+                .map((key) => ({ key, text: cut(texts.plainDefault.get(key) ?? "", 60) })),
+            }
           : {}),
       },
     ];
@@ -141,31 +207,50 @@ export function describeQsfQuestions(
     return question ? [describeQuestion(question, texts, limits)] : [];
   });
   const pageIds = new Set(questions.map((question) => question.page));
+  const inCall = new Set(refs);
   const pages = survey.pages
     .filter((page) => pageIds.has(page.id))
     .map((page) => ({
       id: page.id,
-      questions: page.questionRefs.filter((ref) => refs.includes(ref)),
-      ...(page.logic.length > 0 ? { logic: page.logic.map(describeRule) } : {}),
+      questions: page.questionRefs.filter((ref) => inCall.has(ref)),
+      ...describeRules(page.logic, limits),
     }));
-  const context = describeContext(survey, refs, texts);
+  const context = describeContext(survey, refs, texts, limits);
 
   return safeJson({ pages, questions, ...(context.length > 0 ? { otherQuestions: context } : {}) });
 }
 
 /**
- * The limits every call of this import uses: the loosest ones under which all questions together fit
- * the prompt budget.
+ * The limits every call of this import uses: the loosest ones under which the data of all questions
+ * together — page logic and context included — fits `QSF_PROMPT_BUDGET_CHARS`. `null` when not even
+ * the tightest do: such an import is refused before any AI call.
  */
-export function chooseQsfPromptLimits(survey: TQsfSurvey, refs: readonly string[], texts: TQsfPromptTexts) {
+export function chooseQsfPromptLimits(
+  survey: TQsfSurvey,
+  refs: readonly string[],
+  texts: TQsfPromptTexts
+): TPromptLimits | null {
   for (const limits of PROMPT_LIMITS) {
-    const size = refs.reduce((total, ref) => {
-      const question = survey.questions.get(ref);
-      return total + (question ? safeJson(describeQuestion(question, texts, limits)).length : 0);
-    }, 0);
-    if (size <= QSF_PROMPT_BUDGET_CHARS) return limits;
+    if (describeQsfQuestions(survey, refs, texts, limits).length <= QSF_PROMPT_BUDGET_CHARS) return limits;
   }
-  return PROMPT_LIMITS[PROMPT_LIMITS.length - 1];
+  return null;
+}
+
+/**
+ * The reader's estimate of the tightest prompt, from the raw default-language texts (every text is
+ * cut to the tier's bound, so raw and sanitized texts weigh about the same). Lets `prepareQsfImport`
+ * refuse a file no limits can fit with a 422, before the stream opens.
+ */
+export function estimateQsfMinimumPromptChars(survey: TQsfSurvey): number {
+  const plainDefault = new Map<TQsfTextKey, string>();
+  for (const [key, text] of survey.texts)
+    plainDefault.set(key, text.byLanguage.get(survey.defaultLanguage) ?? "");
+  return describeQsfQuestions(
+    survey,
+    [...survey.questions.keys()],
+    { plainDefault },
+    PROMPT_LIMITS[PROMPT_LIMITS.length - 1]
+  ).length;
 }
 
 export type { TPromptLimits as TQsfPromptLimits };
@@ -203,13 +288,14 @@ export function buildQsfPlanSystemPrompt(): string {
     "- Anything else Formbricks cannot represent: skip it.",
     "",
     "Logic notes:",
-    "- For each rule in a question's logic, one sentence in its logicNotes. For each rule in a page's logic, one sentence in that page's entry in pages[] (only pages with logic need one).",
+    "- For each rule listed in a question's logic, one sentence in its logicNotes. For each rule listed in a page's logic, one sentence in that page's entry in pages[] (only pages with logic need one). moreRules and moreConditions count what is not listed: do not guess at those.",
     "- Name questions by their text, not their ref, and choices by their text. Example: \"Shown only if 'Do you use our product?' is 'Yes'.\"",
     "- Plain text, at most 300 characters, no links, no HTML. Write in the survey's language.",
   ].join("\n");
 }
 
 const FAILURE_HINTS: Record<TQsfPlanFailure, string> = {
+  ai_budget: "it was not planned in time",
   invalid_output: "the plan could not be read; follow the schema exactly",
   invalid_entry: "its entry did not follow the schema",
   missing: "it was missing; list it in questions[] or in skipped[]",

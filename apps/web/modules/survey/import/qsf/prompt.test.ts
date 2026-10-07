@@ -11,6 +11,13 @@ import {
 import { readQsf } from "./read-qsf";
 import { sanitizeQsfTexts } from "./sanitize-text";
 
+/** The limits an import would use; every fixture fits the budget. */
+const limitsFor = (...args: Parameters<typeof chooseQsfPromptLimits>) => {
+  const limits = chooseQsfPromptLimits(...args);
+  if (!limits) throw new Error("The survey does not fit the prompt budget");
+  return limits;
+};
+
 const prepare = async (fixture: string) => {
   const qsf = loadQsfFixture(fixture);
   const survey = readQsf(qsf);
@@ -20,7 +27,7 @@ const prepare = async (fixture: string) => {
     survey,
     refs,
     texts,
-    limits: chooseQsfPromptLimits(survey, refs, texts),
+    limits: limitsFor(survey, refs, texts),
   });
   return { qsf, survey, texts, refs, prompt };
 };
@@ -83,7 +90,7 @@ describe("buildQsfPlanPrompt", () => {
       survey,
       refs,
       texts: { plainDefault },
-      limits: chooseQsfPromptLimits(survey, refs, { plainDefault }),
+      limits: limitsFor(survey, refs, { plainDefault }),
     });
 
     expect(prompt.match(/<\/qualtrics_questions>/g)).toHaveLength(1);
@@ -94,7 +101,7 @@ describe("buildQsfPlanPrompt", () => {
     const { survey, texts } = await prepare("logic-skip-display-branch.qsf");
 
     const data = JSON.parse(
-      describeQsfQuestions(survey, ["QID2"], texts, chooseQsfPromptLimits(survey, ["QID2"], texts))
+      describeQsfQuestions(survey, ["QID2"], texts, limitsFor(survey, ["QID2"], texts))
     ) as { otherQuestions: { ref: string; text: string }[] };
 
     expect(data.otherQuestions).toEqual([
@@ -109,7 +116,7 @@ describe("buildQsfPlanPrompt", () => {
       survey,
       refs: ["QID2"],
       texts,
-      limits: chooseQsfPromptLimits(survey, ["QID2"], texts),
+      limits: limitsFor(survey, ["QID2"], texts),
       failures: new Map([["QID2", ["type_not_allowed"]]]),
     });
 
@@ -133,7 +140,7 @@ describe("chooseQsfPromptLimits", () => {
       plainDefault.set(question.textKey, "question text ".repeat(100));
     }
 
-    const limits = chooseQsfPromptLimits(survey, refs, { plainDefault });
+    const limits = limitsFor(survey, refs, { plainDefault });
     const size = describeQsfQuestions(survey, refs, { plainDefault }, limits).length;
 
     expect(limits.options).toBeLessThan(40);
