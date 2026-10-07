@@ -156,9 +156,10 @@ describe("toComparableStoredCustomCss", () => {
 });
 
 describe("getCompiledByteSize", () => {
-  test("counts the compiled field in UTF-8 bytes and treats a missing field as empty", () => {
-    expect(getCompiledByteSize("@layer fb-survey{#fbjs a{color:red!important}}")).toBe(46);
-    expect(getCompiledByteSize("é")).toBe(2);
+  test("counts base and dark together in UTF-8 bytes, as the output limit does", () => {
+    expect(getCompiledByteSize({ light: "@layer fb-survey{#fbjs a{color:red!important}}" })).toBe(46);
+    expect(getCompiledByteSize({ light: "é", dark: "abc" })).toBe(5);
+    expect(getCompiledByteSize({ dark: "abc" })).toBe(3);
     expect(getCompiledByteSize(null)).toBe(0);
   });
 });

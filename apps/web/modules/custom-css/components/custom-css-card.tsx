@@ -93,7 +93,7 @@ export const CustomCssCard = ({
   // Only meaningful for a draft whose own check passed; an earlier draft's output would mislead.
   const processedSize =
     validation.status === "valid" && !validation.isPreviewBehind
-      ? getCompiledByteSize(validation.previewCss?.[appearance])
+      ? getCompiledByteSize(validation.previewCss)
       : null;
   const canType = mode === "full";
   const canClear = mode !== "read-only";

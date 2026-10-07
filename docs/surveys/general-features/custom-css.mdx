@@ -455,7 +455,7 @@ Define `@keyframes` in the same field as the rules that use them.
 
 Sizes are counted in bytes of UTF-8 text, so most characters count as one byte. The processed output adds scoping to every selector, so CSS close to the size limit that consists of many short rules can exceed the output limit. At most 50 warnings are listed per check; anything beyond that is still removed.
 
-The editor shows both sizes under the field: the source size (base and dark together) and, once the CSS is checked, the processed size of the field you are editing.
+The editor shows both sizes under the field: the source size (base and dark together) and, once the CSS is checked, the processed size, also base and dark together.
 
 Two notes do not remove anything: **Unknown property** (for example a typo like `colr`) and **Invalid value** (for example `color: notacolor`). The declaration stays, but browsers ignore it, so it has no effect.
 
