@@ -4,7 +4,11 @@ import { HistoryIcon, Loader2Icon } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { type TCustomCssAppearance, type TCustomCssCompiled } from "@formbricks/types/custom-css";
+import {
+  CUSTOM_CSS_NOTE_CODES,
+  type TCustomCssAppearance,
+  type TCustomCssCompiled,
+} from "@formbricks/types/custom-css";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -72,9 +76,11 @@ export const WorkspaceCustomCssCard = ({
   const handleSave = async () => {
     try {
       const { warnings } = await editor.save(normalizeCustomCssInput(editor.draft));
+      // Notes leave their declaration in place, so only removals are counted as removed.
+      const removedCount = warnings.filter((warning) => !CUSTOM_CSS_NOTE_CODES.has(warning.code)).length;
       toast.success(
-        warnings.length > 0
-          ? t("workspace.custom_css.saved_with_warnings", { count: warnings.length })
+        removedCount > 0
+          ? t("workspace.custom_css.saved_with_warnings", { count: removedCount })
           : t("workspace.custom_css.saved")
       );
     } catch (error) {

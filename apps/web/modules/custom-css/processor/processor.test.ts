@@ -786,6 +786,26 @@ describe("warnings", () => {
   });
 });
 
+describe("declarations that do nothing", () => {
+  test("a misspelled property and an unreadable value stay, each with a located note", () => {
+    const { compiled, warnings } = compile(".a {\n  colr: red;\n  color: notacolor;\n  width: 10px;\n}");
+    expect(warnings.map(({ code, line, column }) => ({ code, line, column }))).toEqual([
+      { code: "unknown_property", line: 2, column: 3 },
+      { code: "invalid_value", line: 3, column: 3 },
+    ]);
+    expect(compiled.light).toContain("colr:red");
+    expect(compiled.light).toContain("width:10px");
+  });
+
+  test("valid modern CSS, custom properties, vendor prefixes and var() values get no note", () => {
+    const { warnings } = compile(
+      ".a{--x:1;-webkit-foo:bar;color:var(--x);margin:env(safe-area-inset-top);box-shadow:none;" +
+        "quotes:none;content:'x';text-wrap:balance;field-sizing:content;color:light-dark(#000,#fff)}"
+    );
+    expect(warnings).toEqual([]);
+  });
+});
+
 describe("normalizeCustomCssInput", () => {
   test("trims fields, maps empty fields to null and no CSS at all to null", () => {
     expect(normalizeCustomCssInput(null)).toBeNull();

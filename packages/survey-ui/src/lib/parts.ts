@@ -20,11 +20,14 @@ export const FB_PART = {
   headline: "headline",
   /** Description (subheader) under a headline. */
   description: "description",
-  /** One selectable choice: a list row, picture tile, ranking item or an item of an open dropdown. */
+  /**
+   * One selectable choice: a list row, picture tile, ranking item, an item of an open dropdown, a rating
+   * or NPS step, a matrix cell or a day in the date picker. Carries `data-checked="true"` while selected.
+   */
   option: "option",
   /** The text of a choice, and the consent checkbox label. */
   optionLabel: "option-label",
-  /** The radio circle or checkbox square of a choice, and the consent checkbox. */
+  /** The radio circle or checkbox square of a choice, a ranking item's position badge, and the consent checkbox. */
   optionControl: "option-control",
   /** A single-line text field (open text, contact info, address, "Other" text, dropdown search). */
   input: "input",

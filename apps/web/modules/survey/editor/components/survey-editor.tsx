@@ -29,6 +29,7 @@ import type { TSurveyAccess } from "@/lib/survey/visibility/access";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useDocumentVisibility } from "@/lib/useDocumentVisibility";
 import { useCustomCssValidation } from "@/modules/custom-css/components/hooks/use-custom-css-validation";
+import { useLiveWorkspaceCustomCss } from "@/modules/custom-css/components/hooks/use-live-workspace-custom-css";
 import { getCustomCssSource, toCustomCssDraft } from "@/modules/custom-css/components/lib/draft";
 import { type TSurveyCustomCssEditorConfig } from "@/modules/custom-css/components/types";
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
@@ -210,7 +211,30 @@ export const SurveyEditor = ({
     draft: toCustomCssDraft(getCustomCssSource(localSurvey?.customCss)),
     enabled: customCssEditor !== null,
   });
-  const workspaceCompiledCss = customCssEditor?.workspace.compiled ?? null;
+  // Workspace CSS saved in another tab reaches the preview and the inherited panel without a reload.
+  const liveWorkspaceCss = useLiveWorkspaceCustomCss({
+    workspaceId: workspace.id,
+    enabled: customCssEditor !== null,
+    initial: {
+      source: customCssEditor?.workspace.source ?? null,
+      compiled: customCssEditor?.workspace.compiled ?? null,
+    },
+  });
+  const workspaceCompiledCss = liveWorkspaceCss.compiled;
+  const liveCustomCssEditor = useMemo(
+    () =>
+      customCssEditor
+        ? {
+            ...customCssEditor,
+            workspace: {
+              ...customCssEditor.workspace,
+              source: liveWorkspaceCss.source,
+              compiled: workspaceCompiledCss,
+            },
+          }
+        : null,
+    [customCssEditor, liveWorkspaceCss.source, workspaceCompiledCss]
+  );
   const surveyPreviewCss = surveyCustomCssValidation.previewCss;
   // Stable, so the memoized preview re-mounts the survey only when the validated CSS changes.
   const previewCustomCss = useMemo(
@@ -378,7 +402,7 @@ export const SurveyEditor = ({
               isStorageConfigured={isStorageConfigured}
               appearance={stylingAppearance}
               setAppearance={setStylingAppearance}
-              customCssEditor={customCssEditor}
+              customCssEditor={liveCustomCssEditor}
               customCssValidation={surveyCustomCssValidation}
               savedCustomCss={survey.customCss}
             />

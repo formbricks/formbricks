@@ -3,6 +3,7 @@
 import { AlertCircleIcon, AlertTriangleIcon, CheckCircle2Icon, Loader2Icon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
+  CUSTOM_CSS_NOTE_CODES,
   type TCustomCssAppearance,
   type TCustomCssError,
   type TCustomCssErrorCode,
@@ -50,6 +51,8 @@ export const CustomCssIssues = ({
     unsafe_value_removed: t("workspace.custom_css.warning_unsafe_value_removed"),
     fixed_position_removed: t("workspace.custom_css.warning_fixed_position_removed"),
     unsafe_selector_removed: t("workspace.custom_css.warning_unsafe_selector_removed"),
+    unknown_property: t("workspace.custom_css.warning_unknown_property"),
+    invalid_value: t("workspace.custom_css.warning_invalid_value"),
   };
   const fieldLabels: Record<TCustomCssAppearance, string> = {
     light: t("workspace.custom_css.base_css_label"),
@@ -79,11 +82,16 @@ export const CustomCssIssues = ({
   if (status === "pending") {
     statusText = t("workspace.custom_css.status_checking");
   } else if (status === "valid") {
+    // Removals and notes are told apart: a note's declaration stays in the CSS, it just does nothing.
+    const removedCount = warnings.filter((warning) => !CUSTOM_CSS_NOTE_CODES.has(warning.code)).length;
     StatusIcon = warnings.length > 0 ? AlertTriangleIcon : CheckCircle2Icon;
-    statusText =
-      warnings.length > 0
-        ? t("workspace.custom_css.status_valid_with_warnings", { count: warnings.length })
-        : t("workspace.custom_css.status_valid");
+    if (removedCount > 0) {
+      statusText = t("workspace.custom_css.status_valid_with_warnings", { count: removedCount });
+    } else if (warnings.length > 0) {
+      statusText = t("workspace.custom_css.status_valid_with_notes");
+    } else {
+      statusText = t("workspace.custom_css.status_valid");
+    }
   } else if (status === "invalid") {
     StatusIcon = AlertCircleIcon;
     statusText = t("workspace.custom_css.status_invalid");

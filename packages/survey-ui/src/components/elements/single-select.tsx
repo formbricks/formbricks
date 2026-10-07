@@ -449,6 +449,7 @@ function SingleSelectOptionItem({
       dir={dir}
       htmlFor={optionId}
       data-fb-part={FB_PART.option}
+      data-checked={isSelected ? "true" : undefined}
       className={cn(getOptionContainerClassName(isSelected, disabled), isSelected && "z-10")}>
       <span className="flex items-center">
         <input
@@ -614,6 +615,7 @@ function OtherOptionLabel({
     <div
       dir={dir}
       data-fb-part={FB_PART.option}
+      data-checked={isOtherSelected ? "true" : undefined}
       className={cn(getOptionContainerClassName(isOtherSelected, disabled), isOtherSelected && "z-10")}>
       <label htmlFor={optionId} className="flex cursor-pointer items-center">
         <input

@@ -7,6 +7,12 @@ describe("checkCustomCssFile", () => {
       ok: true,
     });
     expect(checkCustomCssFile({ name: "THEME.CSS", type: "", size: 10 }, "survey")).toEqual({ ok: true });
+    expect(
+      checkCustomCssFile({ name: "theme.css", type: "application/octet-stream", size: 10 }, "survey")
+    ).toEqual({ ok: true });
+    expect(checkCustomCssFile({ name: "theme.css", type: "text/plain", size: 10 }, "survey")).toEqual({
+      ok: true,
+    });
   });
 
   test("rejects other files", () => {

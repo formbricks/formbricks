@@ -4,6 +4,10 @@ import { getCustomCssByteLimit } from "./draft";
 /** What the file picker offers. The type check below is what decides; this only filters the dialog. */
 export const CUSTOM_CSS_FILE_ACCEPT = ".css,text/css";
 
+// Some systems (Windows registry gaps, automation) report a .css file as a generic type; whatever the file
+// holds is checked by the processor like typed CSS, so only a type that names something else is refused.
+const CSS_FILE_TYPES = new Set(["", "text/css", "text/plain", "application/octet-stream"]);
+
 export type TCustomCssFileCheck = { ok: true } | { ok: false; reason: "type" | "size" };
 
 /**
@@ -17,8 +21,7 @@ export const checkCustomCssFile = (
   scope: TCustomCssScope
 ): TCustomCssFileCheck => {
   const hasCssExtension = file.name.toLowerCase().endsWith(".css");
-  const hasCssType = file.type === "" || file.type === "text/css";
-  if (!hasCssExtension || !hasCssType) return { ok: false, reason: "type" };
+  if (!hasCssExtension || !CSS_FILE_TYPES.has(file.type)) return { ok: false, reason: "type" };
   if (file.size > getCustomCssByteLimit(scope)) return { ok: false, reason: "size" };
   return { ok: true };
 };

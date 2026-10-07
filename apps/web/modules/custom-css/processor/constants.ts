@@ -17,7 +17,7 @@ export const BLOCK_EXTERNAL_CUSTOM_CSS_RESOURCES = true as const;
  * output format — and on every `lightningcss` upgrade (its printer and minifier shape the output).
  * Stored output compiled under another version is reprocessed from source before delivery.
  */
-const CUSTOM_CSS_PROCESSOR_REVISION = 3;
+const CUSTOM_CSS_PROCESSOR_REVISION = 4;
 
 /** The lightningcss version the revision above was produced with; a unit test pins the installed one. */
 export const CUSTOM_CSS_LIGHTNINGCSS_VERSION = "1.32.0";
@@ -145,7 +145,7 @@ export const UNSAFE_PROPERTIES: Record<string, string> = {
 /** Value functions removed wherever they appear, whatever the URL policy. */
 export const UNSAFE_FUNCTIONS: Record<string, string> = {
   expression: "expression() can run script in legacy browsers.",
-  attr: "attr() can read attribute values into styles.",
+  attr: "attr() can read attribute values into styles; use a fixed value instead.",
   element: "element() can render other parts of the page.",
   "-moz-element": "-moz-element() can render other parts of the page.",
   "-webkit-canvas": "-webkit-canvas() can render page canvases.",

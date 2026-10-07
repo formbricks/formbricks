@@ -151,6 +151,7 @@ function RankingItem({
     <li
       dir={dir}
       data-fb-part={FB_PART.option}
+      data-checked={isRanked ? "true" : undefined}
       className={cn(
         "rounded-option flex min-h-12 cursor-pointer flex-col border px-3 transition-all",
         "bg-option-bg border-option-border",
@@ -178,6 +179,7 @@ function RankingItem({
           className="group flex h-full grow items-center gap-4 text-start focus:outline-none"
           aria-label={isRanked ? `Remove ${item.label} from ranking` : `Add ${item.label} to ranking`}>
           <span
+            data-fb-part={FB_PART.optionControl}
             className={cn(
               "border-brand flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
               isRanked

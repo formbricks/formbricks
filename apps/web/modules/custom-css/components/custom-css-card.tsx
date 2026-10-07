@@ -9,12 +9,18 @@ import { type TCustomCssAppearance, type TCustomCssScope } from "@formbricks/typ
 import { cn } from "@/lib/cn";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { Label } from "@/modules/ui/components/label";
 import { Textarea } from "@/modules/ui/components/textarea";
 import { CustomCssIssues } from "./custom-css-issues";
 import { type TCustomCssHealthStatus } from "./lib/api-client";
 import { CUSTOM_CSS_DOCS_URL } from "./lib/constants";
-import { type TCustomCssDraft, getCustomCssByteLimit, getCustomCssByteSize } from "./lib/draft";
+import {
+  type TCustomCssDraft,
+  getCompiledByteSize,
+  getCustomCssByteLimit,
+  getCustomCssByteSize,
+} from "./lib/draft";
 import { type TCustomCssEditMode } from "./lib/edit-mode";
 import { shouldShowDarkPreviewHint } from "./lib/hints";
 import { CUSTOM_CSS_FILE_ACCEPT, checkCustomCssFile, stripByteOrderMark } from "./lib/upload";
@@ -76,11 +82,23 @@ export const CustomCssCard = ({
   const uploadErrorId = `${id}-upload-error`;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  // Clearing or replacing CSS that is already there asks first: a wiped field is saved by the survey
+  // editor's auto-save before anyone notices.
+  const [pendingReplace, setPendingReplace] = useState<{ title: string; apply: () => void } | null>(null);
+  const confirmReplace = (title: string, apply: () => void, needsConfirm: boolean) => {
+    if (needsConfirm) setPendingReplace({ title, apply });
+    else apply();
+  };
 
   const byteLimit = getCustomCssByteLimit(scope);
   const byteSize = getCustomCssByteSize(draft);
   const isOverLimit = byteSize > byteLimit;
   const value = draft[appearance];
+  // Only meaningful for a draft whose own check passed; an earlier draft's output would mislead.
+  const processedSize =
+    validation.status === "valid" && !validation.isPreviewBehind
+      ? getCompiledByteSize(validation.previewCss?.[appearance])
+      : null;
   const canType = mode === "full";
   const canClear = mode !== "read-only";
 
@@ -113,7 +131,11 @@ export const CustomCssCard = ({
     try {
       const text = stripByteOrderMark(await file.text());
       setUploadError(null);
-      setField(appearance, text);
+      confirmReplace(
+        t("workspace.custom_css.confirm_replace_title"),
+        () => setField(appearance, text),
+        draft[appearance].trim() !== ""
+      );
     } catch {
       setUploadError(t("workspace.custom_css.upload_read_failed"));
     }
@@ -214,7 +236,7 @@ export const CustomCssCard = ({
                 autoCapitalize="off"
                 autoComplete="off"
                 autoCorrect="off"
-                placeholder={canType ? '[data-fb-part="headline"] { font-weight: 600; }' : undefined}
+                placeholder={canType ? '[data-fb-part="headline"] { color: #10283a; }' : undefined}
                 aria-invalid={hasFieldError || isOverLimit}
                 aria-describedby={describedBy}
                 isInvalid={hasFieldError || isOverLimit}
@@ -254,7 +276,13 @@ export const CustomCssCard = ({
                         size="sm"
                         variant="ghost"
                         disabled={value === ""}
-                        onClick={() => setField(appearance, "")}>
+                        onClick={() =>
+                          confirmReplace(
+                            t("workspace.custom_css.confirm_clear_field_title", { field: fieldLabel }),
+                            () => setField(appearance, ""),
+                            true
+                          )
+                        }>
                         <EraserIcon aria-hidden />
                         {t("workspace.custom_css.clear_field")}
                       </Button>
@@ -263,14 +291,34 @@ export const CustomCssCard = ({
                         size="sm"
                         variant="ghost"
                         disabled={draft.light === "" && draft.dark === ""}
-                        onClick={() => onDraftChange({ light: "", dark: "" })}>
+                        onClick={() =>
+                          confirmReplace(
+                            t("workspace.custom_css.confirm_clear_all_title"),
+                            () => onDraftChange({ light: "", dark: "" }),
+                            true
+                          )
+                        }>
                         {t("workspace.custom_css.clear_all")}
                       </Button>
                     </>
                   )}
                 </div>
-                <span className={cn("text-xs tabular-nums", isOverLimit ? "text-red-700" : "text-slate-500")}>
-                  {t("workspace.custom_css.byte_counter", { used: byteSize, limit: byteLimit })}
+                <span
+                  className={cn(
+                    "flex flex-col items-end text-xs tabular-nums",
+                    isOverLimit ? "text-red-700" : "text-slate-500"
+                  )}>
+                  <span>
+                    {t("workspace.custom_css.byte_counter_total", { used: byteSize, limit: byteLimit })}
+                  </span>
+                  {processedSize !== null && processedSize > 0 && (
+                    <span className={cn(processedSize > byteLimit && "text-red-700")}>
+                      {t("workspace.custom_css.byte_counter_processed", {
+                        used: processedSize,
+                        limit: byteLimit,
+                      })}
+                    </span>
+                  )}
                 </span>
               </div>
 
@@ -293,6 +341,26 @@ export const CustomCssCard = ({
           </div>
         )}
       </Collapsible.CollapsibleContent>
+      <ConfirmationModal
+        open={pendingReplace !== null}
+        setOpen={(next) => {
+          if (next === false) setPendingReplace(null);
+        }}
+        title={pendingReplace?.title ?? ""}
+        // As the description, which otherwise defaults to "cannot be undone" — the workspace draft can be.
+        description={
+          scope === "survey"
+            ? t("workspace.custom_css.confirm_replace_survey_body")
+            : t("workspace.custom_css.confirm_replace_workspace_body")
+        }
+        body={null}
+        buttonText={t("workspace.custom_css.confirm_replace_button")}
+        buttonVariant="destructive"
+        onConfirm={() => {
+          pendingReplace?.apply();
+          setPendingReplace(null);
+        }}
+      />
     </Collapsible.Root>
   );
 };

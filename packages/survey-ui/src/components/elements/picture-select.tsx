@@ -136,6 +136,7 @@ function PictureSelect({
                   key={option.id}
                   htmlFor={optionId}
                   data-fb-part={FB_PART.option}
+                  data-checked={isSelected ? "true" : undefined}
                   className={cn(
                     "rounded-option relative aspect-[162/97] w-full cursor-pointer transition-all",
                     disabled && "cursor-not-allowed opacity-50"
@@ -195,6 +196,7 @@ function PictureSelect({
                   key={option.id}
                   htmlFor={optionId}
                   data-fb-part={FB_PART.option}
+                  data-checked={isSelected ? "true" : undefined}
                   className={cn(
                     "rounded-option relative aspect-[162/97] w-full cursor-pointer transition-all",
                     disabled && "cursor-not-allowed opacity-50"

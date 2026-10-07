@@ -152,3 +152,10 @@ export const toComparableStoredCustomCss = (
   const toEntry = (source: string | null) => (source === null ? null : { source, compiled: "" });
   return { light: toEntry(normalized.light), dark: toEntry(normalized.dark), processorVersion: 0 };
 };
+
+/**
+ * Bytes of one field's compiled output, which has its own limit: scoping and `!important` make it larger
+ * than the source, so a source under its limit can still be rejected (the counter alone would not show it).
+ */
+export const getCompiledByteSize = (compiled: string | null | undefined): number =>
+  compiled ? getUtf8ByteLength(compiled) : 0;

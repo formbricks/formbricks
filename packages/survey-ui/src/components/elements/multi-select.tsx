@@ -148,6 +148,7 @@ function MultiSelectOptionItem({
       key={option.id}
       htmlFor={optionId}
       data-fb-part={FB_PART.option}
+      data-checked={isChecked ? "true" : undefined}
       className={cn(getOptionContainerClassName(isChecked, isDisabled), isChecked && "z-10")}>
       <span className="flex items-center">
         <input
@@ -467,6 +468,7 @@ function ListVariant({
           // off. The bordered box is a plain container; only the option row is the checkbox's label.
           <div
             data-fb-part={FB_PART.option}
+            data-checked={isOtherSelected ? "true" : undefined}
             className={cn(
               getOptionContainerClassName(isOtherSelected, disabled || isNoneSelected),
               isOtherSelected && "z-10"

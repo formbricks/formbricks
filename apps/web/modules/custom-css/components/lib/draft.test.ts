@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { type TCustomCssStored } from "@formbricks/types/custom-css";
 import {
   applyCustomCssDraftToStored,
+  getCompiledByteSize,
   getCustomCssByteSize,
   getCustomCssChangeKind,
   getCustomCssSource,
@@ -151,5 +152,13 @@ describe("toComparableStoredCustomCss", () => {
   test("reduces no CSS to null", () => {
     expect(toComparableStoredCustomCss(null)).toBeNull();
     expect(toComparableStoredCustomCss(undefined)).toBeNull();
+  });
+});
+
+describe("getCompiledByteSize", () => {
+  test("counts the compiled field in UTF-8 bytes and treats a missing field as empty", () => {
+    expect(getCompiledByteSize("@layer fb-survey{#fbjs a{color:red!important}}")).toBe(46);
+    expect(getCompiledByteSize("é")).toBe(2);
+    expect(getCompiledByteSize(null)).toBe(0);
   });
 });

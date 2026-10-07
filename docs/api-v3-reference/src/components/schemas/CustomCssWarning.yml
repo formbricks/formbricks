@@ -1,6 +1,7 @@
 type: object
 description: >-
-  A construct the custom CSS processor removed; the rest of the CSS still applies. The `code` is
+  A construct the custom CSS processor removed; the rest of the CSS still applies. `unknown_property`
+  and `invalid_value` are notes instead: the declaration stays, but browsers ignore it. The `code` is
   stable — branch on it, not on `reason`, which never echoes customer source beyond a short construct
   name.
 required:
@@ -22,6 +23,8 @@ properties:
       - unsafe_value_removed
       - fixed_position_removed
       - unsafe_selector_removed
+      - unknown_property
+      - invalid_value
   scope:
     type: string
     enum:

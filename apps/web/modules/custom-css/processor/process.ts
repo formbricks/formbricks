@@ -47,6 +47,7 @@ import {
   fromRuleLocation,
   toSyntaxRejection,
 } from "./issues";
+import { findIneffectiveDeclarations } from "./ineffective";
 import { prescanCustomCss, removePrescanImports } from "./prescan";
 import {
   type TSubjectPosition,
@@ -621,6 +622,9 @@ const compileFields = (
       printedSelectorSize: 0,
       outputBudget: options.budget,
     };
+    for (const note of findIneffectiveDeclarations(field.source)) {
+      options.sink.add(note.code, field.appearance, note.reason, note.location);
+    }
     try {
       const css = compileField(field.source, ctx);
       if (field.appearance === "light") lightKeyframes = ctx.keyframes;

@@ -2152,9 +2152,16 @@ checksums:
     workspace/contacts/upload_contacts_success: cd5d6b6d587586dd4f944868c92835bc
     workspace/custom_css/base_css_help: f3abee185b1ff377c52c40822df14a3e
     workspace/custom_css/base_css_label: 6aadf2927353b0194a7a652cd5c56023
-    workspace/custom_css/byte_counter: 178fa1e51f90a46eef90214a7b80337b
+    workspace/custom_css/byte_counter_processed: 3c1225969409c8926a9e9286875eb6d9
+    workspace/custom_css/byte_counter_total: 711aa80fcb46f9a444fee56282009894
     workspace/custom_css/clear_all: 0ad9f3ff199c1c4fed9e08203c3e65f3
     workspace/custom_css/clear_field: dd961e35f8e6d792b2ac625b765c9f50
+    workspace/custom_css/confirm_clear_all_title: 7e04a971132a41ae6d3cad1b4cd7c6ba
+    workspace/custom_css/confirm_clear_field_title: 3d73752298866eb2b53748155dbbb406
+    workspace/custom_css/confirm_replace_button: 3cfba90b4600131e82fc4260c568d044
+    workspace/custom_css/confirm_replace_survey_body: 0a11a546595d6a9e699f63f8f324c2bf
+    workspace/custom_css/confirm_replace_title: 334bd1808bf189e1ad48bb08a2a1c087
+    workspace/custom_css/confirm_replace_workspace_body: 222d3f8caf5682c257b6bfba061e8c7f
     workspace/custom_css/confirm_save_button: 63427854e795f8eafa45464f9fa99367
     workspace/custom_css/confirm_save_restore_hint: 0328afcec5b4766d4dac3ff66d5e2480
     workspace/custom_css/confirm_save_text: 16304f7051d16e0a5be41828ade0b7c7
@@ -2192,7 +2199,8 @@ checksums:
     workspace/custom_css/status_preview_behind: 1ca4bb59fb4a119d36671cfae0259df4
     workspace/custom_css/status_unavailable: 2721db15287f1019579c6936858cc14c
     workspace/custom_css/status_valid: 5f0a4b035e7401502dfe4a0a29f80474
-    workspace/custom_css/status_valid_with_warnings: b9b907d2ca1c20e9d76a134101cf1ae2
+    workspace/custom_css/status_valid_with_notes: a1ec39c04f97334190d52bd2018a2c88
+    workspace/custom_css/status_valid_with_warnings: ef79344aa40d913f3604ed35d2bd3bd4
     workspace/custom_css/survey_precedence: 4592376b7eae718ac4d1a1c0b76eab01
     workspace/custom_css/title: d43a2cc2f8f47dd96d03099dcc6e68bb
     workspace/custom_css/unsaved_changes: 347fdb9cfb05d483cfed3dfa59ca784c
@@ -2205,6 +2213,8 @@ checksums:
     workspace/custom_css/warning_fixed_position_removed: dd0d4d742c12caf61130ba04b008e1dc
     workspace/custom_css/warning_font_face_removed: b65a9ab6583c54d283d83b3e1747b87c
     workspace/custom_css/warning_import_removed: 87081b219a501f5810767a10dd98f120
+    workspace/custom_css/warning_invalid_value: c0008149925f6ad921ad36532a21caee
+    workspace/custom_css/warning_unknown_property: 9f2356fec622b6169084c9bcd8d02b8c
     workspace/custom_css/warning_unsafe_property_removed: f7898792f97c82b1169a1613442b236c
     workspace/custom_css/warning_unsafe_selector_removed: 820bf4edc45fecc04d76a483de4cbf10
     workspace/custom_css/warning_unsafe_value_removed: f8c62690c9b838ef852edb1d12ac0f98

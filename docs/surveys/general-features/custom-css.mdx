@@ -117,9 +117,9 @@ Target survey parts through their `data-fb-part` attribute. These names are a su
 | `[data-fb-part="card"]` | The card a question, welcome or ending screen sits on | Not present with the **Cardless** card arrangement. |
 | `[data-fb-part="headline"]` | Headlines of questions, welcome and ending cards | See [Headline](#headline) for formatted text. |
 | `[data-fb-part="description"]` | The description under a headline | |
-| `[data-fb-part="option"]` | One choice: a row in single or multi select, a picture tile, a ranking item, an option in an open dropdown | Includes the "Other" and "None" rows. |
+| `[data-fb-part="option"]` | One choice: a row in single or multi select, a picture tile, a ranking item, an option in an open dropdown, a rating or NPS step, a matrix cell, a day in the date picker | Includes the "Other" and "None" rows. Carries `data-checked="true"` while selected. |
 | `[data-fb-part="option-label"]` | The text of a choice, and the consent checkbox label | |
-| `[data-fb-part="option-control"]` | The radio circle or checkbox square of a choice, and the consent checkbox | |
+| `[data-fb-part="option-control"]` | The radio circle or checkbox square of a choice, a matrix cell's radio, a ranking item's position badge, and the consent checkbox | |
 | `[data-fb-part="input"]` | A single-line text field: free text, contact info, address and "Other" fields | |
 | `[data-fb-part="textarea"]` | A multi-line free text field | |
 | `[data-fb-part="dropdown"]` | The button that opens a dropdown choice list | Its open list holds `option` hooks, so row styles such as borders and backgrounds on `option` also apply to dropdown items. Scope them with `[data-fb-part="option"]:has(input)` to style list rows only. |
@@ -131,7 +131,7 @@ Target survey parts through their `data-fb-part` attribute. These names are a su
 | `[data-fb-part="branding"]` | The "Powered by Formbricks" link | |
 | `[data-fb-part="progress"]` | The progress bar track | Color the fill with `--fb-progress-indicator-bg-color`. |
 
-Rating and NPS scales, matrix grids, the date picker, the file upload area and Cal.com booking embeds have no part hooks of their own; style them through the [variables](#variables). Their headline, description, error and buttons are hooked like everywhere else.
+The file upload area and Cal.com booking embeds have no part hooks of their own; style them through the [variables](#variables). Their headline, description, error and buttons are hooked like everywhere else.
 
 <Warning>
   Generated class names (such as `.bg-input-bg` or `.button-custom`) and the HTML structure around a hook
@@ -146,14 +146,14 @@ Interactive states are on the hooked element itself, so `:hover`, `:active` and 
 | --- | --- |
 | Hover, pressed | `[data-fb-part="button-primary"]:hover`, `…:active` (any hook) |
 | Keyboard focus | `[data-fb-part="input"]:focus-visible` on fields, buttons and the dropdown; `[data-fb-part="option"]:has(:focus-visible)` on choices |
-| Selected choice | `[data-fb-part="option"]:has(:checked)` |
+| Selected choice | `[data-fb-part="option"][data-checked="true"]`, on every kind of choice including rating, NPS, matrix and date |
 | Selected option in an open dropdown | `[data-fb-part="option"][aria-checked="true"]` |
 | Checked consent box | `[data-fb-part="consent"]:has([aria-checked="true"])`, or `[data-fb-part="option-control"][aria-checked="true"]` on the checkbox itself |
 | Invalid field | `[data-fb-part="input"][aria-invalid="true"]`, also on `textarea` and `dropdown` |
 | Disabled | `[data-fb-part="button-primary"]:disabled`; on choices `[data-fb-part="option"]:has(:disabled)` |
 | Dark mode | `#fbjs[data-appearance="dark"] [data-fb-part="card"]`, or any rule in **Dark CSS** |
 
-To style selected choices in lists and in dropdowns with one rule, combine both forms: `[data-fb-part="option"]:is([aria-checked="true"], :has(:checked))`.
+To style selected choices in lists and in dropdowns with one rule, combine both forms: `[data-fb-part="option"]:is([aria-checked="true"], [data-checked="true"])`.
 
 ## Variables
 
@@ -454,6 +454,14 @@ Define `@keyframes` in the same field as the rules that use them.
 | Universal selectors (`*`) in one selector | 2 | 2 |
 
 Sizes are counted in bytes of UTF-8 text, so most characters count as one byte. The processed output adds scoping to every selector, so CSS close to the size limit that consists of many short rules can exceed the output limit. At most 50 warnings are listed per check; anything beyond that is still removed.
+
+The editor shows both sizes under the field: the source size (base and dark together) and, once the CSS is checked, the processed size of the field you are editing.
+
+Two notes do not remove anything: **Unknown property** (for example a typo like `colr`) and **Invalid value** (for example `color: notacolor`). The declaration stays, but browsers ignore it, so it has no effect.
+
+### Responsive Rules
+
+`@media` width queries read the width of the page, not of the survey. A website survey shown as a 400 px pop-up on a desktop page matches desktop breakpoints, and the editor preview can match different breakpoints than the live page. Use width queries for page-level layout only, and keep survey styles that must hold at any size outside them.
 
 ## Browser And App Support
 

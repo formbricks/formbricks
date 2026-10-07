@@ -74,7 +74,11 @@ export interface TRendererCustomCss {
   survey?: TCustomCssCompiled | null;
 }
 
-/** Constructs the processor removes with a warning; the remaining valid rules still apply. */
+/**
+ * Constructs the processor removes with a warning; the remaining valid rules still apply. The last two
+ * are notes, not removals: a misspelled property or a value browsers cannot read stays in the CSS (a
+ * browser ignores it the same way), but the author is told it does nothing.
+ */
 export const ZCustomCssWarningCode = z.enum([
   "import_removed",
   "font_face_removed",
@@ -84,8 +88,16 @@ export const ZCustomCssWarningCode = z.enum([
   "unsafe_value_removed",
   "fixed_position_removed",
   "unsafe_selector_removed",
+  "unknown_property",
+  "invalid_value",
 ]);
 export type TCustomCssWarningCode = z.infer<typeof ZCustomCssWarningCode>;
+
+/** Warning codes that leave the declaration in place (see ZCustomCssWarningCode). */
+export const CUSTOM_CSS_NOTE_CODES: ReadonlySet<TCustomCssWarningCode> = new Set([
+  "unknown_property",
+  "invalid_value",
+]);
 
 /** Failures that reject the whole operation. Nothing is saved and no compiled output is returned. */
 export const ZCustomCssErrorCode = z.enum([
