@@ -1,9 +1,15 @@
 import { describe, expect, test, vi } from "vitest";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
+import { loadRecordedPlan, recordedGenerate } from "./__fixtures__/recorded-plans";
 import type { TQsfPlanGenerate } from "./ai-plan";
 import { QsfImportFailedError, QsfImportInputError, prepareQsfImport, runQsfImport } from "./pipeline";
 
-const budget = vi.hoisted(() => ({ estimate: null as number | null, noLimits: false }));
+const budget = vi.hoisted(() => ({
+  estimate: null as number | null,
+  noLimits: false,
+  maxCallChars: null as number | null,
+  maxTotalChars: null as number | null,
+}));
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/modules/survey/lib/permission", () => ({ getExternalUrlsPermission: vi.fn(async () => true) }));
@@ -13,6 +19,13 @@ vi.mock("./prompt", async (importOriginal) => {
   const original = await importOriginal<typeof import("./prompt")>();
   return {
     ...original,
+    // Read when a call is made, so a test can shrink one call's or the whole import's allowance.
+    get QSF_PROMPT_MAX_CALL_CHARS() {
+      return budget.maxCallChars ?? original.QSF_PROMPT_MAX_CALL_CHARS;
+    },
+    get QSF_PROMPT_MAX_TOTAL_CHARS() {
+      return budget.maxTotalChars ?? original.QSF_PROMPT_MAX_TOTAL_CHARS;
+    },
     estimateQsfMinimumPromptChars: (...args: Parameters<typeof original.estimateQsfMinimumPromptChars>) =>
       budget.estimate ?? original.estimateQsfMinimumPromptChars(...args),
     chooseQsfPromptLimits: (...args: Parameters<typeof original.chooseQsfPromptLimits>) =>
@@ -48,5 +61,49 @@ describe("a survey too large for the prompt budget", () => {
     expect(error).toBeInstanceOf(QsfImportFailedError);
     expect((error as QsfImportFailedError).reason).toBe("prompt_budget");
     expect(generate).not.toHaveBeenCalled();
+  });
+});
+
+describe("the prompt guards on each call", () => {
+  const run = (generate: TQsfPlanGenerate) =>
+    runQsfImport({
+      prepared: prepareQsfImport(loadQsfFixture("large-150.qsf"), "large-150.qsf"),
+      workspaceId: "clxx1234567890123456789012",
+      organizationId: "org_1",
+      userId: null,
+      signal: new AbortController().signal,
+      deadlineMs: 120_000,
+      onProgress: () => undefined,
+      generate,
+    });
+
+  test("never send a call over the per-call cap: it is split, and a single question too big is dropped", async () => {
+    // Smaller than the system prompt alone, so no call can be sent at any size.
+    budget.maxCallChars = 3_000;
+    const generate = vi.fn<TQsfPlanGenerate>(recordedGenerate(loadRecordedPlan("large-150.qsf")));
+
+    const error = await run(generate).catch((caught: unknown) => caught);
+    budget.maxCallChars = null;
+
+    expect(generate).not.toHaveBeenCalled();
+    expect((error as QsfImportFailedError).reason).toBe("no_questions");
+  });
+
+  test("stop sending once the import's total is spent, dropping what is left as ai_budget", async () => {
+    budget.maxTotalChars = 40_000;
+    const sizes: number[] = [];
+    const recorded = recordedGenerate(loadRecordedPlan("large-150.qsf"));
+    const generate: TQsfPlanGenerate = async (request) => {
+      sizes.push(request.system.length + request.prompt.length);
+      return recorded(request);
+    };
+
+    const result = await run(generate);
+    budget.maxTotalChars = null;
+
+    expect(sizes.length).toBeGreaterThan(0);
+    expect(sizes.reduce((total, size) => total + size, 0)).toBeLessThanOrEqual(40_000);
+    expect(result.report.issues.some((issue) => issue.params?.cause === "ai_budget")).toBe(true);
+    expect(result.report.summary.questions).toBeGreaterThan(0);
   });
 });
