@@ -221,23 +221,28 @@ export const revokeTokensBeyondConsentAfterHandler = async (ctx: AuthHookContext
   if (!session) return;
   const userId = session.user.id;
 
+  let clientId: string | null = null;
   try {
-    const clientId = await changedConsentClientId(ctx, userId);
+    clientId = await changedConsentClientId(ctx, userId);
     if (!clientId) return;
+    const changedClientId = clientId;
 
     const ended = await prisma.$transaction(async (tx) => {
-      const client = await tx.oauthClient.findUnique({ where: { clientId }, select: { skipConsent: true } });
+      const client = await tx.oauthClient.findUnique({
+        where: { clientId: changedClientId },
+        select: { skipConsent: true },
+      });
       if (!client || client.skipConsent) return null;
-      const consentedScopes = await readConsentedScopes(tx, userId, clientId);
+      const consentedScopes = await readConsentedScopes(tx, userId, changedClientId);
       if (!consentedScopes) return null;
-      return endTokensBeyondScopes(tx, { userId, clientId, consentedScopes });
+      return endTokensBeyondScopes(tx, { userId, clientId: changedClientId, consentedScopes });
     });
     if (!ended || ended.refreshTokensDeleted + ended.accessTokensRevoked === 0) return;
 
     logger.info({ userId, clientId, ...ended }, "OAuth consent narrowed; tokens beyond it ended");
   } catch (err) {
     logger.error(
-      { err, userId },
+      { err, userId, clientId },
       "OAuth consent changed but ending the tokens beyond it failed; the refresh check still applies"
     );
   }
@@ -267,9 +272,9 @@ const invalidGrant = (): APIError =>
  *  - A consent narrowed below the token (ENG-3529): ends the client's tokens that reach past the
  *    consent and the presented token's whole grant (the one just issued included, even when the client
  *    asked for scopes the consent does cover, except in grants from before Better Auth 1.7, which carry
- *    no grant id; that token never leaves the server either way), and answers `invalid_grant`. The client has to go back
- *    through `/authorize`, which only issues what the consent covers. Grants within the consent, such as
- *    the narrowed approval's own, keep working.
+ *    no grant id; that token never leaves the server either way), and answers `invalid_grant`. The
+ *    client has to go back through `/authorize`, which only issues what the consent covers. Grants
+ *    within the consent, such as the narrowed approval's own, keep working.
  *
  * It runs after issuance on purpose. A check before issuance could pass, then lose to a revoke that
  * commits before the new refresh token is inserted, leaving that token outside the revoke's update.
