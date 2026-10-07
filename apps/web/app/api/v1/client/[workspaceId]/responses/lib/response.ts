@@ -7,6 +7,8 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import {
+  type TClientResponseCreateContext,
+  type TCreateResponseTxContext,
   buildClientResponse,
   createResponseWithQuotaEvaluation as createClientResponseWithQuotaEvaluation,
 } from "@/app/api/client/[workspaceId]/responses/lib/response";
@@ -61,33 +63,48 @@ export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInput,
   ingestFlags?: readonly TIngestFlag[],
   // Optional caller-owned transaction — see the comment on the client helper this delegates to.
-  tx?: Prisma.TransactionClient
+  txContext?: TCreateResponseTxContext
 ): Promise<TResponseWithQuotaFull> => {
-  return await createClientResponseWithQuotaEvaluation(responseInput, createResponse, ingestFlags, tx);
+  return await createClientResponseWithQuotaEvaluation(
+    responseInput,
+    { resolveContext: resolveCreateResponseContext, createResponse },
+    ingestFlags,
+    txContext
+  );
 };
 
-export const createResponse = async (
-  responseInput: TResponseInput,
-  tx: Prisma.TransactionClient,
-  ingestFlags?: readonly TIngestFlag[]
-): Promise<TResponse> => {
-  validateInputs([responseInput, ZResponseInput]);
-
-  const { workspaceId, userId, finished, ttc: initialTtc } = responseInput;
-
+/** The reads a create needs, made before its transaction opens — see `TClientResponseCreateContext`. */
+export const resolveCreateResponseContext = async ({
+  workspaceId,
+  userId,
+}: Pick<TResponseInput, "workspaceId" | "userId">): Promise<TClientResponseCreateContext> => {
   try {
-    let contact: { id: string; attributes: TContactAttributes } | null = null;
-
     const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     const organization = await getOrganization(organizationId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", organizationId);
     }
 
-    if (userId) {
-      contact = await getContactByUserId(workspaceId, userId);
-    }
+    const contact: { id: string; attributes: TContactAttributes } | null = userId
+      ? await getContactByUserId(workspaceId, userId)
+      : null;
+    return { contact };
+  } catch (error) {
+    return handleClientResponseCreateError(error);
+  }
+};
 
+export const createResponse = async (
+  responseInput: TResponseInput,
+  { contact }: TClientResponseCreateContext,
+  tx: Prisma.TransactionClient,
+  ingestFlags?: readonly TIngestFlag[]
+): Promise<TResponse> => {
+  validateInputs([responseInput, ZResponseInput]);
+
+  const { workspaceId, finished, ttc: initialTtc } = responseInput;
+
+  try {
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
 
     if (responseInput.displayId) {
