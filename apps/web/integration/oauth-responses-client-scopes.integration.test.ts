@@ -172,7 +172,9 @@ describe("ENG-3470 leaves existing grants as the user approved them", () => {
   const OLD_SCOPE = "surveys:read offline_access";
   const WIDER_SCOPE = "surveys:read responses:read offline_access";
 
-  const scopesOf = (body: Record<string, unknown>): string[] => String(body.scope).split(" ");
+  const APPROVED_SCOPES = OLD_SCOPE.split(" ").sort();
+
+  const scopesOf = (body: Record<string, unknown>): string[] => String(body.scope).split(" ").sort();
 
   /** A user who consented to a pre-ENG-2862 client, and that client's tokens, before the migration ran. */
   const grantBeforeMigration = async () => {
@@ -204,7 +206,8 @@ describe("ENG-3470 leaves existing grants as the user approved them", () => {
 
     const plain = await refresh(clientId, tokens.refresh_token);
     expect(plain.status, JSON.stringify(plain.body)).toBe(200);
-    expect(scopesOf(plain.body)).not.toContain("responses:read");
+    // Exactly what was approved: a missing or empty `scope` must not pass as "no responses:read".
+    expect(scopesOf(plain.body)).toEqual(APPROVED_SCOPES);
 
     const widened = await refresh(clientId, plain.body.refresh_token as string, WIDER_SCOPE);
     expect(widened.status).toBe(400);
@@ -214,7 +217,7 @@ describe("ENG-3470 leaves existing grants as the user approved them", () => {
     // The refused request costs the user nothing: the grant they approved still refreshes.
     const after = await refresh(clientId, plain.body.refresh_token as string);
     expect(after.status, JSON.stringify(after.body)).toBe(200);
-    expect(scopesOf(after.body)).not.toContain("responses:read");
+    expect(scopesOf(after.body)).toEqual(APPROVED_SCOPES);
   });
 
   test("asking for the new scopes at authorize goes to the consent screen, not straight to a code", async () => {
