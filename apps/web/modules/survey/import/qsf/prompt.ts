@@ -47,13 +47,18 @@ interface TPromptLimits {
  * Tighter and tighter limits, tried in order until the whole import fits `QSF_PROMPT_BUDGET_CHARS`.
  * Fewer listed options costs the model little: roles map whole lists, so it only needs to see the
  * options it might single out (an "Other", a "None of these"). Every part of the data is bounded —
- * texts, options, rules, conditions, operands, context — so the tightest tier has a size ceiling of
- * its own: about 1.2k characters a question, under the budget for a survey at the reader's limits.
+ * texts, options, rules, conditions, operands, context.
+ *
+ * The last tier degrades rather than refuses (ENG-3411): logic is only counted, with no conditions and
+ * no notes asked for, no other questions are described, and option lists show four with a count of
+ * the rest. A survey there still imports; its logic lines just come without descriptions. Only a
+ * survey over budget even then is refused.
  */
 const PROMPT_LIMITS: readonly TPromptLimits[] = [
   { text: 400, option: 120, options: 40, rules: 3, conditions: 6, operand: 60, context: 20 },
   { text: 160, option: 60, options: 12, rules: 2, conditions: 3, operand: 40, context: 10 },
   { text: 60, option: 30, options: 6, rules: 1, conditions: 2, operand: 30, context: 5 },
+  { text: 60, option: 24, options: 4, rules: 0, conditions: 0, operand: 0, context: 0 },
 ];
 
 /** The question data of one import, all questions together, at the limits chosen (~60k tokens). */
@@ -111,8 +116,9 @@ function describeRule(rule: TQsfLogicRule, limits: TPromptLimits) {
 /** The rules a call describes, and how many it leaves out. */
 function describeRules(rules: TQsfLogicRule[], limits: TPromptLimits) {
   if (rules.length === 0) return {};
+  const described = rules.slice(0, limits.rules);
   return {
-    logic: rules.slice(0, limits.rules).map((rule) => describeRule(rule, limits)),
+    ...(described.length > 0 ? { logic: described.map((rule) => describeRule(rule, limits)) } : {}),
     ...(rules.length > limits.rules ? { moreRules: rules.length - limits.rules } : {}),
   };
 }

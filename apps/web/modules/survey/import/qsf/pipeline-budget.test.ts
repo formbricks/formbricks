@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
-import { loadRecordedPlan, recordedGenerate } from "./__fixtures__/recorded-plans";
+import { buildMatrixHeavyQsf } from "./__fixtures__/matrix-heavy";
+import { loadRecordedPlan, recordedGenerate, refsInPrompt } from "./__fixtures__/recorded-plans";
 import type { TQsfPlanGenerate } from "./ai-plan";
 import { QsfImportFailedError, QsfImportInputError, prepareQsfImport, runQsfImport } from "./pipeline";
 
@@ -106,4 +107,70 @@ describe("the prompt guards on each call", () => {
     expect(result.report.issues.some((issue) => issue.params?.cause === "ai_budget")).toBe(true);
     expect(result.report.summary.questions).toBeGreaterThan(0);
   });
+});
+
+describe("a large, ordinary survey over the full prompt budget", () => {
+  test(
+    "imports with its logic described more coarsely instead of being refused",
+    { timeout: 60_000 },
+    async () => {
+      // 200 Likert matrices, 8 statements on 7 points, each behind a two-condition branch and with a
+      // two-condition display rule: over the budget at every tier that describes conditions.
+      const prepared = prepareQsfImport(buildMatrixHeavyQsf(), "ratings.qsf");
+      const prompts: string[] = [];
+      const generate: TQsfPlanGenerate = async (request) => {
+        prompts.push(request.prompt);
+        return {
+          object: {
+            questions: refsInPrompt(request.prompt).map((ref) => ({
+              ref,
+              type: "matrix",
+              required: false,
+              choicesFrom: null,
+              rowsFrom: "choices",
+              columnsFrom: "answers",
+              otherChoiceKey: null,
+              noneChoiceKey: null,
+              labelKey: null,
+              excludedKeys: [],
+              contactFields: [],
+              inputType: null,
+              scale: null,
+              range: null,
+              format: null,
+              logicNotes: [],
+            })),
+            skipped: [],
+            pages: [],
+          },
+        };
+      };
+
+      const result = await runQsfImport({
+        prepared,
+        workspaceId: "clxx1234567890123456789012",
+        organizationId: "org_1",
+        userId: null,
+        signal: new AbortController().signal,
+        deadlineMs: 120_000,
+        onProgress: () => undefined,
+        generate,
+      });
+
+      // Every matrix keeps all 8 statements and 7 points: roles map whole lists, whatever the prompt showed.
+      expect(result.report.summary.questions).toBe(200);
+      expect(result.payload.blocks[0].elements[0]).toMatchObject({ type: "matrix" });
+      const matrix = result.payload.blocks[0].elements[0];
+      if (matrix.type !== "matrix") throw new Error("type");
+      expect([matrix.rows.length, matrix.columns.length]).toEqual([8, 7]);
+      // Logic is only counted in the prompt, and every rule is still reported, without a description.
+      expect(prompts.some((prompt) => prompt.includes('"conditions"'))).toBe(false);
+      expect(
+        prompts.every((prompt) => prompt.includes('"moreRules"') && prompt.includes('"moreChoices":4'))
+      ).toBe(true);
+      const logicLines = result.report.issues.filter((issue) => issue.code === "logic_not_imported");
+      expect(logicLines).toHaveLength(2 * 199);
+      expect(logicLines.every((issue) => issue.params === undefined)).toBe(true);
+    }
+  );
 });
