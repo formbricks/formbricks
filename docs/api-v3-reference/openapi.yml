@@ -6897,7 +6897,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     FeedbackRecordsBadRequest:
-      description: 'Bad Request. From the **gateway** (`text/plain`): a missing or malformed `tenant_id`, a request body that is not JSON, or a path under `/api/v3/feedbackRecords` that is not one of the documented operations. A record id that is not a UUID and a path such as `/count` both fall in that last case and share the one `Unsupported FeedbackRecords route` body, so the two cannot be told apart from the response. From the **feedback store** (`application/problem+json`): schema validation failures — an unknown enum value, an inverted range, a malformed or re-ordered cursor, or a string with NULL bytes or invalid UTF-8.'
+      description: 'Bad Request. From the **gateway** (`text/plain`): a missing or malformed `tenant_id`; a request body that is not a single JSON object; a body whose top-level keys can be read more than one way (a repeated key, a key with non-ASCII characters, or a key that differs from `tenant_id` only in letter case); a `tenant_id` query parameter given more than once; or a path under `/api/v3/feedbackRecords` that is not one of the documented operations. A record id that is not a UUID and a path such as `/count` both fall in that last case and share the one `Unsupported FeedbackRecords route` body, so the two cannot be told apart from the response. From the **feedback store** (`application/problem+json`): schema validation failures — an unknown enum value, an inverted range, a malformed or re-ordered cursor, or a string with NULL bytes or invalid UTF-8.'
       content:
         text/plain:
           schema:
@@ -6906,6 +6906,12 @@ components:
             missingTenant:
               summary: Gateway — tenant_id missing or malformed
               value: Invalid or missing tenant_id
+            invalidBody:
+              summary: Gateway — body is not a single JSON object, or has a repeated or non-ASCII key
+              value: Invalid request body
+            ambiguousTenant:
+              summary: Gateway — tenant_id given in more than one spelling, or repeated in the query
+              value: Ambiguous tenant_id
             unsupportedRoute:
               summary: Gateway — not a documented operation
               value: Unsupported FeedbackRecords route
