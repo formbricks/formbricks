@@ -1,38 +1,42 @@
 import "server-only";
-import { z } from "zod";
-import type { InvalidParam } from "@/app/api/v3/lib/response";
-import { prepareV3SurveyCreateInput } from "@/app/api/v3/surveys/prepare";
-import type { TV3CreateSurveyRequestBody } from "@/app/api/v3/surveys/schemas";
-import type { TQsfImportReport, TQsfImportStage } from "../types";
+import { logger } from "@formbricks/logger";
+import { generateOrganizationAIObject } from "@/lib/ai/service";
+import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
+import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
+import type { TQsfImportIssue, TQsfImportReport, TQsfImportStage } from "../types";
+import { type TQsfPlanGenerate, type TQsfPlanUsage, planQsfImport } from "./ai-plan";
+import { type TQsfAssembly, type TQsfDraftDocument, assembleQsfDraft } from "./assemble";
+import { QsfImportFailedError } from "./errors";
+import { checkQsfDraft, elementsAtFault } from "./final-gate";
+import type { TQsfSurvey } from "./qsf-model";
+import { readQsf } from "./read-qsf";
+import { buildQsfImportReport } from "./report";
+import { sanitizeQsfTexts } from "./sanitize-text";
+
+export { QsfImportFailedError, QsfImportInputError, QsfImportTimeoutError } from "./errors";
 
 /**
- * The Qualtrics import pipeline: a parsed QSF in, a v3 create document and the import report out.
- * The stream route (`/api/internal/surveys/import/stream`) is one caller; nothing here knows about
- * HTTP, so a later public route or a background job reuses it unchanged (ENG-3604).
+ * The Qualtrics import pipeline (ENG-3654): a parsed QSF in, a v3 create document and the import
+ * report out. The stream route (`/api/internal/surveys/import/stream`) is one caller; nothing here
+ * knows about HTTP, so a later public route or a background job reuses it unchanged (ENG-3604).
  *
  * Two phases, because the route has to answer a bad file with a problem response before its stream
- * opens: `prepareQsfImport` is the synchronous reader and its guards; `runQsfImport` is the AI call and
- * the assembly, which run while the stream reports progress.
+ * opens:
  *
- * **Stub.** The reader, the AI plan and the assembly land with ENG-3654. Until then `prepareQsfImport`
- * checks only the QSF envelope and `runQsfImport` returns a fixed one-question draft, so the import
- * dialog (ENG-3655) can be built against the real route.
+ * - `prepareQsfImport` is the reader and its limits: synchronous and cheap (≤ ~50 ms on the largest
+ *   file), throwing `QsfImportInputError` for a 422;
+ * - `runQsfImport` does the rest while the stream reports progress: sanitize the texts (yielding to
+ *   the event loop), ask the AI for a plan and check it (`ai`), assemble the draft and gate it with
+ *   the create's own checks (`assembling`).
+ *
+ * The AI never writes survey text: it says which type each question becomes and which option list
+ * plays which role, and the assembly copies every text from the file by key (ENG-3479).
  */
-
-/** The file is not a Qualtrics survey export the import can read. Answered as a 422 before streaming. */
-export class QsfImportInputError extends Error {
-  readonly invalidParams: InvalidParam[];
-
-  constructor(invalidParams: InvalidParam[]) {
-    super("The file is not a Qualtrics survey export (.qsf).");
-    this.name = "QsfImportInputError";
-    this.invalidParams = invalidParams;
-  }
-}
 
 export interface TPreparedQsfImport {
   fileName: string;
   surveyName: string;
+  survey: TQsfSurvey;
 }
 
 export interface TQsfImportResult {
@@ -40,10 +44,10 @@ export interface TQsfImportResult {
    * The draft in the shape `POST /api/v3/surveys` takes — locale-keyed texts, not the internal `default`
    * key — because the dialog sends it there unchanged.
    */
-  payload: TV3CreateSurveyRequestBody;
+  payload: TQsfDraftDocument;
   report: TQsfImportReport;
-  /** Tokens the AI call used, for the route's log line. Absent when no AI call ran. */
-  usage?: { inputTokens: number; outputTokens: number };
+  /** Tokens the AI calls used, for the route's log line. Absent when no AI call ran. */
+  usage?: TQsfPlanUsage;
 }
 
 export interface TRunQsfImportParams {
@@ -52,97 +56,117 @@ export interface TRunQsfImportParams {
   organizationId: string;
   userId: string | null;
   /**
-   * Aborts on Stop, client disconnect and the route's deadline. Pass it to the AI call, and stop
-   * promptly when it fires: the route gives the import's concurrency slot back as soon as the client
-   * leaves, so work that carries on after that is work the limit no longer counts.
+   * Aborts on Stop, client disconnect and the route's deadline. Passed to every AI call; the pipeline
+   * also stops between stages when it fires, since the route gives the import's concurrency slot back
+   * as soon as the client leaves.
    */
   signal: AbortSignal;
+  /** The route's deadline for the whole import. AI calls are sized to what is left of it. */
+  deadlineMs: number;
   onProgress: (stage: TQsfImportStage) => void;
+  /** The model call. The organization's AI by default; the eval script passes its own. */
+  generate?: TQsfPlanGenerate;
 }
-
-/**
- * The part of the QSF envelope every Qualtrics export has. Other keys are allowed, since QSF has no
- * published schema and Qualtrics adds keys between versions (ENG-3609), but dropped rather than copied:
- * this check reads one name, and a loose parse would copy every top-level key of a file up to 15 MB into
- * a new object — through ordinary assignment, where an own `__proto__` key swaps the copy's prototype.
- * The reader in ENG-3654 reads the file itself, not this result.
- */
-const ZQsfEnvelope = z.object({
-  SurveyEntry: z.object({ SurveyName: z.string().trim().min(1) }),
-  SurveyElements: z.array(z.unknown()),
-});
 
 /** Read and check the file, before any AI call. Throws `QsfImportInputError` for a file it cannot read. */
 export function prepareQsfImport(qsf: Record<string, unknown>, fileName: string): TPreparedQsfImport {
-  const envelope = ZQsfEnvelope.safeParse(qsf);
-  if (!envelope.success) {
-    throw new QsfImportInputError(
-      envelope.error.issues.map((issue) => ({
-        name: ["qsf", ...issue.path.map(String)].join("."),
-        reason: issue.message,
-      }))
-    );
-  }
-
-  return { fileName, surveyName: envelope.data.SurveyEntry.SurveyName };
+  const survey = readQsf(qsf);
+  return { fileName, surveyName: survey.name, survey };
 }
+
+function organizationGenerate(params: TRunQsfImportParams): TQsfPlanGenerate {
+  const aiTracing = params.userId
+    ? { distinctId: params.userId, feature: AI_TRACING_FEATURE.QsfImport, workspaceId: params.workspaceId }
+    : undefined;
+  return (request) =>
+    generateOrganizationAIObject({ organizationId: params.organizationId, aiTracing, ...request });
+}
+
+const countElements = (document: TQsfDraftDocument): number =>
+  document.blocks.reduce((count, block) => count + block.elements.length, 0);
 
 /**
- * Plan and assemble the survey. Stubbed until ENG-3654 (see the module comment).
- *
- * Asynchronous by contract, since the real pipeline awaits the AI call; the stub has nothing to wait
- * for, and `Promise.try` keeps its failures rejections rather than throws, as the real one's will be.
+ * Assemble the draft and hold it to the create's checks. A problem with one element drops that
+ * element (reported) and the draft is assembled again once; a problem anywhere else, or a second
+ * failure, fails the import. Only the problems' paths are logged: their reasons can quote the file.
  */
-export function runQsfImport(params: TRunQsfImportParams): Promise<TQsfImportResult> {
-  return Promise.try(() => assembleStubDraft(params));
-}
+function assembleCheckedDraft(
+  build: (excludedRefs: ReadonlySet<string>) => TQsfAssembly,
+  survey: TQsfSurvey
+): { assembly: TQsfAssembly; dropped: TQsfImportIssue[] } {
+  const first = build(new Set());
+  const problems = checkQsfDraft(first.document);
+  if (problems.length === 0) return { assembly: first, dropped: [] };
 
-function assembleStubDraft({
-  prepared,
-  workspaceId,
-  signal,
-  onProgress,
-}: TRunQsfImportParams): TQsfImportResult {
-  signal.throwIfAborted();
-  onProgress("ai");
-  signal.throwIfAborted();
-  onProgress("assembling");
+  const names = problems.slice(0, 20).map((problem) => problem.name);
+  const atFault = elementsAtFault(problems);
+  if (!atFault) {
+    logger.error({ invalidParamNames: names }, "QSF import draft failed the create check outside an element");
+    throw new QsfImportFailedError("draft_invalid");
+  }
 
-  const payload: TV3CreateSurveyRequestBody = {
-    workspaceId,
-    name: `${prepared.surveyName} (imported)`,
-    type: "link",
-    status: "draft",
-    blocks: [
-      {
-        name: "Block 1",
-        elements: [
-          {
-            id: "q1",
-            type: "openText",
-            headline: { "en-US": "Imported question" },
-            required: false,
-            inputType: "text",
-          },
-        ],
-      },
-    ],
-  };
-
-  // The same preparation POST /api/v3/surveys runs, so a draft the dialog shows is one it can create.
-  // Not `ZV3CreateSurveyBody.parse`: its output carries the internal `default` translation key, which
-  // the public create refuses.
-  const preparation = prepareV3SurveyCreateInput(payload);
-  if (!preparation.ok) {
-    throw new Error("The assembled import draft does not pass create validation");
+  const excluded = new Set(atFault.flatMap(([block, element]) => first.elementRefs[block]?.[element] ?? []));
+  logger.warn(
+    { invalidParamNames: names, droppedElements: excluded.size },
+    "QSF import dropped elements the create would refuse"
+  );
+  const second = build(excluded);
+  if (checkQsfDraft(second.document).length > 0) {
+    throw new QsfImportFailedError("draft_invalid");
   }
 
   return {
-    payload,
-    report: {
-      source: { kind: "qsf", fileName: prepared.fileName },
-      summary: { blocks: 1, questions: 1, languages: ["en-US"], logicRules: 0, hiddenFields: 0 },
-      issues: [],
-    },
+    assembly: second,
+    dropped: [...excluded].map((ref) => ({
+      code: "question_skipped" as const,
+      severity: "warning" as const,
+      questionTag: survey.questions.get(ref)?.exportTag ?? ref,
+      params: { cause: "validation_failed" },
+    })),
+  };
+}
+
+/** Plan and assemble the survey. */
+export async function runQsfImport(params: TRunQsfImportParams): Promise<TQsfImportResult> {
+  const { prepared, workspaceId, organizationId, signal, onProgress } = params;
+  const { survey } = prepared;
+  const deadline = performance.now() + params.deadlineMs;
+
+  signal.throwIfAborted();
+  const texts = await sanitizeQsfTexts(survey, signal);
+
+  signal.throwIfAborted();
+  onProgress("ai");
+  const planned = await planQsfImport({
+    survey,
+    texts,
+    generate: params.generate ?? organizationGenerate(params),
+    signal,
+    deadline,
+  });
+
+  signal.throwIfAborted();
+  onProgress("assembling");
+  if (planned.plan.questions.size === 0) throw new QsfImportFailedError("no_questions");
+
+  // Only asked when there is a redirect to keep: on Cloud it is a billing lookup.
+  const allowExternalUrls = survey.endRedirectUrl ? await getExternalUrlsPermission(organizationId) : false;
+  signal.throwIfAborted();
+
+  const { assembly, dropped } = assembleCheckedDraft(
+    (excludedRefs) =>
+      assembleQsfDraft({ survey, texts, plan: planned.plan, workspaceId, allowExternalUrls, excludedRefs }),
+    survey
+  );
+  if (countElements(assembly.document) === 0) throw new QsfImportFailedError("no_questions");
+
+  return {
+    payload: assembly.document,
+    report: buildQsfImportReport({
+      fileName: prepared.fileName,
+      document: assembly.document,
+      issues: [...survey.issues, ...texts.issues, ...planned.issues, ...dropped, ...assembly.issues],
+    }),
+    ...(planned.calls > 0 ? { usage: planned.usage } : {}),
   };
 }
