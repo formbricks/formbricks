@@ -3,7 +3,7 @@
  * Qualtrics import). The browser reads it with `NdjsonParser`.
  */
 import { logger } from "@formbricks/logger";
-import { loggableError } from "./loggable-error";
+import { loggableError } from "@/app/api/v3/lib/loggable-error";
 
 export const NDJSON_CONTENT_TYPE = "application/x-ndjson; charset=utf-8";
 

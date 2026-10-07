@@ -1,6 +1,5 @@
 import { AIOutputTokenLimitError, classifyAIProviderError } from "@formbricks/ai";
 import { TooManyRequestsError } from "@formbricks/types/errors";
-import { loggableError } from "./loggable-error";
 
 /** Mid-stream AI failures every AI-backed stream reports the same way. Each route words its own detail. */
 export const AI_STREAM_FAILURE_CODES = {
@@ -46,18 +45,4 @@ export function isClientAbort(error: unknown, signal: AbortSignal): boolean {
   if (signal.aborted) return true;
 
   return error instanceof Error && error.name === "AbortError";
-}
-
-/**
- * What an AI stream's failure may put in the log: `loggableError`'s name and frames, plus the provider's
- * status. Never a message: the AI SDK's errors keep the prompt or the model's output in their message
- * and fields (`NoObjectGeneratedError.text`, `TypeValidationError.value`), and pino's error serializer
- * would log all of it.
- */
-export function loggableAIError(error: unknown): Record<string, unknown> {
-  const providerStatusCode = error instanceof Error ? classifyAIProviderError(error)?.statusCode : undefined;
-  return {
-    ...loggableError(error),
-    ...(providerStatusCode === undefined ? {} : { providerStatusCode }),
-  };
 }

@@ -1,9 +1,9 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
-import { isClientAbort, loggableAIError } from "@/app/api/internal/lib/ai-stream-errors";
+import { isClientAbort } from "@/app/api/internal/lib/ai-stream-errors";
 import { createNdjsonResponse } from "@/app/api/internal/lib/ndjson-stream";
 import { createRequestAbort } from "@/app/api/internal/lib/request-abort";
-import { mapV3AIError } from "@/app/api/v3/lib/ai-errors";
+import { loggableAIError, mapV3AIError } from "@/app/api/v3/lib/ai-errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { problemInternalError, problemUnprocessableContent } from "@/app/api/v3/lib/response";

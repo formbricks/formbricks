@@ -6,6 +6,7 @@ import {
   TooManyRequestsError,
 } from "@formbricks/types/errors";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
+import { loggableError } from "@/app/api/v3/lib/loggable-error";
 import { problemAIUnavailable, problemBadGateway, problemTooManyRequests } from "@/app/api/v3/lib/response";
 import { AI_ERROR_CODES, type TAIErrorCode } from "@/lib/ai/service";
 
@@ -96,4 +97,18 @@ export function mapV3AIError(
   }
 
   return null;
+}
+
+/**
+ * What an AI failure may put in the log: `loggableError`'s name and frames, plus the provider's
+ * status. Never a message: the AI SDK's errors keep the prompt or the model's output in their message
+ * and fields (`NoObjectGeneratedError.text`, `TypeValidationError.value`), and pino's error serializer
+ * would log all of it.
+ */
+export function loggableAIError(error: unknown): Record<string, unknown> {
+  const providerStatusCode = error instanceof Error ? classifyAIProviderError(error)?.statusCode : undefined;
+  return {
+    ...loggableError(error),
+    ...(providerStatusCode === undefined ? {} : { providerStatusCode }),
+  };
 }

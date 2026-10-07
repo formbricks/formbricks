@@ -1,8 +1,8 @@
 /**
- * Errors as the internal routes that stream AI output or a user's file (Create with AI, the Qualtrics
- * import) log them: name and stack frames, never the message. A message can carry either — the AI SDK's
- * errors repeat the prompt or the model's output — so it is not safe to log however the error arose.
- * Frames are file paths, so a bug still points at its line.
+ * Errors as the routes that handle AI output or a user's file (Create with AI, the Qualtrics import) log
+ * them: name and stack frames, never the message. A message can carry either — the AI SDK's errors repeat
+ * the prompt or the model's output — so it is not safe to log however the error arose. Frames are file
+ * paths, so a bug still points at its line.
  */
 
 /**
@@ -17,7 +17,7 @@
  *
  * One case is out of reach: a message cut back at a line break after the stack was read still matches,
  * and the lines it lost pass as frames. A string stack does not say where its header ended, so nothing
- * here can tell; no code on these routes rewrites a message that way.
+ * here can tell; no code on those routes rewrites a message that way.
  */
 export const stackFrames = (error: Error): string[] => {
   const { name, message, stack } = error;

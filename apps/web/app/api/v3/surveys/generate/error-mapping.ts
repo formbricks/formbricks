@@ -1,6 +1,6 @@
 import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { logger } from "@formbricks/logger";
-import { mapV3AIError } from "@/app/api/v3/lib/ai-errors";
+import { loggableAIError, mapV3AIError } from "@/app/api/v3/lib/ai-errors";
 import { problemBadGateway, problemBadRequest, problemUnprocessableContent } from "@/app/api/v3/lib/response";
 import { V3SurveyGeneratePromptError, V3SurveyGeneratedPayloadValidationError } from "./service";
 
@@ -52,13 +52,9 @@ export function mapV3SurveyGenerateError(error: unknown, context: TGenerateError
     return aiResponse;
   }
 
+  // Name, frames and provider status only: the message can repeat the prompt or the model's output.
   logger.error(
-    {
-      err: error,
-      requestId,
-      workspaceId,
-      organizationId,
-    },
+    { ...loggableAIError(error), requestId, workspaceId, organizationId },
     "Failed to generate v3 survey create payload"
   );
 

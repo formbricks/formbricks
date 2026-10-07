@@ -1,3 +1,4 @@
+import { APICallError } from "ai";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AIOAuthTokenError, AIOutputTokenLimitError } from "@formbricks/ai";
 import {
@@ -5,7 +6,7 @@ import {
   ResourceNotFoundError,
   TooManyRequestsError,
 } from "@formbricks/types/errors";
-import { mapV3AIError } from "./ai-errors";
+import { loggableAIError, mapV3AIError } from "./ai-errors";
 
 vi.mock("server-only", () => ({}));
 
@@ -81,5 +82,25 @@ describe("mapV3AIError", () => {
     ["a plain error", new Error("boom")],
   ])("leaves %s to the caller", (_case, error) => {
     expect(mapV3AIError(error, context)).toBeNull();
+  });
+});
+
+describe("loggableAIError", () => {
+  test("logs a provider error by name, frames and status, never the prompt it echoes", () => {
+    const logged = loggableAIError(
+      new APICallError({
+        message: "Provider rejected the prompt: secret-from-the-prompt",
+        url: "https://provider.example/v1/chat",
+        requestBodyValues: { prompt: "secret-from-the-prompt" },
+        statusCode: 500,
+      })
+    );
+
+    expect(logged).toMatchObject({ errName: "AI_APICallError", providerStatusCode: 500 });
+    expect(JSON.stringify(logged)).not.toContain("secret-from-the-prompt");
+  });
+
+  test("adds no status to an error that is not the provider's", () => {
+    expect(loggableAIError(new Error("boom"))).not.toHaveProperty("providerStatusCode");
   });
 });
