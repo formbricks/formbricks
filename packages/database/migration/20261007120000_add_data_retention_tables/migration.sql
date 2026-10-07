@@ -1,6 +1,6 @@
 -- Data retention (ENG-3713, decided in ENG-3697): policies, exemptions, run history and notice
--- markers. New tables only; nothing on "Survey" or "Response" changes, because retention must never
--- write the survey row (its "updated_at" is one of the survey clocks).
+-- markers, plus "User"."reactivatedAt". Nothing on "Survey" or "Response" changes, because retention
+-- must never write the survey row (its "updated_at" is one of the survey clocks).
 --
 -- One transaction for the whole file. Prisma 7.8 does not add one, and these statements only make
 -- sense together: a partial apply would leave tables standing without their constraints or foreign
@@ -120,6 +120,11 @@ CREATE TABLE IF NOT EXISTS "RetentionNotice" (
     CONSTRAINT "RetentionNotice_pkey" PRIMARY KEY ("id"),
     CONSTRAINT "RetentionNotice_target_check" CHECK (("entity" = 'surveys' AND "surveyId" IS NOT NULL AND "userId" IS NULL) OR ("entity" = 'members' AND "userId" IS NOT NULL AND "surveyId" IS NULL))
 );
+
+-- AlterTable
+-- A nullable column with no default: a catalog-only change that rewrites nothing. It takes a brief
+-- ACCESS EXCLUSIVE lock on "User", which the SET LOCAL above bounds.
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "reactivatedAt" TIMESTAMP(3);
 
 -- Every index below is on a table this same transaction just created, so it is built over zero rows
 -- and locks nothing anyone else can reach. CONCURRENTLY is not an option here in any case: Postgres

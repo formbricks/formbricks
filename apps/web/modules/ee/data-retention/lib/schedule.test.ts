@@ -259,11 +259,44 @@ describe("getSurveyRetentionClock", () => {
 
 describe("getMemberRetentionClock", () => {
   test("uses the last sign-in", () => {
-    expect(getMemberRetentionClock({ lastLoginAt: day(5) }, membersPolicy, day(10))).toEqual(day(5));
+    expect(
+      getMemberRetentionClock({ lastLoginAt: day(5), reactivatedAt: null }, membersPolicy, day(10))
+    ).toEqual(day(5));
   });
 
   test("counts a member with no recorded sign-in from when the policy was switched on", () => {
-    expect(getMemberRetentionClock({ lastLoginAt: null }, membersPolicy, day(10))).toEqual(day(-1000));
-    expect(getMemberRetentionClock({ lastLoginAt: null }, { enabledAt: null }, day(10))).toEqual(day(10));
+    expect(
+      getMemberRetentionClock({ lastLoginAt: null, reactivatedAt: null }, membersPolicy, day(10))
+    ).toEqual(day(-1000));
+    expect(
+      getMemberRetentionClock({ lastLoginAt: null, reactivatedAt: null }, { enabledAt: null }, day(10))
+    ).toEqual(day(10));
+  });
+
+  test("a reactivation restarts the clock without a sign-in", () => {
+    expect(
+      getMemberRetentionClock({ lastLoginAt: day(5), reactivatedAt: day(400) }, membersPolicy, day(401))
+    ).toEqual(day(400));
+    expect(
+      getMemberRetentionClock({ lastLoginAt: null, reactivatedAt: day(400) }, membersPolicy, day(401))
+    ).toEqual(day(400));
+  });
+
+  test("a sign-in after the reactivation still counts", () => {
+    expect(
+      getMemberRetentionClock({ lastLoginAt: day(500), reactivatedAt: day(400) }, membersPolicy, day(501))
+    ).toEqual(day(500));
+  });
+
+  test("a reactivation voids the notice that led to the deactivation", () => {
+    const clock = getMemberRetentionClock(
+      { lastLoginAt: day(0), reactivatedAt: day(400) },
+      membersPolicy,
+      day(401)
+    );
+
+    expect(
+      getRetentionSchedule(membersPolicy, target({ clock, noticeSentAt: day(305) }), day(401)).noticeSent
+    ).toBe(false);
   });
 });

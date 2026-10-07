@@ -1277,6 +1277,10 @@ model User {
   retentionNotices          RetentionNotice[]
   lastLoginAt               DateTime?
   isActive                  Boolean              @default(true)
+  /// When an admin last reactivated this user. Restarts the members retention clock (ENG-3713)
+  /// without touching `lastLoginAt`, which the member list, usage counts and APIs report as a real
+  /// sign-in.
+  reactivatedAt             DateTime?
 
   // ENG-2247: marks the ONE account admitted by the fresh-instance exception (closed instance, no
   // invite, zero users). The unique index is the serialization: two concurrent uninvited sign-ups

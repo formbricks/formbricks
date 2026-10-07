@@ -14,6 +14,7 @@ const mockPrismaUser = {
   backupCodes: "backupCodes",
   groupId: "groupId",
   isBootstrapAdmin: null,
+  reactivatedAt: null,
 };
 
 vi.mock("@formbricks/database", () => ({

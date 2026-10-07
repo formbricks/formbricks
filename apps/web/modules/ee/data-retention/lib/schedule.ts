@@ -210,10 +210,13 @@ export const getSurveyRetentionClock = (
 
 /**
  * A member's clock under the members policy: their last sign-in or, for someone with none on record,
- * the day the policy was switched on.
+ * the day the policy was switched on. A reactivation restarts it, whichever is later.
  */
 export const getMemberRetentionClock = (
-  member: { lastLoginAt: Date | null },
+  member: { lastLoginAt: Date | null; reactivatedAt: Date | null },
   policy: Pick<TRetentionSchedulePolicy, "enabledAt">,
   now: Date
-): Date => member.lastLoginAt ?? policy.enabledAt ?? now;
+): Date => {
+  const clock = member.lastLoginAt ?? policy.enabledAt ?? now;
+  return member.reactivatedAt ? latest(clock, member.reactivatedAt) : clock;
+};
