@@ -207,15 +207,20 @@ describe("cleanNote", () => {
     );
   });
 
-  test("replaces bare domains, with or without a path", () => {
-    expect(cleanNote("Log in at evil.com/login or Mail.Evil-Example.org now, user@evil.co")).toBe(
-      "Log in at … or … now, user@…"
-    );
+  test.each([
+    ["a domain with a path", "Log in at evil.com/login now", "Log in at … now"],
+    ["an email address", "Write to user@evil.co today", "Write to … today"],
+    ["a domain with a port", "Open evil.example:8080 first", "Open … first"],
+    ["a bare domain with a common top-level domain", "See Mail.Evil-Example.org or evil.io.", "See … or …."],
+  ])("replaces %s", (_case, raw, cleaned) => {
+    expect(cleanNote(raw)).toBe(cleaned);
   });
 
-  test("leaves prose without links alone", () => {
-    const note = "Shown only if 'Do you use it?' is 'Yes', e.g. for daily users (v2.0).";
-
+  test.each([
+    "Shown only if 'Do you use it?' is 'Yes', e.g. for daily users (v2.0).",
+    "Asked of Node.js users only.",
+    "Skips to the next answer.Then ends the survey.",
+  ])("leaves prose alone: %s", (note) => {
     expect(cleanNote(note)).toBe(note);
   });
 

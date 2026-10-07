@@ -90,11 +90,67 @@ export interface TQsfPlanResponse {
 // Control characters and the bidi overrides, which can make a report line read as something else.
 // eslint-disable-next-line no-control-regex -- matching control characters is the point
 const CONTROL_CHARACTERS = /[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2066-\u2069]/g;
-// A scheme or `www.` and what follows, or a bare domain (`evil.com/login`): labels of letters, digits
-// and hyphens, a 2–24 letter top-level label, then an optional path. Each label is bounded and dots
-// separate them, so a long run backtracks a bounded amount per position.
-const URL_LIKE =
-  /\b(?:[a-z][a-z0-9+.-]{1,20}:\/\/|(?:javascript|data|vbscript|mailto):|www\.)\S*|\b(?:[a-z0-9-]{1,63}\.)+[a-z]{2,24}\b(?:[/:?#]\S*)?/gi;
+/** Top-level domains common enough that a bare `name.tld` in a note is taken for a link. */
+const COMMON_TLDS = [
+  "com",
+  "net",
+  "org",
+  "io",
+  "co",
+  "info",
+  "biz",
+  "app",
+  "dev",
+  "xyz",
+  "me",
+  "ai",
+  "ly",
+  "gg",
+  "tk",
+  "top",
+  "site",
+  "online",
+  "shop",
+  "link",
+  "click",
+  "live",
+  "store",
+  "eu",
+  "uk",
+  "us",
+  "de",
+  "fr",
+  "nl",
+  "ch",
+  "at",
+  "es",
+  "it",
+  "ru",
+  "cn",
+  "jp",
+  "br",
+  "in",
+  "au",
+  "ca",
+].join("|");
+const DOTTED_NAME = String.raw`(?:[a-z0-9-]{1,63}\.)+[a-z]{2,24}`;
+
+/**
+ * Anything that looks like a link. A dotted word counts as a domain only with a sign it is one — a
+ * path, a port, an `@` before it, or a common top-level domain — so `Node.js` or `answer.Then` stay
+ * prose while `evil.com/login`, `evil.io:8080` and `user@evil.co` do not. Labels are bounded and
+ * separated by dots, so a long run backtracks a bounded amount per position.
+ */
+const URL_LIKE = new RegExp(
+  [
+    String.raw`\b(?:[a-z][a-z0-9+.-]{1,20}:\/\/|(?:javascript|data|vbscript|mailto):|www\.)\S*`,
+    String.raw`[\w.+-]{0,64}@${DOTTED_NAME}\b\S*`,
+    String.raw`\b${DOTTED_NAME}(?::\d{1,5})?\/\S*`,
+    String.raw`\b${DOTTED_NAME}:\d{1,5}\b`,
+    String.raw`\b(?:[a-z0-9-]{1,63}\.)+(?:${COMMON_TLDS})\b`,
+  ].join("|"),
+  "gi"
+);
 
 /**
  * Free text from the AI, made safe for a report line: control characters gone, anything that looks
