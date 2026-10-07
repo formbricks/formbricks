@@ -135,7 +135,44 @@ export interface TQsfPlanUsage {
  */
 export type TQsfPlanGenerate = (
   request: TQsfPlanRequest
-) => Promise<{ object: unknown; usage?: { inputTokens?: number; outputTokens?: number } }>;
+) => Promise<{ object: unknown; usage?: TQsfCallUsage }>;
+
+/** Usage as the AI SDK reports it. `outputTokens` is the total, reasoning included. */
+interface TQsfCallUsage {
+  inputTokens?: number;
+  outputTokens?: number;
+  outputTokenDetails?: { textTokens?: number; reasoningTokens?: number };
+}
+
+/**
+ * The output tokens a call used, reasoning included: the reported total, or its parts when a provider
+ * reports only those.
+ */
+const outputTokensOf = (usage: TQsfCallUsage | undefined): number =>
+  usage?.outputTokens ??
+  (usage?.outputTokenDetails?.textTokens ?? 0) + (usage?.outputTokenDetails?.reasoningTokens ?? 0);
+
+/**
+ * What a failed call used, read from the error's token counts only — never its text, which can echo
+ * the prompt. A call that ran out of output tokens used its whole budget unless it says otherwise.
+ */
+function usageOfFailure(error: unknown): TQsfCallUsage | undefined {
+  if (error instanceof AIOutputTokenLimitError) {
+    // Reasoning is part of the total, so a reported reasoning count alone says less than the limit hit.
+    const { outputTokens, maxOutputTokens } = error.details;
+    return { outputTokens: outputTokens ?? maxOutputTokens ?? QSF_PLAN_MAX_OUTPUT_TOKENS };
+  }
+  if (NoObjectGeneratedError.isInstance(error)) {
+    return error.usage
+      ? {
+          inputTokens: error.usage.inputTokens,
+          outputTokens: error.usage.outputTokens,
+          outputTokenDetails: error.usage.outputTokenDetails,
+        }
+      : undefined;
+  }
+  return undefined;
+}
 
 export interface TQsfPlanResult {
   plan: TQsfCheckedPlan;
@@ -252,6 +289,11 @@ async function runPool<T>(tasks: (() => Promise<T>)[], limit: number, abort: Abo
   return results;
 }
 
+function addUsage(context: TPlanContext, usage: TQsfCallUsage | undefined): void {
+  context.usage.inputTokens += usage?.inputTokens ?? 0;
+  context.usage.outputTokens += outputTokensOf(usage);
+}
+
 async function callOnce(
   context: TPlanContext,
   refs: string[],
@@ -288,10 +330,11 @@ async function callOnce(
       timeout,
       abortSignal: context.signal,
     });
-    context.usage.inputTokens += result.usage?.inputTokens ?? 0;
-    context.usage.outputTokens += result.usage?.outputTokens ?? 0;
+    addUsage(context, result.usage);
     return { kind: "ok", response: { refs: new Set(refs), object: result.object } };
   } catch (error) {
+    // A call that failed still spent tokens — one that ran out of them spent all 8,192.
+    addUsage(context, usageOfFailure(error));
     // The import's own abort (Stop, disconnect, the route's deadline) is the route's to classify.
     if (context.signal.aborted) throw error;
     if (isTimeoutError(error)) throw new QsfImportTimeoutError();

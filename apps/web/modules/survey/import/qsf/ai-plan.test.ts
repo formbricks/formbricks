@@ -327,6 +327,45 @@ describe("planQsfImport", () => {
     expect(JSON.stringify(result.issues)).not.toMatch(/https?:|evil/);
   });
 
+  test("counts the tokens of calls that failed, from their counts and never their text", async () => {
+    const calls: number[] = [];
+    const generate: TQsfPlanGenerate = async () => {
+      calls.push(calls.length);
+      if (calls.length === 1)
+        throw new AIOutputTokenLimitError({ maxOutputTokens: 8192, reasoningTokens: 6000 });
+      if (calls.length === 2) {
+        throw new NoObjectGeneratedError({
+          response: { id: "r", timestamp: new Date(), modelId: "m" },
+          usage: { inputTokens: 900, outputTokens: 1234 } as never,
+          finishReason: "stop",
+        });
+      }
+      return {
+        object: { questions: [], skipped: [], pages: [] },
+        usage: { inputTokens: 100, outputTokens: 10 },
+      };
+    };
+
+    const result = await plan("simple.qsf", generate);
+
+    // The chunk ran out of its 8,192 (reasoning included), its first half failed the schema, the
+    // rest answered with nothing: 10 tokens a call.
+    expect(result.usage.outputTokens).toBe(8192 + 1234 + 10 * (result.calls - 2));
+    expect(result.usage.inputTokens).toBe(900 + 100 * (result.calls - 2));
+  });
+
+  test("counts a call that ran out of tokens without saying how many as its whole budget", async () => {
+    let calls = 0;
+    const generate: TQsfPlanGenerate = async () => {
+      calls += 1;
+      throw new AIOutputTokenLimitError({});
+    };
+
+    const result = await plan("legacy-object-payload.qsf", generate);
+
+    expect(result.usage.outputTokens).toBe(calls * QSF_PLAN_MAX_OUTPUT_TOKENS);
+  });
+
   test("retries a chunk whose output did not match the schema", async () => {
     const recorded = recordedGenerate(loadRecordedPlan("simple.qsf"));
     let calls = 0;
