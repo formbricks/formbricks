@@ -35,7 +35,9 @@ import { MCP_OAUTH_REFRESH_TOKEN_PREFIX } from "./mcp-oauth-provider-options";
  * Access tokens are self-contained JWTs verified against JWKS (`modules/mcp/auth.ts`), so one minted
  * before the revoke stays valid until it expires (`accessTokenExpiresIn`, 15 minutes). That residual
  * is the same one `sso-recovery.ts` accepts; the `oauthAccessToken` write below only matters for opaque
- * tokens.
+ * tokens. The same residual covers an authorization code issued under the wider consent and redeemed
+ * after the narrowing: its access token lives out its 15 minutes, and its refresh token is refused on
+ * first use.
  */
 
 const CONSENT_PATH = "/oauth2/consent";
@@ -177,7 +179,8 @@ export const revokeOAuthConsentBeforeHandler = async (
 /**
  * The client whose consent a successful `/oauth2/consent` or `/oauth2/update-consent` may have changed,
  * or `null` for any other request. For `/oauth2/consent`, the client id comes from the signed
- * `oauth_query`, whose signature the provider's own `before` hook verified for this request already.
+ * `oauth_query`, whose signature the provider's own `before` hook verified for this request already (an
+ * after hook never runs when that check throws).
  */
 const changedConsentClientId = async (ctx: AuthHookContext, userId: string): Promise<string | null> => {
   if (ctx.path === CONSENT_PATH) {
@@ -202,28 +205,42 @@ const changedConsentClientId = async (ctx: AuthHookContext, userId: string): Pro
  * written the consent, ends the client's tokens for the user that reach past it, so a narrowed approval
  * takes effect now rather than at each token's next refresh.
  *
- * It reconciles against the stored consent rather than the request, so it is safe to run on any outcome
- * and a no-op for an approval that kept or widened the scopes. Without a consent row it does nothing:
- * that is either a `skipConsent` client or a revoke, which ENG-2499's handlers own.
+ * It reconciles against the stored consent rather than the request, so it runs whatever the provider
+ * answered (an approval can be written before the redirect that follows it fails) and is a no-op for an
+ * approval that kept or widened the scopes. It does nothing for a `skipConsent` client, whose tokens the
+ * provider issues without consulting consent, nor without a consent row, which is a revoke that
+ * ENG-2499's handlers own.
+ *
+ * A failure here is logged, not thrown: the approval is already committed, and failing the request
+ * would only cost the client its code. The refresh check still refuses every token beyond the consent.
  */
 export const revokeTokensBeyondConsentAfterHandler = async (ctx: AuthHookContext): Promise<void> => {
   if (ctx.path !== CONSENT_PATH && ctx.path !== CONSENT_UPDATE_PATH) return;
-  if (isAPIError((ctx.context as { returned?: unknown }).returned)) return;
 
   const session = await getSessionFromCtx(ctx);
   if (!session) return;
   const userId = session.user.id;
-  const clientId = await changedConsentClientId(ctx, userId);
-  if (!clientId) return;
 
-  const ended = await prisma.$transaction(async (tx) => {
-    const consentedScopes = await readConsentedScopes(tx, userId, clientId);
-    if (!consentedScopes) return null;
-    return endTokensBeyondScopes(tx, { userId, clientId, consentedScopes });
-  });
-  if (!ended || ended.refreshTokensDeleted + ended.accessTokensRevoked === 0) return;
+  try {
+    const clientId = await changedConsentClientId(ctx, userId);
+    if (!clientId) return;
 
-  logger.info({ userId, clientId, ...ended }, "OAuth consent narrowed; tokens beyond it ended");
+    const ended = await prisma.$transaction(async (tx) => {
+      const client = await tx.oauthClient.findUnique({ where: { clientId }, select: { skipConsent: true } });
+      if (!client || client.skipConsent) return null;
+      const consentedScopes = await readConsentedScopes(tx, userId, clientId);
+      if (!consentedScopes) return null;
+      return endTokensBeyondScopes(tx, { userId, clientId, consentedScopes });
+    });
+    if (!ended || ended.refreshTokensDeleted + ended.accessTokensRevoked === 0) return;
+
+    logger.info({ userId, clientId, ...ended }, "OAuth consent narrowed; tokens beyond it ended");
+  } catch (err) {
+    logger.error(
+      { err, userId },
+      "OAuth consent changed but ending the tokens beyond it failed; the refresh check still applies"
+    );
+  }
 };
 
 /**
@@ -249,7 +266,8 @@ const invalidGrant = (): APIError =>
  *    included) and replaces the response with `invalid_grant`, so the new tokens never leave.
  *  - A consent narrowed below the token (ENG-3529): ends the client's tokens that reach past the
  *    consent and the presented token's whole grant (the one just issued included, even when the client
- *    asked for scopes the consent does cover), and answers `invalid_grant`. The client has to go back
+ *    asked for scopes the consent does cover, except in grants from before Better Auth 1.7, which carry
+ *    no grant id; that token never leaves the server either way), and answers `invalid_grant`. The client has to go back
  *    through `/authorize`, which only issues what the consent covers. Grants within the consent, such as
  *    the narrowed approval's own, keep working.
  *
@@ -293,19 +311,18 @@ export const requireOAuthConsentOnRefreshAfterHandler = async (ctx: AuthHookCont
     const consentedScopes = await readConsentedScopes(tx, userId, clientId);
     if (!consentedScopes) {
       return {
-        reason: "the grant's consent was revoked",
+        reason: "consent_revoked",
         ...(await revokeClientTokens(tx, userId, clientId)),
       };
     }
     if (isCoveredBy(scopes, consentedScopes)) return null;
     return {
-      reason: "the grant's consent was narrowed below its scopes",
+      reason: "consent_narrowed",
       ...(await endTokensBeyondScopes(tx, { userId, clientId, consentedScopes, authorizationCodeId })),
     };
   });
   if (!refused) return;
 
-  const { reason, ...revoked } = refused;
-  logger.warn({ userId, clientId, ...revoked }, `OAuth refresh refused: ${reason}`);
+  logger.warn({ userId, clientId, ...refused }, "OAuth refresh refused: its consent no longer covers it");
   throw invalidGrant();
 };

@@ -2,6 +2,7 @@ import { APIError } from "better-auth/api";
 import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import {
   requireOAuthConsentOnRefreshAfterHandler,
   revokeOAuthConsentBeforeHandler,
@@ -20,6 +21,7 @@ const mocks = vi.hoisted(() => ({
     oauthConsent: { findFirst: vi.fn(), deleteMany: vi.fn() },
     oauthRefreshToken: { updateMany: vi.fn() },
     oauthAccessToken: { updateMany: vi.fn() },
+    oauthClient: { findUnique: vi.fn() },
     $queryRaw: vi.fn(),
     $executeRaw: vi.fn(),
   },
@@ -266,6 +268,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
 
   beforeEach(() => {
     mocks.getSessionFromCtx.mockResolvedValue({ user: { id: "user-1" } });
+    mocks.tx.oauthClient.findUnique.mockResolvedValue({ skipConsent: false });
     mocks.tx.$queryRaw.mockResolvedValue([{ scopes: NARROW }]);
   });
 
@@ -273,7 +276,6 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
     ["another path", ctx("/oauth2/token", { accept: true, oauth_query: oauthQuery })],
     ["a denied approval", ctx("/oauth2/consent", { accept: false, oauth_query: oauthQuery })],
     ["an approval without its signed query", ctx("/oauth2/consent", { accept: true })],
-    ["a request the provider refused", approve(new APIError("BAD_REQUEST"))],
     ["an update-consent without an id", ctx("/oauth2/update-consent", { update: { scopes: NARROW } })],
   ])("does nothing for %s", async (_label, hookCtx) => {
     await revokeTokensBeyondConsentAfterHandler(hookCtx);
@@ -315,6 +317,29 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
       ctx("/oauth2/update-consent", { id: "someone-elses", update: { scopes: NARROW } })
     );
     expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  test("still reconciles when the provider's answer is an error, since the consent may be written", async () => {
+    await revokeTokensBeyondConsentAfterHandler(approve(new APIError("BAD_REQUEST")));
+
+    expect(mocks.calls).toEqual(["delete refresh tokens", "revoke access tokens"]);
+  });
+
+  test("leaves a skipConsent client alone: the provider issues its tokens without consulting consent", async () => {
+    mocks.tx.oauthClient.findUnique.mockResolvedValue({ skipConsent: true });
+
+    await revokeTokensBeyondConsentAfterHandler(approve());
+    expect(mocks.calls).toEqual([]);
+  });
+
+  test("logs a failure instead of failing an approval that is already committed", async () => {
+    mocks.tx.$executeRaw.mockRejectedValue(new Error("connection reset"));
+
+    await expect(revokeTokensBeyondConsentAfterHandler(approve())).resolves.toBeUndefined();
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(Error), userId: "user-1" }),
+      expect.any(String)
+    );
   });
 
   test("leaves a client without a consent row alone: skipConsent clients and revokes aren't its job", async () => {

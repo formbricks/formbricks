@@ -364,6 +364,44 @@ describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, 
     expect((await refresh(clientId, wide.refresh_token)).body.error).toBe("invalid_grant");
   });
 
+  test("narrowing revokes opaque access tokens beyond it, and narrowing to nothing ends every token", async () => {
+    const { cookie, userId } = await signIn();
+    const clientId = await registerClient();
+    await grant(cookie, clientId);
+    const { id } = await consentOf(userId, clientId);
+    // MCP grants carry the resource, so they get JWTs and no access-token row. Opaque ones are looked up
+    // by their value, not hashed by the code under test, so seeding them is a fair stand-in.
+    const opaque = (scopes: string[]) =>
+      prisma.oauthAccessToken.create({
+        data: {
+          token: randomBytes(16).toString("hex"),
+          clientId,
+          userId,
+          scopes,
+          createdAt: new Date(),
+          expiresAt: new Date(Date.now() + 15 * 60_000),
+        },
+        select: { id: true },
+      });
+    const [wideAccess, narrowAccess] = [await opaque(SCOPE.split(" ")), await opaque(NARROW.split(" "))];
+    const updateConsent = (scopes: string[]) =>
+      handle("/oauth2/update-consent", {
+        method: "POST",
+        headers: { "content-type": "application/json", cookie, origin: ORIGIN },
+        body: JSON.stringify({ id, update: { scopes } }),
+      });
+    const isRevoked = async (tokenId: string) =>
+      (await prisma.oauthAccessToken.findUniqueOrThrow({ where: { id: tokenId } })).revoked !== null;
+
+    expect((await updateConsent(NARROW.split(" "))).status).toBe(200);
+    expect(await isRevoked(wideAccess.id)).toBe(true);
+    expect(await isRevoked(narrowAccess.id)).toBe(false);
+
+    expect((await updateConsent([])).status).toBe(200);
+    expect(await isRevoked(narrowAccess.id)).toBe(true);
+    expect(await liveTokens(userId, clientId)).toBe(0);
+  });
+
   test("a grant narrowed before this fix (consent narrowed, tokens live) is refused at its next refresh", async () => {
     const { cookie, userId } = await signIn();
     const clientId = await registerClient();
