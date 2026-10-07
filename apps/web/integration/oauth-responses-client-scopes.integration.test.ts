@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
+import { authorize, createUser, grant, refresh, registerClient, signIn } from "@/integration/oauth-flow";
 import { resetDb } from "@/integration/reset-db";
+import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 // The data migration under test (auto-discovered by the migration runner at deploy).
 import { eng3470GrantResponsesScopesToClients } from "../../../packages/database/migration/20261005130000_eng_3470_grant_responses_scopes_to_clients/migration";
 
@@ -157,5 +159,73 @@ describe("ENG-3470 responses scope grant to registered clients", () => {
   test("is a no-op on a fresh database, as the migration harness requires", async () => {
     await expect(runGrant()).resolves.not.toThrow();
     expect(await prisma.oauthClient.count()).toBe(0);
+  });
+});
+
+/**
+ * The other half of the promise: widening a client's registration must not widen a grant a user already
+ * made. Each grant is minted by the real provider before the migration, then exercised after it.
+ */
+describe("ENG-3470 leaves existing grants as the user approved them", () => {
+  const EMAIL = "eng3470-grant@example.com";
+  const PASSWORD = "Correct-Horse1";
+  const OLD_SCOPE = "surveys:read offline_access";
+  const WIDER_SCOPE = "surveys:read responses:read offline_access";
+
+  const scopesOf = (body: Record<string, unknown>): string[] => String(body.scope).split(" ");
+
+  /** A user who consented to a pre-ENG-2862 client, and that client's tokens, before the migration ran. */
+  const grantBeforeMigration = async () => {
+    const { cookie } = await signIn(EMAIL, PASSWORD);
+    const clientId = await registerClient("ENG-3470 existing grant");
+    // DCR registers with today's defaults, which include `responses:*`; narrow it to what an older
+    // instance would have registered, so the migration has something to widen.
+    await prisma.oauthClient.update({ where: { clientId }, data: { scopes: PRE_ENG2862_SCOPES } });
+    const tokens = await grant(cookie, clientId, OLD_SCOPE);
+    await runGrant();
+    expect((await clientOf(clientId)).scopes).toContain("responses:read");
+    return { cookie, clientId, tokens };
+  };
+
+  beforeEach(async () => {
+    await resetDb();
+    // Atomic for the same reason as the ENG-2499 suite: the boot-time seed can land concurrently.
+    await prisma.oauthResource.createMany({
+      data: [
+        { identifier: getMcpResourceUrl(), name: "Formbricks MCP", allowedScopes: [...MCP_OAUTH_SCOPES] },
+      ],
+      skipDuplicates: true,
+    });
+    await createUser(EMAIL, PASSWORD, "Existing grant");
+  });
+
+  test("a refresh keeps issuing the scopes the user approved, and cannot ask for the new ones", async () => {
+    const { clientId, tokens } = await grantBeforeMigration();
+
+    const plain = await refresh(clientId, tokens.refresh_token);
+    expect(plain.status, JSON.stringify(plain.body)).toBe(200);
+    expect(scopesOf(plain.body)).not.toContain("responses:read");
+
+    const widened = await refresh(clientId, plain.body.refresh_token as string, WIDER_SCOPE);
+    expect(widened.status).toBe(400);
+    expect(widened.body.error).toBe("invalid_scope");
+    expect(widened.body).not.toHaveProperty("access_token");
+
+    // The refused request costs the user nothing: the grant they approved still refreshes.
+    const after = await refresh(clientId, plain.body.refresh_token as string);
+    expect(after.status, JSON.stringify(after.body)).toBe(200);
+    expect(scopesOf(after.body)).not.toContain("responses:read");
+  });
+
+  test("asking for the new scopes at authorize goes to the consent screen, not straight to a code", async () => {
+    const { cookie, clientId } = await grantBeforeMigration();
+
+    // Control: the existing consent covers the old scopes, so those are issued without a prompt.
+    const covered = await authorize(cookie, clientId, OLD_SCOPE);
+    expect(covered.target.searchParams.get("code"), covered.target.toString()).toBeTruthy();
+
+    const wider = await authorize(cookie, clientId, WIDER_SCOPE);
+    expect(wider.target.pathname).toBe("/account/authorize");
+    expect(wider.target.searchParams.get("code")).toBeNull();
   });
 });
