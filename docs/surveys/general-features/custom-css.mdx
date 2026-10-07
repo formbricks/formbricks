@@ -223,20 +223,20 @@ You can define your own variables too, such as `--acme-ink`, and use them in you
 
 ### Headline
 
-Headlines can contain formatted text (bold, links, lists). Set the font family, size, weight and color through the headline variables on the hook, so they reach every part of the formatted text. Line height and letter spacing can be set directly.
+Headlines can contain formatted text (bold, links, lists). A font family, size, weight or color set on the hook reaches every part of it, and bold text stays bold.
 
 ```css
 [data-fb-part="headline"] {
-  --fb-element-headline-font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
-  --fb-element-headline-font-size: 20px;
-  --fb-element-headline-font-weight: 600;
-  --fb-element-headline-color: #10283a;
+  font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #10283a;
   line-height: 24px;
   letter-spacing: -0.025em;
 }
 ```
 
-The same works for descriptions with the `--fb-element-description-*` variables.
+The headline variables (`--fb-element-headline-*`) work as well. The same applies to descriptions, with the `--fb-element-description-*` variables.
 
 ### Primary Button
 

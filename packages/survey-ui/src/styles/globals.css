@@ -287,6 +287,20 @@
 }
 
 /*
+ * Formatted text inside the headline and description hooks takes its typography from the hook element
+ * rather than from the theme variables directly, so a rule on the hook (Custom CSS, ENG-3554) reaches
+ * every word of it, not only plain-text headlines. The hook element holds the same theme values, so
+ * nothing changes without Custom CSS. Opacity is not inherited and stays as it is.
+ */
+#fbjs [data-fb-part="headline"] *,
+#fbjs [data-fb-part="description"] * {
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/*
  * Keep bold (<strong>/<b>) inside rich text actually bold. The headline /
  * description weight rules above target every descendant (`* `), which would
  * otherwise flatten bold spans to the base weight and erase the contrast

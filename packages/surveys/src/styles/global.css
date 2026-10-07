@@ -64,6 +64,23 @@
 }
 
 /*
+ * A rich-text headline or description is the hook element its formatted text inherits from (see
+ * survey-ui's globals.css), so it carries the headline or description values, not the body-text
+ * defaults above. Its own text is all inside that markup, so this only changes what it passes down.
+ */
+#fbjs .htmlbody.label-headline {
+  font-size: var(--fb-element-headline-font-size);
+  font-weight: var(--fb-element-headline-font-weight);
+  color: var(--fb-element-headline-color) !important;
+}
+
+#fbjs .htmlbody.label-description {
+  font-size: var(--fb-element-description-font-size);
+  font-weight: var(--fb-element-description-font-weight);
+  color: var(--fb-element-description-color) !important;
+}
+
+/*
  * Keep bold (<strong>/<b>) inside rich text actually bold. The headline /
  * description font-weight rules injected by styles.ts target every descendant
  * (`.label-headline *`), which would otherwise flatten bold spans to the base

@@ -463,6 +463,12 @@ export const addCustomThemeToDom = ({
     }
   };
 
+  // Formatted text inside the headline and description hooks inherits these from the hook element, as in
+  // survey-ui's globals.css, so Custom CSS on the hook reaches it. Same specificity as the `.label-* *`
+  // rule it follows, so it wins by order while the bold rule (`.label-headline strong`) still wins.
+  const toInherited = (declarations: string) =>
+    declarations.replaceAll(/: var\([^)]*\) !important;/g, ": inherit !important;");
+
   // --- Headlines ---
   let headlineDecls = "";
   if (styling.elementHeadlineFontSize !== undefined)
@@ -472,6 +478,7 @@ export const addCustomThemeToDom = ({
   if (styling.elementHeadlineColor?.light)
     headlineDecls += "  color: var(--fb-element-headline-color) !important;\n";
   addRule("#fbjs .label-headline,\n#fbjs .label-headline *", headlineDecls);
+  addRule('#fbjs [data-fb-part="headline"] *', toInherited(headlineDecls));
 
   // --- Descriptions ---
   let descriptionDecls = "";
@@ -482,6 +489,7 @@ export const addCustomThemeToDom = ({
   if (styling.elementDescriptionColor?.light)
     descriptionDecls += "  color: var(--fb-element-description-color) !important;\n";
   addRule("#fbjs .label-description,\n#fbjs .label-description *", descriptionDecls);
+  addRule('#fbjs [data-fb-part="description"] *', toInherited(descriptionDecls));
 
   // --- Upper labels ---
   let upperDecls = "";
