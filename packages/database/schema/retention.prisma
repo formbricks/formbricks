@@ -91,7 +91,7 @@ model RetentionExemption {
   survey         Survey?         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId       String?
   until          DateTime
-  reason         String?
+  reason         String
   createdBy      User?           @relation("retentionExemptionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   createdById    String?
   revokedAt      DateTime?

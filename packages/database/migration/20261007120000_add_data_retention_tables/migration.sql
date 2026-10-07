@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS "RetentionExemption" (
     "entity" "RetentionEntity" NOT NULL,
     "surveyId" TEXT,
     "until" TIMESTAMP(3) NOT NULL,
-    "reason" TEXT,
+    "reason" TEXT NOT NULL,
     "createdById" TEXT,
     "revokedAt" TIMESTAMP(3),
     "revokedById" TEXT,
