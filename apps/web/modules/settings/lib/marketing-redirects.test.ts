@@ -1,8 +1,10 @@
 import { describe, expect, test } from "vitest";
 import {
+  type TMarketingSectionSlug,
   appendSearch,
   getLoginRedirectUrl,
   getMarketingRedirectTarget,
+  getSectionDestination,
   getSettingsRedirectPath,
 } from "./marketing-redirects";
 import { getOrganizationBillingPath } from "./routes";
@@ -88,7 +90,10 @@ describe("getLoginRedirectUrl", () => {
 
 describe("getMarketingRedirectTarget", () => {
   const url = new URL(`${WEBAPP_URL}/settings/teams?utm_campaign=launch`);
-  const buildPath = (id: string) => getSettingsRedirectPath(id, ["teams"], true);
+  const destination = {
+    scope: "organization" as const,
+    buildPath: (id: string) => getSettingsRedirectPath(id, ["teams"], true),
+  };
 
   test("logged-out users go to login and come back to the same link", () => {
     const target = getMarketingRedirectTarget({
@@ -96,7 +101,7 @@ describe("getMarketingRedirectTarget", () => {
       organizationId: undefined,
       url,
       webAppUrl: WEBAPP_URL,
-      buildPath,
+      destination,
     });
     expect(target).toBe(getLoginRedirectUrl(WEBAPP_URL, "/settings/teams", "?utm_campaign=launch"));
   });
@@ -108,7 +113,7 @@ describe("getMarketingRedirectTarget", () => {
         organizationId: undefined,
         url,
         webAppUrl: WEBAPP_URL,
-        buildPath,
+        destination,
       })
     ).toBe("/");
   });
@@ -120,8 +125,114 @@ describe("getMarketingRedirectTarget", () => {
         organizationId: ORG,
         url,
         webAppUrl: WEBAPP_URL,
-        buildPath,
+        destination,
       })
     ).toBe("/organizations/org-1/settings/teams?utm_campaign=launch");
+  });
+});
+
+describe("feature links (MARKETING_SECTIONS)", () => {
+  const WS = "ws-1";
+
+  const resolve = (slug: TMarketingSectionSlug, segments: string[], search = "") => {
+    const pathname = `/${[slug, ...segments].join("/")}`;
+    return getMarketingRedirectTarget({
+      isAuthenticated: true,
+      organizationId: ORG,
+      workspaceId: WS,
+      url: new URL(`${WEBAPP_URL}${pathname}${search}`),
+      webAppUrl: WEBAPP_URL,
+      destination: getSectionDestination(slug, segments),
+    });
+  };
+
+  test.each<[TMarketingSectionSlug, string[], string]>([
+    ["embedded-data", [], "/workspaces/ws-1/settings/workspace/embedded-data"],
+    ["enterprise-license", [], "/organizations/org-1/settings/enterprise"],
+    ["mcp", [], "/account/settings/authorized-apps"],
+    ["contacts", [], "/workspaces/ws-1/contacts"],
+    ["contacts", ["segments"], "/workspaces/ws-1/segments"],
+    ["contacts", ["attributes"], "/workspaces/ws-1/attributes"],
+    ["branding-removal", [], "/workspaces/ws-1/settings/workspace/look"],
+    ["feedback-unification", [], "/workspaces/ws-1/unify/feedback-records"],
+    ["feedback-unification", ["sources"], "/workspaces/ws-1/unify/sources"],
+    ["feedback-unification", ["feedback-records"], "/workspaces/ws-1/unify/feedback-records"],
+    ["feedback-unification", ["taxonomy"], "/workspaces/ws-1/unify/taxonomy"],
+    ["analysis", [], "/workspaces/ws-1/dashboards"],
+    ["analysis", ["dashboards"], "/workspaces/ws-1/dashboards"],
+    ["analysis", ["charts"], "/workspaces/ws-1/charts"],
+    ["workflows", [], "/workspaces/ws-1/workflows"],
+    ["workflows", ["runs"], "/workspaces/ws-1/workflows/runs"],
+    ["surveys", [], "/workspaces/ws-1/surveys"],
+    ["integrations", [], "/workspaces/ws-1/settings/workspace/integrations"],
+    ["integrations", ["slack"], "/workspaces/ws-1/settings/workspace/integrations/slack"],
+    ["integrations", ["notion"], "/workspaces/ws-1/settings/workspace/integrations/notion"],
+    ["integrations", ["airtable"], "/workspaces/ws-1/settings/workspace/integrations/airtable"],
+    ["integrations", ["google-sheets"], "/workspaces/ws-1/settings/workspace/integrations/google-sheets"],
+    ["integrations", ["webhooks"], "/workspaces/ws-1/settings/workspace/integrations/webhooks"],
+    // Unknown, extra or crafted sub-segments open the section's main page and are never echoed.
+    ["integrations", ["zapier"], "/workspaces/ws-1/settings/workspace/integrations"],
+    ["integrations", ["slack", "extra"], "/workspaces/ws-1/settings/workspace/integrations"],
+    ["contacts", ["..", "evil.com"], "/workspaces/ws-1/contacts"],
+    ["contacts", ["constructor"], "/workspaces/ws-1/contacts"],
+    ["surveys", ["anything"], "/workspaces/ws-1/surveys"],
+  ])("/%s %j -> %s", (slug, segments, expected) => {
+    expect(resolve(slug, segments)).toBe(expected);
+  });
+
+  test("keeps the query string", () => {
+    expect(resolve("contacts", ["segments"], "?utm_source=newsletter&utm_campaign=q4")).toBe(
+      "/workspaces/ws-1/segments?utm_source=newsletter&utm_campaign=q4"
+    );
+  });
+
+  test("a workspace link without an accessible workspace opens the organization's landing page", () => {
+    expect(
+      getMarketingRedirectTarget({
+        isAuthenticated: true,
+        organizationId: ORG,
+        workspaceId: undefined,
+        url: new URL(`${WEBAPP_URL}/surveys?utm_source=x`),
+        webAppUrl: WEBAPP_URL,
+        destination: getSectionDestination("surveys", []),
+      })
+    ).toBe("/organizations/org-1/landing?utm_source=x");
+  });
+
+  test("a workspace link without an organization opens the root page", () => {
+    expect(
+      getMarketingRedirectTarget({
+        isAuthenticated: true,
+        organizationId: undefined,
+        url: new URL(`${WEBAPP_URL}/surveys`),
+        webAppUrl: WEBAPP_URL,
+        destination: getSectionDestination("surveys", []),
+      })
+    ).toBe("/");
+  });
+
+  test("organization links do not need a workspace", () => {
+    expect(
+      getMarketingRedirectTarget({
+        isAuthenticated: true,
+        organizationId: ORG,
+        workspaceId: undefined,
+        url: new URL(`${WEBAPP_URL}/enterprise-license`),
+        webAppUrl: WEBAPP_URL,
+        destination: getSectionDestination("enterprise-license", []),
+      })
+    ).toBe("/organizations/org-1/settings/enterprise");
+  });
+
+  test("logged-out users go to login and come back to the same link", () => {
+    expect(
+      getMarketingRedirectTarget({
+        isAuthenticated: false,
+        organizationId: undefined,
+        url: new URL(`${WEBAPP_URL}/workflows/runs?utm_source=x`),
+        webAppUrl: WEBAPP_URL,
+        destination: getSectionDestination("workflows", ["runs"]),
+      })
+    ).toBe(getLoginRedirectUrl(WEBAPP_URL, "/workflows/runs", "?utm_source=x"));
   });
 });

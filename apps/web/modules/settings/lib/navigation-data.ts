@@ -16,7 +16,10 @@ import {
   getAccessControlPermission,
   getOrganizationWorkspacesLimit,
 } from "@/modules/ee/license-check/lib/utils";
-import { resolveActiveOrganizationId } from "@/modules/settings/lib/active-organization";
+import {
+  pickActiveWorkspaceId,
+  resolveActiveOrganizationId,
+} from "@/modules/settings/lib/active-organization";
 
 type TOrganizationWithBilling = NonNullable<Awaited<ReturnType<typeof getOrganization>>>;
 type TLicense = Awaited<ReturnType<typeof getEnterpriseLicense>>;
@@ -90,10 +93,7 @@ export const getSettingsLayoutData = async (
   // Resolve the workspace to display in the shell. Prefer the last active workspace when it belongs
   // to the accessible list; otherwise fall back to the first accessible workspace so the shell
   // always has something to show.
-  const resolvedWorkspaceId =
-    activeWorkspaceId && workspaces.some((w) => w.id === activeWorkspaceId)
-      ? activeWorkspaceId
-      : workspaces[0]?.id;
+  const resolvedWorkspaceId = pickActiveWorkspaceId(workspaces, activeWorkspaceId);
   // Full workspace object (not just id/name) so the shell can supply the WorkspaceContext.
   const currentWorkspace = resolvedWorkspaceId ? await getWorkspace(resolvedWorkspaceId) : null;
   const isOwnerOrManager = membership.role === "owner" || membership.role === "manager";

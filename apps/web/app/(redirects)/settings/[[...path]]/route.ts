@@ -6,5 +6,8 @@ import { getSettingsRedirectPath } from "@/modules/settings/lib/marketing-redire
 // currently in (account pages like /settings/profile go to /account/settings/*).
 export const GET = async (request: Request, context: { params: Promise<{ path?: string[] }> }) => {
   const { path } = await context.params;
-  return handleMarketingRedirect(request, (id) => getSettingsRedirectPath(id, path, IS_FORMBRICKS_CLOUD));
+  return handleMarketingRedirect(request, {
+    scope: "organization",
+    buildPath: (id) => getSettingsRedirectPath(id, path, IS_FORMBRICKS_CLOUD),
+  });
 };

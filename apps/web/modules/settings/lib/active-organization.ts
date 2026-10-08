@@ -1,6 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { getOrganizationsByUserId } from "@/app/(app)/workspaces/[workspaceId]/lib/organization";
+import { getWorkspacesByUserId } from "@/app/(app)/workspaces/[workspaceId]/lib/workspace";
 import { FORMBRICKS_ORGANIZATION_ID_COOKIE, FORMBRICKS_WORKSPACE_ID_COOKIE } from "@/lib/localStorage";
 import { getWorkspace } from "@/lib/workspace/service";
 
@@ -45,5 +46,40 @@ export const getActiveOrganizationIdForUser = async (userId: string): Promise<st
     userId,
     cookieStore.get(FORMBRICKS_WORKSPACE_ID_COOKIE)?.value,
     cookieStore.get(FORMBRICKS_ORGANIZATION_ID_COOKIE)?.value
+  );
+};
+
+/**
+ * The workspace to open inside an organization: the last active workspace while the user can still
+ * reach it there, otherwise the first accessible one. `workspaces` must be the user's accessible
+ * workspaces of that organization, so a cookie pointing at a deleted workspace or at a workspace of
+ * another organization never wins.
+ */
+export const pickActiveWorkspaceId = (
+  workspaces: readonly { id: string }[],
+  activeWorkspaceId: string | undefined
+): string | undefined =>
+  activeWorkspaceId && workspaces.some((workspace) => workspace.id === activeWorkspaceId)
+    ? activeWorkspaceId
+    : workspaces[0]?.id;
+
+/** `pickActiveWorkspaceId` over the user's accessible workspaces of `organizationId`. */
+export const resolveActiveWorkspaceId = async (
+  userId: string,
+  organizationId: string,
+  activeWorkspaceId: string | undefined
+): Promise<string | undefined> =>
+  pickActiveWorkspaceId(await getWorkspacesByUserId(userId, organizationId), activeWorkspaceId);
+
+/** `resolveActiveWorkspaceId` fed from the request's workspace cookie (set by the proxy). */
+export const getActiveWorkspaceIdForUser = async (
+  userId: string,
+  organizationId: string
+): Promise<string | undefined> => {
+  const cookieStore = await cookies();
+  return resolveActiveWorkspaceId(
+    userId,
+    organizationId,
+    cookieStore.get(FORMBRICKS_WORKSPACE_ID_COOKIE)?.value
   );
 };
