@@ -4,6 +4,33 @@
 # Node major must stay in sync with .nvmrc (single source of truth for dev + CI + prod).
 FROM node:24-alpine3.23 AS base
 
+# Node's official binary embeds OpenSSL, so apk upgrades cannot patch its TLS implementation.
+# Keep Node 24's current Undici fixes while linking its runtime to Alpine's patched OpenSSL/zlib.
+FROM alpine:3.23 AS node-runtime-builder
+ARG NODE_VERSION=24.21.0
+ARG NODE_SOURCE_SHA256=a6f54defb6fd7c84f41dba13d61e78e9b4e0961712cf61f29715c05f5ced94fc
+ARG NODE_BUILD_JOBS=2
+ARG TARGETARCH
+RUN apk add --no-cache ccache curl g++ linux-headers make python3 xz \
+    "openssl-dev>=3.5.9-r0" "zlib-dev>=1.3.2-r1"
+ENV CC="ccache gcc" CXX="ccache g++" CCACHE_MAXSIZE=3G
+WORKDIR /node-source
+RUN --mount=type=cache,id=node-runtime-ccache-${TARGETARCH},target=/root/.cache/ccache \
+    curl --fail --location --retry 3 --output node.tar.xz "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}.tar.xz" \
+    && echo "${NODE_SOURCE_SHA256}  node.tar.xz" | sha256sum -c - \
+    && tar -xJf node.tar.xz --strip-components=1 \
+    && ./configure --shared-openssl --shared-zlib --without-npm \
+    && make -j${NODE_BUILD_JOBS} \
+    && install -m 755 out/Release/node /usr/local/bin/node
+
+FROM alpine:3.23 AS runtime-base
+RUN apk update && apk upgrade --no-cache \
+    && apk add --no-cache ca-certificates libgcc libstdc++ \
+      "libssl3>=3.5.9-r0" "libcrypto3>=3.5.9-r0" "zlib>=1.3.2-r1"
+COPY --from=node-runtime-builder /usr/local/bin/node /usr/local/bin/node
+COPY apps/web/scripts/docker/verify-runtime.mjs /tmp/verify-runtime.mjs
+RUN node /tmp/verify-runtime.mjs && rm /tmp/verify-runtime.mjs
+
 #
 ## step 1: Install & build
 #
@@ -82,16 +109,10 @@ RUN --mount=type=secret,id=database_url \
 #
 ## step 2: setup production runner
 #
-FROM base AS runner
+FROM runtime-base AS runner
 
-# Upgrade Alpine system packages, remove build-only npm tooling from the runtime image, then create user.
-# The application and startup migrations run directly with Node.js; npm and npx are only needed in the installer.
-# CVE-2026-85091: require Alpine's patched zlib even when rebuilding from cached base layers.
-RUN apk update && apk upgrade --no-cache \
-    && apk add --no-cache "zlib>=1.3.2-r1" \
-    && rm -rf /usr/local/lib/node_modules/npm \
-    && rm -f /usr/local/bin/npm /usr/local/bin/npx \
-    && addgroup -S nextjs \
+# The application and migrations invoke Node directly; the runtime contains no npm/npx or build headers.
+RUN addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
 WORKDIR /home/nextjs
@@ -288,6 +309,9 @@ RUN chmod -R 755 ./node_modules/@noble/hashes
 
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
+
+COPY apps/web/scripts/docker/verify-runtime.mjs ./verify-runtime.mjs
+RUN node ./verify-runtime.mjs --dependencies && rm ./verify-runtime.mjs
 
 # Pino loads transport code in worker threads via dynamic require().
 # Next.js file tracing only traces static imports, missing runtime-loaded files
