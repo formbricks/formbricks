@@ -439,6 +439,50 @@ describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, 
     expect(await liveTokens(userId, clientId)).toBe(0);
   });
 
+  test("a refused pre-1.7 grant, which has no grant id, still loses the token minted for the refresh", async () => {
+    const { cookie, userId } = await signIn();
+    const clientId = await registerClient();
+    const wide = await grant(cookie, clientId);
+    // Grants from before Better Auth 1.7 carry no authorizationCodeId, and rotation keeps it that way.
+    await prisma.oauthRefreshToken.updateMany({
+      where: { userId, clientId },
+      data: { authorizationCodeId: null },
+    });
+    await prisma.oauthConsent.updateMany({
+      where: { userId, clientId },
+      data: { scopes: NARROW.split(" ") },
+    });
+
+    const after = await refresh(clientId, wide.refresh_token, NARROW);
+
+    expect(after.body.error).toBe("invalid_grant");
+    // The narrower token the provider minted for this request is inside the consent, but never left.
+    expect(await liveTokens(userId, clientId)).toBe(0);
+  });
+
+  test("with two consent rows from a racing first approval, narrowing either one is what counts", async () => {
+    const { cookie, userId } = await signIn();
+    const clientId = await registerClient();
+    const wide = await grant(cookie, clientId);
+    const first = await consentOf(userId, clientId);
+    const earlier = new Date(Date.now() - 60_000);
+    const second = await prisma.oauthConsent.create({
+      data: { clientId, userId, scopes: SCOPE.split(" "), createdAt: earlier, updatedAt: earlier },
+    });
+
+    // Narrow the older row; the newer one still lists the wide scopes.
+    const response = await handle("/oauth2/update-consent", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie, origin: ORIGIN },
+      body: JSON.stringify({ id: second.id, update: { scopes: NARROW.split(" ") } }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(first.id).not.toBe(second.id);
+    expect(await liveRefreshTokensWith(userId, clientId, "responses:read")).toBe(0);
+    expect((await refresh(clientId, wide.refresh_token)).body.error).toBe("invalid_grant");
+  });
+
   test("a refresh racing an uncommitted narrowing waits for it and is refused", async () => {
     const { cookie, userId } = await signIn();
     const clientId = await registerClient();
