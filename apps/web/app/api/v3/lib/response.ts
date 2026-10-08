@@ -98,6 +98,7 @@ export type V3ProblemCode = (typeof V3_PROBLEM_CODES)[number];
 export const INTERNAL_PROBLEM_CODES = [
   "attachment_export_empty",
   "attachment_export_too_large",
+  "member_in_other_organizations",
   "retention_exemption_exists",
   "retention_exemption_not_active",
   "retention_export_too_large",
