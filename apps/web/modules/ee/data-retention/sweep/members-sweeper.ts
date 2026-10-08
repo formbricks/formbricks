@@ -30,7 +30,11 @@ type TMemberCandidate = {
   role: "owner" | "manager" | "member" | "billing";
   lastLoginAt: Date | null;
   reactivatedAt: Date | null;
-  /** How many organisations they belong to: the policy only acts on someone who is in this one alone. */
+  /**
+   * How many organisations they belong to or are invited to (a pending, unexpired invite counts:
+   * deactivating the account would stop them accepting it). The policy only acts on someone who is in
+   * this one alone.
+   */
   organizationCount: number;
   noticeClaimedAt: Date | null;
   noticeDeliveredAt: Date | null;
@@ -57,7 +61,11 @@ const readCandidates = (
 ): Promise<TMemberCandidate[]> => client.$queryRaw<TMemberCandidate[]>`
   SELECT u."id" AS "userId", u."email", u."locale", m."role"::text AS "role",
          u."lastLoginAt", u."reactivatedAt",
-         (SELECT count(*)::int FROM "Membership" o WHERE o."userId" = u."id") AS "organizationCount",
+         (SELECT count(*)::int FROM "Membership" o WHERE o."userId" = u."id")
+           + (SELECT count(*)::int FROM "Invite" i
+               WHERE lower(i."email") = lower(u."email") AND i."acceptorId" IS NULL
+                 AND i."expiresAt" > ${context.now} AND i."organizationId" <> m."organizationId")
+           AS "organizationCount",
          n."sentAt" AS "noticeClaimedAt", n."deliveredAt" AS "noticeDeliveredAt"
   FROM "Membership" m
   JOIN "User" u ON u."id" = m."userId"
@@ -83,6 +91,10 @@ type TDeactivation = "deactivated" | "lastOwner" | "otherOrganization" | null;
  *   same clock) and re-check that the schedule says `act`;
  * - never the organisation's last active owner.
  * The `User.isActive` change reaches SpiceDB through the projection outbox trigger on the column.
+ *
+ * Locks are taken memberships first, then the user. A member deleting their own account at the same
+ * moment locks in the other order (the user, then its memberships by cascade), so the two can deadlock;
+ * Postgres then aborts one of them: the run's error is logged and the policy carries on next night.
  */
 export const deactivateDueMember = async (
   context: TRetentionSweepContext,
@@ -209,6 +221,12 @@ const notifyMember = async (
 export const createMembersSweeper = (): TRetentionSweeper => async (context) => {
   const cutoffs = getRetentionClockCutoffs(context.policy, context.now);
   const skips: TRetentionRunSkip[] = [];
+  // The last active owner is never deactivated, so they aren't told they will be.
+  const activeOwners = await runSweepTransaction((tx) =>
+    tx.membership.count({
+      where: { organizationId: context.policy.organizationId, role: "owner", user: { isActive: true } },
+    })
+  );
   const { notify, act } = await collectDueTargets(context, {
     readPage: (tx, afterId) =>
       readCandidates(tx, context, { afterId, noticeDueAtOrBefore: cutoffs.noticeDueAtOrBefore }),
@@ -219,7 +237,12 @@ export const createMembersSweeper = (): TRetentionSweeper => async (context) => 
         skips.push({ targetType: "user", targetId: member.userId, skipReason: "otherOrganization" });
         return null;
       }
-      return getDueRetentionStep(context.policy, targetState(context, member), context.now);
+      const step = getDueRetentionStep(context.policy, targetState(context, member), context.now);
+      if (step === "notify" && member.role === "owner" && activeOwners <= 1) {
+        skips.push({ targetType: "user", targetId: member.userId, skipReason: "lastOwner" });
+        return null;
+      }
+      return step;
     },
   });
 

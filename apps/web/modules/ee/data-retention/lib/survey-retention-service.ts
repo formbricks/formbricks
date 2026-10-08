@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
+import type { Prisma } from "@formbricks/database/prisma";
 import type { TRetentionExemptionPolicy } from "../types";
 import { getRetentionPolicyRows, resolveRetentionPolicySettings } from "./policies-service";
 import type { TSurveyRetentionFacts, TSurveyRetentionPolicyInput } from "./survey-retention";
@@ -87,10 +88,12 @@ export type TCappedCount = { count: number; relation: "eq" | "gte" };
 export async function countSurveysResponsesCreatedAtOrBefore(
   surveyIds: readonly string[],
   cutoff: Date,
-  cap = SURVEY_RETENTION_DUE_COUNT_CAP
+  cap = SURVEY_RETENTION_DUE_COUNT_CAP,
+  /** A bounded transaction, for the sweep; the shared client otherwise. */
+  client: Pick<Prisma.TransactionClient, "$queryRaw"> = prisma
 ): Promise<Map<string, TCappedCount>> {
   if (surveyIds.length === 0) return new Map();
-  const rows = await prisma.$queryRaw<{ surveyId: string; count: number }[]>`
+  const rows = await client.$queryRaw<{ surveyId: string; count: number }[]>`
     SELECT s."id" AS "surveyId",
            (SELECT count(*)::int FROM (
               SELECT 1 FROM "Response" r

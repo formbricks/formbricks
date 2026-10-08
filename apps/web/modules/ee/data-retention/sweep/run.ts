@@ -18,6 +18,8 @@ export type TOpenedRetentionRun = {
   policy: TRetentionPolicySnapshot;
   /** Set when the run restarted the policy's warning first (`RETENTION_SWEEP_GAP_MS`). */
   restartedWarning: { previousEnabledAt: Date } | null;
+  /** Where the previous run's scan stopped for want of time; this run's scan starts after it. */
+  resumeAfter: string | null;
 };
 
 /**
@@ -57,7 +59,7 @@ export const openRetentionRun = (
     const previous = await tx.retentionRun.findFirst({
       where: { organizationId, entity },
       orderBy: [{ startedAt: "desc" }, { id: "desc" }],
-      select: { startedAt: true, finishedAt: true },
+      select: { startedAt: true, finishedAt: true, scanCursor: true },
     });
     const age = (date: Date) => now.getTime() - date.getTime();
     if (previous && !previous.finishedAt && age(previous.startedAt) < RETENTION_RUN_LEASE_MS) return null;
@@ -96,6 +98,7 @@ export const openRetentionRun = (
         conditions: locked.conditions,
       },
       restartedWarning,
+      resumeAfter: previous?.scanCursor ?? null,
     };
   });
 

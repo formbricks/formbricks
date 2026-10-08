@@ -128,6 +128,9 @@ model RetentionRun {
   skippedCount   Int                @default(0)
   /// False when the run changed nothing. History hides those by default.
   hasChanges     Boolean            @default(false)
+  /// Where the run's scan of candidates stopped for want of time, so the next run resumes there instead
+  /// of rescanning the same first targets every night. Null when the scan reached the end.
+  scanCursor     String?
   items          RetentionRunItem[]
 
   @@index([organizationId, startedAt, id])

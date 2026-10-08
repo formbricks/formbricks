@@ -15,10 +15,15 @@ import { runSweepTransaction } from "./transaction";
 
 /**
  * Walk a policy's candidates page by page, each page read in a bounded sweep transaction, and sort them
- * by the step their schedule says is due. Stops at the run's deadline, or once both lists are full
- * (`RETENTION_NOTICES_PER_RUN`, `RETENTION_ACTIONS_PER_RUN`): the rest are still due tomorrow, since
- * candidates are always `<=`. Reading everything first and acting after keeps notices from being
+ * by the step their schedule says is due. Reading first and acting after keeps notices from being
  * starved by a night's deletions, and every action re-checks its target under lock anyway.
+ *
+ * The scan gets half of what is left of the run's time, so notices and actions always get the other
+ * half, and stops early once both lists are full (`RETENTION_NOTICES_PER_RUN`,
+ * `RETENTION_ACTIONS_PER_RUN`). It starts after where the previous run's scan stopped
+ * (`resumeAfter`) and records where this one stops, so a large organisation is covered across nights
+ * rather than the same first targets being rescanned every night; a scan that reaches the end clears
+ * it, and the next one starts from the beginning. Nothing is missed: candidates are always `<=`.
  */
 export const collectDueTargets = async <TTarget>(
   context: TRetentionSweepContext,
@@ -34,9 +39,11 @@ export const collectDueTargets = async <TTarget>(
 ): Promise<{ notify: TTarget[]; act: TTarget[] }> => {
   const notify: TTarget[] = [];
   const act: TTarget[] = [];
-  let afterKey: string | undefined;
+  const scanDeadline = Date.now() + Math.max(0, context.deadline - Date.now()) / 2;
+  let afterKey = context.resumeAfter ?? undefined;
+  let reachedEnd = false;
   while (
-    Date.now() < context.deadline &&
+    Date.now() < scanDeadline &&
     (notify.length < RETENTION_NOTICES_PER_RUN || act.length < RETENTION_ACTIONS_PER_RUN)
   ) {
     const page = await runSweepTransaction((tx) => readPage(tx, afterKey));
@@ -45,8 +52,14 @@ export const collectDueTargets = async <TTarget>(
       if (step === "notify" && notify.length < RETENTION_NOTICES_PER_RUN) notify.push(target);
       if (step === "act" && act.length < RETENTION_ACTIONS_PER_RUN) act.push(target);
     }
-    if (page.length < RETENTION_SWEEP_BATCH_SIZE) break;
+    if (page.length < RETENTION_SWEEP_BATCH_SIZE) {
+      reachedEnd = true;
+      break;
+    }
     afterKey = keyOf(page[page.length - 1]);
+  }
+  if (!reachedEnd && afterKey) {
+    await prisma.retentionRun.update({ where: { id: context.runId }, data: { scanCursor: afterKey } });
   }
   return { notify, act };
 };

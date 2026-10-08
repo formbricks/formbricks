@@ -245,9 +245,13 @@ export const createResponsesSweeper =
     const recipients = await resolveSurveyNoticeRecipients(context.policy.organizationId, notify, canRead);
     // Once delivered now, the reminder's deletion starts `warnDays` from now, and the responses due by
     // then are the ones created at or before `noticeDueAtOrBefore`, whatever the survey.
-    const dueCounts = await countSurveysResponsesCreatedAtOrBefore(
-      notify.filter((candidate) => recipients.has(candidate.id)).map((candidate) => candidate.id),
-      cutoffs.noticeDueAtOrBefore
+    const dueCounts = await runSweepTransaction((tx) =>
+      countSurveysResponsesCreatedAtOrBefore(
+        notify.filter((candidate) => recipients.has(candidate.id)).map((candidate) => candidate.id),
+        cutoffs.noticeDueAtOrBefore,
+        undefined,
+        tx
+      )
     );
     const items: TSurveyNoticeItem<"responses">[] = notify.flatMap((candidate) => {
       const recipient = recipients.get(candidate.id);

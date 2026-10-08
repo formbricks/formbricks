@@ -55,6 +55,9 @@ export const revokeAllUserOAuthGrants = async (
   userId: string,
   revokedAt: Date = new Date()
 ): Promise<{ accessTokensRevoked: number; refreshTokensRevoked: number; consentsDeleted: number }> => {
+  // Consents first, as `revokeOAuthConsentBeforeHandler` does: a refresh in flight that lands between
+  // the two then fails its consent check instead of minting a token after the revocation.
+  const consentRows = await tx.oauthConsent.deleteMany({ where: { userId } });
   const accessRows = await tx.oauthAccessToken.updateMany({
     where: { userId, revoked: null },
     data: { revoked: revokedAt },
@@ -63,7 +66,6 @@ export const revokeAllUserOAuthGrants = async (
     where: { userId, revoked: null },
     data: { revoked: revokedAt },
   });
-  const consentRows = await tx.oauthConsent.deleteMany({ where: { userId } });
   return {
     accessTokensRevoked: accessRows.count,
     refreshTokensRevoked: refreshRows.count,

@@ -154,6 +154,7 @@ CREATE TABLE IF NOT EXISTS "RetentionRun" (
     "deletedCount" INTEGER NOT NULL DEFAULT 0,
     "skippedCount" INTEGER NOT NULL DEFAULT 0,
     "hasChanges" BOOLEAN NOT NULL DEFAULT false,
+    "scanCursor" TEXT,
 
     CONSTRAINT "RetentionRun_pkey" PRIMARY KEY ("id")
 );

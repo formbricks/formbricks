@@ -2971,8 +2971,8 @@ checksums:
     workspace/settings/data_retention/survey_required: 290657a246e312fdc96e3a895794d26a
     workspace/settings/data_retention/surveys_active_help: 94082032b817e6e0453176d8b145372d
     workspace/settings/data_retention/surveys_conditions_heading: dd21d6a8ec1abc226f0b79db7a4e1f0f
-    workspace/settings/data_retention/surveys_notice_help: 4e64b869772ec672af0f7943ae519262
-    workspace/settings/data_retention/surveys_period_help: 7689571fb43bb25ff1bdf844a668d13f
+    workspace/settings/data_retention/surveys_notice_help: 391a956828c9817a51005ddf3a75d3a6
+    workspace/settings/data_retention/surveys_period_help: d8cae7fccd0f2b7628d83c4703cdb42f
     workspace/settings/data_retention/surveys_policy_description: 2a4ddf9a005a0a5e9575176c6e3c0be8
     workspace/settings/data_retention/surveys_policy_title: 4964987825ba25c5bd3bcd70639d4aa7
     workspace/settings/data_retention/surveys_summary: 31cd3ca4f3fde2f6d57b0aefe9ccd350

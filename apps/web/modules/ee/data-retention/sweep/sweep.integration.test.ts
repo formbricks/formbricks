@@ -5,6 +5,7 @@ import { resetDb } from "@/integration/reset-db";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { updateRetentionPolicy } from "../lib/policies-service";
 import { RETENTION_RUN_LEASE_MS, RETENTION_SWEEP_GAP_MS } from "./constants";
+import { collectDueTargets } from "./due-targets";
 import { openRetentionRun, recordRetentionRunActions, recordRetentionRunSkips } from "./run";
 import { runDataRetentionSweep } from "./sweep";
 import {
@@ -142,6 +143,32 @@ describe("data retention sweep (real Postgres)", () => {
     await expect(runSweepTransaction((tx) => lockUnchangedRetentionPolicy(tx, run.policy))).rejects.toThrow(
       RetentionPolicyChangedError
     );
+  });
+
+  test("a scan cut short by time resumes where it stopped on the next run", async () => {
+    await enablePolicy("members", ago(10 * DAY));
+    const keys = Array.from({ length: 250 }, (_, i) => `k${String(i).padStart(3, "0")}`);
+    const startsAfter: (string | undefined)[] = [];
+    // Each page takes longer than the scan's share of a 100 ms run, so the scan stops after one page.
+    const readPage = async (_tx: unknown, afterKey: string | undefined) => {
+      startsAfter.push(afterKey);
+      await new Promise((resolve) => setTimeout(resolve, 60));
+      const from = afterKey ? keys.indexOf(afterKey) + 1 : 0;
+      return keys.slice(from, from + 100);
+    };
+    const scan = async () => {
+      const run = (await openRetentionRun(organizationId, "members"))!;
+      await collectDueTargets(
+        { ...run, deadline: Date.now() + 100 },
+        { readPage, keyOf: (key) => key, stepOf: () => null }
+      );
+      await prisma.retentionRun.update({ where: { id: run.runId }, data: { finishedAt: new Date() } });
+    };
+
+    await scan();
+    await scan();
+
+    expect(startsAfter).toEqual([undefined, "k099"]);
   });
 
   describe("History", () => {

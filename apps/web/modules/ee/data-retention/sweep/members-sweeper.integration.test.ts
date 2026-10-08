@@ -65,6 +65,7 @@ describe("members sweeper (real Postgres)", () => {
 
   test("warns the member, then deactivates them after the full warning and ends their access", async () => {
     const idle = await addMember("idle@example.com", "member", { lastLoginAt: ago(400) });
+    await prisma.user.update({ where: { id: idle }, data: { locale: "de-DE" } });
     await prisma.oauthClient.create({
       data: { clientId: "mcp-client", userId: idle, redirectUris: ["https://example.com/cb"] },
     });
@@ -72,11 +73,21 @@ describe("members sweeper (real Postgres)", () => {
       data: { userId: idle, clientId: "mcp-client", scopes: ["mcp"], createdAt: ago(1), updatedAt: ago(1) },
     });
     expect(await prisma.oauthConsent.count({ where: { userId: idle } })).toBe(1);
+    await prisma.oauthRefreshToken.create({
+      data: {
+        token: "refresh-token",
+        clientId: "mcp-client",
+        userId: idle,
+        scopes: ["mcp"],
+        expiresAt: ago(-30),
+        createdAt: ago(1),
+      },
+    });
 
     await sweep();
     expect(sendMemberRetentionNoticeEmail).toHaveBeenCalledOnce();
     expect(sendMemberRetentionNoticeEmail).toHaveBeenCalledWith(
-      expect.objectContaining({ email: "idle@example.com", organizationName: "Acme" })
+      expect.objectContaining({ email: "idle@example.com", organizationName: "Acme", locale: "de-DE" })
     );
     expect(await isActive(idle)).toBe(true);
 
@@ -86,6 +97,9 @@ describe("members sweeper (real Postgres)", () => {
     expect(await isActive(idle)).toBe(false);
     expect(revokeUserSessionsExcept).toHaveBeenCalledWith({ userId: idle });
     expect(await prisma.oauthConsent.count({ where: { userId: idle } })).toBe(0);
+    expect(await prisma.oauthRefreshToken.findFirstOrThrow({ where: { userId: idle } })).toMatchObject({
+      revoked: expect.any(Date),
+    });
     const items = await prisma.retentionRunItem.findMany({ orderBy: { run: { startedAt: "asc" } } });
     expect(items.map((item) => [item.action, item.targetName])).toEqual([
       ["notified", null],
@@ -115,6 +129,22 @@ describe("members sweeper (real Postgres)", () => {
     expect(await isActive(never)).toBe(true);
   });
 
+  test("counts a pending invite to another organisation as belonging there too", async () => {
+    const otherOrg = (await prisma.organization.create({ data: { name: "Other" } })).id;
+    const invited = await addMember("Invited@example.com", "member", { lastLoginAt: ago(400) });
+    const boss = (await prisma.user.findUniqueOrThrow({ where: { email: "boss@example.com" } })).id;
+    await prisma.invite.create({
+      data: { email: "invited@example.com", organizationId: otherOrg, creatorId: boss, expiresAt: ago(-7) },
+    });
+
+    await sweep();
+
+    expect(sendMemberRetentionNoticeEmail).not.toHaveBeenCalled();
+    expect(await prisma.retentionRunItem.findFirst({ where: { targetId: invited } })).toMatchObject({
+      skipReason: "otherOrganization",
+    });
+  });
+
   test("never acts on a member of another organisation, and never warns them", async () => {
     const otherOrg = (await prisma.organization.create({ data: { name: "Other" } })).id;
     const shared = await addMember("shared@example.com", "member", { lastLoginAt: ago(400) });
@@ -132,18 +162,30 @@ describe("members sweeper (real Postgres)", () => {
     ]);
   });
 
-  test("never deactivates the last active owner", async () => {
+  test("never warns or deactivates the last active owner", async () => {
     await prisma.user.updateMany({ where: { email: "boss@example.com" }, data: { lastLoginAt: ago(400) } });
     const boss = (await prisma.user.findUniqueOrThrow({ where: { email: "boss@example.com" } })).id;
-    await sweep();
-    await ageNotice(boss, WARN + 1);
 
     await sweep();
 
-    expect(await isActive(boss)).toBe(true);
+    expect(sendMemberRetentionNoticeEmail).not.toHaveBeenCalled();
     expect(await prisma.retentionRunItem.findFirst({ where: { action: "skipped" } })).toMatchObject({
       skipReason: "lastOwner",
+      targetId: boss,
     });
+
+    // Even with a notice on record from before, the deactivation itself refuses.
+    await prisma.retentionNotice.create({
+      data: {
+        organizationId,
+        entity: "members",
+        userId: boss,
+        sentAt: ago(WARN + 1),
+        deliveredAt: ago(WARN + 1),
+      },
+    });
+    await sweep();
+    expect(await isActive(boss)).toBe(true);
   });
 
   test("two owners due at once: exactly one is deactivated, so the organisation keeps an owner", async () => {

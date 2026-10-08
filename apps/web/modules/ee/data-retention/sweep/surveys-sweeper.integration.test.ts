@@ -189,6 +189,47 @@ describe("surveys sweeper (real Postgres)", () => {
     expect(sendSurveyRetentionNoticeEmail).toHaveBeenCalledTimes(2);
   });
 
+  test("'created before' holds back a survey created within the period, however old its last edit", async () => {
+    await enablePolicy(["noChange", "createdBefore"]);
+    const recent = await createSurvey("Recent", { age: 400 });
+    await setSurveyTimes(recent, { createdAt: ago(100), updatedAt: ago(400) });
+    const old = await createSurvey("Old", { age: 400 });
+
+    await sweep();
+
+    expect(vi.mocked(sendSurveyRetentionNoticeEmail).mock.calls[0][0].archivedSurveys).toEqual([
+      expect.objectContaining({ name: "Old" }),
+    ]);
+    expect(await notice(recent)).toBeNull();
+    expect(await notice(old)).not.toBeNull();
+  });
+
+  test("leaves a survey scheduled to launch later alone", async () => {
+    await enablePolicy(["noChange"]);
+    const scheduled = await createSurvey("Launches soon", { age: 400 });
+    await prisma.$executeRaw`UPDATE "Survey" SET "publishOn" = ${ago(-10)} WHERE "id" = ${scheduled}`;
+
+    await sweep();
+
+    expect(sendSurveyRetentionNoticeEmail).not.toHaveBeenCalled();
+  });
+
+  test("skips a survey nobody eligible can be told about", async () => {
+    await enablePolicy(["noChange"]);
+    const survey = await createSurvey("Old feedback", { age: 400 });
+
+    await runDataRetentionSweep({
+      checkLicence: async () => true,
+      sweepers: { surveys: createSurveysSweeper(async () => new Set()) },
+    });
+
+    expect(sendSurveyRetentionNoticeEmail).not.toHaveBeenCalled();
+    expect(await notice(survey)).toBeNull();
+    expect(await prisma.retentionRunItem.findMany()).toEqual([
+      expect.objectContaining({ action: "skipped", skipReason: "noRecipient", targetId: survey }),
+    ]);
+  });
+
   test("leaves a survey archived by hand to the purge", async () => {
     await enablePolicy(["noChange"]);
     const survey = await createSurvey("Old feedback", { age: 400 });

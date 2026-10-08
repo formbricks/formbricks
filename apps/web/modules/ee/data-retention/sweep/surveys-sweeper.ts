@@ -55,6 +55,23 @@ const targetState = (
 });
 
 /**
+ * The ticked conditions as SQL over `Survey s`, beyond the `updated_at` bound that always applies: "no
+ * response" needs no response after the cutoff (one index probe on `Response(surveyId, created_at)`),
+ * "created before" the creation date.
+ */
+const conditionClauses = (conditions: readonly RetentionSurveyCondition[], cutoff: Date): Prisma.Sql =>
+  Prisma.sql`
+    ${
+      conditions.includes("noResponse")
+        ? Prisma.sql`AND NOT EXISTS (
+            SELECT 1 FROM "Response" r WHERE r."surveyId" = s."id" AND r."created_at" > ${cutoff}
+          )`
+        : Prisma.empty
+    }
+    ${conditions.includes("createdBefore") ? Prisma.sql`AND s."created_at" <= ${cutoff}` : Prisma.empty}
+  `;
+
+/**
  * The organisation's live surveys whose clock is at or before `noticeDueAtOrBefore`, held by no active
  * exemption on either policy (deleting a survey deletes its responses, so a responses exemption holds it
  * too), keyset-paged on the id. The ticked conditions are pushed into SQL: `updated_at` always counts,
@@ -70,7 +87,6 @@ const readCandidates = (
     noticeDueAtOrBefore,
   }: { afterId?: string; surveyId?: string; noticeDueAtOrBefore: Date }
 ): Promise<TSurveyCandidate[]> => {
-  const { conditions } = context.policy;
   return client.$queryRaw<TSurveyCandidate[]>`
     SELECT s."id", s."name", s."workspaceId", s."ownerId", s."createdBy",
            s."created_at" AS "createdAt", s."updated_at" AS "updatedAt",
@@ -85,15 +101,10 @@ const readCandidates = (
     LEFT JOIN "RetentionNotice" n ON n."surveyId" = s."id" AND n."entity" = 'surveys'
     WHERE w."organizationId" = ${context.policy.organizationId}
       AND s."archivedAt" IS NULL
+      -- A survey scheduled to launch later hasn't had its chance yet.
+      AND (s."publishOn" IS NULL OR s."publishOn" <= ${context.now})
       AND s."updated_at" <= ${noticeDueAtOrBefore}
-      ${
-        conditions.includes("noResponse")
-          ? Prisma.sql`AND NOT EXISTS (
-              SELECT 1 FROM "Response" r WHERE r."surveyId" = s."id" AND r."created_at" > ${noticeDueAtOrBefore}
-            )`
-          : Prisma.empty
-      }
-      ${conditions.includes("createdBefore") ? Prisma.sql`AND s."created_at" <= ${noticeDueAtOrBefore}` : Prisma.empty}
+      ${conditionClauses(context.policy.conditions, noticeDueAtOrBefore)}
       ${surveyId ? Prisma.sql`AND s."id" = ${surveyId}` : Prisma.empty}
       ${afterId ? Prisma.sql`AND s."id" > ${afterId}` : Prisma.empty}
       AND NOT EXISTS (
@@ -117,6 +128,8 @@ const readHeldSurveys = (context: TRetentionSweepContext, noticeDueAtOrBefore: D
         AND e."organizationId" = ${context.policy.organizationId}
         AND e."revokedAt" IS NULL AND e."until" > ${context.now}
         AND s."archivedAt" IS NULL AND s."updated_at" <= ${noticeDueAtOrBefore}
+        AND (s."publishOn" IS NULL OR s."publishOn" <= ${context.now})
+        ${conditionClauses(context.policy.conditions, noticeDueAtOrBefore)}
     `
   );
 
