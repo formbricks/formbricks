@@ -17,6 +17,7 @@ import {
   renderInviteAcceptedEmail,
   renderInviteEmail,
   renderLinkSurveyEmail,
+  renderMemberRetentionNoticeEmail,
   renderNewEmailVerification,
   renderPasswordResetNotifyEmail,
   renderResponseFinishedEmail,
@@ -77,6 +78,10 @@ const renderers: [string, () => Promise<string>][] = [
   [
     "renderSurveyRetentionNoticeEmail",
     () => renderSurveyRetentionNoticeEmail({ ...exampleData.surveyRetentionNoticeEmail, ...legal, t }),
+  ],
+  [
+    "renderMemberRetentionNoticeEmail",
+    () => renderMemberRetentionNoticeEmail({ ...exampleData.memberRetentionNoticeEmail, ...legal, t }),
   ],
   ["renderInviteEmail", () => renderInviteEmail({ ...exampleData.inviteEmail, ...legal, t })],
   [

@@ -8,6 +8,7 @@ import {
   renderInviteAcceptedEmail,
   renderInviteEmail,
   renderLinkSurveyEmail,
+  renderMemberRetentionNoticeEmail,
   renderNewEmailVerification,
   renderPasswordResetNotifyEmail,
   renderResponseFinishedEmail,
@@ -319,6 +320,37 @@ export const sendSurveyRetentionNoticeEmail = async ({
     emailType: "data_retention_notice",
     to: email,
     subject: t("emails.retention_notice_email_subject", { organizationName }),
+    html,
+  });
+};
+
+/**
+ * The members policy's notice (ENG-3612), to the member themself, in their locale. Returns false when
+ * SMTP isn't configured; throws when sending fails, so the caller leaves the notice unsent.
+ */
+export const sendMemberRetentionNoticeEmail = async ({
+  email,
+  locale,
+  organizationName,
+  deactivateDate,
+}: {
+  email: string;
+  locale: TUserLocale;
+  organizationName: string;
+  deactivateDate: string;
+}): Promise<boolean> => {
+  const t = await getTranslate(locale);
+  const html = await renderMemberRetentionNoticeEmail({
+    organizationName,
+    deactivateDate,
+    loginLink: `${WEBAPP_URL}/auth/login`,
+    t,
+    ...legalProps,
+  });
+  return await sendEmail({
+    emailType: "data_retention_notice",
+    to: email,
+    subject: t("emails.member_retention_notice_email_subject", { organizationName }),
     html,
   });
 };

@@ -74,6 +74,13 @@ const translations: Record<TranslationKey, TranslationValue> = {
   "emails.sso_recovery_factors_removed_email_text":
     "You just signed in with single sign-on for the first time. Because your email address had never been verified, we removed the credentials that were set on the account before:",
   "emails.sso_recovery_factors_removed_email_two_factor": "Two-factor authentication was removed.",
+  "emails.member_retention_notice_email_heading": "Your account will be deactivated",
+  "emails.member_retention_notice_email_keep":
+    "To keep your account active, sign in before then. Once deactivated, an owner or manager of the organization can reactivate it.",
+  "emails.member_retention_notice_email_sign_in": "Sign in",
+  "emails.member_retention_notice_email_subject": "Your {organizationName} account will be deactivated",
+  "emails.member_retention_notice_email_text":
+    "You haven't signed in to {organizationName} for a while, so its data retention policy will deactivate your account on {date}.",
   "emails.retention_notice_email_heading": "Upcoming data retention",
   "emails.retention_notice_email_keep":
     "To keep any of this data, ask an owner or manager of your organization to add an exemption in its data retention settings.",

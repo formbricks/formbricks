@@ -28,6 +28,49 @@ import { MCP_OAUTH_REFRESH_TOKEN_PREFIX } from "./mcp-oauth-provider-options";
  * tokens.
  */
 
+/**
+ * End every OAuth grant a user holds, in the caller's transaction: their consents go and their access and
+ * refresh tokens are marked revoked. Used when the account changes hands (SSO recovery) or is switched
+ * off (the data retention members policy).
+ *
+ * The REFRESH token is the one that matters and the one this actually stops: `handleRefreshTokenGrant`
+ * reads `revoked`, so revoking it ends the 30-day persistence. Both token tables' `session` FK is
+ * `onDelete: SetNull`, so revoking sessions alone would blank the liveness check rather than fail it.
+ *
+ * ACCESS tokens are a different story, and worth stating plainly rather than implying this covers them.
+ * Our config sets `resources` and never sets `disableJwtPlugin`, so `isJwtAccessToken` is always true
+ * and every access token is a self-contained JWT: `createJwtAccessToken` signs without persisting, so
+ * there is normally no row here to update, and `/api/mcp` verifies bearers against JWKS
+ * (`modules/mcp/auth.ts`) without reading this table at all. Upstream's own revoke endpoint says as
+ * much — "JWT access tokens are self-contained and cannot be revoked server-side". The access-token
+ * write is therefore defence for the opaque-token configuration only; the residual is that a JWT stays
+ * valid for up to `accessTokenExpiresIn` (15 min).
+ *
+ * Consent goes too: `/authorize` skips the consent screen when a matching `oauthConsent` row exists, so
+ * leaving it would let a still-cookie-cached session (see session-revocation.ts) silently mint a fresh
+ * 30-day refresh token and undo the revocation.
+ */
+export const revokeAllUserOAuthGrants = async (
+  tx: Prisma.TransactionClient,
+  userId: string,
+  revokedAt: Date = new Date()
+): Promise<{ accessTokensRevoked: number; refreshTokensRevoked: number; consentsDeleted: number }> => {
+  const accessRows = await tx.oauthAccessToken.updateMany({
+    where: { userId, revoked: null },
+    data: { revoked: revokedAt },
+  });
+  const refreshRows = await tx.oauthRefreshToken.updateMany({
+    where: { userId, revoked: null },
+    data: { revoked: revokedAt },
+  });
+  const consentRows = await tx.oauthConsent.deleteMany({ where: { userId } });
+  return {
+    accessTokensRevoked: accessRows.count,
+    refreshTokensRevoked: refreshRows.count,
+    consentsDeleted: consentRows.count,
+  };
+};
+
 const CONSENT_DELETE_PATH = "/oauth2/delete-consent";
 const TOKEN_PATH = "/oauth2/token";
 

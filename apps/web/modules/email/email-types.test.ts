@@ -9,6 +9,7 @@ import {
   sendInviteAcceptedEmail,
   sendInviteMemberEmail,
   sendLinkSurveyToVerifiedEmail,
+  sendMemberRetentionNoticeEmail,
   sendPasswordResetLinkEmail,
   sendPasswordResetNotifyEmail,
   sendResponseFinishedEmail,
@@ -49,6 +50,7 @@ vi.mock("@formbricks/email", () => ({
   renderSsoRecoveryFactorsRemovedEmail: async () => "html",
   renderSsoSignInHintEmail: async () => "html",
   renderSurveyRetentionNoticeEmail: async () => "html",
+  renderMemberRetentionNoticeEmail: async () => "html",
   renderVerificationEmail: async () => "html",
 }));
 
@@ -100,6 +102,16 @@ const senders: [string, () => Promise<unknown>][] = [
         organizationName: "Acme",
         archivedSurveys: [],
         responseDeletions: [{ name: "Survey", url: link, count: "3", deleteDate: "Dec 7, 2026" }],
+      }),
+  ],
+  [
+    "data_retention_notice",
+    () =>
+      sendMemberRetentionNoticeEmail({
+        email,
+        locale,
+        organizationName: "Acme",
+        deactivateDate: "Dec 7, 2026",
       }),
   ],
   ["response_notification", () => sendResponseFinishedEmail(email, locale, "workspace", survey, response, 1)],

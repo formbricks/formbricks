@@ -1,12 +1,16 @@
 import "server-only";
 import type { JobHandler, TDataRetentionSweepJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
+import { createMembersSweeper } from "./members-sweeper";
 import { createResponsesSweeper } from "./responses-sweeper";
+import { createSurveysSweeper } from "./surveys-sweeper";
 import { type TRetentionSweepers, runDataRetentionSweep } from "./sweep";
 
 /** Each policy's sweeper. A policy without one is left alone. */
 export const RETENTION_SWEEPERS: TRetentionSweepers = {
   responses: createResponsesSweeper(),
+  surveys: createSurveysSweeper(),
+  members: createMembersSweeper(),
 };
 
 /**

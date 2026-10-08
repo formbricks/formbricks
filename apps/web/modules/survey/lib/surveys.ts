@@ -126,34 +126,38 @@ export const deleteSurvey = async (surveyId: string, options?: { purgeCutoff?: D
  *   scheduled launch date that restore is supposed to hand back.
  * - If the survey was inProgress, moves it to paused so response/display intake stops immediately.
  * - Idempotent: archiving an already-archived survey is a no-op.
+ * - `options.tx` runs it inside the caller's transaction, for a caller that has locked and re-checked the
+ *   survey there first (the data retention sweep).
  */
-export const archiveSurvey = async (surveyId: string) => {
+export const archiveSurvey = async (surveyId: string, options?: { tx?: Prisma.TransactionClient }) => {
   validateInputs([surveyId, ZId]);
 
-  try {
-    return await prisma.$transaction(async (tx) => {
-      const survey = await tx.survey.findUnique({
-        where: { id: surveyId },
-        select: { id: true, status: true, archivedAt: true },
-      });
-
-      if (!survey) {
-        throw new ResourceNotFoundError("Survey", surveyId);
-      }
-
-      if (survey.archivedAt) {
-        return survey;
-      }
-
-      return await tx.survey.update({
-        where: { id: surveyId },
-        data: {
-          archivedAt: new Date(),
-          ...(survey.status === "inProgress" ? { status: "paused" } : {}),
-        },
-        select: { id: true, status: true, archivedAt: true },
-      });
+  const archive = async (tx: Prisma.TransactionClient) => {
+    const survey = await tx.survey.findUnique({
+      where: { id: surveyId },
+      select: { id: true, status: true, archivedAt: true },
     });
+
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", surveyId);
+    }
+
+    if (survey.archivedAt) {
+      return survey;
+    }
+
+    return await tx.survey.update({
+      where: { id: surveyId },
+      data: {
+        archivedAt: new Date(),
+        ...(survey.status === "inProgress" ? { status: "paused" } : {}),
+      },
+      select: { id: true, status: true, archivedAt: true },
+    });
+  };
+
+  try {
+    return options?.tx ? await archive(options.tx) : await prisma.$transaction(archive);
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
       throw error;

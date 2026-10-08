@@ -37,6 +37,12 @@ export const exampleData = {
     securitySettingsLink: "https://app.formbricks.com/account/settings/profile",
   },
 
+  memberRetentionNoticeEmail: {
+    organizationName: "Acme",
+    deactivateDate: "Dec 7, 2026",
+    loginLink: "https://app.formbricks.com/auth/login",
+  },
+
   surveyRetentionNoticeEmail: {
     organizationName: "Acme",
     responseDeletions: [

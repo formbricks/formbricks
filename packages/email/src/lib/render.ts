@@ -9,6 +9,7 @@ import { VerificationEmail } from "../../emails/auth/verification-email";
 import { EmailCustomizationPreviewEmail } from "../../emails/general/email-customization-preview-email";
 import { InviteAcceptedEmail } from "../../emails/invite/invite-accepted-email";
 import { InviteEmail } from "../../emails/invite/invite-email";
+import { MemberRetentionNoticeEmail } from "../../emails/retention/member-retention-notice-email";
 import {
   SurveyRetentionNoticeEmail,
   type TRetentionNoticeArchivedSurvey,
@@ -101,6 +102,17 @@ export async function renderSurveyRetentionNoticeEmail(
   } & TEmailTemplateLegalProps
 ): Promise<string> {
   return await render(SurveyRetentionNoticeEmail(props));
+}
+
+export async function renderMemberRetentionNoticeEmail(
+  props: {
+    organizationName: string;
+    deactivateDate: string;
+    loginLink: string;
+    t: TFunction;
+  } & TEmailTemplateLegalProps
+): Promise<string> {
+  return await render(MemberRetentionNoticeEmail(props));
 }
 
 export async function renderInviteEmail(

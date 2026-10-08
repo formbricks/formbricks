@@ -642,6 +642,11 @@ checksums:
     emails/invite_email_heading: d9f9b18e4de575980de3cde3e4ed08bf
     emails/invite_email_text: 1499fa615105121a133440929b039a64
     emails/invite_member_email_subject: 7f670bc261a9505953ec04ea7aa53ed1
+    emails/member_retention_notice_email_heading: bd6f3ff38c88a5f79066ab0d9a99cffe
+    emails/member_retention_notice_email_keep: 3b12c1e13e80253cb757f700330a566a
+    emails/member_retention_notice_email_sign_in: cb8757c7450e17de1e226e82fb0fa4a2
+    emails/member_retention_notice_email_subject: b268c9bfff7e22c2e45a7b626e4f09c5
+    emails/member_retention_notice_email_text: 3171bad6925a39069f7d3fe2f9378a45
     emails/new_email_verification_text: b7f00f47d04afa9e872176d9933f2d93
     emails/number_variable: d4f2bbb1965c791cf9921a5112914f3f
     emails/password_changed_email_heading: 601f68fc8bef9c5ecf79f4ec4de5ad06
@@ -2956,7 +2961,7 @@ checksums:
     workspace/settings/data_retention/survey_required: 290657a246e312fdc96e3a895794d26a
     workspace/settings/data_retention/surveys_active_help: 94082032b817e6e0453176d8b145372d
     workspace/settings/data_retention/surveys_conditions_heading: dd21d6a8ec1abc226f0b79db7a4e1f0f
-    workspace/settings/data_retention/surveys_notice_help: a041e37b2a426891eee648ae8e7bf90a
+    workspace/settings/data_retention/surveys_notice_help: 4e64b869772ec672af0f7943ae519262
     workspace/settings/data_retention/surveys_period_help: 7689571fb43bb25ff1bdf844a668d13f
     workspace/settings/data_retention/surveys_policy_description: 2a4ddf9a005a0a5e9575176c6e3c0be8
     workspace/settings/data_retention/surveys_policy_title: 4964987825ba25c5bd3bcd70639d4aa7
