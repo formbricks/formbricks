@@ -141,6 +141,13 @@ interface TFlowFrame {
   gate: { rule: TQsfLogicRule; attached: boolean } | null;
 }
 
+/** A finished level of the flow: a rule that gated no block goes on the page before it. */
+function closeFlowFrame(frame: TFlowFrame, result: TFlowResult): void {
+  if (frame.gate && !frame.gate.attached) {
+    result.trailingGates.push({ afterVisit: result.visits.length - 1, rule: frame.gate.rule });
+  }
+}
+
 /**
  * A block the flow shows, the first time it does. It takes every rule of the levels it sits in that
  * has gated no block yet.
@@ -196,6 +203,20 @@ const readCompared = (expression: TRecord): Pick<TQsfLogicCondition, "value"> =>
   const right = str(own(expression, "RightOperand"));
   return right === null ? {} : { value: bounded(right, MAX_LOGIC_VALUE_CHARS) };
 };
+
+/** An element the file holds at most once, read; a second one is refused. */
+const readOnce = <T>(current: T | null, index: number, what: string, read: () => T): T => {
+  if (current !== null) throw inputError(`qsf.SurveyElements.${index}`, `The file has two ${what}`);
+  return read();
+};
+
+/** The survey flow's top-level elements. */
+const flowNodes = (payload: unknown): unknown[] => {
+  const nodes = isRecord(payload) ? own(payload, "Flow") : null;
+  return Array.isArray(nodes) ? nodes : [];
+};
+
+const surveyOptions = (payload: unknown): TRecord => (isRecord(payload) ? payload : {});
 
 /** A block list's entries: the array itself, or an older export's object keyed by index. */
 const blockEntries = (payload: unknown): unknown[] => {
@@ -334,34 +355,27 @@ class QsfReader {
   }
 
   private readElements(elements: unknown[]): TReadElements {
-    const read: TReadElements = { questions: new Map(), blocks: new Map(), flow: null, options: null };
-    let hasBlocks = false;
+    const questions = new Map<string, TRawQuestion>();
+    let blocks: Map<string, TRawBlock> | null = null;
+    let flow: TReadElements["flow"] = null;
+    let options: TRecord | null = null;
 
     elements.forEach((element, index) => {
       if (!isRecord(element)) return;
       const kind = own(element, "Element");
       const payload = own(element, "Payload");
 
-      if (kind === "SQ") {
-        this.readQuestionElement(element, index, read.questions);
-      } else if (kind === "BL") {
-        if (hasBlocks) throw inputError(`qsf.SurveyElements.${index}`, "The file has two block lists");
-        hasBlocks = true;
-        read.blocks = this.readBlocks(index, payload);
-      } else if (kind === "FL") {
-        if (read.flow) throw inputError(`qsf.SurveyElements.${index}`, "The file has two survey flows");
-        const nodes = isRecord(payload) ? own(payload, "Flow") : null;
-        read.flow = { index, nodes: Array.isArray(nodes) ? nodes : [] };
-      } else if (kind === "SO") {
-        if (read.options) {
-          throw inputError(`qsf.SurveyElements.${index}`, "The file has two sets of survey options");
-        }
-        read.options = isRecord(payload) ? payload : {};
-      }
+      if (kind === "SQ") this.readQuestionElement(element, index, questions);
+      else if (kind === "BL")
+        blocks = readOnce(blocks, index, "block lists", () => this.readBlocks(index, payload));
+      else if (kind === "FL")
+        flow = readOnce(flow, index, "survey flows", () => ({ index, nodes: flowNodes(payload) }));
+      else if (kind === "SO")
+        options = readOnce(options, index, "sets of survey options", () => surveyOptions(payload));
       // QC, STAT, RS, SCO, PROJ, Notes and anything newer carry nothing the import uses.
     });
 
-    return read;
+    return { questions, blocks: blocks ?? new Map(), flow, options };
   }
 
   /** One `SQ` element: kept under its question id when the id is one, reported otherwise. */
@@ -457,13 +471,10 @@ class QsfReader {
     for (let frame = stack.at(-1); frame; frame = stack.at(-1)) {
       if (frame.next >= frame.nodes.length) {
         stack.pop();
-        if (frame.gate && !frame.gate.attached) {
-          result.trailingGates.push({ afterVisit: result.visits.length - 1, rule: frame.gate.rule });
-        }
+        closeFlowFrame(frame, result);
         continue;
       }
 
-      const node = frame.nodes[frame.next++];
       nodeCount += 1;
       if (nodeCount > QSF_MAX_FLOW_NODES) {
         throw inputError(
@@ -471,20 +482,34 @@ class QsfReader {
           `The survey flow has more than ${QSF_MAX_FLOW_NODES} elements`
         );
       }
-      if (!isRecord(node)) continue;
-
-      const type = own(node, "Type");
-      if (type === "Block" || type === "Standard") {
-        visitBlock(str(own(node, "ID")), stack, visited, result);
-      } else if (type === "EmbeddedData") {
-        this.readEmbeddedDataNode(node, result);
-      } else {
-        const nested = this.openNestedFlow(node, type, frame, flow.index);
-        if (nested) stack.push(nested);
-      }
+      this.readFlowNode(frame.nodes[frame.next++], { frame, stack, visited, result, flowIndex: flow.index });
     }
 
     return result;
+  }
+
+  /** One flow element: a block shown, embedded data set, or a level of the flow opened. */
+  private readFlowNode(
+    node: unknown,
+    walk: {
+      /** The level the element is in. */
+      frame: TFlowFrame;
+      stack: TFlowFrame[];
+      visited: Set<string>;
+      result: TFlowResult;
+      flowIndex: number;
+    }
+  ): void {
+    if (!isRecord(node)) return;
+    const type = own(node, "Type");
+    if (type === "Block" || type === "Standard") {
+      visitBlock(str(own(node, "ID")), walk.stack, walk.visited, walk.result);
+    } else if (type === "EmbeddedData") {
+      this.readEmbeddedDataNode(node, walk.result);
+    } else {
+      const nested = this.openNestedFlow(node, type, walk.frame, walk.flowIndex);
+      if (nested) walk.stack.push(nested);
+    }
   }
 
   /** The names an `EmbeddedData` flow element sets, counted against the limit before they are read. */
