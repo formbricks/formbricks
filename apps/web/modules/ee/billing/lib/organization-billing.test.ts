@@ -3623,6 +3623,18 @@ describe("organization-billing", () => {
       mockSubscription();
     });
 
+    test("a failed tax lookup leaves the EUR subscription active", async () => {
+      mocks.customersRetrieve.mockImplementation(async (_id: string, params?: { expand?: string[] }) => {
+        if (params?.expand?.includes("tax")) throw new Error("Stripe unavailable");
+        return legacyCustomer();
+      });
+
+      await expect(switchTo("pro")).rejects.toThrow("Stripe unavailable");
+
+      expect(mocks.subscriptionsCancel).not.toHaveBeenCalled();
+      expect(mocks.subscriptionsCreate).not.toHaveBeenCalled();
+    });
+
     test("an upgrade to Pro cancels the EUR subscription and creates a USD one instead of swapping its items", async () => {
       const result = await switchTo("pro");
 
@@ -4329,6 +4341,23 @@ describe("organization-billing", () => {
       for (const phase of scheduleParams.phases) {
         expect(phase.automatic_tax).toEqual({ enabled: true });
       }
+    });
+
+    test("a failed tax lookup leaves a scheduled change's subscription untouched", async () => {
+      mockActiveSubscription("scale", { cancel_at_period_end: true });
+      mocks.customersRetrieve.mockRejectedValue(new Error("Stripe unavailable"));
+
+      await expect(
+        switchOrganizationToCloudPlan({
+          organizationId: "org_1",
+          customerId: "cus_1",
+          targetPlan: "pro",
+          targetInterval: "monthly",
+        })
+      ).rejects.toThrow("Stripe unavailable");
+
+      expect(mocks.subscriptionsUpdate).not.toHaveBeenCalled();
+      expect(mocks.subscriptionSchedulesCreate).not.toHaveBeenCalled();
     });
 
     test("the upgrade preview includes the tax the upgrade will charge", async () => {

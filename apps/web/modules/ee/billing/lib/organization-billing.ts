@@ -1027,6 +1027,11 @@ const scheduleSubscriptionPlanChange = async (
     throw new Error("Stripe is not configured");
   }
 
+  // Looked up before anything changes, so a failed lookup leaves the subscription as it was.
+  const automaticTax = subscription.automatic_tax?.enabled
+    ? { enabled: true as const }
+    : await getAutomaticTaxForCustomer(customerId);
+
   const hadCancelAtPeriodEnd = subscription.cancel_at_period_end;
   if (hadCancelAtPeriodEnd) {
     await stripeClient.subscriptions.update(subscription.id, {
@@ -1041,9 +1046,6 @@ const scheduleSubscriptionPlanChange = async (
   );
   const { schedule, createdSchedule } = await getOrCreatePlanChangeSchedule(subscription);
   const currentPhase = getCurrentSchedulePhase(schedule);
-  const automaticTax = subscription.automatic_tax?.enabled
-    ? { enabled: true as const }
-    : await getAutomaticTaxForCustomer(customerId);
 
   let updatedSchedule: Stripe.SubscriptionSchedule;
 
@@ -1370,6 +1372,8 @@ const replaceSubscriptionInCatalogCurrency = async (input: {
   const isHobbyTarget = targetPlan === "hobby";
   const targetItems = await getCatalogItemsForPlan(targetPlan, targetInterval);
   const card = isHobbyTarget ? null : await resolveReplacementCard(subscription, customerId);
+  // Before the cancel: a failed lookup must not leave the org without its subscription.
+  const automaticTax = isHobbyTarget ? null : await getAutomaticTaxForCustomer(customerId);
   await assertNoOtherCurrencyBillingObjects(subscription, customerId);
 
   // A schedule would keep driving the canceled subscription's phases; release it while it still can be.
@@ -1386,8 +1390,6 @@ const replaceSubscriptionInCatalogCurrency = async (input: {
     await reconcileCloudStripeSubscriptionsForOrganization(organizationId);
     return { clientSecret: null, requiresAction: false };
   }
-
-  const automaticTax = await getAutomaticTaxForCustomer(customerId);
 
   let created: Stripe.Subscription;
   try {
