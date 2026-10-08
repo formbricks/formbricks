@@ -112,7 +112,7 @@
         "offline_access": "Zugriff mit Refresh-Tokens beibehalten",
         "openid": "Dich mit OpenID Connect identifizieren",
         "profile": "Dein Profil einsehen",
-        "responses_read": "Umfrageantworten lesen",
+        "responses_read": "Umfrageantworten lesen, einschließlich der Antworten der Teilnehmer",
         "responses_write": "Umfrageantworten erstellen, aktualisieren und löschen",
         "surveys_read": "Umfragen lesen",
         "surveys_write": "Umfragen erstellen, aktualisieren und löschen",

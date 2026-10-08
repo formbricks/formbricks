@@ -443,7 +443,7 @@ describe("authenticateMcpRequest", () => {
       // added, the baseline auth gate has been widened and MCP is accepting a token that grants no
       // resource access.
       expect(result.response.headers.get("WWW-Authenticate")).toContain(
-        'scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"'
+        'scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write responses:read responses:write"'
       );
     }
     expect(applyRateLimit).not.toHaveBeenCalled();
@@ -474,7 +474,8 @@ describe("authenticateMcpRequest", () => {
 
   // Any single resource scope is enough to authenticate: a feedbackRecords-only grant is a legitimate
   // MCP client and must not be turned away for lacking surveys:read (per-tool guards still apply).
-  test.each([["feedbackRecords:read"], ["surveys:write"]])(
+  // `responses:read` joined that list with ENG-3470; before it, a responses-only token was refused here.
+  test.each([["feedbackRecords:read"], ["surveys:write"], ["responses:read"]])(
     "authenticates an OAuth token scoped only to %s",
     async (scope) => {
       verifyBearerTokenMock.mockResolvedValue({ aud: MCP_AUDIENCE, sub: "user_1", azp: "client_1", scope });

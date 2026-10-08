@@ -112,7 +112,7 @@
         "offline_access": "Toegang behouden met vernieuwingstokens",
         "openid": "Je identificeren met OpenID Connect",
         "profile": "Je profiel bekijken",
-        "responses_read": "Enquêteresultaten lezen",
+        "responses_read": "Enquêterespons lezen, inclusief antwoorden van respondenten",
         "responses_write": "Enquêteresultaten aanmaken, bijwerken en verwijderen",
         "surveys_read": "Enquêtes lezen",
         "surveys_write": "Enquêtes aanmaken, bewerken en verwijderen",

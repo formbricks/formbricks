@@ -35,6 +35,8 @@ export default defineConfig({
   test: {
     environment: "node",
     globals: true,
+    // Let wire tests replace only authentication while exercising the real Vertex serializer.
+    server: { deps: { inline: ["@ai-sdk/google-vertex"] } },
     coverage: {
       reporter: ["text", "json", "html", "lcov"],
     },

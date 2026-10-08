@@ -112,7 +112,7 @@
         "offline_access": "Menține accesul cu token-uri de reîmprospătare",
         "openid": "Te identifică cu OpenID Connect",
         "profile": "Vizualizează profilul tău",
-        "responses_read": "Citește răspunsurile la sondaj",
+        "responses_read": "Citește răspunsurile la sondaj, inclusiv răspunsurile respondenților",
         "responses_write": "Creează, actualizează și șterge răspunsurile la sondaj",
         "surveys_read": "Citește sondajele",
         "surveys_write": "Creează, actualizează și șterge sondaje",

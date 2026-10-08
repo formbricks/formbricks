@@ -112,7 +112,7 @@
         "offline_access": "Behåll åtkomst med refresh tokens",
         "openid": "Identifiera dig med OpenID Connect",
         "profile": "Se din profil",
-        "responses_read": "Läs enkätsvar",
+        "responses_read": "Läs enkätsvar, inklusive respondenternas svar",
         "responses_write": "Skapa, uppdatera och ta bort enkätsvar",
         "surveys_read": "Läs undersökningar",
         "surveys_write": "Skapa, uppdatera och ta bort undersökningar",

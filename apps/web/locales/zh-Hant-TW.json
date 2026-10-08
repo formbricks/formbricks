@@ -112,7 +112,7 @@
         "offline_access": "透過刷新權杖保持存取權限",
         "openid": "透過 OpenID Connect 識別你的身分",
         "profile": "查看你的個人資料",
-        "responses_read": "讀取問卷回覆",
+        "responses_read": "讀取問卷回覆，包括受訪者的答案",
         "responses_write": "建立、更新和刪除問卷回覆",
         "surveys_read": "讀取問卷調查",
         "surveys_write": "建立、更新和刪除問卷調查",

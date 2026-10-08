@@ -112,7 +112,7 @@
         "offline_access": "Mantener acceso con tokens de actualización",
         "openid": "Identificarte con OpenID Connect",
         "profile": "Ver tu perfil",
-        "responses_read": "Leer respuestas de encuestas",
+        "responses_read": "Leer respuestas de encuestas, incluidas las respuestas de los participantes",
         "responses_write": "Crear, actualizar y eliminar respuestas de encuestas",
         "surveys_read": "Leer encuestas",
         "surveys_write": "Crear, actualizar y eliminar encuestas",

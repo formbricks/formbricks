@@ -112,7 +112,7 @@
         "offline_access": "Conserver l'accès avec des jetons de rafraîchissement",
         "openid": "T'identifier avec OpenID Connect",
         "profile": "Voir ton profil",
-        "responses_read": "Lire les réponses aux enquêtes",
+        "responses_read": "Lire les réponses aux sondages, y compris les réponses des participants",
         "responses_write": "Créer, modifier et supprimer les réponses aux enquêtes",
         "surveys_read": "Lire les enquêtes",
         "surveys_write": "Créer, modifier et supprimer des enquêtes",

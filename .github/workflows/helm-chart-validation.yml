@@ -73,6 +73,7 @@ jobs:
           bash charts/formbricks/tests/envoy-gateway.sh
           bash charts/formbricks/tests/pdb-selectors.sh
           bash charts/formbricks/tests/taxonomy-llm-base-url.sh
+          bash charts/formbricks/tests/taxonomy-thinking.sh
           bash charts/formbricks/tests/web-security-context.sh
           bash charts/formbricks/tests/migration-security-context.sh
 

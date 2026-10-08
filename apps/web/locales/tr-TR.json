@@ -112,7 +112,7 @@
         "offline_access": "Yenileme token'ları ile erişimi sürdür",
         "openid": "OpenID Connect ile kimliğini doğrula",
         "profile": "Profilini görüntüle",
-        "responses_read": "Anket yanıtlarını oku",
+        "responses_read": "Yanıtlayanların cevapları dahil olmak üzere anket yanıtlarını oku",
         "responses_write": "Anket yanıtlarını oluştur, güncelle ve sil",
         "surveys_read": "Anketleri oku",
         "surveys_write": "Anketleri oluştur, güncelle ve sil",
