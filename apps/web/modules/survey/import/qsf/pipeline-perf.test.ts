@@ -356,7 +356,10 @@ describe("a draft too large for the create's request body", () => {
       );
       expect(cut.length).toBeGreaterThan(0);
       expect(result.report.summary.questions).toBe(200 - cut.length);
-      expect(cut[0].questionTag).toBe("Q200");
+      // Cut before planning, the trailing run of questions, in flow order.
+      expect(cut.map((issue) => issue.questionTag)).toEqual(
+        Array.from({ length: cut.length }, (_, index) => `Q${200 - cut.length + index + 1}`)
+      );
       expect(result.payload.blocks.flatMap((block) => block.elements).at(-1)?.id).toBe(
         `Q${200 - cut.length}`
       );

@@ -26,7 +26,8 @@ export type TQsfImportStage = "reading" | "ai" | "assembling";
  * - `language_skipped` — a Qualtrics language code with no Formbricks equivalent; its translations are
  *   left out (`params.code`; `params.fallback` when it was the survey's default language). With
  *   `params.cause: "draft_too_large"`, a language the import cut because the draft was too large to
- *   create
+ *   create, with `params.order: "last_declared_first"`: languages go in reverse of the order the
+ *   file declares them
  * - `translation_fallback` — texts missing in a language, filled with the default language's text,
  *   one line per language (`params.language`, `params.count`)
  * - `piped_text_removed` — piped text with no Formbricks equivalent, removed (`params.count`)

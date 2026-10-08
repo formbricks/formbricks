@@ -1,10 +1,20 @@
 import { createId } from "@paralleldrive/cuid2";
 import { describe, expect, test } from "vitest";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
+import { refsInPrompt } from "./__fixtures__/recorded-plans";
+import { type TQsfPlanGenerate, planQsfImport } from "./ai-plan";
 import type { TQsfAssembly, TQsfDraftElement } from "./assemble";
+import { assembleQsfDraft } from "./assemble";
 import { checkQsfDraft } from "./final-gate";
-import { QSF_DRAFT_MAX_BYTES, fitQsfDraftToCreateLimit, measureQsfDraftBytes } from "./fit-draft";
+import {
+  QSF_DRAFT_MAX_BYTES,
+  fitQsfDraftToCreateLimit,
+  fitQsfSurveyToCreateLimit,
+  measureQsfDraftBytes,
+} from "./fit-draft";
 import type { TQsfIssue, TQsfQuestion, TQsfSurvey } from "./qsf-model";
+import { readQsf } from "./read-qsf";
+import { sanitizeQsfTexts } from "./sanitize-text";
 
 /** An assembly of `blocks` × `perBlock` open text questions, each headline `textChars` long in every language. */
 const buildAssembly = (shape: {
@@ -101,8 +111,16 @@ describe("fitQsfDraftToCreateLimit", () => {
     const { dropped } = fitQsfDraftToCreateLimit(assembly, survey, maxBytes);
 
     expect(dropped).toEqual([
-      { code: "language_skipped", severity: "warning", params: { code: "it-IT", cause: "draft_too_large" } },
-      { code: "language_skipped", severity: "warning", params: { code: "es-ES", cause: "draft_too_large" } },
+      {
+        code: "language_skipped",
+        severity: "warning",
+        params: { code: "it-IT", cause: "draft_too_large", order: "last_declared_first" },
+      },
+      {
+        code: "language_skipped",
+        severity: "warning",
+        params: { code: "es-ES", cause: "draft_too_large", order: "last_declared_first" },
+      },
     ]);
     expect(assembly.document.languages.map((language) => language.code)).toEqual(["en-US", "de-DE", "fr-FR"]);
     const element = assembly.document.blocks[0].elements[0];
@@ -220,5 +238,155 @@ describe("fitQsfDraftToCreateLimit", () => {
       ])
     );
     expect(checkQsfDraft(document)).toEqual([]);
+  });
+});
+
+describe("fitQsfSurveyToCreateLimit", () => {
+  /** Questions of `options` options on pages of 5, every text in `languages` too, `textChars` long. */
+  const buildQsf = (shape: {
+    questions: number;
+    options: number;
+    languages: string[];
+    textChars: number;
+  }) => {
+    const pad = "y".repeat(shape.textChars);
+    const refs = Array.from({ length: shape.questions }, (_, q) => `QID${q + 1}`);
+    const elements = refs.map((ref, q) => {
+      const choices = Object.fromEntries(
+        Array.from({ length: shape.options }, (_, i) => [
+          String(i + 1),
+          { Display: `Option ${i + 1} ${pad}` },
+        ])
+      );
+      return {
+        Element: "SQ",
+        PrimaryAttribute: ref,
+        Payload: {
+          QuestionText: `<p>Question ${q} & ${pad}</p>`,
+          DataExportTag: `Q${q + 1}`,
+          QuestionType: "MC",
+          Selector: "SAVR",
+          Choices: choices,
+          Language: Object.fromEntries(
+            shape.languages.map((code) => [code, { QuestionText: `${code} "${q}" ${pad}`, Choices: choices }])
+          ),
+        },
+      };
+    });
+    const blocks = Array.from({ length: Math.ceil(shape.questions / 5) }, (_, b) => ({
+      ID: `BL_${b}`,
+      Description: `Block ${b}`,
+      BlockElements: refs.slice(b * 5, b * 5 + 5).map((ref) => ({ Type: "Question", QuestionID: ref })),
+    }));
+    return {
+      SurveyEntry: { SurveyName: "Fit", SurveyLanguage: "EN" },
+      SurveyElements: [
+        ...elements,
+        { Element: "BL", Payload: blocks },
+        { Element: "FL", Payload: { Flow: blocks.map((block) => ({ Type: "Block", ID: block.ID })) } },
+      ],
+    };
+  };
+
+  const asMultipleChoice: TQsfPlanGenerate = async (request) => ({
+    object: {
+      questions: refsInPrompt(request.prompt).map((ref) => ({
+        ref,
+        type: "multipleChoiceSingle",
+        required: false,
+        choicesFrom: "choices",
+        rowsFrom: null,
+        columnsFrom: null,
+        otherChoiceKey: null,
+        noneChoiceKey: null,
+        labelKey: null,
+        excludedKeys: [],
+        contactFields: [],
+        inputType: null,
+        scale: null,
+        range: null,
+        format: null,
+        logicNotes: [],
+      })),
+      skipped: [],
+      pages: [],
+    },
+  });
+
+  /** Read, sanitize and fit the survey, then plan and assemble what is left. */
+  const fitAndAssemble = async (qsf: Record<string, unknown>, maxBytes: number) => {
+    const survey = readQsf(qsf);
+    const texts = await sanitizeQsfTexts(survey, new AbortController().signal);
+    const fit = fitQsfSurveyToCreateLimit(survey, texts, maxBytes);
+    const { plan } = await planQsfImport({
+      survey,
+      texts,
+      generate: asMultipleChoice,
+      signal: new AbortController().signal,
+      deadline: performance.now() + 120_000,
+    });
+    const assembly = assembleQsfDraft({
+      survey,
+      texts,
+      plan,
+      workspaceId: "clxx1234567890123456789012",
+      allowExternalUrls: true,
+    });
+    return { survey, fit, assembly };
+  };
+
+  test("leaves a survey that fits as it is", async () => {
+    const { fit, survey, assembly } = await fitAndAssemble(
+      buildQsf({ questions: 10, options: 4, languages: ["FR", "DE"], textChars: 20 }),
+      QSF_DRAFT_MAX_BYTES
+    );
+
+    expect(fit.issues).toEqual([]);
+    expect(survey.languages).toEqual(["fr-FR", "de-DE"]);
+    expect(assembly.document.blocks.flatMap((block) => block.elements)).toHaveLength(10);
+  });
+
+  test("drops the languages the file declares last first, and what is left fits once assembled", async () => {
+    const qsf = buildQsf({ questions: 20, options: 6, languages: ["FR", "DE", "AR"], textChars: 200 });
+    const full = await fitAndAssemble(qsf, Number.MAX_SAFE_INTEGER);
+    // Room for the default language and one more, with a little to spare: each is about a quarter.
+    const maxBytes = Math.floor(measureQsfDraftBytes(full.assembly.document) * 0.6);
+
+    const { fit, survey, assembly } = await fitAndAssemble(qsf, maxBytes);
+
+    // Declared French, German, Arabic: Arabic goes first, then German.
+    expect(fit.issues).toEqual([
+      {
+        code: "language_skipped",
+        severity: "warning",
+        params: { code: "ar-EG", cause: "draft_too_large", order: "last_declared_first" },
+      },
+      {
+        code: "language_skipped",
+        severity: "warning",
+        params: { code: "de-DE", cause: "draft_too_large", order: "last_declared_first" },
+      },
+    ]);
+    expect(survey.languages).toEqual(["fr-FR"]);
+    expect(measureQsfDraftBytes(assembly.document)).toBeLessThanOrEqual(maxBytes);
+  });
+
+  test("cuts trailing questions and the pages they empty before planning, and what is left fits", async () => {
+    const qsf = buildQsf({ questions: 30, options: 4, languages: [], textChars: 1_000 });
+    const full = await fitAndAssemble(qsf, Number.MAX_SAFE_INTEGER);
+    const maxBytes = Math.floor(measureQsfDraftBytes(full.assembly.document) * 0.4);
+
+    const { fit, survey, assembly } = await fitAndAssemble(qsf, maxBytes);
+
+    const cut = fit.issues.map((issue) => issue.questionRef);
+    expect(cut.length).toBeGreaterThan(0);
+    // The trailing run, in flow order, each with its id.
+    expect(cut).toEqual(Array.from({ length: cut.length }, (_, i) => `QID${30 - cut.length + i + 1}`));
+    expect(fit.issues.every((issue) => issue.params?.cause === "draft_too_large")).toBe(true);
+    expect([...fit.cutRefs]).toEqual(cut);
+    expect(survey.pages.every((page) => page.questionRefs.length > 0)).toBe(true);
+    expect(survey.pages.flatMap((page) => page.questionRefs)).toHaveLength(30 - cut.length);
+    expect(measureQsfDraftBytes(assembly.document)).toBeLessThanOrEqual(maxBytes);
+    expect(checkQsfDraft(assembly.document)).toEqual([]);
   });
 });

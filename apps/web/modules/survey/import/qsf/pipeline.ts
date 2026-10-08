@@ -9,7 +9,7 @@ import { type TQsfPlanGenerate, type TQsfPlanUsage, planQsfImport } from "./ai-p
 import { type TQsfAssembly, type TQsfDraftDocument, assembleQsfDraft } from "./assemble";
 import { QsfImportFailedError, QsfImportInputError } from "./errors";
 import { checkQsfDraft, elementsAtFault } from "./final-gate";
-import { fitQsfDraftToCreateLimit } from "./fit-draft";
+import { fitQsfDraftToCreateLimit, fitQsfSurveyToCreateLimit } from "./fit-draft";
 import { QSF_PROMPT_BUDGET_CHARS, estimateQsfMinimumPromptChars } from "./prompt";
 import type { TQsfIssue, TQsfSurvey } from "./qsf-model";
 import { readQsf } from "./read-qsf";
@@ -160,6 +160,13 @@ export async function runQsfImport(params: TRunQsfImportParams): Promise<TQsfImp
   signal.throwIfAborted();
   const texts = await sanitizeQsfTexts(survey, signal);
 
+  // Cut what cannot fit the create's request body before any of it is planned or assembled: the
+  // work after this is bounded by about one create body, and the AI is not paid for what goes.
+  signal.throwIfAborted();
+  const surveyFit = fitQsfSurveyToCreateLimit(survey, texts);
+  const keepForSurvey = (issue: TQsfIssue) =>
+    issue.questionRef === undefined || !surveyFit.cutRefs.has(issue.questionRef);
+
   signal.throwIfAborted();
   onProgress("ai");
   const planned = await planQsfImport({
@@ -194,7 +201,14 @@ export async function runQsfImport(params: TRunQsfImportParams): Promise<TQsfImp
     if (checkQsfDraft(assembly.document).length > 0) throw new QsfImportFailedError("draft_invalid");
   }
 
-  const issues = [...survey.issues, ...texts.issues, ...planned.issues, ...dropped, ...assembly.issues];
+  const issues = [
+    ...survey.issues.filter(keepForSurvey),
+    ...texts.issues.filter(keepForSurvey),
+    ...surveyFit.issues,
+    ...planned.issues,
+    ...dropped,
+    ...assembly.issues,
+  ];
   return {
     payload: assembly.document,
     report: buildQsfImportReport({
