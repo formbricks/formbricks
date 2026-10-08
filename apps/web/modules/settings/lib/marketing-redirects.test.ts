@@ -1,33 +1,30 @@
 import { describe, expect, test } from "vitest";
 import {
+  MARKETING_SECTIONS,
+  type TMarketingDestination,
   type TMarketingSectionSlug,
   appendSearch,
-  getLoginRedirectUrl,
   getMarketingRedirectTarget,
   getSectionDestination,
   getSettingsDestination,
+  isMarketingLinkPath,
 } from "./marketing-redirects";
-import { getOrganizationBillingPath } from "./routes";
 
 const ORG = "org-1";
-const WEBAPP_URL = "https://app.formbricks.com";
+const WS = "ws-1";
+
+const build = (destination: TMarketingDestination) =>
+  destination.buildPath(destination.scope === "workspace" ? WS : ORG);
 
 describe("getSettingsDestination", () => {
-  const WS = "ws-1";
-  const resolve = (segments: string[] | undefined, isFormbricksCloud = true) => {
-    const destination = getSettingsDestination(segments, isFormbricksCloud);
-    return destination.buildPath(destination.scope === "workspace" ? WS : ORG);
-  };
-
   test.each<[string[] | undefined, string]>([
     [undefined, "/organizations/org-1/settings/general"],
     [[], "/organizations/org-1/settings/general"],
     [["teams"], "/organizations/org-1/settings/teams"],
     [["api-keys"], "/organizations/org-1/settings/api-keys"],
-    [["usage"], "/organizations/org-1/settings/usage"],
-    [["domain"], "/organizations/org-1/settings/domain"],
     [["feedback-directories"], "/organizations/org-1/settings/feedback-directories"],
     [["billing"], "/organizations/org-1/settings/billing"],
+    [["enterprise"], "/organizations/org-1/settings/billing"],
     [["profile"], "/account/settings/profile"],
     [["notifications"], "/account/settings/notifications"],
     [["authorized-apps"], "/account/settings/authorized-apps"],
@@ -40,6 +37,9 @@ describe("getSettingsDestination", () => {
     [["integrations"], "/workspaces/ws-1/settings/workspace/integrations"],
     [["integrations", "slack"], "/workspaces/ws-1/settings/workspace/integrations/slack"],
     [["integrations", "zapier"], "/workspaces/ws-1/settings/workspace/integrations"],
+    // Self-hosted-only pages 404 on Cloud, so they open General there.
+    [["usage"], "/organizations/org-1/settings/general"],
+    [["domain"], "/organizations/org-1/settings/general"],
     // Case and stray whitespace from marketing copy.
     [["Teams"], "/organizations/org-1/settings/teams"],
     [["Look "], "/workspaces/ws-1/settings/workspace/look"],
@@ -50,104 +50,21 @@ describe("getSettingsDestination", () => {
     [["a/b"], "/organizations/org-1/settings/general"],
     [["constructor"], "/organizations/org-1/settings/general"],
     [["profile", "deeper"], "/account/settings/profile"],
-  ])("/settings %j -> %s", (segments, expected) => {
-    expect(resolve(segments)).toBe(expected);
+  ])("Cloud: /settings %j -> %s", (segments, expected) => {
+    expect(build(getSettingsDestination(segments, true))).toBe(expected);
   });
 
-  test("workspace settings pages need a workspace, the others only an organization", () => {
-    expect(getSettingsDestination(["look"], true).scope).toBe("workspace");
-    expect(getSettingsDestination(["teams"], true).scope).toBe("organization");
-    expect(getSettingsDestination(["profile"], true).scope).toBe("organization");
-  });
-
-  test("billing and enterprise open billing on Cloud and enterprise on self-hosted", () => {
-    expect(resolve(["billing"], true)).toBe(getOrganizationBillingPath(ORG, true));
-    expect(resolve(["enterprise"], true)).toBe(getOrganizationBillingPath(ORG, true));
-    expect(resolve(["billing"], false)).toBe("/organizations/org-1/settings/enterprise");
-    expect(resolve(["enterprise"], false)).toBe("/organizations/org-1/settings/enterprise");
+  test.each<[string[], string]>([
+    [["usage"], "/organizations/org-1/settings/usage"],
+    [["domain"], "/organizations/org-1/settings/domain"],
+    [["billing"], "/organizations/org-1/settings/enterprise"],
+    [["enterprise"], "/organizations/org-1/settings/enterprise"],
+  ])("self-hosted: /settings %j -> %s", (segments, expected) => {
+    expect(build(getSettingsDestination(segments, false))).toBe(expected);
   });
 });
 
-describe("appendSearch", () => {
-  test("keeps the query string", () => {
-    expect(appendSearch("/a", "?utm_source=x&utm_medium=y")).toBe("/a?utm_source=x&utm_medium=y");
-    expect(appendSearch("/a", "utm_source=x")).toBe("/a?utm_source=x");
-  });
-
-  test("adds nothing for an empty query", () => {
-    expect(appendSearch("/a", "")).toBe("/a");
-    expect(appendSearch("/a", "?")).toBe("/a");
-  });
-});
-
-describe("getLoginRedirectUrl", () => {
-  test("encodes the full link, query included, as callbackUrl", () => {
-    expect(getLoginRedirectUrl(WEBAPP_URL, "/billing", "?utm_source=x")).toBe(
-      `${WEBAPP_URL}/auth/login?callbackUrl=${encodeURIComponent(`${WEBAPP_URL}/billing?utm_source=x`)}`
-    );
-  });
-});
-
-describe("getMarketingRedirectTarget", () => {
-  const url = new URL(`${WEBAPP_URL}/settings/teams?utm_campaign=launch`);
-  const destination = getSettingsDestination(["teams"], true);
-
-  test("logged-out users go to login and come back to the same link", () => {
-    const target = getMarketingRedirectTarget({
-      isAuthenticated: false,
-      organizationId: undefined,
-      url,
-      webAppUrl: WEBAPP_URL,
-      destination,
-    });
-    expect(target).toBe(getLoginRedirectUrl(WEBAPP_URL, "/settings/teams", "?utm_campaign=launch"));
-  });
-
-  test("logged-in users without an organization go to the root page", () => {
-    expect(
-      getMarketingRedirectTarget({
-        isAuthenticated: true,
-        organizationId: undefined,
-        url,
-        webAppUrl: WEBAPP_URL,
-        destination,
-      })
-    ).toBe("/");
-  });
-
-  test("logged-in users go to the page of their organization with the query kept", () => {
-    expect(
-      getMarketingRedirectTarget({
-        isAuthenticated: true,
-        organizationId: ORG,
-        url,
-        webAppUrl: WEBAPP_URL,
-        destination,
-      })
-    ).toBe("/organizations/org-1/settings/teams?utm_campaign=launch");
-  });
-});
-
-describe("feature links (MARKETING_SECTIONS)", () => {
-  const WS = "ws-1";
-
-  const resolve = (
-    slug: TMarketingSectionSlug,
-    segments: string[],
-    search = "",
-    isFormbricksCloud = true
-  ) => {
-    const pathname = `/${[slug, ...segments].join("/")}`;
-    return getMarketingRedirectTarget({
-      isAuthenticated: true,
-      organizationId: ORG,
-      workspaceId: WS,
-      url: new URL(`${WEBAPP_URL}${pathname}${search}`),
-      webAppUrl: WEBAPP_URL,
-      destination: getSectionDestination(slug, segments, isFormbricksCloud),
-    });
-  };
-
+describe("getSectionDestination", () => {
   test.each<[TMarketingSectionSlug, string[], string]>([
     ["embedded-data", [], "/workspaces/ws-1/settings/workspace/embedded-data"],
     ["enterprise-license", [], "/organizations/org-1/settings/billing"],
@@ -172,74 +89,94 @@ describe("feature links (MARKETING_SECTIONS)", () => {
     ["integrations", ["airtable"], "/workspaces/ws-1/settings/workspace/integrations/airtable"],
     ["integrations", ["google-sheets"], "/workspaces/ws-1/settings/workspace/integrations/google-sheets"],
     ["integrations", ["webhooks"], "/workspaces/ws-1/settings/workspace/integrations/webhooks"],
+    ["contacts", ["Segments"], "/workspaces/ws-1/segments"],
     // Unknown, extra or crafted sub-segments open the section's main page and are never echoed.
     ["integrations", ["zapier"], "/workspaces/ws-1/settings/workspace/integrations"],
     ["integrations", ["slack", "extra"], "/workspaces/ws-1/settings/workspace/integrations"],
     ["contacts", ["..", "evil.com"], "/workspaces/ws-1/contacts"],
     ["contacts", ["constructor"], "/workspaces/ws-1/contacts"],
     ["surveys", ["anything"], "/workspaces/ws-1/surveys"],
-    ["contacts", ["Segments"], "/workspaces/ws-1/segments"],
-  ])("/%s %j -> %s", (slug, segments, expected) => {
-    expect(resolve(slug, segments)).toBe(expected);
-  });
-
-  test("keeps the query string", () => {
-    expect(resolve("contacts", ["segments"], "?utm_source=newsletter&utm_campaign=q4")).toBe(
-      "/workspaces/ws-1/segments?utm_source=newsletter&utm_campaign=q4"
-    );
+  ])("Cloud: /%s %j -> %s", (slug, segments, expected) => {
+    expect(build(getSectionDestination(slug, segments, true))).toBe(expected);
   });
 
   test("/enterprise-license opens the enterprise page on self-hosted", () => {
-    expect(resolve("enterprise-license", [], "", false)).toBe("/organizations/org-1/settings/enterprise");
+    expect(build(getSectionDestination("enterprise-license", [], false))).toBe(
+      "/organizations/org-1/settings/enterprise"
+    );
+  });
+});
+
+describe("isMarketingLinkPath", () => {
+  test.each([
+    "/billing",
+    "/settings",
+    "/settings/teams",
+    ...Object.keys(MARKETING_SECTIONS).map((s) => `/${s}`),
+  ])("%s is a marketing link", (pathname) => {
+    expect(isMarketingLinkPath(pathname)).toBe(true);
   });
 
-  test("a workspace link without an accessible workspace opens the organization home", () => {
+  test.each(["/billing-confirmation", "/surveysx", "/", "/s/abc", "/api/mcp", "/auth/login"])(
+    "%s is not a marketing link",
+    (pathname) => {
+      expect(isMarketingLinkPath(pathname)).toBe(false);
+    }
+  );
+});
+
+describe("appendSearch", () => {
+  test("keeps the query string", () => {
+    expect(appendSearch("/a", "?utm_source=x&utm_medium=y")).toBe("/a?utm_source=x&utm_medium=y");
+    expect(appendSearch("/a", "utm_source=x")).toBe("/a?utm_source=x");
+  });
+
+  test("adds nothing for an empty query", () => {
+    expect(appendSearch("/a", "")).toBe("/a");
+    expect(appendSearch("/a", "?")).toBe("/a");
+  });
+});
+
+describe("getMarketingRedirectTarget", () => {
+  const surveys = getSectionDestination("surveys", [], true);
+  const base = { isFormbricksCloud: true, search: "?utm_source=x" };
+
+  test("without an organization opens the root page", () => {
+    expect(getMarketingRedirectTarget({ ...base, organizationId: undefined, destination: surveys })).toBe(
+      "/"
+    );
+  });
+
+  test("organization links open in the organization with the query kept", () => {
     expect(
       getMarketingRedirectTarget({
-        isAuthenticated: true,
+        ...base,
         organizationId: ORG,
-        workspaceId: undefined,
-        url: new URL(`${WEBAPP_URL}/surveys?utm_source=x`),
-        webAppUrl: WEBAPP_URL,
-        destination: getSectionDestination("surveys", [], true),
+        destination: getSettingsDestination(["teams"], true),
       })
-    ).toBe("/organizations/org-1?utm_source=x");
+    ).toBe("/organizations/org-1/settings/teams?utm_source=x");
   });
 
-  test("a workspace link without an organization opens the root page", () => {
+  test("workspace links open in the workspace with the query kept", () => {
     expect(
-      getMarketingRedirectTarget({
-        isAuthenticated: true,
-        organizationId: undefined,
-        url: new URL(`${WEBAPP_URL}/surveys`),
-        webAppUrl: WEBAPP_URL,
-        destination: getSectionDestination("surveys", [], true),
-      })
-    ).toBe("/");
+      getMarketingRedirectTarget({ ...base, organizationId: ORG, workspaceId: WS, destination: surveys })
+    ).toBe("/workspaces/ws-1/surveys?utm_source=x");
   });
 
-  test("organization links do not need a workspace", () => {
+  test("a workspace link without a workspace opens the landing page", () => {
+    expect(getMarketingRedirectTarget({ ...base, organizationId: ORG, destination: surveys })).toBe(
+      "/organizations/org-1/landing?utm_source=x"
+    );
+  });
+
+  test("a billing member without a workspace goes to billing", () => {
     expect(
       getMarketingRedirectTarget({
-        isAuthenticated: true,
+        ...base,
         organizationId: ORG,
-        workspaceId: undefined,
-        url: new URL(`${WEBAPP_URL}/enterprise-license`),
-        webAppUrl: WEBAPP_URL,
-        destination: getSectionDestination("enterprise-license", [], true),
+        isBillingMember: true,
+        destination: surveys,
       })
-    ).toBe("/organizations/org-1/settings/billing");
-  });
-
-  test("logged-out users go to login and come back to the same link", () => {
-    expect(
-      getMarketingRedirectTarget({
-        isAuthenticated: false,
-        organizationId: undefined,
-        url: new URL(`${WEBAPP_URL}/workflows/runs?utm_source=x`),
-        webAppUrl: WEBAPP_URL,
-        destination: getSectionDestination("workflows", ["runs"], true),
-      })
-    ).toBe(getLoginRedirectUrl(WEBAPP_URL, "/workflows/runs", "?utm_source=x"));
+    ).toBe("/organizations/org-1/settings/billing?utm_source=x");
   });
 });

@@ -1,6 +1,8 @@
 import "server-only";
 import { redirect } from "next/navigation";
-import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
 import { getSession } from "@/modules/auth/lib/session";
 import {
   getActiveOrganizationIdForUser,
@@ -24,19 +26,28 @@ export const handleMarketingRedirect = async (
 ): Promise<never> => {
   const session = await getSession();
   const userId = session?.user?.id;
-  const organizationId = userId ? await getActiveOrganizationIdForUser(userId) : undefined;
+  // The proxy already sends logged-out visitors to login with this link as callbackUrl; this only
+  // catches a session that expired in between.
+  if (!userId) return redirect("/auth/login");
+
+  const organizationId = await getActiveOrganizationIdForUser(userId);
   const workspaceId =
-    userId && organizationId && destination.scope === "workspace"
+    organizationId && destination.scope === "workspace"
       ? await getActiveWorkspaceIdForUser(userId, organizationId)
       : undefined;
+  // Only a workspace link without a workspace needs the role, to send billing members to billing.
+  const isBillingMember =
+    organizationId && destination.scope === "workspace" && !workspaceId
+      ? getAccessFlags((await getMembershipByUserIdOrganizationId(userId, organizationId))?.role).isBilling
+      : false;
 
   return redirect(
     getMarketingRedirectTarget({
-      isAuthenticated: Boolean(userId),
       organizationId,
       workspaceId,
-      url: new URL(request.url),
-      webAppUrl: WEBAPP_URL,
+      isBillingMember,
+      isFormbricksCloud: IS_FORMBRICKS_CLOUD,
+      search: new URL(request.url).search,
       destination,
     })
   );

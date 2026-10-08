@@ -23,17 +23,17 @@ export const resolveActiveOrganizationId = async (
   activeWorkspaceId: string | undefined,
   activeOrganizationId: string | undefined
 ): Promise<string | undefined> => {
-  const organizations = await getOrganizationsByUserId(userId);
+  const [organizations, activeWorkspace] = await Promise.all([
+    getOrganizationsByUserId(userId),
+    activeWorkspaceId ? getWorkspace(activeWorkspaceId) : null,
+  ]);
 
   if (activeOrganizationId && organizations.some((org) => org.id === activeOrganizationId)) {
     return activeOrganizationId;
   }
 
-  if (activeWorkspaceId) {
-    const activeWorkspace = await getWorkspace(activeWorkspaceId);
-    if (activeWorkspace && organizations.some((org) => org.id === activeWorkspace.organizationId)) {
-      return activeWorkspace.organizationId;
-    }
+  if (activeWorkspace && organizations.some((org) => org.id === activeWorkspace.organizationId)) {
+    return activeWorkspace.organizationId;
   }
 
   return organizations[0]?.id;
