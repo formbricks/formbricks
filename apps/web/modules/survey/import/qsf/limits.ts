@@ -59,7 +59,9 @@ export const QSF_MAX_LOGIC_TERMS = 20;
 /**
  * One text's size before it is sanitized. DOMPurify's cost grows with the markup it parses: about
  * 0.2 ms for a short question on jsdom, 58 ms for a 1 MB inline image and 436 ms for 20,000 spans.
- * A text past either bound is refused with a report line instead of being parsed.
+ * A text past either bound is refused with a report line instead of being parsed. The tags count the
+ * `<` written as character references (`&lt;`, `&#60;`, …) too: decoded, the next parse reads them as
+ * tags.
  */
 export const QSF_MAX_TEXT_CHARS = 50_000;
 export const QSF_MAX_TEXT_TAGS = 500;

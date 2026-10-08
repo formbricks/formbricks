@@ -124,18 +124,48 @@ function readDropped(into: Set<TDroppedCode>): void {
 
 const collapseWhitespace = (text: string): string => text.replaceAll(/\s+/g, " ").trim();
 
-const countTags = (text: string): number => {
+/** The `<` in a text, counted up to just past `limit`. */
+const countLessThan = (text: string, limit: number): number => {
   let count = 0;
-  for (let index = text.indexOf("<"); index !== -1; index = text.indexOf("<", index + 1)) count += 1;
+  for (let index = text.indexOf("<"); index !== -1 && count <= limit; index = text.indexOf("<", index + 1)) {
+    count += 1;
+  }
+  return count;
+};
+
+/**
+ * A `<` written as a character reference: `&lt;`, `&#60;`, `&#x3c;`, with or without the semicolon, any
+ * case and any zero padding (`&nvlt;` decodes to `<` too). `textContent` decodes each into a `<` that the
+ * next parse reads as a tag. Counting a few that are not `<` (`&LT;` is) only errs towards the cap.
+ */
+const ENCODED_LESS_THAN = /&(?:nv)?lt|&#0*60(?!\d)|&#x0*3c(?![\da-f])/gi;
+
+/**
+ * The tags a text can open in any parse: its own `<`, plus every `<` it holds as a character reference,
+ * which decoding turns into tags one parse later. Counted up to just past `limit`.
+ */
+const countTags = (text: string, limit: number): number => {
+  let count = countLessThan(text, limit);
+  if (count > limit || !text.includes("&")) return count;
+  for (const _match of text.matchAll(ENCODED_LESS_THAN)) {
+    count += 1;
+    if (count > limit) break;
+  }
   return count;
 };
 
 /**
  * Whether plain text parses into HTML elements. `textContent` decodes entities, so `&lt;b&gt;` in the
  * file is `<b>` here — markup again, one parse later.
+ *
+ * A text with more `<` than a text may hold tags is markup without being parsed: a parse costs about
+ * linear time in its tags, and thousands of nested ones (`&lt;i>` repeated, decoded) block the event
+ * loop for seconds before DOMPurify throws a `RangeError`. `sanitizeText` refuses such a text first by
+ * counting its encoded `<`; this holds for any text that reaches here by another decode.
  */
 export function containsMarkup(text: string): boolean {
   if (!text.includes("<")) return false;
+  if (countLessThan(text, QSF_MAX_TEXT_TAGS) > QSF_MAX_TEXT_TAGS) return true;
   DOMPurify.sanitize(text, PLAIN_CONFIG);
   return DOMPurify.removed.some(
     (entry) => "element" in entry && !["body", "html", "head", "remove"].includes(elementName(entry.element))
@@ -185,7 +215,7 @@ function sanitizeRich(
 /** Sanitize one text. Synchronous; callers that sanitize many texts yield between them. */
 export function sanitizeText(raw: string, format: TQsfTextFormat): TSanitizedText {
   const dropped = new Set<TDroppedCode>();
-  if (raw.length > QSF_MAX_TEXT_CHARS || countTags(raw) > QSF_MAX_TEXT_TAGS) {
+  if (raw.length > QSF_MAX_TEXT_CHARS || countTags(raw, QSF_MAX_TEXT_TAGS) > QSF_MAX_TEXT_TAGS) {
     return { text: "", plain: "", dropped, escaped: false, tooLong: true };
   }
 

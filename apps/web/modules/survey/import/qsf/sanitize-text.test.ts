@@ -1,5 +1,7 @@
+import DOMPurify from "isomorphic-dompurify";
 import { monitorEventLoopDelay } from "node:perf_hooks";
 import { describe, expect, test, vi } from "vitest";
+import { cpuMsSince } from "./__fixtures__/cpu-time";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { readQsf } from "./read-qsf";
 import { containsMarkup, sanitizeQsfTexts, sanitizeText } from "./sanitize-text";
@@ -15,6 +17,24 @@ vi.mock("node:timers/promises", async (importOriginal) => {
     },
   };
 });
+
+/**
+ * The nodes DOMPurify visits while `work` runs: zero when nothing was parsed. Counted through a hook on
+ * the default export, removed by reference so no other hook is touched.
+ */
+const nodesParsed = (work: () => void): number => {
+  let nodes = 0;
+  const count = () => {
+    nodes += 1;
+  };
+  DOMPurify.addHook("beforeSanitizeElements", count);
+  try {
+    work();
+  } finally {
+    DOMPurify.removeHook("beforeSanitizeElements", count);
+  }
+  return nodes;
+};
 
 describe("sanitizeText", () => {
   describe("plain text", () => {
@@ -98,6 +118,55 @@ describe("sanitizeText", () => {
     ["with more than 500 tags", "<b>x</b>".repeat(251)],
   ])("refuses a text %s instead of parsing it", (_case, raw) => {
     expect(sanitizeText(raw, "rich")).toMatchObject({ text: "", tooLong: true });
+  });
+
+  describe("tags written as character references", () => {
+    // Decoded by `textContent`, each `&lt;i>` is an `<i>` the plain-text re-parse nests: 4,000 of them
+    // held the event loop for about 2 s, and 8,333 (the 50,000-character cap) threw a `RangeError`.
+    test.each([
+      ["&lt;i>", 4_000],
+      ["&lt;i>", 8_333],
+      ["&#60;i>", 501],
+      ["&#x3C;i>", 501],
+      ["&#0060i>", 501],
+      ["&#x003cI>", 501],
+      ["&LT;i>", 501],
+      ["&lt;i>", 501],
+    ])("refuses %s repeated %i times without parsing it", (tag, times) => {
+      const start = process.cpuUsage();
+
+      const parsed = nodesParsed(() => {
+        for (const format of ["plain", "rich"] as const) {
+          expect(sanitizeText(tag.repeat(times), format)).toMatchObject({ text: "", tooLong: true });
+        }
+      });
+
+      // Structural: refused on the count, before any parse.
+      expect(parsed).toBe(0);
+      // Coarse: a count over at most 50,000 characters, well under a millisecond each.
+      expect(cpuMsSince(start)).toBeLessThan(50);
+    });
+
+    test("keeps a text whose raw and encoded tags together stay within the cap", () => {
+      const result = sanitizeText(`${"<b>x</b>".repeat(100)}${"&lt;i>".repeat(299)}`, "plain");
+
+      expect(result).toMatchObject({ tooLong: false, escaped: true });
+    });
+  });
+});
+
+describe("containsMarkup", () => {
+  test("reads a text with more `<` than a text may hold tags as markup, without parsing it", () => {
+    // What a decode `sanitizeText` did not count would hand the re-parse.
+    const start = process.cpuUsage();
+
+    expect(nodesParsed(() => expect(containsMarkup("<i>".repeat(8_333))).toBe(true))).toBe(0);
+    expect(cpuMsSince(start)).toBeLessThan(50);
+  });
+
+  test("still parses a text within the cap", () => {
+    expect(nodesParsed(() => expect(containsMarkup("<i>".repeat(500))).toBe(true))).toBeGreaterThan(0);
+    expect(containsMarkup("a < b, ".repeat(400))).toBe(false);
   });
 });
 
