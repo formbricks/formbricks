@@ -240,7 +240,7 @@ describe("getRetentionClockCutoffs", () => {
       );
       expect(
         getDueRetentionStep(policy, target({ clock: justAfter(actionDueAtOrBefore), noticeSentAt }), now)
-      ).toBe(null);
+      ).toBeNull();
     }
   );
 
