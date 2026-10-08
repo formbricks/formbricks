@@ -7,6 +7,7 @@ import {
   getTextContent,
   validateId,
 } from "@formbricks/types/surveys/validation";
+import { createSlicer } from "./event-loop";
 import { QsfIdRegistry, findFreeSuffixedName, isObjectMemberName } from "./id-registry";
 import { type TPipedTextContext, replacePipedText } from "./piped-text";
 import type { TQsfCheckedPlan, TQsfPlannedQuestion } from "./plan-checks";
@@ -115,6 +116,8 @@ export interface TAssembleQsfDraftParams {
   allowExternalUrls: boolean;
   /** Questions the final gate refused on a first pass. */
   excludedRefs?: ReadonlySet<string>;
+  /** Stops assembly between questions when it fires. */
+  signal?: AbortSignal;
 }
 
 const CONTACT_FIELDS: readonly TQsfPlanContactField[] = [
@@ -263,8 +266,9 @@ class QsfAssembler {
     }));
   }
 
-  assemble(): TQsfAssembly {
+  async assemble(): Promise<TQsfAssembly> {
     const { survey, plan, excludedRefs } = this.params;
+    const slice = createSlicer(this.params.signal);
 
     const hidden = buildHiddenFields(survey.embeddedDataNames);
     this.hiddenFieldIdByName = hidden.idByName;
@@ -293,13 +297,15 @@ class QsfAssembler {
 
     const blocks: TQsfDraftDocument["blocks"] = [];
     const elementRefs: string[][] = [];
-    placedBlocks.forEach(({ page, refs: pageRefs }, blockIndex) => {
+    for (const [blockIndex, { page, refs: pageRefs }] of placedBlocks.entries()) {
       const elements: TQsfDraftElement[] = [];
       const refs: string[] = [];
       for (const ref of pageRefs) {
         const question = survey.questions.get(ref);
         const planned = plan.questions.get(ref);
         if (!question || !planned) continue;
+        // A question with many options in many languages is thousands of texts: yield between them.
+        await slice(); // NOSONAR(typescript:S9382) -- a deliberate yield every slice
         elements.push(this.buildElement(question, planned, blockIndex));
         refs.push(ref);
         this.reportQuestionLogic(question, planned);
@@ -309,7 +315,7 @@ class QsfAssembler {
       elementRefs.push(refs);
       // The page's branch and randomizer rules, on the page's first imported question.
       this.reportRules(page.logic.length, plan.pageNotes.get(page.id) ?? [], survey.questions.get(refs[0]));
-    });
+    }
 
     // A page none of whose questions was imported still had its branch or randomizer: the user
     // rebuilds it around whatever replaces the page. No question to name, so its block's name instead.
@@ -639,6 +645,6 @@ function redirectHost(url: string): string | null {
   }
 }
 
-export function assembleQsfDraft(params: TAssembleQsfDraftParams): TQsfAssembly {
+export function assembleQsfDraft(params: TAssembleQsfDraftParams): Promise<TQsfAssembly> {
   return new QsfAssembler(params).assemble();
 }

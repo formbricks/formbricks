@@ -1,7 +1,7 @@
 import DOMPurify from "isomorphic-dompurify";
-import { setImmediate as yieldToEventLoop } from "node:timers/promises";
 import { FOLLOW_UP_BODY_SANITIZE_CONFIG } from "@/modules/survey/follow-ups/lib/sanitize-follow-up-body";
 import type { TQsfImportIssueCode } from "../types";
+import { createSlicer } from "./event-loop";
 import { QSF_MAX_TEXT_CHARS, QSF_MAX_TEXT_TAGS } from "./limits";
 import { hasMarkup } from "./markup";
 import type { TQsfIssue, TQsfSurvey, TQsfTextFormat, TQsfTextKey } from "./qsf-model";
@@ -34,9 +34,6 @@ const PLAIN_CONFIG = { ALLOWED_TAGS: [] as string[], FORCE_BODY: true, RETURN_DO
 
 /** Stands in for `<` in plain text that would otherwise parse as markup. */
 const NEUTRAL_LESS_THAN = "\uFF1C";
-
-/** How long a run of sanitizing may hold the event loop before it yields. */
-const SANITIZE_SLICE_MS = 10;
 
 /** Removed elements that say nothing about the text: the parser's wrappers and plain structure. */
 const STRUCTURAL_TAGS = new Set(["body", "html", "head", "remove", "div", "p", "br", "span"]);
@@ -241,7 +238,7 @@ class SanitizeReporter {
 }
 
 /**
- * Sanitize every text of the survey. Yields to the event loop every `SANITIZE_SLICE_MS` (by elapsed
+ * Sanitize every text of the survey. Yields to the event loop every `QSF_SLICE_MS` (by elapsed
  * time, not by count: one long text can cost more than a hundred short ones) and stops when `signal`
  * aborts.
  */
@@ -250,16 +247,12 @@ export async function sanitizeQsfTexts(survey: TQsfSurvey, signal: AbortSignal):
   const plainDefault = new Map<TQsfTextKey, string>();
   const reporter = new SanitizeReporter(survey);
 
-  let sliceStart = performance.now();
+  const slice = createSlicer(signal);
   for (const [key, entry] of survey.texts) {
     const sanitized = new Map<string, string>();
     for (const [language, raw] of entry.byLanguage) {
-      if (performance.now() - sliceStart > SANITIZE_SLICE_MS) {
-        // Yields by elapsed time, by design: the point of the loop is to give the event loop back.
-        await yieldToEventLoop(); // NOSONAR(typescript:S9382) -- a deliberate yield every slice
-        signal.throwIfAborted();
-        sliceStart = performance.now();
-      }
+      // Yields by elapsed time, by design: the point of the loop is to give the event loop back.
+      await slice(); // NOSONAR(typescript:S9382) -- a deliberate yield every slice
 
       const result = sanitizeText(raw, entry.format);
       sanitized.set(language, result.text);

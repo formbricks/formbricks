@@ -325,7 +325,7 @@ describe("fitQsfSurveyToCreateLimit", () => {
       signal: new AbortController().signal,
       deadline: performance.now() + 120_000,
     });
-    const assembly = assembleQsfDraft({
+    const assembly = await assembleQsfDraft({
       survey,
       texts,
       plan,

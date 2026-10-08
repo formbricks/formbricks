@@ -37,7 +37,13 @@ vi.mock("@/modules/survey/lib/permission", () => ({
 vi.mock("./final-gate", async (importOriginal) => {
   const original = await importOriginal<typeof import("./final-gate")>();
   mocks.realCheckQsfDraft = original.checkQsfDraft;
-  return { ...original, checkQsfDraft: mocks.checkQsfDraft };
+  return {
+    ...original,
+    checkQsfDraft: mocks.checkQsfDraft,
+    // The pipeline's own way in: through the same mock, so a test can make the gate fail.
+    checkQsfDraftInSlices: async (document: Parameters<typeof original.checkQsfDraft>[0]) =>
+      mocks.checkQsfDraft(document),
+  };
 });
 
 const WORKSPACE_ID = "clxx1234567890123456789012";

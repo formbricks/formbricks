@@ -1,7 +1,7 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { prepareV3SurveyCreateInput } from "@/app/api/v3/surveys/prepare";
 import type { TQsfDraftDocument } from "./assemble";
-import { checkQsfDraft, elementsAtFault } from "./final-gate";
+import { checkQsfDraft, checkQsfDraftInSlices, elementsAtFault } from "./final-gate";
 
 const draft = (elements: unknown[], extra: Partial<TQsfDraftDocument> = {}): TQsfDraftDocument =>
   ({
@@ -93,5 +93,17 @@ describe("elementsAtFault", () => {
       ])
     ).toBeNull();
     expect(elementsAtFault([{ name: "blocks.0.logic", reason: "r" }])).toBeNull();
+  });
+});
+
+describe("checkQsfDraftInSlices", () => {
+  test("runs the same three checks, yielding between them", async () => {
+    const between = vi.fn(async () => undefined);
+    const document = draft([openText("q1", "Hello #recall:q2/fallback:...#"), openText("q2", "Later")]);
+
+    expect(await checkQsfDraftInSlices(draft([openText("q1", "Hello")]), between)).toEqual([]);
+    expect(between).toHaveBeenCalledTimes(2);
+    expect(await checkQsfDraftInSlices(document, async () => undefined)).toEqual(checkQsfDraft(document));
+    expect(checkQsfDraft(document)).not.toEqual([]);
   });
 });

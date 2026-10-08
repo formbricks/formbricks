@@ -29,7 +29,7 @@ const assembleFixture = async (
     deadline: performance.now() + 120_000,
   });
   options.editPlan?.(plan);
-  const assembly = assembleQsfDraft({
+  const assembly = await assembleQsfDraft({
     survey,
     texts,
     plan,

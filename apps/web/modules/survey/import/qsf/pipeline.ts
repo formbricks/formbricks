@@ -1,5 +1,4 @@
 import "server-only";
-import { setImmediate as yieldToEventLoop } from "node:timers/promises";
 import { logger } from "@formbricks/logger";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
@@ -8,7 +7,8 @@ import type { TQsfImportReport, TQsfImportStage } from "../types";
 import { type TQsfPlanGenerate, type TQsfPlanUsage, planQsfImport } from "./ai-plan";
 import { type TQsfAssembly, type TQsfDraftDocument, assembleQsfDraft } from "./assemble";
 import { QsfImportFailedError, QsfImportInputError } from "./errors";
-import { checkQsfDraft, elementsAtFault } from "./final-gate";
+import { yieldToOthers } from "./event-loop";
+import { checkQsfDraftInSlices, elementsAtFault } from "./final-gate";
 import { fitQsfDraftToCreateLimit, fitQsfSurveyToCreateLimit } from "./fit-draft";
 import { QSF_PROMPT_BUDGET_CHARS, estimateQsfMinimumPromptChars } from "./prompt";
 import type { TQsfIssue, TQsfSurvey } from "./qsf-model";
@@ -102,22 +102,20 @@ const countElements = (document: TQsfDraftDocument): number =>
  * element (reported) and the draft is assembled again once; a problem anywhere else, or a second
  * failure, fails the import. Only the problems' paths are logged: their reasons can quote the file.
  *
- * Assembly and each check are synchronous (~20 ms apiece for 150 questions), so it yields to the event
- * loop between them rather than holding it for all of them at once.
+ * Assembly yields between questions, and the gate between its three checks, which are synchronous —
+ * the request schema's the costliest, about 1 s on a 2 MB draft — so no stretch holds the event loop
+ * for more than one of them.
  */
 async function assembleCheckedDraft(
-  build: (excludedRefs: ReadonlySet<string>) => TQsfAssembly,
+  build: (excludedRefs: ReadonlySet<string>) => Promise<TQsfAssembly>,
   survey: TQsfSurvey,
   signal: AbortSignal
 ): Promise<{ assembly: TQsfAssembly; dropped: TQsfIssue[] }> {
-  const pause = async () => {
-    await yieldToEventLoop();
-    signal.throwIfAborted();
-  };
+  const pause = () => yieldToOthers(signal);
 
-  const first = build(new Set());
+  const first = await build(new Set());
   await pause();
-  const problems = checkQsfDraft(first.document);
+  const problems = await checkQsfDraftInSlices(first.document, pause);
   if (problems.length === 0) return { assembly: first, dropped: [] };
 
   const names = problems.slice(0, 20).map((problem) => problem.name);
@@ -133,9 +131,9 @@ async function assembleCheckedDraft(
     "QSF import dropped elements the create would refuse"
   );
   await pause();
-  const second = build(excluded);
+  const second = await build(excluded);
   await pause();
-  if (checkQsfDraft(second.document).length > 0) {
+  if ((await checkQsfDraftInSlices(second.document, pause)).length > 0) {
     throw new QsfImportFailedError("draft_invalid");
   }
 
@@ -187,18 +185,28 @@ export async function runQsfImport(params: TRunQsfImportParams): Promise<TQsfImp
 
   const { assembly, dropped } = await assembleCheckedDraft(
     (excludedRefs) =>
-      assembleQsfDraft({ survey, texts, plan: planned.plan, workspaceId, allowExternalUrls, excludedRefs }),
+      assembleQsfDraft({
+        survey,
+        texts,
+        plan: planned.plan,
+        workspaceId,
+        allowExternalUrls,
+        excludedRefs,
+        signal,
+      }),
     survey,
     signal
   );
-  // The dialog creates the draft through POST /api/v3/surveys, whose body has a size limit: past it,
-  // languages and then trailing questions are cut, and the cut draft is checked again.
+  // The dialog creates the draft through POST /api/v3/surveys, whose body has a size limit. The survey
+  // was cut to an upper bound of it before planning; past it still, languages and then trailing
+  // questions are cut, and only then is the cut draft checked again.
+  await yieldToOthers(signal);
   const fitted = fitQsfDraftToCreateLimit(assembly, survey);
   if (countElements(assembly.document) === 0) throw new QsfImportFailedError("no_questions");
   if (fitted.dropped.length > 0) {
-    await yieldToEventLoop();
-    signal.throwIfAborted();
-    if (checkQsfDraft(assembly.document).length > 0) throw new QsfImportFailedError("draft_invalid");
+    await yieldToOthers(signal);
+    const problems = await checkQsfDraftInSlices(assembly.document, () => yieldToOthers(signal));
+    if (problems.length > 0) throw new QsfImportFailedError("draft_invalid");
   }
 
   const issues = [

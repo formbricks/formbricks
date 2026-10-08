@@ -24,14 +24,52 @@ import type { TQsfDraftDocument } from "./assemble";
  * the pipeline can drop the element at fault.
  */
 export function checkQsfDraft(document: TQsfDraftDocument): InvalidParam[] {
+  const parsed = parseDraft(document);
+  if (!parsed.ok) return parsed.invalidParams;
+  const invalidReferences = validateDraft(parsed.data);
+  return invalidReferences.length > 0 ? invalidReferences : checkCreateInput(document, parsed.data);
+}
+
+/**
+ * `checkQsfDraft`, yielding to the event loop between its three checks with `between`. Each is
+ * synchronous, the request schema's the costliest (~1 s on a 2 MB draft), so this is what keeps the
+ * longest block to one check rather than all three.
+ */
+export async function checkQsfDraftInSlices(
+  document: TQsfDraftDocument,
+  between: () => Promise<void>
+): Promise<InvalidParam[]> {
+  const parsed = parseDraft(document);
+  if (!parsed.ok) return parsed.invalidParams;
+  await between();
+  const invalidReferences = validateDraft(parsed.data);
+  if (invalidReferences.length > 0) return invalidReferences;
+  await between();
+  return checkCreateInput(document, parsed.data);
+}
+
+type TParsedDraft = ReturnType<typeof ZV3CreateSurveyBody.parse>;
+
+/** The v3 request schema, as the create parses the body. */
+function parseDraft(
+  document: TQsfDraftDocument
+): { ok: true; data: TParsedDraft } | { ok: false; invalidParams: InvalidParam[] } {
   const parsed = ZV3CreateSurveyBody.safeParse(document);
-  if (!parsed.success) return formatV3ZodInvalidParams(parsed.error, "data");
+  return parsed.success
+    ? { ok: true, data: parsed.data }
+    : { ok: false, invalidParams: formatV3ZodInvalidParams(parsed.error, "data") };
+}
 
-  const validation = validateV3SurveyDocument(parsed.data, { mode: "enforce" });
-  if (!validation.valid) return validation.invalidParams;
+/** The v3 document validation, recall ordering enforced. */
+function validateDraft(data: TParsedDraft): InvalidParam[] {
+  const validation = validateV3SurveyDocument(data, { mode: "enforce" });
+  return validation.valid ? [] : validation.invalidParams;
+}
 
+/** The survey service's write schema, with placeholder language rows. */
+function checkCreateInput(document: TQsfDraftDocument, data: TParsedDraft): InvalidParam[] {
   const now = new Date();
-  const languages: TSurveyLanguage[] = deriveV3SurveyLanguageRequests(parsed.data).map((request) => ({
+  const languages: TSurveyLanguage[] = deriveV3SurveyLanguageRequests(data).map((request) => ({
     language: {
       id: createId(),
       code: request.code,
@@ -44,9 +82,7 @@ export function checkQsfDraft(document: TQsfDraftDocument): InvalidParam[] {
     enabled: request.enabled,
   }));
 
-  return getV3SurveyCreateInputInvalidParams(
-    buildV3SurveyCreateInput(parsed.data, { languages, createdBy: null })
-  );
+  return getV3SurveyCreateInputInvalidParams(buildV3SurveyCreateInput(data, { languages, createdBy: null }));
 }
 
 const ELEMENT_PATH = /^blocks\.(\d+)\.elements\.(\d+)(?:\.|$)/;
