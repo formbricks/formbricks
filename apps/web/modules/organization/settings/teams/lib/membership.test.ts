@@ -24,6 +24,9 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
       deleteMany: vi.fn(),
     },
+    invite: {
+      updateMany: vi.fn(),
+    },
     $transaction: vi.fn(),
   },
 }));
@@ -153,6 +156,23 @@ describe("deleteMembership", () => {
     expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
       teamMemberships: [{ teamId, userId }],
     });
+  });
+  test("expires the removed member's pending invites in that organization", async () => {
+    const now = new Date("2026-10-08T12:00:00.000Z");
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+    try {
+      vi.mocked(prisma.teamUser.findMany).mockResolvedValue([]);
+
+      await deleteMembership(userId, organizationId);
+
+      expect(prisma.invite.updateMany).toHaveBeenCalledWith({
+        where: { organizationId, creatorId: userId, expiresAt: { gt: now } },
+        data: { expiresAt: now },
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
   test("retries a serializable transaction conflict up to a successful attempt", async () => {
     const transactionConflict = new Prisma.PrismaClientKnownRequestError("transaction conflict", {
