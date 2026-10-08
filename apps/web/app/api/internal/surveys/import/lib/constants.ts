@@ -29,7 +29,12 @@ export const QSF_IMPORT_MAX_IN_FLIGHT_PER_USER = 1;
 /** `Retry-After` when every import slot is taken: about how long a typical import takes. */
 export const QSF_IMPORT_RETRY_AFTER_SECONDS = 15;
 
-/** Hard stop for one import: two waves of AI calls (45 s each at most), a retry wave, and assembly. */
+/**
+ * Hard stop for one import. Each AI call gets at most 45 s, and never more than what is left of this
+ * less the assembly reserve, so a slow call shortens the ones after it instead of running past the
+ * deadline. At the slow end of the model (~31 s a call), the 150-question survey's two waves of calls
+ * and a retry wave take about 93 s, leaving room for assembly.
+ */
 export const QSF_IMPORT_DEADLINE_MS = 120_000;
 
 /** Longest silence on the stream. Well under nginx's 60 s default read timeout. */
