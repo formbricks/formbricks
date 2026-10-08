@@ -7,6 +7,15 @@ import {
   getTextContent,
   validateId,
 } from "@formbricks/types/surveys/validation";
+import type {
+  TDraftChoice,
+  TDraftElementBase,
+  TDraftToggleInput,
+  TQsfDraftDocument,
+  TQsfDraftElement,
+  TQsfDraftEnding,
+  TQsfLocaleText,
+} from "./draft";
 import { createSlicer } from "./event-loop";
 import { QsfIdRegistry, findFreeSuffixedName, isObjectMemberName } from "./id-registry";
 import { type TPipedTextContext, replacePipedText } from "./piped-text";
@@ -33,80 +42,7 @@ import { type TSanitizedTexts, sanitizeName } from "./sanitize-text";
 const hasTextContent = (text: string): boolean =>
   text.includes("<") ? getTextContent(text).length > 0 : text.trim().length > 0;
 
-/** Text keyed by language code, default language first. */
-export type TQsfLocaleText = Record<string, string>;
-
-interface TDraftElementBase {
-  id: string;
-  headline: TQsfLocaleText;
-  required: boolean;
-  isDraft: true;
-}
-
-interface TDraftChoice {
-  id: string;
-  label: TQsfLocaleText;
-}
-
-interface TDraftToggleInput {
-  show: boolean;
-  required: boolean;
-  placeholder: TQsfLocaleText;
-}
-
-export type TQsfDraftElement = TDraftElementBase &
-  (
-    | {
-        type: "openText";
-        inputType: TQsfPlannedQuestion["inputType"];
-        longAnswer: boolean;
-        charLimit: { enabled: false };
-      }
-    | {
-        type: "multipleChoiceSingle" | "multipleChoiceMulti";
-        choices: TDraftChoice[];
-        shuffleOption: "none" | "all" | "exceptLast";
-        displayType: "list" | "dropdown";
-      }
-    | { type: "ranking"; choices: TDraftChoice[]; shuffleOption: "none" | "all" }
-    | { type: "matrix"; rows: TDraftChoice[]; columns: TDraftChoice[]; shuffleOption: "none" }
-    | { type: "nps"; isColorCodingEnabled: false }
-    | {
-        type: "rating" | "csat" | "ces";
-        scale: NonNullable<TQsfPlannedQuestion["scale"]>;
-        range: number;
-        isColorCodingEnabled: false;
-      }
-    | { type: "date"; format: NonNullable<TQsfPlannedQuestion["format"]> }
-    | { type: "fileUpload"; allowMultipleFiles: false }
-    | ({ type: "contactInfo" } & Record<TQsfPlanContactField, TDraftToggleInput>)
-    | { type: "consent"; label: TQsfLocaleText }
-    | { type: "cta"; buttonExternal: false }
-  );
-
-export type TQsfDraftEnding =
-  | { id: string; type: "endScreen"; headline: TQsfLocaleText }
-  | { id: string; type: "redirectToUrl"; url: string; label: string };
-
-/** The create document, typed: `TV3CreateSurveyRequestBody` is the schema's input, which is `unknown`. */
-export interface TQsfDraftDocument {
-  workspaceId: string;
-  name: string;
-  type: "link";
-  status: "draft";
-  defaultLanguage: string;
-  languages: { code: string; default: boolean; enabled: boolean }[];
-  blocks: { id: string; name: string; elements: TQsfDraftElement[] }[];
-  endings: TQsfDraftEnding[];
-  hiddenFields: { enabled: boolean; fieldIds: string[] };
-  /**
-   * Set, both true, on a draft in more than one language: Qualtrics shows its respondents a language
-   * menu and opens a survey in the browser's language, and imported surveys keep doing so (#9508's
-   * fields). Left out on a one-language draft, v3's default. See `withLanguageSettings`.
-   */
-  showLanguageSwitch?: true;
-  autoSelectLanguage?: true;
-}
+export type { TQsfDraftDocument, TQsfDraftElement, TQsfDraftEnding, TQsfLocaleText } from "./draft";
 
 export interface TQsfAssembly {
   document: TQsfDraftDocument;
