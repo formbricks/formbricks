@@ -340,6 +340,46 @@ describe("AI organization service", () => {
     expect(JSON.stringify(mocks.loggerWarn.mock.calls)).not.toContain("The operation timed out.");
   });
 
+  test("does not log an abort when the caller's own signal fired, even with a timeout set", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const abortError = new DOMException("This operation was aborted", "AbortError");
+    mocks.generateObject.mockRejectedValueOnce(abortError);
+
+    await expect(
+      generateOrganizationAIObject({
+        organizationId: "org_1",
+        schema: z.object({}),
+        prompt: "Plan this import",
+        timeout: 45_000,
+        abortSignal: controller.signal,
+      })
+    ).rejects.toBe(abortError);
+    expect(mocks.loggerError).not.toHaveBeenCalled();
+    expect(mocks.loggerWarn).not.toHaveBeenCalled();
+  });
+
+  test("warns about an abort the caller did not make: its timeout firing during the SDK's retry backoff", async () => {
+    const abortError = new DOMException("Delay was aborted", "AbortError");
+    mocks.generateObject.mockRejectedValueOnce(abortError);
+
+    await expect(
+      generateOrganizationAIObject({
+        organizationId: "org_1",
+        schema: z.object({}),
+        prompt: "Plan this import",
+        timeout: 45_000,
+        abortSignal: new AbortController().signal,
+      })
+    ).rejects.toBe(abortError);
+    expect(mocks.loggerError).not.toHaveBeenCalled();
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationId: "org_1", errName: "AbortError" }),
+      "Failed to generate organization AI object"
+    );
+    expect(JSON.stringify(mocks.loggerWarn.mock.calls)).not.toContain("Delay was aborted");
+  });
+
   test("converts a provider 429 from text generation into a TooManyRequestsError", async () => {
     const quotaError = new Error("Resource exhausted");
     mocks.generateText.mockRejectedValueOnce(quotaError);
