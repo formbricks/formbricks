@@ -231,7 +231,7 @@ describe("License Core Logic", () => {
             features: { ...mockFetchedLicenseDetailsFeatures, dataRetention: true },
           },
         }),
-      } as any);
+      });
 
       const license = await getEnterpriseLicense();
 
@@ -250,7 +250,7 @@ describe("License Core Logic", () => {
         json: async () => ({
           data: { ...mockFetchedLicenseDetails, features: featuresWithoutDataRetention },
         }),
-      } as any);
+      });
 
       const license = await getEnterpriseLicense();
 
