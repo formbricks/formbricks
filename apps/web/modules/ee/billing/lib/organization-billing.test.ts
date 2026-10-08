@@ -4199,4 +4199,152 @@ describe("organization-billing", () => {
       expect(mocks.subscriptionsCreate).not.toHaveBeenCalled();
     });
   });
+
+  describe("automatic tax (VAT)", () => {
+    const planItem = (plan: "pro" | "scale", kind: "base" | "responses") => ({
+      id: `si_${plan}_${kind}`,
+      current_period_end: 1742515200,
+      price: {
+        id: `price_${plan}_${kind === "base" ? "monthly" : "responses"}`,
+        metadata: { formbricks_plan: plan, formbricks_price_kind: kind, formbricks_interval: "monthly" },
+        product: { id: `prod_${plan}`, metadata: { formbricks_plan: plan }, active: true },
+        recurring: { usage_type: kind === "base" ? "licensed" : "metered", interval: "month" },
+      },
+    });
+
+    const mockActiveSubscription = (plan: "pro" | "scale", overrides: Record<string, unknown> = {}): void => {
+      mocks.getCloudPlanFromProduct.mockImplementation((product: { id?: string } | string) => {
+        const productId = typeof product === "string" ? product : product.id;
+        return productId === "prod_scale" ? "scale" : "pro";
+      });
+      mocks.subscriptionsList.mockResolvedValue({
+        data: [
+          {
+            id: "sub_1",
+            status: "active",
+            billing_cycle_anchor: 1739923200,
+            cancel_at_period_end: false,
+            schedule: null,
+            automatic_tax: { enabled: false },
+            items: { data: [planItem(plan, "base"), planItem(plan, "responses")] },
+            ...overrides,
+          },
+        ],
+      });
+      mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+        stripeCustomerId: "cus_1",
+        limits: { workspaces: 3, monthly: { responses: 1500 } },
+        usageCycleAnchor: new Date(),
+        stripe: { subscriptionId: "sub_1", plan, interval: "monthly", hasPaymentMethod: true },
+      });
+    };
+
+    const mockCustomerTaxStatus = (status: string) => {
+      mocks.customersRetrieve.mockResolvedValue({
+        id: "cus_1",
+        deleted: false,
+        invoice_settings: { default_payment_method: "pm_1" },
+        tax: { automatic_tax: status },
+      });
+    };
+
+    test("the paid-plan checkout charges tax", async () => {
+      mocks.checkoutSessionsCreate.mockResolvedValue({ url: "https://checkout.stripe.test/session" });
+
+      await createPaidPlanCheckoutSession({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        plan: "pro",
+        interval: "monthly",
+      });
+
+      expect(mocks.checkoutSessionsCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ automatic_tax: { enabled: true } })
+      );
+    });
+
+    test("an upgrade turns tax on before changing items, so the upgrade invoice carries it", async () => {
+      mockActiveSubscription("pro");
+      mockCustomerTaxStatus("supported");
+
+      await switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "scale",
+        targetInterval: "monthly",
+      });
+
+      expect(mocks.customersRetrieve).toHaveBeenCalledWith("cus_1", { expand: ["tax"] });
+      const updates = mocks.subscriptionsUpdate.mock.calls;
+      expect(updates[0]).toEqual(["sub_1", { automatic_tax: { enabled: true } }]);
+      // automatic_tax is not a pending-update attribute, so the item change must not carry it.
+      const itemChange = updates.find(([, params]) => params.payment_behavior === "pending_if_incomplete");
+      expect(itemChange?.[1]).not.toHaveProperty("automatic_tax");
+    });
+
+    test("an upgrade keeps billing without tax when Stripe cannot locate the customer", async () => {
+      mockActiveSubscription("pro");
+      mockCustomerTaxStatus("unrecognized_location");
+
+      await switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "scale",
+        targetInterval: "monthly",
+      });
+
+      for (const [, params] of mocks.subscriptionsUpdate.mock.calls) {
+        expect(params).not.toHaveProperty("automatic_tax");
+      }
+    });
+
+    test("an upgrade does not touch tax that is already on", async () => {
+      mockActiveSubscription("pro", { automatic_tax: { enabled: true } });
+      mockCustomerTaxStatus("supported");
+
+      await switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "scale",
+        targetInterval: "monthly",
+      });
+
+      for (const [, params] of mocks.subscriptionsUpdate.mock.calls) {
+        expect(params).not.toHaveProperty("automatic_tax");
+      }
+    });
+
+    test("a scheduled downgrade keeps tax on in both phases", async () => {
+      mockActiveSubscription("scale", { automatic_tax: { enabled: true } });
+
+      await switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "pro",
+        targetInterval: "monthly",
+      });
+
+      const [, scheduleParams] = mocks.subscriptionSchedulesUpdate.mock.calls[0];
+      expect(scheduleParams.phases).toHaveLength(2);
+      for (const phase of scheduleParams.phases) {
+        expect(phase.automatic_tax).toEqual({ enabled: true });
+      }
+    });
+
+    test("the upgrade preview includes the tax the upgrade will charge", async () => {
+      mockActiveSubscription("pro");
+      mockCustomerTaxStatus("supported");
+
+      await previewImmediateUpgradeCharge({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "scale",
+        targetInterval: "monthly",
+      });
+
+      expect(mocks.invoicesCreatePreview).toHaveBeenCalledWith(
+        expect.objectContaining({ automatic_tax: { enabled: true } })
+      );
+    });
+  });
 });
