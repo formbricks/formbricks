@@ -1,3 +1,4 @@
+import { LEAKY_AI_ERRORS, findPlantedContent } from "@/lib/ai/__mocks__/leaky-ai-errors";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import type { TV3SurveyGenerateBody } from "@/app/api/v3/surveys/generate/schemas";
@@ -269,4 +270,31 @@ describe("streamV3SurveyGeneration", () => {
     );
     expect(JSON.stringify(mocks.log.error.mock.calls)).not.toContain("secret-from-the-prompt");
   });
+
+  // ENG-3720: the completion rejects with the AI SDK's own error, which carries the prompt and the
+  // model's output in its message and fields.
+  test.each(LEAKY_AI_ERRORS)(
+    "logs a mid-generation failure with %s without what the call carried",
+    async (_, build) => {
+      const error = build();
+      const completion = Promise.reject(error);
+      completion.catch(() => undefined);
+      mocks.streamOrganizationAIObject.mockResolvedValue({
+        partialObjectStream: asyncIterable([]),
+        completion,
+      });
+
+      const events = await readEvents(await call());
+
+      expect(events.at(-1)).toMatchObject({ type: "error", code: "ai_generation_failed" });
+      expect(mocks.log.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          errName: error.name,
+          errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
+        }),
+        "AI survey generation stream failed"
+      );
+      expect(findPlantedContent(mocks.log.error.mock.calls)).toBeUndefined();
+    }
+  );
 });

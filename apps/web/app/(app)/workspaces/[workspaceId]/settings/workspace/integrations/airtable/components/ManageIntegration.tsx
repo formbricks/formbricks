@@ -11,7 +11,7 @@ import { TUserLocale } from "@formbricks/types/user";
 import { deleteIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/actions";
 import { AddIntegrationModal } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/airtable/components/AddIntegrationModal";
 import { timeSince } from "@/lib/time";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { RestrictedSurveyHint } from "@/modules/survey/visibility/components/restricted-survey-hint";
 import { hasRestrictedAttachedSurvey } from "@/modules/survey/visibility/lib/outbound";
 import { Alert, AlertButton, AlertDescription } from "@/modules/ui/components/alert";

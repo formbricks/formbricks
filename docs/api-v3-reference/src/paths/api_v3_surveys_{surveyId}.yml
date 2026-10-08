@@ -113,6 +113,8 @@ get:
                       alias: german
                       default: false
                       enabled: false
+                  showLanguageSwitch: false
+                  autoSelectLanguage: null
                   welcomeCard:
                     enabled: false
                   blocks:
@@ -159,6 +161,8 @@ get:
                       alias: german
                       default: false
                       enabled: false
+                  showLanguageSwitch: false
+                  autoSelectLanguage: null
                   welcomeCard:
                     enabled: false
                   blocks:

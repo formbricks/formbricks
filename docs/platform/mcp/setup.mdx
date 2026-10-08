@@ -76,6 +76,29 @@ Use this for **claude.ai** and **Claude Desktop**, where Formbricks is added as 
     Code** instead — it runs locally.
 </Warning>
 
+## ChatGPT (MCP apps)
+
+Use this to add Formbricks to **ChatGPT** as a custom MCP app. Custom MCP apps need ChatGPT
+**developer mode**, which is available on Business and Enterprise/Edu plans and has to be enabled by
+a workspace admin first — see OpenAI's
+[Developer mode and MCP apps in ChatGPT](https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt).
+
+<Steps>
+  <Step title="Create the app">
+    In ChatGPT, go to **Settings → Apps → Create**. Enter the MCP URL
+    `https://app.formbricks.com/api/mcp` and choose **OAuth** as the authentication mechanism.
+  </Step>
+  <Step title="Approve access">
+    ChatGPT opens Formbricks in your browser and registers itself. Sign in and **approve** the
+    requested access; ChatGPT then scans the available tools.
+  </Step>
+</Steps>
+
+<Note>
+  Like the Claude apps, ChatGPT connects from OpenAI's servers, so the MCP URL must be a **public
+  HTTPS** address — not `localhost`.
+</Note>
+
 ## Codex
 
 <Steps>
@@ -131,10 +154,15 @@ periodically for safety.
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="claude.ai says it couldn't register / connect">
-    Custom connectors connect from Anthropic's cloud, which can't reach `localhost` or a private
+  <Accordion title="claude.ai or ChatGPT says it couldn't register / connect">
+    Custom connectors connect from the vendor's cloud, which can't reach `localhost` or a private
     network. Use a **public HTTPS** MCP URL (Formbricks Cloud, or a tunnel to a self-hosted instance),
     or connect a local server with **Claude Code** instead.
+
+    If registration fails with `400 invalid_redirect_uri`, the client asked to register a callback
+    Formbricks doesn't allow. Formbricks accepts local (`http://localhost`, `127.0.0.1`, `[::1]`)
+    callbacks and the exact claude.ai and ChatGPT callbacks. To allow another hosted client, a
+    self-hoster can add its exact callback with `MCP_DCR_ALLOWED_REDIRECT_URIS`.
   </Accordion>
   <Accordion title="invalid_client or a stale-registration error after reconnecting">
     The client cached a registration that no longer exists on the server (e.g. the server data was

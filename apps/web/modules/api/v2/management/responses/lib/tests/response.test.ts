@@ -17,7 +17,11 @@ import {
   getOrganizationBilling,
   getOrganizationIdFromWorkspaceId,
 } from "@/modules/api/v2/management/responses/lib/organization";
-import { createResponse, getResponses } from "../response";
+import {
+  evaluateResponseQuotas,
+  loadQuotaEvaluationContext,
+} from "@/modules/ee/quotas/lib/evaluation-service";
+import { createResponse, createResponseWithQuotaEvaluation, getResponses } from "../response";
 
 vi.mock("@/modules/api/v2/management/responses/lib/organization", () => ({
   getOrganizationIdFromWorkspaceId: vi.fn(),
@@ -25,8 +29,14 @@ vi.mock("@/modules/api/v2/management/responses/lib/organization", () => ({
   getMonthlyOrganizationResponseCount: vi.fn(),
 }));
 
+vi.mock("@/modules/ee/quotas/lib/evaluation-service", () => ({
+  evaluateResponseQuotas: vi.fn(),
+  loadQuotaEvaluationContext: vi.fn(),
+}));
+
 vi.mock("@formbricks/database", () => ({
   prisma: {
+    $transaction: vi.fn(),
     response: {
       create: vi.fn(),
       findMany: vi.fn(),
@@ -255,6 +265,32 @@ describe("Response Lib", () => {
       if (!result.ok) {
         expect(result.error.type).toEqual("internal_server_error");
       }
+    });
+  });
+
+  describe("createResponseWithQuotaEvaluation", () => {
+    test("reads the quota definitions before opening the transaction (ENG-3285)", async () => {
+      const quotaContext = { quotas: [], survey: { id: responseInput.surveyId } } as never;
+      vi.mocked(loadQuotaEvaluationContext).mockResolvedValue(quotaContext);
+      vi.mocked(evaluateResponseQuotas).mockResolvedValue({ shouldEndSurvey: false });
+      vi.mocked(prisma.$transaction).mockImplementation((async (cb: (tx: typeof prisma) => unknown) =>
+        cb(prisma)) as never);
+      vi.mocked(prisma.response.create).mockResolvedValue(response);
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(ok(organizationId));
+      vi.mocked(getOrganizationBilling).mockResolvedValue(ok(organizationBilling));
+      vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(50));
+
+      const result = await createResponseWithQuotaEvaluation(workspaceId, responseInput);
+
+      expect(result.ok).toBe(true);
+      expect(loadQuotaEvaluationContext).toHaveBeenCalledWith(responseInput.surveyId);
+      expect(vi.mocked(loadQuotaEvaluationContext).mock.invocationCallOrder[0]).toBeLessThan(
+        vi.mocked(prisma.$transaction).mock.invocationCallOrder[0]
+      );
+      // Evaluated against the survey of the row written, with the preloaded context.
+      expect(evaluateResponseQuotas).toHaveBeenCalledWith(
+        expect.objectContaining({ surveyId: response.surveyId, quotaContext })
+      );
     });
   });
 

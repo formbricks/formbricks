@@ -9,6 +9,9 @@
   "overrides": {
     "gaxios": {
       "uuid": "11.1.1"
+    },
+    "get-uri": {
+      "basic-ftp": "6.2.2"
     }
   }
 }

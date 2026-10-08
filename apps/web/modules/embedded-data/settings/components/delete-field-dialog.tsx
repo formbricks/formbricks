@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { deleteSharedEmbeddedDataAction } from "@/modules/embedded-data/actions";
 import type { TEmbeddedDataUsageItem, TSharedEmbeddedData } from "@/modules/embedded-data/types";
 import { Button } from "@/modules/ui/components/button";

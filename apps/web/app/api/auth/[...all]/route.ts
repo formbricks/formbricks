@@ -64,8 +64,9 @@ const handler = async (request: Request): Promise<Response> => {
   // hooks, the audits — reads the MAPPED request, so each sees the endpoint that actually ran.
   // Two normalisations, both because 1.7 changed a contract that clients and IdPs already depend on and
   // neither is ours to change: the pinned SSO callback path, and `application_type` on dynamic client
-  // registration (see each module). The DCR redirect-URI allowlist (ENG-3086) rides the same body read
-  // and rejects non-loopback registrations before Better Auth sees them. All three no-op otherwise.
+  // registration (see each module). The DCR redirect-URI allowlist (ENG-3086, ENG-3471) rides the same
+  // body read and rejects registrations whose redirect URIs are neither loopback nor an exact hosted
+  // connector callback, before Better Auth sees them. All three no-op otherwise.
   const preparedRequest = await prepareDcrRequest(mapLegacySsoCallbackRequest(request));
   // A rejected DCR registration is the one early return here. It runs before auth.handler, so it skips
   // Better Auth's `/oauth2/register` rate limit (5/min) and the SSO-callback observability below — both

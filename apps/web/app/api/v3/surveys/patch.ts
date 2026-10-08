@@ -325,6 +325,8 @@ export async function executeV3SurveyPatch(params: {
     name: document.name,
     status: document.status,
     metadata: document.metadata,
+    showLanguageSwitch: document.showLanguageSwitch,
+    autoSelectLanguage: document.autoSelectLanguage,
     welcomeCard: document.welcomeCard,
     blocks: stripIsDraftFromBlocks(document.blocks),
     endings: document.endings,

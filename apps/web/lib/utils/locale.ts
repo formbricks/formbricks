@@ -1,6 +1,16 @@
 import { headers } from "next/headers";
 import { TUserLocale } from "@formbricks/types/user";
 import { AVAILABLE_LOCALES, DEFAULT_LOCALE } from "@/lib/constants";
+import { parseAcceptLanguage } from "@/lib/utils/accept-language";
+
+/**
+ * The respondent's languages from the request's Accept-Language header, most preferred first. Reading
+ * the header makes the calling route dynamic, so the page is rendered per request, never shared.
+ */
+export const getAcceptedLanguages = async (): Promise<string[]> => {
+  const headersList = await headers();
+  return parseAcceptLanguage(headersList.get("accept-language"));
+};
 
 export const findMatchingLocale = async (): Promise<TUserLocale> => {
   const headersList = await headers();
