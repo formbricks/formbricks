@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
+import { cpuMsSince } from "./__fixtures__/cpu-time";
 import { QsfIdRegistry, findFreeSuffixedName, isObjectMemberName } from "./id-registry";
 
 describe("QsfIdRegistry", () => {
@@ -60,11 +61,11 @@ describe("QsfIdRegistry", () => {
 
   test("trims the underscores around a tag in linear time", () => {
     const registry = new QsfIdRegistry();
-    const startedAt = performance.now();
+    const startedAt = process.cpuUsage();
 
     expect(registry.claim(`${"_".repeat(60)}Q1${"_".repeat(100_000)}`, "QID1")).toBe("Q1");
     expect(registry.claim(`${"_".repeat(127)}!`, "QID2")).toBe("QID2");
-    expect(performance.now() - startedAt).toBeLessThan(50);
+    expect(cpuMsSince(startedAt)).toBeLessThan(50);
   });
 });
 

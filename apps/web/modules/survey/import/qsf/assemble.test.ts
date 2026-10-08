@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { cpuMsSince } from "./__fixtures__/cpu-time";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { loadRecordedPlan, recordedGenerate } from "./__fixtures__/recorded-plans";
 import { planQsfImport } from "./ai-plan";
@@ -174,11 +175,11 @@ describe("assembleQsfDraft", () => {
         enabled: true,
       },
     ];
-    const startedAt = performance.now();
+    const startedAt = process.cpuUsage();
 
     expect(disambiguateLabels(items, ["en-US"], languages)).toBe(true);
 
-    expect(performance.now() - startedAt).toBeLessThan(100);
+    expect(cpuMsSince(startedAt)).toBeLessThan(100);
     const labels = items.map((item) => item.label["en-US"]);
     expect(new Set(labels).size).toBe(200);
   });
@@ -337,11 +338,11 @@ describe("buildHiddenFields", () => {
     // Each is over 64 characters, so each is renamed from the same 56-character stem; the eleventh
     // needs `_field_10`, which used to make every candidate too long to accept.
     const names = Array.from({ length: 11 }, (_, index) => `${"a".repeat(56)}_${"x".repeat(10)}${index}`);
-    const startedAt = performance.now();
+    const startedAt = process.cpuUsage();
 
     const { fieldIds, issues } = buildHiddenFields(names);
 
-    expect(performance.now() - startedAt).toBeLessThan(100);
+    expect(cpuMsSince(startedAt)).toBeLessThan(100);
     expect(fieldIds.slice(0, 3)).toEqual([
       "a".repeat(56),
       `${"a".repeat(56)}_field`,
@@ -355,11 +356,11 @@ describe("buildHiddenFields", () => {
 
   test("gives two hundred colliding names distinct, valid ids, quickly", () => {
     const names = Array.from({ length: 200 }, (_, index) => `${"Б".repeat(3)}${"b".repeat(70)}${index}`);
-    const startedAt = performance.now();
+    const startedAt = process.cpuUsage();
 
     const { fieldIds, idByName } = buildHiddenFields(names);
 
-    expect(performance.now() - startedAt).toBeLessThan(200);
+    expect(cpuMsSince(startedAt)).toBeLessThan(200);
     expect(new Set(fieldIds.map((id) => id.toLowerCase())).size).toBe(200);
     expect(fieldIds.every(isSafeFieldId)).toBe(true);
     expect(names.every((name) => idByName.has(name))).toBe(true);

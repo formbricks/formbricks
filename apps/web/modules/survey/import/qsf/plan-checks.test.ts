@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { cpuMsSince } from "./__fixtures__/cpu-time";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { loadRecordedPlan } from "./__fixtures__/recorded-plans";
 import {
@@ -243,11 +244,11 @@ describe("cleanNote", () => {
     (unit) => {
       // 20,000 characters: a quadratic scan of a dotted run took seconds here, a linear one milliseconds.
       const run = unit.repeat(Math.ceil(20_000 / unit.length));
-      const startedAt = performance.now();
+      const startedAt = process.cpuUsage();
 
       run.replaceAll(QSF_NOTE_URL_PATTERN, "…");
 
-      expect(performance.now() - startedAt).toBeLessThan(250);
+      expect(cpuMsSince(startedAt)).toBeLessThan(250);
     }
   );
 

@@ -1,8 +1,20 @@
 import { monitorEventLoopDelay } from "node:perf_hooks";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { readQsf } from "./read-qsf";
 import { containsMarkup, sanitizeQsfTexts, sanitizeText } from "./sanitize-text";
+
+const yields = vi.hoisted(() => ({ count: 0 }));
+vi.mock("node:timers/promises", async (importOriginal) => {
+  const original = await importOriginal<typeof import("node:timers/promises")>();
+  return {
+    ...original,
+    setImmediate: (...args: Parameters<typeof original.setImmediate>) => {
+      yields.count += 1;
+      return original.setImmediate(...args);
+    },
+  };
+});
 
 describe("sanitizeText", () => {
   describe("plain text", () => {
@@ -158,13 +170,17 @@ describe("sanitizeQsfTexts", () => {
       const tick = () => new Promise((resolve) => setTimeout(resolve, 20));
       histogram.enable();
       await tick();
+      yields.count = 0;
       await sanitizeQsfTexts(survey, new AbortController().signal);
       await tick();
       histogram.disable();
 
-      // Each slice runs ~10 ms plus one small text. Loose, for a loaded CI runner, and still far under
-      // the whole run, which is what a sanitizer that stops yielding blocks for.
-      expect(histogram.max / 1e6).toBeLessThan(200);
+      // Structural: over half a second of work in ~10 ms slices gives the event loop back dozens of
+      // times; a sanitizer that stops yielding gives it back none.
+      expect(yields.count).toBeGreaterThanOrEqual(20);
+      // Coarse: each slice runs ~10 ms plus one small text; a loaded machine stretches it, so this only
+      // catches the whole run held at once.
+      expect(histogram.max / 1e6).toBeLessThan(1_000);
     }
   );
 });
