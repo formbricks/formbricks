@@ -52,9 +52,49 @@ const isTargetRecord = (record: FeedbackRecordData, tenantId: string, target: TH
   (!target.responseIds || target.responseIds.includes(record.submission_id));
 
 /**
+ * The first page of the target's records in one tenant, every one re-checked against the filters, or why
+ * it can't be had.
+ */
+const listTenantPage = async (
+  target: THubCleanupTarget,
+  tenantId: string
+): Promise<{ records: FeedbackRecordData[] } | { error: string }> => {
+  const { data, error } = await listFeedbackRecords({
+    tenant_id: tenantId,
+    source_type: [SURVEY_SOURCE_TYPE],
+    source_id: [target.surveyId],
+    ...(target.responseIds ? { submission_id: [...target.responseIds] } : {}),
+    limit: HUB_CLEANUP_PAGE_SIZE,
+  });
+  if (error || !data) {
+    return {
+      error: error && isHubNotConfigured(error) ? "hubNotConfigured" : `hubList:${error?.status ?? 0}`,
+    };
+  }
+  if (!data.data.every((record) => isTargetRecord(record, tenantId, target)))
+    return { error: "hubFilterMismatch" };
+  return { records: data.data };
+};
+
+/** Delete one listed page. A 404 means the record is already gone, and counts as deleted. */
+const deletePage = async (
+  records: readonly FeedbackRecordData[]
+): Promise<{ deleted: number; error: string | null; allAlreadyGone: boolean }> => {
+  const results = await mapWithConcurrency(records, HUB_CLEANUP_CONCURRENCY, (record) =>
+    deleteFeedbackRecord(record.id)
+  );
+  const failure = results.find((result) => result.error && result.error.status !== HUB_NOT_FOUND);
+  return {
+    deleted: results.filter((result) => !result.error || result.error.status === HUB_NOT_FOUND).length,
+    error: failure?.error ? `hubDelete:${failure.error.status}` : null,
+    allAlreadyGone: results.every((result) => result.error?.status === HUB_NOT_FOUND),
+  };
+};
+
+/**
  * Delete a deleted survey's Hub records, or those of some of its deleted responses, in every given tenant.
  * Lists the first page and deletes it until a listing comes back empty: never pages with a cursor, since
- * the deletes move the pages under it. A 404 on delete means the record is already gone.
+ * the deletes move the pages under it.
  */
 export const deleteHubRecords = async (
   target: THubCleanupTarget,
@@ -67,36 +107,17 @@ export const deleteHubRecords = async (
       if (isHubCallBudgetSpent(budget)) return { status: "budget", count };
       budget.remaining -= 1;
 
-      const { data, error } = await listFeedbackRecords({
-        tenant_id: tenantId,
-        source_type: [SURVEY_SOURCE_TYPE],
-        source_id: [target.surveyId],
-        ...(target.responseIds ? { submission_id: [...target.responseIds] } : {}),
-        limit: HUB_CLEANUP_PAGE_SIZE,
-      });
-      if (error || !data) {
-        return {
-          status: "failed",
-          error: error && isHubNotConfigured(error) ? "hubNotConfigured" : `hubList:${error?.status ?? 0}`,
-        };
-      }
-      if (data.data.length === 0) break;
-      if (!data.data.every((record) => isTargetRecord(record, tenantId, target))) {
-        return { status: "failed", error: "hubFilterMismatch" };
-      }
+      const page = await listTenantPage(target, tenantId);
+      if ("error" in page) return { status: "failed", error: page.error };
+      if (page.records.length === 0) break;
 
-      budget.remaining -= data.data.length;
-      const results = await mapWithConcurrency(data.data, HUB_CLEANUP_CONCURRENCY, (record) =>
-        deleteFeedbackRecord(record.id)
-      );
-      const failures = results.filter((result) => result.error && result.error.status !== HUB_NOT_FOUND);
-      count += results.length - failures.length;
-      if (failures[0]?.error) return { status: "failed", error: `hubDelete:${failures[0].error.status}` };
+      budget.remaining -= page.records.length;
+      const outcome = await deletePage(page.records);
+      count += outcome.deleted;
+      if (outcome.error) return { status: "failed", error: outcome.error };
       // Every record listed was already gone: the listing is lagging behind the deletes. Re-listing at
       // once would spin through the budget on the same page, so leave it to the pass after the settle.
-      if (results.every((result) => result.error?.status === HUB_NOT_FOUND)) {
-        return { status: "deleted", count };
-      }
+      if (outcome.allAlreadyGone) return { status: "deleted", count };
     }
   }
 

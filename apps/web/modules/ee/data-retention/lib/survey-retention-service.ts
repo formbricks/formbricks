@@ -59,7 +59,10 @@ export async function getSurveyRetentionFacts(survey: {
   };
   const endedAt = (entity: "surveys" | "responses") =>
     heldUntil.find((row) => row.entity === entity)?.endedAt ?? null;
-  const latest = (a: Date | null, b: Date | null) => (a && b ? (a > b ? a : b) : (a ?? b));
+  const latest = (a: Date | null, b: Date | null) => {
+    if (!a || !b) return a ?? b;
+    return a > b ? a : b;
+  };
 
   return {
     createdAt: survey.createdAt,

@@ -66,9 +66,10 @@ export const resolveSurveyNoticeRecipients = async (
   );
 
   // Owners before managers, then a stable order, so the fallback is the same person every night.
+  const rank = (candidate: TCandidate) => (candidate.role === "owner" ? 0 : 1);
   const fallbacks = [...byId.values()]
     .filter((candidate) => candidate.role === "owner" || candidate.role === "manager")
-    .sort((a, b) => (a.role === b.role ? a.userId.localeCompare(b.userId) : a.role === "owner" ? -1 : 1));
+    .sort((a, b) => rank(a) - rank(b) || a.userId.localeCompare(b.userId));
 
   const checks = personalIds
     .filter((userId) => byId.has(userId))

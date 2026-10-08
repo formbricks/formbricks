@@ -39,24 +39,24 @@ export const collectDueTargets = async <TTarget>(
 ): Promise<{ notify: TTarget[]; act: TTarget[] }> => {
   const notify: TTarget[] = [];
   const act: TTarget[] = [];
+  const isFull = () => notify.length >= RETENTION_NOTICES_PER_RUN && act.length >= RETENTION_ACTIONS_PER_RUN;
+  const sort = (target: TTarget) => {
+    const step = stepOf(target);
+    if (step === "notify" && notify.length < RETENTION_NOTICES_PER_RUN) notify.push(target);
+    if (step === "act" && act.length < RETENTION_ACTIONS_PER_RUN) act.push(target);
+  };
   const scanDeadline = Date.now() + Math.max(0, context.deadline - Date.now()) / 2;
   let afterKey = context.resumeAfter ?? undefined;
   let reachedEnd = false;
-  while (
-    Date.now() < scanDeadline &&
-    (notify.length < RETENTION_NOTICES_PER_RUN || act.length < RETENTION_ACTIONS_PER_RUN)
-  ) {
+  while (Date.now() < scanDeadline && !isFull()) {
     const page = await runSweepTransaction((tx) => readPage(tx, afterKey));
-    for (const target of page) {
-      const step = stepOf(target);
-      if (step === "notify" && notify.length < RETENTION_NOTICES_PER_RUN) notify.push(target);
-      if (step === "act" && act.length < RETENTION_ACTIONS_PER_RUN) act.push(target);
-    }
-    if (page.length < RETENTION_SWEEP_BATCH_SIZE) {
+    page.forEach(sort);
+    const last = page.at(-1);
+    if (page.length < RETENTION_SWEEP_BATCH_SIZE || last === undefined) {
       reachedEnd = true;
       break;
     }
-    afterKey = keyOf(page[page.length - 1]);
+    afterKey = keyOf(last);
   }
   if (!reachedEnd && afterKey) {
     await prisma.retentionRun.update({ where: { id: context.runId }, data: { scanCursor: afterKey } });
@@ -93,5 +93,5 @@ export const surveySkips = (
 ];
 
 /** The latest of the given dates: what a notice must be claimed at or after to count. */
-export const latestOf = (...dates: (Date | null)[]): Date =>
-  dates.filter((date): date is Date => date !== null).reduce((a, b) => (a > b ? a : b));
+export const latestOf = (first: Date, ...others: (Date | null)[]): Date =>
+  others.reduce<Date>((latest, date) => (date && date > latest ? date : latest), first);

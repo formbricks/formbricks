@@ -110,6 +110,21 @@ const sweepPolicy = async (
   return outcome;
 };
 
+/** Each policy of one licensed organisation, in turn, counted on the night's summary. */
+const sweepOrganization = async (
+  organizationId: string,
+  sweepers: TRetentionSweepers,
+  summary: TRetentionSweepSummary
+): Promise<void> => {
+  for (const entity of SWEEP_ORDER) {
+    const sweeper = sweepers[entity];
+    if (!sweeper) continue;
+    const outcome = await sweepPolicy(organizationId, entity, sweeper);
+    if (outcome !== "none") summary.runs += 1;
+    if (outcome === "failed") summary.failedRuns += 1;
+  }
+};
+
 /**
  * One night's sweep: every organisation with an enabled policy, each policy's run in turn. An
  * organisation without the licence (or whose licence lookup fails) is skipped and nothing of it is
@@ -139,17 +154,10 @@ export const runDataRetentionSweep = async ({
       break;
     }
     summary.organizations += 1;
-    if (!(await isLicensed(organizationId, checkLicence))) {
+    if (await isLicensed(organizationId, checkLicence)) {
+      await sweepOrganization(organizationId, sweepers, summary);
+    } else {
       summary.unlicensed += 1;
-      continue;
-    }
-
-    for (const entity of SWEEP_ORDER) {
-      const sweeper = sweepers[entity];
-      if (!sweeper) continue;
-      const outcome = await sweepPolicy(organizationId, entity, sweeper);
-      if (outcome !== "none") summary.runs += 1;
-      if (outcome === "failed") summary.failedRuns += 1;
     }
   }
 
