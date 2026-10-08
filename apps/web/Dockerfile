@@ -9,18 +9,19 @@ FROM node:24-alpine3.23 AS base
 FROM alpine:3.23 AS node-runtime-builder
 ARG NODE_VERSION=24.21.0
 ARG NODE_SOURCE_SHA256=a6f54defb6fd7c84f41dba13d61e78e9b4e0961712cf61f29715c05f5ced94fc
-ARG NODE_BUILD_JOBS=2
+ARG NODE_BUILD_JOBS=4
 ARG TARGETARCH
 RUN apk add --no-cache ccache curl g++ linux-headers make python3 xz \
     "openssl-dev>=3.5.9-r0" "zlib-dev>=1.3.2-r1"
 ENV CC="ccache gcc" CXX="ccache g++" CCACHE_MAXSIZE=3G
 WORKDIR /node-source
-RUN --mount=type=cache,id=node-runtime-ccache-${TARGETARCH},target=/root/.cache/ccache \
-    curl --fail --location --retry 3 --output node.tar.xz "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}.tar.xz" \
+RUN curl --proto '=https' --proto-redir '=https' --fail --location --retry 3 \
+      --output node.tar.xz "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}.tar.xz" \
     && echo "${NODE_SOURCE_SHA256}  node.tar.xz" | sha256sum -c - \
     && tar -xJf node.tar.xz --strip-components=1 \
-    && ./configure --shared-openssl --shared-zlib --without-npm \
-    && make -j${NODE_BUILD_JOBS} \
+    && ./configure --shared-openssl --shared-zlib --without-npm
+RUN --mount=type=cache,id=node-runtime-ccache-${TARGETARCH},target=/root/.cache/ccache \
+    make -j${NODE_BUILD_JOBS} \
     && install -m 755 out/Release/node /usr/local/bin/node
 RUN install -D -m 644 LICENSE /usr/local/share/doc/node/LICENSE
 
