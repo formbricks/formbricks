@@ -224,6 +224,24 @@ describe("runQsfImport on recorded plans", () => {
     30_000
   );
 
+  test("turns on the language switch and browser-language selection for a draft in several languages", async () => {
+    answerFrom("multilang-en-de.qsf");
+    const multi = await run("multilang-en-de.qsf");
+    answerFrom("simple.qsf");
+    const single = await run("simple.qsf");
+
+    expect(multi.payload).toMatchObject({ showLanguageSwitch: true, autoSelectLanguage: true });
+    expect("showLanguageSwitch" in single.payload).toBe(false);
+    expect("autoSelectLanguage" in single.payload).toBe(false);
+    // The create takes them as they are, and stores both.
+    const parsed = prepareV3SurveyCreateInput(JSON.parse(JSON.stringify(multi.payload)));
+    expect(parsed.ok && parsed.document).toMatchObject({
+      showLanguageSwitch: true,
+      autoSelectLanguage: true,
+    });
+    expect(mocks.realCheckQsfDraft(multi.payload)).toEqual([]);
+  });
+
   test("calls the organization's AI with the import's tracing feature", async () => {
     answerFrom("simple.qsf");
 

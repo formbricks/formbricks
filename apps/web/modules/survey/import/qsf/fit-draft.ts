@@ -1,5 +1,5 @@
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
-import type { TQsfAssembly, TQsfDraftDocument } from "./assemble";
+import { type TQsfAssembly, type TQsfDraftDocument, withLanguageSettings } from "./assemble";
 import type { TQsfIssue, TQsfPage, TQsfQuestion, TQsfSurvey, TQsfTextKey } from "./qsf-model";
 
 /**
@@ -89,6 +89,7 @@ function dropLanguages(document: TQsfDraftDocument, overBy: number, issues: TQsf
 
   document.languages = document.languages.filter((language) => !dropped.has(language.code));
   for (const text of texts) for (const code of dropped) delete text[code];
+  withLanguageSettings(document);
   return remaining;
 }
 
@@ -249,6 +250,8 @@ const RECALL_GROWTH_BYTES = 86;
 const LABEL_SUFFIX_BYTES = 6;
 /** A hidden field id (a safe identifier of at most 64 characters), quoted, with its comma. */
 const HIDDEN_FIELD_BYTES = 67;
+/** `"showLanguageSwitch":true,"autoSelectLanguage":true` and their commas, on a multi-language draft. */
+const LANGUAGE_SETTINGS_BYTES = 52;
 
 /** Whether a sanitized text may show nothing: empty, blank, or markup that may hold no text. */
 const mayShowNothing = (text: string | undefined): boolean =>
@@ -344,6 +347,7 @@ export function fitQsfSurveyToCreateLimit(
 
   const fixed =
     DOCUMENT_SKELETON_BYTES +
+    LANGUAGE_SETTINGS_BYTES +
     3 * jsonBytes(survey.name) +
     HIDDEN_FIELD_BYTES * survey.embeddedDataNames.length +
     2 * jsonBytes(survey.endRedirectUrl ?? "") +

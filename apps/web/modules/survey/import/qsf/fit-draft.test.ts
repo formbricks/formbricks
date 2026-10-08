@@ -134,6 +134,29 @@ describe("fitQsfDraftToCreateLimit", () => {
     expect(assembly.document.blocks.flatMap((block) => block.elements)).toHaveLength(10);
   });
 
+  test("keeps the language settings while languages are left, and drops them with the last but one", () => {
+    const several = buildAssembly({ languages: LANGUAGES, blocks: 2, perBlock: 5, textChars: 1_000 });
+    Object.assign(several.assembly.document, { showLanguageSwitch: true, autoSelectLanguage: true });
+    fitQsfDraftToCreateLimit(
+      several.assembly,
+      several.survey,
+      Math.floor((measureQsfDraftBytes(several.assembly.document) * 3.2) / 5)
+    );
+    expect(several.assembly.document.languages.length).toBeGreaterThan(1);
+    expect(several.assembly.document).toMatchObject({ showLanguageSwitch: true, autoSelectLanguage: true });
+
+    const one = buildAssembly({ languages: LANGUAGES, blocks: 2, perBlock: 5, textChars: 1_000 });
+    Object.assign(one.assembly.document, { showLanguageSwitch: true, autoSelectLanguage: true });
+    fitQsfDraftToCreateLimit(
+      one.assembly,
+      one.survey,
+      Math.floor(measureQsfDraftBytes(one.assembly.document) / 4.5)
+    );
+    expect(one.assembly.document.languages.map((language) => language.code)).toEqual(["en-US"]);
+    expect(one.assembly.document.showLanguageSwitch).toBeUndefined();
+    expect(one.assembly.document.autoSelectLanguage).toBeUndefined();
+  });
+
   test("drops trailing questions, and their emptied blocks, once only the default language is left", () => {
     const { assembly, survey } = buildAssembly({
       languages: ["en-US"],

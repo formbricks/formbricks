@@ -99,6 +99,13 @@ export interface TQsfDraftDocument {
   blocks: { id: string; name: string; elements: TQsfDraftElement[] }[];
   endings: TQsfDraftEnding[];
   hiddenFields: { enabled: boolean; fieldIds: string[] };
+  /**
+   * Set, both true, on a draft in more than one language: Qualtrics shows its respondents a language
+   * menu and opens a survey in the browser's language, and imported surveys keep doing so (#9508's
+   * fields). Left out on a one-language draft, v3's default. See `withLanguageSettings`.
+   */
+  showLanguageSwitch?: true;
+  autoSelectLanguage?: true;
 }
 
 export interface TQsfAssembly {
@@ -199,6 +206,25 @@ const choiceShuffle = (randomized: boolean, hasSpecial: boolean): "none" | "all"
   if (!randomized) return "none";
   return hasSpecial ? "exceptLast" : "all";
 };
+
+/**
+ * The respondent language settings for a draft in `languageCount` languages: the switch and
+ * browser-language selection on with more than one, nothing with one.
+ */
+export const languageSettingsFor = (
+  languageCount: number
+): Pick<TQsfDraftDocument, "showLanguageSwitch" | "autoSelectLanguage"> =>
+  languageCount > 1 ? { showLanguageSwitch: true, autoSelectLanguage: true } : {};
+
+/**
+ * The document with the language settings its languages call for, after a fit dropped some: a draft
+ * cut down to one language loses them.
+ */
+export function withLanguageSettings(document: TQsfDraftDocument): void {
+  delete document.showLanguageSwitch;
+  delete document.autoSelectLanguage;
+  Object.assign(document, languageSettingsFor(document.languages.length));
+}
 
 /** Disambiguate labels that repeat within a language: `N/A`, `N/A (2)`. Returns whether any changed. */
 export function disambiguateLabels(
@@ -346,6 +372,7 @@ class QsfAssembler {
         blocks,
         endings: this.buildEndings(),
         hiddenFields: { enabled: hidden.fieldIds.length > 0, fieldIds: hidden.fieldIds },
+        ...languageSettingsFor(this.languageCodes.length),
       },
       issues: this.issues,
       elementRefs,
