@@ -4,6 +4,195 @@ description: "Formbricks Self-hosted version migration"
 icon: "arrow-right"
 ---
 
+## If a migration fails
+
+From Formbricks 5.3 on, one runner applies every database migration in order: the `formbricks-migrate` service on
+Docker Compose, the `formbricks-migration` Job on Kubernetes (the application pods themselves when the chart sets
+`migration.enabled: false`), or `formbricks-authzed-prepare` during a v5 to v6 upgrade. When a migration fails,
+the runner stops and no later migration runs. A failed schema migration then blocks every later run until you
+resolve it; a failed data migration is retried on the next run.
+
+<Warning>
+  Do not delete volumes, restore a backup or roll the images back before you know which migration failed and
+  why. Most failures are fixed in place. The output below can contain SQL and data from your instance, so keep
+  it out of public issues.
+</Warning>
+
+### Open a SQL session
+
+The steps below run SQL as the user that owns the Formbricks tables:
+
+<Tabs>
+  <Tab title="One-Click / Docker Compose">
+    ```bash
+    docker compose exec postgres psql -U postgres -d formbricks
+    ```
+  </Tab>
+  <Tab title="Kubernetes">
+    ```bash
+    kubectl exec -it -n formbricks formbricks-postgresql-0 -- psql -U formbricks -d formbricks
+    ```
+
+    <Info>
+      If your PostgreSQL pod has a different name, run `kubectl get pods -n formbricks` to find it.
+    </Info>
+  </Tab>
+</Tabs>
+
+With an external or managed PostgreSQL, connect with `psql` as the user in `MIGRATE_DATABASE_URL`, or in
+`DATABASE_URL` if you do not set it. The migrations themselves need a direct or session-pooled connection: a
+transaction-mode pooler such as PgBouncer can split their session settings across server connections.
+
+### 1. Find the failed migration
+
+The runner's output names it. `docker compose run … formbricks-migrate` and the update script print it to your
+terminal; `docker compose logs --tail=200 formbricks-migrate` has it only when the service ran under
+`docker compose up`. On Kubernetes, read `kubectl logs -n formbricks job/formbricks-migration` (by default the
+chart deletes the Job 300 seconds after it fails). A first failure prints `Schema migration batch failed:` with
+every migration in that batch; the error names the failed one as `Migration name:`, or as `migration_name="…"`
+when the real error was hidden. Every run after that stops with `P3009` and names it again. If you have no log,
+including with `formbricks-authzed-prepare`, which prints only `upgrade_database_migration_failed`, the database
+always knows:
+
+```sql
+SELECT migration_name, started_at FROM "_prisma_migrations"
+WHERE finished_at IS NULL AND rolled_back_at IS NULL;
+```
+
+If that returns no row but the log says `Data migration … failed`, see [Data migrations](#data-migrations)
+below. If the log just stops without an error, the runner was stopped (Compose stops it after 300 seconds) and
+its last statement may still be running in PostgreSQL: check that first, as step 3 describes.
+
+### 2. Find the real error
+
+The runner's error usually shows it after `Database error:`. If it shows only `current transaction is aborted,
+commands ignored until end of transaction block`, the migration runs in a transaction of its own and the
+[real error was hidden](https://github.com/prisma/prisma/issues/15295). Find it in the PostgreSQL log, on the
+`ERROR` line just before that one:
+
+```bash
+docker compose logs postgres | grep -E "ERROR|STATEMENT"
+kubectl logs -n formbricks formbricks-postgresql-0 | grep -E "ERROR|STATEMENT"
+```
+
+On a managed service, use your provider's database log. `canceling statement due to lock timeout` is the most
+common cause: another session held a lock on the table the migration changes, for example a long-running query,
+a backup, or an old Formbricks pod still running. Stop it, or retry at a quieter time. If the error itself lists
+recovery steps, as some migrations' guards do, follow those.
+
+### 3. Check what the migration left behind
+
+First make sure nothing is still running it. On Compose, the runner has exited. On Kubernetes, the Job has
+finished retrying (`kubectl wait -n formbricks --for=condition=Failed job/formbricks-migration --timeout=10m`
+returns, or the Job is gone). With `migration.enabled: false` the application pods are the runner and retry on
+every restart, so scale them to 0 (`kubectl scale deploy -n formbricks formbricks --replicas=0`) until step 4. A
+statement keeps running in PostgreSQL after its runner is stopped, so also list what the database is still
+running:
+
+```sql
+SELECT pid, now() - query_start AS running_for, left(query, 80) AS query,
+       pid IN (SELECT pid FROM pg_locks WHERE locktype = 'advisory' AND objid = 72707369) AS migration_lock
+FROM pg_stat_activity
+WHERE datname = current_database() AND state IS DISTINCT FROM 'idle' AND pid <> pg_backend_pid();
+```
+
+`migration_lock` marks a schema migration: Prisma holds that lock while it applies one. Data migrations take no
+such lock, so also look for statements on the tables the migration changes. Wait for every migration statement
+to end.
+
+Then read the failed migration's file. A released migration never changes, so the copy in your image is the one
+that ran:
+
+```bash
+migration_name='<the name from step 1>'
+docker compose run --rm --no-deps --entrypoint cat formbricks-migrate \
+  "packages/database/dist/migration/${migration_name}/migration.sql"
+```
+
+It is also on GitHub under any release that ships it, for example
+`https://github.com/formbricks/formbricks/blob/6.0.2/packages/database/migration/<migration_name>/migration.sql`.
+
+- **The runner printed an error, and the whole file is one `BEGIN; … COMMIT;` block, with no statement before
+  `BEGIN;` or after `COMMIT;`:** PostgreSQL rolled the whole file back, so there is nothing to undo. A file that
+  commits a block and then runs more statements, such as `20250911192630_remove_deprecated_fields_and_tables`,
+  belongs under the next case.
+- **Otherwise, including any migration whose runner was stopped instead of printing an error:** the statements
+  before the failing one may have taken effect, even inside a `BEGIN; … COMMIT;` block. For a stopped runner,
+  possibly every statement in the file did: a file Prisma sends as one string runs to its end without a client.
+  Check which did (`\d "Table"` for schema changes, a `SELECT` for data) and undo those before you continue. If
+  the new version is already serving, stop it first (`docker compose stop formbricks`, or scale the Deployment to
+  0) and keep it stopped until you run the migrations again. Undoing a `DROP` means recreating the object so the
+  retry can drop it again; if a change cannot be undone, such as an `UPDATE` whose old values are gone, stop and
+  restore the pre-upgrade backup instead. You need not undo:
+  - `IF NOT EXISTS`, `IF EXISTS` and `CREATE OR REPLACE` statements are safe to repeat, apart from a failed
+    `CREATE INDEX CONCURRENTLY`. That leaves an invalid index which `IF NOT EXISTS` then skips: list invalid
+    indexes with `SELECT indexrelid::regclass FROM pg_index WHERE NOT indisvalid;` and drop only those the
+    migration's file creates, with `SET lock_timeout = 0;` and then `DROP INDEX CONCURRENTLY`.
+  - An `UPDATE`, `INSERT` or `DELETE` is safe to repeat only if running it twice changes nothing.
+
+### 4. Mark it rolled back and run the migrations again
+
+Once the cause is fixed, mark the failed migration rolled back. This is what
+`prisma migrate resolve --rolled-back` does. It should report `UPDATE 1`; `UPDATE 0` means the name is wrong or
+the migration is not recorded as failed:
+
+```sql
+UPDATE "_prisma_migrations" SET rolled_back_at = now()
+WHERE migration_name = '<migration_name>' AND finished_at IS NULL AND rolled_back_at IS NULL;
+```
+
+Then run the migrations again:
+
+<Tabs>
+  <Tab title="One-Click / Docker Compose">
+    ```bash
+    docker compose run --rm --no-deps formbricks-migrate &&
+    docker compose up -d
+    ```
+
+    The service stops the runner after 300 seconds. If a migration needs longer, run it without that limit:
+
+    ```bash
+    docker compose run --rm --no-deps formbricks-migrate "node packages/database/dist/scripts/apply-migrations.js" &&
+    docker compose up -d
+    ```
+
+    During a v5 to v6 upgrade, re-run `formbricks-authzed-prepare` as the
+    [v6 maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade) describes instead.
+  </Tab>
+  <Tab title="Kubernetes">
+    Delete the failed Job, then run the same `helm upgrade` (or Argo CD sync) again. Helm does not re-run a Job
+    that still exists, and refuses to change one (`field is immutable`):
+
+    ```bash
+    kubectl delete job -n formbricks formbricks-migration --ignore-not-found
+    ```
+
+    With `migration.enabled: false`, scale the Deployment back up instead; its pods run the migrations on start.
+
+    Otherwise, if you scaled the Deployment to 0 in step 3, scale it back up once the Job succeeds
+    (`kubectl scale deploy -n formbricks formbricks --replicas=<your count>`). `helm upgrade` restores the count
+    only when `autoscaling.enabled` is false and `deployment.replicas` is set, and an autoscaler does not scale up
+    from 0.
+
+    During a v5 to v6 upgrade, delete and re-create the `formbricks-v6-prepare` Job as the
+    [v6 maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade) describes instead.
+  </Tab>
+</Tabs>
+
+### Data migrations
+
+Most data migrations run in a transaction of their own and leave nothing behind when they fail; the large ones
+commit in batches and are written to resume where they stopped. Either way the runner records the failure and
+retries the migration on the next run: fix the cause and run the migrations again. The exception is
+`Migration is pending. Please resolve the issue manually.`, left by an interrupted run of a version before 5.3.
+Make sure nothing is still running it (step 3), then mark it failed so the next run retries it:
+
+```sql
+SELECT name, status, started_at FROM "DataMigration" WHERE status <> 'applied';
+UPDATE "DataMigration" SET status = 'failed' WHERE name = '<name>' AND status = 'pending';
+```
+
 ## v6.1
 
 ### MCP response scopes (no action required)
@@ -352,8 +541,8 @@ the Feedback Records API or the MCP server. If you do not use Unify Feedback, or
 the UI, there is nothing to do for it. The release adds no new environment variables. It does ship
 **seven database migrations**, applied automatically during the upgrade. Six are quick — new columns and
 tables, two of them data migrations that run on their own. The seventh builds an index on the `Response`
-table, and it is the one that needs scheduling: it blocks response writes while it builds. Other
-migrations add indexes too, but only on new or small tables. See
+table, and it is the one that needs planning: it blocks response writes while it builds, unless you build
+the index yourself first. Other migrations add indexes too, but only on new or small tables. See
 [Database migrations](#database-migrations) before scheduling the upgrade.
 
 v5.4 also upgrades the **Better Auth** authentication core to 1.7. That upgrade needs no manual database
@@ -415,7 +604,7 @@ The parent chart no longer repeats the bundled controller's default port list. T
 ### Database migrations
 
 All seven migrations apply automatically during the upgrade. Two want something from you first: one needs
-`WEBAPP_URL` set if you use MCP OAuth, and one deserves a scheduling decision on large instances. So here
+`WEBAPP_URL` set if you use MCP OAuth, and one deserves a step of its own on large instances. So here
 is the full list rather than a summary:
 
 | Migration | What it does | Impact |
@@ -425,25 +614,111 @@ is the full list rather than a summary:
 | `eng_2343_better_auth_17_resource_model` | The Better Auth 1.7 schema: the `oauthResource` tables, resource columns on OAuth tokens and consents, `alg`/`crv` on `jwks`, and `Account.issuer` with its backfill. Details in the Better Auth 1.7 section below. | Additive and fast. The issuer backfill is what keeps password sign-in working on 1.7, so it must not be skipped — it runs on its own, listed here so it is not mistaken for optional |
 | `eng_2343_backfill_oauth_resource_links` | Data migration linking existing MCP OAuth clients, refresh tokens and consents to this instance's `${WEBAPP_URL}/api/mcp` resource, so already-registered MCP clients survive the upgrade. It is a no-op only when the instance has no OAuth client at all, which in practice means a fresh install. | **Set `WEBAPP_URL` before upgrading if you use MCP OAuth.** The resource identifier is derived from it, so on an instance that has OAuth clients an unset or unparseable `WEBAPP_URL` fails this migration and stops the upgrade — set it and re-run |
 | `add_feedback_source_element_scope` | Adds `FeedbackSource.elementScope`, which controls whether a source picks up survey questions added later. Existing sources keep the current behaviour (`specific`). | Instant |
-| `add_response_survey_finished_index` | Adds an index on `Response(surveyId, finished)` so the survey list's response counts are served from the index instead of scanning the table. | **Blocks response writes while it builds — see the warning below** |
+| `add_response_survey_finished_index` | Adds an index on `Response(surveyId, finished)` so the survey list's response counts are served from the index instead of scanning the table. | **Blocks response writes while it builds, unless you build the index first — see below** |
 | `repair_account_issuer` | Data migration rewriting `Account.issuer` rows that were written with a non-canonical value, which locked the affected Google SSO users into a sign-in loop. Idempotent; a no-op when nothing is wrong. | Fast |
 
 <Warning>
-  `add_response_survey_finished_index` builds its index with a plain `CREATE INDEX`, not `CREATE INDEX
-  CONCURRENTLY` — migrations run inside a transaction, and Postgres does not allow concurrent builds
-  there. The build holds a `SHARE` lock on `Response`: reads keep working, but **survey responses cannot
-  be written until the index is built**. `Response` is usually the largest table on an instance. On small
-  instances the build takes seconds; if yours holds millions of responses, run the upgrade in a window
-  where a short pause in response collection is acceptable.
+  `add_response_survey_finished_index` builds its index with a plain `CREATE INDEX`, which holds a `SHARE`
+  lock on `Response` for the whole build: reads keep working, but **survey responses cannot be written until
+  the index is built**. `Response` is usually the largest table on an instance. On small instances the build
+  takes seconds. If yours holds millions of responses, [build the index before you
+  upgrade](#build-the-response-index-before-you-upgrade) so the migration has nothing left to do, or run the
+  upgrade in a window where a pause in response collection is acceptable.
 
-  Neither documented deployment avoids this, so plan the window either way. On Kubernetes the chart runs
-  migrations in their own job while the pods already running keep serving traffic, so the responses
-  arriving during the build are the ones that block. On Docker Compose the app container does **not** wait
-  for `formbricks-migrate` — it has no `depends_on` on that service and skips startup migrations itself —
-  so after the documented `docker compose down && docker compose up -d` the two come up in parallel: you
-  get downtime while the app boots, and then blocked writes for however much of the index build is left
-  once it starts serving.
+  If you leave the build to the migration, neither documented deployment avoids the pause. On Kubernetes the
+  chart runs migrations in their own job while the pods already running keep serving traffic, so the
+  responses arriving during the build are the ones that block. On Docker Compose the app container does
+  **not** wait for `formbricks-migrate` — it has no `depends_on` on that service and skips startup
+  migrations itself — so after the documented `docker compose down && docker compose up -d` the two come up
+  in parallel: you get downtime while the app boots, and then blocked writes for however much of the index
+  build is left once it starts serving. Compose also stops the migration runner after 300 seconds, so a longer
+  build ends as a failed migration; see [If a migration fails](#if-a-migration-fails).
 </Warning>
+
+#### Build the response index before you upgrade
+
+The migration creates its index only `IF NOT EXISTS`, so an index you build beforehand makes it a no-op. Built
+with `CONCURRENTLY`, the index takes longer but never locks out writes, and the instance keeps running v5.3
+while it builds. It does add disk and WAL load, so some writes can slow down while it runs. On a large table the
+build can take a while, so run it from a session that survives a dropped connection, such as `tmux` or `screen`:
+
+<Tabs>
+  <Tab title="One-Click / Docker Compose">
+    From the directory that contains your `docker-compose.yml` (`formbricks` for One-Click installs):
+
+    ```bash
+    docker compose exec -T postgres psql -U postgres -d formbricks <<'SQL'
+    SET statement_timeout = 0;
+    SET lock_timeout = 0;
+    CREATE INDEX CONCURRENTLY IF NOT EXISTS "Response_surveyId_finished_idx" ON "Response"("surveyId", "finished");
+    SELECT indisvalid FROM pg_index WHERE indexrelid = to_regclass('"Response_surveyId_finished_idx"');
+    SQL
+    ```
+  </Tab>
+  <Tab title="Kubernetes">
+    If you are using the in-cluster PostgreSQL deployed by the Helm chart:
+
+    ```bash
+    kubectl exec -i -n formbricks formbricks-postgresql-0 -- psql -U formbricks -d formbricks <<'SQL'
+    SET statement_timeout = 0;
+    SET lock_timeout = 0;
+    CREATE INDEX CONCURRENTLY IF NOT EXISTS "Response_surveyId_finished_idx" ON "Response"("surveyId", "finished");
+    SELECT indisvalid FROM pg_index WHERE indexrelid = to_regclass('"Response_surveyId_finished_idx"');
+    SQL
+    ```
+
+    <Info>
+      If your PostgreSQL pod has a different name, run `kubectl get pods -n formbricks` to find it.
+    </Info>
+  </Tab>
+</Tabs>
+
+With an external or managed PostgreSQL, run the same statements with `psql` as the user that owns the Formbricks
+tables, connected directly to the primary rather than through a transaction-pooling connection pooler such as
+PgBouncer. A pooler can run the `SET` and the `CREATE` on different server connections. Any other SQL client must
+run the `CREATE INDEX` statement on its own, outside a transaction, because `CONCURRENTLY` cannot run inside one.
+
+The two `SET` lines keep a timeout configured on the server, the database or your user from cancelling the
+build: `lock_timeout` also limits how long the build waits for other transactions to finish. On PostgreSQL 17 or
+later, if `SHOW transaction_timeout;` returns anything other than `0`, add `SET transaction_timeout = 0;` before
+the `CREATE` line too.
+
+Then read the `indisvalid` result:
+
+- **`t`**: the index is ready. Upgrade as usual; the migration finds the index and skips the build.
+- **`f`**: the index exists but is not usable yet. Do not upgrade over it, because the migration would see the
+  name, skip the build, and leave `Response` with an index PostgreSQL never uses. See below.
+- **No row**: the `CREATE` failed before it started, for example under the wrong user or on a read-only replica.
+  Fix the error it printed and run the commands again.
+- **No result at all**: `psql` lost its connection, or never got one, before the check ran. Read on under `f`.
+
+An `f`, or no result at all, means the build is still running or stopped part-way. If the `CREATE` printed an
+error, it stopped: fix that cause (often a timeout), drop the index as below, and run the commands again. If your
+session dropped instead, the build can still be running on the server, so first check, the same way and as the
+same user as above:
+
+```sql
+SELECT phase, current_locker_pid FROM pg_stat_progress_create_index
+WHERE datname = current_database() AND relid = '"Response"'::regclass;
+```
+
+While that returns a row, wait for it to finish and check `indisvalid` again. A `waiting for writers` phase is
+waiting for transactions that wrote to `Response`. `waiting for old snapshots` waits for every older transaction
+in this database that still holds a snapshot, on any table, so a long report or a `pg_dump` backup counts too.
+Either way, `current_locker_pid` is the session it waits for, which you can look up in `pg_stat_activity`. If the
+query returns nothing, the build has ended: check `indisvalid` again. `t` means it finished after all, so upgrade
+as usual. Still `f` means it was interrupted: drop the index the same way, with the same `SET` lines first, since
+a concurrent drop waits under `lock_timeout` too:
+
+```sql
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+DROP INDEX CONCURRENTLY IF EXISTS "Response_surveyId_finished_idx";
+```
+
+Add `SET transaction_timeout = 0;` here too if you needed it for the build. Then run the commands above again.
+
+An extra index is harmless to v5.3, so building it early needs no rollback plan of its own.
 
 None of the seven constrains a rollback. v5.3 reads none of the new columns and tables, and the two
 `NOT NULL` columns added to existing tables both carry a database default, so a v5.3 instance keeps
