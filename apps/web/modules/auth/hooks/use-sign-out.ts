@@ -30,14 +30,22 @@ interface SessionUser {
  */
 export const useSignOut = (sessionUser?: SessionUser | null) => {
   const signOutWithAudit = async (options?: UseSignOutOptions) => {
-    // Log audit event before signing out (server action)
-    if (sessionUser?.id) {
+    // Log audit event before signing out (server action). The action reads the user from the session,
+    // so it has to run while the session still exists — and not at all after account deletion, which
+    // has already removed the user and its sessions.
+    if (sessionUser?.id && options?.reason !== "account_deletion") {
       try {
-        await logSignOutAction(sessionUser.id, sessionUser.email ?? "", {
+        const result = await logSignOutAction({
           reason: options?.reason || "user_initiated", // NOSONAR // We want to check for empty strings
           redirectUrl: options?.redirectUrl || options?.callbackUrl, // NOSONAR // We want to check for empty strings
           organizationId: options?.organizationId,
         });
+        if (result?.serverError || result?.validationErrors) {
+          logger.error(
+            new Error(result.serverError ?? "Invalid sign out audit input"),
+            "Failed to log signOut event"
+          );
+        }
       } catch (error) {
         // Don't block signOut if audit logging fails
         logger.error(

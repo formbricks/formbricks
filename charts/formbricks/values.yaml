@@ -441,6 +441,8 @@ taxonomy:
       project: ""
       location: ""
       thinkingBudget: "0"
+      # Optional thinking level; when set, replaces thinkingBudget in the request.
+      thinkingLevel: ""
       # Existing secret must contain credentialsJsonSecretKey.
       existingSecret: ""
       credentialsJsonSecretKey: TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON
@@ -1084,7 +1086,7 @@ cube:
   # repository and tag back at an upstream "cubejs/cube" release is supported.
   image:
     repository: "ghcr.io/formbricks/cube"
-    tag: "1.7.47-2"
+    tag: "1.7.47-3"
     pullPolicy: IfNotPresent
 
   imagePullSecrets: []

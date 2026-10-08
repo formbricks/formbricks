@@ -128,6 +128,24 @@ describe("initClientSentryFromRuntimeConfig", () => {
     expect(beforeSend(event, { originalException: impostor })).toBe(event);
   });
 
+  test("keeps reporting server actions that got an unexpected response", async () => {
+    window[SENTRY_CLIENT_RUNTIME_CONFIG_KEY] = CONFIG;
+
+    (await importInit())();
+
+    const { beforeSend } = mockInit.mock.calls[0][0];
+    const event = { message: "boom" };
+    const unexpectedResponse = Object.assign(
+      new Error("An unexpected response was received from the server."),
+      { __NEXT_ERROR_CODE: "E394" }
+    );
+
+    // Unlike a stale action, this is a real failure in front of the app (ENG-2899). The notice tells
+    // the user, but Sentry is the only signal we get that it is happening, so it must not be filtered
+    // out as framework noise.
+    expect(beforeSend(event, { originalException: unexpectedResponse })).toBe(event);
+  });
+
   test("does nothing on the server where there is no window", async () => {
     vi.stubGlobal("window", undefined);
 

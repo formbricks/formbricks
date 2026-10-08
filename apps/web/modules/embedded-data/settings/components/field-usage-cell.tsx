@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { getEmbeddedDataUsageAction } from "@/modules/embedded-data/actions";
 import type { TEmbeddedDataUsageItem } from "@/modules/embedded-data/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";

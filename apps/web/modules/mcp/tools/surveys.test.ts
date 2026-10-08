@@ -229,6 +229,8 @@ describe("registerSurveyTools", () => {
         "defaultLanguage",
         "metadata",
         "languages",
+        "showLanguageSwitch",
+        "autoSelectLanguage",
         "welcomeCard",
         "blocks",
         "endings",

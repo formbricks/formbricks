@@ -171,6 +171,33 @@ SELECT name, status, started_at FROM "DataMigration" WHERE status <> 'applied';
 UPDATE "DataMigration" SET status = 'failed' WHERE name = '<name>' AND status = 'pending';
 ```
 
+## v6.1
+
+### MCP response scopes (no action required)
+
+v6.1 adds MCP tools for survey responses, behind two new OAuth scopes: `responses:read` and
+`responses:write`. Responses carry respondents' answers, so these are separate scopes rather than part
+of `surveys:read` / `surveys:write`, and a client only gets them once a user approves them.
+
+Two data migrations set this up on an existing instance. Both apply automatically during the upgrade
+and are fast, since they touch only OAuth configuration rows:
+
+| Migration | What it does |
+| --- | --- |
+| `eng_2862_grant_responses_scopes` | Adds the two scopes to this instance's MCP resource (`${WEBAPP_URL}/api/mcp`), so the authorization server can grant them. |
+| `eng_3470_grant_responses_scopes_to_clients` | Lets already-registered MCP clients request them, mirroring what each client has today: `responses:read` for clients with a read scope, `responses:write` for clients with a write scope. A read-only client stays read-only. |
+
+What your users see: existing MCP integrations keep working with the access they already have. MCP
+clients discover the new scopes from the server's metadata, so when one next authorizes, the consent
+screen names the response scopes. Access to responses starts only once the user approves.
+
+<Note>
+  The client migration skips OAuth clients registered with consent skipped, which only the admin client
+  API can create. Those clients are authorized without a consent screen, so widening them would grant
+  respondent data with no prompt. If you created one and it should read or write responses, add the
+  scopes to it yourself.
+</Note>
+
 ## v6
 
 Formbricks v6 replaces the legacy authorization evaluator with SpiceDB, maintained by AuthZed. PostgreSQL
@@ -242,6 +269,33 @@ formbricks-authzed backfill --scope=survey --clear-ready
 The Helm chart now defaults `hub.embeddings.env.RUST_LOG` to `warn` because TEI 1.9 includes its API key in
 INFO-level startup arguments. If you need a different log level, set `hub.embeddings.env.RUST_LOG` explicitly
 and use it only with a runtime that redacts credentials from its logs.
+
+### Database transaction limits (action required if you connect through a connection pooler)
+
+Formbricks now sets its database transaction limits explicitly instead of relying on library defaults.
+Under load, the old 5-second limit was cancelling writes that were about to succeed: user identification,
+response updates and survey resets.
+
+- Transactions may run for up to 20 seconds.
+- Waiting for a free database connection is bounded by `connect_timeout` in `DATABASE_URL` (5 seconds
+  by default). With `connect_timeout=0`, transactions give up waiting after 6 seconds; other queries
+  wait until a connection is free.
+- Formbricks asks PostgreSQL to end any session left idle inside an open transaction for 60 seconds, which
+  releases that session's locks. It does this with the `idle_in_transaction_session_timeout` connection
+  setting. Migrations are not affected.
+
+To change the idle timeout, add it to `DATABASE_URL` in **milliseconds**, for example
+`?idle_in_transaction_session_timeout=30000`. Set it to `0` to send nothing and keep your server's own
+setting.
+
+<Warning>
+  If Formbricks connects to PostgreSQL through **PgBouncer, Supavisor, RDS Proxy or another pooler**, the
+  pooler may reject connections that carry an unknown startup parameter. Before upgrading, add
+  `idle_in_transaction_session_timeout=0` to `DATABASE_URL`. If your `DATABASE_URL` already contains
+  `pgbouncer=true`, Formbricks skips the setting automatically. Adding the parameter to PgBouncer's
+  `ignore_startup_parameters` also works, but PgBouncer then drops it, so the 60-second safeguard does
+  not apply. A direct connection to PostgreSQL needs no change.
+</Warning>
 
 ### Changes in Environment Variables
 

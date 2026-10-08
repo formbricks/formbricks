@@ -238,6 +238,8 @@ post:
               languages:
                 - code: de-DE
                   enabled: true
+              showLanguageSwitch: true
+              autoSelectLanguage: true
               welcomeCard:
                 enabled: true
                 headline:

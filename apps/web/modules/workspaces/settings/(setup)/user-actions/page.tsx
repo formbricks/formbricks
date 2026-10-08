@@ -1,5 +1,3 @@
-"use server";
-
 import { getActionClasses } from "@/lib/actionClass/service";
 import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getUserLocale } from "@/lib/user/service";

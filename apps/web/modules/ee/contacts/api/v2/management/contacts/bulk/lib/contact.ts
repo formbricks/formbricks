@@ -681,8 +681,10 @@ export const upsertBulkContacts = async (
         if (attributesToUpsert.length > 0) {
           await upsertAttributesInBatches(tx, attributesToUpsert);
         }
-      },
-      { timeout: 10 * 1000 }
+      }
+      // No per-call budget: this used to pass 10 s to rise above Prisma's 5 s default, which would now
+      // cut it below the app client's own (ENG-3285) while it writes the same ContactAttribute rows the
+      // identify path locks.
     );
 
     return ok({

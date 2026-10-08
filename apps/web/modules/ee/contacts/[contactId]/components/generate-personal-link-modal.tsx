@@ -4,7 +4,7 @@ import { CopyIcon, LinkIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { getTranslatedPersonalLinkError } from "@/modules/ee/contacts/lib/personal-link-errors";
 import { PublishedLinkSurvey } from "@/modules/ee/contacts/lib/surveys";
 import { Button } from "@/modules/ui/components/button";

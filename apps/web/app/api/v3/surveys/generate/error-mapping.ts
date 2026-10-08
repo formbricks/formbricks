@@ -13,6 +13,7 @@ import {
   problemTooManyRequests,
   problemUnprocessableContent,
 } from "@/app/api/v3/lib/response";
+import { loggableAIError } from "@/lib/ai/loggable-error";
 import { AI_ERROR_CODES, type TAIErrorCode } from "@/lib/ai/service";
 import { V3SurveyGeneratePromptError, V3SurveyGeneratedPayloadValidationError } from "./service";
 
@@ -116,13 +117,9 @@ export function mapV3SurveyGenerateError(
     );
   }
 
+  // Name, frames and provider status only: the message can repeat the prompt or the model's output.
   logger.error(
-    {
-      err: error,
-      requestId,
-      workspaceId,
-      organizationId,
-    },
+    { ...loggableAIError(error), requestId, workspaceId, organizationId },
     "Failed to generate v3 survey create payload"
   );
 

@@ -1,16 +1,11 @@
 import { Metadata } from "next";
 import {
-  AZURE_OAUTH_ENABLED,
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
-  GITHUB_OAUTH_ENABLED,
-  GOOGLE_OAUTH_ENABLED,
   IS_FORMBRICKS_CLOUD,
   IS_TURNSTILE_CONFIGURED,
   OIDC_DISPLAY_NAME,
-  OIDC_OAUTH_ENABLED,
   PRIVACY_URL,
-  SAML_OAUTH_ENABLED,
   TERMS_URL,
   TURNSTILE_SITE_KEY,
   WEBAPP_URL,
@@ -18,7 +13,7 @@ import {
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { SignupForm } from "@/modules/auth/signup/components/signup-form";
-import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getSsoAvailability, toSsoFormProps } from "@/modules/ee/sso/lib/sso-availability";
 
 export const metadata: Metadata = {
   title: "Sign up",
@@ -28,9 +23,7 @@ export const metadata: Metadata = {
 export const SignupPage = async () => {
   const locale = await findMatchingLocale();
 
-  const [isSsoEnabled, isSamlSsoEnabled] = await Promise.all([getIsSsoEnabled(), getIsSamlSsoEnabled()]);
-
-  const samlSsoEnabled = isSamlSsoEnabled && SAML_OAUTH_ENABLED;
+  const ssoAvailability = await getSsoAvailability();
 
   const t = await getTranslate();
   return (
@@ -44,14 +37,9 @@ export const SignupPage = async () => {
         privacyUrl={PRIVACY_URL}
         emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED}
         emailAuthEnabled={EMAIL_AUTH_ENABLED}
-        googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
-        githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
-        azureOAuthEnabled={AZURE_OAUTH_ENABLED}
-        oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
+        {...toSsoFormProps(ssoAvailability)}
         oidcDisplayName={OIDC_DISPLAY_NAME}
         userLocale={locale}
-        isSsoEnabled={isSsoEnabled}
-        samlSsoEnabled={samlSsoEnabled}
         isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}
         turnstileSiteKey={TURNSTILE_SITE_KEY}
         isFormbricksCloud={IS_FORMBRICKS_CLOUD}

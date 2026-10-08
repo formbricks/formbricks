@@ -3,7 +3,7 @@ import { Config } from "@/lib/common/config";
 import { onFormbricksEvent, resetFormbricksEventSubscribers } from "@/lib/common/events";
 import { Logger } from "@/lib/common/logger";
 import type * as CommonUtils from "@/lib/common/utils";
-import { filterSurveys, getLanguageCode, shouldDisplayBasedOnPercentage } from "@/lib/common/utils";
+import { filterSurveys, getBrowserLanguageCodes, shouldDisplayBasedOnPercentage } from "@/lib/common/utils";
 import { EmbeddedDataStore } from "@/lib/survey/embedded-data";
 import { mockSurvey } from "@/lib/survey/tests/__mocks__/widget.mock";
 import * as widget from "@/lib/survey/widget";
@@ -43,7 +43,7 @@ vi.mock("@/lib/common/utils", async (importOriginal) => {
   return {
     ...actual,
     filterSurveys: vi.fn(),
-    getLanguageCode: vi.fn(),
+    getBrowserLanguageCodes: vi.fn(() => []),
     getStyling: vi.fn(),
     shouldDisplayBasedOnPercentage: vi.fn(),
     wrapThrowsAsync: vi.fn(),
@@ -76,6 +76,7 @@ describe("widget-file", () => {
   const createMockFormbricksSurveys = (): NonNullable<Window["formbricksSurveys"]> => ({
     renderSurvey: vi.fn(),
     setNonce: vi.fn(),
+    resolveSurveyLanguage: vi.fn(() => "default"),
   });
 
   const getFormbricksSurveys = (): NonNullable<Window["formbricksSurveys"]> => {
@@ -225,17 +226,207 @@ describe("widget-file", () => {
     const mockSurveyNoDelay = {
       ...mockSurvey,
       delay: 0,
-      languages: [{ language: { code: "en" } }, { language: { code: "fr" } }],
+      languages: [
+        { language: { code: "en" }, default: true, enabled: true },
+        { language: { code: "fr" }, default: false, enabled: true },
+      ],
     };
 
     widget.setIsSurveyRunning(false);
-    (getLanguageCode as Mock).mockReturnValueOnce(undefined); // means "not available"
+    window.formbricksSurveys = {
+      ...createMockFormbricksSurveys(),
+      resolveSurveyLanguage: vi.fn(() => null), // means "not available"
+    };
 
-    await widget.renderWidget(mockSurveyNoDelay as unknown as TWorkspaceStateSurvey);
+    await widget.renderWidget(mockSurveyNoDelay);
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
       `Survey "${mockSurvey.id}" is not available in specified language.`
     );
+  });
+
+  describe("browser language auto-selection", () => {
+    const germanEnglishSurvey = (autoSelectLanguage: boolean): TWorkspaceStateSurvey => ({
+      ...mockSurvey,
+      delay: 0,
+      autoSelectLanguage,
+      languages: [
+        { language: { code: "en-US" }, default: true, enabled: true },
+        { language: { code: "de-DE" }, default: false, enabled: true },
+      ],
+    });
+
+    const mockConfigWithLanguage = (language: string | undefined): void => {
+      getInstanceConfigMock.mockReturnValue({
+        get: vi.fn().mockReturnValue({
+          appUrl: "https://fake.app",
+          workspaceId: "env_123",
+          workspace: {
+            data: {
+              settings: {
+                clickOutsideClose: true,
+                overlay: "none",
+                placement: "bottomRight",
+                inAppSurveyBranding: true,
+              },
+            },
+          },
+          user: {
+            data: { userId: "user_abc", displays: [], responses: [], lastDisplayAt: null, language },
+          },
+        }),
+        update: vi.fn(),
+      } as unknown as Config);
+    };
+
+    // Stands in for a surveys bundle that predates the resolver.
+    const MISSING_RESOLVER = Symbol("missing-resolver");
+
+    const renderWithResolver = async (
+      survey: TWorkspaceStateSurvey,
+      resolvedLanguage: string | null | typeof MISSING_RESOLVER
+    ): Promise<NonNullable<Window["formbricksSurveys"]>> => {
+      widget.setIsSurveyRunning(false);
+      const formbricksSurveys = createMockFormbricksSurveys();
+      if (resolvedLanguage === MISSING_RESOLVER) {
+        delete formbricksSurveys.resolveSurveyLanguage;
+      } else {
+        vi.mocked(formbricksSurveys.resolveSurveyLanguage!).mockReturnValue(resolvedLanguage);
+      }
+      window.formbricksSurveys = formbricksSurveys;
+      vi.useFakeTimers();
+      try {
+        await widget.renderWidget(survey);
+        vi.advanceTimersByTime(0);
+        return formbricksSurveys;
+      } finally {
+        vi.useRealTimers();
+      }
+    };
+
+    beforeEach(() => {
+      vi.mocked(getBrowserLanguageCodes).mockReturnValue(["de-DE", "en"]);
+    });
+
+    test("hands the browser languages to the resolver when no language is set and the survey opted in", async () => {
+      mockConfigWithLanguage(undefined);
+      const survey = germanEnglishSurvey(true);
+      const formbricksSurveys = await renderWithResolver(survey, "de-DE");
+
+      expect(formbricksSurveys.resolveSurveyLanguage).toHaveBeenCalledWith({
+        languages: survey.languages,
+        explicitLanguage: undefined,
+        browserLanguages: ["de-DE", "en"],
+        autoSelectLanguage: true,
+        unmatchedExplicitLanguage: "skip",
+      });
+      expect(formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+        expect.objectContaining({ languageCode: "de-DE" })
+      );
+    });
+
+    test("does not read the browser languages when the survey did not opt in", async () => {
+      mockConfigWithLanguage(undefined);
+      const formbricksSurveys = await renderWithResolver(germanEnglishSurvey(false), "default");
+
+      expect(getBrowserLanguageCodes).not.toHaveBeenCalled();
+      expect(formbricksSurveys.resolveSurveyLanguage).toHaveBeenCalledWith(
+        expect.objectContaining({ browserLanguages: [], autoSelectLanguage: false })
+      );
+      expect(formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+        expect.objectContaining({ languageCode: "default" })
+      );
+    });
+
+    test("skips cleanly when setLanguage() names a language the survey does not offer", async () => {
+      mockConfigWithLanguage("fr");
+      const shown = vi.fn();
+      onFormbricksEvent("formbricks_survey_shown", shown);
+
+      const formbricksSurveys = await renderWithResolver(germanEnglishSurvey(true), null);
+
+      expect(formbricksSurveys.resolveSurveyLanguage).toHaveBeenCalledWith(
+        expect.objectContaining({ explicitLanguage: "fr", unmatchedExplicitLanguage: "skip" })
+      );
+      expect(formbricksSurveys.renderSurvey).not.toHaveBeenCalled();
+      expect(shown).not.toHaveBeenCalled();
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        `Survey "${mockSurvey.id}" is not available in specified language.`
+      );
+
+      // The skip released the running flag, so the next survey is not blocked behind it.
+      mockLogger.debug.mockClear();
+      await renderWithResolver(germanEnglishSurvey(true), "default");
+      expect(mockLogger.debug).not.toHaveBeenCalledWith("A survey is already running. Skipping.");
+    });
+
+    test("skips resolution for a single-language survey", async () => {
+      mockConfigWithLanguage("fr");
+      const formbricksSurveys = await renderWithResolver({ ...mockSurvey, delay: 0 }, null);
+
+      expect(formbricksSurveys.resolveSurveyLanguage).not.toHaveBeenCalled();
+      expect(formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+        expect.objectContaining({ languageCode: "default" })
+      );
+    });
+
+    describe("with a surveys bundle that predates the resolver", () => {
+      test("renders the default language when no language is set and the survey did not opt in", async () => {
+        mockConfigWithLanguage(undefined);
+        const formbricksSurveys = await renderWithResolver(germanEnglishSurvey(false), MISSING_RESOLVER);
+        expect(getBrowserLanguageCodes).not.toHaveBeenCalled();
+        expect(formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+          expect.objectContaining({ languageCode: "default" })
+        );
+      });
+
+      test("matches the browser languages exactly when no language is set and the survey opted in", async () => {
+        mockConfigWithLanguage(undefined);
+        const formbricksSurveys = await renderWithResolver(germanEnglishSurvey(true), MISSING_RESOLVER);
+        expect(formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+          expect.objectContaining({ languageCode: "de-DE" })
+        );
+      });
+
+      test("falls back to the default language when no browser language matches exactly", async () => {
+        mockConfigWithLanguage(undefined);
+        vi.mocked(getBrowserLanguageCodes).mockReturnValue(["fr-FR", "de"]);
+        const formbricksSurveys = await renderWithResolver(germanEnglishSurvey(true), MISSING_RESOLVER);
+        expect(formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+          expect.objectContaining({ languageCode: "default" })
+        );
+      });
+
+      test("matches an explicit language by exact code, as the SDK did before", async () => {
+        mockConfigWithLanguage("DE-de");
+        const formbricksSurveys = await renderWithResolver(germanEnglishSurvey(true), MISSING_RESOLVER);
+        expect(formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+          expect.objectContaining({ languageCode: "de-DE" })
+        );
+      });
+
+      test("skips an explicit language the survey does not offer", async () => {
+        mockConfigWithLanguage("fr");
+        const formbricksSurveys = await renderWithResolver(germanEnglishSurvey(true), MISSING_RESOLVER);
+        expect(formbricksSurveys.renderSurvey).not.toHaveBeenCalled();
+      });
+
+      test("does not let a disabled language's alias shadow an enabled code", async () => {
+        mockConfigWithLanguage("de");
+        const survey: TWorkspaceStateSurvey = {
+          ...germanEnglishSurvey(true),
+          languages: [
+            { language: { code: "en-US" }, default: true, enabled: true },
+            { language: { code: "de-AT", alias: "de" }, default: false, enabled: false },
+            { language: { code: "de" }, default: false, enabled: true },
+          ],
+        };
+        const formbricksSurveys = await renderWithResolver(survey, MISSING_RESOLVER);
+        expect(formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+          expect.objectContaining({ languageCode: "de" })
+        );
+      });
+    });
   });
 
   test("closeSurvey removes widget container, resets filtered surveys, sets isSurveyRunning=false", () => {

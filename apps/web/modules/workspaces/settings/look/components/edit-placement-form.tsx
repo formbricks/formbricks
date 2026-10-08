@@ -9,7 +9,7 @@ import { ZOverlay } from "@formbricks/types/common";
 import { ZOverlayColor, ZOverlayOpacity } from "@formbricks/types/overlay";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormField, FormItem, FormLabel, FormProvider } from "@/modules/ui/components/form";
