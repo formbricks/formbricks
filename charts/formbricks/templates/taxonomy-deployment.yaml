@@ -7,7 +7,7 @@
 {{- $vertex := .Values.taxonomy.llm.vertex | default dict -}}
 {{- $vertexProject := get $vertex "project" | default "" -}}
 {{- $vertexLocation := get $vertex "location" | default "" -}}
-{{- $vertexThinkingLevel := get $vertex "thinkingLevel" | default "" -}}
+{{- $vertexThinkingLevel := get $vertex "thinkingLevel" -}}
 {{- if not (has $vertexThinkingLevel (list "" "minimal" "low" "medium" "high")) }}
   {{- fail "taxonomy.llm.vertex.thinkingLevel must be minimal, low, medium, or high" }}
 {{- end }}

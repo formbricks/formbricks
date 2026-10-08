@@ -21,19 +21,27 @@ render() {
 
 render >"${render_dir}/legacy.yaml"
 grep -A1 'name: TAXONOMY_VERTEX_THINKING_BUDGET' "${render_dir}/legacy.yaml" | grep -q 'value: "0"'
-! grep -q 'name: TAXONOMY_VERTEX_THINKING_LEVEL' "${render_dir}/legacy.yaml"
+if grep -q 'name: TAXONOMY_VERTEX_THINKING_LEVEL' "${render_dir}/legacy.yaml"; then
+  echo 'Expected the legacy configuration to omit TAXONOMY_VERTEX_THINKING_LEVEL.' >&2
+  exit 1
+fi
 
 for level in minimal low medium high; do
   render --set "taxonomy.llm.vertex.thinkingLevel=${level}" >"${render_dir}/level.yaml"
   grep -A1 'name: TAXONOMY_VERTEX_THINKING_LEVEL' "${render_dir}/level.yaml" | grep -q "value: \"${level}\""
-  ! grep -q 'name: TAXONOMY_VERTEX_THINKING_BUDGET' "${render_dir}/level.yaml"
+  if grep -q 'name: TAXONOMY_VERTEX_THINKING_BUDGET' "${render_dir}/level.yaml"; then
+    echo "Expected thinking level ${level} to omit TAXONOMY_VERTEX_THINKING_BUDGET." >&2
+    exit 1
+  fi
 done
 
-if render --set taxonomy.llm.vertex.thinkingLevel=automatic >"${render_dir}/invalid.yaml" 2>&1; then
-  echo 'Expected an invalid thinking level to fail.' >&2
-  exit 1
-fi
-grep -q 'thinkingLevel must be' "${render_dir}/invalid.yaml"
+for invalid_level in automatic 0 false; do
+  if render --set "taxonomy.llm.vertex.thinkingLevel=${invalid_level}" >"${render_dir}/invalid.yaml" 2>&1; then
+    echo "Expected invalid thinking level ${invalid_level} to fail." >&2
+    exit 1
+  fi
+  grep -q 'thinkingLevel must be' "${render_dir}/invalid.yaml"
+done
 
 if render --set taxonomy.env.TAXONOMY_VERTEX_THINKING_LEVEL=medium >"${render_dir}/override.yaml" 2>&1; then
   echo 'Expected a managed thinking-level env override to fail.' >&2
