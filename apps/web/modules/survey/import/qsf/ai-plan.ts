@@ -29,16 +29,21 @@ import type { TQsfSurvey } from "./qsf-model";
  * The AI half of the import (ENG-3479): ask for the plan, check it, retry what failed once.
  *
  * The questions are split into chunks by the output they are expected to need — a fixed budget per
- * chunk, as many chunks as the survey needs — and at most three run at once. The provider's
+ * chunk, as many chunks as the survey needs — and at most four run at once. The provider's
  * tokens-per-minute is the real limit there, and nothing in the app holds it back. Per chunk:
  *
  * - 429, provider auth and any other provider failure propagate unwrapped, and a shared abort cancels
  *   the sibling calls, so the route's classification keeps working;
- * - running out of output tokens is ours to fix: the chunk is split in two (once) and asked again,
- *   and never surfaces as "split it in Qualtrics";
- * - the AI SDK's own timeout (which spans its retries, and which the SDK's abort check does not
- *   match) becomes `QsfImportTimeoutError`, the route's timeout event;
+ * - running out of output tokens, or out of the call's own time (the AI SDK's `timeout`, which spans
+ *   its retries and which its abort check does not match), is ours to fix: the chunk is split in two
+ *   (once) and each half asked again, queued behind the other chunks. A half that fails the same way
+ *   is dropped with a report line — never "split it in Qualtrics", and never the end of the import;
  * - output that fails the schema fails the chunk's questions, which go to the retry round.
+ *
+ * Only the import's own signal ends the import: Stop, a disconnect, or the route's deadline. Each call's
+ * timeout is sized to what is left before that deadline, less the assembly reserve, so the calls left
+ * when time runs out are dropped and the questions planned so far are still assembled. Only when time
+ * ran out before any question was planned is it `QsfImportTimeoutError`, the route's timeout event.
  *
  * Every call counts against a call cap and an output-token budget — chunks, splits and the retry
  * round together, failed calls included — sized from the import's own chunks and never above
@@ -50,16 +55,24 @@ import type { TQsfSurvey } from "./qsf-model";
 /** The model's output budget per call. Room for reasoning tokens as well as the plan. */
 export const QSF_PLAN_MAX_OUTPUT_TOKENS = 8192;
 /**
- * Output a chunk is sized to expect. Reasoning models (Gemini 2.5 Flash, the default) spend part of
- * the same 8,192-token budget thinking before they write, and Create with AI needs that headroom for
- * its ~3–4k-token drafts; 3,000 keeps more than 60% of the budget for reasoning and for a plan that
- * runs long. About 40 questions without logic, or 15 with two rules each.
+ * Output a chunk is sized to expect: about 20 questions without logic, or 8 with two rules each.
+ *
+ * Sized by time, not by the 8,192-token budget. Gemini 2.5 Flash, the default, writes about 150–250
+ * tokens a second with its thinking included, and thinks up to about 3,000 tokens before a plan. At
+ * the slow end a chunk then takes about 2 s + (3,000 + 1,400) / 150 ≈ 31 s, well inside the 45 s call
+ * timeout; a 3,000-token chunk took about 42 s, and on a live run one timed out.
  */
-export const QSF_CHUNK_OUTPUT_TOKENS = 3_000;
+export const QSF_CHUNK_OUTPUT_TOKENS = 1_400;
 /** Data characters per chunk: one call's cap, less room for the system prompt and instructions. */
 const QSF_CHUNK_DATA_CHARS = QSF_PROMPT_MAX_CALL_CHARS - 20_000;
-/** Calls in flight at once, per import. */
-export const QSF_MAX_PARALLEL_CALLS = 3;
+/**
+ * Calls in flight at once, per import. The 150-question survey the import is built for is 8 chunks
+ * (about 10,500 expected tokens): two waves of at most ~31 s, then a retry wave, about 95 s — inside the
+ * route's 120 s deadline less the assembly reserve. Three at a time would take three waves before the
+ * retry, which would not fit. Bounded, because the provider's tokens-per-minute is the real limit: four
+ * calls of at most ~30k prompt tokens each.
+ */
+export const QSF_MAX_PARALLEL_CALLS = 4;
 /** One call's time budget. */
 export const QSF_AI_CALL_TIMEOUT_MS = 45_000;
 /** Time kept back for assembly when a call is sized against the deadline. */
@@ -76,7 +89,7 @@ const TOKENS_PER_PAGE = 10;
 /**
  * Chunks of the costliest valid survey: the reader's 200 questions, each on its own page, every
  * question and page with as many rules as the loosest prompt describes (3) — 70 + 10 + 2 × 3 × 45 =
- * 350 expected tokens a question, 70,000 in all, in 3,000-token chunks: 24.
+ * 350 expected tokens a question, 70,000 in all, in 1,400-token chunks: 50.
  */
 const QSF_MAX_CHUNKS = Math.ceil(
   (QSF_MAX_QUESTIONS *
@@ -86,7 +99,7 @@ const QSF_MAX_CHUNKS = Math.ceil(
 
 /**
  * Calls one import may make: each chunk once, each split into two halves, and two more for the retry
- * round — `3 × chunks + 2`, which a survey whose every chunk overflows still fits.
+ * round — `3 × chunks + 2`, which a survey whose every chunk overflows or times out still fits.
  */
 const callCapFor = (chunks: number): number => 3 * chunks + 2;
 
@@ -100,8 +113,8 @@ const outputBudgetFor = (chunks: number): number => (2 * chunks + 2) * QSF_PLAN_
 
 /**
  * The ceilings, whatever the file: the costliest valid survey's own allowance, so a hostile file
- * cannot cost more than it. 74 calls (3 × 24 + 2) and 409,600 output tokens ((2 × 24 + 2) × 8,192) —
- * about six times the 70,000 that survey is expected to need.
+ * cannot cost more than it. 152 calls (3 × 50 + 2) and 835,584 output tokens ((2 × 50 + 2) × 8,192) —
+ * every call's whole budget, reasoning included, for a survey expected to need 70,000.
  */
 export const QSF_MAX_AI_CALLS = callCapFor(QSF_MAX_CHUNKS);
 export const QSF_MAX_OUTPUT_TOKENS = outputBudgetFor(QSF_MAX_CHUNKS);
@@ -214,6 +227,8 @@ interface TPlanContext {
 type TCallOutcome =
   | { kind: "ok"; response: TQsfPlanResponse }
   | { kind: "too_long" }
+  /** The call ran out of its own time; the import's signal had not fired. */
+  | { kind: "timed_out" }
   | { kind: "invalid" }
   /** Not sent: the import's call cap, prompt budget or time is spent. */
   | { kind: "budget" };
@@ -285,25 +300,37 @@ export function chunkQuestions(
   return chunks;
 }
 
-/** Run tasks, `limit` at a time. The first failure aborts the rest and is rethrown once they settle. */
-async function runPool<T>(tasks: (() => Promise<T>)[], limit: number, abort: AbortController): Promise<T[]> {
-  const results: T[] = new Array<T>(tasks.length);
-  let next = 0;
-  const worker = async () => {
-    while (next < tasks.length) {
-      const index = next++;
-      results[index] = await tasks[index]();
+/** A unit of work for `runPool`. It may queue more with `enqueue`: the halves of a split chunk. */
+type TPoolTask = (enqueue: (task: TPoolTask) => void) => Promise<void>;
+
+/**
+ * Run tasks `limit` at a time, including the ones they queue, until none is left. The first failure
+ * aborts the rest — the queued ones never start — and is rethrown once the running ones settle.
+ */
+async function runPool(tasks: TPoolTask[], limit: number, abort: AbortController): Promise<void> {
+  const queue = [...tasks];
+  const running = new Set<Promise<void>>();
+  const enqueue = (task: TPoolTask) => queue.push(task);
+  const state: { failure: { error: unknown } | null } = { failure: null };
+
+  while (running.size > 0 || (queue.length > 0 && state.failure === null)) {
+    while (state.failure === null && running.size < limit && queue.length > 0) {
+      const task = queue.shift();
+      if (!task) break;
+      const run: Promise<void> = task(enqueue)
+        .catch((error: unknown) => {
+          if (state.failure !== null) return;
+          state.failure = { error };
+          abort.abort();
+        })
+        .finally(() => running.delete(run));
+      running.add(run);
     }
-  };
-  const workers = Array.from({ length: Math.min(limit, tasks.length) }, worker);
-  try {
-    await Promise.all(workers);
-  } catch (error) {
-    abort.abort();
-    await Promise.allSettled(workers);
-    throw error;
+    // A scheduler: it waits for one call to finish before it starts the next, by design.
+    await Promise.race(running); // NOSONAR(typescript:S9382) -- the pool's bound on calls in flight
   }
-  return results;
+
+  if (state.failure !== null) throw state.failure.error;
 }
 
 function addUsage(context: TPlanContext, usage: TQsfCallUsage | undefined): void {
@@ -360,45 +387,25 @@ async function callOnce(
     addUsage(context, usageOfFailure(error));
     // The import's own abort (Stop, disconnect, the route's deadline) is the route's to classify.
     if (context.signal.aborted) throw error;
-    if (isTimeoutError(error)) throw new QsfImportTimeoutError();
+    if (isTimeoutError(error)) return { kind: "timed_out" };
     if (error instanceof AIOutputTokenLimitError) return { kind: "too_long" };
     if (isInvalidOutput(error)) return { kind: "invalid" };
     throw error;
   }
 }
 
-/** One chunk: a call, and one split into halves when the output did not fit. */
-async function planChunk(
-  context: TPlanContext,
-  refs: string[],
-  timeout: () => number,
-  failures?: ReadonlyMap<string, readonly TQsfPlanFailure[]>
-): Promise<{ responses: TQsfPlanResponse[]; failed: Map<string, TQsfPlanFailure[]> }> {
-  const responses: TQsfPlanResponse[] = [];
-  const failed = new Map<string, TQsfPlanFailure[]>();
-  const fail = (chunkRefs: string[], outcome: TCallOutcome) => {
-    const reason: TQsfPlanFailure = outcome.kind === "budget" ? "ai_budget" : "invalid_output";
-    for (const ref of chunkRefs) failed.set(ref, [reason]);
-  };
+const FAILURE_OF_OUTCOME: Record<Exclude<TCallOutcome["kind"], "ok">, TQsfPlanFailure> = {
+  budget: "ai_budget",
+  timed_out: "ai_timeout",
+  too_long: "invalid_output",
+  invalid: "invalid_output",
+};
 
-  // The timeout is sized again for every call: a chunk and its two halves run one after another.
-  const outcome = await callOnce(context, refs, timeout(), failures);
-  if (outcome.kind === "ok") {
-    responses.push(outcome.response);
-  } else if (outcome.kind !== "too_long" || refs.length === 1) {
-    fail(refs, outcome);
-  } else {
-    const middle = Math.ceil(refs.length / 2);
-    for (const half of [refs.slice(0, middle), refs.slice(middle)]) {
-      const halfOutcome = await callOnce(context, half, timeout(), failures);
-      if (halfOutcome.kind === "ok") responses.push(halfOutcome.response);
-      else fail(half, halfOutcome);
-    }
-  }
-
-  return { responses, failed };
-}
-
+/**
+ * One round of calls: every chunk asked, at most `QSF_MAX_PARALLEL_CALLS` at once. A chunk whose call
+ * ran out of output tokens or of time is split into halves once, queued behind the rest; its halves
+ * are not split again.
+ */
 async function planRound(
   context: TPlanContext,
   chunks: string[][],
@@ -406,21 +413,44 @@ async function planRound(
   abort: AbortController,
   failures?: ReadonlyMap<string, readonly TQsfPlanFailure[]>
 ): Promise<TQsfCheckedPlan> {
-  const outcomes = await runPool(
-    chunks.map((chunk) => () => planChunk(context, chunk, timeout, failures)),
+  const responses: TQsfPlanResponse[] = [];
+  const failed = new Map<string, TQsfPlanFailure[]>();
+
+  const ask =
+    (refs: string[], splittable: boolean): TPoolTask =>
+    async (enqueue) => {
+      // Sized when the call starts: a split's halves run later than the chunk did.
+      const outcome = await callOnce(context, refs, timeout(), failures);
+      if (outcome.kind === "ok") {
+        responses.push(outcome.response);
+        return;
+      }
+      if ((outcome.kind === "too_long" || outcome.kind === "timed_out") && splittable && refs.length > 1) {
+        const middle = Math.ceil(refs.length / 2);
+        enqueue(ask(refs.slice(0, middle), false));
+        enqueue(ask(refs.slice(middle), false));
+        return;
+      }
+      for (const ref of refs) failed.set(ref, [FAILURE_OF_OUTCOME[outcome.kind]]);
+    };
+
+  await runPool(
+    chunks.map((chunk) => ask(chunk, true)),
     QSF_MAX_PARALLEL_CALLS,
     abort
   );
 
-  const plan = checkPlanResponses(
-    context.survey,
-    outcomes.flatMap((outcome) => outcome.responses)
-  );
-  for (const outcome of outcomes) {
-    for (const [ref, reasons] of outcome.failed) plan.failures.set(ref, reasons);
-  }
+  const plan = checkPlanResponses(context.survey, responses);
+  for (const [ref, reasons] of failed) plan.failures.set(ref, reasons);
   return plan;
 }
+
+/** The report's cause for a question the plan could not place. */
+const failureCause = (reasons: readonly TQsfPlanFailure[]): "ai_budget" | "ai_timeout" | "plan_invalid" => {
+  if (reasons.includes("ai_timeout")) return "ai_timeout";
+  if (reasons.includes("ai_budget")) return "ai_budget";
+  return "plan_invalid";
+};
 
 function preSkip(survey: TQsfSurvey): { refs: string[]; issues: TQsfImportIssue[] } {
   const refs: string[] = [];
@@ -481,8 +511,13 @@ export async function planQsfImport(params: {
 
   let plan = await planRound(context, chunks, callTimeout, abort);
 
-  // A question the budget left unplanned is not retried: there is no budget left to retry it with.
-  const unplanned = new Map([...plan.failures].filter(([, reasons]) => reasons.includes("ai_budget")));
+  // A question the budget left unplanned, or whose calls ran out of time even split, is not retried:
+  // there is no budget left to retry it with, or no reason to expect it to be faster.
+  const unplanned = new Map(
+    [...plan.failures].filter(
+      ([, reasons]) => reasons.includes("ai_budget") || reasons.includes("ai_timeout")
+    )
+  );
   const failing = [...plan.failures.keys()].filter((ref) => !unplanned.has(ref));
   if (failing.length > 0) {
     const retry = await planRound(
@@ -509,8 +544,16 @@ export async function planQsfImport(params: {
       code: "question_skipped",
       severity: "warning",
       questionTag: survey.questions.get(ref)?.exportTag ?? ref,
-      params: { cause: reasons.includes("ai_budget") ? "ai_budget" : "plan_invalid" },
+      params: { cause: failureCause(reasons) },
     });
+  }
+
+  // Nothing to assemble because the calls ran out of time: to the user, the import took too long.
+  if (
+    plan.questions.size === 0 &&
+    [...plan.failures.values()].some((reasons) => reasons.includes("ai_timeout"))
+  ) {
+    throw new QsfImportTimeoutError();
   }
 
   return { plan, issues, usage: context.usage, calls: context.calls };

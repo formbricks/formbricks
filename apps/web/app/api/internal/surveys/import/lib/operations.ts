@@ -140,13 +140,14 @@ export async function streamQsfImport({
     },
     onError: (error) => {
       // Before the client-abort check: the deadline aborts the same signal, and a timeout is something
-      // to tell the user, not a quiet exit. An AI call that ran out of its own time is the same to them.
-      const aiCallTimedOut = error instanceof QsfImportTimeoutError;
-      if (importAbort.deadlineExceeded() || aiCallTimedOut) {
+      // to tell the user, not a quiet exit. An import whose AI calls all ran out of time before any
+      // question was planned is the same to them; one slow call alone never ends the import.
+      const planTimedOut = error instanceof QsfImportTimeoutError;
+      if (importAbort.deadlineExceeded() || planTimedOut) {
         outcome = "timed_out";
         const event = importTimedOutEvent();
         errorCode = event.code;
-        log.warn({ deadlineMs: QSF_IMPORT_DEADLINE_MS, aiCallTimedOut }, "QSF import hit its deadline");
+        log.warn({ deadlineMs: QSF_IMPORT_DEADLINE_MS, planTimedOut }, "QSF import hit its deadline");
         return event;
       }
 

@@ -1,12 +1,18 @@
 import { NoObjectGeneratedError } from "ai";
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { buildOversizedLogicQsf } from "./__fixtures__/oversized-logic";
-import { loadRecordedPlan, recordedGenerate, refsInPrompt } from "./__fixtures__/recorded-plans";
+import {
+  loadRecordedPlan,
+  recordedGenerate,
+  refsInPrompt,
+  timedGenerate,
+} from "./__fixtures__/recorded-plans";
 import {
   QSF_AI_CALL_TIMEOUT_MS,
+  QSF_ASSEMBLY_RESERVE_MS,
   QSF_CHUNK_OUTPUT_TOKENS,
   QSF_MAX_AI_CALLS,
   QSF_MAX_OUTPUT_TOKENS,
@@ -96,8 +102,8 @@ describe("chunkQuestions", () => {
 
     const chunks = chunkQuestions({ survey, texts, limits }, refs);
 
-    // 70 expected tokens a question: 42 to a 3,000-token chunk.
-    expect(chunks.map((chunk) => chunk.length)).toEqual([42, 42, 42, 24]);
+    // 70 expected tokens a question: 20 to a 1,400-token chunk.
+    expect(chunks.map((chunk) => chunk.length)).toEqual([20, 20, 20, 20, 20, 20, 20, 10]);
     expect(chunks.flat()).toEqual(refs);
     expect(QSF_CHUNK_OUTPUT_TOKENS).toBeLessThan(QSF_PLAN_MAX_OUTPUT_TOKENS / 2);
   });
@@ -191,7 +197,7 @@ describe("planQsfImport", () => {
     }
   );
 
-  test("plans every question of the largest fixture in four calls, three at a time, summing usage", async () => {
+  test("plans every question of the largest fixture in eight calls, four at a time, summing usage", async () => {
     const requests: TQsfPlanRequest[] = [];
     let inFlight = 0;
     let maxInFlight = 0;
@@ -211,8 +217,8 @@ describe("planQsfImport", () => {
 
     const result = await plan("large-150.qsf", generate);
 
-    expect(result.calls).toBe(4);
-    expect(maxInFlight).toBe(3);
+    expect(result.calls).toBe(8);
+    expect(maxInFlight).toBe(4);
     expect(result.plan.questions.size).toBe(150);
     expect(result.plan.failures.size).toBe(0);
     expect(Number.isFinite(result.usage.inputTokens) && result.usage.inputTokens > 0).toBe(true);
@@ -396,9 +402,9 @@ describe("planQsfImport", () => {
 
     const result = await plan("large-150.qsf", generate);
 
-    // Four chunks: 3 × 4 + 2 = 14 calls, every one of them too long.
-    expect(generate).toHaveBeenCalledTimes(14);
-    expect(result.calls).toBe(14);
+    // Eight chunks: 3 × 8 + 2 = 26 calls, every one of them too long.
+    expect(generate).toHaveBeenCalledTimes(26);
+    expect(result.calls).toBe(26);
     expect(result.plan.questions.size).toBe(0);
     // What the retry round could not ask for is dropped as unplanned, not failed.
     expect(result.issues.length).toBe(150);
@@ -439,9 +445,9 @@ describe("planQsfImport", () => {
 
   test("sizes the ceilings from the reader's limits", () => {
     // 200 questions on 200 pages, three rules described on each: 200 × (70 + 10 + 2 × 3 × 45) =
-    // 70,000 tokens in 3,000-token chunks, 24 of them.
-    expect(QSF_MAX_AI_CALLS).toBe(74);
-    expect(QSF_MAX_OUTPUT_TOKENS).toBe(409_600);
+    // 70,000 tokens in 1,400-token chunks, 50 of them.
+    expect(QSF_MAX_AI_CALLS).toBe(152);
+    expect(QSF_MAX_OUTPUT_TOKENS).toBe(835_584);
   });
 
   test("stops calling once the import's output tokens are spent, dropping the rest", async () => {
@@ -451,10 +457,10 @@ describe("planQsfImport", () => {
 
     const result = await plan("large-150.qsf", generate);
 
-    // Four chunks: (2 × 4 + 2) × 8,192 tokens, ten calls that use all of theirs, before the call cap
-    // of 14. At most the calls already in flight run past it.
-    expect(generate.mock.calls.length).toBeLessThanOrEqual(10 + 2);
-    expect(result.usage.outputTokens).toBeLessThanOrEqual(12 * 8192);
+    // Eight chunks: (2 × 8 + 2) × 8,192 tokens, eighteen calls that use all of theirs, before the call
+    // cap of 26. At most the three other calls already in flight run past it.
+    expect(generate.mock.calls.length).toBeLessThanOrEqual(18 + 3);
+    expect(result.usage.outputTokens).toBeLessThanOrEqual(21 * 8192);
     expect(result.issues.map((issue) => issue.params?.cause)).toContain("ai_budget");
   });
 
@@ -478,12 +484,14 @@ describe("planQsfImport", () => {
     expect(siblings.every((signal) => signal.aborted)).toBe(true);
   });
 
-  test("turns the AI SDK's own timeout into the import's timeout", async () => {
-    const generate: TQsfPlanGenerate = async () => {
+  test("ends in the import's timeout only when the calls ran out of time before any question was planned", async () => {
+    const generate = vi.fn<TQsfPlanGenerate>(async () => {
       throw new DOMException("The operation timed out.", "TimeoutError");
-    };
+    });
 
     await expect(plan("simple.qsf", generate)).rejects.toBeInstanceOf(QsfImportTimeoutError);
+    // The chunk, then its two halves: a timed-out call is split like one that ran out of tokens.
+    expect(generate).toHaveBeenCalledTimes(3);
   });
 
   test("lets the import's own abort through as is, for the route to classify", async () => {
@@ -537,7 +545,7 @@ describe("planQsfImport", () => {
     expect(result.issues.map((issue) => issue.params?.cause)).toEqual(Array(5).fill("ai_budget"));
   });
 
-  test("sizes the timeout of each half of a split again, so the halves cannot pass the deadline", async () => {
+  test("sizes the timeout of each half of a split when it starts, so the halves cannot pass the deadline", async () => {
     const timeouts: number[] = [];
     const recorded = recordedGenerate(loadRecordedPlan("simple.qsf"));
     const generate: TQsfPlanGenerate = async (request) => {
@@ -550,8 +558,127 @@ describe("planQsfImport", () => {
     await plan("simple.qsf", generate, { deadlineInMs: 6_000 });
 
     expect(timeouts).toHaveLength(3);
-    // Each later call gets what is left, not the first call's budget again.
+    // The halves run side by side after the chunk, each with what is left, not the chunk's budget again.
     expect(timeouts[1]).toBeLessThanOrEqual(timeouts[0] - 250);
-    expect(timeouts[2]).toBeLessThanOrEqual(timeouts[1] - 250);
+    expect(timeouts[2]).toBeLessThanOrEqual(timeouts[0] - 250);
+  });
+});
+
+describe("planQsfImport with a model that takes time", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** Plan large-150 against a model on fake timers, running the clock until the plan settles. */
+  const planTimed = async (
+    latencyFor: (refs: string[]) => number,
+    edit: (refs: string[], object: unknown) => unknown = (_refs, object) => object
+  ) => {
+    const { survey, texts } = await prepare("large-150.qsf");
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date", "performance"] });
+    const requests: { refs: string[]; timeout: number; at: number }[] = [];
+    const timedAnswer = timedGenerate(loadRecordedPlan("large-150.qsf"), latencyFor);
+    const timed: TQsfPlanGenerate = async (request) => {
+      const answer = await timedAnswer(request);
+      return { ...answer, object: edit(refsInPrompt(request.prompt), answer.object) };
+    };
+    const startedAt = performance.now();
+    const deadline = startedAt + 120_000;
+    const settled = planQsfImport({
+      survey,
+      texts,
+      generate: (request) => {
+        requests.push({
+          refs: refsInPrompt(request.prompt),
+          timeout: request.timeout,
+          at: performance.now() - startedAt,
+        });
+        return timed(request);
+      },
+      signal: new AbortController().signal,
+      deadline,
+    }).then(
+      (result) => ({ result, error: null, elapsed: performance.now() - startedAt }),
+      (error: unknown) => ({ result: null, error, elapsed: performance.now() - startedAt })
+    );
+    await vi.advanceTimersByTimeAsync(130_000);
+    return { ...(await settled), requests };
+  };
+
+  test("plans 150 questions inside the deadline at the slow end of the model's speed, retry round included", async () => {
+    // 31 s a call, the slow end for a 1,400-token chunk; the first wave leaves QID1 out, so it goes to
+    // the retry round. Two waves of four, then the retry: about 93 s.
+    let firstWave = true;
+    const { result, error, elapsed, requests } = await planTimed(
+      () => 31_000,
+      (refs, object) => {
+        if (!firstWave || !refs.includes("QID1")) return object;
+        firstWave = false;
+        const plan = object as { questions: { ref: string }[] };
+        return { ...plan, questions: plan.questions.filter((entry) => entry.ref !== "QID1") };
+      }
+    );
+
+    expect(error).toBeNull();
+    expect(result?.plan.questions.size).toBe(150);
+    expect(requests).toHaveLength(9);
+    expect(elapsed).toBeLessThanOrEqual(120_000 - QSF_ASSEMBLY_RESERVE_MS);
+  });
+
+  test("splits a chunk whose call ran past its timeout and plans its halves, instead of failing", async () => {
+    // The first chunk's call stalls; every other call, its halves included, takes 20 s.
+    const { result, error, requests } = await planTimed((refs) =>
+      refs.includes("QID1") && refs.length === 20 ? Infinity : 20_000
+    );
+
+    expect(error).toBeNull();
+    expect(result?.plan.questions.size).toBe(150);
+    expect(result?.plan.failures.size).toBe(0);
+    // Eight chunks and two halves; the halves start once the stalled call has timed out.
+    expect(requests.map((request) => request.refs.length)).toEqual([20, 20, 20, 20, 20, 20, 20, 10, 10, 10]);
+    expect(requests.slice(0, 8).every((request) => request.timeout === QSF_AI_CALL_TIMEOUT_MS)).toBe(true);
+    expect(requests.slice(8).every((request) => request.at >= QSF_AI_CALL_TIMEOUT_MS)).toBe(true);
+  });
+
+  test("drops the questions whose halves time out too, as ai_timeout, and keeps the rest", async () => {
+    const { result, error } = await planTimed((refs) => (refs.includes("QID1") ? Infinity : 20_000));
+
+    expect(error).toBeNull();
+    // The first chunk's second half (QID11–QID20) answered; its first half timed out again.
+    expect(result?.plan.questions.size).toBe(140);
+    expect([...(result?.plan.failures.values() ?? [])]).toEqual(Array(10).fill(["ai_timeout"]));
+    const causes = result?.issues.map((issue) => issue.params?.cause);
+    expect(causes).toEqual(Array(10).fill("ai_timeout"));
+  });
+
+  test("never runs a call past the deadline: late calls get what is left, and what time ran out on is dropped", async () => {
+    // Every whole chunk stalls and every half takes 20 s, so the halves queue up against the deadline.
+    const { result, error, requests, elapsed } = await planTimed((refs) =>
+      refs.length === 20 ? Infinity : 20_000
+    );
+    const lastMoment = 120_000 - QSF_ASSEMBLY_RESERVE_MS;
+
+    expect(error).toBeNull();
+    const planned = result?.plan.questions.size ?? 0;
+    expect(planned).toBeGreaterThan(0);
+    expect(planned).toBeLessThan(150);
+    expect(result?.issues).toHaveLength(150 - planned);
+    expect(
+      result?.issues.every((issue) => ["ai_timeout", "ai_budget"].includes(String(issue.params?.cause)))
+    ).toBe(true);
+    expect(requests.some((request) => request.timeout < QSF_AI_CALL_TIMEOUT_MS)).toBe(true);
+    for (const request of requests) expect(request.at + request.timeout).toBeLessThanOrEqual(lastMoment);
+    expect(elapsed).toBeLessThanOrEqual(lastMoment);
+  });
+
+  test("ends in the import's timeout when every call stalls, inside the deadline", async () => {
+    const { result, error, elapsed, requests } = await planTimed(() => Infinity);
+
+    expect(result).toBeNull();
+    expect(error).toBeInstanceOf(QsfImportTimeoutError);
+    expect(elapsed).toBeLessThanOrEqual(120_000 - QSF_ASSEMBLY_RESERVE_MS);
+    for (const request of requests) {
+      expect(request.at + request.timeout).toBeLessThanOrEqual(120_000 - QSF_ASSEMBLY_RESERVE_MS);
+    }
   });
 });

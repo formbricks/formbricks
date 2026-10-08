@@ -323,6 +323,7 @@ export function buildQsfPlanSystemPrompt(): string {
 
 const FAILURE_HINTS: Record<TQsfPlanFailure, string> = {
   ai_budget: "it was not planned in time",
+  ai_timeout: "its plan took too long; keep it short",
   invalid_output: "the plan could not be read; follow the schema exactly",
   invalid_entry: "its entry did not follow the schema",
   missing: "it was missing; list it in questions[] or in skipped[]",

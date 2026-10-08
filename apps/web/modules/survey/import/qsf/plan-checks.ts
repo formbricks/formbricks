@@ -35,6 +35,8 @@ export const QSF_MAX_NOTE_CHARS = 300;
 export type TQsfPlanFailure =
   /** Never asked: the import's AI budget (calls, prompt size or time) ran out first. */
   | "ai_budget"
+  /** Asked, but its call ran out of its own time, split into halves too. */
+  | "ai_timeout"
   | "invalid_output"
   | "invalid_entry"
   | "missing"

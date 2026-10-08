@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { prepareV3SurveyCreateInput } from "@/app/api/v3/surveys/prepare";
 import type { TQsfImportReport } from "../types";
@@ -7,7 +7,7 @@ import {
   type TImportableQsfFixture,
   loadQsfFixture,
 } from "./__fixtures__/load-fixture";
-import { loadRecordedPlan, recordedGenerate } from "./__fixtures__/recorded-plans";
+import { loadRecordedPlan, recordedGenerate, timedGenerate } from "./__fixtures__/recorded-plans";
 import type { TQsfPlanGenerate } from "./ai-plan";
 import type { TQsfDraftDocument } from "./assemble";
 import { checkQsfDraft } from "./final-gate";
@@ -311,11 +311,13 @@ describe("runQsfImport on recorded plans", () => {
     mocks.generateOrganizationAIObject.mockImplementation(
       async (request: Parameters<TQsfPlanGenerate>[0]) => {
         calls += 1;
+        // Read before the await: the halves run at the same time.
+        const call = calls;
         // The whole page is too long for one call, so it is split in two; the first half then leaves
         // QID2 out, which only the retry places.
-        if (calls === 1) throw new AIOutputTokenLimitError({ maxOutputTokens: 8192 });
+        if (call === 1) throw new AIOutputTokenLimitError({ maxOutputTokens: 8192 });
         const result = await recorded(request);
-        if (calls !== 2) return result;
+        if (call !== 2) return result;
         const object = result.object as { questions: { ref: string }[] };
         return {
           ...result,
@@ -424,5 +426,38 @@ describe("runQsfImport on recorded plans", () => {
     const error = await run("simple.qsf", { signal: controller.signal }).catch((caught: unknown) => caught);
 
     expect((error as DOMException).name).toBe("AbortError");
+  });
+
+  describe("with a model that takes time", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    test("finishes with a draft when one AI call runs past its own timeout, splitting that chunk", async () => {
+      const prepared = prepareQsfImport(loadQsfFixture("large-150.qsf"), "large-150.qsf");
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date", "performance"] });
+      // The first chunk stalls past the 45 s call timeout; its halves and every other call take 20 s.
+      mocks.generateOrganizationAIObject.mockImplementation(
+        timedGenerate(loadRecordedPlan("large-150.qsf"), (refs) =>
+          refs.includes("QID1") && refs.length === 20 ? Infinity : 20_000
+        )
+      );
+
+      const settled = runQsfImport({
+        prepared,
+        workspaceId: WORKSPACE_ID,
+        organizationId: "org_1",
+        userId: "user_1",
+        signal: new AbortController().signal,
+        deadlineMs: 120_000,
+        onProgress: vi.fn(),
+      });
+      await vi.advanceTimersByTimeAsync(130_000);
+      const result = await settled;
+
+      expect(result.report.summary.questions).toBe(150);
+      expect(mocks.realCheckQsfDraft(result.payload)).toEqual([]);
+      expect(mocks.generateOrganizationAIObject).toHaveBeenCalledTimes(10);
+    });
   });
 });

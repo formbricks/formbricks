@@ -51,3 +51,34 @@ export const recordedGenerate =
     const outputTokens = Math.ceil(JSON.stringify(object).length / 4);
     return { object, usage: { inputTokens: Math.ceil(request.prompt.length / 4), outputTokens } };
   };
+
+/**
+ * A model that takes time, and honours the call's `timeout` and `abortSignal` the way the AI SDK does:
+ * a call slower than its timeout fails with a `TimeoutError`, and an aborted one with the signal's
+ * reason. `latencyFor` says how long a call about those questions takes, `Infinity` to stall. Meant for
+ * fake timers.
+ */
+export const timedGenerate =
+  (plan: TRecordedPlan, latencyFor: (refs: string[]) => number): TQsfPlanGenerate =>
+  (request) => {
+    const refs = refsInPrompt(request.prompt);
+    const latency = latencyFor(refs);
+    if (request.abortSignal.aborted) return Promise.reject(request.abortSignal.reason);
+    return new Promise((resolve, reject) => {
+      const settle = (outcome: () => void) => {
+        clearTimeout(answer);
+        clearTimeout(timeout);
+        request.abortSignal.removeEventListener("abort", onAbort);
+        outcome();
+      };
+      const onAbort = () => settle(() => reject(request.abortSignal.reason));
+      const answer = Number.isFinite(latency)
+        ? setTimeout(() => settle(() => resolve(recordedGenerate(plan)(request))), latency)
+        : undefined;
+      const timeout = setTimeout(
+        () => settle(() => reject(new DOMException("The operation timed out.", "TimeoutError"))),
+        request.timeout
+      );
+      request.abortSignal.addEventListener("abort", onAbort, { once: true });
+    });
+  };

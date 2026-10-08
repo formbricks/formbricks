@@ -29,7 +29,7 @@ export const QSF_IMPORT_MAX_IN_FLIGHT_PER_USER = 1;
 /** `Retry-After` when every import slot is taken: about how long a typical import takes. */
 export const QSF_IMPORT_RETRY_AFTER_SECONDS = 15;
 
-/** Hard stop for one import: the AI call (45 s), one retry of the questions that failed, and assembly. */
+/** Hard stop for one import: two waves of AI calls (45 s each at most), a retry wave, and assembly. */
 export const QSF_IMPORT_DEADLINE_MS = 120_000;
 
 /** Longest silence on the stream. Well under nginx's 60 s default read timeout. */

@@ -334,7 +334,7 @@ describe("streamQsfImport", () => {
       );
     });
 
-    test("reports an AI call that ran out of its own time as a timeout, not a failure", async () => {
+    test("reports a plan that ran out of time before any question was planned as a timeout", async () => {
       mocks.runQsfImport.mockRejectedValue(new QsfImportTimeoutError());
 
       const events = await readEvents(await call());
