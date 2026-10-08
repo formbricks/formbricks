@@ -33,13 +33,6 @@ describe("@formbricks/cache cacheKeys", () => {
     });
 
     describe("custom css namespace", () => {
-      test("should create per-organization rollout keys", () => {
-        expect(createCacheKey.customCss.rollout("org-1")).toBe("fb:org:org-1:custom-css-rollout");
-        expect(createCacheKey.customCss.rolloutLastKnown("org-1")).toBe(
-          "fb:org:org-1:custom-css-rollout-last-known"
-        );
-      });
-
       test("should version reprocessed output by processor version and source hash", () => {
         expect(createCacheKey.customCss.reprocessed("survey", 3, "abc123")).toBe(
           "fb:custom-css:survey:v3:abc123"

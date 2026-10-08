@@ -3,7 +3,6 @@ import { type TCustomCssError, type TCustomCssWarning } from "@formbricks/types/
 import {
   type TCustomCssDraftCheck,
   type TCustomCssLastValid,
-  canSaveCustomCssDraft,
   customCssKeys,
   deriveCustomCssValidationState,
   getCustomCssDraftKey,
@@ -195,15 +194,5 @@ describe("getNextLastValid", () => {
 
   test("returns the same object when nothing changed, so state updates settle", () => {
     expect(getNextLastValid(lastValid, validCheck, "old")).toBe(lastValid);
-  });
-});
-
-describe("canSaveCustomCssDraft", () => {
-  test("blocks saving only an invalid or still-pending draft", () => {
-    expect(canSaveCustomCssDraft("valid")).toBe(true);
-    expect(canSaveCustomCssDraft("empty")).toBe(true);
-    expect(canSaveCustomCssDraft("unavailable")).toBe(true);
-    expect(canSaveCustomCssDraft("invalid")).toBe(false);
-    expect(canSaveCustomCssDraft("pending")).toBe(false);
   });
 });

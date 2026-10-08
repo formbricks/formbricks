@@ -2,12 +2,8 @@ import "server-only";
 
 export { capturePostHogEvent, groupIdentifyPostHog, identifyPostHogPerson, getEmailDomain } from "./capture";
 export type { PostHogGroupContext } from "./capture";
-export { evaluatePostHogFeatureFlag, getPostHogFeatureFlag } from "./get-feature-flag";
-export type {
-  TPostHogFeatureFlagContext,
-  TPostHogFeatureFlagEvaluation,
-  TPostHogFeatureFlagValue,
-} from "./types";
+export { getPostHogFeatureFlag } from "./get-feature-flag";
+export type { TPostHogFeatureFlagContext, TPostHogFeatureFlagValue } from "./types";
 
 // wrapAiModelWithTracing / instrumentMcpServerWithTracing are intentionally NOT
 // re-exported here: this barrel is imported by ~50 unrelated modules for

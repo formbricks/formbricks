@@ -25,9 +25,9 @@ export const transformPrismaSurvey = <T extends TSurvey | TJsWorkspaceStateSurve
     displayPercentage: Number(surveyPrisma.displayPercentage) || null,
     segment,
     customHeadScriptsMode: surveyPrisma.customHeadScriptsMode,
-    // Rows saved before the strict theme-value schemas (ENG-2950) may hold values a save now refuses.
-    // Dropping them here keeps an unrelated save of this survey from failing on a field nobody touched;
-    // the renderer drops the same values, so nothing a respondent sees changes.
+    // Theme values are not validated on write (the API accepts any string, ENG-3723), so a stored value
+    // that could add CSS (ENG-2950) is dropped here, before it reaches the editor, its previews or an API
+    // read. The renderer drops the same values, so nothing a respondent sees changes.
     ...(surveyPrisma.styling && { styling: sanitizeThemeStyling(surveyPrisma.styling) }),
   } as T;
 

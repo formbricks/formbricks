@@ -4002,9 +4002,9 @@ export const ZSurveyUpdateInput = ZSurveyBase.omit({
   // path. Callers that hand `updateSurvey` a raw `TSurvey` (the editor's save actions) never go
   // through this schema and keep the V2 carrier.
   embeddedFields: true,
-  // ENG-2949: stripped, like `embeddedFields`. This is the legacy v1 PUT boundary, which refuses a body
-  // carrying `customCss`; omitting it here means the merged round-trip never hands the stored value to
-  // `updateSurvey`, which then leaves the survey's CSS untouched.
+  // ENG-2949: stripped, like `embeddedFields`. This is the legacy v1 PUT boundary, which ignores a
+  // `customCss` key like any other unknown one; omitting it here means the merged round-trip never hands
+  // the stored value to `updateSurvey`, which then leaves the survey's CSS untouched.
   customCss: true,
   // The ENG-3282 authorization facts (`visibility`, `ownerId`, the versions) are deliberately NOT
   // omitted: the v1 PUT round-trip re-parses the loaded survey, which carries them.

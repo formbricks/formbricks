@@ -17,7 +17,6 @@ import { hasStylesInHeadScripts } from "@/modules/custom-css/components/lib/hint
 import { type TSurveyCustomCssEditorConfig } from "@/modules/custom-css/components/types";
 import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
 import { getCustomCssHealth, toDeliveredCustomCss } from "@/modules/custom-css/lib/delivery";
-import { getIsCustomCssRolledOut } from "@/modules/custom-css/lib/rollout";
 import { getWorkspaceCustomCssRecord, parseStoredCustomCss } from "@/modules/custom-css/lib/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
@@ -119,7 +118,6 @@ export const SurveyEditorPage = async (props: {
     isExternalUrlsAllowed,
     isUserTargetingAllowed,
     isWorkflowsAllowed,
-    isCustomCssRolledOut,
     isCustomCssPlanAllowed,
   ] = await Promise.all([
     getSurveyFollowUpsPermission(workspaceWithTeamIds.organizationId),
@@ -129,7 +127,6 @@ export const SurveyEditorPage = async (props: {
     getIsContactsEnabled(workspaceWithTeamIds.organizationId),
     // Drives the Follow-ups deprecation: the tab only survives where Workflows cannot replace it.
     getIsWorkflowsEnabled(workspaceWithTeamIds.organizationId),
-    getIsCustomCssRolledOut(workspaceWithTeamIds.organizationId),
     getCustomCssPlanAllowed(workspaceWithTeamIds.organizationId),
   ]);
 
@@ -160,15 +157,13 @@ export const SurveyEditorPage = async (props: {
 
   // The workspace row reaches the editor without its CSS columns (source, compiled output and the
   // previous revision); the editor gets only what the Custom CSS card shows, read here on the server.
-  const customCssEditor = isCustomCssRolledOut
-    ? await getSurveyCustomCssEditorConfig({
-        storedWorkspaceCustomCss: (await getWorkspaceCustomCssRecord(workspaceWithTeamIds.id)).customCss,
-        survey,
-        workspaceHeadScripts: workspaceWithTeamIds.customHeadScripts,
-        organizationId: workspaceWithTeamIds.organizationId,
-        planAllowed: isCustomCssPlanAllowed,
-      })
-    : null;
+  const customCssEditor = await getSurveyCustomCssEditorConfig({
+    storedWorkspaceCustomCss: (await getWorkspaceCustomCssRecord(workspaceWithTeamIds.id)).customCss,
+    survey,
+    workspaceHeadScripts: workspaceWithTeamIds.customHeadScripts,
+    organizationId: workspaceWithTeamIds.organizationId,
+    planAllowed: isCustomCssPlanAllowed,
+  });
 
   return (
     <SurveyEditor

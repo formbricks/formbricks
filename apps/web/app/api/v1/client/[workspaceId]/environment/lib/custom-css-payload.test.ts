@@ -10,7 +10,7 @@ import { getWorkspaceState } from "./environmentState";
  * compiled output, which the processor holds to the same per-scope budget as the source.
  *
  * The real environment-state assembly runs (data shaping, delivery, legacy aliases); only the database,
- * cache and the delivery/rollout lookups are stubbed. Measured 2026-10-05 (ENG-3552 PR): 732 KB raw,
+ * cache and the delivery lookup are stubbed. Measured 2026-10-05 (ENG-3552 PR): 732 KB raw,
  * 69 KB gzip, ~10 ms to assemble and ~4 ms to serialize on a shared 4-CPU container.
  */
 
@@ -26,7 +26,6 @@ vi.mock("@/lib/utils/helper", () => ({ getOrganizationIdFromWorkspaceId: vi.fn()
 vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
 vi.mock("@/modules/storage/utils", () => ({ resolveStorageUrlsInObject: vi.fn((value: unknown) => value) }));
 vi.mock("@/modules/survey/lib/utils", () => ({ transformPrismaSurvey: vi.fn((survey: unknown) => survey) }));
-vi.mock("@/modules/custom-css/lib/rollout", () => ({ getIsCustomCssRolledOut: vi.fn(async () => true) }));
 // Stored output at the current processor version is delivered as stored.
 vi.mock("@/modules/custom-css/lib/delivery", () => ({
   toDeliveredCustomCss: vi.fn(async (stored: TCustomCssStored | null) =>
@@ -96,7 +95,8 @@ const survey = (index: number) => ({
   languages: [],
   endings: [],
   autoClose: null,
-  styling: null,
+  // "Add custom styles" on, so each survey's own CSS is delivered (ENG-3723).
+  styling: { overwriteThemeStyling: true },
   recaptcha: { enabled: false },
   segment: null,
   recontactDays: null,

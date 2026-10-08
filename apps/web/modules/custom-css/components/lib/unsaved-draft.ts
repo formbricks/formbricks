@@ -4,7 +4,7 @@ import { type TCustomCssDraft, getCustomCssChangeKind } from "./draft";
 /**
  * Unsaved workspace CSS drafts, kept in memory for as long as the dashboard stays loaded.
  *
- * The App Router cannot block in-app navigation (see `useBeforeUnloadPrompt`), so leaving Look & Feel
+ * The App Router cannot block in-app navigation (see `useBeforeUnloadPrompt`), so leaving Appearance
  * through a link would drop a pasted stylesheet. The card keeps its draft here instead and picks it up
  * again when it loads. Memory, not browser storage: nothing outlives the tab or a sign-out (which
  * reloads the page), and a reload or a full navigation is covered by the browser's leave prompt.

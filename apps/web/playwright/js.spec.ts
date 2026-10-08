@@ -130,6 +130,17 @@ test.describe("JS Package Test", async () => {
       });
       expect(workspaceCss.ok()).toBe(true);
 
+      // Survey CSS is delivered only while the survey's "Add custom styles" is on (ENG-3723). The v3 survey
+      // API has no styling field, so it is set directly, before the PATCH below invalidates the cache.
+      const { styling } = await prisma.survey.findUniqueOrThrow({
+        where: { id: surveyId },
+        select: { styling: true },
+      });
+      await prisma.survey.update({
+        where: { id: surveyId },
+        data: { styling: { ...styling, overwriteThemeStyling: true } },
+      });
+
       const surveyCss = await page.request.patch(`/api/v3/surveys/${surveyId}`, {
         data: { customCss: { light: '[data-fb-part="headline"] { color: rgb(40, 50, 60); }', dark: null } },
       });

@@ -1,13 +1,5 @@
 import { z } from "zod";
 import { ZColor, ZStorageUrl } from "./common";
-import {
-  isSafeThemeBackground,
-  isSafeThemeBoxShadow,
-  isSafeThemeColor,
-  isSafeThemeDimension,
-  isSafeThemeFontFamily,
-  isSafeThemeFontWeight,
-} from "./styling-values";
 
 export const ZStylingColor = z.object({
   light: ZColor,
@@ -38,29 +30,9 @@ export const LINK_SURVEY_CARD_WIDTH_MAX: Record<TLinkSurveyCardWidthOptions, str
 export const getLinkSurveyCardMaxWidth = (cardWidth?: TLinkSurveyCardWidthOptions | null): string =>
   LINK_SURVEY_CARD_WIDTH_MAX[cardWidth ?? "default"];
 
-/*
- * Free-text theme values are written into generated CSS, so each one must be a valid value for its
- * property and nothing more (ENG-2950, styling-values.ts). Older stored rows may hold values these reject,
- * so the survey read seam (`transformPrismaSurvey`) and the Look & Feel page drop them with
- * `sanitizeThemeStyling` before a save round-trips the row, and the renderer drops them on its own.
- */
-const ZStylingDimension = z
-  .union([z.number(), z.string()])
-  .refine(isSafeThemeDimension, { error: "Invalid size: use a number or a CSS length such as 12px or 1rem" });
-const ZStylingFontWeight = z
-  .union([z.string(), z.number()])
-  .refine(isSafeThemeFontWeight, { error: "Invalid font weight: use 100–900 or a keyword such as bold" });
-const ZStylingFontFamily = z
-  .string()
-  .refine(isSafeThemeFontFamily, { error: "Invalid font family: use a comma-separated list of font names" });
-const ZStylingBoxShadow = z.string().refine(isSafeThemeBoxShadow, {
-  error: "Invalid shadow: use a CSS box-shadow such as 0 1px 2px #0000000d",
-});
-const ZStylingFreeColor = z.string().refine(isSafeThemeColor, { error: "Invalid color" });
-
 export const ZLogo = z.object({
   url: ZStorageUrl.optional(),
-  bgColor: ZStylingFreeColor.optional(),
+  bgColor: z.string().optional(),
 });
 export type TLogo = z.infer<typeof ZLogo>;
 
@@ -76,8 +48,7 @@ export const ZSurveyStylingBackground = z
         return Boolean(surveyBackground.bg);
       }
 
-      // A solid background is written into styles, so it has to be a color.
-      return isSafeThemeBackground(surveyBackground);
+      return true;
     },
     {
       error: "Invalid background",
@@ -95,59 +66,60 @@ export const ZBaseStyling = z.object({
   // A cleared color picker is transformed to undefined at the form layer, so this stays a
   // strict ZColor like every other color field.
   footerLinkColor: ZStylingColor.nullish(),
-  fontFamily: ZStylingFontFamily.nullish(),
+  fontFamily: z.string().nullish(),
 
   // Buttons
   buttonBgColor: ZStylingColor.nullish(),
   buttonTextColor: ZStylingColor.nullish(),
-  buttonBorderRadius: ZStylingDimension.nullish(),
-  buttonHeight: ZStylingDimension.nullish(),
-  buttonFontSize: ZStylingDimension.nullish(),
-  buttonFontWeight: ZStylingFontWeight.nullish(),
-  buttonPaddingX: ZStylingDimension.nullish(),
-  buttonPaddingY: ZStylingDimension.nullish(),
+  buttonBorderRadius: z.union([z.number(), z.string()]).nullish(),
+  buttonHeight: z.union([z.number(), z.string()]).nullish(),
+  buttonFontSize: z.union([z.number(), z.string()]).nullish(),
+  buttonFontWeight: z.union([z.string(), z.number()]).nullish(),
+  buttonPaddingX: z.union([z.number(), z.string()]).nullish(),
+  buttonPaddingY: z.union([z.number(), z.string()]).nullish(),
 
   // Inputs
   inputBgColor: ZStylingColor.nullish(),
   inputBorderColor: ZStylingColor.nullish(),
-  inputBorderRadius: ZStylingDimension.nullish(),
-  inputHeight: ZStylingDimension.nullish(),
+  inputBorderRadius: z.union([z.number(), z.string()]).nullish(),
+  inputHeight: z.union([z.number(), z.string()]).nullish(),
   inputTextColor: ZStylingColor.nullish(),
-  inputFontSize: ZStylingDimension.nullish(),
+  inputFontSize: z.union([z.number(), z.string()]).nullish(),
   inputPlaceholderOpacity: z.number().max(1).min(0).nullish(),
-  inputPaddingX: ZStylingDimension.nullish(),
-  inputPaddingY: ZStylingDimension.nullish(),
-  inputShadow: ZStylingBoxShadow.nullish(),
+  inputPaddingX: z.union([z.number(), z.string()]).nullish(),
+  inputPaddingY: z.union([z.number(), z.string()]).nullish(),
+  inputShadow: z.string().nullish(),
 
   // Options
   optionBgColor: ZStylingColor.nullish(),
   optionLabelColor: ZStylingColor.nullish(),
   optionBorderColor: ZStylingColor.nullish(),
-  optionBorderRadius: ZStylingDimension.nullish(),
-  optionPaddingX: ZStylingDimension.nullish(),
-  optionPaddingY: ZStylingDimension.nullish(),
-  optionFontSize: ZStylingDimension.nullish(),
+  optionBorderRadius: z.union([z.number(), z.string()]).nullish(),
+  optionPaddingX: z.union([z.number(), z.string()]).nullish(),
+  optionPaddingY: z.union([z.number(), z.string()]).nullish(),
+  optionFontSize: z.union([z.number(), z.string()]).nullish(),
 
   // Headlines & Descriptions
-  elementHeadlineFontSize: ZStylingDimension.nullish(),
-  elementHeadlineFontWeight: ZStylingFontWeight.nullish(),
+  elementHeadlineFontSize: z.union([z.number(), z.string()]).nullish(),
+  elementHeadlineFontWeight: z.union([z.string(), z.number()]).nullish(),
   elementHeadlineColor: ZStylingColor.nullish(),
-  elementDescriptionFontSize: ZStylingDimension.nullish(),
-  elementDescriptionFontWeight: ZStylingFontWeight.nullish(),
+  elementDescriptionFontSize: z.union([z.number(), z.string()]).nullish(),
+  elementDescriptionFontWeight: z.union([z.string(), z.number()]).nullish(),
   elementDescriptionColor: ZStylingColor.nullish(),
-  elementUpperLabelFontSize: ZStylingDimension.nullish(),
+  elementUpperLabelFontSize: z.union([z.number(), z.string()]).nullish(),
   elementUpperLabelColor: ZStylingColor.nullish(),
-  elementUpperLabelFontWeight: ZStylingFontWeight.nullish(),
+  elementUpperLabelFontWeight: z.union([z.string(), z.number()]).nullish(),
 
   // Progress Bar
-  progressTrackHeight: ZStylingDimension.nullish(),
+  progressTrackHeight: z.union([z.number(), z.string()]).nullish(),
   progressTrackBgColor: ZStylingColor.nullish(),
   progressIndicatorBgColor: ZStylingColor.nullish(),
 
   cardBackgroundColor: ZStylingColor.nullish(),
   cardBorderColor: ZStylingColor.nullish(),
   highlightBorderColor: ZStylingColor.nullish(),
-  roundness: ZStylingDimension.nullish(),
+  isDarkModeEnabled: z.boolean().nullish(),
+  roundness: z.union([z.number(), z.string()]).nullish(),
   cardArrangement: ZCardArrangement.nullish(),
   linkSurveyCardWidth: ZLinkSurveyCardWidthOptions.nullish(),
   background: ZSurveyStylingBackground.nullish(),

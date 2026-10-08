@@ -43,8 +43,9 @@ export const getWorkspaceWithTeamIds = reactCache(
 
       return {
         ...workspacePrisma,
-        // The editor copies the workspace theme into the survey it saves, so a value saved before the
-        // strict theme-value schemas (ENG-2950) would otherwise fail every save and autosave.
+        // Theme values are not validated on write (ENG-3723), and the editor copies the workspace theme
+        // into the survey it saves and previews, so a stored value that could add CSS (ENG-2950) is
+        // dropped here.
         styling: sanitizeThemeStyling(workspacePrisma.styling),
         teamIds,
       };

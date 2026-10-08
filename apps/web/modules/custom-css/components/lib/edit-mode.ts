@@ -1,5 +1,5 @@
 import { type TCustomCssChangeKind } from "./draft";
-import { type TCustomCssValidationStatus, canSaveCustomCssDraft } from "./validation";
+import { type TCustomCssValidationStatus } from "./validation";
 
 /**
  * What the creator may do with the CSS fields (ENG-2949, M4.4):
@@ -19,16 +19,21 @@ export const getCustomCssEditMode = (params: {
 };
 
 /**
- * Whether the current draft can be submitted. An unchanged draft has nothing to save, `clear-only`
- * may only submit a removal, and a draft the server would reject (invalid, or not yet checked) waits.
- * An empty draft needs no check: clearing everything is always valid.
+ * What the Appearance page's single Save does with the workspace CSS draft (ENG-3723):
+ * - `skip`: nothing this role or plan may save — an unchanged draft, a read-only role, or anything but
+ *   a removal without the plan. The theme still saves.
+ * - `block`: the draft is known to be invalid, so the whole Save stops and the theme waits with it.
+ * - `submit`: everything else, including a draft whose check is still running; the server checks it
+ *   again either way, as the survey editor's manual save does.
  */
-export const canSubmitCustomCssDraft = (params: {
+export type TWorkspaceCssSaveStep = "skip" | "block" | "submit";
+
+export const getWorkspaceCssSaveStep = (params: {
   mode: TCustomCssEditMode;
   changeKind: TCustomCssChangeKind;
   status: TCustomCssValidationStatus;
-}): boolean => {
-  if (params.mode === "read-only" || params.changeKind === "unchanged") return false;
-  if (params.mode === "clear-only" && params.changeKind !== "removal") return false;
-  return canSaveCustomCssDraft(params.status);
+}): TWorkspaceCssSaveStep => {
+  if (params.mode === "read-only" || params.changeKind === "unchanged") return "skip";
+  if (params.mode === "clear-only" && params.changeKind !== "removal") return "skip";
+  return params.status === "invalid" ? "block" : "submit";
 };

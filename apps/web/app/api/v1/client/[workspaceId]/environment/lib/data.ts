@@ -254,13 +254,14 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
     );
 
     // Compiled custom CSS (ENG-3552): the workspace's once, in `workspaceSettings`, each survey's in the
-    // survey. The rollout flag is applied once for the organization, and only when any CSS exists.
+    // survey, and a survey's only while its style overrides apply (ENG-3723).
     const customCss = await resolveRespondentCustomCss({
-      organizationId: workspaceData.organizationId,
       workspaceCustomCss: workspaceData.customCss as TCustomCssStored | null,
+      allowStyleOverwrite: workspaceData.styling?.allowStyleOverwrite,
       surveys: workspaceData.surveys.map((survey) => ({
         id: survey.id,
         customCss: survey.customCss as TCustomCssStored | null,
+        styling: survey.styling,
       })),
     });
 

@@ -7,20 +7,26 @@ import type {
   TRendererCustomCss,
 } from "@formbricks/types/custom-css";
 import { toDeliveredCustomCss } from "@/modules/custom-css/lib/delivery";
-import { getIsCustomCssRolledOut } from "@/modules/custom-css/lib/rollout";
+import { isSurveyCustomCssApplied } from "@/modules/custom-css/lib/survey-css-gate";
 
 /**
  * Custom CSS as respondents receive it (ENG-3552), shared by every respondent surface: the SDK
  * environment state (website/app surveys and mobile SDKs) and the link survey page.
  *
  * - Compiled output only. Source, the previous revision and the processor version never leave here.
- * - The rollout flag is asked once per call (one organization), and only when there is CSS at all, so
- *   the common no-CSS workspace costs no flag lookup.
+ * - A survey's own CSS goes out only while its other style overrides apply (`isSurveyCustomCssApplied`);
+ *   the workspace CSS goes out either way.
  * - Anything that is not there, withheld or failing is omitted, never sent as an empty or partial
  *   object: the renderer treats a missing scope as "no CSS".
  */
 
 type TStoredCustomCss = TCustomCssStored | null | undefined;
+
+interface TRespondentSurvey {
+  id: string;
+  customCss?: TCustomCssStored | null;
+  styling?: { overwriteThemeStyling?: boolean | null } | null;
+}
 
 export interface TRespondentCustomCss {
   workspace?: TCustomCssCompiled;
@@ -51,29 +57,27 @@ const deliver = async (
   }
 };
 
-const getIsRolledOut = async (organizationId: string): Promise<boolean> => {
-  try {
-    return await getIsCustomCssRolledOut(organizationId);
-  } catch (error) {
-    logger.warn({ error, organizationId }, "Custom CSS rollout check failed; withholding custom CSS");
-    return false;
-  }
-};
-
 export const resolveRespondentCustomCss = async ({
-  organizationId,
   workspaceCustomCss,
+  allowStyleOverwrite,
   surveys,
 }: {
-  organizationId: string;
   workspaceCustomCss: TStoredCustomCss;
-  surveys: ReadonlyArray<{ id: string; customCss?: TCustomCssStored | null }>;
+  /** The workspace's "Enable custom styling". */
+  allowStyleOverwrite: boolean | null | undefined;
+  surveys: ReadonlyArray<TRespondentSurvey>;
 }): Promise<TRespondentCustomCss> => {
   const result: TRespondentCustomCss = { surveys: new Map() };
-  const surveysWithCss = surveys.filter((survey) => Boolean(survey.customCss));
+  const surveysWithCss = surveys.filter(
+    (survey) =>
+      Boolean(survey.customCss) &&
+      isSurveyCustomCssApplied({
+        allowStyleOverwrite,
+        overwriteThemeStyling: survey.styling?.overwriteThemeStyling,
+      })
+  );
 
   if (!workspaceCustomCss && surveysWithCss.length === 0) return result;
-  if (!(await getIsRolledOut(organizationId))) return result;
 
   const [workspace, ...surveyCss] = await Promise.all([
     deliver(workspaceCustomCss, "workspace"),
@@ -94,22 +98,20 @@ export const resolveRespondentCustomCss = async ({
  * link page then passes nothing and the renderer applies nothing).
  */
 export const getLinkSurveyCustomCss = async ({
-  organizationId,
   workspaceCustomCss,
-  surveyId,
-  surveyCustomCss,
+  allowStyleOverwrite,
+  survey: linkSurvey,
 }: {
-  organizationId: string;
   workspaceCustomCss: TStoredCustomCss;
-  surveyId: string;
-  surveyCustomCss: TStoredCustomCss;
+  allowStyleOverwrite: boolean | null | undefined;
+  survey: TRespondentSurvey;
 }): Promise<TRendererCustomCss | undefined> => {
   const { workspace, surveys } = await resolveRespondentCustomCss({
-    organizationId,
     workspaceCustomCss,
-    surveys: [{ id: surveyId, customCss: surveyCustomCss }],
+    allowStyleOverwrite,
+    surveys: [linkSurvey],
   });
-  const survey = surveys.get(surveyId);
+  const survey = surveys.get(linkSurvey.id);
 
   if (!workspace && !survey) return undefined;
   return { ...(workspace ? { workspace } : {}), ...(survey ? { survey } : {}) };

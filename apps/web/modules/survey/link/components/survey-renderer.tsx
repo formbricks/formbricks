@@ -227,10 +227,9 @@ async function getRendererCustomCss(
     return undefined;
   }
   return getLinkSurveyCustomCss({
-    organizationId: workspaceContext.organizationId,
     workspaceCustomCss: workspaceContext.customCss,
-    surveyId: survey.id,
-    surveyCustomCss: survey.customCss,
+    allowStyleOverwrite: workspaceContext.workspace.styling?.allowStyleOverwrite,
+    survey,
   });
 }
 

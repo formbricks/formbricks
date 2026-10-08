@@ -10,13 +10,12 @@ import { responses } from "@/app/lib/api/response";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
-import { V1_CUSTOM_CSS_UNSUPPORTED_MESSAGE, checkFeaturePermissions, refuseV1CustomCss } from "./utils";
+import { checkFeaturePermissions } from "./utils";
 
 // Mock dependencies
 vi.mock("@/app/lib/api/response", () => ({
   responses: {
     forbiddenResponse: vi.fn((message) => new Response(message, { status: 403 })),
-    badRequestResponse: vi.fn((message) => new Response(message, { status: 400 })),
   },
 }));
 
@@ -527,19 +526,5 @@ describe("checkFeaturePermissions", () => {
     const result = await checkFeaturePermissions(surveyData as any, mockOrganization, oldSurvey);
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(403);
-  });
-});
-
-describe("refuseV1CustomCss (ENG-2949)", () => {
-  test("refuses any body that carries customCss, even null", () => {
-    expect(refuseV1CustomCss({ name: "x", customCss: { light: "a{}", dark: null } })?.status).toBe(400);
-    expect(refuseV1CustomCss({ customCss: null })?.status).toBe(400);
-    expect(responses.badRequestResponse).toHaveBeenCalledWith(V1_CUSTOM_CSS_UNSUPPORTED_MESSAGE);
-  });
-
-  test("lets every other body through, including non-objects the route reports itself", () => {
-    expect(refuseV1CustomCss({ name: "x" })).toBeNull();
-    expect(refuseV1CustomCss(null)).toBeNull();
-    expect(refuseV1CustomCss([])).toBeNull();
   });
 });

@@ -75,10 +75,9 @@ export const validateSurveyPinAction = actionClient
     // the PIN matched, so a PIN-protected survey's CSS is not readable before it is unlocked.
     const workspaceContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
     const customCss = await getLinkSurveyCustomCss({
-      organizationId: workspaceContext.organizationId,
       workspaceCustomCss: workspaceContext.customCss,
-      surveyId: survey.id,
-      surveyCustomCss: survey.customCss,
+      allowStyleOverwrite: workspaceContext.workspace.styling?.allowStyleOverwrite,
+      survey,
     });
     const publicSurvey = omitCustomCssSource(survey);
 

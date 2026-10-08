@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TCustomCssStored } from "@formbricks/types/custom-css";
 import { toDeliveredCustomCss } from "@/modules/custom-css/lib/delivery";
-import { getIsCustomCssRolledOut } from "@/modules/custom-css/lib/rollout";
 import {
   getLinkSurveyCustomCss,
   omitCustomCssSource,
@@ -11,13 +10,15 @@ import {
 vi.mock("server-only", () => ({}));
 vi.mock("@formbricks/logger", () => ({ logger: { warn: vi.fn(), error: vi.fn() } }));
 vi.mock("@/modules/custom-css/lib/delivery", () => ({ toDeliveredCustomCss: vi.fn() }));
-vi.mock("@/modules/custom-css/lib/rollout", () => ({ getIsCustomCssRolledOut: vi.fn() }));
 
 const stored = (light: string, dark: string | null = null): TCustomCssStored => ({
   light: { source: `/* source */ ${light}`, compiled: `@layer fb-x { ${light} }` },
   dark: dark ? { source: `/* source */ ${dark}`, compiled: `@layer fb-x-dark { ${dark} }` } : null,
   processorVersion: 1,
 });
+
+// A survey whose "Add custom styles" is on, so its own CSS applies.
+const overriding = { overwriteThemeStyling: true };
 
 // Delivery as W2's contract describes it: compiled output only, `undefined` when withheld.
 const deliverCompiled = async (value: TCustomCssStored | null | undefined) =>
@@ -31,18 +32,17 @@ const deliverCompiled = async (value: TCustomCssStored | null | undefined) =>
 describe("resolveRespondentCustomCss", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getIsCustomCssRolledOut).mockResolvedValue(true);
     vi.mocked(toDeliveredCustomCss).mockImplementation(deliverCompiled);
   });
 
   test("delivers the workspace CSS once and each survey's own, compiled only", async () => {
     const result = await resolveRespondentCustomCss({
-      organizationId: "org-1",
       workspaceCustomCss: stored(".w{}", ".wd{}"),
+      allowStyleOverwrite: true,
       surveys: [
-        { id: "s1", customCss: stored(".s1{}") },
-        { id: "s2", customCss: null },
-        { id: "s3", customCss: stored(".s3{}", ".s3d{}") },
+        { id: "s1", customCss: stored(".s1{}"), styling: overriding },
+        { id: "s2", customCss: null, styling: overriding },
+        { id: "s3", customCss: stored(".s3{}", ".s3d{}"), styling: overriding },
       ],
     });
 
@@ -52,44 +52,43 @@ describe("resolveRespondentCustomCss", () => {
       s3: { light: "@layer fb-x { .s3{} }", dark: "@layer fb-x-dark { .s3d{} }" },
     });
     expect(JSON.stringify({ ...result, surveys: [...result.surveys] })).not.toContain("source");
-    // The flag is asked once for the organization, not once per survey.
-    expect(getIsCustomCssRolledOut).toHaveBeenCalledTimes(1);
-    expect(getIsCustomCssRolledOut).toHaveBeenCalledWith("org-1");
   });
 
-  test("asks nothing when the workspace and its surveys have no CSS at all", async () => {
+  test("touches no storage when the workspace and its surveys have no CSS at all", async () => {
     const result = await resolveRespondentCustomCss({
-      organizationId: "org-1",
       workspaceCustomCss: null,
-      surveys: [{ id: "s1", customCss: null }, { id: "s2" }],
+      allowStyleOverwrite: true,
+      surveys: [{ id: "s1", customCss: null, styling: overriding }, { id: "s2" }],
     });
 
     expect(result.workspace).toBeUndefined();
     expect(result.surveys.size).toBe(0);
-    expect(getIsCustomCssRolledOut).not.toHaveBeenCalled();
     expect(toDeliveredCustomCss).not.toHaveBeenCalled();
   });
 
-  test("withholds every scope when the rollout is off, or its check fails, without touching storage", async () => {
-    vi.mocked(getIsCustomCssRolledOut).mockResolvedValueOnce(false);
-    const off = await resolveRespondentCustomCss({
-      organizationId: "org-1",
+  test("withholds a survey's CSS while its style overrides are off, and keeps the workspace CSS", async () => {
+    const surveys = [
+      { id: "on", customCss: stored(".on{}"), styling: overriding },
+      { id: "off", customCss: stored(".off{}"), styling: { overwriteThemeStyling: false } },
+      { id: "unset", customCss: stored(".unset{}"), styling: null },
+    ];
+
+    const allowed = await resolveRespondentCustomCss({
       workspaceCustomCss: stored(".w{}"),
-      surveys: [{ id: "s1", customCss: stored(".s1{}") }],
+      allowStyleOverwrite: true,
+      surveys,
+    });
+    const workspaceOff = await resolveRespondentCustomCss({
+      workspaceCustomCss: stored(".w{}"),
+      allowStyleOverwrite: false,
+      surveys,
     });
 
-    vi.mocked(getIsCustomCssRolledOut).mockRejectedValueOnce(new Error("posthog down"));
-    const failing = await resolveRespondentCustomCss({
-      organizationId: "org-1",
-      workspaceCustomCss: stored(".w{}"),
-      surveys: [],
-    });
-
-    for (const result of [off, failing]) {
-      expect(result.workspace).toBeUndefined();
-      expect(result.surveys.size).toBe(0);
-    }
-    expect(toDeliveredCustomCss).not.toHaveBeenCalled();
+    expect([...allowed.surveys.keys()]).toEqual(["on"]);
+    expect(workspaceOff.surveys.size).toBe(0);
+    expect(workspaceOff.workspace).toEqual({ light: "@layer fb-x { .w{} }" });
+    // A withheld survey costs no delivery work: only the workspace and the one applied survey ran.
+    expect(toDeliveredCustomCss).toHaveBeenCalledTimes(3);
   });
 
   test("a scope delivery withholds or that throws is omitted; the others still go out", async () => {
@@ -100,11 +99,11 @@ describe("resolveRespondentCustomCss", () => {
     });
 
     const result = await resolveRespondentCustomCss({
-      organizationId: "org-1",
       workspaceCustomCss: stored(".w{}"),
+      allowStyleOverwrite: true,
       surveys: [
-        { id: "s1", customCss: stored(".stale{}") },
-        { id: "s2", customCss: stored(".s2{}") },
+        { id: "s1", customCss: stored(".stale{}"), styling: overriding },
+        { id: "s2", customCss: stored(".s2{}"), styling: overriding },
       ],
     });
 
@@ -121,8 +120,8 @@ describe("resolveRespondentCustomCss", () => {
     } as never);
 
     const result = await resolveRespondentCustomCss({
-      organizationId: "org-1",
       workspaceCustomCss: stored(".w{}"),
+      allowStyleOverwrite: true,
       surveys: [],
     });
 
@@ -133,40 +132,33 @@ describe("resolveRespondentCustomCss", () => {
 describe("getLinkSurveyCustomCss", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getIsCustomCssRolledOut).mockResolvedValue(true);
     vi.mocked(toDeliveredCustomCss).mockImplementation(deliverCompiled);
   });
 
-  test("builds the renderer prop with only the scopes that have CSS", async () => {
+  test("builds the renderer prop with only the scopes that have CSS to deliver", async () => {
     await expect(
       getLinkSurveyCustomCss({
-        organizationId: "org-1",
         workspaceCustomCss: null,
-        surveyId: "s1",
-        surveyCustomCss: stored(".s{}"),
+        allowStyleOverwrite: true,
+        survey: { id: "s1", customCss: stored(".s{}"), styling: overriding },
       })
     ).resolves.toEqual({ survey: { light: "@layer fb-x { .s{} }" } });
 
     await expect(
       getLinkSurveyCustomCss({
-        organizationId: "org-1",
         workspaceCustomCss: stored(".w{}"),
-        surveyId: "s1",
-        surveyCustomCss: stored(".s{}"),
+        allowStyleOverwrite: true,
+        survey: { id: "s1", customCss: stored(".s{}"), styling: { overwriteThemeStyling: false } },
       })
-    ).resolves.toEqual({
-      workspace: { light: "@layer fb-x { .w{} }" },
-      survey: { light: "@layer fb-x { .s{} }" },
-    });
+    ).resolves.toEqual({ workspace: { light: "@layer fb-x { .w{} }" } });
   });
 
   test("returns nothing when neither scope has CSS to deliver", async () => {
     await expect(
       getLinkSurveyCustomCss({
-        organizationId: "org-1",
         workspaceCustomCss: null,
-        surveyId: "s1",
-        surveyCustomCss: undefined,
+        allowStyleOverwrite: false,
+        survey: { id: "s1", customCss: stored(".s{}"), styling: overriding },
       })
     ).resolves.toBeUndefined();
   });

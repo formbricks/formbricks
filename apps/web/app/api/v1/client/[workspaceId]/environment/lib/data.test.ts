@@ -734,13 +734,13 @@ describe("custom CSS on the wire (ENG-3552)", () => {
     const result = await getWorkspaceStateData(workspaceId);
     const byId = Object.fromEntries(result.surveys.map((survey) => [survey.id, survey]));
 
-    // Resolved from the stored values, with the rollout flag applied once for the organization.
+    // Resolved from the stored values, with what decides whether each survey's own CSS applies.
     expect(resolveRespondentCustomCss).toHaveBeenCalledWith({
-      organizationId: "org-1",
       workspaceCustomCss: storedWorkspaceCss,
+      allowStyleOverwrite: false,
       surveys: [
-        { id: "styled", customCss: storedSurveyCss },
-        { id: "plain", customCss: null },
+        { id: "styled", customCss: storedSurveyCss, styling: mockWorkspaceData.surveys[0].styling },
+        { id: "plain", customCss: null, styling: mockWorkspaceData.surveys[0].styling },
       ],
     });
     expect(result.workspace.workspaceSettings.customCss).toEqual({ light: "@layer fb-workspace {}" });
@@ -757,7 +757,7 @@ describe("custom CSS on the wire (ENG-3552)", () => {
     });
   });
 
-  test("omits every customCss key when nothing is delivered (no CSS, withheld, or rollout off)", async () => {
+  test("omits every customCss key when nothing is delivered (no CSS, withheld, or overrides off)", async () => {
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue(workspaceWithCss as never);
     vi.mocked(resolveRespondentCustomCss).mockResolvedValueOnce({ surveys: new Map() });
 

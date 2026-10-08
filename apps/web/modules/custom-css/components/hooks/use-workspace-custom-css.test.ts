@@ -24,7 +24,7 @@ const resource = (workspaceId: string, customCss: TCustomCssInput | null) => ({
   planAllowed: true,
 });
 
-/** Mounts the editor the way the Look & Feel page does, with a fresh query cache like a new visit. */
+/** Mounts the editor the way the Appearance page does, with a fresh query cache like a new visit. */
 const visit = async (workspaceId: string) => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const wrapper = ({ children }: Readonly<{ children: ReactNode }>) =>

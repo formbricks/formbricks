@@ -1,7 +1,7 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { CheckIcon, EraserIcon, UploadIcon } from "lucide-react";
+import { CheckIcon, ExternalLinkIcon, UploadIcon } from "lucide-react";
 import Link from "next/link";
 import { type ChangeEvent, type ReactNode, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -9,18 +9,13 @@ import { type TCustomCssAppearance, type TCustomCssScope } from "@formbricks/typ
 import { cn } from "@/lib/cn";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
-import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { Label } from "@/modules/ui/components/label";
-import { Textarea } from "@/modules/ui/components/textarea";
+import { CssCodeField, type TCssCodeFieldHandle } from "./css-code-field";
 import { CustomCssIssues } from "./custom-css-issues";
 import { type TCustomCssHealthStatus } from "./lib/api-client";
+import { getCodeLineMarks } from "./lib/code-field";
 import { CUSTOM_CSS_DOCS_URL } from "./lib/constants";
-import {
-  type TCustomCssDraft,
-  getCompiledByteSize,
-  getCustomCssByteLimit,
-  getCustomCssByteSize,
-} from "./lib/draft";
+import { type TCustomCssDraft, getCustomCssByteLimit, getCustomCssByteSize } from "./lib/draft";
 import { type TCustomCssEditMode } from "./lib/edit-mode";
 import { shouldShowDarkPreviewHint } from "./lib/hints";
 import { CUSTOM_CSS_FILE_ACCEPT, checkCustomCssFile, stripByteOrderMark } from "./lib/upload";
@@ -42,19 +37,21 @@ interface CustomCssCardProps {
   notice?: ReactNode;
   /** The survey editor's read-only inherited workspace CSS. */
   inherited?: ReactNode;
-  /** The workspace card's save controls; the survey's CSS is saved with the survey. */
+  /** Shown under the field, e.g. the workspace card's "Restore previous version". */
   footer?: ReactNode;
   /** Replaces the fields entirely, e.g. the upgrade prompt when the plan has no CSS to show. */
   lockedContent?: ReactNode;
+  /** Greyed out and closed, like the survey editor's other styling cards without "Add custom styles". */
+  disabled?: boolean;
   open: boolean;
   setOpen: (open: boolean) => void;
   isSettingsPage?: boolean;
 }
 
 /**
- * The Custom CSS card shared by workspace Look & Feel and the survey editor's Styling tab (ENG-3553).
- * Plain monospace textareas, one per appearance, with upload, clear and a byte counter. It renders
- * what it is given; the check, the preview and saving belong to the caller.
+ * The Custom CSS card shared by the Appearance settings and the survey editor's Styling tab (ENG-3553,
+ * ENG-3723). One code field per appearance, with upload. It renders what it is given; the
+ * check, the preview and saving belong to the caller.
  */
 export const CustomCssCard = ({
   scope,
@@ -69,6 +66,7 @@ export const CustomCssCard = ({
   inherited,
   footer,
   lockedContent,
+  disabled = false,
   open,
   setOpen,
   isSettingsPage = false,
@@ -77,36 +75,35 @@ export const CustomCssCard = ({
   const id = useId();
   const fieldId = `${id}-field`;
   const helpId = `${id}-help`;
+  const keyboardHintId = `${id}-keyboard-hint`;
   const statusId = `${id}-status`;
   const issuesId = `${id}-issues`;
   const uploadErrorId = `${id}-upload-error`;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fieldRef = useRef<TCssCodeFieldHandle>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  // Clearing or replacing CSS that is already there asks first: a wiped field is saved by the survey
-  // editor's auto-save before anyone notices.
-  const [pendingReplace, setPendingReplace] = useState<{ title: string; apply: () => void } | null>(null);
 
   const byteLimit = getCustomCssByteLimit(scope);
   const byteSize = getCustomCssByteSize(draft);
   const isOverLimit = byteSize > byteLimit;
   const value = draft[appearance];
-  // Only meaningful for a draft whose own check passed; an earlier draft's output would mislead.
-  const processedSize =
-    validation.status === "valid" && !validation.isPreviewBehind
-      ? getCompiledByteSize(validation.previewCss)
-      : null;
   const canType = mode === "full";
-  const canClear = mode !== "read-only";
 
   const hasFieldError = validation.errors.some(
     (error) => error.appearance === appearance || error.appearance === null
   );
   const hasIssues = validation.errors.length > 0 || validation.warnings.length > 0;
-  const describedBy = [helpId, statusId, hasIssues && issuesId, uploadError && uploadErrorId]
+  const describedBy = [
+    helpId,
+    canType && keyboardHintId,
+    statusId,
+    hasIssues && issuesId,
+    uploadError && uploadErrorId,
+  ]
     .filter(Boolean)
     .join(" ");
 
-  const setField = (field: TCustomCssAppearance, next: string) => onDraftChange({ ...draft, [field]: next });
+  const setField = (next: string) => onDraftChange({ ...draft, [appearance]: next });
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -127,26 +124,34 @@ export const CustomCssCard = ({
     try {
       const text = stripByteOrderMark(await file.text());
       setUploadError(null);
-      const apply = () => setField(appearance, text);
-      if (draft[appearance].trim() === "") apply();
-      else setPendingReplace({ title: t("workspace.custom_css.confirm_replace_title"), apply });
+      // Typed into the field rather than set, so Undo brings back what the file replaced.
+      if (fieldRef.current) fieldRef.current.replaceAll(text);
+      else setField(text);
     } catch {
       setUploadError(t("workspace.custom_css.upload_read_failed"));
     }
   };
 
-  const fieldLabel =
-    appearance === "dark"
-      ? t("workspace.custom_css.dark_css_label")
+  const baseCssLabel =
+    scope === "survey"
+      ? t("workspace.custom_css.survey_base_css_label")
       : t("workspace.custom_css.base_css_label");
+  const fieldLabel = appearance === "dark" ? t("workspace.custom_css.dark_css_label") : baseCssLabel;
 
   return (
     <Collapsible.Root
-      open={open}
-      onOpenChange={setOpen}
+      open={open && !disabled}
+      onOpenChange={(next) => {
+        if (!disabled) setOpen(next);
+      }}
       className="w-full rounded-lg border border-slate-300 bg-white">
       {/* A real button, unlike the neighbouring styling cards' div triggers, so it is reachable by keyboard. */}
-      <Collapsible.CollapsibleTrigger className="flex w-full cursor-pointer rounded-lg px-4 py-4 text-left hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none">
+      <Collapsible.CollapsibleTrigger
+        disabled={disabled}
+        className={cn(
+          "flex w-full rounded-lg px-4 py-4 text-left focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none",
+          disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:bg-slate-50"
+        )}>
         {!isSettingsPage && (
           <span className="flex items-center pr-5 pl-2">
             <CheckIcon
@@ -173,20 +178,6 @@ export const CustomCssCard = ({
         <hr className="py-1 text-slate-600" />
         {lockedContent ?? (
           <div className="flex flex-col gap-4 p-6 pt-2">
-            <p id={helpId} className="text-sm text-slate-500">
-              {appearance === "dark"
-                ? t("workspace.custom_css.dark_css_help")
-                : t("workspace.custom_css.base_css_help")}{" "}
-              {scope === "survey" && `${t("workspace.custom_css.survey_precedence")} `}
-              <Link
-                href={CUSTOM_CSS_DOCS_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-slate-700 underline underline-offset-2">
-                {t("workspace.custom_css.docs_link")}
-              </Link>
-            </p>
-
             {savedStatus === "withheld" && (
               <Alert variant="warning" size="small" role="status">
                 <AlertDescription className="whitespace-normal">
@@ -219,101 +210,29 @@ export const CustomCssCard = ({
             {inherited}
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor={fieldId}>{fieldLabel}</Label>
-              <Textarea
-                id={fieldId}
-                value={value}
-                onChange={(event) => setField(appearance, event.target.value)}
-                readOnly={!canType}
-                rows={12}
-                spellCheck={false}
-                autoCapitalize="off"
-                autoComplete="off"
-                autoCorrect="off"
-                placeholder={canType ? '[data-fb-part="headline"] { color: #10283a; }' : undefined}
-                aria-invalid={hasFieldError || isOverLimit}
-                aria-describedby={describedBy}
-                isInvalid={hasFieldError || isOverLimit}
-                className={cn(
-                  "min-h-48 resize-y bg-white font-mono text-xs leading-relaxed",
-                  !canType && "cursor-default bg-slate-50 text-slate-600"
-                )}
-              />
-
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  {canType && (
-                    <>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept={CUSTOM_CSS_FILE_ACCEPT}
-                        className="hidden"
-                        tabIndex={-1}
-                        aria-hidden
-                        onChange={handleFileChange}
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => fileInputRef.current?.click()}>
-                        <UploadIcon aria-hidden />
-                        {t("workspace.custom_css.upload")}
-                      </Button>
-                    </>
-                  )}
-                  {canClear && (
-                    <>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        disabled={value === ""}
-                        onClick={() =>
-                          setPendingReplace({
-                            title: t("workspace.custom_css.confirm_clear_field_title", { field: fieldLabel }),
-                            apply: () => setField(appearance, ""),
-                          })
-                        }>
-                        <EraserIcon aria-hidden />
-                        {t("workspace.custom_css.clear_field")}
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        disabled={draft.light === "" && draft.dark === ""}
-                        onClick={() =>
-                          setPendingReplace({
-                            title: t("workspace.custom_css.confirm_clear_all_title"),
-                            apply: () => onDraftChange({ light: "", dark: "" }),
-                          })
-                        }>
-                        {t("workspace.custom_css.clear_all")}
-                      </Button>
-                    </>
-                  )}
-                </div>
-                <span
-                  className={cn(
-                    "flex flex-col items-end text-xs tabular-nums",
-                    isOverLimit ? "text-red-700" : "text-slate-500"
-                  )}>
-                  <span>
-                    {t("workspace.custom_css.byte_counter_total", { used: byteSize, limit: byteLimit })}
-                  </span>
-                  {processedSize !== null && processedSize > 0 && (
-                    <span className={cn(processedSize > byteLimit && "text-red-700")}>
-                      {t("workspace.custom_css.byte_counter_processed", {
-                        used: processedSize,
-                        limit: byteLimit,
-                      })}
-                    </span>
-                  )}
-                </span>
+              <div>
+                <Label htmlFor={fieldId} className="block text-slate-800">
+                  {fieldLabel}
+                </Label>
+                <p id={helpId} className="text-xs text-slate-500">
+                  {appearance === "dark"
+                    ? t("workspace.custom_css.dark_css_help")
+                    : t("workspace.custom_css.base_css_help")}
+                  {scope === "survey" && ` ${t("workspace.custom_css.survey_precedence")}`}
+                </p>
               </div>
-
+              <CssCodeField
+                id={fieldId}
+                handleRef={fieldRef}
+                keyboardHint={{ id: keyboardHintId, text: t("workspace.custom_css.keyboard_hint") }}
+                value={value}
+                onChange={canType ? setField : undefined}
+                marks={getCodeLineMarks(appearance, validation.errors, validation.warnings)}
+                invalid={hasFieldError || isOverLimit}
+                placeholder={canType ? '[data-fb-part="headline"] { color: #10283a; }' : undefined}
+                rows={12}
+                aria-describedby={describedBy}
+              />
               {uploadError && (
                 <p id={uploadErrorId} role="alert" className="text-xs text-red-700">
                   {uploadError}
@@ -329,30 +248,53 @@ export const CustomCssCard = ({
               byteLimit={byteLimit}
             />
 
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {canType && (
+                  <>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept={CUSTOM_CSS_FILE_ACCEPT}
+                      className="hidden"
+                      tabIndex={-1}
+                      aria-hidden
+                      onChange={handleFileChange}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => fileInputRef.current?.click()}>
+                      <UploadIcon aria-hidden />
+                      {t("workspace.custom_css.upload")}
+                    </Button>
+                  </>
+                )}
+                {mode === "clear-only" && (
+                  // Without the plan the field cannot be typed in, so this is the only way to remove CSS.
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={draft.light === "" && draft.dark === ""}
+                    onClick={() => onDraftChange({ light: "", dark: "" })}>
+                    {t("workspace.custom_css.clear_all")}
+                  </Button>
+                )}
+              </div>
+              <Button type="button" size="sm" variant="ghost" asChild>
+                <Link href={CUSTOM_CSS_DOCS_URL} target="_blank" rel="noopener noreferrer">
+                  {t("common.learn_more")}
+                  <ExternalLinkIcon aria-hidden />
+                </Link>
+              </Button>
+            </div>
+
             {footer}
           </div>
         )}
       </Collapsible.CollapsibleContent>
-      <ConfirmationModal
-        open={pendingReplace !== null}
-        setOpen={(next) => {
-          if (next === false) setPendingReplace(null);
-        }}
-        title={pendingReplace?.title ?? ""}
-        // As the description, which otherwise defaults to "cannot be undone" — the workspace draft can be.
-        description={
-          scope === "survey"
-            ? t("workspace.custom_css.confirm_replace_survey_body")
-            : t("workspace.custom_css.confirm_replace_workspace_body")
-        }
-        body={null}
-        buttonText={t("workspace.custom_css.confirm_replace_button")}
-        buttonVariant="destructive"
-        onConfirm={() => {
-          pendingReplace?.apply();
-          setPendingReplace(null);
-        }}
-      />
     </Collapsible.Root>
   );
 };

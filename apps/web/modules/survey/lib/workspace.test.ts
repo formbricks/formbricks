@@ -4,7 +4,6 @@ import { Prisma, Workspace } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
-import { ZWorkspaceStyling } from "@formbricks/types/workspace";
 import { getWorkspaceWithTeamIds } from "./workspace";
 
 vi.mock("@formbricks/database", () => ({
@@ -92,7 +91,7 @@ describe("getWorkspaceWithTeamIds", () => {
     expect(workspace).toEqual(mockWorkspaceWithTeam);
   });
 
-  test("drops stored theme values a save would refuse, so the editor can save surveys that copy them", async () => {
+  test("drops stored theme values that could add CSS before the editor copies them", async () => {
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
       ...mockWorkspacePrisma,
       styling: { allowStyleOverwrite: true, fontFamily: "Inter's Font", buttonHeight: "40px" },
@@ -101,7 +100,6 @@ describe("getWorkspaceWithTeamIds", () => {
     const workspace = await getWorkspaceWithTeamIds(workspaceId);
 
     expect(workspace?.styling).toEqual({ allowStyleOverwrite: true, buttonHeight: "40px" });
-    expect(ZWorkspaceStyling.safeParse(workspace?.styling).success).toBe(true);
   });
 
   test("should return null when workspace is not found", async () => {
