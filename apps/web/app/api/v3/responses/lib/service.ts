@@ -8,6 +8,7 @@ import { type TKeysetCursor, keysetOrderBy, keysetPagePredicate } from "@/app/ap
 import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
 import { deleteDisplay } from "@/lib/display/service";
 import { inlineSurveyEmbeddedFields, selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
+import { deleteResponsesInTransaction } from "@/lib/response/delete-responses";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { andVisibleSurveys, visibleSurveySqlPredicate } from "@/lib/survey/visibility/predicate";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
@@ -256,58 +257,15 @@ export async function deleteScopedResponses(
   responseIds: string[],
   { visibleSurveyWhere = {}, workspaceId }: TWorkspaceScope
 ): Promise<TBatchDeleteResult> {
-  let outcome: TBatchDeleteResult & { fileUrls: string[] };
+  let outcome: Awaited<ReturnType<typeof deleteResponsesInTransaction>>;
 
   try {
-    outcome = await prisma.$transaction(async (tx) => {
-      // Scoped read first: the file URLs live inside `response.data` and the display ids on the rows,
-      // and both are gone once the rows are.
-      const rows = await tx.response.findMany({
-        where: { id: { in: responseIds }, survey: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) } },
-        select: { id: true, displayId: true, data: true, surveyId: true },
-      });
-
-      if (rows.length === 0) {
-        return { deleted: 0, deletedIds: [], fileUrls: [] };
-      }
-
-      // One read per distinct survey rather than per response: a batch may span several surveys in the
-      // workspace, and at 100 ids the per-row form would be 100 queries for a handful of answers.
-      const surveys = await tx.survey.findMany({
-        where: { id: { in: [...new Set(rows.map((row) => row.surveyId))] } },
-        select: { id: true, blocks: true, questions: true },
-      });
-      const uploadElementIds = new Map(
-        surveys.map((survey) => [
-          survey.id,
-          getSurveyFileUploadElementIds({ blocks: survey.blocks, questions: survey.questions }),
-        ])
-      );
-
-      const fileUrls = rows.flatMap((row) =>
-        collectResponseFileUrls(
-          row.data,
-          uploadElementIds.get(row.surveyId) ?? new Set<string>(),
-          row.surveyId
-        )
-      );
-
-      // Responses before displays — see the note above. Not a correctness constraint: the FK is
-      // SET NULL, so the reverse order also works, it just updates rows on their way out.
-      const { count } = await tx.response.deleteMany({
-        where: { id: { in: responseIds }, survey: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) } },
-      });
-
-      const displayIds = rows
-        .map((row) => row.displayId)
-        .filter((displayId): displayId is string => displayId !== null);
-
-      if (displayIds.length > 0) {
-        await tx.display.deleteMany({ where: { id: { in: displayIds } } });
-      }
-
-      return { deleted: count, deletedIds: rows.map((row) => row.id), fileUrls };
-    });
+    outcome = await prisma.$transaction((tx) =>
+      deleteResponsesInTransaction(tx, {
+        id: { in: responseIds },
+        survey: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) },
+      })
+    );
   } catch (error) {
     rethrowScopedPrismaError(error);
   }

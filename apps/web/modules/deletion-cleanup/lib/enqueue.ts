@@ -31,36 +31,80 @@ export const enqueueSurveyDeletionCleanups = async (
   tx: Prisma.TransactionClient,
   { organizationId, workspaceId, surveyId, fileUrls }: TSurveyDeletionCleanupInput
 ): Promise<{ drainNowIds: string[] }> => {
-  const directories = await tx.feedbackDirectory.findMany({
-    where: { organizationId },
-    select: { id: true },
-  });
+  const tenantIds = await readTenantIds(tx, organizationId);
   const scope = { organizationId, workspaceId, surveyId };
   const settledAt = new Date(Date.now() + CLEANUP_SETTLE_MS);
 
-  const drainNow: DeletionCleanupCreateManyInput[] = [{ ...scope, kind: "storageSurveyFolder" }];
+  const drainNow: DeletionCleanupCreateManyInput[] = [
+    { ...scope, kind: "storageSurveyFolder" },
+    ...storageFileRows(scope, fileUrls),
+  ];
+  const drainLater: DeletionCleanupCreateManyInput[] = [
+    { ...scope, kind: "storageSurveyFolder", nextAttemptAt: settledAt },
+  ];
+  if (tenantIds.length > 0) {
+    drainLater.push({ ...scope, kind: "hubSurvey", tenantIds, nextAttemptAt: settledAt });
+  }
+
+  return insertCleanups(tx, drainNow, drainLater);
+};
+
+export type TResponsesDeletionCleanupInput = TSurveyDeletionCleanupInput & {
+  /** The deleted responses. At most a batch, so the Hub listing's `submission_id` filter stays short. */
+  responseIds: readonly string[];
+};
+
+/**
+ * Queue what deleting some of a survey's responses leaves outside the database: their files and their
+ * Hub records. Call it inside the delete's transaction, like `enqueueSurveyDeletionCleanups`. The files
+ * are drained straight after commit; the Hub records are older than the period by then, so nothing is
+ * still on its way to the Hub and they wait only for the drain job.
+ */
+export const enqueueResponsesDeletionCleanups = async (
+  tx: Prisma.TransactionClient,
+  { organizationId, workspaceId, surveyId, responseIds, fileUrls }: TResponsesDeletionCleanupInput
+): Promise<{ drainNowIds: string[] }> => {
+  if (responseIds.length === 0) return { drainNowIds: [] };
+  const tenantIds = await readTenantIds(tx, organizationId);
+  const scope = { organizationId, workspaceId, surveyId };
+
+  return insertCleanups(
+    tx,
+    storageFileRows(scope, fileUrls),
+    tenantIds.length > 0 ? [{ ...scope, kind: "hubResponses", tenantIds, responseIds: [...responseIds] }] : []
+  );
+};
+
+/** Every feedback directory of the organisation: a Hub tenant that may hold the deleted data's records. */
+const readTenantIds = async (tx: Prisma.TransactionClient, organizationId: string): Promise<string[]> =>
+  (await tx.feedbackDirectory.findMany({ where: { organizationId }, select: { id: true } })).map(
+    (directory) => directory.id
+  );
+
+const storageFileRows = (
+  scope: Pick<DeletionCleanupCreateManyInput, "organizationId" | "workspaceId" | "surveyId">,
+  fileUrls: readonly string[]
+): DeletionCleanupCreateManyInput[] => {
+  const rows: DeletionCleanupCreateManyInput[] = [];
   for (let i = 0; i < fileUrls.length; i += STORAGE_CLEANUP_CHUNK_SIZE) {
-    drainNow.push({
+    rows.push({
       ...scope,
       kind: "storageFiles",
       fileKeys: fileUrls.slice(i, i + STORAGE_CLEANUP_CHUNK_SIZE),
     });
   }
+  return rows;
+};
 
-  const drainLater: DeletionCleanupCreateManyInput[] = [
-    { ...scope, kind: "storageSurveyFolder", nextAttemptAt: settledAt },
-  ];
-  if (directories.length > 0) {
-    drainLater.push({
-      ...scope,
-      kind: "hubSurvey",
-      tenantIds: directories.map((directory) => directory.id),
-      nextAttemptAt: settledAt,
-    });
-  }
-
-  const created = await tx.deletionCleanup.createManyAndReturn({ data: drainNow, select: { id: true } });
-  await tx.deletionCleanup.createMany({ data: drainLater });
-
+const insertCleanups = async (
+  tx: Prisma.TransactionClient,
+  drainNow: DeletionCleanupCreateManyInput[],
+  drainLater: DeletionCleanupCreateManyInput[]
+): Promise<{ drainNowIds: string[] }> => {
+  const created =
+    drainNow.length > 0
+      ? await tx.deletionCleanup.createManyAndReturn({ data: drainNow, select: { id: true } })
+      : [];
+  if (drainLater.length > 0) await tx.deletionCleanup.createMany({ data: drainLater });
   return { drainNowIds: created.map((row) => row.id) };
 };

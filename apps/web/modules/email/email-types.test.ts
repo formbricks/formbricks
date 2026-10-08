@@ -14,6 +14,7 @@ import {
   sendResponseFinishedEmail,
   sendSsoRecoveryFactorsRemovedEmail,
   sendSsoSignInHintEmail,
+  sendSurveyRetentionNoticeEmail,
   sendVerificationEmail,
   sendVerificationLinkEmail,
   sendVerificationNewEmail,
@@ -47,6 +48,7 @@ vi.mock("@formbricks/email", () => ({
   renderResponseFinishedEmail: async () => "html",
   renderSsoRecoveryFactorsRemovedEmail: async () => "html",
   renderSsoSignInHintEmail: async () => "html",
+  renderSurveyRetentionNoticeEmail: async () => "html",
   renderVerificationEmail: async () => "html",
 }));
 
@@ -88,6 +90,18 @@ const senders: [string, () => Promise<unknown>][] = [
       }),
   ],
   ["sso_sign_in_hint", () => sendSsoSignInHintEmail({ email, locale, providerNames: ["Microsoft"] })],
+  [
+    "data_retention_notice",
+    () =>
+      sendSurveyRetentionNoticeEmail({
+        email,
+        locale,
+        organizationId: "organization",
+        organizationName: "Acme",
+        archivedSurveys: [],
+        responseDeletions: [{ name: "Survey", url: link, count: "3", deleteDate: "Dec 7, 2026" }],
+      }),
+  ],
   ["response_notification", () => sendResponseFinishedEmail(email, locale, "workspace", survey, response, 1)],
   ["survey_preview", () => sendEmbedSurveyPreviewEmail(email, "html", "workspace", locale)],
   ["customization_preview", () => sendEmailCustomizationPreviewEmail(email, "User", locale)],

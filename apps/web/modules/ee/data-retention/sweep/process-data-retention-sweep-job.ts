@@ -1,10 +1,13 @@
 import "server-only";
 import type { JobHandler, TDataRetentionSweepJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
+import { createResponsesSweeper } from "./responses-sweeper";
 import { type TRetentionSweepers, runDataRetentionSweep } from "./sweep";
 
 /** Each policy's sweeper. A policy without one is left alone. */
-export const RETENTION_SWEEPERS: TRetentionSweepers = {};
+export const RETENTION_SWEEPERS: TRetentionSweepers = {
+  responses: createResponsesSweeper(),
+};
 
 /**
  * Handler for the recurring `data-retention.sweep` job (ENG-3612): once a night, every organisation's

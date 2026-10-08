@@ -203,3 +203,34 @@ export const recordRetentionRunSkips = async (
     }),
   ]);
 };
+
+/**
+ * Add `count` deleted responses to the survey's `deleted` row on this run, creating it on the first
+ * batch, so History shows one row per survey however many batches its deletion took. In the deleting
+ * transaction, like `recordRetentionRunActions`.
+ */
+export const recordRetentionRunDeletion = async (
+  tx: Prisma.TransactionClient,
+  runId: string,
+  target: TRunTarget,
+  count: number
+): Promise<void> => {
+  if (count <= 0) return;
+  const { count: updated } = await tx.retentionRunItem.updateMany({
+    where: { runId, targetId: target.targetId, action: "deleted" },
+    data: { count: { increment: count } },
+  });
+  if (updated === 0) {
+    await tx.retentionRunItem.create({
+      data: {
+        runId,
+        targetType: target.targetType,
+        targetId: target.targetId,
+        targetName: target.targetName ?? null,
+        action: "deleted",
+        count,
+      },
+    });
+  }
+  await tx.retentionRun.update({ where: { id: runId }, data: { deletedCount: { increment: count } } });
+};

@@ -358,9 +358,9 @@ describe("deleteScopedResponses", () => {
       id: { in: BATCH_IDS },
       survey: { workspaceId: "ws_1" },
     });
+    // Still scoped, and narrowed to the rows read, so only rows whose files were collected are deleted.
     expect(mockTxDeleteMany.mock.calls[0][0].where).toStrictEqual({
-      id: { in: BATCH_IDS },
-      survey: { workspaceId: "ws_1" },
+      AND: [{ id: { in: BATCH_IDS }, survey: { workspaceId: "ws_1" } }, { id: { in: [row().id] } }],
     });
   });
 

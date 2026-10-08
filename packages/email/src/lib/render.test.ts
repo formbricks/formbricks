@@ -22,6 +22,7 @@ import {
   renderResponseFinishedEmail,
   renderSsoRecoveryFactorsRemovedEmail,
   renderSsoSignInHintEmail,
+  renderSurveyRetentionNoticeEmail,
   renderVerificationEmail,
 } from "../index";
 import { exampleData } from "./example-data";
@@ -72,6 +73,10 @@ const renderers: [string, () => Promise<string>][] = [
   [
     "renderSsoSignInHintEmail",
     () => renderSsoSignInHintEmail({ ...exampleData.ssoSignInHintEmail, ...legal, t }),
+  ],
+  [
+    "renderSurveyRetentionNoticeEmail",
+    () => renderSurveyRetentionNoticeEmail({ ...exampleData.surveyRetentionNoticeEmail, ...legal, t }),
   ],
   ["renderInviteEmail", () => renderInviteEmail({ ...exampleData.inviteEmail, ...legal, t })],
   [
