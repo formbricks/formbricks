@@ -21,6 +21,8 @@ import { prepareQsfImport, runQsfImport } from "@/modules/survey/import/qsf/pipe
  *   pnpm qsf:eval --runs=3                 each fixture three times, for latency spread
  *   pnpm qsf:eval --record                 also rewrite the fixtures' recorded plans from the model,
  *                                          except the hand-made hostile, injection and pollution ones
+ *   pnpm qsf:eval --record --record-dir=/tmp/plans
+ *                                          record into another directory, leaving the fixtures alone
  *   pnpm qsf:eval --file=/path/to/x.qsf    a local file; never recorded
  *
  * It runs the real pipeline — reader, sanitizer, chunking, checks, retry, assembly and the final
@@ -53,6 +55,8 @@ interface TArgs {
   file: string | null;
   runs: number;
   record: boolean;
+  /** Where `--record` writes: the fixtures' plans, unless `--record-dir` names another directory. */
+  recordDir: string;
 }
 
 const parseArgs = (argv: ReadonlyArray<string>): TArgs => {
@@ -73,6 +77,7 @@ const parseArgs = (argv: ReadonlyArray<string>): TArgs => {
     file: options.get("file") ?? null,
     runs: Number.isSafeInteger(runs) && runs > 0 ? runs : 1,
     record: options.get("record") === "true",
+    recordDir: resolve(options.get("record-dir") ?? join(FIXTURE_DIR, "plans")),
   };
 };
 
@@ -105,7 +110,8 @@ const mergeResponses = (responses: unknown[]): TRecordedPlan => {
   return plan;
 };
 
-const runOnce = async (name: string, qsf: Record<string, unknown>, record: boolean) => {
+/** One run of one survey; its merged plan written into `recordDir` when that is set. */
+const runOnce = async (name: string, qsf: Record<string, unknown>, recordDir: string | null) => {
   const responses: unknown[] = [];
   const startedAt = performance.now();
   const prepared = prepareQsfImport(qsf, name);
@@ -123,8 +129,8 @@ const runOnce = async (name: string, qsf: Record<string, unknown>, record: boole
   const questions = result.report.summary.questions;
   const outputTokens = result.usage?.outputTokens ?? 0;
 
-  if (record) {
-    const path = join(FIXTURE_DIR, "plans", `${basename(name, ".qsf")}.plan.json`);
+  if (recordDir !== null) {
+    const path = join(recordDir, `${basename(name, ".qsf")}.plan.json`);
     const recording = {
       source: "recorded",
       model: env.AI_MODEL ?? null,
@@ -183,9 +189,9 @@ const explainRecording = (args: TArgs, sources: readonly TSource[]): void => {
 };
 
 /** One run, printed as a line of JSON: its summary, or the error's name and nothing else. */
-const printRun = async (source: TSource, run: number, record: boolean): Promise<void> => {
+const printRun = async (source: TSource, run: number, recordDir: string | null): Promise<void> => {
   try {
-    const summary = await runOnce(source.name, source.qsf, record);
+    const summary = await runOnce(source.name, source.qsf, recordDir);
     console.log(JSON.stringify({ run, ...summary }));
   } catch (error) {
     // The name and nothing else: a provider's message can quote the prompt.
@@ -196,7 +202,7 @@ const printRun = async (source: TSource, run: number, record: boolean): Promise<
   }
 };
 
-const main = async () => {
+const evaluate = async () => {
   const args = parseArgs(process.argv.slice(2));
   const sources = loadSources(args);
   explainRecording(args, sources);
@@ -206,12 +212,21 @@ const main = async () => {
   for (const source of sources) {
     for (let run = 1; run <= args.runs; run++) {
       const record = args.record && source.recordable && run === 1;
-      await printRun(source, run, record); // NOSONAR(typescript:S9382) -- runs are sequential on purpose
+      await printRun(source, run, record ? args.recordDir : null); // NOSONAR(typescript:S9382) -- runs are sequential on purpose
     }
   }
 };
 
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.name : "unknown");
-  process.exitCode = 1;
-});
+/**
+ * The eval. Run through `run-esm-script.mts` (`pnpm qsf:eval`), which loads the app as ES modules —
+ * `tsx` alone loads it as CommonJS, which cannot load `@formbricks/ai` — and awaits this; nothing runs
+ * on import.
+ */
+export const main = async (): Promise<void> => {
+  try {
+    await evaluate();
+  } catch (error) {
+    console.error(error instanceof Error ? error.name : "unknown");
+    process.exitCode = 1;
+  }
+};
