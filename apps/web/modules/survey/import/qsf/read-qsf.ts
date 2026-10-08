@@ -340,7 +340,8 @@ class QsfReader {
     return {
       name: bounded(envelope.data.SurveyEntry.SurveyName, QSF_MAX_NAME_CHARS),
       defaultLanguage: this.defaultLanguage,
-      languages: [...this.translationLanguages].sort((left, right) => left.localeCompare(right)),
+      // In the order the file first declares them: a fit that has to drop languages drops the last.
+      languages: [...this.translationLanguages],
       questions,
       pages,
       texts: this.texts,

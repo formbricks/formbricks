@@ -114,7 +114,10 @@ export interface TQsfSurvey {
   name: string;
   /** Normalized, region-qualified BCP-47 code. */
   defaultLanguage: string;
-  /** The other languages any question is translated into, normalized, sorted. */
+  /**
+   * The other languages any question is translated into, normalized, in the order the file first
+   * declares them (its first question's `Language` keys, then each new one as it appears).
+   */
   languages: string[];
   /** Questions in flow order. */
   questions: Map<string, TQsfQuestion>;

@@ -145,6 +145,19 @@ describe("readQsf", () => {
     ]);
   });
 
+  test("keeps the languages in the order the file first declares them, not sorted", () => {
+    const survey = readQsf(
+      minimalQsf([
+        sq("QID1", { Language: { FR: { QuestionText: "Q" }, DE: { QuestionText: "F" } } }),
+        sq("QID2", { Language: { AR: { QuestionText: "S" }, DE: { QuestionText: "F" } } }),
+        bl(["QID1", "QID2"]),
+        fl(),
+      ])
+    );
+
+    expect(survey.languages).toEqual(["fr-FR", "de-DE", "ar-EG"]);
+  });
+
   test("falls back to en-US for a default language Formbricks does not know, and says so", () => {
     const survey = readQsf(minimalQsf([sq("QID1"), bl(["QID1"]), fl()], { SurveyLanguage: "KLINGON" }));
 
