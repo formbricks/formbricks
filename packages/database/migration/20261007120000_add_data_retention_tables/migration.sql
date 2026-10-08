@@ -173,7 +173,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "RetentionNotice_surveyId_entity_key" ON "Rete
 
 -- CreateIndex
 -- squawk-ignore require-concurrent-index-creation
-CREATE UNIQUE INDEX IF NOT EXISTS "RetentionNotice_userId_entity_key" ON "RetentionNotice"("userId", "entity");
+CREATE UNIQUE INDEX IF NOT EXISTS "RetentionNotice_userId_organizationId_entity_key" ON "RetentionNotice"("userId", "organizationId", "entity");
 
 -- One active exemption per survey and policy. Partial, so Prisma cannot declare it (see "Indexes
 -- Prisma cannot express" in the package README): `RetentionExemption` deliberately has no matching

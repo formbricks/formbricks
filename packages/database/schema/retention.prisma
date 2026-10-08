@@ -169,6 +169,8 @@ model RetentionNotice {
   sentAt         DateTime        @default(now())
 
   @@unique([surveyId, entity])
-  @@unique([userId, entity])
+  /// Per organisation: a member's notice from an organisation they have since left must not block a
+  /// notice from the one they are in now.
+  @@unique([userId, organizationId, entity])
   @@index([organizationId])
 }
