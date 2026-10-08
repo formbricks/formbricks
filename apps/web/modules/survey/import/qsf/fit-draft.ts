@@ -31,10 +31,13 @@ type TLocaleText = Record<string, string>;
  * keys are survey languages and all of whose values are strings. v3 requires every text to carry the
  * default language, and no other part of the draft is keyed by language codes.
  */
-function collectLocaleTexts(document: TQsfDraftDocument): TLocaleText[] {
+function collectLocaleTexts(
+  document: TQsfDraftDocument,
+  roots: unknown[] = [document.blocks, document.endings]
+): TLocaleText[] {
   const codes = new Set(document.languages.map((language) => language.code));
   const texts: TLocaleText[] = [];
-  const stack: unknown[] = [document.blocks, document.endings];
+  const stack: unknown[] = [...roots];
   for (let value = stack.pop(); value !== undefined; value = stack.pop()) {
     if (Array.isArray(value)) {
       stack.push(...value);
@@ -98,10 +101,11 @@ function dropTrailingQuestions(
   survey: TQsfSurvey,
   overBy: number,
   issues: TQsfIssue[]
-): Set<string> {
+): { refs: Set<string>; elementIds: Set<string> } {
   const { document, elementRefs } = assembly;
   /** The questions cut, by Qualtrics id: export tags can repeat. */
   const droppedRefs = new Set<string>();
+  const elementIds = new Set<string>();
   let remaining = overBy;
 
   while (remaining > 0 && document.blocks.length > 0) {
@@ -112,6 +116,7 @@ function dropTrailingQuestions(
     if (element) {
       remaining -= jsonBytes(element) + (block.elements.length > 0 ? 1 : 0);
       if (ref) droppedRefs.add(ref);
+      elementIds.add(element.id);
       issues.push({
         code: "question_skipped",
         severity: "warning",
@@ -126,7 +131,57 @@ function dropTrailingQuestions(
       elementRefs.pop();
     }
   }
-  return droppedRefs;
+  return { refs: droppedRefs, elementIds };
+}
+
+/** A recall token as the import writes it, and as the editor reads it. */
+const RECALL_TOKEN = /#recall:([A-Za-z0-9_-]+)\/fallback:([^#]*)#/g;
+
+/**
+ * Recalls of cut questions, wherever the draft still has them — an ending may recall any question —
+ * replaced by their fallback text, with one `piped_text_removed` line per element or ending holding
+ * any. Left in, the create refuses the draft: a recall must name a question it has.
+ */
+function replaceRecallsOf(
+  assembly: TQsfAssembly,
+  survey: TQsfSurvey,
+  cutIds: ReadonlySet<string>,
+  issues: TQsfIssue[]
+): void {
+  const { document, elementRefs } = assembly;
+  const replaceIn = (root: unknown): number => {
+    let replaced = 0;
+    for (const text of collectLocaleTexts(document, [root])) {
+      for (const [code, value] of Object.entries(text)) {
+        if (!value.includes("#recall:")) continue;
+        text[code] = value.replaceAll(RECALL_TOKEN, (token: string, id: string, fallback: string) => {
+          if (!cutIds.has(id)) return token;
+          replaced += 1;
+          return fallback;
+        });
+      }
+    }
+    return replaced;
+  };
+
+  document.blocks.forEach((block, blockIndex) => {
+    block.elements.forEach((element, elementIndex) => {
+      const count = replaceIn(element);
+      if (count === 0) return;
+      const ref = elementRefs[blockIndex]?.[elementIndex];
+      issues.push({
+        code: "piped_text_removed",
+        severity: "warning",
+        questionTag: (ref ? survey.questions.get(ref)?.exportTag : undefined) ?? element.id,
+        ...(ref ? { questionRef: ref } : {}),
+        params: { count },
+      });
+    });
+  });
+  const inEndings = replaceIn(document.endings);
+  if (inEndings > 0) {
+    issues.push({ code: "piped_text_removed", severity: "warning", params: { count: inEndings } });
+  }
 }
 
 /**
@@ -152,7 +207,9 @@ export function fitQsfDraftToCreateLimit(
   while (overBy > 0 && assembly.document.blocks.length > 0) {
     overBy = dropLanguages(assembly.document, overBy, dropped);
     if (overBy > 0) {
-      dropTrailingQuestions(assembly, survey, overBy, dropped).forEach((ref) => droppedRefs.add(ref));
+      const cut = dropTrailingQuestions(assembly, survey, overBy, dropped);
+      cut.refs.forEach((ref) => droppedRefs.add(ref));
+      replaceRecallsOf(assembly, survey, cut.elementIds, dropped);
     }
     overBy = measureQsfDraftBytes(assembly.document) - maxBytes;
   }

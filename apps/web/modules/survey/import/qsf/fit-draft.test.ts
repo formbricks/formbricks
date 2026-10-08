@@ -1,6 +1,8 @@
+import { createId } from "@paralleldrive/cuid2";
 import { describe, expect, test } from "vitest";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import type { TQsfAssembly, TQsfDraftElement } from "./assemble";
+import { checkQsfDraft } from "./final-gate";
 import { QSF_DRAFT_MAX_BYTES, fitQsfDraftToCreateLimit, measureQsfDraftBytes } from "./fit-draft";
 import type { TQsfIssue, TQsfQuestion, TQsfSurvey } from "./qsf-model";
 
@@ -176,5 +178,47 @@ describe("fitQsfDraftToCreateLimit", () => {
     // Matched by question id, not by export tag, which two questions can share.
     expect(keepIssue(line({ questionTag: "Q10", questionRef: "QID1" }))).toBe(true);
     expect(keepIssue(line({ code: "formatting_dropped" }))).toBe(true);
+  });
+
+  test("replaces every recall of a cut question with its fallback, and the create accepts the result", () => {
+    const { assembly, survey } = buildAssembly({
+      languages: ["en-US"],
+      blocks: 3,
+      perBlock: 4,
+      textChars: 1_000,
+    });
+    const { document } = assembly;
+    document.endings = [
+      {
+        id: createId(),
+        type: "endScreen",
+        headline: { "en-US": "Thanks for #recall:Q12/fallback:...#, and #recall:Q1/fallback:...#" },
+      },
+    ];
+    // Not something the import writes — a recall points back — but a cut question's recall anywhere goes.
+    const q2 = document.blocks[0].elements[1];
+    q2.headline = { "en-US": "About #recall:Q11/fallback:...#" };
+    const maxBytes = Math.floor((measureQsfDraftBytes(document) * 7.5) / 12);
+
+    const { dropped } = fitQsfDraftToCreateLimit(assembly, survey, maxBytes);
+
+    const ending = document.endings[0];
+    expect(ending.type === "endScreen" ? ending.headline["en-US"] : "").toBe(
+      "Thanks for ..., and #recall:Q1/fallback:...#"
+    );
+    expect(q2.headline["en-US"]).toBe("About ...");
+    expect(dropped).toEqual(
+      expect.arrayContaining([
+        { code: "piped_text_removed", severity: "warning", params: { count: 1 } },
+        {
+          code: "piped_text_removed",
+          severity: "warning",
+          questionTag: "Q2",
+          questionRef: "QID2",
+          params: { count: 1 },
+        },
+      ])
+    );
+    expect(checkQsfDraft(document)).toEqual([]);
   });
 });
