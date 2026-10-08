@@ -27,7 +27,9 @@ export type TQsfImportStage = "reading" | "ai" | "assembling";
  *   left out (`params.code`; `params.fallback` when it was the survey's default language). With
  *   `params.cause: "draft_too_large"`, a language the import cut because the draft was too large to
  *   create, with `params.order: "last_declared_first"`: languages go in reverse of the order the
- *   file declares them
+ *   file declares them. With `params.cause: "duplicate_language"`, a code that normalizes to the same
+ *   language (`params.language`) as a code the file gave earlier, the default's included; the first
+ *   keeps the language and this one's translations are left out
  * - `translation_fallback` — texts missing in a language, filled with the default language's text,
  *   one line per language (`params.language`, `params.count`)
  * - `piped_text_removed` — piped text with no Formbricks equivalent, removed, or a recall of a

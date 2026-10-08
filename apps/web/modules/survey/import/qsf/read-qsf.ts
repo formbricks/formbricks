@@ -2,7 +2,11 @@ import { z } from "zod";
 import { DEFAULT_V3_SURVEY_LANGUAGE } from "@/app/api/v3/surveys/schemas";
 import { QsfImportInputError, qsfLimitExceeded, qsfNotRecognized } from "./errors";
 import { isObjectMemberName } from "./id-registry";
-import { isReportableLanguageCode, normalizeQualtricsLanguageCode } from "./language-codes";
+import {
+  isReportableLanguageCode,
+  normalizeQualtricsLanguageCode,
+  qualtricsLanguageCodeSpelling,
+} from "./language-codes";
 import {
   QSF_MAX_BLOCKS,
   QSF_MAX_BLOCK_ELEMENTS,
@@ -271,6 +275,8 @@ class QsfReader {
   private readonly counters = { t: 0, c: 0, a: 0, b: 0, s: 0 };
   private readonly languageByRaw = new Map<string, string | null>();
   private readonly reportedLanguages = new Set<string>();
+  /** Each survey language, by the spelling of the first code the file gave it (the default's included). */
+  private readonly languageSpellings = new Map<string, string>();
   private readonly translationLanguages = new Set<string>();
   /** Raw `Language` keys read so far, all questions together. */
   private languageKeyCount = 0;
@@ -353,7 +359,10 @@ class QsfReader {
   private readDefaultLanguage(raw: unknown): string {
     const code = str(raw) ?? "EN";
     const normalized = normalizeQualtricsLanguageCode(code);
-    if (normalized) return normalized;
+    if (normalized) {
+      this.languageSpellings.set(normalized, qualtricsLanguageCodeSpelling(code));
+      return normalized;
+    }
 
     this.issues.push({
       code: "language_skipped",
@@ -366,25 +375,56 @@ class QsfReader {
     return DEFAULT_V3_SURVEY_LANGUAGE;
   }
 
-  /** The normalized code of a translation's language, or `null` (reported once) when there is none. */
+  /** `normalized`, unless another code of the file already holds that language (reported once). */
+  private claimLanguage(raw: string, normalized: string): string | null {
+    const spelling = qualtricsLanguageCodeSpelling(raw);
+    const holder = this.languageSpellings.get(normalized);
+    if (holder === undefined) {
+      this.languageSpellings.set(normalized, spelling);
+      return normalized;
+    }
+    if (holder === spelling) return normalized;
+
+    const reportKey = `duplicate\u0000${spelling}`;
+    if (!this.reportedLanguages.has(reportKey)) {
+      this.reportedLanguages.add(reportKey);
+      this.issues.push({
+        code: "language_skipped",
+        severity: "warning",
+        params: { code: raw.trim(), cause: "duplicate_language", language: normalized },
+      });
+    }
+    return null;
+  }
+
+  /**
+   * The normalized code of a translation's language, or `null` (reported once) when there is none, or
+   * when an earlier code of the file — the default's included — already normalized to it: `ES` and
+   * `ES-ES` once both read as Spain, and one of them was dropped with no line. The first code keeps the
+   * language; a later one is left out with a `duplicate_language` line. Spellings of one code (`de`,
+   * ` DE`) are that code, not a duplicate.
+   */
   private translationLanguage(raw: string): string | null {
     if (this.languageByRaw.has(raw)) return this.languageByRaw.get(raw) ?? null;
 
     const normalized = normalizeQualtricsLanguageCode(raw);
-    this.languageByRaw.set(raw, normalized);
-    if (!normalized) {
-      const reportable = isReportableLanguageCode(raw);
-      const reportKey = reportable ? raw.trim() : "";
-      if (!this.reportedLanguages.has(reportKey)) {
-        this.reportedLanguages.add(reportKey);
-        this.issues.push({
-          code: "language_skipped",
-          severity: "warning",
-          ...(reportable ? { params: { code: reportKey } } : {}),
-        });
-      }
+    if (normalized) {
+      const claimed = this.claimLanguage(raw, normalized);
+      this.languageByRaw.set(raw, claimed);
+      return claimed;
     }
-    return normalized;
+    this.languageByRaw.set(raw, null);
+    const reportable = isReportableLanguageCode(raw);
+    const reportKey = reportable ? raw.trim() : "";
+    if (!this.reportedLanguages.has(reportKey)) {
+      this.reportedLanguages.add(reportKey);
+      this.issues.push({
+        code: "language_skipped",
+        severity: "warning",
+        ...(reportable ? { params: { code: reportKey } } : {}),
+      });
+    }
+    return null;
   }
 
   private readElements(elements: unknown[]): TReadElements {

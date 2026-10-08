@@ -9,6 +9,9 @@ import { normalizeV3SurveyWriteLanguageCode } from "@/app/api/v3/surveys/languag
  * where Qualtrics' region differs from the one we would infer. v3 refuses a bare `en`, so every value
  * here is region-qualified.
  *
+ * Spanish follows Qualtrics' Translate Survey list: `ES` is "Spanish LATAM" and `ES-ES` is "Spanish EU",
+ * so a survey can carry both and neither may take the other's code.
+ *
  * A `Map`, not an object literal: a lookup by a code from the file must never find an inherited
  * member.
  */
@@ -18,7 +21,7 @@ const QUALTRICS_LANGUAGE_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ["DE", "de-DE"],
   ["FR", "fr-FR"],
   ["FR-CA", "fr-CA"],
-  ["ES", "es-ES"],
+  ["ES", "es-419"],
   ["ES-ES", "es-ES"],
   ["ES-419", "es-419"],
   ["PT", "pt-PT"],
@@ -37,6 +40,14 @@ const QUALTRICS_LANGUAGE_CODE_PATTERN = /^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{1,8}){
 /** Longer than any code the pattern admits (30) with room for spaces: refused before it is trimmed. */
 const MAX_RAW_LANGUAGE_CODE_CHARS = 64;
 
+/**
+ * One Qualtrics code however the file spells it: ` de`, `DE` and `de` are the same code, `ZH_S` and
+ * `ZH-S` too. Two raw codes with the same spelling here are one code; two with different spellings that
+ * normalize to one language are two codes the survey cannot both keep.
+ */
+export const qualtricsLanguageCodeSpelling = (raw: string): string =>
+  raw.trim().toUpperCase().replaceAll("_", "-");
+
 /** The normalized code, or `null` when Formbricks has no equivalent for it. */
 export function normalizeQualtricsLanguageCode(raw: string): string | null {
   if (raw.length > MAX_RAW_LANGUAGE_CODE_CHARS) return null;
@@ -44,7 +55,7 @@ export function normalizeQualtricsLanguageCode(raw: string): string | null {
   if (!QUALTRICS_LANGUAGE_CODE_PATTERN.test(trimmed)) return null;
 
   const canonical =
-    QUALTRICS_LANGUAGE_OVERRIDES.get(trimmed.toUpperCase().replaceAll("_", "-")) ??
+    QUALTRICS_LANGUAGE_OVERRIDES.get(qualtricsLanguageCodeSpelling(trimmed)) ??
     normalizeLanguageCode(trimmed);
   if (!canonical) return null;
 

@@ -13,6 +13,13 @@ describe("normalizeQualtricsLanguageCode", () => {
     ["NO", "nb-NO"],
     ["JA", "ja-JP"],
     [" FR ", "fr-FR"],
+    // Qualtrics' Translate Survey list: `ES` is Spanish LATAM, `ES-ES` Spanish EU.
+    ["ES", "es-419"],
+    ["ES-ES", "es-ES"],
+    ["ES-419", "es-419"],
+    ["AZ-AZ", "az-AZ"],
+    ["SR-ME", "sr-ME"],
+    ["PA-IN", "pa-IN"],
   ])("maps %s to the region-qualified %s v3 stores", (raw, expected) => {
     expect(normalizeQualtricsLanguageCode(raw)).toBe(expected);
   });

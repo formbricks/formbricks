@@ -158,6 +158,71 @@ describe("readQsf", () => {
     expect(survey.languages).toEqual(["fr-FR", "de-DE", "ar-EG"]);
   });
 
+  test("keeps Spanish LATAM (`ES`) and Spanish EU (`ES-ES`) apart, each with its own text", () => {
+    const survey = readQsf(
+      minimalQsf([
+        sq("QID1", {
+          QuestionType: "MC",
+          Selector: "SAVR",
+          Choices: { "1": { Display: "Yes" } },
+          Language: {
+            ES: { QuestionText: "¿Qué tal, che?", Choices: { "1": { Display: "Dale" } } },
+            "ES-ES": { QuestionText: "¿Qué tal, tío?", Choices: { "1": { Display: "Vale" } } },
+          },
+        }),
+        bl(["QID1"]),
+        fl(),
+      ])
+    );
+    const qid1 = survey.questions.get("QID1");
+    const textIn = (key: string | undefined, language: string) =>
+      survey.texts.get(key ?? "")?.byLanguage.get(language);
+
+    expect(survey.languages).toEqual(["es-419", "es-ES"]);
+    expect(textIn(qid1?.textKey, "es-419")).toBe("¿Qué tal, che?");
+    expect(textIn(qid1?.textKey, "es-ES")).toBe("¿Qué tal, tío?");
+    expect(textIn(qid1?.choices[0].key, "es-419")).toBe("Dale");
+    expect(textIn(qid1?.choices[0].key, "es-ES")).toBe("Vale");
+    expect(survey.issues).toEqual([]);
+  });
+
+  test("keeps the first of two codes that normalize to one language and reports the other once", () => {
+    const survey = readQsf(
+      minimalQsf([
+        sq("QID1", { Language: { "ES-419": { QuestionText: "Primero" }, ES: { QuestionText: "Segundo" } } }),
+        sq("QID2", {
+          Language: { ES: { QuestionText: "Otro" }, "es-419": { QuestionText: "Mismo código" } },
+        }),
+        sq("QID3", { Language: { "EN-US": { QuestionText: "Not the default" }, de: { QuestionText: "A" } } }),
+        sq("QID4", { Language: { " DE": { QuestionText: "B" } } }),
+        bl(["QID1", "QID2", "QID3", "QID4"]),
+        fl(),
+      ])
+    );
+    const textOf = (ref: string, language: string) =>
+      survey.texts.get(survey.questions.get(ref)?.textKey ?? "")?.byLanguage.get(language);
+
+    expect(survey.languages).toEqual(["es-419", "de-DE"]);
+    expect(textOf("QID1", "es-419")).toBe("Primero");
+    // `es-419` is the spelling of `ES-419`, the code that holds the language: the same code.
+    expect(textOf("QID2", "es-419")).toBe("Mismo código");
+    // ` DE` is a spelling of `de`, not a second German.
+    expect(textOf("QID4", "de-DE")).toBe("B");
+    // `ES` once, and `EN-US`, which normalizes to the default language `EN` holds.
+    expect(survey.issues).toEqual([
+      {
+        code: "language_skipped",
+        severity: "warning",
+        params: { code: "ES", cause: "duplicate_language", language: "es-419" },
+      },
+      {
+        code: "language_skipped",
+        severity: "warning",
+        params: { code: "EN-US", cause: "duplicate_language", language: "en-US" },
+      },
+    ]);
+  });
+
   test("falls back to en-US for a default language Formbricks does not know, and says so", () => {
     const survey = readQsf(minimalQsf([sq("QID1"), bl(["QID1"]), fl()], { SurveyLanguage: "KLINGON" }));
 
