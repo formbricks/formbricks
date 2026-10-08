@@ -57,8 +57,17 @@ export const StylingAppearanceToggle = ({ appearance, onChange }: Readonly<Styli
   );
 };
 
+interface PreviewAppearanceSwitchProps extends StylingAppearanceToggleProps {
+  /** Padding of each option, to match the size of the pill it sits next to. */
+  optionClassName?: string;
+}
+
 /** Sun / moon switch under a styling preview; drives the same appearance as the Light / Dark toggle. */
-export const PreviewAppearanceSwitch = ({ appearance, onChange }: Readonly<StylingAppearanceToggleProps>) => {
+export const PreviewAppearanceSwitch = ({
+  appearance,
+  onChange,
+  optionClassName = "px-3 py-1",
+}: Readonly<PreviewAppearanceSwitchProps>) => {
   const { t } = useTranslation();
 
   return (
@@ -76,7 +85,8 @@ export const PreviewAppearanceSwitch = ({ appearance, onChange }: Readonly<Styli
           aria-pressed={appearance === value}
           title={label}
           className={cn(
-            "cursor-pointer rounded-full px-3 py-1 text-slate-700",
+            "cursor-pointer rounded-full text-slate-700",
+            optionClassName,
             appearance === value && "bg-slate-200"
           )}
           onClick={() => onChange(value)}>

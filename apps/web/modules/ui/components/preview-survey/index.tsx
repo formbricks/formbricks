@@ -610,7 +610,11 @@ export const PreviewSurvey = ({
             />
           </div>
           {onAppearanceChange && (
-            <PreviewAppearanceSwitch appearance={appearance} onChange={onAppearanceChange} />
+            <PreviewAppearanceSwitch
+              appearance={appearance}
+              onChange={onAppearanceChange}
+              optionClassName="px-4 py-2"
+            />
           )}
         </div>
       </div>
