@@ -145,6 +145,9 @@ Every client you authorize appears under **Settings → Account → Authorized A
 approved. Click **Revoke** to immediately cut off a client's access; it will need to be re-authorized
 to connect again.
 
+Approving a client again with fewer scopes replaces what it was granted: its older tokens that carry
+the dropped scopes stop working, and the client has to re-authorize to get them back.
+
 Tokens are short-lived by design: an access token lasts **15 minutes** and the client refreshes it
 silently in the background for up to **30 days** (the refresh window). After that — or after you
 revoke — the client re-runs the sign-in and consent flow. Approving the write scopes

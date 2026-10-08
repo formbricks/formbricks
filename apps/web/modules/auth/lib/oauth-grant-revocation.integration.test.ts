@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import {
   ORIGIN,
+  authorize,
   createUser,
   grant as grantScopes,
   handle,
@@ -382,12 +383,14 @@ describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, 
     const clientId = await registerRevokeClient();
     const wide = await grant(cookie, clientId);
     const first = await consentOf(userId, clientId);
+    // Both rows list the wide scopes; the provider's own row is pushed back so the narrowing below is
+    // unambiguously the newest write.
     const earlier = new Date(Date.now() - 60_000);
+    await prisma.oauthConsent.update({ where: { id: first.id }, data: { updatedAt: earlier } });
     const second = await prisma.oauthConsent.create({
       data: { clientId, userId, scopes: SCOPE.split(" "), createdAt: earlier, updatedAt: earlier },
     });
 
-    // Narrow the older row; the newer one still lists the wide scopes.
     const response = await handle("/oauth2/update-consent", {
       method: "POST",
       headers: { "content-type": "application/json", cookie, origin: ORIGIN },
@@ -395,9 +398,77 @@ describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, 
     });
 
     expect(response.status).toBe(200);
-    expect(first.id).not.toBe(second.id);
     expect(await liveRefreshTokensWith(userId, clientId, "responses:read")).toBe(0);
     expect((await refresh(clientId, wide.refresh_token)).body.error).toBe("invalid_grant");
+    // The stale wide row is gone, so /authorize can't find it and skip the consent screen.
+    const consents = await prisma.oauthConsent.findMany({ where: { userId, clientId } });
+    expect(consents.map((consent) => [consent.id, consent.scopes.sort()])).toEqual([
+      [second.id, NARROW.split(" ").sort()],
+    ]);
+    const { target } = await authorize(cookie, clientId, SCOPE);
+    expect(target.searchParams.get("code")).toBeNull();
+    expect(target.pathname).toBe("/account/authorize");
+  });
+
+  test("a narrower child minted from a wide grant before the narrowing ends with its grant", async () => {
+    const { cookie, userId } = await signIn();
+    const clientId = await registerRevokeClient();
+    const wide = await grant(cookie, clientId);
+    // A refresh that asks for fewer scopes mints a child inside the narrowing to come.
+    const child = await refresh(clientId, wide.refresh_token, NARROW);
+    expect(child.status, JSON.stringify(child.body)).toBe(200);
+    const { id } = await consentOf(userId, clientId);
+
+    await handle("/oauth2/update-consent", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie, origin: ORIGIN },
+      body: JSON.stringify({ id, update: { scopes: NARROW.split(" ") } }),
+    });
+
+    expect(await liveTokens(userId, clientId)).toBe(0);
+    expect((await refresh(clientId, child.body.refresh_token as string)).body.error).toBe("invalid_grant");
+  });
+
+  test("narrowing one app leaves the user's other apps and other users' tokens alone", async () => {
+    const { cookie, userId } = await signIn();
+    const narrowed = await registerRevokeClient();
+    const other = await registerRevokeClient();
+    await grant(cookie, narrowed);
+    const otherTokens = await grant(cookie, other);
+    // Another user's wide grant for the narrowed client, as stored rows: they're never presented here.
+    const stranger = await prisma.user.create({ data: { email: "stranger@example.com", name: "Stranger" } });
+    const inAQuarterHour = new Date(Date.now() + 15 * 60_000);
+    await prisma.oauthRefreshToken.create({
+      data: {
+        token: randomBytes(16).toString("hex"),
+        clientId: narrowed,
+        userId: stranger.id,
+        scopes: SCOPE.split(" "),
+        createdAt: new Date(),
+        expiresAt: inAQuarterHour,
+      },
+    });
+    await prisma.oauthAccessToken.create({
+      data: {
+        token: randomBytes(16).toString("hex"),
+        clientId: narrowed,
+        userId: stranger.id,
+        scopes: SCOPE.split(" "),
+        createdAt: new Date(),
+        expiresAt: inAQuarterHour,
+      },
+    });
+    const { id } = await consentOf(userId, narrowed);
+
+    await handle("/oauth2/update-consent", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie, origin: ORIGIN },
+      body: JSON.stringify({ id, update: { scopes: NARROW.split(" ") } }),
+    });
+
+    expect(await liveTokens(userId, narrowed)).toBe(0);
+    expect(await liveTokens(stranger.id, narrowed)).toBe(2);
+    expect((await refresh(other, otherTokens.refresh_token)).status).toBe(200);
   });
 
   test("a refresh racing an uncommitted narrowing waits for it and is refused", async () => {

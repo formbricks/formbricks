@@ -36,9 +36,9 @@ import { MCP_OAUTH_REFRESH_TOKEN_PREFIX } from "./mcp-oauth-provider-options";
  * Access tokens are self-contained JWTs verified against JWKS (`modules/mcp/auth.ts`), so one minted
  * before the revoke stays valid until it expires (`accessTokenExpiresIn`, 15 minutes). That residual
  * is the same one `sso-recovery.ts` accepts; the `oauthAccessToken` write below only matters for opaque
- * tokens. The same residual covers an authorization code issued under the wider consent and redeemed
- * after the narrowing: its access token lives out its 15 minutes, and its refresh token is refused on
- * first use.
+ * tokens. An authorization code issued under the wider consent and redeemed after the narrowing has
+ * the same residual, started up to its 10-minute code lifetime later: its access token lives out its 15
+ * minutes, and its refresh token is refused on first use.
  */
 
 const CONSENT_PATH = "/oauth2/consent";
@@ -65,31 +65,82 @@ const revokeClientTokens = async (
   return { refreshTokensRevoked: refreshRows.count, accessTokensRevoked: accessRows.count };
 };
 
+type TConsentRow = { id: string; scopes: string[]; updatedAt: Date };
+
 /**
- * The scopes the user has consented to for the client, or `null` without a consent. Read `FOR SHARE`,
- * so a consent delete or narrowing that is still in flight is waited on rather than read around.
+ * Locks the user's consent rows for the client, in `id` order. Every path that locks several of them
+ * (this module's three, upstream writes only one row at a time) takes them in that order, so a refresh
+ * racing a revoke or a narrowing waits instead of deadlocking.
+ */
+const lockConsents = (
+  tx: Prisma.TransactionClient,
+  userId: string,
+  clientId: string,
+  mode: "share" | "update"
+): Promise<TConsentRow[]> =>
+  mode === "update"
+    ? tx.$queryRaw<TConsentRow[]>`
+        SELECT "id", "scopes", "updatedAt" FROM "oauthConsent"
+        WHERE "userId" = ${userId} AND "clientId" = ${clientId}
+        ORDER BY "id"
+        FOR UPDATE`
+    : tx.$queryRaw<TConsentRow[]>`
+        SELECT "id", "scopes", "updatedAt" FROM "oauthConsent"
+        WHERE "userId" = ${userId} AND "clientId" = ${clientId}
+        ORDER BY "id"
+        FOR SHARE`;
+
+/**
+ * The scopes a set of consent rows allows, and the row that decision rests on; `null` without a row.
  *
  * Normally one row: the provider finds the (user, client) consent and updates it. Two concurrent first
  * approvals can each insert one, though, and a later approval or `update-consent` then rewrites only one
- * of them. The bound is the most recently written row, the user's latest decision; every row is still
- * locked, so a write to either is waited on. The provider stamps `updatedAt` to the second, so rows
- * written in the same second can't be ordered, and the bound is then what all of them allow.
+ * of them. The bound is the most recently written row, the user's latest decision. The provider stamps
+ * `updatedAt` to the second, so rows written in the same second can't be ordered, and the bound is then
+ * what all of them allow. Picked here rather than by `ORDER BY`, which sorts before a waited-on row's
+ * new values come back.
+ */
+const consentBound = (consents: TConsentRow[]): { scopes: string[]; newest: TConsentRow } | null => {
+  if (consents.length === 0) return null;
+  const newestAt = Math.max(...consents.map((consent) => consent.updatedAt.getTime()));
+  const newest = consents.filter((consent) => consent.updatedAt.getTime() === newestAt);
+  const scopes = newest[0].scopes.filter((scope) =>
+    newest.every((consent) => consent.scopes.includes(scope))
+  );
+  return { scopes, newest: newest[0] };
+};
+
+/**
+ * The scopes the user has consented to for the client, or `null` without a consent. Read `FOR SHARE`,
+ * so a consent delete or narrowing that is still in flight is waited on rather than read around.
  */
 const readConsentedScopes = async (
   tx: Prisma.TransactionClient,
   userId: string,
   clientId: string
+): Promise<string[] | null> =>
+  consentBound(await lockConsents(tx, userId, clientId, "share"))?.scopes ?? null;
+
+/**
+ * Like {@link readConsentedScopes}, for the consent hook, which also folds duplicate rows into the one
+ * the bound rests on. The provider's `/authorize` looks a consent up with an unordered `findOne`, so a
+ * stale wider duplicate would otherwise keep skipping the consent screen and minting wide codes after
+ * the user narrowed the other row.
+ */
+const settleConsentedScopes = async (
+  tx: Prisma.TransactionClient,
+  userId: string,
+  clientId: string
 ): Promise<string[] | null> => {
-  const consents = await tx.$queryRaw<{ scopes: string[]; updatedAt: Date }[]>`
-    SELECT "scopes", "updatedAt" FROM "oauthConsent"
-    WHERE "userId" = ${userId} AND "clientId" = ${clientId}
-    ORDER BY "updatedAt" DESC
-    FOR SHARE`;
-  if (consents.length === 0) return null;
-  const latest = consents.filter(
-    (consent) => consent.updatedAt.getTime() === consents[0].updatedAt.getTime()
-  );
-  return latest[0].scopes.filter((scope) => latest.every((consent) => consent.scopes.includes(scope)));
+  const consents = await lockConsents(tx, userId, clientId, "update");
+  const bound = consentBound(consents);
+  if (!bound || consents.length === 1) return bound?.scopes ?? null;
+
+  await tx.oauthConsent.deleteMany({ where: { userId, clientId, id: { not: bound.newest.id } } });
+  if (bound.scopes.length !== bound.newest.scopes.length) {
+    await tx.oauthConsent.update({ where: { id: bound.newest.id }, data: { scopes: bound.scopes } });
+  }
+  return bound.scopes;
 };
 
 type TTokensBeyondConsent = { refreshTokensDeleted: number; accessTokensRevoked: number };
@@ -103,16 +154,19 @@ type TTokensBeyondConsent = { refreshTokensDeleted: number; accessTokensRevoked:
 type TRefusedGrant = { authorizationCodeId: string | null; rotatedAt: Date | null; sessionId: string | null };
 
 /**
- * Ends the client's tokens for the user whose scopes aren't all in `consentedScopes`, plus, when a
- * refused refresh's `grant` is given, every token of that grant. Prisma's list filters can't express
- * "not a subset of", hence the raw `<@`.
+ * Ends the client's tokens for the user that reach past `consentedScopes`, and every other token of the
+ * grants they belong to (one approval's chain of rotations, shared `authorizationCodeId`). A grant ends
+ * whole: a refresh may have asked for fewer scopes, leaving a child inside the consent whose ancestor
+ * isn't, and that child must not outlive the token it was minted from. The narrowed approval's own grant
+ * has a new id, so it is untouched. When a refused refresh's `grant` is given, that grant ends too.
+ * Prisma's list filters can't express "not a subset of", hence the raw `<@`.
  *
  * Refresh tokens are deleted rather than marked revoked, rotated ones included. The provider reads a
  * revoked refresh token presented again as a stolen one and deletes every refresh token the client holds
  * for the user, so a client still holding a token from before the narrowing would take the narrowed
  * grant down with it. A deleted token is answered `invalid_grant` and nothing else. Access tokens have
- * no such reuse check, and are revoked like the rest of this module's: first, including the ones minted
- * from a refresh token about to be deleted, since `oauthAccessToken.refreshId` cascades on delete.
+ * no such reuse check, and are revoked like the rest of this module's. Those minted from a refresh token
+ * about to be deleted are counted here; the `refreshId` cascade then removes them.
  */
 const endTokensBeyondScopes = async (
   tx: Prisma.TransactionClient,
@@ -124,21 +178,34 @@ const endTokensBeyondScopes = async (
   }: { userId: string; clientId: string; consentedScopes: string[]; grant?: TRefusedGrant }
 ): Promise<TTokensBeyondConsent> => {
   const { authorizationCodeId, rotatedAt, sessionId } = grant;
-  // `= NULL` never matches, so without a grant only the scope test applies.
+  const beyond = await tx.$queryRaw<{ grantId: string }[]>`
+    SELECT "authorizationCodeId" AS "grantId" FROM "oauthRefreshToken"
+    WHERE "userId" = ${userId} AND "clientId" = ${clientId}
+      AND "authorizationCodeId" IS NOT NULL AND NOT ("scopes" <@ ${consentedScopes}::text[])
+    UNION
+    SELECT "authorizationCodeId" FROM "oauthAccessToken"
+    WHERE "userId" = ${userId} AND "clientId" = ${clientId}
+      AND "authorizationCodeId" IS NOT NULL AND NOT ("scopes" <@ ${consentedScopes}::text[])`;
+  const grantIds = [
+    ...beyond.map((row) => row.grantId),
+    ...(authorizationCodeId ? [authorizationCodeId] : []),
+  ];
+  // Without a refused grant, `rotatedAt` is null and `"createdAt" = NULL` never matches.
   const ending = await tx.$queryRaw<{ id: string }[]>`
     SELECT "id" FROM "oauthRefreshToken"
     WHERE "userId" = ${userId} AND "clientId" = ${clientId}
       AND (NOT ("scopes" <@ ${consentedScopes}::text[])
-        OR "authorizationCodeId" = ${authorizationCodeId}
+        OR "authorizationCodeId" = ANY(${grantIds}::text[])
         OR (${authorizationCodeId}::text IS NULL AND "authorizationCodeId" IS NULL
           AND "createdAt" = ${rotatedAt} AND "sessionId" IS NOT DISTINCT FROM ${sessionId}))
+    ORDER BY "id"
     FOR UPDATE`;
   const refreshIds = ending.map((row) => row.id);
   const accessTokensRevoked = await tx.$executeRaw`
     UPDATE "oauthAccessToken" SET "revoked" = ${new Date()}
     WHERE "userId" = ${userId} AND "clientId" = ${clientId} AND "revoked" IS NULL
       AND (NOT ("scopes" <@ ${consentedScopes}::text[])
-        OR "authorizationCodeId" = ${authorizationCodeId}
+        OR "authorizationCodeId" = ANY(${grantIds}::text[])
         OR "refreshId" = ANY(${refreshIds}::text[]))`;
   const refreshTokensDeleted = await tx.$executeRaw`
     DELETE FROM "oauthRefreshToken" WHERE "id" = ANY(${refreshIds}::text[])`;
@@ -175,6 +242,9 @@ export const revokeOAuthConsentGrant = async ({
     });
     if (!consent) return null;
 
+    // Locked in id order first, as every other path here does, so a racing refresh waits rather than
+    // deadlocking against a delete that would take the rows in scan order.
+    await lockConsents(tx, userId, consent.clientId, "update");
     const consents = await tx.oauthConsent.deleteMany({ where: { userId, clientId: consent.clientId } });
     const tokens = await revokeClientTokens(tx, userId, consent.clientId);
     return { consentsDeleted: consents.count, ...tokens };
@@ -244,36 +314,52 @@ const changedConsentClientId = async (ctx: AuthHookContext, userId: string): Pro
 export const revokeTokensBeyondConsentAfterHandler = async (ctx: AuthHookContext): Promise<void> => {
   if (ctx.path !== CONSENT_PATH && ctx.path !== CONSENT_UPDATE_PATH) return;
 
-  const session = await getSessionFromCtx(ctx);
-  if (!session) return;
-  const userId = session.user.id;
-
-  let clientId: string | null = null;
+  const ids: { userId?: string; clientId?: string } = {};
   try {
-    clientId = await changedConsentClientId(ctx, userId);
-    if (!clientId) return;
-    const changedClientId = clientId;
+    const session = await getSessionFromCtx(ctx);
+    if (!session) return;
+    ids.userId = session.user.id;
 
-    const ended = await prisma.$transaction(async (tx) => {
-      const client = await tx.oauthClient.findUnique({
-        where: { clientId: changedClientId },
-        select: { skipConsent: true },
-      });
-      if (!client || client.skipConsent) return null;
-      const consentedScopes = await readConsentedScopes(tx, userId, changedClientId);
-      if (!consentedScopes) return null;
-      return endTokensBeyondScopes(tx, { userId, clientId: changedClientId, consentedScopes });
-    });
+    const clientId = await changedConsentClientId(ctx, ids.userId);
+    if (!clientId) {
+      // An approval the provider accepted always names its client. Silence here would mean the
+      // provider's request state stopped reaching this hook, and narrowing waited for the next refresh.
+      if (isAcceptedApproval(ctx)) {
+        logger.warn(
+          ids,
+          "OAuth consent approved but its client couldn't be read; the refresh check still applies"
+        );
+      }
+      return;
+    }
+    ids.clientId = clientId;
+
+    const ended = await endTokensBeyondChangedConsent(ids.userId, clientId);
     if (!ended || ended.refreshTokensDeleted + ended.accessTokensRevoked === 0) return;
 
-    logger.info({ userId, clientId, ...ended }, "OAuth consent narrowed; tokens beyond it ended");
+    logger.info({ ...ids, ...ended }, "OAuth consent narrowed; tokens beyond it ended");
   } catch (err) {
     logger.error(
-      { err, userId, clientId },
+      { err, ...ids },
       "OAuth consent changed but ending the tokens beyond it failed; the refresh check still applies"
     );
   }
 };
+
+const isAcceptedApproval = (ctx: AuthHookContext): boolean =>
+  ctx.path === CONSENT_PATH &&
+  (ctx.body as { accept?: unknown } | undefined)?.accept === true &&
+  !isAPIError((ctx.context as { returned?: unknown }).returned);
+
+/** The consent hook's transaction: settle the consent rows, then end the tokens beyond them. */
+const endTokensBeyondChangedConsent = (userId: string, clientId: string) =>
+  prisma.$transaction(async (tx) => {
+    const client = await tx.oauthClient.findUnique({ where: { clientId }, select: { skipConsent: true } });
+    if (!client || client.skipConsent) return null;
+    const consentedScopes = await settleConsentedScopes(tx, userId, clientId);
+    if (!consentedScopes) return null;
+    return endTokensBeyondScopes(tx, { userId, clientId, consentedScopes });
+  });
 
 /**
  * Better Auth stores refresh tokens as the unpadded base64url SHA-256 of the value after the prefix

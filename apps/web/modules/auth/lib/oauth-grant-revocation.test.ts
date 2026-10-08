@@ -18,10 +18,12 @@ const mocks = vi.hoisted(() => ({
   getSessionFromCtx: vi.fn(),
   getOAuthProviderState: vi.fn(),
   calls: [] as string[],
-  /** The consent rows the `FOR SHARE` read returns, newest first as its `ORDER BY` does. */
-  consents: [] as { scopes: string[]; updatedAt: Date }[],
+  /** The consent rows the locking read returns. */
+  consents: [] as { id: string; scopes: string[]; updatedAt: Date }[],
+  /** Grants that already hold a token beyond the consent. */
+  beyondGrants: [] as string[],
   tx: {
-    oauthConsent: { findFirst: vi.fn(), deleteMany: vi.fn() },
+    oauthConsent: { findFirst: vi.fn(), deleteMany: vi.fn(), update: vi.fn() },
     oauthRefreshToken: { updateMany: vi.fn() },
     oauthAccessToken: { updateMany: vi.fn() },
     oauthClient: { findUnique: vi.fn() },
@@ -75,8 +77,14 @@ beforeEach(() => {
     return { count: 0 };
   });
   mocks.consents = [];
+  mocks.beyondGrants = [];
   mocks.tx.$queryRaw.mockImplementation(async (sql: TemplateStringsArray) => {
-    if (sql.join("?").includes(`FROM "oauthConsent"`)) return mocks.consents;
+    const text = sql.join("?");
+    if (text.includes(`FROM "oauthConsent"`)) return mocks.consents;
+    if (text.includes("UNION")) {
+      mocks.calls.push("find grants beyond");
+      return mocks.beyondGrants.map((grantId) => ({ grantId }));
+    }
     mocks.calls.push("select refresh tokens to end");
     return [{ id: "refresh-1" }];
   });
@@ -86,12 +94,20 @@ beforeEach(() => {
   });
 });
 
-const ENDS_TOKENS = ["select refresh tokens to end", "revoke access tokens", "delete refresh tokens"];
+const ENDS_TOKENS = [
+  "find grants beyond",
+  "select refresh tokens to end",
+  "revoke access tokens",
+  "delete refresh tokens",
+];
 
 /** The values the raw select of the refresh tokens to end was given, so a test can check its scoping. */
 const endingSelectValues = (): unknown[] =>
   mocks.tx.$queryRaw.mock.calls
-    .find(([sql]) => !(sql as TemplateStringsArray).join("?").includes(`FROM "oauthConsent"`))!
+    .find(([sql]) => {
+      const text = (sql as TemplateStringsArray).join("?");
+      return text.includes(`SELECT "id" FROM "oauthRefreshToken"`);
+    })!
     .slice(1);
 
 describe("revokeOAuthConsentGrant", () => {
@@ -186,6 +202,7 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
   /** Consent rows newest first, each a second older than the one before. */
   const consentWith = (...scopes: string[][]) => {
     mocks.consents = scopes.map((consentScopes, i) => ({
+      id: `consent-${i}`,
       scopes: consentScopes,
       updatedAt: new Date(Date.UTC(2026, 9, 8, 10, 0, 59 - i)),
     }));
@@ -257,15 +274,9 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
     // Access tokens first: deleting a refresh token cascades to the access tokens minted from it.
     expect(mocks.calls).toEqual(ENDS_TOKENS);
     // Scoped to the user and client, bounded by the consent, and reaching the presented token's grant.
-    expect(endingSelectValues()).toEqual([
-      "user-1",
-      "client-1",
-      ["surveys:read", "offline_access"],
-      "code-1",
-      "code-1",
-      new Date("2026-10-08T10:00:00Z"),
-      "session-1",
-    ]);
+    expect(endingSelectValues()).toEqual(
+      expect.arrayContaining(["user-1", "client-1", ["surveys:read", "offline_access"], ["code-1"]])
+    );
     // Only a full revoke touches every token the client holds; a narrowing leaves the rest alone.
     expect(mocks.tx.oauthRefreshToken.updateMany).not.toHaveBeenCalled();
   });
@@ -282,23 +293,39 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
       "BAD_REQUEST",
       "invalid_grant"
     );
-    expect(endingSelectValues()).toEqual([
-      "user-1",
-      "client-1",
-      ["surveys:read", "offline_access"],
-      null,
-      null,
-      new Date("2026-10-08T10:00:00Z"),
-      "session-1",
-    ]);
+    // No grant id to reach it by, so the minted token is found by the presented one's rotation stamp.
+    expect(endingSelectValues()).toEqual(
+      expect.arrayContaining([[], new Date("2026-10-08T10:00:00Z"), "session-1"])
+    );
+  });
+
+  test("bounds the token by the newest row even when an older duplicate is narrower", async () => {
+    vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue(storedRow() as never);
+    // The newest row, the user's latest decision, re-approved the wide scopes.
+    consentWith(WIDE, ["surveys:read", "offline_access"]);
+
+    await expect(requireOAuthConsentOnRefreshAfterHandler(refreshCtx())).resolves.toBeUndefined();
+    expect(mocks.calls).toEqual([]);
+  });
+
+  test("picks the newest row by its timestamp, not by the order the rows come back in", async () => {
+    vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue(storedRow() as never);
+    consentWith(["surveys:read", "offline_access"], WIDE);
+    mocks.consents.reverse();
+
+    await expectApiError(
+      requireOAuthConsentOnRefreshAfterHandler(refreshCtx()),
+      "BAD_REQUEST",
+      "invalid_grant"
+    );
   });
 
   test("bounds the token by what every row allows when the newest rows were written in the same second", async () => {
     vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue(storedRow() as never);
     const sameSecond = new Date("2026-10-08T10:00:59Z");
     mocks.consents = [
-      { scopes: WIDE, updatedAt: sameSecond },
-      { scopes: ["surveys:read", "offline_access"], updatedAt: sameSecond },
+      { id: "consent-0", scopes: WIDE, updatedAt: sameSecond },
+      { id: "consent-1", scopes: ["surveys:read", "offline_access"], updatedAt: sameSecond },
     ];
 
     await expectApiError(
@@ -343,7 +370,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
     mocks.getSessionFromCtx.mockResolvedValue({ user: { id: "user-1" } });
     mocks.getOAuthProviderState.mockResolvedValue({ query: oauthQuery });
     mocks.tx.oauthClient.findUnique.mockResolvedValue({ skipConsent: false });
-    mocks.consents = [{ scopes: NARROW, updatedAt: new Date("2026-10-08T10:00:00Z") }];
+    mocks.consents = [{ id: "consent-1", scopes: NARROW, updatedAt: new Date("2026-10-08T10:00:00Z") }];
   });
 
   test.each([
@@ -381,8 +408,62 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
     await revokeTokensBeyondConsentAfterHandler(approve());
 
     expect(mocks.calls).toEqual(ENDS_TOKENS);
-    // No grant: a narrowing reaches tokens by their scopes alone, never a whole grant.
-    expect(endingSelectValues()).toEqual(["user-1", "client-1", NARROW, null, null, null, null]);
+    // No refused grant: tokens are reached by their scopes and the grants already beyond the consent.
+    expect(endingSelectValues()).toEqual(expect.arrayContaining(["user-1", "client-1", NARROW, []]));
+  });
+
+  test("ends whole grants that already hold a token beyond the consent", async () => {
+    mocks.beyondGrants = ["grant-wide"];
+
+    await revokeTokensBeyondConsentAfterHandler(approve());
+
+    expect(endingSelectValues()).toEqual(expect.arrayContaining([["grant-wide"]]));
+  });
+
+  test("folds duplicate consent rows into the newest, so /authorize can't read a stale wider one", async () => {
+    mocks.consents = [
+      {
+        id: "consent-old",
+        scopes: ["surveys:read", "responses:read", "offline_access"],
+        updatedAt: new Date(1_000),
+      },
+      { id: "consent-new", scopes: NARROW, updatedAt: new Date(2_000) },
+    ];
+
+    await revokeTokensBeyondConsentAfterHandler(approve());
+
+    expect(mocks.tx.oauthConsent.deleteMany).toHaveBeenCalledWith({
+      where: { userId: "user-1", clientId: "client-1", id: { not: "consent-new" } },
+    });
+    expect(mocks.tx.oauthConsent.update).not.toHaveBeenCalled();
+  });
+
+  test("on a same-second tie, keeps one row holding what every tied row allows", async () => {
+    const sameSecond = new Date(2_000);
+    mocks.consents = [
+      {
+        id: "consent-a",
+        scopes: ["surveys:read", "responses:read", "offline_access"],
+        updatedAt: sameSecond,
+      },
+      { id: "consent-b", scopes: NARROW, updatedAt: sameSecond },
+    ];
+
+    await revokeTokensBeyondConsentAfterHandler(approve());
+
+    expect(mocks.tx.oauthConsent.update).toHaveBeenCalledWith({
+      where: { id: "consent-a" },
+      data: { scopes: NARROW },
+    });
+  });
+
+  test("warns when an accepted approval can't be mapped to its client", async () => {
+    mocks.getOAuthProviderState.mockResolvedValue(null);
+
+    await revokeTokensBeyondConsentAfterHandler(approve());
+
+    expect(logger.warn).toHaveBeenCalledWith({ userId: "user-1" }, expect.any(String));
+    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
   test("finds an updated consent's client through a lookup scoped to the caller", async () => {
@@ -395,7 +476,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
     expect(prisma.oauthConsent.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: "consent-1", userId: "user-1" } })
     );
-    expect(endingSelectValues()).toEqual(["user-1", "client-1", NARROW, null, null, null, null]);
+    expect(endingSelectValues()).toEqual(expect.arrayContaining(["user-1", "client-1", NARROW]));
   });
 
   test("does nothing for an updated consent the caller doesn't own", async () => {
