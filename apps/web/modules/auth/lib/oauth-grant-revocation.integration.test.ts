@@ -62,6 +62,24 @@ const liveRefreshTokensWith = (userId: string, clientId: string, scope: string):
     where: { userId, clientId, revoked: null, expiresAt: { gt: new Date() }, scopes: { has: scope } },
   });
 
+/**
+ * Resolves once a refresh's `FOR SHARE` read of the consent is blocked on a row lock, i.e. the refresh has
+ * issued its tokens and is waiting on the uncommitted consent write. Fails if that never happens, so the
+ * race tests can't pass by the refresh simply running after the commit.
+ */
+const waitForConsentReadToBlock = async (): Promise<void> => {
+  const deadline = Date.now() + 8_000;
+  while (Date.now() < deadline) {
+    const [{ waiting }] = await prisma.$queryRaw<{ waiting: number }[]>`
+      SELECT count(*)::int AS "waiting" FROM pg_stat_activity
+      WHERE datname = current_database() AND wait_event_type = 'Lock'
+        AND query LIKE '%FROM "oauthConsent"%FOR SHARE%'`;
+    if (waiting > 0) return;
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+  throw new Error("the refresh never blocked on the consent row lock");
+};
+
 beforeEach(async () => {
   await resetDb();
   // Instance-level, so resetDb clears it and only the first test gets the boot-time seed. That seed runs
@@ -149,7 +167,7 @@ describe("revoking an OAuth app ends its access (ENG-2499, real Postgres)", () =
         raced = refresh(clientId, tokens.refresh_token).finally(() => {
           settled = true;
         });
-        await new Promise((resolve) => setTimeout(resolve, 1_500));
+        await waitForConsentReadToBlock();
         expect(settled, "the refresh answered before the revoke committed").toBe(false);
       },
       { timeout: 10_000 }
@@ -400,7 +418,7 @@ describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, 
         raced = refresh(clientId, wide.refresh_token).finally(() => {
           settled = true;
         });
-        await new Promise((resolve) => setTimeout(resolve, 1_500));
+        await waitForConsentReadToBlock();
         expect(settled, "the refresh answered before the narrowing committed").toBe(false);
       },
       { timeout: 10_000 }
