@@ -1554,7 +1554,7 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
         }
 
         // Validate image alt text if present. An empty default is a decorative image and needs no translations.
-        if (element.imageAltText && element.imageAltText[defaultLanguageCode].trim()) {
+        if (element.imageAltText?.[defaultLanguageCode].trim()) {
           elementMultiLangIssue = validateElementLabels(
             "imageAltText",
             element.imageAltText,
@@ -1958,7 +1958,7 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
         }
       }
 
-      if (ending.imageAltText && ending.imageAltText.default.trim()) {
+      if (ending.imageAltText?.default.trim()) {
         const multiLangIssueInImageAltText = validateCardFieldsForAllLanguages(
           "imageAltText",
           ending.imageAltText,
