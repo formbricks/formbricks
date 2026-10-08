@@ -81,11 +81,7 @@ const nextConfig = {
   // Jackson is configured exclusively with PostgreSQL (modules/ee/auth/saml/lib/jackson.ts).
   // TypeORM's lazy SQL Server driver traces unused mssql/tedious code and vulnerable sprintf-js.
   outputFileTracingExcludes: {
-    "/*": [
-      "../../node_modules/**/mssql/**/*",
-      "../../node_modules/**/tedious/**/*",
-      "../../node_modules/**/sprintf-js/**/*",
-    ],
+    "/*": ["../../**/node_modules/{mssql,tedious,sprintf-js}/**/*"],
   },
   outputFileTracingIncludes: {
     "/api/auth/**/*": ["../../node_modules/jose/**/*"],
