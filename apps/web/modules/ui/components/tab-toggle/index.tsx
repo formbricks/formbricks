@@ -23,14 +23,16 @@ export const TabToggle = <T extends string | number>({
   value,
   onChange,
   disabled,
-}: TabToggleProps<T>) => {
+}: Readonly<TabToggleProps<T>>) => {
   const [uncontrolledOption, setUncontrolledOption] = useState<T | undefined>(defaultSelected);
   const selectedOption = value ?? uncontrolledOption;
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const nextValue = event.target.value as T;
-    setUncontrolledOption(nextValue);
-    onChange(nextValue);
+    // The DOM value is always a string; hand back the option's own value so numbers stay numbers.
+    const nextOption = options.find((option) => option.value.toString() === event.target.value);
+    if (!nextOption) return;
+    setUncontrolledOption(nextOption.value);
+    onChange(nextOption.value);
   };
 
   return (

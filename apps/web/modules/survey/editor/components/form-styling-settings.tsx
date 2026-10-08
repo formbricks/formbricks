@@ -37,7 +37,7 @@ export const FormStylingSettings = ({
   form,
   onSuggestColorsClick,
   brandColorNotice,
-}: FormStylingSettingsProps) => {
+}: Readonly<FormStylingSettingsProps>) => {
   const { t } = useTranslation();
   // In Dark the brand color field shows an "Automatic" hint under the input; the button keeps the
   // same bottom offset so it stays level with the input instead of the hint.

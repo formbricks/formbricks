@@ -73,7 +73,7 @@ export const PreviewSurvey = ({
   appearance = "light",
   onAppearanceChange,
   customCss,
-}: PreviewSurveyProps) => {
+}: Readonly<PreviewSurveyProps>) => {
   // Both callers hand over a survey that already carries its `embeddedFields`: the editor's working
   // copy is rows-native (ENG-2628), and the templates gallery builds its never-written survey through
   // `getTemplatePreviewSurvey`, which adapts the preset's legacy keys at that boundary (ENG-2404).

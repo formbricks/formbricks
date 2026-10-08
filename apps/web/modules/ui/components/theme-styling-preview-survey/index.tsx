@@ -78,7 +78,7 @@ export const ThemeStylingPreviewSurvey = ({
   appearance = "light",
   onAppearanceChange,
   customCss,
-}: ThemeStylingPreviewSurveyProps) => {
+}: Readonly<ThemeStylingPreviewSurveyProps>) => {
   const [isFullScreenPreview] = useState(false);
   const [previewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
@@ -314,12 +314,16 @@ export const ThemeStylingPreviewSurvey = ({
               <button
                 type="button"
                 // Link surveys always render light (D4), so there is no dark link preview to show.
-                disabled={appearance === "dark"}
+                // aria-disabled rather than disabled: the button stays focusable, so keyboard users
+                // reach the tooltip that explains why.
+                aria-disabled={appearance === "dark"}
                 className={cn(
                   previewType === "link" && "rounded-full bg-slate-200",
-                  "cursor-pointer px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                  "cursor-pointer px-3 py-1 text-sm aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
                 )}
-                onClick={() => setPreviewType("link")}>
+                onClick={() => {
+                  if (appearance !== "dark") setPreviewType("link");
+                }}>
                 {t("common.link_survey")}
               </button>
             </TooltipRenderer>

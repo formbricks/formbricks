@@ -38,7 +38,7 @@ export const BackgroundStylingCard = ({
   isUnsplashConfigured,
   form,
   isStorageConfigured = true,
-}: BackgroundStylingCardProps) => {
+}: Readonly<BackgroundStylingCardProps>) => {
   const { t } = useTranslation();
 
   return (
