@@ -1,6 +1,13 @@
 import type { TFunction } from "i18next";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
-import type { TRetentionPolicyKind, TRetentionRun } from "../types";
+import type {
+  TRetentionPolicyKind,
+  TRetentionPolicySettings,
+  TRetentionRun,
+  TRetentionSurveyCondition,
+} from "../types";
+import { daysToRetentionPeriod } from "./period";
+import { getRetentionPeriodField } from "./policy-rules";
 
 export const getRetentionPolicyLabel = (policy: TRetentionPolicyKind, t: TFunction): string => {
   switch (policy) {
@@ -41,3 +48,51 @@ export const createRetentionCountFormatter = (locale: string): ((value: number |
  */
 export const formatRetentionDate = (iso: string, locale: string, timeZone: string): string =>
   formatDateForDisplay(new Date(iso), locale, { year: "numeric", month: "short", day: "numeric", timeZone });
+
+/** A number of days as the dialogs state it: "3 years", "6 months", "45 days". */
+export const formatRetentionPeriod = (days: number, t: TFunction): string => {
+  const { amount, unit } = daysToRetentionPeriod(days);
+  switch (unit) {
+    case "years":
+      return t("workspace.settings.data_retention.period_years", { count: amount });
+    case "months":
+      return t("workspace.settings.data_retention.period_months", { count: amount });
+    case "days":
+      return t("workspace.settings.data_retention.period_days", { count: amount });
+  }
+};
+
+const getConditionShortLabel = (condition: TRetentionSurveyCondition, t: TFunction): string => {
+  switch (condition) {
+    case "noResponse":
+      return t("workspace.settings.data_retention.condition_no_response_short");
+    case "noChange":
+      return t("workspace.settings.data_retention.condition_no_change_short");
+    case "createdBefore":
+      return t("workspace.settings.data_retention.condition_created_before_short");
+  }
+};
+
+/** One line saying what a policy does, for the Policies table: "Delete 3 years after collection". */
+export const getRetentionPolicySummary = (
+  policy: TRetentionPolicyKind,
+  settings: TRetentionPolicySettings,
+  t: TFunction,
+  locale: string
+): string => {
+  const days = settings[getRetentionPeriodField(policy)];
+  const period = days === null ? "—" : formatRetentionPeriod(days, t);
+  switch (policy) {
+    case "responses":
+      return t("workspace.settings.data_retention.responses_summary", { period });
+    case "surveys":
+      return t("workspace.settings.data_retention.surveys_summary", {
+        period,
+        conditions: new Intl.ListFormat(locale, { type: "conjunction" }).format(
+          settings.conditions.map((condition) => getConditionShortLabel(condition, t))
+        ),
+      });
+    case "members":
+      return t("workspace.settings.data_retention.members_summary", { period });
+  }
+};

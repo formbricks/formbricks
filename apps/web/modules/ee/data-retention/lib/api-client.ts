@@ -3,11 +3,14 @@ import type {
   TCreateRetentionExemptionInput,
   TRetentionExemption,
   TRetentionExemptionSurveyOption,
+  TRetentionPolicies,
+  TRetentionPoliciesPatch,
   TRetentionRun,
 } from "../types";
 
 const BASE_PATH = "/api/internal/retention-runs";
 const EXEMPTIONS_BASE_PATH = "/api/internal/retention-exemptions";
+const POLICIES_BASE_PATH = "/api/internal/retention-policies";
 const MUTATION_TIMEOUT_MS = 15_000;
 
 export type TRetentionRunListPage = {
@@ -130,4 +133,39 @@ export async function listRetentionExemptionSurveyOptions({
   });
   if (!response.ok) throw await parseV3ApiError(response);
   return ((await response.json()) as { data: TRetentionExemptionSurveyOption[] }).data;
+}
+
+export async function getRetentionPolicies({
+  organizationId,
+  signal,
+}: {
+  organizationId: string;
+  signal?: AbortSignal;
+}): Promise<TRetentionPolicies> {
+  const response = await fetch(`${POLICIES_BASE_PATH}?${new URLSearchParams({ organizationId })}`, {
+    method: "GET",
+    cache: "no-store",
+    signal,
+  });
+  if (!response.ok) throw await parseV3ApiError(response);
+  return ((await response.json()) as { data: TRetentionPolicies }).data;
+}
+
+/** Change one policy; the response is the whole document. */
+export async function updateRetentionPolicies({
+  organizationId,
+  patch,
+}: {
+  organizationId: string;
+  patch: TRetentionPoliciesPatch;
+}): Promise<TRetentionPolicies> {
+  const response = await fetch(`${POLICIES_BASE_PATH}?${new URLSearchParams({ organizationId })}`, {
+    method: "PATCH",
+    cache: "no-store",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(patch),
+    signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
+  });
+  if (!response.ok) throw await parseV3ApiError(response);
+  return ((await response.json()) as { data: TRetentionPolicies }).data;
 }

@@ -46,3 +46,9 @@ export const removeRetentionExemptionFromPages = (
       data: page.data.filter((exemption) => exemption.id !== exemptionId),
     })),
   };
+
+/** Query keys for the Policies tab: one document per organisation. */
+export const retentionPolicyKeys = {
+  all: ["retention-policies"] as const,
+  detail: (organizationId: string) => [...retentionPolicyKeys.all, organizationId] as const,
+};

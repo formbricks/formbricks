@@ -2847,9 +2847,24 @@ checksums:
     workspace/settings/billing/your_plan: dc56f0334977d7d5d7d8f1f5801ac54b
     workspace/settings/data_retention/add_exemption: ffd32798505e9cbe470c6ef07e8940b9
     workspace/settings/data_retention/add_exemption_description: 36eb90ad00003f8e911556e9fd905fcf
+    workspace/settings/data_retention/condition_created_before: caa54cfde5d47b4c39338c8390c769d4
+    workspace/settings/data_retention/condition_created_before_short: a69eb94175dfcca4e7b0b8376866a7d4
+    workspace/settings/data_retention/condition_no_change: aae6f17c4f674137a0f9272717b7d14a
+    workspace/settings/data_retention/condition_no_change_short: 3daa2a25d7cadf56db6cb6b20662ba5e
+    workspace/settings/data_retention/condition_no_response: 04a5753d03a1a44530fd48c00488daba
+    workspace/settings/data_retention/condition_no_response_short: 82154b5dd4b338a4756b124ad195e81b
+    workspace/settings/data_retention/conditions_required: dda2edf57bd45529bd6b217bd7d59c86
+    workspace/settings/data_retention/counts_from: 0cea5f8c8605a716a106bc65a93767d8
+    workspace/settings/data_retention/custom: b7b89901f46267f532600a23cfc54ae2
+    workspace/settings/data_retention/custom_notice_days: a80e8f448e79e1a1657fe882f97664fb
+    workspace/settings/data_retention/custom_period_amount: a0ae9c6ff98b57475cdce56f66066aa4
+    workspace/settings/data_retention/custom_period_unit: a5e2f96308799b23b1ade4448c93b8f7
+    workspace/settings/data_retention/customise: 6178e981f01e69be78cff0c323e4026b
+    workspace/settings/data_retention/data: b7b46ab6ce9606032c8f81f6f6afbb9b
     workspace/settings/data_retention/deleted_or_deactivated: edec3a008cd2524151085c2ee84bc1a7
     workspace/settings/data_retention/description: af778035dce2aa51079eb17a3ef48a9b
     workspace/settings/data_retention/download_csv: 13bcd46bbdc2d7d096a862afe59e91c5
+    workspace/settings/data_retention/edit_policy: c6ce6f1afcbbebba6ee539b74fb41e6e
     workspace/settings/data_retention/exempt_survey: 62936eb36798a695ea7fee192ec7ad1d
     workspace/settings/data_retention/exemption_create_failed: 0a726b5c344717889e9d86ce92699b3a
     workspace/settings/data_retention/exemption_created: 85bf069c10b9d49b49791f6b4333221b
@@ -2859,30 +2874,71 @@ checksums:
     workspace/settings/data_retention/exemptions: 11bb8ce74ddd66757961835ce2bb4e54
     workspace/settings/data_retention/exemptions_description: b3e858bc448372c75dade6e524785920
     workspace/settings/data_retention/exemptions_load_error: ad2df69e16e3377e61a687b0c5fb98cc
+    workspace/settings/data_retention/first_night_note: 869323ee30846e10a46a72bd60d31734
     workspace/settings/data_retention/hide_runs_with_no_changes: f31eb80f5c32dd6a4e3ee9838511e4fd
     workspace/settings/data_retention/history: b0578d6d225f512e42f823fbca2e3c32
     workspace/settings/data_retention/history_description: 01e861f9f5273c0f4c11de7b4184c154
     workspace/settings/data_retention/history_load_error: ee2978901cd5ba0ea08367024060ae9a
     workspace/settings/data_retention/history_no_access: a813915b4b0f09f276a4f5affb0a1c18
+    workspace/settings/data_retention/members_active_help: e2761ff8f433aea14cf11e80198b8f77
+    workspace/settings/data_retention/members_counts_from: cf38e001ef8af76a4f878df7b7a22eda
+    workspace/settings/data_retention/members_notice_help: f42a1788345db7065626a92106a923de
+    workspace/settings/data_retention/members_policy_description: bc2117d082817766bc872c171a4e419b
+    workspace/settings/data_retention/members_policy_title: 28ed550ad0eaa2df536cdfdda0600cfe
+    workspace/settings/data_retention/members_summary: 5e40362d674ce54558ff41f6e3a388c8
     workspace/settings/data_retention/nav_label: 29b770f21d46ffce51b70c417a34a609
     workspace/settings/data_retention/no_exemptions: 478eb07c0582b3ffea8edc326e351c28
     workspace/settings/data_retention/no_runs: 7072a06ce3fadc71b019ef069eedc7ad
     workspace/settings/data_retention/no_runs_with_changes: 64e0c24f176876c8becfb6ce62c7a0ac
+    workspace/settings/data_retention/notice: a19d7a8af21834e2fde9597a41c6ef9e
+    workspace/settings/data_retention/notice_out_of_range: aca598b217d4798f0d6f2236a49fa6ed
     workspace/settings/data_retention/notified: f403759b9f7f05ff3f5451d66900a222
+    workspace/settings/data_retention/period: 779afbd6a307574efb9bd957e9622428
+    workspace/settings/data_retention/period_days: e441e75ded9ab640531d6347d07388cd
+    workspace/settings/data_retention/period_months: 0708fe44b24a7189ec7e31e1bb1ef86a
+    workspace/settings/data_retention/period_out_of_range: 9c788c69e27d58fe4c0f0c5e790a02c0
+    workspace/settings/data_retention/period_years: 14656624962c5d9c8a5f40974913aa73
+    workspace/settings/data_retention/policies: 212492478eb8dd9a506878148c9a4d7c
+    workspace/settings/data_retention/policies_description: 222f6c697289ebe0d345757046fe3755
+    workspace/settings/data_retention/policies_load_error: 0a6f6f3b28034c5cb8c9087ef41560fd
+    workspace/settings/data_retention/policies_read_only_description: 337cbf1f784dfca3bdced90164cf455c
     workspace/settings/data_retention/policy: bcc1b7f6b941378e63b0107ecd5844ae
+    workspace/settings/data_retention/policy_active_label: ea9b55678e1e06a3b3f264c38f1fb58d
+    workspace/settings/data_retention/policy_is_active: 6a13d35fd61ac7baea01696eb88f9291
+    workspace/settings/data_retention/policy_paused: 97d3cd1fcea2133a6749ab7efbfb1365
+    workspace/settings/data_retention/policy_save_failed: 743773bfe7e354048a9a3778ca30d068
+    workspace/settings/data_retention/policy_saved: e1647697f97c8af0883b9498fabd9aa4
+    workspace/settings/data_retention/policy_switched_on: b8a4dbad52229e4ac41be33fb6ee3896
     workspace/settings/data_retention/reason: 9b66f286b86dd0e87b1ac0604c9d1ced
     workspace/settings/data_retention/reason_placeholder: 5411f873e8738b747012f6170b43dab5
     workspace/settings/data_retention/reason_required: d820c9c3204a403a9b0a96f3bdf5cf1d
     workspace/settings/data_retention/reason_too_long: 7850fbf703f08f83e8fd1e7d268cf981
+    workspace/settings/data_retention/responses_active_help: bfde5e33ff7fed836fa8f72779984b6e
+    workspace/settings/data_retention/responses_counts_from: 61326751553a4266e57eb73cbd0c23b4
+    workspace/settings/data_retention/responses_notice_help: 2dc837d5108467dd4df19d5c42c4c685
+    workspace/settings/data_retention/responses_policy_description: df5737d5f98f9d6f142ed34e6e7ef51c
+    workspace/settings/data_retention/responses_policy_title: f525188503e3514f28a497a0fe36bcbb
+    workspace/settings/data_retention/responses_summary: db44b700fa15c436e129501336e7c5c5
     workspace/settings/data_retention/revoke: be57685a85b6dfeaeb6eab4e9560b520
     workspace/settings/data_retention/revoke_exemption_body: e2a0e5ba39c99319ec9e63033bdc0018
     workspace/settings/data_retention/revoke_exemption_for: f313bbb13110ba5bfffe4bd1b177425b
     workspace/settings/data_retention/revoke_exemption_title: 32bcbfda37b3d7ccab3749173411612f
+    workspace/settings/data_retention/rule: 5b3477fee7a10f7883c68819c4e24fc4
     workspace/settings/data_retention/run: cc02693eda0a4aa0c1ab356a79e8afb8
     workspace/settings/data_retention/search_surveys: acb2a01b8fba28ca83171ddeab648558
     workspace/settings/data_retention/select_end_date: 746cd6c3cf52e112e78b944ee3d2c55d
     workspace/settings/data_retention/survey_required: 290657a246e312fdc96e3a895794d26a
+    workspace/settings/data_retention/surveys_active_help: d39ddde2b475a232300584a966ea8118
+    workspace/settings/data_retention/surveys_conditions_heading: dd21d6a8ec1abc226f0b79db7a4e1f0f
+    workspace/settings/data_retention/surveys_notice_help: 0b150e469faddd53f9e25c0c6613b895
+    workspace/settings/data_retention/surveys_period_help: 7689571fb43bb25ff1bdf844a668d13f
+    workspace/settings/data_retention/surveys_policy_description: e9f6b118ff26c2897d0c2362d0954c88
+    workspace/settings/data_retention/surveys_policy_title: 4964987825ba25c5bd3bcd70639d4aa7
+    workspace/settings/data_retention/surveys_summary: 4c4ba1ca3e5dada95401feeb6a436c0a
     workspace/settings/data_retention/title: 29b770f21d46ffce51b70c417a34a609
+    workspace/settings/data_retention/unit_days: be91060aa52f40103be636c55c8c50e2
+    workspace/settings/data_retention/unit_months: ea9b90197973d3827ad0803c24ff1704
+    workspace/settings/data_retention/unit_years: d0ed13fee99ba29479f15d86ce7a1b5d
     workspace/settings/data_retention/until: e955df3e819d71f98398dc99e34dba0b
     workspace/settings/data_retention/until_required: f235134441aa874d3c55f567de8a135f
     workspace/settings/data_retention/upgrade_prompt_description: efce1658f30784307a0c0d38fbbfac7e
