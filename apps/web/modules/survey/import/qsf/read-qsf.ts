@@ -18,6 +18,7 @@ import {
   QSF_MAX_NAME_CHARS,
   QSF_MAX_OPTIONS_PER_QUESTION,
   QSF_MAX_QUESTIONS,
+  QSF_MAX_TEXTS,
   QSF_MAX_TEXT_CHARS,
 } from "./limits";
 import { collectEmbeddedDataReferences } from "./piped-text";
@@ -278,6 +279,8 @@ class QsfReader {
   private blockElementCount = 0;
   /** Embedded data fields the flow sets, read so far. */
   private embeddedDataFieldCount = 0;
+  /** Texts read so far, each language of a text counted. */
+  private textCount = 0;
   /** Per question, Qualtrics choice id → text key, for logic and translations. */
   private readonly choiceKeysByRef = new Map<string, Map<string, TQsfTextKey>>();
   /** Branch rules are met before the questions they read, so their conditions are read last. */
@@ -795,7 +798,7 @@ class QsfReader {
       this.addTranslationLanguage(language);
 
       const questionText = str(own(translation, "QuestionText"));
-      if (questionText !== null) this.texts.get(textKey)?.byLanguage.set(language, questionText);
+      if (questionText !== null) this.setTranslation(textKey, language, questionText);
       const choices = ownRecord(translation, "Choices");
       if (choices) this.readOptionTranslations(choices, choiceKeys, language);
       const answers = ownRecord(translation, "Answers");
@@ -850,7 +853,7 @@ class QsfReader {
       if (!key) continue;
       const record = own(records, id);
       const display = isRecord(record) ? str(own(record, "Display")) : str(record);
-      if (display !== null) this.texts.get(key)?.byLanguage.set(language, display);
+      if (display !== null) this.setTranslation(key, language, display);
     }
   }
 
@@ -1023,12 +1026,32 @@ class QsfReader {
     };
   }
 
+  /** A text's translation into one language, counted when the text did not have that language yet. */
+  private setTranslation(key: TQsfTextKey, language: string, text: string): void {
+    const byLanguage = this.texts.get(key)?.byLanguage;
+    if (!byLanguage) return;
+    if (!byLanguage.has(language)) this.countText();
+    byLanguage.set(language, text);
+  }
+
+  /** One more text to sanitize, refused past `QSF_MAX_TEXTS` before it is kept. */
+  private countText(): void {
+    this.textCount += 1;
+    if (this.textCount > QSF_MAX_TEXTS) {
+      throw inputError(
+        "qsf.SurveyElements",
+        `The survey has more than ${QSF_MAX_TEXTS} texts across its languages`
+      );
+    }
+  }
+
   private addText(
     prefix: keyof QsfReader["counters"],
     format: TQsfTextFormat,
     questionRef: string | null,
     defaultText: string
   ): TQsfTextKey {
+    this.countText();
     this.counters[prefix] += 1;
     const key = `${prefix}${this.counters[prefix]}`;
     this.texts.set(key, {

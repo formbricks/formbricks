@@ -8,6 +8,7 @@ import {
   QSF_MAX_LANGUAGE_KEYS,
   QSF_MAX_LANGUAGE_KEYS_PER_QUESTION,
   QSF_MAX_OPTIONS_PER_QUESTION,
+  QSF_MAX_TEXTS,
   QSF_MAX_TEXT_CHARS,
 } from "./limits";
 import { readQsf } from "./read-qsf";
@@ -364,6 +365,57 @@ describe("readQsf", () => {
       const survey = readQsf(minimalQsf([sq("QID1", { QuestionText: text }), bl(["QID1"]), fl()]));
 
       expect(survey.embeddedDataNames).toEqual([]);
+    });
+
+    describe("more texts across all languages than the import sanitizes", () => {
+      // 10 blocks (a name each, untranslated) and questions whose text and options all come in 10
+      // languages: 10 + 10 × 4,999 = 50,000 texts, exactly the limit.
+      const LANGUAGES = ["DE", "FR", "ES", "IT", "NL", "PT", "SV", "DA", "FI"];
+      const build = (options: { extraChoice?: boolean; endMessage?: boolean } = {}) => {
+        const optionCounts = [...Array(24).fill(199), options.extraChoice ? 199 : 198];
+        const questions = optionCounts.map((count, q) => {
+          const ids = Array.from({ length: count }, (_, i) => String(i + 1));
+          const choices = Object.fromEntries(ids.map((id) => [id, { Display: `Q${q} C${id}` }]));
+          const language = Object.fromEntries(
+            LANGUAGES.map((code) => [code, { QuestionText: `${code} ${q}`, Choices: choices }])
+          );
+          return sq(`QID${q + 1}`, { QuestionType: "MC", Choices: choices, Language: language });
+        });
+        const refs = questions.map((_, q) => `QID${q + 1}`);
+        const blocks = Array.from({ length: 10 }, (_, b) => ({
+          ID: `BL_${b}`,
+          Description: `Block ${b}`,
+          BlockElements: refs
+            .filter((_, q) => q % 10 === b)
+            .map((ref) => ({ Type: "Question", QuestionID: ref })),
+        }));
+        return minimalQsf([
+          ...questions,
+          { Element: "BL", Payload: blocks },
+          fl(blocks.map((block) => ({ Type: "Block", ID: block.ID }))),
+          ...(options.endMessage ? [{ Element: "SO", Payload: { EOSMessage: "Thanks!" } }] : []),
+        ]);
+      };
+
+      test("reads a survey at the limit", () => {
+        const survey = readQsf(build());
+
+        expect(survey.languages).toHaveLength(LANGUAGES.length);
+        const texts = [...survey.texts.values()].reduce((count, text) => count + text.byLanguage.size, 0);
+        expect(texts).toBe(QSF_MAX_TEXTS);
+      });
+
+      test.each([
+        ["one text past it", { endMessage: true }],
+        ["one option past it, in every language", { extraChoice: true }],
+      ])("refuses %s", (_case, options) => {
+        expect(readError(build(options)).invalidParams).toEqual([
+          {
+            name: "qsf.SurveyElements",
+            reason: `The survey has more than ${QSF_MAX_TEXTS} texts across its languages`,
+          },
+        ]);
+      });
     });
 
     test.each([
