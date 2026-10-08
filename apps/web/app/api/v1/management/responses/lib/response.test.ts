@@ -13,7 +13,12 @@ import {
   loadQuotaEvaluationContext,
 } from "@/modules/ee/quotas/lib/evaluation-service";
 import { getContactByUserId } from "./contact";
-import { createResponse, createResponseWithQuotaEvaluation, getResponsesByWorkspaceIds } from "./response";
+import {
+  createResponse,
+  createResponseWithQuotaEvaluation,
+  getResponsesByWorkspaceIds,
+  resolveCreateResponseContext,
+} from "./response";
 
 // Mock Data
 const workspaceId = "test-workspace-id";
@@ -150,20 +155,32 @@ describe("Response Lib Tests", () => {
   });
 
   describe("createResponseWithQuotaEvaluation", () => {
-    test("reads the quota definitions before opening the transaction (ENG-3285)", async () => {
+    test("reads the quota definitions, organization and contact before opening the transaction", async () => {
       const quotaContext = { quotas: [], survey: { id: surveyId } } as never;
+      const mockContact = { id: "contact1", attributes: { userId: mockUserId } };
       vi.mocked(loadQuotaEvaluationContext).mockResolvedValue(quotaContext);
       vi.mocked(evaluateResponseQuotas).mockResolvedValue({ shouldEndSurvey: false });
       vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(mockOrganization);
+      vi.mocked(getContactByUserId).mockResolvedValue(mockContact);
       vi.mocked(calculateTtcTotal).mockReturnValue({ total: 10 });
       vi.mocked(mockTx.response.create).mockResolvedValue({ ...mockResponsePrisma });
 
-      await createResponseWithQuotaEvaluation(mockResponseInput);
+      const response = await createResponseWithQuotaEvaluation(mockResponseInputWithUserId);
 
       expect(loadQuotaEvaluationContext).toHaveBeenCalledWith(surveyId);
-      expect(vi.mocked(loadQuotaEvaluationContext).mock.invocationCallOrder[0]).toBeLessThan(
-        vi.mocked(prisma.$transaction).mock.invocationCallOrder[0]
+      // ENG-3285 / ENG-3722: every root-client read happens before the transaction opens, so none of
+      // them checks out a second connection while it holds the first.
+      const transactionOpenedAt = vi.mocked(prisma.$transaction).mock.invocationCallOrder[0];
+      for (const read of [loadQuotaEvaluationContext, getOrganizationIdFromWorkspaceId, getContactByUserId]) {
+        expect(vi.mocked(read).mock.invocationCallOrder[0]).toBeLessThan(transactionOpenedAt);
+      }
+      // The contact read outside still reaches the row written inside.
+      expect(mockTx.response.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ contact: { connect: { id: mockContact.id } } }),
+        })
       );
+      expect(response.contact).toEqual({ id: mockContact.id, userId: mockUserId });
       // Evaluated against the survey of the row written, with the preloaded context.
       expect(evaluateResponseQuotas).toHaveBeenCalledWith(
         expect.objectContaining({ surveyId: mockResponsePrisma.surveyId, quotaContext, tx: mockTx })
@@ -171,11 +188,47 @@ describe("Response Lib Tests", () => {
     });
   });
 
-  describe("createResponse", () => {
-    test("should create a response successfully with userId", async () => {
+  describe("resolveCreateResponseContext", () => {
+    test("resolves the contact by userId when one is given", async () => {
       const mockContact = { id: "contact1", attributes: { userId: mockUserId } };
       vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(mockOrganization);
       vi.mocked(getContactByUserId).mockResolvedValue(mockContact);
+
+      await expect(resolveCreateResponseContext(mockResponseInputWithUserId)).resolves.toEqual({
+        contact: mockContact,
+      });
+      expect(getOrganizationIdFromWorkspaceId).toHaveBeenCalledWith(workspaceId);
+      expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, mockUserId);
+    });
+
+    test("resolves no contact and skips the lookup without a userId", async () => {
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(mockOrganization);
+
+      await expect(resolveCreateResponseContext(mockResponseInput)).resolves.toEqual({ contact: null });
+      expect(getContactByUserId).not.toHaveBeenCalled();
+    });
+
+    test("should throw ResourceNotFoundError if organization not found", async () => {
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(null as unknown as string);
+
+      await expect(resolveCreateResponseContext(mockResponseInput)).rejects.toThrow(ResourceNotFoundError);
+    });
+
+    test("maps a Prisma error from the contact lookup to DatabaseError", async () => {
+      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(mockOrganization);
+      vi.mocked(getContactByUserId).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("lookup failed", { code: "P2039", clientVersion: "2.0" })
+      );
+
+      await expect(resolveCreateResponseContext(mockResponseInputWithUserId)).rejects.toThrow(DatabaseError);
+    });
+  });
+
+  describe("createResponse", () => {
+    const noContact = { contact: null };
+
+    test("should link the resolved contact and snapshot its attributes", async () => {
+      const mockContact = { id: "contact1", attributes: { userId: mockUserId } };
       vi.mocked(calculateTtcTotal).mockReturnValue({ total: 10 });
       vi.mocked(mockTx.response.create).mockResolvedValue({
         ...mockResponsePrisma,
@@ -183,11 +236,10 @@ describe("Response Lib Tests", () => {
 
       const response = await createResponse(
         mockResponseInputWithUserId,
+        { contact: mockContact },
         mockTx as unknown as Prisma.TransactionClient
       );
 
-      expect(getOrganizationIdFromWorkspaceId).toHaveBeenCalledWith(workspaceId);
-      expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, mockUserId);
       expect(mockTx.response.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -199,25 +251,15 @@ describe("Response Lib Tests", () => {
       expect(response.contact).toEqual({ id: mockContact.id, userId: mockUserId });
     });
 
-    test("should throw ResourceNotFoundError if organization not found", async () => {
-      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(null as unknown as string);
-      await expect(
-        createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient)
-      ).rejects.toThrow(ResourceNotFoundError);
-      expect(getOrganizationIdFromWorkspaceId).toHaveBeenCalledWith(workspaceId);
-      expect(mockTx.response.create).not.toHaveBeenCalled();
-    });
-
     test("should handle PrismaClientKnownRequestError", async () => {
       const prismaError = new Prisma.PrismaClientKnownRequestError("DB error", {
         code: "P2002",
         clientVersion: "2.0",
       });
-      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(mockOrganization);
       vi.mocked(mockTx.response.create).mockRejectedValue(prismaError);
 
       await expect(
-        createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient)
+        createResponse(mockResponseInput, noContact, mockTx as unknown as Prisma.TransactionClient)
       ).rejects.toThrow(DatabaseError);
       expect(logger.error).not.toHaveBeenCalled(); // Should be caught and re-thrown as DatabaseError
     });
@@ -227,24 +269,19 @@ describe("Response Lib Tests", () => {
         code: "P2025", // PrismaErrorType.RecordNotFound
         clientVersion: "2.0",
       });
-      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(mockOrganization);
       vi.mocked(mockTx.response.create).mockRejectedValue(prismaError);
 
       await expect(
-        createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient)
-      ).rejects.toThrow(DatabaseError);
-      await expect(
-        createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient)
+        createResponse(mockResponseInput, noContact, mockTx as unknown as Prisma.TransactionClient)
       ).rejects.toThrow("Display ID does not exist");
     });
 
     test("should handle generic errors", async () => {
       const genericError = new Error("Something went wrong");
-      vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(mockOrganization);
       vi.mocked(mockTx.response.create).mockRejectedValue(genericError);
 
       await expect(
-        createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient)
+        createResponse(mockResponseInput, noContact, mockTx as unknown as Prisma.TransactionClient)
       ).rejects.toThrow(genericError);
     });
   });
