@@ -67,6 +67,9 @@ describe("data retention schema backstops (real Postgres)", () => {
       prisma.deletionCleanup.create({ data: { ...base, kind: "storageFiles" } })
     ).rejects.toThrow();
     await expect(
+      prisma.deletionCleanup.create({ data: { ...base, kind: "storageSurveyFolder", fileKeys: ["k"] } })
+    ).rejects.toThrow();
+    await expect(
       prisma.deletionCleanup.create({ data: { ...base, kind: "hubResponses", responseIds: ["clres"] } })
     ).resolves.toBeDefined();
   });

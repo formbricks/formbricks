@@ -31,6 +31,8 @@ export async function getSurveyRetentionFacts(survey: {
   archivedAt?: Date | null;
 }): Promise<TSurveyRetentionFacts> {
   const surveyId = survey.id;
+  // Bound from the app clock, like every timestamp Prisma writes, rather than the session's `now()`.
+  const now = new Date();
   const [responses, notices, heldUntil] = await Promise.all([
     prisma.response.aggregate({
       where: { surveyId },
@@ -46,7 +48,7 @@ export async function getSurveyRetentionFacts(survey: {
     prisma.$queryRaw<{ entity: "surveys" | "responses"; endedAt: Date }[]>`
       SELECT "entity", MAX(LEAST("until", "revokedAt")) AS "endedAt"
       FROM "RetentionExemption"
-      WHERE "surveyId" = ${surveyId} AND LEAST("until", "revokedAt") <= now()
+      WHERE "surveyId" = ${surveyId} AND LEAST("until", "revokedAt") <= ${now}
       GROUP BY "entity"
     `,
   ]);

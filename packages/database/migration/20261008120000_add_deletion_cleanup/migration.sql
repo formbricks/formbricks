@@ -4,7 +4,7 @@ BEGIN;
 SET LOCAL lock_timeout = '5s';
 
 -- CreateEnum
-CREATE TYPE "DeletionCleanupKind" AS ENUM ('hubSurvey', 'hubResponses', 'storageFiles');
+CREATE TYPE "DeletionCleanupKind" AS ENUM ('hubSurvey', 'hubResponses', 'storageFiles', 'storageSurveyFolder');
 
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "DeletionCleanup" (
@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS "DeletionCleanup" (
         ("kind" = 'hubSurvey' AND COALESCE(cardinality("responseIds"), 0) = 0 AND COALESCE(cardinality("fileKeys"), 0) = 0)
         OR ("kind" = 'hubResponses' AND COALESCE(cardinality("responseIds"), 0) > 0 AND COALESCE(cardinality("fileKeys"), 0) = 0)
         OR ("kind" = 'storageFiles' AND COALESCE(cardinality("fileKeys"), 0) > 0 AND COALESCE(cardinality("responseIds"), 0) = 0)
+        OR ("kind" = 'storageSurveyFolder' AND COALESCE(cardinality("responseIds"), 0) = 0 AND COALESCE(cardinality("fileKeys"), 0) = 0)
     )
 );
 

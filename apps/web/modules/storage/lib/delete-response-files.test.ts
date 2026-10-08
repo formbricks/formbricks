@@ -169,4 +169,51 @@ describe("deleteResponseFileUrls", () => {
     );
     expect(mockDeleteFromS3).not.toHaveBeenCalled();
   });
+
+  // ENG-3612: the cleanup drain retries what this reports, so only a failure that can change on retry
+  // may be reported: a refusal reported as failed would be retried forever.
+  describe("reports which deletes are worth retrying", () => {
+    const own = (name: string) => `/storage/${OWN_WORKSPACE}/private/${name}`;
+
+    beforeEach(() => {
+      mockedResolve.mockImplementation(async (id: string) => ({ id, organizationId: "org-1" }));
+    });
+
+    test("reports storage errors and a throw, but not success, not-found or a refused key", async () => {
+      mockedDeleteFile.mockImplementation((async (_id: string, _access: string, fileName: string) => {
+        if (fileName === "s3-down.png") return { ok: false, error: { code: "s3_client_error" } };
+        if (fileName === "throws.png") throw new Error("socket hang up");
+        if (fileName === "gone.png") return { ok: false, error: { code: "file_not_found_error" } };
+        if (fileName === "refused.png") return { ok: false, error: { code: "invalid_input" } };
+        return { ok: true, data: undefined };
+      }) as never);
+
+      const result = await deleteResponseFileUrls(
+        ["ok.png", "s3-down.png", "throws.png", "gone.png", "refused.png"].map(own),
+        OWN_WORKSPACE
+      );
+
+      expect(result.failed.sort()).toEqual([own("s3-down.png"), own("throws.png")].sort());
+    });
+
+    test("never reports a foreign, unparseable or malformed URL", async () => {
+      mockedResolve.mockResolvedValue({ id: FOREIGN_WORKSPACE, organizationId: "org-2" });
+
+      const result = await deleteResponseFileUrls(
+        [`/storage/${FOREIGN_WORKSPACE}/private/theirs.png`, "not-a-storage-url", own("bad%E0%A4%A.png")],
+        OWN_WORKSPACE
+      );
+
+      expect(result.failed).toEqual([]);
+      expect(mockedDeleteFile).not.toHaveBeenCalled();
+    });
+
+    test("reports a failed workspace lookup, which can succeed on retry", async () => {
+      mockedResolve.mockRejectedValue(new Error("db down"));
+
+      const result = await deleteResponseFileUrls([own("a.png")], OWN_WORKSPACE);
+
+      expect(result.failed).toEqual([own("a.png")]);
+    });
+  });
 });

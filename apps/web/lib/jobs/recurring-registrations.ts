@@ -18,6 +18,8 @@ import {
 } from "@/lib/authzed/scheduled-reconciliation";
 import { USAGE_TELEMETRY_DAILY_CRON_PATTERN, USAGE_TELEMETRY_TIME_ZONE } from "@/lib/telemetry/constants";
 import { processUsageTelemetryJob } from "@/lib/telemetry/process-usage-telemetry-job";
+import { DELETION_CLEANUP_DRAIN_INTERVAL_MS } from "@/modules/deletion-cleanup/lib/constants";
+import { processDeletionCleanupDrainJob } from "@/modules/deletion-cleanup/lib/process-deletion-cleanup-drain-job";
 import {
   WORKFLOWS_USAGE_SNAPSHOT_DAILY_CRON_PATTERN,
   WORKFLOWS_USAGE_SNAPSHOT_TIME_ZONE,
@@ -92,6 +94,14 @@ export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, Recurr
     job: recurringJobs.authzedSurveyAudit,
     schedule: {
       everyMs: 24 * 60 * 60 * 1_000,
+      kind: "every",
+    },
+  },
+  deletionCleanupDrain: {
+    handler: processDeletionCleanupDrainJob,
+    job: recurringJobs.deletionCleanupDrain,
+    schedule: {
+      everyMs: DELETION_CLEANUP_DRAIN_INTERVAL_MS,
       kind: "every",
     },
   },

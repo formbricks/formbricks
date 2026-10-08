@@ -1670,8 +1670,10 @@ enum DeletionCleanupKind {
   hubSurvey
   /// The Hub records of specific deleted responses.
   hubResponses
-  /// Storage objects of deleted responses or surveys.
+  /// Named storage objects (response file URLs) of deleted responses or surveys.
   storageFiles
+  /// A deleted survey's whole upload folder, `{workspaceId}/private/surveys/{surveyId}/`.
+  storageSurveyFolder
 }
 
 /// Work left over after a delete commits (ENG-3612, ENG-3614: deleted means deleted): Hub records and

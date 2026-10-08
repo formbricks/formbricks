@@ -88,7 +88,10 @@ export type TRetentionSchedule = {
    * already archived, when it was.
    */
   actionAt: Date;
-  /** When the data is gone for good: the responses' deletion, or the survey's purge. Null for members. */
+  /**
+   * When the data is gone for good: the responses' deletion, or the survey's purge (the window after the
+   * archive or the latest exemption's end, whichever is later). Null for members.
+   */
   deleteAt: Date | null;
 };
 
@@ -131,7 +134,12 @@ export const getRetentionSchedule = (
 
   let deleteAt: Date | null = null;
   if (policy.entity === "responses") deleteAt = actionAt;
-  if (policy.entity === "surveys") deleteAt = addRetentionDays(actionAt, SURVEY_ARCHIVE_RETENTION_DAYS);
+  // The purge gives a survey the full window from its archive or from the end of its latest exemption,
+  // whichever is later (`getSurveyPurgeEligibleWhere`).
+  if (policy.entity === "surveys") {
+    const purgeFrom = target.heldUntil ? latest(actionAt, target.heldUntil) : actionAt;
+    deleteAt = addRetentionDays(purgeFrom, SURVEY_ARCHIVE_RETENTION_DAYS);
+  }
 
   return { warnAt, noticeAt, noticeSent: noticeDeliveredAt !== null, actionAt, deleteAt };
 };

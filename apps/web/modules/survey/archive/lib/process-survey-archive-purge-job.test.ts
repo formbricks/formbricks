@@ -5,6 +5,7 @@ import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handl
 import { SURVEY_ARCHIVE_PURGE_BATCH_SIZE } from "@/modules/survey/archive/lib/constants";
 import { deleteSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyArchivePurgeCutoff, purgeExpiredArchivedSurveys } from "./process-survey-archive-purge-job";
+import { getSurveyPurgeEligibleWhere } from "./purge-eligibility";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -56,11 +57,11 @@ describe("purgeExpiredArchivedSurveys", () => {
     const purged = await purgeExpiredArchivedSurveys(now);
 
     expect(purged).toBe(2);
-    // The delete is guarded so a survey restored mid-batch is skipped rather than hard-deleted.
-    expect(deleteSurvey).toHaveBeenCalledWith("s1", { requireArchivedBefore: cutoff });
-    expect(deleteSurvey).toHaveBeenCalledWith("s2", { requireArchivedBefore: cutoff });
+    // The delete is guarded so a survey restored or held mid-batch is skipped rather than hard-deleted.
+    expect(deleteSurvey).toHaveBeenCalledWith("s1", { purgeCutoff: cutoff });
+    expect(deleteSurvey).toHaveBeenCalledWith("s2", { purgeCutoff: cutoff });
     expect(vi.mocked(prisma.survey.findMany).mock.calls[0][0]).toMatchObject({
-      where: { archivedAt: { lt: cutoff } },
+      where: getSurveyPurgeEligibleWhere(cutoff),
       orderBy: { archivedAt: "asc" },
       take: SURVEY_ARCHIVE_PURGE_BATCH_SIZE,
     });
@@ -93,9 +94,27 @@ describe("purgeExpiredArchivedSurveys", () => {
     // s1 was restored between selection and delete, so it is skipped (not counted); s2 is purged.
     expect(purged).toBe(1);
     expect(deleteSurvey).toHaveBeenCalledTimes(2);
-    // The short batch ends the run in one query, and the skipped survey is never added to the
-    // failed-exclusion set (a restored survey already drops out of the archivedAt<cutoff filter).
+    // The short batch ends the run in one query.
     expect(vi.mocked(prisma.survey.findMany)).toHaveBeenCalledTimes(1);
+  });
+
+  test("excludes a skipped survey from later batches too", async () => {
+    // A survey the locked guard refused (held by an exemption created after the batch was read) would
+    // otherwise head every following page.
+    const fullBatch = Array.from({ length: SURVEY_ARCHIVE_PURGE_BATCH_SIZE }, (_, i) => makeSurvey(`s${i}`));
+    vi.mocked(prisma.survey.findMany)
+      .mockResolvedValueOnce(fullBatch as never)
+      .mockResolvedValueOnce([] as never);
+    vi.mocked(deleteSurvey).mockImplementation((id: string) =>
+      id === "s0" ? Promise.reject(new ResourceNotFoundError("Survey", id)) : (Promise.resolve({}) as never)
+    );
+
+    await purgeExpiredArchivedSurveys(new Date("2026-07-31T00:00:00.000Z"));
+
+    const secondCallWhere = vi.mocked(prisma.survey.findMany).mock.calls[1][0] as {
+      where: { id?: { notIn: string[] } };
+    };
+    expect(secondCallWhere.where.id).toEqual({ notIn: ["s0"] });
   });
 
   test("excludes a persistently failing survey from later batches so the loop terminates", async () => {

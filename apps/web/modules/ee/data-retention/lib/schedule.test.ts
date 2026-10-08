@@ -97,6 +97,19 @@ describe("getRetentionSchedule", () => {
       );
     });
 
+    test("gets the full 30 days again from the end of an exemption that outlasted the archive", () => {
+      // Matches the purge's own rule (`getSurveyPurgeEligibleWhere`): ending a hold never deletes at once.
+      expect(
+        getRetentionSchedule(surveysPolicy, target({ archivedAt: day(10), heldUntil: day(100) }), day(101))
+          .deleteAt
+      ).toEqual(day(130));
+      // An exemption that ended before the archive changes nothing.
+      expect(
+        getRetentionSchedule(surveysPolicy, target({ archivedAt: day(10), heldUntil: day(5) }), day(11))
+          .deleteAt
+      ).toEqual(day(40));
+    });
+
     test("leaves the policy nothing to do", () => {
       expect(getDueRetentionStep(surveysPolicy, target({ archivedAt: day(10) }), day(9000))).toBeNull();
     });

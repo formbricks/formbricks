@@ -7,6 +7,7 @@ export const JOB_NAMES = {
   authzedProjectionDelivery: "authzed-projection.deliver",
   authzedReconciliationAudit: "authzed-reconciliation.audit",
   authzedSurveyAudit: "authzed-survey.audit",
+  deletionCleanupDrain: "deletion-cleanup.drain",
   testLog: "system.test-log",
   responsePipeline: "response-pipeline.process",
   surveyScheduling: "survey-scheduling.reconcile",
