@@ -9,6 +9,7 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { getReportingTimeZone } from "@/lib/date-ranges";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { formatDateForDisplay, formatDateWithOrdinal } from "@/lib/utils/datetime";
+import { ReactivateMemberButton } from "@/modules/ee/data-retention/components/members/reactivate-member-button";
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
 import { MemberActions } from "@/modules/organization/settings/teams/components/edit-memberships/member-actions";
 import {
@@ -138,6 +139,7 @@ const getMemberColumns = ({
   isOwnerOrManager,
   isManager,
   doesOrgHaveMoreThanOneOwner,
+  canReactivate,
   lastSignInSort,
   onToggleLastSignInSort,
 }: Readonly<{
@@ -152,6 +154,8 @@ const getMemberColumns = ({
   isOwnerOrManager: boolean;
   isManager: boolean;
   doesOrgHaveMoreThanOneOwner: boolean;
+  /** Owners and managers, on an organisation entitled to data retention. */
+  canReactivate: boolean;
   lastSignInSort: TLastSignInSort | null;
   onToggleLastSignInSort: () => void;
 }>): TSettingsTableColumn<TMemberRow>[] => {
@@ -231,17 +235,26 @@ const getMemberColumns = ({
       // `align-middle` and leaving the buttons baseline-aligned rather than centred.
       align: "right",
       cell: (member) => (
-        <MemberActions
-          organization={organization}
-          member={isInvitee(member) ? undefined : member}
-          invite={isInvitee(member) ? member : undefined}
-          showDeleteButton={showDeleteButton(member, {
-            isOwnerOrManager,
-            isManager,
-            currentUserId,
-            doesOrgHaveMoreThanOneOwner,
-          })}
-        />
+        <div className="flex items-center justify-end gap-2">
+          {canReactivate && !isInvitee(member) && !member.isActive ? (
+            <ReactivateMemberButton
+              organizationId={organization.id}
+              userId={member.userId}
+              name={member.name ?? member.email}
+            />
+          ) : null}
+          <MemberActions
+            organization={organization}
+            member={isInvitee(member) ? undefined : member}
+            invite={isInvitee(member) ? member : undefined}
+            showDeleteButton={showDeleteButton(member, {
+              isOwnerOrManager,
+              isManager,
+              currentUserId,
+              doesOrgHaveMoreThanOneOwner,
+            })}
+          />
+        </div>
       ),
     });
   }
@@ -258,6 +271,8 @@ interface MembersInfoProps {
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
   isUserManagementDisabledFromUi: boolean;
+  /** Shows "Reactivate" on inactive members to owners and managers (ENG-3610). */
+  isDataRetentionEnabled?: boolean;
 }
 
 export const MembersInfo = ({
@@ -269,6 +284,7 @@ export const MembersInfo = ({
   isAccessControlAllowed,
   isFormbricksCloud,
   isUserManagementDisabledFromUi,
+  isDataRetentionEnabled = false,
 }: Readonly<MembersInfoProps>) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
@@ -299,6 +315,7 @@ export const MembersInfo = ({
         isOwnerOrManager,
         isManager,
         doesOrgHaveMoreThanOneOwner,
+        canReactivate: isDataRetentionEnabled && isOwnerOrManager,
         lastSignInSort,
         onToggleLastSignInSort: toggleLastSignInSort,
       })}
