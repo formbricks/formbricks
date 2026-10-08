@@ -1,6 +1,15 @@
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
+import {
+  ORIGIN,
+  createUser,
+  grant as grantScopes,
+  handle,
+  refresh,
+  registerClient,
+  signIn as signInAs,
+} from "@/integration/oauth-flow";
 import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "./oauth-urls";
@@ -15,126 +24,17 @@ import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "./oauth-urls";
  * A seeded token would be hashed by the code under test and prove nothing. The "refresh keeps working"
  * test is what fails if a provider upgrade changes that format: the hook fails closed.
  */
-const BASE_URL = "http://localhost:3000";
-const ORIGIN = BASE_URL;
-const REDIRECT_URI = "http://127.0.0.1:33418/callback";
 const EMAIL = "oauth-revoke@example.com";
 const PASSWORD = "Correct-Horse1";
 const SCOPE = ["surveys:read", "responses:read", "offline_access"].join(" ");
 
-const base64Url = (buffer: Buffer): string => buffer.toString("base64url");
-
-const handle = (path: string, init: RequestInit = {}): Promise<Response> =>
-  auth.handler(new Request(`${BASE_URL}/api/auth${path}`, { redirect: "manual", ...init }));
-
-const signIn = async (): Promise<{ cookie: string; userId: string }> => {
-  const response = await auth.api.signInEmail({
-    body: { email: EMAIL, password: PASSWORD },
-    asResponse: true,
-  });
-  expect(response.status).toBe(200);
-  const cookie = response.headers
-    .getSetCookie()
-    .map((value) => value.split(";")[0])
-    .join("; ");
-  const user = await prisma.user.findUniqueOrThrow({ where: { email: EMAIL }, select: { id: true } });
-  return { cookie, userId: user.id };
-};
-
-const registerClient = async (): Promise<string> => {
-  const response = await handle("/oauth2/register", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      client_name: "ENG-2499 revoke test",
-      redirect_uris: [REDIRECT_URI],
-      grant_types: ["authorization_code", "refresh_token"],
-      response_types: ["code"],
-      token_endpoint_auth_method: "none",
-      application_type: "native",
-    }),
-  });
-  const body = (await response.json()) as { client_id?: string };
-  expect(response.status, JSON.stringify(body)).toBe(201);
-  return body.client_id as string;
-};
-
-/** Reads the redirect target from a 302 or, when the request didn't accept HTML, the JSON `url`. */
-const redirectTarget = async (response: Response): Promise<URL> => {
-  const location =
-    response.headers.get("location") ?? ((await response.json()) as { url?: string; redirect?: string }).url;
-  expect(location, `no redirect (status ${response.status})`).toBeTruthy();
-  return new URL(location as string, BASE_URL);
-};
-
-type TTokens = { access_token: string; refresh_token: string; scope: string };
-
-/**
- * authorize → consent → code exchange, as the signed-in user. `prompt: "consent"` forces the consent
- * screen even when an existing consent covers `scope`, which is how a client re-asks for fewer scopes.
- */
-const grant = async (
+const signIn = () => signInAs(EMAIL, PASSWORD);
+const registerRevokeClient = () => registerClient("ENG-2499 revoke test");
+const grant = (
   cookie: string,
   clientId: string,
   { scope = SCOPE, prompt }: { scope?: string; prompt?: "consent" } = {}
-): Promise<TTokens> => {
-  const verifier = base64Url(randomBytes(32));
-  const query = new URLSearchParams({
-    response_type: "code",
-    client_id: clientId,
-    redirect_uri: REDIRECT_URI,
-    scope,
-    code_challenge: base64Url(createHash("sha256").update(verifier).digest()),
-    code_challenge_method: "S256",
-    resource: getMcpResourceUrl(),
-    state: "state",
-    ...(prompt ? { prompt } : {}),
-  });
-
-  let target = await redirectTarget(await handle(`/oauth2/authorize?${query}`, { headers: { cookie } }));
-  if (!target.searchParams.get("code")) {
-    expect(target.pathname).toBe("/account/authorize");
-    target = await redirectTarget(
-      await handle("/oauth2/consent", {
-        method: "POST",
-        headers: { "content-type": "application/json", accept: "application/json", cookie, origin: ORIGIN },
-        body: JSON.stringify({ accept: true, oauth_query: target.search.slice(1) }),
-      })
-    );
-  }
-  const code = target.searchParams.get("code");
-  expect(code, target.toString()).toBeTruthy();
-
-  const response = await token({
-    grant_type: "authorization_code",
-    code: code as string,
-    redirect_uri: REDIRECT_URI,
-    client_id: clientId,
-    code_verifier: verifier,
-    resource: getMcpResourceUrl(),
-  });
-  expect(response.status, JSON.stringify(response.body)).toBe(200);
-  return response.body as TTokens;
-};
-
-const token = async (
-  body: Record<string, string>
-): Promise<{ status: number; body: Record<string, unknown> }> => {
-  const response = await handle("/oauth2/token", {
-    method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams(body),
-  });
-  return { status: response.status, body: (await response.json()) as Record<string, unknown> };
-};
-
-const refresh = (clientId: string, refreshToken: string, scope?: string) =>
-  token({
-    grant_type: "refresh_token",
-    refresh_token: refreshToken,
-    client_id: clientId,
-    ...(scope ? { scope } : {}),
-  });
+) => grantScopes(cookie, clientId, scope, { prompt });
 
 const deleteConsentOverHttp = (cookie: string, id: string): Promise<Response> =>
   handle("/oauth2/delete-consent", {
@@ -171,14 +71,13 @@ beforeEach(async () => {
     data: [{ identifier: getMcpResourceUrl(), name: "Formbricks MCP", allowedScopes: [...MCP_OAUTH_SCOPES] }],
     skipDuplicates: true,
   });
-  await auth.api.signUpEmail({ body: { email: EMAIL, password: PASSWORD, name: "Revoker" } });
-  await prisma.user.update({ where: { email: EMAIL }, data: { emailVerified: true } });
+  await createUser(EMAIL, PASSWORD, "Revoker");
 });
 
 describe("revoking an OAuth app ends its access (ENG-2499, real Postgres)", () => {
   test("refresh keeps working while the consent stands, across rotations", async () => {
     const { cookie } = await signIn();
-    const clientId = await registerClient();
+    const clientId = await registerRevokeClient();
     const first = await grant(cookie, clientId);
 
     const second = await refresh(clientId, first.refresh_token);
@@ -189,7 +88,7 @@ describe("revoking an OAuth app ends its access (ENG-2499, real Postgres)", () =
 
   test("revoking over HTTP deletes the consent and revokes the tokens; the next refresh is refused", async () => {
     const { cookie, userId } = await signIn();
-    const clientId = await registerClient();
+    const clientId = await registerRevokeClient();
     const first = await grant(cookie, clientId);
     // A rotated chain as well as the original: every token of the grant has to go.
     const rotated = await refresh(clientId, first.refresh_token);
@@ -207,7 +106,7 @@ describe("revoking an OAuth app ends its access (ENG-2499, real Postgres)", () =
 
   test("revoking through auth.api, the Authorized Apps action's path, does the same", async () => {
     const { cookie, userId } = await signIn();
-    const clientId = await registerClient();
+    const clientId = await registerRevokeClient();
     const tokens = await grant(cookie, clientId);
     const { id } = await consentOf(userId, clientId);
 
@@ -220,7 +119,7 @@ describe("revoking an OAuth app ends its access (ENG-2499, real Postgres)", () =
 
   test("a grant revoked before this fix (consent gone, tokens live) is refused at its next refresh", async () => {
     const { cookie, userId } = await signIn();
-    const clientId = await registerClient();
+    const clientId = await registerRevokeClient();
     const tokens = await grant(cookie, clientId);
     // What the upstream endpoint used to leave behind: the consent deleted, every token untouched.
     await prisma.oauthConsent.deleteMany({ where: { userId, clientId } });
@@ -236,7 +135,7 @@ describe("revoking an OAuth app ends its access (ENG-2499, real Postgres)", () =
 
   test("a refresh racing an uncommitted revoke waits for it and is refused", async () => {
     const { cookie, userId } = await signIn();
-    const clientId = await registerClient();
+    const clientId = await registerRevokeClient();
     const tokens = await grant(cookie, clientId);
 
     let settled = false;
@@ -263,7 +162,7 @@ describe("revoking an OAuth app ends its access (ENG-2499, real Postgres)", () =
 
   test("another user's consent id and an unknown id get the same 404, and nothing changes", async () => {
     const { cookie, userId } = await signIn();
-    const clientId = await registerClient();
+    const clientId = await registerRevokeClient();
     const tokens = await grant(cookie, clientId);
     const { id } = await consentOf(userId, clientId);
     // The same consent, but owned by a user who is not the caller.
@@ -285,8 +184,8 @@ describe("revoking an OAuth app ends its access (ENG-2499, real Postgres)", () =
 
   test("revoking one app leaves the user's other apps working", async () => {
     const { cookie, userId } = await signIn();
-    const revokedClient = await registerClient();
-    const keptClient = await registerClient();
+    const revokedClient = await registerRevokeClient();
+    const keptClient = await registerRevokeClient();
     await grant(cookie, revokedClient);
     const kept = await grant(cookie, keptClient);
 
@@ -298,7 +197,7 @@ describe("revoking an OAuth app ends its access (ENG-2499, real Postgres)", () =
 
   test("a skipConsent client, which never has a consent row, is not refused", async () => {
     const { cookie, userId } = await signIn();
-    const clientId = await registerClient();
+    const clientId = await registerRevokeClient();
     const tokens = await grant(cookie, clientId);
     await prisma.oauthClient.update({ where: { clientId }, data: { skipConsent: true } });
     await prisma.oauthConsent.deleteMany({ where: { userId, clientId } });
@@ -308,7 +207,7 @@ describe("revoking an OAuth app ends its access (ENG-2499, real Postgres)", () =
 
   test("without a session, revoking is refused and changes nothing", async () => {
     const { cookie, userId } = await signIn();
-    const clientId = await registerClient();
+    const clientId = await registerRevokeClient();
     await grant(cookie, clientId);
     const { id } = await consentOf(userId, clientId);
 
@@ -326,7 +225,7 @@ describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, 
 
   test("re-approving with fewer scopes revokes the older tokens; the narrowed grant keeps refreshing", async () => {
     const { cookie, userId } = await signIn();
-    const clientId = await registerClient();
+    const clientId = await registerRevokeClient();
     const wide = await grant(cookie, clientId);
     const rotated = await refresh(clientId, wide.refresh_token);
 
@@ -349,7 +248,7 @@ describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, 
 
   test("narrowing through update-consent revokes the tokens beyond it", async () => {
     const { cookie, userId } = await signIn();
-    const clientId = await registerClient();
+    const clientId = await registerRevokeClient();
     const wide = await grant(cookie, clientId);
     const { id } = await consentOf(userId, clientId);
 
@@ -366,7 +265,7 @@ describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, 
 
   test("narrowing revokes opaque access tokens beyond it, and narrowing to nothing ends every token", async () => {
     const { cookie, userId } = await signIn();
-    const clientId = await registerClient();
+    const clientId = await registerRevokeClient();
     await grant(cookie, clientId);
     const { id } = await consentOf(userId, clientId);
     // MCP grants carry the resource, so they get JWTs and no access-token row. Opaque ones are looked up
@@ -404,7 +303,7 @@ describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, 
 
   test("a grant narrowed before this fix (consent narrowed, tokens live) is refused at its next refresh", async () => {
     const { cookie, userId } = await signIn();
-    const clientId = await registerClient();
+    const clientId = await registerRevokeClient();
     const wide = await grant(cookie, clientId);
     // What a narrowed approval used to leave behind: the consent replaced, every token untouched.
     await prisma.oauthConsent.updateMany({
@@ -423,7 +322,7 @@ describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, 
 
   test("asking for fewer scopes on refresh doesn't rescue a token from before the narrowing", async () => {
     const { cookie, userId } = await signIn();
-    const clientId = await registerClient();
+    const clientId = await registerRevokeClient();
     const wide = await grant(cookie, clientId);
     await prisma.oauthConsent.updateMany({
       where: { userId, clientId },
@@ -441,7 +340,7 @@ describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, 
 
   test("a refused pre-1.7 grant, which has no grant id, still loses the token minted for the refresh", async () => {
     const { cookie, userId } = await signIn();
-    const clientId = await registerClient();
+    const clientId = await registerRevokeClient();
     const wide = await grant(cookie, clientId);
     // Grants from before Better Auth 1.7 carry no authorizationCodeId, and rotation keeps it that way.
     await prisma.oauthRefreshToken.updateMany({
@@ -462,7 +361,7 @@ describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, 
 
   test("with two consent rows from a racing first approval, narrowing either one is what counts", async () => {
     const { cookie, userId } = await signIn();
-    const clientId = await registerClient();
+    const clientId = await registerRevokeClient();
     const wide = await grant(cookie, clientId);
     const first = await consentOf(userId, clientId);
     const earlier = new Date(Date.now() - 60_000);
@@ -485,7 +384,7 @@ describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, 
 
   test("a refresh racing an uncommitted narrowing waits for it and is refused", async () => {
     const { cookie, userId } = await signIn();
-    const clientId = await registerClient();
+    const clientId = await registerRevokeClient();
     const wide = await grant(cookie, clientId);
 
     let settled = false;
@@ -514,7 +413,7 @@ describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, 
 
   test("re-approving the same scopes, or more, leaves the older tokens working", async () => {
     const { cookie } = await signIn();
-    const clientId = await registerClient();
+    const clientId = await registerRevokeClient();
     const first = await grant(cookie, clientId, { scope: NARROW });
 
     await grant(cookie, clientId, { prompt: "consent" });
