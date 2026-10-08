@@ -7,6 +7,7 @@ import {
   V3_REQUEST_MAX_DEPTH,
   arrayBudgetInvalidParam,
   findArrayBudgetViolation,
+  findRawArrayBudgetViolation,
 } from "./array-budget";
 
 const junk = (count: number) => Array.from({ length: count }, () => 0);
@@ -67,7 +68,7 @@ describe("findArrayBudgetViolation", () => {
     );
   });
 
-  test("accepts the deepest body the API takes: a full-depth segment filter tree, inside an MCP batch", () => {
+  test("accepts the deepest tree the API bounds: a full-depth segment filter tree, inside an MCP batch", () => {
     // The cap has to stay above this, or valid targeting payloads start getting a 400.
     let filters: unknown[] = [
       {
@@ -128,6 +129,80 @@ describe("findArrayBudgetViolation", () => {
     expect(findArrayBudgetViolation("string")).toBeNull();
     expect(findArrayBudgetViolation(null)).toBeNull();
   });
+});
+
+describe("findRawArrayBudgetViolation", () => {
+  const nest = (levels: number, wrap: (inner: unknown) => unknown) => {
+    let value: unknown = 0;
+    for (let level = 0; level < levels; level += 1) {
+      value = wrap(value);
+    }
+    return value;
+  };
+
+  const kindAndPath = (violation: { kind: string; path: string } | null) =>
+    violation && { kind: violation.kind, path: violation.path };
+
+  test.each([
+    ["an array at the cap", { blocks: [{ elements: junk(V3_REQUEST_ARRAY_MAX_ITEMS) }] }],
+    ["an array past the cap", { blocks: [{ elements: junk(V3_REQUEST_ARRAY_MAX_ITEMS + 1) }] }],
+    [
+      "arrays past the whole-body total",
+      { blocks: Array.from({ length: 51 }, () => ({ elements: junk(V3_REQUEST_ARRAY_MAX_ITEMS) })) },
+    ],
+    [
+      "two long arrays, in document order",
+      {
+        first: [{ nested: junk(V3_REQUEST_ARRAY_MAX_ITEMS + 1) }],
+        second: junk(V3_REQUEST_ARRAY_MAX_ITEMS + 1),
+      },
+    ],
+    ["nesting at the depth cap", nest(V3_REQUEST_MAX_DEPTH, (inner) => ({ a: inner }))],
+    ["nesting past the depth cap", nest(V3_REQUEST_MAX_DEPTH + 1, (inner) => [inner, 0])],
+    ["a long key over a long array", { ["k".repeat(100)]: nest(30, (inner) => [inner]) }],
+    ["a long array under a long key", { ["k".repeat(100)]: junk(V3_REQUEST_ARRAY_MAX_ITEMS + 1) }],
+    ["scalars and empty containers", { name: "x", list: [], map: {}, flag: true, none: null, n: -1.5e3 }],
+  ])("refuses %s exactly as the walk over the parsed body does", (_case, body) => {
+    expect(kindAndPath(findRawArrayBudgetViolation(JSON.stringify(body)))).toEqual(
+      kindAndPath(findArrayBudgetViolation(body))
+    );
+  });
+
+  test("reads brackets, commas and escaped quotes inside strings as text", () => {
+    const body = {
+      text: '[[[{{{ \\" ]]] }}} , ,',
+      items: Array.from({ length: V3_REQUEST_ARRAY_MAX_ITEMS }, () => 'a,b,"c",[d]'),
+    };
+
+    expect(findRawArrayBudgetViolation(JSON.stringify(body))).toBeNull();
+  });
+
+  test("names a key the way JSON.parse decodes it", () => {
+    const text = `{"a\\"b\\u0063":[${junk(V3_REQUEST_ARRAY_MAX_ITEMS + 1).join(",")}]}`;
+
+    expect(findRawArrayBudgetViolation(text)?.path).toBe('a"bc');
+  });
+
+  test("refuses a 15 MB nesting from the text alone", () => {
+    const levels = 7_500_000;
+    const text = `${"[".repeat(levels)}${"]".repeat(levels)}`;
+
+    expect(findRawArrayBudgetViolation(text)).toEqual({ kind: "too_deep", path: "0.0.0.0.0.0.0.0.0.0.…" });
+  });
+
+  test("counts the array behind a repeated key, which JSON.parse would drop", () => {
+    const text = `{"a":[${junk(V3_REQUEST_ARRAY_MAX_ITEMS + 1).join(",")}],"a":1}`;
+
+    expect(findArrayBudgetViolation(JSON.parse(text))).toBeNull();
+    expect(findRawArrayBudgetViolation(text)).toMatchObject({ kind: "array_too_long", path: "a" });
+  });
+
+  test.each(["[1,2", '{"a":', "]", '"unterminated', '{"a":"x}', ""])(
+    "leaves %j to JSON.parse when it breaks no limit first",
+    (text) => {
+      expect(findRawArrayBudgetViolation(text)).toBeNull();
+    }
+  );
 });
 
 describe("arrayBudgetInvalidParam", () => {
