@@ -9,6 +9,8 @@ import { streamSurveyGeneration } from "@/modules/survey/components/template-lis
 import { createV3Survey } from "@/modules/survey/list/lib/v3-surveys-client";
 import { type TDraftStreamHandlers, useDraftCreation } from "./use-draft-creation";
 
+const getPromptLabel = (body: TV3SurveyGenerateBody) => body.prompt;
+
 type UseCreateSurveyWithAIProps = {
   workspaceId: string;
   language: TUserLocale;
@@ -49,10 +51,11 @@ export const useCreateSurveyWithAI = ({
     stream,
     create,
     canSubmit: hasUsablePrompt,
-    getSourceLabel: (body) => body.prompt,
+    getSourceLabel: getPromptLabel,
     sourceKind: "prompt",
     onSuccess,
   });
+  const { submit, regenerate } = draft;
 
   const buildBody = useCallback(
     (): TV3SurveyGenerateBody => ({ workspaceId, prompt: prompt.trim(), type: "link", language }),
@@ -60,11 +63,11 @@ export const useCreateSurveyWithAI = ({
   );
 
   const handleGenerate = useCallback(
-    (event: SyntheticEvent<HTMLFormElement>) => draft.submit(buildBody(), event),
-    [buildBody, draft]
+    (event: SyntheticEvent<HTMLFormElement>) => submit(buildBody(), event),
+    [buildBody, submit]
   );
 
-  const handleRegenerate = useCallback(() => draft.regenerate(buildBody()), [buildBody, draft]);
+  const handleRegenerate = useCallback(() => regenerate(buildBody()), [buildBody, regenerate]);
 
   /**
    * The ladder only lists phases that have actually been reached. Until the model emits its first

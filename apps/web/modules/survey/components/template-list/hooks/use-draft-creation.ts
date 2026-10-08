@@ -16,22 +16,25 @@ import {
 } from "@/modules/survey/components/template-list/lib/ai-error-messages";
 import { useBeforeUnloadPrompt } from "@/modules/ui/hooks/use-before-unload-prompt";
 
-/** What a draft source streams: the same events the generation stream emits, plus anything extra. */
-export type TDraftStreamEvent =
+/**
+ * What a draft source streams: the generation stream's events, an import's `progress` stages, and the
+ * source's `report` on `done`. The hook acts on `partial`, `done` and `error` only.
+ */
+export type TDraftStreamEvent<TReport = never> =
   | { type: "start"; requestId?: string }
+  | { type: "progress"; stage: string }
   | { type: "partial"; seq?: number; draft: TSurveyGenerationDraftSnapshot }
-  | { type: "done"; payload: TV3CreateSurveyBody; report?: unknown }
-  | { type: "error"; code: string; detail?: string }
-  | { type: string };
+  | { type: "done"; payload: TV3CreateSurveyBody; report?: TReport | null }
+  | { type: "error"; code: string; detail?: string };
 
-export type TDraftStreamHandlers = {
+export type TDraftStreamHandlers<TReport = never> = {
   signal: AbortSignal;
-  onEvent: (event: TDraftStreamEvent) => void;
+  onEvent: (event: TDraftStreamEvent<TReport>) => void;
 };
 
-export type UseDraftCreationParams<TInput> = {
+export type UseDraftCreationParams<TInput, TReport = never> = {
   /** Run the source: stream events until `done` or `error`. Throws a `V3ApiError` on a pre-stream failure. */
-  stream: (input: TInput, handlers: TDraftStreamHandlers) => Promise<void>;
+  stream: (input: TInput, handlers: TDraftStreamHandlers<TReport>) => Promise<void>;
   /** Persist the reviewed payload; returns the created survey id. */
   create: (payload: TV3CreateSurveyBody) => Promise<{ id: string }>;
   /** Whether the current input is worth sending at all (prompt length, a file present, AI on). */
@@ -47,16 +50,16 @@ export type UseDraftCreationParams<TInput> = {
  * the rAF-coalesced snapshot buffer, abort wiring, the unload guard and error-code mapping. The
  * prompt-specific hook and the import hook each pass their own `stream`, `create` and `canSubmit`.
  */
-export const useDraftCreation = <TInput>({
+export const useDraftCreation = <TInput, TReport = never>({
   stream,
   create,
   canSubmit,
   getSourceLabel,
   sourceKind,
   onSuccess,
-}: UseDraftCreationParams<TInput>) => {
+}: UseDraftCreationParams<TInput, TReport>) => {
   const { t } = useTranslation();
-  const [state, dispatch] = useReducer(aiCreateReducer, INITIAL_AI_CREATE_STATE);
+  const [state, dispatch] = useReducer(aiCreateReducer<TReport>, INITIAL_AI_CREATE_STATE);
   const [isNavigatingToEditor, setIsNavigatingToEditor] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   /** The input the running generation was started with, so Regenerate can replay it. */
@@ -144,22 +147,16 @@ export const useDraftCreation = <TInput>({
             if (abortControllerRef.current !== controller) return;
 
             switch (event.type) {
-              case "partial": {
-                const partial = event as Extract<TDraftStreamEvent, { type: "partial" }>;
-                queueSnapshot(partial.draft);
+              case "partial":
+                queueSnapshot(event.draft);
                 break;
-              }
-              case "done": {
-                const done = event as Extract<TDraftStreamEvent, { type: "done" }>;
+              case "done":
                 flushSnapshot();
-                dispatch({ type: "DONE", payload: done.payload, report: done.report ?? null });
+                dispatch({ type: "DONE", payload: event.payload, report: event.report ?? null });
                 break;
-              }
-              case "error": {
-                const failure = event as Extract<TDraftStreamEvent, { type: "error" }>;
-                dispatch({ type: "FAIL", errorCode: failure.code });
+              case "error":
+                dispatch({ type: "FAIL", errorCode: event.code });
                 break;
-              }
               default:
                 break;
             }
@@ -187,7 +184,7 @@ export const useDraftCreation = <TInput>({
       event?.preventDefault();
       if (!canCreate) return;
 
-      dispatch({ type: "SUBMIT", prompt: getSourceLabel(input), sourceKind });
+      dispatch({ type: "SUBMIT", sourceLabel: getSourceLabel(input), sourceKind });
       void runGeneration(input);
     },
     [canCreate, getSourceLabel, runGeneration, sourceKind]
@@ -208,7 +205,7 @@ export const useDraftCreation = <TInput>({
       if (!canSubmit || next === null || next === undefined) return;
 
       discardQueuedSnapshot();
-      dispatch({ type: "REGENERATE", prompt: getSourceLabel(next), sourceKind });
+      dispatch({ type: "REGENERATE", sourceLabel: getSourceLabel(next), sourceKind });
       void runGeneration(next);
     },
     [canSubmit, discardQueuedSnapshot, getSourceLabel, runGeneration, sourceKind]

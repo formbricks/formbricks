@@ -25,9 +25,10 @@ const wrapper = ({ children }: { children: ReactNode }) =>
   );
 
 type TInput = { fileName: string };
+type TReport = { source: { kind: string; fileName: string }; issues: unknown[] };
 
-const scripted = (events: TDraftStreamEvent[]) =>
-  vi.fn(async (_input: TInput, { onEvent }: { onEvent: (event: TDraftStreamEvent) => void }) => {
+const scripted = (events: TDraftStreamEvent<TReport>[]) =>
+  vi.fn(async (_input: TInput, { onEvent }: { onEvent: (event: TDraftStreamEvent<TReport>) => void }) => {
     events.forEach(onEvent);
   });
 
@@ -45,7 +46,7 @@ const renderDraftHook = (
   const onSuccess = vi.fn();
   const hook = renderHook(
     () =>
-      useDraftCreation<TInput>({
+      useDraftCreation<TInput, TReport>({
         stream,
         create,
         canSubmit: overrides.canSubmit ?? true,
@@ -79,7 +80,7 @@ describe("useDraftCreation", () => {
   });
 
   test("labels the draft with the source and keeps the report from done", async () => {
-    const report = { source: { kind: "qsf", fileName: "survey.qsf" }, issues: [] };
+    const report: TReport = { source: { kind: "qsf", fileName: "survey.qsf" }, issues: [] };
     const stream = scripted([
       { type: "start" },
       {
@@ -125,6 +126,19 @@ describe("useDraftCreation", () => {
 
     expect(stream).toHaveBeenCalledTimes(2);
     expect(stream.mock.calls[1][0]).toEqual({ fileName: "survey.qsf" });
+  });
+
+  test("regenerate keeps the source kind it was given", async () => {
+    const stream = scripted([{ type: "done", payload }]);
+    const { result } = renderDraftHook({ stream });
+
+    await act(async () => result.current.submit({ fileName: "survey.qsf" }));
+    await waitFor(() => expect(result.current.status).toBe("review"));
+    await act(async () => result.current.regenerate());
+
+    await waitFor(() => expect(result.current.status).toBe("review"));
+    expect(stream).toHaveBeenCalledTimes(2);
+    expect(result.current.state.sourceKind).toBe("file");
   });
 
   test("an in-band error event maps to a message and returns to idle", async () => {

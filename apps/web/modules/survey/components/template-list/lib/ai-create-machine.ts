@@ -7,7 +7,11 @@ export type TAiCreateStatus = "idle" | "generating" | "review" | "creating";
 /** What produced the draft on screen: a typed prompt (Create with AI) or a dropped file (Import). */
 export type TAiCreateSourceKind = "prompt" | "file";
 
-export interface TAiCreateState {
+/**
+ * `TReport` is what a source returns next to its payload: an import's report. Create with AI has none,
+ * so it defaults to `never` and `report` stays `null`.
+ */
+export interface TAiCreateState<TReport = never> {
   status: TAiCreateStatus;
   draft: TAiDraftState;
   /** The validated create payload. Only ever set from the stream's terminal event. */
@@ -26,7 +30,7 @@ export interface TAiCreateState {
    * An import produces a report next to the payload; Create with AI has none. Set by `DONE`, cleared
    * whenever a new run starts.
    */
-  report: unknown | null;
+  report: TReport | null;
   /**
    * The last finished draft, held aside while a regeneration runs. Regenerating is a gamble on a
    * better result: abandoning it, or having it fail, must not cost the one the user already had.
@@ -35,20 +39,20 @@ export interface TAiCreateState {
     draft: TAiDraftState;
     payload: TV3CreateSurveyBody;
     sourceLabel: string;
-    report: unknown | null;
+    report: TReport | null;
   } | null;
 }
 
-export type TAiCreateAction =
-  | { type: "SUBMIT"; prompt: string; sourceKind?: TAiCreateSourceKind }
+export type TAiCreateAction<TReport = never> =
+  | { type: "SUBMIT"; sourceLabel: string; sourceKind?: TAiCreateSourceKind }
   | { type: "SNAPSHOT"; snapshot: TSurveyGenerationDraftSnapshot }
-  | { type: "DONE"; payload: TV3CreateSurveyBody; report?: unknown }
+  | { type: "DONE"; payload: TV3CreateSurveyBody; report?: TReport | null }
   | { type: "STOP" }
   | { type: "FAIL"; errorCode: string }
   | { type: "CREATE_FAILED"; errorCode: string }
   | { type: "EDIT_PROMPT" }
   | { type: "BACK_TO_DRAFT" }
-  | { type: "REGENERATE"; prompt: string; sourceKind?: TAiCreateSourceKind }
+  | { type: "REGENERATE"; sourceLabel: string; sourceKind?: TAiCreateSourceKind }
   | { type: "CREATE" }
   | { type: "CLEAR_ERROR" }
   | { type: "RESET" };
@@ -75,7 +79,10 @@ function isEmptyPayload(payload: TV3CreateSurveyBody): boolean {
 }
 
 /** Put a held-aside draft back on screen, or fall back to a clean slate when there is none. */
-function restorePrevious(state: TAiCreateState, errorCode: string | null = null): TAiCreateState {
+function restorePrevious<TReport>(
+  state: TAiCreateState<TReport>,
+  errorCode: string | null = null
+): TAiCreateState<TReport> {
   if (!state.previous) {
     return { ...INITIAL_AI_CREATE_STATE, errorCode };
   }
@@ -102,18 +109,21 @@ export const AI_NOTHING_GENERATED_CODE = "ai_nothing_generated";
  * prompt each generation was *submitted* with, because that is what labels the draft on screen.
  */
 /** A chunk that lands after Stop must not resurrect the generating view. */
-function applySnapshot(state: TAiCreateState, snapshot: TSurveyGenerationDraftSnapshot): TAiCreateState {
+function applySnapshot<TReport>(
+  state: TAiCreateState<TReport>,
+  snapshot: TSurveyGenerationDraftSnapshot
+): TAiCreateState<TReport> {
   if (state.status !== "generating") return state;
 
   const draft = mergeAiDraftSnapshot(state.draft, snapshot);
   return draft === state.draft ? state : { ...state, draft };
 }
 
-function applyDone(
-  state: TAiCreateState,
+function applyDone<TReport>(
+  state: TAiCreateState<TReport>,
   payload: TV3CreateSurveyBody,
-  report: unknown = null
-): TAiCreateState {
+  report: TReport | null = null
+): TAiCreateState<TReport> {
   // Same guard as SNAPSHOT, for the same reason: a terminal event from a run the user already
   // stopped would otherwise pair the restored draft with the abandoned run's payload — what you see
   // would no longer be what saving writes.
@@ -130,7 +140,7 @@ function applyDone(
   return { ...state, status: "review", payload, report, errorCode: null, previous: null };
 }
 
-function applyStop(state: TAiCreateState): TAiCreateState {
+function applyStop<TReport>(state: TAiCreateState<TReport>): TAiCreateState<TReport> {
   // Stopping a regeneration restores the draft it was trying to replace. The partial that was
   // streaming has no payload and could not be saved anyway, so the finished one always wins.
   if (state.previous) return restorePrevious(state);
@@ -139,7 +149,7 @@ function applyStop(state: TAiCreateState): TAiCreateState {
   return state.draft.questions.length > 0 ? { ...state, status: "review" } : { ...INITIAL_AI_CREATE_STATE };
 }
 
-function applyFail(state: TAiCreateState, errorCode: string): TAiCreateState {
+function applyFail<TReport>(state: TAiCreateState<TReport>, errorCode: string): TAiCreateState<TReport> {
   // A failure belonging to an abandoned run must not tear down what the user went back to.
   if (state.status !== "generating") return state;
 
@@ -148,7 +158,7 @@ function applyFail(state: TAiCreateState, errorCode: string): TAiCreateState {
   return restorePrevious(state, errorCode);
 }
 
-function applyEditPrompt(state: TAiCreateState): TAiCreateState {
+function applyEditPrompt<TReport>(state: TAiCreateState<TReport>): TAiCreateState<TReport> {
   // Non-destructive: a finished draft is kept so the user can tweak the prompt, change their mind,
   // and go back to it. A half-written one is dropped — there is nothing to return to.
   if (state.payload) return { ...state, status: "idle", errorCode: null };
@@ -158,11 +168,11 @@ function applyEditPrompt(state: TAiCreateState): TAiCreateState {
   return { ...INITIAL_AI_CREATE_STATE };
 }
 
-function applyRegenerate(
-  state: TAiCreateState,
-  prompt: string,
+function applyRegenerate<TReport>(
+  state: TAiCreateState<TReport>,
+  sourceLabel: string,
   sourceKind: TAiCreateSourceKind = state.sourceKind
-): TAiCreateState {
+): TAiCreateState<TReport> {
   // Clear the visible list so the old one does not sit under the new stream, but hold it aside
   // rather than destroying it: Stop, or a failure, puts it straight back.
   return {
@@ -170,7 +180,7 @@ function applyRegenerate(
     draft: EMPTY_AI_DRAFT,
     payload: null,
     errorCode: null,
-    sourceLabel: prompt,
+    sourceLabel,
     sourceKind,
     report: null,
     previous: state.payload
@@ -183,7 +193,10 @@ function applyRegenerate(
  * A dispatch table rather than a switch full of logic: every case that has to decide something owns
  * a named function above, so the transitions can be read — and tested — one at a time.
  */
-export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction): TAiCreateState {
+export function aiCreateReducer<TReport = never>(
+  state: TAiCreateState<TReport>,
+  action: TAiCreateAction<TReport>
+): TAiCreateState<TReport> {
   switch (action.type) {
     case "SUBMIT":
       // A fresh prompt, so there is nothing worth holding on to.
@@ -192,7 +205,7 @@ export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction):
         draft: EMPTY_AI_DRAFT,
         payload: null,
         errorCode: null,
-        sourceLabel: action.prompt,
+        sourceLabel: action.sourceLabel,
         sourceKind: action.sourceKind ?? "prompt",
         report: null,
         previous: null,
@@ -217,7 +230,7 @@ export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction):
       return state.payload ? { ...state, status: "review", errorCode: null } : state;
 
     case "REGENERATE":
-      return applyRegenerate(state, action.prompt, action.sourceKind);
+      return applyRegenerate(state, action.sourceLabel, action.sourceKind);
 
     case "CREATE":
       return state.status === "review" && state.payload

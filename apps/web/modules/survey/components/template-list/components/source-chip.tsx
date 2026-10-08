@@ -1,7 +1,7 @@
 "use client";
 
 import { PencilIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useId } from "react";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
@@ -33,28 +33,33 @@ export const SourceChip = ({
   editLabel,
   onEdit,
   disabled = false,
-  id = "ai-source-echo",
-}: Readonly<SourceChipProps>) => (
-  <div className="flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 py-1 pr-1 pl-3">
-    {icon ? <span className="flex shrink-0 items-center text-slate-500">{icon}</span> : null}
-    <p id={id} className="min-w-0 flex-1 truncate text-sm text-slate-700">
-      <span className="sr-only">{srLabel}: </span>
-      {label}
-      {detail ? <span className="ml-1 text-xs text-slate-500">{detail}</span> : null}
-    </p>
-    <TooltipRenderer tooltipContent={editLabel}>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="size-7 shrink-0 text-slate-500 hover:text-slate-800"
-        disabled={disabled}
-        // Icon-only, so it needs its own name; describedby points at the source it acts on.
-        aria-label={editLabel}
-        aria-describedby={id}
-        onClick={onEdit}>
-        <PencilIcon aria-hidden="true" />
-      </Button>
-    </TooltipRenderer>
-  </div>
-);
+  id,
+}: Readonly<SourceChipProps>) => {
+  const generatedId = useId();
+  const labelId = id ?? generatedId;
+
+  return (
+    <div className="flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 py-1 pr-1 pl-3">
+      {icon ? <span className="flex shrink-0 items-center text-slate-500">{icon}</span> : null}
+      <p id={labelId} className="min-w-0 flex-1 truncate text-sm text-slate-700">
+        <span className="sr-only">{srLabel}: </span>
+        {label}
+        {detail ? <span className="ml-1 text-xs text-slate-500">{detail}</span> : null}
+      </p>
+      <TooltipRenderer tooltipContent={editLabel}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-7 shrink-0 text-slate-500 hover:text-slate-800"
+          disabled={disabled}
+          // Icon-only, so it needs its own name; describedby points at the source it acts on.
+          aria-label={editLabel}
+          aria-describedby={labelId}
+          onClick={onEdit}>
+          <PencilIcon aria-hidden="true" />
+        </Button>
+      </TooltipRenderer>
+    </div>
+  );
+};
