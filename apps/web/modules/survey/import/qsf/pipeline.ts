@@ -9,6 +9,7 @@ import { type TQsfPlanGenerate, type TQsfPlanUsage, planQsfImport } from "./ai-p
 import { type TQsfAssembly, type TQsfDraftDocument, assembleQsfDraft } from "./assemble";
 import { QsfImportFailedError, QsfImportInputError } from "./errors";
 import { checkQsfDraft, elementsAtFault } from "./final-gate";
+import { fitQsfDraftToCreateLimit } from "./fit-draft";
 import { QSF_PROMPT_BUDGET_CHARS, estimateQsfMinimumPromptChars } from "./prompt";
 import type { TQsfSurvey } from "./qsf-model";
 import { readQsf } from "./read-qsf";
@@ -182,14 +183,23 @@ export async function runQsfImport(params: TRunQsfImportParams): Promise<TQsfImp
     survey,
     signal
   );
+  // The dialog creates the draft through POST /api/v3/surveys, whose body has a size limit: past it,
+  // languages and then trailing questions are cut, and the cut draft is checked again.
+  const fitted = fitQsfDraftToCreateLimit(assembly, survey);
   if (countElements(assembly.document) === 0) throw new QsfImportFailedError("no_questions");
+  if (fitted.dropped.length > 0) {
+    await yieldToEventLoop();
+    signal.throwIfAborted();
+    if (checkQsfDraft(assembly.document).length > 0) throw new QsfImportFailedError("draft_invalid");
+  }
 
+  const issues = [...survey.issues, ...texts.issues, ...planned.issues, ...dropped, ...assembly.issues];
   return {
     payload: assembly.document,
     report: buildQsfImportReport({
       fileName: prepared.fileName,
       document: assembly.document,
-      issues: [...survey.issues, ...texts.issues, ...planned.issues, ...dropped, ...assembly.issues],
+      issues: [...issues.filter(fitted.keepIssue), ...fitted.dropped],
     }),
     ...(planned.calls > 0 ? { usage: planned.usage } : {}),
   };

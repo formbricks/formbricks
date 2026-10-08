@@ -24,7 +24,9 @@ export type TQsfImportStage = "reading" | "ai" | "assembling";
  * - `field_dropped` — embedded data names past the most a survey can hold, left out (`params.count`)
  * - `external_url_removed` — a link the organization's plan does not allow, removed (ENG-3411)
  * - `language_skipped` — a Qualtrics language code with no Formbricks equivalent; its translations are
- *   left out (`params.code`; `params.fallback` when it was the survey's default language)
+ *   left out (`params.code`; `params.fallback` when it was the survey's default language). With
+ *   `params.cause: "draft_too_large"`, a language the import cut because the draft was too large to
+ *   create
  * - `translation_fallback` — texts missing in a language, filled with the default language's text,
  *   one line per language (`params.language`, `params.count`)
  * - `piped_text_removed` — piped text with no Formbricks equivalent, removed (`params.count`)
@@ -35,7 +37,8 @@ export type TQsfImportStage = "reading" | "ai" | "assembling";
  *
  * `question_skipped` carries `params.cause`, a fixed code (`unsupported_type` with the Qualtrics
  * `params.qualtricsType`, `ai_skipped`, `plan_invalid`, `ai_budget`, `ai_timeout`, `not_in_flow`,
- * `invalid_id`, `validation_failed`); `choice_dropped` carries `invalid_id`. Params that carry text from the
+ * `invalid_id`, `validation_failed`, `draft_too_large` for a trailing question cut so the draft fits
+ * the create's size limit); `choice_dropped` carries `invalid_id`. Params that carry text from the
  * file or the AI — `field_renamed`'s `from`, `description` on `logic_not_imported` and
  * `question_skipped`, `logic_not_imported`'s `block`, `questionTag` — must be rendered as plain text,
  * never as rich text.

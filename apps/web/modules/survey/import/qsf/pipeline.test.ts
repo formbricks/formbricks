@@ -7,11 +7,18 @@ import {
   type TImportableQsfFixture,
   loadQsfFixture,
 } from "./__fixtures__/load-fixture";
-import { loadRecordedPlan, recordedGenerate, timedGenerate } from "./__fixtures__/recorded-plans";
+import {
+  loadRecordedPlan,
+  recordedGenerate,
+  refsInPrompt,
+  timedGenerate,
+} from "./__fixtures__/recorded-plans";
 import type { TQsfPlanGenerate } from "./ai-plan";
 import type { TQsfDraftDocument } from "./assemble";
 import { checkQsfDraft } from "./final-gate";
+import { QSF_DRAFT_MAX_BYTES, measureQsfDraftBytes } from "./fit-draft";
 import { isObjectMemberName } from "./id-registry";
+import { normalizeQualtricsLanguageCode } from "./language-codes";
 import {
   QsfImportFailedError,
   QsfImportInputError,
@@ -480,6 +487,177 @@ describe("runQsfImport on recorded plans", () => {
       expect(result.report.summary.questions).toBe(150);
       expect(mocks.realCheckQsfDraft(result.payload)).toEqual([]);
       expect(mocks.generateOrganizationAIObject).toHaveBeenCalledTimes(10);
+    });
+  });
+
+  describe("a draft too large for the create's request body", () => {
+    /** 49 Qualtrics codes for distinct survey languages, from what the reader makes of them. */
+    const translationCodes = (): string[] => {
+      const seen = new Map<string, string>();
+      for (const region of ["", "-AT", "-CH", "-BE", "-US", "-GB"]) {
+        for (const code of [
+          "AR",
+          "BG",
+          "CS",
+          "DA",
+          "DE",
+          "EL",
+          "ES",
+          "ET",
+          "FI",
+          "FR",
+          "HE",
+          "HI",
+          "HR",
+          "HU",
+        ]) {
+          const normalized = normalizeQualtricsLanguageCode(`${code}${region}`);
+          if (normalized && normalized !== "en-US" && !seen.has(normalized))
+            seen.set(normalized, `${code}${region}`);
+        }
+      }
+      return [...seen.values()].slice(0, 49);
+    };
+
+    /** `questions` multiple choice questions of `options` options, on pages of 10, in `languages`. */
+    const buildQsf = (shape: {
+      questions: number;
+      options: number;
+      languages: string[];
+      textChars: number;
+    }) => {
+      const pad = "x".repeat(shape.textChars);
+      const refs = Array.from({ length: shape.questions }, (_, q) => `QID${q + 1}`);
+      const elements = refs.map((ref, q) => {
+        const choices = Object.fromEntries(
+          Array.from({ length: shape.options }, (_, i) => [
+            String(i + 1),
+            { Display: `Option ${i + 1} of ${q}` },
+          ])
+        );
+        const language = Object.fromEntries(
+          shape.languages.map((code) => [
+            code,
+            { QuestionText: `${code} question ${q} ${pad}`, Choices: choices },
+          ])
+        );
+        return {
+          Element: "SQ",
+          PrimaryAttribute: ref,
+          Payload: {
+            QuestionText: `Question ${q} ${pad}`,
+            DataExportTag: `Q${q + 1}`,
+            QuestionType: "MC",
+            Selector: "SAVR",
+            Choices: choices,
+            Language: language,
+          },
+        };
+      });
+      const blocks = Array.from({ length: Math.ceil(shape.questions / 10) }, (_, b) => ({
+        ID: `BL_${b}`,
+        Description: `Block ${b}`,
+        BlockElements: refs.slice(b * 10, b * 10 + 10).map((ref) => ({ Type: "Question", QuestionID: ref })),
+      }));
+      return {
+        SurveyEntry: { SurveyName: "Large", SurveyLanguage: "EN" },
+        SurveyElements: [
+          ...elements,
+          { Element: "BL", Payload: blocks },
+          { Element: "FL", Payload: { Flow: blocks.map((block) => ({ Type: "Block", ID: block.ID })) } },
+        ],
+      };
+    };
+
+    const answerAsMultipleChoice: TQsfPlanGenerate = async (request) => ({
+      object: {
+        questions: refsInPrompt(request.prompt).map((ref) => ({
+          ref,
+          type: "multipleChoiceSingle",
+          required: false,
+          choicesFrom: "choices",
+          rowsFrom: null,
+          columnsFrom: null,
+          otherChoiceKey: null,
+          noneChoiceKey: null,
+          labelKey: null,
+          excludedKeys: [],
+          contactFields: [],
+          inputType: null,
+          scale: null,
+          range: null,
+          format: null,
+          logicNotes: [],
+        })),
+        skipped: [],
+        pages: [],
+      },
+    });
+
+    const runQsf = (qsf: Record<string, unknown>) => {
+      mocks.generateOrganizationAIObject.mockImplementation(answerAsMultipleChoice);
+      return runQsfImport({
+        prepared: prepareQsfImport(qsf, "large.qsf"),
+        workspaceId: WORKSPACE_ID,
+        organizationId: "org_1",
+        userId: "user_1",
+        signal: new AbortController().signal,
+        deadlineMs: 120_000,
+        onProgress: vi.fn(),
+      });
+    };
+
+    test(
+      "cuts languages, last declared first, from 200 questions of 15 options in 50 languages",
+      { timeout: 120_000 },
+      async () => {
+        const result = await runQsf(
+          buildQsf({ questions: 200, options: 15, languages: translationCodes(), textChars: 0 })
+        );
+
+        expect(measureQsfDraftBytes(result.payload)).toBeLessThanOrEqual(QSF_DRAFT_MAX_BYTES);
+        expect(result.report.summary.questions).toBe(200);
+        const cut = result.report.issues.filter(
+          (issue) => issue.code === "language_skipped" && issue.params?.cause === "draft_too_large"
+        );
+        expect(cut.length).toBeGreaterThan(0);
+        expect(result.report.summary.languages).toHaveLength(50 - cut.length);
+        expect(result.report.summary.languages[0]).toBe("en-US");
+        expect(cut.map((issue) => issue.params?.code)).not.toContain("en-US");
+        expect(mocks.realCheckQsfDraft(result.payload)).toEqual([]);
+      }
+    );
+
+    test(
+      "cuts trailing questions from a one-language survey of very long texts",
+      { timeout: 60_000 },
+      async () => {
+        // 200 questions of 20,000-character texts: about 4 MB in one language.
+        const result = await runQsf(
+          buildQsf({ questions: 200, options: 2, languages: [], textChars: 20_000 })
+        );
+
+        expect(measureQsfDraftBytes(result.payload)).toBeLessThanOrEqual(QSF_DRAFT_MAX_BYTES);
+        const cut = result.report.issues.filter(
+          (issue) => issue.code === "question_skipped" && issue.params?.cause === "draft_too_large"
+        );
+        expect(cut.length).toBeGreaterThan(0);
+        expect(result.report.summary.questions).toBe(200 - cut.length);
+        expect(cut[0].questionTag).toBe("Q200");
+        expect(result.payload.blocks.flatMap((block) => block.elements).at(-1)?.id).toBe(
+          `Q${200 - cut.length}`
+        );
+        expect(mocks.realCheckQsfDraft(result.payload)).toEqual([]);
+      }
+    );
+
+    test("leaves an ordinary survey as it was", async () => {
+      answerFrom("multilang-en-de.qsf");
+
+      const result = await run("multilang-en-de.qsf");
+
+      expect(result.report.issues.some((issue) => issue.params?.cause === "draft_too_large")).toBe(false);
+      expect(result.report.summary.languages).toEqual(["en-US", "de-DE"]);
     });
   });
 });
