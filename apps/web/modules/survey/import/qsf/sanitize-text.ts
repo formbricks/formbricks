@@ -3,6 +3,7 @@ import { setImmediate as yieldToEventLoop } from "node:timers/promises";
 import { FOLLOW_UP_BODY_SANITIZE_CONFIG } from "@/modules/survey/follow-ups/lib/sanitize-follow-up-body";
 import type { TQsfImportIssue, TQsfImportIssueCode } from "../types";
 import { QSF_MAX_TEXT_CHARS, QSF_MAX_TEXT_TAGS } from "./limits";
+import { hasMarkup } from "./markup";
 import type { TQsfSurvey, TQsfTextFormat, TQsfTextKey } from "./qsf-model";
 
 /**
@@ -152,7 +153,7 @@ function neutralize(text: string): { text: string; escaped: boolean } {
 }
 
 function sanitizePlain(raw: string, dropped: Set<TDroppedCode>): { text: string; escaped: boolean } {
-  if (!raw.includes("<") && !raw.includes("&")) return { text: collapseWhitespace(raw), escaped: false };
+  if (!hasMarkup(raw)) return { text: collapseWhitespace(raw), escaped: false };
 
   const fragment = DOMPurify.sanitize(raw, PLAIN_CONFIG);
   readDropped(dropped);
@@ -163,7 +164,7 @@ function sanitizeRich(
   raw: string,
   dropped: Set<TDroppedCode>
 ): { text: string; plain: string; escaped: boolean } {
-  if (!raw.includes("<") && !raw.includes("&")) {
+  if (!hasMarkup(raw)) {
     const text = collapseWhitespace(raw);
     return { text, plain: text, escaped: false };
   }

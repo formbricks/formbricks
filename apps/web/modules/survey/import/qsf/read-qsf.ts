@@ -15,12 +15,14 @@ import {
   QSF_MAX_LANGUAGE_KEYS,
   QSF_MAX_LANGUAGE_KEYS_PER_QUESTION,
   QSF_MAX_LOGIC_TERMS,
+  QSF_MAX_MARKUP_TEXTS,
   QSF_MAX_NAME_CHARS,
   QSF_MAX_OPTIONS_PER_QUESTION,
   QSF_MAX_QUESTIONS,
   QSF_MAX_TEXTS,
   QSF_MAX_TEXT_CHARS,
 } from "./limits";
+import { needsParsing } from "./markup";
 import { collectEmbeddedDataReferences } from "./piped-text";
 import type {
   TQsfLogicCondition,
@@ -279,8 +281,9 @@ class QsfReader {
   private blockElementCount = 0;
   /** Embedded data fields the flow sets, read so far. */
   private embeddedDataFieldCount = 0;
-  /** Texts read so far, each language of a text counted. */
+  /** Texts read so far, each language of a text counted, and those with markup among them. */
   private textCount = 0;
+  private markupTextCount = 0;
   /** Per question, Qualtrics choice id → text key, for logic and translations. */
   private readonly choiceKeysByRef = new Map<string, Map<string, TQsfTextKey>>();
   /** Branch rules are met before the questions they read, so their conditions are read last. */
@@ -1030,17 +1033,28 @@ class QsfReader {
   private setTranslation(key: TQsfTextKey, language: string, text: string): void {
     const byLanguage = this.texts.get(key)?.byLanguage;
     if (!byLanguage) return;
-    if (!byLanguage.has(language)) this.countText();
+    if (!byLanguage.has(language)) this.countText(text);
     byLanguage.set(language, text);
   }
 
-  /** One more text to sanitize, refused past `QSF_MAX_TEXTS` before it is kept. */
-  private countText(): void {
+  /**
+   * One more text to sanitize, refused before it is kept past `QSF_MAX_TEXTS`, or past
+   * `QSF_MAX_MARKUP_TEXTS` when it is one the sanitizer has to parse.
+   */
+  private countText(text: string): void {
     this.textCount += 1;
     if (this.textCount > QSF_MAX_TEXTS) {
       throw inputError(
         "qsf.SurveyElements",
         `The survey has more than ${QSF_MAX_TEXTS} texts across its languages`
+      );
+    }
+    if (!needsParsing(text)) return;
+    this.markupTextCount += 1;
+    if (this.markupTextCount > QSF_MAX_MARKUP_TEXTS) {
+      throw inputError(
+        "qsf.SurveyElements",
+        `The survey has more than ${QSF_MAX_MARKUP_TEXTS} formatted texts across its languages`
       );
     }
   }
@@ -1051,7 +1065,7 @@ class QsfReader {
     questionRef: string | null,
     defaultText: string
   ): TQsfTextKey {
-    this.countText();
+    this.countText(defaultText);
     this.counters[prefix] += 1;
     const key = `${prefix}${this.counters[prefix]}`;
     this.texts.set(key, {

@@ -2,11 +2,13 @@ import { describe, expect, test } from "vitest";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { QsfImportInputError } from "./errors";
 import { OBJECT_MEMBER_NAMES } from "./id-registry";
+import { normalizeQualtricsLanguageCode } from "./language-codes";
 import {
   QSF_MAX_BLOCKS,
   QSF_MAX_EMBEDDED_DATA_FIELDS,
   QSF_MAX_LANGUAGE_KEYS,
   QSF_MAX_LANGUAGE_KEYS_PER_QUESTION,
+  QSF_MAX_MARKUP_TEXTS,
   QSF_MAX_OPTIONS_PER_QUESTION,
   QSF_MAX_TEXTS,
   QSF_MAX_TEXT_CHARS,
@@ -368,53 +370,121 @@ describe("readQsf", () => {
     });
 
     describe("more texts across all languages than the import sanitizes", () => {
-      // 10 blocks (a name each, untranslated) and questions whose text and options all come in 10
-      // languages: 10 + 10 × 4,999 = 50,000 texts, exactly the limit.
-      const LANGUAGES = ["DE", "FR", "ES", "IT", "NL", "PT", "SV", "DA", "FI"];
-      const build = (options: { extraChoice?: boolean; endMessage?: boolean } = {}) => {
-        const optionCounts = [...Array(24).fill(199), options.extraChoice ? 199 : 198];
-        const questions = optionCounts.map((count, q) => {
+      // Distinct survey languages, as Qualtrics codes, from what the reader itself makes of them.
+      const codes = ["AR", "BG", "CS", "DA", "DE", "EL", "ES", "ET", "FI", "FR", "HE", "HI", "HR", "HU"];
+      const translationCodes = (count: number): string[] => {
+        const seen = new Map<string, string>();
+        for (const region of ["", "-AT", "-CH", "-BE", "-US", "-GB"]) {
+          for (const code of codes) {
+            const normalized = normalizeQualtricsLanguageCode(`${code}${region}`);
+            if (normalized && normalized !== "en-US" && !seen.has(normalized))
+              seen.set(normalized, code + region);
+          }
+        }
+        const found = [...seen.values()].slice(0, count);
+        if (found.length < count) throw new Error("not enough distinct languages");
+        return found;
+      };
+
+      /**
+       * Questions with `optionCounts[i]` options each, every text translated into `languages`, in
+       * `blocks` blocks. `markup` wraps every question text, option and block name in markup.
+       */
+      const build = (shape: {
+        optionCounts: number[];
+        languages: number;
+        blocks: number;
+        markup?: boolean;
+        endMessage?: string;
+      }) => {
+        const wrap = (text: string) => (shape.markup ? `<b>${text}</b>` : text);
+        const languages = translationCodes(shape.languages);
+        const questions = shape.optionCounts.map((count, q) => {
           const ids = Array.from({ length: count }, (_, i) => String(i + 1));
-          const choices = Object.fromEntries(ids.map((id) => [id, { Display: `Q${q} C${id}` }]));
+          const choices = Object.fromEntries(ids.map((id) => [id, { Display: wrap(`Q${q} C${id}`) }]));
           const language = Object.fromEntries(
-            LANGUAGES.map((code) => [code, { QuestionText: `${code} ${q}`, Choices: choices }])
+            languages.map((code) => [code, { QuestionText: wrap(`${code} ${q}`), Choices: choices }])
           );
-          return sq(`QID${q + 1}`, { QuestionType: "MC", Choices: choices, Language: language });
+          return sq(`QID${q + 1}`, {
+            QuestionText: wrap(`Question ${q}`),
+            QuestionType: "MC",
+            Choices: choices,
+            Language: language,
+          });
         });
         const refs = questions.map((_, q) => `QID${q + 1}`);
-        const blocks = Array.from({ length: 10 }, (_, b) => ({
+        const blocks = Array.from({ length: shape.blocks }, (_, b) => ({
           ID: `BL_${b}`,
-          Description: `Block ${b}`,
+          Description: wrap(`Block ${b}`),
           BlockElements: refs
-            .filter((_, q) => q % 10 === b)
+            .filter((_, q) => q % shape.blocks === b)
             .map((ref) => ({ Type: "Question", QuestionID: ref })),
         }));
         return minimalQsf([
           ...questions,
           { Element: "BL", Payload: blocks },
           fl(blocks.map((block) => ({ Type: "Block", ID: block.ID }))),
-          ...(options.endMessage ? [{ Element: "SO", Payload: { EOSMessage: "Thanks!" } }] : []),
+          ...(shape.endMessage ? [{ Element: "SO", Payload: { EOSMessage: shape.endMessage } }] : []),
         ]);
       };
+      const countTexts = (survey: ReturnType<typeof readQsf>) =>
+        [...survey.texts.values()].reduce((count, text) => count + text.byLanguage.size, 0);
+      const refused = (cap: number, kind: string) => [
+        {
+          name: "qsf.SurveyElements",
+          reason: `The survey has more than ${cap} ${kind} across its languages`,
+        },
+      ];
 
-      test("reads a survey at the limit", () => {
-        const survey = readQsf(build());
+      test("reads a large plain survey in 40 languages: plain texts cost the sanitizer no parse", () => {
+        // 150 questions of 8 options in 40 languages: 54,000 texts, past the formatted-text limit.
+        const survey = readQsf(build({ optionCounts: Array(150).fill(8), languages: 39, blocks: 30 }));
 
-        expect(survey.languages).toHaveLength(LANGUAGES.length);
-        const texts = [...survey.texts.values()].reduce((count, text) => count + text.byLanguage.size, 0);
-        expect(texts).toBe(QSF_MAX_TEXTS);
+        expect(survey.languages).toHaveLength(39);
+        expect(countTexts(survey)).toBe(150 * 9 * 40 + 30);
+        expect(countTexts(survey)).toBeGreaterThan(QSF_MAX_MARKUP_TEXTS);
       });
 
-      test.each([
-        ["one text past it", { endMessage: true }],
-        ["one option past it, in every language", { extraChoice: true }],
-      ])("refuses %s", (_case, options) => {
-        expect(readError(build(options)).invalidParams).toEqual([
-          {
-            name: "qsf.SurveyElements",
-            reason: `The survey has more than ${QSF_MAX_TEXTS} texts across its languages`,
-          },
-        ]);
+      test("refuses the same survey with markup in every text", () => {
+        expect(
+          readError(build({ optionCounts: Array(150).fill(8), languages: 39, blocks: 30, markup: true }))
+            .invalidParams
+        ).toEqual(refused(QSF_MAX_MARKUP_TEXTS, "formatted texts"));
+      });
+
+      // 10 formatted block names, and 10 languages of formatted questions whose text and options make
+      // 4,999 texts a language: 10 + 10 × 4,999 = 50,000 formatted texts, exactly the limit.
+      const atMarkupLimit = {
+        optionCounts: [...Array(24).fill(199), 198],
+        languages: 9,
+        blocks: 10,
+        markup: true,
+      };
+
+      test("reads a survey at the formatted-text limit, and one plain text more", () => {
+        const survey = readQsf(build({ ...atMarkupLimit, endMessage: "Thanks" }));
+
+        expect(countTexts(survey)).toBe(QSF_MAX_MARKUP_TEXTS + 1);
+      });
+
+      test("refuses one formatted text past it", () => {
+        expect(readError(build({ ...atMarkupLimit, endMessage: "<p>Thanks</p>" })).invalidParams).toEqual(
+          refused(QSF_MAX_MARKUP_TEXTS, "formatted texts")
+        );
+      });
+
+      // 50 block names, and 50 languages of 200 questions whose text and options make 3,999 texts a
+      // language: 50 + 50 × 3,999 = 200,000 texts, exactly the limit.
+      const atTextLimit = { optionCounts: [...Array(199).fill(19), 18], languages: 49, blocks: 50 };
+
+      test("reads a survey at the limit on texts of any kind", () => {
+        expect(countTexts(readQsf(build(atTextLimit)))).toBe(QSF_MAX_TEXTS);
+      });
+
+      test("refuses one text past it", () => {
+        expect(readError(build({ ...atTextLimit, endMessage: "Thanks" })).invalidParams).toEqual(
+          refused(QSF_MAX_TEXTS, "texts")
+        );
       });
     });
 

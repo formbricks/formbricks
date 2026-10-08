@@ -65,13 +65,22 @@ export const QSF_MAX_TEXT_CHARS = 50_000;
 export const QSF_MAX_TEXT_TAGS = 500;
 
 /**
- * Texts in all their languages together: every question text, option, block name and end message,
- * once per language it is given in. The sanitizer works through each (about 0.1 ms one with markup),
- * so this bounds an import's sanitizing at a few seconds, sliced. Sized from the largest survey the
- * import is built for, with headroom: 200 questions of a text and 15 options each, in 15 languages,
- * is 48,000. The per-collection limits alone admit 4 million (200 × 401 × 50).
+ * Texts with markup (a `<` or an `&`), in all their languages together. Only these cost the sanitizer
+ * a DOMPurify parse, about 0.1 ms each; a plain text only has its whitespace collapsed. 50,000 bounds an
+ * import's parsing at about 5 s, sliced so the event loop keeps running, against a 120 s deadline.
+ * Qualtrics keeps formatting mostly in question texts (`<b>`, `<br>`), so a survey with markup in
+ * every text of 150 questions with 8 options in 40 languages (54,000) is past it.
  */
-export const QSF_MAX_TEXTS = 50_000;
+export const QSF_MAX_MARKUP_TEXTS = 50_000;
+
+/**
+ * Texts of any kind, in all their languages together: every question text, option, block name and end
+ * message, once per language. Each is held in the model, copied into the draft and checked by the
+ * create's schema, so the count is bounded for memory and time too. 200,000 fits the largest survey the
+ * import is built for at v3's 50 languages — 200 questions of a text and 15 options is 160,000 — while
+ * the per-collection limits alone admit 4 million (200 × 401 × 50).
+ */
+export const QSF_MAX_TEXTS = 200_000;
 
 /** Export tags, block names and the survey name are cut to this before they are used. */
 export const QSF_MAX_NAME_CHARS = 200;
