@@ -5,7 +5,9 @@
 -- One transaction for the whole file. Prisma 7.8 does not add one, and these statements only make
 -- sense together: a partial apply would leave tables standing without their constraints or foreign
 -- keys. It is also what makes the file rerunnable — a rollback leaves nothing behind to collide with
--- on the retry.
+-- on the retry. Every type and constraint is created guarded, and the CHECKs and foreign keys are
+-- added apart from their tables, so the file also converges on a database built with `db:push`,
+-- which has the tables but none of the CHECKs.
 --
 -- `lock_timeout` is SET LOCAL so it expires with the transaction instead of leaking into whichever
 -- migrations run after this one on the same connection. The foreign keys at the bottom lock
@@ -20,19 +22,44 @@ BEGIN;
 SET LOCAL lock_timeout = '5s';
 
 -- CreateEnum
-CREATE TYPE "RetentionEntity" AS ENUM ('responses', 'surveys', 'members');
+DO $$
+BEGIN
+  CREATE TYPE "RetentionEntity" AS ENUM ('responses', 'surveys', 'members');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "RetentionSurveyCondition" AS ENUM ('noResponse', 'noChange', 'createdBefore');
+DO $$
+BEGIN
+  CREATE TYPE "RetentionSurveyCondition" AS ENUM ('noResponse', 'noChange', 'createdBefore');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "RetentionTargetType" AS ENUM ('survey', 'user');
+DO $$
+BEGIN
+  CREATE TYPE "RetentionTargetType" AS ENUM ('survey', 'user');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "RetentionRunItemAction" AS ENUM ('notified', 'archived', 'deactivated', 'deleted', 'skipped');
+DO $$
+BEGIN
+  CREATE TYPE "RetentionRunItemAction" AS ENUM ('notified', 'archived', 'deactivated', 'deleted', 'skipped');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "RetentionSkipReason" AS ENUM ('exempt', 'lastOwner', 'otherOrganization', 'noRecipient');
+DO $$
+BEGIN
+  CREATE TYPE "RetentionSkipReason" AS ENUM ('exempt', 'lastOwner', 'otherOrganization', 'noRecipient');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "RetentionPolicy" (
@@ -48,15 +75,33 @@ CREATE TABLE IF NOT EXISTS "RetentionPolicy" (
     "conditions" "RetentionSurveyCondition"[] DEFAULT ARRAY[]::"RetentionSurveyCondition"[],
     "updatedById" TEXT,
 
-    CONSTRAINT "RetentionPolicy_pkey" PRIMARY KEY ("id"),
-    -- The 14-day notice floor and a notice shorter than the period are product rules the API enforces;
-    -- they are repeated here as backstops for system writers (the sweep moves `enabledAt`): a shorter
-    -- warning could delete early, and one as long as the period would re-send a notice after any
-    -- activity. An enabled policy always knows when it took effect.
-    CONSTRAINT "RetentionPolicy_days_check" CHECK ("warnDays" >= 14 AND "periodDays" > "warnDays"),
-    CONSTRAINT "RetentionPolicy_enabled_at_check" CHECK (NOT "enabled" OR "enabledAt" IS NOT NULL),
-    CONSTRAINT "RetentionPolicy_conditions_check" CHECK ("entity" = 'surveys' OR COALESCE(cardinality("conditions"), 0) = 0)
+    CONSTRAINT "RetentionPolicy_pkey" PRIMARY KEY ("id")
 );
+
+-- The 14-day notice floor and a notice shorter than the period are product rules the API enforces;
+-- they are repeated here as backstops for system writers (the sweep moves `enabledAt`): a shorter
+-- warning could delete early, and one as long as the period would re-send a notice after any
+-- activity. An enabled policy always knows when it took effect.
+DO $$
+BEGIN
+  ALTER TABLE "RetentionPolicy" ADD CONSTRAINT "RetentionPolicy_days_check" CHECK ("warnDays" >= 14 AND "periodDays" > "warnDays");
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+  ALTER TABLE "RetentionPolicy" ADD CONSTRAINT "RetentionPolicy_enabled_at_check" CHECK (NOT "enabled" OR "enabledAt" IS NOT NULL);
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+  ALTER TABLE "RetentionPolicy" ADD CONSTRAINT "RetentionPolicy_conditions_check" CHECK ("entity" = 'surveys' OR COALESCE(cardinality("conditions"), 0) = 0);
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "RetentionExemption" (
@@ -71,11 +116,29 @@ CREATE TABLE IF NOT EXISTS "RetentionExemption" (
     "revokedAt" TIMESTAMP(3),
     "revokedById" TEXT,
 
-    CONSTRAINT "RetentionExemption_pkey" PRIMARY KEY ("id"),
-    CONSTRAINT "RetentionExemption_target_check" CHECK (num_nonnulls("surveyId") = 1),
-    CONSTRAINT "RetentionExemption_entity_check" CHECK ("entity" IN ('surveys', 'responses')),
-    CONSTRAINT "RetentionExemption_revoked_check" CHECK ("revokedById" IS NULL OR "revokedAt" IS NOT NULL)
+    CONSTRAINT "RetentionExemption_pkey" PRIMARY KEY ("id")
 );
+
+DO $$
+BEGIN
+  ALTER TABLE "RetentionExemption" ADD CONSTRAINT "RetentionExemption_target_check" CHECK (num_nonnulls("surveyId") = 1);
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+  ALTER TABLE "RetentionExemption" ADD CONSTRAINT "RetentionExemption_entity_check" CHECK ("entity" IN ('surveys', 'responses'));
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+  ALTER TABLE "RetentionExemption" ADD CONSTRAINT "RetentionExemption_revoked_check" CHECK ("revokedById" IS NULL OR "revokedAt" IS NOT NULL);
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "RetentionRun" (
@@ -105,10 +168,22 @@ CREATE TABLE IF NOT EXISTS "RetentionRunItem" (
     "recipient" TEXT,
     "skipReason" "RetentionSkipReason",
 
-    CONSTRAINT "RetentionRunItem_pkey" PRIMARY KEY ("id"),
-    CONSTRAINT "RetentionRunItem_count_check" CHECK ("count" > 0),
-    CONSTRAINT "RetentionRunItem_skip_reason_check" CHECK (("action" = 'skipped') = ("skipReason" IS NOT NULL))
+    CONSTRAINT "RetentionRunItem_pkey" PRIMARY KEY ("id")
 );
+
+DO $$
+BEGIN
+  ALTER TABLE "RetentionRunItem" ADD CONSTRAINT "RetentionRunItem_count_check" CHECK ("count" > 0);
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+  ALTER TABLE "RetentionRunItem" ADD CONSTRAINT "RetentionRunItem_skip_reason_check" CHECK (("action" = 'skipped') = ("skipReason" IS NOT NULL));
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "RetentionNotice" (
@@ -122,10 +197,22 @@ CREATE TABLE IF NOT EXISTS "RetentionNotice" (
     "emailSent" BOOLEAN NOT NULL DEFAULT false,
     "claimToken" TEXT,
 
-    CONSTRAINT "RetentionNotice_pkey" PRIMARY KEY ("id"),
-    CONSTRAINT "RetentionNotice_target_check" CHECK (("entity" IN ('surveys', 'responses') AND "surveyId" IS NOT NULL AND "userId" IS NULL) OR ("entity" = 'members' AND "userId" IS NOT NULL AND "surveyId" IS NULL)),
-    CONSTRAINT "RetentionNotice_email_check" CHECK (NOT "emailSent" OR "deliveredAt" IS NOT NULL)
+    CONSTRAINT "RetentionNotice_pkey" PRIMARY KEY ("id")
 );
+
+DO $$
+BEGIN
+  ALTER TABLE "RetentionNotice" ADD CONSTRAINT "RetentionNotice_target_check" CHECK (("entity" IN ('surveys', 'responses') AND "surveyId" IS NOT NULL AND "userId" IS NULL) OR ("entity" = 'members' AND "userId" IS NOT NULL AND "surveyId" IS NULL));
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+  ALTER TABLE "RetentionNotice" ADD CONSTRAINT "RetentionNotice_email_check" CHECK (NOT "emailSent" OR "deliveredAt" IS NOT NULL);
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AlterTable
 -- A nullable column with no default: a catalog-only change that rewrites nothing. It takes a brief
@@ -198,46 +285,101 @@ CREATE UNIQUE INDEX IF NOT EXISTS "RetentionExemption_surveyId_entity_active_key
 
 -- AddForeignKey
 -- squawk-ignore constraint-missing-not-valid, adding-foreign-key-constraint
-ALTER TABLE "RetentionPolicy" ADD CONSTRAINT "RetentionPolicy_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+  ALTER TABLE "RetentionPolicy" ADD CONSTRAINT "RetentionPolicy_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
 -- squawk-ignore constraint-missing-not-valid, adding-foreign-key-constraint
-ALTER TABLE "RetentionPolicy" ADD CONSTRAINT "RetentionPolicy_updatedById_fkey" FOREIGN KEY ("updatedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$
+BEGIN
+  ALTER TABLE "RetentionPolicy" ADD CONSTRAINT "RetentionPolicy_updatedById_fkey" FOREIGN KEY ("updatedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
 -- squawk-ignore constraint-missing-not-valid, adding-foreign-key-constraint
-ALTER TABLE "RetentionExemption" ADD CONSTRAINT "RetentionExemption_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+  ALTER TABLE "RetentionExemption" ADD CONSTRAINT "RetentionExemption_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
 -- squawk-ignore constraint-missing-not-valid, adding-foreign-key-constraint
-ALTER TABLE "RetentionExemption" ADD CONSTRAINT "RetentionExemption_surveyId_fkey" FOREIGN KEY ("surveyId") REFERENCES "Survey"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+  ALTER TABLE "RetentionExemption" ADD CONSTRAINT "RetentionExemption_surveyId_fkey" FOREIGN KEY ("surveyId") REFERENCES "Survey"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
 -- squawk-ignore constraint-missing-not-valid, adding-foreign-key-constraint
-ALTER TABLE "RetentionExemption" ADD CONSTRAINT "RetentionExemption_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$
+BEGIN
+  ALTER TABLE "RetentionExemption" ADD CONSTRAINT "RetentionExemption_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
 -- squawk-ignore constraint-missing-not-valid, adding-foreign-key-constraint
-ALTER TABLE "RetentionExemption" ADD CONSTRAINT "RetentionExemption_revokedById_fkey" FOREIGN KEY ("revokedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$
+BEGIN
+  ALTER TABLE "RetentionExemption" ADD CONSTRAINT "RetentionExemption_revokedById_fkey" FOREIGN KEY ("revokedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
 -- squawk-ignore constraint-missing-not-valid, adding-foreign-key-constraint
-ALTER TABLE "RetentionRun" ADD CONSTRAINT "RetentionRun_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+  ALTER TABLE "RetentionRun" ADD CONSTRAINT "RetentionRun_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
 -- squawk-ignore constraint-missing-not-valid, adding-foreign-key-constraint
-ALTER TABLE "RetentionRunItem" ADD CONSTRAINT "RetentionRunItem_runId_fkey" FOREIGN KEY ("runId") REFERENCES "RetentionRun"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+  ALTER TABLE "RetentionRunItem" ADD CONSTRAINT "RetentionRunItem_runId_fkey" FOREIGN KEY ("runId") REFERENCES "RetentionRun"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
 -- squawk-ignore constraint-missing-not-valid, adding-foreign-key-constraint
-ALTER TABLE "RetentionNotice" ADD CONSTRAINT "RetentionNotice_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+  ALTER TABLE "RetentionNotice" ADD CONSTRAINT "RetentionNotice_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
 -- squawk-ignore constraint-missing-not-valid, adding-foreign-key-constraint
-ALTER TABLE "RetentionNotice" ADD CONSTRAINT "RetentionNotice_surveyId_fkey" FOREIGN KEY ("surveyId") REFERENCES "Survey"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+  ALTER TABLE "RetentionNotice" ADD CONSTRAINT "RetentionNotice_surveyId_fkey" FOREIGN KEY ("surveyId") REFERENCES "Survey"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
 -- squawk-ignore constraint-missing-not-valid, adding-foreign-key-constraint
-ALTER TABLE "RetentionNotice" ADD CONSTRAINT "RetentionNotice_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+  ALTER TABLE "RetentionNotice" ADD CONSTRAINT "RetentionNotice_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 COMMIT;
