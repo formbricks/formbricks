@@ -2951,6 +2951,25 @@
         "yearly_checkout_unavailable": "Årlig betalning är inte tillgänglig ännu. Lägg till en betalningsmetod på en månatlig plan först eller kontakta support.",
         "your_plan": "Din plan"
       },
+      "data_retention": {
+        "deleted_or_deactivated": "Borttagna eller inaktiverade",
+        "description": "Ta bort gamla svar, arkivera inaktiva enkäter och inaktivera inaktiva medlemmar automatiskt, enligt ett schema som du bestämmer.",
+        "download_csv": "Ladda ner CSV",
+        "hide_runs_with_no_changes": "Dölj körningar utan ändringar",
+        "history": "Historik",
+        "history_description": "Vad varje nattlig körning gjorde.",
+        "history_load_error": "Det gick inte att läsa in historiken. Försök igen.",
+        "history_no_access": "Bara ägare och chefer kan se historiken för datalagring.",
+        "nav_label": "Datalagring",
+        "no_runs": "Inga körningar ännu. Policyerna körs varje natt.",
+        "no_runs_with_changes": "Inga körningar har ändrat något ännu.",
+        "notified": "Notifierade",
+        "policy": "Policy",
+        "run": "Körning",
+        "title": "Datalagring",
+        "upgrade_prompt_description": "Bestäm hur länge svar, enkäter och inaktiva medlemmar sparas, med aviseringar innan något tas bort och en historik över varje körning.",
+        "upgrade_prompt_title": "Uppgradera för att låsa upp datalagring"
+      },
       "domain": {
         "customize_favicon_description": "Ladda upp en egen favicon för att anpassa din länkenkät och stärka ditt varumärke.",
         "customize_favicon_with_higher_plan": "Anpassa favicon med ett högre abonnemang",

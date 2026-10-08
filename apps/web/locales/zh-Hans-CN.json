@@ -2951,6 +2951,25 @@
         "yearly_checkout_unavailable": "年度结算暂不可用。请先在月度套餐中添加付款方式，或联系客服。",
         "your_plan": "你的套餐"
       },
+      "data_retention": {
+        "deleted_or_deactivated": "已删除或已停用",
+        "description": "按你设定的计划,自动删除旧的回复、归档不活跃的问卷,并停用不活跃的成员。",
+        "download_csv": "下载 CSV",
+        "hide_runs_with_no_changes": "隐藏无变更的运行记录",
+        "history": "历史记录",
+        "history_description": "每晚运行的执行情况。",
+        "history_load_error": "无法加载历史记录,请重试。",
+        "history_no_access": "只有所有者和管理员可以查看数据保留历史记录。",
+        "nav_label": "数据保留",
+        "no_runs": "暂无运行记录。策略会在每晚运行。",
+        "no_runs_with_changes": "目前还没有任何运行产生过变更。",
+        "notified": "已通知",
+        "policy": "策略",
+        "run": "运行",
+        "title": "数据保留",
+        "upgrade_prompt_description": "设置回复、问卷和不活跃成员的保留时长,在删除任何内容之前会发送通知,并记录每次运行的历史。",
+        "upgrade_prompt_title": "升级以解锁数据保留功能"
+      },
       "domain": {
         "customize_favicon_description": "上传自定义 Favicon，个性化您的链接问卷体验，提升品牌形象。",
         "customize_favicon_with_higher_plan": "升级套餐以自定义 Favicon",

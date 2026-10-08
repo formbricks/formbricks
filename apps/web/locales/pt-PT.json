@@ -2951,6 +2951,25 @@
         "yearly_checkout_unavailable": "O pagamento anual ainda não está disponível. Adiciona primeiro um método de pagamento num plano mensal ou contacta o suporte.",
         "your_plan": "O teu plano"
       },
+      "data_retention": {
+        "deleted_or_deactivated": "Eliminado ou desativado",
+        "description": "Elimine respostas antigas, arquive inquéritos inativos e desative membros inativos automaticamente, de acordo com uma programação que definir.",
+        "download_csv": "Transferir CSV",
+        "hide_runs_with_no_changes": "Ocultar execuções sem alterações",
+        "history": "Histórico",
+        "history_description": "O que cada execução noturna fez.",
+        "history_load_error": "Não foi possível carregar o histórico. Tente novamente.",
+        "history_no_access": "Só os proprietários e os gestores podem ver o histórico de retenção de dados.",
+        "nav_label": "Retenção de dados",
+        "no_runs": "Ainda não há execuções. As políticas são executadas todas as noites.",
+        "no_runs_with_changes": "Ainda nenhuma execução alterou algo.",
+        "notified": "Notificados",
+        "policy": "Política",
+        "run": "Execução",
+        "title": "Retenção de dados",
+        "upgrade_prompt_description": "Defina durante quanto tempo as respostas, os inquéritos e os membros inativos são mantidos, com avisos antes de qualquer remoção e um histórico de todas as execuções.",
+        "upgrade_prompt_title": "Atualize para desbloquear a retenção de dados"
+      },
       "domain": {
         "customize_favicon_description": "Carregue um favicon personalizado para personalizar a experiência do seu inquérito por link e reforçar a presença da sua marca.",
         "customize_favicon_with_higher_plan": "Personalize o favicon com um plano superior",

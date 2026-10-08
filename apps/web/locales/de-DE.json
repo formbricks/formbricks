@@ -2951,6 +2951,25 @@
         "yearly_checkout_unavailable": "Jährliche Zahlung ist noch nicht verfügbar. Füge zuerst eine Zahlungsmethode für einen monatlichen Plan hinzu oder kontaktiere den Support.",
         "your_plan": "Dein Plan"
       },
+      "data_retention": {
+        "deleted_or_deactivated": "Gelöscht oder deaktiviert",
+        "description": "Lösche alte Antworten, archiviere inaktive Umfragen und deaktiviere inaktive Mitglieder automatisch – nach einem Zeitplan, den Du festlegst.",
+        "download_csv": "CSV herunterladen",
+        "hide_runs_with_no_changes": "Durchläufe ohne Änderungen ausblenden",
+        "history": "Verlauf",
+        "history_description": "Was bei den nächtlichen Durchläufen jeweils passiert ist.",
+        "history_load_error": "Der Verlauf konnte nicht geladen werden. Bitte versuche es erneut.",
+        "history_no_access": "Nur Eigentümer und Manager können den Verlauf der Datenaufbewahrung sehen.",
+        "nav_label": "Datenaufbewahrung",
+        "no_runs": "Noch keine Durchläufe. Die Richtlinien laufen jede Nacht.",
+        "no_runs_with_changes": "Bisher hat noch kein Durchlauf etwas geändert.",
+        "notified": "Benachrichtigt",
+        "policy": "Richtlinie",
+        "run": "Durchlauf",
+        "title": "Datenaufbewahrung",
+        "upgrade_prompt_description": "Lege fest, wie lange Antworten, Umfragen und inaktive Mitglieder aufbewahrt werden – mit Benachrichtigungen, bevor etwas entfernt wird, und einem Verlauf jedes Durchlaufs.",
+        "upgrade_prompt_title": "Upgrade durchführen, um Datenaufbewahrung freizuschalten"
+      },
       "domain": {
         "customize_favicon_description": "Lade ein eigenes Favicon hoch, um deine Link-Umfragen zu personalisieren und deine Marke zu stärken.",
         "customize_favicon_with_higher_plan": "Favicon mit einem höheren Plan anpassen",

@@ -2951,6 +2951,25 @@
         "yearly_checkout_unavailable": "Jaarlijkse checkout is nog niet beschikbaar. Voeg eerst een betaalmethode toe bij een maandelijks abonnement of neem contact op met support.",
         "your_plan": "Jouw abonnement"
       },
+      "data_retention": {
+        "deleted_or_deactivated": "Verwijderd of gedeactiveerd",
+        "description": "Verwijder oude reacties, archiveer inactieve enquêtes en deactiveer inactieve leden automatisch, volgens een schema dat je zelf instelt.",
+        "download_csv": "CSV downloaden",
+        "hide_runs_with_no_changes": "Uitvoeringen zonder wijzigingen verbergen",
+        "history": "Geschiedenis",
+        "history_description": "Wat elke nachtelijke uitvoering heeft gedaan.",
+        "history_load_error": "De geschiedenis kon niet worden geladen. Probeer het opnieuw.",
+        "history_no_access": "Alleen eigenaren en beheerders kunnen de geschiedenis van gegevensretentie bekijken.",
+        "nav_label": "Gegevensretentie",
+        "no_runs": "Nog geen uitvoeringen. Beleidsregels worden elke nacht uitgevoerd.",
+        "no_runs_with_changes": "Er is nog niets gewijzigd door een uitvoering.",
+        "notified": "Op de hoogte gebracht",
+        "policy": "Beleid",
+        "run": "Uitvoering",
+        "title": "Gegevensretentie",
+        "upgrade_prompt_description": "Bepaal hoe lang reacties, enquêtes en inactieve leden bewaard blijven, met meldingen voordat er iets wordt verwijderd en een geschiedenis van elke uitvoering.",
+        "upgrade_prompt_title": "Upgrade om gegevensretentie te ontgrendelen"
+      },
       "domain": {
         "customize_favicon_description": "Upload een aangepaste favicon om je linkenquête-ervaring te personaliseren en je merkpresentie te versterken.",
         "customize_favicon_with_higher_plan": "Pas favicon aan met een hoger abonnement",

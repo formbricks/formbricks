@@ -2951,6 +2951,25 @@
         "yearly_checkout_unavailable": "Le paiement annuel n'est pas encore disponible. Ajoute d'abord un moyen de paiement sur un forfait mensuel ou contacte le support.",
         "your_plan": "Ton offre"
       },
+      "data_retention": {
+        "deleted_or_deactivated": "Supprimé(e)s ou désactivé(e)s",
+        "description": "Supprimez automatiquement les anciennes réponses, archivez les enquêtes inactives et désactivez les membres inactifs, selon le calendrier que vous définissez.",
+        "download_csv": "Télécharger le CSV",
+        "hide_runs_with_no_changes": "Masquer les exécutions sans modification",
+        "history": "Historique",
+        "history_description": "Ce qu'a fait chaque exécution nocturne.",
+        "history_load_error": "Impossible de charger l'historique. Réessaie.",
+        "history_no_access": "Seuls les propriétaires et les gestionnaires peuvent consulter l'historique de conservation des données.",
+        "nav_label": "Conservation des données",
+        "no_runs": "Aucune exécution pour le moment. Les politiques s'exécutent chaque nuit.",
+        "no_runs_with_changes": "Aucune exécution n'a encore modifié quoi que ce soit.",
+        "notified": "Notifié",
+        "policy": "Politique",
+        "run": "Exécution",
+        "title": "Conservation des données",
+        "upgrade_prompt_description": "Définissez la durée de conservation des réponses, des enquêtes et des membres inactifs, avec des notifications avant toute suppression et un historique de chaque exécution.",
+        "upgrade_prompt_title": "Passe à l'offre supérieure pour débloquer la conservation des données"
+      },
       "domain": {
         "customize_favicon_description": "Chargez un favicon personnalisé pour personnaliser l'expérience de vos enquêtes par lien et renforcer la présence de votre marque.",
         "customize_favicon_with_higher_plan": "Personnaliser le favicon avec un forfait supérieur",

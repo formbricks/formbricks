@@ -2951,6 +2951,25 @@
         "yearly_checkout_unavailable": "年間プランのチェックアウトはまだご利用いただけません。まず月間プランでお支払い方法を追加するか、サポートにお問い合わせください。",
         "your_plan": "ご利用プラン"
       },
+      "data_retention": {
+        "deleted_or_deactivated": "削除または無効化",
+        "description": "古い回答の削除、非アクティブなアンケートのアーカイブ、非アクティブなメンバーの無効化を、設定したスケジュールで自動的に行います。",
+        "download_csv": "CSVをダウンロード",
+        "hide_runs_with_no_changes": "変更のない実行を非表示",
+        "history": "履歴",
+        "history_description": "毎晩の実行で行われた内容です。",
+        "history_load_error": "履歴を読み込めませんでした。もう一度お試しください。",
+        "history_no_access": "データ保持の履歴を確認できるのは、オーナーとマネージャーのみです。",
+        "nav_label": "データ保持",
+        "no_runs": "まだ実行履歴はありません。ポリシーは毎晩実行されます。",
+        "no_runs_with_changes": "まだ変更が行われた実行はありません。",
+        "notified": "通知済み",
+        "policy": "ポリシー",
+        "run": "実行",
+        "title": "データ保持",
+        "upgrade_prompt_description": "回答、アンケート、非アクティブなメンバーの保持期間を設定できます。削除前の通知や、すべての実行履歴も利用できます。",
+        "upgrade_prompt_title": "アップグレードしてデータ保持を利用する"
+      },
       "domain": {
         "customize_favicon_description": "カスタムファビコンをアップロードして、リンク調査の体験をパーソナライズし、ブランドプレゼンスを強化します。",
         "customize_favicon_with_higher_plan": "上位プランでファビコンをカスタマイズ",

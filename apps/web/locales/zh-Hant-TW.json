@@ -2951,6 +2951,25 @@
         "yearly_checkout_unavailable": "年度結帳尚未開放。請先在月繳方案中新增付款方式，或聯絡客服。",
         "your_plan": "您的方案"
       },
+      "data_retention": {
+        "deleted_or_deactivated": "已刪除或已停用",
+        "description": "依照你設定的排程，自動刪除舊回覆、封存閒置問卷，並停用閒置成員。",
+        "download_csv": "下載 CSV",
+        "hide_runs_with_no_changes": "隱藏沒有變更的執行紀錄",
+        "history": "歷史紀錄",
+        "history_description": "每晚執行的處理內容。",
+        "history_load_error": "無法載入歷史紀錄，請再試一次。",
+        "history_no_access": "只有擁有者和管理員可以查看資料保留的歷史紀錄。",
+        "nav_label": "資料保留",
+        "no_runs": "目前還沒有執行紀錄。政策會在每晚執行。",
+        "no_runs_with_changes": "目前還沒有任何執行造成變更。",
+        "notified": "已通知",
+        "policy": "政策",
+        "run": "執行",
+        "title": "資料保留",
+        "upgrade_prompt_description": "設定回覆、問卷和閒置成員的保留期限，在移除任何內容之前都會先發出通知，並提供每次執行的歷史紀錄。",
+        "upgrade_prompt_title": "升級以解鎖資料保留功能"
+      },
       "domain": {
         "customize_favicon_description": "上傳自訂 Favicon，讓您的連結問卷體驗更具個人化，並強化品牌形象。",
         "customize_favicon_with_higher_plan": "升級方案以自訂 Favicon",

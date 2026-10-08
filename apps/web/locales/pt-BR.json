@@ -2951,6 +2951,25 @@
         "yearly_checkout_unavailable": "O checkout anual ainda não está disponível. Adicione um método de pagamento em um plano mensal primeiro ou entre em contato com o suporte.",
         "your_plan": "Seu plano"
       },
+      "data_retention": {
+        "deleted_or_deactivated": "Excluído ou desativado",
+        "description": "Exclua respostas antigas, arquive pesquisas inativas e desative membros inativos automaticamente, em um cronograma que você define.",
+        "download_csv": "Baixar CSV",
+        "hide_runs_with_no_changes": "Ocultar execuções sem alterações",
+        "history": "Histórico",
+        "history_description": "O que cada execução noturna fez.",
+        "history_load_error": "Não foi possível carregar o histórico. Tente novamente.",
+        "history_no_access": "Somente proprietários e gerentes podem ver o histórico de retenção de dados.",
+        "nav_label": "Retenção de dados",
+        "no_runs": "Nenhuma execução ainda. As políticas são executadas todas as noites.",
+        "no_runs_with_changes": "Nenhuma execução alterou algo até agora.",
+        "notified": "Notificado",
+        "policy": "Política",
+        "run": "Execução",
+        "title": "Retenção de dados",
+        "upgrade_prompt_description": "Defina por quanto tempo respostas, pesquisas e membros inativos são mantidos, com avisos antes de qualquer remoção e um histórico de cada execução.",
+        "upgrade_prompt_title": "Faça upgrade para desbloquear a retenção de dados"
+      },
       "domain": {
         "customize_favicon_description": "Faça o upload de um favicon personalizado para personalizar a experiência da sua pesquisa por link e fortalecer a presença da sua marca.",
         "customize_favicon_with_higher_plan": "Personalize o favicon com um plano superior",

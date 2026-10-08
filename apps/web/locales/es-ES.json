@@ -2951,6 +2951,25 @@
         "yearly_checkout_unavailable": "El pago anual aún no está disponible. Primero añade un método de pago en un plan mensual o contacta con soporte.",
         "your_plan": "Tu plan"
       },
+      "data_retention": {
+        "deleted_or_deactivated": "Eliminado o desactivado",
+        "description": "Elimina respuestas antiguas, archiva encuestas inactivas y desactiva miembros inactivos automáticamente, con la programación que tú definas.",
+        "download_csv": "Descargar CSV",
+        "hide_runs_with_no_changes": "Ocultar ejecuciones sin cambios",
+        "history": "Historial",
+        "history_description": "Qué hizo cada ejecución nocturna.",
+        "history_load_error": "No se ha podido cargar el historial. Inténtalo de nuevo.",
+        "history_no_access": "Solo los propietarios y los gestores pueden ver el historial de retención de datos.",
+        "nav_label": "Retención de datos",
+        "no_runs": "Aún no hay ejecuciones. Las políticas se ejecutan cada noche.",
+        "no_runs_with_changes": "Ninguna ejecución ha cambiado nada todavía.",
+        "notified": "Notificado",
+        "policy": "Política",
+        "run": "Ejecución",
+        "title": "Retención de datos",
+        "upgrade_prompt_description": "Define durante cuánto tiempo se conservan las respuestas, las encuestas y los miembros inactivos, con avisos antes de eliminar nada y un historial de cada ejecución.",
+        "upgrade_prompt_title": "Mejora tu plan para desbloquear la retención de datos"
+      },
       "domain": {
         "customize_favicon_description": "Sube un favicon personalizado para personalizar la experiencia de tu encuesta por enlace y fortalecer la presencia de tu marca.",
         "customize_favicon_with_higher_plan": "Personaliza el favicon con un plan superior",

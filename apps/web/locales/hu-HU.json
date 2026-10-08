@@ -2951,6 +2951,25 @@
         "yearly_checkout_unavailable": "Az éves fizetési lehetőség még nem érhető el. Először adjon hozzá fizetési módot egy havi csomaghoz, vagy vegye fel a kapcsolatot a támogatási csapattal.",
         "your_plan": "Az Ön csomagja"
       },
+      "data_retention": {
+        "deleted_or_deactivated": "Törölt vagy deaktivált",
+        "description": "Törölje a régi válaszokat, archiválja az inaktív felméréseket, és deaktiválja az inaktív tagokat automatikusan, Ön által meghatározott ütemezés szerint.",
+        "download_csv": "CSV letöltése",
+        "hide_runs_with_no_changes": "A változtatás nélküli futtatások elrejtése",
+        "history": "Előzmények",
+        "history_description": "Az egyes éjszakai futtatások során végrehajtott műveletek.",
+        "history_load_error": "Az előzmények betöltése nem sikerült. Kérjük, próbálja meg újra.",
+        "history_no_access": "Az adatmegőrzési előzményeket kizárólag a tulajdonosok és a menedzserek tekinthetik meg.",
+        "nav_label": "Adatmegőrzés",
+        "no_runs": "Még nem volt futtatás. A szabályzatok minden éjszaka lefutnak.",
+        "no_runs_with_changes": "Egyetlen futtatás sem módosított még semmit.",
+        "notified": "Értesítve",
+        "policy": "Szabályzat",
+        "run": "Futtatás",
+        "title": "Adatmegőrzés",
+        "upgrade_prompt_description": "Határozza meg, mennyi ideig kerüljenek megőrzésre a válaszok, a felmérések és az inaktív tagok; minden eltávolítás előtt értesítést küldünk, és minden futtatásról előzményeket vezetünk.",
+        "upgrade_prompt_title": "Frissítsen az adatmegőrzési funkció feloldásához"
+      },
       "domain": {
         "customize_favicon_description": "Egyéni böngészőikon feltöltése a hivatkozás-kérdőív élményének személyre szabásához és a márka jelenlétének erősítéséhez.",
         "customize_favicon_with_higher_plan": "Böngészőikon személyre szabása egy magasabb csomaggal",

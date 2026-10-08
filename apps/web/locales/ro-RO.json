@@ -2951,6 +2951,25 @@
         "yearly_checkout_unavailable": "Plata anuală nu este disponibilă încă. Adaugă mai întâi o metodă de plată pe un abonament lunar sau contactează asistența.",
         "your_plan": "Planul tău"
       },
+      "data_retention": {
+        "deleted_or_deactivated": "Șterse sau dezactivate",
+        "description": "Șterge automat răspunsurile vechi, arhivează sondajele inactive și dezactivează membrii inactivi, după un program stabilit de tine.",
+        "download_csv": "Descarcă CSV",
+        "hide_runs_with_no_changes": "Ascunde rulările fără modificări",
+        "history": "Istoric",
+        "history_description": "Ce a făcut fiecare rulare de noapte.",
+        "history_load_error": "Nu am putut încărca istoricul. Încearcă din nou.",
+        "history_no_access": "Doar proprietarii și managerii pot vedea istoricul păstrării datelor.",
+        "nav_label": "Păstrarea datelor",
+        "no_runs": "Nicio rulare încă. Politicile rulează în fiecare noapte.",
+        "no_runs_with_changes": "Nicio rulare nu a modificat nimic până acum.",
+        "notified": "Notificat",
+        "policy": "Politică",
+        "run": "Rulare",
+        "title": "Păstrarea datelor",
+        "upgrade_prompt_description": "Stabilește cât timp sunt păstrate răspunsurile, sondajele și membrii inactivi, cu notificări înainte de orice ștergere și un istoric al fiecărei rulări.",
+        "upgrade_prompt_title": "Fă upgrade pentru a debloca păstrarea datelor"
+      },
       "domain": {
         "customize_favicon_description": "Încărcați un favicon personalizat pentru a oferi o experiență unică sondajului de linkuri și pentru a consolida prezența brandului.",
         "customize_favicon_with_higher_plan": "Personalizați faviconul cu un plan superior",

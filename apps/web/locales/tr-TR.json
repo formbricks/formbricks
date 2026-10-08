@@ -2951,6 +2951,25 @@
         "yearly_checkout_unavailable": "Yıllık ödeme henüz kullanılamıyor. Önce aylık bir plana ödeme yöntemi ekle veya destek ekibiyle iletişime geç.",
         "your_plan": "Planın"
       },
+      "data_retention": {
+        "deleted_or_deactivated": "Silindi veya devre dışı bırakıldı",
+        "description": "Eski yanıtları silin, etkin olmayan anketleri arşivleyin ve etkin olmayan üyeleri belirlediğiniz bir programa göre otomatik olarak devre dışı bırakın.",
+        "download_csv": "CSV'yi indir",
+        "hide_runs_with_no_changes": "Değişiklik içermeyen çalıştırmaları gizle",
+        "history": "Geçmiş",
+        "history_description": "Her gece çalıştırmasında neler yapıldı.",
+        "history_load_error": "Geçmiş yüklenemedi. Lütfen tekrar dene.",
+        "history_no_access": "Veri saklama geçmişini yalnızca sahipler ve yöneticiler görebilir.",
+        "nav_label": "Veri saklama",
+        "no_runs": "Henüz çalıştırma yok. Politikalar her gece çalışır.",
+        "no_runs_with_changes": "Henüz hiçbir çalıştırma bir şeyi değiştirmedi.",
+        "notified": "Bildirildi",
+        "policy": "Politika",
+        "run": "Çalıştırma",
+        "title": "Veri saklama",
+        "upgrade_prompt_description": "Yanıtların, anketlerin ve etkin olmayan üyelerin ne kadar süre saklanacağını belirleyin; herhangi bir şey kaldırılmadan önce bildirim alın ve her çalıştırmanın geçmişini görün.",
+        "upgrade_prompt_title": "Veri saklamanın kilidini açmak için planını yükselt"
+      },
       "domain": {
         "customize_favicon_description": "Link anket deneyimini kişiselleştirmek ve marka varlığını güçlendirmek için özel bir favicon yükle.",
         "customize_favicon_with_higher_plan": "Daha yüksek bir planla favicon'u özelleştir",
