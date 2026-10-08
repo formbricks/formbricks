@@ -109,12 +109,12 @@ export const CssCodeField = ({
     textarea.setSelectionRange(edit.from, edit.to);
     // Applied as typed text so the change lands on the browser's undo stack, which a new `value`
     // would wipe. `execCommand` is the only way to do that; where it is missing, the edit is still
-    // applied, just without undo.
+    // applied, just without undo. Deprecated, but no standard API replaces it yet, hence the NOSONARs.
     isApplyingEdit.current = true;
     const typed =
       edit.insert === ""
-        ? document.execCommand("delete")
-        : document.execCommand("insertText", false, edit.insert);
+        ? document.execCommand("delete") // NOSONAR(typescript:S1874)
+        : document.execCommand("insertText", false, edit.insert); // NOSONAR(typescript:S1874)
     isApplyingEdit.current = false;
     if (typed) {
       textarea.setSelectionRange(edit.selectionStart, edit.selectionEnd);

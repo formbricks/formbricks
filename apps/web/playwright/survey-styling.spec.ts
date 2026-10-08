@@ -465,7 +465,7 @@ test.describe("Survey Styling", async () => {
       const addCustomStyles = page.getByRole("switch", { name: "Add custom styles" });
       await addCustomStyles.click();
       await page.getByRole("button", { name: /^Custom CSS/ }).click();
-      await page.getByLabel("Base CSS", { exact: true }).fill(surveyCss);
+      await page.getByLabel("Survey base CSS", { exact: true }).fill(surveyCss);
 
       const preview = page.locator("#fbjs");
       const previewButton = preview.locator('[data-fb-part="button-primary"]').first();
