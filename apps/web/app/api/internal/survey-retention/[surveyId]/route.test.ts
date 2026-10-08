@@ -37,6 +37,12 @@ vi.mock("server-only", () => ({}));
 const ORG_ID = "clorg11111111111111111111";
 const SURVEY_ID = "clsrv11111111111111111111";
 const CUTOFF = new Date("2029-01-01T00:00:00.000Z");
+const SURVEY = {
+  id: SURVEY_ID,
+  createdAt: new Date("2025-01-01T00:00:00.000Z"),
+  updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+  archivedAt: null,
+};
 
 const get = (surveyId = SURVEY_ID) =>
   GET(new NextRequest(`http://localhost/api/internal/survey-retention/${surveyId}`), {
@@ -47,7 +53,11 @@ describe("GET /api/internal/survey-retention/{surveyId}", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getSession.mockResolvedValue({ user: { id: "cluser1111111111111111111" } });
-    mocks.authorizeSurvey.mockResolvedValue({ authResult: { organizationId: ORG_ID }, response: null });
+    mocks.authorizeSurvey.mockResolvedValue({
+      survey: SURVEY,
+      authResult: { organizationId: ORG_ID },
+      response: null,
+    });
     mocks.isEnabled.mockResolvedValue(true);
     mocks.policies.mockResolvedValue({});
     mocks.facts.mockResolvedValue({ createdAt: new Date() });
@@ -87,6 +97,51 @@ describe("GET /api/internal/survey-retention/{surveyId}", () => {
       expect.objectContaining({ surveyId: SURVEY_ID, access: "read" })
     );
     expect(mocks.count).toHaveBeenCalledWith(SURVEY_ID, CUTOFF);
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+    // The survey the check already read, not a second read of it.
+    expect(mocks.facts).toHaveBeenCalledWith(SURVEY);
+  });
+
+  test("hands the active exemptions to the plan, and returns them serialized", async () => {
+    mocks.exemptions.mockResolvedValueOnce([
+      {
+        id: "clexm11111111111111111111",
+        entity: "responses",
+        until: new Date("2031-03-31T21:59:59.999Z"),
+        reason: "Supplier audit",
+        createdAt: new Date("2030-01-02T00:00:00.000Z"),
+        revokedAt: null,
+        surveyId: SURVEY_ID,
+        surveyName: "Site visit feedback",
+        workspaceId: "clwsp11111111111111111111",
+        createdById: "cluser1111111111111111111",
+        createdByName: "Anna Keller",
+        visibilityVersion: 0,
+        visibilityProjectedVersion: 0,
+      },
+    ]);
+
+    const { data } = await (await get()).json();
+
+    expect(mocks.exemptions).toHaveBeenCalledWith({
+      surveyId: SURVEY_ID,
+      organizationId: ORG_ID,
+      now: expect.any(Date),
+    });
+    // A responses exemption must reach the plan, which holds the survey from the surveys policy too (ENG-3371).
+    expect(mocks.plan).toHaveBeenCalledWith(
+      expect.objectContaining({ exemptPolicies: new Set(["responses"]) })
+    );
+    expect(data.exemptions).toEqual([
+      expect.objectContaining({
+        id: "clexm11111111111111111111",
+        policy: "responses",
+        surveyName: "Site visit feedback",
+        reason: "Supplier audit",
+        createdBy: { id: "cluser1111111111111111111", name: "Anna Keller" },
+      }),
+    ]);
+    expect(data.exemptions[0]).not.toHaveProperty("visibilityVersion");
   });
 
   test("answers not governed, rather than 403, for an organisation without the entitlement", async () => {

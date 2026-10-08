@@ -35,14 +35,21 @@ describe("survey retention service (real Postgres)", () => {
       data: { organizationId, entity: "surveys", surveyId, sentAt: daysAgo(3) },
     });
 
-    expect(await getSurveyRetentionFacts(surveyId)).toMatchObject({
+    const survey = await prisma.survey.findUniqueOrThrow({ where: { id: surveyId } });
+    const other = await prisma.survey.findUniqueOrThrow({ where: { id: otherSurveyId } });
+
+    expect(await getSurveyRetentionFacts(survey)).toEqual({
+      createdAt: survey.createdAt,
+      updatedAt: survey.updatedAt,
       archivedAt: null,
       oldestResponseAt: daysAgo(50),
       newestResponseAt: daysAgo(10),
       surveysNoticeSentAt: daysAgo(3),
     });
-    expect(await getSurveyRetentionFacts(otherSurveyId)).toMatchObject({ surveysNoticeSentAt: null });
-    expect(await getSurveyRetentionFacts("clmissingmissingmissingmi")).toBeNull();
+    expect(await getSurveyRetentionFacts(other)).toMatchObject({
+      oldestResponseAt: daysAgo(500),
+      surveysNoticeSentAt: null,
+    });
   });
 
   test("counts only this survey's responses up to the cutoff, stopping at the cap", async () => {
@@ -65,13 +72,41 @@ describe("survey retention service (real Postgres)", () => {
       data: [
         { organizationId, surveyId, entity: "surveys", until: daysAgo(-30), reason: "Audit" },
         { organizationId, surveyId, entity: "responses", until: daysAgo(1), reason: "Ended" },
+        // Revoked while it still had time to run.
+        {
+          organizationId,
+          surveyId,
+          entity: "responses",
+          until: daysAgo(-60),
+          reason: "Revoked",
+          revokedAt: daysAgo(2),
+        },
         { organizationId, surveyId: otherSurveyId, entity: "surveys", until: daysAgo(-30), reason: "Other" },
       ],
     });
 
-    const rows = await listActiveSurveyRetentionExemptions(surveyId, NOW);
+    const rows = await listActiveSurveyRetentionExemptions({ surveyId, organizationId, now: NOW });
 
     expect(rows.map((row) => [row.entity, row.reason])).toEqual([["surveys", "Audit"]]);
+  });
+
+  test("matches the organisation too, so a row filed under another one never shows", async () => {
+    const foreignOrganizationId = (await prisma.organization.create({ data: { name: "Foreign" } })).id;
+    // Never written by the app, which takes the organisation from the survey; fenced anyway.
+    await prisma.retentionExemption.create({
+      data: {
+        organizationId: foreignOrganizationId,
+        surveyId,
+        entity: "responses",
+        until: daysAgo(-30),
+        reason: "Foreign",
+      },
+    });
+
+    expect(await listActiveSurveyRetentionExemptions({ surveyId, organizationId, now: NOW })).toEqual([]);
+    expect(
+      await listActiveSurveyRetentionExemptions({ surveyId, organizationId: foreignOrganizationId, now: NOW })
+    ).toHaveLength(1);
   });
 
   test("gives the two survey policies with when each took effect", async () => {

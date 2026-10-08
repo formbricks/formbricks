@@ -28,12 +28,13 @@ describe("getSurveyRetentionPlan", () => {
   test("dates each active policy with the schedule the sweep uses", () => {
     const [responses, surveys] = plan();
 
-    // The oldest response passed its 3 years 5 days ago; its warning has run, so it goes now.
+    // The oldest response passed its 3 years 5 days ago and its warning has run, so it goes on the
+    // next run: reported as now, not as a date in the past.
     expect(responses).toEqual({
       policy: "responses",
       exempt: false,
       nextAction: "delete",
-      nextDate: addRetentionDays(survey.oldestResponseAt!, 1095),
+      nextDate: NOW,
       dueCreatedAtOrBefore: daysAgo(1095 - 60),
     });
     // No notice has gone out yet, so the archive waits the full 60 days from the next sweep.
@@ -51,6 +52,18 @@ describe("getSurveyRetentionPlan", () => {
     const [, surveys] = plan({ survey: { ...survey, archivedAt } });
 
     expect(surveys).toMatchObject({ nextAction: "delete", nextDate: addRetentionDays(archivedAt, 30) });
+  });
+
+  test("doesn't count responses when even the oldest is still outside the warning window", () => {
+    const [responses] = plan({
+      survey: { ...survey, oldestResponseAt: daysAgo(400), newestResponseAt: daysAgo(10) },
+    });
+
+    expect(responses).toMatchObject({
+      nextAction: "delete",
+      nextDate: addRetentionDays(daysAgo(400), 1095),
+      dueCreatedAtOrBefore: null,
+    });
   });
 
   test("leaves paused policies out, and says nothing about responses a survey doesn't have", () => {

@@ -126,11 +126,23 @@ export async function findRetentionExemption({
   return row ?? null;
 }
 
-/** A survey's active exemptions, newest first. The caller has already authorized reading the survey. */
-export const listActiveSurveyRetentionExemptions = (surveyId: string, now: Date) =>
+/**
+ * A survey's active exemptions, newest first. The caller has already authorized reading the survey; the
+ * organisation is matched too, as a second fence.
+ */
+export const listActiveSurveyRetentionExemptions = ({
+  surveyId,
+  organizationId,
+  now,
+}: {
+  surveyId: string;
+  organizationId: string;
+  now: Date;
+}) =>
   selectExemptionRows(
     [
       Prisma.sql`e."surveyId" = ${surveyId}`,
+      Prisma.sql`e."organizationId" = ${organizationId}`,
       Prisma.sql`e."revokedAt" IS NULL`,
       Prisma.sql`e."until" > ${now}`,
     ],

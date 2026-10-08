@@ -19,15 +19,19 @@ export async function getSurveyRetentionPolicies(
 }
 
 /**
- * The facts a survey's retention dates derive from: its timestamps, its oldest and newest response
- * (one aggregate over `Response(surveyId, createdAt)`), and the surveys-policy notice if one went out.
+ * The facts a survey's retention dates derive from: its timestamps (from the survey the caller already
+ * read), its oldest and newest response (one aggregate over `Response(surveyId, createdAt)`), and the
+ * surveys-policy notice if one went out.
  */
-export async function getSurveyRetentionFacts(surveyId: string): Promise<TSurveyRetentionFacts | null> {
-  const [survey, responses, notice] = await Promise.all([
-    prisma.survey.findUnique({
-      where: { id: surveyId },
-      select: { createdAt: true, updatedAt: true, archivedAt: true },
-    }),
+export async function getSurveyRetentionFacts(survey: {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  /** Optional on the survey type; absent means never archived. */
+  archivedAt?: Date | null;
+}): Promise<TSurveyRetentionFacts> {
+  const surveyId = survey.id;
+  const [responses, notice] = await Promise.all([
     prisma.response.aggregate({
       where: { surveyId },
       _min: { createdAt: true },
@@ -38,12 +42,11 @@ export async function getSurveyRetentionFacts(surveyId: string): Promise<TSurvey
       select: { sentAt: true },
     }),
   ]);
-  if (!survey) return null;
 
   return {
     createdAt: survey.createdAt,
     updatedAt: survey.updatedAt,
-    archivedAt: survey.archivedAt,
+    archivedAt: survey.archivedAt ?? null,
     oldestResponseAt: responses._min.createdAt,
     newestResponseAt: responses._max.createdAt,
     surveysNoticeSentAt: notice?.sentAt ?? null,

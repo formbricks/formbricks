@@ -32,7 +32,7 @@ export async function getSurveyRetentionOperation({
   requestId: string;
   instance: string;
 }): Promise<Response> {
-  const { authResult, response } = await getAuthorizedV3Survey({
+  const { survey, authResult, response } = await getAuthorizedV3Survey({
     surveyId,
     authentication,
     access: "read",
@@ -48,11 +48,9 @@ export async function getSurveyRetentionOperation({
   const now = new Date();
   const [policies, facts, exemptions] = await Promise.all([
     getSurveyRetentionPolicies(authResult.organizationId),
-    getSurveyRetentionFacts(surveyId),
-    listActiveSurveyRetentionExemptions(surveyId, now),
+    getSurveyRetentionFacts(survey),
+    listActiveSurveyRetentionExemptions({ surveyId, organizationId: authResult.organizationId, now }),
   ]);
-  // Deleted between the authorization and these reads: nothing governs it any more.
-  if (!facts) return successResponse(NOT_GOVERNED, { requestId, cache: "private, no-store" });
 
   const plans = getSurveyRetentionPlan({
     policies,

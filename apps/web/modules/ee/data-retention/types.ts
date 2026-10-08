@@ -93,6 +93,7 @@ export type TSurveyRetentionPolicy = {
   exempt: boolean;
   /** Null when the policy has nothing to do to this survey yet (no responses, or exempt). */
   nextAction: "archive" | "delete" | null;
+  /** Never in the past: a step already due happens on the next nightly run, reported as the request time. */
   nextDate: string | null;
   /**
    * Responses policy: how many responses are already inside the warning window, the oldest deleted on
@@ -107,3 +108,15 @@ export type TSurveyRetention = {
   policies: TSurveyRetentionPolicy[];
   exemptions: TRetentionExemption[];
 };
+
+/**
+ * What a survey page needs to show data retention, resolved on the server. Null when the organisation
+ * isn't entitled: then the page renders nothing about retention and makes no request for it.
+ */
+export type TSurveyDataRetentionContext = {
+  organizationId: string;
+  /** The organisation's display time zone, so dates show as the day they fall on there. */
+  timeZone: string;
+  /** Owners and managers can exempt the survey from the page. */
+  canExempt: boolean;
+} | null;

@@ -247,10 +247,10 @@ describe("retention exemptions service (real Postgres)", () => {
       });
       expect(
         await findRetentionExemption({ id, organizationId, scope: memberScope([otherWorkspaceId]) })
-      ).toBe(null);
+      ).toBeNull();
       expect(
         await findRetentionExemption({ id, organizationId: "clorgxxxxxxxxxxxxxxxxxxxx", scope: ORGANIZATION })
-      ).toBe(null);
+      ).toBeNull();
     });
   });
 

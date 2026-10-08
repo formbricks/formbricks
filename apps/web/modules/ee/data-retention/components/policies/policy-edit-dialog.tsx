@@ -197,9 +197,7 @@ export const PolicyEditDialog = ({
                   control={form.control}
                   name="conditions"
                   render={({ field, fieldState: { error } }) => (
-                    <fieldset
-                      className="space-y-2"
-                      aria-describedby={error ? `${periodHelpId} ${conditionsErrorId}` : periodHelpId}>
+                    <fieldset className="space-y-2" aria-describedby={error ? conditionsErrorId : undefined}>
                       <legend className="text-sm font-medium text-slate-800">
                         {t("workspace.settings.data_retention.surveys_conditions_heading")}
                       </legend>
