@@ -107,6 +107,13 @@ describe("rateLimitConfigs", () => {
         "client",
         "clientEnvironment",
       ]);
+      // The values, not just the key: each export streams an organisation's whole retention history,
+      // names people, and runs a pre-flight count, so a loosened quota is a load and privacy regression.
+      expect(rateLimitConfigs.api.internalRetentionExport).toEqual({
+        interval: 3600,
+        allowedPerInterval: 10,
+        namespace: "api:internal:retention-runs:export",
+      });
     });
 
     test("should have all action configurations", () => {
