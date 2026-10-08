@@ -25,6 +25,14 @@ import { type TSanitizedTexts, sanitizeName } from "./sanitize-text";
  * and only when the organization's plan allows external URLs.
  */
 
+/**
+ * Whether a text shows anything, as the create's check reads it (`getTextContent`). That parses the
+ * text as HTML twice; a text with no `<` cannot hold an element, so for it the answer is its trimmed
+ * self, and most texts — every plain option and translation — skip the parse.
+ */
+const hasTextContent = (text: string): boolean =>
+  text.includes("<") ? getTextContent(text).length > 0 : text.trim().length > 0;
+
 /** Text keyed by language code, default language first. */
 export type TQsfLocaleText = Record<string, string>;
 
@@ -357,17 +365,16 @@ class QsfAssembler {
     };
 
     const defaultText = convert(byLanguage?.get(defaultCode) ?? "");
+    const defaultShows = hasTextContent(defaultText);
     const localized: TQsfLocaleText = { [defaultCode]: defaultText };
     for (const code of this.languageCodes.slice(1)) {
       const translated = byLanguage?.get(code);
       const converted = translated === undefined ? "" : convert(translated);
-      if (getTextContent(converted).length > 0) {
+      if (hasTextContent(converted)) {
         localized[code] = converted;
       } else {
         localized[code] = defaultText;
-        if (getTextContent(defaultText).length > 0) {
-          this.fallbackCounts.set(code, (this.fallbackCounts.get(code) ?? 0) + 1);
-        }
+        if (defaultShows) this.fallbackCounts.set(code, (this.fallbackCounts.get(code) ?? 0) + 1);
       }
     }
     return localized;
@@ -384,7 +391,7 @@ class QsfAssembler {
     const result: TQsfLocaleText = {};
     for (const code of this.languageCodes) {
       const value = text[code] ?? "";
-      if (getTextContent(value).length > 0) {
+      if (hasTextContent(value)) {
         result[code] = value;
       } else {
         result[code] = fallback;
@@ -607,7 +614,7 @@ class QsfAssembler {
       removed: 0,
     });
     const defaultHeadline = headline[survey.defaultLanguage] ?? "";
-    if (getTextContent(defaultHeadline).length === 0) return [];
+    if (!hasTextContent(defaultHeadline)) return [];
     return [{ id: createId(), type: "endScreen", headline: this.filled(headline, defaultHeadline).text }];
   }
 }
