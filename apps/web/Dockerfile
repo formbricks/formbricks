@@ -19,12 +19,14 @@ RUN --mount=type=cache,id=node-runtime-ccache-${TARGETARCH},target=/root/.cache/
     && ./configure --shared-openssl --shared-zlib --without-npm \
     && make -j${NODE_BUILD_JOBS} \
     && install -m 755 out/Release/node /usr/local/bin/node
+RUN install -D -m 644 LICENSE /usr/local/share/doc/node/LICENSE
 
 FROM alpine:3.23 AS runtime-base
 RUN apk update && apk upgrade --no-cache \
     && apk add --no-cache ca-certificates libgcc libstdc++ \
       "libssl3>=3.5.9-r0" "libcrypto3>=3.5.9-r0" "zlib>=1.3.2-r1"
 COPY --from=node-runtime-builder /usr/local/bin/node /usr/local/bin/node
+COPY --from=node-runtime-builder /usr/local/share/doc/node/LICENSE /usr/local/share/doc/node/LICENSE
 COPY apps/web/scripts/docker/verify-runtime.mjs /tmp/verify-runtime.mjs
 RUN node /tmp/verify-runtime.mjs && rm /tmp/verify-runtime.mjs
 
