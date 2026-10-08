@@ -401,9 +401,8 @@ export const SettingsSidebarContent = ({
       label: t("workspace.settings.data_retention.nav_label"),
       href: organizationSettingsPath(organizationId, "data-retention"),
       icon: <HourglassIcon className={iconClassName} />,
-      // Owners and managers only while History is the page's only tab; members get read access when
-      // the Policies tab lands (ENG-3610).
-      hidden: !isOwnerOrManager,
+      // Members read the policies and exemptions; History is owners and managers only (ENG-3695).
+      hidden: isBilling,
     },
     {
       id: "org-domain",

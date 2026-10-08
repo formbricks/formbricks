@@ -5,7 +5,6 @@ import { DownloadIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
-import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -16,6 +15,7 @@ import { useRetentionRuns } from "../../hooks/use-retention-runs";
 import { getRetentionExportUrl } from "../../lib/api-client";
 import {
   createRetentionCountFormatter,
+  formatRetentionDate,
   getRetentionHistoryCounts,
   getRetentionPolicyLabel,
 } from "../../lib/display";
@@ -89,13 +89,7 @@ export const RetentionHistoryView = ({ organizationId, timeZone }: Readonly<Rete
   } = useRetentionRuns({ organizationId, includeEmpty: !hideEmpty, limit: PAGE_SIZE });
 
   const formatCount = createRetentionCountFormatter(locale);
-  const formatRunDate = (iso: string) =>
-    formatDateForDisplay(new Date(iso), locale, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      timeZone,
-    });
+  const formatRunDate = (iso: string) => formatRetentionDate(iso, locale, timeZone);
 
   const errorMessage = getV3ApiErrorMessage(error, t("workspace.settings.data_retention.history_load_error"));
 

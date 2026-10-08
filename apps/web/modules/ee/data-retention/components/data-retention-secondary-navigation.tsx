@@ -17,9 +17,14 @@ export const DataRetentionSecondaryNavigation = ({
 }: Readonly<DataRetentionSecondaryNavigationProps>) => {
   const { t } = useTranslation();
   // The layout renders this nav, so the active tab comes from the child route segment.
-  const activeId = useSelectedLayoutSegment() ?? "history";
+  const activeId = useSelectedLayoutSegment() ?? "exemptions";
 
   const navigation = [
+    {
+      id: "exemptions",
+      label: t("workspace.settings.data_retention.exemptions"),
+      href: organizationSettingsPath(organizationId, "data-retention/exemptions"),
+    },
     {
       id: "history",
       label: t("workspace.settings.data_retention.history"),

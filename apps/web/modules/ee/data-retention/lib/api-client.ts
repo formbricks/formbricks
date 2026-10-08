@@ -1,7 +1,14 @@
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
-import type { TRetentionRun } from "../types";
+import type {
+  TCreateRetentionExemptionInput,
+  TRetentionExemption,
+  TRetentionExemptionSurveyOption,
+  TRetentionRun,
+} from "../types";
 
 const BASE_PATH = "/api/internal/retention-runs";
+const EXEMPTIONS_BASE_PATH = "/api/internal/retention-exemptions";
+const MUTATION_TIMEOUT_MS = 15_000;
 
 export type TRetentionRunListPage = {
   data: TRetentionRun[];
@@ -46,3 +53,81 @@ export async function listRetentionRuns({
 /** The History CSV. A plain link: the browser downloads the streamed file itself. */
 export const getRetentionExportUrl = (organizationId: string): string =>
   `${BASE_PATH}/export?${new URLSearchParams({ organizationId })}`;
+
+export type TRetentionExemptionListPage = {
+  data: TRetentionExemption[];
+  meta: { limit: number; nextCursor: string | null };
+};
+
+export type TRetentionExemptionListInput = { organizationId: string; limit: number };
+
+export const buildRetentionExemptionsSearchParams = ({
+  organizationId,
+  limit,
+  cursor,
+}: TRetentionExemptionListInput & { cursor: string | null }): URLSearchParams => {
+  const params = new URLSearchParams({ organizationId, limit: String(limit) });
+  if (cursor) params.set("cursor", cursor);
+  return params;
+};
+
+export async function listRetentionExemptions({
+  signal,
+  ...input
+}: TRetentionExemptionListInput & {
+  cursor: string | null;
+  signal?: AbortSignal;
+}): Promise<TRetentionExemptionListPage> {
+  const response = await fetch(`${EXEMPTIONS_BASE_PATH}?${buildRetentionExemptionsSearchParams(input)}`, {
+    method: "GET",
+    cache: "no-store",
+    signal,
+  });
+  if (!response.ok) throw await parseV3ApiError(response);
+  return (await response.json()) as TRetentionExemptionListPage;
+}
+
+export async function createRetentionExemption(
+  input: TCreateRetentionExemptionInput
+): Promise<TRetentionExemption> {
+  const response = await fetch(EXEMPTIONS_BASE_PATH, {
+    method: "POST",
+    cache: "no-store",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
+  });
+  if (!response.ok) throw await parseV3ApiError(response);
+  return ((await response.json()) as { data: TRetentionExemption }).data;
+}
+
+export async function revokeRetentionExemption(exemptionId: string): Promise<TRetentionExemption> {
+  const response = await fetch(`${EXEMPTIONS_BASE_PATH}/${encodeURIComponent(exemptionId)}/revoke`, {
+    method: "POST",
+    cache: "no-store",
+    signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
+  });
+  if (!response.ok) throw await parseV3ApiError(response);
+  return ((await response.json()) as { data: TRetentionExemption }).data;
+}
+
+export type TRetentionExemptionSurveyOptionsInput = { organizationId: string; search: string };
+
+/** Surveys for the Add exemption picker, searched by name on the server. */
+export async function listRetentionExemptionSurveyOptions({
+  organizationId,
+  search,
+  signal,
+}: TRetentionExemptionSurveyOptionsInput & { signal?: AbortSignal }): Promise<
+  TRetentionExemptionSurveyOption[]
+> {
+  const params = new URLSearchParams({ organizationId });
+  if (search) params.set("search", search);
+  const response = await fetch(`${EXEMPTIONS_BASE_PATH}/survey-options?${params}`, {
+    method: "GET",
+    cache: "no-store",
+    signal,
+  });
+  if (!response.ok) throw await parseV3ApiError(response);
+  return ((await response.json()) as { data: TRetentionExemptionSurveyOption[] }).data;
+}

@@ -1,5 +1,11 @@
 import type { InfiniteData } from "@tanstack/react-query";
-import type { TRetentionRunListInput, TRetentionRunListPage } from "./api-client";
+import type {
+  TRetentionExemptionListInput,
+  TRetentionExemptionListPage,
+  TRetentionExemptionSurveyOptionsInput,
+  TRetentionRunListInput,
+  TRetentionRunListPage,
+} from "./api-client";
 
 /**
  * Query keys for History. `includeEmpty` is part of the list key on purpose: the API binds a cursor to
@@ -13,3 +19,30 @@ export const retentionRunKeys = {
 
 export const flattenRetentionRunPages = (data?: InfiniteData<TRetentionRunListPage>) =>
   data?.pages.flatMap((page) => page.data) ?? [];
+
+/** Query keys for the Exemptions tab and the Add exemption survey picker. */
+export const retentionExemptionKeys = {
+  all: ["retention-exemptions"] as const,
+  lists: () => [...retentionExemptionKeys.all, "list"] as const,
+  list: (input: TRetentionExemptionListInput) => [...retentionExemptionKeys.lists(), input] as const,
+  surveyOptions: (input: TRetentionExemptionSurveyOptionsInput) =>
+    [...retentionExemptionKeys.all, "survey-options", input] as const,
+};
+
+export type TRetentionExemptionListKey = ReturnType<typeof retentionExemptionKeys.list>;
+
+export const flattenRetentionExemptionPages = (data?: InfiniteData<TRetentionExemptionListPage>) =>
+  data?.pages.flatMap((page) => page.data) ?? [];
+
+/** The list with one exemption taken out, for an optimistic revoke. */
+export const removeRetentionExemptionFromPages = (
+  data: InfiniteData<TRetentionExemptionListPage> | undefined,
+  exemptionId: string
+): InfiniteData<TRetentionExemptionListPage> | undefined =>
+  data && {
+    ...data,
+    pages: data.pages.map((page) => ({
+      ...page,
+      data: page.data.filter((exemption) => exemption.id !== exemptionId),
+    })),
+  };

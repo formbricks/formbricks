@@ -1,4 +1,5 @@
 import type { TFunction } from "i18next";
+import { formatDateForDisplay } from "@/lib/utils/datetime";
 import type { TRetentionPolicyKind, TRetentionRun } from "../types";
 
 export const getRetentionPolicyLabel = (policy: TRetentionPolicyKind, t: TFunction): string => {
@@ -33,3 +34,10 @@ export const createRetentionCountFormatter = (locale: string): ((value: number |
   const numberFormat = new Intl.NumberFormat(locale);
   return (value) => (value === null ? "—" : numberFormat.format(value));
 };
+
+/**
+ * A date as History and Exemptions show it: the calendar day in the organisation's display time zone,
+ * so a night's run, or an exemption's last day, shows on the day it is there.
+ */
+export const formatRetentionDate = (iso: string, locale: string, timeZone: string): string =>
+  formatDateForDisplay(new Date(iso), locale, { year: "numeric", month: "short", day: "numeric", timeZone });

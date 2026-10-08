@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 
-/** The Data retention index opens on its first tab. */
+/** The Data retention index opens on its first tab that every reader has. */
 const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }> }>) => {
   const { organizationId } = await props.params;
-  redirect(organizationSettingsPath(organizationId, "data-retention/history"));
+  redirect(organizationSettingsPath(organizationId, "data-retention/exemptions"));
 };
 
 export default Page;

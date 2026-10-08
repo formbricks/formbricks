@@ -1,7 +1,12 @@
 import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import type { TRetentionRun } from "../types";
-import { createRetentionCountFormatter, getRetentionHistoryCounts, getRetentionPolicyLabel } from "./display";
+import {
+  createRetentionCountFormatter,
+  formatRetentionDate,
+  getRetentionHistoryCounts,
+  getRetentionPolicyLabel,
+} from "./display";
 
 const run = (policy: TRetentionRun["policy"]): TRetentionRun => ({
   id: "run_1",
@@ -60,5 +65,12 @@ describe("createRetentionCountFormatter", () => {
     expect(createRetentionCountFormatter("de-DE")(12345)).toBe("12.345");
     expect(createRetentionCountFormatter("en-US")(0)).toBe("0");
     expect(createRetentionCountFormatter("en-US")(null)).toBe("—");
+  });
+});
+
+describe("formatRetentionDate", () => {
+  test("shows the calendar day in the organisation's time zone, not the browser's", () => {
+    expect(formatRetentionDate("2031-03-31T21:59:59.999Z", "en-US", "Europe/Berlin")).toBe("Mar 31, 2031");
+    expect(formatRetentionDate("2031-03-31T21:59:59.999Z", "en-US", "Asia/Tokyo")).toBe("Apr 1, 2031");
   });
 });
