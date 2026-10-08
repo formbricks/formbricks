@@ -77,6 +77,13 @@ export const QSF_MAX_PARALLEL_CALLS = 4;
 export const QSF_AI_CALL_TIMEOUT_MS = 45_000;
 /** Time kept back for assembly when a call is sized against the deadline. */
 export const QSF_ASSEMBLY_RESERVE_MS = 5_000;
+/**
+ * The least time a call is sent with. Below it no plan can come back: the first token alone takes
+ * 1–3 s, and even a 10-question half needs ~700 tokens and its thinking at 150–250 tokens a second.
+ * Such a call would only time out after paying for its prompt, so its questions are left unplanned
+ * (`ai_budget`, like any call the import has no time left for).
+ */
+export const QSF_MIN_CALL_TIMEOUT_MS = 5_000;
 
 /**
  * Expected output tokens, measured on hand-authored plans: about 70 per question with every field
@@ -356,7 +363,7 @@ async function callOnce(
   if (
     context.calls >= context.callCap ||
     context.usage.outputTokens >= context.outputBudget ||
-    timeout <= 0
+    timeout < QSF_MIN_CALL_TIMEOUT_MS
   ) {
     return { kind: "budget" };
   }

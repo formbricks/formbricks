@@ -16,6 +16,7 @@ import {
   QSF_CHUNK_OUTPUT_TOKENS,
   QSF_MAX_AI_CALLS,
   QSF_MAX_OUTPUT_TOKENS,
+  QSF_MIN_CALL_TIMEOUT_MS,
   QSF_PLAN_MAX_OUTPUT_TOKENS,
   type TQsfPlanGenerate,
   type TQsfPlanRequest,
@@ -529,6 +530,17 @@ describe("planQsfImport", () => {
     expect(generate).toHaveBeenCalledTimes(1);
   });
 
+  test("never sends a call with less time than one needs, dropping its questions as unplanned", async () => {
+    const generate = vi.fn<TQsfPlanGenerate>(recordedGenerate(loadRecordedPlan("simple.qsf")));
+
+    // 9.9 s to the deadline, 5 s kept for assembly: 4.9 s for the call, under the minimum.
+    const result = await plan("simple.qsf", generate, { deadlineInMs: 9_900 });
+
+    expect(generate).not.toHaveBeenCalled();
+    expect(result.plan.questions.size).toBe(0);
+    expect(result.issues.map((issue) => issue.params?.cause)).toEqual(Array(5).fill("ai_budget"));
+  });
+
   test("sizes each call's timeout to what is left before the deadline", async () => {
     const hostile = loadRecordedPlan("hostile");
     const timeouts: number[] = [];
@@ -549,13 +561,14 @@ describe("planQsfImport", () => {
 
   test("skips the retry when no time is left for it, dropping what failed", async () => {
     const hostile = loadRecordedPlan("hostile");
-    // The first call takes the time there was: 5.4 s to the deadline, 5 s kept for assembly.
+    // 10.4 s to the deadline, 5 s kept for assembly: the first call gets 5.4 s and takes 0.5 s of it,
+    // so the retry would get under the 5 s a call needs.
     const generate = vi.fn<TQsfPlanGenerate>(async () => {
       await new Promise((resolve) => setTimeout(resolve, 500));
       return { object: hostile };
     });
 
-    const result = await plan("simple.qsf", generate, { deadlineInMs: 5_400 });
+    const result = await plan("simple.qsf", generate, { deadlineInMs: 10_400 });
 
     expect(generate).toHaveBeenCalledTimes(1);
     expect(result.plan.failures.size).toBe(5);
@@ -572,7 +585,8 @@ describe("planQsfImport", () => {
       return recorded(request);
     };
 
-    await plan("simple.qsf", generate, { deadlineInMs: 6_000 });
+    // 5.8 s for the first call, and over the 5 s minimum for each half after it.
+    await plan("simple.qsf", generate, { deadlineInMs: 10_800 });
 
     expect(timeouts).toHaveLength(3);
     // The halves run side by side after the chunk, each with what is left, not the chunk's budget again.
@@ -699,6 +713,8 @@ describe("planQsfImport with a model that takes time", () => {
       result?.issues.every((issue) => ["ai_timeout", "ai_budget"].includes(String(issue.params?.cause)))
     ).toBe(true);
     expect(requests.some((request) => request.timeout < QSF_AI_CALL_TIMEOUT_MS)).toBe(true);
+    // A call too short to come back with a plan is never sent; its questions are dropped instead.
+    expect(requests.every((request) => request.timeout >= QSF_MIN_CALL_TIMEOUT_MS)).toBe(true);
     for (const request of requests) expect(request.at + request.timeout).toBeLessThanOrEqual(lastMoment);
     expect(elapsed).toBeLessThanOrEqual(lastMoment);
   });
