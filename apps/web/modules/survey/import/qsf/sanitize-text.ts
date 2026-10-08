@@ -209,6 +209,36 @@ export interface TSanitizedTexts {
 }
 
 /**
+ * The report lines sanitizing writes: formatting once per survey, everything else once per question
+ * and code.
+ */
+class SanitizeReporter {
+  readonly issues: TQsfImportIssue[] = [];
+  private readonly reported = new Set<string>();
+
+  constructor(private readonly survey: TQsfSurvey) {}
+
+  add(result: TSanitizedText, questionRef: string | null): void {
+    for (const code of result.dropped) this.report(code, questionRef);
+    if (result.escaped) this.report("markup_escaped", questionRef);
+    if (result.tooLong) this.report("text_too_long", questionRef);
+  }
+
+  private report(code: TQsfImportIssueCode, questionRef: string | null): void {
+    const perSurvey = code === "formatting_dropped";
+    const id = `${code}\u0000${perSurvey ? "" : (questionRef ?? "")}`;
+    if (this.reported.has(id)) return;
+    this.reported.add(id);
+    const exportTag = questionRef === null ? undefined : this.survey.questions.get(questionRef)?.exportTag;
+    this.issues.push({
+      code,
+      severity: perSurvey ? "info" : "warning",
+      ...(exportTag && !perSurvey ? { questionTag: exportTag } : {}),
+    });
+  }
+}
+
+/**
  * Sanitize every text of the survey. Yields to the event loop every `SANITIZE_SLICE_MS` (by elapsed
  * time, not by count: one long text can cost more than a hundred short ones) and stops when `signal`
  * aborts.
@@ -216,7 +246,7 @@ export interface TSanitizedTexts {
 export async function sanitizeQsfTexts(survey: TQsfSurvey, signal: AbortSignal): Promise<TSanitizedTexts> {
   const byKey = new Map<TQsfTextKey, Map<string, string>>();
   const plainDefault = new Map<TQsfTextKey, string>();
-  const reporter = createSanitizeReporter(survey);
+  const reporter = new SanitizeReporter(survey);
 
   let sliceStart = performance.now();
   for (const [key, entry] of survey.texts) {
@@ -238,40 +268,6 @@ export async function sanitizeQsfTexts(survey: TQsfSurvey, signal: AbortSignal):
   }
 
   return { byKey, plainDefault, issues: reporter.issues };
-}
-
-/**
- * The report lines sanitizing writes: formatting once per survey, everything else once per question
- * and code.
- */
-function createSanitizeReporter(survey: TQsfSurvey): {
-  issues: TQsfImportIssue[];
-  add: (result: TSanitizedText, questionRef: string | null) => void;
-} {
-  const issues: TQsfImportIssue[] = [];
-  const reported = new Set<string>();
-
-  const report = (code: TQsfImportIssueCode, questionRef: string | null) => {
-    const perSurvey = code === "formatting_dropped";
-    const id = `${code}\u0000${perSurvey ? "" : (questionRef ?? "")}`;
-    if (reported.has(id)) return;
-    reported.add(id);
-    const exportTag = questionRef === null ? undefined : survey.questions.get(questionRef)?.exportTag;
-    issues.push({
-      code,
-      severity: perSurvey ? "info" : "warning",
-      ...(exportTag && !perSurvey ? { questionTag: exportTag } : {}),
-    });
-  };
-
-  return {
-    issues,
-    add: (result, questionRef) => {
-      for (const code of result.dropped) report(code, questionRef);
-      if (result.escaped) report("markup_escaped", questionRef);
-      if (result.tooLong) report("text_too_long", questionRef);
-    },
-  };
 }
 
 /** Plain text for a name from the file (the survey's, an export tag used as a headline). */
