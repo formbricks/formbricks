@@ -183,17 +183,28 @@ const sourceKeys = (question: TQsfQuestion, source: "choices" | "answers" | null
 
 type TRoleResult = { ok: true; question: TQsfPlannedQuestion } | { ok: false; reasons: TQsfPlanFailure[] };
 
-/** Whether the roles in one entry fit its type and the question it is about. */
-export function checkQuestionRoles(question: TQsfQuestion, entry: TQsfPlanQuestion): TRoleResult {
-  const reasons = new Set<TQsfPlanFailure>();
-  const fail = (reason: TQsfPlanFailure) => reasons.add(reason);
+type TFail = (reason: TQsfPlanFailure) => void;
+type TOptionRole = "choicesFrom" | "rowsFrom" | "columnsFrom";
 
-  if (!ALLOWED_TYPES.has(entry.type)) {
-    return { ok: false, reasons: ["type_not_allowed"] };
-  }
-  const type = entry.type as TQsfPlanElementType;
+/** The types each role belongs to. A role set on any other type says the model misread the question. */
+const ROLE_TYPES: Record<
+  TOptionRole | "otherChoiceKey" | "noneChoiceKey" | "labelKey" | "contactFields",
+  readonly TQsfPlanElementType[]
+> = {
+  choicesFrom: ["multipleChoiceSingle", "multipleChoiceMulti", "ranking"],
+  rowsFrom: ["matrix"],
+  columnsFrom: ["matrix"],
+  otherChoiceKey: ["multipleChoiceSingle", "multipleChoiceMulti"],
+  noneChoiceKey: ["multipleChoiceMulti"],
+  labelKey: ["consent"],
+  contactFields: ["contactInfo"],
+};
 
-  // Every key a role names must be one of this question's own, and each is used once.
+const usesRole = (type: TQsfPlanElementType, role: keyof typeof ROLE_TYPES): boolean =>
+  ROLE_TYPES[role].includes(type);
+
+/** Every key a role names is one of this question's own, and each is used once. */
+function checkRoleKeys(question: TQsfQuestion, entry: TQsfPlanQuestion, fail: TFail): void {
   const ownKeys = new Set([...sourceKeys(question, "choices"), ...sourceKeys(question, "answers")]);
   const used = new Set<string>();
   const roleKeys = [
@@ -208,67 +219,72 @@ export function checkQuestionRoles(question: TQsfQuestion, entry: TQsfPlanQuesti
     else if (used.has(key)) fail("key_reused");
     used.add(key);
   }
-  if (reasons.size > 0) return { ok: false, reasons: [...reasons] };
+}
 
-  const excluded = new Set(entry.excludedKeys);
-  const listed = (source: "choices" | "answers" | null) =>
-    sourceKeys(question, source).filter((key) => !excluded.has(key));
-
-  const usesChoices = type === "multipleChoiceSingle" || type === "multipleChoiceMulti" || type === "ranking";
-  const usesMatrix = type === "matrix";
-  const usesRating = type === "rating" || type === "csat" || type === "ces";
-
-  // Roles a type does not use must be empty: a stray one says the model misread the question.
-  if (!usesChoices && entry.choicesFrom !== null) fail("role_not_for_type");
-  if (!usesMatrix && (entry.rowsFrom !== null || entry.columnsFrom !== null)) fail("role_not_for_type");
-  if (type !== "multipleChoiceSingle" && type !== "multipleChoiceMulti" && entry.otherChoiceKey !== null) {
-    fail("role_not_for_type");
+/** Roles the type does not use are empty. */
+function checkUnusedRoles(type: TQsfPlanElementType, entry: TQsfPlanQuestion, fail: TFail): void {
+  for (const role of Object.keys(ROLE_TYPES) as (keyof typeof ROLE_TYPES)[]) {
+    const isSet = role === "contactFields" ? entry.contactFields.length > 0 : entry[role] !== null;
+    if (isSet && !usesRole(type, role)) fail("role_not_for_type");
   }
-  if (type !== "multipleChoiceMulti" && entry.noneChoiceKey !== null) fail("role_not_for_type");
-  if (type !== "consent" && entry.labelKey !== null) fail("role_not_for_type");
-  if (type !== "contactInfo" && entry.contactFields.length > 0) fail("role_not_for_type");
+}
 
-  let choices: TQsfPlannedOption[] = [];
-  let rows: TQsfTextKey[] = [];
-  let columns: TQsfTextKey[] = [];
-
-  if (usesChoices) {
-    if (entry.choicesFrom === null) {
-      fail("missing_role");
-    } else {
-      const special = new Map<string, "other" | "none">();
-      if (entry.otherChoiceKey) special.set(entry.otherChoiceKey, "other");
-      if (entry.noneChoiceKey) special.set(entry.noneChoiceKey, "none");
-      const keys = listed(entry.choicesFrom);
-      for (const key of special.keys()) if (!keys.includes(key)) fail("foreign_key");
-      choices = keys.map((key) => {
-        const role = special.get(key);
-        return role ? { key, special: role } : { key };
-      });
-      if (choices.length < 2) fail("too_few_options");
-      if (type === "ranking" && choices.length > 25) fail("too_many_options");
-    }
+/** A multiple choice or ranking question's options, with its other and none choices marked. */
+function planChoices(
+  type: TQsfPlanElementType,
+  entry: TQsfPlanQuestion,
+  listed: (source: "choices" | "answers") => TQsfTextKey[],
+  fail: TFail
+): TQsfPlannedOption[] {
+  if (entry.choicesFrom === null) {
+    fail("missing_role");
+    return [];
   }
+  const special = new Map<string, "other" | "none">();
+  if (entry.otherChoiceKey) special.set(entry.otherChoiceKey, "other");
+  if (entry.noneChoiceKey) special.set(entry.noneChoiceKey, "none");
+  const keys = listed(entry.choicesFrom);
+  for (const key of special.keys()) if (!keys.includes(key)) fail("foreign_key");
+  const choices = keys.map((key): TQsfPlannedOption => {
+    const role = special.get(key);
+    return role ? { key, special: role } : { key };
+  });
+  if (choices.length < 2) fail("too_few_options");
+  if (type === "ranking" && choices.length > 25) fail("too_many_options");
+  return choices;
+}
 
-  if (usesMatrix) {
-    if (entry.rowsFrom === null || entry.columnsFrom === null || entry.rowsFrom === entry.columnsFrom) {
-      fail("missing_role");
-    } else {
-      rows = listed(entry.rowsFrom);
-      columns = listed(entry.columnsFrom);
-      if (rows.length < 1 || columns.length < 2) fail("too_few_options");
-    }
+/** A matrix's rows and columns, from two different lists. */
+function planMatrix(
+  entry: TQsfPlanQuestion,
+  listed: (source: "choices" | "answers") => TQsfTextKey[],
+  fail: TFail
+): { rows: TQsfTextKey[]; columns: TQsfTextKey[] } {
+  if (entry.rowsFrom === null || entry.columnsFrom === null || entry.rowsFrom === entry.columnsFrom) {
+    fail("missing_role");
+    return { rows: [], columns: [] };
   }
+  const rows = listed(entry.rowsFrom);
+  const columns = listed(entry.columnsFrom);
+  if (rows.length < 1 || columns.length < 2) fail("too_few_options");
+  return { rows, columns };
+}
 
-  let range: number | null = null;
-  if (usesRating) {
-    if (entry.scale === null) fail("missing_scale");
-    range = entry.range === null ? null : Number(entry.range);
-    if (range === null || !ALLOWED_RANGES[type].includes(range)) fail("invalid_range");
-  }
+/** A rating, CSAT or CES question's range, one its type allows, and its scale. */
+function planRange(type: "rating" | "csat" | "ces", entry: TQsfPlanQuestion, fail: TFail): number | null {
+  if (entry.scale === null) fail("missing_scale");
+  const range = entry.range === null ? null : Number(entry.range);
+  if (range === null || !ALLOWED_RANGES[type].includes(range)) fail("invalid_range");
+  return range;
+}
 
-  if (type === "date" && entry.format === null) fail("missing_format");
-
+/** The roles that name choices of their own: a consent's label, a contact form's fields. */
+function checkChoiceRoles(
+  type: TQsfPlanElementType,
+  question: TQsfQuestion,
+  entry: TQsfPlanQuestion,
+  fail: TFail
+): void {
   const choiceKeys = new Set(sourceKeys(question, "choices"));
   if (type === "consent" && (entry.labelKey === null || !choiceKeys.has(entry.labelKey))) {
     fail("missing_role");
@@ -278,6 +294,35 @@ export function checkQuestionRoles(question: TQsfQuestion, entry: TQsfPlanQuesti
     if (fields.length === 0 || new Set(fields).size !== fields.length) fail("missing_role");
     if (entry.contactFields.some((field) => !choiceKeys.has(field.key))) fail("foreign_key");
   }
+}
+
+const isRatingType = (type: TQsfPlanElementType): type is "rating" | "csat" | "ces" =>
+  type === "rating" || type === "csat" || type === "ces";
+
+/** Whether the roles in one entry fit its type and the question it is about. */
+export function checkQuestionRoles(question: TQsfQuestion, entry: TQsfPlanQuestion): TRoleResult {
+  if (!ALLOWED_TYPES.has(entry.type)) {
+    return { ok: false, reasons: ["type_not_allowed"] };
+  }
+  const type = entry.type as TQsfPlanElementType;
+  const reasons = new Set<TQsfPlanFailure>();
+  const fail: TFail = (reason) => reasons.add(reason);
+
+  checkRoleKeys(question, entry, fail);
+  if (reasons.size > 0) return { ok: false, reasons: [...reasons] };
+
+  const excluded = new Set(entry.excludedKeys);
+  const listed = (source: "choices" | "answers") =>
+    sourceKeys(question, source).filter((key) => !excluded.has(key));
+
+  checkUnusedRoles(type, entry, fail);
+  const choices = usesRole(type, "choicesFrom") ? planChoices(type, entry, listed, fail) : [];
+  const { rows, columns } = usesRole(type, "rowsFrom")
+    ? planMatrix(entry, listed, fail)
+    : { rows: [], columns: [] };
+  const range = isRatingType(type) ? planRange(type, entry, fail) : null;
+  if (type === "date" && entry.format === null) fail("missing_format");
+  checkChoiceRoles(type, question, entry, fail);
 
   if (reasons.size > 0) return { ok: false, reasons: [...reasons] };
 
@@ -306,6 +351,77 @@ const readRef = (entry: unknown): string | null =>
     ? entry.ref
     : null;
 
+type TAddFailure = (ref: string, reason: TQsfPlanFailure) => void;
+type TPlanEnvelope = ReturnType<typeof ZQsfImportPlanEnvelope.parse>;
+
+/** The entries a response gives for the refs its call was asked about, by ref. */
+function readEntries(
+  envelope: TPlanEnvelope,
+  refs: ReadonlySet<string>,
+  addFailure: TAddFailure
+): Map<string, TQsfPlanQuestion[]> {
+  const entries = new Map<string, TQsfPlanQuestion[]>();
+  for (const raw of envelope.questions) {
+    const ref = readRef(raw);
+    if (ref === null || !refs.has(ref)) continue;
+    const parsed = ZQsfPlanQuestion.safeParse(raw);
+    if (parsed.success) entries.set(ref, [...(entries.get(ref) ?? []), parsed.data]);
+    else addFailure(ref, "invalid_entry");
+  }
+  return entries;
+}
+
+/** The skip reasons a response gives for the refs its call was asked about, by ref. */
+function readSkips(envelope: TPlanEnvelope, refs: ReadonlySet<string>): Map<string, string[]> {
+  const skips = new Map<string, string[]>();
+  for (const raw of envelope.skipped) {
+    const parsed = ZQsfPlanSkip.safeParse(raw);
+    if (!parsed.success || !refs.has(parsed.data.ref)) continue;
+    skips.set(parsed.data.ref, [...(skips.get(parsed.data.ref) ?? []), parsed.data.reason]);
+  }
+  return skips;
+}
+
+/** Notes for the pages a call holds questions of. A page split across calls keeps the first. */
+function readPageNotes(
+  survey: TQsfSurvey,
+  envelope: TPlanEnvelope,
+  refs: ReadonlySet<string>,
+  pageNotes: Map<string, string[]>
+): void {
+  const pageIds = new Set([...refs].map((ref) => survey.questions.get(ref)?.pageId));
+  for (const raw of envelope.pages ?? []) {
+    const parsed = ZQsfPlanPage.safeParse(raw);
+    if (!parsed.success || !pageIds.has(parsed.data.id) || pageNotes.has(parsed.data.id)) continue;
+    pageNotes.set(parsed.data.id, cleanNotes(parsed.data.logicNotes));
+  }
+}
+
+/** One question's verdict: placed, skipped, or failed with why. */
+function judgeQuestion(
+  plan: TQsfCheckedPlan,
+  question: TQsfQuestion,
+  entryList: TQsfPlanQuestion[],
+  skipList: string[],
+  addFailure: TAddFailure
+): void {
+  const { ref } = question;
+  if (entryList.length > 1 || skipList.length > 1) {
+    addFailure(ref, "duplicate_ref");
+  } else if (skipList.length === 1 && entryList.length > 0) {
+    addFailure(ref, "placed_and_skipped");
+  } else if (skipList.length === 1) {
+    const reason = cleanNote(skipList[0]);
+    plan.skipped.set(ref, reason.length > 0 ? reason : null);
+  } else if (entryList.length === 0) {
+    addFailure(ref, "missing");
+  } else {
+    const result = checkQuestionRoles(question, entryList[0]);
+    if (result.ok) plan.questions.set(ref, result.question);
+    else for (const reason of result.reasons) addFailure(ref, reason);
+  }
+}
+
 /**
  * Check the answers of one round of AI calls. Each response is checked within the refs its call was
  * asked about; a ref outside them is ignored, so one call can never place, skip or claim the keys of a
@@ -318,7 +434,7 @@ export function checkPlanResponses(survey: TQsfSurvey, responses: TQsfPlanRespon
     skipped: new Map(),
     failures: new Map(),
   };
-  const addFailure = (ref: string, reason: TQsfPlanFailure) => {
+  const addFailure: TAddFailure = (ref, reason) => {
     const reasons = plan.failures.get(ref) ?? [];
     if (!reasons.includes(reason)) reasons.push(reason);
     plan.failures.set(ref, reasons);
@@ -331,54 +447,14 @@ export function checkPlanResponses(survey: TQsfSurvey, responses: TQsfPlanRespon
       continue;
     }
 
-    const entries = new Map<string, TQsfPlanQuestion[]>();
-    for (const raw of envelope.data.questions) {
-      const ref = readRef(raw);
-      if (ref === null || !response.refs.has(ref)) continue;
-      const parsed = ZQsfPlanQuestion.safeParse(raw);
-      if (!parsed.success) {
-        addFailure(ref, "invalid_entry");
-        continue;
-      }
-      entries.set(ref, [...(entries.get(ref) ?? []), parsed.data]);
-    }
-
-    const skips = new Map<string, string[]>();
-    for (const raw of envelope.data.skipped) {
-      const parsed = ZQsfPlanSkip.safeParse(raw);
-      if (!parsed.success || !response.refs.has(parsed.data.ref)) continue;
-      skips.set(parsed.data.ref, [...(skips.get(parsed.data.ref) ?? []), parsed.data.reason]);
-    }
-
-    // Notes for the pages this call holds questions of. A page split across calls keeps the first.
-    const pageIds = new Set([...response.refs].map((ref) => survey.questions.get(ref)?.pageId));
-    for (const raw of envelope.data.pages ?? []) {
-      const parsed = ZQsfPlanPage.safeParse(raw);
-      if (!parsed.success || !pageIds.has(parsed.data.id) || plan.pageNotes.has(parsed.data.id)) continue;
-      plan.pageNotes.set(parsed.data.id, cleanNotes(parsed.data.logicNotes));
-    }
+    const entries = readEntries(envelope.data, response.refs, addFailure);
+    const skips = readSkips(envelope.data, response.refs);
+    readPageNotes(survey, envelope.data, response.refs, plan.pageNotes);
 
     for (const ref of response.refs) {
-      if (plan.failures.has(ref)) continue;
       const question = survey.questions.get(ref);
-      const entryList = entries.get(ref) ?? [];
-      const skipList = skips.get(ref) ?? [];
-
-      if (!question) continue;
-      if (entryList.length > 1 || skipList.length > 1) {
-        addFailure(ref, "duplicate_ref");
-      } else if (skipList.length === 1 && entryList.length > 0) {
-        addFailure(ref, "placed_and_skipped");
-      } else if (skipList.length === 1) {
-        const reason = cleanNote(skipList[0]);
-        plan.skipped.set(ref, reason.length > 0 ? reason : null);
-      } else if (entryList.length === 0) {
-        addFailure(ref, "missing");
-      } else {
-        const result = checkQuestionRoles(question, entryList[0]);
-        if (result.ok) plan.questions.set(ref, result.question);
-        else for (const reason of result.reasons) addFailure(ref, reason);
-      }
+      if (plan.failures.has(ref) || !question) continue;
+      judgeQuestion(plan, question, entries.get(ref) ?? [], skips.get(ref) ?? [], addFailure);
     }
   }
 
