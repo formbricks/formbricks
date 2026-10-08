@@ -15,6 +15,10 @@ describe("collectEmbeddedDataReferences", () => {
       )
     ).toEqual(["firstName", "plan tier"]);
   });
+
+  test("ends a pipe body at a `$`, so an unclosed pipe never swallows the next one", () => {
+    expect(collectEmbeddedDataReferences("${e://Field/broken ${e://Field/firstName}")).toEqual(["firstName"]);
+  });
 });
 
 describe("replacePipedText", () => {

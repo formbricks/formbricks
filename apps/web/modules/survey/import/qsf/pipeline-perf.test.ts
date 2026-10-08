@@ -225,6 +225,48 @@ describe("event loop", () => {
     expect(seen.longestPipedScan).toBeLessThanOrEqual(QSF_MAX_TEXT_CHARS);
   });
 
+  test("prepareQsfImport scans piped text in time linear in the file, its noise spread over many texts", async () => {
+    // 302 texts of `${e://` repeated up to the sanitizer's length, no closing brace, in two questions'
+    // texts and choices: about 15 MB. Each text is within the cap, so each is scanned; a pipe body that
+    // ran up to 200 characters on from every `${` cost about 0.8 s over the file.
+    const noise = "${e://".repeat(Math.floor(QSF_MAX_TEXT_CHARS / "${e://".length));
+    const questions = ["QID1", "QID2"].map((qid) => ({
+      Element: "SQ",
+      PrimaryAttribute: qid,
+      Payload: {
+        QuestionText: noise,
+        QuestionType: "MC",
+        Selector: "SAVR",
+        Choices: Object.fromEntries(
+          Array.from({ length: 150 }, (_, i) => [String(i + 1), { Display: noise }])
+        ),
+      },
+    }));
+    const qsf = {
+      SurveyEntry: { SurveyName: "Spread noise", SurveyLanguage: "EN" },
+      SurveyElements: [
+        ...questions,
+        {
+          Element: "BL",
+          Payload: [
+            {
+              ID: "BL_1",
+              BlockElements: ["QID1", "QID2"].map((qid) => ({ Type: "Question", QuestionID: qid })),
+            },
+          ],
+        },
+        { Element: "FL", Payload: { Flow: [{ Type: "Block", ID: "BL_1" }] } },
+      ],
+    };
+
+    const used = cpuMs(() => prepareQsfImport(qsf, "spread-noise.qsf"));
+
+    // Structural: every text is scanned, none past the cap; the bound is on each scan's cost.
+    expect(seen.longestPipedScan).toBe(noise.length);
+    // Coarse: ~15 ms of scanning, where a body that ran on to 200 characters took about 800.
+    expect(used).toBeLessThanOrEqual(200);
+  });
+
   test("prepareQsfImport cuts every other long string from the file before it trims or matches it", async () => {
     // Names cut before they are trimmed; codes, numbers, a message reference and a URL refused by
     // their length first.

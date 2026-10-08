@@ -2,9 +2,12 @@
  * Qualtrics piped text: `${q://QID3/ChoiceTextEntryValue}`, `${e://Field/firstName}`, `${lm://…}`.
  *
  * The body is bounded (`{0,200}`) so a long run of `${x://` with no closing brace costs a bounded scan
- * per occurrence instead of a scan to the end of the text from each one.
+ * per occurrence instead of a scan to the end of the text from each one. It also stops at a `$`, which
+ * no Qualtrics pipe body holds: a match attempt at each `${` then ends at the next one, so a text of
+ * `${e://` repeated costs a scan of the text once, not 200 characters per occurrence. The text length cap
+ * bounds one text; this bounds the file, whose texts together may hold millions of `${`.
  */
-export const PIPED_TEXT_PATTERN = /\$\{([a-zA-Z]{1,10}):\/\/([^}]{0,200})\}/g;
+export const PIPED_TEXT_PATTERN = /\$\{([a-zA-Z]{1,10}):\/\/([^}$]{0,200})\}/g;
 
 /** The embedded data names a text pipes in (`${e://Field/<name>}`). */
 export function collectEmbeddedDataReferences(text: string): string[] {
