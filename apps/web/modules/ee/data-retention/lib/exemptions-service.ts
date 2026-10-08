@@ -126,6 +126,17 @@ export async function findRetentionExemption({
   return row ?? null;
 }
 
+/** A survey's active exemptions, newest first. The caller has already authorized reading the survey. */
+export const listActiveSurveyRetentionExemptions = (surveyId: string, now: Date) =>
+  selectExemptionRows(
+    [
+      Prisma.sql`e."surveyId" = ${surveyId}`,
+      Prisma.sql`e."revokedAt" IS NULL`,
+      Prisma.sql`e."until" > ${now}`,
+    ],
+    Prisma.sql`ORDER BY e."created_at" DESC, e."id" DESC`
+  );
+
 /** The organisation an exemption belongs to, the only thing a route may read before authorizing. */
 export async function getRetentionExemptionOrganizationId(id: string): Promise<string | null> {
   const exemption = await prisma.retentionExemption.findUnique({

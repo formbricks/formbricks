@@ -85,3 +85,25 @@ export type TRetentionPoliciesPatch =
   | { responses: Partial<Omit<TRetentionPolicySettings, "conditions">> }
   | { surveys: Partial<TRetentionPolicySettings> }
   | { members: Partial<Omit<TRetentionPolicySettings, "conditions">> };
+
+/** What a policy does next to one survey, for its summary note and settings card (ENG-3695). */
+export type TSurveyRetentionPolicy = {
+  policy: TRetentionExemptionPolicy;
+  /** An active exemption holds the survey from this policy, so it has no next date. */
+  exempt: boolean;
+  /** Null when the policy has nothing to do to this survey yet (no responses, or exempt). */
+  nextAction: "archive" | "delete" | null;
+  nextDate: string | null;
+  /**
+   * Responses policy: how many responses are already inside the warning window, the oldest deleted on
+   * `nextDate`. Counted up to a cap, so `relation` says whether the number is exact.
+   */
+  dueCount: { count: number; relation: "eq" | "gte" } | null;
+};
+
+/** `GET /api/internal/survey-retention/{surveyId}`. `governed` is false without the entitlement too. */
+export type TSurveyRetention = {
+  governed: boolean;
+  policies: TSurveyRetentionPolicy[];
+  exemptions: TRetentionExemption[];
+};
