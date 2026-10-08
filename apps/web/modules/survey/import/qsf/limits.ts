@@ -1,4 +1,4 @@
-import { V3_SURVEY_MAX_HIDDEN_FIELDS, V3_SURVEY_MAX_LANGUAGES } from "@/app/api/v3/surveys/schemas";
+import { V3_SURVEY_MAX_LANGUAGES } from "@/app/api/v3/surveys/schemas";
 
 /**
  * Limits of the Qualtrics reader (ENG-3654). They are checked while the file is read, so a file past
@@ -15,11 +15,14 @@ export const QSF_MAX_QUESTIONS = 200;
 /** Choices (`Choices`) and answers (`Answers`, a matrix's columns) of one question. */
 export const QSF_MAX_OPTIONS_PER_QUESTION = 200;
 
-/** Languages, the default included: the v3 survey document's own cap. */
-export const QSF_MAX_LANGUAGES = V3_SURVEY_MAX_LANGUAGES;
-
-/** Embedded data fields kept as hidden fields: the v3 survey document's own cap. The rest are dropped. */
-export const QSF_MAX_HIDDEN_FIELDS = V3_SURVEY_MAX_HIDDEN_FIELDS;
+/**
+ * Languages, the default included, and embedded data fields kept as hidden fields (the rest are
+ * dropped): the v3 survey document's own caps.
+ */
+export {
+  V3_SURVEY_MAX_HIDDEN_FIELDS as QSF_MAX_HIDDEN_FIELDS,
+  V3_SURVEY_MAX_LANGUAGES as QSF_MAX_LANGUAGES,
+} from "@/app/api/v3/surveys/schemas";
 
 /**
  * Raw `Language` keys of one question, and of the whole file. A real export has one per survey

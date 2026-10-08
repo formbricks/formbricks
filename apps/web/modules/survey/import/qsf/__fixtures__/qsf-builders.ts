@@ -113,11 +113,15 @@ export const question = (spec: TQuestionSpec) => ({
   },
 });
 
+/** Stands in a block's elements for a page break. */
+export const PAGE_BREAK = "PAGE_BREAK";
+
 type TBlockSpec = {
   id: string;
   description: string;
   type?: "Default" | "Standard" | "Trash";
-  elements: (string | "PAGE_BREAK")[];
+  /** Question ids, and `PAGE_BREAK` for each page break. */
+  elements: string[];
 };
 
 const blockPayload = (block: TBlockSpec) => ({
@@ -125,7 +129,7 @@ const blockPayload = (block: TBlockSpec) => ({
   Description: block.description,
   ID: block.id,
   BlockElements: block.elements.map((element) =>
-    element === "PAGE_BREAK" ? { Type: "Page Break" } : { Type: "Question", QuestionID: element }
+    element === PAGE_BREAK ? { Type: "Page Break" } : { Type: "Question", QuestionID: element }
   ),
 });
 
@@ -408,7 +412,7 @@ export function buildLarge150Qsf(): Record<string, unknown> {
         break;
     }
     blockElements.push(qid);
-    if (i % 5 === 0 && i < 150) blockElements.push("PAGE_BREAK");
+    if (i % 5 === 0 && i < 150) blockElements.push(PAGE_BREAK);
   }
   const blocks: TBlockSpec[] = [];
   for (let b = 0; b < 10; b++) {

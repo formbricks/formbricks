@@ -407,7 +407,7 @@ describe("planQsfImport", () => {
     expect(result.calls).toBe(26);
     expect(result.plan.questions.size).toBe(0);
     // What the retry round could not ask for is dropped as unplanned, not failed.
-    expect(result.issues.length).toBe(150);
+    expect(result.issues).toHaveLength(150);
     expect(result.issues.map((issue) => issue.params?.cause)).toContain("ai_budget");
   });
 

@@ -179,6 +179,12 @@ export function buildHiddenFields(names: string[]): {
   return { fieldIds, idByName, issues };
 }
 
+/** How a multiple choice question shuffles: never its special choices, which stay last. */
+const choiceShuffle = (randomized: boolean, hasSpecial: boolean): "none" | "all" | "exceptLast" => {
+  if (!randomized) return "none";
+  return hasSpecial ? "exceptLast" : "all";
+};
+
 /** Disambiguate labels that repeat within a language: `N/A`, `N/A (2)`. Returns whether any changed. */
 export function disambiguateLabels(
   items: TDraftChoice[],
@@ -477,12 +483,11 @@ class QsfAssembler {
           const role = ordered[index].special;
           return role ? { ...choice, id: role } : choice;
         });
-        const hasSpecial = ordered.length !== regular.length;
         return {
           ...base,
           type: planned.type,
           choices,
-          shuffleOption: question.randomized ? (hasSpecial ? "exceptLast" : "all") : "none",
+          shuffleOption: choiceShuffle(question.randomized, ordered.length !== regular.length),
           displayType: question.selector === "DL" ? "dropdown" : "list",
         };
       }

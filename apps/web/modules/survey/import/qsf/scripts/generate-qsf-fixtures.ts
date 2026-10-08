@@ -18,6 +18,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  PAGE_BREAK,
   SURVEY_ID,
   blocksElement,
   booleanExpression,
@@ -262,7 +263,7 @@ write(
           id: "BL_1",
           description: "Usage",
           type: "Default",
-          elements: ["QID1", "QID2", "PAGE_BREAK", "QID3"],
+          elements: ["QID1", "QID2", PAGE_BREAK, "QID3"],
         },
         { id: "BL_2", description: "Compliance", elements: ["QID4"] },
         { id: "BL_3", description: "Wrap up", elements: ["QID5", "QID6"] },
@@ -383,11 +384,11 @@ write(
             "QID6",
             "QID1",
             "QID2",
-            "PAGE_BREAK",
+            PAGE_BREAK,
             "QID3",
             "QID4",
             "QID5",
-            "PAGE_BREAK",
+            PAGE_BREAK,
             "QID7",
             "QID8",
             "QID9",
@@ -419,7 +420,7 @@ write(
       question({ qid: "QID4", text: "Trashed question", type: "TE", selector: "SL" }),
       question({ qid: "QID5", text: "Orphan block question", type: "TE", selector: "SL" }),
       blocksElement([
-        { id: "BL_a", description: "Block A", type: "Default", elements: ["QID1", "PAGE_BREAK", "QID2"] },
+        { id: "BL_a", description: "Block A", type: "Default", elements: ["QID1", PAGE_BREAK, "QID2"] },
         { id: "BL_b", description: "Block B", elements: ["QID3"] },
         { id: "BL_orphan", description: "Not in flow", elements: ["QID5"] },
         { id: "BL_trash", description: "Trash / Unused Questions", type: "Trash", elements: ["QID4"] },
@@ -462,7 +463,7 @@ write(
           id: "BL_1",
           description: "Default Question Block",
           type: "Default",
-          elements: ["QID1", "PAGE_BREAK", "QID2"],
+          elements: ["QID1", PAGE_BREAK, "QID2"],
         },
       ]),
       flowElement([
@@ -623,7 +624,7 @@ write(
           id: "BL_1",
           description: "Drinks",
           type: "Default",
-          elements: ["QID1", "QID2", "PAGE_BREAK", "QID3"],
+          elements: ["QID1", "QID2", PAGE_BREAK, "QID3"],
         },
       ]),
       flowElement([flowBlock("BL_1"), flowEnd()]),

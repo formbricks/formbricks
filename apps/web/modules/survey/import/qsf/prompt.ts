@@ -54,11 +54,29 @@ interface TPromptLimits {
  * the rest. A survey there still imports; its logic lines just come without descriptions. Only a
  * survey over budget even then is refused.
  */
+const LOOSEST_LIMITS: TPromptLimits = {
+  text: 400,
+  option: 120,
+  options: 40,
+  rules: 3,
+  conditions: 6,
+  operand: 60,
+  context: 20,
+};
+const COARSEST_LIMITS: TPromptLimits = {
+  text: 60,
+  option: 24,
+  options: 4,
+  rules: 0,
+  conditions: 0,
+  operand: 0,
+  context: 0,
+};
 const PROMPT_LIMITS: readonly TPromptLimits[] = [
-  { text: 400, option: 120, options: 40, rules: 3, conditions: 6, operand: 60, context: 20 },
+  LOOSEST_LIMITS,
   { text: 160, option: 60, options: 12, rules: 2, conditions: 3, operand: 40, context: 10 },
   { text: 60, option: 30, options: 6, rules: 1, conditions: 2, operand: 30, context: 5 },
-  { text: 60, option: 24, options: 4, rules: 0, conditions: 0, operand: 0, context: 0 },
+  COARSEST_LIMITS,
 ];
 
 /** The question data of one import, all questions together, at the limits chosen (~60k tokens). */
@@ -208,7 +226,7 @@ function describeContext(
 }
 
 /** JSON whose `<` cannot close the data block, whatever the file says. */
-const safeJson = (value: unknown): string => JSON.stringify(value).replaceAll("<", "\\u003c");
+const safeJson = (value: unknown): string => JSON.stringify(value).replaceAll("<", String.raw`\u003c`);
 
 /** The characters one question adds to a call's data block, at the given limits. */
 export const describedQuestionChars = (
@@ -218,9 +236,9 @@ export const describedQuestionChars = (
 ): number => safeJson(describeQuestion(question, texts, limits)).length;
 
 /** The loosest limits: what the AI call cap is sized for, since it describes the most rules. */
-export const QSF_LOOSEST_PROMPT_LIMITS = PROMPT_LIMITS[0];
+export const QSF_LOOSEST_PROMPT_LIMITS = LOOSEST_LIMITS;
 /** The coarsest limits, which still import a survey every other tier is too large for. */
-export const QSF_COARSEST_PROMPT_LIMITS = PROMPT_LIMITS[PROMPT_LIMITS.length - 1];
+export const QSF_COARSEST_PROMPT_LIMITS = COARSEST_LIMITS;
 
 /** The data one call carries, as a string, at the tightest limits the whole import needs. */
 export function describeQsfQuestions(

@@ -44,12 +44,15 @@ export const planForRefs = (plan: TRecordedPlan, refs: readonly string[]): TReco
  */
 export const recordedGenerate =
   (plan: TRecordedPlan, onCall?: (request: TQsfPlanRequest) => void): TQsfPlanGenerate =>
-  async (request) => {
+  (request) => {
     onCall?.(request);
-    request.abortSignal.throwIfAborted();
+    if (request.abortSignal.aborted) return Promise.reject(request.abortSignal.reason);
     const object = planForRefs(plan, refsInPrompt(request.prompt));
     const outputTokens = Math.ceil(JSON.stringify(object).length / 4);
-    return { object, usage: { inputTokens: Math.ceil(request.prompt.length / 4), outputTokens } };
+    return Promise.resolve({
+      object,
+      usage: { inputTokens: Math.ceil(request.prompt.length / 4), outputTokens },
+    });
   };
 
 /**
