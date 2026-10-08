@@ -1,4 +1,4 @@
-import { NoObjectGeneratedError } from "ai";
+import { APICallError, NoObjectGeneratedError } from "ai";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { TooManyRequestsError } from "@formbricks/types/errors";
@@ -469,7 +469,8 @@ describe("planQsfImport", () => {
   });
 
   test("lets a quota failure through unwrapped, and cancels the calls running beside it", async () => {
-    const quota = new TooManyRequestsError("ai_quota_exceeded", 30);
+    // A Retry-After past the call's 45 s: not waited out.
+    const quota = new TooManyRequestsError("ai_quota_exceeded", 60);
     const siblings: AbortSignal[] = [];
     let calls = 0;
     const generate: TQsfPlanGenerate = (request) => {
@@ -748,5 +749,128 @@ describe("planQsfImport with a model that takes time", () => {
     for (const request of requests) {
       expect(request.at + request.timeout).toBeLessThanOrEqual(120_000 - QSF_ASSEMBLY_RESERVE_MS);
     }
+  });
+});
+
+describe("planQsfImport retrying a call itself", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const providerError = (statusCode: number) =>
+    new APICallError({
+      message: "provider failure",
+      url: "https://provider.example.com/v1/chat/completions",
+      requestBodyValues: {},
+      statusCode,
+      responseHeaders: {},
+    });
+
+  /**
+   * Plan simple.qsf (one chunk of five questions) on fake timers, the clock run until it settles.
+   * `respond` answers each request; every request is recorded with when it was sent.
+   */
+  const planRetrying = async (
+    respond: (request: TQsfPlanRequest, index: number) => Promise<Awaited<ReturnType<TQsfPlanGenerate>>>,
+    options: { signal?: AbortSignal; abortAt?: { controller: AbortController; ms: number } } = {}
+  ) => {
+    const { survey, texts } = await prepare("simple.qsf");
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date", "performance"] });
+    const startedAt = performance.now();
+    const requests: { refs: string[]; timeout: number; maxRetries: number; at: number }[] = [];
+    if (options.abortAt) {
+      const { controller, ms } = options.abortAt;
+      setTimeout(() => controller.abort(new DOMException("Stopped", "AbortError")), ms);
+    }
+    const settled = planQsfImport({
+      survey,
+      texts,
+      generate: (request) => {
+        requests.push({
+          refs: refsInPrompt(request.prompt),
+          timeout: request.timeout,
+          maxRetries: request.maxRetries,
+          at: performance.now() - startedAt,
+        });
+        return respond(request, requests.length - 1);
+      },
+      signal: options.abortAt?.controller.signal ?? new AbortController().signal,
+      deadline: startedAt + 120_000,
+    }).then(
+      (result) => ({ result, error: null as unknown }),
+      (error: unknown) => ({ result: null, error })
+    );
+    await vi.advanceTimersByTimeAsync(130_000);
+    return { ...(await settled), requests };
+  };
+
+  const answer = recordedGenerate(loadRecordedPlan("simple.qsf"));
+
+  /** Settle after `ms` of fake time, or reject at once when the request's signal aborts. */
+  const after = <T>(request: TQsfPlanRequest, ms: number, outcome: () => Promise<T>): Promise<T> =>
+    new Promise((resolve, reject) => {
+      const timer = setTimeout(() => outcome().then(resolve, reject), ms);
+      request.abortSignal.addEventListener(
+        "abort",
+        () => {
+          clearTimeout(timer);
+          reject(request.abortSignal.reason);
+        },
+        { once: true }
+      );
+    });
+
+  test("lets a 429 through as the quota error when its Retry-After is past the call's time, unsplit", async () => {
+    const quota = new TooManyRequestsError("ai_quota_exceeded", 50);
+
+    const { error, requests } = await planRetrying(() => Promise.reject(quota));
+
+    expect(error).toBe(quota);
+    expect(requests).toHaveLength(1);
+  });
+
+  test("waits out a 429 with a short Retry-After and sends the call again", async () => {
+    const quota = new TooManyRequestsError("ai_quota_exceeded", 3);
+
+    const { result, error, requests } = await planRetrying((request, index) =>
+      index === 0 ? Promise.reject(quota) : answer(request)
+    );
+
+    expect(error).toBeNull();
+    expect(result?.plan.questions.size).toBe(5);
+    expect(result?.calls).toBe(2);
+    expect(requests.map((request) => request.refs.length)).toEqual([5, 5]);
+    expect(requests[1].at).toBeGreaterThanOrEqual(3_000);
+    // The retry gets what is left of the call's time, and the SDK never retries on its own.
+    expect(requests[1].timeout).toBeLessThanOrEqual(QSF_AI_CALL_TIMEOUT_MS - 3_000);
+    expect(requests.every((request) => request.maxRetries === 0)).toBe(true);
+  });
+
+  test("splits a chunk whose 503s outlast the call's time, as a timed-out call", async () => {
+    // The whole chunk fails slowly with a 503; its halves answer.
+    const { result, error, requests } = await planRetrying((request) =>
+      refsInPrompt(request.prompt).length === 5
+        ? after(request, 20_000, () => Promise.reject(providerError(503)))
+        : answer(request)
+    );
+
+    expect(error).toBeNull();
+    expect(result?.plan.questions.size).toBe(5);
+    // 20 s, a backoff of 1–2 s, 20 s more: too little left for a third, so the call timed out.
+    expect(requests.map((request) => request.refs.length)).toEqual([5, 5, 3, 2]);
+    expect(requests[1].at).toBeGreaterThanOrEqual(21_000);
+  });
+
+  test("stops at once when the import is aborted while it waits to retry", async () => {
+    const controller = new AbortController();
+    const quota = new TooManyRequestsError("ai_quota_exceeded", 10);
+
+    const { error, requests } = await planRetrying(() => Promise.reject(quota), {
+      abortAt: { controller, ms: 5_000 },
+    });
+
+    expect((error as DOMException).name).toBe("AbortError");
+    expect((error as DOMException).message).toBe("Stopped");
+    expect(requests).toHaveLength(1);
   });
 });

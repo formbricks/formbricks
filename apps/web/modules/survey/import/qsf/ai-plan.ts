@@ -1,5 +1,6 @@
 import { NoObjectGeneratedError, NoOutputGeneratedError, TypeValidationError } from "ai";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
+import { decideQsfRetry, waitForRetry } from "./call-retry";
 import { QsfImportFailedError, QsfImportTimeoutError } from "./errors";
 import { QSF_MAX_QUESTIONS } from "./limits";
 import {
@@ -32,10 +33,13 @@ import { unsupportedTypeSeverity } from "./unsupported-types";
  * chunk, as many chunks as the survey needs — and at most four run at once. The provider's
  * tokens-per-minute is the real limit there, and nothing in the app holds it back. Per chunk:
  *
- * - 429, provider auth and any other provider failure propagate unwrapped, and a shared abort cancels
- *   the sibling calls, so the route's classification keeps working;
- * - running out of output tokens, or out of the call's own time (the AI SDK's `timeout`, which spans
- *   its retries and which its abort check does not match), is ours to fix: the chunk is split in two
+ * - a 429 or a 5xx is retried here, the SDK's own retries off (`call-retry.ts`): a 429 while its
+ *   `Retry-After` fits in the call's time, a 5xx with backoff while the call has time left;
+ * - a 429 that does not fit, provider auth and any other provider failure propagate unwrapped, and a
+ *   shared abort cancels the sibling calls, so the route's classification keeps working;
+ * - running out of output tokens, or out of the call's own time (the `timeout` its attempts share,
+ *   which the AI SDK's abort check does not match, and a 5xx with no time left to retry it), is ours to
+ *   fix: the chunk is split in two
  *   (once) and each half asked again, queued behind the other chunks. A half that fails the same way
  *   is dropped with a report line — never "split it in Qualtrics", and never the end of the import;
  * - output that fails the schema fails the chunk's questions, which go to the retry round.
@@ -135,7 +139,10 @@ export interface TQsfPlanRequest {
   schemaDescription: string;
   temperature: number;
   maxOutputTokens: number;
+  /** This attempt's time: what is left of the call's. */
   timeout: number;
+  /** Always 0: the import retries its calls itself (`call-retry.ts`), the SDK must not. */
+  maxRetries: 0;
   abortSignal: AbortSignal;
 }
 
@@ -225,10 +232,10 @@ type TCallOutcome =
 const CALL_TIMEOUT_ERROR_NAMES: ReadonlySet<string> = new Set(["TimeoutError", "AbortError"]);
 
 /**
- * Whether a call failed because its own `timeout` fired. Asked only once the import's own signal is
- * known not to have fired, so the call's timeout is the only abort left. The AI SDK reports it as a
- * `TimeoutError`, or — when the timeout fires during its retry backoff — as the backoff delay's
- * `AbortError` ("Delay was aborted").
+ * Whether an attempt failed because its own `timeout` fired. Asked only once the import's own signal
+ * is known not to have fired, so the attempt's timeout is the only abort left. The AI SDK reports it
+ * as a `TimeoutError`, or as an `AbortError` carrying it (a backoff delay's "Delay was aborted", when
+ * its own retries were on).
  */
 const isCallTimeout = (error: unknown): boolean =>
   error instanceof Error &&
@@ -363,33 +370,58 @@ async function callOnce(
   const size = system.length + prompt.length;
   if (size > QSF_PROMPT_MAX_CALL_CHARS) return { kind: "too_long" };
   if (context.promptChars + size > QSF_PROMPT_MAX_TOTAL_CHARS) return { kind: "budget" };
-  context.promptChars += size;
-  context.calls += 1;
 
-  try {
-    const result = await context.generate({
-      system,
-      prompt,
-      schema: ZQsfImportPlanForAI,
-      schemaName: "QualtricsImportPlan",
-      schemaDescription: "How each question of a Qualtrics survey becomes a Formbricks question.",
-      temperature: 0,
-      maxOutputTokens: QSF_PLAN_MAX_OUTPUT_TOKENS,
-      timeout,
-      abortSignal: context.signal,
-    });
-    addUsage(context, result.usage);
-    return { kind: "ok", response: { refs: new Set(refs), object: result.object } };
-  } catch (error) {
-    // A call that failed still spent tokens — one that ran out of them spent all 8,192.
-    addUsage(context, usageOfFailure(error));
-    // The import's own abort (Stop, disconnect, the route's deadline, a sibling's failure) is the
-    // route's to classify. Any other abort is this call's own timeout.
-    if (context.signal.aborted) throw error;
-    if (isCallTimeout(error)) return { kind: "timed_out" };
-    if (error instanceof AIOutputTokenLimitError) return { kind: "too_long" };
-    if (isInvalidOutput(error)) return { kind: "invalid" };
-    throw error;
+  // The call's time spans its retries: each attempt gets what is left of it.
+  const callEnd = performance.now() + timeout;
+  for (let attempt = 0; ; attempt += 1) {
+    context.promptChars += size;
+    context.calls += 1;
+    try {
+      const result = await context.generate({
+        system,
+        prompt,
+        schema: ZQsfImportPlanForAI,
+        schemaName: "QualtricsImportPlan",
+        schemaDescription: "How each question of a Qualtrics survey becomes a Formbricks question.",
+        temperature: 0,
+        maxOutputTokens: QSF_PLAN_MAX_OUTPUT_TOKENS,
+        timeout: attempt === 0 ? timeout : Math.floor(callEnd - performance.now()),
+        maxRetries: 0,
+        abortSignal: context.signal,
+      });
+      addUsage(context, result.usage);
+      return { kind: "ok", response: { refs: new Set(refs), object: result.object } };
+    } catch (error) {
+      // A call that failed still spent tokens — one that ran out of them spent all 8,192.
+      addUsage(context, usageOfFailure(error));
+      // The import's own abort (Stop, disconnect, the route's deadline, a sibling's failure) is the
+      // route's to classify. Any other abort is this attempt's own timeout.
+      if (context.signal.aborted) throw error;
+      if (isCallTimeout(error)) return { kind: "timed_out" };
+      if (error instanceof AIOutputTokenLimitError) return { kind: "too_long" };
+      if (isInvalidOutput(error)) return { kind: "invalid" };
+
+      const decision = decideQsfRetry({
+        error,
+        attempt,
+        remainingMs: callEnd - performance.now(),
+        minAttemptMs: QSF_MIN_CALL_TIMEOUT_MS,
+      });
+      if (decision.kind === "timed_out") return { kind: "timed_out" };
+      // Out of retries, or past the import's call cap or budgets: the failure stands, as the SDK's own
+      // retries ending would have left it.
+      if (
+        decision.kind === "propagate" ||
+        context.calls >= context.callCap ||
+        context.usage.outputTokens >= context.outputBudget ||
+        context.promptChars + size > QSF_PROMPT_MAX_TOTAL_CHARS
+      ) {
+        throw error;
+      }
+      // Waited by design: the retry must not be sent before the provider said to. Abortable by the
+      // import's signal, whose reason then propagates.
+      await waitForRetry(decision.delayMs, context.signal); // NOSONAR(typescript:S9382) -- a backoff
+    }
   }
 }
 
