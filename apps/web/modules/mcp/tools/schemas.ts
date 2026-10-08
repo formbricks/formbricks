@@ -225,6 +225,18 @@ export const ZMcpCreateSurveyInput = z
       max: V3_SURVEY_MAX_LANGUAGES,
       description: "Configured survey languages using the v3 survey document contract.",
     }).optional(),
+    showLanguageSwitch: z
+      .boolean()
+      .nullable()
+      .optional()
+      .describe("Show respondents a language switch on multi-language surveys. null or omitted means off."),
+    autoSelectLanguage: z
+      .boolean()
+      .nullable()
+      .optional()
+      .describe(
+        "Open the survey in the respondent's browser language when it matches an enabled survey language. null or omitted means off."
+      ),
     welcomeCard: ZMcpObjectInput.optional().describe("Welcome card using the v3 survey document contract."),
     blocks: lengthBoundedArray(ZMcpObjectInput, {
       min: 1,

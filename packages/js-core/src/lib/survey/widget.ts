@@ -7,8 +7,8 @@ import { executeRecaptcha, loadRecaptchaScript } from "@/lib/common/recaptcha";
 import { TimeoutStack } from "@/lib/common/timeout-stack";
 import {
   filterSurveys,
+  getBrowserLanguageCodes,
   getCustomCss,
-  getLanguageCode,
   getStyling,
   shouldDisplayBasedOnPercentage,
   surveyHasSegmentFilters,
@@ -128,21 +128,6 @@ export const renderWidget = async (
   const { settings } = config.get().workspace.data;
   const { language } = config.get().user.data;
 
-  const isMultiLanguageSurvey = survey.languages.length > 1;
-  let languageCode = "default";
-
-  if (isMultiLanguageSurvey) {
-    const displayLanguage = getLanguageCode(survey, language);
-    //if survey is not available in selected language, survey wont be shown
-    if (!displayLanguage) {
-      logger.debug(`Survey "${survey.id}" is not available in specified language.`);
-      setIsSurveyRunning(false);
-      return;
-    }
-
-    languageCode = displayLanguage;
-  }
-
   const workspaceOverwrites = survey.workspaceOverwrites ?? {};
   const clickOutside = workspaceOverwrites.clickOutsideClose ?? settings.clickOutsideClose;
   const overlay = workspaceOverwrites.overlay ?? settings.overlay;
@@ -154,6 +139,15 @@ export const renderWidget = async (
     formbricksSurveys = await loadFormbricksSurveysExternally();
   } catch (error) {
     logger.error(`Failed to load surveys library: ${String(error)}`);
+    setIsSurveyRunning(false);
+    return;
+  }
+
+  // Resolved here, after the surveys bundle loads but before anything is scheduled, recorded or shown:
+  // a skip below leaves no display, event or timeout behind, only the released `isSurveyRunning`.
+  const languageCode = resolveDisplayLanguage(survey, language, formbricksSurveys);
+  if (!languageCode) {
+    logger.debug(`Survey "${survey.id}" is not available in specified language.`);
     setIsSurveyRunning(false);
     return;
   }
@@ -371,6 +365,64 @@ const SURVEYS_LOAD_TIMEOUT_MS = 10000;
 const SURVEYS_POLL_INTERVAL_MS = 200;
 
 type TFormbricksSurveys = NonNullable<typeof globalThis.window.formbricksSurveys>;
+
+/**
+ * The SDK's pre-ENG-3289 matcher: exact stored code, then alias, case-insensitive, no canonical table.
+ * Only used while the instance still serves a cached surveys bundle without `resolveSurveyLanguage`
+ * (`/js/*` is CDN-cached for up to 30 days), so explicit languages keep working as they did before
+ * instead of every one of them being skipped; `resolveDisplayLanguage` also runs browser languages
+ * through it when the survey opted in. Disabled languages (other than the default) are left out, so a disabled alias cannot shadow an
+ * enabled code.
+ */
+const matchLanguageExactly = (survey: TWorkspaceStateSurvey, language: string | undefined): string | null => {
+  const requested = language?.trim().toLowerCase();
+  if (!requested) return "default";
+  const candidates = survey.languages.filter(
+    (surveyLanguage) => surveyLanguage.default || surveyLanguage.enabled
+  );
+  const match =
+    candidates.find((surveyLanguage) => surveyLanguage.language.code.toLowerCase() === requested) ??
+    candidates.find((surveyLanguage) => surveyLanguage.language.alias?.toLowerCase() === requested);
+  if (!match) return null;
+  return match.default ? "default" : match.language.code;
+};
+
+/**
+ * The language a survey renders in, or `null` to skip it.
+ *
+ * Matching runs in the surveys bundle (`resolveSurveyLanguage`), which already carries the canonical
+ * language table for the renderer — bundling it here would grow the SDK on every customer page. An
+ * explicit language (`setLanguage()`) that matches nothing skips the survey, as it always has; the
+ * browser languages only apply when no explicit language is set.
+ *
+ * A surveys bundle that predates the resolver gets the SDK's previous matcher instead — see
+ * `matchLanguageExactly`.
+ */
+const resolveDisplayLanguage = (
+  survey: TWorkspaceStateSurvey,
+  language: string | undefined,
+  formbricksSurveys: TFormbricksSurveys
+): string | null => {
+  if (survey.languages.length <= 1) return "default";
+
+  if (!formbricksSurveys.resolveSurveyLanguage) {
+    if (language?.trim() || !survey.autoSelectLanguage) return matchLanguageExactly(survey, language);
+    // Exact-only, so a browser tag reaches a survey language only when the codes or alias agree.
+    for (const browserLanguage of getBrowserLanguageCodes()) {
+      const match = matchLanguageExactly(survey, browserLanguage);
+      if (match) return match;
+    }
+    return "default";
+  }
+
+  return formbricksSurveys.resolveSurveyLanguage({
+    languages: survey.languages,
+    explicitLanguage: language,
+    browserLanguages: survey.autoSelectLanguage ? getBrowserLanguageCodes() : [],
+    autoSelectLanguage: survey.autoSelectLanguage,
+    unmatchedExplicitLanguage: "skip",
+  });
+};
 
 let surveysLoadPromise: Promise<TFormbricksSurveys> | null = null;
 

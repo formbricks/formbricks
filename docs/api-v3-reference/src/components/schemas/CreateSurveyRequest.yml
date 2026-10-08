@@ -3,7 +3,7 @@ description: >
   Strict v3 survey creation document. This endpoint accepts survey structure
   only: name,
 
-  metadata, languages, welcome card, blocks/elements/logic, endings, hidden
+  metadata, languages and language settings, welcome card, blocks/elements/logic, endings, hidden
   fields, and variables.
 
   App surveys (`type: app`) additionally accept the `distribution` (display options + triggers) and
@@ -89,6 +89,23 @@ properties:
       translatable maps
 
       must be declared here; omitted languages are not inferred from map keys.
+  showLanguageSwitch:
+    type:
+      - boolean
+      - "null"
+    default: null
+    description: >-
+      Show respondents a language switch on multi-language surveys. `null` and `false` both
+      mean off.
+  autoSelectLanguage:
+    type:
+      - boolean
+      - "null"
+    default: null
+    description: >-
+      Open link and app surveys in the respondent's browser language when it matches an
+      enabled survey language; otherwise the default language is used. `null` and `false` both
+      mean off.
   welcomeCard:
     allOf:
       - $ref: ./SurveyWelcomeCard.yml

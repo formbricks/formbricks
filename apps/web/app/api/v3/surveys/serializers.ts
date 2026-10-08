@@ -296,6 +296,8 @@ export function serializeV3SurveyResource(
       enabled,
       ...(alias ? { alias } : {}),
     })),
+    showLanguageSwitch: survey.showLanguageSwitch ?? null,
+    autoSelectLanguage: survey.autoSelectLanguage ?? null,
     welcomeCard: serializeValue(survey.welcomeCard),
     blocks: serializeValue(survey.blocks),
     endings: serializeValue(survey.endings),

@@ -273,6 +273,8 @@ export async function executeV3SurveyCreate(params: {
     type: input.type,
     status: input.status,
     metadata: input.metadata,
+    showLanguageSwitch: input.showLanguageSwitch,
+    autoSelectLanguage: input.autoSelectLanguage,
     welcomeCard: input.welcomeCard,
     blocks: input.blocks,
     endings: input.endings,

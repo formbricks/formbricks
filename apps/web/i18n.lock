@@ -21,6 +21,7 @@ checksums:
     auth/email-change/old_email: a0997d29018f8eca4191f04254d7f3c2
     auth/forgot-password/back_to_login: 6bcc9859839f32dc2b4295e1565919a4
     auth/forgot-password/email-sent/heading: d1f5f21900d34943ec70639431c2c04d
+    auth/forgot-password/email-sent/sso_hint: fcffbf3f7541f9bef42ed6128ca6c8b8
     auth/forgot-password/email-sent/text: d7068d31cf3cf4590bdecb56bbe024c8
     auth/forgot-password/reset/confirm_password: b5cdb861d8deb598b0613d48098b82b6
     auth/forgot-password/reset/new_password: c3e35b0671004c7bbd9fa9b9654744d7
@@ -661,6 +662,13 @@ checksums:
     emails/sso_recovery_factors_removed_email_subject: 7caa021eb4fc677405092070521cd3c1
     emails/sso_recovery_factors_removed_email_text: 2b84a67e8678444b491cbd333f071caa
     emails/sso_recovery_factors_removed_email_two_factor: 83d572df760fdce5cdb8fa8df9ea07ad
+    emails/sso_sign_in_hint_email_did_not_request: dc421e6b5b18b06d6b5697f0a72b9b4d
+    emails/sso_sign_in_hint_email_go_to_login: 276d7c5f603c649ad47a6f7d9c9d728d
+    emails/sso_sign_in_hint_email_heading: b88567d0947d3eac36f61685b309c7ef
+    emails/sso_sign_in_hint_email_no_access: 8461e56a711ca3092dff6bc80b389fce
+    emails/sso_sign_in_hint_email_subject: 3c2cd920e0051fb3ff276f573aef90a9
+    emails/sso_sign_in_hint_email_text: 00938ea236714676b74db761f501fc0c
+    emails/sso_sign_in_hint_email_text_unavailable: 97a59e235f0b3c212fa00d3950aaa402
     emails/survey_response_finished_email_congrats: 4cc39698d6a16f68cf7d9db902c5978e
     emails/survey_response_finished_email_dont_want_notifications: 749171800180682839896dc04a53ca10
     emails/survey_response_finished_email_hey: 20c5157a424f7d49ceeb27e6fb13d194
@@ -2737,8 +2745,10 @@ checksums:
     workspace/settings/api_keys/connect_app_banner_description: 76e44d7824850bd9f1713a6101f87714
     workspace/settings/api_keys/connect_app_banner_link: 1b4522cd48be097df8948fdc201c4580
     workspace/settings/api_keys/connect_app_banner_title: 658234361bace033a510d8acdbefce01
+    workspace/settings/billing/billing_currency_conflict: 4893a1a8f2a3eb5bda0dedfbbfae6ec3
     workspace/settings/billing/billing_interval_toggle: 62c76eb73507108fc6aefdf1ab86cc38
     workspace/settings/billing/cancel_at_period_end: c252f54e4ee6f9419a945f3cb7c31e80
+    workspace/settings/billing/card_payment_method_required: dcbbca2348a137392d05292f18da8e87
     workspace/settings/billing/comparison_addon: 4f35a82638402eb9dcb31e00be8997be
     workspace/settings/billing/comparison_best_for: f08508c34b7d27068257186ad96c77f2
     workspace/settings/billing/comparison_included: e6e289fa98e3bf88fb381ebedcade7b7
@@ -2781,6 +2791,7 @@ checksums:
     workspace/settings/billing/comparison_section_scale_unlocks: 8d043ca2c2ff294dfc8ee41ab8830b09
     workspace/settings/billing/confirm_hobby_downgrade_body: 7f7970ac48eb8c4faa92d9adbe25f8d5
     workspace/settings/billing/confirm_hobby_downgrade_description: 263d21901fbb5741bc31f2dbcaacfce1
+    workspace/settings/billing/confirm_hobby_downgrade_ends_current_plan_body: 9f6558685942e41a1ba5ec2faba69e02
     workspace/settings/billing/confirm_hobby_downgrade_title: ec0ad17a5e1c6823634ef7c383d94bd5
     workspace/settings/billing/confirm_trial_continue_body: b5c3ed4d94b0ee2521e688f010479694
     workspace/settings/billing/confirm_trial_continue_body_fallback: 6e2a07e8420c93bb378c531e0fb2ba01
@@ -2793,6 +2804,7 @@ checksums:
     workspace/settings/billing/confirm_upgrade_button: 0c91db4f2f989972d493fed2311cbbc0
     workspace/settings/billing/confirm_upgrade_calculating: a738aa8430b5e2e8022784078d2c4ec3
     workspace/settings/billing/confirm_upgrade_description: 802d3a25618fa1922fdb5ffca0594817
+    workspace/settings/billing/confirm_upgrade_ends_current_plan: 54b7a719a7c7722f832d295cc54dc431
     workspace/settings/billing/confirm_upgrade_title: 0c91db4f2f989972d493fed2311cbbc0
     workspace/settings/billing/contact_sales_cta: 5dc274e84dd0ac81892fe67bf66360fd
     workspace/settings/billing/contact_sales_description: c79ce0fe56b31adcca9c888bdd4fcd52
@@ -3358,6 +3370,8 @@ checksums:
     workspace/surveys/edit/auto_save_disabled: f7411fb0dcfb8f7b19b85f0be54f2231
     workspace/surveys/edit/auto_save_disabled_tooltip: d2dcdbb63a8e5db40fff711f85dd4dbd
     workspace/surveys/edit/auto_save_on: 1524d466830b00c5d727c701db404963
+    workspace/surveys/edit/auto_select_browser_language: 9364ba68ec62070addcf38e6911a96c1
+    workspace/surveys/edit/auto_select_browser_language_description: 36a1c099c0accb1d686bad528b7b4a24
     workspace/surveys/edit/automatically_close_survey_after_n_seconds_if_no_response: 7f8ea038a731a792f744d79fabba4aa9
     workspace/surveys/edit/automatically_close_the_survey_after_a_certain_number_of_responses: 2beee129dca506f041e5d1e6a1688310
     workspace/surveys/edit/automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds: 1be3819ffa1db67385357ae933d69a7b

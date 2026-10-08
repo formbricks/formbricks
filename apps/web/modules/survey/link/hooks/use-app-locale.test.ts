@@ -111,6 +111,34 @@ describe("useAppLocale", () => {
     expect(i18n.changeLanguage).toHaveBeenNthCalledWith(2, "en-US");
   });
 
+  test("a superseded switch that fails does not fall back over the switch that replaced it", async () => {
+    // ENG-3170: the respondent picks a locale whose bundle then fails, but only after they have
+    // already moved on to another. The en-US fallback belongs to the request that is still wanted.
+    let failHebrew: (() => void) | undefined;
+    i18n.changeLanguage.mockImplementation((next: string) => {
+      if (next === "he") {
+        return new Promise<void>((_resolve, reject) => {
+          failHebrew = () => reject(new Error("no bundle for he"));
+        });
+      }
+      setLanguage(next);
+      return Promise.resolve();
+    });
+
+    const { rerender } = renderHook(({ locale }) => useAppLocale(locale), {
+      initialProps: { locale: "he" },
+    });
+    rerender({ locale: "fr-FR" });
+    await waitFor(() => {
+      expect(i18n.language).toBe("fr-FR");
+    });
+
+    await act(async () => failHebrew?.());
+
+    expect(i18n.changeLanguage).not.toHaveBeenCalledWith("en-US");
+    expect(i18n.language).toBe("fr-FR");
+  });
+
   test("stays ready across a later switch, so the survey shell does not blank", async () => {
     const { result, rerender } = renderHook(({ locale }) => useAppLocale(locale), {
       initialProps: { locale: "en-US" },

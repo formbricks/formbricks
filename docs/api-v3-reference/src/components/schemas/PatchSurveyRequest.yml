@@ -120,6 +120,21 @@ properties:
       intentionally removing
 
       a language.
+  showLanguageSwitch:
+    type:
+      - boolean
+      - "null"
+    description: >-
+      Show respondents a language switch on multi-language surveys. `null` and `false` both
+      mean off. Omit to keep the stored value.
+  autoSelectLanguage:
+    type:
+      - boolean
+      - "null"
+    description: >-
+      Open link and app surveys in the respondent's browser language when it matches an
+      enabled survey language; otherwise the default language is used. `null` and `false` both
+      mean off. Omit to keep the stored value.
   welcomeCard:
     $ref: ./SurveyWelcomeCard.yml
   blocks:

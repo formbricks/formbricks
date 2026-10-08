@@ -1,6 +1,7 @@
 import { expect } from "@playwright/test";
 import http from "http";
 import { prisma } from "@formbricks/database";
+import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
 import { test } from "./lib/fixtures";
 import { gotoSurveyList, gotoSurveyTemplates } from "./lib/utils";
 import { activateSurvey, useSelectedTemplate } from "./utils/helper";
@@ -172,10 +173,15 @@ test.describe("JS Package Test", async () => {
     // every survey name so names are not exposed over an unauthenticated endpoint. This is the only
     // place the real API, the widget and the dialog are wired together, so it is the only place that
     // can catch the placeholder leaking into what a screen reader announces: the dialog falls back
-    // to its generic name instead, and no heading carries the placeholder either.
+    // to its generic name instead, and the survey's one h1 carries that same name (ENG-2799). The h1
+    // is looked up inside the dialog, because aria-modal hides anything outside it from assistive tech.
+    // The placeholder is matched through the shared constant, not a literal, so a change to its text
+    // cannot turn this into a matcher that finds nothing and passes vacuously.
     const widget = page.locator("#formbricks-modal-container");
-    await expect(widget.getByRole("dialog")).toHaveAttribute("aria-label", "Survey Dialog");
-    await expect(widget.getByText(/\[deprecated] survey name omitted/)).toHaveCount(0);
+    const dialog = widget.getByRole("dialog");
+    await expect(dialog).toHaveAttribute("aria-label", "Survey Dialog");
+    await expect(dialog.getByRole("heading", { level: 1 })).toHaveText("Survey Dialog");
+    await expect(widget.getByText(PUBLIC_API_SURVEY_NAME_PLACEHOLDER)).toHaveCount(0);
 
     await expect(
       page.locator("#questionCard-0").getByRole("link", { name: "Powered by Formbricks" })

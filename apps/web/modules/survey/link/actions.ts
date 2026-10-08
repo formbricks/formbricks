@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { resolveSurveyLanguage } from "@formbricks/i18n-utils/survey-language-match";
 import { ZLinkSurveyEmailData } from "@formbricks/types/email";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { actionClient } from "@/lib/utils/action-client";
@@ -10,7 +11,6 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
-import { resolveSurveyLanguageCode } from "@/modules/survey/link/lib/language";
 import { createLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
 import { getLinkSurveyCustomCss, omitCustomCssSource } from "@/modules/survey/link/lib/respondent-custom-css";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
@@ -32,7 +32,12 @@ export const sendLinkSurveyEmailAction = actionClient
     // The language arrives from the client, and it ends up as `?lang=` in the link we email out — so
     // resolve it against this survey's own enabled languages here rather than trusting the payload.
     // Anything that names no enabled language becomes "default" and is left out of the link entirely.
-    const surveyLanguageCode = resolveSurveyLanguageCode(parsedInput.surveyLanguageCode, survey);
+    const surveyLanguageCode =
+      resolveSurveyLanguage({
+        languages: survey.languages,
+        explicitLanguage: parsedInput.surveyLanguageCode,
+        unmatchedExplicitLanguage: "fallback",
+      }) ?? "default";
 
     await sendLinkSurveyToVerifiedEmail({
       ...parsedInput,

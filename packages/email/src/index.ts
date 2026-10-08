@@ -4,6 +4,7 @@ export { DeleteAccountEmail } from "../emails/auth/delete-account-email";
 export { NewEmailVerification } from "../emails/auth/new-email-verification";
 export { PasswordResetNotifyEmail } from "../emails/auth/password-reset-notify-email";
 export { SsoRecoveryFactorsRemovedEmail } from "../emails/auth/sso-recovery-factors-removed-email";
+export { SsoSignInHintEmail } from "../emails/auth/sso-sign-in-hint-email";
 export { InviteEmail } from "../emails/invite/invite-email";
 export { InviteAcceptedEmail } from "../emails/invite/invite-accepted-email";
 export { LinkSurveyEmail } from "../emails/survey/link-survey-email";
@@ -24,6 +25,7 @@ export {
   renderNewEmailVerification,
   renderPasswordResetNotifyEmail,
   renderSsoRecoveryFactorsRemovedEmail,
+  renderSsoSignInHintEmail,
   renderInviteEmail,
   renderInviteAcceptedEmail,
   renderLinkSurveyEmail,

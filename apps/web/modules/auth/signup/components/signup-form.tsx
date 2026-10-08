@@ -15,7 +15,7 @@ import {
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
 } from "@formbricks/types/errors";
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
 import {
   buildSignupWithoutVerificationSuccessPath,

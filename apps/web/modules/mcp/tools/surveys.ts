@@ -233,7 +233,7 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Patch survey",
       description: [
-        "Update survey-level fields — name, status, languages, endings, welcomeCard, variables, hiddenFields, customCss — using the v3 Surveys API patch contract.",
+        "Update survey-level fields — name, status, languages, showLanguageSwitch, autoSelectLanguage, endings, welcomeCard, variables, hiddenFields, customCss — using the v3 Surveys API patch contract.",
         "For block changes prefer edit_survey_blocks (update, insert, remove) or set_survey_block_order (reorder): they address blocks by id, cost a fraction of the tokens, and cannot drop a block by omission.",
         "Provided top-level arrays and objects replace that whole subtree, so a partial `blocks` array deletes every block it leaves out.",
         "The full get_survey output can be sent back unchanged; `updatedAt` is then an optimistic-concurrency precondition and a mismatch returns 409.",

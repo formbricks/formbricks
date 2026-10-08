@@ -12,6 +12,8 @@ allOf:
       - metadata
       - defaultLanguage
       - languages
+      - showLanguageSwitch
+      - autoSelectLanguage
       - welcomeCard
       - blocks
       - endings
@@ -65,6 +67,21 @@ allOf:
         type: array
         items:
           $ref: ./SurveyLanguage.yml
+      showLanguageSwitch:
+        type:
+          - boolean
+          - "null"
+        description: >-
+          Show respondents a language switch on multi-language surveys. `null` and `false`
+          both mean off.
+      autoSelectLanguage:
+        type:
+          - boolean
+          - "null"
+        description: >-
+          Open link and app surveys in the respondent's browser language when it matches
+          an enabled survey language; otherwise the default language is used. `null` and
+          `false` both mean off.
       welcomeCard:
         $ref: ./SurveyWelcomeCard.yml
       blocks:

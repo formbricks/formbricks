@@ -417,14 +417,21 @@ const upsertAttributeKeysInBatches = async (
   for (let i = 0; i < keysArray.length; i += BATCH_SIZE) {
     const batch = keysArray.slice(i, i + BATCH_SIZE);
 
+    // Bind each column as one typed `text[]` parameter. Wrapping a JS array in `ARRAY[${…}]` makes the
+    // pg adapter send it as a single text value, so `unnest` yields one `{"a","b"}` string (ENG-3549).
+    const ids = batch.map(() => createId());
+    const keys = batch.map((k) => k.key);
+    const names = batch.map((k) => k.name);
+    const dataTypes = batch.map((k) => k.dataType);
+
     const upsertedKeys = await tx.$queryRaw<{ id: string; key: string }[]>`
       INSERT INTO "ContactAttributeKey" ("id", "key", "name", "workspaceId", "dataType", "created_at", "updated_at")
       SELECT
-        unnest(${Prisma.sql`ARRAY[${batch.map(() => createId())}]`}),
-        unnest(${Prisma.sql`ARRAY[${batch.map((k) => k.key)}]`}),
-        unnest(${Prisma.sql`ARRAY[${batch.map((k) => k.name)}]`}),
+        unnest(${ids}::text[]),
+        unnest(${keys}::text[]),
+        unnest(${names}::text[]),
         ${workspaceId},
-        unnest(${Prisma.sql`ARRAY[${batch.map((k) => k.dataType)}]`}::text[]::"ContactAttributeDataType"[]),
+        unnest(${dataTypes}::text[]::"ContactAttributeDataType"[]),
         NOW(),
         NOW()
       ON CONFLICT ("key", "workspaceId")
@@ -674,8 +681,10 @@ export const upsertBulkContacts = async (
         if (attributesToUpsert.length > 0) {
           await upsertAttributesInBatches(tx, attributesToUpsert);
         }
-      },
-      { timeout: 10 * 1000 }
+      }
+      // No per-call budget: this used to pass 10 s to rise above Prisma's 5 s default, which would now
+      // cut it below the app client's own (ENG-3285) while it writes the same ContactAttribute rows the
+      // identify path locks.
     );
 
     return ok({

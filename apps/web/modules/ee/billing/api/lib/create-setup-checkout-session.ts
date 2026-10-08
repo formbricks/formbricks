@@ -40,6 +40,10 @@ export const createSetupCheckoutSession = async (
     mode: "setup",
     customer: stripeCustomerId,
     currency,
+    // The upgrade that follows is confirmed with stripe.confirmCardPayment and may replace a legacy EUR
+    // subscription with a USD one (ENG-3370), so only a card can pay it: a method offered for the
+    // session's currency (e.g. SEPA for EUR) could be saved and then fail to pay the upgrade.
+    ...(upgradeIntent ? { payment_method_types: ["card"] } : {}),
     billing_address_collection: "required",
     tax_id_collection: {
       enabled: true,

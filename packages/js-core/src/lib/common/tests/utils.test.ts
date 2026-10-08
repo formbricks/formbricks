@@ -6,10 +6,10 @@ import {
   diffInDays,
   evaluateNoCodeConfigClick,
   filterSurveys,
+  getBrowserLanguageCodes,
   getCustomCss,
   getDefaultLanguageCode,
   getIsDebug,
-  getLanguageCode,
   getSecureRandom,
   getStyling,
   handleUrlFilters,
@@ -462,48 +462,60 @@ describe("utils.ts", () => {
   });
 
   // ---------------------------------------------------------------------------------
-  // getLanguageCode
+  // getBrowserLanguageCodes
   // ---------------------------------------------------------------------------------
-  describe("getLanguageCode()", () => {
-    test("returns 'default' if no language param is passed", () => {
-      const survey = {
-        languages: [{ language: { code: "en" }, default: true, enabled: true }],
-      } as unknown as TWorkspaceStateSurvey;
-      const code = getLanguageCode(survey, undefined);
-      expect(code).toBe("default");
+  describe("getBrowserLanguageCodes()", () => {
+    const withNavigator = (navigatorValue: unknown, assertion: () => void): void => {
+      const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+      try {
+        Object.defineProperty(globalThis, "navigator", { configurable: true, value: navigatorValue });
+        assertion();
+      } finally {
+        if (originalNavigator) {
+          Object.defineProperty(globalThis, "navigator", originalNavigator);
+        } else {
+          Reflect.deleteProperty(globalThis, "navigator");
+        }
+      }
+    };
+
+    test("returns navigator.languages in preference order, without empty entries", () => {
+      withNavigator({ languages: ["de-DE", "", "  ", "en-US"], language: "de-DE" }, () => {
+        expect(getBrowserLanguageCodes()).toEqual(["de-DE", "en-US"]);
+      });
     });
 
-    test("returns 'default' if the chosen language is the default one", () => {
-      const survey = {
-        languages: [
-          { language: { code: "en" }, default: true, enabled: true },
-          { language: { code: "fr" }, default: false, enabled: true },
-        ],
-      } as unknown as TWorkspaceStateSurvey;
-      const code = getLanguageCode(survey, "en");
-      expect(code).toBe("default");
+    test("falls back to navigator.language when navigator.languages is empty", () => {
+      withNavigator({ languages: [], language: "fr-FR" }, () => {
+        expect(getBrowserLanguageCodes()).toEqual(["fr-FR"]);
+      });
     });
 
-    test("returns undefined if language not found or disabled", () => {
-      const survey = {
-        languages: [
-          { language: { code: "en" }, default: true, enabled: true },
-          { language: { code: "fr" }, default: false, enabled: false },
-        ],
-      } as unknown as TWorkspaceStateSurvey;
-      const code = getLanguageCode(survey, "fr");
-      expect(code).toBeUndefined();
+    test("falls back to navigator.language when navigator.languages is undefined", () => {
+      withNavigator({ language: "fr-FR" }, () => {
+        expect(getBrowserLanguageCodes()).toEqual(["fr-FR"]);
+      });
     });
 
-    test("returns the language code if found and enabled", () => {
-      const survey = {
-        languages: [
-          { language: { code: "en", alias: "English" }, default: true, enabled: true },
-          { language: { code: "fr", alias: "fr-FR" }, default: false, enabled: true },
-        ],
-      } as unknown as TWorkspaceStateSurvey;
-      expect(getLanguageCode(survey, "fr")).toBe("fr");
-      expect(getLanguageCode(survey, "fr-FR")).toBe("fr");
+    test("ignores a navigator.languages that is not an array", () => {
+      withNavigator({ languages: "de-DE", language: "fr-FR" }, () => {
+        expect(getBrowserLanguageCodes()).toEqual(["fr-FR"]);
+      });
+    });
+
+    test("returns nothing when neither is available", () => {
+      withNavigator({ language: "" }, () => {
+        expect(getBrowserLanguageCodes()).toEqual([]);
+      });
+      withNavigator({}, () => {
+        expect(getBrowserLanguageCodes()).toEqual([]);
+      });
+    });
+
+    test("returns nothing when navigator is undefined", () => {
+      withNavigator(undefined, () => {
+        expect(getBrowserLanguageCodes()).toEqual([]);
+      });
     });
   });
 

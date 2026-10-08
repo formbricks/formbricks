@@ -10,7 +10,8 @@ import {
 
 export const getMetadataForLinkSurvey = async (
   surveyId: string,
-  languageCode?: string
+  languageCode?: string,
+  acceptedLanguages: string[] = []
 ): Promise<Metadata> => {
   const survey = await getSurveyWithMetadata(surveyId);
 
@@ -21,7 +22,8 @@ export const getMetadataForLinkSurvey = async (
   const { title, ogTitle, description, ogImage } = await getBasicSurveyMetadata(
     surveyId,
     languageCode,
-    survey
+    survey,
+    acceptedLanguages
   );
 
   // Fetch organization whitelabel data for custom favicon

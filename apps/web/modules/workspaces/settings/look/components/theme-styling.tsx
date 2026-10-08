@@ -15,7 +15,7 @@ import { previewSurvey } from "@/app/lib/templates";
 import { cn } from "@/lib/cn";
 import { COLOR_DEFAULTS, STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
 import { type TStylingAppearance } from "@/lib/styling/dark-mode";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { type TWorkspaceCustomCssAccess } from "@/modules/custom-css/components/types";
 import { WorkspaceCustomCssCard } from "@/modules/custom-css/components/workspace-custom-css-card";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
