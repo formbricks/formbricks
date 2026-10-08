@@ -1566,7 +1566,6 @@ checksums:
     workspace/actions/action_updated_successfully: 29c2d08120878a8a4f3634a9ce741591
     workspace/actions/action_with_key_already_exists: a4bc14e3992bbbf81bc8d756b1bb3237
     workspace/actions/action_with_name_already_exists: 1b48c9b81a5d9c58a9cdb64caf0dca7c
-    workspace/actions/add_css_class_or_id: cfc4d88412c5b9ef1157e28db4afdcc5
     workspace/actions/add_regular_expression_here: 797fde3681996b85bc63c3550dec1fd4
     workspace/actions/add_url: 8eba7972136a42da78a8fa4798da8e87
     workspace/actions/and: 53e8eb67a396fcb5e419bb4cbf0008df
@@ -1574,6 +1573,8 @@ checksums:
     workspace/actions/contains: 41c8c25407527a5336404313f4c8d650
     workspace/actions/create_action: 3abcc6dbbca18d3218ba49f90c4a66fd
     workspace/actions/css_selector: 615e9f1b74622df29de28a5b5614c6fe
+    workspace/actions/css_selector_help: f189dd19fb953b9ef144dc622960f7a0
+    workspace/actions/css_selector_placeholder: 898fcfd219c93dda283ff0f4b986e188
     workspace/actions/delete_action_text: 5fdb159be2c8635f6a007da95c5edd57
     workspace/actions/does_not_contain: d618eb0f854f7efa0d7c644e6628fa42
     workspace/actions/does_not_exactly_match: abd0ebeecb2195c62e4ba486ce733d71
