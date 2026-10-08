@@ -83,20 +83,21 @@ export async function updateRetentionPolicy({
   policy,
   patch,
   updatedById,
-  now,
+  now: nowOverride,
 }: {
   organizationId: string;
   policy: TRetentionPolicyKind;
   patch: Partial<TRetentionPolicySettings>;
   updatedById: string;
-  now: Date;
+  /** Tests pin the clock; otherwise it is the database's, read once the row is locked. */
+  now?: Date;
 }): Promise<TRetentionPolicyUpdate> {
   return prisma.$transaction(async (tx) => {
     const defaults = RETENTION_POLICY_DEFAULTS[policy];
     const inserted = await tx.$executeRaw`
       INSERT INTO "RetentionPolicy" ("id", "organizationId", "entity", "warnDays", "archiveDays", "deleteDays", "updated_at")
       VALUES (${createId()}, ${organizationId}, ${policy}::"RetentionEntity", ${defaults.warnDays},
-              ${defaults.archiveDays}, ${defaults.deleteDays}, ${now})
+              ${defaults.archiveDays}, ${defaults.deleteDays}, ${nowOverride ?? new Date()})
       ON CONFLICT ("organizationId", "entity") DO NOTHING
     `;
     // Lock the row, then read it through Prisma: raw SQL would hand the enum array back unparsed.
@@ -109,6 +110,12 @@ export async function updateRetentionPolicy({
       where: { organizationId_entity: { organizationId, entity: policy } },
       select: POLICY_SELECT,
     });
+    // `enabledAt` is compared with notice times the database stamps (`RetentionNotice.sentAt`), so it
+    // comes from the same clock, read after the lock: a request queued behind another writer must not
+    // stamp a moment before the change it follows. `clock_timestamp()`, not `now()`, which is the
+    // transaction's start.
+    const now =
+      nowOverride ?? (await tx.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS "now"`)[0].now;
 
     const previous = inserted === 1 ? toSettings(defaults) : toSettings(locked);
     const next: TRetentionPolicySettings = { ...previous, ...patch };

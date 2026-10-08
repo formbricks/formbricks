@@ -151,7 +151,6 @@ describe("PATCH /api/internal/retention-policies", () => {
       policy: "surveys",
       patch: { enabled: true, warnDays: 30 },
       updatedById: USER_ID,
-      now: expect.any(Date),
     });
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -212,6 +211,14 @@ describe("PATCH /api/internal/retention-policies", () => {
   test("returns 403 to a member, and when the organization isn't entitled", async () => {
     mocks.can.mockResolvedValueOnce(false);
     expect((await patch({ surveys: { enabled: true } })).status).toBe(403);
+    // The refused attempt still says what it tried to change, and where.
+    expect(mocks.queueAuditEvent).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        action: "updated",
+        status: "failure",
+        newObject: { organizationId: ORG_ID, policy: "surveys", enabled: true },
+      })
+    );
 
     mocks.isEnabled.mockResolvedValueOnce(false);
     expect((await patch({ surveys: { enabled: true } })).status).toBe(403);

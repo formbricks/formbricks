@@ -91,6 +91,7 @@ export const getRetentionPolicySummary = (
         conditions: new Intl.ListFormat(locale, { type: "conjunction" }).format(
           settings.conditions.map((condition) => getConditionShortLabel(condition, t))
         ),
+        deletePeriod: settings.deleteDays === null ? "—" : formatRetentionPeriod(settings.deleteDays, t),
       });
     case "members":
       return t("workspace.settings.data_retention.members_summary", { period });

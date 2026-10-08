@@ -6,6 +6,7 @@ import {
   getPolicyFormSchema,
   getPolicyFormWarnDays,
   orderConditions,
+  toPoliciesPatch,
   toPolicyFormValues,
   toPolicyPatch,
 } from "./policy-form";
@@ -126,5 +127,47 @@ describe("toPolicyPatch", () => {
 describe("orderConditions", () => {
   test("puts conditions in their canonical order", () => {
     expect(orderConditions(["createdBefore", "noChange"])).toEqual(["noChange", "createdBefore"]);
+  });
+});
+
+describe("toPoliciesPatch", () => {
+  const saved = { ...RETENTION_POLICY_DEFAULTS.surveys, enabled: true };
+
+  test("sends only what changed, so a concurrent pause isn't undone by an unrelated edit", () => {
+    const values = { ...toPolicyFormValues("surveys", saved), warnPreset: "30" };
+
+    expect(toPoliciesPatch("surveys", values, saved)).toEqual({ surveys: { warnDays: 30 } });
+  });
+
+  test("compares conditions as a set, and sends them in canonical order when they change", () => {
+    const reordered = {
+      ...toPolicyFormValues("surveys", saved),
+      conditions: ["noChange", "noResponse"] as const,
+    };
+    expect(
+      toPoliciesPatch("surveys", { ...reordered, conditions: [...reordered.conditions] }, saved)
+    ).toBeNull();
+
+    const changed = {
+      ...toPolicyFormValues("surveys", saved),
+      conditions: ["createdBefore" as const, "noResponse" as const],
+    };
+    expect(toPoliciesPatch("surveys", changed, saved)).toEqual({
+      surveys: { conditions: ["noResponse", "createdBefore"] },
+    });
+  });
+
+  test("names each policy's period field", () => {
+    const responses = {
+      ...toPolicyFormValues("responses", RETENTION_POLICY_DEFAULTS.responses),
+      periodPreset: "365",
+    };
+    expect(toPoliciesPatch("responses", responses, RETENTION_POLICY_DEFAULTS.responses)).toEqual({
+      responses: { deleteDays: 365 },
+    });
+    const members = { ...toPolicyFormValues("members", RETENTION_POLICY_DEFAULTS.members), enabled: true };
+    expect(toPoliciesPatch("members", members, RETENTION_POLICY_DEFAULTS.members)).toEqual({
+      members: { enabled: true },
+    });
   });
 });

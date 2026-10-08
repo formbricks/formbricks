@@ -7,6 +7,7 @@ import {
   type TRetentionPolicySettings,
   type TRetentionSurveyCondition,
 } from "../types";
+import { formatRetentionPeriod } from "./display";
 import { RETENTION_DAYS_PER_UNIT, daysToRetentionPeriod, retentionPeriodToDays } from "./period";
 import { RETENTION_PERIOD_DAYS, RETENTION_WARN_DAYS, getRetentionPeriodField } from "./policy-rules";
 
@@ -43,7 +44,10 @@ export const getPolicyFormSchema = (t: TFunction, policy: TRetentionPolicyKind) 
         ctx.addIssue({
           code: "custom",
           path: ["customPeriodAmount"],
-          message: t("workspace.settings.data_retention.period_out_of_range"),
+          message: t("workspace.settings.data_retention.period_out_of_range", {
+            min: formatRetentionPeriod(RETENTION_PERIOD_DAYS.min, t),
+            max: formatRetentionPeriod(RETENTION_PERIOD_DAYS.max, t),
+          }),
         });
       }
       const warnDays = getPolicyFormWarnDays(values);
@@ -134,17 +138,33 @@ export const orderConditions = (
 ): TRetentionSurveyCondition[] =>
   RETENTION_SURVEY_CONDITIONS.filter((condition) => conditions.includes(condition));
 
-/** The `PATCH` request for a valid form, naming the one policy it changes. */
+/**
+ * The `PATCH` request for a valid form: only the fields that differ from the settings the dialog
+ * opened with, so saving one change can't undo a concurrent one to another field (say, someone else
+ * pausing the policy meanwhile). Null when nothing changed.
+ */
 export const toPoliciesPatch = (
   policy: TRetentionPolicyKind,
-  values: TPolicyFormValues
-): TRetentionPoliciesPatch => {
-  const { conditions, ...fields } = toPolicyPatch(policy, values);
+  values: TPolicyFormValues,
+  saved: TRetentionPolicySettings
+): TRetentionPoliciesPatch | null => {
+  const edited = toPolicyPatch(policy, values);
+  const changed = Object.fromEntries(
+    Object.entries(edited).filter(([field, value]) => {
+      const before = saved[field as keyof TRetentionPolicySettings];
+      return Array.isArray(value) && Array.isArray(before)
+        ? orderConditions(before).join() !== value.join()
+        : before !== value;
+    })
+  ) as Partial<TRetentionPolicySettings>;
+  if (Object.keys(changed).length === 0) return null;
+
+  const { conditions, ...fields } = changed;
   switch (policy) {
     case "responses":
       return { responses: fields };
     case "surveys":
-      return { surveys: { ...fields, conditions } };
+      return { surveys: conditions ? { ...fields, conditions } : fields };
     case "members":
       return { members: fields };
   }

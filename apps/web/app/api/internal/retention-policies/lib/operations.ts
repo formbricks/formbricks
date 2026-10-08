@@ -59,6 +59,8 @@ export async function updateRetentionPoliciesOperation({
     TRetentionPolicyKind,
     Partial<TRetentionPolicySettings>,
   ][];
+  // What was asked for, so a refused or invalid attempt is still attributable in the audit log.
+  if (auditLog) auditLog.newObject = { organizationId: query.organizationId, policy, ...patch };
 
   const access = await requireRetentionOrgAccess({
     authentication,
@@ -77,7 +79,6 @@ export async function updateRetentionPoliciesOperation({
       policy,
       patch,
       updatedById: access.userId,
-      now: new Date(),
     });
   } catch (error) {
     if (error instanceof RetentionPolicyInvalidError) {

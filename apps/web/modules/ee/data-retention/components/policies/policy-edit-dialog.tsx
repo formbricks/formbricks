@@ -48,7 +48,7 @@ import {
   toPoliciesPatch,
   toPolicyFormValues,
 } from "../../lib/policy-form";
-import { RETENTION_WARN_DAYS } from "../../lib/policy-rules";
+import { RETENTION_SURVEY_DELETE_DAYS, RETENTION_WARN_DAYS } from "../../lib/policy-rules";
 import {
   RETENTION_SURVEY_CONDITIONS,
   type TRetentionPolicyKind,
@@ -58,6 +58,8 @@ import {
 
 /** The copy that differs per policy (mock, ENG-3610). */
 const getPolicyCopy = (policy: TRetentionPolicyKind, t: TFunction) => {
+  const notice = { min: RETENTION_WARN_DAYS.min, max: RETENTION_WARN_DAYS.max };
+  const deletePeriod = formatRetentionPeriod(RETENTION_SURVEY_DELETE_DAYS, t);
   switch (policy) {
     case "responses":
       return {
@@ -65,17 +67,17 @@ const getPolicyCopy = (policy: TRetentionPolicyKind, t: TFunction) => {
         description: t("workspace.settings.data_retention.responses_policy_description"),
         countsFrom: t("workspace.settings.data_retention.responses_counts_from"),
         periodHelp: null,
-        noticeHelp: t("workspace.settings.data_retention.responses_notice_help"),
+        noticeHelp: t("workspace.settings.data_retention.responses_notice_help", notice),
         activeHelp: t("workspace.settings.data_retention.responses_active_help"),
       };
     case "surveys":
       return {
         title: t("workspace.settings.data_retention.surveys_policy_title"),
-        description: t("workspace.settings.data_retention.surveys_policy_description"),
+        description: t("workspace.settings.data_retention.surveys_policy_description", { deletePeriod }),
         countsFrom: null,
         periodHelp: t("workspace.settings.data_retention.surveys_period_help"),
-        noticeHelp: t("workspace.settings.data_retention.surveys_notice_help"),
-        activeHelp: t("workspace.settings.data_retention.surveys_active_help"),
+        noticeHelp: t("workspace.settings.data_retention.surveys_notice_help", notice),
+        activeHelp: t("workspace.settings.data_retention.surveys_active_help", { deletePeriod }),
       };
     case "members":
       return {
@@ -83,7 +85,7 @@ const getPolicyCopy = (policy: TRetentionPolicyKind, t: TFunction) => {
         description: t("workspace.settings.data_retention.members_policy_description"),
         countsFrom: t("workspace.settings.data_retention.members_counts_from"),
         periodHelp: null,
-        noticeHelp: t("workspace.settings.data_retention.members_notice_help"),
+        noticeHelp: t("workspace.settings.data_retention.members_notice_help", notice),
         activeHelp: t("workspace.settings.data_retention.members_active_help"),
       };
   }
@@ -136,6 +138,7 @@ export const PolicyEditDialog = ({
   const copy = getPolicyCopy(policy, t);
   const noticeHelpId = useId();
   const periodHelpId = useId();
+  const conditionsErrorId = useId();
   const updatePolicy = useUpdateRetentionPolicy({ organizationId });
 
   const form = useForm<TPolicyFormValues>({
@@ -153,7 +156,12 @@ export const PolicyEditDialog = ({
   };
 
   const onSubmit = (values: TPolicyFormValues) => {
-    updatePolicy.mutate(toPoliciesPatch(policy, values), {
+    const patch = toPoliciesPatch(policy, values, settings);
+    if (!patch) {
+      onClose();
+      return;
+    }
+    updatePolicy.mutate(patch, {
       onSuccess: () => {
         toast.success(t("workspace.settings.data_retention.policy_saved"));
         onClose();
@@ -189,7 +197,9 @@ export const PolicyEditDialog = ({
                   control={form.control}
                   name="conditions"
                   render={({ field, fieldState: { error } }) => (
-                    <fieldset className="space-y-2" aria-describedby={periodHelpId}>
+                    <fieldset
+                      className="space-y-2"
+                      aria-describedby={error ? `${periodHelpId} ${conditionsErrorId}` : periodHelpId}>
                       <legend className="text-sm font-medium text-slate-800">
                         {t("workspace.settings.data_retention.surveys_conditions_heading")}
                       </legend>
@@ -216,7 +226,11 @@ export const PolicyEditDialog = ({
                           </div>
                         );
                       })}
-                      {error?.message ? <p className="text-sm text-error">{error.message}</p> : null}
+                      {error?.message ? (
+                        <p id={conditionsErrorId} role="alert" className="text-sm text-error">
+                          {error.message}
+                        </p>
+                      ) : null}
                     </fieldset>
                   )}
                 />

@@ -115,6 +115,24 @@ describe("retention policies service (real Postgres)", () => {
     }
   });
 
+  test("stamps enabledAt from the database clock, read after the row lock, when no time is given", async () => {
+    const before = (await prisma.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS "now"`)[0].now;
+    await updateRetentionPolicy({
+      organizationId,
+      policy: "members",
+      patch: { enabled: true },
+      updatedById: userId,
+    });
+    const after = (await prisma.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS "now"`)[0].now;
+
+    const { enabledAt } = await prisma.retentionPolicy.findUniqueOrThrow({
+      where: { organizationId_entity: { organizationId, entity: "members" } },
+    });
+    expect(enabledAt!.getTime()).toBeGreaterThanOrEqual(before.getTime() - 1);
+    // The column keeps milliseconds, so the stored value may round by one either way.
+    expect(enabledAt!.getTime()).toBeLessThanOrEqual(after.getTime() + 1);
+  });
+
   test("keeps each policy and organisation apart", async () => {
     const otherOrganizationId = (await prisma.organization.create({ data: { name: "Other" } })).id;
     await update({ enabled: true });

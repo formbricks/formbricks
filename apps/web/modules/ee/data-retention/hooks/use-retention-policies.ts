@@ -21,6 +21,9 @@ export const useUpdateRetentionPolicy = ({ organizationId }: Readonly<{ organiza
   const queryKey = retentionPolicyKeys.detail(organizationId);
   return useMutation({
     mutationFn: (patch: TRetentionPoliciesPatch) => updateRetentionPolicies({ organizationId, patch }),
+    // A read already in flight (a window-focus refetch) could land after the change and put the old
+    // document back, so it is cancelled first.
+    onMutate: () => queryClient.cancelQueries({ queryKey }),
     onSuccess: (policies) => queryClient.setQueryData(queryKey, policies),
     onError: () => queryClient.invalidateQueries({ queryKey }),
   });
