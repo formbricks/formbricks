@@ -40,16 +40,19 @@ The steps below run SQL as the user that owns the Formbricks tables:
 </Tabs>
 
 With an external or managed PostgreSQL, connect with `psql` as the user in `MIGRATE_DATABASE_URL`, or in
-`DATABASE_URL` if you do not set it.
+`DATABASE_URL` if you do not set it. The migrations themselves need a direct or session-pooled connection: a
+transaction-mode pooler such as PgBouncer can split their session settings across server connections.
 
 ### 1. Find the failed migration
 
-The runner's log names it. Read it with `docker compose logs --tail=200 formbricks-migrate`, or
-`kubectl logs -n formbricks job/formbricks-migration` (by default the chart deletes the Job 300 seconds after it
-fails). A first failure prints `Schema migration batch failed:` with every migration in that batch; the error
-names the failed one as `Migration name:`, or as `migration_name="…"` when the real error was hidden. Every run
-after that stops with `P3009` and names it again. `formbricks-authzed-prepare` prints only
-`upgrade_database_migration_failed`, so go straight to the database, which always knows:
+The runner's output names it. `docker compose run … formbricks-migrate` and the update script print it to your
+terminal; `docker compose logs --tail=200 formbricks-migrate` has it only when the service ran under
+`docker compose up`. On Kubernetes, read `kubectl logs -n formbricks job/formbricks-migration` (by default the
+chart deletes the Job 300 seconds after it fails). A first failure prints `Schema migration batch failed:` with
+every migration in that batch; the error names the failed one as `Migration name:`, or as `migration_name="…"`
+when the real error was hidden. Every run after that stops with `P3009` and names it again. If you have no log,
+including with `formbricks-authzed-prepare`, which prints only `upgrade_database_migration_failed`, the database
+always knows:
 
 ```sql
 SELECT migration_name, started_at FROM "_prisma_migrations"
@@ -74,25 +77,28 @@ kubectl logs -n formbricks formbricks-postgresql-0 | grep -E "ERROR|STATEMENT"
 
 On a managed service, use your provider's database log. `canceling statement due to lock timeout` is the most
 common cause: another session held a lock on the table the migration changes, for example a long-running query,
-a backup, or an old Formbricks pod still running. Stop it, or retry at a quieter time.
+a backup, or an old Formbricks pod still running. Stop it, or retry at a quieter time. If the error itself lists
+recovery steps, as some migrations' guards do, follow those.
 
 ### 3. Check what the migration left behind
 
-First make sure nothing is still running it: the Compose runner has exited, or the Job has no running pod
-(`kubectl get pods -n formbricks -l job-name=formbricks-migration`). A statement keeps running in PostgreSQL after
-its runner is stopped, so also list what the database is still running:
+First make sure nothing is still running it. On Compose, the runner has exited. On Kubernetes, the Job has
+finished retrying (`kubectl wait -n formbricks --for=condition=Failed job/formbricks-migration --timeout=10m`
+returns, or the Job is gone). With `migration.enabled: false` the application pods are the runner and retry on
+every restart, so scale them to 0 (`kubectl scale deploy -n formbricks formbricks --replicas=0`) until step 4. A
+statement keeps running in PostgreSQL after its runner is stopped, so also list what the database is still
+running:
 
 ```sql
 SELECT pid, now() - query_start AS running_for, left(query, 80) AS query,
        pid IN (SELECT pid FROM pg_locks WHERE locktype = 'advisory' AND objid = 72707369) AS migration_lock
 FROM pg_stat_activity
-WHERE datname = current_database() AND state <> 'idle' AND pid <> pg_backend_pid();
+WHERE datname = current_database() AND state IS DISTINCT FROM 'idle' AND pid <> pg_backend_pid();
 ```
 
 `migration_lock` marks a schema migration: Prisma holds that lock while it applies one. Data migrations take no
-such lock, so also look for statements on the tables the migration changes. Wait for any migration statement to
-end: one that finishes after the runner stopped has taken effect, though the migration is still recorded as
-failed.
+such lock, so also look for statements on the tables the migration changes. Wait for every migration statement
+to end.
 
 Then read the failed migration's file. A released migration never changes, so the copy in your image is the one
 that ran:
@@ -106,15 +112,21 @@ docker compose run --rm --no-deps --entrypoint cat formbricks-migrate \
 It is also on GitHub under any release that ships it, for example
 `https://github.com/formbricks/formbricks/blob/6.0.2/packages/database/migration/<migration_name>/migration.sql`.
 
-- **The whole file is one `BEGIN; … COMMIT;` block, with no statement before `BEGIN;` or after `COMMIT;`:**
-  PostgreSQL rolled the whole file back, so there is nothing to undo. A file that commits a block and then runs
-  more statements, such as `20250911192630_remove_deprecated_fields_and_tables`, belongs under the next case.
-- **Otherwise:** the statements before the failing one may have stayed applied. Check which took effect
-  (`\d "Table"` for schema changes, a `SELECT` for data) and undo those before you continue, except:
+- **The runner printed an error, and the whole file is one `BEGIN; … COMMIT;` block, with no statement before
+  `BEGIN;` or after `COMMIT;`:** PostgreSQL rolled the whole file back, so there is nothing to undo. A file that
+  commits a block and then runs more statements, such as `20250911192630_remove_deprecated_fields_and_tables`,
+  belongs under the next case.
+- **Otherwise, including any migration whose runner was stopped instead of printing an error:** the statements
+  before the failing one (for a stopped runner, up to and including the one that was running) may have taken
+  effect, even inside a `BEGIN; … COMMIT;` block. Check which did (`\d "Table"` for schema changes, a `SELECT` for
+  data) and undo those before you continue. If the new version is already serving, stop it first
+  (`docker compose stop formbricks`, or scale the Deployment to 0) and keep it stopped until the migrations
+  succeed. Undoing a `DROP` means recreating the object so the retry can drop it again; if a change cannot be
+  undone, such as an `UPDATE` whose old values are gone, stop and restore the pre-upgrade backup instead. Except:
   - `IF NOT EXISTS`, `IF EXISTS` and `CREATE OR REPLACE` statements are safe to repeat, apart from a failed
     `CREATE INDEX CONCURRENTLY`. That leaves an invalid index which `IF NOT EXISTS` then skips: list invalid
-    indexes with `SELECT indexrelid::regclass FROM pg_index WHERE NOT indisvalid;` and drop, with
-    `DROP INDEX CONCURRENTLY`, only those the migration's file creates.
+    indexes with `SELECT indexrelid::regclass FROM pg_index WHERE NOT indisvalid;` and drop only those the
+    migration's file creates, with `SET lock_timeout = 0;` and then `DROP INDEX CONCURRENTLY`.
   - An `UPDATE`, `INSERT` or `DELETE` is safe to repeat only if running it twice changes nothing.
 
 ### 4. Mark it rolled back and run the migrations again
@@ -154,6 +166,8 @@ Then run the migrations again:
     ```bash
     kubectl delete job -n formbricks formbricks-migration --ignore-not-found
     ```
+
+    With `migration.enabled: false`, scale the Deployment back up instead; its pods run the migrations on start.
 
     During a v5 to v6 upgrade, delete and re-create the `formbricks-v6-prepare` Job as the
     [v6 maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade) describes instead.
@@ -686,8 +700,9 @@ While that returns a row, wait for it to finish and check `indisvalid` again. A 
 waiting for transactions that wrote to `Response`. `waiting for old snapshots` waits for every older transaction
 in this database that still holds a snapshot, on any table, so a long report or a `pg_dump` backup counts too.
 Either way, `current_locker_pid` is the session it waits for, which you can look up in `pg_stat_activity`. If the
-query returns nothing, the build was interrupted. Drop the index the same way, with the same `SET` lines first,
-since a concurrent drop waits under `lock_timeout` too:
+query returns nothing, the build has ended: check `indisvalid` again. `t` means it finished after all, so upgrade
+as usual. Still `f` means it was interrupted: drop the index the same way, with the same `SET` lines first, since
+a concurrent drop waits under `lock_timeout` too:
 
 ```sql
 SET statement_timeout = 0;
