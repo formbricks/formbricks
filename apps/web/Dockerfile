@@ -86,7 +86,9 @@ FROM base AS runner
 
 # Upgrade Alpine system packages, remove build-only npm tooling from the runtime image, then create user.
 # The application and startup migrations run directly with Node.js; npm and npx are only needed in the installer.
+# CVE-2026-85091: require Alpine's patched zlib even when rebuilding from cached base layers.
 RUN apk update && apk upgrade --no-cache \
+    && apk add --no-cache "zlib>=1.3.2-r1" \
     && rm -rf /usr/local/lib/node_modules/npm \
     && rm -f /usr/local/bin/npm /usr/local/bin/npx \
     && addgroup -S nextjs \
