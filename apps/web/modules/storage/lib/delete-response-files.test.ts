@@ -216,4 +216,30 @@ describe("deleteResponseFileUrls", () => {
       expect(result.failed).toEqual([own("a.png")]);
     });
   });
+
+  // ENG-3721: a response file URL carries the file name the respondent chose, which can be personal data.
+  test("never logs a file name, whatever the outcome", async () => {
+    const secret = "passport_jane_doe.pdf";
+    mockedResolve.mockImplementation(async (id: string) =>
+      id === OWN_WORKSPACE ? { id, organizationId: "org-1" } : { id, organizationId: "org-2" }
+    );
+    mockedDeleteFile.mockImplementation((async () => {
+      throw new Error("socket hang up");
+    }) as never);
+    mockedDeleteFile.mockResolvedValueOnce({ ok: false, error: { code: "s3_client_error" } } as never);
+
+    await deleteResponseFileUrls(
+      [
+        `/storage/${OWN_WORKSPACE}/private/${secret}`,
+        `/storage/${OWN_WORKSPACE}/private/2-${secret}`,
+        `/storage/${FOREIGN_WORKSPACE}/private/${secret}`,
+        `/storage/${OWN_WORKSPACE}/private/bad%E0%A4%A${secret}`,
+        `not-a-storage-url-${secret}`,
+      ],
+      OWN_WORKSPACE
+    );
+
+    expect(vi.mocked(logger.error).mock.calls.length).toBeGreaterThanOrEqual(4);
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("jane_doe");
+  });
 });

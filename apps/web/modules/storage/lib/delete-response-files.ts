@@ -48,11 +48,13 @@ export const deleteResponseFileUrls = async (
     return pending;
   };
 
+  // No log here carries a URL: it holds the file name the respondent chose, which can be personal data
+  // (ENG-3721), and a failure the cleanup drain retries would be logged again on every retry.
   await Promise.all(
     fileUrls.map(async (fileUrl) => {
       const storageFile = parseStorageFileUrl(fileUrl);
       if (!storageFile) {
-        logger.error({ fileUrl }, "Skipping response file deletion: not a storage file URL");
+        logger.error({ surveyWorkspaceId }, "Skipping response file deletion: not a storage file URL");
         return;
       }
 
@@ -64,7 +66,10 @@ export const deleteResponseFileUrls = async (
       try {
         fileName = decodeURIComponent(storageFile.fileName);
       } catch {
-        logger.error({ fileUrl }, "Skipping response file deletion: malformed file name");
+        logger.error(
+          { storageId: storageFile.storageId, accessType: storageFile.accessType },
+          "Skipping response file deletion: malformed file name"
+        );
         return;
       }
 
@@ -72,7 +77,7 @@ export const deleteResponseFileUrls = async (
         const storageWorkspace = await resolveStorageWorkspace(storageFile.storageId);
         if (storageWorkspace?.id !== surveyWorkspaceId) {
           logger.error(
-            { fileUrl, surveyWorkspaceId, storageId: storageFile.storageId },
+            { surveyWorkspaceId, storageId: storageFile.storageId, accessType: storageFile.accessType },
             "Refusing to delete a response file stored outside the survey's workspace"
           );
           return;
@@ -90,16 +95,22 @@ export const deleteResponseFileUrls = async (
           // Already gone is done; a key storage refuses (traversal, empty segment) is final.
           if (result.error.code === StorageErrorCode.FileNotFoundError) return;
           if (result.error.code !== StorageErrorCode.InvalidInput) failed.push(fileUrl);
-          // Not the URL: it carries the respondent's file name, and a retried failure is logged again
-          // on every retry.
           logger.error(
-            { storageId: storageFile.storageId, surveyWorkspaceId, error: result.error },
+            {
+              storageId: storageFile.storageId,
+              accessType: storageFile.accessType,
+              surveyWorkspaceId,
+              error: result.error,
+            },
             "Failed to delete a response file from storage"
           );
         }
       } catch (error) {
         failed.push(fileUrl);
-        logger.error({ error, storageId: storageFile.storageId }, "Failed to delete file");
+        logger.error(
+          { error, storageId: storageFile.storageId, accessType: storageFile.accessType },
+          "Failed to delete file"
+        );
       }
     })
   );
