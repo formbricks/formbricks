@@ -470,6 +470,9 @@ export const SurveyEditor = ({
             isSpamProtectionAllowed={isSpamProtectionAllowed}
             publicDomain={publicDomain}
             appearance={activeView === "styling" ? stylingAppearance : "light"}
+            onAppearanceChange={
+              activeView === "styling" && previewSurvey.type === "app" ? setStylingAppearance : undefined
+            }
             customCss={previewCustomCss}
           />
         </aside>

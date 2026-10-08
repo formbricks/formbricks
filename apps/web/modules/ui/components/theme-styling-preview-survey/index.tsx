@@ -21,7 +21,9 @@ import {
   previewBoundaryProps,
 } from "@/modules/ui/components/preview-survey/lib/containment";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
+import { PreviewAppearanceSwitch } from "@/modules/ui/components/styling-appearance";
 import { SurveyInline } from "@/modules/ui/components/survey";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface ThemeStylingPreviewSurveyProps {
   survey: TSurvey;
@@ -31,6 +33,8 @@ interface ThemeStylingPreviewSurveyProps {
   publicDomain: string;
   /** Only the app survey renders dark; the link survey preview stays light (D4). */
   appearance?: TStylingAppearance;
+  /** Switches the editor's Light / Dark selection from the preview; without it no switch is shown. */
+  onAppearanceChange?: (appearance: TStylingAppearance) => void;
   /**
    * Compiled workspace (+ survey) custom CSS to preview (ENG-3552), e.g. the look & feel page's
    * validated workspace draft. Passed straight to the renderer, which applies CSS from this prop only.
@@ -72,8 +76,9 @@ export const ThemeStylingPreviewSurvey = ({
   setPreviewType,
   publicDomain,
   appearance = "light",
+  onAppearanceChange,
   customCss,
-}: ThemeStylingPreviewSurveyProps) => {
+}: Readonly<ThemeStylingPreviewSurveyProps>) => {
   const [isFullScreenPreview] = useState(false);
   const [previewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
@@ -300,26 +305,40 @@ export const ThemeStylingPreviewSurvey = ({
           />
         )}
 
-        {/* for toggling between mobile and desktop mode  */}
-        <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
-          <button
-            type="button"
-            // Link surveys always render light (D4), so there is no dark link preview to show.
-            disabled={appearance === "dark"}
-            className={cn(
-              previewType === "link" && "rounded-full bg-slate-200",
-              "cursor-pointer px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-            )}
-            onClick={() => setPreviewType("link")}>
-            {t("common.link_survey")}
-          </button>
+        {/* Survey type on the left, Light / Dark on the right. */}
+        <div className="mt-2 flex w-5/6 items-center justify-between gap-2">
+          <div className="flex rounded-full border-2 border-slate-300 p-1">
+            <TooltipRenderer
+              shouldRender={appearance === "dark"}
+              tooltipContent={t("workspace.look.link_survey_light_only")}>
+              <button
+                type="button"
+                // Link surveys always render light (D4), so there is no dark link preview to show.
+                // aria-disabled rather than disabled: the button stays focusable, so keyboard users
+                // reach the tooltip that explains why.
+                aria-disabled={appearance === "dark"}
+                className={cn(
+                  previewType === "link" && "rounded-full bg-slate-200",
+                  "cursor-pointer px-3 py-1 text-sm aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+                )}
+                onClick={() => {
+                  if (appearance !== "dark") setPreviewType("link");
+                }}>
+                {t("common.link_survey")}
+              </button>
+            </TooltipRenderer>
 
-          <button
-            type="button"
-            className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
-            onClick={() => setPreviewType("app")}>
-            {t("common.app_survey")}
-          </button>
+            <button
+              type="button"
+              className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
+              onClick={() => setPreviewType("app")}>
+              {t("common.app_survey")}
+            </button>
+          </div>
+
+          {onAppearanceChange && (
+            <PreviewAppearanceSwitch appearance={appearance} onChange={onAppearanceChange} />
+          )}
         </div>
       </div>
     </MotionConfig>

@@ -95,16 +95,20 @@ export const ThemeStyling = ({
   const [previewSurveyType, setPreviewSurveyType] = useState<TSurveyType>("link");
   // Light / Dark selector (D14). Only app surveys render dark (D4), so Dark previews the app survey.
   const [appearance, setAppearance] = useState<TStylingAppearance>("light");
-  const handleAppearanceChange = (next: TStylingAppearance) => {
-    setAppearance(next);
-    if (next === "dark") setPreviewSurveyType("app");
-  };
   const [confirmResetStylingModalOpen, setConfirmResetStylingModalOpen] = useState(false);
   const [confirmSuggestColorsOpen, setConfirmSuggestColorsOpen] = useState(false);
 
   const [formStylingOpen, setFormStylingOpen] = useState(false);
   const [cardStylingOpen, setCardStylingOpen] = useState(false);
   const [backgroundStylingOpen, setBackgroundStylingOpen] = useState(false);
+  const handleAppearanceChange = (next: TStylingAppearance) => {
+    setAppearance(next);
+    if (next === "dark") {
+      setPreviewSurveyType("app");
+      // Backgrounds are for link surveys, which always render light: nothing to edit in Dark.
+      setBackgroundStylingOpen(false);
+    }
+  };
   const [customCssOpen, setCustomCssOpen] = useState(false);
 
   // Workspace Custom CSS is its own resource, saved by this form's Save before the theme (ENG-3723). It
@@ -265,6 +269,8 @@ export const ThemeStyling = ({
                       </Button>
                     </div>
                   </div>
+                  {/* Right under the brand color they are about; debounced, so a drag never moves the picker. */}
+                  <DarkContrastWarnings appearance={appearance} styling={form.watch()} />
                   <FormStylingSettings
                     open={formStylingOpen}
                     setOpen={setFormStylingOpen}
@@ -280,7 +286,6 @@ export const ThemeStyling = ({
                     form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
                   />
                 </StylingAppearanceProvider>
-                <DarkContrastWarnings appearance={appearance} styling={form.watch()} />
 
                 <BackgroundStylingCard
                   open={backgroundStylingOpen}
@@ -288,6 +293,8 @@ export const ThemeStyling = ({
                   workspaceId={workspaceId}
                   colors={colors}
                   isSettingsPage
+                  disabled={appearance === "dark"}
+                  disabledReason={t("workspace.look.background_link_surveys_light")}
                   isUnsplashConfigured={isUnsplashConfigured}
                   form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
                   isStorageConfigured={isStorageConfigured}
@@ -335,6 +342,7 @@ export const ThemeStyling = ({
                   },
                 }}
                 appearance={appearance}
+                onAppearanceChange={handleAppearanceChange}
                 customCss={previewCustomCss}
                 previewType={previewSurveyType}
                 setPreviewType={setPreviewSurveyType}
