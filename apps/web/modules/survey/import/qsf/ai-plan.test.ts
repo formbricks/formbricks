@@ -512,6 +512,23 @@ describe("planQsfImport", () => {
     expect((error as DOMException).name).toBe("AbortError");
   });
 
+  test("lets an AbortError through when the import itself was stopped, not as a timeout", async () => {
+    const controller = new AbortController();
+    const generate = vi.fn<TQsfPlanGenerate>(async () => {
+      controller.abort(new DOMException("Stopped", "AbortError"));
+      throw new DOMException("Delay was aborted", "AbortError");
+    });
+
+    const error = await plan("simple.qsf", generate, { signal: controller.signal }).catch(
+      (caught: unknown) => caught
+    );
+
+    expect((error as DOMException).name).toBe("AbortError");
+    expect((error as DOMException).message).toBe("Delay was aborted");
+    // Not split: the import is over.
+    expect(generate).toHaveBeenCalledTimes(1);
+  });
+
   test("sizes each call's timeout to what is left before the deadline", async () => {
     const hostile = loadRecordedPlan("hostile");
     const timeouts: number[] = [];
@@ -572,12 +589,13 @@ describe("planQsfImport with a model that takes time", () => {
   /** Plan large-150 against a model on fake timers, running the clock until the plan settles. */
   const planTimed = async (
     latencyFor: (refs: string[]) => number,
-    edit: (refs: string[], object: unknown) => unknown = (_refs, object) => object
+    edit: (refs: string[], object: unknown) => unknown = (_refs, object) => object,
+    timedOut?: () => Error
   ) => {
     const { survey, texts } = await prepare("large-150.qsf");
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date", "performance"] });
     const requests: { refs: string[]; timeout: number; at: number }[] = [];
-    const timedAnswer = timedGenerate(loadRecordedPlan("large-150.qsf"), latencyFor);
+    const timedAnswer = timedGenerate(loadRecordedPlan("large-150.qsf"), latencyFor, timedOut);
     const timed: TQsfPlanGenerate = async (request) => {
       const answer = await timedAnswer(request);
       return { ...answer, object: edit(refsInPrompt(request.prompt), answer.object) };
@@ -638,6 +656,20 @@ describe("planQsfImport with a model that takes time", () => {
     expect(requests.map((request) => request.refs.length)).toEqual([20, 20, 20, 20, 20, 20, 20, 10, 10, 10]);
     expect(requests.slice(0, 8).every((request) => request.timeout === QSF_AI_CALL_TIMEOUT_MS)).toBe(true);
     expect(requests.slice(8).every((request) => request.at >= QSF_AI_CALL_TIMEOUT_MS)).toBe(true);
+  });
+
+  test("treats a timeout that fires during the SDK's retry backoff, an AbortError, as the call's timeout", async () => {
+    // The AI SDK rejects with its backoff delay's AbortError when the call's timeout fires between
+    // retries (seen with a 503 and ai@6): the import's own signal has not fired, so it is a timeout.
+    const { result, error, requests } = await planTimed(
+      (refs) => (refs.includes("QID1") && refs.length === 20 ? Infinity : 20_000),
+      undefined,
+      () => new DOMException("Delay was aborted", "AbortError")
+    );
+
+    expect(error).toBeNull();
+    expect(result?.plan.questions.size).toBe(150);
+    expect(requests.map((request) => request.refs.length).slice(-2)).toEqual([10, 10]);
   });
 
   test("drops the questions whose halves time out too, as ai_timeout, and keeps the rest", async () => {

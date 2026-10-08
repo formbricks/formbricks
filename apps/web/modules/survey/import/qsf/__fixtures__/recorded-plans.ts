@@ -62,7 +62,12 @@ export const recordedGenerate =
  * fake timers.
  */
 export const timedGenerate =
-  (plan: TRecordedPlan, latencyFor: (refs: string[]) => number): TQsfPlanGenerate =>
+  (
+    plan: TRecordedPlan,
+    latencyFor: (refs: string[]) => number,
+    /** What a call past its timeout rejects with: a `TimeoutError`, as the AI SDK's own timeout does. */
+    timedOut: () => Error = () => new DOMException("The operation timed out.", "TimeoutError")
+  ): TQsfPlanGenerate =>
   (request) => {
     const refs = refsInPrompt(request.prompt);
     const latency = latencyFor(refs);
@@ -78,10 +83,7 @@ export const timedGenerate =
       const answer = Number.isFinite(latency)
         ? setTimeout(() => settle(() => resolve(recordedGenerate(plan)(request))), latency)
         : undefined;
-      const timeout = setTimeout(
-        () => settle(() => reject(new DOMException("The operation timed out.", "TimeoutError"))),
-        request.timeout
-      );
+      const timeout = setTimeout(() => settle(() => reject(timedOut())), request.timeout);
       request.abortSignal.addEventListener("abort", onAbort, { once: true });
     });
   };

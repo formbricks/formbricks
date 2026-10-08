@@ -233,9 +233,18 @@ type TCallOutcome =
   /** Not sent: the import's call cap, prompt budget or time is spent. */
   | { kind: "budget" };
 
-const isTimeoutError = (error: unknown): boolean =>
+const CALL_TIMEOUT_ERROR_NAMES: ReadonlySet<string> = new Set(["TimeoutError", "AbortError"]);
+
+/**
+ * Whether a call failed because its own `timeout` fired. Asked only once the import's own signal is
+ * known not to have fired, so the call's timeout is the only abort left. The AI SDK reports it as a
+ * `TimeoutError`, or — when the timeout fires during its retry backoff — as the backoff delay's
+ * `AbortError` ("Delay was aborted").
+ */
+const isCallTimeout = (error: unknown): boolean =>
   error instanceof Error &&
-  (error.name === "TimeoutError" || (error.cause instanceof Error && error.cause.name === "TimeoutError"));
+  (CALL_TIMEOUT_ERROR_NAMES.has(error.name) ||
+    (error.cause instanceof Error && CALL_TIMEOUT_ERROR_NAMES.has(error.cause.name)));
 
 const isInvalidOutput = (error: unknown): boolean =>
   NoObjectGeneratedError.isInstance(error) ||
@@ -385,9 +394,10 @@ async function callOnce(
   } catch (error) {
     // A call that failed still spent tokens — one that ran out of them spent all 8,192.
     addUsage(context, usageOfFailure(error));
-    // The import's own abort (Stop, disconnect, the route's deadline) is the route's to classify.
+    // The import's own abort (Stop, disconnect, the route's deadline, a sibling's failure) is the
+    // route's to classify. Any other abort is this call's own timeout.
     if (context.signal.aborted) throw error;
-    if (isTimeoutError(error)) return { kind: "timed_out" };
+    if (isCallTimeout(error)) return { kind: "timed_out" };
     if (error instanceof AIOutputTokenLimitError) return { kind: "too_long" };
     if (isInvalidOutput(error)) return { kind: "invalid" };
     throw error;
