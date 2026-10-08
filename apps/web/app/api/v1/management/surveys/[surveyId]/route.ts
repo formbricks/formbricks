@@ -4,7 +4,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSurveyUpdateInput } from "@formbricks/types/surveys/types";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { deleteSurvey } from "@/app/api/v1/management/surveys/[surveyId]/lib/surveys";
-import { checkSurveyWritePermissions, refuseV1CustomCss } from "@/app/api/v1/management/surveys/lib/utils";
+import { checkSurveyWritePermissions } from "@/app/api/v1/management/surveys/lib/utils";
 import {
   addLegacyProjectOverwrites,
   normaliseProjectOverwritesToWorkspace,
@@ -65,22 +65,6 @@ const fetchAndAuthorizeSurvey = async (
   }
 
   return { survey };
-};
-
-/** The request body, or the 413/400 to answer with when it is too large or not JSON. */
-const parseSurveyUpdateBody = async (
-  req: Parameters<typeof parseJsonBodyWithLimit>[0]
-): Promise<{ body: TSurveyUpdateBody } | { response: Response }> => {
-  try {
-    return { body: await parseJsonBodyWithLimit<TSurveyUpdateBody>(req) };
-  } catch (error) {
-    if (error instanceof RequestBodyTooLargeError) {
-      return { response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }) };
-    }
-
-    logger.error({ error, url: req.url }, "Error parsing JSON input");
-    return { response: responses.badRequestResponse("Malformed JSON input, please check your request body") };
-  }
 };
 
 export const GET = withV1ApiWrapper({
@@ -199,15 +183,20 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
-      const parsedBody = await parseSurveyUpdateBody(req);
-      if ("response" in parsedBody) {
-        return { response: parsedBody.response };
-      }
-      let surveyUpdate = parsedBody.body;
+      let surveyUpdate: TSurveyUpdateBody;
+      try {
+        surveyUpdate = await parseJsonBodyWithLimit<TSurveyUpdateBody>(req);
+      } catch (error) {
+        if (error instanceof RequestBodyTooLargeError) {
+          return {
+            response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }),
+          };
+        }
 
-      const customCssRefusal = refuseV1CustomCss(surveyUpdate);
-      if (customCssRefusal) {
-        return { response: customCssRefusal };
+        logger.error({ error, url: req.url }, "Error parsing JSON input");
+        return {
+          response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
+        };
       }
 
       // Backwards compat: accept projectOverwrites as alias for workspaceOverwrites

@@ -118,7 +118,7 @@ describe("transformPrismaSurvey", () => {
     });
   });
 
-  test("drops stored theme values a save would refuse, so the survey round-trips through ZSurveyStyling", () => {
+  test("drops stored theme values that could add CSS and keeps the valid ones", () => {
     const storedStyling = {
       brandColor: { light: "#64748b" },
       buttonHeight: "40px",
@@ -127,7 +127,6 @@ describe("transformPrismaSurvey", () => {
       elementHeadlineFontWeight: "heavy",
       background: { bgType: "color", bg: "url(https://example.com/x.png)" },
     };
-    expect(ZSurveyStyling.safeParse(storedStyling).success).toBe(false);
 
     const { styling } = transformPrismaSurvey<TSurvey>({ id: "survey1", styling: storedStyling });
 

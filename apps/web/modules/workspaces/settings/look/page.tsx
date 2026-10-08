@@ -69,8 +69,8 @@ export const WorkspaceLookSettingsPage = async (props: { params: Promise<{ works
         <CustomCssQueryClientProvider>
           <ThemeStyling
             workspaceId={params.workspaceId}
-            // A theme saved before the strict value schemas (ENG-2950) could otherwise fail its next save
-            // on a value the form does not even show.
+            // Theme values are not validated on write (ENG-3723), so a stored value that could add CSS
+            // (ENG-2950) is dropped before it reaches the form and its preview.
             workspace={{ ...workspace, styling: sanitizeThemeStyling(workspace.styling) }}
             colors={SURVEY_BG_COLORS}
             isUnsplashConfigured={!!UNSPLASH_ACCESS_KEY}

@@ -7,8 +7,10 @@ import type { TBaseStyling, TStylingColor } from "./styling";
  * outside a font name, comments, backslashes, `<`, `!important` or functions outside a small allowlist
  * (so no `url()`), which is what would let a value add declarations or rules.
  *
- * Applied on write by the styling schemas (styling.ts) and defensively at render time by
- * `sanitizeThemeStyling`, which drops an unsafe legacy value so the normal fallback applies.
+ * Applied where values are read and rendered, never on write: the styling schemas (styling.ts) are part
+ * of the public API contract and keep accepting any string (ENG-3723). Every consumer that writes a value
+ * into CSS therefore runs `sanitizeThemeStyling` (or the matching `isSafeTheme*` check), which drops an
+ * unsafe value so the normal fallback applies.
  */
 
 const MAX_VALUE_LENGTH = 300;

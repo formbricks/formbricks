@@ -166,30 +166,20 @@ describe("isSafeThemeBackground", () => {
   });
 });
 
-describe("styling schemas validate on write", () => {
-  test("accept the default theme and a typical styled theme", () => {
-    expect(ZBaseStyling.safeParse(DEFAULT_STYLING).success).toBe(true);
-    expect(ZBaseStyling.safeParse(TYPICAL_STYLING).success).toBe(true);
+// The styling schemas validate API writes (v1, v3, MCP), so a stricter grammar there would turn a 200 into
+// a 400 for existing clients (ENG-3723). Unsafe values are dropped where they are read and rendered instead.
+describe("styling schemas keep accepting any free-text value on write", () => {
+  test("accept unsafe values, which are dropped on read instead", () => {
+    const unsafe = "8px; background: url(https://evil.example/x)";
+    expect(
+      ZBaseStyling.safeParse({ inputShadow: unsafe, fontFamily: unsafe, roundness: unsafe }).success
+    ).toBe(true);
+    expect(ZLogo.safeParse({ bgColor: unsafe }).success).toBe(true);
+    expect(ZSurveyStylingBackground.safeParse({ bg: unsafe, bgType: "color" }).success).toBe(true);
   });
 
-  test.each([
-    ["inputShadow", "0 0 red; background: url(https://evil.example/x)"],
-    ["fontFamily", "Arial; background: url(https://evil.example/x)"],
-    ["roundness", "8px } body { display: none"],
-    ["buttonHeight", "1px; position: fixed"],
-    ["elementHeadlineFontWeight", "600; color: red"],
-    ["progressTrackHeight", "8px</style>"],
-  ])("reject an unsafe %s", (field, value) => {
-    const result = ZBaseStyling.safeParse({ [field]: value });
-    expect(result.success).toBe(false);
-    expect(result.error?.issues[0].path).toEqual([field]);
-  });
-
-  test("reject an unsafe logo background and solid survey background", () => {
-    expect(ZLogo.safeParse({ bgColor: "#fff;background:url(x)" }).success).toBe(false);
-    expect(ZLogo.safeParse({ bgColor: "#ffffff" }).success).toBe(true);
-    expect(ZSurveyStylingBackground.safeParse({ bg: "red;x:y", bgType: "color" }).success).toBe(false);
-    expect(ZSurveyStylingBackground.safeParse({ bg: "#fff", bgType: "color" }).success).toBe(true);
+  test("keep the deprecated isDarkModeEnabled flag", () => {
+    expect(ZBaseStyling.parse({ isDarkModeEnabled: true })).toEqual({ isDarkModeEnabled: true });
   });
 });
 
