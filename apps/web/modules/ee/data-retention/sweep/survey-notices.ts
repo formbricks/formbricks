@@ -4,6 +4,7 @@ import { logger } from "@formbricks/logger";
 import { WEBAPP_URL } from "@/lib/constants";
 import { sendSurveyRetentionNoticeEmail } from "@/modules/email";
 import { formatRetentionDate } from "../lib/display";
+import { RETENTION_NOTICES_PER_RUN, RETENTION_SWEEP_BATCH_SIZE } from "./constants";
 import { claimRetentionNotice, markRetentionNoticeDelivered } from "./notices";
 import type { TNoticeRecipient } from "./recipients";
 import { recordRetentionRunActions } from "./run";
@@ -41,35 +42,46 @@ const formatFor = (locale: string, timeZone: string): TNoticeFormat => {
 };
 
 /**
- * Send one policy's survey notices for the night: claim each survey's notice (`claimRetentionNotice`, so
- * a notice is never sent twice and a void one is replaced), then one email per person listing their
- * surveys, then record each delivery and its History row in one transaction per person. A claim taken
- * by another sweep, or already valid, is left out. When sending throws, that person's claims stay
- * undelivered: nothing acts on them, and they are claimed again once stale. Without SMTP the notices are
- * recorded as delivered with no email, as decided; the History row then names no recipient.
+ * Send one policy's survey notices for the night:
+ * - claim each survey's notice (`claimRetentionNotice`, so a void one is replaced and two sweeps never
+ *   both send it), a batch per transaction, at most `RETENTION_NOTICES_PER_RUN` a run;
+ * - one email per person listing their surveys, until the run's deadline;
+ * - record each delivery and its History row in one transaction per person.
+ * A claim taken by another sweep, or already valid, is left out. When sending throws, or the deadline
+ * stops the run first, those claims stay undelivered: nothing acts on them, and they are claimed again
+ * once stale. Delivery is at least once: if recording it fails after the email went out, the next
+ * claim sends it again. Without SMTP the notices are recorded as delivered with no email, as decided;
+ * the History row then names no recipient.
  */
 export const sendSurveyNotices = async <TEntity extends "surveys" | "responses">(
   context: TRetentionSweepContext,
   entity: TEntity,
   organization: TNoticeOrganization,
-  items: readonly TSurveyNoticeItem<TEntity>[]
+  allItems: readonly TSurveyNoticeItem<TEntity>[]
 ): Promise<void> => {
+  const items = allItems.slice(0, RETENTION_NOTICES_PER_RUN);
   if (items.length === 0) return;
 
-  const claimed = await runSweepTransaction(async (tx) => {
-    await lockUnchangedRetentionPolicy(tx, context.policy);
-    const claimedAt = await readDatabaseClock(tx);
-    const result: (TSurveyNoticeItem<TEntity> & { claimToken: string })[] = [];
-    for (const item of items) {
-      const claimToken = await claimRetentionNotice(
-        tx,
-        { organizationId: context.policy.organizationId, entity, surveyId: item.survey.id },
-        { claimedAt, voidBefore: item.voidBefore }
-      );
-      if (claimToken) result.push({ ...item, claimToken });
-    }
-    return result;
-  });
+  const claimed: (TSurveyNoticeItem<TEntity> & { claimToken: string })[] = [];
+  for (let i = 0; i < items.length && Date.now() < context.deadline; i += RETENTION_SWEEP_BATCH_SIZE) {
+    const batch = items.slice(i, i + RETENTION_SWEEP_BATCH_SIZE);
+    claimed.push(
+      ...(await runSweepTransaction(async (tx) => {
+        await lockUnchangedRetentionPolicy(tx, context.policy);
+        const claimedAt = await readDatabaseClock(tx);
+        const result: (TSurveyNoticeItem<TEntity> & { claimToken: string })[] = [];
+        for (const item of batch) {
+          const claimToken = await claimRetentionNotice(
+            tx,
+            { organizationId: context.policy.organizationId, entity, surveyId: item.survey.id },
+            { claimedAt, voidBefore: item.voidBefore }
+          );
+          if (claimToken) result.push({ ...item, claimToken });
+        }
+        return result;
+      }))
+    );
+  }
 
   const byRecipient = new Map<string, typeof claimed>();
   for (const item of claimed) {
@@ -77,6 +89,7 @@ export const sendSurveyNotices = async <TEntity extends "surveys" | "responses">
   }
 
   for (const recipientItems of byRecipient.values()) {
+    if (Date.now() >= context.deadline) break;
     const { recipient } = recipientItems[0];
     const format = formatFor(recipient.locale, organization.timeZone);
     const lines = recipientItems.map((item) => item.describe(format, surveyUrl(item.survey)));

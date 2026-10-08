@@ -3,6 +3,9 @@ import { prisma } from "@formbricks/database";
 import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
 import type { TAuthorizationActor } from "@/lib/authorization";
 import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
+import { AUTHZED_MAX_BULK_CHECK_ITEMS } from "@/lib/authzed/constants";
+import { mapWithConcurrency } from "@/lib/utils/map-with-concurrency";
+import { RETENTION_RECIPIENT_CHECK_CONCURRENCY } from "./constants";
 
 export type TNoticeRecipient = { userId: string; email: string; name: string; locale: TUserLocale };
 
@@ -22,10 +25,11 @@ type TCandidate = TNoticeRecipient & { role: "owner" | "manager" | "member" };
  * the survey. Surveys with nobody eligible are left out of the result, and the caller skips them
  * (`noRecipient`): a notice no one receives must never let the action run.
  *
- * The owner and creator are checked with the app's own survey read check, in one bulk call per person,
- * so a restricted survey (ENG-3282) or a workspace they have lost access to rules them out. Owners and
- * managers can read every survey in the organisation, so they need no check. Two queries plus one
- * check per distinct owner or creator, whatever the number of surveys.
+ * The owner and creator are checked with the app's own survey read check, in bulk calls of at most
+ * `AUTHZED_MAX_BULK_CHECK_ITEMS` surveys per person, a few in flight at once, so a restricted survey
+ * (ENG-3282) or a workspace they have lost access to rules them out. Owners and managers can read every
+ * survey in the organisation, so they need no check. A failed check throws: the run fails closed rather
+ * than emailing a fallback.
  */
 export const resolveSurveyNoticeRecipients = async (
   organizationId: string,
@@ -42,6 +46,7 @@ export const resolveSurveyNoticeRecipients = async (
     where: {
       organizationId,
       role: { not: "billing" },
+      accepted: true,
       user: { isActive: true },
       OR: [{ userId: { in: personalIds } }, { role: { in: ["owner", "manager"] } }],
     },
@@ -65,17 +70,26 @@ export const resolveSurveyNoticeRecipients = async (
     .filter((candidate) => candidate.role === "owner" || candidate.role === "manager")
     .sort((a, b) => (a.role === b.role ? a.userId.localeCompare(b.userId) : a.role === "owner" ? -1 : 1));
 
-  const readable = new Map<string, ReadonlySet<string>>();
-  await Promise.all(
-    personalIds
-      .filter((userId) => byId.has(userId))
-      .map(async (userId) => {
-        const surveyIds = surveys
-          .filter((survey) => survey.ownerId === userId || survey.createdBy === userId)
-          .map((survey) => survey.id);
-        readable.set(userId, await canRead({ type: "user", id: userId }, surveyIds));
-      })
-  );
+  const checks = personalIds
+    .filter((userId) => byId.has(userId))
+    .flatMap((userId) => {
+      const surveyIds = surveys
+        .filter((survey) => survey.ownerId === userId || survey.createdBy === userId)
+        .map((survey) => survey.id);
+      const chunks: { userId: string; surveyIds: string[] }[] = [];
+      for (let i = 0; i < surveyIds.length; i += AUTHZED_MAX_BULK_CHECK_ITEMS) {
+        chunks.push({ userId, surveyIds: surveyIds.slice(i, i + AUTHZED_MAX_BULK_CHECK_ITEMS) });
+      }
+      return chunks;
+    });
+  const results = await mapWithConcurrency(checks, RETENTION_RECIPIENT_CHECK_CONCURRENCY, async (check) => ({
+    userId: check.userId,
+    allowed: await canRead({ type: "user", id: check.userId }, check.surveyIds),
+  }));
+  const readable = new Map<string, Set<string>>();
+  for (const { userId, allowed } of results) {
+    readable.set(userId, new Set([...(readable.get(userId) ?? []), ...allowed]));
+  }
 
   for (const survey of surveys) {
     const personal = [survey.ownerId, survey.createdBy]

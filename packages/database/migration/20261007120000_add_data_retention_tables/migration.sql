@@ -18,6 +18,8 @@
 -- conditions only on the surveys policy, exactly one target per exemption and notice, and a reason on
 -- every skipped run item. The allowed ranges are validated by the API instead, because they are
 -- expected to widen. Prisma neither models nor drops CHECK constraints, so they cause no schema drift.
+-- A guard that finds a type or constraint already there keeps it as it is: a development database that
+-- applied an earlier draft of this unreleased file keeps that draft's definitions. Reset it instead.
 BEGIN;
 SET LOCAL lock_timeout = '5s';
 

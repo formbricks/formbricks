@@ -166,12 +166,15 @@ export type TRetentionRunSkip = TRunTarget & { skipReason: RetentionSkipReason }
  */
 export const recordRetentionRunSkips = async (
   run: { runId: string; policy: Pick<TRetentionPolicySnapshot, "organizationId" | "entity"> },
-  skips: readonly TRetentionRunSkip[]
+  allSkips: readonly TRetentionRunSkip[]
 ): Promise<void> => {
+  // One skip per target, so a target met twice is written and counted once.
+  const skips = [...new Map(allSkips.map((skip) => [skip.targetId, skip])).values()];
   if (skips.length === 0) return;
-  const latest = await prisma.$queryRaw<
-    { targetId: string; action: RetentionRunItemAction; skipReason: RetentionSkipReason | null }[]
-  >`
+  await runSweepTransaction(async (tx) => {
+    const latest = await tx.$queryRaw<
+      { targetId: string; action: RetentionRunItemAction; skipReason: RetentionSkipReason | null }[]
+    >`
     SELECT DISTINCT ON (i."targetId") i."targetId", i."action", i."skipReason"
     FROM "RetentionRunItem" i
     JOIN "RetentionRun" r ON r."id" = i."runId"
@@ -180,14 +183,13 @@ export const recordRetentionRunSkips = async (
       AND r."entity" = ${run.policy.entity}::"RetentionEntity"
     ORDER BY i."targetId", r."startedAt" DESC, i."id" DESC
   `;
-  const latestByTarget = new Map(latest.map((row) => [row.targetId, row]));
-  const fresh = skips.filter((skip) => {
-    const previous = latestByTarget.get(skip.targetId);
-    return previous?.action !== "skipped" || previous.skipReason !== skip.skipReason;
-  });
+    const latestByTarget = new Map(latest.map((row) => [row.targetId, row]));
+    const fresh = skips.filter((skip) => {
+      const previous = latestByTarget.get(skip.targetId);
+      return previous?.action !== "skipped" || previous.skipReason !== skip.skipReason;
+    });
 
-  await prisma.$transaction([
-    prisma.retentionRunItem.createMany({
+    await tx.retentionRunItem.createMany({
       data: fresh.map((skip) => ({
         runId: run.runId,
         targetType: skip.targetType,
@@ -196,12 +198,12 @@ export const recordRetentionRunSkips = async (
         action: "skipped" as const,
         skipReason: skip.skipReason,
       })),
-    }),
-    prisma.retentionRun.update({
+    });
+    await tx.retentionRun.update({
       where: { id: run.runId },
       data: { skippedCount: { increment: skips.length } },
-    }),
-  ]);
+    });
+  });
 };
 
 /**

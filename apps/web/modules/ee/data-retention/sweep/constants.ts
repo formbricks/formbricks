@@ -13,9 +13,12 @@ const HOUR = 60 * MINUTE;
 /**
  * A policy whose last run is older than this, and whose warning hasn't restarted since, starts its
  * warning again before it acts (ENG-3614): an organisation coming back after a lapsed licence, or a
- * sweep that hasn't run for two nights, must not act that night on a backlog nobody was warned about.
+ * sweep that hasn't run for days, must not act that night on a backlog nobody was warned about. Three
+ * nights, so one missed tick (a deploy dropping it, a licence lookup failing once, a DST jump past
+ * 01:00, a night the sweep's budget deferred the organisation) never restarts it: a restart voids every
+ * notice and emails everyone again.
  */
-export const RETENTION_SWEEP_GAP_MS = 48 * HOUR;
+export const RETENTION_SWEEP_GAP_MS = 72 * HOUR;
 
 /**
  * A run with no `finishedAt` holds its policy for this long, so a second sweep (another replica, an
@@ -37,5 +40,17 @@ export const RETENTION_SWEEP_STATEMENT_TIMEOUT_MS = 30_000;
 export const RETENTION_SWEEP_TRANSACTION_TIMEOUT_MS = 60_000;
 export const RETENTION_SWEEP_TRANSACTION_MAX_WAIT_MS = 10_000;
 
-/** Targets read per candidate query. */
+/** Targets read per candidate query, and claimed per notice transaction. */
 export const RETENTION_SWEEP_BATCH_SIZE = 100;
+
+/**
+ * Notices one policy's run sends at most. A first night with a large backlog warns the rest on the
+ * following nights; nothing acts on a target before its own notice has run in full.
+ */
+export const RETENTION_NOTICES_PER_RUN = 500;
+
+/** Targets one policy's run acts on at most; the rest wait for the next night. */
+export const RETENTION_ACTIONS_PER_RUN = 2000;
+
+/** Survey read checks (SpiceDB bulk calls) in flight at once while choosing notice recipients. */
+export const RETENTION_RECIPIENT_CHECK_CONCURRENCY = 4;

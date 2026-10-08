@@ -2,6 +2,7 @@ import "server-only";
 import { createId } from "@paralleldrive/cuid2";
 import { prisma } from "@formbricks/database";
 import type { TRetentionPolicyKind, TRetentionPolicySettings } from "../types";
+import { readDatabaseClock } from "./database-clock";
 import {
   RETENTION_POLICY_DEFAULTS,
   type TRetentionPolicyIssue,
@@ -112,8 +113,7 @@ export async function updateRetentionPolicy({
     // comes from the same clock, read after the lock: a request queued behind another writer must not
     // stamp a moment before the change it follows. `clock_timestamp()`, not `now()`, which is the
     // transaction's start.
-    const now =
-      nowOverride ?? (await tx.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS "now"`)[0].now;
+    const now = nowOverride ?? (await readDatabaseClock(tx));
 
     const previous = inserted === 1 ? toSettings(defaults) : toSettings(locked);
     const next: TRetentionPolicySettings = { ...previous, ...patch };

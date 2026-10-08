@@ -61,7 +61,8 @@ describe("responses sweeper (real Postgres)", () => {
       data: { sentAt: ago(days), deliveredAt: ago(days) },
     });
 
-  const runItems = () => prisma.retentionRunItem.findMany({ orderBy: { id: "asc" }, include: { run: true } });
+  const runItems = () =>
+    prisma.retentionRunItem.findMany({ orderBy: { run: { startedAt: "asc" } }, include: { run: true } });
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -266,6 +267,38 @@ describe("responses sweeper (real Postgres)", () => {
     expect(sendSurveyRetentionNoticeEmail).toHaveBeenCalledTimes(2);
   });
 
+  test("an exemption revoked after the run opened voids the reminder: a new one, and no deletion", async () => {
+    await addResponses([400, 380]);
+    await sweep();
+    await ageNotice(WARN + 1);
+    // Revoked a moment from now, as if during tonight's run, after the run read its clock.
+    await prisma.retentionExemption.create({
+      data: {
+        organizationId,
+        entity: "responses",
+        surveyId,
+        until: ago(-30),
+        revokedAt: new Date(Date.now() + 60_000),
+        reason: "Audit",
+      },
+    });
+
+    await sweep();
+
+    expect(await prisma.response.count()).toBe(2);
+    expect(sendSurveyRetentionNoticeEmail).toHaveBeenCalledTimes(2);
+  });
+
+  test("re-arms the reminder when the responses left the window some other way", async () => {
+    await addResponses([400]);
+    await sweep();
+    await prisma.response.deleteMany();
+
+    await sweep();
+
+    expect(await notice()).toBeNull();
+  });
+
   describe("who is told", () => {
     test("falls back from an owner who can't read the survey to its creator", async () => {
       const creatorId = await addUser("creator@example.com", "member");
@@ -305,6 +338,30 @@ describe("responses sweeper (real Postgres)", () => {
       expect(await runItems()).toEqual([
         expect.objectContaining({ action: "skipped", skipReason: "noRecipient" }),
       ]);
+    });
+
+    test("checks a prolific owner's surveys in bulk calls the authorization service accepts", async () => {
+      const surveyIds = [surveyId];
+      for (let i = 0; i < 260; i += 1) {
+        surveyIds.push((await prisma.survey.create({ data: { name: `S${i}`, workspaceId, ownerId } })).id);
+      }
+      await prisma.response.createMany({
+        data: surveyIds.map((id) => ({ surveyId: id, createdAt: ago(400) })),
+      });
+      const sizes: number[] = [];
+      const bulkCheck = async (_actor: unknown, ids: ReadonlyArray<string>) => {
+        sizes.push(ids.length);
+        if (ids.length > 250) throw new Error("INVALID_REQUEST: too many items");
+        return new Set(ids);
+      };
+
+      await runDataRetentionSweep({
+        checkLicence: async () => true,
+        sweepers: { responses: createResponsesSweeper(bulkCheck) },
+      });
+
+      expect(Math.max(...sizes)).toBeLessThanOrEqual(250);
+      expect(vi.mocked(sendSurveyRetentionNoticeEmail).mock.calls[0][0].responseDeletions).toHaveLength(261);
     });
 
     test("sends one email per person, listing all of their surveys", async () => {

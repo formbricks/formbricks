@@ -1,5 +1,6 @@
 import "server-only";
 import { addYears } from "date-fns";
+import { prisma } from "@formbricks/database";
 import { buildKeysetPage } from "@/app/api/v3/lib/keyset-cursor";
 import {
   createdResponse,
@@ -10,6 +11,7 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { requireRetentionOrgAccess } from "@/modules/ee/data-retention/lib/api-access";
+import { readDatabaseClock } from "@/modules/ee/data-retention/lib/database-clock";
 import {
   confirmReadableRetentionExemptions,
   resolveRetentionExemptionReadScope,
@@ -159,7 +161,8 @@ export async function createRetentionExemptionOperation({
   if (access instanceof Response) return access;
   if (auditLog) auditLog.organizationId = access.organizationId;
 
-  const now = new Date();
+  // The database's clock: an exemption's start and end are compared with notice times it stamps.
+  const now = await readDatabaseClock(prisma);
   const untilProblem = getUntilProblem(body.until, now);
   if (untilProblem) {
     return problemUnprocessableContent(requestId, untilProblem, {
@@ -254,7 +257,8 @@ export async function revokeRetentionExemptionOperation({
     };
   }
 
-  const now = new Date();
+  // The database's clock: an exemption's start and end are compared with notice times it stamps.
+  const now = await readDatabaseClock(prisma);
   const revoked = await revokeRetentionExemption({ id: exemptionId, revokedById: access.userId, now });
   if (!revoked) {
     return problemUnprocessableContent(requestId, "This exemption has already ended or been revoked.", {

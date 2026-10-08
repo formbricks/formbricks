@@ -75,11 +75,4 @@ export const lockUnchangedRetentionPolicy = async (
   if (!unchanged) throw new RetentionPolicyChangedError(snapshot.entity);
 };
 
-/**
- * The database's clock, as a `Date`. Every retention time a run compares (`enabledAt`, a notice's
- * `sentAt`) is stamped by the database, so a run reads its "now" from the same clock. Read into the app
- * and bound back as a parameter, never written with `clock_timestamp()` directly, which would convert
- * through the session's time zone into the `timestamp(3)` columns.
- */
-export const readDatabaseClock = async (client: Pick<Prisma.TransactionClient, "$queryRaw">): Promise<Date> =>
-  (await client.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS "now"`)[0].now;
+export { readDatabaseClock } from "../lib/database-clock";

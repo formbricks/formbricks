@@ -77,23 +77,43 @@ export async function getSurveyRetentionFacts(survey: {
 /** A survey with more responses due than this is shown as "10,000+". */
 export const SURVEY_RETENTION_DUE_COUNT_CAP = 10_000;
 
+export type TCappedCount = { count: number; relation: "eq" | "gte" };
+
 /**
- * How many of a survey's responses were created at or before `cutoff`, counting at most `cap`, so a
- * survey with millions of responses costs no more than the cap. Walks `Response(surveyId, createdAt)`.
+ * How many of each survey's responses were created at or before `cutoff`, counting at most `cap` per
+ * survey, so a survey with millions of responses costs no more than the cap. One statement for any
+ * number of surveys, each walking `Response(surveyId, created_at)`.
  */
+export async function countSurveysResponsesCreatedAtOrBefore(
+  surveyIds: readonly string[],
+  cutoff: Date,
+  cap = SURVEY_RETENTION_DUE_COUNT_CAP
+): Promise<Map<string, TCappedCount>> {
+  if (surveyIds.length === 0) return new Map();
+  const rows = await prisma.$queryRaw<{ surveyId: string; count: number }[]>`
+    SELECT s."id" AS "surveyId",
+           (SELECT count(*)::int FROM (
+              SELECT 1 FROM "Response" r
+              WHERE r."surveyId" = s."id" AND r."created_at" <= ${cutoff}
+              LIMIT ${cap}
+            ) AS capped) AS "count"
+    FROM unnest(${[...surveyIds]}::text[]) AS s("id")
+  `;
+  return new Map(
+    rows.map((row) => [row.surveyId, { count: row.count, relation: row.count >= cap ? "gte" : "eq" }])
+  );
+}
+
+/** `countSurveysResponsesCreatedAtOrBefore` for one survey. */
 export async function countSurveyResponsesCreatedAtOrBefore(
   surveyId: string,
   cutoff: Date,
   cap = SURVEY_RETENTION_DUE_COUNT_CAP
-): Promise<{ count: number; relation: "eq" | "gte" }> {
-  const [row] = await prisma.$queryRaw<{ count: bigint }[]>`
-    SELECT count(*)::bigint AS count
-    FROM (
-      SELECT 1 FROM "Response" r
-      WHERE r."surveyId" = ${surveyId} AND r."created_at" <= ${cutoff}
-      LIMIT ${cap}
-    ) AS capped
-  `;
-  const count = Number(row?.count ?? 0);
-  return { count, relation: count >= cap ? "gte" : "eq" };
+): Promise<TCappedCount> {
+  return (
+    (await countSurveysResponsesCreatedAtOrBefore([surveyId], cutoff, cap)).get(surveyId) ?? {
+      count: 0,
+      relation: "eq",
+    }
+  );
 }

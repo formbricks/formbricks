@@ -110,6 +110,8 @@ describe("data retention sweep (real Postgres)", () => {
 
     test.each([
       ["the last run is recent", ago(DAY), ago(100 * DAY)],
+      // One missed night (a dropped tick, a failed licence lookup) must not re-notify everyone.
+      ["only one night was missed", ago(49 * HOUR), ago(100 * DAY)],
       ["the warning already restarted since", ago(10 * DAY), ago(DAY)],
       ["there is no earlier run", null, ago(100 * DAY)],
     ])("leaves the warning alone when %s", async (_label, lastRunAt, enabledAt) => {
@@ -161,6 +163,21 @@ describe("data retention sweep (real Postgres)", () => {
         archivedCount: 0,
       });
       expect(await prisma.retentionRunItem.count({ where: { runId: run.runId } })).toBe(3);
+    });
+
+    test("writes and counts a target met twice in one run once", async () => {
+      await enablePolicy("members", ago(10 * DAY));
+      const run = (await openRetentionRun(organizationId, "members"))!;
+
+      await recordRetentionRunSkips(run, [
+        { targetType: "user", targetId: "u1", skipReason: "lastOwner" },
+        { targetType: "user", targetId: "u1", skipReason: "lastOwner" },
+      ]);
+
+      expect(await prisma.retentionRunItem.count({ where: { runId: run.runId } })).toBe(1);
+      expect((await prisma.retentionRun.findUniqueOrThrow({ where: { id: run.runId } })).skippedCount).toBe(
+        1
+      );
     });
 
     test("writes a skip once when it starts, and again only when its reason changes", async () => {

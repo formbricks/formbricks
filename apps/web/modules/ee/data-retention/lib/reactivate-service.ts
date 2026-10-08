@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
+import { readDatabaseClock } from "./database-clock";
 
 export type TReactivateMemberResult =
   | { status: "reactivated"; reactivatedAt: Date }
@@ -61,7 +62,7 @@ export async function reactivateRetentionMember({
 
     // The database's clock, like the notice times the members clock is compared with; the stored value
     // is returned, since the column keeps milliseconds.
-    const now = (await tx.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS "now"`)[0].now;
+    const now = await readDatabaseClock(tx);
     const { reactivatedAt } = await tx.user.update({
       where: { id: userId },
       data: { isActive: true, reactivatedAt: now },

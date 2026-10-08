@@ -13,6 +13,10 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/authorization", () => ({ can: mocks.can }));
+// The database clock, read where the app clock would be: fake timers pin both.
+vi.mock("@/modules/ee/data-retention/lib/database-clock", () => ({
+  readDatabaseClock: async () => new Date(),
+}));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsDataRetentionEnabled: mocks.isEnabled }));
 vi.mock("@/modules/ee/data-retention/lib/exemptions-service", () => ({
   getRetentionExemptionOrganizationId: mocks.getOrganizationId,

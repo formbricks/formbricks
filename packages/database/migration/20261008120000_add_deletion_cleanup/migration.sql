@@ -2,6 +2,8 @@
 -- with no foreign keys, so nothing else is locked or rewritten. The type and the CHECKs are created
 -- guarded and apart from the table, so the file reruns cleanly and converges on a `db:push` database,
 -- which has the table but not the CHECKs that keep a cleanup from widening.
+-- A guard that finds a type or constraint already there keeps it as it is: a development database that
+-- applied an earlier draft of this unreleased file keeps that draft's definitions. Reset it instead.
 BEGIN;
 SET LOCAL lock_timeout = '5s';
 

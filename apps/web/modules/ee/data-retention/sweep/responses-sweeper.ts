@@ -1,8 +1,6 @@
 import "server-only";
-import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
-import { getReportingTimeZone } from "@/lib/date-ranges";
 import { deleteResponsesInTransaction } from "@/lib/response/delete-responses";
 import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
 import { enqueueResponsesDeletionCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
@@ -10,20 +8,19 @@ import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handl
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import {
   type TRetentionTargetState,
-  addRetentionDays,
   getDueRetentionStep,
   getRetentionClockCutoffs,
   getRetentionSchedule,
 } from "../lib/schedule";
 import {
   SURVEY_RETENTION_DUE_COUNT_CAP,
-  countSurveyResponsesCreatedAtOrBefore,
+  countSurveysResponsesCreatedAtOrBefore,
 } from "../lib/survey-retention-service";
 import { RETENTION_SWEEP_BATCH_SIZE } from "./constants";
-import { deleteRetentionNotice } from "./notices";
+import { collectDueTargets, latestOf, loadNoticeOrganization, surveySkips } from "./due-targets";
 import { type TSurveyReadCheck, resolveSurveyNoticeRecipients } from "./recipients";
 import { recordRetentionRunDeletion, recordRetentionRunSkips } from "./run";
-import { type TNoticeOrganization, type TSurveyNoticeItem, sendSurveyNotices } from "./survey-notices";
+import { type TSurveyNoticeItem, sendSurveyNotices } from "./survey-notices";
 import type { TRetentionSweepContext, TRetentionSweeper } from "./sweep";
 import { lockUnchangedRetentionPolicy, runSweepTransaction } from "./transaction";
 
@@ -65,9 +62,10 @@ const readCandidates = (
   SELECT s."id", s."name", s."workspaceId", s."ownerId", s."createdBy",
          (SELECT MIN(r."created_at") FROM "Response" r WHERE r."surveyId" = s."id") AS "oldestResponseAt",
          n."sentAt" AS "noticeClaimedAt", n."deliveredAt" AS "noticeDeliveredAt",
+         -- Every exemption's end, revoked or expired, including one revoked after the run opened: a
+         -- reminder claimed before it is void. An active one keeps the survey out altogether (below).
          (SELECT MAX(LEAST(e."until", e."revokedAt")) FROM "RetentionExemption" e
-           WHERE e."surveyId" = s."id" AND e."entity" = 'responses'
-             AND LEAST(e."until", e."revokedAt") <= ${context.now}) AS "heldUntil"
+           WHERE e."surveyId" = s."id" AND e."entity" = 'responses') AS "heldUntil"
   FROM "Survey" s
   JOIN "Workspace" w ON w."id" = s."workspaceId"
   LEFT JOIN "RetentionNotice" n ON n."surveyId" = s."id" AND n."entity" = 'responses'
@@ -87,16 +85,40 @@ const readCandidates = (
 
 /** Surveys held by an active responses exemption that would otherwise be due: History shows the skip. */
 const readHeldSurveys = (context: TRetentionSweepContext, noticeDueAtOrBefore: Date) =>
-  prisma.$queryRaw<{ id: string; name: string }[]>`
-    SELECT DISTINCT s."id", s."name"
-    FROM "RetentionExemption" e
-    JOIN "Survey" s ON s."id" = e."surveyId"
-    WHERE e."organizationId" = ${context.policy.organizationId} AND e."entity" = 'responses'
-      AND e."revokedAt" IS NULL AND e."until" > ${context.now}
-      AND EXISTS (
-        SELECT 1 FROM "Response" r WHERE r."surveyId" = s."id" AND r."created_at" <= ${noticeDueAtOrBefore}
-      )
-  `;
+  runSweepTransaction(
+    (tx) => tx.$queryRaw<{ id: string; name: string }[]>`
+      SELECT DISTINCT s."id", s."name"
+      FROM "RetentionExemption" e
+      JOIN "Survey" s ON s."id" = e."surveyId"
+      JOIN "Workspace" w ON w."id" = s."workspaceId"
+      WHERE w."organizationId" = ${context.policy.organizationId}
+        AND e."organizationId" = ${context.policy.organizationId} AND e."entity" = 'responses'
+        AND e."revokedAt" IS NULL AND e."until" > ${context.now}
+        AND EXISTS (
+          SELECT 1 FROM "Response" r WHERE r."surveyId" = s."id" AND r."created_at" <= ${noticeDueAtOrBefore}
+        )
+    `
+  );
+
+/**
+ * Forget the responses reminders of the organisation's surveys that have no response left in the
+ * warning window, however the responses went (this sweep, a manual delete, an API call), so the next
+ * responses to become due get a new reminder, to whoever is the survey's recipient then.
+ */
+const rearmReminders = (context: TRetentionSweepContext, noticeDueAtOrBefore: Date) =>
+  runSweepTransaction(async (tx) => {
+    await lockUnchangedRetentionPolicy(tx, context.policy);
+    await tx.$executeRaw`
+      DELETE FROM "RetentionNotice" n
+      USING "Survey" s, "Workspace" w
+      WHERE n."entity" = 'responses' AND n."organizationId" = ${context.policy.organizationId}
+        AND s."id" = n."surveyId" AND w."id" = s."workspaceId"
+        AND w."organizationId" = ${context.policy.organizationId}
+        AND NOT EXISTS (
+          SELECT 1 FROM "Response" r WHERE r."surveyId" = s."id" AND r."created_at" <= ${noticeDueAtOrBefore}
+        )
+    `;
+  });
 
 const auditDeletion = async (
   context: TRetentionSweepContext,
@@ -132,8 +154,10 @@ const auditDeletion = async (
  * its foreign key needing the row), holds the policy unchanged, and re-reads the survey's schedule: the
  * reminder must still be valid and have run its full warning (`getDueRetentionStep` → `act`), and no
  * exemption may hold it. The deleted rows' files and Hub records are queued in the same transaction.
- * Once nothing is left in the warning window, the reminder is forgotten so the next responses to become
- * due get a new one.
+ *
+ * The survey lock also makes a new response to the survey wait (its foreign key takes `FOR KEY SHARE`)
+ * for the length of one batch: a hundred rows, milliseconds. That is the price of an exemption being
+ * created mid-delete always winning; a weaker lock would let it through unseen.
  */
 export const deleteDueResponses = async (
   context: TRetentionSweepContext,
@@ -160,7 +184,7 @@ export const deleteDueResponses = async (
       });
       if (due.length === 0) return null;
 
-      const { deletedIds, fileUrls } = await deleteResponsesInTransaction(tx, {
+      const { deleted, deletedIds, fileUrls } = await deleteResponsesInTransaction(tx, {
         surveyId: survey.id,
         id: { in: due.map((row) => row.id) },
       });
@@ -175,20 +199,8 @@ export const deleteDueResponses = async (
         tx,
         context.runId,
         { targetType: "survey", targetId: survey.id, targetName: current.name },
-        deletedIds.length
+        deleted
       );
-
-      const leftInWindow = await tx.response.findFirst({
-        where: { surveyId: survey.id, createdAt: { lte: cutoffs.noticeDueAtOrBefore } },
-        select: { id: true },
-      });
-      if (!leftInWindow) {
-        await deleteRetentionNotice(tx, {
-          organizationId: context.policy.organizationId,
-          entity: "responses",
-          surveyId: survey.id,
-        });
-      }
       return {
         deletedIds,
         drainNowIds,
@@ -216,94 +228,76 @@ export const deleteDueResponses = async (
  * survey's responses become due, its notice recipient gets one reminder; nothing is deleted until that
  * reminder was delivered and has run `warnDays`. After that, later responses go without another email
  * until the survey has none left in the warning window. An exemption on the responses policy holds the
- * survey; when it ends, a new reminder is due before anything goes.
+ * survey; once it ends, a new reminder is due before anything goes.
  */
 export const createResponsesSweeper =
   (canRead?: TSurveyReadCheck): TRetentionSweeper =>
   async (context) => {
     const cutoffs = getRetentionClockCutoffs(context.policy, context.now);
-    const organization = await prisma.organization.findUniqueOrThrow({
-      where: { id: context.policy.organizationId },
-      select: { name: true, displayTimeZone: true },
+    const { notify, act } = await collectDueTargets(context, {
+      readPage: (tx, afterId) =>
+        readCandidates(tx, context, { afterId, noticeDueAtOrBefore: cutoffs.noticeDueAtOrBefore }),
+      keyOf: (candidate) => candidate.id,
+      stepOf: (candidate) => getDueRetentionStep(context.policy, targetState(candidate), context.now),
     });
-    const noticeOrganization: TNoticeOrganization = {
-      name: organization.name,
-      timeZone: getReportingTimeZone(organization.displayTimeZone),
-    };
 
-    const toNotify: TResponsesCandidate[] = [];
-    let afterId: string | undefined;
-    while (Date.now() < context.deadline) {
-      const candidates = await readCandidates(prisma, context, {
-        afterId,
-        noticeDueAtOrBefore: cutoffs.noticeDueAtOrBefore,
-      });
-      for (const candidate of candidates) {
-        const step = getDueRetentionStep(context.policy, targetState(candidate), context.now);
-        if (step === "notify") toNotify.push(candidate);
-        if (step === "act" && cutoffs.actionDueAtOrBefore && Date.now() < context.deadline) {
-          await deleteDueResponses(context, candidate, {
-            noticeDueAtOrBefore: cutoffs.noticeDueAtOrBefore,
-            actionDueAtOrBefore: cutoffs.actionDueAtOrBefore,
-          });
-        }
-      }
-      if (candidates.length < RETENTION_SWEEP_BATCH_SIZE) break;
-      afterId = candidates.at(-1)?.id;
-    }
-
-    const recipients = await resolveSurveyNoticeRecipients(context.policy.organizationId, toNotify, canRead);
-    const items: TSurveyNoticeItem<"responses">[] = [];
-    const noRecipient: TResponsesCandidate[] = [];
-    for (const candidate of toNotify) {
+    // Reminders first: deletions can always wait a night, and a survey due tonight already has its own.
+    const recipients = await resolveSurveyNoticeRecipients(context.policy.organizationId, notify, canRead);
+    // Once delivered now, the reminder's deletion starts `warnDays` from now, and the responses due by
+    // then are the ones created at or before `noticeDueAtOrBefore`, whatever the survey.
+    const dueCounts = await countSurveysResponsesCreatedAtOrBefore(
+      notify.filter((candidate) => recipients.has(candidate.id)).map((candidate) => candidate.id),
+      cutoffs.noticeDueAtOrBefore
+    );
+    const items: TSurveyNoticeItem<"responses">[] = notify.flatMap((candidate) => {
       const recipient = recipients.get(candidate.id);
-      if (!recipient) {
-        noRecipient.push(candidate);
-        continue;
-      }
-      // The dates the email states: the schedule as it reads once this notice is delivered now.
+      if (!recipient) return [];
       const { actionAt } = getRetentionSchedule(
         context.policy,
         { ...targetState(candidate), noticeClaimedAt: null, noticeDeliveredAt: null },
         context.now
       );
-      const dueCount = await countSurveyResponsesCreatedAtOrBefore(
-        candidate.id,
-        addRetentionDays(actionAt, -context.policy.periodDays)
-      );
-      items.push({
-        survey: candidate,
-        recipient,
-        voidBefore: [context.policy.enabledAt, candidate.heldUntil]
-          .filter((date): date is Date => date !== null)
-          .reduce((a, b) => (a > b ? a : b)),
-        describe: (format, url) => ({
-          name: candidate.name,
-          url,
-          count:
-            dueCount.relation === "gte"
-              ? `${format.number(SURVEY_RETENTION_DUE_COUNT_CAP)}+`
-              : format.number(dueCount.count),
-          deleteDate: format.date(actionAt),
-        }),
-      });
+      const dueCount = dueCounts.get(candidate.id) ?? { count: 0, relation: "eq" as const };
+      return [
+        {
+          survey: candidate,
+          recipient,
+          voidBefore: latestOf(context.policy.enabledAt, candidate.heldUntil),
+          describe: (format, url) => ({
+            name: candidate.name,
+            url,
+            count:
+              dueCount.relation === "gte"
+                ? `${format.number(SURVEY_RETENTION_DUE_COUNT_CAP)}+`
+                : format.number(dueCount.count),
+            deleteDate: format.date(actionAt),
+          }),
+        },
+      ];
+    });
+    await sendSurveyNotices(
+      context,
+      "responses",
+      await loadNoticeOrganization(context.policy.organizationId),
+      items
+    );
+
+    if (cutoffs.actionDueAtOrBefore) {
+      for (const candidate of act) {
+        if (Date.now() >= context.deadline) break;
+        await deleteDueResponses(context, candidate, {
+          noticeDueAtOrBefore: cutoffs.noticeDueAtOrBefore,
+          actionDueAtOrBefore: cutoffs.actionDueAtOrBefore,
+        });
+      }
     }
+    await rearmReminders(context, cutoffs.noticeDueAtOrBefore);
 
-    await sendSurveyNotices(context, "responses", noticeOrganization, items);
-
-    const held = await readHeldSurveys(context, cutoffs.noticeDueAtOrBefore);
-    await recordRetentionRunSkips(context, [
-      ...held.map((survey) => ({
-        targetType: "survey" as const,
-        targetId: survey.id,
-        targetName: survey.name,
-        skipReason: "exempt" as const,
-      })),
-      ...noRecipient.map((survey) => ({
-        targetType: "survey" as const,
-        targetId: survey.id,
-        targetName: survey.name,
-        skipReason: "noRecipient" as const,
-      })),
-    ]);
+    await recordRetentionRunSkips(
+      context,
+      surveySkips(
+        await readHeldSurveys(context, cutoffs.noticeDueAtOrBefore),
+        notify.filter((candidate) => !recipients.has(candidate.id))
+      )
+    );
   };
