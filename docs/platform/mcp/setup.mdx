@@ -207,6 +207,39 @@ periodically for safety.
     mounted at `/formbricks`, use the complete internal URL, such as
     `http://formbricks:3000/formbricks/api/auth/jwks`.
   </Accordion>
+  <Accordion title="Self-hosted behind Cloudflare: the client can't connect, but the URL works in your browser">
+    Only sign-in and consent happen in your browser. Discovery, registration, the token exchange and
+    every tool call come straight from the client — for claude.ai and ChatGPT, from Anthropic's or
+    OpenAI's servers. Cloudflare can treat that traffic as an AI agent or bot and block or challenge it
+    while still letting your browser through. The client then gets a Cloudflare page instead of the JSON
+    it expects, and reports what looks like an OAuth, registration or MCP error. So a URL that opens
+    in your browser, or a consent screen that works, does not rule Cloudflare out.
+
+    Check Cloudflare's **Security Events** for blocked or challenged requests to these paths (prefix
+    each with your [custom subpath](/self-hosting/configuration/custom-subpath) if you use one):
+
+    - `/.well-known/oauth-protected-resource`, `/.well-known/oauth-authorization-server`,
+      `/.well-known/openid-configuration` and `/api/auth/.well-known/` — discovery
+    - `/api/auth/oauth2/` — registration and tokens
+    - `/api/mcp` — the MCP server itself
+
+    Then let the client through without turning protection off for the whole site:
+
+    - **AI bot policies:** under **Security → Settings → Configure AI bot policies**, set **Agent** to
+      **Allow**. Agent covers AI tools acting for a person in real time, which is what an MCP client
+      is. **Training** and **Search** can stay blocked. If you still use the older **Block AI bots**
+      setting, check that too.
+    - **Bot Fight Mode** can't be skipped for specific paths, so if it blocks the client, turn it off.
+      **Super Bot Fight Mode** can: add a WAF custom rule with the **Skip** action for the paths above.
+    - **WAF custom rules and Cloudflare Access:** make sure no Block, Managed Challenge or Access policy
+      covers the paths above. An MCP client can't solve a challenge or sign in to Access.
+
+    Formbricks also fetches its own signing keys from your public `/api/auth/jwks` to verify tokens.
+    If Cloudflare challenges that request, sign-in succeeds but every call to `/api/mcp` is rejected
+    with `401`, and Formbricks logs `MCP OAuth authentication failed` with `failureSource: "jwks_fetch"`.
+    Set `MCP_OAUTH_JWKS_URL` to the internal endpoint so that fetch doesn't go through Cloudflare (see
+    the entry above).
+  </Accordion>
 </AccordionGroup>
 
 ---
