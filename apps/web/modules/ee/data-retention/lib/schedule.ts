@@ -102,12 +102,14 @@ export type TRetentionStep = "notify" | "act";
  */
 const getValidNoticeDeliveredAt = (
   policy: TRetentionSchedulePolicy,
-  target: TRetentionTargetState
+  target: TRetentionTargetState,
+  now: Date
 ): Date | null => {
   const { noticeClaimedAt, noticeDeliveredAt } = target;
   if (!noticeClaimedAt || !noticeDeliveredAt) return null;
   if (NOTICE_FOLLOWS_CLOCK[policy.entity] && !isAtOrBefore(target.clock, noticeClaimedAt)) return null;
-  if (policy.enabledAt && !isAtOrBefore(policy.enabledAt, noticeClaimedAt)) return null;
+  // A policy without `enabledAt` is treated as switched on now, so no earlier notice counts for it.
+  if (!isAtOrBefore(policy.enabledAt ?? now, noticeClaimedAt)) return null;
   if (target.heldUntil && !isAtOrBefore(target.heldUntil, noticeClaimedAt)) return null;
   return noticeDeliveredAt;
 };
@@ -119,7 +121,7 @@ export const getRetentionSchedule = (
 ): TRetentionSchedule => {
   const plannedActionAt = addRetentionDays(target.clock, policy.periodDays);
   const warnAt = addRetentionDays(plannedActionAt, -policy.warnDays);
-  const noticeDeliveredAt = getValidNoticeDeliveredAt(policy, target);
+  const noticeDeliveredAt = getValidNoticeDeliveredAt(policy, target, now);
   const noticeAt = noticeDeliveredAt ?? latest(warnAt, now);
 
   const actionAt =
@@ -156,10 +158,12 @@ export type TRetentionClockCutoffs = {
   /** A target whose clock is at or before this is due a notice. */
   noticeDueAtOrBefore: Date;
   /**
-   * A target whose clock is at or before this is past its planned action. Its notice must also have
-   * been delivered for `warnDays`; checking that is the caller's (`getDueRetentionStep`).
+   * A target whose clock is at or before this is past its planned action. Never sufficient on its own:
+   * the target's notice must also have been delivered for `warnDays`, which only
+   * `getDueRetentionStep` checks. Null while no notice can have run that long yet (the policy took
+   * effect less than `warnDays` ago), so nothing can be selected for action before then.
    */
-  actionDueAtOrBefore: Date;
+  actionDueAtOrBefore: Date | null;
 };
 
 /**
@@ -172,9 +176,11 @@ export const getRetentionClockCutoffs = (
   now: Date
 ): TRetentionClockCutoffs => {
   const actionDueAtOrBefore = addRetentionDays(now, -policy.periodDays);
+  // A valid notice is claimed at or after `enabledAt` and must then run for `warnDays`.
+  const warningCanHaveRun = isAtOrBefore(addRetentionDays(policy.enabledAt ?? now, policy.warnDays), now);
   return {
     noticeDueAtOrBefore: addRetentionDays(actionDueAtOrBefore, policy.warnDays),
-    actionDueAtOrBefore,
+    actionDueAtOrBefore: warningCanHaveRun ? actionDueAtOrBefore : null,
   };
 };
 

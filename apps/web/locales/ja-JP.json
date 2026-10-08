@@ -3001,6 +3001,7 @@
         "no_runs_with_changes": "まだ変更が行われた実行はありません。",
         "notice": "通知",
         "notice_out_of_range": "通知期間は{min}日から{max}日の間で選択してください。",
+        "notice_shorter_than_period": "通知期間は保持期間より短く設定してください。",
         "notified": "通知済み",
         "period": "期間",
         "period_days": "{count, plural, other {#日}}",

@@ -3001,6 +3001,7 @@
         "no_runs_with_changes": "Пока ни один запуск ничего не изменил.",
         "notice": "Уведомление",
         "notice_out_of_range": "Выбери срок уведомления от {min} до {max} дней.",
+        "notice_shorter_than_period": "Срок уведомления должен быть короче самого периода.",
         "notified": "Уведомлены",
         "period": "Период",
         "period_days": "{count, plural, one {# день} few {# дня} many {# дней} other {# дня}}",

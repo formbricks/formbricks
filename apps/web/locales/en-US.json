@@ -3001,6 +3001,7 @@
         "no_runs_with_changes": "No runs have changed anything yet.",
         "notice": "Notice",
         "notice_out_of_range": "Choose a notice between {min} and {max} days.",
+        "notice_shorter_than_period": "The notice must be shorter than the period.",
         "notified": "Notified",
         "period": "Period",
         "period_days": "{count, plural, one {# day} other {# days}}",

@@ -3001,6 +3001,7 @@
         "no_runs_with_changes": "Egyetlen futtatás sem módosított még semmit.",
         "notice": "Értesítés",
         "notice_out_of_range": "Kérjük, válasszon {min} és {max} nap közötti értesítési időt.",
+        "notice_shorter_than_period": "Az értesítési időnek rövidebbnek kell lennie az adott időszaknál.",
         "notified": "Értesítve",
         "period": "Időszak",
         "period_days": "{count, plural, one {# nap} other {# nap}}",

@@ -74,8 +74,10 @@ describe("retention policies service (real Postgres)", () => {
     const error = await update({ enabled: true, periodDays: 10, warnDays: 10 }).catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(RetentionPolicyInvalidError);
+    // Too short a period, too short a notice, and a notice not shorter than the period.
     expect((error as RetentionPolicyInvalidError).issues.map((issue) => issue.field).sort()).toEqual([
       "periodDays",
+      "warnDays",
       "warnDays",
     ]);
     expect(await getRetentionPolicyRows(organizationId)).toEqual([]);

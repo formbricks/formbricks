@@ -3001,6 +3001,7 @@
         "no_runs_with_changes": "Nicio rulare nu a modificat nimic până acum.",
         "notice": "Preaviz",
         "notice_out_of_range": "Alege un preaviz între {min} și {max} zile.",
+        "notice_shorter_than_period": "Termenul de notificare trebuie să fie mai scurt decât perioada de păstrare.",
         "notified": "Notificat",
         "period": "Perioadă",
         "period_days": "{count, plural, one {# zi} few {# zile} other {# de zile}}",

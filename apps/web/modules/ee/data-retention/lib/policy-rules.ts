@@ -55,6 +55,11 @@ export const getRetentionPolicyIssues = (
       reason: `The period must be between ${RETENTION_PERIOD_DAYS.min} and ${RETENTION_PERIOD_DAYS.max} days.`,
     });
   }
+  // A notice as long as the period would be due the moment the clock moves, so every bit of activity
+  // (a sign-in, an edit) would void it and send another one the next night.
+  if (settings.warnDays >= settings.periodDays) {
+    issues.push({ field: "warnDays", reason: "The notice must be shorter than the period." });
+  }
 
   if (policy === "surveys") {
     const distinct = new Set(settings.conditions);

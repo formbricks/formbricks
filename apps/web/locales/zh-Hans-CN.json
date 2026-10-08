@@ -3001,6 +3001,7 @@
         "no_runs_with_changes": "目前还没有任何运行产生过变更。",
         "notice": "通知",
         "notice_out_of_range": "请选择 {min} 到 {max} 天之间的通知期。",
+        "notice_shorter_than_period": "通知时间必须短于保留期限。",
         "notified": "已通知",
         "period": "期限",
         "period_days": "{count, plural, other {# 天}}",

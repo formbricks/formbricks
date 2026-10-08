@@ -25,11 +25,12 @@ CREATE TABLE IF NOT EXISTS "DeletionCleanup" (
     CONSTRAINT "DeletionCleanup_pkey" PRIMARY KEY ("id"),
     -- A survey cleanup never names responses (it would otherwise read as "only these"), a responses
     -- cleanup always does (an empty list must never widen to the whole survey), and a storage cleanup
-    -- always names its files.
+    -- always names its files. Every side is NULL-safe: `cardinality(NULL) > 0` is NULL, which a CHECK
+    -- would let through.
     CONSTRAINT "DeletionCleanup_kind_check" CHECK (
         ("kind" = 'hubSurvey' AND COALESCE(cardinality("responseIds"), 0) = 0 AND COALESCE(cardinality("fileKeys"), 0) = 0)
-        OR ("kind" = 'hubResponses' AND cardinality("responseIds") > 0 AND COALESCE(cardinality("fileKeys"), 0) = 0)
-        OR ("kind" = 'storageFiles' AND cardinality("fileKeys") > 0 AND COALESCE(cardinality("responseIds"), 0) = 0)
+        OR ("kind" = 'hubResponses' AND COALESCE(cardinality("responseIds"), 0) > 0 AND COALESCE(cardinality("fileKeys"), 0) = 0)
+        OR ("kind" = 'storageFiles' AND COALESCE(cardinality("fileKeys"), 0) > 0 AND COALESCE(cardinality("responseIds"), 0) = 0)
     )
 );
 

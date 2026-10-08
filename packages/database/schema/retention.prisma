@@ -35,15 +35,17 @@ enum RetentionSkipReason {
   noRecipient
 }
 
-/// One policy per organisation and kind of data. Every policy has the same three stages, stored in
-/// whole days: warn → archive (reversible) → delete. The dates themselves are never stored; they are
-/// computed by the shared helper in `apps/web/modules/ee/data-retention/lib/schedule.ts`, so the UI,
-/// the emails and the sweep always agree.
+/// One policy per organisation and kind of data: a notice `warnDays` before the action, and the action
+/// `periodDays` after the target's clock. The action follows from the kind of data: responses are
+/// deleted, surveys archived (the archive purge deletes them 30 days later, as it does every archived
+/// survey), members deactivated. The dates themselves are never stored; they are computed by the shared
+/// helper in `apps/web/modules/ee/data-retention/lib/schedule.ts`, so the UI, the emails and the sweep
+/// always agree.
 ///
-/// Which stages each entity uses (responses have no archive, members are never deleted) and the
-/// allowed ranges are validated by the API, not here: they are product rules that are expected to
-/// widen. The migration only enforces the structural invariants (positive days, at least one action
-/// stage, conditions on the surveys policy only) as CHECK constraints, which Prisma cannot express.
+/// The allowed ranges are validated by the API. The migration repeats the ones that guard against
+/// acting early or re-notifying (a notice of at least 14 days and shorter than the period, an enabled
+/// policy always has `enabledAt`) and the structural ones (conditions on the surveys policy only) as
+/// CHECK constraints, which Prisma cannot express.
 model RetentionPolicy {
   id             String                     @id @default(cuid(2))
   createdAt      DateTime                   @default(now()) @map(name: "created_at")
@@ -121,7 +123,7 @@ model RetentionRun {
   notifiedCount  Int                @default(0)
   /// Archived surveys, or deactivated members.
   archivedCount  Int                @default(0)
-  /// Deleted responses or surveys.
+  /// Deleted responses. (Archived surveys are deleted by the archive purge, not counted here.)
   deletedCount   Int                @default(0)
   skippedCount   Int                @default(0)
   /// False when the run changed nothing. History hides those by default.
@@ -151,13 +153,13 @@ model RetentionRunItem {
   @@index([runId, id])
 }
 
-/// "Notice sent" for one survey or member under one policy, so each notice goes out once. Nothing
-/// else about a notice is stored. A notice older than its target's clock or than the policy's
-/// `enabledAt` is void (the clock was reset, or the policy was switched on, unpaused or tightened
-/// after it went out); the sweep then deletes the row, and a later cycle sends a new one.
+/// The notice for one target under one policy, so each notice goes out once: a survey or a member, or
+/// the one-time responses reminder for a survey. It counts only once delivered, and is void if it was
+/// claimed before the policy's `enabledAt`, before the target's latest exemption ended or (surveys and
+/// members) before the target's clock: then a later cycle claims it again and sends a new one.
 ///
-/// A CHECK in the migration ties each entity to its target: `surveys` → `surveyId`, `members` →
-/// `userId`, and responses never get a notice.
+/// A CHECK in the migration ties each entity to its target: `surveys` and `responses` → `surveyId`,
+/// `members` → `userId`; another makes a sent email imply a delivery time.
 model RetentionNotice {
   id             String          @id @default(cuid(2))
   organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)

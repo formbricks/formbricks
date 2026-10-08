@@ -49,9 +49,12 @@ CREATE TABLE IF NOT EXISTS "RetentionPolicy" (
     "updatedById" TEXT,
 
     CONSTRAINT "RetentionPolicy_pkey" PRIMARY KEY ("id"),
-    -- The 14-day notice floor is a product rule the API enforces; it is repeated here as a backstop for
-    -- system writers (the sweep moves `enabledAt`), because a shorter warning could delete early.
-    CONSTRAINT "RetentionPolicy_days_check" CHECK ("warnDays" >= 14 AND "periodDays" > 0),
+    -- The 14-day notice floor and a notice shorter than the period are product rules the API enforces;
+    -- they are repeated here as backstops for system writers (the sweep moves `enabledAt`): a shorter
+    -- warning could delete early, and one as long as the period would re-send a notice after any
+    -- activity. An enabled policy always knows when it took effect.
+    CONSTRAINT "RetentionPolicy_days_check" CHECK ("warnDays" >= 14 AND "periodDays" > "warnDays"),
+    CONSTRAINT "RetentionPolicy_enabled_at_check" CHECK (NOT "enabled" OR "enabledAt" IS NOT NULL),
     CONSTRAINT "RetentionPolicy_conditions_check" CHECK ("entity" = 'surveys' OR COALESCE(cardinality("conditions"), 0) = 0)
 );
 

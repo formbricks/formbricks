@@ -30,6 +30,19 @@ describe("data retention schema backstops (real Postgres)", () => {
     ).resolves.toBeDefined();
   });
 
+  test("refuses a notice as long as the period, and an enabled policy with no start", async () => {
+    await expect(
+      prisma.retentionPolicy.create({
+        data: { organizationId, entity: "members", warnDays: 60, periodDays: 60 },
+      })
+    ).rejects.toThrow();
+    await expect(
+      prisma.retentionPolicy.create({
+        data: { organizationId, entity: "members", warnDays: 14, periodDays: 30, enabled: true },
+      })
+    ).rejects.toThrow();
+  });
+
   test("holds a responses reminder to a survey, and an email sent to a delivery time", async () => {
     await expect(
       prisma.retentionNotice.create({ data: { organizationId, entity: "responses", surveyId } })
@@ -56,5 +69,16 @@ describe("data retention schema backstops (real Postgres)", () => {
     await expect(
       prisma.deletionCleanup.create({ data: { ...base, kind: "hubResponses", responseIds: ["clres"] } })
     ).resolves.toBeDefined();
+  });
+
+  test("refuses a NULL list too, which a raw insert could bind", async () => {
+    const insert = (kind: string) => prisma.$executeRaw`
+      INSERT INTO "DeletionCleanup" ("id", "updated_at", "kind", "organizationId", "workspaceId", "surveyId", "responseIds", "fileKeys")
+      VALUES (${`clclean${kind}`}, now(), ${kind}::"DeletionCleanupKind", ${organizationId}, 'clwsp', ${surveyId}, NULL, NULL)
+    `;
+
+    await expect(insert("hubResponses")).rejects.toThrow();
+    await expect(insert("storageFiles")).rejects.toThrow();
+    await expect(insert("hubSurvey")).resolves.toBe(1);
   });
 });

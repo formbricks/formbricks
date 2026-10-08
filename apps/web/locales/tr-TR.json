@@ -3001,6 +3001,7 @@
         "no_runs_with_changes": "Henüz hiçbir çalıştırma bir şeyi değiştirmedi.",
         "notice": "Bildirim",
         "notice_out_of_range": "{min} ile {max} gün arasında bir bildirim süresi seç.",
+        "notice_shorter_than_period": "Bildirim süresi, saklama süresinden kısa olmalıdır.",
         "notified": "Bildirildi",
         "period": "Süre",
         "period_days": "{count, plural, one {# gün} other {# gün}}",

@@ -21,12 +21,13 @@ describe("getRetentionPolicyIssues", () => {
     ["a notice under two weeks", "responses", { warnDays: 13 }, "warnDays"],
     ["a notice over 90 days", "surveys", { warnDays: 91 }, "warnDays"],
     ["a fractional notice", "members", { warnDays: 45.5 }, "warnDays"],
-    ["a period under 30 days", "responses", { periodDays: 29 }, "periodDays"],
+    ["a period under 30 days", "responses", { periodDays: 29, warnDays: 14 }, "periodDays"],
     ["a period over 10 years", "surveys", { periodDays: 3651 }, "periodDays"],
     ["a fractional period", "members", { periodDays: 364.5 }, "periodDays"],
     ["no survey conditions", "surveys", { conditions: [] }, "conditions"],
     ["a repeated survey condition", "surveys", { conditions: ["noChange", "noChange"] }, "conditions"],
     ["conditions on another policy", "members", { conditions: ["noChange"] }, "conditions"],
+    ["a notice as long as the period", "members", { warnDays: 60, periodDays: 60 }, "warnDays"],
   ] as const)("refuses %s", (_case, policy, override, field) => {
     const settings = { ...RETENTION_POLICY_DEFAULTS[policy], ...override } as TRetentionPolicySettings;
 

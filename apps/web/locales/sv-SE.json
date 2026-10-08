@@ -3001,6 +3001,7 @@
         "no_runs_with_changes": "Inga körningar har ändrat något ännu.",
         "notice": "Varsel",
         "notice_out_of_range": "Välj ett varsel mellan {min} och {max} dagar.",
+        "notice_shorter_than_period": "Varselperioden måste vara kortare än perioden.",
         "notified": "Notifierade",
         "period": "Period",
         "period_days": "{count, plural, one {# dag} other {# dagar}}",

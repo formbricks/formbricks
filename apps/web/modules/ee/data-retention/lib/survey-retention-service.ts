@@ -44,9 +44,9 @@ export async function getSurveyRetentionFacts(survey: {
     }),
     // When the survey's ended exemptions ended, per policy: a notice from before then is void.
     prisma.$queryRaw<{ entity: "surveys" | "responses"; endedAt: Date }[]>`
-      SELECT "entity", MAX(LEAST("until", COALESCE("revokedAt", "until"))) AS "endedAt"
+      SELECT "entity", MAX(LEAST("until", "revokedAt")) AS "endedAt"
       FROM "RetentionExemption"
-      WHERE "surveyId" = ${surveyId} AND LEAST("until", COALESCE("revokedAt", "until")) <= now()
+      WHERE "surveyId" = ${surveyId} AND LEAST("until", "revokedAt") <= now()
       GROUP BY "entity"
     `,
   ]);

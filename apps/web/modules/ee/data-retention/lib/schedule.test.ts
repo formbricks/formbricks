@@ -167,6 +167,26 @@ describe("getRetentionSchedule", () => {
       expect(getRetentionSchedule(surveysPolicy, slow, day(341)).actionAt).toEqual(day(370));
     });
 
+    test("a notice claimed before the clock moved is void, even if delivered after it", () => {
+      const moved = target({ clock: day(337), noticeClaimedAt: day(336), noticeDeliveredAt: day(338) });
+
+      expect(getDueRetentionStep(surveysPolicy, moved, day(1000))).toBe("notify");
+    });
+
+    test("a notice claimed before an exemption ended is void, even if delivered after it", () => {
+      const held = target({ noticeClaimedAt: day(599), noticeDeliveredAt: day(601), heldUntil: day(600) });
+
+      expect(getDueRetentionStep(surveysPolicy, held, day(1000))).toBe("notify");
+    });
+
+    test("a policy with no recorded switch-on time accepts no earlier notice", () => {
+      const off = { ...surveysPolicy, enabledAt: null };
+
+      expect(getRetentionSchedule(off, target({ noticeDeliveredAt: day(335) }), day(400)).noticeSent).toBe(
+        false
+      );
+    });
+
     test("a notice from before an exemption ended is void", () => {
       const held = target({ noticeDeliveredAt: day(335), heldUntil: day(600) });
 
@@ -231,16 +251,31 @@ describe("getRetentionSchedule", () => {
     expect(getRetentionSchedule(off, target(), day(2000)).actionAt).toEqual(day(2030));
   });
 
-  test("a warning longer than the period starts the notice at the clock's own past", () => {
-    const shortPolicy = { ...surveysPolicy, warnDays: 90, periodDays: 60 };
+  test("the shortest allowed policy still runs its notice in full before acting", () => {
+    const shortest = { ...surveysPolicy, warnDays: 14, periodDays: 30 };
 
-    expect(getRetentionSchedule(shortPolicy, target({ noticeDeliveredAt: day(0) }), day(0)).actionAt).toEqual(
-      day(90)
-    );
+    expect(getDueRetentionStep(shortest, target(), day(15))).toBeNull();
+    expect(getDueRetentionStep(shortest, target(), day(16))).toBe("notify");
+    expect(getDueRetentionStep(shortest, target({ noticeDeliveredAt: day(16) }), day(29))).toBeNull();
+    expect(getDueRetentionStep(shortest, target({ noticeDeliveredAt: day(16) }), day(30))).toBe("act");
   });
 });
 
 describe("getRetentionClockCutoffs", () => {
+  test.each([surveysPolicy, responsesPolicy, membersPolicy])(
+    "selects nothing for action until a notice can have run, for $entity",
+    (policy) => {
+      const recent = { ...policy, enabledAt: day(1000) };
+      const cutoff = (now: Date) => getRetentionClockCutoffs(recent, now).actionDueAtOrBefore;
+
+      expect(cutoff(addRetentionDays(day(1000), policy.warnDays - 1))).toBeNull();
+      expect(cutoff(addRetentionDays(day(1000), policy.warnDays))).not.toBeNull();
+      expect(
+        getRetentionClockCutoffs({ ...policy, enabledAt: null }, day(1000)).actionDueAtOrBefore
+      ).toBeNull();
+    }
+  );
+
   // The sweep's SQL selects with these bounds and re-checks each row with getDueRetentionStep, so the
   // two must agree exactly at the boundary: a clock on the cutoff is due, one millisecond later isn't.
   const justAfter = (date: Date) => new Date(date.getTime() + 1);
@@ -258,6 +293,7 @@ describe("getRetentionClockCutoffs", () => {
     const now = day(5000);
     const { actionDueAtOrBefore } = getRetentionClockCutoffs(policy, now);
     const noticeDeliveredAt = addRetentionDays(now, -policy.warnDays);
+    if (!actionDueAtOrBefore) throw new Error("expected a cutoff");
 
     expect(getDueRetentionStep(policy, target({ clock: actionDueAtOrBefore, noticeDeliveredAt }), now)).toBe(
       "act"

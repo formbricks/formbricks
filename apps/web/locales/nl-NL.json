@@ -3001,6 +3001,7 @@
         "no_runs_with_changes": "Er is nog niets gewijzigd door een uitvoering.",
         "notice": "Waarschuwingstermijn",
         "notice_out_of_range": "Kies een waarschuwingstermijn tussen {min} en {max} dagen.",
+        "notice_shorter_than_period": "De kennisgevingstermijn moet korter zijn dan de bewaartermijn.",
         "notified": "Op de hoogte gebracht",
         "period": "Periode",
         "period_days": "{count, plural, one {# dag} other {# dagen}}",

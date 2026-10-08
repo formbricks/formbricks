@@ -3001,6 +3001,7 @@
         "no_runs_with_changes": "Aucune exécution n'a encore modifié quoi que ce soit.",
         "notice": "Préavis",
         "notice_out_of_range": "Choisis un préavis entre {min} et {max} jours.",
+        "notice_shorter_than_period": "Le préavis doit être plus court que la période.",
         "notified": "Notifié",
         "period": "Période",
         "period_days": "{count, plural, one {# jour} many {# de jours} other {# jours}}",

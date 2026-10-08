@@ -3001,6 +3001,7 @@
         "no_runs_with_changes": "Bisher hat noch kein Durchlauf etwas geändert.",
         "notice": "Vorankündigung",
         "notice_out_of_range": "Wähle eine Vorankündigungsfrist zwischen {min} und {max} Tagen.",
+        "notice_shorter_than_period": "Die Benachrichtigungsfrist muss kürzer sein als der Zeitraum.",
         "notified": "Benachrichtigt",
         "period": "Zeitraum",
         "period_days": "{count, plural, one {# Tag} other {# Tage}}",

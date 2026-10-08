@@ -3001,6 +3001,7 @@
         "no_runs_with_changes": "Nenhuma execução alterou algo até agora.",
         "notice": "Aviso",
         "notice_out_of_range": "Escolha um aviso entre {min} e {max} dias.",
+        "notice_shorter_than_period": "O aviso deve ser mais curto do que o período.",
         "notified": "Notificado",
         "period": "Período",
         "period_days": "{count, plural, one {# dia} many {# de dias} other {# dias}}",

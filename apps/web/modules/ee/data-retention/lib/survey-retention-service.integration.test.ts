@@ -62,6 +62,51 @@ describe("survey retention service (real Postgres)", () => {
     });
   });
 
+  test("reads when each policy's latest exemption ended, early revocations and expiries alike", async () => {
+    const survey = await prisma.survey.findUniqueOrThrow({ where: { id: surveyId } });
+    const realNow = new Date();
+    const ago = (days: number) => new Date(realNow.getTime() - days * DAY);
+    await prisma.retentionExemption.createMany({
+      data: [
+        // Surveys: one expired 10 days ago, one revoked 3 days ago though it ran for another month.
+        {
+          organizationId,
+          surveyId,
+          entity: "surveys",
+          until: ago(10),
+          reason: "Expired",
+          revokedAt: ago(10),
+        },
+        {
+          organizationId,
+          surveyId,
+          entity: "surveys",
+          until: ago(-30),
+          reason: "Revoked",
+          revokedAt: ago(3),
+        },
+        // Responses: one still running, which doesn't count as ended, and one expired 5 days ago.
+        { organizationId, surveyId, entity: "responses", until: ago(-30), reason: "Running" },
+      ],
+    });
+    await prisma.retentionExemption.create({
+      data: {
+        organizationId,
+        surveyId,
+        entity: "responses",
+        until: ago(5),
+        reason: "Expired",
+        revokedAt: ago(5),
+      },
+    });
+
+    const facts = await getSurveyRetentionFacts(survey);
+
+    expect(facts.responsesHeldUntil?.getTime()).toBe(ago(5).getTime());
+    // Either policy's exemption holds the survey itself, so the later of the two ends counts.
+    expect(facts.surveyHeldUntil?.getTime()).toBe(ago(3).getTime());
+  });
+
   test("counts only this survey's responses up to the cutoff, stopping at the cap", async () => {
     expect(await countSurveyResponsesCreatedAtOrBefore(surveyId, daysAgo(30))).toEqual({
       count: 3,

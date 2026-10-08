@@ -75,7 +75,7 @@ describe("getPolicyFormSchema", () => {
   test.each([
     [
       "a period under 30 days",
-      { periodPreset: CUSTOM, customPeriodAmount: 29, customPeriodUnit: "days" },
+      { periodPreset: CUSTOM, customPeriodAmount: 29, customPeriodUnit: "days", warnPreset: "14" },
       "customPeriodAmount",
     ],
     [
@@ -86,6 +86,7 @@ describe("getPolicyFormSchema", () => {
     ["an empty custom period", { periodPreset: CUSTOM, customPeriodAmount: null }, "customPeriodAmount"],
     ["a notice under two weeks", { warnPreset: CUSTOM, customWarnDays: 13 }, "customWarnDays"],
     ["no survey condition", { conditions: [] }, "conditions"],
+    ["a notice as long as the period", { periodPreset: "30", warnPreset: "60" }, "warnPreset"],
   ] as const)("refuses %s", (_case, override, path) => {
     const result = getPolicyFormSchema(t, "surveys").safeParse({ ...valid, ...override });
     expect(result.success).toBe(false);

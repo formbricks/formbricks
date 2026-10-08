@@ -61,6 +61,13 @@ export const getPolicyFormSchema = (t: TFunction, policy: TRetentionPolicyKind) 
           }),
         });
       }
+      if (periodDays !== null && warnDays !== null && warnDays >= periodDays) {
+        ctx.addIssue({
+          code: "custom",
+          path: [values.warnPreset === CUSTOM ? "customWarnDays" : "warnPreset"],
+          message: t("workspace.settings.data_retention.notice_shorter_than_period"),
+        });
+      }
       if (policy === "surveys" && values.conditions.length === 0) {
         ctx.addIssue({
           code: "custom",

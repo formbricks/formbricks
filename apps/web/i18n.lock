@@ -2894,6 +2894,7 @@ checksums:
     workspace/settings/data_retention/no_runs_with_changes: 64e0c24f176876c8becfb6ce62c7a0ac
     workspace/settings/data_retention/notice: a19d7a8af21834e2fde9597a41c6ef9e
     workspace/settings/data_retention/notice_out_of_range: aca598b217d4798f0d6f2236a49fa6ed
+    workspace/settings/data_retention/notice_shorter_than_period: 2e35508cc01de64b8e25a885ecc680eb
     workspace/settings/data_retention/notified: f403759b9f7f05ff3f5451d66900a222
     workspace/settings/data_retention/period: 779afbd6a307574efb9bd957e9622428
     workspace/settings/data_retention/period_days: e441e75ded9ab640531d6347d07388cd
