@@ -220,6 +220,22 @@ screen names the response scopes. Access to responses starts only once the user 
   scopes to it yourself.
 </Note>
 
+### Deleted surveys leave nothing behind (no action required)
+
+Deleting a survey, by hand or through the 30-day archive purge, now also removes its records from the Hub
+and retries any upload or Hub record it could not remove at first. The work is queued in the same database
+transaction as the delete and worked off by a new background job, `deletion-cleanup.drain`, every five
+minutes (see [Job Runner](/self-hosting/configuration/job-runner)). The archive purge also skips any survey
+held by a data retention exemption.
+
+Two migrations add new, empty tables; each takes only brief locks and gives up after five seconds rather
+than queueing behind a long query:
+
+| Migration | What it does |
+| --- | --- |
+| `20261007120000_add_data_retention_tables` | Adds the data retention tables and a nullable `User.reactivatedAt` column. |
+| `20261008120000_add_deletion_cleanup` | Adds the `DeletionCleanup` queue. |
+
 ## v6
 
 Formbricks v6 replaces the legacy authorization evaluator with SpiceDB, maintained by AuthZed. PostgreSQL
