@@ -103,8 +103,14 @@ function classifyOrganizationAIFailure(
   // A call that ran out of the time its caller gave it (`timeout`) is a path every caller handles —
   // the QSF import splits the chunk and carries on — so it warns, with the same fields. An abort that
   // is not the caller's (see `isCallerAbort`) is that timeout firing during the SDK's retry backoff.
-  if (isTimeoutError(error) || isAbortError(error)) logger.warn(fields, message);
-  else logger.error(fields, message);
+  // A retryable failure (a 429, a 5xx, a network error) of a call that turned the SDK's retries off
+  // warns too: that caller runs its own retry policy, so one failed attempt is not an incident, and
+  // the failure it finally gives up on is the caller's to log as one.
+  if (isTimeoutError(error) || isAbortError(error) || (ownsRetries(call) && providerError?.isRetryable)) {
+    logger.warn(fields, message);
+  } else {
+    logger.error(fields, message);
+  }
 
   if (providerError?.isQuotaExhausted) {
     throw new TooManyRequestsError(AI_ERROR_CODES.QUOTA_EXCEEDED, providerError.retryAfterSeconds);
@@ -146,7 +152,11 @@ const isAbortError = (error: unknown): boolean => {
 interface TAICallControls {
   abortSignal?: AbortSignal;
   timeout?: unknown;
+  maxRetries?: number;
 }
+
+/** Whether the caller turned the AI SDK's retries off (`maxRetries: 0`) and so retries itself. */
+const ownsRetries = (call: TAICallControls): boolean => call.maxRetries === 0;
 
 /**
  * Whether an abort is the caller's: its signal fired, or it set no `timeout` that could have aborted

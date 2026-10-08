@@ -436,6 +436,64 @@ describe("AI organization service", () => {
     ).rejects.toBe(serverError);
   });
 
+  describe("a caller that retries itself (`maxRetries: 0`)", () => {
+    const failWith = async (
+      statusCode: number,
+      isRetryable: boolean,
+      maxRetries: number | undefined,
+      isAuthFailure = false
+    ) => {
+      const providerError = new Error(`provider ${statusCode}`);
+      mocks.generateObject.mockRejectedValueOnce(providerError);
+      mocks.classifyAIProviderError.mockReturnValue({
+        isQuotaExhausted: false,
+        isRetryable,
+        isAuthFailure,
+        statusCode,
+      });
+      await expect(
+        generateOrganizationAIObject({
+          organizationId: "org_1",
+          schema: z.object({}),
+          prompt: "Plan this import",
+          timeout: 45_000,
+          ...(maxRetries === undefined ? {} : { maxRetries }),
+        })
+      ).rejects.toBe(providerError);
+    };
+
+    test("warns about a retryable failure: one attempt of its own retry policy is not an incident", async () => {
+      await failWith(503, true, 0);
+
+      expect(mocks.loggerError).not.toHaveBeenCalled();
+      expect(mocks.loggerWarn).toHaveBeenCalledWith(
+        expect.objectContaining({ organizationId: "org_1", statusCode: 503, isRetryable: true }),
+        "Failed to generate organization AI object"
+      );
+      expect(JSON.stringify(mocks.loggerWarn.mock.calls)).not.toContain("provider 503");
+    });
+
+    test("still logs a failure it will not retry as an error", async () => {
+      await failWith(401, false, 0, true);
+
+      expect(mocks.loggerWarn).not.toHaveBeenCalled();
+      expect(mocks.loggerError).toHaveBeenCalledWith(
+        expect.objectContaining({ statusCode: 401, isAuthFailure: true }),
+        "Failed to generate organization AI object"
+      );
+    });
+
+    test("leaves a caller that keeps the SDK's retries as it was: a 503 is an error", async () => {
+      await failWith(503, true, undefined);
+
+      expect(mocks.loggerWarn).not.toHaveBeenCalled();
+      expect(mocks.loggerError).toHaveBeenCalledWith(
+        expect.objectContaining({ statusCode: 503 }),
+        "Failed to generate organization AI object"
+      );
+    });
+  });
+
   // Casts rather than `any`: `@formbricks/ai` is mocked here, so the schema is never read — but the input
   // types still require a real one.
   const objectInput = () =>
