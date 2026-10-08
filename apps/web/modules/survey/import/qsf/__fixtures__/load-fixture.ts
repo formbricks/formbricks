@@ -1,12 +1,25 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildLarge150Qsf, buildOverLimitQsf } from "./qsf-builders";
 
 const FIXTURE_DIR = dirname(fileURLToPath(import.meta.url));
 
-/** A fixture as the route receives it: parsed by `JSON.parse`, which keeps an own `__proto__` key. */
-export const loadQsfFixture = (name: string): Record<string, unknown> =>
-  JSON.parse(readFileSync(join(FIXTURE_DIR, name), "utf8")) as Record<string, unknown>;
+/** The fixtures built in memory rather than committed, being the largest. */
+const BUILT_FIXTURES: ReadonlyMap<string, () => Record<string, unknown>> = new Map([
+  ["large-150.qsf", buildLarge150Qsf],
+  ["over-limit.qsf", buildOverLimitQsf],
+]);
+
+/**
+ * A fixture as the route receives it: parsed by `JSON.parse`, which keeps an own `__proto__` key. A
+ * built one goes through `JSON.stringify` and back, so it is exactly what its file would have been.
+ */
+export const loadQsfFixture = (name: string): Record<string, unknown> => {
+  const build = BUILT_FIXTURES.get(name);
+  const text = build ? JSON.stringify(build()) : readFileSync(join(FIXTURE_DIR, name), "utf8");
+  return JSON.parse(text) as Record<string, unknown>;
+};
 
 /** Every fixture an import must turn into a survey. */
 export const IMPORTABLE_QSF_FIXTURES = [
