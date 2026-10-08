@@ -1,6 +1,5 @@
 import { NoObjectGeneratedError, NoOutputGeneratedError, TypeValidationError } from "ai";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
-import type { TQsfImportIssue } from "../types";
 import { QsfImportFailedError, QsfImportTimeoutError } from "./errors";
 import { QSF_MAX_QUESTIONS } from "./limits";
 import {
@@ -24,6 +23,7 @@ import {
   describedRuleCount,
 } from "./prompt";
 import type { TQsfIssue, TQsfSurvey } from "./qsf-model";
+import { unsupportedTypeSeverity } from "./unsupported-types";
 
 /**
  * The AI half of the import (ENG-3479): ask for the plan, check it, retry what failed once.
@@ -125,26 +125,6 @@ const outputBudgetFor = (chunks: number): number => (2 * chunks + 2) * QSF_PLAN_
  */
 export const QSF_MAX_AI_CALLS = callCapFor(QSF_MAX_CHUNKS);
 export const QSF_MAX_OUTPUT_TOKENS = outputBudgetFor(QSF_MAX_CHUNKS);
-
-/**
- * Qualtrics types Formbricks has no element for. Skipped without asking the model: fewer tokens, and
- * the severity is ours to set.
- */
-const UNSUPPORTED_TYPES: ReadonlyMap<string, TQsfImportIssue["severity"]> = new Map([
-  ["CS", "warning"],
-  ["SBS", "warning"],
-  ["HeatMap", "warning"],
-  ["HotSpot", "warning"],
-  ["DD", "warning"],
-  ["PGR", "warning"],
-  ["Highlight", "warning"],
-  ["Signature", "warning"],
-  ["Draw", "warning"],
-  ["GAP", "warning"],
-  ["Timing", "info"],
-  ["Meta", "info"],
-  ["Captcha", "info"],
-]);
 
 /** One structured-output call, as the plan needs it. */
 export interface TQsfPlanRequest {
@@ -475,7 +455,7 @@ function preSkip(survey: TQsfSurvey): { refs: string[]; issues: TQsfIssue[] } {
   const refs: string[] = [];
   const issues: TQsfIssue[] = [];
   for (const question of survey.questions.values()) {
-    const severity = UNSUPPORTED_TYPES.get(question.qualtricsType);
+    const severity = unsupportedTypeSeverity(question);
     if (severity) {
       issues.push({
         code: "question_skipped",

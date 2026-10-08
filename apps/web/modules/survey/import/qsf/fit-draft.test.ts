@@ -273,6 +273,8 @@ describe("fitQsfSurveyToCreateLimit", () => {
     textChars: number;
     /** Every block behind a branch, so each page carries a logic rule. */
     branches?: boolean;
+    /** A trailing Timing question, a type the import skips, its text this long. */
+    timingChars?: number;
   }) => {
     const pad = "y".repeat(shape.textChars);
     const refs = Array.from({ length: shape.questions }, (_, q) => `QID${q + 1}`);
@@ -303,6 +305,22 @@ describe("fitQsfSurveyToCreateLimit", () => {
       Description: `Block ${b}`,
       BlockElements: refs.slice(b * 5, b * 5 + 5).map((ref) => ({ Type: "Question", QuestionID: ref })),
     }));
+    if (shape.timingChars !== undefined) {
+      const ref = `QID${shape.questions + 1}`;
+      elements.push({
+        Element: "SQ",
+        PrimaryAttribute: ref,
+        Payload: {
+          QuestionText: `Timing ${"t".repeat(shape.timingChars)}`,
+          DataExportTag: "Q_timing",
+          QuestionType: "Timing",
+          Selector: "PageTimer",
+          Choices: {},
+          Language: {},
+        },
+      });
+      blocks.at(-1)?.BlockElements.push({ Type: "Question", QuestionID: ref });
+    }
     return {
       SurveyEntry: { SurveyName: "Fit", SurveyLanguage: "EN" },
       SurveyElements: [
@@ -352,7 +370,7 @@ describe("fitQsfSurveyToCreateLimit", () => {
     const survey = readQsf(qsf);
     const texts = await sanitizeQsfTexts(survey, new AbortController().signal);
     const fit = fitQsfSurveyToCreateLimit(survey, texts, maxBytes);
-    const { plan } = await planQsfImport({
+    const { plan, issues: planIssues } = await planQsfImport({
       survey,
       texts,
       generate: asMultipleChoice,
@@ -366,7 +384,7 @@ describe("fitQsfSurveyToCreateLimit", () => {
       workspaceId: "clxx1234567890123456789012",
       allowExternalUrls: true,
     });
-    return { survey, fit, assembly };
+    return { survey, fit, assembly, planIssues };
   };
 
   test("leaves a survey that fits as it is", async () => {
@@ -422,6 +440,32 @@ describe("fitQsfSurveyToCreateLimit", () => {
     expect(survey.pages.flatMap((page) => page.questionRefs)).toHaveLength(30 - cut.length);
     expect(measureQsfDraftBytes(assembly.document)).toBeLessThanOrEqual(maxBytes);
     expect(checkQsfDraft(assembly.document)).toEqual([]);
+  });
+
+  test("neither weighs nor cuts a question the import skips for its type, which keeps its own line", async () => {
+    // A long Timing question last: no draft holds it, so it must neither be cut for size nor push a
+    // question the draft does hold out of it.
+    const shape = { questions: 30, options: 4, languages: [], textChars: 1_000 };
+    const full = await fitAndAssemble(buildQsf(shape), Number.MAX_SAFE_INTEGER);
+    const maxBytes = Math.floor(measureQsfDraftBytes(full.assembly.document) * 0.4);
+
+    const without = await fitAndAssemble(buildQsf(shape), maxBytes);
+    const withTiming = await fitAndAssemble(buildQsf({ ...shape, timingChars: 40_000 }), maxBytes);
+
+    const cut = withTiming.fit.issues.map((issue) => issue.questionRef);
+    expect(cut.length).toBeGreaterThan(0);
+    // The same real questions cut as without it, and not the Timing question.
+    expect(cut).toEqual(without.fit.issues.map((issue) => issue.questionRef));
+    expect(cut).not.toContain("QID31");
+    expect(withTiming.planIssues).toContainEqual({
+      code: "question_skipped",
+      severity: "info",
+      questionTag: "Q_timing",
+      questionRef: "QID31",
+      params: { cause: "unsupported_type", qualtricsType: "Timing" },
+    });
+    expect(measureQsfDraftBytes(withTiming.assembly.document)).toBeLessThanOrEqual(maxBytes);
+    expect(checkQsfDraft(withTiming.assembly.document)).toEqual([]);
   });
 
   test("leaves no logic line behind for a page it cut whole", async () => {

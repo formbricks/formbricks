@@ -1,6 +1,7 @@
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { type TQsfAssembly, type TQsfDraftDocument, withLanguageSettings } from "./assemble";
 import type { TQsfIssue, TQsfPage, TQsfQuestion, TQsfSurvey, TQsfTextKey } from "./qsf-model";
+import { isUnsupportedType } from "./unsupported-types";
 
 /**
  * Fit the draft to the create's body limit (ENG-3654). The dialog sends the draft to
@@ -285,6 +286,9 @@ export interface TQsfSurveyFit {
  * translation is the default text, an empty headline the export tag), every option of every question
  * whatever the plan keeps, JSON escaping, piped text grown to a recall, labels numbered, and room for
  * each element's, option's and block's own keys — so nothing it keeps can push the draft over.
+ *
+ * A question of a type the import skips before planning (`Timing`, `CS`, …) is never in the draft, so it
+ * weighs nothing, opens no page and is never cut here: it keeps its `unsupported_type` line.
  */
 export function fitQsfSurveyToCreateLimit(
   survey: TQsfSurvey,
@@ -332,9 +336,12 @@ export function fitQsfSurveyToCreateLimit(
     return headline + Math.max(optionWeight + contactPlaceholders, labelMayBeEmpty ? headline : 0);
   };
 
-  const questions = survey.pages.flatMap((page) =>
-    page.questionRefs.flatMap((ref) => survey.questions.get(ref) ?? [])
-  );
+  /** A question the draft may hold: one the plan does not skip for its type. */
+  const kept = (ref: string): TQsfQuestion | undefined => {
+    const question = survey.questions.get(ref);
+    return question && !isUnsupportedType(question) ? question : undefined;
+  };
+  const questions = survey.pages.flatMap((page) => page.questionRefs.flatMap((ref) => kept(ref) ?? []));
   const endMessageIn = (code: string) =>
     survey.endMessageKey === null ? 0 : entry(code, valueIn(survey.endMessageKey, code, 0));
 
@@ -365,18 +372,22 @@ export function fitQsfSurveyToCreateLimit(
     return skeleton + questionIn(question, defaultLanguage);
   };
 
+  // A page becomes a block only when it holds a question the draft may hold.
   const base =
     fixed +
-    survey.pages.reduce((total, page) => total + pageWeight(page), 0) +
+    survey.pages.reduce(
+      (total, page) => total + (page.questionRefs.some((ref) => kept(ref)) ? pageWeight(page) : 0),
+      0
+    ) +
     questions.reduce((total, question) => total + questionWeight(question), 0);
 
   const issues: TQsfIssue[] = [];
   let total = base;
   const weights = survey.languages.map((code) => ({ code, weight: languageWeight(code) }));
   total += weights.reduce((sum, language) => sum + language.weight, 0);
-  const kept = [...weights];
-  while (total > maxBytes && kept.length > 0) {
-    const language = kept.pop();
+  const keptLanguages = [...weights];
+  while (total > maxBytes && keptLanguages.length > 0) {
+    const language = keptLanguages.pop();
     if (!language) break;
     total -= language.weight;
     issues.push({
@@ -385,7 +396,7 @@ export function fitQsfSurveyToCreateLimit(
       params: { code: language.code, cause: "draft_too_large", order: "last_declared_first" },
     });
   }
-  survey.languages = kept.map((language) => language.code);
+  survey.languages = keptLanguages.map((language) => language.code);
 
   const cutRefs = new Set<string>();
   if (total > maxBytes) {
@@ -394,7 +405,7 @@ export function fitQsfSurveyToCreateLimit(
     for (const page of survey.pages) {
       let pageOpen = false;
       for (const ref of page.questionRefs) {
-        const question = survey.questions.get(ref);
+        const question = kept(ref);
         if (!question) continue;
         const weight = questionWeight(question) + (pageOpen ? 0 : pageWeight(page));
         if (cutRefs.size === 0 && running + weight <= maxBytes) {
