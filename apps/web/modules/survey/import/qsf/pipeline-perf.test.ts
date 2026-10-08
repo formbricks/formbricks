@@ -310,17 +310,25 @@ describe("a draft too large for the create's request body", () => {
     },
   });
 
-  const runQsf = (qsf: Record<string, unknown>) =>
-    runQsfImport({
-      prepared: prepareQsfImport(qsf, "large.qsf"),
-      workspaceId: "clxx1234567890123456789012",
-      organizationId: "org_1",
-      userId: "user_1",
-      signal: new AbortController().signal,
-      deadlineMs: 120_000,
-      onProgress: () => undefined,
-      generate: answerAsMultipleChoice,
+  /** Run the import, measuring the longest the event loop is held once the stream is open. */
+  const runQsf = async (qsf: Record<string, unknown>) => {
+    const prepared = prepareQsfImport(qsf, "large.qsf");
+    let result: Awaited<ReturnType<typeof runQsfImport>> | undefined;
+    const blockMs = await maxBlockMs(async () => {
+      result = await runQsfImport({
+        prepared,
+        workspaceId: "clxx1234567890123456789012",
+        organizationId: "org_1",
+        userId: "user_1",
+        signal: new AbortController().signal,
+        deadlineMs: 120_000,
+        onProgress: () => undefined,
+        generate: answerAsMultipleChoice,
+      });
     });
+    if (!result) throw new Error("the import returned nothing");
+    return { ...result, blockMs };
+  };
 
   test(
     "cuts languages, last declared first, from 200 questions of 15 options in 50 languages",
@@ -330,6 +338,10 @@ describe("a draft too large for the create's request body", () => {
         buildQsf({ questions: 200, options: 15, languages: translationCodes(), textChars: 0 })
       );
 
+      // Cut to about 2 MB before planning, the longest block left is the create's own request schema
+      // on that draft, which the gate runs as POST /api/v3/surveys will: ~1 s idle, ~1.7 s on a loaded
+      // machine. Uncut, the 4.3 MB draft held the loop for about 6 s at a stretch.
+      expect(result.blockMs).toBeLessThan(2_500);
       expect(measureQsfDraftBytes(result.payload)).toBeLessThanOrEqual(QSF_DRAFT_MAX_BYTES);
       expect(result.report.summary.questions).toBe(200);
       const cut = result.report.issues.filter(
@@ -350,6 +362,8 @@ describe("a draft too large for the create's request body", () => {
       // 200 questions of 20,000-character texts: about 4 MB in one language.
       const result = await runQsf(buildQsf({ questions: 200, options: 2, languages: [], textChars: 20_000 }));
 
+      // Few, long texts: cheap to check, and sliced everywhere else. ~40 ms here.
+      expect(result.blockMs).toBeLessThan(250);
       expect(measureQsfDraftBytes(result.payload)).toBeLessThanOrEqual(QSF_DRAFT_MAX_BYTES);
       const cut = result.report.issues.filter(
         (issue) => issue.code === "question_skipped" && issue.params?.cause === "draft_too_large"
