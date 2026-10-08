@@ -2762,6 +2762,7 @@ checksums:
     workspace/settings/billing/comparison_row_backgrounds: 43c7d7e0c3601c10b6dfbbd65c44da3f
     workspace/settings/billing/comparison_row_conditional_logic: b8e4ae4d508af555bdc3730039c0519b
     workspace/settings/billing/comparison_row_contact_management: 7903fb57ee1b2d765432132ab8ed8567
+    workspace/settings/billing/comparison_row_custom_css: d43a2cc2f8f47dd96d03099dcc6e68bb
     workspace/settings/billing/comparison_row_custom_dashboards: 1bdaff9333974792ba7a8b71dc63d464
     workspace/settings/billing/comparison_row_custom_webhooks: 82a610f3c62d6705e5064f0d977d3af7
     workspace/settings/billing/comparison_row_email_followups: 2aafa8e2749258d584f1f585ad46a7fb
@@ -2876,6 +2877,7 @@ checksums:
     workspace/settings/billing/plan_pro_feature_workspaces: 819874022b491209ca7f0f1ab1e3daea
     workspace/settings/billing/plan_scale: 5f55a30a5bdf8f331b56bad9c073473c
     workspace/settings/billing/plan_scale_description: ef5c66e0b52686f56319e31388bd8409
+    workspace/settings/billing/plan_scale_feature_custom_css: d43a2cc2f8f47dd96d03099dcc6e68bb
     workspace/settings/billing/plan_scale_feature_feedback: 412dca7f6c7255b202da88e522f05193
     workspace/settings/billing/plan_scale_feature_quota: f0b44ec6d192e8ee2fd3ff53b8ecda32
     workspace/settings/billing/plan_scale_feature_rbac: ecde7a5204109c220a358d46210c869d
