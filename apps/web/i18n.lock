@@ -661,7 +661,7 @@ checksums:
     emails/retention_notice_email_keep: cda47476baa5bd36786da8276101bc6d
     emails/retention_notice_email_responses_after: d06f900af0b8366dd4addc293c3d8d15
     emails/retention_notice_email_responses_heading: d5e302ae15a1a56f3db7d2a8be93ed89
-    emails/retention_notice_email_responses_item: 41da51563edc82db82606ec3b5a50cc2
+    emails/retention_notice_email_responses_item: d4edb12a827b7a7daf58d602fad50b6c
     emails/retention_notice_email_subject: f62b659fde5f3cf6f250cf09064dd474
     emails/retention_notice_email_surveys_heading: d93ad1e18c3a3ad611bb2d2891b5473c
     emails/retention_notice_email_surveys_item: 7db252e45575770484dcbb57dfe70af2
@@ -2947,7 +2947,7 @@ checksums:
     workspace/settings/data_retention/responses_counts_from: 61326751553a4266e57eb73cbd0c23b4
     workspace/settings/data_retention/responses_due_for_deletion: 3059c8c1a27e400a20599cba22125010
     workspace/settings/data_retention/responses_due_for_deletion_capped: 6d5f6566e4eb9948a5839c225afc4a8e
-    workspace/settings/data_retention/responses_notice_help: 2557ce307d4dfe910a1aea35c9576fe9
+    workspace/settings/data_retention/responses_notice_help: 927b8615217c44bbf33ac420957b603e
     workspace/settings/data_retention/responses_policy_description: df5737d5f98f9d6f142ed34e6e7ef51c
     workspace/settings/data_retention/responses_policy_title: f525188503e3514f28a497a0fe36bcbb
     workspace/settings/data_retention/responses_summary: db44b700fa15c436e129501336e7c5c5
@@ -2971,7 +2971,7 @@ checksums:
     workspace/settings/data_retention/survey_required: 290657a246e312fdc96e3a895794d26a
     workspace/settings/data_retention/surveys_active_help: 94082032b817e6e0453176d8b145372d
     workspace/settings/data_retention/surveys_conditions_heading: dd21d6a8ec1abc226f0b79db7a4e1f0f
-    workspace/settings/data_retention/surveys_notice_help: 391a956828c9817a51005ddf3a75d3a6
+    workspace/settings/data_retention/surveys_notice_help: fba280492cae48caae3d94417c4bf2ba
     workspace/settings/data_retention/surveys_period_help: d8cae7fccd0f2b7628d83c4703cdb42f
     workspace/settings/data_retention/surveys_policy_description: 2a4ddf9a005a0a5e9575176c6e3c0be8
     workspace/settings/data_retention/surveys_policy_title: 4964987825ba25c5bd3bcd70639d4aa7

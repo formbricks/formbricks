@@ -11,6 +11,7 @@ import { useRetentionPolicies, useUpdateRetentionPolicy } from "./use-retention-
 
 const ORG_ID = "clorg11111111111111111111";
 const URL = `/api/internal/retention-policies?organizationId=${ORG_ID}`;
+const HEALTH_URL = `/api/internal/retention-health?organizationId=${ORG_ID}`;
 
 const documentWith = (surveysEnabled: boolean) => ({
   responses: { enabled: false, warnDays: 60, periodDays: 1095 },
@@ -28,6 +29,24 @@ const json = (body: unknown, status = 200): Response =>
     status,
     headers: { "Content-Type": status < 400 ? "application/json" : "application/problem+json" },
   });
+
+/**
+ * Answer `fetch` by method and URL rather than by call order, so an extra request (a refetch, another
+ * hook) gets its own route's answer instead of someone else's. Each route answers in turn and repeats its
+ * last answer; an unexpected request fails the test.
+ */
+const routeFetch = (routes: Record<string, Response[]>) =>
+  vi.mocked(global.fetch).mockImplementation(async (input, init) => {
+    const key = `${init?.method ?? "GET"} ${String(input)}`;
+    const answers = routes[key];
+    if (!answers) throw new Error(`Unexpected request: ${key}`);
+    return (answers.length > 1 ? answers.shift()! : answers[0]).clone();
+  });
+
+const requests = (method: string, url: string) =>
+  vi
+    .mocked(global.fetch)
+    .mock.calls.filter(([input, init]) => String(input) === url && (init?.method ?? "GET") === method);
 
 const wrapperFor = (queryClient: QueryClient) => {
   const Wrapper = ({ children }: { children: ReactNode }) =>
@@ -48,10 +67,10 @@ describe("Policies hooks", () => {
   });
 
   test("loads the document and replaces it with the one a change returns, without refetching", async () => {
-    const fetchMock = vi.mocked(global.fetch);
-    fetchMock
-      .mockResolvedValueOnce(json({ data: documentWith(false) }))
-      .mockResolvedValueOnce(json({ data: documentWith(true) }));
+    routeFetch({
+      [`GET ${URL}`]: [json({ data: documentWith(false) })],
+      [`PATCH ${URL}`]: [json({ data: documentWith(true) })],
+    });
     const wrapper = wrapperFor(new QueryClient({ defaultOptions: { queries: { retry: false } } }));
     const read = renderHook(() => useRetentionPolicies({ organizationId: ORG_ID }), { wrapper });
     await waitFor(() => expect(read.result.current.data?.surveys.enabled).toBe(false));
@@ -62,20 +81,18 @@ describe("Policies hooks", () => {
     });
 
     await waitFor(() => expect(read.result.current.data?.surveys.enabled).toBe(true));
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock).toHaveBeenLastCalledWith(
-      URL,
-      expect.objectContaining({ method: "PATCH", body: JSON.stringify({ surveys: { enabled: true } }) })
-    );
+    expect(requests("GET", URL)).toHaveLength(1);
+    expect(requests("PATCH", URL)).toEqual([
+      [URL, expect.objectContaining({ body: JSON.stringify({ surveys: { enabled: true } }) })],
+    ]);
   });
 
   test("refreshes the health banners after a change, since switching a policy changes which apply", async () => {
-    const fetchMock = vi.mocked(global.fetch);
     const health = (smtpConfigured: boolean) => json({ data: { issues: [], smtpConfigured } });
-    fetchMock
-      .mockResolvedValueOnce(health(true))
-      .mockResolvedValueOnce(json({ data: documentWith(true) }))
-      .mockResolvedValueOnce(health(false));
+    routeFetch({
+      [`GET ${HEALTH_URL}`]: [health(true), health(false)],
+      [`PATCH ${URL}`]: [json({ data: documentWith(true) })],
+    });
     const wrapper = wrapperFor(new QueryClient({ defaultOptions: { queries: { retry: false } } }));
     const read = renderHook(() => useRetentionHealth({ organizationId: ORG_ID }), { wrapper });
     await waitFor(() => expect(read.result.current.data?.smtpConfigured).toBe(true));
@@ -86,18 +103,14 @@ describe("Policies hooks", () => {
     });
 
     await waitFor(() => expect(read.result.current.data?.smtpConfigured).toBe(false));
-    expect(fetchMock).toHaveBeenLastCalledWith(
-      `/api/internal/retention-health?organizationId=${ORG_ID}`,
-      expect.objectContaining({ method: "GET" })
-    );
+    expect(requests("GET", HEALTH_URL)).toHaveLength(2);
   });
 
   test("refetches after a failed change, in case the server moved on", async () => {
-    const fetchMock = vi.mocked(global.fetch);
-    fetchMock
-      .mockResolvedValueOnce(json({ data: documentWith(false) }))
-      .mockResolvedValueOnce(json({ status: 422, title: "Unprocessable", detail: "No", code: "x" }, 422))
-      .mockResolvedValueOnce(json({ data: documentWith(true) }));
+    routeFetch({
+      [`GET ${URL}`]: [json({ data: documentWith(false) }), json({ data: documentWith(true) })],
+      [`PATCH ${URL}`]: [json({ status: 422, title: "Unprocessable", detail: "No", code: "x" }, 422)],
+    });
     const qc = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
     });
@@ -118,6 +131,6 @@ describe("Policies hooks", () => {
           .enabled
       ).toBe(true)
     );
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(requests("GET", URL)).toHaveLength(2);
   });
 });
