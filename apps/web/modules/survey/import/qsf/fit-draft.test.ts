@@ -248,6 +248,8 @@ describe("fitQsfSurveyToCreateLimit", () => {
     options: number;
     languages: string[];
     textChars: number;
+    /** Every block behind a branch, so each page carries a logic rule. */
+    branches?: boolean;
   }) => {
     const pad = "y".repeat(shape.textChars);
     const refs = Array.from({ length: shape.questions }, (_, q) => `QID${q + 1}`);
@@ -283,7 +285,16 @@ describe("fitQsfSurveyToCreateLimit", () => {
       SurveyElements: [
         ...elements,
         { Element: "BL", Payload: blocks },
-        { Element: "FL", Payload: { Flow: blocks.map((block) => ({ Type: "Block", ID: block.ID })) } },
+        {
+          Element: "FL",
+          Payload: {
+            Flow: blocks.map((block) =>
+              shape.branches
+                ? { Type: "Branch", BranchLogic: {}, Flow: [{ Type: "Block", ID: block.ID }] }
+                : { Type: "Block", ID: block.ID }
+            ),
+          },
+        },
       ],
     };
   };
@@ -388,5 +399,18 @@ describe("fitQsfSurveyToCreateLimit", () => {
     expect(survey.pages.flatMap((page) => page.questionRefs)).toHaveLength(30 - cut.length);
     expect(measureQsfDraftBytes(assembly.document)).toBeLessThanOrEqual(maxBytes);
     expect(checkQsfDraft(assembly.document)).toEqual([]);
+  });
+
+  test("leaves no logic line behind for a page it cut whole", async () => {
+    const qsf = buildQsf({ questions: 30, options: 4, languages: [], textChars: 1_000, branches: true });
+    const full = await fitAndAssemble(qsf, Number.MAX_SAFE_INTEGER);
+    const maxBytes = Math.floor(measureQsfDraftBytes(full.assembly.document) * 0.4);
+
+    const { assembly } = await fitAndAssemble(qsf, maxBytes);
+
+    const logicLines = assembly.issues.filter((issue) => issue.code === "logic_not_imported");
+    // One branch per kept page, each under the page's first question; none named after a cut block.
+    expect(logicLines).toHaveLength(assembly.document.blocks.length);
+    expect(logicLines.some((issue) => issue.params?.block !== undefined)).toBe(false);
   });
 });
