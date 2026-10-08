@@ -144,6 +144,7 @@ checksums:
     common/account_settings: df8e9882a1f5c75951f3a05ddfed72ba
     common/act: b6e0bff3738c7597f2500bc124648103
     common/action: c92af0bdf1698b0d10cf5b28d2ad4945
+    common/action_may_not_have_gone_through: d4647aec8a8e1b0a94981e7266b8565c
     common/actions: c46571856723b03262fd33f511116298
     common/actions_description: 8e35b1538d1006fa8470183310ad21ef
     common/active: 3e1ec025c4a50830bbb9ad57a176630a
@@ -3284,7 +3285,15 @@ checksums:
     workspace/surveys/edit/auto_progress_rating_and_nps_description: cd0cba45fea0157aee460914da3879b4
     workspace/surveys/edit/auto_save_disabled: f7411fb0dcfb8f7b19b85f0be54f2231
     workspace/surveys/edit/auto_save_disabled_tooltip: d2dcdbb63a8e5db40fff711f85dd4dbd
+    workspace/surveys/edit/auto_save_failed: 460812aa4bf51b7888dc7d78bcadad9c
+    workspace/surveys/edit/auto_save_failed_paused_tooltip: 3f9e97971d82a645d6aa96b620e92e38
+    workspace/surveys/edit/auto_save_failed_retrying_tooltip: 5eca4f3e725c7a8f3841ae1d5eb5b8c8
+    workspace/surveys/edit/auto_save_failed_tooltip: f76fa58455953b344b1f4b114bf9e378
     workspace/surveys/edit/auto_save_on: 1524d466830b00c5d727c701db404963
+    workspace/surveys/edit/auto_save_on_tooltip: 8926af8c65ad2f7dc3cf375343856cd2
+    workspace/surveys/edit/auto_save_paused: 4ad5421129c7c3de5ef8f42947c5eb14
+    workspace/surveys/edit/auto_save_paused_tooltip: c0d0134308df7fc2ff393def0d1a4d68
+    workspace/surveys/edit/auto_save_stopped_tooltip: 7534f81c28c0b8966c7b0b5f319ec1e7
     workspace/surveys/edit/auto_select_browser_language: 9364ba68ec62070addcf38e6911a96c1
     workspace/surveys/edit/auto_select_browser_language_description: 36a1c099c0accb1d686bad528b7b4a24
     workspace/surveys/edit/automatically_close_survey_after_n_seconds_if_no_response: 7f8ea038a731a792f744d79fabba4aa9
