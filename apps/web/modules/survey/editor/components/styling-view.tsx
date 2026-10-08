@@ -267,6 +267,13 @@ export const StylingView = ({
               disabled={!overwriteThemeStyling}
               form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
               onSuggestColorsClick={() => setConfirmSuggestColorsOpen(true)}
+              brandColorNotice={
+                localSurvey.type === "app" &&
+                setAppearance &&
+                overwriteThemeStyling && (
+                  <DarkContrastWarnings appearance={appearance} styling={form.watch()} />
+                )
+              }
             />
 
             <CardStylingSettings
@@ -277,10 +284,6 @@ export const StylingView = ({
               form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
             />
           </StylingAppearanceProvider>
-
-          {localSurvey.type === "app" && setAppearance && overwriteThemeStyling && (
-            <DarkContrastWarnings appearance={appearance} styling={form.watch()} />
-          )}
 
           {localSurvey.type === "link" && (
             <>

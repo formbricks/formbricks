@@ -1,12 +1,14 @@
 "use client";
 
-import { AlertTriangleIcon } from "lucide-react";
+import { AlertTriangleIcon, MoonIcon, SunIcon } from "lucide-react";
 import { type ReactNode, createContext, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { type TDarkContrastWarning, getDarkContrastWarnings } from "@formbricks/types/dark-palette";
 import { type TBaseStyling } from "@formbricks/types/styling";
+import { cn } from "@/lib/cn";
 import { type TStylingAppearance } from "@/lib/styling/dark-mode";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
 
 const StylingAppearanceContext = createContext<TStylingAppearance>("light");
@@ -41,12 +43,56 @@ export const StylingAppearanceToggle = ({ appearance, onChange }: Readonly<Styli
           { value: "light", label: t("workspace.look.appearance_light") },
           { value: "dark", label: t("workspace.look.appearance_dark") },
         ]}
-        defaultSelected={appearance}
+        value={appearance}
         onChange={onChange}
       />
       {appearance === "dark" && (
-        <p className="text-xs text-slate-500">{t("workspace.look.appearance_dark_description")}</p>
+        <Alert variant="info" size="small">
+          <AlertDescription className="whitespace-normal">
+            {t("workspace.look.appearance_dark_description")}
+          </AlertDescription>
+        </Alert>
       )}
+    </div>
+  );
+};
+
+interface PreviewAppearanceSwitchProps extends StylingAppearanceToggleProps {
+  /** Padding of each option, to match the size of the pill it sits next to. */
+  optionClassName?: string;
+}
+
+/** Sun / moon switch under a styling preview; drives the same appearance as the Light / Dark toggle. */
+export const PreviewAppearanceSwitch = ({
+  appearance,
+  onChange,
+  optionClassName = "px-3 py-1",
+}: Readonly<PreviewAppearanceSwitchProps>) => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex rounded-full border-2 border-slate-300 p-1">
+      {(
+        [
+          ["light", SunIcon, t("workspace.look.appearance_light")],
+          ["dark", MoonIcon, t("workspace.look.appearance_dark")],
+        ] as const
+      ).map(([value, Icon, label]) => (
+        <button
+          key={value}
+          type="button"
+          aria-label={label}
+          aria-pressed={appearance === value}
+          title={label}
+          className={cn(
+            "cursor-pointer rounded-full text-slate-700",
+            optionClassName,
+            appearance === value && "bg-slate-200"
+          )}
+          onClick={() => onChange(value)}>
+          <Icon className="size-4" aria-hidden />
+        </button>
+      ))}
     </div>
   );
 };
