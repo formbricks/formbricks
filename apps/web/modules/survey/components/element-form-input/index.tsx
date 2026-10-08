@@ -181,7 +181,8 @@ export const ElementFormInput = ({
 
   const [text, setText] = useState(elementText);
   const [showImageUploader, setShowImageUploader] = useState<boolean>(
-    determineImageUploaderVisibility(elementIdx, elements)
+    determineImageUploaderVisibility(elementIdx, elements) ||
+      (endingCard?.type === "endScreen" && Boolean(endingCard.imageUrl ?? endingCard.videoUrl))
   );
 
   // Sync text state when elementText changes (e.g., on page reload or when value prop changes)
@@ -293,6 +294,11 @@ export const ElementFormInput = ({
     if (isEndingCard) {
       if (endingCard && endingCard.type === "endScreen") return endingCard.imageUrl;
     } else return currentElement.imageUrl;
+  };
+
+  const getImageAltText = (): TI18nString | undefined => {
+    if (isEndingCard) return endingCard?.type === "endScreen" ? endingCard.imageAltText : undefined;
+    return isWelcomeCard ? undefined : currentElement.imageAltText;
   };
 
   const getVideoUrl = (): string | undefined => {
@@ -436,10 +442,16 @@ export const ElementFormInput = ({
               workspaceId={localSurvey.workspaceId}
               onFileUpload={(url: string[] | undefined, fileType: "image" | "video") => {
                 if (url) {
+                  // Alt text describes one specific image, so it goes when that image is replaced or removed.
+                  const keepsImage = fileType === "image" && url[0] === getFileUrl();
                   const update =
                     fileType === "video"
-                      ? { videoUrl: url[0], imageUrl: undefined }
-                      : { imageUrl: url[0], videoUrl: undefined };
+                      ? { videoUrl: url[0], imageUrl: undefined, imageAltText: undefined }
+                      : {
+                          imageUrl: url[0],
+                          videoUrl: undefined,
+                          ...(keepsImage ? {} : { imageAltText: undefined }),
+                        };
                   if ((isWelcomeCard || isEndingCard) && updateSurvey) {
                     updateSurvey(update);
                   } else if (updateElement) {
@@ -453,6 +465,26 @@ export const ElementFormInput = ({
               maxSizeInMB={5}
               isStorageConfigured={isStorageConfigured}
             />
+          )}
+
+          {showImageUploader && id === "headline" && !isWelcomeCard && getFileUrl() && (
+            <div>
+              <ElementFormInput
+                id="imageAltText"
+                value={getImageAltText()}
+                localSurvey={localSurvey}
+                elementIdx={elementIdx}
+                updateElement={updateElement}
+                updateSurvey={updateSurvey}
+                isInvalid={isInvalid}
+                selectedLanguageCode={selectedLanguageCode}
+                label={t("workspace.surveys.edit.image_alt_text")}
+                placeholder={t("workspace.surveys.edit.image_alt_text_placeholder")}
+                locale={locale}
+                isStorageConfigured={isStorageConfigured}
+              />
+              <p className="mt-1 text-xs text-slate-500">{t("workspace.surveys.edit.image_alt_text_help")}</p>
+            </div>
           )}
 
           <div className="flex w-full items-start gap-2">

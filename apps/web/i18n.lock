@@ -3512,6 +3512,10 @@ checksums:
     workspace/surveys/edit/ignore_global_cooldown_period: e08db543ace4935625e0961cc6e60489
     workspace/surveys/edit/ignore_global_cooldown_period_description: 37d173a4d537622de40677389238d859
     workspace/surveys/edit/image: 048ba7a239de0fbd883ade8558415830
+    workspace/surveys/edit/image_alt_text: 798f092b96bd479bd710f0f10559f259
+    workspace/surveys/edit/image_alt_text_choice_n: 201888840719e720f848b72da3c426ee
+    workspace/surveys/edit/image_alt_text_help: 4ff58bccd405245b5e43da5a2ddc8d89
+    workspace/surveys/edit/image_alt_text_placeholder: 1c43647ee58c09a42f085bc43a313298
     workspace/surveys/edit/includes_all_of: ec72f90c0839d4c3bb518deb03894031
     workspace/surveys/edit/includes_one_of: 6d5be5d7c2494179e88bd7302b247884
     workspace/surveys/edit/inner_text: d1c7c98cfdb2fae3be91b7ee44288847

@@ -867,6 +867,9 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await fillRichTextEditor(page, "Description", params.pictureSelectQuestion.description);
 
   await uploadImageChoicesForPictureSelection(page);
+  await page
+    .getByLabel("Image alt text, choice 1", { exact: true })
+    .fill(params.pictureSelectQuestion.firstChoiceAltText);
 
   // File Upload Question
   await addElement(page, "File Upload");

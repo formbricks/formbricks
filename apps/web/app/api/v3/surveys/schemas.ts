@@ -183,10 +183,11 @@ function normalizeMetadata(
 
 const WELCOME_CARD_I18N_KEYS = ["headline", "subheader", "buttonLabel"] as const;
 const BLOCK_I18N_KEYS = ["buttonLabel", "backButtonLabel"] as const;
-const ENDING_I18N_KEYS = ["headline", "subheader", "buttonLabel"] as const;
+const ENDING_I18N_KEYS = ["headline", "subheader", "buttonLabel", "imageAltText"] as const;
 const ELEMENT_I18N_KEYS = [
   "headline",
   "subheader",
+  "imageAltText",
   "placeholder",
   "label",
   "otherOptionPlaceholder",
@@ -214,7 +215,7 @@ function normalizeChoice(
   defaultLanguage: string,
   options?: TV3LanguageNormalizationOptions
 ): unknown {
-  return normalizePublicI18nFields(value, defaultLanguage, ["label"], options);
+  return normalizePublicI18nFields(value, defaultLanguage, ["label", "imageAltText"], options);
 }
 
 function normalizeToggleInput(
@@ -464,6 +465,7 @@ const END_SCREEN_KEYS = new Set([
   "buttonLabel",
   "buttonLink",
   "imageUrl",
+  "imageAltText",
   "videoUrl",
   "hideDefaultIcon",
 ]);
@@ -475,6 +477,7 @@ const ELEMENT_BASE_KEYS = new Set([
   "headline",
   "subheader",
   "imageUrl",
+  "imageAltText",
   "videoUrl",
   "required",
   "isDraft",
@@ -603,7 +606,7 @@ function isElementTypeWithStrictKeys(type: string): type is ElementTypeWithStric
   return Object.hasOwn(ELEMENT_KEYS_BY_TYPE, type);
 }
 const LABEL_CHOICE_KEYS = new Set(["id", "label"]);
-const PICTURE_CHOICE_KEYS = new Set(["id", "imageUrl"]);
+const PICTURE_CHOICE_KEYS = new Set(["id", "imageUrl", "imageAltText"]);
 const TOGGLE_INPUT_KEYS = new Set(["show", "required", "placeholder"]);
 const CHAR_LIMIT_KEYS = new Set(["enabled", "min", "max"]);
 const VALIDATION_KEYS = new Set(["rules", "logic"]);

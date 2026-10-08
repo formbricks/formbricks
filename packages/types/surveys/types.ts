@@ -76,6 +76,7 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   buttonLabel: ZI18nString.optional(),
   buttonLink: ZEndingCardButtonLink.optional(),
   imageUrl: ZStorageUrl.optional(),
+  imageAltText: ZI18nString.optional(),
   videoUrl: ZStorageUrl.optional(),
   // Absent means "show it": the checkmark predates this field, so every survey written before it has to
   // keep rendering the icon.
@@ -1552,6 +1553,48 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
           }
         }
 
+        // Validate image alt text if present. An empty default is a decorative image and needs no translations.
+        if (element.imageAltText && element.imageAltText[defaultLanguageCode].trim()) {
+          elementMultiLangIssue = validateElementLabels(
+            "imageAltText",
+            element.imageAltText,
+            languages,
+            blockIndex,
+            elementIndex
+          );
+          if (elementMultiLangIssue) {
+            ctx.addIssue(elementMultiLangIssue);
+          }
+        }
+
+        if (element.type === TSurveyElementTypeEnum.PictureSelection) {
+          element.choices.forEach((choice, choiceIndex) => {
+            if (!choice.imageAltText?.[defaultLanguageCode]?.trim()) return;
+            const choiceAltIssue = validateElementLabels(
+              `Image alt text of choice ${String(choiceIndex + 1)}`,
+              choice.imageAltText,
+              languages,
+              blockIndex,
+              elementIndex,
+              true
+            );
+            if (choiceAltIssue) {
+              ctx.addIssue({
+                ...choiceAltIssue,
+                path: [
+                  "blocks",
+                  blockIndex,
+                  "elements",
+                  elementIndex,
+                  "choices",
+                  choiceIndex,
+                  "imageAltText",
+                ],
+              });
+            }
+          });
+        }
+
         // Type-specific validation
         if (element.type === TSurveyElementTypeEnum.OpenText) {
           if (
@@ -1912,6 +1955,20 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
 
         if (multiLangIssueInSubheader) {
           ctx.addIssue(multiLangIssueInSubheader);
+        }
+      }
+
+      if (ending.imageAltText && ending.imageAltText.default.trim()) {
+        const multiLangIssueInImageAltText = validateCardFieldsForAllLanguages(
+          "imageAltText",
+          ending.imageAltText,
+          languages,
+          "end",
+          index
+        );
+
+        if (multiLangIssueInImageAltText) {
+          ctx.addIssue(multiLangIssueInImageAltText);
         }
       }
 

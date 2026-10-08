@@ -73,6 +73,15 @@ export const PictureSelectionForm = ({
     });
   };
 
+  // ElementFormInput writes `{ imageAltText }` through `updateElement`; route it onto the one choice instead.
+  const updateChoiceAltText = (choiceId: string) => (_elementIdx: number, data: Partial<TSurveyElement>) => {
+    updateElement(elementIdx, {
+      choices: element.choices.map((choice) =>
+        choice.id === choiceId ? { ...choice, imageAltText: data.imageAltText } : choice
+      ),
+    });
+  };
+
   const [parent] = useAutoAnimate();
   return (
     <form>
@@ -147,6 +156,26 @@ export const PictureSelectionForm = ({
             isStorageConfigured={isStorageConfigured}
           />
         </div>
+        {element.choices.length > 0 && (
+          <div className="mt-1">
+            {element.choices.map((choice, choiceIdx) => (
+              <ElementFormInput
+                key={choice.id}
+                id="imageAltText"
+                value={choice.imageAltText ?? createI18nString("", surveyLanguageCodes)}
+                label={t("workspace.surveys.edit.image_alt_text_choice_n", { n: choiceIdx + 1 })}
+                placeholder={t("workspace.surveys.edit.image_alt_text_placeholder")}
+                localSurvey={localSurvey}
+                elementIdx={elementIdx}
+                isInvalid={isInvalid}
+                updateElement={updateChoiceAltText(choice.id)}
+                locale={locale}
+                isStorageConfigured={isStorageConfigured}
+              />
+            ))}
+            <p className="mt-1 text-xs text-slate-500">{t("workspace.surveys.edit.image_alt_text_help")}</p>
+          </div>
+        )}
       </div>
 
       <div className="my-4 flex items-center gap-x-2">

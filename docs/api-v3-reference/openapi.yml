@@ -5325,6 +5325,10 @@ components:
           type: boolean
         imageUrl:
           type: string
+        imageAltText:
+          allOf:
+            - $ref: '#/components/schemas/TranslatableText'
+          description: Text alternative for `imageUrl`, read by screen readers. Omit or leave empty for a decorative image (rendered as `alt=""`).
         videoUrl:
           type: string
         isDraft:
@@ -5625,6 +5629,10 @@ components:
           description: Stable picture choice id.
         imageUrl:
           type: string
+        imageAltText:
+          allOf:
+            - $ref: '#/components/schemas/TranslatableText'
+          description: Text alternative for `imageUrl`, read by screen readers. Omit or leave empty for a decorative image (rendered as `alt=""`).
       additionalProperties: false
     SurveyPictureSelectionElement:
       allOf:
@@ -6215,6 +6223,10 @@ components:
           type: string
         imageUrl:
           type: string
+        imageAltText:
+          allOf:
+            - $ref: '#/components/schemas/TranslatableText'
+          description: Text alternative for `imageUrl`, read by screen readers. Omit or leave empty for a decorative image (rendered as `alt=""`).
         videoUrl:
           type: string
         hideDefaultIcon:

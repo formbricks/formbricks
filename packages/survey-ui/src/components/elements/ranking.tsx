@@ -48,6 +48,8 @@ interface RankingProps {
   disabled?: boolean;
   /** Image URL to display above the headline */
   imageUrl?: string;
+  /** Alt text for the image; empty or absent marks it decorative */
+  imageAltText?: string;
   /** Video URL to display above the headline */
   videoUrl?: string;
   /** ID of the 'other' option; once it is ranked, a free-text input appears inside its item */
@@ -244,6 +246,7 @@ function Ranking({
   dir = "auto",
   disabled = false,
   imageUrl,
+  imageAltText,
   videoUrl,
   otherOptionId,
   otherOptionPlaceholder = "Please specify",
@@ -307,6 +310,7 @@ function Ranking({
         requiredLabel={requiredLabel}
         htmlFor={inputId}
         imageUrl={imageUrl}
+        imageAltText={imageAltText}
         videoUrl={videoUrl}
       />
 

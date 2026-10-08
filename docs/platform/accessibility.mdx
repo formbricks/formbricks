@@ -94,23 +94,23 @@ that criterion as supported, and a later review of the code found otherwise.
 
 **Affected criterion:** 1.1.1 — **Not in the 9 August 2026 report**
 
-Formbricks lets a survey creator add an image to a question or to an ending card, and offers no field for a
-text alternative for it. As assessed, those images were announced only as "Image", with nothing about what they
-show, and a survey creator had no way to change that.
+Formbricks lets a survey creator add an image to a question or to an ending card. As assessed, those images
+were announced only as "Image", with nothing about what they show, and a survey creator had no way to change that.
 
-Question and ending images are now marked decorative, so a screen reader skips them instead of announcing a
-meaningless "Image" — **Fixed, not yet released**. This does not give them a text alternative: an image that
-carries information still has no way to convey it to a respondent who cannot see it.
+Question images, ending card images and each Picture Selection option now have an **Image alt text** field,
+translated per survey language like the headline — **Fixed, not yet released**. The text is read out as the
+image's alternative. An image whose alt text is left empty is marked decorative, so a screen reader skips it
+instead of announcing a meaningless "Image"; a Picture Selection option without alt text is still named by
+position — "Option 1", "Option 2" — so a respondent can tell the options apart. The field is optional, so
+whether an informative image is described is up to the survey creator.
 
-The welcome card's logo and video both carry a real text alternative. The image options in a Picture
-Selection question are named by position — "Option 1", "Option 2" — so a respondent can tell them apart and
-choose one, but the label says nothing about what each image shows. Uploaded file names are never used as text
-alternatives, because a file name can carry personal data.
+The welcome card's logo and video both carry a fixed text alternative. Uploaded file names are never used as
+text alternatives, because a file name can carry personal data.
 
-**Workaround:** Treat question and ending images as illustration. Put anything a respondent needs in order to
-answer into the headline or the description, both of which are always read out. For a Picture Selection
-question, describe the options in the headline or description as well — for example "Option 1 is the blue
-design, option 2 the green one" — wherever the image carries the meaning.
+**Workaround:** On released versions without the field, treat question and ending images as illustration. Put
+anything a respondent needs in order to answer into the headline or the description, both of which are always
+read out. For a Picture Selection question, describe the options in the headline or description as well — for
+example "Option 1 is the blue design, option 2 the green one" — wherever the image carries the meaning.
 
 ### Embedded Third-Party Video
 
@@ -313,11 +313,11 @@ difference.
 without the surrounding context. "How satisfied were you with the onboarding call?" works; "And this one?" does
 not.
 
-**Do not put information only in an image.** Formbricks does not currently offer a field for image alt text, so
-an image cannot carry information on its own. Treat images as illustration and put anything a respondent needs
-in order to answer into the headline or the description. Picture Selection options are announced only by
-position ("Option 1", "Option 2"), so describe the options in text wherever the image carries the meaning. See
-[Image Text Alternatives](#image-text-alternatives) above.
+**Describe every image that carries information.** Fill in the **Image alt text** field under a question image,
+an ending card image, or each Picture Selection option, and translate it like the headline. Say what the image
+shows that matters for the answer — "Bar chart: sign-ups doubled from May to June", not "chart.png". Leave the
+field empty only for an image that is pure decoration. On versions without the field, put that information in
+the headline or the description instead. See [Image Text Alternatives](#image-text-alternatives) above.
 
 **Do not convey meaning with colour alone.** If a rating scale, an option, or an instruction depends on a
 respondent seeing red versus green, add a label, a number, or a word that carries the same meaning.

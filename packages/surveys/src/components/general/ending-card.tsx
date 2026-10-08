@@ -67,7 +67,11 @@ export function EndingCard({
   }, [isCurrent, autoFocusEnabled, isResponseSendingFinished, hasButton]);
   const media =
     endingCard.type === "endScreen" && (endingCard.imageUrl ?? endingCard.videoUrl) ? (
-      <ElementMedia imgUrl={endingCard.imageUrl} videoUrl={endingCard.videoUrl} />
+      <ElementMedia
+        imgUrl={endingCard.imageUrl}
+        videoUrl={endingCard.videoUrl}
+        altText={getLocalizedValue(endingCard.imageAltText, languageCode)}
+      />
     ) : null;
 
   const checkmark = (
