@@ -411,6 +411,8 @@ taxonomy:
       project: ""
       location: ""
       thinkingBudget: "0"
+      # Optional thinking level; when set, replaces thinkingBudget in the request.
+      thinkingLevel: ""
       # Existing secret must contain credentialsJsonSecretKey.
       existingSecret: ""
       credentialsJsonSecretKey: TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON

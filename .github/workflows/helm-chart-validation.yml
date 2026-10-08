@@ -60,6 +60,7 @@ jobs:
           }
 
           helm lint "$chart" --set formbricks.webappUrl=https://qa.example.com
+          bash charts/formbricks/tests/taxonomy-thinking.sh
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
