@@ -47,6 +47,12 @@ export const removeRetentionExemptionFromPages = (
     })),
   };
 
+/** Query keys for the health banners: one per organisation, refreshed when a policy changes. */
+export const retentionHealthKeys = {
+  all: ["retention-health"] as const,
+  detail: (organizationId: string) => [...retentionHealthKeys.all, organizationId] as const,
+};
+
 /** Query keys for the Policies tab: one document per organisation. */
 export const retentionPolicyKeys = {
   all: ["retention-policies"] as const,

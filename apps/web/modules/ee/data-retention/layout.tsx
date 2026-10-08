@@ -3,6 +3,7 @@ import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/comp
 import { can } from "@/lib/authorization";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getReportingTimeZone } from "@/lib/date-ranges";
 import { getTranslate } from "@/lingodotdev/server";
 import { getIsDataRetentionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
@@ -12,6 +13,7 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { DataRetentionSecondaryNavigation } from "./components/data-retention-secondary-navigation";
+import { RetentionHealthAlerts } from "./components/health/retention-health-alerts";
 import { DataRetentionQueryClientProvider } from "./components/query-client-provider";
 
 /**
@@ -77,6 +79,12 @@ export const DataRetentionLayout = async ({
         <PageHeader pageTitle={pageTitle}>
           <DataRetentionSecondaryNavigation organizationId={organization.id} canManage={canManage} />
         </PageHeader>
+        {canManage ? (
+          <RetentionHealthAlerts
+            organizationId={organization.id}
+            timeZone={getReportingTimeZone(organization.displayTimeZone)}
+          />
+        ) : null}
         {children}
       </PageContentWrapper>
     </DataRetentionQueryClientProvider>

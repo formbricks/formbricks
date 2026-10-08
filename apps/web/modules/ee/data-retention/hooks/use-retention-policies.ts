@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRetentionPolicies, updateRetentionPolicies } from "../lib/api-client";
-import { retentionPolicyKeys } from "../lib/query";
+import { retentionHealthKeys, retentionPolicyKeys } from "../lib/query";
 import type { TRetentionPoliciesPatch } from "../types";
 
 /** The organisation's three policies. */
@@ -24,7 +24,11 @@ export const useUpdateRetentionPolicy = ({ organizationId }: Readonly<{ organiza
     // A read already in flight (a window-focus refetch) could land after the change and put the old
     // document back, so it is cancelled first.
     onMutate: () => queryClient.cancelQueries({ queryKey }),
-    onSuccess: (policies) => queryClient.setQueryData(queryKey, policies),
+    onSuccess: (policies) => {
+      queryClient.setQueryData(queryKey, policies);
+      // Switching a policy on or off changes which banners apply.
+      void queryClient.invalidateQueries({ queryKey: retentionHealthKeys.detail(organizationId) });
+    },
     onError: () => queryClient.invalidateQueries({ queryKey }),
   });
 };

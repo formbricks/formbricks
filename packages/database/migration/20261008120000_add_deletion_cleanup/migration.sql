@@ -68,4 +68,9 @@ END $$;
 -- squawk-ignore require-concurrent-index-creation
 CREATE INDEX IF NOT EXISTS "DeletionCleanup_nextAttemptAt_idx" ON "DeletionCleanup"("nextAttemptAt");
 
+-- CreateIndex
+-- An organisation's oldest pending cleanup, for the Data retention health banner. Same zero-row build.
+-- squawk-ignore require-concurrent-index-creation
+CREATE INDEX IF NOT EXISTS "DeletionCleanup_organizationId_created_at_idx" ON "DeletionCleanup"("organizationId", "created_at");
+
 COMMIT;

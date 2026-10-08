@@ -8,10 +8,12 @@ import type {
   TRetentionRun,
   TSurveyRetention,
 } from "../types";
+import type { TRetentionHealthIssue } from "./health";
 
 const BASE_PATH = "/api/internal/retention-runs";
 const EXEMPTIONS_BASE_PATH = "/api/internal/retention-exemptions";
 const POLICIES_BASE_PATH = "/api/internal/retention-policies";
+const HEALTH_BASE_PATH = "/api/internal/retention-health";
 const MUTATION_TIMEOUT_MS = 15_000;
 
 export type TRetentionRunListPage = {
@@ -134,6 +136,25 @@ export async function listRetentionExemptionSurveyOptions({
   });
   if (!response.ok) throw await parseV3ApiError(response);
   return ((await response.json()) as { data: TRetentionExemptionSurveyOption[] }).data;
+}
+
+export type TRetentionHealth = { issues: TRetentionHealthIssue[]; smtpConfigured: boolean };
+
+/** What can keep data retention from working for the organisation. Owners and managers only. */
+export async function getRetentionHealth({
+  organizationId,
+  signal,
+}: {
+  organizationId: string;
+  signal?: AbortSignal;
+}): Promise<TRetentionHealth> {
+  const response = await fetch(`${HEALTH_BASE_PATH}?${new URLSearchParams({ organizationId })}`, {
+    method: "GET",
+    cache: "no-store",
+    signal,
+  });
+  if (!response.ok) throw await parseV3ApiError(response);
+  return ((await response.json()) as { data: TRetentionHealth }).data;
 }
 
 export async function getRetentionPolicies({

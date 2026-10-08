@@ -2891,6 +2891,15 @@ checksums:
     workspace/settings/data_retention/exemptions_description: b3e858bc448372c75dade6e524785920
     workspace/settings/data_retention/exemptions_load_error: ad2df69e16e3377e61a687b0c5fb98cc
     workspace/settings/data_retention/first_night_note: 869323ee30846e10a46a72bd60d31734
+    workspace/settings/data_retention/health_cleanup_description: f0ee795ee9c36d822c81a572c9a8b303
+    workspace/settings/data_retention/health_cleanup_title: 26075a5ea4266d5e4b39b8ab16d60b45
+    workspace/settings/data_retention/health_jobs_description: 160569b502146031469561935d3e7ddb
+    workspace/settings/data_retention/health_jobs_title: ea295a35dd1c242d881cf5d9fb85cf26
+    workspace/settings/data_retention/health_never_run_description: 0678a1d1345244db4463d007437bf1a4
+    workspace/settings/data_retention/health_no_recent_run_description: b06441d8026f5e78cb05646dc652954e
+    workspace/settings/data_retention/health_no_recent_run_title: 2c1bf65f76ce5476603d546704fe0aa4
+    workspace/settings/data_retention/health_smtp_description: fb5a591cff7166cdfbd49f6ac8d364d6
+    workspace/settings/data_retention/health_smtp_title: f332ce4c5060eeb3211546f456998d9d
     workspace/settings/data_retention/hide_runs_with_no_changes: f31eb80f5c32dd6a4e3ee9838511e4fd
     workspace/settings/data_retention/history: b0578d6d225f512e42f823fbca2e3c32
     workspace/settings/data_retention/history_description: 01e861f9f5273c0f4c11de7b4184c154
@@ -2950,6 +2959,7 @@ checksums:
     workspace/settings/data_retention/run: cc02693eda0a4aa0c1ab356a79e8afb8
     workspace/settings/data_retention/search_surveys: acb2a01b8fba28ca83171ddeab648558
     workspace/settings/data_retention/select_end_date: 746cd6c3cf52e112e78b944ee3d2c55d
+    workspace/settings/data_retention/smtp_not_configured_warning: 8b3fc3052da5f06eb4fa63b7b949a877
     workspace/settings/data_retention/survey_card_description: 520dd2e24ff8f9ddcad7d887d8dc4136
     workspace/settings/data_retention/survey_line_exempt: 7845f214bb225270ed848de4c1b770d2
     workspace/settings/data_retention/survey_line_exempt_no_date: 4fe2d36edd3b1d6df80296ad17960d1b

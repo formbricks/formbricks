@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { SURVEY_ARCHIVE_RETENTION_DAYS } from "@/modules/survey/archive/lib/retention-days";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import {
@@ -37,6 +38,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
+import { useRetentionHealth } from "../../hooks/use-retention-health";
 import { useUpdateRetentionPolicy } from "../../hooks/use-retention-policies";
 import { formatRetentionPeriod } from "../../lib/display";
 import { RETENTION_DAYS_PER_UNIT, type TRetentionPeriodUnit } from "../../lib/period";
@@ -141,6 +143,7 @@ export const PolicyEditDialog = ({
   const periodHelpId = useId();
   const conditionsErrorId = useId();
   const updatePolicy = useUpdateRetentionPolicy({ organizationId });
+  const health = useRetentionHealth({ organizationId });
 
   const form = useForm<TPolicyFormValues>({
     resolver: zodResolver(getPolicyFormSchema(t, policy)),
@@ -394,6 +397,13 @@ export const PolicyEditDialog = ({
                       </FormControl>
                     </div>
                     <p className="text-xs text-slate-500">{copy.activeHelp}</p>
+                    {field.value && health.data?.smtpConfigured === false ? (
+                      <Alert variant="warning" size="small" role="status">
+                        <AlertDescription>
+                          {t("workspace.settings.data_retention.smtp_not_configured_warning")}
+                        </AlertDescription>
+                      </Alert>
+                    ) : null}
                   </FormItem>
                 )}
               />

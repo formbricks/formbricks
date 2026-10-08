@@ -6,6 +6,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { retentionPolicyKeys } from "../lib/query";
+import { useRetentionHealth } from "./use-retention-health";
 import { useRetentionPolicies, useUpdateRetentionPolicy } from "./use-retention-policies";
 
 const ORG_ID = "clorg11111111111111111111";
@@ -65,6 +66,29 @@ describe("Policies hooks", () => {
     expect(fetchMock).toHaveBeenLastCalledWith(
       URL,
       expect.objectContaining({ method: "PATCH", body: JSON.stringify({ surveys: { enabled: true } }) })
+    );
+  });
+
+  test("refreshes the health banners after a change, since switching a policy changes which apply", async () => {
+    const fetchMock = vi.mocked(global.fetch);
+    const health = (smtpConfigured: boolean) => json({ data: { issues: [], smtpConfigured } });
+    fetchMock
+      .mockResolvedValueOnce(health(true))
+      .mockResolvedValueOnce(json({ data: documentWith(true) }))
+      .mockResolvedValueOnce(health(false));
+    const wrapper = wrapperFor(new QueryClient({ defaultOptions: { queries: { retry: false } } }));
+    const read = renderHook(() => useRetentionHealth({ organizationId: ORG_ID }), { wrapper });
+    await waitFor(() => expect(read.result.current.data?.smtpConfigured).toBe(true));
+    const { result } = renderHook(() => useUpdateRetentionPolicy({ organizationId: ORG_ID }), { wrapper });
+
+    await act(async () => {
+      await result.current.mutateAsync({ surveys: { enabled: true } });
+    });
+
+    await waitFor(() => expect(read.result.current.data?.smtpConfigured).toBe(false));
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `/api/internal/retention-health?organizationId=${ORG_ID}`,
+      expect.objectContaining({ method: "GET" })
     );
   });
 
