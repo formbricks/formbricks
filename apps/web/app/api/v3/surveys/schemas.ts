@@ -1316,8 +1316,17 @@ export const ZV3CreateSurveyBody = z
   })
   .pipe(ZV3CreateSurveyBodyBase);
 
+/**
+ * Where a created survey came from, for the `survey_created` analytics event and, through the request
+ * URL the audit log keeps as `apiUrl`, the audit trail. One list so the query schema, the operation and
+ * the clients cannot drift: each used to spell the union out by hand.
+ */
+export const V3_SURVEY_CREATED_FROM = ["blank", "template", "xm-template", "ai", "import"] as const;
+
+export type TV3SurveyCreatedFrom = (typeof V3_SURVEY_CREATED_FROM)[number];
+
 export const ZV3CreateSurveyQuery = z.object({
-  createdFrom: z.enum(["blank", "template", "xm-template", "ai"]).optional(),
+  createdFrom: z.enum(V3_SURVEY_CREATED_FROM).optional(),
 });
 
 export type TV3CreateSurveyQuery = z.infer<typeof ZV3CreateSurveyQuery>;
@@ -1522,6 +1531,12 @@ export type TV3EditSurveyBlocksBody = z.infer<typeof ZV3EditSurveyBlocksBody>;
 export type TV3SetSurveyBlockOrderBody = z.infer<typeof ZV3SetSurveyBlockOrderBody>;
 export type TV3SurveyDocument = z.infer<typeof ZV3SurveyDocumentBase>;
 export type TV3CreateSurveyBody = z.infer<typeof ZV3CreateSurveyBody>;
+/**
+ * What a client sends to `POST /api/v3/surveys`: the schema's input, before parsing fills defaults and
+ * maps the default language to the internal `default` translation key. Not interchangeable with
+ * `TV3CreateSurveyBody`, the parsed result — a parsed body sent back is refused for that key.
+ */
+export type TV3CreateSurveyRequestBody = z.input<typeof ZV3CreateSurveyBody>;
 export type TV3PatchSurveyBody = z.infer<typeof ZV3PatchSurveyBody>;
 export type TV3SurveyValidationRequestBody = z.infer<typeof ZV3SurveyValidationRequestBody>;
 export type TV3SurveyDistribution = z.infer<typeof ZV3SurveyDistribution>;

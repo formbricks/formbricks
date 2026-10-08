@@ -436,33 +436,36 @@ describe("createV3SurveyResponse", () => {
     expect(await readJson(response)).toEqual({ data: serializedSurvey });
   });
 
-  test("captures survey_created for session-authenticated product template creates", async () => {
-    const response = await createV3SurveyResponse({
-      body: createBody,
-      authentication: sessionAuthentication,
-      requestId,
-      instance,
-      createdFrom: "template",
-    });
+  test.each(["template", "import"] as const)(
+    "captures survey_created with created_from %s",
+    async (createdFrom) => {
+      const response = await createV3SurveyResponse({
+        body: createBody,
+        authentication: sessionAuthentication,
+        requestId,
+        instance,
+        createdFrom,
+      });
 
-    expect(response.status).toBe(201);
-    expect(capturePostHogEvent).toHaveBeenCalledWith(
-      "user_1",
-      "survey_created",
-      {
-        survey_id: "survey_1",
-        survey_type: "link",
-        organization_id: "org_1",
-        workspace_id: workspaceId,
-        // 0, not 1: a v3 survey has blocks, never legacy questions. The old fixture carried a
-        // legacy shape, which is why this used to read 1. See review-followups.md — the
-        // question_count property itself is always 0 for v3 creates.
-        question_count: 0,
-        created_from: "template",
-      },
-      { organizationId: "org_1", workspaceId }
-    );
-  });
+      expect(response.status).toBe(201);
+      expect(capturePostHogEvent).toHaveBeenCalledWith(
+        "user_1",
+        "survey_created",
+        {
+          survey_id: "survey_1",
+          survey_type: "link",
+          organization_id: "org_1",
+          workspace_id: workspaceId,
+          // 0, not 1: a v3 survey has blocks, never legacy questions. The old fixture carried a
+          // legacy shape, which is why this used to read 1. See review-followups.md — the
+          // question_count property itself is always 0 for v3 creates.
+          question_count: 0,
+          created_from: createdFrom,
+        },
+        { organizationId: "org_1", workspaceId }
+      );
+    }
+  );
 
   test("returns authorization responses from workspace access", async () => {
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(problemForbidden(requestId, "nope", instance));

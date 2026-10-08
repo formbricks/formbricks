@@ -11,6 +11,7 @@ import {
   V3_SURVEY_MAX_TRIGGERS,
   V3_SURVEY_MAX_VARIABLES,
   ZV3CreateSurveyBody,
+  ZV3CreateSurveyQuery,
   ZV3EditSurveyBlocksBody,
   ZV3PatchSurveyBody,
   ZV3SetSurveyBlockOrderBody,
@@ -1210,5 +1211,21 @@ describe("top-level array bounds (ENG-3384)", () => {
     expect(json.properties.distribution).toMatchObject({
       properties: { triggers: expect.objectContaining({ maxItems: V3_SURVEY_MAX_TRIGGERS }) },
     });
+  });
+});
+
+describe("ZV3CreateSurveyQuery", () => {
+  // Spelled out rather than read from the schema's own list, so dropping a value the dashboard sends —
+  // `import` comes from the Qualtrics import dialog (ENG-3653) — fails here.
+  test.each(["blank", "template", "xm-template", "ai", "import"])("accepts createdFrom=%s", (createdFrom) => {
+    expect(ZV3CreateSurveyQuery.safeParse({ createdFrom }).success).toBe(true);
+  });
+
+  test("accepts a create with no createdFrom", () => {
+    expect(ZV3CreateSurveyQuery.safeParse({}).success).toBe(true);
+  });
+
+  test("rejects an unknown createdFrom, so analytics never records an invented source", () => {
+    expect(ZV3CreateSurveyQuery.safeParse({ createdFrom: "qualtrics" }).success).toBe(false);
   });
 });

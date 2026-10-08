@@ -117,16 +117,21 @@ describe("mapV3SurveyGenerateError", () => {
     expect(JSON.stringify(problem)).not.toContain("org_123");
   });
 
-  test("falls back to 502 and logs for an unrecognized error", () => {
-    const error = new Error("provider exploded");
+  test("falls back to 502 and logs where it failed, never the message that can echo the prompt", () => {
+    const error = new Error("provider exploded on secret-from-the-prompt");
 
     const response = mapV3SurveyGenerateError(error, context);
 
     expect(response.status).toBe(502);
     expect(logger.error).toHaveBeenCalledWith(
-      expect.objectContaining({ err: error, requestId: context.requestId }),
+      expect.objectContaining({
+        errName: "Error",
+        errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
+        requestId: context.requestId,
+      }),
       "Failed to generate v3 survey create payload"
     );
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("secret-from-the-prompt");
   });
 
   test("does not report a throttled token endpoint as rejected credentials", async () => {

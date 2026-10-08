@@ -62,6 +62,7 @@ import { V3SurveyReferenceValidationError } from "../reference-validation";
 import {
   type TV3CreateSurveyBody,
   type TV3SurveyBlockOp,
+  type TV3SurveyCreatedFrom,
   type TV3SurveyDocument,
   type TV3SurveyValidationRequestBody,
   ZV3CreateSurveyBody,
@@ -94,7 +95,7 @@ type TCreateV3SurveyParams = {
   requestId: string;
   instance: string;
   auditLog?: TV3AuditLog;
-  createdFrom?: "blank" | "template" | "xm-template" | "ai";
+  createdFrom?: TV3SurveyCreatedFrom;
   createOptions?: TV3SurveyCreateOptions;
   authResult?: V3WorkspaceContext;
 };

@@ -611,8 +611,9 @@ Two kinds of exception:
 </Note>
 
 Array arguments are bounded. No array in a tool call may hold more than 1 000 items, and all the arrays
-in one call together at most 50 000 elements, at any depth; a call over either bound is refused with a
-JSON-RPC `-32602` error before its arguments are parsed. Fields with a tighter bound advertise it as
+in one call together at most 50 000 elements, at any depth; and a call may nest at most 256 levels of
+objects and arrays. A call over any of these is refused with a JSON-RPC `-32602` error before its
+arguments are parsed. Fields with a tighter bound advertise it as
 `maxItems` in the tool's input schema — `create_survey`'s `blocks`, `endings`, `variables` and
 `languages`, `get_survey`'s `lang`, the list filters' `in` arrays, and `create_feedback_records`'
 `records`. A request body may be at most 2 MB, whether or not it declares a `Content-Length`.
