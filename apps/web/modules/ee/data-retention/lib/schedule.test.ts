@@ -136,6 +136,33 @@ describe("getRetentionSchedule", () => {
     });
   });
 
+  describe("a policy switched on, unpaused or tightened voids older notices (ENG-3614)", () => {
+    // Paused after the notice went out, unpaused much later: the clock never moved, so without this
+    // rule the old notice would archive the survey the night the policy is unpaused.
+    const unpaused = { ...surveysPolicy, enabledAt: day(800) };
+
+    test("a notice sent before the policy took effect no longer counts", () => {
+      const schedule = getRetentionSchedule(unpaused, target({ noticeSentAt: day(335) }), day(801));
+
+      expect(schedule.noticeSent).toBe(false);
+      expect(schedule.archiveAt).toEqual(day(831));
+    });
+
+    test("the next cycle sends a new notice and archives only after a full warning", () => {
+      expect(getDueRetentionStep(unpaused, target({ noticeSentAt: day(335) }), day(801))).toBe("notify");
+      expect(getDueRetentionStep(unpaused, target({ noticeSentAt: day(801) }), day(830))).toBeNull();
+      expect(getDueRetentionStep(unpaused, target({ noticeSentAt: day(801) }), day(831))).toBe("archive");
+    });
+
+    test("a notice sent after the policy took effect still counts", () => {
+      const current = { ...surveysPolicy, enabledAt: day(300) };
+
+      expect(getRetentionSchedule(current, target({ noticeSentAt: day(335) }), day(340)).noticeSent).toBe(
+        true
+      );
+    });
+  });
+
   test("policies without an archive step act on the clock with delete", () => {
     expect(getRetentionSchedule(responsesPolicy, target(), day(1))).toEqual({
       warnAt: day(700),

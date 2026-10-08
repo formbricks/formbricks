@@ -41,7 +41,10 @@ export const RETENTION_ENTITY_SENDS_NOTICE = {
 
 export type TRetentionSchedulePolicy = {
   entity: RetentionEntity;
-  /** When the policy was last switched on. Null for a policy that is off: treated as "on from now". */
+  /**
+   * When the current configuration took effect (switched on, unpaused, or tightened; see
+   * `RetentionPolicy.enabledAt`). Null for a policy that is off: treated as "on from now".
+   */
   enabledAt: Date | null;
   warnDays: number;
   archiveDays: number | null;
@@ -84,9 +87,21 @@ const getFirstStageDays = (policy: TRetentionSchedulePolicy): number => {
   return days;
 };
 
-const getValidNoticeSentAt = (target: TRetentionTargetState): Date | null =>
-  // A clock reset after the notice went out voids it: the next cycle sends a new one.
-  target.noticeSentAt && isAtOrBefore(target.clock, target.noticeSentAt) ? target.noticeSentAt : null;
+/**
+ * A notice counts only if it went out after both the target's clock and the policy's current
+ * configuration took effect. A clock reset voids it (the target became active again), and so does a
+ * policy being switched on, unpaused or tightened (`enabledAt` moves): either way the next cycle sends
+ * a new notice and the full warning runs again (ENG-3614).
+ */
+const getValidNoticeSentAt = (
+  policy: TRetentionSchedulePolicy,
+  target: TRetentionTargetState
+): Date | null => {
+  const { noticeSentAt } = target;
+  if (!noticeSentAt || !isAtOrBefore(target.clock, noticeSentAt)) return null;
+  if (policy.enabledAt && !isAtOrBefore(policy.enabledAt, noticeSentAt)) return null;
+  return noticeSentAt;
+};
 
 export const getRetentionSchedule = (
   policy: TRetentionSchedulePolicy,
@@ -96,7 +111,7 @@ export const getRetentionSchedule = (
   const firstStageDays = getFirstStageDays(policy);
   const plannedFirstStageAt = addRetentionDays(target.clock, firstStageDays);
   const warnAt = addRetentionDays(plannedFirstStageAt, -policy.warnDays);
-  const noticeSentAt = getValidNoticeSentAt(target);
+  const noticeSentAt = getValidNoticeSentAt(policy, target);
 
   let noticeAt: Date | null = null;
   let warningStartedAt: Date;

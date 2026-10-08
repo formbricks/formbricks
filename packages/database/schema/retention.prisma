@@ -50,7 +50,11 @@ model RetentionPolicy {
   organizationId String
   entity         RetentionEntity
   enabled        Boolean                    @default(false)
-  /// When the policy was last switched on. The clock for members with no recorded sign-in.
+  /// When the current configuration took effect: the policy was switched on or unpaused, or changed
+  /// in a way that could bring an action earlier (a shorter period or warning, different
+  /// conditions). Lengthening does not move it. The warning always runs in full from here, so no
+  /// change can delete data on the night it is made (ENG-3614). Also the clock for members with no
+  /// recorded sign-in.
   enabledAt      DateTime?
   /// How long before the action the notice goes out. The action never runs before the notice has
   /// been out for this long, so the warning always runs in full.
@@ -147,8 +151,9 @@ model RetentionRunItem {
 }
 
 /// "Notice sent" for one survey or member under one policy, so each notice goes out once. Nothing
-/// else about a notice is stored. A notice older than its target's clock is void (the clock was
-/// reset after it went out); the sweep then deletes the row, and a later cycle sends a new one.
+/// else about a notice is stored. A notice older than its target's clock or than the policy's
+/// `enabledAt` is void (the clock was reset, or the policy was switched on, unpaused or tightened
+/// after it went out); the sweep then deletes the row, and a later cycle sends a new one.
 ///
 /// A CHECK in the migration ties each entity to its target: `surveys` → `surveyId`, `members` →
 /// `userId`, and responses never get a notice.
