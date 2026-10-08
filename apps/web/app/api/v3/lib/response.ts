@@ -95,7 +95,11 @@ export type V3ProblemCode = (typeof V3_PROBLEM_CODES)[number];
  * as an undocumented code, pointing the other way. `problem-codes.test.ts` asserts the two sets stay
  * disjoint and that none of these reaches the spec.
  */
-export const INTERNAL_PROBLEM_CODES = ["attachment_export_empty", "attachment_export_too_large"] as const;
+export const INTERNAL_PROBLEM_CODES = [
+  "attachment_export_empty",
+  "attachment_export_too_large",
+  "retention_export_too_large",
+] as const;
 
 export type InternalProblemCode = (typeof INTERNAL_PROBLEM_CODES)[number];
 

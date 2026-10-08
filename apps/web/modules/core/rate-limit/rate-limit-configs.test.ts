@@ -103,6 +103,7 @@ describe("rateLimitConfigs", () => {
         "v3SurveyGenerate",
         "v3SurveyVisibility",
         "internalDatasetPurge",
+        "internalRetentionExport",
         "client",
         "clientEnvironment",
       ]);
