@@ -24,3 +24,12 @@ export const getRetentionHistoryCounts = (
   archived: run.policy === "surveys" ? run.archived : null,
   deletedOrDeactivated: run.policy === "members" ? run.archived : run.deleted,
 });
+
+/**
+ * A History count formatter for the app's locale: grouped digits, and "—" where the policy has no
+ * such step (see `getRetentionHistoryCounts`). Build it once per render, not per cell.
+ */
+export const createRetentionCountFormatter = (locale: string): ((value: number | null) => string) => {
+  const numberFormat = new Intl.NumberFormat(locale);
+  return (value) => (value === null ? "—" : numberFormat.format(value));
+};

@@ -1,7 +1,7 @@
 import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import type { TRetentionRun } from "../types";
-import { getRetentionHistoryCounts, getRetentionPolicyLabel } from "./display";
+import { createRetentionCountFormatter, getRetentionHistoryCounts, getRetentionPolicyLabel } from "./display";
 
 const run = (policy: TRetentionRun["policy"]): TRetentionRun => ({
   id: "run_1",
@@ -51,5 +51,14 @@ describe("getRetentionPolicyLabel", () => {
     expect(getRetentionPolicyLabel("responses", t)).toBe("common.responses");
     expect(getRetentionPolicyLabel("surveys", t)).toBe("common.surveys");
     expect(getRetentionPolicyLabel("members", t)).toBe("common.members");
+  });
+});
+
+describe("createRetentionCountFormatter", () => {
+  test("groups digits for the given locale and shows a missing step as a dash", () => {
+    expect(createRetentionCountFormatter("en-US")(12345)).toBe("12,345");
+    expect(createRetentionCountFormatter("de-DE")(12345)).toBe("12.345");
+    expect(createRetentionCountFormatter("en-US")(0)).toBe("0");
+    expect(createRetentionCountFormatter("en-US")(null)).toBe("—");
   });
 });

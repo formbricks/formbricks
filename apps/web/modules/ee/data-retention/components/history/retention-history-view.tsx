@@ -14,7 +14,11 @@ import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/component
 import { Switch } from "@/modules/ui/components/switch";
 import { useRetentionRuns } from "../../hooks/use-retention-runs";
 import { getRetentionExportUrl } from "../../lib/api-client";
-import { getRetentionHistoryCounts, getRetentionPolicyLabel } from "../../lib/display";
+import {
+  createRetentionCountFormatter,
+  getRetentionHistoryCounts,
+  getRetentionPolicyLabel,
+} from "../../lib/display";
 import type { TRetentionRun } from "../../types";
 
 const PAGE_SIZE = 25;
@@ -84,8 +88,7 @@ export const RetentionHistoryView = ({ organizationId, timeZone }: Readonly<Rete
     refetch,
   } = useRetentionRuns({ organizationId, includeEmpty: !hideEmpty, limit: PAGE_SIZE });
 
-  const numberFormat = new Intl.NumberFormat(locale);
-  const formatCount = (value: number | null) => (value === null ? "—" : numberFormat.format(value));
+  const formatCount = createRetentionCountFormatter(locale);
   const formatRunDate = (iso: string) =>
     formatDateForDisplay(new Date(iso), locale, {
       year: "numeric",
