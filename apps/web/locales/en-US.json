@@ -3029,7 +3029,7 @@
         "responses_counts_from": "The day each response was collected.",
         "responses_due_for_deletion": "{count, plural, one {# response is} other {# responses are}} due for deletion, the first on {date}.",
         "responses_due_for_deletion_capped": "More than {total} responses are due for deletion, the first on {date}.",
-        "responses_notice_help": "Between {min} and {max} days. The survey shows a warning while responses are due; no email.",
+        "responses_notice_help": "Between {min} and {max} days. The survey's owner gets one email the first time responses are due, and the survey summary shows a dated warning.",
         "responses_policy_description": "Responses are deleted when the period ends. There is no archive.",
         "responses_policy_title": "Responses policy",
         "responses_summary": "Delete {period} after collection",

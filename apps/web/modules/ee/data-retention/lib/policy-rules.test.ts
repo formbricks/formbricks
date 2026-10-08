@@ -18,15 +18,12 @@ describe("getRetentionPolicyIssues", () => {
   });
 
   test.each([
-    ["a notice under 30 days", "responses", { warnDays: 29 }, "warnDays"],
+    ["a notice under two weeks", "responses", { warnDays: 13 }, "warnDays"],
     ["a notice over 90 days", "surveys", { warnDays: 91 }, "warnDays"],
     ["a fractional notice", "members", { warnDays: 45.5 }, "warnDays"],
-    ["a period under 30 days", "responses", { deleteDays: 29 }, "deleteDays"],
-    ["a period over 10 years", "surveys", { archiveDays: 3651 }, "archiveDays"],
-    ["a missing period", "members", { archiveDays: null }, "archiveDays"],
-    ["an archive step on responses", "responses", { archiveDays: 365 }, "archiveDays"],
-    ["a delete step on members", "members", { deleteDays: 30 }, "deleteDays"],
-    ["a survey delete step other than 30 days", "surveys", { deleteDays: 60 }, "deleteDays"],
+    ["a period under 30 days", "responses", { periodDays: 29 }, "periodDays"],
+    ["a period over 10 years", "surveys", { periodDays: 3651 }, "periodDays"],
+    ["a fractional period", "members", { periodDays: 364.5 }, "periodDays"],
     ["no survey conditions", "surveys", { conditions: [] }, "conditions"],
     ["a repeated survey condition", "surveys", { conditions: ["noChange", "noChange"] }, "conditions"],
     ["conditions on another policy", "members", { conditions: ["noChange"] }, "conditions"],
@@ -41,15 +38,15 @@ describe("getRetentionPolicyIssues", () => {
       getRetentionPolicyIssues("surveys", {
         ...RETENTION_POLICY_DEFAULTS.surveys,
         warnDays: 90,
-        archiveDays: 3650,
+        periodDays: 3650,
         conditions: ["noResponse", "noChange", "createdBefore"],
       })
     ).toEqual([]);
     expect(
       getRetentionPolicyIssues("responses", {
         ...RETENTION_POLICY_DEFAULTS.responses,
-        warnDays: 30,
-        deleteDays: 30,
+        warnDays: 14,
+        periodDays: 30,
       })
     ).toEqual([]);
   });
@@ -65,7 +62,7 @@ describe("getRetentionPolicyEnabledAt", () => {
   });
 
   test.each([
-    ["a shorter period", { archiveDays: 365 }],
+    ["a shorter period", { periodDays: 365 }],
     ["a shorter notice", { warnDays: 30 }],
     ["fewer conditions", { conditions: ["noResponse"] }],
     ["different conditions", { conditions: ["noResponse", "createdBefore"] }],
@@ -76,7 +73,7 @@ describe("getRetentionPolicyEnabledAt", () => {
   });
 
   test.each([
-    ["a longer period", { archiveDays: 1825 }],
+    ["a longer period", { periodDays: 1825 }],
     ["a longer notice", { warnDays: 90 }],
     ["the same conditions in another order", { conditions: ["noChange", "noResponse"] }],
   ] as const)("keeps it on %s", (_case, change) => {

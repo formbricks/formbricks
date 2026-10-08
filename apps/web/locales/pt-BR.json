@@ -3029,7 +3029,7 @@
         "responses_counts_from": "O dia em que cada resposta foi coletada.",
         "responses_due_for_deletion": "{count, plural, one {# resposta será excluída} many {# de respostas serão excluídas} other {# respostas serão excluídas}}, sendo a primeira em {date}.",
         "responses_due_for_deletion_capped": "Mais de {total} respostas serão excluídas, sendo a primeira em {date}.",
-        "responses_notice_help": "Entre {min} e {max} dias. A pesquisa mostra um aviso enquanto há respostas com prazo de exclusão chegando; nenhum e-mail é enviado.",
+        "responses_notice_help": "Entre {min} e {max} dias. O proprietário da pesquisa recebe um e-mail na primeira vez em que as respostas estiverem com o prazo de retenção vencido, e o resumo da pesquisa mostra um aviso com data.",
         "responses_policy_description": "As respostas são excluídas quando o período termina. Não há arquivo.",
         "responses_policy_title": "Política de respostas",
         "responses_summary": "Excluir {period} após a coleta",

@@ -6,45 +6,27 @@ import {
 } from "../types";
 
 /**
- * The policy rules every writer and the edit dialogs share (ENG-3695): the defaults a never-saved
- * policy reads as, the limits, and when a change restarts the warning (ENG-3614). Pure, so the API and
- * the UI cannot disagree.
+ * The policy rules every writer and the edit dialogs share: the defaults a never-saved policy reads as,
+ * the limits, and when a change restarts the warning (ENG-3614). Pure, so the API and the UI cannot
+ * disagree.
  */
 
-export const RETENTION_WARN_DAYS = { min: 30, max: 90, default: 60 } as const;
-/** The main period of every policy: 30 days to 10 years. */
+/** The notice: two weeks to three months before the action (8 Oct). */
+export const RETENTION_WARN_DAYS = { min: 14, max: 90, default: 60 } as const;
+/** The period of every policy: 30 days to 10 years. */
 export const RETENTION_PERIOD_DAYS = { min: 30, max: 3650 } as const;
-/** A survey is deleted this long after it is archived; the archive window is not configurable. */
-export const RETENTION_SURVEY_DELETE_DAYS = 30;
 
 /** What a policy that has never been saved reads as. Off until someone switches it on. */
 export const RETENTION_POLICY_DEFAULTS: Readonly<Record<TRetentionPolicyKind, TRetentionPolicySettings>> = {
-  responses: {
-    enabled: false,
-    warnDays: RETENTION_WARN_DAYS.default,
-    archiveDays: null,
-    deleteDays: 1095,
-    conditions: [],
-  },
+  responses: { enabled: false, warnDays: RETENTION_WARN_DAYS.default, periodDays: 1095, conditions: [] },
   surveys: {
     enabled: false,
     warnDays: RETENTION_WARN_DAYS.default,
-    archiveDays: 1095,
-    deleteDays: RETENTION_SURVEY_DELETE_DAYS,
+    periodDays: 1095,
     conditions: ["noResponse", "noChange"],
   },
-  members: {
-    enabled: false,
-    warnDays: RETENTION_WARN_DAYS.default,
-    archiveDays: 365,
-    deleteDays: null,
-    conditions: [],
-  },
+  members: { enabled: false, warnDays: RETENTION_WARN_DAYS.default, periodDays: 365, conditions: [] },
 };
-
-/** The field that carries a policy's main period: archive for surveys and members, delete for responses. */
-export const getRetentionPeriodField = (policy: TRetentionPolicyKind): "archiveDays" | "deleteDays" =>
-  policy === "responses" ? "deleteDays" : "archiveDays";
 
 export type TRetentionPolicyIssue = { field: keyof TRetentionPolicySettings; reason: string };
 
@@ -67,26 +49,10 @@ export const getRetentionPolicyIssues = (
       reason: `The notice must be between ${RETENTION_WARN_DAYS.min} and ${RETENTION_WARN_DAYS.max} days.`,
     });
   }
-
-  const periodField = getRetentionPeriodField(policy);
-  const period = settings[periodField];
-  if (period === null || !isWholeNumberInRange(period, RETENTION_PERIOD_DAYS)) {
+  if (!isWholeNumberInRange(settings.periodDays, RETENTION_PERIOD_DAYS)) {
     issues.push({
-      field: periodField,
+      field: "periodDays",
       reason: `The period must be between ${RETENTION_PERIOD_DAYS.min} and ${RETENTION_PERIOD_DAYS.max} days.`,
-    });
-  }
-
-  if (policy === "responses" && settings.archiveDays !== null) {
-    issues.push({ field: "archiveDays", reason: "Responses are deleted, never archived." });
-  }
-  if (policy === "members" && settings.deleteDays !== null) {
-    issues.push({ field: "deleteDays", reason: "Members are deactivated, never deleted." });
-  }
-  if (policy === "surveys" && settings.deleteDays !== RETENTION_SURVEY_DELETE_DAYS) {
-    issues.push({
-      field: "deleteDays",
-      reason: `Surveys are deleted ${RETENTION_SURVEY_DELETE_DAYS} days after they are archived.`,
     });
   }
 
@@ -105,9 +71,6 @@ export const getRetentionPolicyIssues = (
 const sameConditions = (a: readonly TRetentionSurveyCondition[], b: readonly TRetentionSurveyCondition[]) =>
   a.length === b.length && RETENTION_SURVEY_CONDITIONS.every((c) => a.includes(c) === b.includes(c));
 
-const isShorter = (next: number | null, previous: number | null) =>
-  next !== null && previous !== null && next < previous;
-
 /**
  * When the policy's current configuration took effect, after a change from `previous` (null for a
  * policy never saved) to `next`. The warning always runs in full from that moment (ENG-3614), so it is
@@ -124,9 +87,8 @@ export const getRetentionPolicyEnabledAt = (
   if (!previous?.enabled || previous.enabledAt === null) return now;
 
   const couldActEarlier =
-    isShorter(next.warnDays, previous.warnDays) ||
-    isShorter(next.archiveDays, previous.archiveDays) ||
-    isShorter(next.deleteDays, previous.deleteDays) ||
+    next.warnDays < previous.warnDays ||
+    next.periodDays < previous.periodDays ||
     !sameConditions(next.conditions, previous.conditions);
 
   return couldActEarlier ? now : previous.enabledAt;
@@ -136,6 +98,5 @@ export const getRetentionPolicyEnabledAt = (
 export const isSameRetentionPolicy = (a: TRetentionPolicySettings, b: TRetentionPolicySettings): boolean =>
   a.enabled === b.enabled &&
   a.warnDays === b.warnDays &&
-  a.archiveDays === b.archiveDays &&
-  a.deleteDays === b.deleteDays &&
+  a.periodDays === b.periodDays &&
   sameConditions(a.conditions, b.conditions);

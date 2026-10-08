@@ -12,9 +12,17 @@ export type TSurveyRetentionFacts = {
   archivedAt: Date | null;
   oldestResponseAt: Date | null;
   newestResponseAt: Date | null;
-  /** When the surveys-policy notice for this survey went out, if it did. */
-  surveysNoticeSentAt: Date | null;
+  /** The surveys-policy notice for this survey, if one was claimed. */
+  surveysNotice: TNoticeState | null;
+  /** The one-time responses reminder for this survey, if one was claimed. */
+  responsesNotice: TNoticeState | null;
+  /** When the survey's latest exemption on either policy ended; it holds the survey itself. */
+  surveyHeldUntil: Date | null;
+  /** When the survey's latest responses exemption ended. */
+  responsesHeldUntil: Date | null;
 };
+
+export type TNoticeState = { claimedAt: Date; deliveredAt: Date | null };
 
 export type TSurveyRetentionPolicyInput = TRetentionPolicySettings & { enabledAt: Date | null };
 
@@ -34,8 +42,7 @@ const toSchedulePolicy = (
   entity,
   enabledAt: settings.enabledAt,
   warnDays: settings.warnDays,
-  archiveDays: settings.archiveDays,
-  deleteDays: settings.deleteDays,
+  periodDays: settings.periodDays,
 });
 
 /** A date that has passed means the next nightly run acts on it, so it is reported as now. */
@@ -60,7 +67,13 @@ const getResponsesPlan = (
   const schedulePolicy = toSchedulePolicy("responses", policy);
   const { deleteAt } = getRetentionSchedule(
     schedulePolicy,
-    { clock: survey.oldestResponseAt, noticeSentAt: null, archivedAt: null },
+    {
+      clock: survey.oldestResponseAt,
+      noticeClaimedAt: survey.responsesNotice?.claimedAt ?? null,
+      noticeDeliveredAt: survey.responsesNotice?.deliveredAt ?? null,
+      archivedAt: null,
+      heldUntil: survey.responsesHeldUntil,
+    },
     now
   );
   if (!deleteAt) return empty;
@@ -91,14 +104,21 @@ const getSurveysPlan = (
   );
   const schedule = getRetentionSchedule(
     toSchedulePolicy("surveys", policy),
-    { clock, noticeSentAt: survey.surveysNoticeSentAt, archivedAt: survey.archivedAt },
+    {
+      clock,
+      noticeClaimedAt: survey.surveysNotice?.claimedAt ?? null,
+      noticeDeliveredAt: survey.surveysNotice?.deliveredAt ?? null,
+      archivedAt: survey.archivedAt,
+      heldUntil: survey.surveyHeldUntil,
+    },
     now
   );
   return {
     policy: "surveys",
     exempt,
     nextAction: survey.archivedAt ? "delete" : "archive",
-    nextDate: notBefore(survey.archivedAt ? schedule.deleteAt : schedule.archiveAt, now),
+    // Archived (by the policy or by hand): the archive purge deletes it a fixed period later.
+    nextDate: notBefore(survey.archivedAt ? schedule.deleteAt : schedule.actionAt, now),
     dueCreatedAtOrBefore: null,
   };
 };

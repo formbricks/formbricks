@@ -22,16 +22,14 @@ const POLICY_SELECT = {
   enabled: true,
   enabledAt: true,
   warnDays: true,
-  archiveDays: true,
-  deleteDays: true,
+  periodDays: true,
   conditions: true,
 } as const;
 
 const toSettings = (row: TRetentionPolicySettings): TRetentionPolicySettings => ({
   enabled: row.enabled,
   warnDays: row.warnDays,
-  archiveDays: row.archiveDays,
-  deleteDays: row.deleteDays,
+  periodDays: row.periodDays,
   conditions: [...row.conditions],
 });
 
@@ -95,9 +93,9 @@ export async function updateRetentionPolicy({
   return prisma.$transaction(async (tx) => {
     const defaults = RETENTION_POLICY_DEFAULTS[policy];
     const inserted = await tx.$executeRaw`
-      INSERT INTO "RetentionPolicy" ("id", "organizationId", "entity", "warnDays", "archiveDays", "deleteDays", "updated_at")
+      INSERT INTO "RetentionPolicy" ("id", "organizationId", "entity", "warnDays", "periodDays", "updated_at")
       VALUES (${createId()}, ${organizationId}, ${policy}::"RetentionEntity", ${defaults.warnDays},
-              ${defaults.archiveDays}, ${defaults.deleteDays}, ${nowOverride ?? new Date()})
+              ${defaults.periodDays}, ${nowOverride ?? new Date()})
       ON CONFLICT ("organizationId", "entity") DO NOTHING
     `;
     // Lock the row, then read it through Prisma: raw SQL would hand the enum array back unparsed.

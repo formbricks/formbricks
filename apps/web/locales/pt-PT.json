@@ -3029,7 +3029,7 @@
         "responses_counts_from": "O dia em que cada resposta foi recolhida.",
         "responses_due_for_deletion": "{count, plural, one {# resposta está} other {# respostas estão}} prestes a ser eliminada(s), a primeira em {date}.",
         "responses_due_for_deletion_capped": "Mais de {total} respostas estão prestes a ser eliminadas, a primeira em {date}.",
-        "responses_notice_help": "Entre {min} e {max} dias. O questionário mostra um aviso enquanto houver respostas a eliminar; sem e-mail.",
+        "responses_notice_help": "Entre {min} e {max} dias. O proprietário do inquérito recebe um e-mail na primeira vez que as respostas estiverem prestes a expirar, e o resumo do inquérito mostra um aviso com data.",
         "responses_policy_description": "As respostas são eliminadas quando o período termina. Não existe arquivo.",
         "responses_policy_title": "Política de respostas",
         "responses_summary": "Eliminar {period} após a recolha",

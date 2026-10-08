@@ -3029,7 +3029,7 @@
         "responses_counts_from": "各回答が収集された日からカウントします。",
         "responses_due_for_deletion": "{count, plural, other {#件の回答}}が削除予定です。最初の削除日は{date}です。",
         "responses_due_for_deletion_capped": "{total}件を超える回答が削除予定です。最初の削除日は{date}です。",
-        "responses_notice_help": "{min}日〜{max}日の間で設定します。回答の削除期限が近づくと、アンケートに警告が表示されます。メールは送信されません。",
+        "responses_notice_help": "{min}日~{max}日の間で設定できます。回答の保持期限が初めて近づくと、アンケートの所有者にメールが1通届き、アンケートのサマリーには日付つきの警告が表示されます。",
         "responses_policy_description": "回答は期間が終了すると削除されます。アーカイブはありません。",
         "responses_policy_title": "回答ポリシー",
         "responses_summary": "収集から{period}後に削除",

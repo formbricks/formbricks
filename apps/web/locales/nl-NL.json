@@ -3029,7 +3029,7 @@
         "responses_counts_from": "De dag waarop elke reactie is verzameld.",
         "responses_due_for_deletion": "{count, plural, one {# reactie wordt} other {# reacties worden}} binnenkort verwijderd, de eerste op {date}.",
         "responses_due_for_deletion_capped": "Meer dan {total} reacties worden binnenkort verwijderd, de eerste op {date}.",
-        "responses_notice_help": "Tussen {min} en {max} dagen. In de enquête verschijnt een waarschuwing zolang er reacties aan de beurt zijn om te worden verwijderd; er wordt geen e-mail verstuurd.",
+        "responses_notice_help": "Tussen {min} en {max} dagen. De eigenaar van de enquête krijgt één e-mail zodra antwoorden voor het eerst aan de beurt zijn om verwijderd te worden, en in het overzicht van de enquête verschijnt een waarschuwing met een datum.",
         "responses_policy_description": "Reacties worden verwijderd zodra de periode afloopt. Er is geen archief.",
         "responses_policy_title": "Reactiebeleid",
         "responses_summary": "Verwijderen {period} na verzameling",

@@ -31,6 +31,8 @@ enum RetentionSkipReason {
   exempt
   lastOwner
   otherOrganization
+  /// Nobody eligible to email: no owner, creator, owner or manager who is active and can see the survey.
+  noRecipient
 }
 
 /// One policy per organisation and kind of data. Every policy has the same three stages, stored in
@@ -59,10 +61,9 @@ model RetentionPolicy {
   /// How long before the action the notice goes out. The action never runs before the notice has
   /// been out for this long, so the warning always runs in full.
   warnDays       Int                        @default(60)
-  /// The reversible step, counted from the clock: archive a survey, deactivate a member.
-  archiveDays    Int?
-  /// Counted from the actual archive when there is one, otherwise from the clock.
-  deleteDays     Int?
+  /// The period, counted from the target's clock, after which the policy acts: responses are
+  /// deleted, surveys archived (the archive purge deletes them 30 days later), members deactivated.
+  periodDays     Int
   /// Surveys policy only.
   conditions     RetentionSurveyCondition[] @default([])
   updatedBy      User?                      @relation("retentionPolicyUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
@@ -166,7 +167,17 @@ model RetentionNotice {
   surveyId       String?
   user           User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String?
+  /// When the notice was claimed for sending. A claim that never got delivered can be taken over.
   sentAt         DateTime        @default(now())
+  /// When the notice was handed to the mail transport, or recorded without one (no SMTP). The
+  /// warning only counts from a delivered notice, so a crash between claim and send can't let the
+  /// action run without it.
+  deliveredAt    DateTime?
+  /// Whether an email actually went out. False when SMTP isn't configured.
+  emailSent      Boolean         @default(false)
+  /// Set by each claim; delivery is recorded only for the claim that sent the email, so a slow sender
+  /// can't mark a newer claim delivered.
+  claimToken     String?
 
   @@unique([surveyId, entity])
   /// Per organisation: a member's notice from an organisation they have since left must not block a

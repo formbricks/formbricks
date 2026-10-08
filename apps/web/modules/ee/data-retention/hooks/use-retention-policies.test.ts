@@ -12,15 +12,14 @@ const ORG_ID = "clorg11111111111111111111";
 const URL = `/api/internal/retention-policies?organizationId=${ORG_ID}`;
 
 const documentWith = (surveysEnabled: boolean) => ({
-  responses: { enabled: false, warnDays: 60, archiveDays: null, deleteDays: 1095 },
+  responses: { enabled: false, warnDays: 60, periodDays: 1095 },
   surveys: {
     enabled: surveysEnabled,
     warnDays: 60,
-    archiveDays: 1095,
-    deleteDays: 30,
+    periodDays: 1095,
     conditions: ["noResponse", "noChange"],
   },
-  members: { enabled: false, warnDays: 60, archiveDays: 365, deleteDays: null },
+  members: { enabled: false, warnDays: 60, periodDays: 365 },
 });
 
 const json = (body: unknown, status = 200): Response =>

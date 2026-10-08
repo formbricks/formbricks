@@ -48,8 +48,7 @@ describe("retention policies service (real Postgres)", () => {
       enabled: true,
       enabledAt: T0,
       warnDays: 30,
-      archiveDays: 1095,
-      deleteDays: 30,
+      periodDays: 1095,
       conditions: ["noResponse", "noChange"],
       updatedById: userId,
     });
@@ -58,13 +57,13 @@ describe("retention policies service (real Postgres)", () => {
   test("restarts the warning on a shorter period, keeps it on a longer one or while paused", async () => {
     await update({ enabled: true });
 
-    await update({ archiveDays: 1825 }, at(10));
+    await update({ periodDays: 1825 }, at(10));
     expect((await stored()).enabledAt).toEqual(T0);
 
-    await update({ archiveDays: 365 }, at(20));
+    await update({ periodDays: 365 }, at(20));
     expect((await stored()).enabledAt).toEqual(at(20));
 
-    await update({ enabled: false, archiveDays: 90 }, at(30));
+    await update({ enabled: false, periodDays: 90 }, at(30));
     expect((await stored()).enabledAt).toEqual(at(20));
 
     await update({ enabled: true }, at(40));
@@ -72,11 +71,11 @@ describe("retention policies service (real Postgres)", () => {
   });
 
   test("writes nothing, not even a first row, when the result breaks a rule", async () => {
-    const error = await update({ enabled: true, deleteDays: 60, warnDays: 10 }).catch((e: unknown) => e);
+    const error = await update({ enabled: true, periodDays: 10, warnDays: 10 }).catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(RetentionPolicyInvalidError);
     expect((error as RetentionPolicyInvalidError).issues.map((issue) => issue.field).sort()).toEqual([
-      "deleteDays",
+      "periodDays",
       "warnDays",
     ]);
     expect(await getRetentionPolicyRows(organizationId)).toEqual([]);
@@ -139,7 +138,7 @@ describe("retention policies service (real Postgres)", () => {
     await updateRetentionPolicy({
       organizationId: otherOrganizationId,
       policy: "members",
-      patch: { archiveDays: 90 },
+      patch: { periodDays: 90 },
       updatedById: userId,
       now: T0,
     });

@@ -9,12 +9,12 @@ import {
 } from "../types";
 import { formatRetentionPeriod } from "./display";
 import { RETENTION_DAYS_PER_UNIT, daysToRetentionPeriod, retentionPeriodToDays } from "./period";
-import { RETENTION_PERIOD_DAYS, RETENTION_WARN_DAYS, getRetentionPeriodField } from "./policy-rules";
+import { RETENTION_PERIOD_DAYS, RETENTION_WARN_DAYS } from "./policy-rules";
 
 /** The period presets the edit dialog offers (ENG-3610), in days; anything else is "Custom". */
 export const RETENTION_PERIOD_PRESETS = [30, 90, 365, 1095, 1825] as const;
 /** The notice presets; anything else is behind "Customise". */
-export const RETENTION_WARN_PRESETS = [30, 60, 90] as const;
+export const RETENTION_WARN_PRESETS = [14, 30, 60, 90] as const;
 export const CUSTOM = "custom";
 
 const ZUnit = z.enum(Object.keys(RETENTION_DAYS_PER_UNIT) as [keyof typeof RETENTION_DAYS_PER_UNIT]);
@@ -92,11 +92,8 @@ export const getPolicyFormWarnDays = (
 };
 
 /** The dialog's starting values for a policy's settings, picking the preset that matches when one does. */
-export const toPolicyFormValues = (
-  policy: TRetentionPolicyKind,
-  settings: TRetentionPolicySettings
-): TPolicyFormValues => {
-  const periodDays = settings[getRetentionPeriodField(policy)] ?? RETENTION_PERIOD_PRESETS[0];
+export const toPolicyFormValues = (settings: TRetentionPolicySettings): TPolicyFormValues => {
+  const { periodDays } = settings;
   const isPeriodPreset = (RETENTION_PERIOD_PRESETS as readonly number[]).includes(periodDays);
   const customPeriod = daysToRetentionPeriod(periodDays);
   const isWarnPreset = (RETENTION_WARN_PRESETS as readonly number[]).includes(settings.warnDays);
@@ -112,10 +109,7 @@ export const toPolicyFormValues = (
   };
 };
 
-/**
- * The `PATCH` body for a valid form: only the fields the dialog edits for that policy. The steps it
- * doesn't show (the survey delete step, the absent ones) are left to the server.
- */
+/** The settings a valid form describes, for the one policy the dialog edits. */
 export const toPolicyPatch = (
   policy: TRetentionPolicyKind,
   values: TPolicyFormValues
@@ -127,7 +121,7 @@ export const toPolicyPatch = (
   return {
     enabled: values.enabled,
     warnDays,
-    [getRetentionPeriodField(policy)]: periodDays,
+    periodDays,
     ...(policy === "surveys" ? { conditions: orderConditions(values.conditions) } : {}),
   };
 };

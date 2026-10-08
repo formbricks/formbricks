@@ -1,5 +1,6 @@
 import type { TFunction } from "i18next";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
+import { SURVEY_ARCHIVE_RETENTION_DAYS } from "@/modules/survey/archive/lib/retention-days";
 import type {
   TRetentionExemption,
   TRetentionPolicyKind,
@@ -10,7 +11,6 @@ import type {
   TSurveyRetentionPolicy,
 } from "../types";
 import { daysToRetentionPeriod } from "./period";
-import { getRetentionPeriodField } from "./policy-rules";
 
 export const getRetentionPolicyLabel = (policy: TRetentionPolicyKind, t: TFunction): string => {
   switch (policy) {
@@ -83,8 +83,7 @@ export const getRetentionPolicySummary = (
   t: TFunction,
   locale: string
 ): string => {
-  const days = settings[getRetentionPeriodField(policy)];
-  const period = days === null ? "—" : formatRetentionPeriod(days, t);
+  const period = formatRetentionPeriod(settings.periodDays, t);
   switch (policy) {
     case "responses":
       return t("workspace.settings.data_retention.responses_summary", { period });
@@ -94,7 +93,8 @@ export const getRetentionPolicySummary = (
         conditions: new Intl.ListFormat(locale, { type: "conjunction" }).format(
           settings.conditions.map((condition) => getConditionShortLabel(condition, t))
         ),
-        deletePeriod: settings.deleteDays === null ? "—" : formatRetentionPeriod(settings.deleteDays, t),
+        // Archived surveys are deleted by the archive purge, a fixed period later for everyone.
+        deletePeriod: formatRetentionPeriod(SURVEY_ARCHIVE_RETENTION_DAYS, t),
       });
     case "members":
       return t("workspace.settings.data_retention.members_summary", { period });

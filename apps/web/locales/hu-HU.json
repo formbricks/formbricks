@@ -3029,7 +3029,7 @@
         "responses_counts_from": "Az egyes válaszok begyűjtésének napja.",
         "responses_due_for_deletion": "{count, plural, one {# válasz törlésére} other {# válasz törlésére}} kerül sor, az elsőre ekkor: {date}.",
         "responses_due_for_deletion_capped": "Több mint {total} válasz törlésére kerül sor, az elsőre ekkor: {date}.",
-        "responses_notice_help": "{min} és {max} nap között. A felmérés figyelmeztetést jelenít meg, amíg a válaszok törlésének ideje esedékes; e-mail értesítés nem érkezik.",
+        "responses_notice_help": "{min} és {max} nap között. A felmérés tulajdonosa egy e-mailt kap az első alkalommal, amikor a válaszok törlésre esedékessé válnak, a felmérés összegzése pedig dátummal ellátott figyelmeztetést jelenít meg.",
         "responses_policy_description": "A válaszok az időszak végén törlésre kerülnek. Archívum nem készül.",
         "responses_policy_title": "Válaszokra vonatkozó szabályzat",
         "responses_summary": "Törlés a begyűjtés után {period} elteltével",

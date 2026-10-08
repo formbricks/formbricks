@@ -46,15 +46,14 @@ const USER_ID = "cluser1111111111111111111";
 const POLICY_ID = "clpol11111111111111111111";
 
 const DEFAULT_DOCUMENT = {
-  responses: { enabled: false, warnDays: 60, archiveDays: null, deleteDays: 1095 },
+  responses: { enabled: false, warnDays: 60, periodDays: 1095 },
   surveys: {
     enabled: false,
     warnDays: 60,
-    archiveDays: 1095,
-    deleteDays: 30,
+    periodDays: 1095,
     conditions: ["noResponse", "noChange"],
   },
-  members: { enabled: false, warnDays: 60, archiveDays: 365, deleteDays: null },
+  members: { enabled: false, warnDays: 60, periodDays: 365 },
 };
 
 const get = (query = `organizationId=${ORG_ID}`) =>
@@ -104,7 +103,7 @@ describe("GET /api/internal/retention-policies", () => {
 
     const { data } = await (await get()).json();
 
-    expect(data.members).toEqual({ enabled: true, warnDays: 60, archiveDays: 365, deleteDays: null });
+    expect(data.members).toEqual({ enabled: true, warnDays: 60, periodDays: 365 });
     expect(data.responses).toEqual(DEFAULT_DOCUMENT.responses);
   });
 
@@ -177,16 +176,16 @@ describe("PATCH /api/internal/retention-policies", () => {
     mocks.update.mockRejectedValueOnce(
       new RetentionPolicyInvalidError([
         { field: "warnDays", reason: "The notice must be between 30 and 90 days." },
-        { field: "deleteDays", reason: "Surveys are deleted 30 days after they are archived." },
+        { field: "periodDays", reason: "The period must be between 30 and 3650 days." },
       ])
     );
 
-    const response = await patch({ surveys: { warnDays: 10, deleteDays: 60 } });
+    const response = await patch({ surveys: { warnDays: 10, periodDays: 10 } });
 
     expect(response.status).toBe(422);
     expect((await response.json()).invalid_params).toEqual([
       { name: "surveys.warnDays", reason: expect.any(String) },
-      { name: "surveys.deleteDays", reason: expect.any(String) },
+      { name: "surveys.periodDays", reason: expect.any(String) },
     ]);
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({ action: "updated", organizationId: ORG_ID, status: "failure" })
@@ -201,7 +200,8 @@ describe("PATCH /api/internal/retention-policies", () => {
     ["an unknown field", { surveys: { enabled: true, archiveAfter: 30 } }],
     ["conditions on the responses policy", { responses: { conditions: ["noChange"] } }],
     ["an unknown condition", { surveys: { conditions: ["noLogin"] } }],
-    ["a number as text", { members: { archiveDays: "365" } }],
+    ["a number as text", { members: { periodDays: "365" } }],
+    ["a removed field", { surveys: { deleteDays: 30 } }],
     ["a fractional number of days", { members: { warnDays: 45.5 } }],
   ])("returns 400 on %s", async (_case, body) => {
     expect((await patch(body)).status).toBe(400);

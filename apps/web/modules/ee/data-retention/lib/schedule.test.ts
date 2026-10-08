@@ -16,201 +16,227 @@ const surveysPolicy: TRetentionSchedulePolicy = {
   entity: "surveys",
   enabledAt: day(-1000),
   warnDays: 30,
-  archiveDays: 365,
-  deleteDays: 30,
+  periodDays: 365,
 };
 
 const responsesPolicy: TRetentionSchedulePolicy = {
   entity: "responses",
   enabledAt: day(-1000),
   warnDays: 30,
-  archiveDays: null,
-  deleteDays: 730,
+  periodDays: 730,
 };
 
 const membersPolicy: TRetentionSchedulePolicy = {
   entity: "members",
   enabledAt: day(-1000),
   warnDays: 60,
-  archiveDays: 365,
-  deleteDays: null,
+  periodDays: 365,
 };
 
+// A notice is claimed and delivered at the same moment unless a test says otherwise.
 const target = (overrides: Partial<TRetentionTargetState> = {}): TRetentionTargetState => ({
   clock: day(0),
-  noticeSentAt: null,
+  noticeClaimedAt: overrides.noticeDeliveredAt ?? null,
+  noticeDeliveredAt: null,
   archivedAt: null,
+  heldUntil: null,
   ...overrides,
 });
 
 describe("getRetentionSchedule", () => {
-  test("plans every stage from the clock when the notice goes out on time", () => {
-    const schedule = getRetentionSchedule(surveysPolicy, target({ noticeSentAt: day(335) }), day(340));
+  test("plans the notice and the action from the clock when the notice goes out on time", () => {
+    const schedule = getRetentionSchedule(surveysPolicy, target({ noticeDeliveredAt: day(335) }), day(340));
 
     expect(schedule).toEqual({
       warnAt: day(335),
       noticeAt: day(335),
       noticeSent: true,
-      archiveAt: day(365),
+      actionAt: day(365),
+      // Archived on day 365, purged 30 days later.
       deleteAt: day(395),
     });
   });
 
   describe("the warning always runs in full", () => {
-    test("a notice sent late pushes the archive back to a full warning after it", () => {
-      const schedule = getRetentionSchedule(surveysPolicy, target({ noticeSentAt: day(500) }), day(510));
+    test("a notice delivered late pushes the action back to a full warning after it", () => {
+      const schedule = getRetentionSchedule(surveysPolicy, target({ noticeDeliveredAt: day(500) }), day(510));
 
-      expect(schedule.archiveAt).toEqual(day(530));
+      expect(schedule.actionAt).toEqual(day(530));
       expect(schedule.deleteAt).toEqual(day(560));
     });
 
-    test("a notice that is overdue but unsent is projected from now, not from the clock", () => {
+    test("a notice that is overdue but not delivered is projected from now, not from the clock", () => {
       const schedule = getRetentionSchedule(surveysPolicy, target(), day(500));
 
       expect(schedule.noticeSent).toBe(false);
       expect(schedule.noticeAt).toEqual(day(500));
-      expect(schedule.archiveAt).toEqual(day(530));
+      expect(schedule.actionAt).toEqual(day(530));
     });
 
-    test("nothing is archived until a notice is on record, however old the clock", () => {
+    test("nothing acts until a notice has been delivered, however old the clock", () => {
       expect(getDueRetentionStep(surveysPolicy, target(), day(5000))).toBe("notify");
-      expect(getDueRetentionStep(surveysPolicy, target({ noticeSentAt: day(4990) }), day(5000))).toBeNull();
-      expect(getDueRetentionStep(surveysPolicy, target({ noticeSentAt: day(4970) }), day(5000))).toBe(
-        "archive"
+      expect(
+        getDueRetentionStep(surveysPolicy, target({ noticeDeliveredAt: day(4990) }), day(5000))
+      ).toBeNull();
+      expect(getDueRetentionStep(surveysPolicy, target({ noticeDeliveredAt: day(4970) }), day(5000))).toBe(
+        "act"
       );
-    });
-
-    test("responses, which get no notice, wait a full warning after the policy is switched on", () => {
-      const policy = { ...responsesPolicy, enabledAt: day(1000) };
-
-      expect(getRetentionSchedule(policy, target(), day(1000)).deleteAt).toEqual(day(1030));
-      expect(getDueRetentionStep(policy, target(), day(1029))).toBeNull();
-      expect(getDueRetentionStep(policy, target(), day(1030))).toBe("delete");
     });
   });
 
-  describe("delete follows the actual archive", () => {
-    test("counts from when the target was archived, not from when it was planned", () => {
-      const archived = target({ noticeSentAt: day(335), archivedAt: day(400) });
+  describe("an archived survey is the purge's", () => {
+    test("is purged a fixed 30 days after it was archived, by the policy or by hand", () => {
+      const archived = target({ noticeDeliveredAt: day(335), archivedAt: day(400) });
 
-      expect(getRetentionSchedule(surveysPolicy, archived, day(401)).deleteAt).toEqual(day(430));
-      expect(getDueRetentionStep(surveysPolicy, archived, day(429))).toBeNull();
-      expect(getDueRetentionStep(surveysPolicy, archived, day(430))).toBe("delete");
+      expect(getRetentionSchedule(surveysPolicy, archived, day(401))).toMatchObject({
+        actionAt: day(400),
+        deleteAt: day(430),
+      });
+      expect(getRetentionSchedule(surveysPolicy, target({ archivedAt: day(10) }), day(11)).deleteAt).toEqual(
+        day(40)
+      );
     });
 
-    test("a target archived by hand is deleted on the same schedule", () => {
-      const archived = target({ archivedAt: day(10) });
-
-      expect(getRetentionSchedule(surveysPolicy, archived, day(11)).deleteAt).toEqual(day(40));
-    });
-
-    test("a policy without a delete stage never deletes", () => {
-      const deactivated = target({ noticeSentAt: day(305), archivedAt: day(365) });
-
-      expect(getRetentionSchedule(membersPolicy, deactivated, day(9000)).deleteAt).toBeNull();
-      expect(getDueRetentionStep(membersPolicy, deactivated, day(9000))).toBeNull();
+    test("leaves the policy nothing to do", () => {
+      expect(getDueRetentionStep(surveysPolicy, target({ archivedAt: day(10) }), day(9000))).toBeNull();
     });
   });
 
   describe("a clock reset voids the notice", () => {
     test("a notice older than the clock no longer counts", () => {
-      const reset = target({ clock: day(400), noticeSentAt: day(335) });
+      const reset = target({ clock: day(400), noticeDeliveredAt: day(335) });
       const schedule = getRetentionSchedule(surveysPolicy, reset, day(401));
 
       expect(schedule.noticeSent).toBe(false);
       expect(schedule.warnAt).toEqual(day(735));
-      expect(schedule.archiveAt).toEqual(day(765));
+      expect(schedule.actionAt).toEqual(day(765));
       expect(getDueRetentionStep(surveysPolicy, reset, day(401))).toBeNull();
-    });
-
-    test("the next cycle sends a new notice before anything is archived", () => {
-      const reset = target({ clock: day(400), noticeSentAt: day(335) });
-
       expect(getDueRetentionStep(surveysPolicy, reset, day(765))).toBe("notify");
     });
 
-    test("a notice sent at the same instant as the clock still counts", () => {
-      expect(getRetentionSchedule(surveysPolicy, target({ noticeSentAt: day(0) }), day(1)).noticeSent).toBe(
-        true
-      );
+    test("a notice delivered at the same instant as the clock still counts", () => {
+      expect(
+        getRetentionSchedule(surveysPolicy, target({ noticeDeliveredAt: day(0) }), day(1)).noticeSent
+      ).toBe(true);
     });
   });
 
   describe("a policy switched on, unpaused or tightened voids older notices (ENG-3614)", () => {
     // Paused after the notice went out, unpaused much later: the clock never moved, so without this
-    // rule the old notice would archive the survey the night the policy is unpaused.
+    // rule the old notice would act on the target the night the policy is unpaused.
     const unpaused = { ...surveysPolicy, enabledAt: day(800) };
 
-    test("a notice sent before the policy took effect no longer counts", () => {
-      const schedule = getRetentionSchedule(unpaused, target({ noticeSentAt: day(335) }), day(801));
+    test("a notice delivered before the policy took effect no longer counts", () => {
+      const schedule = getRetentionSchedule(unpaused, target({ noticeDeliveredAt: day(335) }), day(801));
 
       expect(schedule.noticeSent).toBe(false);
-      expect(schedule.archiveAt).toEqual(day(831));
+      expect(schedule.actionAt).toEqual(day(831));
     });
 
-    test("the next cycle sends a new notice and archives only after a full warning", () => {
-      expect(getDueRetentionStep(unpaused, target({ noticeSentAt: day(335) }), day(801))).toBe("notify");
-      expect(getDueRetentionStep(unpaused, target({ noticeSentAt: day(801) }), day(830))).toBeNull();
-      expect(getDueRetentionStep(unpaused, target({ noticeSentAt: day(801) }), day(831))).toBe("archive");
+    test("the next cycle sends a new notice and acts only after a full warning", () => {
+      expect(getDueRetentionStep(unpaused, target({ noticeDeliveredAt: day(335) }), day(801))).toBe("notify");
+      expect(getDueRetentionStep(unpaused, target({ noticeDeliveredAt: day(801) }), day(830))).toBeNull();
+      expect(getDueRetentionStep(unpaused, target({ noticeDeliveredAt: day(801) }), day(831))).toBe("act");
+    });
+  });
+
+  describe("a notice counts from its claim and its delivery", () => {
+    test("a claim that was never delivered doesn't count", () => {
+      expect(
+        getDueRetentionStep(
+          surveysPolicy,
+          target({ noticeClaimedAt: day(335), noticeDeliveredAt: null }),
+          day(400)
+        )
+      ).toBe("notify");
     });
 
-    test("a notice sent after the policy took effect still counts", () => {
-      const current = { ...surveysPolicy, enabledAt: day(300) };
+    test("a notice claimed before a tightening is void, even if delivered after it", () => {
+      // Claimed under the old settings at day 335 (its email carries the old date), the policy was
+      // tightened at day 336, and the email only went out at day 337.
+      const tightened = { ...surveysPolicy, enabledAt: day(336) };
+      const late = target({ noticeClaimedAt: day(335), noticeDeliveredAt: day(337) });
 
-      expect(getRetentionSchedule(current, target({ noticeSentAt: day(335) }), day(340)).noticeSent).toBe(
-        true
+      expect(getRetentionSchedule(tightened, late, day(338)).noticeSent).toBe(false);
+      expect(getDueRetentionStep(tightened, late, day(338))).toBe("notify");
+    });
+
+    test("the warning runs from delivery, not from the claim", () => {
+      const slow = target({ noticeClaimedAt: day(335), noticeDeliveredAt: day(340) });
+
+      expect(getRetentionSchedule(surveysPolicy, slow, day(341)).actionAt).toEqual(day(370));
+    });
+
+    test("a notice from before an exemption ended is void", () => {
+      const held = target({ noticeDeliveredAt: day(335), heldUntil: day(600) });
+
+      expect(getRetentionSchedule(surveysPolicy, held, day(601)).noticeSent).toBe(false);
+      expect(getDueRetentionStep(surveysPolicy, held, day(601))).toBe("notify");
+      expect(
+        getDueRetentionStep(
+          surveysPolicy,
+          target({ noticeDeliveredAt: day(601), heldUntil: day(600) }),
+          day(631)
+        )
+      ).toBe("act");
+    });
+  });
+
+  describe("the responses reminder, sent once per survey", () => {
+    test("the first deletion waits a full warning after the reminder", () => {
+      const policy = { ...responsesPolicy, enabledAt: day(1000) };
+
+      expect(getDueRetentionStep(policy, target(), day(1000))).toBe("notify");
+      expect(getDueRetentionStep(policy, target({ noticeDeliveredAt: day(1000) }), day(1029))).toBeNull();
+      expect(getDueRetentionStep(policy, target({ noticeDeliveredAt: day(1000) }), day(1030))).toBe("act");
+    });
+
+    test("later responses need no new reminder: newer clocks don't void it", () => {
+      const later = target({ clock: day(500), noticeDeliveredAt: day(400) });
+      const schedule = getRetentionSchedule(responsesPolicy, later, day(1300));
+
+      expect(schedule.noticeSent).toBe(true);
+      expect(schedule.actionAt).toEqual(day(1230));
+      expect(getDueRetentionStep(responsesPolicy, later, day(1230))).toBe("act");
+    });
+
+    test("a policy change voids it, so the next deletion waits for a new reminder", () => {
+      const tightened = { ...responsesPolicy, enabledAt: day(1200) };
+
+      expect(getDueRetentionStep(tightened, target({ noticeDeliveredAt: day(400) }), day(1300))).toBe(
+        "notify"
       );
     });
   });
 
-  test("policies without an archive step act on the clock with delete", () => {
-    expect(getRetentionSchedule(responsesPolicy, target(), day(1))).toEqual({
-      warnAt: day(700),
-      noticeAt: null,
-      noticeSent: false,
-      archiveAt: null,
-      deleteAt: day(730),
-    });
+  test("members are deactivated after their notice, and nothing is deleted", () => {
+    expect(getDueRetentionStep(membersPolicy, target(), day(305))).toBe("notify");
+    expect(getDueRetentionStep(membersPolicy, target({ noticeDeliveredAt: day(305) }), day(364))).toBeNull();
+    expect(getDueRetentionStep(membersPolicy, target({ noticeDeliveredAt: day(305) }), day(365))).toBe("act");
+    expect(
+      getRetentionSchedule(membersPolicy, target({ noticeDeliveredAt: day(305) }), day(365)).deleteAt
+    ).toBeNull();
+  });
+
+  test("responses are deleted when the policy acts", () => {
+    const schedule = getRetentionSchedule(responsesPolicy, target({ noticeDeliveredAt: day(700) }), day(701));
+
+    expect(schedule.actionAt).toEqual(day(730));
+    expect(schedule.deleteAt).toEqual(day(730));
   });
 
   test("a policy that is off is planned as if it were switched on now", () => {
-    const off = { ...responsesPolicy, enabledAt: null };
+    const off = { ...surveysPolicy, enabledAt: null };
 
-    expect(getRetentionSchedule(off, target(), day(2000)).deleteAt).toEqual(day(2030));
+    expect(getRetentionSchedule(off, target(), day(2000)).actionAt).toEqual(day(2030));
   });
 
   test("a warning longer than the period starts the notice at the clock's own past", () => {
-    const shortPolicy = { ...surveysPolicy, warnDays: 90, archiveDays: 60 };
+    const shortPolicy = { ...surveysPolicy, warnDays: 90, periodDays: 60 };
 
-    expect(getRetentionSchedule(shortPolicy, target({ noticeSentAt: day(0) }), day(0)).archiveAt).toEqual(
+    expect(getRetentionSchedule(shortPolicy, target({ noticeDeliveredAt: day(0) }), day(0)).actionAt).toEqual(
       day(90)
     );
-  });
-
-  test("rejects a policy with no action stage", () => {
-    expect(() =>
-      getRetentionSchedule({ ...surveysPolicy, archiveDays: null, deleteDays: null }, target(), day(0))
-    ).toThrow();
-  });
-});
-
-describe("getDueRetentionStep", () => {
-  test("walks a survey through notify → archive → delete", () => {
-    expect(getDueRetentionStep(surveysPolicy, target(), day(334))).toBeNull();
-    expect(getDueRetentionStep(surveysPolicy, target(), day(335))).toBe("notify");
-    expect(getDueRetentionStep(surveysPolicy, target({ noticeSentAt: day(335) }), day(364))).toBeNull();
-    expect(getDueRetentionStep(surveysPolicy, target({ noticeSentAt: day(335) }), day(365))).toBe("archive");
-    expect(
-      getDueRetentionStep(surveysPolicy, target({ noticeSentAt: day(335), archivedAt: day(365) }), day(394))
-    ).toBeNull();
-    expect(
-      getDueRetentionStep(surveysPolicy, target({ noticeSentAt: day(335), archivedAt: day(365) }), day(395))
-    ).toBe("delete");
-  });
-
-  test("deactivates a member after the notice and stops there", () => {
-    expect(getDueRetentionStep(membersPolicy, target(), day(305))).toBe("notify");
-    expect(getDueRetentionStep(membersPolicy, target({ noticeSentAt: day(305) }), day(365))).toBe("archive");
   });
 });
 
@@ -218,8 +244,9 @@ describe("getRetentionClockCutoffs", () => {
   // The sweep's SQL selects with these bounds and re-checks each row with getDueRetentionStep, so the
   // two must agree exactly at the boundary: a clock on the cutoff is due, one millisecond later isn't.
   const justAfter = (date: Date) => new Date(date.getTime() + 1);
+  const policies = [surveysPolicy, responsesPolicy, membersPolicy];
 
-  test.each([surveysPolicy, membersPolicy])("agrees with the notice step for $entity", (policy) => {
+  test.each(policies)("agrees with the notice step for $entity", (policy) => {
     const now = day(5000);
     const { noticeDueAtOrBefore } = getRetentionClockCutoffs(policy, now);
 
@@ -227,39 +254,17 @@ describe("getRetentionClockCutoffs", () => {
     expect(getDueRetentionStep(policy, target({ clock: justAfter(noticeDueAtOrBefore) }), now)).toBeNull();
   });
 
-  test.each([surveysPolicy, membersPolicy])(
-    "agrees with the first action for $entity once the notice has run",
-    (policy) => {
-      const now = day(5000);
-      const { actionDueAtOrBefore } = getRetentionClockCutoffs(policy, now);
-      const noticeSentAt = addRetentionDays(now, -policy.warnDays);
-      if (!actionDueAtOrBefore) throw new Error("expected a cutoff");
-
-      expect(getDueRetentionStep(policy, target({ clock: actionDueAtOrBefore, noticeSentAt }), now)).toBe(
-        "archive"
-      );
-      expect(
-        getDueRetentionStep(policy, target({ clock: justAfter(actionDueAtOrBefore), noticeSentAt }), now)
-      ).toBeNull();
-    }
-  );
-
-  test("agrees with the delete step for responses", () => {
+  test.each(policies)("agrees with the action for $entity once the notice has run", (policy) => {
     const now = day(5000);
-    const { actionDueAtOrBefore } = getRetentionClockCutoffs(responsesPolicy, now);
-    if (!actionDueAtOrBefore) throw new Error("expected a cutoff");
+    const { actionDueAtOrBefore } = getRetentionClockCutoffs(policy, now);
+    const noticeDeliveredAt = addRetentionDays(now, -policy.warnDays);
 
-    expect(getDueRetentionStep(responsesPolicy, target({ clock: actionDueAtOrBefore }), now)).toBe("delete");
+    expect(getDueRetentionStep(policy, target({ clock: actionDueAtOrBefore, noticeDeliveredAt }), now)).toBe(
+      "act"
+    );
     expect(
-      getDueRetentionStep(responsesPolicy, target({ clock: justAfter(actionDueAtOrBefore) }), now)
+      getDueRetentionStep(policy, target({ clock: justAfter(actionDueAtOrBefore), noticeDeliveredAt }), now)
     ).toBeNull();
-  });
-
-  test("selects no responses until the policy has been on for a full warning", () => {
-    const policy = { ...responsesPolicy, enabledAt: day(1000) };
-
-    expect(getRetentionClockCutoffs(policy, day(1029)).actionDueAtOrBefore).toBeNull();
-    expect(getRetentionClockCutoffs(policy, day(1030)).actionDueAtOrBefore).toEqual(day(300));
   });
 });
 
@@ -323,7 +328,7 @@ describe("getMemberRetentionClock", () => {
     );
 
     expect(
-      getRetentionSchedule(membersPolicy, target({ clock, noticeSentAt: day(305) }), day(401)).noticeSent
+      getRetentionSchedule(membersPolicy, target({ clock, noticeDeliveredAt: day(305) }), day(401)).noticeSent
     ).toBe(false);
   });
 });

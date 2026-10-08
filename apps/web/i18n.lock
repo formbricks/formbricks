@@ -2922,7 +2922,7 @@ checksums:
     workspace/settings/data_retention/responses_counts_from: 61326751553a4266e57eb73cbd0c23b4
     workspace/settings/data_retention/responses_due_for_deletion: 3059c8c1a27e400a20599cba22125010
     workspace/settings/data_retention/responses_due_for_deletion_capped: 6d5f6566e4eb9948a5839c225afc4a8e
-    workspace/settings/data_retention/responses_notice_help: db9599496490421b031571d3914485aa
+    workspace/settings/data_retention/responses_notice_help: 2557ce307d4dfe910a1aea35c9576fe9
     workspace/settings/data_retention/responses_policy_description: df5737d5f98f9d6f142ed34e6e7ef51c
     workspace/settings/data_retention/responses_policy_title: f525188503e3514f28a497a0fe36bcbb
     workspace/settings/data_retention/responses_summary: db44b700fa15c436e129501336e7c5c5

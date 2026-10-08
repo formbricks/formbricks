@@ -3029,7 +3029,7 @@
         "responses_counts_from": "从每条回复的收集当天开始计算。",
         "responses_due_for_deletion": "{count, plural, other {# 条回复}}即将被删除，最早的一条将于 {date} 删除。",
         "responses_due_for_deletion_capped": "超过 {total} 条回复即将被删除，最早的一条将于 {date} 删除。",
-        "responses_notice_help": "介于 {min} 至 {max} 天之间。回复到期期间，问卷会显示警告；不会发送邮件。",
+        "responses_notice_help": "可设置为 {min} 到 {max} 天之间。首次到达回复保留期限时，问卷所有者会收到一封邮件，问卷摘要中也会显示带日期的提醒。",
         "responses_policy_description": "回复将在期限结束时删除,且不会存档。",
         "responses_policy_title": "回复策略",
         "responses_summary": "收集后 {period}删除",

@@ -32,7 +32,14 @@ describe("survey retention service (real Postgres)", () => {
 
   test("reads a survey's timestamps, its oldest and newest response, and its notice", async () => {
     await prisma.retentionNotice.create({
-      data: { organizationId, entity: "surveys", surveyId, sentAt: daysAgo(3) },
+      data: {
+        organizationId,
+        entity: "surveys",
+        surveyId,
+        sentAt: daysAgo(3),
+        deliveredAt: daysAgo(3),
+        emailSent: true,
+      },
     });
 
     const survey = await prisma.survey.findUniqueOrThrow({ where: { id: surveyId } });
@@ -44,11 +51,14 @@ describe("survey retention service (real Postgres)", () => {
       archivedAt: null,
       oldestResponseAt: daysAgo(50),
       newestResponseAt: daysAgo(10),
-      surveysNoticeSentAt: daysAgo(3),
+      surveysNotice: { claimedAt: daysAgo(3), deliveredAt: daysAgo(3) },
+      responsesNotice: null,
+      surveyHeldUntil: null,
+      responsesHeldUntil: null,
     });
     expect(await getSurveyRetentionFacts(other)).toMatchObject({
       oldestResponseAt: daysAgo(500),
-      surveysNoticeSentAt: null,
+      surveysNotice: null,
     });
   });
 
@@ -121,7 +131,7 @@ describe("survey retention service (real Postgres)", () => {
 
     const policies = await getSurveyRetentionPolicies(organizationId);
 
-    expect(policies.responses).toMatchObject({ enabled: true, enabledAt: NOW, deleteDays: 1095 });
+    expect(policies.responses).toMatchObject({ enabled: true, enabledAt: NOW, periodDays: 1095 });
     expect(policies.surveys).toMatchObject({ enabled: false, enabledAt: null });
   });
 });

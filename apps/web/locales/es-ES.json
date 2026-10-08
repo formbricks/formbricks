@@ -3029,7 +3029,7 @@
         "responses_counts_from": "El día en que se recogió cada respuesta.",
         "responses_due_for_deletion": "{count, plural, one {# respuesta se eliminará} many {# respuestas se eliminarán} other {# respuestas se eliminarán}}, la primera el {date}.",
         "responses_due_for_deletion_capped": "Más de {total} respuestas se eliminarán, la primera el {date}.",
-        "responses_notice_help": "Entre {min} y {max} días. La encuesta muestra una advertencia mientras haya respuestas pendientes de eliminar; no se envía ningún correo.",
+        "responses_notice_help": "Entre {min} y {max} días. El propietario de la encuesta recibe un correo electrónico la primera vez que se deban eliminar las respuestas, y el resumen de la encuesta muestra una advertencia con fecha.",
         "responses_policy_description": "Las respuestas se eliminan cuando termina el periodo. No hay archivo.",
         "responses_policy_title": "Política de respuestas",
         "responses_summary": "Eliminar {period} después de la recogida",

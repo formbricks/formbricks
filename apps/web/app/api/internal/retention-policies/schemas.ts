@@ -13,8 +13,7 @@ const ZPolicyFieldsPatch = z
   .object({
     enabled: z.boolean(),
     warnDays: ZDays,
-    archiveDays: ZDays.nullable(),
-    deleteDays: ZDays.nullable(),
+    periodDays: ZDays,
   })
   .partial()
   .strict();

@@ -12,11 +12,10 @@
 -- "Organization", "Survey" and "User", which are live tables; failing fast is better than queueing
 -- behind a long-running query and holding the lock queue open behind us.
 --
--- The CHECK constraints hold the structural invariants Prisma cannot express: positive day counts, at
--- least one action stage, conditions only on the surveys policy, exactly one target per exemption and
--- notice, and a reason on every skipped run item. The per-entity product rules (which stages each
--- policy uses, the allowed ranges) are validated by the API instead, because they are expected to
--- widen. Prisma neither models nor drops CHECK constraints, so they cause no schema drift.
+-- The CHECK constraints hold the structural invariants Prisma cannot express: positive day counts,
+-- conditions only on the surveys policy, exactly one target per exemption and notice, and a reason on
+-- every skipped run item. The allowed ranges are validated by the API instead, because they are
+-- expected to widen. Prisma neither models nor drops CHECK constraints, so they cause no schema drift.
 BEGIN;
 SET LOCAL lock_timeout = '5s';
 
@@ -33,7 +32,7 @@ CREATE TYPE "RetentionTargetType" AS ENUM ('survey', 'user');
 CREATE TYPE "RetentionRunItemAction" AS ENUM ('notified', 'archived', 'deactivated', 'deleted', 'skipped');
 
 -- CreateEnum
-CREATE TYPE "RetentionSkipReason" AS ENUM ('exempt', 'lastOwner', 'otherOrganization');
+CREATE TYPE "RetentionSkipReason" AS ENUM ('exempt', 'lastOwner', 'otherOrganization', 'noRecipient');
 
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "RetentionPolicy" (
@@ -45,14 +44,14 @@ CREATE TABLE IF NOT EXISTS "RetentionPolicy" (
     "enabled" BOOLEAN NOT NULL DEFAULT false,
     "enabledAt" TIMESTAMP(3),
     "warnDays" INTEGER NOT NULL DEFAULT 60,
-    "archiveDays" INTEGER,
-    "deleteDays" INTEGER,
+    "periodDays" INTEGER NOT NULL,
     "conditions" "RetentionSurveyCondition"[] DEFAULT ARRAY[]::"RetentionSurveyCondition"[],
     "updatedById" TEXT,
 
     CONSTRAINT "RetentionPolicy_pkey" PRIMARY KEY ("id"),
-    CONSTRAINT "RetentionPolicy_days_positive_check" CHECK ("warnDays" > 0 AND ("archiveDays" IS NULL OR "archiveDays" > 0) AND ("deleteDays" IS NULL OR "deleteDays" > 0)),
-    CONSTRAINT "RetentionPolicy_action_stage_check" CHECK ("archiveDays" IS NOT NULL OR "deleteDays" IS NOT NULL),
+    -- The 14-day notice floor is a product rule the API enforces; it is repeated here as a backstop for
+    -- system writers (the sweep moves `enabledAt`), because a shorter warning could delete early.
+    CONSTRAINT "RetentionPolicy_days_check" CHECK ("warnDays" >= 14 AND "periodDays" > 0),
     CONSTRAINT "RetentionPolicy_conditions_check" CHECK ("entity" = 'surveys' OR COALESCE(cardinality("conditions"), 0) = 0)
 );
 
@@ -116,9 +115,13 @@ CREATE TABLE IF NOT EXISTS "RetentionNotice" (
     "surveyId" TEXT,
     "userId" TEXT,
     "sentAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "deliveredAt" TIMESTAMP(3),
+    "emailSent" BOOLEAN NOT NULL DEFAULT false,
+    "claimToken" TEXT,
 
     CONSTRAINT "RetentionNotice_pkey" PRIMARY KEY ("id"),
-    CONSTRAINT "RetentionNotice_target_check" CHECK (("entity" = 'surveys' AND "surveyId" IS NOT NULL AND "userId" IS NULL) OR ("entity" = 'members' AND "userId" IS NOT NULL AND "surveyId" IS NULL))
+    CONSTRAINT "RetentionNotice_target_check" CHECK (("entity" IN ('surveys', 'responses') AND "surveyId" IS NOT NULL AND "userId" IS NULL) OR ("entity" = 'members' AND "userId" IS NOT NULL AND "surveyId" IS NULL)),
+    CONSTRAINT "RetentionNotice_email_check" CHECK (NOT "emailSent" OR "deliveredAt" IS NOT NULL)
 );
 
 -- AlterTable

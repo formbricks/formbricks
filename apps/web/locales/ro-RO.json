@@ -3029,7 +3029,7 @@
         "responses_counts_from": "Ziua în care a fost colectat fiecare răspuns.",
         "responses_due_for_deletion": "{count, plural, one {# răspuns este programat} few {# răspunsuri sunt programate} other {# de răspunsuri sunt programate}} pentru ștergere, primul pe {date}.",
         "responses_due_for_deletion_capped": "Peste {total} răspunsuri sunt programate pentru ștergere, primul pe {date}.",
-        "responses_notice_help": "Între {min} și {max} zile. Sondajul afișează un avertisment cât timp răspunsurile urmează să fie șterse; nu se trimite niciun e-mail.",
+        "responses_notice_help": "Între {min} și {max} zile. Proprietarul sondajului primește un e-mail prima dată când răspunsurile ajung la termenul de păstrare, iar în rezumatul sondajului apare un avertisment cu dată.",
         "responses_policy_description": "Răspunsurile se șterg la sfârșitul perioadei. Nu există arhivă.",
         "responses_policy_title": "Politica răspunsurilor",
         "responses_summary": "Șterge după {period} de la colectare",

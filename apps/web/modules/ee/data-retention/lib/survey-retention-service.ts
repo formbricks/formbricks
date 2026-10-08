@@ -31,17 +31,32 @@ export async function getSurveyRetentionFacts(survey: {
   archivedAt?: Date | null;
 }): Promise<TSurveyRetentionFacts> {
   const surveyId = survey.id;
-  const [responses, notice] = await Promise.all([
+  const [responses, notices, heldUntil] = await Promise.all([
     prisma.response.aggregate({
       where: { surveyId },
       _min: { createdAt: true },
       _max: { createdAt: true },
     }),
-    prisma.retentionNotice.findUnique({
-      where: { surveyId_entity: { surveyId, entity: "surveys" } },
-      select: { sentAt: true },
+    // Both of the survey's notices, by the unique (surveyId, entity) index.
+    prisma.retentionNotice.findMany({
+      where: { surveyId, entity: { in: ["surveys", "responses"] } },
+      select: { entity: true, sentAt: true, deliveredAt: true },
     }),
+    // When the survey's ended exemptions ended, per policy: a notice from before then is void.
+    prisma.$queryRaw<{ entity: "surveys" | "responses"; endedAt: Date }[]>`
+      SELECT "entity", MAX(LEAST("until", COALESCE("revokedAt", "until"))) AS "endedAt"
+      FROM "RetentionExemption"
+      WHERE "surveyId" = ${surveyId} AND LEAST("until", COALESCE("revokedAt", "until")) <= now()
+      GROUP BY "entity"
+    `,
   ]);
+  const notice = (entity: "surveys" | "responses") => {
+    const row = notices.find((candidate) => candidate.entity === entity);
+    return row ? { claimedAt: row.sentAt, deliveredAt: row.deliveredAt } : null;
+  };
+  const endedAt = (entity: "surveys" | "responses") =>
+    heldUntil.find((row) => row.entity === entity)?.endedAt ?? null;
+  const latest = (a: Date | null, b: Date | null) => (a && b ? (a > b ? a : b) : (a ?? b));
 
   return {
     createdAt: survey.createdAt,
@@ -49,7 +64,11 @@ export async function getSurveyRetentionFacts(survey: {
     archivedAt: survey.archivedAt ?? null,
     oldestResponseAt: responses._min.createdAt,
     newestResponseAt: responses._max.createdAt,
-    surveysNoticeSentAt: notice?.sentAt ?? null,
+    surveysNotice: notice("surveys"),
+    responsesNotice: notice("responses"),
+    // Either kind of exemption holds the survey itself (ENG-3371).
+    surveyHeldUntil: latest(endedAt("surveys"), endedAt("responses")),
+    responsesHeldUntil: endedAt("responses"),
   };
 }
 

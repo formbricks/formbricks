@@ -3029,7 +3029,7 @@
         "responses_counts_from": "Dagen då varje svar samlades in.",
         "responses_due_for_deletion": "{count, plural, one {# svar ska} other {# svar ska}} raderas, det första den {date}.",
         "responses_due_for_deletion_capped": "Fler än {total} svar ska raderas, det första den {date}.",
-        "responses_notice_help": "Mellan {min} och {max} dagar. Enkäten visar en varning när svar ska raderas, men inget mejl skickas.",
+        "responses_notice_help": "Mellan {min} och {max} dagar. Enkätens ägare får ett e-postmeddelande första gången svar ska raderas, och enkätsammanfattningen visar en daterad varning.",
         "responses_policy_description": "Svar raderas när perioden går ut. Det finns inget arkiv.",
         "responses_policy_title": "Policy för svar",
         "responses_summary": "Radera {period} efter insamling",

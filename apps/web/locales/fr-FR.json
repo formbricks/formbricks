@@ -3029,7 +3029,7 @@
         "responses_counts_from": "Le jour où chaque réponse a été collectée.",
         "responses_due_for_deletion": "{count, plural, one {# réponse doit être supprimée} many {# de réponses doivent être supprimées} other {# réponses doivent être supprimées}}, la première le {date}.",
         "responses_due_for_deletion_capped": "Plus de {total} réponses doivent être supprimées, la première le {date}.",
-        "responses_notice_help": "Entre {min} et {max} jours. L'enquête affiche un avertissement lorsque des réponses arrivent à échéance ; aucun e-mail n'est envoyé.",
+        "responses_notice_help": "Entre {min} et {max} jours. Le propriétaire du sondage reçoit un e-mail la première fois que des réponses arrivent à échéance, et le récapitulatif du sondage affiche un avertissement daté.",
         "responses_policy_description": "Les réponses sont supprimées à la fin de la période. Il n'y a pas d'archive.",
         "responses_policy_title": "Politique des réponses",
         "responses_summary": "Supprimer {period} après la collecte",

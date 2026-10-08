@@ -3029,7 +3029,7 @@
         "responses_counts_from": "Der Tag, an dem die jeweilige Antwort erfasst wurde.",
         "responses_due_for_deletion": "{count, plural, one {# Antwort wird} other {# Antworten werden}} demnächst gelöscht, die erste am {date}.",
         "responses_due_for_deletion_capped": "Mehr als {total} Antworten werden demnächst gelöscht, die erste am {date}.",
-        "responses_notice_help": "Zwischen {min} und {max} Tagen. Die Umfrage zeigt eine Warnung an, solange Antworten zur Löschung anstehen; es wird keine E-Mail verschickt.",
+        "responses_notice_help": "Zwischen {min} und {max} Tagen. Der Besitzer der Umfrage erhält eine E-Mail, sobald Antworten zum ersten Mal fällig sind, und in der Umfragezusammenfassung wird eine Warnung mit Datum angezeigt.",
         "responses_policy_description": "Antworten werden gelöscht, wenn der Zeitraum endet. Es gibt kein Archiv.",
         "responses_policy_title": "Richtlinie für Antworten",
         "responses_summary": "{period} nach der Erfassung löschen",

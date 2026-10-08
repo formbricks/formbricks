@@ -7,6 +7,7 @@ import { useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { SURVEY_ARCHIVE_RETENTION_DAYS } from "@/modules/survey/archive/lib/retention-days";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import {
@@ -48,7 +49,7 @@ import {
   toPoliciesPatch,
   toPolicyFormValues,
 } from "../../lib/policy-form";
-import { RETENTION_SURVEY_DELETE_DAYS, RETENTION_WARN_DAYS } from "../../lib/policy-rules";
+import { RETENTION_WARN_DAYS } from "../../lib/policy-rules";
 import {
   RETENTION_SURVEY_CONDITIONS,
   type TRetentionPolicyKind,
@@ -59,7 +60,7 @@ import {
 /** The copy that differs per policy (mock, ENG-3610). */
 const getPolicyCopy = (policy: TRetentionPolicyKind, t: TFunction) => {
   const notice = { min: RETENTION_WARN_DAYS.min, max: RETENTION_WARN_DAYS.max };
-  const deletePeriod = formatRetentionPeriod(RETENTION_SURVEY_DELETE_DAYS, t);
+  const deletePeriod = formatRetentionPeriod(SURVEY_ARCHIVE_RETENTION_DAYS, t);
   switch (policy) {
     case "responses":
       return {
@@ -144,7 +145,7 @@ export const PolicyEditDialog = ({
   const form = useForm<TPolicyFormValues>({
     resolver: zodResolver(getPolicyFormSchema(t, policy)),
     mode: "onChange",
-    defaultValues: toPolicyFormValues(policy, settings),
+    defaultValues: toPolicyFormValues(settings),
   });
   const [periodPreset, warnPreset] = useWatch({
     control: form.control,

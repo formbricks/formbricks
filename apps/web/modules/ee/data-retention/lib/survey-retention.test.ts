@@ -18,7 +18,10 @@ const survey: TSurveyRetentionFacts = {
   archivedAt: null,
   oldestResponseAt: daysAgo(1100),
   newestResponseAt: daysAgo(1080),
-  surveysNoticeSentAt: null,
+  surveysNotice: null,
+  responsesNotice: null,
+  surveyHeldUntil: null,
+  responsesHeldUntil: null,
 };
 
 const plan = (overrides: Partial<Parameters<typeof getSurveyRetentionPlan>[0]> = {}) =>
@@ -28,13 +31,13 @@ describe("getSurveyRetentionPlan", () => {
   test("dates each active policy with the schedule the sweep uses", () => {
     const [responses, surveys] = plan();
 
-    // The oldest response passed its 3 years 5 days ago and its warning has run, so it goes on the
-    // next run: reported as now, not as a date in the past.
+    // The oldest response passed its 3 years 5 days ago, but no reminder has gone out yet: the first
+    // deletion waits the full warning after the next run sends it.
     expect(responses).toEqual({
       policy: "responses",
       exempt: false,
       nextAction: "delete",
-      nextDate: NOW,
+      nextDate: addRetentionDays(NOW, 60),
       dueCreatedAtOrBefore: daysAgo(1095 - 60),
     });
     // No notice has gone out yet, so the archive waits the full 60 days from the next sweep.
@@ -45,6 +48,28 @@ describe("getSurveyRetentionPlan", () => {
       nextDate: addRetentionDays(NOW, 60),
       dueCreatedAtOrBefore: null,
     });
+  });
+
+  test("once the reminder has run its warning, due responses go on the next run", () => {
+    const delivered = daysAgo(61);
+    const [responses] = plan({
+      survey: { ...survey, responsesNotice: { claimedAt: delivered, deliveredAt: delivered } },
+    });
+
+    expect(responses).toMatchObject({ nextAction: "delete", nextDate: NOW });
+  });
+
+  test("a reminder from before the responses exemption ended no longer counts", () => {
+    const delivered = daysAgo(61);
+    const [responses] = plan({
+      survey: {
+        ...survey,
+        responsesNotice: { claimedAt: delivered, deliveredAt: delivered },
+        responsesHeldUntil: daysAgo(1),
+      },
+    });
+
+    expect(responses.nextDate).toEqual(addRetentionDays(NOW, 60));
   });
 
   test("dates an archived survey's deletion from when it was archived", () => {

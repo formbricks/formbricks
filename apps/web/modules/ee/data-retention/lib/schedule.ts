@@ -1,19 +1,21 @@
 import type { RetentionEntity, RetentionSurveyCondition } from "@formbricks/database/prisma-browser";
+import { SURVEY_ARCHIVE_RETENTION_DAYS } from "@/modules/survey/archive/lib/retention-days";
 
 /**
  * The one place retention dates are computed (ENG-3697). The API, the UI, the emails and the nightly
  * sweep all call this, so the date someone is shown is the date the sweep acts on. Nothing here is
  * stored: every date is derived from the policy, the target's clock and the two facts the sweep does
- * store (when the notice went out, and when the target was archived).
+ * store (when the notice was delivered, and when the survey was archived).
  *
- * Every policy has the same stages, in whole days: warn → archive (the reversible step: archive a
- * survey, deactivate a member) → delete.
- * - The first action stage (archive, or delete when there is no archive) is anchored to the clock.
- * - The warning starts `warnDays` before it and always runs in full: the action never happens less than
- *   `warnDays` after the warning actually started, so a late notice pushes the action back.
- * - Delete follows the *actual* archive date, not the planned one.
+ * Every policy has the same two steps, in whole days: a notice, then the action `periodDays` after the
+ * target's clock. The action depends on the kind of data: responses are deleted, surveys archived (the
+ * archive purge deletes them `SURVEY_ARCHIVE_RETENTION_DAYS` later), members deactivated.
+ * - The notice is due `warnDays` before the action, and the warning always runs in full: the action
+ *   never happens less than `warnDays` after the notice was delivered, so a late notice pushes it back.
+ * - A notice counts only once delivered (`RetentionNotice.deliveredAt`): a claim that never reached the
+ *   mail transport can't let the action run.
  *
- * Pure and dependency-free, so client components can use it too.
+ * Pure (its only import is a constant), so client components can use it too.
  */
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -30,10 +32,11 @@ const latest = (a: Date, b: Date): Date => (a.getTime() >= b.getTime() ? a : b);
 const isAtOrBefore = (a: Date, b: Date): boolean => a.getTime() <= b.getTime();
 
 /**
- * Whether a policy's warning is a notice the sweep sends and records. Responses get none: the survey
- * summary shows a dated warning instead, visible from the moment the policy is switched on.
+ * Whether a target's notice is tied to its clock. A survey's or member's notice is about that target
+ * becoming due, so a clock reset (the target became active again) voids it. The responses reminder is
+ * sent once per survey (8 Oct), while each response has its own clock, so only a policy change voids it.
  */
-export const RETENTION_ENTITY_SENDS_NOTICE = {
+const NOTICE_FOLLOWS_CLOCK = {
   responses: false,
   surveys: true,
   members: true,
@@ -47,60 +50,66 @@ export type TRetentionSchedulePolicy = {
    */
   enabledAt: Date | null;
   warnDays: number;
-  archiveDays: number | null;
-  deleteDays: number | null;
+  periodDays: number;
 };
 
 export type TRetentionTargetState = {
-  /** The target's last activity: see `getSurveyRetentionClock` and `getMemberRetentionClock`. */
+  /**
+   * The target's last activity: see `getSurveyRetentionClock` and `getMemberRetentionClock`. For the
+   * responses policy, the oldest response's `createdAt`.
+   */
   clock: Date;
-  /** From the target's `RetentionNotice` row, if there is one. A notice older than the clock is void. */
-  noticeSentAt: Date | null;
-  /** When the reversible step happened (`Survey.archivedAt`). Null if it hasn't. */
+  /**
+   * When the target's notice was claimed for sending (`RetentionNotice.sentAt`). Validity is judged on
+   * this, the moment the email's dates were computed: a notice built from settings that changed before
+   * it went out says the wrong date, so it doesn't count.
+   */
+  noticeClaimedAt: Date | null;
+  /** When that notice was delivered (`RetentionNotice.deliveredAt`); the warning counts from here. */
+  noticeDeliveredAt: Date | null;
+  /**
+   * When the target's latest exemption ended (`LEAST(until, revokedAt)`), if it had one. A notice from
+   * before it is void, so nothing acts on the strength of a warning given before the hold.
+   */
+  heldUntil: Date | null;
+  /** Surveys: when the survey was archived (`Survey.archivedAt`), by the policy or by hand. */
   archivedAt: Date | null;
 };
 
 export type TRetentionSchedule = {
-  /** When the warning period starts, according to the clock. */
+  /** When the notice is due, according to the clock. */
   warnAt: Date;
-  /**
-   * When the notice went out or, until it has, when it is expected to: `warnAt`, or the next sweep if
-   * that has already passed. Null for policies that send no notice.
-   */
-  noticeAt: Date | null;
-  /** Whether a notice is on record and still valid for the current clock. */
+  /** When the notice was delivered or, until it is, when it is expected: `warnAt`, or now if that passed. */
+  noticeAt: Date;
+  /** Whether a delivered notice is on record and still valid. */
   noticeSent: boolean;
-  /** When the target is (or was) archived. Null for policies without an archive step. */
-  archiveAt: Date | null;
-  /** When the target is deleted. Null for policies that never delete. */
+  /**
+   * When the policy acts: responses deleted, survey archived, member deactivated. For a survey that is
+   * already archived, when it was.
+   */
+  actionAt: Date;
+  /** When the data is gone for good: the responses' deletion, or the survey's purge. Null for members. */
   deleteAt: Date | null;
 };
 
-export type TRetentionStep = "notify" | "archive" | "delete";
-
-const getFirstStageDays = (policy: TRetentionSchedulePolicy): number => {
-  const days = policy.archiveDays ?? policy.deleteDays;
-  if (days === null) {
-    // The database rejects such a row (RetentionPolicy_action_stage_check); this is unreachable.
-    throw new Error("A retention policy needs an archive or a delete stage");
-  }
-  return days;
-};
+export type TRetentionStep = "notify" | "act";
 
 /**
- * A notice counts only if it went out after both the target's clock and the policy's current
- * configuration took effect. A clock reset voids it (the target became active again), and so does a
- * policy being switched on, unpaused or tightened (`enabledAt` moves): either way the next cycle sends
- * a new notice and the full warning runs again (ENG-3614).
+ * A notice counts only once delivered, and only if it was claimed after the policy's current
+ * configuration took effect (`enabledAt` moves on switch-on, unpause or tightening), after the target's
+ * latest exemption ended and, for clock-bound notices, after the target's clock. Otherwise the next cycle
+ * sends a new notice and the full warning runs again (ENG-3614). Returns when the warning started.
  */
-const getValidNoticeSentAt = (
+const getValidNoticeDeliveredAt = (
   policy: TRetentionSchedulePolicy,
   target: TRetentionTargetState
 ): Date | null => {
-  const { noticeSentAt } = target;
-  if (!noticeSentAt || !isAtOrBefore(target.clock, noticeSentAt)) return null;
-  if (policy.enabledAt && !isAtOrBefore(policy.enabledAt, noticeSentAt)) return null;
-  return noticeSentAt;
+  const { noticeClaimedAt, noticeDeliveredAt } = target;
+  if (!noticeClaimedAt || !noticeDeliveredAt) return null;
+  if (NOTICE_FOLLOWS_CLOCK[policy.entity] && !isAtOrBefore(target.clock, noticeClaimedAt)) return null;
+  if (policy.enabledAt && !isAtOrBefore(policy.enabledAt, noticeClaimedAt)) return null;
+  if (target.heldUntil && !isAtOrBefore(target.heldUntil, noticeClaimedAt)) return null;
+  return noticeDeliveredAt;
 };
 
 export const getRetentionSchedule = (
@@ -108,71 +117,49 @@ export const getRetentionSchedule = (
   target: TRetentionTargetState,
   now: Date
 ): TRetentionSchedule => {
-  const firstStageDays = getFirstStageDays(policy);
-  const plannedFirstStageAt = addRetentionDays(target.clock, firstStageDays);
-  const warnAt = addRetentionDays(plannedFirstStageAt, -policy.warnDays);
-  const noticeSentAt = getValidNoticeSentAt(policy, target);
+  const plannedActionAt = addRetentionDays(target.clock, policy.periodDays);
+  const warnAt = addRetentionDays(plannedActionAt, -policy.warnDays);
+  const noticeDeliveredAt = getValidNoticeDeliveredAt(policy, target);
+  const noticeAt = noticeDeliveredAt ?? latest(warnAt, now);
 
-  let noticeAt: Date | null = null;
-  let warningStartedAt: Date;
-  if (RETENTION_ENTITY_SENDS_NOTICE[policy.entity]) {
-    noticeAt = noticeSentAt ?? latest(warnAt, now);
-    warningStartedAt = noticeAt;
-  } else {
-    // No notice to wait for, but the warning still can't start before the policy was switched on.
-    warningStartedAt = latest(warnAt, policy.enabledAt ?? now);
-  }
+  const actionAt =
+    policy.entity === "surveys" && target.archivedAt
+      ? target.archivedAt
+      : latest(plannedActionAt, addRetentionDays(noticeAt, policy.warnDays));
 
-  const firstStageAt = latest(plannedFirstStageAt, addRetentionDays(warningStartedAt, policy.warnDays));
+  let deleteAt: Date | null = null;
+  if (policy.entity === "responses") deleteAt = actionAt;
+  if (policy.entity === "surveys") deleteAt = addRetentionDays(actionAt, SURVEY_ARCHIVE_RETENTION_DAYS);
 
-  if (policy.archiveDays === null) {
-    return { warnAt, noticeAt, noticeSent: noticeSentAt !== null, archiveAt: null, deleteAt: firstStageAt };
-  }
-
-  const archiveAt = target.archivedAt ?? firstStageAt;
-  return {
-    warnAt,
-    noticeAt,
-    noticeSent: noticeSentAt !== null,
-    archiveAt,
-    deleteAt: policy.deleteDays === null ? null : addRetentionDays(archiveAt, policy.deleteDays),
-  };
+  return { warnAt, noticeAt, noticeSent: noticeDeliveredAt !== null, actionAt, deleteAt };
 };
 
 /**
  * The step the sweep should take on a target now, or null if nothing is due. The sweep selects
- * candidates in SQL with `getRetentionClockCutoffs`, then re-checks each one with this under lock.
- * Exemptions, the licence and whether the policy is on are the caller's to check.
+ * candidates in SQL with `getRetentionClockCutoffs`, then re-checks each one with this under lock. An
+ * archived survey has nothing left for the policy to do: the archive purge deletes it. Exemptions, the
+ * licence and whether the policy is on are the caller's to check.
  */
 export const getDueRetentionStep = (
   policy: TRetentionSchedulePolicy,
   target: TRetentionTargetState,
   now: Date
 ): TRetentionStep | null => {
+  if (policy.entity === "surveys" && target.archivedAt) return null;
+
   const schedule = getRetentionSchedule(policy, target, now);
-
-  if (target.archivedAt !== null && policy.archiveDays !== null) {
-    return schedule.deleteAt && isAtOrBefore(schedule.deleteAt, now) ? "delete" : null;
-  }
-
-  if (RETENTION_ENTITY_SENDS_NOTICE[policy.entity] && !schedule.noticeSent) {
-    return isAtOrBefore(schedule.warnAt, now) ? "notify" : null;
-  }
-
-  const firstStageAt = schedule.archiveAt ?? schedule.deleteAt;
-  if (!firstStageAt || !isAtOrBefore(firstStageAt, now)) return null;
-  return policy.archiveDays === null ? "delete" : "archive";
+  if (!schedule.noticeSent) return isAtOrBefore(schedule.warnAt, now) ? "notify" : null;
+  return isAtOrBefore(schedule.actionAt, now) ? "act" : null;
 };
 
 export type TRetentionClockCutoffs = {
-  /** A target whose clock is at or before this is due a notice (policies that send one). */
+  /** A target whose clock is at or before this is due a notice. */
   noticeDueAtOrBefore: Date;
   /**
-   * A target whose clock is at or before this is past its planned first action stage. For policies
-   * with a notice, the notice must also have been out for `warnDays`; checking that is the caller's.
-   * Null when nothing can be due yet: a policy without a notice, switched on less than `warnDays` ago.
+   * A target whose clock is at or before this is past its planned action. Its notice must also have
+   * been delivered for `warnDays`; checking that is the caller's (`getDueRetentionStep`).
    */
-  actionDueAtOrBefore: Date | null;
+  actionDueAtOrBefore: Date;
 };
 
 /**
@@ -184,15 +171,10 @@ export const getRetentionClockCutoffs = (
   policy: TRetentionSchedulePolicy,
   now: Date
 ): TRetentionClockCutoffs => {
-  const firstStageDays = getFirstStageDays(policy);
-  const actionDueAtOrBefore = addRetentionDays(now, -firstStageDays);
-  const warningCanHaveRun =
-    RETENTION_ENTITY_SENDS_NOTICE[policy.entity] ||
-    isAtOrBefore(addRetentionDays(policy.enabledAt ?? now, policy.warnDays), now);
-
+  const actionDueAtOrBefore = addRetentionDays(now, -policy.periodDays);
   return {
     noticeDueAtOrBefore: addRetentionDays(actionDueAtOrBefore, policy.warnDays),
-    actionDueAtOrBefore: warningCanHaveRun ? actionDueAtOrBefore : null,
+    actionDueAtOrBefore,
   };
 };
 

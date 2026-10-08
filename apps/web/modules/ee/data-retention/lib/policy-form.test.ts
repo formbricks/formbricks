@@ -16,7 +16,7 @@ const t = ((key: string) => key) as unknown as TFunction;
 
 describe("toPolicyFormValues", () => {
   test("picks the preset that matches the saved period and notice", () => {
-    expect(toPolicyFormValues("surveys", RETENTION_POLICY_DEFAULTS.surveys)).toMatchObject({
+    expect(toPolicyFormValues(RETENTION_POLICY_DEFAULTS.surveys)).toMatchObject({
       periodPreset: "1095",
       warnPreset: "60",
       conditions: ["noResponse", "noChange"],
@@ -25,9 +25,9 @@ describe("toPolicyFormValues", () => {
 
   test("falls back to the custom inputs, in the largest unit that fits", () => {
     expect(
-      toPolicyFormValues("responses", {
+      toPolicyFormValues({
         ...RETENTION_POLICY_DEFAULTS.responses,
-        deleteDays: 180,
+        periodDays: 180,
         warnDays: 45,
       })
     ).toMatchObject({
@@ -66,7 +66,7 @@ describe("getPolicyFormPeriodDays / getPolicyFormWarnDays", () => {
 });
 
 describe("getPolicyFormSchema", () => {
-  const valid = toPolicyFormValues("surveys", RETENTION_POLICY_DEFAULTS.surveys);
+  const valid = toPolicyFormValues(RETENTION_POLICY_DEFAULTS.surveys);
 
   test("accepts the defaults", () => {
     expect(getPolicyFormSchema(t, "surveys").safeParse(valid).success).toBe(true);
@@ -84,7 +84,7 @@ describe("getPolicyFormSchema", () => {
       "customPeriodAmount",
     ],
     ["an empty custom period", { periodPreset: CUSTOM, customPeriodAmount: null }, "customPeriodAmount"],
-    ["a notice under 30 days", { warnPreset: CUSTOM, customWarnDays: 20 }, "customWarnDays"],
+    ["a notice under two weeks", { warnPreset: CUSTOM, customWarnDays: 13 }, "customWarnDays"],
     ["no survey condition", { conditions: [] }, "conditions"],
   ] as const)("refuses %s", (_case, override, path) => {
     const result = getPolicyFormSchema(t, "surveys").safeParse({ ...valid, ...override });
@@ -93,31 +93,29 @@ describe("getPolicyFormSchema", () => {
   });
 
   test("doesn't ask other policies for conditions", () => {
-    const members = toPolicyFormValues("members", RETENTION_POLICY_DEFAULTS.members);
+    const members = toPolicyFormValues(RETENTION_POLICY_DEFAULTS.members);
     expect(getPolicyFormSchema(t, "members").safeParse(members).success).toBe(true);
   });
 });
 
 describe("toPolicyPatch", () => {
   test("sends the fields the dialog edits, under each policy's period field", () => {
-    const values = { ...toPolicyFormValues("surveys", RETENTION_POLICY_DEFAULTS.surveys), enabled: true };
+    const values = { ...toPolicyFormValues(RETENTION_POLICY_DEFAULTS.surveys), enabled: true };
     expect(toPolicyPatch("surveys", { ...values, conditions: ["createdBefore", "noResponse"] })).toEqual({
       enabled: true,
       warnDays: 60,
-      archiveDays: 1095,
+      periodDays: 1095,
       conditions: ["noResponse", "createdBefore"],
     });
-    expect(
-      toPolicyPatch("responses", toPolicyFormValues("responses", RETENTION_POLICY_DEFAULTS.responses))
-    ).toEqual({
+    expect(toPolicyPatch("responses", toPolicyFormValues(RETENTION_POLICY_DEFAULTS.responses))).toEqual({
       enabled: false,
       warnDays: 60,
-      deleteDays: 1095,
+      periodDays: 1095,
     });
   });
 
   test("refuses an invalid form rather than sending it", () => {
-    const values = toPolicyFormValues("members", RETENTION_POLICY_DEFAULTS.members);
+    const values = toPolicyFormValues(RETENTION_POLICY_DEFAULTS.members);
     expect(() =>
       toPolicyPatch("members", { ...values, periodPreset: CUSTOM, customPeriodAmount: null })
     ).toThrow();
@@ -134,14 +132,14 @@ describe("toPoliciesPatch", () => {
   const saved = { ...RETENTION_POLICY_DEFAULTS.surveys, enabled: true };
 
   test("sends only what changed, so a concurrent pause isn't undone by an unrelated edit", () => {
-    const values = { ...toPolicyFormValues("surveys", saved), warnPreset: "30" };
+    const values = { ...toPolicyFormValues(saved), warnPreset: "30" };
 
     expect(toPoliciesPatch("surveys", values, saved)).toEqual({ surveys: { warnDays: 30 } });
   });
 
   test("compares conditions as a set, and sends them in canonical order when they change", () => {
     const reordered = {
-      ...toPolicyFormValues("surveys", saved),
+      ...toPolicyFormValues(saved),
       conditions: ["noChange", "noResponse"] as const,
     };
     expect(
@@ -149,7 +147,7 @@ describe("toPoliciesPatch", () => {
     ).toBeNull();
 
     const changed = {
-      ...toPolicyFormValues("surveys", saved),
+      ...toPolicyFormValues(saved),
       conditions: ["createdBefore" as const, "noResponse" as const],
     };
     expect(toPoliciesPatch("surveys", changed, saved)).toEqual({
@@ -159,13 +157,13 @@ describe("toPoliciesPatch", () => {
 
   test("names each policy's period field", () => {
     const responses = {
-      ...toPolicyFormValues("responses", RETENTION_POLICY_DEFAULTS.responses),
+      ...toPolicyFormValues(RETENTION_POLICY_DEFAULTS.responses),
       periodPreset: "365",
     };
     expect(toPoliciesPatch("responses", responses, RETENTION_POLICY_DEFAULTS.responses)).toEqual({
-      responses: { deleteDays: 365 },
+      responses: { periodDays: 365 },
     });
-    const members = { ...toPolicyFormValues("members", RETENTION_POLICY_DEFAULTS.members), enabled: true };
+    const members = { ...toPolicyFormValues(RETENTION_POLICY_DEFAULTS.members), enabled: true };
     expect(toPoliciesPatch("members", members, RETENTION_POLICY_DEFAULTS.members)).toEqual({
       members: { enabled: true },
     });

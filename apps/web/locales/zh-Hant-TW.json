@@ -3029,7 +3029,7 @@
         "responses_counts_from": "從每則回覆收集當天開始計算。",
         "responses_due_for_deletion": "{count, plural, other {# 筆回覆}}即將刪除,最早的一筆將於 {date} 刪除。",
         "responses_due_for_deletion_capped": "超過 {total} 筆回覆即將刪除,最早的一筆將於 {date} 刪除。",
-        "responses_notice_help": "介於 {min} 到 {max} 天之間。回覆到期時,問卷會顯示警告,不會寄送電子郵件。",
+        "responses_notice_help": "請設定 {min} 至 {max} 天之間。回覆資料首次到期時，問卷擁有者會收到一封電子郵件，問卷摘要中也會顯示附有日期的警告。",
         "responses_policy_description": "期間結束後,回覆就會被刪除,不會保留封存。",
         "responses_policy_title": "回覆政策",
         "responses_summary": "收集後 {period}刪除",

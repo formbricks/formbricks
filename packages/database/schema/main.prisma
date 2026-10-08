@@ -1665,6 +1665,43 @@ enum HubFieldType {
   date
 }
 
+enum DeletionCleanupKind {
+  /// Every Hub record of a deleted survey.
+  hubSurvey
+  /// The Hub records of specific deleted responses.
+  hubResponses
+  /// Storage objects of deleted responses or surveys.
+  storageFiles
+}
+
+/// Work left over after a delete commits (ENG-3612, ENG-3614: deleted means deleted): Hub records and
+/// storage files that can't be removed inside the database transaction. A row is written in the same
+/// transaction as the delete, so a delete that commits always gets its cleanup and one that rolls back
+/// queues nothing. A worker drains it with retries, never giving up, and deletes each row once done.
+model DeletionCleanup {
+  id             String              @id @default(cuid(2))
+  createdAt      DateTime            @default(now()) @map(name: "created_at")
+  updatedAt      DateTime            @updatedAt @map(name: "updated_at")
+  kind           DeletionCleanupKind
+  /// Scoping and logs. Not foreign keys: the rows they name are usually gone already.
+  organizationId String
+  workspaceId    String
+  surveyId       String
+  /// Hub kinds: the organisation's feedback directories, read inside the delete's transaction.
+  tenantIds      String[]            @default([])
+  /// `hubResponses`: the deleted responses whose records go.
+  responseIds    String[]            @default([])
+  /// `storageFiles`: the object keys or URLs to delete.
+  fileKeys       String[]            @default([])
+  attempts       Int                 @default(0)
+  /// Not drained before this, so a late pipeline write can't slip in behind a survey's cleanup.
+  nextAttemptAt  DateTime            @default(now())
+  /// The last failure: a short code and message, never record or file content.
+  lastError      String?
+
+  @@index([nextAttemptAt])
+}
+
 /// A feedback source — connects external data into Unify Feedback for record creation.
 /// Naming note: "FeedbackSource" is the Unify Feedback domain term; the word "Connector"
 /// is reserved for the Workflows domain (see docs/development/standards/practices/naming-conventions.mdx).

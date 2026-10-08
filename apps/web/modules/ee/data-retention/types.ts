@@ -62,14 +62,14 @@ export const RETENTION_SURVEY_CONDITIONS = ["noResponse", "noChange", "createdBe
 export type TRetentionSurveyCondition = (typeof RETENTION_SURVEY_CONDITIONS)[number];
 
 /**
- * One policy's settings, all in days (ENG-3695). `null` means the step doesn't exist: responses have no
- * archive, members no delete. `conditions` is for the surveys policy only.
+ * One policy's settings, in days. After `periodDays` the policy acts: responses are deleted, surveys
+ * archived (the archive purge deletes them 30 days later), members deactivated. The notice goes out
+ * `warnDays` before. `conditions` is for the surveys policy only.
  */
 export type TRetentionPolicySettings = {
   enabled: boolean;
   warnDays: number;
-  archiveDays: number | null;
-  deleteDays: number | null;
+  periodDays: number;
   conditions: TRetentionSurveyCondition[];
 };
 
