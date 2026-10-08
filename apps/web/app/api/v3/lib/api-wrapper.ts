@@ -12,7 +12,7 @@ import {
 import {
   DEFAULT_REQUEST_BODY_LIMIT_BYTES,
   RequestBodyTooLargeError,
-  parseJsonBodyWithLimit,
+  readRequestBodyWithLimit,
 } from "@/app/lib/api/request-body";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
@@ -21,7 +21,11 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { TAuditAction, TAuditTarget } from "@/modules/ee/audit-logs/types/audit-log";
-import { arrayBudgetInvalidParam, findArrayBudgetViolation } from "./array-budget";
+import {
+  arrayBudgetInvalidParam,
+  findArrayBudgetViolation,
+  findRawArrayBudgetViolation,
+} from "./array-budget";
 import { buildV3AuditLog, queueV3AuditLog } from "./audit";
 import { mapV3ThrownError } from "./errors";
 import { BoundedInvalidParams } from "./invalid-params";
@@ -314,7 +318,8 @@ function bodyTooLargeFailure(
 /**
  * The array budget, checked before any schema sees the body: an oversized array would otherwise cost
  * one Zod issue per element (ENG-3384), and this covers arrays a schema types as `unknown` or
- * `z.record` too.
+ * `z.record` too. `readV3JsonBody` already held the raw text to the same budget, so this walk is the
+ * second line: it sees the parsed value, which drops a repeated key's earlier values.
  */
 function arrayBudgetFailure(
   bodyData: unknown,
@@ -327,20 +332,57 @@ function arrayBudgetFailure(
     : null;
 }
 
+type TV3JsonBodyRead =
+  | { kind: "parsed"; data: unknown }
+  | { kind: "malformed" }
+  | { kind: "refused"; failure: TV3InputParseFailure };
+
+/**
+ * Read the body within the byte limit and hold it to the array budget on its raw text, before
+ * `JSON.parse` builds a single object. Parsing is where a hostile body costs memory — 15.5 MiB of
+ * `[[[…]]]` is ~470 MB of arrays — so on a route that takes bodies that large the budget has to hold
+ * before the parse, not after it (ENG-3653).
+ */
+async function readV3JsonBody(
+  req: Request,
+  { requestId, instance, bodyLimitBytes }: TV3ParseContext
+): Promise<TV3JsonBodyRead> {
+  let text: string;
+  try {
+    text = await readRequestBodyWithLimit(req, bodyLimitBytes);
+  } catch (error) {
+    return error instanceof RequestBodyTooLargeError
+      ? { kind: "refused", failure: bodyTooLargeFailure(error, requestId, instance) }
+      : { kind: "malformed" };
+  }
+
+  const violation = findRawArrayBudgetViolation(text);
+  if (violation) {
+    return {
+      kind: "refused",
+      failure: invalidBodyFailure([arrayBudgetInvalidParam(violation, "body")], requestId, instance),
+    };
+  }
+
+  try {
+    return { kind: "parsed", data: JSON.parse(text) as unknown };
+  } catch {
+    return { kind: "malformed" };
+  }
+}
+
 /** The body step of `parseV3Input`: read within the byte limit, check the array budget, then parse. */
 async function parseV3Body(
   req: NextRequest,
   schema: TV3Schema,
-  { requestId, instance, bodyLimitBytes }: TV3ParseContext
+  context: TV3ParseContext
 ): Promise<{ ok: true; body: unknown } | TV3InputParseFailure> {
-  let bodyData: unknown;
-  try {
-    bodyData = await parseJsonBodyWithLimit(req, bodyLimitBytes);
-  } catch (error) {
-    if (error instanceof RequestBodyTooLargeError) {
-      return bodyTooLargeFailure(error, requestId, instance);
-    }
-
+  const { requestId, instance } = context;
+  const read = await readV3JsonBody(req, context);
+  if (read.kind === "refused") {
+    return read.failure;
+  }
+  if (read.kind === "malformed") {
     return invalidBodyFailure(
       [{ name: "body", reason: "Malformed JSON input, please check your request body" }],
       requestId,
@@ -348,6 +390,7 @@ async function parseV3Body(
     );
   }
 
+  const bodyData = read.data;
   const budgetFailure = arrayBudgetFailure(bodyData, requestId, instance);
   if (budgetFailure) {
     return budgetFailure;
@@ -370,20 +413,21 @@ async function parseV3Body(
  */
 async function preflightUndeclaredBody(
   req: NextRequest,
-  { requestId, instance, bodyLimitBytes }: TV3ParseContext
+  context: TV3ParseContext
 ): Promise<TV3InputParseFailure | null> {
   if (req.method === "GET" || req.method === "HEAD" || req.body === null) {
     return null;
   }
 
-  let bodyData: unknown;
-  try {
-    bodyData = await parseJsonBodyWithLimit(req.clone(), bodyLimitBytes);
-  } catch (error) {
-    return error instanceof RequestBodyTooLargeError ? bodyTooLargeFailure(error, requestId, instance) : null;
+  const read = await readV3JsonBody(req.clone(), context);
+  if (read.kind === "refused") {
+    return read.failure;
+  }
+  if (read.kind === "malformed") {
+    return null;
   }
 
-  return arrayBudgetFailure(bodyData, requestId, instance);
+  return arrayBudgetFailure(read.data, context.requestId, context.instance);
 }
 
 async function parseV3Input<S extends TV3Schemas | undefined, TProps>(

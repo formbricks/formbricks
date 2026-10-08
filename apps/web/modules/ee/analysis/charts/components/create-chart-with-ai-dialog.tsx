@@ -5,7 +5,7 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { AIUnavailableAlert } from "@/modules/ai/components/ai-unavailable-alert";
 import { generateAIChartAction } from "@/modules/ee/analysis/charts/actions";
 import { NoFeedbackDirectoryAlert } from "@/modules/ee/analysis/charts/components/no-feedback-directory-alert";

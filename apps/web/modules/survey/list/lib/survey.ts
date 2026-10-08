@@ -99,6 +99,7 @@ const getExistingSurvey = async (surveyId: string) => {
       delay: true,
       displayPercentage: true,
       showLanguageSwitch: true,
+      autoSelectLanguage: true,
       pin: true,
       recaptcha: true,
       isVerifyEmailEnabled: true,

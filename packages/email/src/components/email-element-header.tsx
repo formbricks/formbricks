@@ -3,7 +3,9 @@ import { Container } from "react-email";
 import { cn } from "../../src/lib/cn";
 
 interface ElementHeaderProps {
+  /** Rendered as raw HTML. Callers must sanitize it first. */
   readonly headline: string;
+  /** Rendered as raw HTML. Callers must sanitize it first. */
   readonly subheader?: string;
   readonly className?: string;
   readonly style?: CSSProperties;

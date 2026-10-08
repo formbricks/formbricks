@@ -120,6 +120,9 @@ describe("upsertBulkContacts", () => {
       },
     });
 
+    // Inherits the app client's transaction budget rather than overriding it with a shorter one (ENG-3285).
+    expect(vi.mocked(prisma.$transaction).mock.calls[0]).toHaveLength(1);
+
     // Verify that new contacts were created in the transaction
     expect(prisma.contact.createMany).toHaveBeenCalledWith({
       data: [

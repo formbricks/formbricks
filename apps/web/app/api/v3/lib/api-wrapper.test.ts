@@ -6,7 +6,7 @@ import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { ConcurrencyLimiter } from "@/app/lib/api/concurrency-limiter";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { formatZodIssues, withV3ApiWrapper } from "./api-wrapper";
-import { V3_REQUEST_ARRAY_MAX_ITEMS } from "./array-budget";
+import { V3_REQUEST_ARRAY_MAX_ITEMS, V3_REQUEST_MAX_DEPTH } from "./array-budget";
 import { V3_INVALID_PARAMS_MAX } from "./invalid-params";
 
 const { mockAuthenticateRequest, mockGetSession } = vi.hoisted(() => ({
@@ -955,6 +955,37 @@ describe("request array budget (ENG-3384)", () => {
       }),
       "V3 API request validation failed"
     );
+  });
+
+  test("refuses a body nested past the cap before JSON.parse builds it", async () => {
+    // Parsing is what a hostile body costs (15.5 MiB of `[[[…]]]` is ~470 MB parsed), so the budget
+    // has to hold on the raw text.
+    const deep = `{"a":${"[".repeat(V3_REQUEST_MAX_DEPTH)}0${"]".repeat(V3_REQUEST_MAX_DEPTH)}}`;
+    const parse = vi.spyOn(JSON, "parse");
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+
+    const response = await withV3ApiWrapper({ auth: "none", schemas: { body: z.unknown() }, handler })(
+      new NextRequest("http://localhost/api/v3/surveys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: deep,
+      }),
+      {} as never
+    );
+    const parsedTheBody = parse.mock.calls.some(([text]) => text === deep);
+    parse.mockRestore();
+
+    expect(response.status).toBe(400);
+    expect(parsedTheBody).toBe(false);
+    expect(handler).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toMatchObject({
+      invalid_params: [
+        {
+          name: "a.0.0.0.0.0.0.0.0.0.…",
+          reason: `Too deep: expected the request to nest <=${V3_REQUEST_MAX_DEPTH} levels`,
+        },
+      ],
+    });
   });
 
   // The workflows routes declare no body schema and hand `req` to a handler that reads it itself, so

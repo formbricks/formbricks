@@ -16,10 +16,11 @@ export const V3_REQUEST_ARRAY_MAX_TOTAL_ELEMENTS = 50_000;
 /**
  * Deepest nesting a v3 request may carry, counted in containers from the root. The walk holds a little
  * state for every open level, so depth is what bounds it: without a cap, a 15 MB body nested one level
- * per few bytes keeps millions of levels open at once (ENG-3653). The cap costs one frame per level, so
- * it sits well clear of the deepest valid body rather than close to it: a segment-filter tree at
- * `MAX_SEGMENT_FILTER_DEPTH` in a survey's `targeting.filters` nests about 105 levels, 109 inside an MCP
- * batch. Keep it above that — the test that walks such a tree fails first.
+ * per few bytes keeps millions of levels open at once (ENG-3653). The cap sits well clear of the deepest
+ * structure the API bounds itself: a segment-filter tree at `MAX_SEGMENT_FILTER_DEPTH` in a survey's
+ * `targeting.filters` nests about 105 levels, 109 inside an MCP batch. Keep it above that — the test
+ * that walks such a tree fails first. Logic and workflow condition groups and free-form `metadata` have
+ * no bound of their own, so this is theirs: a survey logic tree about 125 groups deep reaches it.
  */
 export const V3_REQUEST_MAX_DEPTH = 256;
 
@@ -172,6 +173,10 @@ function renderPath(node: TPathNode | null): string {
   }
   segments.reverse();
 
+  return renderSegments(segments);
+}
+
+function renderSegments(segments: string[]): string {
   const shown = segments
     .slice(0, MAX_REPORTED_PATH_SEGMENTS)
     .map((segment) =>
@@ -184,6 +189,191 @@ function renderPath(node: TPathNode | null): string {
   }
 
   return shown.join(".");
+}
+
+const QUOTE = 34;
+const BACKSLASH = 92;
+const COMMA = 44;
+const COLON = 58;
+const OPEN_BRACKET = 91;
+const CLOSE_BRACKET = 93;
+const OPEN_BRACE = 123;
+const CLOSE_BRACE = 125;
+
+const isWhitespace = (code: number): boolean => code === 32 || code === 10 || code === 13 || code === 9;
+
+const endsToken = (code: number): boolean =>
+  code === COMMA || code === CLOSE_BRACKET || code === CLOSE_BRACE || isWhitespace(code);
+
+/** An open container while scanning text: arrays count their elements, objects remember their key. */
+type TRawFrame = {
+  isArray: boolean;
+  /** Elements counted so far, so an array's current element is `count - 1`. */
+  count: number;
+  /** The current key of an object, as offsets of the text between its quotes. */
+  keyStart: number;
+  keyEnd: number;
+  /** After `[`, `{` or `,`: the next token is an element (array) or a key (object). */
+  expectingEntry: boolean;
+};
+
+/** The quote that closes the string opening at `start`, or -1: one not preceded by an odd run of `\`. */
+function closingQuote(text: string, start: number): number {
+  for (let end = text.indexOf('"', start + 1); end !== -1; end = text.indexOf('"', end + 1)) {
+    let backslashes = 0;
+    for (let cursor = end - 1; text.charCodeAt(cursor) === BACKSLASH; cursor -= 1) {
+      backslashes += 1;
+    }
+    if (backslashes % 2 === 0) {
+      return end;
+    }
+  }
+  return -1;
+}
+
+/** A key as `JSON.parse` would read it; only decoded when a violation names it. */
+function decodeKey(text: string, frame: TRawFrame): string {
+  const raw = text.slice(frame.keyStart, frame.keyEnd);
+  if (!raw.includes("\\")) {
+    return raw;
+  }
+  try {
+    return JSON.parse(`"${raw}"`) as string;
+  } catch {
+    return raw;
+  }
+}
+
+/** The path to the current child of the last frame in `frames`, rendered like the walk's. */
+const rawPath = (text: string, frames: TRawFrame[]): string =>
+  renderSegments(frames.map((frame) => (frame.isArray ? String(frame.count - 1) : decodeKey(text, frame))));
+
+/**
+ * The same budgets as `findArrayBudgetViolation`, read off the raw body before `JSON.parse` builds it.
+ * Parsing is what a hostile body costs: 15.5 MiB of `[[[…]]]` is ~470 MB of arrays once parsed, and an
+ * array of `{}` ~320 MB, so a check after the parse comes too late for a route that takes bodies that
+ * large (ENG-3653). One forward pass that skips strings and decodes a key only when a violation names
+ * it, so a body within budget costs the scan and nothing else.
+ *
+ * Text that is not valid JSON gets `null` and is left to `JSON.parse`, unless a limit is crossed before
+ * the text breaks. A key that repeats counts every time, though `JSON.parse` keeps only the last. Where
+ * a body breaks several limits, this names the first one reached reading left to right, which can be a
+ * different one from the walk's; either is true of the body.
+ */
+export function findRawArrayBudgetViolation(text: string): TArrayBudgetViolation | null {
+  const scan: TRawScan = { text, frames: [], total: 0 };
+
+  for (let index = 0; index < text.length; index += 1) {
+    const code = text.charCodeAt(index);
+    if (isWhitespace(code) || code === COLON) {
+      continue;
+    }
+
+    if (code === COMMA || code === CLOSE_BRACKET || code === CLOSE_BRACE) {
+      if (!applyPunctuation(scan, code)) {
+        return null;
+      }
+      continue;
+    }
+
+    const step = expectsKey(scan, code) ? readKey(scan, index) : readValue(scan, index, code);
+    if (step.violation) {
+      return step.violation;
+    }
+    if (step.end === -1) {
+      return null;
+    }
+    index = step.end;
+  }
+
+  return null;
+}
+
+type TRawScan = { text: string; frames: TRawFrame[]; total: number };
+
+/** Where a token ended (-1: the text broke there), or the limit it crossed. */
+type TRawStep = { end: number; violation?: TArrayBudgetViolation };
+
+/** A comma opens the next entry; a closing bracket or brace closes a frame. False for one too many. */
+function applyPunctuation(scan: TRawScan, code: number): boolean {
+  if (code === COMMA) {
+    const top = scan.frames.at(-1);
+    if (top) {
+      top.expectingEntry = true;
+    }
+    return true;
+  }
+  return scan.frames.pop() !== undefined;
+}
+
+const expectsKey = (scan: TRawScan, code: number): boolean => {
+  const top = scan.frames.at(-1);
+  return code === QUOTE && top !== undefined && !top.isArray && top.expectingEntry;
+};
+
+/** Remembers where an object's key is, to decode it only if a violation names it. */
+function readKey(scan: TRawScan, index: number): TRawStep {
+  const top = scan.frames.at(-1) as TRawFrame;
+  const end = closingQuote(scan.text, index);
+  top.keyStart = index + 1;
+  top.keyEnd = end;
+  top.expectingEntry = false;
+  return { end };
+}
+
+/** Counts the value as its array's next element, then opens a container or skips a string or literal. */
+function readValue(scan: TRawScan, index: number, code: number): TRawStep {
+  const counted = countElement(scan);
+  if (counted) {
+    return { end: index, violation: counted };
+  }
+
+  if (code === OPEN_BRACKET || code === OPEN_BRACE) {
+    if (scan.frames.length >= V3_REQUEST_MAX_DEPTH) {
+      return { end: index, violation: { kind: "too_deep", path: rawPath(scan.text, scan.frames) } };
+    }
+    scan.frames.push({
+      isArray: code === OPEN_BRACKET,
+      count: 0,
+      keyStart: 0,
+      keyEnd: 0,
+      expectingEntry: true,
+    });
+    return { end: index };
+  }
+
+  if (code === QUOTE) {
+    return { end: closingQuote(scan.text, index) };
+  }
+
+  let end = index;
+  while (end + 1 < scan.text.length && !endsToken(scan.text.charCodeAt(end + 1))) {
+    end += 1;
+  }
+  return { end };
+}
+
+/** In an array, a value is its next element: the per-array and whole-body counts both grow. */
+function countElement(scan: TRawScan): TArrayBudgetViolation | null {
+  const top = scan.frames.at(-1);
+  if (!top?.isArray || !top.expectingEntry) {
+    return null;
+  }
+
+  top.count += 1;
+  top.expectingEntry = false;
+  scan.total += 1;
+  if (top.count > V3_REQUEST_ARRAY_MAX_ITEMS) {
+    return { kind: "array_too_long", path: rawPath(scan.text, scan.frames.slice(0, -1)), length: top.count };
+  }
+  if (scan.total > V3_REQUEST_ARRAY_MAX_TOTAL_ELEMENTS) {
+    return {
+      kind: "too_many_elements",
+      path: rawPath(scan.text, scan.frames.slice(0, -1)),
+      total: scan.total,
+    };
+  }
+  return null;
 }
 
 /**

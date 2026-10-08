@@ -63,6 +63,15 @@ describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
       });
     });
 
+    test("runs the reset on its own execution budget rather than the client default (ENG-3285)", async () => {
+      vi.mocked(prisma.$transaction).mockResolvedValue([{ count: 0 }, { count: 0 }]);
+
+      await deleteResponsesAndDisplaysForSurvey(surveyId);
+
+      // The whole survey is deleted in one batch; a short budget rolls back a reset about to commit.
+      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Array), { timeout: 120_000 });
+    });
+
     test("Handles case with no responses or displays to delete", async () => {
       // Mock $transaction to return zero counts
       vi.mocked(prisma.$transaction).mockResolvedValue([{ count: 0 }, { count: 0 }]);

@@ -14,12 +14,12 @@
 export const QSF_IMPORT_BODY_LIMIT_BYTES = 15.5 * 1024 * 1024;
 
 /**
- * Imports one server process runs at once. Measured on the worst 15.5 MiB bodies: one object with 1.3M
- * keys parses to about 80 MB of heap, and the request's budget check adds about 10 MB walking it. Deep
- * nesting parses smaller (about 52 MB for a sibling on every level) and the check refuses it at
- * `V3_REQUEST_MAX_DEPTH` levels without holding anything. With the raw body that is about 100 MB an
- * import, so three in flight stay around 300 MB, well inside the pod's memory. The per-user rate limit
- * does not cover many users importing at the same time; this does.
+ * Imports one server process runs at once. The request budget is checked on the raw text before it is
+ * parsed, so nesting and long arrays never reach `JSON.parse` (15.5 MiB of `[[[…]]]` would retain about
+ * 470 MB). Measured on the worst 15.5 MiB body that does: one object with 1.2M keys holding `{}` retains
+ * about 150 MB, the walk over it about 20 MB more, and the raw text 16 MB. Under 200 MB an import, so
+ * three in flight stay under 600 MB, inside the pod's memory. The per-user rate limit does not cover
+ * many users importing at the same time; this does.
  */
 export const QSF_IMPORT_MAX_IN_FLIGHT = 3;
 

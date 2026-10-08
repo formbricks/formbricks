@@ -68,11 +68,19 @@ issuer under `/api/auth`.
 ### OAuth 2.1
 
 OAuth clients use Authorization Code + PKCE with Dynamic Client Registration. Registration is open
-(no initial access token — MCP clients self-register), so it accepts only `http` loopback redirect
-URIs: `localhost`, `127.0.0.1` or `[::1]` on any port, which is what every MCP client uses. A
-registration claiming any other redirect URI — including an `https` one — is refused with
-`400 invalid_redirect_uri`, because a remote address is one an attacker could receive an
-authorization code at. The MCP protected resource is:
+(no initial access token — MCP clients self-register), so it accepts only redirect URIs an attacker
+can never receive an authorization code at:
+
+- `http` loopback — `localhost`, `127.0.0.1` or `[::1]` on any port — which local clients (Claude
+  Code, Codex, MCP Inspector) use.
+- An exact hosted-connector callback: `https://claude.ai/api/mcp/auth_callback`,
+  `https://claude.com/api/mcp/auth_callback` and `https://chatgpt.com/connector_platform_oauth_redirect`
+  (`HOSTED_MCP_CLIENT_REDIRECT_URIS` in `apps/web/modules/auth/lib/mcp-dcr-redirect-policy.ts`), plus
+  any a self-hoster adds with `MCP_DCR_ALLOWED_REDIRECT_URIS`. These match by exact string, so a code
+  can only ever reach the vendor.
+
+Any other redirect URI is refused with `400 invalid_redirect_uri` before Better Auth sees the
+request. `post_logout_redirect_uris` stays loopback-only. The MCP protected resource is:
 
 ```text
 https://app.formbricks.com/api/mcp
@@ -611,8 +619,9 @@ Two kinds of exception:
 </Note>
 
 Array arguments are bounded. No array in a tool call may hold more than 1 000 items, and all the arrays
-in one call together at most 50 000 elements, at any depth; a call over either bound is refused with a
-JSON-RPC `-32602` error before its arguments are parsed. Fields with a tighter bound advertise it as
+in one call together at most 50 000 elements, at any depth; and a call may nest at most 256 levels of
+objects and arrays. A call over any of these is refused with a JSON-RPC `-32602` error before its
+arguments are parsed. Fields with a tighter bound advertise it as
 `maxItems` in the tool's input schema — `create_survey`'s `blocks`, `endings`, `variables` and
 `languages`, `get_survey`'s `lang`, the list filters' `in` arrays, and `create_feedback_records`'
 `records`. A request body may be at most 2 MB, whether or not it declares a `Content-Length`.

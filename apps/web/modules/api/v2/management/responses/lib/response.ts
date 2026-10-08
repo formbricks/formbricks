@@ -15,7 +15,10 @@ import { getResponsesQuery } from "@/modules/api/v2/management/responses/lib/uti
 import { TGetResponsesFilter, TResponseInput } from "@/modules/api/v2/management/responses/types/responses";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
-import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
+import {
+  evaluateResponseQuotas,
+  loadQuotaEvaluationContext,
+} from "@/modules/ee/quotas/lib/evaluation-service";
 
 export const getResponses = async (
   workspaceIds: string[],
@@ -184,6 +187,8 @@ export const createResponseWithQuotaEvaluation = async (
   // Canonicalize once so quota evaluation uses the same code persisted on the response (createResponse
   // canonicalizes the stored value via the same helper). Keeps a request internally consistent.
   const canonicalLanguage = normalizeResponseLanguage(responseInput.language);
+  // Read before the transaction opens; evaluation checks it against the survey of the row written.
+  const quotaContext = await loadQuotaEvaluationContext(responseInput.surveyId);
   const txResponse = await prisma.$transaction<Result<Response, ApiErrorResponseV2>>(async (tx) => {
     const responseResult = await createResponse(workspaceId, responseInput, tx);
     if (!responseResult.ok) {
@@ -193,7 +198,7 @@ export const createResponseWithQuotaEvaluation = async (
     const response = responseResult.data;
 
     const quotaResult = await evaluateResponseQuotas({
-      surveyId: responseInput.surveyId,
+      surveyId: response.surveyId,
       responseId: response.id,
       data: responseInput.data,
       variables: responseInput.variables,
@@ -202,6 +207,7 @@ export const createResponseWithQuotaEvaluation = async (
       // The row just written, so `reserved` quota operands resolve (ENG-1840).
       response,
       tx,
+      quotaContext,
     });
 
     if (quotaResult.shouldEndSurvey) {

@@ -17,7 +17,7 @@ import {
   ZSurveyQuotaInput,
 } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { createQuotaAction, updateQuotaAction } from "@/modules/ee/quotas/actions";
 import { EndingCardSelector } from "@/modules/ee/quotas/components/ending-card-selector";

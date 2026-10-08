@@ -1,7 +1,7 @@
 /**
  * Lexical wraps a nested list in a structural <li> that carries no text of its own. Its class and
  * the declaration that hides its marker are declared here once and consumed by
- * `suppressNestedListMarkers` (email preview) and, by reference, by the two stylesheets that style
+ * `prepareEmailRichText` (email preview) and, by reference, by the two stylesheets that style
  * the same markup: `styles-editor-frontend.css` and `packages/surveys/src/styles/global.css`.
  * `example-theme.test.ts` fails if a rename leaves one of those stylesheets behind.
  */

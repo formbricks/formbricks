@@ -1021,6 +1021,9 @@ export const ZSurveyBase = z.object({
   workspaceOverwrites: ZSurveyWorkspaceOverwrites.nullable(),
   styling: ZSurveyStyling.nullable(),
   showLanguageSwitch: z.boolean().nullable(),
+  // Optional so survey literals and API payloads that predate the setting keep validating; null and
+  // undefined both read as "off".
+  autoSelectLanguage: z.boolean().nullish(),
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
   segment: ZSegment.nullable(),
   singleUse: ZSurveySingleUse.nullable(),

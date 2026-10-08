@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { waitForBillingPlanAction } from "@/modules/ee/billing/actions";
@@ -49,11 +50,19 @@ export const ConfirmationPage = () => {
 
     let cancelled = false;
     setIsSyncing(true);
-    void waitForBillingPlanAction({ organizationId, targetPlan: plan }).finally(() => {
-      if (!cancelled) {
-        setIsSyncing(false);
-      }
-    });
+    // Best-effort: the billing page re-syncs a stale snapshot on its own. A failure here (this poll is
+    // long enough to meet a load balancer timeout) must not surface as "try again" under "Upgrade
+    // successful" -- a customer who just paid could retry the upgrade -- so it is caught and reported
+    // instead of reaching the global unexpected-response notice (ENG-2899).
+    void waitForBillingPlanAction({ organizationId, targetPlan: plan })
+      .catch((error: unknown) => {
+        Sentry.captureException(error);
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsSyncing(false);
+        }
+      });
 
     return () => {
       cancelled = true;

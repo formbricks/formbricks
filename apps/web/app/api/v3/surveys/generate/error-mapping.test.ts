@@ -1,3 +1,4 @@
+import { LEAKY_AI_ERRORS, findPlantedContent } from "@/lib/ai/__mocks__/leaky-ai-errors";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AIOAuthTokenError, AIOutputTokenLimitError } from "@formbricks/ai";
 import { logger } from "@formbricks/logger";
@@ -132,6 +133,21 @@ describe("mapV3SurveyGenerateError", () => {
       "Failed to generate v3 survey create payload"
     );
     expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("secret-from-the-prompt");
+  });
+
+  // ENG-3720: what falls through to the 502 is usually an AI SDK error, which carries the prompt and the
+  // model's output in its message and fields.
+  test.each(LEAKY_AI_ERRORS)("logs none of what %s carried", (_, build) => {
+    const error = build();
+
+    const response = mapV3SurveyGenerateError(error, context);
+
+    expect(response.status).toBe(502);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ errName: error.name, requestId: context.requestId }),
+      "Failed to generate v3 survey create payload"
+    );
+    expect(findPlantedContent(vi.mocked(logger.error).mock.calls)).toBeUndefined();
   });
 
   test("does not report a throttled token endpoint as rejected credentials", async () => {

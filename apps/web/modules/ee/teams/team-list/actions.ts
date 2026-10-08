@@ -6,7 +6,7 @@ import { assertCan } from "@/lib/authorization";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromTeamId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { checkRoleManagementPermission } from "@/modules/ee/role-management/actions";
+import { checkRoleManagementPermission } from "@/modules/ee/role-management/lib/permission";
 import { getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
 import {
   createTeam,

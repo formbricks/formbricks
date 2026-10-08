@@ -31,7 +31,7 @@ info:
     Unrecognized **headers** are tolerated, as gateways and proxies legitimately add them; strictness is about parameters and body fields, not transport metadata.
     This is the rule for the surveys, responses, tags and workspace reference-list operations. The workflows family does not enforce it today, so treat parameter strictness there as unspecified rather than guaranteed.
     **Request limits**
-    A request body may be at most **2 MB**; a larger one is refused with **413** before it is read. Inside a body, **no array may hold more than 1 000 items, and all arrays together may hold at most 50 000 elements**, at any depth — a body that exceeds either bound is refused with **400** and a single `invalid_params` entry naming the offending array, before any field is validated. Fields with a tighter bound document it as `maxItems` on the field (a survey's `blocks`, `endings`, `variables`, `languages`, `hiddenFields.fieldIds` and `distribution.triggers` since 0.2.0). A 400 or 422 lists at most **50** `invalid_params` entries; when there are more, the last entry says how many were left out. Since 0.2.0.
+    A request body may be at most **2 MB**; a larger one is refused with **413** before it is read. Inside a body, **no array may hold more than 1 000 items, and all arrays together may hold at most 50 000 elements**, at any depth — a body that exceeds either bound is refused with **400** and a single `invalid_params` entry naming the offending array, before any field is validated. The same holds for nesting: a body may nest at most **256** levels of objects and arrays, counted from the root, and a deeper one is refused the same way, naming where it went too deep. Fields with a tighter bound document it as `maxItems` on the field (a survey's `blocks`, `endings`, `variables`, `languages`, `hiddenFields.fieldIds` and `distribution.triggers` since 0.2.0). A 400 or 422 lists at most **50** `invalid_params` entries; when there are more, the last entry says how many were left out. Since 0.2.0.
     **Filtering**
     Filters use explicit operator-style query parameters under the **`filter[...]` family**. The survey list supports `filter[name][contains]`, `filter[status][in]`, and `filter[type][in]`. The workflow list supports `filter[name][contains]` and `filter[status][in]`; the workflow run list supports `filter[status][in]` and `filter[isDryRun][eq]`. Resource-scoping identifiers (`workspaceId`, `workflowId`, `responseId`) stay plain query parameters. Multi-value filters use repeated keys or comma-separated values (e.g. `filter[status][in]=draft&filter[status][in]=inProgress` or `filter[status][in]=draft,inProgress`). Sorting remains a flat `sortBy` query parameter.
 
@@ -284,6 +284,8 @@ paths:
                   languages:
                     - code: de-DE
                       enabled: true
+                  showLanguageSwitch: true
+                  autoSelectLanguage: true
                   welcomeCard:
                     enabled: true
                     headline:
@@ -941,6 +943,8 @@ paths:
                           alias: german
                           default: false
                           enabled: false
+                      showLanguageSwitch: false
+                      autoSelectLanguage: null
                       welcomeCard:
                         enabled: false
                       blocks:
@@ -987,6 +991,8 @@ paths:
                           alias: german
                           default: false
                           enabled: false
+                      showLanguageSwitch: false
+                      autoSelectLanguage: null
                       welcomeCard:
                         enabled: false
                       blocks:
@@ -2489,7 +2495,7 @@ paths:
                           identifier: fr
                           referenceType: language
         '400':
-          description: 'Bad Request — the envelope itself is malformed: missing or unknown `operation`, missing `data`, or a `patch` without `responseId`. Problems *inside* `data` are the point of this endpoint and come back as `200` with `valid: false`, not as a 400.'
+          description: 'Bad Request — the envelope itself is malformed: missing or unknown `operation`, missing `data`, or a `patch` without `responseId`; or the body breaks the request limits (an array past its budget, or nesting past 256 levels). Other problems *inside* `data` are the point of this endpoint and come back as `200` with `valid: false`, not as a 400.'
           content:
             application/problem+json:
               schema:
@@ -6679,7 +6685,7 @@ components:
       type: object
       description: |
         Strict v3 survey creation document. This endpoint accepts survey structure only: name,
-        metadata, languages, welcome card, blocks/elements/logic, endings, hidden fields, and variables.
+        metadata, languages and language settings, welcome card, blocks/elements/logic, endings, hidden fields, and variables.
         App surveys (`type: app`) additionally accept the `distribution` (display options + triggers) and `targeting` (contact segment filters) objects; these are rejected for `link` surveys.
         It rejects legacy `questions` and out-of-scope settings such as styling, follow-ups, recaptcha, single-use/email verification, slug, custom scripts, analytics fields, timestamps, and `createdBy`.
 
@@ -6739,6 +6745,18 @@ components:
           description: |
             Optional survey language configuration. Every non-default locale used by translatable maps
             must be declared here; omitted languages are not inferred from map keys.
+        showLanguageSwitch:
+          type:
+            - boolean
+            - 'null'
+          default: null
+          description: Show respondents a language switch on multi-language surveys. `null` and `false` both mean off.
+        autoSelectLanguage:
+          type:
+            - boolean
+            - 'null'
+          default: null
+          description: Open link and app surveys in the respondent's browser language when it matches an enabled survey language; otherwise the default language is used. `null` and `false` both mean off.
         welcomeCard:
           allOf:
             - $ref: '#/components/schemas/SurveyWelcomeCard'
@@ -6926,6 +6944,8 @@ components:
             - metadata
             - defaultLanguage
             - languages
+            - showLanguageSwitch
+            - autoSelectLanguage
             - welcomeCard
             - blocks
             - endings
@@ -6973,6 +6993,16 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/SurveyLanguage'
+            showLanguageSwitch:
+              type:
+                - boolean
+                - 'null'
+              description: Show respondents a language switch on multi-language surveys. `null` and `false` both mean off.
+            autoSelectLanguage:
+              type:
+                - boolean
+                - 'null'
+              description: Open link and app surveys in the respondent's browser language when it matches an enabled survey language; otherwise the default language is used. `null` and `false` both mean off.
             welcomeCard:
               $ref: '#/components/schemas/SurveyWelcomeCard'
             blocks:
@@ -7229,6 +7259,16 @@ components:
             by `metadata`, `welcomeCard`, `blocks`, or `endings` translatable maps must be explicitly
             declared here, so remove the locale key from those maps as well when intentionally removing
             a language.
+        showLanguageSwitch:
+          type:
+            - boolean
+            - 'null'
+          description: Show respondents a language switch on multi-language surveys. `null` and `false` both mean off. Omit to keep the stored value.
+        autoSelectLanguage:
+          type:
+            - boolean
+            - 'null'
+          description: Open link and app surveys in the respondent's browser language when it matches an enabled survey language; otherwise the default language is used. `null` and `false` both mean off. Omit to keep the stored value.
         welcomeCard:
           $ref: '#/components/schemas/SurveyWelcomeCard'
         blocks:
@@ -8631,7 +8671,7 @@ components:
           enum:
             - create
         data:
-          description: 'Intended create payload, checked against `CreateResponseRequest` by the operation rather than by this envelope. Any JSON value is accepted here so the endpoint can return repairable validation errors: a document that is not an object, or that breaks `CreateResponseRequest`, is a **200** with `valid: false`, never a 400.'
+          description: 'Intended create payload, checked against `CreateResponseRequest` by the operation rather than by this envelope. Any JSON value is accepted here so the endpoint can return repairable validation errors: a document that is not an object, or that breaks `CreateResponseRequest`, is a **200** with `valid: false`, not a 400. Only the request limits come first: an array past its budget, or nesting past 256 levels, is a 400 for any request.'
       additionalProperties: false
     ValidateResponsePatchRequest:
       type: object
@@ -8648,7 +8688,7 @@ components:
           type: string
           format: cuid2
         data:
-          description: 'Intended patch payload, checked against `PatchResponseRequest` by the operation rather than by this envelope. Any JSON value is accepted here so the endpoint can return repairable validation errors: a document that is not an object, or that breaks `PatchResponseRequest`, is a **200** with `valid: false`, never a 400.'
+          description: 'Intended patch payload, checked against `PatchResponseRequest` by the operation rather than by this envelope. Any JSON value is accepted here so the endpoint can return repairable validation errors: a document that is not an object, or that breaks `PatchResponseRequest`, is a **200** with `valid: false`, not a 400. Only the request limits come first: an array past its budget, or nesting past 256 levels, is a 400 for any request.'
       additionalProperties: false
     ValidateResponseRequest:
       oneOf:
@@ -10390,7 +10430,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     FeedbackRecordsBadRequest:
-      description: 'Bad Request. From the **gateway** (`text/plain`): a missing or malformed `tenant_id`, a request body that is not JSON, or a path under `/api/v3/feedbackRecords` that is not one of the documented operations. A record id that is not a UUID and a path such as `/count` both fall in that last case and share the one `Unsupported FeedbackRecords route` body, so the two cannot be told apart from the response. From the **feedback store** (`application/problem+json`): schema validation failures — an unknown enum value, an inverted range, a malformed or re-ordered cursor, or a string with NULL bytes or invalid UTF-8.'
+      description: 'Bad Request. From the **gateway** (`text/plain`): a missing or malformed `tenant_id`; a request body that is not a single JSON object; a body whose top-level keys can be read more than one way (a repeated key, a key with non-ASCII characters, or a key that differs from `tenant_id` only in letter case); a `tenant_id` query parameter given more than once; or a path under `/api/v3/feedbackRecords` that is not one of the documented operations. A record id that is not a UUID and a path such as `/count` both fall in that last case and share the one `Unsupported FeedbackRecords route` body, so the two cannot be told apart from the response. From the **feedback store** (`application/problem+json`): schema validation failures — an unknown enum value, an inverted range, a malformed or re-ordered cursor, or a string with NULL bytes or invalid UTF-8.'
       content:
         text/plain:
           schema:
@@ -10399,6 +10439,12 @@ components:
             missingTenant:
               summary: Gateway — tenant_id missing or malformed
               value: Invalid or missing tenant_id
+            invalidBody:
+              summary: Gateway — body is not a single JSON object, or has a repeated or non-ASCII key
+              value: Invalid request body
+            ambiguousTenant:
+              summary: Gateway — tenant_id given in more than one spelling, or repeated in the query
+              value: Ambiguous tenant_id
             unsupportedRoute:
               summary: Gateway — not a documented operation
               value: Unsupported FeedbackRecords route

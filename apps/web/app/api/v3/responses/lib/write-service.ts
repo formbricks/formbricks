@@ -17,7 +17,10 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { inlineSurveyEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
 import { getUniqueConstraintFields, isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
-import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
+import {
+  evaluateResponseQuotas,
+  loadQuotaEvaluationContext,
+} from "@/modules/ee/quotas/lib/evaluation-service";
 import { type TV3ResponseSurveyRow, v3ResponseReadSelect, v3ResponseSurveySelect } from "./service";
 
 /**
@@ -433,6 +436,8 @@ export async function createScopedResponse(input: TV3CreateResponsePersist): Pro
   // Already resolved to one of the survey's own declared codes by `resolveV3WriteLanguage`, so it is
   // deliberately not canonicalized again here — that is what would push it out of the survey's set.
   const language = input.language ?? null;
+  // Read before the transaction opens — see `TQuotaEvaluationContext`.
+  const quotaContext = await loadQuotaEvaluationContext(survey.id);
 
   try {
     return await prisma.$transaction(async (tx) => {
@@ -505,6 +510,7 @@ export async function createScopedResponse(input: TV3CreateResponsePersist): Pro
         // The row as persisted, so `reserved` quota operands resolve (ENG-1840).
         response: toQuotaEvaluationRow(created),
         tx,
+        quotaContext,
       });
 
       return { ok: true as const, responseId: created.id };
@@ -552,6 +558,9 @@ export async function updateScopedResponse({
   survey,
   patch,
 }: TV3UpdateResponsePersist): Promise<TV3WriteOutcome> {
+  // Read before the transaction opens — see `TQuotaEvaluationContext`.
+  const quotaContext = await loadQuotaEvaluationContext(survey.id);
+
   try {
     return await prisma.$transaction(async (tx) => {
       const { issues } = await collectReferenceIssues(tx, {
@@ -605,6 +614,7 @@ export async function updateScopedResponse({
         responseFinished: updated.finished,
         response: toQuotaEvaluationRow(updated),
         tx,
+        quotaContext,
       });
 
       return { ok: true as const, responseId: updated.id };

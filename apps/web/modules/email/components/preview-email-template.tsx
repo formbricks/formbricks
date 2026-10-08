@@ -57,8 +57,7 @@ import {
   getScaleOptionStyle,
   getSecondaryButtonStyle,
   importantStyle,
-  normalizeRichTextSpacing,
-  suppressNestedListMarkers,
+  prepareEmailRichText,
 } from "../lib/preview-email-template-styles";
 import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
 
@@ -161,9 +160,9 @@ function PreviewElementHeader({
   return (
     <ElementHeader
       className={className}
-      headline={suppressNestedListMarkers(normalizeRichTextSpacing(headline))}
+      headline={prepareEmailRichText(headline)}
       style={getLightModeTextStyle(styleTokens)}
-      subheader={subheader ? suppressNestedListMarkers(normalizeRichTextSpacing(subheader)) : undefined}
+      subheader={subheader ? prepareEmailRichText(subheader) : undefined}
       subheaderStyle={{
         ...getForcedColorStyle(styleTokens.elementDescriptionColor),
         fontSize: styleTokens.elementDescriptionFontSize,

@@ -394,6 +394,8 @@ const ROOT_KEYS = new Set([
   "metadata",
   "defaultLanguage",
   "languages",
+  "showLanguageSwitch",
+  "autoSelectLanguage",
   "welcomeCard",
   "blocks",
   "endings",
@@ -407,6 +409,8 @@ const PATCH_ROOT_KEYS = new Set([
   "status",
   "metadata",
   "languages",
+  "showLanguageSwitch",
+  "autoSelectLanguage",
   "welcomeCard",
   "blocks",
   "endings",
@@ -1235,6 +1239,10 @@ function addAppDistributionIssues(
   }
 }
 
+// Multi-language respondent settings. Nullable to mirror the Survey columns: `null` and `false` both
+// mean "off". On PATCH, omitting a key keeps the stored value and `null` clears it.
+const ZV3SurveyLanguageSetting = z.boolean().nullable();
+
 /** `bound: false` is for the stored document only — see `TV3SurveyDocumentSchemaOptions.boundArrays`. */
 function createV3SurveyDocumentShape(options?: TV3LanguageCompatibilityOptions, bound = true) {
   return {
@@ -1247,6 +1255,8 @@ function createV3SurveyDocumentShape(options?: TV3LanguageCompatibilityOptions, 
       { max: V3_SURVEY_MAX_LANGUAGES },
       bound
     ).prefault([]),
+    showLanguageSwitch: ZV3SurveyLanguageSetting.prefault(null),
+    autoSelectLanguage: ZV3SurveyLanguageSetting.prefault(null),
     welcomeCard: ZSurveyWelcomeCard.prefault({ enabled: false }),
     blocks: createZV3SurveyBlocks(bound),
     endings: createZV3SurveyEndings(bound).prefault([]),
@@ -1265,6 +1275,8 @@ function createV3SurveyPatchShape(options?: TV3LanguageCompatibilityOptions) {
     languages: lengthBoundedArray(createZV3SurveyLanguageInput(options), {
       max: V3_SURVEY_MAX_LANGUAGES,
     }).optional(),
+    showLanguageSwitch: ZV3SurveyLanguageSetting.optional(),
+    autoSelectLanguage: ZV3SurveyLanguageSetting.optional(),
     welcomeCard: ZSurveyWelcomeCard.optional(),
     blocks: createZV3SurveyBlocks(true).optional(),
     endings: createZV3SurveyEndings(true).optional(),

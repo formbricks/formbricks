@@ -40,6 +40,20 @@ describe("buildV3SurveyCreateInput", () => {
       blocks: input.blocks,
     });
   });
+  test("carries the multi-language respondent settings through", () => {
+    const input = ZV3CreateSurveyBody.parse({
+      workspaceId: "clxx1234567890123456789012",
+      name: "Survey",
+      showLanguageSwitch: true,
+      autoSelectLanguage: false,
+      blocks: [{ name: "Block", elements: [element(["A", "B"])] }],
+    });
+
+    expect(buildV3SurveyCreateInput(input, { languages, createdBy: null })).toMatchObject({
+      showLanguageSwitch: true,
+      autoSelectLanguage: false,
+    });
+  });
 });
 
 describe("getV3SurveyCreateInputInvalidParams", () => {

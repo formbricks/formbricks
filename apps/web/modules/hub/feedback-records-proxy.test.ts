@@ -1,4 +1,7 @@
 import { NextRequest } from "next/server";
+import http from "node:http";
+import v8 from "node:v8";
+import vm from "node:vm";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { proxyFeedbackRecordsRequest } from "@/modules/hub/feedback-records-proxy";
 
@@ -66,7 +69,58 @@ const serializeIncludingErrors = (value: unknown): string => {
   });
 };
 
-describe("proxyFeedbackRecordsRequest", () => {
+/**
+ * Wraps a request the way Next's app-route runtime hands it to a route handler. For the default
+ * `dynamic = "auto"`, `proxyNextRequest` (next/dist/server/route-modules/app-route/module.js) puts the
+ * NextRequest behind a Proxy whose getter binds methods to the real target, and whose `clone()` returns
+ * the cloned Request behind another Proxy. Reading through it works; handing it to a Request constructor
+ * as `input` does not, because fetch objects keep their state in private fields a Proxy cannot carry
+ * (nodejs/undici#4290). Building tests from a bare NextRequest is what let that ship unnoticed.
+ */
+const wrapLikeNextAppRoute = (request: NextRequest): NextRequest => {
+  const handlers: ProxyHandler<Request> = {
+    get(target, prop) {
+      if (prop === "clone") return () => new Proxy(target.clone(), handlers);
+      const value: unknown = Reflect.get(target, prop, target);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  };
+
+  return new Proxy(request, handlers) as NextRequest;
+};
+
+const handlerRequestShapes: [string, (request: NextRequest) => NextRequest][] = [
+  ["a plain NextRequest", (request) => request],
+  ["the proxied request Next passes to route handlers", wrapLikeNextAppRoute],
+];
+
+/**
+ * A real garbage collection, for the abort test. undici links a cloned Request's signal to its source
+ * only through a WeakRef (nodejs/undici#4068), so whether a disconnect still reaches the Hub hop depends
+ * on whether a collection ran in between — and nothing in a short test triggers one on its own.
+ */
+let collectGarbage: (() => void) | undefined;
+const collectGarbageAcrossTurns = async (): Promise<void> => {
+  // Enabled here rather than at import so only this test changes the worker's V8 flags.
+  if (!collectGarbage) {
+    v8.setFlagsFromString("--expose-gc");
+    collectGarbage = vm.runInNewContext("gc") as () => void;
+  }
+  // A WeakRef target survives until the end of the job that last dereferenced it, so yield first.
+  for (let pass = 0; pass < 3; pass++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    collectGarbage();
+  }
+};
+
+/** The single Hub hop, as the URL and init the proxy handed to `fetch`, plus the Request they make. */
+const hubCall = (fetchMock: ReturnType<typeof vi.fn>) => {
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+  const [url, init] = fetchMock.mock.calls[0] as [URL, RequestInit];
+  return { url, init, request: new Request(url, init) };
+};
+
+describe.each(handlerRequestShapes)("proxyFeedbackRecordsRequest with %s", (_shape, asHandlerRequest) => {
   beforeEach(() => {
     vi.clearAllMocks();
     runtime.isProduction = false;
@@ -98,23 +152,28 @@ describe("proxyFeedbackRecordsRequest", () => {
     const fetchMock = vi.fn().mockResolvedValue(Response.json({ data: [] }));
     vi.stubGlobal("fetch", fetchMock);
 
-    await proxyFeedbackRecordsRequest(new NextRequest(requestUrl));
+    await proxyFeedbackRecordsRequest(asHandlerRequest(new NextRequest(requestUrl)));
 
-    const hubRequest = fetchMock.mock.calls[0][0] as Request;
-    expect(hubRequest.url).toBe(expectedHubUrl);
-    expect(fetchMock).toHaveBeenCalledWith(hubRequest, { cache: "no-store" });
+    const { url, init } = hubCall(fetchMock);
+    expect(url.href).toBe(expectedHubUrl);
+    expect(init.method).toBe("GET");
+    // A bodyless request must not carry `duplex`, which undici only accepts alongside a body.
+    expect(init.body).toBeUndefined();
+    expect(init).not.toHaveProperty("duplex");
   });
 
-  test("authorizes a cloned request before forwarding the original body", async () => {
+  test("authorizes the incoming request and forwards exactly the body it authorized", async () => {
+    // `tenant_id` decides authorization, so the Hub must receive the bytes the authorizer read and no
+    // others — the clone has to be taken before authorization consumes the body.
     const body = JSON.stringify({ tenant_id: "dir_1", text: "Feedback" });
+    let authorizedBody: string | undefined;
     mockAuthorizeGatewayRequest.mockImplementationOnce(async ({ request }: { request: NextRequest }) => {
-      expect(await request.text()).toBe(body);
+      authorizedBody = await request.text();
       return new Response(null, { status: 200 });
     });
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 201 }));
     vi.stubGlobal("fetch", fetchMock);
-
-    await proxyFeedbackRecordsRequest(
+    const request = asHandlerRequest(
       new NextRequest("http://localhost:3000/api/v3/feedbackRecords", {
         method: "POST",
         body,
@@ -125,17 +184,119 @@ describe("proxyFeedbackRecordsRequest", () => {
       })
     );
 
+    await proxyFeedbackRecordsRequest(request);
+
     const authorizationInput = mockAuthorizeGatewayRequest.mock.calls[0][0];
     expect(authorizationInput.originalRequest).toEqual({
       method: "POST",
       url: new URL("http://localhost:3000/api/v3/feedbackRecords"),
     });
     expect(authorizationInput.requestId).toBe("request_1");
+    expect(authorizedBody).toBe(body);
 
-    const hubRequest = fetchMock.mock.calls[0][0] as Request;
+    const { init, request: hubRequest } = hubCall(fetchMock);
+    expect(init).toHaveProperty("duplex", "half");
     expect(hubRequest.method).toBe("POST");
     expect(hubRequest.headers.get("content-type")).toBe("application/json");
-    expect(await hubRequest.text()).toBe(body);
+    expect(await hubRequest.text()).toBe(authorizedBody);
+  });
+
+  test("gives the authorizer the request's cookies for session authentication", async () => {
+    let sessionCookie: string | undefined;
+    mockAuthorizeGatewayRequest.mockImplementationOnce(async ({ request }: { request: NextRequest }) => {
+      sessionCookie = request.cookies.get("formbricks.session_token")?.value;
+      return new Response(null, { status: 200 });
+    });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ data: [] })));
+
+    await proxyFeedbackRecordsRequest(
+      asHandlerRequest(
+        new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1", {
+          headers: { cookie: "formbricks.session_token=session_1" },
+        })
+      )
+    );
+
+    expect(sessionCookie).toBe("session_1");
+  });
+
+  test("aborts the Hub call when the client disconnects, even after a garbage collection", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 201 }));
+    vi.stubGlobal("fetch", fetchMock);
+    // Stands in for the controller Next ties to the client connection (signalFromNodeResponse).
+    const clientConnection = new AbortController();
+    // A body, so the Hub hop is forwarded from a clone: the case whose own signal GC can sever.
+    const request = asHandlerRequest(
+      new NextRequest("http://localhost:3000/api/v3/feedbackRecords", {
+        method: "POST",
+        body: JSON.stringify({ tenant_id: "dir_1" }),
+        signal: clientConnection.signal,
+      })
+    );
+
+    await proxyFeedbackRecordsRequest(request);
+    const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit];
+    expect(init.signal?.aborted).toBe(false);
+
+    await collectGarbageAcrossTurns();
+    clientConnection.abort();
+
+    expect(init.signal?.aborted).toBe(true);
+    // Next keeps the incoming request alive for the whole handler; so does this test.
+    expect(request.signal.aborted).toBe(true);
+  });
+
+  test("answers a client that hung up mid-call without logging a proxy failure", async () => {
+    const fetchMock = vi.fn(
+      (_url: URL, init: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
+        })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const clientConnection = new AbortController();
+
+    const pending = proxyFeedbackRecordsRequest(
+      asHandlerRequest(
+        new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1", {
+          signal: clientConnection.signal,
+        })
+      )
+    );
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    clientConnection.abort();
+
+    const response = await pending;
+    expect(response.status).toBe(499);
+    expect(mockLoggerError).not.toHaveBeenCalled();
+  });
+
+  test("never lets Next cache a Hub response, so reads stay live and writes always reach the Hub", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ data: [] }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await proxyFeedbackRecordsRequest(
+      asHandlerRequest(new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1"))
+    );
+
+    expect(hubCall(fetchMock).init.cache).toBe("no-store");
+  });
+
+  test("passes a Hub redirect to the caller instead of following it", async () => {
+    const hubRedirect = new Response(null, {
+      status: 307,
+      headers: { location: "/v1/feedback-records/record_1" },
+    });
+    const fetchMock = vi.fn().mockResolvedValue(hubRedirect);
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await proxyFeedbackRecordsRequest(
+      asHandlerRequest(new NextRequest("http://localhost:3000/api/v3/feedbackRecords/record_1"))
+    );
+
+    expect(hubCall(fetchMock).init.redirect).toBe("manual");
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("/v1/feedback-records/record_1");
   });
 
   test("replaces client credentials with the internal Hub credential", async () => {
@@ -143,25 +304,69 @@ describe("proxyFeedbackRecordsRequest", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1", {
-        headers: {
-          authorization: "Bearer client-token",
-          connection: "keep-alive, X-Client-Context",
-          cookie: "session=secret",
-          host: "localhost:3000",
-          "x-api-key": "fbk_client-key",
-          "x-client-context": "sensitive-client-context",
-        },
-      })
+      asHandlerRequest(
+        new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1", {
+          headers: {
+            authorization: "Bearer client-token",
+            connection: "keep-alive, X-Client-Context",
+            cookie: "session=secret",
+            host: "localhost:3000",
+            "x-api-key": "fbk_client-key",
+            "x-client-context": "sensitive-client-context",
+          },
+        })
+      )
     );
 
-    const hubRequest = fetchMock.mock.calls[0][0] as Request;
+    const { request: hubRequest } = hubCall(fetchMock);
     expect(hubRequest.headers.get("authorization")).toBe("Bearer hub-api-key");
     expect(hubRequest.headers.has("cookie")).toBe(false);
     expect(hubRequest.headers.has("x-api-key")).toBe(false);
     expect(hubRequest.headers.has("connection")).toBe(false);
     expect(hubRequest.headers.has("host")).toBe(false);
     expect(hubRequest.headers.has("x-client-context")).toBe(false);
+  });
+
+  test("forwards no header undici refuses to send, so large uploads reach the Hub", async () => {
+    // curl adds `expect: 100-continue` above 1 MiB, and undici rejects it (and the others below) at
+    // dispatch, not when the Request is built, so a stubbed fetch cannot catch it: the captured init is
+    // sent for real.
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 201 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await proxyFeedbackRecordsRequest(
+      asHandlerRequest(
+        new NextRequest("http://localhost:3000/api/v3/feedbackRecords", {
+          method: "POST",
+          body: JSON.stringify({ tenant_id: "dir_1" }),
+          headers: {
+            "content-type": "application/json",
+            expect: "100-continue",
+            "keep-alive": "timeout=5",
+            "transfer-encoding": "chunked",
+            upgrade: "h2c",
+          },
+        })
+      )
+    );
+    const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit];
+    vi.unstubAllGlobals();
+
+    const server = http.createServer((req, res) => {
+      req.resume();
+      req.on("end", () => res.end("received"));
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    try {
+      const { port } = server.address() as { port: number };
+      const response = await fetch(`http://127.0.0.1:${port}/v1/feedback-records`, init);
+
+      expect(response.status).toBe(200);
+      expect(await response.text()).toBe("received");
+    } finally {
+      // fetch keeps its connection alive; drop it so the server actually stops with the test.
+      server.closeAllConnections();
+      await new Promise((resolve) => server.close(resolve));
+    }
   });
 
   test("passes the Hub response through unchanged", async () => {
@@ -175,7 +380,7 @@ describe("proxyFeedbackRecordsRequest", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(hubResponse));
 
     const response = await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1")
+      asHandlerRequest(new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1"))
     );
 
     expect(response).toBe(hubResponse);
@@ -191,7 +396,7 @@ describe("proxyFeedbackRecordsRequest", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const response = await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1")
+      asHandlerRequest(new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1"))
     );
 
     expect(response).toBe(authorizationResponse);
@@ -206,9 +411,11 @@ describe("proxyFeedbackRecordsRequest", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const response = await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1", {
-        method: "PUT",
-      })
+      asHandlerRequest(
+        new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1", {
+          method: "PUT",
+        })
+      )
     );
 
     expect(response.status).toBe(400);
@@ -221,7 +428,7 @@ describe("proxyFeedbackRecordsRequest", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const response = await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/api/v3/feedbackRecordsFoo")
+      asHandlerRequest(new NextRequest("http://localhost:3000/api/v3/feedbackRecordsFoo"))
     );
 
     expect(response.status).toBe(400);
@@ -242,11 +449,13 @@ describe("proxyFeedbackRecordsRequest", () => {
     );
 
     const response = await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1", {
-        headers: {
-          "x-request-id": "request_1",
-        },
-      })
+      asHandlerRequest(
+        new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1", {
+          headers: {
+            "x-request-id": "request_1",
+          },
+        })
+      )
     );
 
     expect(response.status).toBe(502);
@@ -277,7 +486,7 @@ describe("proxyFeedbackRecordsRequest", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const response = await proxyFeedbackRecordsRequest(
-      new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1")
+      asHandlerRequest(new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1"))
     );
 
     expect(response.status).toBe(404);

@@ -46,6 +46,7 @@ export const getMinimalSurvey = (t: TFunction): TSurvey => ({
   segment: null,
   languages: [],
   showLanguageSwitch: false,
+  autoSelectLanguage: false,
   isVerifyEmailEnabled: false,
   variables: [],
   followUps: [],

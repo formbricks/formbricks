@@ -588,7 +588,7 @@ services:
   # "CUBEJS_API_SECRET is required to run Cube" when the secret is empty.
   cube:
     restart: always
-    image: ghcr.io/formbricks/cube:1.7.47-2
+    image: ghcr.io/formbricks/cube:1.7.47-3
     depends_on:
       hub-migrate:
         condition: service_completed_successfully
