@@ -82,20 +82,21 @@ function classifyOrganizationAIFailure(
   }
 
   const providerError = classifyAIProviderError(error);
-  logger.error(
-    {
-      organizationId,
-      isInstanceConfigured: aiConfig.isInstanceConfigured,
-      errorCode: getAIErrorCode(error),
-      ...(error instanceof AIConfigurationError ? { configuration: getConfigurationDetails(error) } : {}),
-      statusCode: providerError?.statusCode,
-      isQuotaExhausted: providerError?.isQuotaExhausted,
-      isRetryable: providerError?.isRetryable,
-      isAuthFailure: providerError?.isAuthFailure,
-      ...describeAIError(error),
-    },
-    message
-  );
+  const fields = {
+    organizationId,
+    isInstanceConfigured: aiConfig.isInstanceConfigured,
+    errorCode: getAIErrorCode(error),
+    ...(error instanceof AIConfigurationError ? { configuration: getConfigurationDetails(error) } : {}),
+    statusCode: providerError?.statusCode,
+    isQuotaExhausted: providerError?.isQuotaExhausted,
+    isRetryable: providerError?.isRetryable,
+    isAuthFailure: providerError?.isAuthFailure,
+    ...describeAIError(error),
+  };
+  // A call that ran out of the time its caller gave it (`timeout`) is a path every caller handles —
+  // the QSF import splits the chunk and carries on — so it warns, with the same fields.
+  if (isTimeoutError(error)) logger.warn(fields, message);
+  else logger.error(fields, message);
 
   if (providerError?.isQuotaExhausted) {
     throw new TooManyRequestsError(AI_ERROR_CODES.QUOTA_EXCEEDED, providerError.retryAfterSeconds);
@@ -133,6 +134,11 @@ const isAbortError = (error: unknown): boolean => {
 
   return error.cause instanceof Error && error.cause.name === "AbortError";
 };
+
+/** The AI SDK's own `timeout` firing: a `TimeoutError`, sometimes wrapped one level down as the `cause`. */
+const isTimeoutError = (error: unknown): boolean =>
+  error instanceof Error &&
+  (error.name === "TimeoutError" || (error.cause instanceof Error && error.cause.name === "TimeoutError"));
 
 export const getOrganizationAIConfig = async (organizationId: string): Promise<TOrganizationAIConfig> => {
   const organization = await getOrganization(organizationId);

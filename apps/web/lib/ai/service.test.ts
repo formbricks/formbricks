@@ -1,5 +1,6 @@
 import { LEAKY_AI_ERRORS, buildRetryError, findPlantedContent } from "@/lib/ai/__mocks__/leaky-ai-errors";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { z } from "zod";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   assertOrganizationAIConfigured,
@@ -313,6 +314,30 @@ describe("AI organization service", () => {
       { organizationId: "org_1", ...details },
       "Failed to generate organization AI object: output token limit reached"
     );
+  });
+
+  test("warns rather than logging an error when a call runs out of its own timeout, with the same fields", async () => {
+    const timeoutError = new DOMException("The operation timed out.", "TimeoutError");
+    mocks.generateObject.mockRejectedValueOnce(timeoutError);
+
+    await expect(
+      generateOrganizationAIObject({
+        organizationId: "org_1",
+        schema: z.object({}),
+        prompt: "Plan this import",
+        timeout: 45_000,
+      })
+    ).rejects.toBe(timeoutError);
+    expect(mocks.loggerError).not.toHaveBeenCalled();
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: "org_1",
+        isInstanceConfigured: true,
+        errName: "TimeoutError",
+      }),
+      "Failed to generate organization AI object"
+    );
+    expect(JSON.stringify(mocks.loggerWarn.mock.calls)).not.toContain("The operation timed out.");
   });
 
   test("converts a provider 429 from text generation into a TooManyRequestsError", async () => {
