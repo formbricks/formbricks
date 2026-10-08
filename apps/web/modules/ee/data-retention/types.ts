@@ -56,3 +56,32 @@ export type TRetentionExemptionSurveyOption = {
   name: string;
   workspaceName: string;
 };
+
+/** What a survey must meet to be archived by the surveys policy; every condition ticked must hold. */
+export const RETENTION_SURVEY_CONDITIONS = ["noResponse", "noChange", "createdBefore"] as const;
+export type TRetentionSurveyCondition = (typeof RETENTION_SURVEY_CONDITIONS)[number];
+
+/**
+ * One policy's settings, all in days (ENG-3695). `null` means the step doesn't exist: responses have no
+ * archive, members no delete. `conditions` is for the surveys policy only.
+ */
+export type TRetentionPolicySettings = {
+  enabled: boolean;
+  warnDays: number;
+  archiveDays: number | null;
+  deleteDays: number | null;
+  conditions: TRetentionSurveyCondition[];
+};
+
+/** `GET /api/internal/retention-policies`: the organisation's three policies as one document. */
+export type TRetentionPolicies = {
+  responses: Omit<TRetentionPolicySettings, "conditions">;
+  surveys: TRetentionPolicySettings;
+  members: Omit<TRetentionPolicySettings, "conditions">;
+};
+
+/** `PATCH /api/internal/retention-policies`: exactly one policy, any of its fields. */
+export type TRetentionPoliciesPatch =
+  | { responses: Partial<Omit<TRetentionPolicySettings, "conditions">> }
+  | { surveys: Partial<TRetentionPolicySettings> }
+  | { members: Partial<Omit<TRetentionPolicySettings, "conditions">> };
