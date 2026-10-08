@@ -18,6 +18,7 @@ import {
   QSF_MAX_NAME_CHARS,
   QSF_MAX_OPTIONS_PER_QUESTION,
   QSF_MAX_QUESTIONS,
+  QSF_MAX_TEXT_CHARS,
 } from "./limits";
 import { collectEmbeddedDataReferences } from "./piped-text";
 import type {
@@ -51,7 +52,9 @@ import type {
  * - nothing recurses on the file: the flow walk is iterative and capped at `QSF_MAX_FLOW_DEPTH`, and
  *   logic is read at its fixed depth;
  * - every collection is counted against its limit before its entries are worked on — blocks and their
- *   entries, embedded data, options, `Language` keys — so a file past one costs a count, not the work.
+ *   entries, embedded data, options, `Language` keys — so a file past one costs a count, not the work;
+ * - no string from the file is scanned past its bound: a name is cut before it is trimmed, and a text
+ *   longer than `QSF_MAX_TEXT_CHARS` (which the sanitizer refuses) is never searched for piped text.
  */
 
 /** Qualtrics question ids are `QID` and a number. Anything else is refused, `__proto__` included. */
@@ -61,13 +64,23 @@ const OPTION_ID_PATTERN = /^[A-Za-z0-9_-]{1,32}$/;
 const TOKEN_PATTERN = /^[A-Za-z][A-Za-z0-9_-]{0,39}$/;
 const MAX_LOGIC_VALUE_CHARS = 80;
 const MAX_URL_CHARS = 2_000;
+/** A message library reference (`MS_…`) is an id, never longer than this. */
+const MAX_MESSAGE_REF_CHARS = 64;
+const MESSAGE_REF_PATTERN = /^MS_[A-Za-z0-9]+$/;
+/** Longest number read from a string: a 15 MB numeric string is not a slider bound. */
+const MAX_NUMBER_CHARS = 32;
 
 /**
  * The part of the envelope every Qualtrics export has, read before anything else. Strict about the
  * three keys it checks and blind to the rest: it never copies the file.
  */
 const ZQsfEnvelope = z.object({
-  SurveyEntry: z.object({ SurveyName: z.string().trim().min(1) }),
+  SurveyEntry: z.object({
+    SurveyName: z
+      .string()
+      .transform((name) => bounded(trimmedHead(name, 2 * QSF_MAX_NAME_CHARS), QSF_MAX_NAME_CHARS))
+      .pipe(z.string().min(1)),
+  }),
   SurveyElements: z.array(z.unknown()),
 });
 
@@ -92,7 +105,12 @@ const str = (value: unknown): string | null => {
 
 const num = (value: unknown): number | null => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value))) {
+  if (
+    typeof value === "string" &&
+    value.length <= MAX_NUMBER_CHARS &&
+    value.trim() !== "" &&
+    Number.isFinite(Number(value))
+  ) {
     return Number(value);
   }
   return null;
@@ -107,6 +125,16 @@ const token = (value: unknown): string | null => {
 };
 
 const bounded = (value: string, max: number): string => (value.length > max ? value.slice(0, max) : value);
+
+/** `value`'s first `max` characters, trimmed: the work is bounded by the cut, never by the file. */
+const trimmedHead = (value: string, max: number): string => bounded(value, max).trim();
+
+/** An export tag from the file, cut and trimmed, or `null` when there is none. */
+const exportTagOf = (payload: TRecord): string | null => {
+  const raw = str(own(payload, "DataExportTag"));
+  const tag = raw === null ? "" : bounded(trimmedHead(raw, 2 * QSF_MAX_NAME_CHARS), QSF_MAX_NAME_CHARS);
+  return tag.length > 0 ? tag : null;
+};
 
 const inputError = (name: string, reason: string): QsfImportInputError =>
   new QsfImportInputError([{ name, reason }]);
@@ -520,7 +548,9 @@ class QsfReader {
     for (const field of fields) {
       if (!isRecord(field)) continue;
       const name = str(own(field, "Field")) ?? str(own(field, "Description"));
-      if (name !== null && name.trim().length > 0) result.embeddedDataNames.push(name);
+      if (name !== null && trimmedHead(name, 2 * QSF_MAX_NAME_CHARS).length > 0) {
+        result.embeddedDataNames.push(name);
+      }
     }
   }
 
@@ -682,7 +712,7 @@ class QsfReader {
 
     return {
       ref,
-      exportTag: bounded(str(own(payload, "DataExportTag"))?.trim() || ref, QSF_MAX_NAME_CHARS),
+      exportTag: exportTagOf(payload) ?? ref,
       position,
       pageId,
       qualtricsType: token(own(payload, "QuestionType")) ?? "Unknown",
@@ -938,7 +968,7 @@ class QsfReader {
     const names: string[] = [];
     const seen = new Set<string>();
     const add = (name: string) => {
-      const value = bounded(name.trim(), QSF_MAX_NAME_CHARS);
+      const value = bounded(trimmedHead(name, 2 * QSF_MAX_NAME_CHARS), QSF_MAX_NAME_CHARS);
       if (value.length === 0 || seen.has(value)) return;
       seen.add(value);
       names.push(value);
@@ -952,7 +982,10 @@ class QsfReader {
 
     fromFlow.forEach(add);
     for (const text of this.texts.values()) {
-      for (const raw of text.byLanguage.values()) collectEmbeddedDataReferences(raw).forEach(addPiped);
+      for (const raw of text.byLanguage.values()) {
+        // A text the sanitizer refuses for its length is left out of the survey, and never scanned.
+        if (raw.length <= QSF_MAX_TEXT_CHARS) collectEmbeddedDataReferences(raw).forEach(addPiped);
+      }
     }
 
     // Past what a survey can hold, the first ones are kept — the flow's, then the ones texts pipe in —
@@ -974,14 +1007,16 @@ class QsfReader {
   } {
     if (!options) return { endMessageKey: null, endRedirectUrl: null };
 
-    // `MS_…` is a message library reference, whose text is not in the export.
-    const message = str(own(options, "EOSMessage"))?.trim() ?? "";
+    // `MS_…` is a message library reference, whose text is not in the export. A message past the
+    // text limit is kept as it is, for the sanitizer to refuse and report.
+    const rawMessage = str(own(options, "EOSMessage")) ?? "";
+    const message = rawMessage.length > QSF_MAX_TEXT_CHARS ? rawMessage : rawMessage.trim();
+    const isMessageRef = message.length <= MAX_MESSAGE_REF_CHARS && MESSAGE_REF_PATTERN.test(message);
     const endMessageKey =
-      message.length > 0 && !/^MS_[A-Za-z0-9]+$/.test(message)
-        ? this.addText("s", "rich", null, message)
-        : null;
+      message.length > 0 && !isMessageRef ? this.addText("s", "rich", null, message) : null;
 
-    const url = str(own(options, "EOSRedirectURL"))?.trim() ?? "";
+    const rawUrl = str(own(options, "EOSRedirectURL")) ?? "";
+    const url = rawUrl.length > 2 * MAX_URL_CHARS ? "" : rawUrl.trim();
     return {
       endMessageKey,
       endRedirectUrl: url.length > 0 && url.length <= MAX_URL_CHARS ? url : null,
@@ -1005,7 +1040,7 @@ class QsfReader {
   }
 
   private questionTag(payload: TRecord, fallback?: string): { questionTag?: string } {
-    const tag = str(own(payload, "DataExportTag"))?.trim() || fallback;
+    const tag = exportTagOf(payload) ?? fallback;
     return tag ? { questionTag: bounded(tag, QSF_MAX_NAME_CHARS) } : {};
   }
 }

@@ -8,6 +8,7 @@ import {
   QSF_MAX_LANGUAGE_KEYS,
   QSF_MAX_LANGUAGE_KEYS_PER_QUESTION,
   QSF_MAX_OPTIONS_PER_QUESTION,
+  QSF_MAX_TEXT_CHARS,
 } from "./limits";
 import { readQsf } from "./read-qsf";
 
@@ -344,15 +345,25 @@ describe("readQsf", () => {
     });
 
     test("more embedded data names piped into texts than any survey has", () => {
-      const text = Array.from(
-        { length: QSF_MAX_EMBEDDED_DATA_FIELDS + 1 },
-        (_, i) => `\${e://Field/f${i}}`
-      ).join(" ");
+      // Spread over questions, each text under the length the reader scans.
+      const perText = 2_000;
+      const count = Math.ceil((QSF_MAX_EMBEDDED_DATA_FIELDS + 1) / perText);
+      const refs = Array.from({ length: count }, (_, i) => `QID${i + 1}`);
+      const text = (question: number) =>
+        Array.from({ length: perText }, (_, i) => `\${e://Field/f${question}_${i}}`).join(" ");
 
       expect(
-        readError(minimalQsf([sq("QID1", { QuestionText: text }), bl(["QID1"]), fl()])).invalidParams[0]
-          .reason
+        readError(minimalQsf([...refs.map((ref, i) => sq(ref, { QuestionText: text(i) })), bl(refs), fl()]))
+          .invalidParams[0].reason
       ).toContain("embedded data fields");
+    });
+
+    test("never scans a text past the length the sanitizer takes for piped text", () => {
+      const text = `\${e://Field/hidden_in_a_long_text} ${"x".repeat(QSF_MAX_TEXT_CHARS)}`;
+
+      const survey = readQsf(minimalQsf([sq("QID1", { QuestionText: text }), bl(["QID1"]), fl()]));
+
+      expect(survey.embeddedDataNames).toEqual([]);
     });
 
     test.each([

@@ -78,6 +78,66 @@ function buildLanguageVariantsQsf(variants: number): Record<string, unknown> {
 }
 
 describe("event loop", () => {
+  test("prepareQsfImport never scans a 15 MB text for piped text", async () => {
+    // One question text of `${e://` repeated, no closing brace: every match attempt used to scan up to
+    // 200 characters on, about 1.7 s for the whole text.
+    const qsf = {
+      SurveyEntry: { SurveyName: "Long text", SurveyLanguage: "EN" },
+      SurveyElements: [
+        {
+          Element: "SQ",
+          PrimaryAttribute: "QID1",
+          Payload: { QuestionText: "${e://".repeat(2_500_000), QuestionType: "TE", Selector: "SL" },
+        },
+        {
+          Element: "BL",
+          Payload: [{ ID: "BL_1", BlockElements: [{ Type: "Question", QuestionID: "QID1" }] }],
+        },
+        { Element: "FL", Payload: { Flow: [{ Type: "Block", ID: "BL_1" }] } },
+      ],
+    };
+
+    expect(await maxBlockMs(() => prepareQsfImport(qsf, "long-text.qsf"))).toBeLessThanOrEqual(50);
+  });
+
+  test("prepareQsfImport cuts every other long string from the file before it trims or matches it", async () => {
+    // Names cut before they are trimmed; codes, numbers, a message reference and a URL refused by
+    // their length first.
+    const pad = " ".repeat(3_000_000);
+    const qsf = {
+      SurveyEntry: { SurveyName: `Name${pad}`, SurveyLanguage: `${pad}EN` },
+      SurveyElements: [
+        {
+          Element: "SQ",
+          PrimaryAttribute: "QID1",
+          Payload: {
+            QuestionText: "Q",
+            DataExportTag: `Q1${pad}`,
+            QuestionType: "TE",
+            Selector: "SL",
+            Language: { [`${pad}DE`]: { QuestionText: "F" } },
+          },
+        },
+        {
+          Element: "BL",
+          Payload: [{ ID: "BL_1", BlockElements: [{ Type: "Question", QuestionID: "QID1" }] }],
+        },
+        {
+          Element: "FL",
+          Payload: {
+            Flow: [
+              { Type: "EmbeddedData", EmbeddedData: [{ Field: `f${pad}` }] },
+              { Type: "Block", ID: "BL_1" },
+            ],
+          },
+        },
+        { Element: "SO", Payload: { EOSMessage: `MS_${"a".repeat(3_000_000)}`, EOSRedirectURL: `${pad}x` } },
+      ],
+    };
+
+    expect(await maxBlockMs(() => prepareQsfImport(qsf, "long-strings.qsf"))).toBeLessThanOrEqual(50);
+  });
+
   test("prepareQsfImport refuses a file of Language key variants at once, before reading any key", async () => {
     const qsf = buildLanguageVariantsQsf(20_000);
     let refused: unknown;

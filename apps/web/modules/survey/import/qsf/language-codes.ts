@@ -34,9 +34,12 @@ const QUALTRICS_LANGUAGE_OVERRIDES: ReadonlyMap<string, string> = new Map([
  * or `normalizeLanguageCode` (whose own table is a plain object).
  */
 const QUALTRICS_LANGUAGE_CODE_PATTERN = /^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{1,8}){0,3}$/;
+/** Longer than any code the pattern admits (30) with room for spaces: refused before it is trimmed. */
+const MAX_RAW_LANGUAGE_CODE_CHARS = 64;
 
 /** The normalized code, or `null` when Formbricks has no equivalent for it. */
 export function normalizeQualtricsLanguageCode(raw: string): string | null {
+  if (raw.length > MAX_RAW_LANGUAGE_CODE_CHARS) return null;
   const trimmed = raw.trim();
   if (!QUALTRICS_LANGUAGE_CODE_PATTERN.test(trimmed)) return null;
 
@@ -51,5 +54,5 @@ export function normalizeQualtricsLanguageCode(raw: string): string | null {
 
 /** Whether a raw code is worth naming in a report line: bounded, so a report never quotes a blob. */
 export function isReportableLanguageCode(raw: string): boolean {
-  return QUALTRICS_LANGUAGE_CODE_PATTERN.test(raw.trim());
+  return raw.length <= MAX_RAW_LANGUAGE_CODE_CHARS && QUALTRICS_LANGUAGE_CODE_PATTERN.test(raw.trim());
 }
