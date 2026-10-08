@@ -248,12 +248,6 @@ export const CustomCssCard = ({
             />
 
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <Button type="button" size="sm" variant="secondary" asChild>
-                <Link href={CUSTOM_CSS_DOCS_URL} target="_blank" rel="noopener noreferrer">
-                  {t("common.learn_more")}
-                  <ExternalLinkIcon aria-hidden />
-                </Link>
-              </Button>
               <div className="flex flex-wrap items-center gap-2">
                 {canType && (
                   <>
@@ -269,7 +263,7 @@ export const CustomCssCard = ({
                     <Button
                       type="button"
                       size="sm"
-                      variant="ghost"
+                      variant="secondary"
                       onClick={() => fileInputRef.current?.click()}>
                       <UploadIcon aria-hidden />
                       {t("workspace.custom_css.upload")}
@@ -288,6 +282,12 @@ export const CustomCssCard = ({
                   </Button>
                 )}
               </div>
+              <Button type="button" size="sm" variant="ghost" asChild>
+                <Link href={CUSTOM_CSS_DOCS_URL} target="_blank" rel="noopener noreferrer">
+                  {t("common.learn_more")}
+                  <ExternalLinkIcon aria-hidden />
+                </Link>
+              </Button>
             </div>
 
             {footer}
