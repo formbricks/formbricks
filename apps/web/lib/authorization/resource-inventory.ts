@@ -33,6 +33,8 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   Dashboard: "direct_authorization_resource",
   DashboardWidget: "parent_derived_or_data_integrity",
   DataMigration: "public_or_out_of_scope",
+  // A system queue of cleanup work (Hub records, storage files) left by deletes; no user reads it.
+  DeletionCleanup: "authentication_or_application",
   Display: "parent_derived_or_data_integrity",
   EmbeddedData: "parent_derived_or_data_integrity",
   FeedbackDirectory: "direct_authorization_resource",
