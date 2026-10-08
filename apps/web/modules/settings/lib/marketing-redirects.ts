@@ -10,42 +10,64 @@ import {
 // app/(redirects)/ resolve the user's current organization (and workspace) and hand everything else to
 // the pure helpers below.
 
-// First /settings segments that are account (user-level) settings rather than organization settings.
+// Pages /settings/<slug> can open, per settings area. Only these strings ever reach a destination: an
+// unknown slug (a typo, a page that was renamed) opens organization General instead of a 404, and no
+// URL segment is ever echoed into the path. "general" and "teams" exist in both the organization and the
+// workspace area; the organization one wins, as /settings is organization settings first.
+const ORGANIZATION_SETTINGS_SLUGS = new Set([
+  "general",
+  "teams",
+  "api-keys",
+  "billing",
+  "usage",
+  "domain",
+  "enterprise",
+  "feedback-directories",
+]);
 const ACCOUNT_SETTINGS_SLUGS = new Set(["profile", "notifications", "authorized-apps"]);
+const WORKSPACE_SETTINGS_SLUGS = new Set([
+  "look",
+  "languages",
+  "tags",
+  "embedded-data",
+  "app-connection",
+  "user-actions",
+  "integrations",
+]);
+const INTEGRATION_SLUGS = new Set(["slack", "notion", "airtable", "google-sheets", "webhooks"]);
 
 // Bare /settings goes straight to the general page instead of the /organizations/<id>/settings index:
 // that page redirects to general on its own but drops the query string, which would lose UTM params.
 const DEFAULT_ORGANIZATION_SETTINGS_SLUG = "general";
 
-/**
- * Drops empty, "." and ".." segments and percent-encodes the rest, so a segment taken from the URL can
- * never add a path level, climb out of the settings base, or turn the Location into a
- * protocol-relative (off-site) URL. Every destination also starts with a fixed app path.
- */
-const toSafeSegments = (segments: readonly string[] | undefined): string[] =>
-  (segments ?? [])
-    .filter((segment) => segment !== "" && segment !== "." && segment !== "..")
-    .map((segment) => encodeURIComponent(segment));
+// URL segments arrive decoded and as typed; marketing copy is not always lower-case.
+const normalizeSegment = (segment: string | undefined): string => segment?.trim().toLowerCase() ?? "";
 
-export const getSettingsRedirectPath = (
-  organizationId: string,
+export const getSettingsDestination = (
   segments: readonly string[] | undefined,
   isFormbricksCloud: boolean
-): string => {
-  const safeSegments = toSafeSegments(segments);
-  if (safeSegments.length === 0) {
-    return organizationSettingsPath(organizationId, DEFAULT_ORGANIZATION_SETTINGS_SLUG);
-  }
+): TMarketingDestination => {
+  const [first, second] = (segments ?? []).map(normalizeSegment);
 
-  // Self-hosted has no billing page; /settings/billing lands where /billing does (enterprise).
-  if (safeSegments[0] === "billing" && !isFormbricksCloud) {
-    return getOrganizationBillingPath(organizationId, isFormbricksCloud);
+  // /settings/billing lands where /billing does (enterprise on self-hosted, which has no billing page).
+  if (first === "billing" || first === "enterprise") {
+    return {
+      scope: "organization",
+      buildPath: (organizationId) => getOrganizationBillingPath(organizationId, isFormbricksCloud),
+    };
   }
-
-  const slug = safeSegments.join("/");
-  return ACCOUNT_SETTINGS_SLUGS.has(safeSegments[0])
-    ? accountSettingsPath(slug)
-    : organizationSettingsPath(organizationId, slug);
+  if (ACCOUNT_SETTINGS_SLUGS.has(first)) {
+    return { scope: "organization", buildPath: () => accountSettingsPath(first) };
+  }
+  if (WORKSPACE_SETTINGS_SLUGS.has(first) && !ORGANIZATION_SETTINGS_SLUGS.has(first)) {
+    const page = first === "integrations" && INTEGRATION_SLUGS.has(second) ? `integrations/${second}` : first;
+    return { scope: "workspace", buildPath: (workspaceId) => workspaceSettingsPath(workspaceId, page) };
+  }
+  const slug = ORGANIZATION_SETTINGS_SLUGS.has(first) ? first : DEFAULT_ORGANIZATION_SETTINGS_SLUG;
+  return {
+    scope: "organization",
+    buildPath: (organizationId) => organizationSettingsPath(organizationId, slug),
+  };
 };
 
 /**
@@ -67,9 +89,10 @@ export type TMarketingDestination =
   | { scope: "organization"; buildPath: (organizationId: string) => string }
   | { scope: "workspace"; buildPath: (workspaceId: string) => string };
 
-// Where a logged-in user with an organization but no accessible workspace goes for a workspace link.
-const getOrganizationLandingPath = (organizationId: string): string =>
-  `/organizations/${organizationId}/landing`;
+// Where a logged-in user with an organization but no accessible workspace goes for a workspace link: the
+// organization redirect in app/(redirects)/organizations/[organizationId], which already sends billing
+// members to billing and an organization without workspaces to its landing page.
+const getOrganizationHomePath = (organizationId: string): string => `/organizations/${organizationId}`;
 
 interface TMarketingRedirectInput {
   isAuthenticated: boolean;
@@ -83,7 +106,7 @@ interface TMarketingRedirectInput {
 /**
  * Where a marketing link sends the user: logged out to login (returning here afterwards), logged in
  * without an organization to "/" (which handles setup/onboarding), a workspace link without an
- * accessible workspace to the organization's landing page, otherwise to the destination. The incoming
+ * accessible workspace to the organization home (see `getOrganizationHomePath`), otherwise to the destination. The incoming
  * query string is kept on every in-app target.
  */
 export const getMarketingRedirectTarget = ({
@@ -99,11 +122,16 @@ export const getMarketingRedirectTarget = ({
   if (destination.scope === "organization") {
     return appendSearch(destination.buildPath(organizationId), url.search);
   }
-  if (!workspaceId) return appendSearch(getOrganizationLandingPath(organizationId), url.search);
+  if (!workspaceId) return appendSearch(getOrganizationHomePath(organizationId), url.search);
   return appendSearch(destination.buildPath(workspaceId), url.search);
 };
 
-type TSectionKind = "workspace" | "workspace-settings" | "organization-settings" | "account-settings";
+type TSectionKind =
+  | "workspace"
+  | "workspace-settings"
+  | "organization-settings"
+  | "organization-billing"
+  | "account-settings";
 
 interface TMarketingSection {
   kind: TSectionKind;
@@ -121,7 +149,9 @@ interface TMarketingSection {
  */
 export const MARKETING_SECTIONS = {
   "embedded-data": { kind: "workspace-settings", page: "embedded-data" },
-  "enterprise-license": { kind: "organization-settings", page: "enterprise" },
+  // Same target as /billing: the enterprise page is self-hosted only (it 404s on Cloud, where enterprise
+  // plans are bought on the billing page).
+  "enterprise-license": { kind: "organization-billing", page: "enterprise" },
   // The MCP server authenticates through OAuth; connected MCP clients are managed as authorized apps.
   mcp: { kind: "account-settings", page: "authorized-apps" },
   contacts: {
@@ -163,7 +193,11 @@ export const MARKETING_SECTIONS = {
 
 export type TMarketingSectionSlug = keyof typeof MARKETING_SECTIONS;
 
-const toDestination = (kind: TSectionKind, page: string): TMarketingDestination => {
+const toDestination = (
+  kind: TSectionKind,
+  page: string,
+  isFormbricksCloud: boolean
+): TMarketingDestination => {
   switch (kind) {
     case "workspace":
       return { scope: "workspace", buildPath: (workspaceId) => `/workspaces/${workspaceId}/${page}` };
@@ -174,6 +208,11 @@ const toDestination = (kind: TSectionKind, page: string): TMarketingDestination 
         scope: "organization",
         buildPath: (organizationId) => organizationSettingsPath(organizationId, page),
       };
+    case "organization-billing":
+      return {
+        scope: "organization",
+        buildPath: (organizationId) => getOrganizationBillingPath(organizationId, isFormbricksCloud),
+      };
     case "account-settings":
       // Account settings carry no ID, but still need an organization for the settings shell.
       return { scope: "organization", buildPath: () => accountSettingsPath(page) };
@@ -183,10 +222,11 @@ const toDestination = (kind: TSectionKind, page: string): TMarketingDestination 
 /** Resolves `/<section>/<segments...>` to its destination, falling back to the section's main page. */
 export const getSectionDestination = (
   slug: TMarketingSectionSlug,
-  segments: readonly string[] | undefined
+  segments: readonly string[] | undefined,
+  isFormbricksCloud: boolean
 ): TMarketingDestination => {
   const section: TMarketingSection = MARKETING_SECTIONS[slug];
   const subPages = new Map(Object.entries(section.subPages ?? {}));
-  const subPage = segments?.length === 1 ? subPages.get(segments[0]) : undefined;
-  return toDestination(section.kind, subPage ?? section.page);
+  const subPage = segments?.length === 1 ? subPages.get(normalizeSegment(segments[0])) : undefined;
+  return toDestination(section.kind, subPage ?? section.page, isFormbricksCloud);
 };

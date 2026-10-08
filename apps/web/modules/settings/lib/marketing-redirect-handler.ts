@@ -1,6 +1,6 @@
 import "server-only";
 import { redirect } from "next/navigation";
-import { WEBAPP_URL } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
 import { getSession } from "@/modules/auth/lib/session";
 import {
   getActiveOrganizationIdForUser,
@@ -47,5 +47,5 @@ export const marketingSectionRoute =
   (slug: TMarketingSectionSlug) =>
   async (request: Request, context: { params: Promise<{ path?: string[] }> }): Promise<never> => {
     const { path } = await context.params;
-    return handleMarketingRedirect(request, getSectionDestination(slug, path));
+    return handleMarketingRedirect(request, getSectionDestination(slug, path, IS_FORMBRICKS_CLOUD));
   };

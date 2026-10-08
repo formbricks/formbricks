@@ -5,66 +5,66 @@ import {
   getLoginRedirectUrl,
   getMarketingRedirectTarget,
   getSectionDestination,
-  getSettingsRedirectPath,
+  getSettingsDestination,
 } from "./marketing-redirects";
 import { getOrganizationBillingPath } from "./routes";
 
 const ORG = "org-1";
 const WEBAPP_URL = "https://app.formbricks.com";
 
-describe("getSettingsRedirectPath", () => {
-  test("bare /settings goes to the organization's general settings", () => {
-    expect(getSettingsRedirectPath(ORG, undefined, true)).toBe("/organizations/org-1/settings/general");
-    expect(getSettingsRedirectPath(ORG, [], true)).toBe("/organizations/org-1/settings/general");
+describe("getSettingsDestination", () => {
+  const WS = "ws-1";
+  const resolve = (segments: string[] | undefined, isFormbricksCloud = true) => {
+    const destination = getSettingsDestination(segments, isFormbricksCloud);
+    return destination.buildPath(destination.scope === "workspace" ? WS : ORG);
+  };
+
+  test.each<[string[] | undefined, string]>([
+    [undefined, "/organizations/org-1/settings/general"],
+    [[], "/organizations/org-1/settings/general"],
+    [["teams"], "/organizations/org-1/settings/teams"],
+    [["api-keys"], "/organizations/org-1/settings/api-keys"],
+    [["usage"], "/organizations/org-1/settings/usage"],
+    [["domain"], "/organizations/org-1/settings/domain"],
+    [["feedback-directories"], "/organizations/org-1/settings/feedback-directories"],
+    [["billing"], "/organizations/org-1/settings/billing"],
+    [["profile"], "/account/settings/profile"],
+    [["notifications"], "/account/settings/notifications"],
+    [["authorized-apps"], "/account/settings/authorized-apps"],
+    [["look"], "/workspaces/ws-1/settings/workspace/look"],
+    [["languages"], "/workspaces/ws-1/settings/workspace/languages"],
+    [["tags"], "/workspaces/ws-1/settings/workspace/tags"],
+    [["embedded-data"], "/workspaces/ws-1/settings/workspace/embedded-data"],
+    [["app-connection"], "/workspaces/ws-1/settings/workspace/app-connection"],
+    [["user-actions"], "/workspaces/ws-1/settings/workspace/user-actions"],
+    [["integrations"], "/workspaces/ws-1/settings/workspace/integrations"],
+    [["integrations", "slack"], "/workspaces/ws-1/settings/workspace/integrations/slack"],
+    [["integrations", "zapier"], "/workspaces/ws-1/settings/workspace/integrations"],
+    // Case and stray whitespace from marketing copy.
+    [["Teams"], "/organizations/org-1/settings/teams"],
+    [["Look "], "/workspaces/ws-1/settings/workspace/look"],
+    // Unknown, crafted or extra segments open General and are never echoed.
+    [["does-not-exist"], "/organizations/org-1/settings/general"],
+    [["..", "..", "admin"], "/organizations/org-1/settings/general"],
+    [["", "evil.com"], "/organizations/org-1/settings/general"],
+    [["a/b"], "/organizations/org-1/settings/general"],
+    [["constructor"], "/organizations/org-1/settings/general"],
+    [["profile", "deeper"], "/account/settings/profile"],
+  ])("/settings %j -> %s", (segments, expected) => {
+    expect(resolve(segments)).toBe(expected);
   });
 
-  test("organization slugs map to organization settings, keeping deeper segments", () => {
-    expect(getSettingsRedirectPath(ORG, ["teams"], true)).toBe("/organizations/org-1/settings/teams");
-    expect(getSettingsRedirectPath(ORG, ["api-keys", "new"], true)).toBe(
-      "/organizations/org-1/settings/api-keys/new"
-    );
+  test("workspace settings pages need a workspace, the others only an organization", () => {
+    expect(getSettingsDestination(["look"], true).scope).toBe("workspace");
+    expect(getSettingsDestination(["teams"], true).scope).toBe("organization");
+    expect(getSettingsDestination(["profile"], true).scope).toBe("organization");
   });
 
-  test.each(["profile", "notifications", "authorized-apps"])(
-    "account slug %s maps to account settings",
-    (slug) => {
-      expect(getSettingsRedirectPath(ORG, [slug], true)).toBe(`/account/settings/${slug}`);
-      expect(getSettingsRedirectPath(ORG, [slug, "deeper"], true)).toBe(`/account/settings/${slug}/deeper`);
-    }
-  );
-
-  test("an account slug only counts as the first segment", () => {
-    expect(getSettingsRedirectPath(ORG, ["general", "profile"], true)).toBe(
-      "/organizations/org-1/settings/general/profile"
-    );
-  });
-
-  test("segments cannot climb out of the settings base or leave the app", () => {
-    expect(getSettingsRedirectPath(ORG, ["..", "..", "admin"], true)).toBe(
-      "/organizations/org-1/settings/admin"
-    );
-    expect(getSettingsRedirectPath(ORG, ["", "", "evil.com"], true)).toBe(
-      "/organizations/org-1/settings/evil.com"
-    );
-    expect(getSettingsRedirectPath(ORG, ["."], true)).toBe("/organizations/org-1/settings/general");
-    expect(getSettingsRedirectPath(ORG, ["a/b", "c\\d", "x?y#z"], true)).toBe(
-      "/organizations/org-1/settings/a%2Fb/c%5Cd/x%3Fy%23z"
-    );
-  });
-});
-
-describe("getSettingsRedirectPath billing", () => {
-  test("cloud keeps /settings/billing on the billing page", () => {
-    expect(getSettingsRedirectPath(ORG, ["billing"], true)).toBe("/organizations/org-1/settings/billing");
-  });
-
-  test("self-hosted sends /settings/billing to the enterprise page, like /billing", () => {
-    expect(getSettingsRedirectPath(ORG, ["billing"], false)).toBe(getOrganizationBillingPath(ORG, false));
-    expect(getSettingsRedirectPath(ORG, ["billing"], false)).toBe("/organizations/org-1/settings/enterprise");
-  });
-
-  test("self-hosted leaves other settings pages alone", () => {
-    expect(getSettingsRedirectPath(ORG, ["teams"], false)).toBe("/organizations/org-1/settings/teams");
+  test("billing and enterprise open billing on Cloud and enterprise on self-hosted", () => {
+    expect(resolve(["billing"], true)).toBe(getOrganizationBillingPath(ORG, true));
+    expect(resolve(["enterprise"], true)).toBe(getOrganizationBillingPath(ORG, true));
+    expect(resolve(["billing"], false)).toBe("/organizations/org-1/settings/enterprise");
+    expect(resolve(["enterprise"], false)).toBe("/organizations/org-1/settings/enterprise");
   });
 });
 
@@ -90,10 +90,7 @@ describe("getLoginRedirectUrl", () => {
 
 describe("getMarketingRedirectTarget", () => {
   const url = new URL(`${WEBAPP_URL}/settings/teams?utm_campaign=launch`);
-  const destination = {
-    scope: "organization" as const,
-    buildPath: (id: string) => getSettingsRedirectPath(id, ["teams"], true),
-  };
+  const destination = getSettingsDestination(["teams"], true);
 
   test("logged-out users go to login and come back to the same link", () => {
     const target = getMarketingRedirectTarget({
@@ -134,7 +131,12 @@ describe("getMarketingRedirectTarget", () => {
 describe("feature links (MARKETING_SECTIONS)", () => {
   const WS = "ws-1";
 
-  const resolve = (slug: TMarketingSectionSlug, segments: string[], search = "") => {
+  const resolve = (
+    slug: TMarketingSectionSlug,
+    segments: string[],
+    search = "",
+    isFormbricksCloud = true
+  ) => {
     const pathname = `/${[slug, ...segments].join("/")}`;
     return getMarketingRedirectTarget({
       isAuthenticated: true,
@@ -142,13 +144,13 @@ describe("feature links (MARKETING_SECTIONS)", () => {
       workspaceId: WS,
       url: new URL(`${WEBAPP_URL}${pathname}${search}`),
       webAppUrl: WEBAPP_URL,
-      destination: getSectionDestination(slug, segments),
+      destination: getSectionDestination(slug, segments, isFormbricksCloud),
     });
   };
 
   test.each<[TMarketingSectionSlug, string[], string]>([
     ["embedded-data", [], "/workspaces/ws-1/settings/workspace/embedded-data"],
-    ["enterprise-license", [], "/organizations/org-1/settings/enterprise"],
+    ["enterprise-license", [], "/organizations/org-1/settings/billing"],
     ["mcp", [], "/account/settings/authorized-apps"],
     ["contacts", [], "/workspaces/ws-1/contacts"],
     ["contacts", ["segments"], "/workspaces/ws-1/segments"],
@@ -176,6 +178,7 @@ describe("feature links (MARKETING_SECTIONS)", () => {
     ["contacts", ["..", "evil.com"], "/workspaces/ws-1/contacts"],
     ["contacts", ["constructor"], "/workspaces/ws-1/contacts"],
     ["surveys", ["anything"], "/workspaces/ws-1/surveys"],
+    ["contacts", ["Segments"], "/workspaces/ws-1/segments"],
   ])("/%s %j -> %s", (slug, segments, expected) => {
     expect(resolve(slug, segments)).toBe(expected);
   });
@@ -186,7 +189,11 @@ describe("feature links (MARKETING_SECTIONS)", () => {
     );
   });
 
-  test("a workspace link without an accessible workspace opens the organization's landing page", () => {
+  test("/enterprise-license opens the enterprise page on self-hosted", () => {
+    expect(resolve("enterprise-license", [], "", false)).toBe("/organizations/org-1/settings/enterprise");
+  });
+
+  test("a workspace link without an accessible workspace opens the organization home", () => {
     expect(
       getMarketingRedirectTarget({
         isAuthenticated: true,
@@ -194,9 +201,9 @@ describe("feature links (MARKETING_SECTIONS)", () => {
         workspaceId: undefined,
         url: new URL(`${WEBAPP_URL}/surveys?utm_source=x`),
         webAppUrl: WEBAPP_URL,
-        destination: getSectionDestination("surveys", []),
+        destination: getSectionDestination("surveys", [], true),
       })
-    ).toBe("/organizations/org-1/landing?utm_source=x");
+    ).toBe("/organizations/org-1?utm_source=x");
   });
 
   test("a workspace link without an organization opens the root page", () => {
@@ -206,7 +213,7 @@ describe("feature links (MARKETING_SECTIONS)", () => {
         organizationId: undefined,
         url: new URL(`${WEBAPP_URL}/surveys`),
         webAppUrl: WEBAPP_URL,
-        destination: getSectionDestination("surveys", []),
+        destination: getSectionDestination("surveys", [], true),
       })
     ).toBe("/");
   });
@@ -219,9 +226,9 @@ describe("feature links (MARKETING_SECTIONS)", () => {
         workspaceId: undefined,
         url: new URL(`${WEBAPP_URL}/enterprise-license`),
         webAppUrl: WEBAPP_URL,
-        destination: getSectionDestination("enterprise-license", []),
+        destination: getSectionDestination("enterprise-license", [], true),
       })
-    ).toBe("/organizations/org-1/settings/enterprise");
+    ).toBe("/organizations/org-1/settings/billing");
   });
 
   test("logged-out users go to login and come back to the same link", () => {
@@ -231,7 +238,7 @@ describe("feature links (MARKETING_SECTIONS)", () => {
         organizationId: undefined,
         url: new URL(`${WEBAPP_URL}/workflows/runs?utm_source=x`),
         webAppUrl: WEBAPP_URL,
-        destination: getSectionDestination("workflows", ["runs"]),
+        destination: getSectionDestination("workflows", ["runs"], true),
       })
     ).toBe(getLoginRedirectUrl(WEBAPP_URL, "/workflows/runs", "?utm_source=x"));
   });
