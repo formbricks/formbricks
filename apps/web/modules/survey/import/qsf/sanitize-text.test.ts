@@ -100,11 +100,11 @@ describe("sanitizeQsfTexts", () => {
     expect(result.plainDefault.get(qid1?.textKey ?? "")).toBe("What is your name?");
     expect(result.issues).toEqual(
       expect.arrayContaining([
-        { code: "image_dropped", severity: "warning", questionTag: "Q1" },
-        { code: "script_dropped", severity: "warning", questionTag: "Q1" },
-        { code: "script_dropped", severity: "warning", questionTag: "Q_hello" },
-        { code: "markup_escaped", severity: "warning", questionTag: "Q3" },
-        { code: "text_too_long", severity: "warning", questionTag: "Q6" },
+        { code: "image_dropped", severity: "warning", questionTag: "Q1", questionRef: "QID1" },
+        { code: "script_dropped", severity: "warning", questionTag: "Q1", questionRef: "QID1" },
+        { code: "script_dropped", severity: "warning", questionTag: "Q_hello", questionRef: "QID2" },
+        { code: "markup_escaped", severity: "warning", questionTag: "Q3", questionRef: "QID3" },
+        { code: "text_too_long", severity: "warning", questionTag: "Q6", questionRef: "QID6" },
         { code: "image_dropped", severity: "warning" },
       ])
     );

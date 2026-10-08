@@ -247,18 +247,21 @@ describe("planQsfImport", () => {
           code: "question_skipped",
           severity: "info",
           questionTag: "Q9",
+          questionRef: "QID9",
           params: { cause: "unsupported_type", qualtricsType: "Timing" },
         },
         {
           code: "question_skipped",
           severity: "warning",
           questionTag: "Q10",
+          questionRef: "QID10",
           params: { cause: "unsupported_type", qualtricsType: "CS" },
         },
         {
           code: "question_skipped",
           severity: "warning",
           questionTag: "Q12",
+          questionRef: "QID12",
           params: {
             cause: "ai_skipped",
             description: "A ranking of 26 options; Formbricks ranks at most 25.",

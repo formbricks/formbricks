@@ -1,6 +1,15 @@
 import type { TQsfImportIssue } from "../types";
 
 /**
+ * A report line inside the import, with the Qualtrics question (`QID`) it is about. The id is how the
+ * import finds the lines of a question it cuts, since export tags can repeat; `buildQsfImportReport`
+ * leaves it out of the report the dialog gets.
+ */
+export interface TQsfIssue extends TQsfImportIssue {
+  questionRef?: string;
+}
+
+/**
  * What the reader recovers from a Qualtrics export (ENG-3654): only what the import uses, in shapes
  * that cannot be polluted. Every keyed collection is a `Map`; ids and language codes went through a
  * bounded pattern before they became a key; texts are held by a key the reader assigned, never by an
@@ -116,5 +125,5 @@ export interface TQsfSurvey {
   endMessageKey: TQsfTextKey | null;
   endRedirectUrl: string | null;
   /** Lines the reader already knows belong in the report (refused ids, skipped languages, …). */
-  issues: TQsfImportIssue[];
+  issues: TQsfIssue[];
 }

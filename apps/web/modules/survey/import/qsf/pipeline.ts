@@ -4,14 +4,14 @@ import { logger } from "@formbricks/logger";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
-import type { TQsfImportIssue, TQsfImportReport, TQsfImportStage } from "../types";
+import type { TQsfImportReport, TQsfImportStage } from "../types";
 import { type TQsfPlanGenerate, type TQsfPlanUsage, planQsfImport } from "./ai-plan";
 import { type TQsfAssembly, type TQsfDraftDocument, assembleQsfDraft } from "./assemble";
 import { QsfImportFailedError, QsfImportInputError } from "./errors";
 import { checkQsfDraft, elementsAtFault } from "./final-gate";
 import { fitQsfDraftToCreateLimit } from "./fit-draft";
 import { QSF_PROMPT_BUDGET_CHARS, estimateQsfMinimumPromptChars } from "./prompt";
-import type { TQsfSurvey } from "./qsf-model";
+import type { TQsfIssue, TQsfSurvey } from "./qsf-model";
 import { readQsf } from "./read-qsf";
 import { buildQsfImportReport } from "./report";
 import { sanitizeQsfTexts } from "./sanitize-text";
@@ -109,7 +109,7 @@ async function assembleCheckedDraft(
   build: (excludedRefs: ReadonlySet<string>) => TQsfAssembly,
   survey: TQsfSurvey,
   signal: AbortSignal
-): Promise<{ assembly: TQsfAssembly; dropped: TQsfImportIssue[] }> {
+): Promise<{ assembly: TQsfAssembly; dropped: TQsfIssue[] }> {
   const pause = async () => {
     await yieldToEventLoop();
     signal.throwIfAborted();
@@ -145,6 +145,7 @@ async function assembleCheckedDraft(
       code: "question_skipped" as const,
       severity: "warning" as const,
       questionTag: survey.questions.get(ref)?.exportTag ?? ref,
+      questionRef: ref,
       params: { cause: "validation_failed" },
     })),
   };

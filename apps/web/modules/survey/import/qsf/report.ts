@@ -1,5 +1,6 @@
 import type { TQsfImportIssue, TQsfImportReport } from "../types";
 import type { TQsfDraftDocument } from "./assemble";
+import type { TQsfIssue } from "./qsf-model";
 
 /**
  * The import report (ENG-3654). The summary is read off the assembled document, so it describes the
@@ -8,7 +9,7 @@ import type { TQsfDraftDocument } from "./assemble";
 export function buildQsfImportReport(params: {
   fileName: string;
   document: TQsfDraftDocument;
-  issues: TQsfImportIssue[];
+  issues: TQsfIssue[];
 }): TQsfImportReport {
   const { fileName, document, issues } = params;
   return {
@@ -20,6 +21,7 @@ export function buildQsfImportReport(params: {
       logicRules: issues.filter((issue) => issue.code === "logic_not_imported").length,
       hiddenFields: document.hiddenFields.fieldIds.length,
     },
-    issues,
+    // The question ids are the import's own bookkeeping, not part of the report.
+    issues: issues.map(({ questionRef: _questionRef, ...issue }): TQsfImportIssue => issue),
   };
 }

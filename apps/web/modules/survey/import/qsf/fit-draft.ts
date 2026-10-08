@@ -1,7 +1,6 @@
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
-import type { TQsfImportIssue } from "../types";
 import type { TQsfAssembly, TQsfDraftDocument } from "./assemble";
-import type { TQsfSurvey } from "./qsf-model";
+import type { TQsfIssue, TQsfSurvey } from "./qsf-model";
 
 /**
  * Fit the draft to the create's body limit (ENG-3654). The dialog sends the draft to
@@ -57,7 +56,7 @@ function collectLocaleTexts(document: TQsfDraftDocument): TLocaleText[] {
  * summed once — `,"code":"text"` in every text, and its entry in `languages` — so no step serializes
  * the draft again.
  */
-function dropLanguages(document: TQsfDraftDocument, overBy: number, issues: TQsfImportIssue[]): number {
+function dropLanguages(document: TQsfDraftDocument, overBy: number, issues: TQsfIssue[]): number {
   const droppable = document.languages.filter((language) => !language.default);
   if (droppable.length === 0) return overBy;
 
@@ -98,11 +97,11 @@ function dropTrailingQuestions(
   assembly: TQsfAssembly,
   survey: TQsfSurvey,
   overBy: number,
-  issues: TQsfImportIssue[]
+  issues: TQsfIssue[]
 ): Set<string> {
   const { document, elementRefs } = assembly;
-  /** The export tags of the questions cut. */
-  const droppedTags = new Set<string>();
+  /** The questions cut, by Qualtrics id: export tags can repeat. */
+  const droppedRefs = new Set<string>();
   let remaining = overBy;
 
   while (remaining > 0 && document.blocks.length > 0) {
@@ -112,12 +111,12 @@ function dropTrailingQuestions(
     const ref = elementRefs[blockIndex]?.pop();
     if (element) {
       remaining -= jsonBytes(element) + (block.elements.length > 0 ? 1 : 0);
-      const questionTag = (ref ? survey.questions.get(ref)?.exportTag : undefined) ?? element.id;
-      droppedTags.add(questionTag);
+      if (ref) droppedRefs.add(ref);
       issues.push({
         code: "question_skipped",
         severity: "warning",
-        questionTag,
+        questionTag: (ref ? survey.questions.get(ref)?.exportTag : undefined) ?? element.id,
+        ...(ref ? { questionRef: ref } : {}),
         params: { cause: "draft_too_large" },
       });
     }
@@ -127,7 +126,7 @@ function dropTrailingQuestions(
       elementRefs.pop();
     }
   }
-  return droppedTags;
+  return droppedRefs;
 }
 
 /**
@@ -140,28 +139,28 @@ export function fitQsfDraftToCreateLimit(
   assembly: TQsfAssembly,
   survey: TQsfSurvey,
   maxBytes: number = QSF_DRAFT_MAX_BYTES
-): { dropped: TQsfImportIssue[]; keepIssue: (issue: TQsfImportIssue) => boolean } {
+): { dropped: TQsfIssue[]; keepIssue: (issue: TQsfIssue) => boolean } {
   let overBy = measureQsfDraftBytes(assembly.document) - maxBytes;
   if (overBy <= 0) return { dropped: [], keepIssue: () => true };
 
-  const dropped: TQsfImportIssue[] = [];
+  const dropped: TQsfIssue[] = [];
   const languagesBefore = assembly.document.languages.map((language) => language.code);
-  const droppedTags = new Set<string>();
+  const droppedRefs = new Set<string>();
 
   // The weights are exact, but the result is measured again rather than trusted, and cut further if
   // it is still over.
   while (overBy > 0 && assembly.document.blocks.length > 0) {
     overBy = dropLanguages(assembly.document, overBy, dropped);
     if (overBy > 0) {
-      dropTrailingQuestions(assembly, survey, overBy, dropped).forEach((tag) => droppedTags.add(tag));
+      dropTrailingQuestions(assembly, survey, overBy, dropped).forEach((ref) => droppedRefs.add(ref));
     }
     overBy = measureQsfDraftBytes(assembly.document) - maxBytes;
   }
 
   const kept = new Set(assembly.document.languages.map((language) => language.code));
   const droppedLanguages = new Set(languagesBefore.filter((code) => !kept.has(code)));
-  const keepIssue = (issue: TQsfImportIssue) =>
+  const keepIssue = (issue: TQsfIssue) =>
     !(issue.code === "translation_fallback" && droppedLanguages.has(String(issue.params?.language))) &&
-    !(issue.questionTag !== undefined && droppedTags.has(issue.questionTag));
+    !(issue.questionRef !== undefined && droppedRefs.has(issue.questionRef));
   return { dropped, keepIssue };
 }

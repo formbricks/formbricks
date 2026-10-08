@@ -1,9 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
-import type { TQsfImportIssue } from "../types";
 import type { TQsfAssembly, TQsfDraftElement } from "./assemble";
 import { QSF_DRAFT_MAX_BYTES, fitQsfDraftToCreateLimit, measureQsfDraftBytes } from "./fit-draft";
-import type { TQsfQuestion, TQsfSurvey } from "./qsf-model";
+import type { TQsfIssue, TQsfQuestion, TQsfSurvey } from "./qsf-model";
 
 /** An assembly of `blocks` × `perBlock` open text questions, each headline `textChars` long in every language. */
 const buildAssembly = (shape: {
@@ -163,7 +162,7 @@ describe("fitQsfDraftToCreateLimit", () => {
     const maxBytes = Math.floor(measureQsfDraftBytes(assembly.document) / 6);
 
     const { keepIssue } = fitQsfDraftToCreateLimit(assembly, survey, maxBytes);
-    const line = (issue: Partial<TQsfImportIssue>): TQsfImportIssue => ({
+    const line = (issue: Partial<TQsfIssue>): TQsfIssue => ({
       code: "logic_not_imported",
       severity: "warning",
       ...issue,
@@ -172,8 +171,10 @@ describe("fitQsfDraftToCreateLimit", () => {
     expect(keepIssue(line({ code: "translation_fallback", params: { language: "de-DE", count: 2 } }))).toBe(
       false
     );
-    expect(keepIssue(line({ questionTag: "Q10" }))).toBe(false);
-    expect(keepIssue(line({ questionTag: "Q1" }))).toBe(true);
+    expect(keepIssue(line({ questionTag: "Q10", questionRef: "QID10" }))).toBe(false);
+    expect(keepIssue(line({ questionTag: "Q1", questionRef: "QID1" }))).toBe(true);
+    // Matched by question id, not by export tag, which two questions can share.
+    expect(keepIssue(line({ questionTag: "Q10", questionRef: "QID1" }))).toBe(true);
     expect(keepIssue(line({ code: "formatting_dropped" }))).toBe(true);
   });
 });

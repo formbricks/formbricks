@@ -7,12 +7,11 @@ import {
   getTextContent,
   validateId,
 } from "@formbricks/types/surveys/validation";
-import type { TQsfImportIssue } from "../types";
 import { QsfIdRegistry, findFreeSuffixedName, isObjectMemberName } from "./id-registry";
 import { type TPipedTextContext, replacePipedText } from "./piped-text";
 import type { TQsfCheckedPlan, TQsfPlannedQuestion } from "./plan-checks";
 import type { TQsfPlanContactField } from "./plan-schema";
-import type { TQsfQuestion, TQsfSurvey, TQsfTextKey } from "./qsf-model";
+import type { TQsfIssue, TQsfQuestion, TQsfSurvey, TQsfTextKey } from "./qsf-model";
 import { type TSanitizedTexts, sanitizeName } from "./sanitize-text";
 
 /**
@@ -103,7 +102,7 @@ export interface TQsfDraftDocument {
 
 export interface TQsfAssembly {
   document: TQsfDraftDocument;
-  issues: TQsfImportIssue[];
+  issues: TQsfIssue[];
   /** The question ref behind each element, by block and element index, to map a gate issue back. */
   elementRefs: string[][];
 }
@@ -142,12 +141,12 @@ const MAX_HIDDEN_FIELD_ID_LENGTH = 64;
 export function buildHiddenFields(names: string[]): {
   fieldIds: string[];
   idByName: Map<string, string>;
-  issues: TQsfImportIssue[];
+  issues: TQsfIssue[];
 } {
   const fieldIds: string[] = [];
   const taken = new Set<string>();
   const idByName = new Map<string, string>();
-  const issues: TQsfImportIssue[] = [];
+  const issues: TQsfIssue[] = [];
   // Duplicates are checked against `taken`, in O(1); `validateId` only checks the name itself.
   const isFree = (id: string) =>
     id.length > 0 &&
@@ -238,7 +237,7 @@ export function disambiguateLabels(
 }
 
 class QsfAssembler {
-  private readonly issues: TQsfImportIssue[] = [];
+  private readonly issues: TQsfIssue[] = [];
   private readonly languageCodes: string[];
   private readonly surveyLanguages: TSurveyLanguage[];
   private readonly fallbackCounts = new Map<string, number>();
@@ -309,11 +308,7 @@ class QsfAssembler {
       blocks.push({ id: createId(), name: name || `Block ${blockIndex + 1}`, elements });
       elementRefs.push(refs);
       // The page's branch and randomizer rules, on the page's first imported question.
-      this.reportRules(
-        page.logic.length,
-        plan.pageNotes.get(page.id) ?? [],
-        survey.questions.get(refs[0])?.exportTag
-      );
+      this.reportRules(page.logic.length, plan.pageNotes.get(page.id) ?? [], survey.questions.get(refs[0]));
     });
 
     // A page none of whose questions was imported still had its branch or randomizer: the user
@@ -431,7 +426,12 @@ class QsfAssembler {
       sanitizeName(tag) || question.ref
     );
     if (headline.filled) {
-      this.issues.push({ code: "headline_fallback", severity: "warning", questionTag: tag });
+      this.issues.push({
+        code: "headline_fallback",
+        severity: "warning",
+        questionTag: tag,
+        questionRef: question.ref,
+      });
     }
 
     const base: TDraftElementBase = {
@@ -454,11 +454,17 @@ class QsfAssembler {
         code: "piped_text_removed",
         severity: "warning",
         questionTag: tag,
+        questionRef: question.ref,
         params: { count: piped.removed },
       });
     }
     if (renamedLabels) {
-      this.issues.push({ code: "choice_label_renamed", severity: "info", questionTag: tag });
+      this.issues.push({
+        code: "choice_label_renamed",
+        severity: "info",
+        questionTag: tag,
+        questionRef: question.ref,
+      });
     }
     return element;
   }
@@ -568,13 +574,14 @@ class QsfAssembler {
    * neither hide a rule nor add lines of its own.
    */
   private reportQuestionLogic(question: TQsfQuestion, planned: TQsfPlannedQuestion): void {
-    this.reportRules(question.logic.length, planned.notes, question.exportTag);
+    this.reportRules(question.logic.length, planned.notes, question);
   }
 
   private reportRules(
     ruleCount: number,
     notes: string[],
-    questionTag: string | undefined,
+    /** The question the lines are filed under: the rule's own, or the first of the page it gates. */
+    question: TQsfQuestion | undefined,
     blockName?: string
   ): void {
     for (let index = 0; index < ruleCount; index++) {
@@ -585,7 +592,7 @@ class QsfAssembler {
       this.issues.push({
         code: "logic_not_imported",
         severity: "warning",
-        ...(questionTag ? { questionTag } : {}),
+        ...(question ? { questionTag: question.exportTag, questionRef: question.ref } : {}),
         ...(Object.keys(params).length > 0 ? { params } : {}),
       });
     }

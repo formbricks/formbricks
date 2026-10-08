@@ -33,4 +33,14 @@ describe("buildQsfImportReport", () => {
     });
     expect(report.issues).toHaveLength(3);
   });
+
+  test("leaves the import's own question ids out of the report", () => {
+    const report = buildQsfImportReport({
+      fileName: "survey.qsf",
+      document: { languages: [], blocks: [], hiddenFields: { fieldIds: [] } } as unknown as TQsfDraftDocument,
+      issues: [{ code: "headline_fallback", severity: "warning", questionTag: "Q1", questionRef: "QID1" }],
+    });
+
+    expect(report.issues).toEqual([{ code: "headline_fallback", severity: "warning", questionTag: "Q1" }]);
+  });
 });

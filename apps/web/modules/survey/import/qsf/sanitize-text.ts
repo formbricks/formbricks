@@ -1,10 +1,10 @@
 import DOMPurify from "isomorphic-dompurify";
 import { setImmediate as yieldToEventLoop } from "node:timers/promises";
 import { FOLLOW_UP_BODY_SANITIZE_CONFIG } from "@/modules/survey/follow-ups/lib/sanitize-follow-up-body";
-import type { TQsfImportIssue, TQsfImportIssueCode } from "../types";
+import type { TQsfImportIssueCode } from "../types";
 import { QSF_MAX_TEXT_CHARS, QSF_MAX_TEXT_TAGS } from "./limits";
 import { hasMarkup } from "./markup";
-import type { TQsfSurvey, TQsfTextFormat, TQsfTextKey } from "./qsf-model";
+import type { TQsfIssue, TQsfSurvey, TQsfTextFormat, TQsfTextKey } from "./qsf-model";
 
 /**
  * Text sanitizing for the Qualtrics import (ENG-3607).
@@ -206,7 +206,7 @@ export interface TSanitizedTexts {
   byKey: Map<TQsfTextKey, Map<string, string>>;
   /** The default language's text without markup, by text key, for the prompt. */
   plainDefault: Map<TQsfTextKey, string>;
-  issues: TQsfImportIssue[];
+  issues: TQsfIssue[];
 }
 
 /**
@@ -214,7 +214,7 @@ export interface TSanitizedTexts {
  * and code.
  */
 class SanitizeReporter {
-  readonly issues: TQsfImportIssue[] = [];
+  readonly issues: TQsfIssue[] = [];
   private readonly reported = new Set<string>();
 
   constructor(private readonly survey: TQsfSurvey) {}
@@ -235,6 +235,7 @@ class SanitizeReporter {
       code,
       severity: perSurvey ? "info" : "warning",
       ...(exportTag && !perSurvey ? { questionTag: exportTag } : {}),
+      ...(questionRef !== null && !perSurvey ? { questionRef } : {}),
     });
   }
 }

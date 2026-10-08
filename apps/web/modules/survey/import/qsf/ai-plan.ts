@@ -23,7 +23,7 @@ import {
   describedQuestionChars,
   describedRuleCount,
 } from "./prompt";
-import type { TQsfSurvey } from "./qsf-model";
+import type { TQsfIssue, TQsfSurvey } from "./qsf-model";
 
 /**
  * The AI half of the import (ENG-3479): ask for the plan, check it, retry what failed once.
@@ -211,7 +211,7 @@ function usageOfFailure(error: unknown): TQsfCallUsage | undefined {
 
 export interface TQsfPlanResult {
   plan: TQsfCheckedPlan;
-  issues: TQsfImportIssue[];
+  issues: TQsfIssue[];
   usage: TQsfPlanUsage;
   calls: number;
 }
@@ -471,9 +471,9 @@ const failureCause = (reasons: readonly TQsfPlanFailure[]): "ai_budget" | "ai_ti
   return "plan_invalid";
 };
 
-function preSkip(survey: TQsfSurvey): { refs: string[]; issues: TQsfImportIssue[] } {
+function preSkip(survey: TQsfSurvey): { refs: string[]; issues: TQsfIssue[] } {
   const refs: string[] = [];
-  const issues: TQsfImportIssue[] = [];
+  const issues: TQsfIssue[] = [];
   for (const question of survey.questions.values()) {
     const severity = UNSUPPORTED_TYPES.get(question.qualtricsType);
     if (severity) {
@@ -481,6 +481,7 @@ function preSkip(survey: TQsfSurvey): { refs: string[]; issues: TQsfImportIssue[
         code: "question_skipped",
         severity,
         questionTag: question.exportTag,
+        questionRef: question.ref,
         params: { cause: "unsupported_type", qualtricsType: question.qualtricsType },
       });
     } else {
@@ -556,6 +557,7 @@ export async function planQsfImport(params: {
       code: "question_skipped",
       severity: "warning",
       questionTag: survey.questions.get(ref)?.exportTag ?? ref,
+      questionRef: ref,
       params: { cause: "ai_skipped", ...(description ? { description } : {}) },
     });
   }
@@ -564,6 +566,7 @@ export async function planQsfImport(params: {
       code: "question_skipped",
       severity: "warning",
       questionTag: survey.questions.get(ref)?.exportTag ?? ref,
+      questionRef: ref,
       params: { cause: failureCause(reasons) },
     });
   }

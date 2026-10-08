@@ -72,7 +72,13 @@ describe("readQsf", () => {
     // Block B comes first in the flow; the trashed question is not worth a line, the orphan is.
     expect(survey.pages.map((page) => page.questionRefs)).toEqual([["QID3"], ["QID1"], ["QID2"]]);
     expect(survey.issues).toEqual([
-      { code: "question_skipped", severity: "info", questionTag: "Q5", params: { cause: "not_in_flow" } },
+      {
+        code: "question_skipped",
+        severity: "info",
+        questionTag: "Q5",
+        questionRef: "QID5",
+        params: { cause: "not_in_flow" },
+      },
     ]);
     // The randomizer becomes a rule on the first page it shuffles.
     expect(survey.pages[1].logic).toEqual([{ kind: "randomizer", conditions: [] }]);

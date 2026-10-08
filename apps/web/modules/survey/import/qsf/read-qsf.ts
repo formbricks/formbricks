@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { DEFAULT_V3_SURVEY_LANGUAGE } from "@/app/api/v3/surveys/schemas";
-import type { TQsfImportIssue } from "../types";
 import { QsfImportInputError } from "./errors";
 import { isObjectMemberName } from "./id-registry";
 import { isReportableLanguageCode, normalizeQualtricsLanguageCode } from "./language-codes";
@@ -25,6 +24,7 @@ import {
 import { needsParsing } from "./markup";
 import { collectEmbeddedDataReferences } from "./piped-text";
 import type {
+  TQsfIssue,
   TQsfLogicCondition,
   TQsfLogicRule,
   TQsfOption,
@@ -269,7 +269,7 @@ interface TFlowResult {
 }
 
 class QsfReader {
-  private readonly issues: TQsfImportIssue[] = [];
+  private readonly issues: TQsfIssue[] = [];
   private readonly texts = new Map<TQsfTextKey, TQsfText>();
   private readonly counters = { t: 0, c: 0, a: 0, b: 0, s: 0 };
   private readonly languageByRaw = new Map<string, string | null>();
@@ -673,6 +673,7 @@ class QsfReader {
         code: "question_skipped",
         severity: "info",
         ...this.questionTag(raw.payload, raw.ref),
+        questionRef: raw.ref,
         params: { cause: "not_in_flow" },
       });
     }
@@ -762,6 +763,7 @@ class QsfReader {
           code: "choice_dropped",
           severity: "warning",
           ...this.questionTag(payload, ref),
+          questionRef: ref,
           params: { cause: "invalid_id" },
         });
         continue;

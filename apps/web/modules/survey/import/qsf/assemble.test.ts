@@ -121,7 +121,12 @@ describe("assembleQsfDraft", () => {
     ]);
     // Distinct in Chinese already: left alone.
     expect(q1.choices.map((choice) => choice.label["zh-Hans-CN"])).toEqual(["茶", "不适用", "咖啡", "无"]);
-    expect(issues).toContainEqual({ code: "choice_label_renamed", severity: "info", questionTag: "Q1" });
+    expect(issues).toContainEqual({
+      code: "choice_label_renamed",
+      severity: "info",
+      questionTag: "Q1",
+      questionRef: "QID1",
+    });
   });
 
   test("numbers a duplicate past any label already taken, until every label is unique", () => {
@@ -194,6 +199,7 @@ describe("assembleQsfDraft", () => {
       code: "piped_text_removed",
       severity: "warning",
       questionTag: "Q3",
+      questionRef: "QID3",
       params: { count: 2 },
     });
     expect(checkQsfDraft(document)).toEqual([]);
@@ -207,6 +213,7 @@ describe("assembleQsfDraft", () => {
       code: "headline_fallback",
       severity: "warning",
       questionTag: "Q_image_only",
+      questionRef: "QID5",
     });
   });
 
