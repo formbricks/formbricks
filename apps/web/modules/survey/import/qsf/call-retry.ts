@@ -16,7 +16,8 @@ import { TooManyRequestsError } from "@formbricks/types/errors";
  * - anything else is not retried.
  *
  * At most `QSF_MAX_CALL_RETRIES` retries a call, the SDK's own default, and every attempt counts
- * against the import's call cap and budgets like a call of its own.
+ * against the import's call cap and budgets like a call of its own. A retry those leave no room for
+ * ends the call like any other the import could not afford: its questions are dropped as `ai_budget`.
  */
 
 /** Retries per call after the first attempt: the AI SDK's default `maxRetries`. */
@@ -52,6 +53,16 @@ const backoffMs = (attempt: number, random: () => number): number => {
 };
 
 /**
+ * The wait before the next attempt: the provider's `Retry-After` when it sent a usable one, the backoff
+ * otherwise. A negative one says nothing usable — taken as given it would retry at once — so it counts
+ * as missing.
+ */
+const retryDelayMs = (retryAfterSeconds: number | undefined, attempt: number, random: () => number) =>
+  retryAfterSeconds !== undefined && Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0
+    ? retryAfterSeconds * 1_000
+    : backoffMs(attempt, random);
+
+/**
  * What to do after attempt number `attempt` (0 for the first) failed with `error`, with `remainingMs`
  * left in the call and `minAttemptMs` the least time an attempt is worth sending with.
  */
@@ -68,8 +79,7 @@ export function decideQsfRetry(params: {
   const quota = quotaOf(error);
   if (quota) {
     if (attempt >= QSF_MAX_CALL_RETRIES) return { kind: "propagate" };
-    const delayMs =
-      quota.retryAfterSeconds === undefined ? backoffMs(attempt, random) : quota.retryAfterSeconds * 1_000;
+    const delayMs = retryDelayMs(quota.retryAfterSeconds, attempt, random);
     // Past the call's time the user is told about the quota, not that the import took too long.
     return fits(delayMs) ? { kind: "retry", delayMs } : { kind: "propagate" };
   }
@@ -77,8 +87,7 @@ export function decideQsfRetry(params: {
   const info = classifyAIProviderError(error);
   if (!info?.isRetryable || info.isAuthFailure) return { kind: "propagate" };
   if (attempt >= QSF_MAX_CALL_RETRIES) return { kind: "propagate" };
-  const delayMs =
-    info.retryAfterSeconds === undefined ? backoffMs(attempt, random) : info.retryAfterSeconds * 1_000;
+  const delayMs = retryDelayMs(info.retryAfterSeconds, attempt, random);
   return fits(delayMs) ? { kind: "retry", delayMs } : { kind: "timed_out" };
 }
 

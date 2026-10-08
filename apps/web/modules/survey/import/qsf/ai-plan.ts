@@ -408,15 +408,17 @@ async function callOnce(
         minAttemptMs: QSF_MIN_CALL_TIMEOUT_MS,
       });
       if (decision.kind === "timed_out") return { kind: "timed_out" };
-      // Out of retries, or past the import's call cap or budgets: the failure stands, as the SDK's own
-      // retries ending would have left it.
+      // Not retryable, out of retries, or a quota wait that does not fit: the failure stands, as the
+      // SDK's own retries ending would have left it.
+      if (decision.kind === "propagate") throw error;
+      // Retryable, but past the import's call cap or budgets: like any call the import cannot afford,
+      // its questions are dropped as `ai_budget`, and the calls beside it carry on.
       if (
-        decision.kind === "propagate" ||
         context.calls >= context.callCap ||
         context.usage.outputTokens >= context.outputBudget ||
         context.promptChars + size > QSF_PROMPT_MAX_TOTAL_CHARS
       ) {
-        throw error;
+        return { kind: "budget" };
       }
       // Waited by design: the retry must not be sent before the provider said to. Abortable by the
       // import's signal, whose reason then propagates.

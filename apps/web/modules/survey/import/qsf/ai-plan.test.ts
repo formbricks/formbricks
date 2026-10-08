@@ -772,9 +772,13 @@ describe("planQsfImport retrying a call itself", () => {
    */
   const planRetrying = async (
     respond: (request: TQsfPlanRequest, index: number) => Promise<Awaited<ReturnType<TQsfPlanGenerate>>>,
-    options: { signal?: AbortSignal; abortAt?: { controller: AbortController; ms: number } } = {}
+    options: {
+      signal?: AbortSignal;
+      abortAt?: { controller: AbortController; ms: number };
+      fixture?: string;
+    } = {}
   ) => {
-    const { survey, texts } = await prepare("simple.qsf");
+    const { survey, texts } = await prepare(options.fixture ?? "simple.qsf");
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date", "performance"] });
     const startedAt = performance.now();
     const requests: { refs: string[]; timeout: number; maxRetries: number; at: number }[] = [];
@@ -805,6 +809,7 @@ describe("planQsfImport retrying a call itself", () => {
   };
 
   const answer = recordedGenerate(loadRecordedPlan("simple.qsf"));
+  const answerLarge = recordedGenerate(loadRecordedPlan("large-150.qsf"));
 
   /** Settle after `ms` of fake time, or reject at once when the request's signal aborts. */
   const after = <T>(request: TQsfPlanRequest, ms: number, outcome: () => Promise<T>): Promise<T> =>
@@ -859,6 +864,40 @@ describe("planQsfImport retrying a call itself", () => {
     // 20 s, a backoff of 1–2 s, 20 s more: too little left for a third, so the call timed out.
     expect(requests.map((request) => request.refs.length)).toEqual([5, 5, 3, 2]);
     expect(requests[1].at).toBeGreaterThanOrEqual(21_000);
+  });
+
+  test("drops a chunk as ai_budget when the budget leaves no room to retry its 503, and carries on", async () => {
+    // large-150, four calls at a time. The first fails with a 503 after 1 s; the second answers at once
+    // but spends the import's whole output budget; the third and fourth answer at 5 s, still in flight
+    // when the first would retry.
+    const signals: AbortSignal[] = [];
+    const { result, error, requests } = await planRetrying(
+      (request, index) => {
+        signals.push(request.abortSignal);
+        if (index === 0) return after(request, 1_000, () => Promise.reject(providerError(503)));
+        if (index === 1) {
+          return answerLarge(request).then((answered) => ({
+            ...answered,
+            usage: { inputTokens: 1, outputTokens: 10 * QSF_MAX_OUTPUT_TOKENS },
+          }));
+        }
+        return after(request, 5_000, () => answerLarge(request));
+      },
+      { fixture: "large-150.qsf" }
+    );
+
+    expect(error).toBeNull();
+    // The 503's chunk was not retried and no other chunk was asked: the budget was spent.
+    expect(requests).toHaveLength(4);
+    const firstChunk = requests[0].refs;
+    // The calls beside it were not cancelled: their questions are planned.
+    expect(signals.some((signal) => signal.aborted)).toBe(false);
+    for (const ref of [...requests[2].refs, ...requests[3].refs]) {
+      expect(result?.plan.questions.has(ref)).toBe(true);
+    }
+    const dropped = result?.issues.filter((issue) => issue.params?.cause === "ai_budget") ?? [];
+    expect(dropped.map((issue) => issue.questionRef)).toEqual(expect.arrayContaining(firstChunk));
+    expect(result?.issues.every((issue) => issue.params?.cause === "ai_budget")).toBe(true);
   });
 
   test("stops at once when the import is aborted while it waits to retry", async () => {

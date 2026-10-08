@@ -37,6 +37,14 @@ describe("decideQsfRetry", () => {
     expect(decide(new TooManyRequestsError("ai_quota_exceeded"), 0, 6_000)).toEqual({ kind: "propagate" });
   });
 
+  test("takes a negative Retry-After as missing, backing off instead of retrying at once", () => {
+    expect(decide(new TooManyRequestsError("ai_quota_exceeded", -5))).toEqual({
+      kind: "retry",
+      delayMs: 2_000,
+    });
+    expect(decide(providerError(503, { "retry-after": "-1" }))).toEqual({ kind: "retry", delayMs: 2_000 });
+  });
+
   test("backs a 5xx off exponentially, with jitter", () => {
     expect(decide(providerError(503), 0)).toEqual({ kind: "retry", delayMs: 2_000 });
     expect(decide(providerError(503), 1)).toEqual({ kind: "retry", delayMs: 4_000 });
