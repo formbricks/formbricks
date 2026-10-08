@@ -652,6 +652,16 @@ checksums:
     emails/render_email_response_value_file_upload_response_link_not_included: 56f400d68c00b06a2bd976389778df9f
     emails/response_data: 26363c0d3a839c3b33c9e8c6dd3deca9
     emails/response_finished_email_subject: 7e8b92b483242ddb31ba83e8fcf890f9
+    emails/retention_notice_email_heading: 56753878dbc29e758a2906f68536ce0e
+    emails/retention_notice_email_keep: cda47476baa5bd36786da8276101bc6d
+    emails/retention_notice_email_responses_after: d06f900af0b8366dd4addc293c3d8d15
+    emails/retention_notice_email_responses_heading: d5e302ae15a1a56f3db7d2a8be93ed89
+    emails/retention_notice_email_responses_item: 41da51563edc82db82606ec3b5a50cc2
+    emails/retention_notice_email_subject: f62b659fde5f3cf6f250cf09064dd474
+    emails/retention_notice_email_surveys_heading: d93ad1e18c3a3ad611bb2d2891b5473c
+    emails/retention_notice_email_surveys_item: 7db252e45575770484dcbb57dfe70af2
+    emails/retention_notice_email_text: 008b3cf01dbe44d35a549603b5535d95
+    emails/retention_notice_email_view_settings: 13e113cbbb92df3b06ede52bb28a2b63
     emails/schedule_your_meeting: 01683323bd7373560cd2cb2737dbaf06
     emails/select_a_date: 521e4a705800da06d091fde3e801ce02
     emails/sso_recovery_factors_removed_email_api_keys: 80c5ebff50c6d809bd5bac1bf67e8da7
