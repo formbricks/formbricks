@@ -11,6 +11,10 @@ const FORWARDED_CREDENTIAL_HEADERS = ["authorization", "cookie", "x-api-key"] as
 const HOP_BY_HOP_REQUEST_HEADERS = [
   "connection",
   "content-length",
+  // The 100-continue exchange belongs to the client's hop, which Node has already answered, and
+  // undici refuses the header outright, so forwarding it would fail the Hub call (curl sends it for
+  // bodies above 1 MiB).
+  "expect",
   "host",
   "keep-alive",
   "proxy-authenticate",
@@ -36,8 +40,12 @@ const buildHubRequestUrl = (requestUrl: URL): URL | null => {
   return hubUrl;
 };
 
-const buildHubRequest = (request: NextRequest, hubUrl: URL): Request => {
-  const hubRequest = new Request(hubUrl, request);
+// Every field is copied explicitly rather than passing `request` as the init: the source is Next's
+// proxied route request (see proxyFeedbackRecordsRequest), and an explicit init forwards only what the
+// Hub hop needs. Paired with `fetch(url, init)`, it also keeps Next's patched fetch from rebuilding a
+// Request input around the body stream.
+const buildHubRequestInit = (request: Request, signal: AbortSignal): RequestInit => {
+  const headers = new Headers(request.headers);
   const connectionHeaders = (request.headers.get("connection") ?? "")
     .split(",")
     .map((header) => header.trim().toLowerCase())
@@ -49,12 +57,27 @@ const buildHubRequest = (request: NextRequest, hubUrl: URL): Request => {
   ]);
 
   for (const header of headersToRemove) {
-    hubRequest.headers.delete(header);
+    headers.delete(header);
   }
 
-  hubRequest.headers.set("authorization", `Bearer ${HUB_API_KEY}`);
+  headers.set("authorization", `Bearer ${HUB_API_KEY}`);
 
-  return hubRequest;
+  return {
+    method: request.method,
+    headers,
+    // A client disconnect keeps aborting the Hub call.
+    signal,
+    // Envoy never follows an upstream redirect; neither does this stand-in, so a Hub 3xx reaches the
+    // caller instead of being chased server-side with the service credential attached.
+    redirect: "manual",
+    // This is a pass-through for live records and writes: a cached response would keep serving
+    // updated or deleted records, and `force-cache` would let a POST be answered without reaching
+    // the Hub.
+    cache: "no-store",
+    // `duplex` is absent from TypeScript's RequestInit; cast only that property so the rest keeps its
+    // checking. undici requires it for a stream body.
+    ...(request.body ? { body: request.body, ...({ duplex: "half" } as RequestInit) } : {}),
+  };
 };
 
 const buildAllowResponse = (): Response => new Response(null, { status: 200 });
@@ -71,8 +94,18 @@ export const proxyFeedbackRecordsRequest = async (request: NextRequest): Promise
     return new Response("Unsupported FeedbackRecords proxy route", { status: 400 });
   }
 
+  // `request` is not a plain NextRequest: Next's app-route runtime wraps every handler's request in a
+  // Proxy, and `clone()` returns another one. Fetch objects keep their state in private fields a Proxy
+  // cannot carry, so neither may become a Request constructor's `input` (nodejs/undici#4290).
+  // Reading through the Proxy is fine.
+  //
+  // The authorizer gets the request itself, as the production ext_authz route does: it needs the real
+  // cookies for session auth and may consume the body (POST routes read `tenant_id` from it), so a
+  // request with a body is forwarded from a clone taken before authorization reads anything.
+  const hubBoundRequest = request.body ? request.clone() : request;
+
   const authorizationResponse = await authorizeGatewayRequest({
-    request: new NextRequest(request.clone()),
+    request,
     originalRequest: {
       method: request.method.toUpperCase(),
       url: originalUrl,
@@ -88,8 +121,19 @@ export const proxyFeedbackRecordsRequest = async (request: NextRequest): Promise
   }
 
   try {
-    return await fetch(buildHubRequest(request, hubUrl), { cache: "no-store" });
+    // The signal is the incoming request's own, not the clone's: undici makes a clone's signal follow
+    // the original only through a WeakRef, so a garbage collection mid-flight silently stops a client
+    // disconnect from aborting the Hub call (nodejs/undici#4068). Next keeps `request` alive for the
+    // whole handler, and with it the link to the connection.
+    return await fetch(hubUrl, buildHubRequestInit(hubBoundRequest, request.signal));
   } catch (err) {
+    // The caller hung up and the abort cancelled the Hub call: nothing failed upstream and nobody is
+    // left to answer, so this is not logged as a proxy failure. 499 is the conventional "client closed
+    // request" status.
+    if (request.signal.aborted) {
+      return new Response(null, { status: 499 });
+    }
+
     // Deliberately still does not log `err`: a fetch failure embeds the target URL in its message,
     // which can carry credentials or query parameters, and keeping it out of the logs is the point
     // of this payload being hand-built. The hint is derived from the error's errno alone and is a

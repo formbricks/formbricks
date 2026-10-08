@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { toSafeIdentifier } from "@formbricks/types/safe-identifier";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { promoteEmbeddedDataToSharedAction } from "@/modules/embedded-data/actions";
 import type { TSharedEmbeddedData } from "@/modules/embedded-data/types";
 import { Button } from "@/modules/ui/components/button";

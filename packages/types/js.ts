@@ -15,6 +15,7 @@ export const ZJsWorkspaceStateSurvey = ZSurveyBase.pick({
   variables: true,
   type: true,
   showLanguageSwitch: true,
+  autoSelectLanguage: true,
   languages: true,
   endings: true,
   autoClose: true,

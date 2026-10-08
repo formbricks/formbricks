@@ -140,6 +140,19 @@ describe("getWorkspaceStateData", () => {
     });
   });
 
+  // The assertion above compares against the shared constant, so it moves with any edit to it and
+  // pins nothing. The text itself ships in an unauthenticated public API response, so changing it is
+  // an API change and has to be deliberate: this literal is what such an edit must get past (ENG-2799).
+  test("substitutes the exact placeholder text for every survey name", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockWorkspaceData as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+
+    expect(result.surveys[0].name).toBe(
+      "[deprecated] survey name omitted from public API - will be removed soon"
+    );
+  });
+
   /**
    * ENG-1845: this payload is the renderer's allow-list for app surveys. `getSurveyEmbeddedFields`
    * fails closed, so a select that loses the join is indistinguishable from a survey with no fields
@@ -157,6 +170,23 @@ describe("getWorkspaceStateData", () => {
     // The public selector, not the write-path one: this payload reaches anonymous SDK clients, and
     // the workspace-library row id is of no use to a renderer.
     expect(select.surveys.select.embeddedDataLinks).toEqual(selectPublicSurveyEmbeddedDataLinks);
+  });
+
+  test("carries the survey's language settings, which the SDK resolves the display language from", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      surveys: [{ ...mockWorkspaceData.surveys[0], autoSelectLanguage: true }],
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+
+    const [{ select }] = vi.mocked(prisma.workspace.findUnique).mock.calls[0] as [
+      { select: { surveys: { select: Record<string, unknown> } } },
+    ];
+    expect(select.surveys.select).toEqual(
+      expect.objectContaining({ showLanguageSwitch: true, autoSelectLanguage: true })
+    );
+    expect(result.surveys[0].autoSelectLanguage).toBe(true);
   });
 
   test("should throw ResourceNotFoundError when workspace is not found", async () => {

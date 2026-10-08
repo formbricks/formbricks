@@ -4064,6 +4064,12 @@ components:
             - boolean
             - "null"
           description: Whether to show the language switch
+        autoSelectLanguage:
+          type:
+            - boolean
+            - "null"
+          description: Whether to open the survey in the respondent's browser language when it matches an
+            enabled survey language
         showThankYouMessage:
           type:
             - boolean
@@ -5803,6 +5809,7 @@ components:
         - status
         - thankYouMessage
         - showLanguageSwitch
+        - autoSelectLanguage
         - showThankYouMessage
         - welcomeCard
         - displayProgressBar

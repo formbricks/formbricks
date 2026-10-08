@@ -16,7 +16,10 @@ import { getSurvey } from "@/lib/survey/service";
 import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
-import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
+import {
+  evaluateResponseQuotas,
+  loadQuotaEvaluationContext,
+} from "@/modules/ee/quotas/lib/evaluation-service";
 import { getContactByUserId } from "./contact";
 
 export const responseSelection = {
@@ -60,6 +63,8 @@ export const responseSelection = {
 export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInput
 ): Promise<TResponse> => {
+  // Read before the transaction opens; evaluation checks it against the survey of the row written.
+  const quotaContext = await loadQuotaEvaluationContext(responseInput.surveyId);
   const txResponse = await prisma.$transaction(async (tx) => {
     const response = await createResponse(responseInput, tx);
 
@@ -67,7 +72,7 @@ export const createResponseWithQuotaEvaluation = async (
     // buildPrismaResponseData canonicalizes it), so the stored value is the single source of truth and a
     // legacy code from a stale client still matches language-scoped quotas. Mirrors the v2/management path.
     const quotaResult = await evaluateResponseQuotas({
-      surveyId: responseInput.surveyId,
+      surveyId: response.surveyId,
       responseId: response.id,
       data: responseInput.data,
       variables: responseInput.variables,
@@ -76,6 +81,7 @@ export const createResponseWithQuotaEvaluation = async (
       // The row just written, so `reserved` quota operands resolve (ENG-1840).
       response,
       tx,
+      quotaContext,
     });
 
     if (quotaResult.shouldEndSurvey && quotaResult.refreshedResponse) {

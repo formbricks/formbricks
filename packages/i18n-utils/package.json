@@ -20,6 +20,11 @@
       "import": "./dist/canonical.js",
       "require": "./dist/canonical.cjs"
     },
+    "./survey-language-match": {
+      "types": "./dist/survey-language-match.d.ts",
+      "import": "./dist/survey-language-match.js",
+      "require": "./dist/survey-language-match.cjs"
+    },
     "./survey-runtime-languages": {
       "types": "./dist/survey-runtime-languages.d.ts",
       "import": "./dist/survey-runtime-languages.js",

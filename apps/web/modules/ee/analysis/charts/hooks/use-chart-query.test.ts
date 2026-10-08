@@ -11,7 +11,7 @@ vi.mock("@/modules/ee/analysis/charts/actions", () => ({
   executeQueryAction: (...args: unknown[]) => mockExecuteQueryAction(...args),
 }));
 
-vi.mock("@/lib/utils/helper", () => ({
+vi.mock("@/lib/utils/error-message", () => ({
   getFormattedErrorMessage: (result: { serverError?: string }) => result?.serverError ?? "formatted-error",
 }));
 

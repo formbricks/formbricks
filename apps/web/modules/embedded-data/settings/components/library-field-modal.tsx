@@ -15,7 +15,7 @@ import {
 } from "@formbricks/types/embedded-data";
 import { toSafeIdentifier } from "@formbricks/types/safe-identifier";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import {
   createSharedEmbeddedDataAction,
   updateSharedEmbeddedDataAction,

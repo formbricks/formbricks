@@ -91,7 +91,7 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsMultiOrgEnabled: vi.fn(),
 }));
 
-vi.mock("@/modules/ee/role-management/actions", () => ({
+vi.mock("@/modules/ee/role-management/lib/permission", () => ({
   checkRoleManagementPermission: mocks.checkRoleManagementPermission,
 }));
 

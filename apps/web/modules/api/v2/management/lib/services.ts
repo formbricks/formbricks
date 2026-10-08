@@ -1,5 +1,4 @@
-"use server";
-
+import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { err, ok } from "@formbricks/types/error-handlers";

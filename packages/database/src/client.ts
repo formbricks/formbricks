@@ -1,13 +1,9 @@
-import { PRISMA_GLOBAL_OMIT } from "./client-options";
+import { createAppPrismaClientOptions } from "./client-options";
 import { PrismaClient } from "./prisma";
-import { createPrismaPgAdapter } from "./prisma-adapter";
 
 const prismaClientSingleton = (): PrismaClient => {
-  const { adapter } = createPrismaPgAdapter();
-
   return new PrismaClient({
-    adapter,
-    omit: PRISMA_GLOBAL_OMIT,
+    ...createAppPrismaClientOptions(),
     ...(process.env.DEBUG === "1" && {
       log: ["query", "info"],
     }),

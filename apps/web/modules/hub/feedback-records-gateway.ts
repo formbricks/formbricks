@@ -12,6 +12,11 @@ import { getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getFeedbackDirectoryAuthContext } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
+  type TGatewayJsonBodyRejectionReason,
+  hasCaseVariantKey,
+  parseGatewayJsonObject,
+} from "@/modules/gateway-auth/lib/json-body";
+import {
   TGatewayAuthenticatedPrincipal,
   TGatewayRequestAuthorizer,
   allowGatewayRequest,
@@ -132,6 +137,25 @@ const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TPa
 
 type TAuthenticatedGatewayPrincipal = TGatewayAuthenticatedPrincipal;
 
+const TENANT_ID_KEY = "tenant_id";
+const INVALID_REQUEST_BODY_MESSAGE = "Invalid request body";
+const AMBIGUOUS_TENANT_ID_MESSAGE = "Ambiguous tenant_id";
+
+/**
+ * A refused ambiguous request is a likely probe, so it is logged — with the reason only. The keys are
+ * caller-controlled and never logged, and neither are directory or record ids.
+ */
+const logAmbiguousRequest = (
+  requestId: string,
+  route: TParsedGatewayRoute,
+  reason: TGatewayJsonBodyRejectionReason | "case_variant_tenant_id" | "repeated_tenant_id"
+): void => {
+  logger.warn(
+    { requestId, operation: route.operation, reason },
+    "Feedback records gateway refused an ambiguous request"
+  );
+};
+
 const parseTenantId = (tenantId: string | null): string | null => {
   if (!tenantId) {
     return null;
@@ -140,40 +164,100 @@ const parseTenantId = (tenantId: string | null): string | null => {
   return ZId.safeParse(tenantId).success ? tenantId : null;
 };
 
+/**
+ * Reads the body the upstream will receive verbatim. A body whose keys could be read more than one way
+ * is refused rather than authorized, because the Hub would not necessarily act on the `tenant_id` this
+ * authorizer checked (ENG-3658) — see `parseGatewayJsonObject`. Hubs from the ENG-3658 release on
+ * refuse such bodies too; this gate is what protects deployments still running an older one.
+ */
 const parseJsonBody = async (
-  request: NextRequest
+  request: NextRequest,
+  route: TParsedGatewayRoute,
+  requestId: string
 ): Promise<
   | {
       ok: true;
       body: Record<string, unknown> | null;
+      keys: string[];
     }
   | {
       ok: false;
       response: Response;
     }
 > => {
+  let rawBody: string;
   try {
-    const rawBody = await readRequestBodyWithLimit(request);
-    if (!rawBody.trim()) {
-      return { ok: true, body: null };
-    }
-
-    const parsedBody = JSON.parse(rawBody);
-    return {
-      ok: true,
-      body: parsedBody && typeof parsedBody === "object" ? (parsedBody as Record<string, unknown>) : null,
-    };
+    rawBody = await readRequestBodyWithLimit(request);
   } catch (error) {
     if (error instanceof RequestBodyTooLargeError) {
       return { ok: false, response: buildGatewayStatusResponse(413, "Payload Too Large") };
     }
 
-    return { ok: true, body: null };
+    return { ok: false, response: buildGatewayStatusResponse(400, INVALID_REQUEST_BODY_MESSAGE) };
   }
+
+  if (!rawBody.trim()) {
+    return { ok: true, body: null, keys: [] };
+  }
+
+  const parseResult = parseGatewayJsonObject(rawBody);
+  if (!parseResult.ok) {
+    if (parseResult.reason === "duplicate_key" || parseResult.reason === "non_ascii_key") {
+      logAmbiguousRequest(requestId, route, parseResult.reason);
+    }
+
+    return { ok: false, response: buildGatewayStatusResponse(400, INVALID_REQUEST_BODY_MESSAGE) };
+  }
+
+  return { ok: true, body: parseResult.body, keys: parseResult.keys };
 };
 
 const getFeedbackRecordsGatewayJwtFromHeaders = (headers: Headers): string | null => {
   return getBearerTokenFromHeaders(headers);
+};
+
+type TTenantResolution = { tenantId: string } | { errorResponse: Response };
+
+const invalidOrMissingTenantId = (): TTenantResolution => ({
+  errorResponse: buildGatewayStatusResponse(400, "Invalid or missing tenant_id"),
+});
+
+const resolveQueryTenantId = (
+  route: TParsedGatewayRoute,
+  originalUrl: URL,
+  requestId: string
+): TTenantResolution => {
+  const tenantIds = originalUrl.searchParams.getAll(TENANT_ID_KEY);
+  if (tenantIds.length > 1) {
+    logAmbiguousRequest(requestId, route, "repeated_tenant_id");
+    return { errorResponse: buildGatewayStatusResponse(400, AMBIGUOUS_TENANT_ID_MESSAGE) };
+  }
+
+  const tenantId = parseTenantId(tenantIds[0] ?? null);
+  return tenantId ? { tenantId } : invalidOrMissingTenantId();
+};
+
+const resolveBodyTenantId = async (
+  request: NextRequest,
+  route: TParsedGatewayRoute,
+  requestId: string
+): Promise<TTenantResolution> => {
+  const parseResult = await parseJsonBody(request, route, requestId);
+  if (!parseResult.ok) {
+    return { errorResponse: parseResult.response };
+  }
+
+  // A Hub that decodes with Go's encoding/json v1 (every release before ENG-3658) matches JSON keys
+  // case-insensitively, so `TENANT_ID` next to `tenant_id` would be the tenant it acts on while
+  // `tenant_id` is the one authorized here.
+  if (hasCaseVariantKey(parseResult.keys, TENANT_ID_KEY)) {
+    logAmbiguousRequest(requestId, route, "case_variant_tenant_id");
+    return { errorResponse: buildGatewayStatusResponse(400, AMBIGUOUS_TENANT_ID_MESSAGE) };
+  }
+
+  const tenantValue = parseResult.body?.[TENANT_ID_KEY];
+  const tenantId = parseTenantId(typeof tenantValue === "string" ? tenantValue : null);
+  return tenantId ? { tenantId } : invalidOrMissingTenantId();
 };
 
 const resolveTenantId = async (
@@ -181,33 +265,13 @@ const resolveTenantId = async (
   route: TParsedGatewayRoute,
   originalUrl: URL,
   requestId: string
-): Promise<{ tenantId: string } | { errorResponse: Response }> => {
+): Promise<TTenantResolution> => {
   if (route.tenantSource === "query") {
-    const tenantId = parseTenantId(originalUrl.searchParams.get("tenant_id"));
-    if (!tenantId) {
-      return {
-        errorResponse: buildGatewayStatusResponse(400, "Invalid or missing tenant_id"),
-      };
-    }
-
-    return { tenantId };
+    return resolveQueryTenantId(route, originalUrl, requestId);
   }
 
   if (route.tenantSource === "body") {
-    const parseResult = await parseJsonBody(request);
-    if (!parseResult.ok) {
-      return { errorResponse: parseResult.response };
-    }
-
-    const body = parseResult.body;
-    const tenantId = parseTenantId(typeof body?.tenant_id === "string" ? body.tenant_id : null);
-    if (!tenantId) {
-      return {
-        errorResponse: buildGatewayStatusResponse(400, "Invalid or missing tenant_id"),
-      };
-    }
-
-    return { tenantId };
+    return resolveBodyTenantId(request, route, requestId);
   }
 
   const tenantLookup = await getFeedbackRecordTenant(route.recordId!);
