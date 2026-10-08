@@ -1,12 +1,24 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { cpuMsSince } from "./__fixtures__/cpu-time";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
+import {
+  PAGE_BREAK,
+  blocksElement,
+  flowBlock,
+  flowElement,
+  flowEnd,
+  optionsElement,
+  question,
+  resetFlowIds,
+  survey as surveyExport,
+} from "./__fixtures__/qsf-builders";
 import { loadRecordedPlan, recordedGenerate, refsInPrompt } from "./__fixtures__/recorded-plans";
 import type { TQsfPlanGenerate } from "./ai-plan";
 import { checkQsfDraft } from "./final-gate";
 import { QSF_DRAFT_MAX_BYTES, fitQsfSurveyToCreateLimit, measureQsfDraftBytes } from "./fit-draft";
 import { normalizeQualtricsLanguageCode } from "./language-codes";
 import { QSF_MAX_TEXT_CHARS } from "./limits";
+import { QSF_RECALL_FALLBACK } from "./piped-text";
 import { QsfImportInputError, prepareQsfImport, runQsfImport } from "./pipeline";
 import type { TQsfSurvey } from "./qsf-model";
 
@@ -506,6 +518,77 @@ describe("a draft too large for the create's request body", () => {
       );
       expect(result.payload.blocks.flatMap((block) => block.elements).at(-1)?.id).toBe(
         `Q${200 - cut.length}`
+      );
+      expect(checkQsfDraft(result.payload)).toEqual([]);
+    }
+  );
+
+  test(
+    "shows the fallback for a pipe to a question cut to fit, in the ending and in kept questions, and says so",
+    { timeout: 60_000 },
+    async () => {
+      // 120 questions of 20,000-character texts in one language: the trailing ones are cut before
+      // planning. The end message recalls two of them and a kept one; Q70 recalls a kept and a cut one.
+      const words = (seed: string, length: number) =>
+        Array.from({ length: Math.ceil(length / 4) }, (_, i) => `${seed}w${i}`)
+          .join(" ")
+          .slice(0, length);
+      const pipe = (qid: string) => `\${q://${qid}/ChoiceGroup/SelectedChoices}`;
+      const extra: Record<number, string> = {
+        70: `Recall of kept Q2: [${pipe("QID2")}] and of cut Q118: [${pipe("QID118")}].`,
+      };
+      resetFlowIds();
+      const elements: string[] = [];
+      const questions = Array.from({ length: 120 }, (_, index) => {
+        const n = index + 1;
+        elements.push(`QID${n}`);
+        if (n % 5 === 0 && n < 120) elements.push(PAGE_BREAK);
+        return question({
+          qid: `QID${n}`,
+          text: `Question ${n}: ${extra[n] ?? ""} ${words(`q${n}`, 20_000)}`,
+          type: "MC",
+          selector: "SAVR",
+          choices: [1, 2, 3, 4].map((option) => ({ display: `Option ${option} of ${n}` })),
+        });
+      });
+      const endMessage = `Cut Q118 said [${pipe("QID118")}], cut Q120 said [${pipe("QID120")}], kept Q2 said [${pipe("QID2")}].`;
+      const qsf = surveyExport(
+        "Recall of cut",
+        "EN",
+        [
+          ...questions,
+          blocksElement([{ id: "BL_1", description: "All", type: "Default", elements }]),
+          flowElement([flowBlock("BL_1"), flowEnd()]),
+          optionsElement({ EOSMessage: endMessage }),
+        ],
+        120
+      );
+
+      const result = await runQsf(qsf);
+
+      const cut = result.report.issues
+        .filter((issue) => issue.code === "question_skipped" && issue.params?.cause === "draft_too_large")
+        .map((issue) => issue.questionTag);
+      expect(cut).toEqual(expect.arrayContaining(["Q118", "Q120"]));
+      expect(cut).not.toContain("Q70");
+
+      const ending = result.payload.endings[0];
+      const endText = ending?.type === "endScreen" ? ending.headline["en-US"] : "";
+      expect(endText).toContain(
+        `Cut Q118 said [${QSF_RECALL_FALLBACK}], cut Q120 said [${QSF_RECALL_FALLBACK}]`
+      );
+      expect(endText).toContain("kept Q2 said [#recall:Q2/fallback:...#]");
+      const q70 = result.payload.blocks
+        .flatMap((block) => block.elements)
+        .find((element) => element.id === "Q70");
+      expect(q70?.headline["en-US"]).toContain(
+        `Recall of kept Q2: [#recall:Q2/fallback:...#] and of cut Q118: [${QSF_RECALL_FALLBACK}].`
+      );
+      expect(result.report.issues).toEqual(
+        expect.arrayContaining([
+          { code: "piped_text_removed", severity: "warning", params: { count: 2, subject: "ending" } },
+          { code: "piped_text_removed", severity: "warning", questionTag: "Q70", params: { count: 1 } },
+        ])
       );
       expect(checkQsfDraft(result.payload)).toEqual([]);
     }

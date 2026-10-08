@@ -4,6 +4,7 @@ import { QSF_RECALL_FALLBACK, collectEmbeddedDataReferences, replacePipedText } 
 const context = {
   recallElement: (ref: string) => (ref === "QID1" ? "Q1" : null),
   hiddenField: (name: string) => (name === "firstName" ? "firstname" : null),
+  cutQuestion: (ref: string) => ref === "QID8",
 };
 
 describe("collectEmbeddedDataReferences", () => {
@@ -17,6 +18,15 @@ describe("collectEmbeddedDataReferences", () => {
 });
 
 describe("replacePipedText", () => {
+  test("shows the fallback for a pipe to a question the import cut, never nothing, and counts it", () => {
+    expect(
+      replacePipedText("Cut said [${q://QID8/ChoiceTextEntryValue}], other [${q://QID7/x}]", context)
+    ).toEqual({
+      text: `Cut said [${QSF_RECALL_FALLBACK}], other []`,
+      removed: 2,
+    });
+  });
+
   test("recalls an earlier element and a hidden field, with the fixed fallback", () => {
     expect(
       replacePipedText("You said ${q://QID1/ChoiceTextEntryValue}, ${e://Field/firstName}.", context)

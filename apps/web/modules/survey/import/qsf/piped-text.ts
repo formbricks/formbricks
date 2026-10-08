@@ -29,6 +29,12 @@ export interface TPipedTextContext {
   recallElement: (ref: string) => string | null;
   /** The hidden field id an embedded data name became, or `null`. */
   hiddenField: (name: string) => string | null;
+  /**
+   * Whether the import cut the question (to fit the create's body, or because the create refused
+   * it). A pipe to one shows the recall fallback rather than nothing: the question existed, and the
+   * text around the pipe still expects an answer there.
+   */
+  cutQuestion: (ref: string) => boolean;
 }
 
 const recallToken = (id: string): string => `#recall:${id}/fallback:${QSF_RECALL_FALLBACK}#`;
@@ -43,8 +49,10 @@ const PLACEHOLDER_PATTERN = /\uE000(\d+)\uE001/g;
 
 /**
  * Qualtrics piped text → Formbricks recall. `${q://QID3/…}` recalls the element QID3 became, when that
- * element is in an earlier block; `${e://Field/name}` recalls the hidden field the name became; every
- * other pipe (`lm://`, `rand://`, `date://`, a later question) has no equivalent and is removed.
+ * element is in an earlier block, and shows the recall fallback (`QSF_RECALL_FALLBACK`) when the import
+ * cut QID3; `${e://Field/name}` recalls the hidden field the name became; every other pipe (`lm://`,
+ * `rand://`, `date://`, a later question) has no equivalent and is removed. A pipe not turned into a
+ * recall counts in `removed`.
  *
  * Any `#recall:` left in the text afterwards is the file's own, and is broken up: whether it was there
  * from the start or formed when a pipe between its letters was removed (`#rec${lm://x}all:…`), it must
@@ -52,7 +60,8 @@ const PLACEHOLDER_PATTERN = /\uE000(\d+)\uE001/g;
  * placeholders meanwhile, and file text that would run on from one of them (`…#recall:…`) is broken
  * up too.
  *
- * Without a context (choice labels, which do not render recall) every pipe is removed.
+ * In a text that does not render recall (a choice label), the context recalls nothing, so every pipe
+ * is removed but one to a cut question, which shows the fallback.
  */
 export function replacePipedText(
   text: string,
@@ -72,8 +81,13 @@ export function replacePipedText(
     .replaceAll(PLACEHOLDER_END, "")
     .replaceAll(PIPED_TEXT_PATTERN, (_token: string, scheme: string, body: string) => {
       if (context && scheme === "q") {
-        const id = context.recallElement(body.split("/")[0]);
+        const ref = body.split("/")[0];
+        const id = context.recallElement(ref);
         if (id) return placeholder(recallToken(id));
+        if (context.cutQuestion(ref)) {
+          removed += 1;
+          return QSF_RECALL_FALLBACK;
+        }
       } else if (context && scheme === "e") {
         const [kind, name] = body.split("/");
         const id = kind === "Field" && name ? context.hiddenField(name) : null;

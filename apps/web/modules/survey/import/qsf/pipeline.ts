@@ -192,6 +192,7 @@ export async function runQsfImport(params: TRunQsfImportParams): Promise<TQsfImp
         workspaceId,
         allowExternalUrls,
         excludedRefs,
+        cutRefs: surveyFit.cutRefs,
         signal,
       }),
     survey,

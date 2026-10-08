@@ -30,7 +30,9 @@ export type TQsfImportStage = "reading" | "ai" | "assembling";
  *   file declares them
  * - `translation_fallback` — texts missing in a language, filled with the default language's text,
  *   one line per language (`params.language`, `params.count`)
- * - `piped_text_removed` — piped text with no Formbricks equivalent, removed (`params.count`)
+ * - `piped_text_removed` — piped text with no Formbricks equivalent, removed, or a recall of a
+ *   question the import cut, shown as its fallback text (`params.count`). Under the question holding
+ *   it, or, for the end message, with no `questionTag` and `params.subject: "ending"`
  * - `choice_label_renamed` — duplicate labels in one question, numbered so each is distinct
  * - `choice_dropped` — a choice whose id the reader refuses
  * - `text_too_long` — a text past the size the import sanitizes, left out

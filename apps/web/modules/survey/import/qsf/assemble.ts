@@ -116,6 +116,11 @@ export interface TAssembleQsfDraftParams {
   allowExternalUrls: boolean;
   /** Questions the final gate refused on a first pass. */
   excludedRefs?: ReadonlySet<string>;
+  /**
+   * Questions cut from the survey before planning, to fit the create's body. Like the ones the gate
+   * refused, a pipe to one shows the recall fallback, with a report line.
+   */
+  cutRefs?: ReadonlySet<string>;
   /** Stops assembly between questions when it fires. */
   signal?: AbortSignal;
 }
@@ -410,13 +415,24 @@ class QsfAssembler {
           ? (this.elementIdByRef.get(ref) ?? null)
           : null,
       hiddenField: (name) => this.hiddenFieldIdByName.get(name) ?? null,
+      cutQuestion: (ref) => this.isCut(ref),
     };
+  }
+
+  /** For a text that does not render recall (a label): no pipe is recalled, a cut one shows the fallback. */
+  private labelContext(): TPipedTextContext {
+    return { recallElement: () => null, hiddenField: () => null, cutQuestion: (ref) => this.isCut(ref) };
+  }
+
+  /** Whether the import cut the question: to fit the create's body, or because the create refused it. */
+  private isCut(ref: string): boolean {
+    return this.params.cutRefs?.has(ref) === true || this.params.excludedRefs?.has(ref) === true;
   }
 
   private buildOptions(keys: TQsfTextKey[], piped: { removed: number }): TDraftChoice[] {
     return keys.map((key, index) => ({
       id: createId(),
-      label: this.filled(this.localize(key, null, piped), String(index + 1)).text,
+      label: this.filled(this.localize(key, this.labelContext(), piped), String(index + 1)).text,
     }));
   }
 
@@ -552,7 +568,10 @@ class QsfAssembler {
                 ? {
                     show: true,
                     required: planned.required,
-                    placeholder: this.filled(this.localize(key, null, piped), String(index + 1)).text,
+                    placeholder: this.filled(
+                      this.localize(key, this.labelContext(), piped),
+                      String(index + 1)
+                    ).text,
                   }
                 : { show: false, required: false, placeholder: this.uniform("") },
             ];
@@ -565,7 +584,7 @@ class QsfAssembler {
           ...base,
           type: "consent",
           label: this.filled(
-            this.localize(planned.labelKey ?? "", null, piped),
+            this.localize(planned.labelKey ?? "", this.labelContext(), piped),
             getTextContent(base.headline[this.languageCodes[0]] ?? "") || "1"
           ).text,
         };
@@ -623,9 +642,16 @@ class QsfAssembler {
     }
 
     if (!survey.endMessageKey) return [];
-    const headline = this.localize(survey.endMessageKey, this.recallContext(Number.POSITIVE_INFINITY), {
-      removed: 0,
-    });
+    const piped = { removed: 0 };
+    const headline = this.localize(survey.endMessageKey, this.recallContext(Number.POSITIVE_INFINITY), piped);
+    if (piped.removed > 0) {
+      // No question to name: the line says it is about the ending.
+      this.issues.push({
+        code: "piped_text_removed",
+        severity: "warning",
+        params: { count: piped.removed, subject: "ending" },
+      });
+    }
     const defaultHeadline = headline[survey.defaultLanguage] ?? "";
     if (!hasTextContent(defaultHeadline)) return [];
     return [{ id: createId(), type: "endScreen", headline: this.filled(headline, defaultHeadline).text }];
