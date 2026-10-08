@@ -13,6 +13,7 @@ import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context
 import { getTranslate } from "@/lingodotdev/server";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
+import { getSurveyDataRetentionContext } from "@/modules/ee/data-retention/lib/survey-context";
 import {
   getIsContactsEnabled,
   getIsQuotasEnabled,
@@ -140,11 +141,10 @@ export const SurveyEditorPage = async (props: {
 
   const isCxMode = searchParams.mode === "cx";
   const publicDomain = getPublicDomain();
-  const { surveyVisibilityGate, visibility, surveyAccess, ownerName } = await getSurveyVisibilityViewer(
-    survey,
-    session.user.id,
-    workspaceWithTeamIds.organizationId
-  );
+  const [{ surveyVisibilityGate, visibility, surveyAccess, ownerName }, dataRetention] = await Promise.all([
+    getSurveyVisibilityViewer(survey, session.user.id, workspaceWithTeamIds.organizationId),
+    getSurveyDataRetentionContext(organization, session.user.id),
+  ]);
 
   return (
     <SurveyEditor
@@ -181,6 +181,7 @@ export const SurveyEditorPage = async (props: {
       visibility={visibility}
       surveyAccess={surveyAccess}
       ownerName={ownerName}
+      dataRetention={dataRetention}
     />
   );
 };

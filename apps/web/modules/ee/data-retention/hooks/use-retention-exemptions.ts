@@ -21,6 +21,7 @@ import {
   flattenRetentionExemptionPages,
   removeRetentionExemptionFromPages,
   retentionExemptionKeys,
+  surveyRetentionKeys,
 } from "../lib/query";
 import type { TCreateRetentionExemptionInput } from "../types";
 
@@ -39,12 +40,16 @@ export const useRetentionExemptions = (input: TRetentionExemptionListInput) => {
   return { ...query, queryKey, exemptions: flattenRetentionExemptionPages(query.data) };
 };
 
-/** Create an exemption, then refetch the list so it shows in its place. */
+/** Create an exemption, then refetch the list, and the survey's dates, so both show it. */
 export const useCreateRetentionExemption = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: TCreateRetentionExemptionInput) => createRetentionExemption(input),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: retentionExemptionKeys.lists() }),
+    onSettled: (_data, _error, input) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: retentionExemptionKeys.lists() }),
+        queryClient.invalidateQueries({ queryKey: surveyRetentionKeys.detail(input.surveyId) }),
+      ]),
   });
 };
 

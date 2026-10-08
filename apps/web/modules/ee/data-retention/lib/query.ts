@@ -52,3 +52,9 @@ export const retentionPolicyKeys = {
   all: ["retention-policies"] as const,
   detail: (organizationId: string) => [...retentionPolicyKeys.all, organizationId] as const,
 };
+
+/** Query keys for one survey's retention dates, refreshed when an exemption is added or revoked. */
+export const surveyRetentionKeys = {
+  all: ["survey-retention"] as const,
+  detail: (surveyId: string) => [...surveyRetentionKeys.all, surveyId] as const,
+};

@@ -1,10 +1,13 @@
 import type { TFunction } from "i18next";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 import type {
+  TRetentionExemption,
   TRetentionPolicyKind,
   TRetentionPolicySettings,
   TRetentionRun,
   TRetentionSurveyCondition,
+  TSurveyRetention,
+  TSurveyRetentionPolicy,
 } from "../types";
 import { daysToRetentionPeriod } from "./period";
 import { getRetentionPeriodField } from "./policy-rules";
@@ -96,4 +99,60 @@ export const getRetentionPolicySummary = (
     case "members":
       return t("workspace.settings.data_retention.members_summary", { period });
   }
+};
+
+/** One line per active policy, for the survey's settings card: what happens next, and when. */
+export const getSurveyRetentionLines = (
+  retention: TSurveyRetention,
+  t: TFunction,
+  formatDate: (iso: string) => string
+): string[] =>
+  retention.policies.map((plan: TSurveyRetentionPolicy) => {
+    const policy = getRetentionPolicyLabel(plan.policy, t);
+    if (plan.exempt) {
+      // The exemption that holds it; under ENG-3371 either one holds the survey from the surveys policy.
+      const holding: TRetentionExemption | undefined =
+        retention.exemptions.find((exemption) => exemption.policy === plan.policy) ?? retention.exemptions[0];
+      return holding
+        ? t("workspace.settings.data_retention.survey_line_exempt", {
+            policy,
+            date: formatDate(holding.until),
+          })
+        : t("workspace.settings.data_retention.survey_line_exempt_no_date", { policy });
+    }
+    if (!plan.nextAction || !plan.nextDate) {
+      return t("workspace.settings.data_retention.survey_line_nothing_due", { policy });
+    }
+    const date = formatDate(plan.nextDate);
+    if (plan.policy === "responses") {
+      return t("workspace.settings.data_retention.survey_line_responses_delete", { date });
+    }
+    return plan.nextAction === "archive"
+      ? t("workspace.settings.data_retention.survey_line_survey_archive", { date })
+      : t("workspace.settings.data_retention.survey_line_survey_delete", { date });
+  });
+
+/**
+ * The dated warning on the survey summary while responses are inside the notice window: "214
+ * responses are due for deletion, the first on Oct 3". Null when none are.
+ */
+export const getSurveyRetentionDueWarning = (
+  retention: TSurveyRetention,
+  t: TFunction,
+  locale: string,
+  formatDate: (iso: string) => string
+): string | null => {
+  const responses = retention.policies.find((plan) => plan.policy === "responses");
+  if (!responses?.dueCount || !responses.nextDate) return null;
+
+  const date = formatDate(responses.nextDate);
+  return responses.dueCount.relation === "gte"
+    ? t("workspace.settings.data_retention.responses_due_for_deletion_capped", {
+        total: new Intl.NumberFormat(locale).format(responses.dueCount.count),
+        date,
+      })
+    : t("workspace.settings.data_retention.responses_due_for_deletion", {
+        count: responses.dueCount.count,
+        date,
+      });
 };

@@ -41,7 +41,11 @@ import {
   getExemptionUntilBounds,
   toCreateRetentionExemptionInput,
 } from "../../lib/exemption-form";
-import { RETENTION_EXEMPTION_POLICIES, RETENTION_EXEMPTION_REASON_MAX_LENGTH } from "../../types";
+import {
+  RETENTION_EXEMPTION_POLICIES,
+  RETENTION_EXEMPTION_REASON_MAX_LENGTH,
+  type TRetentionExemptionSurveyOption,
+} from "../../types";
 import { ExemptionSurveyPicker } from "./exemption-survey-picker";
 
 const DEFAULT_VALUES: TAddExemptionFormValues = { survey: null, policy: "surveys", until: null, reason: "" };
@@ -52,6 +56,8 @@ interface AddExemptionDialogProps {
   timeZone: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Exempt this survey, from its own page: the picker is replaced by its name. */
+  survey?: TRetentionExemptionSurveyOption;
 }
 
 /** Exempt a survey from one policy until a date, with a reason (ENG-3346). Owners and managers only. */
@@ -60,6 +66,7 @@ export const AddExemptionDialog = ({
   timeZone,
   open,
   onOpenChange,
+  survey: fixedSurvey,
 }: Readonly<AddExemptionDialogProps>) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
@@ -76,15 +83,16 @@ export const AddExemptionDialog = ({
   }
   const createExemption = useCreateRetentionExemption();
 
+  const defaultValues: TAddExemptionFormValues = { ...DEFAULT_VALUES, survey: fixedSurvey ?? null };
   const form = useForm<TAddExemptionFormValues>({
     resolver: zodResolver(getAddExemptionFormSchema(t)),
     mode: "onChange",
-    defaultValues: DEFAULT_VALUES,
+    defaultValues,
   });
 
   const handleOpenChange = (next: boolean) => {
     if (createExemption.isPending) return;
-    if (!next) form.reset(DEFAULT_VALUES);
+    if (!next) form.reset(defaultValues);
     onOpenChange(next);
   };
 
@@ -92,7 +100,7 @@ export const AddExemptionDialog = ({
     createExemption.mutate(toCreateRetentionExemptionInput(values, timeZone), {
       onSuccess: () => {
         toast.success(t("workspace.settings.data_retention.exemption_created"));
-        form.reset(DEFAULT_VALUES);
+        form.reset(defaultValues);
         onOpenChange(false);
       },
       onError: (error) => {
@@ -121,15 +129,19 @@ export const AddExemptionDialog = ({
                 render={({ field, fieldState: { error } }) => (
                   <FormItem>
                     <FormLabel>{t("common.survey")}</FormLabel>
-                    <FormControl>
-                      <ExemptionSurveyPicker
-                        organizationId={organizationId}
-                        value={field.value}
-                        onChange={field.onChange}
-                        isInvalid={!!error}
-                        disabled={createExemption.isPending}
-                      />
-                    </FormControl>
+                    {fixedSurvey ? (
+                      <p className="text-sm text-slate-700">{fixedSurvey.name}</p>
+                    ) : (
+                      <FormControl>
+                        <ExemptionSurveyPicker
+                          organizationId={organizationId}
+                          value={field.value}
+                          onChange={field.onChange}
+                          isInvalid={!!error}
+                          disabled={createExemption.isPending}
+                        />
+                      </FormControl>
+                    )}
                     {error?.message && <FormError>{error.message}</FormError>}
                   </FormItem>
                 )}

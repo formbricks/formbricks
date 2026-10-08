@@ -2866,6 +2866,7 @@ checksums:
     workspace/settings/data_retention/download_csv: 13bcd46bbdc2d7d096a862afe59e91c5
     workspace/settings/data_retention/edit_policy: c6ce6f1afcbbebba6ee539b74fb41e6e
     workspace/settings/data_retention/exempt_survey: 62936eb36798a695ea7fee192ec7ad1d
+    workspace/settings/data_retention/exempt_this_survey: dab1442b492761fa0f3244db61928fc1
     workspace/settings/data_retention/exemption_create_failed: 0a726b5c344717889e9d86ce92699b3a
     workspace/settings/data_retention/exemption_created: 85bf069c10b9d49b49791f6b4333221b
     workspace/settings/data_retention/exemption_policy_help: 45d72c4f3f628c5a8266ec6e923f0a91
@@ -2915,6 +2916,8 @@ checksums:
     workspace/settings/data_retention/reason_too_long: 7850fbf703f08f83e8fd1e7d268cf981
     workspace/settings/data_retention/responses_active_help: bfde5e33ff7fed836fa8f72779984b6e
     workspace/settings/data_retention/responses_counts_from: 61326751553a4266e57eb73cbd0c23b4
+    workspace/settings/data_retention/responses_due_for_deletion: 3059c8c1a27e400a20599cba22125010
+    workspace/settings/data_retention/responses_due_for_deletion_capped: 6d5f6566e4eb9948a5839c225afc4a8e
     workspace/settings/data_retention/responses_notice_help: db9599496490421b031571d3914485aa
     workspace/settings/data_retention/responses_policy_description: df5737d5f98f9d6f142ed34e6e7ef51c
     workspace/settings/data_retention/responses_policy_title: f525188503e3514f28a497a0fe36bcbb
@@ -2927,6 +2930,14 @@ checksums:
     workspace/settings/data_retention/run: cc02693eda0a4aa0c1ab356a79e8afb8
     workspace/settings/data_retention/search_surveys: acb2a01b8fba28ca83171ddeab648558
     workspace/settings/data_retention/select_end_date: 746cd6c3cf52e112e78b944ee3d2c55d
+    workspace/settings/data_retention/survey_card_description: 520dd2e24ff8f9ddcad7d887d8dc4136
+    workspace/settings/data_retention/survey_line_exempt: 7845f214bb225270ed848de4c1b770d2
+    workspace/settings/data_retention/survey_line_exempt_no_date: 4fe2d36edd3b1d6df80296ad17960d1b
+    workspace/settings/data_retention/survey_line_nothing_due: 2dd9f30c6332b0d918ef14b711731efe
+    workspace/settings/data_retention/survey_line_responses_delete: 10da4fcff50b56edf6e30ab4d29298c9
+    workspace/settings/data_retention/survey_line_survey_archive: 0c24775db8713283089307f80dcb0988
+    workspace/settings/data_retention/survey_line_survey_delete: 4062e8892a60eb7a5101afaecb2f0f17
+    workspace/settings/data_retention/survey_note: 3827254109f3a2a426f6a0c4c7092d25
     workspace/settings/data_retention/survey_required: 290657a246e312fdc96e3a895794d26a
     workspace/settings/data_retention/surveys_active_help: 94082032b817e6e0453176d8b145372d
     workspace/settings/data_retention/surveys_conditions_heading: dd21d6a8ec1abc226f0b79db7a4e1f0f
@@ -2943,6 +2954,7 @@ checksums:
     workspace/settings/data_retention/until_required: f235134441aa874d3c55f567de8a135f
     workspace/settings/data_retention/upgrade_prompt_description: efce1658f30784307a0c0d38fbbfac7e
     workspace/settings/data_retention/upgrade_prompt_title: 2eebe686465b3c1bafddb53e89d727b7
+    workspace/settings/data_retention/view_policies: 1f74c8f1d4f65c3f68c9897720e2a381
     workspace/settings/domain/customize_favicon_description: d3ac29934a66fd56294c0d8069fbc11e
     workspace/settings/domain/customize_favicon_with_higher_plan: 43a6b834a8fd013c52923863d62248f3
     workspace/settings/domain/description: f0b4d8c96da816f793cf1f4fdfaade34

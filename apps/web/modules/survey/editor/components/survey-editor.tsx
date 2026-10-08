@@ -18,6 +18,7 @@ import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import type { TSurveyAccess } from "@/lib/survey/visibility/access";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useDocumentVisibility } from "@/lib/useDocumentVisibility";
+import type { TSurveyDataRetentionContext } from "@/modules/ee/data-retention/types";
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { ElementsView } from "@/modules/survey/editor/components/elements-view";
@@ -83,6 +84,8 @@ interface SurveyEditorProps {
   visibility: TSurveyVisibility;
   surveyAccess: TSurveyAccess | null;
   ownerName: string | null;
+  /** Null when the organisation isn't entitled to data retention. */
+  dataRetention: TSurveyDataRetentionContext;
 }
 
 export const SurveyEditor = ({
@@ -119,6 +122,7 @@ export const SurveyEditor = ({
   visibility,
   surveyAccess,
   ownerName,
+  dataRetention,
 }: Readonly<SurveyEditorProps>) => {
   const isFollowUpsTabVisible = shouldShowFollowUpsTab({
     followUpCount: survey.followUps.length,
@@ -353,6 +357,7 @@ export const SurveyEditor = ({
 
           {activeView === "settings" && (
             <SettingsView
+              dataRetention={dataRetention}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurveyNonNull}
               actionClasses={actionClasses}

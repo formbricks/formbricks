@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
-import type { TRetentionRun } from "../types";
+import type { TRetentionRun, TSurveyRetentionPolicy } from "../types";
 import {
   createRetentionCountFormatter,
   formatRetentionDate,
@@ -8,6 +8,8 @@ import {
   getRetentionHistoryCounts,
   getRetentionPolicyLabel,
   getRetentionPolicySummary,
+  getSurveyRetentionDueWarning,
+  getSurveyRetentionLines,
 } from "./display";
 import { RETENTION_POLICY_DEFAULTS } from "./policy-rules";
 
@@ -101,5 +103,102 @@ describe("policy summaries", () => {
     expect(getRetentionPolicySummary("members", RETENTION_POLICY_DEFAULTS.members, t, "en-US")).toBe(
       'members_summary {"period":"period_years {\\"count\\":1}"}'
     );
+  });
+});
+
+describe("survey retention copy", () => {
+  const echo = ((key: string, values?: Record<string, unknown>) =>
+    values
+      ? `${key.split(".").pop()} ${JSON.stringify(values)}`
+      : (key.split(".").pop() as string)) as unknown as TFunction;
+  const formatDate = (iso: string) => iso.slice(0, 10);
+  const exemption = {
+    id: "clexm",
+    surveyId: "clsrv",
+    surveyName: "Site visit",
+    workspaceId: "clwsp",
+    policy: "responses" as const,
+    until: "2031-03-31T21:59:59.999Z",
+    reason: "Audit",
+    createdBy: null,
+    createdAt: "2030-01-01T00:00:00.000Z",
+    revokedAt: null,
+  };
+  const plan = (policy: "responses" | "surveys", rest: Partial<TSurveyRetentionPolicy> = {}) => ({
+    policy,
+    exempt: false,
+    nextAction: null,
+    nextDate: null,
+    dueCount: null,
+    ...rest,
+  });
+
+  test("states each policy's next step and date, or its exemption", () => {
+    expect(
+      getSurveyRetentionLines(
+        {
+          governed: true,
+          policies: [
+            plan("responses", { nextAction: "delete", nextDate: "2030-10-03T00:00:00.000Z" }),
+            plan("surveys", { exempt: true }),
+          ],
+          exemptions: [exemption],
+        },
+        echo,
+        formatDate
+      )
+    ).toEqual([
+      'survey_line_responses_delete {"date":"2030-10-03"}',
+      // Held by the responses exemption, the only one there is (ENG-3371).
+      'survey_line_exempt {"policy":"surveys","date":"2031-03-31"}',
+    ]);
+  });
+
+  test("says when nothing is due, and tells an archive from a deletion", () => {
+    const lines = getSurveyRetentionLines(
+      {
+        governed: true,
+        policies: [
+          plan("responses"),
+          plan("surveys", { nextAction: "delete", nextDate: "2030-07-01T00:00:00.000Z" }),
+        ],
+        exemptions: [],
+      },
+      echo,
+      formatDate
+    );
+    expect(lines).toEqual([
+      'survey_line_nothing_due {"policy":"responses"}',
+      'survey_line_survey_delete {"date":"2030-07-01"}',
+    ]);
+  });
+
+  test("warns about responses already due, with a capped count shown as a lower bound", () => {
+    const due = (count: number, relation: "eq" | "gte") => ({
+      governed: true,
+      policies: [
+        plan("responses", {
+          nextAction: "delete" as const,
+          nextDate: "2030-10-03T00:00:00.000Z",
+          dueCount: { count, relation },
+        }),
+      ],
+      exemptions: [],
+    });
+
+    expect(getSurveyRetentionDueWarning(due(214, "eq"), echo, "en-US", formatDate)).toBe(
+      'responses_due_for_deletion {"count":214,"date":"2030-10-03"}'
+    );
+    expect(getSurveyRetentionDueWarning(due(10000, "gte"), echo, "en-US", formatDate)).toBe(
+      'responses_due_for_deletion_capped {"total":"10,000","date":"2030-10-03"}'
+    );
+    expect(
+      getSurveyRetentionDueWarning(
+        { governed: true, policies: [plan("responses")], exemptions: [] },
+        echo,
+        "en-US",
+        formatDate
+      )
+    ).toBeNull();
   });
 });

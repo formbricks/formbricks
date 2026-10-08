@@ -116,6 +116,27 @@ describe("Exemptions hooks", () => {
     await waitFor(() => expect(list.result.current.exemptions.map((e) => e.id)).toEqual(["exm_new"]));
   });
 
+  test("refreshes the exempted survey's retention dates as well as the list", async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce(json({ data: exemption("exm_new") }, 201));
+    const queryClient = newQueryClient();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    const { result } = renderHook(() => useCreateRetentionExemption(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        surveyId: "clsrv11111111111111111111",
+        policy: "surveys",
+        until: "2031-03-31T21:59:59.999Z",
+        reason: "Supplier audit",
+      });
+    });
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["retention-exemptions", "list"] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["survey-retention", "clsrv11111111111111111111"] });
+  });
+
   test("surfaces the API's problem when creating fails", async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce(problem(422, "retention_exemption_exists"));
     const { result } = renderHook(() => useCreateRetentionExemption(), {

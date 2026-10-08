@@ -6,6 +6,7 @@ import type {
   TRetentionPolicies,
   TRetentionPoliciesPatch,
   TRetentionRun,
+  TSurveyRetention,
 } from "../types";
 
 const BASE_PATH = "/api/internal/retention-runs";
@@ -168,4 +169,21 @@ export async function updateRetentionPolicies({
   });
   if (!response.ok) throw await parseV3ApiError(response);
   return ((await response.json()) as { data: TRetentionPolicies }).data;
+}
+
+/** What data retention will do to one survey; `governed: false` when nothing will. */
+export async function getSurveyRetention({
+  surveyId,
+  signal,
+}: {
+  surveyId: string;
+  signal?: AbortSignal;
+}): Promise<TSurveyRetention> {
+  const response = await fetch(`/api/internal/survey-retention/${encodeURIComponent(surveyId)}`, {
+    method: "GET",
+    cache: "no-store",
+    signal,
+  });
+  if (!response.ok) throw await parseV3ApiError(response);
+  return ((await response.json()) as { data: TSurveyRetention }).data;
 }
