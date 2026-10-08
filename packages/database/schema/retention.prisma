@@ -151,6 +151,8 @@ model RetentionRunItem {
   skipReason RetentionSkipReason?
 
   @@index([runId, id])
+  /// A target's latest row, so a skip is written once when it starts rather than every night.
+  @@index([targetId])
 }
 
 /// The notice for one target under one policy, so each notice goes out once: a survey or a member, or

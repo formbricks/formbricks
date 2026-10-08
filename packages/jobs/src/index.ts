@@ -28,6 +28,7 @@ export type { TRecurringJobKey } from "./recurring";
 export type { JobsRuntimeHandle, JobsRuntimeOptions } from "./runtime";
 export type { TRecurringBackgroundJobSchedule } from "./schedules";
 export {
+  ZDataRetentionSweepJobData,
   ZDeletionCleanupDrainJobData,
   ZGlobalScopeJobData,
   ZResponsePipelineEvent,
@@ -42,6 +43,7 @@ export {
   ZWorkflowRunReconcileJobData,
 } from "./types";
 export type {
+  TDataRetentionSweepJobData,
   TDeletionCleanupDrainJobData,
   TGlobalScopeJobData,
   TResponsePipelineEvent,

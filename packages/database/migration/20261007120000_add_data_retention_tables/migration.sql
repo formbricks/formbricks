@@ -171,6 +171,10 @@ CREATE INDEX IF NOT EXISTS "RetentionRunItem_runId_id_idx" ON "RetentionRunItem"
 
 -- CreateIndex
 -- squawk-ignore require-concurrent-index-creation
+CREATE INDEX IF NOT EXISTS "RetentionRunItem_targetId_idx" ON "RetentionRunItem"("targetId");
+
+-- CreateIndex
+-- squawk-ignore require-concurrent-index-creation
 CREATE INDEX IF NOT EXISTS "RetentionNotice_organizationId_idx" ON "RetentionNotice"("organizationId");
 
 -- CreateIndex

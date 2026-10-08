@@ -399,6 +399,7 @@ describe("@formbricks/jobs queue helpers", () => {
     ["authzedProjectionDelivery", "authzed-projection.deliver:global:authzed-projection-delivery"],
     ["authzedReconciliationAudit", "authzed-reconciliation.audit:global:authzed-reconciliation-audit"],
     ["authzedSurveyAudit", "authzed-survey.audit:global:daily-authzed-survey-audit"],
+    ["dataRetentionSweep", "data-retention.sweep:global:daily-data-retention-sweep"],
     ["deletionCleanupDrain", "deletion-cleanup.drain:global:deletion-cleanup-drain"],
     ["surveyArchivePurge", "survey-archive-purge.process:global:daily-survey-archive-purge"],
     ["surveyScheduling", "survey-scheduling.reconcile:global:daily-survey-scheduling"],

@@ -21,6 +21,11 @@ import { processUsageTelemetryJob } from "@/lib/telemetry/process-usage-telemetr
 import { DELETION_CLEANUP_DRAIN_INTERVAL_MS } from "@/modules/deletion-cleanup/lib/constants";
 import { processDeletionCleanupDrainJob } from "@/modules/deletion-cleanup/lib/process-deletion-cleanup-drain-job";
 import {
+  DATA_RETENTION_SWEEP_DAILY_CRON_PATTERN,
+  DATA_RETENTION_SWEEP_TIME_ZONE,
+} from "@/modules/ee/data-retention/sweep/constants";
+import { processDataRetentionSweepJob } from "@/modules/ee/data-retention/sweep/process-data-retention-sweep-job";
+import {
   WORKFLOWS_USAGE_SNAPSHOT_DAILY_CRON_PATTERN,
   WORKFLOWS_USAGE_SNAPSHOT_TIME_ZONE,
 } from "@/modules/ee/workflows/lib/analytics/constants";
@@ -95,6 +100,15 @@ export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, Recurr
     schedule: {
       everyMs: 24 * 60 * 60 * 1_000,
       kind: "every",
+    },
+  },
+  dataRetentionSweep: {
+    handler: processDataRetentionSweepJob,
+    job: recurringJobs.dataRetentionSweep,
+    schedule: {
+      cronPattern: DATA_RETENTION_SWEEP_DAILY_CRON_PATTERN,
+      kind: "cron",
+      timeZone: DATA_RETENTION_SWEEP_TIME_ZONE,
     },
   },
   deletionCleanupDrain: {
