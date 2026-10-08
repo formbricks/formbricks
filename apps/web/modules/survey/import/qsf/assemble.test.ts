@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { loadRecordedPlan, recordedGenerate } from "./__fixtures__/recorded-plans";
 import { planQsfImport } from "./ai-plan";
-import { type TQsfDraftElement, assembleQsfDraft, disambiguateLabels } from "./assemble";
+import { type TQsfDraftElement, assembleQsfDraft, buildHiddenFields, disambiguateLabels } from "./assemble";
 import { checkQsfDraft } from "./final-gate";
 import { isObjectMemberName } from "./id-registry";
 import type { TQsfCheckedPlan } from "./plan-checks";
@@ -150,6 +150,34 @@ describe("assembleQsfDraft", () => {
     expect(new Set(labels).size).toBe(labels.length);
   });
 
+  test("numbers two hundred repeats of one label in linear time", () => {
+    const items = Array.from({ length: 200 }, (_, index) => ({
+      id: String(index),
+      label: { "en-US": index % 2 === 0 ? "Same" : `Same (${index + 2})` },
+    }));
+    const languages = [
+      {
+        language: {
+          id: "en",
+          code: "en-US",
+          alias: null,
+          workspaceId: WORKSPACE_ID,
+          createdAt: new Date(0),
+          updatedAt: new Date(0),
+        },
+        default: true,
+        enabled: true,
+      },
+    ];
+    const startedAt = performance.now();
+
+    expect(disambiguateLabels(items, ["en-US"], languages)).toBe(true);
+
+    expect(performance.now() - startedAt).toBeLessThan(100);
+    const labels = items.map((item) => item.label["en-US"]);
+    expect(new Set(labels).size).toBe(200);
+  });
+
   test("pipes earlier answers and hidden fields in as recall, and removes what has no equivalent", async () => {
     const { document, issues } = await assembleFixture("rich-text.qsf");
 
@@ -292,5 +320,47 @@ describe("assembleQsfDraft", () => {
       email: { show: false, placeholder: { "en-US": "" } },
     });
     expect(checkQsfDraft(document)).toEqual([]);
+  });
+});
+
+describe("buildHiddenFields", () => {
+  const isSafeFieldId = (id: string) => /^[a-z][a-z0-9_]{0,63}$/.test(id);
+
+  test("renames eleven long names sharing their first 56 characters, without spinning", () => {
+    // Each is over 64 characters, so each is renamed from the same 56-character stem; the eleventh
+    // needs `_field_10`, which used to make every candidate too long to accept.
+    const names = Array.from({ length: 11 }, (_, index) => `${"a".repeat(56)}_${"x".repeat(10)}${index}`);
+    const startedAt = performance.now();
+
+    const { fieldIds, issues } = buildHiddenFields(names);
+
+    expect(performance.now() - startedAt).toBeLessThan(100);
+    expect(fieldIds.slice(0, 3)).toEqual([
+      "a".repeat(56),
+      `${"a".repeat(56)}_field`,
+      `${"a".repeat(56)}_field_2`,
+    ]);
+    expect(fieldIds[10]).toBe(`${"a".repeat(55)}_field_10`);
+    expect(new Set(fieldIds).size).toBe(11);
+    expect(fieldIds.every(isSafeFieldId)).toBe(true);
+    expect(issues).toHaveLength(11);
+  });
+
+  test("gives two hundred colliding names distinct, valid ids, quickly", () => {
+    const names = Array.from({ length: 200 }, (_, index) => `${"Б".repeat(3)}${"b".repeat(70)}${index}`);
+    const startedAt = performance.now();
+
+    const { fieldIds, idByName } = buildHiddenFields(names);
+
+    expect(performance.now() - startedAt).toBeLessThan(200);
+    expect(new Set(fieldIds.map((id) => id.toLowerCase())).size).toBe(200);
+    expect(fieldIds.every(isSafeFieldId)).toBe(true);
+    expect(names.every((name) => idByName.has(name))).toBe(true);
+  });
+
+  test("falls back to numbered field ids for names with nothing safe in them", () => {
+    const { fieldIds } = buildHiddenFields(["Ωμέγα", "Привет", "field_2"]);
+
+    expect(fieldIds).toEqual(["field_1", "field_2", "field_2_field"]);
   });
 });

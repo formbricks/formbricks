@@ -8,7 +8,7 @@ import {
   validateId,
 } from "@formbricks/types/surveys/validation";
 import type { TQsfImportIssue } from "../types";
-import { QsfIdRegistry, isObjectMemberName } from "./id-registry";
+import { QsfIdRegistry, findFreeSuffixedName, isObjectMemberName } from "./id-registry";
 import { type TPipedTextContext, replacePipedText } from "./piped-text";
 import type { TQsfCheckedPlan, TQsfPlannedQuestion } from "./plan-checks";
 import type { TQsfPlanContactField } from "./plan-schema";
@@ -123,32 +123,56 @@ const MAX_HIDDEN_FIELD_ID_LENGTH = 64;
 /**
  * Embedded data names → hidden field ids. A name Formbricks refuses for a new field — reserved, not a
  * safe identifier, or an `Object.prototype` member, which `isSafeIdentifier` admits — is renamed and
- * reported.
+ * reported: to its safe form, then that with `_field`, then `_field_2`, `_field_3`, …, and last to
+ * `field_2`, `field_3`, ….
+ *
+ * Every search is bounded by the names already taken, so the renaming always ends: the candidates of
+ * one search are distinct and well-formed (each fits the length, and a safe stem keeps it safe), so at
+ * most one more than the ids taken can be refused. It never spins on a file's names (ENG-3654 review:
+ * 11 long names with the same first 56 characters used to).
  */
-function buildHiddenFields(names: string[]): {
+export function buildHiddenFields(names: string[]): {
   fieldIds: string[];
   idByName: Map<string, string>;
   issues: TQsfImportIssue[];
 } {
   const fieldIds: string[] = [];
+  const taken = new Set<string>();
   const idByName = new Map<string, string>();
   const issues: TQsfImportIssue[] = [];
+  // Duplicates are checked against `taken`, in O(1); `validateId` only checks the name itself.
   const isFree = (id: string) =>
     id.length > 0 &&
     id.length <= MAX_HIDDEN_FIELD_ID_LENGTH &&
+    !taken.has(id.toLowerCase()) &&
     !isObjectMemberName(id) &&
-    validateId(id, [], [], fieldIds, [], { requireSafeIdentifier: true }) === null;
+    validateId(id, [], [], [], [], { requireSafeIdentifier: true }) === null;
+  const suffixed = (stem: string, separator: string) =>
+    findFreeSuffixedName(stem, {
+      separator,
+      maxLength: MAX_HIDDEN_FIELD_ID_LENGTH,
+      maxAttempts: taken.size + 1,
+      isFree,
+    });
+
+  const rename = (name: string): string => {
+    const base =
+      toSafeIdentifier(name).slice(0, MAX_HIDDEN_FIELD_ID_LENGTH - 8) || `field_${fieldIds.length + 1}`;
+    const renamed =
+      [base, `${base}_field`].find((candidate) => isFree(candidate)) ??
+      suffixed(base, "_field_") ??
+      suffixed("field", "_");
+    if (renamed === null) throw new Error("The QSF import found no free hidden field id");
+    return renamed;
+  };
 
   for (const name of names) {
-    let id = name;
-    if (!isFree(id)) {
-      const base =
-        toSafeIdentifier(name).slice(0, MAX_HIDDEN_FIELD_ID_LENGTH - 8) || `field_${fieldIds.length + 1}`;
-      id = isFree(base) ? base : `${base}_field`;
-      for (let counter = 2; !isFree(id); counter += 1) id = `${base}_field_${counter}`;
+    const id = isFree(name) ? name : rename(name);
+    if (id !== name) {
       issues.push({ code: "field_renamed", severity: "warning", params: { from: name, to: id } });
     }
     fieldIds.push(id);
+    taken.add(id.toLowerCase());
     idByName.set(name, id);
   }
 
@@ -177,14 +201,19 @@ export function disambiguateLabels(
     // `N/A`, `N/A (2)` becomes `N/A`, `N/A (3)`, `N/A (2)`.
     const taken = new Set(items.map((item) => (item.label[code] ?? "").trim()));
     const seen = new Set<string>();
+    // Per label, the number to try next, so repeats of one label resume where the last one stopped. A
+    // step past a number only skips a label in `taken` (the items' own labels and the renames), so the
+    // steps of every search together stay under twice the items: it ends, and in linear time.
+    const nextNumber = new Map<string, number>();
     for (const item of items) {
       const text = (item.label[code] ?? "").trim();
       if (!seen.has(text)) {
         seen.add(text);
         continue;
       }
-      let counter = 2;
+      let counter = nextNumber.get(text) ?? 2;
       while (taken.has(`${text} (${counter})`)) counter += 1;
+      nextNumber.set(text, counter + 1);
       const renamed = `${text} (${counter})`;
       item.label[code] = renamed;
       taken.add(renamed);

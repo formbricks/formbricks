@@ -1,5 +1,5 @@
-import { describe, expect, test } from "vitest";
-import { QsfIdRegistry, isObjectMemberName } from "./id-registry";
+import { describe, expect, test, vi } from "vitest";
+import { QsfIdRegistry, findFreeSuffixedName, isObjectMemberName } from "./id-registry";
 
 describe("QsfIdRegistry", () => {
   test("hands out the export tag when clean and free, case-insensitively", () => {
@@ -44,6 +44,45 @@ describe("QsfIdRegistry", () => {
 
   test("cuts a long tag to 64 characters", () => {
     expect(new QsfIdRegistry().claim("a".repeat(500), "QID1")).toBe("a".repeat(64));
+  });
+
+  test("cuts a fallback of the full length to fit each suffix, so it never runs out of ids", () => {
+    const registry = new QsfIdRegistry();
+    const fallback = "f".repeat(64);
+
+    const ids = Array.from({ length: 12 }, () => registry.claim("", fallback));
+
+    expect(ids.slice(0, 3)).toEqual([fallback, `${"f".repeat(62)}_2`, `${"f".repeat(62)}_3`]);
+    expect(ids[11]).toBe(`${"f".repeat(61)}_12`);
+    expect(new Set(ids).size).toBe(12);
+    expect(ids.every((id) => id.length <= 64)).toBe(true);
+  });
+});
+
+describe("findFreeSuffixedName", () => {
+  test("fits every candidate to the length, however wide the counter grows", () => {
+    const seen: string[] = [];
+
+    const found = findFreeSuffixedName("s".repeat(64), {
+      separator: "_x_",
+      maxLength: 64,
+      maxAttempts: 200,
+      isFree: (candidate) => {
+        seen.push(candidate);
+        return seen.length === 150;
+      },
+    });
+
+    expect(found).toBe(`${"s".repeat(58)}_x_151`);
+    expect(seen.every((candidate) => candidate.length === 64)).toBe(true);
+    expect(new Set(seen).size).toBe(seen.length);
+  });
+
+  test("gives up after its attempts instead of looping", () => {
+    const isFree = vi.fn(() => false);
+
+    expect(findFreeSuffixedName("id", { separator: "_", maxLength: 64, maxAttempts: 5, isFree })).toBeNull();
+    expect(isFree).toHaveBeenCalledTimes(5);
   });
 });
 
