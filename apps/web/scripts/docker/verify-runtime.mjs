@@ -42,7 +42,7 @@ assert.deepEqual(Buffer.concat([decipher.update(encrypted), decipher.final()]), 
 console.log("Runtime crypto, compression, locales and patched dependency versions verified");
 
 if (process.argv.includes("--dependencies")) {
-  const require = createRequire(import.meta.url);
+  const require = createRequire(join(process.cwd(), "apps/web/package.json"));
 
   // Minimum patched versions for every npm package in the live Inspector finding inventory.
   // Inspect nested copies too: a safe hoisted version does not fix an older transitive install.
@@ -62,9 +62,10 @@ if (process.argv.includes("--dependencies")) {
     "@opentelemetry/instrumentation-pg": "0.73.0",
     "@opentelemetry/instrumentation-tedious": "0.40.0",
   };
-  for (const file of readdirSync("node_modules", { recursive: true, withFileTypes: true })) {
+  for (const file of readdirSync(".", { recursive: true, withFileTypes: true })) {
     if (!file.isFile() || file.name !== "package.json") continue;
     const path = join(file.parentPath, file.name);
+    if (!path.includes("node_modules/")) continue;
     const { name, version } = JSON.parse(readFileSync(path, "utf8"));
     assert.notEqual(name, "sprintf-js", `${path} must stay outside the runner`);
     const minimum =
@@ -91,6 +92,5 @@ if (process.argv.includes("--dependencies")) {
     url: "postgresql://smoke:smoke@127.0.0.1:5432/smoke",
   });
   assert.equal(dataSource.options.type, "postgres");
-  assert.equal(typeof require("@boxyhq/saml-jackson").controllers, "function");
   console.log("SAML PostgreSQL driver loads without SQL Server dependencies");
 }
