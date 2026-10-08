@@ -155,6 +155,8 @@ export const useDraftCreation = <TInput, TReport = never>({
                 dispatch({ type: "DONE", payload: event.payload, report: event.report ?? null });
                 break;
               case "error":
+                // A snapshot still waiting for its frame would otherwise land in the next run.
+                discardQueuedSnapshot();
                 dispatch({ type: "FAIL", errorCode: event.code });
                 break;
               default:
@@ -166,6 +168,7 @@ export const useDraftCreation = <TInput, TReport = never>({
         // Stop aborts the fetch; that is the user getting what they asked for, not a failure.
         if (controller.signal.aborted) return;
 
+        discardQueuedSnapshot();
         dispatch({ type: "FAIL", errorCode: getAiErrorCode(error) });
       } finally {
         if (abortControllerRef.current === controller) {
@@ -173,7 +176,7 @@ export const useDraftCreation = <TInput, TReport = never>({
         }
       }
     },
-    [flushSnapshot, queueSnapshot, stream]
+    [discardQueuedSnapshot, flushSnapshot, queueSnapshot, stream]
   );
 
   const canCreate = canSubmit && state.status === "idle";

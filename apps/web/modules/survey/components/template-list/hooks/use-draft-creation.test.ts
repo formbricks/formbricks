@@ -141,6 +141,49 @@ describe("useDraftCreation", () => {
     expect(result.current.state.sourceKind).toBe("file");
   });
 
+  test.each([
+    [
+      "an error event",
+      (onEvent: (event: TDraftStreamEvent<TReport>) => void) =>
+        onEvent({ type: "error", code: "ai_quota_exceeded" }),
+    ],
+    [
+      "a thrown error",
+      () => {
+        throw new Error("network");
+      },
+    ],
+  ])("a snapshot queued before %s never reaches the next run", async (_, fail) => {
+    // Frames run only when the test says so, so the failed run's snapshot is still queued.
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => frames.push(callback));
+    const partial: TDraftStreamEvent<TReport> = {
+      type: "partial",
+      draft: {
+        name: "Failed",
+        blocks: [{ name: "B", questions: [{ type: "openText", headline: "Q" }] }],
+      } as never,
+    };
+    let calls = 0;
+    const stream = vi.fn(
+      async (_input: TInput, { onEvent }: { onEvent: (event: TDraftStreamEvent<TReport>) => void }) => {
+        calls += 1;
+        if (calls > 1) return new Promise<void>(() => undefined);
+        onEvent(partial);
+        fail(onEvent);
+      }
+    );
+    const { result } = renderDraftHook({ stream });
+
+    await act(async () => result.current.submit({ fileName: "survey.qsf" }));
+    await waitFor(() => expect(result.current.status).toBe("idle"));
+    await act(async () => result.current.submit({ fileName: "survey.qsf" }));
+    act(() => frames.forEach((frame) => frame(0)));
+
+    expect(result.current.status).toBe("generating");
+    expect(result.current.draft.questions).toHaveLength(0);
+  });
+
   test("an in-band error event maps to a message and returns to idle", async () => {
     const stream = scripted([{ type: "error", code: "ai_quota_exceeded" }]);
     const { result } = renderDraftHook({ stream });
