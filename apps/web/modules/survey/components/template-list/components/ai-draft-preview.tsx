@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { type ReactNode, memo, useEffect, useMemo, useRef } from "react";
+import { type ReactNode, memo, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { cn } from "@/lib/cn";
@@ -17,6 +17,11 @@ import { Skeleton } from "@/modules/ui/components/skeleton";
 /** How close to the bottom still counts as "following along", in px. */
 const PIN_THRESHOLD_PX = 32;
 const PENDING_ROW_COUNT = 3;
+/** Above this many rows the list is windowed: only the rows near the viewport are mounted (ENG-3478). */
+export const DRAFT_PREVIEW_VIRTUALIZE_THRESHOLD = 50;
+/** Every row has the same height by construction (truncate, never wrap), which is what makes windowing cheap. */
+const ROW_HEIGHT_PX = 60;
+const OVERSCAN_ROWS = 8;
 const CHOICE_ELEMENT_TYPES = new Set(["multipleChoiceSingle", "multipleChoiceMulti", "ranking", "matrix"]);
 
 type AiDraftRowProps = {
@@ -24,47 +29,58 @@ type AiDraftRowProps = {
   icon?: ReactNode;
   typeName?: string;
   t: (key: string, options?: Record<string, unknown>) => string;
+  /** Set by the windowed list, which positions each row absolutely inside a fixed-height track. */
+  className?: string;
+  style?: React.CSSProperties;
+  /** The windowed list mounts only some rows, so each says where it sits in the whole list. */
+  position?: { index: number; total: number };
 };
 
 /**
  * Memoised, and the reducer guarantees an unchanged question keeps its object identity — together
  * that is what stops every row re-rendering on each snapshot.
  */
-const AiDraftRow = memo(({ question, icon, typeName, t }: Readonly<AiDraftRowProps>) => {
-  const showsOptionCount = question.type ? CHOICE_ELEMENT_TYPES.has(question.type) : false;
-  const optionCount =
-    showsOptionCount && question.choiceCount
-      ? t("workspace.surveys.ai_create.option_count", { count: question.choiceCount })
-      : undefined;
+const AiDraftRow = memo(
+  ({ question, icon, typeName, t, className, style, position }: Readonly<AiDraftRowProps>) => {
+    const showsOptionCount = question.type ? CHOICE_ELEMENT_TYPES.has(question.type) : false;
+    const optionCount =
+      showsOptionCount && question.choiceCount
+        ? t("workspace.surveys.ai_create.option_count", { count: question.choiceCount })
+        : undefined;
 
-  return (
-    <li className="flex animate-fadeIn items-start gap-3 px-4 py-3">
-      <span className="mt-0.5 flex shrink-0 items-center text-slate-600">{icon}</span>
-      <div className="min-w-0 flex-1">
-        {question.headline ? (
-          // Semibold, primary ink: the question is the content, so it has to outweigh everything
-          // else in the row. truncate, never wrap — a headline growing character by character
-          // extends rightwards and clips, so the row height is fixed from the moment it mounts.
-          <h3 className="truncate text-sm font-semibold text-slate-800">{question.headline}</h3>
-        ) : (
-          // Same height as the text it becomes, and no fade on the swap — a transition on every
-          // keystroke-sized update is exactly what reads as flicker.
-          <Skeleton className="my-1 h-3.5 w-48 rounded-md" />
-        )}
-        {/*
+    return (
+      <li
+        className={cn("flex animate-fadeIn items-start gap-3 px-4 py-3", className)}
+        style={{ minHeight: ROW_HEIGHT_PX, ...style }}
+        aria-posinset={position ? position.index + 1 : undefined}
+        aria-setsize={position?.total}>
+        <span className="mt-0.5 flex shrink-0 items-center text-slate-600">{icon}</span>
+        <div className="min-w-0 flex-1">
+          {question.headline ? (
+            // Semibold, primary ink: the question is the content, so it has to outweigh everything
+            // else in the row. truncate, never wrap — a headline growing character by character
+            // extends rightwards and clips, so the row height is fixed from the moment it mounts.
+            <h3 className="truncate text-sm font-semibold text-slate-800">{question.headline}</h3>
+          ) : (
+            // Same height as the text it becomes, and no fade on the swap — a transition on every
+            // keystroke-sized update is exactly what reads as flicker.
+            <Skeleton className="my-1 h-3.5 w-48 rounded-md" />
+          )}
+          {/*
           Muted plain text rather than a pill: a chip carries a border and a fill, which made the
           metadata louder than the question it describes. The weight gap against the semibold
           headline is what stops this reading as an answer to it. Matches the row the survey editor
           already uses for the same job, down to the token.
         */}
-        <p className="mt-1 truncate text-xs text-slate-500">
-          {typeName ?? "\u00a0"}
-          {optionCount ? ` · ${optionCount}` : ""}
-        </p>
-      </div>
-    </li>
-  );
-});
+          <p className="mt-1 truncate text-xs text-slate-500">
+            {typeName ?? "\u00a0"}
+            {optionCount ? ` · ${optionCount}` : ""}
+          </p>
+        </div>
+      </li>
+    );
+  }
+);
 
 AiDraftRow.displayName = "AiDraftRow";
 
@@ -93,6 +109,19 @@ export const AiDraftPreview = ({
 
   const scrollRef = useRef<HTMLElement>(null);
   const isPinnedRef = useRef(true);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(0);
+  const isVirtualized = draft.questions.length > DRAFT_PREVIEW_VIRTUALIZE_THRESHOLD;
+
+  useEffect(() => {
+    const element = scrollRef.current;
+    if (!element || !isVirtualized) return;
+    const update = () => setViewportHeight(element.clientHeight);
+    update();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
+    observer?.observe(element);
+    return () => observer?.disconnect();
+  }, [isVirtualized]);
 
   useEffect(() => {
     const element = scrollRef.current;
@@ -108,7 +137,19 @@ export const AiDraftPreview = ({
     if (!element) return;
 
     isPinnedRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < PIN_THRESHOLD_PX;
+    if (isVirtualized) setScrollTop(element.scrollTop);
   };
+
+  // Plain windowing for long imports: the rows are equal-height, so the visible slice is arithmetic.
+  // Block headers are dropped in this mode; a 150-question review is a list to scan, not to navigate.
+  const rowWindow = useMemo(() => {
+    if (!isVirtualized) return null;
+    const total = draft.questions.length;
+    const first = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT_PX) - OVERSCAN_ROWS);
+    const visibleCount = Math.ceil((viewportHeight || ROW_HEIGHT_PX * 8) / ROW_HEIGHT_PX) + OVERSCAN_ROWS * 2;
+    const last = Math.min(total, first + visibleCount);
+    return { first, last, total };
+  }, [draft.questions.length, isVirtualized, scrollTop, viewportHeight]);
 
   return (
     <div
@@ -146,9 +187,26 @@ export const AiDraftPreview = ({
         aria-label={t("workspace.surveys.ai_create.draft_survey")}
         aria-busy={isGenerating}
         className="focus-visible:ring-ring min-h-0 flex-1 overflow-y-auto focus-visible:ring-1 focus-visible:outline-hidden">
-        {blocks.map((block) => (
-          <section key={block.key} className="-mt-px first:mt-0">
-            {/*
+        {rowWindow ? (
+          <ul className="relative" style={{ height: rowWindow.total * ROW_HEIGHT_PX }}>
+            {draft.questions.slice(rowWindow.first, rowWindow.last).map((question, index) => (
+              <AiDraftRow
+                key={question.key}
+                question={question}
+                icon={iconMap[question.type as TSurveyElementTypeEnum]}
+                typeName={nameMap[question.type as TSurveyElementTypeEnum]}
+                t={t}
+                className="absolute inset-x-0 border-b border-slate-100"
+                style={{ top: (rowWindow.first + index) * ROW_HEIGHT_PX, height: ROW_HEIGHT_PX }}
+                position={{ index: rowWindow.first + index, total: rowWindow.total }}
+              />
+            ))}
+          </ul>
+        ) : null}
+        {!rowWindow &&
+          blocks.map((block) => (
+            <section key={block.key} className="-mt-px first:mt-0">
+              {/*
               The model is asked to name every block, so show that structure rather than flattening
               it into one list — but only when there is more than one, since a lone header over the
               whole draft is chrome that says nothing.
@@ -156,24 +214,26 @@ export const AiDraftPreview = ({
               Sticky so the section you are reading stays named while you scroll through it. The
               band is opaque, so rows pass cleanly behind it rather than showing through.
             */}
-            {showsBlockNames && (
-              <h4 className="sticky top-0 z-10 border-y border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-medium text-slate-500">
-                {block.name ?? <Skeleton className="my-0.5 inline-block h-3 w-24 rounded-md align-middle" />}
-              </h4>
-            )}
-            <ul className="divide-y divide-slate-100">
-              {block.questions.map((question) => (
-                <AiDraftRow
-                  key={question.key}
-                  question={question}
-                  icon={iconMap[question.type as TSurveyElementTypeEnum]}
-                  typeName={nameMap[question.type as TSurveyElementTypeEnum]}
-                  t={t}
-                />
-              ))}
-            </ul>
-          </section>
-        ))}
+              {showsBlockNames && (
+                <h4 className="sticky top-0 z-10 border-y border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-medium text-slate-500">
+                  {block.name ?? (
+                    <Skeleton className="my-0.5 inline-block h-3 w-24 rounded-md align-middle" />
+                  )}
+                </h4>
+              )}
+              <ul className="divide-y divide-slate-100">
+                {block.questions.map((question) => (
+                  <AiDraftRow
+                    key={question.key}
+                    question={question}
+                    icon={iconMap[question.type as TSurveyElementTypeEnum]}
+                    typeName={nameMap[question.type as TSurveyElementTypeEnum]}
+                    t={t}
+                  />
+                ))}
+              </ul>
+            </section>
+          ))}
 
         {isGenerating ? (
           <ul className="divide-y divide-slate-100">

@@ -220,6 +220,16 @@ export const useDraftCreation = <TInput, TReport = never>({
     dispatch({ type: "EDIT_PROMPT" });
   }, [discardQueuedSnapshot]);
 
+  /**
+   * Back to a clean slate, keeping nothing. Unlike Edit prompt, which keeps a finished draft to return
+   * to, this is for a source with no way back: a new file replaces the old one.
+   */
+  const reset = useCallback(() => {
+    abortControllerRef.current?.abort();
+    discardQueuedSnapshot();
+    dispatch({ type: "RESET" });
+  }, [discardQueuedSnapshot]);
+
   const handleOpenInEditor = useCallback(() => {
     if (state.status !== "review" || !state.payload) return;
 
@@ -252,6 +262,7 @@ export const useDraftCreation = <TInput, TReport = never>({
     regenerate,
     handleStop,
     handleEditPrompt,
+    reset,
     handleBackToDraft,
     handleOpenInEditor,
     clearError,
