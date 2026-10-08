@@ -5,6 +5,7 @@ export type TReactivateMemberResult =
   | { status: "reactivated"; reactivatedAt: Date }
   | { status: "already_active" }
   | { status: "not_member" }
+  | { status: "owner_needs_owner" }
   | { status: "in_other_organizations" };
 
 /**
@@ -17,14 +18,23 @@ export type TReactivateMemberResult =
  * later lapse gets a fresh notice and a full warning. The `User.isActive` change reaches SpiceDB through
  * the projection outbox trigger on the column.
  *
- * The user row is locked, so two reactivations, or one racing a deactivation, apply in order.
+ * Only an owner can reactivate an owner: managers don't act on owners anywhere else either (role
+ * changes, removal).
+ *
+ * The user row is locked `FOR UPDATE`, which orders this against other reactivations and deactivations
+ * and also against a membership being added meanwhile: that insert takes `FOR KEY SHARE` on the same row
+ * through its foreign key, so it either lands first and is counted, or waits. A weaker lock (`FOR NO
+ * KEY UPDATE`) would let it through.
  */
 export async function reactivateRetentionMember({
   userId,
   organizationId,
+  actorUserId,
 }: {
   userId: string;
   organizationId: string;
+  /** Who is reactivating: an owner may reactivate anyone, a manager anyone but an owner. */
+  actorUserId: string;
 }): Promise<TReactivateMemberResult> {
   return prisma.$transaction(async (tx) => {
     const [user] = await tx.$queryRaw<{ isActive: boolean }[]>`
@@ -34,10 +44,16 @@ export async function reactivateRetentionMember({
 
     const memberships = await tx.membership.findMany({
       where: { userId },
-      select: { organizationId: true },
+      select: { organizationId: true, role: true },
     });
-    if (!memberships.some((membership) => membership.organizationId === organizationId)) {
-      return { status: "not_member" };
+    const membership = memberships.find((candidate) => candidate.organizationId === organizationId);
+    if (!membership) return { status: "not_member" };
+    if (membership.role === "owner" && userId !== actorUserId) {
+      const actor = await tx.membership.findUnique({
+        where: { userId_organizationId: { userId: actorUserId, organizationId } },
+        select: { role: true },
+      });
+      if (actor?.role !== "owner") return { status: "owner_needs_owner" };
     }
     // Nothing to do for someone already active, wherever else they belong.
     if (user.isActive) return { status: "already_active" };

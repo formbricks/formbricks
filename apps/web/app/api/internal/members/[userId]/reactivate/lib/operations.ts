@@ -38,10 +38,17 @@ export async function reactivateMemberOperation({
   if (access instanceof Response) return access;
   if (auditLog) auditLog.organizationId = access.organizationId;
 
-  const result = await reactivateRetentionMember({ userId, organizationId: access.organizationId });
+  const result = await reactivateRetentionMember({
+    userId,
+    organizationId: access.organizationId,
+    actorUserId: access.userId,
+  });
   switch (result.status) {
     case "not_member":
       return problemForbidden(requestId, undefined, instance);
+    case "owner_needs_owner":
+      // The caller sees roles on the member list already, so naming the reason reveals nothing new.
+      return problemForbidden(requestId, "Only an owner can reactivate an owner.", instance);
     case "in_other_organizations":
       return problemUnprocessableContent(
         requestId,

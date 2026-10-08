@@ -236,11 +236,15 @@ const getMemberColumns = ({
       align: "right",
       cell: (member) => (
         <div className="flex items-center justify-end gap-2">
-          {canReactivate && !isInvitee(member) && !member.isActive ? (
+          {canReactivate &&
+          !isInvitee(member) &&
+          !member.isActive &&
+          // Managers don't act on owners, as with Delete; the API refuses it too.
+          !(isManager && member.role === "owner") ? (
             <ReactivateMemberButton
               organizationId={organization.id}
               userId={member.userId}
-              name={member.name ?? member.email}
+              name={member.name || member.email}
             />
           ) : null}
           <MemberActions

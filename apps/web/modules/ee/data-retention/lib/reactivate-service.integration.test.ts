@@ -6,19 +6,24 @@ import { reactivateRetentionMember } from "./reactivate-service";
 describe("reactivate a member (real Postgres)", () => {
   let organizationId: string;
   let otherOrganizationId: string;
+  let ownerId: string;
+  let managerId: string;
 
-  const createMember = async (email: string, organizationIds: string[], isActive = false) => {
+  const createMember = async (
+    email: string,
+    organizationIds: string[],
+    isActive = false,
+    role: "owner" | "manager" | "member" = "member"
+  ) => {
     const user = await prisma.user.create({ data: { name: email, email, isActive } });
     await prisma.membership.createMany({
-      data: organizationIds.map((id) => ({
-        userId: user.id,
-        organizationId: id,
-        role: "member" as const,
-        accepted: true,
-      })),
+      data: organizationIds.map((id) => ({ userId: user.id, organizationId: id, role, accepted: true })),
     });
     return user.id;
   };
+
+  const reactivate = (userId: string, actorUserId = ownerId) =>
+    reactivateRetentionMember({ userId, organizationId, actorUserId });
 
   const userOutbox = (userId: string) =>
     prisma.$queryRaw<{ isRevocation: boolean }[]>`
@@ -31,6 +36,8 @@ describe("reactivate a member (real Postgres)", () => {
     await resetDb();
     organizationId = (await prisma.organization.create({ data: { name: "Retention Org" } })).id;
     otherOrganizationId = (await prisma.organization.create({ data: { name: "Other Org" } })).id;
+    ownerId = await createMember("owner@example.com", [organizationId], true, "owner");
+    managerId = await createMember("manager@example.com", [organizationId], true, "manager");
   });
 
   test("reactivates, restarts the clock, clears this organisation's notice and queues the projection", async () => {
@@ -43,7 +50,7 @@ describe("reactivate a member (real Postgres)", () => {
     });
     const before = (await userOutbox(userId)).length;
 
-    const result = await reactivateRetentionMember({ userId, organizationId });
+    const result = await reactivate(userId);
 
     expect(result.status).toBe("reactivated");
     const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
@@ -59,7 +66,7 @@ describe("reactivate a member (real Postgres)", () => {
   test("refuses a member of another organisation too, and changes nothing", async () => {
     const userId = await createMember("tom@example.com", [organizationId, otherOrganizationId]);
 
-    expect(await reactivateRetentionMember({ userId, organizationId })).toEqual({
+    expect(await reactivate(userId)).toEqual({
       status: "in_other_organizations",
     });
     expect((await prisma.user.findUniqueOrThrow({ where: { id: userId } })).isActive).toBe(false);
@@ -68,19 +75,34 @@ describe("reactivate a member (real Postgres)", () => {
   test("tells a non-member and a missing user apart from nobody", async () => {
     const outsider = await createMember("eve@example.com", [otherOrganizationId]);
 
-    expect(await reactivateRetentionMember({ userId: outsider, organizationId })).toEqual({
+    expect(await reactivate(outsider)).toEqual({
       status: "not_member",
     });
-    expect(await reactivateRetentionMember({ userId: "clmissingmissingmissingmi", organizationId })).toEqual({
+    expect(await reactivate("clmissingmissingmissingmi")).toEqual({
       status: "not_member",
     });
     expect((await prisma.user.findUniqueOrThrow({ where: { id: outsider } })).isActive).toBe(false);
   });
 
+  test("lets only an owner reactivate an owner", async () => {
+    const inactiveOwner = await createMember("former@example.com", [organizationId], false, "owner");
+
+    expect(await reactivate(inactiveOwner, managerId)).toEqual({ status: "owner_needs_owner" });
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: inactiveOwner } })).isActive).toBe(false);
+
+    expect((await reactivate(inactiveOwner, ownerId)).status).toBe("reactivated");
+  });
+
+  test("lets a manager reactivate a member", async () => {
+    const userId = await createMember("mia@example.com", [organizationId]);
+
+    expect((await reactivate(userId, managerId)).status).toBe("reactivated");
+  });
+
   test("leaves an active member alone, wherever else they belong", async () => {
     const userId = await createMember("ben@example.com", [organizationId, otherOrganizationId], true);
 
-    expect(await reactivateRetentionMember({ userId, organizationId })).toEqual({ status: "already_active" });
+    expect(await reactivate(userId)).toEqual({ status: "already_active" });
     expect((await prisma.user.findUniqueOrThrow({ where: { id: userId } })).reactivatedAt).toBeNull();
   });
 });

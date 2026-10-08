@@ -72,7 +72,11 @@ describe("POST /api/internal/members/{userId}/reactivate", () => {
       type: "organization",
       id: ORG_ID,
     });
-    expect(mocks.reactivate).toHaveBeenCalledWith({ userId: MEMBER_ID, organizationId: ORG_ID });
+    expect(mocks.reactivate).toHaveBeenCalledWith({
+      userId: MEMBER_ID,
+      organizationId: ORG_ID,
+      actorUserId: ACTOR_ID,
+    });
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "reactivated",
@@ -95,6 +99,15 @@ describe("POST /api/internal/members/{userId}/reactivate", () => {
 
     expect(notMember.status).toBe(403);
     expect(forbidden).toStrictEqual(notMember);
+  });
+
+  test("refuses a manager reactivating an owner, saying why", async () => {
+    mocks.reactivate.mockResolvedValueOnce({ status: "owner_needs_owner" });
+
+    const response = await reactivate();
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe("Only an owner can reactivate an owner.");
   });
 
   test("checks the caller before touching the member", async () => {
