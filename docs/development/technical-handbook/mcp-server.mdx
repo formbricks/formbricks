@@ -142,13 +142,16 @@ system reaches that. The checks that do: a test pins `registerScopedTool` as the
 `guard-scopes.ts`, and `feedback-records.test.ts` drives all ten tools with the opposite scope, which
 goes red if a tool is registered unguarded *or* wired to the wrong scope.
 
-**`responses:read` / `responses:write` are grantable but not yet advertised.** They are in
-`MCP_OAUTH_SCOPES` and in the resource's `allowedScopes`, so a client that asks for one is granted it —
-but they are deliberately absent from `MCP_RESOURCE_SCOPES`, which is what the protected-resource
-metadata publishes. Advertising a scope to clients that registered before it existed earns them
-`invalid_scope` on their next consent, so the pair is added to that list only once the integrator
-notice has gone out (ENG-2862). Until then the response tools are registered and gated but reachable
-only by a client that requests the scope explicitly.
+**A new scope is advertised only together with a migration that grants it to existing clients.**
+`MCP_RESOURCE_SCOPES` is what the protected-resource metadata and the 401 challenge publish, and a
+spec-following client (the MCP SDK takes its scope from exactly those) asks for everything in it. The
+provider validates that request against the scopes the client *registered* with, so advertising a scope
+to clients that registered before it existed earns them `invalid_scope`. `responses:read` /
+`responses:write` show the full sequence: added to `MCP_OAUTH_SCOPES` and to the resource's
+`allowedScopes` (ENG-2862), then to each registered client's `scopes` by a data migration that mirrors
+what the client already holds and skips `skipConsent` clients, and only then to `MCP_RESOURCE_SCOPES`
+(ENG-3470). Skip the client migration and every integration registered before the scope existed
+breaks at its next sign-in.
 
 **There is no single mandatory baseline scope.** Authentication requires *at least one* resource scope
 (`MCP_RESOURCE_SCOPES`), so a workflows-only or `feedbackRecords:read`-only grant is a legitimate MCP
@@ -159,19 +162,20 @@ own memberships and key grants, so admitting any read scope exposes nothing extr
 The authorization server supports all of the above, but the MCP protected-resource metadata
 (`/.well-known/oauth-protected-resource/api/mcp`) advertises only the resource scopes an MCP client
 needs — `surveys:read`, `surveys:write`, `workflows:read`, `workflows:write`, `feedbackRecords:read`,
-`feedbackRecords:write`, and `offline_access`. Clients derive their Dynamic Client Registration scopes
+`feedbackRecords:write`, `responses:read`, `responses:write`, and `offline_access`. Clients derive their Dynamic Client Registration scopes
 from that list, so `offline_access` must be advertised there for clients to be issued refresh tokens
 (`openid`/`profile`/`email` are OIDC scopes the MCP resource does not require).
 
 <Warning>
-  Adding a resource scope breaks already-connected OAuth clients until they re-register. The
-  authorization server validates `/authorize` against the scopes the **client** registered with, so a
-  client registered before the change requests the newly advertised scope and is rejected with
-  `invalid_scope` — it does not fall back to the scopes it already holds, and re-consenting does not help
-  because the same `client_id` is reused. The client has to run Dynamic Client Registration again: remove
-  and re-add the MCP server (for example `claude mcp remove <name>` then `claude mcp add …`), or delete
-  its `oauthClient` row so the next connection re-registers. Ship a release note whenever this list
-  changes.
+  Never advertise a new resource scope without a data migration that grants it to existing `oauthClient`
+  rows. The authorization server validates `/authorize` against the scopes the **client** registered
+  with, so a client registered before the change requests the newly advertised scope and is rejected with
+  `invalid_scope`. It does not fall back to the scopes it already holds, and re-consenting does not help,
+  because the same `client_id` is reused. Ship the migration in the same release as the list change, as
+  `responses:*` did (see [A new scope family](#a-new-scope-family)), and nothing breaks: users see one
+  consent screen naming the new scopes. If a client is already stuck on `invalid_scope`, it recovers by
+  registering again: remove and re-add the MCP server (for example `claude mcp remove <name>`, then
+  `claude mcp add …`).
 </Warning>
 
 OAuth scopes gate MCP tool categories at the token layer. Actual workspace access is still evaluated
@@ -710,8 +714,11 @@ Reusing `<resource>:read` / `<resource>:write` needs nothing more. A new resourc
 2. API-key scopes in `getMcpScopes` (`modules/mcp/auth.ts`), the consent label in `getOAuthScopeLabel` plus its
    en-US string (then `pnpm i18n`), and the `anyOf` list on `list_workspaces`.
 3. `registerXTools(server)` in `modules/mcp/server.ts`, before the final `instrumentMcpServerWithTracing`.
-4. Last, `MCP_RESOURCE_SCOPES`, which advertises the scope. This breaks already-connected clients until they
-   re-register (see the warning under [Authentication](#authentication)), so it ships with a release note.
+4. Last, `MCP_RESOURCE_SCOPES`, which advertises the scope, in the same release as a data migration that
+   appends the pair to existing `oauthClient.scopes` rows. Mirror read/write (`:read` only for clients that
+   hold a read scope) and skip `skipConsent` clients, as `20261005130000_eng_3470_grant_responses_scopes_to_clients`
+   does. Without it, every client registered before the scope existed requests it and gets `invalid_scope`
+   at its next sign-in (see [Authentication](#authentication)).
 
 ### What makes a tool good
 
@@ -1837,9 +1844,6 @@ query, like `create_feedback_record`.
   a query and a tenant. Those need Hub-side support first.
 - The search tools require an embedding model configured on the Hub API **and** the Hub worker; without
   one they return 503. Embedding is asynchronous and covers only records with text.
-- The response tools are registered but `responses:read` / `responses:write` are not yet advertised in
-  the protected-resource metadata, so a client following the normal consent flow is not offered them.
-  Adding them to `MCP_RESOURCE_SCOPES` is the rollout step that follows the integrator notice.
 - `outputSchema` is declared on the response tools only. The survey, workflow and feedback-record tools
   still advertise no result shape, so a client has to infer theirs from an example.
 - The response tools cover the v3 operations and nothing more: there is no tool that adds or removes a

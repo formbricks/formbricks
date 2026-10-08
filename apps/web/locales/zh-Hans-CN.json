@@ -112,7 +112,7 @@
         "offline_access": "通过刷新令牌保持访问",
         "openid": "使用 OpenID Connect 识别你的身份",
         "profile": "查看你的个人资料",
-        "responses_read": "读取调查回复",
+        "responses_read": "读取调查问卷回复，包括受访者的答案",
         "responses_write": "创建、更新和删除调查回复",
         "surveys_read": "读取调查",
         "surveys_write": "创建、更新和删除调查",
