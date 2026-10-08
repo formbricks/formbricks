@@ -106,7 +106,9 @@ docker compose run --rm --no-deps --entrypoint cat formbricks-migrate \
 It is also on GitHub under any release that ships it, for example
 `https://github.com/formbricks/formbricks/blob/6.0.2/packages/database/migration/<migration_name>/migration.sql`.
 
-- **Its first statement is `BEGIN;`:** PostgreSQL rolled the whole file back, so there is nothing to undo.
+- **The whole file is one `BEGIN; … COMMIT;` block, with no statement before `BEGIN;` or after `COMMIT;`:**
+  PostgreSQL rolled the whole file back, so there is nothing to undo. A file that commits a block and then runs
+  more statements, such as `20250911192630_remove_deprecated_fields_and_tables`, belongs under the next case.
 - **Otherwise:** the statements before the failing one may have stayed applied. Check which took effect
   (`\d "Table"` for schema changes, a `SELECT` for data) and undo those before you continue, except:
   - `IF NOT EXISTS`, `IF EXISTS` and `CREATE OR REPLACE` statements are safe to repeat, apart from a failed
