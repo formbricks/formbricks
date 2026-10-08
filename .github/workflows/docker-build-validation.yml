@@ -16,7 +16,7 @@ jobs:
   validate-authzed-compose:
     name: Validate AuthZed Compose
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
     permissions:
       contents: read
     env:
@@ -69,6 +69,7 @@ jobs:
   validate-docker-build:
     name: Validate Docker Build
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     permissions:
       contents: read
 
