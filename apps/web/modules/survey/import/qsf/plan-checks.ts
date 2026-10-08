@@ -133,21 +133,27 @@ const COMMON_TLDS = [
   "au",
   "ca",
 ].join("|");
-const DOTTED_NAME = String.raw`(?:[a-z0-9-]{1,63}\.)+[a-z]{2,24}`;
+/**
+ * A host name: up to ten dot-ended labels, then a top-level domain. The label count is bounded so a
+ * long dotted run (`a.a.a.…`) costs a bounded amount of work from each position, not a scan of the rest
+ * of the run — with an unbounded `+`, 1,200 characters of it took about 6 ms a note. A longer host is
+ * still caught: the match starts at a later label.
+ */
+const DOTTED_NAME = String.raw`(?:[a-z0-9-]{1,63}\.){1,10}[a-z]{2,24}`;
 
 /**
  * Anything that looks like a link. A dotted word counts as a domain only with a sign it is one — a
  * path, a port, an `@` before it, or a common top-level domain — so `Node.js` or `answer.Then` stay
- * prose while `evil.com/login`, `evil.io:8080` and `user@evil.co` do not. Labels are bounded and
- * separated by dots, so a long run backtracks a bounded amount per position.
+ * prose while `evil.com/login`, `evil.io:8080` and `user@evil.co` do not. Every quantifier is bounded or
+ * consumes a run nothing after it can give back, so the scan is linear in the note.
  */
-const URL_LIKE = new RegExp(
+export const QSF_NOTE_URL_PATTERN = new RegExp(
   [
     String.raw`\b(?:[a-z][a-z0-9+.-]{1,20}:\/\/|(?:javascript|data|vbscript|mailto):|www\.)\S*`,
     String.raw`[\w.+-]{0,64}@${DOTTED_NAME}\b\S*`,
     String.raw`\b${DOTTED_NAME}(?::\d{1,5})?\/\S*`,
     String.raw`\b${DOTTED_NAME}:\d{1,5}\b`,
-    String.raw`\b(?:[a-z0-9-]{1,63}\.)+(?:${COMMON_TLDS})\b`,
+    String.raw`\b(?:[a-z0-9-]{1,63}\.){1,10}(?:${COMMON_TLDS})\b`,
   ].join("|"),
   "gi"
 );
@@ -161,7 +167,7 @@ export function cleanNote(raw: string): string {
   const cleaned = raw
     .slice(0, QSF_MAX_NOTE_CHARS * 4)
     .replaceAll(CONTROL_CHARACTERS, " ")
-    .replaceAll(URL_LIKE, "…")
+    .replaceAll(QSF_NOTE_URL_PATTERN, "…")
     .replaceAll(/[<>]/g, "")
     .replaceAll(/\s+/g, " ")
     .trim();

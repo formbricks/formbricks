@@ -57,6 +57,15 @@ describe("QsfIdRegistry", () => {
     expect(new Set(ids).size).toBe(12);
     expect(ids.every((id) => id.length <= 64)).toBe(true);
   });
+
+  test("trims the underscores around a tag in linear time", () => {
+    const registry = new QsfIdRegistry();
+    const startedAt = performance.now();
+
+    expect(registry.claim(`${"_".repeat(60)}Q1${"_".repeat(100_000)}`, "QID1")).toBe("Q1");
+    expect(registry.claim(`${"_".repeat(127)}!`, "QID2")).toBe("QID2");
+    expect(performance.now() - startedAt).toBeLessThan(50);
+  });
 });
 
 describe("findFreeSuffixedName", () => {

@@ -3,6 +3,7 @@ import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { loadRecordedPlan } from "./__fixtures__/recorded-plans";
 import {
   QSF_MAX_NOTE_CHARS,
+  QSF_NOTE_URL_PATTERN,
   checkPlanResponses,
   checkQuestionRoles,
   cleanNote,
@@ -232,6 +233,23 @@ describe("cleanNote", () => {
   test("drops control characters, bidi overrides and markup characters", () => {
     expect(cleanNote("a\u0007b\u202ec<script>")).toBe("a b cscript");
   });
+
+  test("still catches a host with more labels than a match holds", () => {
+    expect(cleanNote("Go to a.b.c.d.e.f.g.h.i.j.k.l.evil.com/x first")).toBe("Go to a.b.c.… first");
+  });
+
+  test.each(["a.", "ab.", "a-", `${"a".repeat(63)}.`, "a@", "1."])(
+    "scans a long run of %j for links in linear time",
+    (unit) => {
+      // 20,000 characters: a quadratic scan of a dotted run took seconds here, a linear one milliseconds.
+      const run = unit.repeat(Math.ceil(20_000 / unit.length));
+      const startedAt = performance.now();
+
+      run.replaceAll(QSF_NOTE_URL_PATTERN, "…");
+
+      expect(performance.now() - startedAt).toBeLessThan(250);
+    }
+  );
 
   test("caps the length", () => {
     const note = cleanNote("x".repeat(5_000));

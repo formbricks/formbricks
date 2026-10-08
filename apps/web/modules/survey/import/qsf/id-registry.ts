@@ -43,6 +43,15 @@ export function findFreeSuffixedName(
   return null;
 }
 
+/** `value` without the underscores it starts or ends with. A scan, not a regex: linear on any input. */
+const trimUnderscores = (value: string): string => {
+  let start = 0;
+  let end = value.length;
+  while (start < end && value[start] === "_") start += 1;
+  while (end > start && value[end - 1] === "_") end -= 1;
+  return value.slice(start, end);
+};
+
 /**
  * Hands out element ids. Ids must be unique case-insensitively across elements, hidden fields, endings
  * and variables (v3 reference validation), so the registry is seeded with the hidden field ids before
@@ -64,12 +73,12 @@ export class QsfIdRegistry {
 
   /** Claim `preferred` when usable, else `fallback`, suffixed `_2`, `_3`, … until free. */
   claim(preferred: string, fallback: string): string {
-    const cleaned = preferred
-      .slice(0, MAX_ELEMENT_ID_LENGTH * 2)
-      .trim()
-      .replaceAll(/[^A-Za-z0-9_-]+/g, "_")
-      .replaceAll(/^_+|_+$/g, "")
-      .slice(0, MAX_ELEMENT_ID_LENGTH);
+    const cleaned = trimUnderscores(
+      preferred
+        .slice(0, MAX_ELEMENT_ID_LENGTH * 2)
+        .trim()
+        .replaceAll(/[^A-Za-z0-9_-]+/g, "_")
+    ).slice(0, MAX_ELEMENT_ID_LENGTH);
     if (this.isUsable(cleaned)) return this.take(cleaned);
 
     const base = this.isWellFormed(fallback) ? fallback : "question";

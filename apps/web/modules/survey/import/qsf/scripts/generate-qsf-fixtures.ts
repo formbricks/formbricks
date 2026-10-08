@@ -72,7 +72,7 @@ const translationMap = (values: string[] | undefined) =>
     ? Object.fromEntries(values.map((value, index) => [String(index + 1), { Display: value }]))
     : undefined;
 
-const plainText = (html: string) => html.replaceAll(/<[^>]+>/g, "").slice(0, 60);
+const plainText = (html: string) => html.replaceAll(/<[^<>]+>/g, "").slice(0, 60);
 
 const question = (spec: TQuestionSpec) => ({
   SurveyID: SURVEY_ID,
