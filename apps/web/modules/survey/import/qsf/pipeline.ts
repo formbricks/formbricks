@@ -6,7 +6,7 @@ import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import type { TQsfImportReport, TQsfImportStage } from "../types";
 import { type TQsfPlanGenerate, type TQsfPlanUsage, planQsfImport } from "./ai-plan";
 import { type TQsfAssembly, type TQsfDraftDocument, assembleQsfDraft } from "./assemble";
-import { QsfImportFailedError, QsfImportInputError } from "./errors";
+import { QsfImportFailedError, qsfLimitExceeded } from "./errors";
 import { yieldToOthers } from "./event-loop";
 import { checkQsfDraftInSlices, elementsAtFault } from "./final-gate";
 import { fitQsfDraftToCreateLimit, fitQsfSurveyToCreateLimit } from "./fit-draft";
@@ -76,12 +76,11 @@ export function prepareQsfImport(qsf: Record<string, unknown>, fileName: string)
   const survey = readQsf(qsf);
   // Every part of the prompt is bounded, so only a hostile file gets here; refuse it before the stream.
   if (estimateQsfMinimumPromptChars(survey) > QSF_PROMPT_BUDGET_CHARS) {
-    throw new QsfImportInputError([
-      {
-        name: "qsf.SurveyElements",
-        reason: "The survey's questions and logic are too large to import",
-      },
-    ]);
+    throw qsfLimitExceeded(
+      "prompt_size",
+      "qsf.SurveyElements",
+      "The survey's questions and logic are too large to import"
+    );
   }
   return { fileName, surveyName: survey.name, survey };
 }

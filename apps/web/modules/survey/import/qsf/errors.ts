@@ -1,20 +1,34 @@
 import type { InvalidParam } from "@/app/api/v3/lib/response";
+import type { TQsfImportLimit } from "../types";
+
+/** One problem with a refused file, coded for the dialog (see `TQsfImportRefusalCode`). */
+export type TQsfInputInvalidParam = InvalidParam &
+  ({ code: "qsf_not_recognized" } | { code: "qsf_limit_exceeded"; identifier: TQsfImportLimit });
 
 /**
  * The file is not a Qualtrics survey export the import can read, or it is past one of the reader's
  * limits. Answered as a 422 before the stream opens, so no AI is spent on it.
  *
- * `invalidParams` names where (`qsf.SurveyElements.3`) and a fixed reason; never text from the file.
+ * Each invalid param names where (`qsf.SurveyElements.3`), a fixed reason — never text from the file
+ * — and a `code`: `qsf_not_recognized`, or `qsf_limit_exceeded` with the limit in `identifier`.
  */
 export class QsfImportInputError extends Error {
-  readonly invalidParams: InvalidParam[];
+  readonly invalidParams: TQsfInputInvalidParam[];
 
-  constructor(invalidParams: InvalidParam[]) {
+  constructor(invalidParams: TQsfInputInvalidParam[]) {
     super("The file is not a Qualtrics survey export (.qsf).");
     this.name = "QsfImportInputError";
     this.invalidParams = invalidParams;
   }
 }
+
+/** The file is not a Qualtrics export the import can read. */
+export const qsfNotRecognized = (name: string, reason: string): QsfImportInputError =>
+  new QsfImportInputError([{ name, reason, code: "qsf_not_recognized" }]);
+
+/** The file is a Qualtrics export past one of the import's limits. */
+export const qsfLimitExceeded = (limit: TQsfImportLimit, name: string, reason: string): QsfImportInputError =>
+  new QsfImportInputError([{ name, reason, code: "qsf_limit_exceeded", identifier: limit }]);
 
 /**
  * The import could not produce a survey: no question survived, the survey's data cannot fit the

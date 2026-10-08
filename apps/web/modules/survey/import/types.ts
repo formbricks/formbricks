@@ -46,6 +46,33 @@ export type TQsfImportStage = "reading" | "ai" | "assembling";
  * `question_skipped`, `logic_not_imported`'s `block`, `questionTag` — must be rendered as plain text,
  * never as rich text.
  */
+/**
+ * The codes on the invalid params of the import's 422 (`QsfImportInputError`), from v3's
+ * `InvalidParam.code`, so the dialog can tell the two refusals apart without reading the reason:
+ *
+ * - `qsf_not_recognized` — the file is not a Qualtrics export the import can read: the envelope is
+ *   missing, it has two survey flows, block lists or option sets, two questions share an id, or no
+ *   question is in its flow;
+ * - `qsf_limit_exceeded` — the file is a Qualtrics export past one of the import's limits, named in
+ *   the param's `identifier` (`TQsfImportLimit`); `name` points at where in the file.
+ */
+export type TQsfImportRefusalCode = "qsf_not_recognized" | "qsf_limit_exceeded";
+
+/** The limit a `qsf_limit_exceeded` param is about, in its `identifier`. */
+export type TQsfImportLimit =
+  | "questions"
+  | "options"
+  | "languages"
+  | "language_keys"
+  | "blocks"
+  | "block_entries"
+  | "flow_nodes"
+  | "flow_depth"
+  | "embedded_data"
+  | "texts"
+  | "formatted_texts"
+  | "prompt_size";
+
 export type TQsfImportIssueCode =
   | "logic_not_imported"
   | "question_skipped"

@@ -234,6 +234,69 @@ describe("readQsf", () => {
     expect(survey.endMessageKey).toBeNull();
   });
 
+  describe("codes every refusal, so the dialog can tell an unreadable file from one past a limit", () => {
+    const flowOf = (depth: number): unknown => {
+      let nested: unknown = { Type: "Block", ID: "BL_1" };
+      for (let level = 0; level < depth; level++) nested = { Type: "Group", Flow: [nested] };
+      return nested;
+    };
+
+    test.each([
+      ["not a Qualtrics export", { name: "Just JSON" }],
+      ["two block lists", minimalQsf([sq("QID1"), bl(["QID1"]), bl(["QID1"]), fl()])],
+      ["two flows", minimalQsf([sq("QID1"), bl(["QID1"]), fl(), fl()])],
+      [
+        "two option sets",
+        minimalQsf([
+          sq("QID1"),
+          bl(["QID1"]),
+          fl(),
+          { Element: "SO", Payload: {} },
+          { Element: "SO", Payload: {} },
+        ]),
+      ],
+      ["two questions with one id", minimalQsf([sq("QID1"), sq("QID1"), bl(["QID1"]), fl()])],
+      ["no question in the flow", minimalQsf([sq("QID1"), bl(["QID1"]), fl([])])],
+    ])("%s: qsf_not_recognized", (_case, qsf) => {
+      const { invalidParams } = readError(qsf);
+
+      expect(invalidParams.length).toBeGreaterThan(0);
+      expect(invalidParams.every((param) => param.code === "qsf_not_recognized")).toBe(true);
+    });
+
+    test.each([
+      ["flow_depth", minimalQsf([sq("QID1"), bl(["QID1"]), fl([flowOf(65)])])],
+      ["questions", loadQsfFixture("over-limit.qsf")],
+      [
+        "languages",
+        minimalQsf([
+          sq("QID1", {
+            Language: Object.fromEntries(
+              ["AR", "BG", "CS", "DA", "DE", "EL", "ES", "ET", "FI", "FR", "HE", "HI", "HR", "HU"].flatMap(
+                (code) =>
+                  ["", "-AT", "-CH", "-BE"].map((region) => [`${code}${region}`, { QuestionText: "x" }])
+              )
+            ),
+          }),
+          bl(["QID1"]),
+          fl(),
+        ]),
+      ],
+      [
+        "flow_nodes",
+        minimalQsf([
+          sq("QID1"),
+          bl(["QID1"]),
+          fl([{ Type: "Group", Flow: Array.from({ length: 2_001 }, () => ({ Type: "EndSurvey" })) }]),
+        ]),
+      ],
+    ])("past the %s limit: qsf_limit_exceeded, naming it", (limit, qsf) => {
+      expect(readError(qsf).invalidParams).toEqual([
+        expect.objectContaining({ code: "qsf_limit_exceeded", identifier: limit }),
+      ]);
+    });
+  });
+
   describe("refuses a file it cannot read with a 422 naming where", () => {
     test("anything that is not a Qualtrics export", () => {
       expect(readError(loadQsfFixture("not-a-qsf.json")).invalidParams.map((param) => param.name)).toEqual([
@@ -244,7 +307,11 @@ describe("readQsf", () => {
 
     test("an export with no question in its flow", () => {
       expect(readError(minimalQsf([sq("QID1"), bl(["QID1"]), fl([])])).invalidParams).toEqual([
-        { name: "qsf.SurveyElements", reason: "The survey has no questions in its survey flow" },
+        {
+          name: "qsf.SurveyElements",
+          reason: "The survey has no questions in its survey flow",
+          code: "qsf_not_recognized",
+        },
       ]);
     });
 
@@ -252,6 +319,8 @@ describe("readQsf", () => {
       expect(readError(loadQsfFixture("deep-flow.qsf")).invalidParams[0]).toEqual({
         name: "qsf.SurveyElements.2.Payload.Flow",
         reason: "The survey flow is nested deeper than 64 levels",
+        code: "qsf_limit_exceeded",
+        identifier: "flow_depth",
       });
     });
 
@@ -275,6 +344,8 @@ describe("readQsf", () => {
       expect(error.invalidParams[0]).toEqual({
         name: "qsf.SurveyElements.0.Payload.Choices",
         reason: `A question has more than ${QSF_MAX_OPTIONS_PER_QUESTION} choices`,
+        code: "qsf_limit_exceeded",
+        identifier: "options",
       });
     });
 
@@ -303,6 +374,8 @@ describe("readQsf", () => {
         {
           name: "qsf.SurveyElements.0.Payload.Language",
           reason: `A question has more than ${QSF_MAX_LANGUAGE_KEYS_PER_QUESTION} translations`,
+          code: "qsf_limit_exceeded",
+          identifier: "language_keys",
         },
       ]);
     });
@@ -322,6 +395,8 @@ describe("readQsf", () => {
       expect(error.invalidParams[0]).toEqual({
         name: "qsf.SurveyElements",
         reason: `The survey has more than ${QSF_MAX_LANGUAGE_KEYS} translations`,
+        code: "qsf_limit_exceeded",
+        identifier: "language_keys",
       });
     });
 
@@ -338,6 +413,8 @@ describe("readQsf", () => {
       ).toEqual({
         name: "qsf.SurveyElements.1.Payload",
         reason: `The survey has more than ${QSF_MAX_BLOCKS} blocks`,
+        code: "qsf_limit_exceeded",
+        identifier: "blocks",
       });
     });
 
@@ -363,6 +440,8 @@ describe("readQsf", () => {
       expect(readError(minimalQsf([sq("QID1"), bl(["QID1"]), fl(flow)])).invalidParams[0]).toEqual({
         name: "qsf.SurveyElements",
         reason: `The survey has more than ${QSF_MAX_EMBEDDED_DATA_FIELDS} embedded data fields`,
+        code: "qsf_limit_exceeded",
+        identifier: "embedded_data",
       });
     });
 
@@ -452,6 +531,8 @@ describe("readQsf", () => {
         {
           name: "qsf.SurveyElements",
           reason: `The survey has more than ${cap} ${kind} across its languages`,
+          code: "qsf_limit_exceeded",
+          identifier: kind === "texts" ? "texts" : "formatted_texts",
         },
       ];
 

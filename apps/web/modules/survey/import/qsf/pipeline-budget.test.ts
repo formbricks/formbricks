@@ -41,8 +41,19 @@ describe("a survey too large for the prompt budget", () => {
   test("is refused by prepareQsfImport with a 422, before the stream opens", () => {
     budget.estimate = Number.MAX_SAFE_INTEGER;
 
-    expect(() => prepareQsfImport(loadQsfFixture("simple.qsf"), "simple.qsf")).toThrow(QsfImportInputError);
+    let error: unknown;
+    try {
+      prepareQsfImport(loadQsfFixture("simple.qsf"), "simple.qsf");
+    } catch (caught) {
+      error = caught;
+    }
     budget.estimate = null;
+
+    expect(error).toBeInstanceOf(QsfImportInputError);
+    // A Qualtrics export past a limit — the prompt's — not an unreadable file.
+    expect((error as QsfImportInputError).invalidParams).toEqual([
+      expect.objectContaining({ code: "qsf_limit_exceeded", identifier: "prompt_size" }),
+    ]);
   });
 
   test("fails the import before any AI call when no limits fit it", async () => {
