@@ -98,26 +98,29 @@ const hasStyleAttribute = (node: unknown): boolean =>
   typeof node.hasAttribute === "function" &&
   Boolean(node.hasAttribute("style"));
 
+/** The report code for an element DOMPurify removed, or `null` for structure (`body`, `div`, …). */
+function droppedElementCode(element: unknown): TDroppedCode | null {
+  const tag = elementName(element);
+  if (MEDIA_TAGS.has(tag)) return "image_dropped";
+  if (ACTIVE_TAGS.has(tag)) return "script_dropped";
+  if (tag === "style" || hasStyleAttribute(element)) return "formatting_dropped";
+  return tag !== "" && !STRUCTURAL_TAGS.has(tag) ? "formatting_dropped" : null;
+}
+
+/** The report code for an attribute DOMPurify removed, or `null` for one not worth a line. */
+function droppedAttributeCode(attribute: { name: string; value: string }): TDroppedCode | null {
+  const name = attribute.name.toLowerCase();
+  if (name.startsWith("on") || (name === "href" && ACTIVE_URL.test(attribute.value))) return "script_dropped";
+  return STYLE_ATTRIBUTES.has(name) ? "formatting_dropped" : null;
+}
+
 /** What the last DOMPurify call removed, as report codes. */
 function readDropped(into: Set<TDroppedCode>): void {
   for (const entry of DOMPurify.removed) {
-    if ("element" in entry) {
-      const tag = elementName(entry.element);
-      if (MEDIA_TAGS.has(tag)) into.add("image_dropped");
-      else if (ACTIVE_TAGS.has(tag)) into.add("script_dropped");
-      else if (tag === "style" || hasStyleAttribute(entry.element)) into.add("formatting_dropped");
-      else if (tag !== "" && !STRUCTURAL_TAGS.has(tag)) into.add("formatting_dropped");
-      continue;
-    }
-
-    const attribute = entry.attribute;
-    if (!attribute) continue;
-    const name = attribute.name.toLowerCase();
-    if (name.startsWith("on") || (name === "href" && ACTIVE_URL.test(attribute.value))) {
-      into.add("script_dropped");
-    } else if (STYLE_ATTRIBUTES.has(name)) {
-      into.add("formatting_dropped");
-    }
+    let code: TDroppedCode | null = null;
+    if ("element" in entry) code = droppedElementCode(entry.element);
+    else if (entry.attribute) code = droppedAttributeCode(entry.attribute);
+    if (code) into.add(code);
   }
 }
 
@@ -213,29 +216,15 @@ export interface TSanitizedTexts {
 export async function sanitizeQsfTexts(survey: TQsfSurvey, signal: AbortSignal): Promise<TSanitizedTexts> {
   const byKey = new Map<TQsfTextKey, Map<string, string>>();
   const plainDefault = new Map<TQsfTextKey, string>();
-  const issues: TQsfImportIssue[] = [];
-  const reported = new Set<string>();
-
-  const report = (code: TQsfImportIssueCode, questionRef: string | null) => {
-    // Formatting is one line per survey; everything else one line per question.
-    const scope = code === "formatting_dropped" ? "" : (questionRef ?? "");
-    const id = `${code}\u0000${scope}`;
-    if (reported.has(id)) return;
-    reported.add(id);
-    const exportTag = questionRef === null ? undefined : survey.questions.get(questionRef)?.exportTag;
-    issues.push({
-      code,
-      severity: code === "formatting_dropped" ? "info" : "warning",
-      ...(exportTag && code !== "formatting_dropped" ? { questionTag: exportTag } : {}),
-    });
-  };
+  const reporter = createSanitizeReporter(survey);
 
   let sliceStart = performance.now();
   for (const [key, entry] of survey.texts) {
     const sanitized = new Map<string, string>();
     for (const [language, raw] of entry.byLanguage) {
       if (performance.now() - sliceStart > SANITIZE_SLICE_MS) {
-        await yieldToEventLoop();
+        // Yields by elapsed time, by design: the point of the loop is to give the event loop back.
+        await yieldToEventLoop(); // NOSONAR(typescript:S9382) -- a deliberate yield every slice
         signal.throwIfAborted();
         sliceStart = performance.now();
       }
@@ -243,14 +232,46 @@ export async function sanitizeQsfTexts(survey: TQsfSurvey, signal: AbortSignal):
       const result = sanitizeText(raw, entry.format);
       sanitized.set(language, result.text);
       if (language === survey.defaultLanguage) plainDefault.set(key, result.plain);
-      for (const code of result.dropped) report(code, entry.questionRef);
-      if (result.escaped) report("markup_escaped", entry.questionRef);
-      if (result.tooLong) report("text_too_long", entry.questionRef);
+      reporter.add(result, entry.questionRef);
     }
     byKey.set(key, sanitized);
   }
 
-  return { byKey, plainDefault, issues };
+  return { byKey, plainDefault, issues: reporter.issues };
+}
+
+/**
+ * The report lines sanitizing writes: formatting once per survey, everything else once per question
+ * and code.
+ */
+function createSanitizeReporter(survey: TQsfSurvey): {
+  issues: TQsfImportIssue[];
+  add: (result: TSanitizedText, questionRef: string | null) => void;
+} {
+  const issues: TQsfImportIssue[] = [];
+  const reported = new Set<string>();
+
+  const report = (code: TQsfImportIssueCode, questionRef: string | null) => {
+    const perSurvey = code === "formatting_dropped";
+    const id = `${code}\u0000${perSurvey ? "" : (questionRef ?? "")}`;
+    if (reported.has(id)) return;
+    reported.add(id);
+    const exportTag = questionRef === null ? undefined : survey.questions.get(questionRef)?.exportTag;
+    issues.push({
+      code,
+      severity: perSurvey ? "info" : "warning",
+      ...(exportTag && !perSurvey ? { questionTag: exportTag } : {}),
+    });
+  };
+
+  return {
+    issues,
+    add: (result, questionRef) => {
+      for (const code of result.dropped) report(code, questionRef);
+      if (result.escaped) report("markup_escaped", questionRef);
+      if (result.tooLong) report("text_too_long", questionRef);
+    },
+  };
 }
 
 /** Plain text for a name from the file (the survey's, an export tag used as a headline). */
