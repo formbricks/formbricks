@@ -417,6 +417,7 @@ describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, 
     // A refresh that asks for fewer scopes mints a child inside the narrowing to come.
     const child = await refresh(clientId, wide.refresh_token, NARROW);
     expect(child.status, JSON.stringify(child.body)).toBe(200);
+    expect((child.body.scope as string).split(" ").sort()).toEqual(NARROW.split(" ").sort());
     const { id } = await consentOf(userId, clientId);
 
     await handle("/oauth2/update-consent", {
