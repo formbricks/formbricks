@@ -219,6 +219,7 @@ overrides:
   node-forge: 1.4.0
   minimatch@10: 10.2.5
   postcss: 8.5.23
+  source-map-js: 1.2.2
   dompurify: 3.4.16
   fast-xml-parser: 5.7.2
   ip-address@10: 10.7.1

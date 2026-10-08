@@ -1,3 +1,4 @@
+import { LEAKY_AI_ERRORS, findPlantedContent } from "@/lib/ai/__mocks__/leaky-ai-errors";
 import { NoObjectGeneratedError } from "ai";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError } from "@formbricks/types/errors";
@@ -404,18 +405,41 @@ describe("generateAIChartQuery", () => {
     ).rejects.toBe(providerError);
   });
 
-  test("does not convert non-Error rejections", async () => {
-    mocks.generateOrganizationAIObject.mockRejectedValueOnce("string failure");
+  // ENG-3720: a rejection from here reaches the server action client, which writes a thrown error whole
+  // to the logs and to Sentry — and an AI SDK error carries the user's question and the model's answer.
+  test.each(LEAKY_AI_ERRORS)("rethrows a failure with %s without what the call carried", async (_, build) => {
+    mocks.generateOrganizationAIObject.mockRejectedValueOnce(build());
 
-    await expect(
-      generateAIChartQuery({
-        organizationId: "organization-1",
-        workspaceId: "workspace-1",
-        feedbackDirectoryId: "directory-1",
-        userId: "user-1",
-        prompt: "anything",
-      })
-    ).rejects.toBe("string failure");
+    const rejection = await generateAIChartQuery({
+      organizationId: "organization-1",
+      workspaceId: "workspace-1",
+      feedbackDirectoryId: "directory-1",
+      userId: "user-1",
+      prompt: "anything",
+    }).catch((thrown: unknown) => thrown);
+
+    expect(rejection).toBeInstanceOf(Error);
+    expect(findPlantedContent(rejection)).toBeUndefined();
+  });
+
+  // What the user sees: a non-Error rejection is not their prompt's fault, so it must not become the
+  // "could not be converted" prompt error — it stays an unexpected failure. And since the action client
+  // logs and reports that failure whole, it arrives redacted rather than as the raw value.
+  test("does not turn a non-Error rejection into a prompt error, and redacts it", async () => {
+    mocks.generateOrganizationAIObject.mockRejectedValueOnce({ error: { message: "string failure" } });
+
+    const rejection = await generateAIChartQuery({
+      organizationId: "organization-1",
+      workspaceId: "workspace-1",
+      feedbackDirectoryId: "directory-1",
+      userId: "user-1",
+      prompt: "anything",
+    }).catch((thrown: unknown) => thrown);
+
+    expect(rejection).not.toBeInstanceOf(InvalidInputError);
+    expect(rejection).toMatchObject({ name: "RedactedAIError", originalName: "object" });
+    expect(JSON.stringify(rejection)).not.toContain("string failure");
+    expect(String((rejection as Error).message)).not.toContain("string failure");
   });
 
   test("puts the directory's real sources and questions in the system prompt", async () => {

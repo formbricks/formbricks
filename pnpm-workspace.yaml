@@ -210,6 +210,10 @@ overrides:
   # denial-of-service findings are patched in 8.5.23.
   # load-bearing: next pins 8.4.31 and @tailwindcss/postcss pins 8.5.15.
   postcss: 8.5.23
+  # ENG-3661 / GHSA-68fv-2mgg-jv7q (CVE-2026-93749): source-map-js <1.2.2 does not validate the per-section
+  # offset line of indexed source maps, so a huge value blocks the event loop; patched in 1.2.2.
+  # load-bearing: postcss (via next, @tailwindcss/node and @vue/compiler-core) resolves 1.2.1.
+  source-map-js: 1.2.2
   # SDK and runtime transitive security pins.
   # GHSA-55q2-fjhq-7xh7: DOMPurify <=3.4.12 can be bypassed with crafted HTML; patched in 3.4.13.
   # load-bearing: isomorphic-dompurify, posthog-js and redoc resolve vulnerable 3.x versions.
