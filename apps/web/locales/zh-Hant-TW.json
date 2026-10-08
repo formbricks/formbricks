@@ -2983,6 +2983,7 @@
         "reason_too_long": "原因最多只能輸入 {max} 個字元。",
         "revoke": "撤銷",
         "revoke_exemption_body": "{survey} 將不再豁免於「{policy}」政策，此變更會立即生效。",
+        "revoke_exemption_for": "撤銷 {survey} 的{policy}豁免",
         "revoke_exemption_title": "要撤銷豁免嗎？",
         "run": "執行",
         "search_surveys": "搜尋問卷",

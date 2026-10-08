@@ -2983,6 +2983,7 @@
         "reason_too_long": "O motivo pode ter no máximo {max} carateres.",
         "revoke": "Revogar",
         "revoke_exemption_body": "{survey} deixará de estar isento da política de {policy}. Isto tem efeito imediato.",
+        "revoke_exemption_for": "Revogar a isenção de {policy} para {survey}",
         "revoke_exemption_title": "Revogar isenção?",
         "run": "Execução",
         "search_surveys": "Pesquisar inquéritos",

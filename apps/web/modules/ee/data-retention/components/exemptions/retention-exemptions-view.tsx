@@ -75,7 +75,14 @@ const getExemptionColumns = ({
           align: "right" as const,
           stopRowClick: true,
           cell: (exemption: TRetentionExemption) => (
-            <Button variant="ghost" size="sm" onClick={() => onRevoke(exemption)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label={t("workspace.settings.data_retention.revoke_exemption_for", {
+                survey: exemption.surveyName,
+                policy: getRetentionPolicyLabel(exemption.policy, t),
+              })}
+              onClick={() => onRevoke(exemption)}>
               {t("workspace.settings.data_retention.revoke")}
             </Button>
           ),

@@ -1,7 +1,7 @@
 import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
+import { RETENTION_EXEMPTION_REASON_MAX_LENGTH } from "../types";
 import {
-  EXEMPTION_REASON_MAX_LENGTH,
   getAddExemptionFormSchema,
   getExemptionUntilBounds,
   toCreateRetentionExemptionInput,
@@ -24,7 +24,7 @@ describe("getAddExemptionFormSchema", () => {
     ["a blank reason", { reason: "   " }, "workspace.settings.data_retention.reason_required"],
     [
       "a reason over the limit",
-      { reason: "x".repeat(EXEMPTION_REASON_MAX_LENGTH + 1) },
+      { reason: "x".repeat(RETENTION_EXEMPTION_REASON_MAX_LENGTH + 1) },
       "workspace.settings.data_retention.reason_too_long",
     ],
   ])("refuses %s", (_case, override, message) => {

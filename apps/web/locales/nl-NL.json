@@ -2983,6 +2983,7 @@
         "reason_too_long": "De reden mag maximaal {max} tekens bevatten.",
         "revoke": "Intrekken",
         "revoke_exemption_body": "{survey} is niet langer uitgezonderd van het beleid voor {policy}. Dit gaat direct in.",
+        "revoke_exemption_for": "Trek de uitzondering voor {policy} in voor {survey}",
         "revoke_exemption_title": "Uitzondering intrekken?",
         "run": "Uitvoering",
         "search_surveys": "Enquêtes zoeken",

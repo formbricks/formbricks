@@ -2983,6 +2983,7 @@
         "reason_too_long": "The reason can be at most {max} characters.",
         "revoke": "Revoke",
         "revoke_exemption_body": "{survey} will no longer be exempt from the {policy} policy. This takes effect right away.",
+        "revoke_exemption_for": "Revoke the {policy} exemption for {survey}",
         "revoke_exemption_title": "Revoke exemption?",
         "run": "Run",
         "search_surveys": "Search surveys",

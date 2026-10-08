@@ -20,6 +20,11 @@ export type TRetentionRun = {
 export const RETENTION_EXEMPTION_POLICIES = ["surveys", "responses"] as const;
 export type TRetentionExemptionPolicy = (typeof RETENTION_EXEMPTION_POLICIES)[number];
 
+/** An exemption's reason, at most this long once trimmed. */
+export const RETENTION_EXEMPTION_REASON_MAX_LENGTH = 500;
+/** How far ahead an exemption may end. Open-ended exemptions are out of scope (ENG-3346). */
+export const RETENTION_EXEMPTION_MAX_YEARS = 10;
+
 /**
  * An exemption as the `retention-exemptions` routes return it (ENG-3695). `until` is the instant it
  * ends; `revokedAt` is set once it is revoked, or closed after it ended.

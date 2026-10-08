@@ -10,7 +10,10 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { requireRetentionOrgAccess } from "@/modules/ee/data-retention/lib/api-access";
-import { resolveRetentionExemptionReadScope } from "@/modules/ee/data-retention/lib/exemption-read-scope";
+import {
+  confirmReadableRetentionExemptions,
+  resolveRetentionExemptionReadScope,
+} from "@/modules/ee/data-retention/lib/exemption-read-scope";
 import {
   RetentionExemptionExistsError,
   createRetentionExemption,
@@ -21,10 +24,10 @@ import {
   revokeRetentionExemption,
   searchRetentionExemptionSurveys,
 } from "@/modules/ee/data-retention/lib/exemptions-service";
+import { RETENTION_EXEMPTION_MAX_YEARS } from "@/modules/ee/data-retention/types";
 import {
   RETENTION_EXEMPTIONS_CURSOR_KIND,
   RETENTION_EXEMPTIONS_SORT,
-  RETENTION_EXEMPTION_MAX_YEARS,
   type TCreateRetentionExemptionBody,
   type TRetentionExemptionSurveyOptionsQuery,
   type TRetentionExemptionsListQuery,
@@ -76,8 +79,11 @@ export async function listRetentionExemptionsOperation({
     sortValue: (exemption) => exemption.createdAt,
   });
 
+  // After paging, so the cursor still follows the rows the query walked.
+  const readable = await confirmReadableRetentionExemptions(access.userId, scope, page);
+
   return successListResponse(
-    page.map(serializeRetentionExemption),
+    readable.map(serializeRetentionExemption),
     { limit: query.limit, nextCursor },
     { requestId }
   );
@@ -105,11 +111,13 @@ export async function getRetentionExemptionOperation({
   });
   if (access instanceof Response) return access;
 
-  const exemption = await findRetentionExemption({
+  const scope = await resolveRetentionExemptionReadScope(access.userId, access.organizationId);
+  const found = await findRetentionExemption({
     id: exemptionId,
     organizationId: access.organizationId,
-    scope: await resolveRetentionExemptionReadScope(access.userId, access.organizationId),
+    scope,
   });
+  const [exemption] = found ? await confirmReadableRetentionExemptions(access.userId, scope, [found]) : [];
   if (!exemption) return problemForbidden(requestId, undefined, instance);
 
   return successResponse(serializeRetentionExemption(exemption), { requestId });
@@ -135,6 +143,9 @@ export async function createRetentionExemptionOperation({
   instance,
   auditLog,
 }: TRequestContext & { body: TCreateRetentionExemptionBody; auditLog?: TV3AuditLog }): Promise<Response> {
+  // What was asked for, so a refused or failed attempt is still attributable in the audit log.
+  if (auditLog) auditLog.newObject = { surveyId: body.surveyId, policy: body.policy };
+
   const survey = await getRetentionExemptionSurvey(body.surveyId);
   if (!survey) return problemForbidden(requestId, undefined, instance);
 
@@ -224,6 +235,25 @@ export async function revokeRetentionExemptionOperation({
   if (access instanceof Response) return access;
   if (auditLog) auditLog.organizationId = access.organizationId;
 
+  // Read first: the audit entry has to say which survey and policy were un-exempted, and the row goes
+  // with its survey if that is deleted later.
+  const exemption = await findRetentionExemption({
+    id: exemptionId,
+    organizationId: access.organizationId,
+    scope: { kind: "organization" },
+  });
+  // Gone since the lookup (its survey was deleted): the same answer as one that never existed.
+  if (!exemption) return problemForbidden(requestId, undefined, instance);
+  if (auditLog) {
+    auditLog.oldObject = {
+      surveyId: exemption.surveyId,
+      policy: exemption.entity,
+      until: exemption.until.toISOString(),
+      reason: exemption.reason,
+      revokedAt: exemption.revokedAt?.toISOString() ?? null,
+    };
+  }
+
   const now = new Date();
   const revoked = await revokeRetentionExemption({ id: exemptionId, revokedById: access.userId, now });
   if (!revoked) {
@@ -233,19 +263,10 @@ export async function revokeRetentionExemptionOperation({
     });
   }
 
-  const exemption = await findRetentionExemption({
-    id: exemptionId,
-    organizationId: access.organizationId,
-    scope: { kind: "organization" },
-  });
-  if (!exemption) throw new Error("A revoked retention exemption could not be read back");
+  if (auditLog)
+    auditLog.newObject = { ...auditLog.oldObject, revokedAt: now.toISOString(), revokedById: access.userId };
 
-  if (auditLog) {
-    auditLog.oldObject = { revokedAt: null };
-    auditLog.newObject = { revokedAt: now.toISOString(), revokedById: access.userId };
-  }
-
-  return successResponse(serializeRetentionExemption(exemption), { requestId });
+  return successResponse(serializeRetentionExemption({ ...exemption, revokedAt: now }), { requestId });
 }
 
 /** Surveys to offer in the Add exemption picker. Owners and managers only, like creating one. */

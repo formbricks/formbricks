@@ -2983,6 +2983,7 @@
         "reason_too_long": "Motivul poate avea cel mult {max} de caractere.",
         "revoke": "Revocă",
         "revoke_exemption_body": "{survey} nu va mai fi exceptat de la politica {policy}. Modificarea intră în vigoare imediat.",
+        "revoke_exemption_for": "Revocă exceptarea {policy} pentru {survey}",
         "revoke_exemption_title": "Revoci excepția?",
         "run": "Rulare",
         "search_surveys": "Caută sondaje",

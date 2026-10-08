@@ -21,6 +21,9 @@ export type TRetentionExemptionRow = {
   workspaceId: string;
   createdById: string | null;
   createdByName: string | null;
+  /** The survey's visibility projection state, for the ENG-3282 graph check. Never serialized. */
+  visibilityVersion: number;
+  visibilityProjectedVersion: number;
 };
 
 /**
@@ -50,7 +53,8 @@ const selectExemptionRows = (where: Prisma.Sql[], tail: Prisma.Sql) => prisma.$q
 >`
   SELECT e."id", e."entity", e."until", e."reason", e."created_at" AS "createdAt", e."revokedAt",
          s."id" AS "surveyId", s."name" AS "surveyName", s."workspaceId",
-         u."id" AS "createdById", u."name" AS "createdByName"
+         u."id" AS "createdById", u."name" AS "createdByName",
+         s."visibilityVersion", s."visibilityProjectedVersion"
   FROM "RetentionExemption" e
   JOIN "Survey" s ON s."id" = e."surveyId"
   LEFT JOIN "User" u ON u."id" = e."createdById"

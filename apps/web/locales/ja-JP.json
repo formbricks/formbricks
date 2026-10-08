@@ -2983,6 +2983,7 @@
         "reason_too_long": "理由は最大{max}文字までです。",
         "revoke": "取り消す",
         "revoke_exemption_body": "{survey}は{policy}ポリシーの除外対象ではなくなります。この変更はすぐに反映されます。",
+        "revoke_exemption_for": "{survey}に対する{policy}の適用除外を取り消す",
         "revoke_exemption_title": "除外を取り消しますか?",
         "run": "実行",
         "search_surveys": "アンケートを検索",

@@ -73,7 +73,7 @@ describe("POST /api/internal/retention-exemptions/{exemptionId}/revoke", () => {
       until: new Date("2031-03-31T21:59:59.999Z"),
       reason: "Audit",
       createdAt: new Date("2030-01-02T00:00:00.000Z"),
-      revokedAt: NOW,
+      revokedAt: null,
       surveyId: "clsrv11111111111111111111",
       surveyName: "Site visit feedback",
       workspaceId: "clwsp11111111111111111111",
@@ -103,10 +103,25 @@ describe("POST /api/internal/retention-exemptions/{exemptionId}/revoke", () => {
         targetId: EXEMPTION_ID,
         organizationId: ORG_ID,
         status: "success",
-        oldObject: { revokedAt: null },
-        newObject: { revokedAt: NOW.toISOString(), revokedById: USER_ID },
+        oldObject: {
+          surveyId: "clsrv11111111111111111111",
+          policy: "surveys",
+          until: "2031-03-31T21:59:59.999Z",
+          reason: "Audit",
+          revokedAt: null,
+        },
+        newObject: {
+          surveyId: "clsrv11111111111111111111",
+          policy: "surveys",
+          until: "2031-03-31T21:59:59.999Z",
+          reason: "Audit",
+          revokedAt: NOW.toISOString(),
+          revokedById: USER_ID,
+        },
       })
     );
+    // The snapshot is taken before the revoke, so the audit names what was un-exempted.
+    expect(mocks.find.mock.invocationCallOrder[0]).toBeLessThan(mocks.revoke.mock.invocationCallOrder[0]);
   });
 
   test("answers a missing exemption exactly like one in an organisation the caller can't manage", async () => {
@@ -116,8 +131,13 @@ describe("POST /api/internal/retention-exemptions/{exemptionId}/revoke", () => {
     mocks.can.mockResolvedValueOnce(false);
     const foreign = await snapshot(await revoke());
 
+    // Deleted with its survey between the lookup and the revoke.
+    mocks.find.mockResolvedValueOnce(null);
+    const vanished = await snapshot(await revoke());
+
     expect(missing.status).toBe(403);
     expect(foreign).toStrictEqual(missing);
+    expect(vanished).toStrictEqual(missing);
     expect(mocks.revoke).not.toHaveBeenCalled();
   });
 
@@ -136,7 +156,12 @@ describe("POST /api/internal/retention-exemptions/{exemptionId}/revoke", () => {
     expect(response.status).toBe(422);
     expect((await response.json()).code).toBe("retention_exemption_not_active");
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ action: "revoked", targetId: EXEMPTION_ID, status: "failure" })
+      expect.objectContaining({
+        action: "revoked",
+        targetId: EXEMPTION_ID,
+        status: "failure",
+        oldObject: expect.objectContaining({ surveyId: "clsrv11111111111111111111", policy: "surveys" }),
+      })
     );
   });
 });

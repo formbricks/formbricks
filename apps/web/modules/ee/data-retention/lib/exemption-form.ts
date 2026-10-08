@@ -2,11 +2,12 @@ import { addYears, subDays } from "date-fns";
 import type { TFunction } from "i18next";
 import { z } from "zod";
 import { getCalendarDayInTimeZone, getEndOfDayInTimeZone } from "@/lib/date-ranges";
-import { RETENTION_EXEMPTION_POLICIES, type TCreateRetentionExemptionInput } from "../types";
-
-/** Mirrors the API's limits (`app/api/internal/retention-exemptions/schemas.ts`). */
-export const EXEMPTION_REASON_MAX_LENGTH = 500;
-const EXEMPTION_MAX_YEARS = 10;
+import {
+  RETENTION_EXEMPTION_MAX_YEARS,
+  RETENTION_EXEMPTION_POLICIES,
+  RETENTION_EXEMPTION_REASON_MAX_LENGTH,
+  type TCreateRetentionExemptionInput,
+} from "../types";
 
 const ZSurveyOption = z.object({ id: z.string(), name: z.string(), workspaceName: z.string() });
 
@@ -28,8 +29,8 @@ export const getAddExemptionFormSchema = (t: TFunction) =>
       .trim()
       .min(1, t("workspace.settings.data_retention.reason_required"))
       .max(
-        EXEMPTION_REASON_MAX_LENGTH,
-        t("workspace.settings.data_retention.reason_too_long", { max: EXEMPTION_REASON_MAX_LENGTH })
+        RETENTION_EXEMPTION_REASON_MAX_LENGTH,
+        t("workspace.settings.data_retention.reason_too_long", { max: RETENTION_EXEMPTION_REASON_MAX_LENGTH })
       ),
   });
 
@@ -41,7 +42,7 @@ export type TAddExemptionFormValues = z.input<ReturnType<typeof getAddExemptionF
  */
 export const getExemptionUntilBounds = (now: Date, timeZone: string): { minDay: Date; maxDay: Date } => ({
   minDay: getCalendarDayInTimeZone(now, timeZone),
-  maxDay: subDays(getCalendarDayInTimeZone(addYears(now, EXEMPTION_MAX_YEARS), timeZone), 1),
+  maxDay: subDays(getCalendarDayInTimeZone(addYears(now, RETENTION_EXEMPTION_MAX_YEARS), timeZone), 1),
 });
 
 /**

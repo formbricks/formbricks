@@ -2983,6 +2983,7 @@
         "reason_too_long": "Der Grund darf höchstens {max} Zeichen lang sein.",
         "revoke": "Widerrufen",
         "revoke_exemption_body": "{survey} ist nicht mehr von der Richtlinie {policy} ausgenommen. Dies gilt sofort.",
+        "revoke_exemption_for": "Die Ausnahme von {policy} für {survey} widerrufen",
         "revoke_exemption_title": "Ausnahme widerrufen?",
         "run": "Durchlauf",
         "search_surveys": "Umfragen durchsuchen",

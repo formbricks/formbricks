@@ -2983,6 +2983,7 @@
         "reason_too_long": "Az indoklás legfeljebb {max} karakter hosszúságú lehet.",
         "revoke": "Visszavonás",
         "revoke_exemption_body": "A(z) {survey} felmérés a továbbiakban nem lesz mentesítve a(z) {policy} szabályzat alól. A módosítás azonnal hatályba lép.",
+        "revoke_exemption_for": "A(z) {policy} alóli mentesség visszavonása a(z) {survey} esetében",
         "revoke_exemption_title": "Visszavonja a kivételt?",
         "run": "Futtatás",
         "search_surveys": "Felmérések keresése",

@@ -2983,6 +2983,7 @@
         "reason_too_long": "Neden en fazla {max} karakter olabilir.",
         "revoke": "İptal et",
         "revoke_exemption_body": "{survey} artık {policy} politikasından muaf olmayacak. Bu değişiklik hemen geçerli olur.",
+        "revoke_exemption_for": "{survey} için {policy} muafiyetini iptal et",
         "revoke_exemption_title": "İstisna iptal edilsin mi?",
         "run": "Çalıştırma",
         "search_surveys": "Anketlerde ara",

@@ -2876,6 +2876,7 @@ checksums:
     workspace/settings/data_retention/reason_too_long: 7850fbf703f08f83e8fd1e7d268cf981
     workspace/settings/data_retention/revoke: be57685a85b6dfeaeb6eab4e9560b520
     workspace/settings/data_retention/revoke_exemption_body: e2a0e5ba39c99319ec9e63033bdc0018
+    workspace/settings/data_retention/revoke_exemption_for: f313bbb13110ba5bfffe4bd1b177425b
     workspace/settings/data_retention/revoke_exemption_title: 32bcbfda37b3d7ccab3749173411612f
     workspace/settings/data_retention/run: cc02693eda0a4aa0c1ab356a79e8afb8
     workspace/settings/data_retention/search_surveys: acb2a01b8fba28ca83171ddeab648558

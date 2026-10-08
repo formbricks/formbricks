@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   isEnabled: vi.fn(),
   resolveScope: vi.fn(),
+  confirmReadable: vi.fn(),
   listPage: vi.fn(),
   find: vi.fn(),
   getSurvey: vi.fn(),
@@ -23,6 +24,7 @@ vi.mock("@/lib/authorization", () => ({ can: mocks.can }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsDataRetentionEnabled: mocks.isEnabled }));
 vi.mock("@/modules/ee/data-retention/lib/exemption-read-scope", () => ({
   resolveRetentionExemptionReadScope: mocks.resolveScope,
+  confirmReadableRetentionExemptions: mocks.confirmReadable,
 }));
 vi.mock("@/modules/ee/data-retention/lib/exemptions-service", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/modules/ee/data-retention/lib/exemptions-service")>();
@@ -115,6 +117,9 @@ describe("GET /api/internal/retention-exemptions", () => {
     mocks.can.mockResolvedValue(true);
     mocks.isEnabled.mockResolvedValue(true);
     mocks.resolveScope.mockResolvedValue(SCOPE);
+    mocks.confirmReadable.mockImplementation(
+      async (_userId: string, _scope: unknown, rows: unknown[]) => rows
+    );
     mocks.listPage.mockResolvedValue([row(EXEMPTION_B)]);
   });
 
@@ -155,6 +160,20 @@ describe("GET /api/internal/retention-exemptions", () => {
 
     const elsewhere = await get(`organizationId=${OTHER_ORG_ID}&limit=1&cursor=${first.meta.nextCursor}`);
     expect(elsewhere.status).toBe(400);
+  });
+
+  test("drops what the graph denies from the page, but keeps the cursor of the rows walked", async () => {
+    mocks.listPage.mockResolvedValue([row(EXEMPTION_B), row(EXEMPTION_A), row(EXEMPTION_A)]);
+    mocks.confirmReadable.mockResolvedValueOnce([]);
+
+    const body = await (await get(`organizationId=${ORG_ID}&limit=2`)).json();
+
+    expect(body.data).toEqual([]);
+    expect(body.meta.nextCursor).toEqual(expect.any(String));
+    expect(mocks.confirmReadable).toHaveBeenCalledWith(USER_ID, SCOPE, [
+      expect.objectContaining({ id: EXEMPTION_B }),
+      expect.objectContaining({ id: EXEMPTION_A }),
+    ]);
   });
 
   test("returns 401 without a session", async () => {
@@ -255,6 +274,14 @@ describe("POST /api/internal/retention-exemptions", () => {
   test("returns 403 to a member, and when the organization isn't entitled", async () => {
     mocks.can.mockResolvedValueOnce(false);
     expect((await post(body)).status).toBe(403);
+    // The refused attempt still says which survey it was for.
+    expect(mocks.queueAuditEvent).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        action: "created",
+        status: "failure",
+        newObject: { surveyId: SURVEY_ID, policy: "surveys" },
+      })
+    );
 
     mocks.isEnabled.mockResolvedValueOnce(false);
     expect((await post(body)).status).toBe(403);

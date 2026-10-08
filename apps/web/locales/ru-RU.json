@@ -2983,6 +2983,7 @@
         "reason_too_long": "Причина может содержать не более {max} символов.",
         "revoke": "Отозвать",
         "revoke_exemption_body": "Для опроса {survey} больше не будет действовать исключение из политики {policy}. Изменение вступит в силу сразу же.",
+        "revoke_exemption_for": "Отозвать исключение из политики {policy} для {survey}",
         "revoke_exemption_title": "Отозвать исключение?",
         "run": "Запуск",
         "search_surveys": "Поиск опросов",

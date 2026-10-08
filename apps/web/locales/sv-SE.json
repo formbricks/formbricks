@@ -2983,6 +2983,7 @@
         "reason_too_long": "Anledningen får vara högst {max} tecken.",
         "revoke": "Återkalla",
         "revoke_exemption_body": "{survey} kommer inte längre att vara undantagen från policyn {policy}. Ändringen träder i kraft direkt.",
+        "revoke_exemption_for": "Återkalla undantaget från {policy} för {survey}",
         "revoke_exemption_title": "Vill du återkalla undantaget?",
         "run": "Körning",
         "search_surveys": "Sök enkäter",

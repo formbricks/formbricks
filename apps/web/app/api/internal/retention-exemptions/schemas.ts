@@ -4,16 +4,15 @@ import {
   computeFilterFingerprint,
   decodeKeysetCursor,
 } from "@/app/api/v3/lib/keyset-cursor";
-import { RETENTION_EXEMPTION_POLICIES } from "@/modules/ee/data-retention/types";
+import {
+  RETENTION_EXEMPTION_POLICIES,
+  RETENTION_EXEMPTION_REASON_MAX_LENGTH,
+} from "@/modules/ee/data-retention/types";
 
 export const RETENTION_EXEMPTIONS_CURSOR_KIND = "retention-exemptions";
 export const RETENTION_EXEMPTIONS_SORT = "-createdAt";
 export const RETENTION_EXEMPTIONS_DEFAULT_LIMIT = 25;
 export const RETENTION_EXEMPTIONS_MAX_LIMIT = 100;
-
-export const RETENTION_EXEMPTION_REASON_MAX_LENGTH = 500;
-/** How far ahead an exemption may end. Open-ended exemptions are out of scope (ENG-3346). */
-export const RETENTION_EXEMPTION_MAX_YEARS = 10;
 
 export const RETENTION_EXEMPTION_SURVEY_OPTIONS_DEFAULT_LIMIT = 20;
 export const RETENTION_EXEMPTION_SURVEY_OPTIONS_MAX_LIMIT = 50;

@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   isEnabled: vi.fn(),
   resolveScope: vi.fn(),
+  confirmReadable: vi.fn(),
   getOrganizationId: vi.fn(),
   find: vi.fn(),
 }));
@@ -15,6 +16,7 @@ vi.mock("@/lib/authorization", () => ({ can: mocks.can }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsDataRetentionEnabled: mocks.isEnabled }));
 vi.mock("@/modules/ee/data-retention/lib/exemption-read-scope", () => ({
   resolveRetentionExemptionReadScope: mocks.resolveScope,
+  confirmReadableRetentionExemptions: mocks.confirmReadable,
 }));
 vi.mock("@/modules/ee/data-retention/lib/exemptions-service", () => ({
   getRetentionExemptionOrganizationId: mocks.getOrganizationId,
@@ -56,6 +58,9 @@ describe("GET /api/internal/retention-exemptions/{exemptionId}", () => {
     mocks.can.mockResolvedValue(true);
     mocks.isEnabled.mockResolvedValue(true);
     mocks.resolveScope.mockResolvedValue(MEMBER_SCOPE);
+    mocks.confirmReadable.mockImplementation(
+      async (_userId: string, _scope: unknown, rows: unknown[]) => rows
+    );
     mocks.getOrganizationId.mockResolvedValue(ORG_ID);
     mocks.find.mockResolvedValue({
       id: EXEMPTION_ID,
@@ -93,7 +98,7 @@ describe("GET /api/internal/retention-exemptions/{exemptionId}", () => {
     });
   });
 
-  test("answers a missing exemption, a foreign one and one outside the reader's scope alike", async () => {
+  test("answers a missing exemption, a foreign one, one outside the reader's scope and one the graph denies alike", async () => {
     mocks.getOrganizationId.mockResolvedValueOnce(null);
     const missing = await snapshot(await get());
 
@@ -103,9 +108,13 @@ describe("GET /api/internal/retention-exemptions/{exemptionId}", () => {
     mocks.find.mockResolvedValueOnce(null);
     const outOfScope = await snapshot(await get());
 
+    mocks.confirmReadable.mockResolvedValueOnce([]);
+    const denied = await snapshot(await get());
+
     expect(missing.status).toBe(403);
     expect(foreign).toStrictEqual(missing);
     expect(outOfScope).toStrictEqual(missing);
+    expect(denied).toStrictEqual(missing);
   });
 
   test("returns 400 on an id that isn't one", async () => {

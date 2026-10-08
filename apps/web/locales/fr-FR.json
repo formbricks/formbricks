@@ -2983,6 +2983,7 @@
         "reason_too_long": "Le motif ne peut pas dépasser {max} caractères.",
         "revoke": "Révoquer",
         "revoke_exemption_body": "{survey} ne sera plus exempté(e) de la politique {policy}. Cette modification prend effet immédiatement.",
+        "revoke_exemption_for": "Révoquer l'exemption {policy} pour {survey}",
         "revoke_exemption_title": "Révoquer l'exemption ?",
         "run": "Exécution",
         "search_surveys": "Rechercher des enquêtes",

@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -36,13 +36,12 @@ import { Textarea } from "@/modules/ui/components/textarea";
 import { useCreateRetentionExemption } from "../../hooks/use-retention-exemptions";
 import { getRetentionPolicyLabel } from "../../lib/display";
 import {
-  EXEMPTION_REASON_MAX_LENGTH,
   type TAddExemptionFormValues,
   getAddExemptionFormSchema,
   getExemptionUntilBounds,
   toCreateRetentionExemptionInput,
 } from "../../lib/exemption-form";
-import { RETENTION_EXEMPTION_POLICIES } from "../../types";
+import { RETENTION_EXEMPTION_POLICIES, RETENTION_EXEMPTION_REASON_MAX_LENGTH } from "../../types";
 import { ExemptionSurveyPicker } from "./exemption-survey-picker";
 
 const DEFAULT_VALUES: TAddExemptionFormValues = { survey: null, policy: "surveys", until: null, reason: "" };
@@ -64,8 +63,17 @@ export const AddExemptionDialog = ({
 }: Readonly<AddExemptionDialogProps>) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
-  // Fixed while the dialog is open, so the picker's range doesn't shift under the user.
+  const policyHelpId = useId();
+  const untilErrorId = useId();
+  // Taken each time the dialog opens and fixed while it is open, so a tab left open overnight doesn't
+  // offer yesterday, and the range doesn't shift under the user. The parent opens it by setting `open`,
+  // which Radix does not report through onOpenChange, so this follows the prop.
   const [bounds, setBounds] = useState(() => getExemptionUntilBounds(new Date(), timeZone));
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setBounds(getExemptionUntilBounds(new Date(), timeZone));
+  }
   const createExemption = useCreateRetentionExemption();
 
   const form = useForm<TAddExemptionFormValues>({
@@ -76,8 +84,7 @@ export const AddExemptionDialog = ({
 
   const handleOpenChange = (next: boolean) => {
     if (createExemption.isPending) return;
-    if (next) setBounds(getExemptionUntilBounds(new Date(), timeZone));
-    else form.reset(DEFAULT_VALUES);
+    if (!next) form.reset(DEFAULT_VALUES);
     onOpenChange(next);
   };
 
@@ -138,7 +145,7 @@ export const AddExemptionDialog = ({
                       onValueChange={field.onChange}
                       disabled={createExemption.isPending}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger aria-describedby={policyHelpId}>
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
@@ -151,7 +158,7 @@ export const AddExemptionDialog = ({
                       </SelectContent>
                     </Select>
                     {/* Not FormDescription: it renders the control's own id, which would duplicate it. */}
-                    <p className="text-xs text-slate-500">
+                    <p id={policyHelpId} className="text-xs text-slate-500">
                       {t("workspace.settings.data_retention.exemption_policy_help")}
                     </p>
                   </FormItem>
@@ -162,10 +169,12 @@ export const AddExemptionDialog = ({
                 name="until"
                 render={({ field, fieldState: { error } }) => (
                   <FormItem>
-                    <FormLabel>{t("workspace.settings.data_retention.until")}</FormLabel>
-                    {/* The picker takes no id, so its trigger is named by its own text, not this label. */}
+                    {/* No htmlFor: naming the trigger "Until" would hide the date it shows. */}
+                    <FormLabel htmlFor={undefined}>{t("workspace.settings.data_retention.until")}</FormLabel>
                     <div>
                       <DatePicker
+                        aria-describedby={error ? untilErrorId : undefined}
+                        aria-invalid={!!error}
                         value={field.value}
                         onChange={field.onChange}
                         locale={locale}
@@ -177,7 +186,11 @@ export const AddExemptionDialog = ({
                         className="w-full"
                       />
                     </div>
-                    {error?.message && <FormError>{error.message}</FormError>}
+                    {error?.message && (
+                      <p id={untilErrorId} className="text-sm text-error">
+                        {error.message}
+                      </p>
+                    )}
                   </FormItem>
                 )}
               />
@@ -191,7 +204,7 @@ export const AddExemptionDialog = ({
                       <Textarea
                         {...field}
                         rows={3}
-                        maxLength={EXEMPTION_REASON_MAX_LENGTH}
+                        maxLength={RETENTION_EXEMPTION_REASON_MAX_LENGTH}
                         isInvalid={!!error}
                         disabled={createExemption.isPending}
                         placeholder={t("workspace.settings.data_retention.reason_placeholder")}
