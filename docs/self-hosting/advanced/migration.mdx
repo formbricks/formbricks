@@ -170,9 +170,10 @@ Then run the migrations again:
 
     With `migration.enabled: false`, scale the Deployment back up instead; its pods run the migrations on start.
 
-    If you scaled the Deployment to 0 in step 3, scale it back up once the Job succeeds
+    Otherwise, if you scaled the Deployment to 0 in step 3, scale it back up once the Job succeeds
     (`kubectl scale deploy -n formbricks formbricks --replicas=<your count>`). `helm upgrade` restores the count
-    only when `autoscaling.enabled` is false, and an autoscaler does not scale up from 0.
+    only when `autoscaling.enabled` is false and `deployment.replicas` is set, and an autoscaler does not scale up
+    from 0.
 
     During a v5 to v6 upgrade, delete and re-create the `formbricks-v6-prepare` Job as the
     [v6 maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade) describes instead.
