@@ -93,7 +93,7 @@ A CSS selector tells Formbricks which element to watch. The symbol in front of t
 | an attribute            | `[data-track="signup"]` | `<button data-track="signup">`   |
 
 <Warning>
-  Without `#` or `.`, the name is read as an element type. `signup-button` looks for a `<signup-button>` tag, not for the id or class — the action saves but never fires.
+  Without `#` or `.`, the name is read as an element type. `signup-button` matches a `<signup-button>` tag, not an element with that id or class. If your page has no such tag, the action saves but cannot trigger.
 </Warning>
 
 Chain several parts without spaces to make a selector more specific, as in `button.btn-primary.large`. A click on an icon or label inside a matched element counts as a click on that element.
