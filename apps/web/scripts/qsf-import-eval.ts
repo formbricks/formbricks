@@ -144,13 +144,19 @@ const runOnce = async (name: string, qsf: Record<string, unknown>, record: boole
     outputTokens,
     outputTokensPerQuestion: questions > 0 ? Math.round(outputTokens / questions) : null,
     passesCreateCheck: checkQsfDraft(result.payload).length === 0,
-    issues: result.report.issues.map((issue) => issue.code).sort(),
+    issues: result.report.issues.map((issue) => issue.code).sort((left, right) => left.localeCompare(right)),
   };
 };
 
-const main = async () => {
-  const args = parseArgs(process.argv.slice(2));
-  const sources: { name: string; qsf: Record<string, unknown>; recordable: boolean }[] = args.file
+interface TSource {
+  name: string;
+  qsf: Record<string, unknown>;
+  recordable: boolean;
+}
+
+/** What to import: the `--file`, or the fixtures, each with whether `--record` may rewrite its plan. */
+const loadSources = (args: TArgs): TSource[] =>
+  args.file
     ? [
         {
           name: basename(args.file),
@@ -164,31 +170,43 @@ const main = async () => {
         recordable: !NEVER_RECORDED.has(basename(name, ".qsf")),
       }));
 
-  if (args.record && args.file) {
+/** Say which plans `--record` leaves alone, and why. */
+const explainRecording = (args: TArgs, sources: readonly TSource[]): void => {
+  if (!args.record) return;
+  if (args.file) {
     console.log("--record is ignored for --file: a recorded plan would paraphrase the file.");
+    return;
   }
-  if (args.record) {
-    for (const source of sources) {
-      if (!source.recordable && !args.file) console.log(`--record leaves ${source.name}'s plan as it is.`);
-    }
+  for (const source of sources) {
+    if (!source.recordable) console.log(`--record leaves ${source.name}'s plan as it is.`);
   }
+};
 
+/** One run, printed as a line of JSON: its summary, or the error's name and nothing else. */
+const printRun = async (source: TSource, run: number, record: boolean): Promise<void> => {
+  try {
+    const summary = await runOnce(source.name, source.qsf, record);
+    console.log(JSON.stringify({ run, ...summary }));
+  } catch (error) {
+    // The name and nothing else: a provider's message can quote the prompt.
+    console.log(
+      JSON.stringify({ run, fixture: source.name, failed: error instanceof Error ? error.name : "unknown" })
+    );
+    process.exitCode = 1;
+  }
+};
+
+const main = async () => {
+  const args = parseArgs(process.argv.slice(2));
+  const sources = loadSources(args);
+  explainRecording(args, sources);
+
+  // One run at a time, by design: runs side by side would share the provider's rate limit and skew
+  // the latencies this script is for.
   for (const source of sources) {
     for (let run = 1; run <= args.runs; run++) {
-      try {
-        const summary = await runOnce(source.name, source.qsf, args.record && source.recordable && run === 1);
-        console.log(JSON.stringify({ run, ...summary }));
-      } catch (error) {
-        // The name and nothing else: a provider's message can quote the prompt.
-        console.log(
-          JSON.stringify({
-            run,
-            fixture: source.name,
-            failed: error instanceof Error ? error.name : "unknown",
-          })
-        );
-        process.exitCode = 1;
-      }
+      const record = args.record && source.recordable && run === 1;
+      await printRun(source, run, record); // NOSONAR(typescript:S9382) -- runs are sequential on purpose
     }
   }
 };
