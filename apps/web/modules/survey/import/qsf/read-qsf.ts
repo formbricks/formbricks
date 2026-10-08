@@ -126,6 +126,84 @@ interface TRawBlock {
   elements: (string | null)[];
 }
 
+interface TReadElements {
+  questions: Map<string, TRawQuestion>;
+  blocks: Map<string, TRawBlock>;
+  flow: { index: number; nodes: unknown[] } | null;
+  options: TRecord | null;
+}
+
+/** One open level of the flow walk: its elements, where it is, and the rule gating it, if any. */
+interface TFlowFrame {
+  nodes: unknown[];
+  next: number;
+  depth: number;
+  gate: { rule: TQsfLogicRule; attached: boolean } | null;
+}
+
+/**
+ * A block the flow shows, the first time it does. It takes every rule of the levels it sits in that
+ * has gated no block yet.
+ */
+function visitBlock(
+  blockId: string | null,
+  stack: readonly TFlowFrame[],
+  visited: Set<string>,
+  result: TFlowResult
+): void {
+  if (blockId === null || visited.has(blockId)) return;
+  visited.add(blockId);
+
+  const gates: TQsfLogicRule[] = [];
+  for (const open of stack) {
+    if (open.gate && !open.gate.attached) {
+      open.gate.attached = true;
+      gates.push(open.gate.rule);
+    }
+  }
+  result.visits.push({ blockId, gates });
+}
+
+/**
+ * An option list's ids in display order: `ChoiceOrder` first (ids as strings or numbers), then any the
+ * order leaves out, each once and only when the list has it. Refused at the first id past the limit,
+ * before any option is read.
+ */
+function optionIds(records: TRecord, order: unknown, tooMany: () => Error): string[] {
+  const ids: string[] = [];
+  const seen = new Set<string>();
+  const consider = (id: string) => {
+    if (seen.has(id) || !Object.hasOwn(records, id)) return;
+    seen.add(id);
+    ids.push(id);
+    if (ids.length > QSF_MAX_OPTIONS_PER_QUESTION) throw tooMany();
+  };
+  if (Array.isArray(order)) {
+    for (const id of order) if (str(id) !== null) consider(String(id));
+  }
+  for (const id of Object.keys(records)) consider(id);
+  return ids;
+}
+
+/** How an expression joins the one before it, when it has one before it and says `And` or `Or`. */
+const readConjunction = (expression: TRecord, joined: boolean): Pick<TQsfLogicCondition, "conjunction"> => {
+  const conjunction = token(own(expression, "Conjuction"))?.toLowerCase();
+  return joined && (conjunction === "and" || conjunction === "or") ? { conjunction } : {};
+};
+
+/** The value an expression compares with, cut to its bound. */
+const readCompared = (expression: TRecord): Pick<TQsfLogicCondition, "value"> => {
+  const right = str(own(expression, "RightOperand"));
+  return right === null ? {} : { value: bounded(right, MAX_LOGIC_VALUE_CHARS) };
+};
+
+/** A block list's entries: the array itself, or an older export's object keyed by index. */
+const blockEntries = (payload: unknown): unknown[] => {
+  if (Array.isArray(payload)) return payload;
+  if (isRecord(payload)) return Object.keys(payload).map((key) => payload[key]);
+  return [];
+};
+
 interface TFlowVisit {
   blockId: string;
   gates: TQsfLogicRule[];
@@ -255,16 +333,9 @@ class QsfReader {
     return normalized;
   }
 
-  private readElements(elements: unknown[]): {
-    questions: Map<string, TRawQuestion>;
-    blocks: Map<string, TRawBlock>;
-    flow: { index: number; nodes: unknown[] } | null;
-    options: TRecord | null;
-  } {
-    const questions = new Map<string, TRawQuestion>();
-    let blocks: Map<string, TRawBlock> | null = null;
-    let flow: { index: number; nodes: unknown[] } | null = null;
-    let options: TRecord | null = null;
+  private readElements(elements: unknown[]): TReadElements {
+    const read: TReadElements = { questions: new Map(), blocks: new Map(), flow: null, options: null };
+    let hasBlocks = false;
 
     elements.forEach((element, index) => {
       if (!isRecord(element)) return;
@@ -272,60 +343,55 @@ class QsfReader {
       const payload = own(element, "Payload");
 
       if (kind === "SQ") {
-        const ref = str(own(element, "PrimaryAttribute"));
-        if (!isRecord(payload)) return;
-        if (ref === null || !QUESTION_REF_PATTERN.test(ref)) {
-          this.issues.push({
-            code: "question_skipped",
-            severity: "warning",
-            ...this.questionTag(payload),
-            params: { cause: "invalid_id" },
-          });
-          return;
-        }
-        if (questions.has(ref)) {
-          throw inputError(`qsf.SurveyElements.${index}`, "Two questions in the file share one question id");
-        }
-        questions.set(ref, {
-          ref,
-          elementIndex: index,
-          payload,
-          secondaryAttribute: str(own(element, "SecondaryAttribute")),
-        });
-        return;
-      }
-
-      if (kind === "BL") {
-        if (blocks) throw inputError(`qsf.SurveyElements.${index}`, "The file has two block lists");
-        blocks = this.readBlocks(index, payload);
-        return;
-      }
-
-      if (kind === "FL") {
-        if (flow) throw inputError(`qsf.SurveyElements.${index}`, "The file has two survey flows");
+        this.readQuestionElement(element, index, read.questions);
+      } else if (kind === "BL") {
+        if (hasBlocks) throw inputError(`qsf.SurveyElements.${index}`, "The file has two block lists");
+        hasBlocks = true;
+        read.blocks = this.readBlocks(index, payload);
+      } else if (kind === "FL") {
+        if (read.flow) throw inputError(`qsf.SurveyElements.${index}`, "The file has two survey flows");
         const nodes = isRecord(payload) ? own(payload, "Flow") : null;
-        flow = { index, nodes: Array.isArray(nodes) ? nodes : [] };
-        return;
-      }
-
-      if (kind === "SO") {
-        if (options)
+        read.flow = { index, nodes: Array.isArray(nodes) ? nodes : [] };
+      } else if (kind === "SO") {
+        if (read.options) {
           throw inputError(`qsf.SurveyElements.${index}`, "The file has two sets of survey options");
-        options = isRecord(payload) ? payload : {};
+        }
+        read.options = isRecord(payload) ? payload : {};
       }
       // QC, STAT, RS, SCO, PROJ, Notes and anything newer carry nothing the import uses.
     });
 
-    return { questions, blocks: blocks ?? new Map(), flow, options };
+    return read;
+  }
+
+  /** One `SQ` element: kept under its question id when the id is one, reported otherwise. */
+  private readQuestionElement(element: TRecord, index: number, questions: Map<string, TRawQuestion>): void {
+    const payload = own(element, "Payload");
+    if (!isRecord(payload)) return;
+    const ref = str(own(element, "PrimaryAttribute"));
+    if (ref === null || !QUESTION_REF_PATTERN.test(ref)) {
+      this.issues.push({
+        code: "question_skipped",
+        severity: "warning",
+        ...this.questionTag(payload),
+        params: { cause: "invalid_id" },
+      });
+      return;
+    }
+    if (questions.has(ref)) {
+      throw inputError(`qsf.SurveyElements.${index}`, "Two questions in the file share one question id");
+    }
+    questions.set(ref, {
+      ref,
+      elementIndex: index,
+      payload,
+      secondaryAttribute: str(own(element, "SecondaryAttribute")),
+    });
   }
 
   /** `BL` is an array in newer exports and an object keyed by index in older ones. */
   private readBlocks(index: number, payload: unknown): Map<string, TRawBlock> {
-    const entries = Array.isArray(payload)
-      ? payload
-      : isRecord(payload)
-        ? Object.keys(payload).map((key) => payload[key])
-        : [];
+    const entries = blockEntries(payload);
     if (entries.length > QSF_MAX_BLOCKS) {
       throw inputError(
         `qsf.SurveyElements.${index}.Payload`,
@@ -339,37 +405,40 @@ class QsfReader {
       const id = str(own(entry, "ID"));
       if (id === null || id.length > 64 || blocks.has(id)) continue;
 
-      const rawElements = own(entry, "BlockElements");
-      const elements: (string | null)[] = [];
-      if (Array.isArray(rawElements)) {
-        this.blockElementCount += rawElements.length;
-        if (this.blockElementCount > QSF_MAX_BLOCK_ELEMENTS) {
-          throw inputError(
-            `qsf.SurveyElements.${index}.Payload`,
-            `The survey's blocks hold more than ${QSF_MAX_BLOCK_ELEMENTS} questions and page breaks`
-          );
-        }
-        for (const item of rawElements) {
-          if (!isRecord(item)) continue;
-          const type = own(item, "Type");
-          if (type === "Page Break") {
-            elements.push(null);
-          } else if (type === "Question") {
-            const ref = str(own(item, "QuestionID"));
-            if (ref !== null && QUESTION_REF_PATTERN.test(ref)) elements.push(ref);
-          }
-        }
-      }
-
       blocks.set(id, {
         id,
         name: bounded(str(own(entry, "Description")) ?? "", QSF_MAX_NAME_CHARS),
         isTrash: own(entry, "Type") === "Trash",
-        elements,
+        elements: this.readBlockElements(index, own(entry, "BlockElements")),
       });
     }
 
     return blocks;
+  }
+
+  /** A block's question refs in order, `null` for a page break; counted against the limit first. */
+  private readBlockElements(index: number, rawElements: unknown): (string | null)[] {
+    if (!Array.isArray(rawElements)) return [];
+    this.blockElementCount += rawElements.length;
+    if (this.blockElementCount > QSF_MAX_BLOCK_ELEMENTS) {
+      throw inputError(
+        `qsf.SurveyElements.${index}.Payload`,
+        `The survey's blocks hold more than ${QSF_MAX_BLOCK_ELEMENTS} questions and page breaks`
+      );
+    }
+
+    const elements: (string | null)[] = [];
+    for (const item of rawElements) {
+      if (!isRecord(item)) continue;
+      const type = own(item, "Type");
+      if (type === "Page Break") {
+        elements.push(null);
+        continue;
+      }
+      const ref = type === "Question" ? str(own(item, "QuestionID")) : null;
+      if (ref !== null && QUESTION_REF_PATTERN.test(ref)) elements.push(ref);
+    }
+    return elements;
   }
 
   /**
@@ -381,18 +450,11 @@ class QsfReader {
     const result: TFlowResult = { visits: [], embeddedDataNames: [], trailingGates: [] };
     if (!flow) return result;
 
-    interface TFrame {
-      nodes: unknown[];
-      next: number;
-      depth: number;
-      gate: { rule: TQsfLogicRule; attached: boolean } | null;
-    }
-    const stack: TFrame[] = [{ nodes: flow.nodes, next: 0, depth: 1, gate: null }];
+    const stack: TFlowFrame[] = [{ nodes: flow.nodes, next: 0, depth: 1, gate: null }];
     const visited = new Set<string>();
     let nodeCount = 0;
 
-    while (stack.length > 0) {
-      const frame = stack[stack.length - 1];
+    for (let frame = stack.at(-1); frame; frame = stack.at(-1)) {
       if (frame.next >= frame.nodes.length) {
         stack.pop();
         if (frame.gate && !frame.gate.attached) {
@@ -413,55 +475,58 @@ class QsfReader {
 
       const type = own(node, "Type");
       if (type === "Block" || type === "Standard") {
-        const blockId = str(own(node, "ID"));
-        if (blockId === null || visited.has(blockId)) continue;
-        visited.add(blockId);
-
-        const gates: TQsfLogicRule[] = [];
-        for (const open of stack) {
-          if (open.gate && !open.gate.attached) {
-            open.gate.attached = true;
-            gates.push(open.gate.rule);
-          }
-        }
-        result.visits.push({ blockId, gates });
-        continue;
+        visitBlock(str(own(node, "ID")), stack, visited, result);
+      } else if (type === "EmbeddedData") {
+        this.readEmbeddedDataNode(node, result);
+      } else {
+        const nested = this.openNestedFlow(node, type, frame, flow.index);
+        if (nested) stack.push(nested);
       }
-
-      if (type === "EmbeddedData") {
-        const fields = own(node, "EmbeddedData");
-        if (Array.isArray(fields)) {
-          this.countEmbeddedDataFields(fields.length);
-          for (const field of fields) {
-            if (!isRecord(field)) continue;
-            const name = str(own(field, "Field")) ?? str(own(field, "Description"));
-            if (name !== null && name.trim().length > 0) result.embeddedDataNames.push(name);
-          }
-        }
-        continue;
-      }
-
-      const children = own(node, "Flow");
-      if (!Array.isArray(children)) continue;
-      if (frame.depth + 1 > QSF_MAX_FLOW_DEPTH) {
-        throw inputError(
-          `qsf.SurveyElements.${flow.index}.Payload.Flow`,
-          `The survey flow is nested deeper than ${QSF_MAX_FLOW_DEPTH} levels`
-        );
-      }
-
-      let gate: TFrame["gate"] = null;
-      if (type === "Branch") {
-        const rule: TQsfLogicRule = { kind: "branch", conditions: [] };
-        this.pendingBranchLogic.set(rule, own(node, "BranchLogic"));
-        gate = { rule, attached: false };
-      } else if (type === "BlockRandomizer" || type === "Randomizer") {
-        gate = { rule: { kind: "randomizer", conditions: [] }, attached: false };
-      }
-      stack.push({ nodes: children, next: 0, depth: frame.depth + 1, gate });
     }
 
     return result;
+  }
+
+  /** The names an `EmbeddedData` flow element sets, counted against the limit before they are read. */
+  private readEmbeddedDataNode(node: TRecord, result: TFlowResult): void {
+    const fields = own(node, "EmbeddedData");
+    if (!Array.isArray(fields)) return;
+    this.countEmbeddedDataFields(fields.length);
+    for (const field of fields) {
+      if (!isRecord(field)) continue;
+      const name = str(own(field, "Field")) ?? str(own(field, "Description"));
+      if (name !== null && name.trim().length > 0) result.embeddedDataNames.push(name);
+    }
+  }
+
+  /**
+   * The frame for a flow element's children — a branch, randomizer or group — or `null` when it has
+   * none. A branch or randomizer carries a gate for the first page under it.
+   */
+  private openNestedFlow(
+    node: TRecord,
+    type: unknown,
+    parent: TFlowFrame,
+    flowIndex: number
+  ): TFlowFrame | null {
+    const children = own(node, "Flow");
+    if (!Array.isArray(children)) return null;
+    if (parent.depth + 1 > QSF_MAX_FLOW_DEPTH) {
+      throw inputError(
+        `qsf.SurveyElements.${flowIndex}.Payload.Flow`,
+        `The survey flow is nested deeper than ${QSF_MAX_FLOW_DEPTH} levels`
+      );
+    }
+
+    let gate: TFlowFrame["gate"] = null;
+    if (type === "Branch") {
+      const rule: TQsfLogicRule = { kind: "branch", conditions: [] };
+      this.pendingBranchLogic.set(rule, own(node, "BranchLogic"));
+      gate = { rule, attached: false };
+    } else if (type === "BlockRandomizer" || type === "Randomizer") {
+      gate = { rule: { kind: "randomizer", conditions: [] }, attached: false };
+    }
+    return { nodes: children, next: 0, depth: parent.depth + 1, gate };
   }
 
   private buildPages(
@@ -475,36 +540,7 @@ class QsfReader {
 
     for (const visit of flow.visits) {
       const block = blocks.get(visit.blockId);
-      if (!block || block.isTrash) {
-        lastPageOfVisit.push(pages.at(-1) ?? null);
-        continue;
-      }
-
-      const blockNameKey = this.addText("b", "plain", null, block.name);
-      let current: string[] = [];
-      let firstPageOfBlock = true;
-      const flush = () => {
-        if (current.length === 0) return;
-        pages.push({
-          id: `p${pages.length + 1}`,
-          blockId: block.id,
-          blockNameKey,
-          questionRefs: current,
-          logic: firstPageOfBlock ? visit.gates : [],
-        });
-        firstPageOfBlock = false;
-        current = [];
-      };
-
-      for (const ref of block.elements) {
-        if (ref === null) {
-          flush();
-        } else if (rawQuestions.has(ref) && !placed.has(ref)) {
-          placed.add(ref);
-          current.push(ref);
-        }
-      }
-      flush();
+      if (block && !block.isTrash) this.addBlockPages(block, visit, rawQuestions, placed, pages);
       lastPageOfVisit.push(pages.at(-1) ?? null);
 
       if (placed.size > QSF_MAX_QUESTIONS) {
@@ -520,10 +556,55 @@ class QsfReader {
       if (page) page.logic = [...page.logic, rule];
     }
 
-    // Questions the flow never shows. Trashed ones are deleted in Qualtrics and not worth a line.
+    this.reportUnplacedQuestions(blocks, rawQuestions, placed);
+    return pages;
+  }
+
+  /** A block's pages, one per page break, holding the questions no earlier page placed. */
+  private addBlockPages(
+    block: TRawBlock,
+    visit: TFlowVisit,
+    rawQuestions: Map<string, TRawQuestion>,
+    placed: Set<string>,
+    pages: TQsfPage[]
+  ): void {
+    const blockNameKey = this.addText("b", "plain", null, block.name);
+    let current: string[] = [];
+    let firstPageOfBlock = true;
+    const flush = () => {
+      if (current.length === 0) return;
+      pages.push({
+        id: `p${pages.length + 1}`,
+        blockId: block.id,
+        blockNameKey,
+        questionRefs: current,
+        logic: firstPageOfBlock ? visit.gates : [],
+      });
+      firstPageOfBlock = false;
+      current = [];
+    };
+
+    for (const ref of block.elements) {
+      if (ref === null) {
+        flush();
+      } else if (rawQuestions.has(ref) && !placed.has(ref)) {
+        placed.add(ref);
+        current.push(ref);
+      }
+    }
+    flush();
+  }
+
+  /** Questions the flow never shows. Trashed ones are deleted in Qualtrics and not worth a line. */
+  private reportUnplacedQuestions(
+    blocks: Map<string, TRawBlock>,
+    rawQuestions: Map<string, TRawQuestion>,
+    placed: Set<string>
+  ): void {
     const trashed = new Set<string>();
     for (const block of blocks.values()) {
-      if (block.isTrash) for (const ref of block.elements) if (ref !== null) trashed.add(ref);
+      if (!block.isTrash) continue;
+      for (const ref of block.elements) if (ref !== null) trashed.add(ref);
     }
     for (const raw of rawQuestions.values()) {
       if (placed.has(raw.ref) || trashed.has(raw.ref)) continue;
@@ -534,8 +615,6 @@ class QsfReader {
         params: { cause: "not_in_flow" },
       });
     }
-
-    return pages;
   }
 
   private readQuestion(raw: TRawQuestion, pageId: string, position: number): TQsfQuestion {
@@ -609,24 +688,12 @@ class QsfReader {
     const records = ownRecord(payload, mapKey);
     if (!records) return [];
 
-    const order = own(payload, orderKey);
-    const ids: string[] = [];
-    const seen = new Set<string>();
-    // Refused at the first option past the limit, before any is read.
-    const consider = (id: string) => {
-      if (seen.has(id) || !Object.hasOwn(records, id)) return;
-      seen.add(id);
-      ids.push(id);
-      if (ids.length > QSF_MAX_OPTIONS_PER_QUESTION) {
-        throw inputError(
-          `qsf.SurveyElements.${elementIndex}.Payload.${mapKey}`,
-          `A question has more than ${QSF_MAX_OPTIONS_PER_QUESTION} ${mapKey === "Choices" ? "choices" : "answers"}`
-        );
-      }
-    };
-    if (Array.isArray(order)) for (const id of order) if (str(id) !== null) consider(String(id));
-    for (const id of Object.keys(records)) consider(id);
-
+    const ids = optionIds(records, own(payload, orderKey), () =>
+      inputError(
+        `qsf.SurveyElements.${elementIndex}.Payload.${mapKey}`,
+        `A question has more than ${QSF_MAX_OPTIONS_PER_QUESTION} ${mapKey === "Choices" ? "choices" : "answers"}`
+      )
+    );
     const options: TQsfOption[] = [];
     for (const id of ids) {
       if (!OPTION_ID_PATTERN.test(id) || isObjectMemberName(id)) {
@@ -660,9 +727,32 @@ class QsfReader {
   ): void {
     const languages = ownRecord(payload, "Language");
     if (!languages) return;
+    const rawCodes = this.languageKeys(elementIndex, languages);
 
-    // Counted before any key is read: variants of one code (`DE`, ` de`) normalize to one language,
-    // so only a count bounds what they cost.
+    // A language another key of this question already filled costs nothing: the first key wins.
+    const applied = new Set<string>();
+    for (const rawCode of rawCodes) {
+      const language = this.translationLanguage(rawCode);
+      if (!language || language === this.defaultLanguage || applied.has(language)) continue;
+      const translation = ownRecord(languages, rawCode);
+      if (!translation) continue;
+      applied.add(language);
+      this.addTranslationLanguage(language);
+
+      const questionText = str(own(translation, "QuestionText"));
+      if (questionText !== null) this.texts.get(textKey)?.byLanguage.set(language, questionText);
+      const choices = ownRecord(translation, "Choices");
+      if (choices) this.readOptionTranslations(choices, choiceKeys, language);
+      const answers = ownRecord(translation, "Answers");
+      if (answers) this.readOptionTranslations(answers, answerKeys, language);
+    }
+  }
+
+  /**
+   * A question's raw `Language` keys, counted against the limits before any is read: variants of one
+   * code (`DE`, ` de`) normalize to one language, so only a count bounds what they cost.
+   */
+  private languageKeys(elementIndex: number, languages: TRecord): string[] {
     const rawCodes = Object.keys(languages);
     if (rawCodes.length > QSF_MAX_LANGUAGE_KEYS_PER_QUESTION) {
       throw inputError(
@@ -677,28 +767,7 @@ class QsfReader {
         `The survey has more than ${QSF_MAX_LANGUAGE_KEYS} translations`
       );
     }
-
-    // A language another key of this question already filled costs nothing: the first key wins.
-    const applied = new Set<string>();
-    for (const rawCode of rawCodes) {
-      const language = this.translationLanguage(rawCode);
-      if (!language || language === this.defaultLanguage || applied.has(language)) continue;
-      const translation = ownRecord(languages, rawCode);
-      if (!translation) continue;
-      applied.add(language);
-      this.addTranslationLanguage(language);
-
-      const questionText = str(own(translation, "QuestionText"));
-      if (questionText !== null) this.texts.get(textKey)?.byLanguage.set(language, questionText);
-
-      for (const [mapKey, keys] of [
-        ["Choices", choiceKeys],
-        ["Answers", answerKeys],
-      ] as const) {
-        const records = ownRecord(translation, mapKey);
-        if (records) this.readOptionTranslations(records, keys, language);
-      }
-    }
+    return rawCodes;
   }
 
   /** A survey language, refused the moment it would be one more than a Formbricks survey can have. */
@@ -808,19 +877,16 @@ class QsfReader {
   private readExpression(expression: TRecord, joined: boolean): TQsfLogicCondition {
     const logicType = token(own(expression, "LogicType"));
     const operator = token(own(expression, "Operator")) ?? "unknown";
-    const conjunctionRaw = token(own(expression, "Conjuction"))?.toLowerCase();
-    const conjunction =
-      joined && (conjunctionRaw === "and" || conjunctionRaw === "or") ? conjunctionRaw : undefined;
-    const right = str(own(expression, "RightOperand"));
-    const value = right === null ? undefined : bounded(right, MAX_LOGIC_VALUE_CHARS);
+    const conjunction = readConjunction(expression, joined);
+    const value = readCompared(expression);
 
     if (logicType === "EmbeddedField") {
       const field = str(own(expression, "LeftOperand"));
       return {
         ...(field === null ? {} : { field: bounded(field, MAX_LOGIC_VALUE_CHARS) }),
         operator,
-        ...(value === undefined ? {} : { value }),
-        ...(conjunction ? { conjunction } : {}),
+        ...value,
+        ...conjunction,
       };
     }
 
@@ -828,20 +894,15 @@ class QsfReader {
       const locator = this.readLocator(
         str(own(expression, "LeftOperand")) ?? str(own(expression, "ChoiceLocator"))
       );
-      return {
-        ...locator,
-        operator,
-        ...(value === undefined ? {} : { value }),
-        ...(conjunction ? { conjunction } : {}),
-      };
+      return { ...locator, operator, ...value, ...conjunction };
     }
 
-    return { operator: logicType ?? operator, ...(conjunction ? { conjunction } : {}) };
+    return { operator: logicType ?? operator, ...conjunction };
   }
 
   /** `q://QID3/SelectableChoice/2` → the question and the text key of its choice. */
   private readLocator(locator: string | null): Pick<TQsfLogicCondition, "questionRef" | "choiceKey"> {
-    if (locator === null || !locator.startsWith("q://")) return {};
+    if (!locator?.startsWith("q://")) return {};
     const [questionRef, , choiceId] = locator.slice(4, 200).split("/");
     if (!questionRef || !QUESTION_REF_PATTERN.test(questionRef)) return {};
     const choiceKey = choiceId ? this.choiceKeysByRef.get(questionRef)?.get(choiceId) : undefined;
