@@ -2238,7 +2238,7 @@
       "upload_contacts_success": "A partnerek sikeresen feltöltve"
     },
     "custom_css": {
-      "base_css_help": "Az alap CSS világos és sötét módban egyaránt érvényes.",
+      "base_css_help": "Ez a CSS világos és sötét módban egyaránt érvényesül.",
       "base_css_label": "Alap CSS",
       "clear_all": "Összes CSS törlése",
       "dark_css_help": "A sötét CSS a sötét módhoz tartozó szabályokat egészíti ki. Az alap CSS sötét módban is érvényes, ezért kérjük, csak a módosuló elemeket adja meg.",
@@ -2275,6 +2275,7 @@
       "status_valid": "A CSS érvényes.",
       "status_valid_with_notes": "A CSS menthető. Kérjük, tekintse át az alábbi megjegyzéseket:",
       "status_valid_with_warnings": "A CSS menthető. {count, plural, one {{count} szabály eltávolításra kerül} other {{count} szabály eltávolításra kerül}}:",
+      "survey_base_css_label": "Kérdőív alap CSS",
       "survey_precedence": "A munkaterület CSS-e után kerül alkalmazásra, ezért felülírja azt azokon a területeken, ahol mindkettő ugyanazt az elemet formázza.",
       "title": "Egyéni CSS",
       "unsaved_changes_restored": "A korábbi nem mentett módosítások visszaállításra kerültek",

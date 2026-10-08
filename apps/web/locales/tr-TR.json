@@ -2238,7 +2238,7 @@
       "upload_contacts_success": "Kişiler başarıyla yüklendi"
     },
     "custom_css": {
-      "base_css_help": "Temel CSS, açık ve koyu modda uygulanır.",
+      "base_css_help": "Bu CSS, hem açık hem de koyu modda geçerlidir.",
       "base_css_label": "Temel CSS",
       "clear_all": "Tüm CSS'i temizle",
       "dark_css_help": "Koyu CSS, koyu mod için kurallar ekler. Temel CSS koyu modda da uygulanmaya devam eder, bu yüzden yalnızca değişmesi gerekenleri ekle.",
@@ -2275,6 +2275,7 @@
       "status_valid": "CSS geçerli.",
       "status_valid_with_notes": "CSS kaydedilebilir. Aşağıdaki notlara göz at:",
       "status_valid_with_warnings": "CSS kaydedilebilir. {count, plural, one {{count} kural} other {{count} kural}} kaldırıldı:",
+      "survey_base_css_label": "Anket temel CSS'i",
       "survey_precedence": "Çalışma alanı CSS'inden sonra gelir, bu yüzden ikisi de aynı öğeyi biçimlendirdiğinde onu geçersiz kılar.",
       "title": "Özel CSS",
       "unsaved_changes_restored": "Daha önceki kaydedilmemiş değişiklikler geri yüklendi",

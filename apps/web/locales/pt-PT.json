@@ -2238,7 +2238,7 @@
       "upload_contacts_success": "Contactos carregados com sucesso"
     },
     "custom_css": {
-      "base_css_help": "O CSS base aplica-se nos modos claro e escuro.",
+      "base_css_help": "Este CSS aplica-se nos modos claro e escuro.",
       "base_css_label": "CSS base",
       "clear_all": "Limpar todo o CSS",
       "dark_css_help": "O CSS escuro adiciona regras para o modo escuro. O CSS base continua a aplicar-se no modo escuro, por isso adiciona apenas o que muda.",
@@ -2275,6 +2275,7 @@
       "status_valid": "O CSS é válido.",
       "status_valid_with_notes": "O CSS pode ser guardado. Vê as notas abaixo:",
       "status_valid_with_warnings": "O CSS pode ser guardado. {count, plural, one {{count} regra é removida} many {{count} regras são removidas} other {{count} regras são removidas}}:",
+      "survey_base_css_label": "CSS base do inquérito",
       "survey_precedence": "Vem depois do CSS do espaço de trabalho, por isso substitui-o nos pontos em que ambos definem o estilo do mesmo elemento.",
       "title": "CSS personalizado",
       "unsaved_changes_restored": "As alterações não guardadas anteriormente foram restauradas",

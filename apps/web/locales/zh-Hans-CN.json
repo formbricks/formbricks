@@ -2238,7 +2238,7 @@
       "upload_contacts_success": "联系人上传成功"
     },
     "custom_css": {
-      "base_css_help": "基础 CSS 在浅色和深色模式下均生效。",
+      "base_css_help": "此 CSS 在浅色和深色模式下均适用。",
       "base_css_label": "基础 CSS",
       "clear_all": "清除所有 CSS",
       "dark_css_help": "深色 CSS 用于为深色模式添加额外规则。基础 CSS 在深色模式下仍然生效,因此只需添加有变化的部分即可。",
@@ -2275,6 +2275,7 @@
       "status_valid": "CSS 有效。",
       "status_valid_with_notes": "CSS 可以保存。请查看以下说明:",
       "status_valid_with_warnings": "CSS 可以保存。{count, plural, other {有 {count} 条规则将被移除:}}",
+      "survey_base_css_label": "问卷基础 CSS",
       "survey_precedence": "它位于工作区 CSS 之后,因此当两者对同一元素设置样式时,将以它为准。",
       "title": "自定义 CSS",
       "unsaved_changes_restored": "已恢复之前未保存的更改",

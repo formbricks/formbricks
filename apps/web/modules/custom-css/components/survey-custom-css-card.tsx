@@ -67,7 +67,6 @@ export const SurveyCustomCssCard = ({
     <InheritedWorkspaceCss
       source={config.workspace.source}
       status={config.workspace.status}
-      appearance={appearance}
       appearanceHref={appearanceHref}
     />
   );

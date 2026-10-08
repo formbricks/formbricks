@@ -132,10 +132,11 @@ export const CustomCssCard = ({
     }
   };
 
-  const fieldLabel =
-    appearance === "dark"
-      ? t("workspace.custom_css.dark_css_label")
+  const baseCssLabel =
+    scope === "survey"
+      ? t("workspace.custom_css.survey_base_css_label")
       : t("workspace.custom_css.base_css_label");
+  const fieldLabel = appearance === "dark" ? t("workspace.custom_css.dark_css_label") : baseCssLabel;
 
   return (
     <Collapsible.Root

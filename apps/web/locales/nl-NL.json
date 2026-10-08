@@ -2238,7 +2238,7 @@
       "upload_contacts_success": "Contacten succesvol geüpload"
     },
     "custom_css": {
-      "base_css_help": "Basis-CSS geldt in zowel de lichte als de donkere modus.",
+      "base_css_help": "Deze CSS wordt toegepast in zowel de lichte als de donkere modus.",
       "base_css_label": "Basis-CSS",
       "clear_all": "Alle CSS wissen",
       "dark_css_help": "Donkere CSS voegt regels toe voor de donkere modus. Basis-CSS geldt ook in de donkere modus, dus voeg alleen toe wat anders moet zijn.",
@@ -2275,6 +2275,7 @@
       "status_valid": "CSS is geldig.",
       "status_valid_with_notes": "De CSS kan worden opgeslagen. Bekijk de opmerkingen hieronder:",
       "status_valid_with_warnings": "De CSS kan worden opgeslagen. {count, plural, one {{count} regel wordt} other {{count} regels worden}} verwijderd:",
+      "survey_base_css_label": "Basis-CSS voor enquêtes",
       "survey_precedence": "Deze komt na de CSS van de werkruimte, dus overschrijft hij die wanneer beide dezelfde opmaak bepalen.",
       "title": "Aangepaste CSS",
       "unsaved_changes_restored": "Niet-opgeslagen wijzigingen van eerder zijn hersteld",

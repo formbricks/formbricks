@@ -2238,7 +2238,7 @@
       "upload_contacts_success": "Contacts uploaded successfully"
     },
     "custom_css": {
-      "base_css_help": "Base CSS applies in light and dark mode.",
+      "base_css_help": "This CSS applies in light and dark mode.",
       "base_css_label": "Base CSS",
       "clear_all": "Clear all CSS",
       "dark_css_help": "Dark CSS adds rules for dark mode. Base CSS still applies in dark mode, so only add what changes.",
@@ -2275,6 +2275,7 @@
       "status_valid": "CSS is valid.",
       "status_valid_with_notes": "CSS can be saved. Check the notes below:",
       "status_valid_with_warnings": "CSS can be saved. {count, plural, one {{count} rule is} other {{count} rules are}} removed:",
+      "survey_base_css_label": "Survey base CSS",
       "survey_precedence": "It comes after the workspace CSS, so it overrides it where both style the same thing.",
       "title": "Custom CSS",
       "unsaved_changes_restored": "Unsaved changes from earlier restored",

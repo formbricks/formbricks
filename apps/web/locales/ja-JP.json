@@ -2238,7 +2238,7 @@
       "upload_contacts_success": "連絡先のアップロードに成功しました"
     },
     "custom_css": {
-      "base_css_help": "ベースCSSはライトモードでもダークモードでも適用されます。",
+      "base_css_help": "このCSSはライトモードとダークモードの両方に適用されます。",
       "base_css_label": "ベースCSS",
       "clear_all": "すべてのCSSをクリア",
       "dark_css_help": "ダークCSSは、ダークモード用のルールを追加します。ベースCSSはダークモードでも適用されるので、変更したい部分だけを追加してください。",
@@ -2275,6 +2275,7 @@
       "status_valid": "CSSは有効です。",
       "status_valid_with_notes": "CSSは保存できます。以下の注意事項を確認してください:",
       "status_valid_with_warnings": "CSSは保存できます。{count, plural, other {{count}件のルールが}}削除されます:",
+      "survey_base_css_label": "アンケートのベースCSS",
       "survey_precedence": "ワークスペースのCSSの後に適用されるため、両方で同じ要素にスタイルを指定している場合は、こちらが優先されます。",
       "title": "カスタムCSS",
       "unsaved_changes_restored": "以前の未保存の変更を復元しました",

@@ -17,7 +17,6 @@ const MAX_VISIBLE_LINES = 10;
 interface InheritedWorkspaceCssProps {
   source: TCustomCssInput | null;
   status: TCustomCssHealthStatus;
-  appearance: TCustomCssAppearance;
   appearanceHref: string;
 }
 
@@ -28,14 +27,13 @@ interface InheritedWorkspaceCssProps {
 export const InheritedWorkspaceCss = ({
   source,
   status,
-  appearance,
   appearanceHref,
 }: Readonly<InheritedWorkspaceCssProps>) => {
   const { t } = useTranslation();
   const id = useId();
   const [open, setOpen] = useState(false);
-  // Base CSS applies in both appearances, so the Dark tab shows it next to the dark rules it adds to.
-  const fields: TCustomCssAppearance[] = appearance === "dark" ? ["light", "dark"] : ["light"];
+  // Both stylesheets regardless of the Light / Dark tab, so the panel shows everything the survey inherits.
+  const fields: TCustomCssAppearance[] = ["light", "dark"];
   const inherited = fields.flatMap((field) => {
     const css = source?.[field] ?? null;
     if (!css) return [];
@@ -45,10 +43,6 @@ export const InheritedWorkspaceCss = ({
         : t("workspace.custom_css.workspace_base_css_label");
     return [{ field, css, label }];
   });
-  // Light shows the base CSS alone, which the panel title already names. Dark shows both, so each gets a
-  // label, prefixed so neither repeats the survey field's own "Base CSS" or "Dark CSS" title below.
-  const showLabels = fields.length > 1;
-
   return (
     <Collapsible.Root open={open} onOpenChange={setOpen} className="rounded-md border border-slate-200">
       <Collapsible.Trigger className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none">
@@ -79,17 +73,16 @@ export const InheritedWorkspaceCss = ({
         {inherited.length > 0 ? (
           inherited.map(({ field, css, label }) => (
             <div key={field} className="flex flex-col gap-1">
-              {showLabels && (
-                <p className="text-xs font-medium text-slate-600">
-                  {label}
-                  {field === "light" && (
-                    <span className="font-normal text-slate-500">
-                      {" "}
-                      · {t("workspace.custom_css.base_css_help")}
-                    </span>
-                  )}
-                </p>
-              )}
+              {/* Prefixed so neither reads like the survey's own fields below. */}
+              <p className="text-xs font-medium text-slate-600">
+                {label}
+                {field === "light" && (
+                  <span className="font-normal text-slate-500">
+                    {" "}
+                    · {t("workspace.custom_css.base_css_help")}
+                  </span>
+                )}
+              </p>
               <CssCodeField
                 // Read-only but focusable, so a keyboard user can scroll a long stylesheet.
                 id={`${id}-${field}`}

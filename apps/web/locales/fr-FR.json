@@ -2238,7 +2238,7 @@
       "upload_contacts_success": "Contacts téléchargés avec succès"
     },
     "custom_css": {
-      "base_css_help": "Le CSS de base s'applique en mode clair et en mode sombre.",
+      "base_css_help": "Ce CSS s'applique en mode clair et en mode sombre.",
       "base_css_label": "CSS de base",
       "clear_all": "Effacer tout le CSS",
       "dark_css_help": "Le CSS sombre ajoute des règles pour le mode sombre. Le CSS de base s'applique aussi en mode sombre : n'ajoute donc que ce qui change.",
@@ -2275,6 +2275,7 @@
       "status_valid": "Le CSS est valide.",
       "status_valid_with_notes": "Le CSS peut être enregistré. Consulte les remarques ci-dessous :",
       "status_valid_with_warnings": "Le CSS peut être enregistré. {count, plural, one {{count} règle est supprimée} many {{count} règles sont supprimées} other {{count} règles sont supprimées}} :",
+      "survey_base_css_label": "CSS de base du sondage",
       "survey_precedence": "Il passe après le CSS de l'espace de travail, donc il le remplace lorsque les deux stylisent le même élément.",
       "title": "CSS personnalisé",
       "unsaved_changes_restored": "Les modifications non enregistrées précédentes ont été restaurées",

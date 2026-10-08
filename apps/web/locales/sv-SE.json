@@ -2238,7 +2238,7 @@
       "upload_contacts_success": "Kontakter uppladdade"
     },
     "custom_css": {
-      "base_css_help": "Bas-CSS gäller i både ljust och mörkt läge.",
+      "base_css_help": "Den här CSS-koden gäller i både ljust och mörkt läge.",
       "base_css_label": "Bas-CSS",
       "clear_all": "Rensa all CSS",
       "dark_css_help": "Mörk CSS lägger till regler för mörkt läge. Bas-CSS gäller fortfarande i mörkt läge, så lägg bara till det som ska ändras.",
@@ -2275,6 +2275,7 @@
       "status_valid": "CSS:en är giltig.",
       "status_valid_with_notes": "CSS-koden kan sparas. Kolla anteckningarna nedan:",
       "status_valid_with_warnings": "CSS-koden kan sparas. {count, plural, one {{count} regel tas} other {{count} regler tas}} bort:",
+      "survey_base_css_label": "Basal CSS för enkäter",
       "survey_precedence": "Den läses in efter arbetsytans CSS och åsidosätter den därför där båda styr samma sak.",
       "title": "Anpassad CSS",
       "unsaved_changes_restored": "Osparade ändringar från tidigare har återställts",

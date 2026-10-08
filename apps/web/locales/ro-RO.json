@@ -2238,7 +2238,7 @@
       "upload_contacts_success": "Contactele au fost încărcate cu succes"
     },
     "custom_css": {
-      "base_css_help": "CSS-ul de bază se aplică atât în modul luminos, cât și în cel întunecat.",
+      "base_css_help": "Acest CSS se aplică atât în modul luminos, cât și în cel întunecat.",
       "base_css_label": "CSS de bază",
       "clear_all": "Șterge tot CSS-ul",
       "dark_css_help": "CSS-ul pentru modul întunecat adaugă reguli specifice acestui mod. CSS-ul de bază se aplică și în modul întunecat, așa că adaugă doar ce se schimbă.",
@@ -2275,6 +2275,7 @@
       "status_valid": "CSS-ul este valid.",
       "status_valid_with_notes": "CSS-ul poate fi salvat. Verifică notele de mai jos:",
       "status_valid_with_warnings": "CSS-ul poate fi salvat. {count, plural, one {A fost eliminată {count} regulă} few {Au fost eliminate {count} reguli} other {Au fost eliminate {count} de reguli}}:",
+      "survey_base_css_label": "CSS de bază pentru sondaj",
       "survey_precedence": "Se aplică după CSS-ul spațiului de lucru, deci îl suprascrie acolo unde ambele stilizează același element.",
       "title": "CSS personalizat",
       "unsaved_changes_restored": "Modificările nesalvate anterioare au fost restaurate",

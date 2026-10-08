@@ -2238,7 +2238,7 @@
       "upload_contacts_success": "Kontakte erfolgreich hochgeladen"
     },
     "custom_css": {
-      "base_css_help": "Das Basis-CSS gilt im hellen und im dunklen Modus.",
+      "base_css_help": "Dieses CSS gilt sowohl im hellen als auch im dunklen Modus.",
       "base_css_label": "Basis-CSS",
       "clear_all": "Gesamtes CSS löschen",
       "dark_css_help": "Das Dark-CSS fügt Regeln für den dunklen Modus hinzu. Das Basis-CSS gilt auch im dunklen Modus, füge daher nur hinzu, was sich ändert.",
@@ -2275,6 +2275,7 @@
       "status_valid": "CSS ist gültig.",
       "status_valid_with_notes": "CSS kann gespeichert werden. Beachte die folgenden Hinweise:",
       "status_valid_with_warnings": "CSS kann gespeichert werden. {count, plural, one {{count} Regel wird} other {{count} Regeln werden}} entfernt:",
+      "survey_base_css_label": "Basis-CSS für Umfragen",
       "survey_precedence": "Es kommt nach dem Workspace-CSS und überschreibt es daher, wenn beide dasselbe Element formatieren.",
       "title": "Benutzerdefiniertes CSS",
       "unsaved_changes_restored": "Nicht gespeicherte Änderungen von zuvor wiederhergestellt",
