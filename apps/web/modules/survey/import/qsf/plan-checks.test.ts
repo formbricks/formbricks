@@ -271,7 +271,11 @@ describe("checkPlanResponses", () => {
   });
 
   test("drops, neutralizes or caps every part of a hostile plan", () => {
-    const plan = checkPlanResponses(simple, [{ refs: allRefs, object: loadRecordedPlan("hostile") }]);
+    const hostile = loadRecordedPlan("hostile");
+    // The file spells its right-to-left override as an escape, so it holds no bidi character itself.
+    expect(JSON.stringify(hostile)).toContain("\u202e");
+
+    const plan = checkPlanResponses(simple, [{ refs: allRefs, object: hostile }]);
 
     expect(Object.fromEntries(plan.failures)).toEqual({
       QID1: ["placed_and_skipped"],
@@ -286,6 +290,7 @@ describe("checkPlanResponses", () => {
     // ignored. The call's own page keeps its notes, cleaned and capped.
     expect([...plan.pageNotes.keys()]).toEqual(["p1"]);
     expect(JSON.stringify([...plan.pageNotes.values()])).not.toMatch(/https?:|evil|<|javascript/);
+    expect([...plan.pageNotes.values()].flat().join("")).not.toMatch(/[\u202a-\u202e\u2066-\u2069]/);
     expect(plan.pageNotes.get("p1")?.every((note) => note.length <= QSF_MAX_NOTE_CHARS)).toBe(true);
   });
 
