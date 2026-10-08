@@ -530,15 +530,27 @@ describe("planQsfImport", () => {
     expect(generate).toHaveBeenCalledTimes(1);
   });
 
-  test("never sends a call with less time than one needs, dropping its questions as unplanned", async () => {
+  test("never sends a call with less time than one needs, and ends in the import's timeout", async () => {
     const generate = vi.fn<TQsfPlanGenerate>(recordedGenerate(loadRecordedPlan("simple.qsf")));
 
-    // 9.9 s to the deadline, 5 s kept for assembly: 4.9 s for the call, under the minimum.
-    const result = await plan("simple.qsf", generate, { deadlineInMs: 9_900 });
-
+    // 9.9 s to the deadline, 5 s kept for assembly: 4.9 s for the call, under the minimum. Nothing
+    // was planned because time ran out, so to the user the import took too long.
+    await expect(plan("simple.qsf", generate, { deadlineInMs: 9_900 })).rejects.toBeInstanceOf(
+      QsfImportTimeoutError
+    );
     expect(generate).not.toHaveBeenCalled();
+  });
+
+  test("does not call it a timeout when the calls ran out, not the time", async () => {
+    const generate = vi.fn<TQsfPlanGenerate>(async () => {
+      throw tooLong();
+    });
+
+    const result = await plan("simple.qsf", generate);
+
+    // The chunk, its halves and the retry round, every one too long: out of calls, with time to spare.
     expect(result.plan.questions.size).toBe(0);
-    expect(result.issues.map((issue) => issue.params?.cause)).toEqual(Array(5).fill("ai_budget"));
+    expect(result.issues.map((issue) => issue.params?.cause)).not.toContain("ai_timeout");
   });
 
   test("sizes each call's timeout to what is left before the deadline", async () => {
@@ -560,19 +572,24 @@ describe("planQsfImport", () => {
   });
 
   test("skips the retry when no time is left for it, dropping what failed", async () => {
-    const hostile = loadRecordedPlan("hostile");
     // 10.4 s to the deadline, 5 s kept for assembly: the first call gets 5.4 s and takes 0.5 s of it,
-    // so the retry would get under the 5 s a call needs.
-    const generate = vi.fn<TQsfPlanGenerate>(async () => {
+    // so the retry would get under the 5 s a call needs. The first call leaves QID1 and QID2 out.
+    const recorded = loadRecordedPlan("simple.qsf");
+    const partial = {
+      ...recorded,
+      questions: recorded.questions.filter((entry) => entry.ref !== "QID1" && entry.ref !== "QID2"),
+    };
+    const generate = vi.fn<TQsfPlanGenerate>(async (request) => {
       await new Promise((resolve) => setTimeout(resolve, 500));
-      return { object: hostile };
+      return recordedGenerate(partial)(request);
     });
 
     const result = await plan("simple.qsf", generate, { deadlineInMs: 10_400 });
 
     expect(generate).toHaveBeenCalledTimes(1);
-    expect(result.plan.failures.size).toBe(5);
-    expect(result.issues.map((issue) => issue.params?.cause)).toEqual(Array(5).fill("ai_budget"));
+    expect(result.plan.questions.size).toBe(3);
+    expect([...result.plan.failures.keys()]).toEqual(["QID1", "QID2"]);
+    expect(result.issues.map((issue) => issue.params?.cause)).toEqual(["ai_budget", "ai_budget"]);
   });
 
   test("sizes the timeout of each half of a split when it starts, so the halves cannot pass the deadline", async () => {

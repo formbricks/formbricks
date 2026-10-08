@@ -15,6 +15,7 @@ import { isObjectMemberName } from "./id-registry";
 import {
   QsfImportFailedError,
   QsfImportInputError,
+  QsfImportTimeoutError,
   type TRunQsfImportParams,
   prepareQsfImport,
   runQsfImport,
@@ -332,6 +333,27 @@ describe("runQsfImport on recorded plans", () => {
     expect(result.payload.blocks.map((block) => block.elements.map((element) => element.id))).toEqual([
       ["Q1", "Q2", "Q3", "Q4", "Q5"],
     ]);
+  });
+
+  test("times out, not fails, when the deadline leaves no time for any AI call", async () => {
+    answerFrom("simple.qsf");
+
+    // 9.9 s for the whole import: 4.9 s for a call once assembly is reserved, under the 5 s minimum.
+    const error = await run("simple.qsf", { deadlineMs: 9_900 }).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(QsfImportTimeoutError);
+    expect(mocks.generateOrganizationAIObject).not.toHaveBeenCalled();
+  });
+
+  test("fails, not times out, when the AI calls run out before any question is planned", async () => {
+    mocks.generateOrganizationAIObject.mockRejectedValue(
+      new AIOutputTokenLimitError({ maxOutputTokens: 8192 })
+    );
+
+    const error = await run("simple.qsf").catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(QsfImportFailedError);
+    expect((error as QsfImportFailedError).reason).toBe("no_questions");
   });
 
   test("fails the import when no question survives", async () => {

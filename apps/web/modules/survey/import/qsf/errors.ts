@@ -32,9 +32,9 @@ export class QsfImportFailedError extends Error {
 }
 
 /**
- * The plan ran out of time before any question was planned: every AI call that fit before the
- * deadline ran past its own timeout (the AI SDK's `timeout`, which spans the SDK's retries), split
- * chunks included. One slow call never ends the import — its chunk is split, then its questions are
+ * The plan ran out of time before any question was planned: the AI calls that fit before the deadline
+ * ran past their own timeout (the AI SDK's `timeout`, which spans the SDK's retries), split chunks
+ * included, or the deadline left too little time to send one. One slow call never ends the import — its chunk is split, then its questions are
  * dropped. Streamed as `import_timed_out`, like the route's own deadline: to the user both mean "it
  * took too long", and neither is an incident.
  */

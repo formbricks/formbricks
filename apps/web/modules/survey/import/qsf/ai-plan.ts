@@ -229,6 +229,8 @@ interface TPlanContext {
   callCap: number;
   /** Output tokens this import may spend. */
   outputBudget: number;
+  /** Whether a call was left unsent because the time before the deadline was too short for one. */
+  ranOutOfTime: boolean;
 }
 
 type TCallOutcome =
@@ -360,11 +362,11 @@ async function callOnce(
   timeout: number,
   failures?: ReadonlyMap<string, readonly TQsfPlanFailure[]>
 ): Promise<TCallOutcome> {
-  if (
-    context.calls >= context.callCap ||
-    context.usage.outputTokens >= context.outputBudget ||
-    timeout < QSF_MIN_CALL_TIMEOUT_MS
-  ) {
+  if (context.calls >= context.callCap || context.usage.outputTokens >= context.outputBudget) {
+    return { kind: "budget" };
+  }
+  if (timeout < QSF_MIN_CALL_TIMEOUT_MS) {
+    context.ranOutOfTime = true;
     return { kind: "budget" };
   }
 
@@ -518,6 +520,7 @@ export async function planQsfImport(params: {
     calls: 0,
     callCap: 0,
     outputBudget: 0,
+    ranOutOfTime: false,
   };
   const chunks = chunkQuestions(context, refs);
   context.callCap = Math.min(callCapFor(chunks.length), QSF_MAX_AI_CALLS);
@@ -565,10 +568,11 @@ export async function planQsfImport(params: {
     });
   }
 
-  // Nothing to assemble because the calls ran out of time: to the user, the import took too long.
+  // Nothing to assemble because time ran out — calls past their timeout, or calls the deadline left no
+  // time for: to the user, the import took too long. Out of calls or tokens, it failed.
   if (
     plan.questions.size === 0 &&
-    [...plan.failures.values()].some((reasons) => reasons.includes("ai_timeout"))
+    (context.ranOutOfTime || [...plan.failures.values()].some((reasons) => reasons.includes("ai_timeout")))
   ) {
     throw new QsfImportTimeoutError();
   }
