@@ -5,10 +5,15 @@ import { QsfImportInputError } from "./errors";
 import { isObjectMemberName } from "./id-registry";
 import { isReportableLanguageCode, normalizeQualtricsLanguageCode } from "./language-codes";
 import {
+  QSF_MAX_BLOCKS,
+  QSF_MAX_BLOCK_ELEMENTS,
+  QSF_MAX_EMBEDDED_DATA_FIELDS,
   QSF_MAX_FLOW_DEPTH,
   QSF_MAX_FLOW_NODES,
   QSF_MAX_HIDDEN_FIELDS,
   QSF_MAX_LANGUAGES,
+  QSF_MAX_LANGUAGE_KEYS,
+  QSF_MAX_LANGUAGE_KEYS_PER_QUESTION,
   QSF_MAX_LOGIC_TERMS,
   QSF_MAX_NAME_CHARS,
   QSF_MAX_OPTIONS_PER_QUESTION,
@@ -44,7 +49,9 @@ import type {
  * - an id or language code from the file becomes a key only after a bounded pattern check, and only in
  *   a `Map`; a refused one becomes a report line;
  * - nothing recurses on the file: the flow walk is iterative and capped at `QSF_MAX_FLOW_DEPTH`, and
- *   logic is read at its fixed depth.
+ *   logic is read at its fixed depth;
+ * - every collection is counted against its limit before its entries are worked on — blocks and their
+ *   entries, embedded data, options, `Language` keys — so a file past one costs a count, not the work.
  */
 
 /** Qualtrics question ids are `QID` and a number. Anything else is refused, `__proto__` included. */
@@ -138,6 +145,12 @@ class QsfReader {
   private readonly languageByRaw = new Map<string, string | null>();
   private readonly reportedLanguages = new Set<string>();
   private readonly translationLanguages = new Set<string>();
+  /** Raw `Language` keys read so far, all questions together. */
+  private languageKeyCount = 0;
+  /** Block list entries read so far. */
+  private blockElementCount = 0;
+  /** Embedded data fields the flow sets, read so far. */
+  private embeddedDataFieldCount = 0;
   /** Per question, Qualtrics choice id → text key, for logic and translations. */
   private readonly choiceKeysByRef = new Map<string, Map<string, TQsfTextKey>>();
   /** Branch rules are met before the questions they read, so their conditions are read last. */
@@ -186,13 +199,6 @@ class QsfReader {
     }
     for (const [rule, branchLogic] of this.pendingBranchLogic) {
       rule.conditions = this.readBooleanExpression(branchLogic);
-    }
-
-    if (this.translationLanguages.size + 1 > QSF_MAX_LANGUAGES) {
-      throw inputError(
-        "qsf.SurveyElements",
-        `The survey has more than ${QSF_MAX_LANGUAGES} languages, the most a Formbricks survey can have`
-      );
     }
 
     const embeddedDataNames = this.collectEmbeddedDataNames(flowResult.embeddedDataNames);
@@ -291,7 +297,7 @@ class QsfReader {
 
       if (kind === "BL") {
         if (blocks) throw inputError(`qsf.SurveyElements.${index}`, "The file has two block lists");
-        blocks = this.readBlocks(payload);
+        blocks = this.readBlocks(index, payload);
         return;
       }
 
@@ -314,12 +320,18 @@ class QsfReader {
   }
 
   /** `BL` is an array in newer exports and an object keyed by index in older ones. */
-  private readBlocks(payload: unknown): Map<string, TRawBlock> {
+  private readBlocks(index: number, payload: unknown): Map<string, TRawBlock> {
     const entries = Array.isArray(payload)
       ? payload
       : isRecord(payload)
         ? Object.keys(payload).map((key) => payload[key])
         : [];
+    if (entries.length > QSF_MAX_BLOCKS) {
+      throw inputError(
+        `qsf.SurveyElements.${index}.Payload`,
+        `The survey has more than ${QSF_MAX_BLOCKS} blocks`
+      );
+    }
     const blocks = new Map<string, TRawBlock>();
 
     for (const entry of entries) {
@@ -330,6 +342,13 @@ class QsfReader {
       const rawElements = own(entry, "BlockElements");
       const elements: (string | null)[] = [];
       if (Array.isArray(rawElements)) {
+        this.blockElementCount += rawElements.length;
+        if (this.blockElementCount > QSF_MAX_BLOCK_ELEMENTS) {
+          throw inputError(
+            `qsf.SurveyElements.${index}.Payload`,
+            `The survey's blocks hold more than ${QSF_MAX_BLOCK_ELEMENTS} questions and page breaks`
+          );
+        }
         for (const item of rawElements) {
           if (!isRecord(item)) continue;
           const type = own(item, "Type");
@@ -412,6 +431,7 @@ class QsfReader {
       if (type === "EmbeddedData") {
         const fields = own(node, "EmbeddedData");
         if (Array.isArray(fields)) {
+          this.countEmbeddedDataFields(fields.length);
           for (const field of fields) {
             if (!isRecord(field)) continue;
             const name = str(own(field, "Field")) ?? str(own(field, "Description"));
@@ -548,7 +568,7 @@ class QsfReader {
       answerKeys
     );
     this.choiceKeysByRef.set(ref, choiceKeys);
-    this.readTranslations(payload, textKey, choiceKeys, answerKeys);
+    this.readTranslations(raw.elementIndex, payload, textKey, choiceKeys, answerKeys);
 
     const validation = ownRecord(payload, "Validation");
     const settings = (validation && ownRecord(validation, "Settings")) ?? {};
@@ -592,20 +612,20 @@ class QsfReader {
     const order = own(payload, orderKey);
     const ids: string[] = [];
     const seen = new Set<string>();
+    // Refused at the first option past the limit, before any is read.
     const consider = (id: string) => {
       if (seen.has(id) || !Object.hasOwn(records, id)) return;
       seen.add(id);
       ids.push(id);
+      if (ids.length > QSF_MAX_OPTIONS_PER_QUESTION) {
+        throw inputError(
+          `qsf.SurveyElements.${elementIndex}.Payload.${mapKey}`,
+          `A question has more than ${QSF_MAX_OPTIONS_PER_QUESTION} ${mapKey === "Choices" ? "choices" : "answers"}`
+        );
+      }
     };
     if (Array.isArray(order)) for (const id of order) if (str(id) !== null) consider(String(id));
     for (const id of Object.keys(records)) consider(id);
-
-    if (ids.length > QSF_MAX_OPTIONS_PER_QUESTION) {
-      throw inputError(
-        `qsf.SurveyElements.${elementIndex}.Payload.${mapKey}`,
-        `A question has more than ${QSF_MAX_OPTIONS_PER_QUESTION} ${mapKey === "Choices" ? "choices" : "answers"}`
-      );
-    }
 
     const options: TQsfOption[] = [];
     for (const id of ids) {
@@ -632,6 +652,7 @@ class QsfReader {
   }
 
   private readTranslations(
+    elementIndex: number,
     payload: TRecord,
     textKey: TQsfTextKey,
     choiceKeys: Map<string, TQsfTextKey>,
@@ -640,12 +661,32 @@ class QsfReader {
     const languages = ownRecord(payload, "Language");
     if (!languages) return;
 
-    for (const rawCode of Object.keys(languages)) {
+    // Counted before any key is read: variants of one code (`DE`, ` de`) normalize to one language,
+    // so only a count bounds what they cost.
+    const rawCodes = Object.keys(languages);
+    if (rawCodes.length > QSF_MAX_LANGUAGE_KEYS_PER_QUESTION) {
+      throw inputError(
+        `qsf.SurveyElements.${elementIndex}.Payload.Language`,
+        `A question has more than ${QSF_MAX_LANGUAGE_KEYS_PER_QUESTION} translations`
+      );
+    }
+    this.languageKeyCount += rawCodes.length;
+    if (this.languageKeyCount > QSF_MAX_LANGUAGE_KEYS) {
+      throw inputError(
+        "qsf.SurveyElements",
+        `The survey has more than ${QSF_MAX_LANGUAGE_KEYS} translations`
+      );
+    }
+
+    // A language another key of this question already filled costs nothing: the first key wins.
+    const applied = new Set<string>();
+    for (const rawCode of rawCodes) {
       const language = this.translationLanguage(rawCode);
-      if (!language || language === this.defaultLanguage) continue;
+      if (!language || language === this.defaultLanguage || applied.has(language)) continue;
       const translation = ownRecord(languages, rawCode);
       if (!translation) continue;
-      this.translationLanguages.add(language);
+      applied.add(language);
+      this.addTranslationLanguage(language);
 
       const questionText = str(own(translation, "QuestionText"));
       if (questionText !== null) this.texts.get(textKey)?.byLanguage.set(language, questionText);
@@ -655,13 +696,48 @@ class QsfReader {
         ["Answers", answerKeys],
       ] as const) {
         const records = ownRecord(translation, mapKey);
-        if (!records) continue;
-        for (const [id, key] of keys) {
-          const record = own(records, id);
-          const display = isRecord(record) ? str(own(record, "Display")) : str(record);
-          if (display !== null) this.texts.get(key)?.byLanguage.set(language, display);
-        }
+        if (records) this.readOptionTranslations(records, keys, language);
       }
+    }
+  }
+
+  /** A survey language, refused the moment it would be one more than a Formbricks survey can have. */
+  private addTranslationLanguage(language: string): void {
+    if (this.translationLanguages.has(language)) return;
+    // The default, the translations so far, and this one.
+    if (1 + this.translationLanguages.size + 1 > QSF_MAX_LANGUAGES) {
+      throw inputError(
+        "qsf.SurveyElements",
+        `The survey has more than ${QSF_MAX_LANGUAGES} languages, the most a Formbricks survey can have`
+      );
+    }
+    this.translationLanguages.add(language);
+  }
+
+  /**
+   * One translation's labels for a question's options, matched by Qualtrics id. Walks whichever side is
+   * smaller — the translation's entries or the question's options — so its cost is bounded by both.
+   */
+  private readOptionTranslations(records: TRecord, keys: Map<string, TQsfTextKey>, language: string): void {
+    const recordIds = Object.keys(records);
+    const ids = recordIds.length < keys.size ? recordIds : [...keys.keys()];
+    for (const id of ids) {
+      const key = keys.get(id);
+      if (!key) continue;
+      const record = own(records, id);
+      const display = isRecord(record) ? str(own(record, "Display")) : str(record);
+      if (display !== null) this.texts.get(key)?.byLanguage.set(language, display);
+    }
+  }
+
+  /** Embedded data fields the flow sets, refused past `QSF_MAX_EMBEDDED_DATA_FIELDS` before any is read. */
+  private countEmbeddedDataFields(count: number): void {
+    this.embeddedDataFieldCount += count;
+    if (this.embeddedDataFieldCount > QSF_MAX_EMBEDDED_DATA_FIELDS) {
+      throw inputError(
+        "qsf.SurveyElements",
+        `The survey has more than ${QSF_MAX_EMBEDDED_DATA_FIELDS} embedded data fields`
+      );
     }
   }
 
@@ -781,10 +857,16 @@ class QsfReader {
       seen.add(value);
       names.push(value);
     };
+    // The flow's were counted as they were read; a name a text pipes in counts once.
+    const addPiped = (name: string) => {
+      const before = seen.size;
+      add(name);
+      if (seen.size > before) this.countEmbeddedDataFields(1);
+    };
 
     fromFlow.forEach(add);
     for (const text of this.texts.values()) {
-      for (const raw of text.byLanguage.values()) collectEmbeddedDataReferences(raw).forEach(add);
+      for (const raw of text.byLanguage.values()) collectEmbeddedDataReferences(raw).forEach(addPiped);
     }
 
     // Past what a survey can hold, the first ones are kept — the flow's, then the ones texts pipe in —

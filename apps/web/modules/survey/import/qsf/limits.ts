@@ -21,6 +21,29 @@ export const QSF_MAX_LANGUAGES = V3_SURVEY_MAX_LANGUAGES;
 /** Embedded data fields kept as hidden fields: the v3 survey document's own cap. The rest are dropped. */
 export const QSF_MAX_HIDDEN_FIELDS = V3_SURVEY_MAX_HIDDEN_FIELDS;
 
+/**
+ * Raw `Language` keys of one question, and of the whole file. A real export has one per survey
+ * language, so at most 50; twice that leaves room for aliases. Checked before any key is read: case
+ * and whitespace variants (`DE`, ` de`, `de `) normalize to one language, so the language cap alone
+ * never fires on them, and each key used to be checked against every choice and answer.
+ */
+export const QSF_MAX_LANGUAGE_KEYS_PER_QUESTION = 2 * V3_SURVEY_MAX_LANGUAGES;
+export const QSF_MAX_LANGUAGE_KEYS = 10_000;
+
+/**
+ * Blocks in the block list, and question and page-break entries in them all together. A survey's blocks
+ * hold its questions once each, and the file has at most 1,000 elements (the route's array budget).
+ */
+export const QSF_MAX_BLOCKS = 2_000;
+export const QSF_MAX_BLOCK_ELEMENTS = 10_000;
+
+/**
+ * Embedded data fields the flow sets, all its embedded data elements together, plus the distinct names
+ * texts pipe in. Far past what is kept (`QSF_MAX_HIDDEN_FIELDS`); counted as they are read, so a file
+ * past it is refused before the names are collected.
+ */
+export const QSF_MAX_EMBEDDED_DATA_FIELDS = 10_000;
+
 /** Nesting of the survey flow (branches, groups and randomizers inside each other). */
 export const QSF_MAX_FLOW_DEPTH = 64;
 

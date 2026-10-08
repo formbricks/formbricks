@@ -2,7 +2,13 @@ import { describe, expect, test } from "vitest";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { QsfImportInputError } from "./errors";
 import { OBJECT_MEMBER_NAMES } from "./id-registry";
-import { QSF_MAX_OPTIONS_PER_QUESTION } from "./limits";
+import {
+  QSF_MAX_BLOCKS,
+  QSF_MAX_EMBEDDED_DATA_FIELDS,
+  QSF_MAX_LANGUAGE_KEYS,
+  QSF_MAX_LANGUAGE_KEYS_PER_QUESTION,
+  QSF_MAX_OPTIONS_PER_QUESTION,
+} from "./limits";
 import { readQsf } from "./read-qsf";
 
 const readError = (qsf: Record<string, unknown>): QsfImportInputError => {
@@ -168,6 +174,35 @@ describe("readQsf", () => {
     });
   });
 
+  test("reads a language once per question, however many keys spell it: the first one wins", () => {
+    const choices = Object.fromEntries(
+      Array.from({ length: QSF_MAX_OPTIONS_PER_QUESTION }, (_, i) => [String(i + 1), { Display: `C${i}` }])
+    );
+    // At the per-question cap, every key a variant of German, each with every choice translated.
+    const language = Object.fromEntries(
+      Array.from({ length: QSF_MAX_LANGUAGE_KEYS_PER_QUESTION }, (_, i) => [
+        `${" ".repeat(i)}${i % 2 === 0 ? "DE" : "de"}`,
+        {
+          QuestionText: `Frage ${i}`,
+          Choices: Object.fromEntries(Object.keys(choices).map((id) => [id, { Display: `Wahl ${i}` }])),
+        },
+      ])
+    );
+
+    const survey = readQsf(
+      minimalQsf([
+        sq("QID1", { QuestionType: "MC", Choices: choices, Language: language }),
+        bl(["QID1"]),
+        fl(),
+      ])
+    );
+
+    expect(survey.languages).toEqual(["de-DE"]);
+    const question = survey.questions.get("QID1");
+    expect(survey.texts.get(question?.textKey ?? "")?.byLanguage.get("de-DE")).toBe("Frage 0");
+    expect(survey.texts.get(question?.choices[0].key ?? "")?.byLanguage.get("de-DE")).toBe("Wahl 0");
+  });
+
   test("ignores a message library reference as the end message", () => {
     const survey = readQsf(
       minimalQsf([sq("QID1"), bl(["QID1"]), fl(), { Element: "SO", Payload: { EOSMessage: "MS_abc123" } }])
@@ -229,6 +264,95 @@ describe("readQsf", () => {
       const error = readError(minimalQsf([sq("QID1", { Language: language }), bl(["QID1"]), fl()]));
 
       expect(error.invalidParams[0].reason).toContain("more than 50 languages");
+    });
+
+    test("more Language keys on one question than an export has, counted before any is read", () => {
+      const language = Object.fromEntries(
+        Array.from({ length: QSF_MAX_LANGUAGE_KEYS_PER_QUESTION + 1 }, (_, i) => [
+          `${" ".repeat(i)}DE`,
+          { QuestionText: "x" },
+        ])
+      );
+
+      expect(
+        readError(minimalQsf([sq("QID1", { Language: language }), bl(["QID1"]), fl()])).invalidParams
+      ).toEqual([
+        {
+          name: "qsf.SurveyElements.0.Payload.Language",
+          reason: `A question has more than ${QSF_MAX_LANGUAGE_KEYS_PER_QUESTION} translations`,
+        },
+      ]);
+    });
+
+    test("more Language keys in the whole file than an export has", () => {
+      const perQuestion = 60;
+      const count = Math.ceil(QSF_MAX_LANGUAGE_KEYS / perQuestion) + 1;
+      const refs = Array.from({ length: count }, (_, i) => `QID${i + 1}`);
+      const language = Object.fromEntries(
+        Array.from({ length: perQuestion }, (_, i) => [`${" ".repeat(i)}DE`, { QuestionText: "x" }])
+      );
+
+      const error = readError(
+        minimalQsf([...refs.map((ref) => sq(ref, { Language: language })), bl(refs), fl()])
+      );
+
+      expect(error.invalidParams[0]).toEqual({
+        name: "qsf.SurveyElements",
+        reason: `The survey has more than ${QSF_MAX_LANGUAGE_KEYS} translations`,
+      });
+    });
+
+    test("more blocks than a survey has", () => {
+      const blocks = Object.fromEntries(
+        Array.from({ length: QSF_MAX_BLOCKS + 1 }, (_, i) => [
+          String(i),
+          { ID: `BL_${i}`, BlockElements: [] },
+        ])
+      );
+
+      expect(
+        readError(minimalQsf([sq("QID1"), { Element: "BL", Payload: blocks }, fl()])).invalidParams[0]
+      ).toEqual({
+        name: "qsf.SurveyElements.1.Payload",
+        reason: `The survey has more than ${QSF_MAX_BLOCKS} blocks`,
+      });
+    });
+
+    test("more block entries than a survey's questions and page breaks", () => {
+      const pageBreaks = Array.from({ length: 1_000 }, () => ({ Type: "Page Break" }));
+      const blocks = Array.from({ length: 11 }, (_, i) => ({ ID: `BL_${i}`, BlockElements: pageBreaks }));
+
+      expect(
+        readError(minimalQsf([sq("QID1"), { Element: "BL", Payload: blocks }, fl()])).invalidParams[0].reason
+      ).toContain("more than 10000 questions and page breaks");
+    });
+
+    test("more embedded data fields in the flow than any survey sets", () => {
+      const fields = Array.from({ length: 1_000 }, (_, i) => ({ Field: "same" + String(i % 3) }));
+      const flow = [
+        ...Array.from({ length: QSF_MAX_EMBEDDED_DATA_FIELDS / 1_000 + 1 }, () => ({
+          Type: "EmbeddedData",
+          EmbeddedData: fields,
+        })),
+        { Type: "Block", ID: "BL_1" },
+      ];
+
+      expect(readError(minimalQsf([sq("QID1"), bl(["QID1"]), fl(flow)])).invalidParams[0]).toEqual({
+        name: "qsf.SurveyElements",
+        reason: `The survey has more than ${QSF_MAX_EMBEDDED_DATA_FIELDS} embedded data fields`,
+      });
+    });
+
+    test("more embedded data names piped into texts than any survey has", () => {
+      const text = Array.from(
+        { length: QSF_MAX_EMBEDDED_DATA_FIELDS + 1 },
+        (_, i) => `\${e://Field/f${i}}`
+      ).join(" ");
+
+      expect(
+        readError(minimalQsf([sq("QID1", { QuestionText: text }), bl(["QID1"]), fl()])).invalidParams[0]
+          .reason
+      ).toContain("embedded data fields");
     });
 
     test.each([
