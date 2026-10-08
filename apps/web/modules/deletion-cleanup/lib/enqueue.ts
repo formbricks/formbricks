@@ -1,6 +1,6 @@
 import "server-only";
 import type { DeletionCleanupCreateManyInput, Prisma } from "@formbricks/database/prisma";
-import { HUB_CLEANUP_SETTLE_MS, STORAGE_CLEANUP_CHUNK_SIZE } from "./constants";
+import { CLEANUP_SETTLE_MS, STORAGE_CLEANUP_CHUNK_SIZE } from "./constants";
 
 export type TSurveyDeletionCleanupInput = {
   organizationId: string;
@@ -23,8 +23,9 @@ export type TSurveyDeletionCleanupInput = {
  * Hub calls stay scoped by `source_type` and `source_id`, so a directory with none of this survey's
  * records costs one empty listing.
  *
- * Returns the ids of the rows to drain straight after commit (the storage ones). The Hub row waits
- * `HUB_CLEANUP_SETTLE_MS` for any record still on its way to the Hub.
+ * Returns the ids of the rows to drain straight after commit (the storage ones). The rest wait
+ * `CLEANUP_SETTLE_MS` for what can still land after the delete: the Hub cleanup, for records on their way
+ * to the Hub, and a second sweep of the upload folder, for an upload signed before the delete.
  */
 export const enqueueSurveyDeletionCleanups = async (
   tx: Prisma.TransactionClient,
@@ -35,30 +36,31 @@ export const enqueueSurveyDeletionCleanups = async (
     select: { id: true },
   });
   const scope = { organizationId, workspaceId, surveyId };
+  const settledAt = new Date(Date.now() + CLEANUP_SETTLE_MS);
 
-  const storageRows: DeletionCleanupCreateManyInput[] = [{ ...scope, kind: "storageSurveyFolder" }];
+  const drainNow: DeletionCleanupCreateManyInput[] = [{ ...scope, kind: "storageSurveyFolder" }];
   for (let i = 0; i < fileUrls.length; i += STORAGE_CLEANUP_CHUNK_SIZE) {
-    storageRows.push({
+    drainNow.push({
       ...scope,
       kind: "storageFiles",
       fileKeys: fileUrls.slice(i, i + STORAGE_CLEANUP_CHUNK_SIZE),
     });
   }
 
-  const [created] = await Promise.all([
-    tx.deletionCleanup.createManyAndReturn({ data: storageRows, select: { id: true } }),
-    directories.length > 0
-      ? tx.deletionCleanup.create({
-          data: {
-            ...scope,
-            kind: "hubSurvey",
-            tenantIds: directories.map((directory) => directory.id),
-            nextAttemptAt: new Date(Date.now() + HUB_CLEANUP_SETTLE_MS),
-          },
-          select: { id: true },
-        })
-      : null,
-  ]);
+  const drainLater: DeletionCleanupCreateManyInput[] = [
+    { ...scope, kind: "storageSurveyFolder", nextAttemptAt: settledAt },
+  ];
+  if (directories.length > 0) {
+    drainLater.push({
+      ...scope,
+      kind: "hubSurvey",
+      tenantIds: directories.map((directory) => directory.id),
+      nextAttemptAt: settledAt,
+    });
+  }
+
+  const created = await tx.deletionCleanup.createManyAndReturn({ data: drainNow, select: { id: true } });
+  await tx.deletionCleanup.createMany({ data: drainLater });
 
   return { drainNowIds: created.map((row) => row.id) };
 };

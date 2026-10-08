@@ -32,6 +32,13 @@ CREATE TABLE IF NOT EXISTS "DeletionCleanup" (
         OR ("kind" = 'hubResponses' AND COALESCE(cardinality("responseIds"), 0) > 0 AND COALESCE(cardinality("fileKeys"), 0) = 0)
         OR ("kind" = 'storageFiles' AND COALESCE(cardinality("fileKeys"), 0) > 0 AND COALESCE(cardinality("responseIds"), 0) = 0)
         OR ("kind" = 'storageSurveyFolder' AND COALESCE(cardinality("responseIds"), 0) = 0 AND COALESCE(cardinality("fileKeys"), 0) = 0)
+    ),
+    -- The lists are never NULL (the drain reads each as an array) and the ids never empty: a storage
+    -- delete builds its prefix from them, so an empty id would widen it. A CHECK rather than NOT NULL on
+    -- the lists, which Prisma models as nullable list columns and would otherwise report as drift.
+    CONSTRAINT "DeletionCleanup_values_check" CHECK (
+        "tenantIds" IS NOT NULL AND "responseIds" IS NOT NULL AND "fileKeys" IS NOT NULL
+        AND length("organizationId") > 0 AND length("workspaceId") > 0 AND length("surveyId") > 0
     )
 );
 

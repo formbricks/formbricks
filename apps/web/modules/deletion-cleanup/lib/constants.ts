@@ -8,22 +8,28 @@
 export const DELETION_CLEANUP_DRAIN_INTERVAL_MS = 5 * 60 * 1000;
 
 /**
- * How long a survey's Hub cleanup waits after the delete, and after any pass that still found records.
- * A response being sent to the Hub when its survey was deleted can land a record moments later, so the
- * row is done only once a pass this long after the last deletion finds nothing.
+ * How long work that can still trickle in after a delete is given to land before it is looked at again.
+ * A response being sent to the Hub when its survey was deleted can land a record moments later, so a Hub
+ * cleanup is done only once a pass this long after its last deletion finds nothing; and an upload signed
+ * before the delete (valid for two minutes) can land in the survey's folder after the first sweep, so
+ * the folder is swept once more this long after.
  */
-export const HUB_CLEANUP_SETTLE_MS = 5 * 60 * 1000;
+export const CLEANUP_SETTLE_MS = 5 * 60 * 1000;
 
 /**
- * A claimed row is hidden from other drains for this long. Far longer than a run's time budget, so a row
- * is only picked up twice if its worker died, and every step is idempotent if that happens.
+ * A claimed row is hidden from other drains for this long: far longer than a run's time budget, so a row
+ * is only picked up again if its worker died or stalled. A drain finishes a row only while it still holds
+ * the lease, so a worker that outlived it can't overwrite the newer claim's outcome.
  */
 export const DELETION_CLEANUP_LEASE_SECONDS = 15 * 60;
 
 /** Rows claimed per round trip. */
 export const DELETION_CLEANUP_CLAIM_BATCH = 10;
 
-/** A drain stops claiming once this much time has passed; a row in progress finishes its current call. */
+/**
+ * A drain stops once this much time has passed: it claims no more rows, and a Hub cleanup in progress
+ * stops before its next page. A storage call already in flight finishes.
+ */
 export const DELETION_CLEANUP_RUN_BUDGET_MS = 60 * 1000;
 
 /** Hub calls (lists and deletes) one drain may make, across all its rows. */

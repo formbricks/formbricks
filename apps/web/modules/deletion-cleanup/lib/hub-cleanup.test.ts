@@ -24,7 +24,7 @@ const record = (id: string, overrides: Partial<FeedbackRecordData> = {}): Feedba
   }) as FeedbackRecordData;
 
 const page = (records: FeedbackRecordData[]) => ({ data: { data: records }, error: null }) as never;
-const budget = (remaining = 10_000) => ({ remaining });
+const budget = (remaining = 10_000) => ({ remaining, deadline: Date.now() + 60_000 });
 
 describe("deleteHubRecords", () => {
   beforeEach(() => {
@@ -94,6 +94,30 @@ describe("deleteHubRecords", () => {
       status: "deleted",
       count: 1,
     });
+  });
+
+  test("leaves a page of already-gone records to the next pass instead of re-listing it", async () => {
+    // A listing lagging behind the deletes would otherwise return the same page until the budget is gone.
+    vi.mocked(listFeedbackRecords).mockResolvedValue(page([record("r1"), record("r2")]));
+    vi.mocked(deleteFeedbackRecord).mockResolvedValue({
+      data: null,
+      error: { status: 404, message: "not found", detail: "" },
+    });
+
+    await expect(deleteHubRecords({ tenantIds: ["dir-a"], surveyId }, budget())).resolves.toEqual({
+      status: "deleted",
+      count: 2,
+    });
+    expect(listFeedbackRecords).toHaveBeenCalledTimes(1);
+  });
+
+  test("stops before the next page once the run's deadline has passed", async () => {
+    vi.mocked(listFeedbackRecords).mockResolvedValue(page([record("r1")]));
+
+    await expect(
+      deleteHubRecords({ tenantIds: ["dir-a"], surveyId }, { remaining: 10_000, deadline: Date.now() - 1 })
+    ).resolves.toEqual({ status: "budget", count: 0 });
+    expect(listFeedbackRecords).not.toHaveBeenCalled();
   });
 
   test("fails on any other delete error, and on a listing error", async () => {

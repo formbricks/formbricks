@@ -15,8 +15,11 @@ export type THubCleanupTarget = {
   responseIds?: readonly string[];
 };
 
-/** Hub calls a drain may still make. Shared by every row the drain handles, and spent as calls are made. */
-export type THubCallBudget = { remaining: number };
+/**
+ * What a drain may still spend on the Hub: calls, and time (`deadline`, epoch ms). Shared by every row the
+ * drain handles, and spent as calls are made, so one large survey can't hold the job worker past its run.
+ */
+export type THubCallBudget = { remaining: number; deadline: number };
 
 export type THubCleanupResult =
   /** Every tenant listed nothing and nothing was deleted. */
@@ -34,7 +37,7 @@ const HUB_CALLS_PER_PAGE = 1 + HUB_CLEANUP_PAGE_SIZE;
 
 /** Whether the budget can't cover another page, so the drain should leave Hub work to its next run. */
 export const isHubCallBudgetSpent = (budget: THubCallBudget): boolean =>
-  budget.remaining < HUB_CALLS_PER_PAGE;
+  budget.remaining < HUB_CALLS_PER_PAGE || Date.now() >= budget.deadline;
 
 /**
  * Whether a listed record is one this cleanup may delete. The Hub's delete takes a bare id and checks no
@@ -89,6 +92,11 @@ export const deleteHubRecords = async (
       const failures = results.filter((result) => result.error && result.error.status !== HUB_NOT_FOUND);
       count += results.length - failures.length;
       if (failures[0]?.error) return { status: "failed", error: `hubDelete:${failures[0].error.status}` };
+      // Every record listed was already gone: the listing is lagging behind the deletes. Re-listing at
+      // once would spin through the budget on the same page, so leave it to the pass after the settle.
+      if (results.every((result) => result.error?.status === HUB_NOT_FOUND)) {
+        return { status: "deleted", count };
+      }
     }
   }
 

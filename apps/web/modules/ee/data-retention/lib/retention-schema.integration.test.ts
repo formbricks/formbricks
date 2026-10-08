@@ -82,6 +82,20 @@ describe("data retention schema backstops (real Postgres)", () => {
 
     await expect(insert("hubResponses")).rejects.toThrow();
     await expect(insert("storageFiles")).rejects.toThrow();
-    await expect(insert("hubSurvey")).resolves.toBe(1);
+    // Even a kind that needs no list: the drain reads every list as an array.
+    await expect(insert("hubSurvey")).rejects.toThrow();
+  });
+
+  test("refuses an empty id, which would widen a storage prefix", async () => {
+    await expect(
+      prisma.deletionCleanup.create({
+        data: { organizationId, workspaceId: "", surveyId, kind: "storageSurveyFolder" },
+      })
+    ).rejects.toThrow();
+    await expect(
+      prisma.deletionCleanup.create({
+        data: { organizationId, workspaceId: "clwsp", surveyId: "", kind: "storageSurveyFolder" },
+      })
+    ).rejects.toThrow();
   });
 });

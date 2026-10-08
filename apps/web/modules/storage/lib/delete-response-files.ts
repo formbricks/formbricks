@@ -90,14 +90,16 @@ export const deleteResponseFileUrls = async (
           // Already gone is done; a key storage refuses (traversal, empty segment) is final.
           if (result.error.code === StorageErrorCode.FileNotFoundError) return;
           if (result.error.code !== StorageErrorCode.InvalidInput) failed.push(fileUrl);
+          // Not the URL: it carries the respondent's file name, and a retried failure is logged again
+          // on every retry.
           logger.error(
-            { fileUrl, surveyWorkspaceId, error: result.error },
+            { storageId: storageFile.storageId, surveyWorkspaceId, error: result.error },
             "Failed to delete a response file from storage"
           );
         }
       } catch (error) {
         failed.push(fileUrl);
-        logger.error({ error, fileUrl }, "Failed to delete file");
+        logger.error({ error, storageId: storageFile.storageId }, "Failed to delete file");
       }
     })
   );

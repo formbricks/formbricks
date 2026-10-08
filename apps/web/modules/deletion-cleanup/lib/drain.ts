@@ -5,11 +5,11 @@ import { logger } from "@formbricks/logger";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
 import { deleteSurveyUploadFolder } from "@/modules/storage/service";
 import {
+  CLEANUP_SETTLE_MS,
   DELETION_CLEANUP_CLAIM_BATCH,
   DELETION_CLEANUP_HUB_CALL_BUDGET,
   DELETION_CLEANUP_LEASE_SECONDS,
   DELETION_CLEANUP_RUN_BUDGET_MS,
-  HUB_CLEANUP_SETTLE_MS,
   getDeletionCleanupRetryDelayMs,
 } from "./constants";
 import {
@@ -29,6 +29,8 @@ type TClaimedCleanup = {
   responseIds: string[];
   fileKeys: string[];
   attempts: number;
+  /** The lease this drain holds, as written to `nextAttemptAt`; the fence for finishing the row. */
+  leaseUntil: Date;
 };
 
 type TCleanupOutcome =
@@ -40,9 +42,10 @@ type TCleanupOutcome =
 export type TDeletionCleanupDrainSummary = { done: number; again: number; failed: number };
 
 /**
- * Claim due rows for this drain: each is hidden from other drains for the lease, so two workers never
- * hold the same row while both are alive. `SKIP LOCKED` lets concurrent drains split the queue instead
- * of queueing behind each other. Times are bound from the app clock, the same one Prisma writes with.
+ * Claim due rows for this drain: each is hidden from other drains for the lease. `SKIP LOCKED` lets
+ * concurrent drains split the queue instead of queueing behind each other. A later claim is only possible
+ * once the lease has passed, so its `nextAttemptAt` is always later: that value is the lease's token.
+ * Times are bound from the app clock, the same one Prisma writes with.
  */
 const claimDueCleanups = (now: Date, ids: readonly string[] | undefined): Promise<TClaimedCleanup[]> => {
   const leaseUntil = new Date(now.getTime() + DELETION_CLEANUP_LEASE_SECONDS * 1000);
@@ -58,7 +61,7 @@ const claimDueCleanups = (now: Date, ids: readonly string[] | undefined): Promis
       FOR UPDATE SKIP LOCKED
     )
     RETURNING "id", "kind"::text AS "kind", "organizationId", "workspaceId", "surveyId", "tenantIds",
-      "responseIds", "fileKeys", "attempts"
+      "responseIds", "fileKeys", "attempts", "nextAttemptAt" AS "leaseUntil"
   `;
 };
 
@@ -87,7 +90,7 @@ const fromHubResult = (result: THubCleanupResult): TCleanupOutcome => {
       return { status: "done" };
     // Look once more after the settle time: done only when a pass finds nothing left.
     case "deleted":
-      return { status: "again", delayMs: HUB_CLEANUP_SETTLE_MS };
+      return { status: "again", delayMs: CLEANUP_SETTLE_MS };
     case "budget":
       return { status: "again", delayMs: 0 };
     case "failed":
@@ -130,52 +133,62 @@ const processCleanup = async (row: TClaimedCleanup, hubBudget: THubCallBudget): 
   }
 };
 
-const finishCleanup = async (row: TClaimedCleanup, outcome: TCleanupOutcome, now: Date): Promise<void> => {
-  // `deleteMany`/`updateMany` by id: if the lease ran out and another drain finished the row first,
-  // there is nothing left to update, which is fine.
-  if (outcome.status === "done") {
-    await prisma.deletionCleanup.deleteMany({ where: { id: row.id } });
-    return;
-  }
+/** The row as this drain claimed it: matches nothing once another drain has claimed it since. */
+const leased = (row: TClaimedCleanup) => ({ id: row.id, nextAttemptAt: row.leaseUntil });
 
-  if (outcome.status === "again") {
-    await prisma.deletionCleanup.updateMany({
-      where: { id: row.id },
+const finishCleanup = async (row: TClaimedCleanup, outcome: TCleanupOutcome, now: Date): Promise<void> => {
+  let written: { count: number };
+  if (outcome.status === "done") {
+    written = await prisma.deletionCleanup.deleteMany({ where: leased(row) });
+  } else if (outcome.status === "again") {
+    written = await prisma.deletionCleanup.updateMany({
+      where: leased(row),
       data: { attempts: 0, lastError: null, nextAttemptAt: new Date(now.getTime() + outcome.delayMs) },
     });
-    return;
+  } else {
+    const attempts = row.attempts + 1;
+    const retryInMs = getDeletionCleanupRetryDelayMs(attempts);
+    written = await prisma.deletionCleanup.updateMany({
+      where: leased(row),
+      data: {
+        attempts,
+        lastError: outcome.error,
+        nextAttemptAt: new Date(now.getTime() + retryInMs),
+        ...(outcome.fileKeys ? { fileKeys: outcome.fileKeys } : {}),
+      },
+    });
+    // An unconfigured Hub is a deployment choice, not a fault: the row waits for it, quietly.
+    const log = outcome.error === "hubNotConfigured" ? logger.info : logger.warn;
+    log.call(
+      logger,
+      {
+        cleanupId: row.id,
+        kind: row.kind,
+        surveyId: row.surveyId,
+        organizationId: row.organizationId,
+        attempts,
+        retryInMs,
+        error: outcome.error,
+      },
+      "Deletion cleanup failed; will retry"
+    );
   }
 
-  const attempts = row.attempts + 1;
-  const retryInMs = getDeletionCleanupRetryDelayMs(attempts);
-  await prisma.deletionCleanup.updateMany({
-    where: { id: row.id },
-    data: {
-      attempts,
-      lastError: outcome.error,
-      nextAttemptAt: new Date(now.getTime() + retryInMs),
-      ...(outcome.fileKeys ? { fileKeys: outcome.fileKeys } : {}),
-    },
-  });
-  logger.warn(
-    {
-      cleanupId: row.id,
-      kind: row.kind,
-      surveyId: row.surveyId,
-      organizationId: row.organizationId,
-      attempts,
-      retryInMs,
-      error: outcome.error,
-    },
-    "Deletion cleanup failed; will retry"
-  );
+  // The lease ran out mid-row and another drain claimed the row: its outcome stands, and this one's work
+  // (idempotent deletes) is simply repeated by it.
+  if (written.count === 0) {
+    logger.warn(
+      { cleanupId: row.id, kind: row.kind },
+      "Deletion cleanup lease lost; left to the newer claim"
+    );
+  }
 };
 
 /** Hand claimed rows this drain won't get to straight back, rather than leaving them leased. */
 const releaseCleanups = async (rows: readonly TClaimedCleanup[], now: Date): Promise<void> => {
   if (rows.length === 0) return;
   await prisma.deletionCleanup.updateMany({
-    where: { id: { in: rows.map((row) => row.id) } },
+    where: { OR: rows.map(leased) },
     data: { nextAttemptAt: now },
   });
 };
@@ -192,7 +205,7 @@ export const drainDeletionCleanups = async ({
   if (ids?.length === 0) return summary;
 
   const deadline = Date.now() + DELETION_CLEANUP_RUN_BUDGET_MS;
-  const hubBudget: THubCallBudget = { remaining: DELETION_CLEANUP_HUB_CALL_BUDGET };
+  const hubBudget: THubCallBudget = { remaining: DELETION_CLEANUP_HUB_CALL_BUDGET, deadline };
 
   while (Date.now() < deadline) {
     const rows = await claimDueCleanups(new Date(), ids);
