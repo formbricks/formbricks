@@ -236,6 +236,20 @@ than queueing behind a long query:
 | `20261007120000_add_data_retention_tables` | Adds the data retention tables and a nullable `User.reactivatedAt` column. |
 | `20261008120000_add_deletion_cleanup` | Adds the `DeletionCleanup` queue. |
 
+### Data retention (Enterprise, no action required)
+
+Data retention policies run as a nightly background job, `data-retention.sweep`, at 01:00 in
+`SURVEY_SCHEDULING_TIME_ZONE`. Nothing changes until an owner switches a policy on. What it needs:
+
+- **The Job Runner** (Redis), like the other background jobs. Without it the Data retention page tells
+  owners and managers that the nightly run can't happen.
+- **SMTP**, so people are warned before their data is removed. Without it notices are recorded but not
+  sent, the notice period still runs in full, and the page says so.
+
+A policy never acts on the night it is switched on: notices go out first, and nothing is deleted,
+archived or deactivated until its notice has run for the notice period. If the job hasn't run for an
+organization for three days, its notice period starts again before anything is acted on.
+
 ## v6
 
 Formbricks v6 replaces the legacy authorization evaluator with SpiceDB, maintained by AuthZed. PostgreSQL
