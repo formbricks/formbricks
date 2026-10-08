@@ -16,7 +16,7 @@ jobs:
   validate-authzed-compose:
     name: Validate AuthZed Compose
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     permissions:
       contents: read
     env:

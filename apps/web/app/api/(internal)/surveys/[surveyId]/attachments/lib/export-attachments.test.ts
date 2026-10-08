@@ -82,7 +82,7 @@ describe("streamAttachmentsAsZip", () => {
     vi.clearAllMocks();
   });
 
-  test("sets the streaming download headers", () => {
+  test("sets the streaming download headers", async () => {
     mockedGetFileStream.mockResolvedValue(streamOf("x") as never);
 
     const response = streamAttachmentsAsZip({ entries: [okEntry()], survey, now: NOW });
@@ -93,6 +93,8 @@ describe("streamAttachmentsAsZip", () => {
       'attachment; filename="survey-1-attachments-2026-09-01.zip"'
     );
     expect(response.headers.get("Cache-Control")).toBe("no-store");
+    // Finish the archive before the next test resets the manifest mock.
+    await response.arrayBuffer();
   });
 
   test("writes each attachment at its zip path and appends a manifest", async () => {
