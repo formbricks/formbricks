@@ -81,8 +81,11 @@ ARG TARGETARCH
 ARG BASE_PATH=""
 ENV BASE_PATH=${BASE_PATH}
 
-# Prepare the build
-COPY . .
+# Prepare the build. patches/ is already in place from the install step and must not be copied
+# again: pnpm fails `pnpm run` with "Patches were modified" when a patch file is newer than the
+# install's last validation, and a reused install layer (Depot's persistent cache) is always older
+# than this checkout's files.
+COPY --exclude=patches . .
 
 # Create a .env file
 RUN touch apps/web/.env
