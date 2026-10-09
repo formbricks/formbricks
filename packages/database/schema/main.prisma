@@ -470,6 +470,10 @@ model Survey {
   customHeadScripts     String?
   customHeadScriptsMode SurveyScriptMode? @default(add)
 
+  /// [CustomCssStored] Survey custom CSS (ENG-2949): source plus trusted compiled output, written only
+  /// by the shared custom CSS save service. null = no survey CSS. Kept outside `styling` (M2.07).
+  customCss Json?
+
   @@unique([id, workspaceId])
   @@index([workspaceId, updatedAt])
   @@index([workspaceId, ownerId])
@@ -679,6 +683,11 @@ model Workspace {
   workspaceTeams              WorkspaceTeam[]
   appSetupCompleted           Boolean                      @default(false)
   customHeadScripts           String? // Custom HTML scripts for link surveys (self-hosted only)
+  /// [CustomCssStored] Workspace custom CSS (ENG-2949), written only by the shared save service.
+  customCss                   Json?
+  /// [CustomCssStored] The one recoverable previous workspace CSS revision, source included. Restored by
+  /// submitting its source again through the current processor and authorization checks.
+  customCssPrevious           Json?
   feedbackDirectoryWorkspaces FeedbackDirectoryWorkspace[]
   charts                      Chart[]
   dashboards                  Dashboard[]

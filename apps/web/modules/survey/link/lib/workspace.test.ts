@@ -152,6 +152,7 @@ describe("getWorkspaceContextForLinkSurvey", () => {
         linkSurveyBranding: true,
         customHeadScripts: null,
       },
+      customCss: null,
       organizationId: "clh1a2b3c4d5e6f7g8h9k",
       organizationBilling: {
         stripeCustomerId: null,
@@ -173,6 +174,7 @@ describe("getWorkspaceContextForLinkSurvey", () => {
         logo: true,
         linkSurveyBranding: true,
         customHeadScripts: true,
+        customCss: true,
         organizationId: true,
         organization: {
           select: {
@@ -282,6 +284,7 @@ describe("getWorkspaceContextForLinkSurvey", () => {
         linkSurveyBranding: false,
         customHeadScripts: null,
       },
+      customCss: null,
       organizationId: "clh1a2b3c4d5e6f7g8h9u",
       organizationBilling: {
         stripeCustomerId: null,
@@ -293,5 +296,38 @@ describe("getWorkspaceContextForLinkSurvey", () => {
       },
       organizationWhitelabel: null,
     });
+  });
+  test("keeps the stored custom CSS off the workspace object that client components receive", async () => {
+    const mockWorkspaceId = "clh1a2b3c4d5e6f7g8h9v";
+    const storedCustomCss = {
+      light: {
+        source: ".a { color: red }",
+        compiled: "@layer fb-workspace { #fbjs .a { color: red !important } }",
+      },
+      dark: null,
+      processorVersion: 1,
+    };
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      id: mockWorkspaceId,
+      name: "Styled Workspace",
+      styling: null,
+      logo: null,
+      linkSurveyBranding: true,
+      customHeadScripts: null,
+      customCss: storedCustomCss,
+      organizationId: "clh1a2b3c4d5e6f7g8h9w",
+      organization: {
+        id: "clh1a2b3c4d5e6f7g8h9w",
+        billing: { stripeCustomerId: null, limits: {}, usageCycleAnchor: null, stripe: null },
+        whitelabel: null,
+      },
+    } as any);
+
+    const result = await getWorkspaceContextForLinkSurvey(mockWorkspaceId);
+
+    // `workspace` is passed whole to client components (SurveyClientWrapper, SurveyInactive, PinScreen),
+    // so the source-carrying stored value must live beside it, never inside it.
+    expect(result.customCss).toEqual(storedCustomCss);
+    expect(result.workspace).not.toHaveProperty("customCss");
   });
 });

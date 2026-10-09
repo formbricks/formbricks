@@ -24,4 +24,21 @@ properties:
       when `valid=true`.
     items:
       $ref: ./SurveyValidationLanguage.yml
+  customCss:
+    $ref: ./CustomCssCompiled.yml
+    description: >-
+      Compiled custom CSS, when the payload carried `customCss` and `valid=true`. Never present on a
+      failed validation.
+  warnings:
+    type: array
+    maxItems: 50
+    description: Constructs the processor removed from the payload's `customCss`, when it carried one.
+    items:
+      $ref: ./CustomCssWarning.yml
+  errors:
+    type: array
+    maxItems: 50
+    description: Why the payload's `customCss` could not be processed, when it could not.
+    items:
+      $ref: ./CustomCssError.yml
 additionalProperties: false

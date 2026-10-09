@@ -3,18 +3,27 @@
 import { MotionConfig, Variants, motion } from "framer-motion";
 import { Fragment, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TRendererCustomCss } from "@formbricks/types/custom-css";
+import { resolveDarkColors } from "@formbricks/types/dark-palette";
 import { resolveOverlayAppearance } from "@formbricks/types/overlay";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
+import { type TStylingAppearance } from "@/lib/styling/dark-mode";
 import { toJsWorkspaceStateSurvey } from "@/lib/survey/client-utils";
 import { CardlessPreviewLogo } from "@/modules/ui/components/cardless-preview-logo";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { Modal } from "@/modules/ui/components/preview-survey/components/modal";
+import {
+  PREVIEW_BOUNDARY_CLASS_NAME,
+  previewBoundaryProps,
+} from "@/modules/ui/components/preview-survey/lib/containment";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
+import { PreviewAppearanceSwitch } from "@/modules/ui/components/styling-appearance";
 import { SurveyInline } from "@/modules/ui/components/survey";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface ThemeStylingPreviewSurveyProps {
   survey: TSurvey;
@@ -22,6 +31,15 @@ interface ThemeStylingPreviewSurveyProps {
   previewType: TSurveyType;
   setPreviewType: (type: TSurveyType) => void;
   publicDomain: string;
+  /** Only the app survey renders dark; the link survey preview stays light (D4). */
+  appearance?: TStylingAppearance;
+  /** Switches the editor's Light / Dark selection from the preview; without it no switch is shown. */
+  onAppearanceChange?: (appearance: TStylingAppearance) => void;
+  /**
+   * Compiled workspace (+ survey) custom CSS to preview (ENG-3552), e.g. the look & feel page's
+   * validated workspace draft. Passed straight to the renderer, which applies CSS from this prop only.
+   */
+  customCss?: TRendererCustomCss;
 }
 
 const previewParentContainerVariant: Variants = {
@@ -57,7 +75,10 @@ export const ThemeStylingPreviewSurvey = ({
   previewType,
   setPreviewType,
   publicDomain,
-}: ThemeStylingPreviewSurveyProps) => {
+  appearance = "light",
+  onAppearanceChange,
+  customCss,
+}: Readonly<ThemeStylingPreviewSurveyProps>) => {
   const [isFullScreenPreview] = useState(false);
   const [previewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
@@ -155,13 +176,19 @@ export const ThemeStylingPreviewSurvey = ({
       overlayColor={overlayColor}
       overlayOpacity={overlayOpacity}
       previewMode="desktop"
-      background={workspace.styling.cardBackgroundColor?.light}
+      background={
+        appearance === "dark"
+          ? resolveDarkColors(workspace.styling).cardBackgroundColor
+          : workspace.styling.cardBackgroundColor?.light
+      }
       borderRadius={workspace.styling.roundness ?? 8}>
       <Fragment key={surveyKey}>
         <SurveyInline
           appUrl={publicDomain}
           isPreviewMode={true}
+          customCss={customCss}
           survey={toJsWorkspaceStateSurvey({ ...survey, type: "app" })}
+          appearance={appearance}
           isBrandingEnabled={workspace.inAppSurveyBranding}
           isRedirectDisabled={true}
           onFileUpload={async (file) => file.name}
@@ -209,6 +236,7 @@ export const ThemeStylingPreviewSurvey = ({
             <SurveyInline
               appUrl={publicDomain}
               isPreviewMode={true}
+              customCss={customCss}
               survey={toJsWorkspaceStateSurvey({ ...survey, type: "link" })}
               isBrandingEnabled={workspace.linkSurveyBranding}
               isRedirectDisabled={true}
@@ -260,7 +288,10 @@ export const ThemeStylingPreviewSurvey = ({
               </div>
             </div>
           </div>
-          <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-b-lg">
+          {/* The trusted box the survey is contained in, below the chrome and its controls. */}
+          <div
+            {...previewBoundaryProps}
+            className={cn("flex min-h-0 w-full flex-1 flex-col rounded-b-lg", PREVIEW_BOUNDARY_CLASS_NAME)}>
             {isAppSurvey ? renderAppPreview() : renderLinkPreview()}
           </div>
         </motion.div>
@@ -274,21 +305,40 @@ export const ThemeStylingPreviewSurvey = ({
           />
         )}
 
-        {/* for toggling between mobile and desktop mode  */}
-        <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
-          <button
-            type="button"
-            className={`${previewType === "link" ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
-            onClick={() => setPreviewType("link")}>
-            {t("common.link_survey")}
-          </button>
+        {/* Survey type on the left, Light / Dark on the right. */}
+        <div className="mt-2 flex w-5/6 items-center justify-between gap-2">
+          <div className="flex rounded-full border-2 border-slate-300 p-1">
+            <TooltipRenderer
+              shouldRender={appearance === "dark"}
+              tooltipContent={t("workspace.look.link_survey_light_only")}>
+              <button
+                type="button"
+                // Link surveys always render light (D4), so there is no dark link preview to show.
+                // aria-disabled rather than disabled: the button stays focusable, so keyboard users
+                // reach the tooltip that explains why.
+                aria-disabled={appearance === "dark"}
+                className={cn(
+                  previewType === "link" && "rounded-full bg-slate-200",
+                  "cursor-pointer px-3 py-1 text-sm aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+                )}
+                onClick={() => {
+                  if (appearance !== "dark") setPreviewType("link");
+                }}>
+                {t("common.link_survey")}
+              </button>
+            </TooltipRenderer>
 
-          <button
-            type="button"
-            className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
-            onClick={() => setPreviewType("app")}>
-            {t("common.app_survey")}
-          </button>
+            <button
+              type="button"
+              className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
+              onClick={() => setPreviewType("app")}>
+              {t("common.app_survey")}
+            </button>
+          </div>
+
+          {onAppearanceChange && (
+            <PreviewAppearanceSwitch appearance={appearance} onChange={onAppearanceChange} />
+          )}
         </div>
       </div>
     </MotionConfig>

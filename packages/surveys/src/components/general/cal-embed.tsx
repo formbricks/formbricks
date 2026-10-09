@@ -1,7 +1,8 @@
 import snippet from "@calcom/embed-snippet";
-import { useEffect, useMemo, useRef } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TSurveyCalElement } from "@formbricks/types/surveys/elements";
+import { getResolvedAppearance, subscribeToAppearance } from "@/lib/appearance";
 import { cn } from "@/lib/utils";
 
 interface CalEmbedProps {
@@ -30,6 +31,34 @@ function resolveSurveyColor(scope: HTMLElement, varName: string): string | undef
   return color || undefined;
 }
 
+// Forward the survey's resolved text colors into Cal's own text vars so the scheduler header (host, title,
+// description, duration/link/timezone) stays legible and honors the survey style override instead of Cal's
+// washed-out grey defaults. Unresolved vars fall back to Cal's default theme. Cal's theme follows the survey
+// appearance: dark survey text on Cal's white light theme would be unreadable.
+function getCalUiConfig(embedContainer: HTMLElement | null, appearance: "light" | "dark") {
+  const headingColor = embedContainer ? resolveSurveyColor(embedContainer, "--fb-heading-color") : undefined;
+  const subheadingColor = embedContainer
+    ? resolveSurveyColor(embedContainer, "--fb-subheading-color")
+    : undefined;
+  const infoColor = embedContainer ? resolveSurveyColor(embedContainer, "--fb-info-text-color") : undefined;
+
+  const calCssVars = {
+    "cal-border-subtle": "transparent",
+    "cal-border-booker": "transparent",
+    ...(headingColor ? { "cal-text-emphasis": headingColor } : {}),
+    ...(subheadingColor ? { "cal-text": subheadingColor, "cal-text-subtle": subheadingColor } : {}),
+    ...(infoColor ? { "cal-text-muted": infoColor } : {}),
+  };
+
+  return {
+    theme: appearance,
+    cssVarsPerTheme: {
+      light: { ...calCssVars },
+      dark: { "cal-bg-muted": "transparent", "cal-bg": "transparent", ...calCssVars },
+    },
+  };
+}
+
 export function CalEmbed({ element, onSuccessfulBooking }: Readonly<CalEmbedProps>) {
   const { t } = useTranslation();
   const iframeTitle = t("common.scheduling_calendar");
@@ -52,6 +81,17 @@ export function CalEmbed({ element, onSuccessfulBooking }: Readonly<CalEmbedProp
 
   const cal = useMemo(() => snippet("https://cal.com/embed.js"), []);
 
+  // Cal renders its own theme in a cross-origin iframe, so it gets the survey's appearance and the text
+  // colors resolved for it, and both again on a live switch.
+  const [appearance, setAppearance] = useState(getResolvedAppearance);
+  useEffect(
+    () =>
+      subscribeToAppearance(setAppearance, () => document.getElementById(containerId)?.isConnected ?? true),
+    [containerId]
+  );
+
+  // `appearance` is a dependency: a live switch rebuilds the scheduler, because the embed's theme is fixed
+  // when it loads and the forwarded text colors changed with the survey's variables.
   useEffect(() => {
     // Initialize a namespaced Cal instance; `cal.ns[namespace]` is created
     // synchronously by the snippet so all further commands stay scoped to it.
@@ -61,44 +101,7 @@ export function CalEmbed({ element, onSuccessfulBooking }: Readonly<CalEmbedProp
     const ns = cal.ns[namespace];
 
     const embedContainer = document.getElementById(containerId);
-
-    // Forward the survey's resolved text colors into Cal's own text vars so the
-    // scheduler header (host, title, description, duration/link/timezone) stays
-    // legible and honors the survey style override instead of Cal's washed-out
-    // grey defaults. Unresolved vars fall back to Cal's default theme.
-    const headingColor = embedContainer
-      ? resolveSurveyColor(embedContainer, "--fb-heading-color")
-      : undefined;
-    const subheadingColor = embedContainer
-      ? resolveSurveyColor(embedContainer, "--fb-subheading-color")
-      : undefined;
-    const infoColor = embedContainer ? resolveSurveyColor(embedContainer, "--fb-info-text-color") : undefined;
-
-    const calTextVars = {
-      ...(headingColor ? { "cal-text-emphasis": headingColor } : {}),
-      ...(subheadingColor ? { "cal-text": subheadingColor, "cal-text-subtle": subheadingColor } : {}),
-      ...(infoColor ? { "cal-text-muted": infoColor } : {}),
-    };
-
-    const calCssVars = {
-      "cal-border-subtle": "transparent",
-      "cal-border-booker": "transparent",
-      ...calTextVars,
-    };
-
-    ns("ui", {
-      theme: "light",
-      cssVarsPerTheme: {
-        light: {
-          ...calCssVars,
-        },
-        dark: {
-          "cal-bg-muted": "transparent",
-          "cal-bg": "transparent",
-          ...calCssVars,
-        },
-      },
-    });
+    ns("ui", getCalUiConfig(embedContainer, appearance));
 
     const handleBooking = (): void => {
       onSuccessfulBookingRef.current();
@@ -108,6 +111,10 @@ export function CalEmbed({ element, onSuccessfulBooking }: Readonly<CalEmbedProp
     ns("inline", {
       elementOrSelector: `#${containerId}`,
       calLink: element.calUserName,
+      // `ui` alone only switches Cal's color tokens; a Cal account whose booking page is set to a light
+      // theme keeps its white background and ends up with light text on white. The embed's own `theme`
+      // overrides the account setting.
+      config: { theme: appearance },
     });
 
     // The snippet injects the iframe asynchronously without a title, so screen
@@ -133,7 +140,7 @@ export function CalEmbed({ element, onSuccessfulBooking }: Readonly<CalEmbedProp
       // Remove only this scheduler's injected embed, not every cal-inline on the page.
       embedContainer?.querySelector("cal-inline")?.remove();
     };
-  }, [cal, namespace, containerId, element.calHost, element.calUserName, iframeTitle]);
+  }, [cal, namespace, containerId, element.calHost, element.calUserName, iframeTitle, appearance]);
 
   return (
     <div className="relative mt-4 overflow-auto">

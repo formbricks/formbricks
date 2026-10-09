@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZLinkedEmbeddedField } from "@formbricks/types/embedded-data";
-import { ZSurveyType } from "@formbricks/types/surveys/types";
+import { ZSurveyStyling, ZSurveyType } from "@formbricks/types/surveys/types";
 
 /**
  * Lenient schema for draft survey updates.
@@ -27,6 +27,10 @@ export const ZSurveyDraft = z.looseObject({
   // mapper and throws there — a 500 where the request deserves a 400. A malformed-but-mappable entry
   // is worse still: it writes, and the survey then fails `ZSurvey` forever and cannot be published.
   embeddedFields: z.array(ZLinkedEmbeddedField).optional(),
+
+  // Its free-text values are written into the survey's CSS, so a draft save checks them like a
+  // publish does: a value that is not valid for its property cannot add declarations (ENG-2950).
+  styling: ZSurveyStyling.nullish(),
 }); // Allow all other fields without validation
 
 export type TSurveyDraft = z.infer<typeof ZSurveyDraft>;

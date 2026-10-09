@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { can } from "@/lib/authorization";
 import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
-import { getSurvey } from "@/lib/survey/service";
+import { getSurveyWithCustomCss } from "@/lib/survey/service";
 import { getAuthorizedV3Survey } from "./authorization";
 import { resolveV3SurveyResourceVisibility } from "./visibility-context";
 
@@ -23,18 +23,18 @@ beforeEach(() => {
 });
 
 vi.mock("@/lib/survey/service", () => ({
-  getSurvey: vi.fn(),
+  getSurveyWithCustomCss: vi.fn(),
 }));
 
 const survey = {
   id: "clsv1234567890123456789012",
   workspaceId: "clxx1234567890123456789012",
 };
-const surveyRecord = survey as unknown as NonNullable<Awaited<ReturnType<typeof getSurvey>>>;
+const surveyRecord = survey as unknown as NonNullable<Awaited<ReturnType<typeof getSurveyWithCustomCss>>>;
 
 describe("getAuthorizedV3Survey", () => {
   test("returns a generic forbidden response when the survey does not exist", async () => {
-    vi.mocked(getSurvey).mockResolvedValue(null);
+    vi.mocked(getSurveyWithCustomCss).mockResolvedValue(null);
 
     const result = await getAuthorizedV3Survey({
       surveyId: survey.id,
@@ -50,7 +50,7 @@ describe("getAuthorizedV3Survey", () => {
 
   test("returns the authorization response when workspace access is denied", async () => {
     const forbiddenResponse = new Response(null, { status: 403 });
-    vi.mocked(getSurvey).mockResolvedValue(surveyRecord);
+    vi.mocked(getSurveyWithCustomCss).mockResolvedValue(surveyRecord);
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(forbiddenResponse);
 
     const result = await getAuthorizedV3Survey({
@@ -66,7 +66,7 @@ describe("getAuthorizedV3Survey", () => {
 
   test("returns the survey and authorization context when access is allowed", async () => {
     const authResult = { workspaceId: survey.workspaceId, organizationId: "org_1" };
-    vi.mocked(getSurvey).mockResolvedValue(surveyRecord);
+    vi.mocked(getSurveyWithCustomCss).mockResolvedValue(surveyRecord);
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(authResult);
 
     const result = await getAuthorizedV3Survey({
@@ -94,7 +94,7 @@ describe("getAuthorizedV3Survey", () => {
     "with visibility enforced, also requires %s on the survey itself (ENG-3282)",
     async (access, action) => {
       vi.mocked(isSurveyVisibilityReady).mockResolvedValue(true);
-      vi.mocked(getSurvey).mockResolvedValue(surveyRecord);
+      vi.mocked(getSurveyWithCustomCss).mockResolvedValue(surveyRecord);
       vi.mocked(requireV3WorkspaceAccess).mockResolvedValue({
         workspaceId: survey.workspaceId,
         organizationId: "org_1",

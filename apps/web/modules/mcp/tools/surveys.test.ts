@@ -436,6 +436,55 @@ describe("registerSurveyTools", () => {
     });
   });
 
+  test("validate_survey runs the custom CSS variant read-only, even for a read-scoped OAuth token", async () => {
+    const { tools } = createToolServer();
+    const validationBody = {
+      operation: "customCss" as const,
+      workspaceId: "clxx1234567890123456789012",
+      scope: "survey" as const,
+      surveyId: "clsv1234567890123456789012",
+      data: { customCss: { light: "a{}", dark: null } },
+    };
+    vi.mocked(validateV3SurveyFromRawInput).mockResolvedValue(
+      successResponse(
+        {
+          valid: true,
+          operation: "customCss",
+          invalid_params: [],
+          customCss: { light: "x", dark: null },
+          warnings: [],
+        },
+        { requestId: "req_tool" }
+      )
+    );
+
+    const result = await tools
+      .get("validate_survey")!
+      .handler(validationBody, { http: { authInfo: readOnlyOAuthAuthInfo } });
+
+    expect(validateV3SurveyFromRawInput).toHaveBeenCalledWith(
+      expect.objectContaining({ body: validationBody })
+    );
+    expect(buildV3AuditLog).not.toHaveBeenCalled();
+    expect(result.structuredContent.data).toMatchObject({ valid: true, operation: "customCss" });
+  });
+
+  test("create_survey accepts custom CSS source and rejects compiled output at the tool boundary", () => {
+    const { tools } = createToolServer();
+    const schema = tools.get("create_survey")!.config.inputSchema as z.ZodType;
+    const base = {
+      workspaceId: "clxx1234567890123456789012",
+      name: "Styled",
+      blocks: [{ name: "Block", elements: [] }],
+    };
+
+    expect(schema.safeParse({ ...base, customCss: { light: "a{}", dark: null } }).success).toBe(true);
+    expect(schema.safeParse({ ...base, customCss: null }).success).toBe(true);
+    expect(
+      schema.safeParse({ ...base, customCss: { light: "a{}", dark: null, compiled: "x" } }).success
+    ).toBe(false);
+  });
+
   test("patch_survey queues a successful audit log", async () => {
     const { tools } = createToolServer();
     const auditLog = { status: "failure" };

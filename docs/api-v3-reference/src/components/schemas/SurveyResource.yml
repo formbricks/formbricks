@@ -19,6 +19,7 @@ allOf:
       - endings
       - hiddenFields
       - variables
+      - customCss
     properties:
       id:
         type: string
@@ -105,4 +106,12 @@ allOf:
         allOf:
           - $ref: ./SurveyTargeting.yml
         description: App-survey contact targeting. Present only for app surveys; omitted for link surveys.
+      customCss:
+        anyOf:
+          - $ref: ./CustomCssInput.yml
+          - type: "null"
+        description: >-
+          The survey's custom CSS **source** (ENG-3641), `null` when it has none. Compiled output and
+          the processor version are internal and never exposed here. The full resource may be sent
+          back with PATCH: unchanged source is not reprocessed and needs no plan.
   - $ref: ./SurveyVisibilityFields.yml

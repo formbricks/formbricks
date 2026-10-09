@@ -10,6 +10,7 @@ import {
   getAccessControlPermission,
   getBiggerUploadFileSizePermission,
   getBulkInvitePermission,
+  getCustomCssPermission,
   getIsAISmartToolsEnabled,
   getIsAuditLogsEnabled,
   getIsContactsEnabled,
@@ -191,6 +192,31 @@ describe("License Utils", () => {
       const result = await getBulkInvitePermission("org_1");
 
       expect(result).toBe(false);
+    });
+  });
+
+  describe("getCustomCssPermission", () => {
+    test("returns true on self-hosted on every plan, without a license or an entitlement check", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+
+      await expect(getCustomCssPermission("org_1")).resolves.toBe(true);
+      expect(hasOrganizationEntitlementWithLicenseGuard).not.toHaveBeenCalled();
+      expect(getEnterpriseLicense).not.toHaveBeenCalled();
+    });
+
+    test("uses the cloud custom-css entitlement", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValueOnce(true);
+
+      await expect(getCustomCssPermission("org_1")).resolves.toBe(true);
+      expect(hasOrganizationEntitlementWithLicenseGuard).toHaveBeenCalledWith("org_1", "custom-css");
+    });
+
+    test("returns false on cloud without the custom-css entitlement", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValueOnce(false);
+
+      await expect(getCustomCssPermission("org_1")).resolves.toBe(false);
     });
   });
 

@@ -73,11 +73,19 @@ const nextConfig = {
     "@prisma/instrumentation",
     "bullmq",
     "ioredis",
+    // Custom CSS processor (modules/custom-css/processor): loads a native binary per platform.
+    "lightningcss",
     "pino",
     "pino-pretty",
     "pino-opentelemetry-transport",
     "posthog-node",
+    "typeorm",
   ],
+  // Jackson is configured exclusively with PostgreSQL (modules/ee/auth/saml/lib/jackson.ts).
+  // TypeORM's lazy SQL Server driver traces unused mssql/tedious code and vulnerable sprintf-js.
+  outputFileTracingExcludes: {
+    "/*": ["../../**/node_modules/{mssql,tedious,sprintf-js}/**/*"],
+  },
   outputFileTracingIncludes: {
     "/api/auth/**/*": ["../../node_modules/jose/**/*"],
     // pino loads transport code in worker threads via dynamic require() — the file tracer
@@ -89,6 +97,12 @@ const nextConfig = {
       "../../node_modules/pino-opentelemetry-transport/**/*",
       "../../node_modules/pino-abstract-transport/**/*",
       "../../node_modules/otlp-logger/**/*",
+      // lightningcss picks its native package at runtime (require of "lightningcss-<platform>"),
+      // which the tracer cannot follow; only the package matching the build's platform/libc is
+      // installed (musl in the Alpine image), so the wildcard copies exactly that one.
+      "../../node_modules/lightningcss/**/*",
+      "../../node_modules/lightningcss-*/**/*",
+      "../../node_modules/detect-libc/**/*",
     ],
   },
   turbopack: {},

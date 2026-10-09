@@ -64,6 +64,7 @@ export const V3_PROBLEM_CODES = [
   "bad_gateway",
   "bad_request",
   "conflict",
+  "custom_css_plan_required",
   "forbidden",
   "internal_server_error",
   "invalid_workflow_state",
@@ -296,6 +297,34 @@ export function problemUnprocessableContent(
 }
 
 /**
+ * ENG-2949: adding or editing custom CSS needs the Scale plan on Formbricks Cloud. Independent of the
+ * resource, so it reveals nothing about it; removing CSS never answers this.
+ */
+export function problemCustomCssPlanRequired(requestId: string, detail: string, instance?: string): Response {
+  return problemResponse(403, "Forbidden", detail, requestId, {
+    code: "custom_css_plan_required",
+    instance,
+  });
+}
+
+/**
+ * ENG-3641: custom CSS that the processor rejected (syntax, size or complexity limits, processing
+ * failure). A 422 like any other semantic document failure; `details.errors` carries the processor's
+ * located errors (code, scope, appearance, line, column, reason), `invalid_params` the same as fields.
+ */
+export function problemCustomCssInvalid(
+  requestId: string,
+  options: { invalid_params: InvalidParam[]; errors: unknown[]; instance?: string }
+): Response {
+  return problemResponse(422, "Unprocessable Content", "Custom CSS failed validation", requestId, {
+    code: "unprocessable_content",
+    instance: options.instance,
+    invalid_params: options.invalid_params,
+    details: { errors: options.errors },
+  });
+}
+
+/**
  * ENG-3282: survey visibility is not available here — the organization lacks the entitlement or the
  * deployment's readiness marker is unset (contract §5). Independent of the survey, so it reveals
  * nothing about it.
@@ -476,9 +505,16 @@ export function successListResponse<T, TMeta extends Record<string, unknown>>(
   return Response.json({ data, meta }, { status: 200, headers });
 }
 
+/**
+ * Top-level members a success body may carry beside `data` — additive, never a replacement for it. The
+ * custom CSS writes use it for `warnings` (ENG-3641), which describe the request rather than the
+ * resource, so they stay out of `data` and a PATCH that round-trips `data` never sends them back.
+ */
+type TSuccessExtensions = { warnings?: unknown[] };
+
 export function successResponse<T>(
   data: T,
-  options?: { requestId?: string; cache?: string; status?: number }
+  options?: { requestId?: string; cache?: string; status?: number; extensions?: TSuccessExtensions }
 ): Response {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -492,6 +528,7 @@ export function successResponse<T>(
   return Response.json(
     {
       data,
+      ...options?.extensions,
     },
     {
       status: options?.status ?? 200,
@@ -502,7 +539,7 @@ export function successResponse<T>(
 
 export function createdResponse<T>(
   data: T,
-  options: { location: string; requestId?: string; cache?: string }
+  options: { location: string; requestId?: string; cache?: string; extensions?: TSuccessExtensions }
 ): Response {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -517,6 +554,7 @@ export function createdResponse<T>(
   return Response.json(
     {
       data,
+      ...options.extensions,
     },
     {
       status: 201,

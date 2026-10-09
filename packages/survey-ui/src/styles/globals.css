@@ -10,7 +10,15 @@
    Components use Tailwind utilities backed by these CSS variables.
    ============================================================================= */
 
-@layer theme, base, components, utilities;
+/*
+  Cascade layer order (ENG-3449 / ENG-3552). The first statement in this stylesheet, so wherever the
+  host page has not named these layers yet, it fixes their order before anything below registers
+  them. Customer CSS lives in the four fb-* layers and is all `!important`, and for important
+  declarations the earlier layer wins: survey dark > survey > workspace dark > workspace > the
+  theme editor and every built-in style. Keep in sync with CUSTOM_CSS_LAYER_ORDER in
+  packages/types/custom-css.ts; the renderer also puts the fb-* names first in <head>.
+*/
+@layer fb-survey-dark, fb-survey, fb-workspace-dark, fb-workspace, theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities) important;
 
@@ -165,6 +173,65 @@
   --fb-page-bg-color: #e2e8f0;
 }
 
+/* =============================================================================
+   Dark appearance
+
+   The renderer sets data-appearance on every #fbjs root (ENG-2940). These are
+   the fallback values for a survey without styling, so a dark survey paints
+   dark from its first frame. styles.ts overrides them from the styling object
+   exactly as it does for light.
+
+   Color values MUST match getDerivedDarkColors("#1e40af") in
+   packages/types/dark-palette.ts. Brand, button and progress indicator keep
+   their light values (D12), so they are not repeated here.
+
+   `color-scheme` sits on the survey root, never on :root — on :root it can
+   paint a transparent mobile WebView dark over the host app (ENG-3447).
+   ============================================================================= */
+
+#fbjs[data-appearance="dark"] {
+  color-scheme: dark;
+
+  --background: #0d1426;
+  --foreground: #dde2f3;
+  --card: #0d1426;
+  --card-foreground: #dde2f3;
+  --popover: #0e1832;
+  --popover-foreground: #dde2f3;
+  --secondary: #0e1832;
+  --secondary-foreground: #dde2f3;
+  --muted: #0e1832;
+  --muted-foreground: #9fa5b9;
+  --accent: #101d42;
+  --accent-foreground: #dde2f3;
+  --border: #5b6a97;
+  --input: #dde2f3;
+
+  /* Hover / selected states lighten a dark surface instead of darkening it. */
+  --fb-shade-color: white;
+  --fb-tint-color: #0d1426;
+
+  --fb-accent-background-color: #101d42;
+  --fb-accent-background-color-selected: #122251;
+  --fb-element-headline-color: #dde2f3;
+  --fb-element-description-color: #dde2f3;
+  --fb-element-upper-label-color: #dde2f3;
+  --fb-label-color: #dde2f3;
+  --fb-input-bg-color: #0e1832;
+  --fb-input-border-color: #5b6a97;
+  --fb-input-color: #dde2f3;
+  --fb-input-shadow: none;
+  --fb-progress-track-bg-color: #5a6587;
+  --fb-option-bg-color: #0e1832;
+  --fb-option-label-color: #dde2f3;
+  --fb-page-bg-color: #0b0f17;
+
+  /* Readable variants of the brand and the error red on the dark card
+     (getDarkReadableColors in dark-palette.ts). */
+  --destructive: #ee4d54;
+  --fb-brand-readable-color: #788ccf;
+}
+
 #fbjs .button-custom {
   width: var(--fb-button-width);
   height: var(--fb-button-height);
@@ -217,6 +284,20 @@
   font-size: var(--fb-element-description-font-size);
   color: var(--fb-element-description-color);
   opacity: var(--fb-element-description-opacity);
+}
+
+/*
+ * Formatted text inside the headline and description hooks takes its typography from the hook element
+ * rather than from the theme variables directly, so a rule on the hook (Custom CSS, ENG-3554) reaches
+ * every word of it, not only plain-text headlines. The hook element holds the same theme values, so
+ * nothing changes without Custom CSS. Opacity is not inherited and stays as it is.
+ */
+#fbjs [data-fb-part="headline"] *,
+#fbjs [data-fb-part="description"] * {
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  color: inherit;
 }
 
 /*
@@ -290,6 +371,14 @@
     --fb-focus-ring-outer-color: var(--fb-survey-brand-color, #1e40af);
     --fb-focus-ring-inner-width: 2px;
     --fb-focus-ring-outer-width: 2px;
+  }
+
+  /* The inner ring separates the outer ring from the control; on a dark card
+     it takes the card color instead of white. */
+  #fbjs[data-appearance="dark"] {
+    --fb-focus-ring-inner-color: var(--fb-survey-background-color, #0d1426);
+    /* The brand can sit below 3 : 1 on the dark card; styles.ts emits the readable variant. */
+    --fb-focus-ring-outer-color: #4b66bf;
   }
 
   /* Tailwind v4's transition-colors includes outline-color, and the focus rule

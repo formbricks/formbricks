@@ -11,6 +11,7 @@ import { logger } from "@formbricks/logger";
 import { getWritableWorkspacesAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
+import { getCustomCssCopyNotice } from "@/modules/survey/list/lib/custom-css-notice";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -115,6 +116,17 @@ export const CopySurveyModal = ({
         );
       }
     }
+
+    // A copy can succeed without the source's custom CSS (destination plan, or CSS that no longer
+    // passes); say so per workspace instead of letting the success toast imply it came along.
+    settled.forEach((outcome, index) => {
+      if (outcome.status !== "fulfilled" || !outcome.value?.data) return;
+      const customCssNotice = getCustomCssCopyNotice(outcome.value.data, t);
+      if (!customCssNotice) return;
+      const targetWorkspaceId = data.workspaceIds[index];
+      const workspaceName = workspaces.find((w) => w.id === targetWorkspaceId)?.name ?? targetWorkspaceId;
+      toast.error(`[${workspaceName}] - ${customCssNotice}`, { duration: 8000 });
+    });
 
     errorsIndexes.forEach((index, idx) => {
       const targetWorkspaceId = data.workspaceIds[index];

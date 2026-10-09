@@ -2,6 +2,7 @@ import * as React from "react";
 import { Checkbox } from "@/components/general/checkbox";
 import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
+import { FB_PART } from "@/lib/parts";
 import { cn } from "@/lib/utils";
 
 /**
@@ -80,6 +81,7 @@ function Consent({
 
         <label
           htmlFor={`${inputId}-checkbox`}
+          data-fb-part={FB_PART.consent}
           className={cn(
             "bg-input-bg border-input-border text-input-text w-input px-input-x py-input-y rounded-input flex cursor-pointer items-center gap-3 border p-4 transition-colors",
             "focus-within:border-ring focus-within:ring-ring/50 font-fontWeight focus-within:shadow-sm",
@@ -89,6 +91,7 @@ function Consent({
           dir={dir}>
           <Checkbox
             id={`${inputId}-checkbox`}
+            data-fb-part={FB_PART.optionControl}
             checked={value}
             onCheckedChange={handleCheckboxChange}
             disabled={disabled}
@@ -96,6 +99,7 @@ function Consent({
             aria-describedby={errorAria.ariaDescribedBy}
           />
           <span
+            data-fb-part={FB_PART.optionLabel}
             className="font-input-weight text-input-text flex-1 [font-size:var(--fb-input-font-size)]"
             dir={dir}>
             {checkboxLabel}

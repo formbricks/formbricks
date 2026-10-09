@@ -4,6 +4,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
+import type { TCustomCssStored } from "@formbricks/types/custom-css";
 import {
   linkedToDesiredEmbeddedFields,
   toLegacyEmbeddedFields,
@@ -49,6 +50,12 @@ import {
 } from "@/lib/organization/service";
 import type { TSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
+import {
+  invalidateCustomCssCaches,
+  parseStoredCustomCss,
+  readCustomCssPayloadSource,
+  resolveCustomCssWriteOrThrow,
+} from "@/modules/custom-css/lib/service";
 import { getSurveyWorkspaceIdMap } from "@/modules/ee/contacts/segments/lib/segments";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
@@ -215,6 +222,18 @@ export const selectSurvey = {
   embeddedDataLinks: selectSurveyEmbeddedDataLinks,
 } satisfies Prisma.SurveySelect;
 
+/**
+ * `selectSurvey` plus the stored custom CSS (source and compiled output, up to ~40 KB). Kept out of the
+ * generic selector so the respondent hot paths built on `getSurvey` — response and display writes, file
+ * uploads — never load it. The readers that use it select it on purpose: the save paths (this file and
+ * API v3), whose results go back to the editor and to v3 serializers. A survey loaded without the column
+ * has no `customCss` key at all, which every write path reads as "leave the CSS unchanged".
+ */
+export const selectSurveyWithCustomCss = {
+  ...selectSurvey,
+  customCss: true,
+} satisfies Prisma.SurveySelect;
+
 const reconcilePersistedSurveySchedulingIfDue = async ({
   logSource,
   survey,
@@ -246,7 +265,7 @@ const reconcilePersistedSurveySchedulingIfDue = async ({
 
   const reconciledSurvey = await prisma.survey.findUnique({
     where: { id: survey.id },
-    select: selectSurvey,
+    select: selectSurveyWithCustomCss,
   });
 
   if (!reconciledSurvey) {
@@ -256,7 +275,10 @@ const reconcilePersistedSurveySchedulingIfDue = async ({
   return transformPrismaSurvey<TSurvey>(reconciledSurvey);
 };
 
-export const getSurvey = reactCache(async (surveyId: string): Promise<TSurvey | null> => {
+const findSurveyById = async (
+  surveyId: string,
+  select: typeof selectSurvey | typeof selectSurveyWithCustomCss
+): Promise<TSurvey | null> => {
   validateInputs([surveyId, ZId]);
 
   let surveyPrisma;
@@ -265,7 +287,7 @@ export const getSurvey = reactCache(async (surveyId: string): Promise<TSurvey | 
       where: {
         id: surveyId,
       },
-      select: selectSurvey,
+      select,
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -280,7 +302,21 @@ export const getSurvey = reactCache(async (surveyId: string): Promise<TSurvey | 
   }
 
   return transformPrismaSurvey<TSurvey>(surveyPrisma);
-});
+};
+
+/** A survey without its stored custom CSS — see {@link selectSurveyWithCustomCss}. */
+export const getSurvey = reactCache(
+  async (surveyId: string): Promise<TSurvey | null> => await findSurveyById(surveyId, selectSurvey)
+);
+
+/**
+ * {@link getSurvey} with the stored custom CSS, for the readers that serialize or edit it (API v3). Not for
+ * respondent paths: they receive compiled CSS through the delivery code, never the stored value.
+ */
+export const getSurveyWithCustomCss = reactCache(
+  async (surveyId: string): Promise<TSurvey | null> =>
+    await findSurveyById(surveyId, selectSurveyWithCustomCss)
+);
 
 export const getSurveysByActionClassId = reactCache(
   async (
@@ -393,9 +429,30 @@ export const getSurveyCount = reactCache(async (workspaceId: string): Promise<nu
   }
 });
 
+/** The survey's stored custom CSS, read from the row (tenant-scoped by workspace). */
+const getStoredSurveyCustomCss = async (surveyId: string, workspaceId: string) => {
+  const row = await prisma.survey.findUnique({
+    where: { id: surveyId, workspaceId },
+    select: { customCss: true },
+  });
+  if (!row) {
+    throw new ResourceNotFoundError("Survey", surveyId);
+  }
+  return parseStoredCustomCss(row.customCss);
+};
+
+export type TUpdateSurveyOptions = {
+  /**
+   * The acting user's id, charged when the save adds or edits custom CSS — the budget CSS validation
+   * spends, so the editor's save and autosave cannot run the processor outside it.
+   */
+  customCssPrincipal?: string;
+};
+
 export const updateSurveyInternal = async (
   updatedSurvey: TSurvey,
-  skipValidation = false
+  skipValidation = false,
+  options: TUpdateSurveyOptions = {}
 ): Promise<TSurvey> => {
   if (!skipValidation) {
     validateInputs([updatedSurvey, ZSurvey]);
@@ -451,6 +508,9 @@ export const updateSurveyInternal = async (
       visibilityProjectedVersion: _visibilityProjectedVersion,
       visibilityChangedAt: _visibilityChangedAt,
       visibilityChangedById: _visibilityChangedById,
+      // ENG-2949: never spread. Only its source is read, and it reaches the row through the shared
+      // custom CSS service below, so a caller's compiled CSS or processor version is never stored.
+      customCss,
       ...surveyData
     } = updatedSurvey;
 
@@ -529,6 +589,32 @@ export const updateSurveyInternal = async (
         throw blocksValidation.error;
       }
     }
+
+    // ENG-2949: custom CSS is decided before anything is written — the segment block below writes
+    // outside the transaction, so a refusal raised later would half-apply the save. Full-object payloads
+    // (the editor's save and autosave) are revalidated from source against the stored row: unchanged
+    // source costs no plan check and no processing, removal needs no plan, and an addition or edit needs
+    // the plan, a unit of the custom CSS budget and a clean processor run. Failures keep the stored
+    // revision.
+    const customCssSource = readCustomCssPayloadSource(customCss);
+    const customCssWrite =
+      customCssSource === undefined
+        ? null
+        : await resolveCustomCssWriteOrThrow({
+            scope: "survey",
+            organizationId: async () => {
+              const organization = await getOrganizationByWorkspaceId(currentSurvey.workspaceId);
+              if (!organization) {
+                throw new ResourceNotFoundError("Organization", null);
+              }
+              return organization.id;
+            },
+            // From the row, never from `currentSurvey`: `getSurvey` does not select the column, and a
+            // missing value read as "no CSS" would turn a clear into a no-op.
+            existing: await getStoredSurveyCustomCss(surveyId, currentSurvey.workspaceId),
+            input: customCssSource,
+            principal: options.customCssPrincipal,
+          });
 
     if (languages) {
       // Process languages update logic here
@@ -789,6 +875,10 @@ export const updateSurveyInternal = async (
       type,
     };
 
+    if (customCssWrite?.changed) {
+      data.customCss = customCssWrite.stored ?? Prisma.DbNull;
+    }
+
     delete data.createdBy;
     const persistedSurvey = await prisma.$transaction(
       async (tx) => {
@@ -831,7 +921,7 @@ export const updateSurveyInternal = async (
         // copy and short-circuits on differing key counts, so the key shape must be identical.
         return tx.survey.findUniqueOrThrow({
           where: { id: surveyId, workspaceId: currentSurvey.workspaceId },
-          select: selectSurvey,
+          select: selectSurveyWithCustomCss,
         });
       },
       // Prisma's default interactive-transaction ceiling is 5s, which the write above can plausibly
@@ -848,6 +938,10 @@ export const updateSurveyInternal = async (
     // blocks leaves the stored questions untouched, and diffing its empty payload would delete every
     // mapping. Best-effort: a failure logs inside the helper and never blocks the save.
     await scheduleFeedbackSourceReconciliation(surveyId, currentSurvey.workspaceId, persistedSurvey.blocks);
+
+    if (customCssWrite?.changed) {
+      await invalidateCustomCssCaches(currentSurvey.workspaceId);
+    }
 
     return await reconcilePersistedSurveySchedulingIfDue({
       logSource: "survey-update",
@@ -990,12 +1084,17 @@ export type TCreateSurveyOptions = Readonly<{
    */
   creationFacts: TSurveyCreationFacts;
   privateSegmentFilters?: TBaseFilters;
+  /**
+   * ENG-2949: custom CSS already resolved by the shared custom CSS service (plan checked, processed).
+   * `ZSurveyCreateInput` strips `customCss` from the body, so this is the only way a create stores it.
+   */
+  customCss?: TCustomCssStored | null;
 }>;
 
 export const createSurvey = async (
   workspaceId: string,
   surveyBody: TSurveyCreateInput,
-  { creationFacts, privateSegmentFilters = [] }: TCreateSurveyOptions
+  { creationFacts, privateSegmentFilters = [], customCss }: TCreateSurveyOptions
 ): Promise<TSurvey> => {
   const [parsedWorkspaceId, parsedSurveyBody] = validateInputs(
     [workspaceId, ZId],
@@ -1108,6 +1207,7 @@ export const createSurvey = async (
         const createdSurvey = await tx.survey.create({
           data: {
             ...data,
+            ...(customCss ? { customCss } : {}),
             workspace: {
               connect: {
                 id: parsedWorkspaceId,
@@ -1163,7 +1263,10 @@ export const createSurvey = async (
         // all. Cheap here in a way it would not be on the editor-save path: creation happens once per
         // survey, and this also picks up the private-segment connect above, which `createdSurvey`
         // predates.
-        return tx.survey.findUniqueOrThrow({ where: { id: createdSurvey.id }, select: selectSurvey });
+        return tx.survey.findUniqueOrThrow({
+          where: { id: createdSurvey.id },
+          select: selectSurveyWithCustomCss,
+        });
       },
       // This transaction predates ENG-1978, but the reconcile above adds a read plus two writes per
       // field inside it, and neither `variables` nor `hiddenFields` is bounded — so a large template or

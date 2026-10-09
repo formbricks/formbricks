@@ -2,18 +2,18 @@
 
 import { PlusCircleIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Workspace } from "@formbricks/database/prisma-browser";
 import { TTemplate } from "@formbricks/types/templates";
 import { customSurveyTemplate } from "@/app/lib/templates";
 import { cn } from "@/lib/cn";
 import { replacePresetPlaceholders } from "@/lib/utils/templates";
+import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { Button } from "@/modules/ui/components/button";
 
 interface StartFromScratchTemplateProps {
   activeTemplate: TTemplate | null;
   setActiveTemplate: (template: TTemplate) => void;
   onTemplateClick: (template: TTemplate) => void;
-  workspace: Workspace;
+  workspace: TWorkspaceWithoutCustomCss;
   createSurvey: (template: TTemplate) => void;
   loading: boolean;
   noPreview?: boolean;

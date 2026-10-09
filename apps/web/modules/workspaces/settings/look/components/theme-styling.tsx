@@ -3,23 +3,30 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RotateCcwIcon, SparklesIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { type TCustomCssCompiled } from "@formbricks/types/custom-css";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { TWorkspaceStyling, ZWorkspaceStyling } from "@formbricks/types/workspace";
 import { previewSurvey } from "@/app/lib/templates";
+import { cn } from "@/lib/cn";
 import { COLOR_DEFAULTS, STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
+import { type TStylingAppearance } from "@/lib/styling/dark-mode";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { type TWorkspaceCustomCssAccess } from "@/modules/custom-css/components/types";
+import {
+  type TWorkspaceCustomCssSaveHandle,
+  WorkspaceCustomCssCard,
+} from "@/modules/custom-css/components/workspace-custom-css-card";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { BackgroundStylingCard } from "@/modules/ui/components/background-styling-card";
 import { Button } from "@/modules/ui/components/button";
 import { CardStylingSettings } from "@/modules/ui/components/card-styling-settings";
-import { ColorPicker } from "@/modules/ui/components/color-picker";
 import {
   FormControl,
   FormDescription,
@@ -28,6 +35,12 @@ import {
   FormLabel,
   FormProvider,
 } from "@/modules/ui/components/form";
+import {
+  DarkContrastWarnings,
+  StylingAppearanceProvider,
+  StylingAppearanceToggle,
+} from "@/modules/ui/components/styling-appearance";
+import { ColorField } from "@/modules/ui/components/styling-fields";
 import { Switch } from "@/modules/ui/components/switch";
 import { ThemeStylingPreviewSurvey } from "@/modules/ui/components/theme-styling-preview-survey";
 import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
@@ -40,6 +53,7 @@ interface ThemeStylingProps {
   isReadOnly: boolean;
   isStorageConfigured: boolean;
   publicDomain: string;
+  customCssAccess: TWorkspaceCustomCssAccess;
 }
 
 export const ThemeStyling = ({
@@ -50,7 +64,8 @@ export const ThemeStyling = ({
   isReadOnly,
   isStorageConfigured = true,
   publicDomain,
-}: ThemeStylingProps) => {
+  customCssAccess,
+}: Readonly<ThemeStylingProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
 
@@ -78,12 +93,31 @@ export const ThemeStyling = ({
   );
 
   const [previewSurveyType, setPreviewSurveyType] = useState<TSurveyType>("link");
+  // Light / Dark selector (D14). Only app surveys render dark (D4), so Dark previews the app survey.
+  const [appearance, setAppearance] = useState<TStylingAppearance>("light");
   const [confirmResetStylingModalOpen, setConfirmResetStylingModalOpen] = useState(false);
   const [confirmSuggestColorsOpen, setConfirmSuggestColorsOpen] = useState(false);
 
   const [formStylingOpen, setFormStylingOpen] = useState(false);
   const [cardStylingOpen, setCardStylingOpen] = useState(false);
   const [backgroundStylingOpen, setBackgroundStylingOpen] = useState(false);
+  const handleAppearanceChange = (next: TStylingAppearance) => {
+    setAppearance(next);
+    if (next === "dark") {
+      setPreviewSurveyType("app");
+      // Backgrounds are for link surveys, which always render light: nothing to edit in Dark.
+      setBackgroundStylingOpen(false);
+    }
+  };
+  const [customCssOpen, setCustomCssOpen] = useState(false);
+
+  // Workspace Custom CSS is its own resource, saved by this form's Save before the theme (ENG-3723). It
+  // shares the appearance selector and the preview, which renders only CSS the server validated for
+  // the current draft (ENG-3553).
+  const customCssSaveRef = useRef<TWorkspaceCustomCssSaveHandle>(null);
+  const [customCssPreview, setCustomCssPreview] = useState<TCustomCssCompiled | null>(null);
+  // A stable prop, so the preview only re-applies custom CSS when the validated output changes.
+  const previewCustomCss = useMemo(() => ({ workspace: customCssPreview }), [customCssPreview]);
   const onReset = useCallback(async () => {
     const updatedWorkspaceResponse = await updateWorkspaceAction({
       workspaceId: workspace.id,
@@ -109,6 +143,12 @@ export const ThemeStyling = ({
 
     for (const [key, value] of Object.entries(suggested)) {
       form.setValue(key as keyof TWorkspaceStyling, value, { shouldDirty: true });
+      // The dark palette derives from the new light colors, so stale dark overrides are cleared.
+      if (key.endsWith(".light")) {
+        form.setValue(key.replace(/\.light$/, ".dark") as keyof TWorkspaceStyling, null, {
+          shouldDirty: true,
+        });
+      }
     }
 
     // Footer link color auto-adjusts for contrast when unset; clear any override so it
@@ -123,6 +163,10 @@ export const ThemeStyling = ({
   };
 
   const onSubmit: SubmitHandler<TWorkspaceStyling> = async (data) => {
+    // CSS first: when it cannot be saved, nothing is, so the page never ends up half saved.
+    const customCss = (await customCssSaveRef.current?.save()) ?? { status: "skipped" };
+    if (customCss.status === "stopped") return;
+
     const updatedWorkspaceResponse = await updateWorkspaceAction({
       workspaceId: workspace.id,
       data: {
@@ -136,7 +180,11 @@ export const ThemeStyling = ({
       setPreviewBrandColor(
         saved?.brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor
       );
-      toast.success(t("workspace.look.styling_updated_successfully"));
+      toast.success(
+        customCss.status === "saved" && customCss.removedCount > 0
+          ? t("workspace.custom_css.saved_with_warnings", { count: customCss.removedCount })
+          : t("workspace.look.styling_updated_successfully")
+      );
     } else {
       const errorMessage = getFormattedErrorMessage(updatedWorkspaceResponse);
       toast.error(errorMessage);
@@ -145,11 +193,22 @@ export const ThemeStyling = ({
 
   if (isReadOnly) {
     return (
-      <Alert variant="warning" role="status">
-        <AlertDescription>
-          {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
-        </AlertDescription>
-      </Alert>
+      <div className="flex flex-col gap-4">
+        <Alert variant="warning" role="status">
+          <AlertDescription>
+            {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
+          </AlertDescription>
+        </Alert>
+        <StylingAppearanceToggle appearance={appearance} onChange={setAppearance} />
+        <WorkspaceCustomCssCard
+          workspaceId={workspaceId}
+          access={{ ...customCssAccess, canEdit: false }}
+          appearance={appearance}
+          open={customCssOpen}
+          setOpen={setCustomCssOpen}
+          onPreviewCssChange={setCustomCssPreview}
+        />
+      </div>
     );
   }
   return (
@@ -188,53 +247,45 @@ export const ThemeStyling = ({
               </div>
 
               <div className="flex flex-col gap-4 rounded-lg bg-slate-50 p-4">
-                <div className="grid grid-cols-2 items-end gap-4">
-                  <FormField
-                    control={form.control}
-                    name="brandColor.light"
-                    render={({ field }) => (
-                      <FormItem className="space-y-1">
-                        <FormLabel>{t("workspace.surveys.edit.brand_color")}</FormLabel>
-                        <FormDescription>
-                          {t("workspace.surveys.edit.brand_color_description")}
-                        </FormDescription>
-                        <FormControl>
-                          <ColorPicker
-                            color={
-                              field.value ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor
-                            }
-                            onChange={(color) => field.onChange(color)}
-                            containerClass="w-full"
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <div className="flex flex-col gap-1">
-                    <Button
-                      type="button"
-                      variant="default"
-                      className="h-10 justify-center gap-1"
-                      onClick={() => setConfirmSuggestColorsOpen(true)}>
-                      <SparklesIcon className="mr-2 size-4" />
-                      {t("workspace.look.suggest_colors")}
-                    </Button>
+                <StylingAppearanceToggle appearance={appearance} onChange={handleAppearanceChange} />
+                <StylingAppearanceProvider appearance={appearance}>
+                  <div className="grid grid-cols-2 items-end gap-4">
+                    <ColorField
+                      form={form}
+                      name="brandColor.light"
+                      label={t("workspace.surveys.edit.brand_color")}
+                      description={t("workspace.surveys.edit.brand_color_description")}
+                      fallbackColor={STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor}
+                    />
+                    {/* Level with the input: in Dark the brand field adds an "Automatic" hint below it. */}
+                    <div className={cn("flex flex-col gap-1", appearance === "dark" && "mb-5")}>
+                      <Button
+                        type="button"
+                        variant="default"
+                        className="h-10 justify-center gap-1"
+                        onClick={() => setConfirmSuggestColorsOpen(true)}>
+                        <SparklesIcon className="mr-2 size-4" />
+                        {t("workspace.look.suggest_colors")}
+                      </Button>
+                    </div>
                   </div>
-                </div>
-                <FormStylingSettings
-                  open={formStylingOpen}
-                  setOpen={setFormStylingOpen}
-                  isSettingsPage
-                  form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
-                />
+                  {/* Right under the brand color they are about; debounced, so a drag never moves the picker. */}
+                  <DarkContrastWarnings appearance={appearance} styling={form.watch()} />
+                  <FormStylingSettings
+                    open={formStylingOpen}
+                    setOpen={setFormStylingOpen}
+                    isSettingsPage
+                    form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
+                  />
 
-                <CardStylingSettings
-                  open={cardStylingOpen}
-                  setOpen={setCardStylingOpen}
-                  isSettingsPage
-                  surveyType={previewSurveyType}
-                  form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
-                />
+                  <CardStylingSettings
+                    open={cardStylingOpen}
+                    setOpen={setCardStylingOpen}
+                    isSettingsPage
+                    surveyType={previewSurveyType}
+                    form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
+                  />
+                </StylingAppearanceProvider>
 
                 <BackgroundStylingCard
                   open={backgroundStylingOpen}
@@ -242,15 +293,27 @@ export const ThemeStyling = ({
                   workspaceId={workspaceId}
                   colors={colors}
                   isSettingsPage
+                  disabled={appearance === "dark"}
+                  disabledReason={t("workspace.look.background_link_surveys_light")}
                   isUnsplashConfigured={isUnsplashConfigured}
                   form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
                   isStorageConfigured={isStorageConfigured}
+                />
+
+                <WorkspaceCustomCssCard
+                  workspaceId={workspaceId}
+                  access={customCssAccess}
+                  appearance={appearance}
+                  open={customCssOpen}
+                  setOpen={setCustomCssOpen}
+                  onPreviewCssChange={setCustomCssPreview}
+                  saveRef={customCssSaveRef}
                 />
               </div>
             </div>
 
             <div className="mt-4 flex items-center gap-2">
-              <Button size="sm" type="submit">
+              <Button size="sm" type="submit" loading={form.formState.isSubmitting}>
                 {t("common.save")}
               </Button>
               <Button
@@ -273,8 +336,14 @@ export const ThemeStyling = ({
                 survey={previewSurvey(workspace.name, t)}
                 workspace={{
                   ...workspace,
-                  styling: { ...form.watch(), brandColor: { light: previewBrandColor } },
+                  styling: {
+                    ...form.watch(),
+                    brandColor: { ...form.watch().brandColor, light: previewBrandColor },
+                  },
                 }}
+                appearance={appearance}
+                onAppearanceChange={handleAppearanceChange}
+                customCss={previewCustomCss}
                 previewType={previewSurveyType}
                 setPreviewType={setPreviewSurveyType}
                 publicDomain={publicDomain}

@@ -115,6 +115,7 @@
                   "surveys/general-features/add-image-or-video-question",
                   "surveys/general-features/conditional-logic",
                   "surveys/general-features/overwrite-styling",
+                  "surveys/general-features/custom-css",
                   "surveys/general-features/hidden-fields",
                   "surveys/general-features/limit-submissions",
                   "surveys/general-features/survey-scheduling",
@@ -176,6 +177,7 @@
                 "pages": [
                   "surveys/website-app-surveys/quickstart",
                   "surveys/website-app-surveys/framework-guides",
+                  "surveys/website-app-surveys/sdk-compatibility",
                   "surveys/website-app-surveys/google-tag-manager",
                   "surveys/website-app-surveys/custom-css",
                   {
@@ -408,6 +410,7 @@
               "development/technical-handbook/api-v3-schema-generation",
               "development/technical-handbook/mcp-server",
               "development/technical-handbook/cube-tenant-isolation",
+              "development/technical-handbook/custom-css-rollout",
               "development/technical-handbook/database-model",
               "development/technical-handbook/tenant-separation"
             ]

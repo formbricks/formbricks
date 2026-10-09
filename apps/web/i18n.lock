@@ -2174,6 +2174,67 @@ checksums:
     workspace/contacts/upload_contacts_modal_preview: 2ea999d47068d8d626cde456ae0ac44a
     workspace/contacts/upload_contacts_modal_upload_btn: 47b7f3bcf478a7d8dc258d2efc80af37
     workspace/contacts/upload_contacts_success: cd5d6b6d587586dd4f944868c92835bc
+    workspace/custom_css/base_css_help: 2ddd170c93b555fb039820b01c4cf735
+    workspace/custom_css/base_css_label: 6aadf2927353b0194a7a652cd5c56023
+    workspace/custom_css/clear_all: 0ad9f3ff199c1c4fed9e08203c3e65f3
+    workspace/custom_css/dark_css_help: 5d53fbfc632f413091d89a2892e4c12d
+    workspace/custom_css/dark_css_label: edcf76e3a77eaee063a6240f9865dfd4
+    workspace/custom_css/dark_preview_hint: de3c981f6e28c6318890f36e880e9829
+    workspace/custom_css/description_survey: bb804c8b0497d234790f3fd830ab494b
+    workspace/custom_css/description_workspace: 0e4f80ce996b6be89ef87dbbe1c55b6f
+    workspace/custom_css/discard_changes: 389863172fe772f45b47fc8ca7b09f17
+    workspace/custom_css/error_limit_exceeded: a508bf0cf62411e27209dca379e984c5
+    workspace/custom_css/error_output_too_large: 79238313abe265986799bbcb571e41f4
+    workspace/custom_css/error_processing_failed: c49762151adc6c8731d53d7364bf6d56
+    workspace/custom_css/error_source_too_large: 83738a55b561c68c076b3175e44a64c3
+    workspace/custom_css/error_syntax_error: c6b7f1e2ddd96af0bc59a9d47936dbe2
+    workspace/custom_css/fix_errors_before_saving: accb32e9e41121021eb87ad157b4a582
+    workspace/custom_css/fix_errors_before_saving_workspace: 8e90c79139a03e4e437160ff73365c42
+    workspace/custom_css/head_scripts_warning: 0670fcfa41df29d3549424ee4c743947
+    workspace/custom_css/issue_location: 00aa17e7a4f5b338459ca0285cf9267e
+    workspace/custom_css/keyboard_hint: 6c58ec8c02fc7f0d3ba68bc572c10839
+    workspace/custom_css/load_failed: 405616d9f1b718f0c4f06ddaa234e581
+    workspace/custom_css/plan_required_description: afdc026fdfb8cb2334563e92d9f982ac
+    workspace/custom_css/plan_required_title: 1d37d902f428f605471cca57823d8fa0
+    workspace/custom_css/plan_required_upsell: 03dc7b4172192f224648f6e64f2cce40
+    workspace/custom_css/read_only_role: 41c8fb59701c5aec8e98cb4dd86a8a6e
+    workspace/custom_css/restore_previous: 1e9bafa4d063119fb1d6bb20bc6b219a
+    workspace/custom_css/restore_previous_loaded: 500093f1fcffb80a9717755932474342
+    workspace/custom_css/save_failed: cb32861e873664a29e58ab80c63c80fb
+    workspace/custom_css/saved_with_warnings: 0129cb88cb7281670bbec9a5e2632d5b
+    workspace/custom_css/source_too_large_detail: f79ae8ea0227231e6eb24d16f3a0c63c
+    workspace/custom_css/stale_info: cc446c0c6c0f86793c88b88a0b842d32
+    workspace/custom_css/status_checking: e65d8b8b5cec7b9df2783d0a57adab62
+    workspace/custom_css/status_invalid: e77ff358f5e2884fad65ff6f1534ae1e
+    workspace/custom_css/status_preview_behind: 1ca4bb59fb4a119d36671cfae0259df4
+    workspace/custom_css/status_unavailable: 2721db15287f1019579c6936858cc14c
+    workspace/custom_css/status_valid: 5f0a4b035e7401502dfe4a0a29f80474
+    workspace/custom_css/status_valid_with_notes: a1ec39c04f97334190d52bd2018a2c88
+    workspace/custom_css/status_valid_with_warnings: ef79344aa40d913f3604ed35d2bd3bd4
+    workspace/custom_css/survey_base_css_label: 75a4e04a558eb616e46701d021c214ab
+    workspace/custom_css/survey_precedence: 4ed9db7347f5190d4b8c4f95919e3964
+    workspace/custom_css/title: d43a2cc2f8f47dd96d03099dcc6e68bb
+    workspace/custom_css/unsaved_changes_restored: 5d998f41e9df609206a1ab43438442db
+    workspace/custom_css/upload: e4dc342e180b57b5fca6f2ea0ab64259
+    workspace/custom_css/upload_invalid_type: 6c63b5e3f851dc0f38b27717bf6238b2
+    workspace/custom_css/upload_read_failed: bdd6ab52c8c083e76bb7c9a10d8286a4
+    workspace/custom_css/upload_too_large: e5d49c95a9ba411ce9fe46c2d82ef041
+    workspace/custom_css/warning_external_resource_removed: bd30da52920bbc5614b72e29215e05d5
+    workspace/custom_css/warning_fixed_position_removed: dd0d4d742c12caf61130ba04b008e1dc
+    workspace/custom_css/warning_font_face_removed: b65a9ab6583c54d283d83b3e1747b87c
+    workspace/custom_css/warning_import_removed: 87081b219a501f5810767a10dd98f120
+    workspace/custom_css/warning_invalid_value: c0008149925f6ad921ad36532a21caee
+    workspace/custom_css/warning_unknown_property: 9f2356fec622b6169084c9bcd8d02b8c
+    workspace/custom_css/warning_unsafe_property_removed: f7898792f97c82b1169a1613442b236c
+    workspace/custom_css/warning_unsafe_selector_removed: 820bf4edc45fecc04d76a483de4cbf10
+    workspace/custom_css/warning_unsafe_value_removed: f8c62690c9b838ef852edb1d12ac0f98
+    workspace/custom_css/warning_unsupported_at_rule_removed: e01738a2e6b8b7f2fb351e31a914c378
+    workspace/custom_css/withheld_warning: 0f1bc69d892c0a71fddc4e5339319d6d
+    workspace/custom_css/workspace_base_css_label: ef435952b7a5ee0c9ded44bd2cfa596b
+    workspace/custom_css/workspace_css_empty: 09b996d04cfc4eba3fefb000da67c9c2
+    workspace/custom_css/workspace_css_help: e85114e48d31e10650db3eccc140f74a
+    workspace/custom_css/workspace_css_label: fc3b18b095945b66b5da2c6b825b727f
+    workspace/custom_css/workspace_dark_css_label: 55c423a8f97b75ed00b1c1effbaa3e29
     workspace/embedded_data/add_field: dc802a39c55c111c7c9639c6fe5c4292
     workspace/embedded_data/add_field_description: 01969ef5e35d7f537c82cf0657aaf0cd
     workspace/embedded_data/add_to_library: eaa0b09943650123d1aa1c5c518f3e09
@@ -2534,6 +2595,17 @@ checksums:
     workspace/look/advanced_styling_section_options: a92819a15bc8c3eb44bdd82a5075c9e2
     workspace/look/app_survey_placement: f09cddac6bbb77d4694df223c6edf6b6
     workspace/look/app_survey_placement_settings_description: d81bcff7a866a2f83ff76936dbad4770
+    workspace/look/appearance_automatic: 1cf3b42f4ed743171d3e97c89f408532
+    workspace/look/appearance_automatic_same_as_light: ce22a61f502b5184c0e6d49d52cd116c
+    workspace/look/appearance_dark: 73e6e208ba628b26e90fcf6dce15e1b2
+    workspace/look/appearance_dark_contrast_warning: b199720dce0377613fe278bdf9773ffd
+    workspace/look/appearance_dark_contrast_warning_button_text: ff661135aed4c5821aa11b8582563d2f
+    workspace/look/appearance_dark_contrast_warning_shared: cc175f3373856127fffd2f8dbe96b974
+    workspace/look/appearance_dark_description: c0d64c1e46daf40a08244abfbc90f452
+    workspace/look/appearance_light: bb78ea2c6edd8662676c81a8a13ecb93
+    workspace/look/appearance_shared_color: 2b21150f9a8aea754969a0282af7885e
+    workspace/look/appearance_use_automatic: f9b3ffa3285d7819e7295e87111f4a82
+    workspace/look/background_link_surveys_light: c41e1c242351d64fe5adacd1307ee186
     workspace/look/email_customization: ae399f381183a4fe0ffd41ab496b5d8f
     workspace/look/email_customization_description: 5ccaf1769b2c39d7e87f3a08d056a374
     workspace/look/enable_custom_styling: 4774d8fb009c27044aa0191ebcccdcc2
@@ -2547,6 +2619,7 @@ checksums:
     workspace/look/generate_theme_btn: 0345bf322c191e70d01fd6607ec5c2f8
     workspace/look/generate_theme_confirmation: f119dbb85fb2bda1c0bcdc581724ef3b
     workspace/look/generate_theme_header: 4df5f30a20cf78e248465915f222fd1b
+    workspace/look/link_survey_light_only: d5b49bd1a1feb6232f918f8861e07307
     workspace/look/logo_removed_successfully: f3a7f9d226affa91121e90ff360553aa
     workspace/look/logo_settings_description: da155953f55cb44d0e563d9e740241aa
     workspace/look/logo_updated_successfully: 170250f18062b79be6ac0481ec9d4368
@@ -2693,6 +2766,7 @@ checksums:
     workspace/settings/billing/comparison_row_backgrounds: 43c7d7e0c3601c10b6dfbbd65c44da3f
     workspace/settings/billing/comparison_row_conditional_logic: b8e4ae4d508af555bdc3730039c0519b
     workspace/settings/billing/comparison_row_contact_management: 7903fb57ee1b2d765432132ab8ed8567
+    workspace/settings/billing/comparison_row_custom_css: d43a2cc2f8f47dd96d03099dcc6e68bb
     workspace/settings/billing/comparison_row_custom_dashboards: 1bdaff9333974792ba7a8b71dc63d464
     workspace/settings/billing/comparison_row_custom_webhooks: 82a610f3c62d6705e5064f0d977d3af7
     workspace/settings/billing/comparison_row_email_followups: 2aafa8e2749258d584f1f585ad46a7fb
@@ -2807,6 +2881,7 @@ checksums:
     workspace/settings/billing/plan_pro_feature_workspaces: 819874022b491209ca7f0f1ab1e3daea
     workspace/settings/billing/plan_scale: 5f55a30a5bdf8f331b56bad9c073473c
     workspace/settings/billing/plan_scale_description: ef5c66e0b52686f56319e31388bd8409
+    workspace/settings/billing/plan_scale_feature_custom_css: d43a2cc2f8f47dd96d03099dcc6e68bb
     workspace/settings/billing/plan_scale_feature_feedback: 412dca7f6c7255b202da88e522f05193
     workspace/settings/billing/plan_scale_feature_quota: f0b44ec6d192e8ee2fd3ff53b8ecda32
     workspace/settings/billing/plan_scale_feature_rbac: ecde7a5204109c220a358d46210c869d
@@ -3364,6 +3439,8 @@ checksums:
     workspace/surveys/copy_survey_success: a829e645fe034b3e712d0b8572a5edc4
     workspace/surveys/copy_survey_target_workspaces_label: 6aa0152a5284197c98fa4ce9b455d465
     workspace/surveys/copy_to: 845c72c41ad3573b2080003daac605d9
+    workspace/surveys/custom_css_not_copied_invalid: 59cfec8c35a15aec6b89dbf2583932cb
+    workspace/surveys/custom_css_not_copied_plan: 9c6c7bcc8ee9ef6f5f6cfdcd7d4266c4
     workspace/surveys/delete_survey_and_responses_warning: 3320c91c1fd27378b7f3d6abc003f2ae
     workspace/surveys/edit/activate_translations: af127c1bed2b47e2012e3a23e489ecb8
     workspace/surveys/edit/add: 5196f5cd4ba3a6ac8edef91345e17f66
@@ -3399,7 +3476,7 @@ checksums:
     workspace/surveys/edit/address_line_2: fc4b5a87de46ac4a28a6616f47a34135
     workspace/surveys/edit/adjust_survey_closed_message: ae6f38c9daf08656362bd84459a312fa
     workspace/surveys/edit/adjust_survey_closed_message_description: e906aebd9af6451a2a39c73287927299
-    workspace/surveys/edit/adjust_theme_in_look_and_feel_settings: 51372cb5ee8d3d42389bc95468866ad1
+    workspace/surveys/edit/adjust_theme_in_look_and_feel_settings: f013b074260d662d812fef6bf27cfcfa
     workspace/surveys/edit/ai_translate: f25943cdeffe155ee524428f4daa5da2
     workspace/surveys/edit/ai_translating: ff40de13a2a948c0dca87a6ce2d21df2
     workspace/surveys/edit/ai_translation_all_fields_populated: d78f6a663ea19ce77045970179bd200f
@@ -3826,7 +3903,7 @@ checksums:
     workspace/surveys/edit/select_saved_action: de31ab9cbb2bb67a050df717de7cdde4
     workspace/surveys/edit/send_survey_to_audience_who_match: 8bc5660659f6e28cc19b1961897e9878
     workspace/surveys/edit/send_your_respondents_to_a_page_of_your_choice: 9b77b1afe9a81bdbbb55ae323c5a3175
-    workspace/surveys/edit/set_global_placement_in_look_feel_settings_hint: 18e030590220d3d8626c8f9ddb4dd855
+    workspace/surveys/edit/set_global_placement_in_look_feel_settings_hint: 7c1b97b72f3d32e914d6bc717cdb7c90
     workspace/surveys/edit/settings_saved_successfully: 7f6833d9079e404fb3a5b0aa51fdcf17
     workspace/surveys/edit/seven_points: 4ead50fdfda45e8710767e1b1a84bf42
     workspace/surveys/edit/show_block_settings: bad99d99c9908874e45f5c350a88cc79
