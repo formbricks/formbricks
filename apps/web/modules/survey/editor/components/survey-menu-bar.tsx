@@ -50,6 +50,8 @@ import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { updateSurveyAction, updateSurveyDraftAction } from "../actions";
+import { type TAutoSaveFailure } from "../lib/auto-save-badge";
+import { createSaveAttemptOrder } from "../lib/save-attempt-order";
 import { describeElementIssue, isMissingRequiredTrigger, isSurveyValid } from "../lib/validation";
 import { AutoSaveIndicator } from "./auto-save-indicator";
 
@@ -126,6 +128,15 @@ export const SurveyMenuBar = ({
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
   const [lastAutoSaved, setLastAutoSaved] = useState<Date | null>(null);
+  // Set when an auto-save tick does not land -- the request failed, or the server refused it -- and
+  // cleared by the next save that does. `retrying` while the tick keeps going (it re-sends the whole
+  // draft, so a retry cannot apply anything twice); `stopped` once a stale deployment has ended it.
+  // This only makes sure the indicator stops claiming the work is safe while it is not (ENG-2899).
+  const [autoSaveFailure, setAutoSaveFailure] = useState<TAutoSaveFailure | null>(null);
+  // The indicator follows the newest save attempt to settle, by start order, not whichever response
+  // arrives last. Next.js happens to send server actions one at a time today, so they settle in start
+  // order anyway; see save-attempt-order.ts for why that is not relied on. One ordering per editor.
+  const [saveAttemptOrder] = useState(createSaveAttemptOrder);
   const isSuccessfullySavedRef = useRef(false);
   const isAutoSavingRef = useRef(false);
   const isSurveyPublishingRef = useRef(false);
@@ -499,9 +510,15 @@ export const SurveyMenuBar = ({
 
       // Check for changes using refs (avoids re-creating interval on every change), and skip if
       // there are none
-      if (!hasUnsavedSurveyChanges(currentSurvey, [surveyRef.current, lastSavedSurveyRef.current])) return;
+      if (!hasUnsavedSurveyChanges(currentSurvey, [surveyRef.current, lastSavedSurveyRef.current])) {
+        // Nothing is waiting to be saved, so nothing is lost either -- e.g. the author reverted the
+        // edit a failed tick was carrying. (A no-op when the flag is already clear.)
+        setAutoSaveFailure(null);
+        return;
+      }
 
       isAutoSavingRef.current = true;
+      const attempt = saveAttemptOrder.begin();
 
       try {
         const updatedSurveyResponse = await updateSurveyDraftAction({
@@ -550,7 +567,16 @@ export const SurveyMenuBar = ({
           surveyRef.current = { ...savedData };
           lastSavedSurveyRef.current = structuredClone(savedData);
           isSuccessfullySavedRef.current = true;
-          setLastAutoSaved(new Date());
+          // The refs above follow what the server stored either way; the indicator only follows the
+          // newest attempt, so a tick that lands after a newer save failed does not say "saved".
+          if (saveAttemptOrder.settle(attempt)) {
+            setAutoSaveFailure(null);
+            setLastAutoSaved(new Date());
+          }
+        } else if (saveAttemptOrder.settle(attempt)) {
+          // The request reached the app and the save was refused (`serverError`, validation, a missing
+          // segment) -- just as unsaved as a failed request.
+          setAutoSaveFailure("retrying");
         }
       } catch (e) {
         // A stale bundle's action id is rejected by the new deployment: hand it to the reload
@@ -559,22 +585,30 @@ export const SurveyMenuBar = ({
         // requests behind a prompt that is already up.
         if (reportStaleServerActionError(e)) {
           clearInterval(intervalId);
+          // The edit this tick carried is not saved, and nothing will retry it: say so, without the
+          // "keeps trying" promise the retrying state makes.
+          setAutoSaveFailure("stopped");
           return;
         }
+        // Anything else means this tick's save did not land -- a load balancer error page, a dropped
+        // connection. Nothing reaches `unhandledrejection` from here, so the indicator is the only
+        // place the author can learn about it.
         console.error(e);
+        if (saveAttemptOrder.settle(attempt)) setAutoSaveFailure("retrying");
       } finally {
         isAutoSavingRef.current = false;
       }
     }, 10000);
 
     return () => clearInterval(intervalId);
-  }, [localSurvey.publishOn, localSurvey.status, setLocalSurvey]);
+  }, [localSurvey.publishOn, localSurvey.status, saveAttemptOrder, setLocalSurvey]);
 
   // Add new handler after handleSurveySave
   const handleSurveySaveDraft = async (): Promise<boolean> => {
     if (blockOnInvalidCustomCss()) return false;
 
     setIsSurveySaving(true);
+    const attempt = saveAttemptOrder.begin();
 
     try {
       const segment = await handleSegmentUpdate();
@@ -589,8 +623,11 @@ export const SurveyMenuBar = ({
         lastSavedSurveyRef.current = structuredClone(updatedSurveyResponse.data);
         toast.success(t("workspace.surveys.edit.changes_saved"));
         isSuccessfullySavedRef.current = true;
+        if (saveAttemptOrder.settle(attempt)) setAutoSaveFailure(null);
         router.refresh();
       } else {
+        // Recorded so an older tick that lands afterwards cannot report this draft as saved.
+        saveAttemptOrder.settle(attempt);
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
         toast.error(errorMessage);
         return false;
@@ -598,6 +635,7 @@ export const SurveyMenuBar = ({
       return true;
     } catch (e) {
       setIsSurveySaving(false);
+      saveAttemptOrder.settle(attempt);
       // The reload prompt already explains a stale-deployment failure, so don't also claim the
       // save itself went wrong.
       if (reportStaleServerActionError(e)) {
@@ -615,6 +653,8 @@ export const SurveyMenuBar = ({
     if (blockOnInvalidCustomCss()) return false;
 
     setIsSurveySaving(true);
+    // Begun only once the request is about to go out: a save stopped by validation never raced anything.
+    let attempt: number | undefined;
 
     const isSurveyValidatedWithZod = validateSurveyWithZod();
 
@@ -652,6 +692,7 @@ export const SurveyMenuBar = ({
         }
       });
 
+      attempt = saveAttemptOrder.begin();
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
       const updatedSurveyResponse = await updateSurveyAction({ ...localSurvey, segment });
@@ -666,8 +707,10 @@ export const SurveyMenuBar = ({
         toast.success(t("workspace.surveys.edit.changes_saved"));
         // Set flag to prevent beforeunload warning during router.refresh()
         isSuccessfullySavedRef.current = true;
+        if (saveAttemptOrder.settle(attempt)) setAutoSaveFailure(null);
         router.refresh();
       } else {
+        saveAttemptOrder.settle(attempt);
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
         toast.error(errorMessage);
         return false;
@@ -676,6 +719,7 @@ export const SurveyMenuBar = ({
       return true;
     } catch (e) {
       setIsSurveySaving(false);
+      if (attempt !== undefined) saveAttemptOrder.settle(attempt);
       if (reportStaleServerActionError(e)) {
         return false;
       }
@@ -927,7 +971,15 @@ export const SurveyMenuBar = ({
       </div>
 
       <div className="mt-3 flex items-center gap-2 sm:mt-0 sm:ml-4">
-        <AutoSaveIndicator isDraft={localSurvey.status === "draft"} lastSaved={lastAutoSaved} />
+        <AutoSaveIndicator
+          isDraft={localSurvey.status === "draft"}
+          // Scheduled drafts are not auto-saved (the interval is torn down), so the badge says paused.
+          isScheduled={isPublishScheduled}
+          lastSaved={lastAutoSaved}
+          failure={autoSaveFailure}
+          // CX mode hides the manual save, so the badge must not suggest one.
+          canSaveManually={!isCxMode}
+        />
         {!isStorageConfigured && (
           <div>
             <Alert variant="warning" size="small" role="status">

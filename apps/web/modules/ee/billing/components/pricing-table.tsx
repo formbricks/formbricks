@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import { type Stripe as StripeJs, loadStripe } from "@stripe/stripe-js";
 import type { TFunction } from "i18next";
 import { CheckIcon } from "lucide-react";
@@ -41,6 +42,7 @@ import {
   waitForBillingPaymentMethodAction,
   waitForBillingPlanAction,
 } from "../actions";
+import { runSetupCheckoutUpgrade } from "../lib/setup-checkout-upgrade";
 import type {
   TStripeBillingCatalogDisplay,
   TStripeBillingCatalogDisplayItem,
@@ -528,6 +530,10 @@ export const PricingTable = ({
       void (async () => {
         try {
           await waitForBillingPaymentMethodAction({ organizationId });
+        } catch (error) {
+          // Best-effort: the reload below renders whatever has synced. Reported rather than left to
+          // raise the global "check that it was saved and try again" notice right after checkout.
+          Sentry.captureException(error);
         } finally {
           toast.dismiss(cardSyncToastId);
           // Full reload strips checkout_success (blocks re-run on back-nav/refresh) and
@@ -573,7 +579,7 @@ export const PricingTable = ({
     };
 
     // Terminal state without a reload (error, or the poll timed out): clean the URL, dismiss the
-    // loading toast, surface a message. The webhook will still land the plan; the user can refresh.
+    // loading toast, surface a message. A confirmed upgrade can still synchronize after a timeout.
     const settleWithoutReload = (message: string) => {
       clearUpgradeIntent();
       toast.dismiss(toastId);
@@ -596,42 +602,41 @@ export const PricingTable = ({
       }
     };
 
-    const run = async () => {
-      // Finalize attaches the saved card and applies the upgrade; the plan then reflects in our DB
-      // asynchronously, which is what pollUntilPlanApplied waits for below.
-      const response = await finalizeSetupCheckoutUpgradeAction({ organizationId, checkoutSessionId });
-
-      if (response?.serverError) {
-        settleWithoutReload(getActionErrorMessage(response.serverError, t));
-        return;
-      }
-
-      const resolvedPlan =
-        (response?.data && "targetPlan" in response.data ? response.data.targetPlan : null) ?? pendingPlan;
-
-      if (response?.data) {
-        const settled = await settleUpgradeConfirmation(response.data);
-        if (!settled.applied) {
-          settleWithoutReload(settled.message ?? t("common.something_went_wrong_please_try_again"));
-          return;
-        }
-      }
-
-      if (!resolvedPlan) {
-        // No target to verify against — best effort: reload so any applied change renders.
-        reloadWithToast(resolvedPlan);
-        return;
-      }
-
-      if (await pollUntilPlanApplied(resolvedPlan)) {
-        reloadWithToast(resolvedPlan);
-      } else {
-        // Poll window elapsed without the plan reflecting; the webhook will still catch up.
+    void runSetupCheckoutUpgrade({
+      pendingPlan,
+      finalize: async () => {
+        const response = await finalizeSetupCheckoutUpgradeAction({ organizationId, checkoutSessionId });
+        return {
+          data: response?.data,
+          serverError: response?.serverError ? getActionErrorMessage(response.serverError, t) : undefined,
+        };
+      },
+      confirm: settleUpgradeConfirmation,
+      waitForPlan: pollUntilPlanApplied,
+    }).then((outcome) => {
+      if (outcome.status === "unknown") {
+        Sentry.captureException(outcome.error);
+        toast.dismiss(toastId);
+        // Preserve the URL's session_id and the upgrade intent: this completed setup checkout may
+        // still need finalization. Its webhook only saves the card. Reload explicitly resumes the
+        // same checkout, whose finalization already handles an applied upgrade without charging twice.
+        toast.error(
+          <div className="flex flex-col gap-2">
+            <span>{t("common.something_went_wrong")}</span>
+            <Button variant="secondary" size="sm" onClick={() => globalThis.window.location.reload()}>
+              {t("common.reload_page")}
+            </Button>
+          </div>,
+          { duration: Infinity }
+        );
+      } else if (outcome.status === "failed") {
+        settleWithoutReload(outcome.message ?? t("common.something_went_wrong_please_try_again"));
+      } else if (outcome.status === "pending") {
         settleWithoutReload(t("workspace.settings.billing.upgrade_checkout_pending"));
+      } else {
+        reloadWithToast(outcome.plan);
       }
-    };
-
-    void run();
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, router, t, organizationId]);
 
