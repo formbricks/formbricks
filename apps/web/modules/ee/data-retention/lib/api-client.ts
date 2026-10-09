@@ -8,6 +8,7 @@ import type {
   TRetentionRun,
   TSurveyRetention,
 } from "../types";
+import { getContentDispositionFileName } from "./file-download";
 import type { TRetentionHealthIssue } from "./health";
 
 const BASE_PATH = "/api/internal/retention-runs";
@@ -56,9 +57,37 @@ export async function listRetentionRuns({
   return (await response.json()) as TRetentionRunListPage;
 }
 
-/** The History CSV. A plain link: the browser downloads the streamed file itself. */
-export const getRetentionExportUrl = (organizationId: string): string =>
+const getRetentionExportUrl = (organizationId: string): string =>
   `${BASE_PATH}/export?${new URLSearchParams({ organizationId })}`;
+
+/** The name the History CSV is saved under when the response doesn't name it. */
+export const RETENTION_EXPORT_FALLBACK_FILE_NAME = "retention-history.csv";
+
+/**
+ * The History CSV, fetched rather than linked: a refusal (an export past the row cap, a rate limit)
+ * is problem JSON, which a plain download link would save as the "CSV". Thrown as a `V3ApiError`
+ * then; on success, the body and the file name the server gave it.
+ */
+export async function fetchRetentionExport({
+  organizationId,
+  signal,
+}: {
+  organizationId: string;
+  signal?: AbortSignal;
+}): Promise<{ blob: Blob; fileName: string }> {
+  const response = await fetch(getRetentionExportUrl(organizationId), {
+    method: "GET",
+    cache: "no-store",
+    signal,
+  });
+  if (!response.ok) throw await parseV3ApiError(response);
+  return {
+    blob: await response.blob(),
+    fileName:
+      getContentDispositionFileName(response.headers.get("Content-Disposition")) ??
+      RETENTION_EXPORT_FALLBACK_FILE_NAME,
+  };
+}
 
 export type TRetentionExemptionListPage = {
   data: TRetentionExemption[];

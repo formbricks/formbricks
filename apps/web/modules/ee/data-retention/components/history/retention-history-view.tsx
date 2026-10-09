@@ -3,22 +3,22 @@
 import type { TFunction } from "i18next";
 import { DownloadIcon } from "lucide-react";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
-import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import { Switch } from "@/modules/ui/components/switch";
-import { useRetentionRuns } from "../../hooks/use-retention-runs";
-import { getRetentionExportUrl } from "../../lib/api-client";
+import { useDownloadRetentionExport, useRetentionRuns } from "../../hooks/use-retention-runs";
 import {
   createRetentionCountFormatter,
   formatRetentionDate,
   getRetentionHistoryCounts,
   getRetentionPolicyLabel,
 } from "../../lib/display";
+import { getRetentionErrorMessage } from "../../lib/error-message";
 import type { TRetentionRun } from "../../types";
 
 const PAGE_SIZE = 25;
@@ -87,11 +87,28 @@ export const RetentionHistoryView = ({ organizationId, timeZone }: Readonly<Rete
     fetchNextPage,
     refetch,
   } = useRetentionRuns({ organizationId, includeEmpty: !hideEmpty, limit: PAGE_SIZE });
+  const downloadExport = useDownloadRetentionExport({ organizationId });
 
   const formatCount = createRetentionCountFormatter(locale);
   const formatRunDate = (iso: string) => formatRetentionDate(iso, locale, timeZone);
 
-  const errorMessage = getV3ApiErrorMessage(error, t("workspace.settings.data_retention.history_load_error"));
+  const errorMessage = getRetentionErrorMessage(
+    error,
+    t,
+    t("workspace.settings.data_retention.history_load_error")
+  );
+
+  const download = () =>
+    downloadExport.mutate(undefined, {
+      onError: (downloadError) =>
+        toast.error(
+          getRetentionErrorMessage(
+            downloadError,
+            t,
+            t("workspace.settings.data_retention.history_download_failed")
+          )
+        ),
+    });
 
   return (
     <SettingsCard
@@ -106,11 +123,14 @@ export const RetentionHistoryView = ({ organizationId, timeZone }: Readonly<Rete
               {t("workspace.settings.data_retention.hide_runs_with_no_changes")}
             </Label>
           </div>
-          <Button asChild variant="outline" size="sm">
-            <a href={getRetentionExportUrl(organizationId)} download>
-              <DownloadIcon />
-              {t("workspace.settings.data_retention.download_csv")}
-            </a>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            loading={downloadExport.isPending}
+            onClick={download}>
+            <DownloadIcon />
+            {t("workspace.settings.data_retention.download_csv")}
           </Button>
         </div>
       }>

@@ -18,7 +18,7 @@ export const RetentionHealthAlerts = ({
   const { data } = useRetentionHealth({ organizationId });
   if (!data || data.issues.length === 0) return null;
 
-  const locale = i18n.resolvedLanguage ?? "en-US";
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const describe = (issue: TRetentionHealthIssue): { title: string; description: string } => {
     switch (issue.code) {
       case "jobsNotConfigured":

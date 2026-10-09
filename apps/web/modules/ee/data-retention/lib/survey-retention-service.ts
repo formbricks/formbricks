@@ -80,7 +80,7 @@ export async function getSurveyRetentionFacts(
   };
 }
 
-/** A survey with more responses due than this is shown as "10,000+". */
+/** The most due responses counted per survey. At the cap the count is a lower bound: "10,000+". */
 export const SURVEY_RETENTION_DUE_COUNT_CAP = 10_000;
 
 export type TCappedCount = { count: number; relation: "eq" | "gte" };

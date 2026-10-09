@@ -5,13 +5,13 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
-import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import { Switch } from "@/modules/ui/components/switch";
 import { useRetentionPolicies, useUpdateRetentionPolicy } from "../../hooks/use-retention-policies";
 import { formatRetentionPeriod, getRetentionPolicyLabel, getRetentionPolicySummary } from "../../lib/display";
+import { getRetentionErrorMessage, getRetentionPolicySaveErrorMessage } from "../../lib/error-message";
 import type {
   TRetentionPolicies,
   TRetentionPoliciesPatch,
@@ -143,10 +143,7 @@ export const RetentionPoliciesView = ({
             : t("workspace.settings.data_retention.policy_paused", { policy: label })
         );
       },
-      onError: (toggleError) =>
-        toast.error(
-          getV3ApiErrorMessage(toggleError, t("workspace.settings.data_retention.policy_save_failed"))
-        ),
+      onError: (toggleError) => toast.error(getRetentionPolicySaveErrorMessage(toggleError, t)),
       onSettled: () => setTogglingPolicy(null),
     });
   };
@@ -168,7 +165,11 @@ export const RetentionPoliciesView = ({
           <div className="p-4">
             <Alert variant="error">
               <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
-                {getV3ApiErrorMessage(error, t("workspace.settings.data_retention.policies_load_error"))}
+                {getRetentionErrorMessage(
+                  error,
+                  t,
+                  t("workspace.settings.data_retention.policies_load_error")
+                )}
                 <Button variant="secondary" size="sm" onClick={() => refetch()}>
                   {t("common.try_again")}
                 </Button>

@@ -5,7 +5,6 @@ import { type ComponentPropsWithoutRef, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
-import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import {
   Command,
   CommandEmpty,
@@ -17,6 +16,7 @@ import {
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { useRetentionExemptionSurveyOptions } from "../../hooks/use-retention-exemptions";
+import { getRetentionErrorMessage } from "../../lib/error-message";
 import type { TRetentionExemptionSurveyOption } from "../../types";
 
 const SEARCH_DEBOUNCE_MS = 250;
@@ -64,7 +64,7 @@ export const ExemptionSurveyPicker = ({
   };
 
   const getEmptyMessage = () => {
-    if (error) return getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"));
+    if (error) return getRetentionErrorMessage(error, t, t("common.something_went_wrong_please_try_again"));
     if (isFetching) return <LoadingSpinner className="size-4" />;
     return t("common.no_surveys_found");
   };
@@ -76,10 +76,11 @@ export const ExemptionSurveyPicker = ({
           {...buttonProps}
           type="button"
           // A combobox, like the kit's Select trigger, so the chosen survey is read as its value. It
-          // controls the popover that holds the search and the list; the id is set on both ends.
+          // controls the popover that holds the search and the list, which is only mounted while open,
+          // so the reference is only set then (an `aria-controls` must name an element that exists).
           role="combobox"
           aria-expanded={open}
-          aria-controls={popoverId}
+          aria-controls={open ? popoverId : undefined}
           disabled={disabled}
           className={cn(
             "flex h-10 w-full min-w-0 items-center justify-between gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-left text-sm focus:ring-2 focus:ring-slate-400 focus:ring-offset-1 focus:outline-hidden hover:enabled:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50",

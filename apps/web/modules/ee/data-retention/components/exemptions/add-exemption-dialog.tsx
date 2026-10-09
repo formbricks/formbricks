@@ -5,7 +5,6 @@ import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import { DatePicker } from "@/modules/ui/components/date-picker";
 import {
@@ -35,6 +34,7 @@ import {
 import { Textarea } from "@/modules/ui/components/textarea";
 import { useCreateRetentionExemption } from "../../hooks/use-retention-exemptions";
 import { getRetentionPolicyLabel } from "../../lib/display";
+import { getRetentionErrorMessage } from "../../lib/error-message";
 import {
   type TAddExemptionFormValues,
   getAddExemptionFormSchema,
@@ -105,7 +105,7 @@ export const AddExemptionDialog = ({
       },
       onError: (error) => {
         toast.error(
-          getV3ApiErrorMessage(error, t("workspace.settings.data_retention.exemption_create_failed"))
+          getRetentionErrorMessage(error, t, t("workspace.settings.data_retention.exemption_create_failed"))
         );
       },
     });

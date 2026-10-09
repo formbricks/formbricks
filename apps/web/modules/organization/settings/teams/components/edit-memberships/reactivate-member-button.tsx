@@ -4,9 +4,9 @@ import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import { reactivateMember } from "../../lib/reactivate-member-client";
+import { getReactivateMemberErrorMessage } from "../../lib/reactivate-member-error";
 
 interface ReactivateMemberButtonProps {
   organizationId: string;
@@ -17,7 +17,7 @@ interface ReactivateMemberButtonProps {
 /**
  * "Reactivate" on an inactive member (ENG-3610): owners and managers bring back someone the members
  * policy, or anyone, deactivated, which restarts their retention clock. The API refuses someone who
- * also belongs to another organisation, and its message says so. Runs under the member list's query
+ * also belongs to another organisation, and the toast says so. Runs under the member list's query
  * client (`MembersInfo`).
  */
 export const ReactivateMemberButton = ({
@@ -37,8 +37,7 @@ export const ReactivateMemberButton = ({
         // page is re-rendered to show the new status. Moving the list onto a query is a follow-up.
         router.refresh();
       },
-      onError: (error) =>
-        toast.error(getV3ApiErrorMessage(error, t("workspace.settings.data_retention.reactivate_failed"))),
+      onError: (error) => toast.error(getReactivateMemberErrorMessage(error, t)),
     });
 
   return (

@@ -7,13 +7,13 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
-import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import { useRetentionExemptions, useRevokeRetentionExemption } from "../../hooks/use-retention-exemptions";
 import { formatRetentionDate, getRetentionPolicyLabel } from "../../lib/display";
+import { getRetentionErrorMessage } from "../../lib/error-message";
 import type { TRetentionExemption } from "../../types";
 import { AddExemptionDialog } from "./add-exemption-dialog";
 
@@ -124,8 +124,9 @@ export const RetentionExemptionsView = ({
   } = useRetentionExemptions({ organizationId, limit: PAGE_SIZE });
   const revokeExemption = useRevokeRetentionExemption({ queryKey });
 
-  const errorMessage = getV3ApiErrorMessage(
+  const errorMessage = getRetentionErrorMessage(
     error,
+    t,
     t("workspace.settings.data_retention.exemptions_load_error")
   );
 
@@ -137,7 +138,11 @@ export const RetentionExemptionsView = ({
         onSuccess: () => toast.success(t("workspace.settings.data_retention.exemption_revoked")),
         onError: (revokeError) =>
           toast.error(
-            getV3ApiErrorMessage(revokeError, t("workspace.settings.data_retention.exemption_revoke_failed"))
+            getRetentionErrorMessage(
+              revokeError,
+              t,
+              t("workspace.settings.data_retention.exemption_revoke_failed")
+            )
           ),
         onSettled: () => setRevoking(null),
       }

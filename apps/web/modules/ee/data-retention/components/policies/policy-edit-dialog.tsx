@@ -6,7 +6,6 @@ import { useId } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { SURVEY_ARCHIVE_RETENTION_DAYS } from "@/modules/survey/archive/lib/retention-days";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -41,6 +40,7 @@ import { Switch } from "@/modules/ui/components/switch";
 import { useRetentionHealth } from "../../hooks/use-retention-health";
 import { useUpdateRetentionPolicy } from "../../hooks/use-retention-policies";
 import { formatRetentionPeriod } from "../../lib/display";
+import { getRetentionPolicySaveErrorMessage } from "../../lib/error-message";
 import { RETENTION_DAYS_PER_UNIT, type TRetentionPeriodUnit } from "../../lib/period";
 import {
   CUSTOM,
@@ -170,8 +170,7 @@ export const PolicyEditDialog = ({
         toast.success(t("workspace.settings.data_retention.policy_saved"));
         onClose();
       },
-      onError: (error) =>
-        toast.error(getV3ApiErrorMessage(error, t("workspace.settings.data_retention.policy_save_failed"))),
+      onError: (error) => toast.error(getRetentionPolicySaveErrorMessage(error, t)),
     });
   };
 
