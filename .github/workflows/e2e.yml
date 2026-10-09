@@ -146,6 +146,11 @@ jobs:
           echo "S3_ACCESS_KEY=devrustfs-service" >> .env
           echo "S3_SECRET_KEY=devrustfs-service123" >> .env
           echo "S3_FORCE_PATH_STYLE=1" >> .env
+          # The survey import spec needs the instance to count as AI-configured. Nothing calls this
+          # provider: the spec answers the import's stream in the browser with a recorded one.
+          echo "AI_PROVIDER=openai-compatible" >> .env
+          echo "AI_MODEL=e2e-not-called" >> .env
+          echo "AI_OPENAI_COMPATIBLE_BASE_URL=http://127.0.0.1:9/v1" >> .env
         shell: bash
 
       - name: Start AuthZed CI fixture

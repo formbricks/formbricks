@@ -1,0 +1,303 @@
+{
+  "payload": {
+    "blocks": [
+      {
+        "elements": [
+          {
+            "buttonExternal": false,
+            "headline": {
+              "en-US": "<p>Welcome to the <em>advanced</em> section.</p><ul><li>Item</li></ul>"
+            },
+            "id": "Q6",
+            "isDraft": true,
+            "required": false,
+            "type": "cta"
+          },
+          {
+            "columns": [
+              {
+                "id": "ydpc4dtkxuu9jr0b4iyp6yjb",
+                "label": {
+                  "en-US": "Poor"
+                }
+              },
+              {
+                "id": "mk01jfdn5u102j4rdbo6yvbb",
+                "label": {
+                  "en-US": "OK"
+                }
+              },
+              {
+                "id": "jy1wutjlrh3k8lwu40hco2nr",
+                "label": {
+                  "en-US": "Great"
+                }
+              }
+            ],
+            "headline": {
+              "en-US": "Rate our service"
+            },
+            "id": "Q1",
+            "isDraft": true,
+            "required": true,
+            "rows": [
+              {
+                "id": "kzppvlvt4oew94jp1dun2po8",
+                "label": {
+                  "en-US": "Speed"
+                }
+              },
+              {
+                "id": "h6zo6w1iri35kckbjod6ny3v",
+                "label": {
+                  "en-US": "Friendliness"
+                }
+              }
+            ],
+            "shuffleOption": "none",
+            "type": "matrix"
+          },
+          {
+            "columns": [
+              {
+                "id": "phf58mz809ujmr1yv8wdrysg",
+                "label": {
+                  "en-US": "A"
+                }
+              },
+              {
+                "id": "w11tgp9jx8ptrpb6l068p3kv",
+                "label": {
+                  "en-US": "B"
+                }
+              }
+            ],
+            "headline": {
+              "en-US": "Pick all that apply per row"
+            },
+            "id": "Q2",
+            "isDraft": true,
+            "required": false,
+            "rows": [
+              {
+                "id": "yevjv1x4wg9n5p0q029aydpz",
+                "label": {
+                  "en-US": "Row"
+                }
+              }
+            ],
+            "shuffleOption": "none",
+            "type": "matrix"
+          }
+        ],
+        "id": "imrk3zwfa2vpjc8wj3fobzgb",
+        "name": "Advanced"
+      },
+      {
+        "elements": [
+          {
+            "headline": {
+              "en-US": "Star rating"
+            },
+            "id": "Q4",
+            "isColorCodingEnabled": false,
+            "isDraft": true,
+            "range": 5,
+            "required": false,
+            "scale": "star",
+            "type": "rating"
+          },
+          {
+            "choices": [
+              {
+                "id": "goqzan0y5eba2jxlpudasc5u",
+                "label": {
+                  "en-US": "Speed"
+                }
+              },
+              {
+                "id": "sqtqt06v5aa63r589rbpdc88",
+                "label": {
+                  "en-US": "Price"
+                }
+              },
+              {
+                "id": "orwa6fc05022edy55epuax96",
+                "label": {
+                  "en-US": "Support"
+                }
+              },
+              {
+                "id": "myo8k2awl6hramc0lusttf7s",
+                "label": {
+                  "en-US": "Design"
+                }
+              }
+            ],
+            "headline": {
+              "en-US": "Rank these priorities"
+            },
+            "id": "Q5",
+            "isDraft": true,
+            "required": false,
+            "shuffleOption": "none",
+            "type": "ranking"
+          }
+        ],
+        "id": "ydk2m2ejejipq79rrhhe9ioe",
+        "name": "Advanced"
+      },
+      {
+        "elements": [
+          {
+            "allowMultipleFiles": false,
+            "headline": {
+              "en-US": "Upload a screenshot"
+            },
+            "id": "Q7",
+            "isDraft": true,
+            "required": false,
+            "type": "fileUpload"
+          },
+          {
+            "company": {
+              "placeholder": {
+                "en-US": "Company"
+              },
+              "required": false,
+              "show": true
+            },
+            "email": {
+              "placeholder": {
+                "en-US": ""
+              },
+              "required": false,
+              "show": false
+            },
+            "firstName": {
+              "placeholder": {
+                "en-US": "First name"
+              },
+              "required": false,
+              "show": true
+            },
+            "headline": {
+              "en-US": "Contact details"
+            },
+            "id": "Q8",
+            "isDraft": true,
+            "lastName": {
+              "placeholder": {
+                "en-US": "Last name"
+              },
+              "required": false,
+              "show": true
+            },
+            "phone": {
+              "placeholder": {
+                "en-US": ""
+              },
+              "required": false,
+              "show": false
+            },
+            "required": false,
+            "type": "contactInfo"
+          },
+          {
+            "format": "M-d-y",
+            "headline": {
+              "en-US": "When did you start using the product?"
+            },
+            "id": "Q13",
+            "isDraft": true,
+            "required": false,
+            "type": "date"
+          }
+        ],
+        "id": "ctk6l6drbtzxwk4tt8cgekwv",
+        "name": "Advanced"
+      }
+    ],
+    "defaultLanguage": "en-US",
+    "endings": [],
+    "hiddenFields": {
+      "enabled": false,
+      "fieldIds": []
+    },
+    "languages": [
+      {
+        "code": "en-US",
+        "default": true,
+        "enabled": true
+      }
+    ],
+    "name": "Advanced types (imported)",
+    "status": "draft",
+    "type": "link",
+    "workspaceId": "clxx1234567890123456789012"
+  },
+  "report": {
+    "issues": [
+      {
+        "code": "question_skipped",
+        "params": {
+          "cause": "unsupported_type",
+          "qualtricsType": "Timing"
+        },
+        "questionTag": "Q9",
+        "severity": "info"
+      },
+      {
+        "code": "question_skipped",
+        "params": {
+          "cause": "unsupported_type",
+          "qualtricsType": "CS"
+        },
+        "questionTag": "Q10",
+        "severity": "warning"
+      },
+      {
+        "code": "question_skipped",
+        "params": {
+          "cause": "unsupported_type",
+          "qualtricsType": "SBS"
+        },
+        "questionTag": "Q11",
+        "severity": "warning"
+      },
+      {
+        "code": "question_skipped",
+        "params": {
+          "cause": "ai_skipped",
+          "description": "A slider with two statements; a Formbricks rating question holds one."
+        },
+        "questionTag": "Q3",
+        "severity": "warning"
+      },
+      {
+        "code": "question_skipped",
+        "params": {
+          "cause": "ai_skipped",
+          "description": "A ranking of 26 options; Formbricks ranks at most 25."
+        },
+        "questionTag": "Q12",
+        "severity": "warning"
+      },
+      {
+        "code": "external_url_removed",
+        "severity": "warning"
+      }
+    ],
+    "source": {
+      "fileName": "matrix-slider-ranking.qsf",
+      "kind": "qsf"
+    },
+    "summary": {
+      "blocks": 3,
+      "hiddenFields": 0,
+      "languages": ["en-US"],
+      "logicRules": 0,
+      "questions": 8
+    }
+  }
+}
