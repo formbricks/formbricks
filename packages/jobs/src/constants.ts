@@ -1,6 +1,25 @@
 import type { JobSchedulerTemplateOptions, JobsOptions } from "bullmq";
 
+/** The default queue: every job runs here unless its definition names a dedicated queue. */
 export const JOBS_QUEUE_NAME = "background-jobs";
+
+/**
+ * AuthZed projection delivery gets a queue of its own, served by one dedicated worker in every jobs
+ * runtime. Every authorization check fails closed once a revocation has waited in the outbox longer than
+ * `AUTHZED_OUTBOX_REVOCATION_MAX_AGE_MS` (apps/web), so delivery must never queue behind a long sweep on
+ * the default queue's worker slots.
+ */
+export const AUTHZED_PROJECTION_QUEUE_NAME = "authzed-projection";
+
+/** Queues that each get exactly one worker of their own, outside `workerCount`/`concurrency`. */
+export const DEDICATED_JOBS_QUEUE_NAMES = [AUTHZED_PROJECTION_QUEUE_NAME] as const;
+
+export const JOBS_QUEUE_NAMES = [JOBS_QUEUE_NAME, ...DEDICATED_JOBS_QUEUE_NAMES] as const;
+
+export type TJobsQueueName = (typeof JOBS_QUEUE_NAMES)[number];
+
+export type TDedicatedJobsQueueName = (typeof DEDICATED_JOBS_QUEUE_NAMES)[number];
+
 export const JOBS_PREFIX = "{formbricks:jobs}";
 
 export const JOB_NAMES = {

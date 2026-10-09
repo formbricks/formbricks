@@ -1,4 +1,5 @@
 import type { ZodType } from "zod";
+import { JOBS_QUEUE_NAME, type TJobsQueueName } from "@/src/constants";
 import type { TResponsePipelineJobData } from "@/src/types";
 
 export interface JobExecutionContext {
@@ -22,12 +23,15 @@ export type JobHandlerOverrides = Partial<Record<string, JobHandler<unknown>>>;
 export interface BackgroundJobDefinition<TData> {
   handle: JobHandler<TData>;
   name: string;
+  /** The queue the job is produced to and consumed from. Omitted means the default `background-jobs`. */
+  queueName?: TJobsQueueName;
   schema: ZodType<TData>;
 }
 
 export interface AnyBackgroundJobDefinition {
   handle: JobHandler<unknown>;
   name: string;
+  queueName: TJobsQueueName;
   schema: ZodType;
 }
 
@@ -38,6 +42,7 @@ export const toAnyBackgroundJobDefinition = <TData>(
     await definition.handle(data as TData, context);
   },
   name: definition.name,
+  queueName: definition.queueName ?? JOBS_QUEUE_NAME,
   schema: definition.schema,
 });
 

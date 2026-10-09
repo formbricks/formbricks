@@ -2,13 +2,26 @@ import { type Job, type Queue, Worker } from "bullmq";
 import type IORedis from "ioredis";
 import { logger } from "@formbricks/logger";
 import { closeRedisConnection, createProducerConnection, createWorkerConnection } from "@/src/connection";
-import { JOBS_PREFIX, JOBS_QUEUE_NAME } from "@/src/constants";
+import {
+  DEDICATED_JOBS_QUEUE_NAMES,
+  JOBS_PREFIX,
+  JOBS_QUEUE_NAME,
+  type TDedicatedJobsQueueName,
+  type TJobsQueueName,
+} from "@/src/constants";
 import type { JobHandlerOverrides } from "@/src/contracts";
 import { processJob } from "@/src/processors/registry";
-import { createJobsQueue } from "@/src/queue";
+import { createJobsQueues } from "@/src/queue";
 
 const DEFAULT_WORKER_CONCURRENCY = 1;
 const DEFAULT_WORKER_COUNT = 1;
+
+/**
+ * A dedicated queue's jobs are short and recurring (AuthZed delivery runs every 5 s), so one slot per
+ * runtime is enough; replicas add more. Deliberately not `concurrency`/`workerCount`: those size the
+ * default queue for its own workload, and tuning them must not starve — or multiply — this one.
+ */
+const DEDICATED_WORKER_CONCURRENCY = 1;
 
 export interface JobsRuntimeOptions {
   redisUrl: string;
@@ -19,8 +32,14 @@ export interface JobsRuntimeOptions {
 }
 
 export interface JobsRuntimeHandle {
+  /** The default `background-jobs` queue. */
   queue: Queue;
+  /** Every queue this runtime serves, keyed by name — the default one and each dedicated one. */
+  queues: Readonly<Record<TJobsQueueName, Queue>>;
+  /** The `workerCount` workers on the default queue, each running `concurrency` jobs at once. */
   workers: Worker[];
+  /** One worker per dedicated queue, sized independently of `workerCount` and `concurrency`. */
+  dedicatedWorkers: Readonly<Record<TDedicatedJobsQueueName, Worker>>;
   close: () => Promise<void>;
 }
 
@@ -38,9 +57,9 @@ const getPositiveInteger = (value: number, label: string): number => {
   return value;
 };
 
-const registerWorkerLogging = (worker: Worker, workerNumber: number): void => {
+const registerWorkerLogging = (worker: Worker, queueName: TJobsQueueName, workerNumber: number): void => {
   worker.on("error", (error) => {
-    logger.error({ err: error, queueName: JOBS_QUEUE_NAME, workerNumber }, "BullMQ worker error");
+    logger.error({ err: error, queueName, workerNumber }, "BullMQ worker error");
   });
 
   worker.on("failed", (job, error) => {
@@ -85,9 +104,10 @@ export const startJobsRuntime = async ({
     connectionName: "formbricks-jobs-runtime-producer",
   });
 
-  let queue: Queue | undefined;
-  const workerConnections: IORedis[] = [];
+  let queues: Readonly<Record<TJobsQueueName, Queue>> | undefined;
+  const workerConnections: { connection: IORedis; connectionName: string }[] = [];
   const workers: Worker[] = [];
+  const dedicatedWorkers: Partial<Record<TDedicatedJobsQueueName, Worker>> = {};
   let closeRuntimePromise: Promise<void> | undefined;
 
   const closeRuntime = async (): Promise<void> => {
@@ -104,28 +124,42 @@ export const startJobsRuntime = async ({
           }
         };
 
-        await Promise.all(
-          workers.map(async (worker, index) => {
-            try {
-              await worker.close();
-            } catch (error) {
-              logger.error({ err: error, workerNumber: index + 1 }, "Failed to close BullMQ worker cleanly");
-            }
-          })
-        );
-
-        if (queue) {
+        const closeWorkerSafely = async (
+          worker: Worker,
+          queueName: TJobsQueueName,
+          workerNumber: number
+        ): Promise<void> => {
           try {
-            await queue.close();
+            await worker.close();
           } catch (error) {
-            logger.error({ err: error }, "Failed to close BullMQ queue cleanly");
+            logger.error({ err: error, queueName, workerNumber }, "Failed to close BullMQ worker cleanly");
           }
+        };
+
+        await Promise.all([
+          ...workers.map((worker, index) => closeWorkerSafely(worker, JOBS_QUEUE_NAME, index + 1)),
+          ...DEDICATED_JOBS_QUEUE_NAMES.flatMap((queueName) => {
+            const worker = dedicatedWorkers[queueName];
+            return worker ? [closeWorkerSafely(worker, queueName, 1)] : [];
+          }),
+        ]);
+
+        if (queues) {
+          await Promise.all(
+            Object.entries(queues).map(async ([queueName, queue]) => {
+              try {
+                await queue.close();
+              } catch (error) {
+                logger.error({ err: error, queueName }, "Failed to close BullMQ queue cleanly");
+              }
+            })
+          );
         }
 
         await Promise.all([
           closeConnectionSafely(producerConnection, "producer"),
-          ...workerConnections.map((workerConnection, index) =>
-            closeConnectionSafely(workerConnection, `worker-${(index + 1).toString()}`)
+          ...workerConnections.map(({ connection, connectionName }) =>
+            closeConnectionSafely(connection, connectionName)
           ),
         ]);
       })();
@@ -154,38 +188,68 @@ export const startJobsRuntime = async ({
       });
   };
 
+  const startWorker = (
+    queueName: TJobsQueueName,
+    workerNumber: number,
+    workerConcurrency: number,
+    connectionName: string
+  ): Worker => {
+    const connection = createWorkerConnection({
+      redisUrl,
+      connectionName: `formbricks-jobs-runtime-${connectionName}`,
+    });
+    workerConnections.push({ connection, connectionName });
+    const worker = new Worker(
+      queueName,
+      async (job: Job) => {
+        await processJob(job, jobHandlerOverrides);
+      },
+      {
+        connection,
+        concurrency: workerConcurrency,
+        prefix,
+      }
+    );
+
+    registerWorkerLogging(worker, queueName, workerNumber);
+    return worker;
+  };
+
   try {
-    queue = createJobsQueue({ connection: producerConnection, prefix });
+    queues = createJobsQueues({ connection: producerConnection, prefix });
 
     for (let workerIndex = 0; workerIndex < resolvedWorkerCount; workerIndex++) {
-      const workerConnection = createWorkerConnection({
-        redisUrl,
-        connectionName: `formbricks-jobs-runtime-worker-${(workerIndex + 1).toString()}`,
-      });
-      workerConnections.push(workerConnection);
-      const worker = new Worker(
-        JOBS_QUEUE_NAME,
-        async (job: Job) => {
-          await processJob(job, jobHandlerOverrides);
-        },
-        {
-          connection: workerConnection,
-          concurrency: resolvedConcurrency,
-          prefix,
-        }
+      const workerNumber = workerIndex + 1;
+      workers.push(
+        startWorker(JOBS_QUEUE_NAME, workerNumber, resolvedConcurrency, `worker-${workerNumber.toString()}`)
       );
-
-      workers.push(worker);
-      registerWorkerLogging(worker, workerIndex + 1);
     }
 
-    await Promise.all([queue.waitUntilReady(), ...workers.map((worker) => worker.waitUntilReady())]);
+    for (const queueName of DEDICATED_JOBS_QUEUE_NAMES) {
+      dedicatedWorkers[queueName] = startWorker(
+        queueName,
+        1,
+        DEDICATED_WORKER_CONCURRENCY,
+        `${queueName}-worker`
+      );
+    }
+
+    // Every dedicated queue name was just assigned a worker above; the Partial only covers a startup
+    // that throws midway, which `closeRuntime` has to clean up.
+    const startedDedicatedWorkers = dedicatedWorkers as Record<TDedicatedJobsQueueName, Worker>;
+
+    await Promise.all([
+      ...Object.values(queues).map((queue) => queue.waitUntilReady()),
+      ...workers.map((worker) => worker.waitUntilReady()),
+      ...Object.values(startedDedicatedWorkers).map((worker) => worker.waitUntilReady()),
+    ]);
 
     process.once("SIGTERM", handleSigterm);
     process.once("SIGINT", handleSigint);
 
     logger.info(
       {
+        dedicatedQueueNames: [...DEDICATED_JOBS_QUEUE_NAMES],
         queueName: JOBS_QUEUE_NAME,
         prefix,
         workerConcurrency: resolvedConcurrency,
@@ -195,8 +259,10 @@ export const startJobsRuntime = async ({
     );
 
     return {
-      queue,
+      queue: queues[JOBS_QUEUE_NAME],
+      queues,
       workers,
+      dedicatedWorkers: startedDedicatedWorkers,
       close: closeRuntime,
     };
   } catch (error) {

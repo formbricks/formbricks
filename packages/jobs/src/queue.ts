@@ -7,10 +7,12 @@ import {
   JOBS_DEFAULT_JOB_SCHEDULER_TEMPLATE_OPTIONS,
   JOBS_PREFIX,
   JOBS_QUEUE_NAME,
+  JOBS_QUEUE_NAMES,
   JOB_NAMES,
+  type TJobsQueueName,
   WEBHOOK_DELIVERY_JOB_OPTIONS,
 } from "@/src/constants";
-import type { BackgroundJobProducer, EnqueuedJob } from "@/src/contracts";
+import type { AnyBackgroundJobDefinition, BackgroundJobProducer, EnqueuedJob } from "@/src/contracts";
 import { getBackgroundJobDefinition } from "@/src/definitions";
 import { type RecurringJobDescriptor, type TRecurringJobKey, recurringJobDescriptors } from "@/src/recurring";
 import {
@@ -33,16 +35,20 @@ export interface JobsQueueHandle {
   queue: Queue;
 }
 
-interface TGlobalJobsQueueState {
-  formbricksJobsQueue: Queue | undefined;
-  formbricksJobsProducerConnection: IORedis | undefined;
-  formbricksJobsQueueInitializing: Promise<JobsQueueHandle> | undefined;
+/** Every queue the producer can address, sharing one Redis connection. */
+interface JobsProducerHandle {
+  connection: IORedis;
+  queues: Readonly<Record<TJobsQueueName, Queue>>;
 }
 
-const globalForJobsQueue = globalThis as unknown as TGlobalJobsQueueState;
+interface TGlobalJobsQueueState {
+  formbricksJobsProducer: JobsProducerHandle | undefined;
+  formbricksJobsProducerInitializing: Promise<JobsProducerHandle> | undefined;
+}
 
-let queueSingleton = globalForJobsQueue.formbricksJobsQueue;
-let connectionSingleton = globalForJobsQueue.formbricksJobsProducerConnection;
+// On globalThis rather than module scope so a module instantiated twice (Next.js dev reloads, separate
+// server bundles) still shares one producer connection.
+const globalForJobsQueue = globalThis as unknown as TGlobalJobsQueueState;
 
 const hasActiveConnection = (connection?: IORedis): connection is IORedis =>
   connection !== undefined && connection.status !== "end";
@@ -50,11 +56,13 @@ const hasActiveConnection = (connection?: IORedis): connection is IORedis =>
 export const createJobsQueue = ({
   connection,
   prefix = JOBS_PREFIX,
+  queueName = JOBS_QUEUE_NAME,
 }: {
   connection: IORedis;
   prefix?: string;
+  queueName?: TJobsQueueName;
 }): Queue => {
-  const queue = new Queue(JOBS_QUEUE_NAME, {
+  const queue = new Queue(queueName, {
     connection,
     defaultJobOptions: JOBS_DEFAULT_JOB_OPTIONS,
     prefix,
@@ -64,46 +72,56 @@ export const createJobsQueue = ({
   // runtime.ts). Without one, an emitted 'error' is an unhandled EventEmitter error and takes the
   // process down.
   queue.on("error", (error) => {
-    logger.error({ err: error, queueName: JOBS_QUEUE_NAME, prefix }, "BullMQ queue error");
+    logger.error({ err: error, queueName, prefix }, "BullMQ queue error");
   });
 
   return queue;
 };
 
-export const getJobsQueue = async (): Promise<JobsQueueHandle> => {
-  if (queueSingleton && hasActiveConnection(connectionSingleton)) {
-    return {
-      queue: queueSingleton,
-      connection: connectionSingleton,
-    };
-  }
+/** One `Queue` per known queue name, all on the given connection. */
+export const createJobsQueues = ({
+  connection,
+  prefix = JOBS_PREFIX,
+}: {
+  connection: IORedis;
+  prefix?: string;
+}): Readonly<Record<TJobsQueueName, Queue>> =>
+  Object.fromEntries(
+    JOBS_QUEUE_NAMES.map((queueName) => [queueName, createJobsQueue({ connection, prefix, queueName })])
+  ) as Record<TJobsQueueName, Queue>;
 
-  if (
-    globalForJobsQueue.formbricksJobsQueue &&
-    hasActiveConnection(globalForJobsQueue.formbricksJobsProducerConnection)
-  ) {
-    queueSingleton = globalForJobsQueue.formbricksJobsQueue;
-    connectionSingleton = globalForJobsQueue.formbricksJobsProducerConnection;
-
-    return {
-      queue: globalForJobsQueue.formbricksJobsQueue,
-      connection: globalForJobsQueue.formbricksJobsProducerConnection,
-    };
-  }
-
-  if (globalForJobsQueue.formbricksJobsQueueInitializing) {
-    return await globalForJobsQueue.formbricksJobsQueueInitializing;
-  }
-
-  globalForJobsQueue.formbricksJobsQueueInitializing = (async (): Promise<JobsQueueHandle> => {
-    const connection = createProducerConnection({ redisUrl: getRedisUrlFromEnv() });
-    const queue = createJobsQueue({ connection });
-
-    try {
-      await queue.waitUntilReady();
-    } catch (error) {
+const closeJobsQueues = async (queues: Readonly<Record<TJobsQueueName, Queue>>): Promise<void> => {
+  await Promise.all(
+    Object.entries(queues).map(async ([queueName, queue]) => {
       try {
         await queue.close();
+      } catch (error) {
+        logger.error({ err: error, queueName }, "Failed to close BullMQ producer queue");
+      }
+    })
+  );
+};
+
+const getJobsProducer = async (): Promise<JobsProducerHandle> => {
+  const existing = globalForJobsQueue.formbricksJobsProducer;
+
+  if (existing && hasActiveConnection(existing.connection)) {
+    return existing;
+  }
+
+  if (globalForJobsQueue.formbricksJobsProducerInitializing) {
+    return await globalForJobsQueue.formbricksJobsProducerInitializing;
+  }
+
+  globalForJobsQueue.formbricksJobsProducerInitializing = (async (): Promise<JobsProducerHandle> => {
+    const connection = createProducerConnection({ redisUrl: getRedisUrlFromEnv() });
+    const queues = createJobsQueues({ connection });
+
+    try {
+      await Promise.all(Object.values(queues).map((queue) => queue.waitUntilReady()));
+    } catch (error) {
+      try {
+        await closeJobsQueues(queues);
       } finally {
         await closeRedisConnection(connection);
       }
@@ -111,22 +129,24 @@ export const getJobsQueue = async (): Promise<JobsQueueHandle> => {
       throw error;
     }
 
-    queueSingleton = queue;
-    connectionSingleton = connection;
-    globalForJobsQueue.formbricksJobsQueue = queue;
-    globalForJobsQueue.formbricksJobsProducerConnection = connection;
+    const producer: JobsProducerHandle = { connection, queues };
+    globalForJobsQueue.formbricksJobsProducer = producer;
 
-    return {
-      queue,
-      connection,
-    };
+    return producer;
   })();
 
   try {
-    return await globalForJobsQueue.formbricksJobsQueueInitializing;
+    return await globalForJobsQueue.formbricksJobsProducerInitializing;
   } finally {
-    globalForJobsQueue.formbricksJobsQueueInitializing = undefined;
+    globalForJobsQueue.formbricksJobsProducerInitializing = undefined;
   }
+};
+
+/** The producer queue for `queueName` — the default `background-jobs` unless a definition names another. */
+export const getJobsQueue = async (queueName: TJobsQueueName = JOBS_QUEUE_NAME): Promise<JobsQueueHandle> => {
+  const { connection, queues } = await getJobsProducer();
+
+  return { connection, queue: queues[queueName] };
 };
 
 const toEnqueuedJob = (
@@ -157,7 +177,7 @@ const enqueueBackgroundJob = async <TData>(
   }
 
   const parsedData = definition.schema.parse(data);
-  const { queue } = await getJobsQueue();
+  const { queue } = await getJobsQueue(definition.queueName);
   return await queue.add(definition.name, parsedData, options);
 };
 
@@ -184,17 +204,18 @@ const upsertRecurringBackgroundJobSchedule = async <TData>(
   }
 
   const parsedData = definition.schema.parse(data);
-  const { queue } = await getJobsQueue();
+  const schedulerId = getRecurringJobSchedulerId(definition.name, identity);
+  const { queue } = await getJobsQueue(definition.queueName);
 
-  return await queue.upsertJobScheduler(
-    getRecurringJobSchedulerId(definition.name, identity),
-    toBullMQRepeatOptions(schedule),
-    {
-      data: parsedData,
-      name: definition.name,
-      opts: JOBS_DEFAULT_JOB_SCHEDULER_TEMPLATE_OPTIONS,
-    }
-  );
+  const scheduledJob = await queue.upsertJobScheduler(schedulerId, toBullMQRepeatOptions(schedule), {
+    data: parsedData,
+    name: definition.name,
+    opts: JOBS_DEFAULT_JOB_SCHEDULER_TEMPLATE_OPTIONS,
+  });
+
+  await removeLegacyDefaultQueueSchedule(definition, schedulerId);
+
+  return scheduledJob;
 };
 
 const removeRecurringBackgroundJobSchedule = async (
@@ -207,9 +228,47 @@ const removeRecurringBackgroundJobSchedule = async (
     throw new Error(`No background job definition registered for job: ${jobName}`);
   }
 
-  const { queue } = await getJobsQueue();
+  const schedulerId = getRecurringJobSchedulerId(definition.name, identity);
+  const { queue } = await getJobsQueue(definition.queueName);
+  const removed = await queue.removeJobScheduler(schedulerId);
+  const removedLegacy = await removeLegacyDefaultQueueSchedule(definition, schedulerId);
 
-  return await queue.removeJobScheduler(getRecurringJobSchedulerId(definition.name, identity));
+  return removed || removedLegacy;
+};
+
+/**
+ * Every recurring job used to live on the default queue. When a definition moves to a dedicated queue,
+ * the scheduler the previous build left on `background-jobs` would otherwise keep firing there forever
+ * — still queued behind the long jobs the move exists to escape. Removing it is idempotent (`false`
+ * when there is nothing to remove) and also deletes the scheduler's pending delayed job, so the old
+ * schedule stops producing work; a run already waiting completes once, harmlessly.
+ *
+ * Always called *after* the upsert on the dedicated queue, so the job is never left without a schedule.
+ */
+const removeLegacyDefaultQueueSchedule = async (
+  definition: AnyBackgroundJobDefinition,
+  schedulerId: string
+): Promise<boolean> => {
+  if (definition.queueName === JOBS_QUEUE_NAME) {
+    return false;
+  }
+
+  const { queue: legacyQueue } = await getJobsQueue(JOBS_QUEUE_NAME);
+  const removed = await legacyQueue.removeJobScheduler(schedulerId);
+
+  if (removed) {
+    logger.info(
+      {
+        jobName: definition.name,
+        legacyQueueName: JOBS_QUEUE_NAME,
+        queueName: definition.queueName,
+        schedulerId,
+      },
+      "Removed legacy BullMQ schedule from the default queue"
+    );
+  }
+
+  return removed;
 };
 
 export const enqueueTestLogJob = async (data: TTestLogJobData): Promise<Job> => {
@@ -402,25 +461,20 @@ export const getBackgroundJobProducer = (): BackgroundJobProducer => ({
 });
 
 export const resetJobsQueueFactory = async (): Promise<void> => {
-  try {
-    if (queueSingleton) {
-      await queueSingleton.close();
-    }
-  } catch (error) {
-    logger.error({ err: error }, "Failed to close BullMQ producer queue during reset");
+  const producer = globalForJobsQueue.formbricksJobsProducer;
+
+  globalForJobsQueue.formbricksJobsProducer = undefined;
+  globalForJobsQueue.formbricksJobsProducerInitializing = undefined;
+
+  if (!producer) {
+    return;
   }
 
+  await closeJobsQueues(producer.queues);
+
   try {
-    if (connectionSingleton) {
-      await closeRedisConnection(connectionSingleton);
-    }
+    await closeRedisConnection(producer.connection);
   } catch (error) {
     logger.error({ err: error }, "Failed to close BullMQ producer connection during reset");
   }
-
-  queueSingleton = undefined;
-  connectionSingleton = undefined;
-  globalForJobsQueue.formbricksJobsQueue = undefined;
-  globalForJobsQueue.formbricksJobsProducerConnection = undefined;
-  globalForJobsQueue.formbricksJobsQueueInitializing = undefined;
 };
