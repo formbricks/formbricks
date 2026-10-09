@@ -221,6 +221,25 @@ const notifyMember = async (
   });
 };
 
+/** After a committed deactivation: end the member's access, and audit it as a system change. */
+const afterDeactivation = async (context: TRetentionSweepContext, userId: string): Promise<void> => {
+  await revokeCredentials(userId);
+  try {
+    await queueAuditEventWithoutRequest({
+      action: "deactivated",
+      targetType: "user",
+      targetId: userId,
+      organizationId: context.policy.organizationId,
+      userId: "system",
+      userType: "system",
+      status: "success",
+      newObject: { isActive: false, retentionRunId: context.runId },
+    });
+  } catch (error) {
+    logger.error({ error, userId }, "Data retention deactivation audit failed");
+  }
+};
+
 /**
  * The members policy (ENG-3612): a member who hasn't signed in for `periodDays` is deactivated. They are
  * told themselves `warnDays` before, and signing in (or being reactivated) moves their clock and voids the
@@ -255,35 +274,24 @@ export const createMembersSweeper = (): TRetentionSweeper => async (context) => 
     },
   });
 
-  const organization = await loadNoticeOrganization(context.policy.organizationId);
-  for (const member of notify) {
-    if (Date.now() >= context.deadline) break;
-    await notifyMember(context, member, organization);
-  }
+  return {
+    act: async (deadline) => {
+      const organization = await loadNoticeOrganization(context.policy.organizationId);
+      for (const member of notify) {
+        if (Date.now() >= deadline) break;
+        await notifyMember(context, member, organization);
+      }
 
-  for (const member of act) {
-    if (Date.now() >= context.deadline) break;
-    const outcome = await deactivateDueMember(context, member.userId, cutoffs.noticeDueAtOrBefore);
-    if (outcome === "lastOwner" || outcome === "otherOrganization") {
-      skips.push({ targetType: "user", targetId: member.userId, skipReason: outcome });
-    }
-    if (outcome !== "deactivated") continue;
-    await revokeCredentials(member.userId);
-    try {
-      await queueAuditEventWithoutRequest({
-        action: "deactivated",
-        targetType: "user",
-        targetId: member.userId,
-        organizationId: context.policy.organizationId,
-        userId: "system",
-        userType: "system",
-        status: "success",
-        newObject: { isActive: false, retentionRunId: context.runId },
-      });
-    } catch (error) {
-      logger.error({ error, userId: member.userId }, "Data retention deactivation audit failed");
-    }
-  }
+      for (const member of act) {
+        if (Date.now() >= deadline) break;
+        const outcome = await deactivateDueMember(context, member.userId, cutoffs.noticeDueAtOrBefore);
+        if (outcome === "lastOwner" || outcome === "otherOrganization") {
+          skips.push({ targetType: "user", targetId: member.userId, skipReason: outcome });
+        }
+        if (outcome === "deactivated") await afterDeactivation(context, member.userId);
+      }
 
-  await recordRetentionRunSkips(context, skips);
+      await recordRetentionRunSkips(context, skips);
+    },
+  };
 };

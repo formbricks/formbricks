@@ -262,19 +262,23 @@ describe("data retention sweep (real Postgres)", () => {
       const summary = await runDataRetentionSweep({
         checkLicence: async () => true,
         sweepers: {
-          responses: async ({ runId }) => {
-            await prisma.$transaction((tx) =>
-              recordRetentionRunActions(tx, runId, [
-                { targetType: "survey", targetId: "s1", action: "deleted", count: 3 },
-              ])
-            );
-          },
+          responses: async ({ runId }) => ({
+            act: async () => {
+              await prisma.$transaction((tx) =>
+                recordRetentionRunActions(tx, runId, [
+                  { targetType: "survey", targetId: "s1", action: "deleted", count: 3 },
+                ])
+              );
+            },
+          }),
           surveys: async () => {
             throw new Error("boom");
           },
-          members: async ({ policy }) => {
-            throw new RetentionPolicyChangedError(policy.entity);
-          },
+          members: async ({ policy }) => ({
+            act: async () => {
+              throw new RetentionPolicyChangedError(policy.entity);
+            },
+          }),
         },
       });
 
@@ -296,7 +300,12 @@ describe("data retention sweep (real Postgres)", () => {
 
       await runDataRetentionSweep({
         checkLicence: async () => true,
-        sweepers: { members: async ({ policy }) => void order.push(policy.organizationId) },
+        sweepers: {
+          members: async ({ policy }) => {
+            order.push(policy.organizationId);
+            return { act: async () => {} };
+          },
+        },
       });
 
       expect(order).toEqual([other, organizationId]);
@@ -306,7 +315,10 @@ describe("data retention sweep (real Postgres)", () => {
       await enablePolicy("members", ago(100 * DAY));
       await addRun("members", ago(RETENTION_SWEEP_GAP_MS + HOUR));
 
-      await runDataRetentionSweep({ checkLicence: async () => true, sweepers: { members: async () => {} } });
+      await runDataRetentionSweep({
+        checkLicence: async () => true,
+        sweepers: { members: async () => ({ act: async () => {} }) },
+      });
 
       expect(queueAuditEventWithoutRequest).toHaveBeenCalledWith(
         expect.objectContaining({

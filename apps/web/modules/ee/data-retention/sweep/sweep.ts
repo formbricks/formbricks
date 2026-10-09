@@ -6,13 +6,25 @@ import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handl
 import { getIsDataRetentionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { RETENTION_RUN_BUDGET_MS, RETENTION_SWEEP_BUDGET_MS } from "./constants";
 import { type TOpenedRetentionRun, closeRetentionRun, openRetentionRun } from "./run";
+import { type TSurveyNoticeBatch, sendSurveyNotices } from "./survey-notices";
 import { RetentionPolicyChangedError } from "./transaction";
 
 /** What a policy's sweeper gets: its run (policy snapshot, clock, run id) and when to stop starting work. */
 export type TRetentionSweepContext = TOpenedRetentionRun & { deadline: number };
 
-/** One policy's work for one organisation. Records what it does on the run as it goes. */
-export type TRetentionSweeper = (context: TRetentionSweepContext) => Promise<void>;
+/** What a policy will do tonight, once it has read what is due. */
+export type TRetentionSweepPlan = {
+  /**
+   * Its survey notices. The responses and surveys policies' are sent together, one email per person a
+   * night listing both.
+   */
+  surveyNotices?: TSurveyNoticeBatch;
+  /** Its actions, after the night's notices, until `deadline`. Records what it does on the run. */
+  act: (deadline: number) => Promise<void>;
+};
+
+/** One policy's work for one organisation: read what is due, and plan the night's notices and actions. */
+export type TRetentionSweeper = (context: TRetentionSweepContext) => Promise<TRetentionSweepPlan>;
 
 export type TRetentionSweepers = Partial<Record<RetentionEntity, TRetentionSweeper>>;
 
@@ -79,49 +91,100 @@ const auditWarningRestart = async (run: TOpenedRetentionRun): Promise<void> => {
   }
 };
 
-/** Run one policy for one organisation. Never throws: a failure closes the run and is logged. */
-const sweepPolicy = async (
-  organizationId: string,
-  entity: RetentionEntity,
-  sweeper: TRetentionSweeper
-): Promise<"ran" | "failed" | "none"> => {
-  const run = await openRetentionRun(organizationId, entity);
-  if (!run) return "none";
-  await auditWarningRestart(run);
+type TPolicyRun = {
+  run: TOpenedRetentionRun;
+  /** Null once the run stopped (the policy changed, or a step failed). */
+  plan: TRetentionSweepPlan | null;
+  failed: boolean;
+};
 
-  const logContext = { organizationId, entity, runId: run.runId };
-  if (run.restartedWarning) {
-    logger.info(logContext, "Data retention warning restarted after a gap in sweeps");
-  }
-
-  let outcome: "ran" | "failed" = "ran";
+/**
+ * One step of a policy's run. A policy changed mid-run stops that run quietly; any other failure is
+ * logged and fails it. Either way its later steps are skipped and the other policies carry on.
+ */
+const runStep = async (policyRun: TPolicyRun, step: () => Promise<void>): Promise<void> => {
+  const logContext = {
+    organizationId: policyRun.run.policy.organizationId,
+    entity: policyRun.run.policy.entity,
+    runId: policyRun.run.runId,
+  };
   try {
-    await sweeper({ ...run, deadline: Date.now() + RETENTION_RUN_BUDGET_MS });
+    await step();
   } catch (error) {
+    policyRun.plan = null;
     if (error instanceof RetentionPolicyChangedError) {
       logger.info(logContext, "Data retention policy changed during its run; stopped");
     } else {
-      outcome = "failed";
+      policyRun.failed = true;
       logger.error({ ...logContext, error }, "Data retention run failed");
     }
-  } finally {
-    await closeRetentionRun(run.runId);
   }
-  return outcome;
 };
 
-/** Each policy of one licensed organisation, in turn, counted on the night's summary. */
+/** Open one policy's run, restarting its warning first if it is due, or null when there is none. */
+const startPolicyRun = async (
+  organizationId: string,
+  entity: RetentionEntity
+): Promise<TPolicyRun | null> => {
+  const run = await openRetentionRun(organizationId, entity);
+  if (!run) return null;
+  await auditWarningRestart(run);
+  if (run.restartedWarning) {
+    logger.info(
+      { organizationId, entity, runId: run.runId },
+      "Data retention warning restarted after a gap in sweeps"
+    );
+  }
+  return { run, plan: null, failed: false };
+};
+
+/**
+ * One licensed organisation's night, counted on the summary: every enabled policy reads what is due,
+ * then the survey notices of the responses and surveys policies go out together (one email per person),
+ * then each policy acts, each step within its own time budget. Every run is closed, whatever happened.
+ */
 const sweepOrganization = async (
   organizationId: string,
   sweepers: TRetentionSweepers,
   summary: TRetentionSweepSummary
 ): Promise<void> => {
-  for (const entity of SWEEP_ORDER) {
-    const sweeper = sweepers[entity];
-    if (!sweeper) continue;
-    const outcome = await sweepPolicy(organizationId, entity, sweeper);
-    if (outcome !== "none") summary.runs += 1;
-    if (outcome === "failed") summary.failedRuns += 1;
+  const policyRuns: TPolicyRun[] = [];
+  try {
+    for (const entity of SWEEP_ORDER) {
+      const sweeper = sweepers[entity];
+      if (!sweeper) continue;
+      const policyRun = await startPolicyRun(organizationId, entity);
+      if (!policyRun) continue;
+      policyRuns.push(policyRun);
+      await runStep(policyRun, async () => {
+        policyRun.plan = await sweeper({ ...policyRun.run, deadline: Date.now() + RETENTION_RUN_BUDGET_MS });
+      });
+    }
+
+    const noticeRuns = policyRuns.filter((policyRun) => policyRun.plan?.surveyNotices);
+    if (noticeRuns.length > 0) {
+      await sendSurveyNotices(
+        noticeRuns.map((policyRun) => policyRun.plan!.surveyNotices!),
+        Date.now() + RETENTION_RUN_BUDGET_MS
+      ).catch((error: unknown) => {
+        for (const policyRun of noticeRuns) {
+          policyRun.plan = null;
+          policyRun.failed = true;
+        }
+        logger.error({ error, organizationId }, "Data retention notices failed");
+      });
+    }
+
+    for (const policyRun of policyRuns) {
+      const plan = policyRun.plan;
+      if (plan) await runStep(policyRun, () => plan.act(Date.now() + RETENTION_RUN_BUDGET_MS));
+    }
+  } finally {
+    for (const policyRun of policyRuns) {
+      await closeRetentionRun(policyRun.run.runId);
+      summary.runs += 1;
+      if (policyRun.failed) summary.failedRuns += 1;
+    }
   }
 };
 

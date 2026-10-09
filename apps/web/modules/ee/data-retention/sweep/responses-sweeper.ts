@@ -17,10 +17,10 @@ import {
   countSurveysResponsesCreatedAtOrBefore,
 } from "../lib/survey-retention-service";
 import { RETENTION_SWEEP_BATCH_SIZE } from "./constants";
-import { collectDueTargets, latestOf, loadNoticeOrganization, surveySkips } from "./due-targets";
+import { collectDueTargets, latestOf, surveySkips } from "./due-targets";
 import { type TSurveyReadCheck, resolveSurveyNoticeRecipients } from "./recipients";
 import { recordRetentionRunDeletion, recordRetentionRunSkips } from "./run";
-import { type TSurveyNoticeItem, sendSurveyNotices } from "./survey-notices";
+import type { TSurveyNoticeItem } from "./survey-notices";
 import type { TRetentionSweepContext, TRetentionSweeper } from "./sweep";
 import { lockUnchangedRetentionPolicy, runSweepTransaction } from "./transaction";
 
@@ -279,29 +279,28 @@ export const createResponsesSweeper =
         },
       ];
     });
-    await sendSurveyNotices(
-      context,
-      "responses",
-      await loadNoticeOrganization(context.policy.organizationId),
-      items
-    );
 
-    if (cutoffs.actionDueAtOrBefore) {
-      for (const candidate of act) {
-        if (Date.now() >= context.deadline) break;
-        await deleteDueResponses(context, candidate, {
-          noticeDueAtOrBefore: cutoffs.noticeDueAtOrBefore,
-          actionDueAtOrBefore: cutoffs.actionDueAtOrBefore,
-        });
-      }
-    }
-    await rearmReminders(context, cutoffs.noticeDueAtOrBefore);
-
-    await recordRetentionRunSkips(
-      context,
-      surveySkips(
-        await readHeldSurveys(context, cutoffs.noticeDueAtOrBefore),
-        notify.filter((candidate) => !recipients.has(candidate.id))
-      )
-    );
+    return {
+      surveyNotices: { context, entity: "responses", items },
+      act: async (deadline) => {
+        const actionDueAtOrBefore = cutoffs.actionDueAtOrBefore;
+        if (actionDueAtOrBefore) {
+          for (const candidate of act) {
+            if (Date.now() >= deadline) break;
+            await deleteDueResponses({ ...context, deadline }, candidate, {
+              noticeDueAtOrBefore: cutoffs.noticeDueAtOrBefore,
+              actionDueAtOrBefore,
+            });
+          }
+        }
+        await rearmReminders(context, cutoffs.noticeDueAtOrBefore);
+        await recordRetentionRunSkips(
+          context,
+          surveySkips(
+            await readHeldSurveys(context, cutoffs.noticeDueAtOrBefore),
+            notify.filter((candidate) => !recipients.has(candidate.id))
+          )
+        );
+      },
+    };
   };

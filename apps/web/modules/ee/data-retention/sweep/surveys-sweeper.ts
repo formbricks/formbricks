@@ -11,10 +11,10 @@ import {
   getSurveyRetentionClock,
 } from "../lib/schedule";
 import { RETENTION_SWEEP_BATCH_SIZE } from "./constants";
-import { collectDueTargets, latestOf, loadNoticeOrganization, surveySkips } from "./due-targets";
+import { collectDueTargets, latestOf, surveySkips } from "./due-targets";
 import { type TSurveyReadCheck, resolveSurveyNoticeRecipients } from "./recipients";
 import { recordRetentionRunActions, recordRetentionRunSkips } from "./run";
-import { type TSurveyNoticeItem, sendSurveyNotices } from "./survey-notices";
+import type { TSurveyNoticeItem } from "./survey-notices";
 import type { TRetentionSweepContext, TRetentionSweeper } from "./sweep";
 import { lockUnchangedRetentionPolicy, runSweepTransaction } from "./transaction";
 
@@ -183,8 +183,9 @@ export const archiveDueSurvey = async (
 
 /**
  * The surveys policy (ENG-3612): a survey whose ticked conditions have held for `periodDays` is archived,
- * and the archive purge deletes it 30 days later. Its notice recipient is told `warnDays` before, in one
- * email per person a night; nothing is archived until that notice was delivered and has run in full.
+ * and the archive purge deletes it 30 days later. Its notice recipient is told `warnDays` before, in the
+ * night's one email per person (with any responses reminders); nothing is archived until that notice was
+ * delivered and has run in full.
  * Any activity that moves the survey's clock voids the notice, and an exemption on either policy holds
  * the survey. Surveys archived by hand are the purge's alone.
  */
@@ -226,23 +227,21 @@ export const createSurveysSweeper =
         },
       ];
     });
-    await sendSurveyNotices(
-      context,
-      "surveys",
-      await loadNoticeOrganization(context.policy.organizationId),
-      items
-    );
 
-    for (const candidate of act) {
-      if (Date.now() >= context.deadline) break;
-      await archiveDueSurvey(context, candidate.id, cutoffs.noticeDueAtOrBefore);
-    }
-
-    await recordRetentionRunSkips(
-      context,
-      surveySkips(
-        await readHeldSurveys(context, cutoffs.noticeDueAtOrBefore),
-        notify.filter((candidate) => !recipients.has(candidate.id))
-      )
-    );
+    return {
+      surveyNotices: { context, entity: "surveys", items },
+      act: async (deadline) => {
+        for (const candidate of act) {
+          if (Date.now() >= deadline) break;
+          await archiveDueSurvey({ ...context, deadline }, candidate.id, cutoffs.noticeDueAtOrBefore);
+        }
+        await recordRetentionRunSkips(
+          context,
+          surveySkips(
+            await readHeldSurveys(context, cutoffs.noticeDueAtOrBefore),
+            notify.filter((candidate) => !recipients.has(candidate.id))
+          )
+        );
+      },
+    };
   };

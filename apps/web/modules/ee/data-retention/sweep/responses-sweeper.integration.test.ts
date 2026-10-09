@@ -7,6 +7,7 @@ import { updateRetentionPolicy } from "../lib/policies-service";
 import { getRetentionClockCutoffs } from "../lib/schedule";
 import { createResponsesSweeper, deleteDueResponses } from "./responses-sweeper";
 import { openRetentionRun } from "./run";
+import { createSurveysSweeper } from "./surveys-sweeper";
 import { runDataRetentionSweep } from "./sweep";
 
 vi.mock("@/modules/email", () => ({ sendSurveyRetentionNoticeEmail: vi.fn() }));
@@ -297,6 +298,45 @@ describe("responses sweeper (real Postgres)", () => {
     await sweep();
 
     expect(await notice()).toBeNull();
+  });
+
+  test("one email a night per person, listing both their responses reminders and survey notices", async () => {
+    await addResponses([400]);
+    const stale = (await prisma.survey.create({ data: { name: "Old feedback", workspaceId, ownerId } })).id;
+    await prisma.$executeRaw`UPDATE "Survey" SET "created_at" = ${ago(400)}, "updated_at" = ${ago(400)} WHERE "id" = ${stale}`;
+    await prisma.retentionPolicy.create({
+      data: {
+        organizationId,
+        entity: "surveys",
+        enabled: true,
+        enabledAt: ago(1000),
+        warnDays: WARN,
+        periodDays: PERIOD,
+        conditions: ["noChange"],
+      },
+    });
+
+    await runDataRetentionSweep({
+      checkLicence: async () => true,
+      sweepers: { responses: createResponsesSweeper(canRead), surveys: createSurveysSweeper(canRead) },
+    });
+
+    expect(sendSurveyRetentionNoticeEmail).toHaveBeenCalledOnce();
+    expect(vi.mocked(sendSurveyRetentionNoticeEmail).mock.calls[0][0]).toMatchObject({
+      responseDeletions: [expect.objectContaining({ name: "Site visit" })],
+      archivedSurveys: [expect.objectContaining({ name: "Old feedback" })],
+    });
+    // Each notice is recorded on its own policy's run.
+    const notified = await prisma.retentionRunItem.findMany({
+      where: { action: "notified" },
+      include: { run: true },
+    });
+    expect(notified.map((item) => [item.run.entity, item.targetId]).sort()).toEqual(
+      [
+        ["responses", surveyId],
+        ["surveys", stale],
+      ].sort()
+    );
   });
 
   describe("who is told", () => {
