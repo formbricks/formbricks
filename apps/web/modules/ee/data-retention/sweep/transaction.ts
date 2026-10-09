@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import type { Prisma, RetentionEntity, RetentionSurveyCondition } from "@formbricks/database/prisma";
+import { sameConditions } from "../lib/policy-rules";
 import {
   RETENTION_SWEEP_STATEMENT_TIMEOUT_MS,
   RETENTION_SWEEP_TRANSACTION_MAX_WAIT_MS,
@@ -39,12 +40,6 @@ export class RetentionPolicyChangedError extends Error {
     this.name = "RetentionPolicyChangedError";
   }
 }
-
-/** The same set of conditions, in any order. Both directions, so a repeated entry can't stand in for another. */
-const sameConditions = (a: readonly string[], b: readonly string[]) =>
-  a.length === b.length &&
-  a.every((condition) => b.includes(condition)) &&
-  b.every((condition) => a.includes(condition));
 
 /**
  * Hold the policy row `FOR SHARE` for the rest of the action's transaction and check it still matches the

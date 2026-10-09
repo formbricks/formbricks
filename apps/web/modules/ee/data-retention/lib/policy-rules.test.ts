@@ -5,6 +5,7 @@ import {
   getRetentionPolicyEnabledAt,
   getRetentionPolicyIssues,
   isSameRetentionPolicy,
+  sameConditions,
 } from "./policy-rules";
 
 const NOW = new Date("2030-06-01T00:00:00.000Z");
@@ -100,5 +101,22 @@ describe("isSameRetentionPolicy", () => {
     expect(isSameRetentionPolicy(base, { ...base, enabled: true })).toBe(false);
     expect(isSameRetentionPolicy(base, { ...base, warnDays: 61 })).toBe(false);
     expect(isSameRetentionPolicy(base, { ...base, conditions: ["noChange"] })).toBe(false);
+  });
+});
+
+describe("sameConditions", () => {
+  test("compares the conditions as a set, in any order", () => {
+    expect(sameConditions(["noResponse", "noChange"], ["noChange", "noResponse"])).toBe(true);
+    expect(sameConditions([], [])).toBe(true);
+    expect(sameConditions(["noResponse"], ["noResponse", "noChange"])).toBe(false);
+  });
+
+  test("won't let a repeated entry stand in for another, either way round", () => {
+    expect(sameConditions(["noResponse", "noResponse"], ["noResponse", "noChange"])).toBe(false);
+    expect(sameConditions(["noResponse", "noChange"], ["noResponse", "noResponse"])).toBe(false);
+  });
+
+  test("takes conditions read back as plain text, unknown values included", () => {
+    expect(sameConditions(["somethingNew"], ["noResponse"])).toBe(false);
   });
 });

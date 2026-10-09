@@ -1,9 +1,4 @@
-import {
-  RETENTION_SURVEY_CONDITIONS,
-  type TRetentionPolicyKind,
-  type TRetentionPolicySettings,
-  type TRetentionSurveyCondition,
-} from "../types";
+import type { TRetentionPolicyKind, TRetentionPolicySettings } from "../types";
 
 /**
  * The policy rules every writer and the edit dialogs share: the defaults a never-saved policy reads as,
@@ -73,8 +68,14 @@ export const getRetentionPolicyIssues = (
   return issues;
 };
 
-const sameConditions = (a: readonly TRetentionSurveyCondition[], b: readonly TRetentionSurveyCondition[]) =>
-  a.length === b.length && RETENTION_SURVEY_CONDITIONS.every((c) => a.includes(c) === b.includes(c));
+/**
+ * The same set of survey conditions, in any order. Checked both ways, so a repeated entry can't stand
+ * in for another. Takes plain strings, so the sweep can compare a row it read back as `text[]`.
+ */
+export const sameConditions = (a: readonly string[], b: readonly string[]): boolean =>
+  a.length === b.length &&
+  a.every((condition) => b.includes(condition)) &&
+  b.every((condition) => a.includes(condition));
 
 /**
  * When the policy's current configuration took effect, after a change from `previous` (null for a
