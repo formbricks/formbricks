@@ -490,6 +490,39 @@ const resolvePendingChangeEffectiveAt = (
   return currentPeriodEnd ? new Date(currentPeriodEnd * 1000).toISOString() : null;
 };
 
+type TAutomaticTax = { enabled: true };
+
+/**
+ * Stripe Tax (VAT) for a paid subscription of this customer. Stripe rejects automatic tax when it
+ * cannot place the customer, and the Hobby and Pro-trial subscriptions are created at signup, before
+ * any billing address exists. So it is only turned on once Stripe reports a usable location (the
+ * checkouts collect the billing address); without one the subscription keeps billing without tax.
+ */
+const getAutomaticTaxForCustomer = async (customerId: string): Promise<TAutomaticTax | null> => {
+  if (!stripeClient) return null;
+
+  const customer = await stripeClient.customers.retrieve(customerId, { expand: ["tax"] });
+  if (customer.deleted) return null;
+
+  const status = customer.tax?.automatic_tax;
+  // "not_collecting": located, but not in a country we're registered in — Stripe charges no tax.
+  if (status === "supported" || status === "not_collecting") {
+    return { enabled: true };
+  }
+
+  logger.warn({ customerId, status }, "Stripe cannot locate the customer for tax; billing without tax");
+  return null;
+};
+
+/** Automatic tax for a subscription moving to a paid plan; `null` when it's already on or unavailable. */
+const getMissingAutomaticTax = async (
+  subscription: Pick<Stripe.Subscription, "automatic_tax">,
+  customerId: string
+): Promise<TAutomaticTax | null> => {
+  if (subscription.automatic_tax?.enabled) return null;
+  return getAutomaticTaxForCustomer(customerId);
+};
+
 const ensureHobbySubscription = async (
   organizationId: string,
   customerId: string,
@@ -623,6 +656,8 @@ export const createPaidPlanCheckoutSession = async (input: {
       line_items: items,
       client_reference_id: input.organizationId,
       billing_address_collection: "required",
+      // Charges VAT/sales tax from the billing address and tax ID collected below.
+      automatic_tax: { enabled: true },
       tax_id_collection: {
         enabled: true,
         required: "if_supported",
@@ -722,9 +757,14 @@ const previewFullConversionChargeCents = async (
   }
   const targetItems = await getCatalogItemsForPlan(targetPlan, targetInterval);
   const existingDeletions = subscription.items.data.map((item) => ({ id: item.id, deleted: true as const }));
+  // Mirrors the tax the upgrade will charge, so the amount shown includes VAT.
+  const automaticTax = subscription.automatic_tax?.enabled
+    ? { enabled: true as const }
+    : await getAutomaticTaxForCustomer(customerId);
   const preview = await stripeClient.invoices.createPreview({
     customer: customerId,
     subscription: subscription.id,
+    ...(automaticTax ? { automatic_tax: automaticTax } : {}),
     subscription_details: {
       items: [...existingDeletions, ...targetItems],
       proration_behavior: "always_invoice",
@@ -759,6 +799,7 @@ const toTrialConversionError = (error: unknown): unknown => {
 
 const updateSubscriptionItemsImmediately = async (
   subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
+  customerId: string,
   targetPlan: TStandardCloudPlan,
   targetInterval: TCloudBillingInterval
 ): Promise<TUpgradePaymentConfirmation> => {
@@ -771,11 +812,14 @@ const updateSubscriptionItemsImmediately = async (
     id: item.id,
     deleted: true as const,
   }));
+  const automaticTax = targetPlan === "hobby" ? null : await getMissingAutomaticTax(subscription, customerId);
 
-  // Not a pending-update attribute, so clear it in a separate plain update first.
-  if (subscription.cancel_at_period_end) {
+  // Neither is a pending-update attribute, so set them in a separate plain update first. Tax goes on
+  // before the item change so the upgrade invoice already carries it.
+  if (subscription.cancel_at_period_end || automaticTax) {
     await stripeClient.subscriptions.update(subscription.id, {
-      cancel_at_period_end: false,
+      ...(subscription.cancel_at_period_end ? { cancel_at_period_end: false } : {}),
+      ...(automaticTax ? { automatic_tax: automaticTax } : {}),
     });
   }
 
@@ -896,18 +940,31 @@ const buildPlanChangePhases = (input: {
   organizationId: string;
   targetPlan: TStandardCloudPlan;
   targetInterval: TCloudBillingInterval;
+  automaticTax: TAutomaticTax | null;
 }) => {
-  const { currentPhase, currentItems, targetItems, organizationId, targetPlan, targetInterval } = input;
+  const {
+    currentPhase,
+    currentItems,
+    targetItems,
+    organizationId,
+    targetPlan,
+    targetInterval,
+    automaticTax,
+  } = input;
+  // Phases are rewritten whole, so a phase without it would switch automatic tax off at its start.
+  const taxParams = automaticTax ? { automatic_tax: automaticTax } : {};
 
   return [
     {
       start_date: currentPhase.start_date,
       end_date: currentPhase.end_date,
       items: currentItems,
+      ...taxParams,
     },
     {
       start_date: currentPhase.end_date,
       items: targetItems,
+      ...taxParams,
       metadata: {
         organizationId,
         targetPlan,
@@ -961,6 +1018,7 @@ const rollbackFailedPlanChangeScheduleUpdate = async (input: {
 
 const scheduleSubscriptionPlanChange = async (
   organizationId: string,
+  customerId: string,
   subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
   targetPlan: TStandardCloudPlan,
   targetInterval: TCloudBillingInterval
@@ -968,6 +1026,11 @@ const scheduleSubscriptionPlanChange = async (
   if (!stripeClient) {
     throw new Error("Stripe is not configured");
   }
+
+  // Looked up before anything changes, so a failed lookup leaves the subscription as it was.
+  const automaticTax = subscription.automatic_tax?.enabled
+    ? { enabled: true as const }
+    : await getAutomaticTaxForCustomer(customerId);
 
   const hadCancelAtPeriodEnd = subscription.cancel_at_period_end;
   if (hadCancelAtPeriodEnd) {
@@ -1000,6 +1063,7 @@ const scheduleSubscriptionPlanChange = async (
         organizationId,
         targetPlan,
         targetInterval,
+        automaticTax,
       }),
     });
   } catch (error) {
@@ -1308,6 +1372,8 @@ const replaceSubscriptionInCatalogCurrency = async (input: {
   const isHobbyTarget = targetPlan === "hobby";
   const targetItems = await getCatalogItemsForPlan(targetPlan, targetInterval);
   const card = isHobbyTarget ? null : await resolveReplacementCard(subscription, customerId);
+  // Before the cancel: a failed lookup must not leave the org without its subscription.
+  const automaticTax = isHobbyTarget ? null : await getAutomaticTaxForCustomer(customerId);
   await assertNoOtherCurrencyBillingObjects(subscription, customerId);
 
   // A schedule would keep driving the canceled subscription's phases; release it while it still can be.
@@ -1331,6 +1397,7 @@ const replaceSubscriptionInCatalogCurrency = async (input: {
       {
         customer: customerId,
         items: targetItems,
+        ...(automaticTax ? { automatic_tax: automaticTax } : {}),
         ...(card?.subscriptionPaymentMethodId
           ? { default_payment_method: card.subscriptionPaymentMethodId }
           : {}),
@@ -1376,9 +1443,14 @@ const performImmediateUpgradeOrTrialConversion = async (input: {
   clientSecret: string | null;
   requiresAction: boolean;
 }> => {
-  const { organizationId, subscription, targetPlan, targetInterval } = input;
+  const { organizationId, customerId, subscription, targetPlan, targetInterval } = input;
 
-  const confirmation = await updateSubscriptionItemsImmediately(subscription, targetPlan, targetInterval);
+  const confirmation = await updateSubscriptionItemsImmediately(
+    subscription,
+    customerId,
+    targetPlan,
+    targetInterval
+  );
 
   // Supersedes any pending downgrade (e.g. a no-card-trial "Return to Hobby" via cancel_at_period_end,
   // no schedule) unconditionally: releases any schedule, undoes cancel_at_period_end, and nulls the
@@ -1559,6 +1631,7 @@ export const switchOrganizationToCloudPlan = async (input: {
 
   const pendingChange = await scheduleSubscriptionPlanChange(
     input.organizationId,
+    input.customerId,
     subscription,
     input.targetPlan,
     input.targetInterval
