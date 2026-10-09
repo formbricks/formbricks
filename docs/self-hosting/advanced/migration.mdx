@@ -220,10 +220,12 @@ screen names the response scopes. Access to responses starts only once the user 
   scopes to it yourself.
 </Note>
 
-### Deleted surveys leave nothing behind (no action required)
+### Deleted surveys and responses leave nothing behind (no action required)
 
 Deleting a survey, by hand or through the 30-day archive purge, now also removes its records from the Hub
-and retries any upload or Hub record it could not remove at first. The work is queued in the same database
+and retries any upload or Hub record it could not remove at first. So does deleting responses in bulk
+through the v3 API (`POST /api/v3/responses/batch-delete`), which used to leave the Hub copies in place;
+deleting a single response still does (ENG-2855). The work is queued in the same database
 transaction as the delete and worked off by a new background job, `deletion-cleanup.drain`, every five
 minutes (see [Job Runner](/self-hosting/configuration/job-runner)). The archive purge also skips any survey
 held by a data retention exemption.
