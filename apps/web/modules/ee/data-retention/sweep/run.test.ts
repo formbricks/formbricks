@@ -38,8 +38,9 @@ const HOUR = 60 * 60 * 1000;
 
 const makeTx = () => ({
   $queryRaw: vi.fn(),
+  $executeRaw: vi.fn(),
   retentionRun: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
-  retentionPolicy: { update: vi.fn(), updateMany: vi.fn() },
+  retentionPolicy: { update: vi.fn() },
   retentionRunItem: { createMany: vi.fn(), updateMany: vi.fn(), create: vi.fn() },
 });
 let tx: ReturnType<typeof makeTx>;
@@ -224,13 +225,27 @@ describe("openRetentionRuns", () => {
 });
 
 describe("recordRetentionDeferral", () => {
-  test("marks the enabled policies of the given organisations on the database clock", async () => {
+  test("marks the enabled policies of the given organisations whose chain is unbroken, on the database clock", async () => {
     await recordRetentionDeferral(["org_a", "org_b"]);
 
-    expect(tx.retentionPolicy.updateMany).toHaveBeenCalledWith({
-      where: { organizationId: { in: ["org_a", "org_b"] }, enabled: true },
-      data: { deferredAt: NOW },
-    });
+    const { text, values } = statement(tx.$executeRaw.mock.calls[0]);
+    expect(text).toContain('SET "deferredAt" = ?');
+    expect(text).toContain('p."organizationId" = ANY(?::text[]) AND p."enabled"');
+    // A policy already past the gap keeps it: one deferral never stands in for a week unwatched.
+    expect(text).toMatch(/GREATEST\( p\."enabledAt", p\."deferredAt", \(SELECT MAX\(r\."startedAt"\)/);
+    expect(text).toContain(") > ?");
+    expect(values).toEqual([NOW, ["org_a", "org_b"], new Date(NOW.getTime() - RETENTION_SWEEP_GAP_MS)]);
+  });
+
+  test("marks a large night in chunks, one transaction each", async () => {
+    const ids = Array.from({ length: 2500 }, (_, index) => `org_${index}`);
+
+    await recordRetentionDeferral(ids);
+
+    expect(runSweepTransaction).toHaveBeenCalledTimes(3);
+    expect(tx.$executeRaw.mock.calls.map((call) => (statement(call).values[1] as string[]).length)).toEqual([
+      1000, 1000, 500,
+    ]);
   });
 
   test("opens no transaction for no organisations", async () => {

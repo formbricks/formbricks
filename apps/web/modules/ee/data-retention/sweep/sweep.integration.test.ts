@@ -135,24 +135,39 @@ describe("data retention sweep (real Postgres)", () => {
       await expect(openRetentionRuns(organizationId, ["responses", "members"])).resolves.toHaveLength(2);
     });
 
-    test("keeps the warning of an organisation the sweep had no time for, and only a licensed one", async () => {
-      const deferred = await enablePolicy("responses", ago(100 * DAY));
-      await addRun("responses", ago(10 * DAY));
-      const unlicensedOrg = (await prisma.organization.create({ data: { name: "Lapsed" } })).id;
-      const lapsed = await enablePolicy("responses", ago(100 * DAY), unlicensedOrg);
-      await addRun("responses", ago(10 * DAY), true, unlicensedOrg);
+    test("marks a deferred organisation whose chain is unbroken, and keeps its warning past the gap", async () => {
+      const policy = await enablePolicy("responses", ago(100 * DAY));
+      await addRun("responses", ago(2 * DAY));
 
-      // Last night's sweep ran out of time before both; only the licensed one is marked.
       await recordRetentionDeferral([organizationId]);
+
+      const marked = await prisma.retentionPolicy.findUniqueOrThrow({ where: { id: policy.id } });
+      expect(marked.deferredAt).not.toBeNull();
+      // Nights later, deferred each night: the run is past the gap, the last deferral isn't.
+      await prisma.retentionRun.updateMany({ where: { organizationId }, data: { startedAt: ago(10 * DAY) } });
+      await prisma.retentionPolicy.update({ where: { id: policy.id }, data: { deferredAt: ago(DAY) } });
+      await recordRetentionDeferral([organizationId]);
+      expect(
+        (await prisma.retentionPolicy.findUniqueOrThrow({ where: { id: policy.id } })).deferredAt!.getTime()
+      ).toBeGreaterThan(ago(HOUR).getTime());
 
       await expect(openRetentionRun(organizationId, "responses")).resolves.toMatchObject({
         restartedWarning: null,
       });
+    });
+
+    test("never marks an organisation already past the gap: one deferral can't stand in for a week unwatched", async () => {
+      const policy = await enablePolicy("responses", ago(100 * DAY));
+      // Last run a week ago; the licence lapsed or the sweep was down since.
+      await addRun("responses", ago(7 * DAY));
+
+      await recordRetentionDeferral([organizationId]);
+
       expect(
-        (await prisma.retentionPolicy.findUniqueOrThrow({ where: { id: deferred.id } })).enabledAt
-      ).toEqual(deferred.enabledAt);
-      await expect(openRetentionRun(unlicensedOrg, "responses")).resolves.toMatchObject({
-        restartedWarning: { previousEnabledAt: lapsed.enabledAt },
+        (await prisma.retentionPolicy.findUniqueOrThrow({ where: { id: policy.id } })).deferredAt
+      ).toBeNull();
+      await expect(openRetentionRun(organizationId, "responses")).resolves.toMatchObject({
+        restartedWarning: { previousEnabledAt: policy.enabledAt },
       });
     });
 

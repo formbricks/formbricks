@@ -74,21 +74,39 @@ export const openRetentionRuns = (
     return runs;
   });
 
+/** How many organisations one deferral update marks; a night with more is marked in chunks. */
+const RETENTION_DEFERRAL_CHUNK = 1000;
+
 /**
  * Mark the enabled policies of organisations the night's sweep ran out of time for, all of them
  * licensed (the caller checked), so the next night doesn't take the wait for a sweep that stopped and
  * restart their warnings (`openPolicyRun`). An organisation without the licence isn't marked: its gap is
  * real, and its warning restarts when it comes back.
+ *
+ * Only a policy whose chain is still unbroken is marked: its last run, its warning restart (`enabledAt`)
+ * or its last deferral is within `RETENTION_SWEEP_GAP_MS`. A policy already past the gap (a lapsed
+ * licence, a sweep that was down) keeps that gap, or one deferral after a week unwatched would stand in
+ * for the whole week and let a backlog act without a fresh warning (ENG-3614).
  */
 export const recordRetentionDeferral = async (organizationIds: readonly string[]): Promise<void> => {
-  if (organizationIds.length === 0) return;
-  await runSweepTransaction(async (tx) => {
-    const now = await readDatabaseClock(tx);
-    await tx.retentionPolicy.updateMany({
-      where: { organizationId: { in: [...organizationIds] }, enabled: true },
-      data: { deferredAt: now },
+  for (let start = 0; start < organizationIds.length; start += RETENTION_DEFERRAL_CHUNK) {
+    const chunk = organizationIds.slice(start, start + RETENTION_DEFERRAL_CHUNK);
+    await runSweepTransaction(async (tx) => {
+      const now = await readDatabaseClock(tx);
+      const unbrokenSince = new Date(now.getTime() - RETENTION_SWEEP_GAP_MS);
+      await tx.$executeRaw`
+        UPDATE "RetentionPolicy" p
+        SET "deferredAt" = ${now}
+        WHERE p."organizationId" = ANY(${chunk}::text[]) AND p."enabled"
+          AND GREATEST(
+            p."enabledAt",
+            p."deferredAt",
+            (SELECT MAX(r."startedAt") FROM "RetentionRun" r
+              WHERE r."organizationId" = p."organizationId" AND r."entity" = p."entity")
+          ) > ${unbrokenSince}
+      `;
     });
-  });
+  }
 };
 
 /** Open one policy's run inside `openRetentionRuns`, or return null when the policy is off. */
