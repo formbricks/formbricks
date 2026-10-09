@@ -1,6 +1,7 @@
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import type { TSurveyGenerationDraftSnapshot } from "@/app/api/internal/surveys/generate/lib/events";
 import type { TV3CreateSurveyRequestBody } from "@/app/api/v3/surveys/schemas";
+import { extractId, extractRecallInfo, replaceRecallInfoWithUnderline } from "@/lib/utils/recall";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -23,6 +24,20 @@ const readText = (value: unknown, defaultLanguage: string | undefined): string |
   return typeof text === "string" ? getTextContent(text) || undefined : undefined;
 };
 
+/**
+ * A text's recalls as the editor writes them in plain text (`recallToHeadline`): `@` and what is
+ * recalled, instead of the stored token. A question shows its headline; anything else, such as a
+ * hidden field, its id, which is the field's name.
+ */
+const showRecalls = (text: string, labels: ReadonlyMap<string, string>): string => {
+  let shown = text;
+  for (let token = extractRecallInfo(shown); token; token = extractRecallInfo(shown)) {
+    const id = extractId(token) ?? "";
+    shown = shown.replace(token, () => `@${labels.get(id) ?? id}`);
+  }
+  return shown;
+};
+
 /** Choices, or a matrix's rows: what the row's "N options" counts. */
 const countOptions = (element: Record<string, unknown>): number | undefined => {
   if (Array.isArray(element.choices)) return element.choices.length;
@@ -42,16 +57,28 @@ export const payloadToDraftSnapshot = (
   const body: Record<string, unknown> = isRecord(payload) ? payload : {};
   const defaultLanguage = typeof body.defaultLanguage === "string" ? body.defaultLanguage : undefined;
   const blocks: unknown[] = Array.isArray(body.blocks) ? body.blocks : [];
+  const elementsOf = (block: Record<string, unknown>) =>
+    (Array.isArray(block.elements) ? block.elements : []).filter(isRecord);
+  // What a recall of each question shows. Labels carry no tokens (a recall inside one reads `___`, as
+  // in the editor), so replacing the tokens of a text always ends.
+  const recallLabels = new Map<string, string>();
+  for (const element of blocks.filter(isRecord).flatMap(elementsOf)) {
+    const headline = readText(element.headline, defaultLanguage);
+    if (typeof element.id === "string" && headline) {
+      recallLabels.set(element.id, replaceRecallInfoWithUnderline(headline));
+    }
+  }
 
   return {
     name: typeof body.name === "string" ? body.name : undefined,
     blocks: blocks.filter(isRecord).map((block) => ({
       name: typeof block.name === "string" ? block.name : undefined,
-      questions: (Array.isArray(block.elements) ? block.elements : []).filter(isRecord).map((element) => {
+      questions: elementsOf(block).map((element) => {
         const optionCount = countOptions(element);
+        const headline = readText(element.headline, defaultLanguage);
         return {
           type: typeof element.type === "string" ? element.type : undefined,
-          headline: readText(element.headline, defaultLanguage),
+          headline: headline && showRecalls(headline, recallLabels),
           ...(optionCount === undefined ? {} : { choices: Array.from({ length: optionCount }, () => "") }),
         };
       }),

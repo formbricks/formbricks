@@ -86,6 +86,34 @@ describe("payloadToDraftSnapshot", () => {
     ]);
   });
 
+  test("shows a recall as the editor does: @ and what it recalls", () => {
+    const rows = rowsFor({
+      defaultLanguage: "en-US",
+      blocks: [
+        {
+          name: "B",
+          elements: [
+            { id: "Q1", type: "openText", headline: { "en-US": "<p>What is your <b>name</b>?</p>" } },
+            {
+              id: "Q2",
+              type: "openText",
+              headline: {
+                "en-US": "Thanks #recall:Q1/fallback:...#, from #recall:store_name/fallback:...#!",
+              },
+            },
+            { id: "Q3", type: "openText", headline: { "en-US": "You said: #recall:Q2/fallback:...#" } },
+          ],
+        },
+      ],
+    });
+
+    expect(rows.map((row) => row.headline)).toEqual([
+      "What is your name?",
+      "Thanks @What is your name?, from @store_name!",
+      "You said: @Thanks ___, from ___!",
+    ]);
+  });
+
   test("tolerates a payload with nothing in it", () => {
     expect(rowsFor({})).toEqual([]);
   });
