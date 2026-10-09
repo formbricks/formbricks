@@ -21,7 +21,7 @@ jobs:
   build-community-testing:
     name: Build Community Testing Image
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
