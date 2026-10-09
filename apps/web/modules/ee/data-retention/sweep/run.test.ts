@@ -6,6 +6,7 @@ import {
   closeRetentionRun,
   openRetentionRun,
   openRetentionRuns,
+  recordRetentionDeferral,
   recordRetentionRunActions,
   recordRetentionRunDeletion,
   recordRetentionRunSkips,
@@ -38,7 +39,7 @@ const HOUR = 60 * 60 * 1000;
 const makeTx = () => ({
   $queryRaw: vi.fn(),
   retentionRun: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
-  retentionPolicy: { update: vi.fn() },
+  retentionPolicy: { update: vi.fn(), updateMany: vi.fn() },
   retentionRunItem: { createMany: vi.fn(), updateMany: vi.fn(), create: vi.fn() },
 });
 let tx: ReturnType<typeof makeTx>;
@@ -195,6 +196,47 @@ describe("openRetentionRuns", () => {
 
     await expect(openRetentionRun(ORG_ID, "surveys")).resolves.toMatchObject({ restartedWarning: null });
     expect(tx.retentionPolicy.update).not.toHaveBeenCalled();
+  });
+
+  test("keeps the warning when the sweep had no time for the organisation since its last run", async () => {
+    database({
+      policies: { surveys: [policyRow({ enabledAt: ago(30 * 24 * HOUR), deferredAt: ago(24 * HOUR) })] },
+      previous: previousRun(ago(10 * 24 * HOUR)),
+    });
+
+    await expect(openRetentionRun(ORG_ID, "surveys")).resolves.toMatchObject({ restartedWarning: null });
+    expect(tx.retentionPolicy.update).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["the deferral is as old as the gap", ago(RETENTION_SWEEP_GAP_MS)],
+    ["the deferral predates the last run", ago(20 * 24 * HOUR)],
+  ])("still restarts the warning when %s", async (_case, deferredAt) => {
+    database({
+      policies: { surveys: [policyRow({ enabledAt: ago(30 * 24 * HOUR), deferredAt })] },
+      previous: previousRun(ago(10 * 24 * HOUR)),
+    });
+
+    await expect(openRetentionRun(ORG_ID, "surveys")).resolves.toMatchObject({
+      restartedWarning: { previousEnabledAt: ago(30 * 24 * HOUR) },
+    });
+  });
+});
+
+describe("recordRetentionDeferral", () => {
+  test("marks the enabled policies of the given organisations on the database clock", async () => {
+    await recordRetentionDeferral(["org_a", "org_b"]);
+
+    expect(tx.retentionPolicy.updateMany).toHaveBeenCalledWith({
+      where: { organizationId: { in: ["org_a", "org_b"] }, enabled: true },
+      data: { deferredAt: NOW },
+    });
+  });
+
+  test("opens no transaction for no organisations", async () => {
+    await recordRetentionDeferral([]);
+
+    expect(runSweepTransaction).not.toHaveBeenCalled();
   });
 });
 

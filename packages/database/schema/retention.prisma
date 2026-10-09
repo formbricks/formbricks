@@ -68,6 +68,10 @@ model RetentionPolicy {
   periodDays     Int
   /// Surveys policy only.
   conditions     RetentionSurveyCondition[] @default([])
+  /// The last night the sweep's time ran out before it reached this policy's organisation, licensed.
+  /// The organisation was due and the sweep was running, so it counts as reached for the gap that
+  /// restarts the warning (`RETENTION_SWEEP_GAP_MS`): a backlog of organisations never restarts warnings.
+  deferredAt     DateTime?
   updatedBy      User?                      @relation("retentionPolicyUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
   updatedById    String?
 

@@ -5,7 +5,12 @@ import { logger } from "@formbricks/logger";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsDataRetentionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { RETENTION_RUN_BUDGET_MS, RETENTION_SWEEP_BUDGET_MS } from "./constants";
-import { type TOpenedRetentionRun, closeRetentionRun, openRetentionRuns } from "./run";
+import {
+  type TOpenedRetentionRun,
+  closeRetentionRun,
+  openRetentionRuns,
+  recordRetentionDeferral,
+} from "./run";
 import { type TSurveyNoticeBatch, sendSurveyNotices } from "./survey-notices";
 import { type TRetentionSweepPlan, type TRetentionSweeper, runDataRetentionSweep } from "./sweep";
 import { RetentionPolicyChangedError } from "./transaction";
@@ -15,7 +20,11 @@ vi.mock("@formbricks/database", () => ({ prisma: { $queryRaw: vi.fn() } }));
 vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), error: vi.fn() } }));
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEventWithoutRequest: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsDataRetentionEnabled: vi.fn() }));
-vi.mock("./run", () => ({ openRetentionRuns: vi.fn(), closeRetentionRun: vi.fn() }));
+vi.mock("./run", () => ({
+  openRetentionRuns: vi.fn(),
+  closeRetentionRun: vi.fn(),
+  recordRetentionDeferral: vi.fn(),
+}));
 vi.mock("./survey-notices", () => ({ sendSurveyNotices: vi.fn() }));
 
 /**
@@ -315,7 +324,43 @@ describe("runDataRetentionSweep", () => {
 
     const summary = await runDataRetentionSweep({ sweepers: {}, checkLicence });
 
-    expect(checkLicence).toHaveBeenCalledTimes(1);
     expect(summary).toEqual({ organizations: 1, unlicensed: 1, runs: 0, failedRuns: 0, deferred: 2 });
+    expect(openRetentionRuns).not.toHaveBeenCalled();
+  });
+
+  test("marks the licensed organisations it had no time for, so the wait doesn't restart their warnings", async () => {
+    orgs("org-1", "org-2", "org-3", "org-4");
+    const checkLicence = vi.fn(async (organizationId: string) => {
+      if (organizationId === "org-1") {
+        vi.advanceTimersByTime(RETENTION_SWEEP_BUDGET_MS);
+        return false;
+      }
+      if (organizationId === "org-3") throw new Error("licence server down");
+      return organizationId === "org-2";
+    });
+
+    const summary = await runDataRetentionSweep({ sweepers: {}, checkLicence });
+
+    expect(summary.deferred).toBe(3);
+    // org-3's lookup failed and org-4 isn't licensed: their gap is real, so neither is marked.
+    expect(recordRetentionDeferral).toHaveBeenCalledWith(["org-2"]);
+  });
+
+  test("finishes the night even when recording the deferral fails", async () => {
+    orgs("org-1", "org-2");
+    vi.mocked(recordRetentionDeferral).mockRejectedValueOnce(new Error("db down"));
+    const checkLicence = vi.fn(async () => {
+      vi.advanceTimersByTime(RETENTION_SWEEP_BUDGET_MS);
+      return true;
+    });
+    vi.mocked(openRetentionRuns).mockResolvedValue([]);
+
+    await expect(runDataRetentionSweep({ sweepers: {}, checkLicence })).resolves.toMatchObject({
+      deferred: 1,
+    });
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ deferred: 1 }),
+      "Failed to record the organisations the data retention sweep had no time for"
+    );
   });
 });

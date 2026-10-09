@@ -9,6 +9,7 @@ import { collectDueTargets } from "./due-targets";
 import {
   openRetentionRun,
   openRetentionRuns,
+  recordRetentionDeferral,
   recordRetentionRunActions,
   recordRetentionRunSkips,
 } from "./run";
@@ -132,6 +133,27 @@ describe("data retention sweep (real Postgres)", () => {
       release();
       await opening;
       await expect(openRetentionRuns(organizationId, ["responses", "members"])).resolves.toHaveLength(2);
+    });
+
+    test("keeps the warning of an organisation the sweep had no time for, and only a licensed one", async () => {
+      const deferred = await enablePolicy("responses", ago(100 * DAY));
+      await addRun("responses", ago(10 * DAY));
+      const unlicensedOrg = (await prisma.organization.create({ data: { name: "Lapsed" } })).id;
+      const lapsed = await enablePolicy("responses", ago(100 * DAY), unlicensedOrg);
+      await addRun("responses", ago(10 * DAY), true, unlicensedOrg);
+
+      // Last night's sweep ran out of time before both; only the licensed one is marked.
+      await recordRetentionDeferral([organizationId]);
+
+      await expect(openRetentionRun(organizationId, "responses")).resolves.toMatchObject({
+        restartedWarning: null,
+      });
+      expect(
+        (await prisma.retentionPolicy.findUniqueOrThrow({ where: { id: deferred.id } })).enabledAt
+      ).toEqual(deferred.enabledAt);
+      await expect(openRetentionRun(unlicensedOrg, "responses")).resolves.toMatchObject({
+        restartedWarning: { previousEnabledAt: lapsed.enabledAt },
+      });
     });
 
     test("restarts the warning when the last run is too old, as a system change", async () => {

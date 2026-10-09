@@ -74,6 +74,23 @@ export const openRetentionRuns = (
     return runs;
   });
 
+/**
+ * Mark the enabled policies of organisations the night's sweep ran out of time for, all of them
+ * licensed (the caller checked), so the next night doesn't take the wait for a sweep that stopped and
+ * restart their warnings (`openPolicyRun`). An organisation without the licence isn't marked: its gap is
+ * real, and its warning restarts when it comes back.
+ */
+export const recordRetentionDeferral = async (organizationIds: readonly string[]): Promise<void> => {
+  if (organizationIds.length === 0) return;
+  await runSweepTransaction(async (tx) => {
+    const now = await readDatabaseClock(tx);
+    await tx.retentionPolicy.updateMany({
+      where: { organizationId: { in: [...organizationIds] }, enabled: true },
+      data: { deferredAt: now },
+    });
+  });
+};
+
 /** Open one policy's run inside `openRetentionRuns`, or return null when the policy is off. */
 const openPolicyRun = async (
   tx: Prisma.TransactionClient,
@@ -88,9 +105,11 @@ const openPolicyRun = async (
       warnDays: number;
       periodDays: number;
       conditions: RetentionSurveyCondition[];
+      deferredAt: Date | null;
     }[]
   >`
-    SELECT "id", "enabled", "enabledAt", "warnDays", "periodDays", "conditions"::text[] AS "conditions"
+    SELECT "id", "enabled", "enabledAt", "warnDays", "periodDays", "conditions"::text[] AS "conditions",
+           "deferredAt"
     FROM "RetentionPolicy"
     WHERE "organizationId" = ${organizationId} AND "entity" = ${entity}::"RetentionEntity"
     FOR UPDATE
@@ -108,9 +127,15 @@ const openPolicyRun = async (
 
   let enabledAt = locked.enabledAt;
   let restartedWarning: TOpenedRetentionRun["restartedWarning"] = null;
+  // A night the sweep's time ran out before this organisation counts as reached: the sweep was
+  // running and the organisation licensed, so its backlog was waiting its turn, not unwatched.
+  const lastReachedAt =
+    previous && locked.deferredAt && locked.deferredAt > previous.startedAt
+      ? locked.deferredAt
+      : previous?.startedAt;
   if (
-    previous &&
-    age(previous.startedAt) >= RETENTION_SWEEP_GAP_MS &&
+    lastReachedAt &&
+    age(lastReachedAt) >= RETENTION_SWEEP_GAP_MS &&
     age(enabledAt) >= RETENTION_SWEEP_GAP_MS
   ) {
     await tx.retentionPolicy.update({

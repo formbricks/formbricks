@@ -2,10 +2,16 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import type { RetentionEntity } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import { mapWithConcurrency } from "@/lib/utils/map-with-concurrency";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsDataRetentionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { RETENTION_RUN_BUDGET_MS, RETENTION_SWEEP_BUDGET_MS } from "./constants";
-import { type TOpenedRetentionRun, closeRetentionRun, openRetentionRuns } from "./run";
+import {
+  type TOpenedRetentionRun,
+  closeRetentionRun,
+  openRetentionRuns,
+  recordRetentionDeferral,
+} from "./run";
 import { type TSurveyNoticeBatch, sendSurveyNotices } from "./survey-notices";
 import { RetentionPolicyChangedError } from "./transaction";
 
@@ -64,6 +70,33 @@ const listOrganizationsToSweep = async (): Promise<string[]> => {
     ORDER BY last."startedAt" ASC NULLS FIRST, o."organizationId"
   `;
   return rows.map((row) => row.organizationId);
+};
+
+/** How many licence lookups run at once when marking the organisations a night had no time for. */
+const DEFERRAL_LICENCE_CHECK_CONCURRENCY = 8;
+
+/**
+ * Record that the night ran out of time for these organisations (`recordRetentionDeferral`), the
+ * licensed ones only, so a backlog of organisations never restarts their warnings. A failure is logged,
+ * not thrown: the cost is a warning restarting after three such nights, which only delays action.
+ */
+const markDeferred = async (
+  organizationIds: readonly string[],
+  checkLicence: (organizationId: string) => Promise<boolean>
+): Promise<void> => {
+  try {
+    const licensed = await mapWithConcurrency(
+      organizationIds,
+      DEFERRAL_LICENCE_CHECK_CONCURRENCY,
+      async (organizationId) => ((await isLicensed(organizationId, checkLicence)) ? organizationId : null)
+    );
+    await recordRetentionDeferral(licensed.filter((id): id is string => id !== null));
+  } catch (error) {
+    logger.error(
+      { error, deferred: organizationIds.length },
+      "Failed to record the organisations the data retention sweep had no time for"
+    );
+  }
 };
 
 /** A lookup that fails reads as unlicensed: the sweep never acts on a guess. */
@@ -255,7 +288,9 @@ export const runDataRetentionSweep = async ({
 
   for (const [index, organizationId] of organizationIds.entries()) {
     if (Date.now() >= deadline) {
-      summary.deferred = organizationIds.length - index;
+      const deferred = organizationIds.slice(index);
+      summary.deferred = deferred.length;
+      await markDeferred(deferred, checkLicence);
       break;
     }
     summary.organizations += 1;

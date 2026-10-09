@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS "RetentionPolicy" (
     "warnDays" INTEGER NOT NULL DEFAULT 60,
     "periodDays" INTEGER NOT NULL,
     "conditions" "RetentionSurveyCondition"[] DEFAULT ARRAY[]::"RetentionSurveyCondition"[],
+    "deferredAt" TIMESTAMP(3),
     "updatedById" TEXT,
 
     CONSTRAINT "RetentionPolicy_pkey" PRIMARY KEY ("id")
