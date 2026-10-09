@@ -55,7 +55,8 @@ WORKDIR /app
 
 # Copy only what the install reads, so a source-only change reuses the install layer. Everything
 # that busts this layer (the secrets script, BASE_PATH) is declared after it. xlsx is a `file:`
-# dependency on a tarball under apps/web/vendor, so the install needs that directory too.
+# dependency on a tarball under apps/web/vendor, so the install needs that directory too. Keep these
+# COPYs in sync with the timestamp reset after `COPY . .` below.
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY patches ./patches
 COPY --parents apps/*/package.json packages/*/package.json docker/package.json ./
