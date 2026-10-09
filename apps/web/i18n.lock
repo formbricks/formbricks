@@ -3910,6 +3910,7 @@ checksums:
     workspace/surveys/import/issues/logic_not_imported: f16e7996e04b9042bec7ba9538e4a326
     workspace/surveys/import/issues/markup_escaped: d2384ad3f31c8fcfb2b94e19c63e45a6
     workspace/surveys/import/issues/matrix_single_answer: 9382694709e8546e5a6ee709009db2cc
+    workspace/surveys/import/issues/options_left_out: 3400731d2ca05074e720090c33e484a7
     workspace/surveys/import/issues/piped_text_removed: 1924c723a676c2bd631917f8ff6fc032
     workspace/surveys/import/issues/question_skipped: 0da7b465f2df0a8ef0c5252924bfbc3a
     workspace/surveys/import/issues/question_skipped_ai_budget: 6f3b25489741e96c01a235805d40ef4e
@@ -3921,6 +3922,7 @@ checksums:
     workspace/surveys/import/issues/question_skipped_plan_invalid: d4119e1f8e1d342e29708d7789e21cfa
     workspace/surveys/import/issues/question_skipped_unsupported_type: 6dfd927767a9f86e69d5e0fb48a20133
     workspace/surveys/import/issues/question_skipped_validation_failed: 0a5b956b70ee349203488e9278c72d8d
+    workspace/surveys/import/issues/scale_changed: 5485ad02852c383d9cdc67377a2dbfe2
     workspace/surveys/import/issues/script_dropped: ad92cd87ee93e38e927c6709ae55dc44
     workspace/surveys/import/issues/text_too_long: 9abc9b3ccac371b03f2ac5ca05131769
     workspace/surveys/import/issues/translation_missing: da255c38cae954ee94e0c0037dcba58b
