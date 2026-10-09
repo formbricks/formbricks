@@ -9,3 +9,10 @@ docs/api-v3-reference/openapi.yml linguist-generated=true
 # `pnpm api:v3:schemas:check` (part of `pnpm lint`). eol=lf because the check compares bytes: a CRLF
 # checkout would fail it with nothing to fix.
 packages/api-v3-schemas/src/generated/** linguist-generated=true eol=lf
+
+# The Qualtrics import's test data: QSF exports and recorded AI plans, written by
+# apps/web/modules/survey/import/qsf/scripts/generate-qsf-fixtures.ts or recorded by `pnpm qsf:eval`.
+# The fixture helpers beside them (`*.ts`) are code, and stay in the diff.
+apps/web/modules/survey/import/qsf/__fixtures__/*.qsf linguist-generated=true
+apps/web/modules/survey/import/qsf/__fixtures__/*.json linguist-generated=true
+apps/web/modules/survey/import/qsf/__fixtures__/plans/** linguist-generated=true

@@ -1,0 +1,409 @@
+{
+  "SurveyEntry": {
+    "SurveyID": "SV_SampleSurvey",
+    "SurveyName": "Sample Survey",
+    "SurveyDescription": null,
+    "SurveyOwnerID": "UR_sample",
+    "SurveyBrandID": "formbricks",
+    "DivisionID": null,
+    "SurveyLanguage": "EN",
+    "SurveyStatus": "Inactive",
+    "SurveyStartDate": "0000-00-00 00:00:00",
+    "SurveyExpirationDate": "0000-00-00 00:00:00",
+    "SurveyCreationDate": "2026-09-09 11:39:31",
+    "CreatorID": "UR_sample",
+    "LastModified": "2026-09-09 11:39:31",
+    "LastAccessed": "0000-00-00 00:00:00",
+    "LastActivated": "0000-00-00 00:00:00",
+    "Deleted": null
+  },
+  "SurveyElements": [
+    {
+      "SurveyID": "SV_SampleSurvey",
+      "Element": "BL",
+      "PrimaryAttribute": "Survey Blocks",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "1": {
+          "Type": "Standard",
+          "SubType": "",
+          "Description": "Sample Survey",
+          "ID": "BL_main",
+          "BlockElements": [
+            {
+              "Type": "Question",
+              "QuestionID": "QID1"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID2"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID3"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID4"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID5"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID6"
+            }
+          ]
+        },
+        "2": {
+          "Type": "Trash",
+          "Description": "Trash / Unused Questions",
+          "ID": "BL_trash",
+          "BlockElements": []
+        }
+      }
+    },
+    {
+      "SurveyID": "SV_SampleSurvey",
+      "Element": "FL",
+      "PrimaryAttribute": "Survey Flow",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "Type": "Root",
+        "FlowID": "FL_1",
+        "Flow": [
+          {
+            "Type": "Block",
+            "ID": "BL_main",
+            "FlowID": "FL_2",
+            "Autofill": []
+          }
+        ],
+        "Properties": {
+          "Count": 2
+        }
+      }
+    },
+    {
+      "SurveyID": "SV_SampleSurvey",
+      "Element": "SO",
+      "PrimaryAttribute": "Survey Options",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "BackButton": "true",
+        "SaveAndContinue": "true",
+        "SurveyProtection": "PublicSurvey",
+        "SurveyTitle": "Sample Survey",
+        "SkinLibrary": "qualtrics",
+        "SkinType": "templated",
+        "NewScoring": 1
+      }
+    },
+    {
+      "SurveyID": "SV_SampleSurvey",
+      "Element": "QC",
+      "PrimaryAttribute": "Survey Question Count",
+      "SecondaryAttribute": "6",
+      "TertiaryAttribute": null,
+      "Payload": null
+    },
+    {
+      "SurveyID": "SV_SampleSurvey",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID1",
+      "SecondaryAttribute": "Which option do you prefer?",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionID": "QID1",
+        "QuestionText": "Which option do you prefer?",
+        "DataExportTag": "Q1",
+        "QuestionDescription": "Which option do you prefer?",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "ON",
+            "ForceResponseType": "ON",
+            "Type": "None"
+          }
+        },
+        "Language": [],
+        "QuestionType": "MC",
+        "Selector": "SAVR",
+        "SubSelector": "TX",
+        "Choices": {
+          "1": {
+            "Display": "Option A"
+          },
+          "2": {
+            "Display": "Option B"
+          },
+          "3": {
+            "Display": "Option C"
+          }
+        },
+        "ChoiceOrder": [
+          "1",
+          "2",
+          "3"
+        ],
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      }
+    },
+    {
+      "SurveyID": "SV_SampleSurvey",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID2",
+      "SecondaryAttribute": "Pick a colour from the list.",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionID": "QID2",
+        "QuestionText": "Pick a colour from the list.",
+        "DataExportTag": "Q2",
+        "QuestionDescription": "Pick a colour from the list.",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "ON",
+            "ForceResponseType": "ON",
+            "Type": "None"
+          }
+        },
+        "Language": [],
+        "QuestionType": "MC",
+        "Selector": "DL",
+        "SubSelector": "TX",
+        "Choices": {
+          "1": {
+            "Display": "Red"
+          },
+          "2": {
+            "Display": "Green"
+          },
+          "3": {
+            "Display": "Blue"
+          },
+          "4": {
+            "Display": "Other"
+          }
+        },
+        "ChoiceOrder": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      }
+    },
+    {
+      "SurveyID": "SV_SampleSurvey",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID3",
+      "SecondaryAttribute": "How satisfied are you overall?",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionID": "QID3",
+        "QuestionText": "How satisfied are you overall?",
+        "DataExportTag": "Q3",
+        "QuestionDescription": "How satisfied are you overall?",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "ON",
+            "ForceResponseType": "ON",
+            "Type": "None"
+          }
+        },
+        "Language": [],
+        "QuestionType": "MC",
+        "Selector": "SAHR",
+        "SubSelector": "TX",
+        "Choices": {
+          "1": {
+            "Display": "1 – Very dissatisfied"
+          },
+          "2": {
+            "Display": "2"
+          },
+          "3": {
+            "Display": "3"
+          },
+          "4": {
+            "Display": "4"
+          },
+          "5": {
+            "Display": "5 – Very satisfied"
+          }
+        },
+        "ChoiceOrder": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      }
+    },
+    {
+      "SurveyID": "SV_SampleSurvey",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID4",
+      "SecondaryAttribute": "How easy was it to complete this task?",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionID": "QID4",
+        "QuestionText": "How easy was it to complete this task?",
+        "DataExportTag": "Q4",
+        "QuestionDescription": "How easy was it to complete this task?",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "ON",
+            "ForceResponseType": "ON",
+            "Type": "None"
+          }
+        },
+        "Language": [],
+        "QuestionType": "MC",
+        "Selector": "SAHR",
+        "SubSelector": "TX",
+        "Choices": {
+          "1": {
+            "Display": "1 – Very difficult"
+          },
+          "2": {
+            "Display": "2"
+          },
+          "3": {
+            "Display": "3"
+          },
+          "4": {
+            "Display": "4"
+          },
+          "5": {
+            "Display": "5 – Very easy"
+          }
+        },
+        "ChoiceOrder": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      }
+    },
+    {
+      "SurveyID": "SV_SampleSurvey",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID5",
+      "SecondaryAttribute": "How likely are you to recommend us to a friend?",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionID": "QID5",
+        "QuestionText": "How likely are you to recommend us to a friend?",
+        "DataExportTag": "Q5",
+        "QuestionDescription": "How likely are you to recommend us to a friend?",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "ON",
+            "ForceResponseType": "ON",
+            "Type": "None"
+          }
+        },
+        "Language": [],
+        "QuestionType": "NPS",
+        "Selector": "NPS",
+        "Choices": {
+          "0": {
+            "Display": "0"
+          },
+          "1": {
+            "Display": "1"
+          },
+          "2": {
+            "Display": "2"
+          },
+          "3": {
+            "Display": "3"
+          },
+          "4": {
+            "Display": "4"
+          },
+          "5": {
+            "Display": "5"
+          },
+          "6": {
+            "Display": "6"
+          },
+          "7": {
+            "Display": "7"
+          },
+          "8": {
+            "Display": "8"
+          },
+          "9": {
+            "Display": "9"
+          },
+          "10": {
+            "Display": "10"
+          }
+        },
+        "ChoiceOrder": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9",
+          "10"
+        ],
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText",
+          "NumberOfColumns": 11,
+          "MobileFirst": true
+        }
+      }
+    },
+    {
+      "SurveyID": "SV_SampleSurvey",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID6",
+      "SecondaryAttribute": "Any additional comments?",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionID": "QID6",
+        "QuestionText": "Any additional comments?",
+        "DataExportTag": "Q6",
+        "QuestionDescription": "Any additional comments?",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "Language": [],
+        "QuestionType": "TE",
+        "Selector": "ML",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        }
+      }
+    }
+  ]
+}

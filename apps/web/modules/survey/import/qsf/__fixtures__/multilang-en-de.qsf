@@ -1,0 +1,333 @@
+{
+  "SurveyEntry": {
+    "SurveyID": "SV_fixture000000000",
+    "SurveyName": "Produktfeedback",
+    "SurveyDescription": null,
+    "SurveyOwnerID": "UR_fixture",
+    "SurveyBrandID": "fixture",
+    "DivisionID": null,
+    "SurveyLanguage": "EN",
+    "SurveyActiveResponseSet": "RS_fixture",
+    "SurveyStatus": "Active",
+    "SurveyStartDate": "0000-00-00 00:00:00",
+    "SurveyExpirationDate": "0000-00-00 00:00:00",
+    "SurveyCreationDate": "2026-09-01 10:00:00",
+    "CreatorID": "UR_fixture",
+    "LastModified": "2026-09-08 10:00:00",
+    "LastAccessed": "0000-00-00 00:00:00",
+    "LastActivated": "2026-09-01 10:00:00",
+    "Deleted": null
+  },
+  "SurveyElements": [
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID1",
+      "SecondaryAttribute": "How satisfied are you?",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "How satisfied are you?",
+        "DataExportTag": "Q1",
+        "QuestionType": "MC",
+        "Selector": "SAVR",
+        "SubSelector": "TX",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "How satisfied are you?",
+        "Choices": {
+          "1": {
+            "Display": "Very satisfied"
+          },
+          "2": {
+            "Display": "Satisfied"
+          },
+          "3": {
+            "Display": "Unsatisfied"
+          }
+        },
+        "ChoiceOrder": [
+          "1",
+          "2",
+          "3"
+        ],
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "ON",
+            "ForceResponseType": "ON",
+            "Type": "None"
+          }
+        },
+        "Language": {
+          "DE": {
+            "QuestionText": "Wie zufrieden sind Sie?",
+            "Choices": {
+              "1": {
+                "Display": "Sehr zufrieden"
+              },
+              "2": {
+                "Display": "Zufrieden"
+              },
+              "3": {
+                "Display": "Unzufrieden"
+              }
+            }
+          }
+        },
+        "QuestionID": "QID1",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 4,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID2",
+      "SecondaryAttribute": "Anything else?",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Anything else?",
+        "DataExportTag": "Q2",
+        "QuestionType": "TE",
+        "Selector": "ML",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Anything else?",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "Language": {
+          "DE": {
+            "QuestionText": "Noch etwas?"
+          }
+        },
+        "QuestionID": "QID2",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID3",
+      "SecondaryAttribute": "Rate these statements",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Rate these statements",
+        "DataExportTag": "Q3",
+        "QuestionType": "Matrix",
+        "Selector": "Likert",
+        "SubSelector": "SingleAnswer",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Rate these statements",
+        "Choices": {
+          "1": {
+            "Display": "Easy to use"
+          },
+          "2": {
+            "Display": "Good value"
+          }
+        },
+        "ChoiceOrder": [
+          "1",
+          "2"
+        ],
+        "Answers": {
+          "1": {
+            "Display": "Agree"
+          },
+          "2": {
+            "Display": "Neutral"
+          },
+          "3": {
+            "Display": "Disagree"
+          }
+        },
+        "AnswerOrder": [
+          "1",
+          "2",
+          "3"
+        ],
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "Language": {
+          "DE": {
+            "QuestionText": "Bewerten Sie diese Aussagen",
+            "Choices": {
+              "1": {
+                "Display": "Einfach zu bedienen"
+              },
+              "2": {
+                "Display": "Gutes Preis-Leistungs-Verhältnis"
+              }
+            },
+            "Answers": {
+              "1": {
+                "Display": "Stimme zu"
+              },
+              "2": {
+                "Display": "Neutral"
+              },
+              "3": {
+                "Display": "Stimme nicht zu"
+              }
+            }
+          }
+        },
+        "QuestionID": "QID3",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 3,
+        "NextAnswerId": 4
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "BL",
+      "PrimaryAttribute": "Survey Blocks",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": [
+        {
+          "Type": "Default",
+          "Description": "Feedback",
+          "ID": "BL_1",
+          "BlockElements": [
+            {
+              "Type": "Question",
+              "QuestionID": "QID1"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID2"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "FL",
+      "PrimaryAttribute": "Survey Flow",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "Type": "Root",
+        "FlowID": "FL_root",
+        "Flow": [
+          {
+            "Type": "Block",
+            "ID": "BL_1",
+            "FlowID": "FL_1"
+          },
+          {
+            "Type": "EndSurvey",
+            "FlowID": "FL_2"
+          }
+        ],
+        "Properties": {
+          "Count": 2
+        }
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SO",
+      "PrimaryAttribute": "Survey Options",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "BackButton": "false",
+        "SaveAndContinue": "true",
+        "SurveyProtection": "PublicSurvey",
+        "ProgressBarDisplay": "None",
+        "PartialData": "+1 week",
+        "EOSMessage": "Danke! / Thank you!",
+        "EOSRedirectURL": "",
+        "NextButton": "→",
+        "PreviousButton": "←",
+        "ShowExportTags": "false"
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "QC",
+      "PrimaryAttribute": "Survey Question Count",
+      "SecondaryAttribute": "3",
+      "TertiaryAttribute": null,
+      "Payload": null
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "STAT",
+      "PrimaryAttribute": "Survey Statistics",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "MobileCompatible": true,
+        "ID": "Survey Statistics"
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "RS",
+      "PrimaryAttribute": "RS_fixture",
+      "SecondaryAttribute": "Default Response Set",
+      "TertiaryAttribute": null,
+      "Payload": null
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SCO",
+      "PrimaryAttribute": "Scoring",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "ScoringCategories": [],
+        "ScoringCategoryGroups": [],
+        "ScoringSummaryCategory": null,
+        "ScoringSummaryAfterQuestions": 0,
+        "ScoringSummaryAfterSurvey": 0,
+        "DefaultScoringCategory": null,
+        "AutoScoringCategory": null
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "PROJ",
+      "PrimaryAttribute": "CORE",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": "1.1.0",
+      "Payload": {
+        "ProjectCategory": "CORE",
+        "SchemaVersion": "1.1.0"
+      }
+    }
+  ]
+}
