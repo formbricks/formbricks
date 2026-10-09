@@ -1,12 +1,10 @@
+import { prisma } from "@/lib/__mocks__/database";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
 import { deleteSurveyUploadFolder } from "@/modules/storage/service";
 import {
   CLEANUP_SETTLE_MS,
-  DELETION_CLEANUP_CLAIM_BATCH,
   DELETION_CLEANUP_LEASE_SECONDS,
   DELETION_CLEANUP_RUN_BUDGET_MS,
   getDeletionCleanupRetryDelayMs,
@@ -15,14 +13,6 @@ import { drainDeletionCleanups } from "./drain";
 import { type THubCleanupResult, deleteHubRecords } from "./hub-cleanup";
 
 vi.mock("server-only", () => ({}));
-vi.mock("@formbricks/database", () => ({
-  prisma: {
-    $queryRaw: vi.fn(),
-    survey: { findUnique: vi.fn() },
-    response: { findFirst: vi.fn() },
-    deletionCleanup: { deleteMany: vi.fn(), updateMany: vi.fn() },
-  },
-}));
 vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 vi.mock("@/modules/storage/lib/delete-response-files", () => ({ deleteResponseFileUrls: vi.fn() }));
 vi.mock("@/modules/storage/service", () => ({ deleteSurveyUploadFolder: vi.fn() }));
@@ -32,15 +22,11 @@ vi.mock("./hub-cleanup", async (importOriginal) => ({
 }));
 
 /**
- * The drain against a real database (rows claimed with `SKIP LOCKED`, a lease-fenced finish, budgets
- * releasing the rest, a storage failure keeping only the failed keys, the Hub filter) is proven in
- * `deletion-cleanup.integration.test.ts`. These pin how each kind of row is judged and rescheduled.
+ * The drain against a real database (rows claimed with `SKIP LOCKED`, narrowed to given ids, a
+ * lease-fenced finish, budgets releasing the rest, a storage failure keeping only the failed keys, the
+ * Hub filter) is proven in `deletion-cleanup.integration.test.ts`. These pin how each kind of row is
+ * judged and rescheduled.
  */
-const statement = (args: unknown[]) => {
-  const [strings, ...values] = args as [TemplateStringsArray, ...unknown[]];
-  const sql = Prisma.sql(strings, ...values);
-  return { text: sql.sql.replace(/\s+/g, " "), values: sql.values };
-};
 
 const NOW = new Date("2030-01-10T00:00:00.000Z");
 const LEASE_UNTIL = new Date(NOW.getTime() + DELETION_CLEANUP_LEASE_SECONDS * 1000);
@@ -90,27 +76,15 @@ describe("drainDeletionCleanups", () => {
     expect(prisma.$queryRaw).not.toHaveBeenCalled();
   });
 
-  test("claims due rows under a lease, narrowed to the given ids, until the queue is empty", async () => {
+  test("claims until the queue is empty, and finishes a row only while it holds the lease", async () => {
     queue(row("c1", "storageSurveyFolder"));
 
     await expect(drainDeletionCleanups({ ids: ["c1"] })).resolves.toEqual({ done: 1, again: 0, failed: 0 });
 
     expect(prisma.$queryRaw).toHaveBeenCalledTimes(2);
-    const { text, values } = statement(vi.mocked(prisma.$queryRaw).mock.calls[0]);
-    expect(text).toContain('AND "id" = ANY(?::text[])');
-    expect(text).toContain("LIMIT ? FOR UPDATE SKIP LOCKED");
-    expect(values).toEqual([LEASE_UNTIL, NOW, NOW, ["c1"], DELETION_CLEANUP_CLAIM_BATCH]);
     expect(deleteSurveyUploadFolder).toHaveBeenCalledWith({ workspaceId: "clwsp", surveyId: "clsrv" });
     // Finished only while this drain still holds the lease.
     expect(prisma.deletionCleanup.deleteMany).toHaveBeenCalledWith({ where: leased("c1") });
-  });
-
-  test("drains the whole queue when no ids are given", async () => {
-    queue();
-
-    await drainDeletionCleanups();
-
-    expect(statement(vi.mocked(prisma.$queryRaw).mock.calls[0]).text).not.toContain("ANY(");
   });
 
   test("never removes a live survey's folder or Hub records: the row waits with backoff instead", async () => {

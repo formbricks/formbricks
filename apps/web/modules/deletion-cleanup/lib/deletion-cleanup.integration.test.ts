@@ -330,6 +330,37 @@ describe("deletion cleanup (real Postgres)", () => {
       await expect(drainDeletionCleanups()).resolves.toEqual({ done: 1, again: 0, failed: 0 });
     });
 
+    test("drains only the rows it is given, and the whole due queue when given none", async () => {
+      const queueFiles = (surveyId: string) =>
+        prisma.deletionCleanup.create({
+          data: {
+            kind: "storageFiles",
+            organizationId,
+            workspaceId,
+            surveyId,
+            fileKeys: [`/storage/${workspaceId}/private/${surveyId}.png`],
+            nextAttemptAt: daysAgo(1),
+          },
+        });
+      const mine = await queueFiles("clgonesurvey0000000000005");
+      const other = await queueFiles("clgonesurvey0000000000006");
+      vi.mocked(deleteFile).mockResolvedValue({ ok: true } as never);
+
+      await expect(drainDeletionCleanups({ ids: [mine.id] })).resolves.toEqual({
+        done: 1,
+        again: 0,
+        failed: 0,
+      });
+
+      expect(await prisma.deletionCleanup.findUnique({ where: { id: mine.id } })).toBeNull();
+      expect(await prisma.deletionCleanup.findUniqueOrThrow({ where: { id: other.id } })).toMatchObject({
+        attempts: 0,
+      });
+
+      await expect(drainDeletionCleanups()).resolves.toEqual({ done: 1, again: 0, failed: 0 });
+      expect(await prisma.deletionCleanup.findUnique({ where: { id: other.id } })).toBeNull();
+    });
+
     test("keeps only the files that failed, and leaves a row not yet due alone", async () => {
       const urls = ["a.png", "b.png", "c.png"].map((name) => `/storage/${workspaceId}/private/${name}`);
       const row = await prisma.deletionCleanup.create({
