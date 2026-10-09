@@ -91,6 +91,35 @@ const deletePage = async (
   };
 };
 
+/** The running count, and the result to stop with when this tenant can't be finished now. */
+type TTenantPass = { count: number; stop?: THubCleanupResult };
+
+/** One tenant's matching records, page by page, until a listing comes back empty. */
+const deleteTenantRecords = async (
+  target: THubCleanupTarget,
+  tenantId: string,
+  budget: THubCallBudget,
+  countSoFar: number
+): Promise<TTenantPass> => {
+  let count = countSoFar;
+  for (;;) {
+    if (isHubCallBudgetSpent(budget)) return { count, stop: { status: "budget", count } };
+    budget.remaining -= 1;
+
+    const page = await listTenantPage(target, tenantId);
+    if ("error" in page) return { count, stop: { status: "failed", error: page.error } };
+    if (page.records.length === 0) return { count };
+
+    budget.remaining -= page.records.length;
+    const outcome = await deletePage(page.records);
+    count += outcome.deleted;
+    if (outcome.error) return { count, stop: { status: "failed", error: outcome.error } };
+    // Every record listed was already gone: the listing is lagging behind the deletes. Re-listing at
+    // once would spin through the budget on the same page, so leave it to the pass after the settle.
+    if (outcome.allAlreadyGone) return { count, stop: { status: "deleted", count } };
+  }
+};
+
 /**
  * Delete a deleted survey's Hub records, or those of some of its deleted responses, in every given tenant.
  * Lists the first page and deletes it until a listing comes back empty: never pages with a cursor, since
@@ -101,25 +130,10 @@ export const deleteHubRecords = async (
   budget: THubCallBudget
 ): Promise<THubCleanupResult> => {
   let count = 0;
-
   for (const tenantId of target.tenantIds) {
-    for (;;) {
-      if (isHubCallBudgetSpent(budget)) return { status: "budget", count };
-      budget.remaining -= 1;
-
-      const page = await listTenantPage(target, tenantId);
-      if ("error" in page) return { status: "failed", error: page.error };
-      if (page.records.length === 0) break;
-
-      budget.remaining -= page.records.length;
-      const outcome = await deletePage(page.records);
-      count += outcome.deleted;
-      if (outcome.error) return { status: "failed", error: outcome.error };
-      // Every record listed was already gone: the listing is lagging behind the deletes. Re-listing at
-      // once would spin through the budget on the same page, so leave it to the pass after the settle.
-      if (outcome.allAlreadyGone) return { status: "deleted", count };
-    }
+    const pass = await deleteTenantRecords(target, tenantId, budget, count);
+    if (pass.stop) return pass.stop;
+    count = pass.count;
   }
-
   return count > 0 ? { status: "deleted", count } : { status: "clean" };
 };

@@ -136,6 +136,67 @@ const recordDelivered = (notices: readonly TClaimedNotice[], emailSent: boolean,
     }
   });
 
+/** Claim every policy's notices; a policy changed since its run read it stops only its own. */
+const claimAll = async (batches: readonly TSurveyNoticeBatch[], deadline: number) => {
+  const claimed: TClaimedNotice[] = [];
+  for (const batch of batches) {
+    try {
+      claimed.push(...(await claimBatch(batch, deadline)));
+    } catch (error) {
+      if (!(error instanceof RetentionPolicyChangedError)) throw error;
+      logger.info(
+        { runId: batch.context.runId },
+        "Data retention policy changed before its notices; skipped"
+      );
+    }
+  }
+  return claimed;
+};
+
+/** The claimed notices of each person, across both policies. */
+const groupByRecipient = (claimed: readonly TClaimedNotice[]) => {
+  const byRecipient = new Map<string, TClaimedNotice[]>();
+  for (const notice of claimed) {
+    byRecipient.set(notice.recipient.userId, [...(byRecipient.get(notice.recipient.userId) ?? []), notice]);
+  }
+  return byRecipient.values();
+};
+
+/**
+ * Email one person all their notices. Resolves to whether an email went out (false without SMTP), or
+ * null when sending threw, so the claims stay undelivered.
+ */
+const emailRecipient = async (
+  notices: readonly TClaimedNotice[],
+  organization: Awaited<ReturnType<typeof loadNoticeOrganization>>
+): Promise<boolean | null> => {
+  const { recipient } = notices[0];
+  const format = formatFor(recipient.locale, organization.timeZone);
+  const archivedSurveys: TRetentionNoticeArchivedSurvey[] = [];
+  const responseDeletions: TRetentionNoticeResponseDeletion[] = [];
+  for (const notice of notices) {
+    if (notice.entity === "surveys") archivedSurveys.push(notice.describe(format, surveyUrl(notice.survey)));
+    else responseDeletions.push(notice.describe(format, surveyUrl(notice.survey)));
+  }
+
+  try {
+    return await sendSurveyRetentionNoticeEmail({
+      email: recipient.email,
+      locale: recipient.locale,
+      organizationId: notices[0].context.policy.organizationId,
+      organizationName: organization.name,
+      archivedSurveys,
+      responseDeletions,
+    });
+  } catch (error) {
+    logger.error(
+      { error, surveyCount: notices.length },
+      "Data retention notice email failed; the notices stay unsent"
+    );
+    return null;
+  }
+};
+
 /**
  * Send the night's survey notices of one organisation, from both survey policies at once:
  * - claim each policy's notices (`claimBatch`); a policy changed since its run read it stops only its
@@ -152,55 +213,13 @@ export const sendSurveyNotices = async (
   batches: readonly TSurveyNoticeBatch[],
   deadline: number
 ): Promise<void> => {
-  const claimed: TClaimedNotice[] = [];
-  for (const batch of batches) {
-    try {
-      claimed.push(...(await claimBatch(batch, deadline)));
-    } catch (error) {
-      if (!(error instanceof RetentionPolicyChangedError)) throw error;
-      logger.info(
-        { runId: batch.context.runId },
-        "Data retention policy changed before its notices; skipped"
-      );
-    }
-  }
+  const claimed = await claimAll(batches, deadline);
   if (claimed.length === 0) return;
 
   const organization = await loadNoticeOrganization(claimed[0].context.policy.organizationId);
-  const byRecipient = new Map<string, TClaimedNotice[]>();
-  for (const notice of claimed) {
-    byRecipient.set(notice.recipient.userId, [...(byRecipient.get(notice.recipient.userId) ?? []), notice]);
-  }
-
-  for (const notices of byRecipient.values()) {
+  for (const notices of groupByRecipient(claimed)) {
     if (Date.now() >= deadline) break;
-    const { recipient } = notices[0];
-    const format = formatFor(recipient.locale, organization.timeZone);
-    const archivedSurveys: TRetentionNoticeArchivedSurvey[] = [];
-    const responseDeletions: TRetentionNoticeResponseDeletion[] = [];
-    for (const notice of notices) {
-      if (notice.entity === "surveys")
-        archivedSurveys.push(notice.describe(format, surveyUrl(notice.survey)));
-      else responseDeletions.push(notice.describe(format, surveyUrl(notice.survey)));
-    }
-
-    let emailSent: boolean;
-    try {
-      emailSent = await sendSurveyRetentionNoticeEmail({
-        email: recipient.email,
-        locale: recipient.locale,
-        organizationId: notices[0].context.policy.organizationId,
-        organizationName: organization.name,
-        archivedSurveys,
-        responseDeletions,
-      });
-    } catch (error) {
-      logger.error(
-        { error, surveyCount: notices.length },
-        "Data retention notice email failed; the notices stay unsent"
-      );
-      continue;
-    }
-    await recordDelivered(notices, emailSent, recipient.email);
+    const emailSent = await emailRecipient(notices, organization);
+    if (emailSent !== null) await recordDelivered(notices, emailSent, notices[0].recipient.email);
   }
 };
